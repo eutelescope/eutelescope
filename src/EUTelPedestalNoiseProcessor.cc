@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.1.1.1 2007-02-07 10:53:12 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.2 2007-02-07 16:25:13 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -18,12 +18,19 @@
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
 
+#ifdef MARLIN_USE_AIDA
+// aida includes <.h>
+#include <marlin/AIDAProcessor.h>
+#include <AIDA/IHistogramFactory.h>
+#include <AIDA/IHistogram1D.h>
+#include <AIDA/ITree.h>
+#endif
+
 // lcio includes <.h> 
 #include <lcio.h>
 
 // system includes <>
 #include <string>
-
 
 using namespace std;
 using namespace lcio;
@@ -133,6 +140,22 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
   _minY = runHeader->getMinY();
   _maxY = runHeader->getMaxY();
 
+#ifdef MARLIN_USE_AIDA
+  static StringVec loopDirName;
+  static StringVec detectorDirName;
+  
+  for (int iLoop = 0 ; iLoop < _noOfCMIterations + 1; iLoop++) {
+    loopDirName.push_back(string("loop-" + iLoop));
+    AIDAProcessor::tree(this)->mkdir(loopDirName[iLoop].c_str());
+    AIDAProcessor::tree(this)->cd(loopDirName[iLoop]);
+    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      detectorDirName.push_back(string("detector-" + iDetector) + string("_loop-" + iLoop));
+      AIDAProcessor::tree(this)->mkdir(detectorDirName[iDetector].c_str());
+    }
+    AIDAProcessor::tree(this)->cd("..");
+  }
+#endif
+
 }
 
 
@@ -161,12 +184,15 @@ void EUTelPedestalNoiseProcessor::end() {
   _tempPede.clear();
   _tempNoise.clear();
   _tempEntries.clear();
-
+  
   // mask the bad pixels here
   maskBadPixel();
 
   // increment the loop counter
   ++_iLoop;
+
+  // fill in the histograms
+  fillHistos();
 
   // check if we need another loop or we can finish. Remember that we
   // have a total number of loop of _noOfCMIteration + 1
@@ -184,9 +210,18 @@ void EUTelPedestalNoiseProcessor::end() {
     // and the first event flag
     _isFirstEvent = true;
 
-    throw RewindDataFilesException(this);
+    // throw RewindDataFilesException(this);
     setReturnValue("IsPedestalFinished", false);
   }
+}
+
+void EUTelPedestalNoiseProcessor::fillHistos() {
+  
+#ifdef MARLIN_USE_AIDA
+
+#else
+  cout << "[" << name() << "] No histogram produced because Marlin doesn't use AIDA " << endl;
+#endif
 
 }
 
@@ -215,6 +250,8 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
     double rms        = sqrt( meanw2 - pow(meanw,2));
     double threshold  = meanw + (rms * _badPixelMaskCut);
 
+
+
     // scan the noise vector again and apply the cut
     for (unsigned int iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
       if ( ( _noise[iDetector][iPixel] > threshold ) && 
@@ -226,23 +263,25 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
 }
 
 void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * evt) {
+
+  if ( ( _iEvt < _firstEvent ) || ( _iEvt >= _lastEvent ) ) {
+    // pedestal calculation may occuring on a subset of events
+    // outside this range, just skip the current event
+    if ( ( _iEvt == 0 ) || ( _iEvt ==  _firstEvent - 1) || ( _iEvt == _lastEvent ) || ( _iEvt%10 == 0) )
+      cout << "[" << name() << "] Skipping event " << _iEvt << endl;
+    ++_iEvt;
+    return;
+  }
   
   // keep the user updated
   if ( _iEvt % 10 == 0 ) {
-    cout << "Performing loop " << _iLoop << " on event: " << _iEvt << endl;
+    cout << "[" << name() << "] Performing loop " << _iLoop << " on event: " << _iEvt << endl;
   }
 
   // let me get the rawDataCollection. This is should contain a TrackerRawDataObject
   // for each detector plane in the telescope.
   LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
 
-
-  if ( ( _iEvt < _firstEvent ) || ( _iEvt >= _lastEvent ) ) {
-    // pedestal calculation may occuring on a subset of events
-    // outside this range, just skip the current event
-    ++_iEvt;
-    return;
-  }
   
   if ( isFirstEvent() ) {
     // the collection contains several TrackerRawData
@@ -259,6 +298,7 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * evt) {
       // elements into _tempPedestal with a suitable re-casting
 
       // get the TrackerRawData object from the collection for this detector
+
       TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt (iDetector));
       ShortVec adcValues = trackerRawData->getADCValues ();
       ShortVec::iterator iter = adcValues.begin();
@@ -317,7 +357,16 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * evt) {
 
 void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
   
-    // keep the user updated
+  if ( ( _iEvt < _firstEvent ) || ( _iEvt >= _lastEvent ) ) {
+    // pedestal calculation may occuring on a subset of events
+    // outside this range, just skip the current event
+    if ( ( _iEvt == 0 ) || ( _iEvt ==  _firstEvent - 1) || ( _iEvt == _lastEvent ) || ( _iEvt%10 == 0) )
+      cout << "[" << name() << "] Skipping event " << _iEvt << endl;
+    ++_iEvt;
+    return;
+  }
+
+  // keep the user updated
   if ( _iEvt % 10 == 0 ) {
     cout << "Performing " << _iLoop << " loop on event: " << _iEvt << endl;
   }
@@ -326,18 +375,13 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
   // for each detector plane in the telescope.
   LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
   
-  if ( ( _iEvt < _firstEvent ) || ( _iEvt >= _lastEvent ) ) {
-    // pedestal calculation may occuring on a subset of events
-    // outside this range, just skip the current event
-    ++_iEvt;
-    return;
-  }
 
   if ( isFirstEvent() ) {
     // the collection contains several TrackerRawData
     // move back the _pedestal and _noise to the _temp vector
     _tempPede  = _pedestal;
     _tempNoise = _noise;
+    
     for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
       _tempEntries.push_back(IntVec( _noise[iDetector].size(), 1));
     }
@@ -404,3 +448,11 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
   }	
   ++_iEvt;
 }
+
+
+std::string EUTelPedestalNoiseProcessor::_pedeDistHistoName   = "PedeDist-";
+std::string EUTelPedestalNoiseProcessor::_noiseDistHistoName  = "NoiseDist-";
+std::string EUTelPedestalNoiseProcessor::_commonModeHistoName = "CommonMode-";
+std::string EUTelPedestalNoiseProcessor::_pedeMapHistoName    = "PedeMap-";
+std::string EUTelPedestalNoiseProcessor::_noiseMapHistoName   = "NoiseMap-";
+std::string EUTelPedestalNoiseProcessor::_statusMapHistoName  = "StatusMap-";
