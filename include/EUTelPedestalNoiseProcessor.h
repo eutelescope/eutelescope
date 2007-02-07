@@ -15,6 +15,11 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
+#ifdef MARLIN_USE_AIDA
+// aida includes <.h>
+#include <AIDA/IBaseHistogram.h>
+#endif
+
 // lcio includes <.h> 
 #include <EVENT/LCParameters.h>
 #include <IMPL/LCCollectionVec.h>
@@ -47,7 +52,7 @@ namespace eutelescope
    *  @param StatusCollectionName Name of the output pixel status collection
    * 
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.1.1.1 2007-02-07 10:53:12 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.2 2007-02-07 16:25:30 bulgheroni Exp $ 
    */
 
   class EUTelPedestalNoiseProcessor:public marlin::Processor
@@ -153,6 +158,43 @@ namespace eutelescope
      */
     void otherLoop(LCEvent * evt);
 
+
+    //! Book histograms
+    /*! This method is used to prepare the needed directory structure
+     * within the current ITree folder and books all required
+     * histograms. Hisrogram pointers are stored into
+     * EUTelPedestalNoiseProcess::_aidaHistoMap so that they can be
+     * recalled and filled from anywhere in the code.
+    */
+    void bookHistos();
+
+    //! Fill histograms
+    /*! This method is used to fill in some control histograms. It is
+     *  called from end() so it has available the final
+     *  vectors. Results are grouped in order to have different loops
+     *  and different detectors separated. Here comes a list of filled
+     *  histograms:
+     *
+     *  \li pedestalDistribution: 1D histogram with all good pixel
+     *  pedestal values.
+     *
+     *  \li noiseDistribution: 1D histogram with all good pixel noise
+     *  values.
+     *
+     *  \li pedestalMap: 2D histogram binned as the detector number of
+     *  pixels representing the geometrical distribution of pedestal
+     *  values
+     *
+     *  \li noiseMap: as above but for the noise values.
+     *
+     *  \li statusMap: as above but for the pixel status. Remeber that
+     *  GOODPIXEL == 0 and BADPIXEL == 1.
+     *
+     *  Histograms are produced only if MARLIN_USE_AIDA is defined.
+     */
+    void fillHistos();
+    
+
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. The
      *  following operations are performed: \li Temporary pedestal and
@@ -171,7 +213,10 @@ namespace eutelescope
      *  catched by the Marlin main program. In fact, this exception is
      *  implemented only during the event loop. But to throw
      *  RewindDataFilesException while the last event is processed you
-     *  should know in advance how many events are in the file.
+     *  should know in advance how many events are in the
+     *  file. Throwing te Rewind exception from end() may result is a
+     *  program crash. For the time being the exception has been
+     *  remove to allow debugging other parts.
      *
      *  @todo For the time being, the three output vectors (_pedestal,
      *  _noise and _status) are not moved to a LCObject and then to
@@ -424,6 +469,74 @@ namespace eutelescope
      */
     bool _doPedestal;
 
+  private:
+
+    //! AIDA loop dir names
+    /*! In the output histogram file (produced only if
+     *  MARLIN_USE_AIDA) and the AIDAProcessor is properly set at the
+     *  beginning on the <execute> field in the steering file,
+     *  histograms are grouped in subdirectories. There is one
+     *  subdirectory for each loop, and within each loop there is one
+     *  folder for each detector. aidaLoopDirVec is a StringVec
+     *  containing the name of loop directories
+     */
+    lcio::StringVec _aidaLoopDirVec;
+
+    //! AIDA detector dir names
+    /*! In the output histogram file (produced only if
+     *  MARLIN_USE_AIDA) and the AIDAProcessor is properly set at the
+     *  beginning on the <execute> field in the steering file,
+     *  histograms are grouped in subdirectories. There is one
+     *  subdirectory for each loop, and within each loop there is one
+     *  folder for each detector. aidaDetectorDirVec is a StringVec
+     *  containing the name of detector directories
+     */
+    lcio::StringVec _aidaDetectorDirVec;
+
+#ifdef MARLIN_USE_AIDA
+    //! AIDA histogram map
+    /*! The histogram filling procedure may occur in many different
+     *  places, while it is usually a good reason to keep the booking
+     *  procedure in one place only. To recall an histogram pointer
+     *  from a different place in the code they are stored within this
+     *  histogram map.
+     */
+    std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
+#endif 
+
+    //! Pedestal distribution 1D histo base name
+    /*! @see EUTelPedestalNoiseProcessor::_noiseHistoName;
+     */
+    static std::string _pedeDistHistoName;
+
+    //! Noise distribution 1D histo base name
+    /*! All histograms names defined therein should be actually
+     *  considered as base names, in the meaning they are goind to be
+     *  padded with the loop and detector numbers. For example for the
+     *  noise distribution histo on detector number 5 during loop 1 it
+     *  is going to be <i>noiseHisto-d5-l1<i>
+     */
+    static std::string _noiseDistHistoName;
+
+    //! Common mode distribution 1D histo base name
+    /*! @see EUTelPedestalNoiseProcessor::_noiseHistoName;
+     */
+    static std::string _commonModeHistoName;
+
+    //! Pedestal 2D map
+    /*! @see EUTelPedestalNoiseProcessor::_noiseHistoName;
+     */
+    static std::string _pedeMapHistoName;
+
+    //! Noise 2D map
+    /*! @see EUTelPedestalNoiseProcessor::_noiseHistoName;
+     */
+    static std::string _noiseMapHistoName;
+
+    //! Pixel status 2D map
+    /*! @see EUTelPedestalNoiseProcessor::_noiseHistoName;
+     */
+    static std::string _statusMapHistoName;
   };
 }
 #endif
