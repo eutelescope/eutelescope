@@ -1,0 +1,22 @@
+This is a first trial to integrate LCIO + Marlin into the standard
+analysis procedure used within the sucimaPix framework. Of course this
+is under very heavy develop, so please check very often for updates
+and new releases.
+
+To install it, download the source code via cvs or a tarball with the
+source code from the web CVS interface. The code has been organized as
+a Marlin package, so copy the Eutelescope folder into the
+$(MARLIN)/packages folder and type make from Marlin top level
+directory. So far, there is no need to add user specific includes and
+libraries, so the userlib.gmk in Marlin top level folder is actually
+an empty file.
+
+The documentation is built together with the Marlin one typing make
+doc from the top level directory. All Eutelescope classes belongs to
+eutelescope namespace.
+
+For anything else, mail me: antonio.bulgheroni@gmail.com
+
+
+// Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+// Version $Id: README,v 1.1.1.1 2007-02-07 10:53:11 bulgheroni Exp $
