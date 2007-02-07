@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelSucimaImagerReader.cc,v 1.1.1.1 2007-02-07 10:53:12 bulgheroni Exp $
+// Version $Id: EUTelSucimaImagerReader.cc,v 1.2 2007-02-07 16:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -23,6 +23,7 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerRawDataImpl.h>
 #include <UTIL/CellIDEncoder.h>
+// #include <UTIL/LCTOOLS.h>
 
 // system includes 
 #include <fstream>
@@ -86,14 +87,14 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
     LCCollectionVec *rawData = new LCCollectionVec (LCIO::TRACKERRAWDATA);
     
     if (eventNumber % 10 == 0)
-      cout << "Converting event " << eventNumber << endl;
+      cout << "[" << name() << "] Converting event " << eventNumber << endl;
     
     if (isFirstEvent ()) {
       
       // in the case it is the first run so we need to process and
       // write out the run header.
       EUTelRunHeaderImpl *runHeader = new EUTelRunHeaderImpl;
-      runHeader-> setDescription(" Events read from SUCIMA Imager ASCII input file: " + _fileName);
+      runHeader->setDescription(" Events read from SUCIMA Imager ASCII input file: " + _fileName);
       runHeader->setRunNumber (runNumber);
       runHeader->setHeaderVersion (0.0001);
       runHeader->setDataType (EUTELESCOPE::CONVDATA);
@@ -104,6 +105,14 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
       runHeader->setDAQSWVersion (0.0001);
       runHeader->addIntermediateFile (_fileName);
       runHeader->addProcessor (_processorName);
+
+      runHeader->setNoOfDetector(1);
+      runHeader->setMinX(IntVec(1, 0));
+      runHeader->setMaxX(IntVec(1, _noOfXPixel - 1));
+      runHeader->setMinY(IntVec(1, 0));
+      runHeader->setMaxY(IntVec(1, _noOfYPixel - 1));
+
+      // UTIL::LCTOOLS::dumpRunHeader(runHeader);
       
       // process the run header
       ProcessorMgr::instance ()->processRunHeader (runHeader);
