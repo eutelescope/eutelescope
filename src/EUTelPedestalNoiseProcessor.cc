@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.2 2007-02-07 16:25:13 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.3 2007-02-08 09:39:32 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -23,6 +23,7 @@
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
+#include <AIDA/IHistogram2D.h>
 #include <AIDA/ITree.h>
 #endif
 
@@ -107,10 +108,12 @@ void EUTelPedestalNoiseProcessor::init () {
   _doPedestal = true;
   _iLoop = 0;
 
-  // reset the temporary arrays
-  _tempPede.clear ();
-  _tempNoise.clear ();
-  _tempEntries.clear ();
+  if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
+    // reset the temporary arrays
+    _tempPede.clear ();
+    _tempNoise.clear ();
+    _tempEntries.clear ();
+  }
 
   // reset all the final arrays
   _pedestal.clear();
@@ -140,21 +143,8 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
   _minY = runHeader->getMinY();
   _maxY = runHeader->getMaxY();
 
-#ifdef MARLIN_USE_AIDA
-  static StringVec loopDirName;
-  static StringVec detectorDirName;
-  
-  for (int iLoop = 0 ; iLoop < _noOfCMIterations + 1; iLoop++) {
-    loopDirName.push_back(string("loop-" + iLoop));
-    AIDAProcessor::tree(this)->mkdir(loopDirName[iLoop].c_str());
-    AIDAProcessor::tree(this)->cd(loopDirName[iLoop]);
-    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-      detectorDirName.push_back(string("detector-" + iDetector) + string("_loop-" + iLoop));
-      AIDAProcessor::tree(this)->mkdir(detectorDirName[iDetector].c_str());
-    }
-    AIDAProcessor::tree(this)->cd("..");
-  }
-#endif
+  // book histograms
+  bookHistos();
 
 }
 
@@ -188,11 +178,11 @@ void EUTelPedestalNoiseProcessor::end() {
   // mask the bad pixels here
   maskBadPixel();
 
-  // increment the loop counter
-  ++_iLoop;
-
   // fill in the histograms
   fillHistos();
+
+  // increment the loop counter
+  ++_iLoop;
 
   // check if we need another loop or we can finish. Remember that we
   // have a total number of loop of _noOfCMIteration + 1
@@ -218,6 +208,52 @@ void EUTelPedestalNoiseProcessor::end() {
 void EUTelPedestalNoiseProcessor::fillHistos() {
   
 #ifdef MARLIN_USE_AIDA
+  cout << "[" << name() << "] Filling final histograms " << endl;
+
+  string tempHistoName;
+  for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+    int iPixel = 0;
+    for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
+      for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
+	{
+	  stringstream ss;
+	  ss << _statusMapHistoName << "-d" << iDetector << "-l" << _iLoop;
+	  tempHistoName = ss.str();
+	}
+	(dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[tempHistoName]))->fill(static_cast<double>(xPixel), static_cast<double>(yPixel),
+										static_cast<double>(_status[iDetector][iPixel]));
+	if ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL) {
+	  {
+	    stringstream ss;
+	    ss << _pedeDistHistoName << "-d" << iDetector << "-l" << _iLoop;
+	    tempHistoName = ss.str();
+	  }
+	  (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(_pedestal[iDetector][iPixel]);
+	  {
+	    stringstream ss;
+	    ss << _noiseDistHistoName << "-d" << iDetector << "-l" << _iLoop;
+	    tempHistoName = ss.str();
+	  }
+	  (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(_noise[iDetector][iPixel]);
+	  {
+	    stringstream ss;
+	    ss << _pedeMapHistoName << "-d" << iDetector << "-l" << _iLoop;
+	    tempHistoName = ss.str();
+	  }
+	  (dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[tempHistoName]))->fill(static_cast<double>(xPixel), static_cast<double>(yPixel),
+										   _pedestal[iDetector][iPixel]);
+	  {
+	    stringstream ss;
+	    ss << _noiseMapHistoName << "-d" << iDetector << "-l" << _iLoop;
+	    tempHistoName = ss.str();
+	  } 
+	  (dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[tempHistoName]))->fill(static_cast<double>(xPixel), static_cast<double>(yPixel),
+										  _noise[iDetector][iPixel]);
+	}
+	++iPixel;
+      }
+    }
+  }
 
 #else
   cout << "[" << name() << "] No histogram produced because Marlin doesn't use AIDA " << endl;
@@ -337,8 +373,8 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * evt) {
       
       // start looping on all pixels
       int iPixel = 0;
-      for (int yPixel = _minY[iDetector]; yPixel < _maxY[iDetector]; yPixel++) {
-	for (int xPixel = _minX[iDetector]; xPixel < _maxX[iDetector]; xPixel++) {
+      for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
+	for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
 	  _tempEntries[iDetector][iPixel] =  _tempEntries[iDetector][iPixel] + 1;
 	  _tempPede[iDetector][iPixel]    = ((_tempEntries[iDetector][iPixel] - 1) * _tempPede[iDetector][iPixel]
 					     + adcValues[iPixel]) / _tempEntries[iDetector][iPixel];
@@ -408,8 +444,8 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
     int    iPixel       = 0;
     
     // start looping on all pixels for hit rejection
-    for (int yPixel = _minY[iDetector]; yPixel < _maxY[iDetector]; yPixel++) {
-      for (int xPixel = _minX[iDetector]; xPixel < _maxX[iDetector]; xPixel++) {
+    for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
+      for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
 	bool isHit  = ( ( adcValues[iPixel] - _pedestal[iDetector][iPixel] ) > _hitRejectionCut * _noise[iDetector][iPixel] );
 	bool isGood = ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL );
 	if ( !isHit && isGood ) {
@@ -428,8 +464,8 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
       commonMode = pixelSum / goodPixel;
       
       iPixel = 0;
-      for (int yPixel = _minY[iDetector]; yPixel < _maxY[iDetector]; yPixel++) {
-	for (int xPixel = _minX[iDetector]; xPixel < _maxX[iDetector]; xPixel++) {
+      for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
+	for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
 	  if ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) {
 	    double pedeCorrected = adcValues[iPixel] - commonMode;
 	    _tempEntries[iDetector][iPixel] = _tempEntries[iDetector][iPixel] + 1;
@@ -444,15 +480,141 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
       }
     } else {
       cout << "Skipping event " << _iEvt << " because of max number of rejected pixel exceeded." << endl;
+      ++_noOfSkippedEvent;
     }
   }	
   ++_iEvt;
 }
 
 
-std::string EUTelPedestalNoiseProcessor::_pedeDistHistoName   = "PedeDist-";
-std::string EUTelPedestalNoiseProcessor::_noiseDistHistoName  = "NoiseDist-";
-std::string EUTelPedestalNoiseProcessor::_commonModeHistoName = "CommonMode-";
-std::string EUTelPedestalNoiseProcessor::_pedeMapHistoName    = "PedeMap-";
-std::string EUTelPedestalNoiseProcessor::_noiseMapHistoName   = "NoiseMap-";
-std::string EUTelPedestalNoiseProcessor::_statusMapHistoName  = "StatusMap-";
+std::string EUTelPedestalNoiseProcessor::_pedeDistHistoName   = "PedeDist";
+std::string EUTelPedestalNoiseProcessor::_noiseDistHistoName  = "NoiseDist";
+std::string EUTelPedestalNoiseProcessor::_commonModeHistoName = "CommonMode";
+std::string EUTelPedestalNoiseProcessor::_pedeMapHistoName    = "PedeMap";
+std::string EUTelPedestalNoiseProcessor::_noiseMapHistoName   = "NoiseMap";
+std::string EUTelPedestalNoiseProcessor::_statusMapHistoName  = "StatusMap";
+
+void EUTelPedestalNoiseProcessor::bookHistos() {
+
+#ifdef MARLIN_USE_AIDA
+  // histograms are grouped in loops and detectors
+  cout << "[" << name() << "] Booking histograms " << endl;
+
+
+  string tempHistoName;
+
+  // start looping on the number of loops. Remeber that we have one
+  // loop more than the number of common mode iterations
+  for (int iLoop = 0; iLoop < _noOfCMIterations + 1; iLoop++) {
+
+    // prepare the name of the current loop directory and add it the
+    // the current ITree
+    string loopDirName;
+    {
+      stringstream ss;
+      ss << "loop-" << iLoop;
+      loopDirName = ss.str();
+    }
+    AIDAProcessor::tree(this)->mkdir(loopDirName.c_str());
+
+    // start looping on detectors
+    for (int iDetector = 0; iDetector < _noOfDetector;  iDetector++) {
+
+      // prepare the name of the current detector and add it to the
+      // current ITree inside the current loop folder
+      string detectorDirName;
+      {
+	stringstream ss;
+	ss << "detector-" << iDetector;
+	detectorDirName = ss.str();
+      }
+      string basePath = loopDirName + "/" + detectorDirName + "/";
+      AIDAProcessor::tree(this)->mkdir(basePath.c_str());
+      
+      // book an histogram for the pedestal distribution
+      const int    pedeDistHistoNBin   = 100; 
+      const double pedeDistHistoMin    = -20.;
+      const double pedeDistHistoMax    =  29.;
+      {
+	stringstream ss;
+	ss << _pedeDistHistoName << "-d" << iDetector << "-l" << iLoop;
+	tempHistoName = ss.str();
+      } 
+      AIDA::IHistogram1D * pedeDistHisto = 
+	AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 
+ 								  pedeDistHistoNBin, pedeDistHistoMin, pedeDistHistoMax);
+      _aidaHistoMap.insert(make_pair(tempHistoName, pedeDistHisto));
+
+      // book an histogram for the noise distribution
+      const int    noiseDistHistoNBin  =   30;
+      const double noiseDistHistoMin   =  -5.;
+      const double noiseDistHistoMax   =  15.;
+      {
+	stringstream ss;
+	ss << _noiseDistHistoName << "-d" << iDetector << "-l" << iLoop;
+	tempHistoName = ss.str();
+      }
+      AIDA::IHistogram1D * noiseDistHisto =
+	AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+								  noiseDistHistoNBin, noiseDistHistoMin, noiseDistHistoMax);
+      _aidaHistoMap.insert(make_pair(tempHistoName, noiseDistHisto));
+
+      // book a 1d histo for common mode only if loop >= 1
+      if (iLoop >= 1) {
+	const int    commonModeHistoNBin = 20;
+	const double commonModeHistoMin  = -2;
+	const double commonModeHistoMax  =  2;
+	{
+	  stringstream ss;
+	  ss << _commonModeHistoName << "-d" << iDetector << "-l" << iLoop;
+	  tempHistoName = ss.str();
+	}
+	AIDA::IHistogram1D * commonModeHisto =
+	  AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+								    commonModeHistoNBin, commonModeHistoMin, commonModeHistoMax);
+	_aidaHistoMap.insert(make_pair(tempHistoName, commonModeHisto));
+      }
+
+      // book a 2d histogram for pedestal map
+      const int    xNoOfPixel = abs( _maxX[iDetector] - _minX[iDetector] + 1);
+      const int    yNoOfPixel = abs( _maxY[iDetector] - _minY[iDetector] + 1);
+      const double xMin       = _minX[iDetector] - 0.5;
+      const double xMax       =  xMin + xNoOfPixel;
+      const double yMin       = _minY[iDetector] - 0.5;
+      const double yMax       =  yMin + yNoOfPixel;
+      {
+	stringstream ss;
+	ss << _pedeMapHistoName << "-d" << iDetector << "-l" << iLoop;
+	tempHistoName = ss.str();
+      }
+      AIDA::IHistogram2D * pedeMapHisto =
+	AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
+								  xNoOfPixel, xMin, xMax, yNoOfPixel, yMin, yMax);	
+      _aidaHistoMap.insert(make_pair(tempHistoName, pedeMapHisto));
+
+      // book a 2d histogram for noise map
+      {
+	stringstream ss;
+	ss << _noiseMapHistoName << "-d" << iDetector << "-l" << iLoop;
+	tempHistoName = ss.str();
+      }
+      AIDA::IHistogram2D * noiseMapHisto =
+	AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
+								  xNoOfPixel, xMin, xMax, yNoOfPixel, yMin, yMax);	
+      _aidaHistoMap.insert(make_pair(tempHistoName, noiseMapHisto));      
+
+      // book a 2d histogram for status map
+      {
+	stringstream ss;
+	ss << _statusMapHistoName << "-d" << iDetector << "-l" << iLoop;
+	tempHistoName = ss.str();
+      }
+      AIDA::IHistogram2D * statusMapHisto =
+	AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
+								  xNoOfPixel, xMin, xMax, yNoOfPixel, yMin, yMax);	
+      _aidaHistoMap.insert(make_pair(tempHistoName, statusMapHisto));
+
+    }
+  } // end on iLoop
+#endif // MARLIN_USE_AIDA
+}
