@@ -52,7 +52,7 @@ namespace eutelescope
    *  @param StatusCollectionName Name of the output pixel status collection
    * 
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.2 2007-02-07 16:25:30 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.3 2007-02-08 09:40:11 bulgheroni Exp $ 
    */
 
   class EUTelPedestalNoiseProcessor:public marlin::Processor
@@ -74,12 +74,30 @@ namespace eutelescope
     //! Default constructor 
     EUTelPedestalNoiseProcessor ();
 
-    /*! Called at the begin of the job before anything is read.  Use
-     *  to initialize the processor, e.g.book histograms.
+    //! Called at the job beginning.
+    /*! This is executed only once in the whole execution. It prints
+     *  out the processor parameters and reset all needed data
+     *  members. In principle this could also be the right place to
+     *  book histograms, but since those are also grouped according to
+     *  the detector numbers we need to have this parameter available.
      */
     virtual void init ();
 
-    /** Called for every run.
+    //! Called for every run.
+    /*! At the beginning of every run the run header is read and
+     *  processed by this method. As a first thing, the input run
+     *  header is dynamically recasted to a EUTelRunHeaderImpl and
+     *  then important things like the number of detectors and the
+     *  pixel detector boundaries are dumped from the file. After that
+     *  the EUTelPedestalNoiseProcess::bookHistos() is called.
+     *  
+     *  @todo the dynamic_cast cannot failed, because LCRunHeader and
+     *  EUTelRunHeaderImpl have the same data members. This is true
+     *  even for run headers that were not written using the
+     *  Eutelescope implemantion. This may result in a run header
+     *  where the needed parameters are missing and the assignement is
+     *  only fictitius. I should add a cross-check on the parameter
+     *  goodness after the assignement.
      */
     virtual void processRunHeader (LCRunHeader * run);
 
@@ -106,11 +124,11 @@ namespace eutelescope
      *  thing both the <i>mean</i> and the <i>RMS</i> of the
      *  distribution are calculated. Then the region in the
      *  distribution with pixel having a noise exceeding
-     *  _badPixelMaskCut * RMS + mean is considered bad. This
-     *  algorithm has the advantage of being pretty robust and system
-     *  independent since it does not use any system unit as ADC or
-     *  ENC, but, at the same time, as the disadvantage of being
-     *  difficult to tune. In fact, while the general user has a
+     *  <code>_badPixelMaskCut * RMS + mean</code> is considered
+     *  bad. This algorithm has the advantage of being pretty robust
+     *  and system independent since it does not use any system unit
+     *  as ADC or ENC, but, at the same time, as the disadvantage of
+     *  being difficult to tune. In fact, while the general user has a
      *  natural idea of what could be the noise of a bad pixel in
      *  her/his own system, it is not easy and clear which should be
      *  the _badPixelMaskCut to be used to obtain the same result.
@@ -161,11 +179,23 @@ namespace eutelescope
 
     //! Book histograms
     /*! This method is used to prepare the needed directory structure
-     * within the current ITree folder and books all required
-     * histograms. Hisrogram pointers are stored into
-     * EUTelPedestalNoiseProcess::_aidaHistoMap so that they can be
-     * recalled and filled from anywhere in the code.
-    */
+     *  within the current ITree folder and books all required *
+     *  histograms. Hisrogram pointers are stored into *
+     *  EUTelPedestalNoiseProcess::_aidaHistoMap so that they can be *
+     *  recalled and filled from anywhere in the code.  Apart from the
+     *  histograms listed in EUTelPedestalNoiseProcessor::fillHistos()
+     *  there is also a common mode histo described here below:
+     *
+     *  \li commonModeHisto: 1D histogram to store the calculated
+     *  common mode value for each event. This histogram is booked and
+     *  filled only if the loop counter is greater-equal than 1, *
+     *  because for _iLoop == 0 there is no common mode suppression.
+     *  
+     *  This last histo is not filled with the other because it needs
+     *  to be updated every event.
+     * 
+     *  @see EUTelPedestalNoiseProcessor::fillHistos() for the todos
+     */
     void bookHistos();
 
     //! Fill histograms
@@ -188,9 +218,19 @@ namespace eutelescope
      *  \li noiseMap: as above but for the noise values.
      *
      *  \li statusMap: as above but for the pixel status. Remeber that
-     *  GOODPIXEL == 0 and BADPIXEL == 1.
+     *  <code>GOODPIXEL == 0</code> and <code>BADPIXEL == 1</code>.
      *
-     *  Histograms are produced only if MARLIN_USE_AIDA is defined.
+     *  @todo Histograms are produced only if MARLIN_USE_AIDA is
+     *  defined, but this may be not enough since also the
+     *  AIDAProcessor should be inserted in Marlin execution block. I
+     *  would like to introduce another conditional statement checking
+     *  for the existence of the AIDAProcessor.
+     *
+     *  @todo Another improvement could be the use of ROOT as a
+     *  histogramming package. I should use define such
+     *  EUTELESCOPE_USE_ROOT and of course add the needed includes and
+     *  libraries in the building procedure.
+     *
      */
     void fillHistos();
     
@@ -280,6 +320,22 @@ namespace eutelescope
      */
     std::string _badPixelAlgo;
 
+    //! Bad pixel masking cut
+    /*! This value is used to mask bad pixels.  After each loop on
+     *  events the average (noiseAvg) and the variance (noiseSigma) of
+     *  the noise distribution is calculated. To identify bad pixels
+     *  the following criteria is adopted.  A pixel is masked as bad
+     *  if:
+     *    
+     * \li its noise is == 0. This is usually a good indication a pixel
+     * is dead!  \li its noise is exceeding noiseAvg + _badPixelMaskCut
+     * * noiseSigma.
+     *
+     * \todo In principle also a cut to remove the left tail of the
+     * distribution can be introduced, but probably not so important.
+     */
+    float _badPixelMaskCut;
+
     //! Common mode suppression iterations
     /*! This is the number of times the common mode suppression
      *    algorithm has to be applied to the data. Usually one iteration
@@ -289,16 +345,7 @@ namespace eutelescope
      */
     int _noOfCMIterations;
 
-    //! Event loop counter
-    /*! This is a counter for the number of loops. The processor will
-     * loop the first time (_iLoop == 0) for pedestal and noise
-     * calculations and other _noOfCMIterations for common mode
-     * suppression and next order correction to the pedestal and noise
-     * values.
-     */
-    int _iLoop;
-
-    //! Hit rejection cut
+   //! Hit rejection cut
     /*! A.k.a. common mode cut. During the common mode suppression
      *  algorithm the average of all pixels signals is computed and
      *  then subtracted from their initial value. This is usually done
@@ -322,6 +369,45 @@ namespace eutelescope
      */
     int _maxNoOfRejectedPixels;
     
+    //! Current run number.
+    /*! This number is used to store the current run number
+     */
+    int _iRun;
+
+    //! Current event number.
+    /*! This number is used to store the current event number NOTE that
+     * events are counted from 0 and on a run base
+     */
+    int _iEvt;
+    
+    //! First event for pedestal calculation
+    /*! This is the first event to be used for pedestal
+     *  calculation. If the input file is not a specific pedestal run
+     *  and only some events are really empty, then the user has to
+     *  select this range.
+     */
+    int _firstEvent;
+
+    //! Last event for pedestal calculation
+    /*! This is the last event to be used for pedestal calculation. If
+     *  the imput file is not a specific pedestal run and only some
+     *  events are really empty, then the user has to select this
+     *  range. If the user set this value to -1 or to an event number
+     *  in excess to the total number of events, then all events are
+     *  used for pedestal calculation.
+     */
+    int _lastEvent;
+
+    //! Boolean flag for pedestal calculation
+    /*! This boolean flag is used to modify the
+     *  EUTelPedestalNoiseProcessor::processEvent(LCEvent *)
+     *  behaviour. This boolean is set to true during the first run
+     *  over the selected events
+     */
+    bool _doPedestal;
+
+  private:
+
     //! Counter for skipped event due to common mode
     /*! This counter is used to enumerate how many events in the run
      *  have been skipped because of a number of hit pixels exceeding
@@ -334,22 +420,6 @@ namespace eutelescope
      *  somehow screw up! @see EUTelPedestalNoiseProcessor::_maxNoOfRejectedPixels.
      */
     int _noOfSkippedEvent;
-
-    //! Bad pixel masking cut
-    /*! This value is used to mask bad pixels.  After each loop on
-     *  events the average (noiseAvg) and the variance (noiseSigma) of
-     *  the noise distribution is calculated. To identify bad pixels
-     *  the following criteria is adopted.  A pixel is masked as bad
-     *  if:
-     *    
-     * \li its noise is == 0. This is usually a good indication a pixel
-     * is dead!  \li its noise is exceeding noiseAvg + _badPixelMaskCut
-     * * noiseSigma.
-     *
-     * \todo In principle also a cut to remove the left tail of the
-     * distribution can be introduced, but probably not so important.
-     */
-    float _badPixelMaskCut;
 
     //! Number of detector planes in the run
     /*! This is the total number of detector saved into this input
@@ -382,17 +452,6 @@ namespace eutelescope
      *  pixel along the Y direction
      */
     IntVec _maxY;
-
-    //! Current run number.
-    /*! This number is used to store the current run number
-     */
-    int _iRun;
-
-    //! Current event number.
-    /*! This number is used to store the current event number NOTE that
-     * events are counted from 0 and on a run base
-     */
-    int _iEvt;
 
     //! Temporary array to store the running average
     /*! This a vector of vectors of doubles. The outern layer represents
@@ -442,56 +501,15 @@ namespace eutelescope
     /*! This is the place where the status of pixel is saved
      */
     std::vector < IntVec > _status;
-    
-    //! First event for pedestal calculation
-    /*! This is the first event to be used for pedestal
-     *  calculation. If the input file is not a specific pedestal run
-     *  and only some events are really empty, then the user has to
-     *  select this range.
-     */
-    int _firstEvent;
 
-    //! Last event for pedestal calculation
-    /*! This is the last event to be used for pedestal calculation. If
-     *  the imput file is not a specific pedestal run and only some
-     *  events are really empty, then the user has to select this
-     *  range. If the user set this value to -1 or to an event number
-     *  in excess to the total number of events, then all events are
-     *  used for pedestal calculation.
+    //! Event loop counter
+    /*! This is a counter for the number of loops. The processor will
+     * loop the first time (_iLoop == 0) for pedestal and noise
+     * calculations and other _noOfCMIterations for common mode
+     * suppression and next order correction to the pedestal and noise
+     * values.
      */
-    int _lastEvent;
-
-    //! Boolean flag for pedestal calculation
-    /*! This boolean flag is used to modify the
-     *  EUTelPedestalNoiseProcessor::processEvent(LCEvent *)
-     *  behaviour. This boolean is set to true during the first run
-     *  over the selected events
-     */
-    bool _doPedestal;
-
-  private:
-
-    //! AIDA loop dir names
-    /*! In the output histogram file (produced only if
-     *  MARLIN_USE_AIDA) and the AIDAProcessor is properly set at the
-     *  beginning on the <execute> field in the steering file,
-     *  histograms are grouped in subdirectories. There is one
-     *  subdirectory for each loop, and within each loop there is one
-     *  folder for each detector. aidaLoopDirVec is a StringVec
-     *  containing the name of loop directories
-     */
-    lcio::StringVec _aidaLoopDirVec;
-
-    //! AIDA detector dir names
-    /*! In the output histogram file (produced only if
-     *  MARLIN_USE_AIDA) and the AIDAProcessor is properly set at the
-     *  beginning on the <execute> field in the steering file,
-     *  histograms are grouped in subdirectories. There is one
-     *  subdirectory for each loop, and within each loop there is one
-     *  folder for each detector. aidaDetectorDirVec is a StringVec
-     *  containing the name of detector directories
-     */
-    lcio::StringVec _aidaDetectorDirVec;
+    int _iLoop;
 
 #ifdef MARLIN_USE_AIDA
     //! AIDA histogram map
