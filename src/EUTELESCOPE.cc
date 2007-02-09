@@ -1,5 +1,5 @@
 // Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTELESCOPE.cc,v 1.1.1.1 2007-02-07 10:53:12 bulgheroni Exp $
+// Version: $Id: EUTELESCOPE.cc,v 1.2 2007-02-09 10:29:31 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -38,7 +38,9 @@ const char *   EUTELESCOPE::IPHCIMAGER          = "IPHCIMAGER";
 const char *   EUTELESCOPE::SUCIMAIMAGER        = "SUCIMAIMAGER";
 const char *   EUTELESCOPE::EUDAQ               = "EUDAQ";
 const int      EUTELESCOPE::GOODPIXEL           =  0;
-const int      EUTELESCOPE::BADPIXEL            = -1;
-const int      EUTELESCOPE::HITPIXEL            =  1;
+const int      EUTELESCOPE::BADPIXEL            =  1;
+const int      EUTELESCOPE::HITPIXEL            = -1;
+const char *   EUTELESCOPE::ABSOLUTENOISEVALUE  = "AbsoluteNoiseValue";
 const char *   EUTELESCOPE::NOISEDISTRIBUTION   = "NoiseDistribution";
 const char *   EUTELESCOPE::MEANRMS             = "MeanRMS";
+const char *   EUTELESCOPE::AIDAPROFILE         = "AIDAProfile";
