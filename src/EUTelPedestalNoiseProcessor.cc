@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.4 2007-02-09 10:33:09 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.5 2007-02-09 20:36:21 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -99,6 +99,8 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPed
   registerProcessorParameter ("LastEvent",
 			      "Last event for pedestal calculation",
 			      _lastEvent, static_cast < int > (-1));
+  registerProcessorParameter ("OutputPedeFile","The filename (w/o .slcio) to store the pedestal file",
+			      _outputPedeFileName , string("outputpede")); 
 
   // now the optional parameters
   registerOptionalParameter ("PedestalCollectionName",
@@ -185,6 +187,19 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
     throw InvalidParameterException(string("_badPixelAlgo cannot be " + _badPixelAlgo));
   }
 
+  // get from the file header the event number
+  int tempNoOfEvent = runHeader->getNoOfEvent();
+  
+  if (tempNoOfEvent == 0) {
+    stringstream ss;
+    ss << "NoOfEvent cannot be " << tempNoOfEvent;
+    throw InvalidParameterException(ss.str());
+  }
+
+  if ( _lastEvent == -1) _lastEvent = tempNoOfEvent;
+  if ( _lastEvent >= tempNoOfEvent) _lastEvent = tempNoOfEvent;
+
+
   // book histograms
   bookHistos();
 
@@ -206,142 +221,7 @@ void EUTelPedestalNoiseProcessor::check (LCEvent * evt) {
 
 
 void EUTelPedestalNoiseProcessor::end() {
-  
-
-  if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
-
-    // the loop on events is over so we need to move temporary vectors
-    // to final vectors
-    _pedestal = _tempPede;
-    _noise    = _tempNoise;
-    
-    // clear the temporary vectors
-    _tempPede.clear();
-    _tempNoise.clear();
-    _tempEntries.clear();
-
-  } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
-#ifdef MARLIN_USE_AIDA
-    _pedestal.clear();
-    _noise.clear();
-    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-      stringstream ss;
-      ss << _tempProfile2DName << "-d" << iDetector;
-      FloatVec tempPede;
-      FloatVec tempNoise;
-      for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
-	for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
-	  // WARNING: Still not working because of several bugs affecting RAIDA v00-03
-	  // waiting for bug fixes
-	  tempPede.push_back((float) (dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]))->binMeanX(xPixel,yPixel));
-	  tempNoise.push_back((float) (dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]))->binRms(xPixel,yPixel));
-	  //cout << xPixel << " " << yPixel << " " << tempPede.back() << " " << tempNoise.back() << endl;
-	}
-      }
-      _pedestal.push_back(tempPede);
-      _noise.push_back(tempNoise);
-    }
-#endif
-  }
-
-  // mask the bad pixels here
-  maskBadPixel();
-  
-  // fill in the histograms
-  fillHistos();
-  
-  // increment the loop counter
-  ++_iLoop;
-
-  // *** EXPERIMENTAL *** // 
-  _iLoop = _noOfCMIterations + 1;
-
-
-  // check if we need another loop or we can finish. Remember that we
-  // have a total number of loop of _noOfCMIteration + 1
-  if ( _iLoop == _noOfCMIterations + 1 ) {
-    // ok this was last loop  
-   
-    // move the pedestal, noise and status arrays to a TrackerData
-    // ... //
-
-
-    // *** EXPERIMENTAL BLOCK *** //
-    LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
-    
-    try {
-      lcWriter->open("prova",LCIO::WRITE_NEW);
-    } catch (IOException& e) {
-      cerr << e.what() << endl;
-      return;
-    }
-
-    LCEventImpl * event = new LCEventImpl();
-    event->setDetectorName("MIMOSA");
-    event->setRunNumber(_iRun);
-    
-    LCCollectionVec * pedestalCollection = new LCCollectionVec(LCIO::TRACKERDATA);
-    LCCollectionVec * noiseCollection    = new LCCollectionVec(LCIO::TRACKERDATA);
-    LCCollectionVec * statusCollection   = new LCCollectionVec(LCIO::TRACKERRAWDATA);
-    
-    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-      
-      TrackerDataImpl    * pedestalMatrix = new TrackerDataImpl;
-      TrackerDataImpl    * noiseMatrix    = new TrackerDataImpl;
-      TrackerRawDataImpl * statusMatrix   = new TrackerRawDataImpl;
-      
-//       CellIDEncoder<TrackerDataImpl>    idPedestalEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", pedestalCollection);
-//       CellIDEncoder<TrackerDataImpl>    idNoiseEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", noiseCollection);
-//       CellIDEncoder<TrackerRawDataImpl> idStatusEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", statusCollection);
-      
-//       idPedestalEncoder["sensorID"] = iDetector;
-//       idNoiseEncoder["sensorID"]    = iDetector;
-//       idStatusEncoder["sensorID"]   = iDetector;
-//       idPedestalEncoder["xMin"]     = _minX[iDetector];
-//       idNoiseEncoder["xMin"]        = _minX[iDetector];
-//       idStatusEncoder["xMin"]       = _minX[iDetector];
-//       idPedestalEncoder["xMax"]     = _maxX[iDetector];
-//       idNoiseEncoder["xMax"]        = _maxX[iDetector];
-//       idStatusEncoder["xMax"]       = _maxX[iDetector];
-//       idPedestalEncoder["yMin"]     = _minY[iDetector];
-//       idNoiseEncoder["yMin"]        = _minY[iDetector];
-//       idStatusEncoder["yMin"]       = _minY[iDetector];
-//       idPedestalEncoder["yMax"]     = _maxY[iDetector];
-//       idNoiseEncoder["yMax"]        = _maxY[iDetector];
-//       idStatusEncoder["yMax"]       = _maxY[iDetector];
-//       idPedestalEncoder.setCellID(pedestalMatrix);
-//       idNoiseEncoder.setCellID(noiseMatrix);
-//       idStatusEncoder.setCellID(statusMatrix);
-      
-      pedestalMatrix->setChargeValues(_pedestal[iDetector]);
-      noiseMatrix->setChargeValues(_noise[iDetector]);
-      statusMatrix->setADCValues(_status[iDetector]);
-      
-      pedestalCollection->push_back(pedestalMatrix);
-      noiseCollection->push_back(noiseMatrix);
-      statusCollection->push_back(statusMatrix);
-    }
-
-    event->addCollection(pedestalCollection, _pedestalCollectionName);
-    event->addCollection(noiseCollection, _noiseCollectionName);
-    event->addCollection(statusCollection, _statusCollectionName);
-    
-    lcWriter->writeEvent(event);
-    delete event;
-    
-    // *** END EXPERIMENTAL BLOCK *** //
-
-    setReturnValue("IsPedestalFinished", true);
-  } else {
-    // now we need to loop again
-    // so reset the event counter
-    _iEvt = 0;
-    // and the first event flag
-    _isFirstEvent = true;
-
-    // throw RewindDataFilesException(this);
-    setReturnValue("IsPedestalFinished", false);
-  }
+  cout << "[" << name() <<"] Successfully finished" << endl;
 }
 
 void EUTelPedestalNoiseProcessor::fillHistos() {
@@ -406,6 +286,7 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
 
   double threshold;
   int    badPixelCounter = 0;
+  cout <<  "[" << name() "] Masking bad pixels ";
 
   if ( _badPixelAlgo == EUTELESCOPE::NOISEDISTRIBUTION ) {
     // to do it we need to know the mean value and the RMS of the noise
@@ -446,7 +327,7 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
       }
     }
   } // end loop on detector;
-  cout << "[" << name() << "] Masked " << badPixelCounter << " bad pixels " << endl;
+  cout << "(" << badPixelCounter << ")" << endl;
 }
 
 
@@ -461,7 +342,7 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * evt) {
     throw SkipEventException(this);
   }
 
-  if ( _iEvt >= _lastEvent ) {
+  if ( _iEvt > _lastEvent ) {
     cout << "[" << name() <<"] Last processed event " << _iEvt - 1 << endl;
     throw StopProcessingException(this);
   }
@@ -587,57 +468,36 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * evt) {
 
   // increment the event counter
   ++_iEvt;
+
+  if (isLastEvent()) finalizeProcessor();
+
 }
 
 void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
   
-  if ( ( _iEvt < _firstEvent ) || ( _iEvt >= _lastEvent ) ) {
+  if (  _iEvt < _firstEvent  ) {
     // pedestal calculation may occuring on a subset of events
     // outside this range, just skip the current event
-    if ( ( _iEvt == 0 ) || ( _iEvt ==  _firstEvent - 1) || ( _iEvt == _lastEvent ) || ( _iEvt%10 == 0) )
+    if ( ( _iEvt == 0 ) || ( _iEvt ==  _firstEvent - 1) || ( _iEvt%10 == 0) )
       cout << "[" << name() << "] Skipping event " << _iEvt << endl;
     ++_iEvt;
-    return;
+    throw SkipEventException(this);
+  }
+
+  if ( _iEvt > _lastEvent ) {
+    cout << "[" << name() <<"] Last processed event " << _iEvt - 1 << endl;
+    throw StopProcessingException(this);
   }
 
   // keep the user updated
   if ( _iEvt % 10 == 0 ) {
-    cout << "Performing " << _iLoop << " loop on event: " << _iEvt << endl;
+    cout << "[" << name() <<"] Performing " << _iLoop << " loop on event: " << _iEvt << endl;
   }
 
   // let me get the rawDataCollection. This is should contain a TrackerRawDataObject
   // for each detector plane in the telescope.
   LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
   
-
-  if ( isFirstEvent() ) {
-    
-    if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
-
-      // the collection contains several TrackerRawData
-      // move back the _pedestal and _noise to the _temp vector
-      _tempPede  = _pedestal;
-      _tempNoise = _noise;
-      
-      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-	_tempEntries.push_back(IntVec( _noise[iDetector].size(), 1));
-      }
-      
-    } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
-      // in case the AIDAPROFILE algorithm is used, the only thing we
-      // need to do is to clean up the previous loop histograms
-      // remeber to loop over all detectors
-#ifdef MARLIN_USE_AIDA
-      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-	stringstream ss;
-	ss << _tempProfile2DName << "-d" << iDetector;
-	(dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]))->reset();
-      }
-#endif
-    }
-    _isFirstEvent = false;
-  }
-
   for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
     // get the TrackerRawData object from the collection for this detector
     TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt (iDetector));
@@ -675,7 +535,11 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
 	 ( goodPixel != 0 ) ) {
 
       commonMode = pixelSum / goodPixel;
-      
+#ifdef MARLIN_USE_AIDA      
+      stringstream ss;
+      ss << _commonModeHistoName << "-d" << iDetector << "-l" << _iLoop;
+      (dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[ss.str()]))->fill(commonMode);
+#endif
       iPixel = 0;
       for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
 	for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
@@ -703,11 +567,13 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
 	}
       }
     } else {
-      cout << "Skipping event " << _iEvt << " because of max number of rejected pixel exceeded." << endl;
+      cout << "Skipping event " << _iEvt << " because of max number of rejected pixels exceeded. (" << skippedPixel << ")" << endl;
       ++_noOfSkippedEvent;
     }
   }	
   ++_iEvt;
+  cout << "_ievt, _lastevent" << _iEvt << " " << _lastEvent << endl;
+  if (isLastEvent()) finalizeProcessor();
 }
 
 void EUTelPedestalNoiseProcessor::bookHistos() {
@@ -763,7 +629,7 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
       pedeDistHisto->setTitle("Pedestal distribution");
 
       // book an histogram for the noise distribution
-      const int    noiseDistHistoNBin  =   30;
+      const int    noiseDistHistoNBin  =  100;
       const double noiseDistHistoMin   =  -5.;
       const double noiseDistHistoMax   =  15.;
       {
@@ -779,9 +645,9 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 
       // book a 1d histo for common mode only if loop >= 1
       if (iLoop >= 1) {
-	const int    commonModeHistoNBin = 20;
-	const double commonModeHistoMin  = -2;
-	const double commonModeHistoMax  =  2;
+	const int    commonModeHistoNBin = 100;
+	const double commonModeHistoMin  =  -2;
+	const double commonModeHistoMax  =   2;
 	{
 	  stringstream ss;
 	  ss << _commonModeHistoName << "-d" << iDetector << "-l" << iLoop;
@@ -856,4 +722,153 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
     }
   } // end on iLoop
 #endif // MARLIN_USE_AIDA
+}
+
+void EUTelPedestalNoiseProcessor::finalizeProcessor() {
+  
+  if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
+    
+    // the loop on events is over so we need to move temporary vectors
+    // to final vectors
+    _pedestal = _tempPede;
+    _noise    = _tempNoise;
+    
+    // clear the temporary vectors
+    _tempPede.clear();
+    _tempNoise.clear();
+    _tempEntries.clear();
+    
+  } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
+#ifdef MARLIN_USE_AIDA
+    _pedestal.clear();
+    _noise.clear();
+    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      stringstream ss;
+      ss << _tempProfile2DName << "-d" << iDetector;
+      FloatVec tempPede;
+      FloatVec tempNoise;
+      for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
+	for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
+	  // WARNING: Still not working because of several bugs affecting RAIDA v00-03
+	  // waiting for bug fixes
+	  tempPede.push_back((float) (dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]))->binMeanX(xPixel,yPixel));
+	  tempNoise.push_back((float) (dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]))->binRms(xPixel,yPixel));
+	  //cout << xPixel << " " << yPixel << " " << tempPede.back() << " " << tempNoise.back() << endl;
+	}
+      }
+      _pedestal.push_back(tempPede);
+      _noise.push_back(tempNoise);
+    }
+#endif
+  }
+  
+  // mask the bad pixels here
+  maskBadPixel();
+  
+  // fill in the histograms
+  fillHistos();
+  
+  // increment the loop counter
+  ++_iLoop;
+  
+  // check if we need another loop or we can finish. Remember that we
+  // have a total number of loop of _noOfCMIteration + 1
+  if ( _iLoop == _noOfCMIterations + 1 ) {
+    // ok this was last loop  
+
+    LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
+    
+    try {
+      lcWriter->open(_outputPedeFileName,LCIO::WRITE_NEW);
+    } catch (IOException& e) {
+      cerr << e.what() << endl;
+      return;
+    }
+    
+    LCEventImpl * event = new LCEventImpl();
+    event->setDetectorName("MIMOSA");
+    event->setRunNumber(_iRun);
+    
+    LCCollectionVec * pedestalCollection = new LCCollectionVec(LCIO::TRACKERDATA);
+    LCCollectionVec * noiseCollection    = new LCCollectionVec(LCIO::TRACKERDATA);
+    LCCollectionVec * statusCollection   = new LCCollectionVec(LCIO::TRACKERRAWDATA);
+    
+    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      
+      TrackerDataImpl    * pedestalMatrix = new TrackerDataImpl;
+      TrackerDataImpl    * noiseMatrix    = new TrackerDataImpl;
+      TrackerRawDataImpl * statusMatrix   = new TrackerRawDataImpl;
+      
+//       CellIDEncoder<TrackerDataImpl>    idPedestalEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", pedestalCollection);
+//       CellIDEncoder<TrackerDataImpl>    idNoiseEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", noiseCollection);
+//       CellIDEncoder<TrackerRawDataImpl> idStatusEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", statusCollection);
+      
+//       idPedestalEncoder["sensorID"] = iDetector;
+//       idNoiseEncoder["sensorID"]    = iDetector;
+//       idStatusEncoder["sensorID"]   = iDetector;
+//       idPedestalEncoder["xMin"]     = _minX[iDetector];
+//       idNoiseEncoder["xMin"]        = _minX[iDetector];
+//       idStatusEncoder["xMin"]       = _minX[iDetector];
+//       idPedestalEncoder["xMax"]     = _maxX[iDetector];
+//       idNoiseEncoder["xMax"]        = _maxX[iDetector];
+//       idStatusEncoder["xMax"]       = _maxX[iDetector];
+//       idPedestalEncoder["yMin"]     = _minY[iDetector];
+//       idNoiseEncoder["yMin"]        = _minY[iDetector];
+//       idStatusEncoder["yMin"]       = _minY[iDetector];
+//       idPedestalEncoder["yMax"]     = _maxY[iDetector];
+//       idNoiseEncoder["yMax"]        = _maxY[iDetector];
+//       idStatusEncoder["yMax"]       = _maxY[iDetector];
+//       idPedestalEncoder.setCellID(pedestalMatrix);
+//       idNoiseEncoder.setCellID(noiseMatrix);
+//       idStatusEncoder.setCellID(statusMatrix);
+      
+      pedestalMatrix->setChargeValues(_pedestal[iDetector]);
+      noiseMatrix->setChargeValues(_noise[iDetector]);
+      statusMatrix->setADCValues(_status[iDetector]);
+      
+      pedestalCollection->push_back(pedestalMatrix);
+      noiseCollection->push_back(noiseMatrix);
+      statusCollection->push_back(statusMatrix);
+    }
+
+    event->addCollection(pedestalCollection, _pedestalCollectionName);
+    event->addCollection(noiseCollection, _noiseCollectionName);
+    event->addCollection(statusCollection, _statusCollectionName);
+    
+    lcWriter->writeEvent(event);
+    delete event;
+    throw StopProcessingException(this);
+    setReturnValue("IsPedestalFinished", true);
+  } else {
+    // now we need to loop again
+    // so reset the event counter
+    _iEvt = 0;
+
+    // prepare everything for the next loop
+    if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
+
+      // the collection contains several TrackerRawData
+      // move back the _pedestal and _noise to the _temp vector
+      _tempPede  = _pedestal;
+      _tempNoise = _noise;
+      
+      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+	_tempEntries.push_back(IntVec( _noise[iDetector].size(), 1));
+      }
+      
+    } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
+      // in case the AIDAPROFILE algorithm is used, the only thing we
+      // need to do is to clean up the previous loop histograms
+      // remeber to loop over all detectors
+#ifdef MARLIN_USE_AIDA
+      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+	stringstream ss;
+	ss << _tempProfile2DName << "-d" << iDetector;
+	(dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]))->reset();
+      }
+#endif
+    }
+
+    setReturnValue("IsPedestalFinished", false);
+  }
 }

@@ -50,9 +50,16 @@ namespace eutelescope
    *  @param PedestalCollectionName Name of the output pedestal collection
    *  @param NoiseCollectionName Name of the output noise collection
    *  @param StatusCollectionName Name of the output pixel status collection
-   * 
+   *  @param OutputPedeFile Name of the output pedestal file
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.4 2007-02-09 10:28:22 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.5 2007-02-09 20:36:21 bulgheroni Exp $ 
+   *
+   *  @todo For the time being the final pedestal/noise/status objects
+   *  are stored into a LCIO and they will be successively accessed by
+   *  a ConditionProcess; consider the possibility to store those
+   *  objects also into a DB.
+   *
    */
 
   class EUTelPedestalNoiseProcessor:public marlin::Processor
@@ -100,18 +107,31 @@ namespace eutelescope
      *  where the needed parameters are missing and the assignement is
      *  only fictitius. I should add a cross-check on the parameter
      *  goodness after the assignement.
+     * 
+     *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
 
-    /** Called for every event - the working horse.
+    //! Called every event
+    /*  Since the behavior of the PedestalNoise processor is different
+     *  if this is the first or one of the following loop, this method
+     *  is just calling
+     *  EUTelPedestalNoiseProcessor::firstLoop(LCEvent*) or
+     *  EUTelPedestalNoiseProcessor::otherLoop(LCEvent*)
+     *
+     *  @param evt the current LCEvent event as passed by the
+     *  ProcessMgr
      */
     virtual void processEvent (LCEvent * evt);
 
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
-     * soon as the processEvent is over. It can be used to fill check
-     * plots.
+     *  soon as the processEvent is over. It can be used to fill check
+     *  plots. For the time being there is nothing to check and do in
+     *  this slot.
+     * 
+     *  @param evt The LCEvent event as passed by the ProcessMgr
      */
     virtual void check (LCEvent * evt);
 
@@ -269,8 +289,27 @@ namespace eutelescope
     
 
     //! Called after data processing.
-    /*! This method is called when the loop on events is finished. The
-     *  following operations are performed: 
+    /*! This method is called when the loop on events is finished. It
+     *  prints only a goodbye message
+     */
+    virtual void end();
+
+    //! True if this the current one is the last event in the files
+    /*! This utility is used to know if the current events is the last
+     *  one. This is currently used in this process to allow data
+     *  rewind and multiple loops on events.
+     *  
+     *  @return true if this is the last event
+     */
+    inline virtual bool isLastEvent() const { return (_iEvt == _lastEvent); }
+
+    //! Finishes up the current loop 
+    /*! This method is called at the end of the event loop, just
+     *  before falling into the end() callback. Here we can perform
+     *  all the needed operations to finish up the current loop and,
+     *  if needed, restart the loop once more. It the case this was
+     *  the last loop, just save the output results in an external
+     *  file. Here comes a more detailed description:
      *  
      *  \li In a way that depends on the calculation algorithm,
      *  pedestal and noise vectors are filled with the current loop
@@ -289,29 +328,18 @@ namespace eutelescope
      *  to true and pedestal, noise and status are moved to a
      *  Tracker(Raw)Data object.
      *
-     *  @bug RewindDataFilesException is properly thrown but it is not
-     *  catched by the Marlin main program. In fact, this exception is
-     *  implemented only during the event loop. But to throw
-     *  RewindDataFilesException while the last event is processed you
-     *  should know in advance how many events are in the
-     *  file. Throwing te Rewind exception from end() may result is a
-     *  program crash. For the time being the exception has been
-     *  remove to allow debugging other parts.
-     *
-     *  @todo For the time being, the three output vectors (_pedestal,
-     *  _noise and _status) are not moved to a LCObject and then to
-     *  collection.
-     *
-     *  @bug We can calculate the final values of pedestal and noise
-     *  only after the last event has been processed. So the natural
-     *  place to do it is within end(), but here we do not have any
-     *  LCEvent to attach the collection we want to save.
+     *  @bug Still not working the CellIDEncoder because of a bug in LCIO
      *
      *  @see EUTelPedestalNoiseProcessor::fillHistos() for a detailed
      *  description on histogram filling.
      *
+     *  @throw RewindDataException to restart the event loop 
+     *
+     *  @throw StopProcessingException to stop the looping in the
+     *  final number of looping is reached.
+     *
      */
-    virtual void end();
+    virtual void finalizeProcessor();
 
 
   protected:
@@ -433,6 +461,12 @@ namespace eutelescope
      *  used for pedestal calculation.
      */
     int _lastEvent;
+
+    //! Output pedestal/noise/status file name
+    /*! At the end of this processor a LCIO file containing the
+     *  results will be saved with this name
+     */
+    std::string _outputPedeFileName;
 
     //! Boolean flag for pedestal calculation
     /*! This boolean flag is used to modify the
