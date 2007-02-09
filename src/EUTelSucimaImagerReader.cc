@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelSucimaImagerReader.cc,v 1.2 2007-02-07 16:21:28 bulgheroni Exp $
+// Version $Id: EUTelSucimaImagerReader.cc,v 1.3 2007-02-09 20:34:26 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -105,7 +105,9 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
       runHeader->setDAQSWVersion (0.0001);
       runHeader->addIntermediateFile (_fileName);
       runHeader->addProcessor (_processorName);
-
+      // this is a mistake here only for testing....
+      runHeader->setNoOfEvent( 99);
+      //////////////////////////////////////////////
       runHeader->setNoOfDetector(1);
       runHeader->setMinX(IntVec(1, 0));
       runHeader->setMaxX(IntVec(1, _noOfXPixel - 1));

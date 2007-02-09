@@ -1,5 +1,5 @@
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelRunHeaderImpl.cc,v 1.1.1.1 2007-02-07 10:53:12 bulgheroni Exp $
+// Version: $Id: EUTelRunHeaderImpl.cc,v 1.2 2007-02-09 20:34:26 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -45,6 +45,15 @@ EUTelRunHeaderImpl::setDataType (std::string type)
    // sets the type of data saved in this file
 
    _params.setValue (EUTELESCOPE::DATATYPE, type);
+}
+
+void
+EUTelRunHeaderImpl::setNoOfEvent ( int num )
+{
+  // sets the number of events in the file
+  
+  _params.setValue(EUTELESCOPE::NOOFEVENT, num);
+
 }
 
 void

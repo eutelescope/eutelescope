@@ -1,5 +1,5 @@
 // Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTELESCOPE.cc,v 1.2 2007-02-09 10:29:31 bulgheroni Exp $
+// Version: $Id: EUTELESCOPE.cc,v 1.3 2007-02-09 20:35:55 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -14,6 +14,7 @@
 using namespace eutelescope;
 
 const char *   EUTELESCOPE::HEADERVERSION       = "HeaderVersion";
+const char *   EUTELESCOPE::NOOFEVENT           = "NoOfEvent";
 const char *   EUTELESCOPE::DATATYPE            = "DataType";
 const char *   EUTELESCOPE::DATETIME            = "DateTime";
 const char *   EUTELESCOPE::DAQHWNAME           = "DAQHWName";

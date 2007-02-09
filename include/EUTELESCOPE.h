@@ -24,7 +24,7 @@ namespace eutelescope
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.2 2007-02-09 10:22:25 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.3 2007-02-09 20:34:26 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -53,6 +53,9 @@ namespace eutelescope
      *  @see EUTELESCOPE::DAQDATA, EUTELESCOPE::SIMULDATA, EUTELESCOPE::CONVDATA
      */
     static const char * DATATYPE;
+
+    //! Parameter key to store/recall the number of events in the file
+    static const char * NOOFEVENT;
 
     //! Parameter key to store/recall the date time string in human readable format
     static const char * DATETIME;
