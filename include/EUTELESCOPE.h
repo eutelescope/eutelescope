@@ -24,7 +24,7 @@ namespace eutelescope
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.1.1.1 2007-02-07 10:53:12 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.2 2007-02-09 10:22:25 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -145,13 +145,42 @@ namespace eutelescope
 
     // algorithm names
 
-    //! Constant to select the bad pixel masking algorithm
-    /*! @see EUTelPedestalNoiseProcessor::maskBadPixel(const char *)
+    //! Bad pixel masking algorithm identifier
+    /*! @see EUTelPedestalNoiseProcessor::maskBadPixel() for a
+     *  detailed description of the algorithm
      */
     static const char * NOISEDISTRIBUTION;
+    
+    //! Bad pixel masking algorithm identifier
+    /*! @see EUTelPedestalNoiseProcessor::maskBadPixel() for a
+     * detailed description of the algorithm.
+     */
+    static const char * ABSOLUTENOISEVALUE;
 
-    //! Constant used to identify pedestal and noise calculation algorithm
+
+    //! Pedestal calculation algorithm identifier
+    /*! This string is used to identify a pedestal calculation
+     *  algorithm. @a MEANRMS means that the pedestal value is defined
+     *  as the mean value of each single pixel signal distribution,
+     *  while the noise is given by the distribution RMS. The
+     *  algorithm is based on the use of std::vector's
+     */ 
     static const char * MEANRMS;
+
+    //! Pedestal calculation algorithm identifier
+    /*! This string is used to identify a pedestal calculation
+     *  algorithm. @a AIDAPROFILE means that pedestal and noise are
+     *  determined taking advantages from the use of an
+     *  AIDA::IProfile2D object. For each event, all pixel signals are
+     *  filled into a 2d profile properly booked in the init()
+     *  phase. When the loop is complete, the mean value and the noise
+     *  of each pixel is dumped from the IProfile2D to pedestal and
+     *  noise std::vector's. Of course, the use of it is limited to
+     *  the cases in which MARLIN_USE_AIDA is defined. Otherwise, the
+     *  algorithm will fall back to something, may be to so elegant,
+     *  but definetively more standard (EUTELESCOPE::MEANRMS).
+     */
+    static const char * AIDAPROFILE;
 
   };
 
