@@ -52,7 +52,7 @@ namespace eutelescope
    *  @param StatusCollectionName Name of the output pixel status collection
    * 
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.3 2007-02-08 09:40:11 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.4 2007-02-09 10:28:22 bulgheroni Exp $ 
    */
 
   class EUTelPedestalNoiseProcessor:public marlin::Processor
@@ -61,10 +61,12 @@ namespace eutelescope
   public:
 
      
-    //! Return a new instance of EUTelPedestalNoiseProcessor
+    //! Returns a new instance of EUTelPedestalNoiseProcessor
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
+     *  
+     *  @return a new EUTelPedestalNoiseProcess.
      */
     virtual Processor * newProcessor ()
     {
@@ -118,20 +120,30 @@ namespace eutelescope
      *  identify too noisy pixels and remove them from the following
      *  analysis steps. Bad pixels are flagged as
      *  EUTELESCOPE::BADPIXEL in the
-     *  EUTelPedestalNoiseProcessor::_status vector. <br>For the time
-     *  being there is only one procedure implemented based on the
-     *  noise distribution (<b>"NoiseDistribution"</b>). As a first
-     *  thing both the <i>mean</i> and the <i>RMS</i> of the
-     *  distribution are calculated. Then the region in the
-     *  distribution with pixel having a noise exceeding
-     *  <code>_badPixelMaskCut * RMS + mean</code> is considered
-     *  bad. This algorithm has the advantage of being pretty robust
-     *  and system independent since it does not use any system unit
-     *  as ADC or ENC, but, at the same time, as the disadvantage of
-     *  being difficult to tune. In fact, while the general user has a
-     *  natural idea of what could be the noise of a bad pixel in
-     *  her/his own system, it is not easy and clear which should be
-     *  the _badPixelMaskCut to be used to obtain the same result.
+     *  EUTelPedestalNoiseProcessor::_status vector. Here comes a list
+     *  of all implemented algoriths:
+     *
+     *  \li <b>"NoiseDistribution"</b>. As a first thing both the
+     *  <i>mean</i> and the <i>RMS</i> of the distribution are
+     *  calculated. Then the region in the distribution with pixel
+     *  having a noise exceeding <code>_badPixelMaskCut * RMS +
+     *  mean</code> is considered bad. This algorithm has the
+     *  advantage of being pretty robust and system independent since
+     *  it does not use any system unit as ADC or ENC, but, at the
+     *  same time, as the disadvantage of being difficult to tune. In
+     *  fact, while the general user has a natural idea of what could
+     *  be the noise of a bad pixel in her/his own system, it is not
+     *  easy and clear which should be the _badPixelMaskCut to be used
+     *  to obtain the same result.
+     *  
+     *  \li <b>"AbsoluteNoiseValue"</b>. This second algorithm, even
+     *  if it is less general than the "NoiseDistribution" one it
+     *  offers to the user a higher degree of sensibility. With this
+     *  algorithm, the user has to provide as a _badPixelMaskCut the
+     *  maximum acceptable value of noise in ADC units. At the
+     *  pedestal calculation level, it is still impossible to provide
+     *  any reasonable "calibration" able to provide a conversion
+     *  factor from ADC units to equivalet noise charge.
      *
      *  @todo Ask other teams about their favorite masking algorithm.
      */
@@ -142,13 +154,34 @@ namespace eutelescope
      *  EUTelPedestalNoiseProcessor::processEvent(LCEvent *) when the
      *  loop counter is 0. Within this method the first approximations
      *  of both pedestal and noise are calculated on a detector based.
-     *  For the time being there is only algorithm ("MeanRMS")
-     *  implemented based on the calculation of each pixel mean and
-     *  RMS. The algorithm is chosen by the user from the steering
-     *  file.
+     *  Here comes a list of all available processing algorithms:
+     *
+     *  \li <b>MeamRMS</b>. This method can be selected using the
+     *  static const char EUTELESCOPE::MEANRMS, or typing MeanRMS in
+     *  the steering file. This algorithm computes the pedestal of a
+     *  pixel as its average value over the full range of selected
+     *  events. The RMS of such signal distribution is used as the
+     *  pixel noise.
+     *
+     *  \li <b>AIDAProfile</b>. This method can be selectd using the
+     *  static const char EUTELESCOPE::AIDAPROFILE, or typing
+     *  AIDAProfile in the steering file. To use this algorith, Marlin
+     *  and consequently Eutelescope, have to be linked against an
+     *  AIDA implementation. In the case MARLIN_USE_AIDA is undefined
+     *  and the user selects this algorithm, then the program will
+     *  automatically fall back to MeanRMS. This algorithm is based on
+     *  the use of a AIDA::IProfile2D. Such an object can be booked
+     *  having every pixel centered into a single bin and can be
+     *  filled with all entries of the TrackerRawData. At the end of
+     *  the event loop, each bin contains the pixel mean signal and
+     *  each bin error is the noise.
      *
      *  @param evt This is the current event passed by
      *  EUTelPedestalNoieProcessor::processEvent(LCEvent*)
+     *
+     *  @todo A full debug of the AIDAProfile algorithm is yet not
+     *  possibile because of some bugs affecting RAIDA, the ROOT-based
+     *  implementation of AIDA I'm using.
      *
      *  @todo Ask other teams about their favorite calculation
      *  algorithm
@@ -172,27 +205,27 @@ namespace eutelescope
      *  @param evt This is the current event passed by the
      *  EUTelPedestalNoiseProcessor::processEvent(LCEvent*).
      * 
-     *  @see EUTelPedestalNoiseProcessor::firstLoop(LCEvent*)
+     *  @see EUTelPedestalNoiseProcessor::firstLoop(LCEvent*) for the
+     *  description of available algorithms.
      */
     void otherLoop(LCEvent * evt);
 
 
     //! Book histograms
     /*! This method is used to prepare the needed directory structure
-     *  within the current ITree folder and books all required *
-     *  histograms. Hisrogram pointers are stored into *
-     *  EUTelPedestalNoiseProcess::_aidaHistoMap so that they can be *
+     *  within the current ITree folder and books all required
+     *  histograms. Histogram pointers are stored into
+     *  EUTelPedestalNoiseProcess::_aidaHistoMap so that they can be
      *  recalled and filled from anywhere in the code.  Apart from the
      *  histograms listed in EUTelPedestalNoiseProcessor::fillHistos()
      *  there is also a common mode histo described here below:
      *
      *  \li commonModeHisto: 1D histogram to store the calculated
      *  common mode value for each event. This histogram is booked and
-     *  filled only if the loop counter is greater-equal than 1, *
+     *  filled only if the loop counter is greater-equal than 1,
      *  because for _iLoop == 0 there is no common mode suppression.
-     *  
-     *  This last histo is not filled with the other because it needs
-     *  to be updated every event.
+     *  This histo is not filled with the other because it needs to be
+     *  updated every event.
      * 
      *  @see EUTelPedestalNoiseProcessor::fillHistos() for the todos
      */
@@ -237,13 +270,20 @@ namespace eutelescope
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. The
-     *  following operations are performed: \li Temporary pedestal and
-     *  noise vectors are copied into the final ones.  \li Temporary
-     *  vectors are cleared. \li The bad pixel masking procedure is
-     *  invoked. \li The loop counter is incremented and crosschecked
-     *  if other loop on events are needed or if the full processor is
-     *  over. In the case the loop as to be re-executed, then the
-     *  return value of the processor is set to false and a
+     *  following operations are performed: 
+     *  
+     *  \li In a way that depends on the calculation algorithm,
+     *  pedestal and noise vectors are filled with the current loop
+     *  calculation results. 
+     *
+     *  \li The bad pixel masking procedure is invoked. 
+     *
+     *  \li Check histograms are filled.
+     *
+     *  \li The loop counter is incremented and crosschecked if other
+     *  loop on events are needed or if the full processor is over. In
+     *  the case the loop as to be re-executed, then the return value
+     *  of the processor is set to false and a
      *  RewindDataFilesException is thrown. In the case, instead, the
      *  number of loops is the final one, then the return value is set
      *  to true and pedestal, noise and status are moved to a
@@ -266,6 +306,9 @@ namespace eutelescope
      *  only after the last event has been processed. So the natural
      *  place to do it is within end(), but here we do not have any
      *  LCEvent to attach the collection we want to save.
+     *
+     *  @see EUTelPedestalNoiseProcessor::fillHistos() for a detailed
+     *  description on histogram filling.
      *
      */
     virtual void end();
@@ -321,27 +364,20 @@ namespace eutelescope
     std::string _badPixelAlgo;
 
     //! Bad pixel masking cut
-    /*! This value is used to mask bad pixels.  After each loop on
-     *  events the average (noiseAvg) and the variance (noiseSigma) of
-     *  the noise distribution is calculated. To identify bad pixels
-     *  the following criteria is adopted.  A pixel is masked as bad
-     *  if:
-     *    
-     * \li its noise is == 0. This is usually a good indication a pixel
-     * is dead!  \li its noise is exceeding noiseAvg + _badPixelMaskCut
-     * * noiseSigma.
-     *
-     * \todo In principle also a cut to remove the left tail of the
-     * distribution can be introduced, but probably not so important.
+    /*! This value is used to mask bad pixels.  
+     * 
+     *  @see EUTelPedestalNoiseProcess::maskBadPixel() for a detailed
+     *  description about the implemented algorithm and the use of
+     *  _badPixelMaskCut in all cases.
      */
     float _badPixelMaskCut;
 
     //! Common mode suppression iterations
     /*! This is the number of times the common mode suppression
-     *    algorithm has to be applied to the data. Usually one iteration
-     *    is enough, but in case of a very noisy setup it can be
-     *    repeated several times.  Set it to zero to skip common mode
-     *    suppression at all.
+     *  algorithm has to be applied to the data. Usually one iteration
+     *  is enough, but in case of a very noisy setup it can be
+     *  repeated several times.  Set it to zero to skip common mode
+     *  suppression at all.
      */
     int _noOfCMIterations;
 
@@ -461,7 +497,7 @@ namespace eutelescope
      * plane in the run is discovered.  The inner layer is done in the
      * firstEvent of each detector module.
      */
-    std::vector < DoubleVec > _tempPede;
+    std::vector < FloatVec > _tempPede;
 
     //! Temporary array to store the running sigma
     /*! This a vector of vectors of doubles. The outern layer represents
@@ -471,7 +507,7 @@ namespace eutelescope
      * plane in the run is discovered.  The inner layer is done in the
      * firstEvent of each detector module.
      */
-    std::vector < DoubleVec > _tempNoise;
+    std::vector < FloatVec > _tempNoise;
 
     //! Temporary array to store the number of entries
     /*! In order to have both the running average and sigma working,
@@ -489,18 +525,18 @@ namespace eutelescope
      *  stored into this array to allow further improvements in the
      *  following event loops
      */
-    std::vector < DoubleVec > _pedestal;
+    std::vector < FloatVec > _pedestal;
 
     //! Array to store intermediate/final noise value
     /*! As for EUTelPedestalNoiseProcessor::_pedestal but now for the
      *  noise
      */
-    std::vector < DoubleVec > _noise;
+    std::vector < FloatVec > _noise;
 
     //! Array to store the status 
     /*! This is the place where the status of pixel is saved
      */
-    std::vector < IntVec > _status;
+    std::vector < ShortVec > _status;
 
     //! Event loop counter
     /*! This is a counter for the number of loops. The processor will
@@ -517,10 +553,28 @@ namespace eutelescope
      *  places, while it is usually a good reason to keep the booking
      *  procedure in one place only. To recall an histogram pointer
      *  from a different place in the code they are stored within this
-     *  histogram map.
+     *  histogram map. The second object of the pair has to a
+     *  AIDA::IBaseHistogram since this is the base class of all
+     *  different kind of histograms, profiles included. It has also
+     *  to be a pointer since, this is a pure virtual class and we
+     *  want to use <code>dynamic_cast</code> to convert them back to
+     *  their orginal cast.
      */
     std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
-#endif 
+
+    //! Name of the temporary AIDA 2D profile
+    /*! The histogram pointed by this name is used in the case
+     *  EUTELESCOPE::AIDAPROFILE pedestal calculation algorithm is
+     *  selected. In fact, in such a case, a IProfile2D for each
+     *  detector is booked in such a way that there each pixel is
+     *  centered into a bin. In the end() call back the content of
+     *  these profiles are moved back into the
+     *  EUTelPedestalNoiseProcess::_pedestal and
+     *  EUTelPedestalNoiseProcessor::_noise standard vectors. The
+     *  profiles are cleared and ready to be re-used into an eventual
+     *  following loop.
+     */
+    static std::string _tempProfile2DName;
 
     //! Pedestal distribution 1D histo base name
     /*! @see EUTelPedestalNoiseProcessor::_noiseHistoName;
@@ -555,6 +609,8 @@ namespace eutelescope
     /*! @see EUTelPedestalNoiseProcessor::_noiseHistoName;
      */
     static std::string _statusMapHistoName;
+#endif 
+
   };
 }
 #endif
