@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.5 2007-02-09 20:36:21 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.6 2007-02-10 08:03:13 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -32,7 +32,7 @@
 // lcio includes <.h> 
 #include <lcio.h>
 #include <UTIL/LCTOOLS.h>
-//#include <UTIL/CellIDEncoder.h>
+#include <UTIL/CellIDEncoder.h>
 #include <IMPL/LCEventImpl.h>
 #include <IMPL/TrackerRawDataImpl.h>
 #include <IMPL/TrackerDataImpl.h> 
@@ -286,7 +286,7 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
 
   double threshold;
   int    badPixelCounter = 0;
-  cout <<  "[" << name() "] Masking bad pixels ";
+  cout <<  "[" << name() << "] Masking bad pixels ";
 
   if ( _badPixelAlgo == EUTELESCOPE::NOISEDISTRIBUTION ) {
     // to do it we need to know the mean value and the RMS of the noise
@@ -799,28 +799,28 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
       TrackerDataImpl    * noiseMatrix    = new TrackerDataImpl;
       TrackerRawDataImpl * statusMatrix   = new TrackerRawDataImpl;
       
-//       CellIDEncoder<TrackerDataImpl>    idPedestalEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", pedestalCollection);
-//       CellIDEncoder<TrackerDataImpl>    idNoiseEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", noiseCollection);
-//       CellIDEncoder<TrackerRawDataImpl> idStatusEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", statusCollection);
+      CellIDEncoder<TrackerDataImpl>    idPedestalEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", pedestalCollection);
+      CellIDEncoder<TrackerDataImpl>    idNoiseEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", noiseCollection);
+      CellIDEncoder<TrackerRawDataImpl> idStatusEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", statusCollection);
       
-//       idPedestalEncoder["sensorID"] = iDetector;
-//       idNoiseEncoder["sensorID"]    = iDetector;
-//       idStatusEncoder["sensorID"]   = iDetector;
-//       idPedestalEncoder["xMin"]     = _minX[iDetector];
-//       idNoiseEncoder["xMin"]        = _minX[iDetector];
-//       idStatusEncoder["xMin"]       = _minX[iDetector];
-//       idPedestalEncoder["xMax"]     = _maxX[iDetector];
-//       idNoiseEncoder["xMax"]        = _maxX[iDetector];
-//       idStatusEncoder["xMax"]       = _maxX[iDetector];
-//       idPedestalEncoder["yMin"]     = _minY[iDetector];
-//       idNoiseEncoder["yMin"]        = _minY[iDetector];
-//       idStatusEncoder["yMin"]       = _minY[iDetector];
-//       idPedestalEncoder["yMax"]     = _maxY[iDetector];
-//       idNoiseEncoder["yMax"]        = _maxY[iDetector];
-//       idStatusEncoder["yMax"]       = _maxY[iDetector];
-//       idPedestalEncoder.setCellID(pedestalMatrix);
-//       idNoiseEncoder.setCellID(noiseMatrix);
-//       idStatusEncoder.setCellID(statusMatrix);
+      idPedestalEncoder["sensorID"] = iDetector;
+      idNoiseEncoder["sensorID"]    = iDetector;
+      idStatusEncoder["sensorID"]   = iDetector;
+      idPedestalEncoder["xMin"]     = _minX[iDetector];
+      idNoiseEncoder["xMin"]        = _minX[iDetector];
+      idStatusEncoder["xMin"]       = _minX[iDetector];
+      idPedestalEncoder["xMax"]     = _maxX[iDetector];
+      idNoiseEncoder["xMax"]        = _maxX[iDetector];
+      idStatusEncoder["xMax"]       = _maxX[iDetector];
+      idPedestalEncoder["yMin"]     = _minY[iDetector];
+      idNoiseEncoder["yMin"]        = _minY[iDetector];
+      idStatusEncoder["yMin"]       = _minY[iDetector];
+      idPedestalEncoder["yMax"]     = _maxY[iDetector];
+      idNoiseEncoder["yMax"]        = _maxY[iDetector];
+      idStatusEncoder["yMax"]       = _maxY[iDetector];
+      idPedestalEncoder.setCellID(pedestalMatrix);
+      idNoiseEncoder.setCellID(noiseMatrix);
+      idStatusEncoder.setCellID(statusMatrix);
       
       pedestalMatrix->setChargeValues(_pedestal[iDetector]);
       noiseMatrix->setChargeValues(_noise[iDetector]);
