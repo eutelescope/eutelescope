@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.6 2007-02-10 08:03:13 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.7 2007-02-10 08:27:34 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -201,7 +201,7 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
 
 
   // book histograms
-  bookHistos();
+  if ( _iLoop == 0 ) bookHistos();
 
 }
 
@@ -491,7 +491,7 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
 
   // keep the user updated
   if ( _iEvt % 10 == 0 ) {
-    cout << "[" << name() <<"] Performing " << _iLoop << " loop on event: " << _iEvt << endl;
+    cout << "[" << name() <<"] Performing loop " << _iLoop << " on event: " << _iEvt << endl;
   }
 
   // let me get the rawDataCollection. This is should contain a TrackerRawDataObject
@@ -572,7 +572,6 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
     }
   }	
   ++_iEvt;
-  cout << "_ievt, _lastevent" << _iEvt << " " << _lastEvent << endl;
   if (isLastEvent()) finalizeProcessor();
 }
 
@@ -868,7 +867,7 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
       }
 #endif
     }
-
+    throw RewindDataFilesException(this);
     setReturnValue("IsPedestalFinished", false);
   }
 }
