@@ -53,7 +53,7 @@ namespace eutelescope
    *  @param OutputPedeFile Name of the output pedestal file
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.5 2007-02-09 20:36:21 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.6 2007-02-11 08:46:01 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -646,5 +646,9 @@ namespace eutelescope
 #endif 
 
   };
+
+  //! A global instance of the processor
+  EUTelPedestalNoiseProcessor gEUTelPedestalNoiseProcessor;      
+
 }
 #endif

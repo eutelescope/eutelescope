@@ -45,7 +45,7 @@ namespace eutelescope
     *   @param   NoOfXPixel number of pixels along X
     *   @param   NoOfYPixel number of pixels along Y
     *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-    *   @version $Id: EUTelSucimaImagerReader.h,v 1.1.1.1 2007-02-07 10:53:12 bulgheroni Exp $
+    *   @version $Id: EUTelSucimaImagerReader.h,v 1.2 2007-02-11 08:46:01 bulgheroni Exp $
     *
     */
 
@@ -106,6 +106,9 @@ namespace eutelescope
       short *_buffer;
 
    };
+
+  //! A global instance of the processor
+  EUTelSucimaImagerReader gEUTelSucimaImagerReader;
 
 }                               // end namespace eutelescope
 #endif

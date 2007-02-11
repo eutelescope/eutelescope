@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelSucimaImagerReader.cc,v 1.3 2007-02-09 20:34:26 bulgheroni Exp $
+// Version $Id: EUTelSucimaImagerReader.cc,v 1.4 2007-02-11 08:46:01 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -32,9 +32,6 @@
 using namespace std;
 using namespace marlin;
 using namespace eutelescope;
-
-EUTelSucimaImagerReader gEUTelSucimaImagerReader;
-
 
 EUTelSucimaImagerReader::EUTelSucimaImagerReader ():DataSourceProcessor  ("EUTelSucimaImagerReader") {
   

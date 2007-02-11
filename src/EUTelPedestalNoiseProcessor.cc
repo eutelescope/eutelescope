@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.7 2007-02-10 08:27:34 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.8 2007-02-11 08:46:01 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -46,8 +46,6 @@ using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
-// global instance of the object
-EUTelPedestalNoiseProcessor gEUTelPedestalNoiseProcessor;      
 
 // definition of static members mainly used to name histograms
 #ifdef MARLIN_USE_AIDA
