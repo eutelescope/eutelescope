@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelSucimaImagerReader.cc,v 1.4 2007-02-11 08:46:01 bulgheroni Exp $
+// Version $Id: EUTelSucimaImagerReader.cc,v 1.5 2007-02-17 13:37:14 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -23,6 +23,7 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerRawDataImpl.h>
 #include <UTIL/CellIDEncoder.h>
+#include <UTIL/LCTime.h>
 // #include <UTIL/LCTOOLS.h>
 
 // system includes 
@@ -81,6 +82,12 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
     }
     
     LCEventImpl *event = new LCEventImpl;
+    event->setDetectorName("MIMOSA");
+    
+    LCTime * now = new LCTime;
+    event->setTimeStamp(now->timeStamp());
+    delete now;
+
     LCCollectionVec *rawData = new LCCollectionVec (LCIO::TRACKERRAWDATA);
     
     if (eventNumber % 10 == 0)
@@ -110,7 +117,7 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
       runHeader->setMaxX(IntVec(1, _noOfXPixel - 1));
       runHeader->setMinY(IntVec(1, 0));
       runHeader->setMaxY(IntVec(1, _noOfYPixel - 1));
-
+      runHeader->setDetectorName("MIMOSA");
       // UTIL::LCTOOLS::dumpRunHeader(runHeader);
       
       // process the run header
@@ -155,12 +162,12 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
     // prepare a collection to store the raw-data
     
     TrackerRawDataImpl *rawMatrix = new TrackerRawDataImpl;
-    CellIDEncoder < TrackerRawDataImpl > idEncoder ("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", rawData);
+    CellIDEncoder < TrackerRawDataImpl > idEncoder (EUTELESCOPE::MATRIXDEFAULTENCODING, rawData);
     idEncoder["sensorID"] = 0;
     idEncoder["xMin"] = 0;
-    idEncoder["xMax"] = _noOfXPixel;
+    idEncoder["xMax"] = _noOfXPixel - 1;
     idEncoder["yMin"] = 0;
-    idEncoder["yMax"] = _noOfYPixel;
+    idEncoder["yMax"] = _noOfYPixel - 1;
     idEncoder.setCellID (rawMatrix);
     
     nVal = 0;

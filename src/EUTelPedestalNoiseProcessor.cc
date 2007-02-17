@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.8 2007-02-11 08:46:01 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.9 2007-02-17 13:37:14 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -33,6 +33,7 @@
 #include <lcio.h>
 #include <UTIL/LCTOOLS.h>
 #include <UTIL/CellIDEncoder.h>
+#include <UTIL/LCTime.h>
 #include <IMPL/LCEventImpl.h>
 #include <IMPL/TrackerRawDataImpl.h>
 #include <IMPL/TrackerDataImpl.h> 
@@ -156,6 +157,8 @@ void EUTelPedestalNoiseProcessor::init () {
 
 void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
 
+  _detectorName = rdr->getDetectorName();
+
   // to make things easier re-cast the input header to the EUTelRunHeaderImpl
   EUTelRunHeaderImpl *  runHeader = static_cast<EUTelRunHeaderImpl*>(rdr);
 
@@ -197,10 +200,42 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
   if ( _lastEvent == -1) _lastEvent = tempNoOfEvent;
   if ( _lastEvent >= tempNoOfEvent) _lastEvent = tempNoOfEvent;
 
+  if ( _iLoop == 0 ) {
+    // write the current header to the output condition file
+    LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
 
-  // book histograms
-  if ( _iLoop == 0 ) bookHistos();
+    try {
+      lcWriter->open(_outputPedeFileName, LCIO::WRITE_NEW);
+    } catch (IOException& e) {
+      cerr << e.what() << endl;
+      return;
+    }
 
+    EUTelRunHeaderImpl * newHeader = new EUTelRunHeaderImpl;
+    
+    newHeader->setRunNumber(runHeader->getRunNumber());
+    newHeader->setDetectorName(runHeader->getDetectorName());
+    newHeader->setHeaderVersion(runHeader->getHeaderVersion());
+    newHeader->setDataType(runHeader->getDataType());
+    newHeader->setDateTime();
+    newHeader->setDAQHWName(runHeader->getDAQHWName());
+    newHeader->setDAQHWVersion(runHeader->getDAQHWVersion());
+    newHeader->setDAQSWName(runHeader->getDAQSWName());
+    newHeader->setDAQSWVersion(runHeader->getDAQSWVersion());  
+    newHeader->setNoOfEvent(runHeader->getNoOfEvent());
+    newHeader->setNoOfDetector(runHeader->getNoOfDetector());
+    newHeader->setMinX(runHeader->getMinY());
+    newHeader->setMaxX(runHeader->getMaxX());
+    newHeader->setMinY(runHeader->getMinY());
+    newHeader->setMaxY(runHeader->getMaxY());
+    newHeader->addProcessor(name());
+    
+    lcWriter->writeRunHeader(newHeader);
+    lcWriter->close();
+
+    // also book histos
+    bookHistos();
+  }
 }
 
 
@@ -610,7 +645,7 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
       string basePath = loopDirName + "/" + detectorDirName + "/";
       AIDAProcessor::tree(this)->mkdir(basePath.c_str());
       
-      // book an histogram for the pedestal distribution
+      // book an histogram for the edestal distribution
       const int    pedeDistHistoNBin   = 100; 
       const double pedeDistHistoMin    = -20.;
       const double pedeDistHistoMax    =  29.;
@@ -746,9 +781,9 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
       FloatVec tempNoise;
       for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
 	for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
-	  // WARNING: Still not working because of several bugs affecting RAIDA v00-03
-	  // waiting for bug fixes
-	  tempPede.push_back((float) (dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]))->binMeanX(xPixel,yPixel));
+	  tempPede.push_back((float) (dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]))->binHeight(xPixel,yPixel));
+	  // WARNING: the noise part of this algorithm is still not
+	  // working probably because of a bug in RAIDA implementation
 	  tempNoise.push_back((float) (dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]))->binRms(xPixel,yPixel));
 	  //cout << xPixel << " " << yPixel << " " << tempPede.back() << " " << tempNoise.back() << endl;
 	}
@@ -773,19 +808,26 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
   if ( _iLoop == _noOfCMIterations + 1 ) {
     // ok this was last loop  
 
+    cout << "[" << name() << "] Writing the output condition file" << endl;
+
     LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
     
     try {
-      lcWriter->open(_outputPedeFileName,LCIO::WRITE_NEW);
+      lcWriter->open(_outputPedeFileName,LCIO::WRITE_APPEND);
     } catch (IOException& e) {
       cerr << e.what() << endl;
       return;
     }
     
     LCEventImpl * event = new LCEventImpl();
-    event->setDetectorName("MIMOSA");
+    event->setDetectorName(_detectorName);
     event->setRunNumber(_iRun);
     
+    LCTime * now = new LCTime;
+    event->setTimeStamp(now->timeStamp());
+    delete now;
+
+
     LCCollectionVec * pedestalCollection = new LCCollectionVec(LCIO::TRACKERDATA);
     LCCollectionVec * noiseCollection    = new LCCollectionVec(LCIO::TRACKERDATA);
     LCCollectionVec * statusCollection   = new LCCollectionVec(LCIO::TRACKERRAWDATA);
@@ -796,9 +838,9 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
       TrackerDataImpl    * noiseMatrix    = new TrackerDataImpl;
       TrackerRawDataImpl * statusMatrix   = new TrackerRawDataImpl;
       
-      CellIDEncoder<TrackerDataImpl>    idPedestalEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", pedestalCollection);
-      CellIDEncoder<TrackerDataImpl>    idNoiseEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", noiseCollection);
-      CellIDEncoder<TrackerRawDataImpl> idStatusEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", statusCollection);
+      CellIDEncoder<TrackerDataImpl>    idPedestalEncoder(EUTELESCOPE::MATRIXDEFAULTENCODING, pedestalCollection);
+      CellIDEncoder<TrackerDataImpl>    idNoiseEncoder(EUTELESCOPE::MATRIXDEFAULTENCODING, noiseCollection);
+      CellIDEncoder<TrackerRawDataImpl> idStatusEncoder(EUTELESCOPE::MATRIXDEFAULTENCODING, statusCollection);
       
       idPedestalEncoder["sensorID"] = iDetector;
       idNoiseEncoder["sensorID"]    = iDetector;

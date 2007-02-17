@@ -24,7 +24,7 @@ namespace eutelescope
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.3 2007-02-09 20:34:26 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.4 2007-02-17 13:37:14 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -185,6 +185,29 @@ namespace eutelescope
      */
     static const char * AIDAPROFILE;
 
+    //! Fixed frame clustering algorithm
+    /*! For a detailed description @see
+     *  EUTelClusteringProcessor::_clusteringAlgo
+     */
+    static const char * FIXEDFRAME;
+
+    //! Default Tracker(Raw)Data encoding for full matrix
+    /*! This constant string is used with CellIDEncoder to define the
+     *  default encoding used for describe cells into a
+     *  Tracker(Raw)Data object
+     *
+     *  "sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12"
+     */
+    static const char * MATRIXDEFAULTENCODING;
+
+    //! Default TrackerData encoding for cluster
+    /*! This constant string is used with CellIDEncoder to define the
+     *  default encoding used for describe cells into a clusters. This
+     *  encoding is different from the one for complete matrices.
+     *
+     *  "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5.yCluSize:5"
+     */
+    static const char * CLUSTERDEFAULTENCODING;
   };
 
 }

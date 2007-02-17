@@ -33,8 +33,38 @@
 namespace eutelescope
 {
 
-  /**  Pedestal and noise  processor for marlin.
-   * 
+  //! Pedestal and noise  processor for Marlin.
+  /*! This processor has the task to calculate the pedestal and noise
+   *  value of each single pixel in the EUDET telescope. The input
+   *  data, as they come from the DAQ, or converted from another
+   *  format, are organized in a collection of TrackerRawData named
+   *  rawdata. This collection has as many elements as the number of
+   *  sensors in the telescope. This number may or may not correspond
+   *  to the number of sensitive planes into the telescope geometry,
+   *  because a plane can in principle be made by more than one
+   *  sensor. This distinction between detectors and planes has been
+   *  introduced because several algorithm like common mode
+   *  suppression and bad pixel masking should be performed on a
+   *  detector and not on a plane basis.  Moreover, n the case of a
+   *  sensor like the MimoSTAR2 that is divided into two channels
+   *  featuring different pixel characteristics can be in principle be
+   *  considered as two different detectors.  Each Tracker(Raw)Data
+   *  has cellID0/1 set using the CellIDEncoder utility with
+   *  EUTELESCOPE::DEFAULTMATRIXENCODING. This encoding offers the
+   *  possibility to store the "sensorID" (5 bits), the "xMin",
+   *  "xMax", "yMin", "yMax" with 12 bit each. The xMin and yMin are
+   *  different from 0 only in the case there are more than one sensor
+   *  per plane or the detector is actually a channel of a bigger
+   *  detector.
+   *  
+   *  The user can choose which algorithm should be used for pedestal
+   *  calculation. @see EUTelPedestalNoiseProcessor::_pedestalAlgo
+   *  for a detailed description of the available methods.
+   *
+   *  The user can select the bad pixel masking algorithm, changing
+   *  the value of _badPixelAlgo. @see
+   *  EUTelPedestalNoiseProcessor::_badPixelAlgo
+   *
    *  <h4>Input - Prerequisites</h4>
    *
    *  <h4>Output</h4> 
@@ -53,7 +83,7 @@ namespace eutelescope
    *  @param OutputPedeFile Name of the output pedestal file
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.6 2007-02-11 08:46:01 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.7 2007-02-17 13:37:14 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -132,6 +162,11 @@ namespace eutelescope
      *  this slot.
      * 
      *  @param evt The LCEvent event as passed by the ProcessMgr
+     *
+     *  @todo LCEventImpl offer the possibility to store both the
+     *  detector name and the current time stamp, but those are not
+     *  available in the abstract class (LCEvent). Ask Frank how I can
+     *  do to add this information
      */
     virtual void check (LCEvent * evt);
 
@@ -328,8 +363,6 @@ namespace eutelescope
      *  to true and pedestal, noise and status are moved to a
      *  Tracker(Raw)Data object.
      *
-     *  @bug Still not working the CellIDEncoder because of a bug in LCIO
-     *
      *  @see EUTelPedestalNoiseProcessor::fillHistos() for a detailed
      *  description on histogram filling.
      *
@@ -477,6 +510,12 @@ namespace eutelescope
     bool _doPedestal;
 
   private:
+
+    //! Detector name
+    /*! This string is used to copy the detector name from the run
+     *  header to the event "header"
+     */ 
+    std::string _detectorName;
 
     //! Counter for skipped event due to common mode
     /*! This counter is used to enumerate how many events in the run

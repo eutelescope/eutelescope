@@ -25,20 +25,55 @@ namespace eutelescope {
    *  invalid algorithm then this exceptions is thrown
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.1 2007-02-09 10:24:44 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.2 2007-02-17 13:37:14 bulgheroni Exp $
    */
 
   class InvalidParameterException  : public lcio::Exception {
     
   protected:
+    //! Default constructor
     InvalidParameterException() { /* NO-OP */ ;}
   public:
+    //! Default destructor
     virtual ~InvalidParameterException() throw() { /* NO-OP */ ;}
     
+    //! Default constructor with string argument
+    /*! @param text Message shown by what().
+     */
     InvalidParameterException( std::string text ) {
       message = "eutelescope::InvalidParameterException: " + text;
     }
   };
+
+  
+  //! Incompatible data set
+  /*! This exception is thrown all the times two data set are compared
+   *  and not found to be compatible. A typical example is when you
+   *  try to subtrack a pedestal collection from a raw data
+   *  collection acquired using two configurations that differs in
+   *  the number of detectors.
+   *
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelExceptions.h,v 1.2 2007-02-17 13:37:14 bulgheroni Exp $
+   */
+  class IncompatibleDataSetException : public lcio::Exception {
+    
+  protected:
+    //! Default constructor
+    IncompatibleDataSetException() { /* NO-OP */ ; }
+    
+  public:
+    //! Default destructor
+    virtual ~IncompatibleDataSetException() throw() { /* NO - OP */ ; }
+    
+    //! Default constructor with string argument
+    /*! @param text Message shown by what().
+     */
+    IncompatibleDataSetException(std::string text) {
+      message = "eutelescope::IncompatibleDataSetException: " + text;
+    }
+  };
+
 }
 
 #endif
