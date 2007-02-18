@@ -1,0 +1,34 @@
+This simple test program is used to generate both a pedestal slcio
+file and another slcio file in which on the pedestal values a random
+number of clusters is injected. This utility is providing a powerfull
+way to test the cluster reconstruction capabilities of the
+EUTelClusteringProcessor.  In particular this tool is also saving a
+text log file listing on an event basis, the position of each injected
+cluster. 
+
+A similar log file can also be produced using the
+EUTelClusteringProcessor uncommenting all the debug lines.
+
+To build the test executable, type make from the command prompt.
+
+The test usage is summarized in the following:
+
+./clustertest pede       to produce only the pedestal file
+./clustertest data       to produce only the data file
+./clustertest pede data  to produce both!
+
+The produced test files are the following:
+
+pede_input.slcio containing rawdata to be processed by the
+EUTelPedestalNoiseProcessor
+
+data_input.slcio containing rawdata with injected random clusters to
+be processed by the full chain of processors.
+
+clustering.log containing in a text format the information about the
+position of the injected clusters.
+
+Have a look at the code in clustertest.cc and eventually modify the
+global parameters to better fit your needs. For example the number of
+events, the maximum number of injected clusters on a single detector,
+the number of detectors....
