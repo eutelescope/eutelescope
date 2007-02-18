@@ -1,0 +1,14 @@
+This small example program is used to generate a known pedestal
+pattern to test the pedestal processor functionalities. Have a look at
+the code of pedetest.cc and eventually adapt it to your testing
+conditions.
+
+To make the binary file, type make at the command prompt.
+
+Running ./pedetest will produce both a file.root file containing the
+histograms and profiles describing the produced pedestal and a slcio
+file that can be used as input for the
+EUTelPedestalNoiseProcessor. The obtained processor results can be
+compared with the one included into file.root
+
+
