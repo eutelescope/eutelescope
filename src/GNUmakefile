@@ -4,7 +4,7 @@
 #
 # @author Frank Gaede
 # @author Jan Engels
-# @version $Id: GNUmakefile,v 1.1.1.1 2007-02-07 10:53:12 bulgheroni Exp $
+# @version $Id: GNUmakefile,v 1.2 2007-02-18 11:13:26 bulgheroni Exp $
 #
 ###########################################################
 
@@ -47,6 +47,11 @@ DOCDIR = $(MARLINWORKDIR)/doc/$(PROGNAME)
 TMPDIR = $(MARLINWORKDIR)/tmp/$(PROGNAME)
 OBJDIR = $(TMPDIR)/obj
 DEPDIR = $(TMPDIR)/dep
+
+TESTDIR = ../test
+
+TESTNAMES = $(patsubst $(TESTDIR)/%, %, $(wildcard $(TESTDIR)/*)) 
+
 
 # library file without path
 LIBNAME = lib$(PROGNAME).a
@@ -165,4 +170,12 @@ $(DEPDIR)/%.d : %.cc
 	| sed 's|\($*\)\.o[ :]*|$(OBJDIR)/\1.o $(DEPDIR)/$*.d : |g'\
 	> $@; [ -s $@ ] || rm -f $@
 
+test:
+	@for i in $(TESTNAMES); do \
+	echo "Making $$i ... "; \
+	$(MAKE) -C $(TESTDIR)/$$i ; done;
+
+
+
 # end
+
