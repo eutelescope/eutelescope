@@ -24,7 +24,7 @@ namespace eutelescope
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.4 2007-02-17 13:37:14 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.5 2007-02-19 11:17:06 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -205,7 +205,7 @@ namespace eutelescope
      *  default encoding used for describe cells into a clusters. This
      *  encoding is different from the one for complete matrices.
      *
-     *  "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5.yCluSize:5"
+     *  "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5"
      */
     static const char * CLUSTERDEFAULTENCODING;
   };
