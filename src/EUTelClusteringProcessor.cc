@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.1 2007-02-17 13:37:14 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.2 2007-02-19 11:16:45 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -142,15 +142,20 @@ void EUTelClusteringProcessor::processEvent (LCEvent * evt) {
 
   if (_iEvt % 10 == 0) 
     cout << "[" << name() << "] Clustering event " << _iEvt << endl;
+  
+  if ( _clusteringAlgo == EUTELESCOPE::FIXEDFRAME ) fixedFrameClustering(evt);
+  
+}
 
-
+void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
+  
   LCCollectionVec * inputCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_dataCollectionName));
   LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
   LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
   
   
   if (isFirstEvent()) {
-
+    
     /// /*DEBUG*/ logfile.open("clustering.log");
     
     // this is the right place to cross check wheter the pedestal and
