@@ -31,10 +31,76 @@
 namespace eutelescope {
 
   //! Clustering processor for the EUTelescope
-  /*! 
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.1 2007-02-17 13:37:14 bulgheroni Exp $
+  /*! This processor is used to search within the current data matrix
+   *  (after pedestal subtraction and eventual common mode
+   *  suppression) for clusters. In this contest a cluster is a group
+   *  of neighbouring pixels, fulfilling certain conditions and
+   *  representing the signal produced in the detector by the passage
+   *  of a particle. Hence, clustering is then considered the first
+   *  step in a tracking procedure.
    *
+   *  To obtain space points from clusters, the actual geometrical
+   *  description of the sensors (pixel pitches, definition of the
+   *  local frame of reference, relation to the global frame of
+   *  reference are required. Moreover, a suitable algorithm to
+   *  calculate the cluster center, in a linear (charge center of
+   *  gravity) or non-linear (eta function) is needed.
+   *
+   *  There are different ways to build up a clusters: the user can
+   *  choose which algortihm to use via the clusteringAlgo parameter. 
+   *
+   *  @see processEvent(LCEvent*) for a detailed description of
+   *  available algorithms.
+   *
+   *  <h4>Input</h4> 
+   *
+   *  <b>DataCollectionName</b>: the input data TrackerData collection
+   *  name. This collection is containing data pedestal subtracted
+   *  and, eventually, common mode corrected
+   *
+   *  <b>NoiseCollectionName</b>: the noise TrackerData collection
+   *  name as read from the Condition Processor. This object contains
+   *  the noise information of all pixels in all telescope
+   *  detectors. Those numbers are used to calculate seed and cluster
+   *  signal to noise ratio.
+   *  
+   *  <b>StatucCollectionName</b>: the status TrackerData collection
+   *  name as read from the Condition Processor. This object is used
+   *  to exclude from the clustering procedure pixels defined as bad
+   *  during the pedestal processor.
+   *
+   *  <b>ClusteringAlgo</b>: a string representing which algorithm
+   *  should be used for the clustering procedure.
+   *
+   *  <b>ClusterSizeX</b>: the maximum size of the cluster in pixel
+   *  unit along the x direction. It has to be an odd number since the
+   *  seed pixel is bound to be the cluster center.
+   *
+   *  <b>ClusterSizeY</b>: as the ClusterSizeX but along the y
+   *  direction.
+   *
+   *  <b>SeedPixelCut</b>: the SNR threshold used to identify seed
+   *  pixel candidates.
+   *
+   *  <b>ClusterCut</b>: the SNR threshold used to accept cluster
+   *  candidates.
+   *
+   *  <h4>Ouput</h4>
+   *
+   *  <b>Cluster</b>: a collection of TrackerData containing the
+   *  clustering results.
+   *
+   *  @param _dataCollectionName the name of the input data collection
+   *  @param _noiseCollectionName the name of the noise collection as read from the ConditionProcessor
+   *  @param _statusCollectionName the name of the status collection as read from the ConditionProcessor
+   *  @param _clusteringAlgo the clustering algorithm to be used. Use constant string defined in EUTELESCOPE
+   *  @param _xClusterSize the maximum cluster size along x. It has to be an odd number. 
+   *  @param _yClusterSize the maximum cluster size along y. It has to be an odd number.
+   *  @param _seedPixelCut the threshold to identify the seed pixel candidate
+   *  @param _clusterCut the threshold to select clusters.
+   *  
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.2 2007-02-19 11:16:35 bulgheroni Exp $
    *
    */
 
@@ -76,16 +142,10 @@ namespace eutelescope {
     virtual void processRunHeader (LCRunHeader * run);
 
     //! Called every event
-    /*  This is called for each event in the file. In the case this is
-     *  the first event, then a cross-check is done on the
-     *  compatiblity of input raw data and pedestal collections. They
-     *  have to contain the same number of detector planes and each of
-     *  them should have exactly the same number of pixels. Of course
-     *  this check is not exhaustive, but at least should avoid
-     *  segmentation fault.
+    /*! It looks for clusters in the current event using the selected
+     *  algorithm.
      *
-     *  @throw IncompatibleDataSetException in the case the two
-     *  collections are found to be incompatible
+     *  @see EUTelClusteringProcessor::fixedFrameClustering(LCEvent *)
      * 
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
@@ -146,7 +206,7 @@ namespace eutelescope {
      *
      *  @return the corresponding y coordinate
      *
-     *  @throw InvalidParameterExcpetion in the unlucky event the
+     *  @throw InvalidParameterException in the unlucky event the
      *  number of pixels along x is 0 or negative.
      */
     inline int getYFromIndex(int index) const {
@@ -172,7 +232,7 @@ namespace eutelescope {
      *  coordinate corresponding to @c index
      *
      *  @param y reference to an integer number representing the y
-     *  coordinate corresponding to index
+     *  coordinate corresponding to @c index
      *
      *  @throw InvalidParameterException in the unluckly case the
      *  number of pixels along x is 0 or negative
@@ -212,6 +272,74 @@ namespace eutelescope {
 
 
   protected:
+    
+    //! Wrapper of the processEvent(LCEvent*) for fixed frame clustering
+    /*! This method is called by the processEvent method in the case
+     *  the user selected the EUTELESCOPE::FIXEDFRAME algorithm for
+     *  clustering.
+     *
+     *  This algorithm is based on the reconstruction of clusters
+     *  having a rectangular predefined maximum shape centered around
+     *  the seed pixel. The seed pixel is defined as the one with the
+     *  highest signal. Follows a brief description of the algorithm:
+     *  
+     *  \li The full data matrix is scanned searching for seed pixel
+     *  candidates. A seed candidate is defined as a pixel with a
+     *  signal to noise ratio in excess the
+     *  EUTelClusteringProcessor::_seedPixelCut defined by the
+     *  user. All candidates are added to a map
+     *  (EUTelClusteringProcessor::_seedCandidateMap) where the first
+     *  template element is the (float) pixel charge and the second is
+     *  the pixel index. 
+     *
+     *  \li The use of a map has the advantage that the belonging
+     *  elements are sorted according to the "key" value,
+     *  i.e. according to the pixel signal. In this way, at the end of
+     *  the matrix crossing, the last element of the map is the pixel
+     *  seed candidate with the highest signal. A known limitation of
+     *  this approach is the impossibility to store two pixels with
+     *  exactly the same signal. Nevertheless, this approach is
+     *  competitive compared to using the pixel index as map key. This
+     *  second approach excludes the possibility to have two pixels
+     *  with the same key, but requires a more complicated sorting
+     *  algorithm. The seed candidate map has to be compulsory sorted,
+     *  because the cluster building procedure has to start from a
+     *  seed pixel.
+     *
+     *  \li Starting from the last entry of the seed candidate map
+     *  (i.e. the pixel with the highest signal in the matrix), a
+     *  candidate cluster is built around this seed. The clustering is
+     *  done with two nested loops in way that the seed pixel is the
+     *  center of the resulting cluster. Only pixels with a good
+     *  status, effectively belonging to the matrix (1) and not yet
+     *  belonging to the any other clusters are addded to the current
+     *  cluster candidate.
+     *
+     *  \li A cluster candidate is finally accepted as a good cluster
+     *  if its SNR is passing the _clusterCur threshold. Each good
+     *  cluster is added to the current event using a TrackerData
+     *  class. The cellID encoding used is the
+     *  EUTELESCOPE::CLUSTERDEFAULTENCODING where along with the
+     *  detector number, also the cluster id, the seed pixel
+     *  coordinates and the cluster sizes are stored so that the
+     *  cluster can be reconstructed.
+     *
+     *  (1) The 2D coordinates of each pixel is determined using the
+     *  pixel index information along with the size along X of the
+     *  matrix. For this purpose, some utility methods have been
+     *  defined; those methods don't perform any consistency check of
+     *  the obtained results. This means that the use of such methods
+     *  can result into pixel coordinates outside the actual valid
+     *  range. For this reason, during the clustering, a check on the
+     *  validity of the x, y pair is required.
+     *
+     *  @throw IncompatibleDataSetException in the case the two
+     *  collections are found to be incompatible
+     *
+     *  @param evt The LCIO event has passed by processEvent(LCEvent*)
+     */
+    void fixedFrameClustering(LCEvent * evt);
+
 
     //! Input collection name.
     /*! The input collection is the calibrated data one coming from
