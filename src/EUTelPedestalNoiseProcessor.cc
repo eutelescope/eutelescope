@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.9 2007-02-17 13:37:14 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.10 2007-02-20 15:58:32 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -104,13 +104,13 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPed
   // now the optional parameters
   registerOptionalParameter ("PedestalCollectionName",
 			     "Pedestal collection name",
-			     _pedestalCollectionName, string ("pedestal"));
+			     _pedestalCollectionName, string ("pedestalDB"));
   registerOptionalParameter ("NoiseCollectionName",
 			     "Noise collection name", _noiseCollectionName,
-			     string ("noise"));
+			     string ("noiseDB"));
   registerOptionalParameter ("StatusCollectionName",
 			     "Status collection name",
-			     _statusCollectionName, string ("status"));
+			     _statusCollectionName, string ("statusDB"));
 
 }
 
