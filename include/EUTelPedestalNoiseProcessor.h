@@ -83,7 +83,7 @@ namespace eutelescope
    *  @param OutputPedeFile Name of the output pedestal file
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.7 2007-02-17 13:37:14 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.8 2007-02-20 16:07:29 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -130,14 +130,6 @@ namespace eutelescope
      *  pixel detector boundaries are dumped from the file. After that
      *  the EUTelPedestalNoiseProcess::bookHistos() is called.
      *  
-     *  @todo the dynamic_cast cannot failed, because LCRunHeader and
-     *  EUTelRunHeaderImpl have the same data members. This is true
-     *  even for run headers that were not written using the
-     *  Eutelescope implemantion. This may result in a run header
-     *  where the needed parameters are missing and the assignement is
-     *  only fictitius. I should add a cross-check on the parameter
-     *  goodness after the assignement.
-     * 
      *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
@@ -163,10 +155,6 @@ namespace eutelescope
      * 
      *  @param evt The LCEvent event as passed by the ProcessMgr
      *
-     *  @todo LCEventImpl offer the possibility to store both the
-     *  detector name and the current time stamp, but those are not
-     *  available in the abstract class (LCEvent). Ask Frank how I can
-     *  do to add this information
      */
     virtual void check (LCEvent * evt);
 
