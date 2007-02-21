@@ -1,3 +1,14 @@
+// Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+// Version $Id: pedetest.cc,v 1.2 2007-02-21 11:02:27 bulgheroni Exp $
+/*
+ *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
+ */
+
 #include "lcio.h"
 #include "EUTelRunHeaderImpl.h"
 #include "IMPL/LCEventImpl.h"
