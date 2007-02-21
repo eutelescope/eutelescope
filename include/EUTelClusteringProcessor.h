@@ -16,10 +16,7 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-#ifdef MARLIN_USE_AIDA
 // aida includes <.h>
-#include <AIDA/IBaseHistogram.h>
-#endif
 
 // lcio includes <.h> 
 
@@ -27,6 +24,18 @@
 #include <string>
 #include <map>
 #include <cmath>
+
+// forward declarations
+namespace IMPL {
+  class TrackerRawDataImpl;
+}
+
+#ifdef MARLIN_USE_AIDA
+namespace AIDA {
+  class IBaseHistogram;
+}
+#endif
+
 
 namespace eutelescope {
 
@@ -69,6 +78,12 @@ namespace eutelescope {
    *  to exclude from the clustering procedure pixels defined as bad
    *  during the pedestal processor.
    *
+   *  <b>ClusterCollectionName</b>: this is the name of the output
+   *  cluster collection. This object is used the core result of the
+   *  first analysis part. The cluster collection will be used to fill
+   *  in dectector level data quality histograms and, along with the
+   *  geometry interface, will provide space points information.
+   *
    *  <b>ClusteringAlgo</b>: a string representing which algorithm
    *  should be used for the clustering procedure.
    *
@@ -91,8 +106,9 @@ namespace eutelescope {
    *  clustering results.
    *
    *  @param _dataCollectionName the name of the input data collection
-   *  @param _noiseCollectionName the name of the noise collection as read from the ConditionProcessor
-   *  @param _statusCollectionName the name of the status collection as read from the ConditionProcessor
+   *  @param _noiseCollectionName the name of the noise collection 
+   *  @param _statusCollectionName the name of the status collection 
+   *  @param _clusterCollectionName the name of the output cluster collection
    *  @param _clusteringAlgo the clustering algorithm to be used. Use constant string defined in EUTELESCOPE
    *  @param _xClusterSize the maximum cluster size along x. It has to be an odd number. 
    *  @param _yClusterSize the maximum cluster size along y. It has to be an odd number.
@@ -100,7 +116,7 @@ namespace eutelescope {
    *  @param _clusterCut the threshold to select clusters.
    *  
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.2 2007-02-19 11:16:35 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.3 2007-02-21 08:30:24 bulgheroni Exp $
    *
    */
 
@@ -269,7 +285,25 @@ namespace eutelescope {
       return xCor + yCor * noOfXPixel;
     }
 
-
+    //! Reset the status map
+    /*! This method is called at the beginning of the clustering
+     *  procedure because it is possibly containing the position of
+     *  the previous identified clusters. Hit pixels are identified by
+     *  the value EUTELESCOPE::HITPIXEL; during the reset all of them
+     *  are set to EUTELESCOPE::GOODPIXEL. This is not touching the
+     *  bad pixels since them are marked with EUTELESCOPE::BADPIXEL.
+     *
+     *  @param status A pointer to the TrackerRawData with the status
+     *  to be reset
+     *
+     *  @todo Consider the possibility to use instead of
+     *  EUTELESCOPE::HITPIXEL, the clusterID to flag hit pixel. This
+     *  is offering a very easy way to show on a 2D histograms where
+     *  clusters have been found. It might be of any usefulness if we
+     *  will try to write a piece of code to deconvolve merging
+     *  clusters.
+     */
+    void resetStatus(IMPL::TrackerRawDataImpl * status);
 
   protected:
     
@@ -358,7 +392,11 @@ namespace eutelescope {
      */
     std::string _statusCollectionName;
 
-    
+    //! Cluster collection name.
+    /*! This is the name used to store the output cluster collection.
+     */ 
+    std::string _clusterCollectionName;
+
     //! Current run number.
     /*! This number is used to store the current run number
      */
@@ -466,6 +504,12 @@ namespace eutelescope {
      */
     IntVec _maxY;
 
+    //! Total cluster found 
+    /*! This array of int is used to store the total number of
+     *  clusters found for each detector. The contents of this array
+     *  is shown during the end()
+     */ 
+    IntVec _totCluster;
 
   };
 
