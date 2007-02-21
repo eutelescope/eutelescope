@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.2 2007-02-19 11:16:45 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.3 2007-02-21 08:32:56 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -30,11 +30,6 @@
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
 
-#ifdef MARLIN_USE_AIDA
-// aida includes <.h>
-
-#endif
-
 // lcio includes <.h> 
 #include <UTIL/CellIDEncoder.h>
 #include <IMPL/TrackerDataImpl.h>
@@ -49,7 +44,7 @@ using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
-/// /*DEBUG*/ ofstream logfile;
+ /// /*DEBUG*/ ofstream logfile;
 
 EUTelClusteringProcessor::EUTelClusteringProcessor () :Processor("EUTelClusteringProcessor") {
 
@@ -59,16 +54,21 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () :Processor("EUTelClusterin
 
   // first of all we need to register the input collection
   registerInputCollection (LCIO::TRACKERDATA, "DataCollectionName",
-			   "Input calibrated data collection",
+			   "Input calibrated data collection name",
 			   _dataCollectionName, string ("data"));
 
   registerInputCollection (LCIO::TRACKERDATA, "NoiseCollectionName",
-			   "Noise from the condition file",
+			   "Noise (input) collection name",
 			   _noiseCollectionName, string("noise"));
 
   registerInputCollection (LCIO::TRACKERRAWDATA, "StatusCollectionName",
-			   "Pixel status from the condition file",
+			   "Pixel status (input) collection name",
 			   _statusCollectionName, string("status"));
+
+  registerOutputCollection(LCIO::TRACKERDATA, "ClusterCollectionName",
+			   "Cluster (output) collection name",
+			   _clusterCollectionName, string("cluster"));
+
 
   // now the optional parameters
   registerProcessorParameter ("ClusteringAlgo",
@@ -118,6 +118,9 @@ void EUTelClusteringProcessor::init () {
   _iRun = 0;
   _iEvt = 0;
 
+  // reset the content of the total cluster vector
+  _totCluster.clear();
+
 }
 
 void EUTelClusteringProcessor::processRunHeader (LCRunHeader * rdr) {
@@ -153,10 +156,9 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
   LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
   LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
   
-  
   if (isFirstEvent()) {
     
-    /// /*DEBUG*/ logfile.open("clustering.log");
+     /// /*DEBUG*/ logfile.open("clustering.log");
     
     // this is the right place to cross check wheter the pedestal and
     // the input data are at least compatible. I mean the same number
@@ -170,22 +172,28 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
       throw IncompatibleDataSetException(ss.str());
     }
     
+    for (_iDetector = 0; _iDetector < inputCollectionVec->getNumberOfElements(); _iDetector++) 
+      _totCluster.push_back(0);
+    
     _isFirstEvent = false;
   }
   
-  /// /*DEBUG*/ logfile << "Event " << _iEvt << endl;
+   /// /*DEBUG*/ logfile << "Event " << _iEvt << endl;
   
   LCCollectionVec * clusterCollection = new LCCollectionVec(LCIO::TRACKERDATA);
   
   for (_iDetector = 0; _iDetector < inputCollectionVec->getNumberOfElements(); _iDetector++) {
     
-    /// /*DEBUG*/ logfile << "  Working on detector " << _iDetector << endl;
+     /// /*DEBUG*/ logfile << "  Working on detector " << _iDetector << endl;
     
     // get the calibrated data 
     TrackerDataImpl    * data   = dynamic_cast<TrackerDataImpl*>   (inputCollectionVec->getElementAt(_iDetector));
     TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt(_iDetector));
     TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt(_iDetector));
-    
+
+    // reset the status
+    resetStatus(status);
+
     // initialize the cluster counter 
     short clusterCounter = 0;
 
@@ -202,10 +210,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
     // continue only if seed candidate map is not empty!
     if ( _seedCandidateMap.size() != 0 ) {
 
-      /// /*DEBUG*/ logfile << "  Seed candidates " << _seedCandidateMap.size() << endl;
-
-      // create a vector to store the hit status
-      vector<int> hitStatus(status->getADCValues().size(), EUTELESCOPE::GOODPIXEL);
+       /// /*DEBUG*/ logfile << "  Seed candidates " << _seedCandidateMap.size() << endl;
 
       // now built up a cluster for each seed candidate 
       map<float, unsigned int>::iterator mapIter = _seedCandidateMap.end();     
@@ -213,7 +218,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	--mapIter;	
 	// check if this seed candidate has not been already added to a
 	// cluster
-	if ( hitStatus[(*mapIter).second] ==  EUTELESCOPE::GOODPIXEL ){
+	if ( status->adcValues()[(*mapIter).second] == EUTELESCOPE::GOODPIXEL ) {
 	  // if we enter here, this means that at least the seed pixel
 	  // wasn't added yet to another cluster.  Note that now we need
 	  // to build a candidate cluster that has to pass the
@@ -233,7 +238,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	      if ( ( xPixel >= _minX[_iDetector] )  &&  ( xPixel <= _maxX[_iDetector] ) &&
 		   ( yPixel >= _minY[_iDetector] )  &&  ( yPixel <= _maxY[_iDetector] ) ) {
 		int index = getIndexFromXY(xPixel, yPixel);
-		bool isHit  = ( hitStatus[index] == EUTELESCOPE::HITPIXEL);
+		bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
 		bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
 		if ( isGood && !isHit ) {
 		  clusterCandidateSignal += data->getChargeValues()[index];
@@ -264,23 +269,25 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	    idClusterEncoder["yCluSize"]      = _yClusterSize;
 	    idClusterEncoder.setCellID(cluster);
 	    
-	    /// /*DEBUG*/ logfile << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY << endl;
+	     /// /*DEBUG*/ logfile << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY << endl;
 	    
 	    while ( indexIter != clusterCandidateIndeces.end() ) {
-	      hitStatus[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+	      status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
 	      ++indexIter;
 	    }
 
-	    /// /*DEBUG*/ for (unsigned int iPixel = 0; iPixel < clusterCandidateIndeces.size(); iPixel++) {
-	    /// /*DEBUG*/  logfile << "  x " <<  getXFromIndex(clusterCandidateIndeces[iPixel])
-	    /// /*DEBUG*/	      << "  y " <<  getYFromIndex(clusterCandidateIndeces[iPixel])
-	    /// /*DEBUG*/              << "  s " <<  clusterCandidateCharges[iPixel] << endl;
-	    /// /*DEBUG*/ }
+	     /// /*DEBUG*/ for (unsigned int iPixel = 0; iPixel < clusterCandidateIndeces.size(); iPixel++) {
+	     /// /*DEBUG*/  logfile << "  x " <<  getXFromIndex(clusterCandidateIndeces[iPixel])
+	     /// /*DEBUG*/	      << "  y " <<  getYFromIndex(clusterCandidateIndeces[iPixel])
+	     /// /*DEBUG*/              << "  s " <<  clusterCandidateCharges[iPixel] << endl;
+	     /// /*DEBUG*/ }
 
 	    // copy the candidate charges inside the cluster
 	    cluster->setChargeValues(clusterCandidateCharges);
 	    clusterCollection->push_back(cluster);
+	    _totCluster[_iDetector] += 1;
 	    ++clusterCounter;
+
 	  } else {
 	    // the cluster has not passed the cut!
 	  }
@@ -288,7 +295,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
       }
     }
   }
-  evt->addCollection(clusterCollection,"cluster");
+  evt->addCollection(clusterCollection,_clusterCollectionName);
   
   ++_iEvt;
   
@@ -299,12 +306,27 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 void EUTelClusteringProcessor::check (LCEvent * evt) {
   // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
-
+ 
 
 void EUTelClusteringProcessor::end() {
   cout << "[" << name() <<"] Successfully finished" << endl;
 
-  /// /*DEBUG*/  logfile.close();
+  for (_iDetector = 0; _iDetector < (signed) _totCluster.size() ; _iDetector++) {
+    cout << "Found " << _totCluster[_iDetector] << " colusters on detector " << _iDetector << endl;
+    /// /*DEBUG*/ logfile << "Found " << _totCluster[_iDetector] << " colusters on detector " << _iDetector << endl;
+  }
+   /// /*DEBUG*/  logfile.close();
 }
 
 
+void EUTelClusteringProcessor::resetStatus(TrackerRawDataImpl * status) {
+  
+  ShortVec::iterator iter = status->adcValues().begin();
+  while ( iter != status->adcValues().end() ) {
+    if ( *iter == EUTELESCOPE::HITPIXEL ) {
+      *iter = EUTELESCOPE::GOODPIXEL;
+    }
+    ++iter; 
+  }
+
+}
