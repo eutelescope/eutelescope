@@ -1,0 +1,26 @@
+This simple test program is used to generate a data file with some
+injected clusters topping up a more or less contanst pedestal. The
+output data file is aimed to test the capability of
+EUTelAutoPedestalNoiseProcess to deal with pedestal and noise with a
+flat distribution on the full sensor (this is more or less what is
+happening with self biased MAPS sensors).
+
+Use: 
+
+./autopedetest basepede basenoise
+
+where basepede is a floating value representing the mean value of the
+full sensor, and basenoise is a typical value of noise for all pixels
+in the sensor
+
+data_input.slcio containing rawdata with injected random clusters to
+be processed by the full chain of processors.
+
+clustering.log containing in a text format the information about the
+position of the injected clusters.
+
+Have a look at the code in clustertest.cc and eventually modify the
+global parameters to better fit your needs. For example the number of
+events, the maximum number of injected clusters on a single detector,
+the number of detectors....
+
