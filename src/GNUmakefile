@@ -4,7 +4,7 @@
 #
 # @author Frank Gaede
 # @author Jan Engels
-# @version $Id: GNUmakefile,v 1.2 2007-02-18 11:13:26 bulgheroni Exp $
+# @version $Id: GNUmakefile,v 1.3 2007-02-21 13:58:07 bulgheroni Exp $
 #
 ###########################################################
 
@@ -50,7 +50,7 @@ DEPDIR = $(TMPDIR)/dep
 
 TESTDIR = ../test
 
-TESTNAMES = $(patsubst $(TESTDIR)/%, %, $(wildcard $(TESTDIR)/*)) 
+TESTNAMES = $(patsubst $(TESTDIR)/%, %, $(filter-out $(TESTDIR)/CVS, $(wildcard $(TESTDIR)/*)))
 
 
 # library file without path
@@ -140,6 +140,8 @@ doc:
 
 clean:
 	rm -f $(OBJ) $(BINOBJ) $(BIN) $(LIB)
+	@for i in $(TESTNAMES); do \
+	$(MAKE) -C $(TESTDIR)/$$i clean ; done;
 
 distclean:
 	rm -rf $(BIN) $(LIB) $(TMPDIR) $(DOCDIR)
@@ -174,7 +176,6 @@ test:
 	@for i in $(TESTNAMES); do \
 	echo "Making $$i ... "; \
 	$(MAKE) -C $(TESTDIR)/$$i ; done;
-
 
 
 # end
