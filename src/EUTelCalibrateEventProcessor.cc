@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.1 2007-02-17 13:37:14 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.2 2007-02-21 13:55:43 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -304,6 +304,8 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * evt) {
 #endif
 
       } else {
+	cerr << "[" << name() << "] Skipping event " << _iEvt << " because of common mode limit exceeded " << endl;
+	++_iEvt;
 	throw SkipEventException(this);
       }
     }
