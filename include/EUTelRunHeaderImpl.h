@@ -75,7 +75,7 @@ namespace eutelescope
    *
    *  \li <b>DAQHWVersion</b>: this is a float number representing
    *  the version of the DAQ hardware system. This value is
-   *  meaningfull only when the run is not a simulation. The
+   *  meaningful only when the run is not a simulation. The
    *  conversion from version to float is the same of HeaderVersion
    *
    *  \li <b>DAQSWName</b>: this is a string used to identify the
@@ -84,7 +84,7 @@ namespace eutelescope
    *  EUTELESCOPE::EUDAQ.
    *
    *  \li <b>DAQSWVersion</b>: this is a float number representing
-   *  the version of the DAQ software. This value is meaningfull only
+   *  the version of the DAQ software. This value is meaningful only
    *  when the run is not a simulation. The conversion from version to
    *  float is the same of HeaderVersion.
    *
@@ -100,7 +100,7 @@ namespace eutelescope
    *  current telescope geometrical configuration with an entry in the
    *  geometry database. This is used during the reconstruction phase
    *  into a DB query to retrieve precise information about the
-   *  detector positioning and alignement.
+   *  detector positioning and alignment.
    *
    *  \li <b>NoOfDetector</b>: this int number represents the number
    *  of pixel detectors into the current telescope configuration. It
@@ -116,7 +116,7 @@ namespace eutelescope
    *  <b>Note</b>: This information is of course repeated
    *  into the geometry DB, but, at least, for only monitoring,
    *  detector debug and single plane characterization is better
-   *  having this information also localy.
+   *  having this information also locally.
    *
    *  \li <b>MinX</b>: this is an IntVec containing NoOfDetector
    *  numbers. Each of this represents the pixel number of the minimum
@@ -143,13 +143,13 @@ namespace eutelescope
    *  a "just saved" file from the DAQ, the list would be empty.
    *
    *  \li <b>IntermediateFile</b>: during the analysis procedure that
-   *  can involve several steps/processors, it may be usefull to save
+   *  can involve several steps/processors, it may be useful to save
    *  the intermediate results into a file. This list of string
    *  contains the intermediate file used to produce this lcio
-   *  file. Again this is usefull to reconstruct the file history.
+   *  file. Again this is useful to reconstruct the file history.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTelRunHeaderImpl.h,v 1.2 2007-02-09 20:34:26 bulgheroni Exp $
+   * @Version $Id: EUTelRunHeaderImpl.h,v 1.3 2007-02-22 08:09:36 bulgheroni Exp $
    * 
    */
 
@@ -184,20 +184,20 @@ namespace eutelescope
     virtual void setNoOfEvent(int num);
 
     //! Set the data type
-    /*! this string is used to distinguish real
-     *  data run from simulation. In the EUTELESCOPE namespace few
-     *  static constant string are available for this purpose:
-     *  EUTELESCOPE::DAQDATA and EUTELESCOPE::SIMULDATA.
+    /*! this string is used to distinguish real data run from
+     *  simulation. In the EUTELESCOPE class few static constant
+     *  string are available for this purpose: EUTELESCOPE::DAQDATA
+     *  and EUTELESCOPE::SIMULDATA.
      *
      *  @param type The type of data contained into the file
      */
     virtual void setDataType (std::string type);
 
     //! Set the current date and time of the day
-    /*! this string is used to distinguish real
-     *  data run from simulation. In the EUTELESCOPE namespace few
-     *  static constant string are available for this purpose:
-     *  EUTELESCOPE::DAQDATA and EUTELESCOPE::SIMULDATA.
+    /*! this string is used to distinguish real data run from
+     *  simulation. In the EUTELESCOPE class few static constant
+     *  string are available for this purpose: EUTELESCOPE::DAQDATA
+     *  and EUTELESCOPE::SIMULDATA.
      *
      *  @todo Consider the possibility to add another method having as
      *  an input parameter a UTIL::LCTime pointer. This will allow the
@@ -218,7 +218,7 @@ namespace eutelescope
 
     //! Set the DAQ hardware version
     /*! this is a float number representing
-     *  the version of the DAQ software. This value is meaningfull only
+     *  the version of the DAQ software. This value is meaningful only
      *  when the run is not a simulation. The conversion from version to
      *  float is the same of HeaderVersion.
      *
@@ -238,7 +238,7 @@ namespace eutelescope
 
     //! Set the DAQ version number
     /*! this is a float number representing
-     *  the version of the DAQ software. This value is meaningfull only
+     *  the version of the DAQ software. This value is meaningful only
      *  when the run is not a simulation. The conversion from version to
      *  float is the same of HeaderVersion.
      *
@@ -269,7 +269,7 @@ namespace eutelescope
      *  current telescope geometrical configuration with an entry in the
      *  geometry database. This is used during the reconstruction phase
      *  into a DB query to retrieve precise information about the
-     *  detector positioning and alignement.
+     *  detector positioning and alignments.
      *
      *  @param id The identification number of the current geometry
      */
@@ -289,7 +289,7 @@ namespace eutelescope
      *  information is of course repeated into the geometry DB, but,
      *  at least, for only monitoring, detector debug and single plane
      *  characterization is better having this information also
-     *  localy.
+     *  locally.
      *
      *  @param num The number of detectors in this file
      */
@@ -337,7 +337,7 @@ namespace eutelescope
     //! Add a processor to the applied processor list
     /*  The analysis procedure of some input data usually requires
      *  that many processors have been applied sequentially. Saving
-     *  this list it may be of interest when tring to reconstruct the
+     *  this list it may be of interest when trying to reconstruct the
      *  history of a file.
      *  
      *  @param processor The name of the process to add to the list

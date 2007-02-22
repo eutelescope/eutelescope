@@ -46,7 +46,7 @@ namespace eutelescope {
    *  thrown.
    *
    *  \li In the case, the user would like to apply a common mode
-   *  suppresion procedure, this is done on a event and detector
+   *  suppression procedure, this is done on a event and detector
    *  basis. If MARLIN_USE_AIDA is defined, a common mode distribution
    *  plot is also filled.
    *
@@ -72,7 +72,7 @@ namespace eutelescope {
    *  
    *  <br><b>NoiseCollection</b>. This is a collection of TrackerData
    *  contaning all pixel noise values as they are calculated by
-   *  EUTelPedestalNoiseProcessor. This collection is comining from
+   *  EUTelPedestalNoiseProcessor. This collection is coming from
    *  the condition file and is used only if the user switched on the
    *  common mode calculation.  
    *
@@ -85,7 +85,9 @@ namespace eutelescope {
    *  
    *  <br><b>DataCollection</b>. This is a collection of TrackerData
    *  containing the calibrated signal of each pixel. This is the
-   *  entry point for cluster search.
+   *  entry point for cluster search. The user can decide the name of
+   *  this output collection via the steering parameter
+   *  DataCollectionName
    *
    *  @param RawDataCollectionName Name of the input data collection
    *
@@ -112,10 +114,13 @@ namespace eutelescope {
    *  skipped. If this parameter is set to -1 then the control is
    *  by-passed
    *
+   *  @param DataCollectionName the name of the output calibrated data
+   *  collection
+   *
    *  @author Antonio Bulgheroni, INFN
    *  <mailto:antonio.bulgheroni@gmail.com>
    *  
-   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.1 2007-02-17 13:37:14 bulgheroni Exp $
+   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.2 2007-02-22 08:09:36 bulgheroni Exp $
    *
    *
    */
@@ -160,7 +165,7 @@ namespace eutelescope {
     //! Called every event
     /*  This is called for each event in the file. In the case this is
      *  the first event, then a cross-check is done on the
-     *  compatiblity of input raw data and pedestal collections. They
+     *  compatibility of input raw data and pedestal collections. They
      *  have to contain the same number of detector planes and each of
      *  them should have exactly the same number of pixels. Of course
      *  this check is not exhaustive, but at least should avoid
@@ -203,9 +208,9 @@ namespace eutelescope {
     /*! We have three different output collections that are going to be
      *  saved in the file within the first event possibly so that the
      *  next processor will have access to the pedestal, noise and
-     *  status immeditalety.  We have a collection for the pedestal, one
+     *  status immediately.  We have a collection for the pedestal, one
      *  for the noise and another for the status.  The first two are
-     *  self exaplaining, while few more words are needed for the status
+     *  self explaining, while few more words are needed for the status
      *  one.  This one is used, for example, to set a bad pixel mask or
      *  to flag pixel as already belonging to an already reconstructed
      *  cluster.
@@ -222,7 +227,12 @@ namespace eutelescope {
      */
     std::string _statusCollectionName;
 
-    
+    //! Calibrated data collection name.
+    /*! The name of the output calibrated data collection. Usually
+     *  simply "data"
+     */ 
+    std::string _calibratedDataCollectionName;
+
     //! Current run number.
     /*! This number is used to store the current run number
      */
@@ -262,7 +272,7 @@ namespace eutelescope {
      *  common mode cut.  If in a particular event there is a number
      *  of rejected pixels exceeding this value, then the event is
      *  rejected and not used for common mode suppression.  Usually
-     *  this number if a not negligigle fraction of the whole matrix
+     *  this number if a not negligible fraction of the whole matrix
      *  (say 30%).  Having some many hit pixels is usually a good
      *  indication of a "crazy" event and it is better to skip it.
      *
@@ -313,7 +323,7 @@ namespace eutelescope {
      *  different kind of histograms, profiles included. It has also
      *  to be a pointer since, this is a pure virtual class and we
      *  want to use <code>dynamic_cast</code> to convert them back to
-     *  their orginal cast.
+     *  their original cast.
      */
     std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
 #endif

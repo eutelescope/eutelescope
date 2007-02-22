@@ -19,12 +19,12 @@ namespace eutelescope
   /*!
    * This class has only static data members used only to define global
    * constant to be used within the Eutelescope package. Please add here
-   * whatever contanst you want to use.  A typical usefull of this class
+   * whatever constant you want to use.  A typical useful of this class
    * is to define name of collection to be retrieved/saved from/to
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.5 2007-02-19 11:17:06 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.6 2007-02-22 08:09:36 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -106,7 +106,7 @@ namespace eutelescope
     //! Parameter key to store/recall the maximum Y pixel
     static const char * MAXY;
 
-    //! Parameter key to store/recall te list of applied processors
+    //! Parameter key to store/recall the list of applied processors
     static const char * APPLIEDPROCESSOR;
 
     //! Parameter key to store/recall the intermediate file names
@@ -181,7 +181,7 @@ namespace eutelescope
      *  noise std::vector's. Of course, the use of it is limited to
      *  the cases in which MARLIN_USE_AIDA is defined. Otherwise, the
      *  algorithm will fall back to something, may be to so elegant,
-     *  but definetively more standard (EUTELESCOPE::MEANRMS).
+     *  but definitely more standard (EUTELESCOPE::MEANRMS).
      */
     static const char * AIDAPROFILE;
 
@@ -190,6 +190,12 @@ namespace eutelescope
      *  EUTelClusteringProcessor::_clusteringAlgo
      */
     static const char * FIXEDFRAME;
+
+    //! Fixed weight algorithm for the pedestal / noise update
+    /*! The name for the pedestal and noise update algorithm. @see
+     *  EUTelUpdatePedestalNoiseProcessor
+     */
+    static const char * FIXEDWEIGHT;
 
     //! Default Tracker(Raw)Data encoding for full matrix
     /*! This constant string is used with CellIDEncoder to define the

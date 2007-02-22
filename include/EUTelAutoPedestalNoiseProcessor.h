@@ -31,7 +31,7 @@ namespace eutelescope {
    *  peaked around a single value.
    *  
    *  The general idea behind this process is that, we can start the
-   *  analysis procedure with fictitius pedestal and noise values
+   *  analysis procedure with fictitious pedestal and noise values
    *  valid for a whole sensor that are going then updated during the
    *  procedure itself (@see PedestalUpdateProcessor)
    * 
@@ -62,7 +62,7 @@ namespace eutelescope {
    *  @param StatusCollectionName
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelAutoPedestalNoiseProcessor.h,v 1.1 2007-02-21 14:08:13 bulgheroni Exp $
+   *  @version $Id: EUTelAutoPedestalNoiseProcessor.h,v 1.2 2007-02-22 08:09:36 bulgheroni Exp $
    *
    *
    */

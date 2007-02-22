@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.2 2007-02-21 13:55:43 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.3 2007-02-22 08:09:36 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -68,6 +68,10 @@ EUTelCalibrateEventProcessor::EUTelCalibrateEventProcessor () :Processor("EUTelC
   registerInputCollection (LCIO::TRACKERRAWDATA, "StatusCollectionName",
 			   "Pixel status from the condition file",
 			   _statusCollectionName, string("status"));
+
+  registerOutputCollection (LCIO::TRACKERDATA, "CalibratedDataCollectionName",
+			    "Name of the output calibrated data collection",
+			    _calibratedDataCollectionName, string("data"));
 
   // now the optional parameters
   registerProcessorParameter ("DebugHistoFilling",
@@ -163,7 +167,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * evt) {
 
       // in the case MARLIN_USE_AIDA and the user wants to fill detector
       // debug histogram, this is the right place to book them. As usual
-      // histograms are grouped in directory identifing the detector
+      // histograms are grouped in directory identifying the detector
 #ifdef MARLIN_USE_AIDA
       string basePath, tempHistoName;
       {
@@ -253,7 +257,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * evt) {
     // for some unknown reason I cannot do something like
     // idDataEncoder["sensorID"] = cellDecoder(rawData)["sensorID"];
     // because it causes a compilation error, ask Frank for an
-    // exaplanation because I'm able to understand why it is
+    // explanation because I'm not able to understand why it is
     // complaining
     int sensorID              = cellDecoder(rawData)["sensorID"];
     int xmin                  = cellDecoder(rawData)["xMin"];
@@ -341,7 +345,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * evt) {
     }
     correctedDataCollection->push_back(corrected);
   }
-  evt->addCollection(correctedDataCollection,"data");
+  evt->addCollection(correctedDataCollection, _calibratedDataCollectionName);
   
   
   ++_iEvt;
@@ -351,7 +355,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * evt) {
 
 
 void EUTelCalibrateEventProcessor::check (LCEvent * evt) {
-  // nothing to check here - could be used to fill checkplots in reconstruction processor
+  // nothing to check here - could be used to fill check plots in reconstruction processor
 }
 
 

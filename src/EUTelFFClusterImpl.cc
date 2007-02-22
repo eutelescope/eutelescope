@@ -1,5 +1,5 @@
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.1 2007-02-20 11:35:50 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.2 2007-02-22 08:09:36 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -35,13 +35,10 @@ float EUTelFFClusterImpl::getTotalCharge() const {
   return totalCharge;
 }
 
-void EUTelFFClusterImpl::getCenterOfGravity(float& xCoG, float& yCoG) const {
+void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG) const {
 
   int xSize, ySize;
   getClusterSize(xSize, ySize);
-
-  int xSeed, ySeed;
-  getSeedCoord(xSeed, ySeed);
 
   float normalization = 0;
   float tempX = 0;
@@ -58,12 +55,26 @@ void EUTelFFClusterImpl::getCenterOfGravity(float& xCoG, float& yCoG) const {
   }
 
   if ( normalization != 0)  {
-    xCoG = tempX / normalization + xSeed;
-    yCoG = tempY / normalization + ySeed;
+    xCoG = tempX / normalization;
+    yCoG = tempY / normalization;
   } else {
     xCoG = 0;
     yCoG = 0;
   }
+
+
+}
+
+void EUTelFFClusterImpl::getCenterOfGravity(float& xCoG, float& yCoG) const {
+
+  int xSeed, ySeed;
+  getSeedCoord(xSeed, ySeed);
+
+  getCenterOfGravityShift(xCoG, yCoG);
+  
+  xCoG += xSeed;
+  yCoG += ySeed;
+
   
 }
   

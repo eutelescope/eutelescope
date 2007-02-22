@@ -1,5 +1,5 @@
 // Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTELESCOPE.cc,v 1.4 2007-02-17 13:37:14 bulgheroni Exp $
+// Version: $Id: EUTELESCOPE.cc,v 1.5 2007-02-22 08:09:36 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -48,3 +48,4 @@ const char *   EUTELESCOPE::AIDAPROFILE         = "AIDAProfile";
 const char *   EUTELESCOPE::FIXEDFRAME          = "FixedFrame";
 const char *   EUTELESCOPE::MATRIXDEFAULTENCODING  = "sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12";
 const char *   EUTELESCOPE::CLUSTERDEFAULTENCODING = "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5";
+const char *   EUTELESCOPE::FIXEDWEIGHT         = "FixedWeight";

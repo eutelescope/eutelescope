@@ -43,7 +43,7 @@ namespace eutelescope {
   /*! This processor is used to search within the current data matrix
    *  (after pedestal subtraction and eventual common mode
    *  suppression) for clusters. In this contest a cluster is a group
-   *  of neighbouring pixels, fulfilling certain conditions and
+   *  of neighboring pixels, fulfilling certain conditions and
    *  representing the signal produced in the detector by the passage
    *  of a particle. Hence, clustering is then considered the first
    *  step in a tracking procedure.
@@ -56,7 +56,7 @@ namespace eutelescope {
    *  gravity) or non-linear (eta function) is needed.
    *
    *  There are different ways to build up a clusters: the user can
-   *  choose which algortihm to use via the clusteringAlgo parameter. 
+   *  choose which algorithm to use via the clusteringAlgo parameter. 
    *
    *  @see processEvent(LCEvent*) for a detailed description of
    *  available algorithms.
@@ -81,7 +81,7 @@ namespace eutelescope {
    *  <b>ClusterCollectionName</b>: this is the name of the output
    *  cluster collection. This object is used the core result of the
    *  first analysis part. The cluster collection will be used to fill
-   *  in dectector level data quality histograms and, along with the
+   *  in detector level data quality histograms and, along with the
    *  geometry interface, will provide space points information.
    *
    *  <b>ClusteringAlgo</b>: a string representing which algorithm
@@ -100,7 +100,7 @@ namespace eutelescope {
    *  <b>ClusterCut</b>: the SNR threshold used to accept cluster
    *  candidates.
    *
-   *  <h4>Ouput</h4>
+   *  <h4>Output</h4>
    *
    *  <b>Cluster</b>: a collection of TrackerData containing the
    *  clustering results.
@@ -116,7 +116,7 @@ namespace eutelescope {
    *  @param _clusterCut the threshold to select clusters.
    *  
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.3 2007-02-21 08:30:24 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.4 2007-02-22 08:09:36 bulgheroni Exp $
    *
    */
 
@@ -209,7 +209,7 @@ namespace eutelescope {
     }
     
     //! Get the y coordinate from the matrix index
-    /*! This inline function retrives the x coordinate starting from
+    /*! This inline function retrieves the x coordinate starting from
      *  the position index withing the ADCValues or the ChargeValues
      *  array.  Since pixels are push_backed into the arrays always in
      *  the same way with two nested loops, the inner on x and the
@@ -250,7 +250,7 @@ namespace eutelescope {
      *  @param y reference to an integer number representing the y
      *  coordinate corresponding to @c index
      *
-     *  @throw InvalidParameterException in the unluckly case the
+     *  @throw InvalidParameterException in the unlikely case the
      *  number of pixels along x is 0 or negative
      */
     inline void getXYFromIndex(int index, int& x, int& y) const {
@@ -272,7 +272,7 @@ namespace eutelescope {
      *
      *  @return the position index corresponding to x and y
      *
-     *  @throw InvalidParameterException in the unluckly case the
+     *  @throw InvalidParameterException in the unlikely case the
      *  number of pixels along x is 0 or negative
      *
      */
@@ -346,7 +346,7 @@ namespace eutelescope {
      *  done with two nested loops in way that the seed pixel is the
      *  center of the resulting cluster. Only pixels with a good
      *  status, effectively belonging to the matrix (1) and not yet
-     *  belonging to the any other clusters are addded to the current
+     *  belonging to the any other clusters are added to the current
      *  cluster candidate.
      *
      *  \li A cluster candidate is finally accepted as a good cluster

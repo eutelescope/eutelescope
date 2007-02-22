@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelSucimaImagerReader.cc,v 1.5 2007-02-17 13:37:14 bulgheroni Exp $
+// Version $Id: EUTelSucimaImagerReader.cc,v 1.6 2007-02-22 08:09:36 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -140,7 +140,7 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
       }
     } catch (exception & e) {
       if (!inputFile.eof ())
-	cerr << "A read exception occured : " << e.what () << endl;
+	cerr << "A read exception occurred : " << e.what () << endl;
       if ((xPixel == 0) && (yPixel == 0)) {
 	// that's normal
 	// we are reading the last empty line.
@@ -150,7 +150,7 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
 	// that's strange. it might be that the last event was not complete
 	// break here
 	cerr << "Event " << eventNumber << " finished un-expectedly. "  << endl 
-	     << "Consider to check the input file, or limit the converion to "
+	     << "Consider to check the input file, or limit the conversion to "
 	     << eventNumber - 1 << " events" << endl << "Sorry to quit!" << endl;
 	break;
       }

@@ -29,8 +29,8 @@
 namespace eutelescope {
 
   //! Implementation of the a fixed frame cluster for the EUDET telescope.
-  /*! Within the Eutelescope enviroment, a cluster is a group of
-   *  neighbuoring pixels having a signal or signal to noise such that
+  /*! Within the Eutelescope environment, a cluster is a group of
+   *  neighboring pixels having a signal or signal to noise such that
    *  all the thresholds are passed.
    *  
    *  This is a special implementation of a cluster having a fixed
@@ -39,7 +39,7 @@ namespace eutelescope {
    *  signal) exactly in the cluster center. This requirement is
    *  setting some limitations:
    *
-   *  \li To have the seed pixel in te center the sizes of the cluster
+   *  \li To have the seed pixel in the center the sizes of the cluster
    *  edge have to be some odd number of pixels.
    *  
    *  \li To avoid cluster merging the minimum distance between two
@@ -52,7 +52,7 @@ namespace eutelescope {
    *  clusters have to have the same number of pixels (<code>xSize *
    *  ySize</code>), so in the case of seed pixels founds on a
    *  detector edge or close to it, the corresponding cluster has to
-   *  be padded with fictitius null signal pixels not belonging to the
+   *  be padded with fictitious null signal pixels not belonging to the
    *  detector.
    *
    *  To store such an object a TrackerData object can be used. The
@@ -89,7 +89,7 @@ namespace eutelescope {
    *  @todo Test the charge center of mass method.
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.1 2007-02-20 11:35:50 bulgheroni Exp $
+   *  @Version $Id: EUTelFFClusterImpl.h,v 1.2 2007-02-22 08:09:36 bulgheroni Exp $
    */ 
 
   class EUTelFFClusterImpl : public IMPL::TrackerDataImpl {
@@ -117,7 +117,7 @@ namespace eutelescope {
     }
 
     //! Get the cluster identification number
-    /*! This method is used to return the cluster idenditication number
+    /*! This method is used to return the cluster identification number
      *  @return the clusterID
      */
     inline int getClusterID() const {
@@ -196,6 +196,16 @@ namespace eutelescope {
      *  @return the total cluster charge
      */
     float getTotalCharge() const;
+
+    //! Get the center of gravity shift
+    /*! This method is used to calculate the signed distance of the
+     *  charge center of gravity from the seed coordinates. This is a
+     *  very useful method for the estimation of the eta function.
+     *
+     *  @param xCoG reference to the CoG shift along x
+     *  @param yCoG reference to the CoG shift along y
+     */
+    void getCenterOfGravityShift(float& xCoG, float& yCoG) const;
 
 
     //! Get the cluster charge CoG

@@ -1,5 +1,5 @@
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelRunHeaderImpl.cc,v 1.2 2007-02-09 20:34:26 bulgheroni Exp $
+// Version: $Id: EUTelRunHeaderImpl.cc,v 1.3 2007-02-22 08:09:36 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -166,7 +166,7 @@ EUTelRunHeaderImpl::setMinY (lcio::IntVec yMin)
 void
 EUTelRunHeaderImpl::setMaxY (lcio::IntVec yMax)
 {
-   // sets the vector containing the maximum pixel nymber along Y
+   // sets the vector containing the maximum pixel number along Y
 
    _params.setValues (EUTELESCOPE::MAXY, yMax);
 }

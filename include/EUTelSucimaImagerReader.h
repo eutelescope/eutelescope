@@ -27,13 +27,13 @@ namespace eutelescope
    //!  Reads SUCIMA Imager ASCII file
    /*!  This Marlin processor is used to convert existing data file
     *   acquired using the SUCIMA Imager DAQ system. The output data
-    *   format is a very unconvenient one in terms of data storage and
+    *   format is a very inconvenient one in terms of data storage and
     *   I/O performance, but, at the same time, it is very practical
     *   from the debug point of view. Pixel signals (short integers)
     *   are saved in the ASCII file in a single row and are tab
     *   separated.
     *   
-    *   <h4>Input - Prerequisities</h4>
+    *   <h4>Input - Prerequisites</h4>
     *   SUCIMA Imager ASCII data file
     *   Number of pixels in the horizontal direction
     *   Number of pixels in the vertical direction
@@ -45,7 +45,7 @@ namespace eutelescope
     *   @param   NoOfXPixel number of pixels along X
     *   @param   NoOfYPixel number of pixels along Y
     *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-    *   @version $Id: EUTelSucimaImagerReader.h,v 1.2 2007-02-11 08:46:01 bulgheroni Exp $
+    *   @version $Id: EUTelSucimaImagerReader.h,v 1.3 2007-02-22 08:09:36 bulgheroni Exp $
     *
     */
 
@@ -73,7 +73,7 @@ namespace eutelescope
 
       //! Init method
       /*! It is called at the beginning of the cycle and it prints out
-       *  the paramters.
+       *  the parameters.
        */
       virtual void init ();
 

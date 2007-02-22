@@ -25,7 +25,7 @@ namespace eutelescope {
    *  invalid algorithm then this exceptions is thrown
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.2 2007-02-17 13:37:14 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.3 2007-02-22 08:09:36 bulgheroni Exp $
    */
 
   class InvalidParameterException  : public lcio::Exception {
@@ -49,12 +49,12 @@ namespace eutelescope {
   //! Incompatible data set
   /*! This exception is thrown all the times two data set are compared
    *  and not found to be compatible. A typical example is when you
-   *  try to subtrack a pedestal collection from a raw data
+   *  try to subtract a pedestal collection from a raw data
    *  collection acquired using two configurations that differs in
    *  the number of detectors.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.2 2007-02-17 13:37:14 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.3 2007-02-22 08:09:36 bulgheroni Exp $
    */
   class IncompatibleDataSetException : public lcio::Exception {
     

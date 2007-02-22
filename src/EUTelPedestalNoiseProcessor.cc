@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.10 2007-02-20 15:58:32 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.11 2007-02-22 08:09:36 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -249,7 +249,7 @@ void EUTelPedestalNoiseProcessor::processEvent (LCEvent * evt) {
 
 
 void EUTelPedestalNoiseProcessor::check (LCEvent * evt) {
-  // nothing to check here - could be used to fill checkplots in reconstruction processor
+  // nothing to check here - could be used to fill check plots in reconstruction processor
 }
 
 
@@ -367,7 +367,7 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
 void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * evt) {
 
   if (  _iEvt < _firstEvent )  {
-    // pedestal calculation may occuring on a subset of events
+    // pedestal calculation may occurring on a subset of events
     // outside this range, just skip the current event
     if ( ( _iEvt == 0 ) || ( _iEvt ==  _firstEvent - 1) || ( _iEvt%10 == 0) )
       cout << "[" << name() << "] Skipping event " << _iEvt << endl;
@@ -509,7 +509,7 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * evt) {
 void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
   
   if (  _iEvt < _firstEvent  ) {
-    // pedestal calculation may occuring on a subset of events
+    // pedestal calculation may occurring on a subset of events
     // outside this range, just skip the current event
     if ( ( _iEvt == 0 ) || ( _iEvt ==  _firstEvent - 1) || ( _iEvt%10 == 0) )
       cout << "[" << name() << "] Skipping event " << _iEvt << endl;
@@ -617,7 +617,7 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 
   string tempHistoName;
 
-  // start looping on the number of loops. Remeber that we have one
+  // start looping on the number of loops. Remember that we have one
   // loop more than the number of common mode iterations
   for (int iLoop = 0; iLoop < _noOfCMIterations + 1; iLoop++) {
 
@@ -645,7 +645,7 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
       string basePath = loopDirName + "/" + detectorDirName + "/";
       AIDAProcessor::tree(this)->mkdir(basePath.c_str());
       
-      // book an histogram for the edestal distribution
+      // book an histogram for the pedestal distribution
       const int    pedeDistHistoNBin   = 100; 
       const double pedeDistHistoMin    = -20.;
       const double pedeDistHistoMax    =  29.;
@@ -898,7 +898,7 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
     } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
       // in case the AIDAPROFILE algorithm is used, the only thing we
       // need to do is to clean up the previous loop histograms
-      // remeber to loop over all detectors
+      // remember to loop over all detectors
 #ifdef MARLIN_USE_AIDA
       for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
 	stringstream ss;

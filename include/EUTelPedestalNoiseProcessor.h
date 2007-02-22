@@ -83,7 +83,7 @@ namespace eutelescope
    *  @param OutputPedeFile Name of the output pedestal file
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.8 2007-02-20 16:07:29 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.9 2007-02-22 08:09:36 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -125,7 +125,7 @@ namespace eutelescope
     //! Called for every run.
     /*! At the beginning of every run the run header is read and
      *  processed by this method. As a first thing, the input run
-     *  header is dynamically recasted to a EUTelRunHeaderImpl and
+     *  header is dynamically re-casted to a EUTelRunHeaderImpl and
      *  then important things like the number of detectors and the
      *  pixel detector boundaries are dumped from the file. After that
      *  the EUTelPedestalNoiseProcess::bookHistos() is called.
@@ -164,7 +164,7 @@ namespace eutelescope
      *  analysis steps. Bad pixels are flagged as
      *  EUTELESCOPE::BADPIXEL in the
      *  EUTelPedestalNoiseProcessor::_status vector. Here comes a list
-     *  of all implemented algoriths:
+     *  of all implemented algorithms:
      *
      *  \li <b>"NoiseDistribution"</b>. As a first thing both the
      *  <i>mean</i> and the <i>RMS</i> of the distribution are
@@ -186,7 +186,7 @@ namespace eutelescope
      *  maximum acceptable value of noise in ADC units. At the
      *  pedestal calculation level, it is still impossible to provide
      *  any reasonable "calibration" able to provide a conversion
-     *  factor from ADC units to equivalet noise charge.
+     *  factor from ADC units to equivalent noise charge.
      *
      *  @todo Ask other teams about their favorite masking algorithm.
      */
@@ -206,9 +206,9 @@ namespace eutelescope
      *  events. The RMS of such signal distribution is used as the
      *  pixel noise.
      *
-     *  \li <b>AIDAProfile</b>. This method can be selectd using the
+     *  \li <b>AIDAProfile</b>. This method can be selected using the
      *  static const char EUTELESCOPE::AIDAPROFILE, or typing
-     *  AIDAProfile in the steering file. To use this algorith, Marlin
+     *  AIDAProfile in the steering file. To use this algorithm, Marlin
      *  and consequently Eutelescope, have to be linked against an
      *  AIDA implementation. In the case MARLIN_USE_AIDA is undefined
      *  and the user selects this algorithm, then the program will
@@ -223,7 +223,7 @@ namespace eutelescope
      *  EUTelPedestalNoieProcessor::processEvent(LCEvent*)
      *
      *  @todo A full debug of the AIDAProfile algorithm is yet not
-     *  possibile because of some bugs affecting RAIDA, the ROOT-based
+     *  possible because of some bugs affecting RAIDA, the ROOT-based
      *  implementation of AIDA I'm using.
      *
      *  @todo Ask other teams about their favorite calculation
@@ -293,7 +293,7 @@ namespace eutelescope
      *
      *  \li noiseMap: as above but for the noise values.
      *
-     *  \li statusMap: as above but for the pixel status. Remeber that
+     *  \li statusMap: as above but for the pixel status. Remember that
      *  <code>GOODPIXEL == 0</code> and <code>BADPIXEL == 1</code>.
      *
      *  @todo Histograms are produced only if MARLIN_USE_AIDA is
@@ -374,9 +374,9 @@ namespace eutelescope
     /*! We have three different output collections that are going to be
      *  saved in the file within the first event possibly so that the
      *  next processor will have access to the pedestal, noise and
-     *  status immeditalety.  We have a collection for the pedestal, one
+     *  status immediately.  We have a collection for the pedestal, one
      *  for the noise and another for the status.  The first two are
-     *  self exaplaining, while few more words are needed for the status
+     *  self explaining, while few more words are needed for the status
      *  one.  This one is used, for example, to set a bad pixel mask or
      *  to flag pixel as already belonging to an already reconstructed
      *  cluster.
@@ -448,7 +448,7 @@ namespace eutelescope
      *  common mode cut.  If in a particular event there is a number
      *  of rejected pixels exceeding this value, then the event is
      *  rejected and not used for common mode suppression.  Usually
-     *  this number if a not negligigle fraction of the whole matrix
+     *  this number if a not negligible fraction of the whole matrix
      *  (say 30%).  Having some many hit pixels is usually a good
      *  indication of a "crazy" event and it is better to skip it.
      */
@@ -475,7 +475,7 @@ namespace eutelescope
 
     //! Last event for pedestal calculation
     /*! This is the last event to be used for pedestal calculation. If
-     *  the imput file is not a specific pedestal run and only some
+     *  the input file is not a specific pedestal run and only some
      *  events are really empty, then the user has to select this
      *  range. If the user set this value to -1 or to an event number
      *  in excess to the total number of events, then all events are
@@ -492,7 +492,7 @@ namespace eutelescope
     //! Boolean flag for pedestal calculation
     /*! This boolean flag is used to modify the
      *  EUTelPedestalNoiseProcessor::processEvent(LCEvent *)
-     *  behaviour. This boolean is set to true during the first run
+     *  behavior. This boolean is set to true during the first run
      *  over the selected events
      */
     bool _doPedestal;
@@ -575,7 +575,7 @@ namespace eutelescope
      * another array to store how many "entries" a pixel has should be
      * recorded. This might be useless there is an entry for each event,
      * but this is not the case when applying "hit rejection" in common
-     * mode suppression algorithm. The underlying phylosophy is the same
+     * mode suppression algorithm. The underlying philosophy is the same
      * used for _tempPede and _tempNoise
      */
     std::vector < IntVec > _tempEntries;
@@ -619,7 +619,7 @@ namespace eutelescope
      *  different kind of histograms, profiles included. It has also
      *  to be a pointer since, this is a pure virtual class and we
      *  want to use <code>dynamic_cast</code> to convert them back to
-     *  their orginal cast.
+     *  their original cast.
      */
     std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
 
@@ -644,7 +644,7 @@ namespace eutelescope
 
     //! Noise distribution 1D histo base name
     /*! All histograms names defined therein should be actually
-     *  considered as base names, in the meaning they are goind to be
+     *  considered as base names, in the meaning they are going to be
      *  padded with the loop and detector numbers. For example for the
      *  noise distribution histo on detector number 5 during loop 1 it
      *  is going to be <i>noiseHisto-d5-l1<i>
