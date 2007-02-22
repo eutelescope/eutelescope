@@ -16,6 +16,7 @@
 #include "marlin/Processor.h"
 
 // lcio includes <.h> 
+#include <LCIOTypes.h>
 #include <IMPL/LCCollectionVec.h>
 
 // system includes <>
@@ -83,7 +84,7 @@ namespace eutelescope {
    *  @param FixedWeightValue the value of the fixed weight
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelUpdatePedestalNoiseProcessor.h,v 1.1 2007-02-22 08:11:51 bulgheroni Exp $
+   *  @version $Id: EUTelUpdatePedestalNoiseProcessor.h,v 1.2 2007-02-22 13:23:39 bulgheroni Exp $
    *
    *  @todo Implement the status matrix update
    */
@@ -131,9 +132,21 @@ namespace eutelescope {
      *
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
+     *
+     *  @throw InvalidParameterException if information in the cellID
+     *  are inconsistence
      */
     virtual void processEvent (LCEvent * evt);
 
+    //! Check call back
+    /*! This method is called every event just after the processEvent
+     *  one. For the time being it is just calling the pixel
+     *  monitoring protected method
+     *
+     *  @param evt the current LCEvent event as passed by the
+     *  ProcessMgr
+     */
+    virtual void check(LCEvent * evt);
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
@@ -168,6 +181,46 @@ namespace eutelescope {
      */
     void fixedWeightUpdate(LCEvent * evt);
 
+    //! Pixel monitoring
+    /*! This method is used to collect some information about the
+     *  pedestal and noise update. Updating pedestal values is of
+     *  utmost importance when analysing long lasting run where a
+     *  possible thermal run away may occurr. Anyway this procedure is
+     *  not risk-free and bias can be induced by the update
+     *  itself. Monitoring how the pedestal and noise values of a
+     *  selected number of pixels are changing can be used as figure
+     *  of merit to estimate the suitable value of updateFrequency and
+     *  the consistency of the update.
+     *
+     *  This method has been set protected because it has to be called
+     *  by the check(LCEvent *) call back. Moreover it is assumed to
+     *  be algorithm independent, so that if other algorithm are
+     *  implemented the monitoring task can be left untouched.
+     *
+     *  @param evt The LCEvent as passed by check(LCEvent*)
+     *
+     *  @throw InvalidParameterException if something bad happens with
+     *  pixel index calculation.
+     */
+    void pixelMonitoring(LCEvent * evt);
+
+#ifdef MARLIN_USE_AIDA
+    //! Fill in AIDA DataPointSet for pixel monitoring
+    /*! If, and only if Marlin is using AIDA and an AIDAProcessor has
+     *  been called before this processor (as it is expected to be)
+     *  some dataPointSet are filled and saved into the AIDA output
+     *  file.  Those dataPointSet will held the pedestal and noise
+     *  evolution versus update iterations (read time).
+     *
+     *  This method is set protected since it is going to be called
+     *  only by the end() call back. 
+     *
+     *  @todo It is probably better to allow the user to save the
+     *  monitoring info also if the Marlin is not using AIDA
+     */
+    void saveMonitoring();
+#endif
+
     //! Raw data collection name
     /*! This is the input collection containing the current raw data
      */
@@ -195,6 +248,32 @@ namespace eutelescope {
      *  @see EUTELESCOPE::FIXEDWEIGHT
      */
     std::string _updateAlgo;
+
+    //! Monitored pixel list.
+    /*! This vector of integer is used by the user in the steering
+     *  file to provide a list of pixels to be monitored during the
+     *  update process. Each pixel has to be specified by three
+     *  integer numbers: the detectordID, the xCoord and the yCoord.
+     *  If the size of _monitoredPixel is zero, then the full
+     *  monitoring procedure will be switched off.
+     */
+    IntVec _monitoredPixel;
+
+    //! Pedestal monitor
+    /*! This is a vector of float vectors. There is a FloatVec for
+     *  each monitored pixels and the size of this FloatVec is equal
+     *  to the number of times the update pedestal algorithm has been
+     *  called + 1.
+     */
+    std::vector<FloatVec > _monitoredPixelPedestal;
+
+    //! Noise monitor
+    /*! This is a vector of float vectors. There is a FloatVec for
+     *  each monitored pixels and the size of this FloatVec is equal
+     *  to the number of times the update pedestal algorithm has been
+     *  called + 1.
+     */
+    std::vector<FloatVec > _monitoredPixelNoise;
 
     //! Update frequency
     /*! This is an integer number representing how often this

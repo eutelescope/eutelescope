@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.1 2007-02-22 08:11:51 bulgheroni Exp $
+// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.2 2007-02-22 13:23:39 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -17,10 +17,22 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
+#ifdef MARLIN_USE_AIDA
+#include "marlin/AIDAProcessor.h"
+#include "AIDA/IDataPointSetFactory.h"
+#include <AIDA/IDataPointSet.h>
+#include <AIDA/IDataPoint.h>
+#include <AIDA/IMeasurement.h>
+
+#include <AIDA/IHistogramFactory.h>
+#endif
+
 // lcio includes <.h> 
+#include <LCIOTypes.h>
 #include <IMPL/TrackerRawDataImpl.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
+#include <UTIL/CellIDDecoder.h>
 
 // system includes <>
 #include <cmath>
@@ -28,7 +40,6 @@
 using namespace std;
 using namespace marlin;
 using namespace eutelescope;
-
 
 
 EUTelUpdatePedestalNoiseProcessor::EUTelUpdatePedestalNoiseProcessor () : Processor("EUTelUpdatePedestalNoiseProcessor") {
@@ -65,6 +76,15 @@ EUTelUpdatePedestalNoiseProcessor::EUTelUpdatePedestalNoiseProcessor () : Proces
   registerOptionalParameter("FixedWeightValue",
 			    "The value of the fixed weight (only for fixed weight algorithm",
 			    _fixedWeight, static_cast<int>(100));
+
+  IntVec monitorPixelExample;
+  monitorPixelExample.push_back(0);
+  monitorPixelExample.push_back(10);
+  monitorPixelExample.push_back(15);
+
+  registerOptionalParameter("PixelMonitored",
+			    "A pixel to be monitored (detectorID, xCoord, yCoord). Add as many line as this as you wish",
+			    _monitoredPixel, monitorPixelExample );
   
 }
 
@@ -89,6 +109,10 @@ void EUTelUpdatePedestalNoiseProcessor::init () {
   _iRun = 0;
   _iEvt = 0;
 
+  // reset vectors
+  _monitoredPixelPedestal.clear();
+  _monitoredPixelNoise.clear();
+
 }
 
 void EUTelUpdatePedestalNoiseProcessor::processRunHeader (LCRunHeader * /*rdr*/ ) {
@@ -104,6 +128,49 @@ void EUTelUpdatePedestalNoiseProcessor::processRunHeader (LCRunHeader * /*rdr*/ 
 
 void EUTelUpdatePedestalNoiseProcessor::processEvent (LCEvent * evt) {
 
+  if (isFirstEvent()) {
+    
+    if ( _monitoredPixel.size() != 0 ) {
+      // this means we have to fill in the vectors pedestal and noise
+      // monitoring
+
+      LCCollectionVec * pedestalCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_pedestalCollectionName));
+      LCCollectionVec * noiseCollection    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
+    
+      unsigned index = 0;
+      while ( index < _monitoredPixel.size() ) {
+	int  iDetector = _monitoredPixel[index++];
+	int  xCoord    = _monitoredPixel[index++];
+	int  yCoord    = _monitoredPixel[index++];
+	
+	TrackerDataImpl * pedestal = dynamic_cast < TrackerDataImpl * >    (pedestalCollection->getElementAt(iDetector));
+	TrackerDataImpl * noise    = dynamic_cast < TrackerDataImpl * >    (noiseCollection->getElementAt(iDetector));
+
+	// I need to find the pixel index, for this I need the number of pixels in the x directions.
+	CellIDDecoder<TrackerDataImpl> decoder(pedestalCollection);
+	int xMin = decoder(pedestal)["xMin"];
+	int xMax = decoder(pedestal)["xMax"];
+	int yMin = decoder(pedestal)["yMin"];
+	int noOfXPixel = abs( xMax - xMin ) + 1;
+	if (noOfXPixel <= 0) throw InvalidParameterException("The number of pixels along has to be > 0");
+	int pixelIndex = ( xCoord - xMin ) + ( yCoord - yMin ) * noOfXPixel;	
+
+	// initialize the pedestal monitor
+	FloatVec pedestalMonitor;
+	pedestalMonitor.push_back(pedestal->chargeValues()[pixelIndex]);
+	_monitoredPixelPedestal.push_back(pedestalMonitor);
+
+	// and now the noise one
+	FloatVec noiseMonitor;
+	noiseMonitor.push_back(noise->chargeValues()[pixelIndex]);
+	_monitoredPixelNoise.push_back(noiseMonitor);
+	
+      }  
+    }
+    _isFirstEvent = false;
+  }
+
+
   if ( _iEvt % _updateFrequency == 0 ) {
 
     cout << "[" << name() << "] Updating pedestal and noise ...";
@@ -118,6 +185,37 @@ void EUTelUpdatePedestalNoiseProcessor::processEvent (LCEvent * evt) {
   
 }
   
+
+void EUTelUpdatePedestalNoiseProcessor::pixelMonitoring(LCEvent * evt) {
+
+  LCCollectionVec * pedestalCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_pedestalCollectionName));
+  LCCollectionVec * noiseCollection    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
+  
+  unsigned int index  = 0;
+  unsigned int iPixel = 0;
+  while (index < _monitoredPixel.size() ) {
+    int  iDetector = _monitoredPixel[index++];
+    int  xCoord    = _monitoredPixel[index++];
+    int  yCoord    = _monitoredPixel[index++];
+    
+    TrackerDataImpl * pedestal = dynamic_cast < TrackerDataImpl * >    (pedestalCollection->getElementAt(iDetector));
+    TrackerDataImpl * noise    = dynamic_cast < TrackerDataImpl * >    (noiseCollection->getElementAt(iDetector));
+    
+    // I need to find the pixel index, for this I need the number of pixels in the x directions.
+    CellIDDecoder<TrackerDataImpl> decoder(pedestalCollection);
+    int xMin = decoder(pedestal)["xMin"];
+    int xMax = decoder(pedestal)["xMax"];
+    int yMin = decoder(pedestal)["yMin"];
+    int noOfXPixel = abs( xMax - xMin ) + 1;
+    if (noOfXPixel <= 0) throw InvalidParameterException("The number of pixels along has to be > 0");
+    int pixelIndex = ( xCoord - xMin ) + ( yCoord - yMin ) * noOfXPixel;
+    
+    _monitoredPixelPedestal[iPixel].push_back(pedestal->chargeValues()[pixelIndex]);
+    _monitoredPixelNoise[iPixel].push_back(noise->chargeValues()[pixelIndex]);
+    ++iPixel;
+  }
+
+}
 
 void EUTelUpdatePedestalNoiseProcessor::fixedWeightUpdate(LCEvent * evt) {
   
@@ -151,7 +249,63 @@ void EUTelUpdatePedestalNoiseProcessor::fixedWeightUpdate(LCEvent * evt) {
 
 void EUTelUpdatePedestalNoiseProcessor::end() {
 
+#ifdef MARLIN_USE_AIDA
+  
+  unsigned index  = 0;
+  unsigned iPixel = 0;
+  while ( index < _monitoredPixel.size() ) {
+    int  iDetector = _monitoredPixel[index++];
+    int  xCoord    = _monitoredPixel[index++];
+    int  yCoord    = _monitoredPixel[index++];
+    
+    string name;
+    string title;
+
+    {
+      stringstream namestream;
+      namestream << "PedestalMonitor-" << iDetector << "-" << xCoord << "-" << yCoord;
+      name = namestream.str();
+
+      stringstream titlestream;
+      titlestream << "Pedestal monitoring on detector " << iDetector << "(" << xCoord << "," << yCoord << ")";
+      title = titlestream.str();
+    }
+
+    //    AIDA::IDataPointSet * pedestalDPS = AIDAProcessor::dataPointSetFactory(this)->create(name,title,1);
+
+    {
+      stringstream namestream;
+      namestream << "NoiseMonitor-" << iDetector << "-" << xCoord << "-" << yCoord;
+      name = namestream.str();
+
+      stringstream titlestream;
+      titlestream << "Noise monitoring on detector " << iDetector << "(" << xCoord << "," << yCoord << ")";
+      title = titlestream.str();
+    }
+    
+    //    AIDA::IDataPointSet * noiseDPS =  AIDAProcessor::dataPointSetFactory(this)->create();
+
+    for (unsigned int count = 0; count < _monitoredPixelPedestal[iPixel].size(); count++) {
+      cout << count << " " << _monitoredPixelPedestal[iPixel][count] << " " << _monitoredPixelNoise[iPixel][count] << endl;
+//       pedestalDPS->addPoint();
+//       pedestalDPS->point(count)->coordinate(0)->setValue(_monitoredPixelPedestal[iPixel][count]);
+      
+//       noiseDPS->addPoint();
+//       noiseDPS->point(count)->coordinate(0)->setValue(_monitoredPixelNoise[iPixel][count]);
+    }
+    
+    ++iPixel;
+  }
+    
+#endif
+
   cout << "[" << name() << "] Successfully finished " << endl;
   
 }
 
+void EUTelUpdatePedestalNoiseProcessor::check( LCEvent * evt ) {
+
+  if ( (_iEvt - 1) % _updateFrequency == 0 ) 
+    pixelMonitoring(evt);
+
+}
