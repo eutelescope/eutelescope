@@ -15,11 +15,6 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-#ifdef MARLIN_USE_AIDA
-// aida includes <.h>
-#include <AIDA/IBaseHistogram.h>
-#endif
-
 // lcio includes <.h> 
 #include <EVENT/LCParameters.h>
 #include <IMPL/LCCollectionVec.h>
@@ -29,9 +24,16 @@
 #include <string>
 #include <cmath>
 
+// forward declaration
 
-namespace eutelescope
-{
+#ifdef MARLIN_USE_AIDA
+namespace AIDA {
+  class IBaseHistogram;
+}
+#endif
+
+
+namespace eutelescope {
 
   //! Pedestal and noise  processor for Marlin.
   /*! This processor has the task to calculate the pedestal and noise
@@ -83,7 +85,7 @@ namespace eutelescope
    *  @param OutputPedeFile Name of the output pedestal file
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.9 2007-02-22 08:09:36 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.10 2007-02-23 11:24:55 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
