@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCopyPedestalProcessor.cc,v 1.1 2007-02-20 16:06:32 bulgheroni Exp $
+// Version $Id: EUTelCopyPedestalProcessor.cc,v 1.2 2007-02-26 09:24:54 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -11,6 +11,7 @@
 
 // eutelescope includes ".h" 
 #include "EUTelCopyPedestalProcessor.h"
+#include "EUTELESCOPE.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -19,7 +20,7 @@
 #include <IMPL/TrackerRawDataImpl.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
-
+#include <UTIL/CellIDEncoder.h>
 
 // system includes <>
 
@@ -96,7 +97,10 @@ void EUTelCopyPedestalProcessor::processEvent (LCEvent * evt) {
     _pedestalCollectionVec = new LCCollectionVec(LCIO::TRACKERDATA);
     _noiseCollectionVec    = new LCCollectionVec(LCIO::TRACKERDATA);
     _statusCollectionVec   = new LCCollectionVec(LCIO::TRACKERRAWDATA);
-    
+    CellIDEncoder<TrackerDataImpl>    pedeDecoder  (EUTELESCOPE::MATRIXDEFAULTENCODING,_pedestalCollectionVec);
+    CellIDEncoder<TrackerDataImpl>    noiseDecoder (EUTELESCOPE::MATRIXDEFAULTENCODING,_noiseCollectionVec);
+    CellIDEncoder<TrackerRawDataImpl> statusDecoder(EUTELESCOPE::MATRIXDEFAULTENCODING,_statusCollectionVec);
+
     for (int iDetector = 0; iDetector < pedestalCollectionVecDB->getNumberOfElements(); iDetector++) {
 
       TrackerRawDataImpl * statusDB = dynamic_cast< TrackerRawDataImpl * > (statusCollectionVecDB->getElementAt(iDetector));
