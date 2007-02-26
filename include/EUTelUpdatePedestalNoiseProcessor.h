@@ -84,9 +84,10 @@ namespace eutelescope {
    *  @param FixedWeightValue the value of the fixed weight
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelUpdatePedestalNoiseProcessor.h,v 1.2 2007-02-22 13:23:39 bulgheroni Exp $
+   *  @version $Id: EUTelUpdatePedestalNoiseProcessor.h,v 1.3 2007-02-26 09:24:02 bulgheroni Exp $
    *
    *  @todo Implement the status matrix update
+   *
    */
 
   class EUTelUpdatePedestalNoiseProcessor : public marlin::Processor {
@@ -217,6 +218,9 @@ namespace eutelescope {
      *
      *  @todo It is probably better to allow the user to save the
      *  monitoring info also if the Marlin is not using AIDA
+     *
+     *  @bug Because of a bug in RAIDA, this is not even compiling
+     *  when using this AIDA implementation
      */
     void saveMonitoring();
 #endif
