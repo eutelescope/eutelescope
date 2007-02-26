@@ -24,7 +24,7 @@ namespace eutelescope
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.6 2007-02-22 08:09:36 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.7 2007-02-26 09:21:28 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -197,6 +197,15 @@ namespace eutelescope
      */
     static const char * FIXEDWEIGHT;
 
+    //! Cluster separation algorithm with only flagging capability
+    /*! The name for the cluster separation algorithm that is not
+     *  really dividing merging clusters, but only flagging their
+     *  quality. @see EUTelClusterSeparationProcessor
+     */
+    static const char * FLAGONLY;
+
+    // Encoding strings
+
     //! Default Tracker(Raw)Data encoding for full matrix
     /*! This constant string is used with CellIDEncoder to define the
      *  default encoding used for describe cells into a
@@ -211,10 +220,95 @@ namespace eutelescope
      *  default encoding used for describe cells into a clusters. This
      *  encoding is different from the one for complete matrices.
      *
-     *  "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5"
+     *  "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5:quality:5"
+     *
+     *  Note about cluster quality: this is a three bit flag to be
+     *  used with the cluster quality enum.
+     *
+     *  @see ClusterQuality
      */
     static const char * CLUSTERDEFAULTENCODING;
   };
+
+  //! Cluster quality enum
+  /*! This enum can be attached to a LCIO class describing a cluster
+   *  or it can be inserted into the CellID describing the cluster
+   *  collection. It is a five bit flag, that can be used to
+   *  discriminate among different cluster qualities. This is because
+   *  not all clusters passing the required cuts can be considered to
+   *  be at the same quality levels. For example there are clusters
+   *  centered on or so close to the detector edge that are
+   *  incomplete. Those, even if they are passing the threshold for
+   *  cluster identification they cannot be used for resolution
+   *  studies, because their calculated position if biased by the
+   *  missing pixels. The same apply for pixels with one missing pixel
+   *  because was flagged as bad during the clustering processor.
+   *
+   *  Here a description of all allowed value of cluster quality and
+   *  their meaning:
+   *
+   *  \li <b>kGoodCluster</b>: this flag is used to identify clusters
+   *  having no problem at all.
+   *
+   *  \li <b>kIncompleteCluster</b>: this flag is used to identify
+   *  clusters in which at least one pixel is missing because it was
+   *  flagged as bad during the previous analysis processors.
+   *
+   *  \li <b>kBorderCluster</b>: this flag is used with clusters found
+   *  to close to the detector edge and for that reason, their
+   *  completeness cannot be garanted.
+   *
+   *  \li <b>kMergedCluster</b>: this flag is used to label clusters
+   *  that have been tracked in a position so close to another cluster
+   *  that charge sharing between the two cannot be excluded.
+   *
+   *  There are still two "not assigned" bits that can be used in the
+   *  future to mark other different kind of bad quality clusters.
+   *
+   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @Version $Id: EUTELESCOPE.h,v 1.7 2007-02-26 09:21:28 bulgheroni Exp $
+   */ 
+  
+  enum ClusterQuality {
+    kGoodCluster       = 0,
+    kIncompleteCluster = 1L << 0,
+    kBorderCluster     = 1L << 1,
+    kMergedCluster     = 1L << 2
+  };
+
+  //! Cluster quality bit-wise AND operator
+  /*! This is a convenience operator used to identify the reason of a
+   *  non good quality clusters. Bad quality clusters may be so for more
+   *  than one reason simultaneously. This operator is used in the
+   *  identification of such reasons.
+   *  
+   *  @param a A cluster quality value
+   *  @param b Another cluster quality value
+   *  @return the bit wise and among @a a and @a b
+   */
+  ClusterQuality operator&(ClusterQuality a, ClusterQuality b);
+    
+
+
+  //! Cluster quality bit-wise OR operator
+  /*! This is a crucial operator for ClusterQuality since, during the
+   *  cluster search processor, a cluster maybe flagged with one or
+   *  more than one "bad" qualities. For this reason, using this
+   *  operator can allow to flag the same cluster with more than one
+   *  bad qualities.
+   *
+   *  @param a A cluster quality value
+   *  @param b Another cluster quality value
+   *  @return the bit wise or among @a a and @a b
+   */ 
+  ClusterQuality operator|(ClusterQuality a, ClusterQuality b);
+
+
+  //! Cluster quality self bit-wise OR operator 
+  /*! @see operator|(ClusterQuality a, ClusterQuality b)
+   *  @bug Not working!!!! Have a look on the web...
+   */ 
+  ClusterQuality operator|=(ClusterQuality a, ClusterQuality b);
 
 }
 
