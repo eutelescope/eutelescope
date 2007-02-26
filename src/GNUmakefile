@@ -4,7 +4,7 @@
 #
 # @author Frank Gaede
 # @author Jan Engels
-# @version $Id: GNUmakefile,v 1.3 2007-02-21 13:58:07 bulgheroni Exp $
+# @version $Id: GNUmakefile,v 1.4 2007-02-26 09:26:52 bulgheroni Exp $
 #
 ###########################################################
 
@@ -28,7 +28,7 @@ endif
 
 # additional user include/libraries
 ifndef USERINCLUDES
- USERINCLUDES +=
+ USERINCLUDES += -I$(MARLIN)/packages/MarlinUtil/include
 endif
 
 ifndef USERLIBS
