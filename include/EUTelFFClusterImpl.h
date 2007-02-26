@@ -89,7 +89,7 @@ namespace eutelescope {
    *  @todo Test the charge center of mass method.
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.2 2007-02-22 08:09:36 bulgheroni Exp $
+   *  @Version $Id: EUTelFFClusterImpl.h,v 1.3 2007-02-26 09:23:35 bulgheroni Exp $
    */ 
 
   class EUTelFFClusterImpl : public IMPL::TrackerDataImpl {
@@ -189,6 +189,47 @@ namespace eutelescope {
       }
     }
 
+    //! Get cluster quality 
+    /*! This method is used to check the quality of the current
+     *  clusters. Possible values of cluster qualities are given by
+     *  the ClusterQuality enum.
+     *
+     *  @return the current cluster quality
+     */
+    inline ClusterQuality getClusterQuality() const {
+      lcio::long64 cell1 = static_cast<lcio::long64> (getCellID1());
+
+      int rhs = 15;
+      lcio::long64 mask = ( 0x1F << rhs );
+      
+      return static_cast<ClusterQuality> ( (cell1 & mask) >> rhs ) ;
+ 
+    }
+
+    //! Get distance from another cluster
+    /*! This method is used to calculate the distance between to
+     *  clusters belonging to the same detector plane (having the same
+     *  detectorID). It can be used by a processor aming to separate
+     *  merging clusters or just flagging those with kClusterMergin
+     *  quality attributes. The returned distance is in pixel units
+     *  and it is calculated using the seed position and neither the
+     *  CoG nor the Eta corrected cluster center. Those corrections,
+     *  in fact, are too small to severily affect the cluster
+     *  separation.
+     * 
+     *  @param otherCluster The other cluster for distance calculation
+     *  @return The distance in pixel unit from @a this to @a otherCluster
+     */
+    float getDistance(EUTelFFClusterImpl * otherCluster) const;
+
+    //! Get the cluster external radius
+    /*! This method is used to calculate the fixed frame cluster
+     *  external circle radius.
+     *
+     *  @return The external circle radius in pixel unit
+     */ 
+    float getExternalRadius() const;
+
     //! Get the total cluster signal
     /*! This method is used to calculate the total charge contained
      *  inside the current cluster
@@ -199,14 +240,43 @@ namespace eutelescope {
 
     //! Get the center of gravity shift
     /*! This method is used to calculate the signed distance of the
-     *  charge center of gravity from the seed coordinates. This is a
+     *  charge center of gravity from the seed coordinates. With this
+     *  method all pixels in the clusters are considered. This is a
      *  very useful method for the estimation of the eta function.
-     *
+     *  
      *  @param xCoG reference to the CoG shift along x
      *  @param yCoG reference to the CoG shift along y
      */
     void getCenterOfGravityShift(float& xCoG, float& yCoG) const;
 
+    //! Get the center of gravity shift using only a n x m cluster.
+    /*! This method is used to calculate the CoG shift, but only
+     *  considering pixels belonging to a rectangular <code> n x
+     *  m</code> cluster centered around the seed pixel. If this
+     *  sub-cluster is greater or equal to the full cluster then
+     *  getCenterOfGravityShift(float&, float&) is used.
+     *
+     *  @param xCoG reference to the CoG shift along x
+     *  @param yCoG reference to the CoG shift along y
+     *  @param xSize maximum number of pixels along x
+     *  @param ySize maximum number of pixels along y
+     */ 
+    void getCenterOfGravityShift(float& xCoG, float& yCoG, int xSize, int ySize) const ;
+
+    //! Get the center of gravity shift using only @a n pixels with the
+    //highest signal.
+    /*! This is another method to get the CoG shift from the current
+     *  cluster. With this method only @a n pixels with the highest
+     *  signal are used. In case, the selected number of pixels is
+     *  greater than the cluster size, then
+     *  getCenterOfGravityShift(float&, float&) is used
+     *
+     *  @param xCoG reference to the CoG shift along x
+     *  @param yCoG reference to the CoG shift along y
+     *  @param n number of pixels with the highest signal
+     */ 
+    void getCenterOfGravityShift(float& xCoG, float& yCoG, int n) const ;
+    
 
     //! Get the cluster charge CoG
     /*! This method is used to calculate the current cluster charge
@@ -218,6 +288,7 @@ namespace eutelescope {
      *  @param yCoG reference to the charge center of gravity along y
      */
     void getCenterOfGravity(float& xCoG, float& yCoG) const;
+
 
   };
  

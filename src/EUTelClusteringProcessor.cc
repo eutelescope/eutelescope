@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.4 2007-02-22 08:09:36 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.5 2007-02-26 09:23:35 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -232,6 +232,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 
 	  // start looping around the seed pixel. Remember that the seed
 	  // pixel has to stay in the center of cluster
+	  ClusterQuality cluQuality = kGoodCluster;
 	  for (int yPixel = seedY - (_yClusterSize / 2); yPixel <= seedY + (_yClusterSize / 2); yPixel++) {
 	    for (int xPixel =  seedX - (_xClusterSize / 2); xPixel <= seedX + (_xClusterSize / 2); xPixel++) {
 	      // always check we are still within the sensor!!!
@@ -245,10 +246,22 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 		  clusterCandidateNoise2 += noise->getChargeValues()[index];
 		  clusterCandidateCharges.push_back(data->getChargeValues()[index]);
 		  clusterCandidateIndeces.push_back(index);
-		} else {
+		} else if (isHit) {
+		  // this can be a good place to flag the current
+		  // cluster as kMergedCluster, but it would introduce
+		  // a bias since the at least another cluster (the
+		  // one which this pixel belong to) is not flagged.
+		  //
+		  // In order to flag all merged clusters and possibly
+		  // try to separate the different contributions use
+		  // the EUTelSeparateClusterProcessor
+		  clusterCandidateCharges.push_back(0.);
+		} else if (!isGood) {
+		  cluQuality = cluQuality | kIncompleteCluster;
 		  clusterCandidateCharges.push_back(0.);
 		}
 	      } else {
+		cluQuality = cluQuality | kBorderCluster;
 		clusterCandidateCharges.push_back(0.);
 	      }
 	    }
@@ -267,6 +280,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	    idClusterEncoder["ySeed"]         = seedY;
 	    idClusterEncoder["xCluSize"]      = _xClusterSize;
 	    idClusterEncoder["yCluSize"]      = _yClusterSize;
+	    idClusterEncoder["quality"]       = static_cast<int>(cluQuality);
 	    idClusterEncoder.setCellID(cluster);
 	    
 	      /// /*DEBUG*/ logfile << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY << endl;
