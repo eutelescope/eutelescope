@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.11 2007-02-22 08:09:36 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.12 2007-02-28 08:18:39 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -18,6 +18,7 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
+#include "marlin/Global.h"
 
 #ifdef MARLIN_USE_AIDA
 // aida includes <.h>
@@ -189,7 +190,8 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
   }
 
   // get from the file header the event number
-  int tempNoOfEvent = runHeader->getNoOfEvent();
+  int tempNoOfEvent = min ( runHeader->getNoOfEvent(),
+			    Global::parameters->getIntVal("MaxRecordNumber")) -1;
   
   if (tempNoOfEvent == 0) {
     stringstream ss;
