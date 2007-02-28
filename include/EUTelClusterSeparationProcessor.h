@@ -23,7 +23,7 @@
 #include <set>
 
 // forward declaration 
-
+class IMPL::LCCollectionVec;
 
 namespace eutelescope {
 
@@ -83,7 +83,7 @@ namespace eutelescope {
    *  cluster separation.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterSeparationProcessor.h,v 1.1 2007-02-26 09:32:10 bulgheroni Exp $
+   *  @version $Id: EUTelClusterSeparationProcessor.h,v 1.2 2007-02-28 08:13:33 bulgheroni Exp $
    *
    *
    */
@@ -110,33 +110,27 @@ namespace eutelescope {
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters and reset all needed data
-     *  members. In the case the user set the _fillDebugHisto then
-     *  she/he warned that the procedure is going to slow down
-     *  considerably
+     *  members. 
      */
     virtual void init ();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
-     *  is incremented. From the run header the number of detector is
-     *  retrieved.
+     *  is incremented. 
      * 
      *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
 
     //! Called every event
-    /*  This is called for each event in the file. In the case this is
-     *  the first event, then a cross-check is done on the
-     *  compatibility of input raw data and pedestal collections. They
-     *  have to contain the same number of detector planes and each of
-     *  them should have exactly the same number of pixels. Of course
-     *  this check is not exhaustive, but at least should avoid
-     *  segmentation fault.
+    /*  This is called for each event in the file. As a first thing,
+     *  the system will check among all clusters found in the current
+     *  event there are pairs of merging clusters on the same
+     *  detector. If at least one pair of merging cluster is found,
+     *  then the groupingMergingPairs(std::vector< pair<int, int> >,
+     *  vector< set<int > > *) is called; otherwise it returns
+     *  immediately.
      *
-     *  @throw IncompatibleDataSetException in the case the two
-     *  collections are found to be incompatible
-     * 
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
@@ -159,11 +153,41 @@ namespace eutelescope {
      */
     virtual void end();
 
-    //! Separation algorithm implementation
-    /*! This function is called with the processEvent(LCEvent*) call
-     *  back when two clusters have been found to be merging.
+    //! This is the real method
+    /*! This is the method where the real separation algorithm is
+     *  written/called. 
+     *
+     *  @param setVector A STL vector of STL set containing the
+     *  cluster of clusters to be separated.
+     *
+     *  @param collectionVec A pointer to the input cluster collection
+     *
+     *  @return true if the algorithm was successfully applied.
      */ 
+    bool applySeparationAlgorithm(std::vector< std::set< int > > setVector, LCCollectionVec * collectionVec) const ;
 
+    //! Groups together pairs of merging clusters.
+    /*! The identification of merging clusters can very easily done on
+     *  a pair basis. It means that after a double loop on clusters, a
+     *  collection of pairs of merging clusters is available. To be
+     *  more general, one should consider the possibility of having
+     *  groups of merging clusters, a sort of cluster of
+     *  clusters. This groupingMergingPairs method is exactly doing
+     *  this, looking if there are pairs of merging clusters that can
+     *  be grouped into a cluster of clusters.
+     *  
+     *  Of course this method is called if, and only if, at least a
+     *  pair merging clusters have been found
+     *
+     *  @param pairVector A STL vector of STL pairs. For each pairs,
+     *  the two integers represent the cluster indices within the
+     *  clusterCollection
+     *
+     *  @param setVector A pointer to a STL vector of STL set. Each
+     *  set has to be considered as the cluster of clusters defined
+     *  above and the int value_type of the set represents the cluster
+     *  index in the clusterCollection
+     */ 
     void groupingMergingPairs(std::vector< std::pair<int , int> > pairVector, std::vector< std::set< int > > * setVector) const;
 
   protected:
