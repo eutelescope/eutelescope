@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.1 2007-02-26 09:32:10 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.2 2007-02-28 08:17:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -24,6 +24,7 @@
 
 // system includes <>
 #include <vector>
+#include <string>
 #include <set>
 
 using namespace std;
@@ -76,7 +77,6 @@ void EUTelClusterSeparationProcessor::processRunHeader (LCRunHeader * rdr) {
 void EUTelClusterSeparationProcessor::processEvent (LCEvent * evt) {
 
   
-
   if (_iEvt % 10 == 0) 
     cout << "[" << name() << "] Separating clusters on event " << _iEvt << endl;
 
@@ -133,35 +133,53 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * evt) {
     return ;
   }
   
-
-//   // ecco le coppie
-//   vector< pair<int, int > >::iterator iterPair = mergingPairVector.begin();
-//   while ( iterPair != mergingPairVector.end() ) {
-//     cout << iterPair->first << " " << iterPair->second << endl;
-//     ++iterPair;
-//   }
-
   // all merging clusters are collected into a vector of set. Each set
   // is a group of clusters all merging.
   vector< set<int > > mergingSetVector;
   groupingMergingPairs(mergingPairVector, &mergingSetVector) ;
 
-  // ok now dump the set vector
-  vector< set<int > >::iterator iterSet = mergingSetVector.begin();
-  while ( iterSet != mergingSetVector.end() ) {
-    set<int >::iterator iter = (*iterSet).begin();
-    while (iter != (*iterSet).end() ) {
-      cout << "porco qua " << (*iter) << " " ;
-      ++iter;
-    }
-    ++iterSet;
-  }
-  cout << endl;
+  applySeparationAlgorithm(mergingSetVector, clusterCollectionVec);
 
   ++_iEvt;
   
 }
   
+
+bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(vector<set <int > > setVector, LCCollectionVec * collectionVec) const {
+
+  /// /*DEBUG*/   cout << "[" << name() << "] Applying cluster separation algorithm " << _separationAlgo << endl;
+  /// /*DEBUG*/   cout << "[" << name() << "] Found " << setVector.size() << " group(s) of merging clusters on event " << _iEvt << endl;
+  if ( _separationAlgo == EUTELESCOPE::FLAGONLY ) {
+    /// /*DEBUG*/   int iCounter = 0;    
+    vector<set <int > >::iterator vectorIterator = setVector.begin();    
+    while ( vectorIterator != setVector.end() ) {
+      /// /*DEBUG*/     cout << "[" << name() << "]    Group " << (iCounter++) << " with the following clusters " << endl;
+      set <int >::iterator setIterator = (*vectorIterator).begin();
+      while ( setIterator != (*vectorIterator).end() ) {
+	EUTelFFClusterImpl * cluster = static_cast<EUTelFFClusterImpl *> (collectionVec->getElementAt( *setIterator )) ;
+	/// /*DEBUG*/       int xSeed, ySeed;
+	/// /*DEBUG*/       int detectorID = cluster->getDetectorID();
+	/// /*DEBUG*/       int clusterID  = cluster->getClusterID();
+	/// /*DEBUG*/       int xSize, ySize;
+	/// /*DEBUG*/       ClusterQuality quality = cluster->getClusterQuality();
+	/// /*DEBUG*/       cluster->getClusterSize(xSize, ySize);
+	/// /*DEBUG*/       cluster->getSeedCoord(xSeed, ySeed);
+	/// /*DEBUG*/       cout << "[" << name() << "]        Cluster " << (*setIterator) 
+	  /// /*DEBUG*/		     << " (" << detectorID << ":" << clusterID << ":" << xSeed 
+	  /// /*DEBUG*/		     << "," << ySeed << ":" << xSize << "," << ySize << ":" << static_cast<int>(quality) << ") " << endl;
+	cluster->setClusterQuality ( cluster->getClusterQuality() | kMergedCluster );
+	++setIterator;
+      }
+      ++vectorIterator;
+    }
+    return true;
+  }
+
+  return false;
+
+
+}
+
 void EUTelClusterSeparationProcessor::groupingMergingPairs(vector< pair<int , int> > pairVector, 
 							   vector< set<int > > * setVector) const {
 
