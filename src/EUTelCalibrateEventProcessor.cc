@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.3 2007-02-22 08:09:36 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.4 2007-02-28 08:12:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -42,9 +42,11 @@ using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
+#ifdef MARLIN_USE_AIDA
 string EUTelCalibrateEventProcessor::_rawDataDistHistoName    = "RawDataDistHisto";
 string EUTelCalibrateEventProcessor::_dataDistHistoName       = "DataDistHisto";
 string EUTelCalibrateEventProcessor::_commonModeDistHistoName = "CommonModeDistHisto";
+#endif 
 
 EUTelCalibrateEventProcessor::EUTelCalibrateEventProcessor () :Processor("EUTelCalibrateEventProcessor") {
 
@@ -168,6 +170,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * evt) {
       // in the case MARLIN_USE_AIDA and the user wants to fill detector
       // debug histogram, this is the right place to book them. As usual
       // histograms are grouped in directory identifying the detector
+
 #ifdef MARLIN_USE_AIDA
       string basePath, tempHistoName;
       {
@@ -231,8 +234,8 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * evt) {
 	_aidaHistoMap.insert(make_pair(tempHistoName, commonModeDistHisto));
 	commonModeDistHisto->setTitle("Common mode distribution");
       }
-    }
 #endif    
+    }
     _isFirstEvent = false;
   }
 
