@@ -1,0 +1,102 @@
+// -*- C++ -*-
+/*
+ *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
+ */
+
+#ifndef EUTELETAFUNCTIONIMPL_H
+#define EUTELETAFUNCTIONIMPL_H
+
+
+
+// lcio includes <.h>
+#include <lcio.h>
+#include <IMPL/LCGenericObjectImpl.h>
+
+// system includes <>
+#include <string>
+
+namespace eutelescope {
+
+  //! Eta function LCIO implementation 
+  /*! The Eta function calculated by the EUTelCalculateEtaProcessor is
+   *  saved into a Condition file using this implementation.
+   *  EUTelEtaFunctionImpl is nothing more than a sub-class of
+   *  LCGenericObjectImpl where the integer and float parts are masked
+   *  behind the private label. The number of double entries is twice
+   *  the number of bins: the first @a nBin are the bin centers (x
+   *  axis) while the second @a nBin are the corresponding Eta values.
+   *
+   *  Some convenience methods have been introduced to allow the user
+   *  to set/get the full bin center and the full eta value vectors
+   *
+   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @Version $Id: EUTelEtaFunctionImpl.h,v 1.1 2007-02-28 08:19:34 bulgheroni Exp $
+   */ 
+  class EUTelEtaFunctionImpl : public IMPL::LCGenericObjectImpl {
+
+  public:
+    //! Default constructor
+    /*! This is the default constructor of the Eta function LCIO
+     *  implementation. 
+     *  
+     *  @param nBin This is the number of bins used in the calculation
+     *  of the Eta function.
+     */
+    EUTelEtaFunctionImpl(int nBin); 
+
+    //! Constructor with all the needed parameters
+    /*! This convenience constructor can be used to create the object
+     *  and immediately set both the bin center and the value vectors
+     *
+     *  @param nBin This is the number of bins used in the calculation of the Eta function
+     *  @param centerVec This is a STL vector of double with the bin centers.
+     *  @param valueVec This is a STL vector of double with the eta values
+     */ 
+    EUTelEtaFunctionImpl(int nBin, std::vector<double > centerVec, std::vector<double > valueVec);
+
+    //! Default destructor
+    virtual ~EUTelEtaFunctionImpl() { /* NO-OP */ ; }
+
+    //! Set the bin center vector
+    /*! This method can be used to set all bin centers in one call
+     *  @param center A STL vector of double with all the bin centers
+     */ 
+    void setBinCenterVector(std::vector<double > center);
+
+    //! Set the eta value vector
+    /*! This method can be used to set all eta values in one call
+     *  @param center A STL vector of double with all the eta values
+     */ 
+    void setEtaValueVector(std::vector<double > value);
+
+
+    //! Get the bin center vector
+    /*! @return A STL vector of double with the bin centers
+     */ 
+    std::vector<double > getBinCenterVector() const;
+
+    //! Get the eta value vector
+    /*! @return A STL vector of double with the eta values
+     */ 
+    std::vector<double > getEtaValueVector() const;
+
+  private:
+
+    void getNInt()   {;}
+    void getNFloat() {;}
+    void getIntVal() {;}
+    void getFloatVal() {;}
+    void setIntVal(unsigned int, int) {;}
+    void setFloatVal(unsigned int, float) {;}
+    void isFixedSize() {;}
+
+  };
+
+}
+
+#endif
