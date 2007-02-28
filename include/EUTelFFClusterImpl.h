@@ -89,7 +89,7 @@ namespace eutelescope {
    *  @todo Test the charge center of mass method.
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.3 2007-02-26 09:23:35 bulgheroni Exp $
+   *  @Version $Id: EUTelFFClusterImpl.h,v 1.4 2007-02-28 08:14:19 bulgheroni Exp $
    */ 
 
   class EUTelFFClusterImpl : public IMPL::TrackerDataImpl {
@@ -205,6 +205,15 @@ namespace eutelescope {
       return static_cast<ClusterQuality> ( (cell1 & mask) >> rhs ) ;
  
     }
+
+    //! Set the cluster quality flag
+    /*! This method is used to apply the cluster quality flag to the
+     *  current cluster. It modifies directly the CellID1 content
+     *
+     *  @param quality It is the cluster quality bit mask using a
+     *  eutelescope::ClusterQuality enum
+     */ 
+    void setClusterQuality(ClusterQuality quality);
 
     //! Get distance from another cluster
     /*! This method is used to calculate the distance between to
