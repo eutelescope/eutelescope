@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.1 2007-02-26 09:30:20 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.2 2007-02-28 08:15:59 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -18,6 +18,7 @@
 #include "marlin/Exceptions.h"
 #include "marlin/Processor.h"
 #include "marlin/ProcessorMgr.h"
+#include "marlin/Global.h"
 #include "PseudoHistogram.h"
 
 #ifdef MARLIN_USE_AIDA
@@ -127,18 +128,18 @@ void EUTelCalculateEtaProcessor::init () {
 
 void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
 
-  cout << _iRun << endl;
-
   // to make things easier re-cast the input header to the EUTelRunHeaderImpl
   EUTelRunHeaderImpl *  runHeader = static_cast<EUTelRunHeaderImpl*>(rdr);
 
   _noOfDetector = runHeader->getNoOfDetector();
 
-  int tempEvent = runHeader->getNoOfEvent();
+  int tempEvent = min( runHeader->getNoOfEvent(),
+		       Global::parameters->getIntVal("MaxRecordNumber") ) - 1;
+  
   if ( ( _nEvent == -1 ) || ( _nEvent >= tempEvent ) ) {
     _nEvent = tempEvent;
   }
-
+  
   
   if ( !_isEtaCalculationFinished ) {
 
@@ -397,19 +398,34 @@ void EUTelCalculateEtaProcessor::check (LCEvent * evt) {
 void EUTelCalculateEtaProcessor::finishCalculation() {
   
   double integral;
+  vector<vector<double > > xEtaBinCenterVec;
+  vector<vector<double > > xEtaValueVec;
+
   for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
     
     for (int iBin = 1; iBin < _cogHistogramX[iDetector]->getNumberOfBins(); iBin++ ) {
       double x = _cogHistogramX[iDetector]->getBinCenter(iBin);
       integral = _cogHistogramX[iDetector]->integral(1, iBin);
       _integralHistoX[iDetector]->fill(x, integral);
+      
     }
     
+    vector<double > xEtaBinCenter;
+    vector<double > xEtaBinValue;
+    
+    for (int iBin = 1; iBin < _integralHistoX[iDetector]->getNumberOfBins(); iBin++) {
+      xEtaBinCenter.push_back( _integralHistoX[iDetector]->getBinCenter(iBin) );
+      xEtaBinValue.push_back(  _integralHistoX[iDetector]->getBinContent(iBin) / integral );
+    }
+    xEtaBinCenterVec.push_back(xEtaBinCenter);
+    xEtaValueVec.push_back(xEtaBinValue);
+ 
     for (int iBin = 1; iBin < _cogHistogramY[iDetector]->getNumberOfBins(); iBin++ ) {
       double y = _cogHistogramY[iDetector]->getBinCenter(iBin);
       integral = _cogHistogramY[iDetector]->integral(1, iBin);
       _integralHistoY[iDetector]->fill(y, integral);
     }
+
 
 
 
