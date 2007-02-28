@@ -112,7 +112,7 @@ namespace eutelescope {
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  
-   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.1 2007-02-26 09:30:20 bulgheroni Exp $
+   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.2 2007-02-28 08:12:39 bulgheroni Exp $
    *
    *
    */
@@ -219,15 +219,10 @@ namespace eutelescope {
      *  A priori the user may don't know how many events are in the
      *  input files. So, if she/he wants to run the calculation over
      *  the full event range, this parameter has to set to -1. If
-     *  _nEvent is exceeding the total number of events in the file,
-     *  the calculation will stop when the last available event is
-     *  used.
+     *  _nEvent is exceeding the total number of events in the file or
+     *  the MaxRecordParameter in the global section, then the
+     *  calculation will stop just before the last available event.
      *
-     *  @bug _nEvent is never reached and the eta not calculated when
-     *  for example the user from the steering file set a global
-     *  MaxRecordNumber lesser than _nEvent. To fix it, there should
-     *  be a way to have access to global parameter from within a
-     *  processor. 
      */
     int _nEvent;
 
