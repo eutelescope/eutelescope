@@ -1,5 +1,5 @@
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.3 2007-02-26 09:25:27 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.4 2007-02-28 08:17:55 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -205,3 +205,21 @@ void EUTelFFClusterImpl::getCenterOfGravity(float& xCoG, float& yCoG) const {
 }
   
   
+void EUTelFFClusterImpl::setClusterQuality(ClusterQuality quality) {
+
+  lcio::long64 cell1 = static_cast<lcio::long64> (getCellID1()) ;
+
+  int rhs = 15;
+  lcio::long64  emptyMask = ~( 0x1F << rhs );
+  lcio::long64  maskedQuality = ( (static_cast<int> (quality) & 0x1F ) << rhs );
+
+  // first apply an empty mask for the quality bit ranges
+  cell1 = cell1 & emptyMask;
+  
+  // now apply the maskedQuality
+  cell1 = cell1 | maskedQuality;
+
+  // apply the changes
+  setCellID1(cell1);
+
+}
