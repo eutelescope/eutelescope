@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: pedetest.cc,v 1.2 2007-02-21 11:02:27 bulgheroni Exp $
+// Version $Id: pedetest.cc,v 1.3 2007-02-28 14:57:43 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -21,6 +21,7 @@
 #include <TFile.h>
 #include <TProfile2D.h>
 #include <iostream>
+#include <cmath>
 
 using namespace lcio;
 using namespace eutelescope;
