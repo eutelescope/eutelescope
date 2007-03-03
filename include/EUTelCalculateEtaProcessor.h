@@ -112,7 +112,7 @@ namespace eutelescope {
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  
-   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.2 2007-02-28 08:12:39 bulgheroni Exp $
+   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.3 2007-03-03 08:51:51 bulgheroni Exp $
    *
    *
    */
@@ -282,6 +282,23 @@ namespace eutelescope {
      */ 
     int _nPixel;
 
+    //! Eta X output collection name
+    /*! This is the name of the output collection containing all the
+     *  eta functions along x
+     */ 
+    std::string _etaXCollectionName;
+
+    //! Eta Y output collection name
+    /*! This is the name of the output collection containing all the
+     *  eta functions along y
+     */ 
+    std::string _etaYCollectionName;
+
+    //! The eta condition output file name
+    /*! The eta collections are saved within a collection 
+     */ 
+    std::string _outputEtaFileName;
+
   private:
 
     //! Boolean return value
@@ -331,6 +348,12 @@ namespace eutelescope {
      *  file 
      */
     int _noOfDetector;
+
+    //! The detector name
+    /*! This is got from the input header and copied into the
+     *  condition file header
+     */ 
+    std::string _detectorName;
 
     //! Current run number.
     /*! This number is used to store the current run number

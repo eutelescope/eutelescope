@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.2 2007-02-28 08:15:59 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.3 2007-03-03 08:52:34 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -13,6 +13,7 @@
 #include "EUTelCalculateEtaProcessor.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelEtaFunctionImpl.h"
 
 // marlin includes ".h"
 #include "marlin/Exceptions.h"
@@ -40,8 +41,9 @@
 // lcio includes <.h> 
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
+#include <IMPL/LCEventImpl.h>
 #include <UTIL/CellIDDecoder.h>
-
+#include <UTIL/LCTime.h>
 
 // system includes <>
 #include <iostream>
@@ -106,6 +108,17 @@ EUTelCalculateEtaProcessor::EUTelCalculateEtaProcessor () : Processor("EUTelCalc
 			     "The number of pixel with the highest signal (only for NPixel)",
 			     _nPixel, static_cast<int> ( 5 ));
  
+  registerProcessorParameter("EtaXCollectionName",
+			     "Set the name of the Eta collection along x",
+			     _etaXCollectionName, string("xEtaCondition"));
+
+  registerProcessorParameter("EtaYCollectionName",
+			     "Set the name of the Eta collection along y",
+			     _etaYCollectionName, string("yEtaCondition"));
+  
+  registerProcessorParameter("OutputEtaFileName",
+			     "This is the name of the output condition file",
+			     _outputEtaFileName, string("etafile"));
 }
 
 
@@ -132,9 +145,16 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
   EUTelRunHeaderImpl *  runHeader = static_cast<EUTelRunHeaderImpl*>(rdr);
 
   _noOfDetector = runHeader->getNoOfDetector();
+  _detectorName = runHeader->getDetectorName();
 
-  int tempEvent = min( runHeader->getNoOfEvent(),
-		       Global::parameters->getIntVal("MaxRecordNumber") ) - 1;
+
+  int tempEvent;
+  if ( Global::parameters->getIntVal("MaxRecordNumber") == 0 ) {
+    tempEvent = runHeader->getNoOfEvent();
+  } else {
+    tempEvent = min( runHeader->getNoOfEvent(),
+		     Global::parameters->getIntVal("MaxRecordNumber") ) - 1;
+  }
   
   if ( ( _nEvent == -1 ) || ( _nEvent >= tempEvent ) ) {
     _nEvent = tempEvent;
@@ -160,7 +180,40 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
       
       PseudoHistogram * integralY = new PseudoHistogram(yNoOfBin, min, max);
       _integralHistoY.push_back(integralY);
+
+      // prepare the output file
+      LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
+
+      try {
+	lcWriter->open( _outputEtaFileName, LCIO::WRITE_NEW );
+      } catch (IOException& e) {
+	cerr << e.what() << endl;
+	exit(-1);
+      }
       
+
+      EUTelRunHeaderImpl * newHeader = new EUTelRunHeaderImpl;
+      newHeader->setRunNumber(runHeader->getRunNumber());
+      newHeader->setDetectorName(runHeader->getDetectorName());
+      newHeader->setHeaderVersion(runHeader->getHeaderVersion());
+      newHeader->setDataType(runHeader->getDataType());
+      newHeader->setDateTime();
+      newHeader->setDAQHWName(runHeader->getDAQHWName());
+      newHeader->setDAQHWVersion(runHeader->getDAQHWVersion());
+      newHeader->setDAQSWName(runHeader->getDAQSWName());
+      newHeader->setDAQSWVersion(runHeader->getDAQSWVersion());  
+      newHeader->setNoOfEvent(runHeader->getNoOfEvent());
+      newHeader->setNoOfDetector(runHeader->getNoOfDetector());
+      newHeader->setMinX(runHeader->getMinY());
+      newHeader->setMaxX(runHeader->getMaxX());
+      newHeader->setMinY(runHeader->getMinY());
+      newHeader->setMaxY(runHeader->getMaxY());
+      newHeader->addProcessor(name()); 
+      
+      lcWriter->writeRunHeader(newHeader);
+      delete newHeader;
+      lcWriter->close();
+
       
 #ifdef MARLIN_USE_ROOT
       {
@@ -398,8 +451,28 @@ void EUTelCalculateEtaProcessor::check (LCEvent * evt) {
 void EUTelCalculateEtaProcessor::finishCalculation() {
   
   double integral;
-  vector<vector<double > > xEtaBinCenterVec;
-  vector<vector<double > > xEtaValueVec;
+
+  cout << "[" << name() << "] Writing the output condition file" << endl;
+  
+  LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
+
+  try {
+    lcWriter->open( _outputEtaFileName, LCIO::WRITE_APPEND);
+  } catch (IOException& e ) {
+    cerr << e.what() << endl;
+    exit(-1);
+  }
+
+  LCEventImpl * event = new LCEventImpl();
+  event->setDetectorName(_detectorName);
+  event->setRunNumber(_iRun);
+
+  LCTime * now = new LCTime;
+  event->setTimeStamp(now->timeStamp());
+  delete now;
+
+  LCCollectionVec * etaXCollection = new LCCollectionVec(LCIO::LCGENERICOBJECT);
+  LCCollectionVec * etaYCollection = new LCCollectionVec(LCIO::LCGENERICOBJECT);
 
   for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
     
@@ -410,23 +483,33 @@ void EUTelCalculateEtaProcessor::finishCalculation() {
       
     }
     
-    vector<double > xEtaBinCenter;
-    vector<double > xEtaBinValue;
+    vector<double > etaBinCenter;
+    vector<double > etaBinValue;
     
     for (int iBin = 1; iBin < _integralHistoX[iDetector]->getNumberOfBins(); iBin++) {
-      xEtaBinCenter.push_back( _integralHistoX[iDetector]->getBinCenter(iBin) );
-      xEtaBinValue.push_back(  _integralHistoX[iDetector]->getBinContent(iBin) / integral );
+      etaBinCenter.push_back( _integralHistoX[iDetector]->getBinCenter(iBin) );
+      etaBinValue.push_back(  _integralHistoX[iDetector]->getBinContent(iBin) / integral );
     }
-    xEtaBinCenterVec.push_back(xEtaBinCenter);
-    xEtaValueVec.push_back(xEtaBinValue);
- 
+
+    EUTelEtaFunctionImpl * etaX = new EUTelEtaFunctionImpl(etaBinCenter.size(), etaBinCenter, etaBinValue);
+    etaXCollection->push_back(etaX);
+    
+    etaBinCenter.clear();
+    etaBinValue.clear();
+
     for (int iBin = 1; iBin < _cogHistogramY[iDetector]->getNumberOfBins(); iBin++ ) {
       double y = _cogHistogramY[iDetector]->getBinCenter(iBin);
       integral = _cogHistogramY[iDetector]->integral(1, iBin);
       _integralHistoY[iDetector]->fill(y, integral);
     }
 
+    for (int iBin = 1; iBin < _integralHistoY[iDetector]->getNumberOfBins(); iBin++) {
+      etaBinCenter.push_back( _integralHistoY[iDetector]->getBinCenter(iBin) );
+      etaBinValue.push_back(  _integralHistoY[iDetector]->getBinContent(iBin) / integral );
+    }
 
+    EUTelEtaFunctionImpl * etaY = new EUTelEtaFunctionImpl(etaBinCenter.size(), etaBinCenter, etaBinValue);
+    etaYCollection->push_back(etaY);
 
 
 #ifdef MARLIN_USE_AIDA
@@ -502,9 +585,19 @@ void EUTelCalculateEtaProcessor::finishCalculation() {
 
 #endif
 
-  } 
+  }
+
+  event->addCollection(etaXCollection, _etaXCollectionName);
+  event->addCollection(etaYCollection, _etaYCollectionName);
+  
+  lcWriter->writeEvent(event);
+  delete event;
+
+  lcWriter->close();
+
 
   _isEtaCalculationFinished = true;
+  setReturnValue( "isEtaCalculationFinished" , _isEtaCalculationFinished);
   throw RewindDataFilesException(this);
 
 }
