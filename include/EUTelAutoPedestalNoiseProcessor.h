@@ -47,7 +47,7 @@ namespace eutelescope {
    *  Float vector containing the initial value for the pixel
    *  noise. The size of this vector should be equal to the number of
    *  detector in the telescope <br> <b>PedestalCollectionName</b>:
-   *  this is the name of the output pedestal collection.</br>
+   *  this is the name of the output pedestal collection.<br>
    *  <b>NoiseCollectionName</b>: this is the name of the output noise
    *  collection. <br> <b>StatusCollectionName</b>: this is the name
    *  of the output status collection.
@@ -62,7 +62,7 @@ namespace eutelescope {
    *  @param StatusCollectionName
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelAutoPedestalNoiseProcessor.h,v 1.2 2007-02-22 08:09:36 bulgheroni Exp $
+   *  @version $Id: EUTelAutoPedestalNoiseProcessor.h,v 1.3 2007-03-03 16:37:50 bulgheroni Exp $
    *
    *
    */
