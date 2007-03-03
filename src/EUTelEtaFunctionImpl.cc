@@ -1,9 +1,24 @@
+// Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+// Version $Id: EUTelEtaFunctionImpl.cc,v 1.2 2007-03-03 08:56:26 bulgheroni Exp $
+/*
+ *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
+ */
+
+// eutelescope includes ".h" 
 #include "EUTelEtaFunctionImpl.h"
 
+// lcio includes <.h>
 #include <lcio.h>
 #include <IMPL/LCGenericObjectImpl.h>
 
+// system includes <>
 #include <vector>
+#include <algorithm>
 
 using namespace lcio;
 using namespace eutelescope;
@@ -53,7 +68,7 @@ void EUTelEtaFunctionImpl::setEtaValueVector(vector<double > value) {
 }
   
 
-vector<double > EUTelEtaFunctionImpl::getBinCenterVector() const {
+const vector<double > EUTelEtaFunctionImpl::getBinCenterVector() const {
 
   vector<double > center;
   int index;
@@ -65,7 +80,7 @@ vector<double > EUTelEtaFunctionImpl::getBinCenterVector() const {
 
 }
 
-vector<double > EUTelEtaFunctionImpl::getEtaValueVector() const {
+const vector<double > EUTelEtaFunctionImpl::getEtaValueVector() const {
 
   vector<double > value;
   int index;
@@ -76,3 +91,32 @@ vector<double > EUTelEtaFunctionImpl::getEtaValueVector() const {
   return value;
 
 }
+
+double EUTelEtaFunctionImpl::getEtaFromCoG(double x) const {
+
+  typedef vector<double >::const_iterator DoubleIter;
+  
+  DoubleIter xLeft    = lower_bound(getCoGBeginConstIterator(), getCoGEndConstIterator(), x);
+  DoubleIter xRight   = xLeft + 1;
+  DoubleIter etaLeft  = getEtaBeginConstIterator() +  ( xLeft - getCoGBeginConstIterator());
+  DoubleIter etaRight = etaLeft + 1;
+
+  return *etaLeft + ( *etaLeft - *etaRight ) / ( *xLeft - *xRight ) * ( x - *xLeft) ;
+
+}
+
+vector<double >::const_iterator EUTelEtaFunctionImpl::getCoGBeginConstIterator() const {
+  return _doubleVec.begin();
+}
+
+vector<double >::const_iterator EUTelEtaFunctionImpl::getCoGEndConstIterator() const {
+  return _doubleVec.begin() + (getNDouble() / 2 );
+}
+
+vector<double >::const_iterator EUTelEtaFunctionImpl::getEtaBeginConstIterator() const {
+  return _doubleVec.begin() + (getNDouble() / 2);
+} 
+
+vector<double >::const_iterator EUTelEtaFunctionImpl::getEtaEndConstIterator() const {
+  return _doubleVec.end();
+} 
