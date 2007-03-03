@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.12 2007-02-28 08:18:39 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.13 2007-03-03 08:49:53 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -189,9 +189,16 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
     throw InvalidParameterException(string("_badPixelAlgo cannot be " + _badPixelAlgo));
   }
 
-  // get from the file header the event number
-  int tempNoOfEvent = min ( runHeader->getNoOfEvent(),
+  
+  int tempNoOfEvent;
+
+  // get from the file header the event number 
+  if ( Global::parameters->getIntVal("MaxRecordNumber") == 0 ) {
+    tempNoOfEvent = runHeader->getNoOfEvent();
+  } else {
+    tempNoOfEvent = min ( runHeader->getNoOfEvent(),
 			    Global::parameters->getIntVal("MaxRecordNumber")) -1;
+  }
   
   if (tempNoOfEvent == 0) {
     stringstream ss;
@@ -233,6 +240,8 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
     newHeader->addProcessor(name());
     
     lcWriter->writeRunHeader(newHeader);
+    delete newHeader;
+
     lcWriter->close();
 
     // also book histos
@@ -878,6 +887,9 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
     
     lcWriter->writeEvent(event);
     delete event;
+
+    lcWriter->close();
+
     throw StopProcessingException(this);
     setReturnValue("IsPedestalFinished", true);
   } else {
