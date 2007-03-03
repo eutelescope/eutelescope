@@ -35,7 +35,7 @@ namespace eutelescope {
    *  to set/get the full bin center and the full eta value vectors
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelEtaFunctionImpl.h,v 1.1 2007-02-28 08:19:34 bulgheroni Exp $
+   *  @Version $Id: EUTelEtaFunctionImpl.h,v 1.2 2007-03-03 08:54:07 bulgheroni Exp $
    */ 
   class EUTelEtaFunctionImpl : public IMPL::LCGenericObjectImpl {
 
@@ -70,7 +70,8 @@ namespace eutelescope {
 
     //! Set the eta value vector
     /*! This method can be used to set all eta values in one call
-     *  @param center A STL vector of double with all the eta values
+     * 
+     *  @param value A STL vector of double with all the eta values
      */ 
     void setEtaValueVector(std::vector<double > value);
 
@@ -78,12 +79,74 @@ namespace eutelescope {
     //! Get the bin center vector
     /*! @return A STL vector of double with the bin centers
      */ 
-    std::vector<double > getBinCenterVector() const;
+    const std::vector<double > getBinCenterVector() const;
 
     //! Get the eta value vector
     /*! @return A STL vector of double with the eta values
      */ 
-    std::vector<double > getEtaValueVector() const;
+    const std::vector<double > getEtaValueVector() const;
+
+
+    //! Get Eta for a given CoG value
+    /*! When applying the Eta correction to the charge center of
+     *  gravity, the user must find Eta(CoG). This convenience
+     *  function is used for that purpose. This algorithm is based on
+     *  a binary search of the center of gravity value @a x using the
+     *  C++ implementation of lower_bound. Once the binning whici @a x
+     *  belongs to is found, the returned value of @a eta is linearly
+     *  interpolated. 
+     *
+     *  \li Note 1: It is possible to use the lower_bound algorithm
+     *  because the CoG vector is sorted by definition.
+     *
+     *  \li Note 2: In the case the x axis binning during the Eta
+     *  function calculation was kept constant and uniform, then the
+     *  binary search algorthim can be replaced with a much faster
+     *  calculation of the x closest pair of values. Because of this
+     *  lack in generality, we prefer to invest some calculation power
+     *  in the binary search.
+     *
+     *  @param x is the current CoG value
+     *  @return the corresponding Eta value
+     *
+     *  @todo Try to use find algorithm with a predicate function
+     */ 
+    double getEtaFromCoG(double x) const ;
+
+  protected:
+    
+    //! Get the begin iterator for the CoG vector
+    /*! This method is used to get an iterator corresponding to the
+     *  beginning of the charge center of gravity vector.
+     *
+     *  @return a iterator to the beginning of the CoG vector
+     */ 
+    std::vector<double >::const_iterator getCoGBeginConstIterator() const;
+
+    //! Get the end iterator for the CoG vector
+    /*! This method is used to get an iterator corresponding to the
+     *  end of the charge center of gravity vector.
+     *
+     *  @return a iterator to the end of the CoG vector
+     */ 
+    std::vector<double >::const_iterator getCoGEndConstIterator() const;
+
+
+    //! Get the begin iterator for the Eta value vector
+    /*! This method is used to get an iterator corresponding to the
+     *  beginning of the charge center of gravity vector.
+     *
+     *  @return a iterator to the beginning of the Eta value vector
+     */ 
+    std::vector<double >::const_iterator getEtaBeginConstIterator() const;
+
+    //! Get the end iterator for the Eta value vector
+    /*! This method is used to get an iterator corresponding to the
+     *  end of the charge center of gravity vector.
+     *
+     *  @return a iterator to the end of the Eta value vector
+     */ 
+    std::vector<double >::const_iterator getEtaEndConstIterator() const;
 
   private:
 
