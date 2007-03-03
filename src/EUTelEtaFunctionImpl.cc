@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEtaFunctionImpl.cc,v 1.2 2007-03-03 08:56:26 bulgheroni Exp $
+// Version $Id: EUTelEtaFunctionImpl.cc,v 1.3 2007-03-03 16:37:12 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -96,9 +96,23 @@ double EUTelEtaFunctionImpl::getEtaFromCoG(double x) const {
 
   typedef vector<double >::const_iterator DoubleIter;
   
-  DoubleIter xLeft    = lower_bound(getCoGBeginConstIterator(), getCoGEndConstIterator(), x);
+  DoubleIter cogBegin = getCoGBeginConstIterator();
+  DoubleIter cogEnd   = getCoGEndConstIterator();
+  DoubleIter etaBegin = getEtaBeginConstIterator();
+  DoubleIter etaEnd   = getEtaEndConstIterator();
+
+  // before doing the binary search, try to see if x isn't at the
+  // beginning or at the end of the CoG vector; in such cases the
+  // research is useless and the eta value can be returned
+  // immediately. Remember that the end() iterator is one element
+  // after the last element
+
+  if ( x <= (*cogBegin) ) return (*etaBegin);
+  if ( x >= (*(cogEnd - 1)) ) return (*(etaEnd - 1));
+  
+  DoubleIter xLeft    = lower_bound(cogBegin, cogEnd, x);
   DoubleIter xRight   = xLeft + 1;
-  DoubleIter etaLeft  = getEtaBeginConstIterator() +  ( xLeft - getCoGBeginConstIterator());
+  DoubleIter etaLeft  = etaBegin +  ( xLeft - cogBegin);
   DoubleIter etaRight = etaLeft + 1;
 
   return *etaLeft + ( *etaLeft - *etaRight ) / ( *xLeft - *xRight ) * ( x - *xLeft) ;
