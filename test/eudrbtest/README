@@ -1,0 +1,15 @@
+This small example program is used to generate a file containing the
+same data structure produced by the data transfer from the VME bus of
+the EUDRB board. This is used to test the validity of the
+EUTelEUDRBReader processor.
+
+It is possible to costumize the produced data file changing the global
+constant in the eudrb.cc.
+
+By default, this test program is linking against GSL (GNU Scientific
+library) only for random number generator. This binding can be avoided
+just commenting the first line of the GNUmakefile. 
+
+
+
+
