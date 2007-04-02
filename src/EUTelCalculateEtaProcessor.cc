@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.3 2007-03-03 08:52:34 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.4 2007-04-02 14:18:05 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -14,13 +14,13 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelEtaFunctionImpl.h"
+#include "EUTelPseudo1DHistogram.h"
 
 // marlin includes ".h"
 #include "marlin/Exceptions.h"
 #include "marlin/Processor.h"
 #include "marlin/ProcessorMgr.h"
 #include "marlin/Global.h"
-#include "PseudoHistogram.h"
 
 #ifdef MARLIN_USE_AIDA
 // aida includes <.h>
@@ -169,16 +169,16 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
     int yNoOfBin = _noOfBin[1];
     
     for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-      PseudoHistogram * histoX = new PseudoHistogram(xNoOfBin, min, max);
+      EUTelPseudo1DHistogram * histoX = new EUTelPseudo1DHistogram(xNoOfBin, min, max);
       _cogHistogramX.push_back(histoX);
       
-      PseudoHistogram * histoY = new PseudoHistogram(yNoOfBin, min, max);
+      EUTelPseudo1DHistogram * histoY = new EUTelPseudo1DHistogram(yNoOfBin, min, max);
       _cogHistogramY.push_back(histoY);
       
-      PseudoHistogram * integralX = new PseudoHistogram(xNoOfBin, min, max);
+      EUTelPseudo1DHistogram * integralX = new EUTelPseudo1DHistogram(xNoOfBin, min, max);
       _integralHistoX.push_back(integralX);
       
-      PseudoHistogram * integralY = new PseudoHistogram(yNoOfBin, min, max);
+      EUTelPseudo1DHistogram * integralY = new EUTelPseudo1DHistogram(yNoOfBin, min, max);
       _integralHistoY.push_back(integralY);
 
       // prepare the output file

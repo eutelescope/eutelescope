@@ -11,6 +11,7 @@
 #define EUTELCALCULATEETAPROCESSOR_H 1
 
 // eutelescope includes ".h" 
+#include "EUTelPseudo1DHistogram.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -21,8 +22,6 @@
 #include <string>
 #include <map>
 
-// forward declaration
-class PseudoHistogram;
 
 #undef MARLIN_USE_HISTOGRAM
 #ifdef MARLIN_USE_AIDA
@@ -112,7 +111,7 @@ namespace eutelescope {
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  
-   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.3 2007-03-03 08:51:51 bulgheroni Exp $
+   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.4 2007-04-02 14:18:05 bulgheroni Exp $
    *
    *
    */
@@ -317,7 +316,7 @@ namespace eutelescope {
      *  filled with signed distanced between the CoG and the seed
      *  coordinates
      */
-    std::vector<PseudoHistogram* > _cogHistogramX;
+    std::vector<EUTelPseudo1DHistogram* > _cogHistogramX;
 
     //! Pseudo histograms for CoG along y
     /*! This is a vector of pointers to pseudo histogram objects one
@@ -325,7 +324,7 @@ namespace eutelescope {
      *  filled with signed distanced between the CoG and the seed
      *  coordinates
      */
-    std::vector<PseudoHistogram* > _cogHistogramY;
+    std::vector<EUTelPseudo1DHistogram* > _cogHistogramY;
 
     //! Pseudo histograms with the CoG integral along x
     /*! This is a vector of pointers to pseudo histogram objects one
@@ -333,7 +332,7 @@ namespace eutelescope {
      *  will be filled during the end() with the integral function of
      *  _cogHistogramX
      */
-    std::vector<PseudoHistogram* > _integralHistoX;
+    std::vector<EUTelPseudo1DHistogram* > _integralHistoX;
 
     //! Pseudo histograms with the CoG integral along y
     /*! This is a vector of pointers to pseudo histogram objects one
@@ -341,7 +340,7 @@ namespace eutelescope {
      *  will be filled during the end() with the integral function of
      *  _cogHistogramY
      */
-    std::vector<PseudoHistogram* > _integralHistoY;
+    std::vector<EUTelPseudo1DHistogram* > _integralHistoY;
 
     //! Number of detector planes in the run
     /*! This is the total number of detector saved into this input
