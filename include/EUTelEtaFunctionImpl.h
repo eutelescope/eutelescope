@@ -11,8 +11,6 @@
 #ifndef EUTELETAFUNCTIONIMPL_H
 #define EUTELETAFUNCTIONIMPL_H
 
-
-
 // lcio includes <.h>
 #include <lcio.h>
 #include <IMPL/LCGenericObjectImpl.h>
@@ -35,7 +33,7 @@ namespace eutelescope {
    *  to set/get the full bin center and the full eta value vectors
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelEtaFunctionImpl.h,v 1.2 2007-03-03 08:54:07 bulgheroni Exp $
+   *  @Version $Id: EUTelEtaFunctionImpl.h,v 1.3 2007-04-02 14:19:58 bulgheroni Exp $
    */ 
   class EUTelEtaFunctionImpl : public IMPL::LCGenericObjectImpl {
 
@@ -92,9 +90,9 @@ namespace eutelescope {
      *  gravity, the user must find Eta(CoG). This convenience
      *  function is used for that purpose. This algorithm is based on
      *  a binary search of the center of gravity value @a x using the
-     *  C++ implementation of lower_bound. Once the binning whici @a x
+     *  C++ implementation of lower_bound. Once the binning which @a x
      *  belongs to is found, the returned value of @a eta is linearly
-     *  interpolated. 
+     *  interpolated.
      *
      *  \li Note 1: It is possible to use the lower_bound algorithm
      *  because the CoG vector is sorted by definition.
@@ -109,7 +107,6 @@ namespace eutelescope {
      *  @param x is the current CoG value
      *  @return the corresponding Eta value
      *
-     *  @todo Try to use find algorithm with a predicate function
      */ 
     double getEtaFromCoG(double x) const ;
 

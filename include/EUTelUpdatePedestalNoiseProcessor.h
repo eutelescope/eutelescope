@@ -84,7 +84,7 @@ namespace eutelescope {
    *  @param FixedWeightValue the value of the fixed weight
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelUpdatePedestalNoiseProcessor.h,v 1.3 2007-02-26 09:24:02 bulgheroni Exp $
+   *  @version $Id: EUTelUpdatePedestalNoiseProcessor.h,v 1.4 2007-04-02 14:19:58 bulgheroni Exp $
    *
    *  @todo Implement the status matrix update
    *
@@ -120,7 +120,7 @@ namespace eutelescope {
     /*! It is called for every run, and consequently the run counter
      *  is incremented. 
      * 
-     *  @param the run LCRunHeader of the this current run
+     *  @param run LCRunHeader of the this current run
      *
      *  @throw InvalidParameterException if a paramter is wrongly set
      */

@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.2 2007-02-28 08:17:28 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.3 2007-04-02 14:21:10 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -145,7 +145,8 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * evt) {
 }
   
 
-bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(vector<set <int > > setVector, LCCollectionVec * collectionVec) const {
+bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::set <int > > setVector, 
+							       LCCollectionVec * collectionVec) const {
 
   /// /*DEBUG*/   cout << "[" << name() << "] Applying cluster separation algorithm " << _separationAlgo << endl;
   /// /*DEBUG*/   cout << "[" << name() << "] Found " << setVector.size() << " group(s) of merging clusters on event " << _iEvt << endl;
@@ -180,8 +181,8 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(vector<set <int >
 
 }
 
-void EUTelClusterSeparationProcessor::groupingMergingPairs(vector< pair<int , int> > pairVector, 
-							   vector< set<int > > * setVector) const {
+void EUTelClusterSeparationProcessor::groupingMergingPairs(std::vector< std::pair<int , int> > pairVector, 
+							   std::vector< std::set<int > > * setVector) const {
 
   vector< pair<int, int> >::iterator iter = pairVector.begin();
   while ( iter != pairVector.end() ) {

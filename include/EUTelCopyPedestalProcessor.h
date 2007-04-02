@@ -44,7 +44,7 @@ namespace eutelescope {
    *  <h4>Output</h4>
    *
    *  <b>PedestalCollectionName</b>: this is the name of the output
-   *  pedestal collection.</br> 
+   *  pedestal collection.<br> 
    *  <b>NoiseCollectionName</b>: this is
    *  the name of the output noise collection. <br>
    *  <b>StatusCollectionName</b>: this is the name of the output
@@ -58,7 +58,7 @@ namespace eutelescope {
    *  @param StatusCollectionName
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelCopyPedestalProcessor.h,v 1.2 2007-03-03 08:50:17 bulgheroni Exp $
+   *  @version $Id: EUTelCopyPedestalProcessor.h,v 1.3 2007-04-02 14:19:58 bulgheroni Exp $
    *
    *
    */

@@ -47,17 +47,17 @@ namespace eutelescope {
    *  sensor. This distinction between detectors and planes has been
    *  introduced because several algorithm like common mode
    *  suppression and bad pixel masking should be performed on a
-   *  detector and not on a plane basis.  Moreover, n the case of a
+   *  detector and not on a plane basis.  Moreover, in the case of a
    *  sensor like the MimoSTAR2 that is divided into two channels
-   *  featuring different pixel characteristics can be in principle be
-   *  considered as two different detectors.  Each Tracker(Raw)Data
-   *  has cellID0/1 set using the CellIDEncoder utility with
-   *  EUTELESCOPE::DEFAULTMATRIXENCODING. This encoding offers the
-   *  possibility to store the "sensorID" (5 bits), the "xMin",
-   *  "xMax", "yMin", "yMax" with 12 bit each. The xMin and yMin are
-   *  different from 0 only in the case there are more than one sensor
-   *  per plane or the detector is actually a channel of a bigger
-   *  detector.
+   *  featuring different pixel characteristics, the sensor can be in
+   *  principle be considered as two different detectors.  Each
+   *  Tracker(Raw)Data has cellID0/1 set using the CellIDEncoder
+   *  utility with EUTELESCOPE::DEFAULTMATRIXENCODING. This encoding
+   *  offers the possibility to store the "sensorID" (5 bits), the
+   *  "xMin", "xMax", "yMin", "yMax" with 12 bit each. The xMin and
+   *  yMin are different from 0 only in the case there are more than
+   *  one sensor per plane or the detector is actually a channel of a
+   *  bigger detector.
    *  
    *  The user can choose which algorithm should be used for pedestal
    *  calculation. @see EUTelPedestalNoiseProcessor::_pedestalAlgo
@@ -85,7 +85,7 @@ namespace eutelescope {
    *  @param OutputPedeFile Name of the output pedestal file
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.10 2007-02-23 11:24:55 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.11 2007-04-02 14:19:58 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -396,15 +396,39 @@ namespace eutelescope {
     std::string _statusCollectionName;
 
     //! Pedestal calculation algorithm
-    /*! People around the word are using several different algorithm
-     *    to calculate the pedestal and noise values of pixel
-     *    detector. To allow everyone to use her/his favorite method,
-     *    this same processor can be used with different algorithm
-     *    implementations. The user can select among the following
-     *    methods already implemented: \li MeanRMS --> The pedestal is
-     *    the mean pixel signal --> The noise is the sigma of the
-     *    pixel signal distribution \todo Implement all other methods
-     *    according to user wishes.
+    /*! People around the word are using several different algorithms
+     *  to calculate the pedestal and noise values of pixel
+     *  detector. To allow everyone to use her/his favorite method,
+     *  this same processor can be used with different algorithm
+     *  implementations. The user can select among the following
+     *  methods already implemented: 
+     * 
+     *  \li <b>MeanRMS</b>. This method is based on the on line
+     *  calculation of the pedestal and noise value as the mean and
+     *  the RMS of each pixel signal distribution. The actual values
+     *  of pedestal and noise are calculated.
+     *  
+     *  \li <b>AIDAProfile</b>. This algorithm is the easiest one from
+     *  the coding point of view since it relies on algorithm already
+     *  coded into the used AIDA implementation. The idea behind is
+     *  that all pixel output signals are used to fill in an AIDA
+     *  profile. At the end of the event loop, each bin of the profile
+     *  will be characterized by pixel mean value (pedestal) and
+     *  spread (noise). The use of this algorithm requires that the
+     *  MARLIN_USE_AIDA is set to 1 and that the AIDAProcessor is
+     *  properly called before this processor. In the case one or both
+     *  of these conditions are not fullfil the choice fall back on
+     *  the very safe and always possible MeanRMS algorithm simply
+     *  alerting the user of the change.  
+
+     *  @bug All debug tests have been done using RAIDA as AIDA
+     *  implementation and due to a bug in the
+     *  AIDAIProfile2D::binRMS() method, the calculated noise is not
+     *  correct. Moreover, this algorithm looks particularly slow. <br>
+     *
+     *  @todo Implement all other methods according to user wishes. In
+     *  particular, we can imagine to implement the ROOTProfile as
+     *  soon as the ROOTProcessor will be ready and fully tested. 
      */
     std::string _pedestalAlgo;
 

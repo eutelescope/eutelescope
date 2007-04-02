@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.5 2007-02-26 09:23:35 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.6 2007-04-02 14:21:10 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -333,7 +333,7 @@ void EUTelClusteringProcessor::end() {
 }
 
 
-void EUTelClusteringProcessor::resetStatus(TrackerRawDataImpl * status) {
+void EUTelClusteringProcessor::resetStatus(IMPL::TrackerRawDataImpl * status) {
   
   ShortVec::iterator iter = status->adcValues().begin();
   while ( iter != status->adcValues().end() ) {

@@ -26,7 +26,7 @@ class TFile;
 class TObject;
 
 
-namespace marlin {
+namespace eutelescope {
 
 
   //! Implementation of the ROOT histogramming interface
@@ -39,7 +39,7 @@ namespace marlin {
    *  even if ROOT is not making use of Factories owning all the
    *  produced objects.
    *
-   *  This processor is actually built with Marlin only the user
+   *  This processor is actually built with Marlin only if the user
    *  exported the enviromental variable MARLIN_USE_ROOT before
    *  starting. This is changing the building option in the top level
    *  GNUmakefile.
@@ -50,12 +50,19 @@ namespace marlin {
    *  processor as the first one has to be considered as a good
    *  attitude.
    *
-   *  When the init() method is called, the ROOTProcessor singleton
-   *  will open the ROOT output file for writing with the user
-   *  specified name.  When the user wants to save a ROOT object in
-   *  the file, he/she has to take care of creating the object and to
-   *  use the addTObject(Processor*,TObject*) to add it to the list of
-   *  objects being saved at the end.
+   *  For the time being only the end() method is actually
+   *  implemented. When it is called by the ProcessorMgr, a ROOT file
+   *  with the user specified name is open for writing. The
+   *  _listOfList object is containing a list for each of the active
+   *  processors which have added at least one TObject. The list name
+   *  corresponds to the processor name.
+   *
+   *  When the end() method is called, the ROOTProcessor
+   *  singleton will open the ROOT output file for writing with the
+   *  user specified name.  When the user wants to save a ROOT object
+   *  in the file, he/she has to take care of creating the object and
+   *  to use the addTObject(Processor*,TObject*) to add it to the list
+   *  of objects being saved at the end.
    *
    *  <h4>Input - Prerequisites</h4>
    *  None
@@ -65,10 +72,10 @@ namespace marlin {
    *  other processors.
    *
    *  @param ROOT file name
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: ROOTProcessor.h,v 1.1 2007-02-26 09:28:53 bulgheroni Exp $
+   *  @version $Id: ROOTProcessor.h,v 1.2 2007-04-02 14:19:58 bulgheroni Exp $
    */
-
   class ROOTProcessor : public marlin::Processor {
     
   public:
@@ -118,26 +125,58 @@ namespace marlin {
     //! Add TObject to the output file
     /*! This static member is used to add any kind of TObject to the
      *  list of objects are going to be saved into the output ROOT
-     *  files. 
+     *  file. This object will be saved into the main processor folder.
      * 
      *  @param proc The processor is calling the addTObject method. So
      *  usually this.
      *  @param obj The TObject we want to add
      */ 
-    static void addTObject(const Processor * proc, TObject * obj);
+    static void addTObject(const marlin::Processor * proc, TObject * obj);
+
+    //! Add TObject to the the output file in a subfolder
+    /*! This static member is used to add any kind of TObject to the
+     *  list of objects are going to be saved into the output ROOT
+     *  file. This method, allow the user to specify a subfolder
+     *  (inside the current processor @a proc directory) where the
+     *  object has to be saved. The @a subfolder syntax has to be
+     *  something like <code> subfolder1/subfolder2 </code>. The use
+     *  of relative path like "../" is not allowed.
+     *
+     *  @param proc The processor is calling the addTObject method. So
+     *  usually this.  
+     *  @param subfolder The name of the subfolder where the TObject
+     *  has to be saved 
+     *  @param obj The TObject we want to add
+     */ 
+    static void addTObject(const marlin::Processor * proc, const char * subfolder, TObject * obj);
 
     //! Get a TObject
     /*! This static member is used to get back the pointer of a
-     *  certain objcted. The object is recognized by its name.
+     *  certain object. The object is recognized by its name.
      *
      *  @param proc A pointer to the processor calling the method
-     *  @param name The name of the object we want to retrieve
+     *  @param objName The name of the object we want to retrieve
      *  @return A pointer to the object we would like to have
      *
      *  @todo Consider the possibility to define and throw an
      *  exception if the object the user is looking for doesn't exist
      */ 
-    static TObject * getTObject(const Processor * proc, const char* objName) ;
+    static TObject * getTObject(const marlin::Processor * proc, const char * objName) ;
+
+    //! Get a TObject
+    /*! This static member is used to get back the pointer of a
+     *  certain object. The object is recognized by its name and has
+     *  to be located into @a subfolder
+     *
+     *  @param proc A pointer to the processor calling the method
+     *  @param subfolder The folder where the object is stored.
+     *  @param objName The name of the object we want to retrieve @return
+     *  A pointer to the object we would like to have
+     *
+     *  @todo Consider the possibility to define and throw an
+     *  exception if the object the user is looking for doesn't exist
+     */ 
+    static TObject * getTObject(const marlin::Processor * proc, const char * subfolder, const char * objName );
 
     //! Get the TList of TObjects
     /*! This static member is used to get back a pointer to the list
@@ -147,7 +186,7 @@ namespace marlin {
      *  @return A pointer to the TList containing all objects added by
      *  this processor
      */
-    static TList * getTList(const Processor * proc) ;
+    static TList * getTList(const marlin::Processor * proc) ;
 
   protected:
     
