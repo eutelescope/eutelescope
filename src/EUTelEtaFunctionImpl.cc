@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEtaFunctionImpl.cc,v 1.3 2007-03-03 16:37:12 bulgheroni Exp $
+// Version $Id: EUTelEtaFunctionImpl.cc,v 1.4 2007-04-02 14:25:05 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -31,7 +31,7 @@ EUTelEtaFunctionImpl::EUTelEtaFunctionImpl(int nBin) : IMPL::LCGenericObjectImpl
   _isFixedSize     = true;
 }
 
-EUTelEtaFunctionImpl::EUTelEtaFunctionImpl(int nBin, vector<double > centerVec, vector<double > valueVec) : 
+EUTelEtaFunctionImpl::EUTelEtaFunctionImpl(int nBin, std::vector<double > centerVec, std::vector<double > valueVec) : 
   IMPL::LCGenericObjectImpl(0,0,2 * nBin) {
     _typeName        = "Eta function";
     _dataDescription = "The first nBin double values are the bin centers, the second nBin doubles values"
@@ -50,7 +50,7 @@ EUTelEtaFunctionImpl::EUTelEtaFunctionImpl(int nBin, vector<double > centerVec, 
       
 }
 
-void EUTelEtaFunctionImpl::setBinCenterVector(vector<double > center) {
+void EUTelEtaFunctionImpl::setBinCenterVector(std::vector<double > center) {
 
   unsigned int indexCenter;
   for ( indexCenter = 0; indexCenter < center.size(); indexCenter++ ) {
@@ -58,7 +58,7 @@ void EUTelEtaFunctionImpl::setBinCenterVector(vector<double > center) {
   }
 }
 
-void EUTelEtaFunctionImpl::setEtaValueVector(vector<double > value) {
+void EUTelEtaFunctionImpl::setEtaValueVector(std::vector<double > value) {
 
   unsigned int index;
   int shift = getNDouble() / 2;
@@ -70,11 +70,7 @@ void EUTelEtaFunctionImpl::setEtaValueVector(vector<double > value) {
 
 const vector<double > EUTelEtaFunctionImpl::getBinCenterVector() const {
 
-  vector<double > center;
-  int index;
-  for (index = 0; index < getNDouble() / 2; index++) {
-    center.push_back(getDoubleVal(index));
-  }
+  vector<double > center(_doubleVec.begin(), _doubleVec.begin() + (getNDouble() / 2) );
 
   return center;
 
@@ -82,12 +78,7 @@ const vector<double > EUTelEtaFunctionImpl::getBinCenterVector() const {
 
 const vector<double > EUTelEtaFunctionImpl::getEtaValueVector() const {
 
-  vector<double > value;
-  int index;
-  for (index = getNDouble() / 2; index < getNDouble(); index++) {
-    value.push_back(getDoubleVal(index));
-  }
-
+  vector<double > value( _doubleVec.begin() + (getNDouble() / 2), _doubleVec.end());
   return value;
 
 }
@@ -107,7 +98,7 @@ double EUTelEtaFunctionImpl::getEtaFromCoG(double x) const {
   // immediately. Remember that the end() iterator is one element
   // after the last element
 
-  if ( x <= (*cogBegin) ) return (*etaBegin);
+  if ( x <= (*cogBegin) )     return (*etaBegin);
   if ( x >= (*(cogEnd - 1)) ) return (*(etaEnd - 1));
   
   DoubleIter xLeft    = lower_bound(cogBegin, cogEnd, x);
