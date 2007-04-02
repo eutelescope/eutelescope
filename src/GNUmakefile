@@ -4,7 +4,7 @@
 #
 # @author Frank Gaede
 # @author Jan Engels
-# @version $Id: GNUmakefile,v 1.4 2007-02-26 09:26:52 bulgheroni Exp $
+# @version $Id: GNUmakefile,v 1.5 2007-04-02 14:22:43 bulgheroni Exp $
 #
 ###########################################################
 
@@ -28,7 +28,7 @@ endif
 
 # additional user include/libraries
 ifndef USERINCLUDES
- USERINCLUDES += -I$(MARLIN)/packages/MarlinUtil/include
+ USERINCLUDES +=
 endif
 
 ifndef USERLIBS
@@ -108,6 +108,12 @@ CPPFLAGS += `. $(MARLINWORKDIR)/bin/marlin_includes.sh`
 #LIBS = -Wl,-whole-archive -L $(LIBDIR) -l$(PROGNAME) -Wl,-no-whole-archive
 LIBS += $(USERLIBS)
 LIBS += `. $(MARLINWORKDIR)/bin/marlin_libs.sh`
+
+ifeq ($(MARLIN_USE_ROOT),1)
+ CPPFLAGS += -DMARLIN_USE_ROOT `root-config --cflags`
+ LIBS += `root-config --libs`
+endif
+
 
 # linker
 LD = $(CXX)
