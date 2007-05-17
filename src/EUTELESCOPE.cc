@@ -1,5 +1,5 @@
 // Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTELESCOPE.cc,v 1.6 2007-02-26 09:21:28 bulgheroni Exp $
+// Version: $Id: EUTELESCOPE.cc,v 1.7 2007-05-17 13:43:35 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -24,12 +24,16 @@ const char *   EUTELESCOPE::DAQSWVERSION        = "DAQSWVersion";
 const char *   EUTELESCOPE::SIMULSWNAME         = "SimulSWName";
 const char *   EUTELESCOPE::SIMULSWVERSION      = "SimulSWVersion";
 const char *   EUTELESCOPE::GEOID               = "GeoID";
+const char *   EUTELESCOPE::BEAMLOCATION        = "BeamLocation";
+const char *   EUTELESCOPE::BEAMTYPE            = "BeamType";
+const char *   EUTELESCOPE::BEAMENERGY          = "BeamEnergy";
 const char *   EUTELESCOPE::NOOFDETECTOR        = "NoOfDetector";
 const char *   EUTELESCOPE::MINX                = "MinX";
 const char *   EUTELESCOPE::MAXX                = "MaxX";
 const char *   EUTELESCOPE::MINY                = "MinY";
 const char *   EUTELESCOPE::MAXY                = "MaxY";
 const char *   EUTELESCOPE::INTERMEDIATEFILE    = "IntermediateFile";
+const char *   EUTELESCOPE::USERCOMMENT         = "UserComment";
 const char *   EUTELESCOPE::APPLIEDPROCESSOR    = "AppliedProcessor";
 const char *   EUTELESCOPE::DAQDATA             = "DAQData";
 const char *   EUTELESCOPE::SIMULDATA           = "SimulData";

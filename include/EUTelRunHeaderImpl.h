@@ -48,21 +48,6 @@ namespace eutelescope
    *  or simulated data files that were generated and saved with
    *  another data file.
    *
-   *  \li <b>EventNumber</b>: this is the total number of events
-   *  saved into the file. Due to I/O data format, it is possible to
-   *  know a priori how many events are stored into the file. For
-   *  some specific analysis processes like pedestal calculation and
-   *  eta function estimation, just quote two of them, it is
-   *  compulsory to have a processor performing multiple loops over
-   *  all events. This has been made possible by the use of a
-   *  RewindDataFileException that can only be thrown within the
-   *  processEvent(LCEvent*) callback. So it means that you need to
-   *  call it before going into end(): if you know how many events
-   *  are stored in your file then when isLastEvent() becomes true
-   *  throw the exception. If you don't know it, you are doom to fall
-   *  in the end() without any possibility to go back at the
-   *  beginning of the loop.
-   * 
    *  \li <b>DateTime</b>: this is a string showing in a human
    *  readable format the current date and time. Calling the set
    *  method, the current data is automatically saved.
@@ -101,6 +86,17 @@ namespace eutelescope
    *  geometry database. This is used during the reconstruction phase
    *  into a DB query to retrieve precise information about the
    *  detector positioning and alignment.
+   *
+   *  \li <b>BeamLocation</b>: this is a string field used to store
+   *  where the test beam is taking place. It can be something like
+   *  DESY, or CERN or it might be more detailed like CERN-H8. 
+   *
+   *  \li <b>BeamType</b>: this is another string field used to store
+   *  the beam type, i.e. the kind of particle used (muons, electrons,
+   *  hadron)
+   *
+   *  \li <b>BeamEnergy</b>: this is float number representing the
+   *  beam enegery in GeV.
    *
    *  \li <b>NoOfDetector</b>: this int number represents the number
    *  of pixel detectors into the current telescope configuration. It
@@ -148,8 +144,10 @@ namespace eutelescope
    *  contains the intermediate file used to produce this lcio
    *  file. Again this is useful to reconstruct the file history.
    *
+   *  \li <b>UserComment</b>: a user defined string field. 
+   *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTelRunHeaderImpl.h,v 1.3 2007-02-22 08:09:36 bulgheroni Exp $
+   * @Version $Id: EUTelRunHeaderImpl.h,v 1.4 2007-05-17 13:43:35 bulgheroni Exp $
    * 
    */
 
@@ -274,7 +272,31 @@ namespace eutelescope
      *  @param id The identification number of the current geometry
      */
     virtual void setGeoID (int id);
+    
+    //! Set the beam location 
+    /*! This is a string field representing where the beam test is
+     *  taking place. In case of simulated data is meaningless. It can
+     *  be something like "DESY" or "CERN-H8"
+     *
+     *  @param location The place where data were collected.
+     */
+    virtual void setBeamLocation (std::string location);
 
+    //! Set beam type
+    /*! This string is used to shortly describe the kind of beam used:
+     *  like electrons, hadrons, ....
+     *
+     *  @param type The type of beam
+     */
+    virtual void setBeamType (std::string type);
+
+    //! Set beam energy 
+    /*! This float number represent the beam energy measured in GeV.
+     * 
+     *  @param energy Beam energy in GeV
+     */ 
+    virtual void setBeamEnergy (float energy);
+    
     //! Set the number of detector in this run
     /*! this int number represents the number of pixel detectors into
      *  the current telescope configuration. It might correspond to
@@ -353,6 +375,14 @@ namespace eutelescope
      */
     virtual void addIntermediateFile (std::string file);
 
+    //! User defined string field
+    /*! This field can be used to store a comment from the user or
+     *  anything else the user wants to write in the run header
+     *
+     *  @param note The user note about the run
+     */ 
+    virtual void setUserComment(std::string note);
+
     //! return the header version
     inline float getHeaderVersion () const
     {
@@ -411,10 +441,16 @@ namespace eutelescope
     {
       return _params.getFloatVal (EUTELESCOPE::SIMULSWVERSION);
     }
+    
     //! return the geometry identification number 
     inline int getGeoID () const
     {
       return _params.getIntVal (EUTELESCOPE::GEOID);
+    }
+
+    //! return the beam location
+    inline std::string getBeamLocation() const {
+      return _params.getStringVal(EUTELESCOPE::BEAMLOCATION);
     }
 
     //! return the number of pixel detectors in the file
@@ -450,6 +486,12 @@ namespace eutelescope
       lcio::IntVec v;
       return _params.getIntVals (EUTELESCOPE::MAXY, v);
     }
+
+    //! return the user comment 
+    inline std::string getUserComment() const {
+      return _params.getStringVal(EUTELESCOPE::USERCOMMENT);
+    }
+
   };                           // end of EUTelRunHeaderImpl
 }                               // eutelescope namespace
 

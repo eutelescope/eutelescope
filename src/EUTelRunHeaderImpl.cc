@@ -1,5 +1,5 @@
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelRunHeaderImpl.cc,v 1.3 2007-02-22 08:09:36 bulgheroni Exp $
+// Version: $Id: EUTelRunHeaderImpl.cc,v 1.4 2007-05-17 13:43:35 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -130,6 +130,19 @@ EUTelRunHeaderImpl::setGeoID (int id)
    _params.setValue (EUTELESCOPE::GEOID, id);
 }
 
+void EUTelRunHeaderImpl::setBeamLocation(std::string location) {
+  _params.setValue(EUTELESCOPE::BEAMLOCATION, location);
+}
+
+
+void EUTelRunHeaderImpl::setBeamType(std::string type) {
+  _params.setValue(EUTELESCOPE::BEAMTYPE, type);
+}
+
+void EUTelRunHeaderImpl::setBeamEnergy(float energy) {
+  _params.setValue(EUTELESCOPE::BEAMENERGY, energy);
+}
+
 void
 EUTelRunHeaderImpl::setNoOfDetector (int num)
 {
@@ -191,4 +204,8 @@ EUTelRunHeaderImpl::addIntermediateFile (std::string file)
    _params.getStringVals (EUTELESCOPE::INTERMEDIATEFILE, fileVec);
    fileVec.push_back (file);
    _params.setValues (EUTELESCOPE::INTERMEDIATEFILE, fileVec);
+}
+
+void EUTelRunHeaderImpl::setUserComment(std::string note) {
+  _params.setValue(EUTELESCOPE::USERCOMMENT, note);
 }

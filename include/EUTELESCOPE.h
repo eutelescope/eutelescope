@@ -24,7 +24,7 @@ namespace eutelescope
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.7 2007-02-26 09:21:28 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.8 2007-05-17 13:43:35 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -91,6 +91,15 @@ namespace eutelescope
     //! Parameter key to store/recall the geometry identification number
     static const char * GEOID;
 
+    //! Parameter key to store/recall the beam location
+    static const char * BEAMLOCATION;
+
+    //! Parameter key to store/recall the beam type
+    static const char * BEAMTYPE;
+
+    //! Parameter key to store/recall the beam energy
+    static const char * BEAMENERGY;
+
     //! Parameter key to store/recall the number of detector in the file
     static const char * NOOFDETECTOR;
 
@@ -112,6 +121,9 @@ namespace eutelescope
     //! Parameter key to store/recall the intermediate file names
     static const char * INTERMEDIATEFILE;
 
+    //! Parameter key to store/recall the user defined run header comment
+    static const char * USERCOMMENT;
+    
     // standard name to be saved into the header
 
     //! Constant used to identify really acquired data
@@ -266,7 +278,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.7 2007-02-26 09:21:28 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.8 2007-05-17 13:43:35 bulgheroni Exp $
    */ 
   
   enum ClusterQuality {
