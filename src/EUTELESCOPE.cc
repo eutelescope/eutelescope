@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTELESCOPE.cc,v 1.7 2007-05-17 13:43:35 bulgheroni Exp $
+// Version: $Id: EUTELESCOPE.cc,v 1.8 2007-05-18 07:58:20 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -43,6 +44,7 @@ const char *   EUTELESCOPE::IPHCIMAGER          = "IPHCIMAGER";
 const char *   EUTELESCOPE::SUCIMAIMAGER        = "SUCIMAIMAGER";
 const char *   EUTELESCOPE::EUDAQ               = "EUDAQ";
 const int      EUTELESCOPE::GOODPIXEL           =  0;
+const char *   EUTELESCOPE::EVENTTYPE           = "EventType";
 const int      EUTELESCOPE::BADPIXEL            =  1;
 const int      EUTELESCOPE::HITPIXEL            = -1;
 const char *   EUTELESCOPE::ABSOLUTENOISEVALUE  = "AbsoluteNoiseValue";
