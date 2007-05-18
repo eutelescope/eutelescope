@@ -1,5 +1,5 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: clustertest.cc,v 1.2 2007-02-21 10:55:13 bulgheroni Exp $
+// Version $Id: clustertest.cc,v 1.3 2007-05-18 14:55:31 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,7 +10,8 @@
  */
 
 #include "lcio.h"
-#include  "EUTelRunHeaderImpl.h"
+#include "EUTelRunHeaderImpl.h"
+#include "EUTelEventImpl.h"
 #include "IMPL/LCEventImpl.h"
 #include "IMPL/LCCollectionVec.h"
 #include "IMPL/TrackerRawDataImpl.h"
@@ -106,46 +107,52 @@ int main(int argc, char ** argv) {
     delete runHeader;
 
 
-    for (int iEvent = 0; iEvent < nPedeEvent; iEvent++) {
+    for (int iEvent = 0; iEvent <= nPedeEvent; iEvent++) {
       if ( iEvent % 10 == 0 )
 	cout << "Pedestal on event " << iEvent << endl;
 
-      LCEventImpl * event = new LCEventImpl;
+      EUTelEventImpl * event = new EUTelEventImpl;
       event->setDetectorName("test");
-      
       LCTime * now = new LCTime;
       event->setTimeStamp(now->timeStamp());
       delete now;
-
       event->setEventNumber(iEvent);
-      LCCollectionVec * rawData = new LCCollectionVec(LCIO::TRACKERRAWDATA);
 
-      for (int iDetector = 0; iDetector < nDetector ; iDetector++) {
+      if ( iEvent < nPedeEvent ) {
+	
+	event->setEventType(kDE);
+	LCCollectionVec * rawData = new LCCollectionVec(LCIO::TRACKERRAWDATA);
 
-	short  baseSignal = 1;
-	
-	TrackerRawDataImpl * rawMatrix = new TrackerRawDataImpl;
-	CellIDEncoder<TrackerRawDataImpl> idEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", rawData);
-	idEncoder["sensorID"] = iDetector;
-	idEncoder["xMin"]     = 0;
-	idEncoder["xMax"]     = xNPixel - 1;
-	idEncoder["yMin"]     = 0;
-	idEncoder["yMax"]     = yNPixel - 1;
-	idEncoder.setCellID(rawMatrix);
-	
-	for (int yPixel = 0; yPixel < yNPixel; yPixel++) {
-	  for (int xPixel = 0; xPixel < xNPixel; xPixel++) {
+	for (int iDetector = 0; iDetector < nDetector ; iDetector++) {
+	  
+	  short  baseSignal = 1;
+	  
+	  TrackerRawDataImpl * rawMatrix = new TrackerRawDataImpl;
+	  CellIDEncoder<TrackerRawDataImpl> idEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", rawData);
+	  idEncoder["sensorID"] = iDetector;
+	  idEncoder["xMin"]     = 0;
+	  idEncoder["xMax"]     = xNPixel - 1;
+	  idEncoder["yMin"]     = 0;
+	  idEncoder["yMax"]     = yNPixel - 1;
+	  idEncoder.setCellID(rawMatrix);
+	  
+	  for (int yPixel = 0; yPixel < yNPixel; yPixel++) {
+	    for (int xPixel = 0; xPixel < xNPixel; xPixel++) {
 	    rawMatrix->adcValues().push_back(baseSignal + (short) (rand()/(RAND_MAX / noiseDivider)));
 	    ++baseSignal;
+	    }
 	  }
+	  rawData->push_back(rawMatrix);
 	}
-	rawData->push_back(rawMatrix);
-      }
-      event->addCollection(rawData, "rawdata");
-      lcWriter->writeEvent(event);
+	event->addCollection(rawData, "rawdata");
+      
+      } else event->setEventType(kEORE);
+
+      LCEventImpl * lcevent = static_cast<LCEventImpl*>(event);
+      lcWriter->writeEvent(lcevent);
       delete event;
     }
-
+    
     lcWriter->close();
 
   }
@@ -185,77 +192,85 @@ int main(int argc, char ** argv) {
 
     logfile.open("clustering.log");
 
-    for (int iEvent = 0; iEvent < nDataEvent; iEvent++) {
+    for (int iEvent = 0; iEvent <= nDataEvent; iEvent++) {
       if ( iEvent % 10 == 0) 
 	cout << "Data on event " << iEvent << endl;
 
       logfile << "Event " << iEvent << endl;
-      LCEventImpl * event = new LCEventImpl;
+
+      EUTelEventImpl * event = new EUTelEventImpl;
       event->setEventNumber(iEvent);
       event->setDetectorName("test");
-      
       LCTime * now = new LCTime;
       event->setTimeStamp(now->timeStamp());
       delete now;
+      
+      if ( iEvent < nDataEvent) {
 
-      LCCollectionVec * rawData = new LCCollectionVec(LCIO::TRACKERRAWDATA);
-
-      for (int iDetector = 0; iDetector < nDetector; iDetector++) {
-	logfile << "Working on detector " << iDetector << endl;
+	event->setEventType(kDE);
+      
+	LCCollectionVec * rawData = new LCCollectionVec(LCIO::TRACKERRAWDATA);
 	
-	short  baseSignal = 1;
-	
-	TrackerRawDataImpl * rawMatrix = new TrackerRawDataImpl;
-	CellIDEncoder<TrackerRawDataImpl> idEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", rawData);
-	idEncoder["sensorID"] = iDetector;
-	idEncoder["xMin"]     = 0;
-	idEncoder["xMax"]     = xNPixel - 1;
-	idEncoder["yMin"]     = 0;
-	idEncoder["yMax"]     = yNPixel - 1;
-	idEncoder.setCellID(rawMatrix);
-
-	int iPixel = 0;
-	for (int yPixel = 0; yPixel < yNPixel; yPixel++) {
-	  for (int xPixel = 0; xPixel < xNPixel; xPixel++) {
-	    matrix[iPixel] = baseSignal +  + (short) (rand()/(RAND_MAX / noiseDivider));
-	    ++iPixel;
-	    ++baseSignal;
-	  }
-	}
-	
-	// set the number of cluster 
-	int clusterPerEvent = rand() / (RAND_MAX / maxClusterPerEvent);
-	logfile << "  injected " << clusterPerEvent << " clusters " << endl; 
-	for (int iSeed = 0; iSeed < clusterPerEvent; iSeed++) {
-	  int index = rand() / (RAND_MAX / (xNPixel * yNPixel));
-	  int xSeed, ySeed;
-	  getXYFromIndex(index, xSeed, ySeed);
-	  logfile << "iSeed " << iSeed << " xSeed " << xSeed << " ySeed " << ySeed << endl;
-	  int iCluPos = 0;
-	  for (int yPixel = ySeed - (yCluSize / 2); yPixel <=  ySeed + (yCluSize / 2); yPixel++) {
-	    for (int xPixel = xSeed - (xCluSize / 2); xPixel <=  xSeed + (xCluSize / 2); xPixel++) {
-	      if ( ( xPixel >= 0 ) && ( xPixel < xNPixel ) &&
-		   ( yPixel >= 0 ) && ( yPixel < yNPixel ) ) {
-		index = getIndexFromXY(xPixel, yPixel);
-		matrix[index] += clusterSignal[iCluPos];
-		//		logfile << "x = " << xPixel << " y = " << yPixel << " s = " << matrix[index] << endl;
-	      }
-	      ++iCluPos;
+	for (int iDetector = 0; iDetector < nDetector; iDetector++) {
+	  logfile << "Working on detector " << iDetector << endl;
+	  
+	  short  baseSignal = 1;
+	  
+	  TrackerRawDataImpl * rawMatrix = new TrackerRawDataImpl;
+	  CellIDEncoder<TrackerRawDataImpl> idEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", rawData);
+	  idEncoder["sensorID"] = iDetector;
+	  idEncoder["xMin"]     = 0;
+	  idEncoder["xMax"]     = xNPixel - 1;
+	  idEncoder["yMin"]     = 0;
+	  idEncoder["yMax"]     = yNPixel - 1;
+	  idEncoder.setCellID(rawMatrix);
+	  
+	  int iPixel = 0;
+	  for (int yPixel = 0; yPixel < yNPixel; yPixel++) {
+	    for (int xPixel = 0; xPixel < xNPixel; xPixel++) {
+	      matrix[iPixel] = baseSignal +  + (short) (rand()/(RAND_MAX / noiseDivider));
+	      ++iPixel;
+	      ++baseSignal;
 	    }
 	  }
-	}
-      
-	iPixel = 0;
-	for (int yPixel = 0; yPixel < yNPixel; yPixel++) {
-	  for (int xPixel = 0; xPixel < xNPixel; xPixel++) {
-	    rawMatrix->adcValues().push_back(matrix[iPixel]);
-	    ++iPixel;
+	  
+	  // set the number of cluster 
+	  int clusterPerEvent = rand() / (RAND_MAX / maxClusterPerEvent);
+	  logfile << "  injected " << clusterPerEvent << " clusters " << endl; 
+	  for (int iSeed = 0; iSeed < clusterPerEvent; iSeed++) {
+	    int index = rand() / (RAND_MAX / (xNPixel * yNPixel));
+	    int xSeed, ySeed;
+	    getXYFromIndex(index, xSeed, ySeed);
+	    logfile << "iSeed " << iSeed << " xSeed " << xSeed << " ySeed " << ySeed << endl;
+	    int iCluPos = 0;
+	    for (int yPixel = ySeed - (yCluSize / 2); yPixel <=  ySeed + (yCluSize / 2); yPixel++) {
+	      for (int xPixel = xSeed - (xCluSize / 2); xPixel <=  xSeed + (xCluSize / 2); xPixel++) {
+		if ( ( xPixel >= 0 ) && ( xPixel < xNPixel ) &&
+		     ( yPixel >= 0 ) && ( yPixel < yNPixel ) ) {
+		  index = getIndexFromXY(xPixel, yPixel);
+		  matrix[index] += clusterSignal[iCluPos];
+		  //		logfile << "x = " << xPixel << " y = " << yPixel << " s = " << matrix[index] << endl;
+		}
+		++iCluPos;
+	      }
+	    }
 	  }
+	  
+	  iPixel = 0;
+	  for (int yPixel = 0; yPixel < yNPixel; yPixel++) {
+	    for (int xPixel = 0; xPixel < xNPixel; xPixel++) {
+	      rawMatrix->adcValues().push_back(matrix[iPixel]);
+	      ++iPixel;
+	    }
+	  }
+	  rawData->push_back(rawMatrix);
 	}
-	rawData->push_back(rawMatrix);
-      }
-      event->addCollection(rawData,"rawdata");
-      lcWriter->writeEvent(event);
+	event->addCollection(rawData,"rawdata");
+	
+      } else event->setEventType(kEORE);
+
+      LCEventImpl * lcevent = static_cast<LCEventImpl*>(event);
+      lcWriter->writeEvent(lcevent);
       delete event;
     }
     
