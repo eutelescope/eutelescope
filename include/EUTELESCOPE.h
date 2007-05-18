@@ -1,4 +1,4 @@
-// -*- C++ -*-
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog -*-
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -24,7 +24,7 @@ namespace eutelescope
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.8 2007-05-17 13:43:35 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.9 2007-05-18 07:57:43 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -147,6 +147,12 @@ namespace eutelescope
     //! Constant used to identify the DAQ software developed by Geneva team
     static const char * EUDAQ;
 
+    // PARAMETER NAMES USED IN THE EVENT IMPLEMENTATION
+    
+    //! Constant used to get/set the event type 
+    static const char * EVENTTYPE;
+
+
     // pixel flags
 
     //! Constant to identify good pixels
@@ -242,6 +248,43 @@ namespace eutelescope
     static const char * CLUSTERDEFAULTENCODING;
   };
 
+  //! Event type enum
+  /*! This enumeration type has been introduced in order to
+   *  distinguish the three main different kind of events available in
+   *  a EUTelEventImpl. Those are the following:
+   *
+   *  \li <b>kBORE</b>: Beginning Of Run Event. This is a dummy event
+   *  containing none of the real data collection. For the time being
+   *  it is not used since the first event of the run can be
+   *  identified precisely being the first after the run header
+   *  record.
+   *
+   *  \li <b>kEORE</b>: End of Run Event. This is the last event of
+   *  the run. If the DAQ software was able to terminate properly the
+   *  run this event should be the last, otherwise it has to be
+   *  appended "manually" using a sort of LCIO file fix.
+   *
+   *  \li <b>kDE</b>: Data Event. This is flag is used for all the
+   *  other events in the run, the ones containing the data collection
+   *  to be used for the analysis.
+   *
+   *  \li <b>kUNKNOWN</b>: type unknown or not set. This value has
+   *  been introduced in order to extend the compatibility to non
+   *  EUTelEventImpl event. In such case, in fact, asking for a not
+   *  existing parameter will return 0.
+   *
+   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @Version $Id: EUTELESCOPE.h,v 1.9 2007-05-18 07:57:43 bulgheroni Exp $
+   */
+  enum EventType {
+    kUNKNOWN  = 0,
+    kBORE     = 1,
+    kDE       = 2,
+    kEORE     = 3
+  };
+
+
+
   //! Cluster quality enum
   /*! This enum can be attached to a LCIO class describing a cluster
    *  or it can be inserted into the CellID describing the cluster
@@ -278,7 +321,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.8 2007-05-17 13:43:35 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.9 2007-05-18 07:57:43 bulgheroni Exp $
    */ 
   
   enum ClusterQuality {
