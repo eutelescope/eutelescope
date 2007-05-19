@@ -1,4 +1,4 @@
-// -*- C++ -*-
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -85,7 +85,7 @@ namespace eutelescope {
    *  @param OutputPedeFile Name of the output pedestal file
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.11 2007-04-02 14:19:58 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.12 2007-05-19 09:51:22 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -315,7 +315,12 @@ namespace eutelescope {
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It
-     *  prints only a goodbye message
+     *  is checking whether the calculation is properly finished or
+     *  not. 
+     *  A very common error occurs when the file finished without a
+     *  EORE or when the MaxRecordNumber was set to low to loop over
+     *  all the needed record. To check this is very easy because we
+     *  just have to crosscheck if _iLoop is equal to noOfCMIterations.
      */
     virtual void end();
 
