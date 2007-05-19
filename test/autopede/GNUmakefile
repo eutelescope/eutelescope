@@ -21,7 +21,7 @@ LIBS          = $(ROOTLIBS) $(SYSLIBS)
 GLIBS         = $(ROOTGLIBS) $(SYSLIBS)
 
 EUTELESCOPECFLAGS = -I$(MARLIN)/packages/Eutelescope/include
-EUTELESCOPELIBS   = -L$(MARLIN)/lib -lMarlin -L$(MARLIN)/packages/Eutelescope/  -lEutelescope
+EUTELESCOPELIBS   = -L$(MARLIN)/lib -lMarlin -L$(MARLIN)/packages/Eutelescope/lib  -lEutelescope
 
 CXXFLAGS += $(EUTELESCOPECFLAGS)
 LIBS += $(EUTELESCOPELIBS)
