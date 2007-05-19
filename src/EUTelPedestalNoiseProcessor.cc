@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.13 2007-03-03 08:49:53 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.14 2007-05-19 09:53:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -12,6 +13,7 @@
 // eutelescope includes ".h" 
 #include "EUTelExceptions.h"
 #include "EUTelRunHeaderImpl.h"
+#include "EUTelEventImpl.h"
 #include "EUTelPedestalNoiseProcessor.h"
 #include "EUTELESCOPE.h"
 
@@ -190,24 +192,58 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
   }
 
   
-  int tempNoOfEvent;
+  // the user can decide to limit the pedestal calculation on a
+  // sub range of events for many reasons. The most common one is that
+  // a run is started with the beam off and some hundreds of events
+  // are taken on purpose before switching the beam on. In this way
+  // the same file contains both pedestal and data, with pedestal
+  // events within a specific event window. 
+  //
+  // From the Marlin steering file the best way the user has to select
+  // this range is using the _firstEvent and _lastEvent parameter of
+  // the processor it self. 
+  // There is another variable that can influence this behavior and it
+  // is the global MaxRecordNumber. Being global, of course it is
+  // dominant with respect to the local _lastEvent setting. Once more,
+  // if the EORE is found before the _lastEvent than finalize method
+  // is called anyway.
+  //
 
-  // get from the file header the event number 
-  if ( Global::parameters->getIntVal("MaxRecordNumber") == 0 ) {
-    tempNoOfEvent = runHeader->getNoOfEvent();
+
+  int maxRecordNumber = Global::parameters->getIntVal("MaxRecordNumber");
+
+  message<DEBUG>( log() << "Event range for pedestal calculation is from " << _firstEvent << " to " << _lastEvent );
+  message<DEBUG>( log() << "MaxRecordNumber from the global section is   " << maxRecordNumber );
+
+  if ( _lastEvent == -1 ) {
+    // the user didn't select an upper limit for the event range, so
+    // we don't know on how many events the calculation should be done
+    //
+    // if the global MaxRecordNumber has been set, so warn the user
+    // that the procedure could be wrong due to a too low number of
+    // records.
+    if ( maxRecordNumber != 0 ) {
+      message<WARNING> ( log() << "The MaxRecordNumber in the Global section of the steering file has been set to " 
+			 << maxRecordNumber << "." );
+      message<WARNING> ( log() << "This means that in order to properly perform the pedestal calculation the maximum allowed number of events is " 
+			 << maxRecordNumber / ( _noOfCMIterations + 1 ) << "." );
+      message<WARNING> ( log() << "Let's hope it is correct and try to continue.");
+    }
   } else {
-    tempNoOfEvent = min ( runHeader->getNoOfEvent(),
-			    Global::parameters->getIntVal("MaxRecordNumber")) -1;
-  }
-  
-  if (tempNoOfEvent == 0) {
-    stringstream ss;
-    ss << "NoOfEvent cannot be " << tempNoOfEvent;
-    throw InvalidParameterException(ss.str());
+    // ok we know on how many events the calculation should be done. 
+    // we can compare this number with the maxRecordNumber if
+    // different from 0
+    if ( maxRecordNumber != 0 ) {
+      if ( (_lastEvent - _firstEvent) * ( _noOfCMIterations + 1 ) > maxRecordNumber ) {
+	message<ERROR> ( log() << "The pedestal calculation should be done on " << _lastEvent - _firstEvent 
+			 << " times " <<  _noOfCMIterations + 1 << " iterations = " 
+			 << (_lastEvent - _firstEvent) * ( _noOfCMIterations + 1 ) << " records." );
+	message<ERROR> ( log() << "The global variable MarRecordNumber is limited to " << maxRecordNumber );
+	throw InvalidParameterException("MaxRecordNumber");
+      }
+    }
   }
 
-  if ( _lastEvent == -1) _lastEvent = tempNoOfEvent;
-  if ( _lastEvent >= tempNoOfEvent) _lastEvent = tempNoOfEvent;
 
   if ( _iLoop == 0 ) {
     // write the current header to the output condition file
@@ -252,6 +288,14 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelPedestalNoiseProcessor::processEvent (LCEvent * evt) {
 
+  EUTelEventImpl * eutelEvent = static_cast<EUTelEventImpl*> (evt);
+  EventType type              = eutelEvent->getEventType();
+  
+  if ( type == kUNKNOWN ) {
+    message<WARNING> ( log() << "Event number " << evt->getEventNumber() 
+		       << " is of unknown type. Continue considering it as a normal Data Event."  );
+  }
+
   if ( _iLoop == 0 ) firstLoop(evt);
   else otherLoop(evt);
 
@@ -265,13 +309,20 @@ void EUTelPedestalNoiseProcessor::check (LCEvent * evt) {
 
 
 void EUTelPedestalNoiseProcessor::end() {
-  cout << "[" << name() <<"] Successfully finished" << endl;
+
+  if ( _iLoop == _noOfCMIterations + 1 )  message<MESSAGE> ( log() << "Successfully finished" ) ;
+  else {
+    message<ERROR> ( log() << "Not all the iterations have been done because of a too MaxRecordNumber." );
+    message<ERROR> ( log() << "Try to increase it in the global section of the steering file." );
+    exit(-1);
+  }
+
 }
 
 void EUTelPedestalNoiseProcessor::fillHistos() {
   
 #ifdef MARLIN_USE_AIDA
-  cout << "[" << name() << "] Filling final histograms " << endl;
+  message<MESSAGE> ( log() << "Filling final histograms " );
 
   string tempHistoName;
   for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
@@ -321,7 +372,7 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
 
 
 #else
-  cout << "[" << name() << "] No histogram produced because Marlin doesn't use AIDA " << endl;
+  message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
 #endif
 
 }
@@ -330,7 +381,7 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
 
   double threshold;
   int    badPixelCounter = 0;
-  cout <<  "[" << name() << "] Masking bad pixels ";
+
 
   if ( _badPixelAlgo == EUTELESCOPE::NOISEDISTRIBUTION ) {
     // to do it we need to know the mean value and the RMS of the noise
@@ -371,29 +422,36 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
       }
     }
   } // end loop on detector;
-  cout << "(" << badPixelCounter << ")" << endl;
+  message<MESSAGE> (log() << "Masked " << badPixelCounter << " bad pixels " );
 }
 
 
-void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * evt) {
+void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
 
-  if (  _iEvt < _firstEvent )  {
-    // pedestal calculation may occurring on a subset of events
-    // outside this range, just skip the current event
-    if ( ( _iEvt == 0 ) || ( _iEvt ==  _firstEvent - 1) || ( _iEvt%10 == 0) )
-      cout << "[" << name() << "] Skipping event " << _iEvt << endl;
+  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
+
+
+  // do some checks in order to see if we have to continue or to stop
+  // with the processor.
+  //
+  // 1. we have to go immediately to the finalize if this is a EORE event
+  // 2. we have to go to the finalize if the user select an event
+  // range for pedestal calculation and the current event number is
+  // out of range
+  // 3. we have to skip this event if _iEvt is < than the first event
+  // selected for pedestal calculation
+
+  
+  if ( evt->getEventType() == kEORE ) finalizeProcessor();
+  if ( ( _lastEvent != -1 ) && ( _iEvt >= _lastEvent ) ) finalizeProcessor();
+  if ( _iEvt < _firstEvent ) {
     ++_iEvt;
     throw SkipEventException(this);
   }
 
-  if ( _iEvt > _lastEvent ) {
-    cout << "[" << name() <<"] Last processed event " << _iEvt - 1 << endl;
-    throw StopProcessingException(this);
-  }
-  
   // keep the user updated
   if ( _iEvt % 10 == 0 ) {
-    cout << "[" << name() << "] Performing loop " << _iLoop << " on event: " << _iEvt << endl;
+    message<MESSAGE> ( log() << "Performing loop " << _iLoop << " on event: " << _iEvt );
   }
 
   // let me get the rawDataCollection. This is should contain a TrackerRawDataObject
@@ -513,29 +571,33 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * evt) {
   // increment the event counter
   ++_iEvt;
 
-  if (isLastEvent()) finalizeProcessor();
-
 }
 
-void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
+void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
+
+  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
+
+  // do some checks in order to see if we have to continue or to stop
+  // with the processor.
+  //
+  // 1. we have to go immediately to the finalize if this is a EORE event
+  // 2. we have to go to the finalize if the user select an event
+  // range for pedestal calculation and the current event number is
+  // out of range
+  // 3. we have to skip this event if _iEvt is < than the first event
+  // selected for pedestal calculation
+
   
-  if (  _iEvt < _firstEvent  ) {
-    // pedestal calculation may occurring on a subset of events
-    // outside this range, just skip the current event
-    if ( ( _iEvt == 0 ) || ( _iEvt ==  _firstEvent - 1) || ( _iEvt%10 == 0) )
-      cout << "[" << name() << "] Skipping event " << _iEvt << endl;
+  if ( evt->getEventType() == kEORE ) finalizeProcessor();
+  if ( ( _lastEvent != -1 ) && ( _iEvt >= _lastEvent ) ) finalizeProcessor();
+  if ( _iEvt < _firstEvent ) {
     ++_iEvt;
     throw SkipEventException(this);
   }
-
-  if ( _iEvt > _lastEvent ) {
-    cout << "[" << name() <<"] Last processed event " << _iEvt - 1 << endl;
-    throw StopProcessingException(this);
-  }
-
+  
   // keep the user updated
   if ( _iEvt % 10 == 0 ) {
-    cout << "[" << name() <<"] Performing loop " << _iLoop << " on event: " << _iEvt << endl;
+    message<MESSAGE> ( log() << "Performing loop " << _iLoop << " on event: " << _iEvt );
   }
 
   // let me get the rawDataCollection. This is should contain a TrackerRawDataObject
@@ -611,19 +673,18 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * evt) {
 	}
       }
     } else {
-      cout << "Skipping event " << _iEvt << " because of max number of rejected pixels exceeded. (" << skippedPixel << ")" << endl;
+      message<WARNING>( log() << "Skipping event " << _iEvt << " because of max number of rejected pixels exceeded. (" << skippedPixel << ")" );
       ++_noOfSkippedEvent;
     }
   }	
   ++_iEvt;
-  if (isLastEvent()) finalizeProcessor();
 }
 
 void EUTelPedestalNoiseProcessor::bookHistos() {
 
 #ifdef MARLIN_USE_AIDA
   // histograms are grouped in loops and detectors
-  cout << "[" << name() << "] Booking histograms " << endl;
+  message<MESSAGE> ( log() << "Booking histograms " );
 
 
   string tempHistoName;
@@ -819,7 +880,7 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
   if ( _iLoop == _noOfCMIterations + 1 ) {
     // ok this was last loop  
 
-    cout << "[" << name() << "] Writing the output condition file" << endl;
+    message<MESSAGE> ( log() << "Writing the output condition file" );
 
     LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
     
