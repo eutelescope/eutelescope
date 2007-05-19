@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: pedetest.cc,v 1.3 2007-02-28 14:57:43 bulgheroni Exp $
+// Version $Id: pedetest.cc,v 1.4 2007-05-19 09:55:53 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -11,10 +12,13 @@
 
 #include "lcio.h"
 #include "EUTelRunHeaderImpl.h"
+#include "EUTelEventImpl.h"
+#include "EUTELESCOPE.h"
 #include "IMPL/LCEventImpl.h"
 #include "IMPL/LCCollectionVec.h"
 #include "IMPL/TrackerRawDataImpl.h"
 #include "UTIL/CellIDEncoder.h"
+#include "UTIL/LCTime.h"
 
 #include <TList.h>
 #include <TH1.h>
@@ -76,58 +80,69 @@ int main(int argc , char ** argv) {
   
 
 
-  for (int iEvent = 0; iEvent < nEvent; iEvent++) {
+  for (int iEvent = 0; iEvent <= nEvent; iEvent++) {
 
-    LCEventImpl * event = new LCEventImpl;
+    EUTelEventImpl * event = new EUTelEventImpl;
     event->setEventNumber(iEvent);
-    LCCollectionVec * rawData = new LCCollectionVec(LCIO::TRACKERRAWDATA);
+    event->setDetectorName("test");
+    LCTime * now = new LCTime;
+    event->setTimeStamp(now->timeStamp());
+    delete now;
 
-    int    iPixel     = 0;
-    short  baseSignal = 1;
-    float  noise      = 3;
-    
-    TrackerRawDataImpl * rawMatrix = new TrackerRawDataImpl;
-    CellIDEncoder<TrackerRawDataImpl> idEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", rawData);
-    idEncoder["sensorID"] = 0;
-    idEncoder["xMin"]     = 0;
-    idEncoder["xMax"]     = nXPixel - 1;
-    idEncoder["yMin"]     = 0;
-    idEncoder["yMax"]     = nYPixel - 1;
-    idEncoder.setCellID(rawMatrix);
-    
-    for (int yPixel = 0; yPixel < nYPixel; yPixel++) {
-      for (int xPixel = 0; xPixel < nXPixel; xPixel++) {
-	matrix[iPixel] = baseSignal + (short) (rand()/(RAND_MAX / noise));
-	profile->Fill(xPixel, yPixel, matrix[iPixel]);
-	rawMatrix->adcValues().push_back(matrix[iPixel]);
+    if ( iEvent < nEvent ) {
+      
+      event->setEventType(kDE);
+      LCCollectionVec * rawData = new LCCollectionVec(LCIO::TRACKERRAWDATA);
 
-	if (iEvent == 0 ) {
-	  stringstream ss;
-	  ss << "h-" << xPixel << "-" << yPixel << "-" << (noise/sqrt(12));
-	  histoArray[iPixel] = new TH1D(ss.str().c_str(), ss.str().c_str(), 100, 0., 0.);
-	  histoArray[iPixel]->SetBit(TH1::kCanRebin);
-	  histoList->Add(histoArray[iPixel]);
+      int    iPixel     = 0;
+      short  baseSignal = 1;
+      float  noise      = 3;
+      
+      TrackerRawDataImpl * rawMatrix = new TrackerRawDataImpl;
+      CellIDEncoder<TrackerRawDataImpl> idEncoder("sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12", rawData);
+      idEncoder["sensorID"] = 0;
+      idEncoder["xMin"]     = 0;
+      idEncoder["xMax"]     = nXPixel - 1;
+      idEncoder["yMin"]     = 0;
+      idEncoder["yMax"]     = nYPixel - 1;
+      idEncoder.setCellID(rawMatrix);
+      
+      for (int yPixel = 0; yPixel < nYPixel; yPixel++) {
+	for (int xPixel = 0; xPixel < nXPixel; xPixel++) {
+	  matrix[iPixel] = baseSignal + (short) (rand()/(RAND_MAX / noise));
+	  profile->Fill(xPixel, yPixel, matrix[iPixel]);
+	  rawMatrix->adcValues().push_back(matrix[iPixel]);
+	  
+	  if (iEvent == 0 ) {
+	    stringstream ss;
+	    ss << "h-" << xPixel << "-" << yPixel << "-" << (noise/sqrt(12));
+	    histoArray[iPixel] = new TH1D(ss.str().c_str(), ss.str().c_str(), 100, 0., 0.);
+	    histoArray[iPixel]->SetBit(TH1::kCanRebin);
+	    histoList->Add(histoArray[iPixel]);
+	  }
+	  
+	  histoArray[iPixel]->Fill(matrix[iPixel]); 
+	  ++iPixel; 
+	  baseSignal += 5;
+	  noise += 3;
 	}
-
-	histoArray[iPixel]->Fill(matrix[iPixel]); 
-	++iPixel; 
-	baseSignal += 5;
-	noise += 3;
       }
-    }
-    rawData->push_back(rawMatrix);
-    event->addCollection(rawData,"rawdata");
-    lcWriter->writeEvent(event);
+      rawData->push_back(rawMatrix);
+      event->addCollection(rawData,"rawdata");
+    } else event->setEventType(kEORE);
+
+    LCEventImpl * lcevent = static_cast<LCEventImpl*>(event);
+    lcWriter->writeEvent(lcevent);
     delete event;
   }
   
   
-
+  
   profile->Write();
   histoList->Write();
   lcWriter->close();
   outputFile->Close();
-
+  
   delete [] histoArray;
   delete [] matrix;
   

@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: clustertest.cc,v 1.3 2007-05-18 14:55:31 bulgheroni Exp $
+// Version $Id: clustertest.cc,v 1.4 2007-05-19 09:55:41 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -122,7 +123,7 @@ int main(int argc, char ** argv) {
 	
 	event->setEventType(kDE);
 	LCCollectionVec * rawData = new LCCollectionVec(LCIO::TRACKERRAWDATA);
-
+	
 	for (int iDetector = 0; iDetector < nDetector ; iDetector++) {
 	  
 	  short  baseSignal = 1;
@@ -138,16 +139,16 @@ int main(int argc, char ** argv) {
 	  
 	  for (int yPixel = 0; yPixel < yNPixel; yPixel++) {
 	    for (int xPixel = 0; xPixel < xNPixel; xPixel++) {
-	    rawMatrix->adcValues().push_back(baseSignal + (short) (rand()/(RAND_MAX / noiseDivider)));
-	    ++baseSignal;
+	      rawMatrix->adcValues().push_back(baseSignal + (short) (rand()/(RAND_MAX / noiseDivider)));
+	      ++baseSignal;
 	    }
 	  }
 	  rawData->push_back(rawMatrix);
 	}
 	event->addCollection(rawData, "rawdata");
-      
+	
       } else event->setEventType(kEORE);
-
+      
       LCEventImpl * lcevent = static_cast<LCEventImpl*>(event);
       lcWriter->writeEvent(lcevent);
       delete event;
