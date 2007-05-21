@@ -1,4 +1,4 @@
-// -*- C++ -*-
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -18,7 +18,7 @@
  *  develop both their DAQ and analysis/reconstruction software.
  *  
  *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
- *  @Version $Id: eutelescope.h,v 1.1.1.1 2007-02-07 10:53:12 bulgheroni Exp $
+ *  @Version $Id: eutelescope.h,v 1.2 2007-05-21 11:37:33 bulgheroni Exp $
  */
 
 namespace eutelescope {}

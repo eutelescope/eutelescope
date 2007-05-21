@@ -1,4 +1,4 @@
-// -*- C++ -*-
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -45,7 +45,7 @@ namespace eutelescope
     *   @param   NoOfXPixel number of pixels along X
     *   @param   NoOfYPixel number of pixels along Y
     *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-    *   @version $Id: EUTelSucimaImagerReader.h,v 1.3 2007-02-22 08:09:36 bulgheroni Exp $
+    *   @version $Id: EUTelSucimaImagerReader.h,v 1.4 2007-05-21 11:37:33 bulgheroni Exp $
     *
     */
 

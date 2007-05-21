@@ -1,4 +1,4 @@
-// -*- C++ -*-
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -62,7 +62,7 @@ namespace eutelescope {
    *  @param StatusCollectionName
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelAutoPedestalNoiseProcessor.h,v 1.3 2007-03-03 16:37:50 bulgheroni Exp $
+   *  @version $Id: EUTelAutoPedestalNoiseProcessor.h,v 1.4 2007-05-21 11:37:33 bulgheroni Exp $
    *
    *
    */

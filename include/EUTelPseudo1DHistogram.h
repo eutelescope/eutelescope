@@ -1,4 +1,4 @@
-// -*- C++ -*-
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -35,7 +35,7 @@ namespace eutelescope {
    *  in the MarlinUtil package were written by O. Wendt (DESY)
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPseudo1DHistogram.h,v 1.1 2007-04-02 14:17:39 bulgheroni Exp $
+   *  @version $Id: EUTelPseudo1DHistogram.h,v 1.2 2007-05-21 11:37:33 bulgheroni Exp $
    */ 
   
   class EUTelPseudo1DHistogram {

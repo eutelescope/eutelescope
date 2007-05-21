@@ -1,4 +1,4 @@
-// -*- C++ -*-
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -147,7 +147,7 @@ namespace eutelescope
    *  \li <b>UserComment</b>: a user defined string field. 
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTelRunHeaderImpl.h,v 1.4 2007-05-17 13:43:35 bulgheroni Exp $
+   * @Version $Id: EUTelRunHeaderImpl.h,v 1.5 2007-05-21 11:37:33 bulgheroni Exp $
    * 
    */
 
