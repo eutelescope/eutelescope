@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPseudo1DHistogram.cc,v 1.1 2007-04-02 14:17:39 bulgheroni Exp $
+// Version $Id: EUTelPseudo1DHistogram.cc,v 1.2 2007-05-21 11:44:26 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as

@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: ROOTProcessor.cc,v 1.2 2007-04-02 14:23:40 bulgheroni Exp $
+// Version $Id: ROOTProcessor.cc,v 1.3 2007-05-21 11:42:14 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as

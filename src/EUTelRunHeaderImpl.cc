@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelRunHeaderImpl.cc,v 1.4 2007-05-17 13:43:35 bulgheroni Exp $
+// Version: $Id: EUTelRunHeaderImpl.cc,v 1.5 2007-05-21 11:42:14 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
