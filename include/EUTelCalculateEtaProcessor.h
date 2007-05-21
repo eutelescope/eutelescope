@@ -1,4 +1,4 @@
-// -*- C++ -*-
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -111,7 +111,7 @@ namespace eutelescope {
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  
-   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.4 2007-04-02 14:18:05 bulgheroni Exp $
+   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.5 2007-05-21 11:32:30 bulgheroni Exp $
    *
    *
    */
@@ -172,7 +172,7 @@ namespace eutelescope {
      *  so that the user can now re-loop on events and applying the
      *  calculated eta function
      */
-    virtual void finishCalculation();
+    virtual void finalizeProcessor();
 
 
     //! Check event method
