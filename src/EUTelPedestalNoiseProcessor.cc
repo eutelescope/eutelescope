@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.14 2007-05-19 09:53:48 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.15 2007-05-21 11:43:57 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -442,8 +442,16 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
   // selected for pedestal calculation
 
   
-  if ( evt->getEventType() == kEORE ) finalizeProcessor();
-  if ( ( _lastEvent != -1 ) && ( _iEvt >= _lastEvent ) ) finalizeProcessor();
+  if ( evt->getEventType() == kEORE ) {
+    message<DEBUG> ( "EORE found: calling finalizeProcessor().");
+    finalizeProcessor();
+  }
+
+  if ( ( _lastEvent != -1 ) && ( _iEvt >= _lastEvent ) ) {
+    message<DEBUG> ( "Looping limited by _lastEvent: calling finalizeProcessor().");
+    finalizeProcessor();
+  }
+
   if ( _iEvt < _firstEvent ) {
     ++_iEvt;
     throw SkipEventException(this);
