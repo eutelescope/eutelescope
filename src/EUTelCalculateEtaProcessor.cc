@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.4 2007-04-02 14:18:05 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.5 2007-05-21 11:46:24 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -12,6 +13,8 @@
 // eutelescope includes ".h" 
 #include "EUTelCalculateEtaProcessor.h"
 #include "EUTelRunHeaderImpl.h"
+#include "EUTelEventImpl.h"
+#include "EUTELESCOPE.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelEtaFunctionImpl.h"
 #include "EUTelPseudo1DHistogram.h"
@@ -187,7 +190,7 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
       try {
 	lcWriter->open( _outputEtaFileName, LCIO::WRITE_NEW );
       } catch (IOException& e) {
-	cerr << e.what() << endl;
+	message<ERROR> ( log() << e.what() );
 	exit(-1);
       }
       
@@ -362,13 +365,20 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
 }
 
 
-void EUTelCalculateEtaProcessor::processEvent (LCEvent * evt) {
+void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
 
+  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
+
+  if ( evt->getEventType() == kEORE ) {
+    message<DEBUG> ( "EORE found: calling finalizeProcessor().");
+    finalizeProcessor();
+    return; 
+  }
 
   if ( !_isEtaCalculationFinished ) {
 
     if (_iEvt % 10 == 0) 
-      cout << "[" << name() << "] Filling CoG histograms event " << _iEvt << endl;
+      message<MESSAGE> ( log() << "Filling Center of Gravity histogram with event " << _iEvt );
     
     LCCollectionVec * clusterCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_clusterCollectionName));
     CellIDDecoder<TrackerDataImpl> cellDecoder(clusterCollectionVec);
@@ -434,7 +444,6 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * evt) {
     
     ++_iEvt;
     
-    if ( isLastEvent() )  finishCalculation();
   }
 
   setReturnValue( "isEtaCalculationFinished" , _isEtaCalculationFinished);
@@ -448,18 +457,18 @@ void EUTelCalculateEtaProcessor::check (LCEvent * evt) {
 }
 
 
-void EUTelCalculateEtaProcessor::finishCalculation() {
+void EUTelCalculateEtaProcessor::finalizeProcessor() {
   
   double integral;
 
-  cout << "[" << name() << "] Writing the output condition file" << endl;
+  message<MESSAGE> ( log() << "Writing the output eta file " << _outputEtaFileName ) ;
   
   LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
 
   try {
     lcWriter->open( _outputEtaFileName, LCIO::WRITE_APPEND);
   } catch (IOException& e ) {
-    cerr << e.what() << endl;
+    message<ERROR> (log() << e.what());
     exit(-1);
   }
 
@@ -604,7 +613,7 @@ void EUTelCalculateEtaProcessor::finishCalculation() {
 
 
 void EUTelCalculateEtaProcessor::end() {
-  cout << "[" << name() <<"] Successfully finished" << endl;
+  message<MESSAGE> ( "Successfully finished");
 
 
 

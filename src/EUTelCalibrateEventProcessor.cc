@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.4 2007-02-28 08:12:02 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.5 2007-05-21 11:46:24 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -14,6 +15,7 @@
 #include "EUTelExceptions.h"
 #include "EUTelCalibrateEventProcessor.h"
 #include "EUTelRunHeaderImpl.h"
+#include "EUTelEventImpl.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -102,7 +104,7 @@ void EUTelCalibrateEventProcessor::init () {
   printParameters ();
 
   if ( _fillDebugHisto == 1 ) {
-    cout << "[" << name() << "] WARNING filling debug histo will slow down the procedure" << endl;
+    message<WARNING>( "Filling debug histograms is slowing down the procedure");
   }
 
   // set to zero the run and event counters
@@ -124,12 +126,18 @@ void EUTelCalibrateEventProcessor::processRunHeader (LCRunHeader * rdr) {
 }
 
 
-void EUTelCalibrateEventProcessor::processEvent (LCEvent * evt) {
+void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
-  
+  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
+
+  if ( evt->getEventType() == kEORE ) {
+    message<DEBUG> ( "EORE found: nothing else to do." );
+    return;
+  }  
+
 
   if (_iEvt % 10 == 0) 
-    cout << "[" << name() << "] Calibrating event " << _iEvt << endl;
+    message<MESSAGE> ( log() << "Applying pedestal correction on event " << _iEvt );
 
   LCCollectionVec * inputCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_rawDataCollectionName));
   LCCollectionVec * pedestalCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_pedestalCollectionName));
@@ -311,7 +319,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * evt) {
 #endif
 
       } else {
-	cerr << "[" << name() << "] Skipping event " << _iEvt << " because of common mode limit exceeded " << endl;
+	message<WARNING> ( log() << "Skipping event " << _iEvt << " because of common mode limit exceeded " );
 	++_iEvt;
 	throw SkipEventException(this);
       }
@@ -363,6 +371,7 @@ void EUTelCalibrateEventProcessor::check (LCEvent * evt) {
 
 
 void EUTelCalibrateEventProcessor::end() {
-  cout << "[" << name() <<"] Successfully finished" << endl;
+  message<MESSAGE> ( "Successfully finished" );
+
 }
 

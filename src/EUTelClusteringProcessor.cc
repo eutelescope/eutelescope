@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.6 2007-04-02 14:21:10 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.7 2007-05-21 11:46:24 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -9,22 +10,12 @@
  *
  */
 
-//
-//   Because of the complexity of this processor some debug features
-//   have been implemented and left within the code, so that other
-//   users can test the processor functionality. To active the debug
-//   mode replace all "///" with "" and re-build.  To shut down the
-//   debug option, just replace the string "/*DEBUG*/" with "///
-//   /*DEBUG*/"
-//   Emacs Alt+Shift+5 does it very easily!
-//
-
-
 // eutelescope includes ".h" 
 #include "EUTELESCOPE.h"
 #include "EUTelClusteringProcessor.h"
 #include "EUTelExceptions.h"
 #include "EUTelRunHeaderImpl.h"
+#include "EUTelEventImpl.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -37,7 +28,9 @@
 #include <IMPL/LCCollectionVec.h>
 
 // system includes <>
-/// /*DEBUG*/ #include <fstream> 
+#ifdef MARLINDEBUG
+#include <fstream> 
+#endif
 
 using namespace std;
 using namespace lcio;
@@ -141,10 +134,15 @@ void EUTelClusteringProcessor::processRunHeader (LCRunHeader * rdr) {
 }
 
 
-void EUTelClusteringProcessor::processEvent (LCEvent * evt) {
+void EUTelClusteringProcessor::processEvent (LCEvent * event) {
 
-  if (_iEvt % 10 == 0) 
-    cout << "[" << name() << "] Clustering event " << _iEvt << endl;
+  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
+  if ( evt->getEventType() == kEORE ) {
+    message<DEBUG> ( "EORE found: nothing else to do." );
+    return;
+  }
+
+  if (_iEvt % 10 == 0)  message<MESSAGE> ( log() <<  "Clustering event " << _iEvt ) ;
   
   if ( _clusteringAlgo == EUTELESCOPE::FIXEDFRAME ) fixedFrameClustering(evt);
   
@@ -158,7 +156,9 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
   
   if (isFirstEvent()) {
     
-      /// /*DEBUG*/ logfile.open("clustering.log");
+#ifdef MARLINDEBUG
+    logfile.open("clustering.log");
+#endif
     
     // this is the right place to cross check whether the pedestal and
     // the input data are at least compatible. I mean the same number
@@ -178,14 +178,20 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
     _isFirstEvent = false;
   }
   
-    /// /*DEBUG*/ logfile << "Event " << _iEvt << endl;
-  
+#ifdef MARLINDEBUG
+  message<DEBUG> ( logfile << "Event " << _iEvt );
+  message<DEBUG> ( log()   << "Event " << _iEvt );
+#endif
+
   LCCollectionVec * clusterCollection = new LCCollectionVec(LCIO::TRACKERDATA);
   
   for (_iDetector = 0; _iDetector < inputCollectionVec->getNumberOfElements(); _iDetector++) {
     
-      /// /*DEBUG*/ logfile << "  Working on detector " << _iDetector << endl;
-    
+#ifdef MARLINDEBUG
+    message<DEBUG> ( logfile << "  Working on detector " << _iDetector );
+    message<DEBUG> ( log()   << "  Working on detector " << _iDetector );
+#endif
+
     // get the calibrated data 
     TrackerDataImpl    * data   = dynamic_cast<TrackerDataImpl*>   (inputCollectionVec->getElementAt(_iDetector));
     TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt(_iDetector));
@@ -210,7 +216,10 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
     // continue only if seed candidate map is not empty!
     if ( _seedCandidateMap.size() != 0 ) {
 
-        /// /*DEBUG*/ logfile << "  Seed candidates " << _seedCandidateMap.size() << endl;
+#ifdef MARLINDEBUG
+      message<DEBUG> ( logfile << "  Seed candidates " << _seedCandidateMap.size() ); 
+      message<DEBUG> ( log()   << "  Seed candidates " << _seedCandidateMap.size() );
+#endif
 
       // now built up a cluster for each seed candidate 
       map<float, unsigned int>::iterator mapIter = _seedCandidateMap.end();     
@@ -282,19 +291,27 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	    idClusterEncoder["yCluSize"]      = _yClusterSize;
 	    idClusterEncoder["quality"]       = static_cast<int>(cluQuality);
 	    idClusterEncoder.setCellID(cluster);
-	    
-	      /// /*DEBUG*/ logfile << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY << endl;
+
+#ifdef MARLINDEBUG
+	    message<DEBUG> ( logfile << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY );
+	    message<DEBUG> ( log()   << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY );
+#endif	    
 	    
 	    while ( indexIter != clusterCandidateIndeces.end() ) {
 	      status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
 	      ++indexIter;
 	    }
 
-	      /// /*DEBUG*/ for (unsigned int iPixel = 0; iPixel < clusterCandidateIndeces.size(); iPixel++) {
-	      /// /*DEBUG*/  logfile << "  x " <<  getXFromIndex(clusterCandidateIndeces[iPixel])
-	      /// /*DEBUG*/	      << "  y " <<  getYFromIndex(clusterCandidateIndeces[iPixel])
-	      /// /*DEBUG*/              << "  s " <<  clusterCandidateCharges[iPixel] << endl;
-	      /// /*DEBUG*/ }
+#ifdef MARLINDEBUG
+	    for (unsigned int iPixel = 0; iPixel < clusterCandidateIndeces.size(); iPixel++) {
+	      message<DEBUG> ( logfile << "  x " <<  getXFromIndex(clusterCandidateIndeces[iPixel])
+			       << "  y " <<  getYFromIndex(clusterCandidateIndeces[iPixel])
+			       << "  s " <<  clusterCandidateCharges[iPixel]);
+	      message<DEBUG> ( log() << "  x " <<  getXFromIndex(clusterCandidateIndeces[iPixel])
+			       << "  y " <<  getYFromIndex(clusterCandidateIndeces[iPixel])
+			       << "  s " <<  clusterCandidateCharges[iPixel]);
+	    }
+#endif
 
 	    // copy the candidate charges inside the cluster
 	    cluster->setChargeValues(clusterCandidateCharges);
@@ -323,13 +340,17 @@ void EUTelClusteringProcessor::check (LCEvent * evt) {
  
 
 void EUTelClusteringProcessor::end() {
-  cout << "[" << name() <<"] Successfully finished" << endl;
 
+  message<MESSAGE> ( "Successfully finished" );
+
+#ifdef MARLINDEBUG
   for (_iDetector = 0; _iDetector < (signed) _totCluster.size() ; _iDetector++) {
-    cout << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector << endl;
-     /// /*DEBUG*/ logfile << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector << endl;
+    message<DEBUG> ( logfile << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector );
+    message<DEBUG> ( log() << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector );
   }
-    /// /*DEBUG*/  logfile.close();
+  logfile.close();
+#endif
+
 }
 
 

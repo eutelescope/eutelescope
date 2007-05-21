@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelAutoPedestalNoiseProcessor.cc,v 1.1 2007-02-21 14:08:13 bulgheroni Exp $
+// Version $Id: EUTelAutoPedestalNoiseProcessor.cc,v 1.2 2007-05-21 11:46:24 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -12,9 +13,12 @@
 // eutelescope includes ".h" 
 #include "EUTelAutoPedestalNoiseProcessor.h"
 #include "EUTelRunHeaderImpl.h"
+#include "EUTelEventImpl.h"
+#include "EUTELESCOPE.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
+#include "marlin/Exceptions.h"
 
 // lcio includes <.h> 
 #include <IMPL/TrackerRawDataImpl.h>
@@ -91,12 +95,12 @@ void EUTelAutoPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
   unsigned int noOfDetector = runHeader->getNoOfDetector();
 
   if (noOfDetector != _initPedestal.size()) {
-    cerr << "[" << name() << "] Resizing the init pedestal vector " << endl;
+    message<WARNING> ( "Resizing the initial pedestal vector" );
     _initPedestal.resize(noOfDetector, _initPedestal.back());
   }
 
   if (noOfDetector != _initNoise.size()) {
-    cerr << "[" << name() << "] Resizing the init noise vector " << endl;
+    message<WARNING> ( "Resizing the initial noise vector");
     _initNoise.resize(noOfDetector, _initNoise.back());
   }
 
@@ -111,7 +115,15 @@ void EUTelAutoPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
 }
 
 
-void EUTelAutoPedestalNoiseProcessor::processEvent (LCEvent * evt) {
+void EUTelAutoPedestalNoiseProcessor::processEvent (LCEvent * event) {
+
+  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
+  
+  if ( evt->getEventType() == kEORE ) {
+    message<DEBUG> ( "EORE found: nothing else to do." );
+    return;
+  }
+
 
   if (isFirstEvent()) {
 
@@ -182,6 +194,7 @@ void EUTelAutoPedestalNoiseProcessor::end() {
   delete _pedestalCollectionVec;
   delete _noiseCollectionVec;
   delete _statusCollectionVec;
-  
+
+  message<MESSAGE> ( log() << "Successfully finished" ) ;  
 }
 

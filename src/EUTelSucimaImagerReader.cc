@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelSucimaImagerReader.cc,v 1.6 2007-02-22 08:09:36 bulgheroni Exp $
+// Version $Id: EUTelSucimaImagerReader.cc,v 1.7 2007-05-21 11:46:24 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -13,6 +14,7 @@
 #include "EUTelSucimaImagerReader.h"
 #include "EUTELESCOPE.h"
 #include "EUTelRunHeaderImpl.h"
+#include "EUTelEventImpl.h"
 
 // marlin includes
 #include "marlin/DataSourceProcessor.h"
@@ -67,7 +69,7 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
   try {
     inputFile.open (_fileName.c_str (), ios::in);
   } catch (exception & e) {
-    cerr << "Problem opening file " << _fileName << ". Exiting." << endl;
+    message<ERROR> ( log() << "Problem opening file " << _fileName << ". Exiting." );
     exit (-1);
   }
   
@@ -81,17 +83,17 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
       break;
     }
     
-    LCEventImpl *event = new LCEventImpl;
+    EUTelEventImpl *event = new EUTelEventImpl;
     event->setDetectorName("MIMOSA");
-    
+    event->setEventType(kDE);
     LCTime * now = new LCTime;
     event->setTimeStamp(now->timeStamp());
     delete now;
 
     LCCollectionVec *rawData = new LCCollectionVec (LCIO::TRACKERRAWDATA);
     
-    if (eventNumber % 10 == 0)
-      cout << "[" << name() << "] Converting event " << eventNumber << endl;
+    if (eventNumber % 10 == 0)  message<MESSAGE> ( log() << "Converting event " << eventNumber );
+
     
     if (isFirstEvent ()) {
       
@@ -110,7 +112,7 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
       runHeader->addIntermediateFile (_fileName);
       runHeader->addProcessor (_processorName);
       // this is a mistake here only for testing....
-      runHeader->setNoOfEvent( 99);
+      runHeader->setNoOfEvent(100);
       //////////////////////////////////////////////
       runHeader->setNoOfDetector(1);
       runHeader->setMinX(IntVec(1, 0));
@@ -149,10 +151,10 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
       } else {
 	// that's strange. it might be that the last event was not complete
 	// break here
-	cerr << "Event " << eventNumber << " finished un-expectedly. "  << endl 
-	     << "Consider to check the input file, or limit the conversion to "
-	     << eventNumber - 1 << " events" << endl << "Sorry to quit!" << endl;
-	break;
+	message<ERROR> ( log() << "Event " << eventNumber << " finished un-expectedly. " );
+	message<ERROR> ( log() << "Consider to check the input file, or limit the conversion to " 	    
+			 << eventNumber - 1 << " events" << endl << "Sorry to quit!" ) ;
+	exit(-1);
       }
     }
     
@@ -179,13 +181,27 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
     rawData->push_back (rawMatrix);
     
     event->addCollection (rawData, "rawdata");
-    ProcessorMgr::instance ()->processEvent (event);
+    ProcessorMgr::instance ()->processEvent (static_cast<LCEventImpl*> (event));
     delete event;
   }
+
+  EUTelEventImpl *event = new EUTelEventImpl;
+  event->setDetectorName("MIMOSA");
+  event->setEventType(kDE);
+  LCTime * now = new LCTime;
+  event->setTimeStamp(now->timeStamp());
+  delete now;
+  event->setRunNumber (runNumber);
+  event->setEventNumber (eventNumber++);
+  event->setEventType(kEORE);
+  ProcessorMgr::instance ()->processEvent (static_cast<LCEventImpl*> (event));
+  delete event;
+  
 }
 
 
 
 void EUTelSucimaImagerReader::end () {
   delete[]_buffer;
+  message<MESSAGE> ("Successfully finished") ;
 }

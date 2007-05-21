@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.3 2007-04-02 14:21:10 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.4 2007-05-21 11:46:24 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -12,6 +13,7 @@
 // eutelescope includes ".h" 
 #include "EUTELESCOPE.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelEventImpl.h"
 #include "EUTelClusterSeparationProcessor.h"
 
 // marlin includes ".h"
@@ -74,11 +76,16 @@ void EUTelClusterSeparationProcessor::processRunHeader (LCRunHeader * rdr) {
 }
 
 
-void EUTelClusterSeparationProcessor::processEvent (LCEvent * evt) {
+void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
 
+  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> ( event );
+  if ( evt->getEventType() == kEORE ) {
+    message<DEBUG> ( "EORE found: nothing else to do.");
+    return ;
+  }
   
   if (_iEvt % 10 == 0) 
-    cout << "[" << name() << "] Separating clusters on event " << _iEvt << endl;
+    message<MESSAGE> ( log() << "Separating clusters on event " << _iEvt ) ;
 
   LCCollectionVec       *   clusterCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_clusterCollectionName));
   vector< pair<int, int > > mergingPairVector;
@@ -148,26 +155,37 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * evt) {
 bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::set <int > > setVector, 
 							       LCCollectionVec * collectionVec) const {
 
-  /// /*DEBUG*/   cout << "[" << name() << "] Applying cluster separation algorithm " << _separationAlgo << endl;
-  /// /*DEBUG*/   cout << "[" << name() << "] Found " << setVector.size() << " group(s) of merging clusters on event " << _iEvt << endl;
+  //  message<DEBUG> ( log() << "Applying cluster separation algorithm " << _separationAlgo );
+  message<DEBUG> ( log () <<  "Found " ); // << setVector.size() << " group(s) of merging clusters on event " << _iEvt );
   if ( _separationAlgo == EUTELESCOPE::FLAGONLY ) {
-    /// /*DEBUG*/   int iCounter = 0;    
+
+#ifdef MARLINDEBUG
+    int iCounter = 0;    
+#endif
+
     vector<set <int > >::iterator vectorIterator = setVector.begin();    
     while ( vectorIterator != setVector.end() ) {
-      /// /*DEBUG*/     cout << "[" << name() << "]    Group " << (iCounter++) << " with the following clusters " << endl;
+
+#ifdef MARLINDEBUG
+      message<DEBUG> ( log() <<  "     Group " << (iCounter++) << " with the following clusters " << endl;
+#endif
+
       set <int >::iterator setIterator = (*vectorIterator).begin();
       while ( setIterator != (*vectorIterator).end() ) {
 	EUTelFFClusterImpl * cluster = static_cast<EUTelFFClusterImpl *> (collectionVec->getElementAt( *setIterator )) ;
-	/// /*DEBUG*/       int xSeed, ySeed;
-	/// /*DEBUG*/       int detectorID = cluster->getDetectorID();
-	/// /*DEBUG*/       int clusterID  = cluster->getClusterID();
-	/// /*DEBUG*/       int xSize, ySize;
-	/// /*DEBUG*/       ClusterQuality quality = cluster->getClusterQuality();
-	/// /*DEBUG*/       cluster->getClusterSize(xSize, ySize);
-	/// /*DEBUG*/       cluster->getSeedCoord(xSeed, ySeed);
-	/// /*DEBUG*/       cout << "[" << name() << "]        Cluster " << (*setIterator) 
-	  /// /*DEBUG*/		     << " (" << detectorID << ":" << clusterID << ":" << xSeed 
-	  /// /*DEBUG*/		     << "," << ySeed << ":" << xSize << "," << ySize << ":" << static_cast<int>(quality) << ") " << endl;
+
+#ifdef MARLINDEBUG
+	int xSeed, ySeed;
+	int detectorID = cluster->getDetectorID();
+	int clusterID  = cluster->getClusterID();
+	int xSize, ySize;
+	ClusterQuality quality = cluster->getClusterQuality();
+	cluster->getClusterSize(xSize, ySize);
+	cluster->getSeedCoord(xSeed, ySeed);
+	message<DEBUG> ( log()  << "         Cluster " << (*setIterator)  << " (" << detectorID << ":" << clusterID << ":" << xSeed 
+			 << ", " << ySeed << ":" << xSize << "," << ySize << ":" << static_cast<int>(quality) << ") " );
+#endif
+
 	cluster->setClusterQuality ( cluster->getClusterQuality() | kMergedCluster );
 	++setIterator;
       }
@@ -224,6 +242,6 @@ void EUTelClusterSeparationProcessor::check (LCEvent * evt) {
 
 
 void EUTelClusterSeparationProcessor::end() {
-  cout << "[" << name() <<"] Successfully finished" << endl;
+  message<MESSAGE> ( "Successfully finished" );
 }
 

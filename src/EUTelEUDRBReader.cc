@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEUDRBReader.cc,v 1.1 2007-03-04 18:23:23 bulgheroni Exp $
+// Version $Id: EUTelEUDRBReader.cc,v 1.2 2007-05-21 11:46:24 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -13,6 +14,7 @@
 #include "EUTelEUDRBReader.h"
 #include "EUTELESCOPE.h"
 #include "EUTelRunHeaderImpl.h"
+#include "EUTelEventImpl.h"
 
 // marlin includes
 #include "marlin/DataSourceProcessor.h"
@@ -70,13 +72,13 @@ void EUTelEUDRBReader::init () {
 void EUTelEUDRBReader::readDataSource (int numEvents) {
 
   ifstream inputFile;
-  inputFile.exceptions (ifstream::failbit | ifstream::badbit);
+  inputFile.exceptions (ifstream::failbit | ifstream::badbit );
   
   // try to open the input file....
   try {
     inputFile.open (_fileName.c_str (), ios::in | ios::binary);
   } catch (exception & e) {
-    cerr << "Problem opening file " << _fileName << ". Exiting." << endl;
+    message<ERROR> ( log() << "Problem opening file " << _fileName << ". Exiting." );
     exit (-1);
   }
   
@@ -86,7 +88,7 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
   try {
     inputFile.read(reinterpret_cast<char*>(_fileHeader), sizeof(EUDRBFileHeader));
   } catch (exception & e) {
-    cerr << "Problem reading the file header" << endl;
+    message<ERROR> ( log() << "Problem reading the file header" );
     exit(-1);
   }
 
@@ -94,7 +96,7 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
 
     EUTelRunHeaderImpl * runHeader = new EUTelRunHeaderImpl;
     runHeader->setDAQHWName( "EUDRB" );
-    runHeader->setNoOfEvent( _fileHeader->numberOfEvent );
+    runHeader->setNoOfEvent( _fileHeader->numberOfEvent + 1);
     runHeader->setNoOfDetector( _fileHeader->numberOfDetector * 4);
     IntVec minX, minY, maxX, maxY;
     for (int iDetector = 0; iDetector < _fileHeader->numberOfDetector * 4; iDetector++) {
@@ -118,12 +120,14 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
 
   }
 
-  for ( int iEvent = 0; iEvent < _fileHeader->numberOfEvent; iEvent++ ) {
+  int iEvent;
+  for ( iEvent = 0; iEvent < _fileHeader->numberOfEvent; iEvent++ ) {
 
-    LCEventImpl     * event = new LCEventImpl;
+    EUTelEventImpl     * event = new EUTelEventImpl;
     event->setDetectorName("debug_detector");
     event->setRunNumber(0);
     event->setEventNumber(iEvent);
+    event->setEventType(kDE);
     
     LCTime * now = new LCTime;
     event->setTimeStamp(now->timeStamp());
@@ -137,13 +141,13 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
     try {
       inputFile.read(reinterpret_cast<char*>(&eventHeader), sizeof(eventHeader));
     } catch (exception & e) {
-      cerr << "Problem reading the event header for event " << iEvent << endl;
+      message<ERROR> ( log() << "Problem reading the event header for event " );
       exit(-1);
     }
     
     // check the event number consistency
     if ( iEvent != eventHeader.eventNumber ) {
-      cerr << "Event number not corresponding " << eventHeader.eventNumber  << endl;
+      message<WARNING> ( log() << "Event number not corresponding " << eventHeader.eventNumber );
     }
     event->setRunNumber(0);
     event->setEventNumber(iEvent);
@@ -152,10 +156,10 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
     try {
       inputFile.read(reinterpret_cast<char*>(_buffer), _fileHeader->dataSize );
     } catch (exception& e) {
-      cerr << "Problem reading the data block for event " << iEvent << endl;
+      message<ERROR> ( log() << "Problem reading the data block for event " << iEvent );
+      exit(-1);
     }
     
-
       
     // this is made between frame 3 and frame 2
     int frameRecordSize = _fileHeader->nXPixel * _fileHeader->nYPixel * 4 /*frame*/ / 2 /*pixel per record*/;
@@ -247,18 +251,36 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
     try {
       inputFile.read(reinterpret_cast<char*>(&eventTrailer), sizeof(eventTrailer));
     } catch (exception & e) {
-      cerr << "Problem reading the event trailer on event " << iEvent << endl;
+      message<ERROR> ( log() << "Problem reading the event trailer on event " << iEvent );
       exit(-1);
     }
     // crosscheck the trailer
     if (eventTrailer.trailer != 0x89abcdef ) {
-      cerr << "The trailer is not correct " << endl;
+      message<WARNING> ( log() << "The trailer is not correct on event " << iEvent ) ;
     }
     
     event->addCollection(rawData, "rawdata");
-    ProcessorMgr::instance()->processEvent(event);
+
+    ProcessorMgr::instance()->processEvent(static_cast<LCEventImpl*> (event) );
     delete event;
+
+    if ( inputFile.eof() ) break;
   }
+
+  // add the EORE event
+  EUTelEventImpl     * event = new EUTelEventImpl;
+  event->setDetectorName("debug_detector");
+  event->setRunNumber(0);
+  event->setEventNumber(iEvent);
+  event->setEventType(kEORE);
+  LCTime * now = new LCTime;
+  event->setTimeStamp(now->timeStamp());
+  delete now;
+  event->setRunNumber(0);
+  event->setEventNumber(iEvent + 1);
+
+  ProcessorMgr::instance()->processEvent(static_cast<LCEventImpl*> (event) );
+  delete event;
 
   inputFile.close();
 }
@@ -267,5 +289,6 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
 void EUTelEUDRBReader::end () {
 
   delete [] _buffer;
+  message<MESSAGE> ( "Successfully finished" );
 
 }

@@ -1,5 +1,6 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.2 2007-02-22 13:23:39 bulgheroni Exp $
+// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.3 2007-05-21 11:46:24 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -13,6 +14,7 @@
 #include "EUTelExceptions.h"
 #include "EUTelUpdatePedestalNoiseProcessor.h"
 #include "EUTELESCOPE.h"
+#include "EUTelEventImpl.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -101,7 +103,7 @@ void EUTelUpdatePedestalNoiseProcessor::init () {
   }
   
   if ( _updateFrequency <= 0 ) {
-    cerr << "[" << name() << "] The update frequency has to be greater than 0. Set it to 1." << endl;
+    message<WARNING> ( "The update frequency has to be greater than 0. Set it to 1.");
     _updateFrequency = 1;
   }
 
@@ -126,7 +128,14 @@ void EUTelUpdatePedestalNoiseProcessor::processRunHeader (LCRunHeader * /*rdr*/ 
 }
 
 
-void EUTelUpdatePedestalNoiseProcessor::processEvent (LCEvent * evt) {
+void EUTelUpdatePedestalNoiseProcessor::processEvent (LCEvent * event) {
+
+  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
+  if ( evt->getEventType() == kEORE ) {
+    message<DEBUG> ( "EORE found: nothing else to do." );
+    return;
+  }
+
 
   if (isFirstEvent()) {
     
@@ -173,12 +182,10 @@ void EUTelUpdatePedestalNoiseProcessor::processEvent (LCEvent * evt) {
 
   if ( _iEvt % _updateFrequency == 0 ) {
 
-    cout << "[" << name() << "] Updating pedestal and noise ...";
-
     if ( _updateAlgo == EUTELESCOPE::FIXEDWEIGHT ) 
       fixedWeightUpdate(evt);
 
-    cout << " ok " << endl;
+    message<MESSAGE> ( "Updating pedestal and noise ... ok" );
 
   }
   ++_iEvt;
@@ -285,13 +292,14 @@ void EUTelUpdatePedestalNoiseProcessor::end() {
     
     //    AIDA::IDataPointSet * noiseDPS =  AIDAProcessor::dataPointSetFactory(this)->create();
 
+    message<DEBUG> ( "Update results" );
     for (unsigned int count = 0; count < _monitoredPixelPedestal[iPixel].size(); count++) {
-      cout << count << " " << _monitoredPixelPedestal[iPixel][count] << " " << _monitoredPixelNoise[iPixel][count] << endl;
-//       pedestalDPS->addPoint();
-//       pedestalDPS->point(count)->coordinate(0)->setValue(_monitoredPixelPedestal[iPixel][count]);
+      message<DEBUG> ( log() << count << " " << _monitoredPixelPedestal[iPixel][count] << " " << _monitoredPixelNoise[iPixel][count] );
+      //       pedestalDPS->addPoint();
+      //       pedestalDPS->point(count)->coordinate(0)->setValue(_monitoredPixelPedestal[iPixel][count]);
       
-//       noiseDPS->addPoint();
-//       noiseDPS->point(count)->coordinate(0)->setValue(_monitoredPixelNoise[iPixel][count]);
+      //       noiseDPS->addPoint();
+      //       noiseDPS->point(count)->coordinate(0)->setValue(_monitoredPixelNoise[iPixel][count]);
     }
     
     ++iPixel;
@@ -299,7 +307,7 @@ void EUTelUpdatePedestalNoiseProcessor::end() {
     
 #endif
 
-  cout << "[" << name() << "] Successfully finished " << endl;
+  message<MESSAGE> ( "Successfully finished" );
   
 }
 
