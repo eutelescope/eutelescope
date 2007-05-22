@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.4 2007-05-21 11:46:24 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.5 2007-05-22 16:44:41 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -20,6 +20,7 @@
 #include "marlin/Processor.h"
 
 // lcio includes <.h> 
+#include <IMPL/TrackerPulseImpl.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
 #include <UTIL/CellIDEncoder.h>
@@ -41,7 +42,7 @@ EUTelClusterSeparationProcessor::EUTelClusterSeparationProcessor () :Processor("
 
 
   // first of all we need to register the input collection
-  registerInputCollection (LCIO::TRACKERDATA, "ClusterCollectionName",
+  registerInputCollection (LCIO::TRACKERPULSE, "ClusterCollectionName",
 			   "Cluster collection name ",
 			   _clusterCollectionName, string ("cluster"));
 
@@ -87,12 +88,26 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
   if (_iEvt % 10 == 0) 
     message<MESSAGE> ( log() << "Separating clusters on event " << _iEvt ) ;
 
-  LCCollectionVec       *   clusterCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_clusterCollectionName));
-  vector< pair<int, int > > mergingPairVector;
+  LCCollectionVec                *clusterCollectionVec = dynamic_cast <LCCollectionVec *> (evt->getCollection(_clusterCollectionName));
+  CellIDDecoder<TrackerPulseImpl> cellDecoder(clusterCollectionVec);
+  vector< pair<int, int > >       mergingPairVector;
 
   for ( int iCluster = 0 ; iCluster < clusterCollectionVec->getNumberOfElements() ; iCluster++) {
 
-    EUTelFFClusterImpl * cluster = static_cast< EUTelFFClusterImpl *> (clusterCollectionVec->getElementAt(iCluster));
+    TrackerPulseImpl   * pulse   = dynamic_cast<TrackerPulseImpl *>   ( clusterCollectionVec->getElementAt(iCluster) );
+    int temp = cellDecoder(pulse)["type"];
+    ClusterType          type    = static_cast<ClusterType> ( temp );
+    
+    // all clusters have to inherit from TrackerDataImpl, but there
+    // might be some overlayer to that depending on the cluster type.
+    EUTelVirtualCluster    * cluster; 
+    
+    if ( type == kEUTelFFClusterImpl ) 
+      cluster = static_cast< EUTelFFClusterImpl *> ( pulse->getTrackerData() ) ;
+    else {
+      message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
+      exit(-1);
+    }
     
     int  iOtherCluster     = iCluster + 1;
     bool isExisisting      = (iOtherCluster < clusterCollectionVec->getNumberOfElements() );
@@ -102,7 +117,8 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
     while ( isOnSameDetector && isExisisting ) {
 
       // get the next cluster in the collection
-      EUTelFFClusterImpl * otherCluster = static_cast< EUTelFFClusterImpl *> (clusterCollectionVec->getElementAt(iOtherCluster));
+      TrackerPulseImpl   * otherPulse   = dynamic_cast<TrackerPulseImpl *> (clusterCollectionVec->getElementAt(iOtherCluster)) ;
+      EUTelFFClusterImpl * otherCluster = static_cast< EUTelFFClusterImpl *> ( otherPulse->getTrackerData() );
       
       // check if the two are on the same detector
       if ( cluster->getDetectorID() == otherCluster->getDetectorID() ) {
@@ -156,7 +172,7 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 							       LCCollectionVec * collectionVec) const {
 
   //  message<DEBUG> ( log() << "Applying cluster separation algorithm " << _separationAlgo );
-  message<DEBUG> ( log () <<  "Found " ); // << setVector.size() << " group(s) of merging clusters on event " << _iEvt );
+  message<DEBUG> ( log () <<  "Found "  << setVector.size() << " group(s) of merging clusters on event " << _iEvt );
   if ( _separationAlgo == EUTELESCOPE::FLAGONLY ) {
 
 #ifdef MARLINDEBUG
@@ -172,7 +188,8 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 
       set <int >::iterator setIterator = (*vectorIterator).begin();
       while ( setIterator != (*vectorIterator).end() ) {
-	EUTelFFClusterImpl * cluster = static_cast<EUTelFFClusterImpl *> (collectionVec->getElementAt( *setIterator )) ;
+	TrackerPulseImpl   * pulse   = dynamic_cast<TrackerPulseImpl * > ( collectionVec->getElementAt( *setIterator ) ) ;
+	EUTelFFClusterImpl * cluster = static_cast<EUTelFFClusterImpl *> ( pulse->getTrackerData() );
 
 #ifdef MARLINDEBUG
 	int xSeed, ySeed;
@@ -201,6 +218,8 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 
 void EUTelClusterSeparationProcessor::groupingMergingPairs(std::vector< std::pair<int , int> > pairVector, 
 							   std::vector< std::set<int > > * setVector) const {
+
+  message<DEBUG> ( "Grouping merging pairs of clusters " );
 
   vector< pair<int, int> >::iterator iter = pairVector.begin();
   while ( iter != pairVector.end() ) {
