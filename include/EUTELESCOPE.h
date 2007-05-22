@@ -24,7 +24,7 @@ namespace eutelescope
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.9 2007-05-18 07:57:43 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.10 2007-05-22 16:37:13 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -246,6 +246,21 @@ namespace eutelescope
      *  @see ClusterQuality
      */
     static const char * CLUSTERDEFAULTENCODING;
+
+    //! Default TrackerPulse encoding for cluster
+    /*! This constant string is used with CellIDEncoder to define the
+     *  default encoding used to describe cells into a tracker
+     *  pulse. This encoding is very similar to CLUSTERDEFAULTENCODING
+     *  but instead of the quality it has a 5 bit fields to identify
+     *  the cluster reimplementation class.
+     *
+     *  "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5:type:5"
+     *
+     *  @see ClusterType
+     */
+    static const char * PULSEDEFAULTENCODING;
+    
+
   };
 
   //! Event type enum
@@ -274,7 +289,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.9 2007-05-18 07:57:43 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.10 2007-05-22 16:37:13 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -321,7 +336,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.9 2007-05-18 07:57:43 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.10 2007-05-22 16:37:13 bulgheroni Exp $
    */ 
   
   enum ClusterQuality {
@@ -365,7 +380,26 @@ namespace eutelescope
    */ 
   ClusterQuality operator|=(ClusterQuality a, ClusterQuality b);
 
+  //! Cluster type enum
+  /*! This enum is used in the encoding of a TrackerPulse to describe
+   *  which was the underlying class used for the description of the
+   *  cluster during the clusterization process itself. 
+   *  
+   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @Version $Id: EUTELESCOPE.h,v 1.10 2007-05-22 16:37:13 bulgheroni Exp $
+   */
+  enum ClusterType {
+    kEUTelFFClusterImpl = 0,
+    // add here all the other cluster type numbering them in between 0
+    // and 31 unknown 
+    kUnknown            = 31
+  };
+
+
 }
+
+
+
 
 
 #endif
