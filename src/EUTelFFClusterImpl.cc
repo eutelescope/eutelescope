@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.5 2007-05-21 11:42:14 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.6 2007-05-22 16:41:22 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -13,6 +13,7 @@
 
 // personal includes ".h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelVirtualCluster.h"
 
 // lcio includes <.h>
 #include <LCIOTypes.h>
@@ -26,10 +27,10 @@ using namespace eutelescope;
 using namespace std;
 
 
-EUTelFFClusterImpl::EUTelFFClusterImpl() : IMPL::TrackerDataImpl() { ; } 
+EUTelFFClusterImpl::EUTelFFClusterImpl() : EUTelVirtualCluster() { ; } 
 
 
-float EUTelFFClusterImpl::getDistance(EUTelFFClusterImpl * otherCluster) const {
+float EUTelFFClusterImpl::getDistance(EUTelVirtualCluster * otherCluster) const {
 
   int xOtherSeed, yOtherSeed;
   otherCluster->getSeedCoord(xOtherSeed, yOtherSeed);

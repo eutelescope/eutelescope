@@ -13,13 +13,13 @@
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
+#include "EUTelVirtualCluster.h"
 
 // marlin includes ".h"
 
 // lcio includes <.h>
 #include <lcio.h>
 #include <IMPL/LCCollectionVec.h>
-#include <IMPL/TrackerDataImpl.h>
 #include <UTIL/CellIDDecoder.h>
 #include <UTIL/CellIDEncoder.h>
 
@@ -89,10 +89,10 @@ namespace eutelescope {
    *  @todo Test the charge center of mass method.
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.5 2007-05-21 11:37:33 bulgheroni Exp $
+   *  @Version $Id: EUTelFFClusterImpl.h,v 1.6 2007-05-22 16:36:25 bulgheroni Exp $
    */ 
 
-  class EUTelFFClusterImpl : public IMPL::TrackerDataImpl {
+  class EUTelFFClusterImpl : public EUTelVirtualCluster {
 
   public:
     //! Default constructor
@@ -229,7 +229,7 @@ namespace eutelescope {
      *  @param otherCluster The other cluster for distance calculation
      *  @return The distance in pixel unit from @a this to @a otherCluster
      */
-    float getDistance(EUTelFFClusterImpl * otherCluster) const;
+    float getDistance(EUTelVirtualCluster * otherCluster) const;
 
     //! Get the cluster external radius
     /*! This method is used to calculate the fixed frame cluster
