@@ -56,7 +56,25 @@ namespace eutelescope {
    *  gravity) or non-linear (eta function) is needed.
    *
    *  There are different ways to build up a clusters: the user can
-   *  choose which algorithm to use via the clusteringAlgo parameter. 
+   *  choose which algorithm to use via the clusteringAlgo
+   *  parameter. Different algorithms may requires different way to
+   *  store, at least temporary, the cluster information in
+   *  memory. For example, in the case of fixed frame NxM clustering
+   *  the natural object to store a cluster is a EUTelFFClusterImpl
+   *  object that is inheriting from TrackerData; other, algorithms
+   *  can used different re-implementation of TrackerData. 
+   *
+   *  In order to write data on disk in the most general and
+   *  consistent way, whatever object has been used during the
+   *  clustering procedure to store cluster info, those are then moved
+   *  to a TrackPulse before writing. The original information about
+   *  the TrackerData is saved as a reference in the TrackerPulse for
+   *  possible further use.
+   *
+   *  The TrackerPulse cell id encoding is very similar to the
+   *  EUTELESCOPE::CLUSTERDEFAULTENCODING but instead of having the
+   *  quality, it has another field named ClusterType used to identify
+   *  the class used to store the cluster information.
    *
    *  @see processEvent(LCEvent*) for a detailed description of
    *  available algorithms.
@@ -78,7 +96,7 @@ namespace eutelescope {
    *  to exclude from the clustering procedure pixels defined as bad
    *  during the pedestal processor.
    *
-   *  <b>ClusterCollectionName</b>: this is the name of the output
+   *  <b>PulseCollectionName</b>: this is the name of the output
    *  cluster collection. This object is used the core result of the
    *  first analysis part. The cluster collection will be used to fill
    *  in detector level data quality histograms and, along with the
@@ -102,7 +120,7 @@ namespace eutelescope {
    *
    *  <h4>Output</h4>
    *
-   *  <b>Cluster</b>: a collection of TrackerData containing the
+   *  <b>Cluster</b>: a collection of TrackerPulse containing the
    *  clustering results.
    *
    *  @param _dataCollectionName the name of the input data collection
@@ -116,7 +134,7 @@ namespace eutelescope {
    *  @param _clusterCut the threshold to select clusters.
    *  
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.5 2007-05-21 11:37:33 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.6 2007-05-22 16:39:54 bulgheroni Exp $
    *
    */
 
@@ -392,10 +410,21 @@ namespace eutelescope {
      */
     std::string _statusCollectionName;
 
-    //! Cluster collection name.
-    /*! This is the name used to store the output cluster collection.
+    //! Pulse collection name.
+    /*! This is the name used to store the output cluster
+     *  collection. 
      */ 
-    std::string _clusterCollectionName;
+    std::string _pulseCollectionName;
+
+    
+    //! Cluster collection name.
+    /*! This is the name of the collection to store the in memory and
+     *  on the disk the cluster. This will be a collection of
+     *  TrackerData but it can be reimplemented depending on the
+     *  clustering algorithm.
+     */ 
+    std::string _dummyCollectionName;
+
 
     //! Current run number.
     /*! This number is used to store the current run number

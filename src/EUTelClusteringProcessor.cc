@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.7 2007-05-21 11:46:24 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.8 2007-05-22 16:41:52 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -16,6 +16,7 @@
 #include "EUTelExceptions.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
+#include "EUTelFFClusterImpl.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -23,8 +24,8 @@
 
 // lcio includes <.h> 
 #include <UTIL/CellIDEncoder.h>
-#include <IMPL/TrackerDataImpl.h>
 #include <IMPL/TrackerRawDataImpl.h>
+#include <IMPL/TrackerPulseImpl.h>
 #include <IMPL/LCCollectionVec.h>
 
 // system includes <>
@@ -37,7 +38,9 @@ using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
-  /// /*DEBUG*/ ofstream logfile;
+#ifdef MARLINDEBUG
+ofstream logfile;
+#endif
 
 EUTelClusteringProcessor::EUTelClusteringProcessor () :Processor("EUTelClusteringProcessor") {
 
@@ -58,9 +61,15 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () :Processor("EUTelClusterin
 			   "Pixel status (input) collection name",
 			   _statusCollectionName, string("status"));
 
-  registerOutputCollection(LCIO::TRACKERDATA, "ClusterCollectionName",
+  registerOutputCollection(LCIO::TRACKERPULSE, "PulseCollectionName",
 			   "Cluster (output) collection name",
-			   _clusterCollectionName, string("cluster"));
+			   _pulseCollectionName, string("cluster"));
+
+  // I believe it is safer not allowing the dummyCollection to be
+  // renamed by the user. I prefer to set it once for ever here and
+  // eventually, only if really needed, in the future allow add
+  // another registerOutputCollection.
+  _dummyCollectionName = "original_data";
 
 
   // now the optional parameters
@@ -183,8 +192,9 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
   message<DEBUG> ( log()   << "Event " << _iEvt );
 #endif
 
-  LCCollectionVec * clusterCollection = new LCCollectionVec(LCIO::TRACKERDATA);
-  
+  LCCollectionVec * pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
+  LCCollectionVec * dummyCollection = new LCCollectionVec(LCIO::TRACKERDATA);
+
   for (_iDetector = 0; _iDetector < inputCollectionVec->getNumberOfElements(); _iDetector++) {
     
 #ifdef MARLINDEBUG
@@ -281,8 +291,23 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	    // the cluster candidate is a good cluster
 	    // mark all pixels belonging to the cluster as hit
 	    IntVec::iterator indexIter = clusterCandidateIndeces.begin();
-	    TrackerDataImpl * cluster = new TrackerDataImpl;
-	    CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, clusterCollection);
+
+	    // the final result of the clustering will enter in a
+	    // TrackerPulseImpl in order to be algorithm independent 
+	    TrackerPulseImpl * pulse = new TrackerPulseImpl;
+	    CellIDEncoder<TrackerPulseImpl> idPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
+	    idPulseEncoder["sensorID"]      = _iDetector;
+	    idPulseEncoder["clusterID"]     = clusterCounter;
+	    idPulseEncoder["xSeed"]         = seedX;
+	    idPulseEncoder["ySeed"]         = seedY;
+	    idPulseEncoder["xCluSize"]      = _xClusterSize;
+	    idPulseEncoder["yCluSize"]      = _yClusterSize;
+	    idPulseEncoder["type"]          = static_cast<int>(kEUTelFFClusterImpl);
+	    idPulseEncoder.setCellID(pulse);	    
+
+
+	    EUTelFFClusterImpl * cluster = new EUTelFFClusterImpl;
+	    CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, dummyCollection);
 	    idClusterEncoder["sensorID"]      = _iDetector;
 	    idClusterEncoder["clusterID"]     = clusterCounter;
 	    idClusterEncoder["xSeed"]         = seedX;
@@ -315,7 +340,14 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 
 	    // copy the candidate charges inside the cluster
 	    cluster->setChargeValues(clusterCandidateCharges);
-	    clusterCollection->push_back(cluster);
+	    dummyCollection->push_back(cluster);
+
+	    pulse->setCharge(cluster->getTotalCharge());
+	    pulse->setQuality(static_cast<int>(cluQuality));
+	    pulse->setTrackerData(static_cast<TrackerDataImpl*>(cluster));
+	    pulseCollection->push_back(pulse);
+
+	    // increment the cluster counters
 	    _totCluster[_iDetector] += 1;
 	    ++clusterCounter;
 
@@ -326,8 +358,9 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
       }
     }
   }
-  evt->addCollection(clusterCollection,_clusterCollectionName);
-  
+  evt->addCollection(pulseCollection,_pulseCollectionName);
+  evt->addCollection(dummyCollection,_dummyCollectionName);
+
   ++_iEvt;
   
 }
