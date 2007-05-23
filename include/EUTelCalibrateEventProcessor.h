@@ -15,19 +15,17 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
+// AIDA includes <.h>
+#ifdef MARLIN_USE_AIDA
+#include <AIDA/IBaseHistogram.h>
+#endif
+
 // lcio includes <.h> 
 
 // system includes <>
 #include <string>
 #include <map>
 
-// forward declaration 
-
-#ifdef MARLIN_USE_AIDA
-namespace AIDA {
-  class IBaseHistogram;
-}
-#endif
 
 namespace eutelescope {
 
@@ -122,7 +120,7 @@ namespace eutelescope {
    *  @author Antonio Bulgheroni, INFN
    *  <mailto:antonio.bulgheroni@gmail.com>
    *  
-   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.4 2007-05-21 11:37:33 bulgheroni Exp $
+   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.5 2007-05-23 14:08:44 bulgheroni Exp $
    *
    *
    */

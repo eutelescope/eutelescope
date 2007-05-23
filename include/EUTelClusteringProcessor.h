@@ -17,25 +17,17 @@
 #include "marlin/Processor.h"
 
 // aida includes <.h>
+#ifdef MARLIN_USE_AIDA
+#include <AIDA/IBaseHistogram.h>
+#endif
 
 // lcio includes <.h> 
+#include <IMPL/TrackerRawDataImpl.h>
 
 // system includes <>
 #include <string>
 #include <map>
 #include <cmath>
-
-// forward declarations
-namespace IMPL {
-  class TrackerRawDataImpl;
-}
-
-#ifdef MARLIN_USE_AIDA
-namespace AIDA {
-  class IBaseHistogram;
-}
-#endif
-
 
 namespace eutelescope {
 
@@ -134,7 +126,7 @@ namespace eutelescope {
    *  @param _clusterCut the threshold to select clusters.
    *  
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.6 2007-05-22 16:39:54 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.7 2007-05-23 14:08:44 bulgheroni Exp $
    *
    */
 

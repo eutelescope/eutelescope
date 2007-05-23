@@ -20,17 +20,16 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerRawDataImpl.h>
 
+// AIDA includes <.h>
+#ifdef MARLIN_USE_AIDA
+#include <AIDA/IBaseHistogram.h>
+#endif
+
+
 // system includes <>
 #include <string>
 #include <cmath>
 
-// forward declaration
-
-#ifdef MARLIN_USE_AIDA
-namespace AIDA {
-  class IBaseHistogram;
-}
-#endif
 
 
 namespace eutelescope {
@@ -85,7 +84,7 @@ namespace eutelescope {
    *  @param OutputPedeFile Name of the output pedestal file
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.12 2007-05-19 09:51:22 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.13 2007-05-23 14:08:44 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by

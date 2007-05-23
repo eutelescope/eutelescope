@@ -16,14 +16,12 @@
 #include "marlin/Processor.h"
 
 // lcio includes <.h> 
+#include <IMPL/LCCollectionVec.h>
 
 // system includes <>
 #include <string>
 #include <vector>
 #include <set>
-
-// forward declaration 
-class IMPL::LCCollectionVec;
 
 namespace eutelescope {
 
@@ -83,7 +81,7 @@ namespace eutelescope {
    *  cluster separation.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterSeparationProcessor.h,v 1.3 2007-05-21 11:37:33 bulgheroni Exp $
+   *  @version $Id: EUTelClusterSeparationProcessor.h,v 1.4 2007-05-23 14:08:44 bulgheroni Exp $
    *
    *
    */
