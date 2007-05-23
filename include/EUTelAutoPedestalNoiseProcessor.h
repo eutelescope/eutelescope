@@ -62,7 +62,7 @@ namespace eutelescope {
    *  @param StatusCollectionName
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelAutoPedestalNoiseProcessor.h,v 1.4 2007-05-21 11:37:33 bulgheroni Exp $
+   *  @version $Id: EUTelAutoPedestalNoiseProcessor.h,v 1.5 2007-05-23 14:08:12 bulgheroni Exp $
    *
    *
    */
@@ -73,8 +73,8 @@ namespace eutelescope {
 
      
     //! Returns a new instance of EUTelAutoPedestalNoiseProcessor
-    /*! This method returns an new instance of the this processor.  It
-     *  is called by Marlin execution framework and it shouldn't be
+    /*! This method returns a new instance of this processor.  It is
+     *  called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
      *  
      *  @return a new EUTelAutoPedestalNoiseProcessor.
