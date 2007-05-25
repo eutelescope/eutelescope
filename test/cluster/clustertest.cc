@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: clustertest.cc,v 1.4 2007-05-19 09:55:41 bulgheroni Exp $
+// Version $Id: clustertest.cc,v 1.5 2007-05-25 05:12:15 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -26,7 +26,7 @@ using namespace std;
 using namespace lcio;
 using namespace eutelescope;
 
-const int nDetector  = 5;
+const int nDetector  = 6;
 const int nPedeEvent = 100;
 const int nDataEvent = 100;
 
