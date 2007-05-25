@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.6 2007-05-21 14:16:26 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.7 2007-05-25 05:14:01 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -15,9 +15,11 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTELESCOPE.h"
+#include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelEtaFunctionImpl.h"
 #include "EUTelPseudo1DHistogram.h"
+#include "EUTelExceptions.h"
 
 // marlin includes ".h"
 #include "marlin/Exceptions.h"
@@ -42,6 +44,7 @@
 #endif 
 
 // lcio includes <.h> 
+#include <IMPL/TrackerPulseImpl.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/LCEventImpl.h>
@@ -381,11 +384,25 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
       message<MESSAGE> ( log() << "Filling Center of Gravity histogram with event " << _iEvt );
     
     LCCollectionVec * clusterCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_clusterCollectionName));
-    CellIDDecoder<TrackerDataImpl> cellDecoder(clusterCollectionVec);
+    CellIDDecoder<TrackerPulseImpl> cellDecoder(clusterCollectionVec); 
     
     for (int iCluster = 0; iCluster < clusterCollectionVec->getNumberOfElements() ; iCluster++) {
       
-      EUTelFFClusterImpl * cluster = static_cast< EUTelFFClusterImpl * > ( clusterCollectionVec->getElementAt(iCluster) );
+      TrackerPulseImpl   * pulse = dynamic_cast<TrackerPulseImpl *>  ( clusterCollectionVec->getElementAt(iCluster) );
+      int temp = cellDecoder(pulse)["type"];
+      ClusterType type = static_cast<ClusterType>( temp );
+
+      // all clusters have to inherit from the virtual cluster (that is
+      // a TrackerDataImpl with some utility methods).
+      EUTelVirtualCluster    * cluster; 
+
+      if ( type == kEUTelFFClusterImpl ) 
+	cluster = static_cast< EUTelFFClusterImpl * > ( pulse->getTrackerData() );
+      else {
+	message<ERROR> ( "Unknown cluster type. Sorry for quitting" );
+	throw UnknownDataTypeException("Cluster type unknown");
+      }
+
       int detectorID = cluster->getDetectorID();
       float xShift, yShift;
       
