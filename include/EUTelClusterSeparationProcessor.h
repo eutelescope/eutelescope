@@ -81,7 +81,7 @@ namespace eutelescope {
    *  cluster separation.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterSeparationProcessor.h,v 1.4 2007-05-23 14:08:44 bulgheroni Exp $
+   *  @version $Id: EUTelClusterSeparationProcessor.h,v 1.5 2007-05-25 05:14:58 bulgheroni Exp $
    *
    *
    */
@@ -131,6 +131,9 @@ namespace eutelescope {
      *
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
+     *
+     *  @throw UnknownDataTypeException if the cluster type stored in
+     *  the TrackerPulse is unknown.
      */
     virtual void processEvent (LCEvent * evt);
 

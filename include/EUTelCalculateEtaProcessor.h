@@ -110,7 +110,7 @@ namespace eutelescope {
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  
-   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.6 2007-05-23 14:08:44 bulgheroni Exp $
+   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.7 2007-05-25 05:13:35 bulgheroni Exp $
    *
    *
    */
@@ -151,11 +151,14 @@ namespace eutelescope {
     virtual void processRunHeader (LCRunHeader * run);
 
     //! Called every event
-    /*  This is called for each event in the file. Pseudohistograms
+    /*! This is called for each event in the file. Pseudohistograms
      *  are filled
      * 
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
+     *
+     *  @throw UnknownDataTypeException if the cluster type stored in
+     *  the TrackerPulse is unknown.
      */
     virtual void processEvent (LCEvent * evt);
 
