@@ -25,7 +25,7 @@ namespace eutelescope {
    *  invalid algorithm then this exceptions is thrown
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.4 2007-05-21 11:37:33 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.5 2007-05-25 05:14:40 bulgheroni Exp $
    */
 
   class InvalidParameterException  : public lcio::Exception {
@@ -40,7 +40,7 @@ namespace eutelescope {
     //! Default constructor with string argument
     /*! @param text Message shown by what().
      */
-    InvalidParameterException( std::string text ) {
+    InvalidParameterException( const std::string&  text ) {
       message = "eutelescope::InvalidParameterException: " + text;
     }
   };
@@ -54,7 +54,7 @@ namespace eutelescope {
    *  the number of detectors.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.4 2007-05-21 11:37:33 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.5 2007-05-25 05:14:40 bulgheroni Exp $
    */
   class IncompatibleDataSetException : public lcio::Exception {
     
@@ -69,11 +69,55 @@ namespace eutelescope {
     //! Default constructor with string argument
     /*! @param text Message shown by what().
      */
-    IncompatibleDataSetException(std::string text) {
+    IncompatibleDataSetException(const std::string& text) {
       message = "eutelescope::IncompatibleDataSetException: " + text;
     }
   };
 
+  //! Unknown data type
+  /*! This exception is thrown when the code is not able to understand
+   *  the type of an object. 
+   *  
+   *  A typical example is the case of clusters. In the EUTelescope
+   *  framework there is a virtual base class to describe a cluster
+   *  inheriting from IMPL::TrackerDataImpl. There are several
+   *  different way this virtual base class can be implemented
+   *  according to the way the cluster was found (clustering
+   *  algorithm) or the initial data were available (zero suppressed
+   *  or not).
+   *
+   *  Clusters are stored within a TrackerPulse object, but the
+   *  corresponding TrackerData needs to re-interpret according to the
+   *  cluster type originally used. This is coded into the
+   *  TrackerPulse cellID (ClusterType) with an enumeration
+   *  (eutelescope::ClusterType). 
+   *
+   *  Of course, if this information is missing the rest of the
+   *  analysis procedure might not be able to continue and this
+   *  exception is thorwn.
+   *
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelExceptions.h,v 1.5 2007-05-25 05:14:40 bulgheroni Exp $
+   */ 
+  class UnknownDataTypeException : public lcio::Exception {
+    
+  protected:
+    //! Default constructor
+    UnknownDataTypeException() { /* NO - OP */ ; }
+    
+  public:
+    //! Default destructor
+    virtual ~UnknownDataTypeException() throw() { /* NO - OP */ ; }
+
+    //! Default constructor with string argument
+    /*! This is the standard way to create this exception.
+     *
+     *  @param text Message to be shown by what()
+     */ 
+    UnknownDataTypeException(const std::string& text) {
+      message = "eutelescope::UnknownDataTypeException: " + text;
+    }
+  };
 }
 
 #endif
