@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.5 2007-05-22 16:44:41 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.6 2007-05-25 05:15:45 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -15,6 +15,7 @@
 #include "EUTelFFClusterImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelClusterSeparationProcessor.h"
+#include "EUTelExceptions.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -98,15 +99,15 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
     int temp = cellDecoder(pulse)["type"];
     ClusterType          type    = static_cast<ClusterType> ( temp );
     
-    // all clusters have to inherit from TrackerDataImpl, but there
-    // might be some overlayer to that depending on the cluster type.
+    // all clusters have to inherit from the virtual cluster (that is
+    // a TrackerDataImpl with some utility methods).
     EUTelVirtualCluster    * cluster; 
     
     if ( type == kEUTelFFClusterImpl ) 
       cluster = static_cast< EUTelFFClusterImpl *> ( pulse->getTrackerData() ) ;
     else {
       message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
-      exit(-1);
+      throw UnknownDataTypeException("Cluster type unknown");
     }
     
     int  iOtherCluster     = iCluster + 1;
