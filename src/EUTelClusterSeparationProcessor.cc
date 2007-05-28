@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.6 2007-05-25 05:15:45 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.7 2007-05-28 11:52:27 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -96,8 +96,7 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
   for ( int iCluster = 0 ; iCluster < clusterCollectionVec->getNumberOfElements() ; iCluster++) {
 
     TrackerPulseImpl   * pulse   = dynamic_cast<TrackerPulseImpl *>   ( clusterCollectionVec->getElementAt(iCluster) );
-    int temp = cellDecoder(pulse)["type"];
-    ClusterType          type    = static_cast<ClusterType> ( temp );
+    ClusterType          type    = static_cast<ClusterType> (static_cast<int>( cellDecoder(pulse)["type"] ) );
     
     // all clusters have to inherit from the virtual cluster (that is
     // a TrackerDataImpl with some utility methods).
@@ -118,8 +117,15 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
     while ( isOnSameDetector && isExisisting ) {
 
       // get the next cluster in the collection
-      TrackerPulseImpl   * otherPulse   = dynamic_cast<TrackerPulseImpl *> (clusterCollectionVec->getElementAt(iOtherCluster)) ;
-      EUTelFFClusterImpl * otherCluster = static_cast< EUTelFFClusterImpl *> ( otherPulse->getTrackerData() );
+      TrackerPulseImpl    * otherPulse   = dynamic_cast<TrackerPulseImpl *> (clusterCollectionVec->getElementAt(iOtherCluster)) ;
+      EUTelVirtualCluster * otherCluster;
+      
+      if ( type == kEUTelFFClusterImpl ) 
+	otherCluster = static_cast< EUTelFFClusterImpl *> ( otherPulse->getTrackerData() );
+      else {
+	message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
+	throw UnknownDataTypeException("Cluster type unknown");
+      }
       
       // check if the two are on the same detector
       if ( cluster->getDetectorID() == otherCluster->getDetectorID() ) {
