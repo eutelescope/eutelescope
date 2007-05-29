@@ -15,8 +15,7 @@
 #include "EUTELESCOPE.h"
 
 // lcio includes <.h>
-#include "IMPL/TrackerDataImpl.h"
-
+#include <IMPL/TrackerDataImpl.h>
 
 namespace eutelescope {
 
@@ -29,14 +28,14 @@ namespace eutelescope {
    *  inherithing from this virtual class.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelVirtualCluster.h,v 1.1 2007-05-22 16:35:49 bulgheroni Exp $
+   *  @Version $Id: EUTelVirtualCluster.h,v 1.2 2007-05-29 15:48:42 bulgheroni Exp $
    */
 
-  class EUTelVirtualCluster : public IMPL::TrackerDataImpl {
+  class EUTelVirtualCluster {
 
   public:
     //! Default constructor
-    EUTelVirtualCluster() {} ;
+    EUTelVirtualCluster(IMPL::TrackerDataImpl *) { } 
 
     //! Default destructor
     virtual ~EUTelVirtualCluster() {;}
@@ -158,6 +157,11 @@ namespace eutelescope {
      */
     virtual void setClusterQuality(ClusterQuality)                        = 0;
     
+
+  protected:
+    
+    IMPL::TrackerDataImpl * _trackerData;
+
   };
 
 }

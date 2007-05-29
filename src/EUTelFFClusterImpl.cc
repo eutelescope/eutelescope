@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.6 2007-05-22 16:41:22 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.7 2007-05-29 15:48:42 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -24,10 +24,11 @@
 #include <cmath>
 
 using namespace eutelescope;
+using namespace IMPL;
 using namespace std;
 
 
-EUTelFFClusterImpl::EUTelFFClusterImpl() : EUTelVirtualCluster() { ; } 
+EUTelFFClusterImpl::EUTelFFClusterImpl(TrackerDataImpl * data) : EUTelVirtualCluster(data) { _trackerData = data; } 
 
 
 float EUTelFFClusterImpl::getDistance(EUTelVirtualCluster * otherCluster) const {
@@ -56,9 +57,9 @@ float EUTelFFClusterImpl::getTotalCharge() const {
   
   float totalCharge = 0;
   
-  FloatVec::const_iterator iter = getChargeValues().begin();
+  FloatVec::const_iterator iter = _trackerData->getChargeValues().begin();
 
-  while (iter != getChargeValues().end()) {
+  while (iter != _trackerData->getChargeValues().end()) {
     totalCharge += (*iter++);
   }
 
@@ -77,9 +78,9 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG) const
   int iPixel = 0;
   for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
     for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
-      normalization += getChargeValues()[iPixel];
-      tempX         += xPixel * getChargeValues()[iPixel];
-      tempY         += yPixel * getChargeValues()[iPixel];
+      normalization += _trackerData->getChargeValues()[iPixel];
+      tempX         += xPixel * _trackerData->getChargeValues()[iPixel];
+      tempY         += yPixel * _trackerData->getChargeValues()[iPixel];
       ++iPixel;
     }
   }
@@ -113,9 +114,9 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int x
     for (int xPixel = -1 * (xCluSize / 2); xPixel <= (xCluSize / 2); xPixel++) {
       if ( ( xPixel >= -1 * (xSize / 2) ) &&  ( xPixel <= (xSize / 2) ) &&
 	   ( yPixel >= -1 * (ySize / 2) ) &&  ( yPixel <= (ySize / 2) ) ) {
-	normalization += getChargeValues()[iPixel];
-	tempX         += xPixel * getChargeValues()[iPixel];
-	tempY         += yPixel * getChargeValues()[iPixel];
+	normalization += _trackerData->getChargeValues()[iPixel];
+	tempX         += xPixel * _trackerData->getChargeValues()[iPixel];
+	tempY         += yPixel * _trackerData->getChargeValues()[iPixel];
       } 
       ++iPixel;
     }
@@ -142,7 +143,7 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int n
   }
 
   map<int, float> highSignalPixel;
-  FloatVec        vectorCopy(getChargeValues());
+  FloatVec        vectorCopy(_trackerData->getChargeValues());
   int             iPixel = 0;
   while ( iPixel != nPixel - 1 ) {
     
@@ -209,7 +210,7 @@ void EUTelFFClusterImpl::getCenterOfGravity(float& xCoG, float& yCoG) const {
   
 void EUTelFFClusterImpl::setClusterQuality(ClusterQuality quality) {
 
-  lcio::long64 cell1 = static_cast<lcio::long64> (getCellID1()) ;
+  lcio::long64 cell1 = static_cast<lcio::long64> (_trackerData->getCellID1()) ;
 
   int rhs = 15;
   lcio::long64  emptyMask = ~( 0x1F << rhs );
@@ -222,6 +223,6 @@ void EUTelFFClusterImpl::setClusterQuality(ClusterQuality quality) {
   cell1 = cell1 | maskedQuality;
 
   // apply the changes
-  setCellID1(cell1);
+  _trackerData->setCellID1(cell1);
 
 }

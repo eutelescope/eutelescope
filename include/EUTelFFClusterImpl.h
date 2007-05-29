@@ -89,15 +89,15 @@ namespace eutelescope {
    *  @todo Test the charge center of mass method.
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.6 2007-05-22 16:36:25 bulgheroni Exp $
+   *  @Version $Id: EUTelFFClusterImpl.h,v 1.7 2007-05-29 15:48:42 bulgheroni Exp $
    */ 
 
   class EUTelFFClusterImpl : public EUTelVirtualCluster {
 
   public:
     //! Default constructor
-    EUTelFFClusterImpl();
-
+    EUTelFFClusterImpl(TrackerDataImpl * data);
+   
     //! Destructor
     virtual ~EUTelFFClusterImpl() { /* NOOP */ ; }
     
@@ -111,7 +111,7 @@ namespace eutelescope {
       
       int   rhs = 0;
       lcio::long64 mask  = 0x1F;
-      lcio::long64 cell0 = static_cast<lcio::long64> (getCellID0());
+      lcio::long64 cell0 = static_cast<lcio::long64> (_trackerData->getCellID0());
       return static_cast<int> ( ( cell0 & mask ) >> rhs );
       
     }
@@ -124,7 +124,7 @@ namespace eutelescope {
       
       int rhs = 5;
       lcio::long64 mask = 0x1FE0;
-      lcio::long64 cell0 = static_cast<lcio::long64> (getCellID0());
+      lcio::long64 cell0 = static_cast<lcio::long64> (_trackerData->getCellID0());
       return static_cast<int> ( ( cell0  & mask ) >> rhs );
     }
 
@@ -138,8 +138,8 @@ namespace eutelescope {
      */
     inline void getSeedCoord(int& xSeed, int& ySeed) const {
 
-      lcio::long64 cell0 = static_cast<lcio::long64> (getCellID0());
-      lcio::long64 cell1 = static_cast<lcio::long64> (getCellID1());
+      lcio::long64 cell0 = static_cast<lcio::long64> (_trackerData->getCellID0());
+      lcio::long64 cell1 = static_cast<lcio::long64> (_trackerData->getCellID1());
 
       {
 	// first parameter block
@@ -170,7 +170,7 @@ namespace eutelescope {
      */
     inline void getClusterSize(int& xSize, int& ySize) const {
       
-      lcio::long64 cell1 = static_cast<lcio::long64> (getCellID1());
+      lcio::long64 cell1 = static_cast<lcio::long64> (_trackerData->getCellID1());
       
       { 
 	// first parameter block
@@ -197,7 +197,7 @@ namespace eutelescope {
      *  @return the current cluster quality
      */
     inline ClusterQuality getClusterQuality() const {
-      lcio::long64 cell1 = static_cast<lcio::long64> (getCellID1());
+      lcio::long64 cell1 = static_cast<lcio::long64> (_trackerData->getCellID1());
 
       int rhs = 15;
       lcio::long64 mask = ( 0x1F << rhs );
@@ -298,6 +298,13 @@ namespace eutelescope {
      */
     void getCenterOfGravity(float& xCoG, float& yCoG) const;
 
+    //! Return a pointer to the TrackerDataImpl
+    /*! This method is used to expose to the public the
+     *  TrackerDataImpl member.
+     *
+     *  @return The pointer of _trackerData
+     */
+    IMPL::TrackerDataImpl * trackerData() { return _trackerData; }
 
   };
  
