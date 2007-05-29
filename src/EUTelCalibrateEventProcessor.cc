@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.5 2007-05-21 11:46:24 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.6 2007-05-29 08:51:03 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -189,7 +189,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
       if ( ( _fillDebugHisto == 1 ) ||
 	   ( _doCommonMode   == 1 ) ) {
-	AIDAProcessor::tree(this)->mkdir(basePath.c_str());
+	AIDAProcessor::tree(this)->mkdirs(basePath.c_str());
       }
 
       if (_fillDebugHisto == 1) {
@@ -230,15 +230,15 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	const int    commonModeDistHistoNBin = 100;
 	const double commonModeDistHistoMin  = -10;
 	const double commonModeDistHistoMax  = +10;
-	{
-	  stringstream ss;
-	  ss << _commonModeDistHistoName << "-d" << iDetector;
-	  tempHistoName = ss.str();
-	} 
-	AIDA::IHistogram1D * commonModeDistHisto = 
-	  AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-								    commonModeDistHistoNBin, commonModeDistHistoMin, 
-								    commonModeDistHistoMax);
+ 	{
+ 	  stringstream ss;
+ 	  ss << _commonModeDistHistoName << "-d" << iDetector;
+ 	  tempHistoName = ss.str();
+ 	} 
+ 	AIDA::IHistogram1D * commonModeDistHisto = 
+ 	  AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 
+ 								    commonModeDistHistoNBin, commonModeDistHistoMin, 
+ 								    commonModeDistHistoMax);
 	_aidaHistoMap.insert(make_pair(tempHistoName, commonModeDistHisto));
 	commonModeDistHisto->setTitle("Common mode distribution");
       }
