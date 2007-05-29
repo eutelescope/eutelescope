@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.7 2007-05-25 05:14:01 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.8 2007-05-29 15:54:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -397,7 +397,7 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
       EUTelVirtualCluster    * cluster; 
 
       if ( type == kEUTelFFClusterImpl ) 
-	cluster = static_cast< EUTelFFClusterImpl * > ( pulse->getTrackerData() );
+	cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
       else {
 	message<ERROR> ( "Unknown cluster type. Sorry for quitting" );
 	throw UnknownDataTypeException("Cluster type unknown");
@@ -457,6 +457,7 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
 	}
 #endif
       }
+      delete cluster;
     }
     
     ++_iEvt;

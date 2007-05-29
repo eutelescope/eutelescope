@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.6 2007-05-29 08:51:03 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.7 2007-05-29 15:54:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -189,7 +189,10 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
       if ( ( _fillDebugHisto == 1 ) ||
 	   ( _doCommonMode   == 1 ) ) {
-	AIDAProcessor::tree(this)->mkdirs(basePath.c_str());
+	// it was changed from mkdir to mkdirs to be sure all
+	// intermediate folders were properly created, but then I had
+	// to come back to mkdir because this is the only supported in RAIDA.
+	AIDAProcessor::tree(this)->mkdir(basePath.c_str());
       }
 
       if (_fillDebugHisto == 1) {

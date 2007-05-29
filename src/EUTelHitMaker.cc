@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.3 2007-05-29 08:48:08 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.4 2007-05-29 15:54:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -251,7 +251,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     ClusterType type = static_cast<ClusterType>(static_cast<int>((pulseCellDecoder(pulse)["type"])));    
 
     if ( type == kEUTelFFClusterImpl ) {
-      cluster = static_cast<EUTelFFClusterImpl*> ( pulse->getTrackerData() );
+      cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
     } else {
       message<ERROR> ( "Unknown cluster type. Sorry for quitting" );
       throw UnknownDataTypeException("Cluster type unknown");
@@ -365,7 +365,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     
     // prepare a LCObjectVec to store the current cluster
     LCObjectVec clusterVec;
-    clusterVec.push_back( cluster );
+    clusterVec.push_back( pulse->getTrackerData() );
         
     // add the clusterVec to the hit
     hit->rawHits() = clusterVec;
@@ -373,6 +373,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     // add the new hit to the hit collection
     hitCollection->push_back( hit );
 
+    // delete the eutel cluster
+    delete cluster;
+    
   }
   ++_iEvt;
   evt->addCollection( hitCollection, _hitCollectionName );

@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.7 2007-05-28 11:52:27 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.8 2007-05-29 15:54:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -103,7 +103,7 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
     EUTelVirtualCluster    * cluster; 
     
     if ( type == kEUTelFFClusterImpl ) 
-      cluster = static_cast< EUTelFFClusterImpl *> ( pulse->getTrackerData() ) ;
+      cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ) ;
     else {
       message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
       throw UnknownDataTypeException("Cluster type unknown");
@@ -121,7 +121,7 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
       EUTelVirtualCluster * otherCluster;
       
       if ( type == kEUTelFFClusterImpl ) 
-	otherCluster = static_cast< EUTelFFClusterImpl *> ( otherPulse->getTrackerData() );
+	otherCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (otherPulse->getTrackerData()) );
       else {
 	message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
 	throw UnknownDataTypeException("Cluster type unknown");
@@ -151,7 +151,10 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
 	isOnSameDetector = false;
       }
       isExisisting = (++iOtherCluster <  clusterCollectionVec->getNumberOfElements() );
+      delete otherCluster;
     }  
+    
+    delete cluster;
   }
   
   // at this point we have inserted into the mergingPairVector all the
@@ -182,6 +185,8 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
   message<DEBUG> ( log () <<  "Found "  << setVector.size() << " group(s) of merging clusters on event " << _iEvt );
   if ( _separationAlgo == EUTELESCOPE::FLAGONLY ) {
 
+    CellIDDecoder<TrackerPulseImpl> cellDecoder(collectionVec);
+
 #ifdef MARLINDEBUG
     int iCounter = 0;    
 #endif
@@ -195,8 +200,17 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 
       set <int >::iterator setIterator = (*vectorIterator).begin();
       while ( setIterator != (*vectorIterator).end() ) {
-	TrackerPulseImpl   * pulse   = dynamic_cast<TrackerPulseImpl * > ( collectionVec->getElementAt( *setIterator ) ) ;
-	EUTelFFClusterImpl * cluster = static_cast<EUTelFFClusterImpl *> ( pulse->getTrackerData() );
+	TrackerPulseImpl    * pulse   = dynamic_cast<TrackerPulseImpl * > ( collectionVec->getElementAt( *setIterator ) ) ;
+	ClusterType           type    = static_cast<ClusterType> (static_cast<int>( cellDecoder(pulse)["type"] ) );
+	
+	EUTelVirtualCluster * cluster;
+	
+	if ( type == kEUTelFFClusterImpl ) 
+	  cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
+	else {
+	  message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
+	  throw UnknownDataTypeException("Cluster type unknown");
+	}
 
 #ifdef MARLINDEBUG
 	int xSeed, ySeed;
@@ -212,6 +226,7 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 
 	cluster->setClusterQuality ( cluster->getClusterQuality() | kMergedCluster );
 	++setIterator;
+	delete cluster;
       }
       ++vectorIterator;
     }

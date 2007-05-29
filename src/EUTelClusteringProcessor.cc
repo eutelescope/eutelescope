@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.9 2007-05-23 14:06:18 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.10 2007-05-29 15:54:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -15,8 +15,8 @@
 #include "EUTelExceptions.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
-#include "EUTelFFClusterImpl.h"
 #include "EUTelClusteringProcessor.h"
+#include "EUTelFFClusterImpl.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -25,6 +25,7 @@
 // lcio includes <.h> 
 #include <UTIL/CellIDEncoder.h>
 #include <IMPL/TrackerRawDataImpl.h>
+#include <IMPL/TrackerDataImpl.h>
 #include <IMPL/TrackerPulseImpl.h>
 #include <IMPL/LCCollectionVec.h>
 
@@ -306,7 +307,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	    idPulseEncoder.setCellID(pulse);	    
 
 
-	    EUTelFFClusterImpl * cluster = new EUTelFFClusterImpl;
+	    TrackerDataImpl * cluster = new TrackerDataImpl;
 	    CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, dummyCollection);
 	    idClusterEncoder["sensorID"]      = _iDetector;
 	    idClusterEncoder["clusterID"]     = clusterCounter;
@@ -341,10 +342,13 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	    // copy the candidate charges inside the cluster
 	    cluster->setChargeValues(clusterCandidateCharges);
 	    dummyCollection->push_back(cluster);
+	    
+	    EUTelFFClusterImpl * eutelCluster = new EUTelFFClusterImpl( cluster );
+	    pulse->setCharge(eutelCluster->getTotalCharge());
+	    delete eutelCluster;
 
-	    pulse->setCharge(cluster->getTotalCharge());
 	    pulse->setQuality(static_cast<int>(cluQuality));
-	    pulse->setTrackerData(static_cast<TrackerDataImpl*>(cluster));
+	    pulse->setTrackerData(cluster);
 	    pulseCollection->push_back(pulse);
 
 	    // increment the cluster counters
