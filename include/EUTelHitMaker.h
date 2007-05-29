@@ -124,6 +124,26 @@ namespace eutelescope {
    *  Other possible rotations are not currently available in the
    *  geometry description.
    *
+   *  <h4>Control histograms</h4>
+   *  If MARLIN_USE_AIDA is defined and a AIDAProcessor is activated,
+   *  then some control histrograms are filled. There are mainly three
+   *  families of histograms:
+   *
+   *  @li <b>Local hit map</b>: one histogram per plane, it contains
+   *  the hit position in the detector frame of reference. The x and y
+   *  axes have been already converted in millimeter.
+   *
+   *  @li <b>Telescope hit map</b>: one histogram per plane, it
+   *  contains the hit position in the telescope frame of
+   *  reference. This histo is actually the same of the previous one,
+   *  but all translation and rotation to move the local frame of
+   *  reference to the telescope one have been performed already.
+   *
+   *  @li <b>Density plot</b>: one global histogram, it contains into
+   *  a 3D frame all detected hit. If the run contains enough hits and
+   *  they are uniformly distributed on the sensor surface, this plot
+   *  should resemble the telescope geometry. 
+   *
    *  <h4>Good programming note</h4>
    *  
    *  This processor is useful if and only if it has access to
@@ -165,7 +185,7 @@ namespace eutelescope {
    *  the eta collection along x and y.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHitMaker.h,v 1.2 2007-05-28 11:52:45 bulgheroni Exp $
+   *  @version $Id: EUTelHitMaker.h,v 1.3 2007-05-29 08:48:08 bulgheroni Exp $
    *
    *
    */
@@ -344,6 +364,15 @@ namespace eutelescope {
      *  each detector in the geometry.
      */ 
     static std::string _hitCloudTelescopeName;
+    
+    //! Name of the density plot
+    /*! This is a very nice plot showing in a 3D frame where all hits
+     *  have been found. If the run is sufficiently long and the hits
+     *  are uniformly distributed on the sensor surface, this plot
+     *  should recall the shape of the telescope itself. 
+     */ 
+    static std::string _densityPlotName;
+    
 #endif
 
   };

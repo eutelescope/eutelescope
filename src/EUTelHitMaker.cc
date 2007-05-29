@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.2 2007-05-28 11:52:45 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.3 2007-05-29 08:48:08 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -37,6 +37,7 @@
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/ICloud2D.h>
+#include <AIDA/ICloud3D.h>
 #include <AIDA/ITree.h>
 #endif
 
@@ -60,6 +61,7 @@ using namespace eutelescope;
 #ifdef MARLIN_USE_AIDA
 std::string EUTelHitMaker::_hitCloudLocalName     = "HitCloudLocal";
 std::string EUTelHitMaker::_hitCloudTelescopeName = "HitCloudTelescope";
+std::string EUTelHitMaker::_densityPlotName       = "DensityPlot";
 #endif
 
 
@@ -126,8 +128,6 @@ void EUTelHitMaker::init() {
 
 #endif
 
-  // now book histograms plz...
-  bookHistos();
 }
 
 void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
@@ -172,7 +172,8 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
   //     }
   //   }
 	
-  
+    // now book histograms plz...
+  bookHistos();
 
   // increment the run counter
   ++_iRun;
@@ -195,8 +196,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
   
   LCCollectionVec * pulseCollection   = static_cast<LCCollectionVec*> (event->getCollection( _pulseCollectionName ));
   LCCollectionVec * clusterCollection = static_cast<LCCollectionVec*> (event->getCollection("original_data"));
+  LCCollectionVec * hitCollection    = new LCCollectionVec(LCIO::TRACKERHIT);
   LCCollectionVec * xEtaCollection, * yEtaCollection;
-  LCCollectionVec * hitCollection   = new LCCollectionVec(LCIO::TRACKERHIT);
 
   CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder(pulseCollection);
   CellIDDecoder<TrackerDataImpl>   clusterCellDecoder(clusterCollection);
@@ -259,7 +260,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     // there could be several clusters belonging to the same
     // detector. So update the geometry information only if this new
     // cluster belongs to a different detector.
-    detectorID = clusterCellDecoder(cluster)["sensorID"];
+    detectorID = cluster->getDetectorID();
 
     if ( detectorID != oldDetectorID ) {
       oldDetectorID = detectorID;
@@ -296,82 +297,85 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     
     // get the position of the seed pixel. This is in pixel number.
     int xCluCenter, yCluCenter;
-    cluster->getSeedCoord( xCluCenter, yCluCenter );
+    cluster->getSeedCoord(xCluCenter, yCluCenter);
     
     // with the charge center of gravity calculation, we get a shift
     // from the seed pixel center due to the charge distribution. Those
     // two numbers are the correction values in the case the Eta
     // correction is not applied.
-//     float xShift, yShift;
-//     cluster->getCenterOfGravityShift( xShift, yShift );
-//     double xCorrection = static_cast<double> (xShift) ;
-//     double yCorrection = static_cast<double> (yShift) ;
+    float xShift, yShift;
+    cluster->getCenterOfGravityShift( xShift, yShift );
+    double xCorrection = static_cast<double> (xShift) ;
+    double yCorrection = static_cast<double> (yShift) ;
 
     
-//     if ( _etaCorrection == 1 ) {
+    if ( _etaCorrection == 1 ) {
       
-//       EUTelEtaFunctionImpl * xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt(detectorID) );
-//       EUTelEtaFunctionImpl * yEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( yEtaCollection->getElementAt(detectorID) );
+      EUTelEtaFunctionImpl * xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt(detectorID) );
+      EUTelEtaFunctionImpl * yEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( yEtaCollection->getElementAt(detectorID) );
 
-//       xCorrection = xEtaFunc->getEtaFromCoG( xShift );
-//       yCorrection = yEtaFunc->getEtaFromCoG( yShift );
+      xCorrection = xEtaFunc->getEtaFromCoG( xShift );
+      yCorrection = yEtaFunc->getEtaFromCoG( yShift );
       
-//     }
+    }
 
-//     // rescale the pixel number in millimeter
-//     double xDet = ( static_cast<double> (xCluCenter) + xCorrection + 0.5 ) * xPitch ;
-//     double yDet = ( static_cast<double> (yCluCenter) + yCorrection + 0.5 ) * yPitch ;
+    // rescale the pixel number in millimeter
+    double xDet = ( static_cast<double> (xCluCenter) + xCorrection + 0.5 ) * xPitch ;
+    double yDet = ( static_cast<double> (yCluCenter) + yCorrection + 0.5 ) * yPitch ;
 
-// #ifdef MARLIN_USE_AIDA
-//     string tempHistoName;
-//     {
-//       stringstream ss; 
-//       ss << _hitCloudLocalName << "-" << detectorID ;
-//       tempHistoName = ss.str();
-//     }
-//     (dynamic_cast<AIDA::ICloud2D*>(_aidaHistoMap[ tempHistoName ]))->fill(xDet,yDet);
+#ifdef MARLIN_USE_AIDA
+    string tempHistoName;
+    {
+      stringstream ss; 
+      ss << _hitCloudLocalName << "-" << detectorID ;
+      tempHistoName = ss.str();
+    }
+    (dynamic_cast<AIDA::ICloud2D*>(_aidaHistoMap[ tempHistoName ]))->fill(xDet,yDet);
 
-// #endif 
+#endif 
 
-//     // now perform the rotation of the frame of references and put the
-//     // results already into a 3D array of double to be ready for the
-//     // setPosition method of TrackerHit
-//     double telPos[3];
-//     telPos[0] = xPointing[0] * xDet + xPointing[1] * yDet;
-//     telPos[1] = yPointing[0] * xDet + yPointing[1] * yDet;
+    // now perform the rotation of the frame of references and put the
+    // results already into a 3D array of double to be ready for the
+    // setPosition method of TrackerHit
+    double telPos[3];
+    telPos[0] = xPointing[0] * xDet + xPointing[1] * yDet;
+    telPos[1] = yPointing[0] * xDet + yPointing[1] * yDet;
 
-//     // now the translation
-//     telPos[0] -= xZero;
-//     telPos[1] -= yZero;
-//     telPos[2] = zZero + 0.5 * zThickness;
+    // now the translation
+    telPos[0] -= xZero;
+    telPos[1] -= yZero;
+    telPos[2] = zZero + 0.5 * zThickness;
 
-// #ifdef MARLIN_USE_AIDA
-//     {
-//       stringstream ss;
-//       ss << _hitCloudTelescopeName << "-" << detectorID ;
-//       tempHistoName = ss.str();
-//     }
-//     (dynamic_cast<AIDA::ICloud2D*> (_aidaHistoMap[ tempHistoName ] ))->fill( telPos[0], telPos[1] );
-// #endif
+#ifdef MARLIN_USE_AIDA
+    {
+      stringstream ss;
+      ss << _hitCloudTelescopeName << "-" << detectorID ;
+      tempHistoName = ss.str();
+    }
+    (dynamic_cast<AIDA::ICloud2D*> (_aidaHistoMap[ tempHistoName ] ))->fill( telPos[0], telPos[1] );
 
-//     // create the new hit
-//     TrackerHitImpl * hit = new TrackerHitImpl;
-//     hit->setPosition( &telPos[0] );
-//     hit->setType( pulseCellDecoder(pulse)["type"] );
+    (dynamic_cast<AIDA::ICloud3D*> (_aidaHistoMap[ _densityPlotName ] ))->fill( telPos[0], telPos[1], telPos[2] );
+
+#endif
+
+    // create the new hit
+    TrackerHitImpl * hit = new TrackerHitImpl;
+    hit->setPosition( &telPos[0] );
+    hit->setType( pulseCellDecoder(pulse)["type"] );
     
-//     // prepare a LCObjectVec to store the current cluster
-//     LCObjectVec clusterVec;
-//     clusterVec.push_back( cluster );
+    // prepare a LCObjectVec to store the current cluster
+    LCObjectVec clusterVec;
+    clusterVec.push_back( cluster );
         
-//     // add the clusterVec to the hit
-//     hit->rawHits() = clusterVec;
+    // add the clusterVec to the hit
+    hit->rawHits() = clusterVec;
 
-//     // add the new hit to the hit collection
-//     hitCollection->push_back( hit );
+    // add the new hit to the hit collection
+    hitCollection->push_back( hit );
 
   }
   ++_iEvt;
-  //   evt->addCollection( hitCollection, _hitCollectionName );
+  evt->addCollection( hitCollection, _hitCollectionName );
   
   if ( isFirstEvent() ) _isFirstEvent = false;
 
@@ -408,6 +412,7 @@ void EUTelHitMaker::bookHistos() {
       tempHistoName = ss.str();
     }
     AIDA::ICloud2D * hitCloudLocal = AIDAProcessor::histogramFactory(this)->createCloud2D( (basePath + tempHistoName).c_str() );
+    hitCloudLocal->setTitle("Hit map in the detector local frame of reference");
     _aidaHistoMap.insert( make_pair( tempHistoName, hitCloudLocal ) );
 
     {
@@ -416,12 +421,16 @@ void EUTelHitMaker::bookHistos() {
       tempHistoName = ss.str();
     }
     AIDA::ICloud2D * hitCloudTelescope = AIDAProcessor::histogramFactory(this)->createCloud2D( ( basePath + tempHistoName ).c_str() );
+    hitCloudTelescope->setTitle("Hit map in the telescope frame of reference");
     _aidaHistoMap.insert( make_pair ( tempHistoName, hitCloudTelescope ) );
 											   
   }
 
-
   
+  AIDA::ICloud3D * densityPlot = AIDAProcessor::histogramFactory(this)->createCloud3D( _densityPlotName );
+  densityPlot->setTitle("Hit position in the telescope frame of reference");
+  _aidaHistoMap.insert( make_pair ( _densityPlotName, densityPlot ) ) ;
+
 #endif
 }
 
