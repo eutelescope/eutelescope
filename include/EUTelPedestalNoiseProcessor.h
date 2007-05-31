@@ -83,8 +83,79 @@ namespace eutelescope {
    *  @param StatusCollectionName Name of the output pixel status collection
    *  @param OutputPedeFile Name of the output pedestal file
    *
+   *  <h4>Typical steering file for pedestal production</h4> The
+   *  following code can be used as a steering file for pedestal
+   *  production.  
+   *  
+   *  @code 
+   *  <marlin>
+   *   <global> 
+   *    <parameter name="LCIOInputFiles"> pedestal-run.slcio  </parameter> 
+   *    <parameter name="GearXMLFile" value="gear-telescope.xml"/>
+   *    <parameter name="MaxRecordNumber" value="5001"/> 
+   *    <parameter name="SkipNEvents" value="0 "/> 
+   *    <parameter name="SupressCheck" value="false"/> 
+   *    <parameter name="Verbosity" value="MESSAGE"/>
+   *   </global>
+   * 
+   *   <execute>
+   *    <processor name="AIDAHistogrammingInterface"/>
+   *    <processor name="PedestalAndNoiseCalculator"/>
+   *   </execute>
+   *
+   *   <processor name="AIDAHistogrammingInterface" type="AIDAProcessor">
+   *    <!--
+   *      Processor that handles AIDA files. Creates on directory per
+   *      processor. Processors only need to create and fill the
+   *      histograms, clouds and tuples. Needs to be the first
+   *      ActiveProcessor
+   *    -->
+   *    <!-- compression of output file 0: false >0: true (default) -->
+   *    <parameter name="Compress" type="int" value="1"/>
+   *    <!-- filename without extension-->
+   *    <parameter name="FileName" type="string" value="pedestal-histo"/>
+   *    <!-- type of output file xml (default) or root ( only OpenScientist)-->
+   *    <parameter name="FileType" type="string" value="root"/>
+   *   </processor>
+   *  
+   *   <processor name="PedestalAndNoiseCalculator" type="EUTelPedestalNoiseProcessor">
+   *    <!--EUTelPedestalNoiseProcessor computes the pedestal and noise values of a pixel detector-->
+   *    <!--Input raw data collection-->
+   *    <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData"> rawdata </parameter>
+   *    <!--Threshold for bad pixel identification-->
+   *    <parameter name="BadPixelMaskCut" type="float" value="3.5"/>
+   *    <!--Select the algorithm for bad pixel masking-->
+   *    <parameter name="BadPixelMaskingAlgorithm" type="string" value="NoiseDistribution"/>
+   *    <!--Select the algorithm for pede/noise calculation-->
+   *    <parameter name="CalculationAlgorithm" type="string" value="MeanRMS"/>
+   *    <!--First event for pedestal calculation-->
+   *    <parameter name="FirstEvent" type="int" value="0"/>
+   *    <!--Threshold for rejection of hit pixel (SNR units)-->
+   *    <parameter name="HitRejectionCut" type="float" value="4"/>
+   *    <!--Last event for pedestal calculation-->
+   *    <parameter name="LastEvent" type="int" value="-1"/>
+   *    <!--Maximum allowed number of rejected pixels per event-->
+   *    <parameter name="MaxNoOfRejectedPixels" type="int" value="1000"/>
+   *    <!--Number of common mode suppression iterations-->
+   *    <parameter name="NoOfCMIteration" type="int" value="1"/>
+   *    <!--Noise collection name-->
+   *    <!--parameter name="NoiseCollectionName" type="string" value="noiseDB"/-->
+   *    <!--The filename (w/o .slcio) to store the pedestal file-->
+   *    <parameter name="OutputPedeFile" type="string" value="pedestal-db"/>
+   *    <!--Pedestal collection name-->
+   *    <!--parameter name="PedestalCollectionName" type="string" value="pedestalDB"/-->
+   *    <!--Status collection name-->
+   *    <!--parameter name="StatusCollectionName" type="string" value="statusDB"/-->
+   *   </processor>
+   *  </marlin>
+   *  @endcode
+   *
+   *  Note that you don't need a LCIOOutputProcessor at the end since
+   *  it is the EUTelPedestalNoiseProcessor itself taking care of
+   *  saving the output pedestal file.
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.13 2007-05-23 14:08:44 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.14 2007-05-31 15:24:32 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
