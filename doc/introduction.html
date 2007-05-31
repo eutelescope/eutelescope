@@ -1,0 +1,947 @@
+/**
+
+@mainpage EUTelescope 
+
+Welcome to the EUTelescope documentation server. This is the place
+where you can find all the explanation and the examples you may need
+to run the EUTelescope processors within Marlin.
+<br><br>
+If you know already something about this software project, then you
+can browse the documentation clicking on the button above or putting a
+keyword in the search field in top right corner of this page.
+<br><br>
+If you feel you don't know enough on the EUTelescope then we encourage
+you take have a look at the following pages:
+
+@li @ref intro
+
+@li @ref preparation
+
+@li @ref analysis
+
+@li @ref downinst
+
+<br><br> If those information are not yet enough, consider contact us
+on the Linear Collider <a href="http://forum.linearcollider.org/index.php?t=threadt&frm_id=43">Forum</a>.
+
+*/
+
+*****************************************************************************
+
+/**
+
+@page intro Introduction
+
+This is the documentation page of the EUTelescope software
+project. EUTelescope is a group of <a
+href="http://ilcsoft.desy.de/marlin">Marlin</a> processors to be used
+for analysis and reconstruction of data taken using the <a
+href="http://www.eudet.org">EUDET</a> JRA1 pixel telescope. <br><br> The
+main goal of the EUTelescope software is to go from raw data acquired
+by a set of data aquisition boards to high level objects like tracks
+crossing the telescope. Those tracks are used to characterized both
+the telescope itself and any other position sensitive detector (DUT)
+that can be inserted into the telescope setup.<br><br> The structure of
+EUTelescope is very modular and the each processor is just taking care
+of doing a particular task on the input collection and eventually add
+other output collections that can be used by other following
+processors. This approach has many advantages but some disadvantages
+as well when compare against a monolithic approach where one processor
+only is doing the full job from the beginning to the end (see below
+@ref modular).<br><br> The main input of the full analysis chain is the
+LCIO output file produced by the DAQ system containing the pixel raw
+data. Along with that other data are also needed: as for example
+calibration constants (pedestal and noise), eta distribution for each
+sensor and alignment constants. These preparation steps (@ref
+preparation) can be done using a complex conditional steering file, or
+they can be processed beforehand using much simpler steering file.<br><br>
+When the preparation steps are done, then the complete analysis chain
+can be executed (@ref analysis).
+
+@section modular Pros and cons of a modular approach
+
+The basic idea of having a modular approach is to keep things as
+simple as possible. Every single step of the full analysis chain that
+goes from raw data to tracks can be processed step by step and the
+output of each step is still self consistent and can be fed in to the
+next step without any manipulation. Of course this is particularly
+valuable during the debug phase when each processor has to be
+controlled and checked against bugs. <br> <br> From an end user point of
+view, having so many steps might result in a too complicated and
+useless structure. In this case it would be better to have just one
+big piece of code the user run it and the result file pops up at the
+end.<br> <br> For the time being we would like to stick to the modular
+approach that is also Marlin inherited and for the laziest end user,
+we are providing example of complete steering files to have (almost)
+everything done just launching a command.
+
+
+
+*/
+
+*****************************************************************************
+
+/**
+
+@page analysis The analysis chain
+
+In this page we would like to summarize which processors have to be
+used to go from raw data to tracks. 
+
+\section histogram The histogram interface
+
+The first processor one may want to add to the steering file is an
+histogram interface. This processor is making the handling of
+histograms very user friendly and available to all other
+processor. This is not a compulsory element of the analysis chain, but
+it is very encouraged. <br>Within the EUTelescope framework there are
+actually two available histogramming interfaces:
+
+@li the marlin::AIDAProcessor: provided by Marlin,
+
+@li the eutelescope::ROOTProcessor: that is instead typical of
+EUTelescope but still under development.
+
+The user can decide which of one or even both should be used. Here
+below is a typical xml configuration the AIDAProcessor
+
+@code
+ <processor name="AIDAHistogramInterface" type="AIDAProcessor">
+  <!--
+      Processor that handles AIDA files. Creates on directory per
+      processor . Processors only need to create and fill the
+      histograms, clouds and tuples. Needs to be the first
+      ActiveProcessor
+   -->
+  <!-- compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int" value="1"/>
+  <!-- filename without extension-->
+  <parameter name="FileName" type="string" value="analysis-histo"/>
+  <!-- type of output file xml (default) or root ( only OpenScientist)-->
+  <parameter name="FileType" type="string" value="root"/>
+</processor>
+@endcode
+
+\section conditionload Loading the condition file
+
+The second step in the analysis chain is to load the calibration file
+also known as pedestal file and the eta function files. Those can prepared beforehand (@ref
+pedestal and @ref eta) and the pedestal, noise and status collections should made
+available to the following processors using a ConditionProcessor. In
+fact those files can be real files or an entries of a
+condition database. <br> Here below an example of ConditionProcessor
+to be used to load collection from an LCIO file:
+
+@code
+ <processor name="LoadPedestalFile" type="ConditionsProcessor">
+  <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+  <parameter name="SimpleFileHandler" type="StringVec"> pedestalDB pedestal_db.slcio pedestalDB </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> noiseDB pedestal_db.slcio noiseDB </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> statusDB pedestal_db.slcio statusDB </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> xEtaCondition etafile_db.slcio xEtaCondition </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> yEtaCondition etafile_db.slcio yEtaCondition </parameter>
+
+ </processor>
+@endcode
+
+With this configuration the ContionsProcessors is loading from a file
+named @c pedestal_db.slcio three different conditions and from a file
+named @c etafile_db.slcio other two collections. A drawback of this
+ConditionProcessor is that collections taken from LCIO file are made
+read only and the user cannot modify them. This sounds reasonable for
+calibration data until the user wants to keep the calibration
+constants updated during the running analysis chain. If this is true,
+i.e. if the user wants to run a pedestal update algorithm
+(eutelescope::EUTelUpdatePedestalNoiseProcessor) then those
+collections should be locally copied to writable ones. This second
+task can be accomplished by the
+eutelescope::EUTelCopyPedestalProcessor configured as follows:
+
+@code
+ <processor name="LocalCopyPedestal" type="EUTelCopyPedestalProcessor">
+ <!--EUTelCopyPedestalProcessor copies the condition data into local writable collections-->
+  <!--Noise input condition-->
+  <parameter name="NoiseConditionName" type="string" lcioInType="TrackerData"> noiseDB </parameter>
+  <!--Pedestal input condition-->
+  <parameter name="PedestalConditionName" type="string" lcioInType="TrackerData"> pedestalDB </parameter>
+  <!--Status input condition-->
+  <parameter name="StatusConditionName" type="string" lcioInType="TrackerRawData"> statusDB </parameter>
+  <!--Noise local collection-->
+  <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> noise </parameter>
+  <!--Pedestal local collection-->
+  <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData"> pedestal </parameter>
+  <!--Pixel status collection-->
+  <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> status </parameter>
+ </processor>
+@endcode
+
+One can do the exactly the same also for the eta conditions.
+
+@todo Consider renaming EUTelCopyPedestalProcessor in EUTelCopyConditionProcessor
+
+\section calibrate Apply the pedestal correction
+
+Finally it is time to start doing something. The first thing to do is
+to apply to the input data the calibration constants previously loaded
+and now available in the event. This operation is taking the input
+TrackerRawData and transforming them into TrackerData containing
+calibrated data. This operation is done by the
+eutelescope::EUTelCalibrateEventProcessor that is also responsible to
+apply common mode suppression. The user can ask to this processor also
+to fill the so-called detector low level debug histograms, a bunch of
+big histograms containing information about the detector
+functionality. <br> This is a typical configuration for this processor.
+
+@code
+ <processor name="ApplyPedestalCorrection" type="EUTelCalibrateEventProcessor">
+ <!--EUTelCalibrateEventProcessor subtract the pedestal value from the input data-->
+  <!--Noise from the condition file-->
+  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise </parameter>
+  <!--Pedestal from the condition file-->
+  <parameter name="PedestalCollectionName" type="string" lcioInType="TrackerData"> pedestal </parameter>
+  <!--Input raw data collection-->
+  <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData"> rawdata </parameter>
+  <!--Pixel status from the condition file-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
+  <!--Name of the output calibrated data collection-->
+  <parameter name="CalibratedDataCollectionName" type="string" lcioOutType="TrackerData"> data </parameter>
+  <!--Flag to switch on (1) or off (0) the detector debug histogram filling-->
+  <parameter name="DebugHistoFilling" type="int" value="0"/>
+  <!--Threshold of pixel SNR for hit rejection-->
+  <parameter name="HitRejectionCut" type="float" value="3.5"/>
+  <!--Maximum allowed number of rejected pixel per event-->
+  <parameter name="MaxNoOfRejectedPixels" type="int" value="3000"/>
+  <!--Flag to switch on (1) or off (0) the common mode suppression algorithm-->
+  <parameter name="PerformCommonMode" type="int" value="1"/>
+</processor>
+@endcode
+
+\section clustering Search for clusters
+
+With the calibrated data, it is possible to scan the matrix looking
+for clusters, i.e. group of space correlated pixels all having signals
+above a certain threshold. There are several different cluster
+searching algorithm one can imagine, code and apply. Within the EUTelClusteringProcessor, the user can select
+which searching criteria should be used, but irrespectively of that,
+the output of this clustering processor should be a TrackerPulse
+collection having for each pulse a TrackerData attached. The
+TrackerPulse contains only general information about the cluster,
+while the TrackerData contains the full set of information. For this
+reason the TrackerData structure may depend of the clusterization
+algorithm and for that purpose the user can apply on top of that the
+eutelescope::EUTelVirtualCluster.
+@see eutelescope::EUTelClusteringProcessor for more
+details
+
+<br>
+Here below an example of the configuration of eutelescope::EUTelClusteringProcessor
+
+@code
+ <processor name="ClusterFinder" type="EUTelClusteringProcessor">
+ <!--EUTelClusteringProcessor subtract the pedestal value from the input data-->
+  <!--Input calibrated data collection name-->
+  <parameter name="DataCollectionName" type="string" lcioInType="TrackerData"> data </parameter>
+  <!--Noise (input) collection name-->
+  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise </parameter>
+  <!--Pixel status (input) collection name-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
+  <!--Cluster (output) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster </parameter>
+  <!--Threshold in SNR for cluster identification-->
+  <parameter name="ClusterCut" type="float" value="3"/>
+  <!--Maximum allowed cluster size along x (only odd numbers)-->
+  <parameter name="ClusterSizeX" type="int" value="5"/>
+  <!--Maximum allowed cluster size along y (only odd numbers)-->
+  <parameter name="ClusterSizeY" type="int" value="5"/>
+  <!--Select here which algorithm should be used for clustering-->
+  <parameter name="ClusteringAlgo" type="string" value="FixedFrame"/>
+  <!--Threshold in SNR for seed pixel identification-->
+  <parameter name="SeedPixelCut" type="float" value="4.5"/>
+ </processor>
+@endcode
+
+After the clusters were found, the user may want to apply a cluster
+separation processor in order to try to split clusters that were
+merged. This task is accomplished by the
+eutelescope::EUTelClusterSeparationProcessor that can be configured as below:
+
+@code
+ <processor name="ClusterSplitter" type="EUTelClusterSeparationProcessor">
+ <!--EUTelClusterSeparationProcessor separates merging clusters-->
+  <!--Cluster collection name -->
+  <parameter name="ClusterCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
+  <!--Minimum distance allowed between separated clusters (0 == only touching clusters)-->
+  <parameter name="MinimumDistance" type="float" value="0"/>
+  <!--Select which algorithm to use for cluster separation-->
+  <parameter name="SeparationAlgorithm" type="string" value="FlagOnly"/>
+</processor>
+
+@endcode
+
+After the cluster searching, the user may want to update the
+calibration constants using the current event. For that purpose, the
+pedestal, noise and status collection should be made writable by the
+eutelescope::EUTelCopyPedestalProcessor and then the
+eutelescope::EUTelUpdatePedestalNoiseProcessor can be called with a
+configuration similar to the follow one:
+
+@code
+
+ <processor name="PedestalUpdater" type="EUTelUpdatePedestalNoiseProcessor">
+  <!--EUTelUpdatePedestalNoiseProcessor periodically updates the pedestaland noise values-->
+  <!--Noise local collection-->
+  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise </parameter>
+  <!--Pedestal local collection-->
+  <parameter name="PedestalCollectionName" type="string" lcioInType="TrackerData"> pedestal </parameter>
+  <!--Raw data collection name-->
+  <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData"> rawdata </parameter>
+  <!--Pixel status collection-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
+  <!--The value of the fixed weight (only for fixed weight algorithm-->
+  <parameter name="FixedWeightValue" type="int" value="100"/>
+  <!--A pixel to be monitored (detectorID, xCoord, yCoord). Add as many line as this as you wish-->
+  <parameter name="PixelMonitored" type="IntVec"> 0 10 15 </parameter>
+  <!--The algorithm to be used for pedestal update-->
+  <parameter name="UpdateAlgorithm" type="string" value="FixedWeight"/>
+  <!--How often the algorithm should be applied-->
+  <parameter name="UpdateFrequency" type="int" value="10"/>
+ </processor>
+
+@endcode
+
+@section spacepoint From clusters to space points
+
+The next step in the analysis procedure is to move from TrackerPulse
+to TrackerHit or in other word we need to move from local cluster in
+the detector frame of reference to space point in the telescope frame
+of reference. This task is accomplished by the
+eutelescope::EUTelHitMaker and this is the first processor that is
+accessing to the geometry repository through GEAR. The xml file
+describing the geometry has to be provided as a global information in
+the steering file.
+
+@code
+
+   <global>
+     ...
+    <parameter name="GearXMLFile" value="gear-telescope.xml"/>
+     ...
+   </global>
+
+@endcode
+<br>
+The user can also decide to apply or not the Eta function correction
+just selecting a switch in steering file. For the time being, since
+the geometry description of the telescope is still in a development
+phase, some parameters are hard coded in the software. 
+<br>
+Again an configuration example for this processor.
+
+@code
+ <processor name="ApplyGeometry" type="EUTelHitMaker">
+ <!--
+     EUTelHitMaker is responsible to translate cluster centers from
+     the local frame of reference to the external frame of reference
+     using the GEAR geometry description
+  -->
+  <!--Cluster (pulse) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
+  <!--Hit collection name-->
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
+  <!--The name of the collections containing the eta function (x and y respectively)-->
+  <parameter name="EtaCollectionName" type="StringVec"> xEtaCondition yEtaCondition </parameter>
+  <!--Enable (==1) or disable eta correction-->
+  <parameter name="EtaSwitch" type="int" value="1"/>
+ </processor>
+@endcode
+
+@todo This is the very last born processor, still needs some debug and
+need to be patched against the next release of the geometry
+description.
+
+@section tracking The track fitting
+
+To be added
+
+@section outputfile Saving the results
+
+Saving the output file with all the needed collections is the task of
+the eutelescope::EUTelOutputProcessor. The reason why we have a custom
+output processor and we don't use the standard
+marlin::LCIOOutputProcessor is because of the event structure in the
+EUDAQ software. In fact the acquisition system is appending at the end
+of a run an empty event called End Of Run Event that can be used by
+serial input/output protocol (like SIO) to identify which is the last
+event before the real end of file. The EUTelOutputProcessor just check
+the presence of the EORE event at the end of the run and if it is
+missing a new EORE is appended. This output processor has to be used in every step because if we want
+to be self consistent every step output file has to finish with an
+EORE. <br> Another interesting use of this processor is the file
+fix. If, in fact, for any reason should the DAQ fails to write the
+EORE, this LCIO can be fed into this output processor that will append
+at the end the EORE. The configuration of EUTelOutputProcessor is
+identical to the one of the LCIOOutputProcessor and it is repeated for
+the sake of clarity
+
+@code
+
+ <processor name="SaveOutputFile" type="EUTelOutputProcessor">
+  <!--
+     Writes the current event to the specified LCIO outputfile.  
+     Eventually it adds a EORE at the of the file if it was missing. 
+      Needs to be the last ActiveProcessor
+  .-->
+  <!--drops the named collections from the event-->
+  <!--parameter name="DropCollectionNames" type="StringVec"> rawdata data pedestal noise status </parameter-->
+  <!--drops all collections of the given type from the event-->
+  <!--parameter name="DropCollectionTypes" type="StringVec"> TrackerRawData TrackerData </parameter-->
+  <!-- name of output file -->
+  <parameter name="LCIOOutputFile" type="string" value="tracking-output.slcio"/>
+  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+  <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
+ </processor>
+
+
+@endcode
+
+
+*/
+
+*****************************************************************************
+
+/**
+
+@page preparation The preparation steps
+
+For the time being there are two preparation steps available within
+the EUTelescope package, for the calculation of calibration constants
+(@ref pedestal) and for eta functions (@ref eta).
+
+
+@section pedestal The pedestal and noise calculator
+
+The first step to be done is to calibrate the output of each pixel
+detector in order to remove the constant and useless signal. Together
+with this pedestal value also the noise figure is estimated as the
+width of the pedestal distribution.
+
+The output of this step is a condition file having two TrackerData and
+one TrackerRawData for each detector module:
+
+@li Pedestal collection (TrackerData): one per detector with the mean
+output value of each pixel
+
+@li Noise collection (TrackerData): one per detector with the noise
+value for each pixel
+
+@li Status collection (TrackerRawData): one per detector with the
+status of each pixel. This can be used to hide some very bad pixels
+from the rest of the analysis.
+
+Those collections are meant to be condition data and for the time
+being are saved to LCIO files but they can be moved to a
+database. <br> There are two ways to generate good pedestal and noise
+constants:
+
+@li Producing them from a specific run (@ref pedestalnoisecalculator)
+
+@li Assuming a known initial value and then keep them update (@ref
+autopedestal)
+
+@subsection pedestalnoisecalculator Calculating pedestal and noise 
+
+The standard approach for pedestal and noise calculation consists on
+having a special run with no or very few particles arriving on the
+telescope (a so called pedestal run, indeed) that should be processed
+in order to retrieve the mean value of the output signal of each pixel
+and the correponding noise figure. This task is accomplished by a
+specific processor named
+eutelescope::EUTelPedestalNoiseProcessor. More details about the
+calculation algorithms already implemented are provided within the
+class description.<br>
+Here below is an example of a steering file to produce the pedestal,
+noise and status collection using eutelescope::EUTelPedestalNoiseProcessor
+@code
+  <marlin>
+   <global> 
+    <parameter name="LCIOInputFiles"> pedestal-run.slcio  </parameter> 
+    <parameter name="GearXMLFile" value="gear-telescope.xml"/>
+    <parameter name="MaxRecordNumber" value="5001"/> 
+    <parameter name="SkipNEvents" value="0 "/> 
+    <parameter name="SupressCheck" value="false"/> 
+    <parameter name="Verbosity" value="MESSAGE"/>
+   </global>
+ 
+   <execute>
+    <processor name="AIDAHistogrammingInterface"/>
+    <processor name="PedestalAndNoiseCalculator"/>
+   </execute>
+
+   <processor name="AIDAHistogrammingInterface" type="AIDAProcessor">
+    <!--
+      Processor that handles AIDA files. Creates on directory per
+      processor. Processors only need to create and fill the
+      histograms, clouds and tuples. Needs to be the first
+      ActiveProcessor
+    -->
+    <!-- compression of output file 0: false >0: true (default) -->
+    <parameter name="Compress" type="int" value="1"/>
+    <!-- filename without extension-->
+    <parameter name="FileName" type="string" value="pedestal-histo"/>
+    <!-- type of output file xml (default) or root ( only OpenScientist)-->
+    <parameter name="FileType" type="string" value="root"/>
+   </processor>
+  
+   <processor name="PedestalAndNoiseCalculator" type="EUTelPedestalNoiseProcessor">
+    <!--EUTelPedestalNoiseProcessor computes the pedestal and noise values of a pixel detector-->
+    <!--Input raw data collection-->
+    <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData"> rawdata </parameter>
+    <!--Threshold for bad pixel identification-->
+    <parameter name="BadPixelMaskCut" type="float" value="3.5"/>
+    <!--Select the algorithm for bad pixel masking-->
+    <parameter name="BadPixelMaskingAlgorithm" type="string" value="NoiseDistribution"/>
+    <!--Select the algorithm for pede/noise calculation-->
+    <parameter name="CalculationAlgorithm" type="string" value="MeanRMS"/>
+    <!--First event for pedestal calculation-->
+    <parameter name="FirstEvent" type="int" value="0"/>
+    <!--Threshold for rejection of hit pixel (SNR units)-->
+    <parameter name="HitRejectionCut" type="float" value="4"/>
+    <!--Last event for pedestal calculation-->
+    <parameter name="LastEvent" type="int" value="-1"/>
+    <!--Maximum allowed number of rejected pixels per event-->
+    <parameter name="MaxNoOfRejectedPixels" type="int" value="1000"/>
+    <!--Number of common mode suppression iterations-->
+    <parameter name="NoOfCMIteration" type="int" value="1"/>
+    <!--Noise collection name-->
+    <!--parameter name="NoiseCollectionName" type="string" value="noiseDB"/-->
+    <!--The filename (w/o .slcio) to store the pedestal file-->
+    <parameter name="OutputPedeFile" type="string" value="pedestal-db"/>
+    <!--Pedestal collection name-->
+    <!--parameter name="PedestalCollectionName" type="string" value="pedestalDB"/-->
+    <!--Status collection name-->
+    <!--parameter name="StatusCollectionName" type="string" value="statusDB"/-->
+   </processor>
+  </marlin>
+@endcode
+
+It should be noted that the AIDAProcessor can be removed, but then no
+control histogram will be produced. Another remark concerns the
+absence of a LCIOOutputProcessor; this is not needed since is the
+eutelescope::EUTelPedestalNoiseProcessor taking care of saving the
+final pedestal/noise/status collection on the disk when the
+calculation is over.<br>
+The eutelescope::EUTelPedestalNoiseProcessor can be runned also in the
+complete analysis scheme using a more complicated conditional steering
+file, but for simplicity this is not recommended.
+
+@subsection autopedestal Assuming initial pedestal value
+
+Another possible approach for the preparation of good pedestal and
+noise collection is to assume a certain reasonable value for both the
+pedestal and noise of every pixel in the matrix and then let the
+system update (correct) this value to a more correct one. This
+approach is particularly interesting when dealing with detector having
+a pretty uniform pedestal distribution over the full sensitive
+area. <br>
+An advantage of this approach is that the user does not need to
+execute a specific run to have the pedestal output, but she/he has
+just to put the eutelescope::EUTelAutoPedestalNoiseProcessor at the
+beginning of the analysis chain and the
+eutelescope::EUTelUpdatePedestalNoiseProcessor soon after the
+clusterization processor. Here below an example of a steering file
+using the automatic pedestal calculation, for more info also refer to
+the eutelescope::EUTelAutoPedestalNoiseProcessor and
+eutelescope::EUTelUpdatePedestalNoiseProcessor class description.
+
+@code
+<marlin>
+ <global>
+  <parameter name="LCIOInputFiles"> simuldata-run.slcio </parameter>
+  <parameter name="GearXMLFile" value="gear-telescope.xml"/>
+  <parameter name="MaxRecordNumber" value="5001"/>
+  <parameter name="SkipNEvents" value="0"/>
+  <parameter name="SupressCheck" value="false"/>
+  <parameter name="Verbosity" value="MESSAGE"/>
+ </global>
+
+ <execute>
+  <processor name="AIDAHistogramInterface"/>
+  <processor name="AutomaticPedestalCalculator"/>
+  <processor name="ApplyCalibration"/>
+  <processor name="ClusterFinder"/>
+  <processor name="ClusterSplitter"/>
+  <processor name="PedestalUpdater"/>
+  <processor name="SaveOutputFile"/>
+ </execute>
+
+ <processor name="AIDAHistogramInterface" type="AIDAProcessor">
+ <!--
+     Processor that handles AIDA files. Creates on directory per
+     processor. Processors only need to create and fill the
+     histograms,  clouds and tuples. Needs to be the first
+     ActiveProcessor
+ -->
+  <!-- compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int" value="1"/>
+  <!-- filename without extension-->
+  <parameter name="FileName" type="string" value="analysis-histo"/>
+  <!-- type of output file xml (default) or root ( only OpenScientist)-->
+  <parameter name="FileType" type="string" value="root"/>
+ </processor>
+
+ <processor name="AutomaticPedestalCalculator" type="EUTelAutoPedestalNoiseProcessor">
+  <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
+  <!--Noise local collection-->
+  <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> noise </parameter>
+  <!--Pedestal local collection-->
+  <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData"> pedestal </parameter>
+  <!--Pixel status collection-->
+  <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> status </parameter>
+  <!--The initial value of noise (one value for detector)-->
+  <parameter name="InitNoiseValue" type="FloatVec"> 1 1 1 1 1 1 </parameter>
+  <!--The initial value of pedestal (one value for detector)-->
+  <parameter name="InitPedestalValue" type="FloatVec"> 0 0 0 0 0 0 </parameter>
+ </processor>
+
+ <processor name="ApplyCalibration" type="EUTelCalibrateEventProcessor">
+  <!--EUTelCalibrateEventProcessor subtract the pedestal value from the input data-->
+  <!--Noise from the condition file-->
+  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise </parameter>
+  <!--Pedestal from the condition file-->
+  <parameter name="PedestalCollectionName" type="string" lcioInType="TrackerData"> pedestal </parameter>
+  <!--Input raw data collection-->
+  <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData"> rawdata </parameter>
+  <!--Pixel status from the condition file-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
+  <!--Name of the output calibrated data collection-->
+  <parameter name="CalibratedDataCollectionName" type="string" lcioOutType="TrackerData"> data </parameter>
+  <!--Flag to switch on (1) or off (0) the detector debug histogram filling-->
+  <parameter name="DebugHistoFilling" type="int" value="0"/>
+  <!--Threshold of pixel SNR for hit rejection-->
+  <parameter name="HitRejectionCut" type="float" value="3.5"/>
+  <!--Maximum allowed number of rejected pixel per event-->
+  <parameter name="MaxNoOfRejectedPixels" type="int" value="3000"/>
+  <!--Flag to switch on (1) or off (0) the common mode suppression algorithm-->
+  <parameter name="PerformCommonMode" type="int" value="1"/>
+ </processor>
+
+ <processor name="ClusterFinder" type="EUTelClusteringProcessor">
+  <!--EUTelClusteringProcessor subtract the pedestal value from the input data-->
+  <!--Input calibrated data collection name-->
+  <parameter name="DataCollectionName" type="string" lcioInType="TrackerData"> data </parameter>
+  <!--Noise (input) collection name-->
+  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise </parameter>
+  <!--Pixel status (input) collection name-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
+  <!--Cluster (output) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster </parameter>
+  <!--Threshold in SNR for cluster identification-->
+  <parameter name="ClusterCut" type="float" value="3"/>
+  <!--Maximum allowed cluster size along x (only odd numbers)-->
+  <parameter name="ClusterSizeX" type="int" value="5"/>
+  <!--Maximum allowed cluster size along y (only odd numbers)-->
+  <parameter name="ClusterSizeY" type="int" value="5"/>
+  <!--Select here which algorithm should be used for clustering-->
+  <parameter name="ClusteringAlgo" type="string" value="FixedFrame"/>
+  <!--Threshold in SNR for seed pixel identification-->
+  <parameter name="SeedPixelCut" type="float" value="4.5"/>
+ </processor>
+
+ <processor name="ClusterSplitter" type="EUTelClusterSeparationProcessor">
+ <!--EUTelClusterSeparationProcessor separates merging clusters-->
+  <!--Cluster collection name -->
+  <parameter name="ClusterCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
+  <!--Minimum distance allowed between separated clusters (0 == only touching clusters)-->
+  <parameter name="MinimumDistance" type="float" value="0"/>
+  <!--Select which algorithm to use for cluster separation-->
+  <parameter name="SeparationAlgorithm" type="string" value="FlagOnly"/>
+ </processor>
+
+ <processor name="PedestalUpdater" type="EUTelUpdatePedestalNoiseProcessor">
+ <!--EUTelUpdatePedestalNoiseProcessor periodically updates the pedestaland noise values-->
+  <!--Noise local collection-->
+  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise </parameter>
+  <!--Pedestal local collection-->
+  <parameter name="PedestalCollectionName" type="string" lcioInType="TrackerData"> pedestal </parameter>
+  <!--Raw data collection name-->
+  <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData"> rawdata </parameter>
+  <!--Pixel status collection-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
+  <!--The value of the fixed weight (only for fixed weight algorithm-->
+  <parameter name="FixedWeightValue" type="int" value="100"/>
+  <!--A pixel to be monitored (detectorID, xCoord, yCoord). Add as many line as this as you wish-->
+  <parameter name="PixelMonitored" type="IntVec"> 0 10 15 </parameter>
+  <!--The algorithm to be used for pedestal update-->
+  <parameter name="UpdateAlgorithm" type="string" value="FixedWeight"/>
+  <!--How often the algorithm should be applied-->
+  <parameter name="UpdateFrequency" type="int" value="10"/>
+ </processor>
+
+ <processor name="SaveOutputFile" type="EUTelOutputProcessor">
+  <!--
+     Writes the current event to the specified LCIO outputfile. 
+     Eventually it adds a EORE at the of the file if it was missing.
+     Needs to be the last ActiveProcessor.
+  -->
+  <!--drops the named collections from the event-->
+  <parameter name="DropCollectionNames" type="StringVec"> rawdata data pedestal noise status </parameter>
+  <!--drops all collections of the given type from the event-->
+  <!--parameter name="DropCollectionTypes" type="StringVec"> TrackerRawData TrackerData </parameter-->
+  <!-- name of output file -->
+  <parameter name="LCIOOutputFile" type="string" value="autopede-output.slcio"/>
+  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+  <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
+ </processor>
+
+</marlin>
+@endcode
+
+
+@section eta Eta function calculation
+
+The Eta function is used to calculate the center of a cluster. It is
+used as a non linear weighting function in the charge center of mass
+calculation. An a priori calculation of the Eta function starting from
+the pixel detector design and consequently the field distribution
+within the sensor is practically unfeasible. An experimental approach
+based on probability distribution is, instead, easy to apply and
+assure good results. This is based on the fact that the probability to
+find the cluster center is flat over the pixel surface; in other
+words, there are no physical reasons way a certain region of a pixel
+should collect more cluster centers than another. If there is such a
+region, this can only derive from an artifact due to pixel design and
+the way the charge is collected within the sensitive volume. <br>
+Correcting the charge center of mass algorithm, introducing non linear
+weights, can solve this problem and flat the probability
+distribution. This non linear weighting function is called <b>Eta
+function</b>. To calculate it starting from the experimental data, one
+need as an input a large enough collection of clusters for each
+detector layers in order to have a statistically significant amount of
+cluster centers and apply to that the
+eutelescope::EUTelCalculateEtaProcessor. This processor is taking care
+of calculating the eta function of each detector in the two orthogonal
+directions. More on the Eta function can be found in the
+eutelescope::EUTelCalculateEtaProcessor class description. <br>
+The output file of the Eta calculation phase is a condition LCIO file
+(as for pedestal also this file can be moved to a condition database
+through the abstract interface provided by LCCD) containing two
+collections of eutelescope::EUTelEtaFunctionImpl one for each of the
+two directions. Each collection contains as many objects as the number
+of detectors in telescope.<br>
+Also for Eta calculation one can imagine to have a complicated
+conditional steering file performing on one loop the eta calculation
+and the apply the calculation results on the second loop, but to keep
+the procedure the simplest possible, the user should run on some input
+files the Eta calculator processor and then, afterward, apply the
+results to the hits. Exploiting the modular approach, one can
+calculate the Eta functions (using for example the steering file
+provided below) and save as an output file the TrackerPulse found. The
+next run can then start directly with the eutelescope::EUTelHitMaker
+processor using as input the output of the previous step.
+
+@code
+<marlin>
+ <global>
+  <parameter name="LCIOInputFiles"> simuldata-run.slcio </parameter>
+  <parameter name="GearXMLFile" value="gear-telescope.xml"/>
+  <parameter name="MaxRecordNumber" value="5001"/>
+  <parameter name="SkipNEvents" value="0"/>
+  <parameter name="SupressCheck" value="false"/>
+  <parameter name="Verbosity" value="MESSAGE"/>
+ </global>
+
+ <execute>
+  <processor name="AIDAHistogramInterface"/>
+  <processor name="LoadPedestalFile"/>
+  <processor name="LocalCopyPedestal"/>
+  <processor name="ApplyPedestalCorrection"/>
+  <processor name="ClusterFinder"/>
+  <processor name="ClusterSplitter"/>
+  <processor name="EtaCalculator"/>
+  <if condition="EtaCalculator.isEtaCalculationFinished">
+   <processor name="SaveOutputFile"/>
+  </if>
+ </execute>
+
+ <processor name="AIDAHistogramInterface" type="AIDAProcessor">
+  <!--
+     Processor that handles AIDA files. Creates on directory per
+     processor. Processors only need to create and fill the
+     histograms, clouds and tuples. Needs to be the first
+     ActiveProcessor
+  -->
+  <!-- compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int" value="1"/>
+  <!-- filename without extension-->
+  <parameter name="FileName" type="string" value="analysis-histo"/>
+  <!-- type of output file xml (default) or root ( only OpenScientist)-->
+  <parameter name="FileType" type="string" value="root"/>
+ </processor>
+
+ <processor name="LoadPedestalFile" type="ConditionsProcessor">
+ <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+  <parameter name="SimpleFileHandler" type="StringVec"> pedestalDB pedestal_db.slcio pedestalDB </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> noiseDB pedestal_db.slcio noiseDB </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> statusDB pedestal_db.slcio statusDB </parameter>
+ </processor>
+ 
+ <processor name="LocalCopyPedestal" type="EUTelCopyPedestalProcessor">
+  <!--EUTelCopyPedestalProcessor copies the condition data into local writable collections-->
+  <!--Noise input condition-->
+  <parameter name="NoiseConditionName" type="string" lcioInType="TrackerData"> noiseDB </parameter>
+  <!--Pedestal input condition-->
+  <parameter name="PedestalConditionName" type="string" lcioInType="TrackerData"> pedestalDB </parameter>
+  <!--Status input condition-->
+  <parameter name="StatusConditionName" type="string" lcioInType="TrackerRawData"> statusDB </parameter>
+  <!--Noise local collection-->
+  <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> noise </parameter>
+  <!--Pedestal local collection-->
+  <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData"> pedestal </parameter>
+  <!--Pixel status collection-->
+  <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> status </parameter>
+ </processor>
+
+ <processor name="ApplyPedestalCorrection" type="EUTelCalibrateEventProcessor">
+  <!--EUTelCalibrateEventProcessor subtract the pedestal value from the input data-->
+  <!--Noise from the condition file-->
+  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise </parameter>
+  <!--Pedestal from the condition file-->
+  <parameter name="PedestalCollectionName" type="string" lcioInType="TrackerData"> pedestal </parameter>
+  <!--Input raw data collection-->
+  <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData"> rawdata </parameter>
+  <!--Pixel status from the condition file-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
+  <!--Name of the output calibrated data collection-->
+  <parameter name="CalibratedDataCollectionName" type="string" lcioOutType="TrackerData"> data </parameter>
+  <!--Flag to switch on (1) or off (0) the detector debug histogram filling-->
+  <parameter name="DebugHistoFilling" type="int" value="0"/>
+  <!--Threshold of pixel SNR for hit rejection-->
+  <parameter name="HitRejectionCut" type="float" value="3.5"/>
+  <!--Maximum allowed number of rejected pixel per event-->
+  <parameter name="MaxNoOfRejectedPixels" type="int" value="3000"/>
+  <!--Flag to switch on (1) or off (0) the common mode suppression algorithm-->
+  <parameter name="PerformCommonMode" type="int" value="1"/>
+ </processor>
+
+ <processor name="ClusterFinder" type="EUTelClusteringProcessor">
+  <!--EUTelClusteringProcessor subtract the pedestal value from the input data-->
+  <!--Input calibrated data collection name-->
+  <parameter name="DataCollectionName" type="string" lcioInType="TrackerData"> data </parameter>
+  <!--Noise (input) collection name-->
+  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise </parameter>
+  <!--Pixel status (input) collection name-->
+  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
+  <!--Cluster (output) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster </parameter>
+  <!--Threshold in SNR for cluster identification-->
+  <parameter name="ClusterCut" type="float" value="3"/>
+  <!--Maximum allowed cluster size along x (only odd numbers)-->
+  <parameter name="ClusterSizeX" type="int" value="5"/>
+  <!--Maximum allowed cluster size along y (only odd numbers)-->
+  <parameter name="ClusterSizeY" type="int" value="5"/>
+  <!--Select here which algorithm should be used for clustering-->
+  <parameter name="ClusteringAlgo" type="string" value="FixedFrame"/>
+  <!--Threshold in SNR for seed pixel identification-->
+  <parameter name="SeedPixelCut" type="float" value="4.5"/>
+ </processor>
+
+ <processor name="ClusterSplitter" type="EUTelClusterSeparationProcessor">
+  <!--EUTelClusterSeparationProcessor separates merging clusters-->
+  <!--Cluster collection name -->
+  <parameter name="ClusterCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
+  <!--Minimum distance allowed between separated clusters (0 == only touching clusters)-->
+  <parameter name="MinimumDistance" type="float" value="0"/>
+  <!--Select which algorithm to use for cluster separation-->
+  <parameter name="SeparationAlgorithm" type="string" value="FlagOnly"/>
+ </processor>
+
+ <processor name="EtaCalculator" type="EUTelCalculateEtaProcessor">
+  <!--EUTelCalculateEtaProcessor calculates the eta function for a given set of clusters-->
+  <!--Input cluster collection-->
+  <parameter name="ClusterCollectionName" type="string" lcioInType="TrackerData"> cluster </parameter>
+  <!--To use only kGoodQuality write 0 here-->
+  <parameter name="ClusterQualitySelection" type="int" value="0"/>
+  <!--Write FULL: full cluster, NxMPixel: for a NxM sub-cluster, NPixel: to use only N pixel-->
+  <parameter name="ClusterTypeSelection" type="string" value="FULL"/>
+  <!--Set the name of the Eta collection along x-->
+  <parameter name="EtaXCollectionName" type="string" value="xEtaCondition"/>
+  <!--Set the name of the Eta collection along y-->
+  <parameter name="EtaYCollectionName" type="string" value="yEtaCondition"/>
+  <!--Write here how many events you want to use for eta calculation (-1 for all)-->
+  <parameter name="EventNumber" type="int" value="-1"/>
+  <!--The number of pixel with the highest signal (only for NPixel)-->
+  <parameter name="NPixelSize" type="int" value="5"/>
+  <!--Write here in how many bins the seed pixel should be divided (x and y)-->
+  <parameter name="NumberOfBins" type="IntVec"> 1000 1000 </parameter>
+  <!--The size along x and y of the subcluster (only for NxMPixel)-->
+  <parameter name="NxMPixelClusterSize" type="IntVec"> 3 3 </parameter>
+  <!--This is the name of the output condition file-->
+  <parameter name="OutputEtaFileName" type="string" value="etafile"/>
+ </processor>
+
+ <processor name="SaveOutputFile" type="EUTelOutputProcessor">
+  <!--
+      Writes the current event to the specified LCIO outputfile. 
+      Eventually it adds a EORE at the of the file if it was missing.
+       Needs to be the last ActiveProcessor.
+  -->
+  <!--drops the named collections from the event-->
+  <parameter name="DropCollectionNames" type="StringVec"> rawdata data pedestal noise status </parameter>
+  <!--drops all collections of the given type from the event-->
+  <!--parameter name="DropCollectionTypes" type="StringVec"> TrackerRawData TrackerData </parameter-->
+  <!-- name of output file -->
+  <parameter name="LCIOOutputFile" type="string" value="analysis-output.slcio"/>
+  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+  <!--parameter name="SplitFileSizekB" type="int" value="1992294"/--> 
+ </processor>
+</marlin>
+@endcode
+
+*/
+
+*****************************************************************************
+
+/**
+
+@page downinst Download and installation
+
+@section donwload How to download
+
+To download the source code of the EUTelescope project there at least
+two possibility. The first and easiest one is to get a Tarball of the
+tagged release you wish from our CVS web <a
+href="http://www-zeuthen.desy.de/lc-cgi-bin/cvsweb.cgi/Eutelescope/?cvsroot=eutelescope">server</a>.
+Otherwise you can access directly the CVS repository as anonymous
+following the instructions given <a
+href="http://www.ifh.de/linear_collider/">here</a>.
+
+@section install How to install
+
+Installation is even easier than downloading the source
+code. Actually, the installation process can take care of the source
+download as well. The <a
+href="http://www-flc.desy.de/ilcsoft/ilcsoftware/ilcinstall/psc_project_view">ilcinstall</a>
+can be used to install any Marlin package and consequently also the
+EUTelescope one. Here below the part of the ilcinstall configuration
+file concerning the EUTelescope installation. Replace "HEAD" with a
+valid tag if you want to have a different release.
+
+@code
+eutelescope = MarlinPKG("Eutelescope","HEAD")
+ilcsoft.install(eutelescope)
+eutelescope.download.url="http://www-zeuthen.desy.de/lc-cgi-bin/cvsweb.cgi/Eutelescope/Eutelescope.tar.gz?cvsroot=eutelescope;only_with_tag=HEAD;tarball=1"
+eutelescope.addDependency( ["Marlin","GSL", "LCIO"] )
+eutelescope.debug = True
+ilcsoft.module("Marlin").buildWith(["Eutelescope"])
+@endcode
+
+
+
+
+*/
