@@ -28,7 +28,7 @@ namespace eutelescope {
    *  inherithing from this virtual class.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelVirtualCluster.h,v 1.2 2007-05-29 15:48:42 bulgheroni Exp $
+   *  @Version $Id: EUTelVirtualCluster.h,v 1.3 2007-05-31 15:24:58 bulgheroni Exp $
    */
 
   class EUTelVirtualCluster {
@@ -160,6 +160,12 @@ namespace eutelescope {
 
   protected:
     
+    //! The tracker data member
+    /*! This is the core of the decorator pattern design. Whenever an
+     *  object deriving from this virtual class is created from an
+     *  already existing TrackerData object, this is assigned to
+     *  _trackerData by the constructor. 
+     */ 
     IMPL::TrackerDataImpl * _trackerData;
 
   };
