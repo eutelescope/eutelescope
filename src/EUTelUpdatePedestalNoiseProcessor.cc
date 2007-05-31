@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.3 2007-05-21 11:46:24 bulgheroni Exp $
+// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.4 2007-05-31 15:26:36 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -114,6 +114,14 @@ void EUTelUpdatePedestalNoiseProcessor::init () {
   // reset vectors
   _monitoredPixelPedestal.clear();
   _monitoredPixelNoise.clear();
+
+#ifdef MARLINDEBUG
+  vector<int >::iterator iter = _monitoredPixel.begin();
+  while ( iter != _monitoredPixel.end() ) {
+    message<DEBUG> ( log() << "Monitoring pixel " << (*iter) );
+    ++iter;
+  }
+#endif
 
 }
 
@@ -256,58 +264,60 @@ void EUTelUpdatePedestalNoiseProcessor::fixedWeightUpdate(LCEvent * evt) {
 
 void EUTelUpdatePedestalNoiseProcessor::end() {
 
-#ifdef MARLIN_USE_AIDA
-  
   unsigned index  = 0;
   unsigned iPixel = 0;
-  while ( index < _monitoredPixel.size() ) {
-    int  iDetector = _monitoredPixel[index++];
-    int  xCoord    = _monitoredPixel[index++];
-    int  yCoord    = _monitoredPixel[index++];
-    
-    string name;
-    string title;
 
-    {
-      stringstream namestream;
-      namestream << "PedestalMonitor-" << iDetector << "-" << xCoord << "-" << yCoord;
-      name = namestream.str();
+  if ( _monitoredPixelPedestal.size() == 0 ) {
+    message<ERROR> ( "The update procedure failed." );
+  } else {
 
-      stringstream titlestream;
-      titlestream << "Pedestal monitoring on detector " << iDetector << "(" << xCoord << "," << yCoord << ")";
-      title = titlestream.str();
-    }
-
-    //    AIDA::IDataPointSet * pedestalDPS = AIDAProcessor::dataPointSetFactory(this)->create(name,title,1);
-
-    {
-      stringstream namestream;
-      namestream << "NoiseMonitor-" << iDetector << "-" << xCoord << "-" << yCoord;
-      name = namestream.str();
-
-      stringstream titlestream;
-      titlestream << "Noise monitoring on detector " << iDetector << "(" << xCoord << "," << yCoord << ")";
-      title = titlestream.str();
-    }
-    
-    //    AIDA::IDataPointSet * noiseDPS =  AIDAProcessor::dataPointSetFactory(this)->create();
-
-    message<DEBUG> ( "Update results" );
-    for (unsigned int count = 0; count < _monitoredPixelPedestal[iPixel].size(); count++) {
-      message<DEBUG> ( log() << count << " " << _monitoredPixelPedestal[iPixel][count] << " " << _monitoredPixelNoise[iPixel][count] );
-      //       pedestalDPS->addPoint();
-      //       pedestalDPS->point(count)->coordinate(0)->setValue(_monitoredPixelPedestal[iPixel][count]);
+#ifdef MARLIN_USE_AIDA
+    while ( index < _monitoredPixel.size() ) {
+      int  iDetector = _monitoredPixel[index++];
+      int  xCoord    = _monitoredPixel[index++];
+      int  yCoord    = _monitoredPixel[index++];
       
-      //       noiseDPS->addPoint();
-      //       noiseDPS->point(count)->coordinate(0)->setValue(_monitoredPixelNoise[iPixel][count]);
+      string name;
+      string title;
+      
+      {
+	stringstream namestream;
+	namestream << "PedestalMonitor-" << iDetector << "-" << xCoord << "-" << yCoord;
+	name = namestream.str();
+	
+	stringstream titlestream;
+	titlestream << "Pedestal monitoring on detector " << iDetector << "(" << xCoord << "," << yCoord << ")";
+	title = titlestream.str();
+      }
+      
+      //    AIDA::IDataPointSet * pedestalDPS = AIDAProcessor::dataPointSetFactory(this)->create(name,title,1);
+      
+      {
+	stringstream namestream;
+	namestream << "NoiseMonitor-" << iDetector << "-" << xCoord << "-" << yCoord;
+	name = namestream.str();
+	
+	stringstream titlestream;
+	titlestream << "Noise monitoring on detector " << iDetector << "(" << xCoord << "," << yCoord << ")";
+	title = titlestream.str();
+      }
+      
+      //    AIDA::IDataPointSet * noiseDPS =  AIDAProcessor::dataPointSetFactory(this)->create();
+      
+      message<DEBUG> ( "Update results" );
+      for (unsigned int count = 0; count < _monitoredPixelPedestal[iPixel].size(); count++) {
+	message<DEBUG> ( log() << count << " " << _monitoredPixelPedestal[iPixel][count] << " " << _monitoredPixelNoise[iPixel][count] );
+	//       pedestalDPS->addPoint();
+	//       pedestalDPS->point(count)->coordinate(0)->setValue(_monitoredPixelPedestal[iPixel][count]);
+	
+	//       noiseDPS->addPoint();
+	//       noiseDPS->point(count)->coordinate(0)->setValue(_monitoredPixelNoise[iPixel][count]);
+      }
+      ++iPixel;
     }
-    
-    ++iPixel;
+#endif        
+    message<MESSAGE> ( "Successfully finished" );
   }
-    
-#endif
-
-  message<MESSAGE> ( "Successfully finished" );
   
 }
 
