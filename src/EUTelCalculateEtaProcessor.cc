@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.8 2007-05-29 15:54:48 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.9 2007-05-31 15:25:37 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -81,7 +81,7 @@ EUTelCalculateEtaProcessor::EUTelCalculateEtaProcessor () : Processor("EUTelCalc
   _isEtaCalculationFinished = false;
 
   // first of all we need to register the input collection
-  registerInputCollection (LCIO::TRACKERDATA, "ClusterCollectionName",
+  registerInputCollection (LCIO::TRACKERPULSE, "ClusterCollectionName",
 			   "Input cluster collection",
 			   _clusterCollectionName, string ("cluster"));
 
