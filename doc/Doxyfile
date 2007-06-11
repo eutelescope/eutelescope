@@ -1005,7 +1005,8 @@ PREDEFINED             = CLHEP \
 			 MARLIN_USE_AIDA \
                          MARLIN_USE_ROOT \
                          USE_CONDDB \
-			 USE_GEAR
+			 USE_GEAR \
+			 USE_EUDAQ
 
 
 # If the MACRO_EXPANSION and EXPAND_ONLY_PREDEF tags are set to YES then 
