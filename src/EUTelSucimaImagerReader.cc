@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelSucimaImagerReader.cc,v 1.7 2007-05-21 11:46:24 bulgheroni Exp $
+// Version $Id: EUTelSucimaImagerReader.cc,v 1.8 2007-06-11 22:22:26 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -187,7 +187,6 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
 
   EUTelEventImpl *event = new EUTelEventImpl;
   event->setDetectorName("MIMOSA");
-  event->setEventType(kDE);
   LCTime * now = new LCTime;
   event->setTimeStamp(now->timeStamp());
   delete now;
