@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEUDRBReader.cc,v 1.2 2007-05-21 11:46:24 bulgheroni Exp $
+// Version $Id: EUTelEUDRBReader.cc,v 1.3 2007-06-11 22:21:42 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,6 +10,7 @@
  *
  */
 
+#ifdef EXPERIMENTAL
 // personal includes
 #include "EUTelEUDRBReader.h"
 #include "EUTELESCOPE.h"
@@ -292,3 +293,4 @@ void EUTelEUDRBReader::end () {
   message<MESSAGE> ( "Successfully finished" );
 
 }
+#endif
