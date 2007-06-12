@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.11 2007-06-12 14:32:14 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.12 2007-06-12 22:43:42 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -190,8 +190,8 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
   
 #ifdef MARLINDEBUG
   message<DEBUG> ( logfile << "Event " << _iEvt );
-  message<DEBUG> ( log()   << "Event " << _iEvt );
 #endif
+  message<DEBUG> ( log()   << "Event " << _iEvt );
 
   LCCollectionVec * pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
   LCCollectionVec * dummyCollection = new LCCollectionVec(LCIO::TRACKERDATA);
@@ -200,8 +200,9 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
     
 #ifdef MARLINDEBUG
     message<DEBUG> ( logfile << "  Working on detector " << _iDetector );
-    message<DEBUG> ( log()   << "  Working on detector " << _iDetector );
 #endif
+    message<DEBUG> ( log()   << "  Working on detector " << _iDetector );
+
 
     // get the calibrated data 
     TrackerDataImpl    * data   = dynamic_cast<TrackerDataImpl*>   (inputCollectionVec->getElementAt(_iDetector));
@@ -213,9 +214,13 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 
     // initialize the cluster counter 
     short clusterCounter = 0;
+    short limitExceed = 0;
 
     _seedCandidateMap.clear();
     
+    message<DEBUG> ( log() << "Max signal " << (*max_element(data->getChargeValues().begin(), data->getChargeValues().end()))
+		     << "\nMin signal " << (*min_element(data->getChargeValues().begin(), data->getChargeValues().end())) );
+
     for (unsigned int iPixel = 0; iPixel < data->getChargeValues().size(); iPixel++) {
       if (status->getADCValues()[iPixel] == EUTELESCOPE::GOODPIXEL) {
 	if (data->getChargeValues()[iPixel] > _seedPixelCut * noise->getChargeValues()[iPixel]) {
@@ -229,8 +234,8 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 
 #ifdef MARLINDEBUG
       message<DEBUG> ( logfile << "  Seed candidates " << _seedCandidateMap.size() ); 
-      message<DEBUG> ( log()   << "  Seed candidates " << _seedCandidateMap.size() );
 #endif
+      message<DEBUG> ( log()   << "  Seed candidates " << _seedCandidateMap.size() );
 
       // now built up a cluster for each seed candidate 
       map<float, unsigned int>::iterator mapIter = _seedCandidateMap.end();     
@@ -320,24 +325,27 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 
 #ifdef MARLINDEBUG
 	    message<DEBUG> ( logfile << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY );
-	    message<DEBUG> ( log()   << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY );
 #endif	    
+	    message<DEBUG> ( log()   << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY );
+
 	    
 	    while ( indexIter != clusterCandidateIndeces.end() ) {
 	      status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
 	      ++indexIter;
 	    }
 
-#ifdef MARLINDEBUG
+
 	    for (unsigned int iPixel = 0; iPixel < clusterCandidateIndeces.size(); iPixel++) {
+#ifdef MARLINDEBUG
 	      message<DEBUG> ( logfile << "  x " <<  getXFromIndex(clusterCandidateIndeces[iPixel])
 			       << "  y " <<  getYFromIndex(clusterCandidateIndeces[iPixel])
 			       << "  s " <<  clusterCandidateCharges[iPixel]);
+#endif
 	      message<DEBUG> ( log() << "  x " <<  getXFromIndex(clusterCandidateIndeces[iPixel])
 			       << "  y " <<  getYFromIndex(clusterCandidateIndeces[iPixel])
 			       << "  s " <<  clusterCandidateCharges[iPixel]);
 	    }
-#endif
+
 
 	    // copy the candidate charges inside the cluster
 	    cluster->setChargeValues(clusterCandidateCharges);
@@ -354,7 +362,12 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	    // increment the cluster counters
 	    _totCluster[_iDetector] += 1;
 	    ++clusterCounter;
-
+	    if ( clusterCounter > 256 ) {
+	      ++limitExceed;
+	      --clusterCounter;
+	      message<WARNING> ( log() << "Event " << _iEvt << " contains more than 256 clusters (" 
+				 << clusterCounter + limitExceed << ")" );
+	    }
 	  } else {
 	    // the cluster has not passed the cut!
 
@@ -388,11 +401,13 @@ void EUTelClusteringProcessor::end() {
 
   message<MESSAGE> ( "Successfully finished" );
 
-#ifdef MARLINDEBUG
   for (_iDetector = 0; _iDetector < (signed) _totCluster.size() ; _iDetector++) {
+#ifdef MARLINDEBUG
     message<DEBUG> ( logfile << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector );
+#endif
     message<DEBUG> ( log() << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector );
   }
+#ifdef MARLINDEBUG
   logfile.close();
 #endif
 
