@@ -62,7 +62,7 @@ namespace eutelescope {
    *   documentation for more info.
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelMimoTelReader.h,v 1.1 2007-06-11 22:19:32 bulgheroni Exp $
+   *   @version $Id: EUTelMimoTelReader.h,v 1.2 2007-06-12 13:49:14 bulgheroni Exp $
    *
    */
   
@@ -129,6 +129,12 @@ namespace eutelescope {
      *  CDS calculation. It is 0 otherwise.
      */
     int _cdsCalculation;
+
+    //! Signal polarity 
+    /*! This is used to change the signal polarity in the CDS
+     *  calculation. 
+     */
+    float _polarity;
 
   };
 

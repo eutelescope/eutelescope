@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.1 2007-06-11 22:19:32 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.2 2007-06-12 13:49:14 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -66,6 +66,10 @@ EUTelMimoTelReader::EUTelMimoTelReader (): DataSourceProcessor  ("EUTelMimoTelRe
   
   registerProcessorParameter("InputDataFileName", "Inpuf file",
 			     _fileName, string("run012345.raw") );
+  
+  registerProcessorParameter("SignalPolarity", "Signal polarity (negative == -1)",
+			     _polarity, float(-1));
+
 
 }
 
@@ -232,9 +236,10 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	      idEncoderCDS.setCellID( cdsFrame );
 	      vector< short > cdsVector;
 	      for (unsigned int iPixel = 0; iPixel < eudrbDecoder->NumPixels(brd); iPixel++) {
-		cdsVector.push_back( ( array.m_pivot[iPixel] - 1   ) * array.m_adc[0][iPixel] +
-				     ( 1 - 2*array.m_pivot[iPixel] ) * array.m_adc[1][iPixel] +
-				     ( 1*array.m_pivot[iPixel]     ) * array.m_adc[2][iPixel] );
+		cdsVector.push_back( _polarity * 
+				     ( ( array.m_pivot[iPixel] - 1   ) * array.m_adc[0][iPixel] +
+				       ( 1 - 2*array.m_pivot[iPixel] ) * array.m_adc[1][iPixel] +
+				       ( 1*array.m_pivot[iPixel]     ) * array.m_adc[2][iPixel] ) );
 	      }	      
 	      cdsFrame->setADCValues( cdsVector );
 	      cdsFrameColl->push_back( cdsFrame );
