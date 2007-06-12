@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.7 2007-05-29 15:54:48 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.8 2007-06-12 22:39:37 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -212,9 +212,9 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	rawDataDistHisto->setTitle("Raw data distribution");
 
 	// book the pedestal corrected data histogram
-	const int    dataDistHistoNBin =  1000;
-	const double dataDistHistoMin  = -100.;
-	const double dataDistHistoMax  =  100.;
+	const int    dataDistHistoNBin =  5000;
+	const double dataDistHistoMin  = -500.;
+	const double dataDistHistoMax  =  500.;
 	{
 	  stringstream ss;
 	  ss << _dataDistHistoName << "-d" << iDetector;
