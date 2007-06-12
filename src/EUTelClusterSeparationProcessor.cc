@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.8 2007-05-29 15:54:48 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.9 2007-06-12 13:47:39 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -89,14 +89,16 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
   if (_iEvt % 10 == 0) 
     message<MESSAGE> ( log() << "Separating clusters on event " << _iEvt ) ;
 
-  LCCollectionVec                *clusterCollectionVec = dynamic_cast <LCCollectionVec *> (evt->getCollection(_clusterCollectionName));
+  LCCollectionVec  *clusterCollectionVec = 
+    dynamic_cast <LCCollectionVec *> (evt->getCollection(_clusterCollectionName));
   CellIDDecoder<TrackerPulseImpl> cellDecoder(clusterCollectionVec);
   vector< pair<int, int > >       mergingPairVector;
 
   for ( int iCluster = 0 ; iCluster < clusterCollectionVec->getNumberOfElements() ; iCluster++) {
 
-    TrackerPulseImpl   * pulse   = dynamic_cast<TrackerPulseImpl *>   ( clusterCollectionVec->getElementAt(iCluster) );
-    ClusterType          type    = static_cast<ClusterType> (static_cast<int>( cellDecoder(pulse)["type"] ) );
+    TrackerPulseImpl   * pulse   = 
+      dynamic_cast<TrackerPulseImpl *>   ( clusterCollectionVec->getElementAt(iCluster) );
+    ClusterType  type    = static_cast<ClusterType> (static_cast<int>( cellDecoder(pulse)["type"] ) );
     
     // all clusters have to inherit from the virtual cluster (that is
     // a TrackerDataImpl with some utility methods).
