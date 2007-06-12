@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.1 2007-06-12 13:56:08 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.2 2007-06-12 14:32:14 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -203,7 +203,7 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
     (dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[tempHistoName]))
       ->fill(static_cast<double >(xSeed), static_cast<double >(ySeed), 1.);
     
-    
+    delete cluster;
   }
 
 #endif

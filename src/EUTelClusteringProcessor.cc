@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.10 2007-05-29 15:54:48 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.11 2007-06-12 14:32:14 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -357,15 +357,23 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 
 	  } else {
 	    // the cluster has not passed the cut!
+
 	  }
 	}
       }
     }
   }
-  evt->addCollection(pulseCollection,_pulseCollectionName);
-  evt->addCollection(dummyCollection,_dummyCollectionName);
 
   ++_iEvt;
+
+  if ( pulseCollection->size() != 0 ) {
+    evt->addCollection(pulseCollection,_pulseCollectionName);
+    evt->addCollection(dummyCollection,_dummyCollectionName);
+  } else {
+    delete pulseCollection;
+    delete dummyCollection;
+    throw SkipEventException(this);
+  }
   
 }
 
