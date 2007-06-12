@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.15 2007-05-21 11:43:57 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.16 2007-06-12 13:52:50 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -344,6 +344,12 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
 	    tempHistoName = ss.str();
 	  }
 	  (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(_pedestal[iDetector][iPixel]);
+	  if ( (xPixel == 10) && (yPixel == 10 )) {
+	    message<DEBUG> 
+	      ( log() << "Detector " << iDetector << " pedestal " << (_pedestal[iDetector][iPixel]));
+	  } 
+
+
 	  {
 	    stringstream ss;
 	    ss << _noiseDistHistoName << "-d" << iDetector << "-l" << _iLoop;
@@ -379,7 +385,7 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
 
 void EUTelPedestalNoiseProcessor::maskBadPixel() {
 
-  double threshold;
+  vector<double > thresholdVec;
   int    badPixelCounter = 0;
 
 
@@ -404,20 +410,28 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
       double meanw      = sumw  / num;
       double meanw2     = sumw2 / num;
       double rms        = sqrt( meanw2 - pow(meanw,2));
-      threshold  = meanw + (rms * _badPixelMaskCut);
+      thresholdVec.push_back(meanw + (rms * _badPixelMaskCut) );
+      message<DEBUG> ( log() << "Mean noise value is " << meanw << " ADC\n"
+		       "RMS of noise is " << rms << " ADC\n"
+		       "Masking threshold is set to " << thresholdVec[iDetector] );
+      
       
     }
   } else if ( _badPixelAlgo == EUTELESCOPE::ABSOLUTENOISEVALUE ) {
-    threshold = _badPixelMaskCut;
+    thresholdVec.push_back(_badPixelMaskCut);
   }
 
 
   // scan the noise vector again and apply the cut
   for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
     for (unsigned int iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
-      if ( ( _noise[iDetector][iPixel] > threshold ) && 
+      if ( ( _noise[iDetector][iPixel] > thresholdVec[iDetector] ) && 
 	   ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) ) {
 	_status[iDetector][iPixel] = EUTELESCOPE::BADPIXEL;
+	message<DEBUG> ( log() <<  "Masking pixel number " << iPixel 
+			 << " on detector " << iDetector 
+			 << " (" << _noise[iDetector][iPixel] 
+			 << " > " << thresholdVec[iDetector] << ")" );
 	++badPixelCounter;
       }
     }
