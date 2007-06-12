@@ -28,7 +28,7 @@ namespace eutelescope {
    *  inherithing from this virtual class.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelVirtualCluster.h,v 1.3 2007-05-31 15:24:58 bulgheroni Exp $
+   *  @Version $Id: EUTelVirtualCluster.h,v 1.4 2007-06-12 13:46:51 bulgheroni Exp $
    */
 
   class EUTelVirtualCluster {
@@ -104,6 +104,33 @@ namespace eutelescope {
      *  @return The total integrated charge
      */
     virtual float getTotalCharge() const                                  = 0;
+    
+    //! Return the seed pixel charge
+    /*! 
+     *  @return the charge of the seed pixel
+     */ 
+    virtual float getSeedCharge() const                                   = 0;
+
+    //! Return the charge of cluster with N pixels
+    /*! This method can be used to return the charge integrated into
+     *  the cluster when only considering the N most significant
+     *  pixels.
+     *
+     *  @return the charge of cluster with N pixels
+     *  @param nPixel The number of pixels to consider
+     */ 
+    virtual float getClusterCharge(int nPixel) const                      = 0;
+
+    //! Return the charge of a subset of the cluster
+    /*! Whatever shape the cluster has it is always possible to define
+     *  a rectangular frame centered on the seed pixel. With this
+     *  method the charge of this frame is calculated.
+     *
+     *  @param  xSize Odd number to define the x size of the subframe
+     *  @param  ySize Odd number to define the y size of the subframe
+     *  @return The charge of the cluster subframe
+     */ 
+    virtual float getClusterCharge(int xSize, int ySize) const            = 0; 
 
     //! Return the center of gravity shift from the seed coordinates
     /*! Having a charge distribution it is possible to calculate the

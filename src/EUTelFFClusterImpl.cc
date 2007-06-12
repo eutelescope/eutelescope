@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.7 2007-05-29 15:48:42 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.8 2007-06-12 13:46:51 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -22,6 +22,8 @@
 // system includes
 #include <map>
 #include <cmath>
+#include <algorithm>
+#include <vector>
 
 using namespace eutelescope;
 using namespace IMPL;
@@ -225,4 +227,49 @@ void EUTelFFClusterImpl::setClusterQuality(ClusterQuality quality) {
   // apply the changes
   _trackerData->setCellID1(cell1);
 
+}
+
+
+float EUTelFFClusterImpl::getSeedCharge() const {
+  
+  return *max_element( _trackerData->getChargeValues().begin(),
+		       _trackerData->getChargeValues().end() );
+}
+
+float EUTelFFClusterImpl::getClusterCharge(int nPixel) const {
+
+  vector<float > vectorCopy(_trackerData->getChargeValues());
+  sort(vectorCopy.begin(), vectorCopy.end(), greater<float>());
+  
+  vector<float >::iterator iter = vectorCopy.begin();
+  float charge = 0;
+  while ( iter != vectorCopy.begin() + nPixel ) {
+    charge = *(iter);
+    ++iter;
+  }
+  return charge;
+
+}
+
+float EUTelFFClusterImpl::getClusterCharge(int xSize, int ySize) const {
+  
+  int xCluSize, yCluSize;
+  getClusterSize(xCluSize, yCluSize);
+  
+  if ( ( xSize >= xCluSize ) && ( ySize >= yCluSize ) ) {
+    return getTotalCharge();
+  }
+
+  int iPixel = 0;
+  float charge = 0;
+  for (int yPixel = -1 * (yCluSize / 2); yPixel <= (yCluSize / 2); yPixel++) {
+    for (int xPixel = -1 * (xCluSize / 2); xPixel <= (xCluSize / 2); xPixel++) {
+      if ( ( xPixel >= -1 * (xSize / 2) ) &&  ( xPixel <= (xSize / 2) ) &&
+	   ( yPixel >= -1 * (ySize / 2) ) &&  ( yPixel <= (ySize / 2) ) ) {
+	charge += _trackerData->getChargeValues()[iPixel];
+	++iPixel;
+      }
+    }
+  }
+  return charge;
 }

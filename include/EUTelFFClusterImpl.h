@@ -89,7 +89,7 @@ namespace eutelescope {
    *  @todo Test the charge center of mass method.
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.7 2007-05-29 15:48:42 bulgheroni Exp $
+   *  @Version $Id: EUTelFFClusterImpl.h,v 1.8 2007-06-12 13:46:51 bulgheroni Exp $
    */ 
 
   class EUTelFFClusterImpl : public EUTelVirtualCluster {
@@ -246,6 +246,34 @@ namespace eutelescope {
      *  @return the total cluster charge
      */
     float getTotalCharge() const;
+
+    //! Get seed charge
+    /*! This method is used to get the seed pixel charge, mainly for
+     *  histogram filling.
+     * 
+     *  @return the seed pixel charge
+     */
+    float getSeedCharge() const;
+
+    //! Get the cluster charge with N pixels
+    /*! This method is used to obtain the cluster charge if
+     *  considering only a certain number of pixels with the highest
+     *  signal.
+     * 
+     *  @param nPixel The number of pixels to consider
+     *  @return The cluster charge using only nPixel
+     */ 
+    float getClusterCharge(int nPixel) const;
+
+    //! Get the cluster charge within a subframe
+    /*! This method is used to obtain the cluster charge considering
+     *  only pixels belonging to a subframe of the full cluster.
+     *  
+     *  @param  xSize Odd number to define the x size of the subframe
+     *  @param  ySize Odd number to define the y size of the subframe
+     *  @return The charge of the cluster subframe
+     */ 
+    float getClusterCharge(int xSize, int ySize) const;
 
     //! Get the center of gravity shift
     /*! This method is used to calculate the signed distance of the
