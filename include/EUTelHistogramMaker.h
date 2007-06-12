@@ -72,12 +72,12 @@ namespace eutelescope {
    *  filled
    *  @param A vector containing the cluster N spectra to be filled.
    *  
-   *  <h4>Output</h>
+   *  <h4>Output</h4>
    *
    *  None
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version  $ 
+   *  @version $Id: EUTelHistogramMaker.h,v 1.2 2007-06-12 14:39:23 bulgheroni Exp $ 
    *
    */
   
