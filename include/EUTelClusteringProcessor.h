@@ -12,6 +12,7 @@
 
 // eutelescope includes ".h" 
 #include "EUTelExceptions.h"
+#include "EUTELESCOPE.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -28,6 +29,7 @@
 #include <string>
 #include <map>
 #include <cmath>
+#include <vector>
 
 namespace eutelescope {
 
@@ -126,7 +128,7 @@ namespace eutelescope {
    *  @param _clusterCut the threshold to select clusters.
    *  
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.7 2007-05-23 14:08:44 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.8 2007-06-13 11:45:43 bulgheroni Exp $
    *
    */
 
@@ -315,6 +317,25 @@ namespace eutelescope {
      */
     void resetStatus(IMPL::TrackerRawDataImpl * status);
 
+#ifdef MARLIN_USE_AIDA
+    //! Book histograms
+    /*! This method is used to prepare the needed directory structure
+     *  within the current ITree folder and books all required
+     *  histograms. Histogram pointers are stored into
+     *  EUTelHistogramMaker::_aidaHistoMap so that they can be
+     *  recalled and filled from anywhere in the code.  
+     */
+    void bookHistos();
+
+    //! Fill histograms
+    /*! This method is called for each event and the cluster
+     *  information are inserted into specific AIDA histograms.
+     *
+     *  @param evt The current event object
+     */ 
+    void fillHistos(LCEvent * evt);
+#endif
+
   protected:
     
     //! Wrapper of the processEvent(LCEvent*) for fixed frame clustering
@@ -485,6 +506,12 @@ namespace eutelescope {
      */
     int _iEvt;
 
+    //! Fill histogram switch
+    /*! This boolean is used to switch on and off the filling of
+     *  histograms.
+     */ 
+    bool _fillHistos;
+
   private:
 
     //! The seed candidate pixel map. 
@@ -531,6 +558,60 @@ namespace eutelescope {
      *  is shown during the end()
      */ 
     IntVec _totCluster;
+
+#ifdef MARLIN_USE_AIDA
+    //! List of cluster spectra N
+    /*! This vector contains a list of cluster spectra we want to fill
+     *  in. 
+     */ 
+    std::vector<int > _clusterSpectraNVector;
+
+    //! List of cluster spectra NxN
+    /*! This vector contains a list of cluster spectra N x N we want
+     *   to fill. For example, if it contains "3", then the cluster 3x3
+     *   spectrum will be filled.
+     */
+    std::vector<int > _clusterSpectraNxNVector;
+
+    //! The number of detectors
+    /*! The number of sensors in the telescope. This is retrieve from
+     *  the run header
+     */ 
+    int _noOfDetector;
+
+    //! AIDA histogram map
+    /*! The histogram filling procedure may occur in many different
+     *  places, while it is usually a good reason to keep the booking
+     *  procedure in one place only. To recall an histogram pointer
+     *  from a different place in the code they are stored within this
+     *  histogram map. The second object of the pair has to a
+     *  AIDA::IBaseHistogram since this is the base class of all
+     *  different kind of histograms, profiles included. It has also
+     *  to be a pointer since, this is a pure virtual class and we
+     *  want to use <code>dynamic_cast</code> to convert them back to
+     *  their original cast.
+     */
+    std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
+
+    //! Cluster signal histogram base name.
+    /*! This is the name of the cluster signal histogram. To this
+     *  name, the detector number is added in order to make it
+     *  unique. This is used also for the other cluster spectra.
+     */
+    static std::string _clusterSignalHistoName;
+
+    //! Seed pixel signal histo name
+    /*! This is the seed pixel spectrum histogram. To this name,
+     *  the detector ID is added in order to make it unique.
+     */ 
+    static std::string _seedSignalHistoName;
+
+    //! Hit map histogram name
+    /*! This is the hit map in pixel coordinate histogram name.
+     */ 
+    static std::string _hitMapHistoName;
+
+#endif
 
   };
 
