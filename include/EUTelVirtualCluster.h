@@ -28,7 +28,7 @@ namespace eutelescope {
    *  inherithing from this virtual class.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelVirtualCluster.h,v 1.4 2007-06-12 13:46:51 bulgheroni Exp $
+   *  @Version $Id: EUTelVirtualCluster.h,v 1.5 2007-06-13 18:02:32 bulgheroni Exp $
    */
 
   class EUTelVirtualCluster {
@@ -120,6 +120,17 @@ namespace eutelescope {
      *  @param nPixel The number of pixels to consider
      */ 
     virtual float getClusterCharge(int nPixel) const                      = 0;
+
+    //! Calculate the cluster charge with different number of pixels
+    /*! This method is a better and faster replacement of the
+     *  getClusterCharge(int) method. This one is actually avoiding to
+     *  re-sort the signal vector all the times it is called. 
+     *
+     *  @param nPixels The list of number of pixels
+     *  @return The charges for each number of pixels
+     */ 
+    virtual std::vector<float > getClusterCharge(std::vector<int > nPixels) const 
+                                                                      = 0;
 
     //! Return the charge of a subset of the cluster
     /*! Whatever shape the cluster has it is always possible to define

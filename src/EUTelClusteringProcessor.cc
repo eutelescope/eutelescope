@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.13 2007-06-13 11:45:43 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.14 2007-06-13 18:02:32 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -539,19 +539,19 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
     }
     (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getSeedCharge());
 
-    vector<int >::iterator iter = _clusterSpectraNVector.begin();
-    while ( iter != _clusterSpectraNVector.end() ) {
+    vector<float > charges = cluster->getClusterCharge(_clusterSpectraNVector);
+
+    for ( unsigned int i = 0; i < charges.size() ; i++ ) {
       {
-	stringstream ss;
-	ss << _clusterSignalHistoName << (*iter) << "-d" << detectorID;
-	tempHistoName = ss.str();
-      }
-      (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))
-	->fill(cluster->getClusterCharge((*iter)));
-      ++iter;
+ 	stringstream ss;
+ 	ss << _clusterSignalHistoName << _clusterSpectraNVector[i] << "-d" << detectorID;
+ 	tempHistoName = ss.str();
+       }
+       (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))
+	 ->fill(charges[i]);
     }
 
-    iter = _clusterSpectraNxNVector.begin();
+    vector<int >::iterator iter = _clusterSpectraNxNVector.begin();
     while ( iter != _clusterSpectraNxNVector.end() ) {
       {
 	stringstream ss;

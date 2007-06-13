@@ -89,7 +89,7 @@ namespace eutelescope {
    *  @todo Test the charge center of mass method.
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.8 2007-06-12 13:46:51 bulgheroni Exp $
+   *  @Version $Id: EUTelFFClusterImpl.h,v 1.9 2007-06-13 18:02:32 bulgheroni Exp $
    */ 
 
   class EUTelFFClusterImpl : public EUTelVirtualCluster {
@@ -264,6 +264,20 @@ namespace eutelescope {
      *  @return The cluster charge using only nPixel
      */ 
     float getClusterCharge(int nPixel) const;
+    
+    //! Calculate the cluster charge with different number of pixels
+    /*! This method is a better and faster replacement of the
+     *  getClusterCharge(int) method. This one is actually avoiding to
+     *  re-sort the signal vector all the times it is called. 
+     *
+     *  This method is getting the signal array and sort it once in
+     *  descending order. Then the sorted array is integrated
+     *  according to the number of pixels in the @c nPixels vector.     
+     *
+     *  @param nPixels The list of number of pixels
+     *  @return The charges for each number of pixels
+     */ 
+    std::vector<float> getClusterCharge(std::vector<int > nPixels) const;
 
     //! Get the cluster charge within a subframe
     /*! This method is used to obtain the cluster charge considering
