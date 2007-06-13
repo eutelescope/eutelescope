@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.2 2007-06-12 14:32:14 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.3 2007-06-13 11:47:08 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -20,8 +20,8 @@
 #include "EUTelExceptions.h"
 
 // marlin includes ".h"
-#include <marlin/Processor.h>
-#include <marlin/AIDAProcessor.h>
+#include "marlin/Processor.h"
+#include "marlin/AIDAProcessor.h"
 
 #ifdef MARLIN_USE_AIDA
 // aida includes <.h>
@@ -129,6 +129,7 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
     message<WARNING> ( log() << "Event number " << evt->getEventNumber() 
 		       << " is of unknown type. Continue considering it as a normal Data Event."  );
   }
+  
 
 #ifdef MARLIN_USE_AIDA
 
@@ -207,7 +208,9 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
   }
 
 #endif
-  
+
+  ++_iEvt;
+
 }
 
 void EUTelHistogramMaker::check (LCEvent * evt) {
@@ -338,6 +341,5 @@ void EUTelHistogramMaker::bookHistos() {
   message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
 #endif
 
-  ++_iEvt;
 }
 
