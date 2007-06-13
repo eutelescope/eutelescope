@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.9 2007-06-12 22:45:30 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.10 2007-06-13 14:30:18 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -262,13 +262,14 @@ float EUTelFFClusterImpl::getClusterCharge(int xSize, int ySize) const {
 
   int iPixel = 0;
   float charge = 0;
+
   for (int yPixel = -1 * (yCluSize / 2); yPixel <= (yCluSize / 2); yPixel++) {
     for (int xPixel = -1 * (xCluSize / 2); xPixel <= (xCluSize / 2); xPixel++) {
       if ( ( xPixel >= -1 * (xSize / 2) ) &&  ( xPixel <= (xSize / 2) ) &&
 	   ( yPixel >= -1 * (ySize / 2) ) &&  ( yPixel <= (ySize / 2) ) ) {
 	charge += _trackerData->getChargeValues()[iPixel];
-	++iPixel;
-      }
+      } 
+      ++iPixel;
     }
   }
   return charge;
