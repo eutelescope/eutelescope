@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.15 2007-06-14 12:36:21 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.16 2007-06-14 22:21:24 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -122,7 +122,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () :Processor("EUTelClusterin
   
   registerOptionalParameter("ClusterNxN", "The list of cluster NxN to be filled."
 			    "For example 3 means filling the 3x3 histogram spectrum",
-			    _clusterSpectraNxNVector, clusterNxNExample, clusterNxNExample.size());
+			    _clusterSpectraNxNVector, clusterNxNExample);
 
   IntVec clusterNExample;
   clusterNExample.push_back(4);
@@ -132,7 +132,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () :Processor("EUTelClusterin
   clusterNExample.push_back(25);
   registerOptionalParameter("ClusterN", "The list of cluster N to be filled."
 			    "For example 7 means filling the cluster spectra with the 7 most significant pixels",
-			    _clusterSpectraNVector, clusterNExample, clusterNExample.size() );
+			    _clusterSpectraNVector, clusterNExample );
 #endif
 
   registerProcessorParameter("HistogramFilling","Switch on or off the histogram filling",
@@ -284,9 +284,11 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
     short limitExceed = 0;
 
     _seedCandidateMap.clear();
-    
+
+#ifdef MARLINDEBUG    
     message<DEBUG> ( log() << "Max signal " << (*max_element(data->getChargeValues().begin(), data->getChargeValues().end()))
 		     << "\nMin signal " << (*min_element(data->getChargeValues().begin(), data->getChargeValues().end())) );
+#endif
 
     for (unsigned int iPixel = 0; iPixel < data->getChargeValues().size(); iPixel++) {
       if (status->getADCValues()[iPixel] == EUTELESCOPE::GOODPIXEL) {
@@ -634,8 +636,12 @@ void EUTelClusteringProcessor::bookHistos() {
 	AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
 								  clusterNBin, clusterMin, clusterMax);
       _aidaHistoMap.insert(make_pair(tempHistoName, clusterSignalNHisto) );
-      string tempTitle = "Cluster spectrum with the " + (*iter);
-      tempTitle.append(" most significant pixels ");
+      string tempTitle;
+      {
+	stringstream ss;
+	ss << "Cluster spectrum with the " << (*iter) << " most significant pixels ";
+	tempTitle = ss.str();
+      }
       clusterSignalNHisto->setTitle(tempTitle.c_str());
 
       ++iter;
