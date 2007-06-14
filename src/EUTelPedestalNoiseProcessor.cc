@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.16 2007-06-12 13:52:50 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.17 2007-06-14 19:49:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -421,11 +421,17 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
     thresholdVec.push_back(_badPixelMaskCut);
   }
 
+  const float lowerThreshold = 0.2;
+  message<MESSAGE>  ( log() << "Marking as bad also dead pixels (noise < " << lowerThreshold << " ADC)" );
+
 
   // scan the noise vector again and apply the cut
   for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
     for (unsigned int iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
-      if ( ( _noise[iDetector][iPixel] > thresholdVec[iDetector] ) && 
+      if ( ( 
+	     ( _noise[iDetector][iPixel] > thresholdVec[iDetector] ) || 
+	     ( _noise[iDetector][iPixel] < lowerThreshold ) 
+	     ) && 
 	   ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) ) {
 	_status[iDetector][iPixel] = EUTELESCOPE::BADPIXEL;
 	message<DEBUG> ( log() <<  "Masking pixel number " << iPixel 
