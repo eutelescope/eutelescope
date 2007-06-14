@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.14 2007-06-13 18:02:32 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.15 2007-06-14 12:36:21 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -139,6 +139,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () :Processor("EUTelClusterin
 			     _fillHistos, static_cast< bool > ( true ) );
 
 
+  _isFirstEvent = true;
 }
 
 
@@ -186,10 +187,9 @@ void EUTelClusteringProcessor::processRunHeader (LCRunHeader * rdr) {
 #ifdef MARLIN_USE_AIDA
   // let me get from the run header all the available parameter
   _noOfDetector = runHeader->getNoOfDetector();
-
-  // book the histograms now
-  if ( _fillHistos ) bookHistos();
 #endif
+
+
 
   // increment the run counter
   ++_iRun;
@@ -198,6 +198,13 @@ void EUTelClusteringProcessor::processRunHeader (LCRunHeader * rdr) {
 
 
 void EUTelClusteringProcessor::processEvent (LCEvent * event) {
+
+#ifdef MARLIN_USE_AIDA
+  // book the histograms now
+  if ( _fillHistos && isFirstEvent() ) {
+    bookHistos();
+  }
+#endif
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
   if ( evt->getEventType() == kEORE ) {
