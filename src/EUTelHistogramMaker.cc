@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.3 2007-06-13 11:47:08 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.4 2007-06-15 15:04:42 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -69,7 +69,7 @@ EUTelHistogramMaker::EUTelHistogramMaker () : Processor("EUTelHistogramMaker") {
   
   registerOptionalParameter("ClusterNxN", "The list of cluster NxN to be filled."
 			    "For example 3 means filling the 3x3 histogram spectrum",
-			    _clusterSpectraNxNVector, clusterNxNExample, clusterNxNExample.size());
+			    _clusterSpectraNxNVector, clusterNxNExample);
 
   IntVec clusterNExample;
   clusterNExample.push_back(4);
@@ -79,7 +79,7 @@ EUTelHistogramMaker::EUTelHistogramMaker () : Processor("EUTelHistogramMaker") {
   clusterNExample.push_back(25);
   registerOptionalParameter("ClusterN", "The list of cluster N to be filled."
 			    "For example 7 means filling the cluster spectra with the 7 most significant pixels",
-			    _clusterSpectraNVector, clusterNExample, clusterNExample.size() );
+			    _clusterSpectraNVector, clusterNExample );
   
   
 
