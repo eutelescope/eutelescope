@@ -1,7 +1,6 @@
-#ifdef EXPERIMENTAL
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.1 2007-06-14 22:19:54 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.2 2007-06-15 15:04:07 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -13,13 +12,16 @@
 
 // eutelescope includes ".h" 
 #include "EUTELESCOPE.h"
+#include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelClusterFilter.h"
 #include "EUTelExceptions.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
+#include "marlin/Exceptions.h"
 
 // lcio includes <.h> 
 #include <IMPL/TrackerPulseImpl.h>
@@ -30,7 +32,8 @@
 // system includes <>
 #include <vector>
 #include <string>
-#include <set>
+#include <map>
+#include <algorithm>
 
 using namespace std;
 using namespace lcio;
@@ -44,30 +47,90 @@ EUTelClusterFilter::EUTelClusterFilter () :Processor("EUTelClusterFilter") {
 
 
   // first of all we need to register the input collection
-  registerInputCollection (LCIO::TRACKERPULSE, "ClusterCollectionName",
-			   "Cluster collection name ",
-			   _clusterCollectionName, string ("cluster"));
+  registerInputCollection (LCIO::TRACKERPULSE, "InputPulseCollectionName",
+			   "This is the input Tracker Pulse collection that should be filtered",
+			   _inputPulseCollectionName, string ("cluster"));
 
-  // now the optional parameters
-  registerProcessorParameter ("SeparationAlgorithm",
-			      "Select which algorithm to use for cluster separation",
-			      _separationAlgo, string(EUTELESCOPE::FLAGONLY));
+  registerOutputCollection (LCIO::TRACKERPULSE,"OutputPulseCollectionName",
+			    "This is the output Tracker Pulse collection containing the filtered clusters",
+			    _outputPulseCollectionName, string ("filteredcluster"));
 
-  registerProcessorParameter ("MinimumDistance",
-			      "Minimum distance allowed between separated clusters (0 == only touching clusters)",
-			      _minimumDistance, static_cast<float> (0));
-    
+  // assuming 3 as the number of detectors
+  FloatVec minTotalChargeVecExample;
+  minTotalChargeVecExample.push_back(90);
+  minTotalChargeVecExample.push_back(75);
+  minTotalChargeVecExample.push_back(80);
+
+  registerProcessorParameter("ClusterMinTotalCharge", "This is the minimum allowed total charge in to a cluster. "
+			     "One floating point number for each sensor in the telescope",
+			     _minTotalChargeVec, minTotalChargeVecExample);
+  
+  // again assuming 3 detectors
+  FloatVec minNChargeVecExample;
+  minNChargeVecExample.push_back(9); // this is the number of pixels in the cluster
+  minNChargeVecExample.push_back(90);
+  minNChargeVecExample.push_back(75);
+  minNChargeVecExample.push_back(80);
+
+  registerProcessorParameter("ClusterNMinCharge", "This is the minimum charge that a cluster of N pixels has to have. "
+			     "The first figure has to be the number of pixels to consider in the cluster, then one float number "
+			     "for each sensor.",
+			     _minNChargeVec, minNChargeVecExample);
+
+  FloatVec minSeedChargeVecExample;
+  minSeedChargeVecExample.push_back(20);
+  minSeedChargeVecExample.push_back(25);
+  minSeedChargeVecExample.push_back(21);
+  
+  registerProcessorParameter("SeedMinCharge", "This is the minimum allowed charge that the seed pixel of a cluster has to have. "
+			     "One floating number for each detector",
+			     _minSeedChargeVec, minSeedChargeVecExample);
 }
 
 
 void EUTelClusterFilter::init () {
-  // this method is called only once even when the rewind is active
-  // usually a good idea to
+
   printParameters ();
+
+  // check and set properly the switches
+  // total cluster charge
+  if (count_if( _minTotalChargeVec.begin(),  _minTotalChargeVec.end(),  bind2nd(greater<float>(), 0) ) != 0 ) {
+    // ok there is at least one sensor for which this cut is on
+    _minTotalChargeSwitch = true;
+  } else {
+    _minTotalChargeSwitch = false;
+  }
+  
+  message<DEBUG> ( log () << "MinTotalChargeSwitch " << _minTotalChargeSwitch );
+  
+  // N cluster charge
+  if ( _minNChargeVec.size() != 0 ) {
+    if ( _minNChargeVec[0] != 0 ) {
+      _minNChargeSwitch = true;
+    } else {
+      _minNChargeSwitch = false;
+    }
+  } else {
+    _minNChargeSwitch = false;
+  }
+
+  message<DEBUG> ( log () << "MinNChargeSwitch " << _minNChargeSwitch );
+
+  // Seed charge
+  if ( count_if( _minSeedChargeVec.begin(), _minSeedChargeVec.end(), bind2nd(greater<float>(), 0) ) != 0 ) {
+    _minSeedChargeSwitch = true;
+  } else {
+    _minSeedChargeSwitch = false;
+  }
+
+  message<DEBUG> ( log () << "MinSeedChargeSwitch " << _minSeedChargeSwitch );
 
   // set to zero the run and event counters
   _iRun = 0;
   _iEvt = 0;
+
+  _isFirstEvent = true;
+
 
 }
 
@@ -76,10 +139,66 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
   // increment the run counter
   ++_iRun;
 
+  if ( isFirstEvent() ) {
+    EUTelRunHeaderImpl * runHeader = static_cast<EUTelRunHeaderImpl *> (rdr);
+    
+    _noOfDetectors = runHeader->getNoOfDetector();
+    
+    // check the consistency of selection thresholds
+    _rejectionMap.clear();
+    
+    if ( _minTotalChargeSwitch ) {
+      if (  _minTotalChargeVec.size() != (unsigned) _noOfDetectors ) {
+	message<ERROR> (log() << "The threshold vector on the total cluster charge did not match the right size \n"
+			<<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minTotalChargeVec.size() 
+			<<  "\n"
+			<<  "Disabling the selection criterion and continue without");
+	_minTotalChargeSwitch = false;
+      } else {
+	message<DEBUG> ( "Total cluster charge criterion verified and switched on" );
+	vector<unsigned int >  rejectedCounter(_noOfDetectors, 0);
+	_rejectionMap.insert( make_pair("MinTotalChargeCut", rejectedCounter));
+      }
+    }
+    
+    if ( _minNChargeSwitch ) {
+      unsigned int module = _noOfDetectors + 1;
+      if ( _minNChargeVec.size() % module != 0 ) {
+	message<ERROR> (log() << "The threshold vector for the N pixels charge ded not match the right size \n "
+			<<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minSeedChargeVec.size() 
+			<<  "\n"
+			<<  "Disabling the selection criterion and continue without");
+	_minNChargeSwitch = false;
+      } else {
+	message<DEBUG> ("N pixel charge criterion verified and switched on");
+	vector<unsigned int> rejectedCounter(_noOfDetectors, 0);
+	_rejectionMap.insert( make_pair("MinNChargeCut", rejectedCounter));
+      }
+    }
+    
+    if ( _minSeedChargeSwitch ) {
+      if (  _minSeedChargeVec.size() != (unsigned) _noOfDetectors ) {
+	message<ERROR> (log() << "The threshold vector on the seed charge did not match the right size \n"
+			<<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minSeedChargeVec.size() 
+			<<  "\n"
+			<<  "Disabling the selection criterion and continue without");
+	_minSeedChargeSwitch = false;
+      } else {
+	message<DEBUG> ( "Seed charge criterion verified and switched on" );
+	vector<unsigned int >  rejectedCounter(_noOfDetectors, 0);
+	_rejectionMap.insert( make_pair("MinSeedChargeCut", rejectedCounter));
+      }
+    }
+  }
 }
 
 
 void EUTelClusterFilter::processEvent (LCEvent * event) {
+
+  ++_iEvt;
+
+  if ( isFirstEvent() ) _isFirstEvent = false;
+
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> ( event );
   if ( evt->getEventType() == kEORE ) {
@@ -88,197 +207,128 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
   }
   
   if (_iEvt % 10 == 0) 
-    message<MESSAGE> ( log() << "Separating clusters on event " << _iEvt ) ;
+    message<MESSAGE> ( log() << "Filtering clusters on event " << _iEvt ) ;
 
-  LCCollectionVec  *clusterCollectionVec = 
-    dynamic_cast <LCCollectionVec *> (evt->getCollection(_clusterCollectionName));
-  CellIDDecoder<TrackerPulseImpl> cellDecoder(clusterCollectionVec);
-  vector< pair<int, int > >       mergingPairVector;
+  LCCollectionVec * pulseCollectionVec    =   dynamic_cast <LCCollectionVec *> (evt->getCollection(_inputPulseCollectionName));
+  LCCollectionVec * filteredCollectionVec =   new LCCollectionVec(LCIO::TRACKERPULSE);
+  CellIDEncoder<TrackerPulseImpl> outputEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, filteredCollectionVec);
+  CellIDDecoder<TrackerPulseImpl> inputDecoder(pulseCollectionVec);
 
-  for ( int iCluster = 0 ; iCluster < clusterCollectionVec->getNumberOfElements() ; iCluster++) {
+  vector<int > acceptedClusterVec;
 
-    TrackerPulseImpl   * pulse   = 
-      dynamic_cast<TrackerPulseImpl *>   ( clusterCollectionVec->getElementAt(iCluster) );
-    ClusterType  type    = static_cast<ClusterType> (static_cast<int>( cellDecoder(pulse)["type"] ) );
-    
-    // all clusters have to inherit from the virtual cluster (that is
-    // a TrackerDataImpl with some utility methods).
-    EUTelVirtualCluster    * cluster; 
+  // CLUSTER BASED CUTS
+  for ( int iPulse = 0; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ ) {
+    message<DEBUG> ( log() << "Filtering cluster " << iPulse + 1  << " / " << pulseCollectionVec->getNumberOfElements() ) ;
+    TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl* > (pulseCollectionVec->getElementAt(iPulse));
+    ClusterType type = static_cast<ClusterType> (static_cast<int> ( inputDecoder(pulse)["type"] ));
+    EUTelVirtualCluster * cluster;
     
     if ( type == kEUTelFFClusterImpl ) 
-      cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ) ;
+      cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
     else {
-      message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
+      message<ERROR> ("Unknown cluster type. Sorry for quitting");
       throw UnknownDataTypeException("Cluster type unknown");
     }
     
-    int  iOtherCluster     = iCluster + 1;
-    bool isExisisting      = (iOtherCluster < clusterCollectionVec->getNumberOfElements() );
-    bool isOnSameDetector  = true;
-
+    bool isAccepted = true;
     
-    while ( isOnSameDetector && isExisisting ) {
+    isAccepted &= isAboveMinTotalCharge(cluster);
+    isAccepted &= isAboveNMinCharge(cluster);
+    isAccepted &= isAboveMinSeedCharge(cluster);
 
-      // get the next cluster in the collection
-      TrackerPulseImpl    * otherPulse   = dynamic_cast<TrackerPulseImpl *> (clusterCollectionVec->getElementAt(iOtherCluster)) ;
-      EUTelVirtualCluster * otherCluster;
-      
-      if ( type == kEUTelFFClusterImpl ) 
-	otherCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (otherPulse->getTrackerData()) );
-      else {
-	message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
-	throw UnknownDataTypeException("Cluster type unknown");
-      }
-      
-      // check if the two are on the same detector
-      if ( cluster->getDetectorID() == otherCluster->getDetectorID() ) {
-	
-	if ( _minimumDistance == 0 ) {
-	  // ok we need to calculate the touching distance
-	  float radius      = cluster->getExternalRadius();
-	  float otherRadius = otherCluster->getExternalRadius();
-	  _minimumDistance  = radius + otherRadius;
-	}
+    if ( isAccepted )  acceptedClusterVec.push_back(iPulse); 
 
-	// ok they are on the same plane, so it makes sense check it
-	// they are merging
-	float distance = cluster->getDistance(otherCluster);
-	
-	if ( distance < _minimumDistance ) {
-	  // they are merging! we need to apply the separation
-	  // algorithm
-	  mergingPairVector.push_back( make_pair(iCluster, iOtherCluster) );
-	}
-
-      } else {
-	isOnSameDetector = false;
-      }
-      isExisisting = (++iOtherCluster <  clusterCollectionVec->getNumberOfElements() );
-      delete otherCluster;
-    }  
-    
     delete cluster;
-  }
-  
-  // at this point we have inserted into the mergingPairVector all the
-  // pairs of merging clusters. we can try to put together all groups
-  // of clusters, but only in the case the mergingPairVector has a non
-  // null size
-  if ( mergingPairVector.empty() ) {
-    ++_iEvt;
-    return ;
-  }
-  
-  // all merging clusters are collected into a vector of set. Each set
-  // is a group of clusters all merging.
-  vector< set<int > > mergingSetVector;
-  groupingMergingPairs(mergingPairVector, &mergingSetVector) ;
 
-  applySeparationAlgorithm(mergingSetVector, clusterCollectionVec);
+  }
 
-  ++_iEvt;
-  
+  if ( acceptedClusterVec.empty() ) {
+    delete filteredCollectionVec;
+    message<DEBUG> ( "No cluster passed the selection" );
+    throw SkipEventException(this);
+  } else {
+    vector<int >::iterator iter = acceptedClusterVec.begin();
+    while ( iter != acceptedClusterVec.end() ) {
+      TrackerPulseImpl * pulse     = dynamic_cast<TrackerPulseImpl *> ( pulseCollectionVec->getElementAt( *iter ) );
+      TrackerPulseImpl * accepted  = new TrackerPulseImpl;
+      accepted->setCellID0( pulse->getCellID0() );
+      accepted->setCellID1( pulse->getCellID1() );
+      accepted->setTime(    pulse->getTime()    );
+      accepted->setCharge(  pulse->getCharge()  );
+      accepted->setQuality( pulse->getQuality() );
+      accepted->setTrackerData( pulse->getTrackerData() );
+      filteredCollectionVec->push_back(accepted);
+      ++iter;
+    }
+    evt->addCollection(filteredCollectionVec, _outputPulseCollectionName);
+  }
 }
   
 
-bool EUTelClusterFilter::applySeparationAlgorithm(std::vector<std::set <int > > setVector, 
-							       LCCollectionVec * collectionVec) const {
-
-  //  message<DEBUG> ( log() << "Applying cluster separation algorithm " << _separationAlgo );
-  message<DEBUG> ( log () <<  "Found "  << setVector.size() << " group(s) of merging clusters on event " << _iEvt );
-  if ( _separationAlgo == EUTELESCOPE::FLAGONLY ) {
-
-    CellIDDecoder<TrackerPulseImpl> cellDecoder(collectionVec);
-
-#ifdef MARLINDEBUG
-    int iCounter = 0;    
-#endif
-
-    vector<set <int > >::iterator vectorIterator = setVector.begin();    
-    while ( vectorIterator != setVector.end() ) {
-
-#ifdef MARLINDEBUG
-      message<DEBUG> ( log() <<  "     Group " << (iCounter++) << " with the following clusters " << endl;
-#endif
-
-      set <int >::iterator setIterator = (*vectorIterator).begin();
-      while ( setIterator != (*vectorIterator).end() ) {
-	TrackerPulseImpl    * pulse   = dynamic_cast<TrackerPulseImpl * > ( collectionVec->getElementAt( *setIterator ) ) ;
-	ClusterType           type    = static_cast<ClusterType> (static_cast<int>( cellDecoder(pulse)["type"] ) );
-	
-	EUTelVirtualCluster * cluster;
-	
-	if ( type == kEUTelFFClusterImpl ) 
-	  cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
-	else {
-	  message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
-	  throw UnknownDataTypeException("Cluster type unknown");
-	}
-
-#ifdef MARLINDEBUG
-	int xSeed, ySeed;
-	int detectorID = cluster->getDetectorID();
-	int clusterID  = cluster->getClusterID();
-	int xSize, ySize;
-	ClusterQuality quality = cluster->getClusterQuality();
-	cluster->getClusterSize(xSize, ySize);
-	cluster->getSeedCoord(xSeed, ySeed);
-	message<DEBUG> ( log()  << "         Cluster " << (*setIterator)  << " (" << detectorID << ":" << clusterID << ":" << xSeed 
-			 << ", " << ySeed << ":" << xSize << "," << ySize << ":" << static_cast<int>(quality) << ") " );
-#endif
-
-	cluster->setClusterQuality ( cluster->getClusterQuality() | kMergedCluster );
-	++setIterator;
-	delete cluster;
-      }
-      ++vectorIterator;
-    }
+bool EUTelClusterFilter::isAboveMinTotalCharge(EUTelVirtualCluster * cluster) const {
+  
+  if ( !_minTotalChargeSwitch ) {
     return true;
   }
+  message<DEBUG> ( "Filtering against the total charge " ) ;
 
-  return false;
 
-
-}
-
-void EUTelClusterFilter::groupingMergingPairs(std::vector< std::pair<int , int> > pairVector, 
-							   std::vector< std::set<int > > * setVector) const {
-
-  message<DEBUG> ( "Grouping merging pairs of clusters " );
-
-  vector< pair<int, int> >::iterator iter = pairVector.begin();
-  while ( iter != pairVector.end() ) {
-
-    set<int > tempSet;
-    // add the pair to the tempSet
-    tempSet.insert(pairVector.front().first);
-    tempSet.insert(pairVector.front().second);
-
-    vector<vector< pair<int, int> >::iterator > tempIterVec;
-    tempIterVec.push_back(iter);
-     
-    if ( iter + 1 != pairVector.end() ) {
-      vector< pair<int, int> >::iterator otherIter = iter + 1;
-      while (otherIter != pairVector.end() ) {
- 	if ( ( tempSet.find(otherIter->first)  != tempSet.end() ) ||
- 	     ( tempSet.find(otherIter->second) != tempSet.end() ) ) {
- 	  tempSet.insert(otherIter->first);
- 	  tempSet.insert(otherIter->second);
- 	  tempIterVec.push_back(otherIter);
-	}
-	++otherIter;
-      }
-    }
-    setVector->push_back(tempSet);
-
-    // remove the pairs already grouped starting from the last
-    vector<vector< pair<int, int> >::iterator >::reverse_iterator iterIter = tempIterVec.rbegin();
-    while ( iterIter != tempIterVec.rend() ) {
-      pairVector.erase(*iterIter);
-      ++iterIter;
-    }
+  int detectorID = cluster->getDetectorID();
+  
+  if ( cluster->getTotalCharge() > _minTotalChargeVec[detectorID] ) return true;
+  else {
+    message<DEBUG> ( log() << "Rejected cluster because its charge is " << cluster->getTotalCharge() 
+		     << " and the threshold is " << _minTotalChargeVec[detectorID] ) ;
+    unsigned int current = _rejectionMap["MinTotalChargeCut"][detectorID];
+    _rejectionMap["MinTotalChargeCut"][detectorID] = current + 1;
+    return false;
   }
 }
+
+bool EUTelClusterFilter::isAboveNMinCharge(EUTelVirtualCluster * cluster) const {
+  
+  if ( !_minNChargeSwitch ) return true;
+  
+  message<DEBUG> ( "Filtering against the N Pixel charge " ) ;
+
+  int detectorID = cluster->getDetectorID();
+
+  vector<float >::const_iterator iter = _minNChargeVec.begin();
+  while ( iter != _minNChargeVec.end() ) {
+    int nPixel      = static_cast<int > (*iter);
+    float charge    = cluster->getClusterCharge(nPixel);
+    float threshold = (* (iter + detectorID + 1) );
+    if ( charge > threshold ) {
+      iter += _noOfDetectors + 1;
+    } else {
+      message<DEBUG> ( log() << "Rejected cluster because its charge over " << (*iter) << " is charge " 
+		       << "and the threshold is " << threshold );
+      unsigned int current = _rejectionMap["MinNChargeCut"][detectorID];
+      _rejectionMap["MinChargeCut"][detectorID] = current + 1;
+      return false;
+    }
+  }
+  return true;
+}
+      
+bool EUTelClusterFilter::isAboveMinSeedCharge(EUTelVirtualCluster * cluster) const {
+  
+  if ( !_minSeedChargeSwitch ) return true;
+
+  message<DEBUG> ( "Filtering against the seed charge " ) ;
+  
+  int detectorID = cluster->getDetectorID();
+  
+  if ( cluster->getSeedCharge() > _minSeedChargeVec[detectorID] ) return true;
+  else {
+    message<DEBUG> (  log() << "Rejected cluster because its seed charge is " << cluster->getSeedCharge()
+		      << " and the threshold is " <<  _minSeedChargeVec[detectorID] );
+    unsigned int current = _rejectionMap["MinSeedChargeCut"][detectorID];
+    _rejectionMap["MinSeedChargeCut"][detectorID] = current + 1;
+    return false;
+  }
+}
+
 
 void EUTelClusterFilter::check (LCEvent * evt) {
   // nothing to check here - could be used to fill check plots in reconstruction processor
@@ -286,7 +336,30 @@ void EUTelClusterFilter::check (LCEvent * evt) {
 
 
 void EUTelClusterFilter::end() {
-  message<MESSAGE> ( "Successfully finished" );
+  message<MESSAGE> ( log() << printSummary() );
+  
 }
 
-#endif
+stringstream&  EUTelClusterFilter::printSummary() const {
+  
+  stringstream  ss;
+
+  ss << " Rejection summary \n\n" ;
+  
+  map<string, vector<unsigned int> >::iterator iter = _rejectionMap.begin();
+  while ( iter != _rejectionMap.end() ) {
+    ss << (*iter).first << "\t";
+    
+    vector<unsigned int>::iterator iter2 = (*iter).second.begin();
+    while ( iter2 != (*iter).second.end() ) {
+      ss << ( *iter2)  << "  ";
+      ++iter2;
+    }
+    ss << "\n";
+    
+    ++iter;
+  }
+
+  return ss;
+    
+}

@@ -7,7 +7,6 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifdef EXPERIMENTAL
 #ifndef EUTELCLUSTERFILTER_H
 #define EUTELCLUSTERFILTER_H 1
 
@@ -19,9 +18,14 @@
 // lcio includes <.h> 
 
 // system includes <>
-
+#include <map>
+#include <string>
+#include <vector>
+#include <sstream>
 
 namespace eutelescope {
+
+  class EUTelVirtualCluster;
 
   //! Cluster filter
   /*! This processor is used during the analysis chain to perform a
@@ -48,7 +52,7 @@ namespace eutelescope {
    *  she/he has to provide the following in the steering file:
    *
    *  @code
-   *  <parameter name="ClusterMinTotalCharge" type="IntVec"> 100 100 100 100 </parameter>
+   *  <parameter name="ClusterMinTotalCharge" type="FloatVec"> 100 100 100 100 </parameter>
    *  @endcode
    *
    *  If instead she/he wants to cuts on the charge of a cluster but
@@ -56,7 +60,7 @@ namespace eutelescope {
    *  steering file should something like this:
    *   
    *  @code
-   *  <parameter name="ClusterNMinCharge" type="IntVec"> 9 75 43 55 87 </parameter>
+   *  <parameter name="ClusterNMinCharge" type="FloatVec"> 9 75 43 55 87 </parameter>
    *  @endcode
    *
    *  This last parameter will set a cut on the cluster charge
@@ -119,7 +123,7 @@ namespace eutelescope {
    *  collection. 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterFilter.h,v 1.1 2007-06-14 22:19:54 bulgheroni Exp $
+   *  @version $Id: EUTelClusterFilter.h,v 1.2 2007-06-15 15:04:07 bulgheroni Exp $
    *
    *
    */
@@ -141,12 +145,19 @@ namespace eutelescope {
     }
 
     //! Default constructor 
+    /*! This is the place where all the processor parameters are
+     *  assigned to their local variable in the class. Those variables
+     *  will be crosscheck for consistency in the init() method.
+     */ 
     EUTelClusterFilter ();
 
     //! Called at the job beginning.
-    /*! This is executed only once in the whole execution. It prints
-     *  out the processor parameters and reset all needed data
-     *  members. 
+    /*! This is printing out all the parameters and also making a
+     *  brief summary of which selection criteria are really used,
+     *  which are deactivated and their values. 
+     *  This is also the place where depending all the on/off switches
+     *  are set and cuts are checked for consistency.
+     *
      */
     virtual void init ();
 
@@ -159,16 +170,31 @@ namespace eutelescope {
     virtual void processRunHeader (LCRunHeader * run);
 
     //! Called every event
-    /*  This is called for each event in the file. As a first thing,
-     *  the system will check among all clusters found in the current
-     *  event there are pairs of merging clusters on the same
-     *  detector. If at least one pair of merging cluster is found,
-     *  then the groupingMergingPairs(std::vector< pair<int, int> >,
-     *  vector< set<int > > *) is called; otherwise it returns
-     *  immediately.
+    /*  This is the method. For each event, the input tracker pulse
+     *  collection is obtained and a loop on all clusters is
+     *  started. There are a few different kinds of selection
+     *  criteria:
+     *  
+     *  @li  <b>Single cluster based</b>: These cuts can be applied on
+     *  a single cut and they don't require the knowledge of anything
+     *  else. An example is the cluster pulse cut.
      *
-     *  @param evt the current LCEvent event as passed by the
-     *  ProcessMgr
+     *  @li  <b>Detector based</b>: These cuts have to be applied
+     *  taking into account all the hits found on the same
+     *  detector. An example is the rejection of events having a too
+     *  high number of clusters. This means that all the clusters of a
+     *  sensor should be processed first.
+     *
+     *  @li  <b>Telescope based</b>: These are even more complicated
+     *  because they require a global knowledge of the event. There
+     *  are no selction criteria of this kind implemented yet.
+     *
+     *  All active selection criteria are tested against each
+     *  cluster. This is because at the end of the job a complete
+     *  rejection summary is displayed and the user can evaluate the
+     *  strength of each single item.
+     * 
+     *  @param evt The input LCEvent
      *
      *  @throw UnknownDataTypeException if the cluster type stored in
      *  the TrackerPulse is unknown.
@@ -187,69 +213,135 @@ namespace eutelescope {
     virtual void check (LCEvent * evt);
 
     //! Called after data processing.
-    /*! This method is called when the loop on events is finished. It
-     *  prints only a goodbye message
+    /*! This method is called when the loop on events is finished. A
+     *  part from printing a good bye message, it also show the
+     *  selection summary.
+     *  
      */
     virtual void end();
 
-    //! This is the real method
-    /*! This is the method where the real separation algorithm is
-     *  written/called. 
+    //! Check if the total cluster charge is above a certain value
+    /*! This is used to select clusters having a total integrated
+     *  charge above a certain value. This threshold value is given on
+     *  a per detector basis and stored into the
+     *  _clusterMinTotalChargeVec.
      *
-     *  @param setVector A STL vector of STL set containing the
-     *  cluster of clusters to be separated.
-     *
-     *  @param collectionVec A pointer to the input cluster collection
-     *
-     *  @return true if the algorithm was successfully applied.
+     *  @param cluster The cluster under test.
+     *  @return True if the @c cluster has a charge below its own threshold.
+     * 
      */ 
-    bool applySeparationAlgorithm(std::vector< std::set< int > > setVector, LCCollectionVec * collectionVec) const ;
+    bool isAboveMinTotalCharge(EUTelVirtualCluster * cluster) const ;
 
-    //! Groups together pairs of merging clusters.
-    /*! The identification of merging clusters can very easily done on
-     *  a pair basis. It means that after a double loop on clusters, a
-     *  collection of pairs of merging clusters is available. To be
-     *  more general, one should consider the possibility of having
-     *  groups of merging clusters, a sort of cluster of
-     *  clusters. This groupingMergingPairs method is exactly doing
-     *  this, looking if there are pairs of merging clusters that can
-     *  be grouped into a cluster of clusters.
+    //! Check if the total cluster charge is below a certain value
+    /*! This is used to select clusters having a total integrated
+     *  charge below a certain value. This threshold value is given on
+     *  a per detector basis and stored into the
+     *  _clusterMaxTotalChargeVec.    .
+     *
+     *  @todo Implement it! 
+     *  @param cluster The cluster under test.
+     *  @return True if the @c cluster has a charge below its own threshold.
+     * 
+     */
+    bool isBelowMaxTotalCharge(EUTelVirtualCluster * cluster) const { return true; }
+
+
+    //! Check against the charge collected by N pixels
+    /*! This is working in a similar way to the isAboveMinTotalCharge
+     *  but is comparing not the total charge but the charge collected
+     *  by the first N most significant pixels
      *  
-     *  Of course this method is called if, and only if, at least a
-     *  pair merging clusters have been found
-     *
-     *  @param pairVector A STL vector of STL pairs. For each pairs,
-     *  the two integers represent the cluster indices within the
-     *  clusterCollection
-     *
-     *  @param setVector A pointer to a STL vector of STL set. Each
-     *  set has to be considered as the cluster of clusters defined
-     *  above and the int value_type of the set represents the cluster
-     *  index in the clusterCollection
-     */ 
-    void groupingMergingPairs(std::vector< std::pair<int , int> > pairVector, std::vector< std::set< int > > * setVector) const;
+     *  The thresholds are stored into a vector on a detector
+     *  basis. The first number is the number of pixels to be
+     *  considered.
+     * 
+     *  @return True if the charge is above threshold
+     *  @param cluster The cluster under test.
+     */
+    bool isAboveNMinCharge(EUTelVirtualCluster * cluster) const;
 
+
+    //! Seed pixel cut
+    /*! This is used to select clusters having a seed pixel charge
+     *  above the specified threshold
+     *  
+     *  @return True if the seed pixel charge is above threshold
+     *  @param cluster The cluster under test.
+     */
+    bool isAboveMinSeedCharge(EUTelVirtualCluster * cluster) const;
+
+    //! Print the rejection summary
+    /*! To better understand which cut is more important, a rejection
+     *  counter is kept updated during the processing and at the end
+     *  it is printed out;
+     *
+     *  @return an output stream object to be printed out
+     */
+    std::stringstream& printSummary() const;
+ 
   protected:
 
-    //! Input cluster collection name.
-    /*! This is the name of the input cluster collection name
+    //! Input pulse collection name.
+    /*! This is the name of the input pulse collection name
      */
-    std::string _clusterCollectionName;
+    std::string _inputPulseCollectionName;
 
-    //! Minimum distance
-    /*! This is the minimum distance (in pixel units) allowed between
-     *  two clusters. If their distance is below this number, then the
-     *  two will be considered merging and the separation algorithm
-     *  will be applied. If it is set to 0, only touching clusters
-     *  will be considered merging.
+    //! Output pulse collection name.
+    /*! This is the name of the output pulse collection name
      */
-    float _minimumDistance;
+    std::string _outputPulseCollectionName;
 
-    //! Separation algorithm name
-    /*! This is the name of the algorithm used to divide merging
-     *  clusters. @see EUTELESCOPE::FLAGONLY.
+    //! Threshold for the minimum total cluster charge
+    /*! This is a vector of the same size as the number of detectors
+     *  in the telescope and for each detector there is a float number
+     *  representing the minimum allowed total cluster charge.
+     * 
+     *  This selection is switched off for a sensor when this value is
+     *  lesser equal to zero.
+     * 
+     */ 
+    std::vector<float > _minTotalChargeVec;
+
+    //! Thresholds for the N pixel cluster
+    /*! This vector contains the thresholds for the minimum allowed
+     *  charge collected by a cluster considering only the first N
+     *  most significant pixels.
+     *
+     *  The number of components of this vector should be a integer
+     *  multiple of @c _noOfDetectors + 1. This is because the first
+     *  digit for each set is the number of pixels in the cluster
+     *  while the other @c _noOfDetectors are the different thresholds
+     *
+     *  To switch it off, just put N = 0.
+     *
      */
-    std::string _separationAlgo;
+    std::vector<float > _minNChargeVec;
+
+    //! Thresholds for the seed pixel charge
+    /*! This vector contains the thresholds for the minimum allowed
+     *  seed charge in the cluster.
+     * 
+     *  The number of components in this vector should be equal to the
+     *  number of detectors in the telescope.
+     *
+     *  To switch it off set the components to 0
+     *
+     */
+    std::vector<float > _minSeedChargeVec;
+
+  private:
+
+    //! Switch for the minimum total cluster charge
+    bool _minTotalChargeSwitch;
+
+    //! Switch for the minimum N pixel cluster charge
+    bool _minNChargeSwitch;
+
+    //! Switch for the minimum seed charge
+    bool _minSeedChargeSwitch;
+
+    //! The number of detectors
+    int _noOfDetectors;
 
     //! Current run number.
     /*! This number is used to store the current run number
@@ -262,6 +354,9 @@ namespace eutelescope {
      */
     int _iEvt;
 
+    //! Rejection summary map
+    mutable std::map<std::string, std::vector<unsigned int > > _rejectionMap;
+
   };
 
   //! A global instance of the processor
@@ -269,4 +364,4 @@ namespace eutelescope {
 
 }
 #endif
-#endif
+
