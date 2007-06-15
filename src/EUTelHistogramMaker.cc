@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.5 2007-06-15 17:31:17 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.6 2007-06-15 19:59:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -82,7 +82,7 @@ EUTelHistogramMaker::EUTelHistogramMaker () : Processor("EUTelHistogramMaker") {
 			    _clusterSpectraNVector, clusterNExample );
   
   
-
+  _isFirstEvent = true;
 }
 
 
@@ -110,9 +110,6 @@ void EUTelHistogramMaker::processRunHeader (LCRunHeader * rdr) {
   _minY = runHeader->getMinY();
   _maxY = runHeader->getMaxY();
 
-#ifdef MARLIN_USE_AIDA
-  bookHistos();
-#endif
 
 }
 
@@ -129,7 +126,13 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
     message<WARNING> ( log() << "Event number " << evt->getEventNumber() 
 		       << " is of unknown type. Continue considering it as a normal Data Event."  );
   }
-  
+
+  if ( isFirstEvent() ) {
+#ifdef MARLIN_USE_AIDA
+    bookHistos();
+    _isFirstEvent = false;
+#endif
+  }  
 
 #ifdef MARLIN_USE_AIDA
 
