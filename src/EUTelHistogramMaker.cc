@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.4 2007-06-15 15:04:42 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.5 2007-06-15 17:31:17 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -271,8 +271,12 @@ void EUTelHistogramMaker::bookHistos() {
 	AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
 								  clusterNBin, clusterMin, clusterMax);
       _aidaHistoMap.insert(make_pair(tempHistoName, clusterSignalNHisto) );
-      string tempTitle = "Cluster spectrum with the " + (*iter);
-      tempTitle.append(" most significant pixels ");
+      string tempTitle;
+      {
+	stringstream ss;
+	ss <<  "Cluster spectrum with the " + (*iter) << " most significant pixels ";
+	tempTitle=ss.str();
+      }
       clusterSignalNHisto->setTitle(tempTitle.c_str());
 
       ++iter;
