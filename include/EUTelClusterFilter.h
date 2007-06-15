@@ -123,7 +123,7 @@ namespace eutelescope {
    *  collection. 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterFilter.h,v 1.2 2007-06-15 15:04:07 bulgheroni Exp $
+   *  @version $Id: EUTelClusterFilter.h,v 1.3 2007-06-15 22:47:17 bulgheroni Exp $
    *
    *
    */
@@ -270,6 +270,43 @@ namespace eutelescope {
      */
     bool isAboveMinSeedCharge(EUTelVirtualCluster * cluster) const;
 
+    //! Quality cut
+    /*! This is a selection cut based on the cluster quality. Only
+     *  clusters having the given clusters are accepted.
+     *
+     *  The quality is provided into a vector of integer by the
+     *  user. To disable this cut put a negative value into the
+     *  quality vector.
+     *
+     *  @return True if the quality is correct
+     *  @param cluster The cluster under test.
+     */ 
+    bool hasQuality(EUTelVirtualCluster * cluster) const;
+
+    //! Minimum cluster number
+    /*! This selection criterion can be used to require a minimum
+     *  number of cluster for each detector. To switch the cut off,
+     *  just put its corresponding value to 0 or any negative
+     *  number. 
+     *
+     *  @return True if there are more than the required cluster per plane
+     *  @param clusterVec A vector with the number of clusters per plane
+     */ 
+    bool areClusterEnough(std::vector<int > clusterVec) const;
+
+    //! Maximum cluster number
+    /*! This selection criterion can be used to limit the maximum
+     *  number of cluster reconstructed for each plane. To switch the
+     *  cut off, set the corresponding value to any negative
+     *  number. Be careful this selection criteria has an opposite
+     *  logic with respect to the other, i. e. the cut is passed when
+     *  the there are <b>NO</b> too many clusters
+     * 
+     *  @return True if there are TOO MANY clusters
+     *  @param clusterVec A vector with the number of clusters per plane
+     */ 
+    bool areClusterTooMany(std::vector<int > clusterVec) const;
+
     //! Print the rejection summary
     /*! To better understand which cut is more important, a rejection
      *  counter is kept updated during the processing and at the end
@@ -277,7 +314,7 @@ namespace eutelescope {
      *
      *  @return an output stream object to be printed out
      */
-    std::stringstream& printSummary() const;
+    std::string printSummary() const;
  
   protected:
 
@@ -329,6 +366,29 @@ namespace eutelescope {
      */
     std::vector<float > _minSeedChargeVec;
 
+    //! Qualities for the clusters
+    /*! This vector contains the quality information for the
+     *  cluster. To switch it off set a negative number.
+     *  Those numbers corresponds to the eutelescope::ClusterQuality
+     *  enum type.
+     */ 
+    std::vector<int > _clusterQualityVec;
+
+    //! Minimum number of cluster per plane
+    /*! This vector of contains the minimum number of allowed clusters
+     *  per plane. To switch it off set it to zero or to any negative
+     *  numbers.
+     *
+     */
+    std::vector<int > _minClusterNoVec;
+
+    //! Maximum number of cluster per plane
+    /*! This vector of contains the maximum number of allowed clusters
+     *  per plane. To switch it off set a negative number.
+     *
+     */
+    std::vector<int > _maxClusterNoVec;    
+
   private:
 
     //! Switch for the minimum total cluster charge
@@ -339,6 +399,15 @@ namespace eutelescope {
 
     //! Switch for the minimum seed charge
     bool _minSeedChargeSwitch;
+
+    //! Switch for the cluster quality
+    bool _clusterQualitySwitch;
+
+    //! Switch for the minimum cluster number
+    bool _minClusterNoSwitch;
+
+    //! Switch for the maximum cluster number
+    bool _maxClusterNoSwitch;
 
     //! The number of detectors
     int _noOfDetectors;
