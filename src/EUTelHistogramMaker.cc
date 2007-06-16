@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.6 2007-06-15 19:59:02 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.7 2007-06-16 10:57:33 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -80,7 +80,9 @@ EUTelHistogramMaker::EUTelHistogramMaker () : Processor("EUTelHistogramMaker") {
   registerOptionalParameter("ClusterN", "The list of cluster N to be filled."
 			    "For example 7 means filling the cluster spectra with the 7 most significant pixels",
 			    _clusterSpectraNVector, clusterNExample );
-  
+
+  registerOptionalParameter("EventBrowserHistograms","Switch this parameter to on if you want to have event by event information "
+			  " in the histogram output file.", _eventBrowserSwitch, static_cast< bool > ( false ) );
   
   _isFirstEvent = true;
 }
@@ -91,6 +93,12 @@ void EUTelHistogramMaker::init () {
   // usually a good idea to
   printParameters ();
 
+  if ( _eventBrowserSwitch ) {
+    message<MESSAGE> ( "The event browser switch has been turned on and will slow down the "
+		       "histogram filling and the produce a big output histogram file" );
+  }
+  
+  _iRun = 0;
   _iEvt = 0;
 
 }
@@ -110,7 +118,7 @@ void EUTelHistogramMaker::processRunHeader (LCRunHeader * rdr) {
   _minY = runHeader->getMinY();
   _maxY = runHeader->getMaxY();
 
-
+  ++_iRun;
 }
 
 
@@ -136,6 +144,31 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 
 #ifdef MARLIN_USE_AIDA
 
+  AIDA::IHistogram2D * eventBrowserHistos[_noOfDetector];
+  if ( _eventBrowserSwitch ) {
+    int eventNumber = evt->getEventNumber();
+    stringstream ss;
+    ss << "event-"  << eventNumber ;
+    AIDAProcessor::tree(this)->mkdir(ss.str().c_str());
+    ss << "/";
+    for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++ ) {
+      int     xBin = _maxX[iDetector] - _minX[iDetector] + 1;
+      double  xMin = static_cast<double >(_minX[iDetector]) - 0.5;
+      double  xMax = static_cast<double >(_maxX[iDetector]) + 0.5;
+      int     yBin = _maxY[iDetector] - _minY[iDetector] + 1;
+      double  yMin = static_cast<double >(_minY[iDetector]) - 0.5;
+      double  yMax = static_cast<double >(_maxY[iDetector]) + 0.5;
+      stringstream ss1;
+      ss1 << "ev-" << eventNumber << "-d" << iDetector;
+      eventBrowserHistos[iDetector] =
+	AIDAProcessor::histogramFactory(this)->createHistogram2D( (ss.str() + ss1.str() ).c_str() ,
+								  xBin, xMin, xMax, yBin, yMin, yMax);
+      stringstream ss2;
+      ss2 << "Event " << eventNumber << " on detector " << iDetector;
+      eventBrowserHistos[iDetector]->setTitle( ss2.str().c_str() );
+    }
+  }
+
   if ( (_iEvt % 10) == 0 ) 
     message<MESSAGE> ( log() << "Filling histogram on event " << _iEvt );
   
@@ -158,6 +191,21 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 
     int detectorID = cluster->getDetectorID();
     string tempHistoName;
+
+    if ( _eventBrowserSwitch ) {
+      int xSize, ySize, xSeed, ySeed;
+      cluster->getClusterSize(xSize, ySize);
+      cluster->getSeedCoord(xSeed, ySeed);
+
+      vector<float >::const_iterator chargeIter = cluster->trackerData()->getChargeValues().begin();
+      for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
+	for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
+	  eventBrowserHistos[detectorID]->fill( xPixel + xSeed, yPixel + ySeed, (*chargeIter) );
+	  ++chargeIter;
+	}
+      }
+    }
+
 
     {
       stringstream ss;
