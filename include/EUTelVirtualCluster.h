@@ -28,7 +28,7 @@ namespace eutelescope {
    *  inherithing from this virtual class.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelVirtualCluster.h,v 1.5 2007-06-13 18:02:32 bulgheroni Exp $
+   *  @Version $Id: EUTelVirtualCluster.h,v 1.6 2007-06-16 10:58:26 bulgheroni Exp $
    */
 
   class EUTelVirtualCluster {
@@ -195,6 +195,13 @@ namespace eutelescope {
      */
     virtual void setClusterQuality(ClusterQuality)                        = 0;
     
+    //! Return a pointer to the TrackerDataImpl
+    /*! This method is used to expose to the public the
+     *  TrackerDataImpl member.
+     *
+     *  @return The pointer of _trackerData
+     */
+    virtual IMPL::TrackerDataImpl * trackerData()                         = 0;
 
   protected:
     
