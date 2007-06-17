@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.2 2007-06-12 13:49:14 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.3 2007-06-17 22:39:17 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -274,7 +274,6 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
       event->setEventNumber( eventNumber );
       ProcessorMgr::instance()->processEvent( static_cast<LCEventImpl*> (event) ) ;
       delete event;
-      throw StopProcessingException(this);
     }
   }
 }    
