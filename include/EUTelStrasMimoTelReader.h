@@ -44,7 +44,7 @@ namespace eutelescope {
    *   LCEvent with TrackerRawData collection
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelStrasMimoTelReader.h,v 1.1 2007-06-17 22:42:25 bulgheroni Exp $
+   *   @version $Id: EUTelStrasMimoTelReader.h,v 1.2 2007-06-18 21:40:42 bulgheroni Exp $
    *
    */
 
@@ -93,7 +93,7 @@ namespace eutelescope {
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
      *  @author Gilles CLAUS, LEPSI <mailto:claus@lepsi.in2p3.fr>
-     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.1 2007-06-17 22:42:25 bulgheroni Exp $
+     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.2 2007-06-18 21:40:42 bulgheroni Exp $
      */ 
     class StrasRunHeader {
 
@@ -210,7 +210,7 @@ namespace eutelescope {
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
      *  @author Gilles CLAUS, LEPSI <mailto:claus@lepsi.in2p3.fr>
-     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.1 2007-06-17 22:42:25 bulgheroni Exp $
+     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.2 2007-06-18 21:40:42 bulgheroni Exp $
      */ 
     class StrasEventHeader {
       
@@ -307,7 +307,7 @@ namespace eutelescope {
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
      *  @author Gilles CLAUS, LEPSI <mailto:claus@lepsi.in2p3.fr>
-     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.1 2007-06-17 22:42:25 bulgheroni Exp $
+     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.2 2007-06-18 21:40:42 bulgheroni Exp $
      */ 
     class StrasEventTrailer {
       
@@ -369,11 +369,12 @@ namespace eutelescope {
     static const std::string _fileNameExt;
     
     //! Number of pixels along X
-    int _noOfXPixel;
+    static int _noOfXPixel;
 
     //! Number of pixels along Y
-    int _noOfYPixel;
+    static int _noOfYPixel;
 
+    static int _noOfSubMatrix;
     
   };
 

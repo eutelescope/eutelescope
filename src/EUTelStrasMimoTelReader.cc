@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelStrasMimoTelReader.cc,v 1.1 2007-06-17 22:42:25 bulgheroni Exp $
+// Version $Id: EUTelStrasMimoTelReader.cc,v 1.2 2007-06-18 21:40:42 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -9,6 +9,15 @@
  *   header with author names in all development based on this file.
  *
  */
+
+
+#define NB_MAX_VFAS 4
+#define EVENT_HEADER_RESERVED_ESZ 12
+#define ADC_NB 1
+//#define SAMPLE_NB 262144
+#define SAMPLE_NB 16896
+#define warnings 0
+
 
 // personal includes
 #include "EUTelStrasMimoTelReader.h"
@@ -33,6 +42,7 @@
 #include <fstream>
 #include <string>
 #include <sstream>
+#include <algorithm>
 
 using namespace std;
 using namespace marlin;
@@ -40,6 +50,9 @@ using namespace eutelescope;
 
 string EUTelStrasMimoTelReader::_dataFileBaseName   = "RUN_";
 const string EUTelStrasMimoTelReader::_fileNameExt  = ".rz" ;
+int EUTelStrasMimoTelReader::_noOfXPixel    =  66;
+int EUTelStrasMimoTelReader::_noOfYPixel    = 256;
+int EUTelStrasMimoTelReader::_noOfSubMatrix =   1;
 
 EUTelStrasMimoTelReader::EUTelStrasMimoTelReader ():DataSourceProcessor  ("EUTelStrasMimoTelReader") {
   
@@ -106,9 +119,9 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
     eutelRunHeader->setDAQSWName( EUTELESCOPE::IPHCIMAGER );
     eutelRunHeader->setNoOfDetector( _runHeader.VFasPresentNb + 1 );
     eutelRunHeader->setMinX(IntVec( _runHeader.VFasPresentNb + 1, 0 ) );
-    eutelRunHeader->setMaxX(IntVec( _runHeader.VFasPresentNb + 1, 263 ) );
+    eutelRunHeader->setMaxX(IntVec( _runHeader.VFasPresentNb + 1, _noOfXPixel - 1 ) );
     eutelRunHeader->setMinY(IntVec( _runHeader.VFasPresentNb + 1, 0 ) );
-    eutelRunHeader->setMaxY(IntVec( _runHeader.VFasPresentNb + 1, 255 ) );
+    eutelRunHeader->setMaxY(IntVec( _runHeader.VFasPresentNb + 1, _noOfYPixel - 1 ) );
     eutelRunHeader->setDetectorName("MimoTel");
     
     ProcessorMgr::instance()->processRunHeader(eutelRunHeader);
@@ -116,12 +129,11 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
     
   } catch (exception& e) {
     message<ERROR> ( log() << "Unable to open file " << runHeaderFileName << ". Exiting." );
-    exit(-1);
   }
   
   int nFile = _runHeader.TotEvNb / _runHeader.FileEvNb;
-  _dataBuffer = new int[_runHeader.DataSz / sizeof(int)];
-
+  _dataBuffer   = new int[_runHeader.DataSz / sizeof(int) ];
+  int matrixSize   = _noOfXPixel * _noOfYPixel;
   
   for ( int iFile = 0; iFile < nFile; iFile++  ) {
     
@@ -147,7 +159,7 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
 	    
 	// get the full record
 	dataFile.read( reinterpret_cast<char *> (&_eventHeader), sizeof(StrasEventHeader) );
-	dataFile.read( reinterpret_cast<char *> (_dataBuffer), _runHeader.DataSz );
+	dataFile.read( reinterpret_cast<char *> (_dataBuffer), _runHeader.DataSz  );
 	dataFile.read( reinterpret_cast<char *> (&_eventTrailer), sizeof(StrasEventTrailer) );
 	
 	// make some checks
@@ -159,43 +171,101 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
 	if ( _eventHeader.EvNo != (unsigned) eventCounter ) {
 	  message<WARNING> ( log() << "Event number mismatch: expected " << eventCounter << " read " << _eventHeader.EvNo );
 	}
-	
-	EUTelEventImpl * event = new EUTelEventImpl;
-	event->setRunNumber( _runNumber );
-	event->setEventNumber( _eventHeader.EvNo );
-	LCTime * now = new LCTime;
-	event->setTimeStamp(now->timeStamp());
-	delete now;
-	event->setEventType( kDE );
 
-	LCCollectionVec * cdsColl = new LCCollectionVec( LCIO::TRACKERRAWDATA );
-	CellIDEncoder< TrackerRawDataImpl > idEncoderCDS( EUTELESCOPE::MATRIXDEFAULTENCODING, cdsColl );
-	idEncoderCDS["xMin"] = 0;
-	idEncoderCDS["xMax"] = 263;
-	idEncoderCDS["yMin"] = 0;
-	idEncoderCDS["yMax"] = 255;
-	
-	for ( int iDetector = 0; iDetector < _runHeader.VFasPresentNb + 1; iDetector++ ) {
+	if ( _eventHeader.VFasCnt < 0 ) {
+	  // the trigger is not accepted. Skip the event
 	  
-	  TrackerRawDataImpl * cds = new TrackerRawDataImpl;
-	  idEncoderCDS["sensorID"] = iDetector;
+	} else {
+
+	  EUTelEventImpl * event = new EUTelEventImpl;
+	  event->setRunNumber( _runNumber );
+	  event->setEventNumber( _eventHeader.EvNo );
+	  LCTime * now = new LCTime;
+	  event->setTimeStamp(now->timeStamp());
+	  delete now;
+	  event->setEventType( kDE );
 	  
-	  // that's the place to insert data
+	  LCCollectionVec * cdsColl    = new LCCollectionVec( LCIO::TRACKERRAWDATA );
+	  LCCollectionVec * frame0Coll = new LCCollectionVec( LCIO::TRACKERRAWDATA );
+	  LCCollectionVec * frame1Coll = new LCCollectionVec( LCIO::TRACKERRAWDATA );
+	  CellIDEncoder< TrackerRawDataImpl > idEncoderCDS( EUTELESCOPE::MATRIXDEFAULTENCODING, cdsColl );
+	  idEncoderCDS["xMin"] = 0;
+	  idEncoderCDS["xMax"] = _noOfXPixel - 1;
+	  idEncoderCDS["yMin"] = 0;
+	  idEncoderCDS["yMax"] = _noOfYPixel - 1;
+	  CellIDEncoder< TrackerRawDataImpl > idEncoderFrame0( EUTELESCOPE::MATRIXDEFAULTENCODING, frame0Coll );
+	  idEncoderFrame0["xMin"] = 0;
+	  idEncoderFrame0["xMax"] = _noOfXPixel - 1;
+	  idEncoderFrame0["yMin"] = 0;
+	  idEncoderFrame0["yMax"] = _noOfYPixel - 1;
+	  CellIDEncoder< TrackerRawDataImpl > idEncoderFrame1( EUTELESCOPE::MATRIXDEFAULTENCODING, frame1Coll );
+	  idEncoderFrame1["xMin"] = 0;
+	  idEncoderFrame1["xMax"] = _noOfXPixel - 1;
+	  idEncoderFrame1["yMin"] = 0;
+	  idEncoderFrame1["yMax"] = _noOfYPixel - 1;
+	  
+	  // this is  because the first matrix contains only rubbish! 
+	  int offset = matrixSize ;
+	  unsigned int frame0Mask  = 0xFFF;
+	  unsigned int frame0Shift = 0;
+	  unsigned int frame1Mask  = 0xFFF000;
+	  unsigned int frame1Shift = 12;
 
-	  cdsColl->push_back( cds );
-	}
-	
-	event->addCollection( cdsColl, "rawdata");
-	ProcessorMgr::instance()->processEvent( event ) ;
-	delete event;
-
+	  for ( int iDetector = 0; iDetector < _runHeader.VFasPresentNb + 1; iDetector++ ) {
+	    	    
+	    TrackerRawDataImpl * frame1 = new TrackerRawDataImpl;
+	    TrackerRawDataImpl * frame0 = new TrackerRawDataImpl;
+	    idEncoderFrame1["sensorID"] = iDetector;
+	    idEncoderFrame1.setCellID(frame1);
+	    idEncoderFrame0["sensorID"] = iDetector;
+	    idEncoderFrame0.setCellID(frame0);
+	    TrackerRawDataImpl * cds    = new TrackerRawDataImpl;
+	    idEncoderCDS["sensorID"] = iDetector;
+	    idEncoderCDS.setCellID(cds);
+	    
+	    int iPixel =  offset + iDetector * matrixSize;
+	    for ( int y = 0; y < _noOfYPixel; y++ ) {  
+	      for ( int x = 0; x < _noOfXPixel; x++ ) {
+		short f0 = static_cast<short>(( _dataBuffer[iPixel] & frame0Mask ) >> frame0Shift);
+		short f1 = static_cast<short>(( _dataBuffer[iPixel] & frame1Mask ) >> frame1Shift);
+		frame0->adcValues().push_back( f0 );
+		frame1->adcValues().push_back( f1 );
+		cds->adcValues().push_back( f1 - f0 );
+		++iPixel;
+	      }
+	    }
+ 	    vector<short > cdsVec = cds->adcValues();
+	    vector<short >::iterator begin, end;
+ 	    // correct for the CDS sign
+	    if ( _eventHeader.VFasCnt < matrixSize ) {
+	      begin = cdsVec.begin() + _eventHeader.VFasCnt ;
+	      end   = cdsVec.end();
+	    } else { 
+	      begin = cdsVec.begin();
+	      end   = cdsVec.begin() + _eventHeader.VFasCnt %  matrixSize;
+	    }
+	    transform( begin, end, begin, negate<int>() );
+	    frame0Coll->push_back( frame0 ) ;
+	    frame1Coll->push_back( frame1 ) ;
+	    cdsColl->push_back( cds );
+	      
+	  }
+	  
+	  event->addCollection( frame0Coll, "frame0" );
+	  event->addCollection( frame1Coll, "frame1" );
+	  event->addCollection( cdsColl,    "rawdata");
+	  
+	  ProcessorMgr::instance()->processEvent( event ) ;
+	  delete event;
+	  
+	}  
 	++eventCounter;
 	if ( eventCounter > numEvents ) {
 	  dataFile.close();
 	  break;
 	}
+	
       }
-
     } catch (ifstream::failure e) {
       if ( !dataFile.eof() ) {
 	message<ERROR> ( log() << "Unable to open file " << dataFileName << ". Exiting." );
@@ -207,12 +277,11 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
       }
     } 
   }
- 
-  delete [] _dataBuffer;
-  addEORE();
-
-
   
+  delete [] _dataBuffer;
+  
+  addEORE();
+   
 }
 
 void EUTelStrasMimoTelReader::addEORE() {
