@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.7 2007-06-16 10:57:33 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.8 2007-06-19 13:50:08 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -325,7 +325,7 @@ void EUTelHistogramMaker::bookHistos() {
       string tempTitle;
       {
 	stringstream ss;
-	ss <<  "Cluster spectrum with the " + (*iter) << " most significant pixels ";
+	ss <<  "Cluster spectrum with the " << (*iter) << " most significant pixels ";
 	tempTitle=ss.str();
       }
       clusterSignalNHisto->setTitle(tempTitle.c_str());
