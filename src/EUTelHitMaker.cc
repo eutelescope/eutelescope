@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.4 2007-05-29 15:54:48 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.5 2007-06-19 21:05:17 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -36,6 +36,7 @@
 #ifdef MARLIN_USE_AIDA
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
+#include <AIDA/ICloud.h>
 #include <AIDA/ICloud2D.h>
 #include <AIDA/ICloud3D.h>
 #include <AIDA/ITree.h>
@@ -126,6 +127,8 @@ void EUTelHitMaker::init() {
   _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
+  _histogramSwitch = true;
+
 #endif
 
 }
@@ -173,13 +176,10 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
   //   }
 	
     // now book histograms plz...
-  bookHistos();
+  if ( isFirstEvent() )  bookHistos();
 
   // increment the run counter
   ++_iRun;
-
-  
-
 }
 
 
@@ -196,7 +196,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
   
   LCCollectionVec * pulseCollection   = static_cast<LCCollectionVec*> (event->getCollection( _pulseCollectionName ));
   LCCollectionVec * clusterCollection = static_cast<LCCollectionVec*> (event->getCollection("original_data"));
-  LCCollectionVec * hitCollection    = new LCCollectionVec(LCIO::TRACKERHIT);
+  LCCollectionVec * hitCollection     = new LCCollectionVec(LCIO::TRACKERHIT);
   LCCollectionVec * xEtaCollection, * yEtaCollection;
 
   CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder(pulseCollection);
@@ -240,9 +240,10 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
   int    layerIndex;
   double xZero, yZero, zZero;
+  double xSize, ySize;
   double zThickness;
   double xPitch, yPitch;
-  int    xPointing[2], yPointing[2];
+  double xPointing[2], yPointing[2];
 
   for ( int iPulse = 0; iPulse < pulseCollection->getNumberOfElements(); iPulse++ ) {
     
@@ -278,20 +279,23 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 	  }
 	}
       }
-      
-      layerIndex = _conversionIdMap[detectorID];
-      xZero      = _siPlanesLayerLayout->getSensitivePositionX(layerIndex); // mm
-      yZero      = _siPlanesLayerLayout->getSensitivePositionY(layerIndex); // mm
-      zZero      = _siPlanesLayerLayout->getSensitivePositionZ(layerIndex); // mm
-      zThickness = _siPlanesLayerLayout->getSensitiveThickness(layerIndex); //  ??? 
-      
-      xPitch  = 30 /* um */ * 0.001 ; // mm
-      yPitch  = 30 /* um */ * 0.001 ; // mm
-      
-      xPointing[0] = -1 ;       xPointing[1] =  0 ;
-      yPointing[0] =  0 ;       yPointing[1] = -1 ;
 
-      
+      // perfect! The full geometry description is now coming from the
+      // GEAR interface. Let's keep the finger xed!
+      layerIndex   = _conversionIdMap[detectorID];
+      xZero        = _siPlanesLayerLayout->getSensitivePositionX(layerIndex); // mm
+      yZero        = _siPlanesLayerLayout->getSensitivePositionY(layerIndex); // mm
+      zZero        = _siPlanesLayerLayout->getSensitivePositionZ(layerIndex); // mm
+      zThickness   = _siPlanesLayerLayout->getSensitiveThickness(layerIndex); // mm
+      xPitch       = _siPlanesLayerLayout->getSensitivePitchX(layerIndex);    // mm
+      yPitch       = _siPlanesLayerLayout->getSensitivePitchY(layerIndex);    // mm
+      xSize        = _siPlanesLayerLayout->getSensitiveSizeX(layerIndex);     // mm  
+      ySize        = _siPlanesLayerLayout->getSensitiveSizeY(layerIndex);     // mm
+      xPointing[0] = _siPlanesLayerLayout->getSensitiveRotation1(layerIndex); // was -1 ; 
+      xPointing[1] = _siPlanesLayerLayout->getSensitiveRotation2(layerIndex); // was  0 ;
+      yPointing[0] = _siPlanesLayerLayout->getSensitiveRotation3(layerIndex); // was  0 ;  
+      yPointing[1] = _siPlanesLayerLayout->getSensitiveRotation4(layerIndex); // was -1 ;
+
       if ( isFirstEvent() && (iPulse == 0) ) message<WARNING> ( "Using hardcoded values for the pitches and for the orientation." );
     }
     
@@ -325,13 +329,14 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
 #ifdef MARLIN_USE_AIDA
     string tempHistoName;
-    {
-      stringstream ss; 
-      ss << _hitCloudLocalName << "-" << detectorID ;
-      tempHistoName = ss.str();
+    if ( _histogramSwitch ) {
+      {
+	stringstream ss; 
+	ss << _hitCloudLocalName << "-" << detectorID ;
+	tempHistoName = ss.str();
+      }
+      (dynamic_cast<AIDA::ICloud2D*>(_aidaHistoMap[ tempHistoName ]))->fill(xDet,yDet);
     }
-    (dynamic_cast<AIDA::ICloud2D*>(_aidaHistoMap[ tempHistoName ]))->fill(xDet,yDet);
-
 #endif 
 
     // now perform the rotation of the frame of references and put the
@@ -342,20 +347,21 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     telPos[1] = yPointing[0] * xDet + yPointing[1] * yDet;
 
     // now the translation
-    telPos[0] -= xZero;
-    telPos[1] -= yZero;
+    telPos[0] -= ( xZero - xSize/2 );
+    telPos[1] -= ( yZero - ySize/2 );
     telPos[2] = zZero + 0.5 * zThickness;
 
 #ifdef MARLIN_USE_AIDA
-    {
-      stringstream ss;
-      ss << _hitCloudTelescopeName << "-" << detectorID ;
-      tempHistoName = ss.str();
+    if ( _histogramSwitch ) {
+      {
+	stringstream ss;
+	ss << _hitCloudTelescopeName << "-" << detectorID ;
+	tempHistoName = ss.str();
+      }
+      (dynamic_cast<AIDA::ICloud2D*> (_aidaHistoMap[ tempHistoName ] ))->fill( telPos[0], telPos[1] );
+      
+      (dynamic_cast<AIDA::ICloud3D*> (_aidaHistoMap[ _densityPlotName ] ))->fill( telPos[0], telPos[1], telPos[2] );
     }
-    (dynamic_cast<AIDA::ICloud2D*> (_aidaHistoMap[ tempHistoName ] ))->fill( telPos[0], telPos[1] );
-
-    (dynamic_cast<AIDA::ICloud3D*> (_aidaHistoMap[ _densityPlotName ] ))->fill( telPos[0], telPos[1], telPos[2] );
-
 #endif
 
     // create the new hit
@@ -386,55 +392,89 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
 void EUTelHitMaker::end() {
 
+#ifdef MARLIN_USE_AIDA
+  if ( _histogramSwitch ) {
+    message<MESSAGE> ( log() << "Convert clouds to histograms before to exit " );
+    
+    map<string, AIDA::IBaseHistogram *>::iterator mapIter = _aidaHistoMap.begin();
+    while ( mapIter != _aidaHistoMap.end() ) {
+      
+      AIDA::ICloud * cloud = dynamic_cast<AIDA::ICloud*> ( mapIter->second );
+      if ( cloud )  cloud->convertToHistogram();
+      ++mapIter;
+    }
+  }
+
+#endif
   message<MESSAGE> ( log() << "Successfully finished" ) ;  
 }
 
 void EUTelHitMaker::bookHistos() {
   
 #ifdef MARLIN_USE_AIDA
-  message<MESSAGE> ( "Booking histograms" );
 
-  string tempHistoName;
-
-  // histograms are grouped into folders named after the
-  // detector. This requires to loop on detector now.
-  for (int iDet = 0 ; iDet < _siPlanesParameters->getSiPlanesNumber(); iDet++) {
-
-    string basePath;
-    {
-      stringstream ss ;
-      ss << "plane-" << iDet;
-      basePath = ss.str();
-    }
-    AIDAProcessor::tree(this)->mkdir(basePath.c_str());
-    basePath = basePath + "/";
+  try {
+    message<MESSAGE> ( "Booking histograms" );
     
-    {
-      stringstream ss ;
-      ss <<  _hitCloudLocalName << "-" << iDet ;
-      tempHistoName = ss.str();
-    }
-    AIDA::ICloud2D * hitCloudLocal = AIDAProcessor::histogramFactory(this)->createCloud2D( (basePath + tempHistoName).c_str() );
-    hitCloudLocal->setTitle("Hit map in the detector local frame of reference");
-    _aidaHistoMap.insert( make_pair( tempHistoName, hitCloudLocal ) );
+    string tempHistoName;
+    
+    // histograms are grouped into folders named after the
+    // detector. This requires to loop on detector now.
+    for (int iDet = 0 ; iDet < _siPlanesParameters->getSiPlanesNumber(); iDet++) {
+      
+      string basePath;
+      {
+	stringstream ss ;
+	ss << "plane-" << iDet;
+	basePath = ss.str();
+      }
+      AIDAProcessor::tree(this)->mkdir(basePath.c_str());
+      cout << basePath << " " << tempHistoName << endl;
+      basePath = basePath + "/";
+      
+      {
+	stringstream ss ;
+	ss <<  _hitCloudLocalName << "-" << iDet ;
+	tempHistoName = ss.str();
+      }
+      AIDA::ICloud2D * hitCloudLocal = AIDAProcessor::histogramFactory(this)->createCloud2D( (basePath + tempHistoName).c_str() );
+      hitCloudLocal->setTitle("Hit map in the detector local frame of reference");
+      _aidaHistoMap.insert( make_pair( tempHistoName, hitCloudLocal ) );
 
-    {
-      stringstream ss ;
-      ss <<  _hitCloudTelescopeName << "-" << iDet ;
-      tempHistoName = ss.str();
+      
+      {
+	stringstream ss ;
+	ss <<  _hitCloudTelescopeName << "-" << iDet ;
+	tempHistoName = ss.str();
+      }
+      AIDA::ICloud2D * hitCloudTelescope = AIDAProcessor::histogramFactory(this)->createCloud2D( ( basePath + tempHistoName ).c_str() );
+      hitCloudTelescope->setTitle("Hit map in the telescope frame of reference");
+      _aidaHistoMap.insert( make_pair ( tempHistoName, hitCloudTelescope ) );
+      
     }
-    AIDA::ICloud2D * hitCloudTelescope = AIDAProcessor::histogramFactory(this)->createCloud2D( ( basePath + tempHistoName ).c_str() );
-    hitCloudTelescope->setTitle("Hit map in the telescope frame of reference");
-    _aidaHistoMap.insert( make_pair ( tempHistoName, hitCloudTelescope ) );
-											   
+    
+    
+    AIDA::ICloud3D * densityPlot = AIDAProcessor::histogramFactory(this)->createCloud3D( _densityPlotName );
+    densityPlot->setTitle("Hit position in the telescope frame of reference");
+    _aidaHistoMap.insert( make_pair ( _densityPlotName, densityPlot ) ) ;
+
+  } catch (lcio::Exception& e ) {
+    
+    message<ERROR> ( log() << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" );
+    string answer;
+    while ( true ) {
+      message<ERROR> ( "[q]/[c]" );
+      cin >> answer;
+      transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
+      if ( answer == "q" ) {
+	exit(-1);
+      } else if ( answer == "c" )
+	_histogramSwitch = false;
+	break;
+    }
   }
-
-  
-  AIDA::ICloud3D * densityPlot = AIDAProcessor::histogramFactory(this)->createCloud3D( _densityPlotName );
-  densityPlot->setTitle("Hit position in the telescope frame of reference");
-  _aidaHistoMap.insert( make_pair ( _densityPlotName, densityPlot ) ) ;
-
 #endif
 }
 
+  
 #endif

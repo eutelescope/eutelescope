@@ -185,7 +185,7 @@ namespace eutelescope {
    *  the eta collection along x and y.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHitMaker.h,v 1.3 2007-05-29 08:48:08 bulgheroni Exp $
+   *  @version $Id: EUTelHitMaker.h,v 1.4 2007-06-19 21:05:17 bulgheroni Exp $
    *
    *
    */
@@ -372,6 +372,12 @@ namespace eutelescope {
      *  should recall the shape of the telescope itself. 
      */ 
     static std::string _densityPlotName;
+
+    //! Fill histogram switch
+    /*! Only for debug reason
+     */
+    bool _histogramSwitch;
+
     
 #endif
 
