@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.5 2007-06-19 21:05:17 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.6 2007-06-21 17:00:24 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -64,7 +64,6 @@ std::string EUTelHitMaker::_hitCloudLocalName     = "HitCloudLocal";
 std::string EUTelHitMaker::_hitCloudTelescopeName = "HitCloudTelescope";
 std::string EUTelHitMaker::_densityPlotName       = "DensityPlot";
 #endif
-
 
 EUTelHitMaker::EUTelHitMaker () : Processor("EUTelHitMaker") {
 
@@ -189,10 +188,29 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
   
   if ( evt->getEventType() == kEORE ) {
+
+#ifdef MARLIN_USE_AIDA
+    if ( _histogramSwitch ) {
+      
+      message<DEBUG> ( log() << "Converting clouds to histograms before leaving " );
+      
+      map<string, AIDA::IBaseHistogram *>::iterator mapIter = _aidaHistoMap.begin();
+      while ( mapIter != _aidaHistoMap.end() ) {
+
+ 	AIDA::ICloud * cloud = dynamic_cast<AIDA::ICloud*> ( mapIter->second );
+ 	if ( cloud )  {
+	  cloud->convertToHistogram();
+	}
+ 	++mapIter;
+      }
+    }
+    
+#endif
     message<DEBUG> ( "EORE found: nothing else to do." );
+    
     return;
   }
-
+  
   
   LCCollectionVec * pulseCollection   = static_cast<LCCollectionVec*> (event->getCollection( _pulseCollectionName ));
   LCCollectionVec * clusterCollection = static_cast<LCCollectionVec*> (event->getCollection("original_data"));
@@ -296,7 +314,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       yPointing[0] = _siPlanesLayerLayout->getSensitiveRotation3(layerIndex); // was  0 ;  
       yPointing[1] = _siPlanesLayerLayout->getSensitiveRotation4(layerIndex); // was -1 ;
 
-      if ( isFirstEvent() && (iPulse == 0) ) message<WARNING> ( "Using hardcoded values for the pitches and for the orientation." );
     }
     
     // get the position of the seed pixel. This is in pixel number.
@@ -335,7 +352,14 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 	ss << _hitCloudLocalName << "-" << detectorID ;
 	tempHistoName = ss.str();
       }
-      (dynamic_cast<AIDA::ICloud2D*>(_aidaHistoMap[ tempHistoName ]))->fill(xDet,yDet);
+      if ( AIDA::ICloud2D* cloud = dynamic_cast<AIDA::ICloud2D*>(_aidaHistoMap[ tempHistoName ]) )
+	cloud->fill(xDet, yDet);
+      else {
+	message<ERROR> ( log() << "Not able to retrieve histogram pointer for " << tempHistoName 
+			 << ".\nDisabling histogramming from now on " );
+	_histogramSwitch = false;
+      }
+      
     }
 #endif 
 
@@ -347,6 +371,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     telPos[1] = yPointing[0] * xDet + yPointing[1] * yDet;
 
     // now the translation
+    // not sure about the sign. At least it is working for the current
+    // configuration but we need to double checkit
     telPos[0] -= ( xZero - xSize/2 );
     telPos[1] -= ( yZero - ySize/2 );
     telPos[2] = zZero + 0.5 * zThickness;
@@ -358,9 +384,21 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 	ss << _hitCloudTelescopeName << "-" << detectorID ;
 	tempHistoName = ss.str();
       }
-      (dynamic_cast<AIDA::ICloud2D*> (_aidaHistoMap[ tempHistoName ] ))->fill( telPos[0], telPos[1] );
-      
-      (dynamic_cast<AIDA::ICloud3D*> (_aidaHistoMap[ _densityPlotName ] ))->fill( telPos[0], telPos[1], telPos[2] );
+      AIDA::ICloud2D * cloud2D = dynamic_cast<AIDA::ICloud2D*> (_aidaHistoMap[ tempHistoName ] );
+      if ( cloud2D ) cloud2D->fill( telPos[0], telPos[1] );
+      else {
+	message<ERROR> ( log() << "Not able to retrieve histogram pointer for " << tempHistoName 
+			 << ".\nDisabling histogramming from now on " );
+	_histogramSwitch = false;
+      }
+      AIDA::ICloud3D * cloud3D = dynamic_cast<AIDA::ICloud3D*> (_aidaHistoMap[ _densityPlotName ] );
+      if ( cloud3D ) cloud3D->fill( telPos[0], telPos[1], telPos[2] );
+      else {
+	message<ERROR> ( log() << "Not able to retrieve histogram pointer for " << tempHistoName 
+			 << ".\nDisabling histogramming from now on " );
+	_histogramSwitch = false;
+      }
+
     }
 #endif
 
@@ -392,20 +430,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
 void EUTelHitMaker::end() {
 
-#ifdef MARLIN_USE_AIDA
-  if ( _histogramSwitch ) {
-    message<MESSAGE> ( log() << "Convert clouds to histograms before to exit " );
-    
-    map<string, AIDA::IBaseHistogram *>::iterator mapIter = _aidaHistoMap.begin();
-    while ( mapIter != _aidaHistoMap.end() ) {
-      
-      AIDA::ICloud * cloud = dynamic_cast<AIDA::ICloud*> ( mapIter->second );
-      if ( cloud )  cloud->convertToHistogram();
-      ++mapIter;
-    }
-  }
-
-#endif
   message<MESSAGE> ( log() << "Successfully finished" ) ;  
 }
 
@@ -429,7 +453,6 @@ void EUTelHitMaker::bookHistos() {
 	basePath = ss.str();
       }
       AIDAProcessor::tree(this)->mkdir(basePath.c_str());
-      cout << basePath << " " << tempHistoName << endl;
       basePath = basePath + "/";
       
       {
@@ -438,9 +461,16 @@ void EUTelHitMaker::bookHistos() {
 	tempHistoName = ss.str();
       }
       AIDA::ICloud2D * hitCloudLocal = AIDAProcessor::histogramFactory(this)->createCloud2D( (basePath + tempHistoName).c_str() );
-      hitCloudLocal->setTitle("Hit map in the detector local frame of reference");
-      _aidaHistoMap.insert( make_pair( tempHistoName, hitCloudLocal ) );
-
+      if ( hitCloudLocal ) {
+	hitCloudLocal->setTitle("Hit map in the detector local frame of reference");
+	_aidaHistoMap.insert( make_pair( tempHistoName, hitCloudLocal ) );
+      } else {
+	message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+			 << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	_histogramSwitch = false;
+      }
+      
+      
       
       {
 	stringstream ss ;
@@ -448,15 +478,25 @@ void EUTelHitMaker::bookHistos() {
 	tempHistoName = ss.str();
       }
       AIDA::ICloud2D * hitCloudTelescope = AIDAProcessor::histogramFactory(this)->createCloud2D( ( basePath + tempHistoName ).c_str() );
-      hitCloudTelescope->setTitle("Hit map in the telescope frame of reference");
-      _aidaHistoMap.insert( make_pair ( tempHistoName, hitCloudTelescope ) );
-      
+      if ( hitCloudTelescope ) {
+	hitCloudTelescope->setTitle("Hit map in the telescope frame of reference");
+	_aidaHistoMap.insert( make_pair ( tempHistoName, hitCloudTelescope ) );
+      } else {
+	message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+			 << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	_histogramSwitch = false;
+      }
     }
-    
-    
+
     AIDA::ICloud3D * densityPlot = AIDAProcessor::histogramFactory(this)->createCloud3D( _densityPlotName );
-    densityPlot->setTitle("Hit position in the telescope frame of reference");
-    _aidaHistoMap.insert( make_pair ( _densityPlotName, densityPlot ) ) ;
+    if ( densityPlot ) {
+      densityPlot->setTitle("Hit position in the telescope frame of reference");
+      _aidaHistoMap.insert( make_pair ( _densityPlotName, densityPlot ) ) ;
+    } else {
+      message<ERROR> ( log() << "Problem booking the " << (tempHistoName) << ".\n"
+		       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+      _histogramSwitch = false;
+    }
 
   } catch (lcio::Exception& e ) {
     
