@@ -185,7 +185,7 @@ namespace eutelescope {
    *  the eta collection along x and y.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHitMaker.h,v 1.4 2007-06-19 21:05:17 bulgheroni Exp $
+   *  @version $Id: EUTelHitMaker.h,v 1.5 2007-06-21 16:58:04 bulgheroni Exp $
    *
    *
    */
@@ -374,7 +374,10 @@ namespace eutelescope {
     static std::string _densityPlotName;
 
     //! Fill histogram switch
-    /*! Only for debug reason
+    /*! This boolean switch was initially introduced for debug reason
+     *  but then we realized that it could stay there and protect
+     *  against missing AIDA::Processor.
+     * 
      */
     bool _histogramSwitch;
 
