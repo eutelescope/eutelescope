@@ -44,7 +44,7 @@ namespace eutelescope {
    *   LCEvent with TrackerRawData collection
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelStrasMimoTelReader.h,v 1.2 2007-06-18 21:40:42 bulgheroni Exp $
+   *   @version $Id: EUTelStrasMimoTelReader.h,v 1.3 2007-06-21 16:59:05 bulgheroni Exp $
    *
    */
 
@@ -93,7 +93,7 @@ namespace eutelescope {
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
      *  @author Gilles CLAUS, LEPSI <mailto:claus@lepsi.in2p3.fr>
-     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.2 2007-06-18 21:40:42 bulgheroni Exp $
+     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.3 2007-06-21 16:59:05 bulgheroni Exp $
      */ 
     class StrasRunHeader {
 
@@ -210,7 +210,7 @@ namespace eutelescope {
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
      *  @author Gilles CLAUS, LEPSI <mailto:claus@lepsi.in2p3.fr>
-     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.2 2007-06-18 21:40:42 bulgheroni Exp $
+     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.3 2007-06-21 16:59:05 bulgheroni Exp $
      */ 
     class StrasEventHeader {
       
@@ -267,6 +267,11 @@ namespace eutelescope {
        *  one contained into VFasCnt[0] so I can forget about the rest
        *  of the size. But this is not allowing me to continue a
        *  proper decoding.
+       *
+       *  According to something I have found looking around the
+       *  NB_MAX_VFAS should be defined as 4. Since for the time being
+       *  the only information really needed of this register is the
+       *  first, I don't want to touch 
        */
       int VFasCnt;
       
@@ -307,7 +312,7 @@ namespace eutelescope {
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
      *  @author Gilles CLAUS, LEPSI <mailto:claus@lepsi.in2p3.fr>
-     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.2 2007-06-18 21:40:42 bulgheroni Exp $
+     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.3 2007-06-21 16:59:05 bulgheroni Exp $
      */ 
     class StrasEventTrailer {
       
@@ -369,11 +374,33 @@ namespace eutelescope {
     static const std::string _fileNameExt;
     
     //! Number of pixels along X
-    static int _noOfXPixel;
+    /*! This parameter can be selected by the user via the steering
+     *  file
+     */ 
+    int _noOfXPixel;
 
     //! Number of pixels along Y
-    static int _noOfYPixel;
+    /*! This parameter can be selected by the user via the steering
+     *  file
+     */ 
+    int _noOfYPixel;
 
+    //! Name of the frame 0 collection
+    /*! This is the name of the first frame collection. 
+     */
+    std::string _frame0CollectionName;
+    
+    //! Name of the frame 1 collection
+    /*! This is the name of the second frame collection. 
+     */
+    std::string _frame1CollectionName;   
+
+    //! Name of the frame 1 collection
+    /*! This is the name of the second frame collection. 
+     */
+    std::string _cdsCollectionName; 
+
+    //! Static variable == 1 for the time being
     static int _noOfSubMatrix;
     
   };

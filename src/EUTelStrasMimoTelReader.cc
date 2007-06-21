@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelStrasMimoTelReader.cc,v 1.2 2007-06-18 21:40:42 bulgheroni Exp $
+// Version $Id: EUTelStrasMimoTelReader.cc,v 1.3 2007-06-21 16:59:05 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -9,14 +9,6 @@
  *   header with author names in all development based on this file.
  *
  */
-
-
-#define NB_MAX_VFAS 4
-#define EVENT_HEADER_RESERVED_ESZ 12
-#define ADC_NB 1
-//#define SAMPLE_NB 262144
-#define SAMPLE_NB 16896
-#define warnings 0
 
 
 // personal includes
@@ -50,8 +42,6 @@ using namespace eutelescope;
 
 string EUTelStrasMimoTelReader::_dataFileBaseName   = "RUN_";
 const string EUTelStrasMimoTelReader::_fileNameExt  = ".rz" ;
-int EUTelStrasMimoTelReader::_noOfXPixel    =  66;
-int EUTelStrasMimoTelReader::_noOfYPixel    = 256;
 int EUTelStrasMimoTelReader::_noOfSubMatrix =   1;
 
 EUTelStrasMimoTelReader::EUTelStrasMimoTelReader ():DataSourceProcessor  ("EUTelStrasMimoTelReader") {
@@ -63,6 +53,25 @@ EUTelStrasMimoTelReader::EUTelStrasMimoTelReader ():DataSourceProcessor  ("EUTel
   
   registerProcessorParameter("LEPSIRunNumber","The run to be converted (the number only)",
 			     _runNumber, static_cast<int> (500) );
+
+  registerProcessorParameter("XNoOfPixel","Number of pixels along the x axis",
+			     _noOfXPixel, static_cast<int> ( 66 ) );
+  
+  registerProcessorParameter("YNoOfPixel","Number of pixels along the x axis",
+			     _noOfYPixel, static_cast<int> ( 256 ) );
+
+  registerOutputCollection(LCIO::TRACKERRAWDATA, "Frame0CollectionName",
+			   "Name of the Frame0 collection",
+			   _frame0CollectionName, string( "frame0" ));
+
+  registerOutputCollection(LCIO::TRACKERRAWDATA, "Frame1CollectionName",
+			   "Name of the Frame1 collection",
+			   _frame1CollectionName, string( "frame1" ));
+
+  registerOutputCollection(LCIO::TRACKERRAWDATA, "CDSCollectionName",
+			   "Name of the CDS collection",
+			   _cdsCollectionName, string( "cds" ));
+  
 }
 
 EUTelStrasMimoTelReader * EUTelStrasMimoTelReader::newProcessor () {
@@ -174,6 +183,7 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
 
 	if ( _eventHeader.VFasCnt < 0 ) {
 	  // the trigger is not accepted. Skip the event
+	  message<WARNING> ( log() << "Trigger not accepted on event " << eventCounter ) ;
 	  
 	} else {
 
@@ -236,6 +246,10 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
 	    }
  	    vector<short > cdsVec = cds->adcValues();
 	    vector<short >::iterator begin, end;
+
+	    //	    cout << iDetector << " before min = " << (*min_element(cdsVec.begin(), cdsVec.end())) 
+	    //		 << " max = " << (*max_element(cdsVec.begin(), cdsVec.end())) << endl;
+
  	    // correct for the CDS sign
 	    if ( _eventHeader.VFasCnt < matrixSize ) {
 	      begin = cdsVec.begin() + _eventHeader.VFasCnt ;
@@ -245,15 +259,18 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
 	      end   = cdsVec.begin() + _eventHeader.VFasCnt %  matrixSize;
 	    }
 	    transform( begin, end, begin, negate<int>() );
+	    // 	    cout << iDetector << " after min = " << (*min_element(cdsVec.begin(), cdsVec.end())) 
+	    //		 << " max = " << (*max_element(cdsVec.begin(), cdsVec.end())) << endl;
+
 	    frame0Coll->push_back( frame0 ) ;
 	    frame1Coll->push_back( frame1 ) ;
 	    cdsColl->push_back( cds );
 	      
 	  }
 	  
-	  event->addCollection( frame0Coll, "frame0" );
-	  event->addCollection( frame1Coll, "frame1" );
-	  event->addCollection( cdsColl,    "rawdata");
+	  event->addCollection( frame0Coll, _frame0CollectionName );
+	  event->addCollection( frame1Coll, _frame1CollectionName );
+	  event->addCollection( cdsColl,    _cdsCollectionName    );
 	  
 	  ProcessorMgr::instance()->processEvent( event ) ;
 	  delete event;
