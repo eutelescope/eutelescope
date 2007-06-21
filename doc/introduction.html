@@ -936,11 +936,22 @@ valid tag if you want to have a different release.
 eutelescope = MarlinPKG("Eutelescope","HEAD")
 ilcsoft.install(eutelescope)
 eutelescope.download.url="http://www-zeuthen.desy.de/lc-cgi-bin/cvsweb.cgi/Eutelescope/Eutelescope.tar.gz?cvsroot=eutelescope;only_with_tag=HEAD;tarball=1"
-eutelescope.addDependency( ["Marlin","GSL", "LCIO"] )
+eutelescope.addDependency( ["Marlin","GSL", "LCIO", "GEAR"] )
 eutelescope.debug = True
 ilcsoft.module("Marlin").buildWith(["Eutelescope"])
 @endcode
 
+@section dcache Accessing data in the DESY dCache
+
+If your computer is registered in the DESY network, you can access
+data directly from the dCache without having to copy them locally to
+your storage. This is particularly useful if you are in DESY and you
+don't have a GRID certificate.<br>
+Add to your environment script the following line:
+@code
+export LD_PRELOAD=/opt/products/lib/libpdcap.so
+@endcode
+where the path to libpdcap.so may depend from one machine to the other. 
 
 
 
