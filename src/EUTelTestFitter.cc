@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.3 2007-06-21 17:06:07 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.4 2007-06-21 18:28:35 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -13,6 +13,7 @@
  *
  */
 
+// eutelescope inlcudes
 #include "EUTelTestFitter.h"
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
@@ -24,13 +25,14 @@
 //#include <AIDA/IHistogram1D.h>
 #endif
 
+#include "marlin/Exceptions.h"
+
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
-// #include <EVENT/TrackerHit.h>
-#include "IMPL/LCCollectionVec.h"
-#include "IMPL/TrackerHitImpl.h"
-#include "IMPL/TrackImpl.h"
-#include "IMPL/LCFlagImpl.h"
+#include <IMPL/LCCollectionVec.h>
+#include <IMPL/TrackerHitImpl.h>
+#include <IMPL/TrackImpl.h>
+#include <IMPL/LCFlagImpl.h>
 
 #include <iostream>
 #include <fstream>
@@ -346,7 +348,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   if(nHit + _allowMissingHits < _nActivePlanes) {
     message<DEBUG> ( log() << "Not enough hits to perform the fit, exiting... " );
-    return;
+    throw SkipEventException(this);
   }
 
   double * hitX  = new double[nHit];
@@ -505,9 +507,25 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     if(nFiredPlanes + _allowMissingHits < _nActivePlanes)
       {
-        if( firstTrack )
-	  message<DEBUG> ( log() << "Not enough planes hit to perform the fit, exiting... " );
-        break;
+        if( firstTrack ) {
+	  message<DEBUG> ( log() << "Not enough planes hit to perform the fit " );
+	  // before throwing the exception I should clean up the
+	  // memory...
+	  delete [] bestEy;
+	  delete [] bestY;
+	  delete [] bestEx;
+	  delete [] bestX;
+	  delete [] planeHitID;
+	  delete [] nPlaneChoice;
+	  delete [] nPlaneHits;
+	  delete [] hitPlane;
+	  delete [] hitZ;
+	  delete [] hitEy;
+	  delete [] hitY;
+	  delete [] hitEx;
+	  delete [] hitX;
+	  throw SkipEventException(this);
+	}
       }
 
 
@@ -597,9 +615,27 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       }
     // End of loop over track possibilities
 
-    if(ibest<0 && firstTrack)
+    if(ibest<0 && firstTrack) {
       message<DEBUG> ( log() << "No track fulfilling search criteria found ! " );
-
+      // before throwing the exception I should clean up the
+      // memory...
+      delete [] bestEy;
+      delete [] bestY;
+      delete [] bestEx;
+      delete [] bestX;
+      delete [] planeHitID;
+      delete [] nPlaneChoice;
+      delete [] nPlaneHits;
+      delete [] hitPlane;
+      delete [] hitZ;
+      delete [] hitEy;
+      delete [] hitY;
+      delete [] hitEx;
+      delete [] hitX;	
+      throw SkipEventException(this);
+    }
+    
+    
     if(ibest>=0)
       {
 
@@ -640,9 +676,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 	for(int ipl=0;ipl<_nTelPlanes;ipl++)
 	  {
 	    TrackerHitImpl * fitpoint = new TrackerHitImpl;
-
+	    
 	    // Plane number stored as hit type
-
+	    
 	    fitpoint->setType(ipl+1);
 
 	    // fitted position in a plane
@@ -683,26 +719,26 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 	      for(int iref=0;iref<3;iref++)
 		refpoint[iref]=pos[iref];
 	  }
-
+	
 	// Store track reference point.
 	fittrack->setReferencePoint(refpoint);
-
+	
 	fittrackvec->addElement(fittrack);
 	nFittedTracks++;
       }
-
+    
     // If multiple tracks allowed: remove hits from fitted track from the list
-
+    
     if(ibest>=0 && _searchMultipleTracks)
       {
 	int modchoice=ibest;
-
+	
 	for(int ipl=0;ipl<_nTelPlanes;ipl++)
 	  if(_isActive[ipl])
 	    {
 	      int ihit=modchoice%nPlaneChoice[ipl];
 	      modchoice/=nPlaneChoice[ipl];
-
+	      
 	      if(ihit<nPlaneHits[ipl])
 		{
                   planeHitID[ipl].erase(planeHitID[ipl].begin()+ihit);
@@ -710,13 +746,13 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 		}
 	    }
       }
-
+    
     // Suppress output for secondary tracks
-
+    
     // firstTrack=false;
   }
   while(_searchMultipleTracks && ibest>=0 && nGoodHit + _allowMissingHits >= _nActivePlanes);
-
+    
   // End of track loop
 
   if(nFittedTracks > 0 )
@@ -766,27 +802,27 @@ void EUTelTestFitter::end(){
 
   // Clean memory 
 
-   delete [] _planePosition ;
-   delete [] _planeThickness  ;
-   delete [] _planeX0  ;
-   delete [] _planeResolution ;
-   delete [] _planeDist ;
-   delete [] _planeScat ;
-   delete [] _isActive ;
+  delete [] _planePosition ;
+  delete [] _planeThickness  ;
+  delete [] _planeX0  ;
+  delete [] _planeResolution ;
+  delete [] _planeDist ;
+  delete [] _planeScat ;
+  delete [] _isActive ;
    
-   delete [] _planeX ;
-   delete [] _planeEx ;
-   delete [] _planeY ;
-   delete [] _planeEy ;
+  delete [] _planeX ;
+  delete [] _planeEx ;
+  delete [] _planeY ;
+  delete [] _planeEy ;
    
-   delete [] _fitX  ;
-   delete [] _fitEx ;
-   delete [] _fitY ;
-   delete [] _fitEy ;
-   delete [] _fitArray ;
+  delete [] _fitX  ;
+  delete [] _fitEx ;
+  delete [] _fitY ;
+  delete [] _fitEy ;
+  delete [] _fitArray ;
    
-   delete [] _nominalFitArray ;
-   delete [] _nominalError ;
+  delete [] _nominalFitArray ;
+  delete [] _nominalError ;
 }
 
 //
