@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.1 2007-06-04 06:45:03 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.2 2007-06-21 15:24:30 tklimk Exp $
 // Date 2007.06.04
 
 /*
@@ -14,9 +14,8 @@
  */
 
 #include "EUTelTestFitter.h"
-#include <iostream>
-#include <fstream>
-#include <cmath>
+#include "EUTELESCOPE.h"
+#include "EUTelEventImpl.h"
 
 #ifdef MARLIN_USE_AIDA
 #include <marlin/AIDAProcessor.h>
@@ -32,6 +31,11 @@
 #include "IMPL/TrackerHitImpl.h"
 #include "IMPL/TrackImpl.h"
 #include "IMPL/LCFlagImpl.h"
+
+#include <iostream>
+#include <fstream>
+#include <cmath>
+
 
 
 using namespace std;
@@ -304,6 +308,12 @@ void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) {
 } 
 
 void EUTelTestFitter::processEvent( LCEvent * event ) { 
+  
+  EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
+  if ( euEvent->getEventType() == kEORE ) {
+    message<DEBUG> ( "EORE found: nothing else to do." );
+    return;
+  }
 
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0) ;
 
@@ -314,7 +324,18 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     cout << "\n EUTelTestFitter: Processing " << _nEvt 
 	 << " event record, event nr " << evtNr << endl ;
 
-  LCCollection* col = event->getCollection( _inputColName ) ;
+  LCCollection* col;
+  try {
+    col = event->getCollection( _inputColName ) ;
+  } catch (lcio::DataNotAvailableException& e) {
+    message<ERROR> ( log() << "Not able to get collection " 
+		     << _inputColName 
+		     << "\nfrom event " << event->getEventNumber()
+		     << " in run " << event->getRunNumber() << "."
+		     << "\nSorry for quitting." );
+    exit(-1);
+  }
+    
 
   if( col == 0 ) 
     {
@@ -765,27 +786,27 @@ void EUTelTestFitter::end(){
 
   // Clean memory 
 
-  delete _planePosition ;
-  delete _planeThickness  ;
-  delete _planeX0  ;
-  delete _planeResolution ;
-  delete _planeDist ;
-  delete _planeScat ;
-  delete _isActive ;
-
-  delete _planeX ;
-  delete _planeEx ;
-  delete _planeY ;
-  delete _planeEy ;
-
-  delete _fitX  ;
-  delete _fitEx ;
-  delete _fitY ;
-  delete _fitEy ;
-  delete _fitArray ;
-
-  delete _nominalFitArray ;
-  delete _nominalError ;
+   delete []  _planePosition ;
+   delete _planeThickness  ;
+   delete _planeX0  ;
+   delete _planeResolution ;
+   delete _planeDist ;
+   delete _planeScat ;
+   delete _isActive ;
+   
+   delete _planeX ;
+   delete _planeEx ;
+   delete _planeY ;
+   delete _planeEy ;
+   
+   delete _fitX  ;
+   delete _fitEx ;
+   delete _fitY ;
+   delete _fitEy ;
+   delete _fitArray ;
+   
+   delete _nominalFitArray ;
+   delete [] _nominalError ;
 }
 
 //
