@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.2 2007-06-21 15:24:30 tklimk Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.3 2007-06-21 17:06:07 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -35,6 +35,7 @@
 #include <iostream>
 #include <fstream>
 #include <cmath>
+#include <sstream>
 
 
 
@@ -152,11 +153,10 @@ void EUTelTestFitter::init() {
   catch (exception& e) {
     cerr << "IO exception " << e.what() << " with " 
 	 << _geometryFileName << ".\nExiting." << endl;
-    return;
+    exit(-1);
   }
 
-  cout << "Reading telescope geometry description from " 
-       << _geometryFileName << endl ;
+  message<MESSAGE> ( log() << "Reading telescope geometry description from " << _geometryFileName ) ;
 
   geometryFile >> _nTelPlanes >> _iDUT ;
   _iDUT-- ;
@@ -195,30 +195,30 @@ void EUTelTestFitter::init() {
     }
 
   // Print out geometry information
+  message<MESSAGE> ( log() << "Telescope configuration with " << _nTelPlanes << " planes" );
 
-  cout << "Telescope configuration with " << _nTelPlanes << " planes" <<  endl;
 
   for(int ipl=0; ipl < _nTelPlanes; ipl++)
     {
+      stringstream ss ; 
       if(ipl == _iDUT)
-	cout << "D.U.T.  plane at" ;
+	ss << "D.U.T.  plane at" ;
       else
 	if(_isActive[ipl])
-	  cout << "Active  plane at" ;
+	  ss << "Active  plane at" ;
 	else
-	  cout << "Passive plane at" ; 
-
-      cout << "  Z [mm] = " << _planePosition[ipl] 
-           << " dZ [um] = " << _planeThickness[ipl]*1000. ;
-
+	  ss << "Passive plane at" ; 
+      
+      ss << "  Z [mm] = " << _planePosition[ipl] 
+	 << " dZ [um] = " << _planeThickness[ipl]*1000. ;
+      
       if(_isActive[ipl])
-	cout << "  Res [um] = " << _planeResolution[ipl]*1000. ;
-
-      cout << endl;
+	ss << "  Res [um] = " << _planeResolution[ipl]*1000. ;
+      
+      message<MESSAGE> ( log() << ss.str() );
     }
-
-  cout << "Total of " << _nActivePlanes << " active sensor planes " << endl;
-
+  message<MESSAGE> ( log() << "Total of " << _nActivePlanes << " active sensor planes " );
+  
   // Allocate arrays for track fitting
 
   _planeX  = new double[_nTelPlanes];
@@ -276,10 +276,11 @@ void EUTelTestFitter::init() {
   for(int imx=0; imx<arrayDim; imx++)
     _nominalFitArray[imx] = _fitArray[imx];
 
-  cout << "Expected position resolutions [um]: " << endl ;
-  for(int ipl=0; ipl<_nTelPlanes ; ipl++)
-    cout << _nominalError[ipl]*1000. << "  " ;
-  cout << endl;
+  message<MESSAGE> ( log() << "Expected position resolutions [um]: " ) ;
+  stringstream ss;
+  for(int ipl=0; ipl<_nTelPlanes ; ipl++) 
+    ss << _nominalError[ipl]*1000. << "  " ;
+  message<MESSAGE> ( log() << ss.str() );
 }
 
 void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) { 
@@ -289,21 +290,21 @@ void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) {
   // Decode and print out Run Header information - just a check
 
   int runNr = runHeader->getRunNumber();
-
-  cout << "\n Processing run header " << _nRun 
-       << ", run nr " << runNr << endl ;
+  
+  message<MESSAGE> ( log() << "Processing run header " << _nRun 
+		     << ", run nr " << runNr );
 
   const std::string detectorName = runHeader->getDetectorName();
   const std::string detectorDescription = runHeader->getDescription();
   const std::vector<std::string> * subDets = runHeader->getActiveSubdetectors();
 
-  cout << detectorName << " : " << detectorDescription << endl;
+  message<MESSAGE> ( log() << detectorName << " : " << detectorDescription ) ;
 
   int nDet = subDets->size();
 
-  cout << nDet << " subdetectors defined :" << endl;
-  for(int idet=0;idet<nDet;idet++)
-    cout << idet+1 << " : " << subDets->at(idet) << endl;
+  message<MESSAGE> ( log() << nDet << " subdetectors defined :" );
+  stringstream ss;
+  for(int idet=0;idet<nDet;idet++)  message<MESSAGE> (log()  << idet+1 << " : " << subDets->at(idet) );
 
 } 
 
@@ -315,14 +316,11 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     return;
   }
 
-  bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0) ;
-
   _nEvt ++ ;
   int evtNr = event->getEventNumber();
 
-  if(debug)
-    cout << "\n EUTelTestFitter: Processing " << _nEvt 
-	 << " event record, event nr " << evtNr << endl ;
+
+  message<DEBUG> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
 
   LCCollection* col;
   try {
@@ -337,14 +335,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   }
     
 
-  if( col == 0 ) 
-    {
-      cerr << "Missing collection " << _inputColName 
-	   << " in event " <<   _nEvt << " / " << evtNr << endl ;
-
-      return ;
-    }
-
   // Copy hits to local table
   // Assign hits to sensor planes
   // =============================
@@ -352,27 +342,23 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   int nHit = col->getNumberOfElements()  ;
 
-  if(debug)
-    cout << "Total of " << nHit << " tracker hits in input collection " << endl ;
+  message<DEBUG> ( log() << "Total of " << nHit << " tracker hits in input collection " );
 
-  if(nHit + _allowMissingHits < _nActivePlanes)
-    {
-      if(debug) 
-	cout << "Not enough hits to perform the fit, exiting... " << endl ;
-      return;
-    }
-
+  if(nHit + _allowMissingHits < _nActivePlanes) {
+    message<DEBUG> ( log() << "Not enough hits to perform the fit, exiting... " );
+    return;
+  }
 
   double * hitX  = new double[nHit];
   double * hitEx = new double[nHit];
   double * hitY  = new double[nHit];
   double * hitEy = new double[nHit];
   double * hitZ  = new double[nHit];
-  int * hitPlane = new int[nHit];
+  int    * hitPlane = new int[nHit];
 
-  int * nPlaneHits = new int[_nTelPlanes];
-  int * nPlaneChoice = new int[_nTelPlanes];
-  IntVec * planeHitID = new IntVec[_nTelPlanes];
+  int    * nPlaneHits   = new int[_nTelPlanes];
+  int    * nPlaneChoice = new int[_nTelPlanes];
+  IntVec * planeHitID   = new IntVec[_nTelPlanes];
 
   double * bestX  = new double[_nTelPlanes];
   double * bestEx = new double[_nTelPlanes];
@@ -418,12 +404,11 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
       // Ignore hits not matched to any plane
 
-      if(hitPlane[ihit]<0)
-	{
-	  cerr << "Reconstructed hit outside sensor planes z [mm] = " 
-	       << hitZ[ihit] << endl ;
-	  continue;
-	}
+      if(hitPlane[ihit]<0) {
+
+	message<ERROR> ( log() << "Reconstructed hit outside sensor planes z [mm] = "  << hitZ[ihit] );
+
+      }
 
       // Ignore hit, if plane not declared as active (i.e. not used in the fit)
 
@@ -456,11 +441,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 	hitEy[ihit]=_planeResolution[hitPlane[ihit]];
 
 
-      if(debug)
-        cout << "Hit " << ihit
-             << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]  
-             << "   Y = " << hitY[ihit] << " +/- " << hitEy[ihit]  
-             << "   Z = " << hitZ[ihit] << " (plane" << hitPlane[ihit] << ")" << endl ;
+      message<DEBUG> ( log() << "Hit " << ihit
+		       << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]  
+		       << "   Y = " << hitY[ihit] << " +/- " << hitEy[ihit]  
+		       << "   Z = " << hitZ[ihit] << " (plane" << hitPlane[ihit] << ")" );
     }
 
 
@@ -507,12 +491,13 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 	nChoice*=nPlaneChoice[ipl];
 
-	if(debug && _isActive[ipl] && firstTrack)
+	if( _isActive[ipl] && firstTrack )
 	  {
-	    cout << "Plane " << ipl << "  " << nPlaneHits[ipl] << " hit(s), hit IDs : " ;
+	    stringstream ss;
+	    ss << "Plane " << ipl << "  " << nPlaneHits[ipl] << " hit(s), hit IDs :";
 	    for( int ihit=0; ihit < (int) planeHitID[ipl].size() ; ihit ++)
-	      cout << planeHitID[ipl].at(ihit) << " " ;
-	    cout << endl;
+	      ss << planeHitID[ipl].at(ihit) << " " ;
+	    message<DEBUG> ( log() << ss.str() );
 	  }
       }
  
@@ -520,16 +505,14 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     if(nFiredPlanes + _allowMissingHits < _nActivePlanes)
       {
-        if(debug && firstTrack)
-	  cout << "Not enough planes hit to perform the fit, exiting... " << endl ;
-
+        if( firstTrack )
+	  message<DEBUG> ( log() << "Not enough planes hit to perform the fit, exiting... " );
         break;
       }
 
 
-    if(debug && firstTrack)
-      cout << nFiredPlanes << " active sensor planes hit, checking "
-	   << nChoice << " fit possibilities " << endl ;
+    if( firstTrack )  message<DEBUG> ( log() << nFiredPlanes << " active sensor planes hit, checking "
+				       << nChoice << " fit possibilities " );
 
     // Check all track possibilities
 
@@ -614,26 +597,24 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       }
     // End of loop over track possibilities
 
-    if(ibest<0 && debug && firstTrack)
-      cout << "No track fulfilling search criteria found ! " << endl ;
+    if(ibest<0 && firstTrack)
+      message<DEBUG> ( log() << "No track fulfilling search criteria found ! " );
 
     if(ibest>=0)
       {
-	if(debug)
-	  {
-	    cout << "Best fit from choice " << ibest << " : " << nBestFired << " hits " 
-		 << " chi2 = " << chi2best << " including penalties of " << bestPenalty << endl ;
 
-	    for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	      cout << "  X = " << bestX[ipl] << " +/- " << bestEx[ipl] 
-		   << "  Y = " << bestY[ipl] << " +/- " << bestEy[ipl] 
-		   << "  at Z = " << _planePosition[ipl] << endl ;
-	  }
+	message<DEBUG> ( log() << "Best fit from choice " << ibest << " : " << nBestFired << " hits " 
+			 << " chi2 = " << chi2best << " including penalties of " << bestPenalty );
 
+	for(int ipl=0;ipl<_nTelPlanes;ipl++)
+	  message<DEBUG> ( log() <<  "X = " << bestX[ipl] << " +/- " << bestEx[ipl] 
+			   << "  Y = " << bestY[ipl] << " +/- " << bestEy[ipl] 
+			   << "  at Z = " << _planePosition[ipl] ) ;
+	
 	// Write fit result out
-
+	
 	TrackImpl * fittrack = new TrackImpl();
-
+	
 	// Following parameters are not used for Telescope
 	// and are set to zero (just in case)
 	fittrack->setOmega(0.);     // curvature of the track
@@ -750,22 +731,21 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     }
 
   // Clear all working arrays
+  
+  delete [] bestEy;
+  delete [] bestY;
+  delete [] bestEx;
+  delete [] bestX;
+  delete [] planeHitID;
+  delete [] nPlaneChoice;
+  delete [] nPlaneHits;
+  delete [] hitPlane;
+  delete [] hitZ;
+  delete [] hitEy;
+  delete [] hitY;
+  delete [] hitEx;
+  delete [] hitX;
 
-  delete hitX;
-  delete hitEx;
-  delete hitY;
-  delete hitEy;
-  delete hitZ;
-  delete hitPlane;
-
-  delete nPlaneHits;
-  delete nPlaneChoice;
-  delete planeHitID;
-
-  delete bestX;
-  delete bestEx;
-  delete bestY;
-  delete bestEy;
 
   return;
 }
@@ -786,26 +766,26 @@ void EUTelTestFitter::end(){
 
   // Clean memory 
 
-   delete []  _planePosition ;
-   delete _planeThickness  ;
-   delete _planeX0  ;
-   delete _planeResolution ;
-   delete _planeDist ;
-   delete _planeScat ;
-   delete _isActive ;
+   delete [] _planePosition ;
+   delete [] _planeThickness  ;
+   delete [] _planeX0  ;
+   delete [] _planeResolution ;
+   delete [] _planeDist ;
+   delete [] _planeScat ;
+   delete [] _isActive ;
    
-   delete _planeX ;
-   delete _planeEx ;
-   delete _planeY ;
-   delete _planeEy ;
+   delete [] _planeX ;
+   delete [] _planeEx ;
+   delete [] _planeY ;
+   delete [] _planeEy ;
    
-   delete _fitX  ;
-   delete _fitEx ;
-   delete _fitY ;
-   delete _fitEy ;
-   delete _fitArray ;
+   delete [] _fitX  ;
+   delete [] _fitEx ;
+   delete [] _fitY ;
+   delete [] _fitEy ;
+   delete [] _fitArray ;
    
-   delete _nominalFitArray ;
+   delete [] _nominalFitArray ;
    delete [] _nominalError ;
 }
 
