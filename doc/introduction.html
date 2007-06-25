@@ -415,10 +415,55 @@ the sake of clarity
 
 @page preparation The preparation steps
 
-For the time being there are two preparation steps available within
+For the time being there are three preparation steps available within
 the EUTelescope package, for the calculation of calibration constants
 (@ref pedestal) and for eta functions (@ref eta).
 
+@section conversion The raw data converter
+
+This is the step zero of the analysis chain. The final DAQ software
+will save an output file directly formatted in LCIO with the proper
+event structure and the correct event model. For the time, especially 
+for debug reason, the DAQ is saving data on file according to its own
+native data format using its built-in Serializer. 
+To translate from the native raw format to the LCIO raw format, a
+ specific data reader has been developed (eutelescope::EUTelMimoTelReader). 
+The basic idea behind this reader is instead of re-writing and
+ re-inventing the deserializing procedure the DAQ software is using to
+ write the output file, the EUTelescope is linking against the
+ libeudaq shared library and using directly the native
+ deserializer. This imply that the EUDAQ software should be installed
+ in the system and available. To avoid building problem, this reader
+ is actually built only if the USE_EUDAQ is defined. Here below an
+ example of what should be added to the userlib.gmk and to the env.sh
+ 
+@code
+#--------------------------------------------------------------------------------
+#     EUDAQ
+#--------------------------------------------------------------------------------
+USERLIBS += -L/home/toto/ilc/eudaq/main -leudaq
+USERINCLUDES += -DUSE_EUDAQ -DEUDAQ_FUNC=__PRETTY_FUNCTION__
+USERINCLUDES += -DEUDAQ_PLATFORM=PF_LINUX -I/home/toto/ilc/eudaq/main/include
+@endcode
+
+@code
+#--------------------------------------------------------------------------------
+#     EUDAQ
+#--------------------------------------------------------------------------------
+export EUDAQ=/home/toto/ilc/eudaq/pro
+export LD_LIBRARY_PATH="$EUDAQ/main:$LD_LIBRARY_PATH"
+@endcode 
+
+Another reader (eutelescope::EUTelStrasMimoTelReader) has been
+ prepared in order to convert the output of the IPHC DAQ in LCIO
+ format. In this case we didn't follow the approach used for the EUDAQ
+ since we don't have any compatible libraries. So binary data are
+ reintrepret according to
+ eutelescope::EUTelStrasMimoTelReader::StrasEventHeader,
+ eutelescope::EUTelStrasMimoTelReader::StrasEventTrailer and
+ eutelescope::EUTelStrasMimoTelReader::StrasRunHeader. <br>
+This reader should be clean up and refurbished in order to make it
+ more general.
 
 @section pedestal The pedestal and noise calculator
 
