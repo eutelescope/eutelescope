@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.4 2007-06-21 18:28:35 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.5 2007-06-26 16:19:19 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -163,6 +163,8 @@ void EUTelTestFitter::init() {
   geometryFile >> _nTelPlanes >> _iDUT ;
   _iDUT-- ;
 
+  _planeShiftX     = new double[_nTelPlanes];
+  _planeShiftY     = new double[_nTelPlanes];
   _planePosition   = new double[_nTelPlanes];
   _planeThickness  = new double[_nTelPlanes];
   _planeX0         = new double[_nTelPlanes];
@@ -177,7 +179,9 @@ void EUTelTestFitter::init() {
 
       // All dimensions should be given in mm !!!
 
-      geometryFile >> _planePosition[ipl]
+      geometryFile >> _planeShiftX[ipl]
+                   >> _planeShiftY[ipl]
+                   >> _planePosition[ipl]
                    >> _planeThickness[ipl]
                    >> _planeX0[ipl]
                    >> iActive 
@@ -211,7 +215,9 @@ void EUTelTestFitter::init() {
 	else
 	  ss << "Passive plane at" ; 
       
-      ss << "  Z [mm] = " << _planePosition[ipl] 
+      ss << "  X [mm] = " << _planeShiftX[ipl] 
+         << "  Y [mm] = " << _planeShiftY[ipl] 
+         << "  Z [mm] = " << _planePosition[ipl] 
 	 << " dZ [um] = " << _planeThickness[ipl]*1000. ;
       
       if(_isActive[ipl])
@@ -423,6 +429,11 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
          _maxPlaneHits-planeHitID[hitPlane[ihit]].size()<=0) 
 	continue ;
 
+      // Hit will be used: correct for plane alignment
+
+      hitX[ihit] += _planeShiftX[hitPlane[ihit]];
+      hitY[ihit] += _planeShiftY[hitPlane[ihit]];
+ 
       // Add hit to hit list for given plane - to be used in track selection
 
       planeHitID[hitPlane[ihit]].push_back(ihit);
@@ -802,6 +813,8 @@ void EUTelTestFitter::end(){
 
   // Clean memory 
 
+  delete [] _planeShiftX ;
+  delete [] _planeShiftY ;
   delete [] _planePosition ;
   delete [] _planeThickness  ;
   delete [] _planeX0  ;

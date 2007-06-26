@@ -64,6 +64,8 @@ namespace eutelescope {
    * Following N lines include description of telescope planes.
    * Planes have to be ordered in position along the beam line ! 
    * For each plane following details have to be given:
+   * \li plane alignment correction in horizontal direction in mm (float)
+   * \li plane alignment correction in vertical direction in mm (float)
    * \li position of the plane along beam axis in mm (float)
    * \li thickness of the plane in mm (float)
    * \li radiation length in the plane material in mm (float)
@@ -128,7 +130,7 @@ namespace eutelescope {
    * many hits)
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelTestFitter.h,v 1.1 2007-06-04 06:45:03 bulgheroni Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.2 2007-06-26 16:19:19 zarnecki Exp $
    * \date 2007.06.04
    *
    */ 
@@ -267,6 +269,8 @@ namespace eutelescope {
     int _nActivePlanes;
     int _iDUT;
   
+    double * _planeShiftX;
+    double * _planeShiftY;
     double * _planePosition;
     double * _planeThickness;
     double * _planeX0;
