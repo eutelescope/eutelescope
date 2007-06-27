@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelHistogramManager.cc,v 1.1 2007-06-17 22:41:19 bulgheroni Exp $
+// Version: $Id: EUTelHistogramManager.cc,v 1.2 2007-06-27 16:58:05 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -11,290 +11,144 @@
  *
  */
 
-#ifdef EXPERIMENTAL
+// #ifdef EXPERIMENTAL
 // personal includes ".h"
 #include "EUTelHistogramManager.h"
-#include "EUTelVirtualCluster.h"
+
+// marlin includes ".h"
+#include "marlin/Exceptions.h"
+#include "marlin/tinyxml.h"
 
 // lcio includes <.h>
-#include <LCIOTypes.h>
-#include <IMPL/TrackerDataImpl.h>
 
 // system includes
+#include <string>
 #include <map>
-#include <cmath>
-#include <algorithm>
-#include <vector>
+#include <exception>
+#include <iostream>
 
-using namespace eutelescope;
-using namespace IMPL;
+
 using namespace std;
+using namespace marlin;
+using namespace eutelescope;
 
 
-EUTelHistogramManager::EUTelHistogramManager(TrackerDataImpl * data) : EUTelVirtualCluster(data) { _trackerData = data; } 
 
 
-float EUTelHistogramManager::getDistance(EUTelVirtualCluster * otherCluster) const {
+EUTelHistogramManager::~EUTelHistogramManager() {
 
-  int xOtherSeed, yOtherSeed;
-  otherCluster->getSeedCoord(xOtherSeed, yOtherSeed);
-
-  int xThisSeed, yThisSeed;
-  this->getSeedCoord(xThisSeed, yThisSeed);
-
-  return sqrt( pow(static_cast<double> (xThisSeed - xOtherSeed), 2) + pow(static_cast<double> (yThisSeed - yOtherSeed), 2) );
-
-}
-
-float EUTelHistogramManager::getExternalRadius() const {
-
-  int xSize, ySize;
-  getClusterSize(xSize, ySize);
-
-  return 0.5 * sqrt( pow(static_cast<double> (xSize), 2) + pow(static_cast<double> (ySize), 2) );
-
-}
-
-
-float EUTelHistogramManager::getTotalCharge() const {
-  
-  float totalCharge = 0;
-  
-  FloatVec::const_iterator iter = _trackerData->getChargeValues().begin();
-
-  while (iter != _trackerData->getChargeValues().end()) {
-    totalCharge += (*iter++);
-  }
-
-  return totalCharge;
-}
-
-void EUTelHistogramManager::getCenterOfGravityShift(float& xCoG, float& yCoG) const {
-
-  int xSize, ySize;
-  getClusterSize(xSize, ySize);
-
-  float normalization = 0;
-  float tempX = 0;
-  float tempY = 0;
-
-  int iPixel = 0;
-  for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
-    for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
-      normalization += _trackerData->getChargeValues()[iPixel];
-      tempX         += xPixel * _trackerData->getChargeValues()[iPixel];
-      tempY         += yPixel * _trackerData->getChargeValues()[iPixel];
-      ++iPixel;
-    }
-  }
-
-  if ( normalization != 0)  {
-    xCoG = tempX / normalization;
-    yCoG = tempY / normalization;
-  } else {
-    xCoG = 0;
-    yCoG = 0;
-  }
-
-}
-
-void EUTelHistogramManager::getCenterOfGravityShift(float& xCoG, float& yCoG, int xSize, int ySize) const {
-
-  int xCluSize, yCluSize;
-  getClusterSize(xCluSize, yCluSize);
-  
-  if ( ( xSize >= xCluSize ) && ( ySize >= yCluSize ) ) {
-    getCenterOfGravityShift(xCoG, yCoG);
-    return;
-  } 
-
-  float normalization = 0;
-  float tempX         = 0; 
-  float tempY         = 0;
-  int   iPixel        = 0;
-
-  for (int yPixel = -1 * (yCluSize / 2); yPixel <= (yCluSize / 2); yPixel++) {
-    for (int xPixel = -1 * (xCluSize / 2); xPixel <= (xCluSize / 2); xPixel++) {
-      if ( ( xPixel >= -1 * (xSize / 2) ) &&  ( xPixel <= (xSize / 2) ) &&
-	   ( yPixel >= -1 * (ySize / 2) ) &&  ( yPixel <= (ySize / 2) ) ) {
-	normalization += _trackerData->getChargeValues()[iPixel];
-	tempX         += xPixel * _trackerData->getChargeValues()[iPixel];
-	tempY         += yPixel * _trackerData->getChargeValues()[iPixel];
-      } 
-      ++iPixel;
-    }
-  }
-  
-  if ( normalization != 0 ) {
-    xCoG = tempX / normalization;
-    yCoG = tempY / normalization;
-  } else {
-    xCoG = 0;
-    yCoG = 0;
-  }
-}
-
-
-void EUTelHistogramManager::getCenterOfGravityShift(float& xCoG, float& yCoG, int nPixel) const {
-  
-  int xSize, ySize;
-  getClusterSize(xSize, ySize);
-
-  if ( nPixel >= xSize * ySize ) {
-    getCenterOfGravityShift(xCoG, yCoG);
-    return ; 
-  }
-
-  map<int, float> highSignalPixel;
-  FloatVec        vectorCopy(_trackerData->getChargeValues());
-  int             iPixel = 0;
-  while ( iPixel != nPixel - 1 ) {
-    
-    float maxSignal = 0;
-    int   maxIndex  = 0;
-    int   index;
-    FloatVec::iterator maxIter;
-    FloatVec::iterator iter = vectorCopy.begin();
-    
-    while ( iter != vectorCopy.end() ) {
-      if ( *iter > maxSignal ) {
-	maxSignal = *(iter);
-	maxIndex  = index;
-	maxIter   = iter;
-      }
-      ++index; ++iter;
-    }
-    highSignalPixel.insert( make_pair(maxIndex, maxSignal) ) ;
-    vectorCopy.erase(maxIter);
-    ++iPixel;
-  }
-
-  iPixel = 0;
-  float normalization = 0;
-  float tempX         = 0;
-  float tempY         = 0;
-  map<int , float>::iterator mapIter;
-  for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
-    for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
-      mapIter = highSignalPixel.find( iPixel );
-      if ( mapIter != highSignalPixel.end() ) {
-      	normalization += mapIter->second;
-      	tempX         += xPixel * mapIter->second;
-      	tempY         += yPixel * mapIter->second;
-      }
-      ++iPixel;
-    }
-  }
-
-  if ( normalization != 0 ) {
-    xCoG = tempX / normalization;
-    yCoG = tempY / normalization;
-  } else {
-    xCoG = 0;
-    yCoG = 0;
-  }
-
-}
-
-
-void EUTelHistogramManager::getCenterOfGravity(float& xCoG, float& yCoG) const {
-
-  int xSeed, ySeed;
-  getSeedCoord(xSeed, ySeed);
-
-  getCenterOfGravityShift(xCoG, yCoG);
-  
-  xCoG += xSeed;
-  yCoG += ySeed;
-
-  
-}
-  
-  
-void EUTelHistogramManager::setClusterQuality(ClusterQuality quality) {
-
-  lcio::long64 cell1 = static_cast<lcio::long64> (_trackerData->getCellID1()) ;
-
-  int rhs = 15;
-  lcio::long64  emptyMask = ~( 0x1F << rhs );
-  lcio::long64  maskedQuality = ( (static_cast<int> (quality) & 0x1F ) << rhs );
-
-  // first apply an empty mask for the quality bit ranges
-  cell1 = cell1 & emptyMask;
-  
-  // now apply the maskedQuality
-  cell1 = cell1 | maskedQuality;
-
-  // apply the changes
-  _trackerData->setCellID1(cell1);
-
-}
-
-
-float EUTelHistogramManager::getSeedCharge() const {
-  
-  return *max_element( _trackerData->getChargeValues().begin(),
-		       _trackerData->getChargeValues().end() );
-}
-
-float EUTelHistogramManager::getClusterCharge(int nPixel) const {
-
-  vector<float > vectorCopy(_trackerData->getChargeValues());
-  sort(vectorCopy.begin(), vectorCopy.end(), greater<float>());
-
-  vector<float >::iterator iter = vectorCopy.begin();
-  float charge = 0;
-  while ( iter != vectorCopy.begin() + nPixel ) {
-    charge += *(iter);
+  map< string, EUTelHistogramInfo * >::iterator iter = _histoInfoMap.begin();
+  while ( iter != _histoInfoMap.end() ) {
+    delete iter->second;
     ++iter;
   }
-  return charge;
+  _histoInfoMap.clear();
 
 }
 
-vector<float> EUTelHistogramManager::getClusterCharge(vector<int > nPixels) const {
+bool EUTelHistogramManager::init() throw( std::exception, marlin::ParseException ) {
+
   
-  vector< float > clusterSignal;
+  TiXmlDocument * doc = new TiXmlDocument;
 
-  vector<float> vectorCopy(_trackerData->getChargeValues()); 
-  sort(vectorCopy.begin(), vectorCopy.end(), greater<float>());
-  vector<float >::iterator iter;
+  if ( doc->LoadFile( _histoInfoFileName ) ) {
 
-  for (unsigned int i = 0; i < nPixels.size(); i++) {
-    iter = vectorCopy.begin();
-    float charge = 0;
-    while ( iter != vectorCopy.begin() + nPixels[i] ) {
-      charge += (*iter);
-      ++iter;
+    TiXmlHandle    hDoc(doc);
+    TiXmlHandle    hRoot(0);
+    TiXmlElement * pElem;
+    
+    pElem = hDoc.FirstChildElement().Element();
+    if ( !pElem ) {
+      delete doc;
+      throw ParseException( string( "EUTelHistogramManager::init: no root tag <HistogramManager> ... </HistogramManager> "
+				    "found in ") + _histoInfoFileName );
+    } else {
+      hRoot = TiXmlHandle(pElem);
     }
-    clusterSignal.push_back(charge);
-  }
-  
-  return clusterSignal;
+	
 
-}
+    _histoInfoMap.clear();
 
-float EUTelHistogramManager::getClusterCharge(int xSize, int ySize) const {
-  
-  int xCluSize, yCluSize;
-  getClusterSize(xCluSize, yCluSize);
-  
-  if ( ( xSize >= xCluSize ) && ( ySize >= yCluSize ) ) {
-    return getTotalCharge();
-  }
-
-  int iPixel = 0;
-  float charge = 0;
-
-  for (int yPixel = -1 * (yCluSize / 2); yPixel <= (yCluSize / 2); yPixel++) {
-    for (int xPixel = -1 * (xCluSize / 2); xPixel <= (xCluSize / 2); xPixel++) {
-      if ( ( xPixel >= -1 * (xSize / 2) ) &&  ( xPixel <= (xSize / 2) ) &&
-	   ( yPixel >= -1 * (ySize / 2) ) &&  ( yPixel <= (ySize / 2) ) ) {
-	charge += _trackerData->getChargeValues()[iPixel];
-      } 
-      ++iPixel;
+    TiXmlNode * nHistosBlock = hRoot.FirstChild( "histos" ).ToNode();
+    if ( !nHistosBlock ) {
+      delete doc;
+      throw ParseException( string( "EUTelHistogramManager::init: no <histos> ... </histos> block found in ")  + _histoInfoFileName);
     }
+    TiXmlElement * pHistoNode = hRoot.FirstChild( "histos" ).FirstChild().Element();
+    while ( pHistoNode ) {
+      EUTelHistogramInfo * histoInfo = new EUTelHistogramInfo;
+      histoInfo->_name  = pHistoNode->Attribute("name");
+
+      if ( pHistoNode->Attribute("type") == NULL ) {
+	delete doc;
+	throw ParseException( string( "EUTelHistogramManager::init: no type found for " + histoInfo->_name ) );
+      } else   histoInfo->_type  = pHistoNode->Attribute("type");
+
+      if ( pHistoNode->Attribute("title") == NULL  ) histoInfo->_title = "";
+      else histoInfo->_title = pHistoNode->Attribute("title");
+
+      if ( ( histoInfo->_type != string("C1D") ) &&
+	   ( histoInfo->_type != string("C2D") ) &&
+	   ( histoInfo->_type != string("C3D") ) ) {
+	pHistoNode->QueryIntAttribute("xBin", &(histoInfo->_xBin));
+	pHistoNode->QueryFloatAttribute("xMin", &(histoInfo->_xMin));
+	pHistoNode->QueryFloatAttribute("xMax", &(histoInfo->_xMax));
+	
+	if ( ( histoInfo->_type == string("H2D") ) || 
+	     ( histoInfo->_type == string("H3D") ) ) {
+	  pHistoNode->QueryIntAttribute("yBin", &(histoInfo->_yBin));
+	  pHistoNode->QueryFloatAttribute("yMin", &(histoInfo->_yMin));
+	  pHistoNode->QueryFloatAttribute("yMax", &(histoInfo->_yMax));
+	}
+
+	if ( histoInfo->_type == string("H3D") ) {
+	  pHistoNode->QueryIntAttribute("zBin", &(histoInfo->_zBin));
+	  pHistoNode->QueryFloatAttribute("zMin", &(histoInfo->_zMin));
+	  pHistoNode->QueryFloatAttribute("zMax", &(histoInfo->_zMax));
+	}
+
+	if ( histoInfo->_type == string("P1D")) {
+	  pHistoNode->QueryFloatAttribute("yMin", &(histoInfo->_yMin));
+	  pHistoNode->QueryFloatAttribute("yMax", &(histoInfo->_yMax));
+	}
+	
+	if ( histoInfo->_type == string("P2D")) {
+	  pHistoNode->QueryIntAttribute("yBin", &(histoInfo->_yBin));
+	  pHistoNode->QueryFloatAttribute("yMin", &(histoInfo->_yMin));
+	  pHistoNode->QueryFloatAttribute("yMax", &(histoInfo->_yMax));
+	  pHistoNode->QueryFloatAttribute("zMin", &(histoInfo->_zMin));
+	  pHistoNode->QueryFloatAttribute("zMax", &(histoInfo->_zMax));
+	}
+	
+      }
+      EUTelHistogramInfo pippo = *histoInfo;
+      cout << pippo << endl;
+      _histoInfoMap.insert( make_pair( histoInfo->_name, histoInfo ) );
+      pHistoNode = pHistoNode->NextSiblingElement();
+    }
+
+  } else {
+    
+    stringstream ss;
+    ss << "EUTelHistogramManager::init error in file " << _histoInfoFileName 
+       << ", row: " << doc->ErrorRow() << ", col: " << doc->ErrorCol() << " : " 
+       << doc->ErrorDesc();
+    delete doc;
+    throw ParseException( ss.str() );
   }
-  return charge;
+
+  return true;
+
 }
-#endif 
+
+EUTelHistogramInfo * EUTelHistogramManager::getHistogramInfo(string histoName) const {
+
+  std::map< std::string , EUTelHistogramInfo *>::const_iterator iter = _histoInfoMap.find(histoName);
+
+  if ( iter == _histoInfoMap.end() ) return 0x0;
+  return iter->second;
+
+}
+
+
+// #endif 
