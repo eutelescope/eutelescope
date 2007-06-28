@@ -155,7 +155,7 @@ namespace eutelescope {
    *  saving the output pedestal file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.14 2007-05-31 15:24:32 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.15 2007-06-28 07:29:20 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -772,6 +772,15 @@ namespace eutelescope {
      */
     static std::string _statusMapHistoName;
 #endif 
+
+    //! Histogram switch
+    /*! Useful flag to switch on or off the histogramming
+     *  operations. In case of problem with booking or filling this
+     *  switch will be turned off even if marlin is using AIDA and the
+     *  AIDAProcessor is available.
+     *
+     */
+    bool _histogramSwitch;
 
   };
 
