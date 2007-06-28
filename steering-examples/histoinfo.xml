@@ -1,0 +1,28 @@
+<HistogramManager>
+  <histos>
+
+    <!-- EUTelCalibrateEvent --> 
+    <histo name="RawDataDistHisto"  type="H1D" xBin="4096" xMin="-2048.5" xMax="2047.5"/>
+    <histo name="DataDistHisto"     type="H1D" xBin="5000" xMin="-500"    xMax="500" />
+    <histo name="CommonDistHisto"   type="H1D" xBin="100"  xMin="-10"     xMax="10" />
+
+    <!-- EUTelHitMaker -->
+    <histo name="HitCloudLocal"     type="C2D" />
+    <histo name="HitCloudTelescope" type="C2D" />
+    <histo name="DensityPlot"       type="C3D" />
+
+    <!-- EUTelPedestalNoiseProcessor -->
+    <histo name="PedeDist"          type="H1D" xBin="100"  xMin="-20"     xMax="29"/>
+    <histo name="NoiseDist"         type="H1D" xBin="100"  xMin="-5"      xMax="15"/>
+    <histo name="CommonMode"        type="H1D" xBin="100"  xMin="-2"      xMax="2" />
+
+    <!-- EUTelHistogramMaker and EUTelClusteringProcessor -->
+    <histo name="clusterSignal"     type="H1D" xBin="500" xMin="0"       xMax="1000"/>
+    <histo name="seedSignal"        type="H1D" xBin="500"  xMin="0"       xMax="500"/>
+
+  </histos>
+</HistogramManager>
+  
+
+
+
