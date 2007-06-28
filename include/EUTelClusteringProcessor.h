@@ -128,7 +128,7 @@ namespace eutelescope {
    *  @param _clusterCut the threshold to select clusters.
    *  
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.8 2007-06-13 11:45:43 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.9 2007-06-28 07:25:27 bulgheroni Exp $
    *
    */
 
@@ -511,6 +511,16 @@ namespace eutelescope {
      *  histograms.
      */ 
     bool _fillHistos;
+
+    //! The histogram information file
+    /*! This string contain the name of the histogram information
+     *  file. This is selected by the user in the steering file.
+     * 
+     *  @see eutelescope::EUTelHistogramManager
+     *  @see eutelescope::EUTelHistogramInfo
+     */ 
+    std::string _histoInfoFileName;    
+
 
   private:
 

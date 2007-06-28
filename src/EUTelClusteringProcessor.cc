@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.16 2007-06-14 22:21:24 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.17 2007-06-28 07:25:27 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -64,7 +64,7 @@ std::string EUTelClusteringProcessor::_seedSignalHistoName      = "seedSignal";
 std::string EUTelClusteringProcessor::_hitMapHistoName          = "hitMap";
 #endif
 
-EUTelClusteringProcessor::EUTelClusteringProcessor () :Processor("EUTelClusteringProcessor") {
+EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteringProcessor") {
 
   // modify processor description
   _description =
@@ -114,6 +114,9 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () :Processor("EUTelClusterin
   registerProcessorParameter ("ClusterCut",
 			      "Threshold in SNR for cluster identification",
 			      _clusterCut, static_cast<float> (3.0));
+
+  registerProcessorParameter("HistoInfoFileName", "This is the name of the histogram information file",
+			     _histoInfoFileName, string( "histoinfo.xml" ) );
 
 #ifdef MARLIN_USE_AIDA
   IntVec clusterNxNExample;
@@ -594,7 +597,22 @@ void EUTelClusteringProcessor::bookHistos() {
 #ifdef MARLIN_USE_AIDA
   // histograms are grouped in loops and detectors
   message<MESSAGE> ( log() << "Booking histograms " );
+  auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+  EUTelHistogramInfo    * histoInfo;
+  bool                    isHistoManagerAvailable;
 
+  try { 
+    isHistoManagerAvailable = histoMgr->init();
+  } catch ( ios::failure& e) {
+    message<ERROR> ( log() << "I/O problem with " << _histoInfoFileName << "\n"
+		     << "Continuing without histogram manager"    );
+    isHistoManagerAvailable = false;
+  } catch ( ParseException& e ) {
+    message<ERROR> ( log() << e.what() << "\n"
+		     << "Continuing without histogram manager" );
+    isHistoManagerAvailable = false;
+  }
+  
 
   string tempHistoName;
   string basePath;
@@ -614,15 +632,25 @@ void EUTelClusteringProcessor::bookHistos() {
       tempHistoName = ss.str();
     } 
 
-    const int    clusterNBin = 1000;
-    const double clusterMin  = 0.;
-    const double clusterMax  = 1000.;
-
+    int    clusterNBin  = 1000;
+    double clusterMin   = 0.;
+    double clusterMax   = 1000.;
+    string clusterTitle = "Cluster spectrum with all pixels";
+    if ( isHistoManagerAvailable ) {
+      histoInfo = histoMgr->getHistogramInfo( _clusterSignalHistoName );
+      if ( histoInfo ) {
+	message<DEBUG> ( log() << (* histoInfo ) );
+	clusterNBin = histoInfo->_xBin;
+	clusterMin  = histoInfo->_xMin;
+	clusterMax  = histoInfo->_xMax;
+	if ( histoInfo->_title != "" ) clusterTitle = histoInfo->_title;
+      }
+    }      
     AIDA::IHistogram1D * clusterSignalHisto = 
       AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 
 								clusterNBin,clusterMin,clusterMax);
     _aidaHistoMap.insert(make_pair(tempHistoName, clusterSignalHisto));
-    clusterSignalHisto->setTitle("Cluster spectrum with all pixels");
+    clusterSignalHisto->setTitle(clusterTitle.c_str());
 
     
     vector<int >::iterator iter = _clusterSpectraNVector.begin();
@@ -669,21 +697,30 @@ void EUTelClusteringProcessor::bookHistos() {
       ++iter;
     }
 
-
-    int    seedNBin = 500;
-    double seedMin  = 0.;
-    double seedMax  = 500.;
-
     {
       stringstream ss;
       ss << _seedSignalHistoName << "-d" << iDetector;
       tempHistoName = ss.str();
-    } 
+    }
+    int    seedNBin  = 500;
+    double seedMin   = 0.;
+    double seedMax   = 500.;
+    string seedTitle = "Seed pixel spectrum"; 
+    if ( isHistoManagerAvailable ) {
+      histoInfo = histoMgr->getHistogramInfo( _seedSignalHistoName );
+      if ( histoInfo ) {
+	message<DEBUG> ( log() << (* histoInfo ) );
+	seedNBin = histoInfo->_xBin;
+	seedMin  = histoInfo->_xMin;
+	seedMax  = histoInfo->_xMax;
+	if ( histoInfo->_title != "" ) seedTitle = histoInfo->_title;
+      }
+    }
     AIDA::IHistogram1D * seedSignalHisto =
       AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
 								seedNBin, seedMin, seedMax);
     _aidaHistoMap.insert(make_pair(tempHistoName, seedSignalHisto));
-    seedSignalHisto->setTitle("Seed pixel spectrum");
+    seedSignalHisto->setTitle(seedTitle.c_str());
   
     
     {
