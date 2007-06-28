@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.8 2007-06-19 13:50:08 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.9 2007-06-28 07:27:07 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -18,6 +18,7 @@
 #include "EUTelHistogramMaker.h"
 #include "EUTELESCOPE.h"
 #include "EUTelExceptions.h"
+#include "EUTelHistogramManager.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -63,6 +64,9 @@ EUTelHistogramMaker::EUTelHistogramMaker () : Processor("EUTelHistogramMaker") {
 			   "Input tracker pulse collection",
 			   _pulseCollectionName, string("pulse"));
 
+  registerProcessorParameter("HistoInfoFileName", "This is the name of the histogram information file",
+			     _histoInfoFileName, string( "histoinfo.xml" ) );
+
   IntVec clusterNxNExample;
   clusterNxNExample.push_back(3);
   clusterNxNExample.push_back(5);
@@ -81,9 +85,6 @@ EUTelHistogramMaker::EUTelHistogramMaker () : Processor("EUTelHistogramMaker") {
 			    "For example 7 means filling the cluster spectra with the 7 most significant pixels",
 			    _clusterSpectraNVector, clusterNExample );
 
-  registerOptionalParameter("EventBrowserHistograms","Switch this parameter to on if you want to have event by event information "
-			  " in the histogram output file.", _eventBrowserSwitch, static_cast< bool > ( false ) );
-  
   _isFirstEvent = true;
 }
 
@@ -93,11 +94,6 @@ void EUTelHistogramMaker::init () {
   // usually a good idea to
   printParameters ();
 
-  if ( _eventBrowserSwitch ) {
-    message<MESSAGE> ( "The event browser switch has been turned on and will slow down the "
-		       "histogram filling and the produce a big output histogram file" );
-  }
-  
   _iRun = 0;
   _iEvt = 0;
 
@@ -144,31 +140,6 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 
 #ifdef MARLIN_USE_AIDA
 
-  AIDA::IHistogram2D * eventBrowserHistos[_noOfDetector];
-  if ( _eventBrowserSwitch ) {
-    int eventNumber = evt->getEventNumber();
-    stringstream ss;
-    ss << "event-"  << eventNumber ;
-    AIDAProcessor::tree(this)->mkdir(ss.str().c_str());
-    ss << "/";
-    for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++ ) {
-      int     xBin = _maxX[iDetector] - _minX[iDetector] + 1;
-      double  xMin = static_cast<double >(_minX[iDetector]) - 0.5;
-      double  xMax = static_cast<double >(_maxX[iDetector]) + 0.5;
-      int     yBin = _maxY[iDetector] - _minY[iDetector] + 1;
-      double  yMin = static_cast<double >(_minY[iDetector]) - 0.5;
-      double  yMax = static_cast<double >(_maxY[iDetector]) + 0.5;
-      stringstream ss1;
-      ss1 << "ev-" << eventNumber << "-d" << iDetector;
-      eventBrowserHistos[iDetector] =
-	AIDAProcessor::histogramFactory(this)->createHistogram2D( (ss.str() + ss1.str() ).c_str() ,
-								  xBin, xMin, xMax, yBin, yMin, yMax);
-      stringstream ss2;
-      ss2 << "Event " << eventNumber << " on detector " << iDetector;
-      eventBrowserHistos[iDetector]->setTitle( ss2.str().c_str() );
-    }
-  }
-
   if ( (_iEvt % 10) == 0 ) 
     message<MESSAGE> ( log() << "Filling histogram on event " << _iEvt );
   
@@ -191,21 +162,6 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 
     int detectorID = cluster->getDetectorID();
     string tempHistoName;
-
-    if ( _eventBrowserSwitch ) {
-      int xSize, ySize, xSeed, ySeed;
-      cluster->getClusterSize(xSize, ySize);
-      cluster->getSeedCoord(xSeed, ySeed);
-
-      vector<float >::const_iterator chargeIter = cluster->trackerData()->getChargeValues().begin();
-      for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
-	for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
-	  eventBrowserHistos[detectorID]->fill( xPixel + xSeed, yPixel + ySeed, (*chargeIter) );
-	  ++chargeIter;
-	}
-      }
-    }
-
 
     {
       stringstream ss;
@@ -280,7 +236,22 @@ void EUTelHistogramMaker::bookHistos() {
 #ifdef MARLIN_USE_AIDA
   // histograms are grouped in loops and detectors
   message<MESSAGE> ( log() << "Booking histograms " );
+  
+  auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+  EUTelHistogramInfo    * histoInfo;
+  bool                    isHistoManagerAvailable;
 
+  try {
+    isHistoManagerAvailable = histoMgr->init();
+  } catch ( ios::failure& e) {
+    message<ERROR> ( log() << "I/O problem with " << _histoInfoFileName << "\n"
+		     << "Continuing without histogram manager"    );
+    isHistoManagerAvailable = false;
+  } catch ( ParseException& e ) {
+    message<ERROR> ( log() << e.what() << "\n"
+		     << "Continuing without histogram manager" );
+    isHistoManagerAvailable = false;
+  }
 
   string tempHistoName;
   string basePath;
@@ -299,16 +270,26 @@ void EUTelHistogramMaker::bookHistos() {
       ss << _clusterSignalHistoName << "-d" << iDetector;
       tempHistoName = ss.str();
     } 
-
-    const int    clusterNBin = 1000;
-    const double clusterMin  = 0.;
-    const double clusterMax  = 1000.;
-
+    
+    int    clusterNBin  = 1000;
+    double clusterMin   = 0.;
+    double clusterMax   = 1000.;
+    string clusterTitle = "Cluster spectrum with all pixels";
+    if ( isHistoManagerAvailable ) {
+      histoInfo = histoMgr->getHistogramInfo(_clusterSignalHistoName);
+      if ( histoInfo ) {
+	message<DEBUG> ( log() << (* histoInfo ) );
+	clusterNBin = histoInfo->_xBin;
+	clusterMin  = histoInfo->_xMin;
+	clusterMax  = histoInfo->_xMax;
+	if ( histoInfo->_title != "" ) clusterTitle = histoInfo->_title;
+      }
+    }
     AIDA::IHistogram1D * clusterSignalHisto = 
       AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 
 								clusterNBin,clusterMin,clusterMax);
     _aidaHistoMap.insert(make_pair(tempHistoName, clusterSignalHisto));
-    clusterSignalHisto->setTitle("Cluster spectrum with all pixels");
+    clusterSignalHisto->setTitle(clusterTitle.c_str());
 
     
     vector<int >::iterator iter = _clusterSpectraNVector.begin();
@@ -355,21 +336,31 @@ void EUTelHistogramMaker::bookHistos() {
       ++iter;
     }
 
-
-    int    seedNBin = 500;
-    double seedMin  = 0.;
-    double seedMax  = 500.;
-
     {
       stringstream ss;
       ss << _seedSignalHistoName << "-d" << iDetector;
       tempHistoName = ss.str();
     } 
+
+    int    seedNBin  = 500;
+    double seedMin   = 0.;
+    double seedMax   = 500.;
+    string seedTitle = "Seed pixel spectrum";
+    if ( isHistoManagerAvailable ) {
+      histoInfo = histoMgr->getHistogramInfo( _seedSignalHistoName );
+      if ( histoInfo ) {
+	message<DEBUG> ( log() << (* histoInfo ) );
+	seedNBin = histoInfo->_xBin;
+	seedMin  = histoInfo->_xMin;
+	seedMax  = histoInfo->_xMax;
+	if ( histoInfo->_title != "" ) seedTitle = histoInfo->_title;
+      }
+    }
     AIDA::IHistogram1D * seedSignalHisto =
       AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
 								seedNBin, seedMin, seedMax);
     _aidaHistoMap.insert(make_pair(tempHistoName, seedSignalHisto));
-    seedSignalHisto->setTitle("Seed pixel spectrum");
+    seedSignalHisto->setTitle(seedTitle.c_str());
   
     
     {
@@ -390,7 +381,6 @@ void EUTelHistogramMaker::bookHistos() {
     hitMapHisto->setTitle("Hit map");
 
   }
-  
   
 #else
   message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );

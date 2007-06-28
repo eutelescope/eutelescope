@@ -77,7 +77,7 @@ namespace eutelescope {
    *  None
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHistogramMaker.h,v 1.3 2007-06-16 10:57:33 bulgheroni Exp $ 
+   *  @version $Id: EUTelHistogramMaker.h,v 1.4 2007-06-28 07:27:07 bulgheroni Exp $ 
    *
    */
   
@@ -161,16 +161,14 @@ namespace eutelescope {
      */
     std::string _pulseCollectionName;
 
-    //! Event browser switch
-    /*! When this switch is turned on (by the user in the steering
-     *  file), for each event there will be a specific folder
-     *  containing a 2D histogram for each detector containing the
-     *  cluster information. This is very useful since those histos
-     *  can be afterward browsed in order to see if there are good
-     *  track candidates.
-     *
-     */
-    bool _eventBrowserSwitch;
+    //! The histogram information file
+    /*! This string contain the name of the histogram information
+     *  file. This is selected by the user in the steering file.
+     * 
+     *  @see eutelescope::EUTelHistogramManager
+     *  @see eutelescope::EUTelHistogramInfo
+     */ 
+    std::string _histoInfoFileName;
 
   private:
 
