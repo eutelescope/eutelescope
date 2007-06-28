@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.6 2007-06-21 17:00:24 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.7 2007-06-28 07:30:20 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -189,23 +189,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
   
   if ( evt->getEventType() == kEORE ) {
 
-#ifdef MARLIN_USE_AIDA
-    if ( _histogramSwitch ) {
-      
-      message<DEBUG> ( log() << "Converting clouds to histograms before leaving " );
-      
-      map<string, AIDA::IBaseHistogram *>::iterator mapIter = _aidaHistoMap.begin();
-      while ( mapIter != _aidaHistoMap.end() ) {
-
- 	AIDA::ICloud * cloud = dynamic_cast<AIDA::ICloud*> ( mapIter->second );
- 	if ( cloud )  {
-	  cloud->convertToHistogram();
-	}
- 	++mapIter;
-      }
-    }
-    
-#endif
     message<DEBUG> ( "EORE found: nothing else to do." );
     
     return;
@@ -429,6 +412,24 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 }
 
 void EUTelHitMaker::end() {
+
+#ifdef MARLIN_USE_AIDA
+    if ( _histogramSwitch ) {
+      
+      message<DEBUG> ( log() << "Converting clouds to histograms before leaving " );
+      
+      map<string, AIDA::IBaseHistogram *>::iterator mapIter = _aidaHistoMap.begin();
+      while ( mapIter != _aidaHistoMap.end() ) {
+
+ 	AIDA::ICloud * cloud = dynamic_cast<AIDA::ICloud*> ( mapIter->second );
+ 	if ( cloud )  {
+	  cloud->convertToHistogram();
+	}
+ 	++mapIter;
+      }
+    }
+    
+#endif
 
   message<MESSAGE> ( log() << "Successfully finished" ) ;  
 }
