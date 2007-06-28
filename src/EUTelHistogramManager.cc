@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelHistogramManager.cc,v 1.2 2007-06-27 16:58:05 bulgheroni Exp $
+// Version: $Id: EUTelHistogramManager.cc,v 1.3 2007-06-28 07:31:16 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -74,19 +74,21 @@ bool EUTelHistogramManager::init() throw( std::exception, marlin::ParseException
       delete doc;
       throw ParseException( string( "EUTelHistogramManager::init: no <histos> ... </histos> block found in ")  + _histoInfoFileName);
     }
-    TiXmlElement * pHistoNode = hRoot.FirstChild( "histos" ).FirstChild().Element();
+
+    TiXmlElement * pHistoNode = hRoot.FirstChild( "histos" ).FirstChild( "histo" ).Element();
     while ( pHistoNode ) {
+
       EUTelHistogramInfo * histoInfo = new EUTelHistogramInfo;
       histoInfo->_name  = pHistoNode->Attribute("name");
-
+      
       if ( pHistoNode->Attribute("type") == NULL ) {
 	delete doc;
 	throw ParseException( string( "EUTelHistogramManager::init: no type found for " + histoInfo->_name ) );
       } else   histoInfo->_type  = pHistoNode->Attribute("type");
-
+      
       if ( pHistoNode->Attribute("title") == NULL  ) histoInfo->_title = "";
       else histoInfo->_title = pHistoNode->Attribute("title");
-
+      
       if ( ( histoInfo->_type != string("C1D") ) &&
 	   ( histoInfo->_type != string("C2D") ) &&
 	   ( histoInfo->_type != string("C3D") ) ) {
@@ -100,13 +102,13 @@ bool EUTelHistogramManager::init() throw( std::exception, marlin::ParseException
 	  pHistoNode->QueryFloatAttribute("yMin", &(histoInfo->_yMin));
 	  pHistoNode->QueryFloatAttribute("yMax", &(histoInfo->_yMax));
 	}
-
+	
 	if ( histoInfo->_type == string("H3D") ) {
 	  pHistoNode->QueryIntAttribute("zBin", &(histoInfo->_zBin));
 	  pHistoNode->QueryFloatAttribute("zMin", &(histoInfo->_zMin));
 	  pHistoNode->QueryFloatAttribute("zMax", &(histoInfo->_zMax));
 	}
-
+	
 	if ( histoInfo->_type == string("P1D")) {
 	  pHistoNode->QueryFloatAttribute("yMin", &(histoInfo->_yMin));
 	  pHistoNode->QueryFloatAttribute("yMax", &(histoInfo->_yMax));
@@ -119,10 +121,7 @@ bool EUTelHistogramManager::init() throw( std::exception, marlin::ParseException
 	  pHistoNode->QueryFloatAttribute("zMin", &(histoInfo->_zMin));
 	  pHistoNode->QueryFloatAttribute("zMax", &(histoInfo->_zMax));
 	}
-	
       }
-      EUTelHistogramInfo pippo = *histoInfo;
-      cout << pippo << endl;
       _histoInfoMap.insert( make_pair( histoInfo->_name, histoInfo ) );
       pHistoNode = pHistoNode->NextSiblingElement();
     }
@@ -144,9 +143,9 @@ bool EUTelHistogramManager::init() throw( std::exception, marlin::ParseException
 EUTelHistogramInfo * EUTelHistogramManager::getHistogramInfo(string histoName) const {
 
   std::map< std::string , EUTelHistogramInfo *>::const_iterator iter = _histoInfoMap.find(histoName);
-
   if ( iter == _histoInfoMap.end() ) return 0x0;
   return iter->second;
+  
 
 }
 
