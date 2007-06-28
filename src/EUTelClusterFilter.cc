@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.3 2007-06-15 22:47:17 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.4 2007-06-28 08:35:56 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -389,7 +389,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
   }
 }
   
-bool EUTelClusterFilter::areClusterEnough(vector<int > clusterNoVec) const {
+bool EUTelClusterFilter::areClusterEnough(std::vector<int > clusterNoVec) const {
   
   if ( ! _minClusterNoSwitch ) return true;
 
@@ -410,7 +410,7 @@ bool EUTelClusterFilter::areClusterEnough(vector<int > clusterNoVec) const {
 
 }
 
-bool EUTelClusterFilter::areClusterTooMany(vector<int > clusterNoVec) const {
+bool EUTelClusterFilter::areClusterTooMany(std::vector<int > clusterNoVec) const {
   
   if ( ! _maxClusterNoSwitch ) return false;
   

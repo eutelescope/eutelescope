@@ -29,7 +29,7 @@ namespace eutelescope {
    *  read from the XML information file.
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelHistogramManager.h,v 1.2 2007-06-27 16:58:05 bulgheroni Exp $
+   *  @Version $Id: EUTelHistogramManager.h,v 1.3 2007-06-28 08:35:56 bulgheroni Exp $
    */
   class EUTelHistogramInfo {
     
@@ -79,6 +79,17 @@ namespace eutelescope {
     //! Maximum value along z
     float _zMax;
     
+    //! Streamer for the EUTelHistogramInfo class
+    /*! Mostly used for debug purposes, this operator can stream out
+     *  all histogram information read from the XML input
+     *  file. Depending on the histogram type, only the needed
+     *  information are displayed.
+     *
+     *  @return The output stream
+     *  @param os The input stream
+     *  @param histoInfo The object to stream out.
+     *  
+     */ 
     friend std::ostream& operator<<(std::ostream& os, const EUTelHistogramInfo& histoInfo ) {
       os << "===============================================\n" 
 	 << "| Name         " << histoInfo._name << std::endl;
@@ -148,7 +159,7 @@ namespace eutelescope {
    *  available histograms.
    * 
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelHistogramManager.h,v 1.2 2007-06-27 16:58:05 bulgheroni Exp $
+   *  @Version $Id: EUTelHistogramManager.h,v 1.3 2007-06-28 08:35:56 bulgheroni Exp $
    */ 
     
   class EUTelHistogramManager  {

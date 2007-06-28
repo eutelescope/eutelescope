@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.11 2007-06-13 18:02:32 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.12 2007-06-28 08:35:56 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -251,7 +251,7 @@ float EUTelFFClusterImpl::getClusterCharge(int nPixel) const {
 
 }
 
-vector<float> EUTelFFClusterImpl::getClusterCharge(vector<int > nPixels) const {
+std::vector<float> EUTelFFClusterImpl::getClusterCharge(std::vector<int > nPixels) const {
   
   vector< float > clusterSignal;
 

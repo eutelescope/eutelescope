@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelHistogramManager.cc,v 1.3 2007-06-28 07:31:16 bulgheroni Exp $
+// Version: $Id: EUTelHistogramManager.cc,v 1.4 2007-06-28 08:35:56 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -140,7 +140,7 @@ bool EUTelHistogramManager::init() throw( std::exception, marlin::ParseException
 
 }
 
-EUTelHistogramInfo * EUTelHistogramManager::getHistogramInfo(string histoName) const {
+EUTelHistogramInfo * EUTelHistogramManager::getHistogramInfo(std::string histoName) const {
 
   std::map< std::string , EUTelHistogramInfo *>::const_iterator iter = _histoInfoMap.find(histoName);
   if ( iter == _histoInfoMap.end() ) return 0x0;

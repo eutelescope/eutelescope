@@ -50,7 +50,7 @@ namespace eutelescope {
    *  geometry. For the telescope use 99999. The geometry information
    *  are then read from GEAR.
    *
-   *  @Todo The universe described in the openGL window is well suited
+   *  @todo The universe described in the openGL window is well suited
    *  for describing a calorimeter that is much bigger than our small
    *  telescope. Drawing our telescope in the openGL window results in
    *  a so small telescope that can only hardly seen. The workaround
@@ -60,7 +60,7 @@ namespace eutelescope {
    *
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEventViewer.h,v 1.1 2007-06-25 16:14:06 bulgheroni Exp $ 
+   *  @version $Id: EUTelEventViewer.h,v 1.2 2007-06-28 08:35:56 bulgheroni Exp $ 
    */
   class EUTelEventViewer : public marlin::Processor {
   
