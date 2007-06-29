@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.17 2007-06-28 07:25:27 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.18 2007-06-29 09:19:17 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -19,6 +19,7 @@
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelExceptions.h"
+#include "EUTelHistogramManager.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
