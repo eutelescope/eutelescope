@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.4 2007-06-28 08:35:56 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.5 2007-06-29 12:01:47 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -18,6 +18,7 @@
 #include "EUTelEventImpl.h"
 #include "EUTelClusterFilter.h"
 #include "EUTelExceptions.h"
+#include "EUTelROI.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -44,7 +45,9 @@ using namespace eutelescope;
 EUTelClusterFilter::EUTelClusterFilter () :Processor("EUTelClusterFilter") {
 
   // modify processor description
-  _description = "EUTelClusterFilter separates merging clusters";
+  _description = "EUTelClusterFilter is a very powerful tool. It allows to select among an input collection of TrackerPulse\n"
+    "only the clusters fulfilling a certain set of selection criteria.\n"
+    "The user can modify the switch on and off each selection cut and set the proper value for that via the processor parameter.";
 
 
   // first of all we need to register the input collection
@@ -62,7 +65,7 @@ EUTelClusterFilter::EUTelClusterFilter () :Processor("EUTelClusterFilter") {
   minTotalChargeVecExample.push_back(75);
   minTotalChargeVecExample.push_back(80);
 
-  registerProcessorParameter("ClusterMinTotalCharge", "This is the minimum allowed total charge in to a cluster. "
+  registerProcessorParameter("ClusterMinTotalCharge", "This is the minimum allowed total charge in to a cluster.\n"
 			     "One floating point number for each sensor in the telescope",
 			     _minTotalChargeVec, minTotalChargeVecExample);
   
@@ -73,9 +76,9 @@ EUTelClusterFilter::EUTelClusterFilter () :Processor("EUTelClusterFilter") {
   minNChargeVecExample.push_back(75);
   minNChargeVecExample.push_back(80);
 
-  registerProcessorParameter("ClusterNMinCharge", "This is the minimum charge that a cluster of N pixels has to have. "
-			     "The first figure has to be the number of pixels to consider in the cluster, then one float number "
-			     "for each sensor.",
+  registerProcessorParameter("ClusterNMinCharge", "This is the minimum charge that a cluster of N pixels has to have.\n"
+			     "The first figure has to be the number of pixels to consider in the cluster, \n"
+			     "then one float number for each sensor.",
 			     _minNChargeVec, minNChargeVecExample);
 
   FloatVec minSeedChargeVecExample;
@@ -83,7 +86,7 @@ EUTelClusterFilter::EUTelClusterFilter () :Processor("EUTelClusterFilter") {
   minSeedChargeVecExample.push_back(25);
   minSeedChargeVecExample.push_back(21);
   
-  registerProcessorParameter("SeedMinCharge", "This is the minimum allowed charge that the seed pixel of a cluster has to have. "
+  registerProcessorParameter("SeedMinCharge", "This is the minimum allowed charge that the seed pixel of a cluster has to have.\n"
 			     "One floating number for each detector",
 			     _minSeedChargeVec, minSeedChargeVecExample);
 
@@ -92,17 +95,35 @@ EUTelClusterFilter::EUTelClusterFilter () :Processor("EUTelClusterFilter") {
   clusterQualityVecExample.push_back(0);
   clusterQualityVecExample.push_back(0);
 
-  registerProcessorParameter("ClusterQuality", "This is the required quality for the cluster. "
-			     "One integer number for each detector according to ClusterQuality. "
+  registerProcessorParameter("ClusterQuality", "This is the required quality for the cluster.\n"
+			     "One integer number for each detector according to ClusterQuality.\n"
 			     "Put a negative number to disable the cut",
 			     _clusterQualityVec, clusterQualityVecExample);
+
+  FloatVec roiExample;
+  roiExample.push_back( -1 );
+  roiExample.push_back( 10. );
+  roiExample.push_back( 10. );
+  roiExample.push_back( 40. );
+  roiExample.push_back( 40. );
+  
+  registerProcessorParameter("InsideRegion", "Define here ROI's. The first number (integer) is the detector ID.\n"
+ 			     "The other four float are xBotLeft  yBotLeft xTopRight yTopRight.\n"
+			     "To disable it, just put a negative number as detector ID.",
+ 			     _tempInsideROI, roiExample, roiExample.size() );
+
+  registerProcessorParameter("OutsideRegion","Define here ROI's. The first number (integer) is the detector ID.\n"
+ 			     "The other four float are xBotLeft  yBotLeft xTopRight yTopRight.\n"
+			     "To disable it, just put a negative number as detector ID.",
+			     _tempOutsideROI, roiExample, roiExample.size() );
+ 
 
   IntVec minClusterNoVecExample;
   minClusterNoVecExample.push_back(0);
   minClusterNoVecExample.push_back(0);
   minClusterNoVecExample.push_back(0);
   
-  registerProcessorParameter("MinClusterPerPlane", "This is the minimum required number of cluster per plane. "
+  registerProcessorParameter("MinClusterPerPlane", "This is the minimum required number of cluster per plane.\n"
 			     "One integer number for each detector. Write 0 to disable the cut",
 			     _minClusterNoVec, minClusterNoVecExample);
   
@@ -111,13 +132,12 @@ EUTelClusterFilter::EUTelClusterFilter () :Processor("EUTelClusterFilter") {
   maxClusterNoVecExample.push_back(-1);
   maxClusterNoVecExample.push_back(-1);
   
-  registerProcessorParameter("MaxClusterPerPlane", "This is the maximum allowed number of cluster per plane. "
+  registerProcessorParameter("MaxClusterPerPlane", "This is the maximum allowed number of cluster per plane.\n "
 			     "One integer number for each detector. Write a negative number to disable the cut",
 			     _maxClusterNoVec, maxClusterNoVecExample);
   
-  
+ 
 }
-
 
 void EUTelClusterFilter::init () {
 
@@ -191,8 +211,44 @@ void EUTelClusterFilter::init () {
   }
   
   message<DEBUG> ( log() << "MaxClusterNoSwitch " << _maxClusterNoSwitch ) ;
+
+
+  // inside ROI
+  vector<float>::iterator roiIter = _tempInsideROI.begin();
+  while ( roiIter != _tempInsideROI.end() ) {
+    int detectorID = static_cast<int> ( *roiIter++ );
+    float xBL = ( *roiIter++ );
+    float yBL = ( *roiIter++ );
+    float xTR = ( *roiIter++ );
+    float yTR = ( *roiIter++ );
+    if ( detectorID >= 0 ) {
+      EUTelROI roi( detectorID, xBL, yBL, xTR, yTR);
+      _insideROIVec.push_back( roi );
+      message<DEBUG> ( log() << roi );
+    }
+  }
   
+  _insideROISwitch = (  _insideROIVec.size() > 0 );
+  message<DEBUG> ( log() << "InsideROISwitch " << _insideROISwitch );
+
+  // outside ROI
+  roiIter = _tempOutsideROI.begin();
+  while ( roiIter != _tempOutsideROI.end() ) {
+    int detectorID = static_cast<int> ( *roiIter++ );
+    float xBL = ( *roiIter++ );
+    float yBL = ( *roiIter++ );
+    float xTR = ( *roiIter++ );
+    float yTR = ( *roiIter++ );
+    if ( detectorID >= 0 ) {
+      EUTelROI roi( detectorID, xBL, yBL, xTR, yTR);
+      _outsideROIVec.push_back( roi );
+      message<DEBUG> ( log() << roi );
+    }
+  }
   
+  _outsideROISwitch = (  _outsideROIVec.size() > 0 );
+  message<DEBUG> ( log() << "OutsideROISwitch " << _outsideROISwitch );
+ 
 
   // set to zero the run and event counters
   _iRun = 0;
@@ -300,6 +356,18 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
 	_rejectionMap.insert( make_pair("MaxClusterNoCut", rejectedCounter ));
       }
     }
+
+    if ( _insideROISwitch ) {
+      message<DEBUG> ( "Inside ROI criterion verified and switched on");
+      vector<unsigned int > rejectedCounter( _noOfDetectors, 0 );
+      _rejectionMap.insert( make_pair("InsideROICut", rejectedCounter ));
+    }
+
+    if ( _outsideROISwitch ) {
+      message<DEBUG> ( "Outside ROI criterion verified and switched on");
+      vector<unsigned int > rejectedCounter( _noOfDetectors, 0 );
+      _rejectionMap.insert( make_pair("OutsideROICut", rejectedCounter ));
+    }
   }
 }
 
@@ -348,6 +416,8 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
     isAccepted &= isAboveNMinCharge(cluster);
     isAccepted &= isAboveMinSeedCharge(cluster);
     isAccepted &= hasQuality(cluster);
+    isAccepted &= isInsideROI(cluster); 
+    isAccepted &= isOutsideROI(cluster);
 
     if ( isAccepted )  acceptedClusterVec.push_back(iPulse); 
 
@@ -513,6 +583,60 @@ bool EUTelClusterFilter::hasQuality(EUTelVirtualCluster * cluster) const {
 }    
 
 
+
+bool EUTelClusterFilter::isInsideROI(EUTelVirtualCluster * cluster) const {
+  
+  if ( !_insideROISwitch ) return true;
+  
+  int detectorID = cluster->getDetectorID();
+  float x, y;
+  cluster->getCenterOfGravity(x, y);
+
+  bool tempAccepted = true;
+  vector<EUTelROI>::const_iterator iter = _insideROIVec.begin();
+  vector<EUTelROI>::const_iterator end  = _insideROIVec.end();
+  while ( true ) {
+    iter = find_if( iter, end, HasSameID(detectorID));
+    if ( iter != end ) {
+      if ( (*iter).isInside(x,y) ) {
+	tempAccepted &= true;
+      }  else {
+	_rejectionMap["InsideROICut"][detectorID]++;
+	tempAccepted &= false;
+      }
+      ++iter;
+    } else break;
+  }
+  return tempAccepted;
+  
+}
+
+bool EUTelClusterFilter::isOutsideROI(EUTelVirtualCluster * cluster) const {
+  
+  if ( !_outsideROISwitch ) return true;
+  
+  int detectorID = cluster->getDetectorID();
+  float x, y;
+  cluster->getCenterOfGravity(x, y);
+
+  bool tempAccepted = true;
+  vector<EUTelROI>::const_iterator iter = _outsideROIVec.begin();
+  vector<EUTelROI>::const_iterator end  = _outsideROIVec.end();
+  while ( true ) {
+    iter = find_if( iter, end, HasSameID(detectorID));
+    if ( iter != end ) {
+      if ( !(*iter).isInside(x,y) ) {
+	tempAccepted &= true;
+      }  else {
+	_rejectionMap["OutsideROICut"][detectorID]++;
+	tempAccepted &= false;
+      }
+      ++iter;
+    } else break;
+  }
+  return tempAccepted;
+  
+}
 
 void EUTelClusterFilter::check (LCEvent * evt) {
   // nothing to check here - could be used to fill check plots in reconstruction processor

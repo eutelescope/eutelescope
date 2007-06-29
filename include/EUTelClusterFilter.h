@@ -11,6 +11,7 @@
 #define EUTELCLUSTERFILTER_H 1
 
 // eutelescope includes ".h" 
+#include "EUTelROI.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -108,22 +109,73 @@ namespace eutelescope {
 
    *  Another selection can be done of the cluster position. For
    *  example the user may wants to keep only clusters having the
-   *  central pixel within a certain range of pixels according to the
+   *  cluster center within a certain range of pixels according to the
    *  following parametrization:
    *
    *  @code
-   *  <parameter name="InsideRegion" type="IntVec"> detID xBotLeft  yBotLeft xTopRight yTopRight  </parameter> 
-   *  <parameter name="OutsideRegion" type="IntVec"> detID xBotLeft  yBotLeft xTopRight yTopRight  </parameter> 
+   *  <parameter name="InsideRegion" type="FloatVec"> detID xBotLeft  yBotLeft xTopRight yTopRight  </parameter> 
+   *  <parameter name="OutsideRegion" type="FloatVec"> detID xBotLeft  yBotLeft xTopRight yTopRight  </parameter> 
    *  @endcode
    *
+   *  <h4> Input collection </h4>
    *  @param PulseCollectionName Name of the input cluster
    *  collection to be filtered
    *  
+   *  <h4> Output collection </h4>
    *  @param FilteredPulseCollectionName Name of the filtered output
    *  collection. 
    *
+   *  <h4> Processor parameter </h4>
+   *  @param ClusterMinTotalCharge. This is the minimum value allowed
+   *  for the cluster total charge in ADC counts. For this parameter,
+   *  one value for each detector should be provided. To switch it
+   *  off, set all values to 0 or to a negative value.
+   *
+   *  @param ClusterNMinCharge. This is a selection criterion very
+   *  similar to ClusterMinTotalCharge but it acts not on the total
+   *  charge but on the charge collected by the first N most
+   *  significant pixels in the cluster. To specify the selection, the
+   *  user has to specify ( noOfDetector + 1 ) parameters. In fact,
+   *  the first parameter is the number of significant pixels. To
+   *  switch it off is enough to set to zero the first value.
+   *
+   *  @param SeedMinCharge. This is the minimum allowed charge
+   *  collected by the seed pixel (i. e. the one with the highest
+   *  signal). The user has to specify one floating value for each
+   *  detector. Set everything to zero, or to a negative value to
+   *  disable the cut.
+   *
+   *  @param ClusterQuality. This selection is based on the cluster
+   *  quality as defined by the eutelescope::ClusterQuality
+   *  enumeration. The user has to specify one integer number for each
+   *  detector. To disable the selection put all negative numbers.
+   *
+   *  @param InsideRegion. This is a sort of geographical cut. Only
+   *  clusters belonging to the defined ROI will be accepted. To
+   *  specify the ROI the user has to provide 5 numbers, the first one
+   *  being the sensor identification, the other four the coordinates
+   *  of the bottom left and top right corner. Multiple ROIs also on
+   *  the same sensor can be applied. To switch it off it is enough to
+   *  set the sensor ID to a negative number.
+   *
+   *  @param OutsideRegion. This is very similar to InsideRegion, but
+   *  it works the other way round. Only cluster outside the ROI are
+   *  accepted. 
+   *
+   *  @param MinClusterPerPlane. This selection is working on a sensor
+   *  level and no more on a cluster level. Only events where a
+   *  certain minimum number of clusters per plane has been found will
+   *  be accepted. The user has to specify one value for each plane,
+   *  of course setting a 0 is disabling the cut.
+   *
+   *  @param MaxClusterPerPlane. As MinClusterPerPlane above but
+   *  working in the other way round. Only events where the total
+   *  number of clusters per plane was not exceeding a certain limit
+   *  are accepted. The user has to specify one value for each
+   *  plane. Setting a negative number is disabling the cut.
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterFilter.h,v 1.3 2007-06-15 22:47:17 bulgheroni Exp $
+   *  @version $Id: EUTelClusterFilter.h,v 1.4 2007-06-29 12:01:47 bulgheroni Exp $
    *
    *
    */
@@ -307,6 +359,26 @@ namespace eutelescope {
      */ 
     bool areClusterTooMany(std::vector<int > clusterVec) const;
 
+    //! Inside the ROI
+    /*! This selection criterion can be used to get only clusters
+     *  having the center within a certain ROI.
+     *
+     *  @return True if the cluster center is inside the ROI
+     *  @param cluster The cluster under test.
+     *
+     */ 
+    bool isInsideROI(EUTelVirtualCluster * cluster) const;
+
+    //! Outside the ROI
+    /*! This selection criterion can be used to get only clusters
+     *  having the center outside a certain ROI.
+     *
+     *  @return True if the cluster center is outside the ROI
+     *  @param cluster The cluster under test.
+     *
+     */ 
+    bool isOutsideROI(EUTelVirtualCluster * cluster) const;
+
     //! Print the rejection summary
     /*! To better understand which cut is more important, a rejection
      *  counter is kept updated during the processing and at the end
@@ -388,8 +460,46 @@ namespace eutelescope {
      *
      */
     std::vector<int > _maxClusterNoVec;    
+    
+    //! A vector of region of interest
+    /*! This is a vector of region of interests and it is built using
+     *  the information provided by the user in the steering file. All
+     *  clusters should be centered inside those ROI's
+     */ 
+    std::vector<EUTelROI > _insideROIVec;
+
+    //! A vector of region of interest 
+    /*! This is a vector of region of interests and it is built using
+     *  the information provided by the user in the steering file. All
+     *  clusters should be centered outside those ROI's.
+     */ 
+    std::vector<EUTelROI > _outsideROIVec;
 
   private:
+
+    //! A temporary vector for the inside ROI
+    /*! The reason for this temporary array is that from the steering
+     *  file the user can specify only values and not directly a
+     *  EUTelROI. So the user specified values are stored in the
+     *  _tempInsideROI and then moved to the _insideROIVec soon after.
+     *
+     *  @todo Ask Frank why Marlin is crashing if in the
+     *  registerProcessorParameter we ask to put the values in
+     *  something that is not a class member
+     */
+    std::vector<float > _tempInsideROI;
+
+    //! A temporary vector for the outside ROI
+    /*! The reason for this temporary array is that from the steering
+     *  file the user can specify only values and not directly a
+     *  EUTelROI. So the user specified values are stored in the
+     *  _tempOutsideROI and then moved to the _outsideROIVec soon after.
+     *
+     *  @todo Ask Frank why Marlin is crashing if in the
+     *  registerProcessorParameter we ask to put the values in
+     *  something that is not a class member
+     */
+    std::vector<float > _tempOutsideROI;
 
     //! Switch for the minimum total cluster charge
     bool _minTotalChargeSwitch;
@@ -409,6 +519,12 @@ namespace eutelescope {
     //! Switch for the maximum cluster number
     bool _maxClusterNoSwitch;
 
+    //! Switch for the insideROI selection
+    bool _insideROISwitch;
+
+    //! Switch for the outsideROI selection
+    bool _outsideROISwitch;
+    
     //! The number of detectors
     int _noOfDetectors;
 
@@ -425,6 +541,46 @@ namespace eutelescope {
 
     //! Rejection summary map
     mutable std::map<std::string, std::vector<unsigned int > > _rejectionMap;
+
+  public:
+
+    //! Helper predicate class
+    /*! The main use of this class is to find a ROI having the same
+     *  detector ID as the current cluster. It is used as a predicate
+     *  in find_if.
+     *
+     *  @author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
+     *  @version $Id: EUTelClusterFilter.h,v 1.4 2007-06-29 12:01:47 bulgheroni Exp $
+     */
+    class HasSameID {
+    public:
+      //! Default constructor.
+      /*! 
+       *  @param id is the detector ID we want to check against
+       */ 
+      HasSameID(int id) : _id(id) {;}
+
+      //! Overload operator()
+      /*! This is the operator used by the predicate function in the
+       *  find_if algorithm. 
+       *
+       *  The idea is that I have a list or ROI's and I want to find
+       *  the first one having the same detector ID of the cluster I'm
+       *  testing. 
+       *  
+       *  @param roi The ROI under test
+       *  @return True if the ROI is located on the same sensor
+       *  identified by @c _id
+       */
+      bool operator()(EUTelROI roi) const { return (roi.getDetectorID() == _id) ; }
+      
+    private:
+      //! The detector ID
+      int _id;
+    };
+  
+
+
 
   };
 
