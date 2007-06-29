@@ -1,3 +1,22 @@
+<!-- 
+     Histogram information file
+     
+     This sort of file can be use to dynamically set booking
+     boundaries for histograms available in a Processor The basic idea
+     is that before booking the histograms, the processor will create
+     an instance of a EUTelHistogramManager pointing to a XML file
+     like this. The file name can be specified by the user via the
+     steering file.
+     After that, the histoMgr will parse this file and store a
+     EUTelHistogramInfo for each <histo= ... /> and a into a map keyed
+     by the histogram name. 
+
+     Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+     Version: <!-- 	$Id: histoinfo.xml,v 1.2 2007-06-29 09:16:01 bulgheroni Exp $	 -->
+
+
+  -->
+
 <HistogramManager>
   <histos>
 
@@ -17,8 +36,16 @@
     <histo name="CommonMode"        type="H1D" xBin="100"  xMin="-2"      xMax="2" />
 
     <!-- EUTelHistogramMaker and EUTelClusteringProcessor -->
-    <histo name="clusterSignal"     type="H1D" xBin="500" xMin="0"       xMax="1000"/>
+    <histo name="clusterSignal"     type="H1D" xBin="500" xMin="0"        xMax="1000"/>
     <histo name="seedSignal"        type="H1D" xBin="500"  xMin="0"       xMax="500"/>
+
+    <!-- EUTelCalculateEtaProcessor -->
+    <!-- 
+	 The boundaries of histograms needed by this processor cannot
+	 be changed. They have to be -0.5 and +0.5.  The number of
+	 bins is already a variable that can be modified via the
+	 steering file.
+      -->
 
   </histos>
 </HistogramManager>
