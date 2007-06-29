@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.9 2007-05-31 15:25:37 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.10 2007-06-29 09:18:27 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -168,6 +168,11 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
   
   
   if ( !_isEtaCalculationFinished ) {
+
+    // For this specific processor the binning information are not
+    // taken from the EUTelHistogramManager since the histo boundiares
+    // are fixed from -1/2 to 1/2 and the number of divisions is an
+    // important parameter available in the steering file. 
 
     const double min = -0.5;
     const double max = +0.5;
