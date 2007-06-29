@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.1 2007-06-25 16:14:06 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.2 2007-06-29 15:24:23 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -103,9 +103,6 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
   EUTelEventImpl * event = static_cast<EUTelEventImpl *> ( evt );
   EventType type = event->getEventType();
 
-  float scaleFactor = Global::parameters->getFloatVal("GeoScaleFactor");
-  if ( scaleFactor == 0 ) scaleFactor = 1;
-
   if ( type == kUNKNOWN ) {
     message<WARNING> ( log() << "Event number " << evt->getEventNumber() 
 		       << " is of unknown type. Continue considering it as a normal Data Event."  );
@@ -126,9 +123,9 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
 	LCCollection * collection = evt->getCollection( _trackerHitCollectionNameVec[iCollection].c_str() );
 	for ( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ ) {
 	  TrackerHitImpl * hit = dynamic_cast<TrackerHitImpl *> ( collection->getElementAt(iHit) ) ;
-	  float x = static_cast<float > (scaleFactor * hit->getPosition()[0]);
-	  float y = static_cast<float > (scaleFactor * hit->getPosition()[1]);
-	  float z = static_cast<float > (scaleFactor * hit->getPosition()[2]);
+	  float x = static_cast<float > ( hit->getPosition()[0] );
+	  float y = static_cast<float > ( hit->getPosition()[1] );
+	  float z = static_cast<float > ( hit->getPosition()[2] );
 	  unsigned int color =  returnColor(iCollection);
 	  ced_hit(x,y,z, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
 	}

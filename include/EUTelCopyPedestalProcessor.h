@@ -33,33 +33,37 @@ namespace eutelescope {
    *  like to update the pedestal and noise during the process and
    *  when we would like to use the status to mark hit pixels.
    *
-   *  <h4>Input</h4> 
+   *  <h4>Input conditions</h4> 
    *  
-   *  <b>PedestalConditionName</b>: this is the name of the input
-   *  pedestal condition collection. <br> <b>NoiseConditionName</b>:
-   *  this is the name of the input noise condition collection. <br>
-   *  <b>StatusConditionName</b>: this is the name of the input status
-   *  condition name. <br>
+   *  <b>Pedestal condition</b>: Input pedestal condition.
+   *  <br> <b>Noise condition</b>: Input noise condition. <br>
+   *  <b>Status condition</b>: Input status condition. <br>
    *
-   *  <h4>Output</h4>
+   *  <h4>Output collections</h4>
    *
-   *  <b>PedestalCollectionName</b>: this is the name of the output
-   *  pedestal collection.<br> 
-   *  <b>NoiseCollectionName</b>: this is
-   *  the name of the output noise collection. <br>
-   *  <b>StatusCollectionName</b>: this is the name of the output
-   *  status collection.
+   *  <b>Pedestal collection</b>: Output pedestal collection.<br>
+   *  <b>Noise collection</b>: Output noise collection. <br> <b>Status
+   *  Collection</b>: Output status collection.
    *
-   *  @param PedestalConditionName
-   *  @param NoiseConditionName
-   *  @param StatusConditionName
-   *  @param PedestalCollectionName
-   *  @param NoiseCollectionName
-   *  @param StatusCollectionName
+   *  @param PedestalConditionName This is the name of the pedestal
+   *  condition
+   *
+   *  @param NoiseConditionName This ts the name of the noise
+   *  condition
+   * 
+   *  @param StatusConditionName This is the name of the status
+   *  condition
+   *
+   *  @param PedestalCollectionName This is the name of the pedestal
+   *  collection
+   *
+   *  @param NoiseCollectionName This is the name of the noise
+   *  collection
+   *
+   *  @param StatusCollectionName This is the name of the status collection.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelCopyPedestalProcessor.h,v 1.4 2007-05-21 11:37:33 bulgheroni Exp $
-   *
+   *  @version $Id: EUTelCopyPedestalProcessor.h,v 1.5 2007-06-29 15:24:23 bulgheroni Exp $
    *
    */
 

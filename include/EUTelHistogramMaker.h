@@ -65,19 +65,26 @@ namespace eutelescope {
    *  of entries for each bin corresponds to the number of times a
    *  seed pixel has been found on that pixel.
    *
-   *  <h4>Input</h4>
-   *  
-   *  @param A TrackerPulse input collection
-   *  @param A vector containing the cluster N x N spectra to be
+   *  <h4>Input collections </h4>
+   *  A tracker pulse collection with clusters to be histogrammed.
+   *
+   *  @param PulseCollectionName The name of the TrackerPulse input
+   *  collection.
+   *
+   *  @param HistoInfoFileName The name of the XML information file
+   *  with the histogram booking information.
+   *
+   *  @param ClusterNxN A vector containing the cluster N x N spectra to be
    *  filled
-   *  @param A vector containing the cluster N spectra to be filled.
+   *
+   *  @param ClusterN A vector containing the cluster N spectra to be filled.
    *  
-   *  <h4>Output</h4>
+   *  <h4>Output collections </h4>
    *
    *  None
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHistogramMaker.h,v 1.4 2007-06-28 07:27:07 bulgheroni Exp $ 
+   *  @version $Id: EUTelHistogramMaker.h,v 1.5 2007-06-29 15:24:23 bulgheroni Exp $ 
    *
    */
   

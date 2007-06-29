@@ -118,20 +118,24 @@ namespace eutelescope {
    *  @endcode
    *
    *  <h4> Input collection </h4>
-   *  @param PulseCollectionName Name of the input cluster
-   *  collection to be filtered
+   *  A TrackerPulse collection containing the clusters to be filtered.
    *  
    *  <h4> Output collection </h4>
+   *  A TrackerPulse collection containing only the clusters having
+   *  passed all the selection criteria.
+   *
+   *  @param PulseCollectionName Name of the input cluster
+   *  collection to be filtered
+   *
    *  @param FilteredPulseCollectionName Name of the filtered output
    *  collection. 
    *
-   *  <h4> Processor parameter </h4>
-   *  @param ClusterMinTotalCharge. This is the minimum value allowed
+   *  @param ClusterMinTotalCharge This is the minimum value allowed
    *  for the cluster total charge in ADC counts. For this parameter,
    *  one value for each detector should be provided. To switch it
    *  off, set all values to 0 or to a negative value.
    *
-   *  @param ClusterNMinCharge. This is a selection criterion very
+   *  @param ClusterNMinCharge This is a selection criterion very
    *  similar to ClusterMinTotalCharge but it acts not on the total
    *  charge but on the charge collected by the first N most
    *  significant pixels in the cluster. To specify the selection, the
@@ -139,18 +143,18 @@ namespace eutelescope {
    *  the first parameter is the number of significant pixels. To
    *  switch it off is enough to set to zero the first value.
    *
-   *  @param SeedMinCharge. This is the minimum allowed charge
+   *  @param SeedMinCharge This is the minimum allowed charge
    *  collected by the seed pixel (i. e. the one with the highest
    *  signal). The user has to specify one floating value for each
    *  detector. Set everything to zero, or to a negative value to
    *  disable the cut.
    *
-   *  @param ClusterQuality. This selection is based on the cluster
+   *  @param ClusterQuality This selection is based on the cluster
    *  quality as defined by the eutelescope::ClusterQuality
    *  enumeration. The user has to specify one integer number for each
    *  detector. To disable the selection put all negative numbers.
    *
-   *  @param InsideRegion. This is a sort of geographical cut. Only
+   *  @param InsideRegion This is a sort of geographical cut. Only
    *  clusters belonging to the defined ROI will be accepted. To
    *  specify the ROI the user has to provide 5 numbers, the first one
    *  being the sensor identification, the other four the coordinates
@@ -158,24 +162,24 @@ namespace eutelescope {
    *  the same sensor can be applied. To switch it off it is enough to
    *  set the sensor ID to a negative number.
    *
-   *  @param OutsideRegion. This is very similar to InsideRegion, but
+   *  @param OutsideRegion This is very similar to InsideRegion, but
    *  it works the other way round. Only cluster outside the ROI are
    *  accepted. 
    *
-   *  @param MinClusterPerPlane. This selection is working on a sensor
+   *  @param MinClusterPerPlane This selection is working on a sensor
    *  level and no more on a cluster level. Only events where a
    *  certain minimum number of clusters per plane has been found will
    *  be accepted. The user has to specify one value for each plane,
    *  of course setting a 0 is disabling the cut.
    *
-   *  @param MaxClusterPerPlane. As MinClusterPerPlane above but
+   *  @param MaxClusterPerPlane As MinClusterPerPlane above but
    *  working in the other way round. Only events where the total
    *  number of clusters per plane was not exceeding a certain limit
    *  are accepted. The user has to specify one value for each
    *  plane. Setting a negative number is disabling the cut.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterFilter.h,v 1.4 2007-06-29 12:01:47 bulgheroni Exp $
+   *  @version $Id: EUTelClusterFilter.h,v 1.5 2007-06-29 15:24:23 bulgheroni Exp $
    *
    *
    */
@@ -222,7 +226,7 @@ namespace eutelescope {
     virtual void processRunHeader (LCRunHeader * run);
 
     //! Called every event
-    /*  This is the method. For each event, the input tracker pulse
+    /*! This is the method. For each event, the input tracker pulse
      *  collection is obtained and a loop on all clusters is
      *  started. There are a few different kinds of selection
      *  criteria:
@@ -550,7 +554,7 @@ namespace eutelescope {
      *  in find_if.
      *
      *  @author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
-     *  @version $Id: EUTelClusterFilter.h,v 1.4 2007-06-29 12:01:47 bulgheroni Exp $
+     *  @version $Id: EUTelClusterFilter.h,v 1.5 2007-06-29 15:24:23 bulgheroni Exp $
      */
     class HasSameID {
     public:

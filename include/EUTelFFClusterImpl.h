@@ -89,7 +89,7 @@ namespace eutelescope {
    *  @todo Test the charge center of mass method.
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.9 2007-06-13 18:02:32 bulgheroni Exp $
+   *  @Version $Id: EUTelFFClusterImpl.h,v 1.10 2007-06-29 15:24:23 bulgheroni Exp $
    */ 
 
   class EUTelFFClusterImpl : public EUTelVirtualCluster {
@@ -314,8 +314,7 @@ namespace eutelescope {
      */ 
     void getCenterOfGravityShift(float& xCoG, float& yCoG, int xSize, int ySize) const ;
 
-    //! Get the center of gravity shift using only @a n pixels with the
-    //highest signal.
+    //! Get the center of gravity shift using only @a n pixels
     /*! This is another method to get the CoG shift from the current
      *  cluster. With this method only @a n pixels with the highest
      *  signal are used. In case, the selected number of pixels is

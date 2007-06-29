@@ -59,29 +59,26 @@ namespace eutelescope {
    *  (eutelescope::ClusterQuality::kMergedCluster) so to exclude them
    *  from following analysis processors.
    *
-   *  <h4>Input - Prerequisites</h4>
-   *  <br><b>ClusterCollection</b>. This is the collection of cluster
-   *  to be used. <br><b>MinimumDistance</b>. This floating point
-   *  parameter is used to set which is the minimum distance between
-   *  two separeted clusters. It is measured in pixel unit. If it set
-   *  to 0, only touching clusters are considered
-   *  merged. <br><b>SeparationAlgorithm</b>. This string is used to
-   *  define different way to separate merging clusters.
+   *  <h4>Input collection</h4> <br><b>ClusterCollection</b>. This is
+   *  the collection of cluster (TrackerPulse) to be used.
    *  
    *  <h4>Output</h4>
    *  
    *  <br><b>ClusterCollection</b>. It outputs the same collection but
    *  now with separated pixels.
    *
+   *  @param ClusterCollectionName The name of the input cluster collection
    *  @param ClusterCollectionName Name of the input cluster
    *  collection 
+   * 
    *  @param MinimumDistance Float number being the minimum
    *  distance allowed between clusters. 
+   *
    *  @param SeparationAlgorithm Name the algorithm to be used for
    *  cluster separation.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterSeparationProcessor.h,v 1.5 2007-05-25 05:14:58 bulgheroni Exp $
+   *  @version $Id: EUTelClusterSeparationProcessor.h,v 1.6 2007-06-29 15:24:23 bulgheroni Exp $
    *
    *
    */
@@ -121,7 +118,7 @@ namespace eutelescope {
     virtual void processRunHeader (LCRunHeader * run);
 
     //! Called every event
-    /*  This is called for each event in the file. As a first thing,
+    /*! This is called for each event in the file. As a first thing,
      *  the system will check among all clusters found in the current
      *  event there are pairs of merging clusters on the same
      *  detector. If at least one pair of merging cluster is found,

@@ -24,10 +24,38 @@
 #include <string>
 
 namespace eutelescope {
-  //! EUTelEventViewer
+  //! Event viewer
   /*! This processor is used to display the content of a EUTelescope
    *  file into a graphical window using the information stored in
-   *  GEAR. This is still very experimental!!!
+   *  GEAR. 
+   *  
+   *  The graphical environment is provided by CED (C Event Display)
+   *  that is a server / client application. The server side that is
+   *  implemented using openGL (glced) should be already running on
+   *  the computer, before Marlin is executed. 
+   *
+   *  This viewer is accessing MarlinCED, a singleton class playing
+   *  the role of CED client, and forwarding there all the graphical
+   *  objects. For every event, the graphical screen is reset and the
+   *  geometry re-drawn along with the current hits and tracks. 
+   *
+   *  The viewer can be used in a interactive way setting
+   *  WaitForKeyboard to 1. In this way Marlin execution will be
+   *  stopped as soon as the event is drawn waiting for the user to
+   *  hit return.
+   *
+   *  Several objects can be displayed together, since for each
+   *  collection type multiple selections are possible.
+   *
+   *  @image html CEDEvent.png "One event with a track candidate"
+   *
+   *  <h4>Input collections</h4>
+   * 
+   *  <b>Track collections</b>: this is a vector of all the track
+   *  collections the user wants to display.
+   *
+   *  <b>Tracker hit collections</b>: this is a vector of all the
+   *  tracker hit collections the user wants to display.
    *
    *  @param TrackerHitCollectionNameVec. This is a vector of string
    *  containing the names of all the TrackerHitCollection one would
@@ -50,17 +78,8 @@ namespace eutelescope {
    *  geometry. For the telescope use 99999. The geometry information
    *  are then read from GEAR.
    *
-   *  @todo The universe described in the openGL window is well suited
-   *  for describing a calorimeter that is much bigger than our small
-   *  telescope. Drawing our telescope in the openGL window results in
-   *  a so small telescope that can only hardly seen. The workaround
-   *  currently used is based on a global parameter from the steering
-   *  file. This is read by both the MarlinCED and by this
-   *  processor. If the parameter is missing, the identity will be used.
-   *
-   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEventViewer.h,v 1.2 2007-06-28 08:35:56 bulgheroni Exp $ 
+   *  @version $Id: EUTelEventViewer.h,v 1.3 2007-06-29 15:24:23 bulgheroni Exp $ 
    */
   class EUTelEventViewer : public marlin::Processor {
   

@@ -37,14 +37,27 @@ namespace eutelescope {
    *   this DAQ, but for simplicity for the time being some values are
    *   hardcoded to properly decode MimoTel information.
    *
-   *   <h4>Input - Prerequisites</h4>
-   *   An integer number representing the run number
+   *   <h4>Input collection</h4>
+   *   None
    *
    *   <h4>Output</h4>
    *   LCEvent with TrackerRawData collection
    *
+   *   @param LEPSIRunNumber Integer number corresponding to the run
+   *   number
+   *
+   *   @param XNoOfPixel Number of pixels along the x axis
+   *
+   *   @param YNoOfPixel Number of pixels along the x axis
+   *  
+   *   @param Frame0CollectionName Name of the Frame0 collection
+   * 
+   *   @param Frame1CollectionName Name of the Frame1 collection
+   *
+   *   @param CDSCollectionName Name of the CDS collection
+   *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelStrasMimoTelReader.h,v 1.3 2007-06-21 16:59:05 bulgheroni Exp $
+   *   @version $Id: EUTelStrasMimoTelReader.h,v 1.4 2007-06-29 15:24:23 bulgheroni Exp $
    *
    */
 
@@ -93,7 +106,7 @@ namespace eutelescope {
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
      *  @author Gilles CLAUS, LEPSI <mailto:claus@lepsi.in2p3.fr>
-     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.3 2007-06-21 16:59:05 bulgheroni Exp $
+     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.4 2007-06-29 15:24:23 bulgheroni Exp $
      */ 
     class StrasRunHeader {
 
@@ -210,7 +223,7 @@ namespace eutelescope {
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
      *  @author Gilles CLAUS, LEPSI <mailto:claus@lepsi.in2p3.fr>
-     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.3 2007-06-21 16:59:05 bulgheroni Exp $
+     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.4 2007-06-29 15:24:23 bulgheroni Exp $
      */ 
     class StrasEventHeader {
       
@@ -312,7 +325,7 @@ namespace eutelescope {
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
      *  @author Gilles CLAUS, LEPSI <mailto:claus@lepsi.in2p3.fr>
-     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.3 2007-06-21 16:59:05 bulgheroni Exp $
+     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.4 2007-06-29 15:24:23 bulgheroni Exp $
      */ 
     class StrasEventTrailer {
       

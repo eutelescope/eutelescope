@@ -147,7 +147,7 @@ namespace eutelescope
    *  \li <b>UserComment</b>: a user defined string field. 
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTelRunHeaderImpl.h,v 1.5 2007-05-21 11:37:33 bulgheroni Exp $
+   * @Version $Id: EUTelRunHeaderImpl.h,v 1.6 2007-06-29 15:24:23 bulgheroni Exp $
    * 
    */
 
@@ -357,7 +357,7 @@ namespace eutelescope
     virtual void setMaxY (lcio::IntVec yMax);
 
     //! Add a processor to the applied processor list
-    /*  The analysis procedure of some input data usually requires
+    /*! The analysis procedure of some input data usually requires
      *  that many processors have been applied sequentially. Saving
      *  this list it may be of interest when trying to reconstruct the
      *  history of a file.
@@ -367,7 +367,7 @@ namespace eutelescope
     virtual void addProcessor (std::string processor);
 
     //! Add an intermediate file to the list of intermediate file
-    /*  The analysis procedure may be split in several intermediate
+    /*! The analysis procedure may be split in several intermediate
      *  steps with results saved into other files. Use this method to
      *  add a filename to the list of intermediate file of this one.
      * 

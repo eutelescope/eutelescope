@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.8 2007-06-29 09:14:08 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.9 2007-06-29 15:24:23 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -89,8 +89,8 @@ EUTelHitMaker::EUTelHitMaker () : Processor("EUTelHitMaker") {
 			    _etaCollectionNames, etaNames, etaNames.size());
 
 
-  registerOptionalParameter("EtaSwitch","Enable (==1) or disable eta correction",
-			    _etaCorrection, static_cast< int > ( 1 ) ); 
+  registerOptionalParameter("EtaSwitch","Enable or disable eta correction",
+			    _etaCorrection, static_cast< bool > ( 1 ) ); 
   
 }
 

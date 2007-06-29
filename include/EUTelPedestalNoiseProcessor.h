@@ -66,9 +66,12 @@ namespace eutelescope {
    *  the value of _badPixelAlgo. @see
    *  EUTelPedestalNoiseProcessor::_badPixelAlgo
    *
-   *  <h4>Input - Prerequisites</h4>
+   *  <h4>Input collection</h4>
+   *  <b>Raw data</b> A collection of TrackerRawData 
    *
-   *  <h4>Output</h4> 
+   *  <h4>Output file</h4> 
+   *  The output of this processor will be saved into a separate file
+   *  and can be reloaded using a condition processor. 
    * 
    *  @param RawDataCollectionName Name of the input data collection
    *  @param CalculationAlgorithm Name of the calculation algorithm used
@@ -155,7 +158,7 @@ namespace eutelescope {
    *  saving the output pedestal file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.15 2007-06-28 07:29:20 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.16 2007-06-29 15:24:23 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -207,7 +210,7 @@ namespace eutelescope {
     virtual void processRunHeader (LCRunHeader * run);
 
     //! Called every event
-    /*  Since the behavior of the PedestalNoise processor is different
+    /*! Since the behavior of the PedestalNoise processor is different
      *  if this is the first or one of the following loop, this method
      *  is just calling
      *  EUTelPedestalNoiseProcessor::firstLoop(LCEvent*) or

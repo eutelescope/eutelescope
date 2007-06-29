@@ -33,14 +33,22 @@ namespace eutelescope {
    *  The general idea behind this process is that, we can start the
    *  analysis procedure with fictitious pedestal and noise values
    *  valid for a whole sensor that are going then updated during the
-   *  procedure itself (@see PedestalUpdateProcessor)
+   *  procedure itself. 
+   *
+   *  @see eutelescope::EUTelPedestalUpdateProcessor
    * 
    *  The user has to specify the initial pedestal and noise values
    *  for each detector as a steering parameters via the _initPedestal
    *  and _initNoise float vector.
    *
-   *  <h4>Input</h4> 
-   *  
+   *  <h4>Input collection:</h4> 
+   *  None
+   *
+   *  <h4>Output collection:</h4>
+   *  <b>PedestalCollection</b><br>
+   *  <b>NoiseCollection</b><br>
+   *  <b>StatusCollection</b>
+   *
    *  <b>InitPedestal</b>: Float vector containing the initial value
    *  for pixel pedestal. The size of this vector should be equal to
    *  the number of detectors in the telescope <br> <b>InitNoise</b>:
@@ -55,14 +63,17 @@ namespace eutelescope {
    *  <h4>Output</h4>
    *  <b>PedestalCollection</b><br><b>NoiseCollection</b><br><b>StatusCollection</b>
    *
-   *  @param InitPedestal the initial pedestal value (vector of float)
-   *  @param InitNoise the initial noise value (vector of float)
-   *  @param PedestalCollectionName
-   *  @param NoiseCollectionName
-   *  @param StatusCollectionName
+   *  @param InitPedestal The initial pedestal value. This is a vector
+   *  of float, one value for each detector in the telescope.
+   *  @param InitNoise The initial noise value. This is a vector of
+   *  float, one value for each detector in the telescope.
+   *  @param PedestalCollectionName This is the name of the pedestal
+   *  collection.
+   *  @param NoiseCollectionName This is the name of the noise collection.
+   *  @param StatusCollectionName This is the name of the status collection.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelAutoPedestalNoiseProcessor.h,v 1.5 2007-05-23 14:08:12 bulgheroni Exp $
+   *  @version $Id: EUTelAutoPedestalNoiseProcessor.h,v 1.6 2007-06-29 15:24:23 bulgheroni Exp $
    *
    *
    */

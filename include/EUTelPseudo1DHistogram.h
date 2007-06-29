@@ -35,7 +35,7 @@ namespace eutelescope {
    *  in the MarlinUtil package were written by O. Wendt (DESY)
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPseudo1DHistogram.h,v 1.2 2007-05-21 11:37:33 bulgheroni Exp $
+   *  @version $Id: EUTelPseudo1DHistogram.h,v 1.3 2007-06-29 15:24:23 bulgheroni Exp $
    */ 
   
   class EUTelPseudo1DHistogram {
@@ -132,13 +132,30 @@ namespace eutelescope {
     double getBinCenter(int index);
     
   private:
-    int _FullNumberOfBins; // number of bins plus the over- and undeflow bin
-    int _NumberOfBins; // number of bins without the over- and undeflow bin
+    //! Number of bins plus the over- and undeflow bin
+    int _FullNumberOfBins; 
+    
+    //! Number of bins without the over- and undeflow bin
+    int _NumberOfBins; 
+
+    //! Lower bound
     double _MinValue;
+    
+    //! Upper bound
     double _MaxValue;
+
+    //! Bin width 
+    /*! Only constant binning is allowed
+     */ 
     double _BinWidth;
+
+    //! Number of entries per bin
     int* _NOfEntries;
+
+    //! Content array
     double* _Content;
+
+    //! Bin upper limit array
     double* _UpperIntervalLimit;
     
   };

@@ -73,62 +73,58 @@ namespace eutelescope {
    *  @see processEvent(LCEvent*) for a detailed description of
    *  available algorithms.
    *
-   *  <h4>Input</h4> 
+   *  <h4>Input collections</h4> 
    *
-   *  <b>DataCollectionName</b>: the input data TrackerData collection
+   *  <b>Data collection</b>: the input data TrackerData collection
    *  name. This collection is containing data pedestal subtracted
    *  and, eventually, common mode corrected
    *
-   *  <b>NoiseCollectionName</b>: the noise TrackerData collection
+   *  <b>Noise collections</b>: the noise TrackerData collection
    *  name as read from the Condition Processor. This object contains
    *  the noise information of all pixels in all telescope
    *  detectors. Those numbers are used to calculate seed and cluster
    *  signal to noise ratio.
    *  
-   *  <b>StatucCollectionName</b>: the status TrackerData collection
+   *  <b>Status collection</b>: the status TrackerData collection
    *  name as read from the Condition Processor. This object is used
    *  to exclude from the clustering procedure pixels defined as bad
    *  during the pedestal processor.
    *
-   *  <b>PulseCollectionName</b>: this is the name of the output
-   *  cluster collection. This object is used the core result of the
-   *  first analysis part. The cluster collection will be used to fill
-   *  in detector level data quality histograms and, along with the
-   *  geometry interface, will provide space points information.
+   *  <h4>Output collections</h4>
    *
-   *  <b>ClusteringAlgo</b>: a string representing which algorithm
+   *  <b>Pulse collection</b>: this is the TrackerPulse collection
+   *  containing all clusters found in the event.
+   *
+   *  @param DataCollectionName The name of the input data collection.
+   *
+   *  @param NoiseCollectionName The name of the noise collection.
+   *
+   *  @param StatusCollectionName The name of the status collection.
+   *
+   *  @param PulseCollectionName The name of the output TrackerPulse collection.
+   * 
+   *  @param ClusteringAlgo  This is a string representing which algorithm
    *  should be used for the clustering procedure.
    *
-   *  <b>ClusterSizeX</b>: the maximum size of the cluster in pixel
-   *  unit along the x direction. It has to be an odd number since the
-   *  seed pixel is bound to be the cluster center.
+   *  @param ClusterSizeX The maximum size of the cluster in pixel
+   *  unit along the x direction. It is used only for
+   *  EUTELESCOPE::FIXEDFRAME algorithm. It has to be an odd number
+   *  since the seed pixel is bound to be the cluster center.
    *
-   *  <b>ClusterSizeY</b>: as the ClusterSizeX but along the y
+   *  @param ClusterSizeY As the ClusterSizeX but along the y
    *  direction.
    *
-   *  <b>SeedPixelCut</b>: the SNR threshold used to identify seed
-   *  pixel candidates.
+   *  @param SeedPixelCut This is the SNR threshold used to identify seed
+   *  pixel candidates. One global number for all detectors.
    *
-   *  <b>ClusterCut</b>: the SNR threshold used to accept cluster
+   *  @param ClusterCut  This is the SNR threshold used to accept cluster
    *  candidates.
    *
-   *  <h4>Output</h4>
+   *  @param HistoInfoFileName This is the name of the XML file
+   *  containing the histogram booking information.
    *
-   *  <b>Cluster</b>: a collection of TrackerPulse containing the
-   *  clustering results.
-   *
-   *  @param _dataCollectionName the name of the input data collection
-   *  @param _noiseCollectionName the name of the noise collection 
-   *  @param _statusCollectionName the name of the status collection 
-   *  @param _clusterCollectionName the name of the output cluster collection
-   *  @param _clusteringAlgo the clustering algorithm to be used. Use constant string defined in EUTELESCOPE
-   *  @param _xClusterSize the maximum cluster size along x. It has to be an odd number. 
-   *  @param _yClusterSize the maximum cluster size along y. It has to be an odd number.
-   *  @param _seedPixelCut the threshold to identify the seed pixel candidate
-   *  @param _clusterCut the threshold to select clusters.
-   *  
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.9 2007-06-28 07:25:27 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.10 2007-06-29 15:24:23 bulgheroni Exp $
    *
    */
 

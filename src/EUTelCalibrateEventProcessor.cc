@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.10 2007-06-29 09:17:24 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.11 2007-06-29 15:24:23 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -81,11 +81,11 @@ EUTelCalibrateEventProcessor::EUTelCalibrateEventProcessor () :Processor("EUTelC
   // now the optional parameters
   registerProcessorParameter ("DebugHistoFilling",
 			      "Flag to switch on (1) or off (0) the detector debug histogram filling",
-			      _fillDebugHisto, static_cast<int> (0));
+			      _fillDebugHisto, static_cast<bool> (false));
   
   registerProcessorParameter ("PerformCommonMode",
 			      "Flag to switch on (1) or off (0) the common mode suppression algorithm",
-			      _doCommonMode, static_cast<int> (1));
+			      _doCommonMode, static_cast<bool> (true));
 
   registerProcessorParameter ("HitRejectionCut",
 			      "Threshold of pixel SNR for hit rejection",

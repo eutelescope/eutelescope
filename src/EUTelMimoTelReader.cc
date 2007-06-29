@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.3 2007-06-17 22:39:17 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.4 2007-06-29 15:24:23 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -50,7 +50,7 @@ EUTelMimoTelReader::EUTelMimoTelReader (): DataSourceProcessor  ("EUTelMimoTelRe
     "Reads EUDRB events with MimoTel data inside";
  
   registerOptionalParameter("CDS","Enable (==1) or disable (==0) the CDS calculation",
-			  _cdsCalculation, static_cast< int > ( 1 ) );
+			  _cdsCalculation, static_cast< bool > ( true ) );
 
   registerOutputCollection(LCIO::TRACKERRAWDATA,"FirstFrameCollectionName",
 			   "First frame collection name", _firstFrameCollectionName, 

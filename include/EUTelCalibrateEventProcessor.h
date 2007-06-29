@@ -59,7 +59,7 @@ namespace eutelescope {
    *  considered as the input collection for the cluster search
    *  processor
    *
-   *  <h4>Input - Prerequisites</h4>
+   *  <h4>Input collections</h4>
    *  <br><b>RawDataCollection</b>. This is a collection of
    *  TrackerRawData containing all pixel signals as they are readout
    *  by the DAQ system. This collection is coming from the input
@@ -89,7 +89,7 @@ namespace eutelescope {
    *  this output collection via the steering parameter
    *  DataCollectionName
    *
-   *  @param RawDataCollectionName Name of the input data collection
+   *  @param RawDataCollectionName Name of the input raw data collection
    *
    *  @param PedestalCollectionName Name of the input (condition)
    *  pedestal collection 
@@ -100,11 +100,11 @@ namespace eutelescope {
    *  @param StatusCollectionName Name of the input (condition) status
    *  collection
    *
-   *  @param FillDetectorDebugHisto Flag to set the filling of debug
-   *  histo on (1) or off (0)
+   *  @param DebugHistoFilling Flag to set the filling of debug
+   *  histo on (true) or off (false)
    *
-   *  @param DoCommonMode Flag to set the common mode suppression on
-   *  (1) or off (0)
+   *  @param PerformCommonMode Flag to set the common mode suppression on
+   *  (true) or off (false)
    *
    *  @param HitRejectionCut Threshold in SNR to consider a pixel hit
    *  and exclude it from the common mode calculation.
@@ -114,13 +114,14 @@ namespace eutelescope {
    *  skipped. If this parameter is set to -1 then the control is
    *  by-passed
    *
-   *  @param DataCollectionName the name of the output calibrated data
+   *  @param DataCollectionName The name of the output calibrated data
    *  collection
    *
-   *  @author Antonio Bulgheroni, INFN
-   *  <mailto:antonio.bulgheroni@gmail.com>
-   *  
-   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.6 2007-06-29 09:17:24 bulgheroni Exp $
+   *  @param HistoInfoFileName The name of the XML containing the
+   *  histogram information file.
+   *
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.7 2007-06-29 15:24:23 bulgheroni Exp $
    *
    *
    */
@@ -163,7 +164,7 @@ namespace eutelescope {
     virtual void processRunHeader (LCRunHeader * run);
 
     //! Called every event
-    /*  This is called for each event in the file. In the case this is
+    /*! This is called for each event in the file. In the case this is
      *  the first event, then a cross-check is done on the
      *  compatibility of input raw data and pedestal collections. They
      *  have to contain the same number of detector planes and each of
@@ -218,12 +219,12 @@ namespace eutelescope {
     std::string _pedestalCollectionName;
 
     //! Noise collection name.
-    /*! See _pedestalCollectionName for the detailed description
+    /*! See EUTelCalibrateEventProcessor::_pedestalCollectionName for the detailed description
      */
     std::string _noiseCollectionName;
 
     //! Status collection name.
-    /*! See _pedestalCollectionName for the detailed description
+    /*! See EUTelCalibrateEventProcessor::_pedestalCollectionName for the detailed description
      */
     std::string _statusCollectionName;
 
@@ -246,19 +247,19 @@ namespace eutelescope {
 
     //! Filling of the debug histo
     /*! If the user wants to fill some low level detector debug
-     *  histograms, she/he has to switch this flag on (==1). An AIDA
+     *  histograms, she/he has to switch this flag on. An AIDA
      *  interface is also needed.
      */
-    int _fillDebugHisto;
+    bool _fillDebugHisto;
 
 
     //! Perform common mode suppression
     /*! The user can perform a common mode suppression step by
-     *  switching on (==1) this flag.  The common mode suppression is
+     *  switching on this flag.  The common mode suppression is
      *  done on a detector base and it is rejecting possible hit
      *  pixels.
      */
-    int _doCommonMode;
+    bool _doCommonMode;
 
     //! Hit rejection threshold 
     /*! In the case the user wants to suppress the common mode, we

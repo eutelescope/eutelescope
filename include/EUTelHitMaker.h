@@ -74,8 +74,7 @@ namespace eutelescope {
    *  the y axis going from the bottom to the top side and the x axis
    *  from the right to the left hand side.
    *
-   *  \image html frameOfReference.png "Frame of references: the
-   *  detector on the left and the telescope one on the right."
+   *  \image html frameOfReference.png "Frame of references: the detector on the left and the telescope one on the right."
    *
    *  Moreover, the detector FoR can be rotated with respect to the
    *  telescope one. This rotation in the x-y plane is expressed by
@@ -144,6 +143,10 @@ namespace eutelescope {
    *  they are uniformly distributed on the sensor surface, this plot
    *  should resemble the telescope geometry. 
    *
+   *  <h4>GEAR Geometry file</h4>
+   *  The geometry information about plane positions and orientations
+   *  is 
+   *  
    *  <h4>Good programming note</h4>
    *  
    *  This processor is useful if and only if it has access to
@@ -158,35 +161,35 @@ namespace eutelescope {
    *  \#endif 
    *  \endcode  block.
    *
-   *  <h4>Input</h4> 
+   *  <h4>Input collections</h4> 
    *  
-   *  <b>TrackerPulse</b>: A collection with cluster
+   *  <b>Tracker pulse</b>: A collection with cluster
    *  information. Along with that also the original TrackerData
    *  (suitably reimplemented as a EUTelVirtualCluster) should be
    *  available in the event.
    *
-   *  <b>GEAR geometry description</b>: During the init() phase this
-   *  processor will check if a GEAR geometry description is available
-   *  and if Marlin is actually configured to use GEAR. During the
-   *  processRunHeader the consistency of the given geometry with the
-   *  one stored on the cluster input file is check in order not to
-   *  apply the wrong geometry description.
-   *
-   *  <b>EtaFunction</b>: Optionally if the user wants to apply the
+   *  <b>Eta functions</b>: Optionally if the user wants to apply the
    *  eta correction, a collection of EtaFunctionImpl should be loaded
    *  as condition file before this processor.
    *
-   *  <h4>Output</h4>
-   *  <b>TrackerHit</b>: A collection of TrackerHit, ready to be used
+   *  <h4>Output collections</h4>
+   *  <b>Tracker hit</b>: A collection of TrackerHit, ready to be used
    *  by a track fitting algorithm
    *
-   *  @param TrackerPulseCollectionName The name of the tracker pulse colelction
-   *  @param EtaCollectionNames A vector of strings with the name of
+   *  @param TrackerPulseCollectionName The name of the tracker pulse
+   *  collection.
+   *  
+   *  @param HitCollectionName The name of the output Tracker Hit
+   *  collection. 
+   *
+   *  @param EtaCollectionName A vector of strings with the name of
    *  the eta collection along x and y.
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHitMaker.h,v 1.5 2007-06-21 16:58:04 bulgheroni Exp $
+   *  @param EtaSwitch A boolean to switch on and off the eta
+   *  corrections.
    *
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelHitMaker.h,v 1.6 2007-06-29 15:24:23 bulgheroni Exp $
    *
    */
 
@@ -294,9 +297,8 @@ namespace eutelescope {
      *  switch off the correction might be usefull for debug
      *  purposes. 
      *
-     *  _etaCorrection == 1 means that the correction will be applied
      */ 
-    int _etaCorrection ;
+    bool _etaCorrection ;
 
   private:
     

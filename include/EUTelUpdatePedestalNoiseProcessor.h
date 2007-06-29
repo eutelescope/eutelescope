@@ -63,17 +63,21 @@ namespace eutelescope {
    *  elements is kept constant to weight value. An analogous approach
    *  is used for the noise calculation.
    *
-   *  <h4>Input</h4> 
+   *  <h4>Input collections</h4> 
    *  
-   *  <b>RawDataCollectionName</b> the name of the raw data previously
-   *  used in the cluster search <br> <b>PedestalCollectionName</b> the name
-   *  of the pedestal collection.<br> <b>NoiseCollectionName</b> the
-   *  name of the noise collection.<br> <b>StatusCollectionName</b>
-   *  the name of the pixel status collection. <br>
-   *  <b>UpdateAlgorithm</b> the name the update algorithm to be
-   *  used. <br> <b>UpdateFrequency</b> how often the algorithm has to
-   *  be applied. <br> <b>FixedWeightValue</b> the weight value to be
-   *  used with EUTELESCOPE::FIXEDWEIGHT
+   *  <b>Raw data collection</b> the collection with the full raw data matrix.
+   * 
+   *  <b>Pedestal collection</b> the current pedestal collection
+   *
+   *  <b>Noise collection </b> the current noise collection
+   *
+   *  <b>Status collection </b> the current status collection
+   *
+   *  <h4>Output collections</h4>
+   *
+   *  <b>Pedestal collection</b> the updated pedestal collection
+   *
+   *  <b>Noise collection </b> the updated noise collection
    *
    *  @param RawDataCollectionName name of the raw data collection
    *  @param PedestalCollectionName name of the pedestal collection
@@ -84,7 +88,7 @@ namespace eutelescope {
    *  @param FixedWeightValue the value of the fixed weight
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelUpdatePedestalNoiseProcessor.h,v 1.5 2007-05-21 11:37:33 bulgheroni Exp $
+   *  @version $Id: EUTelUpdatePedestalNoiseProcessor.h,v 1.6 2007-06-29 15:24:23 bulgheroni Exp $
    *
    *  @todo Implement the status matrix update
    *

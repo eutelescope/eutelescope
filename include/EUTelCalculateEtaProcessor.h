@@ -70,47 +70,64 @@ namespace eutelescope {
    *  \li This eta function has to be normalized and shifted by half a
    *  pitch
    *
-   *  <h4>Input - Prerequisites</h4> <b>ClusterCollection</b>. A
-   *  collection of clusters. The name of this collection has to be
-   *  specified in the steering file.  <br><b>EventNumber</b>. This is
-   *  the number of events will be used for the eta calculation. Set
-   *  it to -1 to use all available
-   *  events. <br><b>NumberOfBins</b>. This vector contains the number
+   *  <h4>Input collections </h4> 
+   *  <b>ClusterCollection</b>. A collection of clusters (TrackerPulse)
+   *  
+   *  <h4>Output colelctions</h4>
+   *  None
+   *  
+   *  <h4>Output file</h4>
+   *  <b>OutputEtaFileName</b>. This is the name of the output LCIO
+   *  file containing the eta calculation results. This file can be
+   *  reloaded into Marlin via a condition processor.
+   *
+   *  @param ClusterCollectionName The name of the input cluster
+   *  collection.  
+   *
+   *  @param EventNumber The number of events to use for the
+   *  calculation
+   *
+   *  @param NumberOfBins  This vector contains the number
    *  of bins along x and y respectively to be used while binning the
    *  two eta function
-   *  projections. <br><b>ClusterQualitySelection</b>. This parameter
-   *  is used to select the quality of clusters used for Eta
-   *  calculation. Reccomended is 0 ==
-   *  kGoodCluster. <br><b>ClusterTypeSelection</b>. This string is
+   *
+   *  @param ClusterQualitySelection This parameter is used to select
+   *  the quality of clusters used for Eta calculation. Reccomended is
+   *  0 == kGoodCluster. To apply other, more elaborated selection
+   *  criteria see eutelescope::EUTelClusterFilter.
+   * 
+   *  @param ClusterTypeSelection This string is
    *  used to choose how the charge center of gravity is
    *  calculated. Type "FULL" to use the full cluster, whatever number
    *  of pixels or shape it has; type "NxMPixel" to use only pixels of
    *  the cluster belonging to a NxM region around the seed; type
    *  NPixel to use only the N pixels of the cluster having the
-   *  highest signal. <br><b>NxMPixelClusterSize</b>. This parameter
-   *  is used only when ClusterTypeSelection=="NxMPixel" and
-   *  represents the size along x and y of the cluster region of
-   *  interest. In case this is bigger or equal to the full cluster,
-   *  then "FULL" is used. <br><b>NPixelSize</b>. This parameter is
-   *  used only when ClusterTypeSelection=="NPixel" and represents the
-   *  number of pixels with the highest signal to be used in the CoG
+   *  highest signal. 
+   *
+   *  @param NxMPixelClusterSize This parameter is used only when
+   *  ClusterTypeSelection=="NxMPixel" and represents the size along x
+   *  and y of the cluster region of interest. In case this is bigger
+   *  or equal to the full cluster, then "FULL" is
+   *  used. 
+   *
+   *  @param NPixelSize This parameter is used only when
+   *  ClusterTypeSelection=="NPixel" and represents the number of
+   *  pixels with the highest signal to be used in the CoG
    *  calculation. In case this number is exceeding the cluster
    *  multiplicity then "FULL" is used.
    *
-   *  <h4>Output</h4>
-   *  
-   *  @param ClusterCollectionName The name of the input cluster
-   *  collection.
-   *  @param EventNumber The number of events to use for the calculation
-   *  @param NumberOfBins The number of bins (x and y) for the calculation
-   *  @param ClusterQualitySelection The cluster quality for the calculation
-   *  @param ClusterTypeSelection The way the CoG is calculated
-   *  @param NxMPixelClusterSize Number of pixels when ClusterTypeSelection=="NxMPixel"
-   *  @param NPixelSize Number of pixels when ClusterTypeSelection="NPixel"
+   *  @param EtaXCollectionName This is the name of the collection of
+   *  eta functions along the X axis. This collection is saved in the
+   *  output file and not made available to the current event.
+   *
+   *  @param EtaYCollectionName This is the name of the collection of
+   *  eta functions along the Y axis. This collection is saved in the
+   *  output file and not made available to the current event. 
+   *
+   *  @param OutputEtaFileName The name of the output file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  
-   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.7 2007-05-25 05:13:35 bulgheroni Exp $
+   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.8 2007-06-29 15:24:23 bulgheroni Exp $
    *
    *
    */

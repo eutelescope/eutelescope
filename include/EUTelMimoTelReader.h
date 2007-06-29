@@ -61,8 +61,43 @@ namespace eutelescope {
    *   provided by the DAQ software, so please refer to that
    *   documentation for more info.
    *
+   *
+   *   <h4>Input collection</h4>
+   *   None
+   *
+   *   <h4>Output collections</h4>
+   * 
+   *   <b>First frame</b> A collection of TrackerRawData containing
+   *   the first decoded frame
+   *
+   *   <b>Second frame</b> A collection of TrackerRawData containing
+   *   the second decoded frame
+   *
+   *   <b>Third frame</b> A collection of TrackerRawData containing
+   *   the third decoded frame
+   *
+   *   <b>CDS</b> A collection of TrackerRawData containing
+   *   the CDS make taking into account the pivot pixel.
+   *
+   *   @param FirstFrameCollectionName The name of the first frame
+   *   collection.
+   *
+   *   @param SecondFrameCollectionName The name of the second frame collection.
+   *
+   *   @param ThirdFrameCollectionName The name of the third frame
+   *   collection.
+   *
+   *   @param CDSCollection The name of the CDS collection.
+   *
+   *   @param CDS Switch to enable / disable the CDS calculation.
+   *   
+   *   @param InputDataFileName The input file to convert.
+   *
+   *   @param SignalPolarity The expected signal polarity.
+   *
+   *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelMimoTelReader.h,v 1.2 2007-06-12 13:49:14 bulgheroni Exp $
+   *   @version $Id: EUTelMimoTelReader.h,v 1.3 2007-06-29 15:24:23 bulgheroni Exp $
    *
    */
   
@@ -125,10 +160,10 @@ namespace eutelescope {
     std::string _cdsCollectionName;
 
     //! The CDS enable flag
-    /*! This flag is one if the converter should perform also online
-     *  CDS calculation. It is 0 otherwise.
+    /*! This flag is true if the converter should perform also online
+     *  CDS calculation. It is false otherwise.
      */
-    int _cdsCalculation;
+    bool _cdsCalculation;
 
     //! Signal polarity 
     /*! This is used to change the signal polarity in the CDS
