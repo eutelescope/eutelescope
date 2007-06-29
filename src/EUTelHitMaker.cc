@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.7 2007-06-28 07:30:20 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.8 2007-06-29 09:14:08 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -153,26 +153,28 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
   // in the xml file. If the numbers are different, instead of barely
   // quitting ask the user what to do.
 
-  // UNCOMMENT THE FOLLOWING PART WHEN THE GEO ID WILL BE IMPLEMENTED
-  // ALSO IN THE XML GEAR DESCRIPTION
-  //
-  //   if ( header->getGeoID() != _siPlanesParameters->getSiPlanesNumber() ) {
-  //     message<ERROR> ( "Error during the geometry consistency check: " );
-  //     message<ERROR> ( log() << "The run header says the GeoID is " << header->getGeoID() );
-  //     message<ERROR> ( log() << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesNumber() );
-  //     string answer;
-  //     while (true) {
-  //       message<ERROR> ( "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" );
-  //       cin >> answer;
-  //       // put the answer in lower case before making the comparison.
-  //       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
-  //       if ( answer == "q" ) {
-  // 	exit(-1);
-  //       } else if ( answer == "c" ) {
-  // 	break;
-  //       }
-  //     }
-  //   }
+  if ( header->getGeoID() == 0 ) 
+    message<WARNING> ( "The geometry ID in the run header is set to zero.\n" 
+		       "This may mean that the GeoID parameter was not set" );
+  
+
+  if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
+    message<ERROR> ( "Error during the geometry consistency check: " );
+    message<ERROR> ( log() << "The run header says the GeoID is " << header->getGeoID() );
+    message<ERROR> ( log() << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesNumber() );
+    string answer;
+    while (true) {
+      message<ERROR> ( "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" );
+      cin >> answer;
+      // put the answer in lower case before making the comparison.
+      transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
+      if ( answer == "q" ) {
+  	exit(-1);
+      } else if ( answer == "c" ) {
+  	break;
+      }
+    }
+  }
 	
     // now book histograms plz...
   if ( isFirstEvent() )  bookHistos();
