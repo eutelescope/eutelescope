@@ -120,7 +120,7 @@ namespace eutelescope {
    *  @author Antonio Bulgheroni, INFN
    *  <mailto:antonio.bulgheroni@gmail.com>
    *  
-   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.5 2007-05-23 14:08:44 bulgheroni Exp $
+   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.6 2007-06-29 09:17:24 bulgheroni Exp $
    *
    *
    */
@@ -281,6 +281,16 @@ namespace eutelescope {
      *  of all events. This cut can by-passed setting its value to -1.
      */
     int _maxNoOfRejectedPixels;
+
+    //! The histogram information file
+    /*! This string contain the name of the histogram information
+     *  file. This is selected by the user in the steering file.
+     * 
+     *  @see eutelescope::EUTelHistogramManager
+     *  @see eutelescope::EUTelHistogramInfo
+     */ 
+    std::string _histoInfoFileName;
+
 
   private:
 
