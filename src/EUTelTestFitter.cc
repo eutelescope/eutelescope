@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.5 2007-06-26 16:19:19 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.6 2007-06-30 15:26:49 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -650,14 +650,43 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     if(ibest>=0)
       {
 
-	message<DEBUG> ( log() << "Best fit from choice " << ibest << " : " << nBestFired << " hits " 
-			 << " chi2 = " << chi2best << " including penalties of " << bestPenalty );
+		message<DEBUG> ( log() << "Track reconstructed from " << nBestFired << " hits: " );
+
+
+    // print out hits contributing to the fit
+
+	int modchoice=ibest;
 
 	for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	  message<DEBUG> ( log() <<  "X = " << bestX[ipl] << " +/- " << bestEx[ipl] 
+	  {
+	    if(_isActive[ipl])
+	      {
+		  int ihit=modchoice%nPlaneChoice[ipl];
+		  modchoice/=nPlaneChoice[ipl];
+
+		  if(ihit<nPlaneHits[ipl])
+		    {
+		    int jhit = planeHitID[ipl].at(ihit);
+            message<DEBUG> ( log() << "Hit " << jhit
+		       << "   X = " << hitX[jhit] 
+		       << "   Y = " << hitY[jhit] 
+		       << "   Z = " << hitZ[jhit] << " (plane" << hitPlane[jhit] << ")" );
+		    }
+	      }
+	  }
+
+
+	message<DEBUG> (log() << " Fitted positions in telescope planes:");
+
+	for(int ipl=0;ipl<_nTelPlanes;ipl++)
+	  message<DEBUG> ( log() << "  X = " << bestX[ipl] << " +/- " << bestEx[ipl] 
 			   << "  Y = " << bestY[ipl] << " +/- " << bestEy[ipl] 
 			   << "  at Z = " << _planePosition[ipl] ) ;
 	
+
+	message<DEBUG> ( log() << " Fit chi2 = " << chi2best << " including penalties of " << bestPenalty );
+
+
 	// Write fit result out
 	
 	TrackImpl * fittrack = new TrackImpl();
