@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.4 2007-06-29 15:24:23 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.5 2007-07-03 14:18:58 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -37,7 +37,7 @@
 // system includes 
 #include <string>
 #include <vector>
-
+#include <algorithm>
 
 using namespace std;
 using namespace marlin;
@@ -68,7 +68,29 @@ EUTelMimoTelReader::EUTelMimoTelReader (): DataSourceProcessor  ("EUTelMimoTelRe
 			     _fileName, string("run012345.raw") );
   
   registerProcessorParameter("SignalPolarity", "Signal polarity (negative == -1)",
-			     _polarity, float(-1));
+			     _polarity, static_cast<int> (-1));
+
+  registerProcessorParameter("GeoID", "The geometry identification number",
+			     _geoID, static_cast<int> ( 0 ));
+
+  registerProcessorParameter("RemoveMarker","If set to true, pixels identified as markers will be removed\n"
+			     "from the TrackerRawData output collections",
+			     _removeMarkerSwitch, static_cast< bool > ( false ) );
+
+  IntVec markerPositionExample;
+  markerPositionExample.push_back( 0  );
+  markerPositionExample.push_back( 1  );
+  markerPositionExample.push_back( 66 );
+  markerPositionExample.push_back( 67 );
+  markerPositionExample.push_back( 132 );
+  markerPositionExample.push_back( 133 );
+  markerPositionExample.push_back( 198 );
+  markerPositionExample.push_back( 199 );
+
+  registerOptionalParameter("MarkerPosition","This vector of integer contains the marker positions in pixel number.\n"
+			    "(Pixels are numbered starting from 0)",
+			    _markerPositionVec, markerPositionExample );
+			    
 
 
 }
@@ -79,6 +101,23 @@ EUTelMimoTelReader * EUTelMimoTelReader::newProcessor () {
 
 void EUTelMimoTelReader::init () {
   printParameters ();
+
+  // those two values are constants!!!
+  _xMax = 264;
+  _yMax = 256;
+
+  if ( _removeMarkerSwitch ) {
+
+    message<DEBUG> ( "Data conversion with markers removal" );
+    if ( _markerPositionVec.size() == 0 ) {
+      message<WARNING> ( "Data conversion with markers removal selected but no markers position found\n"
+			 "Disabling marker removal" );
+      _removeMarkerSwitch = false;
+      sort( _markerPositionVec.begin(), _markerPositionVec.end() );
+    }
+  } else {
+    _markerPositionVec.clear();
+  }
 }
 
 
@@ -120,13 +159,15 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	  }
 	}
       }
+
       runHeader->setNoOfDetector(noOfDetectors);
       runHeader->setMinX(IntVec(noOfDetectors, 0));
-      runHeader->setMaxX(IntVec(noOfDetectors, 263));
+      runHeader->setMaxX(IntVec(noOfDetectors, _xMax - _markerPositionVec.size() -  1));
       runHeader->setMinY(IntVec(noOfDetectors, 0));
-      runHeader->setMaxY(IntVec(noOfDetectors, 255));
+      runHeader->setMaxY(IntVec(noOfDetectors, _yMax - 1));
       runHeader->setDetectorName("MimoTel");
-      
+      runHeader->setGeoID( _geoID );
+
       runHeader->setDateTime();
       
       ProcessorMgr::instance()->processRunHeader(runHeader);
@@ -165,21 +206,21 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
       // set here static parameters, while keeping the sensor id
       // setting for within the sensor loop
       idEncoder1["xMin"]     = 0;
-      idEncoder1["xMax"]     = 263;
+      idEncoder1["xMax"]     = _xMax - 1 - _markerPositionVec.size();
       idEncoder1["yMin"]     = 0;
-      idEncoder1["yMax"]     = 255;
+      idEncoder1["yMax"]     = _yMax - 1;
       idEncoder2["xMin"]     = 0;
-      idEncoder2["xMax"]     = 263;
+      idEncoder2["xMax"]     = _xMax - 1 - _markerPositionVec.size();
       idEncoder2["yMin"]     = 0;
-      idEncoder2["yMax"]     = 255;
+      idEncoder2["yMax"]     = _yMax - 1;
       idEncoder3["xMin"]     = 0;
-      idEncoder3["xMax"]     = 263;
+      idEncoder3["xMax"]     = _xMax - 1 - _markerPositionVec.size();
       idEncoder3["yMin"]     = 0;
-      idEncoder3["yMax"]     = 255;
+      idEncoder3["yMax"]     = _yMax - 1;
       idEncoderCDS["xMin"]   = 0;
-      idEncoderCDS["xMax"]   = 263;
+      idEncoderCDS["xMax"]   = _xMax - 1 - _markerPositionVec.size();
       idEncoderCDS["yMin"]   = 0;
-      idEncoderCDS["yMax"]   = 255;
+      idEncoderCDS["yMax"]   = _yMax - 1;
       if ( eventNumber % 10 == 0 ) 
 	message<MESSAGE> ( log() << "Converting event " << eventNumber );
 
@@ -221,27 +262,141 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	    idEncoder3["sensorID"] = iDetector;
 	    idEncoder3.setCellID( thirdFrame );
 	  
-	    // move the adc values from the EUDRBDecoder::arrays_t to
-	    // the trackerRawDataImpl
-	    firstFrame->setADCValues(  array.m_adc[0] );
-	    firstFrame->setTime(brd.PivotPixel());
-	    secondFrame->setADCValues( array.m_adc[1] );
-	    secondFrame->setTime(brd.PivotPixel());
-	    thirdFrame->setADCValues(  array.m_adc[2] );
-	    thirdFrame->setTime(brd.PivotPixel());
+	    if ( _removeMarkerSwitch ) {
+	      // the idea behind the marker removal procedure is that:
+	      // markers are occurring always at the same column
+	      // position, so we can repeat the procedure into a loop
+	      // over all the rows. The marker positions are given by
+	      // the user in the steering file and stored into the
+	      // _markerPositionVec. For each row the part of the
+	      // original vector in between two markers is copied into
+	      // the stripped matrix.
 
+	      vector<short > firstStrippedVec(  ( _xMax - _markerPositionVec.size() ) * _yMax );
+	      vector<short > secondStrippedVec( ( _xMax - _markerPositionVec.size() ) * _yMax );
+	      vector<short > thirdStrippedVec(  ( _xMax - _markerPositionVec.size() ) * _yMax );
+	      vector<short >::iterator currentFirstPos  = firstStrippedVec.begin();
+	      vector<short >::iterator currentSecondPos = secondStrippedVec.begin();
+	      vector<short >::iterator currentThirdPos  = thirdStrippedVec.begin();
+	      vector<short >::iterator firstBegin       = array.m_adc[0].begin();
+	      vector<short >::iterator secondBegin      = array.m_adc[1].begin();
+	      vector<short >::iterator thirdBegin       = array.m_adc[2].begin();
+
+	      for ( int y = 0; y < _yMax ; y++ ) {
+		int offset = y * _xMax;
+		vector<int >::iterator marker = _markerPositionVec.begin();
+		// first of all copy the part of the array going from
+		// the row beginning to the first marker position
+		currentFirstPos    = copy( firstBegin + offset, 
+					   firstBegin + ( *(marker) + offset ),
+					   currentFirstPos );
+		currentSecondPos   = copy( secondBegin + offset,
+					   secondBegin + ( *(marker) + offset ),
+					   currentSecondPos );
+		currentThirdPos    = copy( thirdBegin + offset, 
+					   thirdBegin + ( *(marker) + offset ),
+					   currentThirdPos );
+
+		while ( marker != _markerPositionVec.end() ) {
+		  if ( marker < _markerPositionVec.end() - 1 ) {
+		    currentFirstPos   = copy( firstBegin + ( *(marker) + 1 + offset),
+					      firstBegin + ( *(marker + 1 ) + offset),
+					      currentFirstPos );
+		    currentSecondPos  = copy( secondBegin + ( *(marker) + 1 + offset),
+					      secondBegin + ( *(marker + 1 ) + offset),
+					      currentSecondPos );
+		    currentThirdPos   = copy( thirdBegin + ( *(marker) + 1 + offset),
+					      thirdBegin + ( *(marker + 1 ) + offset),
+					      currentThirdPos );
+		  } else {
+		    // this is the case where we have to copy the part
+		    // of the original vector going from the last
+		    // marker and the end of the row.
+		    currentFirstPos = copy( firstBegin + ( *(marker) + 1 + offset ),
+					    firstBegin + offset + _xMax, 
+					    currentFirstPos );
+
+		    currentSecondPos = copy( secondBegin + ( *(marker) + 1 + offset ),
+					    secondBegin + offset + _xMax, 
+					    currentSecondPos );
+
+		    currentThirdPos = copy( thirdBegin + ( *(marker) + 1 + offset ),
+					    thirdBegin + offset + _xMax, 
+					    currentThirdPos );
+		  }
+		  ++marker;
+		}
+	      }
+
+	      firstFrame->setADCValues( firstStrippedVec );
+	      secondFrame->setADCValues( secondStrippedVec );
+	      thirdFrame->setADCValues( thirdStrippedVec );
+	      
+	      
+	    } else {
+	      
+	      // just move the adc values from the EUDRBDecoder::arrays_t to
+	      // the trackerRawDataImpl
+
+
+	      firstFrame->setADCValues(  array.m_adc[0] );
+	      secondFrame->setADCValues( array.m_adc[1] );
+	      thirdFrame->setADCValues(  array.m_adc[2] );
+
+	    }
+
+	    firstFrame->setTime(brd.PivotPixel());
+	    secondFrame->setTime(brd.PivotPixel());	      
+	    thirdFrame->setTime(brd.PivotPixel());
+	    
 	    if ( _cdsCalculation ) {
 	      TrackerRawDataImpl * cdsFrame = new TrackerRawDataImpl;
 	      idEncoderCDS["sensorID"] = iDetector;
 	      idEncoderCDS.setCellID( cdsFrame );
-	      vector< short > cdsVector;
+	      vector<short > cdsVector;
+	      vector<short > firstFrameVec  = array.m_adc[0];
+	      vector<short > secondFrameVec = array.m_adc[1];
+	      vector<short > thirdFrameVec  = array.m_adc[2]; 
+
+	      // bad luck! the pivot pixel is obtained counting also
+	      // the markers, so I prefer to calculate the cds as the
+	      // marker should stay into and in case remove them afterward.
 	      for (unsigned int iPixel = 0; iPixel < eudrbDecoder->NumPixels(brd); iPixel++) {
-		cdsVector.push_back( _polarity * 
-				     ( ( array.m_pivot[iPixel] - 1   ) * array.m_adc[0][iPixel] +
-				       ( 1 - 2*array.m_pivot[iPixel] ) * array.m_adc[1][iPixel] +
-				       ( 1*array.m_pivot[iPixel]     ) * array.m_adc[2][iPixel] ) );
+		cdsVector.push_back( static_cast<short> (_polarity )* 
+				     ( ( array.m_pivot[iPixel] - 1   ) * firstFrameVec[iPixel] +
+				       ( 1 - 2*array.m_pivot[iPixel] ) * secondFrameVec[iPixel] +
+				       ( 1*array.m_pivot[iPixel]     ) * thirdFrameVec[iPixel] ) );
 	      }	      
-	      cdsFrame->setADCValues( cdsVector );
+
+
+	      if ( _removeMarkerSwitch ) {
+		// strip away the markers...
+		vector<short > cdsStrippedVec( ( _xMax - _markerPositionVec.size() ) * _yMax );
+		vector<short >::iterator currentCDSPos = cdsStrippedVec.begin();
+		vector<short >::iterator cdsBegin      = cdsVector.begin();
+		for ( int y = 0; y < _yMax ; y ++ ) {
+		  int offset = y * _xMax ;
+		  vector<int >::iterator marker = _markerPositionVec.begin();
+		  currentCDSPos = copy( cdsBegin + offset, 
+					cdsBegin + ( *(marker) + offset ),
+					currentCDSPos);
+		  while ( marker != _markerPositionVec.end() ) {
+		    if ( marker < _markerPositionVec.end() - 1 ) {
+		      currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset),
+					    cdsBegin + ( *(marker + 1 ) + offset),
+					    currentCDSPos );
+		    } else {
+		      currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ),
+					    cdsBegin + offset + _xMax, 
+					    currentCDSPos );
+		    }
+		    ++marker;
+		  }
+		}
+		cdsFrame->setADCValues( cdsStrippedVec );
+	      } else {
+		cdsFrame->setADCValues( cdsVector );
+	      }
 	      cdsFrameColl->push_back( cdsFrame );
 	    }	    
 
@@ -251,6 +406,7 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	    secondFrameColl->push_back( secondFrame  );
 	    thirdFrameColl->push_back(  thirdFrame   );
 	  }
+
 	} else {
 	  message<DEBUG> ( log() << "Not a EUDRBEvent, very likely a TLUEvent " );
 	}
