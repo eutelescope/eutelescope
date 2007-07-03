@@ -95,9 +95,18 @@ namespace eutelescope {
    *
    *   @param SignalPolarity The expected signal polarity.
    *
+   *   @param GeoID This is the identification number of the used
+   *   geometry. It has to be the same here and in the corresponding
+   *   XML geometry description.
+   *
+   *   @param RemoveMarker This boolean is used to remove (true) the
+   *   markers from the output data stream. 
+   *
+   *   @param MarkerPosition This is a vector of integer containing
+   *   the marker position in pixel number start counting from 0.
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelMimoTelReader.h,v 1.3 2007-06-29 15:24:23 bulgheroni Exp $
+   *   @version $Id: EUTelMimoTelReader.h,v 1.4 2007-07-03 14:16:43 bulgheroni Exp $
    *
    */
   
@@ -169,7 +178,47 @@ namespace eutelescope {
     /*! This is used to change the signal polarity in the CDS
      *  calculation. 
      */
-    float _polarity;
+    int _polarity;
+
+    //! Geometry ID
+    /*! This is the unique identification number of the telescope
+     *  geometry. This identification number is saved in the run
+     *  header and then crosscheck against the XML geometry
+     *  description during the reconstruction phase. 
+     *  
+     *  In the future, this ID can be used to browse a geometry database.
+     */ 
+    int _geoID;
+
+    //! Marker removal switch
+    /*! This boolean is used to set the removal of markers from the
+     *  TrackerRawData output collections.
+     *  When this switch is set to true, the output collection will
+     *  not contain the marker information.
+     */
+    bool _removeMarkerSwitch;
+
+    //! Marker position vector
+    /*! This vector of integer contains the position of all the
+     *  markers that have to stripped away from the output
+     *  collection. 
+     *  Markers are assumed to occur always at the same position in
+     *  the row.
+     *
+     */
+    std::vector<int > _markerPositionVec;
+
+    //! Maximum number of pixel along the x direction
+    /*! This variable can assume two values depending if the user
+     *  wants to remove the markers of not
+     */ 
+    int _xMax;
+
+    //! Maximum number of pixel along the y direction
+    /*! Since on the MimoTel there are only columns of markers (and no
+     *  row), the maximum number of pixel along y is constant.
+     */ 
+    int _yMax;
 
   };
 
