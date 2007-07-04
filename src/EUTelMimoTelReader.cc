@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.5 2007-07-03 14:18:58 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.6 2007-07-04 13:01:20 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -363,9 +363,9 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	      // marker should stay into and in case remove them afterward.
 	      for (unsigned int iPixel = 0; iPixel < eudrbDecoder->NumPixels(brd); iPixel++) {
 		cdsVector.push_back( static_cast<short> (_polarity )* 
-				     ( ( array.m_pivot[iPixel] - 1   ) * firstFrameVec[iPixel] +
-				       ( 1 - 2*array.m_pivot[iPixel] ) * secondFrameVec[iPixel] +
-				       ( 1*array.m_pivot[iPixel]     ) * thirdFrameVec[iPixel] ) );
+				     ( ( -1 * array.m_pivot[iPixel]    ) * firstFrameVec[iPixel] +
+				       ( 2 * array.m_pivot[iPixel] - 1 ) * secondFrameVec[iPixel] +
+				       ( 1 - array.m_pivot[iPixel]     ) * thirdFrameVec[iPixel] ) );
 	      }	      
 
 
