@@ -998,6 +998,52 @@ export LD_PRELOAD=/opt/products/lib/libpdcap.so
 @endcode
 where the path to libpdcap.so may depend from one machine to the other. 
 
+*/
 
+/**
+
+@page cdsPage CDS calculation
+
+CDS is a very powerful technique to reduce the noise in particle
+detectors. MAPS uses CDS very extensively and even if it is based on
+the difference between two following sampling of the same pixel
+signal, it is worth to explain how CDS is calculated in a test beam
+setup. 
+
+@section cds3frame Calculating CDS in RAW3 mode.
+
+When working in RAW3 mode, the EUDRB DAQ producer is streaming out for
+each triggered event, three following full frames, being the trigger
+accepted by the EUDRB during the second one. Oversimplifying the
+situation let us start considering the detector linear. Each frame
+contains all the readout pixels chronologically sorted, starting from
+the first one.
+<br><br>
+@image html cdsraw3.png "CDS algorithm with RAW 3".
+<br><br>
+The trigger is arriving sometime during the readout of the second
+frame. The arrow in the figure is showing which pixel is readout when
+the trigger is accepted by the DAQ and <b>not the hit pixel</b>. The position
+of the arrow is dividing the second frame in two parts:
+@li the preceding one (<b>region 1</b>) made by pixels that are
+already readout at the trigger time,
+@li the following part (<b>region 2</b>) made by pixels that are readout after the trigger.
+
+A priori, we do not know whether the particle is passing through the
+detector and consequently we have to analyze both region 1 and 2
+separately. If it is on region 1, the signal will
+pop up only at the next reading, so during the first part of the third
+frame (yellow part in the picture). Instead, if it is on region 2,
+the particle signal is going to be sampled and then as reference
+signal the second part of the first frame should be used (cyan part in
+the picture).
+<br>
+The EUDRB is making available the trigger arrival position. To simplify the
+calculation, the EUDRB producer via the EUDRBDecoder::GetArrays is
+providing four vectors with one component per pixel.
+@li @c "m_adc[0]", @c "m_adc[1]", @c "m_adc[2]" contain the reading of the
+first, second and third frames respectively.
+@li @c "m_pivot" is an array of boolean, that is 0 till the trigger
+arrival and then it is 1 till the end. 
 
 */

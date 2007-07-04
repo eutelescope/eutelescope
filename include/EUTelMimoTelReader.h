@@ -61,6 +61,15 @@ namespace eutelescope {
    *   provided by the DAQ software, so please refer to that
    *   documentation for more info.
    *
+   *   Using the data streams provided by the EUDRB Producer the CDS
+   *   value for each pixel is calculating using a suitable algorithm
+   *   depending on the number of readout frame per event. 
+   *
+   *   @see @ref cds3frame
+   *
+   *   The marker removal procedure is done a very general way
+   *   allowing to copy paste the same code for a detector with a
+   *   different configuration of markers.
    *
    *   <h4>Input collection</h4>
    *   None
@@ -106,7 +115,7 @@ namespace eutelescope {
    *   the marker position in pixel number start counting from 0.
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelMimoTelReader.h,v 1.4 2007-07-03 14:16:43 bulgheroni Exp $
+   *   @version $Id: EUTelMimoTelReader.h,v 1.5 2007-07-04 07:38:40 bulgheroni Exp $
    *
    */
   
