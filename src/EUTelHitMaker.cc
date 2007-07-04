@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.9 2007-06-29 15:24:23 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.10 2007-07-04 13:00:36 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -161,7 +161,7 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
   if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
     message<ERROR> ( "Error during the geometry consistency check: " );
     message<ERROR> ( log() << "The run header says the GeoID is " << header->getGeoID() );
-    message<ERROR> ( log() << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesNumber() );
+    message<ERROR> ( log() << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID() );
     string answer;
     while (true) {
       message<ERROR> ( "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" );
