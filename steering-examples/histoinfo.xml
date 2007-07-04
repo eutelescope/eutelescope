@@ -12,10 +12,9 @@
      by the histogram name. 
 
      Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-     Version: <!-- 	$Id: histoinfo.xml,v 1.2 2007-06-29 09:16:01 bulgheroni Exp $	 -->
-
-
   -->
+
+     <!-- Version $Id: histoinfo.xml,v 1.3 2007-07-04 07:34:45 bulgheroni Exp $	 -->
 
 <HistogramManager>
   <histos>
