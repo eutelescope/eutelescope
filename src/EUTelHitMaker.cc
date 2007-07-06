@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.10 2007-07-04 13:00:36 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.11 2007-07-06 15:23:39 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -195,7 +195,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     
     return;
   }
-  
+
+  if ( _iEvt % 10 ) 
+    message<MESSAGE> ( log() << "Applying geometry to the pulses of event " << _iEvt );
   
   LCCollectionVec * pulseCollection   = static_cast<LCCollectionVec*> (event->getCollection( _pulseCollectionName ));
   LCCollectionVec * clusterCollection = static_cast<LCCollectionVec*> (event->getCollection("original_data"));
