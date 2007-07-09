@@ -24,6 +24,7 @@
 #include <UTIL/CellIDEncoder.h>
 
 // system includes <>
+#include <iostream>
 
 
 namespace eutelescope {
@@ -89,7 +90,7 @@ namespace eutelescope {
    *  @todo Test the charge center of mass method.
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.10 2007-06-29 15:24:23 bulgheroni Exp $
+   *  @Version $Id: EUTelFFClusterImpl.h,v 1.11 2007-07-09 10:20:41 bulgheroni Exp $
    */ 
 
   class EUTelFFClusterImpl : public EUTelVirtualCluster {
@@ -346,6 +347,13 @@ namespace eutelescope {
      *  @return The pointer of _trackerData
      */
     IMPL::TrackerDataImpl * trackerData() { return _trackerData; }
+
+    //! Print method
+    /*! This method is used to print out the content of the clusters
+     *
+     *  @param os The input output stream
+     */
+    void print(std::ostream& os)  const;
 
   };
  
