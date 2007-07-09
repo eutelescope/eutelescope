@@ -143,6 +143,16 @@ namespace eutelescope {
    *  they are uniformly distributed on the sensor surface, this plot
    *  should resemble the telescope geometry. 
    *
+   *  @li <b>Cluster center</b>: a 2D histogram containing the center
+   *  of gravity within a pixel.
+   *
+   *  @li <b>Cluster center Eta</b>: as above but eta corrected.
+   *
+   *  @li <b>Cluster center X/Y</b>: projection along X and Y of the
+   *  cluster center 2D histogram
+   *
+   *  @li <b>Cluster center X/Y eta</b>: as above but eta corrected.
+   *
    *  <h4>GEAR Geometry file</h4>
    *  The geometry information about plane positions and orientations
    *  is 
@@ -188,8 +198,24 @@ namespace eutelescope {
    *  @param EtaSwitch A boolean to switch on and off the eta
    *  corrections.
    *
+   *  @param CoGAlgorithm The center of gravity is calculated always
+   *  using the same algorithm but different results can be obtained
+   *  changing the number of pixels considered in the calculation. The
+   *  user via the steering file can choose to use the "Full" cluster
+   *  or a cluster made by only the first N most significant pixels
+   *  ("NPixel") or using a submatrix made by N times M pixels
+   *  centered around the seed ("NxMPixel").
+   *
+   *  @param NPixel Parameter used only when CoGAlgorithm is
+   *  "NPixel". This is the number of most significant pixels to be
+   *  used for the CoG calculation.
+   *
+   *  @param NxMPixel Parameter used only when CoGAlgorithm is
+   *  "NxMPixel". This vector contains respectively the number of
+   *  pixel along x and y to be used.
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHitMaker.h,v 1.6 2007-06-29 15:24:23 bulgheroni Exp $
+   *  @version $Id: EUTelHitMaker.h,v 1.7 2007-07-09 13:40:52 bulgheroni Exp $
    *
    */
 
@@ -300,6 +326,36 @@ namespace eutelescope {
      */ 
     bool _etaCorrection ;
 
+    //! The algorithm for CoG calculation.
+    /*! The algorithm for the calculation of the Center of Gravity is
+     *  obviously always the same, what can be different is the
+     *  considered number of pixels and the size.
+     *
+     *  These are the algorithms available:
+     *
+     *  @li <b>Full</b>: All pixels are used in the calculation
+     *
+     *  @li <b>NPixel</b>: Only the first N most significant pixels
+     *  are used. The user has to set also the NPixel parameter
+     *
+     *  @li <b>NxMPixel</b>: The CoG will be calculated using a
+     *  submatrix N x M centered around the seed pixel.
+     *
+     */
+    std::string _cogAlgorithm;
+
+    //! The number of most significant pixels
+    /*! This number is used only when _cogAlgorithm is "NPixel"
+     */
+    int _nPixel;
+    
+    //! The submatrix size (x and y) 
+    /*! This vector contains the size along x and along y of the
+     *  cluster submatrix for CoG calculation only when _cogAlgorithm
+     *  is "NxMPixel
+     */
+    std::vector<int > _xyCluSize;
+
   private:
     
     //! Run number 
@@ -374,6 +430,40 @@ namespace eutelescope {
      *  should recall the shape of the telescope itself. 
      */ 
     static std::string _densityPlotName;
+
+    //! Cluster center
+    /*! This 2D histogram contains the center of all the clusters
+     *  corrected using the provided Eta functions. The binning is
+     *  fixed and corresponds to the Eta function granularity.
+     */
+    static std::string _clusterCenterHistoName;
+
+    //! Cluster center projection along X
+    /*! This is the projection along the X axis of the previous plot.
+     */
+    static std::string _clusterCenterXHistoName;
+    
+    //! Cluster center projection along Y
+    /*! This is the projection along the Y axis of the previous plot.
+     */
+    static std::string _clusterCenterYHistoName;
+
+    //! Cluster center (Eta corrected)
+    /*! This 2D histogram contains the center of all the clusters
+     *  corrected using the provided Eta functions. The binning is
+     *  fixed and corresponds to the Eta function granularity.
+     */
+    static std::string _clusterCenterEtaHistoName;
+
+    //! Cluster center projection along X (Eta corrected)
+    /*! This is the projection along the X axis of the previous plot.
+     */
+    static std::string _clusterCenterEtaXHistoName;
+    
+    //! Cluster center projection along Y (Eta corrected)
+    /*! This is the projection along the Y axis of the previous plot.
+     */
+    static std::string _clusterCenterEtaYHistoName;
 
     //! Fill histogram switch
     /*! This boolean switch was initially introduced for debug reason
