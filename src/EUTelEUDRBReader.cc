@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEUDRBReader.cc,v 1.3 2007-06-11 22:21:42 bulgheroni Exp $
+// Version $Id: EUTelEUDRBReader.cc,v 1.4 2007-07-09 13:57:59 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -18,6 +18,7 @@
 #include "EUTelEventImpl.h"
 
 // marlin includes
+#include "marlin/Processor.h"
 #include "marlin/DataSourceProcessor.h"
 #include "marlin/ProcessorMgr.h"
 
