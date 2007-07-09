@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelOutputProcessor.cc,v 1.1 2007-05-23 14:10:05 bulgheroni Exp $
+// Version $Id: EUTelOutputProcessor.cc,v 1.2 2007-07-09 13:44:56 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -34,44 +34,50 @@ EUTelOutputProcessor::EUTelOutputProcessor() : LCIOOutputProcessor("EUTelOutputP
     " Needs to be the last ActiveProcessor." ;
     
     
-  registerProcessorParameter( "LCIOOutputFile" , 
-			      " name of output file "  ,
-			      _lcioOutputFile ,
-			      std::string("outputfile.slcio") ) ;
+//   registerProcessorParameter( "LCIOOutputFile" , 
+// 			      " name of output file "  ,
+// 			      _lcioOutputFile ,
+// 			      std::string("outputfile.slcio") ) ;
     
-  registerProcessorParameter( "LCIOWriteMode" , 
-			      "write mode for output file:  WRITE_APPEND or WRITE_NEW"  ,
-			      _lcioWriteMode ,
-			      std::string("None") ) ;
+//   registerProcessorParameter( "LCIOWriteMode" , 
+// 			      "write mode for output file:  WRITE_APPEND or WRITE_NEW"  ,
+// 			      _lcioWriteMode ,
+// 			      std::string("None") ) ;
 
 
-  StringVec dropNamesExamples ;
-  dropNamesExamples.push_back("rawdata");
-  dropNamesExamples.push_back("data");
-  dropNamesExamples.push_back("pedestal");
-  dropNamesExamples.push_back("noise");
-  dropNamesExamples.push_back("status");
+//   StringVec dropNamesExamples ;
+//   dropNamesExamples.push_back("rawdata");
+//   dropNamesExamples.push_back("data");
+//   dropNamesExamples.push_back("pedestal");
+//   dropNamesExamples.push_back("noise");
+//   dropNamesExamples.push_back("status");
 
-  registerOptionalParameter( "DropCollectionNames" , 
-			     "drops the named collections from the event"  ,
-			     _dropCollectionNames ,
-			     dropNamesExamples ) ;
+//   registerOptionalParameter( "DropCollectionNames" , 
+// 			     "drops the named collections from the event"  ,
+// 			     _dropCollectionNames ,
+// 			     dropNamesExamples ) ;
     
     
-  StringVec dropTypesExample ;
-  dropTypesExample.push_back("TrackerRawData");
-  dropTypesExample.push_back("TrackerData");
+//   StringVec dropTypesExample ;
+//   dropTypesExample.push_back("TrackerRawData");
+//   dropTypesExample.push_back("TrackerData");
     
-  registerOptionalParameter( "DropCollectionTypes" , 
-			     "drops all collections of the given type from the event"  ,
-			     _dropCollectionTypes ,
-			     dropTypesExample ) ;
+//   registerOptionalParameter( "DropCollectionTypes" , 
+// 			     "drops all collections of the given type from the event"  ,
+// 			     _dropCollectionTypes ,
+// 			     dropTypesExample ) ;
     
 
-  registerOptionalParameter( "SplitFileSizekB" , 
-			     "will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW"  ,
-			     _splitFileSizekB, 
-			     1992294 ) ;  // 1.9 GB in kB
+//   registerOptionalParameter( "SplitFileSizekB" , 
+// 			     "will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW"  ,
+// 			     _splitFileSizekB, 
+// 			     1992294 ) ;  // 1.9 GB in kB
+
+
+  registerProcessorParameter("SkipIntermediateEORE",
+			     "Set it to true to remove intermediate EORE in merged runs",
+			     _skipIntermediateEORESwitch, static_cast< bool > ( true ) );
+
 
 }
 
@@ -93,8 +99,21 @@ void EUTelOutputProcessor::processRunHeader( LCRunHeader* run) {
 
 void EUTelOutputProcessor::processEvent( LCEvent * evt ) { 
 
+  EUTelEventImpl * eutelEvt =  static_cast<EUTelEventImpl * > ( evt );
+
+  if ( _skipIntermediateEORESwitch && ( eutelEvt->getEventType() == kEORE ) ) {
+    // ok the user wants me to skip this because it may be an
+    // intermediate EORE. But how to know this is not the last of the
+    // intermediate EORE? Easy, don't care, set the _eventType to kDE
+    // and in case this the last one, end() will be called soon after
+    // and a kEORE will be appended!
+    _eventType = kDE;
+    return ;
+  }
+
   LCIOOutputProcessor::processEvent(evt);
-  _eventType = ( static_cast<EUTelEventImpl * > ( evt ) )->getEventType();
+  _eventType = eutelEvt->getEventType();
+
 }
 
 void EUTelOutputProcessor::end(){ 
