@@ -33,7 +33,7 @@ namespace eutelescope {
    *  to set/get the full bin center and the full eta value vectors
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelEtaFunctionImpl.h,v 1.4 2007-05-21 11:37:33 bulgheroni Exp $
+   *  @Version $Id: EUTelEtaFunctionImpl.h,v 1.5 2007-07-09 10:17:36 bulgheroni Exp $
    */ 
   class EUTelEtaFunctionImpl : public IMPL::LCGenericObjectImpl {
 
@@ -73,6 +73,10 @@ namespace eutelescope {
      */ 
     void setEtaValueVector(std::vector<double > value);
 
+    //! Get the number of bin
+    /*! This is used to get the number of bin in the function.
+     */
+    int getNoOfBin() const;
 
     //! Get the bin center vector
     /*! @return A STL vector of double with the bin centers
