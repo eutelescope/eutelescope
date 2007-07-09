@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.9 2007-06-12 13:47:39 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.10 2007-07-09 13:56:57 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -197,7 +197,7 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
     while ( vectorIterator != setVector.end() ) {
 
 #ifdef MARLINDEBUG
-      message<DEBUG> ( log() <<  "     Group " << (iCounter++) << " with the following clusters " << endl;
+      message<DEBUG> ( log() <<  "     Group " << (iCounter++) << " with the following clusters " );
 #endif
 
       set <int >::iterator setIterator = (*vectorIterator).begin();
@@ -215,15 +215,7 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 	}
 
 #ifdef MARLINDEBUG
-	int xSeed, ySeed;
-	int detectorID = cluster->getDetectorID();
-	int clusterID  = cluster->getClusterID();
-	int xSize, ySize;
-	ClusterQuality quality = cluster->getClusterQuality();
-	cluster->getClusterSize(xSize, ySize);
-	cluster->getSeedCoord(xSeed, ySeed);
-	message<DEBUG> ( log()  << "         Cluster " << (*setIterator)  << " (" << detectorID << ":" << clusterID << ":" << xSeed 
-			 << ", " << ySeed << ":" << xSize << "," << ySize << ":" << static_cast<int>(quality) << ") " );
+	message<DEBUG> ( log() << ( * cluster ) );
 #endif
 
 	cluster->setClusterQuality ( cluster->getClusterQuality() | kMergedCluster );
