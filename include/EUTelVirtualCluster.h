@@ -17,6 +17,9 @@
 // lcio includes <.h>
 #include <IMPL/TrackerDataImpl.h>
 
+// system includes <>
+#include <iostream>
+
 namespace eutelescope {
 
 
@@ -28,7 +31,7 @@ namespace eutelescope {
    *  inherithing from this virtual class.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelVirtualCluster.h,v 1.6 2007-06-16 10:58:26 bulgheroni Exp $
+   *  @Version $Id: EUTelVirtualCluster.h,v 1.7 2007-07-09 10:23:40 bulgheroni Exp $
    */
 
   class EUTelVirtualCluster {
@@ -202,6 +205,25 @@ namespace eutelescope {
      *  @return The pointer of _trackerData
      */
     virtual IMPL::TrackerDataImpl * trackerData()                         = 0;
+
+    //! Print
+    /*! This method is used to print out the content of the clusters
+     * 
+     *  @param os The input output stream
+     */
+    virtual void print(std::ostream& os) const                            = 0;
+      
+    //! Overload of operator<<
+    /*! This friend function is the overload of the operator << for
+     *  the virtual cluster class. It uses the print method that is
+     *  virtually defined for all cluster subclasses.
+     *
+     *  @param os The input output stream as modified by the print
+     *  method
+     *  @param clu The cluster to be stream out
+     *  @return The output stream
+     */ 
+    friend std::ostream& operator<< (std::ostream& os , const EUTelVirtualCluster & clu )  { clu.print(os); return os; }
 
   protected:
     
