@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.10 2007-07-09 13:56:57 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.11 2007-07-09 15:26:05 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -47,6 +47,11 @@ EUTelClusterSeparationProcessor::EUTelClusterSeparationProcessor () :Processor("
 			   "Cluster collection name ",
 			   _clusterCollectionName, string ("cluster"));
 
+  // and the output collection
+  registerOutputCollection (LCIO::TRACKERPULSE, "ClusterOutputCollectionName",
+			    "Cluster output collection name",
+			    _clusterOutputCollectionName, string ("splitcluster" ));
+
   // now the optional parameters
   registerProcessorParameter ("SeparationAlgorithm",
 			      "Select which algorithm to use for cluster separation",
@@ -89,16 +94,17 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
   if (_iEvt % 10 == 0) 
     message<MESSAGE> ( log() << "Separating clusters on event " << _iEvt ) ;
 
-  LCCollectionVec  *clusterCollectionVec = 
-    dynamic_cast <LCCollectionVec *> (evt->getCollection(_clusterCollectionName));
+  LCCollectionVec * clusterCollectionVec =  dynamic_cast <LCCollectionVec *> (evt->getCollection(_clusterCollectionName));
+  LCCollectionVec * outputCollectionVec  =  new LCCollectionVec(LCIO::TRACKERPULSE);
+  CellIDEncoder<TrackerPulseImpl> outputEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, outputCollectionVec);
   CellIDDecoder<TrackerPulseImpl> cellDecoder(clusterCollectionVec);
+
   vector< pair<int, int > >       mergingPairVector;
 
   for ( int iCluster = 0 ; iCluster < clusterCollectionVec->getNumberOfElements() ; iCluster++) {
 
-    TrackerPulseImpl   * pulse   = 
-      dynamic_cast<TrackerPulseImpl *>   ( clusterCollectionVec->getElementAt(iCluster) );
-    ClusterType  type    = static_cast<ClusterType> (static_cast<int>( cellDecoder(pulse)["type"] ) );
+    TrackerPulseImpl   * pulse   = dynamic_cast<TrackerPulseImpl *>   ( clusterCollectionVec->getElementAt(iCluster) );
+    ClusterType          type    = static_cast<ClusterType> (static_cast<int>( cellDecoder(pulse)["type"] ) );
     
     // all clusters have to inherit from the virtual cluster (that is
     // a TrackerDataImpl with some utility methods).
@@ -164,6 +170,22 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
   // of clusters, but only in the case the mergingPairVector has a non
   // null size
   if ( mergingPairVector.empty() ) {
+    // if the mergingPairVector is empty, then there are no merging
+    // clusters, i.e. that the input and the output collections are
+    // exactly the same
+    for ( int iPulse = 0; iPulse < clusterCollectionVec->getNumberOfElements() ; iPulse++ ) {
+      TrackerPulseImpl * pulse    = dynamic_cast<TrackerPulseImpl *> ( clusterCollectionVec->getElementAt( iPulse ) );
+      TrackerPulseImpl * newPulse = new TrackerPulseImpl;
+      newPulse->setCellID0( pulse->getCellID0() );
+      newPulse->setCellID1( pulse->getCellID1() );
+      newPulse->setTime   ( pulse->getTime() );
+      newPulse->setCharge ( pulse->getCharge() );
+      newPulse->setQuality( pulse->getQuality() );
+      newPulse->setTrackerData( pulse->getTrackerData() );
+      
+      outputCollectionVec->push_back( newPulse );
+    }
+    evt->addCollection( outputCollectionVec, _clusterOutputCollectionName );
     ++_iEvt;
     return ;
   }
@@ -173,7 +195,8 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
   vector< set<int > > mergingSetVector;
   groupingMergingPairs(mergingPairVector, &mergingSetVector) ;
 
-  applySeparationAlgorithm(mergingSetVector, clusterCollectionVec);
+  applySeparationAlgorithm(mergingSetVector, clusterCollectionVec, outputCollectionVec);
+  evt->addCollection( outputCollectionVec, _clusterOutputCollectionName );
 
   ++_iEvt;
   
@@ -181,13 +204,36 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
   
 
 bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::set <int > > setVector, 
-							       LCCollectionVec * collectionVec) const {
+							       LCCollectionVec * inputCollectionVec,
+							       LCCollectionVec * outputCollectionVec) const {
 
   //  message<DEBUG> ( log() << "Applying cluster separation algorithm " << _separationAlgo );
   message<DEBUG> ( log () <<  "Found "  << setVector.size() << " group(s) of merging clusters on event " << _iEvt );
   if ( _separationAlgo == EUTELESCOPE::FLAGONLY ) {
 
-    CellIDDecoder<TrackerPulseImpl> cellDecoder(collectionVec);
+    // with this splitting algorithm, the input and output collections
+    // have the same number of entries. The only difference is that
+    // there maybe some cluster in the output collection being flagged
+    // as merged. So the first thing is to copy the content of the
+    // input collection to the output one. The second step is to
+    // modify the content of the output collection according to what
+    // follow.
+    for ( int iPulse = 0; iPulse < inputCollectionVec->getNumberOfElements() ; iPulse++ ) {
+      TrackerPulseImpl * pulse    = dynamic_cast<TrackerPulseImpl *> ( inputCollectionVec->getElementAt( iPulse ) );
+      TrackerPulseImpl * newPulse = new TrackerPulseImpl;
+      newPulse->setCellID0( pulse->getCellID0() );
+      newPulse->setCellID1( pulse->getCellID1() );
+      newPulse->setTime   ( pulse->getTime() );
+      newPulse->setCharge ( pulse->getCharge() );
+      newPulse->setQuality( pulse->getQuality() );
+      newPulse->setTrackerData( pulse->getTrackerData() );
+      
+      outputCollectionVec->push_back( newPulse );
+    }
+   
+    
+    CellIDDecoder<TrackerPulseImpl> cellDecoder(outputCollectionVec);
+    
 
 #ifdef MARLINDEBUG
     int iCounter = 0;    
@@ -202,7 +248,7 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 
       set <int >::iterator setIterator = (*vectorIterator).begin();
       while ( setIterator != (*vectorIterator).end() ) {
-	TrackerPulseImpl    * pulse   = dynamic_cast<TrackerPulseImpl * > ( collectionVec->getElementAt( *setIterator ) ) ;
+	TrackerPulseImpl    * pulse   = dynamic_cast<TrackerPulseImpl * > ( outputCollectionVec->getElementAt( *setIterator ) ) ;
 	ClusterType           type    = static_cast<ClusterType> (static_cast<int>( cellDecoder(pulse)["type"] ) );
 	
 	EUTelVirtualCluster * cluster;
@@ -217,8 +263,15 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 #ifdef MARLINDEBUG
 	message<DEBUG> ( log() << ( * cluster ) );
 #endif
-
-	cluster->setClusterQuality ( cluster->getClusterQuality() | kMergedCluster );
+	
+	try {
+	  cluster->setClusterQuality ( cluster->getClusterQuality() | kMergedCluster );
+	} catch (lcio::ReadOnlyException& e) {
+	  message<WARNING> ( log() << "Attempt to change the cluster quality on the original data\n"
+			     "This is possible only when the " << name() << " is not applied to data already on tape\n"
+			     "In this case only the pulse containing this cluster will have the proper quality" );
+	}
+	pulse->setQuality ( static_cast<int> (ClusterQuality( pulse->getQuality() | kMergedCluster )) );
 	++setIterator;
 	delete cluster;
       }

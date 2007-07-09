@@ -62,13 +62,14 @@ namespace eutelescope {
    *  <h4>Input collection</h4> <br><b>ClusterCollection</b>. This is
    *  the collection of cluster (TrackerPulse) to be used.
    *  
-   *  <h4>Output</h4>
+   *  <h4>Output collection</h4>
    *  
-   *  <br><b>ClusterCollection</b>. It outputs the same collection but
-   *  now with separated pixels.
+   *  <br><b>ClusterOutputCollection</b>. It outputs another
+   *  collection of TrackerPulse containing all clusters found in the
+   *  input collections with split clusters.
    *
    *  @param ClusterCollectionName The name of the input cluster collection
-   *  @param ClusterCollectionName Name of the input cluster
+   *  @param ClusterOutputCollectionName Name of the output cluster
    *  collection 
    * 
    *  @param MinimumDistance Float number being the minimum
@@ -78,7 +79,7 @@ namespace eutelescope {
    *  cluster separation.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterSeparationProcessor.h,v 1.6 2007-06-29 15:24:23 bulgheroni Exp $
+   *  @version $Id: EUTelClusterSeparationProcessor.h,v 1.7 2007-07-09 15:26:05 bulgheroni Exp $
    *
    *
    */
@@ -158,11 +159,14 @@ namespace eutelescope {
      *  @param setVector A STL vector of STL set containing the
      *  cluster of clusters to be separated.
      *
-     *  @param collectionVec A pointer to the input cluster collection
+     *  @param inputCollectionVec A pointer to the input cluster collection
+     *  @param outputCollectionVec A pointer to the output cluster collection
      *
      *  @return true if the algorithm was successfully applied.
      */ 
-    bool applySeparationAlgorithm(std::vector< std::set< int > > setVector, LCCollectionVec * collectionVec) const ;
+    bool applySeparationAlgorithm(std::vector< std::set< int > > setVector, 
+				  LCCollectionVec * inputCollectionVec,
+				  LCCollectionVec * outputCollectionVec) const ;
 
     //! Groups together pairs of merging clusters.
     /*! The identification of merging clusters can very easily done on
@@ -191,9 +195,14 @@ namespace eutelescope {
   protected:
 
     //! Input cluster collection name.
-    /*! This is the name of the input cluster collection name
+    /*! This is the name of the input cluster collection.
      */
     std::string _clusterCollectionName;
+
+    //! Output cluster collection name.
+    /*! This is the name of the output cluster collection.
+     */
+    std::string _clusterOutputCollectionName;
 
     //! Minimum distance
     /*! This is the minimum distance (in pixel units) allowed between
