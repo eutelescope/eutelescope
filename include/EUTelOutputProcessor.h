@@ -56,13 +56,25 @@ namespace eutelescope {
    *  last processed event was not a EORE, then a EORE is appended
    *  before closing the output file.
    *
+   *  A possible drawback of having EORE at the end of each run is
+   *  that when Marlin is executed having more than one input files,
+   *  this will result in an output file with several EOREs. This
+   *  could be unpractical in all cases the output file should be used
+   *  as input of other processors using the EORE to end up the
+   *  calculation. Setting SkipIntermediateEORE to true in the steering
+   *  file will allow to remove all the intermediate EORE and leaving
+   *  only the last one.
+   *
    *  @see marlin::LCIOOutputProcessor
    *  @see eutelescope::EventType
    *  @see eutelescope::EUTelEventImpl
    *
+   *  @param All parameters available in LCIOOutputProcessir
+   *  @param SkipIntermediateEORE Remove EORE in between following runs.
+   *
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelOutputProcessor.h,v 1.1 2007-05-23 14:10:05 bulgheroni Exp $ 
+   *  @version $Id: EUTelOutputProcessor.h,v 1.2 2007-07-09 13:42:40 bulgheroni Exp $ 
    */
 
   class EUTelOutputProcessor : public marlin::LCIOOutputProcessor {
@@ -125,6 +137,22 @@ namespace eutelescope {
      *  EORE or not. If not a new EORE is added.
      */ 
     EventType _eventType;
+
+    //! The switch to remove intermediate EORE events
+    /*! Every EUTelescope properly ended file should have a EORE event
+     *  attached at the end. When multiple files are processed
+     *  together, i.e. Marlin is executed with several input files, in
+     *  the output file there will be an EORE at the end of each
+     *  file. If _skipIntermediateEORESwitch is set to true, than all the
+     *  EORE events will not be saved and only one EORE will be
+     *  appended at the end.
+     *  If _skipIntermediateEORESwitch is false, all EOREs will appear also
+     *  in the output file and, only if missing, an EORE will be
+     *  appended at the end.
+     * 
+     */ 
+    bool _skipIntermediateEORESwitch;
+      
 
   } ;
 
