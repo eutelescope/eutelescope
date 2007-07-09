@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.12 2007-06-28 08:35:56 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.13 2007-07-09 10:22:41 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -24,6 +24,7 @@
 #include <cmath>
 #include <algorithm>
 #include <vector>
+#include <iostream>
 
 using namespace eutelescope;
 using namespace IMPL;
@@ -296,3 +297,31 @@ float EUTelFFClusterImpl::getClusterCharge(int xSize, int ySize) const {
   }
   return charge;
 }
+
+void EUTelFFClusterImpl::print(std::ostream& os ) const {
+  
+  int xSize, ySize, xSeed, ySeed;
+  float xShift, yShift;
+  ClusterQuality quality = getClusterQuality();
+  getClusterSize(xSize,ySize);
+  getSeedCoord(xSeed, ySeed);
+  getCenterOfGravityShift(xShift, yShift);
+  
+  os   <<  "Fixed frame cluster (" << xSize << ", " << ySize << ")\n"
+       <<  "Cluster ID " << getClusterID() << " on detector " << getDetectorID() << "\n"
+       <<  "Cluster quality " << quality << "\n"
+       <<  "Cluster total charge " << getTotalCharge() << "\n"
+       <<  "Seed charge " << getSeedCharge() << " in (" << xSeed << ", " << ySeed << ")\n"
+       <<  "CoG shift (" << xShift << ", " << yShift << ")\n"
+       <<  "-----------------------------------------------------------------------\n";
+  int iPixel = 0;
+  for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
+    for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
+      os <<  _trackerData->getChargeValues()[iPixel] << "  \t" ;
+      ++iPixel;
+    }
+    os << "\n";
+  }
+  os << "-----------------------------------------------------------------------";
+}
+
