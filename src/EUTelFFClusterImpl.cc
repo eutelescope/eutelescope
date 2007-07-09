@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.13 2007-07-09 10:22:41 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.14 2007-07-09 13:58:48 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -25,6 +25,7 @@
 #include <algorithm>
 #include <vector>
 #include <iostream>
+#include <iomanip>
 
 using namespace eutelescope;
 using namespace IMPL;
@@ -307,21 +308,64 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
   getSeedCoord(xSeed, ySeed);
   getCenterOfGravityShift(xShift, yShift);
   
-  os   <<  "Fixed frame cluster (" << xSize << ", " << ySize << ")\n"
-       <<  "Cluster ID " << getClusterID() << " on detector " << getDetectorID() << "\n"
-       <<  "Cluster quality " << quality << "\n"
-       <<  "Cluster total charge " << getTotalCharge() << "\n"
-       <<  "Seed charge " << getSeedCharge() << " in (" << xSeed << ", " << ySeed << ")\n"
-       <<  "CoG shift (" << xShift << ", " << yShift << ")\n"
-       <<  "-----------------------------------------------------------------------\n";
+  int bigspacer = 23;
+  
+  os   <<  setw(bigspacer) << setiosflags(ios::left) << "Fixed frame cluster "<< "(" << xSize << ", " << ySize << ")\n"
+       <<  setw(bigspacer) <<  "Cluster ID " << getClusterID() << " on detector " << getDetectorID() << "\n"
+       <<  setw(bigspacer) <<  "Cluster quality " << quality << "\n"
+       <<  setw(bigspacer) <<  "Cluster total charge " << getTotalCharge() << "\n"
+       <<  setw(bigspacer) <<  "Seed charge " << getSeedCharge() << " in (" << xSeed << ", " << ySeed << ")\n"
+       <<  setw(bigspacer) <<  "CoG shift "<< "(" << xShift << ", " << yShift << ")\n" << resetiosflags(ios::left);
+  int spacer = 14;
+
+  os << "|";
+  for ( int i = 0; i < spacer - 1; i++ ) {
+    os << "-";
+  }
+
+  for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
+    os << "|";
+    for ( int i = 0; i < spacer - 1; i++ ) {
+      os << "-";
+    }   
+  }
+  os <<"|\n" 
+     << "|" << setw(spacer - 1) << " x / y ";
+  for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
+    os << "|" << setw(spacer - 1 ) << xSeed - xPixel ;
+  }
+  os << "|\n";
+  os << "|";
+  for ( int i = 0; i < spacer - 1; i++ ) {
+    os << "-";
+  }    
+  for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
+    os << "|";
+    for ( int i = 0; i < spacer - 1; i++ ) {
+      os << "-";
+    }    
+  }
+  os <<"|\n";
   int iPixel = 0;
   for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
+    os << "|" << setw(spacer - 1) << ySeed - yPixel << "|";
     for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
-      os <<  _trackerData->getChargeValues()[iPixel] << "  \t" ;
+      os <<  setw(spacer - 1) << _trackerData->getChargeValues()[iPixel] << "|" ;
       ++iPixel;
     }
     os << "\n";
+    os << "|";
+    for ( int i = 0; i < spacer - 1; i++ ) {
+      os << "-";
+    }       
+    for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
+      os << "|";
+      for ( int i = 0; i < spacer - 1; i++ ) {
+	os << "-";
+      }      
+    }
+    if ( yPixel == (ySize / 2) ) os << "|";
+    else os << "|\n";
   }
-  os << "-----------------------------------------------------------------------";
 }
 
