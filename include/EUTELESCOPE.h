@@ -11,6 +11,8 @@
 #ifndef EUTELESCOPE_H
 #define EUTELESCOPE_H
 
+// system includes <>
+#include <iostream>
 
 namespace eutelescope
 {
@@ -24,7 +26,7 @@ namespace eutelescope
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.10 2007-05-22 16:37:13 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.11 2007-07-09 10:15:28 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -289,7 +291,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.10 2007-05-22 16:37:13 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.11 2007-07-09 10:15:28 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -336,7 +338,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.10 2007-05-22 16:37:13 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.11 2007-07-09 10:15:28 bulgheroni Exp $
    */ 
   
   enum ClusterQuality {
@@ -359,7 +361,6 @@ namespace eutelescope
   ClusterQuality operator&(ClusterQuality a, ClusterQuality b);
     
 
-
   //! Cluster quality bit-wise OR operator
   /*! This is a crucial operator for ClusterQuality since, during the
    *  cluster search processor, a cluster maybe flagged with one or
@@ -380,13 +381,23 @@ namespace eutelescope
    */ 
   ClusterQuality operator|=(ClusterQuality a, ClusterQuality b);
 
+  //! Cluster quality operator <<
+  /*! This operator can be used to stream out the value of a cluster
+   *  quality enum. Both the numerical and the textual values are shown.
+   *
+   *  @param os The input output stream
+   *  @param quality The variable to the be stream out
+   *  @return The input output stream
+   */
+  std::ostream& operator<<(std::ostream& os, const ClusterQuality & quality);
+
   //! Cluster type enum
   /*! This enum is used in the encoding of a TrackerPulse to describe
    *  which was the underlying class used for the description of the
    *  cluster during the clusterization process itself. 
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.10 2007-05-22 16:37:13 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.11 2007-07-09 10:15:28 bulgheroni Exp $
    */
   enum ClusterType {
     kEUTelFFClusterImpl = 0,
