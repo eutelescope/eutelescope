@@ -4,7 +4,7 @@
 #
 # @author Frank Gaede
 # @author Jan Engels
-# @version $Id: GNUmakefile,v 1.6 2007-05-11 10:46:32 bulgheroni Exp $
+# @version $Id: GNUmakefile,v 1.7 2007-07-09 10:24:41 bulgheroni Exp $
 #
 ###########################################################
 
@@ -94,7 +94,7 @@ endif
 
 # compiler flags
 ifdef MARLINDEBUG
- CXXFLAGS = -g -Wall -ansi
+ CXXFLAGS = -g -Wall -ansi -DMARLINDEBUG=1
 else
  CXXFLAGS = -O3 -Wall -ansi
 endif
