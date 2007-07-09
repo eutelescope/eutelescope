@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.10 2007-06-29 09:18:27 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.11 2007-07-09 13:35:31 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -176,10 +176,14 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
 
     const double min = -0.5;
     const double max = +0.5;
-    int xNoOfBin = _noOfBin[0];
-    int yNoOfBin = _noOfBin[1];
+    int xNoOfBin =  _noOfBin[0];
+    int yNoOfBin =  _noOfBin[1];
     
     for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      // the pseudo histograms are the tools used for the
+      // calculation. A priori we don't know if the user has any
+      // histogram interface active or not, we need to use something
+      // that is for sure available like the EUTelPseudo1DHistogram
       EUTelPseudo1DHistogram * histoX = new EUTelPseudo1DHistogram(xNoOfBin, min, max);
       _cogHistogramX.push_back(histoX);
       
@@ -220,6 +224,7 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
       newHeader->setMinY(runHeader->getMinY());
       newHeader->setMaxY(runHeader->getMaxY());
       newHeader->addProcessor(name()); 
+      newHeader->setGeoID(runHeader->getGeoID());
       
       lcWriter->writeRunHeader(newHeader);
       delete newHeader;
@@ -510,7 +515,7 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
 
   for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
     
-    for (int iBin = 1; iBin < _cogHistogramX[iDetector]->getNumberOfBins(); iBin++ ) {
+    for (int iBin = 1; iBin <= _cogHistogramX[iDetector]->getNumberOfBins(); iBin++ ) {
       double x = _cogHistogramX[iDetector]->getBinCenter(iBin);
       integral = _cogHistogramX[iDetector]->integral(1, iBin);
       _integralHistoX[iDetector]->fill(x, integral);
@@ -520,10 +525,11 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
     vector<double > etaBinCenter;
     vector<double > etaBinValue;
     
-    for (int iBin = 1; iBin < _integralHistoX[iDetector]->getNumberOfBins(); iBin++) {
+    for (int iBin = 1; iBin <= _integralHistoX[iDetector]->getNumberOfBins(); iBin++) {
       etaBinCenter.push_back( _integralHistoX[iDetector]->getBinCenter(iBin) );
-      etaBinValue.push_back(  _integralHistoX[iDetector]->getBinContent(iBin) / integral );
+      etaBinValue.push_back(  _integralHistoX[iDetector]->getBinContent(iBin) / integral - 0.5 ); // - 0.5);
     }
+
 
     EUTelEtaFunctionImpl * etaX = new EUTelEtaFunctionImpl(etaBinCenter.size(), etaBinCenter, etaBinValue);
     etaXCollection->push_back(etaX);
@@ -531,15 +537,15 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
     etaBinCenter.clear();
     etaBinValue.clear();
 
-    for (int iBin = 1; iBin < _cogHistogramY[iDetector]->getNumberOfBins(); iBin++ ) {
+    for (int iBin = 1; iBin <= _cogHistogramY[iDetector]->getNumberOfBins(); iBin++ ) {
       double y = _cogHistogramY[iDetector]->getBinCenter(iBin);
       integral = _cogHistogramY[iDetector]->integral(1, iBin);
       _integralHistoY[iDetector]->fill(y, integral);
     }
 
-    for (int iBin = 1; iBin < _integralHistoY[iDetector]->getNumberOfBins(); iBin++) {
+    for (int iBin = 1; iBin <= _integralHistoY[iDetector]->getNumberOfBins(); iBin++) {
       etaBinCenter.push_back( _integralHistoY[iDetector]->getBinCenter(iBin) );
-      etaBinValue.push_back(  _integralHistoY[iDetector]->getBinContent(iBin) / integral );
+      etaBinValue.push_back(  _integralHistoY[iDetector]->getBinContent(iBin) / integral - 0.5 ); // 0.5);
     }
 
     EUTelEtaFunctionImpl * etaY = new EUTelEtaFunctionImpl(etaBinCenter.size(), etaBinCenter, etaBinValue);
@@ -580,7 +586,7 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
     for (int iBin = 0; iBin < integralHisto->axis().bins(); iBin++) {
       double x = integralHisto->axis().binLowerEdge(iBin) + 0.5 * integralHisto->axis().binWidth(iBin);
       double v = integralHisto->binHeight(iBin);
-      etaXHisto->fill(x, v/integral - 0.5);
+      etaXHisto->fill(x, v/integral - 0.5 ); // - 0.5);
     }
 
     {
@@ -614,7 +620,7 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
     for (int iBin = 0; iBin < integralHisto->axis().bins(); iBin++) {
       double y = integralHisto->axis().binLowerEdge(iBin) + 0.5 * integralHisto->axis().binWidth(iBin);
       double v = integralHisto->binHeight(iBin);
-      etaYHisto->fill(y, v/integral - 0.5);
+      etaYHisto->fill(y, v/integral - 0.5 ); // - 0.5);
     }
 
 #endif
