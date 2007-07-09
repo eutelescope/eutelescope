@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEtaFunctionImpl.cc,v 1.5 2007-05-21 11:42:14 bulgheroni Exp $
+// Version $Id: EUTelEtaFunctionImpl.cc,v 1.6 2007-07-09 10:19:08 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -84,6 +84,10 @@ const vector<double > EUTelEtaFunctionImpl::getEtaValueVector() const {
 
 }
 
+int EUTelEtaFunctionImpl::getNoOfBin() const {
+  return getNDouble() / 2;
+}
+
 double EUTelEtaFunctionImpl::getEtaFromCoG(double x) const {
 
   typedef vector<double >::const_iterator DoubleIter;
@@ -99,7 +103,7 @@ double EUTelEtaFunctionImpl::getEtaFromCoG(double x) const {
   // immediately. Remember that the end() iterator is one element
   // after the last element
 
-  if ( x <= (*cogBegin) )     return (*etaBegin);
+  if ( x <= (*cogBegin) )     return (*etaBegin); 
   if ( x >= (*(cogEnd - 1)) ) return (*(etaEnd - 1));
   
   DoubleIter xLeft    = lower_bound(cogBegin, cogEnd, x);
