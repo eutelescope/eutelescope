@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.6 2007-06-30 15:26:49 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.7 2007-07-09 13:38:33 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -25,7 +25,9 @@
 //#include <AIDA/IHistogram1D.h>
 #endif
 
+#include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
+
 
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>

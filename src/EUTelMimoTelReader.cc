@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.6 2007-07-04 13:01:20 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.7 2007-07-09 13:38:33 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -19,6 +19,7 @@
 
 // marlin includes
 #include "marlin/Exceptions.h"
+#include "marlin/Processor.h"
 #include "marlin/DataSourceProcessor.h"
 #include "marlin/ProcessorMgr.h"
 

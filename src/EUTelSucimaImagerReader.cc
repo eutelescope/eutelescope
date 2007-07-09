@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelSucimaImagerReader.cc,v 1.8 2007-06-11 22:22:26 bulgheroni Exp $
+// Version $Id: EUTelSucimaImagerReader.cc,v 1.9 2007-07-09 13:38:33 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -17,6 +17,7 @@
 #include "EUTelEventImpl.h"
 
 // marlin includes
+#include "marlin/Processor.h"
 #include "marlin/DataSourceProcessor.h"
 #include "marlin/ProcessorMgr.h"
 
