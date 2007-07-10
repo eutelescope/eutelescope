@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.12 2007-07-09 13:40:52 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.13 2007-07-10 07:46:52 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -479,16 +479,19 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       EUTelEtaFunctionImpl * xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt(detectorID) );
       EUTelEtaFunctionImpl * yEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( yEtaCollection->getElementAt(detectorID) );
 
+      bool anomalous = false;
       if ( ( xShift >= -0.5 ) && ( xShift <= 0.5 ) ) {
 	xCorrection = xEtaFunc->getEtaFromCoG( xShift );
       } else {
-	message<DEBUG> ( log() << "Found anomalous cluster\n" << ( * cluster ) );
+	anomalous = true;
       }
       if ( ( yShift >= -0.5 ) && ( yShift <= 0.5 ) ) {
 	yCorrection = yEtaFunc->getEtaFromCoG( yShift );
       } else {
-	message<DEBUG> ( log() << "Found anomalous cluster\n" << ( * cluster ) );	
+	anomalous = true;
       }
+      
+      if ( anomalous )  message<DEBUG> ( log() << "Found anomalous cluster\n" << ( * cluster ) );
 
 #ifdef MARLIN_USE_AIDA
       string tempHistoName;
