@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEtaFunctionImpl.cc,v 1.6 2007-07-09 10:19:08 bulgheroni Exp $
+// Version $Id: EUTelEtaFunctionImpl.cc,v 1.7 2007-07-10 15:07:04 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -20,6 +20,7 @@
 // system includes <>
 #include <vector>
 #include <algorithm>
+#include <cassert>
 
 using namespace lcio;
 using namespace eutelescope;
@@ -106,10 +107,15 @@ double EUTelEtaFunctionImpl::getEtaFromCoG(double x) const {
   if ( x <= (*cogBegin) )     return (*etaBegin); 
   if ( x >= (*(cogEnd - 1)) ) return (*(etaEnd - 1));
   
-  DoubleIter xLeft    = lower_bound(cogBegin, cogEnd, x);
-  DoubleIter xRight   = xLeft + 1;
-  DoubleIter etaLeft  = etaBegin +  ( xLeft - cogBegin);
-  DoubleIter etaRight = etaLeft + 1;
+  // lower_bound returns an iterator to the position where it is
+  // sorting safe to insert the value x under test. If you want to
+  // have the element just at left you need to decrement by one unit
+  // the iterator
+
+  DoubleIter xRight    = lower_bound(cogBegin, cogEnd, x);
+  DoubleIter xLeft     = xRight - 1;
+  DoubleIter etaLeft   = etaBegin +  ( xLeft - cogBegin);
+  DoubleIter etaRight  = etaLeft + 1;
 
   return *etaLeft + ( *etaLeft - *etaRight ) / ( *xLeft - *xRight ) * ( x - *xLeft) ;
 
