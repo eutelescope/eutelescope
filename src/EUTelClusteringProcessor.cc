@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.18 2007-06-29 09:19:17 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.19 2007-07-10 07:45:00 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -352,7 +352,10 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 		  //
 		  // In order to flag all merged clusters and possibly
 		  // try to separate the different contributions use
-		  // the EUTelSeparateClusterProcessor
+		  // the EUTelSeparateClusterProcessor. In this
+		  // processor not all the merged clusters will be
+		  // flagged as kMergedCluster | kIncompleteCluster
+		  cluQuality = cluQuality | kMergedCluster | kIncompleteCluster ; 
 		  clusterCandidateCharges.push_back(0.);
 		} else if (!isGood) {
 		  cluQuality = cluQuality | kIncompleteCluster;
