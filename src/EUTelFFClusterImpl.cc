@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.14 2007-07-09 13:58:48 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.15 2007-07-10 07:45:57 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -332,7 +332,7 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
   os <<"|\n" 
      << "|" << setw(spacer - 1) << " x / y ";
   for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
-    os << "|" << setw(spacer - 1 ) << xSeed - xPixel ;
+    os << "|" << setw(spacer - 1 ) << xSeed - ( -1 * xPixel );
   }
   os << "|\n";
   os << "|";
@@ -348,7 +348,7 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
   os <<"|\n";
   int iPixel = 0;
   for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
-    os << "|" << setw(spacer - 1) << ySeed - yPixel << "|";
+    os << "|" << setw(spacer - 1) << ySeed - ( -1 * yPixel ) << "|";
     for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
       os <<  setw(spacer - 1) << _trackerData->getChargeValues()[iPixel] << "|" ;
       ++iPixel;
