@@ -69,6 +69,16 @@ namespace eutelescope {
    *  first sensor, 43 on the second and so on and so forth. Note that
    *  the first digit represents the number of significant pixels
    *
+   *  In a similar way, a selection criterion can be based on the
+   *  charge collected by a smaller squared sub cluster made, for
+   *  example, by 3 x 3 pixels only.
+   *
+   *  @code
+   *  <parameter name="ClusterNxNMinCharge" type"FloatVec"> 3 90 95 120 </parameter>
+   *  @encode
+   *
+   *  As above the first number if the subcluster size.
+   *
    *  The seed pixel can also be used as a cut, again in ADC value and
    *  one per sensor.
    *
@@ -143,6 +153,12 @@ namespace eutelescope {
    *  the first parameter is the number of significant pixels. To
    *  switch it off is enough to set to zero the first value.
    *
+   *  @param ClusterNxNMinCharge This is a selection criterion similar
+   *  to the previous one but acting on the charge collected by a
+   *  smaller squared cluster. The first number in the vector is the
+   *  cluster size. The same rules about the number of vector
+   *  components and switching off of ClusterNMinCharge apply also here.
+   *
    *  @param SeedMinCharge This is the minimum allowed charge
    *  collected by the seed pixel (i. e. the one with the highest
    *  signal). The user has to specify one floating value for each
@@ -179,7 +195,7 @@ namespace eutelescope {
    *  plane. Setting a negative number is disabling the cut.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterFilter.h,v 1.5 2007-06-29 15:24:23 bulgheroni Exp $
+   *  @version $Id: EUTelClusterFilter.h,v 1.6 2007-07-10 14:31:15 bulgheroni Exp $
    *
    *
    */
@@ -316,6 +332,15 @@ namespace eutelescope {
      */
     bool isAboveNMinCharge(EUTelVirtualCluster * cluster) const;
 
+    //! Check against the charge collected by N x N pixels
+    /*! This cut is working on the charge collected by a subframe N x
+     *  N pixels wide centered around the seed.
+     *
+     *  @param cluster The cluster under test.
+     *  @return True if the charge is above threshold.
+     */
+    bool isAboveNxNMinCharge(EUTelVirtualCluster * cluster) const;
+
 
     //! Seed pixel cut
     /*! This is used to select clusters having a seed pixel charge
@@ -430,6 +455,20 @@ namespace eutelescope {
      */
     std::vector<float > _minNChargeVec;
 
+    //! Thresholds for the N x N pixel cluster.
+    /*! This vector contains the thresholds for the minimum allowed
+     *  charge collected by a cluster made by the N x N pixels around
+     *  the seed. 
+     * 
+     *  The number of components of this vector should be a integer
+     *  multiple of @c _noOfDetectors + 1. This is because the first
+     *  digit for each set is the number of pixels in the cluster
+     *  while the other @c _noOfDetectors are the different thresholds
+     *
+     *  To switch it off, just put N = 0.
+     */
+    std::vector<float > _minNxNChargeVec;
+
     //! Thresholds for the seed pixel charge
     /*! This vector contains the thresholds for the minimum allowed
      *  seed charge in the cluster.
@@ -511,6 +550,9 @@ namespace eutelescope {
     //! Switch for the minimum N pixel cluster charge
     bool _minNChargeSwitch;
 
+    //! Switch for the minimum N x N pixel cluster charge
+    bool _minNxNChargeSwitch;
+
     //! Switch for the minimum seed charge
     bool _minSeedChargeSwitch;
 
@@ -554,7 +596,7 @@ namespace eutelescope {
      *  in find_if.
      *
      *  @author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
-     *  @version $Id: EUTelClusterFilter.h,v 1.5 2007-06-29 15:24:23 bulgheroni Exp $
+     *  @version $Id: EUTelClusterFilter.h,v 1.6 2007-07-10 14:31:15 bulgheroni Exp $
      */
     class HasSameID {
     public:

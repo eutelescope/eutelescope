@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.5 2007-06-29 12:01:47 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.6 2007-07-10 14:31:15 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -80,6 +80,19 @@ EUTelClusterFilter::EUTelClusterFilter () :Processor("EUTelClusterFilter") {
 			     "The first figure has to be the number of pixels to consider in the cluster, \n"
 			     "then one float number for each sensor.",
 			     _minNChargeVec, minNChargeVecExample);
+
+  // again for 3 planes
+  FloatVec minNxNChargeVecExample;
+  minNxNChargeVecExample.push_back(3);
+  minNxNChargeVecExample.push_back(0);
+  minNxNChargeVecExample.push_back(0);
+  minNxNChargeVecExample.push_back(0);
+  
+  registerProcessorParameter("ClusterNxNMinCharge","This is the minimum charge that a cluster of N times N pixels has to have.\n"
+			     "The first figure is the subcluster size in pixels (odd number), then one floating number for each \n"
+			     "planes. To switch this selection off, set all numbers to zero.",
+			     _minNxNChargeVec, minNxNChargeVecExample);
+
 
   FloatVec minSeedChargeVecExample;
   minSeedChargeVecExample.push_back(20);
@@ -166,6 +179,15 @@ void EUTelClusterFilter::init () {
   }
 
   message<DEBUG> ( log () << "MinNChargeSwitch " << _minNChargeSwitch );
+
+  // NxN cluster charge
+  if (  ( count_if( _minNxNChargeVec.begin(), _minNxNChargeVec.end(), bind2nd(greater<float>(),0)) != 0  ) &&
+	( _minNxNChargeVec[0] != 0 ) ) {
+    _minNxNChargeSwitch = true;
+  } else {
+    _minNxNChargeSwitch = false;
+  }
+	 
 
   // Seed charge
   if ( count_if( _minSeedChargeVec.begin(), _minSeedChargeVec.end(), bind2nd(greater<float>(), 0) ) != 0 ) {
@@ -289,7 +311,7 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
     if ( _minNChargeSwitch ) {
       unsigned int module = _noOfDetectors + 1;
       if ( _minNChargeVec.size() % module != 0 ) {
-	message<ERROR> (log() << "The threshold vector for the N pixels charge ded not match the right size \n "
+	message<ERROR> (log() << "The threshold vector for the N pixels charge did not match the right size \n "
 			<<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minSeedChargeVec.size() 
 			<<  "\n"
 			<<  "Disabling the selection criterion and continue without");
@@ -298,6 +320,21 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
 	message<DEBUG> ("N pixel charge criterion verified and switched on");
 	vector<unsigned int> rejectedCounter(_noOfDetectors, 0);
 	_rejectionMap.insert( make_pair("MinNChargeCut", rejectedCounter));
+      }
+    }
+    
+    if ( _minNxNChargeSwitch ) {
+      unsigned int module = _noOfDetectors + 1;
+      if ( _minNxNChargeVec.size() % module != 0 ) {
+	message<ERROR> ( log() << "The threshold vector for the N x N pixels charge did not match the right size \n "
+			 <<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minNxNChargeVec.size() 
+			 << "\n"
+			 << "Disabling the selection criterion and continue without");
+	_minNxNChargeSwitch = false; 
+      } else {
+	message<DEBUG> ("NxN pixel charge criterion verified and switched on");
+	vector<unsigned int> rejectedCounter(_noOfDetectors, 0);
+	_rejectionMap.insert( make_pair("MinNxNChargeCut", rejectedCounter));
       }
     }
     
@@ -414,6 +451,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
     
     isAccepted &= isAboveMinTotalCharge(cluster);
     isAccepted &= isAboveNMinCharge(cluster);
+    isAccepted &= isAboveNxNMinCharge(cluster);
     isAccepted &= isAboveMinSeedCharge(cluster);
     isAccepted &= hasQuality(cluster);
     isAccepted &= isInsideROI(cluster); 
@@ -536,8 +574,8 @@ bool EUTelClusterFilter::isAboveNMinCharge(EUTelVirtualCluster * cluster) const 
     if ( charge > threshold ) {
       iter += _noOfDetectors + 1;
     } else {
-      message<DEBUG> ( log() << "Rejected cluster because its charge over " << (*iter) << " is charge " 
-		       << "and the threshold is " << threshold );
+      message<DEBUG> ( log() << "Rejected cluster because its charge over " << (*iter) << " is " << charge 
+		       << " and the threshold is " << threshold );
       _rejectionMap["MinNChargeCut"][detectorID]++;
       return false;
     }
@@ -545,6 +583,31 @@ bool EUTelClusterFilter::isAboveNMinCharge(EUTelVirtualCluster * cluster) const 
   return true;
 }
       
+bool EUTelClusterFilter::isAboveNxNMinCharge(EUTelVirtualCluster * cluster) const {
+  
+  if ( !_minNxNChargeSwitch ) return true;
+  
+  message<DEBUG> ( "Filtering against the N x N pixel charge" );
+  
+  int detectorID = cluster->getDetectorID();
+  vector<float >::const_iterator iter = _minNxNChargeVec.begin();
+  while ( iter != _minNxNChargeVec.end() ) {
+    int nxnPixel    = static_cast<int > ( *iter ) ;
+    float charge    = cluster->getClusterCharge(nxnPixel, nxnPixel);
+    float threshold = (* ( iter + detectorID + 1 )) ;
+    if ( ( threshold <= 0) || (charge > threshold) ) {
+      iter += _noOfDetectors + 1;
+    } else {
+      message<DEBUG> ( log() << "Rejected cluster because its charge within a " << (*iter) << " x " << (*iter) 
+		       << " subcluster is " << charge << " and the threshold is " << threshold ) ;
+      _rejectionMap["MinNxNChargeCut"][detectorID]++;
+      return false;
+    }
+  }
+  return true;
+}
+
+
 bool EUTelClusterFilter::isAboveMinSeedCharge(EUTelVirtualCluster * cluster) const {
   
   if ( !_minSeedChargeSwitch ) return true;
