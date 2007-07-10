@@ -124,7 +124,7 @@ namespace eutelescope {
    *  containing the histogram booking information.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.10 2007-06-29 15:24:23 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.11 2007-07-10 07:42:54 bulgheroni Exp $
    *
    */
 
@@ -265,7 +265,7 @@ namespace eutelescope {
       int noOfXPixel = abs( _maxX[_iDetector] - _minX[_iDetector] + 1 ) ;
       
       if (noOfXPixel <= 0) throw InvalidParameterException("The number of pixels along has to be > 0");
-      y = (index / noOfXPixel) + _minX[_iDetector];
+      y = (index / noOfXPixel) + _minY[_iDetector];
       x = index - (y * noOfXPixel) + _minX[_iDetector];
     
     }
