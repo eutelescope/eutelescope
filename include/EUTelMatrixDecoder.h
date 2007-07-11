@@ -23,6 +23,10 @@
 #include <IMPL/TrackerRawDataImpl.h>
 #include <UTIL/CellIDDecoder.h>
 
+// system includes <>
+#include <string>
+#include <iostream>
+
 namespace eutelescope {
   
 
@@ -39,7 +43,7 @@ namespace eutelescope {
    *  different away in order to simplify the code.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelMatrixDecoder.h,v 1.1 2007-07-10 07:49:07 bulgheroni Exp $
+   *  @version $Id: EUTelMatrixDecoder.h,v 1.2 2007-07-11 06:59:05 bulgheroni Exp $
    */ 
   class EUTelMatrixDecoder {
     
@@ -84,9 +88,10 @@ namespace eutelescope {
      *  for the corresponding collection already exists and can be
      *  used to get these information.
      *
-     *  The current implementation is using a template for the both
-     *  the CellIDDecoder and the rawdata matrix. The constructor is
-     *  throwing an exception if the encoding is not the EUTELESCOPE::MATRIXDEFAULTENCODING
+     *  The current implementation is using a template for both the
+     *  CellIDDecoder and the rawdata matrix. In case the decoder does
+     *  not contain the required fields, the lcio::exception is caught
+     *  and the program execution is stopped.
      *
      *  @param decoder A reference to the cell id decoder 
      *  @param rawData A pointer to the tracker (raw) data needed
@@ -99,8 +104,22 @@ namespace eutelescope {
      *  is different from EUTELESCOPE::MATRIXDEFAULTENCODING.
      */
     template <class T>
-    EUTelMatrixDecoder(CellIDDecoder<T >& decoder, T * rawData)
-      throw (InvalidParameterException);
+    EUTelMatrixDecoder(UTIL::CellIDDecoder<T >& decoder, T * rawData)
+      throw (InvalidParameterException) {
+  
+      try {
+	_xNoOfPixel = decoder(rawData)["xMax"] - decoder(rawData)["xMin"] + 1;
+	_yNoOfPixel = decoder(rawData)["yMax"] - decoder(rawData)["yMin"] + 1;
+	_xMin       = decoder(rawData)["xMin"];
+	_yMin       = decoder(rawData)["yMin"];
+      } catch (lcio::Exception& e) {
+	std::cerr << e.what() << std::endl;
+	exit(-1);
+      }
+
+      if ( _xNoOfPixel <= 0 ) throw InvalidParameterException("xNoOfPixel has to be positive");
+      if ( _yNoOfPixel <= 0 ) throw InvalidParameterException("yNoOfPixel has to be positive");
+    }
 
 
 #ifdef USE_GEAR

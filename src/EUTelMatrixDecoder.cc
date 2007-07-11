@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMatrixDecoder.cc,v 1.1 2007-07-10 07:49:07 bulgheroni Exp $
+// Version $Id: EUTelMatrixDecoder.cc,v 1.2 2007-07-11 06:59:05 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -64,24 +64,6 @@ EUTelMatrixDecoder::EUTelMatrixDecoder(gear::SiPlanesLayerLayout * siPlanes, int
 
 }
 #endif
-
-
-template <class T >
-EUTelMatrixDecoder::EUTelMatrixDecoder(CellIDDecoder<T >& decoder, T * rawData) 
-  throw (InvalidParameterException) {
-  
-  if ( string(EUTELESCOPE::MATRIXDEFAULTENCODING) != (*decoder._defaultEncoding) ) 
-    throw InvalidParameterException("Not valid encoding");
-  
-
-  _xNoOfPixel = decoder(rawData)["xMax"] - decoder(rawData)["xMin"] + 1;
-  _yNoOfPixel = decoder(rawData)["yMax"] - decoder(rawData)["yMin"] + 1;
-  _xMin       = decoder(rawData)["xMin"];
-  _yMin       = decoder(rawData)["yMin"];
-
-  if ( _xNoOfPixel <= 0 ) throw InvalidParameterException("xNoOfPixel has to be positive");
-  if ( _yNoOfPixel <= 0 ) throw InvalidParameterException("yNoOfPixel has to be positive");
-}
 
 int EUTelMatrixDecoder::getIndexFromXY(int x, int y) const {
   
