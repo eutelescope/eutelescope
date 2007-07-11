@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.15 2007-07-10 07:45:57 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.16 2007-07-11 06:55:29 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -26,6 +26,7 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include <climits>
 
 using namespace eutelescope;
 using namespace IMPL;
@@ -149,11 +150,11 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int n
   map<int, float> highSignalPixel;
   FloatVec        vectorCopy(_trackerData->getChargeValues());
   int             iPixel = 0;
-  while ( iPixel != nPixel - 1 ) {
+  while ( iPixel != nPixel  ) {
     
-    float maxSignal = 0;
+    float maxSignal = numeric_limits<float>::min();
     int   maxIndex  = 0;
-    int   index;
+    int   index     = 0;
     FloatVec::iterator maxIter;
     FloatVec::iterator iter = vectorCopy.begin();
     
@@ -166,7 +167,7 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int n
       ++index; ++iter;
     }
     highSignalPixel.insert( make_pair(maxIndex, maxSignal) ) ;
-    vectorCopy.erase(maxIter);
+    (*maxIter) = numeric_limits<float>::min();
     ++iPixel;
   }
 
@@ -302,11 +303,13 @@ float EUTelFFClusterImpl::getClusterCharge(int xSize, int ySize) const {
 void EUTelFFClusterImpl::print(std::ostream& os ) const {
   
   int xSize, ySize, xSeed, ySeed;
-  float xShift, yShift;
+  float xShift, yShift, xShift9, yShift9, xShift3x3, yShift3x3;
   ClusterQuality quality = getClusterQuality();
   getClusterSize(xSize,ySize);
   getSeedCoord(xSeed, ySeed);
   getCenterOfGravityShift(xShift, yShift);
+  getCenterOfGravityShift(xShift9, yShift9, 9);
+  getCenterOfGravityShift(xShift3x3, yShift3x3, 3, 3);
   
   int bigspacer = 23;
   
@@ -314,8 +317,14 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
        <<  setw(bigspacer) <<  "Cluster ID " << getClusterID() << " on detector " << getDetectorID() << "\n"
        <<  setw(bigspacer) <<  "Cluster quality " << quality << "\n"
        <<  setw(bigspacer) <<  "Cluster total charge " << getTotalCharge() << "\n"
+       <<  setw(bigspacer) <<  "Cluster charge (9) " << getClusterCharge(9) << "\n"
+       <<  setw(bigspacer) <<  "Cluster charge (3x3) " << getClusterCharge(3,3) << "\n"
        <<  setw(bigspacer) <<  "Seed charge " << getSeedCharge() << " in (" << xSeed << ", " << ySeed << ")\n"
-       <<  setw(bigspacer) <<  "CoG shift "<< "(" << xShift << ", " << yShift << ")\n" << resetiosflags(ios::left);
+       <<  setw(bigspacer) <<  "CoG shift "<< "(" << xShift << ", " << yShift << ")\n" 
+       <<  setw(bigspacer) <<  "CoG(9) shift " << "(" << xShift9 << ", " << yShift9 << ")\n" 
+       <<  setw(bigspacer) <<  "CoG(3x3) shift " << "(" << xShift3x3 << ", " << yShift3x3 << ")\n" 
+       << resetiosflags(ios::left);
+
   int spacer = 14;
 
   os << "|";
