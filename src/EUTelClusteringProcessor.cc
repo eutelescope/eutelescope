@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.19 2007-07-10 07:45:00 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.20 2007-07-11 06:52:30 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -20,6 +20,7 @@
 #include "EUTelFFClusterImpl.h"
 #include "EUTelExceptions.h"
 #include "EUTelHistogramManager.h"
+#include "EUTelMatrixDecoder.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -69,7 +70,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
 
   // modify processor description
   _description =
-    "EUTelClusteringProcessor subtract the pedestal value from the input data";
+    "EUTelClusteringProcessor is looking for clusters into a calibrated pixel matrix.";
 
   // first of all we need to register the input collection
   registerInputCollection (LCIO::TRACKERDATA, "DataCollectionName",
@@ -97,7 +98,9 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
 
   // now the optional parameters
   registerProcessorParameter ("ClusteringAlgo",
-			      "Select here which algorithm should be used for clustering",
+			      "Select here which algorithm should be used for clustering.\n"
+			      "Available algorithms are:\n"
+			      "-> FixedFrame: for custer with a given size",
 			      _clusteringAlgo, string(EUTELESCOPE::FIXEDFRAME));
   
   registerProcessorParameter ("ClusterSizeX",
@@ -111,7 +114,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
   registerProcessorParameter ("SeedPixelCut",
 			      "Threshold in SNR for seed pixel identification",
 			      _seedPixelCut, static_cast<float> (4.5));
-
+  
   registerProcessorParameter ("ClusterCut",
 			      "Threshold in SNR for cluster identification",
 			      _clusterCut, static_cast<float> (3.0));
@@ -234,7 +237,9 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
   LCCollectionVec * inputCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_dataCollectionName));
   LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
   LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
-  
+
+  CellIDDecoder<TrackerDataImpl> cellDecoder( inputCollectionVec );
+
   if (isFirstEvent()) {
     
 #ifdef MARLINDEBUG
@@ -258,10 +263,11 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
     
     _isFirstEvent = false;
   }
-  
-#ifdef MARLINDEBUG
+
+#ifdef MARLINDEBUG  
   message<DEBUG> ( logfile << "Event " << _iEvt );
 #endif
+
   message<DEBUG> ( log()   << "Event " << _iEvt );
 
   LCCollectionVec * pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
@@ -274,11 +280,13 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 #endif
     message<DEBUG> ( log()   << "  Working on detector " << _iDetector );
 
-
     // get the calibrated data 
     TrackerDataImpl    * data   = dynamic_cast<TrackerDataImpl*>   (inputCollectionVec->getElementAt(_iDetector));
     TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt(_iDetector));
     TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt(_iDetector));
+
+    // prepare the matrix decoder
+    EUTelMatrixDecoder matrixDecoder(cellDecoder, data);
 
     // reset the status
     resetStatus(status);
@@ -326,7 +334,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	  FloatVec clusterCandidateCharges;
 	  IntVec   clusterCandidateIndeces;
 	  int seedX, seedY;
-	  getXYFromIndex((*mapIter).second, seedX, seedY);
+	  matrixDecoder.getXYFromIndex((*mapIter).second,seedX, seedY);
 
 	  // start looping around the seed pixel. Remember that the seed
 	  // pixel has to stay in the center of cluster
@@ -336,7 +344,8 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	      // always check we are still within the sensor!!!
 	      if ( ( xPixel >= _minX[_iDetector] )  &&  ( xPixel <= _maxX[_iDetector] ) &&
 		   ( yPixel >= _minY[_iDetector] )  &&  ( yPixel <= _maxY[_iDetector] ) ) {
-		int index = getIndexFromXY(xPixel, yPixel);
+		int index = matrixDecoder.getIndexFromXY(xPixel, yPixel);
+
 		bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
 		bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
 		if ( isGood && !isHit ) {
@@ -355,7 +364,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 		  // the EUTelSeparateClusterProcessor. In this
 		  // processor not all the merged clusters will be
 		  // flagged as kMergedCluster | kIncompleteCluster
-		  cluQuality = cluQuality | kMergedCluster | kIncompleteCluster ; 
+		  cluQuality = cluQuality | kIncompleteCluster | kMergedCluster ; 
 		  clusterCandidateCharges.push_back(0.);
 		} else if (!isGood) {
 		  cluQuality = cluQuality | kIncompleteCluster;
@@ -410,18 +419,16 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	      ++indexIter;
 	    }
 
-
-	    for (unsigned int iPixel = 0; iPixel < clusterCandidateIndeces.size(); iPixel++) {
 #ifdef MARLINDEBUG
-	      message<DEBUG> ( logfile << "  x " <<  getXFromIndex(clusterCandidateIndeces[iPixel])
-			       << "  y " <<  getYFromIndex(clusterCandidateIndeces[iPixel])
+	    for (unsigned int iPixel = 0; iPixel < clusterCandidateIndeces.size(); iPixel++) {
+	      message<DEBUG> ( logfile << "  x " << matrixDecoder.getXFromIndex(clusterCandidateIndeces[iPixel])
+			       << "  y " <<  matrixDecoder.getYFromIndex(clusterCandidateIndeces[iPixel])
 			       << "  s " <<  clusterCandidateCharges[iPixel]);
-#endif
-	      message<DEBUG> ( log() << "  x " <<  getXFromIndex(clusterCandidateIndeces[iPixel])
-			       << "  y " <<  getYFromIndex(clusterCandidateIndeces[iPixel])
+	      message<DEBUG> ( log() << "  x " <<  matrixDecoder.getXFromIndex(clusterCandidateIndeces[iPixel])
+			       << "  y " <<  matrixDecoder.getYFromIndex(clusterCandidateIndeces[iPixel])
 			       << "  s " <<  clusterCandidateCharges[iPixel]);
 	    }
-
+#endif
 
 	    // copy the candidate charges inside the cluster
 	    cluster->setChargeValues(clusterCandidateCharges);

@@ -124,7 +124,7 @@ namespace eutelescope {
    *  containing the histogram booking information.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.11 2007-07-10 07:42:54 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.12 2007-07-11 06:52:30 bulgheroni Exp $
    *
    */
 
@@ -192,106 +192,6 @@ namespace eutelescope {
      *  prints only a goodbye message
      */
     virtual void end();
-
-
-    //! Get the x coordinate from the matrix index
-    /*! This inline function retrives the x coordinate starting from
-     *  the position index withing the ADCValues or the ChargeValues
-     *  array.  Since pixels are push_backed into the arrays always in
-     *  the same way with two nested loops, the inner on x and the
-     *  outer on y, it is possible to get the x and y coordinate just
-     *  making the integer division by the index and the number of
-     *  pixels along x.  In the case of x coordinate, you need also to
-     *  calculate the y coordinate.
-     *
-     *  @param index is the integer number representing the position
-     *  of the current pixel into the 1D data array.
-     *
-     *  @return the corresponding x coordinate
-     */
-    inline int getXFromIndex(int index) const {
-      
-      int noOfXPixel = abs( _maxX[_iDetector] - _minX[_iDetector] + 1 );
-      return index - (getYFromIndex(index) * noOfXPixel) + _minX[_iDetector];
-      
-    }
-    
-    //! Get the y coordinate from the matrix index
-    /*! This inline function retrieves the x coordinate starting from
-     *  the position index withing the ADCValues or the ChargeValues
-     *  array.  Since pixels are push_backed into the arrays always in
-     *  the same way with two nested loops, the inner on x and the
-     *  outer on y, it is possible to get the x and y coordinate just
-     *  making the integer division by the index and the number of
-     *  pixels along x.  
-     *
-     *  @param index is the integer number representing the position
-     *  of the current pixel into the 1D data array.
-     *
-     *  @return the corresponding y coordinate
-     *
-     *  @throw InvalidParameterException in the unlucky event the
-     *  number of pixels along x is 0 or negative.
-     */
-    inline int getYFromIndex(int index) const {
-      
-      int noOfXPixel = abs( _maxX[_iDetector] - _minX[_iDetector] + 1 ) ;
-      
-      if (noOfXPixel <= 0) throw InvalidParameterException("The number of pixels along has to be > 0");
-      return (index / noOfXPixel) + _minY[_iDetector];
-      
-    }
-
-    //! Get both coordinates from index 
-    /*! This methods is working exactly like the
-     *  EUTelClusteringProcessor::getXFromIndex(int) and
-     *  EUTelClusteringProcessor::getYFromIndex(int), but has the
-     *  advantage to make one function call less. Performance may
-     *  matter!
-     *  
-     *  @param index is the integer number representing the position
-     *  of the current pixel into the 1D data array.
-     *
-     *  @param x reference to an integer number representing the x
-     *  coordinate corresponding to @c index
-     *
-     *  @param y reference to an integer number representing the y
-     *  coordinate corresponding to @c index
-     *
-     *  @throw InvalidParameterException in the unlikely case the
-     *  number of pixels along x is 0 or negative
-     */
-    inline void getXYFromIndex(int index, int& x, int& y) const {
-      int noOfXPixel = abs( _maxX[_iDetector] - _minX[_iDetector] + 1 ) ;
-      
-      if (noOfXPixel <= 0) throw InvalidParameterException("The number of pixels along has to be > 0");
-      y = (index / noOfXPixel) + _minY[_iDetector];
-      x = index - (y * noOfXPixel) + _minX[_iDetector];
-    
-    }
-
-    //! Returns the index position having the two coordinates
-    /*! Since the relation between the position index and the x, y
-     *  coordinate is 1 to 1, also the inverse function can be defined
-     *
-     *  @param x the x coordinate of the pixel you want to know the index
-     *
-     *  @param y the y coordinate of the pixel you want to know the index
-     *
-     *  @return the position index corresponding to x and y
-     *
-     *  @throw InvalidParameterException in the unlikely case the
-     *  number of pixels along x is 0 or negative
-     *
-     */
-    inline int getIndexFromXY(int x, int y) const {
-      int noOfXPixel = abs( _maxX[_iDetector] - _minX[_iDetector] + 1 ) ;
-      if (noOfXPixel <= 0) throw InvalidParameterException("The number of pixels along has to be > 0");
-
-      int xCor = x - _minX[_iDetector];
-      int yCor = y - _minY[_iDetector];
-      return xCor + yCor * noOfXPixel;
-    }
 
     //! Reset the status map
     /*! This method is called at the beginning of the clustering
