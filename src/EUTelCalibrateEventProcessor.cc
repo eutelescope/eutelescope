@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.11 2007-06-29 15:24:23 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.12 2007-07-11 06:54:16 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -55,7 +55,7 @@ EUTelCalibrateEventProcessor::EUTelCalibrateEventProcessor () :Processor("EUTelC
 
   // modify processor description
   _description =
-    "EUTelCalibrateEventProcessor subtract the pedestal value from the input data";
+    "EUTelCalibrateEventProcessor subtracts the pedestal value from the input data";
 
   // first of all we need to register the input collection
   registerInputCollection (LCIO::TRACKERRAWDATA, "RawDataCollectionName",
