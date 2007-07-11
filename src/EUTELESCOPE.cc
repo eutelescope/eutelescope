@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTELESCOPE.cc,v 1.10 2007-07-09 10:16:17 bulgheroni Exp $
+// Version: $Id: EUTELESCOPE.cc,v 1.11 2007-07-11 06:53:24 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -83,11 +83,13 @@ namespace eutelescope {
       if ( moreThanOne ) os << ", ";
       os << "kIncompleteCluster";
       moreThanOne = true;
-    } else if ( quality & kBorderCluster ) {
+    } 
+    if ( quality & kBorderCluster ) {
       if ( moreThanOne ) os << ", ";
       os << "kBorderCluster";
       moreThanOne = true;
-    } else if ( quality & kMergedCluster ) {
+    } 
+    if ( quality & kMergedCluster ) {
       if ( moreThanOne ) os << ", ";
       os << "kMergedCluster";
       moreThanOne = true;
