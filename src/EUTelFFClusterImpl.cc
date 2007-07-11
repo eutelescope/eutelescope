@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.16 2007-07-11 06:55:29 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.17 2007-07-11 08:35:03 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -151,13 +151,12 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int n
   FloatVec        vectorCopy(_trackerData->getChargeValues());
   int             iPixel = 0;
   while ( iPixel != nPixel  ) {
-    
-    float maxSignal = numeric_limits<float>::min();
+    float maxSignal = -1 * numeric_limits<float >::max();
     int   maxIndex  = 0;
     int   index     = 0;
     FloatVec::iterator maxIter;
     FloatVec::iterator iter = vectorCopy.begin();
-    
+
     while ( iter != vectorCopy.end() ) {
       if ( *iter > maxSignal ) {
 	maxSignal = *(iter);
@@ -166,8 +165,9 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int n
       }
       ++index; ++iter;
     }
+    //    cerr << maxIndex << endl;
     highSignalPixel.insert( make_pair(maxIndex, maxSignal) ) ;
-    (*maxIter) = numeric_limits<float>::min();
+    (*maxIter) = -1 * numeric_limits<float >::max();
     ++iPixel;
   }
 
