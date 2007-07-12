@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCopyPedestalProcessor.cc,v 1.3 2007-05-21 11:46:24 bulgheroni Exp $
+// Version $Id: EUTelCopyPedestalProcessor.cc,v 1.4 2007-07-12 14:42:29 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -115,7 +115,7 @@ void EUTelCopyPedestalProcessor::processEvent (LCEvent * event) {
       TrackerRawDataImpl * status   = new TrackerRawDataImpl;
       status->setADCValues(statusDB->getADCValues());
       status->setCellID0(statusDB->getCellID0());
-      status->setCellID1(statusDB->getCellID0());
+      status->setCellID1(statusDB->getCellID1());
       _statusCollectionVec->push_back(status);
 
 
@@ -123,7 +123,7 @@ void EUTelCopyPedestalProcessor::processEvent (LCEvent * event) {
       TrackerDataImpl * pedestal    = new TrackerDataImpl;
       pedestal->setChargeValues(pedestalDB->getChargeValues());
       pedestal->setCellID0(pedestalDB->getCellID0());
-      pedestal->setCellID1(pedestalDB->getCellID0());
+      pedestal->setCellID1(pedestalDB->getCellID1());
       _pedestalCollectionVec->push_back(pedestal);
 
 
@@ -131,7 +131,7 @@ void EUTelCopyPedestalProcessor::processEvent (LCEvent * event) {
       TrackerDataImpl * noise    = new TrackerDataImpl;
       noise->setChargeValues(noiseDB->getChargeValues());
       noise->setCellID0(noiseDB->getCellID0());
-      noise->setCellID1(noiseDB->getCellID0());
+      noise->setCellID1(noiseDB->getCellID1());
       _noiseCollectionVec->push_back(noise);
 
     }
