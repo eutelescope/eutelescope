@@ -124,7 +124,7 @@ namespace eutelescope {
    *  containing the histogram booking information.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.12 2007-07-11 06:52:30 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.13 2007-07-12 14:45:28 bulgheroni Exp $
    *
    */
 
@@ -516,6 +516,23 @@ namespace eutelescope {
     /*! This is the hit map in pixel coordinate histogram name.
      */ 
     static std::string _hitMapHistoName;
+
+    //! Seed pixel SNR name
+    /*! This is the seed pixel SNR histogram name
+     */ 
+    static std::string _seedSNRHistoName;
+
+    //! Cluster noise histogram name
+    /*! This is the full cluster noise histogram name
+     */
+    static std::string _clusterNoiseHistoName;
+
+    //! Cluster SNR histogram name
+    /*! This is the name of the histogram containing the seed pixel
+     *  SNR
+     */
+    static std::string _clusterSNRHistoName;
+    
 
 #endif
 

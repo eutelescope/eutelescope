@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.20 2007-07-11 06:52:30 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.21 2007-07-12 14:45:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -45,10 +45,12 @@
 // system includes <>
 #ifdef MARLINDEBUG
 #include <fstream> 
+#include <cassert>
 #endif
 #include <string>
 #include <sstream>
 #include <vector>
+
 
 using namespace std;
 using namespace lcio;
@@ -64,6 +66,9 @@ ofstream logfile;
 std::string EUTelClusteringProcessor::_clusterSignalHistoName   = "clusterSignal";
 std::string EUTelClusteringProcessor::_seedSignalHistoName      = "seedSignal";
 std::string EUTelClusteringProcessor::_hitMapHistoName          = "hitMap";
+std::string EUTelClusteringProcessor::_seedSNRHistoName         = "seedSNR";
+std::string EUTelClusteringProcessor::_clusterNoiseHistoName    = "clusterNoise";
+std::string EUTelClusteringProcessor::_clusterSNRHistoName      = "clusterSNR";
 #endif
 
 EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteringProcessor") {
@@ -528,24 +533,29 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
   if ( (_iEvt % 10) == 0 ) 
     message<MESSAGE> ( log() << "Filling histogram on event " << _iEvt );
   
-  LCCollectionVec * pulseCollectionVec = dynamic_cast<LCCollectionVec*> 
-    (evt->getCollection(_pulseCollectionName));
-  CellIDDecoder<TrackerPulseImpl> cellDecoder(pulseCollectionVec);
+  LCCollectionVec * pulseCollectionVec = dynamic_cast<LCCollectionVec*>  (evt->getCollection(_pulseCollectionName));
+  CellIDDecoder<TrackerPulseImpl > cellDecoder(pulseCollectionVec);
 
+  // I also need the noise collection too fill in the SNR histograms
+  LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
+  LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
+  CellIDDecoder<TrackerDataImpl > noiseDecoder(noiseCollectionVec);
+    
   for ( int iPulse = 0; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ ) {
     TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl*> ( pulseCollectionVec->getElementAt(iPulse) );
     ClusterType        type  = static_cast<ClusterType> ( static_cast<int> ( cellDecoder(pulse)["type"] ));
     
     EUTelVirtualCluster * cluster;
-    
-    if ( type == kEUTelFFClusterImpl ) 
+
+    if ( type == kEUTelFFClusterImpl ) {
       cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
-    else {
+    } else {
       message<ERROR> ( "Unknown cluster type. Sorry for quitting" );
       throw UnknownDataTypeException("Cluster type unknown");
     }
 
     int detectorID = cluster->getDetectorID();
+
     string tempHistoName;
 
     {
@@ -563,7 +573,6 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
     (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getSeedCharge());
 
     vector<float > charges = cluster->getClusterCharge(_clusterSpectraNVector);
-
     for ( unsigned int i = 0; i < charges.size() ; i++ ) {
       {
  	stringstream ss;
@@ -595,7 +604,113 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
     cluster->getSeedCoord(xSeed, ySeed);
     (dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[tempHistoName]))
       ->fill(static_cast<double >(xSeed), static_cast<double >(ySeed), 1.);
+
     
+    // fill the noise related histograms 
+
+    // get the noise TrackerDataImpl corresponding to the detector
+    // under analysis and the status matrix as well
+    TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl *>    (noiseCollectionVec->getElementAt(detectorID) );
+    TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> (statusCollectionVec->getElementAt(detectorID) );
+
+    // prepare also a MatrixDecoder for this matrix
+    EUTelMatrixDecoder noiseMatrixDecoder(noiseDecoder, noiseMatrix);
+
+    // build the fake noise cluster
+    vector<float > noiseValues;
+    for ( int yPixel = ySeed - ( _yClusterSize / 2 ); yPixel <= ySeed + ( _yClusterSize / 2 ); yPixel++ ) {
+      for ( int xPixel = xSeed - ( _xClusterSize / 2 ); xPixel <= xSeed + ( _xClusterSize / 2 ); xPixel++ ) {
+	// always check we are still within the sensor!!!
+	if ( ( xPixel >= _minX[detectorID] )  &&  ( xPixel <= _maxX[detectorID] ) &&
+ 	     ( yPixel >= _minY[detectorID] )  &&  ( yPixel <= _maxY[detectorID] ) ) {
+ 	  int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
+ 	  // the corresponding position in the status matrix has to be HITPIXEL
+	  bool isHit  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::HITPIXEL );
+	  bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
+ 	  if ( !isBad && isHit ) {
+ 	    noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
+ 	  } else {
+ 	    noiseValues.push_back( 0. );
+ 	  }
+ 	} else {
+ 	  noiseValues.push_back( 0. );
+	}
+      }
+    }
+
+    bool fillSNRSwitch = true;
+    try {
+      cluster->setNoiseValues(noiseValues);
+    } catch ( IncompatibleDataSetException& e ) {
+      message<ERROR> ( log() << e.what() << "\n"
+		       "Continuing without filling the noise histograms" );
+      fillSNRSwitch = false;
+    }
+
+
+    if ( fillSNRSwitch ) {
+      
+      AIDA::IHistogram1D * histo;
+
+      {
+	stringstream ss;
+	ss << _clusterNoiseHistoName << "-d" << detectorID;
+	tempHistoName = ss.str();
+      }
+      histo = dynamic_cast<AIDA::IHistogram1D* > ( _aidaHistoMap[tempHistoName] );
+      if ( histo ) {
+	histo->fill( cluster->getClusterNoise() );
+      }
+      
+
+      {
+	stringstream ss;
+	ss << _clusterSNRHistoName << "-d" << detectorID;
+	tempHistoName = ss.str();
+      }
+      histo = dynamic_cast<AIDA::IHistogram1D* > ( _aidaHistoMap[tempHistoName] );
+      if ( histo ) {
+	histo->fill( cluster->getClusterSNR() );
+      }
+
+      {
+	stringstream ss;
+	ss << _seedSNRHistoName << "-d" << detectorID;
+	tempHistoName = ss.str();
+      }
+      histo = dynamic_cast<AIDA::IHistogram1D * > ( _aidaHistoMap[tempHistoName] );
+      if ( histo ) {
+	histo->fill( cluster->getSeedSNR() );
+      }
+
+      vector<int >::iterator iter = _clusterSpectraNxNVector.begin();
+      while ( iter != _clusterSpectraNxNVector.end() ) {
+	{
+	  stringstream ss;
+	  ss << _clusterSNRHistoName << (*iter) << "x" << (*iter) << "-d" << detectorID;
+	  tempHistoName = ss.str();
+	}
+	histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName] ) ;
+	if ( histo ) {
+	  histo->fill(cluster->getClusterSNR( (*iter), (*iter) ));
+	}
+	++iter;
+      }
+
+      vector<float > snrs = cluster->getClusterSNR(_clusterSpectraNVector);
+      for ( unsigned int i = 0; i < snrs.size() ; i++ ) {
+	{
+	  stringstream ss;
+	  ss << _clusterSNRHistoName << _clusterSpectraNVector[i] << "-d" << detectorID;
+	  tempHistoName = ss.str();
+	}
+	histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName] );
+	if ( histo ) {
+	  histo->fill( snrs[i] ); 
+	}
+      }
+    }
+
     delete cluster;
   }
 
@@ -637,12 +752,6 @@ void EUTelClusteringProcessor::bookHistos() {
     AIDAProcessor::tree(this)->mkdir(basePath.c_str());
     basePath.append("/");
 
-    {
-      stringstream ss;
-      ss << _clusterSignalHistoName << "-d" << iDetector;
-      tempHistoName = ss.str();
-    } 
-
     int    clusterNBin  = 1000;
     double clusterMin   = 0.;
     double clusterMax   = 1000.;
@@ -657,15 +766,49 @@ void EUTelClusteringProcessor::bookHistos() {
 	if ( histoInfo->_title != "" ) clusterTitle = histoInfo->_title;
       }
     }      
+
+    int    clusterSNRNBin  = 300;
+    double clusterSNRMin   = 0.;
+    double clusterSNRMax   = 200;
+    string clusterSNRTitle = "Cluster SNR";
+    if ( isHistoManagerAvailable ) {
+      histoInfo = histoMgr->getHistogramInfo( _clusterSNRHistoName );
+      if ( histoInfo ) {
+	message<DEBUG> ( log() << (* histoInfo ) );
+	clusterSNRNBin = histoInfo->_xBin;
+	clusterSNRMin  = histoInfo->_xMin;
+	if ( histoInfo->_title != "" ) clusterSNRTitle = histoInfo->_title;
+      }
+    }
+
+    // cluster signal
+    {
+      stringstream ss;
+      ss << _clusterSignalHistoName << "-d" << iDetector;
+      tempHistoName = ss.str();
+    } 
     AIDA::IHistogram1D * clusterSignalHisto = 
       AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 
 								clusterNBin,clusterMin,clusterMax);
     _aidaHistoMap.insert(make_pair(tempHistoName, clusterSignalHisto));
     clusterSignalHisto->setTitle(clusterTitle.c_str());
 
+    // cluster SNR
+    {
+      stringstream ss;
+      ss << _clusterSNRHistoName << "-d" << iDetector;
+      tempHistoName = ss.str();
+    }
+    AIDA::IHistogram1D * clusterSNRHisto = 
+      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+								clusterSNRNBin, clusterSNRMin, clusterSNRMax);
+    _aidaHistoMap.insert( make_pair(tempHistoName, clusterSNRHisto) ) ;
+    clusterSNRHisto->setTitle(clusterSNRTitle.c_str());
+
     
     vector<int >::iterator iter = _clusterSpectraNVector.begin();
     while ( iter != _clusterSpectraNVector.end() ) {
+      // this is for the signal
       {
 	stringstream ss;
 	ss << _clusterSignalHistoName << (*iter) << "-d" << iDetector;
@@ -683,11 +826,31 @@ void EUTelClusteringProcessor::bookHistos() {
       }
       clusterSignalNHisto->setTitle(tempTitle.c_str());
 
+
+      // this is for the SNR
+      {
+	stringstream ss;
+	ss << _clusterSNRHistoName << (*iter) << "-d" << iDetector;
+	tempHistoName = ss.str();
+      }
+      AIDA::IHistogram1D * clusterSNRNHisto = 
+	AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+								  clusterSNRNBin, clusterSNRMin, clusterSNRMax);
+      {
+	stringstream ss;
+	ss << "Cluster SNR with the " << (*iter) << " most significant pixels";
+	tempTitle = ss.str();
+      } 
+      _aidaHistoMap.insert( make_pair( tempHistoName, clusterSNRNHisto ) );
+      clusterSNRNHisto->setTitle(tempTitle.c_str());
+
       ++iter;
     }
 
     iter = _clusterSpectraNxNVector.begin();
     while ( iter != _clusterSpectraNxNVector.end() ) {
+
+      // first the signal
       {
 	stringstream ss;
 	ss << _clusterSignalHistoName << (*iter) << "x" << (*iter) << "-d" << iDetector;
@@ -704,6 +867,24 @@ void EUTelClusteringProcessor::bookHistos() {
 	tempTitle = ss.str();
       }
       clusterSignalNxNHisto->setTitle(tempTitle.c_str());
+
+      // then the SNR
+      {
+	stringstream ss;
+	ss << _clusterSNRHistoName << (*iter) << "x" << (*iter) << "-d" << iDetector;
+	tempHistoName = ss.str();
+      }
+      AIDA::IHistogram1D * clusterSNRNxNHisto =
+	AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+								  clusterSNRNBin, clusterSNRMin, clusterSNRMax);
+      _aidaHistoMap.insert(make_pair(tempHistoName, clusterSNRNxNHisto) );
+      {
+	stringstream ss;
+	ss << "SNR with " << (*iter) << " by " << (*iter) << " pixels ";
+	tempTitle = ss.str();
+      }
+      clusterSNRNxNHisto->setTitle(tempTitle.c_str());
+
 
       ++iter;
     }
@@ -733,7 +914,58 @@ void EUTelClusteringProcessor::bookHistos() {
     _aidaHistoMap.insert(make_pair(tempHistoName, seedSignalHisto));
     seedSignalHisto->setTitle(seedTitle.c_str());
   
-    
+    {
+      stringstream ss;
+      ss << _seedSNRHistoName << "-d" << iDetector;
+      tempHistoName = ss.str();
+    }
+    int    seedSNRNBin  =  300;
+    double seedSNRMin   =    0.;
+    double seedSNRMax   =  200.;
+    string seedSNRTitle = "Seed SNR";
+    if ( isHistoManagerAvailable ) {
+      histoInfo = histoMgr->getHistogramInfo( _seedSignalHistoName );
+      if ( histoInfo ) {
+	message<DEBUG> ( log() << (* histoInfo ) );
+	seedSNRNBin = histoInfo->_xBin;
+	seedSNRMin  = histoInfo->_xMin;
+	seedSNRMax  = histoInfo->_xMax;
+	if ( histoInfo->_title != "" ) seedSNRTitle = histoInfo->_title;
+      }
+    }
+    AIDA::IHistogram1D * seedSNRHisto = 
+      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+								seedSNRNBin, seedSNRMin, seedSNRMax);
+    _aidaHistoMap.insert( make_pair(tempHistoName, seedSNRHisto ));
+    seedSNRHisto->setTitle(seedSNRTitle.c_str());
+
+
+    {
+      stringstream ss;
+      ss << _clusterNoiseHistoName << "-d" << iDetector;
+      tempHistoName = ss.str();
+    }
+    int    clusterNoiseNBin  =  300;
+    double clusterNoiseMin   =    0.;
+    double clusterNoiseMax   =  200.;
+    string clusterNoiseTitle = "Cluster noise";
+    if ( isHistoManagerAvailable ) {
+      histoInfo = histoMgr->getHistogramInfo( _seedSignalHistoName );
+      if ( histoInfo ) {
+	message<DEBUG> ( log() << (* histoInfo ) );
+	clusterNoiseNBin = histoInfo->_xBin;
+	clusterNoiseMin  = histoInfo->_xMin;
+	clusterNoiseMax  = histoInfo->_xMax;
+	if ( histoInfo->_title != "" ) clusterNoiseTitle = histoInfo->_title;
+      }
+    }
+    AIDA::IHistogram1D * clusterNoiseHisto = 
+      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+								clusterNoiseNBin, clusterNoiseMin, clusterNoiseMax);
+    _aidaHistoMap.insert( make_pair(tempHistoName, clusterNoiseHisto ));
+    clusterNoiseHisto->setTitle(clusterNoiseTitle.c_str());
+
+
     {
       stringstream ss;
       ss << _hitMapHistoName << "-d" << iDetector;
@@ -753,10 +985,9 @@ void EUTelClusteringProcessor::bookHistos() {
 
   }
   
-  
+
 #else
   message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
 #endif
 
- 
 }
