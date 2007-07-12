@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMatrixDecoder.cc,v 1.2 2007-07-11 06:59:05 bulgheroni Exp $
+// Version $Id: EUTelMatrixDecoder.cc,v 1.3 2007-07-12 14:41:34 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -20,11 +20,12 @@
 #endif
 
 // lcio includes <.h>
-#include <IMPL/TrackerRawDataImpl.h>
 #include <UTIL/CellIDDecoder.h>
 
 // system includes <>
 #include <string>
+#include <iomanip>
+#include <iostream>
 
 using namespace std;
 using namespace lcio;
@@ -90,4 +91,17 @@ int EUTelMatrixDecoder::getYFromIndex(int index) const {
   
   return ( index / _xNoOfPixel ) + _yMin;
 
+}
+
+std::ostream& eutelescope::operator<< (std::ostream& os, const EUTelMatrixDecoder& decoder){
+        
+  int spacer = 30;
+  
+  os << setiosflags(ios::left) 
+     << std::setw(spacer) << "Number of pixel along X " << decoder._xNoOfPixel << "\n"
+     << std::setw(spacer) << "Number of pixel along Y " << decoder._yNoOfPixel << "\n"
+     << std::setw(spacer) << "Origin  " << "(" << decoder._xMin << ", " << decoder._yMin  << ")"
+     << resetiosflags(ios::left);
+  
+  return os;
 }

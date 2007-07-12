@@ -26,6 +26,7 @@
 // system includes <>
 #include <string>
 #include <iostream>
+#include <iomanip>
 
 namespace eutelescope {
   
@@ -43,7 +44,7 @@ namespace eutelescope {
    *  different away in order to simplify the code.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelMatrixDecoder.h,v 1.2 2007-07-11 06:59:05 bulgheroni Exp $
+   *  @version $Id: EUTelMatrixDecoder.h,v 1.3 2007-07-12 14:41:34 bulgheroni Exp $
    */ 
   class EUTelMatrixDecoder {
     
@@ -182,6 +183,15 @@ namespace eutelescope {
      *  @param y A reference to the corresponding Y coordinate
      */
     void getXYFromIndex(int index, int& x, int& y) const ;
+
+    //! A streamer to print out the decoder
+    /*! Utility to print or save to disk the decoder structure
+     * 
+     *  @param os The input output stream
+     *  @param decoder The decoder to stream
+     *  @return The output stream
+     */ 
+    friend std::ostream& operator<< (std::ostream& os, const EUTelMatrixDecoder& decoder) ;
 
   private:
     
