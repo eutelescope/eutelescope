@@ -19,6 +19,7 @@
 
 // system includes <>
 #include <iostream>
+#include <vector>
 
 namespace eutelescope {
 
@@ -31,7 +32,7 @@ namespace eutelescope {
    *  inherithing from this virtual class.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelVirtualCluster.h,v 1.7 2007-07-09 10:23:40 bulgheroni Exp $
+   *  @Version $Id: EUTelVirtualCluster.h,v 1.8 2007-07-12 14:44:32 bulgheroni Exp $
    */
 
   class EUTelVirtualCluster {
@@ -42,6 +43,18 @@ namespace eutelescope {
 
     //! Default destructor
     virtual ~EUTelVirtualCluster() {;}
+
+    //! Set the noise value vector
+    /*! This method is used to attach to the cluster a vector of
+     *  floating number representing the pixel noise values. Depending
+     *  on the cluster implementation, in fact, the noise value of
+     *  each pixel can be already contained in the TrackerData or
+     *  not.
+     *  
+     *  @param noiseValues A STL vector of float containing the noise
+     *  values.
+     */
+    virtual void setNoiseValues(std::vector<float > noiseValues)          = 0;
     
     //! Return the detector ID
     /*! This number is used to link the detector which this cluster
@@ -197,7 +210,74 @@ namespace eutelescope {
      *  @see eutelescope::ClusterQuality
      */
     virtual void setClusterQuality(ClusterQuality)                        = 0;
-    
+
+    //! Get the noise value vector
+    /*! This method is used to get a vector containing the pixel noise
+     *  values. The order inside the vector corresponds to the one of
+     *  pixel signal value in the TrackerData.
+     *
+     *  @return A vector of float containing the noise values.
+     */
+    virtual std::vector<float > getNoiseValues() const                    = 0;
+
+    //! Get the cluster noise
+    /*! This method is used to calculate the cluster noise.
+     *  See the implementation for the way the cluster noise is
+     *  calculated. 
+     *
+     *  @return A float value representing the cluster noise.
+     */
+    virtual float getClusterNoise() const                                 = 0;
+
+    //! Get the cluster SNR
+    /*! This method is used to calculate the cluster signal to noise
+     *  ratio. 
+     *
+     *  @return The cluster SNR for the current cluster
+     */ 
+    virtual float getClusterSNR() const                                   = 0;
+
+    //! Get seed pixel SNR
+    /*! This method is used to calculate the seed pixel signal to
+     *  noise ratio. Note that depending on the cluster
+     *  implementation, the definition of seed may differ.
+     *
+     *  @return The seed pixel SNR
+     */
+    virtual float getSeedSNR() const                                      = 0;
+
+    //! Get the cluster N SNR
+    /*! This method returns the SNR of the cluster considering only
+     *  the N most significant pixels. The pixel significance is based
+     *  on a signal (and not SNR) basis.
+     *
+     *  @param nPixel The number of pixel to consider in the cluster
+     *  @return The cluster N SNR.
+     */ 
+    virtual float getClusterSNR(int nPixel) const                         = 0;
+     
+    //! Get the cluster N x M SNR
+    /*! This method returns the SNR when considering only a
+     *  rectangular subframe of N x M pixel centered around the seed
+     *  pixel. 
+     *
+     *  @param xSize Odd number to define the x size of the subframe
+     *  @param ySize Odd number to define the y size of the subframe
+     *  @return The SNR of the cluster subframe
+     */
+    virtual float getClusterSNR(int xSize, int ySize) const               = 0;
+
+    //! Calculate the cluster SNR with different number of pixels
+    /*! This method is a better and faster replacement of the
+     *  getClusterSNR(int) method. This one is actually avoiding to
+     *  re-sort the signal vector all the times it is called. 
+     *
+     *  @param nPixels The list of number of pixels
+     *  @return The SNRs for each number of pixels
+     */ 
+    virtual std::vector<float > getClusterSNR(std::vector<int > nPixels) const 
+                                                                          = 0;
+
     //! Return a pointer to the TrackerDataImpl
     /*! This method is used to expose to the public the
      *  TrackerDataImpl member.

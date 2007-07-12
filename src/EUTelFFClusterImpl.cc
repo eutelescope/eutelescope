@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.17 2007-07-11 08:35:03 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.18 2007-07-12 14:44:32 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -14,10 +14,12 @@
 // personal includes ".h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelVirtualCluster.h"
+#include "EUTelExceptions.h"
 
 // lcio includes <.h>
 #include <LCIOTypes.h>
 #include <IMPL/TrackerDataImpl.h>
+#include <Exceptions.h>
 
 // system includes
 #include <map>
@@ -27,13 +29,18 @@
 #include <iostream>
 #include <iomanip>
 #include <climits>
+#include <cassert>
 
 using namespace eutelescope;
 using namespace IMPL;
 using namespace std;
 
 
-EUTelFFClusterImpl::EUTelFFClusterImpl(TrackerDataImpl * data) : EUTelVirtualCluster(data) { _trackerData = data; } 
+EUTelFFClusterImpl::EUTelFFClusterImpl(TrackerDataImpl * data) : EUTelVirtualCluster(data) { 
+  _trackerData = data;
+  _noiseValues.clear();
+  _noiseSetSwitch = false;
+} 
 
 
 float EUTelFFClusterImpl::getDistance(EUTelVirtualCluster * otherCluster) const {
@@ -165,7 +172,6 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int n
       }
       ++index; ++iter;
     }
-    //    cerr << maxIndex << endl;
     highSignalPixel.insert( make_pair(maxIndex, maxSignal) ) ;
     (*maxIter) = -1 * numeric_limits<float >::max();
     ++iPixel;
@@ -276,6 +282,163 @@ std::vector<float> EUTelFFClusterImpl::getClusterCharge(std::vector<int > nPixel
 
 }
 
+void EUTelFFClusterImpl::setNoiseValues(std::vector<float > noiseValues ) {
+
+  // first check that the noiseValues sizes is the same of the
+  // TrackerData
+  if ( noiseValues.size() != _trackerData->getChargeValues().size() ) {
+    _noiseSetSwitch = false;
+    throw IncompatibleDataSetException("The noiseValues size is different from the TrackerData size");
+  }
+
+  _noiseValues = noiseValues;
+  _noiseSetSwitch = true;
+
+}
+
+vector<float > EUTelFFClusterImpl::getNoiseValues() const {
+
+  if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
+  return _noiseValues;
+}
+
+float EUTelFFClusterImpl::getClusterNoise() const {
+
+  if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
+
+  float squaredSum = 0;
+  vector<float >::const_iterator iter = _noiseValues.begin();
+  while ( iter != _noiseValues.end() ) {
+    squaredSum += pow( (*iter), 2 );
+    ++iter;
+  }
+  return sqrt( squaredSum );
+
+}
+
+float EUTelFFClusterImpl::getClusterSNR() const {
+  
+  if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
+  float clusterNoise = getClusterNoise();
+  if ( clusterNoise == 0 )  return 0.;
+  float clusterSignal = getTotalCharge();
+  return clusterSignal / clusterNoise;
+}
+
+float EUTelFFClusterImpl::getSeedSNR() const {
+  
+  if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
+  vector<float >::const_iterator chargeBegin    = _trackerData->getChargeValues().begin();
+  vector<float >::const_iterator seedChargeIter = max_element( chargeBegin, _trackerData->getChargeValues().end() );
+  vector<float >::const_iterator seedNoiseIter  = _noiseValues.begin() + ( seedChargeIter - chargeBegin );
+  return (*seedChargeIter) / (*seedNoiseIter);
+}
+
+float EUTelFFClusterImpl::getClusterSNR(int nPixel) const {
+  
+  if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
+  int xSize, ySize;
+  getClusterSize(xSize, ySize);
+  
+  if ( nPixel >= xSize * ySize ) 
+    return getClusterSNR();
+  
+  map<int, float > highSignalPixel;
+  vector<float >   vectorCopy( _trackerData->getChargeValues() );
+  int              iPixel = 0;
+  while ( iPixel != nPixel ) {
+    float maxSignal = -1 * numeric_limits<float >::max();
+    int   maxIndex  = 0;
+    int   index     = 0;
+    vector<float >::iterator maxIter;
+    vector<float >::iterator iter = vectorCopy.begin();
+    
+    while ( iter != vectorCopy.end() ) {
+      if ( *iter > maxSignal ) {
+	maxSignal = (*iter);
+	maxIndex  = index;
+	maxIter   = iter;
+      }
+      ++index; ++iter;
+    }
+    highSignalPixel.insert( make_pair(maxIndex, maxSignal) );
+    (*maxIter) = -1 * numeric_limits<float >::max();
+    ++iPixel;
+  }
+
+  float signal = 0, noise2 = 0;
+  map<int, float >::iterator mapIter = highSignalPixel.begin();
+  while ( mapIter != highSignalPixel.end() ) {
+    signal += mapIter->second;
+    noise2 += pow( _noiseValues[mapIter->first], 2 );
+    ++mapIter;
+  }
+  if ( noise2 == 0 ) return 0;
+  return signal / sqrt( noise2 );
+
+}
+
+std::vector<float > EUTelFFClusterImpl::getClusterSNR( std::vector<int > nPixels ) const {
+  
+  if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
+  map<float, int > clusterSignalMap;
+  vector<float >::const_iterator iter = _trackerData->getChargeValues().begin();
+  int index = 0;
+  while ( iter != _trackerData->getChargeValues().end() ) {
+    clusterSignalMap.insert( make_pair( (*iter), index ) );
+    ++index; ++iter;
+  }
+  
+  vector<int >::iterator pixelIter = nPixels.begin();
+  vector<float > snr;
+  while ( pixelIter != nPixels.end() ) {
+    map<float, int >::reverse_iterator mapIter = clusterSignalMap.rbegin();
+    float signal = 0;
+    float noise2 = 0;
+    int   iPixel = 0;
+    while ( (iPixel < (*pixelIter)) && (mapIter != clusterSignalMap.rend()) ) {
+      signal += mapIter->first;
+      noise2 += pow( _noiseValues[ mapIter->second], 2 );
+      ++mapIter; ++iPixel;
+    } 
+    if ( noise2 == 0 ) snr.push_back(0.);
+    else snr.push_back( signal / sqrt( noise2 ) ); 
+    ++pixelIter;
+  }
+  return snr;
+}
+  
+
+
+float EUTelFFClusterImpl::getClusterSNR(int xSize, int ySize) const {
+  
+  if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
+  
+  int xCluSize, yCluSize;
+  getClusterSize(xCluSize, yCluSize);
+  
+  if ( ( xSize >= xCluSize ) && ( ySize >= yCluSize ) ) {
+    return getClusterSNR();
+  }
+
+  int   iPixel = 0; 
+  float signal = 0, noise2 = 0;
+  
+  for ( int yPixel = -1 * ( yCluSize / 2 ); yPixel <= (yCluSize / 2); yPixel++ ) {
+    for ( int xPixel = -1 * ( xCluSize / 2 ); xPixel <= (xCluSize / 2); xPixel++ ) {
+      if ( ( xPixel >= -1 * (xSize / 2) ) &&  ( xPixel <= (xSize / 2) ) &&
+	   ( yPixel >= -1 * (ySize / 2) ) &&  ( yPixel <= (ySize / 2) ) ) {
+	signal += _trackerData->getChargeValues()[iPixel];
+	noise2 += pow( _noiseValues[iPixel] , 2 );
+      }
+      ++iPixel;
+    }
+  }
+  if ( noise2 == 0 ) return 0;
+  return signal / sqrt( noise2 );
+
+}
+
 float EUTelFFClusterImpl::getClusterCharge(int xSize, int ySize) const {
   
   int xCluSize, yCluSize;
@@ -311,6 +474,14 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
   getCenterOfGravityShift(xShift9, yShift9, 9);
   getCenterOfGravityShift(xShift3x3, yShift3x3, 3, 3);
   
+  float noise, SNR, SNR9, SNR3x3;
+  if ( _noiseSetSwitch ) {
+    noise  = getClusterNoise();
+    SNR    = getClusterSNR();
+    SNR9   = getClusterSNR(9);
+    SNR3x3 = getClusterSNR(3,3);
+  }
+
   int bigspacer = 23;
   
   os   <<  setw(bigspacer) << setiosflags(ios::left) << "Fixed frame cluster "<< "(" << xSize << ", " << ySize << ")\n"
@@ -322,8 +493,15 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
        <<  setw(bigspacer) <<  "Seed charge " << getSeedCharge() << " in (" << xSeed << ", " << ySeed << ")\n"
        <<  setw(bigspacer) <<  "CoG shift "<< "(" << xShift << ", " << yShift << ")\n" 
        <<  setw(bigspacer) <<  "CoG(9) shift " << "(" << xShift9 << ", " << yShift9 << ")\n" 
-       <<  setw(bigspacer) <<  "CoG(3x3) shift " << "(" << xShift3x3 << ", " << yShift3x3 << ")\n" 
-       << resetiosflags(ios::left);
+       <<  setw(bigspacer) <<  "CoG(3x3) shift " << "(" << xShift3x3 << ", " << yShift3x3 << ")\n" ;
+  if ( _noiseSetSwitch ) {
+    os << setw(bigspacer)  <<  "Cluster noise " << noise << "\n"
+       << setw(bigspacer)  <<  "Cluster SNR " << SNR << "\n"
+       << setw(bigspacer)  <<  "Cluster SNR(9) " << SNR9 << "\n"
+       << setw(bigspacer)  <<  "Cluster SNR(3x3) " << SNR3x3 << "\n";
+  }
+
+  os   << resetiosflags(ios::left);
 
   int spacer = 14;
 

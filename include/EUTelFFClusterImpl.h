@@ -24,6 +24,7 @@
 #include <UTIL/CellIDEncoder.h>
 
 // system includes <>
+#include <vector>
 #include <iostream>
 
 
@@ -84,13 +85,18 @@ namespace eutelescope {
    *  to cluster related quantities like the total charge, the charge
    *  center of gravity and others.
    *
+   *  Together with the pixel signals, via the TrackerData object, the
+   *  user can attach also a vector of pixel noises. This is very
+   *  useful when filling SNR histograms or making selection using SNR
+   *  information. 
+   *
    *  @see EUTELESCOPE::CLUSTERDEFAULTENCODING for the standard
    *  encoding of fixed frame clusters
    *
    *  @todo Test the charge center of mass method.
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.11 2007-07-09 10:20:41 bulgheroni Exp $
+   *  @Version $Id: EUTelFFClusterImpl.h,v 1.12 2007-07-12 14:44:32 bulgheroni Exp $
    */ 
 
   class EUTelFFClusterImpl : public EUTelVirtualCluster {
@@ -101,6 +107,27 @@ namespace eutelescope {
    
     //! Destructor
     virtual ~EUTelFFClusterImpl() { /* NOOP */ ; }
+
+    //! Set the pixel noise values
+    /*! This method is used to set the noise values. The Fixed Frame
+     *  cluster implementation does not have in the TrackerData the
+     *  noise value of the pixels. This method allows to attach at the
+     *  current cluster a vector of floats with one entry for each
+     *  pixel representing the noise value. The noise values in the
+     *  vector must be ordered with the same order the pixel signals
+     *  have been loaded into the TrackerData.
+     *  
+     *  Note that those noise values cannot be saved on disk and that
+     *  they will be lost when the EUTelFFClusterImpl object will be
+     *  destroyed. 
+     *
+     *  When this method is called, the _noiseSetSwitch is set to true
+     *  and all the other methods calling noise features will be made
+     *  available. 
+     *
+     *  @param noiseValues The vector containing the pixel noise.
+     */ 
+    void setNoiseValues(std::vector<float > noiseValues) ;
     
     //! Get the detector ID
     /*! This method is used to get from the CellID the detector
@@ -340,6 +367,73 @@ namespace eutelescope {
      */
     void getCenterOfGravity(float& xCoG, float& yCoG) const;
 
+    //! Get the pixel noise values
+    /*! This method returns the pixel noise value vector if it was
+     *  properly set. Otherwise it throws a DataNotAvailableException.
+     *
+     *  @return a vector of float with the pixel noise values.
+     */
+    std::vector<float > getNoiseValues() const;
+    
+
+    //! Get the cluster noise
+    /*! This method returns the full cluster noise. This is evaluated
+     *  according to the following formula:
+     *  
+     *  @code
+     *  N = sqrt( N_1^2 + N_2^2 + ... + N_m^2 )
+     *  @endcode
+     */ 
+    float getClusterNoise() const;
+
+    //! Get the cluster SNR
+    /*! This method is used to calculate the cluster signal to noise
+     *  ratio. 
+     *
+     *  @return The cluster SNR for the current cluster
+     */ 
+    float getClusterSNR() const ;
+
+    //! Get seed pixel SNR
+    /*! This method is used to calculate the seed pixel signal to
+     *  noise ratio. In this implementation, the seed pixel is both
+     *  the one with the highest signal and the central one.
+     *
+     *  @return The seed pixel SNR
+     */
+    float getSeedSNR() const ;
+
+    //! Get the cluster N SNR
+    /*! This method returns the SNR of the cluster considering only
+     *  the N most significant pixels. The pixel significance is based
+     *  on a signal (and not SNR) basis.
+     *
+     *  @param nPixel The number of pixel to consider in the cluster
+     *  @return The cluster N SNR.
+     */ 
+    float getClusterSNR(int nPixel) const ;
+     
+    //! Calculate the cluster SNR with different number of pixels
+    /*! This method is a better and faster replacement of the
+     *  getClusterSNR(int) method. This one is actually avoiding to
+     *  re-sort the signal vector all the times it is called. 
+     *
+     *  @param nPixels The list of number of pixels
+     *  @return The SNRs for each number of pixels
+     */ 
+    std::vector<float > getClusterSNR(std::vector<int > nPixels) const ;
+
+    //! Get the cluster N x M SNR
+    /*! This method returns the SNR when considering only a
+     *  rectangular subframe of N x M pixel centered around the seed
+     *  pixel. 
+     *
+     *  @param xSize Odd number to define the x size of the subframe
+     *  @param ySize Odd number to define the y size of the subframe
+     *  @return The SNR of the cluster subframe
+     */
+    float getClusterSNR(int xSize, int ySize) const ;
+    
     //! Return a pointer to the TrackerDataImpl
     /*! This method is used to expose to the public the
      *  TrackerDataImpl member.
@@ -355,6 +449,18 @@ namespace eutelescope {
      */
     void print(std::ostream& os)  const;
 
+  private:
+    
+    //! Noise values vector
+    std::vector<float > _noiseValues;
+
+    //! Noise set switch
+    /*! By default this switch is set to false and it is disabling all
+     *  methods referring to the _noiseValue. This bool is set to true
+     *  only when the setNoiseValues() is called and all the
+     *  crosschecks have been passed.
+     */
+    bool _noiseSetSwitch;
   };
  
 }
