@@ -84,7 +84,7 @@ namespace eutelescope {
    *  None
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHistogramMaker.h,v 1.5 2007-06-29 15:24:23 bulgheroni Exp $ 
+   *  @version $Id: EUTelHistogramMaker.h,v 1.6 2007-07-13 08:15:05 bulgheroni Exp $ 
    *
    */
   
@@ -168,6 +168,23 @@ namespace eutelescope {
      */
     std::string _pulseCollectionName;
 
+    //! Noise collection name.
+    /*! This is the name of the TrackerData collection containing the
+     *  noise information. The presence of this collection is not
+     *  compulsory. If it is found in the event, then also the "noise"
+     *  related histograms are filled, otherwise those are skipped.
+     */
+    std::string _noiseCollectionName;
+
+    //! Status collection name.
+    /*! This is the name of the TrackerRawData collection containing
+     *  the pixel status information. As for the noise collection,
+     *  also this one is not compulsory for the proper behaviour of
+     *  this processor. Having the status collection will allow the
+     *  filling the of noise related histograms.
+     */
+    std::string _statusCollectionName;
+
     //! The histogram information file
     /*! This string contain the name of the histogram information
      *  file. This is selected by the user in the steering file.
@@ -218,6 +235,15 @@ namespace eutelescope {
      */ 
     std::vector<int > _maxY;
     
+    //! Switch to turn on and off the noise histo filling
+    /*! To fill noise and SNR related histograms, the presence of the
+     *  noise and the status collections has to be verified first.
+     *   
+     *  This switch, true by default, will be turned off if the noise
+     *  and status collections are not found.
+     */ 
+    bool _noiseHistoSwitch;
+
 #ifdef MARLIN_USE_AIDA
     //! AIDA histogram map
     /*! The histogram filling procedure may occur in many different
@@ -251,6 +277,28 @@ namespace eutelescope {
      */ 
     static std::string _hitMapHistoName;
 
+    //! Seed pixel SNR name
+    /*! This is the seed pixel SNR histogram name
+     */ 
+    static std::string _seedSNRHistoName;
+
+    //! Cluster SNR histogram name
+    /*! This is the name of the histogram containing the seed pixel
+     *  SNR
+     */
+    static std::string _clusterSNRHistoName;
+
+    //! Event multiplicity histogram name
+    /*! There is one of this histogram for each plane in the telescope
+     *  setup. For each event this histogram is filled with the number
+     *  of clusters passing the thresholds found.
+     */
+    static std::string _eventMultiplicityHistoName;
+
+    //! Cluster noise histogram name
+    /*! This is the full cluster noise histogram name
+     */
+    static std::string _clusterNoiseHistoName;
 #endif 
     
     //! Event counter
