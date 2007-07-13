@@ -55,8 +55,11 @@ namespace eutelescope {
    *  store, at least temporary, the cluster information in
    *  memory. For example, in the case of fixed frame NxM clustering
    *  the natural object to store a cluster is a EUTelFFClusterImpl
-   *  object that is inheriting from TrackerData; other, algorithms
-   *  can used different re-implementation of TrackerData. 
+   *  object but all of them should inherit from the
+   *  EUTelVirtualCluster, that is the base cluster class in the
+   *  EUTelescope framework. All these classes are working according
+   *  to the Decorator Pattern, and they have at least a TrackerData
+   *  pointer as data member.  
    *
    *  In order to write data on disk in the most general and
    *  consistent way, whatever object has been used during the
@@ -124,7 +127,7 @@ namespace eutelescope {
    *  containing the histogram booking information.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.13 2007-07-12 14:45:28 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.14 2007-07-13 08:13:57 bulgheroni Exp $
    *
    */
 
@@ -532,7 +535,13 @@ namespace eutelescope {
      *  SNR
      */
     static std::string _clusterSNRHistoName;
-    
+
+    //! Event multiplicity histogram name
+    /*! There is one of this histogram for each plane in the telescope
+     *  setup. For each event this histogram is filled with the number
+     *  of clusters passing the thresholds found.
+     */
+    static std::string _eventMultiplicityHistoName;
 
 #endif
 
