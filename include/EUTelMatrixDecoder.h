@@ -22,6 +22,7 @@
 // lcio includes
 #include <IMPL/TrackerRawDataImpl.h>
 #include <UTIL/CellIDDecoder.h>
+#include <Exceptions.h>
 
 // system includes <>
 #include <string>
@@ -44,7 +45,7 @@ namespace eutelescope {
    *  different away in order to simplify the code.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelMatrixDecoder.h,v 1.3 2007-07-12 14:41:34 bulgheroni Exp $
+   *  @version $Id: EUTelMatrixDecoder.h,v 1.4 2007-07-15 16:43:55 bulgheroni Exp $
    */ 
   class EUTelMatrixDecoder {
     
@@ -99,24 +100,20 @@ namespace eutelescope {
      *  for the decoding
      *
      *  @throw InvalidParameterException if @c xNoOfPixel or @c
-     *  yNoOfPixel are lesser equal to 0
+     *  yNoOfPixel are lesser equal to 0 
+     *  
+     *  @throw lcio::Exception if the encoding is not correct /
+     *  available.
      *
-     *  @throw InvalidParameterException if the CellIDDecoder encoding
-     *  is different from EUTELESCOPE::MATRIXDEFAULTENCODING.
      */
     template <class T>
     EUTelMatrixDecoder(UTIL::CellIDDecoder<T >& decoder, T * rawData)
-      throw (InvalidParameterException) {
+      throw (InvalidParameterException, lcio::Exception) {
   
-      try {
-	_xNoOfPixel = decoder(rawData)["xMax"] - decoder(rawData)["xMin"] + 1;
-	_yNoOfPixel = decoder(rawData)["yMax"] - decoder(rawData)["yMin"] + 1;
-	_xMin       = decoder(rawData)["xMin"];
-	_yMin       = decoder(rawData)["yMin"];
-      } catch (lcio::Exception& e) {
-	std::cerr << e.what() << std::endl;
-	exit(-1);
-      }
+      _xNoOfPixel = decoder(rawData)["xMax"] - decoder(rawData)["xMin"] + 1;
+      _yNoOfPixel = decoder(rawData)["yMax"] - decoder(rawData)["yMin"] + 1;
+      _xMin       = decoder(rawData)["xMin"];
+      _yMin       = decoder(rawData)["yMin"];
 
       if ( _xNoOfPixel <= 0 ) throw InvalidParameterException("xNoOfPixel has to be positive");
       if ( _yNoOfPixel <= 0 ) throw InvalidParameterException("yNoOfPixel has to be positive");
@@ -183,6 +180,30 @@ namespace eutelescope {
      *  @param y A reference to the corresponding Y coordinate
      */
     void getXYFromIndex(int index, int& x, int& y) const ;
+
+    //! Returns the minimum value of X
+    /*! 
+     *  @return The minimum value of X
+     */ 
+    inline int getMinX() const { return _xMin ; }
+
+    //! Returns the minimum value of Y
+    /*! 
+     *  @return The minimum value of Y
+     */ 
+    inline int getMinY() const { return _yMin ; }
+
+   //! Returns the maximum value of X
+    /*! 
+     *  @return The minimum value of X
+     */ 
+    inline int getMaxX() const { return _xMin + _xNoOfPixel - 1 ; }
+
+    //! Returns the minimum value of Y
+    /*! 
+     *  @return The minimum value of Y
+     */ 
+    inline int getMaxY() const { return _yMin + _yNoOfPixel - 1; }
 
     //! A streamer to print out the decoder
     /*! Utility to print or save to disk the decoder structure
