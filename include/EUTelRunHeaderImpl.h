@@ -147,7 +147,7 @@ namespace eutelescope
    *  \li <b>UserComment</b>: a user defined string field. 
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTelRunHeaderImpl.h,v 1.6 2007-06-29 15:24:23 bulgheroni Exp $
+   * @Version $Id: EUTelRunHeaderImpl.h,v 1.7 2007-07-15 16:36:26 bulgheroni Exp $
    * 
    */
 
@@ -197,10 +197,6 @@ namespace eutelescope
      *  string are available for this purpose: EUTELESCOPE::DAQDATA
      *  and EUTELESCOPE::SIMULDATA.
      *
-     *  @todo Consider the possibility to add another method having as
-     *  an input parameter a UTIL::LCTime pointer. This will allow the
-     *  user to set the date and time of the current file to any
-     *  value.
      */
     virtual void setDateTime ();
 

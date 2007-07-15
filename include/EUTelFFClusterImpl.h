@@ -93,10 +93,8 @@ namespace eutelescope {
    *  @see EUTELESCOPE::CLUSTERDEFAULTENCODING for the standard
    *  encoding of fixed frame clusters
    *
-   *  @todo Test the charge center of mass method.
-   *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.12 2007-07-12 14:44:32 bulgheroni Exp $
+   *  @Version $Id: EUTelFFClusterImpl.h,v 1.13 2007-07-15 16:36:26 bulgheroni Exp $
    */ 
 
   class EUTelFFClusterImpl : public EUTelVirtualCluster {

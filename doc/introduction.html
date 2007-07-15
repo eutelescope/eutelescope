@@ -122,6 +122,28 @@ below is a typical xml configuration the AIDAProcessor
 </processor>
 @endcode
 
+Another tool offered by the EUTelescope framework is the
+eutelescope::EUTelHistogramManager. This is an XML interpreter for the so
+called "histoinfo.xml" file. This file contains the booking
+information of the great part of the histograms booked and filled by
+the EUTelescope processors. This is allowing to have well defined (and
+not automatic) binning without the need of modify the hardcoded
+binning information and re-compile.
+
+This is an example of a histogram information file:
+
+@code
+<HistogramManager>
+  <histos>
+
+    <!-- EUTelCalibrateEvent --> 
+    <histo name="RawDataDistHisto"  type="H1D" xBin="4096" xMin="-2048.5" xMax="2047.5"/>
+    <histo name="DataDistHisto"     type="H1D" xBin="5000" xMin="-500"    xMax="500" />
+    <histo name="CommonDistHisto"   type="H1D" xBin="100"  xMin="-10"     xMax="10" />
+  </histos>
+</HistogramManager>
+@endcode
+
 \section conditionload Loading the condition file
 
 The second step in the analysis chain is to load the calibration file
@@ -231,7 +253,7 @@ reason the TrackerData structure may depend of the clusterization
 algorithm and for that purpose the user can apply on top of that the
 eutelescope::EUTelVirtualCluster.
 @see eutelescope::EUTelClusteringProcessor for more
-details
+details.
 
 <br>
 Here below an example of the configuration of eutelescope::EUTelClusteringProcessor
@@ -259,6 +281,10 @@ Here below an example of the configuration of eutelescope::EUTelClusteringProces
   <parameter name="SeedPixelCut" type="float" value="4.5"/>
  </processor>
 @endcode
+
+A further and more precise selection of clusters fulfilling a list of
+selection criteria is available in the eutelescope::EUTelClusterFilter
+processor.
 
 After the clusters were found, the user may want to apply a cluster
 separation processor in order to try to split clusters that were
@@ -355,10 +381,6 @@ Again an configuration example for this processor.
  </processor>
 @endcode
 
-@todo This is the very last born processor, still needs some debug and
-need to be patched against the next release of the geometry
-description.
-
 @section tracking The track fitting
 
 To be added
@@ -374,17 +396,22 @@ of a run an empty event called End Of Run Event that can be used by
 serial input/output protocol (like SIO) to identify which is the last
 event before the real end of file. The EUTelOutputProcessor just check
 the presence of the EORE event at the end of the run and if it is
-missing a new EORE is appended. This output processor has to be used in every step because if we want
+missing a new EORE is appended.  Many EUTelescope processors are using
+the EORE to finish up the calculation or to throw a
+RewindDataFilesException.<br>  If more than one input files are
+processed at the same time, the user can decide to keep, or skip the
+intermediate EORE in the output file. The behavior of the processor
+can be changed using the SkipIntermediateEORE steering parameter.<br>
+This output processor has to be used in every step because if we want
 to be self consistent every step output file has to finish with an
 EORE. <br> Another interesting use of this processor is the file
 fix. If, in fact, for any reason should the DAQ fails to write the
 EORE, this LCIO can be fed into this output processor that will append
 at the end the EORE. The configuration of EUTelOutputProcessor is
-identical to the one of the LCIOOutputProcessor and it is repeated for
-the sake of clarity
+almost identical to the one of the LCIOOutputProcessor but the
+SkipIntermediateEORE.
 
 @code
-
  <processor name="SaveOutputFile" type="EUTelOutputProcessor">
   <!--
      Writes the current event to the specified LCIO outputfile.  
@@ -401,6 +428,9 @@ the sake of clarity
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
   <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
+  <!--Set it to true to remove intermediate EORE in merged runs-->
+  <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
+
  </processor>
 
 
@@ -416,8 +446,9 @@ the sake of clarity
 @page preparation The preparation steps
 
 For the time being there are three preparation steps available within
-the EUTelescope package, for the calculation of calibration constants
-(@ref pedestal) and for eta functions (@ref eta).
+the EUTelescope package, for the raw DAQ native format conversion
+(@ref conversion), for the calculation of calibration constants (@ref
+pedestal) and for eta functions (@ref eta).
 
 @section conversion The raw data converter
 
@@ -462,7 +493,7 @@ Another reader (eutelescope::EUTelStrasMimoTelReader) has been
  eutelescope::EUTelStrasMimoTelReader::StrasEventHeader,
  eutelescope::EUTelStrasMimoTelReader::StrasEventTrailer and
  eutelescope::EUTelStrasMimoTelReader::StrasRunHeader. <br>
-This reader should be clean up and refurbished in order to make it
+This reader should be improved and refurbished in order to make it
  more general.
 
 @section pedestal The pedestal and noise calculator

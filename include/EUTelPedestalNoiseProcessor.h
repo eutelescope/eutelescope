@@ -158,7 +158,7 @@ namespace eutelescope {
    *  saving the output pedestal file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.16 2007-06-29 15:24:23 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.17 2007-07-15 16:36:26 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -297,9 +297,7 @@ namespace eutelescope {
      *  @param evt This is the current event passed by
      *  EUTelPedestalNoieProcessor::processEvent(LCEvent*)
      *
-     *  @todo A full debug of the AIDAProfile algorithm is yet not
-     *  possible because of some bugs affecting RAIDA, the ROOT-based
-     *  implementation of AIDA I'm using.
+     *  @todo A full debug of the AIDAProfile algorithm is required.
      *
      *  @todo Ask other teams about their favorite calculation
      *  algorithm
@@ -370,17 +368,6 @@ namespace eutelescope {
      *
      *  \li statusMap: as above but for the pixel status. Remember that
      *  <code>GOODPIXEL == 0</code> and <code>BADPIXEL == 1</code>.
-     *
-     *  @todo Histograms are produced only if MARLIN_USE_AIDA is
-     *  defined, but this may be not enough since also the
-     *  AIDAProcessor should be inserted in Marlin execution block. I
-     *  would like to introduce another conditional statement checking
-     *  for the existence of the AIDAProcessor.
-     *
-     *  @todo Another improvement could be the use of ROOT as a
-     *  histogramming package. I should use define such
-     *  EUTELESCOPE_USE_ROOT and of course add the needed includes and
-     *  libraries in the building procedure.
      *
      */
     void fillHistos();
