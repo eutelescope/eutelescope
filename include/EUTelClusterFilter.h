@@ -75,12 +75,17 @@ namespace eutelescope {
    *
    *  @code
    *  <parameter name="ClusterNxNMinCharge" type"FloatVec"> 3 90 95 120 </parameter>
-   *  @encode
+   *  @endcode
    *
    *  As above the first number if the subcluster size.
    *
    *  The seed pixel can also be used as a cut, again in ADC value and
    *  one per sensor.
+   *
+   *  All the previous cuts available for cluster and seed pixel
+   *  signals are also available on a SNR basis. In this case,
+   *  depending on the cluster implementation contained into the input
+   *  collection, providing a noise and a status collection is required.
    *
    *  The user can select also upon the minimum and the maximum number
    *  of clusters per plane. So for example the following code will
@@ -95,7 +100,7 @@ namespace eutelescope {
    *  To switch off all those cuts the user can set them to zero or to
    *  a negative value. The system will then disable their
    *  functionality.
-   *
+   * 
    *  Another possible selection criterion is based on the cluster
    *  quality. In this case it is worth to remember that the cluster
    *  quality is defined via a specific enum ClusterQuality reported
@@ -117,7 +122,7 @@ namespace eutelescope {
    *  The idea behind is that the processor will select all clusters
    *  having the quality the users specify.
 
-   *  Another selection can be done of the cluster position. For
+   *  Another selection can be done on the cluster position. For
    *  example the user may wants to keep only clusters having the
    *  cluster center within a certain range of pixels according to the
    *  following parametrization:
@@ -128,7 +133,12 @@ namespace eutelescope {
    *  @endcode
    *
    *  <h4> Input collection </h4>
-   *  A TrackerPulse collection containing the clusters to be filtered.
+   *  A TrackerPulse collection containing the clusters to be
+   *  filtered.
+   *  A TrackerData collection containing the noise information
+   *  (optional).
+   *  A TrackerRawData collection containing the pixel status
+   *  information (optional).
    *  
    *  <h4> Output collection </h4>
    *  A TrackerPulse collection containing only the clusters having
@@ -140,10 +150,20 @@ namespace eutelescope {
    *  @param FilteredPulseCollectionName Name of the filtered output
    *  collection. 
    *
+   *  @param NoiseCollectionName Name of the optional noise collection.
+   *
+   *  @param StatusCollectionName Name of the optional pixel status
+   *  collection.
+   *
    *  @param ClusterMinTotalCharge This is the minimum value allowed
    *  for the cluster total charge in ADC counts. For this parameter,
    *  one value for each detector should be provided. To switch it
    *  off, set all values to 0 or to a negative value.
+   *
+   *  @param ClusterMinTotalSNR This is the minimum allowed value for
+   *  the cluster SNR.  For this parameter, one value for each
+   *  detector should be provided. To switch it off, set all values to
+   *  0 or to a negative value.
    *
    *  @param ClusterNMinCharge This is a selection criterion very
    *  similar to ClusterMinTotalCharge but it acts not on the total
@@ -153,17 +173,34 @@ namespace eutelescope {
    *  the first parameter is the number of significant pixels. To
    *  switch it off is enough to set to zero the first value.
    *
+   *  @param ClusterNMinSNR This is as the parameter above but based
+   *  on the SNR instead of charge. The same rules to switch it off
+   *  apply.
+   *
    *  @param ClusterNxNMinCharge This is a selection criterion similar
    *  to the previous one but acting on the charge collected by a
    *  smaller squared cluster. The first number in the vector is the
    *  cluster size. The same rules about the number of vector
    *  components and switching off of ClusterNMinCharge apply also here.
    *
+   *  @param ClusterNxNMinSNR This is as the parameter above but based
+   *  on the SNR instead of charge. The same rules to switch it off
+   *  apply.
+   *
    *  @param SeedMinCharge This is the minimum allowed charge
    *  collected by the seed pixel (i. e. the one with the highest
    *  signal). The user has to specify one floating value for each
    *  detector. Set everything to zero, or to a negative value to
    *  disable the cut.
+   *
+   *  @param SeedMinSNR This is the minimum allowed SNR for the seed
+   *  pixel.  The user has to specify one floating value for each
+   *  detector. Set everything to zero, or to a negative value to
+   *  disable the cut.
+   *
+   *  @param MaxClusterNoise This is the maximum allowed cluster
+   *  noise. The user has to specify one floating value for each
+   *  detector. To disable the cut, set a negative value.
    *
    *  @param ClusterQuality This selection is based on the cluster
    *  quality as defined by the eutelescope::ClusterQuality
@@ -194,8 +231,16 @@ namespace eutelescope {
    *  are accepted. The user has to specify one value for each
    *  plane. Setting a negative number is disabling the cut.
    *
+   *  @param SkipEmptyEvent This boolean switch can be used to modify
+   *  the behavior of the processor when an event is left empty. If
+   *  set to true and no cluster passed the selections, then a
+   *  SkipEventException is thrown and the following processors in the
+   *  steering file will not be executed. If set to false, the
+   *  processEvent will return leaving the output collection empty for
+   *  the current event.
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterFilter.h,v 1.6 2007-07-10 14:31:15 bulgheroni Exp $
+   *  @version $Id: EUTelClusterFilter.h,v 1.7 2007-07-15 16:42:48 bulgheroni Exp $
    *
    *
    */
@@ -304,6 +349,18 @@ namespace eutelescope {
      */ 
     bool isAboveMinTotalCharge(EUTelVirtualCluster * cluster) const ;
 
+
+    //! Check if the total cluster SNR is above a certain value
+    /*! This is used to select clusters having a total SNR above a
+     *  certain value. This threshold value is given on a per detector
+     *  basis and stored into the _minTotalSNRVec.
+     *  
+     *  @param cluster The cluster under test.
+     *  @return True if the @c cluster has a SNR below its own
+     *  threshold.
+     */
+    bool isAboveMinTotalSNR(EUTelVirtualCluster * cluster) const;
+
     //! Check if the total cluster charge is below a certain value
     /*! This is used to select clusters having a total integrated
      *  charge below a certain value. This threshold value is given on
@@ -332,6 +389,19 @@ namespace eutelescope {
      */
     bool isAboveNMinCharge(EUTelVirtualCluster * cluster) const;
 
+    //! Check against the SNR of the N most significant pixels 
+    /*! The SNR of the cluster made by the first N significant pixels
+     *  is calculated and compared with the given threshold. 
+     * 
+     *  The thresholds are stored into a vector on a detector
+     *  basis. The first number is the number of pixels to be
+     *  considered.
+     *
+     *  @return True if the SNR is above threshold
+     *  @param cluster The cluster under test.
+     */
+    bool isAboveNMinSNR(EUTelVirtualCluster * cluster) const;
+
     //! Check against the charge collected by N x N pixels
     /*! This cut is working on the charge collected by a subframe N x
      *  N pixels wide centered around the seed.
@@ -340,7 +410,15 @@ namespace eutelescope {
      *  @return True if the charge is above threshold.
      */
     bool isAboveNxNMinCharge(EUTelVirtualCluster * cluster) const;
-
+    
+    //! Check against the SNR collected by N x N pixels 
+    /*! This cut is working on the SNR collected by a subframe N x
+     *  N pixels wide centered around the seed.
+     *
+     *  @param cluster The cluster under test.
+     *  @return True if the SNR is above threshold.
+     */
+    bool isAboveNxNMinSNR(EUTelVirtualCluster * cluster) const;
 
     //! Seed pixel cut
     /*! This is used to select clusters having a seed pixel charge
@@ -350,6 +428,15 @@ namespace eutelescope {
      *  @param cluster The cluster under test.
      */
     bool isAboveMinSeedCharge(EUTelVirtualCluster * cluster) const;
+
+    //! Seed SNR cut
+    /*! This is used to select clusters having a seed pixel SNR above
+     *  the specified threshold
+     * 
+     *  @return True if the seed SNR is above threshold
+     *  @param cluster The cluster under test.
+     */
+    bool isAboveMinSeedSNR(EUTelVirtualCluster * cluster) const;
 
     //! Quality cut
     /*! This is a selection cut based on the cluster quality. Only
@@ -408,6 +495,15 @@ namespace eutelescope {
      */ 
     bool isOutsideROI(EUTelVirtualCluster * cluster) const;
 
+    //! Below the maximum cluster noise
+    /*! This selection criterion is based on the full cluster noise. 
+     *  
+     *  @return True if the cluster noise is below the maximum
+     *  allowed.
+     *  @param cluster The cluster under test
+     */
+    bool isBelowMaxClusterNoise(EUTelVirtualCluster * cluster) const;
+
     //! Print the rejection summary
     /*! To better understand which cut is more important, a rejection
      *  counter is kept updated during the processing and at the end
@@ -423,6 +519,22 @@ namespace eutelescope {
     /*! This is the name of the input pulse collection name
      */
     std::string _inputPulseCollectionName;
+
+    //! Noise collection name.
+    /*! This is the name of the TrackerData collection containing
+     *  noise information. The presence of this collection in the
+     *  event is not compulsory, but it allows all the selection
+     *  criteria based on noise cuts
+     */
+    std::string _noiseCollectionName;
+    
+    //! Noise collection name.
+    /*! This is the name of the TrackerRawData collection containing
+     *  status information. The presence of this collection in the
+     *  event is not compulsory, but it allows all the selection
+     *  criteria based on noise cuts
+     */
+    std::string _statusCollectionName;
 
     //! Output pulse collection name.
     /*! This is the name of the output pulse collection name
@@ -440,7 +552,17 @@ namespace eutelescope {
      */ 
     std::vector<float > _minTotalChargeVec;
 
-    //! Thresholds for the N pixel cluster
+    //! Threshold for the minimum total cluster SNR
+    /*! This is a vector of the same size as the number of detectors
+     *  in the telescope and for each detector there is a float number
+     *  representing the minimum allowed total cluster SNR.
+     *
+     *  This selection is switched off for a sensor when this value is
+     *  lesser equal to zero.
+     */ 
+    std::vector<float > _minTotalSNRVec;
+
+    //! Thresholds for the N pixel cluster charge
     /*! This vector contains the thresholds for the minimum allowed
      *  charge collected by a cluster considering only the first N
      *  most significant pixels.
@@ -455,7 +577,21 @@ namespace eutelescope {
      */
     std::vector<float > _minNChargeVec;
 
-    //! Thresholds for the N x N pixel cluster.
+    //! Thresholds for the N pixel cluster SNR
+    /*! This vector contains the thresholds for the minimum allowed
+     *  SNR  collected by a cluster considering only the first N
+     *  most significant pixels.
+     *
+     *  The number of components of this vector should be a integer
+     *  multiple of @c _noOfDetectors + 1. This is because the first
+     *  digit for each set is the number of pixels in the cluster
+     *  while the other @c _noOfDetectors are the different thresholds
+     *
+     *  To switch it off, just put N = 0.
+     */
+    std::vector<float > _minNSNRVec;
+
+    //! Thresholds for the N x N pixel cluster charge.
     /*! This vector contains the thresholds for the minimum allowed
      *  charge collected by a cluster made by the N x N pixels around
      *  the seed. 
@@ -469,6 +605,20 @@ namespace eutelescope {
      */
     std::vector<float > _minNxNChargeVec;
 
+    //! Thresholds for the N x N pixel cluster SNR.
+    /*! This vector contains the thresholds for the minimum allowed
+     *  SNR collected by a cluster made by the N x N pixels around the
+     *  seed.
+     * 
+     *  The number of components of this vector should be a integer
+     *  multiple of @c _noOfDetectors + 1. This is because the first
+     *  digit for each set is the number of pixels in the cluster
+     *  while the other @c _noOfDetectors are the different thresholds
+     *
+     *  To switch it off, just put N = 0.
+     */
+    std::vector<float > _minNxNSNRVec;
+
     //! Thresholds for the seed pixel charge
     /*! This vector contains the thresholds for the minimum allowed
      *  seed charge in the cluster.
@@ -480,6 +630,17 @@ namespace eutelescope {
      *
      */
     std::vector<float > _minSeedChargeVec;
+
+    //! Thresholds for the seed pixel SNR
+    /*! This vector contains the thresholds for the minimum allowed
+     *  seed SNR.
+     * 
+     *  The number of components in this vector should be equal to the
+     *  number of detectors in the telescope.
+     *
+     *   To switch it off set the components to 0
+     */
+    std::vector<float > _minSeedSNRVec;
 
     //! Qualities for the clusters
     /*! This vector contains the quality information for the
@@ -518,6 +679,28 @@ namespace eutelescope {
      */ 
     std::vector<EUTelROI > _outsideROIVec;
 
+    //! A vector with the maximum allowed cluster noises.
+    /*! This is a vector of float with one components for each plane,
+     *  representing the maximum allowed cluster noise. The cluster
+     *  noise calculation may depends on the effective cluster
+     *  implementation.
+     */
+    std::vector<float > _maxClusterNoiseVec;
+
+    //! A switch to skip empty event
+    /*! This boolean steering parameter is used by the user to trigger
+     *  a SkipEventException in the case after the selection the
+     *  current event is left empty. 
+     *   
+     *  Setting it to true will remove from the output file all event
+     *  with the output collection empty, but at the same time will
+     *  prevent other following processor to be applied. This a major
+     *  drawback in the case two EUTelClusterFilter processors are
+     *  applied on the same input collection and the user wants to
+     *  compare the results of different selection criteria.
+     */
+    bool _skipEmptyEvent;
+
   private:
 
     //! A temporary vector for the inside ROI
@@ -544,17 +727,56 @@ namespace eutelescope {
      */
     std::vector<float > _tempOutsideROI;
 
+    //! Total cluster counter
+    /*! Vector of unsigned integer to count the total number of
+     *  cluster in the input collection .
+     */
+    std::vector<unsigned int> _totalClusterCounter;
+
+    //! Accepted cluster counter
+    /*! Vector of unsigned integer to count the number of accepted
+     *  cluster.
+     */
+    std::vector<unsigned int> _acceptedClusterCounter;
+
+    //! Global switch for noise related cuts
+    /*! The capability to perform cuts on noise related figure of
+     *  merits depends on the specific implementation of the
+     *  EUTelVirtualCluster. There are implementation in which the
+     *  status and noise values of each pixels in included into the
+     *  TrackerData object, but there are also other implementations
+     *  (like EUTelFFClusterImpl) that require access to other
+     *  collection to retrieve those information. In such a case, the
+     *  processor has to verify first if the noise and status
+     *  collection have been provided in the steering file, then if
+     *  they are available in the event, and finally to allow noise
+     *  related cuts.
+     */
+    bool _noiseRelatedCuts;
+     
     //! Switch for the minimum total cluster charge
     bool _minTotalChargeSwitch;
+
+    //! Switch for the minimum total cluster SNR
+    bool _minTotalSNRSwitch;
 
     //! Switch for the minimum N pixel cluster charge
     bool _minNChargeSwitch;
 
+    //! Switch for the minimum N pixel cluster SNR
+    bool _minNSNRSwitch;
+
     //! Switch for the minimum N x N pixel cluster charge
     bool _minNxNChargeSwitch;
 
+    //! Switch for the minimum N x N pixel cluster SNR
+    bool _minNxNSNRSwitch;
+
     //! Switch for the minimum seed charge
     bool _minSeedChargeSwitch;
+
+    //! Switch for the minimum seed SNR
+    bool _minSeedSNRSwitch;
 
     //! Switch for the cluster quality
     bool _clusterQualitySwitch;
@@ -571,6 +793,9 @@ namespace eutelescope {
     //! Switch for the outsideROI selection
     bool _outsideROISwitch;
     
+    //! Switch for the maximum cluster noise
+    bool _maxClusterNoiseSwitch;
+
     //! The number of detectors
     int _noOfDetectors;
 
@@ -596,7 +821,7 @@ namespace eutelescope {
      *  in find_if.
      *
      *  @author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
-     *  @version $Id: EUTelClusterFilter.h,v 1.6 2007-07-10 14:31:15 bulgheroni Exp $
+     *  @version $Id: EUTelClusterFilter.h,v 1.7 2007-07-15 16:42:48 bulgheroni Exp $
      */
     class HasSameID {
     public:
@@ -625,8 +850,6 @@ namespace eutelescope {
       int _id;
     };
   
-
-
 
   };
 
