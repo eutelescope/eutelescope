@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.22 2007-07-13 08:13:56 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.23 2007-07-15 16:37:44 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -796,6 +796,7 @@ void EUTelClusteringProcessor::bookHistos() {
 	message<DEBUG> ( log() << (* histoInfo ) );
 	clusterSNRNBin = histoInfo->_xBin;
 	clusterSNRMin  = histoInfo->_xMin;
+	clusterSNRMax  = histoInfo->_xMax;
 	if ( histoInfo->_title != "" ) clusterSNRTitle = histoInfo->_title;
       }
     }
@@ -943,7 +944,7 @@ void EUTelClusteringProcessor::bookHistos() {
     double seedSNRMax   =  200.;
     string seedSNRTitle = "Seed SNR";
     if ( isHistoManagerAvailable ) {
-      histoInfo = histoMgr->getHistogramInfo( _seedSignalHistoName );
+      histoInfo = histoMgr->getHistogramInfo( _seedSNRHistoName );
       if ( histoInfo ) {
 	message<DEBUG> ( log() << (* histoInfo ) );
 	seedSNRNBin = histoInfo->_xBin;
@@ -969,7 +970,7 @@ void EUTelClusteringProcessor::bookHistos() {
     double clusterNoiseMax   =  200.;
     string clusterNoiseTitle = "Cluster noise";
     if ( isHistoManagerAvailable ) {
-      histoInfo = histoMgr->getHistogramInfo( _seedSignalHistoName );
+      histoInfo = histoMgr->getHistogramInfo( _clusterNoiseHistoName );
       if ( histoInfo ) {
 	message<DEBUG> ( log() << (* histoInfo ) );
 	clusterNoiseNBin = histoInfo->_xBin;
