@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.4 2007-05-31 15:26:36 bulgheroni Exp $
+// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.5 2007-07-18 13:36:52 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -145,47 +145,55 @@ void EUTelUpdatePedestalNoiseProcessor::processEvent (LCEvent * event) {
   }
 
 
-  if (isFirstEvent()) {
-    
-    if ( _monitoredPixel.size() != 0 ) {
-      // this means we have to fill in the vectors pedestal and noise
-      // monitoring
+  try {
 
-      LCCollectionVec * pedestalCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_pedestalCollectionName));
-      LCCollectionVec * noiseCollection    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
-    
-      unsigned index = 0;
-      while ( index < _monitoredPixel.size() ) {
-	int  iDetector = _monitoredPixel[index++];
-	int  xCoord    = _monitoredPixel[index++];
-	int  yCoord    = _monitoredPixel[index++];
+    if (isFirstEvent()) {
+      
+      if ( _monitoredPixel.size() != 0 ) {
+	// this means we have to fill in the vectors pedestal and noise
+	// monitoring
 	
-	TrackerDataImpl * pedestal = dynamic_cast < TrackerDataImpl * >    (pedestalCollection->getElementAt(iDetector));
-	TrackerDataImpl * noise    = dynamic_cast < TrackerDataImpl * >    (noiseCollection->getElementAt(iDetector));
-
-	// I need to find the pixel index, for this I need the number of pixels in the x directions.
-	CellIDDecoder<TrackerDataImpl> decoder(pedestalCollection);
-	int xMin = decoder(pedestal)["xMin"];
-	int xMax = decoder(pedestal)["xMax"];
-	int yMin = decoder(pedestal)["yMin"];
-	int noOfXPixel = abs( xMax - xMin ) + 1;
-	if (noOfXPixel <= 0) throw InvalidParameterException("The number of pixels along has to be > 0");
-	int pixelIndex = ( xCoord - xMin ) + ( yCoord - yMin ) * noOfXPixel;	
-
-	// initialize the pedestal monitor
-	FloatVec pedestalMonitor;
-	pedestalMonitor.push_back(pedestal->chargeValues()[pixelIndex]);
-	_monitoredPixelPedestal.push_back(pedestalMonitor);
-
-	// and now the noise one
-	FloatVec noiseMonitor;
-	noiseMonitor.push_back(noise->chargeValues()[pixelIndex]);
-	_monitoredPixelNoise.push_back(noiseMonitor);
 	
-      }  
+	LCCollectionVec * pedestalCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_pedestalCollectionName));
+	LCCollectionVec * noiseCollection    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
+	
+	unsigned index = 0;
+	while ( index < _monitoredPixel.size() ) {
+	  int  iDetector = _monitoredPixel[index++];
+	  int  xCoord    = _monitoredPixel[index++];
+	  int  yCoord    = _monitoredPixel[index++];
+	  
+	  TrackerDataImpl * pedestal = dynamic_cast < TrackerDataImpl * >    (pedestalCollection->getElementAt(iDetector));
+	  TrackerDataImpl * noise    = dynamic_cast < TrackerDataImpl * >    (noiseCollection->getElementAt(iDetector));
+	  
+	  // I need to find the pixel index, for this I need the number of pixels in the x directions.
+	  CellIDDecoder<TrackerDataImpl> decoder(pedestalCollection);
+	  int xMin = decoder(pedestal)["xMin"];
+	  int xMax = decoder(pedestal)["xMax"];
+	  int yMin = decoder(pedestal)["yMin"];
+	  int noOfXPixel = abs( xMax - xMin ) + 1;
+	  if (noOfXPixel <= 0) throw InvalidParameterException("The number of pixels along has to be > 0");
+	  int pixelIndex = ( xCoord - xMin ) + ( yCoord - yMin ) * noOfXPixel;	
+	  
+	  // initialize the pedestal monitor
+	  FloatVec pedestalMonitor;
+	  pedestalMonitor.push_back(pedestal->chargeValues()[pixelIndex]);
+	  _monitoredPixelPedestal.push_back(pedestalMonitor);
+	  
+	  // and now the noise one
+	  FloatVec noiseMonitor;
+	  noiseMonitor.push_back(noise->chargeValues()[pixelIndex]);
+	  _monitoredPixelNoise.push_back(noiseMonitor);
+	  
+	}  
+      
+	_isFirstEvent = false;
+      }
     }
-    _isFirstEvent = false;
+  } catch ( DataNotAvailableException& e) {
+    message<WARNING> ( log() << "Collection not available in this event" );
   }
+
 
 
   if ( _iEvt % _updateFrequency == 0 ) {
@@ -203,61 +211,72 @@ void EUTelUpdatePedestalNoiseProcessor::processEvent (LCEvent * event) {
 
 void EUTelUpdatePedestalNoiseProcessor::pixelMonitoring(LCEvent * evt) {
 
-  LCCollectionVec * pedestalCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_pedestalCollectionName));
-  LCCollectionVec * noiseCollection    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
-  
-  unsigned int index  = 0;
-  unsigned int iPixel = 0;
-  while (index < _monitoredPixel.size() ) {
-    int  iDetector = _monitoredPixel[index++];
-    int  xCoord    = _monitoredPixel[index++];
-    int  yCoord    = _monitoredPixel[index++];
+  try {
+    LCCollectionVec * pedestalCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_pedestalCollectionName));
+    LCCollectionVec * noiseCollection    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
     
-    TrackerDataImpl * pedestal = dynamic_cast < TrackerDataImpl * >    (pedestalCollection->getElementAt(iDetector));
-    TrackerDataImpl * noise    = dynamic_cast < TrackerDataImpl * >    (noiseCollection->getElementAt(iDetector));
-    
-    // I need to find the pixel index, for this I need the number of pixels in the x directions.
-    CellIDDecoder<TrackerDataImpl> decoder(pedestalCollection);
-    int xMin = decoder(pedestal)["xMin"];
-    int xMax = decoder(pedestal)["xMax"];
-    int yMin = decoder(pedestal)["yMin"];
-    int noOfXPixel = abs( xMax - xMin ) + 1;
-    if (noOfXPixel <= 0) throw InvalidParameterException("The number of pixels along has to be > 0");
-    int pixelIndex = ( xCoord - xMin ) + ( yCoord - yMin ) * noOfXPixel;
-    
-    _monitoredPixelPedestal[iPixel].push_back(pedestal->chargeValues()[pixelIndex]);
-    _monitoredPixelNoise[iPixel].push_back(noise->chargeValues()[pixelIndex]);
-    ++iPixel;
+    unsigned int index  = 0;
+    unsigned int iPixel = 0;
+    while (index < _monitoredPixel.size() ) {
+      int  iDetector = _monitoredPixel[index++];
+      int  xCoord    = _monitoredPixel[index++];
+      int  yCoord    = _monitoredPixel[index++];
+      
+      TrackerDataImpl * pedestal = dynamic_cast < TrackerDataImpl * >    (pedestalCollection->getElementAt(iDetector));
+      TrackerDataImpl * noise    = dynamic_cast < TrackerDataImpl * >    (noiseCollection->getElementAt(iDetector));
+      
+      // I need to find the pixel index, for this I need the number of pixels in the x directions.
+      CellIDDecoder<TrackerDataImpl> decoder(pedestalCollection);
+      int xMin = decoder(pedestal)["xMin"];
+      int xMax = decoder(pedestal)["xMax"];
+      int yMin = decoder(pedestal)["yMin"];
+      int noOfXPixel = abs( xMax - xMin ) + 1;
+      if (noOfXPixel <= 0) throw InvalidParameterException("The number of pixels along has to be > 0");
+      int pixelIndex = ( xCoord - xMin ) + ( yCoord - yMin ) * noOfXPixel;
+      
+      _monitoredPixelPedestal[iPixel].push_back(pedestal->chargeValues()[pixelIndex]);
+      _monitoredPixelNoise[iPixel].push_back(noise->chargeValues()[pixelIndex]);
+      ++iPixel;
+    }
+  } catch ( DataNotAvailableException& e) {
+    message<WARNING> ( log() << "Collection not available in this event" );
   }
+
 
 }
 
 void EUTelUpdatePedestalNoiseProcessor::fixedWeightUpdate(LCEvent * evt) {
-  
-  LCCollectionVec * pedestalCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_pedestalCollectionName));
-  LCCollectionVec * noiseCollection    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
-  LCCollectionVec * statusCollection   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
-  LCCollectionVec * rawDataCollection  = dynamic_cast < LCCollectionVec * > (evt->getCollection(_rawDataCollectionName));
 
-
-  for (int iDetector = 0; iDetector < statusCollection->getNumberOfElements(); iDetector++) {
-
-    TrackerRawDataImpl * status   = dynamic_cast < TrackerRawDataImpl * > (statusCollection->getElementAt(iDetector));
-    TrackerRawDataImpl * rawData  = dynamic_cast < TrackerRawDataImpl * > (rawDataCollection->getElementAt(iDetector));
-    TrackerDataImpl    * noise    = dynamic_cast < TrackerDataImpl * >    (noiseCollection->getElementAt(iDetector));
-    TrackerDataImpl    * pedestal = dynamic_cast < TrackerDataImpl * >    (pedestalCollection->getElementAt(iDetector));
-
-    for (unsigned int iPixel = 0; iPixel < status->adcValues().size(); iPixel++) {
-
-      if ( status->adcValues()[iPixel] == EUTELESCOPE::GOODPIXEL ) {
-	pedestal->chargeValues()[iPixel] = ( (_fixedWeight - 1) * pedestal->chargeValues()[iPixel] + 
-					     rawData->getADCValues()[iPixel] ) / _fixedWeight;
-	noise->chargeValues()[iPixel]    = sqrt( ( (_fixedWeight - 1) * pow( noise->chargeValues()[iPixel], 2 ) +
-						   pow( rawData->getADCValues()[iPixel] - pedestal->chargeValues()[iPixel], 2) ) /
-						 _fixedWeight );
+  try {
+    
+    LCCollectionVec * pedestalCollection = dynamic_cast < LCCollectionVec * > (evt->getCollection(_pedestalCollectionName));
+    LCCollectionVec * noiseCollection    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
+    LCCollectionVec * statusCollection   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
+    LCCollectionVec * rawDataCollection  = dynamic_cast < LCCollectionVec * > (evt->getCollection(_rawDataCollectionName));
+    
+    
+    for (int iDetector = 0; iDetector < statusCollection->getNumberOfElements(); iDetector++) {
+      
+      TrackerRawDataImpl * status   = dynamic_cast < TrackerRawDataImpl * > (statusCollection->getElementAt(iDetector));
+      TrackerRawDataImpl * rawData  = dynamic_cast < TrackerRawDataImpl * > (rawDataCollection->getElementAt(iDetector));
+      TrackerDataImpl    * noise    = dynamic_cast < TrackerDataImpl * >    (noiseCollection->getElementAt(iDetector));
+      TrackerDataImpl    * pedestal = dynamic_cast < TrackerDataImpl * >    (pedestalCollection->getElementAt(iDetector));
+      
+      for (unsigned int iPixel = 0; iPixel < status->adcValues().size(); iPixel++) {
+	
+	if ( status->adcValues()[iPixel] == EUTELESCOPE::GOODPIXEL ) {
+	  pedestal->chargeValues()[iPixel] = ( (_fixedWeight - 1) * pedestal->chargeValues()[iPixel] + 
+					       rawData->getADCValues()[iPixel] ) / _fixedWeight;
+	  noise->chargeValues()[iPixel]    = sqrt( ( (_fixedWeight - 1) * pow( noise->chargeValues()[iPixel], 2 ) +
+						     pow( rawData->getADCValues()[iPixel] - pedestal->chargeValues()[iPixel], 2) ) /
+						   _fixedWeight );
+	}
       }
     }
+  }  catch ( DataNotAvailableException& e) {
+    message<WARNING> ( log() << "Collection not available in this event" );
   }
+
 }
 
 
