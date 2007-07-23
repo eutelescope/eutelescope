@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.11 2007-07-15 16:40:27 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.12 2007-07-23 12:12:10 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -118,6 +118,11 @@ void EUTelHistogramMaker::init () {
   _iRun = 0;
   _iEvt = 0;
 
+  
+  // by default fill also the noise related histograms.
+  _noiseHistoSwitch = true;
+    
+
 }
 
 void EUTelHistogramMaker::processRunHeader (LCRunHeader * rdr) {
@@ -156,28 +161,29 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 
   if ( (_iEvt % 10) == 0 ) 
     message<MESSAGE> ( log() << "Filling histogram on event " << _iEvt );
-  
+
   try {
 
     LCCollectionVec * pulseCollectionVec = dynamic_cast<LCCollectionVec*>  (evt->getCollection(_pulseCollectionName));
     CellIDDecoder<TrackerPulseImpl> cellDecoder(pulseCollectionVec);
     
     LCCollectionVec * noiseCollectionVec, * statusCollectionVec;
-    _noiseHistoSwitch = true;
     
-    try {
-      noiseCollectionVec  = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _noiseCollectionName ) );
-    } catch (lcio::DataNotAvailableException& e) {
-      message<ERROR> ( log() << e.what() 
-		       << "Switching off the noise histogram filling and continuing" );
-      _noiseHistoSwitch &= false;    
-    }
-    try {
-      statusCollectionVec = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _statusCollectionName ) );
-    } catch (lcio::DataNotAvailableException& e) {
-      message<ERROR> ( log() << e.what() 
-		       << "Switching off the noise histogram filling and continuing" );    
-      _noiseHistoSwitch &= false;
+    if ( _noiseHistoSwitch ) {
+      try {
+	noiseCollectionVec  = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _noiseCollectionName ) );
+      } catch (lcio::DataNotAvailableException& e) {
+	message<ERROR> ( log() << e.what() 
+			 << "Switching off the noise histogram filling and continuing" );
+	_noiseHistoSwitch &= false;    
+      }
+      try {
+	statusCollectionVec = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _statusCollectionName ) );
+      } catch (lcio::DataNotAvailableException& e) {
+	message<ERROR> ( log() << e.what() 
+			 << "Switching off the noise histogram filling and continuing" );    
+	_noiseHistoSwitch &= false;
+      }
     }
     
     if ( isFirstEvent() ) {
