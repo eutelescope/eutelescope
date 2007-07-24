@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.18 2007-07-12 14:44:32 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.19 2007-07-24 14:25:15 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -474,7 +474,7 @@ void EUTelFFClusterImpl::print(std::ostream& os ) const {
   getCenterOfGravityShift(xShift9, yShift9, 9);
   getCenterOfGravityShift(xShift3x3, yShift3x3, 3, 3);
   
-  float noise, SNR, SNR9, SNR3x3;
+  float noise = 0., SNR = 0., SNR9 = 0., SNR3x3 = 0.;
   if ( _noiseSetSwitch ) {
     noise  = getClusterNoise();
     SNR    = getClusterSNR();

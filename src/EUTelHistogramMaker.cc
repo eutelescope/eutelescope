@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.12 2007-07-23 12:12:10 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.13 2007-07-24 14:25:15 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -167,7 +167,7 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
     LCCollectionVec * pulseCollectionVec = dynamic_cast<LCCollectionVec*>  (evt->getCollection(_pulseCollectionName));
     CellIDDecoder<TrackerPulseImpl> cellDecoder(pulseCollectionVec);
     
-    LCCollectionVec * noiseCollectionVec, * statusCollectionVec;
+    LCCollectionVec * noiseCollectionVec = 0x0, * statusCollectionVec = 0x0;
     
     if ( _noiseHistoSwitch ) {
       try {

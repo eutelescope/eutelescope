@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.14 2007-07-18 07:22:07 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.15 2007-07-24 14:25:15 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -228,7 +228,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
     LCCollectionVec * pulseCollection   = static_cast<LCCollectionVec*> (event->getCollection( _pulseCollectionName ));
     LCCollectionVec * hitCollection     = new LCCollectionVec(LCIO::TRACKERHIT);
-    LCCollectionVec * xEtaCollection, * yEtaCollection;
+    LCCollectionVec * xEtaCollection = 0x0, * yEtaCollection = 0x0;
     
     CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder(pulseCollection);
     
@@ -394,12 +394,12 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     int detectorID    = -99; // it's a non sense
     int oldDetectorID = -100;
     
-    int    layerIndex;
-    double xZero, yZero, zZero;
-    double xSize, ySize;
-    double zThickness;
-    double xPitch, yPitch;
-    double xPointing[2], yPointing[2];
+    int    layerIndex = -99;
+    double xZero = 0., yZero = 0., zZero = 0. ;
+    double xSize = 0., ySize = 0.;
+    double zThickness = 0.;
+    double xPitch = 0., yPitch = 0.;
+    double xPointing[2] = { 1., 0. }, yPointing[2] = { 1., 0. };
     
     for ( int iPulse = 0; iPulse < pulseCollection->getNumberOfElements(); iPulse++ ) {
       

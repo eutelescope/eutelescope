@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.11 2007-07-09 13:35:31 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.12 2007-07-24 14:25:15 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -489,7 +489,7 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
   
   if ( _isEtaCalculationFinished ) return;
 
-  double integral;
+  double integral = 0;
 
   message<MESSAGE> ( log() << "Writing the output eta file " << _outputEtaFileName ) ;
   

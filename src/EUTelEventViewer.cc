@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.2 2007-06-29 15:24:23 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.3 2007-07-24 14:25:15 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -216,8 +216,7 @@ void EUTelEventViewer::end(){ }
 int EUTelEventViewer::returnColor(int counter) {
 
   int icol =  counter % 16;
-  int kcol;
-  if (icol==0)  kcol = 0x00ff00;
+  int kcol =  0x00ff00;
   if (icol==1)  kcol = 0xAA00ff;
   if (icol==2)  kcol = 0xff0000;
   if (icol==3)  kcol = 0x00ffff;
