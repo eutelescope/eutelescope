@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.23 2007-07-15 16:37:44 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.24 2007-07-24 14:24:01 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -356,7 +356,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 		bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
 		if ( isGood && !isHit ) {
 		  clusterCandidateSignal += data->getChargeValues()[index];
-		  clusterCandidateNoise2 += noise->getChargeValues()[index];
+		  clusterCandidateNoise2 += pow(noise->getChargeValues()[index] , 2);
 		  clusterCandidateCharges.push_back(data->getChargeValues()[index]);
 		  clusterCandidateIndeces.push_back(index);
 		} else if (isHit) {
