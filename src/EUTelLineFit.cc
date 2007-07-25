@@ -41,6 +41,8 @@
 // lcio includes <.h> 
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
+#include <IMPL/TrackImpl.h>
+#include <IMPL/LCFlagImpl.h>
 
 // system includes <>
 #include <string>
@@ -71,9 +73,23 @@ EUTelLineFit::EUTelLineFit () : Processor("EUTelLineFit") {
   _description =
     "EUTelLineFit will fit a straight line";
   
+  // input collection
+
   registerInputCollection(LCIO::TRACKERHIT,"HitCollectionName",
 			  "Hit collection name",
 			  _hitCollectionName, string ( "hit" ));
+
+  // output collection
+
+
+  registerOutputCollection(LCIO::TRACK,"OutputTrackCollectionName",
+                             "Collection name for fitted tracks",
+                             _outputTrackColName, string ("fittracks"));
+
+  registerOutputCollection(LCIO::TRACKERHIT,"OutputHitCollectionName",
+                             "Collection name for fitted particle hits (positions)",
+                             _outputHitColName, string ("fithits"));
+
 }
 
 void EUTelLineFit::init() {
@@ -110,7 +126,20 @@ void EUTelLineFit::init() {
   _histogramSwitch = true;
   
 #endif
+
+  _nPlanes = _siPlanesParameters->getSiPlanesNumber();
+
+  _xPos = new double[_nPlanes];
+  _yPos = new double[_nPlanes];
+  _zPos = new double[_nPlanes];
+  _waferResidX = new double[_nPlanes];
+  _waferResidY = new double[_nPlanes];
+  _xFitPos = new double[_nPlanes];
+  _yFitPos = new double[_nPlanes];
   
+  _intrResolX = new double[_nPlanes];
+  _intrResolY = new double[_nPlanes];
+    
 }
 
 void EUTelLineFit::processRunHeader (LCRunHeader * rdr) {
@@ -119,7 +148,7 @@ void EUTelLineFit::processRunHeader (LCRunHeader * rdr) {
   EUTelRunHeaderImpl * header = static_cast<EUTelRunHeaderImpl*> (rdr);
   
   // the run header contains the number of detectors. This number
-  // should be in principle be the same as the number of layers in the
+  // should be in principle the same as the number of layers in the
   // geometry description
   if ( header->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) {
     message<ERROR> ( "Error during the geometry consistency check: " );
@@ -174,19 +203,8 @@ void EUTelLineFit::processEvent (LCEvent * event) {
   
   int detectorID    = -99; // it's a non sense
   int oldDetectorID = -100;
-
-  _nPlanes = _siPlanesParameters->getSiPlanesNumber();
-
-  _xPos = new double[_nPlanes];
-  _yPos = new double[_nPlanes];
-  _zPos = new double[_nPlanes];
-  _waferResidX = new double[_nPlanes];
-  _waferResidY = new double[_nPlanes];
-  
   int    layerIndex; 
-  _intrResolX = new double[_nPlanes];
-  _intrResolY = new double[_nPlanes];
-  
+
   for ( int iHit = 0; iHit < hitCollection->getNumberOfElements(); iHit++ ) {
     
     TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( hitCollection->getElementAt(iHit) );
@@ -227,14 +245,15 @@ void EUTelLineFit::processEvent (LCEvent * event) {
       
     }
     
-    _xPos[iHit] = 1000 * hit->getPosition()[0];
-    _yPos[iHit] = 1000 * hit->getPosition()[1];
-    _zPos[iHit] = 1000 * hit->getPosition()[2];
-    
+    _xPos[iHit] = 1000 * hit->getPosition()[0]; // in um
+    _yPos[iHit] = 1000 * hit->getPosition()[1]; // in um
+    _zPos[iHit] = 1000 * hit->getPosition()[2]; // in um
+
+    delete cluster; // <--- destroying the cluster   
   }
   
   // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  // ++++++++++++ See Blobel Page 226 !!! ++++++++++++++
+  // ++++++++++++ See Blobel Page 226 !!! +++++++++++++++++
   // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
   
   int counter;
@@ -308,29 +327,87 @@ void EUTelLineFit::processEvent (LCEvent * event) {
   A2[1]=Sxybar[1]/Sxxbar[1];
   
   // Calculate chi sqaured
-  // Chi^2 for X coordinate for hits in all planes 
+  // Chi^2 for X and Y coordinate for hits in all planes 
   
   for( counter = 0; counter < _nPlanes; counter++ ){
     Chiquare[0] += pow(-_zPos[counter]*A2[0]
 		       +_xPos[counter]-Ybar[0]+Xbar[0]*A2[0],2)/pow(_intrResolX[counter],2);
-  }
-  
-  // Chi^2 for Y coordinate for hits in all planes 
-  
-  for( counter = 0; counter < _nPlanes; counter++ ){
     Chiquare[1] += pow(-_zPos[counter]*A2[1]
 		       +_yPos[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(_intrResolY[counter],2);
   }
-  
-  //     cout << "Chiquare[0] = " << Chiquare[0] << endl;
-  //     cout << "Chiquare[1] = " << Chiquare[1] << endl;
   
   for( counter = 0; counter < _nPlanes; counter++ ){
     _waferResidX[counter] = (Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0])-_xPos[counter];
     _waferResidY[counter] = (Ybar[1]-Xbar[1]*A2[1]+_zPos[counter]*A2[1])-_yPos[counter];
   }
+
+  // Define output track and hit collections
+  LCCollectionVec     * fittrackvec = new LCCollectionVec(LCIO::TRACK);
+  LCCollectionVec     * fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
+
+  // Set flag for storing track hits in track collection
+
+  LCFlagImpl flag(fittrackvec->getFlag()); 
+  flag.setBit( LCIO::TRBIT_HITS );
+  fittrackvec->setFlag(flag.getFlag());
+
+
+  // fill output collections...
+
+  // Write fit result out
+	
+  TrackImpl * fittrack = new TrackImpl();
   
+  // Following parameters are not used for Telescope
+  // and are set to zero (just in case)
+  fittrack->setOmega(0.);     // curvature of the track
+  fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
+  fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
+  fittrack->setPhi(0.);       // phi of the track at reference point
+  fittrack->setTanLambda(0.); // dip angle of the track at reference point
+
+  // Used class members
+
+  fittrack->setChi2(Chiquare[0]);  // x Chi2 of the fit 
+  //  fittrack->setNdf(nBestFired); // Number of planes fired (!)
+
+  fittrack->setIsReferencePointPCA(false);  
+
+  // Calculate positions of fitted track in every plane
+
+  int nFittedTracks = 0 ;
+
+  for( counter = 0; counter < _nPlanes; counter++ ){
+    
+    _xFitPos[counter] = Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0];
+    _yFitPos[counter] = Ybar[1]-Xbar[1]*A2[1]+_zPos[counter]*A2[1];
+
+    TrackerHitImpl * fitpoint = new TrackerHitImpl;
+
+    // Plane number stored as hit type
+    fitpoint->setType(counter+1);
+    double pos[3];
+    pos[0] = _xFitPos[counter];
+    pos[1] = _yFitPos[counter];
+    pos[2] = _zPos[counter];
+
+    fitpoint->setPosition(pos);    
+
+    // store fit point 
+    
+    fitpointvec->push_back(fitpoint);
+    
+    //   add point to track
+    
+    fittrack->addHit(fitpoint);
+    
+  }
   
+  fittrackvec->addElement(fittrack);
+
+  event->addCollection(fittrackvec,_outputTrackColName);
+  event->addCollection(fitpointvec,_outputHitColName);
+
 #ifdef MARLIN_USE_AIDA
   string tempHistoName;
   
@@ -436,13 +513,15 @@ void EUTelLineFit::processEvent (LCEvent * event) {
 
 void EUTelLineFit::end() {
   
-  delete [] _xPos;
-  delete [] _yPos;
-  delete [] _zPos;
-  delete [] _waferResidX;
-  delete [] _waferResidY;
-  delete [] _intrResolX;
   delete [] _intrResolY;
+  delete [] _intrResolX;
+  delete [] _yFitPos;
+  delete [] _xFitPos;
+  delete [] _waferResidY;
+  delete [] _waferResidX;
+  delete [] _zPos;
+  delete [] _yPos;
+  delete [] _xPos;
 
   message<MESSAGE> ( log() << "Successfully finished" ) ;  
 

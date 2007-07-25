@@ -119,18 +119,20 @@ namespace eutelescope {
   protected:
     
     //! TrackerHit collection name
-    /*! This is the name the user wants to give to the output hit
-     *  collection.
+    /*! Input collection with hits.
      */ 
     std::string _hitCollectionName;
 
-    //! Eta function collection names
-    /*! This is a vector containg the name of the eta collection along
-     *  the two directions (say x and y). AS for pedestal information
-     *  the Eta function has to be calculated beforehand and then
-     *  loaded as a condition collection by a suitable
-     *  ConditionProcessor.
-     */
+    //! TRACK collection name
+    /*! Output collection with fitted tracks.
+     */ 
+    std::string _outputTrackColName;
+
+    //! TRACKERHIT collection name
+    /*! Output collection with hits from fitted tracks.
+     */ 
+    std::string _outputHitColName;
+
 
   private:
     
@@ -202,6 +204,8 @@ namespace eutelescope {
     double * _waferResidY;
     double * _intrResolX;
     double * _intrResolY;
+    double * _xFitPos;
+    double * _yFitPos;
 
     //! Fill histogram switch
     /*! Only for debug reason
