@@ -991,31 +991,77 @@ processor using as input the output of the previous step.
 
 To download the source code of the EUTelescope project there at least
 two possibility. The first and easiest one is to get a Tarball of the
-tagged release you wish from our CVS web <a
-href="http://www-zeuthen.desy.de/lc-cgi-bin/cvsweb.cgi/Eutelescope/?cvsroot=eutelescope">server</a>.
-Otherwise you can access directly the CVS repository as anonymous
-following the instructions given <a
-href="http://www.ifh.de/linear_collider/">here</a>.
+tagged release you wish from our CVS
+web <a href="http://www-zeuthen.desy.de/lc-cgi-bin/cvsweb.cgi/Eutelescope/?cvsroot=eutelescope">server</a>.
+Otherwise you can access directly the CVS repository as anonymous user
+following the instructions
+given <a href="http://www.ifh.de/linear_collider/">here</a>.
 
 @section install How to install
 
 Installation is even easier than downloading the source
 code. Actually, the installation process can take care of the source
-download as well. The <a
-href="http://www-flc.desy.de/ilcsoft/ilcsoftware/ilcinstall/psc_project_view">ilcinstall</a>
+download as
+well. The <a href="http://www-flc.desy.de/ilcsoft/ilcsoftware/ilcinstall/psc_project_view">ilcinstall</a>
 can be used to install any Marlin package and consequently also the
-EUTelescope one. Here below the part of the ilcinstall configuration
-file concerning the EUTelescope installation. Replace "HEAD" with a
-valid tag if you want to have a different release.
+EUTelescope one. Within this installation script there is a module to
+download, build and install the EUTelescope package into Marlin
+directly. The only thing the user should do is to add a line like the
+following after the declaration of the Marlin module
 
 @code
-eutelescope = MarlinPKG("Eutelescope","HEAD")
-ilcsoft.install(eutelescope)
-eutelescope.download.url="http://www-zeuthen.desy.de/lc-cgi-bin/cvsweb.cgi/Eutelescope/Eutelescope.tar.gz?cvsroot=eutelescope;only_with_tag=HEAD;tarball=1"
-eutelescope.addDependency( ["Marlin","GSL", "LCIO", "GEAR"] )
-eutelescope.debug = True
-ilcsoft.module("Marlin").buildWith(["Eutelescope"])
+ilcsoft.install(EUTelescope("HEAD"));
 @endcode
+
+where, of course, HEAD can be replaced by any valid CVS tag. The
+following options can also be added: 
+
+
+@li <b>Download type</b>: this can be used to specify to download the
+source code simply using @c wget or a CVS client like @c cvs or @c
+ccvssh (ilcsoft.module("EUTelescope").download.type="type").
+
+@li <b>Download username</b>: in the case, the download is going
+through CVS and the user is a EUTelescope developer, then it necessary
+to set also the username in order to gain read and write access to the
+repository (ilcsoft.module("EUTelescope").download.username="name").
+
+@li <b>Building the documentation</b>: in the case the user wants to
+build locally also this documentation, it is enough to set to true the
+buildDoc flag in this way: ilcsoft.module("EUTelescope").buildDoc=True
+
+@li <b>Building in DEBUG mode</b>: it is recommended to build the
+executable not optimized and with the debug symbols only during the
+debug and development phase. See the @ref performance section for a
+comparison of optimized and debug built. To set the debug mode on, add
+a line like the following: ilcsoft.module("EUTelescope").debug=True.
+
+@li <b>Other ILC packages dependencies</b>: a standard and minimal
+build of the EUTelescope package requires the following other ILC
+libraries: LCIO, Marlin, MarlinUtil and LCCD. Optionally the user can
+add the following dependencies: RAIDA, GEAR and GSL. Linking against
+RAIDA will allow to have histograms of relevant figures of merit
+filled during the processor execution. Linking against GEAR will allow
+the user to run the most advanced processors taking care of hit
+generation and track fitting. GSL (GNU Scientific Library) is used
+only in a couple of examples.
+
+@li <b>Other non ILC packages dependencies</b>: a typical example is
+the eudaq software. This is the DAQ software of the EUDET JRA1 and for
+the time being it cannot be installed using the ilcsoft. This means
+that the user has to install this package manually and before the
+execution of the ilcinstall script. To link against this package the
+following lines has to be added in the install configuration script.
+
+@code
+ilcsoft.module("EUTelescope").env="EUDAQ=/path/to/eudaq"
+ilcsoft.module("EUTelescope").envpath("PATH")="$EUDAQ/main"
+ilcsoft.module("EUTelescope").envpath("LD_LIBRARY_PATH")="$EUDAQ/main"
+ilcsoft.module("EUTelescope").envbuild("USERINCLUDES")="-DUSE_EUDAQ -DEUDAQ_FUNC=__PRETTY_FUNCTION__"
+ilcsoft.module("EUTelescope").envbuild("USERINCLUDES")="-DEUDAQ_PLATFORM=PF_LINUX -I $EUDAQ/main/include"
+ilcsoft.module("EUTelescope").envbuild("USERLIBS")="-L $EUDAQ/main -leudaq"
+@endcode
+
 
 @section dcache Accessing data in the DESY dCache
 
