@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.13 2007-07-24 14:25:15 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.14 2007-07-26 06:49:20 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -390,11 +390,10 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
       }
     }
     
-#endif
-
   } catch( DataNotAvailableException& e ) {
     message<WARNING> ( log() << "No input collection found on event " << _iEvt );
   }
+#endif
 
   ++_iEvt;
 }

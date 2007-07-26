@@ -195,6 +195,7 @@ namespace eutelescope {
     static std::string _residualY1Localname;
     static std::string _residualY2Localname;
     static std::string _residualY3Localname;
+#endif
 
     int _nPlanes;
     double * _xPos;
@@ -213,7 +214,7 @@ namespace eutelescope {
     bool _histogramSwitch;
 
     
-#endif
+
 
   };
 

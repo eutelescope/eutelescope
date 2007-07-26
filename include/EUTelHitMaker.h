@@ -215,7 +215,7 @@ namespace eutelescope {
    *  pixel along x and y to be used.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHitMaker.h,v 1.7 2007-07-09 13:40:52 bulgheroni Exp $
+   *  @version $Id: EUTelHitMaker.h,v 1.8 2007-07-26 06:49:20 bulgheroni Exp $
    *
    */
 
@@ -465,6 +465,8 @@ namespace eutelescope {
      */
     static std::string _clusterCenterEtaYHistoName;
 
+#endif
+
     //! Fill histogram switch
     /*! This boolean switch was initially introduced for debug reason
      *  but then we realized that it could stay there and protect
@@ -473,8 +475,6 @@ namespace eutelescope {
      */
     bool _histogramSwitch;
 
-    
-#endif
 
   };
 

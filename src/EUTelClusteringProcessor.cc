@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.24 2007-07-24 14:24:01 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.25 2007-07-26 06:49:20 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -515,6 +515,7 @@ void EUTelClusteringProcessor::resetStatus(IMPL::TrackerRawDataImpl * status) {
 
 }
 
+#ifdef MARLIN_USE_AIDA
 void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 
   EUTelEventImpl * eutelEvent = static_cast<EUTelEventImpl*> (evt);
@@ -528,8 +529,6 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 		       << " is of unknown type. Continue considering it as a normal Data Event."  );
   }
   
-
-#ifdef MARLIN_USE_AIDA
 
   if ( (_iEvt % 10) == 0 ) 
     message<MESSAGE> ( log() << "Filling histogram on event " << _iEvt );
@@ -733,13 +732,12 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
     }
   }
 
-#endif
-  
 }
+#endif 
 
-void EUTelClusteringProcessor::bookHistos() {
-  
 #ifdef MARLIN_USE_AIDA
+void EUTelClusteringProcessor::bookHistos() {
+
   // histograms are grouped in loops and detectors
   message<MESSAGE> ( log() << "Booking histograms " );
   auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
@@ -1030,9 +1028,5 @@ void EUTelClusteringProcessor::bookHistos() {
 
   }
   
-
-#else
-  message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
-#endif
-
 }
+#endif
