@@ -262,8 +262,8 @@ void EUTelLineFit::processEvent (LCEvent * event) {
   float Sx[2]   = {0,0};
   float Xbar[2] = {0,0};
   
-  float Zbar_X[_nPlanes];
-  float Zbar_Y[_nPlanes];
+  float * Zbar_X = new float[_nPlanes];
+  float * Zbar_Y = new float[_nPlanes];
   for (counter = 0; counter < _nPlanes; counter++){
     Zbar_X[counter] = 0.;
     Zbar_Y[counter] = 0.;
@@ -505,6 +505,9 @@ void EUTelLineFit::processEvent (LCEvent * event) {
   
 #endif 
   
+  delete [] Zbar_X;
+  delete [] Zbar_Y;
+
   ++_iEvt;
   
   if ( isFirstEvent() ) _isFirstEvent = false;
