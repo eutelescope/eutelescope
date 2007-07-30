@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.12 2007-07-24 14:25:15 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.13 2007-07-30 15:17:44 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -260,113 +260,115 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
 #endif 
 
 #ifdef MARLIN_USE_AIDA
-      {
-	string name, title, path;
+      if ( isFirstEvent() ) {
 	{
-	  stringstream sname;
-	  sname  << _cogHistogramXName << "-" << iDetector ;
-	  name = sname.str();
+	  string name, title, path;
+	  {
+	    stringstream sname;
+	    sname  << _cogHistogramXName << "-" << iDetector ;
+	    name = sname.str();
+	    
+	    stringstream stitle;
+	    stitle << "CoG shift along X on detector " << iDetector;
+	    title = stitle.str();
+	    
+	    stringstream spath;
+	    spath << "detector-" << iDetector << "/" ;
+	    path = spath.str();
+	  }
 	  
-	  stringstream stitle;
-	  stitle << "CoG shift along X on detector " << iDetector;
-	  title = stitle.str();
+	  AIDAProcessor::tree(this)->mkdir(path.c_str());
 	  
-	  stringstream spath;
-	  spath << "detector-" << iDetector << "/" ;
-	  path = spath.str();
-	}
+	  AIDA::IHistogram1D * cogHistoX = AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), xNoOfBin, 
+												     min, max);
+	  cogHistoX->setTitle(title.c_str());
+	  _aidaHistoMap.insert( make_pair(name, cogHistoX) );
 	
-	AIDAProcessor::tree(this)->mkdir(path.c_str());
-	
-	AIDA::IHistogram1D * cogHistoX = AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), xNoOfBin, 
-												   min, max);
-	cogHistoX->setTitle(title.c_str());
-	_aidaHistoMap.insert( make_pair(name, cogHistoX) );
-	
-	{
-	  stringstream sname;
+	  {
+	    stringstream sname;
 	  sname  << _cogHistogramYName << "-" << iDetector ;
 	  name = sname.str();
 	  
 	  stringstream stitle;
 	  stitle << "CoG shift along Y on detector " << iDetector;
 	  title = stitle.str();
-	}
-	
-	AIDA::IHistogram1D * cogHistoY = AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), yNoOfBin, 
-												   min, max);
-	cogHistoY->setTitle(title.c_str());
-	_aidaHistoMap.insert( make_pair(name, cogHistoY) );
-	
-	{
-	  stringstream sname;
-	  sname  << _cogIntegralXName << "-" << iDetector ;
-	  name = sname.str();
+	  }
 	  
-	  stringstream stitle;
-	  stitle << "Integral CoG (x) shift histogram on " << iDetector;
-	  title = stitle.str();
-	}
-	AIDA::IHistogram1D * cogIntegralHistoX = 
-	  AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), xNoOfBin, min, max);
-	cogIntegralHistoX->setTitle(title.c_str());
-	_aidaHistoMap.insert( make_pair(name, cogIntegralHistoX) );
-	
-	{
-	  stringstream sname;
-	  sname  << _cogIntegralYName << "-" << iDetector ;
-	  name = sname.str();
+	  AIDA::IHistogram1D * cogHistoY = AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), yNoOfBin, 
+												     min, max);
+	  cogHistoY->setTitle(title.c_str());
+	  _aidaHistoMap.insert( make_pair(name, cogHistoY) );
 	  
-	  stringstream stitle;
-	  stitle << "Integral CoG (y) shift histogram on " << iDetector;
-	  title = stitle.str();
-	}
-	AIDA::IHistogram1D * cogIntegralHistoY = 
-	  AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), yNoOfBin, min, max);
-	cogIntegralHistoY->setTitle(title.c_str());
-	_aidaHistoMap.insert( make_pair(name, cogIntegralHistoY) );
-	
-	{
-	  stringstream sname;
-	  sname << _etaHistoXName << "-" << iDetector ;
-	  name = sname.str();
+	  {
+	    stringstream sname;
+	    sname  << _cogIntegralXName << "-" << iDetector ;
+	    name = sname.str();
+	    
+	    stringstream stitle;
+	    stitle << "Integral CoG (x) shift histogram on " << iDetector;
+	    title = stitle.str();
+	  }
+	  AIDA::IHistogram1D * cogIntegralHistoX = 
+	    AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), xNoOfBin, min, max);
+	  cogIntegralHistoX->setTitle(title.c_str());
+	  _aidaHistoMap.insert( make_pair(name, cogIntegralHistoX) );
 	  
-	  stringstream stitle;
-	  stitle << "Eta profile x for detector " << iDetector;
-	  title = stitle.str();
-	}
-	AIDA::IProfile1D * etaHistoX = AIDAProcessor::histogramFactory(this)
-	  ->createProfile1D( (path + name).c_str(), xNoOfBin, min, max, min, max);
-	etaHistoX->setTitle(title.c_str());
-	_aidaHistoMap.insert( make_pair(name, etaHistoX) );
-	
-	{
-	  stringstream sname;
-	  sname << _etaHistoYName << "-" << iDetector ;
-	  name = sname.str();
+	  {
+	    stringstream sname;
+	    sname  << _cogIntegralYName << "-" << iDetector ;
+	    name = sname.str();
+	    
+	    stringstream stitle;
+	    stitle << "Integral CoG (y) shift histogram on " << iDetector;
+	    title = stitle.str();
+	  }
+	  AIDA::IHistogram1D * cogIntegralHistoY = 
+	    AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), yNoOfBin, min, max);
+	  cogIntegralHistoY->setTitle(title.c_str());
+	  _aidaHistoMap.insert( make_pair(name, cogIntegralHistoY) );
 	  
-	  stringstream stitle;
-	  stitle << "Eta profile y for detector " << iDetector;
-	  title = stitle.str();
+	  {
+	    stringstream sname;
+	    sname << _etaHistoXName << "-" << iDetector ;
+	    name = sname.str();
+	    
+	    stringstream stitle;
+	    stitle << "Eta profile x for detector " << iDetector;
+	    title = stitle.str();
+	  }
+	  AIDA::IProfile1D * etaHistoX = AIDAProcessor::histogramFactory(this)
+	    ->createProfile1D( (path + name).c_str(), xNoOfBin, min, max, min, max);
+	  etaHistoX->setTitle(title.c_str());
+	  _aidaHistoMap.insert( make_pair(name, etaHistoX) );
+	  
+	  {
+	    stringstream sname;
+	    sname << _etaHistoYName << "-" << iDetector ;
+	    name = sname.str();
+	    
+	    stringstream stitle;
+	    stitle << "Eta profile y for detector " << iDetector;
+	    title = stitle.str();
+	  }
+	  AIDA::IProfile1D * etaHistoY = AIDAProcessor::histogramFactory(this)
+	    ->createProfile1D( (path + name).c_str(), yNoOfBin, min, max, min, max);
+	  etaHistoY->setTitle(title.c_str());
+	  _aidaHistoMap.insert( make_pair(name, etaHistoY) );
+	  
+	  {
+	    stringstream sname;
+	    sname << _cogHisto2DName << "-" << iDetector ;
+	    name = sname.str();
+	    
+	    stringstream stitle;
+	    stitle << "2D Histo with the CoG within the seed pixel for detector " << iDetector;
+	    title = stitle.str();
+	  }
+	  AIDA::IHistogram2D * cogHisto2D = AIDAProcessor::histogramFactory(this)
+	    ->createHistogram2D( (path + name).c_str(), xNoOfBin, min, max, yNoOfBin, min, max);
+	  cogHisto2D->setTitle(title.c_str());
+	  _aidaHistoMap.insert( make_pair(name, cogHisto2D) );
 	}
-	AIDA::IProfile1D * etaHistoY = AIDAProcessor::histogramFactory(this)
-	  ->createProfile1D( (path + name).c_str(), yNoOfBin, min, max, min, max);
-	etaHistoY->setTitle(title.c_str());
-	_aidaHistoMap.insert( make_pair(name, etaHistoY) );
-
-	{
-	  stringstream sname;
-	  sname << _cogHisto2DName << "-" << iDetector ;
-	  name = sname.str();
-
-	  stringstream stitle;
-	  stitle << "2D Histo with the CoG within the seed pixel for detector " << iDetector;
-	  title = stitle.str();
-	}
-	AIDA::IHistogram2D * cogHisto2D = AIDAProcessor::histogramFactory(this)
-	  ->createHistogram2D( (path + name).c_str(), xNoOfBin, min, max, yNoOfBin, min, max);
-	cogHisto2D->setTitle(title.c_str());
-	_aidaHistoMap.insert( make_pair(name, cogHisto2D) );
       }
 #endif
     }
@@ -473,6 +475,8 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
     ++_iEvt;
     
   }
+
+  if ( isFirstEvent() ) _isFirstEvent = false;
 
   setReturnValue( "isEtaCalculationFinished" , _isEtaCalculationFinished);
   
