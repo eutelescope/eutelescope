@@ -24,8 +24,8 @@ SET( Marlin_HOME "${ILC_HOME}/Marlin/HEAD"
   CACHE PATH "Path to Marlin" FORCE )
 
 # Path to MarlinUtil
-SET( Marlin_HOME "${ILC_HOME}/MarlinUtil/HEAD"
-  CACHE PATH "Path to Marlin" FORCE )
+SET( MarlinUtil_HOME "${ILC_HOME}/MarlinUtil/HEAD"
+  CACHE PATH "Path to MarlinUtil" FORCE )
 
 # Path to LCIO
 SET( LCIO_HOME "${ILC_HOME}/lcio/HEAD"
@@ -35,22 +35,21 @@ SET( LCIO_HOME "${ILC_HOME}/lcio/HEAD"
 SET( GEAR_HOME "${ILC_HOME}/gear/HEAD"
   CACHE PATH "Path to GEAR" FORCE )
 
-## Path to LCCD
-#SET( LCCD_HOME "${ILC_HOME}/lccd/v00-03-05"
-#  CACHE PATH "Path to LCCD" FORCE )
-
-## Path to CLHEP
-#SET( CLHEP_HOME "${ILC_HOME}/CLHEP/2.0.2.2"
-#    CACHE PATH "Path to CLHEP" FORCE )
+# Path to CLHEP
+SET( CLHEP_HOME "${ILC_HOME}/CLHEP/2.0.2.2"
+    CACHE PATH "Path to CLHEP" FORCE )
 
 ## Path to RAIDA
 SET( RAIDA_HOME "${ILC_HOME}/RAIDA/v01-02"
   CACHE PATH "Path to RAIDA" FORCE )
 
 # CMake Modules Path
-SET( CMAKE_MODULE_PATH "${ILC_HOME}/CMakeModules/v01-00"
+SET( CMAKE_MODULE_PATH "${ILC_HOME}/CMakeModules/HEAD"
     CACHE PATH "Path to CMake Modules" FORCE )
 
+# Path to EUDAQ (define this to build Eutelescope with EUDAQ)
+#SET( EUDAQ_HOME "path_to_eudaq"
+#  CACHE PATH "Path to EUDAQ" FORCE )
 
 #############################################################################
 # Optional packages
@@ -58,9 +57,7 @@ SET( CMAKE_MODULE_PATH "${ILC_HOME}/CMakeModules/v01-00"
                                                                                                                                                             
 # if you want to build and link your package with one or more additional
 # tools you also have to define the corresponding "home" paths above
-# if you uncomment the next 2 lines don't forget to change 'mymarlin' to your package name
-SET( BUILD_WITH "GEAR RAIDA" 
-    CACHE STRING "Build Eutelescope with these optional packages" FORCE )
+SET( BUILD_WITH "GEAR RAIDA" CACHE STRING "Build Eutelescope with these optional packages" FORCE )
                                                                                                                                                             
 #############################################################################
 # Project options

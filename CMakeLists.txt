@@ -3,7 +3,7 @@
 #
 # Original author: J. Engels, DESY
 # Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# Version $Id: CMakeLists.txt,v 1.1 2007-07-25 08:34:25 bulgheroni Exp $
+# Version $Id: CMakeLists.txt,v 1.2 2007-07-30 14:06:33 bulgheroni Exp $
 ########################################################
 
 
@@ -40,7 +40,7 @@ OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" ON )
 
 # project dependencies
 # e.g. SET( ${PROJECT_NAME}_DEPENDS "Marlin MarlinUtil LCIO GEAR CLHEP GSL RAIDA ROOT" )
-SET( ${PROJECT_NAME}_DEPENDS "Marlin MarlinUtil GEAR RAIDA LCIO" )
+SET( ${PROJECT_NAME}_DEPENDS "Marlin MarlinUtil LCIO GSL CLHEP" )
 
 # set default cmake build type to RelWithDebInfo
 # possible options are: None Debug Release RelWithDebInfo MinSizeRel
@@ -67,6 +67,43 @@ INSTALL( DIRECTORY "${CMAKE_SOURCE_DIR}/include"
 
 
 ### SOURCES ##################################################################
+
+# EUDAQ stuff
+IF( DEFINED EUDAQ_HOME OR DEFINED ENV{EUDAQ} )
+    IF( NOT DEFINED EUDAQ_HOME )
+        SET( EUDAQ_HOME "$ENV{EUDAQ}" )
+    ENDIF()
+    # write EUDAQ_HOME to cache
+    SET( EUDAQ_HOME "${EUDAQ_HOME}" CACHE PATH "Path to EUDAQ" FORCE )
+
+    # find eudaq include dir
+    FIND_PATH( EUDAQ_INCLUDE_DIR
+        NAMES eudaq/RunControl.hh
+        PATHS ${EUDAQ_HOME}
+        PATH_SUFFIXES main/include
+        NO_DEFAULT_PATH )
+    IF( NOT EUDAQ_INCLUDE_DIR )
+        MESSAGE( STATUS "EUDAQ include dir not found!!" )
+    ENDIF()
+   
+    # find eudaq library
+    FIND_LIBRARY( EUDAQ_LIB
+        NAMES eudaq
+        PATHS ${EUDAQ_HOME}
+        PATH_SUFFIXES main   
+        NO_DEFAULT_PATH )
+    IF( NOT EUDAQ_LIB )
+        MESSAGE( STATUS "EUDAQ library not found!!" )
+    ENDIF()
+    
+    IF( EUDAQ_INCLUDE_DIR AND EUDAQ_LIB)
+        INCLUDE_DIRECTORIES( "${EUDAQ_INCLUDE_DIR}" )
+        LINK_LIBRARIES( "${EUDAQ_LIB}" )
+        ADD_DEFINITIONS( "-DUSE_EUDAQ -DEUDAQ_PLATFORM=PF_LINUX -DEUDAQ_FUNC=__PRETTY_FUNCTION__" )
+    ELSE()
+        MESSAGE( STATUS "WARNING: failed to configure ${PROJECT_NAME} with EUDAQ!!" )
+    ENDIF()
+ENDIF()
 
 # require proper c++
 ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
