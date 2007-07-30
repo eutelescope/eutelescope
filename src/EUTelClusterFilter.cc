@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.7 2007-07-15 16:42:48 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.8 2007-07-30 15:15:59 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -624,148 +624,155 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
   if (_iEvt % 10 == 0) 
     message<MESSAGE> ( log() << "Filtering clusters on event " << _iEvt ) ;
 
-  LCCollectionVec * pulseCollectionVec    =   dynamic_cast <LCCollectionVec *> (evt->getCollection(_inputPulseCollectionName));
-  LCCollectionVec * filteredCollectionVec =   new LCCollectionVec(LCIO::TRACKERPULSE);
-  CellIDEncoder<TrackerPulseImpl> outputEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, filteredCollectionVec);
-  CellIDDecoder<TrackerPulseImpl> inputDecoder(pulseCollectionVec);
+  try {
 
-  vector<int > acceptedClusterVec;
-  vector<int > clusterNoVec(_noOfDetectors, 0);
-
-  // CLUSTER BASED CUTS
-  for ( int iPulse = 0; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ ) {
-    message<DEBUG> ( log() << "Filtering cluster " << iPulse + 1  << " / " << pulseCollectionVec->getNumberOfElements() ) ;
-    TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl* > (pulseCollectionVec->getElementAt(iPulse));
-    ClusterType type = static_cast<ClusterType> (static_cast<int> ( inputDecoder(pulse)["type"] ));
-    EUTelVirtualCluster * cluster;
+    LCCollectionVec * pulseCollectionVec    =   dynamic_cast <LCCollectionVec *> (evt->getCollection(_inputPulseCollectionName));
+    LCCollectionVec * filteredCollectionVec =   new LCCollectionVec(LCIO::TRACKERPULSE);
+    CellIDEncoder<TrackerPulseImpl> outputEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, filteredCollectionVec);
+    CellIDDecoder<TrackerPulseImpl> inputDecoder(pulseCollectionVec);
     
-    if ( type == kEUTelFFClusterImpl )  {
-      cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
-
-      if ( _noiseRelatedCuts ) {
+    vector<int > acceptedClusterVec;
+    vector<int > clusterNoVec(_noOfDetectors, 0);
+    
+    // CLUSTER BASED CUTS
+    for ( int iPulse = 0; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ ) {
+      message<DEBUG> ( log() << "Filtering cluster " << iPulse + 1  << " / " << pulseCollectionVec->getNumberOfElements() ) ;
+      TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl* > (pulseCollectionVec->getElementAt(iPulse));
+      ClusterType type = static_cast<ClusterType> (static_cast<int> ( inputDecoder(pulse)["type"] ));
+      EUTelVirtualCluster * cluster;
       
-	// the EUTelFFClusterImpl doesn't contain the noise and status
-	// information in the TrackerData object. So this is the right
-	// place to attach to the cluster the noise information.
-	try {
-	  LCCollectionVec * noiseCollectionVec  = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _noiseCollectionName )) ;
-	  LCCollectionVec * statusCollectionVec = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _statusCollectionName )) ;
-	  CellIDDecoder<TrackerDataImpl> noiseDecoder(noiseCollectionVec);
+      if ( type == kEUTelFFClusterImpl )  {
+	cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
+	
+	if ( _noiseRelatedCuts ) {
 	  
-	  int detectorID = cluster->getDetectorID();
-	  TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl    *> ( noiseCollectionVec->getElementAt(detectorID) );
-	  TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt(detectorID) );
-	  EUTelMatrixDecoder   noiseMatrixDecoder(noiseDecoder, noiseMatrix);
-	  
-	  int xSeed, ySeed, xClusterSize, yClusterSize;
-	  cluster->getSeedCoord(xSeed, ySeed);
-	  cluster->getClusterSize(xClusterSize, yClusterSize);
-	  vector<float > noiseValues;
-	  for ( int yPixel = ySeed - ( yClusterSize / 2 ); yPixel <= ySeed + ( yClusterSize / 2 ); yPixel++ ) {
-	    for ( int xPixel = xSeed - ( xClusterSize / 2 ); xPixel <= xSeed + ( xClusterSize / 2 ); xPixel++ ) {
-	      
-	      // always check we are still within the sensor!!!
-	      if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <= noiseMatrixDecoder.getMaxX() ) &&
-		   ( yPixel >= noiseMatrixDecoder.getMinY() )  &&  ( yPixel <= noiseMatrixDecoder.getMaxY() ) ) {
-		int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
+	  // the EUTelFFClusterImpl doesn't contain the noise and status
+	  // information in the TrackerData object. So this is the right
+	  // place to attach to the cluster the noise information.
+	  try {
+	    LCCollectionVec * noiseCollectionVec  = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _noiseCollectionName )) ;
+	    LCCollectionVec * statusCollectionVec = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _statusCollectionName )) ;
+	    CellIDDecoder<TrackerDataImpl> noiseDecoder(noiseCollectionVec);
+	    
+	    int detectorID = cluster->getDetectorID();
+	    TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl    *> ( noiseCollectionVec->getElementAt(detectorID) );
+	    TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt(detectorID) );
+	    EUTelMatrixDecoder   noiseMatrixDecoder(noiseDecoder, noiseMatrix);
+	    
+	    int xSeed, ySeed, xClusterSize, yClusterSize;
+	    cluster->getSeedCoord(xSeed, ySeed);
+	    cluster->getClusterSize(xClusterSize, yClusterSize);
+	    vector<float > noiseValues;
+	    for ( int yPixel = ySeed - ( yClusterSize / 2 ); yPixel <= ySeed + ( yClusterSize / 2 ); yPixel++ ) {
+	      for ( int xPixel = xSeed - ( xClusterSize / 2 ); xPixel <= xSeed + ( xClusterSize / 2 ); xPixel++ ) {
 		
-		// the corresponding position in the status matrix has to be HITPIXEL
-		// in the EUTelClusteringProcessor, we verify also that
-		// the pixel isHit, but this cannot be done in this
-		// processor, since the status matrix could have been reset
-		// 
-		// bool isHit  = ( statusMatrix->getADCValues()[index] ==
-		// EUTELESCOPE::HITPIXEL );
-		//
-		bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
-		if ( !isBad ) {
-		  noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
+		// always check we are still within the sensor!!!
+		if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <= noiseMatrixDecoder.getMaxX() ) &&
+		     ( yPixel >= noiseMatrixDecoder.getMinY() )  &&  ( yPixel <= noiseMatrixDecoder.getMaxY() ) ) {
+		  int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
+		  
+		  // the corresponding position in the status matrix has to be HITPIXEL
+		  // in the EUTelClusteringProcessor, we verify also that
+		  // the pixel isHit, but this cannot be done in this
+		  // processor, since the status matrix could have been reset
+		  // 
+		  // bool isHit  = ( statusMatrix->getADCValues()[index] ==
+		  // EUTELESCOPE::HITPIXEL );
+		  //
+		  bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
+		  if ( !isBad ) {
+		    noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
+		  } else {
+		    noiseValues.push_back( 0. );
+		  }
 		} else {
 		  noiseValues.push_back( 0. );
 		}
-	      } else {
-		noiseValues.push_back( 0. );
 	      }
 	    }
-	  }
-	  try {
-	    cluster->setNoiseValues( noiseValues );
-	  } catch ( IncompatibleDataSetException& e ) {
+	    try {
+	      cluster->setNoiseValues( noiseValues );
+	    } catch ( IncompatibleDataSetException& e ) {
+	      message<ERROR> ( log() << e.what() << "\n" << "Continuing without noise based cuts" );
+	      _noiseRelatedCuts = false;
+	    }
+	  } catch ( DataNotAvailableException& e ) {
 	    message<ERROR> ( log() << e.what() << "\n" << "Continuing without noise based cuts" );
 	    _noiseRelatedCuts = false;
 	  }
-	} catch ( DataNotAvailableException& e ) {
-	  message<ERROR> ( log() << e.what() << "\n" << "Continuing without noise based cuts" );
-	  _noiseRelatedCuts = false;
+	  message<DEBUG> ( "Noise related cuts may be used" );
 	}
-	message<DEBUG> ( "Noise related cuts may be used" );
-      }
 	      
-    } else {
-      message<ERROR> ("Unknown cluster type. Sorry for quitting");
-      throw UnknownDataTypeException("Cluster type unknown");
-    }
+      } else {
+	message<ERROR> ("Unknown cluster type. Sorry for quitting");
+	throw UnknownDataTypeException("Cluster type unknown");
+      }
     
-    // increment the event counter 
-    _totalClusterCounter[cluster->getDetectorID()]++;
+      // increment the event counter 
+      _totalClusterCounter[cluster->getDetectorID()]++;
     
-    bool isAccepted = true;
+      bool isAccepted = true;
    
-    isAccepted &= isAboveMinTotalCharge(cluster);
-    isAccepted &= isAboveMinTotalSNR(cluster);
-    isAccepted &= isAboveNMinCharge(cluster);
-    isAccepted &= isAboveNMinSNR(cluster);
-    isAccepted &= isAboveNxNMinCharge(cluster);
-    isAccepted &= isAboveNxNMinSNR(cluster);
-    isAccepted &= isAboveMinSeedCharge(cluster);
-    isAccepted &= isAboveMinSeedSNR(cluster);
-    isAccepted &= hasQuality(cluster);
-    isAccepted &= isBelowMaxClusterNoise(cluster);
-    isAccepted &= isInsideROI(cluster); 
-    isAccepted &= isOutsideROI(cluster);
+      isAccepted &= isAboveMinTotalCharge(cluster);
+      isAccepted &= isAboveMinTotalSNR(cluster);
+      isAccepted &= isAboveNMinCharge(cluster);
+      isAccepted &= isAboveNMinSNR(cluster);
+      isAccepted &= isAboveNxNMinCharge(cluster);
+      isAccepted &= isAboveNxNMinSNR(cluster);
+      isAccepted &= isAboveMinSeedCharge(cluster);
+      isAccepted &= isAboveMinSeedSNR(cluster);
+      isAccepted &= hasQuality(cluster);
+      isAccepted &= isBelowMaxClusterNoise(cluster);
+      isAccepted &= isInsideROI(cluster); 
+      isAccepted &= isOutsideROI(cluster);
 
-    if ( isAccepted )  acceptedClusterVec.push_back(iPulse); 
+      if ( isAccepted )  acceptedClusterVec.push_back(iPulse); 
 
-    delete cluster;
+      delete cluster;
 
-  }
-
-  vector<int >::iterator cluIter = acceptedClusterVec.begin(); 
-  while ( cluIter != acceptedClusterVec.end() ) {
-    TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl* > (pulseCollectionVec->getElementAt(*cluIter));
-    int detectorID = inputDecoder(pulse)["sensorID"];
-    clusterNoVec[detectorID]++;
-    ++cluIter;
-  }
-
-  bool isEventAccepted = areClusterEnough(clusterNoVec) && !areClusterTooMany(clusterNoVec);
-
-  if ( ! isEventAccepted ) acceptedClusterVec.clear();
-
-  if ( acceptedClusterVec.empty() ) {
-    delete filteredCollectionVec;
-    message<DEBUG> ( "No cluster passed the selection" );
-    if ( _skipEmptyEvent ) throw SkipEventException(this);
-    else return;
-  } else {
-    vector<int >::iterator iter = acceptedClusterVec.begin();
-    while ( iter != acceptedClusterVec.end() ) {
-      TrackerPulseImpl * pulse     = dynamic_cast<TrackerPulseImpl *> ( pulseCollectionVec->getElementAt( *iter ) );
-      TrackerPulseImpl * accepted  = new TrackerPulseImpl;
-      accepted->setCellID0( pulse->getCellID0() );
-      accepted->setCellID1( pulse->getCellID1() );
-      accepted->setTime(    pulse->getTime()    );
-      accepted->setCharge(  pulse->getCharge()  );
-      accepted->setQuality( pulse->getQuality() );
-      accepted->setTrackerData( pulse->getTrackerData() );
-      filteredCollectionVec->push_back(accepted);
-      _acceptedClusterCounter[ inputDecoder(pulse)["sensorID"] ]++;
-      ++iter;
     }
-    evt->addCollection(filteredCollectionVec, _outputPulseCollectionName);
+
+    vector<int >::iterator cluIter = acceptedClusterVec.begin(); 
+    while ( cluIter != acceptedClusterVec.end() ) {
+      TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl* > (pulseCollectionVec->getElementAt(*cluIter));
+      int detectorID = inputDecoder(pulse)["sensorID"];
+      clusterNoVec[detectorID]++;
+      ++cluIter;
+    }
+
+    bool isEventAccepted = areClusterEnough(clusterNoVec) && !areClusterTooMany(clusterNoVec);
+
+    if ( ! isEventAccepted ) acceptedClusterVec.clear();
+
+    if ( acceptedClusterVec.empty() ) {
+      delete filteredCollectionVec;
+      message<DEBUG> ( "No cluster passed the selection" );
+      if ( _skipEmptyEvent ) throw SkipEventException(this);
+      else return;
+    } else {
+      vector<int >::iterator iter = acceptedClusterVec.begin();
+      while ( iter != acceptedClusterVec.end() ) {
+	TrackerPulseImpl * pulse     = dynamic_cast<TrackerPulseImpl *> ( pulseCollectionVec->getElementAt( *iter ) );
+	TrackerPulseImpl * accepted  = new TrackerPulseImpl;
+	accepted->setCellID0( pulse->getCellID0() );
+	accepted->setCellID1( pulse->getCellID1() );
+	accepted->setTime(    pulse->getTime()    );
+	accepted->setCharge(  pulse->getCharge()  );
+	accepted->setQuality( pulse->getQuality() );
+	accepted->setTrackerData( pulse->getTrackerData() );
+	filteredCollectionVec->push_back(accepted);
+	_acceptedClusterCounter[ inputDecoder(pulse)["sensorID"] ]++;
+	++iter;
+      }
+      evt->addCollection(filteredCollectionVec, _outputPulseCollectionName);
+    }
+  } catch (DataNotAvailableException& e ) {
+    message<WARNING> ( log() << "Input collection not found in the current event. Skipping..." );
+    return;
   }
-}
-  
+}  
+
+
 bool EUTelClusterFilter::areClusterEnough(std::vector<int > clusterNoVec) const {
   
   if ( ! _minClusterNoSwitch ) return true;
@@ -977,7 +984,7 @@ bool EUTelClusterFilter::isAboveMinSeedSNR(EUTelVirtualCluster * cluster) const 
   if ( cluster->getSeedSNR() > _minSeedSNRVec[detectorID] ) return true;
   else {
     message<DEBUG> ( log() << "Rejected cluster because its seed charge is " << cluster->getSeedSNR()
-		      << " and the threshold is " <<  _minSeedSNRVec[detectorID] );
+		     << " and the threshold is " <<  _minSeedSNRVec[detectorID] );
     _rejectionMap["MinSeedSNRCut"][detectorID]++;
     return false;
   }
@@ -1016,7 +1023,7 @@ bool EUTelClusterFilter::isBelowMaxClusterNoise(EUTelVirtualCluster * cluster) c
 	( _maxClusterNoiseVec[detectorID] < 0 ) ) return true;
   else {
     message<DEBUG> ( log() << "Rejected cluster because its noise is " << cluster->getClusterNoise()
-		      << " and the threshold is " <<  _maxClusterNoiseVec[detectorID] );
+		     << " and the threshold is " <<  _maxClusterNoiseVec[detectorID] );
     _rejectionMap["MaxClusterNoiseCut"][detectorID]++;
     return false;
   }
