@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.8 2007-07-30 15:15:59 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.9 2007-07-31 14:45:50 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -206,6 +206,11 @@ EUTelClusterFilter::EUTelClusterFilter () :Processor("EUTelClusterFilter") {
 			     "One floating number for each detector. Write 0 to disable the cut",
 			     _minTotalSNRVec, minTotalSNRVecExample );
 
+
+  registerProcessorParameter("SameNumberOfHits", "Setting this to true will select only events having the same number \n"
+			     "of hits for each plane.",
+			     _sameNumberOfHitSwitch, static_cast<bool > (false) );
+
   registerOptionalParameter("NoiseCollectionName","This is the name of the noise collection.\n"
 			    "The presence of this collection in the event is allowing all the noise based selection cuts",
 			    _noiseCollectionName, string( "noiseDB" ) );
@@ -390,6 +395,9 @@ void EUTelClusterFilter::init () {
     _maxClusterNoiseSwitch = false;
   }
   message<DEBUG> ( log() << "MaxClusterNoiseSwitch " << _maxClusterNoiseSwitch );
+
+
+  message<DEBUG> ( log() << "SameNumberofHitSwitch " << _sameNumberOfHitSwitch );
 
   // set to zero the run and event counters
   _iRun = 0;
@@ -604,6 +612,13 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
       vector<unsigned int > rejectedCounter( _noOfDetectors, 0 );
       _rejectionMap.insert( make_pair("OutsideROICut", rejectedCounter ));
     }
+
+    if ( _sameNumberOfHitSwitch ) {
+      message<DEBUG> ( "Same number of hits criterion verified and switched on");
+      vector<unsigned int > rejectedCounter( _noOfDetectors, 0 );
+      _rejectionMap.insert( make_pair("SameNumberOfHitCut", rejectedCounter ));
+    }
+
   }
 }
 
@@ -741,6 +756,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
     }
 
     bool isEventAccepted = areClusterEnough(clusterNoVec) && !areClusterTooMany(clusterNoVec);
+    isEventAccepted &= hasSameNumberOfHit(clusterNoVec);
 
     if ( ! isEventAccepted ) acceptedClusterVec.clear();
 
@@ -812,6 +828,36 @@ bool EUTelClusterFilter::areClusterTooMany(std::vector<int > clusterNoVec) const
   }
 
   return areTooMany;
+}
+
+bool EUTelClusterFilter::hasSameNumberOfHit(std::vector<int > clusterNoVec) const {
+  
+  if ( ! _sameNumberOfHitSwitch ) return true;
+  
+  bool hasSameNumber = true;
+
+  vector<int >::iterator iter = clusterNoVec.begin() + 1;
+  while ( iter != clusterNoVec.end() ) {
+    if ( *( iter - 1) !=  (*iter ) ) {
+      message<DEBUG> ( log() << "Rejected event because the number of hit is different from one sensor to the other"  );
+      hasSameNumber = false;
+      break;
+    }
+    ++iter;
+  }
+
+  if ( ! hasSameNumber ) {
+    vector<int >::iterator iter = clusterNoVec.begin();
+    vector<unsigned int >::iterator iter2 = _rejectionMap["SameNumberOfHitCut"].begin();
+    while ( ( iter  != clusterNoVec.end() ) ||
+	    ( iter2 != _rejectionMap["SameNumberOfHitCut"].end() ) ) {
+      (*iter2) += (*iter);
+      ++iter;
+      ++iter2;
+    }
+  }
+
+  return hasSameNumber;
 }
 
 bool EUTelClusterFilter::isAboveMinTotalCharge(EUTelVirtualCluster * cluster) const {

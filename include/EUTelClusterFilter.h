@@ -240,7 +240,7 @@ namespace eutelescope {
    *  the current event.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterFilter.h,v 1.7 2007-07-15 16:42:48 bulgheroni Exp $
+   *  @version $Id: EUTelClusterFilter.h,v 1.8 2007-07-31 14:45:50 bulgheroni Exp $
    *
    *
    */
@@ -450,6 +450,17 @@ namespace eutelescope {
      *  @param cluster The cluster under test.
      */ 
     bool hasQuality(EUTelVirtualCluster * cluster) const;
+
+    //! Same number of hits
+    /*! This selection criterion can be used to select events in which
+     *  all planes have the same number of hits passing all the other
+     *  selection cuts.
+     * 
+     *  @return True if there are the same number of hits on every
+     *  sensor planes
+     *  @param clusterVec A vector with the number of clusters per plane
+     */ 
+    bool hasSameNumberOfHit(std::vector<int > clusterVec) const;
 
     //! Minimum cluster number
     /*! This selection criterion can be used to require a minimum
@@ -796,6 +807,13 @@ namespace eutelescope {
     //! Switch for the maximum cluster noise
     bool _maxClusterNoiseSwitch;
 
+    //! Switch for the same number of hit per plane
+    /*! This selection criterion does not require any other further
+     *  number to be used, so the switch will be activated directly by
+     *  the user in the steering file.
+     */ 
+    bool _sameNumberOfHitSwitch;
+
     //! The number of detectors
     int _noOfDetectors;
 
@@ -821,7 +839,7 @@ namespace eutelescope {
      *  in find_if.
      *
      *  @author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
-     *  @version $Id: EUTelClusterFilter.h,v 1.7 2007-07-15 16:42:48 bulgheroni Exp $
+     *  @version $Id: EUTelClusterFilter.h,v 1.8 2007-07-31 14:45:50 bulgheroni Exp $
      */
     class HasSameID {
     public:
