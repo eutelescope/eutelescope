@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.18 2007-06-28 07:29:20 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.19 2007-08-16 21:40:47 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -44,6 +44,9 @@
 // system includes <>
 #include <string>
 #include <sstream>
+#include <fstream>
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 using namespace lcio;
@@ -104,6 +107,9 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPed
   registerProcessorParameter ("OutputPedeFile","The filename (w/o .slcio) to store the pedestal file",
 			      _outputPedeFileName , string("outputpede")); 
 
+  registerProcessorParameter ("ASCIIOutputSwitch","Set to true if the pedestal should also be saved as ASCII files",
+			      _asciiOutputSwitch, static_cast< bool > ( true ) );
+    
   // now the optional parameters
   registerOptionalParameter ("PedestalCollectionName",
 			     "Pedestal collection name",
@@ -1084,6 +1090,41 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
       pedestalCollection->push_back(pedestalMatrix);
       noiseCollection->push_back(noiseMatrix);
       statusCollection->push_back(statusMatrix);
+
+      if ( _asciiOutputSwitch ) {
+	if ( iDetector == 0 ) message<MESSAGE> ( "Writing the ASCII pedestal files" );
+	stringstream ss;
+	ss << _outputPedeFileName << "-b" << iDetector << ".dat";
+	ofstream asciiPedeFile(ss.str().c_str());
+	asciiPedeFile << "# Pedestal and noise for board number " << iDetector << endl
+		      << "# calculated from run " << _outputPedeFileName << endl;
+
+	const int subMatrixWidth = 3;
+	const int xPixelWidth    = 4;
+	const int yPixelWidth    = 4;
+	const int pedeWidth      = 15;
+	const int noiseWidth     = 15;
+	const int statusWidth    = 3;
+	const int precision      = 8;
+
+	int iPixel = 0;
+	for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
+	  for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
+	    asciiPedeFile << setiosflags(ios::left) 
+			  << setw(subMatrixWidth) << iDetector 
+			  << setw(xPixelWidth)    << xPixel
+			  << setw(yPixelWidth)    << yPixel
+			  << resetiosflags(ios::left) << setiosflags(ios::fixed) << setprecision(precision) 
+			  << setw(pedeWidth)      << _pedestal[iDetector][iPixel]
+			  << setw(noiseWidth)     << _noise[iDetector][iPixel]
+			  << resetiosflags(ios::fixed) 
+			  << setw(statusWidth)    << _status[iDetector][iPixel]
+			  << endl;
+	    ++iPixel;
+	  }
+	}
+	asciiPedeFile.close();
+      }
     }
 
     event->addCollection(pedestalCollection, _pedestalCollectionName);

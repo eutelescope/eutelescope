@@ -85,6 +85,8 @@ namespace eutelescope {
    *  @param NoiseCollectionName Name of the output noise collection
    *  @param StatusCollectionName Name of the output pixel status collection
    *  @param OutputPedeFile Name of the output pedestal file
+   *  @param ASCIIOutputSwitch To enable/disable the generation of
+   *  ASCII output files
    *
    *  <h4>Typical steering file for pedestal production</h4> The
    *  following code can be used as a steering file for pedestal
@@ -158,7 +160,7 @@ namespace eutelescope {
    *  saving the output pedestal file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.17 2007-07-15 16:36:26 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.18 2007-08-16 21:40:47 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -587,6 +589,14 @@ namespace eutelescope {
      *  over the selected events
      */
     bool _doPedestal;
+
+    //! Boolean switch for ASCII output file
+    /*! This switch is set in the steering file to enable the ASCII
+     *  output file for pedestal, noise and status.
+     *  These files are particularly useful when loading initial
+     *  configuration for zero suppression operation mode.
+     */
+    bool _asciiOutputSwitch;
 
   private:
 
