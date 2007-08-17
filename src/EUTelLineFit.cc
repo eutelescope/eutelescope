@@ -46,9 +46,6 @@
 #include <IMPL/TrackImpl.h>
 #include <IMPL/LCFlagImpl.h>
 
-// ROOT includes
-#include <TMath.h>
-
 // system includes <>
 #include <string>
 #include <vector>
@@ -382,8 +379,8 @@ void EUTelLineFit::processEvent (LCEvent * event) {
 
       }
 
-      _xPos[iHit] = (TMath::Cos(theta_y)*TMath::Cos(theta_z1)) * hit->getPosition()[0] * 1000 + ((-1)*TMath::Sin(theta_x)*TMath::Sin(theta_y)*TMath::Cos(theta_z1) + TMath::Cos(theta_x)*TMath::Sin(theta_z1)) * hit->getPosition()[1] * 1000 + off_x;
-      _yPos[iHit] = ((-1)*TMath::Cos(theta_y)*TMath::Sin(theta_z2)) * hit->getPosition()[0] * 1000 + (TMath::Sin(theta_x)*TMath::Sin(theta_y)*TMath::Sin(theta_z2) + TMath::Cos(theta_x)*TMath::Cos(theta_z2)) * hit->getPosition()[1] * 1000 + off_y;
+      _xPos[iHit] = (cos(theta_y)*cos(theta_z1)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z1) + cos(theta_x)*sin(theta_z1)) * hit->getPosition()[1] * 1000 + off_x;
+      _yPos[iHit] = ((-1)*cos(theta_y)*sin(theta_z2)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z2) + cos(theta_x)*cos(theta_z2)) * hit->getPosition()[1] * 1000 + off_y;
       _zPos[iHit] = 1000 * hit->getPosition()[2];
 
 
