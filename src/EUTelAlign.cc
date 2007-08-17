@@ -10,7 +10,8 @@
  *
  */
 
-// #ifdef MARLIN_USE_ROOT
+// build only if ROOT is used
+#ifdef MARLIN_USE_ROOT
 
 // built only if GEAR is used
 #ifdef USE_GEAR
@@ -47,9 +48,8 @@
 #include <IMPL/LCFlagImpl.h>
 
 // ROOT includes
-#include <TObject.h>
 #include <TMinuit.h>
-#include <TMath.h>
+#include <TSystem.h>
 
 // system includes <>
 #include <string>
@@ -334,8 +334,8 @@ void Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t 
     // just to be sure
     distance = 0.0;
 
-    x = (TMath::Cos(par[3])*TMath::Cos(par[4])) * _hitsForFit[i].secondLayerMeasuredX + ((-1)*TMath::Sin(par[2])*TMath::Sin(par[3])*TMath::Cos(par[4]) + TMath::Cos(par[2])*TMath::Sin(par[4])) * _hitsForFit[i].secondLayerMeasuredY + par[0];
-    y = ((-1)*TMath::Cos(par[3])*TMath::Sin(par[5])) * _hitsForFit[i].secondLayerMeasuredX + (TMath::Sin(par[2])*TMath::Sin(par[3])*TMath::Sin(par[5]) + TMath::Cos(par[2])*TMath::Cos(par[5])) * _hitsForFit[i].secondLayerMeasuredY + par[1];
+    x = (cos(par[3])*cos(par[4])) * _hitsForFit[i].secondLayerMeasuredX + ((-1)*sin(par[2])*sin(par[3])*cos(par[4]) + cos(par[2])*sin(par[4])) * _hitsForFit[i].secondLayerMeasuredY + par[0];
+    y = ((-1)*cos(par[3])*sin(par[5])) * _hitsForFit[i].secondLayerMeasuredX + (sin(par[2])*sin(par[3])*sin(par[5]) + cos(par[2])*cos(par[5])) * _hitsForFit[i].secondLayerMeasuredY + par[1];
 
     distance = ((x - _hitsForFit[i].secondLayerPredictedX) * (x - _hitsForFit[i].secondLayerPredictedX) + (y - _hitsForFit[i].secondLayerPredictedY) * (y - _hitsForFit[i].secondLayerPredictedY)) / 100;
 
@@ -368,6 +368,8 @@ void EUTelAlign::end() {
 
   // run MINUIT
   // ----------
+
+  gSystem->Load("libMinuit");
 
   // init Minuit for 6 parameters
   TMinuit *gMinuit = new TMinuit(7);
@@ -457,5 +459,7 @@ void EUTelAlign::end() {
   message<MESSAGE> ( log() << "Successfully finished" ) ;  
 
 }
+
+#endif
 
 #endif
