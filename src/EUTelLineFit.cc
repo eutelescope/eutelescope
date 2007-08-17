@@ -25,6 +25,8 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Global.h"
+#include "marlin/Exceptions.h"
+#include "marlin/AIDAProcessor.h"
 
 // gear includes <.h>
 #include <gear/GearMgr.h>
@@ -44,14 +46,18 @@
 #include <IMPL/TrackImpl.h>
 #include <IMPL/LCFlagImpl.h>
 
+// ROOT includes
+#include <TMath.h>
+
 // system includes <>
 #include <string>
 #include <vector>
 #include <algorithm>
 
 using namespace std;
+using namespace lcio;
 using namespace marlin;
-using namespace gear;
+// using namespace gear;
 using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
@@ -81,7 +87,6 @@ EUTelLineFit::EUTelLineFit () : Processor("EUTelLineFit") {
 
   // output collection
 
-
   registerOutputCollection(LCIO::TRACK,"OutputTrackCollectionName",
                              "Collection name for fitted tracks",
                              _outputTrackColName, string ("fittracks"));
@@ -89,6 +94,59 @@ EUTelLineFit::EUTelLineFit () : Processor("EUTelLineFit") {
   registerOutputCollection(LCIO::TRACKERHIT,"OutputHitCollectionName",
                              "Collection name for fitted particle hits (positions)",
                              _outputHitColName, string ("fithits"));
+
+  // input parameters: take these from database later
+
+  FloatVec constantsSecondLayer;
+  constantsSecondLayer.push_back(0.0);
+  constantsSecondLayer.push_back(0.0);
+  constantsSecondLayer.push_back(0.0);
+  constantsSecondLayer.push_back(0.0);
+  constantsSecondLayer.push_back(0.0);
+  constantsSecondLayer.push_back(0.0);
+
+  FloatVec constantsThirdLayer;
+  constantsThirdLayer.push_back(0.0);
+  constantsThirdLayer.push_back(0.0);
+  constantsThirdLayer.push_back(0.0);
+  constantsThirdLayer.push_back(0.0);
+  constantsThirdLayer.push_back(0.0);
+  constantsThirdLayer.push_back(0.0);
+
+  FloatVec constantsFourthLayer;
+  constantsFourthLayer.push_back(0.0);
+  constantsFourthLayer.push_back(0.0);
+  constantsFourthLayer.push_back(0.0);
+  constantsFourthLayer.push_back(0.0);
+  constantsFourthLayer.push_back(0.0);
+  constantsFourthLayer.push_back(0.0);
+
+  FloatVec constantsFifthLayer;
+  constantsFifthLayer.push_back(0.0);
+  constantsFifthLayer.push_back(0.0);
+  constantsFifthLayer.push_back(0.0);
+  constantsFifthLayer.push_back(0.0);
+  constantsFifthLayer.push_back(0.0);
+  constantsFifthLayer.push_back(0.0);
+
+  FloatVec constantsSixthLayer;
+  constantsSixthLayer.push_back(0.0);
+  constantsSixthLayer.push_back(0.0);
+  constantsSixthLayer.push_back(0.0);
+  constantsSixthLayer.push_back(0.0);
+  constantsSixthLayer.push_back(0.0);
+  constantsSixthLayer.push_back(0.0);
+  
+  registerOptionalParameter("AlignmentConstantsSecondLayer","Alignment Constants for second Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z1, theta_z2",
+			    _alignmentConstantsSecondLayer, constantsSecondLayer);
+  registerOptionalParameter("AlignmentConstantsThirdLayer","Alignment Constants for third Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z1, theta_z2",
+			    _alignmentConstantsThirdLayer, constantsThirdLayer);
+  registerOptionalParameter("AlignmentConstantsFourthLayer","Alignment Constants for fourth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z1, theta_z2",
+			    _alignmentConstantsFourthLayer, constantsFourthLayer);
+  registerOptionalParameter("AlignmentConstantsFifthLayer","Alignment Constants for fifth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z1, theta_z2"
+			    ,_alignmentConstantsFifthLayer, constantsFifthLayer);
+  registerOptionalParameter("AlignmentConstantsSixthLayer","Alignment Constants for sixth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z1, theta_z2"
+			    ,_alignmentConstantsSixthLayer, constantsSixthLayer);
 
 }
 
@@ -120,8 +178,8 @@ void EUTelLineFit::init() {
     exit(-1);
   }
   
-  _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
+  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
+  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
   
   _histogramSwitch = true;
   
@@ -203,7 +261,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
   
   int detectorID    = -99; // it's a non sense
   int oldDetectorID = -100;
-  int    layerIndex; 
+  int layerIndex; 
 
   for ( int iHit = 0; iHit < hitCollection->getNumberOfElements(); iHit++ ) {
     
@@ -244,10 +302,92 @@ void EUTelLineFit::processEvent (LCEvent * event) {
       _intrResolY[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
       
     }
-    
-    _xPos[iHit] = 1000 * hit->getPosition()[0]; // in um
-    _yPos[iHit] = 1000 * hit->getPosition()[1]; // in um
-    _zPos[iHit] = 1000 * hit->getPosition()[2]; // in um
+
+    // Old code. Should be removed soon.
+
+//       _xPos[iHit] = 1000 * hit->getPosition()[0]; // in um
+//       _yPos[iHit] = 1000 * hit->getPosition()[1]; // in um
+//       _zPos[iHit] = 1000 * hit->getPosition()[2]; // in um
+
+    // Getting positions of the hits.
+    // Here the alignment constants are used to correct the positions.
+
+    layerIndex   = _conversionIdMap[detectorID];     
+
+    // The other layers were aligned with respect to the first one.
+
+    double off_x, off_y, theta_x, theta_y, theta_z1, theta_z2;
+
+    if (layerIndex == 0) {
+
+      _xPos[iHit] = 1000 * hit->getPosition()[0]; // in um
+      _yPos[iHit] = 1000 * hit->getPosition()[1]; // in um
+      _zPos[iHit] = 1000 * hit->getPosition()[2]; // in um
+
+    } else {
+
+      if (layerIndex == 1) {
+
+	off_x = _alignmentConstantsSecondLayer[0];
+	off_y = _alignmentConstantsSecondLayer[1];
+	theta_x = _alignmentConstantsSecondLayer[2];
+	theta_y = _alignmentConstantsSecondLayer[3];
+	theta_z1 = _alignmentConstantsSecondLayer[4];
+	theta_z2 = _alignmentConstantsSecondLayer[5];
+
+      } else if (layerIndex == 2) {
+
+	off_x = _alignmentConstantsThirdLayer[0];
+	off_y = _alignmentConstantsThirdLayer[1];
+	theta_x = _alignmentConstantsThirdLayer[2];
+	theta_y = _alignmentConstantsThirdLayer[3];
+	theta_z1 = _alignmentConstantsThirdLayer[4];
+	theta_z2 = _alignmentConstantsThirdLayer[5];
+
+      } else if (layerIndex == 3) {
+
+	off_x = _alignmentConstantsFourthLayer[0];
+	off_y = _alignmentConstantsFourthLayer[1];
+	theta_x = _alignmentConstantsFourthLayer[2];
+	theta_y = _alignmentConstantsFourthLayer[3];
+	theta_z1 = _alignmentConstantsFourthLayer[4];
+	theta_z2 = _alignmentConstantsFourthLayer[5];
+
+      } else if (layerIndex == 4) {
+
+	off_x = _alignmentConstantsFifthLayer[0];
+	off_y = _alignmentConstantsFifthLayer[1];
+	theta_x = _alignmentConstantsFifthLayer[2];
+	theta_y = _alignmentConstantsFifthLayer[3];
+	theta_z1 = _alignmentConstantsFifthLayer[4];
+	theta_z2 = _alignmentConstantsFifthLayer[5];
+
+      } else if (layerIndex == 5) {
+	
+	off_x = _alignmentConstantsSixthLayer[0];
+	off_y = _alignmentConstantsSixthLayer[1];
+	theta_x = _alignmentConstantsSixthLayer[2];
+	theta_y = _alignmentConstantsSixthLayer[3];
+	theta_z1 = _alignmentConstantsSixthLayer[4];
+	theta_z2 = _alignmentConstantsSixthLayer[5];
+
+      } else {
+
+	off_x = 0.0;
+	off_y = 0.0;
+	theta_x = 0.0;
+	theta_y = 0.0;
+	theta_z1 = 0.0;
+	theta_z2 = 0.0;
+
+      }
+
+      _xPos[iHit] = (TMath::Cos(theta_y)*TMath::Cos(theta_z1)) * hit->getPosition()[0] * 1000 + ((-1)*TMath::Sin(theta_x)*TMath::Sin(theta_y)*TMath::Cos(theta_z1) + TMath::Cos(theta_x)*TMath::Sin(theta_z1)) * hit->getPosition()[1] * 1000 + off_x;
+      _yPos[iHit] = ((-1)*TMath::Cos(theta_y)*TMath::Sin(theta_z2)) * hit->getPosition()[0] * 1000 + (TMath::Sin(theta_x)*TMath::Sin(theta_y)*TMath::Sin(theta_z2) + TMath::Cos(theta_x)*TMath::Cos(theta_z2)) * hit->getPosition()[1] * 1000 + off_y;
+      _zPos[iHit] = 1000 * hit->getPosition()[2];
+
+
+    }
 
     delete cluster; // <--- destroying the cluster   
   }
@@ -592,7 +732,7 @@ void EUTelLineFit::bookHistos() {
       residualX2Local->setTitle("X Residual 2");
       _aidaHistoMap.insert( make_pair( _residualX2Localname, residualX2Local ) );
     } else {
-      message<ERROR> ( log() << "Problem booking the " << (_residualX1Localname) << ".\n"
+      message<ERROR> ( log() << "Problem booking the " << (_residualX2Localname) << ".\n"
 		       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
       _histogramSwitch = false;
     }
@@ -603,7 +743,7 @@ void EUTelLineFit::bookHistos() {
       residualX3Local->setTitle("X Residual 3");
       _aidaHistoMap.insert( make_pair( _residualX3Localname, residualX3Local ) );
     } else {
-      message<ERROR> ( log() << "Problem booking the " << (_residualX1Localname) << ".\n"
+      message<ERROR> ( log() << "Problem booking the " << (_residualX3Localname) << ".\n"
 		       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
       _histogramSwitch = false;
     }
@@ -614,7 +754,7 @@ void EUTelLineFit::bookHistos() {
       residualY1Local->setTitle("Y Residual 1");
       _aidaHistoMap.insert( make_pair( _residualY1Localname, residualY1Local ) );
     } else {
-      message<ERROR> ( log() << "Problem booking the " << (_residualX1Localname) << ".\n"
+      message<ERROR> ( log() << "Problem booking the " << (_residualY1Localname) << ".\n"
 		       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
       _histogramSwitch = false;
     }
@@ -625,7 +765,7 @@ void EUTelLineFit::bookHistos() {
       residualY2Local->setTitle("Y Residual 2");
       _aidaHistoMap.insert( make_pair( _residualY2Localname, residualY2Local ) );
     } else {
-      message<ERROR> ( log() << "Problem booking the " << (_residualX1Localname) << ".\n"
+      message<ERROR> ( log() << "Problem booking the " << (_residualY2Localname) << ".\n"
 		       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
       _histogramSwitch = false;
     }
@@ -636,7 +776,7 @@ void EUTelLineFit::bookHistos() {
       residualY3Local->setTitle("Y Residual 3");
       _aidaHistoMap.insert( make_pair( _residualY3Localname, residualY3Local ) );
     } else {
-      message<ERROR> ( log() << "Problem booking the " << (_residualX1Localname) << ".\n"
+      message<ERROR> ( log() << "Problem booking the " << (_residualY3Localname) << ".\n"
 		       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
       _histogramSwitch = false;
     }
