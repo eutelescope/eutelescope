@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.3 2007-08-17 22:16:42 bulgheroni Exp $
+// Version: $Id: EUTelAlign.cc,v 1.4 2007-08-17 22:41:10 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -225,6 +225,8 @@ void EUTelAlign::processEvent (LCEvent * event) {
   int oldDetectorID = -100;
   int layerIndex; 
 
+  HitsForFit hitsForFit;
+
   // Loop over all hits
   for ( int iHit = 0; iHit < measHitCollection->getNumberOfElements(); iHit++ ) {
     
@@ -271,42 +273,37 @@ void EUTelAlign::processEvent (LCEvent * event) {
 
     layerIndex = _conversionIdMap[detectorID];
 
-    HitsForFit hitsForFit;
-
     if (layerIndex == 0) {
-
       
       hitsForFit.firstLayerMeasuredX = 1000 * measHit->getPosition()[0];
       hitsForFit.firstLayerMeasuredY = 1000 * measHit->getPosition()[1];
       hitsForFit.firstLayerMeasuredZ = 1000 * measHit->getPosition()[2];
 
-      // cout << _hitsForFit[_hitIndex].firstLayerMeasuredX << " " << _hitsForFit[_hitIndex].firstLayerMeasuredY << "            ";
+      // cout << hitsForFit.firstLayerMeasuredX << " " << hitsForFit.firstLayerMeasuredY << "            ";
 
       hitsForFit.firstLayerResolution = 1000 * _siPlanesLayerLayout->getSensitiveResolution(layerIndex); // Add multiple scattering later!
 
       hitsForFit.secondLayerPredictedX = hitsForFit.firstLayerMeasuredX;
       hitsForFit.secondLayerPredictedY = hitsForFit.firstLayerMeasuredY;
 
-      _hitsForFit.push_back(hitsForFit);
-
     } else if (layerIndex == (_alignedPlane - 1)) {
-
 
       hitsForFit.secondLayerMeasuredX = 1000 * measHit->getPosition()[0];
       hitsForFit.secondLayerMeasuredY = 1000 * measHit->getPosition()[1];
       hitsForFit.secondLayerMeasuredZ = 1000 * measHit->getPosition()[2];
 
-      // cout << _hitsForFit[_hitIndex].secondLayerMeasuredX << " " << _hitsForFit[_hitIndex].secondLayerMeasuredY << endl;
+      // cout << hitsForFit.secondLayerMeasuredX << " " << hitsForFit.secondLayerMeasuredY << endl;
 
       hitsForFit.secondLayerPredictedZ = 1000 * measHit->getPosition()[2];
       hitsForFit.secondLayerResolution = 1000 * _siPlanesLayerLayout->getSensitiveResolution(layerIndex); // Add multiple scattering later!
 
-      _hitsForFit.push_back(hitsForFit);
     }
     
     delete cluster; // <--- destroying the cluster   
 
   } // End loop over all hits
+
+  _hitsForFit.push_back(hitsForFit);
   
   ++_iEvt;
   
