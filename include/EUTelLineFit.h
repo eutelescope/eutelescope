@@ -133,6 +133,11 @@ namespace eutelescope {
      */ 
     std::string _outputHitColName;
 
+    std::vector<float > _alignmentConstantsSecondLayer;
+    std::vector<float > _alignmentConstantsThirdLayer;
+    std::vector<float > _alignmentConstantsFourthLayer;
+    std::vector<float > _alignmentConstantsFifthLayer;
+    std::vector<float > _alignmentConstantsSixthLayer;
 
   private:
     
@@ -141,7 +146,6 @@ namespace eutelescope {
     
     //! Event number
     int _iEvt;
-
 
     //! Conversion ID map. 
     /*! In the data file, each cluster is tagged with a detector ID
