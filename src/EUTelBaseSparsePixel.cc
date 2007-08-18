@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelSparseDataImpl.cc,v 1.2 2007-08-18 21:49:40 bulgheroni Exp $
+// Version: $Id: EUTelBaseSparsePixel.cc,v 1.1 2007-08-18 21:49:40 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -12,18 +12,16 @@
  */
 
 // personal includes ".h"
-#include "EUTelSparseDataImpl.h"
-#include "EUTELESCOPE.h"
+#include "EUTelBaseSparsePixel.h"
 
-// lcio includes <.h>
-#include <IMPL/TrackerDataImpl.h>
-
-// system includes
-#include <vector>
-#include <string>
+// system 
+#include <cmath>
 
 using namespace eutelescope;
-using namespace IMPL;
-using namespace std;
 
+float distance(EUTelBaseSparsePixel * first, EUTelBaseSparsePixel * second) {
+  
+  return std::sqrt( pow( first->getXCoord() - second->getXCoord() , 2) +
+		    pow( first->getYCoord() - second->getYCoord() , 2) );
 
+}

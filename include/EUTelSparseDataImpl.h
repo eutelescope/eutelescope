@@ -7,12 +7,15 @@
  *   header with author names in all development based on this file.
  *
  */
-
-#ifdef  EXPERIMENTAL
 #ifndef EUTELSPARSEDATAIMPL_H
 #define EUTELSPARSEDATAIMPL_H
 
 // personal includes ".h"
+#include "EUTelVirtualCluster.h"
+#include "EUTelBaseSparsePixel.h"
+#include "EUTelSimpleSparsePixel.h"
+#include "EUTelExceptions.h"
+#include "EUTELESCOPE.h"
 
 // marlin includes ".h"
 
@@ -21,13 +24,10 @@
 
 // system includes <>
 #include <vector>
-
+#include <string>
+#include <memory>
 
 namespace eutelescope {
-
-  // forward declaration
-  class EUTelSparsePixel;
-  class EUTelClusterImpl;
 
   //! Implementation of the EUTelescope sparse data structure
   /*! Within the EUTelescope framework input data can be provided both
@@ -69,10 +69,6 @@ namespace eutelescope {
    *  adcValues.push_back(pixelXCoord);
    *  adcValues.push_back(pixelYCoord);
    *  adcValues.push_back(pixelSignal);
-   *  adcValues.push_back(threshold);
-   *  adcValues.push_back(pedestal);
-   *  adcValues.push_back(noise);
-   *  adcValues.push_back(rawValue);
    *  adcValues.push_back(spare); // to be properly encoded if needed.
    *  @encode
    *
@@ -94,9 +90,10 @@ namespace eutelescope {
    *  process run on this sparse data. 
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelSparseDataImpl.h,v 1.1 2007-06-11 22:18:04 bulgheroni Exp $
+   *  @Version $Id: EUTelSparseDataImpl.h,v 1.2 2007-08-18 21:49:40 bulgheroni Exp $
    */ 
 
+  template<class PixelType>
   class EUTelSparseDataImpl {
 
   public:
@@ -110,7 +107,7 @@ namespace eutelescope {
     /*! This method is used to add to the current TrackerDataImpl a
      *  new sparse pixel with all the pieces of information.
      */
-    void addSparsePixel(EUTelSparsePixel * pixel);
+    void addSparsePixel(PixelType * pixel);
     
     //! Perform cluster search
     /*! This is a very important method for this class since it is
@@ -124,7 +121,8 @@ namespace eutelescope {
      *  cluster. Remember that this distance is measure in pixel units
      *  and so two pixels sharing one side are 1 pixel far apart,
      *  while two pixels with a touching corner are
-     *  <code>sqrt(2)</code> far apart.
+     *  <code>sqrt(2)</code> far apart. So, setting the minDistance to
+     *  sqrt(2) is equivalent to ask "touching pixels".
      *
      *  @param minDistance The minimum distance between two pixels in
      *  order to consider the two making a cluster.
@@ -132,7 +130,7 @@ namespace eutelescope {
      *  @return A vector of pointers to EUTelClusterImpl containing
      *  the cluster search result.
      */
-    virtual std::vector<EUTelClusterImpl *> findClusters(double minDistance);
+    virtual std::vector<EUTelVirtualCluster *> findClusters(double minDistance);
 
     //! Get one of the sparse pixel
     /*! This method is used to get one of the sparse pixel contained
@@ -143,14 +141,14 @@ namespace eutelescope {
      *  @return A EUTelSparsePixel with the information concerning the
      *  pixel number @a index in the collection
      */ 
-    EUTelSparsePixel * getSparsePixelAt(int index);
+    PixelType * getSparsePixelAt(unsigned int index);
     
     //! Get the number of sparse pixels in the collection
     /*! This utility can be used to know how many pixels are contained
      *  in the TrackerData.
      *
      *  @return the size of TrackerData measured in sparse
-     *  pixels. Returns 0x0 in case @a index is out of range.
+     *  pixels. 
      */ 
     unsigned int size() const ;
 
@@ -170,14 +168,125 @@ namespace eutelescope {
      */
     IMPL::TrackerDataImpl * _trackerData;
 
-    //! Static constant.
-    /*! This static constant initialized to 8 is used to set the
-     *  number of entries of the TrackerData each EUTelSparsePixel is using.
+    //! Number of elements in the sparse pixel
+    /*! This value is initialized in the constructor and taken from
+     *  the template class.
      */ 
-    static unsigned const int _nElement;
+    unsigned int _nElement;
+
+    //! Sparse pixel type
+    /*! This enumerator value is set in the constructor and taken from
+     *  the template class.
+     */
+    SparsePixelType _type;
 
   };
  
+  template<class PixelType> 
+  EUTelSparseDataImpl<PixelType>::EUTelSparseDataImpl(IMPL::TrackerDataImpl * data) {
+    // to work properly the template class has to be or at least
+    // inherit from EUTelBaseSparsePixel
+    EUTelBaseSparsePixel      * goodPixel;
+    std::auto_ptr<PixelType>    pixel(new PixelType);
+    if ( goodPixel = dynamic_cast<PixelType *>( pixel.get() ) ) {
+      // the template class should be a good sparse pixel so we can
+      // continue...
+      _nElement     = goodPixel->getNoOfElements();
+      _type         = goodPixel->getSparsePixelType();
+      _trackerData  = data;
+    } else {
+      // the template class is not inheriting from
+      // EUTelBaseSparsePixel, so it cannot be used, throw an
+      // exception...
+      throw InvalidParameterException(std::string("The template parameter is not valid"));
+    }
+  } 
+  
+  template<class PixelType>
+  void EUTelSparseDataImpl<PixelType>::addSparsePixel(PixelType * pixel) {
+
+    if ( _type == kEUTelSimpleSparsePixel ) {
+      EUTelSimpleSparsePixel * simplePixelType = dynamic_cast<EUTelSimpleSparsePixel*> ( pixel ) ;
+      _trackerData->chargeValues().push_back( static_cast<float> (simplePixelType->getXCoord()) );
+      _trackerData->chargeValues().push_back( static_cast<float> (simplePixelType->getYCoord()) );
+      _trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
+    } else if ( _type == kUnknownPixelType ) {
+      throw UnknownDataTypeException("Unknown sparse pixel type");
+    }
+
+  }
+
+  template<class PixelType>
+  std::vector<EUTelVirtualCluster *> EUTelSparseDataImpl<PixelType>::findClusters(double minDistance) {
+    
+    std::vector<int> status(size, 0);
+    for ( unsigned int iPixel = 0 ; iPixel < size() ; iPixel++ ) {
+
+      // grouped pixel is a vector containing the pixels that are
+      // fulfilling the minDistance condition
+      std::vector<int> groupedPixel;
+
+      // get the pixel under investigation
+      EUTelBaseSparsePixel * pixel = getSparsePixelAt(iPixel);
+
+      if ( status[iPixel] == 0 ) {
+	groupedPixel.push_back(iPixel);
+	status[iPixel] = iPixel;
+	
+	// first of all, find all the pixels close to the current one
+	// and add them to the groupedPixel vector.
+	for ( unsigned int iPixel2 = iPixel ; iPixel2 < size() ; iPixel2++ ) {
+	  if ( status[iPixel2] == 0 ) {
+	    EUTelBaseSparsePixel * otherPixel = getSparsePixelAt(iPixel2);
+	    if ( distance(pixel, otherPixel) <= minDistance ) {
+	      groupedPixel.push_back(iPixel2);
+	      status[iPixel2] = iPixel;
+	    }
+	  }
+	}
+
+	if ( groupedPixel.size() > 1 ) {
+	  // the current group of pixel has more than one pixel in
+	  // it. A part from the first, we have to check if the other
+	  // are close enough to other pixels
+	  std::vector<int>::iterator firstIter = groupedPixel.begin() + 1;
+	  while ( firstIter != groupedPixel.end() ) {
+	    for ( unsigned int iPixel2 = (*firstIter) + 1 ; iPixel2 < size(); iPixel2++ ) {
+	      if ( status[iPixel2] == 0 ) {
+		if ( distance( getSparsePixelAt(*firstIter) , getSparsePixelAt(iPixel2) ) <= minDistance ) {
+		  groupedPixel.push_back(iPixel2);
+		  status[iPixel2] = iPixel;
+		}
+	      }
+	    }
+	    ++firstIter;
+	  }
+	}
+      }
+
+      
+
+      // that's the right place to build the cluster
+
+    }
+
+    return 0x0;
+  }
+
+  template<>
+  EUTelSimpleSparsePixel * EUTelSparseDataImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index) {
+    EUTelSimpleSparsePixel * pixel = new EUTelSimpleSparsePixel;
+    pixel->setXCoord( static_cast<int> ( _trackerData->chargeValues()[index * _nElement]     ) );
+    pixel->setYCoord( static_cast<int> ( _trackerData->chargeValues()[index * _nElement + 1] ) );
+    pixel->setSignal( static_cast<int> ( _trackerData->chargeValues()[index * _nElement + 2] ) );
+    return pixel;
+  }
+
+  template<class PixelType>
+  unsigned int EUTelSparseDataImpl<PixelType>::size() const {
+    return _trackerData->chargeValues().size() / _nElement;
+  }
+					 
+
 }
-#endif
 #endif

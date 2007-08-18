@@ -14,6 +14,9 @@
 // system includes <>
 #include <iostream>
 
+// Useful preprocessor macro
+#define TOSTRING( s ) # s
+
 namespace eutelescope
 {
 
@@ -26,7 +29,7 @@ namespace eutelescope
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.11 2007-07-09 10:15:28 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.12 2007-08-18 21:49:40 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -235,6 +238,20 @@ namespace eutelescope
      */
     static const char * MATRIXDEFAULTENCODING;
 
+    //! Default encoding for zero suppress data
+    /*! This constant string is used with CellIDEncoder to define the
+     *  encoding used for describe cells in a TrackerData object
+     *  containing sparsified pixel.
+     *  
+     *  The sparse pixel type is defined using the SparsePixelType
+     *  enumeration.
+     *
+     *  @see SparsePixelType
+     *
+     *  "sensorID:5,sparsePixelType:5"
+     */
+    static const char * ZSDATADEFAULTENCODING;
+
     //! Default TrackerData encoding for cluster
     /*! This constant string is used with CellIDEncoder to define the
      *  default encoding used for describe cells into a clusters. This
@@ -262,6 +279,16 @@ namespace eutelescope
      */
     static const char * PULSEDEFAULTENCODING;
     
+    //! Zero suppress cluster default encoding
+    /*! This encoding string is used for the TrackerData containing
+     *  clusters made by sparsified pixels
+     *
+     *  "sensorID:5,clusterID:8,sparsePixelType:5,quality:5"
+     *  
+     *  @see SparsePixelType
+     *  @see ClusterQuality
+     */
+    static const char * ZSCLUSTERDEFAULTENCODING;
 
   };
 
@@ -291,7 +318,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.11 2007-07-09 10:15:28 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.12 2007-08-18 21:49:40 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -338,7 +365,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.11 2007-07-09 10:15:28 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.12 2007-08-18 21:49:40 bulgheroni Exp $
    */ 
   
   enum ClusterQuality {
@@ -397,7 +424,7 @@ namespace eutelescope
    *  cluster during the clusterization process itself. 
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.11 2007-07-09 10:15:28 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.12 2007-08-18 21:49:40 bulgheroni Exp $
    */
   enum ClusterType {
     kEUTelFFClusterImpl = 0,
@@ -406,7 +433,29 @@ namespace eutelescope
     kUnknown            = 31
   };
 
+  //! Sparse pixel type enum
+  /*! This enumerator is used to define the sparsified pixel type. 
+   *
+   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @Version $Id: EUTELESCOPE.h,v 1.12 2007-08-18 21:49:40 bulgheroni Exp $
+   */
+  enum SparsePixelType {
+    kEUTelBaseSparsePixel   = 0,
+    kEUTelSimpleSparsePixel = 1,
+    // add here your implementation 
+    kUnknownPixelType       = 31
+  };
 
+  //! SparsePixelType operator <<
+  /*! This operator can be used to stream out the value of a sparse
+   *  pixel type enum. Both the numerical and the textual values are
+   *  shown.
+   *
+   *  @param os The input output stream
+   *  @param type The variable to the be stream out
+   *  @return The input output stream
+   */
+  std::ostream& operator<<(std::ostream& os, const SparsePixelType& type) ;
 }
 
 
