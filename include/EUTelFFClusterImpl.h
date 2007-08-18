@@ -30,7 +30,7 @@
 
 namespace eutelescope {
 
-  //! Implementation of the a fixed frame cluster for the EUDET telescope.
+  //! Implementation of a fixed frame cluster for the EUDET telescope.
   /*! Within the Eutelescope environment, a cluster is a group of
    *  neighboring pixels having a signal or signal to noise such that
    *  all the thresholds are passed.
@@ -94,7 +94,7 @@ namespace eutelescope {
    *  encoding of fixed frame clusters
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.13 2007-07-15 16:36:26 bulgheroni Exp $
+   *  @Version $Id: EUTelFFClusterImpl.h,v 1.14 2007-08-18 21:47:30 bulgheroni Exp $
    */ 
 
   class EUTelFFClusterImpl : public EUTelVirtualCluster {
