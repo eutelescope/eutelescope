@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.8 2007-08-18 08:37:30 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.9 2007-08-18 15:02:39 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -160,6 +160,7 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
       EUTelRunHeaderImpl * runHeader = new EUTelRunHeaderImpl;
       runHeader->setRunNumber( ev->GetRunNumber() );
       
+      eudrbDecoder = new EUDRBDecoder(*dev);      
       int noOfDetectors = 0;
       
       for (unsigned int i = 0; i < dev->NumEvents(); ++i) {
@@ -171,7 +172,6 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	  string det  = eudev->GetTag("DET");
 	  if ( !eudrbDecoder ) {
 	    message<WARNING> ("Assuming all the EUDRB producers running with the same mode and detector");
-	    eudrbDecoder = new EUDRBDecoder(*eudev);
 	  } 
 	  if (  mode != "RAW3" ) {
 	    throw InvalidParameterException("For the time being only RAW3 is supported");
