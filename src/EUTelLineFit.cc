@@ -512,8 +512,6 @@ void EUTelLineFit::processEvent (LCEvent * event) {
 
   // Calculate positions of fitted track in every plane
 
-  int nFittedTracks = 0 ;
-
   for( counter = 0; counter < _nPlanes; counter++ ){
     
     _xFitPos[counter] = Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0];
