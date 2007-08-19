@@ -17,8 +17,10 @@
 #include "EUTelBaseSparsePixel.h"
 #include "EUTelSimpleSparsePixel.h"
 #include "EUTelSparseDataImpl.h"
+#include "EUTelExceptions.h"
 
 // marling includes ".h"
+#include <marlin/Exceptions.h>
 
 // lcio includes <.h>
 #include <IMPL/TrackerDataImpl.h>
@@ -26,6 +28,7 @@
 // system includes <>
 #include <iostream>
 #include <limits>
+#include <memory>
 
 namespace eutelescope {
 
@@ -42,7 +45,7 @@ namespace eutelescope {
    *  method. 
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelSparseClusterImpl.h,v 1.1 2007-08-18 21:49:40 bulgheroni Exp $
+   *  @Version $Id: EUTelSparseClusterImpl.h,v 1.2 2007-08-19 15:38:22 bulgheroni Exp $
    */
   template<class PixelType>
   class EUTelSparseClusterImpl : public EUTelVirtualCluster {
@@ -108,7 +111,7 @@ namespace eutelescope {
      *  @param ySeed The coordinate along y of the seed pixel in the
      *  local frame of reference
      */ 
-    void getSeedCoord(int& xSeed, int& ySeed) ;
+    void getSeedCoord(int& xSeed, int& ySeed) const ;
 
     //! Get the pixel noise values
     /*! This method returns the pixel noise value vector if it was
@@ -118,40 +121,6 @@ namespace eutelescope {
      */
     std::vector<float > getNoiseValues() const;   
     
-    ////////////////////////////////////////////////////////
-    //                                                    //
-    //                IMPLEMENTATION                      //
-    //                  SPECIFIC                          //
-    //                                                    //
-    ////////////////////////////////////////////////////////
-
-    //! Get the number of sparse pixels in the collection
-    /*! This utility can be used to know how many pixels are contained
-     *  in the TrackerData.
-     *
-     *  @return the size of TrackerData measured in sparse
-     *  pixels. 
-     */ 
-    unsigned int size() const ;
-    
-    //! Get the type of sparsified pixel
-    /*! This method is used to get the type of sparsified pixel
-     *  contained in the cluster. 
-     *
-     *  It is implementation specific and it is not available in the
-     *  virtual interface since not all kind of clusters are made by
-     *  sparsified pixels
-     *
-     *  @return The sparse pixel type using the SparsePixelType enum
-     *
-     *  @see SparsePixelType
-     */
-    SparsePixelType getSparsePixelType() const {
-      int rhs = 13;
-      lcio::long64 mask   = 0x3E000;
-      lcio::long64 cell0  = static_cast<lcio::long64> (_trackerData->getCellID0());
-      return static_cast<SparsePixelType> ( ( cell0 & mask ) >> rhs );
-    }
 
     //! Return the cluster quality
     /*! It returns the cluster quality using the ClusterQuality enum.
@@ -194,10 +163,56 @@ namespace eutelescope {
      */ 
     virtual float getSeedCharge() const ;
 
+    ////////////////////////////////////////////////////////
+    //                                                    //
+    //                IMPLEMENTATION                      //
+    //                  SPECIFIC                          //
+    //                                                    //
+    ////////////////////////////////////////////////////////
+
+    //! Get the number of sparse pixels in the collection
+    /*! This utility can be used to know how many pixels are contained
+     *  in the TrackerData.
+     *
+     *  @return the size of TrackerData measured in sparse
+     *  pixels. 
+     */ 
+    unsigned int size() const ;
+    
+    //! Get the type of sparsified pixel
+    /*! This method is used to get the type of sparsified pixel
+     *  contained in the cluster. 
+     *
+     *  It is implementation specific and it is not available in the
+     *  virtual interface since not all kind of clusters are made by
+     *  sparsified pixels
+     *
+     *  @return The sparse pixel type using the SparsePixelType enum
+     *
+     *  @see SparsePixelType
+     */
+    SparsePixelType getSparsePixelType() const {
+      int rhs = 13;
+      lcio::long64 mask   = 0x3E000;
+      lcio::long64 cell0  = static_cast<lcio::long64> (_trackerData->getCellID0());
+      return static_cast<SparsePixelType> ( ( cell0 & mask ) >> rhs );
+    }
+
+    //! Get one of the sparse pixel
+    /*! This method is used to get one of the sparse pixel contained
+     *  into the TrackerData. 
+     *
+     *  @param index Index of the sparse pixel within the collection
+     *
+     *  @return A EUTelSparsePixel with the information concerning the
+     *  pixel number @a index in the collection
+     */ 
+    PixelType * getSparsePixelAt(unsigned int index, PixelType * pixel);
+
   protected:
 
     //! The number of elements in the data structure
-    unsigned int _noOfElements;
+    unsigned int _nElement;
 
     //! The sparse pixel type enumerator
     SparsePixelType _type;
@@ -217,6 +232,10 @@ namespace eutelescope {
 
   };
 
+  template<>
+  EUTelSimpleSparsePixel * 
+  EUTelSparseClusterImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index, EUTelSimpleSparsePixel * pixel); 
+
 
   template<class PixelType>
   EUTelSparseClusterImpl<PixelType>::EUTelSparseClusterImpl(IMPL::TrackerDataImpl * data) {
@@ -224,10 +243,10 @@ namespace eutelescope {
     // corresponds to a valid sparsified pixel. To be valid, this has
     // to inherit from EUTelBaseSparsePixel
     EUTelBaseSparsePixel * goodPixelType;
-    auto_ptr<PixelType>    currentPixelType(new PixelType);
-    if ( goodPixel = dynamic_cast<PixelType *> ( currentPixelType.get() ) ) {
-      _nElement       = goodPixel->getNoOfElements();
-      _type           = goodPixel->getSparsePixelType();
+    std::auto_ptr<PixelType>    currentPixelType(new PixelType);
+    if ( goodPixelType = dynamic_cast<PixelType *> ( currentPixelType.get() ) ) {
+      _nElement       = goodPixelType->getNoOfElements();
+      _type           = goodPixelType->getSparsePixelType();
       _trackerData    = data;
       _noiseSetSwitch = false;
       _noiseValues.clear();
@@ -254,52 +273,52 @@ namespace eutelescope {
   }
 
   template<class PixelType>
-  void EUTelSparseClusterImpl<PixelType>::getNoiseValues() const {
+  std::vector<float > EUTelSparseClusterImpl<PixelType>::getNoiseValues() const {
     if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
     return _noiseValues;
   }
 
   template<class PixelType>
   void EUTelSparseClusterImpl<PixelType>::getSeedCoord(int& xSeed, int& ySeed) const {
-    EUTelSparseDataImpl<PixelType> data( _trackerData );
     unsigned int   maxIndex  = 0;
-    float          maxSignal = -1 * numeric_limits<float>::max();
-    for ( unsigned int index = 0; index < data.size() ; index++ ) {
-      EUTelBaseSparsePixel * pixel = static_cast<EUTelBaseSparsePixel*> (data.getSparsePixelAt(index));
+    float          maxSignal = -1 * std::numeric_limits<float>::max();
+    for ( unsigned int index = 0; index < size() ; index++ ) {
+      EUTelBaseSparsePixel * pixel = static_cast<EUTelBaseSparsePixel*> (&getSparsePixelAt(index));
       if ( pixel->getSignal() > maxSignal ) {
-	maxSignal = pixel->getSignal();
-	maxIndex  = index;
+ 	maxSignal = pixel->getSignal();
+ 	maxIndex  = index;
       }
     }
-    EUTelBaseSparsePixel * seedPixel = static_cast<EUTelBaseSparsePixel*> (data.getSparsePixelAt(maxIndex));
+    EUTelBaseSparsePixel * seedPixel = static_cast<EUTelBaseSparsePixel*> (&getSparsePixelAt(maxIndex));
     xSeed = seedPixel->getXCoord();
     ySeed = seedPixel->getYCoord();
   }
 
   template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getTotalCharge() const {
-    EUTelSparseDataImpl<PixelType> data( _trackerData );
     float charge = 0;
-    for ( unsigned int index = 0; index < data.size() ; index++ ) {    
-      charge += (static_cast<EUTelBaseSparsePixel*> (data.getSparsePixelAt(index)))->getSignal();
+    for ( unsigned int index = 0; index < size() ; index++ ) {    
+      charge += (static_cast<EUTelBaseSparsePixel*> (&getSparsePixelAt(index)))->getSignal();
     }
     return charge;
   }
 
   template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getSeedCharge() const {
-    EUTelSparseDataImpl<PixelType> data( _trackerData );
     unsigned int   maxIndex  = 0;
-    float          maxSignal = -1 * numeric_limits<float>::max();
-    for ( unsigned int index = 0; index < data.size() ; index++ ) {
-      EUTelBaseSparsePixel * pixel = static_cast<EUTelBaseSparsePixel*> (data.getSparsePixelAt(index));
+    float          maxSignal = -1 * std::numeric_limits<float>::max();
+    for ( unsigned int index = 0; index < size() ; index++ ) {
+      EUTelBaseSparsePixel * pixel = static_cast<EUTelBaseSparsePixel*> (&getSparsePixelAt(index));
       if ( pixel->getSignal() > maxSignal ) {
 	maxSignal = pixel->getSignal();
 	maxIndex  = index;
       }
     }
-    return (static_cast<EUTelBaseSparsePixel*> (data.getSparsePixelAt(maxIndex)))->getSignal();
+    return (static_cast<EUTelBaseSparsePixel*> (&getSparsePixelAt(maxIndex)))->getSignal();
   }
+
+
+  
 
   ////////////////////////////////////////////////////////
   //                                                    //
@@ -308,7 +327,14 @@ namespace eutelescope {
   //                                                    //
   ////////////////////////////////////////////////////////
   
-
+  template<>
+  inline EUTelSimpleSparsePixel * EUTelSparseClusterImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index,
+												   EUTelSimpleSparsePixel * pixel)  {
+    pixel->setXCoord( static_cast<int> ( _trackerData->chargeValues()[index * _nElement]     ) );
+    pixel->setYCoord( static_cast<int> ( _trackerData->chargeValues()[index * _nElement + 1] ) );
+    pixel->setSignal( static_cast<int> ( _trackerData->chargeValues()[index * _nElement + 2] ) );
+    return pixel;
+  }
 }
 
 #endif

@@ -12,6 +12,7 @@
 
 // personal includes ".h"
 #include "EUTelVirtualCluster.h"
+#include "EUTelSparseClusterImpl.h"
 #include "EUTelBaseSparsePixel.h"
 #include "EUTelSimpleSparsePixel.h"
 #include "EUTelExceptions.h"
@@ -90,7 +91,7 @@ namespace eutelescope {
    *  process run on this sparse data. 
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelSparseDataImpl.h,v 1.2 2007-08-18 21:49:40 bulgheroni Exp $
+   *  @Version $Id: EUTelSparseDataImpl.h,v 1.3 2007-08-19 15:38:22 bulgheroni Exp $
    */ 
 
   template<class PixelType>
@@ -141,7 +142,7 @@ namespace eutelescope {
      *  @return A EUTelSparsePixel with the information concerning the
      *  pixel number @a index in the collection
      */ 
-    PixelType * getSparsePixelAt(unsigned int index);
+    PixelType *  getSparsePixelAt(unsigned int index, PixelType * pixel);
     
     //! Get the number of sparse pixels in the collection
     /*! This utility can be used to know how many pixels are contained
@@ -182,13 +183,22 @@ namespace eutelescope {
 
   };
  
+  template<>
+  EUTelSimpleSparsePixel *  
+  EUTelSparseDataImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index, EUTelSimpleSparsePixel * pixel );
+
+  template<>
+  std::vector<EUTelVirtualCluster *> EUTelSparseDataImpl<EUTelSimpleSparsePixel>::findClusters(double minDistance);
+    
+
   template<class PixelType> 
   EUTelSparseDataImpl<PixelType>::EUTelSparseDataImpl(IMPL::TrackerDataImpl * data) {
     // to work properly the template class has to be or at least
     // inherit from EUTelBaseSparsePixel
     EUTelBaseSparsePixel      * goodPixel;
     std::auto_ptr<PixelType>    pixel(new PixelType);
-    if ( goodPixel = dynamic_cast<PixelType *>( pixel.get() ) ) {
+    goodPixel = dynamic_cast<EUTelBaseSparsePixel *>( pixel.get() );
+    if ( goodPixel != 0x0 ) {
       // the template class should be a good sparse pixel so we can
       // continue...
       _nElement     = goodPixel->getNoOfElements();
@@ -216,19 +226,21 @@ namespace eutelescope {
 
   }
 
-  template<class PixelType>
-  std::vector<EUTelVirtualCluster *> EUTelSparseDataImpl<PixelType>::findClusters(double minDistance) {
-    
-    std::vector<int> status(size, 0);
-    for ( unsigned int iPixel = 0 ; iPixel < size() ; iPixel++ ) {
+  template<>
+  inline std::vector<EUTelVirtualCluster *> EUTelSparseDataImpl<EUTelSimpleSparsePixel>::findClusters(double minDistance) {
 
+    EUTelSimpleSparsePixel * pixel      = new EUTelSimpleSparsePixel;
+    EUTelSimpleSparsePixel * otherPixel = new EUTelSimpleSparsePixel;
+     
+    std::vector<int> status(size(), 0);
+    for ( unsigned int iPixel = 0 ; iPixel < size() ; iPixel++ ) {
+      
       // grouped pixel is a vector containing the pixels that are
       // fulfilling the minDistance condition
       std::vector<int> groupedPixel;
-
-      // get the pixel under investigation
-      EUTelBaseSparsePixel * pixel = getSparsePixelAt(iPixel);
-
+      
+      getSparsePixelAt( iPixel, pixel);
+      
       if ( status[iPixel] == 0 ) {
 	groupedPixel.push_back(iPixel);
 	status[iPixel] = iPixel;
@@ -237,14 +249,14 @@ namespace eutelescope {
 	// and add them to the groupedPixel vector.
 	for ( unsigned int iPixel2 = iPixel ; iPixel2 < size() ; iPixel2++ ) {
 	  if ( status[iPixel2] == 0 ) {
-	    EUTelBaseSparsePixel * otherPixel = getSparsePixelAt(iPixel2);
+	    getSparsePixelAt(iPixel2, otherPixel);
 	    if ( distance(pixel, otherPixel) <= minDistance ) {
 	      groupedPixel.push_back(iPixel2);
 	      status[iPixel2] = iPixel;
 	    }
 	  }
 	}
-
+	
 	if ( groupedPixel.size() > 1 ) {
 	  // the current group of pixel has more than one pixel in
 	  // it. A part from the first, we have to check if the other
@@ -253,7 +265,7 @@ namespace eutelescope {
 	  while ( firstIter != groupedPixel.end() ) {
 	    for ( unsigned int iPixel2 = (*firstIter) + 1 ; iPixel2 < size(); iPixel2++ ) {
 	      if ( status[iPixel2] == 0 ) {
-		if ( distance( getSparsePixelAt(*firstIter) , getSparsePixelAt(iPixel2) ) <= minDistance ) {
+		if ( distance( getSparsePixelAt(*firstIter, pixel) , getSparsePixelAt(iPixel2, otherPixel) ) <= minDistance ) {
 		  groupedPixel.push_back(iPixel2);
 		  status[iPixel2] = iPixel;
 		}
@@ -263,19 +275,21 @@ namespace eutelescope {
 	  }
 	}
       }
-
       
-
+      
+      
       // that's the right place to build the cluster
-
+      
     }
-
-    return 0x0;
+    
+    std::vector<EUTelVirtualCluster * > dummy;
+    
+    return dummy;
   }
-
+  
   template<>
-  EUTelSimpleSparsePixel * EUTelSparseDataImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index) {
-    EUTelSimpleSparsePixel * pixel = new EUTelSimpleSparsePixel;
+  inline EUTelSimpleSparsePixel *  EUTelSparseDataImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index, EUTelSimpleSparsePixel * pixel ) {
+    if ( index * _nElement + 2 > _trackerData->chargeValues().size() ) return 0x0;
     pixel->setXCoord( static_cast<int> ( _trackerData->chargeValues()[index * _nElement]     ) );
     pixel->setYCoord( static_cast<int> ( _trackerData->chargeValues()[index * _nElement + 1] ) );
     pixel->setSignal( static_cast<int> ( _trackerData->chargeValues()[index * _nElement + 2] ) );
@@ -286,7 +300,10 @@ namespace eutelescope {
   unsigned int EUTelSparseDataImpl<PixelType>::size() const {
     return _trackerData->chargeValues().size() / _nElement;
   }
-					 
+
+
+  template<class PixelType> 
+  PixelType * EUTelSparseDataImpl<PixelType>::getSparsePixelAt(unsigned int index, PixelType *) { return 0x0; }					 
 
 }
 #endif
