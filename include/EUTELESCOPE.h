@@ -29,7 +29,7 @@ namespace eutelescope
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.12 2007-08-18 21:49:40 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.13 2007-08-19 15:15:36 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -318,7 +318,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.12 2007-08-18 21:49:40 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.13 2007-08-19 15:15:36 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -365,7 +365,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.12 2007-08-18 21:49:40 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.13 2007-08-19 15:15:36 bulgheroni Exp $
    */ 
   
   enum ClusterQuality {
@@ -424,20 +424,21 @@ namespace eutelescope
    *  cluster during the clusterization process itself. 
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.12 2007-08-18 21:49:40 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.13 2007-08-19 15:15:36 bulgheroni Exp $
    */
   enum ClusterType {
-    kEUTelFFClusterImpl = 0,
+    kEUTelFFClusterImpl     = 0,
+    kEUTelSparseClusterImpl = 1,
     // add here all the other cluster type numbering them in between 0
     // and 31 unknown 
-    kUnknown            = 31
+    kUnknown                = 31
   };
 
   //! Sparse pixel type enum
   /*! This enumerator is used to define the sparsified pixel type. 
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.12 2007-08-18 21:49:40 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.13 2007-08-19 15:15:36 bulgheroni Exp $
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,
