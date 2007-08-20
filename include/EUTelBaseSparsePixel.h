@@ -105,6 +105,15 @@ namespace eutelescope {
     SparsePixelType _type;
   };
 
+  //! Compute the distance between two pixels
+  /*! This function is calculating the distance between two sparsified
+   *  pixels (of any type) returning a floating value in pixel unit.
+   *
+   *  Two pixels sharing one side will have a distance equal to one,
+   *  while if they are touching by a corner, they will be sqrt(2) far
+   *  a part. 
+   *
+   */ 
   float distance(EUTelBaseSparsePixel * first, EUTelBaseSparsePixel * second) ;
 
 }
