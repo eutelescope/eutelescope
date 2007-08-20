@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelSimpleSparsePixel.cc,v 1.1 2007-08-18 21:49:40 bulgheroni Exp $
+// Version: $Id: EUTelSimpleSparsePixel.cc,v 1.2 2007-08-20 18:22:40 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -52,12 +52,13 @@ void EUTelSimpleSparsePixel::print(std::ostream& os) const {
   for ( int i = 0 ; i < bigWidth ; ++i ) {
     os << "-";
   }
+  os << endl;
   int width = 20;
-  os << setw(width) << "Type: "     << _type << endl
+  os << setw(width) << setiosflags(ios::left) << "Type: "     << _type << endl
      << setw(width) << "Elements: " << _noOfElements << endl
      << setw(width) << "x coord: "  << _xCoord << endl
      << setw(width) << "y coord: "  << _yCoord << endl
-     << setw(width) << "signal:  "  << _signal << endl;
+     << setw(width) << "signal: "  << _signal << endl;
   for ( int i = 0 ; i < bigWidth ; ++i ) {
     os << "-";
   }
