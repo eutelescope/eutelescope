@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelRawDataSparsifier.cc,v 1.1 2007-08-19 15:38:22 bulgheroni Exp $
+// Version $Id: EUTelRawDataSparsifier.cc,v 1.2 2007-08-20 16:48:38 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -214,6 +214,7 @@ void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
 	      sparsePixel->setXCoord( matrixDecoder.getXFromIndex(iPixel) );
 	      sparsePixel->setYCoord( matrixDecoder.getYFromIndex(iPixel) );
 	      sparsePixel->setSignal( static_cast<short> ( data ) );
+	      message<DEBUG> ( log() << (*sparsePixel.get())  ) ;
 	      sparseData.addSparsePixel( sparsePixel.get() );
 	    }
 	  }
