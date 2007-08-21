@@ -30,7 +30,8 @@
 
 namespace eutelescope {
 
-  //! Implementation of the EUTelescope sparse data structure
+
+  //! Implementation of the EUTelescope sparse data structure.
   /*! Within the EUTelescope framework input data can be provided both
    *  in non zero suppressed mode, i.e. one ADC signal for each pixel
    *  in the detector irrespectively of the signal amplitude; or in
@@ -57,7 +58,7 @@ namespace eutelescope {
    *  values, the threshold used for the selection and, last but not
    *  least, the initial raw value.
    *
-   *  For all these reasons the use of a standard TrackerRawData is
+    *  For all these reasons the use of a standard TrackerRawData is
    *  impossible and another way out has to be found. A possibility
    *  would be to use a LCGenericObject containing all the needed
    *  information but this is adding a performance penalty. Another
@@ -71,16 +72,11 @@ namespace eutelescope {
    *  adcValues.push_back(pixelYCoord);
    *  adcValues.push_back(pixelSignal);
    *  adcValues.push_back(spare); // to be properly encoded if needed.
-   *  @encode
+   *  @endcode
    *
    *  For the time being the second possibility has been chosen mainly
    *  because the usage of a LCGenericObject is introducing some
    *  performance penalties.
-   *
-   *  @todo Ask Frank which kind of penalties are coming from the use
-   *  of a LCGenericObject, I mean, access to disk, compression
-   *  factor or whatever. This is important to understand if those
-   *  penalties are really relevant for our purpose. 
    *
    *  To handle the complicated data structure behind this
    *  TrackerData, a specific helper class has been designed on
@@ -91,9 +87,8 @@ namespace eutelescope {
    *  process run on this sparse data. 
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelSparseDataImpl.h,v 1.3 2007-08-19 15:38:22 bulgheroni Exp $
-   */ 
-
+   *  @Version $Id: EUTelSparseDataImpl.h,v 1.4 2007-08-21 13:19:30 bulgheroni Exp $
+   */  
   template<class PixelType>
   class EUTelSparseDataImpl {
 
@@ -110,28 +105,28 @@ namespace eutelescope {
      */
     void addSparsePixel(PixelType * pixel);
     
-    //! Perform cluster search
-    /*! This is a very important method for this class since it is
-     *  used to group together nearby pixels present in this
-     *  TrackerDataImpl and return a collection of EUTelClusterImpl.
-     * 
-     *  For the time being only one clustering strategy has been
-     *  envisaged for sparse data. This is base on the distance of two
-     *  pixels. If this is below the threshold distance set by the
-     *  user, than the two pixels are assumed to belong to the same
-     *  cluster. Remember that this distance is measure in pixel units
-     *  and so two pixels sharing one side are 1 pixel far apart,
-     *  while two pixels with a touching corner are
-     *  <code>sqrt(2)</code> far apart. So, setting the minDistance to
-     *  sqrt(2) is equivalent to ask "touching pixels".
-     *
-     *  @param minDistance The minimum distance between two pixels in
-     *  order to consider the two making a cluster.
-     *
-     *  @return A vector of pointers to EUTelClusterImpl containing
-     *  the cluster search result.
-     */
-    virtual std::vector<EUTelVirtualCluster *> findClusters(double minDistance);
+    //     //! Perform cluster search
+//     /*! This is a very important method for this class since it is
+//      *  used to group together nearby pixels present in this
+//      *  TrackerDataImpl and return a collection of EUTelClusterImpl.
+//      * 
+//      *  For the time being only one clustering strategy has been
+//      *  envisaged for sparse data. This is base on the distance of two
+//      *  pixels. If this is below the threshold distance set by the
+//      *  user, than the two pixels are assumed to belong to the same
+//      *  cluster. Remember that this distance is measure in pixel units
+//      *  and so two pixels sharing one side are 1 pixel far apart,
+//      *  while two pixels with a touching corner are
+//      *  <code>sqrt(2)</code> far apart. So, setting the minDistance to
+//      *  sqrt(2) is equivalent to ask "touching pixels".
+//      *
+//      *  @param minDistance The minimum distance between two pixels in
+//      *  order to consider the two making a cluster.
+//      *
+//      *  @return A vector of pointers to EUTelClusterImpl containing
+//      *  the cluster search result.
+//      */
+//     virtual std::vector<EUTelSparseClusterImpl<PixelType> *> findClusters(double minDistance);
 
     //! Get one of the sparse pixel
     /*! This method is used to get one of the sparse pixel contained
@@ -187,8 +182,9 @@ namespace eutelescope {
   EUTelSimpleSparsePixel *  
   EUTelSparseDataImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index, EUTelSimpleSparsePixel * pixel );
 
-  template<>
-  std::vector<EUTelVirtualCluster *> EUTelSparseDataImpl<EUTelSimpleSparsePixel>::findClusters(double minDistance);
+//   template<>
+//   std::vector<EUTelSparseClusterImpl<EUTelSimpleSparsePixel> *> 
+//   EUTelSparseDataImpl<EUTelSimpleSparsePixel>::findClusters(double minDistance);
     
 
   template<class PixelType> 
@@ -226,66 +222,73 @@ namespace eutelescope {
 
   }
 
-  template<>
-  inline std::vector<EUTelVirtualCluster *> EUTelSparseDataImpl<EUTelSimpleSparsePixel>::findClusters(double minDistance) {
+//   template<>
+//   inline std::vector<EUTelSparseClusterImpl<EUTelSimpleSparsePixel> *> 
+//   EUTelSparseDataImpl<EUTelSimpleSparsePixel>::findClusters(double minDistance) {
 
-    EUTelSimpleSparsePixel * pixel      = new EUTelSimpleSparsePixel;
-    EUTelSimpleSparsePixel * otherPixel = new EUTelSimpleSparsePixel;
-     
-    std::vector<int> status(size(), 0);
-    for ( unsigned int iPixel = 0 ; iPixel < size() ; iPixel++ ) {
+//     EUTelSimpleSparsePixel * pixel      = new EUTelSimpleSparsePixel;
+//     EUTelSimpleSparsePixel * otherPixel = new EUTelSimpleSparsePixel;
+//     std::vector<EUTelSparseClusterImpl<EUTelSimpleSparsePixel> * > clusterVec;
+
+//     std::vector<int> status(size(), 0);
+//     for ( unsigned int iPixel = 0 ; iPixel < size() ; iPixel++ ) {
       
-      // grouped pixel is a vector containing the pixels that are
-      // fulfilling the minDistance condition
-      std::vector<int> groupedPixel;
+//       // grouped pixel is a vector containing the pixels that are
+//       // fulfilling the minDistance condition
+//       std::vector<int> groupedPixel;
       
-      getSparsePixelAt( iPixel, pixel);
+//       getSparsePixelAt( iPixel, pixel);
       
-      if ( status[iPixel] == 0 ) {
-	groupedPixel.push_back(iPixel);
-	status[iPixel] = iPixel;
+//       if ( status[iPixel] == 0 ) {
+// 	groupedPixel.push_back(iPixel);
+// 	status[iPixel] = iPixel;
 	
-	// first of all, find all the pixels close to the current one
-	// and add them to the groupedPixel vector.
-	for ( unsigned int iPixel2 = iPixel ; iPixel2 < size() ; iPixel2++ ) {
-	  if ( status[iPixel2] == 0 ) {
-	    getSparsePixelAt(iPixel2, otherPixel);
-	    if ( distance(pixel, otherPixel) <= minDistance ) {
-	      groupedPixel.push_back(iPixel2);
-	      status[iPixel2] = iPixel;
-	    }
-	  }
-	}
+// 	// first of all, find all the pixels close to the current one
+// 	// and add them to the groupedPixel vector.
+// 	for ( unsigned int iPixel2 = iPixel ; iPixel2 < size() ; iPixel2++ ) {
+// 	  if ( status[iPixel2] == 0 ) {
+// 	    getSparsePixelAt(iPixel2, otherPixel);
+// 	    if ( distance(pixel, otherPixel) <= minDistance ) {
+// 	      groupedPixel.push_back(iPixel2);
+// 	      status[iPixel2] = iPixel;
+// 	    }
+// 	  }
+// 	}
 	
-	if ( groupedPixel.size() > 1 ) {
-	  // the current group of pixel has more than one pixel in
-	  // it. A part from the first, we have to check if the other
-	  // are close enough to other pixels
-	  std::vector<int>::iterator firstIter = groupedPixel.begin() + 1;
-	  while ( firstIter != groupedPixel.end() ) {
-	    for ( unsigned int iPixel2 = (*firstIter) + 1 ; iPixel2 < size(); iPixel2++ ) {
-	      if ( status[iPixel2] == 0 ) {
-		if ( distance( getSparsePixelAt(*firstIter, pixel) , getSparsePixelAt(iPixel2, otherPixel) ) <= minDistance ) {
-		  groupedPixel.push_back(iPixel2);
-		  status[iPixel2] = iPixel;
-		}
-	      }
-	    }
-	    ++firstIter;
-	  }
-	}
-      }
+// 	if ( groupedPixel.size() > 1 ) {
+// 	  // the current group of pixel has more than one pixel in
+// 	  // it. A part from the first, we have to check if the other
+// 	  // are close enough to other pixels
+// 	  std::vector<int>::iterator firstIter = groupedPixel.begin() + 1;
+// 	  while ( firstIter != groupedPixel.end() ) {
+// 	    for ( unsigned int iPixel2 = (*firstIter) + 1 ; iPixel2 < size(); iPixel2++ ) {
+// 	      if ( status[iPixel2] == 0 ) {
+// 		if ( distance( getSparsePixelAt(*firstIter, pixel) , getSparsePixelAt(iPixel2, otherPixel) ) <= minDistance ) {
+// 		  groupedPixel.push_back(iPixel2);
+// 		  status[iPixel2] = iPixel;
+// 		}
+// 	      }
+// 	    }
+// 	    ++firstIter;
+// 	  }
+// 	}
+//       }
       
+//       EUTelSparseClusterImpl<EUTelSimpleSparsePixel > * cluster = new EUTelSparseClusterImpl<EUTelSimpleSparsePixel >;
+//       std::vector<int>::iterator firstIter = groupedPixel.begin();
+//       while ( firstIter != groupedPixel.end() ) {
+// 	cluster->addSparsePixel(getSparsePixelAt(*firstIter, pixel));
+//       }
+//       clusterVec.push_back(cluster); 
       
-      
-      // that's the right place to build the cluster
-      
-    }
+//     }
     
-    std::vector<EUTelVirtualCluster * > dummy;
-    
-    return dummy;
-  }
+
+//     delete pixel;
+//     delete otherPixel;
+
+//     return clusterVec;
+//   }
   
   template<>
   inline EUTelSimpleSparsePixel *  EUTelSparseDataImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index, EUTelSimpleSparsePixel * pixel ) {
