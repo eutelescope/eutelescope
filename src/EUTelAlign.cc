@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.4 2007-08-17 22:41:10 roloff Exp $
+// Version: $Id: EUTelAlign.cc,v 1.5 2007-08-21 18:26:31 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -33,14 +33,6 @@
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
 
-// aida includes <.h>
-#ifdef MARLIN_USE_AIDA
-#include <marlin/AIDAProcessor.h>
-#include <AIDA/IHistogramFactory.h>
-#include <AIDA/IHistogram1D.h>
-#include <AIDA/ITree.h>
-#endif
-
 // lcio includes <.h> 
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
@@ -62,29 +54,11 @@ using namespace marlin;
 using namespace gear;
 using namespace eutelescope;
 
-// definition of static members mainly used to name histograms
-#ifdef MARLIN_USE_AIDA
-//std::string EUTelLineFit::_chi2XLocalname          = "Chi2XLocal";
-#endif
+void fitFunctionWrapper(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag) {
+  EUTelAlign::Chi2Function(npar,gin,f,par,iflag);
+}
 
-// Variables for hit parameters
-// ----------------------------
-
-struct HitsForFit {
-  double firstLayerMeasuredX;
-  double firstLayerMeasuredY;
-  double firstLayerMeasuredZ;
-  double secondLayerPredictedX;
-  double secondLayerPredictedY;
-  double secondLayerPredictedZ;
-  double secondLayerMeasuredX;
-  double secondLayerMeasuredY;
-  double secondLayerMeasuredZ;
-  double firstLayerResolution;
-  double secondLayerResolution;
-};
-
-std::vector<HitsForFit> _hitsForFit;
+vector<EUTelAlign::HitsForFit > EUTelAlign::_hitsForFit;
 
 EUTelAlign::EUTelAlign () : Processor("EUTelAlign") {
   
@@ -152,8 +126,6 @@ void EUTelAlign::init() {
   
   _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-  
-  _histogramSwitch = true;
   
 #endif
 
@@ -311,7 +283,7 @@ void EUTelAlign::processEvent (LCEvent * event) {
   
 }
 
-void Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag) {
+void EUTelAlign::Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag) {
 
   // Chi2 function for Minuit
   // ------------------------
@@ -354,7 +326,7 @@ void Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t 
 
   } // end loop over all events
 
-  cout << usedevents << " ";
+  streamlog_out ( MESSAGE) << usedevents << " ";
 
   f = chi2;
 
@@ -362,23 +334,23 @@ void Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t 
 
 void EUTelAlign::end() {
 
-  cout << "Number of Events used in the fit: " << _hitsForFit.size() << endl;
+  streamlog_out ( MESSAGE ) << "Number of Events used in the fit: " << _hitsForFit.size() << endl;
 
-  cout << "Minuit will soon be started" << endl;
+  streamlog_out ( MESSAGE ) << "Minuit will soon be started" << endl;
 
   // run MINUIT
   // ----------
 
   gSystem->Load("libMinuit");
 
-  // init Minuit for 6 parameters
+  // init Minuit for 7 parameters
   TMinuit *gMinuit = new TMinuit(7);
 
   // set print level (-1 = quiet, 0 = normal, 1 = verbose)
   gMinuit->SetPrintLevel(0);
 
   // set function
-  gMinuit->SetFCN(Chi2Function);
+  gMinuit->SetFCN(fitFunctionWrapper);
 
   double arglist[10];
   int ierflag = 0;
@@ -410,14 +382,14 @@ void EUTelAlign::end() {
 //   gMinuit->FixParameter(4);
 //   gMinuit->FixParameter(5);
 
-  cout << "Used events: " << endl;
+  streamlog_out ( MESSAGE ) << "Used events: " << endl;
 
   // call migrad (500 iterations, 0.1 = tolerance)
   arglist[0] = 2000;
   arglist[1] = 0.1;
   gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
 
-  cout << endl;
+  streamlog_out ( MESSAGE) << endl;
 
   double off_x;
   double off_y;
@@ -441,14 +413,14 @@ void EUTelAlign::end() {
   gMinuit->GetParameter(4,theta_z1,theta_z1_error);
   gMinuit->GetParameter(5,theta_z2,theta_z2_error);
 
-  message<MESSAGE> ( log() << endl << "Alignment constants from the fit:" ) ;
-  message<MESSAGE> ( log() << "---------------------------------" << endl ) ;
-  message<MESSAGE> ( log() << "off_x: " << off_x << " +/- " << off_x_error ) ;
-  message<MESSAGE> ( log() << "off_y: " << off_y << " +/- " << off_y_error ) ;
-  message<MESSAGE> ( log() << "theta_x: " << theta_x << " +/- " << theta_x_error ) ;
-  message<MESSAGE> ( log() << "theta_y: " << theta_y << " +/- " << theta_y_error ) ;
-  message<MESSAGE> ( log() << "theta_z1: " << theta_z1 << " +/- " << theta_z1_error ) ;
-  message<MESSAGE> ( log() << "theta_z2: " << theta_z2 << " +/- " << theta_z2_error ) ;
+  streamlog_out ( MESSAGE ) << endl << "Alignment constants from the fit:" << endl;
+  streamlog_out ( MESSAGE ) << "---------------------------------" << endl;
+  streamlog_out ( MESSAGE ) << "off_x: " << off_x << " +/- " << off_x_error << endl;
+  streamlog_out ( MESSAGE ) << "off_y: " << off_y << " +/- " << off_y_error << endl;
+  streamlog_out ( MESSAGE ) << "theta_x: " << theta_x << " +/- " << theta_x_error << endl;
+  streamlog_out ( MESSAGE ) << "theta_y: " << theta_y << " +/- " << theta_y_error << endl;
+  streamlog_out ( MESSAGE ) << "theta_z1: " << theta_z1 << " +/- " << theta_z1_error << endl;
+  streamlog_out ( MESSAGE ) << "theta_z2: " << theta_z2 << " +/- " << theta_z2_error << endl;
 
 //   delete [] _intrResolY;
 //   delete [] _intrResolX;
@@ -456,9 +428,12 @@ void EUTelAlign::end() {
   delete [] _yMeasPos;
   delete [] _zMeasPos;
 
-  message<MESSAGE> ( log() << "Successfully finished" ) ;  
+  streamlog_out ( MESSAGE ) << "Successfully finished" << endl;
 
 }
+
+
+
 
 #endif
 
