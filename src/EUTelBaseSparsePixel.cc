@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelBaseSparsePixel.cc,v 1.1 2007-08-18 21:49:40 bulgheroni Exp $
+// Version: $Id: EUTelBaseSparsePixel.cc,v 1.2 2007-08-21 12:29:21 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -19,7 +19,7 @@
 
 using namespace eutelescope;
 
-float distance(EUTelBaseSparsePixel * first, EUTelBaseSparsePixel * second) {
+float eutelescope::distance(EUTelBaseSparsePixel * first, EUTelBaseSparsePixel * second) {
   
   return std::sqrt( pow( first->getXCoord() - second->getXCoord() , 2) +
 		    pow( first->getYCoord() - second->getYCoord() , 2) );
