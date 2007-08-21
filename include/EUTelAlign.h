@@ -25,17 +25,15 @@
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
 
-// AIDA includes <.h>
-#ifdef MARLIN_USE_AIDA
-#include <AIDA/IBaseHistogram.h>
-#endif
-
 // system includes <>
 #include <string>
 #include <vector>
 #include <map>
 
+#include "TMinuit.h"
 class TMinuit;
+
+
 
 namespace eutelescope {
 
@@ -47,7 +45,27 @@ namespace eutelescope {
   class EUTelAlign : public marlin::Processor {
 
   public:
+    
+    static void Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag);
 
+    //! Variables for hit parameters
+    class HitsForFit {
+
+    public:
+
+      double firstLayerMeasuredX;
+      double firstLayerMeasuredY;
+      double firstLayerMeasuredZ;
+      double secondLayerPredictedX;
+      double secondLayerPredictedY;
+      double secondLayerPredictedZ;
+      double secondLayerMeasuredX;
+      double secondLayerMeasuredY;
+      double secondLayerMeasuredZ;
+      double firstLayerResolution;
+      double secondLayerResolution;
+
+    };
      
     //! Returns a new instance of EUTelAlign
     /*! This method returns a new instance of this processor.  It is
@@ -110,6 +128,8 @@ namespace eutelescope {
     void bookHistos();
 
   protected:
+
+    static std::vector<HitsForFit> _hitsForFit;
     
     //! TrackerHit collection name
     /*! Input collection with measured hits.
@@ -132,7 +152,6 @@ namespace eutelescope {
     /*! Output collection with hits from fitted tracks.
      */ 
     //    std::string _outputHitColName;
-
 
   private:
 
@@ -174,21 +193,6 @@ namespace eutelescope {
      */ 
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
     
-#ifdef MARLIN_USE_AIDA
-    //! AIDA histogram map
-    /*! Instead of putting several pointers to AIDA histograms as
-     *  class members, histograms are booked in the init() method and
-     *  their pointers are inserted into this map keyed by their
-     *  names. 
-     *  The histogram filling can proceed recalling an object through
-     *  its name
-     */ 
-    std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
-
-    //    static std::string _chi2XLocalname;
-
-#endif
-
     int _nPlanes;
     double * _xMeasPos;
     double * _yMeasPos;
@@ -197,15 +201,12 @@ namespace eutelescope {
     double _xMeas, _yMeas;
     double _xPred, _yPred;
 
-    //! Fill histogram switch
-    /*! Only for debug reason
-     */
-    bool _histogramSwitch;
-
   };
 
   //! A global instance of the processor
   EUTelAlign gEUTelAlign;      
+
+
 
 }
 #endif
