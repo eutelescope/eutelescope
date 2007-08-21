@@ -29,6 +29,7 @@
 #include <iostream>
 #include <limits>
 #include <memory>
+#include <vector>
 
 namespace eutelescope {
 
@@ -45,7 +46,7 @@ namespace eutelescope {
    *  method. 
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelSparseClusterImpl.h,v 1.2 2007-08-19 15:38:22 bulgheroni Exp $
+   *  @Version $Id: EUTelSparseClusterImpl.h,v 1.3 2007-08-21 13:18:05 bulgheroni Exp $
    */
   template<class PixelType>
   class EUTelSparseClusterImpl : public EUTelVirtualCluster {
@@ -112,15 +113,16 @@ namespace eutelescope {
      *  local frame of reference
      */ 
     void getSeedCoord(int& xSeed, int& ySeed) const ;
-
-    //! Get the pixel noise values
-    /*! This method returns the pixel noise value vector if it was
-     *  properly set. Otherwise it throws a DataNotAvailableException.
-     *
-     *  @return a vector of float with the pixel noise values.
-     */
-    std::vector<float > getNoiseValues() const;   
     
+    //! Get the cluster dimensions
+    /*! For each cluster type is always possible to define the
+     *  external sizes. 
+     *
+     *  @param xSize The size along x
+     *  @param ySize The size along y
+     */ 
+    virtual void getClusterSize(int& xSize, int& ySize) const { ; } 
+
 
     //! Return the cluster quality
     /*! It returns the cluster quality using the ClusterQuality enum.
@@ -162,6 +164,169 @@ namespace eutelescope {
      *  @return the charge of the seed pixel
      */ 
     virtual float getSeedCharge() const ;
+
+    //! Return the charge of cluster with N pixels
+    /*! This method can be used to return the charge integrated into
+     *  the cluster when only considering the N most significant
+     *  pixels.
+     *
+     *  @return the charge of cluster with N pixels
+     *  @param nPixel The number of pixels to consider
+     */ 
+    virtual float getClusterCharge(int nPixel) const  { return 0.; }
+
+    //! Calculate the cluster charge with different number of pixels
+    /*! This method is a better and faster replacement of the
+     *  getClusterCharge(int) method. This one is actually avoiding to
+     *  re-sort the signal vector all the times it is called. 
+     *
+     *  @param nPixels The list of number of pixels
+     *  @return The charges for each number of pixels
+     */ 
+    virtual std::vector<float > getClusterCharge(std::vector<int > nPixels) const { std::vector<float > vec; return vec; }
+
+    //! Return the charge of a subset of the cluster
+    /*! Whatever shape the cluster has it is always possible to define
+     *  a rectangular frame centered on the seed pixel. With this
+     *  method the charge of this frame is calculated.
+     *
+     *  @param  xSize Odd number to define the x size of the subframe
+     *  @param  ySize Odd number to define the y size of the subframe
+     *  @return The charge of the cluster subframe
+     */ 
+    virtual float getClusterCharge(int xSize, int ySize) const  { return 0.; }
+
+    //! Return the center of gravity shift from the seed coordinates
+    /*! Having a charge distribution it is possible to calculate the
+     *  charge center of gravity of the cluster. This will not
+     *  correspond to the center of the cluster. This method returns
+     *  the shift in both directions one has to apply to the cluster
+     *  center to find the center of gravity
+     *
+     *  @param x Shift along x
+     *  @param y Shift along y
+     */ 
+    virtual void  getCenterOfGravityShift(float& x, float& y) const  { ; }
+
+    //! Return the CoG shift using only a subregion of the cluster
+    /*! As the method above, but this uses only a subset of pixel in
+     *  the cluster: the one belonging to a frame @a xSize width @a
+     *  ySize long around the center
+     *
+     *  @param x Shift along x
+     *  @param y Shift along y
+     *  @param xSize Frame size along x
+     *  @param ySize Frame size along y
+     */ 
+    virtual void  getCenterOfGravityShift(float& x, float& y, 
+					  int xSize, int ySize) const  { ; }
+
+    //! Return the CoG shift using only the nth higher pixels
+    /*! As the above method, but this uses only the @n pixels with the
+     *  highest signal for CoG calculation
+     *
+     *  @param x Shift along x
+     *  @param y Shift along y
+     *  @param n Number of pixels to be used
+     */
+    virtual void  getCenterOfGravityShift(float& x, float& y,
+					  int n) const   { ; }
+
+    //! Return the CoG coordinates
+    /*! This method adds already to the shift the coordinates of the
+     *  cluster center
+     *
+     *  @param x CoG coordinate along x
+     *  @param y CoG coordinate along y
+     */ 
+    virtual void  getCenterOfGravity(float& x, float& y) const  { ; }
+
+    //! Set the cluster quality
+    /*! Used to set the cluster quality using the ClusterQuality enum.
+     *  
+     *  @see eutelescope::ClusterQuality
+     */
+    virtual void setClusterQuality(ClusterQuality)  { ;}
+
+    //! Get the pixel noise values
+    /*! This method returns the pixel noise value vector if it was
+     *  properly set. Otherwise it throws a DataNotAvailableException.
+     *
+     *  @return a vector of float with the pixel noise values.
+     */
+    std::vector<float > getNoiseValues() const;   
+
+   //! Get the cluster noise
+    /*! This method is used to calculate the cluster noise.
+     *  See the implementation for the way the cluster noise is
+     *  calculated. 
+     *
+     *  @return A float value representing the cluster noise.
+     */
+    virtual float getClusterNoise() const    { return 0.; }
+
+    //! Get the cluster SNR
+    /*! This method is used to calculate the cluster signal to noise
+     *  ratio. 
+     *
+     *  @return The cluster SNR for the current cluster
+     */ 
+    virtual float getClusterSNR() const   { return 0.; }
+
+    //! Get seed pixel SNR
+    /*! This method is used to calculate the seed pixel signal to
+     *  noise ratio. Note that depending on the cluster
+     *  implementation, the definition of seed may differ.
+     *
+     *  @return The seed pixel SNR
+     */
+    virtual float getSeedSNR() const { return  0. ; }
+
+    //! Get the cluster N SNR
+    /*! This method returns the SNR of the cluster considering only
+     *  the N most significant pixels. The pixel significance is based
+     *  on a signal (and not SNR) basis.
+     *
+     *  @param nPixel The number of pixel to consider in the cluster
+     *  @return The cluster N SNR.
+     */ 
+    virtual float getClusterSNR(int nPixel) const  {return 0.; }
+
+    //! Get the cluster N x M SNR
+    /*! This method returns the SNR when considering only a
+     *  rectangular subframe of N x M pixel centered around the seed
+     *  pixel. 
+     *
+     *  @param xSize Odd number to define the x size of the subframe
+     *  @param ySize Odd number to define the y size of the subframe
+     *  @return The SNR of the cluster subframe
+     */
+    virtual float getClusterSNR(int xSize, int ySize) const { return 0. ; }
+
+    //! Calculate the cluster SNR with different number of pixels
+    /*! This method is a better and faster replacement of the
+     *  getClusterSNR(int) method. This one is actually avoiding to
+     *  re-sort the signal vector all the times it is called. 
+     *
+     *  @param nPixels The list of number of pixels
+     *  @return The SNRs for each number of pixels
+     */ 
+    virtual std::vector<float > getClusterSNR(std::vector<int > nPixels) const   { std::vector<float > vec; return vec;} 
+    
+    //! Return a pointer to the TrackerDataImpl
+    /*! This method is used to expose to the public the
+     *  TrackerDataImpl member.
+     *
+     *  @return The pointer of _trackerData
+     */
+    virtual IMPL::TrackerDataImpl * trackerData()  { return _trackerData; } 
+    
+    //! Print
+    /*! This method is used to print out the content of the clusters
+     * 
+     *  @param os The input output stream
+     */
+    virtual void print(std::ostream& os) const { ; }
 
     ////////////////////////////////////////////////////////
     //                                                    //
