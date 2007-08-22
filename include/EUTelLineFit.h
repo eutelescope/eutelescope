@@ -193,12 +193,11 @@ namespace eutelescope {
     static std::string _chi2XLocalname;
     static std::string _chi2YLocalname;
 
-    static std::string _residualX1Localname;
-    static std::string _residualX2Localname;
-    static std::string _residualX3Localname;
-    static std::string _residualY1Localname;
-    static std::string _residualY2Localname;
-    static std::string _residualY3Localname;
+    static std::string _angleXLocalname;
+    static std::string _angleYLocalname;
+
+    static std::string _residualXLocalname;
+    static std::string _residualYLocalname;
 #endif
 
     int _nPlanes;
