@@ -59,14 +59,12 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #ifdef MARLIN_USE_AIDA
-std::string EUTelLineFit::_chi2XLocalname          = "Chi2XLocal";
-std::string EUTelLineFit::_chi2YLocalname          = "Chi2YLocal";
-std::string EUTelLineFit::_residualX1Localname     = "ResidualX1Local";
-std::string EUTelLineFit::_residualX2Localname     = "ResidualX2Local";
-std::string EUTelLineFit::_residualX3Localname     = "ResidualX3Local";
-std::string EUTelLineFit::_residualY1Localname     = "ResidualY1Local";
-std::string EUTelLineFit::_residualY2Localname     = "ResidualY2Local";
-std::string EUTelLineFit::_residualY3Localname     = "ResidualY3Local";
+std::string EUTelLineFit::_chi2XLocalname          = "Chi2X";
+std::string EUTelLineFit::_chi2YLocalname          = "Chi2Y";
+std::string EUTelLineFit::_angleXLocalname          = "AngleX";
+std::string EUTelLineFit::_angleYLocalname          = "AngleY";
+std::string EUTelLineFit::_residualXLocalname      = "ResidualX";
+std::string EUTelLineFit::_residualYLocalname      = "ResidualY";
 #endif
 
 
@@ -412,7 +410,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
   float Sxxbar[2] = {0,0};
   float A2[2]     = {0,0};
   float Chiquare[2] = {0,0};
-  
+  float angle[2] = {0,0};
   
   // define S1
   for( counter = 0; counter < _nPlanes; counter++ ){
@@ -477,6 +475,13 @@ void EUTelLineFit::processEvent (LCEvent * event) {
     _waferResidX[counter] = (Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0])-_xPos[counter];
     _waferResidY[counter] = (Ybar[1]-Xbar[1]*A2[1]+_zPos[counter]*A2[1])-_yPos[counter];
   }
+
+  // define angle
+
+
+  angle[0] = atan(A2[0]);
+  angle[1] = atan(A2[1]);
+
 
   // Define output track and hit collections
   LCCollectionVec     * fittrackvec = new LCCollectionVec(LCIO::TRACK);
@@ -573,71 +578,69 @@ void EUTelLineFit::processEvent (LCEvent * event) {
       _histogramSwitch = false;
     }       
   }
-  
+
   if ( _histogramSwitch ) {
     {
       stringstream ss; 
-      ss << _residualX1Localname << endl;
+      ss << _angleXLocalname << endl;
     }
-    if ( AIDA::IHistogram1D* residx1_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_residualX1Localname]) )
-      residx1_histo->fill(_waferResidX[0]);
+    if ( AIDA::IHistogram1D* anglex_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleXLocalname]) )
+      anglex_histo->fill(angle[0]*180/M_PI);
     else {
-      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualX1Localname
+      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _angleXLocalname
 		       << ".\nDisabling histogramming from now on " );
       _histogramSwitch = false;
     }       
   }
-  
+ 
   if ( _histogramSwitch ) {
-    if ( AIDA::IHistogram1D* residx2_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_residualX2Localname]) )
-      residx2_histo->fill(_waferResidX[1]);
+    {
+      stringstream ss; 
+      ss << _angleYLocalname << endl;
+    }
+    if ( AIDA::IHistogram1D* angley_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleYLocalname]) )
+      angley_histo->fill(angle[1]*180/M_PI);
     else {
-      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualX2Localname
+      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _angleYLocalname
 		       << ".\nDisabling histogramming from now on " );
       _histogramSwitch = false;
+    }       
+  }
+ 
+
+  for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
+    
+    if ( _histogramSwitch ) {
+      {
+	stringstream ss; 
+	ss << _residualXLocalname << "-d" << iDetector; 
+	tempHistoName=ss.str();
+      }
+      if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+	residx_histo->fill(_waferResidX[iDetector]);
+      else {
+	message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualXLocalname
+			 << ".\nDisabling histogramming from now on " );
+	_histogramSwitch = false;
+      }       
+    }
+    
+    if ( _histogramSwitch ) {
+      {
+	stringstream ss; 
+	ss << _residualYLocalname << "-d" << iDetector; 
+	tempHistoName=ss.str();
+      }
+      if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+	residy_histo->fill(_waferResidY[iDetector]);
+      else {
+	message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualYLocalname
+			 << ".\nDisabling histogramming from now on " );
+	_histogramSwitch = false;
+      }       
     }
   }
-  
-  if ( _histogramSwitch ) {
-    if ( AIDA::IHistogram1D* residx3_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_residualX3Localname]) )
-      residx3_histo->fill(_waferResidX[2]);
-    else {
-      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualX3Localname
-		       << ".\nDisabling histogramming from now on " );
-      _histogramSwitch = false;
-    }
-  }
-  
-  if ( _histogramSwitch ) {
-    if ( AIDA::IHistogram1D* residy1_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_residualY1Localname]) )
-      residy1_histo->fill(_waferResidY[0]);
-    else {
-      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualY1Localname
-		       << ".\nDisabling histogramming from now on " );
-      _histogramSwitch = false;
-    }
-  }
-  
-  if ( _histogramSwitch ) {
-    if ( AIDA::IHistogram1D* residy2_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_residualY2Localname]) )
-      residy2_histo->fill(_waferResidY[1]);
-    else {
-      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualY2Localname
-		       << ".\nDisabling histogramming from now on " );
-      _histogramSwitch = false;
-    }
-  }       
-  
-  if ( _histogramSwitch ) {
-    if ( AIDA::IHistogram1D* residy3_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_residualY3Localname]) )
-      residy3_histo->fill(_waferResidY[2]);
-    else {
-      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualY3Localname
-		       << ".\nDisabling histogramming from now on " );
-      _histogramSwitch = false;
-    }
-  }
-  
+
 #endif 
   
   delete [] Zbar_X;
@@ -673,21 +676,15 @@ void EUTelLineFit::bookHistos() {
   try {
     message<MESSAGE> ( "Booking histograms" );
     
-    string tempHistoName;
-    
-    {
-      stringstream ss ;
-      ss <<   _residualX1Localname ;
-      tempHistoName = ss.str();
-      //	cout << "tempHistoName in bookHistos = " << tempHistoName << endl; 
-    }
-    
     const int    NBin = 100;
     const double Chi2Min  = 0.;      
-    const double Chi2Max  = 10000.;      
-    const double Min  = -500.;
-    const double Max  = 500.;
-    
+    const double Chi2Max  = 10.;      
+    const double Min  = -50.;
+    const double Max  = 50.;
+    const double angleMin  = -3.;
+    const double angleMax  = 3.;
+
+
     AIDA::IHistogram1D * chi2XLocal = 
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_chi2XLocalname,NBin,Chi2Min,Chi2Max);
     if ( chi2XLocal ) {
@@ -710,70 +707,84 @@ void EUTelLineFit::bookHistos() {
       _histogramSwitch = false;
     }
     
-    AIDA::IHistogram1D * residualX1Local = 
-      AIDAProcessor::histogramFactory(this)->createHistogram1D(_residualX1Localname,NBin, Min,Max);
-    if ( residualX1Local ) {
-      residualX1Local->setTitle("X Residual 1");
-      _aidaHistoMap.insert( make_pair( _residualX1Localname, residualX1Local ) );
+    AIDA::IHistogram1D * angleXLocal = 
+      AIDAProcessor::histogramFactory(this)->createHistogram1D(_angleXLocalname,NBin,angleMin,angleMax);
+    if ( angleXLocal ) {
+      angleXLocal->setTitle("X Angle");
+      _aidaHistoMap.insert( make_pair( _angleXLocalname, angleXLocal ) );
     } else {
-      message<ERROR> ( log() << "Problem booking the " << (_residualX1Localname) << ".\n"
+      message<ERROR> ( log() << "Problem booking the " << (_angleXLocalname) << ".\n"
 		       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
       _histogramSwitch = false;
     }
     
-    AIDA::IHistogram1D * residualX2Local = 
-      AIDAProcessor::histogramFactory(this)->createHistogram1D(_residualX2Localname,NBin, Min,Max);
-    if ( residualX2Local ) {
-      residualX2Local->setTitle("X Residual 2");
-      _aidaHistoMap.insert( make_pair( _residualX2Localname, residualX2Local ) );
+    AIDA::IHistogram1D * angleYLocal = 
+      AIDAProcessor::histogramFactory(this)->createHistogram1D(_angleYLocalname,NBin,angleMin,angleMax);
+    if ( angleYLocal ) {
+      angleYLocal->setTitle("Y Angle");
+      _aidaHistoMap.insert( make_pair( _angleYLocalname, angleYLocal ) );
     } else {
-      message<ERROR> ( log() << "Problem booking the " << (_residualX2Localname) << ".\n"
+      message<ERROR> ( log() << "Problem booking the " << (_angleYLocalname) << ".\n"
 		       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
       _histogramSwitch = false;
     }
+
+    string tempHisto;
+    string tempHistoName;
+    string histoTitleXResid;
+    string histoTitleYResid;
     
-    AIDA::IHistogram1D * residualX3Local = 
-      AIDAProcessor::histogramFactory(this)->createHistogram1D(_residualX3Localname,NBin, Min,Max);
-    if ( residualX3Local ) {
-      residualX3Local->setTitle("X Residual 3");
-      _aidaHistoMap.insert( make_pair( _residualX3Localname, residualX3Local ) );
-    } else {
-      message<ERROR> ( log() << "Problem booking the " << (_residualX3Localname) << ".\n"
-		       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
-      _histogramSwitch = false;
-    }
-    
-    AIDA::IHistogram1D * residualY1Local = 
-      AIDAProcessor::histogramFactory(this)->createHistogram1D(_residualY1Localname,NBin, Min,Max);
-    if ( residualY1Local ) {
-      residualY1Local->setTitle("Y Residual 1");
-      _aidaHistoMap.insert( make_pair( _residualY1Localname, residualY1Local ) );
-    } else {
-      message<ERROR> ( log() << "Problem booking the " << (_residualY1Localname) << ".\n"
-		       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
-      _histogramSwitch = false;
-    }
-    
-    AIDA::IHistogram1D * residualY2Local = 
-      AIDAProcessor::histogramFactory(this)->createHistogram1D(_residualY2Localname,NBin, Min,Max);
-    if ( residualY2Local ) {
-      residualY2Local->setTitle("Y Residual 2");
-      _aidaHistoMap.insert( make_pair( _residualY2Localname, residualY2Local ) );
-    } else {
-      message<ERROR> ( log() << "Problem booking the " << (_residualY2Localname) << ".\n"
-		       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
-      _histogramSwitch = false;
-    }
-    
-    AIDA::IHistogram1D * residualY3Local = 
-      AIDAProcessor::histogramFactory(this)->createHistogram1D(_residualY3Localname,NBin, Min,Max);
-    if ( residualY3Local ) {
-      residualY3Local->setTitle("Y Residual 3");
-      _aidaHistoMap.insert( make_pair( _residualY3Localname, residualY3Local ) );
-    } else {
-      message<ERROR> ( log() << "Problem booking the " << (_residualY3Localname) << ".\n"
-		       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
-      _histogramSwitch = false;
+    for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
+      
+      {
+	stringstream ss; 
+	stringstream pp; 
+	stringstream tt;
+	
+	pp << "ResidualXLocal-d" << iDetector; 
+	tempHisto=pp.str();
+	ss << _residualXLocalname << "-d" << iDetector; 
+	tempHistoName=ss.str();
+	tt << "XResidual" << "-d" << iDetector; 
+	histoTitleXResid=tt.str();
+	
+      }
+      
+      AIDA::IHistogram1D *  tempXHisto = 
+	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin, Min,Max);
+      if ( tempXHisto ) {
+	tempXHisto->setTitle(histoTitleXResid);
+	_aidaHistoMap.insert( make_pair( tempHistoName, tempXHisto ) );
+      } else {
+	message<ERROR> ( log() << "Problem booking the " << (tempHistoName) << ".\n"
+			 << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	_histogramSwitch = false;
+      }
+      
+      {
+	stringstream ss; 
+	stringstream pp; 
+      	stringstream tt;
+	
+	pp << "ResidualYLocal-d" << iDetector; 
+	tempHisto=pp.str();
+	ss << _residualYLocalname << "-d" << iDetector; 
+	tempHistoName=ss.str();
+	tt << "YResidual" << "-d" << iDetector; 
+	histoTitleYResid=tt.str();
+      }
+      
+      AIDA::IHistogram1D *  tempYHisto = 
+	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin, Min,Max);
+      if ( tempYHisto ) {
+	tempYHisto->setTitle(histoTitleYResid);
+	_aidaHistoMap.insert( make_pair( tempHistoName, tempYHisto ) );
+      } else {
+	message<ERROR> ( log() << "Problem booking the " << (tempHistoName) << ".\n"
+			 << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	_histogramSwitch = false;
+      }
+      
     }
     
   } catch (lcio::Exception& e ) {
