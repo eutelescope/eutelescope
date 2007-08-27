@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.5 2007-08-21 18:26:31 roloff Exp $
+// Version: $Id: EUTelAlign.cc,v 1.6 2007-08-27 13:08:16 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -79,9 +79,15 @@ EUTelAlign::EUTelAlign () : Processor("EUTelAlign") {
 			     "Aligned plane",
 			     _alignedPlane,  static_cast < int > (0));
 
+  // not used at the moment
+
+  /*
+
   registerProcessorParameter("Chi2Cut",
 			     "Start value for Chi2 cut in fit",
 			     _chi2Cut,  static_cast < double > (0));
+
+  */
 
   FloatVec startValues;
   startValues.push_back(0.0);
@@ -310,23 +316,15 @@ void EUTelAlign::Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t 
     y = ((-1)*cos(par[3])*sin(par[5])) * _hitsForFit[i].secondLayerMeasuredX + (sin(par[2])*sin(par[3])*sin(par[5]) + cos(par[2])*cos(par[5])) * _hitsForFit[i].secondLayerMeasuredY + par[1];
 
     distance = ((x - _hitsForFit[i].secondLayerPredictedX) * (x - _hitsForFit[i].secondLayerPredictedX) + (y - _hitsForFit[i].secondLayerPredictedY) * (y - _hitsForFit[i].secondLayerPredictedY)) / 100;
-
-    if (par[6] == 0) {
-      usedevents++;
-      chi2+=distance;
-    } else {
-      if (distance < par[6]) {
-	usedevents++;
-	chi2+=distance;
-      }
-    }
       
-    // add chi2 cut here
+    // add chi2 cut here later?
     chi2 = chi2 + distance;
+
+    usedevents++;
 
   } // end loop over all events
 
-  streamlog_out ( MESSAGE) << usedevents << " ";
+  // streamlog_out ( MESSAGE) << usedevents << " ";
 
   f = chi2;
 
@@ -343,8 +341,8 @@ void EUTelAlign::end() {
 
   gSystem->Load("libMinuit");
 
-  // init Minuit for 7 parameters
-  TMinuit *gMinuit = new TMinuit(7);
+  // init Minuit for 6 parameters
+  TMinuit *gMinuit = new TMinuit(6);
 
   // set print level (-1 = quiet, 0 = normal, 1 = verbose)
   gMinuit->SetPrintLevel(0);
@@ -377,15 +375,25 @@ void EUTelAlign::end() {
   gMinuit->mnparm(3,"theta_y",start_theta_y,0.001,0,0,ierflag);
   gMinuit->mnparm(4,"theta_z1",start_theta_z1,0.001,0,0,ierflag);
   gMinuit->mnparm(5,"theta_z2",start_theta_z2,0.001,0,0,ierflag);
-  gMinuit->mnparm(6,"chicut",_chi2Cut,1,0,0,ierflag);
 
-//   gMinuit->FixParameter(4);
-//   gMinuit->FixParameter(5);
+  gMinuit->FixParameter(2);
+  gMinuit->FixParameter(3);
+  gMinuit->FixParameter(4);
+  gMinuit->FixParameter(5);
 
-  streamlog_out ( MESSAGE ) << "Used events: " << endl;
+  // call migrad (2000 iterations, 0.1 = tolerance)
+  arglist[0] = 500;
+  arglist[1] = 0.1;
+  gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
 
-  // call migrad (500 iterations, 0.1 = tolerance)
-  arglist[0] = 2000;
+  gMinuit->Release(2);
+  gMinuit->Release(3);
+  gMinuit->Release(4);
+  gMinuit->Release(5);
+  // gMinuit->Release(6);
+
+  // call migrad (2000 iterations, 0.1 = tolerance)
+  arglist[0] = 500;
   arglist[1] = 0.1;
   gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
 
@@ -420,7 +428,8 @@ void EUTelAlign::end() {
   streamlog_out ( MESSAGE ) << "theta_x: " << theta_x << " +/- " << theta_x_error << endl;
   streamlog_out ( MESSAGE ) << "theta_y: " << theta_y << " +/- " << theta_y_error << endl;
   streamlog_out ( MESSAGE ) << "theta_z1: " << theta_z1 << " +/- " << theta_z1_error << endl;
-  streamlog_out ( MESSAGE ) << "theta_z2: " << theta_z2 << " +/- " << theta_z2_error << endl;
+  streamlog_out ( MESSAGE ) << "theta_z2: " << theta_z2 << " +/- " << theta_z2_error << endl << endl;
+  streamlog_out ( MESSAGE ) << "For copy and paste to line fit xml-file: " << off_x << " " << off_y << " " << theta_x << " " << theta_y << " " << theta_z1 << " " << theta_z2 << endl;
 
 //   delete [] _intrResolY;
 //   delete [] _intrResolX;
