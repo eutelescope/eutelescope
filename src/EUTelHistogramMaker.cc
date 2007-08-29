@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.14 2007-07-26 06:49:20 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.15 2007-08-29 15:14:13 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -162,34 +162,35 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
   if ( (_iEvt % 10) == 0 ) 
     message<MESSAGE> ( log() << "Filling histogram on event " << _iEvt );
 
+  LCCollectionVec * noiseCollectionVec = 0x0, * statusCollectionVec = 0x0;
+  
+  if ( _noiseHistoSwitch ) {
+    try {
+      noiseCollectionVec  = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _noiseCollectionName ) );
+    } catch (lcio::DataNotAvailableException& e) {
+      message<ERROR> ( log() << e.what() 
+		       << "Switching off the noise histogram filling and continuing" );
+      _noiseHistoSwitch &= false;    
+    }
+    try {
+      statusCollectionVec = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _statusCollectionName ) );
+    } catch (lcio::DataNotAvailableException& e) {
+      message<ERROR> ( log() << e.what() 
+			 << "Switching off the noise histogram filling and continuing" );    
+      _noiseHistoSwitch &= false;
+    }
+  }
+    
+  if ( isFirstEvent() ) {
+    bookHistos();
+    _isFirstEvent = false;
+  } 
+  
+
   try {
 
     LCCollectionVec * pulseCollectionVec = dynamic_cast<LCCollectionVec*>  (evt->getCollection(_pulseCollectionName));
     CellIDDecoder<TrackerPulseImpl> cellDecoder(pulseCollectionVec);
-    
-    LCCollectionVec * noiseCollectionVec = 0x0, * statusCollectionVec = 0x0;
-    
-    if ( _noiseHistoSwitch ) {
-      try {
-	noiseCollectionVec  = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _noiseCollectionName ) );
-      } catch (lcio::DataNotAvailableException& e) {
-	message<ERROR> ( log() << e.what() 
-			 << "Switching off the noise histogram filling and continuing" );
-	_noiseHistoSwitch &= false;    
-      }
-      try {
-	statusCollectionVec = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _statusCollectionName ) );
-      } catch (lcio::DataNotAvailableException& e) {
-	message<ERROR> ( log() << e.what() 
-			 << "Switching off the noise histogram filling and continuing" );    
-	_noiseHistoSwitch &= false;
-      }
-    }
-    
-    if ( isFirstEvent() ) {
-      bookHistos();
-      _isFirstEvent = false;
-    } 
     
     // prepare and reset the hit counter
     vector<unsigned short> eventCounterVec( _noOfDetector, 0 );
