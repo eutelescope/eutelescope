@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTELESCOPE.cc,v 1.12 2007-08-18 21:49:40 bulgheroni Exp $
+// Version: $Id: EUTELESCOPE.cc,v 1.13 2007-08-30 08:24:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -25,6 +25,7 @@ const char *   EUTELESCOPE::DAQSWVERSION        = "DAQSWVersion";
 const char *   EUTELESCOPE::SIMULSWNAME         = "SimulSWName";
 const char *   EUTELESCOPE::SIMULSWVERSION      = "SimulSWVersion";
 const char *   EUTELESCOPE::GEOID               = "GeoID";
+const char *   EUTELESCOPE::EUDRBMODE           = "EUDRBMode";
 const char *   EUTELESCOPE::BEAMLOCATION        = "BeamLocation";
 const char *   EUTELESCOPE::BEAMTYPE            = "BeamType";
 const char *   EUTELESCOPE::BEAMENERGY          = "BeamEnergy";
@@ -58,7 +59,7 @@ const char *   EUTELESCOPE::CLUSTERDEFAULTENCODING   = "sensorID:5,clusterID:8,x
 const char *   EUTELESCOPE::PULSEDEFAULTENCODING     = "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,type:5";
 const char *   EUTELESCOPE::ZSDATADEFAULTENCODING    = "sensorID:5,sparsePixelType:5";
 const char *   EUTELESCOPE::ZSCLUSTERDEFAULTENCODING = "sensorID:5,clusterID:8,sparsePixelType:5,quality:5";
-const char *   EUTELESCOPE::FIXEDWEIGHT         = "FixedWeight";
+const char *   EUTELESCOPE::FIXEDWEIGHT              = "FixedWeight";
 
 
 namespace eutelescope {
