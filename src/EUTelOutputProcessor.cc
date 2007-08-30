@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelOutputProcessor.cc,v 1.2 2007-07-09 13:44:56 bulgheroni Exp $
+// Version $Id: EUTelOutputProcessor.cc,v 1.3 2007-08-30 08:49:42 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -13,6 +13,7 @@
 // eutelescope includes ".h"
 #include "EUTelOutputProcessor.h"
 #include "EUTelEventImpl.h"
+#include "EUTelRunHeaderImpl.h"
 #include "EUTELESCOPE.h"
 
 // marlin includes ".h"
@@ -21,6 +22,9 @@
 // lcio includes <.h>
 #include <UTIL/LCTOOLS.h>
 #include <UTIL/LCTime.h>
+
+// system includes <>
+#include <memory>
 
 using namespace std;
 using namespace marlin;
@@ -33,46 +37,47 @@ EUTelOutputProcessor::EUTelOutputProcessor() : LCIOOutputProcessor("EUTelOutputP
     " Eventually it adds a EORE at the of the file if it was missing"
     " Needs to be the last ActiveProcessor." ;
     
+#ifndef MARLIN_VERSION_GE
+
+  registerProcessorParameter( "LCIOOutputFile" , 
+			      " name of output file "  ,
+			      _lcioOutputFile ,
+			      std::string("outputfile.slcio") ) ;
     
-//   registerProcessorParameter( "LCIOOutputFile" , 
-// 			      " name of output file "  ,
-// 			      _lcioOutputFile ,
-// 			      std::string("outputfile.slcio") ) ;
-    
-//   registerProcessorParameter( "LCIOWriteMode" , 
-// 			      "write mode for output file:  WRITE_APPEND or WRITE_NEW"  ,
-// 			      _lcioWriteMode ,
-// 			      std::string("None") ) ;
+  registerProcessorParameter( "LCIOWriteMode" , 
+			      "write mode for output file:  WRITE_APPEND or WRITE_NEW"  ,
+			      _lcioWriteMode ,
+			      std::string("None") ) ;
 
 
-//   StringVec dropNamesExamples ;
-//   dropNamesExamples.push_back("rawdata");
-//   dropNamesExamples.push_back("data");
-//   dropNamesExamples.push_back("pedestal");
-//   dropNamesExamples.push_back("noise");
-//   dropNamesExamples.push_back("status");
+  StringVec dropNamesExamples ;
+  dropNamesExamples.push_back("rawdata");
+  dropNamesExamples.push_back("data");
+  dropNamesExamples.push_back("pedestal");
+  dropNamesExamples.push_back("noise");
+  dropNamesExamples.push_back("status");
 
-//   registerOptionalParameter( "DropCollectionNames" , 
-// 			     "drops the named collections from the event"  ,
-// 			     _dropCollectionNames ,
-// 			     dropNamesExamples ) ;
+  registerOptionalParameter( "DropCollectionNames" , 
+			     "drops the named collections from the event"  ,
+			     _dropCollectionNames ,
+			     dropNamesExamples ) ;
     
     
-//   StringVec dropTypesExample ;
-//   dropTypesExample.push_back("TrackerRawData");
-//   dropTypesExample.push_back("TrackerData");
+  StringVec dropTypesExample ;
+  dropTypesExample.push_back("TrackerRawData");
+  dropTypesExample.push_back("TrackerData");
     
-//   registerOptionalParameter( "DropCollectionTypes" , 
-// 			     "drops all collections of the given type from the event"  ,
-// 			     _dropCollectionTypes ,
-// 			     dropTypesExample ) ;
+  registerOptionalParameter( "DropCollectionTypes" , 
+			     "drops all collections of the given type from the event"  ,
+			     _dropCollectionTypes ,
+			     dropTypesExample ) ;
     
 
-//   registerOptionalParameter( "SplitFileSizekB" , 
-// 			     "will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW"  ,
-// 			     _splitFileSizekB, 
-// 			     1992294 ) ;  // 1.9 GB in kB
-
+  registerOptionalParameter( "SplitFileSizekB" , 
+			     "will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW"  ,
+			     _splitFileSizekB, 
+			     1992294 ) ;  // 1.9 GB in kB
+#endif    
 
   registerProcessorParameter("SkipIntermediateEORE",
 			     "Set it to true to remove intermediate EORE in merged runs",
@@ -92,6 +97,9 @@ void EUTelOutputProcessor::init() {
 
 
 void EUTelOutputProcessor::processRunHeader( LCRunHeader* run) { 
+
+  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( run ) ) ;
+  runHeader->addProcessor( type() );
 
   LCIOOutputProcessor::processRunHeader(run);
 
