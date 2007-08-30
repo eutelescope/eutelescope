@@ -24,6 +24,7 @@
 
 // lcio includes <.h> 
 #include <IMPL/TrackerRawDataImpl.h>
+#include <IMPL/LCCollectionVec.h>
 
 // system includes <>
 #include <string>
@@ -127,7 +128,7 @@ namespace eutelescope {
    *  containing the histogram booking information.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.14 2007-07-13 08:13:57 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.15 2007-08-30 08:59:01 bulgheroni Exp $
    *
    */
 
@@ -302,7 +303,7 @@ namespace eutelescope {
      *
      *  @param evt The LCIO event has passed by processEvent(LCEvent*)
      */
-    void fixedFrameClustering(LCEvent * evt);
+    void fixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
 
     //! Input collection name.
@@ -343,7 +344,7 @@ namespace eutelescope {
      */
     int _iRun;
 
-    //! Clusterization algorithm
+    //! Clusterization algorithm for full frames
     /*! This string is used to select which clustering algorithm
      *  should be used. Follows a list of available algorithm:
      *
@@ -362,7 +363,12 @@ namespace eutelescope {
      *  assigned to any other clusters and is removed from further
      *  operations.
      */
-    std::string _clusteringAlgo;
+    std::string _rawModeClusteringAlgo;
+
+    //! Clusterization algorithm for ZS frames
+    /*! 
+     */
+    std::string _zsModeClusteringAlgo;
 
 
     //! Cluster size along x in pixel

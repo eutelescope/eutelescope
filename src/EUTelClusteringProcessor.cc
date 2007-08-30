@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.25 2007-07-26 06:49:20 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.26 2007-08-30 08:59:01 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -50,7 +50,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
-
+#include <memory>
 
 using namespace std;
 using namespace lcio;
@@ -107,7 +107,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
 			      "Select here which algorithm should be used for clustering.\n"
 			      "Available algorithms are:\n"
 			      "-> FixedFrame: for custer with a given size",
-			      _clusteringAlgo, string(EUTELESCOPE::FIXEDFRAME));
+			      _rawModeClusteringAlgo, string(EUTELESCOPE::FIXEDFRAME));
   
   registerProcessorParameter ("ClusterSizeX",
 			      "Maximum allowed cluster size along x (only odd numbers)",
@@ -163,7 +163,7 @@ void EUTelClusteringProcessor::init () {
 
   // in the case the FIXEDFRAME algorithm is selected, the check if
   // the _xClusterSize and the _yClusterSize are odd numbers
-  if ( _clusteringAlgo == EUTELESCOPE::FIXEDFRAME ) {
+  if ( _rawModeClusteringAlgo == EUTELESCOPE::FIXEDFRAME ) {
     bool isZero = ( _xClusterSize <= 0 );
     bool isEven = ( _xClusterSize % 2 == 0 );
     if ( isZero || isEven ) {
@@ -187,9 +187,11 @@ void EUTelClusteringProcessor::init () {
 
 void EUTelClusteringProcessor::processRunHeader (LCRunHeader * rdr) {
 
-  // to make things easier re-cast the input header to the EUTelRunHeaderImpl
-  EUTelRunHeaderImpl *  runHeader = static_cast<EUTelRunHeaderImpl*>(rdr);
 
+  auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
+
+  runHeader->addProcessor( type());
+  
   // the four vectors containing the first and the last pixel
   // along both the directions
   _minX = runHeader->getMinX();
@@ -212,6 +214,15 @@ void EUTelClusteringProcessor::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelClusteringProcessor::processEvent (LCEvent * event) {
 
+  if (_iEvt % 10 == 0) 
+    streamlog_out( MESSAGE4 ) << "Processing event " 
+			      << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+			      << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+			      << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  ++_iEvt;
+
+  // in the current event it is possible to have either 
+    
 #ifdef MARLIN_USE_AIDA
   // book the histograms now
   if ( _fillHistos && isFirstEvent() ) {
@@ -221,24 +232,40 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
   if ( evt->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
+    streamlog_out ( DEBUG4 ) <<  "EORE found: nothing else to do." <<  endl;
     return;
   } else if ( evt->getEventType() == kUNKNOWN ) {
-    message<WARNING> ( log() << "Event number " << evt->getEventNumber() 
-		       << " is of unknown type. Continue considering it as a normal Data Event."  );
+    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() 
+			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
-  if (_iEvt % 10 == 0)  message<MESSAGE> ( log() <<  "Clustering event " << _iEvt ) ;
+  // prepare a pulse collection to add all clusters found
+  LCCollectionVec * pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
+
+  // first look for cluster in RAW mode frames
+  if ( _rawModeClusteringAlgo == EUTELESCOPE::FIXEDFRAME ) fixedFrameClustering(evt, pulseCollection);
   
-  if ( _clusteringAlgo == EUTELESCOPE::FIXEDFRAME ) fixedFrameClustering(evt);
-  
+  // now also in the ZS mode frames
+  //  if ( _rawModeClusteringAlgo == EUTELESCOPE::SPARSECLUSTER )
+  //  sparseClustering(evt);
+
+  // if the pulseCollection is not empty add it to the event
+  if ( pulseCollection->size() != 0 ) {
+    evt->addCollection(pulseCollection,_pulseCollectionName);
+
 #ifdef MARLIN_USE_AIDA
-  if ( _fillHistos ) fillHistos(event);
+    if ( _fillHistos ) fillHistos(event);
 #endif
+
+  } else {
+    delete pulseCollection;
+  }
+
+  _isFirstEvent = false;
 
 }
 
-void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
+void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
   
   LCCollectionVec * inputCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_dataCollectionName));
   LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
@@ -267,16 +294,14 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
     for (_iDetector = 0; _iDetector < inputCollectionVec->getNumberOfElements(); _iDetector++) 
       _totCluster.push_back(0);
     
-    _isFirstEvent = false;
   }
 
 #ifdef MARLINDEBUG  
   /// /* DEBUG */ message<DEBUG> ( logfile << "Event " << _iEvt );
 #endif
 
-  message<DEBUG> ( log()   << "Event " << _iEvt );
+  streamlog_out ( DEBUG0 ) << "Event " << _iEvt << endl;
 
-  LCCollectionVec * pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
   LCCollectionVec * dummyCollection = new LCCollectionVec(LCIO::TRACKERDATA);
 
   for (_iDetector = 0; _iDetector < inputCollectionVec->getNumberOfElements(); _iDetector++) {
@@ -284,7 +309,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 #ifdef MARLINDEBUG
     /// /* DEBUG */ message<DEBUG> ( logfile << "  Working on detector " << _iDetector );
 #endif
-    message<DEBUG> ( log()   << "  Working on detector " << _iDetector );
+    streamlog_out ( DEBUG0 ) << "  Working on detector " << _iDetector << endl;
 
     // get the calibrated data 
     TrackerDataImpl    * data   = dynamic_cast<TrackerDataImpl*>   (inputCollectionVec->getElementAt(_iDetector));
@@ -322,7 +347,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 #ifdef MARLINDEBUG
       /// /* DEBUG */      message<DEBUG> ( logfile << "  Seed candidates " << _seedCandidateMap.size() ); 
 #endif
-      message<DEBUG> ( log()   << "  Seed candidates " << _seedCandidateMap.size() );
+      streamlog_out ( DEBUG0 ) << "  Seed candidates " << _seedCandidateMap.size() << endl;
 
       // now built up a cluster for each seed candidate 
       map<float, unsigned int>::iterator mapIter = _seedCandidateMap.end();     
@@ -417,7 +442,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 #ifdef MARLINDEBUG
 	    /// /* DEBUG */	    message<DEBUG> ( logfile << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY );
 #endif	    
-	    message<DEBUG> ( log()   << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY );
+	    streamlog_out (DEBUG0) << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY << endl;
 
 	    
 	    while ( indexIter != clusterCandidateIndeces.end() ) {
@@ -430,9 +455,9 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	      /// /* DEBUG */	      message<DEBUG> ( logfile << "  x " << matrixDecoder.getXFromIndex(clusterCandidateIndeces[iPixel])
 	      /// /* DEBUG */			       << "  y " <<  matrixDecoder.getYFromIndex(clusterCandidateIndeces[iPixel])
 	      /// /* DEBUG */			       << "  s " <<  clusterCandidateCharges[iPixel]);
-	      message<DEBUG> ( log() << "  x " <<  matrixDecoder.getXFromIndex(clusterCandidateIndeces[iPixel])
-			       << "  y " <<  matrixDecoder.getYFromIndex(clusterCandidateIndeces[iPixel])
-			       << "  s " <<  clusterCandidateCharges[iPixel]);
+	      streamlog_out ( DEBUG0 ) << "  x " <<  matrixDecoder.getXFromIndex(clusterCandidateIndeces[iPixel])
+				       << "  y " <<  matrixDecoder.getYFromIndex(clusterCandidateIndeces[iPixel])
+				       << "  s " <<  clusterCandidateCharges[iPixel] << endl;
 	    }
 #endif
 
@@ -454,8 +479,8 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
 	    if ( clusterCounter > 256 ) {
 	      ++limitExceed;
 	      --clusterCounter;
-	      message<WARNING> ( log() << "Event " << _iEvt << " contains more than 256 clusters (" 
-				 << clusterCounter + limitExceed << ")" );
+	      streamlog_out ( WARNING0 ) << "Event " << _iEvt << " contains more than 256 clusters (" 
+					 << clusterCounter + limitExceed << ")" << endl;
 	    }
 	  } else {
 	    // the cluster has not passed the cut!
@@ -466,15 +491,11 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt) {
     }
   }
 
-  ++_iEvt;
-
-  if ( pulseCollection->size() != 0 ) {
-    evt->addCollection(pulseCollection,_pulseCollectionName);
+  if ( dummyCollection->size() != 0 ) {
     evt->addCollection(dummyCollection,_dummyCollectionName);
   } else {
-    delete pulseCollection;
     delete dummyCollection;
-    throw SkipEventException(this);
+    //    throw SkipEventException(this);
   }
   
 }
@@ -488,13 +509,13 @@ void EUTelClusteringProcessor::check (LCEvent * evt) {
 
 void EUTelClusteringProcessor::end() {
 
-  message<MESSAGE> ( "Successfully finished" );
+  streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
 
   for (_iDetector = 0; _iDetector < (signed) _totCluster.size() ; _iDetector++) {
 #ifdef MARLINDEBUG
     /// /* DEBUG */    message<DEBUG> ( logfile << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector );
 #endif
-    message<DEBUG> ( log() << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector );
+    streamlog_out ( DEBUG4 ) << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector << endl;
   }
 #ifdef MARLINDEBUG
   /// /* DEBUG */  logfile.close();
@@ -522,16 +543,12 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
   EventType type              = eutelEvent->getEventType();
   
   if ( type == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do.");
+    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return ;
   } else if ( type == kUNKNOWN ) {
-    message<WARNING> ( log() << "Event number " << evt->getEventNumber() 
-		       << " is of unknown type. Continue considering it as a normal Data Event."  );
+    streamlog_out ( WARNING2 )  << "Event number " << evt->getEventNumber() 
+				<< " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
-  
-
-  if ( (_iEvt % 10) == 0 ) 
-    message<MESSAGE> ( log() << "Filling histogram on event " << _iEvt );
   
   LCCollectionVec * pulseCollectionVec = dynamic_cast<LCCollectionVec*>  (evt->getCollection(_pulseCollectionName));
   CellIDDecoder<TrackerPulseImpl > cellDecoder(pulseCollectionVec);
@@ -552,7 +569,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
     if ( type == kEUTelFFClusterImpl ) {
       cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
     } else {
-      message<ERROR> ( "Unknown cluster type. Sorry for quitting" );
+      streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
       throw UnknownDataTypeException("Cluster type unknown");
     }
     
@@ -606,7 +623,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
       tempHistoName = ss.str();
     } 
     int xSeed, ySeed;
-    cluster->getSeedCoord(xSeed, ySeed);
+    cluster->getCenterCoord(xSeed, ySeed);
     (dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[tempHistoName]))
       ->fill(static_cast<double >(xSeed), static_cast<double >(ySeed), 1.);
     
@@ -646,8 +663,8 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
     try {
       cluster->setNoiseValues(noiseValues);
     } catch ( IncompatibleDataSetException& e ) {
-      message<ERROR> ( log() << e.what() << "\n"
-		       "Continuing without filling the noise histograms" );
+      streamlog_out ( WARNING2 ) << e.what() << endl
+				 << "Continuing without filling the noise histograms" << endl;
       fillSNRSwitch = false;
     }
     
@@ -739,7 +756,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 void EUTelClusteringProcessor::bookHistos() {
 
   // histograms are grouped in loops and detectors
-  message<MESSAGE> ( log() << "Booking histograms " );
+  streamlog_out ( MESSAGE0 )  << "Booking histograms " << endl;
   auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
   EUTelHistogramInfo    * histoInfo;
   bool                    isHistoManagerAvailable;
@@ -747,12 +764,12 @@ void EUTelClusteringProcessor::bookHistos() {
   try { 
     isHistoManagerAvailable = histoMgr->init();
   } catch ( ios::failure& e) {
-    message<ERROR> ( log() << "I/O problem with " << _histoInfoFileName << "\n"
-		     << "Continuing without histogram manager"    );
+    streamlog_out ( WARNING2 ) << "I/O problem with " << _histoInfoFileName << "\n"
+			       << "Continuing without histogram manager"  << endl;
     isHistoManagerAvailable = false;
   } catch ( ParseException& e ) {
-    message<ERROR> ( log() << e.what() << "\n"
-		     << "Continuing without histogram manager" );
+    streamlog_out ( WARNING2 ) << e.what() << "\n"
+			       << "Continuing without histogram manager" << endl;
     isHistoManagerAvailable = false;
   }
   
@@ -776,7 +793,7 @@ void EUTelClusteringProcessor::bookHistos() {
     if ( isHistoManagerAvailable ) {
       histoInfo = histoMgr->getHistogramInfo( _clusterSignalHistoName );
       if ( histoInfo ) {
-	message<DEBUG> ( log() << (* histoInfo ) );
+	streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
 	clusterNBin = histoInfo->_xBin;
 	clusterMin  = histoInfo->_xMin;
 	clusterMax  = histoInfo->_xMax;
@@ -791,7 +808,7 @@ void EUTelClusteringProcessor::bookHistos() {
     if ( isHistoManagerAvailable ) {
       histoInfo = histoMgr->getHistogramInfo( _clusterSNRHistoName );
       if ( histoInfo ) {
-	message<DEBUG> ( log() << (* histoInfo ) );
+	streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
 	clusterSNRNBin = histoInfo->_xBin;
 	clusterSNRMin  = histoInfo->_xMin;
 	clusterSNRMax  = histoInfo->_xMax;
@@ -919,7 +936,7 @@ void EUTelClusteringProcessor::bookHistos() {
     if ( isHistoManagerAvailable ) {
       histoInfo = histoMgr->getHistogramInfo( _seedSignalHistoName );
       if ( histoInfo ) {
-	message<DEBUG> ( log() << (* histoInfo ) );
+	streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
 	seedNBin = histoInfo->_xBin;
 	seedMin  = histoInfo->_xMin;
 	seedMax  = histoInfo->_xMax;
@@ -944,7 +961,7 @@ void EUTelClusteringProcessor::bookHistos() {
     if ( isHistoManagerAvailable ) {
       histoInfo = histoMgr->getHistogramInfo( _seedSNRHistoName );
       if ( histoInfo ) {
-	message<DEBUG> ( log() << (* histoInfo ) );
+	streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
 	seedSNRNBin = histoInfo->_xBin;
 	seedSNRMin  = histoInfo->_xMin;
 	seedSNRMax  = histoInfo->_xMax;
@@ -970,7 +987,7 @@ void EUTelClusteringProcessor::bookHistos() {
     if ( isHistoManagerAvailable ) {
       histoInfo = histoMgr->getHistogramInfo( _clusterNoiseHistoName );
       if ( histoInfo ) {
-	message<DEBUG> ( log() << (* histoInfo ) );
+	streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
 	clusterNoiseNBin = histoInfo->_xBin;
 	clusterNoiseMin  = histoInfo->_xMin;
 	clusterNoiseMax  = histoInfo->_xMax;
@@ -1013,7 +1030,7 @@ void EUTelClusteringProcessor::bookHistos() {
     if ( isHistoManagerAvailable ) {
       histoInfo = histoMgr->getHistogramInfo(  _eventMultiplicityHistoName );
       if ( histoInfo ) {
-	message<DEBUG> ( log() << (* histoInfo ) );
+	streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
 	eventMultiNBin  = histoInfo->_xBin;
 	eventMultiMin   = histoInfo->_xMin;
 	eventMultiMax   = histoInfo->_xMax;
