@@ -115,7 +115,7 @@ namespace eutelescope {
    *   the marker position in pixel number start counting from 0.
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelMimoTelReader.h,v 1.5 2007-07-04 07:38:40 bulgheroni Exp $
+   *   @version $Id: EUTelMimoTelReader.h,v 1.6 2007-08-30 09:00:28 bulgheroni Exp $
    *
    */
   
@@ -177,6 +177,9 @@ namespace eutelescope {
     //! The CDS collection name
     std::string _cdsCollectionName;
 
+    //! The zero suppressed frame collection name
+    std::string _zsFrameCollectionName;
+
     //! The CDS enable flag
     /*! This flag is true if the converter should perform also online
      *  CDS calculation. It is false otherwise.
@@ -216,6 +219,14 @@ namespace eutelescope {
      *
      */
     std::vector<int > _markerPositionVec;
+
+    //! Type of sparsified pixel
+    /*! Which information of the pixel passing the zero suppression
+     *  can be stored into different data structure. The user can
+     *  select which one in the steering file using the
+     *  SparsePixelType enumerator
+     */
+    int _pixelType;
 
     //! Maximum number of pixel along the x direction
     /*! This variable can assume two values depending if the user
