@@ -89,7 +89,7 @@ namespace eutelescope {
      *  the base sparse pixel class. It uses the print method that is
      *  virtually defined for all sparse pixel subclasses.
      *  
-     *  @param op The input output stream as modified by the print
+     *  @param os The input output stream as modified by the print
      *  method
      *  @param pixel The base pixel to be stream out
      *  @return The output stream
