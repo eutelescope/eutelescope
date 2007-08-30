@@ -94,7 +94,7 @@ namespace eutelescope {
    *  encoding of fixed frame clusters
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.14 2007-08-18 21:47:30 bulgheroni Exp $
+   *  @Version $Id: EUTelFFClusterImpl.h,v 1.15 2007-08-30 08:34:49 bulgheroni Exp $
    */ 
 
   class EUTelFFClusterImpl : public EUTelVirtualCluster {
@@ -154,6 +154,18 @@ namespace eutelescope {
       return static_cast<int> ( ( cell0  & mask ) >> rhs );
     }
 
+    //! Get the cluster central pixel
+    /*! Due to the definition of EUTelFFClusterImpl the central pixel
+     *  is the seed pixel. 
+     *
+     *  @param xCenter reference to the x coordinate of the central
+     *  pixel
+     *  @param yCenter reference to the y coordinate of the central
+     *  pixel
+     */
+    inline void getCenterCoord(int& xCenter, int& yCenter) const {
+      getSeedCoord(xCenter, yCenter);
+    }
 
     //! Get the seed pixel coordinates
     /*! This method is used to obtain the seed pixel coordinate from
