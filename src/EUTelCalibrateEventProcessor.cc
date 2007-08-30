@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.12 2007-07-11 06:54:16 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.13 2007-08-30 08:28:21 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -39,6 +39,9 @@
 
 // system includes <>
 #include <sstream>
+#include <iostream>
+#include <iomanip>
+#include <memory>
 
 using namespace std;
 using namespace lcio;
@@ -106,7 +109,7 @@ void EUTelCalibrateEventProcessor::init () {
   printParameters ();
 
   if ( _fillDebugHisto == 1 ) {
-    message<WARNING>( "Filling debug histograms is slowing down the procedure");
+    streamlog_out( WARNING2 ) << "Filling debug histograms is slowing down the procedure" << endl;
   }
 
   // set to zero the run and event counters
@@ -117,10 +120,11 @@ void EUTelCalibrateEventProcessor::init () {
 
 void EUTelCalibrateEventProcessor::processRunHeader (LCRunHeader * rdr) {
 
-  // to make things easier re-cast the input header to the EUTelRunHeaderImpl
-  EUTelRunHeaderImpl *  runHeader = static_cast<EUTelRunHeaderImpl*>(rdr);
+  auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
 
-  _noOfDetector = runHeader->getNoOfDetector();
+  runHeader->addProcessor( type());
+  _noOfDetector    = runHeader->getNoOfDetector();
+  _eudrbGlobalMode = runHeader->getEUDRBMode();
 
   // increment the run counter
   ++_iRun;
@@ -130,52 +134,75 @@ void EUTelCalibrateEventProcessor::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
+  if ( _iEvt % 10 == 0 ) 
+    streamlog_out ( MESSAGE4 ) << "Processing event " 
+			       << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+			       << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+			       << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  ++_iEvt;
+
+
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
   if ( evt->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
+    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return;
   }  
 
+  if ( _eudrbGlobalMode == "ZS" ) {
+    if ( isFirstEvent() )   
+      streamlog_out( WARNING2 ) << "The input data file was taken in ZS mode. No need to apply pedestal correction" << endl;
+    return;
+  }
 
-  if (_iEvt % 10 == 0) 
-    message<MESSAGE> ( log() << "Applying pedestal correction on event " << _iEvt );
 
+    
   try {
     
     LCCollectionVec * inputCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_rawDataCollectionName));
     LCCollectionVec * pedestalCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_pedestalCollectionName));
     LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
     LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
-    CellIDDecoder<TrackerRawDataImpl> cellDecoder(inputCollectionVec);
+    CellIDDecoder<TrackerRawDataImpl> cellDecoder( inputCollectionVec );
     
 
     if (isFirstEvent()) {
       
-      // this is the right place to cross check wheter the pedestal and
-      // the input data are at least compatible. I mean the same number
-      // of detectors and the same number of pixels in each place.
-      
-      if ( (inputCollectionVec->getNumberOfElements() != pedestalCollectionVec->getNumberOfElements()) ||
-	   (inputCollectionVec->getNumberOfElements() != _noOfDetector) ) {
-	stringstream ss;
-	ss << "Input data and pedestal are incompatible" << endl
-	   << "Input collection has    " << inputCollectionVec->getNumberOfElements()    << " detectors," << endl
-	   << "Pedestal collection has " << pedestalCollectionVec->getNumberOfElements() << " detectors," << endl
-	   << "The expected number is  " << _noOfDetector << endl;
-	throw IncompatibleDataSetException(ss.str());
+      // until version v00-00-03 this was the right place to cross
+      // check that the number of elements in the input collection,
+      // the number of detector in the run header and the number of
+      // detector in the pedestal file were all equal. 
+      // starting from v00-00-04 this is not true anymore since the
+      // input file can contain also ZS frames for which the pedestal
+      // correction has not to be applied. 
+      // The crosscheck is done if and only if the EUDRB Global mode
+      // was set to RAW3.
+
+      if ( _eudrbGlobalMode == "RAW3" ) {
+	if ( (inputCollectionVec->getNumberOfElements() != pedestalCollectionVec->getNumberOfElements()) ||
+	     (inputCollectionVec->getNumberOfElements() != _noOfDetector) ) {
+	  stringstream ss;
+	  ss << "Input data and pedestal are incompatible" << endl
+	     << "Input collection has    " << inputCollectionVec->getNumberOfElements()    << " detectors," << endl
+	     << "Pedestal collection has " << pedestalCollectionVec->getNumberOfElements() << " detectors," << endl
+	     << "The expected number is  " << _noOfDetector << endl;
+	  throw IncompatibleDataSetException(ss.str());
+	}
+      } else {
+	streamlog_out ( DEBUG4 ) << "EUDRB mode different from RAW3, skipping control on the detector number." << endl;
       }
+      
 
-
-      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      for (unsigned int iDetector = 0; iDetector < inputCollectionVec->size(); iDetector++) {
 
 	TrackerRawDataImpl * rawData  = dynamic_cast < TrackerRawDataImpl * >(inputCollectionVec->getElementAt(iDetector));
-	TrackerDataImpl    * pedestal = dynamic_cast < TrackerDataImpl * >   (pedestalCollectionVec->getElementAt(iDetector));
-      
+	int sensorID = cellDecoder(rawData)["sensorID"];
+	TrackerDataImpl    * pedestal = dynamic_cast < TrackerDataImpl * >   (pedestalCollectionVec->getElementAt(sensorID));
+	
 	if (rawData->getADCValues().size() != pedestal->getChargeValues().size()){
 	  stringstream ss;
 	  ss << "Input data and pedestal are incompatible" << endl
-	     << "Detector " << iDetector << " has " <<  rawData->getADCValues().size() << " pixels in the input data " << endl
+	     << "Detector " << sensorID << " has " <<  rawData->getADCValues().size() << " pixels in the input data " << endl
 	     << "while " << pedestal->getChargeValues().size() << " in the pedestal data " << endl;
 	  throw IncompatibleDataSetException(ss.str());
 	}
@@ -188,7 +215,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	string basePath, tempHistoName;
 	{
 	  stringstream ss;
-	  ss << "detector-" << iDetector << "/";
+	  ss << "detector-" << sensorID << "/";
 	  basePath = ss.str();
 	}
 
@@ -221,7 +248,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	  // book the raw data histogram
 	  {
 	    stringstream ss;
-	    ss << _rawDataDistHistoName << "-d" << iDetector;
+	    ss << _rawDataDistHistoName << "-d" << sensorID;
 	    tempHistoName = ss.str();
 	  }
 	  int    rawDataDistHistoNBin = 4096;
@@ -253,7 +280,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	  // book the pedestal corrected data histogram
 	  {
 	    stringstream ss;
-	    ss << _dataDistHistoName << "-d" << iDetector;
+	    ss << _dataDistHistoName << "-d" << sensorID;
 	    tempHistoName = ss.str();
 	  }
 	  int    dataDistHistoNBin =  5000;
@@ -288,7 +315,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	  // book the common mode histo
 	  {
 	    stringstream ss;
-	    ss << _commonModeDistHistoName << "-d" << iDetector;
+	    ss << _commonModeDistHistoName << "-d" << sensorID;
 	    tempHistoName = ss.str();
 	  } 
 	  int    commonModeDistHistoNBin = 100;
@@ -332,7 +359,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
   
     LCCollectionVec * correctedDataCollection = new LCCollectionVec(LCIO::TRACKERDATA);
     
-    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+    for (unsigned int iDetector = 0; iDetector < inputCollectionVec->size(); iDetector++) {
       
       // reset quantity for the common mode.
       double pixelSum      = 0.;
@@ -342,27 +369,19 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
       
       
       TrackerRawDataImpl  * rawData   = dynamic_cast < TrackerRawDataImpl * >(inputCollectionVec->getElementAt(iDetector));
-      TrackerDataImpl     * pedestal  = dynamic_cast < TrackerDataImpl * >   (pedestalCollectionVec->getElementAt(iDetector));
-      TrackerDataImpl     * noise     = dynamic_cast < TrackerDataImpl * >   (noiseCollectionVec->getElementAt(iDetector));
-      TrackerRawDataImpl  * status    = dynamic_cast < TrackerRawDataImpl * >(statusCollectionVec->getElementAt(iDetector));
+      int sensorID                    = cellDecoder(rawData)["sensorID"];
+
+      TrackerDataImpl     * pedestal  = dynamic_cast < TrackerDataImpl * >   (pedestalCollectionVec->getElementAt(sensorID));
+      TrackerDataImpl     * noise     = dynamic_cast < TrackerDataImpl * >   (noiseCollectionVec->getElementAt(sensorID));
+      TrackerRawDataImpl  * status    = dynamic_cast < TrackerRawDataImpl * >(statusCollectionVec->getElementAt(sensorID));
       
       TrackerDataImpl     * corrected = new TrackerDataImpl;
       CellIDEncoder<TrackerDataImpl> idDataEncoder(EUTELESCOPE::MATRIXDEFAULTENCODING, correctedDataCollection);
-      // for some unknown reason I cannot do something like
-      // idDataEncoder["sensorID"] = cellDecoder(rawData)["sensorID"];
-      // because it causes a compilation error, ask Frank for an
-      // explanation because I'm not able to understand why it is
-      // complaining
-      int sensorID              = cellDecoder(rawData)["sensorID"];
-      int xmin                  = cellDecoder(rawData)["xMin"];
-      int xmax                  = cellDecoder(rawData)["xMax"];
-      int ymin                  = cellDecoder(rawData)["yMin"];
-      int ymax                  = cellDecoder(rawData)["yMax"];
       idDataEncoder["sensorID"] = sensorID;
-      idDataEncoder["xMin"]     = xmin;
-      idDataEncoder["xMax"]     = xmax;
-      idDataEncoder["yMin"]     = ymin;
-      idDataEncoder["yMax"]     = ymax;
+      idDataEncoder["xMin"]     = static_cast<int > (cellDecoder(rawData)["xMin"]);
+      idDataEncoder["xMax"]     = static_cast<int > (cellDecoder(rawData)["xMax"]);
+      idDataEncoder["yMin"]     = static_cast<int > (cellDecoder(rawData)["yMin"]);
+      idDataEncoder["yMax"]     = static_cast<int > (cellDecoder(rawData)["yMax"]);
       idDataEncoder.setCellID(corrected);
       
       ShortVec::const_iterator rawIter     = rawData->getADCValues().begin();
@@ -395,7 +414,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	  string tempHistoName;
 	  {
 	    stringstream ss;
-	    ss << _commonModeDistHistoName << "-d" << iDetector;
+	    ss << _commonModeDistHistoName << "-d" << sensorID;
 	    tempHistoName = ss.str();
 	  }
 	  if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
@@ -406,7 +425,6 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	  message<WARNING> ( log() << "Skipping event " << _iEvt 
 			     << " because of common mode limit exceeded (" 
 			     << skippedPixel << ")");
-	  ++_iEvt;
 	  throw SkipEventException(this);
 	}
       }
@@ -425,7 +443,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	  string tempHistoName;
 	  {
 	    stringstream ss;
-	    ss << _rawDataDistHistoName << "-d" << iDetector;
+	    ss << _rawDataDistHistoName << "-d" << sensorID;
 	    tempHistoName = ss.str();
 	  }
 	  if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
@@ -438,7 +456,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
 	  {
 	    stringstream ss;
-	    ss << _dataDistHistoName << "-d" << iDetector;
+	    ss << _dataDistHistoName << "-d" << sensorID;
 	    tempHistoName = ss.str();
 	  }
 	  if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) ) 
@@ -458,7 +476,6 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
     evt->addCollection(correctedDataCollection, _calibratedDataCollectionName);
   
   
-    ++_iEvt;
   } catch (DataNotAvailableException& e) {
     message<ERROR> ( log() << e.what() << "\n"
 		     << "Skipping this event " );
