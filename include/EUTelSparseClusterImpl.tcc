@@ -15,22 +15,17 @@
 namespace eutelescope {
 
   template<class PixelType>
-  EUTelSparseClusterImpl<PixelType>::EUTelSparseClusterImpl(IMPL::TrackerDataImpl * data) {
-    // before proceeding we need to verify if the template parameter
-    // corresponds to a valid sparsified pixel. To be valid, this has
-    // to inherit from EUTelBaseSparsePixel
-    EUTelBaseSparsePixel * goodPixelType;
-    std::auto_ptr<PixelType>    currentPixelType(new PixelType);
-    if ( goodPixelType = dynamic_cast<PixelType *> ( currentPixelType.get() ) ) {
-      _nElement       = goodPixelType->getNoOfElements();
-      _type           = goodPixelType->getSparsePixelType();
-      _trackerData    = data;
-      _noiseSetSwitch = false;
-      _noiseValues.clear();
-    } else {
-      throw InvalidParameterException(std::string("The template parameter is not valid"));
-    }
+  EUTelSparseClusterImpl<PixelType>::EUTelSparseClusterImpl(IMPL::TrackerDataImpl * data) : EUTelVirtualCluster(data) {
+
+    std::auto_ptr<PixelType> pixel( new PixelType);
+    _nElement       = pixel->getNoOfElements();
+    _type           = pixel->getSparsePixelType();
+    _trackerData    = data;
+    _noiseSetSwitch = false;
+    _noiseValues.clear();
+
   }
+
 
   template<class PixelType>
   unsigned int EUTelSparseClusterImpl<PixelType>::size()  const {
@@ -431,7 +426,7 @@ namespace eutelescope {
   template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getClusterSNR(int nPixel) const {
     if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
-    if ( nPixel >= size() ) 
+    if ( ( unsigned ) nPixel >= size() ) 
       return getClusterSNR();
 
     PixelType * pixel = new PixelType;
@@ -607,7 +602,6 @@ namespace eutelescope {
     }
     os << std::resetiosflags(std::ios::left) << std::endl;
     delete pixel; 
-    return os;
   }
 }
 

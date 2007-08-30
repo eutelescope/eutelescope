@@ -26,7 +26,7 @@ namespace eutelescope {
    *  method. 
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelSparseClusterImpl.hcc,v 1.1 2007-08-30 09:02:37 bulgheroni Exp $
+   *  @Version $Id: EUTelSparseClusterImpl.hcc,v 1.2 2007-08-30 15:17:34 bulgheroni Exp $
    */
 
   template<class PixelType>
@@ -368,6 +368,13 @@ namespace eutelescope {
      */ 
     PixelType * getSparsePixelAt(unsigned int index, PixelType * pixel) const ;
 
+
+    //! Add a sparse pixel
+    /*! This method is used to add to the current TrackerDataImpl a
+     *  new sparse pixel with all the pieces of information.
+     */
+    void addSparsePixel(PixelType * pixel);
+
   protected:
 
     //! The number of elements in the data structure
@@ -397,6 +404,7 @@ namespace eutelescope {
   //                  SPECIALIZATION                    //
   //                                                    //
   ////////////////////////////////////////////////////////
+
   
 
   //! Template specialization for the getSparsePixelAt method
@@ -417,6 +425,21 @@ namespace eutelescope {
     return pixel;
   }
 
+
+  //! Template specialization for the addSparsePixel method
+  /*! The same consideration about getSparsePixelAt. Adding and
+   *  retrieving pixel information are sensitive to the pixel
+   *  definition.
+   */
+  template<>
+  inline void EUTelSparseClusterImpl<EUTelSimpleSparsePixel>::addSparsePixel(EUTelSimpleSparsePixel * pixel) {
+    
+    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getXCoord()) );
+    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getYCoord()) );
+    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
+
+    
+  }  
 
 
 }
