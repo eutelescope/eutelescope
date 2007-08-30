@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.8 2007-08-30 08:57:13 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.9 2007-08-30 14:04:59 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -26,8 +26,14 @@
 //#include <AIDA/IHistogram1D.h>
 #endif
 
+// marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
+#include "marlin/Global.h"
+
+// gear includes <.h>
+#include <gear/GearMgr.h>
+#include <gear/SiPlanesParameters.h>
 
 
 #include <EVENT/LCCollection.h>
@@ -72,11 +78,6 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
   registerProcessorParameter ("DebugEventCount",
 			      "Print out every DebugEnevtCount event",
 			      _debugCount,  static_cast < int > (100));
-
-  registerProcessorParameter ("GeometryFileName",
-                              "Name of the geometry description file",
-                              _geometryFileName,
-                              string ("EUTelTestFitter.geom"));
 
   registerProcessorParameter ("AllowMissingHits",
 			      "Allowed number of missing hits in the track",
@@ -147,63 +148,154 @@ void EUTelTestFitter::init() {
   _nRun = 0 ;
   _nEvt = 0 ;
 
-  // Read geometry information from file
+  // check if Marlin was built with GEAR support or not
+#ifndef USE_GEAR
 
-  ifstream geometryFile;
-  geometryFile.exceptions(ifstream::failbit | ifstream::badbit);
+  message<ERROR> ( "Marlin was not built with GEAR support." );
+  message<ERROR> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
+  
+  // I'm thinking if this is the case of throwing an exception or
+  // not. This is a really error and not something that can
+  // exceptionally happens. Still not sure what to do
+  exit(-1);
 
-  try {
-    geometryFile.open(_geometryFileName.c_str(),ios::in);
-  }
-  catch (exception& e) {
-    cerr << "IO exception " << e.what() << " with " 
-	 << _geometryFileName << ".\nExiting." << endl;
+#else
+
+  // check if the GEAR manager pointer is not null!
+  if ( Global::GEAR == 0x0 ) {
+    message<ERROR> ( "The GearMgr is not available, for an unknown reason." );
     exit(-1);
   }
 
-  message<MESSAGE> ( log() << "Reading telescope geometry description from " << _geometryFileName ) ;
+  // Read geometry information from GEAR
 
-  geometryFile >> _nTelPlanes >> _iDUT ;
-  _iDUT-- ;
+  message<MESSAGE> ( log() << "Reading telescope geometry description from GEAR ") ;
+
+  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
+  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
+
+#endif
+
+// Active planes only:
+//  _nTelPlanes = _siPlanesParameters->getSiPlanesNumber();
+
+// Take all layers defined in GEAR geometry
+  _nTelPlanes = _siPlanesLayerLayout->getNLayers();
+
+// Check for DUT
+
+   if( _siPlanesParameters->getSiPlanesType()==_siPlanesParameters->TelescopeWithDUT )
+        {
+      _iDUT = _nTelPlanes ;
+      _nTelPlanes++;
+        }
+   else
+       _iDUT = -1 ;
+
+// Read position in Z first and sort layers in Z
+
+  _planeSort = new int[_nTelPlanes];
+  _planePosition   = new double[_nTelPlanes];
+
+  for(int ipl=0; ipl <  _siPlanesLayerLayout->getNLayers(); ipl++)
+    {
+      _planePosition[ipl]=_siPlanesLayerLayout->getLayerPositionZ(ipl);
+      _planeSort[ipl]=ipl;
+    }
+
+  if(_iDUT>0)
+      {
+      _planePosition[_iDUT]=_siPlanesLayerLayout->getDUTPositionZ();
+      _planeSort[_iDUT]=_iDUT;
+      }
+
+ // Binary sorting
+
+   bool sorted;
+   do{
+   sorted=false;
+   for(int iz=0; iz<_nTelPlanes-1 ; iz++)
+      if(_planePosition[iz]>_planePosition[iz+1])
+         {
+         double _posZ = _planePosition[iz];
+         _planePosition[iz] = _planePosition[iz+1];
+         _planePosition[iz+1] = _posZ;
+
+         int _idZ = _planeSort[iz];
+         _planeSort[iz] = _planeSort[iz+1];
+         _planeSort[iz+1] = _idZ;
+
+         sorted=true;
+         }
+
+     }while(sorted);
+
+// Book local geometry arrays
 
   _planeShiftX     = new double[_nTelPlanes];
   _planeShiftY     = new double[_nTelPlanes];
-  _planePosition   = new double[_nTelPlanes];
   _planeThickness  = new double[_nTelPlanes];
   _planeX0         = new double[_nTelPlanes];
   _planeResolution = new double[_nTelPlanes];
   _isActive        = new bool[_nTelPlanes];
   _nActivePlanes = 0 ;
 
-  for(int ipl=0; ipl < _nTelPlanes; ipl++)
+// Fill arrays with parameters of layer, sorted in Z
+
+  for(int iz=0; iz < _nTelPlanes ; iz++)
     {
+      int ipl=_planeSort[iz];
+
       int iActive;
       double resolution;
 
-      // All dimensions should be given in mm !!!
+// All dimensions are assumed to be in mm !!!
 
-      geometryFile >> _planeShiftX[ipl]
-                   >> _planeShiftY[ipl]
-                   >> _planePosition[ipl]
-                   >> _planeThickness[ipl]
-                   >> _planeX0[ipl]
-                   >> iActive 
-                   >> resolution ;
+      if(ipl != _iDUT )
+         {
+      _planeThickness[iz]=_siPlanesLayerLayout->getLayerThickness(ipl);
+      _planeX0[iz]=_siPlanesLayerLayout->getLayerRadLength(ipl);
+      resolution = _siPlanesLayerLayout->getSensitiveResolution(ipl);
+        }
+      else
+         {
+      _planeThickness[iz]=_siPlanesLayerLayout->getDUTThickness();
+      _planeX0[iz]=_siPlanesLayerLayout->getDUTRadLength();
+       resolution = _siPlanesLayerLayout->getDUTSensitiveResolution();
+        }
 
+      iActive = (resolution > 0);
+ 
       if(iActive && (ipl != _iDUT || _useDUT ))
 	{
-	  _isActive[ipl] = true ;
-	  _planeResolution[ipl]=resolution;
+	  _isActive[iz] = true ;
+	  _planeResolution[iz]=resolution;
 	  _nActivePlanes++ ;
 	}
       else
 	{
-          _isActive[ipl] = false ;
-          _planeResolution[ipl]=0.;
+          _isActive[iz] = false ;
+          _planeResolution[iz]=0.;
 	}
+
+// No alignment corrections in GEAR file
+
+    _planeShiftX[iz]=0.;
+    _planeShiftY[iz]=0.;
     }
 
+  // Get new DUT position (after sorting)
+
+  for(int iz=0;iz< _nTelPlanes ; iz++)
+    if(_planeSort[iz]==_iDUT)
+       {
+        _iDUT=iz;
+        break;
+       }
+
+
   // Print out geometry information
+
   message<MESSAGE> ( log() << "Telescope configuration with " << _nTelPlanes << " planes" );
 
 
@@ -230,7 +322,7 @@ void EUTelTestFitter::init() {
     }
   message<MESSAGE> ( log() << "Total of " << _nActivePlanes << " active sensor planes " );
   
-  // Allocate arrays for track fitting
+    // Allocate arrays for track fitting
 
   _planeX  = new double[_nTelPlanes];
   _planeEx = new double[_nTelPlanes];
@@ -463,7 +555,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       message<DEBUG> ( log() << "Hit " << ihit
 		       << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]  
 		       << "   Y = " << hitY[ihit] << " +/- " << hitEy[ihit]  
-		       << "   Z = " << hitZ[ihit] << " (plane" << hitPlane[ihit] << ")" );
+		       << "   Z = " << hitZ[ihit] << " (plane " << hitPlane[ihit] << ")" );
     }
 
 
@@ -848,6 +940,7 @@ void EUTelTestFitter::end(){
 
   // Clean memory 
 
+  delete [] _planeSort ;
   delete [] _planeShiftX ;
   delete [] _planeShiftY ;
   delete [] _planePosition ;

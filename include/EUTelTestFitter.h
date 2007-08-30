@@ -13,7 +13,15 @@
 #define EUTelTestFitter_h 1
 
 #include "marlin/Processor.h"
+
+// gear includes <.h>
+#include <gear/SiPlanesParameters.h>
+#include <gear/SiPlanesLayerLayout.h>
+
+// lcio includes <.h> 
 #include "lcio.h"
+
+// system includes <>
 #include <string>
 
 namespace eutelescope {
@@ -90,9 +98,6 @@ namespace eutelescope {
    * \param DebugEventCount      Print out debug and information
    * messages only for one out of given number of events. If zero, no
    * debug information is printed. 
-   * \param GeometryFileName     Name of the geometry description
-   * file. This version of the processor does not use GEAR input yet!
-   * Needed geometry information are stored in a dedicated ASCII file.
    * \param AllowMissingHits Allowed number of hits missing in the track
    * (sensor planes without hits or with hits removed from given track)
    * \param AllowSkipHits Allowed number of hits removed from the track
@@ -130,7 +135,7 @@ namespace eutelescope {
    * many hits)
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelTestFitter.h,v 1.2 2007-06-26 16:19:19 zarnecki Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.3 2007-08-30 14:06:27 zarnecki Exp $
    * \date 2007.06.04
    *
    */ 
@@ -226,11 +231,35 @@ namespace eutelescope {
     //! Solve matrix equation
     int GaussjSolve(double * alfa, double * beta, int n);
 
+
+    //! Silicon planes parameters as described in GEAR
+    /*! This structure actually contains the following:
+     *  @li A reference to the telescope geoemtry and layout
+     *  @li An integer number saying if the telescope is w/ or w/o DUT
+     *  @li An integer number saying the number of planes in the
+     *  telescope.
+     *
+     *  This object is provided by GEAR during the init() phase and
+     *  stored here for local use.
+     */ 
+    gear::SiPlanesParameters * _siPlanesParameters;
+
+    //! Silicon plane layer layout
+    /*! This is the real geoemetry description. For each layer
+     *  composing the telescope the relevant information are
+     *  available.
+     *  
+     *  This object is taken from the _siPlanesParameters during the
+     *  init() phase and stored for local use
+     */ 
+    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+
+
     // Global processor parameters
     // Parameter documentation is already included above
 
     int _debugCount ;
-   
+
     std::string _inputColName ;
 
     std::string _outputTrackColName ;
@@ -263,12 +292,11 @@ namespace eutelescope {
 
     // Setup description
 
-    std::string _geometryFileName;
-
     int _nTelPlanes;
     int _nActivePlanes;
     int _iDUT;
   
+    int * _planeSort;
     double * _planeShiftX;
     double * _planeShiftY;
     double * _planePosition;
