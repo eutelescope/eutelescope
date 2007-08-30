@@ -128,7 +128,7 @@ namespace eutelescope {
    *  containing the histogram booking information.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.15 2007-08-30 08:59:01 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.16 2007-08-30 15:21:52 bulgheroni Exp $
    *
    */
 
@@ -304,6 +304,7 @@ namespace eutelescope {
      *  @param evt The LCIO event has passed by processEvent(LCEvent*)
      */
     void fixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
+    void sparseClustering(LCEvent * evt, LCCollectionVec * pulse);
 
 
     //! Input collection name.
@@ -311,7 +312,8 @@ namespace eutelescope {
      *  the EUTelCalibrateEventProcessor. It is, usually, called
      *  "data" and it is a collection of TrackerData
      */
-    std::string _dataCollectionName;
+    std::string _nzsDataCollectionName;
+    std::string _zsDataCollectionName;
 
     //! Noise collection name.
     /*! See _pedestalCollectionName for the detailed description
@@ -363,12 +365,12 @@ namespace eutelescope {
      *  assigned to any other clusters and is removed from further
      *  operations.
      */
-    std::string _rawModeClusteringAlgo;
+    std::string _nzsClusteringAlgo;
 
     //! Clusterization algorithm for ZS frames
     /*! 
      */
-    std::string _zsModeClusteringAlgo;
+    std::string _zsClusteringAlgo;
 
 
     //! Cluster size along x in pixel
@@ -396,6 +398,7 @@ namespace eutelescope {
      *  pixel.
      */
     float _seedPixelCut;
+    float _zsSeedCut;
 
     //! Threshold for cluster identification
     /*! This float number represents the threshold in SNR units for
@@ -404,6 +407,8 @@ namespace eutelescope {
      *  total SNR has to pass this cluster threshold.
      */
     float _clusterCut;
+    float _zsClusterCut;
+    float _minDistance;
 
     //! Current event number.
     /*! This number is used to store the current event number NOTE that

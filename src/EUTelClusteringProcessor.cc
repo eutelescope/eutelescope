@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.26 2007-08-30 08:59:01 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.27 2007-08-30 15:21:52 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -21,6 +21,8 @@
 #include "EUTelExceptions.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelMatrixDecoder.h"
+#include "EUTelSparseDataImpl.h"
+#include "EUTelSparseClusterImpl.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -51,6 +53,7 @@
 #include <sstream>
 #include <vector>
 #include <memory>
+#include <list>
 
 using namespace std;
 using namespace lcio;
@@ -79,9 +82,9 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
     "EUTelClusteringProcessor is looking for clusters into a calibrated pixel matrix.";
 
   // first of all we need to register the input collection
-  registerInputCollection (LCIO::TRACKERDATA, "DataCollectionName",
-			   "Input calibrated data collection name",
-			   _dataCollectionName, string ("data"));
+  registerInputCollection (LCIO::TRACKERDATA, "NZSDataCollectionName",
+			   "Input calibrated data not zero suppressed collection name",
+			   _nzsDataCollectionName, string ("data"));
 
   registerInputCollection (LCIO::TRACKERDATA, "NoiseCollectionName",
 			   "Noise (input) collection name",
@@ -107,7 +110,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
 			      "Select here which algorithm should be used for clustering.\n"
 			      "Available algorithms are:\n"
 			      "-> FixedFrame: for custer with a given size",
-			      _rawModeClusteringAlgo, string(EUTELESCOPE::FIXEDFRAME));
+			      _nzsClusteringAlgo, string(EUTELESCOPE::FIXEDFRAME));
   
   registerProcessorParameter ("ClusterSizeX",
 			      "Maximum allowed cluster size along x (only odd numbers)",
@@ -163,7 +166,7 @@ void EUTelClusteringProcessor::init () {
 
   // in the case the FIXEDFRAME algorithm is selected, the check if
   // the _xClusterSize and the _yClusterSize are odd numbers
-  if ( _rawModeClusteringAlgo == EUTELESCOPE::FIXEDFRAME ) {
+  if ( _nzsClusteringAlgo == EUTELESCOPE::FIXEDFRAME ) {
     bool isZero = ( _xClusterSize <= 0 );
     bool isEven = ( _xClusterSize % 2 == 0 );
     if ( isZero || isEven ) {
@@ -180,8 +183,7 @@ void EUTelClusteringProcessor::init () {
   _iRun = 0;
   _iEvt = 0;
 
-  // reset the content of the total cluster vector
-  _totCluster.clear();
+
 
 }
 
@@ -221,7 +223,42 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
 			      << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
   ++_iEvt;
 
-  // in the current event it is possible to have either 
+  
+  
+  // things to be done only once! 
+  if ( isFirstEvent() ) {
+    // prepare a vector to store the number of clusters found for 
+    _totCluster.clear();
+    _totCluster.resize( _noOfDetector, 0 );
+  }
+
+
+  // in the current event it is possible to have either full frame and
+  // zs data. Here is the right place to guess what we have
+  bool hasNZSData = true;
+  try {
+    event->getCollection(_nzsDataCollectionName);
+    
+  } catch (lcio::DataNotAvailableException& e) {
+    hasNZSData = false;
+    streamlog_out ( DEBUG4 ) << "No NZS data found in the event" << endl;
+  }
+  
+  bool hasZSData = true;
+  try {
+    event->getCollection( _zsDataCollectionName ) ;
+
+  } catch (lcio::DataNotAvailableException& e ) {
+    hasZSData = false;
+    streamlog_out ( DEBUG4 ) << "No ZS data found in the event" << endl;
+  }
+
+  if ( !hasNZSData && !hasZSData ) {
+    streamlog_out ( MESSAGE2 ) << "The current event doesn't contain neither ZS nor NZS data collections" << endl
+			      << "Leaving this event without any further processing" << endl;
+    return ;
+  }
+
     
 #ifdef MARLIN_USE_AIDA
   // book the histograms now
@@ -243,11 +280,15 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
   LCCollectionVec * pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
 
   // first look for cluster in RAW mode frames
-  if ( _rawModeClusteringAlgo == EUTELESCOPE::FIXEDFRAME ) fixedFrameClustering(evt, pulseCollection);
+  if ( hasNZSData ) {
+    // put here all the possible algorithm applicable to NZS data
+    if ( _nzsClusteringAlgo == EUTELESCOPE::FIXEDFRAME )     fixedFrameClustering(evt, pulseCollection);
   
-  // now also in the ZS mode frames
-  //  if ( _rawModeClusteringAlgo == EUTELESCOPE::SPARSECLUSTER )
-  //  sparseClustering(evt);
+  }
+  if ( hasZSData ) {
+    // put here all the possible algorithm applicable to ZS data 
+    if ( _nzsClusteringAlgo == EUTELESCOPE::SPARSECLUSTER )  sparseClustering(evt, pulseCollection);
+  }
 
   // if the pulseCollection is not empty add it to the event
   if ( pulseCollection->size() != 0 ) {
@@ -265,78 +306,257 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
 
 }
 
+
+void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
+  
+  // get the collections of interest from the event.
+  LCCollectionVec * zsInputCollectionVec  = dynamic_cast < LCCollectionVec * > (evt->getCollection( _zsDataCollectionName ));
+  LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
+  
+  // prepare some decoders
+  CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputCollectionVec );
+  CellIDDecoder<TrackerDataImpl> noiseDecoder( noiseCollectionVec );
+
+  // this is the equivalent of the dummyCollection in the fixed frame
+  // clustering. BTW we should consider changing that "meaningful"
+  // name! This contains cluster and not yet pulses 
+  auto_ptr<LCCollectionVec > sparseClusterCollectionVec ( new  LCCollectionVec(LCIO::TRACKERDATA) );
+  CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec.get()  );
+
+  // prepare an encoder also for the pulse collection
+  CellIDEncoder<TrackerPulseImpl> idZSPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
+
+  // utility
+  short limitExceed    = 0;
+
+  if ( isFirstEvent() ) {
+
+    // For the time being nothing to do specifically in the first
+    // event.
+
+  }
+  
+  // in the zsInputCollectionVec we should have one TrackerData for
+  // each detector working in ZS mode. We need to loop over all of
+  // them
+  for ( unsigned int i = 0 ; i < zsInputCollectionVec->size(); i++ ) {
+    // get the TrackerData and guess which kind of sparsified data it
+    // contains.
+    TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
+    SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
+    _iDetector               = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
+    
+    // reset the cluster counter for the clusterID
+    int clusterID = 0;
+    
+    // get the noise matrix with the right detectorID
+    TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt(_iDetector));
+    
+    // prepare the matrix decoder
+    EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
+    
+    if ( type == kEUTelSimpleSparsePixel ) {
+      
+      // now prepare the EUTelescope interface to sparsified data.
+      auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > > 
+	sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+      
+      streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << _iDetector << " with "
+			       << sparseData->size() << " pixels " << endl;
+      
+      // get from the sparse data the list of neighboring pixels
+      list<list< unsigned int> > listOfList = sparseData->findNeighborPixels( _minDistance );
+
+      // prepare a vector to store the noise values
+      vector<float > noiseValueVec;
+      
+      // prepare a generic pixel to store the values
+      EUTelSimpleSparsePixel * pixel = new EUTelSimpleSparsePixel;
+      
+      // now loop over all the lists
+      list<list< unsigned int> >::iterator listOfListIter = listOfList.begin();
+      while ( listOfListIter != listOfList.end() ) {
+	list<unsigned int > currentList = (*listOfListIter);
+	
+	// prepare a TrackerData to store the cluster candidate
+	auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
+	
+	// prepare a reimplementation of sparsified cluster
+	auto_ptr<EUTelSparseClusterImpl<EUTelSimpleSparsePixel > > 
+	  sparseCluster ( new EUTelSparseClusterImpl<EUTelSimpleSparsePixel > ( zsCluster.get()  ) );
+	
+	// clear the noise vector
+	noiseValueVec.clear();
+	
+	// now we can finally build the cluster candidate
+	list<unsigned int >::iterator listIter = currentList.begin();
+	
+	while ( listIter != currentList.end() ) {
+	  
+	  sparseData->getSparsePixelAt( (*listIter ), pixel );
+	  sparseCluster->addSparsePixel( pixel );
+	  
+	  noiseValueVec.push_back(noise->getChargeValues()[ matrixDecoder.getIndexFromXY ( pixel->getXCoord(), pixel->getYCoord() ) ]);
+
+	  // remember the iterator++
+	  ++listIter;
+	}
+	sparseCluster->setNoiseValues( noiseValueVec );
+
+	// verify if the cluster candidates can become a good cluster
+	if ( ( sparseCluster->getSeedSNR() >= _zsSeedCut ) &&
+	     ( sparseCluster->getClusterSNR() >= _zsClusterCut ) ) {
+	  // ok good cluster....
+
+	  // set the ID for this zsCluster
+	  idZSClusterEncoder["sensorID"] = _iDetector;
+	  idZSClusterEncoder["clusterID"] = clusterID;
+	  idZSClusterEncoder["sparsePixelType"] = static_cast<int> ( type );
+	  idZSClusterEncoder["quality"] = 0;
+	  idZSClusterEncoder.setCellID( zsCluster.get() );
+	  
+	  // add it to the cluster collection
+	  sparseClusterCollectionVec->push_back( zsCluster.release() );
+
+	  // prepare a pulse for this cluster
+	  int xSeed, ySeed, xSize, ySize;
+	  sparseCluster->getSeedCoord(xSeed, ySeed);
+	  sparseCluster->getClusterSize(xSize, ySize);
+
+	  auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
+	  idZSPulseEncoder["sensorID"]  = _iDetector;
+	  idZSPulseEncoder["clusterID"] = clusterID;
+	  idZSPulseEncoder["xSeed"]     = xSeed;
+	  idZSPulseEncoder["ySeed"]     = ySeed;
+	  idZSPulseEncoder["xCluSize"]  = xSize;
+	  idZSPulseEncoder["yCluSize"]  = ySize;
+	  idZSPulseEncoder["type"]      = static_cast<int>(kEUTelSparseClusterImpl);
+	  idZSPulseEncoder.setCellID( zsPulse.get() );
+
+	  zsPulse->setCharge( sparseCluster->getTotalCharge() );
+	  zsPulse->setQuality( static_cast<int > (sparseCluster->getClusterQuality()) );
+	  zsPulse->setTrackerData( zsCluster.get() );
+	  pulseCollection->push_back( zsPulse.release() );
+	
+
+	  // last but not least increment the clusterID
+	  _totCluster[_iDetector] += 1;
+	  ++clusterID;
+	  if ( clusterID > 256 ) {
+	    --clusterID;
+	    ++limitExceed;
+	    streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " on run " << evt->getRunNumber()
+				       << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
+	  }
+
+	} else {
+	  
+	  // in the case the cluster candidate is not passing the
+	  // threshold ... forget about ! ! !
+	  // memory should be automatically cleaned by auto_ptr's
+
+	}
+ 
+	// remember to increment the iterator
+	++listOfListIter;
+      }
+
+      // clean up the memory
+      delete pixel;
+      
+    } else {
+	throw UnknownDataTypeException("Unknown sparsified pixel");
+    }
+    
+    
+    
+
+  } // this is the end of the loop over all ZS detectors
+  
+  // if the sparseClusterCollectionVec isn't empty add it to the
+  // current event. The pulse collection will be added afterwards 
+  if ( sparseClusterCollectionVec->size() != 0 ) {
+    evt->addCollection( sparseClusterCollectionVec.release(), "original_zsdata" );
+  }
+
+}
+
+
 void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
   
-  LCCollectionVec * inputCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_dataCollectionName));
+  LCCollectionVec * nzsInputCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_nzsDataCollectionName));
   LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
   LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
 
-  CellIDDecoder<TrackerDataImpl> cellDecoder( inputCollectionVec );
+  CellIDDecoder<TrackerDataImpl> cellDecoder( nzsInputCollectionVec );
 
   if (isFirstEvent()) {
     
-#ifdef MARLINDEBUG
-    /// /* DEBUG */    logfile.open("clustering.log");
-#endif
-    
-    // this is the right place to cross check whether the pedestal and
-    // the input data are at least compatible. I mean the same number
-    // of detectors and the same number of pixels in each place.
-    
-    if  ( inputCollectionVec->getNumberOfElements() != noiseCollectionVec->getNumberOfElements()) {
-      stringstream ss;
-      ss << "Input data and pedestal are incompatible" << endl
-	 << "Input collection has    " << inputCollectionVec->getNumberOfElements()    << " detectors," << endl
-	 << "Noise collection has    " << noiseCollectionVec->getNumberOfElements() << " detectors," << endl;
-      throw IncompatibleDataSetException(ss.str());
+    // check if for each TrackerData into the NZS corresponds one
+    // TrackerData with noise information having the same number of
+    // pixels. 
+
+    for ( unsigned int i = 0 ; i < nzsInputCollectionVec->size(); i++ ) {
+      TrackerDataImpl    * nzsData = dynamic_cast<TrackerDataImpl* > ( nzsInputCollectionVec->getElementAt( i ) );
+      int detectorID     = cellDecoder( nzsData ) ["sensorID"];
+
+      TrackerDataImpl    * noise   = dynamic_cast<TrackerDataImpl* >    ( noiseCollectionVec->getElementAt( detectorID ) );
+      TrackerRawDataImpl * status  = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt( detectorID ) );
+
+      if ( ( noise->chargeValues().size() != status->adcValues().size() ) ||
+	   ( noise->chargeValues().size() != nzsData->chargeValues().size() ) ) {
+	throw IncompatibleDataSetException("NZS data and noise/status size mismatch");
+      }
     }
     
-    for (_iDetector = 0; _iDetector < inputCollectionVec->getNumberOfElements(); _iDetector++) 
-      _totCluster.push_back(0);
     
+    /// /* DEBUG */    logfile.open("clustering.log");
   }
-
+  
 #ifdef MARLINDEBUG  
   /// /* DEBUG */ message<DEBUG> ( logfile << "Event " << _iEvt );
 #endif
-
+  
   streamlog_out ( DEBUG0 ) << "Event " << _iEvt << endl;
-
+  
   LCCollectionVec * dummyCollection = new LCCollectionVec(LCIO::TRACKERDATA);
-
-  for (_iDetector = 0; _iDetector < inputCollectionVec->getNumberOfElements(); _iDetector++) {
+  
+  for ( int i = 0; i < nzsInputCollectionVec->getNumberOfElements(); i++) {
     
+    streamlog_out ( DEBUG0 ) << "  Working on detector " << _iDetector << endl;
+    
+    // get the calibrated data 
+    TrackerDataImpl    * nzsData = dynamic_cast<TrackerDataImpl*>  (nzsInputCollectionVec->getElementAt( i ) );
+    _iDetector = cellDecoder( nzsData ) ["sensorID"];
+  
 #ifdef MARLINDEBUG
     /// /* DEBUG */ message<DEBUG> ( logfile << "  Working on detector " << _iDetector );
-#endif
-    streamlog_out ( DEBUG0 ) << "  Working on detector " << _iDetector << endl;
+#endif      
 
-    // get the calibrated data 
-    TrackerDataImpl    * data   = dynamic_cast<TrackerDataImpl*>   (inputCollectionVec->getElementAt(_iDetector));
     TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt(_iDetector));
     TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt(_iDetector));
 
     // prepare the matrix decoder
-    EUTelMatrixDecoder matrixDecoder(cellDecoder, data);
+    EUTelMatrixDecoder matrixDecoder(cellDecoder, nzsData);
 
     // reset the status
     resetStatus(status);
 
     // initialize the cluster counter 
     short clusterCounter = 0;
-    short limitExceed = 0;
+    short limitExceed    = 0;
 
     _seedCandidateMap.clear();
 
 #ifdef MARLINDEBUG    
-    /// /* DEBUG */ message<DEBUG> ( log() << "Max signal " << (*max_element(data->getChargeValues().begin(), data->getChargeValues().end()))
-    /// /* DEBUG */		     << "\nMin signal " << (*min_element(data->getChargeValues().begin(), data->getChargeValues().end())) );
+    /// /* DEBUG */ message<DEBUG> ( log() << "Max signal " << (*max_element(nzsData->getChargeValues().begin(), nzsData->getChargeValues().end()))
+    /// /* DEBUG */		     << "\nMin signal " << (*min_element(nzsData->getChargeValues().begin(), nzsData->getChargeValues().end())) );
 #endif
 
-    for (unsigned int iPixel = 0; iPixel < data->getChargeValues().size(); iPixel++) {
+    for (unsigned int iPixel = 0; iPixel < nzsData->getChargeValues().size(); iPixel++) {
       if (status->getADCValues()[iPixel] == EUTELESCOPE::GOODPIXEL) {
-	if (data->getChargeValues()[iPixel] > _seedPixelCut * noise->getChargeValues()[iPixel]) {
-	  _seedCandidateMap.insert(make_pair(data->getChargeValues()[iPixel], iPixel));
+	if ( nzsData->getChargeValues()[iPixel] > _seedPixelCut * noise->getChargeValues()[iPixel]) {
+	  _seedCandidateMap.insert(make_pair( nzsData->getChargeValues()[iPixel], iPixel));
 	}
       }
     }
@@ -380,9 +600,9 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 		bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
 		bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
 		if ( isGood && !isHit ) {
-		  clusterCandidateSignal += data->getChargeValues()[index];
+		  clusterCandidateSignal += nzsData->getChargeValues()[index];
 		  clusterCandidateNoise2 += pow(noise->getChargeValues()[index] , 2);
-		  clusterCandidateCharges.push_back(data->getChargeValues()[index]);
+		  clusterCandidateCharges.push_back(nzsData->getChargeValues()[index]);
 		  clusterCandidateIndeces.push_back(index);
 		} else if (isHit) {
 		  // this can be a good place to flag the current
