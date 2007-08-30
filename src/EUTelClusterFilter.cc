@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.9 2007-07-31 14:45:50 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.10 2007-08-30 08:55:23 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -40,6 +40,7 @@
 #include <limits>
 #include <iostream>
 #include <iomanip>
+#include <memory>
 
 using namespace std;
 using namespace lcio;
@@ -414,8 +415,9 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
   ++_iRun;
 
   if ( isFirstEvent() ) {
-    EUTelRunHeaderImpl * runHeader = static_cast<EUTelRunHeaderImpl *> (rdr);
-    
+    auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) ) ;
+    runHeader->addProcessor( type() ) ;
+
     _noOfDetectors = runHeader->getNoOfDetector();
     
     // reset the cluster counter
@@ -675,7 +677,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
 	    EUTelMatrixDecoder   noiseMatrixDecoder(noiseDecoder, noiseMatrix);
 	    
 	    int xSeed, ySeed, xClusterSize, yClusterSize;
-	    cluster->getSeedCoord(xSeed, ySeed);
+	    cluster->getCenterCoord(xSeed, ySeed);
 	    cluster->getClusterSize(xClusterSize, yClusterSize);
 	    vector<float > noiseValues;
 	    for ( int yPixel = ySeed - ( yClusterSize / 2 ); yPixel <= ySeed + ( yClusterSize / 2 ); yPixel++ ) {
