@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelRawDataSparsifier.cc,v 1.2 2007-08-20 16:48:38 bulgheroni Exp $
+// Version $Id: EUTelRawDataSparsifier.cc,v 1.3 2007-08-30 09:03:54 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -96,19 +96,19 @@ void EUTelRawDataSparsifier::init () {
 
 void EUTelRawDataSparsifier::processRunHeader (LCRunHeader * rdr) {
 
-  // to make things easier re-cast the input header to the EUTelRunHeaderImpl
-  EUTelRunHeaderImpl *  runHeader = static_cast<EUTelRunHeaderImpl*>(rdr);
+  auto_ptr<EUTelRunHeaderImpl> runHeader (new EUTelRunHeaderImpl(rdr) );
+  runHeader->addProcessor( type() );
 
   _noOfDetector = runHeader->getNoOfDetector();
 
   // let's check if the number of sigma cut components is the same of
   // the detector number.
   if ( (unsigned) _noOfDetector != _sigmaCutVec.size() ) {
-    message<WARNING> ( log() << "The number of values in the sigma cut does not match the number of detectors\n"
-		       << "Changing SigmaCutVec consequently." );
+    streamlog_out( WARNING2 ) << "The number of values in the sigma cut does not match the number of detectors\n"
+			      << "Changing SigmaCutVec consequently." << endl;
     _sigmaCutVec.resize(_noOfDetector, _sigmaCutVec.back());
   }
-
+  
   // increment the run counter
   ++_iRun;
 
@@ -117,15 +117,22 @@ void EUTelRawDataSparsifier::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
 
+  if (_iEvt % 10 == 0) 
+    streamlog_out( MESSAGE4 ) << "Processing event " 
+			      << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+			      << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+			      << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+
+  // right place to increment the event counter
+  ++_iEvt;   
+
+
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
   if ( evt->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
+    streamlog_out( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return;
   }  
-
-  if (_iEvt % 10 == 0) 
-    message<MESSAGE> ( log() << "Sparsifing RAW data on event " << _iEvt );
 
   try {
     
@@ -214,7 +221,7 @@ void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
 	      sparsePixel->setXCoord( matrixDecoder.getXFromIndex(iPixel) );
 	      sparsePixel->setYCoord( matrixDecoder.getYFromIndex(iPixel) );
 	      sparsePixel->setSignal( static_cast<short> ( data ) );
-	      message<DEBUG> ( log() << (*sparsePixel.get())  ) ;
+	      streamlog_out ( DEBUG0 ) << (*sparsePixel.get()) << endl;
 	      sparseData.addSparsePixel( sparsePixel.get() );
 	    }
 	  }
@@ -232,15 +239,12 @@ void EUTelRawDataSparsifier::processEvent (LCEvent * event) {
       sparsifiedDataCollection->push_back( sparsified );
     }
     evt->addCollection(sparsifiedDataCollection, _sparsifiedDataCollectionName);
-  
-  
-    ++_iEvt;
+ 
   } catch (DataNotAvailableException& e) {
-    message<ERROR> ( log() << e.what() << "\n"
-		     << "Skipping this event " );
+    streamlog_out ( ERROR2 ) <<  e.what() << "\n" << "Skipping this event " << endl;
     throw SkipEventException(this);
   }
-  
+
 }
   
 
@@ -251,7 +255,7 @@ void EUTelRawDataSparsifier::check (LCEvent * evt) {
 
 
 void EUTelRawDataSparsifier::end() {
-  message<MESSAGE> ( "Successfully finished" );
+  streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
 
 }
 
