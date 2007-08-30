@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelStrasMimoTelReader.cc,v 1.4 2007-07-09 13:38:33 bulgheroni Exp $
+// Version $Id: EUTelStrasMimoTelReader.cc,v 1.5 2007-08-30 08:57:13 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -36,6 +36,7 @@
 #include <string>
 #include <sstream>
 #include <algorithm>
+#include <memory>
 
 using namespace std;
 using namespace marlin;
@@ -121,8 +122,10 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
     message<MESSAGE> ( log() << "Reading the run header\n" << _runHeader );
     runHeaderFile.close();
 
-    EUTelRunHeaderImpl * eutelRunHeader = new EUTelRunHeaderImpl;
-    eutelRunHeader->setRunNumber( _runNumber );
+    auto_ptr<IMPL::LCRunHeaderImpl> lcHeader ( new IMPL::LCRunHeaderImpl );
+    auto_ptr<EUTelRunHeaderImpl>    eutelRunHeader ( new EUTelRunHeaderImpl (lcHeader.get() ));
+    eutelRunHeader->addProcessor( type() );
+    eutelRunHeader->lcRunHeader()->setRunNumber( _runNumber );
     eutelRunHeader->setDataType( EUTELESCOPE::CONVDATA );
     eutelRunHeader->setDateTime();
     eutelRunHeader->setDAQHWName( EUTELESCOPE::IPHCIMAGER );
@@ -132,10 +135,9 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
     eutelRunHeader->setMaxX(IntVec( _runHeader.VFasPresentNb + 1, _noOfXPixel - 1 ) );
     eutelRunHeader->setMinY(IntVec( _runHeader.VFasPresentNb + 1, 0 ) );
     eutelRunHeader->setMaxY(IntVec( _runHeader.VFasPresentNb + 1, _noOfYPixel - 1 ) );
-    eutelRunHeader->setDetectorName("MimoTel");
+    eutelRunHeader->lcRunHeader()->setDetectorName("MimoTel");
     
-    ProcessorMgr::instance()->processRunHeader(eutelRunHeader);
-    delete eutelRunHeader;
+    ProcessorMgr::instance()->processRunHeader( lcHeader.release() );
     
   } catch (exception& e) {
     message<ERROR> ( log() << "Unable to open file " << runHeaderFileName << ". Exiting." );

@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelSucimaImagerReader.cc,v 1.9 2007-07-09 13:38:33 bulgheroni Exp $
+// Version $Id: EUTelSucimaImagerReader.cc,v 1.10 2007-08-30 08:57:13 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -31,7 +31,7 @@
 
 // system includes 
 #include <fstream>
-
+#include <memory>
 
 using namespace std;
 using namespace marlin;
@@ -100,9 +100,11 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
       
       // in the case it is the first run so we need to process and
       // write out the run header.
-      EUTelRunHeaderImpl *runHeader = new EUTelRunHeaderImpl;
-      runHeader->setDescription(" Events read from SUCIMA Imager ASCII input file: " + _fileName);
-      runHeader->setRunNumber (runNumber);
+      auto_ptr<IMPL::LCRunHeaderImpl> lcHeader  ( new IMPL::LCRunHeaderImpl );
+      auto_ptr<EUTelRunHeaderImpl>    runHeader ( new EUTelRunHeaderImpl (lcHeader.get()) );
+      runHeader->addProcessor( type() );
+      runHeader->lcRunHeader()->setDescription(" Events read from SUCIMA Imager ASCII input file: " + _fileName);
+      runHeader->lcRunHeader()->setRunNumber (runNumber);
       runHeader->setHeaderVersion (0.0001);
       runHeader->setDataType (EUTELESCOPE::CONVDATA);
       runHeader->setDateTime ();
@@ -120,11 +122,11 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
       runHeader->setMaxX(IntVec(1, _noOfXPixel - 1));
       runHeader->setMinY(IntVec(1, 0));
       runHeader->setMaxY(IntVec(1, _noOfYPixel - 1));
-      runHeader->setDetectorName("MIMOSA");
+      runHeader->lcRunHeader()->setDetectorName("MIMOSA");
       // UTIL::LCTOOLS::dumpRunHeader(runHeader);
       
       // process the run header
-      ProcessorMgr::instance ()->processRunHeader (runHeader);
+      ProcessorMgr::instance ()->processRunHeader ( static_cast<lcio::LCRunHeader*> ( lcHeader.release()) );
       
       // prepare the short buffet
       _buffer = new short[_noOfXPixel * _noOfYPixel];

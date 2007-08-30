@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEUDRBReader.cc,v 1.4 2007-07-09 13:57:59 bulgheroni Exp $
+// Version $Id: EUTelEUDRBReader.cc,v 1.5 2007-08-30 08:57:13 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -32,7 +32,6 @@
 
 // system includes 
 #include <fstream>
-
 
 using namespace std;
 using namespace marlin;
@@ -96,7 +95,8 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
 
   if (isFirstEvent() ) {
 
-    EUTelRunHeaderImpl * runHeader = new EUTelRunHeaderImpl;
+    IMPL::LCRunHeaderImpl rdr      = new IMPL::LCRunHeaderImpl;
+    EUTelRunHeaderImpl * runHeader = new EUTelRunHeaderImpl(rdr)
     runHeader->setDAQHWName( "EUDRB" );
     runHeader->setNoOfEvent( _fileHeader->numberOfEvent + 1);
     runHeader->setNoOfDetector( _fileHeader->numberOfDetector * 4);
@@ -112,11 +112,12 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
     runHeader->setMinY( minY );
     runHeader->setMaxY( maxY );
 
-    ProcessorMgr::instance()->processRunHeader( runHeader ) ;
+    ProcessorMgr::instance()->processRunHeader( rdr ) ;
 
     _isFirstEvent = false;
 
     delete runHeader;
+    delete rdr;
 
     _buffer = new int[ _fileHeader->dataSize / sizeof(int) ];
 

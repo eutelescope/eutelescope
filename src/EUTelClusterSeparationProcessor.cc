@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.11 2007-07-09 15:26:05 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.12 2007-08-30 08:57:13 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -14,6 +14,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelEventImpl.h"
+#include "EUTelRunHeaderImpl.h"
 #include "EUTelClusterSeparationProcessor.h"
 #include "EUTelExceptions.h"
 
@@ -30,6 +31,7 @@
 #include <vector>
 #include <string>
 #include <set>
+#include <memory>
 
 using namespace std;
 using namespace lcio;
@@ -76,6 +78,9 @@ void EUTelClusterSeparationProcessor::init () {
 }
 
 void EUTelClusterSeparationProcessor::processRunHeader (LCRunHeader * rdr) {
+
+  auto_ptr<EUTelRunHeaderImpl > runHeader ( new EUTelRunHeaderImpl( rdr ) ) ;
+  runHeader->addProcessor( type() );
 
   // increment the run counter
   ++_iRun;

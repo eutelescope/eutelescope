@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelAutoPedestalNoiseProcessor.cc,v 1.2 2007-05-21 11:46:24 bulgheroni Exp $
+// Version $Id: EUTelAutoPedestalNoiseProcessor.cc,v 1.3 2007-08-30 08:57:13 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -28,7 +28,7 @@
 
 
 // system includes <>
-
+#include <memory>
 
 using namespace std;
 using namespace marlin;
@@ -91,7 +91,9 @@ void EUTelAutoPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
   // increment the run counter
   ++_iRun;
 
-  EUTelRunHeaderImpl * runHeader = static_cast<EUTelRunHeaderImpl*> (rdr);
+  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) );
+
+  runHeader->addProcessor( type() ) ;
   unsigned int noOfDetector = runHeader->getNoOfDetector();
 
   if (noOfDetector != _initPedestal.size()) {

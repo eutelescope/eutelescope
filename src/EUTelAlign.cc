@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.6 2007-08-27 13:08:16 roloff Exp $
+// Version: $Id: EUTelAlign.cc,v 1.7 2007-08-30 08:57:13 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -48,6 +48,7 @@
 #include <vector>
 #include <algorithm>
 #include <cmath>
+#include <memory>
 
 using namespace std;
 using namespace marlin;
@@ -145,8 +146,9 @@ void EUTelAlign::init() {
 
 void EUTelAlign::processRunHeader (LCRunHeader * rdr) {
 
-  EUTelRunHeaderImpl * header = static_cast<EUTelRunHeaderImpl*> (rdr);
-  
+  auto_ptr<EUTelRunHeaderImpl> header( new EUTelRunHeaderImpl( rdr ) );
+
+
   // the run header contains the number of detectors. This number
   // should be in principle the same as the number of layers in the
   // geometry description
@@ -324,7 +326,7 @@ void EUTelAlign::Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t 
 
   } // end loop over all events
 
-  // streamlog_out ( MESSAGE) << usedevents << " ";
+  // streamlog_out ( MESSAGE2) << usedevents << " ";
 
   f = chi2;
 
@@ -332,9 +334,9 @@ void EUTelAlign::Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t 
 
 void EUTelAlign::end() {
 
-  streamlog_out ( MESSAGE ) << "Number of Events used in the fit: " << _hitsForFit.size() << endl;
+  streamlog_out ( MESSAGE2 ) << "Number of Events used in the fit: " << _hitsForFit.size() << endl;
 
-  streamlog_out ( MESSAGE ) << "Minuit will soon be started" << endl;
+  streamlog_out ( MESSAGE2 ) << "Minuit will soon be started" << endl;
 
   // run MINUIT
   // ----------
@@ -397,7 +399,7 @@ void EUTelAlign::end() {
   arglist[1] = 0.1;
   gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
 
-  streamlog_out ( MESSAGE) << endl;
+  streamlog_out ( MESSAGE2) << endl;
 
   double off_x;
   double off_y;
@@ -421,15 +423,15 @@ void EUTelAlign::end() {
   gMinuit->GetParameter(4,theta_z1,theta_z1_error);
   gMinuit->GetParameter(5,theta_z2,theta_z2_error);
 
-  streamlog_out ( MESSAGE ) << endl << "Alignment constants from the fit:" << endl;
-  streamlog_out ( MESSAGE ) << "---------------------------------" << endl;
-  streamlog_out ( MESSAGE ) << "off_x: " << off_x << " +/- " << off_x_error << endl;
-  streamlog_out ( MESSAGE ) << "off_y: " << off_y << " +/- " << off_y_error << endl;
-  streamlog_out ( MESSAGE ) << "theta_x: " << theta_x << " +/- " << theta_x_error << endl;
-  streamlog_out ( MESSAGE ) << "theta_y: " << theta_y << " +/- " << theta_y_error << endl;
-  streamlog_out ( MESSAGE ) << "theta_z1: " << theta_z1 << " +/- " << theta_z1_error << endl;
-  streamlog_out ( MESSAGE ) << "theta_z2: " << theta_z2 << " +/- " << theta_z2_error << endl << endl;
-  streamlog_out ( MESSAGE ) << "For copy and paste to line fit xml-file: " << off_x << " " << off_y << " " << theta_x << " " << theta_y << " " << theta_z1 << " " << theta_z2 << endl;
+  streamlog_out ( MESSAGE2 ) << endl << "Alignment constants from the fit:" << endl;
+  streamlog_out ( MESSAGE2 ) << "---------------------------------" << endl;
+  streamlog_out ( MESSAGE2 ) << "off_x: " << off_x << " +/- " << off_x_error << endl;
+  streamlog_out ( MESSAGE2 ) << "off_y: " << off_y << " +/- " << off_y_error << endl;
+  streamlog_out ( MESSAGE2 ) << "theta_x: " << theta_x << " +/- " << theta_x_error << endl;
+  streamlog_out ( MESSAGE2 ) << "theta_y: " << theta_y << " +/- " << theta_y_error << endl;
+  streamlog_out ( MESSAGE2 ) << "theta_z1: " << theta_z1 << " +/- " << theta_z1_error << endl;
+  streamlog_out ( MESSAGE2 ) << "theta_z2: " << theta_z2 << " +/- " << theta_z2_error << endl << endl;
+  streamlog_out ( MESSAGE2 ) << "For copy and paste to line fit xml-file: " << off_x << " " << off_y << " " << theta_x << " " << theta_y << " " << theta_z1 << " " << theta_z2 << endl;
 
 //   delete [] _intrResolY;
 //   delete [] _intrResolX;
@@ -437,7 +439,7 @@ void EUTelAlign::end() {
   delete [] _yMeasPos;
   delete [] _zMeasPos;
 
-  streamlog_out ( MESSAGE ) << "Successfully finished" << endl;
+  streamlog_out ( MESSAGE2 ) << "Successfully finished" << endl;
 
 }
 

@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCopyPedestalProcessor.cc,v 1.4 2007-07-12 14:42:29 bulgheroni Exp $
+// Version $Id: EUTelCopyPedestalProcessor.cc,v 1.5 2007-08-30 08:57:13 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -12,6 +12,7 @@
 
 // eutelescope includes ".h" 
 #include "EUTelCopyPedestalProcessor.h"
+#include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTELESCOPE.h"
 
@@ -25,7 +26,7 @@
 #include <UTIL/CellIDEncoder.h>
 
 // system includes <>
-
+#include <memory>
 
 using namespace std;
 using namespace marlin;
@@ -81,6 +82,9 @@ void EUTelCopyPedestalProcessor::init () {
 }
 
 void EUTelCopyPedestalProcessor::processRunHeader (LCRunHeader * rdr) {
+
+  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) ) ;
+  runHeader->addProcessor( type() );
 
   // increment the run counter
   ++_iRun;

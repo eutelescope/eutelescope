@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.19 2007-08-16 21:40:47 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.20 2007-08-30 08:57:13 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -47,6 +47,7 @@
 #include <fstream>
 #include <iostream>
 #include <iomanip>
+#include <memory>
 
 using namespace std;
 using namespace lcio;
@@ -172,7 +173,8 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
   _detectorName = rdr->getDetectorName();
 
   // to make things easier re-cast the input header to the EUTelRunHeaderImpl
-  EUTelRunHeaderImpl *  runHeader = static_cast<EUTelRunHeaderImpl*>(rdr);
+  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl(rdr)) ;
+  runHeader->addProcessor( type() );
 
   // increment the run counter
   ++_iRun;
@@ -264,11 +266,12 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
       cerr << e.what() << endl;
       return;
     }
-
-    EUTelRunHeaderImpl * newHeader = new EUTelRunHeaderImpl;
     
-    newHeader->setRunNumber(runHeader->getRunNumber());
-    newHeader->setDetectorName(runHeader->getDetectorName());
+    LCRunHeaderImpl    * lcHeader  = new LCRunHeaderImpl;
+    EUTelRunHeaderImpl * newHeader = new EUTelRunHeaderImpl (lcHeader);
+    
+    newHeader->lcRunHeader()->setRunNumber(runHeader->lcRunHeader()->getRunNumber());
+    newHeader->lcRunHeader()->setDetectorName(runHeader->lcRunHeader()->getDetectorName());
     newHeader->setHeaderVersion(runHeader->getHeaderVersion());
     newHeader->setDataType(runHeader->getDataType());
     newHeader->setDateTime();
@@ -284,8 +287,9 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
     newHeader->setMaxY(runHeader->getMaxY());
     newHeader->addProcessor(name());
     
-    lcWriter->writeRunHeader(newHeader);
+    lcWriter->writeRunHeader(lcHeader);
     delete newHeader;
+    delete lcHeader;
 
     lcWriter->close();
 

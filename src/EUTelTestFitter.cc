@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.7 2007-07-09 13:38:33 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.8 2007-08-30 08:57:13 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -17,6 +17,7 @@
 #include "EUTelTestFitter.h"
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
+#include "EUTelRunHeaderImpl.h"
 
 #ifdef MARLIN_USE_AIDA
 #include <marlin/AIDAProcessor.h>
@@ -40,7 +41,7 @@
 #include <fstream>
 #include <cmath>
 #include <sstream>
-
+#include <memory>
 
 
 using namespace std;
@@ -295,6 +296,9 @@ void EUTelTestFitter::init() {
 
 void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) { 
 
+  auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
+  eutelHeader->addProcessor( type() );
+  
   _nRun++ ;
 
   // Decode and print out Run Header information - just a check

@@ -50,6 +50,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 using namespace std;
 using namespace lcio;
@@ -198,7 +199,8 @@ void EUTelLineFit::init() {
 void EUTelLineFit::processRunHeader (LCRunHeader * rdr) {
   
 
-  EUTelRunHeaderImpl * header = static_cast<EUTelRunHeaderImpl*> (rdr);
+  auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
+  header->addProcessor( type() ) ;
   
   // the run header contains the number of detectors. This number
   // should be in principle the same as the number of layers in the
