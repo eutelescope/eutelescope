@@ -121,7 +121,7 @@ namespace eutelescope {
    *  histogram information file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.7 2007-06-29 15:24:23 bulgheroni Exp $
+   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.8 2007-08-30 08:26:04 bulgheroni Exp $
    *
    *
    */
@@ -301,6 +301,8 @@ namespace eutelescope {
      */
     int _noOfDetector;
 
+    //! Global operational mode of the EUDRB
+    std::string _eudrbGlobalMode;
 
 #ifdef MARLIN_USE_AIDA
 
