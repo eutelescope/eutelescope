@@ -69,7 +69,7 @@ namespace eutelescope {
    *  process run on this sparse data. 
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelSparseDataImpl.hcc,v 1.1 2007-08-30 09:02:37 bulgheroni Exp $
+   *  @Version $Id: EUTelSparseDataImpl.hcc,v 1.2 2007-08-30 15:20:46 bulgheroni Exp $
    */  
   template<class PixelType>
   class EUTelSparseDataImpl {
@@ -87,22 +87,22 @@ namespace eutelescope {
      */
     void addSparsePixel(PixelType * pixel);
     
-    //! Perform cluster search
+    //! Looks for neighboring pixels over threshold 
     /*! This is a very important method for this class since it is
      *  used to group together nearby pixels present in this
      *  TrackerDataImpl and return a list of pixel list. Each pixel
      *  list contains all pixels that can be grouped together to form
-     *  a cluster. 
-     * 
-     *  For the time being only one clustering strategy has been
-     *  envisaged for sparse data. This is base on the distance of two
-     *  pixels. If this is below the threshold distance set by the
-     *  user, than the two pixels are assumed to belong to the same
-     *  cluster. Remember that this distance is measure in pixel units
-     *  and so two pixels sharing one side are 1 pixel far apart,
-     *  while two pixels with a touching corner are
-     *  <code>sqrt(2)</code> far apart. So, setting the minDistance to
-     *  sqrt(2) is equivalent to ask "touching pixels".
+     *  a cluster candidate.
+     *
+     *  This step is initial step for clustering and it is base on the
+     *  distance of two pixels. If this is below the threshold
+     *  distance set by the user, than the two pixels are assumed to
+     *  belong to the same cluster candidate. Remember that this
+     *  distance is measure in pixel units and so two pixels sharing
+     *  one side are 1 pixel far apart, while two pixels with a
+     *  touching corner are <code>sqrt(2)</code> far apart. So,
+     *  setting the minDistance to sqrt(2) is equivalent to ask
+     *  "touching pixels".
      *
      *  @param minDistance The minimum distance between two pixels in
      *  order to consider the two making a cluster.
@@ -110,7 +110,7 @@ namespace eutelescope {
      *  @return A list of list with the pixel index that can form a
      *  cluster.
      */
-    virtual std::list<std::list< unsigned int> > findClusters(double minDistance) const;
+    virtual std::list<std::list< unsigned int> > findNeighborPixels(double minDistance) const;
 
     //! Get one of the sparse pixel
     /*! This method is used to get one of the sparse pixel contained
@@ -182,8 +182,20 @@ namespace eutelescope {
     return pixel;
   }
 
+  //! Template specialization for the addSparsePixel method
+  /*! The same consideration about getSparsePixelAt. Adding and
+   *  retrieving pixel information are sensitive to the pixel
+   *  definition.
+   */
+  template<>
+  inline void EUTelSparseDataImpl< EUTelSimpleSparsePixel>::addSparsePixel(EUTelSimpleSparsePixel * pixel) {
+    
+    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getXCoord()) );
+    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getYCoord()) );
+    _trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
 
-  
+    
+  }  
 
 
   

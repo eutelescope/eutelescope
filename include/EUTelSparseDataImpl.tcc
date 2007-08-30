@@ -14,50 +14,22 @@ namespace eutelescope {
 
   template<class PixelType> 
   EUTelSparseDataImpl<PixelType>::EUTelSparseDataImpl(IMPL::TrackerDataImpl * data) {
-    // to work properly the template class has to be or at least
-    // inherit from EUTelBaseSparsePixel
-    EUTelBaseSparsePixel      * goodPixel;
-    std::auto_ptr<PixelType>    pixel(new PixelType);
-    goodPixel = dynamic_cast<EUTelBaseSparsePixel *>( pixel.get() );
-    if ( goodPixel != 0x0 ) {
-      // the template class should be a good sparse pixel so we can
-      // continue...
-      _nElement     = goodPixel->getNoOfElements();
-      _type         = goodPixel->getSparsePixelType();
-      _trackerData  = data;
-    } else {
-    // the template class is not inheriting from
-    // EUTelBaseSparsePixel, so it cannot be used, throw an
-    // exception...
-      throw InvalidParameterException(std::string("The template parameter is not valid"));
-    }
+
+    std::auto_ptr<PixelType> pixel ( new PixelType );
+    _nElement     = pixel->getNoOfElements();
+    _type         = pixel->getSparsePixelType();
+    _trackerData  = data;
+
   } 
   
-  template<class PixelType>
-  void EUTelSparseDataImpl<PixelType>::addSparsePixel(PixelType * pixel) {
-    
-    if ( _type == kEUTelSimpleSparsePixel ) {
-      EUTelSimpleSparsePixel * simplePixelType = dynamic_cast<EUTelSimpleSparsePixel*> ( pixel ) ;
-      _trackerData->chargeValues().push_back( static_cast<float> (simplePixelType->getXCoord()) );
-      _trackerData->chargeValues().push_back( static_cast<float> (simplePixelType->getYCoord()) );
-      _trackerData->chargeValues().push_back( static_cast<float> (pixel->getSignal()) );
-    } else if ( _type == kUnknownPixelType ) {
-      throw UnknownDataTypeException("Unknown sparse pixel type");
-    }
-    
-  }
-
   template<class PixelType>
   unsigned int EUTelSparseDataImpl<PixelType>::size() const {
     return _trackerData->chargeValues().size() / _nElement;
   }
 
   
-//   template<class PixelType> 
-//   PixelType * EUTelSparseDataImpl<PixelType>::getSparsePixelAt(unsigned int index, PixelType *) { return 0x0; }	
-
   template<class PixelType>
-  std::list<std::list< unsigned int> > EUTelSparseDataImpl<PixelType>::findClusters(double minDistance) const {
+  std::list<std::list< unsigned int> > EUTelSparseDataImpl<PixelType>::findNeighborPixels(double minDistance) const {
 
     PixelType * pixel      = new PixelType;
     PixelType * otherPixel = new PixelType;
