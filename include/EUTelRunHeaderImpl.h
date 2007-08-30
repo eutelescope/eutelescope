@@ -18,23 +18,20 @@
 
 // lcio includes <.h>
 #include <lcio.h>
+#include <EVENT/LCRunHeader.h>
 #include <IMPL/LCRunHeaderImpl.h>
 
 // system includes <>
 
 
-namespace eutelescope
-{
+namespace eutelescope {
 
   //! Implementation of the Run Header for the EUDET telescope.
   /*! This is used within the EUDET JRA1 collaboration to store the
    *  run header into the LCIO files produced both by the system DAQ
-   *  and by simulation software. This class is inheriting from
-   *  LCRunHeaderImpl and in order to maintain compatibility with the
-   *  rest of the LCIO framework, it does not add any other data
-   *  members, but it simply provide methods to set other specific
-   *  name parameters inside the LCParameter object. The following
-   *  other parameters have been defined: 
+   *  and by simulation software. This class is using the decorator
+   *  pattern around the LCRunHeaderImpl. The following parameters
+   *  have been defined:
    *
    *  \li <b>HeaderVersion</b>: a float number representing the
    *  version of this header class. Standard version number v01-23-04
@@ -147,22 +144,19 @@ namespace eutelescope
    *  \li <b>UserComment</b>: a user defined string field. 
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTelRunHeaderImpl.h,v 1.7 2007-07-15 16:36:26 bulgheroni Exp $
+   * @Version $Id: EUTelRunHeaderImpl.h,v 1.8 2007-08-30 08:30:37 bulgheroni Exp $
    * 
    */
 
-  class EUTelRunHeaderImpl:public IMPL::LCRunHeaderImpl
-  {
+  class EUTelRunHeaderImpl   {
 
   public:
-
+    
     //! Default constructor
-    EUTelRunHeaderImpl ();
+    EUTelRunHeaderImpl ( lcio::LCRunHeader * lcHeader ) { _lcHeader = dynamic_cast<IMPL::LCRunHeaderImpl*> (lcHeader) ; }
 
     //! Destructor
-    virtual ~ EUTelRunHeaderImpl ()
-    { /* NO-OP */ ;
-    }
+    virtual ~ EUTelRunHeaderImpl ()  { /* NO-OP */ ;  }
 
     //! Set the header version number
     /*! this is a float number representing the version of this header
@@ -352,6 +346,15 @@ namespace eutelescope
      */
     virtual void setMaxY (lcio::IntVec yMax);
 
+    //! Set the detector modality
+    /*! This is the tag taken from the DAQ software to identify how
+     *  the EUDRBs are configured. For example if they are working in
+     *  RAW mode or in ZS.
+     * 
+     *  @param mode A string representing the mode of operation
+     */
+    virtual void setEUDRBMode(std::string mode);
+
     //! Add a processor to the applied processor list
     /*! The analysis procedure of some input data usually requires
      *  that many processors have been applied sequentially. Saving
@@ -380,113 +383,110 @@ namespace eutelescope
     virtual void setUserComment(std::string note);
 
     //! return the header version
-    inline float getHeaderVersion () const
-    {
-      return _params.getFloatVal (EUTELESCOPE::HEADERVERSION);
+    inline float getHeaderVersion () const    {
+      return _lcHeader->parameters().getFloatVal (EUTELESCOPE::HEADERVERSION);
     }
 
     //! return the data type 
-    inline std::string getDataType () const
-    {
-      return _params.getStringVal (EUTELESCOPE::DATATYPE);
+    inline std::string getDataType () const     {
+      return _lcHeader->parameters().getStringVal (EUTELESCOPE::DATATYPE);
     }
 
     //! return the number of events
-    inline int getNoOfEvent() const 
-    {
-      return _params.getIntVal(EUTELESCOPE::NOOFEVENT);
+    inline int getNoOfEvent() const     {
+      return _lcHeader->parameters().getIntVal(EUTELESCOPE::NOOFEVENT);
     }
 
     //! return the date and time in a human readable format
-    inline std::string getDateTime () const
-    {
-      return _params.getStringVal (EUTELESCOPE::DATETIME);
+    inline std::string getDateTime () const    {
+      return _lcHeader->parameters().getStringVal (EUTELESCOPE::DATETIME);
     }
+
     //! return the DAQ hardware name 
-    inline std::string getDAQHWName () const
-    {
-      return _params.getStringVal (EUTELESCOPE::DAQHWNAME);
+    inline std::string getDAQHWName () const    {
+      return _lcHeader->parameters().getStringVal (EUTELESCOPE::DAQHWNAME);
     }
 
     //! return the DAQ hardware version 
-    inline float getDAQHWVersion () const
-    {
-      return _params.getFloatVal (EUTELESCOPE::DAQHWVERSION);
+    inline float getDAQHWVersion () const    {
+      return _lcHeader->parameters().getFloatVal (EUTELESCOPE::DAQHWVERSION);
     }
 
     //! return the DAQ software name 
-    inline std::string getDAQSWName () const
-    {
-      return _params.getStringVal (EUTELESCOPE::DAQSWNAME);
+    inline std::string getDAQSWName () const    {
+      return _lcHeader->parameters().getStringVal (EUTELESCOPE::DAQSWNAME);
     }
 
     //! return the DAQ software version 
-    inline float getDAQSWVersion () const
-    {
-      return _params.getFloatVal (EUTELESCOPE::DAQSWVERSION);
+    inline float getDAQSWVersion () const    {
+      return _lcHeader->parameters().getFloatVal (EUTELESCOPE::DAQSWVERSION);
     }
 
     //! return the simulation software name
-    inline std::string getSimulSWName () const
-    {
-      return _params.getStringVal (EUTELESCOPE::SIMULSWNAME);
+    inline std::string getSimulSWName () const    {
+      return _lcHeader->parameters().getStringVal (EUTELESCOPE::SIMULSWNAME);
     }
 
     //! return the simulation software version
-    inline float getSimulSWVersion () const
-    {
-      return _params.getFloatVal (EUTELESCOPE::SIMULSWVERSION);
+    inline float getSimulSWVersion () const    {
+      return _lcHeader->parameters().getFloatVal (EUTELESCOPE::SIMULSWVERSION);
     }
     
     //! return the geometry identification number 
-    inline int getGeoID () const
-    {
-      return _params.getIntVal (EUTELESCOPE::GEOID);
+    inline int getGeoID () const    {
+      return _lcHeader->parameters().getIntVal (EUTELESCOPE::GEOID);
     }
 
     //! return the beam location
     inline std::string getBeamLocation() const {
-      return _params.getStringVal(EUTELESCOPE::BEAMLOCATION);
+      return _lcHeader->parameters().getStringVal(EUTELESCOPE::BEAMLOCATION);
     }
 
     //! return the number of pixel detectors in the file
-    inline int getNoOfDetector () const
-    {
-      return _params.getIntVal (EUTELESCOPE::NOOFDETECTOR);
+    inline int getNoOfDetector () const    {
+      return _lcHeader->parameters().getIntVal (EUTELESCOPE::NOOFDETECTOR);
     }
 
     //! return the vector of minimum pixel along X
-    inline lcio::IntVec getMinX () const
-    {
+    inline lcio::IntVec getMinX () const    {
       lcio::IntVec v;
-      return _params.getIntVals (EUTELESCOPE::MINX, v);
+      return _lcHeader->parameters().getIntVals (EUTELESCOPE::MINX, v);
     }
 
     //! return the vector of maximum pixel along X
-    inline lcio::IntVec getMaxX () const
-    {
+    inline lcio::IntVec getMaxX () const    {
       lcio::IntVec v;
-      return _params.getIntVals (EUTELESCOPE::MAXX, v);
+      return _lcHeader->parameters().getIntVals (EUTELESCOPE::MAXX, v);
     }
 
     //! return the vector of minimum pixel along Y
-    inline lcio::IntVec getMinY () const
-    {
+    inline lcio::IntVec getMinY () const    {
       lcio::IntVec v;
-      return _params.getIntVals (EUTELESCOPE::MINY, v);
+      return _lcHeader->parameters().getIntVals (EUTELESCOPE::MINY, v);
     }
 
     //! return the vector of minimum pixel along Y
-    inline lcio::IntVec getMaxY () const
-    {
+    inline lcio::IntVec getMaxY () const    {
       lcio::IntVec v;
-      return _params.getIntVals (EUTELESCOPE::MAXY, v);
+      return _lcHeader->parameters().getIntVals (EUTELESCOPE::MAXY, v);
     }
 
     //! return the user comment 
     inline std::string getUserComment() const {
-      return _params.getStringVal(EUTELESCOPE::USERCOMMENT);
+      return _lcHeader->parameters().getStringVal(EUTELESCOPE::USERCOMMENT);
     }
+
+    //! return the EUDRB operation mode
+    inline std::string getEUDRBMode() const {
+      if ( _lcHeader->parameters().getStringVal(EUTELESCOPE::EUDRBMODE) == "" ) return std::string("RAW3");
+      return _lcHeader->parameters().getStringVal(EUTELESCOPE::EUDRBMODE);
+    }
+
+    //! returns the LCRunHeaderImpl underlying object
+    inline IMPL::LCRunHeaderImpl * lcRunHeader() { return  _lcHeader ; }
+
+  private:
+    IMPL::LCRunHeaderImpl * _lcHeader;
 
   };                           // end of EUTelRunHeaderImpl
 }                               // eutelescope namespace

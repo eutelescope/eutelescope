@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelRunHeaderImpl.cc,v 1.5 2007-05-21 11:42:14 bulgheroni Exp $
+// Version: $Id: EUTelRunHeaderImpl.cc,v 1.6 2007-08-30 08:30:37 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -20,193 +20,155 @@
 // lcio includes <.h>
 #include "lcio.h"
 #include "LCIOTypes.h"
-#include "IMPL/LCRunHeaderImpl.h"
 #include "UTIL/LCTime.h"
 
 using namespace std;
 using namespace eutelescope;
 
 
-EUTelRunHeaderImpl::EUTelRunHeaderImpl ():
-IMPL::LCRunHeaderImpl ()
-{ /* NO - OP */ ;
-}
-
-void
-EUTelRunHeaderImpl::setHeaderVersion (float ver)
-{
+void EUTelRunHeaderImpl::setHeaderVersion (float ver) {
    // sets the header implementation version number
 
-   _params.setValue (EUTELESCOPE::HEADERVERSION, ver);
+   _lcHeader->parameters().setValue (EUTELESCOPE::HEADERVERSION, ver);
 }
 
-void
-EUTelRunHeaderImpl::setDataType (std::string type)
-{
+void EUTelRunHeaderImpl::setDataType (std::string type) {
    // sets the type of data saved in this file
 
-   _params.setValue (EUTELESCOPE::DATATYPE, type);
+   _lcHeader->parameters().setValue (EUTELESCOPE::DATATYPE, type);
 }
 
-void
-EUTelRunHeaderImpl::setNoOfEvent ( int num )
-{
+void EUTelRunHeaderImpl::setNoOfEvent ( int num ) {
   // sets the number of events in the file
   
-  _params.setValue(EUTELESCOPE::NOOFEVENT, num);
+  _lcHeader->parameters().setValue(EUTELESCOPE::NOOFEVENT, num);
 
 }
 
-void
-EUTelRunHeaderImpl::setDateTime ()
-{
+void EUTelRunHeaderImpl::setDateTime () {
    // sets the date and time of this file to now
    // it uses the LCTime util
 
    UTIL::LCTime * now = new UTIL::LCTime ();
-   _params.setValue (EUTELESCOPE::DATETIME, now->getDateString ());
+   _lcHeader->parameters().setValue (EUTELESCOPE::DATETIME, now->getDateString ());
    delete now;
 }
 
-void
-EUTelRunHeaderImpl::setDAQHWName (std::string name)
-{
+void EUTelRunHeaderImpl::setDAQHWName (std::string name) {
    // sets the DAQ hardware name.
    // only in the case of EUTELESCOPE::DAQDATA
 
-   _params.setValue (EUTELESCOPE::DAQHWNAME, name);
+   _lcHeader->parameters().setValue (EUTELESCOPE::DAQHWNAME, name);
 }
 
-void
-EUTelRunHeaderImpl::setDAQHWVersion (float ver)
-{
+void EUTelRunHeaderImpl::setDAQHWVersion (float ver) {
    // sets the DAQ hardware version number
    // only in the case of EUTELESCOPE::DAQDATA
 
-   _params.setValue (EUTELESCOPE::DAQHWVERSION, ver);
+   _lcHeader->parameters().setValue (EUTELESCOPE::DAQHWVERSION, ver);
 }
 
-void
-EUTelRunHeaderImpl::setDAQSWName (std::string name)
-{
+void EUTelRunHeaderImpl::setDAQSWName (std::string name) {
    // sets the DAQ software name
    // only in the case of EUTELESCOPE::DAQDATA
 
-   _params.setValue (EUTELESCOPE::DAQSWNAME, name);
+   _lcHeader->parameters().setValue (EUTELESCOPE::DAQSWNAME, name);
 }
 
-void
-EUTelRunHeaderImpl::setDAQSWVersion (float ver)
-{
+void EUTelRunHeaderImpl::setDAQSWVersion (float ver) {
    // sets the DAQ software version number
    // only in the case of EUTELESCOPE::DAQDATA
 
-   _params.setValue (EUTELESCOPE::DAQSWVERSION, ver);
+   _lcHeader->parameters().setValue (EUTELESCOPE::DAQSWVERSION, ver);
 }
 
-void
-EUTelRunHeaderImpl::setSimulSWName (std::string name)
-{
+void EUTelRunHeaderImpl::setSimulSWName (std::string name) {
    // sets the simulation program name used to generate this data
    // only in the case of EUTELESCOPE::SIMULDATA
 
-   _params.setValue (EUTELESCOPE::SIMULSWNAME, name);
+   _lcHeader->parameters().setValue (EUTELESCOPE::SIMULSWNAME, name);
 }
 
-void
-EUTelRunHeaderImpl::setSimulSWVersion (float ver)
-{
+void EUTelRunHeaderImpl::setSimulSWVersion (float ver) {
    // sets the simulation program version number
    // only in the case of EUTELESCOPE::SIMULDATA
 
-   _params.setValue (EUTELESCOPE::SIMULSWVERSION, ver);
+   _lcHeader->parameters().setValue (EUTELESCOPE::SIMULSWVERSION, ver);
 }
 
-void
-EUTelRunHeaderImpl::setGeoID (int id)
-{
+void EUTelRunHeaderImpl::setGeoID (int id) {
    // sets the current geometry identification number
    // use this number to query the geometry database
 
-   _params.setValue (EUTELESCOPE::GEOID, id);
+   _lcHeader->parameters().setValue (EUTELESCOPE::GEOID, id);
 }
 
 void EUTelRunHeaderImpl::setBeamLocation(std::string location) {
-  _params.setValue(EUTELESCOPE::BEAMLOCATION, location);
+  _lcHeader->parameters().setValue(EUTELESCOPE::BEAMLOCATION, location);
 }
 
 
 void EUTelRunHeaderImpl::setBeamType(std::string type) {
-  _params.setValue(EUTELESCOPE::BEAMTYPE, type);
+  _lcHeader->parameters().setValue(EUTELESCOPE::BEAMTYPE, type);
 }
 
 void EUTelRunHeaderImpl::setBeamEnergy(float energy) {
-  _params.setValue(EUTELESCOPE::BEAMENERGY, energy);
+  _lcHeader->parameters().setValue(EUTELESCOPE::BEAMENERGY, energy);
 }
 
-void
-EUTelRunHeaderImpl::setNoOfDetector (int num)
-{
+void EUTelRunHeaderImpl::setNoOfDetector (int num) {
    // sets the number of detectors in this run.  this corresponds to
    // the number of TrackerRawData objects in each LCCollectionVec
 
-   _params.setValue (EUTELESCOPE::NOOFDETECTOR, num);
+   _lcHeader->parameters().setValue (EUTELESCOPE::NOOFDETECTOR, num);
 }
 
-void
-EUTelRunHeaderImpl::setMinX (lcio::IntVec xMin)
-{
+void EUTelRunHeaderImpl::setMinX (lcio::IntVec xMin) {
    // sets the vector containing the minimum pixel number along X
 
-   _params.setValues (EUTELESCOPE::MINX, xMin);
+   _lcHeader->parameters().setValues (EUTELESCOPE::MINX, xMin);
 }
 
-void
-EUTelRunHeaderImpl::setMaxX (lcio::IntVec xMax)
-{
+void EUTelRunHeaderImpl::setMaxX (lcio::IntVec xMax) {
    // sets the vector containing the maximum pixel number along X
 
-   _params.setValues (EUTELESCOPE::MAXX, xMax);
+   _lcHeader->parameters().setValues (EUTELESCOPE::MAXX, xMax);
 }
 
-void
-EUTelRunHeaderImpl::setMinY (lcio::IntVec yMin)
-{
+void EUTelRunHeaderImpl::setMinY (lcio::IntVec yMin) {
    // sets the vector containing the minimum pixel number along Y
 
-   _params.setValues (EUTELESCOPE::MINY, yMin);
+   _lcHeader->parameters().setValues (EUTELESCOPE::MINY, yMin);
 }
 
-void
-EUTelRunHeaderImpl::setMaxY (lcio::IntVec yMax)
-{
+void EUTelRunHeaderImpl::setMaxY (lcio::IntVec yMax) {
    // sets the vector containing the maximum pixel number along Y
 
-   _params.setValues (EUTELESCOPE::MAXY, yMax);
+   _lcHeader->parameters().setValues (EUTELESCOPE::MAXY, yMax);
 }
 
-void
-EUTelRunHeaderImpl::addProcessor (std::string processor)
-{
+void EUTelRunHeaderImpl::addProcessor (std::string processor) {
    // add a "processor" to the list of applied processors
 
    lcio::StringVec processorVec;
-   _params.getStringVals (EUTELESCOPE::APPLIEDPROCESSOR, processorVec);
+   _lcHeader->parameters().getStringVals (EUTELESCOPE::APPLIEDPROCESSOR, processorVec);
    processorVec.push_back (processor);
-   _params.setValues (EUTELESCOPE::APPLIEDPROCESSOR, processorVec);
+   _lcHeader->parameters().setValues (EUTELESCOPE::APPLIEDPROCESSOR, processorVec);
 }
 
-void
-EUTelRunHeaderImpl::addIntermediateFile (std::string file)
-{
+void EUTelRunHeaderImpl::addIntermediateFile (std::string file) {
    // add a "file" to the list of intermediate file
 
    lcio::StringVec fileVec;
-   _params.getStringVals (EUTELESCOPE::INTERMEDIATEFILE, fileVec);
+   _lcHeader->parameters().getStringVals (EUTELESCOPE::INTERMEDIATEFILE, fileVec);
    fileVec.push_back (file);
-   _params.setValues (EUTELESCOPE::INTERMEDIATEFILE, fileVec);
+   _lcHeader->parameters().setValues (EUTELESCOPE::INTERMEDIATEFILE, fileVec);
 }
 
 void EUTelRunHeaderImpl::setUserComment(std::string note) {
-  _params.setValue(EUTELESCOPE::USERCOMMENT, note);
+  _lcHeader->parameters().setValue(EUTELESCOPE::USERCOMMENT, note);
+}
+
+void EUTelRunHeaderImpl::setEUDRBMode(std::string mode) {
+  _lcHeader->parameters().setValue(EUTELESCOPE::EUDRBMODE, mode);
 }
