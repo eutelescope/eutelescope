@@ -32,7 +32,7 @@ namespace eutelescope {
    *  inherithing from this virtual class.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelVirtualCluster.h,v 1.8 2007-07-12 14:44:32 bulgheroni Exp $
+   *  @Version $Id: EUTelVirtualCluster.h,v 1.9 2007-08-30 08:34:00 bulgheroni Exp $
    */
 
   class EUTelVirtualCluster {
@@ -81,6 +81,16 @@ namespace eutelescope {
      *  local frame of reference
      */ 
     virtual void getSeedCoord(int& xSeed, int& ySeed)  const              = 0;
+
+    //! Get the central pixel coordinate in the local FoR
+    /*! Regardless the kind of cluster in use, the pixel containing
+     *  the charge center of gravity can be considered the cluster
+     *  center. 
+     *
+     *  @param xCenter The coordinate along x of the central pixel
+     *  @param yCenter The coordinate along y of the central pixel
+     */
+    virtual void getCenterCoord(int& xCenter, int& yCenter) const         = 0;
 
     //! Get the cluster dimensions
     /*! For each cluster type is always possible to define the
