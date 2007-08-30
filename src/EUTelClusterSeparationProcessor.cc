@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.12 2007-08-30 08:57:13 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.13 2007-08-30 17:35:18 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -98,8 +98,18 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
   
   if (_iEvt % 10 == 0) 
     message<MESSAGE> ( log() << "Separating clusters on event " << _iEvt ) ;
+  
+  
+  LCCollectionVec * clusterCollectionVec;
 
-  LCCollectionVec * clusterCollectionVec =  dynamic_cast <LCCollectionVec *> (evt->getCollection(_clusterCollectionName));
+  try {
+    clusterCollectionVec  =  dynamic_cast <LCCollectionVec *> (evt->getCollection(_clusterCollectionName));
+  } catch (lcio::DataNotAvailableException& e ) {
+    streamlog_out ( DEBUG2 ) << "No cluster collection found on this event. Returnin now" << endl;
+    return ;
+  }
+
+
   LCCollectionVec * outputCollectionVec  =  new LCCollectionVec(LCIO::TRACKERPULSE);
   CellIDEncoder<TrackerPulseImpl> outputEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, outputCollectionVec);
   CellIDDecoder<TrackerPulseImpl> cellDecoder(clusterCollectionVec);

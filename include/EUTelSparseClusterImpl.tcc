@@ -420,7 +420,7 @@ namespace eutelescope {
     getSparsePixelAt( maxIndex, pixel ) ;
     
     delete pixel;
-    return _noiseValues[maxIndex] / maxSignal;
+    return maxSignal / _noiseValues[maxIndex];
   }
 
   template<class PixelType>
@@ -595,7 +595,7 @@ namespace eutelescope {
       getSparsePixelAt( iPixel, pixel );
 
       os << "Pixel number = " << iPixel << std::endl
-	 << pixel << std::endl;
+	 << ( * pixel ) << std::endl;
     }
     for ( int i = 0; i < spacer - 1; i++ ) {
       os << "-";

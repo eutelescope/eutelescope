@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.27 2007-08-30 15:21:52 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.28 2007-08-30 17:35:18 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -86,6 +86,10 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
 			   "Input calibrated data not zero suppressed collection name",
 			   _nzsDataCollectionName, string ("data"));
 
+  registerInputCollection (LCIO::TRACKERDATA, "ZSDataCollectionName",
+			   "Input of Zero Suppressed data",
+			   _zsDataCollectionName, string ("zsdata") );
+
   registerInputCollection (LCIO::TRACKERDATA, "NoiseCollectionName",
 			   "Noise (input) collection name",
 			   _noiseCollectionName, string("noise"));
@@ -111,6 +115,12 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
 			      "Available algorithms are:\n"
 			      "-> FixedFrame: for custer with a given size",
 			      _nzsClusteringAlgo, string(EUTELESCOPE::FIXEDFRAME));
+
+  registerProcessorParameter ("ZSClusteringAlgo",
+			      "Select here which algorithm should be used for clustering.\n"
+			      "Available algorithms are:\n"
+			      "-> SparseCluster: for custer in ZS frame",
+			      _zsClusteringAlgo, string(EUTELESCOPE::SPARSECLUSTER));
   
   registerProcessorParameter ("ClusterSizeX",
 			      "Maximum allowed cluster size along x (only odd numbers)",
@@ -130,6 +140,17 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
 
   registerProcessorParameter("HistoInfoFileName", "This is the name of the histogram information file",
 			     _histoInfoFileName, string( "histoinfo.xml" ) );
+
+
+  registerProcessorParameter("ZSSeedCut","Threshold in SNR for seed pixel contained in ZS data",
+			     _zsSeedCut, static_cast<float > (4.5));
+  
+  registerProcessorParameter("ZSClusterCut","Threshold in SNR for clusters contained in ZS data",
+			    _zsClusterCut, static_cast<float > (3.0) );
+  
+  registerProcessorParameter("MinDistance","Minimum distance between sparsified pixel ( touching == sqrt(2)) ",
+			     _minDistance, static_cast<float > (0.0 ) );
+  
 
 #ifdef MARLIN_USE_AIDA
   IntVec clusterNxNExample;
@@ -247,7 +268,6 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
   bool hasZSData = true;
   try {
     event->getCollection( _zsDataCollectionName ) ;
-
   } catch (lcio::DataNotAvailableException& e ) {
     hasZSData = false;
     streamlog_out ( DEBUG4 ) << "No ZS data found in the event" << endl;
@@ -287,7 +307,7 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
   }
   if ( hasZSData ) {
     // put here all the possible algorithm applicable to ZS data 
-    if ( _nzsClusteringAlgo == EUTELESCOPE::SPARSECLUSTER )  sparseClustering(evt, pulseCollection);
+    if ( _zsClusteringAlgo == EUTELESCOPE::SPARSECLUSTER )  sparseClustering(evt, pulseCollection);
   }
 
   // if the pulseCollection is not empty add it to the event
@@ -375,9 +395,10 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
       
       // now loop over all the lists
       list<list< unsigned int> >::iterator listOfListIter = listOfList.begin();
+
       while ( listOfListIter != listOfList.end() ) {
 	list<unsigned int > currentList = (*listOfListIter);
-	
+
 	// prepare a TrackerData to store the cluster candidate
 	auto_ptr< TrackerDataImpl > zsCluster ( new TrackerDataImpl );
 	
@@ -403,11 +424,13 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
 	}
 	sparseCluster->setNoiseValues( noiseValueVec );
 
+	cerr << "asss " << sparseCluster->size() << " " <<  sparseCluster->getSeedSNR() << endl;
+
 	// verify if the cluster candidates can become a good cluster
 	if ( ( sparseCluster->getSeedSNR() >= _zsSeedCut ) &&
 	     ( sparseCluster->getClusterSNR() >= _zsClusterCut ) ) {
-	  // ok good cluster....
 
+	  // ok good cluster....
 	  // set the ID for this zsCluster
 	  idZSClusterEncoder["sensorID"] = _iDetector;
 	  idZSClusterEncoder["clusterID"] = clusterID;

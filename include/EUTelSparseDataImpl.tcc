@@ -44,7 +44,7 @@ namespace eutelescope {
       std::list<unsigned int> groupedPixel;
       
       getSparsePixelAt( iPixel, pixel);
-      
+
       if ( status[iPixel] == 0 ) {
 	groupedPixel.push_back(iPixel);
 	status[iPixel] = iPixel;
