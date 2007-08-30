@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.15 2007-07-24 14:25:15 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.16 2007-08-30 08:51:32 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -54,6 +54,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <memory>
 
 using namespace std;
 using namespace marlin;
@@ -160,7 +161,8 @@ void EUTelHitMaker::init() {
 void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
 
 
-  EUTelRunHeaderImpl * header = static_cast<EUTelRunHeaderImpl*> (rdr);
+  auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
+  header->addProcessor( type() );
 
   // the run header contains the number of detectors. This number
   // should be in principle be the same as the number of layers in the
@@ -456,7 +458,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       
       // get the position of the seed pixel. This is in pixel number.
       int xCluCenter, yCluCenter;
-      cluster->getSeedCoord(xCluCenter, yCluCenter);
+      cluster->getCenterCoord(xCluCenter, yCluCenter);
       
       // with the charge center of gravity calculation, we get a shift
       // from the seed pixel center due to the charge distribution. Those
