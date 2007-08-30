@@ -29,7 +29,7 @@ namespace eutelescope
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.14 2007-08-30 08:24:28 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.15 2007-08-30 15:15:34 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -217,6 +217,13 @@ namespace eutelescope
      */
     static const char * FIXEDFRAME;
 
+    //! Clustering algorithm for ZS data
+    /*! This is the basic algorithm for clustering together zero
+     *  suppress data. It is based on three numbers, the minimum
+     *  distance between pixels, the seed SNR and the cluster SNR.
+     */
+    static const char * SPARSECLUSTER;
+
     //! Fixed weight algorithm for the pedestal / noise update
     /*! The name for the pedestal and noise update algorithm. @see
      *  EUTelUpdatePedestalNoiseProcessor
@@ -321,7 +328,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.14 2007-08-30 08:24:28 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.15 2007-08-30 15:15:34 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -368,7 +375,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.14 2007-08-30 08:24:28 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.15 2007-08-30 15:15:34 bulgheroni Exp $
    */ 
   
   enum ClusterQuality {
@@ -427,7 +434,7 @@ namespace eutelescope
    *  cluster during the clusterization process itself. 
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.14 2007-08-30 08:24:28 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.15 2007-08-30 15:15:34 bulgheroni Exp $
    */
   enum ClusterType {
     kEUTelFFClusterImpl     = 0,
@@ -441,7 +448,7 @@ namespace eutelescope
   /*! This enumerator is used to define the sparsified pixel type. 
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.14 2007-08-30 08:24:28 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.15 2007-08-30 15:15:34 bulgheroni Exp $
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,
