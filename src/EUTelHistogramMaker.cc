@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.15 2007-08-29 15:14:13 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.16 2007-08-30 08:52:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -46,7 +46,7 @@
 #include <string>
 #include <sstream>
 #include <vector>
-
+#include <memory>
 
 using namespace std;
 using namespace lcio;
@@ -128,7 +128,8 @@ void EUTelHistogramMaker::init () {
 void EUTelHistogramMaker::processRunHeader (LCRunHeader * rdr) {
 
   // to make things easier re-cast the input header to the EUTelRunHeaderImpl
-  EUTelRunHeaderImpl *  runHeader = static_cast<EUTelRunHeaderImpl*>(rdr);
+  auto_ptr<EUTelRunHeaderImpl> runHeader (new EUTelRunHeaderImpl(rdr));
+  runHeader->addProcessor( type() );
 
   // let me get from the run header all the available parameter
   _noOfDetector = runHeader->getNoOfDetector();
@@ -259,7 +260,7 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 	tempHistoName = ss.str();
       } 
       int xSeed, ySeed;
-      cluster->getSeedCoord(xSeed, ySeed);
+      cluster->getCenterCoord(xSeed, ySeed);
       (dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[tempHistoName]))
 	->fill(static_cast<double >(xSeed), static_cast<double >(ySeed), 1.);
       
