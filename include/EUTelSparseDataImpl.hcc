@@ -1,0 +1,192 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
+/*
+ *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
+ */
+#ifndef EUTELSPARSEDATAIMPL_HCC
+#define EUTELSPARSEDATAIMPL_HCC
+
+namespace eutelescope {
+
+
+  //! Implementation of the EUTelescope sparse data structure.
+  /*! Within the EUTelescope framework input data can be provided both
+   *  in non zero suppressed mode, i.e. one ADC signal for each pixel
+   *  in the detector irrespectively of the signal amplitude; or in
+   *  the so called zero suppress data format. In this case, the DAQ
+   *  output to the PC only the information concerning pixels having a
+   *  signal above a certain (user defined) threshold. While the
+   *  handling of NZS data can be easily done via a
+   *  LCIO::TrackerRawDataImpl class, this is no more true for sparse
+   *  data for the following reasons:
+   *
+   *  @li The output for pixels above threshold will be a float number
+   *  because it will be already corrected for pedestal and common
+   *  noise.
+   *
+   *  @li Not all pixels are present in the output, so it is
+   *  meaningless to use a structure like the LCIO::TrackerRawDataImpl
+   *  where the geometrical position of each pixel can be
+   *  reconstructed using the pixel readout order.
+   *
+   *  @li For each pixel storing the analog signal is not enough. At
+   *  least also the pixel address has to associated to the
+   *  signal. Advanced studies would benefit from having also other
+   *  information of the pixel, like the actual pedestal and noise
+   *  values, the threshold used for the selection and, last but not
+   *  least, the initial raw value.
+   *
+    *  For all these reasons the use of a standard TrackerRawData is
+   *  impossible and another way out has to be found. A possibility
+   *  would be to use a LCGenericObject containing all the needed
+   *  information but this is adding a performance penalty. Another
+   *  possibility is to use a TrackerData as container but within the
+   *  adcValues vector instead of storing only the pixel signal also
+   *  the pixel coordinates and other things can be stored in the
+   *  following manner:
+   *
+   *  @code
+   *  adcValues.push_back(pixelXCoord);
+   *  adcValues.push_back(pixelYCoord);
+   *  adcValues.push_back(pixelSignal);
+   *  adcValues.push_back(spare); // to be properly encoded if needed.
+   *  @endcode
+   *
+   *  For the time being the second possibility has been chosen mainly
+   *  because the usage of a LCGenericObject is introducing some
+   *  performance penalties.
+   *
+   *  To handle the complicated data structure behind this
+   *  TrackerData, a specific helper class has been designed on
+   *  purpose (eutelescope::EUTelSparsePixel).
+   *
+   *  An important feature added to this class is the possibility to
+   *  return a vector of EUTelClusterImpl as a result of a clusterization
+   *  process run on this sparse data. 
+   *  
+   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @Version $Id: EUTelSparseDataImpl.hcc,v 1.1 2007-08-30 09:02:37 bulgheroni Exp $
+   */  
+  template<class PixelType>
+  class EUTelSparseDataImpl {
+
+  public:
+    //! Default constructor
+    EUTelSparseDataImpl(IMPL::TrackerDataImpl * data);
+   
+    //! Destructor
+    virtual ~EUTelSparseDataImpl() { /* NOOP */ ; }
+    
+    //! Add a sparse pixel
+    /*! This method is used to add to the current TrackerDataImpl a
+     *  new sparse pixel with all the pieces of information.
+     */
+    void addSparsePixel(PixelType * pixel);
+    
+    //! Perform cluster search
+    /*! This is a very important method for this class since it is
+     *  used to group together nearby pixels present in this
+     *  TrackerDataImpl and return a list of pixel list. Each pixel
+     *  list contains all pixels that can be grouped together to form
+     *  a cluster. 
+     * 
+     *  For the time being only one clustering strategy has been
+     *  envisaged for sparse data. This is base on the distance of two
+     *  pixels. If this is below the threshold distance set by the
+     *  user, than the two pixels are assumed to belong to the same
+     *  cluster. Remember that this distance is measure in pixel units
+     *  and so two pixels sharing one side are 1 pixel far apart,
+     *  while two pixels with a touching corner are
+     *  <code>sqrt(2)</code> far apart. So, setting the minDistance to
+     *  sqrt(2) is equivalent to ask "touching pixels".
+     *
+     *  @param minDistance The minimum distance between two pixels in
+     *  order to consider the two making a cluster.
+     *
+     *  @return A list of list with the pixel index that can form a
+     *  cluster.
+     */
+    virtual std::list<std::list< unsigned int> > findClusters(double minDistance) const;
+
+    //! Get one of the sparse pixel
+    /*! This method is used to get one of the sparse pixel contained
+     *  into the TrackerData. 
+     *
+     *  @param index Index of the sparse pixel within the collection
+     *  @param pixel A pointer to the output pixel
+     *  @return A pointer to the output pixel same as @c pixel
+     */ 
+    PixelType *  getSparsePixelAt(unsigned int index, PixelType * pixel) const;
+    
+    //! Get the number of sparse pixels in the collection
+    /*! This utility can be used to know how many pixels are contained
+     *  in the TrackerData.
+     *
+     *  @return the size of TrackerData measured in sparse
+     *  pixels. 
+     */ 
+    unsigned int size() const ;
+
+    //! Expose the TrackerDataImpl to the public
+    /*! This method is used to allow a direct and public access to the
+     *  TrackerDataImpl used to collect all the sparse data
+     *  information.
+     *  
+     *  @return The TrackerDataImpl with all the sparse data.
+     */
+    IMPL::TrackerDataImpl * trackerData(); 
+
+  private:
+    //! This is the TrackerDataImpl
+    /*! This is the object where the sparse data information are
+     *  collected all together.
+     */
+    IMPL::TrackerDataImpl * _trackerData;
+
+    //! Number of elements in the sparse pixel
+    /*! This value is initialized in the constructor and taken from
+     *  the template class.
+     */ 
+    unsigned int _nElement;
+
+    //! Sparse pixel type
+    /*! This enumerator value is set in the constructor and taken from
+     *  the template class.
+     */
+    SparsePixelType _type;
+
+  };
+ 
+
+  //! Template specialization
+  /*! A template specialization is definitely needed for the
+   *  getSparsePixelAt method, because depending on how the sparsified
+   *  pixel data are organized in the TrackerData a re-arrangement is
+   *  needed. 
+   *
+   *  @param index The pixel index the user wants to retrieve.
+   *  @param pixel A pointer to the output pixel
+   *  @return A pointer to the output pixel same as @c pixel.
+   */ 
+  template<>
+  inline EUTelSimpleSparsePixel *  EUTelSparseDataImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index, 
+												 EUTelSimpleSparsePixel * pixel ) const {
+    if ( index * _nElement + 2 > _trackerData->chargeValues().size() ) return 0x0;
+    pixel->setXCoord( static_cast<int> ( _trackerData->chargeValues()[index * _nElement]     ) );
+    pixel->setYCoord( static_cast<int> ( _trackerData->chargeValues()[index * _nElement + 1] ) );
+    pixel->setSignal( static_cast<int> ( _trackerData->chargeValues()[index * _nElement + 2] ) );
+    return pixel;
+  }
+
+
+  
+
+
+  
+
+}
+#endif
