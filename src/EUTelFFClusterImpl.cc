@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.19 2007-07-24 14:25:15 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.20 2007-08-30 08:54:12 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -46,10 +46,10 @@ EUTelFFClusterImpl::EUTelFFClusterImpl(TrackerDataImpl * data) : EUTelVirtualClu
 float EUTelFFClusterImpl::getDistance(EUTelVirtualCluster * otherCluster) const {
 
   int xOtherSeed, yOtherSeed;
-  otherCluster->getSeedCoord(xOtherSeed, yOtherSeed);
+  otherCluster->getCenterCoord(xOtherSeed, yOtherSeed);
 
   int xThisSeed, yThisSeed;
-  this->getSeedCoord(xThisSeed, yThisSeed);
+  this->getCenterCoord(xThisSeed, yThisSeed);
 
   return sqrt( pow(static_cast<double> (xThisSeed - xOtherSeed), 2) + pow(static_cast<double> (yThisSeed - yOtherSeed), 2) );
 
@@ -208,7 +208,7 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int n
 void EUTelFFClusterImpl::getCenterOfGravity(float& xCoG, float& yCoG) const {
 
   int xSeed, ySeed;
-  getSeedCoord(xSeed, ySeed);
+  getCenterCoord(xSeed, ySeed);
 
   getCenterOfGravityShift(xCoG, yCoG);
   
