@@ -79,7 +79,7 @@ namespace eutelescope {
    *  are then read from GEAR.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEventViewer.h,v 1.3 2007-06-29 15:24:23 bulgheroni Exp $ 
+   *  @version $Id: EUTelEventViewer.h,v 1.4 2007-08-30 08:32:08 bulgheroni Exp $ 
    */
   class EUTelEventViewer : public marlin::Processor {
   
@@ -188,6 +188,9 @@ namespace eutelescope {
     
 
   } ;
+
+  //! A global instance of the processor.
+  EUTelEventViewer gEUTelEventViewer ;
   
 }
 #endif

@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.3 2007-07-24 14:25:15 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.4 2007-08-30 08:32:08 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -34,13 +34,12 @@
 // system includes <>
 #include <vector>
 #include <string>
+#include <memory>
 
 using namespace std ;
 using namespace lcio ;
 using namespace marlin ;
 using namespace eutelescope;
-
-EUTelEventViewer aEUTelEventViewer ;
 
 
 EUTelEventViewer::EUTelEventViewer() : Processor("EUTelEventViewer") {
@@ -94,7 +93,10 @@ void EUTelEventViewer::init() {
 }
 
 
-void EUTelEventViewer::processRunHeader( LCRunHeader* /* run */ ) { 
+void EUTelEventViewer::processRunHeader( LCRunHeader * rdr ) { 
+  
+  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) );
+  runHeader->addProcessor( type() );
 
 } 
 
