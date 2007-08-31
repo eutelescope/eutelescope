@@ -52,7 +52,7 @@ namespace eutelescope {
 
   template<class PixelType>
   void EUTelSparseClusterImpl<PixelType>::getSeedCoord(int& xSeed, int& ySeed) const {
-    unsigned int   maxIndex  = 0;
+    unsigned int   maxIndex  =  0;
     float          maxSignal = -1 * std::numeric_limits<float>::max();
     PixelType * pixel = new PixelType;
     for ( unsigned int index = 0; index < size() ; index++ ) {
@@ -134,6 +134,12 @@ namespace eutelescope {
   template<class PixelType> 
   void EUTelSparseClusterImpl<PixelType>::getCenterOfGravityShift(float& xCoG, float& yCoG,
 								  int xSize, int ySize) const {
+
+    if ( size() == 1 ) {
+      xCoG = 0; 
+      yCoG = 0;
+      return;
+    }
     
     std::vector<unsigned int> goodPixelList;
     
@@ -176,6 +182,12 @@ namespace eutelescope {
 
   template<class PixelType> 
   void EUTelSparseClusterImpl<PixelType>::getCenterOfGravityShift(float& xCoG, float& yCoG,  int n) const {
+
+    if ( size() == 1 ) {
+      xCoG = 0; 
+      yCoG = 0;
+      return;
+    }
 
     std::map<float, unsigned int> pixelMap;
     PixelType * sparsePixel = new PixelType;
@@ -406,6 +418,7 @@ namespace eutelescope {
 
   template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getSeedSNR() const {
+
     if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
     unsigned int   maxIndex  = 0;
     float          maxSignal = -1 * std::numeric_limits<float>::max();
@@ -418,7 +431,6 @@ namespace eutelescope {
       }
     }
     getSparsePixelAt( maxIndex, pixel ) ;
-    
     delete pixel;
     return maxSignal / _noiseValues[maxIndex];
   }

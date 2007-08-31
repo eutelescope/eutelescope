@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.28 2007-08-30 17:35:18 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.29 2007-08-31 07:48:01 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -146,7 +146,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
 			     _zsSeedCut, static_cast<float > (4.5));
   
   registerProcessorParameter("ZSClusterCut","Threshold in SNR for clusters contained in ZS data",
-			    _zsClusterCut, static_cast<float > (3.0) );
+			     _zsClusterCut, static_cast<float > (3.0) );
   
   registerProcessorParameter("MinDistance","Minimum distance between sparsified pixel ( touching == sqrt(2)) ",
 			     _minDistance, static_cast<float > (0.0 ) );
@@ -275,7 +275,7 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
 
   if ( !hasNZSData && !hasZSData ) {
     streamlog_out ( MESSAGE2 ) << "The current event doesn't contain neither ZS nor NZS data collections" << endl
-			      << "Leaving this event without any further processing" << endl;
+			       << "Leaving this event without any further processing" << endl;
     return ;
   }
 
@@ -374,6 +374,31 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
     
     // prepare the matrix decoder
     EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
+
+    //     if ( type == kEUTelSimpleSparsePixel ) {
+      
+    //       auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > > 
+    //     	sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+
+    //       list<list< unsigned int> > listOfList = sparseData->findNeighborPixels( _minDistance );     
+    //       list<list< unsigned int> >::iterator listOfListIter = listOfList.begin();
+    //       cout << "list of list has " << listOfList.size() << " element " << endl;
+    //       int iListOfListCounter = 0;
+    //       while ( listOfListIter != listOfList.end() ) {
+    // 	cout << "list " << iListOfListCounter << " --> " ;
+    // 	list<unsigned int > currentList = (*listOfListIter);
+    // 	list<unsigned int >::iterator listIter = currentList.begin();
+    // 	while ( listIter != currentList.end() ) {
+    // 	  cout << (*listIter) << ", " ;
+    // 	  ++listIter;
+    // 	}
+    // 	cout << endl;
+    // 	++iListOfListCounter;
+    // 	++listOfListIter;
+    //       }
+    //     }
+    //   }
+    // }
     
     if ( type == kEUTelSimpleSparsePixel ) {
       
@@ -424,10 +449,8 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
 	}
 	sparseCluster->setNoiseValues( noiseValueVec );
 
-	cerr << "asss " << sparseCluster->size() << " " <<  sparseCluster->getSeedSNR() << endl;
-
 	// verify if the cluster candidates can become a good cluster
-	if ( ( sparseCluster->getSeedSNR() >= _zsSeedCut ) &&
+	if ( ( sparseCluster->getSeedSNR() >= _zsSeedCut ) && 
 	     ( sparseCluster->getClusterSNR() >= _zsClusterCut ) ) {
 
 	  // ok good cluster....
@@ -439,7 +462,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
 	  idZSClusterEncoder.setCellID( zsCluster.get() );
 	  
 	  // add it to the cluster collection
-	  sparseClusterCollectionVec->push_back( zsCluster.release() );
+	  sparseClusterCollectionVec->push_back( zsCluster.get() );
 
 	  // prepare a pulse for this cluster
 	  int xSeed, ySeed, xSize, ySize;
@@ -458,7 +481,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
 
 	  zsPulse->setCharge( sparseCluster->getTotalCharge() );
 	  zsPulse->setQuality( static_cast<int > (sparseCluster->getClusterQuality()) );
-	  zsPulse->setTrackerData( zsCluster.get() );
+	  zsPulse->setTrackerData( zsCluster.release() );
 	  pulseCollection->push_back( zsPulse.release() );
 	
 
@@ -488,7 +511,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
       delete pixel;
       
     } else {
-	throw UnknownDataTypeException("Unknown sparsified pixel");
+      throw UnknownDataTypeException("Unknown sparsified pixel");
     }
     
     
@@ -793,206 +816,242 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 				<< " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
   
-  LCCollectionVec * pulseCollectionVec = dynamic_cast<LCCollectionVec*>  (evt->getCollection(_pulseCollectionName));
-  CellIDDecoder<TrackerPulseImpl > cellDecoder(pulseCollectionVec);
+  try {
 
-  // I also need the noise collection too fill in the SNR histograms
-  LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
-  LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
-  CellIDDecoder<TrackerDataImpl > noiseDecoder(noiseCollectionVec);
+    LCCollectionVec * pulseCollectionVec = dynamic_cast<LCCollectionVec*>  (evt->getCollection(_pulseCollectionName));
+    CellIDDecoder<TrackerPulseImpl > cellDecoder(pulseCollectionVec);
     
-  vector<unsigned short> eventCounterVec( _noOfDetector, 0 );
-
-  for ( int iPulse = 0; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ ) {
-    TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl*> ( pulseCollectionVec->getElementAt(iPulse) );
-    ClusterType        type  = static_cast<ClusterType> ( static_cast<int> ( cellDecoder(pulse)["type"] ));
+    // I also need the noise collection too fill in the SNR histograms
+    LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
+    LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
+    CellIDDecoder<TrackerDataImpl > noiseDecoder(noiseCollectionVec);
     
-    EUTelVirtualCluster * cluster;
+    vector<unsigned short> eventCounterVec( _noOfDetector, 0 );
     
-    if ( type == kEUTelFFClusterImpl ) {
-      cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
-    } else {
-      streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
-      throw UnknownDataTypeException("Cluster type unknown");
-    }
-    
-    int detectorID = cluster->getDetectorID();
-    
-    // increment of one unit the event counter for this plane
-    eventCounterVec[detectorID]++;
-    
-    string tempHistoName;
-
-    {
-      stringstream ss;
-      ss << _clusterSignalHistoName << "-d" << detectorID;
-      tempHistoName = ss.str();
-    } 
-    (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getTotalCharge());
-    
-    {
-      stringstream ss;
-      ss << _seedSignalHistoName << "-d" << detectorID;
-      tempHistoName = ss.str();
-    }
-    (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getSeedCharge());
-    
-    vector<float > charges = cluster->getClusterCharge(_clusterSpectraNVector);
-    for ( unsigned int i = 0; i < charges.size() ; i++ ) {
-      {
- 	stringstream ss;
- 	ss << _clusterSignalHistoName << _clusterSpectraNVector[i] << "-d" << detectorID;
- 	tempHistoName = ss.str();
-      }
-      (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))
-	->fill(charges[i]);
-    }
-    
-    vector<int >::iterator iter = _clusterSpectraNxNVector.begin();
-    while ( iter != _clusterSpectraNxNVector.end() ) {
-      {
-	stringstream ss;
-	ss << _clusterSignalHistoName << (*iter) << "x" << (*iter) << "-d" << detectorID;
-	tempHistoName = ss.str();
-      }
-      (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))
-	->fill(cluster->getClusterCharge((*iter), (*iter)));
-      ++iter;
-    }
-    
-    {
-      stringstream ss;
-      ss << _hitMapHistoName << "-d" << detectorID;
-      tempHistoName = ss.str();
-    } 
-    int xSeed, ySeed;
-    cluster->getCenterCoord(xSeed, ySeed);
-    (dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[tempHistoName]))
-      ->fill(static_cast<double >(xSeed), static_cast<double >(ySeed), 1.);
-    
-    
-    // fill the noise related histograms 
-    
-    // get the noise TrackerDataImpl corresponding to the detector
-    // under analysis and the status matrix as well
-    TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl *>    (noiseCollectionVec->getElementAt(detectorID) );
-    TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> (statusCollectionVec->getElementAt(detectorID) );
-    
-    // prepare also a MatrixDecoder for this matrix
-    EUTelMatrixDecoder noiseMatrixDecoder(noiseDecoder, noiseMatrix);
-    
-    vector<float > noiseValues;
-    for ( int yPixel = ySeed - ( _yClusterSize / 2 ); yPixel <= ySeed + ( _yClusterSize / 2 ); yPixel++ ) {
-      for ( int xPixel = xSeed - ( _xClusterSize / 2 ); xPixel <= xSeed + ( _xClusterSize / 2 ); xPixel++ ) {
-	// always check we are still within the sensor!!!
-	if ( ( xPixel >= _minX[detectorID] )  &&  ( xPixel <= _maxX[detectorID] ) &&
- 	     ( yPixel >= _minY[detectorID] )  &&  ( yPixel <= _maxY[detectorID] ) ) {
- 	  int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
- 	  // the corresponding position in the status matrix has to be HITPIXEL
-	  bool isHit  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::HITPIXEL );
-	  bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
- 	  if ( !isBad && isHit ) {
- 	    noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
- 	  } else {
- 	    noiseValues.push_back( 0. );
- 	  }
- 	} else {
- 	  noiseValues.push_back( 0. );
+    for ( int iPulse = 0; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ ) {
+      TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl*> ( pulseCollectionVec->getElementAt(iPulse) );
+      ClusterType        type  = static_cast<ClusterType> ( static_cast<int> ( cellDecoder(pulse)["type"] ));
+      SparsePixelType    pixelType = static_cast<SparsePixelType> (0);
+      EUTelVirtualCluster * cluster;
+      
+      if ( type == kEUTelFFClusterImpl ) {
+	cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
+      } else if ( type == kEUTelSparseClusterImpl ) {
+	// knowing that is a sparse cluster is not enough we need also
+	// to know also the sparse pixel type. This information is
+	// available in the "original_zsdata" collection. Let's get it! 
+	LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+	TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+	CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+	pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+	if ( pixelType == kEUTelSimpleSparsePixel ) {
+	  cluster = new EUTelSparseClusterImpl<EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
+	} else {
+	  streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
+	  throw UnknownDataTypeException("Cluster type unknown");
 	}
+      } else {
+	streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
+	throw UnknownDataTypeException("Cluster type unknown");
       }
-    }
-    
-    bool fillSNRSwitch = true;
-    try {
-      cluster->setNoiseValues(noiseValues);
-    } catch ( IncompatibleDataSetException& e ) {
-      streamlog_out ( WARNING2 ) << e.what() << endl
-				 << "Continuing without filling the noise histograms" << endl;
-      fillSNRSwitch = false;
-    }
-    
-    
-    if ( fillSNRSwitch ) {
       
-      AIDA::IHistogram1D * histo;
-      
+      int detectorID = cluster->getDetectorID();
+    
+      // increment of one unit the event counter for this plane
+      eventCounterVec[detectorID]++;
+    
+      string tempHistoName;
+
       {
 	stringstream ss;
-	ss << _clusterNoiseHistoName << "-d" << detectorID;
+	ss << _clusterSignalHistoName << "-d" << detectorID;
 	tempHistoName = ss.str();
-      }
-      histo = dynamic_cast<AIDA::IHistogram1D* > ( _aidaHistoMap[tempHistoName] );
-      if ( histo ) {
-	histo->fill( cluster->getClusterNoise() );
-      }
-      
-      
+      } 
+      (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getTotalCharge());
+    
       {
 	stringstream ss;
-	ss << _clusterSNRHistoName << "-d" << detectorID;
+	ss << _seedSignalHistoName << "-d" << detectorID;
 	tempHistoName = ss.str();
       }
-      histo = dynamic_cast<AIDA::IHistogram1D* > ( _aidaHistoMap[tempHistoName] );
-      if ( histo ) {
-	histo->fill( cluster->getClusterSNR() );
+      (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getSeedCharge());
+    
+      vector<float > charges = cluster->getClusterCharge(_clusterSpectraNVector);
+      for ( unsigned int i = 0; i < charges.size() ; i++ ) {
+	{
+	  stringstream ss;
+	  ss << _clusterSignalHistoName << _clusterSpectraNVector[i] << "-d" << detectorID;
+	  tempHistoName = ss.str();
+	}
+	(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))
+	  ->fill(charges[i]);
       }
-      
-      {
-	stringstream ss;
-	ss << _seedSNRHistoName << "-d" << detectorID;
-	tempHistoName = ss.str();
-      }
-      histo = dynamic_cast<AIDA::IHistogram1D * > ( _aidaHistoMap[tempHistoName] );
-      if ( histo ) {
-	histo->fill( cluster->getSeedSNR() );
-      }
-      
+    
       vector<int >::iterator iter = _clusterSpectraNxNVector.begin();
       while ( iter != _clusterSpectraNxNVector.end() ) {
 	{
 	  stringstream ss;
-	  ss << _clusterSNRHistoName << (*iter) << "x" << (*iter) << "-d" << detectorID;
+	  ss << _clusterSignalHistoName << (*iter) << "x" << (*iter) << "-d" << detectorID;
 	  tempHistoName = ss.str();
 	}
-	histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName] ) ;
-	if ( histo ) {
-	  histo->fill(cluster->getClusterSNR( (*iter), (*iter) ));
-	}
+	(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))
+	  ->fill(cluster->getClusterCharge((*iter), (*iter)));
 	++iter;
       }
-      
-      vector<float > snrs = cluster->getClusterSNR(_clusterSpectraNVector);
-      for ( unsigned int i = 0; i < snrs.size() ; i++ ) {
-	{
-	  stringstream ss;
-	  ss << _clusterSNRHistoName << _clusterSpectraNVector[i] << "-d" << detectorID;
-	  tempHistoName = ss.str();
+    
+      {
+	stringstream ss;
+	ss << _hitMapHistoName << "-d" << detectorID;
+	tempHistoName = ss.str();
+      } 
+      int xSeed, ySeed;
+      cluster->getCenterCoord(xSeed, ySeed);
+      (dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[tempHistoName]))
+	->fill(static_cast<double >(xSeed), static_cast<double >(ySeed), 1.);
+    
+    
+      // fill the noise related histograms 
+    
+      // get the noise TrackerDataImpl corresponding to the detector
+      // under analysis and the status matrix as well
+      TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl *>    (noiseCollectionVec->getElementAt(detectorID) );
+      TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> (statusCollectionVec->getElementAt(detectorID) );
+    
+      // prepare also a MatrixDecoder for this matrix
+      EUTelMatrixDecoder noiseMatrixDecoder(noiseDecoder, noiseMatrix);
+    
+      vector<float > noiseValues;
+      if ( type == kEUTelFFClusterImpl ) {
+	for ( int yPixel = ySeed - ( _yClusterSize / 2 ); yPixel <= ySeed + ( _yClusterSize / 2 ); yPixel++ ) {
+	  for ( int xPixel = xSeed - ( _xClusterSize / 2 ); xPixel <= xSeed + ( _xClusterSize / 2 ); xPixel++ ) {
+	    // always check we are still within the sensor!!!
+	    if ( ( xPixel >= _minX[detectorID] )  &&  ( xPixel <= _maxX[detectorID] ) &&
+		 ( yPixel >= _minY[detectorID] )  &&  ( yPixel <= _maxY[detectorID] ) ) {
+	      int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
+	      // the corresponding position in the status matrix has to be HITPIXEL
+	      bool isHit  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::HITPIXEL );
+	      bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
+	      if ( !isBad && isHit ) {
+		noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
+	      } else {
+		noiseValues.push_back( 0. );
+	      }
+	    } else {
+	      noiseValues.push_back( 0. );
+	    }
+	  }
 	}
-	histo = dynamic_cast<AIDA::IHistogram1D * > ( _aidaHistoMap[tempHistoName] ) ;
-	if ( histo ) {
-	  histo->fill( snrs[i] ); 
+      } else if ( type == kEUTelSparseClusterImpl ) {
+	if ( pixelType == kEUTelSimpleSparsePixel ) {
+	  auto_ptr<EUTelSimpleSparsePixel> pixel ( new EUTelSimpleSparsePixel );
+	  // this recasting is due to have access to sparse cluster
+	  // specific methods.
+	  EUTelSparseClusterImpl<EUTelSimpleSparsePixel>* recasted = 
+	    dynamic_cast<EUTelSparseClusterImpl<EUTelSimpleSparsePixel>* > (cluster);
+	  for ( unsigned int iPixel = 0 ; iPixel < recasted->size() ; iPixel++ ) {
+	    recasted->getSparsePixelAt( iPixel , pixel.get() );
+	    int index = noiseMatrixDecoder.getIndexFromXY( pixel->getXCoord(), pixel->getYCoord() );
+	    noiseValues.push_back( noiseMatrix->getChargeValues() [ index ] );
+	    
+	  }
 	}
       }
-    }
     
-    delete cluster;
-  }
-
-  // fill the event multiplicity here
-  string tempHistoName;
-  for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++ ) {
-    {
-      stringstream ss;
-      ss << _eventMultiplicityHistoName << "-d" << iDetector;
-      tempHistoName = ss.str();
+      bool fillSNRSwitch = true;
+      try {
+	cluster->setNoiseValues(noiseValues);
+      } catch ( IncompatibleDataSetException& e ) {
+	streamlog_out ( WARNING2 ) << e.what() << endl
+				   << "Continuing without filling the noise histograms" << endl;
+	fillSNRSwitch = false;
+      }
+    
+    
+      if ( fillSNRSwitch ) {
+      
+	AIDA::IHistogram1D * histo;
+      
+	{
+	  stringstream ss;
+	  ss << _clusterNoiseHistoName << "-d" << detectorID;
+	  tempHistoName = ss.str();
+	}
+	histo = dynamic_cast<AIDA::IHistogram1D* > ( _aidaHistoMap[tempHistoName] );
+	if ( histo ) {
+	  histo->fill( cluster->getClusterNoise() );
+	}
+      
+      
+	{
+	  stringstream ss;
+	  ss << _clusterSNRHistoName << "-d" << detectorID;
+	  tempHistoName = ss.str();
+	}
+	histo = dynamic_cast<AIDA::IHistogram1D* > ( _aidaHistoMap[tempHistoName] );
+	if ( histo ) {
+	  histo->fill( cluster->getClusterSNR() );
+	}
+      
+	{
+	  stringstream ss;
+	  ss << _seedSNRHistoName << "-d" << detectorID;
+	  tempHistoName = ss.str();
+	}
+	histo = dynamic_cast<AIDA::IHistogram1D * > ( _aidaHistoMap[tempHistoName] );
+	if ( histo ) {
+	  histo->fill( cluster->getSeedSNR() );
+	}
+      
+	vector<int >::iterator iter = _clusterSpectraNxNVector.begin();
+	while ( iter != _clusterSpectraNxNVector.end() ) {
+	  {
+	    stringstream ss;
+	    ss << _clusterSNRHistoName << (*iter) << "x" << (*iter) << "-d" << detectorID;
+	    tempHistoName = ss.str();
+	  }
+	  histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName] ) ;
+	  if ( histo ) {
+	    histo->fill(cluster->getClusterSNR( (*iter), (*iter) ));
+	  }
+	  ++iter;
+	}
+      
+	vector<float > snrs = cluster->getClusterSNR(_clusterSpectraNVector);
+	for ( unsigned int i = 0; i < snrs.size() ; i++ ) {
+	  {
+	    stringstream ss;
+	    ss << _clusterSNRHistoName << _clusterSpectraNVector[i] << "-d" << detectorID;
+	    tempHistoName = ss.str();
+	  }
+	  histo = dynamic_cast<AIDA::IHistogram1D * > ( _aidaHistoMap[tempHistoName] ) ;
+	  if ( histo ) {
+	    histo->fill( snrs[i] ); 
+	  }
+	}
+      }
+    
+      delete cluster;
     }
-    AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D *> ( _aidaHistoMap[tempHistoName] );
-    if ( histo ) {
-      histo->fill( eventCounterVec[iDetector] );
-    }
-  }
 
+    // fill the event multiplicity here
+    string tempHistoName;
+    for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++ ) {
+      {
+	stringstream ss;
+	ss << _eventMultiplicityHistoName << "-d" << iDetector;
+	tempHistoName = ss.str();
+      }
+      AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D *> ( _aidaHistoMap[tempHistoName] );
+      if ( histo ) {
+	histo->fill( eventCounterVec[iDetector] );
+      }
+    }
+  } catch (lcio::DataNotAvailableException& e) {
+    return;
+  }
+  
 }
+
 #endif 
 
 #ifdef MARLIN_USE_AIDA

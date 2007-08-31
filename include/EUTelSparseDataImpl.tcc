@@ -47,16 +47,16 @@ namespace eutelescope {
 
       if ( status[iPixel] == 0 ) {
 	groupedPixel.push_back(iPixel);
-	status[iPixel] = iPixel;
+	status[iPixel] = iPixel + 1;
 	
 	// first of all, find all the pixels close to the current one
 	// and add them to the groupedPixel vector.
-	for ( unsigned int iPixel2 = iPixel ; iPixel2 < size() ; iPixel2++ ) {
+	for ( unsigned int iPixel2 = iPixel + 1 ; iPixel2 < size() ; iPixel2++ ) {
 	  if ( status[iPixel2] == 0 ) {
 	    getSparsePixelAt(iPixel2, otherPixel);
 	    if ( distance(pixel, otherPixel) <= minDistance ) {
 	      groupedPixel.push_back(iPixel2);
-	      status[iPixel2] = iPixel;
+	      status[iPixel2] = iPixel + 1;
 	    }
 	  }
 	}
@@ -72,7 +72,7 @@ namespace eutelescope {
 	      if ( status[iPixel2] == 0 ) {
 		if ( distance( getSparsePixelAt(*firstIter, pixel) , getSparsePixelAt(iPixel2, otherPixel) ) <= minDistance ) {
 		  groupedPixel.push_back(iPixel2);
-		  status[iPixel2] = iPixel;
+		  status[iPixel2] = iPixel + 1;
 		}
 	      }
 	    }
@@ -81,7 +81,7 @@ namespace eutelescope {
 	}
       }
       
-      listOfList.push_back( groupedPixel );
+      if ( groupedPixel.size() != 0 )   listOfList.push_back( groupedPixel );
       
     }
     

@@ -26,7 +26,7 @@ namespace eutelescope {
    *  method. 
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelSparseClusterImpl.hcc,v 1.2 2007-08-30 15:17:34 bulgheroni Exp $
+   *  @Version $Id: EUTelSparseClusterImpl.hcc,v 1.3 2007-08-31 07:48:01 bulgheroni Exp $
    */
 
   template<class PixelType>
@@ -70,7 +70,6 @@ namespace eutelescope {
       lcio::long64 mask  = 0x1F;
       lcio::long64 cell0 = static_cast<lcio::long64> (_trackerData->getCellID0());
       return static_cast<int> ( ( cell0 & mask ) >> rhs );
-      
     }
 
     //! Get the cluster identification number
