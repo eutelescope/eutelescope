@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.14 2007-08-30 08:57:13 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.15 2007-09-03 16:40:09 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -398,85 +398,89 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
     if (_iEvt % 10 == 0) 
       message<MESSAGE> ( log() << "Filling Center of Gravity histogram with event " << _iEvt );
     
-    LCCollectionVec * clusterCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_clusterCollectionName));
-    CellIDDecoder<TrackerPulseImpl> cellDecoder(clusterCollectionVec); 
-    
-    for (int iCluster = 0; iCluster < clusterCollectionVec->getNumberOfElements() ; iCluster++) {
+    try {
+      LCCollectionVec * clusterCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_clusterCollectionName));
+      CellIDDecoder<TrackerPulseImpl> cellDecoder(clusterCollectionVec); 
       
-      TrackerPulseImpl   * pulse = dynamic_cast<TrackerPulseImpl *>  ( clusterCollectionVec->getElementAt(iCluster) );
-      int temp = cellDecoder(pulse)["type"];
-      ClusterType type = static_cast<ClusterType>( temp );
-
-      // all clusters have to inherit from the virtual cluster (that is
-      // a TrackerDataImpl with some utility methods).
-      EUTelVirtualCluster    * cluster; 
-
-      if ( type == kEUTelFFClusterImpl ) 
-	cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
-      else {
-	message<ERROR> ( "Unknown cluster type. Sorry for quitting" );
-	throw UnknownDataTypeException("Cluster type unknown");
-      }
-
-      int detectorID = cluster->getDetectorID();
-      float xShift, yShift;
-      
-      if ( cluster->getClusterQuality() == static_cast<ClusterQuality> (_clusterQuality) ) {
+      for (int iCluster = 0; iCluster < clusterCollectionVec->getNumberOfElements() ; iCluster++) {
 	
-	if ( _clusterTypeSelection == "FULL" ) {
-	  cluster->getCenterOfGravityShift(xShift, yShift);
-	} else if ( _clusterTypeSelection == "NxMPixel" ) {
-	  cluster->getCenterOfGravityShift(xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
-	} else if ( _clusterTypeSelection == "NPixel" ) {
-	  cluster->getCenterOfGravityShift(xShift, yShift, _nPixel);
+	TrackerPulseImpl   * pulse = dynamic_cast<TrackerPulseImpl *>  ( clusterCollectionVec->getElementAt(iCluster) );
+	int temp = cellDecoder(pulse)["type"];
+	ClusterType type = static_cast<ClusterType>( temp );
+	
+	// all clusters have to inherit from the virtual cluster (that is
+	// a TrackerDataImpl with some utility methods).
+	EUTelVirtualCluster    * cluster; 
+	
+	if ( type == kEUTelFFClusterImpl ) 
+	  cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
+	else {
+	  message<ERROR> ( "Unknown cluster type. Sorry for quitting" );
+	  throw UnknownDataTypeException("Cluster type unknown");
 	}
 	
-	_cogHistogramX[detectorID]->fill(static_cast<double>(xShift), 1.0);
-	_cogHistogramY[detectorID]->fill(static_cast<double>(yShift), 1.0);
+	int detectorID = cluster->getDetectorID();
+	float xShift, yShift;
 	
-#ifdef MARLIN_USE_AIDA
-	{
-	  string name;
-	  {
-	    stringstream ss;
-	    ss << _cogHistogramXName << "-" << detectorID;
-	    name = ss.str();
-	  }
-	  (dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]))->fill(xShift);
+	if ( cluster->getClusterQuality() == static_cast<ClusterQuality> (_clusterQuality) ) {
 	  
-	  {
-	    stringstream ss;
-	    ss << _cogHistogramYName << "-" << detectorID;
-	    name = ss.str();
+	  if ( _clusterTypeSelection == "FULL" ) {
+	    cluster->getCenterOfGravityShift(xShift, yShift);
+	  } else if ( _clusterTypeSelection == "NxMPixel" ) {
+	    cluster->getCenterOfGravityShift(xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
+	  } else if ( _clusterTypeSelection == "NPixel" ) {
+	    cluster->getCenterOfGravityShift(xShift, yShift, _nPixel);
 	  }
-	  (dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]))->fill(yShift);
-
+	  
+	  _cogHistogramX[detectorID]->fill(static_cast<double>(xShift), 1.0);
+	  _cogHistogramY[detectorID]->fill(static_cast<double>(yShift), 1.0);
+	  
+#ifdef MARLIN_USE_AIDA
 	  {
-	    stringstream ss;
-	    ss << _cogHisto2DName << "-" << detectorID ;
-	    name = ss.str();
+	    string name;
+	    {
+	      stringstream ss;
+	      ss << _cogHistogramXName << "-" << detectorID;
+	      name = ss.str();
+	    }
+	    (dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]))->fill(xShift);
+	    
+	    {
+	      stringstream ss;
+	      ss << _cogHistogramYName << "-" << detectorID;
+	      name = ss.str();
+	    }
+	    (dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]))->fill(yShift);
+	    
+	    {
+	      stringstream ss;
+	      ss << _cogHisto2DName << "-" << detectorID ;
+	      name = ss.str();
+	    }
+	    (dynamic_cast< AIDA::IHistogram2D* > (_aidaHistoMap[name]))->fill(xShift, yShift);
 	  }
-	  (dynamic_cast< AIDA::IHistogram2D* > (_aidaHistoMap[name]))->fill(xShift, yShift);
-	}
 #endif
-      
+	  
 #ifdef MARLIN_USE_ROOT
-	{
-	  string name;
 	  {
-	    stringstream ss;
-	    ss << _cogHistogramXName << "-" << detectorID;
-	    name = ss.str();
+	    string name;
+	    {
+	      stringstream ss;
+	      ss << _cogHistogramXName << "-" << detectorID;
+	      name = ss.str();
+	    }
+	    (dynamic_cast<TH1D*> (ROOTProcessor::getTObject(this, name.c_str())))->Fill(xShift);
 	  }
-	  (dynamic_cast<TH1D*> (ROOTProcessor::getTObject(this, name.c_str())))->Fill(xShift);
-	}
 #endif
+	}
+	delete cluster;
       }
-      delete cluster;
+      
+      ++_iEvt;
+      
+    } catch ( lcio::DataNotAvailableException & e) {
+      return ;
     }
-    
-    ++_iEvt;
-    
   }
 
   if ( isFirstEvent() ) _isFirstEvent = false;
