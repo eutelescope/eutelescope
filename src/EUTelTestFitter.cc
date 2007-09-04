@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.9 2007-08-30 14:04:59 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.10 2007-09-04 17:49:09 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -18,12 +18,14 @@
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
 #include "EUTelRunHeaderImpl.h"
+#include "EUTelHistogramManager.h"
+#include "EUTelExceptions.h"
 
 #ifdef MARLIN_USE_AIDA
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
-#include <AIDA/ICloud1D.h>
-//#include <AIDA/IHistogram1D.h>
+#include <AIDA/IHistogram1D.h>
+#include <AIDA/ITree.h>
 #endif
 
 // marlin includes ".h"
@@ -42,18 +44,27 @@
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/TrackImpl.h>
 #include <IMPL/LCFlagImpl.h>
+#include <Exceptions.h>
 
 #include <iostream>
 #include <fstream>
 #include <cmath>
 #include <sstream>
 #include <memory>
+#include <string>
+#include <vector>
+#include <map>
 
 
 using namespace std;
 using namespace lcio ;
 using namespace marlin ;
 using namespace eutelescope;
+
+// definition of static members mainly used to name histograms
+#ifdef MARLIN_USE_AIDA
+std::string EUTelTestFitter::_logChi2HistoName  = "logChi2";
+#endif
 
 
 EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
@@ -72,6 +83,16 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
 			   "Name of the input TrackerHit collection"  ,
 			   _inputColName ,
 			   std::string("meshit") ) ;
+
+  // output collection
+
+  registerOutputCollection(LCIO::TRACK,"OutputTrackCollectionName",
+                             "Collection name for fitted tracks",
+                             _outputTrackColName, string ("testfittracks"));
+
+  registerOutputCollection(LCIO::TRACKERHIT,"OutputHitCollectionName",
+                             "Collection name for fitted particle hits (positions)",
+                             _outputHitColName, string ("testfithits"));
 
   // compulsory parameters:
 
@@ -115,15 +136,30 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
 			      "Beam energy [GeV]",
 			      _eBeam,  static_cast < double > (6.0));
 
+  registerProcessorParameter("HistoInfoFileName", 
+                             "Name of the histogram information file",
+			     _histoInfoFileName, string( "histoinfo.xml" ) );
+
   // optional parameters
 
-  registerOptionalParameter ("OutputTrackCollectionName",
-                             "Collection name for fitted tracks",
-                             _outputTrackColName, string ("testfittracks"));
+  std::vector<int > initLayerIDs;
+  std::vector<float > initLayerShift;
 
-  registerOptionalParameter ("OutputHitCollectionName",
-                             "Collection name for fitted particle hits (positions)",
-                             _outputHitColName, string ("testfithits"));
+  registerOptionalParameter ("SkipLayerIDs",
+                             "Ids of layers which should NOT be included in the fit",
+                             _SkipLayerIDs, initLayerIDs);
+
+  registerOptionalParameter ("AlignLayerIDs",
+                             "Ids of layers for which alignment corrections are given",
+                             _AlignLayerIDs, initLayerIDs);
+
+  registerOptionalParameter ("AlignLayerShiftX",
+                             "Alignment corrections in X for these layers",
+                             _AlignLayerShiftX, initLayerShift);
+
+  registerOptionalParameter ("AlignLayerShiftY",
+                             "Alignment corrections in Y for these layers",
+                             _AlignLayerShiftY, initLayerShift);
 
   registerOptionalParameter ("UseBeamConstraint",
 			     "Flag for using beam direction constraint in the fit",
@@ -176,6 +212,11 @@ void EUTelTestFitter::init() {
 
 #endif
 
+// Test output
+
+ if( _SkipLayerIDs.size() )
+      message<MESSAGE> ( log() <<  _SkipLayerIDs.size() << " layers should be skipped") ;
+
 // Active planes only:
 //  _nTelPlanes = _siPlanesParameters->getSiPlanesNumber();
 
@@ -192,19 +233,39 @@ void EUTelTestFitter::init() {
    else
        _iDUT = -1 ;
 
-// Read position in Z first and sort layers in Z
+// Read position in Z (for sorting), skip layers if requested
 
   _planeSort = new int[_nTelPlanes];
   _planePosition   = new double[_nTelPlanes];
 
+  int nSkip=0;
+
   for(int ipl=0; ipl <  _siPlanesLayerLayout->getNLayers(); ipl++)
     {
-      _planePosition[ipl]=_siPlanesLayerLayout->getLayerPositionZ(ipl);
-      _planeSort[ipl]=ipl;
+    _planePosition[ipl-nSkip]=_siPlanesLayerLayout->getLayerPositionZ(ipl);
+    _planeSort[ipl-nSkip]=ipl;
+
+// Check if not on "skip list"
+
+    int _plID = _siPlanesLayerLayout->getID(ipl);
+
+    for(int spl=0; spl< (int)_SkipLayerIDs.size() ; spl++)
+      if ( _SkipLayerIDs.at(spl) == _plID)
+       {
+       message<MESSAGE> ( log() <<  "Skipping layer ID " << _plID 
+       << " at Z = " << _siPlanesLayerLayout->getLayerPositionZ(ipl) ) ;
+       nSkip++;
+       break;
+       }
+
     }
 
+
+  _nTelPlanes-=nSkip;
+  
   if(_iDUT>0)
       {
+      _iDUT-=nSkip;
       _planePosition[_iDUT]=_siPlanesLayerLayout->getDUTPositionZ();
       _planeSort[_iDUT]=_iDUT;
       }
@@ -232,6 +293,7 @@ void EUTelTestFitter::init() {
 
 // Book local geometry arrays
 
+  _planeID         = new int[_nTelPlanes];
   _planeShiftX     = new double[_nTelPlanes];
   _planeShiftY     = new double[_nTelPlanes];
   _planeThickness  = new double[_nTelPlanes];
@@ -253,12 +315,14 @@ void EUTelTestFitter::init() {
 
       if(ipl != _iDUT )
          {
+      _planeID[iz]=_siPlanesLayerLayout->getID(ipl);
       _planeThickness[iz]=_siPlanesLayerLayout->getLayerThickness(ipl);
       _planeX0[iz]=_siPlanesLayerLayout->getLayerRadLength(ipl);
       resolution = _siPlanesLayerLayout->getSensitiveResolution(ipl);
         }
       else
          {
+      _planeID[iz]=_siPlanesLayerLayout->getDUTID();
       _planeThickness[iz]=_siPlanesLayerLayout->getDUTThickness();
       _planeX0[iz]=_siPlanesLayerLayout->getDUTRadLength();
        resolution = _siPlanesLayerLayout->getDUTSensitiveResolution();
@@ -279,10 +343,20 @@ void EUTelTestFitter::init() {
 	}
 
 // No alignment corrections in GEAR file
+// Look in input options
 
     _planeShiftX[iz]=0.;
     _planeShiftY[iz]=0.;
-    }
+
+     for(int apl=0; apl< (int)_AlignLayerIDs.size() ; apl++)
+      if ( _AlignLayerIDs.at(apl) == _planeID[iz])
+       {
+       _planeShiftX[iz]=_AlignLayerShiftX.at(apl);
+       _planeShiftY[iz]=_AlignLayerShiftY.at(apl);
+       break;
+       }
+
+   }
 
   // Get new DUT position (after sorting)
 
@@ -303,23 +377,29 @@ void EUTelTestFitter::init() {
     {
       stringstream ss ; 
       if(ipl == _iDUT)
-	ss << "D.U.T.  plane at" ;
+	ss << "D.U.T.  plane" ;
       else
 	if(_isActive[ipl])
-	  ss << "Active  plane at" ;
+	  ss << "Active  plane" ;
 	else
-	  ss << "Passive plane at" ; 
+	  ss << "Passive plane" ; 
       
-      ss << "  X [mm] = " << _planeShiftX[ipl] 
-         << "  Y [mm] = " << _planeShiftY[ipl] 
-         << "  Z [mm] = " << _planePosition[ipl] 
+      ss << "  ID = " << _planeID[ipl]
+         << "  at Z [mm] = " << _planePosition[ipl] 
 	 << " dZ [um] = " << _planeThickness[ipl]*1000. ;
       
       if(_isActive[ipl])
+        {
 	ss << "  Res [um] = " << _planeResolution[ipl]*1000. ;
       
+        if(_planeShiftX[ipl] !=0. || _planeShiftY[ipl] !=0. ) 
+           ss << " Corrections dX [mm] = " << _planeShiftX[ipl] 
+              << " dY [mm] = " << _planeShiftY[ipl] ;
+        }
+
       message<MESSAGE> ( log() << ss.str() );
     }
+
   message<MESSAGE> ( log() << "Total of " << _nActivePlanes << " active sensor planes " );
   
     // Allocate arrays for track fitting
@@ -384,6 +464,7 @@ void EUTelTestFitter::init() {
   for(int ipl=0; ipl<_nTelPlanes ; ipl++) 
     ss << _nominalError[ipl]*1000. << "  " ;
   message<MESSAGE> ( log() << ss.str() );
+
 }
 
 void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) { 
@@ -411,6 +492,13 @@ void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) {
   message<MESSAGE> ( log() << nDet << " subdetectors defined :" );
   stringstream ss;
   for(int idet=0;idet<nDet;idet++)  message<MESSAGE> (log()  << idet+1 << " : " << subDets->at(idet) );
+
+
+// Book histograms
+
+#ifdef MARLIN_USE_AIDA
+    bookHistos();
+#endif
 
 } 
 
@@ -784,6 +872,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 	message<DEBUG> ( log() << " Fit chi2 = " << chi2best << " including penalties of " << bestPenalty );
 
+        // Fill Chi2 histogram
+
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_logChi2HistoName]))->fill(log10(chi2best));
 
 	// Write fit result out
 	
@@ -941,6 +1032,7 @@ void EUTelTestFitter::end(){
   // Clean memory 
 
   delete [] _planeSort ;
+  delete [] _planeID ;
   delete [] _planeShiftX ;
   delete [] _planeShiftY ;
   delete [] _planePosition ;
@@ -966,6 +1058,68 @@ void EUTelTestFitter::end(){
   delete [] _nominalError ;
 }
 
+
+
+void EUTelTestFitter::bookHistos() 
+{
+
+#ifdef MARLIN_USE_AIDA
+
+  message<MESSAGE> ( log() << "Booking histograms " );
+  
+/*
+  message<MESSAGE> ( log() << "Histogram information searched in " << _histoInfoFileName);
+
+  auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+  EUTelHistogramInfo    * histoInfo;
+  bool                    isHistoManagerAvailable;
+
+  try {
+    isHistoManagerAvailable = histoMgr->init();
+  } catch ( ios::failure& e) {
+    message<ERROR> ( log() << "I/O problem with " << _histoInfoFileName << "\n"
+		     << "Continuing without histogram manager"    );
+    isHistoManagerAvailable = false;
+  } catch ( ParseException& e ) {
+    message<ERROR> ( log() << e.what() << "\n"
+		     << "Continuing without histogram manager" );
+    isHistoManagerAvailable = false;
+  }
+*/
+    int    chi2NBin  = 100;
+    double chi2Min   = -2.;
+    double chi2Max   = 8.;
+    string chi2Title = "log(Chi2) distribution for stored tracks";
+
+/*
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_logChi2HistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 chi2NBin = histoInfo->_xBin;
+	 chi2Min  = histoInfo->_xMin;
+	 chi2Max  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) chi2Title = histoInfo->_title;
+         }
+      }
+*/
+
+   AIDA::IHistogram1D * logChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _logChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
+
+    logChi2Histo->setTitle(chi2Title.c_str());
+
+
+    _aidaHistoMap.insert(make_pair(_logChi2HistoName, logChi2Histo));
+
+
+#else
+  message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
+#endif
+
+return;
+}
 //
 // ===============================================================================
 //

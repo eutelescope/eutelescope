@@ -21,8 +21,16 @@
 // lcio includes <.h> 
 #include "lcio.h"
 
+// AIDA includes <.h>
+#ifdef MARLIN_USE_AIDA
+#include <AIDA/IBaseHistogram.h>
+#include <AIDA/IHistogram1D.h>
+#endif
+
 // system includes <>
 #include <string>
+#include <vector>
+#include <map>
 
 namespace eutelescope {
 
@@ -60,25 +68,10 @@ namespace eutelescope {
    * \li Remove best track hits from hit list and repeat procedure 
    *
    * \par Geometry description
-   * This version of the processor does not use GEAR input yet!
-   * Needed geometry information are stored in a dedicated ASCII file.
-   * The format of the file is as follows. \n
-   * First line consists of two int numbers: 
-   * \li number of telescope layers N (sensors and passive layers taken
-   * into account in the fit) and 
-   * \li position of DUT  i_DUT ( i_DUT = 1 ... N ). i_DUT=0 corresponds
-   * to telescope without DUT.
-   * 
-   * Following N lines include description of telescope planes.
-   * Planes have to be ordered in position along the beam line ! 
-   * For each plane following details have to be given:
-   * \li plane alignment correction in horizontal direction in mm (float)
-   * \li plane alignment correction in vertical direction in mm (float)
-   * \li position of the plane along beam axis in mm (float)
-   * \li thickness of the plane in mm (float)
-   * \li radiation length in the plane material in mm (float)
-   * \li flag indicating sensitive planes (int; 1 for sensitive, 0 for passive plane)
-   * \li nominal position resolution of sensitive planes in mm (float)
+   * This version of the processor does use GEAR input!
+   * However, corrections to the geometry description (alignment,
+   * removing layers from the fit) can be applied with dedicated parameters
+   * (see below).
    *
    * 
    * \par Output
@@ -95,6 +88,16 @@ namespace eutelescope {
    * \param OutputHitCollectionName Name of the output collection of
    *        fitted particle positions in telescope planes (hits)
    * \param OutputTrackCollectionName Name of the output Track collection
+   * \param SkipLayerIDs Ids of layers which are described in GEAR but
+   * should not be included in the fit. Can be used to remove layers
+   * in front of and behind the telescope, which do not influence the fit,
+   * but can slow down the algorithm (increase fit matrix size).
+   * \param AlignLayerIDs Ids of layers for which alignment corrections
+   * should be applied
+   * \param AlignLayerShiftX Shifts in X, which should be applied to
+   * correct alignment of these layers.
+   * \param AlignLayerShiftY Shifts in Y, which should be applied to
+   * correct alignment of these layers.
    * \param DebugEventCount      Print out debug and information
    * messages only for one out of given number of events. If zero, no
    * debug information is printed. 
@@ -118,6 +121,9 @@ namespace eutelescope {
    * \param BeamSpread Assumed angular spread of the beam [rad]
    * \param SearchMultipleTracks Flag for searching multiple tracks in
    * events with multiple hits 
+   * \param HistoInfoFileName Name of the histogram information file.
+   *  Using this file histogram parameters can be changed without 
+   * recompiling the code.
    *
    * \warning
    * Algorithm is very fast when there are only single (or double) hits
@@ -127,7 +133,8 @@ namespace eutelescope {
    * (default value is 5 and should rather not be increased).
    *
    * \todo
-   *  \li Interface to GEAR geometry description
+   *  \li Control histograms
+   *  \li Interface to LCCD (alignment)
    *  \li More detailed track parameter output (currently only reconstructed
    *      hit positions are stored)
    *  \li Implement new track selection algorithm, which would avoid
@@ -135,7 +142,7 @@ namespace eutelescope {
    * many hits)
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelTestFitter.h,v 1.3 2007-08-30 14:06:27 zarnecki Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.4 2007-09-04 17:49:24 zarnecki Exp $
    * \date 2007.06.04
    *
    */ 
@@ -189,6 +196,15 @@ namespace eutelescope {
     virtual void check( LCEvent * evt ) ; 
   
   
+    //! Book histograms
+    /*! This method is used to books all required
+     *  histograms. Histogram pointers are stored into
+     *  _aidaHistoMap so that they can be recalled and filled 
+     * from anywhere in the code.  
+     */
+    void bookHistos();
+
+
     //! Called after data processing for clean up.
     /*! Used to release memory allocated in init() step
      */
@@ -254,6 +270,15 @@ namespace eutelescope {
      */ 
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
 
+    //! The histogram information file
+    /*! This string contain the name of the histogram information
+     *  file. This is selected by the user in the steering file.
+     * 
+     *  @see eutelescope::EUTelHistogramManager
+     *  @see eutelescope::EUTelHistogramInfo
+     */ 
+    std::string _histoInfoFileName;
+
 
     // Global processor parameters
     // Parameter documentation is already included above
@@ -265,6 +290,12 @@ namespace eutelescope {
     std::string _outputTrackColName ;
 
     std::string _outputHitColName ;
+
+    std::vector<int > _SkipLayerIDs;
+
+    std::vector<int > _AlignLayerIDs;
+    std::vector<float > _AlignLayerShiftX;
+    std::vector<float > _AlignLayerShiftY;
 
     // Parameters of hit selection algorithm
 
@@ -297,6 +328,7 @@ namespace eutelescope {
     int _iDUT;
   
     int * _planeSort;
+    int * _planeID;
     double * _planeShiftX;
     double * _planeShiftY;
     double * _planePosition;
@@ -329,7 +361,22 @@ namespace eutelescope {
     double * _fitArray ;
     double * _nominalFitArray ;
     double * _nominalError ;
-  } ;
+
+
+ #ifdef MARLIN_USE_AIDA
+    //! AIDA histogram map
+    /*! Used to refer to histograms by their names, i.e. to recall 
+     *  a histogram pointer using histogram name.
+     */
+    std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
+
+    //! log(Chi2) histogram name
+    static std::string _logChi2HistoName;
+
+#endif 
+    
+
+ } ;
 
   
   //! A global instance of the processor.
