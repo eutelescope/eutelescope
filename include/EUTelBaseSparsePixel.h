@@ -25,8 +25,10 @@ namespace eutelescope {
   //! Abstract base class for sparsified pixels
   /*! This is a pure abstract class containing only the definition of
    *  methods available to all sparsified pixel type
+   *  
+   *  @Author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
+   *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $
    */
-
   class EUTelBaseSparsePixel {
 
     public:
@@ -103,6 +105,172 @@ namespace eutelescope {
 
     //! The sparse pixel type enumerator
     SparsePixelType _type;
+
+  public:
+
+    //! Helper class for signal sorting
+    /*! This template class is used as a binary function for pixel
+     *  sorting. 
+     *
+     *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+     *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $
+     */ 
+    template<class T>
+    class GreaterSignal :  
+      public std::binary_function<T, T, bool> {
+      
+    public:
+      //! Operator () overload
+      /*! This is the method used by the sort
+       *  
+       *  @param pixel1 The first pixel 
+       *  @param pixel2 The second pixel
+       *  @return True if first pixel has greater signal than pixel2.
+       */ 
+      bool operator() (const T& pixel1,
+		       const T& pixel2 ) const {
+	return pixel1.getSignal() >= pixel2.getSignal();
+      }
+    };
+    
+    //! Helper class for signal sorting
+    /*! This template class is used as a binary function for pixel
+     *  sorting. 
+     *
+     *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+     *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $ 
+     */ 
+    template<class T>
+    class SmallerSignal :
+      public std::binary_function<T, T, bool> {
+      
+    public:
+      //! Operator () overload
+      /*! This is the method used by the sort
+       *  
+       *  @param pixel1 The first pixel 
+       *  @param pixel2 The second pixel
+       *  @return True if first pixel has less signal than pixel2.
+       */     
+      bool operator() ( const T& pixel1,
+			const T& pixel2 ) const {
+	return pixel1.getSignal() <= pixel2.getSignal();
+      }
+    };
+    
+    //! Helper class for position sorting
+    /*! This template class is used as a binary function for pixel
+     *  sorting. 
+     *
+     *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+     *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $ 
+     */     
+    template<class T>
+    class IsBefore :
+      public std::binary_function<T, T, bool > {
+      
+    public:
+      //! Operator () overload
+      /*! This is the method used by the sort
+       *  
+       *  @param pixel1 The first pixel 
+       *  @param pixel2 The second pixel
+       *  @return True if first pixel is positioned before the second
+       *  on the matrix
+       */ 
+      bool operator() ( const T& pixel1, 
+			const T& pixel2 ) const {
+	if ( pixel1.getYCoord() < pixel2.getYCoord() ) return true;
+	else if ( pixel1.getYCoord() == pixel2.getYCoord() ) return ( pixel1.getXCoord() < pixel2.getXCoord() );
+	else return false;
+      }
+    };
+
+    //! Helper predicate class
+    /*! This template class is used as a unary function to find a
+     *  pixel in the matrix
+     *
+     *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+     *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $ 
+     */     
+    template<class T>
+    class HasCoord {
+    public:
+      //! Default constructor
+      HasCoord( int x, int y ) : _x(x), _y(y) { ; } 
+      
+      //! Operator () overload
+      /*! This is the method used by the sort
+       *  
+       *  @param pixel The first pixel 
+       *  @return True if the pixel has the coordinate x, y;
+       */       
+      bool operator() (const T& pixel) 
+      { return ( ( pixel.getXCoord() == _x ) && ( pixel.getYCoord() == _y ) ) ; }
+      
+    private:
+      //! Local copy of the x coordinate
+      int _x;
+      
+      //! Local copy of the y coordinate
+      int _y;
+
+    };
+
+    //! Helper predicate class
+    /*! This template class is used as a unary function to find a
+     *  pixel in the matrix
+     *
+     *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+     *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $ 
+     */ 
+    template<class T>
+    class HasXCoord {
+    public:
+      //! Default constructor
+      HasXCoord( int x ) : _x(x) { ; }
+      
+      //! Operator () overload
+      /*! This is the method used by the sort
+       *  
+       *  @param pixel The first pixel 
+       *  @return True if the pixel has the coordinate x.
+       */
+      bool operator() (const T& pixel )
+      { return ( pixel.getXCoord() == _x ); }
+    
+    private:
+      //! Local copy of the x coordinate
+      int _x;
+    };
+
+    //! Helper predicate class
+    /*! This template class is used as a unary function to find a
+     *  pixel in the matrix
+     *
+     *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+     *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $ 
+     */ 
+    template<class T>
+    class HasYCoord {
+    public:
+      //! Default constructor
+      HasYCoord( int y ) : _y(y) { ; }
+
+      //! Operator () overload
+      /*! This is the method used by the sort
+       *  
+       *  @param pixel The first pixel 
+       *  @return True if the pixel has the coordinate x.
+       */
+      bool operator() (const T& pixel )
+      { return ( pixel.getYCoord() == _y ); }
+    
+    private:
+      //! Local copy of the x coordinate
+      int _y;
+    };
+       
   };
 
   //! Compute the distance between two pixels

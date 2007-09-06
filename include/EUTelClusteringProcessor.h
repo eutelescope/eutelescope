@@ -128,7 +128,7 @@ namespace eutelescope {
    *  containing the histogram booking information.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.16 2007-08-30 15:21:52 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.17 2007-09-06 14:04:00 bulgheroni Exp $
    *
    */
 
@@ -238,7 +238,7 @@ namespace eutelescope {
 
   protected:
     
-    //! Wrapper of the processEvent(LCEvent*) for fixed frame clustering
+    //! Method for fixed frame clustering
     /*! This method is called by the processEvent method in the case
      *  the user selected the EUTELESCOPE::FIXEDFRAME algorithm for
      *  clustering.
@@ -302,17 +302,65 @@ namespace eutelescope {
      *  collections are found to be incompatible
      *
      *  @param evt The LCIO event has passed by processEvent(LCEvent*)
+     *  @param pulse The collection of pulses to append the found
+     *  clusters. 
      */
     void fixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
+
+
+    //! Method for sparse pixel re-clustering 
+    /*! This algorithm is based on the built-in proximity clustering
+     *  implemented in the EUTelSparseDataImpl class. 
+     *
+     *  The output of EUTelSparseDataImpl::findNeighbor is a list of
+     *  list. Each of them is containing the indexes of pixels
+     *  fulfilling the proximity requirement. Those pixels are then
+     *  put together into a EUTelSparseClusterImpl object and
+     *  afterward the SNR cuts are applied.
+     *
+     *  This clustering algorithm is affected by performance penalties
+     *  because EUTelSparseDataImpl::findNeighbor is based on a brute
+     *  force algorithm.
+     *
+     *  @param evt The LCIO event has passed by processEvent(LCEvent*)
+     *  @param pulse The collection of pulses to append the found
+     *  clusters. 
+     */
     void sparseClustering(LCEvent * evt, LCCollectionVec * pulse);
 
+    //! Method for sparse pixel re-clustering with better performance
+    /*! This algorithm is based on the built-in proximity clustering
+     *  implemented in the EUTelSparseDataImpl class. 
+     *
+     *  The output of EUTelSparseDataImpl::findNeighbor is a list of
+     *  list. Each of them is containing the indexes of pixels
+     *  fulfilling the proximity requirement. Those pixels are then
+     *  put together into a EUTelSparseClusterImpl object and
+     *  afterward the SNR cuts are applied.
+     *
+     *  This clustering algorithm is affected by performance penalties
+     *  because EUTelSparseDataImpl::findNeighbor is based on a brute
+     *  force algorithm.
+     *
+     *  @param evt The LCIO event has passed by processEvent(LCEvent*)
+     *  @param pulse The collection of pulses to append the found
+     *  clusters. 
+     */
+    void sparseClustering2(LCEvent * evt, LCCollectionVec * pulse);
 
-    //! Input collection name.
+
+    //! Input collection name for NZS data
     /*! The input collection is the calibrated data one coming from
      *  the EUTelCalibrateEventProcessor. It is, usually, called
-     *  "data" and it is a collection of TrackerData
+     *  "nzsdata" and it is a collection of TrackerData
      */
     std::string _nzsDataCollectionName;
+
+    //! Input collection name for ZS data
+    /*! The input collection is the calibrated data one coming from
+     *  the EUTelCalibrateEventProcessor. It is, usually, called
+     *  "zsdata" and it is a collection of TrackerData
+     */
     std::string _zsDataCollectionName;
 
     //! Noise collection name.
@@ -348,7 +396,7 @@ namespace eutelescope {
 
     //! Clusterization algorithm for full frames
     /*! This string is used to select which clustering algorithm
-     *  should be used. Follows a list of available algorithm:
+     *  should be used. Follows a list of available algorithms:
      *
      *  \li <b>FixedFrame</b>: Selectable also using the
      *  EUTELESCOPE::FIXEDFRAME static constant, it allows to select
@@ -368,7 +416,19 @@ namespace eutelescope {
     std::string _nzsClusteringAlgo;
 
     //! Clusterization algorithm for ZS frames
-    /*! 
+    /*! This string is used to select which clustering algorithm
+     *  should be used. Follows a list of available algorithms:
+     *
+     *  \li <b>SparseCluster</b>: Selectable also using the
+     *  EUTELESCOPE::SPARSECLUSTER static constant. Firstly the list
+     *  of neighbor pixels is taken from the
+     *  EUTelSparseDataImpl::findNeighborPixel, then they are added in
+     *  a EUTelSparseClusterImpl cluster. The seed and cluster SNR
+     *  cuts are then applied.
+     *
+     *  \li <b>SparseCluster2</b>:  Selectable also using the
+     *  EUTELESCOPE::SPARSECLUSTER2 static constant. It works as
+     *  SparseCluster but with improved performance.
      */
     std::string _zsClusteringAlgo;
 
@@ -398,6 +458,13 @@ namespace eutelescope {
      *  pixel.
      */
     float _seedPixelCut;
+
+    //! Threshold for seed pixel in ZS cluster
+    /*! The zero suppress reclustering algorithm may need a threshold
+     *  for seed pixel SNR. To keep the framework as general as
+     *  possible this value is different from the raw mode clustering
+     *  threshold.
+     */
     float _zsSeedCut;
 
     //! Threshold for cluster identification
@@ -407,7 +474,18 @@ namespace eutelescope {
      *  total SNR has to pass this cluster threshold.
      */
     float _clusterCut;
+
+    //! Threshold for cluster SNR in ZS data
+    /*! This value is used to accept clusters coming from ZS data. To
+     *  keep the framework as general as possible this variable is
+     *  kept different from the corresponding rawmode one.
+     */ 
     float _zsClusterCut;
+
+    //! Minimum distance of neighbor pixels
+    /*! ZS pixel reclustering may need a minimum distance parameter to
+     *  identify "close" pixels.
+     */ 
     float _minDistance;
 
     //! Current event number.
