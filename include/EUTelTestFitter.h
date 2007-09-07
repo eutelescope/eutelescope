@@ -88,6 +88,10 @@ namespace eutelescope {
    * \param OutputHitCollectionName Name of the output collection of
    *        fitted particle positions in telescope planes (hits)
    * \param OutputTrackCollectionName Name of the output Track collection
+   * \param InputHitsInTrack Flag for storing input (measured) hits in track.
+   * \param OutputHitsInTrack Flag for storing output (fitted) hits in track.  
+   *        Input and output hits can be distinguished by looking into
+   *        hit type (type <=31 for measured hits, type >=32 for fitted).
    * \param SkipLayerIDs Ids of layers which are described in GEAR but
    * should not be included in the fit. Can be used to remove layers
    * in front of and behind the telescope, which do not influence the fit,
@@ -142,7 +146,7 @@ namespace eutelescope {
    * many hits)
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelTestFitter.h,v 1.4 2007-09-04 17:49:24 zarnecki Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.5 2007-09-07 10:25:16 zarnecki Exp $
    * \date 2007.06.04
    *
    */ 
@@ -291,6 +295,10 @@ namespace eutelescope {
 
     std::string _outputHitColName ;
 
+    bool _InputHitsInTrack;
+
+    bool _OutputHitsInTrack;
+
     std::vector<int > _SkipLayerIDs;
 
     std::vector<int > _AlignLayerIDs;
@@ -362,19 +370,28 @@ namespace eutelescope {
     double * _nominalFitArray ;
     double * _nominalError ;
 
-
  #ifdef MARLIN_USE_AIDA
     //! AIDA histogram map
     /*! Used to refer to histograms by their names, i.e. to recall 
      *  a histogram pointer using histogram name.
      */
+
     std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
 
     //! log(Chi2) histogram name
     static std::string _logChi2HistoName;
+    static std::string _firstChi2HistoName;
+    static std::string _bestChi2HistoName;
+    static std::string _fullChi2HistoName;
+
+    //! Number of reconstructed tracks histogram name
+    static std::string _nTrackHistoName;
+
+    //! Number of hits histogram name
+    static std::string _nHitHistoName;
+    static std::string _nBestHistoName;
 
 #endif 
-    
 
  } ;
 

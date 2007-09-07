@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.10 2007-09-04 17:49:09 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.11 2007-09-07 10:25:01 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -63,7 +63,13 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #ifdef MARLIN_USE_AIDA
-std::string EUTelTestFitter::_logChi2HistoName  = "logChi2";
+std::string EUTelTestFitter::_logChi2HistoName   = "logChi2";
+std::string EUTelTestFitter::_firstChi2HistoName  = "firstChi2";
+std::string EUTelTestFitter::_bestChi2HistoName  = "bestChi2";
+std::string EUTelTestFitter::_fullChi2HistoName  = "fullChi2";
+std::string EUTelTestFitter::_nTrackHistoName    = "nTrack";
+std::string EUTelTestFitter::_nHitHistoName      = "nHit";
+std::string EUTelTestFitter::_nBestHistoName     = "nBest";
 #endif
 
 
@@ -95,6 +101,14 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
                              _outputHitColName, string ("testfithits"));
 
   // compulsory parameters:
+
+  registerProcessorParameter ("InputHitsInTrack",
+			      "Flag for storing input (measured) hits in track",
+			      _InputHitsInTrack,  static_cast < bool > (false));
+
+  registerProcessorParameter ("OutputHitsInTrack",
+			      "Flag for storing output (fitted) hits in track",
+			      _OutputHitsInTrack,  static_cast < bool > (true));
 
   registerProcessorParameter ("DebugEventCount",
 			      "Print out every DebugEnevtCount event",
@@ -510,11 +524,13 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     return;
   }
 
+  bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
+
   _nEvt ++ ;
   int evtNr = event->getEventNumber();
 
 
-  message<DEBUG> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
+  if(debug)message<DEBUG> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
 
   LCCollection* col;
   try {
@@ -536,10 +552,11 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   int nHit = col->getNumberOfElements()  ;
 
-  message<DEBUG> ( log() << "Total of " << nHit << " tracker hits in input collection " );
+  if(debug)message<DEBUG> ( log() << "Total of " << nHit << " tracker hits in input collection " );
 
   if(nHit + _allowMissingHits < _nActivePlanes) {
-    message<DEBUG> ( log() << "Not enough hits to perform the fit, exiting... " );
+    if(debug)message<DEBUG> ( log() << "Not enough hits to perform the fit, exiting... " );
+    (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
     throw SkipEventException(this);
   }
 
@@ -640,7 +657,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 	hitEy[ihit]=_planeResolution[hitPlane[ihit]];
 
 
-      message<DEBUG> ( log() << "Hit " << ihit
+      if(debug)message<DEBUG> ( log() << "Hit " << ihit
 		       << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]  
 		       << "   Y = " << hitY[ihit] << " +/- " << hitEy[ihit]  
 		       << "   Z = " << hitZ[ihit] << " (plane " << hitPlane[ihit] << ")" );
@@ -690,7 +707,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 	nChoice*=nPlaneChoice[ipl];
 
-	if( _isActive[ipl] && firstTrack )
+	if( _isActive[ipl] && firstTrack && debug )
 	  {
 	    stringstream ss;
 	    ss << "Plane " << ipl << "  " << nPlaneHits[ipl] << " hit(s), hit IDs :";
@@ -705,7 +722,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     if(nFiredPlanes + _allowMissingHits < _nActivePlanes)
       {
         if( firstTrack ) {
-	  message<DEBUG> ( log() << "Not enough planes hit to perform the fit " );
+	  if(debug)message<DEBUG> ( log() << "Not enough planes hit to perform the fit " );
+
+          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
+
 	  // before throwing the exception I should clean up the
 	  // memory...
 	  delete [] bestEy;
@@ -726,11 +746,13 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       }
 
 
-    if( firstTrack )  message<DEBUG> ( log() << nFiredPlanes << " active sensor planes hit, checking "
+    if( firstTrack && debug ) 
+           message<DEBUG> ( log() << nFiredPlanes << " active sensor planes hit, checking "
 				       << nChoice << " fit possibilities " );
 
     // Check all track possibilities
 
+    double chi2min  = 1E+100;
     double chi2best = _chi2Max;
     double bestPenalty = 0;
     int nBestFired = 0;
@@ -793,6 +815,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 	double penalty = (_nActivePlanes-nFiredPlanes)*_missingHitPenalty
 	  +   (nFiredPlanes-nChoiceFired)*_skipHitPenalty ;
 
+
+	if(choiceChi2+penalty<chi2min)
+            chi2min=choiceChi2+penalty;   
+
 	// Best fit ?
 
 	if(choiceChi2+penalty<chi2best)
@@ -812,8 +838,16 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       }
     // End of loop over track possibilities
 
+    if(firstTrack) 
+      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_firstChi2HistoName]))->fill(log10(chi2min));
+
+
     if(ibest<0 && firstTrack) {
-      message<DEBUG> ( log() << "No track fulfilling search criteria found ! " );
+      if(debug)message<DEBUG> ( log() << "No track fulfilling search criteria found ! " );
+
+
+      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
+
       // before throwing the exception I should clean up the
       // memory...
       delete [] bestEy;
@@ -836,11 +870,14 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     if(ibest>=0)
       {
 
-		message<DEBUG> ( log() << "Track reconstructed from " << nBestFired << " hits: " );
+      if(debug)
+        {
+        message<DEBUG> ( log() << "Track reconstructed from " << nBestFired << " hits: " );
 
 
     // print out hits contributing to the fit
 
+      
 	int modchoice=ibest;
 
 	for(int ipl=0;ipl<_nTelPlanes;ipl++)
@@ -853,7 +890,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 		  if(ihit<nPlaneHits[ipl])
 		    {
 		    int jhit = planeHitID[ipl].at(ihit);
-            message<DEBUG> ( log() << "Hit " << jhit
+                    message<DEBUG> ( log() << "Hit " << jhit
 		       << "   X = " << hitX[jhit] 
 		       << "   Y = " << hitY[jhit] 
 		       << "   Z = " << hitZ[jhit] << " (plane" << hitPlane[jhit] << ")" );
@@ -872,9 +909,26 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 	message<DEBUG> ( log() << " Fit chi2 = " << chi2best << " including penalties of " << bestPenalty );
 
-        // Fill Chi2 histogram
+        }
+
+     // Fill Chi2 histograms
 
 	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_logChi2HistoName]))->fill(log10(chi2best));
+
+	if(_searchMultipleTracks && firstTrack)
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_bestChi2HistoName]))->fill(log10(chi2best));
+
+        if(_allowMissingHits && nBestFired==_nActivePlanes)
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_fullChi2HistoName]))->fill(log10(chi2best));
+
+     // Fill hit histograms
+
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nHitHistoName]))->fill(nBestFired);
+
+	if(_searchMultipleTracks && firstTrack)
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nBestHistoName]))->fill(nBestFired);
+
+
 
 	// Write fit result out
 	
@@ -900,15 +954,18 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 	fittrack->setIsReferencePointPCA(false);  
 	float refpoint[3];
 
-	// Track points fitted in each plane are stored as track hits !!!
+	// Track points fitted in each plane are stored as track hits 
+
+	int modchoice=ibest;
 
 	for(int ipl=0;ipl<_nTelPlanes;ipl++)
 	  {
 	    TrackerHitImpl * fitpoint = new TrackerHitImpl;
 	    
-	    // Plane number stored as hit type
+	    // Hit type is set to 32, to distinguish from measured
+	    // hits (hit type = cluster type = 0 ... 31)
 	    
-	    fitpoint->setType(ipl+1);
+	    fitpoint->setType(32);
 
 	    // fitted position in a plane
 
@@ -937,9 +994,26 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 	    fitpointvec->push_back(fitpoint);
 
-	    //   add point to track
+	    //   add fitted point to track
 
-	    fittrack->addHit(fitpoint);
+            if(_OutputHitsInTrack)
+              fittrack->addHit(fitpoint);
+
+
+            // add measured point to track (if found)
+
+ 	    if(_InputHitsInTrack && _isActive[ipl])
+	      {
+		 int ihit=modchoice%nPlaneChoice[ipl];
+		 modchoice/=nPlaneChoice[ipl];
+
+		 if(ihit<nPlaneHits[ipl])
+		    {
+		    int jhit = planeHitID[ipl].at(ihit);
+                    TrackerHit * meshit = dynamic_cast<TrackerHit*>( col->getElementAt(jhit) ) ;
+                    fittrack->addHit(meshit);
+		    }
+	      }
 
 	    // Use position at DUT as a track reference point.
 	    // If no DUT present: use position in the first plane !
@@ -976,9 +1050,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 	    }
       }
     
-    // Suppress output for secondary tracks
-    
-    // firstTrack=false;
+    firstTrack=false;
   }
   while(_searchMultipleTracks && ibest>=0 && nGoodHit + _allowMissingHits >= _nActivePlanes);
     
@@ -994,6 +1066,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       delete fittrackvec;
       delete fitpointvec;
     }
+
+  // Number of reconstructed tracks
+
+  (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(nFittedTracks);
 
   // Clear all working arrays
   
@@ -1066,8 +1142,8 @@ void EUTelTestFitter::bookHistos()
 #ifdef MARLIN_USE_AIDA
 
   message<MESSAGE> ( log() << "Booking histograms " );
-  
-/*
+
+
   message<MESSAGE> ( log() << "Histogram information searched in " << _histoInfoFileName);
 
   auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
@@ -1085,13 +1161,15 @@ void EUTelTestFitter::bookHistos()
 		     << "Continuing without histogram manager" );
     isHistoManagerAvailable = false;
   }
-*/
+
+ // log(Chi2) distribution for all accepted tracks
+
     int    chi2NBin  = 100;
     double chi2Min   = -2.;
     double chi2Max   = 8.;
-    string chi2Title = "log(Chi2) distribution for stored tracks";
+    string chi2Title = "log(Chi2) distribution";
 
-/*
+
     if ( isHistoManagerAvailable ) 
       {
       histoInfo = histoMgr->getHistogramInfo(_logChi2HistoName);
@@ -1104,16 +1182,141 @@ void EUTelTestFitter::bookHistos()
 	 if ( histoInfo->_title != "" ) chi2Title = histoInfo->_title;
          }
       }
-*/
+
 
    AIDA::IHistogram1D * logChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _logChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
 
-    logChi2Histo->setTitle(chi2Title.c_str());
-
+     logChi2Histo->setTitle(chi2Title.c_str());
 
     _aidaHistoMap.insert(make_pair(_logChi2HistoName, logChi2Histo));
 
 
+// Additional Chi2 histogram for first track candidate (without chi2 cut)
+
+      string firstchi2Title = chi2Title + ", first candidate (before cut)";
+
+      AIDA::IHistogram1D * firstChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _firstChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
+
+      firstChi2Histo->setTitle(firstchi2Title.c_str());
+
+
+      _aidaHistoMap.insert(make_pair(_firstChi2HistoName, firstChi2Histo));
+
+
+// Chi2 histogram for best tracks in an event - use same binning
+
+	if(_searchMultipleTracks)
+	  {
+      string bestchi2Title = chi2Title + ", best fit";
+
+      AIDA::IHistogram1D * bestChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _bestChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
+
+      bestChi2Histo->setTitle(bestchi2Title.c_str());
+
+
+      _aidaHistoMap.insert(make_pair(_bestChi2HistoName, bestChi2Histo));
+      }
+
+
+// Another Chi2 histogram for all full tracks in an event - use same binning
+
+	if(_allowMissingHits)
+	  {
+      string fullchi2Title = chi2Title + ", full tracks";
+
+      AIDA::IHistogram1D * fullChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _fullChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
+
+      fullChi2Histo->setTitle(fullchi2Title.c_str());
+
+
+	  _aidaHistoMap.insert(make_pair(_fullChi2HistoName, fullChi2Histo));
+      }
+
+
+ // Distribution of number of tracks
+
+    int    trkNBin  = 11;
+    double trkMin   = -0.5;
+    double trkMax   = 10.5;
+    string trkTitle = "Number of reconstructed tracks in an event";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_nTrackHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 trkNBin = histoInfo->_xBin;
+	 trkMin  = histoInfo->_xMin;
+	 trkMax  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) trkTitle = histoInfo->_title;
+         }
+      }
+
+
+   AIDA::IHistogram1D * nTrackHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nTrackHistoName.c_str(),trkNBin,trkMin,trkMax);
+
+     nTrackHisto->setTitle(trkTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_nTrackHistoName, nTrackHisto));
+
+
+
+ // Number of hits per track
+
+    int    hitNBin  = 11;
+    double hitMin   = -0.5;
+    double hitMax   = 10.5;
+    string hitTitle = "Number of hits used to reconstruct the track";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_nHitHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 hitNBin = histoInfo->_xBin;
+	 hitMin  = histoInfo->_xMin;
+	 hitMax  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) hitTitle = histoInfo->_title;
+         }
+      }
+
+   AIDA::IHistogram1D * nHitHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nHitHistoName.c_str(),hitNBin,hitMin,hitMax);
+
+     nHitHisto->setTitle(hitTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_nHitHistoName, nHitHisto));
+
+
+
+// Additional hit number histogram for best tracks in an event - use same binning
+
+   if(_searchMultipleTracks)
+       {
+       string bestTitle = hitTitle + ", best fit";
+
+       AIDA::IHistogram1D * BestHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nBestHistoName.c_str(),hitNBin,hitMin,hitMax);
+
+       BestHisto->setTitle(bestTitle.c_str());
+
+
+       _aidaHistoMap.insert(make_pair(_nBestHistoName, BestHisto));
+       }
+
+
+// List all booked histogram - check of histogram map filling
+
+  message<MESSAGE> ( log() <<  _aidaHistoMap.size() << " histograms booked");  
+
+
+  map<string, AIDA::IBaseHistogram *>::iterator mapIter;
+  for(mapIter = _aidaHistoMap.begin(); mapIter != _aidaHistoMap.end() ; mapIter++ )
+     message<DEBUG> ( log() <<  mapIter->first << " : " <<  (mapIter->second)->title() ) ;
+
+  message<DEBUG> ( log() << "Histogram booking completed \n\n");  
 #else
   message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
 #endif
