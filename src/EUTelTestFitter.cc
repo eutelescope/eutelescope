@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.11 2007-09-07 10:25:01 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.12 2007-09-10 21:28:38 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -479,6 +479,13 @@ void EUTelTestFitter::init() {
     ss << _nominalError[ipl]*1000. << "  " ;
   message<MESSAGE> ( log() << ss.str() );
 
+
+// Book histograms
+
+#ifdef MARLIN_USE_AIDA
+    bookHistos();
+#endif
+
 }
 
 void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) { 
@@ -508,12 +515,6 @@ void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) {
   for(int idet=0;idet<nDet;idet++)  message<MESSAGE> (log()  << idet+1 << " : " << subDets->at(idet) );
 
 
-// Book histograms
-
-#ifdef MARLIN_USE_AIDA
-    bookHistos();
-#endif
-
 } 
 
 void EUTelTestFitter::processEvent( LCEvent * event ) { 
@@ -539,9 +540,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     message<ERROR> ( log() << "Not able to get collection " 
 		     << _inputColName 
 		     << "\nfrom event " << event->getEventNumber()
-		     << " in run " << event->getRunNumber() << "."
-		     << "\nSorry for quitting." );
-    exit(-1);
+		     << " in run " << event->getRunNumber()  );
+   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
+   throw SkipEventException(this);
   }
     
 
