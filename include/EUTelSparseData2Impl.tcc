@@ -45,7 +45,7 @@ namespace eutelescope {
   EUTelSparseData2Impl<PixelType>::findNeighborPixels(double /* minDistance  */)   const {
 
 
-    typedef typename std::vector<PixelType> PixelVector;
+    typedef typename std::vector<PixelType > PixelVector;
     typedef typename PixelVector::iterator PixelVectorIterator;
     PixelVectorIterator foundPixel;
     PixelVectorIterator firstYPixel;
@@ -129,183 +129,101 @@ namespace eutelescope {
 	    // This pixel has to be found before the current pixel 
 	    firstYPixel = find_if ( pixelBegin, currentPixel, EUTelBaseSparsePixel::HasYCoord<PixelType> ( yTest ) );
 	    if ( firstYPixel != currentPixel ) {
+	      firstRowFound = true;
 	      streamlog_out ( DEBUG1 ) << "--> First pixel with Y = " << yTest << " is " << std::endl
-				      << (*firstYPixel ) << std::endl;
+				       << (*firstYPixel ) << std::endl;
 	      
-	      // now find the last pixel having y = yCoord - 1
+	      // now start scanning the matrix until one of the
+	      // following condition is verified
+	      // 
+	      // a. a pixel with a different y is found
+	      // b. all pixels *1*, *2* and *3* have been found
+	      // c. both *2* and *3* are found
+	      // d. pixel *3* is found
+	      // e. the last pixel in the matrix is found
+	      
 	      lastYPixel = firstYPixel;
-	      while ( lastYPixel != currentPixel ) {
-		if ( (*lastYPixel).getYCoord() != yTest ) {
+	      while ( true ) {
+
+		// checking for the end of the matrix and in case just
+		// break the loop
+		if ( lastYPixel == pixelEnd ) 
+		  break;
+		
+		// checking if we are at the end of the row (so it is
+		// changing y), in case just break the loop
+		if ( (*lastYPixel).getYCoord() != yTest )  {
 		  break;
 		}
-		++lastYPixel;
-	      }
-	      streamlog_out ( DEBUG1 ) << "--> Last pixel with Y = " << yTest << " is " << std::endl
-				       << *(lastYPixel - 1 ) << std::endl;
-
-	      // now the pixel under test should be found somewhere in
-	      // between firstYPixel and lastYPixel
-	      streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *1* (" << xTest << ", " << yTest << ")" << std::endl;
-	      foundPixel = find_if ( firstYPixel, lastYPixel, EUTelBaseSparsePixel::HasXCoord<PixelType> ( xTest ));
-	      
-	      if ( foundPixel != lastYPixel ) {
-		streamlog_out ( DEBUG1 ) << "--> Found pixel *1* " << std::endl;
-		indexTest = foundPixel - pixelBegin;
-		if ( status[ indexTest ] == 0 ) {
-		  streamlog_out ( DEBUG1 ) << "--> Pixel *1* status is good" << std::endl;
-		  status[ indexTest ] = 1;
-		  groupedPixel.push_back( indexTest );
-		} else {
-		  streamlog_out ( DEBUG1 ) << "--> Pixel *1* status is bad" << std::endl;
-		}
 		
-		// since pixel *1* has been found, pixel *2* (if
-		// exists) has to be the next one in the ordered
-		// matrix. Just increment the iterator and check if it
-		// is it!
-		++xTest;
-		++foundPixel;
-		streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *2* (" << xTest << ", " << yTest << ")" << std::endl;
-		if ( foundPixel != pixelEnd ) {
-
-		  if ( ( (*foundPixel).getXCoord() == xTest ) && 
-		       ( (*foundPixel).getYCoord() == yTest ) ) {
-		    streamlog_out ( DEBUG1 ) << "--> Found pixel *2* " << std::endl;
-		    indexTest = foundPixel - pixelBegin;
-		    if ( status[ indexTest ] == 0 ) {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *2* status is good" << std::endl;
-		      status[ indexTest ] = 1;
-		      groupedPixel.push_back( indexTest );
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *2* status is bad" << std::endl;
-		    }
-		    
-		    // since pixel *2* has been found, pixel *3* (if
-		    // exists) has to be the next one in the ordered
-		    // matrix. Just increment the iterator and check if
-		    // it is it!
-
-		    ++xTest; 
-		    ++foundPixel;
-		    streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *3* (" << xTest << ", " << yTest << ")" << std::endl;
-		    if ( foundPixel != pixelEnd ) {
-
-		      if ( ( (*foundPixel).getXCoord() == xTest ) && 
-			   ( (*foundPixel).getYCoord() == yTest ) ) {
-			streamlog_out ( DEBUG1 ) << "--> Found pixel *3* " << std::endl;
-			indexTest = foundPixel - pixelBegin;
-			if ( status[ indexTest ] == 0 ) {
-			  streamlog_out ( DEBUG1 ) << "--> Pixel *3* status is good" << std::endl;
-			  status[ indexTest ] = 1;
-			  groupedPixel.push_back( indexTest );
-			} else {
-			  streamlog_out ( DEBUG1 ) << "--> Pixel *3* status is bad" << std::endl;
-			}
-		      } else {
-			streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *3* " << std::endl;
-		      }
-
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *3* because end of list!" << std::endl;
-		    }
-
+		// checking if the current iterator is pointing to
+		// pixel *1*, continue incrementing the iterator
+		if ( (*lastYPixel).getXCoord() == xCoord - 1 ) {
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *1* " << std::endl;
+		  indexTest = lastYPixel - pixelBegin;
+		  if ( status[indexTest] == 0 ) {
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *1* status is good" << std::endl;
+		    status[ indexTest ] = 1;
+		    groupedPixel.push_back( indexTest );
 		  } else {
-		    // it is not pixel *2*, but it can be pixel
-		    // *3*. let's check!
-		    streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *2* " << std::endl;
-
-		    ++xTest;
-		    streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *3* (" << xTest << ", " << yTest << ")" << std::endl;
-		    if ( ( (*foundPixel).getXCoord() == xTest ) && 
-			 ( (*foundPixel).getYCoord() == yTest ) ) {
-		      streamlog_out ( DEBUG1 ) << "--> Found pixel *3* " << std::endl;
-		      indexTest = foundPixel - pixelBegin;
-		      if ( status[ indexTest ] == 0 ) {
-			streamlog_out ( DEBUG1 ) << "--> Pixel *3* status is good" << std::endl;
-			status[ indexTest ] = 1;
-			groupedPixel.push_back( indexTest );
-		      } else {
-			streamlog_out ( DEBUG1 ) << "--> Pixel *3* status is bad" << std::endl;
-		      }
-		    } 
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *1* status is bad" << std::endl;
 		  }
-		} else {
-		  streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *2* because end of list!" << std::endl;
+		  ++lastYPixel;
+
+		  // checking for the end of the matrix and in case just
+		  // break the loop
+		  if ( lastYPixel == pixelEnd ) 
+		    break;
 		}
-	      } else {
-		streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *1* " << std::endl;
-		// pixel *1* not found, but pixel *2* can still
-		// exist. let's look for it
-		++xTest;
-		streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *2* (" << xTest << ", " << yTest << ")" << std::endl;
-		foundPixel = find_if ( firstYPixel, lastYPixel, EUTelBaseSparsePixel::HasXCoord<PixelType> ( xTest ));
-		if ( foundPixel != lastYPixel ) {
+
+		// checking if the current iterator is pointing to
+		// pixel *2*, in case continue incrementing the
+		// iterator
+		if ( (*lastYPixel).getXCoord() == xCoord ) {
 		  streamlog_out ( DEBUG1 ) << "--> Found pixel *2* " << std::endl;
-		  indexTest = foundPixel - pixelBegin;
-		  if ( status[ indexTest ] == 0 ) {
+		  indexTest = lastYPixel - pixelBegin;
+		  if ( status[indexTest] == 0 ) {
 		    streamlog_out ( DEBUG1 ) << "--> Pixel *2* status is good" << std::endl;
 		    status[ indexTest ] = 1;
 		    groupedPixel.push_back( indexTest );
 		  } else {
 		    streamlog_out ( DEBUG1 ) << "--> Pixel *2* status is bad" << std::endl;
 		  }
-		  
-		  // since pixel *2* has been found, pixel *3* (if
-		  // exists) has to be the next one in the ordered
-		  // matrix. Just increment the iterator and check if
-		  // it is it! 
-		  ++xTest;
-		  ++foundPixel;
-		  streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *3* (" << xTest << ", " << yTest << ")" << std::endl;
+		  ++lastYPixel;
 
-		  if ( foundPixel != pixelEnd ) {
+		  // checking for the end of the matrix and in case just
+		  // break the loop
+		  if ( lastYPixel == pixelEnd ) 
+		    break;
+		}
 
-		    if ( ( (*foundPixel).getXCoord() == xTest ) && 
-			 ( (*foundPixel).getYCoord() == yTest ) ) {
-		      streamlog_out ( DEBUG1 ) << "--> Found pixel *3* " << std::endl;
-		      indexTest = foundPixel - pixelBegin;
-		      if ( status[ indexTest ] == 0 ) {
-			streamlog_out ( DEBUG1 ) << "--> Pixel *3* status is good" << std::endl;
-			status[ indexTest ] = 1;
-			groupedPixel.push_back( indexTest );
-		      } else {
-			streamlog_out ( DEBUG1 ) << "--> Pixel *3* status is bad" << std::endl;
-		      }
-		    }
+		// checking if the current iterator is pointing to
+		// pixel *3*, in case break the loop since we found
+		// already everything we need!
+		if ( (*lastYPixel).getXCoord() == xCoord + 1 ) {
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *3* " << std::endl;
+		  indexTest = lastYPixel - pixelBegin;
+		  if ( status[indexTest] == 0 ) {
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *3* status is good" << std::endl;
+		    status[ indexTest ] = 1;
+		    groupedPixel.push_back( indexTest );
 		  } else {
-		    streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *3* because end of list!" << std::endl;
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *3* status is bad" << std::endl;
 		  }
+		  ++lastYPixel;
+		  break;
+		}
 
-		} else { 
-		  streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *2* " << std::endl;
-		  // pixel *2* not found, but pixel *3* can still be
-		  // there somewhere. let's look for it
-		  ++xTest;
-		  streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *3* (" << xTest << ", " << yTest << ")" << std::endl;
-		  foundPixel = find_if (firstYPixel, lastYPixel, EUTelBaseSparsePixel::HasXCoord<PixelType> ( xTest ));
-		  if ( foundPixel != lastYPixel ) {
-		    streamlog_out ( DEBUG1 ) << "--> Found pixel *3* " << std::endl;
-		    indexTest = foundPixel - pixelBegin;
-		    if ( status[ indexTest ] == 0 ) {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *3* status is good" << std::endl;
-		      status[ indexTest ] = 1;
-		      groupedPixel.push_back( indexTest );
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *3* status is bad" << std::endl;
-		    }
-		  } else {
-		    streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *3* " << std::endl;
-		  }
+		// checking if we passed all searched pixels, in case
+		// break the loop...
+		if ( (*lastYPixel).getXCoord() > xCoord + 1 ) {
+		  break;
 		}
 		
+		++lastYPixel;
 	      }
-	      
-	      firstRowFound = true;
 	    } else {
-	      // no pixels with y = yCoord - 1, so the first group is
-	      // done! 
 	      firstRowFound = false;
-	      streamlog_out ( DEBUG1 ) << "--> No pixels found with Y = " << yTest << std::endl;
 	    }
 
 
@@ -324,131 +242,75 @@ namespace eutelescope {
 	    streamlog_out ( DEBUG1 ) << "--> First pixel with Y = " << yTest << " is " << std::endl
 				     << (*firstYPixel ) << std::endl;
 
-	    if ( firstYPixel == currentPixel ) {
-	      // this means that the first pixel of this row is the
-	      // starting pixel, so pixel *4* doesn't exist.
-	      // look directly for pixel *5* incrementing
-	      // firstYPixel by one and also xTest
-	      //
-	      lastYPixel == currentPixel;
-	      ++xTest ;
-	      foundPixel = firstYPixel + 1;
-	      streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *5* (" << xTest << ", " << yTest << ")" << std::endl;
-	      
-	      if ( foundPixel != pixelEnd ) {
+	    
+	    // now start scanning the matrix until one of the
+	    // following condition is verified
+	    // 
+	    // a. a pixel with a different y is found
+	    // b. all pixels *4*, *5* have been found
+	    // c. pixel *5* is found
+	    // d. the last pixel in the matrix is found
+	    lastYPixel = firstYPixel;
+	    while ( true ) {
 
-		if ( ( (*foundPixel).getXCoord() == xTest ) && 
-		     ( (*foundPixel).getYCoord() == yTest ) ) {
-		  streamlog_out ( DEBUG1 ) << "--> Found pixel *5* " << std::endl;
-		  indexTest = foundPixel - pixelBegin;
-		  if ( status[ indexTest ] == 0 ) {
-		    streamlog_out ( DEBUG1 ) << "--> Pixel *5* status is good" << std::endl;
-		    status[ indexTest ] = 1;
-		    groupedPixel.push_back( indexTest );
-		  }
-		  lastYPixel == currentPixel;
-		} else {
-		  streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *5* " << std::endl;
-		}
-	      } else {
-		streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *5* because end of list!" << std::endl;
-	      }
+	      // checking for the end of the matrix and in case just
+	      // break the loop
+	      if ( lastYPixel == pixelEnd ) 
+		break;
 	      
-	    } else if ( ( firstYPixel != currentPixel ) &&
-			( firstYPixel != currentPixel + 1 ) ) {
-	      streamlog_out ( DEBUG1 ) << "--> First pixel with Y = " << yTest << " is " << std::endl
-				       << (*firstYPixel ) << std::endl;
-	      // this meas that there are other pixels on the same
-	      // row on the current one but with lower x.	      
-	      // we also need to find the last pixel 
-	      lastYPixel = firstYPixel;
-	      while ( lastYPixel != pixelEnd ) {
-		if ( (*lastYPixel).getYCoord() != yTest ) {
-		  break;
-		}
-		++lastYPixel;
+	      // checking if we are at the end of the row (so it is
+	      // changing y), in case just break the loop
+	      if ( (*lastYPixel).getYCoord() != yTest )  {
+		break;
 	      }
-	      streamlog_out ( DEBUG1 ) << "--> Last pixel with Y = " << yTest << " is " << std::endl
-				       << *(lastYPixel - 1 ) << std::endl;
 
-	      // Check if *4* exist. Pixel *4* has to be found between
-	      // firstYPixel and currentPixel
-	      streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *4* (" << xTest << ", " << yTest << ")" << std::endl;
-	      foundPixel = find_if ( firstYPixel, currentPixel, EUTelBaseSparsePixel::HasXCoord<PixelType> ( xTest ) ) ;
-	      if ( foundPixel != currentPixel ) {
+	      // checking if the current iterator is pointing to
+	      // pixel *4*, continue incrementing the iterator
+	      if ( (*lastYPixel).getXCoord() == xCoord - 1 ) {
 		streamlog_out ( DEBUG1 ) << "--> Found pixel *4* " << std::endl;
-		indexTest = foundPixel - pixelBegin;
-		if ( status[ indexTest ] == 0 ) {
+		indexTest = lastYPixel - pixelBegin;
+		if ( status[indexTest] == 0 ) {
 		  streamlog_out ( DEBUG1 ) << "--> Pixel *4* status is good" << std::endl;
 		  status[ indexTest ] = 1;
 		  groupedPixel.push_back( indexTest );
 		} else {
 		  streamlog_out ( DEBUG1 ) << "--> Pixel *4* status is bad" << std::endl;
 		}
-
-
-		// if *4* is found, then the *5* has to be two
-		// positions ahead this one.
-		foundPixel += 2;
-		xTest += 2;
-		streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *5* (" << xTest << ", " << yTest << ")" << std::endl;
-		if ( foundPixel < pixelEnd ) {
+		++lastYPixel;
 		
-		  if ( ( (*foundPixel).getXCoord() == xTest ) && 
-		       ( (*foundPixel).getYCoord() == yTest ) ) {
-		    streamlog_out ( DEBUG1 ) << "--> Found pixel *5* " << std::endl;
-		    indexTest = foundPixel - pixelBegin;
-		    if ( status[ indexTest ] == 0 ) {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *5* status is good" << std::endl;
-		      status[ indexTest ] = 1;
-		      groupedPixel.push_back( indexTest );
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *5* status is bad" << std::endl;
-		    }
-		  } else {
-		    streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *5* " << std::endl;
-		  }
-		} else {
-		  streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *5* because end of list" << std::endl;
-		}
-
-	      } else {
-		streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *4* " << std::endl;
-		// pixel *4* not found. foundPixel is now pointing to
-		// currentPixel. So if pixel *5* exists has to be
-		// found one position ahead! 
-		xTest += 2;
-		++foundPixel;
-		streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *5* (" << xTest << ", " << yTest << ")" << std::endl;
-		if ( foundPixel != pixelEnd ) {
-
-		  if ( ( (*foundPixel).getXCoord() == xTest ) && 
-		       ( (*foundPixel).getYCoord() == yTest ) ) {
-		    streamlog_out ( DEBUG1 ) << "--> Found pixel *5* " << std::endl;
-		    indexTest = foundPixel - pixelBegin;
-		    if ( status[ indexTest ] == 0 ) {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *5* status is good" << std::endl;
-		      status[ indexTest ] = 1;
-		      groupedPixel.push_back( indexTest );
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *5* status is bad" << std::endl;
-		    }
-		  } else {
-		    streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *5* " << std::endl;
-		  }
-
-		} else {
-		  streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *5* because end of list" << std::endl;
-		}
+		// checking for the end of the matrix and in case just
+		// break the loop
+		if ( lastYPixel == pixelEnd ) 
+		  break;
+		
 	      }
-	    } else {
-	      // this is a very unlikely case that it is not expected
-	      // to happen because at least one pixel (the current
-	      // one) has to be found on the second row. So complain
-	      // and exit!!!!
-	      streamlog_out ( ERROR4 ) << "Fatal error with sparse data re-clustering. Exiting" << std::endl;
-	      exit(-1);
+
+	      // checking if the current iterator is pointing to
+	      // pixel *5*, in case break the loop since we found
+	      // already everything we need!
+	      if ( (*lastYPixel).getXCoord() == xCoord + 1 ) {
+		streamlog_out ( DEBUG1 ) << "--> Found pixel *5* " << std::endl;
+		indexTest = lastYPixel - pixelBegin;
+		if ( status[indexTest] == 0 ) {
+		  streamlog_out ( DEBUG1 ) << "--> Pixel *5* status is good" << std::endl;
+		  status[ indexTest ] = 1;
+		  groupedPixel.push_back( indexTest );
+		} else {
+		  streamlog_out ( DEBUG1 ) << "--> Pixel *5* status is bad" << std::endl;
+		}
+		++lastYPixel;
+		break;
+	      }
+	      
+	      // checking if we passed all searched pixels, in case
+	      // break the loop...
+	      if ( (*lastYPixel).getXCoord() > xCoord + 1 ) {
+		break;
+	      }	    
+
+	      ++lastYPixel;
 	    }
+
 	    
 	    // let's move on with the third group of pixels
 	    // 
@@ -468,167 +330,100 @@ namespace eutelescope {
 	      streamlog_out ( DEBUG1 ) << "--> First pixel with Y = " << yTest << " is " << std::endl
 				       << (*firstYPixel ) << std::endl;
 
-	      // look for the last pixel having the y = yCoord + 1
+
+
+	      // now start scanning the matrix until one of the
+	      // following condition is verified
+	      // 
+	      // a. a pixel with a different y is found
+	      // b. all pixels *6*, *7* and *8* have been found
+	      // c. both *7* and *8* are found
+	      // d. pixel *8* is found
+	      // e. the last pixel in the matrix is found
+	      
 	      lastYPixel = firstYPixel;
-	      while ( lastYPixel != pixelEnd ) {
-		if ( (*lastYPixel).getYCoord() != yTest ) {
+	      while ( true ) {
+		
+		// checking for the end of the matrix and in case just
+		// break the loop
+		if ( lastYPixel == pixelEnd ) 
+		  break;
+
+		// checking if we are at the end of the row (so it is
+		// changing y), in case just break the loop
+		if ( (*lastYPixel).getYCoord() != yTest )  {
 		  break;
 		}
-		++lastYPixel;
-	      }
-	      streamlog_out ( DEBUG1 ) << "--> Last pixel with Y = " << yTest << " is " << std::endl
-				       << *(lastYPixel - 1 ) << std::endl;	      
-	      
-	      // look for pixel *6*
-	      streamlog_out ( DEBUG1 ) <<  "--> Checking the presence of pixel *6* (" << xTest << ", " << yTest << ")" << std::endl;
-	      foundPixel = find_if ( firstYPixel, lastYPixel,  EUTelBaseSparsePixel::HasXCoord<PixelType> ( xTest ) ) ;
-	      if ( foundPixel != lastYPixel ) {
-		streamlog_out ( DEBUG1 ) << "--> Found pixel *6* " << std::endl;
-		indexTest = foundPixel - pixelBegin;
-		if ( status[ indexTest ] == 0 ) {
-		  streamlog_out ( DEBUG1 ) << "--> Pixel *6* status is good" << std::endl;
-		  status[ indexTest ] = 1;
-		  groupedPixel.push_back( indexTest );
-		} else {
-		  streamlog_out ( DEBUG1 ) << "--> Pixel *6* status is bad" << std::endl;
-		}
-		
-		// if *6* is found, then the *7* has to be the next
-		// one in the ordered matrix
-		++foundPixel;
-		++xTest;
-		streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *7* (" << xTest << ", " << yTest << ")" << std::endl;
-		if ( foundPixel != pixelEnd ) {
-		
-		  if ( ( (*foundPixel).getXCoord() == xTest ) && 
-		       ( (*foundPixel).getYCoord() == yTest ) ) {
-		    streamlog_out ( DEBUG1 ) << "--> Found pixel *7* " << std::endl;
-		    indexTest = foundPixel - pixelBegin;
-		    if ( status[ indexTest ] == 0 ) {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *7* status is good" << std::endl;
-		      status[ indexTest ] = 1;
-		      groupedPixel.push_back( indexTest );
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *7* status is bad" << std::endl;
-		    }
-		    
-		    // since pixel *7* has been found, pixel *8* (if
-		    // exists) has to be the next one in the ordered
-		    // matrix. Just increment the iterator and check it
-		    // it is it! 
-		    ++xTest;
-		    ++foundPixel;
-		    streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *8* (" << xTest << ", " << yTest << ")" << std::endl;
-		    if ( foundPixel != pixelEnd ) {
-		      if ( ( (*foundPixel).getXCoord() == xTest ) && 
-			   ( (*foundPixel).getYCoord() == yTest ) ) {
-			streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl;
-			indexTest = foundPixel - pixelBegin;
-			if ( status[ indexTest ] == 0 ) {
-			  streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
-			  status[ indexTest ] = 1;
-			  groupedPixel.push_back( indexTest );
-			} else {
-			  streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is bad" << std::endl;
-			}
-		      } else {
-			streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *8* " << std::endl;
-		      }
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *8* because end of list! " << std::endl;
-		    }
+
+		// checking if the current iterator is pointing to
+		// pixel *6*, continue incrementing the iterator
+		if ( (*lastYPixel).getXCoord() == xCoord - 1 ) {
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *6* " << std::endl;
+		  indexTest = lastYPixel - pixelBegin;
+		  if ( status[indexTest] == 0 ) {
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *6* status is good" << std::endl;
+		    status[ indexTest ] = 1;
+		    groupedPixel.push_back( indexTest );
 		  } else {
-		    streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *7* " << std::endl;
-		    // it is not pixel *7*, then it might be pixel
-		    // *8*. Increment only xTest....
-		    ++xTest;
-		    streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *8* (" << xTest << ", " << yTest << ")" << std::endl;
-		    if ( ( (*foundPixel).getXCoord() == xTest ) && 
-			 ( (*foundPixel).getYCoord() == yTest ) ) {
-		      streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl;
-		      indexTest = foundPixel - pixelBegin;
-		      if ( status[ indexTest ] == 0 ) {
-			streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
-			status[ indexTest ] = 1;
-			groupedPixel.push_back( indexTest );
-		      } else {
-			streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is bad" << std::endl;
-		      }
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *8* " << std::endl;
-		    }
-		  } 
-		} else {
-		  streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *7* because end of list! " << std::endl;
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *6* status is bad" << std::endl;
+		  }
+		  ++lastYPixel;
+
+		  // checking for the end of the matrix and in case just
+		  // break the loop
+		  if ( lastYPixel == pixelEnd ) 
+		    break;
 		}
-	      } else {
-		// pixel *6* not found but pixel *7* can still
-		// exist. Let's look for it!
-		++xTest;
-		streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *7* (" << xTest << ", " << yTest << ")" << std::endl;
-		foundPixel = find_if ( firstYPixel, lastYPixel, EUTelBaseSparsePixel::HasXCoord<PixelType> ( xTest ));
-		if ( foundPixel != lastYPixel ) {
+
+
+		// checking if the current iterator is pointing to
+		// pixel *7*, in case continue incrementing the
+		// iterator
+		if ( (*lastYPixel).getXCoord() == xCoord ) {
 		  streamlog_out ( DEBUG1 ) << "--> Found pixel *7* " << std::endl;
-		  indexTest = foundPixel - pixelBegin;
-		  if ( status[ indexTest ] == 0 ) {
+		  indexTest = lastYPixel - pixelBegin;
+		  if ( status[indexTest] == 0 ) {
 		    streamlog_out ( DEBUG1 ) << "--> Pixel *7* status is good" << std::endl;
 		    status[ indexTest ] = 1;
 		    groupedPixel.push_back( indexTest );
 		  } else {
 		    streamlog_out ( DEBUG1 ) << "--> Pixel *7* status is bad" << std::endl;
 		  }
-		  
-		  // pixel *7* is found, so pixel *8* either is the
-		  // next one or it doesn't exist! 
-		  ++xTest;
-		  ++foundPixel;
-		  streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *8* (" << xTest << ", " << yTest << ")" << std::endl;
-		  if ( foundPixel != pixelEnd ) {
+		  ++lastYPixel;
 
-		    if ( ( (*foundPixel).getXCoord() == xTest ) && 
-			 ( (*foundPixel).getYCoord() == yTest ) ) {
-		      streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl;
-		      indexTest = foundPixel - pixelBegin;
-		      if ( status[ indexTest ] == 0 ) {
-			streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
-			status[ indexTest ] = 1;
-			groupedPixel.push_back( indexTest );
-		      } else {
-			streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is bad" << std::endl;
-		      }
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *8* " << std::endl;
-		    }
-		  } else {
-		    streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *8* because end of list!" << std::endl;
-		  }
-		} else {
-		  streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *7* " << std::endl;		    
-		  // pixel *7* not found, what about *8*?
-		  ++xTest;
-		  streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *8* (" << xTest << ", " << yTest << ")" << std::endl;
-		  foundPixel = find_if (firstYPixel, lastYPixel, EUTelBaseSparsePixel::HasXCoord<PixelType> ( xTest ));
-		  if ( foundPixel != lastYPixel ) {
-		    streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl;
-		    indexTest = foundPixel - pixelBegin;
-		    if ( status[ indexTest ] == 0 ) {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
-		      status[ indexTest ] = 1;
-		      groupedPixel.push_back( indexTest );
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is bad" << std::endl;
-		    }
-		  } else {
-		    streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *8* " << std::endl;
-		  }
+		  // checking for the end of the matrix and in case just
+		  // break the loop
+		  if ( lastYPixel == pixelEnd ) 
+		    break;
 		}
+
+		// checking if the current iterator is pointing to
+		// pixel *8*, in case break the loop since we found
+		// already everything we need!
+		if ( (*lastYPixel).getXCoord() == xCoord + 1 ) {
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl;
+		  indexTest = lastYPixel - pixelBegin;
+		  if ( status[indexTest] == 0 ) {
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
+		    status[ indexTest ] = 1;
+		    groupedPixel.push_back( indexTest );
+		  } else {
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is bad" << std::endl;
+		  }
+		  ++lastYPixel;
+		  break;
+		}
+		
+		// checking if we passed all searched pixels, in case
+		// break the loop...
+		if ( (*lastYPixel).getXCoord() > xCoord + 1 )   break;
+		
+
+		++lastYPixel;
+		
 	      }
-	      
-	    } else {
-	      streamlog_out ( DEBUG1 ) << "No pixels found with Y = " << yTest << std::endl;
-	    }
-	    
-	    
+	    }	      
+
 	  } else {
 	    
 	    // for the first pixel of the group we just have to check
@@ -669,7 +464,7 @@ namespace eutelescope {
 	    } else {
 	      streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *5* because end of list! " << std::endl;
 	    }
-
+	    
 	    // now move to the next row
 	    xTest = xCoord - 1;
 	    yTest = yCoord + 1;
@@ -681,161 +476,95 @@ namespace eutelescope {
 	      streamlog_out ( DEBUG1 ) << "--> First pixel with Y = " << yTest << " is " << std::endl
 				       << (*firstYPixel ) << std::endl;
 	      
-	      // now find the last pixel having y = yCoord + 1
+	      
+	      // now start scanning the matrix until one of the
+	      // following condition is verified
+	      // 
+	      // a. a pixel with a different y is found
+	      // b. all pixels *6*, *7* and *8* have been found
+	      // c. both *7* and *8* are found
+	      // d. pixel *8* is found
+	      // e. the last pixel in the matrix is found
+	      
 	      lastYPixel = firstYPixel;
-	      while ( lastYPixel != pixelEnd ) {
-		if ( (*lastYPixel).getYCoord() != yTest ) {
+	      while ( true ) {
+		// checking for the end of the matrix and in case just
+		// break the loop
+		if ( lastYPixel == pixelEnd ) 
 		  break;
-		}
-		++lastYPixel;
-	      }
-	      streamlog_out ( DEBUG1 ) << "--> Last pixel with Y = " << yTest << " is " << std::endl
-				       << *(lastYPixel - 1 ) << std::endl;
-
-	      // now the pixel under test should be found somewhere in
-	      // between firstYPixel and lastYPixel
-	      streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *6* (" << xTest << ", " << yTest << ")" << std::endl;
-	      foundPixel = find_if ( firstYPixel, lastYPixel, EUTelBaseSparsePixel::HasXCoord<PixelType> ( xTest ));
-	      if ( foundPixel != lastYPixel ) {
-		streamlog_out ( DEBUG1 ) << "--> Found pixel *6* " << std::endl;
-		indexTest = foundPixel - pixelBegin;
-		if ( status[ indexTest ] == 0 ) {
-		  streamlog_out ( DEBUG1 ) << "--> Pixel *6* status is good" << std::endl;
-		  status[ indexTest ] = 1;
-		  groupedPixel.push_back( indexTest );
-		} else {
-		  streamlog_out ( DEBUG1 ) << "--> Pixel *6* status is bad" << std::endl;
-		}
-
-		// since pixel *6* has been found, pixel *7* if exists is
-		// the following one
-		++xTest;
-		++foundPixel;
-		streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *7* (" << xTest << ", " << yTest << ")" << std::endl;
 		
-		if ( foundPixel != pixelEnd ) {
-
-		  if ( ( (*foundPixel).getXCoord() == xTest ) && 
-		       ( (*foundPixel).getYCoord() == yTest ) ) {
-		    streamlog_out ( DEBUG1 ) << "--> Found pixel *7* " << std::endl;
-		    indexTest = foundPixel - pixelBegin;
-		    if ( status[ indexTest ] == 0 ) {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *7* status is good" << std::endl;
-		      status[ indexTest ] = 1;
-		      groupedPixel.push_back( indexTest );
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *7* status is bad" << std::endl;
-		    }	
-
-		    // since pixel *7* has been found, pixel *8* if
-		    // exists is the following one
-		    ++xTest;
-		    ++foundPixel;
-		    streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *8* (" << xTest << ", " << yTest << ")" << std::endl;
-		    if ( foundPixel != pixelEnd ) {
-
-		      if ( ( (*foundPixel).getXCoord() == xTest ) && 
-			   ( (*foundPixel).getYCoord() == yTest ) ) {
-			streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl;
-			indexTest = foundPixel - pixelBegin;
-			if ( status[ indexTest ] == 0 ) {
-			  streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
-			  status[ indexTest ] = 1;
-			  groupedPixel.push_back( indexTest );
-			} else {
-			  streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is bad" << std::endl;
-			}
-		      } else {
-			streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *8* " << std::endl;
-		      }
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *8* because end of list" << std::endl;
-		    }
+		// checking if we are at the end of the row (so it is
+		// changing y), in case just break the loop
+		if ( (*lastYPixel).getYCoord() != yTest )   break;
+		
+		
+		// checking if the current iterator is pointing to
+		// pixel *6*, continue incrementing the iterator
+		if ( (*lastYPixel).getXCoord() == xCoord - 1 ) {
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *6* " << std::endl;
+		  indexTest = lastYPixel - pixelBegin;
+		  if ( status[indexTest] == 0 ) {
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *6* status is good" << std::endl;
+		    status[ indexTest ] = 1;
+		    groupedPixel.push_back( indexTest );
 		  } else {
-		    // it is not pixel *7*, but it can be pixel *8*
-		    streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *7* " << std::endl;
-		    ++xTest;
-		    streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *8* (" << xTest << ", " << yTest << ")" << std::endl;
-		    if ( ( (*foundPixel).getXCoord() == xTest ) && 
-			 ( (*foundPixel).getYCoord() == yTest ) ) {
-		      streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl;
-		      indexTest = foundPixel - pixelBegin;
-		      if ( status[ indexTest ] == 0 ) {
-			streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
-			status[ indexTest ] = 1;
-			groupedPixel.push_back( indexTest );
-		      } else {
-			streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is bad" << std::endl;
-		      }
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *8* " << std::endl;
-		    }
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *6* status is bad" << std::endl;
 		  }
-		} else {
-		  streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *7* because end of list" << std::endl;
+		  ++lastYPixel;
+		  
+		  // checking for the end of the matrix and in case just
+		  // break the loop
+		  if ( lastYPixel == pixelEnd ) 
+		    break;
 		}
-	      } else {
-		streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *6* " << std::endl;
-		// pixel *6* not found, but pixel *7* can still exist.
-		++xTest;
-		streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *7* (" << xTest << ", " << yTest << ")" << std::endl;
-		foundPixel = find_if ( firstYPixel, lastYPixel, EUTelBaseSparsePixel::HasXCoord<PixelType> ( xTest ));
-		if ( foundPixel != lastYPixel ) {
+		
+		// checking if the current iterator is pointing to
+		// pixel *7*, in case continue incrementing the
+		// iterator
+		if ( (*lastYPixel).getXCoord() == xCoord ) {
 		  streamlog_out ( DEBUG1 ) << "--> Found pixel *7* " << std::endl;
-		  indexTest = foundPixel - pixelBegin;
-		  if ( status[ indexTest ] == 0 ) {
+		  indexTest = lastYPixel - pixelBegin;
+		  if ( status[indexTest] == 0 ) {
 		    streamlog_out ( DEBUG1 ) << "--> Pixel *7* status is good" << std::endl;
 		    status[ indexTest ] = 1;
 		    groupedPixel.push_back( indexTest );
 		  } else {
 		    streamlog_out ( DEBUG1 ) << "--> Pixel *7* status is bad" << std::endl;
 		  }
-
-		  // pixel *7* is found, so pixel *8* is the next one
-		  ++xTest;
-		  ++foundPixel;
-		  streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *8* (" << xTest << ", " << yTest << ")" << std::endl;
-		  if ( foundPixel != pixelEnd ) {
-
-		    if ( ( (*foundPixel).getXCoord() == xTest ) && 
-			 ( (*foundPixel).getYCoord() == yTest ) ) {
-		      streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl;
-		      indexTest = foundPixel - pixelBegin;
-		      if ( status[ indexTest ] == 0 ) {
-			streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
-			status[ indexTest ] = 1;
-			groupedPixel.push_back( indexTest );
-		      } else {
-			streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is bad" << std::endl;
-		      }
-		    }  else {
-		      streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *8* " << std::endl;
-		    }
-		  } else {
-		    streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *8* because end of list" << std::endl;
-		  }
-		} else {
-		  // pixel *7* is not found, but pixel *8* can still
-		  // be there somewhere.
-		  streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *7* " << std::endl;
-		  ++xTest;
-		  streamlog_out ( DEBUG1 ) << "--> Checking the presence of pixel *8* (" << xTest << ", " << yTest << ")" << std::endl;
-		  foundPixel = find_if (firstYPixel, lastYPixel, EUTelBaseSparsePixel::HasXCoord<PixelType> ( xTest ));
-		  if ( foundPixel != lastYPixel ) {
-		    streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl;
-		    indexTest = foundPixel - pixelBegin;
-		    if ( status[ indexTest ] == 0 ) {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
-		      status[ indexTest ] = 1;
-		      groupedPixel.push_back( indexTest );
-		    } else {
-		      streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is bad" << std::endl;
-		    }
-		  } else {
-		    streamlog_out ( DEBUG1 ) << "--> NOT Found pixel *8* " << std::endl;
-		  }
+		  ++lastYPixel;
+		  
+		  // checking for the end of the matrix and in case just
+		  // break the loop
+		  if ( lastYPixel == pixelEnd ) 
+		    break;
 		}
+		
+		// checking if the current iterator is pointing to
+		// pixel *8*, in case break the loop since we found
+		// already everything we need!
+		if ( (*lastYPixel).getXCoord() == xCoord + 1 ) {
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl;
+		  indexTest = lastYPixel - pixelBegin;
+		  if ( status[indexTest] == 0 ) {
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
+		    status[ indexTest ] = 1;
+		    groupedPixel.push_back( indexTest );
+		  } else {
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is bad" << std::endl;
+		  }
+		  ++lastYPixel;
+		  break;
+		}
+		
+		// checking if we passed all searched pixels, in case
+		// break the loop...
+		if ( (*lastYPixel).getXCoord() > xCoord + 1 )  break;
+		
+		++lastYPixel;
+		
 	      }
+	      
+	      
 	    } else {
 	      // no pixels with y = yCoord + 1, nothing else to do! 
 	      streamlog_out ( DEBUG1 ) << "--> No pixels found with Y = " << yTest << std::endl;
@@ -844,22 +573,22 @@ namespace eutelescope {
 	    isFirstPixelOfTheGroup = false;
 	    
 	  }
-	  
+	    
 	  ++indexIter;
 	}
-	
+	  
 	listOfList.push_back( groupedPixel );
       }
     }
-    
+      
     return listOfList;
-
+    
   }
-
-
+    
+    
 
 
 }
-
+  
 
 #endif
