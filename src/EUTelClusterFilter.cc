@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.10 2007-08-30 08:55:23 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.11 2007-09-10 09:47:57 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -765,8 +765,10 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
     if ( acceptedClusterVec.empty() ) {
       delete filteredCollectionVec;
       message<DEBUG> ( "No cluster passed the selection" );
-      if ( _skipEmptyEvent ) throw SkipEventException(this);
-      else return;
+      if ( _skipEmptyEvent ) { 
+	message<WARNING0> ("Skipping event because no clusters left..." );
+	throw SkipEventException(this);
+      }  else return;
     } else {
       vector<int >::iterator iter = acceptedClusterVec.begin();
       while ( iter != acceptedClusterVec.end() ) {
