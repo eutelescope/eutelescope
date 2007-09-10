@@ -25,10 +25,10 @@ namespace eutelescope {
     _isSignalSorted   = false;
     _isOriginalOrder  = true;
 
-    for ( unsigned int index = 0 ; index <  _trackerData->chargeValues().size() ; index += 3 ) {
-      _pixelVec.push_back( PixelType( (short) _trackerData->chargeValues()[ index ],
-				      (short) _trackerData->chargeValues()[ index + 1 ],
-				      (short) _trackerData->chargeValues()[ index + 2 ] ) );
+    for ( unsigned int index = 0 ; index <  _trackerData->getChargeValues().size() ; index += 3 ) {
+      _pixelVec.push_back( PixelType( (short) _trackerData->getChargeValues()[ index ],
+				      (short) _trackerData->getChargeValues()[ index + 1 ],
+				      (short) _trackerData->getChargeValues()[ index + 2 ] ) );
     }
 
 
@@ -55,8 +55,8 @@ namespace eutelescope {
     PixelVectorIterator currentPixel;
 
     // as a first thing sort by position 
-    if ( ! _isPositionSorted ) sortByPosition() ;
-
+    if ( ! _isPositionSorted ) sortByPosition() ; 
+    
     // prepare the return listOfList
     std::list< std::list< unsigned int> > listOfList;    
 
@@ -159,7 +159,8 @@ namespace eutelescope {
 		// checking if the current iterator is pointing to
 		// pixel *1*, continue incrementing the iterator
 		if ( (*lastYPixel).getXCoord() == xCoord - 1 ) {
-		  streamlog_out ( DEBUG1 ) << "--> Found pixel *1* " << std::endl;
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *1* " << std::endl
+					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
 		    streamlog_out ( DEBUG1 ) << "--> Pixel *1* status is good" << std::endl;
@@ -180,7 +181,8 @@ namespace eutelescope {
 		// pixel *2*, in case continue incrementing the
 		// iterator
 		if ( (*lastYPixel).getXCoord() == xCoord ) {
-		  streamlog_out ( DEBUG1 ) << "--> Found pixel *2* " << std::endl;
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *2* " << std::endl
+					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
 		    streamlog_out ( DEBUG1 ) << "--> Pixel *2* status is good" << std::endl;
@@ -201,7 +203,8 @@ namespace eutelescope {
 		// pixel *3*, in case break the loop since we found
 		// already everything we need!
 		if ( (*lastYPixel).getXCoord() == xCoord + 1 ) {
-		  streamlog_out ( DEBUG1 ) << "--> Found pixel *3* " << std::endl;
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *3* " << std::endl
+					     << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
 		    streamlog_out ( DEBUG1 ) << "--> Pixel *3* status is good" << std::endl;
@@ -267,7 +270,8 @@ namespace eutelescope {
 	      // checking if the current iterator is pointing to
 	      // pixel *4*, continue incrementing the iterator
 	      if ( (*lastYPixel).getXCoord() == xCoord - 1 ) {
-		streamlog_out ( DEBUG1 ) << "--> Found pixel *4* " << std::endl;
+		streamlog_out ( DEBUG1 ) << "--> Found pixel *4* " << std::endl
+					     << (*lastYPixel ) << std::endl;
 		indexTest = lastYPixel - pixelBegin;
 		if ( status[indexTest] == 0 ) {
 		  streamlog_out ( DEBUG1 ) << "--> Pixel *4* status is good" << std::endl;
@@ -289,7 +293,8 @@ namespace eutelescope {
 	      // pixel *5*, in case break the loop since we found
 	      // already everything we need!
 	      if ( (*lastYPixel).getXCoord() == xCoord + 1 ) {
-		streamlog_out ( DEBUG1 ) << "--> Found pixel *5* " << std::endl;
+		streamlog_out ( DEBUG1 ) << "--> Found pixel *5* " << std::endl
+					     << (*lastYPixel ) << std::endl;
 		indexTest = lastYPixel - pixelBegin;
 		if ( status[indexTest] == 0 ) {
 		  streamlog_out ( DEBUG1 ) << "--> Pixel *5* status is good" << std::endl;
@@ -358,7 +363,8 @@ namespace eutelescope {
 		// checking if the current iterator is pointing to
 		// pixel *6*, continue incrementing the iterator
 		if ( (*lastYPixel).getXCoord() == xCoord - 1 ) {
-		  streamlog_out ( DEBUG1 ) << "--> Found pixel *6* " << std::endl;
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *6* " << std::endl
+					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
 		    streamlog_out ( DEBUG1 ) << "--> Pixel *6* status is good" << std::endl;
@@ -380,7 +386,8 @@ namespace eutelescope {
 		// pixel *7*, in case continue incrementing the
 		// iterator
 		if ( (*lastYPixel).getXCoord() == xCoord ) {
-		  streamlog_out ( DEBUG1 ) << "--> Found pixel *7* " << std::endl;
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *7* " << std::endl
+					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
 		    streamlog_out ( DEBUG1 ) << "--> Pixel *7* status is good" << std::endl;
@@ -401,7 +408,8 @@ namespace eutelescope {
 		// pixel *8*, in case break the loop since we found
 		// already everything we need!
 		if ( (*lastYPixel).getXCoord() == xCoord + 1 ) {
-		  streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl;
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl
+					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
 		    streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
@@ -449,7 +457,8 @@ namespace eutelescope {
 	      
 	      if ( ( (*foundPixel).getXCoord() == xTest ) && 
 		   ( (*foundPixel).getYCoord() == yTest ) ) {
-		streamlog_out ( DEBUG1 ) << "--> Found pixel *5* " << std::endl;
+		streamlog_out ( DEBUG1 ) << "--> Found pixel *5* " << std::endl
+					 << (*foundPixel ) << std::endl;
 		indexTest = foundPixel - pixelBegin;
 		if ( status[ indexTest ] == 0 ) {
 		  streamlog_out ( DEBUG1 ) << "--> Pixel *5* status is good" << std::endl;
@@ -501,7 +510,8 @@ namespace eutelescope {
 		// checking if the current iterator is pointing to
 		// pixel *6*, continue incrementing the iterator
 		if ( (*lastYPixel).getXCoord() == xCoord - 1 ) {
-		  streamlog_out ( DEBUG1 ) << "--> Found pixel *6* " << std::endl;
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *6* " << std::endl
+					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
 		    streamlog_out ( DEBUG1 ) << "--> Pixel *6* status is good" << std::endl;
@@ -522,10 +532,12 @@ namespace eutelescope {
 		// pixel *7*, in case continue incrementing the
 		// iterator
 		if ( (*lastYPixel).getXCoord() == xCoord ) {
-		  streamlog_out ( DEBUG1 ) << "--> Found pixel *7* " << std::endl;
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *7* " << std::endl
+					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
-		    streamlog_out ( DEBUG1 ) << "--> Pixel *7* status is good" << std::endl;
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *7* status is good" << std::endl
+					     << (*lastYPixel ) << std::endl;
 		    status[ indexTest ] = 1;
 		    groupedPixel.push_back( indexTest );
 		  } else {
@@ -543,10 +555,12 @@ namespace eutelescope {
 		// pixel *8*, in case break the loop since we found
 		// already everything we need!
 		if ( (*lastYPixel).getXCoord() == xCoord + 1 ) {
-		  streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl;
+		  streamlog_out ( DEBUG1 ) << "--> Found pixel *8* " << std::endl
+					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
-		    streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
+		    streamlog_out ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl
+					     << (*lastYPixel ) << std::endl;
 		    status[ indexTest ] = 1;
 		    groupedPixel.push_back( indexTest );
 		  } else {
