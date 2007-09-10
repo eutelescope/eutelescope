@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.6 2007-08-30 08:57:13 bulgheroni Exp $
+// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.7 2007-09-10 19:11:19 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -258,12 +258,17 @@ void EUTelUpdatePedestalNoiseProcessor::fixedWeightUpdate(LCEvent * evt) {
     LCCollectionVec * noiseCollection    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
     LCCollectionVec * statusCollection   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
     LCCollectionVec * rawDataCollection  = dynamic_cast < LCCollectionVec * > (evt->getCollection(_rawDataCollectionName));
+    CellIDDecoder<TrackerRawDataImpl>      rawDataDecoder( rawDataCollection );
+
+
     
-    
-    for (int iDetector = 0; iDetector < statusCollection->getNumberOfElements(); iDetector++) {
+    for (int i = 0; i < rawDataCollection->getNumberOfElements(); i++) {
+      
+      TrackerRawDataImpl * rawData  = dynamic_cast < TrackerRawDataImpl * > (rawDataCollection->getElementAt(i));
+      int iDetector = static_cast<int > ( rawDataDecoder( rawData )["sensorID"] ) ;
+      
       
       TrackerRawDataImpl * status   = dynamic_cast < TrackerRawDataImpl * > (statusCollection->getElementAt(iDetector));
-      TrackerRawDataImpl * rawData  = dynamic_cast < TrackerRawDataImpl * > (rawDataCollection->getElementAt(iDetector));
       TrackerDataImpl    * noise    = dynamic_cast < TrackerDataImpl * >    (noiseCollection->getElementAt(iDetector));
       TrackerDataImpl    * pedestal = dynamic_cast < TrackerDataImpl * >    (pedestalCollection->getElementAt(iDetector));
       
@@ -281,7 +286,7 @@ void EUTelUpdatePedestalNoiseProcessor::fixedWeightUpdate(LCEvent * evt) {
   }  catch ( DataNotAvailableException& e) {
     message<WARNING> ( log() << "Collection not available in this event" );
   }
-
+  
 }
 
 
