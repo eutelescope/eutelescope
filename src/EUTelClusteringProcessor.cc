@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.30 2007-09-06 14:04:00 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.31 2007-09-10 19:20:40 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -335,6 +335,8 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
 
 
 void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
+
+  streamlog_out ( DEBUG4 ) << "Looking for clusters in the zs data with SparseCluster algorithm " << endl;
   
   // get the collections of interest from the event.
   LCCollectionVec * zsInputCollectionVec  = dynamic_cast < LCCollectionVec * > (evt->getCollection( _zsDataCollectionName ));
@@ -536,6 +538,8 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
 
 void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec * pulseCollection) {
   
+  streamlog_out ( DEBUG4 ) << "Looking for clusters in the zs data with SparseCluster2 algorithm " << endl;
+
   // get the collections of interest from the event.
   LCCollectionVec * zsInputCollectionVec  = dynamic_cast < LCCollectionVec * > (evt->getCollection( _zsDataCollectionName ));
   LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
@@ -587,8 +591,8 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
       // now prepare the EUTelescope interface to sparsified data.
       auto_ptr<EUTelSparseData2Impl<EUTelSimpleSparsePixel > > 
 	sparseData(new EUTelSparseData2Impl<EUTelSimpleSparsePixel> ( zsData ));
-      
-      streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << _iDetector << " with "
+
+      streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << _iDetector << " with "
 			       << sparseData->size() << " pixels " << endl;
 
       // get from the sparse data the list of neighboring pixels
@@ -620,12 +624,11 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
 	list<unsigned int >::iterator listIter = currentList.begin();
 	
 	while ( listIter != currentList.end() ) {
-	  
-	  sparseData->getSparsePixelAt( (*listIter ), pixel );
+	 
+	  sparseData->getSparsePixelSortedAt( (*listIter ), pixel );
 	  sparseCluster->addSparsePixel( pixel );
-	  
 	  noiseValueVec.push_back(noise->getChargeValues()[ matrixDecoder.getIndexFromXY ( pixel->getXCoord(), pixel->getYCoord() ) ]);
-
+	  
 	  // remember the iterator++
 	  ++listIter;
 	}
@@ -634,6 +637,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
 	// verify if the cluster candidates can become a good cluster
 	if ( ( sparseCluster->getSeedSNR() >= _zsSeedCut ) && 
 	     ( sparseCluster->getClusterSNR() >= _zsClusterCut ) ) {
+
 
 	  // ok good cluster....
 	  // set the ID for this zsCluster
@@ -656,8 +660,8 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
 	  idZSPulseEncoder["clusterID"] = clusterID;
 	  idZSPulseEncoder["xSeed"]     = xSeed;
 	  idZSPulseEncoder["ySeed"]     = ySeed;
-	  idZSPulseEncoder["xCluSize"]  = xSize;
-	  idZSPulseEncoder["yCluSize"]  = ySize;
+	  idZSPulseEncoder["xCluSize"]  = (xSize < 32 ? xSize : 31 );
+	  idZSPulseEncoder["yCluSize"]  = (ySize < 32 ? ySize : 31 );
 	  idZSPulseEncoder["type"]      = static_cast<int>(kEUTelSparseClusterImpl);
 	  idZSPulseEncoder.setCellID( zsPulse.get() );
 
@@ -711,6 +715,8 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
 
 void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
   
+  streamlog_out ( DEBUG4 ) << "Looking for clusters in the RAW frame with FixedFrame algorithm " << endl;
+
   LCCollectionVec * nzsInputCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_nzsDataCollectionName));
   LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
   LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
@@ -749,13 +755,13 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
   LCCollectionVec * dummyCollection = new LCCollectionVec(LCIO::TRACKERDATA);
   
   for ( int i = 0; i < nzsInputCollectionVec->getNumberOfElements(); i++) {
-    
-    streamlog_out ( DEBUG0 ) << "  Working on detector " << _iDetector << endl;
-    
+        
     // get the calibrated data 
     TrackerDataImpl    * nzsData = dynamic_cast<TrackerDataImpl*>  (nzsInputCollectionVec->getElementAt( i ) );
     _iDetector = cellDecoder( nzsData ) ["sensorID"];
   
+    streamlog_out ( DEBUG0 ) << "  Working on detector " << _iDetector << endl;
+
 #ifdef MARLINDEBUG
     /// /* DEBUG */ message<DEBUG> ( logfile << "  Working on detector " << _iDetector );
 #endif      
