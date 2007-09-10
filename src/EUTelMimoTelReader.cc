@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.10 2007-08-30 09:00:28 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.11 2007-09-10 19:09:39 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -209,22 +209,25 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	  noOfDetectors += from_string(eudev->GetTag("BOARDS"), 0) ;
 	  eudrbGlobalMode   = eudev->GetTag("MODE");
 	  string det  = eudev->GetTag("DET");
-	  if      ( eudrbGlobalMode == "RAW3" )   streamlog_out( MESSAGE2 ) << "All boards are working in RAW3 mode" << endl;
-	  else if ( eudrbGlobalMode == "ZS" )     streamlog_out( MESSAGE2 ) << "All boards are working in ZS mode" << endl;
-	  else if ( eudrbGlobalMode == "Mixed" )  {
+ 	  if ( eudrbGlobalMode.compare("RAW3")   == 0 ) {
+	    streamlog_out( MESSAGE2 ) << "All boards are working in RAW3 mode" << endl;
+	  } else if ( eudrbGlobalMode.compare("ZS")     == 0 )  {
+	    streamlog_out( MESSAGE2 ) << "All boards are working in ZS mode" << endl;
+	  } else  if ( eudrbGlobalMode.compare("Mixed")  == 0 ) {
 	    streamlog_out( MESSAGE2 ) << "Boards running in mixed mode" << endl;
-	    streamlog_out( DEBUG4  ) << "Discovering the mode of operation of each board" << endl;
+	    streamlog_out( DEBUG4  )  << "Discovering the mode of operation of each board" << endl;
 	    for ( int iBoard = 0;  iBoard < from_string(eudev->GetTag("BOARDS"), 0); iBoard++ ) {
-	      stringstream ss;
-	      ss << "MODE" << iBoard;
-	      string subMode = eudev->GetTag( ss.str().c_str() );
-	      eudrbSubMode.push_back( subMode ); 
-	      streamlog_out( DEBUG4 ) << "Board " << iBoard << " working in " << subMode << endl;
+ 	      stringstream ss;
+ 	      ss << "MODE" << iBoard;
+ 	      string subMode = eudev->GetTag( ss.str().c_str() );
+ 	      eudrbSubMode.push_back( subMode ); 
+ 	      streamlog_out( DEBUG4 ) << "Board " << iBoard << " working in " << subMode << endl;
 	    }
-	  } else throw InvalidParameterException("For the time being only RAW3 is supported");
+	  }  else throw InvalidParameterException("For the time being only RAW3 is supported");
 	  runHeader->setEUDRBMode( eudrbGlobalMode );
 	}
       }
+
 
       runHeader->setNoOfDetector(noOfDetectors);
       runHeader->setMinX(IntVec(noOfDetectors, 0));
@@ -237,8 +240,9 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
       runHeader->addProcessor( type() );
 
 
-      ProcessorMgr::instance()->processRunHeader(lcHeader.release());
-      delete lcHeader.get();
+      ProcessorMgr::instance()->processRunHeader(lcHeader.get());
+      delete lcHeader.release();
+
 
     } else if ( ev->IsEORE() ) {
       streamlog_out( DEBUG4 ) << "Found a EORE, processing a dummy empty event" << endl; 
@@ -533,7 +537,6 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		  // data
 		  auto_ptr<EUTelSimpleSparsePixel> sparsePixel( new EUTelSimpleSparsePixel );
 		  for (unsigned int iPixel = 0; iPixel < nPixel; iPixel++ ) {
-
 		    if ( _removeMarkerSwitch ) {
 		      // when removing the markers only the x
 		      // coordinate is affected.
@@ -549,7 +552,9 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 			streamlog_out ( DEBUG0 ) << (* (sparsePixel.get() ) ) << endl;
 			sparseFrame->addSparsePixel( sparsePixel.get() ) ;
 		      } else {
-			streamlog_out ( WARNING2 ) << "Found a sparse pixel on a marker column. Not adding it to the frame" << endl;
+			streamlog_out ( DEBUG0 ) << "Found a sparse pixel ("<< iPixel 
+						   <<")  on a marker column. Not adding it to the frame" << endl
+						   << (* (sparsePixel.get() ) ) << endl;
 		      }
 
 		    } else {
