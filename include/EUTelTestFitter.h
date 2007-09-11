@@ -102,6 +102,8 @@ namespace eutelescope {
    * correct alignment of these layers.
    * \param AlignLayerShiftY Shifts in Y, which should be applied to
    * correct alignment of these layers.
+   * \param AlignLayerRotZ Rotation around Z (beam) axis, which should 
+   * be applied to correct alignment of these layers.
    * \param DebugEventCount      Print out debug and information
    * messages only for one out of given number of events. If zero, no
    * debug information is printed. 
@@ -146,7 +148,7 @@ namespace eutelescope {
    * many hits)
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelTestFitter.h,v 1.5 2007-09-07 10:25:16 zarnecki Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.6 2007-09-11 20:36:43 zarnecki Exp $
    * \date 2007.06.04
    *
    */ 
@@ -304,6 +306,7 @@ namespace eutelescope {
     std::vector<int > _AlignLayerIDs;
     std::vector<float > _AlignLayerShiftX;
     std::vector<float > _AlignLayerShiftY;
+    std::vector<float > _AlignLayerRotZ;
 
     // Parameters of hit selection algorithm
 
@@ -339,6 +342,7 @@ namespace eutelescope {
     int * _planeID;
     double * _planeShiftX;
     double * _planeShiftY;
+    double * _planeRotZ;
     double * _planePosition;
     double * _planeThickness;
     double * _planeX0;

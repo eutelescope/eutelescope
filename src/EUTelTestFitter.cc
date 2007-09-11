@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.12 2007-09-10 21:28:38 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.13 2007-09-11 20:37:46 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -175,6 +175,10 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
                              "Alignment corrections in Y for these layers",
                              _AlignLayerShiftY, initLayerShift);
 
+  registerOptionalParameter ("AlignLayerRotZ",
+                             "Rotation around Z for layer alignment",
+                             _AlignLayerRotZ, initLayerShift);
+
   registerOptionalParameter ("UseBeamConstraint",
 			     "Flag for using beam direction constraint in the fit",
                              _useBeamConstraint,  static_cast < bool > (false));
@@ -310,6 +314,7 @@ void EUTelTestFitter::init() {
   _planeID         = new int[_nTelPlanes];
   _planeShiftX     = new double[_nTelPlanes];
   _planeShiftY     = new double[_nTelPlanes];
+  _planeRotZ       = new double[_nTelPlanes];
   _planeThickness  = new double[_nTelPlanes];
   _planeX0         = new double[_nTelPlanes];
   _planeResolution = new double[_nTelPlanes];
@@ -361,12 +366,16 @@ void EUTelTestFitter::init() {
 
     _planeShiftX[iz]=0.;
     _planeShiftY[iz]=0.;
+    _planeRotZ[iz]=0.;
 
      for(int apl=0; apl< (int)_AlignLayerIDs.size() ; apl++)
       if ( _AlignLayerIDs.at(apl) == _planeID[iz])
        {
        _planeShiftX[iz]=_AlignLayerShiftX.at(apl);
        _planeShiftY[iz]=_AlignLayerShiftY.at(apl);
+       // Rotation can be skipped: check size
+       if(apl < (int)_AlignLayerRotZ.size())
+              _planeRotZ[iz]=_AlignLayerRotZ.at(apl);
        break;
        }
 
@@ -407,8 +416,11 @@ void EUTelTestFitter::init() {
 	ss << "  Res [um] = " << _planeResolution[ipl]*1000. ;
       
         if(_planeShiftX[ipl] !=0. || _planeShiftY[ipl] !=0. ) 
-           ss << " Corrections dX [mm] = " << _planeShiftX[ipl] 
+	  ss << "\n  alignment corrections:" 
+             <<  " dX [mm] = " << _planeShiftX[ipl] 
               << " dY [mm] = " << _planeShiftY[ipl] ;
+        if(_planeRotZ[ipl] !=0.) 
+           ss << " RotZ [rad] = " << _planeRotZ[ipl] ;
         }
 
       message<MESSAGE> ( log() << ss.str() );
@@ -589,15 +601,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
       const double * pos = meshit->getPosition();
 
-      hitX[ihit] = pos[0];
-      hitY[ihit] = pos[1];
       hitZ[ihit] = pos[2];
 
-      // Plane ID should be stored as hit type 
-      //      hitPlane[ihit] = meshit->getType() - 1 ;
 
-
-      // If not, we have to find Plane ID of the hit
+      // We have to find Plane ID of the hit
       // by looking at the Z position
 
       double distMin = 1.;
@@ -633,11 +640,19 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
          _maxPlaneHits-planeHitID[hitPlane[ihit]].size()<=0) 
 	continue ;
 
-      // Hit will be used: correct for plane alignment
+      // Hit will be used: correct X and Y position for plane alignment
 
-      hitX[ihit] += _planeShiftX[hitPlane[ihit]];
-      hitY[ihit] += _planeShiftY[hitPlane[ihit]];
- 
+      //      hitX[ihit] = pos[0];
+      //      hitY[ihit] = pos[1];
+
+      hitX[ihit] = pos[0]*cos(_planeRotZ[hitPlane[ihit]])
+                 + pos[1]*sin(_planeRotZ[hitPlane[ihit]])
+                 + _planeShiftX[hitPlane[ihit]];
+
+      hitY[ihit] = pos[1]*cos(_planeRotZ[hitPlane[ihit]])
+                 - pos[0]*sin(_planeRotZ[hitPlane[ihit]])
+                 + _planeShiftY[hitPlane[ihit]];
+
       // Add hit to hit list for given plane - to be used in track selection
 
       planeHitID[hitPlane[ihit]].push_back(ihit);
@@ -1112,6 +1127,7 @@ void EUTelTestFitter::end(){
   delete [] _planeID ;
   delete [] _planeShiftX ;
   delete [] _planeShiftY ;
+  delete [] _planeRotZ ;
   delete [] _planePosition ;
   delete [] _planeThickness  ;
   delete [] _planeX0  ;
