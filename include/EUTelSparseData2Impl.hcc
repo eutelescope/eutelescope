@@ -80,7 +80,7 @@ namespace eutelescope {
    *  \image html clusteringPerfomance.png "Different algorithms performance"
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelSparseData2Impl.hcc,v 1.2 2007-09-10 19:24:12 bulgheroni Exp $
+   *  @Version $Id: EUTelSparseData2Impl.hcc,v 1.3 2007-09-12 13:29:49 bulgheroni Exp $
    */  
   template<class PixelType>
   class EUTelSparseData2Impl {
@@ -157,12 +157,12 @@ namespace eutelescope {
     /*! 
      */
     void sortByPosition() const {
-      streamlog_out ( DEBUG1 ) << "Sorting by position starting! " << std::endl;
+      streamlog_out_T ( DEBUG1 ) << "Sorting by position starting! " << std::endl;
       sort( _pixelVec.begin(), _pixelVec.end(), EUTelBaseSparsePixel::IsBefore<PixelType>() );
       _isPositionSorted = true;
       _isSignalSorted   = false;
       _isOriginalOrder  = false;
-      streamlog_out ( DEBUG1 ) << "Sorting by position done! " << std::endl;
+      streamlog_out_T ( DEBUG1 ) << "Sorting by position done! " << std::endl;
     }
 
     //! Sort by signal
