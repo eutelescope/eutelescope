@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.11 2007-09-10 09:47:57 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.12 2007-09-13 12:53:22 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -14,6 +14,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelSparseClusterImpl.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelClusterFilter.h"
@@ -244,7 +245,7 @@ void EUTelClusterFilter::init () {
     _minTotalChargeSwitch = false;
   }
   
-  message<DEBUG> ( log () << "MinTotalChargeSwitch " << _minTotalChargeSwitch );
+  streamlog_out( DEBUG2 ) << "MinTotalChargeSwitch " << _minTotalChargeSwitch << endl;
   
   // N cluster charge
   if ( _minNChargeVec.size() != 0 ) {
@@ -257,7 +258,7 @@ void EUTelClusterFilter::init () {
     _minNChargeSwitch = false;
   }
 
-  message<DEBUG> ( log () << "MinNChargeSwitch " << _minNChargeSwitch );
+  streamlog_out( DEBUG2 ) << "MinNChargeSwitch " << _minNChargeSwitch << endl;
 
   // N cluster SNR
   if ( (_minNSNRVec.size() != 0) && (_minNSNRVec[0] != 0) ) {
@@ -266,7 +267,7 @@ void EUTelClusterFilter::init () {
     _minNSNRSwitch = false;
   }
 
-  message<DEBUG> ( log () << "MinNSNRSwitch " << _minNSNRSwitch );
+  streamlog_out( DEBUG2 ) << "MinNSNRSwitch " << _minNSNRSwitch << endl;
 
   // NxN cluster charge
   if (  ( count_if( _minNxNChargeVec.begin(), _minNxNChargeVec.end(), bind2nd(greater<float>(),0)) != 0  ) &&
@@ -276,7 +277,7 @@ void EUTelClusterFilter::init () {
     _minNxNChargeSwitch = false;
   }
 
-  message<DEBUG> ( log () << "MinNxNChargeSwitch " << _minNxNChargeSwitch );	 
+  streamlog_out( DEBUG2 ) << "MinNxNChargeSwitch " << _minNxNChargeSwitch << endl;
 
   // NxN cluster SNR
   if (  ( count_if( _minNxNSNRVec.begin(), _minNxNSNRVec.end(), bind2nd(greater<float>(),0)) != 0  ) &&
@@ -286,7 +287,7 @@ void EUTelClusterFilter::init () {
     _minNxNSNRSwitch = false;
   }
 
-  message<DEBUG> ( log () << "MinNxNSNRSwitch " << _minNxNSNRSwitch );
+  streamlog_out( DEBUG2 ) << "MinNxNSNRSwitch " << _minNxNSNRSwitch << endl;
 
 
   // Seed charge
@@ -296,7 +297,7 @@ void EUTelClusterFilter::init () {
     _minSeedChargeSwitch = false;
   }
 
-  message<DEBUG> ( log () << "MinSeedChargeSwitch " << _minSeedChargeSwitch );
+  streamlog_out( DEBUG2 ) << "MinSeedChargeSwitch " << _minSeedChargeSwitch << endl;
 
   // Seed SNR
   if ( count_if( _minSeedSNRVec.begin(), _minSeedSNRVec.end(), bind2nd(greater<float >(), 0) ) != 0 ) {
@@ -305,7 +306,7 @@ void EUTelClusterFilter::init () {
     _minSeedSNRSwitch = false;
   }
 
-  message<DEBUG> ( log () << "MinSeedSNRSwitch " << _minSeedChargeSwitch );
+  streamlog_out( DEBUG2 ) << "MinSeedSNRSwitch " << _minSeedChargeSwitch << endl;
 
   // Cluster quality
   if ( count_if(_clusterQualityVec.begin(), _clusterQualityVec.end(), bind2nd(greater_equal<int>(), 0) ) != 0 ) {
@@ -314,7 +315,7 @@ void EUTelClusterFilter::init () {
     _clusterQualitySwitch = false;
   }
 
-  message<DEBUG> ( log () << "ClusterQualitySwitch " << _clusterQualitySwitch );
+  streamlog_out( DEBUG2 ) << "ClusterQualitySwitch " << _clusterQualitySwitch << endl;
 
   // Minimum cluster SNR
   if ( count_if(_minTotalSNRVec.begin(), _minTotalSNRVec.end(), bind2nd(greater<float >(), 0) ) != 0 ) {
@@ -323,7 +324,7 @@ void EUTelClusterFilter::init () {
     _minTotalSNRSwitch = false;
   }
 
-  message<DEBUG> ( log () << "MinTotalSNRSwitch " << _minTotalSNRSwitch );
+  streamlog_out( DEBUG2 ) << "MinTotalSNRSwitch " << _minTotalSNRSwitch << endl;
 
   // Minimum cluster number
   if ( count_if(_minClusterNoVec.begin(), _minClusterNoVec.end(), bind2nd(greater<int>(), 0) ) != 0 ) {
@@ -332,7 +333,7 @@ void EUTelClusterFilter::init () {
     _minClusterNoSwitch = false;
   }
   
-  message<DEBUG> ( log() << "MinClusterNoSwitch " << _minClusterNoSwitch ) ;
+  streamlog_out ( DEBUG2 ) << "MinClusterNoSwitch " << _minClusterNoSwitch << endl;
 
   // Maximum cluster number
   if ( count_if(_maxClusterNoVec.begin(), _maxClusterNoVec.end(), bind2nd(greater<int>(), 0) ) != 0 ) {
@@ -350,7 +351,7 @@ void EUTelClusterFilter::init () {
     _maxClusterNoSwitch = false;
   }
   
-  message<DEBUG> ( log() << "MaxClusterNoSwitch " << _maxClusterNoSwitch ) ;
+  streamlog_out( DEBUG2 )  << "MaxClusterNoSwitch " << _maxClusterNoSwitch << endl;
 
 
   // inside ROI
@@ -364,12 +365,12 @@ void EUTelClusterFilter::init () {
     if ( detectorID >= 0 ) {
       EUTelROI roi( detectorID, xBL, yBL, xTR, yTR);
       _insideROIVec.push_back( roi );
-      message<DEBUG> ( log() << roi );
+      streamlog_out( DEBUG1 )  << roi << endl;
     }
   }
   
   _insideROISwitch = (  _insideROIVec.size() > 0 );
-  message<DEBUG> ( log() << "InsideROISwitch " << _insideROISwitch );
+  streamlog_out( DEBUG2 )  << "InsideROISwitch " << _insideROISwitch << endl;
 
   // outside ROI
   roiIter = _tempOutsideROI.begin();
@@ -382,12 +383,12 @@ void EUTelClusterFilter::init () {
     if ( detectorID >= 0 ) {
       EUTelROI roi( detectorID, xBL, yBL, xTR, yTR);
       _outsideROIVec.push_back( roi );
-      message<DEBUG> ( log() << roi );
+      streamlog_out( DEBUG1 )  << roi << endl;
     }
   }
   
   _outsideROISwitch = (  _outsideROIVec.size() > 0 );
-  message<DEBUG> ( log() << "OutsideROISwitch " << _outsideROISwitch );
+  streamlog_out( DEBUG2 ) << "OutsideROISwitch " << _outsideROISwitch << endl;
  
   // max cluster noise
   if ( count_if(_maxClusterNoiseVec.begin(), _maxClusterNoiseVec.end(), bind2nd(greater_equal<float >(), 0)) != 0 ) {
@@ -395,10 +396,10 @@ void EUTelClusterFilter::init () {
   } else {
     _maxClusterNoiseSwitch = false;
   }
-  message<DEBUG> ( log() << "MaxClusterNoiseSwitch " << _maxClusterNoiseSwitch );
+  streamlog_out( DEBUG2 )  << "MaxClusterNoiseSwitch " << _maxClusterNoiseSwitch << endl;
 
 
-  message<DEBUG> ( log() << "SameNumberofHitSwitch " << _sameNumberOfHitSwitch );
+  streamlog_out( DEBUG2 ) << "SameNumberofHitSwitch " << _sameNumberOfHitSwitch  << endl;
 
   // set to zero the run and event counters
   _iRun = 0;
@@ -433,13 +434,13 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
     
     if ( _minTotalChargeSwitch ) {
       if (  _minTotalChargeVec.size() != (unsigned) _noOfDetectors ) {
-	message<ERROR> (log() << "The threshold vector on the total cluster charge did not match the right size \n"
-			<<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minTotalChargeVec.size() 
-			<<  "\n"
-			<<  "Disabling the selection criterion and continue without");
+	streamlog_out ( ERROR1 ) << "The threshold vector on the total cluster charge did not match the right size \n"
+				 <<  "The number of planes is " << _noOfDetectors 
+				 << " while the thresholds are " << _minTotalChargeVec.size() <<  "\n"
+				 <<  "Disabling the selection criterion and continue without" << endl;
 	_minTotalChargeSwitch = false;
       } else {
-	message<DEBUG> ( "Total cluster charge criterion verified and switched on" );
+	streamlog_out ( DEBUG1 ) << "Total cluster charge criterion verified and switched on" << endl;
 	vector<unsigned int >  rejectedCounter(_noOfDetectors, 0);
 	_rejectionMap.insert( make_pair("MinTotalChargeCut", rejectedCounter));
       }
@@ -447,13 +448,13 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
 
     if ( _minTotalSNRSwitch ) {
       if ( _minTotalSNRVec.size() != ( unsigned ) _noOfDetectors ) {
-	message<ERROR> (log() << "The threshold vector on the total cluster SNR did not match the right size \n"
-			<<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minTotalSNRVec.size() 
-			<<  "\n"
-			<<  "Disabling the selection criterion and continue without");
+	streamlog_out ( ERROR1 ) << "The threshold vector on the total cluster SNR did not match the right size \n"
+				 <<  "The number of planes is " << _noOfDetectors 
+				 << " while the thresholds are " << _minTotalSNRVec.size() <<  "\n"
+				 <<  "Disabling the selection criterion and continue without" << endl;
 	_minTotalSNRSwitch = false;
       } else {
-	message<DEBUG> ( "Total cluster SNR criterion verified and switched on" );
+	streamlog_out ( DEBUG1 ) << "Total cluster SNR criterion verified and switched on" << endl;
 	vector<unsigned int >  rejectedCounter(_noOfDetectors, 0);
 	_rejectionMap.insert( make_pair("MinTotalSNRCut", rejectedCounter));
       }
@@ -462,13 +463,13 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
     if ( _minNChargeSwitch ) {
       unsigned int module = _noOfDetectors + 1;
       if ( _minNChargeVec.size() % module != 0 ) {
-	message<ERROR> (log() << "The threshold vector for the N pixels charge did not match the right size \n "
-			<<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minNChargeVec.size() 
-			<<  "\n"
-			<<  "Disabling the selection criterion and continue without");
+	streamlog_out ( ERROR1 ) << "The threshold vector for the N pixels charge did not match the right size \n "
+				 <<  "The number of planes is " << _noOfDetectors 
+				 << " while the thresholds are " << _minNChargeVec.size() <<  "\n"
+				 <<  "Disabling the selection criterion and continue without" << endl;
 	_minNChargeSwitch = false;
       } else {
-	message<DEBUG> ("N pixel charge criterion verified and switched on");
+	streamlog_out ( DEBUG1 ) <<"N pixel charge criterion verified and switched on" << endl;
 	vector<unsigned int> rejectedCounter(_noOfDetectors, 0);
 	_rejectionMap.insert( make_pair("MinNChargeCut", rejectedCounter));
       }
@@ -477,43 +478,43 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
     if ( _minNSNRSwitch ) {
       unsigned int module = _noOfDetectors + 1;
       if ( _minNSNRVec.size() % module != 0 ) {
-	message<ERROR> (log() << "The threshold vector for the N pixels SNR did not match the right size \n "
-			<<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minNSNRVec.size() 
-			<<  "\n"
-			<<  "Disabling the selection criterion and continue without");
+	streamlog_out ( ERROR1 ) << "The threshold vector for the N pixels SNR did not match the right size \n "
+				 <<  "The number of planes is " << _noOfDetectors 
+				 << " while the thresholds are " << _minNSNRVec.size()  <<  "\n"
+				 <<  "Disabling the selection criterion and continue without" << endl;
 	_minNSNRSwitch =  false;
       } else {
-	message<DEBUG> ("N pixel SNR criterion verified and switched on");
+	streamlog_out ( DEBUG1 ) <<"N pixel SNR criterion verified and switched on" << endl;
 	vector<unsigned int> rejectedCounter(_noOfDetectors, 0);
 	_rejectionMap.insert( make_pair("MinNSNRCut", rejectedCounter));
       }
     }	
-
+    
     if ( _minNxNChargeSwitch ) {
       unsigned int module = _noOfDetectors + 1;
       if ( _minNxNChargeVec.size() % module != 0 ) {
-	message<ERROR> ( log() << "The threshold vector for the N x N pixels charge did not match the right size \n "
-			 <<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minNxNChargeVec.size() 
-			 << "\n"
-			 << "Disabling the selection criterion and continue without");
+	streamlog_out ( ERROR1 ) << "The threshold vector for the N x N pixels charge did not match the right size \n "
+				 <<  "The number of planes is " << _noOfDetectors 
+				 << " while the thresholds are " << _minNxNChargeVec.size()  << "\n"
+				 << "Disabling the selection criterion and continue without" << endl;
 	_minNxNChargeSwitch = false; 
       } else {
-	message<DEBUG> ("NxN pixel charge criterion verified and switched on");
+	streamlog_out ( DEBUG1 ) <<"NxN pixel charge criterion verified and switched on" << endl;
 	vector<unsigned int> rejectedCounter(_noOfDetectors, 0);
 	_rejectionMap.insert( make_pair("MinNxNChargeCut", rejectedCounter));
       }
     }
-
+    
     if ( _minNxNSNRSwitch ) {
       unsigned int module = _noOfDetectors + 1;
       if ( _minNxNSNRVec.size() % module != 0 ) {
-	message<ERROR> ( log() << "The threshold vector for the N x N pixels SNR did not match the right size \n "
-			 <<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minNxNSNRVec.size() 
-			 << "\n"
-			 << "Disabling the selection criterion and continue without");
+	streamlog_out ( ERROR1 ) << "The threshold vector for the N x N pixels SNR did not match the right size \n "
+				 <<  "The number of planes is " << _noOfDetectors 
+				 << " while the thresholds are " << _minNxNSNRVec.size() << "\n"
+				 << "Disabling the selection criterion and continue without" << endl;
 	_minNxNSNRSwitch = false; 
       } else {
-	message<DEBUG> ("NxN pixel SNR criterion verified and switched on");
+	streamlog_out ( DEBUG1 ) <<"NxN pixel SNR criterion verified and switched on" << endl;
 	vector<unsigned int> rejectedCounter(_noOfDetectors, 0);
 	_rejectionMap.insert( make_pair("MinNxNSNRCut", rejectedCounter));
       }
@@ -521,27 +522,28 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
     
     if ( _minSeedChargeSwitch ) {
       if (  _minSeedChargeVec.size() != (unsigned) _noOfDetectors ) {
-	message<ERROR> (log() << "The threshold vector on the seed charge did not match the right size \n"
-			<<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minSeedChargeVec.size() 
-			<<  "\n"
-			<<  "Disabling the selection criterion and continue without");
+	streamlog_out ( ERROR1 ) << "The threshold vector on the seed charge did not match the right size \n"
+				 <<  "The number of planes is " << _noOfDetectors 
+				 << " while the thresholds are " << _minSeedChargeVec.size() 
+				 <<  "\n"
+				 <<  "Disabling the selection criterion and continue without" << endl;
 	_minSeedChargeSwitch = false;
       } else {
-	message<DEBUG> ( "Seed charge criterion verified and switched on" );
+	streamlog_out ( DEBUG1 ) << "Seed charge criterion verified and switched on" << endl;
 	vector<unsigned int >  rejectedCounter(_noOfDetectors, 0);
 	_rejectionMap.insert( make_pair("MinSeedChargeCut", rejectedCounter));
       }
     }
-
+    
     if ( _minSeedSNRSwitch ) {
       if ( _minSeedSNRVec.size() != (unsigned) _noOfDetectors ) {
-	message<ERROR> (log() << "The threshold vector on the seed SNR did not match the right size \n"
-			<<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minSeedSNRVec.size() 
-			<<  "\n"
-			<<  "Disabling the selection criterion and continue without");
+	streamlog_out ( ERROR1 ) << "The threshold vector on the seed SNR did not match the right size \n"
+				 <<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minSeedSNRVec.size() 
+				 <<  "\n"
+				 <<  "Disabling the selection criterion and continue without" << endl;
 	_minSeedSNRSwitch = false;	
       } else {
-	message<DEBUG> ( "Seed SNR criterion verified and switched on" );
+	streamlog_out ( DEBUG1 ) << "Seed SNR criterion verified and switched on" << endl;
 	vector<unsigned int >  rejectedCounter(_noOfDetectors, 0);
 	_rejectionMap.insert( make_pair("MinSeedSNRCut", rejectedCounter));
       }
@@ -549,13 +551,14 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
 
     if ( _clusterQualitySwitch ) {
       if ( _clusterQualityVec.size() != (unsigned) _noOfDetectors ) {
-	message<ERROR> (log() << "The cluster quality vector did not match the right size \n"
-			<< "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minSeedChargeVec.size() 
-			<<  "\n"
-			<<  "Disabling the selection criterion and continue without");
+	streamlog_out ( ERROR1 ) << "The cluster quality vector did not match the right size \n"
+				 << "The number of planes is " << _noOfDetectors 
+				 << " while the thresholds are " << _minSeedChargeVec.size() 
+				 <<  "\n"
+				 <<  "Disabling the selection criterion and continue without" << endl;
 	_clusterQualitySwitch = false;
       } else {
-	message<DEBUG> ( "Cluster quality criterion verified and switched on");
+	streamlog_out ( DEBUG1 ) << "Cluster quality criterion verified and switched on" << endl;
 	vector<unsigned int > rejectedCounter(_noOfDetectors, 0);
 	_rejectionMap.insert( make_pair("ClusterQualityCut", rejectedCounter ));
       }
@@ -563,70 +566,76 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
 
     if ( _minClusterNoSwitch ) {
       if ( _minClusterNoVec.size() != (unsigned) _noOfDetectors ) {
-	message<ERROR> (log() << "The minimum cluster number vector did not match the right size \n"
-			<< "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minClusterNoVec.size() 
-			<<  "\n"
-			<<  "Disabling the selection criterion and continue without");
+	streamlog_out ( ERROR1 ) << "The minimum cluster number vector did not match the right size \n"
+				 << "The number of planes is " << _noOfDetectors << " while the thresholds are " 
+				 << _minClusterNoVec.size() <<  "\n"
+				 <<  "Disabling the selection criterion and continue without" << endl;
 	_minClusterNoSwitch = false;
       } else {
-	message<DEBUG> ( "Minimum cluster number criterion verified and switched on");
+	streamlog_out ( DEBUG1 ) << "Minimum cluster number criterion verified and switched on" << endl;
 	vector<unsigned int > rejectedCounter(_noOfDetectors, 0);
 	_rejectionMap.insert( make_pair("MinClusterNoCut", rejectedCounter ));
       }
     }	
-
+    
     if ( _maxClusterNoSwitch ) {
       if ( _maxClusterNoVec.size() != (unsigned) _noOfDetectors ) {
-	message<ERROR> (log() << "The maximum cluster number vector did not match the right size \n"
-			<< "The number of planes is " << _noOfDetectors << " while the thresholds are " << _maxClusterNoVec.size() 
-			<<  "\n"
-			<<  "Disabling the selection criterion and continue without");
+	streamlog_out ( ERROR1 ) << "The maximum cluster number vector did not match the right size \n"
+				 << "The number of planes is " << _noOfDetectors 
+				 << " while the thresholds are " << _maxClusterNoVec.size() <<  "\n"
+				 <<  "Disabling the selection criterion and continue without" << endl;
 	_maxClusterNoSwitch = false;
       } else {
-	message<DEBUG> ( "Maximum cluster number criterion verified and switched on");
+	streamlog_out ( DEBUG1 ) << "Maximum cluster number criterion verified and switched on" << endl;
 	vector<unsigned int > rejectedCounter(_noOfDetectors, 0);
 	_rejectionMap.insert( make_pair("MaxClusterNoCut", rejectedCounter ));
       }
     }
-
+    
     if ( _maxClusterNoiseSwitch ) {
       if ( _maxClusterNoiseVec.size() != (unsigned) _noOfDetectors ) {
-	message<ERROR> ( log() << "The maximum cluster noise vector did not match the right size \n"
-			 << "The number of planes is " << _noOfDetectors << " while the thresholds are " << _maxClusterNoiseVec.size()
-			 << "\n"
-			 << "Disabling the selection criterion and continue without");
+	streamlog_out ( ERROR1 ) << "The maximum cluster noise vector did not match the right size \n"
+				 << "The number of planes is " << _noOfDetectors 
+				 << " while the thresholds are " << _maxClusterNoiseVec.size()	 << "\n"
+				 << "Disabling the selection criterion and continue without" << endl;
 	_maxClusterNoSwitch = false;
       } else {
-	message<DEBUG> ( "Maximum cluster noise criterion verified and switched on");
+	streamlog_out ( DEBUG1 ) << "Maximum cluster noise criterion verified and switched on" << endl;
 	vector<unsigned int > rejectedCounter(_noOfDetectors, 0);
 	_rejectionMap.insert( make_pair("MaxClusterNoiseCut", rejectedCounter ));
       }
     }
     
     if ( _insideROISwitch ) {
-      message<DEBUG> ( "Inside ROI criterion verified and switched on");
+      streamlog_out ( DEBUG1 ) << "Inside ROI criterion verified and switched on" << endl;
       vector<unsigned int > rejectedCounter( _noOfDetectors, 0 );
       _rejectionMap.insert( make_pair("InsideROICut", rejectedCounter ));
     }
-
+    
     if ( _outsideROISwitch ) {
-      message<DEBUG> ( "Outside ROI criterion verified and switched on");
+      streamlog_out ( DEBUG1 ) << "Outside ROI criterion verified and switched on" << endl;
       vector<unsigned int > rejectedCounter( _noOfDetectors, 0 );
       _rejectionMap.insert( make_pair("OutsideROICut", rejectedCounter ));
     }
-
+    
     if ( _sameNumberOfHitSwitch ) {
-      message<DEBUG> ( "Same number of hits criterion verified and switched on");
+      streamlog_out ( DEBUG1 ) << "Same number of hits criterion verified and switched on" << endl;
       vector<unsigned int > rejectedCounter( _noOfDetectors, 0 );
       _rejectionMap.insert( make_pair("SameNumberOfHitCut", rejectedCounter ));
     }
-
+    
   }
 }
 
 
 void EUTelClusterFilter::processEvent (LCEvent * event) {
-
+  
+  if (_iEvt % 10 == 0) 
+    streamlog_out ( MESSAGE4 )  << "Processing event " 
+				<< setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+				<< setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+				<< " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  
   ++_iEvt;
 
   if ( isFirstEvent() ) _isFirstEvent = false;
@@ -634,15 +643,15 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> ( event );
   if ( evt->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do.");
+    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return ;
+  } else if ( evt->getEventType() == kUNKNOWN ) {
+    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() 
+			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
   
-  if (_iEvt % 10 == 0) 
-    message<MESSAGE> ( log() << "Filtering clusters on event " << _iEvt ) ;
-
   try {
-
+    
     LCCollectionVec * pulseCollectionVec    =   dynamic_cast <LCCollectionVec *> (evt->getCollection(_inputPulseCollectionName));
     LCCollectionVec * filteredCollectionVec =   new LCCollectionVec(LCIO::TRACKERPULSE);
     CellIDEncoder<TrackerPulseImpl> outputEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, filteredCollectionVec);
@@ -653,10 +662,11 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
     
     // CLUSTER BASED CUTS
     for ( int iPulse = 0; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ ) {
-      message<DEBUG> ( log() << "Filtering cluster " << iPulse + 1  << " / " << pulseCollectionVec->getNumberOfElements() ) ;
+      streamlog_out ( DEBUG1 ) << "Filtering cluster " << iPulse + 1  << " / " << pulseCollectionVec->getNumberOfElements() << endl;
       TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl* > (pulseCollectionVec->getElementAt(iPulse));
-      ClusterType type = static_cast<ClusterType> (static_cast<int> ( inputDecoder(pulse)["type"] ));
+      ClusterType type         = static_cast<ClusterType> (static_cast<int> ( inputDecoder(pulse)["type"] ));
       EUTelVirtualCluster * cluster;
+      SparsePixelType       pixelType;
       
       if ( type == kEUTelFFClusterImpl )  {
 	cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
@@ -687,7 +697,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
 		if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <= noiseMatrixDecoder.getMaxX() ) &&
 		     ( yPixel >= noiseMatrixDecoder.getMinY() )  &&  ( yPixel <= noiseMatrixDecoder.getMaxY() ) ) {
 		  int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
-		  
+				  
 		  // the corresponding position in the status matrix has to be HITPIXEL
 		  // in the EUTelClusteringProcessor, we verify also that
 		  // the pixel isHit, but this cannot be done in this
@@ -702,34 +712,79 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
 		  } else {
 		    noiseValues.push_back( 0. );
 		  }
+
 		} else {
 		  noiseValues.push_back( 0. );
 		}
 	      }
 	    }
+	    cluster->setNoiseValues( noiseValues );
+	  } 
+	  catch ( lcio::Exception& e )   { 
+	    streamlog_out ( ERROR1 ) << e.what() << endl << "Continuing w/o noise based cuts" << endl;
+	    _noiseRelatedCuts = false;
+	  } 
+	}
+
+      } else if ( type == kEUTelSparseClusterImpl ) {
+
+	// knowing that is a sparse cluster is not enough we need also
+	// to know also the sparse pixel type. This information is
+	// available in the "original_zsdata" collection. Let's get it! 
+	LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+	TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+	CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+	pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+	if ( pixelType == kEUTelSimpleSparsePixel ) {
+	  cluster = new EUTelSparseClusterImpl<EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl* > (pulse->getTrackerData() ));
+	  
+	  EUTelSparseClusterImpl<EUTelSimpleSparsePixel > * recasted = 
+	    dynamic_cast<EUTelSparseClusterImpl<EUTelSimpleSparsePixel > *> ( cluster );
+
+	  if ( _noiseRelatedCuts ) {
+	    // the EUTelSparseClusterImpl<EUTelSimpleSparsePixel>
+	    // doesn't contain any intrinsic noise information. So we
+	    // need to get them from the input noise collection.
+	    
 	    try {
-	      cluster->setNoiseValues( noiseValues );
-	    } catch ( IncompatibleDataSetException& e ) {
-	      message<ERROR> ( log() << e.what() << "\n" << "Continuing without noise based cuts" );
+	      LCCollectionVec * noiseCollectionVec = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _noiseCollectionName ));
+	      CellIDDecoder<TrackerDataImpl > noiseDecoder( noiseCollectionVec ) ;
+	      
+	      int detectorID = cluster->getDetectorID();
+	      TrackerDataImpl    * noiseMatrix = dynamic_cast<TrackerDataImpl *> ( noiseCollectionVec->getElementAt( detectorID ));
+	      EUTelMatrixDecoder   noiseMatrixDecoder( noiseDecoder, noiseMatrix ) ;
+	      
+	      auto_ptr<EUTelSimpleSparsePixel>  sparsePixel(new EUTelSimpleSparsePixel);
+	      vector<float > noiseValues;
+	      for ( unsigned int iPixel = 0 ; iPixel < recasted->size() ; iPixel++ )  {
+		recasted->getSparsePixelAt( iPixel, sparsePixel.get() ) ;
+		int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
+		noiseValues.push_back( noiseMatrix->getChargeValues()[ index ] );
+	      }
+	      cluster->setNoiseValues( noiseValues ) ;
+	      
+	      
+	    } catch ( lcio::Exception&  e )  {
+	      streamlog_out ( ERROR1 )  << e.what() << "\n" << "Continuing without noise based cuts" << endl;
 	      _noiseRelatedCuts = false;
 	    }
-	  } catch ( DataNotAvailableException& e ) {
-	    message<ERROR> ( log() << e.what() << "\n" << "Continuing without noise based cuts" );
-	    _noiseRelatedCuts = false;
+	    streamlog_out ( DEBUG1 ) << "Noise related cuts may be used" << endl;
 	  }
-	  message<DEBUG> ( "Noise related cuts may be used" );
+	 
+	} else {
+	  streamlog_out ( ERROR4 ) << "Unknown pixel type. Sorry for quitting" << endl;
+	  throw UnknownDataTypeException("Cluster type unknown");
 	}
-	      
       } else {
-	message<ERROR> ("Unknown cluster type. Sorry for quitting");
+	streamlog_out ( ERROR4 ) << "Unknown cluster type. Sorry for quitting" << endl;
 	throw UnknownDataTypeException("Cluster type unknown");
       }
-    
+      
       // increment the event counter 
       _totalClusterCounter[cluster->getDetectorID()]++;
-    
+      
       bool isAccepted = true;
-   
+      
       isAccepted &= isAboveMinTotalCharge(cluster);
       isAccepted &= isAboveMinTotalSNR(cluster);
       isAccepted &= isAboveNMinCharge(cluster);
@@ -764,9 +819,9 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
 
     if ( acceptedClusterVec.empty() ) {
       delete filteredCollectionVec;
-      message<DEBUG> ( "No cluster passed the selection" );
+      streamlog_out ( DEBUG1 ) << "No clusters passed the selection" << endl;
       if ( _skipEmptyEvent ) { 
-	message<WARNING0> ("Skipping event because no clusters left..." );
+	streamlog_out ( WARNING0 ) << "Skipping event because no clusters passed the selection" << endl;
 	throw SkipEventException(this);
       }  else return;
     } else {
@@ -787,7 +842,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
       evt->addCollection(filteredCollectionVec, _outputPulseCollectionName);
     }
   } catch (DataNotAvailableException& e ) {
-    message<WARNING> ( log() << "Input collection not found in the current event. Skipping..." );
+    streamlog_out ( WARNING2 )  << "Input collection not found in the current event. Skipping..." << endl;
     return;
   }
 }  
@@ -802,9 +857,9 @@ bool EUTelClusterFilter::areClusterEnough(std::vector<int > clusterNoVec) const 
   for ( int iDetector = 0; iDetector < _noOfDetectors; iDetector++ ) {
 
     if ( clusterNoVec[iDetector] < _minClusterNoVec[iDetector] ) {
-      message<DEBUG> ( log() << "Rejected event because on detector " << iDetector 
-		       << " there are " << clusterNoVec[iDetector] << "\nwhile " 
-		       << "at least " << _minClusterNoVec[iDetector] << " were requested" );
+      streamlog_out ( DEBUG2 )  << "Rejected event because on detector " << iDetector 
+				<< " there are " << clusterNoVec[iDetector] << "\nwhile " 
+				<< "at least " << _minClusterNoVec[iDetector] << " were requested" << endl;
       _rejectionMap["MinClusterNoCut"][iDetector]++;
       areEnough = false;
     }
@@ -823,9 +878,9 @@ bool EUTelClusterFilter::areClusterTooMany(std::vector<int > clusterNoVec) const
   for ( int iDetector = 0; iDetector < _noOfDetectors; iDetector++ ) {
     
     if ( clusterNoVec[iDetector] > _maxClusterNoVec[iDetector] ) {
-      message<DEBUG> ( log() << "Rejected event because on detector " << iDetector 
-		       << " there are " << clusterNoVec[iDetector] << "\nwhile " 
-		       << "only " << _maxClusterNoVec[iDetector] << " were allowed" );
+      streamlog_out ( DEBUG2 )  << "Rejected event because on detector " << iDetector 
+				<< " there are " << clusterNoVec[iDetector] << "\nwhile " 
+				<< "only " << _maxClusterNoVec[iDetector] << " were allowed" << endl;
       _rejectionMap["MaxClusterNoCut"][iDetector]++;
       areTooMany = true;
     } 
@@ -843,7 +898,7 @@ bool EUTelClusterFilter::hasSameNumberOfHit(std::vector<int > clusterNoVec) cons
   vector<int >::iterator iter = clusterNoVec.begin() + 1;
   while ( iter != clusterNoVec.end() ) {
     if ( *( iter - 1) !=  (*iter ) ) {
-      message<DEBUG> ( log() << "Rejected event because the number of hit is different from one sensor to the other"  );
+      streamlog_out ( DEBUG2 )  << "Rejected event because the number of hit is different from one sensor to the other"  << endl;
       hasSameNumber = false;
       break;
     }
@@ -869,15 +924,15 @@ bool EUTelClusterFilter::isAboveMinTotalCharge(EUTelVirtualCluster * cluster) co
   if ( !_minTotalChargeSwitch ) {
     return true;
   }
-  message<DEBUG> ( "Filtering against the total charge " ) ;
+  streamlog_out ( DEBUG1 ) << "Filtering against the total charge " << endl;
 
 
   int detectorID = cluster->getDetectorID();
   
   if ( cluster->getTotalCharge() > _minTotalChargeVec[detectorID] ) return true;
   else {
-    message<DEBUG> ( log() << "Rejected cluster because its charge is " << cluster->getTotalCharge() 
-		     << " and the threshold is " << _minTotalChargeVec[detectorID] ) ;
+    streamlog_out ( DEBUG2 )  << "Rejected cluster because its charge is " << cluster->getTotalCharge() 
+			      << " and the threshold is " << _minTotalChargeVec[detectorID] << endl;
     _rejectionMap["MinTotalChargeCut"][detectorID]++;
     return false;
   }
@@ -890,11 +945,11 @@ bool EUTelClusterFilter::isAboveMinTotalSNR(EUTelVirtualCluster * cluster) const
   
   int detectorID = cluster->getDetectorID();
 
-  message<DEBUG> ( "Filtering against the minimum total SNR " ) ;
+  streamlog_out ( DEBUG1 ) << "Filtering against the minimum total SNR " << endl;
   if  ( cluster->getClusterSNR() > _minTotalSNRVec[detectorID] ) return true;
   else {
-    message<DEBUG> ( log() << "Rejected cluster because its SNR is " << cluster->getClusterSNR() 
-		     << " and the threshold is " << _minTotalSNRVec[detectorID] ) ;
+    streamlog_out ( DEBUG2 )  << "Rejected cluster because its SNR is " << cluster->getClusterSNR() 
+			      << " and the threshold is " << _minTotalSNRVec[detectorID] << endl;
     _rejectionMap["MinTotalSNRCut"][detectorID]++;
     return false;
   }
@@ -904,7 +959,7 @@ bool EUTelClusterFilter::isAboveNMinCharge(EUTelVirtualCluster * cluster) const 
   
   if ( !_minNChargeSwitch ) return true;
   
-  message<DEBUG> ( "Filtering against the N Pixel charge " ) ;
+  streamlog_out ( DEBUG1 ) << "Filtering against the N Pixel charge " << endl;
 
   int detectorID = cluster->getDetectorID();
 
@@ -916,8 +971,8 @@ bool EUTelClusterFilter::isAboveNMinCharge(EUTelVirtualCluster * cluster) const 
     if ( charge > threshold ) {
       iter += _noOfDetectors + 1;
     } else {
-      message<DEBUG> ( log() << "Rejected cluster because its charge over " << (*iter) << " is " << charge 
-		       << " and the threshold is " << threshold );
+      streamlog_out ( DEBUG2 ) << "Rejected cluster because its charge over " << (*iter) << " is " << charge 
+			       << " and the threshold is " << threshold << endl;
       _rejectionMap["MinNChargeCut"][detectorID]++;
       return false;
     }
@@ -931,7 +986,7 @@ bool EUTelClusterFilter::isAboveNMinSNR(EUTelVirtualCluster * cluster) const {
   if ( !_noiseRelatedCuts ) return true;
   if ( !_minNSNRSwitch    ) return true;
   
-  message<DEBUG> ( "Filtering against the N pixel SNR " );
+  streamlog_out ( DEBUG1 ) << "Filtering against the N pixel SNR " << endl;
   
   int detectorID = cluster->getDetectorID();
   
@@ -943,8 +998,8 @@ bool EUTelClusterFilter::isAboveNMinSNR(EUTelVirtualCluster * cluster) const {
     if ( SNR > threshold ) {
       iter += _noOfDetectors + 1;
     } else {
-      message<DEBUG> ( log() << "Rejected cluster because its SNR over " << (*iter) << " is " << SNR 
-		       << " and the threshold is " << threshold );
+      streamlog_out ( DEBUG2 )  << "Rejected cluster because its SNR over " << (*iter) << " is " << SNR 
+				<< " and the threshold is " << threshold  << endl;
       _rejectionMap["MinNSNRCut"][detectorID]++;
       return false;
     }
@@ -959,7 +1014,7 @@ bool EUTelClusterFilter::isAboveNxNMinCharge(EUTelVirtualCluster * cluster) cons
   
   if ( !_minNxNChargeSwitch ) return true;
   
-  message<DEBUG> ( "Filtering against the N x N pixel charge" );
+  streamlog_out ( DEBUG1 ) << "Filtering against the N x N pixel charge" << endl;
   
   int detectorID = cluster->getDetectorID();
   vector<float >::const_iterator iter = _minNxNChargeVec.begin();
@@ -970,8 +1025,8 @@ bool EUTelClusterFilter::isAboveNxNMinCharge(EUTelVirtualCluster * cluster) cons
     if ( ( threshold <= 0) || (charge > threshold) ) {
       iter += _noOfDetectors + 1;
     } else {
-      message<DEBUG> ( log() << "Rejected cluster because its charge within a " << (*iter) << " x " << (*iter) 
-		       << " subcluster is " << charge << " and the threshold is " << threshold ) ;
+      streamlog_out ( DEBUG2 ) << "Rejected cluster because its charge within a " << (*iter) << " x " << (*iter) 
+			       << " subcluster is " << charge << " and the threshold is " << threshold << endl;
       _rejectionMap["MinNxNChargeCut"][detectorID]++;
       return false;
     }
@@ -985,7 +1040,7 @@ bool EUTelClusterFilter::isAboveNxNMinSNR(EUTelVirtualCluster * cluster) const {
   if ( !_noiseRelatedCuts  ) return true;
   if ( !_minNxNSNRSwitch   ) return true;
 
-  message<DEBUG> ( "Filtering against the N x N pixel charge" );
+  streamlog_out ( DEBUG1 ) << "Filtering against the N x N pixel charge" << endl;
   
   int detectorID = cluster->getDetectorID();
   vector<float >::const_iterator iter = _minNxNSNRVec.begin();
@@ -996,8 +1051,8 @@ bool EUTelClusterFilter::isAboveNxNMinSNR(EUTelVirtualCluster * cluster) const {
     if ( ( threshold <= 0) || (snr > threshold) ) {
       iter += _noOfDetectors + 1;
     } else {
-      message<DEBUG> ( log() << "Rejected cluster because its SNR within a " << (*iter) << " x " << (*iter) 
-		       << " subcluster is " << snr << " and the threshold is " << threshold ) ;
+      streamlog_out ( DEBUG2 )  << "Rejected cluster because its SNR within a " << (*iter) << " x " << (*iter) 
+				<< " subcluster is " << snr << " and the threshold is " << threshold << endl;
       _rejectionMap["MinNxNSNRCut"][detectorID]++;
       return false;
     }
@@ -1010,14 +1065,14 @@ bool EUTelClusterFilter::isAboveMinSeedCharge(EUTelVirtualCluster * cluster) con
   
   if ( !_minSeedChargeSwitch ) return true;
 
-  message<DEBUG> ( "Filtering against the seed charge " ) ;
+  streamlog_out ( DEBUG1 ) << "Filtering against the seed charge " << endl;
   
   int detectorID = cluster->getDetectorID();
   
   if ( cluster->getSeedCharge() > _minSeedChargeVec[detectorID] ) return true;
   else {
-    message<DEBUG> (  log() << "Rejected cluster because its seed charge is " << cluster->getSeedCharge()
-		      << " and the threshold is " <<  _minSeedChargeVec[detectorID] );
+    streamlog_out ( DEBUG2 )  << "Rejected cluster because its seed charge is " << cluster->getSeedCharge()
+			      << " and the threshold is " <<  _minSeedChargeVec[detectorID] << endl;
     _rejectionMap["MinSeedChargeCut"][detectorID]++;
     return false;
   }
@@ -1028,13 +1083,13 @@ bool EUTelClusterFilter::isAboveMinSeedSNR(EUTelVirtualCluster * cluster) const 
   if ( !_noiseRelatedCuts  ) return true;
   if ( !_minSeedSNRSwitch  ) return true;
 
-  message<DEBUG> ( "Filtering against the seed SNR " ); 
+  streamlog_out ( DEBUG1 ) << "Filtering against the seed SNR " << endl;
 
   int detectorID = cluster->getDetectorID();
   if ( cluster->getSeedSNR() > _minSeedSNRVec[detectorID] ) return true;
   else {
-    message<DEBUG> ( log() << "Rejected cluster because its seed charge is " << cluster->getSeedSNR()
-		     << " and the threshold is " <<  _minSeedSNRVec[detectorID] );
+    streamlog_out ( DEBUG2 ) << "Rejected cluster because its seed charge is " << cluster->getSeedSNR()
+			     << " and the threshold is " <<  _minSeedSNRVec[detectorID] << endl;
     _rejectionMap["MinSeedSNRCut"][detectorID]++;
     return false;
   }
@@ -1055,8 +1110,8 @@ bool EUTelClusterFilter::hasQuality(EUTelVirtualCluster * cluster) const {
   
   if ( actual == needed ) return true;
   else {
-    message<DEBUG> ( log() << "Rejected cluster because its quality " << static_cast<int> (actual)
-		     << " is not " << _clusterQualityVec[detectorID] );
+    streamlog_out ( DEBUG2 ) <<  "Rejected cluster because its quality " << static_cast<int> (actual)
+			     << " is not " << _clusterQualityVec[detectorID] << endl;
     _rejectionMap["ClusterQualityCut"][detectorID]++;
     return false;
   }
@@ -1067,13 +1122,13 @@ bool EUTelClusterFilter::isBelowMaxClusterNoise(EUTelVirtualCluster * cluster) c
   if ( !_noiseRelatedCuts       ) return true;
   if ( !_maxClusterNoiseSwitch  ) return true;
 
-  message<DEBUG> ( "Filtering against the maximum cluster noise"  ) ;
+  streamlog_out ( DEBUG1 ) << "Filtering against the maximum cluster noise"  << endl;
   int detectorID = cluster->getDetectorID();
   if (  ( cluster->getClusterNoise() < _maxClusterNoiseVec[detectorID] ) ||
 	( _maxClusterNoiseVec[detectorID] < 0 ) ) return true;
   else {
-    message<DEBUG> ( log() << "Rejected cluster because its noise is " << cluster->getClusterNoise()
-		     << " and the threshold is " <<  _maxClusterNoiseVec[detectorID] );
+    streamlog_out ( DEBUG2 )  << "Rejected cluster because its noise is " << cluster->getClusterNoise()
+			      << " and the threshold is " <<  _maxClusterNoiseVec[detectorID] << endl;
     _rejectionMap["MaxClusterNoiseCut"][detectorID]++;
     return false;
   }
@@ -1140,7 +1195,7 @@ void EUTelClusterFilter::check (LCEvent * evt) {
 
 
 void EUTelClusterFilter::end() {
-  message<MESSAGE> ( log() << printSummary() );
+  streamlog_out ( MESSAGE4 )  << printSummary() << endl;
   
 }
 
