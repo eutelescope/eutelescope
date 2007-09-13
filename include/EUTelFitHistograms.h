@@ -219,7 +219,18 @@ namespace eutelescope {
 
     std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
 
-    //! log(Chi2) histogram name
+    static std::string _MeasuredXHistoName;
+    static std::string _MeasuredYHistoName;
+    static std::string _MeasuredXYHistoName;
+
+    static std::string _FittedXHistoName;
+    static std::string _FittedYHistoName;
+    static std::string _FittedXYHistoName;
+
+    static std::string _ResidualXHistoName;
+    static std::string _ResidualYHistoName;
+    static std::string _ResidualXYHistoName;
+
     static std::string _beamShiftXHistoName;
     static std::string _beamShiftYHistoName;
     static std::string _beamRotXHistoName;

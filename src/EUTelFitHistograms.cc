@@ -25,6 +25,7 @@
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
+#include <AIDA/IHistogram2D.h>
 #include <AIDA/IProfile1D.h>
 #include <AIDA/ITree.h>
 #endif
@@ -64,6 +65,18 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #ifdef MARLIN_USE_AIDA
+std::string EUTelFitHistograms::_MeasuredXHistoName  = "measuredX";
+std::string EUTelFitHistograms::_MeasuredYHistoName  = "measuredY";
+std::string EUTelFitHistograms::_MeasuredXYHistoName = "measuredXY";
+
+std::string EUTelFitHistograms::_FittedXHistoName  = "fittedX";
+std::string EUTelFitHistograms::_FittedYHistoName  = "fittedY";
+std::string EUTelFitHistograms::_FittedXYHistoName = "fittedXY";
+
+std::string EUTelFitHistograms::_ResidualXHistoName = "residualX";
+std::string EUTelFitHistograms::_ResidualYHistoName = "residualY";
+std::string EUTelFitHistograms::_ResidualXYHistoName = "residualXY";
+
 std::string EUTelFitHistograms::_beamShiftXHistoName = "beamShiftX";
 std::string EUTelFitHistograms::_beamShiftYHistoName = "beamShiftY";
 std::string EUTelFitHistograms::_beamRotXHistoName   = "beamRotX";
@@ -440,6 +453,89 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
     }
 
+  // Histograms of measured positions
+
+   for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isMeasured[ipl])
+ 	{
+        string tempHistoName;
+
+        stringstream nam;
+        nam << _MeasuredXHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl]);
+
+        stringstream nam2;
+        nam2 << _MeasuredYHistoName << "_" << ipl ;
+        tempHistoName=nam2.str();
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredY[ipl]);
+
+        stringstream nam3;
+        nam3 << _MeasuredXYHistoName << "_" << ipl ;
+        tempHistoName=nam3.str();
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl],_measuredY[ipl]);
+
+	}
+      }
+
+
+
+  // Histograms of fitted positions
+
+   for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isFitted[ipl])
+ 	{
+        string tempHistoName;
+
+        stringstream nam;
+        nam << _FittedXHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedX[ipl]);
+
+        stringstream nam2;
+        nam2 << _FittedYHistoName << "_" << ipl ;
+        tempHistoName=nam2.str();
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedY[ipl]);
+
+        stringstream nam3;
+        nam3 << _FittedXYHistoName << "_" << ipl ;
+        tempHistoName=nam3.str();
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedX[ipl],_fittedY[ipl]);
+
+	}
+      }
+
+
+
+  // Histograms of residuals
+
+   for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isMeasured[ipl] && _isFitted[ipl])
+ 	{
+        string tempHistoName;
+
+        stringstream nam;
+        nam << _ResidualXHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedX[ipl]-_measuredX[ipl]);
+
+        stringstream nam2;
+        nam2 << _ResidualYHistoName << "_" << ipl ;
+        tempHistoName=nam2.str();
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedY[ipl]-_measuredY[ipl]);
+
+        stringstream nam3;
+        nam3 << _ResidualXYHistoName << "_" << ipl ;
+        tempHistoName=nam3.str();
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedX[ipl]-_measuredX[ipl],_fittedY[ipl]-_measuredY[ipl]);
+
+	}
+      }
+
+
 
   // beam alignment
 
@@ -542,6 +638,447 @@ void EUTelFitHistograms::bookHistos()
 
 
 
+ // Measured position in X 
+
+    int    measXNBin  = 400;
+    double measXMin   = -5.;
+    double measXMax   = 5.;
+    string measXTitle = "Measured particle position in X";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_MeasuredXHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 measXNBin = histoInfo->_xBin;
+	 measXMin  = histoInfo->_xMin;
+	 measXMax  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) measXTitle = histoInfo->_title;
+         }
+      }
+
+
+    string tempHistoTitle;
+    string tempHistoName;
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl])
+ 	{
+        stringstream nam,tit;
+
+        nam << _MeasuredXHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << measXTitle << " for plane " << ipl ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),measXNBin,measXMin,measXMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+
+ // Measured position in Y 
+
+    int    measYNBin  = 400;
+    double measYMin   = -5.;
+    double measYMax   = 5.;
+    string measYTitle = "Measured particle position in Y";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_MeasuredYHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 measYNBin = histoInfo->_xBin;
+	 measYMin  = histoInfo->_xMin;
+	 measYMax  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) measYTitle = histoInfo->_title;
+         }
+      }
+
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl])
+ 	{
+        stringstream nam,tit;
+
+        nam << _MeasuredYHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << measYTitle << " for plane " << ipl ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),measYNBin,measYMin,measYMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+
+
+ // Measured position in X-Y 
+
+    measXNBin  = 100;
+    measXMin   = -5.;
+    measXMax   = 5.;
+    measYNBin  = 100;
+    measYMin   = -5.;
+    measYMax   = 5.;
+    string measXYTitle = "Measured particle position in XY";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_MeasuredXYHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 measXNBin = histoInfo->_xBin;
+	 measXMin  = histoInfo->_xMin;
+	 measXMax  = histoInfo->_xMax;
+	 measYNBin = histoInfo->_yBin;
+	 measYMin  = histoInfo->_yMin;
+	 measYMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) measXYTitle = histoInfo->_title;
+         }
+      }
+
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl])
+ 	{
+        stringstream nam,tit;
+
+        nam << _MeasuredXYHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << measXYTitle << " for plane " << ipl ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),measXNBin,measXMin,measXMax,measYNBin,measYMin,measYMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+
+
+
+
+ // Fitted position in X 
+
+    int    fitXNBin  = 400;
+    double fitXMin   = -5.;
+    double fitXMax   = 5.;
+    string fitXTitle = "Fitted particle position in X";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_FittedXHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 fitXNBin = histoInfo->_xBin;
+	 fitXMin  = histoInfo->_xMin;
+	 fitXMax  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) fitXTitle = histoInfo->_title;
+         }
+      }
+
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl])
+ 	{
+        stringstream nam,tit;
+
+        nam << _FittedXHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << fitXTitle << " for plane " << ipl ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),fitXNBin,fitXMin,fitXMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+
+ // Fitted position in Y 
+
+    int    fitYNBin  = 400;
+    double fitYMin   = -5.;
+    double fitYMax   = 5.;
+    string fitYTitle = "Fitted particle position in Y";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_FittedYHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 fitYNBin = histoInfo->_xBin;
+	 fitYMin  = histoInfo->_xMin;
+	 fitYMax  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) fitYTitle = histoInfo->_title;
+         }
+      }
+
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl])
+ 	{
+        stringstream nam,tit;
+
+        nam << _FittedYHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << fitYTitle << " for plane " << ipl ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),fitYNBin,fitYMin,fitYMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+
+
+ // Fitted position in X-Y 
+
+    fitXNBin  = 100;
+    fitXMin   = -5.;
+    fitXMax   = 5.;
+    fitYNBin  = 100;
+    fitYMin   = -5.;
+    fitYMax   = 5.;
+    string fitXYTitle = "Fitted particle position in XY";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_FittedXYHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 fitXNBin = histoInfo->_xBin;
+	 fitXMin  = histoInfo->_xMin;
+	 fitXMax  = histoInfo->_xMax;
+	 fitYNBin = histoInfo->_yBin;
+	 fitYMin  = histoInfo->_yMin;
+	 fitYMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) fitXYTitle = histoInfo->_title;
+         }
+      }
+
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl])
+ 	{
+        stringstream nam,tit;
+
+        nam << _FittedXYHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << fitXYTitle << " for plane " << ipl ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),fitXNBin,fitXMin,fitXMax,fitYNBin,fitYMin,fitYMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+
+
+
+
+ // Residual position in X 
+
+    int    residXNBin  = 400;
+    double residXMin   = -0.1;
+    double residXMax   = 0.1;
+    string residXTitle = "Residual in X";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_ResidualXHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 residXNBin = histoInfo->_xBin;
+	 residXMin  = histoInfo->_xMin;
+	 residXMax  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) residXTitle = histoInfo->_title;
+         }
+      }
+
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl])
+ 	{
+        stringstream nam,tit;
+
+        nam << _ResidualXHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << residXTitle << " for plane " << ipl ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),residXNBin,residXMin,residXMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+
+ // Residual position in Y 
+
+    int    residYNBin  = 400;
+    double residYMin   = -0.1;
+    double residYMax   = 0.1;
+    string residYTitle = "Residual in Y";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_ResidualYHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 residYNBin = histoInfo->_xBin;
+	 residYMin  = histoInfo->_xMin;
+	 residYMax  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) residYTitle = histoInfo->_title;
+         }
+      }
+
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl])
+ 	{
+        stringstream nam,tit;
+
+        nam << _ResidualYHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << residYTitle << " for plane " << ipl ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),residYNBin,residYMin,residYMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+
+
+ // Residual position in X-Y 
+
+    residXNBin  = 100;
+    residXMin   = -0.1;
+    residXMax   = 0.1;
+    residYNBin  = 100;
+    residYMin   = -0.1;
+    residYMax   = 0.1;
+    string residXYTitle = "Residual in XY";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_ResidualXYHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 residXNBin = histoInfo->_xBin;
+	 residXMin  = histoInfo->_xMin;
+	 residXMax  = histoInfo->_xMax;
+	 residYNBin = histoInfo->_yBin;
+	 residYMin  = histoInfo->_yMin;
+	 residYMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) residXYTitle = histoInfo->_title;
+         }
+      }
+
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl])
+ 	{
+        stringstream nam,tit;
+
+        nam << _ResidualXYHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << residXYTitle << " for plane " << ipl ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),residXNBin,residXMin,residXMax,residYNBin,residYMin,residYMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+
+
+
+
+
+
+
  // Beam alignment histograms: shift in X
 
     int    shiftXNBin  = 400;
@@ -563,9 +1100,6 @@ void EUTelFitHistograms::bookHistos()
          }
       }
 
-
-    string tempHistoTitle;
-    string tempHistoName;
 
     for(int ipl=0;ipl<_nTelPlanes; ipl++)
       {
