@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.12 2007-09-13 12:53:22 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.13 2007-09-13 17:29:34 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -646,7 +646,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
     streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return ;
   } else if ( evt->getEventType() == kUNKNOWN ) {
-    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() 
+    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
 			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
   
