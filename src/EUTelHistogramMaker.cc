@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.16 2007-08-30 08:52:51 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.17 2007-09-13 17:30:24 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -15,11 +15,13 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
-#include "EUTelHistogramMaker.h"
+#include "EUTelSparseClusterImpl.h"
+#include "EUTelSimpleSparsePixel.h"
 #include "EUTELESCOPE.h"
 #include "EUTelExceptions.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelMatrixDecoder.h"
+#include "EUTelHistogramMaker.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -147,21 +149,25 @@ void EUTelHistogramMaker::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 
+#ifdef MARLIN_USE_AIDA
+
+  if (_iEvt % 10 == 0) 
+    streamlog_out( MESSAGE4 ) << "Processing event " 
+			      << setw(6) << setiosflags(ios::right) << evt->getEventNumber() << " in run "
+			      << setw(6) << setiosflags(ios::right) << setfill('0')  << evt->getRunNumber() << setfill(' ')
+			      << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  ++_iEvt;
+
   EUTelEventImpl * eutelEvent = static_cast<EUTelEventImpl*> (evt);
   EventType type              = eutelEvent->getEventType();
   
   if ( type == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do.");
+    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return ;
   } else if ( type == kUNKNOWN ) {
-    message<WARNING> ( log() << "Event number " << evt->getEventNumber() 
-		       << " is of unknown type. Continue considering it as a normal Data Event."  );
+    streamlog_out ( WARNING2 ) <<  "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
- 
-#ifdef MARLIN_USE_AIDA
-
-  if ( (_iEvt % 10) == 0 ) 
-    message<MESSAGE> ( log() << "Filling histogram on event " << _iEvt );
 
   LCCollectionVec * noiseCollectionVec = 0x0, * statusCollectionVec = 0x0;
   
@@ -169,19 +175,17 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
     try {
       noiseCollectionVec  = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _noiseCollectionName ) );
     } catch (lcio::DataNotAvailableException& e) {
-      message<ERROR> ( log() << e.what() 
-		       << "Switching off the noise histogram filling and continuing" );
+      streamlog_out ( ERROR1 ) <<  e.what() << endl << "Switching off the noise histogram filling and continuing" << endl;
       _noiseHistoSwitch &= false;    
     }
     try {
       statusCollectionVec = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _statusCollectionName ) );
     } catch (lcio::DataNotAvailableException& e) {
-      message<ERROR> ( log() << e.what() 
-			 << "Switching off the noise histogram filling and continuing" );    
+      streamlog_out ( ERROR1 ) << e.what() << endl  << "Switching off the noise histogram filling and continuing" << endl;
       _noiseHistoSwitch &= false;
     }
   }
-    
+  
   if ( isFirstEvent() ) {
     bookHistos();
     _isFirstEvent = false;
@@ -199,14 +203,34 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
     for ( int iPulse = 0; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ ) {
       TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl*> ( pulseCollectionVec->getElementAt(iPulse) );
       ClusterType        type  = static_cast<ClusterType> ( static_cast<int> ( cellDecoder(pulse)["type"] ));
-      
+      SparsePixelType    pixelType = static_cast<SparsePixelType> (0);
+
       EUTelVirtualCluster * cluster;
       
-      if ( type == kEUTelFFClusterImpl ) 
+      if ( type == kEUTelFFClusterImpl ) {
+
 	cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
-      else {
+
+      } else if ( type == kEUTelSparseClusterImpl ) {
+
+	LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+	TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+	CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+	pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+
+	if ( pixelType == kEUTelSimpleSparsePixel ) {
+	  cluster = new EUTelSparseClusterImpl<EUTelSimpleSparsePixel > 
+	    ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData() ) );
+	} else {
+	  streamlog_out ( ERROR4 ) << "Unknown pixel type. Sorry for quitting." << endl;
+	  throw UnknownDataTypeException("Pixel type unknown");
+	}
+
+      }  else {
+
 	message<ERROR> ( "Unknown cluster type. Sorry for quitting" );
 	throw UnknownDataTypeException("Cluster type unknown");
+
       }
       
       int detectorID = cluster->getDetectorID();
@@ -237,8 +261,20 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 	  ss << _clusterSignalHistoName << (*iter) << "-d" << detectorID;
 	  tempHistoName = ss.str();
 	}
+	float temp = cluster->getClusterCharge(*iter);
+	if ( ( detectorID == 1  ) &&
+	     ( (*iter)    == 9  ) &&
+	     ( temp < 100 ) ) {
+	  cerr << "zaaa" << endl
+	       << (*cluster ) << endl;
+	}
+
+
 	(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))
 	  ->fill(cluster->getClusterCharge((*iter)));
+	
+
+
 	++iter;
       }
       
@@ -273,46 +309,66 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 	EUTelMatrixDecoder noiseMatrixDecoder( _maxX[detectorID] - _minX[detectorID] + 1,
 					       _maxY[detectorID] - _minY[detectorID] + 1,
 					       _minX[detectorID] , _minY[detectorID] );
-	
-	int xClusterSize, yClusterSize;
-	cluster->getClusterSize(xClusterSize, yClusterSize);
+
 	vector<float > noiseValues;
-	for ( int yPixel = ySeed - ( yClusterSize / 2 ); yPixel <= ySeed + ( yClusterSize / 2 ); yPixel++ ) {
-	  for ( int xPixel = xSeed - ( xClusterSize / 2 ); xPixel <= xSeed + ( xClusterSize / 2 ); xPixel++ ) {
-	    
-	    // always check we are still within the sensor!!!
-	    if ( ( xPixel >= _minX[detectorID] )  &&  ( xPixel <= _maxX[detectorID] ) &&
-		 ( yPixel >= _minY[detectorID] )  &&  ( yPixel <= _maxY[detectorID] ) ) {
-	      int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
+	if ( type == kEUTelFFClusterImpl ) { 
+	
+	  int xClusterSize, yClusterSize;
+	  cluster->getClusterSize(xClusterSize, yClusterSize);
+	  
+	  for ( int yPixel = ySeed - ( yClusterSize / 2 ); yPixel <= ySeed + ( yClusterSize / 2 ); yPixel++ ) {
+	    for ( int xPixel = xSeed - ( xClusterSize / 2 ); xPixel <= xSeed + ( xClusterSize / 2 ); xPixel++ ) {
 	      
-	      // the corresponding position in the status matrix has to be HITPIXEL
-	      // in the EUTelClusteringProcessor, we verify also that
-	      // the pixel isHit, but this cannot be done in this
-	      // processor, since the status matrix could have been reset
-	      // 
-	      // bool isHit  = ( statusMatrix->getADCValues()[index] ==
-	      // EUTELESCOPE::HITPIXEL );
-	      //
-	      bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
-	      if ( !isBad ) {
-		noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
+	      // always check we are still within the sensor!!!
+	      if ( ( xPixel >= _minX[detectorID] )  &&  ( xPixel <= _maxX[detectorID] ) &&
+		   ( yPixel >= _minY[detectorID] )  &&  ( yPixel <= _maxY[detectorID] ) ) {
+		int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
+		
+		// the corresponding position in the status matrix has to be HITPIXEL
+		// in the EUTelClusteringProcessor, we verify also that
+		// the pixel isHit, but this cannot be done in this
+		// processor, since the status matrix could have been reset
+		// 
+		// bool isHit  = ( statusMatrix->getADCValues()[index] ==
+		// EUTELESCOPE::HITPIXEL );
+		//
+		bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
+		if ( !isBad ) {
+		  noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
+		} else {
+		  noiseValues.push_back( 0. );
+		}
 	      } else {
 		noiseValues.push_back( 0. );
 	      }
-	    } else {
-	      noiseValues.push_back( 0. );
 	    }
 	  }
+	} else if ( type == kEUTelSparseClusterImpl ) {
+
+	  if ( pixelType == kEUTelSimpleSparsePixel ) {
+
+	    EUTelSparseClusterImpl<EUTelSimpleSparsePixel > * recasted = 
+	      dynamic_cast< EUTelSparseClusterImpl<EUTelSimpleSparsePixel > * > ( cluster );
+	    
+	    auto_ptr<EUTelSimpleSparsePixel> sparsePixel( new EUTelSimpleSparsePixel );
+	    for ( unsigned int iPixel = 0; iPixel < recasted->size() ; iPixel++ ) {
+	      recasted->getSparsePixelAt( iPixel, sparsePixel.get() ) ;
+	      int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
+	      noiseValues.push_back( noiseMatrix->getChargeValues()[ index ] );
+	    }
+
+	  }
+	    
 	}
+
 	try {
 	  cluster->setNoiseValues( noiseValues );
 	} catch ( IncompatibleDataSetException& e ) {
-	  message<ERROR> ( log() << e.what() << "\n"
-			   "Continuing without filling the noise histograms" );
+	  streamlog_out ( ERROR1 )  << e.what() << endl <<  "Continuing without filling the noise histograms" << endl;
 	  _noiseHistoSwitch = false;
 	}
       }
-    
+      
       if ( _noiseHistoSwitch ) {
 	AIDA::IHistogram1D * histo;
 	
@@ -393,11 +449,12 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
     }
     
   } catch( DataNotAvailableException& e ) {
-    message<WARNING> ( log() << "No input collection found on event " << _iEvt );
+    streamlog_out ( WARNING2 )  << "No input collection found on event " << evt->getEventNumber()
+				<< " in run " << evt->getRunNumber() << endl;
+    return ;
   }
 #endif
 
-  ++_iEvt;
 }
 
 void EUTelHistogramMaker::check (LCEvent * evt) {
@@ -407,7 +464,7 @@ void EUTelHistogramMaker::check (LCEvent * evt) {
 
 void EUTelHistogramMaker::end() {
 
-  message<MESSAGE> ( "Processor finished successfully." );
+  streamlog_out ( MESSAGE4 ) << "Processor finished successfully." << endl;
 
 }
 
@@ -415,7 +472,7 @@ void EUTelHistogramMaker::bookHistos() {
 
 #ifdef MARLIN_USE_AIDA
   // histograms are grouped in loops and detectors
-  message<MESSAGE> ( log() << "Booking histograms " );
+  streamlog_out ( MESSAGE4 )  << "Booking histograms " << endl;
   
   auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
   EUTelHistogramInfo    * histoInfo;
@@ -424,12 +481,11 @@ void EUTelHistogramMaker::bookHistos() {
   try {
     isHistoManagerAvailable = histoMgr->init();
   } catch ( ios::failure& e) {
-    message<ERROR> ( log() << "I/O problem with " << _histoInfoFileName << "\n"
-		     << "Continuing without histogram manager"    );
+    streamlog_out ( ERROR1 )  << "I/O problem with " << _histoInfoFileName << endl
+			      << "Continuing without histogram manager"   << endl;
     isHistoManagerAvailable = false;
   } catch ( ParseException& e ) {
-    message<ERROR> ( log() << e.what() << "\n"
-		     << "Continuing without histogram manager" );
+    streamlog_out ( ERROR1 )  << e.what() << endl  << "Continuing without histogram manager" << endl;
     isHistoManagerAvailable = false;
   }
 
@@ -458,7 +514,7 @@ void EUTelHistogramMaker::bookHistos() {
     if ( isHistoManagerAvailable ) {
       histoInfo = histoMgr->getHistogramInfo(_clusterSignalHistoName);
       if ( histoInfo ) {
-	message<DEBUG> ( log() << (* histoInfo ) );
+	streamlog_out ( DEBUG1 )  << (* histoInfo ) << endl;
 	clusterNBin = histoInfo->_xBin;
 	clusterMin  = histoInfo->_xMin;
 	clusterMax  = histoInfo->_xMax;
@@ -478,7 +534,7 @@ void EUTelHistogramMaker::bookHistos() {
     if ( isHistoManagerAvailable ) {
       histoInfo = histoMgr->getHistogramInfo( _clusterSNRHistoName );
       if ( histoInfo ) {
-	message<DEBUG> ( log() << (* histoInfo ) );
+	streamlog_out ( DEBUG1 )  << (* histoInfo ) << endl;
 	clusterSNRNBin = histoInfo->_xBin;
 	clusterSNRMin  = histoInfo->_xMin;
 	clusterSNRMax  = histoInfo->_xMax;
@@ -595,7 +651,7 @@ void EUTelHistogramMaker::bookHistos() {
     if ( isHistoManagerAvailable ) {
       histoInfo = histoMgr->getHistogramInfo( _seedSignalHistoName );
       if ( histoInfo ) {
-	message<DEBUG> ( log() << (* histoInfo ) );
+	streamlog_out ( DEBUG1 )  << (* histoInfo ) << endl;
 	seedNBin = histoInfo->_xBin;
 	seedMin  = histoInfo->_xMin;
 	seedMax  = histoInfo->_xMax;
@@ -622,7 +678,7 @@ void EUTelHistogramMaker::bookHistos() {
       if ( isHistoManagerAvailable ) {
 	histoInfo = histoMgr->getHistogramInfo( _seedSNRHistoName );
 	if ( histoInfo ) {
-	  message<DEBUG> ( log() << (* histoInfo ) );
+	  streamlog_out ( DEBUG1 )  << (* histoInfo ) << endl;
 	  seedSNRNBin = histoInfo->_xBin;
 	  seedSNRMin  = histoInfo->_xMin;
 	  seedSNRMax  = histoInfo->_xMax;
@@ -649,7 +705,7 @@ void EUTelHistogramMaker::bookHistos() {
       if ( isHistoManagerAvailable ) {
 	histoInfo = histoMgr->getHistogramInfo( _clusterNoiseHistoName );
 	if ( histoInfo ) {
-	  message<DEBUG> ( log() << (* histoInfo ) );
+	  streamlog_out ( DEBUG1 )  << (* histoInfo ) << endl;
 	  clusterNoiseNBin = histoInfo->_xBin;
 	  clusterNoiseMin  = histoInfo->_xMin;
 	  clusterNoiseMax  = histoInfo->_xMax;
@@ -694,7 +750,7 @@ void EUTelHistogramMaker::bookHistos() {
     if ( isHistoManagerAvailable ) {
       histoInfo = histoMgr->getHistogramInfo(  _eventMultiplicityHistoName );
       if ( histoInfo ) {
-	message<DEBUG> ( log() << (* histoInfo ) );
+	streamlog_out ( DEBUG1 )  << (* histoInfo ) << endl;
 	eventMultiNBin  = histoInfo->_xBin;
 	eventMultiMin   = histoInfo->_xMin;
 	eventMultiMax   = histoInfo->_xMax;
@@ -709,7 +765,7 @@ void EUTelHistogramMaker::bookHistos() {
   }
 
 #else
-  message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
+  streamlog_out ( MESSAGE2 )  << "No histogram produced because Marlin doesn't use AIDA" << endl;
 #endif
 
 }
