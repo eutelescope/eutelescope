@@ -84,7 +84,10 @@ namespace eutelescope {
    *  \li vector of hits (fitted particle positions in all planes)  
    *
    *
-   * \param InputCollectionName  Name of the input  TrackerHit collection
+   * \param InputCollectionName  Name of the input TrackerHit collection
+   * \param CorrectedHitCollectionName Name of the collection for storing
+   *        corrected particle positions in telescope planes (hits),
+   *        i.e. positions after alignment, as used in the fit
    * \param OutputHitCollectionName Name of the output collection of
    *        fitted particle positions in telescope planes (hits)
    * \param OutputTrackCollectionName Name of the output Track collection
@@ -148,7 +151,7 @@ namespace eutelescope {
    * many hits)
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelTestFitter.h,v 1.6 2007-09-11 20:36:43 zarnecki Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.7 2007-09-13 17:11:07 zarnecki Exp $
    * \date 2007.06.04
    *
    */ 
@@ -294,6 +297,8 @@ namespace eutelescope {
     std::string _inputColName ;
 
     std::string _outputTrackColName ;
+
+    std::string _correctedHitColName ;
 
     std::string _outputHitColName ;
 

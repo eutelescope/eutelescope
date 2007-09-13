@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.13 2007-09-11 20:37:46 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.14 2007-09-13 17:09:43 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -95,6 +95,10 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
   registerOutputCollection(LCIO::TRACK,"OutputTrackCollectionName",
                              "Collection name for fitted tracks",
                              _outputTrackColName, string ("testfittracks"));
+
+  registerOutputCollection(LCIO::TRACKERHIT,"CorrectedHitCollectionName",
+                             "Collection name for corrected particle positions",
+                             _correctedHitColName, string ("corrfithits"));
 
   registerOutputCollection(LCIO::TRACKERHIT,"OutputHitCollectionName",
                              "Collection name for fitted particle hits (positions)",
@@ -685,6 +689,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   // Define output track and hit collections
   LCCollectionVec     * fittrackvec = new LCCollectionVec(LCIO::TRACK);
   LCCollectionVec     * fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
+  LCCollectionVec     * corrpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
 
   // Set flag for storing track hits in track collection
 
@@ -1016,6 +1021,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
               fittrack->addHit(fitpoint);
 
 
+	    //		       << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]  
+	    //       << "   Y = " << hitY[ihit] << " +/- " <<
+	    //       hitEy[ihit]  
+
             // add measured point to track (if found)
 
  	    if(_InputHitsInTrack && _isActive[ipl])
@@ -1026,8 +1035,37 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 		 if(ihit<nPlaneHits[ipl])
 		    {
 		    int jhit = planeHitID[ipl].at(ihit);
-                    TrackerHit * meshit = dynamic_cast<TrackerHit*>( col->getElementAt(jhit) ) ;
-                    fittrack->addHit(meshit);
+                    TrackerHitImpl * meshit = dynamic_cast<TrackerHitImpl*>( col->getElementAt(jhit) ) ;
+	            TrackerHitImpl * corrhit = new TrackerHitImpl;
+		    //
+		    // Copy input hit data
+		    //
+                    corrhit->setType(meshit->getType());
+                    corrhit->setTime(meshit->getTime());
+                    corrhit->setdEdx(meshit->getdEdx());
+                    corrhit->rawHits()=meshit->getRawHits();
+		    // 
+		    // Use corrected position
+		    //
+	            pos[0]=hitX[jhit];
+                    pos[1]=hitY[jhit];
+	            pos[2]=_planePosition[ipl];
+
+	            corrhit->setPosition(pos);
+                    //
+		    // Include errors, as used in the fit
+		    //
+	            cov[0]=hitEx[jhit]*hitEx[jhit];
+   	            cov[1]=0.;
+	            cov[2]=hitEy[jhit]*hitEy[jhit];
+	            cov[3]=cov[4]=0.;
+	            cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
+
+ 	            corrhit->setCovMatrix(cov);
+
+	            corrpointvec->push_back(corrhit);
+
+                    fittrack->addHit(corrhit);
 		    }
 	      }
 
@@ -1076,11 +1114,13 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     {
       event->addCollection(fittrackvec,_outputTrackColName);
       event->addCollection(fitpointvec,_outputHitColName);
+      event->addCollection(corrpointvec,_correctedHitColName);
     }
   else
     {
       delete fittrackvec;
       delete fitpointvec;
+      delete corrpointvec;
     }
 
   // Number of reconstructed tracks
