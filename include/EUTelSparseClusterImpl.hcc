@@ -26,7 +26,7 @@ namespace eutelescope {
    *  method. 
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelSparseClusterImpl.hcc,v 1.3 2007-08-31 07:48:01 bulgheroni Exp $
+   *  @Version $Id: EUTelSparseClusterImpl.hcc,v 1.4 2007-09-13 17:28:28 bulgheroni Exp $
    */
 
   template<class PixelType>
@@ -418,9 +418,9 @@ namespace eutelescope {
   template<>
   inline EUTelSimpleSparsePixel * EUTelSparseClusterImpl<EUTelSimpleSparsePixel>::getSparsePixelAt(unsigned int index,
 												   EUTelSimpleSparsePixel * pixel) const  {
-    pixel->setXCoord( static_cast<int> ( _trackerData->chargeValues()[index * _nElement]     ) );
-    pixel->setYCoord( static_cast<int> ( _trackerData->chargeValues()[index * _nElement + 1] ) );
-    pixel->setSignal( static_cast<int> ( _trackerData->chargeValues()[index * _nElement + 2] ) );
+    pixel->setXCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement]     ) );
+    pixel->setYCoord( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 1] ) );
+    pixel->setSignal( static_cast<int> ( _trackerData->getChargeValues()[index * _nElement + 2] ) );
     return pixel;
   }
 

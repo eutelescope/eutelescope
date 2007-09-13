@@ -29,7 +29,7 @@ namespace eutelescope {
 
   template<class PixelType>
   unsigned int EUTelSparseClusterImpl<PixelType>::size()  const {
-    return _trackerData->chargeValues().size() / _nElement;
+    return _trackerData->getChargeValues().size() / _nElement;
   }
 
   template<class PixelType>
@@ -307,9 +307,9 @@ namespace eutelescope {
 
     }
 
+    std::vector<float >::iterator iter = allSignals.begin();
     sort( allSignals.begin(), allSignals.end(), std::greater<float>() );
 
-    std::vector<float >::iterator iter = allSignals.begin();
     float charge = 0;
     while ( iter != allSignals.begin() + nPixel ) {
       charge += *(iter);
