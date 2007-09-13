@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.13 2007-08-30 08:28:21 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.14 2007-09-13 17:29:01 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -147,7 +147,10 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
   if ( evt->getEventType() == kEORE ) {
     streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return;
-  }  
+  } else if ( evt->getEventType() == kUNKNOWN ) {
+    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+  }
 
   if ( _eudrbGlobalMode == "ZS" ) {
     if ( isFirstEvent() )   
