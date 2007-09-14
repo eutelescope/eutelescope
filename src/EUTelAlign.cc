@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.7 2007-08-30 08:57:13 bulgheroni Exp $
+// Version: $Id: EUTelAlign.cc,v 1.8 2007-09-14 19:37:58 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -301,8 +301,7 @@ void EUTelAlign::Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t 
   // par[1]:       off_y
   // par[2]:       theta_x
   // par[3]:       theta_y
-  // par[4]:       theta_z1
-  // par[5]:       theta_z2
+  // par[4]:       theta_z
 
   double x, y, distance;
   double chi2 = 0.0;
@@ -315,7 +314,7 @@ void EUTelAlign::Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t 
     distance = 0.0;
 
     x = (cos(par[3])*cos(par[4])) * _hitsForFit[i].secondLayerMeasuredX + ((-1)*sin(par[2])*sin(par[3])*cos(par[4]) + cos(par[2])*sin(par[4])) * _hitsForFit[i].secondLayerMeasuredY + par[0];
-    y = ((-1)*cos(par[3])*sin(par[5])) * _hitsForFit[i].secondLayerMeasuredX + (sin(par[2])*sin(par[3])*sin(par[5]) + cos(par[2])*cos(par[5])) * _hitsForFit[i].secondLayerMeasuredY + par[1];
+    y = ((-1)*cos(par[3])*cos(par[4])) * _hitsForFit[i].secondLayerMeasuredX + (sin(par[2])*sin(par[3])*sin(par[4]) + cos(par[2])*cos(par[4])) * _hitsForFit[i].secondLayerMeasuredY + par[1];
 
     distance = ((x - _hitsForFit[i].secondLayerPredictedX) * (x - _hitsForFit[i].secondLayerPredictedX) + (y - _hitsForFit[i].secondLayerPredictedY) * (y - _hitsForFit[i].secondLayerPredictedY)) / 100;
       
@@ -343,8 +342,8 @@ void EUTelAlign::end() {
 
   gSystem->Load("libMinuit");
 
-  // init Minuit for 6 parameters
-  TMinuit *gMinuit = new TMinuit(6);
+  // init Minuit for 5 parameters
+  TMinuit *gMinuit = new TMinuit(5);
 
   // set print level (-1 = quiet, 0 = normal, 1 = verbose)
   gMinuit->SetPrintLevel(0);
@@ -367,21 +366,18 @@ void EUTelAlign::end() {
   double start_off_y = _startValuesForAlignment[1];
   double start_theta_x = _startValuesForAlignment[2];
   double start_theta_y = _startValuesForAlignment[3];
-  double start_theta_z1 = _startValuesForAlignment[4];
-  double start_theta_z2 = _startValuesForAlignment[5];
+  double start_theta_z = _startValuesForAlignment[4];
 
   // set starting values and step sizes
   gMinuit->mnparm(0,"off_x",start_off_x,1,0,0,ierflag);
   gMinuit->mnparm(1,"off_y",start_off_y,1,0,0,ierflag);
   gMinuit->mnparm(2,"theta_x",start_theta_x,0.001,0,0,ierflag);
   gMinuit->mnparm(3,"theta_y",start_theta_y,0.001,0,0,ierflag);
-  gMinuit->mnparm(4,"theta_z1",start_theta_z1,0.001,0,0,ierflag);
-  gMinuit->mnparm(5,"theta_z2",start_theta_z2,0.001,0,0,ierflag);
+  gMinuit->mnparm(4,"theta_z",start_theta_z1,0.001,0,0,ierflag);
 
   gMinuit->FixParameter(2);
   gMinuit->FixParameter(3);
   gMinuit->FixParameter(4);
-  gMinuit->FixParameter(5);
 
   // call migrad (2000 iterations, 0.1 = tolerance)
   arglist[0] = 500;
@@ -391,8 +387,6 @@ void EUTelAlign::end() {
   gMinuit->Release(2);
   gMinuit->Release(3);
   gMinuit->Release(4);
-  gMinuit->Release(5);
-  // gMinuit->Release(6);
 
   // call migrad (2000 iterations, 0.1 = tolerance)
   arglist[0] = 500;
@@ -405,23 +399,20 @@ void EUTelAlign::end() {
   double off_y;
   double theta_x;
   double theta_y;
-  double theta_z1;
-  double theta_z2;
+  double theta_z;
 
   double off_x_error;
   double off_y_error;
   double theta_x_error;
   double theta_y_error;
-  double theta_z1_error;
-  double theta_z2_error;
+  double theta_z_error;
 
   // get results from migrad
   gMinuit->GetParameter(0,off_x,off_x_error);
   gMinuit->GetParameter(1,off_y,off_y_error);
   gMinuit->GetParameter(2,theta_x,theta_x_error);
   gMinuit->GetParameter(3,theta_y,theta_y_error);
-  gMinuit->GetParameter(4,theta_z1,theta_z1_error);
-  gMinuit->GetParameter(5,theta_z2,theta_z2_error);
+  gMinuit->GetParameter(4,theta_z,theta_z_error);
 
   streamlog_out ( MESSAGE2 ) << endl << "Alignment constants from the fit:" << endl;
   streamlog_out ( MESSAGE2 ) << "---------------------------------" << endl;
@@ -429,9 +420,8 @@ void EUTelAlign::end() {
   streamlog_out ( MESSAGE2 ) << "off_y: " << off_y << " +/- " << off_y_error << endl;
   streamlog_out ( MESSAGE2 ) << "theta_x: " << theta_x << " +/- " << theta_x_error << endl;
   streamlog_out ( MESSAGE2 ) << "theta_y: " << theta_y << " +/- " << theta_y_error << endl;
-  streamlog_out ( MESSAGE2 ) << "theta_z1: " << theta_z1 << " +/- " << theta_z1_error << endl;
-  streamlog_out ( MESSAGE2 ) << "theta_z2: " << theta_z2 << " +/- " << theta_z2_error << endl << endl;
-  streamlog_out ( MESSAGE2 ) << "For copy and paste to line fit xml-file: " << off_x << " " << off_y << " " << theta_x << " " << theta_y << " " << theta_z1 << " " << theta_z2 << endl;
+  streamlog_out ( MESSAGE2 ) << "theta_z: " << theta_z << " +/- " << theta_z_error << endl;
+  streamlog_out ( MESSAGE2 ) << "For copy and paste to line fit xml-file: " << off_x << " " << off_y << " " << theta_x << " " << theta_y << " " << theta_z << endl;
 
 //   delete [] _intrResolY;
 //   delete [] _intrResolX;
