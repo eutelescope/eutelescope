@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.8 2007-09-14 19:37:58 roloff Exp $
+// Version: $Id: EUTelAlign.cc,v 1.9 2007-09-14 19:42:31 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -373,7 +373,7 @@ void EUTelAlign::end() {
   gMinuit->mnparm(1,"off_y",start_off_y,1,0,0,ierflag);
   gMinuit->mnparm(2,"theta_x",start_theta_x,0.001,0,0,ierflag);
   gMinuit->mnparm(3,"theta_y",start_theta_y,0.001,0,0,ierflag);
-  gMinuit->mnparm(4,"theta_z",start_theta_z1,0.001,0,0,ierflag);
+  gMinuit->mnparm(4,"theta_z",start_theta_z,0.001,0,0,ierflag);
 
   gMinuit->FixParameter(2);
   gMinuit->FixParameter(3);
