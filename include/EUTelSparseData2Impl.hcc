@@ -80,7 +80,7 @@ namespace eutelescope {
    *  \image html clusteringPerfomance.png "Different algorithms performance"
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelSparseData2Impl.hcc,v 1.3 2007-09-12 13:29:49 bulgheroni Exp $
+   *  @Version $Id: EUTelSparseData2Impl.hcc,v 1.4 2007-09-15 14:34:19 bulgheroni Exp $
    */  
   template<class PixelType>
   class EUTelSparseData2Impl {
@@ -115,13 +115,14 @@ namespace eutelescope {
      *  setting the minDistance to sqrt(2) is equivalent to ask
      *  "touching pixels".
      *
-     *  @param minDistance The minimum distance between two pixels in
-     *  order to consider the two making a cluster.
+     *  @param minSignal This is the minimum signal a pixel has to
+     *  have to be accepted a member of the cluster. If zero or
+     *  negative, the cut is disabled.
      *
      *  @return A list of list with the pixel index that can form a
      *  cluster.
      */
-    virtual std::list<std::list< unsigned int> > findNeighborPixels(double minDistance) const;
+    virtual std::list<std::list< unsigned int> > findNeighborPixels(double minSignal) const;
 
     //! Get one of the sparse pixel
     /*! This method is used to get one of the sparse pixel contained

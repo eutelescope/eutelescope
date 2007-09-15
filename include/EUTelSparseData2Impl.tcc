@@ -42,7 +42,7 @@ namespace eutelescope {
   
   template<class PixelType>
   std::list<std::list< unsigned int> > 
-  EUTelSparseData2Impl<PixelType>::findNeighborPixels(double /* minDistance  */)   const {
+  EUTelSparseData2Impl<PixelType>::findNeighborPixels(double  minSignal )   const {
 
 
     typedef typename std::vector<PixelType > PixelVector;
@@ -163,9 +163,11 @@ namespace eutelescope {
 					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
-		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *1* status is good" << std::endl;
-		    status[ indexTest ] = 1;
-		    groupedPixel.push_back( indexTest );
+		    if ( (*lastYPixel).getSignal() >= minSignal ) {
+		      streamlog_out_T ( DEBUG1 ) << "--> Pixel *1* status is good" << std::endl;
+		      status[ indexTest ] = 1;
+		      groupedPixel.push_back( indexTest );
+		    }
 		  } else {
 		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *1* status is bad" << std::endl;
 		  }
@@ -185,12 +187,15 @@ namespace eutelescope {
 					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
-		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *2* status is good" << std::endl;
-		    status[ indexTest ] = 1;
-		    groupedPixel.push_back( indexTest );
+		    if ( (*lastYPixel).getSignal() >= minSignal ) {
+		      streamlog_out_T ( DEBUG1 ) << "--> Pixel *2* status is good" << std::endl;
+		      status[ indexTest ] = 1;
+		      groupedPixel.push_back( indexTest );
+		    }
 		  } else {
 		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *2* status is bad" << std::endl;
 		  }
+		    
 		  ++lastYPixel;
 
 		  // checking for the end of the matrix and in case just
@@ -207,9 +212,11 @@ namespace eutelescope {
 					     << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
-		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *3* status is good" << std::endl;
-		    status[ indexTest ] = 1;
-		    groupedPixel.push_back( indexTest );
+		    if ( (*lastYPixel).getSignal() > minSignal ) {
+		      streamlog_out_T ( DEBUG1 ) << "--> Pixel *3* status is good" << std::endl;
+		      status[ indexTest ] = 1;
+		      groupedPixel.push_back( indexTest );
+		    }
 		  } else {
 		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *3* status is bad" << std::endl;
 		  }
@@ -274,9 +281,11 @@ namespace eutelescope {
 					     << (*lastYPixel ) << std::endl;
 		indexTest = lastYPixel - pixelBegin;
 		if ( status[indexTest] == 0 ) {
-		  streamlog_out_T ( DEBUG1 ) << "--> Pixel *4* status is good" << std::endl;
-		  status[ indexTest ] = 1;
-		  groupedPixel.push_back( indexTest );
+		  if ( (*lastYPixel).getSignal() > minSignal ) {
+		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *4* status is good" << std::endl;
+		    status[ indexTest ] = 1;
+		    groupedPixel.push_back( indexTest );
+		  }
 		} else {
 		  streamlog_out_T ( DEBUG1 ) << "--> Pixel *4* status is bad" << std::endl;
 		}
@@ -297,9 +306,11 @@ namespace eutelescope {
 					     << (*lastYPixel ) << std::endl;
 		indexTest = lastYPixel - pixelBegin;
 		if ( status[indexTest] == 0 ) {
-		  streamlog_out_T ( DEBUG1 ) << "--> Pixel *5* status is good" << std::endl;
-		  status[ indexTest ] = 1;
-		  groupedPixel.push_back( indexTest );
+		  if ( (*lastYPixel).getSignal() > minSignal ) {
+		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *5* status is good" << std::endl;
+		    status[ indexTest ] = 1;
+		    groupedPixel.push_back( indexTest );
+		  }
 		} else {
 		  streamlog_out_T ( DEBUG1 ) << "--> Pixel *5* status is bad" << std::endl;
 		}
@@ -367,9 +378,11 @@ namespace eutelescope {
 					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
-		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *6* status is good" << std::endl;
-		    status[ indexTest ] = 1;
-		    groupedPixel.push_back( indexTest );
+		    if ( (*lastYPixel).getSignal() > minSignal ) {
+		      streamlog_out_T ( DEBUG1 ) << "--> Pixel *6* status is good" << std::endl;
+		      status[ indexTest ] = 1;
+		      groupedPixel.push_back( indexTest );
+		    }
 		  } else {
 		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *6* status is bad" << std::endl;
 		  }
@@ -390,9 +403,11 @@ namespace eutelescope {
 					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
-		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *7* status is good" << std::endl;
-		    status[ indexTest ] = 1;
-		    groupedPixel.push_back( indexTest );
+		    if ( (*lastYPixel).getSignal() > minSignal ) {
+		      streamlog_out_T ( DEBUG1 ) << "--> Pixel *7* status is good" << std::endl;
+		      status[ indexTest ] = 1;
+		      groupedPixel.push_back( indexTest );
+		    }
 		  } else {
 		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *7* status is bad" << std::endl;
 		  }
@@ -412,9 +427,11 @@ namespace eutelescope {
 					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
-		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
-		    status[ indexTest ] = 1;
-		    groupedPixel.push_back( indexTest );
+		    if ( (*lastYPixel).getSignal() > minSignal ) {
+		      streamlog_out_T ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl;
+		      status[ indexTest ] = 1;
+		      groupedPixel.push_back( indexTest );
+		    }
 		  } else {
 		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *8* status is bad" << std::endl;
 		  }
@@ -458,12 +475,14 @@ namespace eutelescope {
 	      if ( ( (*foundPixel).getXCoord() == xTest ) && 
 		   ( (*foundPixel).getYCoord() == yTest ) ) {
 		streamlog_out_T ( DEBUG1 ) << "--> Found pixel *5* " << std::endl
-					 << (*foundPixel ) << std::endl;
+					   << (*foundPixel ) << std::endl;
 		indexTest = foundPixel - pixelBegin;
 		if ( status[ indexTest ] == 0 ) {
-		  streamlog_out_T ( DEBUG1 ) << "--> Pixel *5* status is good" << std::endl;
-		  status[ indexTest ] = 1;
-		  groupedPixel.push_back( indexTest );
+		  if ( (*foundPixel).getSignal() > minSignal ) {
+		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *5* status is good" << std::endl;
+		    status[ indexTest ] = 1;
+		    groupedPixel.push_back( indexTest );
+		  }
 		} else {
 		  streamlog_out_T ( DEBUG1 ) << "--> Pixel *5* status is bad" << std::endl;
 		}
@@ -514,9 +533,11 @@ namespace eutelescope {
 					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
-		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *6* status is good" << std::endl;
-		    status[ indexTest ] = 1;
-		    groupedPixel.push_back( indexTest );
+		    if ( (*lastYPixel).getSignal() > minSignal ) {
+		      streamlog_out_T ( DEBUG1 ) << "--> Pixel *6* status is good" << std::endl;
+		      status[ indexTest ] = 1;
+		      groupedPixel.push_back( indexTest );
+		    }
 		  } else {
 		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *6* status is bad" << std::endl;
 		  }
@@ -536,10 +557,12 @@ namespace eutelescope {
 					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
-		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *7* status is good" << std::endl
-					     << (*lastYPixel ) << std::endl;
-		    status[ indexTest ] = 1;
-		    groupedPixel.push_back( indexTest );
+		    if ( (*lastYPixel).getSignal() > minSignal ) {
+		      streamlog_out_T ( DEBUG1 ) << "--> Pixel *7* status is good" << std::endl
+						 << (*lastYPixel ) << std::endl;
+		      status[ indexTest ] = 1;
+		      groupedPixel.push_back( indexTest );
+		    }
 		  } else {
 		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *7* status is bad" << std::endl;
 		  }
@@ -559,10 +582,12 @@ namespace eutelescope {
 					   << (*lastYPixel ) << std::endl;
 		  indexTest = lastYPixel - pixelBegin;
 		  if ( status[indexTest] == 0 ) {
-		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl
-					     << (*lastYPixel ) << std::endl;
-		    status[ indexTest ] = 1;
-		    groupedPixel.push_back( indexTest );
+		    if ( (*lastYPixel).getSignal() > minSignal ) {
+		      streamlog_out_T ( DEBUG1 ) << "--> Pixel *8* status is good" << std::endl
+						 << (*lastYPixel ) << std::endl;
+		      status[ indexTest ] = 1;
+		      groupedPixel.push_back( indexTest );
+		    }
 		  } else {
 		    streamlog_out_T ( DEBUG1 ) << "--> Pixel *8* status is bad" << std::endl;
 		  }
