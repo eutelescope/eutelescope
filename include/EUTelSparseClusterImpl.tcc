@@ -99,12 +99,13 @@ namespace eutelescope {
 
   template<class PixelType>
   void EUTelSparseClusterImpl<PixelType>::getCenterOfGravityShift(float& xCoG, float& yCoG) const {
+
     if ( size() == 1 ) {
       xCoG = 0; 
       yCoG = 0;
       return;
     }
-    
+
     float normalization = 0;
     float tempX = 0;
     float tempY = 0;
@@ -140,6 +141,7 @@ namespace eutelescope {
       yCoG = 0;
       return;
     }
+
     
     std::vector<unsigned int> goodPixelList;
     
@@ -165,10 +167,11 @@ namespace eutelescope {
     while ( iter != goodPixelList.end() ) {
       getSparsePixelAt( (*iter), pixel );
       tempX         += pixel->getSignal() * ( pixel->getXCoord() - xSeed ) ;
-      tempY         += pixel->getSignal() * ( pixel->getYCoord() - xSeed ) ;
+      tempY         += pixel->getSignal() * ( pixel->getYCoord() - ySeed ) ;
       normalization += pixel->getSignal();
       ++iter;
     }
+
     if ( normalization != 0 ) {
       xCoG = tempX / normalization;
       yCoG = tempY / normalization;
@@ -177,7 +180,7 @@ namespace eutelescope {
       yCoG = 0.;
     }
 
-    delete pixel;
+
   }
 
   template<class PixelType> 
@@ -189,7 +192,13 @@ namespace eutelescope {
       return;
     }
 
-    std::map<float, unsigned int> pixelMap;
+    if ( (unsigned) n >= size() ) {
+      getCenterOfGravityShift( xCoG, yCoG );
+      return;
+    }
+
+
+    std::multimap<float, unsigned int> pixelMap;
     PixelType * sparsePixel = new PixelType;
     
     for ( unsigned int iPixel = 0; iPixel < size() ; iPixel++ ) {
@@ -202,15 +211,20 @@ namespace eutelescope {
     int xSeed, ySeed;
     getSeedCoord(xSeed, ySeed);
 
-    std::map<float, unsigned int>::iterator mapIter = pixelMap.end();
+    xCoG = 0;
+    yCoG = 0;
+
+
+    std::multimap<float, unsigned int>::iterator mapIter = pixelMap.end();
     while ( counter < n ) {
       --mapIter;
       getSparsePixelAt( (*mapIter).second, sparsePixel ) ;
       tempX         += sparsePixel->getSignal() * ( sparsePixel->getXCoord() - xSeed ) ;
-      tempY         += sparsePixel->getSignal() * ( sparsePixel->getYCoord() - xSeed ) ;
+      tempY         += sparsePixel->getSignal() * ( sparsePixel->getYCoord() - ySeed ) ;
       normalization += sparsePixel->getSignal();
       ++counter;
     }
+
     if ( normalization != 0 ) {
       xCoG = tempX / normalization;
       yCoG = tempY / normalization;
@@ -220,6 +234,7 @@ namespace eutelescope {
     }
     
     delete sparsePixel;
+    return;
   }
 
   template<class PixelType> 
@@ -295,6 +310,9 @@ namespace eutelescope {
 
   template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getClusterCharge(int nPixel) const {
+
+
+    if ( (unsigned) nPixel >= size() ) return getTotalCharge();
 
     std::vector<float > allSignals;
     
@@ -523,7 +541,7 @@ namespace eutelescope {
     
     // put all pixel values into a map
     PixelType * pixel = new PixelType;
-    std::map<float, int> clusterSignalMap;
+    std::multimap<float, int> clusterSignalMap;
 
     for ( unsigned int iPixel = 0 ; iPixel < size(); iPixel++ ) {
       getSparsePixelAt( iPixel, pixel );
@@ -536,7 +554,7 @@ namespace eutelescope {
     std::vector<float > snr;
     
     while ( pixelIter != nPixels.end() ) {
-      std::map<float, int >::reverse_iterator mapIter = clusterSignalMap.rbegin();
+      std::multimap<float, int >::reverse_iterator mapIter = clusterSignalMap.rbegin();
       float signal = 0;
       float noise2 = 0;
       int   iPixel = 0;
