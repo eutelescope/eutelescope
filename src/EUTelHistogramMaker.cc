@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.17 2007-09-13 17:30:24 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.18 2007-09-15 14:39:25 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -212,7 +212,6 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 	cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
 
       } else if ( type == kEUTelSparseClusterImpl ) {
-
 	LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
 	TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
 	CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
@@ -228,7 +227,7 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 
       }  else {
 
-	message<ERROR> ( "Unknown cluster type. Sorry for quitting" );
+	streamlog_out ( ERROR4) << "Unknown cluster type. Sorry for quitting" << endl;
 	throw UnknownDataTypeException("Cluster type unknown");
 
       }
@@ -261,19 +260,9 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 	  ss << _clusterSignalHistoName << (*iter) << "-d" << detectorID;
 	  tempHistoName = ss.str();
 	}
-	float temp = cluster->getClusterCharge(*iter);
-	if ( ( detectorID == 1  ) &&
-	     ( (*iter)    == 9  ) &&
-	     ( temp < 100 ) ) {
-	  cerr << "zaaa" << endl
-	       << (*cluster ) << endl;
-	}
-
 
 	(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))
-	  ->fill(cluster->getClusterCharge((*iter)));
-	
-
+	  ->fill(cluster->getClusterCharge((*iter)));	
 
 	++iter;
       }
