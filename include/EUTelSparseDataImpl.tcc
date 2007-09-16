@@ -24,7 +24,7 @@ namespace eutelescope {
   
   template<class PixelType>
   unsigned int EUTelSparseDataImpl<PixelType>::size() const {
-    return _trackerData->chargeValues().size() / _nElement;
+    return _trackerData->getChargeValues().size() / _nElement;
   }
 
   
