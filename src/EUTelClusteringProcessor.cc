@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.31 2007-09-10 19:20:40 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.32 2007-09-16 11:13:08 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -124,7 +124,8 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
 			      "Select here which algorithm should be used for clustering.\n"
 			      "Available algorithms are:\n"
 			      "-> SparseCluster: for cluster in ZS frame\n"
-			      "-> SparseCluster2: for cluster in ZS frame with better performance",
+			      "-> SparseCluster2: for cluster in ZS frame with better performance"
+			      "-> FixedFrame: for cluster with a given size",			      
 			      _zsClusteringAlgo, string(EUTELESCOPE::SPARSECLUSTER));
   
   registerProcessorParameter ("ClusterSizeX",
@@ -314,6 +315,7 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
     // put here all the possible algorithm applicable to ZS data 
     if ( _zsClusteringAlgo == EUTELESCOPE::SPARSECLUSTER )       sparseClustering(evt, pulseCollection);
     else if ( _zsClusteringAlgo == EUTELESCOPE::SPARSECLUSTER2 ) sparseClustering2(evt, pulseCollection);
+    else if ( _zsClusteringAlgo == EUTELESCOPE::FIXEDFRAME )     zsFixedFrameClustering(evt, pulseCollection);
 
   }
 
@@ -332,6 +334,225 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
   _isFirstEvent = false;
 
 }
+
+
+void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
+
+  streamlog_out ( DEBUG4 ) << "Looking for clusters in the zs data with FixedFrame algorithm " << endl;
+
+  // get the collections of interest from the event.
+  LCCollectionVec * zsInputCollectionVec  = dynamic_cast < LCCollectionVec * > (evt->getCollection( _zsDataCollectionName ));
+  LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
+  LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
+  // prepare some decoders
+  CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputCollectionVec );
+  CellIDDecoder<TrackerDataImpl> noiseDecoder( noiseCollectionVec );
+
+  // this is the equivalent of the dummyCollection in the fixed frame
+  // clustering. BTW we should consider changing that "meaningful"
+  // name! This contains cluster and not yet pulses 
+  auto_ptr<LCCollectionVec > sparseClusterCollectionVec ( new  LCCollectionVec(LCIO::TRACKERDATA) );
+  CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec.get()  );
+
+  // prepare an encoder also for the pulse collection
+  CellIDEncoder<TrackerPulseImpl> idZSPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
+  
+  // utility
+  short limitExceed    = 0;
+  
+  if ( isFirstEvent() ) {
+
+    // For the time being nothing to do specifically in the first
+    // event.
+
+  }
+
+  for ( unsigned int i = 0 ; i < zsInputCollectionVec->size(); i++ ) {
+    // get the TrackerData and guess which kind of sparsified data it
+    // contains.
+    TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
+    SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
+    _iDetector               = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
+
+    // reset the cluster counter for the clusterID
+    int clusterID = 0;
+    
+    // get the noise and the status matrix with the right detectorID
+    TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt(_iDetector));
+    TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt(_iDetector));
+
+    // prepare the matrix decoder
+    EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
+
+    // prepare a data vector mimicking the TrackerData data of the
+    // standard FixedFrameClustering. Initialize all the entries to zero.
+    vector<float > dataVec( noise->getChargeValues().size(), 0. );
+
+    // prepare a multimap for the seed candidates
+    multimap<float , int > seedCandidateMap;
+
+    if ( type == kEUTelSimpleSparsePixel ) {
+      
+      // now prepare the EUTelescope interface to sparsified data.
+      auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > > 
+	sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+      
+      streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << _iDetector << " with "
+			       << sparseData->size() << " pixels " << endl;
+     
+      // loop over all pixels in the sparseData object.
+      auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
+      for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) {
+	sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
+	int   index  = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
+	float signal = sparsePixel->getSignal();
+	dataVec[ index  ] = signal;
+	if (  ( signal  > _seedPixelCut * noise->getChargeValues()[ index ] ) &&
+	      ( status->getADCValues()[ index ] == EUTELESCOPE::GOODPIXEL ) ) {
+	  seedCandidateMap.insert ( make_pair ( signal, index ) );
+	}
+	  
+      }
+    } else {
+      throw UnknownDataTypeException("Unknown sparsified pixel");
+    }
+    
+    if ( seedCandidateMap.size() != 0 ) {
+      
+      streamlog_out ( DEBUG0 ) << "  Seed candidates " << _seedCandidateMap.size() << endl;
+      
+      // now built up a cluster for each seed candidate
+      multimap<float, int >::reverse_iterator rMapIter = seedCandidateMap.rbegin();
+      while ( rMapIter != seedCandidateMap.rend() ) {
+	if ( status->adcValues()[ (*rMapIter).second ] == EUTELESCOPE::GOODPIXEL ) {
+	  // if we enter here, this means that at least the seed pixel
+	  // wasn't added yet to another cluster.  Note that now we need
+	  // to build a candidate cluster that has to pass the
+	  // clusterCut to be considered a good cluster
+	  double clusterCandidateSignal    = 0.;
+	  double clusterCandidateNoise2    = 0.;
+	  FloatVec clusterCandidateCharges;
+	  IntVec   clusterCandidateIndeces;
+	  int seedX, seedY;
+	  matrixDecoder.getXYFromIndex ( (*rMapIter).second, seedX, seedY );
+	  
+	  // start looping around the seed pixel. Remember that the seed
+	  // pixel has to stay in the center of cluster
+	  ClusterQuality cluQuality = kGoodCluster;
+	  for (int yPixel = seedY - (_yClusterSize / 2); yPixel <= seedY + (_yClusterSize / 2); yPixel++) {
+	    for (int xPixel =  seedX - (_xClusterSize / 2); xPixel <= seedX + (_xClusterSize / 2); xPixel++) {
+	      // always check we are still within the sensor!!!
+	      if ( ( xPixel >= _minX[_iDetector] )  &&  ( xPixel <= _maxX[_iDetector] ) &&
+		   ( yPixel >= _minY[_iDetector] )  &&  ( yPixel <= _maxY[_iDetector] ) ) {
+		int index = matrixDecoder.getIndexFromXY(xPixel, yPixel);
+		
+		bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
+		bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
+		if ( isGood && !isHit ) {
+		  clusterCandidateSignal += dataVec[ index ] ;
+		  clusterCandidateNoise2 += pow ( noise->getChargeValues() [ index ], 2 );
+		  clusterCandidateCharges.push_back( dataVec[ index ] );
+		  clusterCandidateIndeces.push_back( index );
+		} else if ( isHit ) {
+		  // this can be a good place to flag the current
+		  // cluster as kMergedCluster, but it would introduce
+		  // a bias since the at least another cluster (the
+		  // one which this pixel belong to) is not flagged.
+		  //
+		  // In order to flag all merged clusters and possibly
+		  // try to separate the different contributions use
+		  // the EUTelSeparateClusterProcessor. In this
+		  // processor not all the merged clusters will be
+		  // flagged as kMergedCluster | kIncompleteCluster
+		  cluQuality = cluQuality | kIncompleteCluster | kMergedCluster ; 
+		  clusterCandidateCharges.push_back(0.);
+		} else if ( !isGood ) {
+		  cluQuality = cluQuality | kIncompleteCluster;
+		  clusterCandidateCharges.push_back(0.);
+		}
+	      } else {
+		cluQuality = cluQuality | kBorderCluster;
+		clusterCandidateCharges.push_back(0.);
+	      }
+	    }
+	  }
+	  // at this point we have built the cluster candidate,
+	  // we need to validate it
+	  if ( clusterCandidateSignal > _clusterCut * sqrt( clusterCandidateNoise2 ) ) {
+	    // the cluster candidate is a good cluster
+	    // mark all pixels belonging to the cluster as hit
+	    IntVec::iterator indexIter = clusterCandidateIndeces.begin();
+	    
+	    // the final result of the clustering will enter in a
+	    // TrackerPulseImpl in order to be algorithm independent 
+	    TrackerPulseImpl * pulse = new TrackerPulseImpl;
+	    CellIDEncoder<TrackerPulseImpl> idPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
+	    idPulseEncoder["sensorID"]      = _iDetector;
+	    idPulseEncoder["clusterID"]     = clusterID;
+	    idPulseEncoder["xSeed"]         = seedX;
+	    idPulseEncoder["ySeed"]         = seedY;
+	    idPulseEncoder["xCluSize"]      = _xClusterSize;
+	    idPulseEncoder["yCluSize"]      = _yClusterSize;
+	    idPulseEncoder["type"]          = static_cast<int>(kEUTelFFClusterImpl);
+	    idPulseEncoder.setCellID(pulse);	    
+	    
+	    TrackerDataImpl * cluster = new TrackerDataImpl;
+	    CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec.get());
+	    idClusterEncoder["sensorID"]      = _iDetector;
+	    idClusterEncoder["clusterID"]     = clusterID;
+	    idClusterEncoder["xSeed"]         = seedX;
+	    idClusterEncoder["ySeed"]         = seedY;
+	    idClusterEncoder["xCluSize"]      = _xClusterSize;
+	    idClusterEncoder["yCluSize"]      = _yClusterSize;
+	    idClusterEncoder["quality"]       = static_cast<int>(cluQuality);
+	    idClusterEncoder.setCellID(cluster);
+	      
+
+	    streamlog_out (DEBUG0) << "  Cluster no " <<  clusterID << " seedX " << seedX << " seedY " << seedY << endl;
+	      
+	      
+	    while ( indexIter != clusterCandidateIndeces.end() ) {
+	      status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+	      ++indexIter;
+	    }
+
+	      
+	    // copy the candidate charges inside the cluster
+	    cluster->setChargeValues(clusterCandidateCharges);
+	    sparseClusterCollectionVec->push_back(cluster);
+
+	    EUTelFFClusterImpl * eutelCluster = new EUTelFFClusterImpl( cluster );
+	    pulse->setCharge(eutelCluster->getTotalCharge());
+	    delete eutelCluster;
+	      
+	    pulse->setQuality(static_cast<int>(cluQuality));
+	    pulse->setTrackerData(cluster);
+	    pulseCollection->push_back(pulse);
+	      
+	    // increment the cluster counters
+	    _totCluster[_iDetector] += 1;
+	    ++clusterID;
+	    if ( clusterID >= 256 ) {
+	      ++limitExceed;
+	      --clusterID;
+	      streamlog_out ( WARNING0 ) << "Event " << _iEvt << " contains more than 256 clusters (" 
+					 << clusterID + limitExceed << ")" << endl;
+	    }
+	  } 
+	}
+	++rMapIter;
+      }
+    }   
+  }
+
+  // if the sparseClusterCollectionVec isn't empty add it to the
+  // current event. The pulse collection will be added afterwards 
+  if ( sparseClusterCollectionVec->size() != 0 ) {
+    evt->addCollection( sparseClusterCollectionVec.release(), "original_zsdata" );
+  }
+
+}     
+
 
 
 void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
@@ -384,30 +605,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
     // prepare the matrix decoder
     EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
 
-    //     if ( type == kEUTelSimpleSparsePixel ) {
-      
-    //       auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > > 
-    //     	sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
 
-    //       list<list< unsigned int> > listOfList = sparseData->findNeighborPixels( _minDistance );     
-    //       list<list< unsigned int> >::iterator listOfListIter = listOfList.begin();
-    //       cout << "list of list has " << listOfList.size() << " element " << endl;
-    //       int iListOfListCounter = 0;
-    //       while ( listOfListIter != listOfList.end() ) {
-    // 	cout << "list " << iListOfListCounter << " --> " ;
-    // 	list<unsigned int > currentList = (*listOfListIter);
-    // 	list<unsigned int >::iterator listIter = currentList.begin();
-    // 	while ( listIter != currentList.end() ) {
-    // 	  cout << (*listIter) << ", " ;
-    // 	  ++listIter;
-    // 	}
-    // 	cout << endl;
-    // 	++iListOfListCounter;
-    // 	++listOfListIter;
-    //       }
-    //     }
-    //   }
-    // }
     
     if ( type == kEUTelSimpleSparsePixel ) {
       
@@ -948,7 +1146,6 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     evt->addCollection(dummyCollection,_dummyCollectionName);
   } else {
     delete dummyCollection;
-    //    throw SkipEventException(this);
   }
   
 }

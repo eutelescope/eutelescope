@@ -128,7 +128,7 @@ namespace eutelescope {
    *  containing the histogram booking information.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.17 2007-09-06 14:04:00 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.18 2007-09-16 11:13:08 bulgheroni Exp $
    *
    */
 
@@ -306,6 +306,8 @@ namespace eutelescope {
      *  clusters. 
      */
     void fixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
+
+    void zsFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
 
     //! Method for sparse pixel re-clustering 
