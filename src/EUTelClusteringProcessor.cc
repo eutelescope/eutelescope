@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.32 2007-09-16 11:13:08 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.33 2007-09-17 12:34:55 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -449,6 +449,10 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
 		bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
 		bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
 		if ( isGood && !isHit ) {
+		  // if the pixel wasn't selected, then its signal
+		  // will be 0.0. Mark it in the status
+		  if ( dataVec[ index ] == 0.0 ) 
+		    status->adcValues()[ index ] == EUTELESCOPE::MISSINGPIXEL ;
 		  clusterCandidateSignal += dataVec[ index ] ;
 		  clusterCandidateNoise2 += pow ( noise->getChargeValues() [ index ], 2 );
 		  clusterCandidateCharges.push_back( dataVec[ index ] );
@@ -1181,6 +1185,9 @@ void EUTelClusteringProcessor::resetStatus(IMPL::TrackerRawDataImpl * status) {
     if ( *iter == EUTELESCOPE::HITPIXEL ) {
       *iter = EUTELESCOPE::GOODPIXEL;
     }
+    if ( *iter == EUTELESCOPE::MISSINGPIXEL ) {
+      *iter = EUTELESCOPE::GOODPIXEL;
+    }
     ++iter; 
   }
 
@@ -1313,9 +1320,10 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 		 ( yPixel >= _minY[detectorID] )  &&  ( yPixel <= _maxY[detectorID] ) ) {
 	      int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
 	      // the corresponding position in the status matrix has to be HITPIXEL
-	      bool isHit  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::HITPIXEL );
-	      bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
-	      if ( !isBad && isHit ) {
+	      bool isHit      = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::HITPIXEL );
+	      bool isBad      = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
+	      bool isMissing  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::MISSINGPIXEL );
+	      if ( !isMissing && !isBad && isHit ) {
 		noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
 	      } else {
 		noiseValues.push_back( 0. );
