@@ -65,7 +65,7 @@ namespace eutelescope {
    * debug information is printed. 
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelFitHistograms.h,v 1.0 2007/09/10 
+   * @version $Id: EUTelFitHistograms.h,v 1.2 2007-09-17 22:24:23 zarnecki Exp $
    * \date 2007.09.10
    *
    */ 
@@ -231,10 +231,23 @@ namespace eutelescope {
     static std::string _ResidualYHistoName;
     static std::string _ResidualXYHistoName;
 
+    static std::string _ScatXHistoName;
+    static std::string _ScatYHistoName;
+    static std::string _ScatXYHistoName;
+
+    static std::string _AngleXHistoName;
+    static std::string _AngleYHistoName;
+    static std::string _AngleXYHistoName;
+
     static std::string _beamShiftXHistoName;
     static std::string _beamShiftYHistoName;
     static std::string _beamRotXHistoName;
     static std::string _beamRotYHistoName;
+
+    static std::string _relShiftXHistoName;
+    static std::string _relShiftYHistoName;
+    static std::string _relRotXHistoName;
+    static std::string _relRotYHistoName;
 
 #endif 
 
