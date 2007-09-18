@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.33 2007-09-17 12:34:55 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.34 2007-09-18 13:03:50 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -1169,7 +1169,7 @@ void EUTelClusteringProcessor::end() {
 #ifdef MARLINDEBUG
     /// /* DEBUG */    message<DEBUG> ( logfile << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector );
 #endif
-    streamlog_out ( DEBUG4 ) << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector << endl;
+    streamlog_out ( MESSAGE2 ) << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector << endl;
   }
 #ifdef MARLINDEBUG
   /// /* DEBUG */  logfile.close();
@@ -1184,8 +1184,7 @@ void EUTelClusteringProcessor::resetStatus(IMPL::TrackerRawDataImpl * status) {
   while ( iter != status->adcValues().end() ) {
     if ( *iter == EUTELESCOPE::HITPIXEL ) {
       *iter = EUTELESCOPE::GOODPIXEL;
-    }
-    if ( *iter == EUTELESCOPE::MISSINGPIXEL ) {
+    } else  if ( *iter == EUTELESCOPE::MISSINGPIXEL ) {
       *iter = EUTELESCOPE::GOODPIXEL;
     }
     ++iter; 
