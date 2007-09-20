@@ -254,374 +254,317 @@ void EUTelLineFit::processEvent (LCEvent * event) {
     return;
   }
   
-  LCCollectionVec * hitCollection     = static_cast<LCCollectionVec*> (event->getCollection( _hitCollectionName ));
-  
-  int detectorID    = -99; // it's a non sense
-  int oldDetectorID = -100;
-  int layerIndex; 
 
-  for ( int iHit = 0; iHit < hitCollection->getNumberOfElements(); iHit++ ) {
+  try {
     
-    TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( hitCollection->getElementAt(iHit) );
+    LCCollectionVec * hitCollection     = static_cast<LCCollectionVec*> (event->getCollection( _hitCollectionName ));
+  
+    int detectorID    = -99; // it's a non sense
+    int oldDetectorID = -100;
+    int layerIndex; 
     
-    LCObjectVec clusterVector = hit->getRawHits();
-    
-    EUTelVirtualCluster * cluster;
-    if ( hit->getType() == kEUTelFFClusterImpl ) {
-      cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-    } else {
-      throw UnknownDataTypeException("Unknown cluster type");
-    }
-    
-    detectorID = cluster->getDetectorID();
-    
-    if ( detectorID != oldDetectorID ) {
-      oldDetectorID = detectorID;
+    for ( int iHit = 0; iHit < hitCollection->getNumberOfElements(); iHit++ ) {
       
-      if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
-	// first of all try to see if this detectorID already belong to 
-	if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
-	  // this means that this detector ID was not already inserted,
-	  // so this is the right place to do that
-	  for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
-	    if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
-	      _conversionIdMap.insert( make_pair( detectorID, iLayer ) );
-	      break;
+      TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( hitCollection->getElementAt(iHit) );
+      
+      LCObjectVec clusterVector = hit->getRawHits();
+      
+      EUTelVirtualCluster * cluster;
+      if ( hit->getType() == kEUTelFFClusterImpl ) {
+	cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+      } else {
+	throw UnknownDataTypeException("Unknown cluster type");
+      }
+      
+      detectorID = cluster->getDetectorID();
+      
+      if ( detectorID != oldDetectorID ) {
+	oldDetectorID = detectorID;
+	
+	if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
+	  // first of all try to see if this detectorID already belong to 
+	  if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
+	    // this means that this detector ID was not already inserted,
+	    // so this is the right place to do that
+	    for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
+	      if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
+		_conversionIdMap.insert( make_pair( detectorID, iLayer ) );
+		break;
+	      }
 	    }
 	  }
 	}
+	
+	// here we take intrinsic resolution from geometry database
+	
+	layerIndex   = _conversionIdMap[detectorID];     
+	_intrResolX[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
+	_intrResolY[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
+	
       }
       
-      // here we take intrinsic resolution from geometry database
-
+      // Old code. Should be removed soon.
+      
+      //       _xPos[iHit] = 1000 * hit->getPosition()[0]; // in um
+      //       _yPos[iHit] = 1000 * hit->getPosition()[1]; // in um
+      //       _zPos[iHit] = 1000 * hit->getPosition()[2]; // in um
+      
+      // Getting positions of the hits.
+      // Here the alignment constants are used to correct the positions.
+      
       layerIndex   = _conversionIdMap[detectorID];     
-      _intrResolX[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
-      _intrResolY[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
+      
+      // The other layers were aligned with respect to the first one.
+      
+      double off_x, off_y, theta_x, theta_y, theta_z1, theta_z2;
+      
+      if (layerIndex == 0) {
+	
+	_xPos[iHit] = 1000 * hit->getPosition()[0]; // in um
+	_yPos[iHit] = 1000 * hit->getPosition()[1]; // in um
+	_zPos[iHit] = 1000 * hit->getPosition()[2]; // in um
+	
+      } else {
+	
+	if (layerIndex == 1) {
+	  
+	  off_x = _alignmentConstantsSecondLayer[0];
+	  off_y = _alignmentConstantsSecondLayer[1];
+	  theta_x = _alignmentConstantsSecondLayer[2];
+	  theta_y = _alignmentConstantsSecondLayer[3];
+	  theta_z1 = _alignmentConstantsSecondLayer[4];
+	  theta_z2 = _alignmentConstantsSecondLayer[5];
+	  
+	} else if (layerIndex == 2) {
+	  
+	  off_x = _alignmentConstantsThirdLayer[0];
+	  off_y = _alignmentConstantsThirdLayer[1];
+	  theta_x = _alignmentConstantsThirdLayer[2];
+	  theta_y = _alignmentConstantsThirdLayer[3];
+	  theta_z1 = _alignmentConstantsThirdLayer[4];
+	  theta_z2 = _alignmentConstantsThirdLayer[5];
+	  
+	} else if (layerIndex == 3) {
+	  
+	  off_x = _alignmentConstantsFourthLayer[0];
+	  off_y = _alignmentConstantsFourthLayer[1];
+	  theta_x = _alignmentConstantsFourthLayer[2];
+	  theta_y = _alignmentConstantsFourthLayer[3];
+	  theta_z1 = _alignmentConstantsFourthLayer[4];
+	  theta_z2 = _alignmentConstantsFourthLayer[5];
+	  
+	} else if (layerIndex == 4) {
+	  
+	  off_x = _alignmentConstantsFifthLayer[0];
+	  off_y = _alignmentConstantsFifthLayer[1];
+	  theta_x = _alignmentConstantsFifthLayer[2];
+	  theta_y = _alignmentConstantsFifthLayer[3];
+	  theta_z1 = _alignmentConstantsFifthLayer[4];
+	  theta_z2 = _alignmentConstantsFifthLayer[5];
+	  
+	} else if (layerIndex == 5) {
+	  
+	  off_x = _alignmentConstantsSixthLayer[0];
+	  off_y = _alignmentConstantsSixthLayer[1];
+	  theta_x = _alignmentConstantsSixthLayer[2];
+	  theta_y = _alignmentConstantsSixthLayer[3];
+	  theta_z1 = _alignmentConstantsSixthLayer[4];
+	  theta_z2 = _alignmentConstantsSixthLayer[5];
+	  
+	} else {
+	  
+	  off_x = 0.0;
+	  off_y = 0.0;
+	  theta_x = 0.0;
+	  theta_y = 0.0;
+	  theta_z1 = 0.0;
+	  theta_z2 = 0.0;
+	  
+	}
+	
+	_xPos[iHit] = (cos(theta_y)*cos(theta_z1)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z1) + cos(theta_x)*sin(theta_z1)) * hit->getPosition()[1] * 1000 + off_x;
+	_yPos[iHit] = ((-1)*cos(theta_y)*sin(theta_z2)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z2) + cos(theta_x)*cos(theta_z2)) * hit->getPosition()[1] * 1000 + off_y;
+	_zPos[iHit] = 1000 * hit->getPosition()[2];
+	
+	
+      }
+      
+      delete cluster; // <--- destroying the cluster   
+    }
+    
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // ++++++++++++ See Blobel Page 226 !!! +++++++++++++++++
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
+    int counter;
+    
+    float S1[2]   = {0,0};
+    float Sx[2]   = {0,0};
+    float Xbar[2] = {0,0};
+    
+    float * Zbar_X = new float[_nPlanes];
+    float * Zbar_Y = new float[_nPlanes];
+    for (counter = 0; counter < _nPlanes; counter++){
+      Zbar_X[counter] = 0.;
+      Zbar_Y[counter] = 0.;
+    }
+    
+    float Sy[2]     = {0,0};
+    float Ybar[2]   = {0,0};
+    float Sxybar[2] = {0,0};
+    float Sxxbar[2] = {0,0};
+    float A2[2]     = {0,0};
+    float Chiquare[2] = {0,0};
+    float angle[2] = {0,0};
+    
+    // define S1
+    for( counter = 0; counter < _nPlanes; counter++ ){
+      S1[0] = S1[0] + 1/pow(_intrResolX[counter],2);
+      S1[1] = S1[1] + 1/pow(_intrResolY[counter],2);
+    }
+    
+    // define Sx
+    for( counter = 0; counter < _nPlanes; counter++ ){
+      Sx[0] = Sx[0] + _zPos[counter]/pow(_intrResolX[counter],2);
+      Sx[1] = Sx[1] + _zPos[counter]/pow(_intrResolY[counter],2);
+    }
+    
+    // define Xbar
+    Xbar[0]=Sx[0]/S1[0];
+    Xbar[1]=Sx[1]/S1[1];
+    
+    // coordinate transformation !! -> bar
+    for( counter=0; counter < _nPlanes; counter++ ){
+      Zbar_X[counter] = _zPos[counter]-Xbar[0];
+      Zbar_Y[counter] = _zPos[counter]-Xbar[1];
+    } 
+    
+    // define Sy
+    for( counter = 0; counter < _nPlanes; counter++ ){
+      Sy[0] = Sy[0] + _xPos[counter]/pow(_intrResolX[counter],2);
+      Sy[1] = Sy[1] + _yPos[counter]/pow(_intrResolY[counter],2);
+    }
+    
+    // define Ybar
+    Ybar[0]=Sy[0]/S1[0];
+    Ybar[1]=Sy[1]/S1[1];
+    
+    // define Sxybar
+    for( counter = 0; counter < _nPlanes; counter++ ){
+      Sxybar[0] = Sxybar[0] + Zbar_X[counter] * _xPos[counter]/pow(_intrResolX[counter],2);
+      Sxybar[1] = Sxybar[1] + Zbar_Y[counter] * _yPos[counter]/pow(_intrResolY[counter],2);
+    }
+    
+    // define Sxxbar
+    for( counter = 0; counter < _nPlanes; counter++ ){
+      Sxxbar[0] = Sxxbar[0] + Zbar_X[counter] * Zbar_X[counter]/pow(_intrResolX[counter],2);
+      Sxxbar[1] = Sxxbar[1] + Zbar_Y[counter] * Zbar_Y[counter]/pow(_intrResolX[counter],2);
+    }
+    
+    // define A2
+    
+    A2[0]=Sxybar[0]/Sxxbar[0];
+    A2[1]=Sxybar[1]/Sxxbar[1];
+    
+    // Calculate chi sqaured
+    // Chi^2 for X and Y coordinate for hits in all planes 
+    
+    for( counter = 0; counter < _nPlanes; counter++ ){
+      Chiquare[0] += pow(-_zPos[counter]*A2[0]
+			 +_xPos[counter]-Ybar[0]+Xbar[0]*A2[0],2)/pow(_intrResolX[counter],2);
+      Chiquare[1] += pow(-_zPos[counter]*A2[1]
+			 +_yPos[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(_intrResolY[counter],2);
+    }
+    
+    for( counter = 0; counter < _nPlanes; counter++ ){
+      _waferResidX[counter] = (Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0])-_xPos[counter];
+      _waferResidY[counter] = (Ybar[1]-Xbar[1]*A2[1]+_zPos[counter]*A2[1])-_yPos[counter];
+    }
+    
+    // define angle
+    
+    
+    angle[0] = atan(A2[0]);
+    angle[1] = atan(A2[1]);
+    
+
+    // Define output track and hit collections
+    LCCollectionVec     * fittrackvec = new LCCollectionVec(LCIO::TRACK);
+    LCCollectionVec     * fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
+    
+    // Set flag for storing track hits in track collection
+    
+    LCFlagImpl flag(fittrackvec->getFlag()); 
+    flag.setBit( LCIO::TRBIT_HITS );
+    fittrackvec->setFlag(flag.getFlag());
+    
+    
+    // fill output collections...
+    
+    // Write fit result out
+    
+    TrackImpl * fittrack = new TrackImpl();
+    
+    // Following parameters are not used for Telescope
+    // and are set to zero (just in case)
+    fittrack->setOmega(0.);     // curvature of the track
+    fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
+    fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
+    fittrack->setPhi(0.);       // phi of the track at reference point
+    fittrack->setTanLambda(0.); // dip angle of the track at reference point
+    
+    // Used class members
+    
+    fittrack->setChi2(Chiquare[0]);  // x Chi2 of the fit 
+    //  fittrack->setNdf(nBestFired); // Number of planes fired (!)
+    
+    fittrack->setIsReferencePointPCA(false);  
+    
+    // Calculate positions of fitted track in every plane
+    
+    for( counter = 0; counter < _nPlanes; counter++ ){
+      
+      _xFitPos[counter] = Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0];
+      _yFitPos[counter] = Ybar[1]-Xbar[1]*A2[1]+_zPos[counter]*A2[1];
+      
+      TrackerHitImpl * fitpoint = new TrackerHitImpl;
+      
+      // Plane number stored as hit type
+      fitpoint->setType(counter+1);
+      double pos[3];
+      pos[0] = _xFitPos[counter];
+      pos[1] = _yFitPos[counter];
+      pos[2] = _zPos[counter];
+      
+      fitpoint->setPosition(pos);    
+      
+      // store fit point 
+      
+      fitpointvec->push_back(fitpoint);
+      
+      //   add point to track
+      
+      fittrack->addHit(fitpoint);
       
     }
-
-    // Old code. Should be removed soon.
-
-//       _xPos[iHit] = 1000 * hit->getPosition()[0]; // in um
-//       _yPos[iHit] = 1000 * hit->getPosition()[1]; // in um
-//       _zPos[iHit] = 1000 * hit->getPosition()[2]; // in um
-
-    // Getting positions of the hits.
-    // Here the alignment constants are used to correct the positions.
-
-    layerIndex   = _conversionIdMap[detectorID];     
-
-    // The other layers were aligned with respect to the first one.
-
-    double off_x, off_y, theta_x, theta_y, theta_z1, theta_z2;
-
-    if (layerIndex == 0) {
-
-      _xPos[iHit] = 1000 * hit->getPosition()[0]; // in um
-      _yPos[iHit] = 1000 * hit->getPosition()[1]; // in um
-      _zPos[iHit] = 1000 * hit->getPosition()[2]; // in um
-
-    } else {
-
-      if (layerIndex == 1) {
-
-	off_x = _alignmentConstantsSecondLayer[0];
-	off_y = _alignmentConstantsSecondLayer[1];
-	theta_x = _alignmentConstantsSecondLayer[2];
-	theta_y = _alignmentConstantsSecondLayer[3];
-	theta_z1 = _alignmentConstantsSecondLayer[4];
-	theta_z2 = _alignmentConstantsSecondLayer[5];
-
-      } else if (layerIndex == 2) {
-
-	off_x = _alignmentConstantsThirdLayer[0];
-	off_y = _alignmentConstantsThirdLayer[1];
-	theta_x = _alignmentConstantsThirdLayer[2];
-	theta_y = _alignmentConstantsThirdLayer[3];
-	theta_z1 = _alignmentConstantsThirdLayer[4];
-	theta_z2 = _alignmentConstantsThirdLayer[5];
-
-      } else if (layerIndex == 3) {
-
-	off_x = _alignmentConstantsFourthLayer[0];
-	off_y = _alignmentConstantsFourthLayer[1];
-	theta_x = _alignmentConstantsFourthLayer[2];
-	theta_y = _alignmentConstantsFourthLayer[3];
-	theta_z1 = _alignmentConstantsFourthLayer[4];
-	theta_z2 = _alignmentConstantsFourthLayer[5];
-
-      } else if (layerIndex == 4) {
-
-	off_x = _alignmentConstantsFifthLayer[0];
-	off_y = _alignmentConstantsFifthLayer[1];
-	theta_x = _alignmentConstantsFifthLayer[2];
-	theta_y = _alignmentConstantsFifthLayer[3];
-	theta_z1 = _alignmentConstantsFifthLayer[4];
-	theta_z2 = _alignmentConstantsFifthLayer[5];
-
-      } else if (layerIndex == 5) {
-	
-	off_x = _alignmentConstantsSixthLayer[0];
-	off_y = _alignmentConstantsSixthLayer[1];
-	theta_x = _alignmentConstantsSixthLayer[2];
-	theta_y = _alignmentConstantsSixthLayer[3];
-	theta_z1 = _alignmentConstantsSixthLayer[4];
-	theta_z2 = _alignmentConstantsSixthLayer[5];
-
-      } else {
-
-	off_x = 0.0;
-	off_y = 0.0;
-	theta_x = 0.0;
-	theta_y = 0.0;
-	theta_z1 = 0.0;
-	theta_z2 = 0.0;
-
-      }
-
-      _xPos[iHit] = (cos(theta_y)*cos(theta_z1)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z1) + cos(theta_x)*sin(theta_z1)) * hit->getPosition()[1] * 1000 + off_x;
-      _yPos[iHit] = ((-1)*cos(theta_y)*sin(theta_z2)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z2) + cos(theta_x)*cos(theta_z2)) * hit->getPosition()[1] * 1000 + off_y;
-      _zPos[iHit] = 1000 * hit->getPosition()[2];
-
-
-    }
-
-    delete cluster; // <--- destroying the cluster   
-  }
-  
-  // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  // ++++++++++++ See Blobel Page 226 !!! +++++++++++++++++
-  // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  
-  int counter;
-  
-  float S1[2]   = {0,0};
-  float Sx[2]   = {0,0};
-  float Xbar[2] = {0,0};
-  
-  float * Zbar_X = new float[_nPlanes];
-  float * Zbar_Y = new float[_nPlanes];
-  for (counter = 0; counter < _nPlanes; counter++){
-    Zbar_X[counter] = 0.;
-    Zbar_Y[counter] = 0.;
-  }
-  
-  float Sy[2]     = {0,0};
-  float Ybar[2]   = {0,0};
-  float Sxybar[2] = {0,0};
-  float Sxxbar[2] = {0,0};
-  float A2[2]     = {0,0};
-  float Chiquare[2] = {0,0};
-  float angle[2] = {0,0};
-  
-  // define S1
-  for( counter = 0; counter < _nPlanes; counter++ ){
-    S1[0] = S1[0] + 1/pow(_intrResolX[counter],2);
-    S1[1] = S1[1] + 1/pow(_intrResolY[counter],2);
-  }
-  
-  // define Sx
-  for( counter = 0; counter < _nPlanes; counter++ ){
-    Sx[0] = Sx[0] + _zPos[counter]/pow(_intrResolX[counter],2);
-    Sx[1] = Sx[1] + _zPos[counter]/pow(_intrResolY[counter],2);
-  }
-  
-  // define Xbar
-  Xbar[0]=Sx[0]/S1[0];
-  Xbar[1]=Sx[1]/S1[1];
-  
-  // coordinate transformation !! -> bar
-  for( counter=0; counter < _nPlanes; counter++ ){
-    Zbar_X[counter] = _zPos[counter]-Xbar[0];
-    Zbar_Y[counter] = _zPos[counter]-Xbar[1];
-  } 
-  
-  // define Sy
-  for( counter = 0; counter < _nPlanes; counter++ ){
-    Sy[0] = Sy[0] + _xPos[counter]/pow(_intrResolX[counter],2);
-    Sy[1] = Sy[1] + _yPos[counter]/pow(_intrResolY[counter],2);
-  }
-  
-  // define Ybar
-  Ybar[0]=Sy[0]/S1[0];
-  Ybar[1]=Sy[1]/S1[1];
-  
-  // define Sxybar
-  for( counter = 0; counter < _nPlanes; counter++ ){
-    Sxybar[0] = Sxybar[0] + Zbar_X[counter] * _xPos[counter]/pow(_intrResolX[counter],2);
-    Sxybar[1] = Sxybar[1] + Zbar_Y[counter] * _yPos[counter]/pow(_intrResolY[counter],2);
-  }
-  
-  // define Sxxbar
-  for( counter = 0; counter < _nPlanes; counter++ ){
-    Sxxbar[0] = Sxxbar[0] + Zbar_X[counter] * Zbar_X[counter]/pow(_intrResolX[counter],2);
-    Sxxbar[1] = Sxxbar[1] + Zbar_Y[counter] * Zbar_Y[counter]/pow(_intrResolX[counter],2);
-  }
-  
-  // define A2
-  
-  A2[0]=Sxybar[0]/Sxxbar[0];
-  A2[1]=Sxybar[1]/Sxxbar[1];
-  
-  // Calculate chi sqaured
-  // Chi^2 for X and Y coordinate for hits in all planes 
-  
-  for( counter = 0; counter < _nPlanes; counter++ ){
-    Chiquare[0] += pow(-_zPos[counter]*A2[0]
-		       +_xPos[counter]-Ybar[0]+Xbar[0]*A2[0],2)/pow(_intrResolX[counter],2);
-    Chiquare[1] += pow(-_zPos[counter]*A2[1]
-		       +_yPos[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(_intrResolY[counter],2);
-  }
-  
-  for( counter = 0; counter < _nPlanes; counter++ ){
-    _waferResidX[counter] = (Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0])-_xPos[counter];
-    _waferResidY[counter] = (Ybar[1]-Xbar[1]*A2[1]+_zPos[counter]*A2[1])-_yPos[counter];
-  }
-
-  // define angle
-
-
-  angle[0] = atan(A2[0]);
-  angle[1] = atan(A2[1]);
-
-
-  // Define output track and hit collections
-  LCCollectionVec     * fittrackvec = new LCCollectionVec(LCIO::TRACK);
-  LCCollectionVec     * fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
-
-  // Set flag for storing track hits in track collection
-
-  LCFlagImpl flag(fittrackvec->getFlag()); 
-  flag.setBit( LCIO::TRBIT_HITS );
-  fittrackvec->setFlag(flag.getFlag());
-
-
-  // fill output collections...
-
-  // Write fit result out
-	
-  TrackImpl * fittrack = new TrackImpl();
-  
-  // Following parameters are not used for Telescope
-  // and are set to zero (just in case)
-  fittrack->setOmega(0.);     // curvature of the track
-  fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
-  fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
-  fittrack->setPhi(0.);       // phi of the track at reference point
-  fittrack->setTanLambda(0.); // dip angle of the track at reference point
-
-  // Used class members
-
-  fittrack->setChi2(Chiquare[0]);  // x Chi2 of the fit 
-  //  fittrack->setNdf(nBestFired); // Number of planes fired (!)
-
-  fittrack->setIsReferencePointPCA(false);  
-
-  // Calculate positions of fitted track in every plane
-
-  for( counter = 0; counter < _nPlanes; counter++ ){
     
-    _xFitPos[counter] = Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0];
-    _yFitPos[counter] = Ybar[1]-Xbar[1]*A2[1]+_zPos[counter]*A2[1];
-
-    TrackerHitImpl * fitpoint = new TrackerHitImpl;
-
-    // Plane number stored as hit type
-    fitpoint->setType(counter+1);
-    double pos[3];
-    pos[0] = _xFitPos[counter];
-    pos[1] = _yFitPos[counter];
-    pos[2] = _zPos[counter];
-
-    fitpoint->setPosition(pos);    
-
-    // store fit point 
+    fittrackvec->addElement(fittrack);
     
-    fitpointvec->push_back(fitpoint);
+    event->addCollection(fittrackvec,_outputTrackColName);
+    event->addCollection(fitpointvec,_outputHitColName);
     
-    //   add point to track
-    
-    fittrack->addHit(fitpoint);
-    
-  }
-  
-  fittrackvec->addElement(fittrack);
-
-  event->addCollection(fittrackvec,_outputTrackColName);
-  event->addCollection(fitpointvec,_outputHitColName);
-
 #ifdef MARLIN_USE_AIDA
-  string tempHistoName;
-  
-  if ( _histogramSwitch ) {
-    {
-      stringstream ss; 
-      ss << _chi2XLocalname << endl;
-    }
-    if ( AIDA::IHistogram1D* chi2x_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2XLocalname]) )
-      chi2x_histo->fill(Chiquare[0]);
-    else {
-      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _chi2XLocalname
-		       << ".\nDisabling histogramming from now on " );
-      _histogramSwitch = false;
-    }       
-  }
-  
-  if ( _histogramSwitch ) {
-    {
-      stringstream ss; 
-      ss << _chi2YLocalname << endl;
-    }
-    if ( AIDA::IHistogram1D* chi2y_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2YLocalname]) )
-      chi2y_histo->fill(Chiquare[1]);
-    else {
-      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _chi2YLocalname
-		       << ".\nDisabling histogramming from now on " );
-      _histogramSwitch = false;
-    }       
-  }
-
-  if ( _histogramSwitch ) {
-    {
-      stringstream ss; 
-      ss << _angleXLocalname << endl;
-    }
-    if ( AIDA::IHistogram1D* anglex_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleXLocalname]) )
-      anglex_histo->fill(angle[0]*180/M_PI);
-    else {
-      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _angleXLocalname
-		       << ".\nDisabling histogramming from now on " );
-      _histogramSwitch = false;
-    }       
-  }
- 
-  if ( _histogramSwitch ) {
-    {
-      stringstream ss; 
-      ss << _angleYLocalname << endl;
-    }
-    if ( AIDA::IHistogram1D* angley_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleYLocalname]) )
-      angley_histo->fill(angle[1]*180/M_PI);
-    else {
-      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _angleYLocalname
-		       << ".\nDisabling histogramming from now on " );
-      _histogramSwitch = false;
-    }       
-  }
- 
-
-  for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
+    string tempHistoName;
     
     if ( _histogramSwitch ) {
       {
 	stringstream ss; 
-	ss << _residualXLocalname << "-d" << iDetector; 
-	tempHistoName=ss.str();
+	ss << _chi2XLocalname << endl;
       }
-      if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	residx_histo->fill(_waferResidX[iDetector]);
+      if ( AIDA::IHistogram1D* chi2x_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2XLocalname]) )
+	chi2x_histo->fill(Chiquare[0]);
       else {
-	message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualXLocalname
+	message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _chi2XLocalname
 			 << ".\nDisabling histogramming from now on " );
 	_histogramSwitch = false;
       }       
@@ -630,26 +573,94 @@ void EUTelLineFit::processEvent (LCEvent * event) {
     if ( _histogramSwitch ) {
       {
 	stringstream ss; 
-	ss << _residualYLocalname << "-d" << iDetector; 
-	tempHistoName=ss.str();
+	ss << _chi2YLocalname << endl;
       }
-      if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	residy_histo->fill(_waferResidY[iDetector]);
+      if ( AIDA::IHistogram1D* chi2y_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2YLocalname]) )
+	chi2y_histo->fill(Chiquare[1]);
       else {
-	message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualYLocalname
+	message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _chi2YLocalname
 			 << ".\nDisabling histogramming from now on " );
 	_histogramSwitch = false;
       }       
     }
-  }
-
+    
+    if ( _histogramSwitch ) {
+      {
+	stringstream ss; 
+	ss << _angleXLocalname << endl;
+      }
+      if ( AIDA::IHistogram1D* anglex_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleXLocalname]) )
+	anglex_histo->fill(angle[0]*180/M_PI);
+      else {
+	message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _angleXLocalname
+			 << ".\nDisabling histogramming from now on " );
+	_histogramSwitch = false;
+      }       
+    }
+    
+    if ( _histogramSwitch ) {
+      {
+	stringstream ss; 
+	ss << _angleYLocalname << endl;
+      }
+      if ( AIDA::IHistogram1D* angley_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleYLocalname]) )
+	angley_histo->fill(angle[1]*180/M_PI);
+      else {
+	message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _angleYLocalname
+			 << ".\nDisabling histogramming from now on " );
+	_histogramSwitch = false;
+      }       
+    }
+    
+    
+    for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
+      
+      if ( _histogramSwitch ) {
+	{
+	  stringstream ss; 
+	  ss << _residualXLocalname << "-d" << iDetector; 
+	  tempHistoName=ss.str();
+	}
+	if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+	  residx_histo->fill(_waferResidX[iDetector]);
+	else {
+	  message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualXLocalname
+			   << ".\nDisabling histogramming from now on " );
+	  _histogramSwitch = false;
+	}       
+      }
+      
+      if ( _histogramSwitch ) {
+	{
+	  stringstream ss; 
+	  ss << _residualYLocalname << "-d" << iDetector; 
+	  tempHistoName=ss.str();
+	}
+	if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+	  residy_histo->fill(_waferResidY[iDetector]);
+	else {
+	  message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualYLocalname
+			   << ".\nDisabling histogramming from now on " );
+	  _histogramSwitch = false;
+	}       
+      }
+    }
+    
 #endif 
-  
-  delete [] Zbar_X;
-  delete [] Zbar_Y;
+    
+    delete [] Zbar_X;
+    delete [] Zbar_Y;
+    
+
+  } catch (DataNotAvailableException& e) {
+    
+    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber() 
+				<< " in run " << event->getRunNumber() << endl;
+    
+  }
 
   ++_iEvt;
-  
+    
   if ( isFirstEvent() ) _isFirstEvent = false;
   
 }
