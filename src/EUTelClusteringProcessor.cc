@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.34 2007-09-18 13:03:50 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.35 2007-09-20 07:34:08 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -539,8 +539,9 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
 	    if ( clusterID >= 256 ) {
 	      ++limitExceed;
 	      --clusterID;
-	      streamlog_out ( WARNING0 ) << "Event " << _iEvt << " contains more than 256 clusters (" 
-					 << clusterID + limitExceed << ")" << endl;
+	      streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber() 
+					 << " on detector " << _iDetector 
+					 << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
 	    }
 	  } 
 	}
@@ -702,7 +703,8 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
 	  if ( clusterID > 256 ) {
 	    --clusterID;
 	    ++limitExceed;
-	    streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " on run " << evt->getRunNumber()
+	    streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+				       << " on detector " << _iDetector 
 				       << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
 	  }
 
@@ -879,7 +881,8 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
 	  if ( clusterID > 256 ) {
 	    --clusterID;
 	    ++limitExceed;
-	    streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " on run " << evt->getRunNumber()
+	    streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber() 
+				       << " on detector " << _iDetector 
 				       << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
 	  }
 
@@ -1134,8 +1137,9 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 	    if ( clusterCounter > 256 ) {
 	      ++limitExceed;
 	      --clusterCounter;
-	      streamlog_out ( WARNING0 ) << "Event " << _iEvt << " contains more than 256 clusters (" 
-					 << clusterCounter + limitExceed << ")" << endl;
+	      streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber() 
+					 << " on detector " << _iDetector 
+					 << " contains more than 256 cluster (" << clusterCounter + limitExceed << ")" << endl;
 	    }
 	  } else {
 	    // the cluster has not passed the cut!

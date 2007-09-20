@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.14 2007-09-13 17:29:01 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.15 2007-09-20 07:34:08 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -425,9 +425,9 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 #endif
 	
 	} else {
-	  message<WARNING> ( log() << "Skipping event " << _iEvt 
-			     << " because of common mode limit exceeded (" 
-			     << skippedPixel << ")");
+	  streamlog_out ( WARNING4 ) << "Skipping event " << _iEvt 
+				     << " because of common mode limit exceeded (" 
+				     << skippedPixel << ")" << endl;
 	  throw SkipEventException(this);
 	}
       }
