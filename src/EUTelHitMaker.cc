@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.16 2007-08-30 08:51:32 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.17 2007-09-20 11:28:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -55,6 +55,8 @@
 #include <vector>
 #include <algorithm>
 #include <memory>
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 using namespace marlin;
@@ -133,8 +135,8 @@ void EUTelHitMaker::init() {
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
 
-  message<ERROR> ( "Marlin was not built with GEAR support." );
-  message<ERROR> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
+  streamlog_out ( ERROR4 ) <<  "Marlin was not built with GEAR support." << endl
+			   <<  "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." << endl;
   
   // I'm thinking if this is the case of throwing an exception or
   // not. This is a really error and not something that can
@@ -145,7 +147,7 @@ void EUTelHitMaker::init() {
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
-    message<ERROR> ( "The GearMgr is not available, for an unknown reason." );
+    streamlog_out ( ERROR4 ) <<  "The GearMgr is not available, for an unknown reason." << endl;
     exit(-1);
   }
 
@@ -168,9 +170,9 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
   // should be in principle be the same as the number of layers in the
   // geometry description
   if ( header->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) {
-    message<ERROR> ( "Error during the geometry consistency check: " );
-    message<ERROR> ( log() << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " );
-    message<ERROR> ( log() << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() << " silicon planes" );
+    streamlog_out ( ERROR4 ) << "Error during the geometry consistency check: " << endl
+			     << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " << endl
+			     << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() << " silicon planes" << endl;
     exit(-1);
   }
   
@@ -181,17 +183,17 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
   // quitting ask the user what to do.
 
   if ( header->getGeoID() == 0 ) 
-    message<WARNING> ( "The geometry ID in the run header is set to zero.\n" 
-		       "This may mean that the GeoID parameter was not set" );
+    streamlog_out ( WARNING0 ) <<  "The geometry ID in the run header is set to zero." << endl
+			       <<  "This may mean that the GeoID parameter was not set" << endl;
   
-
+  
   if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
-    message<ERROR> ( "Error during the geometry consistency check: " );
-    message<ERROR> ( log() << "The run header says the GeoID is " << header->getGeoID() );
-    message<ERROR> ( log() << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID() );
+    streamlog_out ( ERROR1 ) <<  "Error during the geometry consistency check: " << endl
+			     << "The run header says the GeoID is " << header->getGeoID() << endl
+			     << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID() << endl;
     string answer;
     while (true) {
-      message<ERROR> ( "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" );
+      streamlog_out ( ERROR1 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
       cin >> answer;
       // put the answer in lower case before making the comparison.
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
@@ -213,18 +215,23 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelHitMaker::processEvent (LCEvent * event) {
 
+  if (_iEvt % 10 == 0) 
+    streamlog_out( MESSAGE4 ) << "Processing event " 
+			      << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+			      << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+			      << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  ++_iEvt;
 
+  
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
   
   if ( evt->getEventType() == kEORE ) {
 
-    message<DEBUG> ( "EORE found: nothing else to do." );
+    streamlog_out ( DEBUG4 ) <<  "EORE found: nothing else to do." << endl;
     
     return;
   }
 
-  if ( (_iEvt % 10) == 0 ) 
-    message<MESSAGE> ( log() << "Applying geometry to the pulses of event " << _iEvt );
   
   try {
 
@@ -242,16 +249,16 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       try {  
 	xEtaCollection = static_cast<LCCollectionVec*> (event->getCollection( _etaCollectionNames[0] )) ;
       } catch (DataNotAvailableException& e) {
-	message<ERROR> ( log() << "The eta collection " << _etaCollectionNames[0] << " is not available" );
-	message<ERROR> ( log() << "Continuing without eta correction " ) ;
+	streamlog_out ( ERROR1 )  << "The eta collection " << _etaCollectionNames[0] << " is not available" << endl
+				  << "Continuing without eta correction " << endl;
 	_etaCorrection = 0;
       }
       
       try {  
 	yEtaCollection = static_cast<LCCollectionVec*> (event->getCollection( _etaCollectionNames[1] )) ;
       } catch (DataNotAvailableException& e) {
-	message<ERROR> ( log() << "The eta collection " << _etaCollectionNames[1] << " is not available" );
-	message<ERROR> ( log() << "Continuing without eta correction " ) ;
+	streamlog_out ( ERROR1 ) << "The eta collection " << _etaCollectionNames[1] << " is not available" << endl
+				 << "Continuing without eta correction " << endl;
 	_etaCorrection = 0;
       }
     }
@@ -259,10 +266,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     if ( isFirstEvent() && _etaCorrection == 1) {
       if ( ( xEtaCollection->getNumberOfElements() != _siPlanesParameters->getSiPlanesNumber() ) ||
 	   ( yEtaCollection->getNumberOfElements() != _siPlanesParameters->getSiPlanesNumber() ) ) {
-	message<ERROR> ( log() 
-			 <<  "The eta collections contain a different number of elements wrt to "
-			 << _siPlanesParameters->getSiPlanesNumber() );
-	message<ERROR> ( log() << "Continuing without eta correction " );
+	streamlog_out ( ERROR1 ) <<  "The eta collections contain a different number of elements wrt to " 
+				 << _siPlanesParameters->getSiPlanesNumber() << endl
+				 << "Continuing without eta correction " << endl;
 	_etaCorrection = 0;
       } else {
 #ifdef MARLIN_USE_AIDA
@@ -294,8 +300,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 	      clusterCenterEta->setTitle("Position of the cluster center (Eta corrected)");
 	      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEta ) );
 	    } else {
-	      message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+					<< "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	      _histogramSwitch = false;
 	    }
 	    
@@ -312,8 +318,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 	      clusterCenterEta->setTitle("Position of the cluster center");
 	      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenter ) );
 	    } else {
-	      message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+					<< "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	      _histogramSwitch = false;
 	    }
 	    
@@ -330,8 +336,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 	      clusterCenterEtaX->setTitle("Projection along X of the cluster center (Eta corrected)");
 	      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEtaX ) );
 	    } else {
-	      message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+					<< "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	      _histogramSwitch = false;
 	    }
 	    
@@ -347,8 +353,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 	      clusterCenterX->setTitle("Projection along X of the cluster center");
 	      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterX ) );
 	    } else {
-	      message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+					<< "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	      _histogramSwitch = false;
 	    }
 	    
@@ -364,8 +370,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 	      clusterCenterEtaY->setTitle("Projection along Y of the cluster center (Eta corrected)");
 	      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEtaY ) );
 	    } else {
-	      message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+					<< "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	      _histogramSwitch = false;
 	    }
 	    
@@ -381,8 +387,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 	      clusterCenterY->setTitle("Projection along Y of the cluster center");
 	      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterY ) );
 	    } else {
-	      message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+					<< "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	      _histogramSwitch = false;
 	    }
 	    
@@ -412,7 +418,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       if ( type == kEUTelFFClusterImpl ) {
 	cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
       } else {
-	message<ERROR> ( "Unknown cluster type. Sorry for quitting" );
+	streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
 	throw UnknownDataTypeException("Cluster type unknown");
       }
       
@@ -453,7 +459,15 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 	xPointing[1] = _siPlanesLayerLayout->getSensitiveRotation2(layerIndex); // was  0 ;
 	yPointing[0] = _siPlanesLayerLayout->getSensitiveRotation3(layerIndex); // was  0 ;  
 	yPointing[1] = _siPlanesLayerLayout->getSensitiveRotation4(layerIndex); // was -1 ;
+
+	if (  ( xPointing[0] == xPointing[1] ) && ( xPointing[0] == 0 ) ) {
+	  streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
+	}
 	
+	if (  ( yPointing[0] == yPointing[1] ) && ( yPointing[0] == 0 ) ) {
+	  streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
+	}
+
       }
       
       // get the position of the seed pixel. This is in pixel number.
@@ -494,8 +508,10 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 	  anomalous = true;
 	}
 	
-	if ( anomalous )  message<DEBUG> ( log() << "Found anomalous cluster\n" << ( * cluster ) );
-	
+	if ( anomalous )  {
+	  streamlog_out ( DEBUG2 ) << "Found anomalous cluster\n" << ( * cluster ) << endl;
+	}
+
 #ifdef MARLIN_USE_AIDA
 	string tempHistoName;
 	if ( _histogramSwitch ) {
@@ -572,14 +588,15 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 	if ( AIDA::ICloud2D* cloud = dynamic_cast<AIDA::ICloud2D*>(_aidaHistoMap[ tempHistoName ]) )
 	  cloud->fill(xDet, yDet);
 	else {
-	  message<ERROR> ( log() << "Not able to retrieve histogram pointer for " << tempHistoName 
-			   << ".\nDisabling histogramming from now on " );
+	  streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName 
+				    << ".\nDisabling histogramming from now on " << endl;
 	  _histogramSwitch = false;
 	}
 	
       }
 #endif 
-      
+
+
       // now perform the rotation of the frame of references and put the
       // results already into a 3D array of double to be ready for the
       // setPosition method of TrackerHit
@@ -589,9 +606,23 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       
       // now the translation
       // not sure about the sign. At least it is working for the current
-      // configuration but we need to double checkit
-      telPos[0] -= ( xZero - xSize/2 );
-      telPos[1] -= ( yZero - ySize/2 );
+      // configuration but we need to double check it
+      double sign;
+      if      ( xPointing[0] < 0 )       sign = -1 ;
+      else if ( xPointing[0] > 0 )       sign =  1 ;
+      else {
+	if       ( xPointing[1] < 0 )    sign = -1 ;
+	else if  ( xPointing[1] > 0 )    sign =  1 ;
+      }      
+      telPos[0] -= sign * ( xZero + xSize/2 );
+      
+      if      ( yPointing[0] < 0 )       sign = -1 ;
+      else if ( yPointing[0] > 0 )       sign =  1 ;
+      else {
+	if       ( yPointing[1] < 0 )    sign = -1 ;
+	else if  ( yPointing[1] > 0 )    sign =  1 ;
+      }
+      telPos[1] -= sign * ( yZero + ySize/2 );
       telPos[2] = zZero + 0.5 * zThickness;
       
 #ifdef MARLIN_USE_AIDA
@@ -604,15 +635,15 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 	AIDA::ICloud2D * cloud2D = dynamic_cast<AIDA::ICloud2D*> (_aidaHistoMap[ tempHistoName ] );
 	if ( cloud2D ) cloud2D->fill( telPos[0], telPos[1] );
 	else {
-	  message<ERROR> ( log() << "Not able to retrieve histogram pointer for " << tempHistoName 
-			   << ".\nDisabling histogramming from now on " );
+	  streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName 
+				    << ".\nDisabling histogramming from now on " << endl;
 	  _histogramSwitch = false;
 	}
 	AIDA::ICloud3D * cloud3D = dynamic_cast<AIDA::ICloud3D*> (_aidaHistoMap[ _densityPlotName ] );
 	if ( cloud3D ) cloud3D->fill( telPos[0], telPos[1], telPos[2] );
 	else {
-	  message<ERROR> ( log() << "Not able to retrieve histogram pointer for " << tempHistoName 
-			   << ".\nDisabling histogramming from now on " );
+	  streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName 
+				    << ".\nDisabling histogramming from now on " << endl;
 	  _histogramSwitch = false;
 	}
 	
@@ -642,9 +673,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     
     if ( isFirstEvent() ) _isFirstEvent = false;
   } catch (DataNotAvailableException& e  ) {
-    message<WARNING> ( log() << "No input collection found on event " << _iEvt );
+    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber() 
+				<< " in run " << event->getRunNumber() << endl;
   }
-  ++_iEvt;
 
 }
 
@@ -653,7 +684,7 @@ void EUTelHitMaker::end() {
 #ifdef MARLIN_USE_AIDA
     if ( _histogramSwitch ) {
       
-      message<DEBUG> ( log() << "Converting clouds to histograms before leaving " );
+      streamlog_out ( DEBUG4 )  << "Converting clouds to histograms before leaving " << endl;
       
       map<string, AIDA::IBaseHistogram *>::iterator mapIter = _aidaHistoMap.begin();
       while ( mapIter != _aidaHistoMap.end() ) {
@@ -667,8 +698,8 @@ void EUTelHitMaker::end() {
     }
     
 #endif
-
-  message<MESSAGE> ( log() << "Successfully finished" ) ;  
+    
+    streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
 }
 
 void EUTelHitMaker::bookHistos() {
@@ -676,7 +707,7 @@ void EUTelHitMaker::bookHistos() {
 #ifdef MARLIN_USE_AIDA
 
   try {
-    message<MESSAGE> ( "Booking histograms" );
+    streamlog_out ( MESSAGE4 ) <<  "Booking histograms" << endl;
     
     string tempHistoName;
     
@@ -703,8 +734,8 @@ void EUTelHitMaker::bookHistos() {
 	hitCloudLocal->setTitle("Hit map in the detector local frame of reference");
 	_aidaHistoMap.insert( make_pair( tempHistoName, hitCloudLocal ) );
       } else {
-	message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			 << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+				  << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	_histogramSwitch = false;
       }
       
@@ -720,8 +751,8 @@ void EUTelHitMaker::bookHistos() {
 	hitCloudTelescope->setTitle("Hit map in the telescope frame of reference");
 	_aidaHistoMap.insert( make_pair ( tempHistoName, hitCloudTelescope ) );
       } else {
-	message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			 << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+				  << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	_histogramSwitch = false;
       }
     }
@@ -731,8 +762,8 @@ void EUTelHitMaker::bookHistos() {
       densityPlot->setTitle("Hit position in the telescope frame of reference");
       _aidaHistoMap.insert( make_pair ( _densityPlotName, densityPlot ) ) ;
     } else {
-      message<ERROR> ( log() << "Problem booking the " << (_densityPlotName) << ".\n"
-		       << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+      streamlog_out ( ERROR1 )  << "Problem booking the " << (_densityPlotName) << ".\n"
+				<< "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
       _histogramSwitch = false;
     }
 
@@ -742,17 +773,17 @@ void EUTelHitMaker::bookHistos() {
 
   } catch (lcio::Exception& e ) {
     
-    message<ERROR> ( log() << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" );
+    streamlog_out ( ERROR1 ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
     string answer;
     while ( true ) {
-      message<ERROR> ( "[q]/[c]" );
+      streamlog_out ( ERROR1 ) <<  "[q]/[c]" << endl;
       cin >> answer;
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
       if ( answer == "q" ) {
 	exit(-1);
       } else if ( answer == "c" )
 	_histogramSwitch = false;
-	break;
+      break;
     }
   }
 #endif
