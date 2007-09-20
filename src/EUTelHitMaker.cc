@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.17 2007-09-20 11:28:51 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.18 2007-09-20 11:41:36 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -607,7 +607,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       // now the translation
       // not sure about the sign. At least it is working for the current
       // configuration but we need to double check it
-      double sign;
+      double sign = 0;
       if      ( xPointing[0] < 0 )       sign = -1 ;
       else if ( xPointing[0] > 0 )       sign =  1 ;
       else {
