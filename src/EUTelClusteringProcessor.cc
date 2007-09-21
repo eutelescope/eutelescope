@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.35 2007-09-20 07:34:08 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.36 2007-09-21 16:05:54 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -381,6 +381,9 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
     TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt(_iDetector));
     TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt(_iDetector));
 
+    // reset the status
+    resetStatus(status);
+
     // prepare the matrix decoder
     EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
 
@@ -410,6 +413,10 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
 	if (  ( signal  > _seedPixelCut * noise->getChargeValues()[ index ] ) &&
 	      ( status->getADCValues()[ index ] == EUTELESCOPE::GOODPIXEL ) ) {
 	  seedCandidateMap.insert ( make_pair ( signal, index ) );
+	  streamlog_out ( DEBUG1 ) << "Added pixel " << sparsePixel->getXCoord() 
+				   << ", " << sparsePixel->getYCoord() 
+				   << " with signal " << signal 
+				   << " to the seedCandidateMap" << endl;
 	}
 	  
       }
@@ -419,7 +426,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
     
     if ( seedCandidateMap.size() != 0 ) {
       
-      streamlog_out ( DEBUG0 ) << "  Seed candidates " << _seedCandidateMap.size() << endl;
+      streamlog_out ( DEBUG0 ) << "  Seed candidates " << seedCandidateMap.size() << endl;
       
       // now built up a cluster for each seed candidate
       multimap<float, int >::reverse_iterator rMapIter = seedCandidateMap.rbegin();
@@ -1037,11 +1044,11 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 
 		bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
 		bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
+		clusterCandidateIndeces.push_back(index);
 		if ( isGood && !isHit ) {
 		  clusterCandidateSignal += nzsData->getChargeValues()[index];
 		  clusterCandidateNoise2 += pow(noise->getChargeValues()[index] , 2);
 		  clusterCandidateCharges.push_back(nzsData->getChargeValues()[index]);
-		  clusterCandidateIndeces.push_back(index);
 		} else if (isHit) {
 		  // this can be a good place to flag the current
 		  // cluster as kMergedCluster, but it would introduce
@@ -1062,9 +1069,11 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 	      } else {
 		cluQuality = cluQuality | kBorderCluster;
 		clusterCandidateCharges.push_back(0.);
+		clusterCandidateIndeces.push_back( -1 ) ;
 	      }
 	    }
 	  }
+
 	  // at this point we have built the cluster candidate,
 	  // we need to validate it
 	  if ( clusterCandidateSignal > _clusterCut * sqrt(clusterCandidateNoise2) ) {
@@ -1104,7 +1113,9 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 
 	    
 	    while ( indexIter != clusterCandidateIndeces.end() ) {
-	      status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+	      if (*indexIter != -1 ) {
+		status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+	      }
 	      ++indexIter;
 	    }
 
@@ -1112,10 +1123,13 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 	    for (unsigned int iPixel = 0; iPixel < clusterCandidateIndeces.size(); iPixel++) {
 	      /// /* DEBUG */	      message<DEBUG> ( logfile << "  x " << matrixDecoder.getXFromIndex(clusterCandidateIndeces[iPixel])
 	      /// /* DEBUG */			       << "  y " <<  matrixDecoder.getYFromIndex(clusterCandidateIndeces[iPixel])
-	      /// /* DEBUG */			       << "  s " <<  clusterCandidateCharges[iPixel]);
-	      streamlog_out ( DEBUG0 ) << "  x " <<  matrixDecoder.getXFromIndex(clusterCandidateIndeces[iPixel])
-				       << "  y " <<  matrixDecoder.getYFromIndex(clusterCandidateIndeces[iPixel])
-				       << "  s " <<  clusterCandidateCharges[iPixel] << endl;
+	      /// /* DEBUG */			       << "  s " <<
+	      /// clusterCandidateCharges[iPixel]);
+	      if ( clusterCandidateIndeces[iPixel] != -1 ) {
+		streamlog_out ( DEBUG0 ) << "  x " <<  matrixDecoder.getXFromIndex(clusterCandidateIndeces[iPixel])
+					 << "  y " <<  matrixDecoder.getYFromIndex(clusterCandidateIndeces[iPixel])
+					 << "  s " <<  clusterCandidateCharges[iPixel] << endl;
+	      }
 	    }
 #endif
 
