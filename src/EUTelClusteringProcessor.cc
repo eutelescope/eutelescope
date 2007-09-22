@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.36 2007-09-21 16:05:54 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.37 2007-09-22 17:07:21 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -459,7 +459,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
 		  // if the pixel wasn't selected, then its signal
 		  // will be 0.0. Mark it in the status
 		  if ( dataVec[ index ] == 0.0 ) 
-		    status->adcValues()[ index ] == EUTELESCOPE::MISSINGPIXEL ;
+		    status->adcValues()[ index ] = EUTELESCOPE::MISSINGPIXEL ;
 		  clusterCandidateSignal += dataVec[ index ] ;
 		  clusterCandidateNoise2 += pow ( noise->getChargeValues() [ index ], 2 );
 		  clusterCandidateCharges.push_back( dataVec[ index ] );
