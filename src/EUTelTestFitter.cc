@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.14 2007-09-13 17:09:43 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.15 2007-09-22 18:05:17 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -434,6 +434,10 @@ void EUTelTestFitter::init() {
   
     // Allocate arrays for track fitting
 
+  _planeHits   = new int[_nTelPlanes];
+  _planeChoice = new int[_nTelPlanes];
+  _planeMod    = new int[_nTelPlanes];
+
   _planeX  = new double[_nTelPlanes];
   _planeEx = new double[_nTelPlanes];
   _planeY  = new double[_nTelPlanes];
@@ -584,8 +588,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   double * hitZ  = new double[nHit];
   int    * hitPlane = new int[nHit];
 
-  int    * nPlaneHits   = new int[_nTelPlanes];
-  int    * nPlaneChoice = new int[_nTelPlanes];
   IntVec * planeHitID   = new IntVec[_nTelPlanes];
 
   double * bestX  = new double[_nTelPlanes];
@@ -710,34 +712,45 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     int nChoice = 1;
     ibest=-1;
 
-    for(int ipl=0;ipl<_nTelPlanes;ipl++)
-      {
-	nPlaneHits[ipl] = planeHitID[ipl].size() ;
+    // Count from the last plane, to allow for "smart" track finding
 
-	if(nPlaneHits[ipl]>0)
+    for(int ipl=_nTelPlanes-1; ipl>=0 ;ipl--)
+      {
+	_planeHits[ipl] = planeHitID[ipl].size() ;
+
+	if(_planeHits[ipl]>0)
 	  {
 	    nFiredPlanes++;
 
 	    if(_allowSkipHits>0)
-	      nPlaneChoice[ipl]=nPlaneHits[ipl]+1;
+	      _planeChoice[ipl]=_planeHits[ipl]+1;
 	    else
-	      nPlaneChoice[ipl]=nPlaneHits[ipl];
+	      _planeChoice[ipl]=_planeHits[ipl];
 	  }
 	else
-	  nPlaneChoice[ipl]=1;
+	  _planeChoice[ipl]=1;
 
-	nChoice*=nPlaneChoice[ipl];
+        _planeMod[ipl]=nChoice;
 
-	if( _isActive[ipl] && firstTrack && debug )
+	nChoice*=_planeChoice[ipl];
+
+      }
+ 
+    // Debug output
+
+    if(firstTrack && debug )
+      for(int ipl=0;ipl<_nTelPlanes;ipl++)
+	if( _isActive[ipl] )
 	  {
 	    stringstream ss;
-	    ss << "Plane " << ipl << "  " << nPlaneHits[ipl] << " hit(s), hit IDs :";
+	    ss << "Plane " << ipl << "  " << _planeHits[ipl] << " hit(s), hit IDs :";
+
 	    for( int ihit=0; ihit < (int) planeHitID[ipl].size() ; ihit ++)
 	      ss << planeHitID[ipl].at(ihit) << " " ;
 	    message<DEBUG> ( log() << ss.str() );
 	  }
-      }
- 
+
+
     // Check if fit can be done
 
     if(nFiredPlanes + _allowMissingHits < _nActivePlanes)
@@ -754,8 +767,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 	  delete [] bestEx;
 	  delete [] bestX;
 	  delete [] planeHitID;
-	  delete [] nPlaneChoice;
-	  delete [] nPlaneHits;
 	  delete [] hitPlane;
 	  delete [] hitZ;
 	  delete [] hitEy;
@@ -779,13 +790,14 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     int nBestFired = 0;
 
     // Loop over fit possibilities
+    // Start from one-hit track to allow for "smart" skipping of wrong matches
 
-    for(int ichoice=0; ichoice<nChoice; ichoice++)
+    for(int ichoice=nChoice-_planeMod[_allowMissingHits]-1; ichoice >=0 ; ichoice--)
       {
-	int modchoice=ichoice;
-
 	int nChoiceFired=0;
 	double choiceChi2=-1.;
+        int ifirst=-1;
+        int ilast=0;
 
 	// Fill position and error arrays for this hit configuration
 
@@ -795,26 +807,46 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 	    if(_isActive[ipl])
 	      {
-		int ihit=modchoice%nPlaneChoice[ipl];
-		modchoice/=nPlaneChoice[ipl];
+		int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
 
-		if(ihit<nPlaneHits[ipl])
+		if(ihit<_planeHits[ipl])
 		  {
 		    int jhit = planeHitID[ipl].at(ihit);
 		    _planeX[ipl]=hitX[jhit];
 		    _planeY[ipl]=hitY[jhit];
 		    _planeEx[ipl]=(_useNominalResolution)?_planeResolution[ipl]:hitEx[jhit];
 		    _planeEy[ipl]=(_useNominalResolution)?_planeResolution[ipl]:hitEy[jhit];
+                    if(ifirst<0)ifirst=ipl;
+                    ilast=ipl;
 		    nChoiceFired++;
 		  }
 	      }
 	  }
 
 	// Check number of selected hits
+        // =============================
 
-	if(nChoiceFired + _allowMissingHits < _nActivePlanes ||
-	   nChoiceFired + _allowSkipHits    < nFiredPlanes )
-	  continue;
+        // No fit to 1 hit :-)
+
+        if(nChoiceFired < 2) continue;
+
+        // Fit with 2 hits make sense only with beam constraint, or
+        // when 2 point fit is allowed
+
+        if(nChoiceFired==2 && !_useBeamConstraint 
+            && nChoiceFired + _allowMissingHits < _nActivePlanes) continue;
+
+	// Not needed: we start from track with first hit at _allowMissingHits
+        if(ifirst > _allowMissingHits)continue;
+
+        // Skip also if the fit can not be extended to proper number
+        // of planes; no need to check remaining planes !!!
+        if(nChoiceFired + _allowMissingHits < ilast+1)
+	  {
+          ichoice-=_planeMod[ilast]-1;  
+          continue;
+          }
+
 
 	// Select fit method
 	// "Nominal" fit only if all active planes used
@@ -829,7 +861,14 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 	// Fit failed ?
 
-	if(choiceChi2 < 0.)continue ;
+	if(choiceChi2 < 0.)
+	  {
+	    message<WARNING> ( log() << "Fit to " << nChoiceFired 
+         << " planes failed for event " << event->getEventNumber() 
+         << " in run " << event->getRunNumber()  );
+
+           continue ;
+	  }
 
 	// Penalty for missing or skiped hits
 
@@ -837,8 +876,26 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 	  +   (nFiredPlanes-nChoiceFired)*_skipHitPenalty ;
 
 
-	if(choiceChi2+penalty<chi2min)
-            chi2min=choiceChi2+penalty;   
+	if(nChoiceFired + _allowMissingHits >= _nActivePlanes &&
+	   nChoiceFired + _allowSkipHits    >= nFiredPlanes  &&
+           choiceChi2+penalty<chi2min)
+                  chi2min=choiceChi2+penalty;   
+
+        // Check if better than best fit (implies that chi2<chi2Max)
+        // If not: skip also all track possibilities which include
+        // this hit selection !!!
+        if(choiceChi2 >=chi2best)
+	  {
+          ichoice-=_planeMod[ilast]-1;  
+          continue;
+          }
+
+        //
+        // Check if fit could be accepted
+        //
+	if(nChoiceFired + _allowMissingHits < _nActivePlanes ||
+	   nChoiceFired + _allowSkipHits    < nFiredPlanes )
+	   continue;
 
 	// Best fit ?
 
@@ -876,8 +933,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       delete [] bestEx;
       delete [] bestX;
       delete [] planeHitID;
-      delete [] nPlaneChoice;
-      delete [] nPlaneHits;
       delete [] hitPlane;
       delete [] hitZ;
       delete [] hitEy;
@@ -899,16 +954,13 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     // print out hits contributing to the fit
 
       
-	int modchoice=ibest;
-
 	for(int ipl=0;ipl<_nTelPlanes;ipl++)
 	  {
 	    if(_isActive[ipl])
 	      {
-		  int ihit=modchoice%nPlaneChoice[ipl];
-		  modchoice/=nPlaneChoice[ipl];
+		int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
 
-		  if(ihit<nPlaneHits[ipl])
+		  if(ihit<_planeHits[ipl])
 		    {
 		    int jhit = planeHitID[ipl].at(ihit);
                     message<DEBUG> ( log() << "Hit " << jhit
@@ -977,8 +1029,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 	// Track points fitted in each plane are stored as track hits 
 
-	int modchoice=ibest;
-
 	for(int ipl=0;ipl<_nTelPlanes;ipl++)
 	  {
 	    TrackerHitImpl * fitpoint = new TrackerHitImpl;
@@ -1029,10 +1079,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
  	    if(_InputHitsInTrack && _isActive[ipl])
 	      {
-		 int ihit=modchoice%nPlaneChoice[ipl];
-		 modchoice/=nPlaneChoice[ipl];
+		int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
 
-		 if(ihit<nPlaneHits[ipl])
+		 if(ihit<_planeHits[ipl])
 		    {
 		    int jhit = planeHitID[ipl].at(ihit);
                     TrackerHitImpl * meshit = dynamic_cast<TrackerHitImpl*>( col->getElementAt(jhit) ) ;
@@ -1088,15 +1137,12 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     
     if(ibest>=0 && _searchMultipleTracks)
       {
-	int modchoice=ibest;
-	
 	for(int ipl=0;ipl<_nTelPlanes;ipl++)
 	  if(_isActive[ipl])
 	    {
-	      int ihit=modchoice%nPlaneChoice[ipl];
-	      modchoice/=nPlaneChoice[ipl];
-	      
-	      if(ihit<nPlaneHits[ipl])
+	      int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
+
+	      if(ihit<_planeHits[ipl])
 		{
                   planeHitID[ipl].erase(planeHitID[ipl].begin()+ihit);
                   nGoodHit--;
@@ -1134,8 +1180,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   delete [] bestEx;
   delete [] bestX;
   delete [] planeHitID;
-  delete [] nPlaneChoice;
-  delete [] nPlaneHits;
   delete [] hitPlane;
   delete [] hitZ;
   delete [] hitEy;
@@ -1176,6 +1220,10 @@ void EUTelTestFitter::end(){
   delete [] _planeScat ;
   delete [] _isActive ;
    
+  delete [] _planeHits ;
+  delete [] _planeChoice ;
+  delete [] _planeMod ;
+
   delete [] _planeX ;
   delete [] _planeEx ;
   delete [] _planeY ;
@@ -1522,10 +1570,10 @@ int EUTelTestFitter::DoAnalFit(double * pos, double *err)
 	// For beam constraint
 
 	if(ipl==jpl && ipl<2 && _useBeamConstraint)
-	  _fitArray[imx] += _planeScat[1]*_planeDist[1]*_planeDist[1] ;
+	  _fitArray[imx] += _planeScat[0]*_planeDist[1]*_planeDist[1] ;
 
 	if(ipl+jpl==1 && _useBeamConstraint) 
-	  _fitArray[imx] -= _planeScat[1]*_planeDist[1]*_planeDist[1] ;
+	  _fitArray[imx] -= _planeScat[0]*_planeDist[1]*_planeDist[1] ;
 
 
       }
