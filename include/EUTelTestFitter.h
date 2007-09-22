@@ -151,7 +151,7 @@ namespace eutelescope {
    * many hits)
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelTestFitter.h,v 1.7 2007-09-13 17:11:07 zarnecki Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.8 2007-09-22 18:05:37 zarnecki Exp $
    * \date 2007.06.04
    *
    */ 
@@ -359,6 +359,12 @@ namespace eutelescope {
 
     int _nRun ;
     int _nEvt ;
+
+    // Arrays for selecting different hit combinations
+
+    int * _planeHits;
+    int * _planeChoice;
+    int * _planeMod;
 
     // Fitting algorithm arrays
 
