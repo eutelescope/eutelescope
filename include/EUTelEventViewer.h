@@ -79,7 +79,7 @@ namespace eutelescope {
    *  are then read from GEAR.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEventViewer.h,v 1.4 2007-08-30 08:32:08 bulgheroni Exp $ 
+   *  @version $Id: EUTelEventViewer.h,v 1.5 2007-09-24 01:20:56 bulgheroni Exp $ 
    */
   class EUTelEventViewer : public marlin::Processor {
   
@@ -185,6 +185,9 @@ namespace eutelescope {
 
     //! The detector model
     int _detModel;
+
+    //! Total event number
+    int _iEvt;
     
 
   } ;
