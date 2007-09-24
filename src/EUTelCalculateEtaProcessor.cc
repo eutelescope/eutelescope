@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.15 2007-09-03 16:40:09 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.16 2007-09-24 01:20:06 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -53,6 +53,7 @@
 
 // system includes <>
 #include <iostream>
+#include <iomanip>
 #include <string>
 #include <sstream>
 #include <memory>
@@ -204,7 +205,8 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
       try {
 	lcWriter->open( _outputEtaFileName, LCIO::WRITE_NEW );
       } catch (IOException& e) {
-	message<ERROR> ( log() << e.what() );
+	streamlog_out ( ERROR4 ) << e.what() << endl
+				 << "Sorry for quitting." << endl;
 	exit(-1);
       }
       
@@ -385,19 +387,25 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
 
+  if ( _iEvt % 10 == 0 ) 
+    streamlog_out ( MESSAGE4 ) << "Processing event " 
+			       << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+			       << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+			       << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  ++_iEvt;
+
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
   if ( evt->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: calling finalizeProcessor().");
-    finalizeProcessor();
-    return; 
+    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
+    return;
+  } else if ( evt->getEventType() == kUNKNOWN ) {
+    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
   if ( !_isEtaCalculationFinished ) {
 
-    if (_iEvt % 10 == 0) 
-      message<MESSAGE> ( log() << "Filling Center of Gravity histogram with event " << _iEvt );
-    
     try {
       LCCollectionVec * clusterCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_clusterCollectionName));
       CellIDDecoder<TrackerPulseImpl> cellDecoder(clusterCollectionVec); 
@@ -415,7 +423,7 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
 	if ( type == kEUTelFFClusterImpl ) 
 	  cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
 	else {
-	  message<ERROR> ( "Unknown cluster type. Sorry for quitting" );
+	  streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
 	  throw UnknownDataTypeException("Cluster type unknown");
 	}
 	
@@ -476,8 +484,6 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
 	delete cluster;
       }
       
-      ++_iEvt;
-      
     } catch ( lcio::DataNotAvailableException & e) {
       return ;
     }
@@ -502,17 +508,18 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
 
   double integral = 0;
 
-  message<MESSAGE> ( log() << "Writing the output eta file " << _outputEtaFileName ) ;
+  streamlog_out ( MESSAGE4 ) << "Writing the output eta file " << _outputEtaFileName << endl;
   
   LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
 
   try {
     lcWriter->open( _outputEtaFileName, LCIO::WRITE_APPEND);
   } catch (IOException& e ) {
-    message<ERROR> (log() << e.what());
+    streamlog_out ( ERROR4 ) <<  e.what() << endl
+			     << "Sorry for quitting." << endl;
     exit(-1);
   }
-
+  
   LCEventImpl * event = new LCEventImpl();
   event->setDetectorName(_detectorName);
   event->setRunNumber(_iRun);
@@ -655,7 +662,7 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
 
 
 void EUTelCalculateEtaProcessor::end() {
-  message<MESSAGE> ( "Successfully finished");
+  streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
 
 
 

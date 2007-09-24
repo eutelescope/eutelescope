@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.4 2007-08-30 08:32:08 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.5 2007-09-24 01:20:06 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -90,6 +90,8 @@ void EUTelEventViewer::init() {
 
   MarlinCED::init(this) ;
 
+  _iEvt = 0;;
+
 }
 
 
@@ -102,18 +104,21 @@ void EUTelEventViewer::processRunHeader( LCRunHeader * rdr ) {
 
 void EUTelEventViewer::processEvent( LCEvent * evt ) { 
 
-  EUTelEventImpl * event = static_cast<EUTelEventImpl *> ( evt );
-  EventType type = event->getEventType();
+  streamlog_out( MESSAGE4 ) << "Processing event " 
+			    << setw(6) << setiosflags(ios::right) << evt->getEventNumber() << " in run "
+			    << setw(6) << setiosflags(ios::right) << setfill('0')  << evt->getRunNumber() << setfill(' ')
+			    << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
 
-  if ( type == kUNKNOWN ) {
-    message<WARNING> ( log() << "Event number " << evt->getEventNumber() 
-		       << " is of unknown type. Continue considering it as a normal Data Event."  );
-  } else if ( type == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do.");
+  EUTelEventImpl * event = static_cast<EUTelEventImpl *> ( evt );
+  
+  if ( event->getEventType() == kEORE ) {
+    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return;
+  } else if ( event->getEventType() == kUNKNOWN ) {
+    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
-  message<MESSAGE> ( log() << "Showing event " << event->getEventNumber() << " of run " << event->getRunNumber() );
 
   // Drawing Geometry
 
@@ -132,7 +137,9 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
 	  ced_hit(x,y,z, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
 	}
       }  catch (DataNotAvailableException& e) {
-	message<ERROR> ( log() << "Collection " << _trackerHitCollectionNameVec[iCollection] << " not available " );
+	streamlog_out ( WARNING2 ) << "No input collection (" << _trackerHitCollectionNameVec[iCollection] << " found on " 
+				   <<  event->getEventNumber() 
+				   << " in run " << event->getRunNumber() << endl;
       }
     }
   }
@@ -201,7 +208,9 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
 	}
       }
       catch(DataNotAvailableException &e){
-	message<ERROR> ( log() << "Collection " << _trackCollectionNameVec[iCollection] << " not available " );
+	streamlog_out ( WARNING2 ) << "No input collection (" << _trackerHitCollectionNameVec[iCollection] << " found on " 
+				   <<  event->getEventNumber() 
+				   << " in run " << event->getRunNumber() << endl;
       }	
     }
   }

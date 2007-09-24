@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.13 2007-08-30 17:35:18 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.14 2007-09-24 01:20:06 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -32,6 +32,8 @@
 #include <string>
 #include <set>
 #include <memory>
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 using namespace lcio;
@@ -90,16 +92,24 @@ void EUTelClusterSeparationProcessor::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
 
-  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> ( event );
-  if ( evt->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do.");
-    return ;
-  }
-  
   if (_iEvt % 10 == 0) 
-    message<MESSAGE> ( log() << "Separating clusters on event " << _iEvt ) ;
-  
-  
+    streamlog_out( MESSAGE4 ) << "Processing event " 
+			      << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+			      << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+			      << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  ++_iEvt;
+
+
+  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> ( event );
+
+  if ( evt->getEventType() == kEORE ) {
+    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
+    return;
+  } else if ( evt->getEventType() == kUNKNOWN ) {
+    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+  }
+
   LCCollectionVec * clusterCollectionVec;
 
   try {
@@ -128,7 +138,7 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
     if ( type == kEUTelFFClusterImpl ) 
       cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ) ;
     else {
-      message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
+      streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
       throw UnknownDataTypeException("Cluster type unknown");
     }
     
@@ -146,7 +156,7 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
       if ( type == kEUTelFFClusterImpl ) 
 	otherCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (otherPulse->getTrackerData()) );
       else {
-	message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
+	streamlog_out ( ERROR4 ) << "Unknown cluster type. Sorry for quitting" << endl;
 	throw UnknownDataTypeException("Cluster type unknown");
       }
       
@@ -201,7 +211,6 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
       outputCollectionVec->push_back( newPulse );
     }
     evt->addCollection( outputCollectionVec, _clusterOutputCollectionName );
-    ++_iEvt;
     return ;
   }
   
@@ -213,7 +222,6 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
   applySeparationAlgorithm(mergingSetVector, clusterCollectionVec, outputCollectionVec);
   evt->addCollection( outputCollectionVec, _clusterOutputCollectionName );
 
-  ++_iEvt;
   
 }
   
@@ -222,8 +230,10 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 							       LCCollectionVec * inputCollectionVec,
 							       LCCollectionVec * outputCollectionVec) const {
 
-  //  message<DEBUG> ( log() << "Applying cluster separation algorithm " << _separationAlgo );
-  message<DEBUG> ( log () <<  "Found "  << setVector.size() << " group(s) of merging clusters on event " << _iEvt );
+  //  message<DEBUG> ( log() << "Applying cluster separation algorithm
+  //  " << _separationAlgo );
+  streamlog_out ( DEBUG0 ) <<  "Found "  << setVector.size() << " group(s) of merging clusters on event " << _iEvt << endl;
+
   if ( _separationAlgo == EUTELESCOPE::FLAGONLY ) {
 
     // with this splitting algorithm, the input and output collections
@@ -250,16 +260,13 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
     CellIDDecoder<TrackerPulseImpl> cellDecoder(outputCollectionVec);
     
 
-#ifdef MARLINDEBUG
     int iCounter = 0;    
-#endif
 
     vector<set <int > >::iterator vectorIterator = setVector.begin();    
     while ( vectorIterator != setVector.end() ) {
 
-#ifdef MARLINDEBUG
-      message<DEBUG> ( log() <<  "     Group " << (iCounter++) << " with the following clusters " );
-#endif
+
+      streamlog_out ( DEBUG4 )  <<  "     Group " << (iCounter++) << " with the following clusters " << endl;
 
       set <int >::iterator setIterator = (*vectorIterator).begin();
       while ( setIterator != (*vectorIterator).end() ) {
@@ -275,16 +282,14 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 	  throw UnknownDataTypeException("Cluster type unknown");
 	}
 
-#ifdef MARLINDEBUG
-	message<DEBUG> ( log() << ( * cluster ) );
-#endif
+	streamlog_out ( DEBUG4 ) << ( * cluster ) << endl; 
 	
 	try {
 	  cluster->setClusterQuality ( cluster->getClusterQuality() | kMergedCluster );
 	} catch (lcio::ReadOnlyException& e) {
-	  message<WARNING> ( log() << "Attempt to change the cluster quality on the original data\n"
-			     "This is possible only when the " << name() << " is not applied to data already on tape\n"
-			     "In this case only the pulse containing this cluster will have the proper quality" );
+	  streamlog_out ( WARNING2 )  << "Attempt to change the cluster quality on the original data\n"
+	    "This is possible only when the " << name() << " is not applied to data already on tape\n"
+	    "In this case only the pulse containing this cluster will have the proper quality" << endl;
 	}
 	pulse->setQuality ( static_cast<int> (ClusterQuality( pulse->getQuality() | kMergedCluster )) );
 	++setIterator;
@@ -303,7 +308,7 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 void EUTelClusterSeparationProcessor::groupingMergingPairs(std::vector< std::pair<int , int> > pairVector, 
 							   std::vector< std::set<int > > * setVector) const {
 
-  message<DEBUG> ( "Grouping merging pairs of clusters " );
+  streamlog_out ( DEBUG0 ) << "Grouping merging pairs of clusters " << endl;
 
   vector< pair<int, int> >::iterator iter = pairVector.begin();
   while ( iter != pairVector.end() ) {
@@ -345,6 +350,6 @@ void EUTelClusterSeparationProcessor::check (LCEvent * evt) {
 
 
 void EUTelClusterSeparationProcessor::end() {
-  message<MESSAGE> ( "Successfully finished" );
+  streamlog_out ( MESSAGE2 ) << "Successfully finished" << endl;
 }
 

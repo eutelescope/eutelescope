@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCopyPedestalProcessor.cc,v 1.5 2007-08-30 08:57:13 bulgheroni Exp $
+// Version $Id: EUTelCopyPedestalProcessor.cc,v 1.6 2007-09-24 01:20:06 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -95,10 +95,15 @@ void EUTelCopyPedestalProcessor::processRunHeader (LCRunHeader * rdr) {
 void EUTelCopyPedestalProcessor::processEvent (LCEvent * event) {
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
-    if ( evt->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
+
+  if ( evt->getEventType() == kEORE ) {
+    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return;
+  } else if ( evt->getEventType() == kUNKNOWN ) {
+    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
+
 
   if (isFirstEvent()) {
 
@@ -163,6 +168,6 @@ void EUTelCopyPedestalProcessor::end() {
   delete _noiseCollectionVec;
   delete _statusCollectionVec;
   
-  message<MESSAGE> ( log() << "Successfully finished" ) ;  
+  streamlog_out ( MESSAGE2 )  << "Successfully finished" << endl;
 }
 

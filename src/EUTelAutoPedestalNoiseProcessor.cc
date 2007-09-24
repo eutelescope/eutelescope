@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelAutoPedestalNoiseProcessor.cc,v 1.3 2007-08-30 08:57:13 bulgheroni Exp $
+// Version $Id: EUTelAutoPedestalNoiseProcessor.cc,v 1.4 2007-09-24 01:20:06 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -29,6 +29,8 @@
 
 // system includes <>
 #include <memory>
+#include <iostream>
+#include <iomanip>
 
 using namespace std;
 using namespace marlin;
@@ -97,12 +99,12 @@ void EUTelAutoPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
   unsigned int noOfDetector = runHeader->getNoOfDetector();
 
   if (noOfDetector != _initPedestal.size()) {
-    message<WARNING> ( "Resizing the initial pedestal vector" );
+    streamlog_out ( WARNING2 ) << "Resizing the initial pedestal vector" << endl;
     _initPedestal.resize(noOfDetector, _initPedestal.back());
   }
 
   if (noOfDetector != _initNoise.size()) {
-    message<WARNING> ( "Resizing the initial noise vector");
+    streamlog_out ( WARNING2 ) << "Resizing the initial noise vector" << endl;
     _initNoise.resize(noOfDetector, _initNoise.back());
   }
 
@@ -119,13 +121,23 @@ void EUTelAutoPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelAutoPedestalNoiseProcessor::processEvent (LCEvent * event) {
 
+  if ( _iEvt % 10 == 0 ) 
+    streamlog_out ( MESSAGE4 ) << "Processing event " 
+			       << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+			       << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+			       << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  ++_iEvt;
+
+
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
   
   if ( evt->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
+    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return;
+  } else if ( evt->getEventType() == kUNKNOWN ) {
+    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
-
 
   if (isFirstEvent()) {
 
@@ -183,8 +195,6 @@ void EUTelAutoPedestalNoiseProcessor::processEvent (LCEvent * event) {
   evt->takeCollection(_noiseCollectionName);
   evt->addCollection(_statusCollectionVec, _statusCollectionName);
   evt->takeCollection(_statusCollectionName);
-
-  ++_iEvt;
   
 }
   
@@ -197,6 +207,6 @@ void EUTelAutoPedestalNoiseProcessor::end() {
   delete _noiseCollectionVec;
   delete _statusCollectionVec;
 
-  message<MESSAGE> ( log() << "Successfully finished" ) ;  
+  streamlog_out ( MESSAGE2 )  << "Successfully finished" << endl;
 }
 

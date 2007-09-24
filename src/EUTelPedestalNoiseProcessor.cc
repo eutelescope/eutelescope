@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.20 2007-08-30 08:57:13 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.21 2007-09-24 01:20:06 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -150,9 +150,9 @@ void EUTelPedestalNoiseProcessor::init () {
 #ifndef MARLIN_USE_AIDA
   _histogramSwitch = false;
   if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
-    message<ERROR> ( log() << "The " << EUTELESCOPE::AIDAPROFILE
-		     << " algorithm cannot be applied since Marlin is not using AIDA" << endl
-		     << " Algorithm changed to " << EUTELESCOPE::MEANRMS ) ;
+    streamlog_out ( ERROR0 )  << "The " << EUTELESCOPE::AIDAPROFILE
+			      << " algorithm cannot be applied since Marlin is not using AIDA" << endl
+			      << " Algorithm changed to " << EUTELESCOPE::MEANRMS << endl;
     _pedestalAlgo = EUTELESCOPE::MEANRMS;
   }
 #endif
@@ -223,8 +223,8 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
 
   int maxRecordNumber = Global::parameters->getIntVal("MaxRecordNumber");
 
-  message<DEBUG>( log() << "Event range for pedestal calculation is from " << _firstEvent << " to " << _lastEvent 
-		  << "\nMaxRecordNumber from the global section is   " << maxRecordNumber );
+  streamlog_out ( DEBUG4 )  << "Event range for pedestal calculation is from " << _firstEvent << " to " << _lastEvent 
+			    << "\nMaxRecordNumber from the global section is   " << maxRecordNumber << endl;
 
   if ( _lastEvent == -1 ) {
     // the user didn't select an upper limit for the event range, so
@@ -234,11 +234,11 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
     // that the procedure could be wrong due to a too low number of
     // records.
     if ( maxRecordNumber != 0 ) {
-      message<WARNING> ( log() << "The MaxRecordNumber in the Global section of the steering file has been set to " 
-			 << maxRecordNumber << ".\n" 
-			 << "This means that in order to properly perform the pedestal calculation the maximum allowed number of events is "   
-			 << maxRecordNumber / ( _noOfCMIterations + 1 ) << ".\n"
-			 << "Let's hope it is correct and try to continue.");
+      streamlog_out ( WARNING2 )  << "The MaxRecordNumber in the Global section of the steering file has been set to " 
+				  << maxRecordNumber << ".\n" 
+				  << "This means that in order to properly perform the pedestal calculation the maximum allowed number of events is "   
+				  << maxRecordNumber / ( _noOfCMIterations + 1 ) << ".\n"
+				  << "Let's hope it is correct and try to continue." << endl;
     }
   } else {
     // ok we know on how many events the calculation should be done. 
@@ -246,11 +246,11 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
     // different from 0
     if ( maxRecordNumber != 0 ) {
       if ( (_lastEvent - _firstEvent) * ( _noOfCMIterations + 1 ) > maxRecordNumber ) {
-	message<ERROR> ( log() << "The pedestal calculation should be done on " << _lastEvent - _firstEvent 
-			 << " times " <<  _noOfCMIterations + 1 << " iterations = " 
-			 << (_lastEvent - _firstEvent) * ( _noOfCMIterations + 1 ) << " records.\n" 
-			 << "The global variable MarRecordNumber is limited to " << maxRecordNumber );
-	throw InvalidParameterException("MaxRecordNumber");
+	streamlog_out ( ERROR4 ) << "The pedestal calculation should be done on " << _lastEvent - _firstEvent 
+				 << " times " <<  _noOfCMIterations + 1 << " iterations = " 
+				 << (_lastEvent - _firstEvent) * ( _noOfCMIterations + 1 ) << " records.\n" 
+				 << "The global variable MarRecordNumber is limited to " << maxRecordNumber << endl;
+      throw InvalidParameterException("MaxRecordNumber");
       }
     }
   }
@@ -304,9 +304,13 @@ void EUTelPedestalNoiseProcessor::processEvent (LCEvent * evt) {
   EUTelEventImpl * eutelEvent = static_cast<EUTelEventImpl*> (evt);
   EventType type              = eutelEvent->getEventType();
   
-  if ( type == kUNKNOWN ) {
-    message<WARNING> ( log() << "Event number " << evt->getEventNumber() 
-		       << " is of unknown type. Continue considering it as a normal Data Event."  );
+
+  if ( type == kEORE ) {
+    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
+    return;
+  } else if ( type == kUNKNOWN ) {
+    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
   if ( _iLoop == 0 ) firstLoop(evt);
@@ -323,10 +327,10 @@ void EUTelPedestalNoiseProcessor::check (LCEvent * evt) {
 
 void EUTelPedestalNoiseProcessor::end() {
 
-  if ( _iLoop == _noOfCMIterations + 1 )  message<MESSAGE> ( log() << "Successfully finished" ) ;
+  if ( _iLoop == _noOfCMIterations + 1 )  streamlog_out ( MESSAGE4 ) << "Successfully finished" << endl;
   else {
-    message<ERROR> ( log() << "Not all the iterations have been done because of a too MaxRecordNumber.\n"
-		     << "Try to increase it in the global section of the steering file." );
+    streamlog_out ( ERROR4 ) << "Not all the iterations have been done because of a too MaxRecordNumber.\n"
+			     << "Try to increase it in the global section of the steering file." << endl;
     exit(-1);
   }
 
@@ -335,7 +339,7 @@ void EUTelPedestalNoiseProcessor::end() {
 void EUTelPedestalNoiseProcessor::fillHistos() {
   
 #ifdef MARLIN_USE_AIDA
-  message<MESSAGE> ( log() << "Filling final histograms " );
+  streamlog_out ( MESSAGE2 ) << "Filling final histograms " << endl;
 
   string tempHistoName;
   for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
@@ -351,8 +355,8 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
 	  if ( AIDA::IHistogram2D * histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[tempHistoName]) ) 
 	    histo->fill(static_cast<double>(xPixel), static_cast<double>(yPixel), static_cast<double> (_status[iDetector][iPixel]));
 	  else {
-	    message<ERROR> ( log() << "Not able to retrieve histogram pointer for " << tempHistoName 
-			     << ".\nDisabling histogramming from now on " );
+	    streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName 
+				      << ".\nDisabling histogramming from now on " << endl;
 	    _histogramSwitch = false;
 	  }
 	}
@@ -368,16 +372,17 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
 	    if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]) )
 	      histo->fill(_pedestal[iDetector][iPixel]);
 	    else {
-	      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " << tempHistoName 
-			       << ".\nDisabling histogramming from now on " );
+	      streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName 
+				      << ".\nDisabling histogramming from now on " << endl;
 	      _histogramSwitch = false;
 	    }
 	  }  
 	  
-	  if ( (xPixel == 10) && (yPixel == 10 )) {
-	    message<DEBUG> 
-	      ( log() << "Detector " << iDetector << " pedestal " << (_pedestal[iDetector][iPixel]));
-	  } 
+	  if ( streamlog::out.write< streamlog::DEBUG0 > () ) {	 
+	    if ( (xPixel == 10) && (yPixel == 10 )) {
+	      streamlog::out()  << "Detector " << iDetector << " pedestal " << (_pedestal[iDetector][iPixel]) << endl;
+	    } 
+	  }
 
 	  if ( _histogramSwitch ) {
 	    {
@@ -388,8 +393,8 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
 	    if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]) )
 	      histo->fill(_noise[iDetector][iPixel]);
 	    else {
-	      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " << tempHistoName 
-			       << ".\nDisabling histogramming from now on " );
+	      streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName 
+					<< ".\nDisabling histogramming from now on " << endl;
 	      _histogramSwitch = false;
 	    }
 	  }
@@ -403,8 +408,8 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
 	    if ( AIDA::IHistogram2D * histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[tempHistoName]) )
 	      histo-> fill(static_cast<double>(xPixel), static_cast<double>(yPixel), _pedestal[iDetector][iPixel]);
 	    else {
-	      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " << tempHistoName 
-			       << ".\nDisabling histogramming from now on " );
+	      streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName 
+					<< ".\nDisabling histogramming from now on " << endl;
 	      _histogramSwitch = false;
 	    }
 	  }
@@ -418,8 +423,8 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
 	    if ( AIDA::IHistogram2D* histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[tempHistoName]) ) 
 	      histo->fill(static_cast<double>(xPixel), static_cast<double>(yPixel), _noise[iDetector][iPixel]);
 	    else {
-	      message<ERROR> ( log() << "Not able to retrieve histogram pointer for " << tempHistoName 
-			       << ".\nDisabling histogramming from now on " );
+	      streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName 
+					<< ".\nDisabling histogramming from now on " << endl;
 	      _histogramSwitch = false;
 	    }
 	  }
@@ -431,7 +436,7 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
   
 
 #else
-  if ( _iEvt == 0 ) message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
+  if ( _iEvt == 0 ) streamlog_out ( MESSAGE4 )  << "No histogram produced because Marlin doesn't use AIDA" << endl;
 #endif
   
 }
@@ -464,9 +469,9 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
       double meanw2     = sumw2 / num;
       double rms        = sqrt( meanw2 - pow(meanw,2));
       thresholdVec.push_back(meanw + (rms * _badPixelMaskCut) );
-      message<DEBUG> ( log() << "Mean noise value is " << meanw << " ADC\n"
-		       "RMS of noise is " << rms << " ADC\n"
-		       "Masking threshold is set to " << thresholdVec[iDetector] );
+      streamlog_out ( DEBUG4 ) << "Mean noise value is " << meanw << " ADC\n"
+	"RMS of noise is " << rms << " ADC\n"
+	"Masking threshold is set to " << thresholdVec[iDetector] << endl;
       
       
     }
@@ -475,7 +480,7 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
   }
 
   const float lowerThreshold = 0.2;
-  message<MESSAGE>  ( log() << "Marking as bad also dead pixels (noise < " << lowerThreshold << " ADC)" );
+  streamlog_out ( MESSAGE2 ) << "Marking as bad also dead pixels (noise < " << lowerThreshold << " ADC)" << endl;
 
 
   // scan the noise vector again and apply the cut
@@ -487,15 +492,15 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
 	     ) && 
 	   ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) ) {
 	_status[iDetector][iPixel] = EUTELESCOPE::BADPIXEL;
-	message<DEBUG> ( log() <<  "Masking pixel number " << iPixel 
-			 << " on detector " << iDetector 
-			 << " (" << _noise[iDetector][iPixel] 
-			 << " > " << thresholdVec[iDetector] << ")" );
+	streamlog_out ( DEBUG0 ) <<  "Masking pixel number " << iPixel 
+				 << " on detector " << iDetector 
+				 << " (" << _noise[iDetector][iPixel] 
+				 << " > " << thresholdVec[iDetector] << ")" << endl;
 	++badPixelCounter;
       }
     }
   } // end loop on detector;
-  message<MESSAGE> (log() << "Masked " << badPixelCounter << " bad pixels " );
+  streamlog_out ( MESSAGE4 )  << "Masked " << badPixelCounter << " bad pixels " << endl;
 }
 
 
@@ -516,12 +521,12 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
 
   
   if ( evt->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: calling finalizeProcessor().");
+    streamlog_out ( DEBUG4 ) << "EORE found: calling finalizeProcessor()." << endl;
     finalizeProcessor();
   }
 
   if ( ( _lastEvent != -1 ) && ( _iEvt >= _lastEvent ) ) {
-    message<DEBUG> ( "Looping limited by _lastEvent: calling finalizeProcessor().");
+    streamlog_out ( DEBUG4 ) << "Looping limited by _lastEvent: calling finalizeProcessor()." << endl;
     finalizeProcessor();
   }
 
@@ -530,10 +535,12 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
     throw SkipEventException(this);
   }
 
-  // keep the user updated
-  if ( _iEvt % 10 == 0 ) {
-    message<MESSAGE> ( log() << "Performing loop " << _iLoop << " on event: " << _iEvt );
-  }
+  if (_iEvt % 10 == 0) 
+    streamlog_out( MESSAGE4 ) << "Processing event " 
+			      << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+			      << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+			      << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) 
+			      << " - loop " << _iLoop <<  endl;
 
   // let me get the rawDataCollection. This is should contain a TrackerRawDataObject
   // for each detector plane in the telescope.
@@ -589,7 +596,7 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
 	      if ( AIDA::IProfile2D * profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) )
 		profile ->fill(static_cast<double> (xPixel), static_cast<double> (yPixel), temp);
 	      else {
-		message<ERROR> ( log() << "Irreversible error: " << ss.str() << " is not available. Sorry for quitting." );
+		streamlog_out ( ERROR4 )  << "Irreversible error: " << ss.str() << " is not available. Sorry for quitting." << endl;
 		exit(-1);
 	      }
 	      ++iPixel;
@@ -646,7 +653,7 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
 	      if ( AIDA::IProfile2D* profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) )
 		profile->fill(static_cast<double> (xPixel), static_cast<double> (yPixel), static_cast<double> (adcValues[iPixel]));
 	      else {
-		message<ERROR> ( log() << "Irreversible error: " << ss.str() << " is not available. Sorry for quitting." );
+		streamlog_out ( ERROR ) << "Irreversible error: " << ss.str() << " is not available. Sorry for quitting." << endl;
 		exit(-1);
 	      }
 	      ++iPixel;
@@ -661,10 +668,7 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
     // increment the event counter
     ++_iEvt;
   } catch (DataNotAvailableException& e) {
-    message<ERROR> ( log() << "Collection " << _rawDataCollectionName << " is not available in the current event\n"
-		     << "Skipping the current event." );
-    throw SkipEventException(this);
-
+    streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionName << " is not available in the current event" << endl;
   }
 
 }
@@ -692,10 +696,13 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
   }
   
   // keep the user updated
-  if ( _iEvt % 10 == 0 ) {
-    message<MESSAGE> ( log() << "Performing loop " << _iLoop << " on event: " << _iEvt );
-  }
-
+  if ( _iEvt % 10 == 0 ) 
+    streamlog_out( MESSAGE4 ) << "Processing event " 
+			      << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+			      << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+			      << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) 
+			      << " - loop " << _iLoop <<  endl;
+  
   // let me get the rawDataCollection. This is should contain a TrackerRawDataObject
   // for each detector plane in the telescope.
   try {
@@ -770,16 +777,14 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
 	  }
 	}
       } else {
-	message<WARNING>( log() << "Skipping event " << _iEvt << " because of max number of rejected pixels exceeded. (" << skippedPixel << ")" );
+	streamlog_out ( WARNING2 ) <<  "Skipping event " << _iEvt << " because of max number of rejected pixels exceeded. (" 
+				   << skippedPixel << ")" << endl;
 	++_noOfSkippedEvent;
       }
     }	
     ++_iEvt;
   } catch (DataNotAvailableException& e) {
-    message<ERROR> ( log() << "Collection " << _rawDataCollectionName << " is not available in the current event\n"
-		     << "Skipping the current event." );
-    throw SkipEventException(this);
-
+    streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionName << " is not available in the current event" << endl;
   }
 }
 
@@ -787,7 +792,7 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 
 #ifdef MARLIN_USE_AIDA
   // histograms are grouped in loops and detectors
-  message<MESSAGE> ( log() << "Booking histograms " );
+  streamlog_out ( MESSAGE2 ) << "Booking histograms " << endl;
 
 
   string tempHistoName;
@@ -836,8 +841,8 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 	_aidaHistoMap.insert(make_pair(tempHistoName, pedeDistHisto));
 	pedeDistHisto->setTitle("Pedestal distribution");
       } else {
-	message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			 << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+				 << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	_histogramSwitch = false;
       }
 	
@@ -857,8 +862,8 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 	_aidaHistoMap.insert(make_pair(tempHistoName, noiseDistHisto));
 	noiseDistHisto->setTitle("Noise distribution");
       }	else {
-	message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			   << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+				 << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	_histogramSwitch = false;
       }
 	
@@ -878,9 +883,9 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 	if ( commonModeHisto ) {
 	  _aidaHistoMap.insert(make_pair(tempHistoName, commonModeHisto));
 	  commonModeHisto->setTitle("Common mode distribution");
-	}	else {
-	  message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			   << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	} else {
+	  streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+				   << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	  _histogramSwitch = false;
 	}
       }
@@ -904,8 +909,8 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 	_aidaHistoMap.insert(make_pair(tempHistoName, pedeMapHisto));
 	pedeMapHisto->setTitle("Pedestal map");
       }	else {
-	message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			   << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+				 << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	_histogramSwitch = false;
       }
 	
@@ -922,8 +927,8 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 	_aidaHistoMap.insert(make_pair(tempHistoName, noiseMapHisto));      
 	noiseMapHisto->setTitle("Noise map");
       }	else {
-	message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			   << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+				 << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	_histogramSwitch = false;
       }
 
@@ -940,8 +945,8 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 	_aidaHistoMap.insert(make_pair(tempHistoName, statusMapHisto));
 	statusMapHisto->setTitle("Status map");
       }	else {
-	message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			   << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+				 << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	_histogramSwitch = false;
       }	
 
@@ -961,10 +966,9 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 	if ( tempProfile2D ) {
 	  _aidaHistoMap.insert(make_pair(tempHistoName, tempProfile2D));
 	  tempProfile2D->setTitle("Temp profile for pedestal calculation");
-	}	else {
-	  message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			   << "Very likely a problem with path name. Cannot continue without this histogram.\n"
-			   << "Sorry for quitting." );
+	} else {
+	  streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+				   << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	  _histogramSwitch = false;
 	  exit(-1);
 	}
@@ -1008,8 +1012,8 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
 	    tempNoise.push_back((float) profile->binRms(xPixel,yPixel));
 	    //cout << xPixel << " " << yPixel << " " << tempPede.back() << " " << tempNoise.back() << endl;
 	  } else {
-	    message<ERROR> ( log() << "Problem with the AIDA temporary profile.\n"
-			     << "Sorry for quitting... " );
+	    streamlog_out ( ERROR4 )  << "Problem with the AIDA temporary profile.\n"
+				      << "Sorry for quitting... " << endl;
 	    exit(-1);
 	  }
 	}
@@ -1033,8 +1037,8 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
   // have a total number of loop of _noOfCMIteration + 1
   if ( _iLoop == _noOfCMIterations + 1 ) {
     // ok this was last loop  
-
-    message<MESSAGE> ( log() << "Writing the output condition file" );
+    
+    streamlog_out ( MESSAGE4 ) << "Writing the output condition file" << endl;
 
     LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
     
@@ -1096,7 +1100,7 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
       statusCollection->push_back(statusMatrix);
 
       if ( _asciiOutputSwitch ) {
-	if ( iDetector == 0 ) message<MESSAGE> ( "Writing the ASCII pedestal files" );
+	if ( iDetector == 0 ) streamlog_out ( MESSAGE4 ) << "Writing the ASCII pedestal files" << endl;
 	stringstream ss;
 	ss << _outputPedeFileName << "-b" << iDetector << ".dat";
 	ofstream asciiPedeFile(ss.str().c_str());
@@ -1170,8 +1174,8 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
 	if ( AIDA::IProfile2D* profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) ) 
 	  profile->reset();
 	else {
-	  message<ERROR> ( log() << "Unable to reset the AIDA temporary profile.\n"
-			   << "Sorry for quitting..." );
+	  streamlog_out ( ERROR4 ) << "Unable to reset the AIDA temporary profile.\n"
+				   << "Sorry for quitting..." << endl;
 	  exit(-1);
 	}
       }

@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.15 2007-09-20 07:34:08 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.16 2007-09-24 01:20:06 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -185,9 +185,9 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	if ( (inputCollectionVec->getNumberOfElements() != pedestalCollectionVec->getNumberOfElements()) ||
 	     (inputCollectionVec->getNumberOfElements() != _noOfDetector) ) {
 	  stringstream ss;
-	  ss << "Input data and pedestal are incompatible" << endl
-	     << "Input collection has    " << inputCollectionVec->getNumberOfElements()    << " detectors," << endl
-	     << "Pedestal collection has " << pedestalCollectionVec->getNumberOfElements() << " detectors," << endl
+	  ss << "Input data and pedestal are incompatible\n"
+	     << "Input collection has    " << inputCollectionVec->getNumberOfElements()    << " detectors,\n" 
+	     << "Pedestal collection has " << pedestalCollectionVec->getNumberOfElements() << " detectors,\n" 
 	     << "The expected number is  " << _noOfDetector << endl;
 	  throw IncompatibleDataSetException(ss.str());
 	}
@@ -204,8 +204,8 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	
 	if (rawData->getADCValues().size() != pedestal->getChargeValues().size()){
 	  stringstream ss;
-	  ss << "Input data and pedestal are incompatible" << endl
-	     << "Detector " << sensorID << " has " <<  rawData->getADCValues().size() << " pixels in the input data " << endl
+	  ss << "Input data and pedestal are incompatible\n" 
+	     << "Detector " << sensorID << " has " <<  rawData->getADCValues().size() << " pixels in the input data \n"
 	     << "while " << pedestal->getChargeValues().size() << " in the pedestal data " << endl;
 	  throw IncompatibleDataSetException(ss.str());
 	}
@@ -230,12 +230,12 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	try {
 	  isHistoManagerAvailable = histoMgr->init();
 	} catch ( ios::failure& e) {
-	  message<ERROR> ( log() << "I/O problem with " << _histoInfoFileName << "\n"
-			   << "Continuing without histogram manager"    );
+	  streamlog_out ( ERROR1 )  << "I/O problem with " << _histoInfoFileName << "\n"
+				    << "Continuing without histogram manager"    << endl;
 	  isHistoManagerAvailable = false;
 	} catch ( ParseException& e ) {
-	  message<ERROR> ( log() << e.what() << "\n"
-			   << "Continuing without histogram manager" );
+	  streamlog_out ( ERROR1 )  << e.what() << "\n"
+				    << "Continuing without histogram manager" << endl;
 	  isHistoManagerAvailable = false;
 	}
 
@@ -261,7 +261,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	  if ( isHistoManagerAvailable ) {
 	    histoInfo = histoMgr->getHistogramInfo(_rawDataDistHistoName);
 	    if ( histoInfo ) {
-	      message<DEBUG> ( log() << (* histoInfo ) );
+	      streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
 	      rawDataDistHistoNBin = histoInfo->_xBin;
 	      rawDataDistHistoMin  = histoInfo->_xMin;
 	      rawDataDistHistoMax  = histoInfo->_xMax;
@@ -275,8 +275,8 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	    _aidaHistoMap.insert(make_pair(tempHistoName, rawDataDistHisto));
 	    rawDataDistHisto->setTitle(rawDataDistTitle.c_str());
 	  } else {
-	    message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			     << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	    streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+				     << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	    _fillDebugHisto = 0;
 	  }
 
@@ -293,7 +293,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	  if ( isHistoManagerAvailable ) {
 	    histoInfo = histoMgr->getHistogramInfo(_dataDistHistoName);
 	    if ( histoInfo ) {
-	      message<DEBUG> ( log() << (* histoInfo ) );
+	      streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
 	      dataDistHistoNBin = histoInfo->_xBin;
 	      dataDistHistoMin  = histoInfo->_xMin;
 	      dataDistHistoMax  = histoInfo->_xMax;
@@ -307,8 +307,8 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	    _aidaHistoMap.insert(make_pair(tempHistoName, dataDistHisto));
 	    dataDistHisto->setTitle(dataDistTitle.c_str());
 	  } else {
-	    message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			     << "Very likely a problem with path name. Switching off histogramming and continue w/o");
+	    streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+				     << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	    _fillDebugHisto = 0;
 	  }
 
@@ -328,7 +328,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	  if ( isHistoManagerAvailable ) {
 	    histoInfo = histoMgr->getHistogramInfo(_commonModeDistHistoName);
 	    if ( histoInfo ) {
-	      message<DEBUG> ( log() << (* histoInfo ) );
+	      streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
 	      commonModeDistHistoNBin = histoInfo->_xBin;
 	      commonModeDistHistoMin  = histoInfo->_xMin;
 	      commonModeDistHistoMax  = histoInfo->_xMax;
@@ -343,8 +343,8 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	    _aidaHistoMap.insert(make_pair(tempHistoName, commonModeDistHisto));
 	    commonModeDistHisto->setTitle(commonModeTitle.c_str());
 	  } else {
-	    message<ERROR> ( log() << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-			     << "Very likely a problem with path name. Not filling common mode histograms" );
+	    streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+				     << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	    // setting _fillDebugHisto to 0 is not solving the problem
 	    // because the common mode histogram is independent from
 	    // the debug histogram. And disabling the common mode
@@ -419,7 +419,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	    stringstream ss;
 	    ss << _commonModeDistHistoName << "-d" << sensorID;
 	    tempHistoName = ss.str();
-	  }
+}
 	  if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
 	    histo->fill(commonMode);
 #endif
@@ -452,8 +452,8 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	  if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
 	    histo->fill(*rawIter);
 	  else {
-	    message<ERROR> ( log() << "Not able to retrieve histogram pointer for " << tempHistoName 
-			     << ".\nDisabling histogramming from now on " );
+	    streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName 
+				     << ".\nDisabling histogramming from now on " << endl;
 	    _fillDebugHisto = 0 ;
 	  }
 
@@ -465,8 +465,8 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 	  if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) ) 
 	    histo->fill(correctedValue);
 	  else {
-	    message<ERROR> ( log() << "Not able to retrieve histogram pointer for " << tempHistoName 
-			     << ".\nDisabling histogramming from now on " );
+	    streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName 
+				     << ".\nDisabling histogramming from now on " << endl;
 	    _fillDebugHisto = 0 ;
 	  }
 	}
@@ -480,9 +480,8 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
   
   
   } catch (DataNotAvailableException& e) {
-    message<ERROR> ( log() << e.what() << "\n"
-		     << "Skipping this event " );
-    throw SkipEventException(this);
+    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber() 
+				<< " in run " << event->getRunNumber() << endl;
   }
   
 }
@@ -495,7 +494,7 @@ void EUTelCalibrateEventProcessor::check (LCEvent * evt) {
 
 
 void EUTelCalibrateEventProcessor::end() {
-  message<MESSAGE> ( "Successfully finished" );
+  streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
 
 }
 
