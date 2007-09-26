@@ -7,6 +7,7 @@
  *   header with author names in all development based on this file.
  *
  */
+
 #ifndef EUTELALIGN_H
 #define EUTELALIGN_H
 
@@ -24,6 +25,10 @@
 // lcio includes <.h> 
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+
+#ifdef MARLIN_USE_AIDA
+#include <AIDA/IBaseHistogram.h>
+#endif
 
 // system includes <>
 #include <string>
@@ -50,9 +55,7 @@ namespace eutelescope {
 
     //! Variables for hit parameters
     class HitsForFit {
-
     public:
-
       double firstLayerMeasuredX;
       double firstLayerMeasuredY;
       double firstLayerMeasuredZ;
@@ -64,7 +67,6 @@ namespace eutelescope {
       double secondLayerMeasuredZ;
       double firstLayerResolution;
       double secondLayerResolution;
-
     };
      
     //! Returns a new instance of EUTelAlign
@@ -130,7 +132,7 @@ namespace eutelescope {
   protected:
 
     static std::vector<HitsForFit> _hitsForFit;
-    
+   
     //! TrackerHit collection name
     /*! Input collection with measured hits.
      */ 
@@ -192,6 +194,24 @@ namespace eutelescope {
      *  init() phase and stored for local use
      */ 
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+
+#ifdef MARLIN_USE_AIDA
+    //! AIDA histogram map
+    /*! Instead of putting several pointers to AIDA histograms as
+     *  class members, histograms are booked in the init() method and
+     *  their pointers are inserted into this map keyed by their
+     *  names. 
+     *  The histogram filling can proceed recalling an object through
+     *  its name
+     */ 
+    std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
+
+    static std::string _residualXSimpleLocalname;
+    static std::string _residualYSimpleLocalname;
+
+    static std::string _residualXLocalname;
+    static std::string _residualYLocalname;
+#endif
     
     int _nPlanes;
     double * _xMeasPos;
