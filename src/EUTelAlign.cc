@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.9 2007-09-14 19:42:31 roloff Exp $
+// Version: $Id: EUTelAlign.cc,v 1.10 2007-09-26 16:53:56 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -33,6 +33,14 @@
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
 
+// aida includes <.h>
+#ifdef MARLIN_USE_AIDA
+#include <marlin/AIDAProcessor.h>
+#include <AIDA/IHistogramFactory.h>
+#include <AIDA/IHistogram1D.h>
+#include <AIDA/ITree.h>
+#endif
+
 // lcio includes <.h> 
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
@@ -54,6 +62,14 @@ using namespace std;
 using namespace marlin;
 using namespace gear;
 using namespace eutelescope;
+
+// definition of static members mainly used to name histograms
+#ifdef MARLIN_USE_AIDA
+std::string EUTelAlign::_residualXSimpleLocalname      = "ResidualXSimple";
+std::string EUTelAlign::_residualYSimpleLocalname      = "ResidualYSimple";
+std::string EUTelAlign::_residualXLocalname            = "ResidualX";
+std::string EUTelAlign::_residualYLocalname            = "ResidualY";
+#endif
 
 void fitFunctionWrapper(Int_t &npar, Double_t *gin, Double_t &f, Double_t *par, Int_t iflag) {
   EUTelAlign::Chi2Function(npar,gin,f,par,iflag);
@@ -184,7 +200,7 @@ void EUTelAlign::processRunHeader (LCRunHeader * rdr) {
   }
   
   // now book histograms plz...
-  // if ( isFirstEvent() )  bookHistos();
+  if ( isFirstEvent() )  bookHistos();
   
   // increment the run counter
   ++_iRun;
@@ -198,96 +214,168 @@ void EUTelAlign::processEvent (LCEvent * event) {
     message<DEBUG> ( "EORE found: nothing else to do." );
     return;
   }
-  
-  LCCollectionVec * measHitCollection = static_cast<LCCollectionVec*> (event->getCollection( _measHitCollectionName ));
-  
-  int detectorID    = -99; // it's a non sense
-  int oldDetectorID = -100;
-  int layerIndex; 
 
-  HitsForFit hitsForFit;
+  int nHitsFirstPlane = 0;
+  int nHitsSecondPlane = 0;
+  
+  try {
 
-  // Loop over all hits
-  for ( int iHit = 0; iHit < measHitCollection->getNumberOfElements(); iHit++ ) {
+    LCCollectionVec * measHitCollection = static_cast<LCCollectionVec*> (event->getCollection( _measHitCollectionName ));
+  
+    int detectorID    = -99; // it's a non sense
+    int oldDetectorID = -100;
+    int layerIndex; 
+
+    HitsForFit hitsForFit;
     
-    TrackerHitImpl * measHit = static_cast<TrackerHitImpl*> ( measHitCollection->getElementAt(iHit) );
+    double allHitsFirstLayerMeasuredX[20];
+    double allHitsFirstLayerMeasuredY[20];
+    double allHitsFirstLayerMeasuredZ[20];
+    double allHitsSecondLayerMeasuredX[20];
+    double allHitsSecondLayerMeasuredY[20];
+    double allHitsSecondLayerMeasuredZ[20];
+    double allHitsFirstLayerResolution[20];
+    double allHitsSecondLayerResolution[20];
+
+    // Loop over all hits
+    for ( int iHit = 0; iHit < measHitCollection->getNumberOfElements(); iHit++ ) {
     
-    LCObjectVec clusterVector = measHit->getRawHits();
+      TrackerHitImpl * measHit = static_cast<TrackerHitImpl*> ( measHitCollection->getElementAt(iHit) );
     
-    EUTelVirtualCluster * cluster;
-    if ( measHit->getType() == kEUTelFFClusterImpl ) {
-      cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-    } else {
-      throw UnknownDataTypeException("Unknown cluster type");
-    }
-    
-    detectorID = cluster->getDetectorID();
-    
-    if ( detectorID != oldDetectorID ) {
-      oldDetectorID = detectorID;
+      LCObjectVec clusterVector = measHit->getRawHits();
       
-      if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
-	// first of all try to see if this detectorID already belong to 
-	if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
-	  // this means that this detector ID was not already inserted,
-	  // so this is the right place to do that
-	  for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
-	    if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
-	      _conversionIdMap.insert( make_pair( detectorID, iLayer ) );
-	      break;
+      EUTelVirtualCluster * cluster;
+      if ( measHit->getType() == kEUTelFFClusterImpl ) {
+	cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+      } else {
+	throw UnknownDataTypeException("Unknown cluster type");
+      }
+    
+      detectorID = cluster->getDetectorID();
+      
+      if ( detectorID != oldDetectorID ) {
+	oldDetectorID = detectorID;
+	
+	if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
+	  // first of all try to see if this detectorID already belong to 
+	  if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
+	    // this means that this detector ID was not already inserted,
+	    // so this is the right place to do that
+	    for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
+	      if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
+		_conversionIdMap.insert( make_pair( detectorID, iLayer ) );
+		break;
+	      }
 	    }
 	  }
 	}
+	
+	// here we take intrinsic resolution from geometry database
+	
+	layerIndex   = _conversionIdMap[detectorID];     
+	_intrResol[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
+      
       }
+
+      // Assumption: Only one hit in each detector plane
       
-      // here we take intrinsic resolution from geometry database
+      // If first plane: calculate extrapolation to second plane
 
-      layerIndex   = _conversionIdMap[detectorID];     
-      _intrResol[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
+      layerIndex = _conversionIdMap[detectorID];
+
+      if (layerIndex == 0 && nHitsFirstPlane < 20) {
       
-    }
+	allHitsFirstLayerMeasuredX[nHitsFirstPlane] = 1000 * measHit->getPosition()[0];
+	allHitsFirstLayerMeasuredY[nHitsFirstPlane] = 1000 * measHit->getPosition()[1];
+	allHitsFirstLayerMeasuredZ[nHitsFirstPlane] = 1000 * measHit->getPosition()[2];
 
-    // Assumption: Only one hit in each detector plane
+	// cout << hitsForFit.firstLayerMeasuredX << " " << hitsForFit.firstLayerMeasuredY << "            ";
 
-    // If first plane: calculate extrapolation to second plane
+	allHitsFirstLayerResolution[nHitsFirstPlane] = 1000 * _siPlanesLayerLayout->getSensitiveResolution(layerIndex); // Add multiple scattering later!
 
-    layerIndex = _conversionIdMap[detectorID];
+	// hitsForFit.secondLayerPredictedX = hitsForFit.firstLayerMeasuredX;
+	// hitsForFit.secondLayerPredictedY = hitsForFit.firstLayerMeasuredY;
 
-    if (layerIndex == 0) {
+	nHitsFirstPlane++;
+
+      } else if (layerIndex == (_alignedPlane - 1) && nHitsSecondPlane < 20) {
+
+	allHitsSecondLayerMeasuredX[nHitsSecondPlane] = 1000 * measHit->getPosition()[0];
+	allHitsSecondLayerMeasuredY[nHitsSecondPlane] = 1000 * measHit->getPosition()[1];
+	allHitsSecondLayerMeasuredZ[nHitsSecondPlane] = 1000 * measHit->getPosition()[2];
+
+	// cout << hitsForFit.secondLayerMeasuredX << " " << hitsForFit.secondLayerMeasuredY << endl;
+	
+	// hitsForFit.secondLayerPredictedZ = 1000 * measHit->getPosition()[2];
+	
+	allHitsSecondLayerResolution[nHitsSecondPlane] = 1000 * _siPlanesLayerLayout->getSensitiveResolution(layerIndex); // Add multiple scattering later!
+
+	nHitsSecondPlane++;
+
+      }
+
+      delete cluster; // <--- destroying the cluster   
+
+    } // End loop over all hits
+
+    // loop over all hits in first plane
+    for (int firsthit = 0; firsthit < nHitsFirstPlane; firsthit++) {
+	
+      int take = -1000;
+      int veto = -1000;
       
-      hitsForFit.firstLayerMeasuredX = 1000 * measHit->getPosition()[0];
-      hitsForFit.firstLayerMeasuredY = 1000 * measHit->getPosition()[1];
-      hitsForFit.firstLayerMeasuredZ = 1000 * measHit->getPosition()[2];
+      // loop over all hits in second plane
+      for (int secondhit = 0; secondhit < nHitsSecondPlane; secondhit++) {
+	
+	// calculate distance between hits
+	double distance = sqrt(pow(allHitsFirstLayerMeasuredX[firsthit] - allHitsSecondLayerMeasuredX[secondhit],2) + pow(allHitsFirstLayerMeasuredY[firsthit] - allHitsSecondLayerMeasuredY[secondhit],2));
 
-      // cout << hitsForFit.firstLayerMeasuredX << " " << hitsForFit.firstLayerMeasuredY << "            ";
+	if (distance < 2000) {
+	  if (take != -1000) {
+	    veto = 1;
+	  }
+	  take = secondhit;
+	}
 
-      hitsForFit.firstLayerResolution = 1000 * _siPlanesLayerLayout->getSensitiveResolution(layerIndex); // Add multiple scattering later!
+      } // end loop over hits in second plane
+	
+      if (take != -1000 && veto == -1000) {
 
-      hitsForFit.secondLayerPredictedX = hitsForFit.firstLayerMeasuredX;
-      hitsForFit.secondLayerPredictedY = hitsForFit.firstLayerMeasuredY;
+	hitsForFit.firstLayerMeasuredX = allHitsFirstLayerMeasuredX[firsthit];
+	hitsForFit.firstLayerMeasuredY = allHitsFirstLayerMeasuredY[firsthit];
+	hitsForFit.firstLayerMeasuredZ = allHitsFirstLayerMeasuredZ[firsthit];
+	  
+	hitsForFit.secondLayerMeasuredX = allHitsSecondLayerMeasuredX[take];
+	hitsForFit.secondLayerMeasuredY = allHitsSecondLayerMeasuredY[take];
+	hitsForFit.secondLayerMeasuredZ = allHitsSecondLayerMeasuredZ[take];
+	  
+	hitsForFit.secondLayerPredictedX = allHitsFirstLayerMeasuredX[firsthit];
+	hitsForFit.secondLayerPredictedY = allHitsFirstLayerMeasuredY[firsthit];
+	hitsForFit.secondLayerPredictedZ = allHitsSecondLayerMeasuredZ[take];
 
-    } else if (layerIndex == (_alignedPlane - 1)) {
+	hitsForFit.firstLayerResolution = allHitsFirstLayerResolution[firsthit];
+	hitsForFit.secondLayerResolution = allHitsSecondLayerResolution[take];
 
-      hitsForFit.secondLayerMeasuredX = 1000 * measHit->getPosition()[0];
-      hitsForFit.secondLayerMeasuredY = 1000 * measHit->getPosition()[1];
-      hitsForFit.secondLayerMeasuredZ = 1000 * measHit->getPosition()[2];
+	_hitsForFit.push_back(hitsForFit);
+	  
+      }
 
-      // cout << hitsForFit.secondLayerMeasuredX << " " << hitsForFit.secondLayerMeasuredY << endl;
+    } // end loop over hits in first plane
 
-      hitsForFit.secondLayerPredictedZ = 1000 * measHit->getPosition()[2];
-      hitsForFit.secondLayerResolution = 1000 * _siPlanesLayerLayout->getSensitiveResolution(layerIndex); // Add multiple scattering later!
-
-    }
-    
-    delete cluster; // <--- destroying the cluster   
-
-  } // End loop over all hits
-
-  _hitsForFit.push_back(hitsForFit);
+    // _hitsForFit.push_back(hitsForFit);
   
+  } catch (DataNotAvailableException& e) {
+    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber() << " in run " << event->getRunNumber() << endl;
+  }
+
   ++_iEvt;
   
   if ( isFirstEvent() ) _isFirstEvent = false;
+
+  streamlog_out ( MESSAGE2 ) << "Read event: " << _iEvt << endl;
+  streamlog_out ( MESSAGE2 ) << "Number of hits in first plane: " << nHitsFirstPlane << endl;
+  streamlog_out ( MESSAGE2 ) << "Number of hits in the last plane: " << nHitsSecondPlane << endl;
+  streamlog_out ( MESSAGE2 ) << "Hit pairs found so far: " << _hitsForFit.size() << endl;
   
 }
 
@@ -314,7 +402,7 @@ void EUTelAlign::Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t 
     distance = 0.0;
 
     x = (cos(par[3])*cos(par[4])) * _hitsForFit[i].secondLayerMeasuredX + ((-1)*sin(par[2])*sin(par[3])*cos(par[4]) + cos(par[2])*sin(par[4])) * _hitsForFit[i].secondLayerMeasuredY + par[0];
-    y = ((-1)*cos(par[3])*cos(par[4])) * _hitsForFit[i].secondLayerMeasuredX + (sin(par[2])*sin(par[3])*sin(par[4]) + cos(par[2])*cos(par[4])) * _hitsForFit[i].secondLayerMeasuredY + par[1];
+    y = ((-1)*cos(par[3])*sin(par[4])) * _hitsForFit[i].secondLayerMeasuredX + (sin(par[2])*sin(par[3])*sin(par[4]) + cos(par[2])*cos(par[4])) * _hitsForFit[i].secondLayerMeasuredY + par[1];
 
     distance = ((x - _hitsForFit[i].secondLayerPredictedX) * (x - _hitsForFit[i].secondLayerPredictedX) + (y - _hitsForFit[i].secondLayerPredictedY) * (y - _hitsForFit[i].secondLayerPredictedY)) / 100;
       
@@ -384,6 +472,45 @@ void EUTelAlign::end() {
   arglist[1] = 0.1;
   gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
 
+  double off_x_simple;
+  double off_y_simple;
+
+  double off_x_simple_error;
+  double off_y_simple_error;
+
+  // fill histograms
+  double residual_x_simple;
+  double residual_y_simple;
+
+  // loop over all events
+  for (uint i = 0; i < _hitsForFit.size(); i++) {
+  
+    residual_x_simple = off_x_simple + _hitsForFit[i].secondLayerMeasuredX - _hitsForFit[i].secondLayerPredictedX;
+    residual_y_simple = off_y_simple + _hitsForFit[i].secondLayerMeasuredY - _hitsForFit[i].secondLayerPredictedY;
+
+#ifdef MARLIN_USE_AIDA
+    
+    if ( AIDA::IHistogram1D* residx_simple_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_residualXSimpleLocalname]) )
+      residx_simple_histo->fill(residual_x_simple);
+    else {
+      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " <<  _residualXSimpleLocalname << endl;
+    }
+
+    if ( AIDA::IHistogram1D* residy_simple_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_residualYSimpleLocalname]) )
+      residy_simple_histo->fill(residual_y_simple);
+    else {
+      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " <<  _residualYSimpleLocalname << endl;
+    }       
+
+#endif
+  
+  } // end loop over all events
+
+  // get results from migrad
+  gMinuit->GetParameter(0,off_x_simple,off_x_simple_error);
+  gMinuit->GetParameter(1,off_y_simple,off_y_simple_error);
+
+  // release angles
   gMinuit->Release(2);
   gMinuit->Release(3);
   gMinuit->Release(4);
@@ -423,6 +550,40 @@ void EUTelAlign::end() {
   streamlog_out ( MESSAGE2 ) << "theta_z: " << theta_z << " +/- " << theta_z_error << endl;
   streamlog_out ( MESSAGE2 ) << "For copy and paste to line fit xml-file: " << off_x << " " << off_y << " " << theta_x << " " << theta_y << " " << theta_z << endl;
 
+  // fill histograms
+  // ---------------
+
+  double x,y;
+  double residual_x;
+  double residual_y;
+
+  // loop over all events
+  for (uint i = 0; i < _hitsForFit.size(); i++) {
+
+    x = (cos(theta_y)*cos(theta_z)) * _hitsForFit[i].secondLayerMeasuredX + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z) + cos(theta_x)*sin(theta_z)) * _hitsForFit[i].secondLayerMeasuredY + off_x;
+    y = ((-1)*cos(theta_y)*sin(theta_z)) * _hitsForFit[i].secondLayerMeasuredX + (sin(theta_x)*sin(theta_y)*sin(theta_z) + cos(theta_x)*cos(theta_z)) * _hitsForFit[i].secondLayerMeasuredY + off_y;
+
+    residual_x = x - _hitsForFit[i].secondLayerPredictedX;
+    residual_y = y - _hitsForFit[i].secondLayerPredictedY;
+
+#ifdef MARLIN_USE_AIDA
+    
+    if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_residualXLocalname]) )
+      residx_histo->fill(residual_x);
+    else {
+      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " <<  _residualXLocalname << endl;
+    }
+
+    if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_residualYLocalname]) )
+      residy_histo->fill(residual_y);
+    else {
+      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " <<  _residualYLocalname << endl;
+    }       
+
+#endif
+
+  } // end loop over all events
+
 //   delete [] _intrResolY;
 //   delete [] _intrResolX;
   delete [] _xMeasPos;
@@ -433,8 +594,55 @@ void EUTelAlign::end() {
 
 }
 
+void EUTelAlign::bookHistos() {
 
+#ifdef MARLIN_USE_AIDA
+  
+  streamlog_out ( MESSAGE2 ) << "Booking histograms" << endl;
+  
+  const int    NBin = 2000;
+  const double Min  = -1000.0;
+  const double Max  = 1000.0;
 
+  AIDA::IHistogram1D * residualXSimpleLocal = 
+    AIDAProcessor::histogramFactory(this)->createHistogram1D(_residualXSimpleLocalname,NBin,Min,Max);
+  if ( residualXSimpleLocal ) {
+    residualXSimpleLocal->setTitle("Residual X - only offsets");
+    _aidaHistoMap.insert( make_pair( _residualXSimpleLocalname, residualXSimpleLocal ) );
+  } else {
+    streamlog_out ( ERROR2 ) << "Problem booking the " << (_residualXSimpleLocalname) << endl;
+  }
+  
+  AIDA::IHistogram1D * residualYSimpleLocal = 
+    AIDAProcessor::histogramFactory(this)->createHistogram1D(_residualYSimpleLocalname,NBin,Min,Max);
+  if ( residualYSimpleLocal ) {
+    residualYSimpleLocal->setTitle("Residual Y - only offsets");
+    _aidaHistoMap.insert( make_pair( _residualYSimpleLocalname, residualYSimpleLocal ) );
+  } else {
+    streamlog_out ( ERROR2 ) << "Problem booking the " << (_residualYSimpleLocalname) << endl;
+  }
+  
+  AIDA::IHistogram1D * residualXLocal = 
+    AIDAProcessor::histogramFactory(this)->createHistogram1D(_residualXLocalname,NBin,Min,Max);
+  if ( residualXLocal ) {
+    residualXLocal->setTitle("Residual X");
+    _aidaHistoMap.insert( make_pair( _residualXLocalname, residualXLocal ) );
+  } else {
+    streamlog_out ( ERROR2 ) << "Problem booking the " << (_residualXLocalname) << endl;
+  }
+  
+  AIDA::IHistogram1D * residualYLocal = 
+    AIDAProcessor::histogramFactory(this)->createHistogram1D(_residualYLocalname,NBin,Min,Max);
+  if ( residualYLocal ) {
+    residualYLocal->setTitle("Residual Y");
+    _aidaHistoMap.insert( make_pair( _residualYLocalname, residualYLocal ) );
+  } else {
+    streamlog_out ( ERROR2 ) << "Problem booking the " << (_residualYLocalname) << endl;
+  }
+
+#endif
+
+}
 
 #endif
 
