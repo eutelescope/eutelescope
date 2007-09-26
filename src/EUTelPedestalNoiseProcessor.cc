@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.21 2007-09-24 01:20:06 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.22 2007-09-26 09:11:50 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -305,10 +305,7 @@ void EUTelPedestalNoiseProcessor::processEvent (LCEvent * evt) {
   EventType type              = eutelEvent->getEventType();
   
 
-  if ( type == kEORE ) {
-    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
-    return;
-  } else if ( type == kUNKNOWN ) {
+  if ( type == kUNKNOWN ) {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
 			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
