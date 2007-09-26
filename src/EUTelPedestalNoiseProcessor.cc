@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.22 2007-09-26 09:11:50 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.23 2007-09-26 15:15:52 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -64,6 +64,7 @@ std::string EUTelPedestalNoiseProcessor::_pedeMapHistoName    = "PedeMap";
 std::string EUTelPedestalNoiseProcessor::_noiseMapHistoName   = "NoiseMap";
 std::string EUTelPedestalNoiseProcessor::_statusMapHistoName  = "StatusMap";
 std::string EUTelPedestalNoiseProcessor::_tempProfile2DName   = "TempProfile2D";
+std::string EUTelPedestalNoiseProcessor::_fireFreqHistoName   = "Firing frequency";
 #endif
 
 EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPedestalNoiseProcessor") {
@@ -121,6 +122,10 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPed
   registerOptionalParameter ("StatusCollectionName",
 			     "Status collection name",
 			     _statusCollectionName, string ("statusDB"));
+  
+  registerOptionalParameter ("AdditionalMaskingLoop",
+			     "Perform an additional loop for bad pixel masking",
+			     _additionalMaskingLoop, static_cast<bool> ( true ) );
   
   _histogramSwitch = true;
 
@@ -226,18 +231,22 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
   streamlog_out ( DEBUG4 )  << "Event range for pedestal calculation is from " << _firstEvent << " to " << _lastEvent 
 			    << "\nMaxRecordNumber from the global section is   " << maxRecordNumber << endl;
 
+  // check if the user wants an additional loop to remove the bad pixels
+  int additionalLoop = 0; 
+  if ( _additionalMaskingLoop ) additionalLoop = 1;
+
   if ( _lastEvent == -1 ) {
     // the user didn't select an upper limit for the event range, so
     // we don't know on how many events the calculation should be done
     //
     // if the global MaxRecordNumber has been set, so warn the user
     // that the procedure could be wrong due to a too low number of
-    // records.
+    // records.    
     if ( maxRecordNumber != 0 ) {
       streamlog_out ( WARNING2 )  << "The MaxRecordNumber in the Global section of the steering file has been set to " 
 				  << maxRecordNumber << ".\n" 
 				  << "This means that in order to properly perform the pedestal calculation the maximum allowed number of events is "   
-				  << maxRecordNumber / ( _noOfCMIterations + 1 ) << ".\n"
+				  << maxRecordNumber / ( _noOfCMIterations + 1 + additionalLoop ) << ".\n"
 				  << "Let's hope it is correct and try to continue." << endl;
     }
   } else {
@@ -245,10 +254,10 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
     // we can compare this number with the maxRecordNumber if
     // different from 0
     if ( maxRecordNumber != 0 ) {
-      if ( (_lastEvent - _firstEvent) * ( _noOfCMIterations + 1 ) > maxRecordNumber ) {
+      if ( (_lastEvent - _firstEvent) * ( _noOfCMIterations + 1 + additionalLoop ) > maxRecordNumber ) {
 	streamlog_out ( ERROR4 ) << "The pedestal calculation should be done on " << _lastEvent - _firstEvent 
 				 << " times " <<  _noOfCMIterations + 1 << " iterations = " 
-				 << (_lastEvent - _firstEvent) * ( _noOfCMIterations + 1 ) << " records.\n" 
+				 << (_lastEvent - _firstEvent) * ( _noOfCMIterations + 1 + additionalLoop ) << " records.\n" 
 				 << "The global variable MarRecordNumber is limited to " << maxRecordNumber << endl;
       throw InvalidParameterException("MaxRecordNumber");
       }
@@ -295,6 +304,7 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
 
     // also book histos
     bookHistos();
+
   }
 }
 
@@ -311,7 +321,15 @@ void EUTelPedestalNoiseProcessor::processEvent (LCEvent * evt) {
   }
 
   if ( _iLoop == 0 ) firstLoop(evt);
-  else otherLoop(evt);
+  else if ( _additionalMaskingLoop ) {
+    if ( _iLoop == _noOfCMIterations + 1 ) {
+      additionalMaskingLoop(evt);
+    } else {
+      otherLoop(evt);
+    }
+  } else { 
+    otherLoop(evt);
+  }
 
 }
   
@@ -440,64 +458,104 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
 
 void EUTelPedestalNoiseProcessor::maskBadPixel() {
 
-  vector<double > thresholdVec;
-  int    badPixelCounter = 0;
 
+  if ( ( !_additionalMaskingLoop ) ||
+       ( _iLoop < _noOfCMIterations + 1 )) {
 
-  if ( _badPixelAlgo == EUTELESCOPE::NOISEDISTRIBUTION ) {
-    // to do it we need to know the mean value and the RMS of the noise
-    // vector.
+    vector<double > thresholdVec;
+    int    badPixelCounter = 0;
     
-    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+    
+    if ( _badPixelAlgo == EUTELESCOPE::NOISEDISTRIBUTION ) {
+      // to do it we need to know the mean value and the RMS of the noise
+      // vector.
       
-      double sumw  = 0;
-      double sumw2 = 0;
-      double num   = 0;
-      
-      // begin a first loop on all pixel to calculate the masking threshold
-      for (unsigned int iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
-	if ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) {
-	  sumw  += _noise[iDetector][iPixel];
-	  sumw2 += pow(_noise[iDetector][iPixel],2);
-	  ++num;
-	}
-      } 
-      double meanw      = sumw  / num;
-      double meanw2     = sumw2 / num;
-      double rms        = sqrt( meanw2 - pow(meanw,2));
-      thresholdVec.push_back(meanw + (rms * _badPixelMaskCut) );
-      streamlog_out ( DEBUG4 ) << "Mean noise value is " << meanw << " ADC\n"
-	"RMS of noise is " << rms << " ADC\n"
-	"Masking threshold is set to " << thresholdVec[iDetector] << endl;
-      
-      
-    }
-  } else if ( _badPixelAlgo == EUTELESCOPE::ABSOLUTENOISEVALUE ) {
-    thresholdVec.push_back(_badPixelMaskCut);
-  }
-
-  const float lowerThreshold = 0.2;
-  streamlog_out ( MESSAGE2 ) << "Marking as bad also dead pixels (noise < " << lowerThreshold << " ADC)" << endl;
-
-
-  // scan the noise vector again and apply the cut
-  for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-    for (unsigned int iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
-      if ( ( 
-	    ( _noise[iDetector][iPixel] > thresholdVec[iDetector] ) || 
-	    ( _noise[iDetector][iPixel] < lowerThreshold ) 
-	     ) && 
-	   ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) ) {
-	_status[iDetector][iPixel] = EUTELESCOPE::BADPIXEL;
-	streamlog_out ( DEBUG0 ) <<  "Masking pixel number " << iPixel 
-				 << " on detector " << iDetector 
-				 << " (" << _noise[iDetector][iPixel] 
-				 << " > " << thresholdVec[iDetector] << ")" << endl;
-	++badPixelCounter;
+      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+	
+	double sumw  = 0;
+	double sumw2 = 0;
+	double num   = 0;
+	
+	// begin a first loop on all pixel to calculate the masking threshold
+	for (unsigned int iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
+	  if ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) {
+	    sumw  += _noise[iDetector][iPixel];
+	    sumw2 += pow(_noise[iDetector][iPixel],2);
+	    ++num;
+	  }
+	} 
+	double meanw      = sumw  / num;
+	double meanw2     = sumw2 / num;
+	double rms        = sqrt( meanw2 - pow(meanw,2));
+	thresholdVec.push_back(meanw + (rms * _badPixelMaskCut) );
+	streamlog_out ( DEBUG4 ) << "Mean noise value is " << meanw << " ADC\n"
+	  "RMS of noise is " << rms << " ADC\n"
+	  "Masking threshold is set to " << thresholdVec[iDetector] << endl;
+	
+	
       }
+    } else if ( _badPixelAlgo == EUTELESCOPE::ABSOLUTENOISEVALUE ) {
+      thresholdVec.push_back(_badPixelMaskCut);
     }
-  } // end loop on detector;
-  streamlog_out ( MESSAGE4 )  << "Masked " << badPixelCounter << " bad pixels " << endl;
+    
+    const float lowerThreshold = 0.2;
+    streamlog_out ( MESSAGE2 ) << "Marking as bad also dead pixels (noise < " << lowerThreshold << " ADC)" << endl;
+    
+    
+    // scan the noise vector again and apply the cut
+    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      for (unsigned int iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
+	if ( ( 
+	      ( _noise[iDetector][iPixel] > thresholdVec[iDetector] ) || 
+	      ( _noise[iDetector][iPixel] < lowerThreshold ) 
+	       ) && 
+	     ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) ) {
+	  _status[iDetector][iPixel] = EUTELESCOPE::BADPIXEL;
+	  streamlog_out ( DEBUG0 ) <<  "Masking pixel number " << iPixel 
+				   << " on detector " << iDetector 
+				   << " (" << _noise[iDetector][iPixel] 
+				   << " > " << thresholdVec[iDetector] << ")" << endl;
+	  ++badPixelCounter;
+	}
+      }
+    } // end loop on detector;
+    streamlog_out ( MESSAGE4 )  << "Masked " << badPixelCounter << " bad pixels " << endl;
+  } 
+
+
+
+
+  if ( (  _additionalMaskingLoop ) &&
+       ( _iLoop == _noOfCMIterations + 1 )) { 
+    // now masking relying on the additional loop
+    // for the time being this is hardcoded
+    float _maxFreq = 0.25;
+    int badPixelCounter = 0;
+    for ( int iDetector = 0 ; iDetector < _noOfDetector; iDetector++ ) {
+      
+      for (unsigned int iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
+#ifdef MARLIN_USE_AIDA
+	  if ( _histogramSwitch ) {
+	    string tempHistoName;
+	    {
+	      stringstream ss; 
+	      ss << _fireFreqHistoName << "-d" << iDetector << "-l" << _iLoop;
+	      tempHistoName = ss.str();
+	    }
+	    if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ tempHistoName ] ))
+	      histo->fill( (static_cast<double> ( _hitCounter[ iDetector ][ iPixel ] )) / _iEvt );
+	    
+	  }
+#endif
+	  if ( _hitCounter[ iDetector ][ iPixel ] > _maxFreq * _iEvt ) {
+	    _status[ iDetector ][ iPixel ] = EUTELESCOPE::BADPIXEL;
+	    ++badPixelCounter;
+	  }
+      }
+      
+    } // end loop on detector
+    streamlog_out ( MESSAGE4 ) << "Masked " << badPixelCounter << " bad pixels " << endl;
+  }
 }
 
 
@@ -580,6 +638,7 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
 	  _tempNoise.push_back(FloatVec(adcValues.size(), 0.));
 	  _tempEntries.push_back(IntVec(adcValues.size(), 1));
 	  
+
 	} else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
 #ifdef MARLIN_USE_AIDA
 	  // in the case of AIDAPROFILE we don't need any vectors since
@@ -605,6 +664,12 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
 	// the status vector can be initialize as well with all
 	// GOODPIXEL
 	_status.push_back(ShortVec(adcValues.size(), EUTELESCOPE::GOODPIXEL));
+
+	// if the user wants to add an additional loop on events to
+	// mask pixels singing too loud, so the corresponding counter
+	// vector should be reset
+	if ( _additionalMaskingLoop ) _hitCounter.push_back( ShortVec( adcValues.size(), 0) );
+
       } // end of detector loop
       
       // nothing else to do in the first event
@@ -973,68 +1038,136 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 	
     }
   } // end on iLoop
+
+  if ( _additionalMaskingLoop ) {
+    
+    int iLoop = _noOfCMIterations + 1 ;
+    string loopDirName;
+    {
+      stringstream ss;
+      ss << "loop-" << iLoop;
+      loopDirName = ss.str();
+    }
+    AIDAProcessor::tree(this)->mkdir(loopDirName.c_str());
+    
+    for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++ ) {
+
+ // prepare the name of the current detector and add it to the
+      // current ITree inside the current loop folder
+      string detectorDirName;
+      {
+	stringstream ss;
+	ss << "detector-" << iDetector;
+	detectorDirName = ss.str();
+      }
+      string basePath = loopDirName + "/" + detectorDirName + "/";
+      AIDAProcessor::tree(this)->mkdir(basePath.c_str());
+
+      // book an histogram for the firing frequency
+      const int    fireFreqHistoNBin   = 100; 
+      const double fireFreqHistoMin    =  0.0;
+      const double fireFreqHistoMax    =  1.0;
+      {
+	stringstream ss;
+	ss << _fireFreqHistoName << "-d" << iDetector << "-l" << iLoop;
+	tempHistoName = ss.str();
+      } 
+      AIDA::IHistogram1D * fireFreqHisto = 
+	AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 
+								  fireFreqHistoNBin, fireFreqHistoMin, fireFreqHistoMax);
+      if ( fireFreqHisto ) {
+	_aidaHistoMap.insert(make_pair(tempHistoName, fireFreqHisto));
+	fireFreqHisto->setTitle("Firing frequency distribution");
+      } else {
+	streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+				 << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+	_histogramSwitch = false;
+      }
+      
+    }
+  }
+
+
 #endif // MARLIN_USE_AIDA
 
 }
 
-void EUTelPedestalNoiseProcessor::finalizeProcessor() {
+void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
   
-  if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
-    
-    // the loop on events is over so we need to move temporary vectors
-    // to final vectors
-    _pedestal = _tempPede;
-    _noise    = _tempNoise;
-    
-    // clear the temporary vectors
-    _tempPede.clear();
-    _tempNoise.clear();
-    _tempEntries.clear();
-    
-  } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
+
+  if ( ! fromMaskingLoop ) {
+
+    if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
+      
+      // the loop on events is over so we need to move temporary vectors
+      // to final vectors
+      _pedestal = _tempPede;
+      _noise    = _tempNoise;
+      
+      // clear the temporary vectors
+      _tempPede.clear();
+      _tempNoise.clear();
+      _tempEntries.clear();
+      
+    } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
 #ifdef MARLIN_USE_AIDA
-    _pedestal.clear();
-    _noise.clear();
-    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-      stringstream ss;
-      ss << _tempProfile2DName << "-d" << iDetector;
-      FloatVec tempPede;
-      FloatVec tempNoise;
-      for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
-	for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
-	  if ( AIDA::IProfile2D * profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) ) {
-	    tempPede.push_back((float) profile->binHeight(xPixel,yPixel));
-	  // WARNING: the noise part of this algorithm is still not
-	  // working probably because of a bug in RAIDA implementation
-	    tempNoise.push_back((float) profile->binRms(xPixel,yPixel));
-	    //cout << xPixel << " " << yPixel << " " << tempPede.back() << " " << tempNoise.back() << endl;
-	  } else {
-	    streamlog_out ( ERROR4 )  << "Problem with the AIDA temporary profile.\n"
-				      << "Sorry for quitting... " << endl;
-	    exit(-1);
+      _pedestal.clear();
+      _noise.clear();
+      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+	stringstream ss;
+	ss << _tempProfile2DName << "-d" << iDetector;
+	FloatVec tempPede;
+	FloatVec tempNoise;
+	for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
+	  for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
+	    if ( AIDA::IProfile2D * profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) ) {
+	      tempPede.push_back((float) profile->binHeight(xPixel,yPixel));
+	      // WARNING: the noise part of this algorithm is still not
+	      // working probably because of a bug in RAIDA implementation
+	      tempNoise.push_back((float) profile->binRms(xPixel,yPixel));
+	      //cout << xPixel << " " << yPixel << " " << tempPede.back() << " " << tempNoise.back() << endl;
+	    } else {
+	      streamlog_out ( ERROR4 )  << "Problem with the AIDA temporary profile.\n"
+					<< "Sorry for quitting... " << endl;
+	      exit(-1);
+	    }
 	  }
 	}
+	_pedestal.push_back(tempPede);
+	_noise.push_back(tempNoise);
       }
-      _pedestal.push_back(tempPede);
-      _noise.push_back(tempNoise);
-    }
 #endif
+    }
+    
+    // mask the bad pixels here
+    maskBadPixel();
+    
+    // fill in the histograms
+    fillHistos();
+  
+  } else {
+
+    // here refill the status histoMap
+    maskBadPixel();
   }
-  
-  // mask the bad pixels here
-  maskBadPixel();
-  
-  // fill in the histograms
-  fillHistos();
-  
+
+
   // increment the loop counter
   ++_iLoop;
   
   // check if we need another loop or we can finish. Remember that we
-  // have a total number of loop of _noOfCMIteration + 1
-  if ( _iLoop == _noOfCMIterations + 1 ) {
+  // have a total number of loop of _noOfCMIteration + 1 + eventually
+  // the additional loop on bad pixel masking
+  int additionalLoop = 0;
+  if ( _additionalMaskingLoop ) additionalLoop = 1;
+  if ( _iLoop == _noOfCMIterations + 1 + additionalLoop ) {
     // ok this was last loop  
     
+
+    // what we need to do now is to check if the user wants an
+    // additional loop for more accurate bad pixel masking.
+    
+
     streamlog_out ( MESSAGE4 ) << "Writing the output condition file" << endl;
 
     LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
@@ -1143,7 +1276,7 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
 
     throw StopProcessingException(this);
     setReturnValue("IsPedestalFinished", true);
-  } else {
+  } else if ( _iLoop < _noOfCMIterations + 1 ) {
     // now we need to loop again
     // so reset the event counter
     _iEvt = 0;
@@ -1178,7 +1311,60 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor() {
       }
 #endif
     }
-    throw RewindDataFilesException(this);
     setReturnValue("IsPedestalFinished", false);
+    throw RewindDataFilesException(this);
+  } else if ( ( _additionalMaskingLoop ) &&
+	      ( _iLoop ==  _noOfCMIterations + 1 ) ) {
+    // additional loop! 
+    // now we need to loop again
+    // so reset the event counter
+    _iEvt = 0;
+    setReturnValue("IsPedestalFinished", false);
+    throw RewindDataFilesException(this);
+
+  }
+}
+
+void EUTelPedestalNoiseProcessor::additionalMaskingLoop(LCEvent * event) {
+
+  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
+
+  if ( evt->getEventType() == kEORE ) finalizeProcessor(true);
+  if ( ( _lastEvent != -1 ) && ( _iEvt >= _lastEvent ) ) finalizeProcessor(true);
+  if ( _iEvt < _firstEvent ) {
+    ++_iEvt;
+    throw SkipEventException(this);
+  }
+  
+  // keep the user updated
+  if ( _iEvt % 10 == 0 ) 
+    streamlog_out( MESSAGE4 ) << "Processing event " 
+			      << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+			      << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+			      << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) 
+			      << " - loop " << _iLoop <<  endl;
+  
+  // let me get the rawDataCollection. This is should contain a TrackerRawDataObject
+  // for each detector plane in the telescope.
+  try {
+    LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
+    
+    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      // get the TrackerRawData object from the collection for this detector
+      TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt (iDetector));
+      ShortVec adcValues = trackerRawData->getADCValues ();
+      for ( unsigned int iPixel = 0 ; iPixel < adcValues.size(); iPixel++ ) {
+	if ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) {
+	  float correctedValue = adcValues[iPixel] - _pedestal[iDetector][iPixel];
+	  float threshold      = _noise[iDetector][iPixel] *  (0.5 * _hitRejectionCut );
+	  if ( correctedValue > threshold ) {
+	    _hitCounter[iDetector][iPixel]++;
+	  }
+	}
+      }
+    }
+    ++_iEvt;
+  } catch (DataNotAvailableException& e) {
+    streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionName << " is not available in the current event" << endl;
   }
 }

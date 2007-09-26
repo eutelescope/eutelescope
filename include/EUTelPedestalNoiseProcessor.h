@@ -160,7 +160,7 @@ namespace eutelescope {
    *  saving the output pedestal file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.18 2007-08-16 21:40:47 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.19 2007-09-26 15:15:52 bulgheroni Exp $ 
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -328,6 +328,19 @@ namespace eutelescope {
      */
     void otherLoop(LCEvent * evt);
 
+    //! Additional loop for bad pixel masking
+    /*! This method is called within the processEvent(LCEvent * evt)
+     *  if the user wants to perform an additional (very fast) loop
+     *  over the event looking for pixels firing too often. This has
+     *  to be the last loop and both pedestal and noise are not
+     *  changed, only the status is updated. 
+     * 
+     *  A histogram is filled with the firing frequency distribution
+     *  for each detector.
+     *
+     *  @param evt The LCEvent containing all the input collections.
+     */
+    void additionalMaskingLoop(LCEvent * evt);
 
     //! Book histograms
     /*! This method is used to prepare the needed directory structure
@@ -420,6 +433,9 @@ namespace eutelescope {
      *  to true and pedestal, noise and status are moved to a
      *  Tracker(Raw)Data object.
      *
+     *  @param fromMaskingLoop Boolean true when the finalizeProcessor
+     *  is called from the additional masking loop.
+     *
      *  @see EUTelPedestalNoiseProcessor::fillHistos() for a detailed
      *  description on histogram filling.
      *
@@ -429,7 +445,7 @@ namespace eutelescope {
      *  final number of looping is reached.
      *
      */
-    virtual void finalizeProcessor();
+    virtual void finalizeProcessor(bool fromMaskingLoop = false);
 
 
   protected:
@@ -700,6 +716,9 @@ namespace eutelescope {
      */
     std::vector < ShortVec > _status;
 
+    //! Additional bad pixel masking vector
+    std::vector < ShortVec > _hitCounter;
+
     //! Event loop counter
     /*! This is a counter for the number of loops. The processor will
      * loop the first time (_iLoop == 0) for pedestal and noise
@@ -771,6 +790,16 @@ namespace eutelescope {
     /*! @see EUTelPedestalNoiseProcessor::_noiseHistoName;
      */
     static std::string _statusMapHistoName;
+
+
+    //! Firing frequency histogram
+    /*! This histogram contains the cumulative distribution of firing
+     *  frequency. It is filled only if the additional masking loop is
+     *  done.
+     */ 
+    static std::string _fireFreqHistoName;
+
+
 #endif 
 
     //! Histogram switch
@@ -781,6 +810,9 @@ namespace eutelescope {
      *
      */
     bool _histogramSwitch;
+
+    //! Additional bad masking loop
+    bool _additionalMaskingLoop;
 
   };
 
