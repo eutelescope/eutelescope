@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHotPixelKiller.cc,v 1.1 2007-09-26 18:31:37 bulgheroni Exp $
+// Version $Id: EUTelHotPixelKiller.cc,v 1.2 2007-09-27 10:04:32 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -118,7 +118,8 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event) {
     streamlog_out( MESSAGE4 ) << "Processing event " 
 			      << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
 			      << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-			      << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+			      << " (Total = " << setw(10) << (_iCycle * _noOfEventPerCycle) + _iEvt << ")" 
+			      << resetiosflags(ios::left) << endl;
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
   if ( evt->getEventType() == kEORE ) {
@@ -135,9 +136,10 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event) {
     CellIDDecoder<TrackerRawDataImpl>      statusCellDecoder( statusCollectionVec );
 
 
-    if ( isFirstEvent() ) {
-      // the collection contains one TrackerRawData for each detector      
+    if ( _iEvt == 0 ) {
       
+      _firingFreqVec.clear();
+
       for ( int iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) {
 	TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
 	vector< unsigned short > dummyVector( status->getADCValues().size(), 0 );
@@ -152,6 +154,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event) {
       TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
       int sensorID = statusCellDecoder( status )[ "sensorID" ];
       vector< short > statusVec = status->adcValues();
+
       for ( unsigned int iPixel = 0; iPixel < statusVec.size(); iPixel++ ) {
 	
 	if ( statusVec[ iPixel ] == EUTELESCOPE::HITPIXEL ) {
@@ -197,7 +200,7 @@ string EUTelHotPixelKiller::printSummary() const {
      << doubleLine.str() << endl;
 
   for ( unsigned int iCycle = 0 ; iCycle < _killedPixelVec[0].size(); iCycle++ ) {
-    ss << " " << setiosflags( ios::left ) << setw(bigSpacer) << "Cycle num: "
+    ss << " " << setiosflags( ios::left ) << setw(bigSpacer) << "Cycle num:"
        << setiosflags( ios::right ) << setw(tinySpacer) << iCycle << resetiosflags( ios::left) ;
     for ( unsigned int iDetector = 0; iDetector < _killedPixelVec.size(); iDetector++ ) {
       ss << setw(smallSpacer) << _killedPixelVec[iDetector][iCycle] ;
@@ -212,10 +215,6 @@ string EUTelHotPixelKiller::printSummary() const {
 void EUTelHotPixelKiller::check( LCEvent * event ) {
 
   if ( _iEvt == _noOfEventPerCycle -1 ) {
-
-#ifdef MARLIN_USE_AIDA
-    bookAndFillHistos();
-#endif
     
     try {
 
@@ -233,25 +232,32 @@ void EUTelHotPixelKiller::check( LCEvent * event ) {
 	unsigned short killerCounter = 0;
 
 	for ( unsigned int iPixel = 0; iPixel < _firingFreqVec[iDetector].size(); iPixel++ ) {
-	  
-	  if ( _firingFreqVec[iDetector][iPixel] / _iEvt > _maxAllowedFiringFreq ) {
+
+	  if ( _firingFreqVec[iDetector][iPixel] / ( (double) _iEvt ) > _maxAllowedFiringFreq ) {
 	    streamlog_out ( DEBUG3 ) << " Pixel " << iPixel << " on detector " << iDetector 
-				     << " is firing too often (" << _firingFreqVec[iDetector][iPixel] / _iEvt 
+				     << " is firing too often (" << _firingFreqVec[iDetector][iPixel] / ((double) _iEvt )
 				     << "). Masking it now on! " << endl;
-	    statusVec[ iPixel ] == EUTELESCOPE::FIRINGPIXEL;
+	    status->adcValues()[iPixel] = EUTELESCOPE::FIRINGPIXEL;
 	    ++killerCounter;
 	  }
 	  
 	}
 	
 	_killedPixelVec[ iDetector ].push_back( killerCounter );
-
-	// increment the cycle number
-	++_iCycle;
-	
-	// reset the _iEvt counter
-	_iEvt = 0;
       }
+      
+
+#ifdef MARLIN_USE_AIDA
+      bookAndFillHistos();
+#endif
+
+      // increment the cycle number
+      ++_iCycle;
+	
+      // reset the _iEvt counter
+      _iEvt = 0;
+    
+
     } catch (lcio::DataNotAvailableException& e ) {
       streamlog_out ( WARNING2 )  << "Input collection not found in the current event. Skipping..." << endl;
       return;
@@ -306,7 +312,7 @@ void EUTelHotPixelKiller::bookAndFillHistos() {
     }
     int nBin = 100;
     double min = 0;
-    double max = 100;
+    double max = 1;
     AIDA::IHistogram1D * firing1DHisto =
       AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
 								nBin, min, max );
@@ -316,7 +322,7 @@ void EUTelHotPixelKiller::bookAndFillHistos() {
     for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
       for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
 	firing2DHisto->fill(xPixel, yPixel, _firingFreqVec[ iDetector ][ iPixel ] );
-	firing1DHisto->fill( _firingFreqVec[ iDetector ][ iPixel ] / _noOfEventPerCycle );
+	firing1DHisto->fill( _firingFreqVec[ iDetector ][ iPixel ] / ( (double)  _noOfEventPerCycle ));
 	++iPixel;
       }
     }
