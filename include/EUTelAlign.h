@@ -142,6 +142,8 @@ namespace eutelescope {
 
     int _alignedPlane;
     double _chi2Cut;
+    double _distancemin;
+    double _distancemax;
 
     std::vector<float > _startValuesForAlignment;
 
@@ -205,6 +207,8 @@ namespace eutelescope {
      *  its name
      */ 
     std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
+
+    static std::string _distanceLocalname;
 
     static std::string _residualXSimpleLocalname;
     static std::string _residualYSimpleLocalname;
