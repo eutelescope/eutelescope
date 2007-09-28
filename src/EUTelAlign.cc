@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.10 2007-09-26 16:53:56 roloff Exp $
+// Version: $Id: EUTelAlign.cc,v 1.11 2007-09-28 21:15:20 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -65,6 +65,7 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #ifdef MARLIN_USE_AIDA
+std::string EUTelAlign::_distanceLocalname             = "Distance";
 std::string EUTelAlign::_residualXSimpleLocalname      = "ResidualXSimple";
 std::string EUTelAlign::_residualYSimpleLocalname      = "ResidualYSimple";
 std::string EUTelAlign::_residualXLocalname            = "ResidualX";
@@ -116,6 +117,13 @@ EUTelAlign::EUTelAlign () : Processor("EUTelAlign") {
 
   registerOptionalParameter("StartValuesForAlignment","Start values used for the alignment:\n off_x, off_y, theta_x, theta_y, theta_z1, theta_z2",
 			    _startValuesForAlignment, startValues);
+
+  registerOptionalParameter("DistanceMin","Minimal allowed distance between hits before alignment.",
+			    _distancemin, static_cast <double> (0.0));
+
+  registerOptionalParameter("DistanceMax","Maximal allowed distance between hits before alignment.",
+			    _distancemax, static_cast <double> (2000.0));
+
 
 }
 
@@ -330,7 +338,17 @@ void EUTelAlign::processEvent (LCEvent * event) {
 	// calculate distance between hits
 	double distance = sqrt(pow(allHitsFirstLayerMeasuredX[firsthit] - allHitsSecondLayerMeasuredX[secondhit],2) + pow(allHitsFirstLayerMeasuredY[firsthit] - allHitsSecondLayerMeasuredY[secondhit],2));
 
-	if (distance < 2000) {
+#ifdef MARLIN_USE_AIDA
+    
+	if ( AIDA::IHistogram1D* distance_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_distanceLocalname]) )
+      distance_histo->fill(distance);
+	else {
+	  streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " <<  _distanceLocalname << endl;
+	}
+
+#endif
+
+	if (distance >= _distancemin && distance <= _distancemax) {
 	  if (take != -1000) {
 	    veto = 1;
 	  }
@@ -338,7 +356,7 @@ void EUTelAlign::processEvent (LCEvent * event) {
 	}
 
       } // end loop over hits in second plane
-	
+      
       if (take != -1000 && veto == -1000) {
 
 	hitsForFit.firstLayerMeasuredX = allHitsFirstLayerMeasuredX[firsthit];
@@ -472,15 +490,19 @@ void EUTelAlign::end() {
   arglist[1] = 0.1;
   gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
 
-  double off_x_simple;
-  double off_y_simple;
+  double off_x_simple = 0.0;
+  double off_y_simple = 0.0;
 
-  double off_x_simple_error;
-  double off_y_simple_error;
+  double off_x_simple_error = 0.0;
+  double off_y_simple_error = 0.0;
+
+  // get results from migrad
+  gMinuit->GetParameter(0,off_x_simple,off_x_simple_error);
+  gMinuit->GetParameter(1,off_y_simple,off_y_simple_error);
 
   // fill histograms
-  double residual_x_simple;
-  double residual_y_simple;
+  double residual_x_simple = 1000.0;
+  double residual_y_simple = 1000.0;
 
   // loop over all events
   for (uint i = 0; i < _hitsForFit.size(); i++) {
@@ -522,17 +544,17 @@ void EUTelAlign::end() {
 
   streamlog_out ( MESSAGE2) << endl;
 
-  double off_x;
-  double off_y;
-  double theta_x;
-  double theta_y;
-  double theta_z;
+  double off_x = 0.0;
+  double off_y = 0.0;
+  double theta_x = 0.0;
+  double theta_y = 0.0;
+  double theta_z = 0.0;
 
-  double off_x_error;
-  double off_y_error;
-  double theta_x_error;
-  double theta_y_error;
-  double theta_z_error;
+  double off_x_error = 0.0;
+  double off_y_error = 0.0;
+  double theta_x_error = 0.0;
+  double theta_y_error = 0.0;
+  double theta_z_error = 0.0;
 
   // get results from migrad
   gMinuit->GetParameter(0,off_x,off_x_error);
@@ -554,8 +576,8 @@ void EUTelAlign::end() {
   // ---------------
 
   double x,y;
-  double residual_x;
-  double residual_y;
+  double residual_x = 1000.0;
+  double residual_y = 1000.0;
 
   // loop over all events
   for (uint i = 0; i < _hitsForFit.size(); i++) {
@@ -599,6 +621,15 @@ void EUTelAlign::bookHistos() {
 #ifdef MARLIN_USE_AIDA
   
   streamlog_out ( MESSAGE2 ) << "Booking histograms" << endl;
+
+  AIDA::IHistogram1D * distanceLocal = 
+    AIDAProcessor::histogramFactory(this)->createHistogram1D(_distanceLocalname,1000,0.0,5000.0);
+  if ( distanceLocal ) {
+    distanceLocal->setTitle("Distance");
+    _aidaHistoMap.insert( make_pair( _distanceLocalname, distanceLocal ) );
+  } else {
+    streamlog_out ( ERROR2 ) << "Problem booking the " << (_distanceLocalname) << endl;
+  }
   
   const int    NBin = 2000;
   const double Min  = -1000.0;
