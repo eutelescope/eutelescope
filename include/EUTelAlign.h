@@ -142,8 +142,9 @@ namespace eutelescope {
 
     int _alignedPlane;
     double _chi2Cut;
-    double _distancemin;
-    double _distancemax;
+    double _distanceMin;
+    double _distanceMax;
+    int _nHitsMax;
 
     std::vector<float > _startValuesForAlignment;
 

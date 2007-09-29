@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.11 2007-09-28 21:15:20 roloff Exp $
+// Version: $Id: EUTelAlign.cc,v 1.12 2007-09-29 18:40:55 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -119,11 +119,13 @@ EUTelAlign::EUTelAlign () : Processor("EUTelAlign") {
 			    _startValuesForAlignment, startValues);
 
   registerOptionalParameter("DistanceMin","Minimal allowed distance between hits before alignment.",
-			    _distancemin, static_cast <double> (0.0));
+			    _distanceMin, static_cast <double> (0.0));
 
   registerOptionalParameter("DistanceMax","Maximal allowed distance between hits before alignment.",
-			    _distancemax, static_cast <double> (2000.0));
+			    _distanceMax, static_cast <double> (2000.0));
 
+  registerOptionalParameter("NHitsMax","Maximal number of Hits per plane.",
+			    _nHitsMax, static_cast <int> (100));
 
 }
 
@@ -284,8 +286,6 @@ void EUTelAlign::processEvent (LCEvent * event) {
 	_intrResol[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
       
       }
-
-      // Assumption: Only one hit in each detector plane
       
       // If first plane: calculate extrapolation to second plane
 
@@ -326,61 +326,66 @@ void EUTelAlign::processEvent (LCEvent * event) {
 
     } // End loop over all hits
 
-    // loop over all hits in first plane
-    for (int firsthit = 0; firsthit < nHitsFirstPlane; firsthit++) {
-	
-      int take = -1000;
-      int veto = -1000;
+    // check number of hits
+    if (nHitsFirstPlane <= _nHitsMax && nHitsSecondPlane <= _nHitsMax) {
+
+      // loop over all hits in first plane
+      for (int firsthit = 0; firsthit < nHitsFirstPlane; firsthit++) {
+
+	int take = -1000;
+	int veto = -1000;
       
-      // loop over all hits in second plane
-      for (int secondhit = 0; secondhit < nHitsSecondPlane; secondhit++) {
+	// loop over all hits in second plane
+	for (int secondhit = 0; secondhit < nHitsSecondPlane; secondhit++) {
 	
-	// calculate distance between hits
-	double distance = sqrt(pow(allHitsFirstLayerMeasuredX[firsthit] - allHitsSecondLayerMeasuredX[secondhit],2) + pow(allHitsFirstLayerMeasuredY[firsthit] - allHitsSecondLayerMeasuredY[secondhit],2));
+	  // calculate distance between hits
+	  double distance = sqrt(pow(allHitsFirstLayerMeasuredX[firsthit] - allHitsSecondLayerMeasuredX[secondhit],2) + pow(allHitsFirstLayerMeasuredY[firsthit] - allHitsSecondLayerMeasuredY[secondhit],2));
 
 #ifdef MARLIN_USE_AIDA
     
-	if ( AIDA::IHistogram1D* distance_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_distanceLocalname]) )
-      distance_histo->fill(distance);
-	else {
-	  streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " <<  _distanceLocalname << endl;
-	}
+	  if ( AIDA::IHistogram1D* distance_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_distanceLocalname]) )
+	    distance_histo->fill(distance);
+	  else {
+	    streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " <<  _distanceLocalname << endl;
+	  }
 
 #endif
 
-	if (distance >= _distancemin && distance <= _distancemax) {
-	  if (take != -1000) {
-	    veto = 1;
+	  if (distance >= _distanceMin && distance <= _distanceMax) {
+	    if (take != -1000) {
+	      veto = 1;
+	    }
+	    take = secondhit;
 	  }
-	  take = secondhit;
+
+	} // end loop over hits in second plane
+      
+	if (take != -1000 && veto == -1000) {
+
+	  hitsForFit.firstLayerMeasuredX = allHitsFirstLayerMeasuredX[firsthit];
+	  hitsForFit.firstLayerMeasuredY = allHitsFirstLayerMeasuredY[firsthit];
+	  hitsForFit.firstLayerMeasuredZ = allHitsFirstLayerMeasuredZ[firsthit];
+	  
+	  hitsForFit.secondLayerMeasuredX = allHitsSecondLayerMeasuredX[take];
+	  hitsForFit.secondLayerMeasuredY = allHitsSecondLayerMeasuredY[take];
+	  hitsForFit.secondLayerMeasuredZ = allHitsSecondLayerMeasuredZ[take];
+	  
+	  hitsForFit.secondLayerPredictedX = allHitsFirstLayerMeasuredX[firsthit];
+	  hitsForFit.secondLayerPredictedY = allHitsFirstLayerMeasuredY[firsthit];
+	  hitsForFit.secondLayerPredictedZ = allHitsSecondLayerMeasuredZ[take];
+
+	  hitsForFit.firstLayerResolution = allHitsFirstLayerResolution[firsthit];
+	  hitsForFit.secondLayerResolution = allHitsSecondLayerResolution[take];
+
+	  _hitsForFit.push_back(hitsForFit);
+	  
 	}
 
-      } // end loop over hits in second plane
-      
-      if (take != -1000 && veto == -1000) {
+      } // end loop over hits in first plane
 
-	hitsForFit.firstLayerMeasuredX = allHitsFirstLayerMeasuredX[firsthit];
-	hitsForFit.firstLayerMeasuredY = allHitsFirstLayerMeasuredY[firsthit];
-	hitsForFit.firstLayerMeasuredZ = allHitsFirstLayerMeasuredZ[firsthit];
-	  
-	hitsForFit.secondLayerMeasuredX = allHitsSecondLayerMeasuredX[take];
-	hitsForFit.secondLayerMeasuredY = allHitsSecondLayerMeasuredY[take];
-	hitsForFit.secondLayerMeasuredZ = allHitsSecondLayerMeasuredZ[take];
-	  
-	hitsForFit.secondLayerPredictedX = allHitsFirstLayerMeasuredX[firsthit];
-	hitsForFit.secondLayerPredictedY = allHitsFirstLayerMeasuredY[firsthit];
-	hitsForFit.secondLayerPredictedZ = allHitsSecondLayerMeasuredZ[take];
+    } // end if check number of hits
 
-	hitsForFit.firstLayerResolution = allHitsFirstLayerResolution[firsthit];
-	hitsForFit.secondLayerResolution = allHitsSecondLayerResolution[take];
-
-	_hitsForFit.push_back(hitsForFit);
-	  
-      }
-
-    } // end loop over hits in first plane
-
-    // _hitsForFit.push_back(hitsForFit);
+      // _hitsForFit.push_back(hitsForFit);
   
   } catch (DataNotAvailableException& e) {
     streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber() << " in run " << event->getRunNumber() << endl;
