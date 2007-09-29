@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitHistograms.cc,v 1.3 2007-09-20 22:09:56 zarnecki Exp $
+// Version: $Id: EUTelFitHistograms.cc,v 1.4 2007-09-29 18:47:30 zarnecki Exp $
 // Date 2007.09.10
 
 /*
@@ -15,6 +15,8 @@
 
 // eutelescope inlcudes
 #include "EUTelFitHistograms.h"
+#include "EUTelVirtualCluster.h"
+#include "EUTelFFClusterImpl.h"
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
 #include "EUTelRunHeaderImpl.h"
@@ -98,6 +100,12 @@ std::string EUTelFitHistograms::_relShiftXHistoName = "relShiftX";
 std::string EUTelFitHistograms::_relShiftYHistoName = "relShiftY";
 std::string EUTelFitHistograms::_relRotXHistoName   = "relRotX";
 std::string EUTelFitHistograms::_relRotYHistoName   = "relRotY";
+
+std::string EUTelFitHistograms::_clusterSignalHistoName  = "clusterSignal";
+std::string EUTelFitHistograms::_meanSignalXHistoName  = "meanSignalX";
+std::string EUTelFitHistograms::_meanSignalYHistoName  = "meanSignalY";
+std::string EUTelFitHistograms::_meanSignalXYHistoName  = "meanSignalXY";
+
 #endif
 
 
@@ -311,6 +319,7 @@ void EUTelFitHistograms::init() {
 
   _measuredX     = new double[_nTelPlanes];
   _measuredY     = new double[_nTelPlanes];
+  _measuredQ     = new double[_nTelPlanes];
   _fittedX       = new double[_nTelPlanes];
   _fittedY       = new double[_nTelPlanes];
 
@@ -391,7 +400,7 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
     {
       Track * fittrack = dynamic_cast<Track*>( col->getElementAt(itrack) ) ;
 
-      // Hit list asign to track
+      // Hit list assigned to track
 
       std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getTrackerHits();
 
@@ -457,15 +466,30 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
           _measuredX[hitPlane]=pos[0];
           _measuredY[hitPlane]=pos[1];
+
+	  // Get cluster charge
+	  EVENT::LCObjectVec rawdata =  meshit->getRawHits();
+	  EUTelVirtualCluster * cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> (rawdata.at(0))) ;
+
+	  _measuredQ[hitPlane]=cluster->getTotalCharge();
+
+
+         if(debug)message<DEBUG> ( log() << "Measured hit in plane " << hitPlane << " at  X = " 
+			          << pos[0] << ", Y = " << pos[1] << ", Q = " << _measuredQ[hitPlane] );
+
 	}
       else
 	{
-	  // Measured hits
+	  // Fitted hits
 
 	  _isFitted[hitPlane]=true;
 
           _fittedX[hitPlane]=pos[0];
           _fittedY[hitPlane]=pos[1];
+
+         if(debug)message<DEBUG> ( log() << "Fitted  hit  in plane " << hitPlane << " at  X = " 
+			          << pos[0] << ", Y = " << pos[1] );
+
 	}
 
     }
@@ -492,6 +516,29 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
         nam3 << _MeasuredXYHistoName << "_" << ipl ;
         tempHistoName=nam3.str();
         (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl],_measuredY[ipl]);
+
+        stringstream nam4;
+        nam4 << _clusterSignalHistoName << "_" << ipl ;
+        tempHistoName=nam4.str();
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredQ[ipl]);
+
+        stringstream nam5;
+        nam5 << _meanSignalXHistoName << "_" << ipl ;
+        tempHistoName=nam5.str();
+        (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl],_measuredQ[ipl]);
+
+
+        stringstream nam6;
+        nam6 << _meanSignalYHistoName << "_" << ipl ;
+        tempHistoName=nam6.str();
+        (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredY[ipl],_measuredQ[ipl]);
+
+
+        stringstream nam7;
+        nam7 << _meanSignalXYHistoName << "_" << ipl ;
+        tempHistoName=nam7.str();
+        (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl],_measuredY[ipl],_measuredQ[ipl]);
+
 
 	}
       }
@@ -753,6 +800,7 @@ void EUTelFitHistograms::end(){
   delete [] _isFitted ;
   delete [] _measuredX  ;
   delete [] _measuredY  ;
+  delete [] _measuredQ  ;
   delete [] _fittedX ;
   delete [] _fittedY ;
 
@@ -1869,7 +1917,7 @@ void EUTelFitHistograms::bookHistos()
 
     for(int ipl=0;ipl<_nTelPlanes; ipl++)
       {
-      if(ipl!=_referenceID0 && ipl!=_referenceID1)
+      if(_isActive[ipl] && ipl!=_referenceID0 && ipl!=_referenceID1)
  	{
         stringstream nam,tit;
 
@@ -1915,8 +1963,7 @@ void EUTelFitHistograms::bookHistos()
 
     for(int ipl=0;ipl<_nTelPlanes; ipl++)
       {
-      if(ipl!=_referenceID0 && ipl!=_referenceID1)
-      if(ipl!=_beamID)
+      if(_isActive[ipl] && ipl!=_referenceID0 && ipl!=_referenceID1)
  	{
         stringstream nam,tit;
 
@@ -1961,8 +2008,7 @@ void EUTelFitHistograms::bookHistos()
 
     for(int ipl=0;ipl<_nTelPlanes; ipl++)
       {
-      if(ipl!=_beamID)
-      if(ipl!=_referenceID0 && ipl!=_referenceID1)
+      if(_isActive[ipl] && ipl!=_referenceID0 && ipl!=_referenceID1)
  	{
         stringstream nam,tit;
 
@@ -2007,7 +2053,7 @@ void EUTelFitHistograms::bookHistos()
 
     for(int ipl=0;ipl<_nTelPlanes; ipl++)
       {
-      if(ipl!=_referenceID0 && ipl!=_referenceID1)
+      if(_isActive[ipl] && ipl!=_referenceID0 && ipl!=_referenceID1)
  	{
         stringstream nam,tit;
 
@@ -2019,6 +2065,191 @@ void EUTelFitHistograms::bookHistos()
         tempHistoTitle=tit.str();
 
         AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),rotYNBin,rotYMin,rotYMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+    // 
+    // Cluster signal distribution
+    //
+
+    int    clusterNBin  = 1000;
+    double clusterMin   = 0.;
+    double clusterMax   = 1000.;
+    string clusterTitle = "Cluster spectrum with all pixels";
+
+     if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_clusterSignalHistoName);
+      if ( histoInfo ) 
+        {
+	message<DEBUG> ( log() << (* histoInfo ) );
+	clusterNBin = histoInfo->_xBin;
+	clusterMin  = histoInfo->_xMin;
+	clusterMax  = histoInfo->_xMax;
+	if ( histoInfo->_title != "" ) clusterTitle = histoInfo->_title;
+        }
+      }
+
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl])
+ 	{
+        stringstream nam,tit;
+
+        nam << _clusterSignalHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << clusterTitle << " for plane " << ipl ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), clusterNBin,clusterMin,clusterMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+    // 
+    // Mean cluster signal vs X
+    //
+
+    int    meanXNBin  = 100;
+    double meanXMin   = -5.;
+    double meanXMax   = 5.;
+    string meanXTitle = "Mean cluster signal vs X ";
+
+     if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_meanSignalXHistoName);
+      if ( histoInfo ) 
+        {
+	message<DEBUG> ( log() << (* histoInfo ) );
+	meanXNBin = histoInfo->_xBin;
+	meanXMin  = histoInfo->_xMin;
+	meanXMax  = histoInfo->_xMax;
+	if ( histoInfo->_title != "" ) meanXTitle = histoInfo->_title;
+        }
+      }
+
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl])
+ 	{
+        stringstream nam,tit;
+
+        nam << _meanSignalXHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << meanXTitle << " for plane " << ipl ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(), meanXNBin,meanXMin,meanXMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+    // 
+    // Mean cluster signal vs Y
+    //
+
+    int    meanYNBin  = 100;
+    double meanYMin   = -5.;
+    double meanYMax   = 5.;
+    string meanYTitle = "Mean cluster signal vs Y ";
+
+     if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_meanSignalYHistoName);
+      if ( histoInfo ) 
+        {
+	message<DEBUG> ( log() << (* histoInfo ) );
+	meanYNBin = histoInfo->_xBin;
+	meanYMin  = histoInfo->_xMin;
+	meanYMax  = histoInfo->_xMax;
+	if ( histoInfo->_title != "" ) meanYTitle = histoInfo->_title;
+        }
+      }
+
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl])
+ 	{
+        stringstream nam,tit;
+
+        nam << _meanSignalYHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << meanYTitle << " for plane " << ipl ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(), meanYNBin,meanYMin,meanYMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+    // 
+    // Mean cluster signal vs XY
+    //
+
+    meanXNBin  = 100;
+    meanXMin   = -5.;
+    meanXMax   = 5.;
+    meanYNBin  = 100;
+    meanYMin   = -5.;
+    meanYMax   = 5.;
+    string meanXYTitle = "Mean cluster signal vs XY ";
+
+     if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_meanSignalXYHistoName);
+      if ( histoInfo ) 
+        {
+	message<DEBUG> ( log() << (* histoInfo ) );
+	meanXNBin = histoInfo->_xBin;
+	meanXMin  = histoInfo->_xMin;
+	meanXMax  = histoInfo->_xMax;
+	meanYNBin = histoInfo->_yBin;
+	meanYMin  = histoInfo->_yMin;
+	meanYMax  = histoInfo->_yMax;
+	if ( histoInfo->_title != "" ) meanXYTitle = histoInfo->_title;
+        }
+      }
+
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl])
+ 	{
+        stringstream nam,tit;
+
+        nam << _meanSignalXYHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << meanXYTitle << " for plane " << ipl ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IProfile2D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile2D( tempHistoName.c_str(), meanXNBin,meanXMin,meanXMax,  meanYNBin,meanYMin,meanYMax);
 
          tempHisto->setTitle(tempHistoTitle.c_str());
 
