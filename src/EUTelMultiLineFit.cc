@@ -68,7 +68,6 @@ std::string EUTelMultiLineFit::_residualXLocalname      = "ResidualX";
 std::string EUTelMultiLineFit::_residualYLocalname      = "ResidualY";
 #endif
 
-
 EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
   
   // modify processor description
@@ -139,6 +138,14 @@ EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
   registerOptionalParameter("AlignmentConstantsSixthLayer","Alignment Constants for sixth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z"
 			    ,_alignmentConstantsSixthLayer, constantsSixthLayer);
 
+  registerOptionalParameter("DistanceMax","Maximal allowed distance between hits entering the fit.",
+                            _distanceMax, static_cast <float> (2000.0));
+
+  registerOptionalParameter("Chi2XMax","Maximal chi2 for fit of x coordinate."
+			    ,_chi2XMax, static_cast <float> (100.0));
+
+  registerOptionalParameter("Chi2YMax","Maximal chi2 for fit of y coordinate."                             ,_chi2YMax, static_cast <float> (100.0));
+
 }
 
 void EUTelMultiLineFit::init() {
@@ -188,7 +195,7 @@ void EUTelMultiLineFit::init() {
   
   _intrResolX = new double[_nPlanes];
   _intrResolY = new double[_nPlanes];
-    
+
 }
 
 void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
@@ -238,6 +245,105 @@ void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
   ++_iRun;
 }
 
+void EUTelMultiLineFit::FitTrack(int nPlanesFit, double xPosFit[], double yPosFit[], double zPosFit[], double xResFit[], double yResFit[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]) {
+
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    // ++++++++++++ See Blobel Page 226 !!! +++++++++++++++++
+    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+    
+    int counter;
+    
+    float S1[2]   = {0,0};
+    float Sx[2]   = {0,0};
+    float Xbar[2] = {0,0};
+    
+    float * Zbar_X = new float[nPlanesFit];
+    float * Zbar_Y = new float[nPlanesFit];
+    for (counter = 0; counter < nPlanesFit; counter++){
+      Zbar_X[counter] = 0.;
+      Zbar_Y[counter] = 0.;
+    }
+    
+    float Sy[2]     = {0,0};
+    float Ybar[2]   = {0,0};
+    float Sxybar[2] = {0,0};
+    float Sxxbar[2] = {0,0};
+    float A2[2]     = {0,0};
+    // float Chiquare[2] = {0,0};
+    // float angle[2] = {0,0};
+    
+    // define S1
+    for( counter = 0; counter < nPlanesFit; counter++ ){
+      S1[0] = S1[0] + 1/pow(xResFit[counter],2);
+      S1[1] = S1[1] + 1/pow(yResFit[counter],2);
+    }
+    
+    // define Sx
+    for( counter = 0; counter < nPlanesFit; counter++ ){
+      Sx[0] = Sx[0] + zPosFit[counter]/pow(xResFit[counter],2);
+      Sx[1] = Sx[1] + zPosFit[counter]/pow(yResFit[counter],2);
+    }
+    
+    // define Xbar
+    Xbar[0]=Sx[0]/S1[0];
+    Xbar[1]=Sx[1]/S1[1];
+    
+    // coordinate transformation !! -> bar
+    for( counter = 0; counter < nPlanesFit; counter++ ){
+      Zbar_X[counter] = zPosFit[counter]-Xbar[0];
+      Zbar_Y[counter] = zPosFit[counter]-Xbar[1];
+    } 
+    
+    // define Sy
+    for( counter = 0; counter < nPlanesFit; counter++ ){
+      Sy[0] = Sy[0] + xPosFit[counter]/pow(xResFit[counter],2);
+      Sy[1] = Sy[1] + yPosFit[counter]/pow(yResFit[counter],2);
+    }
+    
+    // define Ybar
+    Ybar[0]=Sy[0]/S1[0];
+    Ybar[1]=Sy[1]/S1[1];
+    
+    // define Sxybar
+    for( counter = 0; counter < nPlanesFit; counter++ ){
+      Sxybar[0] = Sxybar[0] + Zbar_X[counter] * xPosFit[counter]/pow(xResFit[counter],2);
+      Sxybar[1] = Sxybar[1] + Zbar_Y[counter] * yPosFit[counter]/pow(yResFit[counter],2);
+    }
+    
+    // define Sxxbar
+    for( counter = 0; counter < nPlanesFit; counter++ ){
+      Sxxbar[0] = Sxxbar[0] + Zbar_X[counter] * Zbar_X[counter]/pow(xResFit[counter],2);
+      Sxxbar[1] = Sxxbar[1] + Zbar_Y[counter] * Zbar_Y[counter]/pow(yResFit[counter],2);
+    }
+    
+    // define A2
+    
+    A2[0]=Sxybar[0]/Sxxbar[0];
+    A2[1]=Sxybar[1]/Sxxbar[1];
+    
+    // Calculate chi sqaured
+    // Chi^2 for X and Y coordinate for hits in all planes 
+    
+    for( counter = 0; counter < nPlanesFit; counter++ ){
+      chi2Fit[0] += pow(-zPosFit[counter]*A2[0]
+			 +xPosFit[counter]-Ybar[0]+Xbar[0]*A2[0],2)/pow(xResFit[counter],2);
+      chi2Fit[1] += pow(-zPosFit[counter]*A2[1]
+			 +yPosFit[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(yResFit[counter],2);
+    }
+    
+    for( counter = 0; counter < nPlanesFit; counter++ ){
+      residXFit[counter] = (Ybar[0]-Xbar[0]*A2[0]+zPosFit[counter]*A2[0])-xPosFit[counter];
+      residYFit[counter] = (Ybar[1]-Xbar[1]*A2[1]+zPosFit[counter]*A2[1])-yPosFit[counter];
+    }
+    
+    // define angle
+    angleFit[0] = atan(A2[0]);
+    angleFit[1] = atan(A2[1]);
+
+    delete [] Zbar_X;
+    delete [] Zbar_Y;
+
+}
 
 void EUTelMultiLineFit::processEvent (LCEvent * event) {
   
@@ -378,103 +484,20 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       }
       
       delete cluster; // <--- destroying the cluster   
+
     }
-    
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    // ++++++++++++ See Blobel Page 226 !!! +++++++++++++++++
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    
-    int counter;
-    
-    float S1[2]   = {0,0};
-    float Sx[2]   = {0,0};
-    float Xbar[2] = {0,0};
-    
-    float * Zbar_X = new float[_nPlanes];
-    float * Zbar_Y = new float[_nPlanes];
-    for (counter = 0; counter < _nPlanes; counter++){
-      Zbar_X[counter] = 0.;
-      Zbar_Y[counter] = 0.;
-    }
-    
-    float Sy[2]     = {0,0};
-    float Ybar[2]   = {0,0};
-    float Sxybar[2] = {0,0};
-    float Sxxbar[2] = {0,0};
-    float A2[2]     = {0,0};
-    float Chiquare[2] = {0,0};
-    float angle[2] = {0,0};
-    
-    // define S1
-    for( counter = 0; counter < _nPlanes; counter++ ){
-      S1[0] = S1[0] + 1/pow(_intrResolX[counter],2);
-      S1[1] = S1[1] + 1/pow(_intrResolY[counter],2);
-    }
-    
-    // define Sx
-    for( counter = 0; counter < _nPlanes; counter++ ){
-      Sx[0] = Sx[0] + _zPos[counter]/pow(_intrResolX[counter],2);
-      Sx[1] = Sx[1] + _zPos[counter]/pow(_intrResolY[counter],2);
-    }
-    
-    // define Xbar
-    Xbar[0]=Sx[0]/S1[0];
-    Xbar[1]=Sx[1]/S1[1];
-    
-    // coordinate transformation !! -> bar
-    for( counter=0; counter < _nPlanes; counter++ ){
-      Zbar_X[counter] = _zPos[counter]-Xbar[0];
-      Zbar_Y[counter] = _zPos[counter]-Xbar[1];
-    } 
-    
-    // define Sy
-    for( counter = 0; counter < _nPlanes; counter++ ){
-      Sy[0] = Sy[0] + _xPos[counter]/pow(_intrResolX[counter],2);
-      Sy[1] = Sy[1] + _yPos[counter]/pow(_intrResolY[counter],2);
-    }
-    
-    // define Ybar
-    Ybar[0]=Sy[0]/S1[0];
-    Ybar[1]=Sy[1]/S1[1];
-    
-    // define Sxybar
-    for( counter = 0; counter < _nPlanes; counter++ ){
-      Sxybar[0] = Sxybar[0] + Zbar_X[counter] * _xPos[counter]/pow(_intrResolX[counter],2);
-      Sxybar[1] = Sxybar[1] + Zbar_Y[counter] * _yPos[counter]/pow(_intrResolY[counter],2);
-    }
-    
-    // define Sxxbar
-    for( counter = 0; counter < _nPlanes; counter++ ){
-      Sxxbar[0] = Sxxbar[0] + Zbar_X[counter] * Zbar_X[counter]/pow(_intrResolX[counter],2);
-      Sxxbar[1] = Sxxbar[1] + Zbar_Y[counter] * Zbar_Y[counter]/pow(_intrResolX[counter],2);
-    }
-    
-    // define A2
-    
-    A2[0]=Sxybar[0]/Sxxbar[0];
-    A2[1]=Sxybar[1]/Sxxbar[1];
-    
-    // Calculate chi sqaured
-    // Chi^2 for X and Y coordinate for hits in all planes 
-    
-    for( counter = 0; counter < _nPlanes; counter++ ){
-      Chiquare[0] += pow(-_zPos[counter]*A2[0]
-			 +_xPos[counter]-Ybar[0]+Xbar[0]*A2[0],2)/pow(_intrResolX[counter],2);
-      Chiquare[1] += pow(-_zPos[counter]*A2[1]
-			 +_yPos[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(_intrResolY[counter],2);
-    }
-    
-    for( counter = 0; counter < _nPlanes; counter++ ){
-      _waferResidX[counter] = (Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0])-_xPos[counter];
-      _waferResidY[counter] = (Ybar[1]-Xbar[1]*A2[1]+_zPos[counter]*A2[1])-_yPos[counter];
-    }
-    
-    // define angle
-    
-    
-    angle[0] = atan(A2[0]);
-    angle[1] = atan(A2[1]);
-    
+
+    // loop over all hits in first plane
+  
+    double Chiquare[2] = {0,0};
+    double angle[2] = {0,0};
+
+    FitTrack(int(_nPlanes), _xPos, _yPos, _zPos, _intrResolX, _intrResolY, Chiquare, _waferResidX, _waferResidY, angle);
+
+
+
+    // not needed so far
+    /*
 
     // Define output track and hit collections
     LCCollectionVec     * fittrackvec = new LCCollectionVec(LCIO::TRACK);
@@ -485,7 +508,6 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     LCFlagImpl flag(fittrackvec->getFlag()); 
     flag.setBit( LCIO::TRBIT_HITS );
     fittrackvec->setFlag(flag.getFlag());
-    
     
     // fill output collections...
     
@@ -510,6 +532,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     
     // Calculate positions of fitted track in every plane
     
+    int counter;
+
     for( counter = 0; counter < _nPlanes; counter++ ){
       
       _xFitPos[counter] = Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0];
@@ -540,9 +564,10 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     
     event->addCollection(fittrackvec,_outputTrackColName);
     event->addCollection(fitpointvec,_outputHitColName);
-    
+
+    */
+
 #ifdef MARLIN_USE_AIDA
-    string tempHistoName;
     
     if ( _histogramSwitch ) {
       {
@@ -571,74 +596,80 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	_histogramSwitch = false;
       }       
     }
+#endif
+
+    // chi2 cut
+    if (Chiquare[0] <= _chi2XMax && Chiquare[1] <= _chi2YMax) {
     
-    if ( _histogramSwitch ) {
-      {
-	stringstream ss; 
-	ss << _angleXLocalname << endl;
-      }
-      if ( AIDA::IHistogram1D* anglex_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleXLocalname]) )
-	anglex_histo->fill(angle[0]*180/M_PI);
-      else {
-	streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _angleXLocalname << endl;
-	streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	_histogramSwitch = false;
-      }       
-    }
-    
-    if ( _histogramSwitch ) {
-      {
-	stringstream ss; 
-	ss << _angleYLocalname << endl;
-      }
-      if ( AIDA::IHistogram1D* angley_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleYLocalname]) )
-	angley_histo->fill(angle[1]*180/M_PI);
-      else {
-	streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _angleYLocalname << endl;
-	streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	_histogramSwitch = false;
-      }       
-    }
-    
-    
-    for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
-      
+#ifdef MARLIN_USE_AIDA
+
+      string tempHistoName;
+   
       if ( _histogramSwitch ) {
 	{
 	  stringstream ss; 
-	  ss << _residualXLocalname << "-d" << iDetector; 
-	  tempHistoName=ss.str();
+	  ss << _angleXLocalname << endl;
 	}
-	if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	  residx_histo->fill(_waferResidX[iDetector]);
+	if ( AIDA::IHistogram1D* anglex_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleXLocalname]) )
+	  anglex_histo->fill(angle[0]*180/M_PI);
 	else {
-	  streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
+	  streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _angleXLocalname << endl;
 	  streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
 	  _histogramSwitch = false;
 	}       
       }
-      
+    
       if ( _histogramSwitch ) {
 	{
 	  stringstream ss; 
-	  ss << _residualYLocalname << "-d" << iDetector; 
-	  tempHistoName=ss.str();
+	  ss << _angleYLocalname << endl;
 	}
-	if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	  residy_histo->fill(_waferResidY[iDetector]);
+	if ( AIDA::IHistogram1D* angley_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleYLocalname]) )
+	  angley_histo->fill(angle[1]*180/M_PI);
 	else {
-	  streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualYLocalname << endl;
+	  streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _angleYLocalname << endl;
 	  streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
 	  _histogramSwitch = false;
 	}       
       }
-    }
+    
+    
+      for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
+      
+	if ( _histogramSwitch ) {
+	  {
+	    stringstream ss; 
+	    ss << _residualXLocalname << "-d" << iDetector; 
+	    tempHistoName=ss.str();
+	  }
+	  if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+	    residx_histo->fill(_waferResidX[iDetector]);
+	  else {
+	    streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
+	    streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+	    _histogramSwitch = false;
+	  }       
+	}
+      
+	if ( _histogramSwitch ) {
+	  {
+	    stringstream ss; 
+	    ss << _residualYLocalname << "-d" << iDetector; 
+	    tempHistoName=ss.str();
+	  }
+	  if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+	    residy_histo->fill(_waferResidY[iDetector]);
+	  else {
+	    streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualYLocalname << endl;
+	    streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+	  _histogramSwitch = false;
+	  }       
+	}
+      }
     
 #endif 
-    
-    delete [] Zbar_X;
-    delete [] Zbar_Y;
-    
+
+    } // end if chi2 cut
 
   } catch (DataNotAvailableException& e) {
     
@@ -677,11 +708,11 @@ void EUTelMultiLineFit::bookHistos() {
   try {
     streamlog_out ( MESSAGE2 ) << "Booking histograms" << endl;
     
-    const int    NBin = 100;
+    const int    NBin = 5000;
     const double Chi2Min  = 0.;      
-    const double Chi2Max  = 10.;      
-    const double Min  = -50.;
-    const double Max  = 50.;
+    const double Chi2Max  = 5000.;      
+    const double Min  = -2500.;
+    const double Max  = 2500.;
     const double angleMin  = -3.;
     const double angleMax  = 3.;
 

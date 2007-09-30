@@ -47,6 +47,7 @@ namespace eutelescope {
 
   public:
 
+    virtual void FitTrack(int nPlanesFit, double xPosFit[], double yPosFit[], double zPosFit[], double xResFit[], double yResFit[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]);
      
     //! Returns a new instance of EUTelMultiLineFit
     /*! This method returns a new instance of this processor.  It is
@@ -138,6 +139,10 @@ namespace eutelescope {
     std::vector<float > _alignmentConstantsFourthLayer;
     std::vector<float > _alignmentConstantsFifthLayer;
     std::vector<float > _alignmentConstantsSixthLayer;
+
+    float _distanceMax;
+    float _chi2XMax;
+    float _chi2YMax;
 
   private:
     
