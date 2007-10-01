@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHotPixelKiller.cc,v 1.2 2007-09-27 10:04:32 bulgheroni Exp $
+// Version $Id: EUTelHotPixelKiller.cc,v 1.3 2007-10-01 11:19:06 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -65,6 +65,10 @@ EUTelHotPixelKiller::EUTelHotPixelKiller () : Processor("EUTelHotPixelKiller") {
 			     "This float number [0,1] represents the maximum allowed firing frequency\n"
 			     "within the selected number of event per cycle",
 			     _maxAllowedFiringFreq, static_cast<float> (0.2) );
+
+  registerProcessorParameter("TotalNoOfCycle",
+			     "The total number of hot pixel cycle",
+			     _totalNoOfCycle, static_cast<int> ( 10 ) );
 }
 
 
@@ -113,6 +117,8 @@ void EUTelHotPixelKiller::processRunHeader (LCRunHeader * rdr ) {
 
 
 void EUTelHotPixelKiller::processEvent (LCEvent * event) {
+
+  if ( _iCycle > (unsigned short) _totalNoOfCycle )  return;
 
   if (_iEvt % 10 == 0) 
     streamlog_out( MESSAGE4 ) << "Processing event " 
@@ -213,6 +219,8 @@ string EUTelHotPixelKiller::printSummary() const {
 }
 
 void EUTelHotPixelKiller::check( LCEvent * event ) {
+
+  if ( _iCycle > (unsigned short) _totalNoOfCycle )  return;
 
   if ( _iEvt == _noOfEventPerCycle -1 ) {
     

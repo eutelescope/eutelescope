@@ -52,7 +52,7 @@ namespace eutelescope {
    *  depending on the occupancy.
    * 
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHotPixelKiller.h,v 1.1 2007-09-26 18:31:37 bulgheroni Exp $
+   *  @version $Id: EUTelHotPixelKiller.h,v 1.2 2007-10-01 11:19:06 bulgheroni Exp $
    *
    */
 
@@ -195,6 +195,10 @@ namespace eutelescope {
      *  pixel along the Y direction
      */
     IntVec _maxY;
+
+
+    //! Total number of cycle
+    int _totalNoOfCycle;
 
   private:
 
