@@ -141,7 +141,8 @@ namespace eutelescope {
     // Parameters
 
     int _alignedPlane;
-    double _chi2Cut;
+    static float _resolution;
+    float _chi2Cut;
     double _distanceMin;
     double _distanceMax;
     int _nHitsMax;

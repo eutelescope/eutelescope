@@ -185,9 +185,6 @@ void EUTelMultiLineFit::init() {
 
   _nPlanes = _siPlanesParameters->getSiPlanesNumber();
 
-  _xPos = new double[_nPlanes];
-  _yPos = new double[_nPlanes];
-  _zPos = new double[_nPlanes];
   _waferResidX = new double[_nPlanes];
   _waferResidY = new double[_nPlanes];
   _xFitPos = new double[_nPlanes];
@@ -347,14 +344,12 @@ void EUTelMultiLineFit::FitTrack(int nPlanesFit, double xPosFit[], double yPosFi
 
 void EUTelMultiLineFit::processEvent (LCEvent * event) {
   
-  
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
   
   if ( evt->getEventType() == kEORE ) {
     streamlog_out ( DEBUG2 ) << "EORE found: nothing else to do." << endl;
     return;
   }
-  
 
   try {
     
@@ -363,7 +358,16 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     int detectorID    = -99; // it's a non sense
     int oldDetectorID = -100;
     int layerIndex; 
+
+    vector<EUTelMultiLineFit::HitsInPlane > _hitsFirstPlane;
+    vector<EUTelMultiLineFit::HitsInPlane > _hitsSecondPlane;
+    vector<EUTelMultiLineFit::HitsInPlane > _hitsThirdPlane;
+    vector<EUTelMultiLineFit::HitsInPlane > _hitsFourthPlane;
+    vector<EUTelMultiLineFit::HitsInPlane > _hitsFifthPlane;
+    vector<EUTelMultiLineFit::HitsInPlane > _hitsSixthPlane;
     
+    HitsInPlane hitsInPlane;
+
     for ( int iHit = 0; iHit < hitCollection->getNumberOfElements(); iHit++ ) {
       
       TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( hitCollection->getElementAt(iHit) );
@@ -418,13 +422,13 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       // The other layers were aligned with respect to the first one.
       
       double off_x, off_y, theta_x, theta_y, theta_z;
-      
+
       if (layerIndex == 0) {
 	
-	_xPos[iHit] = 1000 * hit->getPosition()[0]; // in um
-	_yPos[iHit] = 1000 * hit->getPosition()[1]; // in um
-	_zPos[iHit] = 1000 * hit->getPosition()[2]; // in um
-	
+	hitsInPlane.measuredX = 1000 * hit->getPosition()[0]; // in um
+	hitsInPlane.measuredY = 1000 * hit->getPosition()[1]; // in um
+	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2]; // in um
+
       } else {
 	
 	if (layerIndex == 1) {
@@ -477,24 +481,237 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	  
 	}
 	
-	_xPos[iHit] = (cos(theta_y)*cos(theta_z)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z) + cos(theta_x)*sin(theta_z)) * hit->getPosition()[1] * 1000 + off_x;
-	_yPos[iHit] = ((-1)*cos(theta_y)*sin(theta_z)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z) + cos(theta_x)*cos(theta_z)) * hit->getPosition()[1] * 1000 + off_y;
-	_zPos[iHit] = 1000 * hit->getPosition()[2];
+	hitsInPlane.measuredX = (cos(theta_y)*cos(theta_z)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z) + cos(theta_x)*sin(theta_z)) * hit->getPosition()[1] * 1000 + off_x;
+	hitsInPlane.measuredY = ((-1)*cos(theta_y)*sin(theta_z)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z) + cos(theta_x)*cos(theta_z)) * hit->getPosition()[1] * 1000 + off_y;
+	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
 	
       }
       
       delete cluster; // <--- destroying the cluster   
 
+      if (layerIndex == 0) {
+	_hitsFirstPlane.push_back(hitsInPlane);
+      } else if (layerIndex == 1) {
+	_hitsSecondPlane.push_back(hitsInPlane);
+      } else if (layerIndex == 2) {
+	_hitsThirdPlane.push_back(hitsInPlane);
+      } else if (layerIndex == 3) {
+	_hitsFourthPlane.push_back(hitsInPlane);
+      } else if (layerIndex == 4) {
+	_hitsFifthPlane.push_back(hitsInPlane);
+      } else if (layerIndex == 5) {
+	_hitsSixthPlane.push_back(hitsInPlane);
+      }
+
     }
 
+    double distance12 = 0.0;
+    double distance23 = 0.0;
+    double distance34 = 0.0;
+    double distance45 = 0.0;
+    double distance56 = 0.0;
+
+    _xPos = new double *[100];
+    _yPos = new double *[100];
+    _zPos = new double *[100];
+
+    for (int help = 0; help < 100; help++) {
+      _xPos[help] = new double[_nPlanes];
+      _yPos[help] = new double[_nPlanes];
+      _zPos[help] = new double[_nPlanes];
+    }
+
+    int fitplane[6] = {0, 0, 0, 0, 0, 0};
+
+    for (int help = 0; help < _nPlanes; help++) {
+      fitplane[help] = 1;
+    }
+
+    int _nTracks = 0;
+
     // loop over all hits in first plane
+    for (int firsthit = 0; uint(firsthit) < _hitsFirstPlane.size(); firsthit++) {
+      
+      // loop over all hits in second plane
+      for (int secondhit = 0; uint(secondhit) < _hitsSecondPlane.size(); secondhit++) {
+
+	distance12 = sqrt(pow(_hitsFirstPlane[firsthit].measuredX - _hitsSecondPlane[secondhit].measuredX,2) + pow(_hitsFirstPlane[firsthit].measuredY - _hitsSecondPlane[secondhit].measuredY,2));
+
+	if (_nPlanes == 2 && distance12 < _distanceMax) {
+
+	  _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+	  _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+	  _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+
+	  _xPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredX;
+	  _yPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredY;
+	  _zPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredZ;
+
+	}
+	
+	// more than two planes
+	if (_nPlanes > 2) {
+
+	  // loop over all hits in third plane
+	  for (int thirdhit = 0; uint(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
+
+	    distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
+
+	    if (_nPlanes == 3 && distance12 < _distanceMax && distance23 < _distanceMax) {
+
+	      _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+	      _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+	      _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+
+	      _xPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredX;
+	      _yPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredY;
+	      _zPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredZ;
+
+	      _xPos[_nTracks][2] = _hitsFirstPlane[thirdhit].measuredX;
+	      _yPos[_nTracks][2] = _hitsFirstPlane[thirdhit].measuredY;
+	      _zPos[_nTracks][2] = _hitsFirstPlane[thirdhit].measuredZ;
+
+	    }
+
+	    // more than three planes
+	    if (_nPlanes > 3) {
+	    
+	      // loop over all hits in fourth plane
+	      for (int fourthhit = 0; uint(fourthhit) < _hitsFourthPlane.size(); fourthhit++) {
+
+		distance34 = sqrt(pow(_hitsThirdPlane[thirdhit].measuredX - _hitsFourthPlane[fourthhit].measuredX,2) + pow(_hitsThirdPlane[thirdhit].measuredY - _hitsFourthPlane[fourthhit].measuredY,2));
+
+		if (_nPlanes == 4 && distance12 < _distanceMax && distance23 < _distanceMax && distance34 < _distanceMax) {
+
+		  _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+		  _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+		  _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+
+		  _xPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredX;
+		  _yPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredY;
+		  _zPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredZ;
+
+		  _xPos[_nTracks][2] = _hitsFirstPlane[thirdhit].measuredX;
+		  _yPos[_nTracks][2] = _hitsFirstPlane[thirdhit].measuredY;
+		  _zPos[_nTracks][2] = _hitsFirstPlane[thirdhit].measuredZ;
+
+		  _xPos[_nTracks][3] = _hitsFirstPlane[fourthhit].measuredX;
+		  _yPos[_nTracks][3] = _hitsFirstPlane[fourthhit].measuredY;
+		  _zPos[_nTracks][3] = _hitsFirstPlane[fourthhit].measuredZ;
+
+		}
+	    
+		// more than four planes
+		if (_nPlanes > 4) {
+
+		  // loop over all hits in fifth plane
+		  for (int fifthhit = 0; uint(fifthhit) < _hitsFifthPlane.size(); fifthhit++) {
+
+		    distance45 = sqrt(pow(_hitsFourthPlane[fourthhit].measuredX - _hitsFifthPlane[fifthhit].measuredX,2) + pow(_hitsFourthPlane[fourthhit].measuredY - _hitsFifthPlane[fifthhit].measuredY,2));
+
+		    if (_nPlanes == 5 && distance12 < _distanceMax && distance23 < _distanceMax && distance34 < _distanceMax && distance45 < _distanceMax) {
+
+		      _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+		      _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+		      _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+
+		      _xPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredX;
+		      _yPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredY;
+		      _zPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredZ;
+
+		      _xPos[_nTracks][2] = _hitsFirstPlane[thirdhit].measuredX;
+		      _yPos[_nTracks][2] = _hitsFirstPlane[thirdhit].measuredY;
+		      _zPos[_nTracks][2] = _hitsFirstPlane[thirdhit].measuredZ;
+
+		      _xPos[_nTracks][3] = _hitsFirstPlane[fourthhit].measuredX;
+		      _yPos[_nTracks][3] = _hitsFirstPlane[fourthhit].measuredY;
+		      _zPos[_nTracks][3] = _hitsFirstPlane[fourthhit].measuredZ;
+
+		      _xPos[_nTracks][4] = _hitsFirstPlane[fifthhit].measuredX;
+		      _yPos[_nTracks][4] = _hitsFirstPlane[fifthhit].measuredY;
+		      _zPos[_nTracks][4] = _hitsFirstPlane[fifthhit].measuredZ;
+
+		    }
+
+		    // more than five planes
+		    if (_nPlanes > 5) {
+
+		      // loop over all hits in sixth plane
+		      for (int sixthhit = 0; uint(sixthhit) < _hitsSixthPlane.size(); sixthhit++) {
+			
+			distance56 = sqrt(pow(_hitsFifthPlane[fifthhit].measuredX - _hitsSixthPlane[sixthhit].measuredX,2) + pow(_hitsFifthPlane[fifthhit].measuredY - _hitsSixthPlane[sixthhit].measuredY,2));
+			
+			if (_nPlanes == 6 && distance12 < _distanceMax && distance23 < _distanceMax && distance34 < _distanceMax && distance45 < _distanceMax && distance56 < _distanceMax) {
+
+			  _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+			  _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+			  _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+
+			  _xPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredX;
+			  _yPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredY;
+			  _zPos[_nTracks][1] = _hitsFirstPlane[secondhit].measuredZ;
+
+			  _xPos[_nTracks][2] = _hitsFirstPlane[thirdhit].measuredX;
+			  _yPos[_nTracks][2] = _hitsFirstPlane[thirdhit].measuredY;
+			  _zPos[_nTracks][2] = _hitsFirstPlane[thirdhit].measuredZ;
+
+			  _xPos[_nTracks][3] = _hitsFirstPlane[fourthhit].measuredX;
+			  _yPos[_nTracks][3] = _hitsFirstPlane[fourthhit].measuredY;
+			  _zPos[_nTracks][3] = _hitsFirstPlane[fourthhit].measuredZ;
+
+			  _xPos[_nTracks][4] = _hitsFirstPlane[fifthhit].measuredX;
+			  _yPos[_nTracks][4] = _hitsFirstPlane[fifthhit].measuredY;
+			  _zPos[_nTracks][4] = _hitsFirstPlane[fifthhit].measuredZ;
+
+			  _xPos[_nTracks][5] = _hitsFirstPlane[sixthhit].measuredX;
+			  _yPos[_nTracks][5] = _hitsFirstPlane[sixthhit].measuredY;
+			  _zPos[_nTracks][5] = _hitsFirstPlane[sixthhit].measuredZ;
+
+			}
+
+		      } // end loop over all hits in sixth plane
+
+		    } // end if more than five planes
+
+		  } // end loop over all hits in fifth plane
+
+		} // end if more than four planes
+
+	      } // end loop over all hits in fourth plane
+
+	    } // end if more than three planes
+
+	  } // end loop over all hits in third plane
+
+	} // end if more than two planes
+
+      } // end loop over all hits in second plane
+
+    } // end loop over all hits in first plane
   
     double Chiquare[2] = {0,0};
     double angle[2] = {0,0};
 
-    FitTrack(int(_nPlanes), _xPos, _yPos, _zPos, _intrResolX, _intrResolY, Chiquare, _waferResidX, _waferResidY, angle);
+    // loop over all track candidates
+    for (int track = 0; track < _nTracks; track++) {
 
+      _xPosHere = new double[_nPlanes];
+      _yPosHere = new double[_nPlanes];
+      _zPosHere = new double[_nPlanes];
 
+      for (int help = 0; help < _nTracks; help++) {
+	_xPosHere[help] = _xPos[track][help];
+	_yPosHere[help] = _yPos[track][help];
+	_zPosHere[help] = _zPos[track][help];
+      }
+
+      FitTrack(int(_nPlanes), _xPosHere, _yPosHere, _zPosHere, _intrResolX, _intrResolY, Chiquare, _waferResidX, _waferResidY, angle);
+
+      delete [] _zPosHere;
+      delete [] _yPosHere;
+      delete [] _xPosHere;
+      
+    } // end loop over all track candidates
 
     // not needed so far
     /*
@@ -671,6 +888,16 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
     } // end if chi2 cut
 
+    for (int help = 0; help < 100; help++) {
+      delete [] _zPos[help];
+      delete [] _yPos[help];
+      delete [] _xPos[help];
+    }
+
+    delete [] _zPos;
+    delete [] _yPos;
+    delete [] _xPos;
+    
   } catch (DataNotAvailableException& e) {
     
     streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber() 
@@ -692,9 +919,6 @@ void EUTelMultiLineFit::end() {
   delete [] _xFitPos;
   delete [] _waferResidY;
   delete [] _waferResidX;
-  delete [] _zPos;
-  delete [] _yPos;
-  delete [] _xPos;
 
   streamlog_out ( MESSAGE2 ) << "Successfully finished" << endl;  
 

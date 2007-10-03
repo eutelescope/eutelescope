@@ -47,6 +47,14 @@ namespace eutelescope {
 
   public:
 
+    //! Variables for hit parameters
+    class HitsInPlane {
+    public:
+      double measuredX;
+      double measuredY;
+      double measuredZ;
+    };
+
     virtual void FitTrack(int nPlanesFit, double xPosFit[], double yPosFit[], double zPosFit[], double xResFit[], double yResFit[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]);
      
     //! Returns a new instance of EUTelMultiLineFit
@@ -206,9 +214,14 @@ namespace eutelescope {
 #endif
 
     int _nPlanes;
-    double * _xPos;
-    double * _yPos;
-    double * _zPos;
+
+    double ** _xPos;
+    double ** _yPos;
+    double ** _zPos;
+
+    double * _xPosHere;
+    double * _yPosHere;
+    double * _zPosHere;
     double * _waferResidX;
     double * _waferResidY;
     double * _intrResolX;
@@ -220,9 +233,6 @@ namespace eutelescope {
     /*! Only for debug reason
      */
     bool _histogramSwitch;
-
-    
-
 
   };
 

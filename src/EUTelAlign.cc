@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.12 2007-09-29 18:40:55 roloff Exp $
+// Version: $Id: EUTelAlign.cc,v 1.13 2007-10-03 16:30:55 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -95,17 +95,16 @@ EUTelAlign::EUTelAlign () : Processor("EUTelAlign") {
 
   registerProcessorParameter("AlignedPlane",
 			     "Aligned plane",
-			     _alignedPlane,  static_cast < int > (0));
+			     _alignedPlane, static_cast < int > (0));
+  
+  registerProcessorParameter("Resolution",
+			     "Resolution of aligned plane",
+			     _resolution,static_cast < float > (10.0));
+  
 
-  // not used at the moment
-
-  /*
-
-  registerProcessorParameter("Chi2Cut",
-			     "Start value for Chi2 cut in fit",
-			     _chi2Cut,  static_cast < double > (0));
-
-  */
+  registerOptionalParameter("Chi2Cut",
+			    "Start value for Chi2 cut in fit",
+			    _chi2Cut, static_cast < float > (4.0));
 
   FloatVec startValues;
   startValues.push_back(0.0);
@@ -424,15 +423,25 @@ void EUTelAlign::Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t 
     // just to be sure
     distance = 0.0;
 
+    cout << _resolution << endl;
+
     x = (cos(par[3])*cos(par[4])) * _hitsForFit[i].secondLayerMeasuredX + ((-1)*sin(par[2])*sin(par[3])*cos(par[4]) + cos(par[2])*sin(par[4])) * _hitsForFit[i].secondLayerMeasuredY + par[0];
     y = ((-1)*cos(par[3])*sin(par[4])) * _hitsForFit[i].secondLayerMeasuredX + (sin(par[2])*sin(par[3])*sin(par[4]) + cos(par[2])*cos(par[4])) * _hitsForFit[i].secondLayerMeasuredY + par[1];
 
     distance = ((x - _hitsForFit[i].secondLayerPredictedX) * (x - _hitsForFit[i].secondLayerPredictedX) + (y - _hitsForFit[i].secondLayerPredictedY) * (y - _hitsForFit[i].secondLayerPredictedY)) / 100;
       
     // add chi2 cut here later?
-    chi2 = chi2 + distance;
+    if (par[5] == 0.0) {
 
-    usedevents++;
+      chi2 = chi2 + distance;
+      usedevents++;
+
+    } else if (distance < par[5]) {
+
+      chi2 = chi2 + distance;
+      usedevents++;
+
+    }
 
   } // end loop over all events
 
@@ -453,8 +462,8 @@ void EUTelAlign::end() {
 
   gSystem->Load("libMinuit");
 
-  // init Minuit for 5 parameters
-  TMinuit *gMinuit = new TMinuit(5);
+  // init Minuit for 6 parameters
+  TMinuit *gMinuit = new TMinuit(6);
 
   // set print level (-1 = quiet, 0 = normal, 1 = verbose)
   gMinuit->SetPrintLevel(0);
@@ -478,6 +487,7 @@ void EUTelAlign::end() {
   double start_theta_x = _startValuesForAlignment[2];
   double start_theta_y = _startValuesForAlignment[3];
   double start_theta_z = _startValuesForAlignment[4];
+  double start_chi2 = _chi2Cut;
 
   // set starting values and step sizes
   gMinuit->mnparm(0,"off_x",start_off_x,1,0,0,ierflag);
@@ -485,12 +495,14 @@ void EUTelAlign::end() {
   gMinuit->mnparm(2,"theta_x",start_theta_x,0.001,0,0,ierflag);
   gMinuit->mnparm(3,"theta_y",start_theta_y,0.001,0,0,ierflag);
   gMinuit->mnparm(4,"theta_z",start_theta_z,0.001,0,0,ierflag);
+  gMinuit->mnparm(5,"chi2",start_chi2,0.1,0,0,ierflag);
 
   gMinuit->FixParameter(2);
   gMinuit->FixParameter(3);
   gMinuit->FixParameter(4);
+  gMinuit->FixParameter(5);
 
-  // call migrad (2000 iterations, 0.1 = tolerance)
+  // call migrad (500 iterations, 0.1 = tolerance)
   arglist[0] = 500;
   arglist[1] = 0.1;
   gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
@@ -542,7 +554,17 @@ void EUTelAlign::end() {
   gMinuit->Release(3);
   gMinuit->Release(4);
 
-  // call migrad (2000 iterations, 0.1 = tolerance)
+  // call migrad (500 iterations, 0.1 = tolerance)
+  arglist[0] = 500;
+  arglist[1] = 0.1;
+  gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
+
+  streamlog_out ( MESSAGE2) << endl;
+
+  // release chi2
+  gMinuit->Release(5);
+
+  // call migrad (500 iterations, 0.1 = tolerance)
   arglist[0] = 500;
   arglist[1] = 0.1;
   gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
