@@ -68,7 +68,16 @@ namespace eutelescope {
       double firstLayerResolution;
       double secondLayerResolution;
     };
-     
+
+    class HitsInFirstBox {
+    public:
+      double measuredX;
+      double measuredY;
+      double measuredZ;
+    };
+
+    virtual void FitTrack(int nPlanesFit, double xPosFit[], double yPosFit[], double zPosFit[], double xResFit[], double yResFit[], double chi2Fit[2], double&, double&, double);
+
     //! Returns a new instance of EUTelAlign
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be
@@ -138,9 +147,14 @@ namespace eutelescope {
      */ 
     std::string _measHitCollectionName;
 
+    std::vector<float > _alignmentConstantsSecondLayer;
+    std::vector<float > _alignmentConstantsThirdLayer;
+
     // Parameters
 
     int _alignedPlane;
+    int _alignedBox;
+    int _referencePlane;
     double _resolution;
     double _chi2Cut;
     double _distanceMin;
@@ -226,6 +240,20 @@ namespace eutelescope {
     double * _intrResol;
     double _xMeas, _yMeas;
     double _xPred, _yPred;
+
+    double ** _xPos;
+    double ** _yPos;
+    double ** _zPos;
+
+    double * _xPosHere;
+    double * _yPosHere;
+    double * _zPosHere;
+    double * _waferResidX;
+    double * _waferResidY;
+    double * _intrResolX;
+    double * _intrResolY;
+    double * _xFitPos;
+    double * _yFitPos;
 
   };
 
