@@ -203,6 +203,8 @@ namespace eutelescope {
      */ 
     std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
 
+    static std::string _numberTracksLocalname;
+
     static std::string _chi2XLocalname;
     static std::string _chi2YLocalname;
 

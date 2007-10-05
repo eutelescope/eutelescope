@@ -60,6 +60,7 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #ifdef MARLIN_USE_AIDA
+std::string EUTelMultiLineFit::_numberTracksLocalname   = "NumberTracks";
 std::string EUTelMultiLineFit::_chi2XLocalname          = "Chi2X";
 std::string EUTelMultiLineFit::_chi2YLocalname          = "Chi2Y";
 std::string EUTelMultiLineFit::_angleXLocalname         = "AngleX";
@@ -529,6 +530,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
     int _nTracks = 0;
 
+    int _nGoodTracks = 0;
+
     // loop over all hits in first plane
     for (int firsthit = 0; uint(firsthit) < _hitsFirstPlane.size(); firsthit++) {
       
@@ -833,6 +836,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
       // chi2 cut
       if (Chiquare[0] <= _chi2XMax && Chiquare[1] <= _chi2YMax) {
+
+	_nGoodTracks++;
     
 #ifdef MARLIN_USE_AIDA
 
@@ -911,6 +916,24 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       
     } // end loop over all track candidates
 
+#ifdef MARLIN_USE_AIDA
+
+    if ( _histogramSwitch ) {
+      {
+	stringstream ss; 
+	ss << _numberTracksLocalname << endl;
+      }
+      if ( AIDA::IHistogram1D* number_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_numberTracksLocalname]) )
+	number_histo->fill(_nGoodTracks);
+      else {
+	streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _numberTracksLocalname << endl;
+	streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+	_histogramSwitch = false;
+      }       
+    }
+
+#endif
+
     // clean up
     for (int help = 0; help < 500; help++) {
       delete [] _zPos[help];
@@ -963,7 +986,19 @@ void EUTelMultiLineFit::bookHistos() {
     const double Max  = 5000.;
     const double angleMin  = -3.;
     const double angleMax  = 3.;
+    const double tracksMin = -0.5;
+    const double tracksMax = 19.5;
 
+    AIDA::IHistogram1D * numberTracksLocal = 
+      AIDAProcessor::histogramFactory(this)->createHistogram1D(_numberTracksLocalname,20,tracksMin,tracksMax);
+    if ( numberTracksLocal ) {
+      numberTracksLocal->setTitle("Number of tracks after #chi^{2} cut");
+      _aidaHistoMap.insert( make_pair( _numberTracksLocalname, numberTracksLocal ) );
+    } else {
+      streamlog_out ( ERROR2 ) << "Problem booking the " << (_numberTracksLocalname) << endl;
+      streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+      _histogramSwitch = false;
+    }
 
     AIDA::IHistogram1D * chi2XLocal = 
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_chi2XLocalname,NBin,Chi2Min,Chi2Max);
