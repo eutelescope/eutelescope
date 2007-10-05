@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.16 2007-09-24 01:20:06 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.17 2007-10-05 09:09:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -38,10 +38,10 @@
 #include <AIDA/IAxis.h>
 #endif
 
-#ifdef MARLIN_USE_ROOT
-#include "ROOTProcessor.h"
-#include <TH1.h>
-#endif 
+// #ifdef MARLIN_USE_ROOT
+// #include "ROOTProcessor.h"
+// #include <TH1.h>
+// #endif 
 
 // lcio includes <.h> 
 #include <IMPL/TrackerPulseImpl.h>
@@ -236,33 +236,33 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
       lcWriter->close();
 
       
-#ifdef MARLIN_USE_ROOT
-      {
-	string name, title, path;
-	{
-	  stringstream sname;
-	  sname  << _cogHistogramXName << "-" << iDetector ;
-	  name = sname.str();
+// #ifdef MARLIN_USE_ROOT
+//       {
+// 	string name, title, path;
+// 	{
+// 	  stringstream sname;
+// 	  sname  << _cogHistogramXName << "-" << iDetector ;
+// 	  name = sname.str();
 	  
-	  stringstream stitle;
-	  stitle << "CoG shift along X on detector " << iDetector;
-	  title = stitle.str();
+// 	  stringstream stitle;
+// 	  stitle << "CoG shift along X on detector " << iDetector;
+// 	  title = stitle.str();
 	  
-	  stringstream spath;
-	  spath << "detector-" << iDetector << "/" ;
-	  path = spath.str();
-	}
-	TH1D * cogHistoX = new TH1D(name.c_str(), title.c_str(), xNoOfBin, min, max);
-	ROOTProcessor::addTObject(this, cogHistoX);
+// 	  stringstream spath;
+// 	  spath << "detector-" << iDetector << "/" ;
+// 	  path = spath.str();
+// 	}
+// 	TH1D * cogHistoX = new TH1D(name.c_str(), title.c_str(), xNoOfBin, min, max);
+// 	ROOTProcessor::addTObject(this, cogHistoX);
 	
-	// ** TO BE COMPLETED ** //
-	//
-	// As soon as the ROOTProcess will be in an advanced
-	// developement stage, all histogramming functions will be
-	// made both for AIDA and also for ROOT
+// 	// ** TO BE COMPLETED ** //
+// 	//
+// 	// As soon as the ROOTProcess will be in an advanced
+// 	// developement stage, all histogramming functions will be
+// 	// made both for AIDA and also for ROOT
 
-      }
-#endif 
+//       }
+// #endif 
 
 #ifdef MARLIN_USE_AIDA
       if ( isFirstEvent() ) {
@@ -397,7 +397,8 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
   if ( evt->getEventType() == kEORE ) {
-    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
+    streamlog_out ( DEBUG4 ) << "Found kEORE, calling finalizeProcessor()" << endl;
+    finalizeProcessor();
     return;
   } else if ( evt->getEventType() == kUNKNOWN ) {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
@@ -469,17 +470,17 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
 	  }
 #endif
 	  
-#ifdef MARLIN_USE_ROOT
-	  {
-	    string name;
-	    {
-	      stringstream ss;
-	      ss << _cogHistogramXName << "-" << detectorID;
-	      name = ss.str();
-	    }
-	    (dynamic_cast<TH1D*> (ROOTProcessor::getTObject(this, name.c_str())))->Fill(xShift);
-	  }
-#endif
+// #ifdef MARLIN_USE_ROOT
+// 	  {
+// 	    string name;
+// 	    {
+// 	      stringstream ss;
+// 	      ss << _cogHistogramXName << "-" << detectorID;
+// 	      name = ss.str();
+// 	    }
+// 	    (dynamic_cast<TH1D*> (ROOTProcessor::getTObject(this, name.c_str())))->Fill(xShift);
+// 	  }
+// #endif
 	}
 	delete cluster;
       }
@@ -656,7 +657,7 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
 
   _isEtaCalculationFinished = true;
   setReturnValue( "isEtaCalculationFinished" , _isEtaCalculationFinished);
-  throw RewindDataFilesException(this);
+  //  throw RewindDataFilesException(this);
 
 }
 
