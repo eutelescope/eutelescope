@@ -147,6 +147,9 @@ EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
 
   registerOptionalParameter("Chi2YMax","Maximal chi2 for fit of y coordinate."                             ,_chi2YMax, static_cast <float> (10000.0));
 
+  registerOptionalParameter("ExcludePlane","Exclude plane from fit."
+			    ,_excludePlane, static_cast <int> (0));
+
 }
 
 void EUTelMultiLineFit::init() {
@@ -243,7 +246,36 @@ void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
   ++_iRun;
 }
 
-void EUTelMultiLineFit::FitTrack(int nPlanesFit, double xPosFit[], double yPosFit[], double zPosFit[], double xResFit[], double yResFit[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]) {
+void EUTelMultiLineFit::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFitter[], double yResFitter[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]) {
+
+  int sizearray;
+
+  if (_excludePlane == 0) {
+    sizearray = nPlanesFitter;
+  } else {
+    sizearray = nPlanesFitter - 1;
+  }
+
+  double * xPosFit = new double[sizearray];
+  double * yPosFit = new double[sizearray];
+  double * zPosFit = new double[sizearray];
+  double * xResFit = new double[sizearray];
+  double * yResFit = new double[sizearray];
+
+  int nPlanesFit = 0;
+
+  for (int help = 0; help < nPlanesFitter; help++) {
+    if ((_excludePlane - 1) == help) {
+      // do noting
+    } else {
+      xPosFit[nPlanesFit] = xPosFitter[help];
+      yPosFit[nPlanesFit] = yPosFitter[help];
+      zPosFit[nPlanesFit] = zPosFitter[help];
+      xResFit[nPlanesFit] = xResFitter[help];
+      yResFit[nPlanesFit] = yResFitter[help];
+      nPlanesFit++;
+    }
+  }
 
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
     // ++++++++++++ See Blobel Page 226 !!! +++++++++++++++++
@@ -328,16 +360,23 @@ void EUTelMultiLineFit::FitTrack(int nPlanesFit, double xPosFit[], double yPosFi
       chi2Fit[1] += pow(-zPosFit[counter]*A2[1]
 			 +yPosFit[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(yResFit[counter],2);
     }
-    
-    for( counter = 0; counter < nPlanesFit; counter++ ){
-      residXFit[counter] = (Ybar[0]-Xbar[0]*A2[0]+zPosFit[counter]*A2[0])-xPosFit[counter];
-      residYFit[counter] = (Ybar[1]-Xbar[1]*A2[1]+zPosFit[counter]*A2[1])-yPosFit[counter];
+
+    for( counter = 0; counter < nPlanesFitter; counter++ ) {
+      residXFit[counter] = (Ybar[0]-Xbar[0]*A2[0]+zPosFitter[counter]*A2[0])-xPosFitter[counter];
+      residYFit[counter] = (Ybar[1]-Xbar[1]*A2[1]+zPosFitter[counter]*A2[1])-yPosFitter[counter];
     }
     
     // define angle
     angleFit[0] = atan(A2[0]);
     angleFit[1] = atan(A2[1]);
 
+    // clean up
+    delete [] zPosFit;
+    delete [] yPosFit;
+    delete [] xPosFit;
+    delete [] yResFit;
+    delete [] xResFit;
+      
     delete [] Zbar_X;
     delete [] Zbar_Y;
 

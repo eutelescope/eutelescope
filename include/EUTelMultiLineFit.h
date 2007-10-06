@@ -55,7 +55,7 @@ namespace eutelescope {
       double measuredZ;
     };
 
-    virtual void FitTrack(int nPlanesFit, double xPosFit[], double yPosFit[], double zPosFit[], double xResFit[], double yResFit[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]);
+    virtual void FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFit[], double yResFit[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]);
      
     //! Returns a new instance of EUTelMultiLineFit
     /*! This method returns a new instance of this processor.  It is
@@ -151,6 +151,7 @@ namespace eutelescope {
     float _distanceMax;
     float _chi2XMax;
     float _chi2YMax;
+    int _excludePlane;
 
   private:
     
