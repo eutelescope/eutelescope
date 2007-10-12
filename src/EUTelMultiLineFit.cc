@@ -73,7 +73,7 @@ EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
   
   // modify processor description
   _description =
-    "EUTelMultiLineFit will fit a straight line";
+    "EUTelMultiLineFit will fit several straight lines";
   
   // input collection
 
@@ -149,6 +149,9 @@ EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
 
   registerOptionalParameter("ExcludePlane","Exclude plane from fit."
 			    ,_excludePlane, static_cast <int> (0));
+
+  registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates"
+			    ,_maxTrackCandidates, static_cast <int> (2000));
 
 }
 
@@ -249,7 +252,7 @@ void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
 void EUTelMultiLineFit::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFitter[], double yResFitter[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]) {
 
   int sizearray;
-
+  
   if (_excludePlane == 0) {
     sizearray = nPlanesFitter;
   } else {
@@ -277,112 +280,110 @@ void EUTelMultiLineFit::FitTrack(int nPlanesFitter, double xPosFitter[], double 
     }
   }
 
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    // ++++++++++++ See Blobel Page 226 !!! +++++++++++++++++
-    // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
+  // ++++++++++++ See Blobel Page 226 !!! +++++++++++++++++
+  // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
     
-    int counter;
+  int counter;
     
-    float S1[2]   = {0,0};
-    float Sx[2]   = {0,0};
-    float Xbar[2] = {0,0};
+  float S1[2]   = {0,0};
+  float Sx[2]   = {0,0};
+  float Xbar[2] = {0,0};
     
-    float * Zbar_X = new float[nPlanesFit];
-    float * Zbar_Y = new float[nPlanesFit];
-    for (counter = 0; counter < nPlanesFit; counter++){
-      Zbar_X[counter] = 0.;
-      Zbar_Y[counter] = 0.;
-    }
+  float * Zbar_X = new float[nPlanesFit];
+  float * Zbar_Y = new float[nPlanesFit];
+  for (counter = 0; counter < nPlanesFit; counter++){
+    Zbar_X[counter] = 0.;
+    Zbar_Y[counter] = 0.;
+  }
     
-    float Sy[2]     = {0,0};
-    float Ybar[2]   = {0,0};
-    float Sxybar[2] = {0,0};
-    float Sxxbar[2] = {0,0};
-    float A2[2]     = {0,0};
-    // float Chiquare[2] = {0,0};
-    // float angle[2] = {0,0};
+  float Sy[2]     = {0,0};
+  float Ybar[2]   = {0,0};
+  float Sxybar[2] = {0,0};
+  float Sxxbar[2] = {0,0};
+  float A2[2]     = {0,0};
     
-    // define S1
-    for( counter = 0; counter < nPlanesFit; counter++ ){
-      S1[0] = S1[0] + 1/pow(xResFit[counter],2);
-      S1[1] = S1[1] + 1/pow(yResFit[counter],2);
-    }
+  // define S1
+  for( counter = 0; counter < nPlanesFit; counter++ ){
+    S1[0] = S1[0] + 1/pow(xResFit[counter],2);
+    S1[1] = S1[1] + 1/pow(yResFit[counter],2);
+  }
     
-    // define Sx
-    for( counter = 0; counter < nPlanesFit; counter++ ){
-      Sx[0] = Sx[0] + zPosFit[counter]/pow(xResFit[counter],2);
-      Sx[1] = Sx[1] + zPosFit[counter]/pow(yResFit[counter],2);
-    }
+  // define Sx
+  for( counter = 0; counter < nPlanesFit; counter++ ){
+    Sx[0] = Sx[0] + zPosFit[counter]/pow(xResFit[counter],2);
+    Sx[1] = Sx[1] + zPosFit[counter]/pow(yResFit[counter],2);
+  }
     
-    // define Xbar
-    Xbar[0]=Sx[0]/S1[0];
-    Xbar[1]=Sx[1]/S1[1];
+  // define Xbar
+  Xbar[0]=Sx[0]/S1[0];
+  Xbar[1]=Sx[1]/S1[1];
     
-    // coordinate transformation !! -> bar
-    for( counter = 0; counter < nPlanesFit; counter++ ){
-      Zbar_X[counter] = zPosFit[counter]-Xbar[0];
-      Zbar_Y[counter] = zPosFit[counter]-Xbar[1];
-    } 
+  // coordinate transformation !! -> bar
+  for( counter = 0; counter < nPlanesFit; counter++ ){
+    Zbar_X[counter] = zPosFit[counter]-Xbar[0];
+    Zbar_Y[counter] = zPosFit[counter]-Xbar[1];
+  } 
     
-    // define Sy
-    for( counter = 0; counter < nPlanesFit; counter++ ){
-      Sy[0] = Sy[0] + xPosFit[counter]/pow(xResFit[counter],2);
-      Sy[1] = Sy[1] + yPosFit[counter]/pow(yResFit[counter],2);
-    }
+  // define Sy
+  for( counter = 0; counter < nPlanesFit; counter++ ){
+    Sy[0] = Sy[0] + xPosFit[counter]/pow(xResFit[counter],2);
+    Sy[1] = Sy[1] + yPosFit[counter]/pow(yResFit[counter],2);
+  }
     
-    // define Ybar
-    Ybar[0]=Sy[0]/S1[0];
-    Ybar[1]=Sy[1]/S1[1];
+  // define Ybar
+  Ybar[0]=Sy[0]/S1[0];
+  Ybar[1]=Sy[1]/S1[1];
     
-    // define Sxybar
-    for( counter = 0; counter < nPlanesFit; counter++ ){
-      Sxybar[0] = Sxybar[0] + Zbar_X[counter] * xPosFit[counter]/pow(xResFit[counter],2);
-      Sxybar[1] = Sxybar[1] + Zbar_Y[counter] * yPosFit[counter]/pow(yResFit[counter],2);
-    }
+  // define Sxybar
+  for( counter = 0; counter < nPlanesFit; counter++ ){
+    Sxybar[0] = Sxybar[0] + Zbar_X[counter] * xPosFit[counter]/pow(xResFit[counter],2);
+    Sxybar[1] = Sxybar[1] + Zbar_Y[counter] * yPosFit[counter]/pow(yResFit[counter],2);
+  }
     
-    // define Sxxbar
-    for( counter = 0; counter < nPlanesFit; counter++ ){
-      Sxxbar[0] = Sxxbar[0] + Zbar_X[counter] * Zbar_X[counter]/pow(xResFit[counter],2);
-      Sxxbar[1] = Sxxbar[1] + Zbar_Y[counter] * Zbar_Y[counter]/pow(yResFit[counter],2);
-    }
+  // define Sxxbar
+  for( counter = 0; counter < nPlanesFit; counter++ ){
+    Sxxbar[0] = Sxxbar[0] + Zbar_X[counter] * Zbar_X[counter]/pow(xResFit[counter],2);
+    Sxxbar[1] = Sxxbar[1] + Zbar_Y[counter] * Zbar_Y[counter]/pow(yResFit[counter],2);
+  }
     
-    // define A2
+  // define A2
+  A2[0]=Sxybar[0]/Sxxbar[0];
+  A2[1]=Sxybar[1]/Sxxbar[1];
     
-    A2[0]=Sxybar[0]/Sxxbar[0];
-    A2[1]=Sxybar[1]/Sxxbar[1];
-    
-    // Calculate chi sqaured
-    // Chi^2 for X and Y coordinate for hits in all planes 
-    
-    for( counter = 0; counter < nPlanesFit; counter++ ){
-      chi2Fit[0] += pow(-zPosFit[counter]*A2[0]
-			 +xPosFit[counter]-Ybar[0]+Xbar[0]*A2[0],2)/pow(xResFit[counter],2);
-      chi2Fit[1] += pow(-zPosFit[counter]*A2[1]
-			 +yPosFit[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(yResFit[counter],2);
-    }
+  // Calculate chi sqaured
+  // Chi^2 for X and Y coordinate for hits in all planes 
+  for( counter = 0; counter < nPlanesFit; counter++ ){
+    chi2Fit[0] += pow(-zPosFit[counter]*A2[0]
+		      +xPosFit[counter]-Ybar[0]+Xbar[0]*A2[0],2)/pow(xResFit[counter],2);
+    chi2Fit[1] += pow(-zPosFit[counter]*A2[1]
+		      +yPosFit[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(yResFit[counter],2);
+  }
 
-    for( counter = 0; counter < nPlanesFitter; counter++ ) {
-      residXFit[counter] = (Ybar[0]-Xbar[0]*A2[0]+zPosFitter[counter]*A2[0])-xPosFitter[counter];
-      residYFit[counter] = (Ybar[1]-Xbar[1]*A2[1]+zPosFitter[counter]*A2[1])-yPosFitter[counter];
-    }
+  for( counter = 0; counter < nPlanesFitter; counter++ ) {
+    residXFit[counter] = (Ybar[0]-Xbar[0]*A2[0]+zPosFitter[counter]*A2[0])-xPosFitter[counter];
+    residYFit[counter] = (Ybar[1]-Xbar[1]*A2[1]+zPosFitter[counter]*A2[1])-yPosFitter[counter];
+  }
     
-    // define angle
-    angleFit[0] = atan(A2[0]);
-    angleFit[1] = atan(A2[1]);
+  // define angle
+  angleFit[0] = atan(A2[0]);
+  angleFit[1] = atan(A2[1]);
 
-    // clean up
-    delete [] zPosFit;
-    delete [] yPosFit;
-    delete [] xPosFit;
-    delete [] yResFit;
-    delete [] xResFit;
+  // clean up
+  delete [] zPosFit;
+  delete [] yPosFit;
+  delete [] xPosFit;
+  delete [] yResFit;
+  delete [] xResFit;
       
-    delete [] Zbar_X;
-    delete [] Zbar_Y;
+  delete [] Zbar_X;
+  delete [] Zbar_Y;
 
 }
 
 void EUTelMultiLineFit::processEvent (LCEvent * event) {
+
+  streamlog_out ( MESSAGE2 ) << "Processing event " << _iEvt << "..." << endl;
   
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
   
@@ -447,30 +448,30 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	_intrResolY[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
 	
       }
-      
-      // Old code. Should be removed soon.
-      
-      //       _xPos[iHit] = 1000 * hit->getPosition()[0]; // in um
-      //       _yPos[iHit] = 1000 * hit->getPosition()[1]; // in um
-      //       _zPos[iHit] = 1000 * hit->getPosition()[2]; // in um
-      
-      // Getting positions of the hits.
-      // Here the alignment constants are used to correct the positions.
-      
+
       layerIndex   = _conversionIdMap[detectorID];     
       
+      // Getting positions of the hits.
+      // ------------------------------
+      //
+      // Here the alignment constants are used to correct the positions.
       // The other layers were aligned with respect to the first one.
-      
+      // All distances are given in \mu m.
+
       double off_x, off_y, theta_x, theta_y, theta_z;
 
       if (layerIndex == 0) {
-	
-	hitsInPlane.measuredX = 1000 * hit->getPosition()[0]; // in um
-	hitsInPlane.measuredY = 1000 * hit->getPosition()[1]; // in um
-	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2]; // in um
+
+	// First layer: no constants
+
+	hitsInPlane.measuredX = 1000 * hit->getPosition()[0];
+	hitsInPlane.measuredY = 1000 * hit->getPosition()[1];
+	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
 
       } else {
 	
+	// Other layers: set constants to values from xml file
+
 	if (layerIndex == 1) {
 	  
 	  off_x = _alignmentConstantsSecondLayer[0];
@@ -520,6 +521,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	  theta_z = 0.0;
 	  
 	}
+
+	// For documentation of these formulas look at EUTelAlign
 	
 	hitsInPlane.measuredX = (cos(theta_y)*cos(theta_z)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z) + cos(theta_x)*sin(theta_z)) * hit->getPosition()[1] * 1000 + off_x;
 	hitsInPlane.measuredY = ((-1)*cos(theta_y)*sin(theta_z)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z) + cos(theta_x)*cos(theta_z)) * hit->getPosition()[1] * 1000 + off_y;
@@ -528,6 +531,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       }
       
       delete cluster; // <--- destroying the cluster   
+
+      // Add Hits to vector
 
       if (layerIndex == 0) {
 	_hitsFirstPlane.push_back(hitsInPlane);
@@ -545,17 +550,19 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
     }
 
+    // Distances between hits in individual planes
+
     double distance12 = 0.0;
     double distance23 = 0.0;
     double distance34 = 0.0;
     double distance45 = 0.0;
     double distance56 = 0.0;
 
-    _xPos = new double *[500];
-    _yPos = new double *[500];
-    _zPos = new double *[500];
+    _xPos = new double *[_maxTrackCandidates];
+    _yPos = new double *[_maxTrackCandidates];
+    _zPos = new double *[_maxTrackCandidates];
 
-    for (int help = 0; help < 500; help++) {
+    for (int help = 0; help < _maxTrackCandidates; help++) {
       _xPos[help] = new double[_nPlanes];
       _yPos[help] = new double[_nPlanes];
       _zPos[help] = new double[_nPlanes];
@@ -571,6 +578,11 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
     int _nGoodTracks = 0;
 
+    // Find track candidates using the distance cuts
+    // ---------------------------------------------
+    //
+    // This is done separately for different numbers of planes.
+
     // loop over all hits in first plane
     for (int firsthit = 0; uint(firsthit) < _hitsFirstPlane.size(); firsthit++) {
       
@@ -579,7 +591,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
 	distance12 = sqrt(pow(_hitsFirstPlane[firsthit].measuredX - _hitsSecondPlane[secondhit].measuredX,2) + pow(_hitsFirstPlane[firsthit].measuredY - _hitsSecondPlane[secondhit].measuredY,2));
 
-	if (_nPlanes == 2 && distance12 < _distanceMax) {
+	if (_nPlanes == 2 && distance12 < _distanceMax && _nTracks < _maxTrackCandidates) {
 
 	  _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 	  _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
@@ -601,7 +613,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
 	    distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
 
-	    if (_nPlanes == 3 && distance12 < _distanceMax && distance23 < _distanceMax) {
+	    if (_nPlanes == 3 && distance12 < _distanceMax && distance23 < _distanceMax && _nTracks < _maxTrackCandidates) {
 
 	      _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 	      _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
@@ -627,7 +639,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
 		distance34 = sqrt(pow(_hitsThirdPlane[thirdhit].measuredX - _hitsFourthPlane[fourthhit].measuredX,2) + pow(_hitsThirdPlane[thirdhit].measuredY - _hitsFourthPlane[fourthhit].measuredY,2));
 
-		if (_nPlanes == 4 && distance12 < _distanceMax && distance23 < _distanceMax && distance34 < _distanceMax) {
+		if (_nPlanes == 4 && distance12 < _distanceMax && distance23 < _distanceMax && distance34 < _distanceMax && _nTracks < _maxTrackCandidates) {
 
 		  _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 		  _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
@@ -657,7 +669,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
 		    distance45 = sqrt(pow(_hitsFourthPlane[fourthhit].measuredX - _hitsFifthPlane[fifthhit].measuredX,2) + pow(_hitsFourthPlane[fourthhit].measuredY - _hitsFifthPlane[fifthhit].measuredY,2));
 
-		    if (_nPlanes == 5 && distance12 < _distanceMax && distance23 < _distanceMax && distance34 < _distanceMax && distance45 < _distanceMax) {
+		    if (_nPlanes == 5 && distance12 < _distanceMax && distance23 < _distanceMax && distance34 < _distanceMax && distance45 < _distanceMax && _nTracks < _maxTrackCandidates) {
 
 		      _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 		      _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
@@ -691,7 +703,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 			
 			distance56 = sqrt(pow(_hitsFifthPlane[fifthhit].measuredX - _hitsSixthPlane[sixthhit].measuredX,2) + pow(_hitsFifthPlane[fifthhit].measuredY - _hitsSixthPlane[sixthhit].measuredY,2));
 			
-			if (_nPlanes == 6 && distance12 < _distanceMax && distance23 < _distanceMax && distance34 < _distanceMax && distance45 < _distanceMax && distance56 < _distanceMax) {
+			if (_nPlanes == 6 && distance12 < _distanceMax && distance23 < _distanceMax && distance34 < _distanceMax && distance45 < _distanceMax && distance56 < _distanceMax && _nTracks < _maxTrackCandidates) {
 
 			  _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 			  _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
@@ -741,9 +753,16 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
     } // end loop over all hits in first plane
 
+    if (_nTracks == _maxTrackCandidates) {
+      streamlog_out ( WARNING2 ) << "Maximum number of track candidates reached. Maybe further tracks were skipped" << endl;
+    }
+
     streamlog_out ( MESSAGE2 ) << "Number of hits in the individual planes: " << _hitsFirstPlane.size() << " " << _hitsSecondPlane.size() << " " << _hitsThirdPlane.size() << " " << _hitsFourthPlane.size() << " " << _hitsFifthPlane.size() << " " << _hitsSixthPlane.size() << endl;
 
-    streamlog_out ( MESSAGE2 ) << "Number of tracks found in event " << _iEvt << ": " << _nTracks << endl;
+    streamlog_out ( MESSAGE2 ) << "Number of track candidates found: " << _iEvt << ": " << _nTracks << endl;
+
+    // Perform fit for all found track candidates
+    // ------------------------------------------
 
     double Chiquare[2] = {0,0};
     double angle[2] = {0,0};
@@ -954,6 +973,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       delete [] _xPosHere;
       
     } // end loop over all track candidates
+
+    streamlog_out ( MESSAGE2 ) << "Finished fitting tracks in event " << _iEvt << endl;
 
 #ifdef MARLIN_USE_AIDA
 

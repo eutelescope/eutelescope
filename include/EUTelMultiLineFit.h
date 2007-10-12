@@ -152,6 +152,7 @@ namespace eutelescope {
     float _chi2XMax;
     float _chi2YMax;
     int _excludePlane;
+    int _maxTrackCandidates;
 
   private:
     
