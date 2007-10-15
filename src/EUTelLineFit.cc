@@ -99,10 +99,8 @@ EUTelLineFit::EUTelLineFit () : Processor("EUTelLineFit") {
   constantsSecondLayer.push_back(0.0);
   constantsSecondLayer.push_back(0.0);
   constantsSecondLayer.push_back(0.0);
-  constantsSecondLayer.push_back(0.0);
 
   FloatVec constantsThirdLayer;
-  constantsThirdLayer.push_back(0.0);
   constantsThirdLayer.push_back(0.0);
   constantsThirdLayer.push_back(0.0);
   constantsThirdLayer.push_back(0.0);
@@ -115,10 +113,8 @@ EUTelLineFit::EUTelLineFit () : Processor("EUTelLineFit") {
   constantsFourthLayer.push_back(0.0);
   constantsFourthLayer.push_back(0.0);
   constantsFourthLayer.push_back(0.0);
-  constantsFourthLayer.push_back(0.0);
 
   FloatVec constantsFifthLayer;
-  constantsFifthLayer.push_back(0.0);
   constantsFifthLayer.push_back(0.0);
   constantsFifthLayer.push_back(0.0);
   constantsFifthLayer.push_back(0.0);
@@ -131,17 +127,16 @@ EUTelLineFit::EUTelLineFit () : Processor("EUTelLineFit") {
   constantsSixthLayer.push_back(0.0);
   constantsSixthLayer.push_back(0.0);
   constantsSixthLayer.push_back(0.0);
-  constantsSixthLayer.push_back(0.0);
   
-  registerOptionalParameter("AlignmentConstantsSecondLayer","Alignment Constants for second Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z1, theta_z2",
+  registerOptionalParameter("AlignmentConstantsSecondLayer","Alignment Constants for second Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z",
 			    _alignmentConstantsSecondLayer, constantsSecondLayer);
-  registerOptionalParameter("AlignmentConstantsThirdLayer","Alignment Constants for third Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z1, theta_z2",
+  registerOptionalParameter("AlignmentConstantsThirdLayer","Alignment Constants for third Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z",
 			    _alignmentConstantsThirdLayer, constantsThirdLayer);
-  registerOptionalParameter("AlignmentConstantsFourthLayer","Alignment Constants for fourth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z1, theta_z2",
+  registerOptionalParameter("AlignmentConstantsFourthLayer","Alignment Constants for fourth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z",
 			    _alignmentConstantsFourthLayer, constantsFourthLayer);
-  registerOptionalParameter("AlignmentConstantsFifthLayer","Alignment Constants for fifth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z1, theta_z2"
+  registerOptionalParameter("AlignmentConstantsFifthLayer","Alignment Constants for fifth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z"
 			    ,_alignmentConstantsFifthLayer, constantsFifthLayer);
-  registerOptionalParameter("AlignmentConstantsSixthLayer","Alignment Constants for sixth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z1, theta_z2"
+  registerOptionalParameter("AlignmentConstantsSixthLayer","Alignment Constants for sixth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z"
 			    ,_alignmentConstantsSixthLayer, constantsSixthLayer);
 
 }
@@ -316,7 +311,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
       
       // The other layers were aligned with respect to the first one.
       
-      double off_x, off_y, theta_x, theta_y, theta_z1, theta_z2;
+      double off_x, off_y, theta_x, theta_y, theta_z;
       
       if (layerIndex == 0) {
 	
@@ -332,8 +327,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
 	  off_y = _alignmentConstantsSecondLayer[1];
 	  theta_x = _alignmentConstantsSecondLayer[2];
 	  theta_y = _alignmentConstantsSecondLayer[3];
-	  theta_z1 = _alignmentConstantsSecondLayer[4];
-	  theta_z2 = _alignmentConstantsSecondLayer[5];
+	  theta_z = _alignmentConstantsSecondLayer[4];
 	  
 	} else if (layerIndex == 2) {
 	  
@@ -341,8 +335,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
 	  off_y = _alignmentConstantsThirdLayer[1];
 	  theta_x = _alignmentConstantsThirdLayer[2];
 	  theta_y = _alignmentConstantsThirdLayer[3];
-	  theta_z1 = _alignmentConstantsThirdLayer[4];
-	  theta_z2 = _alignmentConstantsThirdLayer[5];
+	  theta_z = _alignmentConstantsThirdLayer[4];
 	  
 	} else if (layerIndex == 3) {
 	  
@@ -350,8 +343,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
 	  off_y = _alignmentConstantsFourthLayer[1];
 	  theta_x = _alignmentConstantsFourthLayer[2];
 	  theta_y = _alignmentConstantsFourthLayer[3];
-	  theta_z1 = _alignmentConstantsFourthLayer[4];
-	  theta_z2 = _alignmentConstantsFourthLayer[5];
+	  theta_z = _alignmentConstantsFourthLayer[4];
 	  
 	} else if (layerIndex == 4) {
 	  
@@ -359,8 +351,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
 	  off_y = _alignmentConstantsFifthLayer[1];
 	  theta_x = _alignmentConstantsFifthLayer[2];
 	  theta_y = _alignmentConstantsFifthLayer[3];
-	  theta_z1 = _alignmentConstantsFifthLayer[4];
-	  theta_z2 = _alignmentConstantsFifthLayer[5];
+	  theta_z = _alignmentConstantsFifthLayer[4];
 	  
 	} else if (layerIndex == 5) {
 	  
@@ -368,8 +359,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
 	  off_y = _alignmentConstantsSixthLayer[1];
 	  theta_x = _alignmentConstantsSixthLayer[2];
 	  theta_y = _alignmentConstantsSixthLayer[3];
-	  theta_z1 = _alignmentConstantsSixthLayer[4];
-	  theta_z2 = _alignmentConstantsSixthLayer[5];
+	  theta_z = _alignmentConstantsSixthLayer[4];
 	  
 	} else {
 	  
@@ -377,19 +367,20 @@ void EUTelLineFit::processEvent (LCEvent * event) {
 	  off_y = 0.0;
 	  theta_x = 0.0;
 	  theta_y = 0.0;
-	  theta_z1 = 0.0;
-	  theta_z2 = 0.0;
+	  theta_z = 0.0;
 	  
 	}
+
+	// For documentation of these formulas look at EUTelAlign
 	
-	_xPos[iHit] = (cos(theta_y)*cos(theta_z1)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z1) + cos(theta_x)*sin(theta_z1)) * hit->getPosition()[1] * 1000 + off_x;
-	_yPos[iHit] = ((-1)*cos(theta_y)*sin(theta_z2)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z2) + cos(theta_x)*cos(theta_z2)) * hit->getPosition()[1] * 1000 + off_y;
+	_xPos[iHit] = (cos(theta_y)*cos(theta_z)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z) + cos(theta_x)*sin(theta_z)) * hit->getPosition()[1] * 1000 + off_x;
+	_yPos[iHit] = ((-1)*cos(theta_y)*sin(theta_z)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z) + cos(theta_x)*cos(theta_z)) * hit->getPosition()[1] * 1000 + off_y;
 	_zPos[iHit] = 1000 * hit->getPosition()[2];
-	
-	
+
       }
       
       delete cluster; // <--- destroying the cluster   
+
     }
     
     // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
