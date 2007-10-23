@@ -66,7 +66,7 @@ namespace eutelescope {
    * debug information is printed. 
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelDUTHistograms.h,v 1.0 2007-09-17 22:27:25 zarnecki Exp $
+   * @version $Id: EUTelDUTHistograms.h,v 1.1 2007-10-23 21:29:02 zarnecki Exp $
    * \date 2007.09.15
    *
    */ 
@@ -211,6 +211,14 @@ namespace eutelescope {
     static std::string _MeasuredYHistoName;
     static std::string _MeasuredXYHistoName;
 
+    static std::string _MatchedXHistoName;
+    static std::string _MatchedYHistoName;
+    static std::string _MatchedXYHistoName;
+
+    static std::string _UnMatchedXHistoName;
+    static std::string _UnMatchedYHistoName;
+    static std::string _UnMatchedXYHistoName;
+
     static std::string _FittedXHistoName;
     static std::string _FittedYHistoName;
     static std::string _FittedXYHistoName;
@@ -219,11 +227,17 @@ namespace eutelescope {
     static std::string _EfficiencyYHistoName;
     static std::string _EfficiencyXYHistoName;
 
+    static std::string _NoiseXHistoName;
+    static std::string _NoiseYHistoName;
+    static std::string _NoiseXYHistoName;
+
     static std::string _ShiftXHistoName;
     static std::string _ShiftYHistoName;
     static std::string _ShiftXYHistoName;
     static std::string _ShiftXvsYHistoName;
     static std::string _ShiftYvsXHistoName;
+    static std::string _ShiftXvsY2DHistoName;
+    static std::string _ShiftYvsX2DHistoName;
 
 #endif 
 

@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// @version: $Id: EUTelDUTHistograms.cc,v 1.0 2007-09-17 22:27:25 zarnecki Exp $
+// @version: $Id: EUTelDUTHistograms.cc,v 1.1 2007-10-23 21:29:02 zarnecki Exp $
 // Date 2007.09.15
 
 /*
@@ -70,6 +70,14 @@ std::string EUTelDUTHistograms::_MeasuredXHistoName  = "measuredX";
 std::string EUTelDUTHistograms::_MeasuredYHistoName  = "measuredY";
 std::string EUTelDUTHistograms::_MeasuredXYHistoName = "measuredXY";
 
+std::string EUTelDUTHistograms::_MatchedXHistoName  = "matchedX";
+std::string EUTelDUTHistograms::_MatchedYHistoName  = "matchedY";
+std::string EUTelDUTHistograms::_MatchedXYHistoName = "matchedXY";
+
+std::string EUTelDUTHistograms::_UnMatchedXHistoName  = "unmatchedX";
+std::string EUTelDUTHistograms::_UnMatchedYHistoName  = "unmatchedY";
+std::string EUTelDUTHistograms::_UnMatchedXYHistoName = "unmatchedXY";
+
 std::string EUTelDUTHistograms::_FittedXHistoName  = "fittedX";
 std::string EUTelDUTHistograms::_FittedYHistoName  = "fittedY";
 std::string EUTelDUTHistograms::_FittedXYHistoName = "fittedXY";
@@ -78,11 +86,17 @@ std::string EUTelDUTHistograms::_EfficiencyXHistoName  = "DUTeffiX";
 std::string EUTelDUTHistograms::_EfficiencyYHistoName  = "DUTeffiY";
 std::string EUTelDUTHistograms::_EfficiencyXYHistoName = "DUTeffiXY";
 
+std::string EUTelDUTHistograms::_NoiseXHistoName  = "DUTnoiseX";
+std::string EUTelDUTHistograms::_NoiseYHistoName  = "DUTnoiseY";
+std::string EUTelDUTHistograms::_NoiseXYHistoName = "DUTnoiseXY";
+
 std::string EUTelDUTHistograms::_ShiftXHistoName       = "DUTshiftX";
 std::string EUTelDUTHistograms::_ShiftYHistoName       = "DUTshiftY";
 std::string EUTelDUTHistograms::_ShiftXYHistoName      = "DUTshiftXY";
 std::string EUTelDUTHistograms::_ShiftXvsYHistoName    = "DUTshiftXvsY";
 std::string EUTelDUTHistograms::_ShiftYvsXHistoName    = "DUTshiftYvsX";
+std::string EUTelDUTHistograms::_ShiftXvsY2DHistoName    = "DUTshiftXvsY2D";
+std::string EUTelDUTHistograms::_ShiftYvsX2DHistoName    = "DUTshiftYvsX2D";
 
 #endif
 
@@ -447,6 +461,15 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 	nMatch++;
 
+	// Matched hits positions
+
+      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MatchedXHistoName]))->fill(_measuredX[besthit]);
+
+
+      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MatchedYHistoName]))->fill(_measuredY[besthit]);
+
+      (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_MatchedXYHistoName]))->fill(_measuredX[besthit],_measuredY[besthit]);
+
       // Histograms of measured-fitted shifts
 
    (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_ShiftXHistoName]))->fill(_measuredX[besthit]-_fittedX[bestfit]);
@@ -459,6 +482,10 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
    (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_ShiftYvsXHistoName]))->fill(_fittedX[bestfit],_measuredY[besthit]-_fittedY[bestfit]);
 
+   (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ShiftXvsY2DHistoName]))->fill(_fittedY[bestfit],_measuredX[besthit]-_fittedX[bestfit]);
+
+   (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ShiftYvsX2DHistoName]))->fill(_fittedX[bestfit],_measuredY[besthit]-_fittedY[bestfit]);
+
    // Efficiency plots
 
    (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyXHistoName]))->fill(_fittedX[bestfit],1.);
@@ -466,6 +493,15 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
    (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyYHistoName]))->fill(_fittedY[bestfit],1.);
 
    (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EfficiencyXYHistoName]))->fill(_fittedX[bestfit],_fittedY[bestfit],1.);
+
+
+   // Noise plots
+
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_NoiseXHistoName]))->fill(_measuredX[bestfit],0.);
+
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_NoiseYHistoName]))->fill(_measuredY[bestfit],0.);
+
+   (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_NoiseXYHistoName]))->fill(_measuredX[bestfit],_measuredY[bestfit],0.);
 
 
    // Remove matched entries from the list (so the next matching pair
@@ -502,6 +538,28 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
    (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyYHistoName]))->fill(_fittedY[ifit],0.);
 
    (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EfficiencyXYHistoName]))->fill(_fittedX[ifit],_fittedY[ifit],0.);
+    }
+
+   // Noise plots - unmatched hits
+
+  for(int ihit=0;ihit<(int)_measuredX.size(); ihit++)
+    {
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_NoiseXHistoName]))->fill(_measuredX[ihit],1.);
+
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_NoiseYHistoName]))->fill(_measuredY[ihit],1.);
+
+   (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_NoiseXYHistoName]))->fill(_measuredX[ihit],_measuredY[ihit],1.);
+
+
+	// Unmatched hit positions
+
+      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_UnMatchedXHistoName]))->fill(_measuredX[ihit]);
+
+
+      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_UnMatchedYHistoName]))->fill(_measuredY[ihit]);
+
+      (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_UnMatchedXYHistoName]))->fill(_measuredX[ihit],_measuredY[ihit]);
+
     }
 
   return;
@@ -555,6 +613,8 @@ void EUTelDUTHistograms::bookHistos()
     double measXMin   = -5.;
     double measXMax   = 5.;
     string measXTitle = "Measured particle position in X";
+    string matchXTitle = "Matched hit position in X";
+    string unmatchXTitle = "Unmatched hit position in X";
 
 
     if ( isHistoManagerAvailable ) 
@@ -578,12 +638,29 @@ void EUTelDUTHistograms::bookHistos()
     _aidaHistoMap.insert(make_pair(_MeasuredXHistoName, measXHisto));
 
 
+    AIDA::IHistogram1D * matchXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_MatchedXHistoName.c_str(),measXNBin,measXMin,measXMax);
+
+    matchXHisto->setTitle(matchXTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_MatchedXHistoName, matchXHisto));
+
+
+    AIDA::IHistogram1D * unmatchXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_UnMatchedXHistoName.c_str(),measXNBin,measXMin,measXMax);
+
+    unmatchXHisto->setTitle(unmatchXTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_UnMatchedXHistoName, unmatchXHisto));
+
+
  // Measured position in Y 
 
     int    measYNBin  = 400;
     double measYMin   = -5.;
     double measYMax   = 5.;
     string measYTitle = "Measured particle position in Y";
+    string matchYTitle = "Matched hit position in Y";
+    string unmatchYTitle = "Unmatched hit position in Y";
+
 
 
     if ( isHistoManagerAvailable ) 
@@ -608,6 +685,20 @@ void EUTelDUTHistograms::bookHistos()
 
 
 
+    AIDA::IHistogram1D * matchYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_MatchedYHistoName.c_str(),measYNBin,measYMin,measYMax);
+
+    matchYHisto->setTitle(matchYTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_MatchedYHistoName, matchYHisto));
+
+
+    AIDA::IHistogram1D * unmatchYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_UnMatchedYHistoName.c_str(),measYNBin,measYMin,measYMax);
+
+    unmatchYHisto->setTitle(unmatchYTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_UnMatchedYHistoName, unmatchYHisto));
+
+
  // Measured position in X-Y 
 
     measXNBin  = 100;
@@ -617,6 +708,9 @@ void EUTelDUTHistograms::bookHistos()
     measYMin   = -5.;
     measYMax   = 5.;
     string measXYTitle = "Measured particle position in XY";
+    string matchXYTitle = "Matched hit position in XY";
+    string unmatchXYTitle = "Unmatched hit position in XY";
+
 
 
     if ( isHistoManagerAvailable ) 
@@ -642,6 +736,19 @@ void EUTelDUTHistograms::bookHistos()
    _aidaHistoMap.insert(make_pair(_MeasuredXYHistoName, measXYHisto));
 
 
+   AIDA::IHistogram2D * matchXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _MatchedXYHistoName.c_str(),measXNBin,measXMin,measXMax,measYNBin,measYMin,measYMax);
+
+   matchXYHisto->setTitle(matchXYTitle.c_str());
+
+   _aidaHistoMap.insert(make_pair(_MatchedXYHistoName, matchXYHisto));
+
+
+
+   AIDA::IHistogram2D * unmatchXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _UnMatchedXYHistoName.c_str(),measXNBin,measXMin,measXMax,measYNBin,measYMin,measYMax);
+
+   unmatchXYHisto->setTitle(unmatchXYTitle.c_str());
+
+   _aidaHistoMap.insert(make_pair(_UnMatchedXYHistoName, unmatchXYHisto));
 
 
  // Fitted position in X 
@@ -809,10 +916,12 @@ void EUTelDUTHistograms::bookHistos()
 
  // Measured - fitted position in X  vs Y
 
-    int    shiftXvsYNBin  = 200;
-    double shiftXvsYMin   = -5.;
-    double shiftXvsYMax   = 5.;
-    string shiftXvsYTitle = "Measured - fitted X position vs Y";
+    shiftXNBin  = 200;
+    shiftXMin   = -5.;
+    shiftXMax   = 5.;
+    double shiftVMin   = -0.1;
+    double shiftVMax   = 0.1;
+    shiftXTitle = "Measured - fitted X position vs Y";
 
 
     if ( isHistoManagerAvailable ) 
@@ -821,17 +930,19 @@ void EUTelDUTHistograms::bookHistos()
       if ( histoInfo ) 
          {
 	 message<DEBUG> ( log() << (* histoInfo ) );
-	 shiftXvsYNBin = histoInfo->_xBin;
-	 shiftXvsYMin  = histoInfo->_xMin;
-	 shiftXvsYMax  = histoInfo->_xMax;
-	 if ( histoInfo->_title != "" ) shiftXvsYTitle = histoInfo->_title;
+	 shiftXNBin = histoInfo->_xBin;
+	 shiftXMin  = histoInfo->_xMin;
+	 shiftXMax  = histoInfo->_xMax;
+	 shiftVMin  = histoInfo->_yMin;
+	 shiftVMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) shiftXTitle = histoInfo->_title;
          }
       }
 
 
-    AIDA::IProfile1D * shiftXvsYHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_ShiftXvsYHistoName.c_str(),shiftXvsYNBin,shiftXvsYMin,shiftXvsYMax);
+    AIDA::IProfile1D * shiftXvsYHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_ShiftXvsYHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftVMin,shiftVMax);
 
-    shiftXvsYHisto->setTitle(shiftXvsYTitle.c_str());
+    shiftXvsYHisto->setTitle(shiftXTitle.c_str());
 
     _aidaHistoMap.insert(make_pair(_ShiftXvsYHistoName, shiftXvsYHisto));
 
@@ -839,10 +950,12 @@ void EUTelDUTHistograms::bookHistos()
 
  // Measured - fitted position in Y vs X 
 
-    int    shiftYvsXNBin  = 200;
-    double shiftYvsXMin   = -5.;
-    double shiftYvsXMax   = 5.;
-    string shiftYvsXTitle = "Measured - fitted Y position vs X";
+    shiftYNBin  = 200;
+    shiftYMin   = -5.;
+    shiftYMax   = 5.;
+    shiftVMin   = -0.1;
+    shiftVMax   = 0.1;
+    shiftYTitle = "Measured - fitted Y position vs X";
 
 
     if ( isHistoManagerAvailable ) 
@@ -851,18 +964,92 @@ void EUTelDUTHistograms::bookHistos()
       if ( histoInfo ) 
          {
 	 message<DEBUG> ( log() << (* histoInfo ) );
-	 shiftYvsXNBin = histoInfo->_xBin;
-	 shiftYvsXMin  = histoInfo->_xMin;
-	 shiftYvsXMax  = histoInfo->_xMax;
-	 if ( histoInfo->_title != "" ) shiftYvsXTitle = histoInfo->_title;
+	 shiftYNBin = histoInfo->_xBin;
+	 shiftYMin  = histoInfo->_xMin;
+	 shiftYMax  = histoInfo->_xMax;
+	 shiftVMin  = histoInfo->_yMin;
+	 shiftVMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) shiftYTitle = histoInfo->_title;
          }
       }
 
-    AIDA::IProfile1D * shiftYvsXHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_ShiftYvsXHistoName.c_str(),shiftYvsXNBin,shiftYvsXMin,shiftYvsXMax);
+    AIDA::IProfile1D * shiftYvsXHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_ShiftYvsXHistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax,shiftVMin,shiftVMax);
 
-    shiftYvsXHisto->setTitle(shiftYvsXTitle.c_str());
+    shiftYvsXHisto->setTitle(shiftYTitle.c_str());
 
     _aidaHistoMap.insert(make_pair(_ShiftYvsXHistoName, shiftYvsXHisto));
+
+
+
+
+ // Measured - fitted position in X  vs Y (2D plot)
+
+    shiftXNBin  = 200;
+    shiftXMin   = -5.;
+    shiftXMax   = 5.;
+    int shiftVNBin  = 200;
+    shiftVMin   = -0.1;
+    shiftVMax   = 0.1;
+    shiftXTitle = "Measured - fitted X position vs Y";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_ShiftXvsY2DHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 shiftXNBin = histoInfo->_xBin;
+	 shiftXMin  = histoInfo->_xMin;
+	 shiftXMax  = histoInfo->_xMax;
+	 shiftVNBin = histoInfo->_yBin;
+	 shiftVMin  = histoInfo->_yMin;
+	 shiftVMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) shiftXTitle = histoInfo->_title;
+         }
+      }
+
+
+    AIDA::IHistogram2D * shiftXvsY2DHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_ShiftXvsY2DHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftVNBin,shiftVMin,shiftVMax);
+
+    shiftXvsY2DHisto->setTitle(shiftXTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_ShiftXvsY2DHistoName, shiftXvsY2DHisto));
+
+
+
+ // Measured - fitted position in Y vs X  (2D plot)
+
+    shiftYNBin  = 200;
+    shiftYMin   = -5.;
+    shiftYMax   = 5.;
+    shiftVNBin  = 200;
+    shiftVMin   = -0.1;
+    shiftVMax   = 0.1;
+    shiftYTitle = "Measured - fitted Y position vs X";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_ShiftYvsX2DHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 shiftYNBin = histoInfo->_xBin;
+	 shiftYMin  = histoInfo->_xMin;
+	 shiftYMax  = histoInfo->_xMax;
+	 shiftVNBin = histoInfo->_yBin;
+	 shiftVMin  = histoInfo->_yMin;
+	 shiftVMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) shiftYTitle = histoInfo->_title;
+         }
+      }
+
+    AIDA::IHistogram2D * shiftYvsX2DHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_ShiftYvsX2DHistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax,shiftVNBin,shiftVMin,shiftVMax);
+
+    shiftYvsX2DHisto->setTitle(shiftYTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_ShiftYvsX2DHistoName, shiftYvsX2DHisto));
 
 
 
@@ -1008,6 +1195,104 @@ void EUTelDUTHistograms::bookHistos()
 
 
 
+ // Noise as a function of the measured position in X 
+
+    int    noiseXNBin  = 100;
+    double noiseXMin   = -5.;
+    double noiseXMax   = 5.;
+    string noiseXTitle = "Noise fraction vs particle position in X";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_NoiseXHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 noiseXNBin = histoInfo->_xBin;
+	 noiseXMin  = histoInfo->_xMin;
+	 noiseXMax  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) noiseXTitle = histoInfo->_title;
+         }
+      }
+
+
+
+    AIDA::IProfile1D * noiseXHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_NoiseXHistoName.c_str(),noiseXNBin,noiseXMin,noiseXMax);
+
+    noiseXHisto->setTitle(noiseXTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_NoiseXHistoName, noiseXHisto));
+
+
+
+ // Noise as a function of the measured position in Y 
+
+    int    noiseYNBin  = 100;
+    double noiseYMin   = -5.;
+    double noiseYMax   = 5.;
+    string noiseYTitle = "Noise fraction vs particle position in Y";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_NoiseYHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 noiseYNBin = histoInfo->_xBin;
+	 noiseYMin  = histoInfo->_xMin;
+	 noiseYMax  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) noiseYTitle = histoInfo->_title;
+         }
+      }
+
+
+
+
+    AIDA::IProfile1D * noiseYHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_NoiseYHistoName.c_str(),noiseYNBin,noiseYMin,noiseYMax);
+
+    noiseYHisto->setTitle(noiseYTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_NoiseYHistoName, noiseYHisto));
+
+
+
+
+ // Noise as a function of the measured position in X-Y 
+
+    noiseXNBin  = 50;
+    noiseXMin   = -5.;
+    noiseXMax   = 5.;
+    noiseYNBin  = 50;
+    noiseYMin   = -5.;
+    noiseYMax   = 5.;
+    string noiseXYTitle = "Noise fraction vs particle position in XY";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_NoiseXYHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 noiseXNBin = histoInfo->_xBin;
+	 noiseXMin  = histoInfo->_xMin;
+	 noiseXMax  = histoInfo->_xMax;
+	 noiseYNBin = histoInfo->_yBin;
+	 noiseYMin  = histoInfo->_yMin;
+	 noiseYMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) noiseXYTitle = histoInfo->_title;
+         }
+      }
+
+
+
+   AIDA::IProfile2D * noiseXYHisto = AIDAProcessor::histogramFactory(this)->createProfile2D( _NoiseXYHistoName.c_str(),noiseXNBin,noiseXMin,noiseXMax,noiseYNBin,noiseYMin,noiseYMax);
+
+   noiseXYHisto->setTitle(noiseXYTitle.c_str());
+
+   _aidaHistoMap.insert(make_pair(_NoiseXYHistoName, noiseXYHisto));
 
 
 
