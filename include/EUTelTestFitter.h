@@ -151,7 +151,7 @@ namespace eutelescope {
    * many hits)
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelTestFitter.h,v 1.8 2007-09-22 18:05:37 zarnecki Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.9 2007-10-23 21:25:12 zarnecki Exp $
    * \date 2007.06.04
    *
    */ 
@@ -393,16 +393,18 @@ namespace eutelescope {
 
     std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
 
-    //! log(Chi2) histogram name
+    // Chi2 histogram names
+    static std::string _linChi2HistoName;
     static std::string _logChi2HistoName;
     static std::string _firstChi2HistoName;
     static std::string _bestChi2HistoName;
     static std::string _fullChi2HistoName;
 
-    //! Number of reconstructed tracks histogram name
+    // Number of reconstructed tracks histogram name
     static std::string _nTrackHistoName;
 
-    //! Number of hits histogram name
+    // Number of hits histogram names
+    static std::string _nAllHitHistoName;
     static std::string _nHitHistoName;
     static std::string _nBestHistoName;
 

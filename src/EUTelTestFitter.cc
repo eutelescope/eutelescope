@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.15 2007-09-22 18:05:17 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.16 2007-10-23 21:24:59 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -63,11 +63,13 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #ifdef MARLIN_USE_AIDA
+std::string EUTelTestFitter::_linChi2HistoName   = "linChi2";
 std::string EUTelTestFitter::_logChi2HistoName   = "logChi2";
-std::string EUTelTestFitter::_firstChi2HistoName  = "firstChi2";
+std::string EUTelTestFitter::_firstChi2HistoName = "firstChi2";
 std::string EUTelTestFitter::_bestChi2HistoName  = "bestChi2";
 std::string EUTelTestFitter::_fullChi2HistoName  = "fullChi2";
 std::string EUTelTestFitter::_nTrackHistoName    = "nTrack";
+std::string EUTelTestFitter::_nAllHitHistoName   = "nAllHit";
 std::string EUTelTestFitter::_nHitHistoName      = "nHit";
 std::string EUTelTestFitter::_nBestHistoName     = "nBest";
 #endif
@@ -575,6 +577,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   if(debug)message<DEBUG> ( log() << "Total of " << nHit << " tracker hits in input collection " );
 
+ (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nAllHitHistoName]))->fill(nHit);
+
   if(nHit + _allowMissingHits < _nActivePlanes) {
     if(debug)message<DEBUG> ( log() << "Not enough hits to perform the fit, exiting... " );
     (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
@@ -720,12 +724,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 	if(_planeHits[ipl]>0)
 	  {
-	    nFiredPlanes++;
+	   nFiredPlanes++;
 
-	    if(_allowSkipHits>0)
-	      _planeChoice[ipl]=_planeHits[ipl]+1;
-	    else
-	      _planeChoice[ipl]=_planeHits[ipl];
+          _planeChoice[ipl]=_planeHits[ipl]+1;
 	  }
 	else
 	  _planeChoice[ipl]=1;
@@ -792,12 +793,22 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     // Loop over fit possibilities
     // Start from one-hit track to allow for "smart" skipping of wrong matches
 
-    for(int ichoice=nChoice-_planeMod[_allowMissingHits]-1; ichoice >=0 ; ichoice--)
+    int istart=0;
+    int nmiss=_allowMissingHits;
+
+    while(nmiss>0 || !_isActive[istart])
+      {
+	if(_isActive[istart])nmiss--;
+	istart++;
+      }
+
+    for(int ichoice=nChoice-_planeMod[istart]-1; ichoice >=0 ; ichoice--)
       {
 	int nChoiceFired=0;
 	double choiceChi2=-1.;
         int ifirst=-1;
         int ilast=0;
+        int nleft=0;
 
 	// Fill position and error arrays for this hit configuration
 
@@ -818,8 +829,11 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 		    _planeEy[ipl]=(_useNominalResolution)?_planeResolution[ipl]:hitEy[jhit];
                     if(ifirst<0)ifirst=ipl;
                     ilast=ipl;
+                    nleft=0;
 		    nChoiceFired++;
 		  }
+                else
+                  nleft++;
 	      }
 	  }
 
@@ -836,12 +850,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         if(nChoiceFired==2 && !_useBeamConstraint 
             && nChoiceFired + _allowMissingHits < _nActivePlanes) continue;
 
-	// Not needed: we start from track with first hit at _allowMissingHits
-        if(ifirst > _allowMissingHits)continue;
-
         // Skip also if the fit can not be extended to proper number
         // of planes; no need to check remaining planes !!!
-        if(nChoiceFired + _allowMissingHits < ilast+1)
+        if(nChoiceFired + nleft < _nActivePlanes - _allowMissingHits )
 	  {
           ichoice-=_planeMod[ilast]-1;  
           continue;
@@ -985,6 +996,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         }
 
      // Fill Chi2 histograms
+
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_linChi2HistoName]))->fill(chi2best);
 
 	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_logChi2HistoName]))->fill(log10(chi2best));
 
@@ -1267,12 +1280,41 @@ void EUTelTestFitter::bookHistos()
     isHistoManagerAvailable = false;
   }
 
+ // Chi2 distribution for all accepted tracks (linear scale)
+
+    int    chi2NBin  = 1000;
+    double chi2Min   = 0.;
+    double chi2Max   = 200.;
+    string chi2Title = "Chi2 distribution";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_linChi2HistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 chi2NBin = histoInfo->_xBin;
+	 chi2Min  = histoInfo->_xMin;
+	 chi2Max  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) chi2Title = histoInfo->_title;
+         }
+      }
+
+
+   AIDA::IHistogram1D * linChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _linChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
+
+     linChi2Histo->setTitle(chi2Title.c_str());
+
+    _aidaHistoMap.insert(make_pair(_linChi2HistoName, linChi2Histo));
+
+
  // log(Chi2) distribution for all accepted tracks
 
-    int    chi2NBin  = 100;
-    double chi2Min   = -2.;
-    double chi2Max   = 8.;
-    string chi2Title = "log(Chi2) distribution";
+    chi2NBin  = 100;
+    chi2Min   = -2.;
+    chi2Max   = 8.;
+    chi2Title = "log(Chi2) distribution";
 
 
     if ( isHistoManagerAvailable ) 
@@ -1368,12 +1410,41 @@ void EUTelTestFitter::bookHistos()
 
 
 
+ // Number of hits in input collection
+
+    int    hitNBin  = 1000;
+    double hitMin   = 0.;
+    double hitMax   = 1000.;
+    string hitTitle = "Number of hits in input collection";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_nAllHitHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 hitNBin = histoInfo->_xBin;
+	 hitMin  = histoInfo->_xMin;
+	 hitMax  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) hitTitle = histoInfo->_title;
+         }
+      }
+
+   AIDA::IHistogram1D * nAllHitHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nAllHitHistoName.c_str(),hitNBin,hitMin,hitMax);
+
+     nAllHitHisto->setTitle(hitTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_nAllHitHistoName, nAllHitHisto));
+
+
+
  // Number of hits per track
 
-    int    hitNBin  = 11;
-    double hitMin   = -0.5;
-    double hitMax   = 10.5;
-    string hitTitle = "Number of hits used to reconstruct the track";
+    hitNBin  = 11;
+    hitMin   = -0.5;
+    hitMax   = 10.5;
+    hitTitle = "Number of hits used to reconstruct the track";
 
 
     if ( isHistoManagerAvailable ) 
