@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitHistograms.cc,v 1.4 2007-09-29 18:47:30 zarnecki Exp $
+// Version: $Id: EUTelFitHistograms.cc,v 1.5 2007-10-23 21:28:13 zarnecki Exp $
 // Date 2007.09.10
 
 /*
@@ -88,11 +88,13 @@ std::string EUTelFitHistograms::_AngleXHistoName = "incangleX";
 std::string EUTelFitHistograms::_AngleYHistoName = "incangleY";
 std::string EUTelFitHistograms::_AngleXYHistoName = "incangleXY";
 
-std::string EUTelFitHistograms::_beamShiftXHistoName = "beamShiftX";
-std::string EUTelFitHistograms::_beamShiftYHistoName = "beamShiftY";
+std::string EUTelFitHistograms::_beamShiftXHistoName  = "beamShiftX";
+std::string EUTelFitHistograms::_beamShiftYHistoName  = "beamShiftY";
 std::string EUTelFitHistograms::_beamShiftXYHistoName = "beamShiftXY";
-std::string EUTelFitHistograms::_beamRotXHistoName   = "beamRotX";
-std::string EUTelFitHistograms::_beamRotYHistoName   = "beamRotY";
+std::string EUTelFitHistograms::_beamRotXHistoName    = "beamRotX";
+std::string EUTelFitHistograms::_beamRotYHistoName    = "beamRotY";
+std::string EUTelFitHistograms::_beamRotX2DHistoName  = "beamRotX2D";
+std::string EUTelFitHistograms::_beamRotY2DHistoName  = "beamRotY2D";
 std::string EUTelFitHistograms::_beamRot2XHistoName   = "beamRot2X";
 std::string EUTelFitHistograms::_beamRot2YHistoName   = "beamRot2Y";
 
@@ -100,6 +102,8 @@ std::string EUTelFitHistograms::_relShiftXHistoName = "relShiftX";
 std::string EUTelFitHistograms::_relShiftYHistoName = "relShiftY";
 std::string EUTelFitHistograms::_relRotXHistoName   = "relRotX";
 std::string EUTelFitHistograms::_relRotYHistoName   = "relRotY";
+std::string EUTelFitHistograms::_relRotX2DHistoName   = "relRotX2D";
+std::string EUTelFitHistograms::_relRotY2DHistoName   = "relRotY2D";
 
 std::string EUTelFitHistograms::_clusterSignalHistoName  = "clusterSignal";
 std::string EUTelFitHistograms::_meanSignalXHistoName  = "meanSignalX";
@@ -719,6 +723,17 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
         nam6 << _beamRot2YHistoName << "_" << ipl ;
         tempHistoName=nam6.str();
         (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[_beamID],_measuredY[_beamID],_measuredY[ipl]-_measuredY[_beamID]);
+
+        stringstream nam7;
+        nam7 << _beamRotX2DHistoName << "_" << ipl ;
+        tempHistoName=nam7.str();
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredY[_beamID],_measuredX[ipl]-_measuredX[_beamID]);
+
+        stringstream nam8;
+        nam8 << _beamRotY2DHistoName << "_" << ipl ;
+        tempHistoName=nam8.str();
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[_beamID],_measuredY[ipl]-_measuredY[_beamID]);
+
 	}
       }
     }
@@ -763,6 +778,15 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
         nam4 << _relRotYHistoName << "_" << ipl ;
         tempHistoName=nam4.str();
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[tempHistoName]))->fill(lineX,_measuredY[ipl]-lineY);
+        stringstream nam5;
+        nam5 << _relRotX2DHistoName << "_" << ipl ;
+        tempHistoName=nam5.str();
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(lineY,_measuredX[ipl]-lineX);
+
+        stringstream nam6;
+        nam6 << _relRotY2DHistoName << "_" << ipl ;
+        tempHistoName=nam6.str();
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(lineX,_measuredY[ipl]-lineY);
 	}
       }
     }
@@ -1705,9 +1729,11 @@ void EUTelFitHistograms::bookHistos()
 
  // Beam alignment histograms: X vs Y to extract rotation in Z
 
-    int    rotXNBin  = 200;
+    int    rotXNBin  = 100;
     double rotXMin   = -5.;
     double rotXMax   = 5.;
+    double rotVMin   = -0.5;
+    double rotVMax   = 0.5;
     string rotXTitle = "Beam alignment shift in X vs Y";
 
 
@@ -1720,6 +1746,8 @@ void EUTelFitHistograms::bookHistos()
 	 rotXNBin = histoInfo->_xBin;
 	 rotXMin  = histoInfo->_xMin;
 	 rotXMax  = histoInfo->_xMax;
+	 rotVMin  = histoInfo->_yMin;
+	 rotVMax  = histoInfo->_yMax;
 	 if ( histoInfo->_title != "" ) rotXTitle = histoInfo->_title;
          }
       }
@@ -1736,7 +1764,7 @@ void EUTelFitHistograms::bookHistos()
         tit << rotXTitle << " for plane " << ipl << " w.r.t. plane " << _beamID ;
         tempHistoTitle=tit.str();
 
-        AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax);
+        AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotVMin,rotVMax);
 
          tempHisto->setTitle(tempHistoTitle.c_str());
 
@@ -1749,9 +1777,11 @@ void EUTelFitHistograms::bookHistos()
 
  // Beam alignment histograms: Y vs X to extract rotation in Z
 
-    int    rotYNBin  = 200;
+    int    rotYNBin  = 100;
     double rotYMin   = -5.;
     double rotYMax   = 5.;
+    rotVMin   = -0.5;
+    rotVMax   = 0.5;
     string rotYTitle = "Beam alignment shift in Y vs X";
 
 
@@ -1764,6 +1794,8 @@ void EUTelFitHistograms::bookHistos()
 	 rotYNBin = histoInfo->_xBin;
 	 rotYMin  = histoInfo->_xMin;
 	 rotYMax  = histoInfo->_xMax;
+	 rotVMin  = histoInfo->_yMin;
+	 rotVMax  = histoInfo->_yMax;
 	 if ( histoInfo->_title != "" ) rotYTitle = histoInfo->_title;
          }
       }
@@ -1780,7 +1812,106 @@ void EUTelFitHistograms::bookHistos()
         tit << rotYTitle << " for plane " << ipl << " w.r.t. plane " << _beamID ;
         tempHistoTitle=tit.str();
 
-        AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),rotYNBin,rotYMin,rotYMax);
+        AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),rotYNBin,rotYMin,rotYMax,rotVMin,rotVMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+ // Beam alignment histograms: X vs Y (2D plot)
+
+    rotXNBin  = 100;
+    rotXMin   = -5.;
+    rotXMax   = 5.;
+    int rotVNBin  = 100;
+    rotVMin   = -0.5;
+    rotVMax   = 0.5;
+    rotXTitle = "Beam alignment shift in X vs Y";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_beamRotX2DHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 rotXNBin = histoInfo->_xBin;
+	 rotXMin  = histoInfo->_xMin;
+	 rotXMax  = histoInfo->_xMax;
+	 rotVNBin = histoInfo->_yBin;
+	 rotVMin  = histoInfo->_yMin;
+	 rotVMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) rotXTitle = histoInfo->_title;
+         }
+      }
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl] && ipl!=_beamID)
+ 	{
+        stringstream nam,tit;
+
+        nam << _beamRotX2DHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << rotXTitle << " for plane " << ipl << " w.r.t. plane " << _beamID ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotVNBin,rotVMin,rotVMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+
+ // Beam alignment histograms: Y vs X (2D plot)
+
+    rotYNBin  = 100;
+    rotYMin   = -5.;
+    rotYMax   = 5.;
+    rotVNBin  = 100;
+    rotVMin   = -0.5;
+    rotVMax   = 0.5;
+    rotYTitle = "Beam alignment shift in Y vs X";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_beamRotY2DHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 rotYNBin = histoInfo->_xBin;
+	 rotYMin  = histoInfo->_xMin;
+	 rotYMax  = histoInfo->_xMax;
+	 rotVNBin = histoInfo->_yBin;
+	 rotVMin  = histoInfo->_yMin;
+	 rotVMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) rotYTitle = histoInfo->_title;
+         }
+      }
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl] && ipl!=_beamID)
+ 	{
+        stringstream nam,tit;
+
+        nam << _beamRotY2DHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << rotYTitle << " for plane " << ipl << " w.r.t. plane " << _beamID ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),rotYNBin,rotYMin,rotYMax,rotVNBin,rotVMin,rotVMax);
 
          tempHisto->setTitle(tempHistoTitle.c_str());
 
@@ -1798,6 +1929,8 @@ void EUTelFitHistograms::bookHistos()
     rotYNBin  = 50;
     rotYMin   = -5.;
     rotYMax   = 5.;
+    rotVMin   = -0.5;
+    rotVMax   = 0.5;
     rotXTitle = "Beam alignment shift in X vs XY";
 
 
@@ -1813,6 +1946,8 @@ void EUTelFitHistograms::bookHistos()
 	 rotYNBin = histoInfo->_yBin;
 	 rotYMin  = histoInfo->_yMin;
 	 rotYMax  = histoInfo->_yMax;
+	 rotVMin  = histoInfo->_zMin;
+	 rotVMax  = histoInfo->_zMax;
 	 if ( histoInfo->_title != "" ) rotXTitle = histoInfo->_title;
          }
       }
@@ -1829,7 +1964,7 @@ void EUTelFitHistograms::bookHistos()
         tit << rotXTitle << " for plane " << ipl << " w.r.t. plane " << _beamID ;
         tempHistoTitle=tit.str();
 
-        AIDA::IProfile2D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile2D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotYNBin,rotYMin,rotYMax);
+        AIDA::IProfile2D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile2D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotYNBin,rotYMin,rotYMax,rotVMin,rotVMax);
 
          tempHisto->setTitle(tempHistoTitle.c_str());
 
@@ -1850,6 +1985,8 @@ void EUTelFitHistograms::bookHistos()
     rotYNBin  = 50;
     rotYMin   = -5.;
     rotYMax   = 5.;
+    rotVMin   = -0.5;
+    rotVMax   = 0.5;
     rotYTitle = "Beam alignment shift in Y vs XY";
 
 
@@ -1865,6 +2002,8 @@ void EUTelFitHistograms::bookHistos()
 	 rotYNBin = histoInfo->_yBin;
 	 rotYMin  = histoInfo->_yMin;
 	 rotYMax  = histoInfo->_yMax;
+	 rotVMin  = histoInfo->_zMin;
+	 rotVMax  = histoInfo->_zMax;
 	 if ( histoInfo->_title != "" ) rotYTitle = histoInfo->_title;
          }
       }
@@ -1881,7 +2020,7 @@ void EUTelFitHistograms::bookHistos()
         tit << rotYTitle << " for plane " << ipl << " w.r.t. plane " << _beamID ;
         tempHistoTitle=tit.str();
 
-        AIDA::IProfile2D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile2D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotYNBin,rotYMin,rotYMax);
+        AIDA::IProfile2D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile2D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotYNBin,rotYMin,rotYMax,rotVMin,rotVMax);
 
          tempHisto->setTitle(tempHistoTitle.c_str());
 
@@ -1990,6 +2129,8 @@ void EUTelFitHistograms::bookHistos()
     rotXNBin  = 200;
     rotXMin   = -5.;
     rotXMax   = 5.;
+    rotVMin   = -0.1;
+    rotVMax   = 0.1;
     rotXTitle = "Relative alignment shift in X vs Y";
 
 
@@ -2002,6 +2143,8 @@ void EUTelFitHistograms::bookHistos()
 	 rotXNBin = histoInfo->_xBin;
 	 rotXMin  = histoInfo->_xMin;
 	 rotXMax  = histoInfo->_xMax;
+	 rotVMin  = histoInfo->_yMin;
+	 rotVMax  = histoInfo->_yMax;
 	 if ( histoInfo->_title != "" ) rotXTitle = histoInfo->_title;
          }
       }
@@ -2019,7 +2162,7 @@ void EUTelFitHistograms::bookHistos()
 	    << _referenceID0 << " and " << _referenceID1 ;
         tempHistoTitle=tit.str();
 
-        AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax);
+        AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotVMin,rotVMax);
 
          tempHisto->setTitle(tempHistoTitle.c_str());
 
@@ -2035,6 +2178,8 @@ void EUTelFitHistograms::bookHistos()
     rotYNBin  = 200;
     rotYMin   = -5.;
     rotYMax   = 5.;
+    rotVMin   = -0.1;
+    rotVMax   = 0.1;
     rotYTitle = "Relative alignment shift in Y vs X";
 
 
@@ -2047,6 +2192,8 @@ void EUTelFitHistograms::bookHistos()
 	 rotYNBin = histoInfo->_xBin;
 	 rotYMin  = histoInfo->_xMin;
 	 rotYMax  = histoInfo->_xMax;
+	 rotVMin  = histoInfo->_yMin;
+	 rotVMax  = histoInfo->_yMax;
 	 if ( histoInfo->_title != "" ) rotYTitle = histoInfo->_title;
          }
       }
@@ -2064,7 +2211,109 @@ void EUTelFitHistograms::bookHistos()
 	    << _referenceID0 << " and " << _referenceID1 ;
         tempHistoTitle=tit.str();
 
-        AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),rotYNBin,rotYMin,rotYMax);
+        AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),rotYNBin,rotYMin,rotYMax,rotVMin,rotVMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+
+ // Relative alignment histograms: X vs Y (2D plot)
+
+    rotXNBin  = 100;
+    rotXMin   = -5.;
+    rotXMax   = 5.;
+    rotVNBin  = 100;
+    rotVMin   = -0.2;
+    rotVMax   = 0.2;
+    rotXTitle = "Relative alignment shift in X vs Y";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_relRotX2DHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 rotXNBin = histoInfo->_xBin;
+	 rotXMin  = histoInfo->_xMin;
+	 rotXMax  = histoInfo->_xMax;
+	 rotVNBin = histoInfo->_yBin;
+	 rotVMin  = histoInfo->_yMin;
+	 rotVMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) rotXTitle = histoInfo->_title;
+         }
+      }
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl] && ipl!=_referenceID0 && ipl!=_referenceID1)
+ 	{
+        stringstream nam,tit;
+
+        nam << _relRotX2DHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << rotXTitle << " for plane " << ipl << " w.r.t. planes "
+	    << _referenceID0 << " and " << _referenceID1 ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotVNBin,rotVMin,rotVMax);
+
+         tempHisto->setTitle(tempHistoTitle.c_str());
+
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+      }
+
+
+ // Relative alignment histograms: Y vs X (2D plot)
+
+    rotYNBin  = 100;
+    rotYMin   = -5.;
+    rotYMax   = 5.;
+    rotVNBin  = 100;
+    rotVMin   = -0.2;
+    rotVMax   = 0.2;
+    rotYTitle = "Relative alignment shift in Y vs X";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_relRotY2DHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 rotYNBin = histoInfo->_xBin;
+	 rotYMin  = histoInfo->_xMin;
+	 rotYMax  = histoInfo->_xMax;
+	 rotVNBin = histoInfo->_yBin;
+	 rotVMin  = histoInfo->_yMin;
+	 rotVMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) rotYTitle = histoInfo->_title;
+         }
+      }
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)
+      {
+      if(_isActive[ipl] && ipl!=_referenceID0 && ipl!=_referenceID1)
+ 	{
+        stringstream nam,tit;
+
+        nam << _relRotY2DHistoName << "_" << ipl ;
+        tempHistoName=nam.str();
+
+        tit << rotYTitle << " for plane " << ipl << " w.r.t. planes "
+	    << _referenceID0 << " and " << _referenceID1 ;
+        tempHistoTitle=tit.str();
+
+        AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),rotYNBin,rotYMin,rotYMax,rotVNBin,rotVMin,rotVMax);
 
          tempHisto->setTitle(tempHistoTitle.c_str());
 
