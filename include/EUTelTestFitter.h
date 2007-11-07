@@ -181,7 +181,7 @@ namespace eutelescope {
    *      hit positions are stored)
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelTestFitter.h,v 1.10 2007-11-07 07:30:30 zarnecki Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.11 2007-11-07 20:54:09 zarnecki Exp $
    * \date 2007.10.30
    *
    */ 
@@ -450,6 +450,8 @@ namespace eutelescope {
 
     // Number of hits histogram names
     static std::string _nAllHitHistoName;
+    static std::string _nAccHitHistoName;
+
     static std::string _nHitHistoName;
     static std::string _nBestHistoName;
 
