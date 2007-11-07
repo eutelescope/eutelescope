@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.16 2007-10-23 21:24:59 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.17 2007-11-07 07:30:15 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -185,6 +185,48 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
                              "Rotation around Z for layer alignment",
                              _AlignLayerRotZ, initLayerShift);
 
+  registerOptionalParameter ("WindowLayerIDs",
+                             "Ids of layers for which position window cut are applied",
+                             _WindowLayerIDs, initLayerIDs);
+
+  registerOptionalParameter ("WindowMinX",
+                             "Lower window edge in X",
+                             _WindowMinX, initLayerShift);
+
+  registerOptionalParameter ("WindowMaxX",
+                             "Upper window edge in X",
+                             _WindowMaxX, initLayerShift);
+
+  registerOptionalParameter ("WindowMinY",
+                             "Lower window edge in Y",
+                             _WindowMinY, initLayerShift);
+
+  registerOptionalParameter ("WindowMaxY",
+                             "Upper window edge in Y",
+                             _WindowMaxY, initLayerShift);
+
+
+  registerOptionalParameter ("MaskLayerIDs",
+                             "Ids of layers for which position masks are applied",
+                             _MaskLayerIDs, initLayerIDs);
+
+  registerOptionalParameter ("MaskMinX",
+                             "Lower mask edge in X",
+                             _MaskMinX, initLayerShift);
+
+  registerOptionalParameter ("MaskMaxX",
+                             "Upper mask edge in X",
+                             _MaskMaxX, initLayerShift);
+
+  registerOptionalParameter ("MaskMinY",
+                             "Lower mask edge in Y",
+                             _MaskMinY, initLayerShift);
+
+  registerOptionalParameter ("MaskMaxY",
+                             "Upper mask edge in Y",
+                             _MaskMaxY, initLayerShift);
+
+
   registerOptionalParameter ("UseBeamConstraint",
 			     "Flag for using beam direction constraint in the fit",
                              _useBeamConstraint,  static_cast < bool > (false));
@@ -325,6 +367,9 @@ void EUTelTestFitter::init() {
   _planeX0         = new double[_nTelPlanes];
   _planeResolution = new double[_nTelPlanes];
   _isActive        = new bool[_nTelPlanes];
+  _planeWindowIDs  = new std::vector<int>[_nTelPlanes];
+  _planeMaskIDs    = new std::vector<int>[_nTelPlanes];
+
   _nActivePlanes = 0 ;
 
 // Fill arrays with parameters of layer, sorted in Z
@@ -385,6 +430,18 @@ void EUTelTestFitter::init() {
        break;
        }
 
+// Check, if there are additional cuts defined for this plane
+
+
+     for(int wpl=0; wpl< (int)_WindowLayerIDs.size() ; wpl++)
+      if ( _WindowLayerIDs.at(wpl) == _planeID[iz])
+       _planeWindowIDs[iz].push_back(wpl);
+
+     for(int mpl=0; mpl< (int)_MaskLayerIDs.size() ; mpl++)
+      if ( _MaskLayerIDs.at(mpl) == _planeID[iz])
+       _planeMaskIDs[iz].push_back(mpl);
+
+     // End of plane loop
    }
 
   // Get new DUT position (after sorting)
@@ -427,6 +484,27 @@ void EUTelTestFitter::init() {
               << " dY [mm] = " << _planeShiftY[ipl] ;
         if(_planeRotZ[ipl] !=0.) 
            ss << " RotZ [rad] = " << _planeRotZ[ipl] ;
+
+
+        for(int wpl=0; wpl< (int)_planeWindowIDs[ipl].size() ; wpl++)
+	  {
+          int iwin= _planeWindowIDs[ipl].at(wpl);
+	  ss << "\n accepted window: X = " <<  _WindowMinX.at(iwin) 
+	     << " to " <<  _WindowMaxX.at(iwin) 
+	     << " Y = " <<  _WindowMinY.at(iwin) 
+	     << " to " <<  _WindowMaxY.at(iwin); 
+          }
+
+        for(int mpl=0; mpl< (int)_planeMaskIDs[ipl].size() ; mpl++)
+	  {
+	  int imsk= _planeMaskIDs[ipl].at(mpl);
+	  ss << "\n imposed mask: X = " <<  _MaskMinX.at(imsk) 
+	     << " to " <<  _MaskMaxX.at(imsk) 
+	     << " Y = " <<  _MaskMinY.at(imsk) 
+	     << " to " <<  _MaskMaxY.at(imsk); 
+          }
+
+        
         }
 
       message<MESSAGE> ( log() << ss.str() );
@@ -662,6 +740,36 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       hitY[ihit] = pos[1]*cos(_planeRotZ[hitPlane[ihit]])
                  - pos[0]*sin(_planeRotZ[hitPlane[ihit]])
                  + _planeShiftY[hitPlane[ihit]];
+
+      // Check Window and Mask cuts, if defined
+
+      bool hitcut = false;
+
+      for(int wpl=0; wpl< (int)_planeWindowIDs[hitPlane[ihit]].size() ; wpl++)
+	  {
+          int iwin= _planeWindowIDs[hitPlane[ihit]].at(wpl);
+
+	  if(hitX[ihit] <  _WindowMinX.at(iwin)) hitcut = true;
+          if(hitX[ihit] >  _WindowMaxX.at(iwin)) hitcut = true;
+ 	  if(hitY[ihit] <  _WindowMinY.at(iwin)) hitcut = true; 
+	  if(hitY[ihit] >  _WindowMaxY.at(iwin)) hitcut = true; 
+          }
+
+      if(hitcut)continue;
+
+
+      for(int mpl=0; mpl< (int)_planeMaskIDs[hitPlane[ihit]].size() ; mpl++)
+	  {
+	  int imsk= _planeMaskIDs[hitPlane[ihit]].at(mpl);
+
+	  if(hitX[ihit] >  _MaskMinX.at(imsk) &&
+             hitX[ihit] <  _MaskMaxX.at(imsk) &&
+ 	     hitY[ihit] >  _MaskMinY.at(imsk) &&
+	     hitY[ihit] <  _MaskMaxY.at(imsk)) hitcut = true; 
+          }
+     
+      if(hitcut)continue;
+
 
       // Add hit to hit list for given plane - to be used in track selection
 

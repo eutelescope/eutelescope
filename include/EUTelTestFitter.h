@@ -56,16 +56,19 @@ namespace eutelescope {
    * 
    *
    * \par Algorithm  
-   * \li Read measured track points from input TrackerHit collection
+   * \li Read measured track points from input \c TrackerHit collection
    *     and copy to local tables
-   * \li Prepare lists of hits for each active sensor plane
+   * \li Prepare lists of hits for each active sensor plane, apply
+   *     cuts on hit positions, if required
    * \li Count hit numbers, return if not enough planes fired
    * \li Calculate number of fit hypothesis (including missing hit possibility)
-   * \li Fit each hypotheses and calculate Chi^2 (including
-   * ``penalties'' for missing hits or skipped planes)
-   * \li Select the Chi^2
-   * \li Write fitted track position at DUT to output TrackerHit collection
-   * \li Remove best track hits from hit list and repeat procedure 
+   * \li Search the list of fit hypotheses to find the one with best
+   *     Chi^2 (including ``penalties'' for missing hits or skipped planes)
+   * \li Accept the fit if Chi^2 is below threshold
+   * \li Write fitted track to output \c Track collection; measured
+   * particle positions corrected for alignment and fitted positions
+   * are also written out as \c TrackerHit collections 
+   * \li Remove accepted track hits from hit list and repeat procedure 
    *
    * \par Geometry description
    * This version of the processor does use GEAR input!
@@ -76,14 +79,17 @@ namespace eutelescope {
    * 
    * \par Output
    * Fitted particle positions in all telescope planes are stored as 
-   * \c TrackerHit collection. In addition fit results are written in a
-   * \c Track collection. Following \c Track variables are filled: 
+   * \c TrackerHit collection. If required, measured
+   * particle positions corrected for alignment can also be stored as
+   * a separate  \c TrackerHit collection. In addition fit results are
+   * written in a \c Track collection. Following \c Track variables
+   * are filled:  
    *  \li Chi2 of the fit 
    *  \li number of measured hits used in the track fit (as Ndf)
    *  \li reconstructed position at DUT  (as a track reference point)
    *  \li vector of hits (fitted particle positions in all planes)  
-   *
-   *
+   * 
+   * \par Main algorithm parameters
    * \param InputCollectionName  Name of the input TrackerHit collection
    * \param CorrectedHitCollectionName Name of the collection for storing
    *        corrected particle positions in telescope planes (hits),
@@ -95,64 +101,88 @@ namespace eutelescope {
    * \param OutputHitsInTrack Flag for storing output (fitted) hits in track.  
    *        Input and output hits can be distinguished by looking into
    *        hit type (type <=31 for measured hits, type >=32 for fitted).
-   * \param SkipLayerIDs Ids of layers which are described in GEAR but
-   * should not be included in the fit. Can be used to remove layers
-   * in front of and behind the telescope, which do not influence the fit,
-   * but can slow down the algorithm (increase fit matrix size).
-   * \param AlignLayerIDs Ids of layers for which alignment corrections
-   * should be applied
-   * \param AlignLayerShiftX Shifts in X, which should be applied to
-   * correct alignment of these layers.
-   * \param AlignLayerShiftY Shifts in Y, which should be applied to
-   * correct alignment of these layers.
-   * \param AlignLayerRotZ Rotation around Z (beam) axis, which should 
-   * be applied to correct alignment of these layers.
-   * \param DebugEventCount      Print out debug and information
-   * messages only for one out of given number of events. If zero, no
-   * debug information is printed. 
-   * \param AllowMissingHits Allowed number of hits missing in the track
-   * (sensor planes without hits or with hits removed from given track)
-   * \param AllowSkipHits Allowed number of hits removed from the track
-   * (because of large Chi^2 contribution)
-   * \param MaxPlaneHits Maximum number of hits considered per
-   * plane. The algorithm becomes very slow if this number is too large.
-   * \param MissingHitPenalty  "Penalty" added to track Chi^2 for each
-   * missing hit (no hits in given layer).
-   * \param SkipHitPenalty  "Penalty" added to track Chi^2 for each hit
-   * removed from the track because of large Chi^2 contribution.
-   * \param Chi2Max Maximum Chi2 for accepted track fit.
-   * \param UseNominalResolutio Flag for using nominal sensor resolution
-   * (as given in geometry description) instead of hit position errors.
-   * \param UseDUT Flag for including DUT measurement in the track fit.
-   * \param Ebeam Beam energy in [GeV], needed to estimate multiple scattering.
-   * \param UseBeamConstraint Flag for using beam direction constraint
-   * in the fit. Can improve the fit, if beam angular spread is small.
-   * \param BeamSpread Assumed angular spread of the beam [rad]
-   * \param SearchMultipleTracks Flag for searching multiple tracks in
-   * events with multiple hits 
-   * \param HistoInfoFileName Name of the histogram information file.
-   *  Using this file histogram parameters can be changed without 
-   * recompiling the code.
    *
-   * \warning
-   * Algorithm is very fast when there are only single (or double) hits
-   * in each sensor layer. With increasing number of hits per layer (HpL)
-   * fitting time increases like HpL^N, where N is number of sensors.
-   * To protect from "freezing"  \c MaxPlaneHits parameter is introduced
-   * (default value is 5 and should rather not be increased).
+   * \param AllowMissingHits Allowed number of hits missing in the track
+   *        (sensor planes without hits or with hits removed from
+   *        given track) 
+   * \param MissingHitPenalty  "Penalty" added to track Chi^2 for each
+   *        missing hit (no hits in given layer).
+   * \param AllowSkipHits Allowed number of hits removed from the track
+   *        (because of large Chi^2 contribution)
+   * \param SkipHitPenalty  "Penalty" added to track Chi^2 for each hit
+   *        removed from the track because of large Chi^2 contribution.
+   *
+   * \param MaxPlaneHits Maximum number of hits considered per
+   *        plane. The algorithm slows down if this number is
+   *        too large. However, the real limitation comes from
+   *        numerical precision. Maximum number is 34 for 6 planes
+   *        used in the fit, 72 for 5 planes, 214 for 4 planes.
+
+   * \param UseNominalResolutio Flag for using nominal sensor resolution
+   *        (as given in geometry description) instead of hit position
+   *        errors. 
+   *
+   * \param UseDUT Flag for including DUT measurement in the track fit.
+   *
+   * \param Ebeam Beam energy in [GeV], needed to estimate multiple
+   *        scattering. 
+   *
+   * \param UseBeamConstraint Flag for using beam direction constraint
+   *        in the fit. Can improve the fit, if beam angular spread is
+   *        small. 
+   * \param BeamSpread Assumed angular spread of the beam [rad]
+   *
+   * \param SearchMultipleTracks Flag for searching multiple tracks in
+   *        events with multiple hits 
+   *
+   * \param Chi2Max Maximum Chi2 for accepted track fit.
+   *
+   * \par Performance control parameters
+   * \param DebugEventCount      Print out debug and information
+   *        messages only for one out of given number of events. If
+   *        zero, no debug information is printed. 
+   *
+   * \param SkipLayerIDs Ids of layers which are described in GEAR but
+   *        should not be included in the fit. Can be used to remove
+   *        layers in front of and behind the telescope, which do not
+   *        influence the fit, but can slow down the algorithm
+   *        (increase fit matrix size). 
+   *
+   * \param AlignLayerIDs Ids of layers for which alignment corrections
+   *        should be applied
+   * \param AlignLayerShiftX Shifts in X, which should be applied to
+   *        correct alignment of these layers.
+   * \param AlignLayerShiftY Shifts in Y, which should be applied to
+   *        correct alignment of these layers.
+   * \param AlignLayerRotZ Rotation around Z (beam) axis, which should 
+   *        be applied to correct alignment of these layers.
+   *
+   * \param WindowLayerIDs Ids of layers for which position cuts are
+   *        defined. Only hits inside the defined "window" are accepted
+   * \param WindowMinX   Lower window edge in X
+   * \param WindowMaxX   Upper window edge in X
+   * \param WindowMinY   Lower window edge in Y
+   * \param WindowMaxY   Upper window edge in Y
+   *
+   * \param MaskLayerIDs Ids of layers for which position cuts are
+   *        defined. Only hits outside the defined "mask" are accepted
+   * \param MaskMinX   Lower window edge in X
+   * \param MaskMaxX   Upper window edge in X
+   * \param MaskMinY   Lower window edge in Y
+   * \param MaskMaxY   Upper window edge in Y
+   *
+   * \param HistoInfoFileName Name of the histogram information file.
+   *        Using this file histogram parameters can be changed without 
+   *        recompiling the code.
    *
    * \todo
-   *  \li Control histograms
    *  \li Interface to LCCD (alignment)
    *  \li More detailed track parameter output (currently only reconstructed
    *      hit positions are stored)
-   *  \li Implement new track selection algorithm, which would avoid
-   * testing all track hypothesis (to improve efficiency for events with
-   * many hits)
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelTestFitter.h,v 1.9 2007-10-23 21:25:12 zarnecki Exp $
-   * \date 2007.06.04
+   * @version $Id: EUTelTestFitter.h,v 1.10 2007-11-07 07:30:30 zarnecki Exp $
+   * \date 2007.10.30
    *
    */ 
 
@@ -306,12 +336,24 @@ namespace eutelescope {
 
     bool _OutputHitsInTrack;
 
-    std::vector<int > _SkipLayerIDs;
+    std::vector<int >   _SkipLayerIDs;
 
-    std::vector<int > _AlignLayerIDs;
+    std::vector<int >   _AlignLayerIDs;
     std::vector<float > _AlignLayerShiftX;
     std::vector<float > _AlignLayerShiftY;
     std::vector<float > _AlignLayerRotZ;
+
+    std::vector<int >   _WindowLayerIDs;
+    std::vector<float > _WindowMinX;
+    std::vector<float > _WindowMaxX;
+    std::vector<float > _WindowMinY;
+    std::vector<float > _WindowMaxY;
+
+    std::vector<int >   _MaskLayerIDs;
+    std::vector<float > _MaskMinX;
+    std::vector<float > _MaskMaxX;
+    std::vector<float > _MaskMinY;
+    std::vector<float > _MaskMaxY;
 
     // Parameters of hit selection algorithm
 
@@ -353,6 +395,9 @@ namespace eutelescope {
     double * _planeX0;
     double * _planeResolution;
     bool   * _isActive;
+
+    std::vector<int> * _planeWindowIDs;
+    std::vector<int> * _planeMaskIDs;
 
     // Internal processor variables
     // ----------------------------
