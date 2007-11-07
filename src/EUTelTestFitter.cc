@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.17 2007-11-07 07:30:15 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.18 2007-11-07 20:54:27 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -70,6 +70,7 @@ std::string EUTelTestFitter::_bestChi2HistoName  = "bestChi2";
 std::string EUTelTestFitter::_fullChi2HistoName  = "fullChi2";
 std::string EUTelTestFitter::_nTrackHistoName    = "nTrack";
 std::string EUTelTestFitter::_nAllHitHistoName   = "nAllHit";
+std::string EUTelTestFitter::_nAccHitHistoName   = "nAccHit";
 std::string EUTelTestFitter::_nHitHistoName      = "nHit";
 std::string EUTelTestFitter::_nBestHistoName     = "nBest";
 #endif
@@ -796,6 +797,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 		       << "   Y = " << hitY[ihit] << " +/- " << hitEy[ihit]  
 		       << "   Z = " << hitZ[ihit] << " (plane " << hitPlane[ihit] << ")" );
     }
+
+
+ (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nAccHitHistoName]))->fill(nGoodHit);
 
 
   // Main analysis loop: finding multiple tracks (if allowed)
@@ -1544,6 +1548,35 @@ void EUTelTestFitter::bookHistos()
      nAllHitHisto->setTitle(hitTitle.c_str());
 
     _aidaHistoMap.insert(make_pair(_nAllHitHistoName, nAllHitHisto));
+
+
+
+ // Number of accepted hits
+
+    hitNBin  = 1000;
+    hitMin   = 0.;
+    hitMax   = 1000.;
+    hitTitle = "Number of hits accepted from input collection";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_nAccHitHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 hitNBin = histoInfo->_xBin;
+	 hitMin  = histoInfo->_xMin;
+	 hitMax  = histoInfo->_xMax;
+	 if ( histoInfo->_title != "" ) hitTitle = histoInfo->_title;
+         }
+      }
+
+   AIDA::IHistogram1D * nAccHitHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nAccHitHistoName.c_str(),hitNBin,hitMin,hitMax);
+
+     nAccHitHisto->setTitle(hitTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_nAccHitHistoName, nAccHitHisto));
 
 
 
