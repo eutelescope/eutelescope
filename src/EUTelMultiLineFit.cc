@@ -139,7 +139,7 @@ EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
   registerOptionalParameter("AlignmentConstantsSixthLayer","Alignment Constants for sixth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z"
 			    ,_alignmentConstantsSixthLayer, constantsSixthLayer);
 
-  registerOptionalParameter("DistanceMax","Maximal allowed distance between hits entering the fit.",
+  registerOptionalParameter("DistanceMax","Maximal allowed distance between hits entering the fit per 10 cm space between the planes.",
                             _distanceMax, static_cast <float> (2000.0));
 
   registerOptionalParameter("Chi2XMax","Maximal chi2 for fit of x coordinate."
@@ -527,7 +527,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	hitsInPlane.measuredX = (cos(theta_y)*cos(theta_z)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z) + cos(theta_x)*sin(theta_z)) * hit->getPosition()[1] * 1000 + off_x;
 	hitsInPlane.measuredY = ((-1)*cos(theta_y)*sin(theta_z)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z) + cos(theta_x)*cos(theta_z)) * hit->getPosition()[1] * 1000 + off_y;
 	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
-	
+
       }
       
       delete cluster; // <--- destroying the cluster   
@@ -557,6 +557,18 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     double distance34 = 0.0;
     double distance45 = 0.0;
     double distance56 = 0.0;
+
+    double distance_plane12 = 0.0;
+    double distance_plane23 = 0.0;
+    double distance_plane34 = 0.0;
+    double distance_plane45 = 0.0;
+    double distance_plane56 = 0.0;
+
+    double distanceMax12 = 0.0;
+    double distanceMax23 = 0.0;
+    double distanceMax34 = 0.0;
+    double distanceMax45 = 0.0;
+    double distanceMax56 = 0.0;
 
     _xPos = new double *[_maxTrackCandidates];
     _yPos = new double *[_maxTrackCandidates];
@@ -591,7 +603,11 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
 	distance12 = sqrt(pow(_hitsFirstPlane[firsthit].measuredX - _hitsSecondPlane[secondhit].measuredX,2) + pow(_hitsFirstPlane[firsthit].measuredY - _hitsSecondPlane[secondhit].measuredY,2));
 
-	if (_nPlanes == 2 && distance12 < _distanceMax && _nTracks < _maxTrackCandidates) {
+	distance_plane12 = _hitsSecondPlane[secondhit].measuredZ - _hitsFirstPlane[firsthit].measuredZ;
+
+	distanceMax12 = _distanceMax * (distance_plane12 / 100000.0);
+
+	if (_nPlanes == 2 && distance12 < distanceMax12 && _nTracks < _maxTrackCandidates) {
 
 	  _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 	  _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
@@ -613,7 +629,11 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
 	    distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
 
-	    if (_nPlanes == 3 && distance12 < _distanceMax && distance23 < _distanceMax && _nTracks < _maxTrackCandidates) {
+	    distance_plane23 = _hitsThirdPlane[thirdhit].measuredZ - _hitsSecondPlane[secondhit].measuredZ;
+	    
+	    distanceMax23 = _distanceMax * (distance_plane23 / 100000.0);
+
+	    if (_nPlanes == 3 && distance12 < distanceMax12 && distance23 < distanceMax23 && _nTracks < _maxTrackCandidates) {
 
 	      _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 	      _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
@@ -639,7 +659,11 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
 		distance34 = sqrt(pow(_hitsThirdPlane[thirdhit].measuredX - _hitsFourthPlane[fourthhit].measuredX,2) + pow(_hitsThirdPlane[thirdhit].measuredY - _hitsFourthPlane[fourthhit].measuredY,2));
 
-		if (_nPlanes == 4 && distance12 < _distanceMax && distance23 < _distanceMax && distance34 < _distanceMax && _nTracks < _maxTrackCandidates) {
+		distance_plane34 = _hitsFourthPlane[fourthhit].measuredZ - _hitsThirdPlane[thirdhit].measuredZ;
+	    
+		distanceMax34 = _distanceMax * (distance_plane34 / 100000.0);
+
+		if (_nPlanes == 4 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && _nTracks < _maxTrackCandidates) {
 
 		  _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 		  _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
@@ -669,7 +693,11 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
 		    distance45 = sqrt(pow(_hitsFourthPlane[fourthhit].measuredX - _hitsFifthPlane[fifthhit].measuredX,2) + pow(_hitsFourthPlane[fourthhit].measuredY - _hitsFifthPlane[fifthhit].measuredY,2));
 
-		    if (_nPlanes == 5 && distance12 < _distanceMax && distance23 < _distanceMax && distance34 < _distanceMax && distance45 < _distanceMax && _nTracks < _maxTrackCandidates) {
+		    distance_plane45 = _hitsFifthPlane[fifthhit].measuredZ - _hitsFourthPlane[fourthhit].measuredZ;
+	    
+		    distanceMax45 = _distanceMax * (distance_plane45 / 100000.0);
+
+		    if (_nPlanes == 5 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && _nTracks < _maxTrackCandidates) {
 
 		      _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 		      _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
@@ -702,8 +730,12 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 		      for (int sixthhit = 0; uint(sixthhit) < _hitsSixthPlane.size(); sixthhit++) {
 			
 			distance56 = sqrt(pow(_hitsFifthPlane[fifthhit].measuredX - _hitsSixthPlane[sixthhit].measuredX,2) + pow(_hitsFifthPlane[fifthhit].measuredY - _hitsSixthPlane[sixthhit].measuredY,2));
-			
-			if (_nPlanes == 6 && distance12 < _distanceMax && distance23 < _distanceMax && distance34 < _distanceMax && distance45 < _distanceMax && distance56 < _distanceMax && _nTracks < _maxTrackCandidates) {
+
+			distance_plane56 = _hitsSixthPlane[sixthhit].measuredZ - _hitsFifthPlane[fifthhit].measuredZ;
+	    
+			distanceMax56 = _distanceMax * (distance_plane56 / 100000.0);
+
+			if (_nPlanes == 6 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && distance56 < distanceMax56 && _nTracks < _maxTrackCandidates) {
 
 			  _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 			  _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
@@ -995,7 +1027,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 #endif
 
     // clean up
-    for (int help = 0; help < 500; help++) {
+    for (int help = 0; help < _maxTrackCandidates; help++) {
       delete [] _zPos[help];
       delete [] _yPos[help];
       delete [] _xPos[help];
