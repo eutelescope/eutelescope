@@ -796,6 +796,15 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     // Perform fit for all found track candidates
     // ------------------------------------------
 
+    // Define output track and hit collections
+    LCCollectionVec     * fittrackvec = new LCCollectionVec(LCIO::TRACK);
+    LCCollectionVec     * fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
+    
+    // Set flag for storing track hits in track collection
+    LCFlagImpl flag(fittrackvec->getFlag()); 
+    flag.setBit( LCIO::TRBIT_HITS );
+    fittrackvec->setFlag(flag.getFlag());
+
     double Chiquare[2] = {0,0};
     double angle[2] = {0,0};
 
@@ -821,77 +830,6 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       streamlog_out ( MESSAGE2 ) << endl;
 
       FitTrack(int(_nPlanes), _xPosHere, _yPosHere, _zPosHere, _intrResolX, _intrResolY, Chiquare, _waferResidX, _waferResidY, angle);
-
-    // not needed so far
-    /*
-
-    // Define output track and hit collections
-    LCCollectionVec     * fittrackvec = new LCCollectionVec(LCIO::TRACK);
-    LCCollectionVec     * fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
-    
-    // Set flag for storing track hits in track collection
-    
-    LCFlagImpl flag(fittrackvec->getFlag()); 
-    flag.setBit( LCIO::TRBIT_HITS );
-    fittrackvec->setFlag(flag.getFlag());
-    
-    // fill output collections...
-    
-    // Write fit result out
-    
-    TrackImpl * fittrack = new TrackImpl();
-    
-    // Following parameters are not used for Telescope
-    // and are set to zero (just in case)
-    fittrack->setOmega(0.);     // curvature of the track
-    fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
-    fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
-    fittrack->setPhi(0.);       // phi of the track at reference point
-    fittrack->setTanLambda(0.); // dip angle of the track at reference point
-    
-    // Used class members
-    
-    fittrack->setChi2(Chiquare[0]);  // x Chi2 of the fit 
-    //  fittrack->setNdf(nBestFired); // Number of planes fired (!)
-    
-    fittrack->setIsReferencePointPCA(false);  
-    
-    // Calculate positions of fitted track in every plane
-    
-    int counter;
-
-    for( counter = 0; counter < _nPlanes; counter++ ){
-      
-      _xFitPos[counter] = Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0];
-      _yFitPos[counter] = Ybar[1]-Xbar[1]*A2[1]+_zPos[counter]*A2[1];
-      
-      TrackerHitImpl * fitpoint = new TrackerHitImpl;
-      
-      // Plane number stored as hit type
-      fitpoint->setType(counter+1);
-      double pos[3];
-      pos[0] = _xFitPos[counter];
-      pos[1] = _yFitPos[counter];
-      pos[2] = _zPos[counter];
-      
-      fitpoint->setPosition(pos);    
-      
-      // store fit point 
-      
-      fitpointvec->push_back(fitpoint);
-      
-      //   add point to track
-      
-      fittrack->addHit(fitpoint);
-      
-    }
-    
-    fittrackvec->addElement(fittrack);
-    
-    event->addCollection(fittrackvec,_outputTrackColName);
-    event->addCollection(fitpointvec,_outputHitColName);
-
-    */
 
 #ifdef MARLIN_USE_AIDA
     
@@ -928,7 +866,64 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       if (Chiquare[0] <= _chi2XMax && Chiquare[1] <= _chi2YMax) {
 
 	_nGoodTracks++;
+
+	// Save track to output file
+	// -------------------------
     
+	// Write fit result out
+    
+	TrackImpl * fittrack = new TrackImpl();
+    
+	// Following parameters are not used for Telescope
+	// and are set to zero (just in case)
+	fittrack->setOmega(0.);     // curvature of the track
+	fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
+	fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
+	fittrack->setPhi(0.);       // phi of the track at reference point
+	fittrack->setTanLambda(0.); // dip angle of the track at reference point
+    
+	// Used class members
+    
+	fittrack->setChi2(Chiquare[0]);  // x Chi2 of the fit 
+	fittrack->setNdf(_nPlanes);
+    	//  fittrack->setNdf(nBestFired); // Number of planes fired (!)
+    
+	fittrack->setIsReferencePointPCA(false);  
+    
+	// Calculate positions of fitted track in every plane
+    
+	int counter;
+
+	for( counter = 0; counter < _nPlanes; counter++ ){
+      
+	  // _xFitPos[counter] = Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0];
+	  // _yFitPos[counter] = Ybar[1]-Xbar[1]*A2[1]+_zPos[counter]*A2[1];
+      
+	  TrackerHitImpl * fitpoint = new TrackerHitImpl;
+      
+	  // Plane number stored as hit type
+	  // fitpoint->setType(counter+1);
+	  fitpoint->setType(32);
+
+	  double pos[3];
+	  pos[0] = _xPosHere[counter];
+	  pos[1] = _yPosHere[counter];
+	  pos[2] = _zPosHere[counter];
+      
+	  fitpoint->setPosition(pos);    
+      
+	  // store fit point 
+      
+	  fitpointvec->push_back(fitpoint);
+      
+	  //   add point to track
+      
+	  fittrack->addHit(fitpoint);
+      
+	}
+    
+	fittrackvec->addElement(fittrack);
+
 #ifdef MARLIN_USE_AIDA
 
 	string tempHistoName;
@@ -1005,6 +1000,14 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       delete [] _xPosHere;
       
     } // end loop over all track candidates
+
+    if (_nGoodTracks > 0) {
+	event->addCollection(fittrackvec,_outputTrackColName);
+	event->addCollection(fitpointvec,_outputHitColName);
+    } else {
+      delete fittrackvec;
+      delete fitpointvec;
+    }
 
     streamlog_out ( MESSAGE2 ) << "Finished fitting tracks in event " << _iEvt << endl;
 
