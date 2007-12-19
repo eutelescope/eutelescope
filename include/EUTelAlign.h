@@ -154,6 +154,7 @@ namespace eutelescope {
 
     int _alignedPlane;
     int _alignedBox;
+    int _nPlanesFirstBox;
     int _referencePlane;
     double _resolution;
     double _chi2Cut;

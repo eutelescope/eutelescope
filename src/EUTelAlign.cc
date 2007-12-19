@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.15 2007-10-04 20:46:54 roloff Exp $
+// Version: $Id: EUTelAlign.cc,v 1.16 2007-12-19 20:28:03 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -100,6 +100,10 @@ EUTelAlign::EUTelAlign () : Processor("EUTelAlign") {
   registerProcessorParameter("AlignedBox",
 			     "Aligned box",
 			     _alignedBox, static_cast < int > (1));
+
+  registerOptionalParameter("NumberPlanesFirstBox",
+			    "Number of planes in the first telescope box",
+			    _nPlanesFirstBox, static_cast < int > (3));
 
   registerOptionalParameter("ReferencePlane",
 			    "Reference plane",
@@ -535,7 +539,7 @@ void EUTelAlign::processEvent (LCEvent * event) {
 
     } // End loop over all hits
 
-    if (_alignedBox == 2) {
+    if (_alignedBox == 2 && ((_hitsSecondPlane.size() < 20 && _nPlanesFirstBox == 2) || (_hitsSecondPlane.size() < 20 && _hitsThirdPlane.size() < 20 && _nPlanesFirstBox == 3))) {
 
       double distance12 = 0.0;
       double distance23 = 0.0;
@@ -551,7 +555,7 @@ void EUTelAlign::processEvent (LCEvent * event) {
       }
 
       int _nTracks = 0;
-      
+
       // loop over all hits in first plane
       for (int firsthit = 0; uint(firsthit) < _hitsFirstPlane.size(); firsthit++) {
       
@@ -560,12 +564,9 @@ void EUTelAlign::processEvent (LCEvent * event) {
 
 	  distance12 = sqrt(pow(_hitsFirstPlane[firsthit].measuredX - _hitsSecondPlane[secondhit].measuredX,2) + pow(_hitsFirstPlane[firsthit].measuredY - _hitsSecondPlane[secondhit].measuredY,2));
 
-	  // loop over all hits in third plane
-	  for (int thirdhit = 0; uint(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
+	  if (_nPlanesFirstBox == 2) {
 
-	    distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
-
-	    if (distance12 < 100 && distance23 < 100) {
+	    if (distance12 < 100) {
 
 	      _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 	      _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
@@ -575,18 +576,41 @@ void EUTelAlign::processEvent (LCEvent * event) {
 	      _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
 	      _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
 
-	      _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-	      _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-	      _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-
 	      _nTracks++;
 
 	    }
 
-	  } // end loop over all hits in third plane
+	  } else if (_nPlanesFirstBox == 3) {
+	      
+	    // loop over all hits in third plane
+	    for (int thirdhit = 0; uint(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
+	      
+	      distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
+	      
+	      if (distance12 < 100 && distance23 < 100) {
+		
+		_xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+		_yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+		_zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+	    
+		_xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+		_yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+		_zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+
+		_xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
+		_yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
+		_zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+
+		_nTracks++;
+
+	      }
+
+	    } // end loop over all hits in third plane
+
+	  }
 
 	} // end loop over all hits in second plane
-
+	
       } // end loop over all hits in first plane
 
       if (nHitsSecondPlane > 0) {
@@ -604,7 +628,7 @@ void EUTelAlign::processEvent (LCEvent * event) {
 	  _yPosHere = new double[_nPlanes];
 	  _zPosHere = new double[_nPlanes];
 
-	  for (int help = 0; help < 3; help++) {
+	  for (int help = 0; help < _nPlanesFirstBox; help++) {
 	    _xPosHere[help] = _xPos[track][help];
 	    _yPosHere[help] = _yPos[track][help];
 	    _zPosHere[help] = _zPos[track][help];
@@ -618,7 +642,7 @@ void EUTelAlign::processEvent (LCEvent * event) {
 
 	  streamlog_out ( MESSAGE2 ) << endl;
 
-	  FitTrack(3, _xPosHere, _yPosHere, _zPosHere, _intrResolX, _intrResolY, Chiquare, _predictedX, _predictedY, _predictedZ);
+	  FitTrack(_nPlanesFirstBox, _xPosHere, _yPosHere, _zPosHere, _intrResolX, _intrResolY, Chiquare, _predictedX, _predictedY, _predictedZ);
 
 	  streamlog_out ( MESSAGE2 ) << "Fit Result: " << _predictedX << " " << _predictedY << " " << _predictedZ << " Chi^2(x): " << Chiquare[0] << " Chi^2(y): " << Chiquare[1] << endl;
 
