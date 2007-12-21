@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.16 2007-12-19 20:28:03 roloff Exp $
+// Version: $Id: EUTelAlign.cc,v 1.17 2007-12-21 16:40:46 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -918,8 +918,8 @@ void EUTelAlign::end() {
   streamlog_out ( MESSAGE2 ) << endl << "First iteration of alignment: only offsets" << endl;
   streamlog_out ( MESSAGE2 ) << "------------------------------------------" << endl << endl;
 
-  // call migrad (500 iterations, 0.1 = tolerance)
-  arglist[0] = 500;
+  // call migrad (2000 iterations, 0.1 = tolerance)
+  arglist[0] = 2000;
   arglist[1] = 0.1;
   gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
 
@@ -973,8 +973,8 @@ void EUTelAlign::end() {
   streamlog_out ( MESSAGE2 ) << endl << "Second iteration of alignment: include angles" << endl;
   streamlog_out ( MESSAGE2 ) << "---------------------------------------------" << endl << endl;
 
-  // call migrad (500 iterations, 0.1 = tolerance)
-  arglist[0] = 500;
+  // call migrad (2000 iterations, 0.1 = tolerance)
+  arglist[0] = 2000;
   arglist[1] = 0.1;
   gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
 
@@ -984,8 +984,8 @@ void EUTelAlign::end() {
   // release chi2
   gMinuit->mnparm(5,"chi2",start_chi2,1,0,0,ierflag);
 
-  // call migrad (500 iterations, 0.1 = tolerance)
-  arglist[0] = 500;
+  // call migrad (2000 iterations, 0.1 = tolerance)
+  arglist[0] = 2000;
   arglist[1] = 0.1;
   gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
 
