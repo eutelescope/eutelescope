@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.17 2007-12-21 16:40:46 roloff Exp $
+// Version: $Id: EUTelAlign.cc,v 1.18 2007-12-21 17:33:12 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -923,6 +923,11 @@ void EUTelAlign::end() {
   arglist[1] = 0.1;
   gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
 
+  // calculate errors using MINOS
+  arglist[0] = 2000;
+  arglist[1] = 0.1;
+  gMinuit->mnexcm("MINOS",arglist,1,ierflag);
+
   double off_x_simple = 0.0;
   double off_y_simple = 0.0;
 
@@ -978,6 +983,11 @@ void EUTelAlign::end() {
   arglist[1] = 0.1;
   gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
 
+  // calculate errors using MINOS
+  arglist[0] = 2000;
+  arglist[1] = 0.1;
+  gMinuit->mnexcm("MINOS",arglist,1,ierflag);
+
   streamlog_out ( MESSAGE2 ) << endl << "Third iteration of alignment: include chi^2 cut" << endl;
   streamlog_out ( MESSAGE2 ) << "-----------------------------------------------" << endl << endl;
 
@@ -988,6 +998,11 @@ void EUTelAlign::end() {
   arglist[0] = 2000;
   arglist[1] = 0.1;
   gMinuit->mnexcm("MIGRAD",arglist,1,ierflag);
+
+  // calculate errors using MINOS
+  arglist[0] = 2000;
+  arglist[1] = 0.1;
+  gMinuit->mnexcm("MINOS",arglist,1,ierflag);
 
   streamlog_out ( MESSAGE2) << endl;
 
