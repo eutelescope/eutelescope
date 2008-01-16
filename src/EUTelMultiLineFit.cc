@@ -91,7 +91,17 @@ EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
                              "Collection name for fitted particle hits (positions)",
                              _outputHitColName, string ("fithits"));
 
+  registerOptionalParameter("AlignmentMode","1 for constants from EUTelAlign (default), 2 for Millepede."
+			    ,_alignmentMode, static_cast <int> (1));
+
   // input parameters: take these from database later
+
+  FloatVec constantsFirstLayer;
+  constantsFirstLayer.push_back(0.0);
+  constantsFirstLayer.push_back(0.0);
+  constantsFirstLayer.push_back(0.0);
+  constantsFirstLayer.push_back(0.0);
+  constantsFirstLayer.push_back(0.0);
 
   FloatVec constantsSecondLayer;
   constantsSecondLayer.push_back(0.0);
@@ -138,6 +148,19 @@ EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
 			    ,_alignmentConstantsFifthLayer, constantsFifthLayer);
   registerOptionalParameter("AlignmentConstantsSixthLayer","Alignment Constants for sixth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z"
 			    ,_alignmentConstantsSixthLayer, constantsSixthLayer);
+
+  registerOptionalParameter("MillepedeConstantsFirstLayer","Millepede Constants for first Telescope Layer:\n x0, y0, alpha, beta, gamma",
+			    _millepedeConstantsFirstLayer, constantsFirstLayer);
+  registerOptionalParameter("MillepedeConstantsSecondLayer","Millepede Constants for second Telescope Layer:\n x0, y0, alpha, beta, gamme",
+			    _millepedeConstantsSecondLayer, constantsSecondLayer);
+  registerOptionalParameter("MillepedeConstantsThirdLayer","Millepede Constants for third Telescope Layer:\n x0, y0, alpha, beta, gamma",
+			    _millepedeConstantsThirdLayer, constantsThirdLayer);
+  registerOptionalParameter("MillepedeConstantsFourthLayer","Millepede Constants for fourth Telescope Layer:\n x0, y0, alpha, beta, gamma",
+			    _millepedeConstantsFourthLayer, constantsFourthLayer);
+  registerOptionalParameter("MillepedeConstantsFifthLayer","Millepede Constants for fifth Telescope Layer:\n x0, y0, alpha, beta, gamma"
+			    ,_millepedeConstantsFifthLayer, constantsFifthLayer);
+  registerOptionalParameter("MillepedeConstantsSixthLayer","Millepede Constants for sixth Telescope Layer:\n x0, y0, alpha, beta, gamma"
+			    ,_millepedeConstantsSixthLayer, constantsSixthLayer);
 
   registerOptionalParameter("DistanceMax","Maximal allowed distance between hits entering the fit per 10 cm space between the planes.",
                             _distanceMax, static_cast <float> (2000.0));
@@ -458,79 +481,129 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       // The other layers were aligned with respect to the first one.
       // All distances are given in \mu m.
 
+      // "Simple" alignment constants
       double off_x, off_y, theta_x, theta_y, theta_z;
+
+      // Millepede alignment constants
+      double x0, y0, alpha, beta, gamma;
 
       if (layerIndex == 0) {
 
-	// First layer: no constants
+	off_x = 0.0;
+	off_y = 0.0;
+	theta_x = 0.0;
+	theta_y = 0.0;
+	theta_z = 0.0;
 
-	hitsInPlane.measuredX = 1000 * hit->getPosition()[0];
-	hitsInPlane.measuredY = 1000 * hit->getPosition()[1];
-	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
+	x0 = _millepedeConstantsFirstLayer[0];
+	y0 = _millepedeConstantsFirstLayer[1];
+	alpha = _millepedeConstantsFirstLayer[2];
+	beta = _millepedeConstantsFirstLayer[3];
+	gamma = _millepedeConstantsFirstLayer[4];
+
+      } else if (layerIndex == 1) {
+	  
+	off_x = _alignmentConstantsSecondLayer[0];
+	off_y = _alignmentConstantsSecondLayer[1];
+	theta_x = _alignmentConstantsSecondLayer[2];
+	theta_y = _alignmentConstantsSecondLayer[3];
+	theta_z = _alignmentConstantsSecondLayer[4];
+
+	x0 = _millepedeConstantsSecondLayer[0];
+	y0 = _millepedeConstantsSecondLayer[1];
+	alpha = _millepedeConstantsSecondLayer[2];
+	beta = _millepedeConstantsSecondLayer[3];
+	gamma = _millepedeConstantsSecondLayer[4];
+	
+      } else if (layerIndex == 2) {
+	  
+	off_x = _alignmentConstantsThirdLayer[0];
+	off_y = _alignmentConstantsThirdLayer[1];
+	theta_x = _alignmentConstantsThirdLayer[2];
+	theta_y = _alignmentConstantsThirdLayer[3];
+	theta_z = _alignmentConstantsThirdLayer[4];
+
+	x0 = _millepedeConstantsThirdLayer[0];
+	y0 = _millepedeConstantsThirdLayer[1];
+	alpha = _millepedeConstantsThirdLayer[2];
+	beta = _millepedeConstantsThirdLayer[3];
+	gamma = _millepedeConstantsThirdLayer[4];
+
+      } else if (layerIndex == 3) {
+	  
+	off_x = _alignmentConstantsFourthLayer[0];
+	off_y = _alignmentConstantsFourthLayer[1];
+	theta_x = _alignmentConstantsFourthLayer[2];
+	theta_y = _alignmentConstantsFourthLayer[3];
+	theta_z = _alignmentConstantsFourthLayer[4];
+
+	x0 = _millepedeConstantsFourthLayer[0];
+	y0 = _millepedeConstantsFourthLayer[1];
+	alpha = _millepedeConstantsFourthLayer[2];
+	beta = _millepedeConstantsFourthLayer[3];
+	gamma = _millepedeConstantsFourthLayer[4];
+
+      } else if (layerIndex == 4) {
+	  
+	off_x = _alignmentConstantsFifthLayer[0];
+	off_y = _alignmentConstantsFifthLayer[1];
+	theta_x = _alignmentConstantsFifthLayer[2];
+	theta_y = _alignmentConstantsFifthLayer[3];
+	theta_z = _alignmentConstantsFifthLayer[4];
+
+	x0 = _millepedeConstantsFifthLayer[0];
+	y0 = _millepedeConstantsFifthLayer[1];
+	alpha = _millepedeConstantsFifthLayer[2];
+	beta = _millepedeConstantsFifthLayer[3];
+	gamma = _millepedeConstantsFifthLayer[4];
+
+      } else if (layerIndex == 5) {
+	  
+	off_x = _alignmentConstantsSixthLayer[0];
+	off_y = _alignmentConstantsSixthLayer[1];
+	theta_x = _alignmentConstantsSixthLayer[2];
+	theta_y = _alignmentConstantsSixthLayer[3];
+	theta_z = _alignmentConstantsSixthLayer[4];
+
+	x0 = _millepedeConstantsSixthLayer[0];
+	y0 = _millepedeConstantsSixthLayer[1];
+	alpha = _millepedeConstantsSixthLayer[2];
+	beta = _millepedeConstantsSixthLayer[3];
+	gamma = _millepedeConstantsSixthLayer[4];
 
       } else {
-	
-	// Other layers: set constants to values from xml file
+	  
+	off_x = 0.0;
+	off_y = 0.0;
+	theta_x = 0.0;
+	theta_y = 0.0;
+	theta_z = 0.0;
 
-	if (layerIndex == 1) {
-	  
-	  off_x = _alignmentConstantsSecondLayer[0];
-	  off_y = _alignmentConstantsSecondLayer[1];
-	  theta_x = _alignmentConstantsSecondLayer[2];
-	  theta_y = _alignmentConstantsSecondLayer[3];
-	  theta_z = _alignmentConstantsSecondLayer[4];
-	  
-	} else if (layerIndex == 2) {
-	  
-	  off_x = _alignmentConstantsThirdLayer[0];
-	  off_y = _alignmentConstantsThirdLayer[1];
-	  theta_x = _alignmentConstantsThirdLayer[2];
-	  theta_y = _alignmentConstantsThirdLayer[3];
-	  theta_z = _alignmentConstantsThirdLayer[4];
-	  
-	} else if (layerIndex == 3) {
-	  
-	  off_x = _alignmentConstantsFourthLayer[0];
-	  off_y = _alignmentConstantsFourthLayer[1];
-	  theta_x = _alignmentConstantsFourthLayer[2];
-	  theta_y = _alignmentConstantsFourthLayer[3];
-	  theta_z = _alignmentConstantsFourthLayer[4];
-	  
-	} else if (layerIndex == 4) {
-	  
-	  off_x = _alignmentConstantsFifthLayer[0];
-	  off_y = _alignmentConstantsFifthLayer[1];
-	  theta_x = _alignmentConstantsFifthLayer[2];
-	  theta_y = _alignmentConstantsFifthLayer[3];
-	  theta_z = _alignmentConstantsFifthLayer[4];
-	  
-	} else if (layerIndex == 5) {
-	  
-	  off_x = _alignmentConstantsSixthLayer[0];
-	  off_y = _alignmentConstantsSixthLayer[1];
-	  theta_x = _alignmentConstantsSixthLayer[2];
-	  theta_y = _alignmentConstantsSixthLayer[3];
-	  theta_z = _alignmentConstantsSixthLayer[4];
-	  
-	} else {
-	  
-	  off_x = 0.0;
-	  off_y = 0.0;
-	  theta_x = 0.0;
-	  theta_y = 0.0;
-	  theta_z = 0.0;
-	  
-	}
+	x0 = 0.0;
+	y0 = 0.0;
+	alpha = 0.0;
+	beta = 0.0;
+	gamma = 0.0;
 
-	// For documentation of these formulas look at EUTelAlign
+      }
+
+      if (_alignmentMode != 2) {
+
+	// For documentation of these formulas look at EUDET-Memo-2007-20
 	
 	hitsInPlane.measuredX = (cos(theta_y)*cos(theta_z)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z) + cos(theta_x)*sin(theta_z)) * hit->getPosition()[1] * 1000 + off_x;
 	hitsInPlane.measuredY = ((-1)*cos(theta_y)*sin(theta_z)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z) + cos(theta_x)*cos(theta_z)) * hit->getPosition()[1] * 1000 + off_y;
 	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
 
+      } else {
+
+	hitsInPlane.measuredX = 1000 * hit->getPosition()[0] + gamma * 1000 * hit->getPosition()[1] + beta * 1000 * hit->getPosition()[2] + x0;
+	hitsInPlane.measuredY = (-1) * gamma * 1000 * hit->getPosition()[0] + 1000 * hit->getPosition()[1] + alpha * 1000 * hit->getPosition()[2] + y0;
+	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
+
       }
-      
-      delete cluster; // <--- destroying the cluster   
+
+      delete cluster; // <--- destroying the cluster
 
       // Add Hits to vector
 

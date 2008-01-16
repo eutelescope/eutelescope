@@ -142,11 +142,20 @@ namespace eutelescope {
      */ 
     std::string _outputHitColName;
 
+    int _alignmentMode;
+
     std::vector<float > _alignmentConstantsSecondLayer;
     std::vector<float > _alignmentConstantsThirdLayer;
     std::vector<float > _alignmentConstantsFourthLayer;
     std::vector<float > _alignmentConstantsFifthLayer;
     std::vector<float > _alignmentConstantsSixthLayer;
+
+    std::vector<float > _millepedeConstantsFirstLayer;
+    std::vector<float > _millepedeConstantsSecondLayer;
+    std::vector<float > _millepedeConstantsThirdLayer;
+    std::vector<float > _millepedeConstantsFourthLayer;
+    std::vector<float > _millepedeConstantsFifthLayer;
+    std::vector<float > _millepedeConstantsSixthLayer;
 
     float _distanceMax;
     float _chi2XMax;
