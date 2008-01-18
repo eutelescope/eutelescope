@@ -597,8 +597,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
       } else {
 
-	hitsInPlane.measuredX = 1000 * hit->getPosition()[0] + gamma * 1000 * hit->getPosition()[1] + beta * 1000 * hit->getPosition()[2] + x0;
-	hitsInPlane.measuredY = (-1) * gamma * 1000 * hit->getPosition()[0] + 1000 * hit->getPosition()[1] + alpha * 1000 * hit->getPosition()[2] + y0;
+	hitsInPlane.measuredX = 1000 * hit->getPosition()[0] + gamma * 1000 * hit->getPosition()[1] + beta * 1000 * hit->getPosition()[2] - x0;
+	hitsInPlane.measuredY = (-1) * gamma * 1000 * hit->getPosition()[0] + 1000 * hit->getPosition()[1] + alpha * 1000 * hit->getPosition()[2] - y0;
 	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
 
       }
