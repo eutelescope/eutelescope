@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// @version: $Id: EUTelDUTHistograms.cc,v 1.1 2007-10-23 21:29:02 zarnecki Exp $
+// @version: $Id: EUTelDUTHistograms.cc,v 1.2 2008-01-27 22:57:51 zarnecki Exp $
 // Date 2007.09.15
 
 /*
@@ -86,6 +86,10 @@ std::string EUTelDUTHistograms::_EfficiencyXHistoName  = "DUTeffiX";
 std::string EUTelDUTHistograms::_EfficiencyYHistoName  = "DUTeffiY";
 std::string EUTelDUTHistograms::_EfficiencyXYHistoName = "DUTeffiXY";
 
+std::string EUTelDUTHistograms::_BgEfficiencyXHistoName  = "BGeffiX";
+std::string EUTelDUTHistograms::_BgEfficiencyYHistoName  = "BGeffiY";
+std::string EUTelDUTHistograms::_BgEfficiencyXYHistoName = "BGeffiXY";
+
 std::string EUTelDUTHistograms::_NoiseXHistoName  = "DUTnoiseX";
 std::string EUTelDUTHistograms::_NoiseYHistoName  = "DUTnoiseY";
 std::string EUTelDUTHistograms::_NoiseXYHistoName = "DUTnoiseXY";
@@ -93,6 +97,11 @@ std::string EUTelDUTHistograms::_NoiseXYHistoName = "DUTnoiseXY";
 std::string EUTelDUTHistograms::_ShiftXHistoName       = "DUTshiftX";
 std::string EUTelDUTHistograms::_ShiftYHistoName       = "DUTshiftY";
 std::string EUTelDUTHistograms::_ShiftXYHistoName      = "DUTshiftXY";
+
+std::string EUTelDUTHistograms::_BgShiftXHistoName       = "BGshiftX";
+std::string EUTelDUTHistograms::_BgShiftYHistoName       = "BGshiftY";
+std::string EUTelDUTHistograms::_BgShiftXYHistoName      = "BGshiftXY";
+
 std::string EUTelDUTHistograms::_ShiftXvsYHistoName    = "DUTshiftXvsY";
 std::string EUTelDUTHistograms::_ShiftYvsXHistoName    = "DUTshiftYvsX";
 std::string EUTelDUTHistograms::_ShiftXvsY2DHistoName    = "DUTshiftXvsY2D";
@@ -282,13 +291,15 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
    throw SkipEventException(this);
   }
     
-  // Clear local storage
-
-  _measuredX.clear();
-  _measuredY.clear();
+  // Clear local fit storage tables
+  // 'fitted' table used for comparison with measured hits
+  // 'bgfitted' used for comparison with hits from previous event
 
   _fittedX.clear();
   _fittedY.clear();
+
+  _bgfittedX.clear();
+  _bgfittedY.clear();
 
 
   // Loop over tracks in input track collection
@@ -316,6 +327,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 	{
 	  _fittedX.push_back(por[0]);
 	  _fittedY.push_back(por[1]);
+	  _bgfittedX.push_back(por[0]);
+	  _bgfittedY.push_back(por[1]);
 	}
       else
 	{
@@ -342,6 +355,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 	    {
  	    _fittedX.push_back(pos[0]);
 	    _fittedY.push_back(pos[1]);
+ 	    _bgfittedX.push_back(pos[0]);
+	    _bgfittedY.push_back(pos[1]);
             break;
 	    }
 	  }
@@ -370,6 +385,100 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       }
 
 
+
+
+  // Match fitted positions with hits from previous event (background estimate)
+  // Skip first event
+
+  if(_nEvt > 1)
+    {
+   int nMatch=0;
+   double distmin;
+
+   do{
+     int bestfit=-1;
+     int besthit=-1;
+
+     distmin=_distMax*_distMax+1.;
+
+     for(int ifit=0;ifit<(int)_bgfittedX.size(); ifit++)
+       for(int ihit=0; ihit< (int)_bgmeasuredX.size() ; ihit++)
+	     {
+	       double dist=
+                   (_bgmeasuredX[ihit]-_bgfittedX[ifit])*(_bgmeasuredX[ihit]-_bgfittedX[ifit])
+		 + (_bgmeasuredY[ihit]-_bgfittedY[ifit])*(_bgmeasuredY[ihit]-_bgfittedY[ifit]);
+
+	       if(dist<distmin)
+		 {
+		   distmin=dist;
+		   besthit=ihit;
+		   bestfit=ifit;
+		 }
+	     }
+
+     // Match found:
+
+    if(distmin < _distMax*_distMax)
+      {
+
+	nMatch++;
+
+      // Histograms of measured-fitted shifts
+
+   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_BgShiftXHistoName]))->fill(_bgmeasuredX[besthit]-_bgfittedX[bestfit]);
+
+   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_BgShiftYHistoName]))->fill(_bgmeasuredY[besthit]-_bgfittedY[bestfit]);
+
+   (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_BgShiftXYHistoName]))->fill(_bgmeasuredX[besthit]-_bgfittedX[bestfit],_bgmeasuredY[besthit]-_bgfittedY[bestfit]);
+
+   // Efficiency plots
+
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_BgEfficiencyXHistoName]))->fill(_bgfittedX[bestfit],1.);
+
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_BgEfficiencyYHistoName]))->fill(_bgfittedY[bestfit],1.);
+
+   (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_BgEfficiencyXYHistoName]))->fill(_bgfittedX[bestfit],_bgfittedY[bestfit],1.);
+
+
+   // Remove matched entries from the list (so the next matching pair
+   // can be looked for)
+
+   _bgfittedX.erase(_bgfittedX.begin()+bestfit);
+   _bgfittedY.erase(_bgfittedY.begin()+bestfit);
+
+   _bgmeasuredX.erase(_bgmeasuredX.begin()+besthit);
+   _bgmeasuredY.erase(_bgmeasuredY.begin()+besthit);
+
+    }
+
+
+  // End of loop of matching background hits to fitted positions 
+   }
+   while(distmin < _distMax*_distMax);
+
+   // Background efficiency plots - tracks unmached to bg hits
+
+  for(int ifit=0;ifit<(int)_bgfittedX.size(); ifit++)
+    {
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_BgEfficiencyXHistoName]))->fill(_bgfittedX[ifit],0.);
+
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_BgEfficiencyYHistoName]))->fill(_bgfittedY[ifit],0.);
+
+   (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_BgEfficiencyXYHistoName]))->fill(_bgfittedX[ifit],_bgfittedY[ifit],0.);
+    }
+
+
+
+    }  // End of if(_nEvt > 1)  - end of background calculations
+
+
+   // Clear local tables with measured position
+
+  _measuredX.clear();
+  _measuredY.clear();
+
+  _bgmeasuredX.clear();
+  _bgmeasuredY.clear();
 
   // Loop over hits in input collection
   // Read measured positions at DUT
@@ -403,6 +512,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
         _measuredX.push_back(corrX);
 	_measuredY.push_back(corrY);
+        _bgmeasuredX.push_back(corrX);
+	_bgmeasuredY.push_back(corrY);
 	}
     }
  
@@ -882,6 +993,17 @@ void EUTelDUTHistograms::bookHistos()
     _aidaHistoMap.insert(make_pair(_ShiftXHistoName, shiftXHisto));
 
 
+ // Corresponding background histogram
+
+    shiftXTitle = "Measured - fitted X position (background)";
+
+    AIDA::IHistogram1D * bgshiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_BgShiftXHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+
+    bgshiftXHisto->setTitle(shiftXTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_BgShiftXHistoName, bgshiftXHisto));
+
+
 
  // Measured - fitted position in Y 
 
@@ -910,6 +1032,16 @@ void EUTelDUTHistograms::bookHistos()
 
     _aidaHistoMap.insert(make_pair(_ShiftYHistoName, shiftYHisto));
 
+
+ // Corresponding background histogram
+
+    shiftYTitle = "Measured - fitted Y position (background)";
+
+    AIDA::IHistogram1D * bgshiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_BgShiftYHistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+
+    bgshiftYHisto->setTitle(shiftYTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_BgShiftYHistoName, bgshiftYHisto));
 
 
 
@@ -1091,6 +1223,15 @@ void EUTelDUTHistograms::bookHistos()
 
 
 
+ // Corresponding background histogram
+
+    shiftXYTitle = "Measured - fitted position in X-Y (background)";
+
+    AIDA::IHistogram2D * bgshiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_BgShiftXYHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+
+    bgshiftXYHisto->setTitle(shiftXYTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_BgShiftXYHistoName, bgshiftXYHisto));
 
 
 
@@ -1124,6 +1265,18 @@ void EUTelDUTHistograms::bookHistos()
     _aidaHistoMap.insert(make_pair(_EfficiencyXHistoName, effiXHisto));
 
 
+ // Corresponding background histogram
+
+
+    effiXTitle = "Background match probability vs particle position in X";
+
+    AIDA::IProfile1D * bgeffiXHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_BgEfficiencyXHistoName.c_str(),effiXNBin,effiXMin,effiXMax);
+
+    bgeffiXHisto->setTitle(effiXTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_BgEfficiencyXHistoName, bgeffiXHisto));
+
+
 
  // Efficiency as a function of the fitted position in Y 
 
@@ -1147,14 +1300,22 @@ void EUTelDUTHistograms::bookHistos()
       }
 
 
-
-
     AIDA::IProfile1D * effiYHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_EfficiencyYHistoName.c_str(),effiYNBin,effiYMin,effiYMax);
 
     effiYHisto->setTitle(effiYTitle.c_str());
 
     _aidaHistoMap.insert(make_pair(_EfficiencyYHistoName, effiYHisto));
 
+
+ // Corresponding background histogram
+
+     effiYTitle =  "Background match probability vs particle position in Y";
+
+    AIDA::IProfile1D * bgeffiYHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_BgEfficiencyYHistoName.c_str(),effiYNBin,effiYMin,effiYMax);
+
+    bgeffiYHisto->setTitle(effiYTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_BgEfficiencyYHistoName, bgeffiYHisto));
 
 
 
@@ -1192,6 +1353,16 @@ void EUTelDUTHistograms::bookHistos()
    effiXYHisto->setTitle(effiXYTitle.c_str());
 
    _aidaHistoMap.insert(make_pair(_EfficiencyXYHistoName, effiXYHisto));
+
+ // Corresponding background histogram
+
+     effiXYTitle =  "Background match probability vs particle position in XY";
+
+   AIDA::IProfile2D * bgeffiXYHisto = AIDAProcessor::histogramFactory(this)->createProfile2D( _BgEfficiencyXYHistoName.c_str(),effiXNBin,effiXMin,effiXMax,effiYNBin,effiYMin,effiYMax);
+
+   bgeffiXYHisto->setTitle(effiXYTitle.c_str());
+
+   _aidaHistoMap.insert(make_pair(_BgEfficiencyXYHistoName, bgeffiXYHisto));
 
 
 

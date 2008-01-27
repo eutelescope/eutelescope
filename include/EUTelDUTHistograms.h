@@ -66,7 +66,7 @@ namespace eutelescope {
    * debug information is printed. 
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelDUTHistograms.h,v 1.1 2007-10-23 21:29:02 zarnecki Exp $
+   * @version $Id: EUTelDUTHistograms.h,v 1.2 2008-01-27 22:57:51 zarnecki Exp $
    * \date 2007.09.15
    *
    */ 
@@ -193,8 +193,14 @@ namespace eutelescope {
     std::vector<double> _measuredX;
     std::vector<double> _measuredY;
 
+    std::vector<double> _bgmeasuredX;
+    std::vector<double> _bgmeasuredY;
+
     std::vector<double> _fittedX;
     std::vector<double> _fittedY;
+
+    std::vector<double> _bgfittedX;
+    std::vector<double> _bgfittedY;
 
     std::vector<float > _DUTalign;
 
@@ -227,6 +233,10 @@ namespace eutelescope {
     static std::string _EfficiencyYHistoName;
     static std::string _EfficiencyXYHistoName;
 
+    static std::string _BgEfficiencyXHistoName;
+    static std::string _BgEfficiencyYHistoName;
+    static std::string _BgEfficiencyXYHistoName;
+
     static std::string _NoiseXHistoName;
     static std::string _NoiseYHistoName;
     static std::string _NoiseXYHistoName;
@@ -234,6 +244,11 @@ namespace eutelescope {
     static std::string _ShiftXHistoName;
     static std::string _ShiftYHistoName;
     static std::string _ShiftXYHistoName;
+
+    static std::string _BgShiftXHistoName;
+    static std::string _BgShiftYHistoName;
+    static std::string _BgShiftXYHistoName;
+
     static std::string _ShiftXvsYHistoName;
     static std::string _ShiftYvsXHistoName;
     static std::string _ShiftXvsY2DHistoName;
