@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.18 2007-11-07 20:54:27 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.19 2008-01-27 22:55:19 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -73,6 +73,7 @@ std::string EUTelTestFitter::_nAllHitHistoName   = "nAllHit";
 std::string EUTelTestFitter::_nAccHitHistoName   = "nAccHit";
 std::string EUTelTestFitter::_nHitHistoName      = "nHit";
 std::string EUTelTestFitter::_nBestHistoName     = "nBest";
+std::string EUTelTestFitter::_hitAmbiguityHistoName  = "nAmbig";
 #endif
 
 
@@ -239,6 +240,10 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
   registerOptionalParameter ("SearchMultipleTracks",
 			     "Flag for searching multiple tracks in events with multiple hits",
                              _searchMultipleTracks,  static_cast < bool > (false));
+
+  registerOptionalParameter ("AllowAmbiguousHits",
+			     "Allow same hit to be used in more than one track",
+                             _allowAmbiguousHits, static_cast < bool > (false));
 
 }
 
@@ -542,8 +547,7 @@ void EUTelTestFitter::init() {
   // Fill nominal fit matrices and 
   // calculate expected precision of track fitting
 
-  // Planes have to be ordered in position along the beam line !
-  // This is not checked !!!
+  // Planes are ordered in position along the beam line !
 
   for(int ipl=0; ipl<_nTelPlanes ; ipl++)
     {
@@ -670,6 +674,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   double * hitEy = new double[nHit];
   double * hitZ  = new double[nHit];
   int    * hitPlane = new int[nHit];
+  int    * hitFits = new int[nHit];
 
   IntVec * planeHitID   = new IntVec[_nTelPlanes];
 
@@ -692,6 +697,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
       hitZ[ihit] = pos[2];
 
+      hitFits[ihit]=-1;
 
       // We have to find Plane ID of the hit
       // by looking at the Z position
@@ -791,6 +797,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       else
 	hitEy[ihit]=_planeResolution[hitPlane[ihit]];
 
+      hitFits[ihit]=0;
 
       if(debug)message<DEBUG> ( log() << "Hit " << ihit
 		       << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]  
@@ -819,6 +826,11 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   int nFittedTracks = 0 ;
   bool firstTrack = true ;
   int ibest;
+
+  // In the current implementation ambiguity mode works only for full
+  // tracks, i.e. when _allowMissingHits == 0
+
+  bool ambiguityMode =  _allowAmbiguousHits && ( _allowMissingHits == 0 );
 
   do{
 
@@ -881,6 +893,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 	  delete [] bestX;
 	  delete [] planeHitID;
 	  delete [] hitPlane;
+	  delete [] hitFits;
 	  delete [] hitZ;
 	  delete [] hitEy;
 	  delete [] hitY;
@@ -918,6 +931,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       {
 	int nChoiceFired=0;
 	double choiceChi2=-1.;
+	double trackChi2=-1.;
         int ifirst=-1;
         int ilast=0;
         int nleft=0;
@@ -999,22 +1013,25 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 	  +   (nFiredPlanes-nChoiceFired)*_skipHitPenalty ;
 
 
+        trackChi2 = choiceChi2+penalty;
+
 	if(nChoiceFired + _allowMissingHits >= _nActivePlanes &&
 	   nChoiceFired + _allowSkipHits    >= nFiredPlanes  &&
-           choiceChi2+penalty<chi2min)
-                  chi2min=choiceChi2+penalty;   
+           trackChi2 < chi2min)
+                  chi2min=trackChi2;   
 
-        // Check if better than best fit (implies that chi2<chi2Max)
+        // Check if better than best fit (or chi2Max if hit ambiguity allowed)
         // If not: skip also all track possibilities which include
         // this hit selection !!!
-        if(choiceChi2 >=chi2best)
+        if((choiceChi2 >= _chi2Max) || 
+           (choiceChi2 >=  chi2best  && !ambiguityMode) )
 	  {
           ichoice-=_planeMod[ilast]-1;  
           continue;
           }
 
         //
-        // Check if fit could be accepted
+        // Skip fit if could not be accepted (too few planes fired)
         //
 	if(nChoiceFired + _allowMissingHits < _nActivePlanes ||
 	   nChoiceFired + _allowSkipHits    < nFiredPlanes )
@@ -1022,9 +1039,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 	// Best fit ?
 
-	if(choiceChi2+penalty<chi2best)
+	if(trackChi2<chi2best)
           {
-	    chi2best=choiceChi2+penalty;
+	    chi2best=trackChi2;
 	    bestPenalty=penalty;
 	    ibest=ichoice;
 	    nBestFired=nChoiceFired;
@@ -1036,6 +1053,210 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 		bestEy[ipl]=_fitEy[ipl];
 	      }
 	  }
+
+        // If hit ambiguity allowed (same hit can be used in many
+        // tracks) - fill all tracks passing chi2 cut 
+ 
+      if(trackChi2<_chi2Max   && ambiguityMode )
+          {
+
+      if(debug)
+        {
+        message<DEBUG> ( log() << "Track reconstructed from " << nChoiceFired << " hits: " );
+
+
+    // print out hits contributing to the fit
+
+      
+	for(int ipl=0;ipl<_nTelPlanes;ipl++)
+	  {
+	    if(_isActive[ipl])
+	      {
+		int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
+
+		  if(ihit<_planeHits[ipl])
+		    {
+		    int jhit = planeHitID[ipl].at(ihit);
+                    message<DEBUG> ( log() << "Hit " << jhit
+		       << "   X = " << hitX[jhit] 
+		       << "   Y = " << hitY[jhit] 
+		       << "   Z = " << hitZ[jhit] << " (plane" << hitPlane[jhit] << ")" );
+		    }
+	      }
+	  }
+
+
+	message<DEBUG> (log() << " Fitted positions in telescope planes:");
+
+	for(int ipl=0;ipl<_nTelPlanes;ipl++)
+	  message<DEBUG> ( log() << "  X = " << _fitX[ipl] << " +/- " << _fitEx[ipl] 
+			   << "  Y = " << _fitY[ipl] << " +/- " << _fitEy[ipl] 
+			   << "  at Z = " << _planePosition[ipl] ) ;
+	
+
+	message<DEBUG> ( log() << " Fit chi2 = " << trackChi2 << " including penalties of " << penalty );
+
+        }
+
+     // Fill Chi2 histograms
+
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_linChi2HistoName]))->fill(trackChi2);
+
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_logChi2HistoName]))->fill(log10(trackChi2));
+
+        if(_allowMissingHits && nBestFired==_nActivePlanes)
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_fullChi2HistoName]))->fill(log10(trackChi2));
+
+     // Fill hit histograms
+
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nHitHistoName]))->fill(nChoiceFired);
+
+
+	// Write fit result out
+	
+	TrackImpl * fittrack = new TrackImpl();
+	
+	// Following parameters are not used for Telescope
+	// and are set to zero (just in case)
+	fittrack->setOmega(0.);     // curvature of the track
+	fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
+	fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
+	fittrack->setPhi(0.);       // phi of the track at reference point
+	fittrack->setTanLambda(0.); // dip angle of the track at reference point
+
+	// Used class members
+
+	fittrack->setChi2(trackChi2);  // Chi2 of the fit (including penalties)
+	fittrack->setNdf(nChoiceFired); // Number of planes fired (!)
+
+	// Fitted position at DUT is stored as Reference Point
+	// (see below in loop over telescope planes)
+	// If no DUT present: use position in the first plane !
+
+	fittrack->setIsReferencePointPCA(false);  
+	float refpoint[3];
+
+	// Track points fitted in each plane are stored as track hits 
+
+	for(int ipl=0;ipl<_nTelPlanes;ipl++)
+	  {
+	    TrackerHitImpl * fitpoint = new TrackerHitImpl;
+	    
+	    // Hit type is set to 32, to distinguish from measured
+	    // hits (hit type = cluster type = 0 ... 31)
+	    
+	    fitpoint->setType(32);
+
+	    // fitted position in a plane
+
+	    double pos[3];
+
+	    pos[0]=_fitX[ipl];
+	    pos[1]=_fitY[ipl];
+	    pos[2]=_planePosition[ipl];
+
+	    fitpoint->setPosition(pos);
+
+	    // Covariance matrix of the position 
+	    // (stored as lower triangle matrix, i.e.  cov(xx),cov(y,x),cov(y,y) ).
+
+	    float cov[TRKHITNCOVMATRIX];
+
+	    cov[0]=_fitEx[ipl]*_fitEx[ipl];
+	    cov[1]=0.;
+	    cov[2]=_fitEy[ipl]*_fitEy[ipl];
+	    cov[3]=cov[4]=0.;
+	    cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
+
+	    fitpoint->setCovMatrix(cov);
+
+	    // store fit point 
+
+	    fitpointvec->push_back(fitpoint);
+
+	    //   add fitted point to track
+
+            if(_OutputHitsInTrack)
+              fittrack->addHit(fitpoint);
+
+
+	    //		       << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]  
+	    //       << "   Y = " << hitY[ihit] << " +/- " <<
+	    //       hitEy[ihit]  
+
+            // add measured point to track (if found)
+
+ 	    if(_InputHitsInTrack && _isActive[ipl])
+	      {
+		int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
+
+		 if(ihit<_planeHits[ipl])
+		    {
+		    int jhit = planeHitID[ipl].at(ihit);
+                    TrackerHitImpl * meshit = dynamic_cast<TrackerHitImpl*>( col->getElementAt(jhit) ) ;
+	            TrackerHitImpl * corrhit = new TrackerHitImpl;
+		    //
+		    // Copy input hit data
+		    //
+                    corrhit->setType(meshit->getType());
+                    corrhit->setTime(meshit->getTime());
+                    corrhit->setdEdx(meshit->getdEdx());
+                    corrhit->rawHits()=meshit->getRawHits();
+		    // 
+		    // Use corrected position
+		    //
+	            pos[0]=hitX[jhit];
+                    pos[1]=hitY[jhit];
+	            pos[2]=_planePosition[ipl];
+
+	            corrhit->setPosition(pos);
+                    //
+		    // Include errors, as used in the fit
+		    //
+	            cov[0]=hitEx[jhit]*hitEx[jhit];
+   	            cov[1]=0.;
+	            cov[2]=hitEy[jhit]*hitEy[jhit];
+	            cov[3]=cov[4]=0.;
+	            cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
+
+ 	            corrhit->setCovMatrix(cov);
+
+	            corrpointvec->push_back(corrhit);
+
+                    fittrack->addHit(corrhit);
+		    }
+	      }
+
+	    // Use position at DUT as a track reference point.
+	    // If no DUT present: use position in the first plane !
+
+	    if(ipl==_iDUT || (_iDUT<0 && ipl==0))
+	      for(int iref=0;iref<3;iref++)
+		refpoint[iref]=pos[iref];
+	  }
+	
+	// Store track reference point.
+	fittrack->setReferencePoint(refpoint);
+	
+	fittrackvec->addElement(fittrack);
+
+	// Count number of tracks for each hit
+
+	for(int ipl=0;ipl<_nTelPlanes;ipl++)
+ 	    if(_isActive[ipl])
+	      {
+		int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
+
+		if(ihit<_planeHits[ipl])
+		    hitFits[planeHitID[ipl].at(ihit)]++;
+	      }
+
+	nFittedTracks++;
+
+	  }  // end of track filling - if(choiceChi2+penalty<_chi2Max   && ambiguityMode )
+
+
+
       }
     // End of loop over track possibilities
 
@@ -1057,6 +1278,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       delete [] bestX;
       delete [] planeHitID;
       delete [] hitPlane;
+      delete [] hitFits;
       delete [] hitZ;
       delete [] hitEy;
       delete [] hitY;
@@ -1065,8 +1287,18 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       throw SkipEventException(this);
     }
     
-    
-    if(ibest>=0)
+
+     if(ibest>=0 && firstTrack && ambiguityMode )
+       {
+	if(_searchMultipleTracks)
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_bestChi2HistoName]))->fill(log10(chi2best));
+
+	if(_searchMultipleTracks)
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nBestHistoName]))->fill(nBestFired);
+       }
+
+
+    if(ibest>=0 && !ambiguityMode )
       {
 
       if(debug)
@@ -1260,7 +1492,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     
     // If multiple tracks allowed: remove hits from fitted track from the list
     
-    if(ibest>=0 && _searchMultipleTracks)
+    if(ibest>=0 && _searchMultipleTracks && !ambiguityMode )
       {
 	for(int ipl=0;ipl<_nTelPlanes;ipl++)
 	  if(_isActive[ipl])
@@ -1277,7 +1509,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     
     firstTrack=false;
   }
-  while(_searchMultipleTracks && ibest>=0 && nGoodHit + _allowMissingHits >= _nActivePlanes);
+  while(_searchMultipleTracks && ibest>=0 && 
+             nGoodHit + _allowMissingHits >= _nActivePlanes &&  !ambiguityMode );
     
   // End of track loop
 
@@ -1298,6 +1531,15 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(nFittedTracks);
 
+  // Hit ambiguity
+
+  if ( ambiguityMode )
+    {
+    for(int ihit=0; ihit< nHit ; ihit++)
+      if(_isActive[hitPlane[ihit]])
+       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_hitAmbiguityHistoName]))->fill(hitFits[ihit]);
+    }
+
   // Clear all working arrays
   
   delete [] bestEy;
@@ -1306,6 +1548,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   delete [] bestX;
   delete [] planeHitID;
   delete [] hitPlane;
+  delete [] hitFits;
   delete [] hitZ;
   delete [] hitEy;
   delete [] hitY;
@@ -1624,6 +1867,21 @@ void EUTelTestFitter::bookHistos()
        }
 
 
+// Additional histogram for number of tracks fitted to given hit - use same binning
+
+   if(_allowAmbiguousHits && ( _allowMissingHits == 0 ))
+       {
+       string ambigTitle = "Number of tracks containing given hit (ambiguity)";
+
+       AIDA::IHistogram1D * AmbigHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _hitAmbiguityHistoName.c_str(),hitNBin,hitMin,hitMax);
+
+       AmbigHisto->setTitle(ambigTitle.c_str());
+
+
+       _aidaHistoMap.insert(make_pair(_hitAmbiguityHistoName, AmbigHisto));
+       }
+
+
 // List all booked histogram - check of histogram map filling
 
   message<MESSAGE> ( log() <<  _aidaHistoMap.size() << " histograms booked");  
@@ -1782,10 +2040,10 @@ int EUTelTestFitter::DoAnalFit(double * pos, double *err)
 	// For beam constraint
 
 	if(ipl==jpl && ipl<2 && _useBeamConstraint)
-	  _fitArray[imx] += _planeScat[0]*_planeDist[1]*_planeDist[1] ;
+	  _fitArray[imx] += _planeScat[0]*_planeDist[0]*_planeDist[0] ;
 
 	if(ipl+jpl==1 && _useBeamConstraint) 
-	  _fitArray[imx] -= _planeScat[0]*_planeDist[1]*_planeDist[1] ;
+	  _fitArray[imx] -= _planeScat[0]*_planeDist[0]*_planeDist[0] ;
 
 
       }

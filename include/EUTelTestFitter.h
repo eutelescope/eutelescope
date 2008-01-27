@@ -111,13 +111,15 @@ namespace eutelescope {
    *        (because of large Chi^2 contribution)
    * \param SkipHitPenalty  "Penalty" added to track Chi^2 for each hit
    *        removed from the track because of large Chi^2 contribution.
+   * \param AllowAmbiguousHits Allow same hit to be used in more than one.
+   *        Significantly improves algorithm performance.
    *
    * \param MaxPlaneHits Maximum number of hits considered per
    *        plane. The algorithm slows down if this number is
    *        too large. However, the real limitation comes from
    *        numerical precision. Maximum number is 34 for 6 planes
    *        used in the fit, 72 for 5 planes, 214 for 4 planes.
-
+   *
    * \param UseNominalResolutio Flag for using nominal sensor resolution
    *        (as given in geometry description) instead of hit position
    *        errors. 
@@ -177,11 +179,9 @@ namespace eutelescope {
    *
    * \todo
    *  \li Interface to LCCD (alignment)
-   *  \li More detailed track parameter output (currently only reconstructed
-   *      hit positions are stored)
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelTestFitter.h,v 1.11 2007-11-07 20:54:09 zarnecki Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.12 2008-01-27 22:55:31 zarnecki Exp $
    * \date 2007.10.30
    *
    */ 
@@ -363,6 +363,7 @@ namespace eutelescope {
 
     bool _searchMultipleTracks;
 
+    bool _allowAmbiguousHits;
 
     // Parameters of fitting algorithm
 
@@ -454,6 +455,8 @@ namespace eutelescope {
 
     static std::string _nHitHistoName;
     static std::string _nBestHistoName;
+
+    static std::string _hitAmbiguityHistoName;
 
 #endif 
 
