@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitHistograms.cc,v 1.5 2007-10-23 21:28:13 zarnecki Exp $
+// Version: $Id: EUTelFitHistograms.cc,v 1.6 2008-01-27 22:53:25 zarnecki Exp $
 // Date 2007.09.10
 
 /*
@@ -473,9 +473,16 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
 	  // Get cluster charge
 	  EVENT::LCObjectVec rawdata =  meshit->getRawHits();
-	  EUTelVirtualCluster * cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> (rawdata.at(0))) ;
 
-	  _measuredQ[hitPlane]=cluster->getTotalCharge();
+          if(rawdata.size()>0)
+	    {
+	    EUTelVirtualCluster * cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> (rawdata.at(0))) ;
+
+            _measuredQ[hitPlane]=cluster->getTotalCharge();
+	    }
+	  else
+	   _measuredQ[hitPlane]=0.;
+
 
 
          if(debug)message<DEBUG> ( log() << "Measured hit in plane " << hitPlane << " at  X = " 
