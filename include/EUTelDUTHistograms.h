@@ -57,6 +57,10 @@ namespace eutelescope {
    * \param DistMax Maximum allowed distance between fit and matched
    *                 DUT hit.
    *
+   * \param DUTpitchX Sensor pitch size in X
+   *
+   * \param DUTpitchY Sensor pitch size in Y
+   *
    * \param HistoInfoFileName Name of the histogram information file.
    *        Using this file histogram parameters can be changed without 
    *        recompiling the code.
@@ -66,7 +70,7 @@ namespace eutelescope {
    * debug information is printed. 
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelDUTHistograms.h,v 1.2 2008-01-27 22:57:51 zarnecki Exp $
+   * @version $Id: EUTelDUTHistograms.h,v 1.3 2008-01-28 11:38:11 zarnecki Exp $
    * \date 2007.09.15
    *
    */ 
@@ -190,6 +194,12 @@ namespace eutelescope {
     double _zDUT;  
     double _distMax;
 
+    double _pitchX;
+    double _pitchY;
+
+    std::vector<double> _localX;
+    std::vector<double> _localY;
+
     std::vector<double> _measuredX;
     std::vector<double> _measuredY;
 
@@ -253,6 +263,12 @@ namespace eutelescope {
     static std::string _ShiftYvsXHistoName;
     static std::string _ShiftXvsY2DHistoName;
     static std::string _ShiftYvsX2DHistoName;
+
+    static std::string _EtaXHistoName;
+    static std::string _EtaYHistoName;
+    static std::string _EtaX2DHistoName;
+    static std::string _EtaY2DHistoName;
+
 
 #endif 
 

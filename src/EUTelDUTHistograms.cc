@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// @version: $Id: EUTelDUTHistograms.cc,v 1.2 2008-01-27 22:57:51 zarnecki Exp $
+// @version: $Id: EUTelDUTHistograms.cc,v 1.3 2008-01-28 11:38:11 zarnecki Exp $
 // Date 2007.09.15
 
 /*
@@ -107,6 +107,11 @@ std::string EUTelDUTHistograms::_ShiftYvsXHistoName    = "DUTshiftYvsX";
 std::string EUTelDUTHistograms::_ShiftXvsY2DHistoName    = "DUTshiftXvsY2D";
 std::string EUTelDUTHistograms::_ShiftYvsX2DHistoName    = "DUTshiftYvsX2D";
 
+std::string EUTelDUTHistograms::_EtaXHistoName      = "EtaX";
+std::string EUTelDUTHistograms::_EtaYHistoName      = "EtaY";
+std::string EUTelDUTHistograms::_EtaX2DHistoName    = "EtaX2D";
+std::string EUTelDUTHistograms::_EtaY2DHistoName    = "EtaY2D";
+
 #endif
 
 
@@ -138,6 +143,16 @@ EUTelDUTHistograms::EUTelDUTHistograms() : Processor("EUTelDUTHistograms") {
   registerProcessorParameter ("DistMax",
 			      "Maximum allowed distance between fit and matched DUT hit",
 			      _distMax,  static_cast < double > (0.1));
+
+
+  registerProcessorParameter ("DUTpitchX",
+			      "DUT sensor pitch in X",
+			      _pitchX,  static_cast < double > (0.03));
+
+
+  registerProcessorParameter ("DUTpitchY",
+			      "DUT sensor pitch in Y",
+			      _pitchY,  static_cast < double > (0.03));
 
 
   std::vector<float > initAlign;
@@ -477,6 +492,9 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   _measuredX.clear();
   _measuredY.clear();
 
+  _localX.clear();
+  _localY.clear();
+
   _bgmeasuredX.clear();
   _bgmeasuredY.clear();
 
@@ -514,6 +532,29 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 	_measuredY.push_back(corrY);
         _bgmeasuredX.push_back(corrX);
 	_bgmeasuredY.push_back(corrY);
+
+	// Local position should be taken from the cluster. 
+	// This is a temporary solution:
+
+        double locX = pos[0];
+        double locY = pos[1];
+
+	// Subtract position of the central pixel
+
+        int picX = (int)(locX/_pitchX);
+        
+       	    if(locX<0)picX--;
+
+            locX-=(picX+0.5)*_pitchX;
+
+        int picY = (int)(locY/_pitchY);
+        
+	    if(locY<0)picY--;
+
+            locY-=(picY+0.5)*_pitchY;
+
+        _localX.push_back(locX);
+        _localY.push_back(locY);
 	}
     }
  
@@ -597,6 +638,39 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
    (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ShiftYvsX2DHistoName]))->fill(_fittedX[bestfit],_measuredY[besthit]-_fittedY[bestfit]);
 
+
+   // Eta function check plots
+
+
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaXHistoName]))->fill(_localX[besthit],_measuredX[besthit]-_fittedX[bestfit]);
+
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaYHistoName]))->fill(_localY[besthit],_measuredY[besthit]-_fittedY[bestfit]);
+
+   (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaX2DHistoName]))->fill(_localX[besthit],_measuredX[besthit]-_fittedX[bestfit]);
+
+   (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaY2DHistoName]))->fill(_localY[besthit],_measuredY[besthit]-_fittedY[bestfit]);
+
+   // extend Eta histograms to 2 pitch range
+
+   if(_localX[besthit]<0)
+         _localX[besthit]+=_pitchX;
+   else
+         _localX[besthit]-=_pitchX;
+
+   if(_localY[besthit]<0)
+         _localY[besthit]+=_pitchY;
+   else
+         _localY[besthit]-=_pitchY;
+
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaXHistoName]))->fill(_localX[besthit],_measuredX[besthit]-_fittedX[bestfit]);
+
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaYHistoName]))->fill(_localY[besthit],_measuredY[besthit]-_fittedY[bestfit]);
+
+   (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaX2DHistoName]))->fill(_localX[besthit],_measuredX[besthit]-_fittedX[bestfit]);
+
+   (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaY2DHistoName]))->fill(_localY[besthit],_measuredY[besthit]-_fittedY[bestfit]);
+
+
    // Efficiency plots
 
    (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyXHistoName]))->fill(_fittedX[bestfit],1.);
@@ -623,6 +697,9 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
    _measuredX.erase(_measuredX.begin()+besthit);
    _measuredY.erase(_measuredY.begin()+besthit);
+
+   _localX.erase(_localX.begin()+besthit);
+   _localY.erase(_localY.begin()+besthit);
 
     }
 
@@ -1464,6 +1541,146 @@ void EUTelDUTHistograms::bookHistos()
    noiseXYHisto->setTitle(noiseXYTitle.c_str());
 
    _aidaHistoMap.insert(make_pair(_NoiseXYHistoName, noiseXYHisto));
+
+
+
+
+ // Eta function check: measured - fitted position in X  vs  local Y
+
+    int etaXNBin  = 200;
+    double etaXMin   = -0.03;
+    double etaXMax   = 0.03;
+    double etaVMin   = -0.03;
+    double etaVMax   = 0.03;
+    string etaXTitle = "Measured - fitted X position vs local Y";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_EtaXHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 etaXNBin = histoInfo->_xBin;
+	 etaXMin  = histoInfo->_xMin;
+	 etaXMax  = histoInfo->_xMax;
+	 etaVMin  = histoInfo->_yMin;
+	 etaVMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) etaXTitle = histoInfo->_title;
+         }
+      }
+
+
+    AIDA::IProfile1D * etaXHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_EtaXHistoName.c_str(),etaXNBin,etaXMin,etaXMax,etaVMin,etaVMax);
+
+    etaXHisto->setTitle(etaXTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_EtaXHistoName, etaXHisto));
+
+
+
+ // Eta function check: measured - fitted position in Y vs local X 
+
+    int etaYNBin  = 200;
+    double etaYMin   = -0.03;
+    double etaYMax   = 0.03;
+    etaVMin   = -0.03;
+    etaVMax   = 0.03;
+    string etaYTitle = "Measured - fitted Y position vs local X";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_EtaYHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 etaYNBin = histoInfo->_xBin;
+	 etaYMin  = histoInfo->_xMin;
+	 etaYMax  = histoInfo->_xMax;
+	 etaVMin  = histoInfo->_yMin;
+	 etaVMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) etaYTitle = histoInfo->_title;
+         }
+      }
+
+    AIDA::IProfile1D * etaYHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_EtaYHistoName.c_str(),etaYNBin,etaYMin,etaYMax,etaVMin,etaVMax);
+
+    etaYHisto->setTitle(etaYTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_EtaYHistoName, etaYHisto));
+
+
+
+
+ // Eta function check: measured - fitted position in X  vs local Y (2D plot)
+
+    etaXNBin  = 200;
+    etaXMin   = -0.03;
+    etaXMax   = 0.03;
+    int etaVNBin  = 200;
+    etaVMin   = -0.03;
+    etaVMax   = 0.03;
+    etaXTitle = "Measured - fitted X position vs local Y";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_EtaX2DHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 etaXNBin = histoInfo->_xBin;
+	 etaXMin  = histoInfo->_xMin;
+	 etaXMax  = histoInfo->_xMax;
+	 etaVNBin = histoInfo->_yBin;
+	 etaVMin  = histoInfo->_yMin;
+	 etaVMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) etaXTitle = histoInfo->_title;
+         }
+      }
+
+
+    AIDA::IHistogram2D * etaX2DHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_EtaX2DHistoName.c_str(),etaXNBin,etaXMin,etaXMax,etaVNBin,etaVMin,etaVMax);
+
+    etaX2DHisto->setTitle(etaXTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_EtaX2DHistoName, etaX2DHisto));
+
+
+
+ // Measured - fitted position in Y vs X  (2D plot)
+
+    etaYNBin  = 200;
+    etaYMin   = -0.03;
+    etaYMax   = 0.03;
+    etaVNBin  = 200;
+    etaVMin   = -0.03;
+    etaVMax   = 0.03;
+    etaYTitle = "Measured - fitted Y position vs local X";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_EtaY2DHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 etaYNBin = histoInfo->_xBin;
+	 etaYMin  = histoInfo->_xMin;
+	 etaYMax  = histoInfo->_xMax;
+	 etaVNBin = histoInfo->_yBin;
+	 etaVMin  = histoInfo->_yMin;
+	 etaVMax  = histoInfo->_yMax;
+	 if ( histoInfo->_title != "" ) etaYTitle = histoInfo->_title;
+         }
+      }
+
+    AIDA::IHistogram2D * etaY2DHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_EtaY2DHistoName.c_str(),etaYNBin,etaYMin,etaYMax,etaVNBin,etaVMin,etaVMax);
+
+    etaY2DHisto->setTitle(etaYTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_EtaY2DHistoName, etaY2DHisto));
 
 
 
