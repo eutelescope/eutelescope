@@ -176,6 +176,9 @@ EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
   registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates"
 			    ,_maxTrackCandidates, static_cast <int> (2000));
 
+  registerOptionalParameter("MaxHitsPlane","Maximal number of hits per plane"
+			    ,_maxHitsPlane, static_cast <int> (100));
+
 }
 
 void EUTelMultiLineFit::init() {
@@ -668,195 +671,203 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     //
     // This is done separately for different numbers of planes.
 
-    // loop over all hits in first plane
-    for (int firsthit = 0; uint(firsthit) < _hitsFirstPlane.size(); firsthit++) {
+    if (_hitsFirstPlane.size() <= uint(_maxHitsPlane) && _hitsSecondPlane.size() <= uint(_maxHitsPlane) && _hitsThirdPlane.size() <= uint(_maxHitsPlane) && _hitsFourthPlane.size() <= uint(_maxHitsPlane) && _hitsFifthPlane.size() <= uint(_maxHitsPlane) && _hitsSixthPlane.size() <= uint(_maxHitsPlane)) {
+
+      // loop over all hits in first plane
+      for (int firsthit = 0; uint(firsthit) < _hitsFirstPlane.size(); firsthit++) {
       
-      // loop over all hits in second plane
-      for (int secondhit = 0; uint(secondhit) < _hitsSecondPlane.size(); secondhit++) {
+	// loop over all hits in second plane
+	for (int secondhit = 0; uint(secondhit) < _hitsSecondPlane.size(); secondhit++) {
 
-	distance12 = sqrt(pow(_hitsFirstPlane[firsthit].measuredX - _hitsSecondPlane[secondhit].measuredX,2) + pow(_hitsFirstPlane[firsthit].measuredY - _hitsSecondPlane[secondhit].measuredY,2));
+	  distance12 = sqrt(pow(_hitsFirstPlane[firsthit].measuredX - _hitsSecondPlane[secondhit].measuredX,2) + pow(_hitsFirstPlane[firsthit].measuredY - _hitsSecondPlane[secondhit].measuredY,2));
 
-	distance_plane12 = _hitsSecondPlane[secondhit].measuredZ - _hitsFirstPlane[firsthit].measuredZ;
+	  distance_plane12 = _hitsSecondPlane[secondhit].measuredZ - _hitsFirstPlane[firsthit].measuredZ;
 
-	distanceMax12 = _distanceMax * (distance_plane12 / 100000.0);
+	  distanceMax12 = _distanceMax * (distance_plane12 / 100000.0);
 
-	if (_nPlanes == 2 && distance12 < distanceMax12 && _nTracks < _maxTrackCandidates) {
+	  if (_nPlanes == 2 && distance12 < distanceMax12 && _nTracks < _maxTrackCandidates) {
 
-	  _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-	  _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-	  _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+	    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+	    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+	    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
 
-	  _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-	  _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-	  _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+	    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+	    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+	    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
 
-	  _nTracks++;
+	    _nTracks++;
 
-	}
+	  }
 	
-	// more than two planes
-	if (_nPlanes > 2) {
+	  // more than two planes
+	  if (_nPlanes > 2) {
 
-	  // loop over all hits in third plane
-	  for (int thirdhit = 0; uint(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
+	    // loop over all hits in third plane
+	    for (int thirdhit = 0; uint(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
 
-	    distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
+	      distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
 
-	    distance_plane23 = _hitsThirdPlane[thirdhit].measuredZ - _hitsSecondPlane[secondhit].measuredZ;
+	      distance_plane23 = _hitsThirdPlane[thirdhit].measuredZ - _hitsSecondPlane[secondhit].measuredZ;
 	    
-	    distanceMax23 = _distanceMax * (distance_plane23 / 100000.0);
+	      distanceMax23 = _distanceMax * (distance_plane23 / 100000.0);
 
-	    if (_nPlanes == 3 && distance12 < distanceMax12 && distance23 < distanceMax23 && _nTracks < _maxTrackCandidates) {
+	      if (_nPlanes == 3 && distance12 < distanceMax12 && distance23 < distanceMax23 && _nTracks < _maxTrackCandidates) {
 
-	      _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-	      _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-	      _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+		_xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+		_yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+		_zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
 
-	      _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-	      _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-	      _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+		_xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+		_yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+		_zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
 
-	      _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-	      _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-	      _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+		_xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
+		_yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
+		_zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
 
-	      _nTracks++;
+		_nTracks++;
 
-	    }
+	      }
 
-	    // more than three planes
-	    if (_nPlanes > 3) {
+	      // more than three planes
+	      if (_nPlanes > 3) {
 	    
-	      // loop over all hits in fourth plane
-	      for (int fourthhit = 0; uint(fourthhit) < _hitsFourthPlane.size(); fourthhit++) {
+		// loop over all hits in fourth plane
+		for (int fourthhit = 0; uint(fourthhit) < _hitsFourthPlane.size(); fourthhit++) {
 
-		distance34 = sqrt(pow(_hitsThirdPlane[thirdhit].measuredX - _hitsFourthPlane[fourthhit].measuredX,2) + pow(_hitsThirdPlane[thirdhit].measuredY - _hitsFourthPlane[fourthhit].measuredY,2));
+		  distance34 = sqrt(pow(_hitsThirdPlane[thirdhit].measuredX - _hitsFourthPlane[fourthhit].measuredX,2) + pow(_hitsThirdPlane[thirdhit].measuredY - _hitsFourthPlane[fourthhit].measuredY,2));
 
-		distance_plane34 = _hitsFourthPlane[fourthhit].measuredZ - _hitsThirdPlane[thirdhit].measuredZ;
+		  distance_plane34 = _hitsFourthPlane[fourthhit].measuredZ - _hitsThirdPlane[thirdhit].measuredZ;
 	    
-		distanceMax34 = _distanceMax * (distance_plane34 / 100000.0);
+		  distanceMax34 = _distanceMax * (distance_plane34 / 100000.0);
 
-		if (_nPlanes == 4 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && _nTracks < _maxTrackCandidates) {
+		  if (_nPlanes == 4 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && _nTracks < _maxTrackCandidates) {
 
-		  _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-		  _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-		  _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+		    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+		    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+		    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
 
-		  _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-		  _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-		  _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+		    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+		    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+		    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
 
-		  _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-		  _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-		  _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+		    _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
+		    _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
+		    _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
 
-		  _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
-		  _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
-		  _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
+		    _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
+		    _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
+		    _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
 
-		  _nTracks++;
+		    _nTracks++;
 
-		}
+		  }
 	    
-		// more than four planes
-		if (_nPlanes > 4) {
+		  // more than four planes
+		  if (_nPlanes > 4) {
 
-		  // loop over all hits in fifth plane
-		  for (int fifthhit = 0; uint(fifthhit) < _hitsFifthPlane.size(); fifthhit++) {
+		    // loop over all hits in fifth plane
+		    for (int fifthhit = 0; uint(fifthhit) < _hitsFifthPlane.size(); fifthhit++) {
 
-		    distance45 = sqrt(pow(_hitsFourthPlane[fourthhit].measuredX - _hitsFifthPlane[fifthhit].measuredX,2) + pow(_hitsFourthPlane[fourthhit].measuredY - _hitsFifthPlane[fifthhit].measuredY,2));
+		      distance45 = sqrt(pow(_hitsFourthPlane[fourthhit].measuredX - _hitsFifthPlane[fifthhit].measuredX,2) + pow(_hitsFourthPlane[fourthhit].measuredY - _hitsFifthPlane[fifthhit].measuredY,2));
 
-		    distance_plane45 = _hitsFifthPlane[fifthhit].measuredZ - _hitsFourthPlane[fourthhit].measuredZ;
+		      distance_plane45 = _hitsFifthPlane[fifthhit].measuredZ - _hitsFourthPlane[fourthhit].measuredZ;
 	    
-		    distanceMax45 = _distanceMax * (distance_plane45 / 100000.0);
+		      distanceMax45 = _distanceMax * (distance_plane45 / 100000.0);
 
-		    if (_nPlanes == 5 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && _nTracks < _maxTrackCandidates) {
+		      if (_nPlanes == 5 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && _nTracks < _maxTrackCandidates) {
 
-		      _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-		      _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-		      _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+			_xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+			_yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+			_zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
 
-		      _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-		      _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-		      _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+			_xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+			_yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+			_zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
 
-		      _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-		      _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-		      _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+			_xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
+			_yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
+			_zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
 
-		      _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
-		      _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
-		      _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
+			_xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
+			_yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
+			_zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
 
-		      _xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
-		      _yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
-		      _zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
+			_xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
+			_yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
+			_zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
 
-		      _nTracks++;
+			_nTracks++;
 
-		    }
+		      }
 
-		    // more than five planes
-		    if (_nPlanes > 5) {
+		      // more than five planes
+		      if (_nPlanes > 5) {
 
-		      // loop over all hits in sixth plane
-		      for (int sixthhit = 0; uint(sixthhit) < _hitsSixthPlane.size(); sixthhit++) {
+			// loop over all hits in sixth plane
+			for (int sixthhit = 0; uint(sixthhit) < _hitsSixthPlane.size(); sixthhit++) {
 			
-			distance56 = sqrt(pow(_hitsFifthPlane[fifthhit].measuredX - _hitsSixthPlane[sixthhit].measuredX,2) + pow(_hitsFifthPlane[fifthhit].measuredY - _hitsSixthPlane[sixthhit].measuredY,2));
+			  distance56 = sqrt(pow(_hitsFifthPlane[fifthhit].measuredX - _hitsSixthPlane[sixthhit].measuredX,2) + pow(_hitsFifthPlane[fifthhit].measuredY - _hitsSixthPlane[sixthhit].measuredY,2));
 
-			distance_plane56 = _hitsSixthPlane[sixthhit].measuredZ - _hitsFifthPlane[fifthhit].measuredZ;
+			  distance_plane56 = _hitsSixthPlane[sixthhit].measuredZ - _hitsFifthPlane[fifthhit].measuredZ;
 	    
-			distanceMax56 = _distanceMax * (distance_plane56 / 100000.0);
+			  distanceMax56 = _distanceMax * (distance_plane56 / 100000.0);
 
-			if (_nPlanes == 6 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && distance56 < distanceMax56 && _nTracks < _maxTrackCandidates) {
+			  if (_nPlanes == 6 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && distance56 < distanceMax56 && _nTracks < _maxTrackCandidates) {
 
-			  _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-			  _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-			  _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+			    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+			    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+			    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
 
-			  _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-			  _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-			  _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+			    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+			    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+			    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
 
-			  _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-			  _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-			  _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+			    _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
+			    _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
+			    _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
 
-			  _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
-			  _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
-			  _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
+			    _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
+			    _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
+			    _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
 
-			  _xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
-			  _yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
-			  _zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
+			    _xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
+			    _yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
+			    _zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
 
-			  _xPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredX;
-			  _yPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredY;
-			  _zPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredZ;
+			    _xPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredX;
+			    _yPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredY;
+			    _zPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredZ;
 
-			  _nTracks++;
+			    _nTracks++;
 
-			}
+			  }
 
-		      } // end loop over all hits in sixth plane
+			} // end loop over all hits in sixth plane
 
-		    } // end if more than five planes
+		      } // end if more than five planes
 
-		  } // end loop over all hits in fifth plane
+		    } // end loop over all hits in fifth plane
 
-		} // end if more than four planes
+		  } // end if more than four planes
 
-	      } // end loop over all hits in fourth plane
+		} // end loop over all hits in fourth plane
 
-	    } // end if more than three planes
+	      } // end if more than three planes
 
-	  } // end loop over all hits in third plane
+	    } // end loop over all hits in third plane
 
-	} // end if more than two planes
+	  } // end if more than two planes
 
-      } // end loop over all hits in second plane
+	} // end loop over all hits in second plane
 
-    } // end loop over all hits in first plane
+      } // end loop over all hits in first plane
+
+    } else {
+      
+      streamlog_out ( MESSAGE2 ) << "Too many hits. The event will be skipped." << endl;
+
+    }
 
     if (_nTracks == _maxTrackCandidates) {
       streamlog_out ( WARNING2 ) << "Maximum number of track candidates reached. Maybe further tracks were skipped" << endl;
