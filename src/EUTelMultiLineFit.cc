@@ -37,6 +37,8 @@
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
+#include <AIDA/IHistogram2D.h>
+#include <AIDA/IProfile.h>
 #include <AIDA/ITree.h>
 #endif
 
@@ -67,6 +69,9 @@ std::string EUTelMultiLineFit::_angleXLocalname         = "AngleX";
 std::string EUTelMultiLineFit::_angleYLocalname         = "AngleY";
 std::string EUTelMultiLineFit::_residualXLocalname      = "ResidualX";
 std::string EUTelMultiLineFit::_residualYLocalname      = "ResidualY";
+std::string EUTelMultiLineFit::_positionXYLocalname     = "PositionXY";
+std::string EUTelMultiLineFit::_seedSNRLocalname        = "SeedSNR";
+std::string EUTelMultiLineFit::_clusterSNRLocalname     = "ClusterSNR";
 #endif
 
 EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
@@ -426,6 +431,9 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     int oldDetectorID = -100;
     int layerIndex; 
 
+    double seedSNR = -1000.0;
+    double clusterSNR = -1000.0;
+
     vector<EUTelMultiLineFit::HitsInPlane > _hitsFirstPlane;
     vector<EUTelMultiLineFit::HitsInPlane > _hitsSecondPlane;
     vector<EUTelMultiLineFit::HitsInPlane > _hitsThirdPlane;
@@ -447,7 +455,11 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       } else {
 	throw UnknownDataTypeException("Unknown cluster type");
       }
-      
+
+      // Data for SNR not available - use total charge for the moment
+      seedSNR = cluster->getSeedCharge();
+      clusterSNR = cluster->getTotalCharge();
+
       detectorID = cluster->getDetectorID();
       
       if ( detectorID != oldDetectorID ) {
@@ -597,12 +609,16 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	hitsInPlane.measuredX = (cos(theta_y)*cos(theta_z)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z) + cos(theta_x)*sin(theta_z)) * hit->getPosition()[1] * 1000 + off_x;
 	hitsInPlane.measuredY = ((-1)*cos(theta_y)*sin(theta_z)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z) + cos(theta_x)*cos(theta_z)) * hit->getPosition()[1] * 1000 + off_y;
 	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
+	hitsInPlane.seedSNR = seedSNR;
+	hitsInPlane.clusterSNR = clusterSNR;
 
       } else {
 
 	hitsInPlane.measuredX = 1000 * hit->getPosition()[0] + gamma * 1000 * hit->getPosition()[1] + beta * 1000 * hit->getPosition()[2] - x0;
 	hitsInPlane.measuredY = (-1) * gamma * 1000 * hit->getPosition()[0] + 1000 * hit->getPosition()[1] + alpha * 1000 * hit->getPosition()[2] - y0;
 	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
+	hitsInPlane.seedSNR = seedSNR;
+	hitsInPlane.clusterSNR = clusterSNR;
 
       }
 
@@ -649,11 +665,15 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     _xPos = new double *[_maxTrackCandidates];
     _yPos = new double *[_maxTrackCandidates];
     _zPos = new double *[_maxTrackCandidates];
+    _seedSNR = new double *[_maxTrackCandidates];
+    _clusterSNR = new double *[_maxTrackCandidates];
 
     for (int help = 0; help < _maxTrackCandidates; help++) {
       _xPos[help] = new double[_nPlanes];
       _yPos[help] = new double[_nPlanes];
       _zPos[help] = new double[_nPlanes];
+      _seedSNR[help] = new double[_nPlanes];
+      _clusterSNR[help] = new double[_nPlanes];
     }
 
     int fitplane[6] = {0, 0, 0, 0, 0, 0};
@@ -690,10 +710,14 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 	    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
 	    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+	    _seedSNR[_nTracks][0] = _hitsFirstPlane[firsthit].seedSNR;
+	    _clusterSNR[_nTracks][0] = _hitsFirstPlane[firsthit].clusterSNR;
 
 	    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
 	    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
 	    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+	    _seedSNR[_nTracks][1] = _hitsSecondPlane[secondhit].seedSNR;
+	    _clusterSNR[_nTracks][1] = _hitsSecondPlane[secondhit].clusterSNR;
 
 	    _nTracks++;
 
@@ -716,14 +740,20 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 		_xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 		_yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
 		_zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+		_seedSNR[_nTracks][0] = _hitsFirstPlane[firsthit].seedSNR;
+		_clusterSNR[_nTracks][0] = _hitsFirstPlane[firsthit].clusterSNR;
 
 		_xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
 		_yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
 		_zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+		_seedSNR[_nTracks][1] = _hitsSecondPlane[secondhit].seedSNR;
+		_clusterSNR[_nTracks][1] = _hitsSecondPlane[secondhit].clusterSNR;
 
 		_xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
 		_yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
 		_zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+		_seedSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].seedSNR;
+		_clusterSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterSNR;
 
 		_nTracks++;
 
@@ -746,18 +776,26 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 		    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 		    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
 		    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+		    _seedSNR[_nTracks][0] = _hitsFirstPlane[firsthit].seedSNR;
+		    _clusterSNR[_nTracks][0] = _hitsFirstPlane[firsthit].clusterSNR;
 
 		    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
 		    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
 		    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+		    _seedSNR[_nTracks][1] = _hitsSecondPlane[secondhit].seedSNR;
+		    _clusterSNR[_nTracks][1] = _hitsSecondPlane[secondhit].clusterSNR;
 
 		    _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
 		    _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
 		    _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+		    _seedSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].seedSNR;
+		    _clusterSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterSNR;
 
 		    _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
 		    _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
 		    _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
+		    _seedSNR[_nTracks][3] = _hitsFourthPlane[fourthhit].seedSNR;
+		    _clusterSNR[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterSNR;
 
 		    _nTracks++;
 
@@ -780,22 +818,32 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 			_xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 			_yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
 			_zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+			_seedSNR[_nTracks][0] = _hitsFirstPlane[firsthit].seedSNR;
+			_clusterSNR[_nTracks][0] = _hitsFirstPlane[firsthit].clusterSNR;
 
 			_xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
 			_yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
 			_zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+			_seedSNR[_nTracks][1] = _hitsSecondPlane[secondhit].seedSNR;
+			_clusterSNR[_nTracks][1] = _hitsSecondPlane[secondhit].clusterSNR;
 
 			_xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
 			_yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
 			_zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+			_seedSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].seedSNR;
+			_clusterSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterSNR;
 
 			_xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
 			_yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
 			_zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
+			_seedSNR[_nTracks][3] = _hitsFourthPlane[fourthhit].seedSNR;
+			_clusterSNR[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterSNR;
 
 			_xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
 			_yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
 			_zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
+			_seedSNR[_nTracks][4] = _hitsFifthPlane[fifthhit].seedSNR;
+			_clusterSNR[_nTracks][4] = _hitsFifthPlane[fifthhit].clusterSNR;
 
 			_nTracks++;
 
@@ -818,26 +866,38 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 			    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 			    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
 			    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+			    _seedSNR[_nTracks][0] = _hitsFirstPlane[firsthit].seedSNR;
+			    _clusterSNR[_nTracks][0] = _hitsFirstPlane[firsthit].clusterSNR;
 
 			    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
 			    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
 			    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+			    _seedSNR[_nTracks][1] = _hitsSecondPlane[secondhit].seedSNR;
+			    _clusterSNR[_nTracks][1] = _hitsSecondPlane[secondhit].clusterSNR;
 
 			    _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
 			    _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
 			    _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+			    _seedSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].seedSNR;
+			    _clusterSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterSNR;
 
 			    _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
 			    _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
 			    _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
+			    _seedSNR[_nTracks][3] = _hitsFourthPlane[fourthhit].seedSNR;
+			    _clusterSNR[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterSNR;
 
 			    _xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
 			    _yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
 			    _zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
+			    _seedSNR[_nTracks][4] = _hitsFifthPlane[fifthhit].seedSNR;
+			    _clusterSNR[_nTracks][4] = _hitsFifthPlane[fifthhit].clusterSNR;
 
 			    _xPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredX;
 			    _yPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredY;
 			    _zPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredZ;
+			    _seedSNR[_nTracks][5] = _hitsSixthPlane[sixthhit].seedSNR;
+			    _clusterSNR[_nTracks][5] = _hitsSixthPlane[sixthhit].clusterSNR;
 
 			    _nTracks++;
 
@@ -1072,6 +1132,52 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	      _histogramSwitch = false;
 	    }       
 	  }
+
+	  if ( _histogramSwitch ) {
+	    {
+	      stringstream ss; 
+	      ss << _seedSNRLocalname << "_d" << iDetector; 
+	      tempHistoName=ss.str();
+	    }
+	    if ( AIDA::IHistogram1D* seedsnr_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+	      seedsnr_histo->fill(_seedSNR[track][iDetector]);
+	    else {
+	      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
+	      streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+	      _histogramSwitch = false;
+	    }       
+	  }
+
+	  if ( _histogramSwitch ) {
+	    {
+	      stringstream ss; 
+	      ss << _clusterSNRLocalname << "_d" << iDetector; 
+	      tempHistoName=ss.str();
+	    }
+	    if ( AIDA::IHistogram1D* clustersnr_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+	      clustersnr_histo->fill(_clusterSNR[track][iDetector]);
+	    else {
+	      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
+	      streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+	      _histogramSwitch = false;
+	    }       
+	  }
+
+	  if ( _histogramSwitch ) {
+	    {
+	      stringstream ss; 
+	      ss << _positionXYLocalname << "_d" << iDetector; 
+	      tempHistoName=ss.str();
+	    }
+	    if ( AIDA::IHistogram2D* positionxy_histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+	      positionxy_histo->fill(_waferResidX[iDetector] + _xPosHere[iDetector],_waferResidY[iDetector] + _yPosHere[iDetector]);
+	    else {
+	      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _positionXYLocalname << endl;
+	      streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+	      _histogramSwitch = false;
+	    }       
+	  }
+
 	}
 	
 #endif 
@@ -1167,6 +1273,14 @@ void EUTelMultiLineFit::bookHistos() {
     const double angleMax  = 3.;
     const double tracksMin = -0.5;
     const double tracksMax = 19.5;
+    const double snrMin = 0.0;
+    const double snrMax = 10000.0;
+
+    const int NBin2D = 100;
+    const double positionXMin = -5000.0;
+    const double positionXMax = 5000.0;
+    const double positionYMin = -5000.0;
+    const double positionYMax = 5000.0;
 
     AIDA::IHistogram1D * numberTracksLocal = 
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_numberTracksLocalname,20,tracksMin,tracksMax);
@@ -1227,6 +1341,9 @@ void EUTelMultiLineFit::bookHistos() {
     string tempHistoName;
     string histoTitleXResid;
     string histoTitleYResid;
+    string histoTitleSeedSNR;
+    string histoTitleClusterSNR;
+    string histoTitleXYPosition;
     
     for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
       
@@ -1245,7 +1362,7 @@ void EUTelMultiLineFit::bookHistos() {
       }
       
       AIDA::IHistogram1D *  tempXHisto = 
-	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin, Min,Max);
+	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin , Min,Max);
       if ( tempXHisto ) {
 	tempXHisto->setTitle(histoTitleXResid);
 	_aidaHistoMap.insert( make_pair( tempHistoName, tempXHisto ) );
@@ -1278,7 +1395,82 @@ void EUTelMultiLineFit::bookHistos() {
 	streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
 	_histogramSwitch = false;
       }
+
+      {
+	stringstream ss; 
+	stringstream pp; 
+	stringstream tt;
+	
+	pp << "SeedSNRLocal_d" << iDetector; 
+	tempHisto=pp.str();
+	ss << _seedSNRLocalname << "_d" << iDetector; 
+	tempHistoName=ss.str();
+	tt << "SeedSNR" << "_d" << iDetector; 
+	histoTitleSeedSNR=tt.str();
+	
+      }
       
+      AIDA::IHistogram1D *  tempSeedSNRHisto = 
+	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin,snrMin,snrMax);
+      if ( tempSeedSNRHisto ) {
+	tempSeedSNRHisto->setTitle(histoTitleSeedSNR);
+	_aidaHistoMap.insert( make_pair( tempHistoName, tempSeedSNRHisto ) );
+      } else {
+	streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+	streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+	_histogramSwitch = false;
+      }
+
+      {
+	stringstream ss; 
+	stringstream pp; 
+	stringstream tt;
+	
+	pp << "ClusterSNRLocal_d" << iDetector; 
+	tempHisto=pp.str();
+	ss << _clusterSNRLocalname << "_d" << iDetector; 
+	tempHistoName=ss.str();
+	tt << "ClusterSNR" << "_d" << iDetector; 
+	histoTitleClusterSNR=tt.str();
+	
+      }
+      
+      AIDA::IHistogram1D *  tempClusterSNRHisto = 
+	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin,snrMin,snrMax);
+      if ( tempClusterSNRHisto ) {
+	tempClusterSNRHisto->setTitle(histoTitleClusterSNR);
+	_aidaHistoMap.insert( make_pair( tempHistoName, tempClusterSNRHisto ) );
+      } else {
+	streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+	streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+	_histogramSwitch = false;
+      }
+
+      {
+	stringstream ss; 
+	stringstream pp; 
+	stringstream tt;
+	
+	pp << "PositionXYLocal_d" << iDetector; 
+	tempHisto=pp.str();
+	ss << _positionXYLocalname << "_d" << iDetector; 
+	tempHistoName=ss.str();
+	tt << "PositionXY" << "_d" << iDetector; 
+	histoTitleXYPosition=tt.str();
+	
+      }
+
+      AIDA::IHistogram2D * tempXYHisto = 
+      AIDAProcessor::histogramFactory(this)->createHistogram2D(tempHistoName,NBin2D,positionXMin,positionXMax,NBin2D,positionYMin,positionYMax);
+      if ( tempXYHisto ) {
+	tempXYHisto->setTitle(histoTitleXYPosition);
+	_aidaHistoMap.insert( make_pair( tempHistoName, tempXYHisto ) );
+      } else {
+	streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+	streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+	_histogramSwitch = false;
+      }
+
     }
     
   } catch (lcio::Exception& e ) {
