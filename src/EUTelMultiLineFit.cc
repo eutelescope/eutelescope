@@ -1224,11 +1224,15 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       delete [] _zPos[help];
       delete [] _yPos[help];
       delete [] _xPos[help];
+      delete [] _seedSNR[help];
+      delete [] _clusterSNR[help];
     }
 
     delete [] _zPos;
     delete [] _yPos;
     delete [] _xPos;
+    delete [] _seedSNR;
+    delete [] _clusterSNR;
     
   } catch (DataNotAvailableException& e) {
     
