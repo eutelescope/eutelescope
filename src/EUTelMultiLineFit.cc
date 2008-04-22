@@ -246,7 +246,18 @@ void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
     streamlog_out ( ERROR2 ) << "Error during the geometry consistency check: " << endl;
     streamlog_out ( ERROR2 ) << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " << endl;
     streamlog_out ( ERROR2 ) << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() << " silicon planes" << endl;
-    exit(-1);
+    string answer;
+    while (true) {
+      streamlog_out ( ERROR2 ) << "Type Q to quit now or C to continue [Q/C]" << endl;
+      cin >> answer;
+      // put the answer in lower case before making the comparison.
+      transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
+      if ( answer == "q" ) {
+   	exit(-1);
+      } else if ( answer == "c" ) {
+   	break;
+      }
+    }
   }
   
   // this is the right place also to check the geometry ID. This is a
@@ -258,7 +269,7 @@ void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
   if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
     streamlog_out ( ERROR2 ) << "Error during the geometry consistency check: " << endl;
     streamlog_out ( ERROR2 ) << "The run header says the GeoID is " << header->getGeoID() << endl;
-    streamlog_out ( ERROR2 ) << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesNumber() << endl;
+    streamlog_out ( ERROR2 ) << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID() << endl;
     string answer;
     while (true) {
       streamlog_out ( ERROR2 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
