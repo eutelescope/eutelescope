@@ -70,8 +70,8 @@ std::string EUTelMultiLineFit::_angleYLocalname         = "AngleY";
 std::string EUTelMultiLineFit::_residualXLocalname      = "ResidualX";
 std::string EUTelMultiLineFit::_residualYLocalname      = "ResidualY";
 std::string EUTelMultiLineFit::_positionXYLocalname     = "PositionXY";
-std::string EUTelMultiLineFit::_seedSNRLocalname        = "SeedSNR";
-std::string EUTelMultiLineFit::_clusterSNRLocalname     = "ClusterSNR";
+std::string EUTelMultiLineFit::_seedChargeLocalname     = "SeedCharge";
+std::string EUTelMultiLineFit::_clusterChargeLocalname  = "ClusterCharge";
 #endif
 
 EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
@@ -442,8 +442,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     int oldDetectorID = -100;
     int layerIndex; 
 
-    double seedSNR = -1000.0;
-    double clusterSNR = -1000.0;
+    double seedCharge = -1000.0;
+    double clusterCharge = -1000.0;
 
     vector<EUTelMultiLineFit::HitsInPlane > _hitsFirstPlane;
     vector<EUTelMultiLineFit::HitsInPlane > _hitsSecondPlane;
@@ -467,9 +467,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	throw UnknownDataTypeException("Unknown cluster type");
       }
 
-      // Data for SNR not available - use total charge for the moment
-      seedSNR = cluster->getSeedCharge();
-      clusterSNR = cluster->getTotalCharge();
+      seedCharge = cluster->getSeedCharge();
+      clusterCharge = cluster->getTotalCharge();
 
       detectorID = cluster->getDetectorID();
       
@@ -620,16 +619,16 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	hitsInPlane.measuredX = (cos(theta_y)*cos(theta_z)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z) + cos(theta_x)*sin(theta_z)) * hit->getPosition()[1] * 1000 + off_x;
 	hitsInPlane.measuredY = ((-1)*cos(theta_y)*sin(theta_z)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z) + cos(theta_x)*cos(theta_z)) * hit->getPosition()[1] * 1000 + off_y;
 	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
-	hitsInPlane.seedSNR = seedSNR;
-	hitsInPlane.clusterSNR = clusterSNR;
+	hitsInPlane.seedCharge = seedCharge;
+	hitsInPlane.clusterCharge = clusterCharge;
 
       } else {
 
 	hitsInPlane.measuredX = 1000 * hit->getPosition()[0] + gamma * 1000 * hit->getPosition()[1] + beta * 1000 * hit->getPosition()[2] - x0;
 	hitsInPlane.measuredY = (-1) * gamma * 1000 * hit->getPosition()[0] + 1000 * hit->getPosition()[1] + alpha * 1000 * hit->getPosition()[2] - y0;
 	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
-	hitsInPlane.seedSNR = seedSNR;
-	hitsInPlane.clusterSNR = clusterSNR;
+	hitsInPlane.seedCharge = seedCharge;
+	hitsInPlane.clusterCharge = clusterCharge;
 
       }
 
@@ -676,15 +675,15 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     _xPos = new double *[_maxTrackCandidates];
     _yPos = new double *[_maxTrackCandidates];
     _zPos = new double *[_maxTrackCandidates];
-    _seedSNR = new double *[_maxTrackCandidates];
-    _clusterSNR = new double *[_maxTrackCandidates];
+    _seedCharge = new double *[_maxTrackCandidates];
+    _clusterCharge = new double *[_maxTrackCandidates];
 
     for (int help = 0; help < _maxTrackCandidates; help++) {
       _xPos[help] = new double[_nPlanes];
       _yPos[help] = new double[_nPlanes];
       _zPos[help] = new double[_nPlanes];
-      _seedSNR[help] = new double[_nPlanes];
-      _clusterSNR[help] = new double[_nPlanes];
+      _seedCharge[help] = new double[_nPlanes];
+      _clusterCharge[help] = new double[_nPlanes];
     }
 
     int fitplane[6] = {0, 0, 0, 0, 0, 0};
@@ -721,14 +720,14 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 	    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
 	    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-	    _seedSNR[_nTracks][0] = _hitsFirstPlane[firsthit].seedSNR;
-	    _clusterSNR[_nTracks][0] = _hitsFirstPlane[firsthit].clusterSNR;
+	    _seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
+	    _clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
 
 	    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
 	    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
 	    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-	    _seedSNR[_nTracks][1] = _hitsSecondPlane[secondhit].seedSNR;
-	    _clusterSNR[_nTracks][1] = _hitsSecondPlane[secondhit].clusterSNR;
+	    _seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
+	    _clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
 
 	    _nTracks++;
 
@@ -751,20 +750,20 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 		_xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 		_yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
 		_zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-		_seedSNR[_nTracks][0] = _hitsFirstPlane[firsthit].seedSNR;
-		_clusterSNR[_nTracks][0] = _hitsFirstPlane[firsthit].clusterSNR;
+		_seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
+		_clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
 
 		_xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
 		_yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
 		_zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-		_seedSNR[_nTracks][1] = _hitsSecondPlane[secondhit].seedSNR;
-		_clusterSNR[_nTracks][1] = _hitsSecondPlane[secondhit].clusterSNR;
+		_seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
+		_clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
 
 		_xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
 		_yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
 		_zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-		_seedSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].seedSNR;
-		_clusterSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterSNR;
+		_seedCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].seedCharge;
+		_clusterCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterCharge;
 
 		_nTracks++;
 
@@ -787,26 +786,26 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 		    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 		    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
 		    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-		    _seedSNR[_nTracks][0] = _hitsFirstPlane[firsthit].seedSNR;
-		    _clusterSNR[_nTracks][0] = _hitsFirstPlane[firsthit].clusterSNR;
+		    _seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
+		    _clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
 
 		    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
 		    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
 		    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-		    _seedSNR[_nTracks][1] = _hitsSecondPlane[secondhit].seedSNR;
-		    _clusterSNR[_nTracks][1] = _hitsSecondPlane[secondhit].clusterSNR;
+		    _seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
+		    _clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
 
 		    _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
 		    _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
 		    _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-		    _seedSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].seedSNR;
-		    _clusterSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterSNR;
+		    _seedCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].seedCharge;
+		    _clusterCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterCharge;
 
 		    _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
 		    _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
 		    _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
-		    _seedSNR[_nTracks][3] = _hitsFourthPlane[fourthhit].seedSNR;
-		    _clusterSNR[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterSNR;
+		    _seedCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].seedCharge;
+		    _clusterCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterCharge;
 
 		    _nTracks++;
 
@@ -829,32 +828,32 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 			_xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 			_yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
 			_zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-			_seedSNR[_nTracks][0] = _hitsFirstPlane[firsthit].seedSNR;
-			_clusterSNR[_nTracks][0] = _hitsFirstPlane[firsthit].clusterSNR;
+			_seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
+			_clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
 
 			_xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
 			_yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
 			_zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-			_seedSNR[_nTracks][1] = _hitsSecondPlane[secondhit].seedSNR;
-			_clusterSNR[_nTracks][1] = _hitsSecondPlane[secondhit].clusterSNR;
+			_seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
+			_clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
 
 			_xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
 			_yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
 			_zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-			_seedSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].seedSNR;
-			_clusterSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterSNR;
+			_seedCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].seedCharge;
+			_clusterCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterCharge;
 
 			_xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
 			_yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
 			_zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
-			_seedSNR[_nTracks][3] = _hitsFourthPlane[fourthhit].seedSNR;
-			_clusterSNR[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterSNR;
+			_seedCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].seedCharge;
+			_clusterCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterCharge;
 
 			_xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
 			_yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
 			_zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
-			_seedSNR[_nTracks][4] = _hitsFifthPlane[fifthhit].seedSNR;
-			_clusterSNR[_nTracks][4] = _hitsFifthPlane[fifthhit].clusterSNR;
+			_seedCharge[_nTracks][4] = _hitsFifthPlane[fifthhit].seedCharge;
+			_clusterCharge[_nTracks][4] = _hitsFifthPlane[fifthhit].clusterCharge;
 
 			_nTracks++;
 
@@ -877,38 +876,38 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 			    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
 			    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
 			    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-			    _seedSNR[_nTracks][0] = _hitsFirstPlane[firsthit].seedSNR;
-			    _clusterSNR[_nTracks][0] = _hitsFirstPlane[firsthit].clusterSNR;
+			    _seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
+			    _clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
 
 			    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
 			    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
 			    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-			    _seedSNR[_nTracks][1] = _hitsSecondPlane[secondhit].seedSNR;
-			    _clusterSNR[_nTracks][1] = _hitsSecondPlane[secondhit].clusterSNR;
+			    _seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
+			    _clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
 
 			    _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
 			    _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
 			    _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-			    _seedSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].seedSNR;
-			    _clusterSNR[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterSNR;
+			    _seedCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].seedCharge;
+			    _clusterCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterCharge;
 
 			    _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
 			    _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
 			    _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
-			    _seedSNR[_nTracks][3] = _hitsFourthPlane[fourthhit].seedSNR;
-			    _clusterSNR[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterSNR;
+			    _seedCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].seedCharge;
+			    _clusterCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterCharge;
 
 			    _xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
 			    _yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
 			    _zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
-			    _seedSNR[_nTracks][4] = _hitsFifthPlane[fifthhit].seedSNR;
-			    _clusterSNR[_nTracks][4] = _hitsFifthPlane[fifthhit].clusterSNR;
+			    _seedCharge[_nTracks][4] = _hitsFifthPlane[fifthhit].seedCharge;
+			    _clusterCharge[_nTracks][4] = _hitsFifthPlane[fifthhit].clusterCharge;
 
 			    _xPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredX;
 			    _yPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredY;
 			    _zPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredZ;
-			    _seedSNR[_nTracks][5] = _hitsSixthPlane[sixthhit].seedSNR;
-			    _clusterSNR[_nTracks][5] = _hitsSixthPlane[sixthhit].clusterSNR;
+			    _seedCharge[_nTracks][5] = _hitsSixthPlane[sixthhit].seedCharge;
+			    _clusterCharge[_nTracks][5] = _hitsSixthPlane[sixthhit].clusterCharge;
 
 			    _nTracks++;
 
@@ -1147,11 +1146,11 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	  if ( _histogramSwitch ) {
 	    {
 	      stringstream ss; 
-	      ss << _seedSNRLocalname << "_d" << iDetector; 
+	      ss << _seedChargeLocalname << "_d" << iDetector; 
 	      tempHistoName=ss.str();
 	    }
 	    if ( AIDA::IHistogram1D* seedsnr_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	      seedsnr_histo->fill(_seedSNR[track][iDetector]);
+	      seedsnr_histo->fill(_seedCharge[track][iDetector]);
 	    else {
 	      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
 	      streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
@@ -1162,11 +1161,11 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	  if ( _histogramSwitch ) {
 	    {
 	      stringstream ss; 
-	      ss << _clusterSNRLocalname << "_d" << iDetector; 
+	      ss << _clusterChargeLocalname << "_d" << iDetector; 
 	      tempHistoName=ss.str();
 	    }
 	    if ( AIDA::IHistogram1D* clustersnr_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	      clustersnr_histo->fill(_clusterSNR[track][iDetector]);
+	      clustersnr_histo->fill(_clusterCharge[track][iDetector]);
 	    else {
 	      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
 	      streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
@@ -1235,15 +1234,15 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       delete [] _zPos[help];
       delete [] _yPos[help];
       delete [] _xPos[help];
-      delete [] _seedSNR[help];
-      delete [] _clusterSNR[help];
+      delete [] _seedCharge[help];
+      delete [] _clusterCharge[help];
     }
 
     delete [] _zPos;
     delete [] _yPos;
     delete [] _xPos;
-    delete [] _seedSNR;
-    delete [] _clusterSNR;
+    delete [] _seedCharge;
+    delete [] _clusterCharge;
     
   } catch (DataNotAvailableException& e) {
     
@@ -1356,8 +1355,8 @@ void EUTelMultiLineFit::bookHistos() {
     string tempHistoName;
     string histoTitleXResid;
     string histoTitleYResid;
-    string histoTitleSeedSNR;
-    string histoTitleClusterSNR;
+    string histoTitleSeedCharge;
+    string histoTitleClusterCharge;
     string histoTitleXYPosition;
     
     for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
@@ -1416,20 +1415,20 @@ void EUTelMultiLineFit::bookHistos() {
 	stringstream pp; 
 	stringstream tt;
 	
-	pp << "SeedSNRLocal_d" << iDetector; 
+	pp << "SeedChargeLocal_d" << iDetector; 
 	tempHisto=pp.str();
-	ss << _seedSNRLocalname << "_d" << iDetector; 
+	ss << _seedChargeLocalname << "_d" << iDetector; 
 	tempHistoName=ss.str();
-	tt << "SeedSNR" << "_d" << iDetector; 
-	histoTitleSeedSNR=tt.str();
+	tt << "SeedCharge" << "_d" << iDetector; 
+	histoTitleSeedCharge=tt.str();
 	
       }
       
-      AIDA::IHistogram1D *  tempSeedSNRHisto = 
+      AIDA::IHistogram1D *  tempSeedChargeHisto = 
 	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin,snrMin,snrMax);
-      if ( tempSeedSNRHisto ) {
-	tempSeedSNRHisto->setTitle(histoTitleSeedSNR);
-	_aidaHistoMap.insert( make_pair( tempHistoName, tempSeedSNRHisto ) );
+      if ( tempSeedChargeHisto ) {
+	tempSeedChargeHisto->setTitle(histoTitleSeedCharge);
+	_aidaHistoMap.insert( make_pair( tempHistoName, tempSeedChargeHisto ) );
       } else {
 	streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
 	streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
@@ -1441,20 +1440,20 @@ void EUTelMultiLineFit::bookHistos() {
 	stringstream pp; 
 	stringstream tt;
 	
-	pp << "ClusterSNRLocal_d" << iDetector; 
+	pp << "ClusterChargeLocal_d" << iDetector; 
 	tempHisto=pp.str();
-	ss << _clusterSNRLocalname << "_d" << iDetector; 
+	ss << _clusterChargeLocalname << "_d" << iDetector; 
 	tempHistoName=ss.str();
-	tt << "ClusterSNR" << "_d" << iDetector; 
-	histoTitleClusterSNR=tt.str();
+	tt << "ClusterCharge" << "_d" << iDetector; 
+	histoTitleClusterCharge=tt.str();
 	
       }
       
-      AIDA::IHistogram1D *  tempClusterSNRHisto = 
+      AIDA::IHistogram1D *  tempClusterChargeHisto = 
 	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin,snrMin,snrMax);
-      if ( tempClusterSNRHisto ) {
-	tempClusterSNRHisto->setTitle(histoTitleClusterSNR);
-	_aidaHistoMap.insert( make_pair( tempHistoName, tempClusterSNRHisto ) );
+      if ( tempClusterChargeHisto ) {
+	tempClusterChargeHisto->setTitle(histoTitleClusterCharge);
+	_aidaHistoMap.insert( make_pair( tempHistoName, tempClusterChargeHisto ) );
       } else {
 	streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
 	streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;

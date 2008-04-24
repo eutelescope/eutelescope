@@ -53,8 +53,8 @@ namespace eutelescope {
       double measuredX;
       double measuredY;
       double measuredZ;
-      double seedSNR;
-      double clusterSNR;
+      double seedCharge;
+      double clusterCharge;
     };
 
     virtual void FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFit[], double yResFit[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]);
@@ -230,8 +230,8 @@ namespace eutelescope {
 
     static std::string _positionXYLocalname;
 
-    static std::string _seedSNRLocalname;
-    static std::string _clusterSNRLocalname;
+    static std::string _seedChargeLocalname;
+    static std::string _clusterChargeLocalname;
 #endif
 
     int _nPlanes;
@@ -239,8 +239,8 @@ namespace eutelescope {
     double ** _xPos;
     double ** _yPos;
     double ** _zPos;
-    double ** _seedSNR;
-    double ** _clusterSNR;
+    double ** _seedCharge;
+    double ** _clusterCharge;
     
     double * _xPosHere;
     double * _yPosHere;
