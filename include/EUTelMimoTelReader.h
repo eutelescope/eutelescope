@@ -115,7 +115,7 @@ namespace eutelescope {
    *   the marker position in pixel number start counting from 0.
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelMimoTelReader.h,v 1.6 2007-08-30 09:00:28 bulgheroni Exp $
+   *   @version $Id: EUTelMimoTelReader.h,v 1.7 2008-05-09 08:24:28 bulgheroni Exp $
    *
    */
   
@@ -240,6 +240,24 @@ namespace eutelescope {
      */ 
     int _yMax;
 
+    //! Activate / Deactivate out of synch skipping
+    /*! In normal conditions all the boards should work perfectly
+     *  synchronized, but due to several reasons the synchronization
+     *  can be lost and the corresponding data might be
+     *  corrupted. Activating this switch, it is possible to remove
+     *  from the output file all events not properly synchronized.
+     * 
+     */
+    bool _skipOutOfSynch;
+
+    //! Out of synch threshold
+    /*! The definition of an out of synch event is based upon the
+     *  value of pivot pixel address recorded by all the boards. An
+     *  event is declared de-synchronized if the difference between the
+     *  maximum and the minimum pivot pixel address is exceed this threshold.
+     *
+     */ 
+    int _outOfSynchThr;
   };
 
   //! A global instance of the processor

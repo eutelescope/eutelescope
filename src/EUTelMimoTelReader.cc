@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.11 2007-09-10 19:09:39 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.12 2008-05-09 08:24:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -88,6 +88,11 @@ EUTelMimoTelReader::EUTelMimoTelReader (): DataSourceProcessor  ("EUTelMimoTelRe
 			     "from the TrackerRawData output collections",
 			     _removeMarkerSwitch, static_cast< bool > ( false ) );
 
+  registerProcessorParameter("SkipOutOfSynch","If set to true, events having boards out of synchronization\n"
+			     "will be skipped and not saved in the output file",
+			     _skipOutOfSynch, static_cast< bool > ( false ) );
+
+
   IntVec markerPositionExample;
   markerPositionExample.push_back( 0  );
   markerPositionExample.push_back( 1  );
@@ -104,6 +109,13 @@ EUTelMimoTelReader::EUTelMimoTelReader (): DataSourceProcessor  ("EUTelMimoTelRe
 			    
   registerOptionalParameter("SparsePixelType", "Type of sparsified pixel data structure (use SparsePixelType enum)",
 			    _pixelType , static_cast<int> ( 1 ) );
+
+  registerOptionalParameter("SkipOutOfSynch","If set to true, events having boards out of synchronization\n"
+			    "will be skipped and not saved in the output file",
+			    _skipOutOfSynch, static_cast< bool > ( true ) );
+  
+  registerOptionalParameter("OutOfSynchThreshold","The difference in clock pulses to define out of synch events",
+			    _outOfSynchThr, static_cast< int > ( 2 ) );
 
 
 }
@@ -156,6 +168,10 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
   // mode in case they are different. 
   string           eudrbGlobalMode ;
   vector<string >  eudrbSubMode;
+
+  // pivot pixel vector for synchronization check
+  vector<unsigned int > pivotSynchVec;
+  bool  outOfSynchFlag;
 
   while ( des.HasData() ) {
 
@@ -238,6 +254,10 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
       runHeader->setGeoID( _geoID );
       runHeader->setDateTime();
       runHeader->addProcessor( type() );
+
+      // prepare the pivot synch vectors
+      pivotSynchVec.clear();
+      pivotSynchVec.insert(pivotSynchVec.begin(), noOfDetectors, 0);
 
 
       ProcessorMgr::instance()->processRunHeader(lcHeader.get());
@@ -333,10 +353,15 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	  if ( eudev ) {
 	    // ok great this is a EUDRB event, now we need to loop on
 	    // the number of boards the EUDRB producer is reading out
+	    // and set the synchronization flag to false as a start
+
+	    outOfSynchFlag = false;
+
 	    for (unsigned  int iDetector = 0; iDetector < eudev->NumBoards(); iDetector++) {
 	      // EUDRBBoard is the wrapper class containing the real
 	      // data we are interested in
 	      EUDRBBoard & brd = eudev->GetBoard(iDetector);
+
 	           
 	      if (  ( eudrbGlobalMode == "RAW3" ) ||
 		    ( ( eudrbGlobalMode == "Mixed" ) && ( eudrbSubMode[iDetector] == "RAW3" ) ) ) {
@@ -448,6 +473,10 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		secondFrame->setTime(brd.PivotPixel());	      
 		thirdFrame->setTime(brd.PivotPixel());
 	      
+		// put the pivot pixel address in the synchronization
+		// vector
+		pivotSynchVec[iDetector] = brd.PivotPixel();
+
 		if ( _cdsCalculation ) {
 		  auto_ptr<TrackerRawDataImpl> cdsFrame( new TrackerRawDataImpl );
 		  idEncoderCDS["sensorID"] = iDetector;
@@ -504,6 +533,7 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		firstFrameColl->push_back(  firstFrame.release()   );
 		secondFrameColl->push_back( secondFrame.release()  );
 		thirdFrameColl->push_back(  thirdFrame.release()   );
+
 	      } else if ( ( ( eudrbGlobalMode == "Mixed" ) && ( eudrbSubMode[iDetector] == "ZS" ) ) ||
 			  ( eudrbGlobalMode == "ZS" ) ) {
 
@@ -537,6 +567,7 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		  // data
 		  auto_ptr<EUTelSimpleSparsePixel> sparsePixel( new EUTelSimpleSparsePixel );
 		  for (unsigned int iPixel = 0; iPixel < nPixel; iPixel++ ) {
+
 		    if ( _removeMarkerSwitch ) {
 		      // when removing the markers only the x
 		      // coordinate is affected.
@@ -548,13 +579,14 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 							     bind2nd(less<short> (), originalX ) );
 			sparsePixel->setXCoord( originalX - diff ) ;
 			sparsePixel->setYCoord( array.m_y[iPixel]   );
-			sparsePixel->setSignal( array.m_adc[0][iPixel] );
+			sparsePixel->setSignal( array.m_adc[0][iPixel] );		    
 			streamlog_out ( DEBUG0 ) << (* (sparsePixel.get() ) ) << endl;
 			sparseFrame->addSparsePixel( sparsePixel.get() ) ;
 		      } else {
 			streamlog_out ( DEBUG0 ) << "Found a sparse pixel ("<< iPixel 
 						   <<")  on a marker column. Not adding it to the frame" << endl
 						   << (* (sparsePixel.get() ) ) << endl;
+			
 		      }
 
 		    } else {
@@ -568,8 +600,30 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		  }
 		  zsFrameColl->push_back( zsFrame.release() ) ;
 		}
+
+		// also for the ZS put the pivot pixel in the
+		// synchronization vector for further check
+		pivotSynchVec[iDetector] = brd.PivotPixel();
+		
 	      }
 	    }
+
+	    // this is the right place to check the synchronization
+	    int maxVal = *(max_element( pivotSynchVec.begin(), pivotSynchVec.end() ));
+	    int minVal = *(min_element( pivotSynchVec.begin(), pivotSynchVec.end() ));
+	    
+	    if ( (maxVal - minVal) > _outOfSynchThr ) {
+	      streamlog_out ( WARNING0 ) << "Event number " << ev->GetEventNumber() << " seems to be out of synch " << endl;
+	      vector<unsigned int >::iterator iter = pivotSynchVec.begin();
+	      int iDetector = 0;
+	      while ( iter != pivotSynchVec.end() ) {
+		streamlog_out ( DEBUG0 ) << "Board " << iDetector << " " << *iter << endl;
+		++iter;
+		++iDetector;
+	      }
+	      outOfSynchFlag = true;
+	    }
+					 
 	  } else {
 	    streamlog_out (DEBUG3) << "Not a EUDRBEvent, very likely a TLUEvent " << endl;
 	  }
@@ -590,7 +644,12 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	// the event has to be released has well, but remember to
 	// delete it afterwards.
 	EUTelEventImpl * dummyEvt = event.release();
-	ProcessorMgr::instance()->processEvent( static_cast<LCEventImpl*> (dummyEvt) );
+	if ( !_skipOutOfSynch  || ( _skipOutOfSynch && !outOfSynchFlag )) {
+	  // process the events in the following cases:
+	  // 1. if the user doesn't care about the synch
+	  // 2. if the user cares about the synch, only if the flag is false
+	  ProcessorMgr::instance()->processEvent( static_cast<LCEventImpl*> (dummyEvt) );
+	} 
 	delete dummyEvt;
       }  catch (eudaq::Exception& e) {
 	message<ERROR> ( log() << e.what() << endl
