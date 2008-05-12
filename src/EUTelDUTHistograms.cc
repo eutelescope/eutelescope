@@ -1,8 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// @version: $Id: EUTelDUTHistograms.cc,v 1.3 2008-01-28 11:38:11 zarnecki Exp $
-// Date 2007.09.15
+// @version: $Id: EUTelDUTHistograms.cc,v 1.4 2008-05-12 21:26:41 zarnecki Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -111,6 +110,8 @@ std::string EUTelDUTHistograms::_EtaXHistoName      = "EtaX";
 std::string EUTelDUTHistograms::_EtaYHistoName      = "EtaY";
 std::string EUTelDUTHistograms::_EtaX2DHistoName    = "EtaX2D";
 std::string EUTelDUTHistograms::_EtaY2DHistoName    = "EtaY2D";
+std::string EUTelDUTHistograms::_EtaX3DHistoName    = "EtaX3D";
+std::string EUTelDUTHistograms::_EtaY3DHistoName    = "EtaY3D";
 
 #endif
 
@@ -139,6 +140,14 @@ EUTelDUTHistograms::EUTelDUTHistograms() : Processor("EUTelDUTHistograms") {
 			   std::string("hit") ) ;
 
   // other processor parameters:
+
+  registerProcessorParameter ("UseManualDUT",
+            "Flag for manual DUT selection",
+			      _useManualDUT,  static_cast < bool > (false));
+
+  registerProcessorParameter ("ManualDUTid",
+            "Id of telescope layer which should be used as DUT",
+			      _manualDUTid,  static_cast < int > (0));
 
   registerProcessorParameter ("DistMax",
 			      "Maximum allowed distance between fit and matched DUT hit",
@@ -212,6 +221,27 @@ void EUTelDUTHistograms::init() {
 
 #endif
 
+ if(_useManualDUT)
+    {
+    bool _manualOK=false;
+
+    for(int ipl=0; ipl <  _siPlanesLayerLayout->getNLayers(); ipl++)
+       if(_siPlanesLayerLayout->getID(ipl)==_manualDUTid)
+         {
+         _iDUT=_manualDUTid;
+         _zDUT=_siPlanesLayerLayout->getLayerPositionZ(ipl);
+         _manualOK=true;
+	 }
+
+    if(!_manualOK)
+      {
+       message<ERROR> ( log() << "Manual DUT flag set, layer not found ID = " 
+	<< _manualDUTid	
+        << "\n Program will terminate! Correct geometry description!"); 
+       exit(-1);
+       }
+    }
+ else
    if( _siPlanesParameters->getSiPlanesType()==_siPlanesParameters->TelescopeWithDUT )
      {
      _iDUT=_siPlanesLayerLayout->getDUTID();
@@ -649,6 +679,10 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
    (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaX2DHistoName]))->fill(_localX[besthit],_measuredX[besthit]-_fittedX[bestfit]);
 
    (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaY2DHistoName]))->fill(_localY[besthit],_measuredY[besthit]-_fittedY[bestfit]);
+
+   (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EtaX3DHistoName]))->fill(_localX[besthit],_localY[besthit],_measuredX[besthit]-_fittedX[bestfit]);
+
+   (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EtaY3DHistoName]))->fill(_localX[besthit],_localY[besthit],_measuredY[besthit]-_fittedY[bestfit]);
 
    // extend Eta histograms to 2 pitch range
 
@@ -1545,14 +1579,14 @@ void EUTelDUTHistograms::bookHistos()
 
 
 
- // Eta function check: measured - fitted position in X  vs  local Y
+ // Eta function check: measured - fitted position in X  vs  local X
 
     int etaXNBin  = 200;
     double etaXMin   = -0.03;
     double etaXMax   = 0.03;
     double etaVMin   = -0.03;
     double etaVMax   = 0.03;
-    string etaXTitle = "Measured - fitted X position vs local Y";
+    string etaXTitle = "Measured - fitted X position vs local X";
 
 
     if ( isHistoManagerAvailable ) 
@@ -1579,14 +1613,14 @@ void EUTelDUTHistograms::bookHistos()
 
 
 
- // Eta function check: measured - fitted position in Y vs local X 
+ // Eta function check: measured - fitted position in Y vs local Y 
 
     int etaYNBin  = 200;
     double etaYMin   = -0.03;
     double etaYMax   = 0.03;
     etaVMin   = -0.03;
     etaVMax   = 0.03;
-    string etaYTitle = "Measured - fitted Y position vs local X";
+    string etaYTitle = "Measured - fitted Y position vs local Y";
 
 
     if ( isHistoManagerAvailable ) 
@@ -1613,7 +1647,7 @@ void EUTelDUTHistograms::bookHistos()
 
 
 
- // Eta function check: measured - fitted position in X  vs local Y (2D plot)
+ // Eta function check: measured - fitted position in X  vs local X (2D plot)
 
     etaXNBin  = 200;
     etaXMin   = -0.03;
@@ -1621,7 +1655,7 @@ void EUTelDUTHistograms::bookHistos()
     int etaVNBin  = 200;
     etaVMin   = -0.03;
     etaVMax   = 0.03;
-    etaXTitle = "Measured - fitted X position vs local Y";
+    etaXTitle = "Measured - fitted X position vs local X";
 
 
     if ( isHistoManagerAvailable ) 
@@ -1649,7 +1683,7 @@ void EUTelDUTHistograms::bookHistos()
 
 
 
- // Measured - fitted position in Y vs X  (2D plot)
+ // Measured - fitted position in Y vs Y  (2D plot)
 
     etaYNBin  = 200;
     etaYMin   = -0.03;
@@ -1657,7 +1691,7 @@ void EUTelDUTHistograms::bookHistos()
     etaVNBin  = 200;
     etaVMin   = -0.03;
     etaVMax   = 0.03;
-    etaYTitle = "Measured - fitted Y position vs local X";
+    etaYTitle = "Measured - fitted Y position vs local Y";
 
 
     if ( isHistoManagerAvailable ) 
@@ -1682,6 +1716,84 @@ void EUTelDUTHistograms::bookHistos()
 
     _aidaHistoMap.insert(make_pair(_EtaY2DHistoName, etaY2DHisto));
 
+
+
+ // Eta function check: measured - fitted position in X  vs  local X-Y ("3D")
+
+    etaXNBin  = 200;
+    etaXMin   = -0.03;
+    etaXMax   = 0.03;
+    etaYNBin  = 200;
+    etaYMin   = -0.03;
+    etaYMax   = 0.03;
+    etaVMin   = -0.03;
+    etaVMax   = 0.03;
+    etaXTitle = "Measured - fitted X position vs local X-Y";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_EtaX3DHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 etaXNBin = histoInfo->_xBin;
+	 etaXMin  = histoInfo->_xMin;
+	 etaXMax  = histoInfo->_xMax;
+	 etaYNBin = histoInfo->_yBin;
+	 etaYMin  = histoInfo->_yMin;
+	 etaYMax  = histoInfo->_yMax;
+	 etaVMin  = histoInfo->_zMin;
+	 etaVMax  = histoInfo->_zMax;
+	 if ( histoInfo->_title != "" ) etaXTitle = histoInfo->_title;
+         }
+      }
+
+
+    AIDA::IProfile2D * etaX3DHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_EtaX3DHistoName.c_str(),etaXNBin,etaXMin,etaXMax,etaYNBin,etaYMin,etaYMax,etaVMin,etaVMax);
+
+    etaX3DHisto->setTitle(etaXTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_EtaX3DHistoName, etaX3DHisto));
+
+
+
+ // Eta function check: measured - fitted position in Y vs local X-Y ("3D") 
+
+    etaXNBin  = 200;
+    etaXMin   = -0.03;
+    etaXMax   = 0.03;
+    etaYNBin  = 200;
+    etaYMin   = -0.03;
+    etaYMax   = 0.03;
+    etaVMin   = -0.03;
+    etaVMax   = 0.03;
+    etaYTitle = "Measured - fitted Y position vs local X-Y";
+
+
+    if ( isHistoManagerAvailable ) 
+      {
+      histoInfo = histoMgr->getHistogramInfo(_EtaY3DHistoName);
+      if ( histoInfo ) 
+         {
+	 message<DEBUG> ( log() << (* histoInfo ) );
+	 etaXNBin = histoInfo->_xBin;
+	 etaXMin  = histoInfo->_xMin;
+	 etaXMax  = histoInfo->_xMax;
+	 etaYNBin = histoInfo->_yBin;
+	 etaYMin  = histoInfo->_yMin;
+	 etaYMax  = histoInfo->_yMax;
+	 etaVMin  = histoInfo->_zMin;
+	 etaVMax  = histoInfo->_zMax;
+	 if ( histoInfo->_title != "" ) etaYTitle = histoInfo->_title;
+         }
+      }
+
+    AIDA::IProfile2D * etaY3DHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_EtaY3DHistoName.c_str(),etaXNBin,etaXMin,etaXMax,etaYNBin,etaYMin,etaYMax,etaVMin,etaVMax);
+
+    etaY3DHisto->setTitle(etaYTitle.c_str());
+
+    _aidaHistoMap.insert(make_pair(_EtaY3DHistoName, etaY3DHisto));
 
 
 // List all booked histogram - check of histogram map filling

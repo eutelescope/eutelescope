@@ -51,6 +51,11 @@ namespace eutelescope {
    * \param InputHitCollectionName  Name of the input TrackerHit collection,
    *  from which DUT hits are taken 
    *
+   * \param UseManualDUT Flag for manual DUT selection 
+   *                      i.e. ignoring GEAR definition
+   *
+   * \param ManualDUTid  Id of telescope layer which should be used as DUT
+   *
    * \param DUTalignment Alignment corrections for DUT: shift in X, Y
    *                     and rotation around Z
    *
@@ -70,8 +75,7 @@ namespace eutelescope {
    * debug information is printed. 
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelDUTHistograms.h,v 1.3 2008-01-28 11:38:11 zarnecki Exp $
-   * \date 2007.09.15
+   * @version $Id: EUTelDUTHistograms.h,v 1.4 2008-05-12 21:26:41 zarnecki Exp $
    *
    */ 
 
@@ -178,6 +182,14 @@ namespace eutelescope {
     //! Input \c TrackerHit collection name
     std::string _inputHitColName ;
 
+    //! Flag for manual DUT selection 
+
+    bool _useManualDUT;
+
+    //! Id of telescope layer which should be used as DUT
+
+    int _manualDUTid;
+
     //!  Debug print out for one out of given number of events.
     int _debugCount ;
 
@@ -268,6 +280,8 @@ namespace eutelescope {
     static std::string _EtaYHistoName;
     static std::string _EtaX2DHistoName;
     static std::string _EtaY2DHistoName;
+    static std::string _EtaX3DHistoName;
+    static std::string _EtaY3DHistoName;
 
 
 #endif 
