@@ -72,6 +72,7 @@ std::string EUTelMultiLineFit::_residualYLocalname      = "ResidualY";
 std::string EUTelMultiLineFit::_positionXYLocalname     = "PositionXY";
 std::string EUTelMultiLineFit::_seedChargeLocalname     = "SeedCharge";
 std::string EUTelMultiLineFit::_clusterChargeLocalname  = "ClusterCharge";
+std::string EUTelMultiLineFit::_hitDistanceLocalname    = "HitDistance";
 #endif
 
 EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
@@ -184,6 +185,12 @@ EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
   registerOptionalParameter("MaxHitsPlane","Maximal number of hits per plane"
 			    ,_maxHitsPlane, static_cast <int> (100));
 
+  registerOptionalParameter("HitDistanceXMax","Maximal |x| for calculation of efficiencies",
+			    _hitDistanceXMax, static_cast <float> (2500.0));
+
+  registerOptionalParameter("HitDistanceYMax","Maximal |y| for calculation of efficiencies",
+			    _hitDistanceYMax, static_cast <float> (2500.0));
+
 }
 
 void EUTelMultiLineFit::init() {
@@ -195,6 +202,12 @@ void EUTelMultiLineFit::init() {
   _iRun = 0;
   _iEvt = 0;
   
+  // set to zero hit efficiency counters
+  _iHitDUT = 0;
+  for ( int help = 0; help < 10; help++) {
+    _iHitDUTDistanceCut[help] = 0;
+  }
+
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
   
@@ -1081,7 +1094,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 #ifdef MARLIN_USE_AIDA
 
 	string tempHistoName;
-	
+
+	// Fill x angle histogram
 	if ( _histogramSwitch ) {
 	  {
 	    stringstream ss; 
@@ -1095,7 +1109,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	    _histogramSwitch = false;
 	  }       
 	}
-	
+
+	// Fill y angle histogram
 	if ( _histogramSwitch ) {
 	  {
 	    stringstream ss; 
@@ -1109,10 +1124,47 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	    _histogramSwitch = false;
 	  }       
 	}
-    
-    
-	for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
+
+	// Fill hit distance histogram
+	if ( _excludePlane > 0) {
 	  
+	  // exclude border region
+	  if (fabs(_xPosHere[(_excludePlane - 1)] < _hitDistanceXMax) && fabs(_yPosHere[(_excludePlane - 1)]) < _hitDistanceYMax) {
+
+	    double hitDistance = sqrt(_waferResidX[(_excludePlane - 1)] * _waferResidX[(_excludePlane - 1)] + _waferResidY[(_excludePlane - 1)] * _waferResidY[(_excludePlane - 1)]);
+
+	    _iHitDUT = _iHitDUT + 1;
+
+	    // loop over all distance cuts
+	    for ( int help = 0; help < 10; help++ ) {
+	      // distance cut
+	      if ( hitDistance < (help * 20 + 20)) {
+		_iHitDUTDistanceCut[help] = _iHitDUTDistanceCut[help] + 1;
+	      } // end if distance cut
+	    } // end loop over all distance cuts
+
+	    if ( _histogramSwitch ) {
+	      {
+		stringstream ss; 
+		ss << _hitDistanceLocalname << endl;
+	      }
+	      if ( AIDA::IHistogram1D* hitdistance_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_hitDistanceLocalname]) )
+		hitdistance_histo->fill(hitDistance);
+	      else {
+		streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _hitDistanceLocalname << endl;
+		streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+		_histogramSwitch = false;
+	      }
+	    }
+	  
+	  } // end if exclude border region
+
+	}
+
+	// loop over all detector planes
+	for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
+
+	  // fill x residuals histograms
 	  if ( _histogramSwitch ) {
 	    {
 	      stringstream ss; 
@@ -1127,7 +1179,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	      _histogramSwitch = false;
 	    }       
 	  }
-	  
+
+	  // fill y residuals histograms
 	  if ( _histogramSwitch ) {
 	    {
 	      stringstream ss; 
@@ -1143,6 +1196,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	    }       
 	  }
 
+	  // fill seed charge histograms
 	  if ( _histogramSwitch ) {
 	    {
 	      stringstream ss; 
@@ -1158,6 +1212,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	    }       
 	  }
 
+	  // fill cluster charge histograms
 	  if ( _histogramSwitch ) {
 	    {
 	      stringstream ss; 
@@ -1173,6 +1228,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	    }       
 	  }
 
+	  // fill xy positions histograms
 	  if ( _histogramSwitch ) {
 	    {
 	      stringstream ss; 
@@ -1188,7 +1244,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	    }       
 	  }
 
-	}
+	} // end loop over all detector planes
 	
 #endif 
 
@@ -1268,6 +1324,14 @@ void EUTelMultiLineFit::end() {
 
   streamlog_out ( MESSAGE2 ) << "Successfully finished" << endl;  
 
+  // information on DUT efficiency
+  if (_excludePlane > 0) {
+    // loop over all distance cuts
+    for ( int help = 0; help < 10; help++) {
+      streamlog_out ( MESSAGE2 ) << "DUT efficiency (distance < " << (help * 20 + 20) << " mu m :" << (double(_iHitDUTDistanceCut[help]) / _iHitDUT) << endl;
+    } // end loop over all distance cuts
+  }
+
 }
 
 void EUTelMultiLineFit::bookHistos() {
@@ -1279,12 +1343,15 @@ void EUTelMultiLineFit::bookHistos() {
     streamlog_out ( MESSAGE2 ) << "Booking histograms" << endl;
     
     const int    NBin = 10000;
-    const double Chi2Min  = 0.;      
-    const double Chi2Max  = 10000.;      
-    const double Min  = -5000.;
-    const double Max  = 5000.;
-    const double angleMin  = -3.;
-    const double angleMax  = 3.;
+    const double Chi2Min  = 0.0;      
+    const double Chi2Max  = 10000.0;      
+    const double Min  = -5000.0;
+    const double Max  = 5000.0;
+    const double angleMin  = -3.0;
+    const double angleMax  = 3.0;
+    const int    NBinHitDistance = 3000;
+    const double hitDistanceMin = 0.0;
+    const double hitDistanceMax = 3000.0;
     const double tracksMin = -0.5;
     const double tracksMax = 19.5;
     const double snrMin = 0.0;
@@ -1347,6 +1414,17 @@ void EUTelMultiLineFit::bookHistos() {
       _aidaHistoMap.insert( make_pair( _angleYLocalname, angleYLocal ) );
     } else {
       streamlog_out ( ERROR2 ) << "Problem booking the " << (_angleYLocalname) << endl;
+      streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+      _histogramSwitch = false;
+    }
+
+    AIDA::IHistogram1D * hitDistanceLocal = 
+      AIDAProcessor::histogramFactory(this)->createHistogram1D(_hitDistanceLocalname,NBinHitDistance,hitDistanceMin,hitDistanceMax);
+    if ( hitDistanceLocal ) {
+      angleYLocal->setTitle("Distance of hit to predicted position");
+      _aidaHistoMap.insert( make_pair( _hitDistanceLocalname, hitDistanceLocal ) );
+    } else {
+      streamlog_out ( ERROR2 ) << "Problem booking the " << (_hitDistanceLocalname) << endl;
       streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
       _histogramSwitch = false;
     }

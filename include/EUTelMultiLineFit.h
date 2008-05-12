@@ -165,6 +165,8 @@ namespace eutelescope {
     int _excludePlane;
     int _maxTrackCandidates;
     int _maxHitsPlane;
+    float _hitDistanceXMax;
+    float _hitDistanceYMax;
 
   private:
     
@@ -232,6 +234,8 @@ namespace eutelescope {
 
     static std::string _seedChargeLocalname;
     static std::string _clusterChargeLocalname;
+
+    static std::string _hitDistanceLocalname;
 #endif
 
     int _nPlanes;
@@ -256,6 +260,10 @@ namespace eutelescope {
     /*! Only for debug reason
      */
     bool _histogramSwitch;
+
+    // arrays for efficiency calculation
+    int _iHitDUT;
+    int _iHitDUTDistanceCut[10];
 
   };
 
