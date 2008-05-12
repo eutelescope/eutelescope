@@ -1,0 +1,561 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
+
+// Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
+// Version: $Id: EUTelFitTuple.cc,v 1.0 2008-05-12 16:59:20 zarnecki Exp $
+// Date 2007.09.10
+
+/*
+ *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
+ */
+
+// eutelescope inlcudes
+#include "EUTelFitTuple.h"
+#include "EUTelVirtualCluster.h"
+#include "EUTelFFClusterImpl.h"
+#include "EUTELESCOPE.h"
+#include "EUTelEventImpl.h"
+#include "EUTelRunHeaderImpl.h"
+#include "EUTelHistogramManager.h"
+#include "EUTelExceptions.h"
+
+#ifdef MARLIN_USE_AIDA
+#include <marlin/AIDAProcessor.h>
+#include <AIDA/ITupleFactory.h>
+#endif
+
+// marlin includes ".h"
+#include "marlin/Processor.h"
+#include "marlin/Exceptions.h"
+#include "marlin/Global.h"
+
+// gear includes <.h>
+#include <gear/GearMgr.h>
+#include <gear/SiPlanesParameters.h>
+
+
+#include <EVENT/LCCollection.h>
+#include <EVENT/LCEvent.h>
+#include <IMPL/LCCollectionVec.h>
+#include <IMPL/TrackerHitImpl.h>
+#include <IMPL/TrackImpl.h>
+#include <IMPL/LCFlagImpl.h>
+#include <Exceptions.h>
+
+#include <iostream>
+#include <fstream>
+#include <cmath>
+#include <sstream>
+#include <memory>
+#include <string>
+#include <vector>
+#include <map>
+
+
+using namespace std;
+using namespace lcio ;
+using namespace marlin ;
+using namespace eutelescope;
+
+// definition of static members mainly used to name histograms
+#ifdef MARLIN_USE_AIDA
+std::string EUTelFitTuple::_FitTupleName  = "EUFit";
+#endif
+
+
+EUTelFitTuple::EUTelFitTuple() : Processor("EUTelFitTuple") {
+  
+  // modify processor description
+  _description = "Prepare n-tuple with track fit results" ;
+  
+
+  // register steering parameters: 
+  //       name, description, class-variable, default value
+
+  // input collection first:
+
+  registerInputCollection( LCIO::TRACK,
+			   "InputCollectionName" , 
+			   "Name of the input Track collection"  ,
+			   _inputColName ,
+			   std::string("testfittracks") ) ;
+
+  // other processor parameters:
+
+
+  registerProcessorParameter ("DebugEventCount",
+			      "Print out every DebugEnevtCount event",
+			      _debugCount,  static_cast < int > (100));
+
+  registerProcessorParameter ("MissingValue",
+			      "Value used for missing measurements",
+			      _missingValue,  static_cast < double > (-100.));
+
+
+}
+
+
+void EUTelFitTuple::init() { 
+
+  // usually a good idea to
+  printParameters() ;
+
+  _nRun = 0 ;
+  _nEvt = 0 ;
+
+  // check if Marlin was built with GEAR support or not
+#ifndef USE_GEAR
+
+  message<ERROR> ( "Marlin was not built with GEAR support." );
+  message<ERROR> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
+  
+  // I'm thinking if this is the case of throwing an exception or
+  // not. This is a really error and not something that can
+  // exceptionally happens. Still not sure what to do
+  exit(-1);
+
+#else
+
+  // check if the GEAR manager pointer is not null!
+  if ( Global::GEAR == 0x0 ) {
+    message<ERROR> ( "The GearMgr is not available, for an unknown reason." );
+    exit(-1);
+  }
+
+  // Read geometry information from GEAR
+
+  message<MESSAGE> ( log() << "Reading telescope geometry description from GEAR ") ;
+
+  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
+  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
+
+#endif
+
+// Take all layers defined in GEAR geometry
+  _nTelPlanes = _siPlanesLayerLayout->getNLayers();
+
+// Check for DUT
+
+   if( _siPlanesParameters->getSiPlanesType()==_siPlanesParameters->TelescopeWithDUT )
+        {
+      _iDUT = _nTelPlanes ;
+      _nTelPlanes++;
+        }
+   else
+       _iDUT = -1 ;
+
+// Read position in Z (for sorting)
+
+  _planeSort = new int[_nTelPlanes];
+  _planePosition   = new double[_nTelPlanes];
+
+  for(int ipl=0; ipl <  _siPlanesLayerLayout->getNLayers(); ipl++)
+    {
+    _planePosition[ipl]=_siPlanesLayerLayout->getLayerPositionZ(ipl);
+    _planeSort[ipl]=ipl;
+    }
+
+  if(_iDUT>0)
+      {
+      _planePosition[_iDUT]=_siPlanesLayerLayout->getDUTPositionZ();
+      _planeSort[_iDUT]=_iDUT;
+      }
+
+ // Binary sorting
+
+   bool sorted;
+   do{
+   sorted=false;
+   for(int iz=0; iz<_nTelPlanes-1 ; iz++)
+      if(_planePosition[iz]>_planePosition[iz+1])
+         {
+         double _posZ = _planePosition[iz];
+         _planePosition[iz] = _planePosition[iz+1];
+         _planePosition[iz+1] = _posZ;
+
+         int _idZ = _planeSort[iz];
+         _planeSort[iz] = _planeSort[iz+1];
+         _planeSort[iz+1] = _idZ;
+
+         sorted=true;
+         }
+
+     }while(sorted);
+
+// Book local geometry arrays
+
+  _planeID         = new int[_nTelPlanes];
+  _isActive        = new bool[_nTelPlanes];
+
+// Fill remaining layer parameters 
+
+  for(int iz=0; iz < _nTelPlanes ; iz++)
+    {
+      int ipl=_planeSort[iz];
+
+      double resolution;
+
+      if(ipl != _iDUT )
+         {
+      _planeID[iz]=_siPlanesLayerLayout->getID(ipl);
+      resolution = _siPlanesLayerLayout->getSensitiveResolution(ipl);
+        }
+      else
+         {
+      _planeID[iz]=_siPlanesLayerLayout->getDUTID();
+       resolution = _siPlanesLayerLayout->getDUTSensitiveResolution();
+        }
+
+      _isActive[iz] = (resolution > 0);
+
+ 
+    }
+
+  // Get new DUT position (after sorting)
+
+  for(int iz=0;iz< _nTelPlanes ; iz++)
+    if(_planeSort[iz]==_iDUT)
+       {
+        _iDUT=iz;
+        break;
+       }
+
+
+  // Print out geometry information
+
+  message<MESSAGE> ( log() << "Telescope configuration with " << _nTelPlanes << " planes" );
+
+
+  for(int ipl=0; ipl < _nTelPlanes; ipl++)
+    {
+      stringstream ss ; 
+      if(ipl == _iDUT)
+	ss << "D.U.T.  plane" ;
+      else
+	if(_isActive[ipl])
+	  ss << "Active  plane" ;
+	else
+	  ss << "Passive plane" ; 
+      
+      ss << "  ID = " << _planeID[ipl]
+         << "  at Z [mm] = " << _planePosition[ipl]; 
+      
+      message<MESSAGE> ( log() << ss.str() );
+    }
+
+  
+    // Allocate arrays for track fitting
+
+  _isMeasured      = new bool[_nTelPlanes];
+  _isFitted        = new bool[_nTelPlanes];
+
+  _measuredX     = new double[_nTelPlanes];
+  _measuredY     = new double[_nTelPlanes];
+  _measuredQ     = new double[_nTelPlanes];
+  _fittedX       = new double[_nTelPlanes];
+  _fittedY       = new double[_nTelPlanes];
+
+
+// Book histograms
+
+#ifdef MARLIN_USE_AIDA
+    bookHistos();
+#endif
+
+}
+
+void EUTelFitTuple::processRunHeader( LCRunHeader* runHeader) { 
+
+  auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
+  eutelHeader->addProcessor( type() );
+  
+  _nRun++ ;
+
+  // Decode and print out Run Header information - just a check
+
+  _runNr = runHeader->getRunNumber();
+  
+  message<MESSAGE> ( log() << "Processing run header " << _nRun 
+		     << ", run nr " << _runNr );
+
+  const std::string detectorName = runHeader->getDetectorName();
+  const std::string detectorDescription = runHeader->getDescription();
+  const std::vector<std::string> * subDets = runHeader->getActiveSubdetectors();
+
+  message<MESSAGE> ( log() << detectorName << " : " << detectorDescription ) ;
+
+  int nDet = subDets->size();
+
+  if(nDet)message<MESSAGE> ( log() << nDet << " subdetectors defined :" );
+  stringstream ss;
+  for(int idet=0;idet<nDet;idet++)  message<MESSAGE> (log()  << idet+1 << " : " << subDets->at(idet) );
+
+
+} 
+
+void EUTelFitTuple::processEvent( LCEvent * event ) { 
+  
+  EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
+  if ( euEvent->getEventType() == kEORE ) {
+    message<DEBUG> ( "EORE found: nothing else to do." );
+    return;
+  }
+
+  bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
+
+  _nEvt ++ ;
+  _evtNr = event->getEventNumber();
+
+
+  if(debug)message<DEBUG> ( log() << "Processing record " << _nEvt << " == event " << _evtNr );
+
+  LCCollection* col;
+  try {
+    col = event->getCollection( _inputColName ) ;
+  } catch (lcio::DataNotAvailableException& e) {
+    message<ERROR> ( log() << "Not able to get collection " 
+		     << _inputColName 
+		     << "\nfrom event " << event->getEventNumber()
+		     << " in run " << event->getRunNumber()  );
+   throw SkipEventException(this);
+  }
+    
+
+  // Loop over tracks in input collections
+
+  int nTrack = col->getNumberOfElements()  ;
+
+  if(debug)message<DEBUG> ( log() << "Total of " << nTrack << " tracks in input collection " );
+
+
+  for(int itrack=0; itrack< nTrack ; itrack++)
+    {
+      Track * fittrack = dynamic_cast<Track*>( col->getElementAt(itrack) ) ;
+
+      // Hit list assigned to track
+
+      std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getTrackerHits();
+
+  // Copy hits assign to the track to local table
+  // Assign hits to sensor planes
+
+
+   int nHit =   trackhits.size();
+
+   if(debug)message<DEBUG> ( log() << "Track " << itrack << " with " << nHit << " hits, Chi2 = "
+			     << fittrack->getChi2() << "/" << fittrack->getNdf());
+
+
+ // Clear plane tables
+
+      for(int ipl=0;ipl<_nTelPlanes;ipl++)
+	{
+	  _isMeasured[ipl]=false;
+	  _isFitted[ipl]=false;
+
+          _measuredX[ipl]=_missingValue;
+          _measuredY[ipl]=_missingValue;
+          _measuredQ[ipl]=_missingValue;
+
+          _fittedX[ipl]=_missingValue;
+          _fittedY[ipl]=_missingValue;
+
+        }
+
+
+ // Loop over hits and fill hit tables
+
+  for(int ihit=0; ihit< nHit ; ihit++)
+    {
+      TrackerHit * meshit = trackhits.at(ihit); 
+
+      // Hit position
+
+      const double * pos = meshit->getPosition();
+
+      // We find plane number of the hit
+      // by looking at the Z position
+
+      double distMin = 1.;
+      int hitPlane = -1 ;
+
+      for(int ipl=0;ipl<_nTelPlanes;ipl++)
+	{
+	  double dist =  pos[2] - _planePosition[ipl] ;
+
+	  if(dist*dist < distMin*distMin)
+	    {
+	      hitPlane=ipl;
+	      distMin=dist;
+	    }
+	}
+
+      // Ignore hits not matched to any plane
+
+      if(hitPlane<0) 
+        {
+	message<ERROR> ( log() << "Hit outside telescope plane at z [mm] = "  << pos[2] );
+        continue;
+        }
+
+
+      if( meshit->getType() < 32 )
+        {
+	  // Measured hits
+
+	  _isMeasured[hitPlane]=true;
+
+          _measuredX[hitPlane]=pos[0];
+          _measuredY[hitPlane]=pos[1];
+
+	  // Get cluster charge
+
+          _measuredQ[hitPlane]=0.;
+
+	  EVENT::LCObjectVec rawdata =  meshit->getRawHits();
+
+          if(rawdata.size()>0 && rawdata.at(0)!=NULL )
+	    {
+	    EUTelVirtualCluster * cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> (rawdata.at(0))) ;
+            _measuredQ[hitPlane]=cluster->getTotalCharge();
+	    }
+
+         if(debug)message<DEBUG> ( log() << "Measured hit in plane " << hitPlane << " at  X = " 
+			          << pos[0] << ", Y = " << pos[1] << ", Q = " << _measuredQ[hitPlane] );
+
+	}
+      else
+	{
+	  // Fitted hits
+
+	  _isFitted[hitPlane]=true;
+
+          _fittedX[hitPlane]=pos[0];
+          _fittedY[hitPlane]=pos[1];
+
+         if(debug)message<DEBUG> ( log() << "Fitted  hit  in plane " << hitPlane << " at  X = " 
+			          << pos[0] << ", Y = " << pos[1] );
+
+	}
+
+    }
+
+  // Fill n-tuple
+
+  _FitTuple->fill(0,_nEvt);
+  _FitTuple->fill(1,_runNr);
+  _FitTuple->fill(2,_evtNr);
+  _FitTuple->fill(3,fittrack->getNdf());
+  _FitTuple->fill(4,fittrack->getChi2());
+
+  int icol=5;
+   for(int ipl=0; ipl<_nTelPlanes;ipl++)
+     {
+     _FitTuple->fill(icol++,_measuredX[ipl]); 
+     _FitTuple->fill(icol++,_measuredY[ipl]); 
+     _FitTuple->fill(icol++,_measuredQ[ipl]); 
+     _FitTuple->fill(icol++,_fittedX[ipl]); 
+     _FitTuple->fill(icol++,_fittedY[ipl]); 
+     } 
+
+  _FitTuple->addRow();
+
+  // End of loop over tracks
+    }
+
+
+  return;
+}
+
+
+
+void EUTelFitTuple::check( LCEvent * evt ) { 
+  // nothing to check here - could be used to fill checkplots in reconstruction processor
+}
+
+
+void EUTelFitTuple::end(){ 
+  
+  //   std::cout << "EUTelFitTuple::end()  " << name() 
+  // 	    << " processed " << _nEvt << " events in " << _nRun << " runs "
+  // 	    << std::endl ;
+
+#ifdef MARLIN_USE_AIDA
+
+  message<MESSAGE> ( log() << "N-tuple with " 
+		     << _FitTuple->rows() << " rows created" );
+
+ 
+  // Clean memory 
+
+  delete [] _planeSort ;
+  delete [] _planePosition ;
+  delete [] _planeID ;
+  delete [] _isActive ;
+
+  delete [] _isMeasured ;
+  delete [] _isFitted ;
+  delete [] _measuredX  ;
+  delete [] _measuredY  ;
+  delete [] _measuredQ  ;
+  delete [] _fittedX ;
+  delete [] _fittedY ;
+
+#endif
+
+}
+
+
+
+void EUTelFitTuple::bookHistos() 
+{
+
+#ifdef MARLIN_USE_AIDA
+
+  message<MESSAGE> ( log() << "Booking fit n-tuple \n" );
+
+  std::vector<std::string> _columnNames;
+  std::vector<std::string> _columnType;
+
+  _columnNames.push_back("Event");
+  _columnType.push_back("int");
+
+  _columnNames.push_back("RunNr");
+  _columnType.push_back("int");
+
+  _columnNames.push_back("EvtNr");
+  _columnType.push_back("int");
+
+  _columnNames.push_back("Ndf");
+  _columnType.push_back("int");
+
+  _columnNames.push_back("Chi2");
+  _columnType.push_back("float");
+
+  char * _varName[] = { "measX", "measY" , "measQ", "fitX", "fitY" };
+
+  for(int ipl=0; ipl<_nTelPlanes;ipl++)
+    for(int ivar=0; ivar<5;ivar++)
+    {
+      stringstream ss;
+      ss << _varName[ivar] << "_" << ipl;
+      _columnNames.push_back(ss.str());
+      _columnType.push_back("double");
+    }
+
+
+  _FitTuple=AIDAProcessor::tupleFactory(this)->create(_FitTupleName, _FitTupleName, _columnNames, _columnType, "");
+
+
+  message<DEBUG> ( log() << "Booking completed \n\n");
+  
+#else
+  message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
+#endif
+
+return;
+}
