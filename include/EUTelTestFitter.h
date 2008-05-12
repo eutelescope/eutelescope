@@ -150,6 +150,10 @@ namespace eutelescope {
    *        influence the fit, but can slow down the algorithm
    *        (increase fit matrix size). 
    *
+   * \param PassiveLayerIDs Ids of layers which are described as
+   *        active layers in GEAR but should be treated as passive in
+   *        the fit (their data should be ignored). 
+   *
    * \param AlignLayerIDs Ids of layers for which alignment corrections
    *        should be applied
    * \param AlignLayerShiftX Shifts in X, which should be applied to
@@ -181,7 +185,7 @@ namespace eutelescope {
    *  \li Interface to LCCD (alignment)
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelTestFitter.h,v 1.12 2008-01-27 22:55:31 zarnecki Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.13 2008-05-12 16:57:04 zarnecki Exp $
    * \date 2007.10.30
    *
    */ 
@@ -337,6 +341,7 @@ namespace eutelescope {
     bool _OutputHitsInTrack;
 
     std::vector<int >   _SkipLayerIDs;
+    std::vector<int >   _PassiveLayerIDs;
 
     std::vector<int >   _AlignLayerIDs;
     std::vector<float > _AlignLayerShiftX;

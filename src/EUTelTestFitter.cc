@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.19 2008-01-27 22:55:19 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.20 2008-05-12 16:56:48 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -171,6 +171,10 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
                              "Ids of layers which should NOT be included in the fit",
                              _SkipLayerIDs, initLayerIDs);
 
+  registerOptionalParameter ("PassiveLayerIDs",
+                          "Ids of layers which should be treated as passive in the fit",
+                             _PassiveLayerIDs, initLayerIDs);
+
   registerOptionalParameter ("AlignLayerIDs",
                              "Ids of layers for which alignment corrections are given",
                              _AlignLayerIDs, initLayerIDs);
@@ -289,6 +293,9 @@ void EUTelTestFitter::init() {
  if( _SkipLayerIDs.size() )
       message<MESSAGE> ( log() <<  _SkipLayerIDs.size() << " layers should be skipped") ;
 
+ if( _PassiveLayerIDs.size() )
+      message<MESSAGE> ( log() <<  _PassiveLayerIDs.size() << " layers should be considered passive") ;
+
 // Active planes only:
 //  _nTelPlanes = _siPlanesParameters->getSiPlanesNumber();
 
@@ -337,9 +344,8 @@ void EUTelTestFitter::init() {
   
   if(_iDUT>0)
       {
-      _iDUT-=nSkip;
-      _planePosition[_iDUT]=_siPlanesLayerLayout->getDUTPositionZ();
-      _planeSort[_iDUT]=_iDUT;
+      _planePosition[_iDUT-nSkip]=_siPlanesLayerLayout->getDUTPositionZ();
+      _planeSort[_iDUT-nSkip]=_iDUT;
       }
 
  // Binary sorting
@@ -405,6 +411,18 @@ void EUTelTestFitter::init() {
         }
 
       iActive = (resolution > 0);
+
+// Check passive layer list
+
+      for(int ppl=0; ppl< (int)_PassiveLayerIDs.size() ; ppl++)
+        if ( _PassiveLayerIDs.at(ppl) == _planeID[iz])
+         {
+         message<MESSAGE> ( log() <<  "Force passive layer ID " << _planeID[iz] 
+          << " at Z = " << _planePosition[iz] ) ;
+          iActive = false;
+         break;
+         }
+ 
  
       if(iActive && (ipl != _iDUT || _useDUT ))
 	{
@@ -720,8 +738,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
       if(hitPlane[ihit]<0) {
 
-	message<ERROR> ( log() << "Reconstructed hit outside sensor planes z [mm] = "  << hitZ[ihit] );
-
+	if(debug)
+            message<ERROR> ( log() << "Reconstructed hit outside sensor planes z [mm] = "  << hitZ[ihit] );
+	continue;
       }
 
       // Ignore hit, if plane not declared as active (i.e. not used in the fit)
