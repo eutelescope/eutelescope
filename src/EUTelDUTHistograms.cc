@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// @version: $Id: EUTelDUTHistograms.cc,v 1.4 2008-05-12 21:26:41 zarnecki Exp $
+// @version: $Id: EUTelDUTHistograms.cc,v 1.5 2008-05-14 21:11:15 zarnecki Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -326,6 +326,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
     
 
   LCCollection* hitcol;
+  bool _DUTok=true;
   try {
     hitcol = event->getCollection( _inputHitColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
@@ -333,7 +334,12 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 		     << _inputHitColName 
 		     << "\nfrom event " << event->getEventNumber()
 		     << " in run " << event->getRunNumber()  );
-   throw SkipEventException(this);
+   _DUTok=false;
+   //
+   // Do not skip event if DUT hits missing - efficiency and
+   //   background calculations still have to be done!
+   //
+   //   throw SkipEventException(this);
   }
     
   // Clear local fit storage tables
@@ -531,7 +537,9 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   // Loop over hits in input collection
   // Read measured positions at DUT
 
-  int nHit = hitcol->getNumberOfElements()  ;
+  int nHit = 0;
+
+  if(_DUTok) nHit = hitcol->getNumberOfElements();
 
   if(debug)message<DEBUG> ( log() << "Total of " << nHit << " tracker hits in input collection " );
 
@@ -716,11 +724,11 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
    // Noise plots
 
-   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_NoiseXHistoName]))->fill(_measuredX[bestfit],0.);
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_NoiseXHistoName]))->fill(_measuredX[besthit],0.);
 
-   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_NoiseYHistoName]))->fill(_measuredY[bestfit],0.);
+   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_NoiseYHistoName]))->fill(_measuredY[besthit],0.);
 
-   (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_NoiseXYHistoName]))->fill(_measuredX[bestfit],_measuredY[bestfit],0.);
+   (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_NoiseXYHistoName]))->fill(_measuredX[besthit],_measuredY[besthit],0.);
 
 
    // Remove matched entries from the list (so the next matching pair
