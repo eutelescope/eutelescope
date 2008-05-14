@@ -35,37 +35,50 @@
 namespace eutelescope {
 
 
-  //! Fitted track analysis processor for EUDET Telescope
-  /*! This processor was designed for checking track fitting results.
-   *  Based on measured and fitted hit positions in telescope planes
-   *  alignment of the telescope is also verified. 
+  //! Processor for building n-tuple with track fit results
+  /*! This processor prepared for easier analysis of track fitting results.
+   *  Results stored in \c Track collection are used: number of fitted
+   *  planes, measured positions (XY) in these planes, Chi2 of the fit
+   *  and fitted XY positions in each plane. Also positions measured
+   *  in DUT can be included.
    *
    * \par Geometry description
-   * Geometry information is taken from GEAR.
+   * Geometry information is taken from GEAR. However, it is possible
+   * to select DUT layer ID manually.
    *
    * \par Input  
    * \c Track collection is taken as an input. 
    * For each track referenced \c TrackerHit entries are analysed.
    * Measured and fitted hits can be distinguished by looking into
    * hit type (type <=31 for measured hits, type >=32 for fitted). 
-   * 
+   * DUT measuterents are taken directly from \c TrackerHit
+   * collection. Hits belonging to DUT are identified by Z position.
+   *
    * \param InputCollectionName  Name of the input  Tracker collection
    *
-   * \param BeamReferenceID ID of the layer used to check alignment 
-   *        relative to the beam direction
+   * \param InputDUTCollectionName  Name of the input TrackerHit
+   *        collection, from which DUT hits are taken 
    *
-   * \param TelescopeReferenceIDs IDs of two layers used to check 
-   *        internal telescope alignment 
+   * \param UseManualDUT Flag for manual DUT selection 
+   *                      i.e. ignoring GEAR definition
    *
-   * \param HistoInfoFileName Name of the histogram information file.
-   *        Using this file histogram parameters can be changed without 
-   *        recompiling the code.
+   * \param ManualDUTid  Id of telescope layer which should be used as DUT
+   *
+   * \param DUTalignment Alignment corrections for DUT: shift in X, Y
+   *                     and rotation around Z
+   *
+   * \param DistMax Maximum allowed distance between fit and matched
+   *                 DUT hit.
+   *
+   * \param MissingValue Value (double) which is used for missing
+   *        measurements. 
+   *
    * \param DebugEventCount      Print out debug and information
-   * messages only for one out of given number of events. If zero, no
-   * debug information is printed. 
+   *        messages only for one out of given number of events. If
+   *        zero, no debug information is printed. 
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelFitTuple.h,v 1.0 2008-05-12 16:59:20 zarnecki Exp $
+   * @version $Id: EUTelFitTuple.h,v 1.1 2008-05-14 21:12:11 zarnecki Exp $
    * \date 2007.09.10
    *
    */ 
@@ -161,7 +174,18 @@ namespace eutelescope {
     //! Input \c Track collection name
     std::string _inputColName ;
 
-    //!  Debug print out for one out of given number of events.
+    //! Input \c TrackerHit collection name
+    std::string _inputDUTColName ;
+
+    //! Flag for manual DUT selection 
+
+    bool _useManualDUT;
+
+    //! Id of telescope layer which should be used as DUT
+
+    int _manualDUTid;
+
+     //!  Debug print out for one out of given number of events.
     int _debugCount ;
 
     //!  Value to be used for missing measurements
@@ -170,7 +194,6 @@ namespace eutelescope {
     // Setup description
 
     int _nTelPlanes;
-    int _iDUT;
   
     int * _planeSort;
     int * _planeID;
@@ -185,6 +208,11 @@ namespace eutelescope {
     bool   * _isFitted;
     double * _fittedX;
     double * _fittedY;
+
+    int _iDUT;
+    double _zDUT;  
+    double _distMax;
+    std::vector<float > _DUTalign;
 
     // Internal processor variables
     // ----------------------------
