@@ -1129,7 +1129,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	if ( _excludePlane > 0) {
 	  
 	  // exclude border region
-	  if (fabs(_xPosHere[(_excludePlane - 1)] < _hitDistanceXMax) && fabs(_yPosHere[(_excludePlane - 1)]) < _hitDistanceYMax) {
+	  if (fabs(_xPosHere[(_excludePlane - 1)]) < _hitDistanceXMax && fabs(_yPosHere[(_excludePlane - 1)]) < _hitDistanceYMax) {
 
 	    double hitDistance = sqrt(_waferResidX[(_excludePlane - 1)] * _waferResidX[(_excludePlane - 1)] + _waferResidY[(_excludePlane - 1)] * _waferResidY[(_excludePlane - 1)]);
 
