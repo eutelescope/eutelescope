@@ -128,7 +128,7 @@ namespace eutelescope {
    *  containing the histogram booking information.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.18 2007-09-16 11:13:08 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.19 2008-05-19 12:17:05 bulgheroni Exp $
    *
    */
 
@@ -559,6 +559,13 @@ namespace eutelescope {
      */ 
     IntVec _totCluster;
 
+    //! The number of detectors
+    /*! The number of sensors in the telescope. This is retrieve from
+     *  the run header
+     */ 
+    int _noOfDetector;
+
+
 #ifdef MARLIN_USE_AIDA
     //! List of cluster spectra N
     /*! This vector contains a list of cluster spectra we want to fill
@@ -572,12 +579,6 @@ namespace eutelescope {
      *   spectrum will be filled.
      */
     std::vector<int > _clusterSpectraNxNVector;
-
-    //! The number of detectors
-    /*! The number of sensors in the telescope. This is retrieve from
-     *  the run header
-     */ 
-    int _noOfDetector;
 
     //! AIDA histogram map
     /*! The histogram filling procedure may occur in many different
