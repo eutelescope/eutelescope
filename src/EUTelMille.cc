@@ -10,6 +10,9 @@
  *
  */
 
+// build only if ROOT is used
+#ifdef MARLIN_USE_ROOT
+
 // built only if GEAR is used
 #ifdef USE_GEAR
 
@@ -1601,4 +1604,6 @@ void EUTelMille::bookHistos() {
   
 }
   
+#endif
+
 #endif
