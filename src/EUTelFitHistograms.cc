@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitHistograms.cc,v 1.6 2008-01-27 22:53:25 zarnecki Exp $
+// Version: $Id: EUTelFitHistograms.cc,v 1.7 2008-05-19 12:32:06 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -59,6 +59,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <cstdlib>
 
 
 using namespace std;

@@ -1,6 +1,7 @@
+
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.20 2007-08-30 08:54:12 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.21 2008-05-19 12:32:06 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -28,7 +29,7 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
-#include <climits>
+#include <limits>
 #include <cassert>
 
 using namespace eutelescope;

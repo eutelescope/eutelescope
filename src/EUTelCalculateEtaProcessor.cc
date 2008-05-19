@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.17 2007-10-05 09:09:02 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.18 2008-05-19 12:32:06 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -57,7 +57,7 @@
 #include <string>
 #include <sstream>
 #include <memory>
-
+#include <cstdlib>
 
 using namespace std;
 using namespace lcio;

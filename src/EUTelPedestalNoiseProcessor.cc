@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.23 2007-09-26 15:15:52 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.24 2008-05-19 12:32:06 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -48,6 +48,8 @@
 #include <iostream>
 #include <iomanip>
 #include <memory>
+#include <cstdlib>
+
 
 using namespace std;
 using namespace lcio;
@@ -342,8 +344,9 @@ void EUTelPedestalNoiseProcessor::check (LCEvent * evt) {
 
 void EUTelPedestalNoiseProcessor::end() {
 
-  if ( _iLoop == _noOfCMIterations + 1 )  streamlog_out ( MESSAGE4 ) << "Successfully finished" << endl;
-  else {
+  if ( _iLoop == _noOfCMIterations + 1 )  {
+    streamlog_out ( MESSAGE4 ) << "Successfully finished" << endl;
+  }  else {
     streamlog_out ( ERROR4 ) << "Not all the iterations have been done because of a too MaxRecordNumber.\n"
 			     << "Try to increase it in the global section of the steering file." << endl;
     exit(-1);

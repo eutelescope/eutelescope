@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// @version: $Id: EUTelDUTHistograms.cc,v 1.5 2008-05-14 21:11:15 zarnecki Exp $
+// @version: $Id: EUTelDUTHistograms.cc,v 1.6 2008-05-19 12:32:06 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -56,7 +56,7 @@
 #include <string>
 #include <vector>
 #include <map>
-
+#include <cstdlib>
 
 using namespace std;
 using namespace lcio ;

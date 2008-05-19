@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelSucimaImagerReader.cc,v 1.10 2007-08-30 08:57:13 bulgheroni Exp $
+// Version $Id: EUTelSucimaImagerReader.cc,v 1.11 2008-05-19 12:32:06 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -32,6 +32,7 @@
 // system includes 
 #include <fstream>
 #include <memory>
+#include <cstdlib>
 
 using namespace std;
 using namespace marlin;
