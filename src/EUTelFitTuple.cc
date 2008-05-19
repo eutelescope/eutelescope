@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitTuple.cc,v 1.1 2008-05-14 21:12:11 zarnecki Exp $
+// Version: $Id: EUTelFitTuple.cc,v 1.2 2008-05-19 13:54:21 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -54,7 +54,7 @@
 #include <string>
 #include <vector>
 #include <map>
-
+#include <cstdlib>
 
 using namespace std;
 using namespace lcio ;
@@ -689,7 +689,7 @@ void EUTelFitTuple::bookHistos()
   _columnNames.push_back("Chi2");
   _columnType.push_back("float");
 
-  char * _varName[] = { "measX", "measY" , "measQ", "fitX", "fitY" };
+  const char * _varName[] = { "measX", "measY" , "measQ", "fitX", "fitY" };
 
   for(int ipl=0; ipl<_nTelPlanes;ipl++)
     for(int ivar=0; ivar<5;ivar++)
