@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.37 2007-09-22 17:07:21 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.38 2008-05-20 13:03:49 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -124,7 +124,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
 			      "Select here which algorithm should be used for clustering.\n"
 			      "Available algorithms are:\n"
 			      "-> SparseCluster: for cluster in ZS frame\n"
-			      "-> SparseCluster2: for cluster in ZS frame with better performance"
+			      "-> SparseCluster2: for cluster in ZS frame with better performance\n"
 			      "-> FixedFrame: for cluster with a given size",			      
 			      _zsClusteringAlgo, string(EUTELESCOPE::SPARSECLUSTER));
   
