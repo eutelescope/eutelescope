@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTELESCOPE.cc,v 1.17 2007-09-27 06:14:45 bulgheroni Exp $
+// Version: $Id: EUTELESCOPE.cc,v 1.18 2008-05-20 13:07:22 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -26,6 +26,7 @@ const char *   EUTELESCOPE::SIMULSWNAME         = "SimulSWName";
 const char *   EUTELESCOPE::SIMULSWVERSION      = "SimulSWVersion";
 const char *   EUTELESCOPE::GEOID               = "GeoID";
 const char *   EUTELESCOPE::EUDRBMODE           = "EUDRBMode";
+const char *   EUTELESCOPE::EUDRBDET            = "EUDRBDet";
 const char *   EUTELESCOPE::BEAMLOCATION        = "BeamLocation";
 const char *   EUTELESCOPE::BEAMTYPE            = "BeamType";
 const char *   EUTELESCOPE::BEAMENERGY          = "BeamEnergy";

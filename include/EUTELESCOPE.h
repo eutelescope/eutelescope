@@ -29,7 +29,7 @@ namespace eutelescope
    * files.
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.18 2007-09-27 06:14:45 bulgheroni Exp $
+   * @Version $Id: EUTELESCOPE.h,v 1.19 2008-05-20 13:07:22 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -154,6 +154,9 @@ namespace eutelescope
 
     //! Constant used to identify the EUDRB operation mode
     static const char * EUDRBMODE;
+
+    //! Constant used to identify the detectors making the telescope
+    static const char * EUDRBDET;
 
     // PARAMETER NAMES USED IN THE EVENT IMPLEMENTATION
     
@@ -340,7 +343,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.18 2007-09-27 06:14:45 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.19 2008-05-20 13:07:22 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -387,7 +390,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.18 2007-09-27 06:14:45 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.19 2008-05-20 13:07:22 bulgheroni Exp $
    */ 
   
   enum ClusterQuality {
@@ -446,7 +449,7 @@ namespace eutelescope
    *  cluster during the clusterization process itself. 
    *  
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.18 2007-09-27 06:14:45 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.19 2008-05-20 13:07:22 bulgheroni Exp $
    */
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
@@ -461,7 +464,7 @@ namespace eutelescope
   /*! This enumerator is used to define the sparsified pixel type. 
    *
    *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.18 2007-09-27 06:14:45 bulgheroni Exp $
+   *  @Version $Id: EUTELESCOPE.h,v 1.19 2008-05-20 13:07:22 bulgheroni Exp $
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,

@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelRunHeaderImpl.cc,v 1.6 2007-08-30 08:30:37 bulgheroni Exp $
+// Version: $Id: EUTelRunHeaderImpl.cc,v 1.7 2008-05-20 13:07:22 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -171,4 +171,8 @@ void EUTelRunHeaderImpl::setUserComment(std::string note) {
 
 void EUTelRunHeaderImpl::setEUDRBMode(std::string mode) {
   _lcHeader->parameters().setValue(EUTELESCOPE::EUDRBMODE, mode);
+}
+
+void EUTelRunHeaderImpl::setEUDRBDet(std::string det) {
+  _lcHeader->parameters().setValue(EUTELESCOPE::EUDRBDET, det);
 }

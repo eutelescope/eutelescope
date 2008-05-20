@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.12 2008-05-09 08:24:28 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.13 2008-05-20 13:07:22 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -127,19 +127,17 @@ EUTelMimoTelReader * EUTelMimoTelReader::newProcessor () {
 void EUTelMimoTelReader::init () {
   printParameters ();
 
-  // those two values are constants!!!
-  _xMax = 264;
-  _yMax = 256;
-
   if ( _removeMarkerSwitch ) {
 
     streamlog_out( DEBUG4 ) << "Data conversion with markers removal" << endl;
     if ( _markerPositionVec.size() == 0 ) {
       streamlog_out( WARNING2 ) <<  "Data conversion with markers removal selected but no markers position found" << endl
-			       <<  "Disabling marker removal" << endl;
+				<<  "Disabling marker removal" << endl;
       _removeMarkerSwitch = false;
+    } else {
       sort( _markerPositionVec.begin(), _markerPositionVec.end() );
     }
+
   } else {
     _markerPositionVec.clear();
   }
@@ -169,9 +167,20 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
   string           eudrbGlobalMode ;
   vector<string >  eudrbSubMode;
 
+  // the EUDRB can also readout different sensors. For the time being
+  // the only supported sensors are:
+  // 
+  // 1. MimoTEL 
+  // 2. M18
+  string          eudrbGlobalDet;
+  vector<string > eudrbSubDet;
+
+  vector<int >    xMaxVec;
+  vector<int >    yMaxVec;
+
   // pivot pixel vector for synchronization check
   vector<unsigned int > pivotSynchVec;
-  bool  outOfSynchFlag;
+  bool  outOfSynchFlag = false;
 
   while ( des.HasData() ) {
 
@@ -223,12 +232,18 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	// if the dynamic_cast succeeded then the event is a EUDRB event
 	if (eudev) {
 	  noOfDetectors += from_string(eudev->GetTag("BOARDS"), 0) ;
+
+	  // getting from the BORE the overall operation mode
 	  eudrbGlobalMode   = eudev->GetTag("MODE");
-	  string det  = eudev->GetTag("DET");
  	  if ( eudrbGlobalMode.compare("RAW3")   == 0 ) {
 	    streamlog_out( MESSAGE2 ) << "All boards are working in RAW3 mode" << endl;
+	    eudrbSubMode = vector<string > ( noOfDetectors, "RAW3" );
+	  } else if ( eudrbGlobalMode.compare("RAW2")   == 0 )  {
+	    streamlog_out( MESSAGE2 ) << "All boards are working in RAW2 mode" << endl;
+	    eudrbSubMode = vector<string > ( noOfDetectors, "RAW2" );
 	  } else if ( eudrbGlobalMode.compare("ZS")     == 0 )  {
 	    streamlog_out( MESSAGE2 ) << "All boards are working in ZS mode" << endl;
+	    eudrbSubMode = vector<string > ( noOfDetectors, "ZS" );
 	  } else  if ( eudrbGlobalMode.compare("Mixed")  == 0 ) {
 	    streamlog_out( MESSAGE2 ) << "Boards running in mixed mode" << endl;
 	    streamlog_out( DEBUG4  )  << "Discovering the mode of operation of each board" << endl;
@@ -239,18 +254,80 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
  	      eudrbSubMode.push_back( subMode ); 
  	      streamlog_out( DEBUG4 ) << "Board " << iBoard << " working in " << subMode << endl;
 	    }
-	  }  else throw InvalidParameterException("For the time being only RAW3 is supported");
+	  }  else throw InvalidParameterException("For the time being only the following operation modes are supported:\n\n"
+						  "  1. RAW3 \n"
+						  "  2. RAW2 \n"
+						  "  3. ZS   \n"
+						  "  4. MIXED\n"
+						  );
 	  runHeader->setEUDRBMode( eudrbGlobalMode );
+
+	  // getting from the BORE the overall detector 
+	  eudrbGlobalDet = eudev->GetTag("DET");
+	  if ( eudrbGlobalDet.compare("MIMOTEL") == 0 ) {
+	    streamlog_out( MESSAGE2 ) << "All boards are connected to MimoTEL sensors " << endl;
+
+	    // set the limits according to MimoTel specs
+	    _xMax = 264;
+	    _yMax = 256;
+	    xMaxVec = IntVec(noOfDetectors, _xMax - _markerPositionVec.size() -  1);
+	    yMaxVec = IntVec(noOfDetectors, _yMax - 1);
+	    eudrbSubDet = vector<string > ( noOfDetectors, "MIMOTEL");
+
+	  } else if ( eudrbGlobalDet.compare("MIMOSA18") == 0 ) {
+	    
+	    // set the limits according to M18 specs, be aware that
+	    // there is no marker removal implemented for M18
+	    _xMax = 512;
+	    _yMax = 512;
+	    xMaxVec = IntVec(noOfDetectors, _xMax - 1);
+	    yMaxVec = IntVec(noOfDetectors, _yMax - 1);
+	    eudrbSubDet = vector<string > ( noOfDetectors, "MIMOSA18");
+
+	    streamlog_out( MESSAGE2 ) << "All boards are connected to Mimosa18 sensors " << endl;
+	  } else if ( eudrbGlobalDet.compare("Mixed") == 0 ) {
+	    streamlog_out( MESSAGE2 ) << "Boards are connected to a mixed setup" << endl;
+	    streamlog_out( DEBUG4  )  << "Discovering the detector connected to each board" << endl;
+	    for ( int iBoard = 0; iBoard << from_string(eudev->GetTag("BOARDS"), 0); iBoard++ ) {
+	      stringstream ss;
+	      string subDet = eudev->GetTag( ss.str().c_str() );
+	      eudrbSubDet.push_back( subDet );
+	      streamlog_out ( DEBUG4 ) << "Board " << iBoard << " connected to " << subDet << endl;
+	      if ( subDet.compare("MIMOTEL") == 0 ) {
+		_xMax = 264;
+		_yMax = 256;
+		xMaxVec.push_back( _xMax - _markerPositionVec.size() -  1 );
+		yMaxVec.push_back( _yMax - 1 );
+	      } else if ( subDet.compare("MIMOSA18") == 0 ) {
+		_xMax = 512;
+		_yMax = 512;
+		xMaxVec.push_back( _xMax -  1 );
+		yMaxVec.push_back( _yMax -  1 );
+	      } else  {
+		throw InvalidParameterException("For the time being only the following detectors are supported: \n\n"
+						"  1. MimoTEL \n"
+						"  2. Mimosa18 \n"
+						);
+	      }
+	    }
+	  } else {
+	    throw InvalidParameterException("For the time being only the following detectors are supported: \n\n"
+					    "  1. MimoTEL \n"
+					    "  2. Mimosa18 \n"
+					    );
+	  }
+
+	  runHeader->setEUDRBDet( eudrbGlobalDet ) ;
 	}
       }
 
-
+      
       runHeader->setNoOfDetector(noOfDetectors);
       runHeader->setMinX(IntVec(noOfDetectors, 0));
-      runHeader->setMaxX(IntVec(noOfDetectors, _xMax - _markerPositionVec.size() -  1));
+      runHeader->setMaxX( xMaxVec );
       runHeader->setMinY(IntVec(noOfDetectors, 0));
-      runHeader->setMaxY(IntVec(noOfDetectors, _yMax - 1));
-      runHeader->lcRunHeader()->setDetectorName("MimoTel");
+      runHeader->setMaxY( yMaxVec );
+      runHeader->lcRunHeader()->setDetectorName("EUTelescope");
       runHeader->setGeoID( _geoID );
       runHeader->setDateTime();
       runHeader->addProcessor( type() );
@@ -262,7 +339,6 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 
       ProcessorMgr::instance()->processRunHeader(lcHeader.get());
       delete lcHeader.release();
-
 
     } else if ( ev->IsEORE() ) {
       streamlog_out( DEBUG4 ) << "Found a EORE, processing a dummy empty event" << endl; 
@@ -297,7 +373,7 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	auto_ptr<LCCollectionVec> secondFrameColl( new LCCollectionVec (LCIO::TRACKERRAWDATA) );
 	auto_ptr<LCCollectionVec> thirdFrameColl ( new LCCollectionVec (LCIO::TRACKERRAWDATA) );
 	auto_ptr<LCCollectionVec> cdsFrameColl   ( new LCCollectionVec (LCIO::TRACKERRAWDATA) );
-	auto_ptr<LCCollectionVec> zsFrameColl     ( new LCCollectionVec (LCIO::TRACKERDATA)    );
+	auto_ptr<LCCollectionVec> zsFrameColl    ( new LCCollectionVec (LCIO::TRACKERDATA)    );
 	CellIDEncoder< TrackerRawDataImpl > idEncoder1   (EUTELESCOPE::MATRIXDEFAULTENCODING, firstFrameColl.get());
 	CellIDEncoder< TrackerRawDataImpl > idEncoder2   (EUTELESCOPE::MATRIXDEFAULTENCODING, secondFrameColl.get());
 	CellIDEncoder< TrackerRawDataImpl > idEncoder3   (EUTELESCOPE::MATRIXDEFAULTENCODING, thirdFrameColl.get());
@@ -308,23 +384,16 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	// setting for within the sensor loop
 
 	if ( ( eudrbGlobalMode == "RAW3" ) || 
+	     ( eudrbGlobalMode == "RAW2" ) || 
 	     ( eudrbGlobalMode == "Mixed" ) ) {
 	  idEncoder1["xMin"]             = 0;
-	  idEncoder1["xMax"]             = _xMax - 1 - _markerPositionVec.size();
 	  idEncoder1["yMin"]             = 0;
-	  idEncoder1["yMax"]             = _yMax - 1;
 	  idEncoder2["xMin"]             = 0;
-	  idEncoder2["xMax"]             = _xMax - 1 - _markerPositionVec.size();
 	  idEncoder2["yMin"]             = 0;
-	  idEncoder2["yMax"]             = _yMax - 1;
 	  idEncoder3["xMin"]             = 0;
-	  idEncoder3["xMax"]             = _xMax - 1 - _markerPositionVec.size();
 	  idEncoder3["yMin"]             = 0;
-	  idEncoder3["yMax"]             = _yMax - 1;
 	  idEncoderCDS["xMin"]           = 0;
-	  idEncoderCDS["xMax"]           = _xMax - 1 - _markerPositionVec.size();
 	  idEncoderCDS["yMin"]           = 0;
-	  idEncoderCDS["yMax"]           = _yMax - 1;
 	  idEncoderZS["sparsePixelType"] = _pixelType;
 	} else if ( eudrbGlobalMode == "ZS" ) {
 	  idEncoderZS["sparsePixelType"] = _pixelType;
@@ -362,9 +431,20 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	      // data we are interested in
 	      EUDRBBoard & brd = eudev->GetBoard(iDetector);
 
-	           
-	      if (  ( eudrbGlobalMode == "RAW3" ) ||
-		    ( ( eudrbGlobalMode == "Mixed" ) && ( eudrbSubMode[iDetector] == "RAW3" ) ) ) {
+	      if (  ( eudrbGlobalMode == "RAW3" ) || 
+		    ( eudrbGlobalMode == "RAW2" ) ||
+		    ( ( eudrbGlobalMode == "Mixed" ) && ( eudrbSubMode[iDetector] == "RAW3" ) ) ||
+		    ( ( eudrbGlobalMode == "Mixed" ) && ( eudrbSubMode[iDetector] == "RAW2" ) ) 
+		    ) {
+		
+		idEncoder1["xMax"]             = xMaxVec[iDetector];
+		idEncoder1["yMax"]             = yMaxVec[iDetector];
+		idEncoder2["xMax"]             = xMaxVec[iDetector];
+		idEncoder2["yMax"]             = yMaxVec[iDetector];
+		idEncoder3["xMax"]             = xMaxVec[iDetector];
+		idEncoder3["yMax"]             = yMaxVec[iDetector];
+		idEncoderCDS["xMax"]           = xMaxVec[iDetector];
+		idEncoderCDS["yMax"]           = yMaxVec[iDetector];   
 		
 		// get arrays may throw a eudaq::Exception in case, for
 		// instance, the array sizes are different. In this case
@@ -385,8 +465,19 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		auto_ptr<TrackerRawDataImpl > thirdFrame( new TrackerRawDataImpl );
 		idEncoder3["sensorID"] = iDetector;
 		idEncoder3.setCellID( thirdFrame.get() );
-		
-		if ( _removeMarkerSwitch ) {
+
+		if  ( ( _removeMarkerSwitch ) &&
+
+		      // for the time being applying the marker
+		      // removal only in the case of MimoTel sensors
+
+		      ( eudrbSubDet[iDetector] ==  "MIMOTEL" ) &&
+
+		      // for the time being only in the case of RAW3
+		      // mode
+		      
+		      ( eudrbSubMode[iDetector] == "RAW3") ) {
+
 		  // the idea behind the marker removal procedure is that:
 		  // markers are occurring always at the same column
 		  // position, so we can repeat the procedure into a loop
@@ -396,9 +487,9 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		  // original vector in between two markers is copied into
 		  // the stripped matrix.
 		  
-		  vector<short > firstStrippedVec(  ( _xMax - _markerPositionVec.size() ) * _yMax );
-		  vector<short > secondStrippedVec( ( _xMax - _markerPositionVec.size() ) * _yMax );
-		  vector<short > thirdStrippedVec(  ( _xMax - _markerPositionVec.size() ) * _yMax );
+		  vector<short > firstStrippedVec( ( xMaxVec[iDetector] + 1 ) * ( yMaxVec[iDetector] + 1 ) );
+		  vector<short > secondStrippedVec( ( xMaxVec[iDetector] + 1 ) * ( yMaxVec[iDetector] + 1 ) );
+		  vector<short > thirdStrippedVec(  ( xMaxVec[iDetector] + 1 ) * ( yMaxVec[iDetector] + 1 ) );
 		  vector<short >::iterator currentFirstPos  = firstStrippedVec.begin();
 		  vector<short >::iterator currentSecondPos = secondStrippedVec.begin();
 		  vector<short >::iterator currentThirdPos  = thirdStrippedVec.begin();
@@ -406,8 +497,8 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		  vector<short >::iterator secondBegin      = array.m_adc[1].begin();
 		  vector<short >::iterator thirdBegin       = array.m_adc[2].begin();
 		  
-		  for ( int y = 0; y < _yMax ; y++ ) {
-		    int offset = y * _xMax;
+		  for ( int y = 0; y < yMaxVec[iDetector] + 1 ; y++ ) {
+		    int offset = y * ( xMaxVec[iDetector] + 1 + _markerPositionVec.size() );
 		    vector<int >::iterator marker = _markerPositionVec.begin();
 		    // first of all copy the part of the array going from
 		    // the row beginning to the first marker position
@@ -437,15 +528,15 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 			// of the original vector going from the last
 			// marker and the end of the row.
 			currentFirstPos = copy( firstBegin + ( *(marker) + 1 + offset ),
-						firstBegin + offset + _xMax, 
+						firstBegin + offset + ( xMaxVec[iDetector] + 1 + _markerPositionVec.size() ), 
 						currentFirstPos );
 			
 			currentSecondPos = copy( secondBegin + ( *(marker) + 1 + offset ),
-						 secondBegin + offset + _xMax, 
+						 secondBegin + offset + ( xMaxVec[iDetector] + 1 + _markerPositionVec.size() ), 
 						 currentSecondPos );
 			
 			currentThirdPos = copy( thirdBegin + ( *(marker) + 1 + offset ),
-						thirdBegin + offset + _xMax, 
+						thirdBegin + offset + ( xMaxVec[iDetector] + 1 + _markerPositionVec.size() ), 
 						currentThirdPos );
 		      }
 		      ++marker;
@@ -462,16 +553,20 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		  // just move the adc values from the EUDRBDecoder::arrays_t to
 		  // the trackerRawDataImpl
 		  
-		
+
 		  firstFrame->setADCValues(  array.m_adc[0] );
 		  secondFrame->setADCValues( array.m_adc[1] );
-		  thirdFrame->setADCValues(  array.m_adc[2] );
+		  if ( eudrbSubMode[iDetector] == "RAW3" ) {
+		    thirdFrame->setADCValues(  array.m_adc[2] );		  
+		  }
 		  
 		}
 		
 		firstFrame->setTime(brd.PivotPixel());
 		secondFrame->setTime(brd.PivotPixel());	      
-		thirdFrame->setTime(brd.PivotPixel());
+		if ( eudrbSubMode[iDetector] == "RAW3" ) {
+		  thirdFrame->setTime(brd.PivotPixel());
+		}
 	      
 		// put the pivot pixel address in the synchronization
 		// vector
@@ -484,26 +579,47 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		  vector<short > cdsVector;
 		  vector<short > firstFrameVec  = array.m_adc[0];
 		  vector<short > secondFrameVec = array.m_adc[1];
-		  vector<short > thirdFrameVec  = array.m_adc[2]; 
+		  vector<short > thirdFrameVec;
+		  if ( eudrbSubMode[iDetector] == "RAW3" ) {
+		    thirdFrameVec = array.m_adc[2]; 
+		  }
 		  
 		  // bad luck! the pivot pixel is obtained counting also
 		  // the markers, so I prefer to calculate the cds as the
 		  // marker should stay into and in case remove them afterward.
 		  for (unsigned int iPixel = 0; iPixel < eudrbDecoder->NumPixels(brd); iPixel++) {
-		    cdsVector.push_back( static_cast<short> (_polarity )* 
-					 ( ( -1 * array.m_pivot[iPixel]    ) * firstFrameVec[iPixel] +
-					   ( 2 * array.m_pivot[iPixel] - 1 ) * secondFrameVec[iPixel] +
-					   ( 1 - array.m_pivot[iPixel]     ) * thirdFrameVec[iPixel] ) );
+
+		    if ( eudrbSubMode[iDetector] == "RAW3" ) {
+		      cdsVector.push_back( static_cast<short> (_polarity )* 
+					   ( ( -1 * array.m_pivot[iPixel]    ) * firstFrameVec[iPixel] +
+					     ( 2 * array.m_pivot[iPixel] - 1 ) * secondFrameVec[iPixel] +
+					     ( 1 - array.m_pivot[iPixel]     ) * thirdFrameVec[iPixel] ) );
+		    } else {
+		      cdsVector.push_back( static_cast<short> (_polarity ) *
+					   ( secondFrameVec[iPixel] - firstFrameVec[iPixel] ) );
+		    }
 		  }	      
 		  
 		  
-		  if ( _removeMarkerSwitch ) {
+		  if ( ( _removeMarkerSwitch ) && 
+
+		       // for the time being applying the marker
+		       // removal only in the case of MimoTel sensors
+
+		       ( eudrbSubDet[iDetector] ==  "MIMOTEL" ) &&
+		       
+		       // for the time being only in the case of RAW3
+		       // mode
+		       
+		       ( eudrbSubMode[iDetector] == "RAW3") ) {
+		    
+
 		    // strip away the markers...
-		    vector<short > cdsStrippedVec( ( _xMax - _markerPositionVec.size() ) * _yMax );
+		    vector<short > cdsStrippedVec(  ( xMaxVec[iDetector] + 1 ) * ( yMaxVec[iDetector] + 1 ) );
 		    vector<short >::iterator currentCDSPos = cdsStrippedVec.begin();
 		    vector<short >::iterator cdsBegin      = cdsVector.begin();
-		    for ( int y = 0; y < _yMax ; y ++ ) {
-		      int offset = y * _xMax ;
+		    for ( int y = 0; y < yMaxVec[iDetector] + 1 ; y ++ ) {
+		      int offset = y * ( xMaxVec[iDetector] + 1 + _markerPositionVec.size() )  ;
 		      vector<int >::iterator marker = _markerPositionVec.begin();
 		      currentCDSPos = copy( cdsBegin + offset, 
 					    cdsBegin + ( *(marker) + offset ),
@@ -515,7 +631,7 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 						currentCDSPos );
 			} else {
 			  currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ),
-						cdsBegin + offset + _xMax, 
+						cdsBegin + offset + ( xMaxVec[iDetector] + 1 + _markerPositionVec.size() ), 
 						currentCDSPos );
 			}
 			++marker;
@@ -631,12 +747,12 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	// the collection pointers have be to released when added to
 	// the event because the ownership has to be passed to the
 	// event.
-	if ( ( eudrbGlobalMode == "RAW3" ) || ( eudrbGlobalMode == "Mixed" ) ) {
+	if ( ( eudrbGlobalMode == "RAW3" ) || ( eudrbGlobalMode == "Mixed" ) || ( eudrbGlobalMode == "RAW2" )  ) {
 	  event->addCollection(firstFrameColl.release(),  _firstFrameCollectionName);
 	  event->addCollection(secondFrameColl.release(), _secondFrameCollectionName);
 	  event->addCollection(thirdFrameColl.release(),  _thirdFrameCollectionName);
 	  if ( _cdsCalculation ) event->addCollection( cdsFrameColl.release(), _cdsCollectionName );
-	}
+	} 
 	if ( ( eudrbGlobalMode == "ZS" ) || ( eudrbGlobalMode == "Mixed" ) ) {
 	  event->addCollection(zsFrameColl.release(), _zsFrameCollectionName);
 	}

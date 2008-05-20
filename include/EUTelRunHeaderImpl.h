@@ -144,7 +144,7 @@ namespace eutelescope {
    *  \li <b>UserComment</b>: a user defined string field. 
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTelRunHeaderImpl.h,v 1.8 2007-08-30 08:30:37 bulgheroni Exp $
+   * @Version $Id: EUTelRunHeaderImpl.h,v 1.9 2008-05-20 13:07:22 bulgheroni Exp $
    * 
    */
 
@@ -355,6 +355,15 @@ namespace eutelescope {
      */
     virtual void setEUDRBMode(std::string mode);
 
+    //! Set which detectors are in the telescope
+    /*! This is the tag takend from the DAQ software to identify which
+     *  sensors are in the telescope. In case of a mixed
+     *  configuration, the processor will discover the correct order
+     *
+     *  @param det A string naming the sensors in the telescope
+     */
+    virtual void setEUDRBDet(std::string det);
+
     //! Add a processor to the applied processor list
     /*! The analysis procedure of some input data usually requires
      *  that many processors have been applied sequentially. Saving
@@ -480,6 +489,12 @@ namespace eutelescope {
     inline std::string getEUDRBMode() const {
       if ( _lcHeader->parameters().getStringVal(EUTELESCOPE::EUDRBMODE) == "" ) return std::string("RAW3");
       return _lcHeader->parameters().getStringVal(EUTELESCOPE::EUDRBMODE);
+    }
+
+    //! return the EUDRB global detector
+    inline std::string getEUDRBDet() const {
+      if ( _lcHeader->parameters().getStringVal(EUTELESCOPE::EUDRBDET) == "" ) return std::string("MIMOTEL");
+      return _lcHeader->parameters().getStringVal(EUTELESCOPE::EUDRBDET);
     }
 
     //! returns the LCRunHeaderImpl underlying object
