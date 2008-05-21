@@ -36,15 +36,18 @@ namespace eutelescope {
 
 
   //! Analytical track fitting processor for EUDET Telescope
-  /*! This processor was designed for fitting tracks to hits reconstructed in
-   * the telescope sensor planes. Analytical approach is used, taking
-   * into account multiple scattering in the telescope planes.
+  /*! This processor was designed for fitting tracks to hits
+   * reconstructed in the telescope sensor planes. Analytical approach
+   * is used, taking into account multiple scattering in the telescope
+   * planes. However, as there are usually multiple hits in each
+   * plane, main task of the processor is to look for the best track
+   * candidate considering all fit possibilities. 
    * 
-   *  \par Method
+   *  \par Fit method
    *  Track fitting is performed separately in XZ and YZ planes (Z
    *  is defined along the beam axis direction). Track position in each
    *  telescope plane is found by solving matrix equation resulting from
-   *  Chi^2 minimum condition. The following approximation is used: 
+   *  \f$ \chi^{2} \f$ minimum condition. The following approximation is used: 
    *    \li all telescope planes are parallel to each other
    *    \li the incoming beam is perpendicular to the telescope planes
    *    \li the incoming beam has a small angular spread 
@@ -55,7 +58,7 @@ namespace eutelescope {
    *    \li particle energy losses in telescope layers can be neglected
    * 
    *
-   * \par Algorithm  
+   * \par Track finding algorithm  
    * \li Read measured track points from input \c TrackerHit collection
    *     and copy to local tables
    * \li Prepare lists of hits for each active sensor plane, apply
@@ -63,18 +66,19 @@ namespace eutelescope {
    * \li Count hit numbers, return if not enough planes fired
    * \li Calculate number of fit hypothesis (including missing hit possibility)
    * \li Search the list of fit hypotheses to find the one with best
-   *     Chi^2 (including ``penalties'' for missing hits or skipped planes)
-   * \li Accept the fit if Chi^2 is below threshold
+   *     \f$ \chi^{2} \f$ (including ``penalties'' for missing hits or
+   *     skipped planes) 
+   * \li Accept the fit if \f$ \chi^{2} \f$ is below threshold
    * \li Write fitted track to output \c Track collection; measured
-   * particle positions corrected for alignment and fitted positions
-   * are also written out as \c TrackerHit collections 
+   *     particle positions corrected for alignment and fitted positions
+   *     are also written out as \c TrackerHit collections 
    * \li Remove accepted track hits from hit list and repeat procedure 
    *
    * \par Geometry description
-   * This version of the processor does use GEAR input!
-   * However, corrections to the geometry description (alignment,
-   * removing layers from the fit) can be applied with dedicated parameters
-   * (see below).
+   * The processor does use GEAR input for telescope layers and DUT
+   * description. Corrections or modification to the geometry
+   * description (alignment, removing layers from the fit, etc.) can
+   * be applied with dedicated parameters (see below).
    *
    * 
    * \par Output
@@ -84,65 +88,49 @@ namespace eutelescope {
    * a separate  \c TrackerHit collection. In addition fit results are
    * written in a \c Track collection. Following \c Track variables
    * are filled:  
-   *  \li Chi2 of the fit 
+   *  \li \f$ \chi^{2} \f$ of the fit 
    *  \li number of measured hits used in the track fit (as Ndf)
    *  \li reconstructed position at DUT  (as a track reference point)
-   *  \li vector of hits (fitted particle positions in all planes)  
+   *  \li vector of output hits (fitted particle positions in all planes)  
+   *  \li vector of input hits (corrected particle positions in fired planes)  
    * 
+   *
+   * \section parameters Control parameters
+   * Below, parameters defining performance of the algorithm are
+   * described. Some suggestion for the optimal choice of parameters
+   * are given in the next section.
+   *
+   *
    * \par Main algorithm parameters
+   *  Following parameters define input and output from the processor.
+   *
    * \param InputCollectionName  Name of the input TrackerHit collection
+   * \param OutputTrackCollectionName Name of the output Track
+   *        collection (main output of the processor).
+   * \param InputHitsInTrack Flag for storing input (measured,
+   *        corrected for alignment) hits together with the track.
    * \param CorrectedHitCollectionName Name of the collection for storing
    *        corrected particle positions in telescope planes (hits),
    *        i.e. positions after alignment, as used in the fit
-   * \param OutputHitCollectionName Name of the output collection of
-   *        fitted particle positions in telescope planes (hits)
-   * \param OutputTrackCollectionName Name of the output Track collection
-   * \param InputHitsInTrack Flag for storing input (measured) hits in track.
-   * \param OutputHitsInTrack Flag for storing output (fitted) hits in track.  
+   * \param OutputHitsInTrack Flag for storing output (fitted) hits
+   *        together with the track.  
    *        Input and output hits can be distinguished by looking into
    *        hit type (type <=31 for measured hits, type >=32 for fitted).
-   *
-   * \param AllowMissingHits Allowed number of hits missing in the track
-   *        (sensor planes without hits or with hits removed from
-   *        given track) 
-   * \param MissingHitPenalty  "Penalty" added to track Chi^2 for each
-   *        missing hit (no hits in given layer).
-   * \param AllowSkipHits Allowed number of hits removed from the track
-   *        (because of large Chi^2 contribution)
-   * \param SkipHitPenalty  "Penalty" added to track Chi^2 for each hit
-   *        removed from the track because of large Chi^2 contribution.
-   * \param AllowAmbiguousHits Allow same hit to be used in more than one.
-   *        Significantly improves algorithm performance.
-   *
-   * \param MaxPlaneHits Maximum number of hits considered per
-   *        plane. The algorithm slows down if this number is
-   *        too large. However, the real limitation comes from
-   *        numerical precision. Maximum number is 34 for 6 planes
-   *        used in the fit, 72 for 5 planes, 214 for 4 planes.
-   *
-   * \param UseNominalResolutio Flag for using nominal sensor resolution
-   *        (as given in geometry description) instead of hit position
-   *        errors. 
-   *
-   * \param UseDUT Flag for including DUT measurement in the track fit.
-   *
-   * \param Ebeam Beam energy in [GeV], needed to estimate multiple
-   *        scattering. 
-   *
-   * \param UseBeamConstraint Flag for using beam direction constraint
-   *        in the fit. Can improve the fit, if beam angular spread is
-   *        small. 
-   * \param BeamSpread Assumed angular spread of the beam [rad]
-   *
-   * \param SearchMultipleTracks Flag for searching multiple tracks in
-   *        events with multiple hits 
-   *
-   * \param Chi2Max Maximum Chi2 for accepted track fit.
-   *
-   * \par Performance control parameters
+   * \param OutputHitCollectionName Name of the output collection of
+   *        fitted particle positions in telescope planes (hits)
    * \param DebugEventCount      Print out debug and information
    *        messages only for one out of given number of events. If
    *        zero, no debug information is printed. 
+   * \param HistoInfoFileName Name of the histogram information file.
+   *        Using this file histogram parameters can be changed without 
+   *        recompiling the code.
+   * \param Ebeam Beam energy in [GeV], needed to estimate multiple
+   *        scattering. 
+   *
+   *
+   *
+   * \par Geometry description parameters
+   * Following parameters can be used to adjust geometry description
    *
    * \param SkipLayerIDs Ids of layers which are described in GEAR but
    *        should not be included in the fit. Can be used to remove
@@ -163,12 +151,14 @@ namespace eutelescope {
    * \param AlignLayerRotZ Rotation around Z (beam) axis, which should 
    *        be applied to correct alignment of these layers.
    *
+   * 
    * \param WindowLayerIDs Ids of layers for which position cuts are
    *        defined. Only hits inside the defined "window" are accepted
    * \param WindowMinX   Lower window edge in X
    * \param WindowMaxX   Upper window edge in X
    * \param WindowMinY   Lower window edge in Y
    * \param WindowMaxY   Upper window edge in Y
+   *
    *
    * \param MaskLayerIDs Ids of layers for which position cuts are
    *        defined. Only hits outside the defined "mask" are accepted
@@ -177,17 +167,109 @@ namespace eutelescope {
    * \param MaskMinY   Lower window edge in Y
    * \param MaskMaxY   Upper window edge in Y
    *
-   * \param HistoInfoFileName Name of the histogram information file.
-   *        Using this file histogram parameters can be changed without 
-   *        recompiling the code.
+   * \par Fit performance parameters
+   * \param MaxPlaneHits Maximum number of hits considered per
+   *        plane. The algorithm slows down if this number is
+   *        too large. However, the real limitation comes from
+   *        numerical precision. To find the best track fit hypothesis
+   *        have to be numbered and long integer number is used for this
+   *        purpose. However this allows for maximum of \f$ 2^{31} \f$
+   *        hypothesis only. To avoid this limit the number of hits in
+   *        single plane has to be constrained. Maximum number is 34
+   *        for 6 planes used in the fit, 72 for 5 planes, 214 for 4 planes.
+   *        Never use higher values!
+   *
+   * \param Chi2Max Maximum \f$ \chi^{2} \f$ for accepted track fit.
+   *
+   * \param SearchMultipleTracks Flag for searching multiple tracks in
+   *        events with multiple hits. If false, only best (lowest
+   *        \f$ \chi^{2} \f$) track is taken. 
+   *
+   * \param AllowAmbiguousHits Allow same hit to be used in more than
+   *        one track. Significantly improves algorithm
+   *        performance. However, this option can only be used when
+   *        missing hits are not allowed (\e  AllowMissingHits set to 0 )
+   *
+   * \param UseNominalResolution Flag for using nominal sensor resolution
+   *        (as given in geometry description) instead of hit position
+   *        errors. Improves tracking performance.
+   *
+   * \param UseDUT Flag for including DUT measurement in the track fit.
+   *
+   * \param UseBeamConstraint Flag for using beam direction constraint
+   *        in the fit. Can improve the fit, if beam angular spread is
+   *        small. Improves track searching for multiple hits.
+   *
+   * \param BeamSpread Assumed angular spread of the beam [rad]
+   *
+   * \param AllowMissingHits Allowed number of hits missing in the track
+   *        (sensor planes without hits or with hits removed from
+   *        given track) 
+   * \param MissingHitPenalty  "Penalty" added to track 
+   *        \f$ \chi^{2} \f$ for each 
+   *        missing hit (when no hit is left in active layer).
+   * \param AllowSkipHits Allowed number of hits removed from the track
+   *        (because of large \f$ \chi^{2} \f$ contribution)
+   * \param SkipHitPenalty  "Penalty" added to track 
+   *        \f$ \chi^{2} \f$ for each hit removed from the track
+   *        because of large \f$ \chi^{2} \f$ contribution. 
+   *
+   * \section performance Performance issues
+   * As described above, if multiple hits are found in telescope
+   * layers or hit rejection is allowed, the algorithm checks all hits
+   * selection possibilities (all track hypothesis). This task is
+   * optimized to a large extent, but still track finding can be slow
+   * for large multiplicities. Here are some suggestions on how to
+   * improve performance.
+   * 
+   *  \li Remove addition layers from geometry description. At high
+   *      energies, when multiple scattering can be neglected, only
+   *      active telescope planes and DUTs are relevant. At low
+   *      energies you can still remove planes which are in front of
+   *      the first active layer and behind the last one. You can also
+   *      consider removing thin passive layers inside the
+   *      telescope. Number of layers determines the order of matrix
+   *      equation which has to be solved for each track.
+   *
+   *  \li Use nominal plane resolutions instead of cluster position
+   *      errors (set \e UseNominalResolution to \e true ). For full
+   *      tracks (without missing hits) matrix inversion is done only
+   *      once and not for each track hypothesis.
+   *
+   *  \li Use beam constraint (set \e UseBeamConstraint to \e true ),
+   *      even if beam spread is large. With beam 
+   *      constraint first two hits are sufficent to recognize bad track
+   *      hypothesis. Without beam constraint at least 3 hits are needed. 
+   *      However, to use beam constraint telescope layers have to be
+   *      aligned w.r.t. the beam direction (beam has to be perpendicular to
+   *     telescope layers).
+   *
+   * \li Do not allow for missing hits (set \e AllowMissingHits to 0).
+   *     This reduces number of fit hypothesis and improves fit performance.
+   *
+   * \li Allow same hit to be used in more than one track (set
+   *    \e AllowAmbiguousHits to \e true ). If each hit can be used in
+   *    one track only, track finding has to be repeated many times,
+   *    each time finding the best track hypothesis and then removing
+   *    corresponding hits before looking for the next track. If
+   *    ambiguity is allowed only one loop over all hypothesis is
+   *    needed. Therefor this option can significantly improve algorithm
+   *    performance at large multiplicities. The influence on the fit
+   *    results is negligible, as probability of more than one track
+   *    matching given hit is very, very small.
+   * 
+   * \li Limit number of hits per plane. This should \b not be done by
+   *    using \e MaxPlaneHits parameter, as it would bias plane
+   *    efficiency calculation. Best way is to define position window
+   *    in each active plane (see geometry description parameters
+   *    above).
    *
    * \todo
    *  \li Interface to LCCD (alignment)
    *
-   * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelTestFitter.h,v 1.13 2008-05-12 16:57:04 zarnecki Exp $
-   * \date 2007.10.30
-   *
+   * \author A.F.Zarnecki, University of Warsaw, zarnecki@fuw.edu.pl
+   * @version $Id: EUTelTestFitter.h,v 1.14 2008-05-21 20:28:36 zarnecki Exp $
+   * 
    */ 
 
 
@@ -258,7 +340,7 @@ namespace eutelescope {
 
     //! Find track in XZ and YZ 
     /*! Fit track in two planes (XZ and YZ) by solving two matrix
-     * equations and calculate Chi^2
+     * equations and calculate \f$ \chi^{2} \f$
      */
     double MatrixFit();
 
@@ -280,8 +362,8 @@ namespace eutelescope {
     //! Fit particle track in one plane (XZ or YZ) 
     int DoAnalFit(double * pos, double *err);
 
-    //! Calculate Chi^2 of the fit
-    /*! Calculate Chi^2 of the fit taking into account measured particle
+    //! Calculate \f$ \chi^{2} \f$ of the fit
+    /*! Calculate \f$ \chi^{2} \f$ of the fit taking into account measured particle
      *  positions in X and Y and fitted scattering angles in XZ and YZ
      *  planes 
      */
