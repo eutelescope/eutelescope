@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.21 2008-05-19 12:32:06 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.22 2008-05-21 20:26:55 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -760,13 +760,16 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       //      hitX[ihit] = pos[0];
       //      hitY[ihit] = pos[1];
 
+      // Shift sign changed in 1.22 for consistency with alignment
+      // processor
+ 
       hitX[ihit] = pos[0]*cos(_planeRotZ[hitPlane[ihit]])
                  + pos[1]*sin(_planeRotZ[hitPlane[ihit]])
-                 + _planeShiftX[hitPlane[ihit]];
+                 - _planeShiftX[hitPlane[ihit]];
 
       hitY[ihit] = pos[1]*cos(_planeRotZ[hitPlane[ihit]])
                  - pos[0]*sin(_planeRotZ[hitPlane[ihit]])
-                 + _planeShiftY[hitPlane[ihit]];
+                 - _planeShiftY[hitPlane[ihit]];
 
       // Check Window and Mask cuts, if defined
 
