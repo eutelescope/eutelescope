@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// @version: $Id: EUTelDUTHistograms.cc,v 1.6 2008-05-19 12:32:06 bulgheroni Exp $
+// @version: $Id: EUTelDUTHistograms.cc,v 1.7 2008-05-22 15:24:32 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -11,6 +11,8 @@
  *   header with author names in all development based on this file.
  *
  */
+
+#ifdef USE_GEAR
 
 // eutelescope inlcudes
 #include "EUTelDUTHistograms.h"
@@ -1820,3 +1822,5 @@ void EUTelDUTHistograms::bookHistos()
 
 return;
 }
+
+#endif

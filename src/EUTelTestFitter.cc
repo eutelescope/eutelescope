@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.22 2008-05-21 20:26:55 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.23 2008-05-22 15:24:32 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -12,6 +12,8 @@
  *   header with author names in all development based on this file.
  *
  */
+
+#ifdef USE_GEAR
 
 // eutelescope inlcudes
 #include "EUTelTestFitter.h"
@@ -2238,3 +2240,5 @@ int EUTelTestFitter::GaussjSolve(double *alfa,double *beta,int n)
 
   return 0;
 }
+
+#endif

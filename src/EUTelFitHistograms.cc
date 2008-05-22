@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitHistograms.cc,v 1.7 2008-05-19 12:32:06 bulgheroni Exp $
+// Version: $Id: EUTelFitHistograms.cc,v 1.8 2008-05-22 15:24:32 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -12,6 +12,8 @@
  *   header with author names in all development based on this file.
  *
  */
+
+#ifdef USE_GEAR
 
 // eutelescope inlcudes
 #include "EUTelFitHistograms.h"
@@ -2533,3 +2535,5 @@ void EUTelFitHistograms::bookHistos()
 
 return;
 }
+
+#endif 

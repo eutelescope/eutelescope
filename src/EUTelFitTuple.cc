@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitTuple.cc,v 1.2 2008-05-19 13:54:21 bulgheroni Exp $
+// Version: $Id: EUTelFitTuple.cc,v 1.3 2008-05-22 15:24:32 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -12,6 +12,8 @@
  *   header with author names in all development based on this file.
  *
  */
+
+#ifdef USE_GEAR
 
 // eutelescope inlcudes
 #include "EUTelFitTuple.h"
@@ -726,3 +728,5 @@ void EUTelFitTuple::bookHistos()
 
 return;
 }
+
+#endif
