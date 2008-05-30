@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.13 2008-05-20 13:07:22 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.14 2008-05-30 13:42:55 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -471,12 +471,7 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		      // for the time being applying the marker
 		      // removal only in the case of MimoTel sensors
 
-		      ( eudrbSubDet[iDetector] ==  "MIMOTEL" ) &&
-
-		      // for the time being only in the case of RAW3
-		      // mode
-		      
-		      ( eudrbSubMode[iDetector] == "RAW3") ) {
+		      ( eudrbSubDet[iDetector] ==  "MIMOTEL" ) ) {
 
 		  // the idea behind the marker removal procedure is that:
 		  // markers are occurring always at the same column
@@ -495,7 +490,8 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		  vector<short >::iterator currentThirdPos  = thirdStrippedVec.begin();
 		  vector<short >::iterator firstBegin       = array.m_adc[0].begin();
 		  vector<short >::iterator secondBegin      = array.m_adc[1].begin();
-		  vector<short >::iterator thirdBegin       = array.m_adc[2].begin();
+		  vector<short >::iterator thirdBegin;
+		  if ( eudrbSubMode[iDetector] == "RAW3" ) thirdBegin = array.m_adc[2].begin();
 		  
 		  for ( int y = 0; y < yMaxVec[iDetector] + 1 ; y++ ) {
 		    int offset = y * ( xMaxVec[iDetector] + 1 + _markerPositionVec.size() );
@@ -508,9 +504,11 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		    currentSecondPos   = copy( secondBegin + offset,
 					       secondBegin + ( *(marker) + offset ),
 					       currentSecondPos );
-		    currentThirdPos    = copy( thirdBegin + offset, 
-					       thirdBegin + ( *(marker) + offset ),
-					       currentThirdPos );
+		    if ( eudrbSubMode[iDetector] == "RAW3" ) {
+		      currentThirdPos    = copy( thirdBegin + offset, 
+						 thirdBegin + ( *(marker) + offset ),
+						 currentThirdPos );
+		    }
 		    
 		    while ( marker != _markerPositionVec.end() ) {
 		      if ( marker < _markerPositionVec.end() - 1 ) {
@@ -520,9 +518,11 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 			currentSecondPos  = copy( secondBegin + ( *(marker) + 1 + offset),
 						  secondBegin + ( *(marker + 1 ) + offset),
 						  currentSecondPos );
-			currentThirdPos   = copy( thirdBegin + ( *(marker) + 1 + offset),
-						  thirdBegin + ( *(marker + 1 ) + offset),
-						  currentThirdPos );
+			if ( eudrbSubMode[iDetector] == "RAW3" ) {
+			  currentThirdPos   = copy( thirdBegin + ( *(marker) + 1 + offset),
+						    thirdBegin + ( *(marker + 1 ) + offset),
+						    currentThirdPos );
+			}
 		      } else {
 			// this is the case where we have to copy the part
 			// of the original vector going from the last
@@ -535,9 +535,11 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 						 secondBegin + offset + ( xMaxVec[iDetector] + 1 + _markerPositionVec.size() ), 
 						 currentSecondPos );
 			
-			currentThirdPos = copy( thirdBegin + ( *(marker) + 1 + offset ),
-						thirdBegin + offset + ( xMaxVec[iDetector] + 1 + _markerPositionVec.size() ), 
-						currentThirdPos );
+			if ( eudrbSubMode[iDetector] == "RAW3" ) {
+			  currentThirdPos = copy( thirdBegin + ( *(marker) + 1 + offset ),
+						  thirdBegin + offset + ( xMaxVec[iDetector] + 1 + _markerPositionVec.size() ), 
+						  currentThirdPos );
+			}
 		      }
 		      ++marker;
 		    }
@@ -545,7 +547,7 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		
 		  firstFrame->setADCValues( firstStrippedVec );
 		  secondFrame->setADCValues( secondStrippedVec );
-		  thirdFrame->setADCValues( thirdStrippedVec );
+		  if ( eudrbSubMode[iDetector] == "RAW3" )   thirdFrame->setADCValues( thirdStrippedVec );
 		  
 		
 		} else {
@@ -606,12 +608,7 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 		       // for the time being applying the marker
 		       // removal only in the case of MimoTel sensors
 
-		       ( eudrbSubDet[iDetector] ==  "MIMOTEL" ) &&
-		       
-		       // for the time being only in the case of RAW3
-		       // mode
-		       
-		       ( eudrbSubMode[iDetector] == "RAW3") ) {
+		       ( eudrbSubDet[iDetector] ==  "MIMOTEL" ) ) {
 		    
 
 		    // strip away the markers...
