@@ -1185,6 +1185,10 @@ void EUTelMille::processEvent (LCEvent * event) {
 
       } // end check if residual cuts are used
 
+      if (_useResidualCuts != 0 && (residualsXOkay == 0 || residualsYOkay == 0)) {
+	streamlog_out ( MESSAGE2 ) << "Track did not pass the residual cuts." << endl;
+      }
+
       // apply track cuts (at the moment only residuals)
       if (_useResidualCuts == 0 || (residualsXOkay == 1 && residualsYOkay == 1)) {
 
