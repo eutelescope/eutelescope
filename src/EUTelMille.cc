@@ -1404,12 +1404,12 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 #endif
 
-	// clean up
-	delete [] _zPosHere;
-	delete [] _yPosHere;
-	delete [] _xPosHere;
-
       } // end if apply track cuts
+
+      // clean up
+      delete [] _zPosHere;
+      delete [] _yPosHere;
+      delete [] _xPosHere;
 
     } // end loop over all track candidates
 
