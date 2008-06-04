@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.14 2008-05-30 13:42:55 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.15 2008-06-04 14:00:38 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -597,8 +597,8 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 					     ( 2 * array.m_pivot[iPixel] - 1 ) * secondFrameVec[iPixel] +
 					     ( 1 - array.m_pivot[iPixel]     ) * thirdFrameVec[iPixel] ) );
 		    } else {
-		      cdsVector.push_back( static_cast<short> (_polarity ) *
-					   ( secondFrameVec[iPixel] - firstFrameVec[iPixel] ) );
+                      cdsVector.push_back( static_cast<short> ( (_polarity ) * 
+                                                                  (   firstFrameVec[iPixel]   -  secondFrameVec[iPixel] ) )) ;
 		    }
 		  }	      
 		  
