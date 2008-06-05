@@ -3,7 +3,7 @@
 #
 # Original author: J. Engels, DESY
 # Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# Version $Id: CMakeLists.txt,v 1.8 2008-04-16 07:35:48 bulgheroni Exp $
+# Version $Id: CMakeLists.txt,v 1.9 2008-06-05 13:30:38 bulgheroni Exp $
 ########################################################
 
 
@@ -90,7 +90,7 @@ IF( DEFINED EUDAQ_HOME OR DEFINED ENV{EUDAQ} )
     FIND_LIBRARY( EUDAQ_LIB
         NAMES eudaq
         PATHS ${EUDAQ_HOME}
-        PATH_SUFFIXES main   
+        PATH_SUFFIXES bin   
         NO_DEFAULT_PATH )
     IF( NOT EUDAQ_LIB )
         MESSAGE( STATUS "EUDAQ library not found!!" )
