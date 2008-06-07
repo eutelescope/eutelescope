@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.13 2007-09-13 17:29:34 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.14 2008-06-07 12:12:17 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -812,16 +812,31 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
       ++cluIter;
     }
 
-    bool isEventAccepted = areClusterEnough(clusterNoVec) && !areClusterTooMany(clusterNoVec);
-    isEventAccepted &= hasSameNumberOfHit(clusterNoVec);
+    bool areClusterEnoughTemp     = areClusterEnough(clusterNoVec);
+    bool areClusterTooManyTemp    = areClusterTooMany(clusterNoVec);
+    bool hasSameNumberOfHitTemp   = hasSameNumberOfHit(clusterNoVec);
+    bool isEventAccepted = areClusterEnoughTemp && !areClusterTooManyTemp;
+    isEventAccepted &= hasSameNumberOfHitTemp;
 
     if ( ! isEventAccepted ) acceptedClusterVec.clear();
 
     if ( acceptedClusterVec.empty() ) {
       delete filteredCollectionVec;
-      streamlog_out ( DEBUG1 ) << "No clusters passed the selection" << endl;
+      if ( ! areClusterEnoughTemp ) {
+	streamlog_out ( DEBUG1 ) << "Not enough clusters passed the selection " << endl;
+      } else if ( areClusterTooManyTemp ) {
+	streamlog_out ( DEBUG1 ) << "Too many clusters passed the selection " << endl;
+      } else {
+	streamlog_out ( DEBUG1 ) << "No clusters passed the selection" << endl;
+      }
       if ( _skipEmptyEvent ) { 
-	streamlog_out ( WARNING0 ) << "Skipping event because no clusters passed the selection" << endl;
+	if ( ! areClusterEnoughTemp ) {
+	  streamlog_out (WARNING0 ) << "Skipping event because too few clusters passed the selection" << endl;
+	} else if ( areClusterTooManyTemp ) {
+	  streamlog_out (WARNING0 ) << "Skipping event because too many clusters passed the selection" << endl;
+	} else {
+	  streamlog_out ( WARNING0 ) << "Skipping event because no clusters passed the selection" << endl;
+	}
 	throw SkipEventException(this);
       }  else return;
     } else {
