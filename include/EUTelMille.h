@@ -152,7 +152,7 @@ namespace eutelescope {
     std::vector<float > _alignmentConstantsSixthLayer;
 
     float _distanceMax;
-    int _excludePlane;
+    std::vector<int > _excludePlanes;
     int _maxTrackCandidates;
     
     std::string _binaryFilename;
@@ -188,6 +188,9 @@ namespace eutelescope {
     
     //! Event number
     int _iEvt;
+
+    // Excluded planes
+    int _nExcludePlanes;
 
     // Statistics
     int _nMilleDataPoints;

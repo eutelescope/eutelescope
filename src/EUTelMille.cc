@@ -150,8 +150,10 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("DistanceMax","Maximal allowed distance between hits entering the fit per 10 cm space between the planes.",
                             _distanceMax, static_cast <float> (2000.0));
 
-  registerOptionalParameter("ExcludePlane","Exclude plane from fit."
-			    ,_excludePlane, static_cast <int> (0));
+  std::vector<int> exclPlanes;
+
+  registerOptionalParameter("ExcludePlanes","Exclude planes from fit."
+			    ,_excludePlanes , exclPlanes);
 
   registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates."
 			    ,_maxTrackCandidates, static_cast <int> (2000));
@@ -304,6 +306,11 @@ void EUTelMille::init() {
   _iRun = 0;
   _iEvt = 0;
   
+  // Initialize number of excluded planes
+  _nExcludePlanes = _excludePlanes.size();
+
+  streamlog_out ( MESSAGE2 ) << "Number of planes excluded from the alignment fit: " << _nExcludePlanes << endl;
+
   // Initialise Mille statistics
   _nMilleDataPoints = 0;
   _nMilleTracks = 0;
@@ -400,13 +407,13 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
 void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFitter[], double yResFitter[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]) {
 
   int sizearray;
-  
-  if (_excludePlane == 0) {
-    sizearray = nPlanesFitter;
-  } else {
-    sizearray = nPlanesFitter - 1;
-  }
 
+  if (_nExcludePlanes > 0) {
+    sizearray = nPlanesFitter - _nExcludePlanes;
+  } else {
+    sizearray = nPlanesFitter;
+  }
+  
   double * xPosFit = new double[sizearray];
   double * yPosFit = new double[sizearray];
   double * zPosFit = new double[sizearray];
@@ -416,7 +423,19 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
   int nPlanesFit = 0;
 
   for (int help = 0; help < nPlanesFitter; help++) {
-    if ((_excludePlane - 1) == help) {
+    
+    int excluded = 0;
+
+    // check if actual plane is excluded
+    if (_nExcludePlanes > 0) {
+      for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+	if (help == _excludePlanes[helphelp]) {
+	  excluded = 1;
+	}
+      }
+    }
+
+    if (excluded == 1) {
       // do noting
     } else {
       xPosFit[nPlanesFit] = xPosFitter[help];
@@ -1140,9 +1159,25 @@ void EUTelMille::processEvent (LCEvent * event) {
 
       streamlog_out ( MESSAGE2 ) << "Adding track using the following coordinates: ";
 
+      // loop over all planes
       for (int help = 0; help < _nPlanes; help++) {
+
+	int excluded = 0;
+
+	// check if actual plane is excluded
+	if (_nExcludePlanes > 0) {
+	  for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+	    if (help == _excludePlanes[helphelp]) {
+	      excluded = 1;
+	    }
+	  }
+	}
+
+	if (excluded == 0) {
 	streamlog_out ( MESSAGE2 ) << _xPosHere[help] << " " << _yPosHere[help] << " " << _zPosHere[help] << "   ";
-      }
+	}
+
+      } // end loop over all planes
 
       streamlog_out ( MESSAGE2 ) << endl;
 
@@ -1199,7 +1234,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 	if (_alignMode == 2) {
 
 	  const int nLC = 4; // number of local parameters
-	  const int nGL = _nPlanes * 2; // number of global parameters
+	  const int nGL = (_nPlanes - _nExcludePlanes) * 2; // number of global parameters
 
 	  float sigma = _telescopeResolution;
 
@@ -1223,33 +1258,57 @@ void EUTelMille::processEvent (LCEvent * event) {
 	    derLC[help] = 0;
 	  }
 
+	  int nExcluded = 0;
+
+	  // loop over all planes
 	  for (int help = 0; help < _nPlanes; help++) {
 
-	    derGL[(help * 2)] = -1;
-	    derLC[0] = 1;
-	    derLC[2] = _zPosHere[help];
-	    residual = _waferResidX[help];
+	    int excluded = 0;
 
-	    _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+	    // check if actual plane is excluded
+	    if (_nExcludePlanes > 0) {
+	      for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+		if (help == _excludePlanes[helphelp]) {
+		  excluded = 1;
+		  nExcluded++;
+		}
+	      }
+	    }
 
-	    derGL[(help * 2)] = 0;
-	    derLC[0] = 0;
-	    derLC[2] = 0;
+	    // if plane is not excluded
+	    if (excluded == 0) {
 
-	    derGL[((help * 2) + 1)] = -1;
-	    derLC[1] = 1;
-	    derLC[3] = _zPosHere[help];
-	    residual = _waferResidY[help];
+	      int helphelp = help - nExcluded; // index of plane after
+					       // excluded planes have
+					       // been removed
 
-	    _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+	      derGL[(helphelp * 2)] = -1;
+	      derLC[0] = 1;
+	      derLC[2] = _zPosHere[helphelp];
+	      residual = _waferResidX[helphelp];
 
-	    derGL[((help * 2) + 1)] = 0;
-	    derLC[1] = 0;
-	    derLC[3] = 0;
+	      _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+
+	      derGL[(helphelp * 2)] = 0;
+	      derLC[0] = 0;
+	      derLC[2] = 0;
+
+	      derGL[((helphelp * 2) + 1)] = -1;
+	      derLC[1] = 1;
+	      derLC[3] = _zPosHere[helphelp];
+	      residual = _waferResidY[helphelp];
+
+	      _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+
+	      derGL[((helphelp * 2) + 1)] = 0;
+	      derLC[1] = 0;
+	      derLC[3] = 0;
 	      
-	    _nMilleDataPoints++;
+	      _nMilleDataPoints++;
 
-	  }
+	    } // end if plane is not excluded
+
+	  } // end loop over all planes
 
 	  // clean up
 
@@ -1285,37 +1344,61 @@ void EUTelMille::processEvent (LCEvent * event) {
 	    derLC[help] = 0;
 	  }
 
+	  int nExcluded = 0;
+
+	  // loop over all planes
 	  for (int help = 0; help < _nPlanes; help++) {
 
-	    derGL[(help * 3)] = -1;
-	    derGL[((help * 3) + 2)] = _yPosHere[help];
-	    derLC[0] = 1;
-	    derLC[2] = _zPosHere[help];
-	    residual = _waferResidX[help];
+	    int excluded = 0;
 
-	    _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+	    // check if actual plane is excluded
+	    if (_nExcludePlanes > 0) {
+	      for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+		if (help == _excludePlanes[helphelp]) {
+		  excluded = 1;
+		  nExcluded++;
+		}
+	      }
+	    }
 
-	    derGL[(help * 3)] = 0;
-	    derGL[((help * 3) + 2)] = 0;
-	    derLC[0] = 0;
-	    derLC[2] = 0;
+	    // if plane is not excluded
+	    if (excluded == 0) {
 
-	    derGL[((help * 3) + 1)] = -1;
-	    derGL[((help * 3) + 2)] = -1 * _xPosHere[help];
-	    derLC[1] = 1;
-	    derLC[3] = _zPosHere[help];
-	    residual = _waferResidY[help];
+	      int helphelp = help - nExcluded; // index of plane after
+					       // excluded planes have
+					       // been removed
 
-	    _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+	      derGL[(helphelp * 3)] = -1;
+	      derGL[((helphelp * 3) + 2)] = _yPosHere[help];
+	      derLC[0] = 1;
+	      derLC[2] = _zPosHere[helphelp];
+	      residual = _waferResidX[helphelp];
 
-	    derGL[((help * 3) + 1)] = 0;
-	    derGL[((help * 3) + 2)] = 0;
-	    derLC[1] = 0;
-	    derLC[3] = 0;
+	      _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
-	    _nMilleDataPoints++;
+	      derGL[(helphelp * 3)] = 0;
+	      derGL[((helphelp * 3) + 2)] = 0;
+	      derLC[0] = 0;
+	      derLC[2] = 0;
 
-	  }
+	      derGL[((helphelp * 3) + 1)] = -1;
+	      derGL[((helphelp * 3) + 2)] = -1 * _xPosHere[help];
+	      derLC[1] = 1;
+	      derLC[3] = _zPosHere[helphelp];
+	      residual = _waferResidY[helphelp];
+
+	      _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+
+	      derGL[((helphelp * 3) + 1)] = 0;
+	      derGL[((helphelp * 3) + 2)] = 0;
+	      derLC[1] = 0;
+	      derLC[3] = 0;
+
+	      _nMilleDataPoints++;
+
+	    } // end if plane is not excluded
+
+	  } // end loop over all planes
 
 	  // clean up
       
