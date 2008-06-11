@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.24 2008-05-19 12:32:06 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.25 2008-06-11 08:53:40 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -344,7 +344,10 @@ void EUTelPedestalNoiseProcessor::check (LCEvent * evt) {
 
 void EUTelPedestalNoiseProcessor::end() {
 
-  if ( _iLoop == _noOfCMIterations + 1 )  {
+
+  int additionalLoop = 0;
+  if ( _additionalMaskingLoop ) additionalLoop = 1; 
+  if ( _iLoop == _noOfCMIterations + 1 + additionalLoop )  {
     streamlog_out ( MESSAGE4 ) << "Successfully finished" << endl;
   }  else {
     streamlog_out ( ERROR4 ) << "Not all the iterations have been done because of a too MaxRecordNumber.\n"
@@ -580,12 +583,12 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
   
   if ( evt->getEventType() == kEORE ) {
     streamlog_out ( DEBUG4 ) << "EORE found: calling finalizeProcessor()." << endl;
-    finalizeProcessor();
+    finalizeProcessor( false );
   }
 
   if ( ( _lastEvent != -1 ) && ( _iEvt >= _lastEvent ) ) {
     streamlog_out ( DEBUG4 ) << "Looping limited by _lastEvent: calling finalizeProcessor()." << endl;
-    finalizeProcessor();
+    finalizeProcessor( false );
   }
 
   if ( _iEvt < _firstEvent ) {
@@ -753,8 +756,8 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
   // selected for pedestal calculation
 
   
-  if ( evt->getEventType() == kEORE ) finalizeProcessor();
-  if ( ( _lastEvent != -1 ) && ( _iEvt >= _lastEvent ) ) finalizeProcessor();
+  if ( evt->getEventType() == kEORE ) finalizeProcessor( false );
+  if ( ( _lastEvent != -1 ) && ( _iEvt >= _lastEvent ) ) finalizeProcessor( false );
   if ( _iEvt < _firstEvent ) {
     ++_iEvt;
     throw SkipEventException(this);
@@ -1099,7 +1102,10 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
   
 
   if ( ! fromMaskingLoop ) {
-
+    
+    // this is the case in which the function is called from a loop
+    // different from the additional masking loop. 
+    
     if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
       
       // the loop on events is over so we need to move temporary vectors
@@ -1113,6 +1119,7 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
       _tempEntries.clear();
       
     } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
+
 #ifdef MARLIN_USE_AIDA
       _pedestal.clear();
       _noise.clear();
@@ -1140,6 +1147,7 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
 	_noise.push_back(tempNoise);
       }
 #endif
+
     }
     
     // mask the bad pixels here
@@ -1149,6 +1157,9 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
     fillHistos();
   
   } else {
+    
+    // this is instead the case we where coming from the additional
+    // loop. So we don't need to manipulate the pedestal and noise vectors
 
     // here refill the status histoMap
     maskBadPixel();
@@ -1161,15 +1172,13 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
   // check if we need another loop or we can finish. Remember that we
   // have a total number of loop of _noOfCMIteration + 1 + eventually
   // the additional loop on bad pixel masking
+
   int additionalLoop = 0;
   if ( _additionalMaskingLoop ) additionalLoop = 1;
   if ( _iLoop == _noOfCMIterations + 1 + additionalLoop ) {
-    // ok this was last loop  
-    
 
-    // what we need to do now is to check if the user wants an
-    // additional loop for more accurate bad pixel masking.
-    
+    // ok this was last loop whatever kind of loop (first, other or
+    // additional) it was.
 
     streamlog_out ( MESSAGE4 ) << "Writing the output condition file" << endl;
 
@@ -1279,7 +1288,10 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
 
     throw StopProcessingException(this);
     setReturnValue("IsPedestalFinished", true);
+
   } else if ( _iLoop < _noOfCMIterations + 1 ) {
+
+
     // now we need to loop again
     // so reset the event counter
     _iEvt = 0;
@@ -1332,8 +1344,8 @@ void EUTelPedestalNoiseProcessor::additionalMaskingLoop(LCEvent * event) {
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
-  if ( evt->getEventType() == kEORE ) finalizeProcessor(true);
-  if ( ( _lastEvent != -1 ) && ( _iEvt >= _lastEvent ) ) finalizeProcessor(true);
+  if ( evt->getEventType() == kEORE ) finalizeProcessor( true );
+  if ( ( _lastEvent != -1 ) && ( _iEvt >= _lastEvent ) ) finalizeProcessor( true );
   if ( _iEvt < _firstEvent ) {
     ++_iEvt;
     throw SkipEventException(this);
