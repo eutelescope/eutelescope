@@ -1284,8 +1284,8 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 	      derGL[(helphelp * 2)] = -1;
 	      derLC[0] = 1;
-	      derLC[2] = _zPosHere[helphelp];
-	      residual = _waferResidX[helphelp];
+	      derLC[2] = _zPosHere[help];
+	      residual = _waferResidX[help];
 
 	      _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
@@ -1295,8 +1295,8 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 	      derGL[((helphelp * 2) + 1)] = -1;
 	      derLC[1] = 1;
-	      derLC[3] = _zPosHere[helphelp];
-	      residual = _waferResidY[helphelp];
+	      derLC[3] = _zPosHere[help];
+	      residual = _waferResidY[help];
 
 	      _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
@@ -1371,8 +1371,8 @@ void EUTelMille::processEvent (LCEvent * event) {
 	      derGL[(helphelp * 3)] = -1;
 	      derGL[((helphelp * 3) + 2)] = _yPosHere[help];
 	      derLC[0] = 1;
-	      derLC[2] = _zPosHere[helphelp];
-	      residual = _waferResidX[helphelp];
+	      derLC[2] = _zPosHere[help];
+	      residual = _waferResidX[help];
 
 	      _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
@@ -1384,8 +1384,8 @@ void EUTelMille::processEvent (LCEvent * event) {
 	      derGL[((helphelp * 3) + 1)] = -1;
 	      derGL[((helphelp * 3) + 2)] = -1 * _xPosHere[help];
 	      derLC[1] = 1;
-	      derLC[3] = _zPosHere[helphelp];
-	      residual = _waferResidY[helphelp];
+	      derLC[3] = _zPosHere[help];
+	      residual = _waferResidY[help];
 
 	      _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
