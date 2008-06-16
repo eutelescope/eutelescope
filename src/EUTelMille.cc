@@ -64,6 +64,8 @@
 #include <algorithm>
 #include <memory>
 #include <cmath>
+#include <iostream>
+#include <fstream>
 
 using namespace std;
 using namespace lcio;
@@ -219,6 +221,12 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a track"
 			    ,_residualsYMax,MaximalResidualsY);
+
+  registerOptionalParameter("GeneratePedeSteerfile","Generate a steering file for the pede program."
+			    ,_generatePedeSteerfile, static_cast <int> (0));
+
+  registerOptionalParameter("PedeSteerfileName","Name of the steering file for the pede program."
+			    ,_pedeSteerfileName, string("steer_mille.txt"));
 
   registerOptionalParameter("TestModeSensorResolution","Resolution assumed for the sensors in test mode."
 			    ,_testModeSensorResolution, static_cast <float> (3.0));
@@ -1553,6 +1561,159 @@ void EUTelMille::end() {
 
   // close the output file
   delete _mille;
+
+  // if write the pede steering file
+  if (_generatePedeSteerfile) {
+
+    streamlog_out ( MESSAGE2 ) << endl << "Generating the steering file for the pede program..." << endl;
+
+    string tempHistoName;
+    double *meanX = new double[_nPlanes];
+    double *meanY = new double[_nPlanes];
+
+    // loop over all detector planes
+    for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
+	  
+      if ( _histogramSwitch ) {
+	{
+	  stringstream ss; 
+	  ss << _residualXLocalname << "_d" << iDetector; 
+	  tempHistoName=ss.str();
+	}
+	if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+	  meanX[iDetector] = residx_histo->mean();
+	else {
+	  streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
+	  streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+	  _histogramSwitch = false;
+	}       
+      }
+
+      if ( _histogramSwitch ) {
+	{
+	  stringstream ss; 
+	  ss << _residualYLocalname << "_d" << iDetector; 
+	  tempHistoName=ss.str();
+	}
+	if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+	  meanY[iDetector] = residy_histo->mean();
+	else {
+	  streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualYLocalname << endl;
+	  streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+	  _histogramSwitch = false;
+	}       
+      }
+      
+    } // end loop over all detector planes
+
+    ofstream steerFile;
+    steerFile.open(_pedeSteerfileName.c_str());
+
+    if (steerFile.is_open()) {
+
+      // find first and last excluded plane
+      int firstnotexcl = _nPlanes;
+      int lastnotexcl = 0;
+
+      // loop over all planes
+      for (int help = 0; help < _nPlanes; help++) {
+
+	int excluded = 0;
+
+	// loop over all excluded planes
+	for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+	  if (help == _excludePlanes[helphelp]) {
+	    excluded = 1;
+	  }
+	} // end loop over all excluded planes
+
+	if (excluded == 0 && firstnotexcl > help) {
+	  firstnotexcl = help;
+	}
+
+	if (excluded == 0 && lastnotexcl < help) {
+	  lastnotexcl = help;
+	}
+      } // end loop over all planes
+
+      // calculate average
+      double averageX = (meanX[firstnotexcl] + meanX[lastnotexcl]) / 2;
+      double averageY = (meanY[firstnotexcl] + meanY[lastnotexcl]) / 2;
+
+      steerFile << "Cfiles" << endl;
+      steerFile << _binaryFilename << endl;
+      steerFile << endl;
+
+      steerFile << "Parameter" << endl;
+
+      // loop over all planes
+      for (int help = 0; help < _nPlanes; help++) {
+
+	int excluded = 0; // flag for excluded planes
+
+	// loop over all excluded planes
+	for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+
+	  if (help == _excludePlanes[helphelp]) {
+	    excluded = 1;
+	  }
+
+	} // end loop over all excluded planes
+
+	// if plane not excluded
+	if (excluded == 0) {
+	  
+	  // if fixed planes
+	  if (help == firstnotexcl || help == lastnotexcl) {
+      
+	    if (_alignMode == 1) {
+	      steerFile << (help * 3 + 1) << " 0.0 -1.0" << endl;
+	      steerFile << (help * 3 + 2) << " 0.0 -1.0" << endl;
+	      steerFile << (help * 3 + 3) << " 0.0 -1.0" << endl;
+	    } else if (_alignMode == 2) {
+	      steerFile << (help * 2 + 1) << " 0.0 -1.0" << endl;
+	      steerFile << (help * 2 + 2) << " 0.0 -1.0" << endl;
+	    }
+
+	  } else {
+	    
+	    if (_alignMode == 1) {
+	      steerFile << (help * 3 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
+	      steerFile << (help * 3 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
+	      steerFile << (help * 3 + 3) << " 0.0 0.0" << endl;
+	    } else if (_alignMode == 2) {
+	      steerFile << (help * 2 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
+	      steerFile << (help * 2 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
+	    }
+
+	  }
+
+	} // end if plane not excluded
+
+      } // end loop over all planes
+
+      steerFile << endl;
+      steerFile << "chiscut 5.0 2.5" << endl;
+      steerFile << "outlierdownweighting 4" << endl;
+      steerFile << endl;
+      steerFile << "method inversion 10 0.001" << endl;
+      steerFile << endl;
+      steerFile << "histprint" << endl;
+      steerFile << endl;
+      steerFile << "end" << endl;
+
+      steerFile.close();
+
+      streamlog_out ( MESSAGE2 ) << "File " << _pedeSteerfileName << " written." << endl;
+
+    } else {
+
+      streamlog_out ( ERROR2 ) << "Could not open steering file." << endl;
+
+    }
+
+
+  } // end if write the pede steering file
 
   streamlog_out ( MESSAGE2 ) << endl;
   streamlog_out ( MESSAGE2 ) << "Number of data points used: " << _nMilleDataPoints << endl;

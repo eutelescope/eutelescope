@@ -168,6 +168,9 @@ namespace eutelescope {
     std::vector<float > _residualsXMax;
     std::vector<float > _residualsYMax;
 
+    int _generatePedeSteerfile;
+    std::string _pedeSteerfileName;
+
     int _inputMode;
     float _testModeSensorResolution;
     float _testModeXTrackSlope;
