@@ -1646,6 +1646,8 @@ void EUTelMille::end() {
 
       steerFile << "Parameter" << endl;
 
+      int counter = 0;
+
       // loop over all planes
       for (int help = 0; help < _nPlanes; help++) {
 
@@ -1667,26 +1669,28 @@ void EUTelMille::end() {
 	  if (help == firstnotexcl || help == lastnotexcl) {
       
 	    if (_alignMode == 1) {
-	      steerFile << (help * 3 + 1) << " 0.0 -1.0" << endl;
-	      steerFile << (help * 3 + 2) << " 0.0 -1.0" << endl;
-	      steerFile << (help * 3 + 3) << " 0.0 -1.0" << endl;
+	      steerFile << (counter * 3 + 1) << " 0.0 -1.0" << endl;
+	      steerFile << (counter * 3 + 2) << " 0.0 -1.0" << endl;
+	      steerFile << (counter * 3 + 3) << " 0.0 -1.0" << endl;
 	    } else if (_alignMode == 2) {
-	      steerFile << (help * 2 + 1) << " 0.0 -1.0" << endl;
-	      steerFile << (help * 2 + 2) << " 0.0 -1.0" << endl;
+	      steerFile << (counter * 2 + 1) << " 0.0 -1.0" << endl;
+	      steerFile << (counter * 2 + 2) << " 0.0 -1.0" << endl;
 	    }
 
 	  } else {
 	    
 	    if (_alignMode == 1) {
-	      steerFile << (help * 3 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
-	      steerFile << (help * 3 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
-	      steerFile << (help * 3 + 3) << " 0.0 0.0" << endl;
+	      steerFile << (counter * 3 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
+	      steerFile << (counter * 3 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
+	      steerFile << (counter * 3 + 3) << " 0.0 0.0" << endl;
 	    } else if (_alignMode == 2) {
-	      steerFile << (help * 2 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
-	      steerFile << (help * 2 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
+	      steerFile << (counter * 2 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
+	      steerFile << (counter * 2 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
 	    }
 
 	  }
+
+	  counter++;
 
 	} // end if plane not excluded
 
