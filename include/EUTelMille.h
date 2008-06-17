@@ -170,6 +170,7 @@ namespace eutelescope {
 
     int _generatePedeSteerfile;
     std::string _pedeSteerfileName;
+    int _runPede;
 
     int _inputMode;
     float _testModeSensorResolution;

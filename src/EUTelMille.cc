@@ -228,6 +228,9 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("PedeSteerfileName","Name of the steering file for the pede program."
 			    ,_pedeSteerfileName, string("steer_mille.txt"));
 
+  registerOptionalParameter("RunPede","Execute the pede program using the generated steering file."
+			    ,_runPede, static_cast <int> (0));
+
   registerOptionalParameter("TestModeSensorResolution","Resolution assumed for the sensors in test mode."
 			    ,_testModeSensorResolution, static_cast <float> (3.0));
 
@@ -1722,6 +1725,27 @@ void EUTelMille::end() {
   streamlog_out ( MESSAGE2 ) << endl;
   streamlog_out ( MESSAGE2 ) << "Number of data points used: " << _nMilleDataPoints << endl;
   streamlog_out ( MESSAGE2 ) << "Number of tracks used: " << _nMilleTracks << endl;
+
+  // if running pede using the generated steering file
+  if (_runPede == 1) {
+
+    // check if steering file exists
+    if (_generatePedeSteerfile == 1) {
+
+      std::string command = "pede " + _pedeSteerfileName;
+
+      streamlog_out ( MESSAGE2 ) << endl;
+      streamlog_out ( MESSAGE2 ) << "Starting pede..." << endl;
+      system(command.c_str());
+
+    } else {
+
+      streamlog_out ( ERROR2 ) << "Unable to run pede. No steering file has been generated." << endl;
+
+    }
+
+  } // end if running pede using the generated steering file
+
   streamlog_out ( MESSAGE2 ) << endl;
   streamlog_out ( MESSAGE2 ) << "Successfully finished" << endl;  
 
