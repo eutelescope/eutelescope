@@ -140,16 +140,7 @@ namespace eutelescope {
      */ 
     std::string _trackCollectionName;
 
-    //! TRACKERHIT collection name
-    /*! Output collection with hits from fitted tracks.
-     */ 
-    std::string _outputHitColName;
-
-    std::vector<float > _alignmentConstantsSecondLayer;
-    std::vector<float > _alignmentConstantsThirdLayer;
-    std::vector<float > _alignmentConstantsFourthLayer;
-    std::vector<float > _alignmentConstantsFifthLayer;
-    std::vector<float > _alignmentConstantsSixthLayer;
+    // parameters
 
     float _distanceMax;
     std::vector<int > _excludePlanes;

@@ -91,7 +91,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   // choose input mode
   registerOptionalParameter("InputMode","Selects the source of input hits. 0 - hits read from hitfile with simple trackfinding. 1 - hits read from output of tracking processor. 2 - Test mode. Simple internal simulation and simple trackfinding.",_inputMode, static_cast <int> (0));
   
-  // input collection
+  // input collections
 
   registerInputCollection(LCIO::TRACKERHIT,"HitCollectionName",
 			  "Hit collection name",
@@ -101,53 +101,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 			  "Track collection name",
 			  _trackCollectionName,std::string("fittracks"));
 
-  // input parameters: take these from database later
-
-  FloatVec constantsSecondLayer;
-  constantsSecondLayer.push_back(0.0);
-  constantsSecondLayer.push_back(0.0);
-  constantsSecondLayer.push_back(0.0);
-  constantsSecondLayer.push_back(0.0);
-  constantsSecondLayer.push_back(0.0);
-
-  FloatVec constantsThirdLayer;
-  constantsThirdLayer.push_back(0.0);
-  constantsThirdLayer.push_back(0.0);
-  constantsThirdLayer.push_back(0.0);
-  constantsThirdLayer.push_back(0.0);
-  constantsThirdLayer.push_back(0.0);
-
-  FloatVec constantsFourthLayer;
-  constantsFourthLayer.push_back(0.0);
-  constantsFourthLayer.push_back(0.0);
-  constantsFourthLayer.push_back(0.0);
-  constantsFourthLayer.push_back(0.0);
-  constantsFourthLayer.push_back(0.0);
-
-  FloatVec constantsFifthLayer;
-  constantsFifthLayer.push_back(0.0);
-  constantsFifthLayer.push_back(0.0);
-  constantsFifthLayer.push_back(0.0);
-  constantsFifthLayer.push_back(0.0);
-  constantsFifthLayer.push_back(0.0);
-
-  FloatVec constantsSixthLayer;
-  constantsSixthLayer.push_back(0.0);
-  constantsSixthLayer.push_back(0.0);
-  constantsSixthLayer.push_back(0.0);
-  constantsSixthLayer.push_back(0.0);
-  constantsSixthLayer.push_back(0.0);
-  
-  registerOptionalParameter("AlignmentConstantsSecondLayer","Alignment Constants for second Telescope Layer from EUTelAlign:\n off_x, off_y, theta_x, theta_y, theta_z",
-			    _alignmentConstantsSecondLayer, constantsSecondLayer);
-  registerOptionalParameter("AlignmentConstantsThirdLayer","Alignment Constants for third Telescope Layer from EUTelAlign:\n off_x, off_y, theta_x, theta_y, theta_z",
-			    _alignmentConstantsThirdLayer, constantsThirdLayer);
-  registerOptionalParameter("AlignmentConstantsFourthLayer","Alignment Constants for fourth Telescope Layer from EUTelAlign:\n off_x, off_y, theta_x, theta_y, theta_z",
-			    _alignmentConstantsFourthLayer, constantsFourthLayer);
-  registerOptionalParameter("AlignmentConstantsFifthLayer","Alignment Constants for fifth Telescope Layer from EUTelAlign:\n off_x, off_y, theta_x, theta_y, theta_z"
-			    ,_alignmentConstantsFifthLayer, constantsFifthLayer);
-  registerOptionalParameter("AlignmentConstantsSixthLayer","Alignment Constants for sixth Telescope Layer from EUTelAlign:\n off_x, off_y, theta_x, theta_y, theta_z"
-			    ,_alignmentConstantsSixthLayer, constantsSixthLayer);
+  // parameters
 
   registerOptionalParameter("DistanceMax","Maximal allowed distance between hits entering the fit per 10 cm space between the planes.",
                             _distanceMax, static_cast <float> (2000.0));
@@ -651,83 +605,11 @@ void EUTelMille::processEvent (LCEvent * event) {
       
       // Getting positions of the hits.
       // ------------------------------
-      //
-      // Here the alignment constants are used to correct the positions.
-      // The other layers were aligned with respect to the first one.
-      // All distances are given in \mu m.
 
-      double off_x, off_y, theta_x, theta_y, theta_z;
+      hitsInPlane.measuredX = 1000 * hit->getPosition()[0];
+      hitsInPlane.measuredY = 1000 * hit->getPosition()[1];
+      hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
 
-      if (layerIndex == 0) {
-
-	// First layer: no constants
-
-	hitsInPlane.measuredX = 1000 * hit->getPosition()[0];
-	hitsInPlane.measuredY = 1000 * hit->getPosition()[1];
-	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
-
-      } else {
-	
-	// Other layers: set constants to values from xml file
-
-	if (layerIndex == 1) {
-	  
-	  off_x = _alignmentConstantsSecondLayer[0];
-	  off_y = _alignmentConstantsSecondLayer[1];
-	  theta_x = _alignmentConstantsSecondLayer[2];
-	  theta_y = _alignmentConstantsSecondLayer[3];
-	  theta_z = _alignmentConstantsSecondLayer[4];
-	  
-	} else if (layerIndex == 2) {
-	  
-	  off_x = _alignmentConstantsThirdLayer[0];
-	  off_y = _alignmentConstantsThirdLayer[1];
-	  theta_x = _alignmentConstantsThirdLayer[2];
-	  theta_y = _alignmentConstantsThirdLayer[3];
-	  theta_z = _alignmentConstantsThirdLayer[4];
-	  
-	} else if (layerIndex == 3) {
-	  
-	  off_x = _alignmentConstantsFourthLayer[0];
-	  off_y = _alignmentConstantsFourthLayer[1];
-	  theta_x = _alignmentConstantsFourthLayer[2];
-	  theta_y = _alignmentConstantsFourthLayer[3];
-	  theta_z = _alignmentConstantsFourthLayer[4];
-	  
-	} else if (layerIndex == 4) {
-	  
-	  off_x = _alignmentConstantsFifthLayer[0];
-	  off_y = _alignmentConstantsFifthLayer[1];
-	  theta_x = _alignmentConstantsFifthLayer[2];
-	  theta_y = _alignmentConstantsFifthLayer[3];
-	  theta_z = _alignmentConstantsFifthLayer[4];
-	  
-	} else if (layerIndex == 5) {
-	  
-	  off_x = _alignmentConstantsSixthLayer[0];
-	  off_y = _alignmentConstantsSixthLayer[1];
-	  theta_x = _alignmentConstantsSixthLayer[2];
-	  theta_y = _alignmentConstantsSixthLayer[3];
-	  theta_z = _alignmentConstantsSixthLayer[4];
-	  
-	} else {
-	  
-	  off_x = 0.0;
-	  off_y = 0.0;
-	  theta_x = 0.0;
-	  theta_y = 0.0;
-	  theta_z = 0.0;
-	  
-	}
-
-	// For documentation of these formulas look at EUTelAlign
-	
-	hitsInPlane.measuredX = (cos(theta_y)*cos(theta_z)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z) + cos(theta_x)*sin(theta_z)) * hit->getPosition()[1] * 1000 + off_x;
-	hitsInPlane.measuredY = ((-1)*cos(theta_y)*sin(theta_z)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z) + cos(theta_x)*cos(theta_z)) * hit->getPosition()[1] * 1000 + off_y;
-	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
-	
-      }
-      
       delete cluster; // <--- destroying the cluster   
 
       // Add Hits to vector
