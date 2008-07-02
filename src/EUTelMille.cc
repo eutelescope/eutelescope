@@ -336,8 +336,20 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
   if ( header->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) {
     streamlog_out ( ERROR2 ) << "Error during the geometry consistency check: " << endl;
     streamlog_out ( ERROR2 ) << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " << endl;
-    streamlog_out ( ERROR2 ) << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() << " silicon planes" << endl;
-    exit(-1);
+    streamlog_out ( ERROR2 ) << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() 
+			     << " silicon planes" << endl;
+    string answer;
+    while (true) {
+      streamlog_out ( ERROR2 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
+      cin >> answer;
+      // put the answer in lower case before making the comparison.
+      transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
+      if ( answer == "q" ) {
+   	exit(-1);
+      } else if ( answer == "c" ) {
+   	break;
+      }
+    }
   }
   
   // this is the right place also to check the geometry ID. This is a
