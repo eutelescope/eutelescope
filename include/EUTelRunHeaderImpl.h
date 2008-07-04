@@ -144,7 +144,7 @@ namespace eutelescope {
    *  \li <b>UserComment</b>: a user defined string field. 
    *
    * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTelRunHeaderImpl.h,v 1.9 2008-05-20 13:07:22 bulgheroni Exp $
+   * @Version $Id: EUTelRunHeaderImpl.h,v 1.10 2008-07-04 10:00:13 bulgheroni Exp $
    * 
    */
 
@@ -171,7 +171,7 @@ namespace eutelescope {
     /*! this is an integer number equal to the number of events in the
      *  file.
      * 
-     *  @par num The number of events.
+     *  @param num The number of events.
      */
     virtual void setNoOfEvent(int num);
 
