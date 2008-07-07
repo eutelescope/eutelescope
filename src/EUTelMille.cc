@@ -24,6 +24,7 @@
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelExceptions.h"
+#include "EUTelPStream.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -266,7 +267,7 @@ void EUTelMille::init() {
   // this method is called only once even when the rewind is active
   // usually a good idea to
   printParameters ();
-  
+
   // set to zero the run and event counters
   _iRun = 0;
   _iEvt = 0;
@@ -1628,10 +1629,33 @@ void EUTelMille::end() {
 
       std::string command = "pede " + _pedeSteerfileName;
 
-      streamlog_out ( MESSAGE2 ) << endl;
-      streamlog_out ( MESSAGE2 ) << "Starting pede..." << endl;
-      system(command.c_str());
+      // before starting pede, let's check if it is in the path
+      bool isPedeInPath = true;
+      
+      // create a new process
+      redi::ipstream which("which pede");
 
+      // wait for the process to finish
+      which.close();
+      
+      // get the status
+      // if it 255 then the program wasn't found in the path
+      isPedeInPath = !( which.rdbuf()->status() == 255 );
+      
+      if ( !isPedeInPath ) {
+	streamlog_out( ERROR ) << "Pede cannot be executed because not found in the path" << endl;
+      } else {
+      
+	streamlog_out ( MESSAGE2 ) << endl;
+	streamlog_out ( MESSAGE2 ) << "Starting pede..." << endl;
+
+	redi::ipstream pede( command.c_str() );
+	string output;
+	while ( getline( pede, output ) ) {
+	  streamlog_out( MESSAGE2 ) << output << endl;
+	}
+	
+      }
     } else {
 
       streamlog_out ( ERROR2 ) << "Unable to run pede. No steering file has been generated." << endl;
