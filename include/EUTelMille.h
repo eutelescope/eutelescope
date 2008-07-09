@@ -176,6 +176,9 @@ namespace eutelescope {
     std::vector<float > _testModeSensorAlpha;
     std::vector<float > _testModeSensorBeta;
 
+    std::string _alignmentConstantLCIOFile;
+
+
   private:
     
     //! Run number 

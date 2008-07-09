@@ -25,6 +25,7 @@
 #include "EUTelFFClusterImpl.h"
 #include "EUTelExceptions.h"
 #include "EUTelPStream.h"
+#include "EUTelAlignmentConstant.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -48,6 +49,8 @@
 #endif
 
 // lcio includes <.h> 
+#include <IO/LCWriter.h>
+#include <UTIL/LCTime.h>
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <IMPL/LCCollectionVec.h>
@@ -132,6 +135,10 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   registerOptionalParameter("UseResidualCuts","Use cuts on the residuals to reduce the combinatorial background. 0 for off (default), 1 for on"
 			    ,_useResidualCuts, static_cast <int> (0));
+
+  registerOptionalParameter("AlignmentConstatLCIOFile","This is the name of the LCIO file name with the output alignment" 
+			    "constants (add .slcio)",
+			    _alignmentConstantLCIOFile, static_cast< string > ( "alignment.slcio" ) );
 
   FloatVec MinimalResidualsX;
   MinimalResidualsX.push_back(0.0);
@@ -376,10 +383,12 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
       }
     }
   }
-  
+ 
+    
+ 
   // increment the run counter
   ++_iRun;
-
+    
 }
 
 void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFitter[], double yResFitter[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]) {
@@ -1654,6 +1663,145 @@ void EUTelMille::end() {
 	while ( getline( pede, output ) ) {
 	  streamlog_out( MESSAGE2 ) << output << endl;
 	}
+	
+	// wait for the pede execution to finish
+	pede.close();
+
+	// check the exit value of pede
+	if ( pede.rdbuf()->status() == 0 ) {
+	  streamlog_out ( MESSAGE2 ) << "Pede successfully finished" << endl;
+	} 
+
+	// reading back the millepede.res file and getting the
+	// results.
+	string millepedeResFileName = "millepede.res";
+
+	streamlog_out ( MESSAGE2 ) << "Reading back the " << millepedeResFileName << endl
+				   << "Saving the alignment constant into " << _alignmentConstantLCIOFile << endl;
+
+	// open the millepede ASCII output file
+	ifstream millepede( millepedeResFileName.c_str() );
+	
+	// reopen the LCIO file this time in append mode
+	LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
+
+	try {
+	  lcWriter->open( _alignmentConstantLCIOFile, LCIO::WRITE_NEW );
+	} catch ( IOException& e ) {
+	  streamlog_out ( ERROR4 ) << e.what() << endl
+				   << "Sorry for quitting. " << endl;
+	  exit(-1);
+	}
+	
+	// write an almost empty run header
+	LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
+	lcHeader->setRunNumber( 0 );
+	
+
+	lcWriter->writeRunHeader(lcHeader);
+
+	delete lcHeader;
+
+	LCEventImpl * event = new LCEventImpl;
+	event->setRunNumber( 0 );
+	event->setEventNumber( 0 );
+
+	LCTime * now = new LCTime;
+	event->setTimeStamp( now->timeStamp() );
+	delete now;
+	
+	LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
+	
+	
+	if ( millepede.bad() ) {
+	  streamlog_out ( ERROR4 ) << "Error opening the " << millepedeResFileName << endl
+				   << "The alignment slcio file cannot be saved" << endl;
+	} else {
+	  vector<double > tokens;
+	  stringstream tokenizer;
+	  string line;
+	  double buffer;
+	  
+	  // get the first line and throw it away since it is a
+	  // comment! 
+	  getline( millepede, line );
+
+	  int sensorID = 0;
+	  
+	  while ( ! millepede.eof() ) {
+	    
+	    EUTelAlignmentConstant * constant = new EUTelAlignmentConstant;
+    
+	    constant->setSensorID( sensorID );
+	    ++sensorID;
+
+	    bool goodLine = true;
+
+ 	    for ( unsigned int iParam = 0 ; iParam < 3 ; ++iParam ) {
+	
+ 	      getline( millepede, line );
+
+	      if ( line.empty() ) {
+		goodLine = false;
+	      }
+      
+	      tokens.clear();
+ 	      tokenizer.clear();
+ 	      tokenizer.str( line );
+    
+	      while ( tokenizer >> buffer ) {
+ 		tokens.push_back( buffer ) ;
+ 	      }
+
+	      if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) ) {
+		goodLine = true;
+	      } else goodLine = false;
+
+	      bool isFixed = ( tokens.size() == 3 );
+ 	      if ( isFixed ) {
+ 		streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << ( tokens[1] / 1000 ) 
+ 					   << " (fixed)"  << endl;
+ 	      } else {
+ 		streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << (tokens[1] / 1000 )
+					 << " +/- " << ( tokens[5] / 1000 )  << endl;
+ 	      }
+		   
+	      if ( iParam == 0 ) {
+ 		constant->setXOffset( tokens[1] / 1000 );
+		if ( ! isFixed ) {
+		  double err  = tokens[5] / 1000;
+		  constant->setXOffsetError( err ) ;
+		}
+	      }
+	      if ( iParam == 1 ) {
+		constant->setYOffset( tokens[1] / 1000 ) ;
+		if ( ! isFixed ) constant->setYOffsetError( tokens[5] / 1000 ) ;
+	      }
+	      if ( iParam == 2 ) {
+		constant->setXTheta( tokens[1]  ) ;
+		if ( ! isFixed ) constant->setXThetaError( tokens[5] ) ;
+	      }
+
+	    }
+	    
+	    
+
+	    // right place to add the constant to the collection
+	    if ( goodLine ) {
+	      constantsCollection->push_back( constant );	    
+	      streamlog_out ( MESSAGE0 ) << (*constant) << endl;
+	    }
+	    else delete constant;
+	  }
+	  
+	}
+	event->addCollection( constantsCollection, "alignmentConstant" );
+	lcWriter->writeEvent( event );
+	delete event;
+	
+	lcWriter->close();
+
+	millepede.close();
 	
       }
     } else {
