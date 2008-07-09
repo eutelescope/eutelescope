@@ -141,10 +141,10 @@ namespace eutelescope {
    *  contains the intermediate file used to produce this lcio
    *  file. Again this is useful to reconstruct the file history.
    *
-   *  \li <b>UserComment</b>: a user defined string field. 
+   *  \li <b>UserComment</b>: a user defined string field. piipo
    *
-   * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTelRunHeaderImpl.h,v 1.10 2008-07-04 10:00:13 bulgheroni Exp $
+   * @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   * @version $Id: EUTelRunHeaderImpl.h,v 1.11 2008-07-09 14:35:09 bulgheroni Exp $
    * 
    */
 

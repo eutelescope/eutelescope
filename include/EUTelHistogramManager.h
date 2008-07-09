@@ -28,8 +28,8 @@ namespace eutelescope {
   /*! This class is used to store the information about histograms
    *  read from the XML information file.
    *  
-   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelHistogramManager.h,v 1.3 2007-06-28 08:35:56 bulgheroni Exp $
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelHistogramManager.h,v 1.4 2008-07-09 14:35:09 bulgheroni Exp $
    */
   class EUTelHistogramInfo {
     
@@ -158,8 +158,8 @@ namespace eutelescope {
    *  each entry found a EUTelHistoInfo is added to the list of
    *  available histograms.
    * 
-   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelHistogramManager.h,v 1.3 2007-06-28 08:35:56 bulgheroni Exp $
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelHistogramManager.h,v 1.4 2008-07-09 14:35:09 bulgheroni Exp $
    */ 
     
   class EUTelHistogramManager  {

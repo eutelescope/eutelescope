@@ -49,8 +49,8 @@ namespace eutelescope {
    *  the <i>Finalize</i> method (if exists), otherwise it has to
    *  return immediately.
    *
-   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelEventImpl.h,v 1.1 2007-05-18 08:01:16 bulgheroni Exp $
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelEventImpl.h,v 1.2 2008-07-09 14:35:09 bulgheroni Exp $
    * 
    */
 

@@ -27,8 +27,8 @@ namespace eutelescope {
   /*! This class contains only the pixel coordinates and signal as
    *  integer numbers.
    *
-   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelSimpleSparsePixel.h,v 1.1 2007-08-18 21:49:40 bulgheroni Exp $
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelSimpleSparsePixel.h,v 1.2 2008-07-09 14:35:10 bulgheroni Exp $
    */ 
 
   class EUTelSimpleSparsePixel  :  public EUTelBaseSparsePixel  {

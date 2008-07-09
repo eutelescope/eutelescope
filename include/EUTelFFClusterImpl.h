@@ -93,8 +93,8 @@ namespace eutelescope {
    *  @see EUTELESCOPE::CLUSTERDEFAULTENCODING for the standard
    *  encoding of fixed frame clusters
    *
-   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelFFClusterImpl.h,v 1.15 2007-08-30 08:34:49 bulgheroni Exp $
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelFFClusterImpl.h,v 1.16 2008-07-09 14:35:09 bulgheroni Exp $
    */ 
 
   class EUTelFFClusterImpl : public EUTelVirtualCluster {

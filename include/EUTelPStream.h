@@ -1,4 +1,4 @@
-/* $Id: EUTelPStream.h,v 1.1 2008-07-07 09:38:54 bulgheroni Exp $
+/* $Id: EUTelPStream.h,v 1.2 2008-07-09 14:35:09 bulgheroni Exp $
 PStreams - POSIX Process I/O for C++
 Copyright (C) 2001,2002,2003,2004 Jonathan Wakely
 
@@ -2000,10 +2000,7 @@ namespace redi
 
 } // namespace redi
 
-/**
- * @mainpage PStreams Reference
- * @htmlinclude mainpage.html
- */
+
 
 #endif  // REDI_PSTREAM_H_SEEN
 

@@ -1795,7 +1795,7 @@ void EUTelMille::end() {
 	  }
 	  
 	}
-	event->addCollection( constantsCollection, "alignmentConstant" );
+	event->addCollection( constantsCollection, "alignment" );
 	lcWriter->writeEvent( event );
 	delete event;
 	

@@ -31,8 +31,8 @@ namespace eutelescope {
    *  kinds of cluster used within the EUTelescope framework are
    *  inherithing from this virtual class.
    *
-   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelVirtualCluster.h,v 1.9 2007-08-30 08:34:00 bulgheroni Exp $
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelVirtualCluster.h,v 1.10 2008-07-09 14:35:10 bulgheroni Exp $
    */
 
   class EUTelVirtualCluster {

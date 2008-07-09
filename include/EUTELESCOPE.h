@@ -28,8 +28,8 @@ namespace eutelescope
    * is to define name of collection to be retrieved/saved from/to
    * files.
    *
-   * @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @Version $Id: EUTELESCOPE.h,v 1.19 2008-05-20 13:07:22 bulgheroni Exp $
+   * @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   * @version $Id: EUTELESCOPE.h,v 1.20 2008-07-09 14:35:09 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -342,8 +342,8 @@ namespace eutelescope
    *  EUTelEventImpl event. In such case, in fact, asking for a not
    *  existing parameter will return 0.
    *
-   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.19 2008-05-20 13:07:22 bulgheroni Exp $
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTELESCOPE.h,v 1.20 2008-07-09 14:35:09 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -389,8 +389,8 @@ namespace eutelescope
    *  There are still two "not assigned" bits that can be used in the
    *  future to mark other different kind of bad quality clusters.
    *
-   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.19 2008-05-20 13:07:22 bulgheroni Exp $
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTELESCOPE.h,v 1.20 2008-07-09 14:35:09 bulgheroni Exp $
    */ 
   
   enum ClusterQuality {
@@ -448,8 +448,8 @@ namespace eutelescope
    *  which was the underlying class used for the description of the
    *  cluster during the clusterization process itself. 
    *  
-   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.19 2008-05-20 13:07:22 bulgheroni Exp $
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTELESCOPE.h,v 1.20 2008-07-09 14:35:09 bulgheroni Exp $
    */
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
@@ -463,8 +463,8 @@ namespace eutelescope
   //! Sparse pixel type enum
   /*! This enumerator is used to define the sparsified pixel type. 
    *
-   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTELESCOPE.h,v 1.19 2008-05-20 13:07:22 bulgheroni Exp $
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTELESCOPE.h,v 1.20 2008-07-09 14:35:09 bulgheroni Exp $
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,

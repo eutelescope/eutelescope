@@ -27,8 +27,8 @@ namespace eutelescope {
    *  alignment contants obtained by the execution of EUTelMille +
    *  pede. 
    *
-   *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelAlignmentConstant.h,v 1.1 2008-07-09 13:01:26 bulgheroni Exp $
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelAlignmentConstant.h,v 1.2 2008-07-09 14:35:09 bulgheroni Exp $
    */ 
   class EUTelAlignmentConstant : public IMPL::LCGenericObjectImpl {
 

@@ -26,8 +26,8 @@ namespace eutelescope {
   /*! This is a pure abstract class containing only the definition of
    *  methods available to all sparsified pixel type
    *  
-   *  @Author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
-   *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $
+   *  @author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $
    */
   class EUTelBaseSparsePixel {
 
@@ -112,8 +112,8 @@ namespace eutelescope {
     /*! This template class is used as a binary function for pixel
      *  sorting. 
      *
-     *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-     *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $
+     *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+     *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $
      */ 
     template<class T>
     class GreaterSignal :  
@@ -137,8 +137,8 @@ namespace eutelescope {
     /*! This template class is used as a binary function for pixel
      *  sorting. 
      *
-     *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-     *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $ 
+     *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+     *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $ 
      */ 
     template<class T>
     class SmallerSignal :
@@ -162,8 +162,8 @@ namespace eutelescope {
     /*! This template class is used as a binary function for pixel
      *  sorting. 
      *
-     *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-     *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $ 
+     *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+     *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $ 
      */     
     template<class T>
     class IsBefore :
@@ -190,8 +190,8 @@ namespace eutelescope {
     /*! This template class is used as a unary function to find a
      *  pixel in the matrix
      *
-     *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-     *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $ 
+     *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+     *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $ 
      */     
     template<class T>
     class HasCoord {
@@ -221,8 +221,8 @@ namespace eutelescope {
     /*! This template class is used as a unary function to find a
      *  pixel in the matrix
      *
-     *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-     *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $ 
+     *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+     *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $ 
      */ 
     template<class T>
     class HasXCoord {
@@ -248,8 +248,8 @@ namespace eutelescope {
     /*! This template class is used as a unary function to find a
      *  pixel in the matrix
      *
-     *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-     *  @Version $Id: EUTelBaseSparsePixel.h,v 1.4 2007-09-06 14:04:00 bulgheroni Exp $ 
+     *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+     *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $ 
      */ 
     template<class T>
     class HasYCoord {

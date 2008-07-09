@@ -17,8 +17,8 @@
  *  classes defined by the EUDET JRA1 collaboration in order to
  *  develop both their DAQ and analysis/reconstruction software.
  *  
- *  @Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
- *  @Version $Id: eutelescope.h,v 1.2 2007-05-21 11:37:33 bulgheroni Exp $
+ *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+ *  @version $Id: eutelescope.h,v 1.3 2008-07-09 14:35:10 bulgheroni Exp $
  */
 
 namespace eutelescope {}
