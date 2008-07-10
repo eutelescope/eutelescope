@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.1 2008-07-10 16:09:34 bulgheroni Exp $
+// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.2 2008-07-10 17:00:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -123,9 +123,19 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
     // the cell decoder to get the sensor ID
     CellIDDecoder<TrackerDataImpl> clusterCellDecoder( originalDataCollectionVec );
     
+    
 
     if (isFirstEvent()) {
       
+      
+      
+      for ( size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos ) {
+	
+	EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) );
+	_lookUpTable[ alignment->getSensorID() ] = iPos;
+
+      }
+
       _isFirstEvent = false;
     }
   
@@ -144,9 +154,8 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
       
       // now that we know at which sensor the hit belongs to, we can
       // get the corresponding alignment constants
-      EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( sensorID ) );
-
-      if ( alignment == 0x0 ) cerr << "cazzo! " << endl;
+      EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > 
+	( alignmentCollectionVec->getElementAt( _lookUpTable[ sensorID ] ) );
 
 
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;

@@ -19,6 +19,7 @@
 
 // system includes <>
 #include <iostream>
+#include <map>
 
 namespace eutelescope {
 
@@ -56,7 +57,7 @@ namespace eutelescope {
    *  then rotated. 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelApplyAlignmentProcessor.h,v 1.1 2008-07-10 16:09:34 bulgheroni Exp $
+   *  @version $Id: EUTelApplyAlignmentProcessor.h,v 1.2 2008-07-10 17:00:02 bulgheroni Exp $
    *
    *
    */
@@ -164,6 +165,9 @@ namespace eutelescope {
      * events are counted from 0 and on a run base
      */
     int _iEvt;
+
+    //! Look Up Table for the sensor ID
+    std::map< int, int > _lookUpTable;
 
   };
 
