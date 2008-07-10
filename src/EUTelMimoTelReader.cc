@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.16 2008-06-11 08:48:10 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.17 2008-07-10 13:11:38 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -727,7 +727,9 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 	    int minVal = *(min_element( pivotSynchVec.begin(), pivotSynchVec.end() ));
 	    
 	    if ( (maxVal - minVal) > _outOfSynchThr ) {
-	      streamlog_out ( WARNING0 ) << "Event number " << ev->GetEventNumber() << " seems to be out of synch " << endl;
+	      streamlog_out ( WARNING0 ) << "Event number " << ev->GetEventNumber() << " seems to be out of synch ("
+					 << (maxVal - minVal ) << ")"
+					 << endl;
 	      vector<unsigned int >::iterator iter = pivotSynchVec.begin();
 	      int iDetector = 0;
 	      while ( iter != pivotSynchVec.end() ) {
