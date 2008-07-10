@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelAlignmentConstant.cc,v 1.1 2008-07-09 13:01:26 bulgheroni Exp $
+// Version $Id: EUTelAlignmentConstant.cc,v 1.2 2008-07-10 16:06:00 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -27,7 +27,7 @@ using namespace std;
 
 EUTelAlignmentConstant::EUTelAlignmentConstant() : IMPL::LCGenericObjectImpl( ALIGN_CONST_MAX_SIZE, 0 , ALIGN_CONST_MAX_SIZE ) {
   _typeName        = "Alignment constant";
-  _dataDescription = "sensorID, xOff, yOff, zOff, xTheta, yTheta, zTheta + 13 spare fields";
+  _dataDescription = "sensorID, xOff, yOff, zOff, alpha, beta, gamma + 13 spare fields";
   _isFixedSize     = true;
 
 
@@ -41,16 +41,16 @@ EUTelAlignmentConstant::EUTelAlignmentConstant() : IMPL::LCGenericObjectImpl( AL
 
 EUTelAlignmentConstant::EUTelAlignmentConstant( int sensorID,
 					       double xOff,   double yOff,   double zOff,
-					       double xTheta, double yTheta, double zTheta,
+					       double alpha, double beta, double gamma,
 					       double xOffErr,double yOffErr,double zOffErr,
-					       double xThetaErr, double yThetaErr, double zThetaErr )  : 
+					       double alphaErr, double betaErr, double gammaErr )  : 
   
   IMPL::LCGenericObjectImpl(ALIGN_CONST_MAX_SIZE,0,ALIGN_CONST_MAX_SIZE) {
   
   _typeName        = "Alignment constant";
   _dataDescription = "sensorID,\n"
-    "xOff,    yOff,    zOff,    xTheta,    yTheta,    zTheta\n"
-    "xOffErr, yOffErr, zOffErr, xThetaErr, yThetaErr, zThetaErr";
+    "xOff,    yOff,    zOff,    alpha,    beta,    gamma\n"
+    "xOffErr, yOffErr, zOffErr, alphaErr, betaErr, gammaErr";
   _isFixedSize     = true;
   
   for ( size_t iPos = 0; iPos < ALIGN_CONST_MAX_SIZE; ++iPos ) {
@@ -67,9 +67,9 @@ EUTelAlignmentConstant::EUTelAlignmentConstant( int sensorID,
   setDoubleVal( 2, zOff );
   
   // set the sensor angles
-  setDoubleVal( 3, xTheta );
-  setDoubleVal( 4, yTheta );
-  setDoubleVal( 5, zTheta );
+  setDoubleVal( 3, alpha );
+  setDoubleVal( 4, beta );
+  setDoubleVal( 5, gamma );
 
   // set the sensor shifts in mm
   setDoubleVal( 6, xOffErr );
@@ -77,9 +77,9 @@ EUTelAlignmentConstant::EUTelAlignmentConstant( int sensorID,
   setDoubleVal( 8, zOffErr );
   
   // set the sensor angles
-  setDoubleVal( 9, xThetaErr );
-  setDoubleVal( 10, yThetaErr );
-  setDoubleVal( 11, zThetaErr );
+  setDoubleVal( 9, alphaErr );
+  setDoubleVal( 10, betaErr );
+  setDoubleVal( 11, gammaErr );
 
 }
 
@@ -89,17 +89,17 @@ void EUTelAlignmentConstant::setXOffset( double off ) { setDoubleVal( 0, off ); 
 void EUTelAlignmentConstant::setYOffset( double off ) { setDoubleVal( 1, off ); }
 void EUTelAlignmentConstant::setZOffset( double off ) { setDoubleVal( 2, off ); }
 
-void EUTelAlignmentConstant::setXTheta( double theta ) { setDoubleVal( 3, theta ); }
-void EUTelAlignmentConstant::setYTheta( double theta ) { setDoubleVal( 4, theta ); }
-void EUTelAlignmentConstant::setZTheta( double theta ) { setDoubleVal( 5, theta ); }
+void EUTelAlignmentConstant::setAlpha( double theta ) { setDoubleVal( 3, theta ); }
+void EUTelAlignmentConstant::setBeta( double theta ) { setDoubleVal( 4, theta ); }
+void EUTelAlignmentConstant::setGamma( double theta ) { setDoubleVal( 5, theta ); }
 
 void EUTelAlignmentConstant::setXOffsetError( double err ) { setDoubleVal( 6, err ); }
 void EUTelAlignmentConstant::setYOffsetError( double err ) { setDoubleVal( 7, err ); }
 void EUTelAlignmentConstant::setZOffsetError( double err ) { setDoubleVal( 8, err ); }
 
-void EUTelAlignmentConstant::setXThetaError( double err ) { setDoubleVal( 9, err ); }
-void EUTelAlignmentConstant::setYThetaError( double err ) { setDoubleVal( 10, err ); }
-void EUTelAlignmentConstant::setZThetaError( double err ) { setDoubleVal( 11, err ); }
+void EUTelAlignmentConstant::setAlphaError( double err ) { setDoubleVal( 9, err ); }
+void EUTelAlignmentConstant::setBetaError( double err ) { setDoubleVal( 10, err ); }
+void EUTelAlignmentConstant::setGammaError( double err ) { setDoubleVal( 11, err ); }
 
 int EUTelAlignmentConstant::getSensorID() const { return getIntVal( 0 ) ; }
 
@@ -107,17 +107,17 @@ double EUTelAlignmentConstant::getXOffset() const { return getDoubleVal( 0 ) ; }
 double EUTelAlignmentConstant::getYOffset() const { return getDoubleVal( 1 ) ; }
 double EUTelAlignmentConstant::getZOffset() const { return getDoubleVal( 2 ) ; }
 
-double EUTelAlignmentConstant::getXTheta() const { return getDoubleVal( 3 ) ; }
-double EUTelAlignmentConstant::getYTheta() const { return getDoubleVal( 4 ) ; }
-double EUTelAlignmentConstant::getZTheta() const { return getDoubleVal( 5 ) ; }
+double EUTelAlignmentConstant::getAlpha() const { return getDoubleVal( 3 ) ; }
+double EUTelAlignmentConstant::getBeta() const { return getDoubleVal( 4 ) ; }
+double EUTelAlignmentConstant::getGamma() const { return getDoubleVal( 5 ) ; }
 
 double EUTelAlignmentConstant::getXOffsetError() const { return getDoubleVal( 6 ) ; }
 double EUTelAlignmentConstant::getYOffsetError() const { return getDoubleVal( 7 ) ; }
 double EUTelAlignmentConstant::getZOffsetError() const { return getDoubleVal( 8 ) ; }
 
-double EUTelAlignmentConstant::getXThetaError() const { return getDoubleVal( 9 ) ; }
-double EUTelAlignmentConstant::getYThetaError() const { return getDoubleVal( 10 ) ; }
-double EUTelAlignmentConstant::getZThetaError() const { return getDoubleVal( 11 ) ; }
+double EUTelAlignmentConstant::getAlphaError() const { return getDoubleVal( 9 ) ; }
+double EUTelAlignmentConstant::getBetaError() const { return getDoubleVal( 10 ) ; }
+double EUTelAlignmentConstant::getGammaError() const { return getDoubleVal( 11 ) ; }
 
 void EUTelAlignmentConstant::print(ostream & os ) const {
   
@@ -142,16 +142,16 @@ void EUTelAlignmentConstant::print(ostream & os ) const {
      << setw(largeWidth) << getXOffset() 
      << setw(largeWidth) << getYOffset()
      << setw(largeWidth) << getZOffset()
-     << setw(largeWidth) << getXTheta()
-     << setw(largeWidth) << getYTheta()
-     << setw(largeWidth) << getZTheta()
+     << setw(largeWidth) << getAlpha()
+     << setw(largeWidth) << getBeta()
+     << setw(largeWidth) << getGamma()
      << endl
      << setw(largeWidth) << getXOffsetError() 
      << setw(largeWidth) << getYOffsetError()
      << setw(largeWidth) << getZOffsetError()
-     << setw(largeWidth) << getXThetaError()
-     << setw(largeWidth) << getYThetaError()
-     << setw(largeWidth) << getZThetaError()
+     << setw(largeWidth) << getAlphaError()
+     << setw(largeWidth) << getBetaError()
+     << setw(largeWidth) << getGammaError()
      << endl
      << dashline
      << endl;

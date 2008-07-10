@@ -28,7 +28,7 @@ namespace eutelescope {
    *  pede. 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelAlignmentConstant.h,v 1.2 2008-07-09 14:35:09 bulgheroni Exp $
+   *  @version $Id: EUTelAlignmentConstant.h,v 1.3 2008-07-10 16:06:00 bulgheroni Exp $
    */ 
   class EUTelAlignmentConstant : public IMPL::LCGenericObjectImpl {
 
@@ -47,12 +47,12 @@ namespace eutelescope {
      *  @param xOff Offset of the sensor along the x direction
      *  @param yOff Offset of the sensor along the y direction
      *  @param zOff Offset of the sensor along the z direction
-     *  @param xTheta Angle of the sensor along x
-     *  @param yTheta Angle of the sensor along y
-     *  @param zTheta Angle of the sensor along z
-     *  @param xThetaErr Error on the angle of the sensor along x
-     *  @param yThetaErr Error on the angle of the sensor along y
-     *  @param zThetaErr Error on the angle of the sensor along z
+     *  @param alpha Angle of the sensor along x
+     *  @param beta Angle of the sensor along y
+     *  @param gamma Angle of the sensor along z
+     *  @param alphaErr Error on the angle of the sensor along x
+     *  @param betaErr Error on the angle of the sensor along y
+     *  @param gammaErr Error on the angle of the sensor along z
      *  @param xOffErr Error on the offset of the sensor along the x direction
      *  @param yOffErr Error on the offset of the sensor along the y direction
      *  @param zOffErr Error on the offset of the sensor along the z direction
@@ -60,9 +60,9 @@ namespace eutelescope {
      */ 
     EUTelAlignmentConstant( int sensorID, 
 			    double xOff,   double yOff,   double zOff,
-			    double xTheta, double yTheta, double zTheta,
+			    double alpha, double beta, double gamma,
 			    double xOffErr,   double yOffErr,   double zOffErr,
-			    double xThetaErr, double yThetaErr, double zThetaErr );
+			    double alphaErr, double betaErr, double gammaErr );
       
     //! Default destructor
     virtual ~EUTelAlignmentConstant() { /* NO-OP */ ; }
@@ -80,13 +80,13 @@ namespace eutelescope {
     void setZOffset( double off ) ;
 
     //! Set the angle around x
-    void setXTheta( double theta );
+    void setAlpha( double theta );
 
     //! Set the angle around y
-    void setYTheta( double theta );
+    void setBeta( double theta );
 
     //! Set the angle around z
-    void setZTheta( double theta );
+    void setGamma( double theta );
 
     //! Set the error of the offset along x
     void setXOffsetError( double err ) ;
@@ -98,13 +98,13 @@ namespace eutelescope {
     void setZOffsetError( double err ) ;
 
     //! Set the error of the angle around x
-    void setXThetaError( double err ) ;
+    void setAlphaError( double err ) ;
 
     //! Set the error of the angle around y
-    void setYThetaError( double err ) ;
+    void setBetaError( double err ) ;
 
     //! Set the error of the angle around z
-    void setZThetaError( double err ) ;
+    void setGammaError( double err ) ;
 
     //! Get the sensor ID
     int getSensorID() const ;
@@ -119,13 +119,13 @@ namespace eutelescope {
     double getZOffset() const;
 
     //! Get the theta along x
-    double getXTheta() const;
+    double getAlpha() const;
 
     //! Get the theta along y
-    double getYTheta() const;
+    double getBeta() const;
 
     //! Get the theta along z
-    double getZTheta() const;
+    double getGamma() const;
 
     //! Get the error of the offset along x
     double getXOffsetError() const;
@@ -137,13 +137,13 @@ namespace eutelescope {
     double getZOffsetError() const;
 
     //! Get the error of the theta along x
-    double getXThetaError() const;
+    double getAlphaError() const;
 
     //! Get the error of the theta along y
-    double getYThetaError() const;
+    double getBetaError() const;
 
     //! Get the error of the theta along z
-    double getZThetaError() const;
+    double getGammaError() const;
 
     //! Print the output
     /*! This method is used to print out the constant 

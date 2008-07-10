@@ -1778,8 +1778,8 @@ void EUTelMille::end() {
 		if ( ! isFixed ) constant->setYOffsetError( tokens[5] / 1000 ) ;
 	      }
 	      if ( iParam == 2 ) {
-		constant->setXTheta( tokens[1]  ) ;
-		if ( ! isFixed ) constant->setXThetaError( tokens[5] ) ;
+		constant->setGamma( tokens[1]  ) ;
+		if ( ! isFixed ) constant->setGammaError( tokens[5] ) ;
 	      }
 
 	    }
