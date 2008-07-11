@@ -193,6 +193,31 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("RunPede","Execute the pede program using the generated steering file."
 			    ,_runPede, static_cast <int> (0));
 
+  registerOptionalParameter("UsePedeUserStartValues","Give start values for pede by hand (0 - automatic calculation of start values, 1 - start values defined by user)."
+			    ,_usePedeUserStartValues, static_cast <int> (0));
+
+  FloatVec PedeUserStartValuesX;
+  PedeUserStartValuesX.push_back(0.0);
+  PedeUserStartValuesX.push_back(0.0);
+  PedeUserStartValuesX.push_back(0.0);
+  PedeUserStartValuesX.push_back(0.0);
+  PedeUserStartValuesX.push_back(0.0);
+  PedeUserStartValuesX.push_back(0.0);
+
+  registerOptionalParameter("PedeUserStartValuesX","Start values for the alignment in the X direction."
+			    ,_pedeUserStartValuesX,PedeUserStartValuesX);
+
+  FloatVec PedeUserStartValuesY;
+  PedeUserStartValuesY.push_back(0.0);
+  PedeUserStartValuesY.push_back(0.0);
+  PedeUserStartValuesY.push_back(0.0);
+  PedeUserStartValuesY.push_back(0.0);
+  PedeUserStartValuesY.push_back(0.0);
+  PedeUserStartValuesY.push_back(0.0);
+
+  registerOptionalParameter("PedeUserStartValuesY","Start values for the alignment in the Y direction."
+			    ,_pedeUserStartValuesY,PedeUserStartValuesY);
+
   registerOptionalParameter("TestModeSensorResolution","Resolution assumed for the sensors in test mode."
 			    ,_testModeSensorResolution, static_cast <float> (3.0));
 
@@ -1587,12 +1612,27 @@ void EUTelMille::end() {
 	  } else {
 	    
 	    if (_alignMode == 1) {
-	      steerFile << (counter * 3 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
-	      steerFile << (counter * 3 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
-	      steerFile << (counter * 3 + 3) << " 0.0 0.0" << endl;
+	      
+	      if (_usePedeUserStartValues == 0) {
+		steerFile << (counter * 3 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
+		steerFile << (counter * 3 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
+		steerFile << (counter * 3 + 3) << " 0.0 0.0" << endl;
+	      } else {
+		steerFile << (counter * 3 + 1) << " " << _pedeUserStartValuesX[help] << " 0.0" << endl;
+		steerFile << (counter * 3 + 2) << " " << _pedeUserStartValuesY[help] << " 0.0" << endl;
+		steerFile << (counter * 3 + 3) << " 0.0 0.0" << endl;
+	      }
+
 	    } else if (_alignMode == 2) {
-	      steerFile << (counter * 2 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
-	      steerFile << (counter * 2 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
+	      
+	      if (_usePedeUserStartValues == 0) {
+		steerFile << (counter * 2 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
+		steerFile << (counter * 2 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
+	      } else {
+		steerFile << (counter * 2 + 1) << " " << _pedeUserStartValuesX[help] << " 0.0" << endl;
+		steerFile << (counter * 2 + 2) << " " << _pedeUserStartValuesY[help] << " 0.0" << endl;
+	      }
+
 	    }
 
 	  }
