@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.25 2008-06-11 08:53:40 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.26 2008-07-11 09:05:36 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -86,7 +86,9 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPed
 			      _pedestalAlgo,
 			      string (EUTELESCOPE::MEANRMS));
   registerProcessorParameter("BadPixelMaskingAlgorithm",
-			     "Select the algorithm for bad pixel masking",
+			     "Select the algorithm for bad pixel masking. Possible values are:\n"
+			     " NOISEDISTRIBUTION: based on the noise distribution\n"
+			     " ABSOLUTENOISEVALUE: based on the abs noise value",
 			     _badPixelAlgo,
 			     string (EUTELESCOPE::NOISEDISTRIBUTION));
   registerProcessorParameter ("NoOfCMIteration",
@@ -501,7 +503,9 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
 	
       }
     } else if ( _badPixelAlgo == EUTELESCOPE::ABSOLUTENOISEVALUE ) {
+
       thresholdVec.push_back(_badPixelMaskCut);
+
     }
     
     const float lowerThreshold = 0.2;
@@ -511,6 +515,7 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
     // scan the noise vector again and apply the cut
     for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
       for (unsigned int iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
+	cout << thresholdVec[iDetector] << endl;
 	if ( ( 
 	      ( _noise[iDetector][iPixel] > thresholdVec[iDetector] ) || 
 	      ( _noise[iDetector][iPixel] < lowerThreshold ) 
