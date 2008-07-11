@@ -136,7 +136,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("UseResidualCuts","Use cuts on the residuals to reduce the combinatorial background. 0 for off (default), 1 for on"
 			    ,_useResidualCuts, static_cast <int> (0));
 
-  registerOptionalParameter("AlignmentConstatLCIOFile","This is the name of the LCIO file name with the output alignment" 
+  registerOptionalParameter("AlignmentConstantLCIOFile","This is the name of the LCIO file name with the output alignment" 
 			    "constants (add .slcio)",
 			    _alignmentConstantLCIOFile, static_cast< string > ( "alignment.slcio" ) );
 
