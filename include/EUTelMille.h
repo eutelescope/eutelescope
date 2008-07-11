@@ -165,6 +165,7 @@ namespace eutelescope {
     int _usePedeUserStartValues;
     std::vector<float > _pedeUserStartValuesX;
     std::vector<float > _pedeUserStartValuesY;
+    std::vector<float > _pedeUserStartValuesGamma;
 
     int _inputMode;
     float _testModeSensorResolution;

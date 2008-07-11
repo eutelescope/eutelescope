@@ -204,7 +204,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   PedeUserStartValuesX.push_back(0.0);
   PedeUserStartValuesX.push_back(0.0);
 
-  registerOptionalParameter("PedeUserStartValuesX","Start values for the alignment in the X direction."
+  registerOptionalParameter("PedeUserStartValuesX","Start values for the alignment for shifts in the X direction."
 			    ,_pedeUserStartValuesX,PedeUserStartValuesX);
 
   FloatVec PedeUserStartValuesY;
@@ -215,8 +215,19 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   PedeUserStartValuesY.push_back(0.0);
   PedeUserStartValuesY.push_back(0.0);
 
-  registerOptionalParameter("PedeUserStartValuesY","Start values for the alignment in the Y direction."
+  registerOptionalParameter("PedeUserStartValuesY","Start values for the alignment for shifts in the Y direction."
 			    ,_pedeUserStartValuesY,PedeUserStartValuesY);
+
+  FloatVec PedeUserStartValuesGamma;
+  PedeUserStartValuesGamma.push_back(0.0);
+  PedeUserStartValuesGamma.push_back(0.0);
+  PedeUserStartValuesGamma.push_back(0.0);
+  PedeUserStartValuesGamma.push_back(0.0);
+  PedeUserStartValuesGamma.push_back(0.0);
+  PedeUserStartValuesGamma.push_back(0.0);
+
+  registerOptionalParameter("PedeUserStartValuesGamma","Start values for the alignment for the angle gamma."
+			    ,_pedeUserStartValuesGamma,PedeUserStartValuesGamma);
 
   registerOptionalParameter("TestModeSensorResolution","Resolution assumed for the sensors in test mode."
 			    ,_testModeSensorResolution, static_cast <float> (3.0));
@@ -1620,7 +1631,7 @@ void EUTelMille::end() {
 	      } else {
 		steerFile << (counter * 3 + 1) << " " << _pedeUserStartValuesX[help] << " 0.0" << endl;
 		steerFile << (counter * 3 + 2) << " " << _pedeUserStartValuesY[help] << " 0.0" << endl;
-		steerFile << (counter * 3 + 3) << " 0.0 0.0" << endl;
+		steerFile << (counter * 3 + 3) << " " << _pedeUserStartValuesGamma[help] << " 0.0" << endl;
 	      }
 
 	    } else if (_alignMode == 2) {
