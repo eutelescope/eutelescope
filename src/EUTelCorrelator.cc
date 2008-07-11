@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.1 2008-07-11 15:35:30 bulgheroni Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.2 2008-07-11 15:53:39 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -28,6 +28,7 @@
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram2D.h>
+#include <AIDA/ITree.h>
 #endif
 
 // lcio includes <.h> 
@@ -216,21 +217,34 @@ void EUTelCorrelator::bookHistos() {
 
     streamlog_out ( MESSAGE4 ) <<  "Booking histograms" << endl;
     
+    // create all the directories first
+    vector< string > dirNames;
+    dirNames.push_back ("ClusterX");
+    dirNames.push_back ("ClusterY");
+
+    for ( size_t iPos = 0 ; iPos < dirNames.size() ; iPos++ ) {
+
+      AIDAProcessor::tree(this)->mkdir( dirNames[iPos].c_str() ) ;
+
+    }
+     
+    
     string tempHistoName;
     
-
+    
     for ( int row = 0 ; row < _noOfDetectors; ++row ) {
 
       vector< AIDA::IHistogram2D * > innerVector;
       
       for ( int col = 0 ; col < _noOfDetectors; ++col ) {
 
-	
-	stringstream ss;
-	ss << _clusterXCorrelationHistoName << "-d" << row 
-	   << "-d" << col ;
-
-	tempHistoName = ss.str();
+	{
+	  stringstream ss;
+	  ss << "ClusterX/" <<  _clusterXCorrelationHistoName << "-d" << row 
+	     << "-d" << col ;
+	  
+	  tempHistoName = ss.str();
+	}
 
 	streamlog_out( MESSAGE ) << "Booking histo " << tempHistoName << endl;
 	
