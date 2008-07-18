@@ -131,7 +131,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 			    ,_onlySingleTrackEvents, static_cast <int> (0));
 
   registerOptionalParameter("AlignMode","Number of alignment constants used. Available mode are: 1 - shifts in the X and Y directions and a rotation around the Z axis, 2 - only shifts in the X and Y directions",
-			    _alignMode, static_cast <int> (0));
+			    _alignMode, static_cast <int> (1));
 
   registerOptionalParameter("UseResidualCuts","Use cuts on the residuals to reduce the combinatorial background. 0 for off (default), 1 for on"
 			    ,_useResidualCuts, static_cast <int> (0));
