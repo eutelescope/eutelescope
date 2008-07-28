@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.3 2008-07-28 13:42:39 bulgheroni Exp $
+// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.4 2008-07-28 16:13:03 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -133,7 +133,10 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
 
 
-
+  // the cell decoder to get the sensor ID
+  CellIDDecoder<TrackerDataImpl> * clusterCellDecoder = NULL; //( originalZSDataCollectionVec );
+  CellIDDecoder<TrackerDataImpl> * clusterZSCellDecoder = NULL;
+  
     
   try {
     
@@ -143,13 +146,18 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
     // I also need the original data collection for ZS and NZS data
     LCCollectionVec * originalDataCollectionVec = NULL;
     LCCollectionVec * originalZSDataCollectionVec = NULL;
+
     
-    if ( _hasNZSData ) originalDataCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection( "original_data" ) );
-    if ( _hasZSData ) originalZSDataCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection( "original_zsdata" ) );
-    
-    // the cell decoder to get the sensor ID
-    CellIDDecoder<TrackerDataImpl> clusterCellDecoder( originalDataCollectionVec );
-    CellIDDecoder<TrackerDataImpl> clusterZSCellDecoder( originalZSDataCollectionVec );
+    if ( _hasNZSData ) {
+      originalDataCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection( "original_data" ) );
+      clusterCellDecoder = new CellIDDecoder<TrackerDataImpl>(  originalDataCollectionVec );
+    }
+    if ( _hasZSData ) {
+      originalZSDataCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection( "original_zsdata" ) );
+      clusterZSCellDecoder = new CellIDDecoder<TrackerDataImpl>(  originalZSDataCollectionVec );
+    }
+
+
     
 
     if (isFirstEvent()) {
@@ -185,8 +193,8 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 	streamlog_out ( ERROR ) << "This processor is unable to deal with MIXED data. Sorry for quitting..." << endl;
 	exit(-01);
       }
-      if ( _hasNZSData ) sensorID = clusterCellDecoder( cluster ) ["sensorID"] ;
-      if ( _hasZSData  ) sensorID = clusterZSCellDecoder( cluster ) ["sensorID"]   ;
+      if ( _hasNZSData ) sensorID = (*clusterCellDecoder)( cluster ) ["sensorID"] ;
+      if ( _hasZSData  ) sensorID = (*clusterZSCellDecoder)( cluster ) ["sensorID"]   ;
       
       // now that we know at which sensor the hit belongs to, we can
       // get the corresponding alignment constants
@@ -248,8 +256,12 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
     evt->addCollection( outputCollectionVec, _outputHitCollectionName );
   
+    delete clusterCellDecoder;
+    delete clusterZSCellDecoder;
   
   } catch (DataNotAvailableException& e) {
+    if ( clusterCellDecoder ) delete clusterCellDecoder;
+    if ( clusterZSCellDecoder ) delete clusterZSCellDecoder;
     streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber() 
 				<< " in run " << event->getRunNumber() << endl;
   }
