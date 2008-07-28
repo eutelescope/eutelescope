@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.2 2008-07-10 17:00:02 bulgheroni Exp $
+// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.3 2008-07-28 13:42:39 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -12,6 +12,7 @@
 
 // eutelescope includes ".h" 
 #include "EUTelApplyAlignmentProcessor.h"
+#include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelAlignmentConstant.h"
 
@@ -82,8 +83,30 @@ void EUTelApplyAlignmentProcessor::init () {
 
 void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * rdr) {
 
+  // convert the run header into something mode easy to digest
+  auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
+
+  string eudrbGlobalMode = runHeader->getEUDRBMode() ;
+
+  transform( eudrbGlobalMode.begin(), eudrbGlobalMode.end(), eudrbGlobalMode.begin(), ::tolower);
+
+  _hasNZSData = false;
+
+  if ( ( eudrbGlobalMode == "raw2" ) ||
+       ( eudrbGlobalMode == "raw3" ) ||
+       ( eudrbGlobalMode == "mixed" ) ) {
+    _hasNZSData = true;
+  }
+
+  _hasZSData = false;
+
+  if ( ( eudrbGlobalMode == "zs" ) || 
+       ( eudrbGlobalMode == "mixed" ) ) {
+    _hasZSData = true;
+  }
+
   // increment the run counter
-  ++_iRun;
+  ++_iRun;  
 
 }
 
@@ -117,12 +140,16 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
     LCCollectionVec * inputCollectionVec         = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputHitCollectionName));
     LCCollectionVec * alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection(_alignmentCollectionName));
 
-    // I also need the original data collection
-    LCCollectionVec * originalDataCollectionVec  = dynamic_cast < LCCollectionVec * > (evt->getCollection( "original_data" ) );
+    // I also need the original data collection for ZS and NZS data
+    LCCollectionVec * originalDataCollectionVec = NULL;
+    LCCollectionVec * originalZSDataCollectionVec = NULL;
+    
+    if ( _hasNZSData ) originalDataCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection( "original_data" ) );
+    if ( _hasZSData ) originalZSDataCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection( "original_zsdata" ) );
     
     // the cell decoder to get the sensor ID
     CellIDDecoder<TrackerDataImpl> clusterCellDecoder( originalDataCollectionVec );
-    
+    CellIDDecoder<TrackerDataImpl> clusterZSCellDecoder( originalZSDataCollectionVec );
     
 
     if (isFirstEvent()) {
@@ -150,7 +177,16 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
       LCObjectVec        clusterVec = inputHit->getRawHits();
       TrackerDataImpl  * cluster    = dynamic_cast< TrackerDataImpl *>  ( clusterVec[0] );
     
-      int sensorID = clusterCellDecoder( cluster ) ["sensorID"]   ;
+      int sensorID;
+      
+      if ( _hasZSData && _hasNZSData ) {
+	// it means that this is a MIXED run still I don't know what
+	// to do
+	streamlog_out ( ERROR ) << "This processor is unable to deal with MIXED data. Sorry for quitting..." << endl;
+	exit(-01);
+      }
+      if ( _hasNZSData ) sensorID = clusterCellDecoder( cluster ) ["sensorID"] ;
+      if ( _hasZSData  ) sensorID = clusterZSCellDecoder( cluster ) ["sensorID"]   ;
       
       // now that we know at which sensor the hit belongs to, we can
       // get the corresponding alignment constants
