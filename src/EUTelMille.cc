@@ -1814,23 +1814,23 @@ void EUTelMille::end() {
  					   << " (fixed)"  << endl;
  	      } else {
  		streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << (tokens[1] / 1000 )
-					 << " +/- " << ( tokens[5] / 1000 )  << endl;
+					 << " +/- " << ( tokens[4] / 1000 )  << endl;
  	      }
 		   
 	      if ( iParam == 0 ) {
  		constant->setXOffset( tokens[1] / 1000 );
 		if ( ! isFixed ) {
-		  double err  = tokens[5] / 1000;
+		  double err  = tokens[4] / 1000;
 		  constant->setXOffsetError( err ) ;
 		}
 	      }
 	      if ( iParam == 1 ) {
 		constant->setYOffset( tokens[1] / 1000 ) ;
-		if ( ! isFixed ) constant->setYOffsetError( tokens[5] / 1000 ) ;
+		if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000 ) ;
 	      }
 	      if ( iParam == 2 ) {
 		constant->setGamma( tokens[1]  ) ;
-		if ( ! isFixed ) constant->setGammaError( tokens[5] ) ;
+		if ( ! isFixed ) constant->setGammaError( tokens[4] ) ;
 	      }
 
 	    }
