@@ -714,13 +714,13 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     //
     // This is done separately for different numbers of planes.
 
-    if (_hitsFirstPlane.size() <= uint(_maxHitsPlane) && _hitsSecondPlane.size() <= uint(_maxHitsPlane) && _hitsThirdPlane.size() <= uint(_maxHitsPlane) && _hitsFourthPlane.size() <= uint(_maxHitsPlane) && _hitsFifthPlane.size() <= uint(_maxHitsPlane) && _hitsSixthPlane.size() <= uint(_maxHitsPlane)) {
+    if (_hitsFirstPlane.size() <= size_t(_maxHitsPlane) && _hitsSecondPlane.size() <= size_t(_maxHitsPlane) && _hitsThirdPlane.size() <= size_t(_maxHitsPlane) && _hitsFourthPlane.size() <= size_t(_maxHitsPlane) && _hitsFifthPlane.size() <= size_t(_maxHitsPlane) && _hitsSixthPlane.size() <= size_t(_maxHitsPlane)) {
 
       // loop over all hits in first plane
-      for (int firsthit = 0; uint(firsthit) < _hitsFirstPlane.size(); firsthit++) {
+      for (int firsthit = 0; size_t(firsthit) < _hitsFirstPlane.size(); firsthit++) {
       
 	// loop over all hits in second plane
-	for (int secondhit = 0; uint(secondhit) < _hitsSecondPlane.size(); secondhit++) {
+	for (int secondhit = 0; size_t(secondhit) < _hitsSecondPlane.size(); secondhit++) {
 
 	  distance12 = sqrt(pow(_hitsFirstPlane[firsthit].measuredX - _hitsSecondPlane[secondhit].measuredX,2) + pow(_hitsFirstPlane[firsthit].measuredY - _hitsSecondPlane[secondhit].measuredY,2));
 
@@ -750,7 +750,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	  if (_nPlanes > 2) {
 
 	    // loop over all hits in third plane
-	    for (int thirdhit = 0; uint(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
+	    for (int thirdhit = 0; size_t(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
 
 	      distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
 
@@ -786,7 +786,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	      if (_nPlanes > 3) {
 	    
 		// loop over all hits in fourth plane
-		for (int fourthhit = 0; uint(fourthhit) < _hitsFourthPlane.size(); fourthhit++) {
+		for (int fourthhit = 0; size_t(fourthhit) < _hitsFourthPlane.size(); fourthhit++) {
 
 		  distance34 = sqrt(pow(_hitsThirdPlane[thirdhit].measuredX - _hitsFourthPlane[fourthhit].measuredX,2) + pow(_hitsThirdPlane[thirdhit].measuredY - _hitsFourthPlane[fourthhit].measuredY,2));
 
@@ -828,7 +828,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 		  if (_nPlanes > 4) {
 
 		    // loop over all hits in fifth plane
-		    for (int fifthhit = 0; uint(fifthhit) < _hitsFifthPlane.size(); fifthhit++) {
+		    for (int fifthhit = 0; size_t(fifthhit) < _hitsFifthPlane.size(); fifthhit++) {
 
 		      distance45 = sqrt(pow(_hitsFourthPlane[fourthhit].measuredX - _hitsFifthPlane[fifthhit].measuredX,2) + pow(_hitsFourthPlane[fourthhit].measuredY - _hitsFifthPlane[fifthhit].measuredY,2));
 
@@ -876,7 +876,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 		      if (_nPlanes > 5) {
 
 			// loop over all hits in sixth plane
-			for (int sixthhit = 0; uint(sixthhit) < _hitsSixthPlane.size(); sixthhit++) {
+			for (int sixthhit = 0; size_t(sixthhit) < _hitsSixthPlane.size(); sixthhit++) {
 			
 			  distance56 = sqrt(pow(_hitsFifthPlane[fifthhit].measuredX - _hitsSixthPlane[sixthhit].measuredX,2) + pow(_hitsFifthPlane[fifthhit].measuredY - _hitsSixthPlane[sixthhit].measuredY,2));
 

@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.18 2007-12-21 17:33:12 roloff Exp $
+// Version: $Id: EUTelAlign.cc,v 1.19 2008-07-28 10:05:01 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -557,10 +557,10 @@ void EUTelAlign::processEvent (LCEvent * event) {
       int _nTracks = 0;
 
       // loop over all hits in first plane
-      for (int firsthit = 0; uint(firsthit) < _hitsFirstPlane.size(); firsthit++) {
+      for (int firsthit = 0; size_t(firsthit) < _hitsFirstPlane.size(); firsthit++) {
       
 	// loop over all hits in second plane
-	for (int secondhit = 0; uint(secondhit) < _hitsSecondPlane.size(); secondhit++) {
+	for (int secondhit = 0; size_t(secondhit) < _hitsSecondPlane.size(); secondhit++) {
 
 	  distance12 = sqrt(pow(_hitsFirstPlane[firsthit].measuredX - _hitsSecondPlane[secondhit].measuredX,2) + pow(_hitsFirstPlane[firsthit].measuredY - _hitsSecondPlane[secondhit].measuredY,2));
 
@@ -583,7 +583,7 @@ void EUTelAlign::processEvent (LCEvent * event) {
 	  } else if (_nPlanesFirstBox == 3) {
 	      
 	    // loop over all hits in third plane
-	    for (int thirdhit = 0; uint(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
+	    for (int thirdhit = 0; size_t(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
 	      
 	      distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
 	      
@@ -833,7 +833,7 @@ void EUTelAlign::Chi2Function(Int_t &npar, Double_t *gin, Double_t &f, Double_t 
   int usedevents = 0;
 
   // loop over all events
-  for (uint i = 0; i < _hitsForFit.size(); i++) {
+  for (size_t i = 0; i < _hitsForFit.size(); i++) {
 
     // just to be sure
     distance = 0.0;
@@ -943,7 +943,7 @@ void EUTelAlign::end() {
   double residual_y_simple = 1000.0;
 
   // loop over all events
-  for (uint i = 0; i < _hitsForFit.size(); i++) {
+  for (size_t i = 0; i < _hitsForFit.size(); i++) {
   
     residual_x_simple = off_x_simple + _hitsForFit[i].secondLayerMeasuredX - _hitsForFit[i].secondLayerPredictedX;
     residual_y_simple = off_y_simple + _hitsForFit[i].secondLayerMeasuredY - _hitsForFit[i].secondLayerPredictedY;
@@ -1042,7 +1042,7 @@ void EUTelAlign::end() {
   double residual_y = 1000.0;
 
   // loop over all events
-  for (uint i = 0; i < _hitsForFit.size(); i++) {
+  for (size_t i = 0; i < _hitsForFit.size(); i++) {
 
     x = (cos(theta_y)*cos(theta_z)) * _hitsForFit[i].secondLayerMeasuredX + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z) + cos(theta_x)*sin(theta_z)) * _hitsForFit[i].secondLayerMeasuredY + off_x;
     y = ((-1)*cos(theta_y)*sin(theta_z)) * _hitsForFit[i].secondLayerMeasuredX + (sin(theta_x)*sin(theta_y)*sin(theta_z) + cos(theta_x)*cos(theta_z)) * _hitsForFit[i].secondLayerMeasuredY + off_y;
