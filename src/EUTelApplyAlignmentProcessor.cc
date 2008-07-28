@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.4 2008-07-28 16:13:03 bulgheroni Exp $
+// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.5 2008-07-28 16:38:56 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -187,12 +187,12 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
     
       int sensorID;
       
-      if ( _hasZSData && _hasNZSData ) {
-	// it means that this is a MIXED run still I don't know what
-	// to do
-	streamlog_out ( ERROR ) << "This processor is unable to deal with MIXED data. Sorry for quitting..." << endl;
-	exit(-01);
-      }
+//       if ( _hasZSData && _hasNZSData ) {
+// 	// it means that this is a MIXED run still I don't know what
+// 	// to do
+// 	streamlog_out ( ERROR ) << "This processor is unable to deal with MIXED data. Sorry for quitting..." << endl;
+// 	exit(-01);
+//       }
       if ( _hasNZSData ) sensorID = (*clusterCellDecoder)( cluster ) ["sensorID"] ;
       if ( _hasZSData  ) sensorID = (*clusterZSCellDecoder)( cluster ) ["sensorID"]   ;
       
