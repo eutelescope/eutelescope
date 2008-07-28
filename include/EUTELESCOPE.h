@@ -8,6 +8,22 @@
  *
  */
 
+#ifndef EUTELESCOPE_NAMESPACE_H
+#define EUTELESCOPE_NAMESPACE_H
+
+//! The eutelescope namespace.
+/*! This namespace is used in order not to pollute neither the lcio,
+ *  nor the Marlin, not the standard namespaces. It contains all
+ *  classes defined by the EUDET JRA1 collaboration in order to
+ *  develop both their DAQ and analysis/reconstruction software.
+ *  
+ *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+ *  @version $Id: EUTELESCOPE.h,v 1.21 2008-07-28 08:43:33 bulgheroni Exp $
+ */
+
+namespace eutelescope {}
+#endif
+
 #ifndef EUTELESCOPE_H
 #define EUTELESCOPE_H
 
@@ -29,7 +45,7 @@ namespace eutelescope
    * files.
    *
    * @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @version $Id: EUTELESCOPE.h,v 1.20 2008-07-09 14:35:09 bulgheroni Exp $
+   * @version $Id: EUTELESCOPE.h,v 1.21 2008-07-28 08:43:33 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -343,7 +359,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.20 2008-07-09 14:35:09 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.21 2008-07-28 08:43:33 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -390,7 +406,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.20 2008-07-09 14:35:09 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.21 2008-07-28 08:43:33 bulgheroni Exp $
    */ 
   
   enum ClusterQuality {
@@ -449,7 +465,7 @@ namespace eutelescope
    *  cluster during the clusterization process itself. 
    *  
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.20 2008-07-09 14:35:09 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.21 2008-07-28 08:43:33 bulgheroni Exp $
    */
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
@@ -464,7 +480,7 @@ namespace eutelescope
   /*! This enumerator is used to define the sparsified pixel type. 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.20 2008-07-09 14:35:09 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.21 2008-07-28 08:43:33 bulgheroni Exp $
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,
