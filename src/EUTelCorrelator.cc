@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.4 2008-07-29 13:38:48 bulgheroni Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.5 2008-07-29 15:13:23 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -96,7 +96,8 @@ void EUTelCorrelator::init() {
 #ifndef USE_GEAR
 
   streamlog_out ( ERROR4 ) <<  "Marlin was not built with GEAR support." << endl
-			   <<  "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." << endl;
+			   <<  "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." 
+			   << endl;
   
   // I'm thinking if this is the case of throwing an exception or
   // not. This is a really error and not something that can
@@ -112,7 +113,8 @@ void EUTelCorrelator::init() {
   }
 
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
+  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*>
+    ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
 #endif
 
@@ -140,8 +142,10 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
   // geometry description
   if ( runHeader->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) {
     streamlog_out ( ERROR4 ) << "Error during the geometry consistency check: " << endl
-			     << "The run header says there are " << runHeader->getNoOfDetector() << " silicon detectors " << endl
-			     << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() << " silicon planes" << endl;
+			     << "The run header says there are " << runHeader->getNoOfDetector()
+			     << " silicon detectors " << endl
+			     << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber()
+			     << " silicon planes" << endl;
     exit(-1);
   }
   
@@ -159,7 +163,8 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
   if ( runHeader->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
     streamlog_out ( ERROR1 ) <<  "Error during the geometry consistency check: " << endl
 			     << "The run header says the GeoID is " << runHeader->getGeoID() << endl
-			     << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID() << endl;
+			     << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID()
+			     << endl;
     string answer;
     while (true) {
       streamlog_out ( ERROR1 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
@@ -202,14 +207,15 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
     return;
   } else if ( evt->getEventType() == kUNKNOWN ) {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
-			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+			       << " is of unknown type. Continue considering it as a normal Data Event." 
+			       << endl;
   }
   // if the Event that we are looking is the first we create files
   // with histograms.
   if ( isFirstEvent() ) {
 
     try {
-    
+    // let's check if we have cluster collections
       event->getCollection( _inputClusterCollectionName );
 
       _hasClusterCollection = true;
@@ -220,6 +226,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
     }
 
     try {
+      // let's check if we have hit collections
     
       event->getCollection( _inputHitCollectionName ) ;
 
@@ -247,7 +254,10 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
       
       CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder( inputClusterCollection );
       
-      
+      // we have an external detector where we consider a cluster each
+      // time (external cluster) that is correlated with another
+      // detector's clusters (internal cluster) 
+
       for ( size_t iExt = 0 ; iExt < inputClusterCollection->size() ; ++iExt ) {
 	
 	TrackerPulseImpl * externalPulse = static_cast< TrackerPulseImpl * > 
@@ -255,8 +265,10 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 	
 	EUTelVirtualCluster  * externalCluster;
 	
-	ClusterType type = static_cast<ClusterType>(static_cast<int>((pulseCellDecoder(externalPulse)["type"])));
-	
+	ClusterType type = static_cast<ClusterType>
+	  (static_cast<int>((pulseCellDecoder(externalPulse)["type"])));
+	// we check that the type of cluster is ok
+
 	if ( type == kEUTelFFClusterImpl ) {
 	  externalCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*>
 						    ( externalPulse->getTrackerData()) );
@@ -291,15 +303,23 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 	
 	float externalXCenter;
 	float externalYCenter;
+
+	// we catch the coordinates of the external seed  
+
 	externalCluster->getCenterOfGravity( externalXCenter, externalYCenter ) ; 
 
 	for ( size_t iInt = 0;  iInt <  inputClusterCollection->size() ; ++iInt ) {
 
 	  TrackerPulseImpl * internalPulse = static_cast< TrackerPulseImpl * > 
 	    ( inputClusterCollection->getElementAt( iInt ) );
+
 	  EUTelVirtualCluster  * internalCluster;
+
 	  ClusterType type = static_cast<ClusterType>
 	    (static_cast<int>((pulseCellDecoder(internalPulse)["type"])));
+	  
+	  // we check that the type of cluster is ok
+
 	  if ( type == kEUTelFFClusterImpl ) {
 	    internalCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> 
 						      (internalPulse->getTrackerData()) );
@@ -335,33 +355,51 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
 	    float internalXCenter;
 	    float internalYCenter;
+
+	    // we catch the coordinates of the internal seed  
+
 	    internalCluster->getCenterOfGravity( internalXCenter, internalYCenter ) ; 
 
 	    streamlog_out ( DEBUG ) << "Filling histo " << externalSensorID << " " << internalSensorID << endl;
 	  
-	    _clusterXCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalXCenter, internalXCenter );
-	    _clusterYCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalYCenter, internalYCenter ); 
+
+	    // we input the coordinates in the correlation matrix, one
+	    // for each type of coordinate: X and Y
+
+	    _clusterXCorrelationMatrix[ externalSensorID ][ internalSensorID ]->
+	      fill( externalXCenter, internalXCenter );
+	    _clusterYCorrelationMatrix[ externalSensorID ][ internalSensorID ]->
+	      fill( externalYCenter, internalYCenter ); 
 	  
-	  }
+	  } // endif
+	  
+	  delete internalCluster;
 
-	}
-      }
+	} // internal loop
 
-    }
+	delete externalCluster;
+      } // external loop
+    } // endif hasCluster
+
+   
+
 
     if ( _hasHitCollection ) {
 
       LCCollectionVec * inputHitCollection = static_cast< LCCollectionVec *> 
 	( event->getCollection( _inputHitCollectionName )) ;
       
-      LCCollectionVec * originalDataCollectionVec = dynamic_cast< LCCollectionVec * > (evt->getCollection( "original_zsdata" ) );
+      LCCollectionVec * originalDataCollectionVec = dynamic_cast< LCCollectionVec * > 
+	(evt->getCollection( "original_zsdata" ) );
       
       CellIDDecoder<TrackerDataImpl> originalCellDecoder( originalDataCollectionVec );
 
+     
       for ( size_t iExt = 0 ; iExt < inputHitCollection->size(); ++iExt ) {
 
 	// this is the external hit
-	TrackerHitImpl * externalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->getElementAt( iExt ) );
+	TrackerHitImpl * externalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
+									 getElementAt( iExt ) );
 	
 	// now let me take the vector of clusters used to define this
 	// hit
@@ -377,7 +415,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
       
 	for ( size_t iInt = 0; iInt < inputHitCollection->size(); ++iInt ) {
 
-	  TrackerHitImpl  * internalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->getElementAt( iInt ) );
+	  TrackerHitImpl  * internalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
+									    getElementAt( iInt ) );
 	  
 	  LCObjectVec       internalClusterVec = internalHit->getRawHits();
 	  TrackerDataImpl * internalCluster    = dynamic_cast<TrackerDataImpl * > ( internalClusterVec[ 0 ] );
@@ -389,10 +428,12 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 	    double * internalPosition;
 	    internalPosition = (double *) internalHit->getPosition(  );
 	    
-	    _hitXCorrelationMatrix[ externalSensorID ] [ internalSensorID ] ->fill ( externalPosition[0] , internalPosition[0] ) ;
-	   
-
-
+	    _hitXCorrelationMatrix[ externalSensorID ] [ internalSensorID ] ->
+	      fill ( externalPosition[0] , internalPosition[0] ) ;
+	    
+	    _hitYCorrelationMatrix[ externalSensorID ] [ internalSensorID ] ->
+	      fill( externalPosition[1], internalPosition[1] );
+       
 	  }
 	  
 	}
@@ -414,6 +455,26 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 void EUTelCorrelator::end() {
   
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
+
+#ifdef MARLIN_USE_AIDA
+  
+  if ( _hasHitCollection ) {
+    for ( int row = 0 ; row < _noOfDetectors; ++row ) {
+      for ( int col = 0 ; col < _noOfDetectors; ++col ) {
+	
+	if ( col != row ) {
+	  AIDA::ICloud2D * cloud =   _hitXCorrelationMatrix[ row ] [ col ];
+	  if ( ! cloud->isConverted() ) cloud -> convertToHistogram();
+	  cloud =  _hitYCorrelationMatrix[ row ] [ col ] ;
+	  if ( ! cloud->isConverted() ) cloud -> convertToHistogram();
+	}
+      }
+    }
+  }
+
+#endif
+  
+
 }
 
 void EUTelCorrelator::bookHistos() {
@@ -455,8 +516,7 @@ void EUTelCorrelator::bookHistos() {
       vector< AIDA::IHistogram2D * > innerVectorYCluster;
 
       map< unsigned int , AIDA::ICloud2D * > innerMapXHit;
-      // vector< AIDA::ICloud2D * > innerVectorXHit;
-      vector< AIDA::ICloud2D * > innerVectorYHit;
+      map< unsigned int , AIDA::ICloud2D * > innerMapYHit;
       
       
       for ( int col = 0 ; col < _noOfDetectors; ++col ) {
@@ -544,18 +604,18 @@ void EUTelCorrelator::bookHistos() {
 
 	    }
 
-	    streamlog_out( MESSAGE ) << "Booking cloud " << tempHistoName << endl;
+	    streamlog_out( DEBUG ) << "Booking cloud " << tempHistoName << endl;
 	    
-	    AIDA::ICloud2D * cloud2D = 
-	      AIDAProcessor::histogramFactory( this )->createCloud2D( tempHistoName.c_str() );
-
-	    string title ;
+	    string tempHistoTitle ;
 	    stringstream tt ;
 	    tt << "XHitCorrelation" << "-d" << row 
 	       << "-d" << col ;
-	    title = tt.str();
+	    tempHistoTitle = tt.str();
 
-	    cloud2D->setTitle( title ) ;
+	    AIDA::ICloud2D * cloud2D = 
+	      AIDAProcessor::histogramFactory( this )->createCloud2D( tempHistoName.c_str(),
+								      tempHistoTitle.c_str(), 1000 );
+
 	    innerMapXHit[ _siPlanesLayerLayout->getID( col ) ] =  cloud2D ;
 
 
@@ -568,16 +628,17 @@ void EUTelCorrelator::bookHistos() {
 
 	    streamlog_out( DEBUG ) << "Booking cloud " << tempHistoName << endl;
 	    
-	    
-	    AIDAProcessor::histogramFactory( this )->createCloud2D( tempHistoName.c_str() );
-	    
-	    
-	    tt << "YHitCorrelation" << "-d" << row 
-	       << "-d" << col ;
-	    title = tt.str();
+	    {
+	      stringstream tt ;
+	      tt << "YHitCorrelation" << "-d" << row 
+		 << "-d" << col ;
+	      tempHistoTitle = tt.str();
+	    }
 
-	    cloud2D->setTitle( title ) ;
-	    innerVectorYHit.push_back( cloud2D );
+	    cloud2D = AIDAProcessor::histogramFactory( this )->createCloud2D( tempHistoName.c_str(),
+									      tempHistoTitle.c_str(), 1000 );
+	    	    
+	    innerMapYHit[ _siPlanesLayerLayout->getID( col ) ] =  cloud2D ;
 	  }
 
 	} else {
@@ -588,9 +649,8 @@ void EUTelCorrelator::bookHistos() {
 	  }
 
 	  if ( _hasHitCollection ) {
-	    innerMapXHit[ _siPlanesLayerLayout->getID( col )  ] = NULL ;
-	    //	  innerVectorXHit.push_back( NULL );
-	    innerVectorYHit.push_back( NULL );
+	    innerMapXHit[ _siPlanesLayerLayout->getID( col )  ] = NULL ;	   
+	    innerMapYHit[ _siPlanesLayerLayout->getID( col )  ] = NULL ;
 	  }
 
 	}
@@ -604,14 +664,9 @@ void EUTelCorrelator::bookHistos() {
 
       if ( _hasHitCollection ) {
 	_hitXCorrelationMatrix[ _siPlanesLayerLayout->getID( row ) ] = innerMapXHit;
-	
-	// _hitXCorrelationMatrix.push_back( innerVectorXHit ) ;
-	_hitYCorrelationMatrix.push_back( innerVectorYHit ) ;
+	_hitYCorrelationMatrix[ _siPlanesLayerLayout->getID( row ) ] = innerMapYHit;
       }
     }
-
- 
-
   
   } catch (lcio::Exception& e ) {
     

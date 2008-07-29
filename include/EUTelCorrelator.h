@@ -51,12 +51,12 @@ namespace eutelescope {
    *  have this number of histograms because we don't create those 
    *  histograms where there will be the correlation between a
    *  detector and himself.
-   *  These histograms are put into different 
-   *  directories, one for X and one for Y, with cluster and hit
-   *  correlation too. 
+   *  These histograms are put into different directories, 
+   *  one for X and one for Y, with cluster and hit correlation too. 
    *  For each directory we have pairs of histograms that differ only
    *  in the order of DetectorID and these result with X and Y
    *  reversed, but otherwise they are the same.
+   *  We do the same for hit correlation.
    *
    *  At 07/18/08 we do only cluster correlator, then we'll make hit
    *  correlator too.
@@ -70,7 +70,7 @@ namespace eutelescope {
    *
    *  @author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
    *  @author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-   *  @version $Id: EUTelCorrelator.h,v 1.2 2008-07-21 17:04:27 bulgheroni Exp $
+   *  @version $Id: EUTelCorrelator.h,v 1.3 2008-07-29 15:13:23 bulgheroni Exp $
    *
    */
 
@@ -221,9 +221,7 @@ namespace eutelescope {
 
 
     std::map< unsigned int , std::map< unsigned int , AIDA::ICloud2D* > > _hitXCorrelationMatrix;
-    // std::vector< std::vector< AIDA::ICloud2D *  > > _hitXCorrelationMatrix; 
-    std::vector< std::vector< AIDA::ICloud2D *  > > _hitYCorrelationMatrix;
-
+    std::map< unsigned int , std::map< unsigned int , AIDA::ICloud2D* > > _hitYCorrelationMatrix;
 
     //! Base name of the correlation histogram
     static std::string _clusterXCorrelationHistoName;
