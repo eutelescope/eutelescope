@@ -79,7 +79,7 @@ namespace eutelescope {
    *  are then read from GEAR.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEventViewer.h,v 1.5 2007-09-24 01:20:56 bulgheroni Exp $ 
+   *  @version $Id: EUTelEventViewer.h,v 1.6 2008-07-29 17:11:37 bulgheroni Exp $ 
    */
   class EUTelEventViewer : public marlin::Processor {
   
@@ -164,6 +164,18 @@ namespace eutelescope {
      */ 
     std::vector<std::string> _trackCollectionNameVec;
     
+    //! Alignment constant collection
+    /*! This is the collection containing the alignment
+     *  constants. Those numbers are applied to the planes so that
+     *  they will show up in the event display exactly as they are in
+     *  the reality. This is done only if _applyAlignmentToPlane is
+     *  set to true.
+     *
+     *  When the planes are shifted, then the hits have to be
+     *  corrected as well.
+     */ 
+    std::string _alignmentCollectionName;
+
     //! CED TrackerHit layer
     /*! This number corresponds to the CED layer where tracker hit
      *  will be drawn. Setting it to a negative number means switching
@@ -178,10 +190,17 @@ namespace eutelescope {
     int _layerTrack;
 
     //! Wait for keyboard switch
-    /*! Set it to 1 to pause the event processing at the end of each
+    /*! Set it to true to pause the event processing at the end of each
      *  event
      */
-    int _waitForKeyboard; 
+    bool _waitForKeyboard; 
+
+    //! Apply the alignment constants
+    /*! Set it to true if you want to shift and rotate the planes
+     *  according to what is contained in the alignement constants
+     *  collections. 
+     */
+    bool _applyAlignmentToPlane;
 
     //! The detector model
     int _detModel;

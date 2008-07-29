@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.5 2007-09-24 01:20:06 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.6 2008-07-29 17:11:37 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -15,6 +15,7 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelEventViewer.h"
+#include "EUTelAlignmentConstant.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -80,7 +81,18 @@ EUTelEventViewer::EUTelEventViewer() : Processor("EUTelEventViewer") {
   registerProcessorParameter("WaitForKeyboard",
 			     "Wait for Keyboard before proceed",
 			     _waitForKeyboard,
-			     (int)1);
+			     static_cast< bool > (true) );
+
+  registerProcessorParameter("ApplyAlignmentToPlane",
+			     "If true, the planes are shifted and rotated according to the alignment collections",
+			     _applyAlignmentToPlane,
+			     static_cast< bool > ( true ) );
+  
+  registerOptionalParameter("AlignmentConstantName",
+			    "Alignment constant from the condition file",
+			    _alignmentCollectionName, string ("alignment"));
+  
+
 
 }
 
@@ -153,61 +165,46 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
 	for ( int iTrack = 0; iTrack < collection->getNumberOfElements(); iTrack++ ) {
 	  TrackImpl * track = dynamic_cast<TrackImpl*> ( collection->getElementAt(iTrack) );
 	  TrackerHitVec hitvec = track->getTrackerHits();
-	  int nHits = static_cast<int> (hitvec.size());
-	  float * ah = new float[nHits];
-	  float * xh = new float[nHits];
-	  float * yh = new float[nHits];
-	  float * zh = new float[nHits];
-	  float zmin = 1.0E+10;
-	  float zmax = -1.0E+10;
-	  for (int iHit = 0; iHit < nHits; ++iHit) {
-	    TrackerHit * hit = hitvec[iHit];
-	    float x = (float)hit->getPosition()[0];
-	    float y = (float)hit->getPosition()[1];
-	    float z = (float)hit->getPosition()[2];
-	    int kcol = returnColor(iTrack);
-	    ced_hit(x,y,z, _layerTrack<<CED_LAYER_SHIFT,2,kcol);
-	    ah[iHit] = 1.0;
-	    xh[iHit] = x;
-	    yh[iHit] = y;
-	    zh[iHit] = z;
-	    if (z < zmin)
-	      zmin = z;
-	    if (z > zmax)
-	      zmax = z;
-	  } 	
-	  ClusterShapes * shapes = new ClusterShapes(nHits,ah,xh,yh,zh);
-	  float dz = (zmax - zmin) / 500.;
-	  float par[5];
-	  float dpar[5];
-	  float chi2;
-	  float distmax;
-	  shapes->FitHelix(500, 0, 1, par, dpar, chi2, distmax);
-	  float x0 = par[0];
-	  float y0 = par[1];
-	  float r0 = par[2];
-	  float bz = par[3];
-	  float phi0 = par[4];
-	  if (chi2 > 0. && chi2 < 10.) {
-	    for (int iz(0); iz < 500; ++iz) {
-	      float z1 = zmin + iz*dz;
-	      float z2 = z1 + dz;
-	      float x1 = x0 + r0*cos(bz*z1+phi0);
-	      float y1 = y0 + r0*sin(bz*z1+phi0);
-	      float x2 = x0 + r0*cos(bz*z2+phi0);
-	      float y2 = y0 + r0*sin(bz*z2+phi0);
-	      ced_line(x1,y1,z1,x2,y2,z2,_layerTrack<<CED_LAYER_SHIFT,2,0xFFFFFF);
+	
+	  unsigned int color =  returnColor(iCollection);
+
+	  // ok now I have everything I'm interested in. The idea
+	  // behing is that for each hit in the hitvec having the type
+	  // set to 32 I will draw a hit and a line to the next plane.
+	  float xPrev = 0, yPrev = 0, zPrev = 0;
+	  float xNext, yNext, zNext;
+	
+	  for ( size_t iHit = 0; iHit < hitvec.size()  ; ++iHit ) {
+	    
+	    TrackerHitImpl * hit = dynamic_cast< TrackerHitImpl * > ( collection->getElementAt( iHit ) ) ;
+	    if ( iHit == 0) {
+	      
+	      xPrev = static_cast< float > ( hit->getPosition()[0] );
+	      yPrev = static_cast<float > ( hit->getPosition()[1] );
+	      zPrev = static_cast<float > ( hit->getPosition()[2] );
+	      ced_hit(xPrev, yPrev, zPrev, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
+	   
+	    } else {
+	   
+	      xNext = static_cast< float > ( hit->getPosition()[0] );
+	      yNext = static_cast<float > ( hit->getPosition()[1] );
+	      zNext = static_cast<float > ( hit->getPosition()[2] );
+	      ced_hit(xNext, yNext, zNext, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
+	      
+	      ced_line( xPrev, yPrev, zPrev, xNext, yNext, zNext, _layerTrack << CED_LAYER_SHIFT, 2, color );
+	      
+	      xPrev = xNext;
+	      yPrev = yNext;
+	      zPrev = zNext;
+
+
 	    }
+
+	  
+	    
 	  }
-	  //   ced_send_event();
-	  delete shapes;
-	  delete[] xh;
-	  delete[] yh;
-	  delete[] zh;
-	  delete[] ah;
 	}
-      }
-      catch(DataNotAvailableException &e){
+      }  catch(DataNotAvailableException &e) {
 	streamlog_out ( WARNING2 ) << "No input collection (" << _trackerHitCollectionNameVec[iCollection] << " found on " 
 				   <<  event->getEventNumber() 
 				   << " in run " << event->getRunNumber() << endl;
