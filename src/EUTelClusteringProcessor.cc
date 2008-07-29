@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.38 2008-05-20 13:03:49 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.39 2008-07-29 13:38:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -219,7 +219,7 @@ void EUTelClusteringProcessor::processRunHeader (LCRunHeader * rdr) {
 
   auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
 
-  runHeader->addProcessor( type());
+  runHeader->addProcessor( type() );
   
   // the four vectors containing the first and the last pixel
   // along both the directions

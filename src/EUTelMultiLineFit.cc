@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id $
+// Version: $Id: EUTelMultiLineFit.cc,v 1.20 2008-07-29 13:38:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -20,6 +20,8 @@
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelSparseClusterImpl.h"
+#include "EUTelSparseCluster2Impl.h"
 #include "EUTelExceptions.h"
 
 // marlin includes ".h"
@@ -474,8 +476,34 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       LCObjectVec clusterVector = hit->getRawHits();
       
       EUTelVirtualCluster * cluster;
+
       if ( hit->getType() == kEUTelFFClusterImpl ) {
+	
+	// fixed cluster implementation. Remember it can come from
+	// both RAW and ZS data
 	cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+
+      } else if ( hit->getType() == kEUTelSparseClusterImpl ) {
+
+	// ok the cluster is of sparse type, but we also need to know
+	// the kind of pixel description used. This information is
+	// stored in the corresponding original data collection.
+
+	LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+	TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+	CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+	SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+
+	// now we know the pixel type. So we can properly create a new
+	// instance of the sparse cluster
+	if ( pixelType == kEUTelSimpleSparsePixel ) {
+	  cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+	    ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+	} else {
+	  streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+	  throw UnknownDataTypeException("Pixel type unknown");
+	}
+	
       } else {
 	throw UnknownDataTypeException("Unknown cluster type");
       }
@@ -964,8 +992,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     // ------------------------------------------
 
     // Define output track and hit collections
-    LCCollectionVec     * fittrackvec = new LCCollectionVec(LCIO::TRACK);
-    LCCollectionVec     * fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
+    LCCollectionVec     * fittrackvec  = new LCCollectionVec(LCIO::TRACK);
+    LCCollectionVec     * fitpointvec  = new LCCollectionVec(LCIO::TRACKERHIT);
     
     // Set flag for storing track hits in track collection
     LCFlagImpl flag(fittrackvec->getFlag()); 
@@ -1066,8 +1094,8 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 	  // _xFitPos[counter] = Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0];
 	  // _yFitPos[counter] = Ybar[1]-Xbar[1]*A2[1]+_zPos[counter]*A2[1];
       
-	  TrackerHitImpl * fitpoint = new TrackerHitImpl;
-      
+	  TrackerHitImpl * fitpoint  = new TrackerHitImpl;
+
 	  // Plane number stored as hit type
 	  // fitpoint->setType(counter+1);
 	  fitpoint->setType(32);

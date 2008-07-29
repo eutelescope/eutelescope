@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.14 2007-09-24 01:20:06 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.15 2008-07-29 13:38:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -13,6 +13,7 @@
 // eutelescope includes ".h" 
 #include "EUTELESCOPE.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelSparseClusterImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelClusterSeparationProcessor.h"
@@ -135,9 +136,31 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
     // a TrackerDataImpl with some utility methods).
     EUTelVirtualCluster    * cluster; 
     
-    if ( type == kEUTelFFClusterImpl ) 
+    if ( type == kEUTelFFClusterImpl ) { 
       cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ) ;
-    else {
+    
+    } else if ( type == kEUTelSparseClusterImpl ) {
+      
+      // ok the cluster is of sparse type, but we also need to know
+      // the kind of pixel description used. This information is
+      // stored in the corresponding original data collection.
+      
+      LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+      TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+      CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+      SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+      
+      // now we know the pixel type. So we can properly create a new
+      // instance of the sparse cluster
+      if ( pixelType == kEUTelSimpleSparsePixel ) {
+	cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+	  ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
+      } else {
+	streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+	throw UnknownDataTypeException("Pixel type unknown");
+      }
+              
+    } else {
       streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
       throw UnknownDataTypeException("Cluster type unknown");
     }

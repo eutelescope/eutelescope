@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.14 2008-06-07 12:12:17 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.15 2008-07-29 13:38:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -15,6 +15,7 @@
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
+#include "EUTelSparseCluster2Impl.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelClusterFilter.h"
@@ -775,6 +776,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
 	  streamlog_out ( ERROR4 ) << "Unknown pixel type. Sorry for quitting" << endl;
 	  throw UnknownDataTypeException("Cluster type unknown");
 	}
+
       } else {
 	streamlog_out ( ERROR4 ) << "Unknown cluster type. Sorry for quitting" << endl;
 	throw UnknownDataTypeException("Cluster type unknown");

@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.3 2008-07-21 17:04:27 bulgheroni Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.4 2008-07-29 13:38:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -21,6 +21,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelSparseClusterImpl.h"
 #include "EUTelExceptions.h"
 
 // marlin includes ".h"
@@ -259,6 +260,28 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 	if ( type == kEUTelFFClusterImpl ) {
 	  externalCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*>
 						    ( externalPulse->getTrackerData()) );
+
+	} else if ( type == kEUTelSparseClusterImpl ) {
+
+	  // ok the cluster is of sparse type, but we also need to know
+	  // the kind of pixel description used. This information is
+	  // stored in the corresponding original data collection.
+	  
+	  LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+	  TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+	  CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+	  SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+	  
+	  // now we know the pixel type. So we can properly create a new
+	  // instance of the sparse cluster
+	  if ( pixelType == kEUTelSimpleSparsePixel ) {
+	    externalCluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+	      ( static_cast<TrackerDataImpl *> ( externalPulse->getTrackerData()  ) );
+	  } else {
+	    streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+	    throw UnknownDataTypeException("Pixel type unknown");
+	  }
+
 	} else {
 	  streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
 	  throw UnknownDataTypeException("Cluster type unknown");
@@ -280,6 +303,28 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 	  if ( type == kEUTelFFClusterImpl ) {
 	    internalCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> 
 						      (internalPulse->getTrackerData()) );
+	  
+	  } else if ( type == kEUTelSparseClusterImpl ) {
+
+	    // ok the cluster is of sparse type, but we also need to know
+	    // the kind of pixel description used. This information is
+	    // stored in the corresponding original data collection.
+	    
+	    LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+	    TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+	    CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+	    SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+	    
+	    // now we know the pixel type. So we can properly create a new
+	    // instance of the sparse cluster
+	    if ( pixelType == kEUTelSimpleSparsePixel ) {
+	      internalCluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+		( static_cast<TrackerDataImpl *> ( internalPulse->getTrackerData()  ) );
+	    } else {
+	      streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+	      throw UnknownDataTypeException("Pixel type unknown");
+	    }
+	    
 	  } else {
 	    streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
 	    throw UnknownDataTypeException("Cluster type unknown");

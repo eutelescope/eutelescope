@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.23 2008-05-22 15:24:32 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.24 2008-07-29 13:38:48 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -681,7 +681,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   if(debug)message<DEBUG> ( log() << "Total of " << nHit << " tracker hits in input collection " );
 
- (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nAllHitHistoName]))->fill(nHit);
+  (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nAllHitHistoName]))->fill(nHit);
 
   if(nHit + _allowMissingHits < _nActivePlanes) {
     if(debug)message<DEBUG> ( log() << "Not enough hits to perform the fit, exiting... " );
