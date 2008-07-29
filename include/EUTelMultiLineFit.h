@@ -142,6 +142,7 @@ namespace eutelescope {
     //! TRACKERHIT collection name
     /*! Output collection with hits from fitted tracks.
      */ 
+    std::string _correctedHitColName;
     std::string _outputHitColName;
 
     int _alignmentMode;

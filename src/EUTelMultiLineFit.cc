@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMultiLineFit.cc,v 1.20 2008-07-29 13:38:48 bulgheroni Exp $
+// Version: $Id: EUTelMultiLineFit.cc,v 1.21 2008-07-29 21:48:30 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -92,12 +92,16 @@ EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
   // output collection
 
   registerOutputCollection(LCIO::TRACK,"OutputTrackCollectionName",
-                             "Collection name for fitted tracks",
-                             _outputTrackColName, string ("fittracks"));
+			   "Collection name for fitted tracks",
+			   _outputTrackColName, string ("fittracks"));
+
+  registerOutputCollection(LCIO::TRACKERHIT,"CorrectedHitCollectionName",
+			   "Collection name for corrected particle positions",
+			   _correctedHitColName, string ("corrfithits"));
 
   registerOutputCollection(LCIO::TRACKERHIT,"OutputHitCollectionName",
-                             "Collection name for fitted particle hits (positions)",
-                             _outputHitColName, string ("fithits"));
+			   "Collection name for fitted particle hits (positions)",
+			   _outputHitColName, string ("fithits"));
 
   registerOptionalParameter("AlignmentMode","1 for constants from EUTelAlign (default), 2 for Millepede."
 			    ,_alignmentMode, static_cast <int> (1));
@@ -993,8 +997,9 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
     // Define output track and hit collections
     LCCollectionVec     * fittrackvec  = new LCCollectionVec(LCIO::TRACK);
+    LCCollectionVec     * corrpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
     LCCollectionVec     * fitpointvec  = new LCCollectionVec(LCIO::TRACKERHIT);
-    
+
     // Set flag for storing track hits in track collection
     LCFlagImpl flag(fittrackvec->getFlag()); 
     flag.setBit( LCIO::TRBIT_HITS );
@@ -1091,28 +1096,37 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
 	for( counter = 0; counter < _nPlanes; counter++ ){
       
-	  // _xFitPos[counter] = Ybar[0]-Xbar[0]*A2[0]+_zPos[counter]*A2[0];
-	  // _yFitPos[counter] = Ybar[1]-Xbar[1]*A2[1]+_zPos[counter]*A2[1];
-      
+	  TrackerHitImpl * corrpoint = new TrackerHitImpl;
 	  TrackerHitImpl * fitpoint  = new TrackerHitImpl;
 
 	  // Plane number stored as hit type
-	  // fitpoint->setType(counter+1);
+	  // corrpoint->setType(counter+1);
+	  corrpoint->setType(counter+1);
+	  
+	  // Use hit type 32 to be compatible with analytic fitter
 	  fitpoint->setType(32);
 
-	  double pos[3];
-	  pos[0] = _xPosHere[counter];
-	  pos[1] = _yPosHere[counter];
-	  pos[2] = _zPosHere[counter];
+	  double corrpos[3];
+	  corrpos[0] = _xPosHere[counter];
+	  corrpos[1] = _yPosHere[counter];
+	  corrpos[2] = _zPosHere[counter];
+
+	  double fitpos[3];
+	  fitpos[0] = _waferResidX[counter] + _xPosHere[counter];
+	  fitpos[1] = _waferResidY[counter] + _yPosHere[counter];
+	  fitpos[2] = _zPosHere[counter];
+	  
+	  corrpoint->setPosition(corrpos);
+	  fitpoint->setPosition(fitpos);
       
-	  fitpoint->setPosition(pos);    
+	  // store corr and fit point 
       
-	  // store fit point 
-      
+	  corrpointvec->push_back(corrpoint);
 	  fitpointvec->push_back(fitpoint);
       
-	  //   add point to track
-      
+	  // add points to track
+
+	  fittrack->addHit(corrpoint);
 	  fittrack->addHit(fitpoint);
       
 	}
@@ -1287,9 +1301,11 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
     if (_nGoodTracks > 0) {
 	event->addCollection(fittrackvec,_outputTrackColName);
+	event->addCollection(corrpointvec,_correctedHitColName);
 	event->addCollection(fitpointvec,_outputHitColName);
     } else {
       delete fittrackvec;
+      delete corrpointvec;
       delete fitpointvec;
     }
 
