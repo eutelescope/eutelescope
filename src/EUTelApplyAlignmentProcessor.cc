@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.5 2008-07-28 16:38:56 bulgheroni Exp $
+// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.6 2008-07-30 13:43:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -116,7 +116,8 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
   if ( _iEvt % 10 == 0 ) 
     streamlog_out ( MESSAGE4 ) << "Processing event " 
 			       << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-			       << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+			       << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
+			       << setfill(' ')
 			       << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
   ++_iEvt;
 
@@ -163,13 +164,25 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
     if (isFirstEvent()) {
       
       
-      
+      streamlog_out ( MESSAGE ) << "The alignment collection contains: " <<  alignmentCollectionVec->size() 
+				<< " planes " << endl;
+
       for ( size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos ) {
-	
+       
 	EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) );
 	_lookUpTable[ alignment->getSensorID() ] = iPos;
 
       }
+
+#ifndef NDEBUG
+      // print out the lookup table
+      map< int , int >::iterator mapIter = _lookUpTable.begin();
+      while ( mapIter != _lookUpTable.end() ) {
+	streamlog_out ( DEBUG ) << "Sensor ID = " << mapIter->first
+				  << " is in position " << mapIter->second << endl;
+	++mapIter;
+      }
+#endif 
 
       _isFirstEvent = false;
     }
@@ -195,64 +208,81 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 //       }
       if ( _hasNZSData ) sensorID = (*clusterCellDecoder)( cluster ) ["sensorID"] ;
       if ( _hasZSData  ) sensorID = (*clusterZSCellDecoder)( cluster ) ["sensorID"]   ;
-      
+
+
+      TrackerHitImpl   * outputHit  = new TrackerHitImpl;     
+      outputHit->setType( inputHit->getType() );
+      outputHit->rawHits() = clusterVec; 
+
       // now that we know at which sensor the hit belongs to, we can
       // get the corresponding alignment constants
-      EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > 
-	( alignmentCollectionVec->getElementAt( _lookUpTable[ sensorID ] ) );
-
-
-      TrackerHitImpl   * outputHit  = new TrackerHitImpl;
-      outputHit->setType( inputHit->getType() );
-      outputHit->rawHits() = clusterVec;
-      
+      map< int , int >::iterator  positionIter = _lookUpTable.find( sensorID );
 
       double * inputPosition      = const_cast< double * > ( inputHit->getPosition() ) ;
       double   outputPosition[3]  = { 0., 0., 0. };
-
-      if ( _correctionMethod == 0 ) {
-	
-	// this is the shift only case 
-	
-	outputPosition[0] = inputPosition[0] - alignment->getXOffset();
-	outputPosition[1] = inputPosition[1] - alignment->getYOffset();
-	outputPosition[2] = inputPosition[2] - alignment->getZOffset();
-
-      } else if ( _correctionMethod == 1 ) {
-	
-	// this is the rotation first
-	
-	// first the rotation
-	outputPosition[0] = inputPosition[0] + alignment->getGamma() * inputPosition[1] + alignment->getBeta() * inputPosition[2] ;
-	outputPosition[1] = -1 * alignment->getGamma() * inputPosition[0] + inputPosition[1] + alignment->getAlpha() * inputPosition[2];
-	outputPosition[2] = -1 * alignment->getBeta()  * inputPosition[0] + alignment->getAlpha() * inputPosition[1] + inputPosition[2];
-
-	// second the shift
-	outputPosition[0] -= alignment->getXOffset();
-	outputPosition[1] -= alignment->getYOffset();
-	outputPosition[2] -= alignment->getZOffset();
-
-      } else if ( _correctionMethod == 2 ) {
-	
-	// this is the translation first
-	
-	// first the shifts
-	inputPosition[0] -= alignment->getXOffset();
-	inputPosition[1] -= alignment->getYOffset();
-	inputPosition[2] -= alignment->getZOffset();
-	
-	// second the rotation
-	outputPosition[0] = inputPosition[0] + alignment->getGamma() * inputPosition[1] + alignment->getBeta() * inputPosition[2] ;
-	outputPosition[1] = -1 * alignment->getGamma() * inputPosition[0] + inputPosition[1] + alignment->getAlpha() * inputPosition[2];
-	outputPosition[2] = -1 * alignment->getBeta()  * inputPosition[0] + alignment->getAlpha() * inputPosition[1] + inputPosition[2];
-
-      }
       
+      if ( positionIter != _lookUpTable.end() ) {
+
+	EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > 
+	  ( alignmentCollectionVec->getElementAt( positionIter->second ) );
+	
+	if ( _correctionMethod == 0 ) {
+	  
+	  // this is the shift only case 
+	
+	  outputPosition[0] = inputPosition[0] - alignment->getXOffset();
+	  outputPosition[1] = inputPosition[1] - alignment->getYOffset();
+	  outputPosition[2] = inputPosition[2] - alignment->getZOffset();
+	  
+	} else if ( _correctionMethod == 1 ) {
+	  
+	  // this is the rotation first
+	  
+	  // first the rotation
+	  outputPosition[0] = inputPosition[0] + alignment->getGamma() * inputPosition[1] + alignment->getBeta() * inputPosition[2] ;
+	  outputPosition[1] = -1 * alignment->getGamma() * inputPosition[0] + inputPosition[1] + alignment->getAlpha() * inputPosition[2];
+	  outputPosition[2] = -1 * alignment->getBeta()  * inputPosition[0] + alignment->getAlpha() * inputPosition[1] + inputPosition[2];
+	  
+	  // second the shift
+	  outputPosition[0] -= alignment->getXOffset();
+	  outputPosition[1] -= alignment->getYOffset();
+	  outputPosition[2] -= alignment->getZOffset();
+	  
+	} else if ( _correctionMethod == 2 ) {
+	  
+	  // this is the translation first
+	  
+	  // first the shifts
+	  inputPosition[0] -= alignment->getXOffset();
+	  inputPosition[1] -= alignment->getYOffset();
+	  inputPosition[2] -= alignment->getZOffset();
+	  
+	  // second the rotation
+	  outputPosition[0] = inputPosition[0] + alignment->getGamma() * inputPosition[1] + alignment->getBeta() * inputPosition[2] ;
+	  outputPosition[1] = -1 * alignment->getGamma() * inputPosition[0] + inputPosition[1] + alignment->getAlpha() * inputPosition[2];
+	  outputPosition[2] = -1 * alignment->getBeta()  * inputPosition[0] + alignment->getAlpha() * inputPosition[1] + inputPosition[2];
+	  
+	}
+	
+      } else {
+
+	// this hit belongs to a plane whose sensorID is not in the
+	// alignment constants. So the idea is to eventually advice
+	// the users if running in DEBUG and copy the not aligned hit
+	// in the new collection. 
+	streamlog_out ( DEBUG ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit " 
+				  << iHit << endl;
+
+	for ( size_t i = 0; i < 3; ++i ) 
+	  outputPosition[i] = inputPosition[i];
+	
+      }
+
       outputHit->setPosition( outputPosition ) ;
       outputCollectionVec->push_back( outputHit );  
 
-    }
-    
+
+    }    
 
     evt->addCollection( outputCollectionVec, _outputHitCollectionName );
   
