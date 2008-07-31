@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.5 2008-07-29 15:13:23 bulgheroni Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.6 2008-07-31 07:57:30 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -527,8 +527,8 @@ void EUTelCorrelator::bookHistos() {
 	  if ( _hasClusterCollection ) {
 	    {
 	      stringstream ss;
-	      ss << "ClusterX/" <<  _clusterXCorrelationHistoName << "-d" << row 
-		 << "-d" << col ;
+	      ss << "ClusterX/" <<  _clusterXCorrelationHistoName << "_d" << row 
+		 << "_d" << col ;
 	      
 	      tempHistoName = ss.str();
 	    }
@@ -549,8 +549,8 @@ void EUTelCorrelator::bookHistos() {
 	    {
 
 	      stringstream tt ;
-	      tt << "XClusterCorrelation" << "-d" << row 
-		 << "-d" << col ;
+	      tt << "XClusterCorrelation" << "_d" << row 
+		 << "_d" << col ;
 	      tempHistoTitle = tt.str();
 	     
 	    }
@@ -561,8 +561,8 @@ void EUTelCorrelator::bookHistos() {
 	    
 	    {
 	      stringstream ss;
-	      ss << "ClusterY/" <<  _clusterYCorrelationHistoName << "-d" << row 
-		 << "-d" << col ;
+	      ss << "ClusterY/" <<  _clusterYCorrelationHistoName << "_d" << row 
+		 << "_d" << col ;
 	    
 	      tempHistoName = ss.str();
 	    }
@@ -582,8 +582,8 @@ void EUTelCorrelator::bookHistos() {
 									xBin, xMin, xMax, yBin, yMin, yMax );
 	    {
 	      stringstream tt ;
-	      tt << "YClusterCorrelation" << "-d" << row 
-		 << "-d" << col ;
+	      tt << "YClusterCorrelation" << "_d" << row 
+		 << "_d" << col ;
 	      tempHistoTitle = tt.str();
 	    }
 
@@ -599,7 +599,7 @@ void EUTelCorrelator::bookHistos() {
 
 	    {
 	      stringstream ss;
-	      ss << "HitX/" << _hitXCorrelationCloudName << "-d" << row << "-d" << col;
+	      ss << "HitX/" << _hitXCorrelationCloudName << "_d" << row << "_d" << col;
 	      tempHistoName = ss.str();
 
 	    }
@@ -608,8 +608,8 @@ void EUTelCorrelator::bookHistos() {
 	    
 	    string tempHistoTitle ;
 	    stringstream tt ;
-	    tt << "XHitCorrelation" << "-d" << row 
-	       << "-d" << col ;
+	    tt << "XHitCorrelation" << "_d" << row 
+	       << "_d" << col ;
 	    tempHistoTitle = tt.str();
 
 	    AIDA::ICloud2D * cloud2D = 
@@ -621,7 +621,7 @@ void EUTelCorrelator::bookHistos() {
 
 	    {
 	      stringstream ss;
-	      ss << "HitY/" << _hitYCorrelationCloudName << "-d" << row << "-d" << col;
+	      ss << "HitY/" << _hitYCorrelationCloudName << "_d" << row << "_d" << col;
 	      tempHistoName = ss.str();
 
 	    }
@@ -630,8 +630,8 @@ void EUTelCorrelator::bookHistos() {
 	    
 	    {
 	      stringstream tt ;
-	      tt << "YHitCorrelation" << "-d" << row 
-		 << "-d" << col ;
+	      tt << "YHitCorrelation" << "_d" << row 
+		 << "_d" << col ;
 	      tempHistoTitle = tt.str();
 	    }
 
