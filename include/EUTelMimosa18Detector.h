@@ -29,7 +29,7 @@ namespace eutelescope {
   /*! 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelMimosa18Detector.h,v 1.1 2008-08-06 20:37:00 bulgheroni Exp $
+   *  @version $Id: EUTelMimosa18Detector.h,v 1.2 2008-08-10 12:14:42 bulgheroni Exp $
    */
 
   class EUTelMimosa18Detector : public EUTelBaseDetector {
@@ -82,6 +82,16 @@ namespace eutelescope {
 
     //! Set the RO modality
     void setMode( std::string mode );
+
+    //! Has subchannel?
+    virtual bool hasSubChannels() const ;
+
+    //! Get subchannels
+    virtual std::vector< EUTelROI > getSubChannels( bool withMarker = false ) const;
+    
+    //! Get a subchannel boundaries
+    virtual EUTelROI getSubChannelBoundary( size_t iChan, bool witMarker = false ) const ;
+
 
     //! Print
     /*! This method is used to print out the detector

@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelMimoTelDetector.cc,v 1.1 2008-08-06 20:37:00 bulgheroni Exp $
+// Version $Id: EUTelMimoTelDetector.cc,v 1.2 2008-08-10 12:14:42 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -49,11 +49,55 @@ EUTelMimoTelDetector::EUTelMimoTelDetector() : EUTelBaseDetector() {
   _xPitch = 0.03;
   _yPitch = 0.03;
 
+  // prepare and add the subchannels starting from the one with
+  // markers in it
+  EUTelROI ch0wm(   0,  0,  65, 255 );
+  EUTelROI ch1wm(  66,  0, 131, 255 );
+  EUTelROI ch2wm( 132,  0, 197, 255 );
+  EUTelROI ch3wm( 198,  0, 263, 255 );
+  
+  _subChannelsWithMarkers.push_back( ch0wm );
+  _subChannelsWithMarkers.push_back( ch1wm );
+  _subChannelsWithMarkers.push_back( ch2wm );
+  _subChannelsWithMarkers.push_back( ch3wm );
+
+  // now the one without markers
+  EUTelROI ch0wom(   0,   0,  63,  255 );
+  EUTelROI ch1wom(  64,   0, 127,  255 );
+  EUTelROI ch2wom( 128,   0, 191,  255 );
+  EUTelROI ch3wom( 192,   0, 255,  255 );
+  
+  _subChannelsWithoutMarkers.push_back( ch0wom );
+  _subChannelsWithoutMarkers.push_back( ch1wom );
+  _subChannelsWithoutMarkers.push_back( ch2wom );
+  _subChannelsWithoutMarkers.push_back( ch3wom );
+
+
 }
 
 void EUTelMimoTelDetector::setMode( string mode ) {
   
   _mode = mode;
+
+}
+
+bool EUTelMimoTelDetector::hasSubChannels() const {
+ 
+  if (  _subChannelsWithoutMarkers.size() != 0 ) return true;
+  else return false;
+
+}
+
+std::vector< EUTelROI > EUTelMimoTelDetector::getSubChannels( bool withMarker ) const {
+
+  if ( withMarker ) return _subChannelsWithMarkers;
+  else  return _subChannelsWithoutMarkers;
+
+}
+
+EUTelROI EUTelMimoTelDetector::getSubChannelBoundary( size_t iChan, bool withMarker ) const {
+  if ( withMarker ) return _subChannelsWithMarkers.at( iChan );
+  else return _subChannelsWithoutMarkers.at( iChan );
 
 }
 

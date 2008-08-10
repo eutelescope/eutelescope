@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelMimosa18Detector.cc,v 1.1 2008-08-06 20:37:00 bulgheroni Exp $
+// Version $Id: EUTelMimosa18Detector.cc,v 1.2 2008-08-10 12:14:42 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -45,7 +45,50 @@ EUTelMimosa18Detector::EUTelMimosa18Detector() : EUTelBaseDetector() {
   _xPitch = 0.01;
   _yPitch = 0.01;
 
+  // now the matrix boundaries with markers 
+  EUTelROI ch0wm(   0,  0, 255, 255 );
+  EUTelROI ch1wm( 256,  0, 511, 255 );
+  EUTelROI ch2wm(   0,256, 255, 511 );
+  EUTelROI ch3wm( 256,256, 511, 511 );
+  
+  _subChannelsWithMarkers.push_back( ch0wm );
+  _subChannelsWithMarkers.push_back( ch1wm );
+  _subChannelsWithMarkers.push_back( ch2wm );
+  _subChannelsWithMarkers.push_back( ch3wm );
+
+  // now the matrix boundaries without markers 
+  EUTelROI ch0wom(   0,  0, 253, 255 );
+  EUTelROI ch1wom( 254,  0, 507, 255 );
+  EUTelROI ch2wom(   0,256, 253, 511 );
+  EUTelROI ch3wom( 254,256, 507, 511 );
+
+  _subChannelsWithoutMarkers.push_back( ch0wom );
+  _subChannelsWithoutMarkers.push_back( ch1wom );
+  _subChannelsWithoutMarkers.push_back( ch2wom );
+  _subChannelsWithoutMarkers.push_back( ch3wom );
+
+
+
 }
+
+bool EUTelMimosa18Detector::hasSubChannels() const {
+  if (  _subChannelsWithoutMarkers.size() != 0 ) return true;
+  else return false;
+}
+
+std::vector< EUTelROI > EUTelMimosa18Detector::getSubChannels( bool withMarker ) const {
+
+  if ( withMarker ) return _subChannelsWithMarkers;
+  else  return _subChannelsWithoutMarkers;
+
+}
+
+EUTelROI EUTelMimosa18Detector::getSubChannelBoundary( size_t iChan, bool withMarker ) const {
+  if ( withMarker ) return _subChannelsWithMarkers.at( iChan );
+  else return _subChannelsWithoutMarkers.at( iChan );
+
+}
+
 
 void EUTelMimosa18Detector::setMode( string mode ) {
   

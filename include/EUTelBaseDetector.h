@@ -13,6 +13,7 @@
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
+#include "EUTelROI.h"
 
 // lcio includes <.h>
 
@@ -28,7 +29,7 @@ namespace eutelescope {
   /*! 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelBaseDetector.h,v 1.1 2008-08-06 20:37:00 bulgheroni Exp $
+   *  @version $Id: EUTelBaseDetector.h,v 1.2 2008-08-10 12:14:42 bulgheroni Exp $
    */
 
   class EUTelBaseDetector {
@@ -78,6 +79,15 @@ namespace eutelescope {
 
     //! Has marker? 
     virtual bool hasMarker() const = 0 ;
+
+    //! Has subchannel?
+    virtual bool hasSubChannels() const = 0;
+
+    //! Get subchannels
+    virtual std::vector< EUTelROI > getSubChannels( bool withMarker = false ) const = 0;
+    
+    //! Get a subchannel boundaries
+    virtual EUTelROI getSubChannelBoundary( size_t iChan, bool witMarker = false ) const = 0;
 
     //! Print
     /*! This method is used to print out the detector
@@ -131,6 +141,13 @@ namespace eutelescope {
 
     //! This is the detector RO mode
     std::string _mode;
+
+    //! Sub channel boundaries with markers in it
+    std::vector< EUTelROI > _subChannelsWithMarkers;
+
+    //! Sub channel boundaries without markers in it
+    std::vector< EUTelROI > _subChannelsWithoutMarkers;
+
 
   };
 

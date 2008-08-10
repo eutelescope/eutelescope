@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelSparseCluster2Impl.cc,v 1.1 2007-09-06 14:04:00 bulgheroni Exp $
+// Version: $Id: EUTelSparseCluster2Impl.cc,v 1.2 2008-08-10 12:14:42 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -11,8 +11,10 @@
  *
  */
 // personal includes ".h"
+#include "EUTelSparseDataImpl.h"
 #include "EUTelSparseCluster2Impl.h"
 #include "EUTelVirtualCluster.h"
+#include "EUTelSimpleSparsePixel.h"
 
 // lcio includes <.h>
 #include <IMPL/TrackerDataImpl.h>
@@ -23,3 +25,5 @@
 using namespace eutelescope;
 using namespace IMPL;
 using namespace std;
+
+
