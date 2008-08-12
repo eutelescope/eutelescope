@@ -16,6 +16,9 @@
 #include <TColor.h>
 #include <TColorWheel.h>
 #include <Rtypes.h>
+#include <TLegend.h>
+#include <TPaveLabel.h>
+
 using namespace std;
 
 // a few global constants
@@ -24,8 +27,16 @@ const size_t kYPixel = 256;
 
 const size_t kNChan  = 4;
 size_t xLimit[ kNChan + 1  ] = { 0, 64, 128 , 192, 256 };
-int kColor[10] = { kOrange, kOrange + 9, kPink, kPink + 9, kViolet, kViolet + 9,
-		      kAzure, kAzure + 9, kTeal, kTeal + 9 };
+int kColor[10] = { 
+  kRed,
+  kBlue,
+  kBlack,
+  kGreen,
+  kTeal,
+  kOrange,
+  kPink
+};
+
 
 
 template<typename T>
@@ -227,7 +238,8 @@ void advancedNoiseAnalysis( unsigned int runNumber, unsigned int loop = 1) {
   canvasTitle = "Noise summary";
 
   TCanvas * summaryCanvas = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), 1000, 500 );
-
+  summaryCanvas->SetGridx(1);
+  TLegend * legend = new TLegend(0.5, 4.8, 1.5, 4.3,"","br");;
   
 
   for ( size_t iDetector = 0 ; iDetector < nDetector ; ++iDetector ) {
@@ -238,12 +250,14 @@ void advancedNoiseAnalysis( unsigned int runNumber, unsigned int loop = 1) {
     gr->GetXaxis()->SetTitle("Channel #");
     gr->GetYaxis()->SetTitle("Noise [ADC]");
     gr->GetXaxis()->SetNdivisions( 5 );
+    gr->GetXaxis()->SetLabelSize( 0 );
     gr->SetMarkerStyle( iDetector + 1 );
     gr->SetMarkerColor( kColor[iDetector] );
     gr->SetLineColor( kColor[iDetector] );
-    outputHistoList->Write();
+    gr->SetLineWidth( 2 );
+
     
-    summaryCanvas->cd(3);
+    legend->AddEntry( gr, string("Detector " + toString( iDetector )).c_str(), "LP");
 
     if ( iDetector == 0 ) {
       gr->Draw("ALP");
@@ -253,7 +267,18 @@ void advancedNoiseAnalysis( unsigned int runNumber, unsigned int loop = 1) {
     
 
   }
-  summaryCanvas->BuildLegend();
+
+  
+  
+  legend->Draw();
+
+  for ( size_t iChan = 0 ; iChan < kNChan ; ++iChan ) {
+    
+    TPaveLabel * label = new TPaveLabel( iChan - 0.75 , 3.2 , iChan -0.25 , 3, string("Ch " + toString( iChan ) ).c_str());
+    label->Draw();
+  }
+
+
   summaryCanvas->Write();
   comparisonCanvas->Write();
 
