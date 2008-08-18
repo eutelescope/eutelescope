@@ -29,7 +29,7 @@ namespace eutelescope {
   /*! 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelMimoTelDetector.h,v 1.2 2008-08-10 12:14:42 bulgheroni Exp $
+   *  @version $Id: EUTelMimoTelDetector.h,v 1.3 2008-08-18 15:02:22 bulgheroni Exp $
    */
 
   class EUTelMimoTelDetector : public EUTelBaseDetector {
@@ -45,13 +45,13 @@ namespace eutelescope {
     virtual unsigned short getXMin() const { return _xMin ; }
 
     //! Get the first pixel along y
-    virtual unsigned short getyMin() const { return _yMin ; }
+    virtual unsigned short getYMin() const { return _yMin ; }
 
     //! Get the last pixel along x
     virtual unsigned short getXMax() const { return _xMax ; }
 
     //! Get the last pixel along y
-    virtual unsigned short getyMax() const { return _yMax ; }
+    virtual unsigned short getYMax() const { return _yMax ; }
 
     //! Get the no of pixel along X
     virtual unsigned short getXNoOfPixel() const { return _xMax - _xMin + 1 ; } 

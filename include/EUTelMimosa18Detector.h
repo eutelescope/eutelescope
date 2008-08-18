@@ -26,10 +26,10 @@ namespace eutelescope {
 
 
   //! Virtual class to describe detector in the EUTelescope framework
-  /*! 
+  /*!
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelMimosa18Detector.h,v 1.2 2008-08-10 12:14:42 bulgheroni Exp $
+   *  @version $Id: EUTelMimosa18Detector.h,v 1.3 2008-08-18 15:02:22 bulgheroni Exp $
    */
 
   class EUTelMimosa18Detector : public EUTelBaseDetector {
@@ -45,26 +45,26 @@ namespace eutelescope {
     virtual unsigned short getXMin() const { return _xMin ; }
 
     //! Get the first pixel along y
-    virtual unsigned short getyMin() const { return _yMin ; }
+    virtual unsigned short getYMin() const { return _yMin ; }
 
     //! Get the last pixel along x
     virtual unsigned short getXMax() const { return _xMax ; }
 
     //! Get the last pixel along y
-    virtual unsigned short getyMax() const { return _yMax ; }
+    virtual unsigned short getYMax() const { return _yMax ; }
 
     //! Get the no of pixel along X
-    virtual unsigned short getXNoOfPixel() const { return _xMax - _xMin + 1 ; } 
+    virtual unsigned short getXNoOfPixel() const { return _xMax - _xMin + 1 ; }
 
     //! Get the no of pixel along Y
-    virtual unsigned short getYNoOfPixel() const { return _yMax - _yMin + 1 ; }     
-    
+    virtual unsigned short getYNoOfPixel() const { return _yMax - _yMin + 1 ; }
+
     //! Get the pixel pitch along X
-    virtual float getXPitch() const { return _xPitch ; } 
+    virtual float getXPitch() const { return _xPitch ; }
 
     //! Get the pixel pitch along Y
-    virtual float getYPitch() const  { return _yPitch ; }  
- 
+    virtual float getYPitch() const  { return _yPitch ; }
+
     //! Get signal polarity
     virtual short getSignalPolarity() const { return _signalPolarity ; }
 
@@ -77,7 +77,7 @@ namespace eutelescope {
     //! Get marker position
     virtual std::vector< size_t > getMarkerPosition() const { return _markerPos ; }
 
-    //! Has marker? 
+    //! Has marker?
     virtual bool hasMarker() const  { if ( _markerPos.size() != 0 ) return true; else return false; }
 
     //! Set the RO modality
@@ -88,18 +88,18 @@ namespace eutelescope {
 
     //! Get subchannels
     virtual std::vector< EUTelROI > getSubChannels( bool withMarker = false ) const;
-    
+
     //! Get a subchannel boundaries
     virtual EUTelROI getSubChannelBoundary( size_t iChan, bool witMarker = false ) const ;
 
 
     //! Print
     /*! This method is used to print out the detector
-     * 
+     *
      *  @param os The input output stream
      */
     virtual void print(std::ostream& os) const ;
-      
+
 
 
   protected:

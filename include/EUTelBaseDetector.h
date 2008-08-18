@@ -26,17 +26,17 @@ namespace eutelescope {
 
 
   //! Virtual class to describe detector in the EUTelescope framework
-  /*! 
+  /*!
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelBaseDetector.h,v 1.2 2008-08-10 12:14:42 bulgheroni Exp $
+   *  @version $Id: EUTelBaseDetector.h,v 1.3 2008-08-18 15:02:22 bulgheroni Exp $
    */
 
   class EUTelBaseDetector {
 
   public:
     //! Default constructor
-    EUTelBaseDetector() { } 
+    EUTelBaseDetector() { }
 
     //! Default destructor
     virtual ~EUTelBaseDetector() {;}
@@ -45,26 +45,26 @@ namespace eutelescope {
     virtual unsigned short getXMin() const = 0;
 
     //! Get the first pixel along y
-    virtual unsigned short getyMin() const = 0;
+    virtual unsigned short getYMin() const = 0;
 
     //! Get the last pixel along x
     virtual unsigned short getXMax() const = 0;
 
     //! Get the last pixel along y
-    virtual unsigned short getyMax() const = 0;
+    virtual unsigned short getYMax() const = 0;
 
     //! Get the no of pixel along X
     virtual unsigned short getXNoOfPixel() const = 0;
 
     //! Get the no of pixel along Y
-    virtual unsigned short getYNoOfPixel() const = 0;    
-    
+    virtual unsigned short getYNoOfPixel() const = 0;
+
     //! Get the pixel pitch along X
-    virtual float getXPitch() const = 0; 
+    virtual float getXPitch() const = 0;
 
     //! Get the pixel pitch along Y
-    virtual float getYPitch() const = 0; 
- 
+    virtual float getYPitch() const = 0;
+
     //! Get signal polarity
     virtual short getSignalPolarity() const = 0;
 
@@ -77,7 +77,7 @@ namespace eutelescope {
     //! Get marker position
     virtual std::vector< size_t > getMarkerPosition() const = 0;
 
-    //! Has marker? 
+    //! Has marker?
     virtual bool hasMarker() const = 0 ;
 
     //! Has subchannel?
@@ -85,17 +85,17 @@ namespace eutelescope {
 
     //! Get subchannels
     virtual std::vector< EUTelROI > getSubChannels( bool withMarker = false ) const = 0;
-    
+
     //! Get a subchannel boundaries
     virtual EUTelROI getSubChannelBoundary( size_t iChan, bool witMarker = false ) const = 0;
 
     //! Print
     /*! This method is used to print out the detector
-     * 
+     *
      *  @param os The input output stream
      */
     virtual void print(std::ostream& os) const                            = 0;
-      
+
     //! Overload of operator<<
     /*! This friend function is the overload of the operator << for
      *  the detector base class. It uses the print method that is
@@ -105,16 +105,16 @@ namespace eutelescope {
      *  method
      *  @param clu The detector to be stream out
      *  @return The output stream
-     */ 
+     */
     friend std::ostream& operator<< (std::ostream& os , const EUTelBaseDetector & clu )  { clu.print(os); return os; }
 
   protected:
-    
+
     // data members
-    
+
     //! This is the detector name!
     std::string _name;
-    
+
     //! The first pixel along x
     unsigned short _xMin;
 
@@ -128,7 +128,7 @@ namespace eutelescope {
     unsigned short _yMax;
 
     //! Picth along x in mm as usual
-    float _xPitch; 
+    float _xPitch;
 
     //! Picth along y in mm as usual
     float _yPitch;
