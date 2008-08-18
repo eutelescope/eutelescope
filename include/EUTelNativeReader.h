@@ -13,113 +13,88 @@
 #define EUTELNATIVEREADER_H 1
 
 // personal includes ".h"
+#include "EUTELESCOPE.h"
+#include "EUTelEventImpl.h"
+#include "EUTelBaseDetector.h"
 
 // marlin includes ".h"
 #include "marlin/DataSourceProcessor.h"
 
-// eudaq includes <.h>
+// eudaq includes <.hh>
+#include <eudaq/Event.hh>
+#include <eudaq/EUDRBEvent.hh>
+#include <eudaq/TLUEvent.hh>
 
 // lcio includes <.h>
 
 // system includes <>
 #include <string>
+#include <vector>
+
+
 
 namespace eutelescope {
 
-  //!  Reads the data produced by the EUDRB boards
-  /*!  This Marlin reader is taking as an input the output file of
-   *   the eudaq software and converting it to a LCIO event. This is
-   *   linking against libeudaq and using directly the data structure
-   *   used in the DAQ software. This has to be thought as a sort of
-   *   link between the native DAQ raw format and the LCIO data model
-   *   used for the telescope data description.
+  //!  Reads the data produced by the EUDAQ software
+  /*!  This Marlin processor is used to convert the data produced by
+   *   the DAQ in its native format to the LCIO format with the
+   *   appropriate data model.
    *
-   *   This processor is automatically guessing both the kind of data
-   *   contained into the raw file, i.e. RAW2, RAW3, ZS and also the
-   *   detector type (MimoTel and Mimosa18).
+   *   The idea behind this reader is the universal replacement for
+   *   the EUTelMimoTelReader that was focused on the conversion of
+   *   events containing only mimotel sensors and finally also to
+   *   Mimosa 18. 
    *
-   *   The main goal of this data reader is to test the quality of
-   *   the data output from the hardware but it is going to disappear
-   *   soon being the LCIO output already produced by the online
-   *   system.
+   *   The EUTelNativeReader will guess from the BORE which kind of
+   *   sensors are present in the telescope setup and fill in a list
+   *   of EUTelBaseDetector derived classes, each of them is
+   *   implementing a precise sensor configuration.
    *
-   *   @see @ref cds3frame
+   *   For each group of sensors there will be a common output
+   *   collection containing the raw data information.
    *
-   *   The marker removal procedure is done a very general way
-   *   allowing to copy paste the same code for a detector with a
-   *   different configuration of markers.
+   *   <b>What to do to add a new sensor</b>
    *
-   *   <h4>Input collection</h4>
-   *   None
-   *
-   *   <h4>Output collections</h4>
-   * 
-   *   <b>First frame</b> A collection of TrackerRawData containing
-   *   the first decoded frame
-   *
-   *   <b>Second frame</b> A collection of TrackerRawData containing
-   *   the second decoded frame
-   *
-   *   <b>Third frame</b> A collection of TrackerRawData containing
-   *   the third decoded frame
-   *
-   *   <b>CDS</b> A collection of TrackerRawData containing
-   *   the CDS make taking into account the pivot pixel.
-   *
-   *   @param FirstFrameCollectionName The name of the first frame
-   *   collection.
-   *
-   *   @param SecondFrameCollectionName The name of the second frame collection.
-   *
-   *   @param ThirdFrameCollectionName The name of the third frame
-   *   collection.
-   *
-   *   @param CDSCollection The name of the CDS collection.
-   *
-   *   @param CDS Switch to enable / disable the CDS calculation.
-   *   
-   *   @param InputDataFileName The input file to convert.
-   *
-   *   @param SignalPolarity The expected signal polarity.
-   *
-   *   @param GeoID This is the identification number of the used
-   *   geometry. It has to be the same here and in the corresponding
-   *   XML geometry description.
-   *
-   *   @param RemoveMarker This boolean is used to remove (true) the
-   *   markers from the output data stream. 
-   *
-   *   @param MarkerPosition This is a vector of integer containing
-   *   the marker position in pixel number start counting from 0.
+   *   First of all, you need to derive EUTelBaseDector into your own
+   *   sensor. Then you have to decide which is the most appropriate
+   *   type of collection one can use to store your detector raw
+   *   data. In case, this does not exist, you have to create it
+   *   deriving a LCGenericObject.
+   *   Add a new output collection with a reasonable default name. For
+   *   historical reasons, the name rawdata is reserved for MimoTel
+   *   sensors. The advice is to append something link "_mysensor" to
+   *   the collection name.
+   *   Add a new method to this class in charge to decode the data
+   *   into the native format in the corresponding LCIO for you
+   *   sensor.
+   *   If you need to add private data members, carefully describe
+   *   them and respect the naming convention.
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelNativeReader.h,v 1.1 2008-08-06 20:37:00 bulgheroni Exp $
+   *   @version $Id: EUTelNativeReader.h,v 1.2 2008-08-18 15:04:58 bulgheroni Exp $
    *
    */
-  
   class EUTelNativeReader : public marlin::DataSourceProcessor    {
-    
+
   public:
-     
+
     //! Default constructor
     EUTelNativeReader ();
-     
+
     //! New processor
     /*! Return a new instance of a EUTelNativeReader. It is
      *  called by the Marlin execution framework and shouldn't be used
      *  by the final user.
      */
     virtual EUTelNativeReader * newProcessor ();
-     
+
     //! Creates events from the eudaq software
-    /*! This method reads a certain number of events from the input
-     *  raw data file and generates LCIO events with at least three
-     *  collections. This processor is very specific for the MimoTel
-     *  setup, so it cannot be used in general to read the output of
-     *  the EUDRB board. This limitation is due to the fact that the
-     *  main goal of this data reader is to check the quality of the
-     *  data producer and soon the LCIO output will be provided
-     *  directly from the DAQ software.
+    /*! This is the real method. This is looping over all the events
+     *  containied into the native file and calling the appropriate
+     *  decoder for each of the subevent found into the current event.
+     *
+     *  When reading the BORE a list of EUTelBaseDetector derived
+     *  classes is also produced to describe the system geometry.
      *
      *  @param numEvents The number of events to be read out.
      */
@@ -132,110 +107,122 @@ namespace eutelescope {
     virtual void init ();
 
     //! End method
-    /*! It prints out a good bye message 
+    /*! It prints out a good bye message
      */
     virtual void end ();
+
+    //! Process BORE
+    /*! This method is called whenever in the input data stream a
+     *  Begin of Run Event is found. A corresponding Run Header is
+     *  generated and processed
+     *
+     *  @param bore The eudaq event containg the BORE
+     */
+    void processBORE( eudaq::Event * bore );
+
+    //! Process EORE
+    /*! This method is called whenever in the input data stream an
+     *  End Of Run Event is found. A LCIO kEORE event is then passed
+     *  to the ProcessorMgr.
+     *
+     *  @para eore The eudaq event contaning the EORE
+     */
+    void processEORE( eudaq::Event * eore );
+
+
+    //! Process TLU data event
+    /*! This method is called whenever a TLU data event is found in
+     *  the input data stream
+     *
+     *  @param tluEvent The TLUEvent with the input information
+     *  @param eutelEvent The output EUTelEventImpl
+     */
+    void processTLUDataEvent( eudaq::TLUEvent * tluEvent, EUTelEventImpl * eutelEvent );
+
+    //! Process EUDRB data event
+    /*! This method is called whenever a EUDRB data event is found in
+     *  the input data stream
+     *
+     *  @param eudrbEvent The EUDRBEvent with the input information
+     *  @param eutelEvent The output EUTelEventImpl
+     */
+    void processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, EUTelEventImpl * eutelEvent) ;
+
 
   protected:
 
     //! The input file name
     /*! It is set as a Marlin parameter in the constructor
-     */ 
+     */
     std::string _fileName;
-
-    //! The first frame collection name
-    std::string _firstFrameCollectionName;
-
-    //! The second frame collection name
-    std::string _secondFrameCollectionName;
-
-    //! The third frame collection name
-    std::string _thirdFrameCollectionName;
-
-    //! The CDS collection name
-    std::string _cdsCollectionName;
-
-    //! The zero suppressed frame collection name
-    std::string _zsFrameCollectionName;
-
-    //! The CDS enable flag
-    /*! This flag is true if the converter should perform also online
-     *  CDS calculation. It is false otherwise.
-     */
-    bool _cdsCalculation;
-
-    //! Signal polarity 
-    /*! This is used to change the signal polarity in the CDS
-     *  calculation. 
-     */
-    int _polarity;
 
     //! Geometry ID
     /*! This is the unique identification number of the telescope
      *  geometry. This identification number is saved in the run
      *  header and then crosscheck against the XML geometry
      *  description during the reconstruction phase. 
-     *  
+     *
      *  In the future, this ID can be used to browse a geometry database.
-     */ 
+     */
     int _geoID;
 
-    //! Marker removal switch
-    /*! This boolean is used to set the removal of markers from the
-     *  TrackerRawData output collections.
-     *  When this switch is set to true, the output collection will
-     *  not contain the marker information.
+    //! The eudrb output collection name
+    /*! This is the name of the eudrb output collection.
      */
-    bool _removeMarkerSwitch;
+    std::string _eudrbRawModeOutputCollectionName;
 
-    //! Marker position vector
-    /*! This vector of integer contains the position of all the
-     *  markers that have to stripped away from the output
-     *  collection. 
-     *  Markers are assumed to occur always at the same position in
-     *  the row.
-     *
+    //! The eudrb output collection name for ZS data
+    /*! This is the name of the eudrb output collection when the
+     *  detector was readout in ZS mode
      */
-    std::vector<int > _markerPositionVec;
+    std::string _eudrbZSModeOutputCollectionName;
 
-    //! Type of sparsified pixel
+
+  private:
+    // from here below only private data members
+
+    //! Vector of detectors readout by the EUDRBProducer
+    std::vector<EUTelBaseDetector * > _eudrbDetectors;
+
+    //! Vector of detectors readout by the TLUProducer
+    std::vector<EUTelBaseDetector * > _tluDetectors;
+
+
+    // detector specific...................................
+
+    //! Type of sparsified pixel for the mimotel sensors
     /*! Which information of the pixel passing the zero suppression
      *  can be stored into different data structure. The user can
      *  select which one in the steering file using the
      *  SparsePixelType enumerator
      */
-    int _pixelType;
+    int _eudrbSparsePixelType;
 
-    //! Maximum number of pixel along the x direction
-    /*! This variable can assume two values depending if the user
-     *  wants to remove the markers of not
-     */ 
-    int _xMax;
+    //! The EUDRBDecoder
+    eudaq::EUDRBDecoder * _eudrbDecoder;
 
-    //! Maximum number of pixel along the y direction
-    /*! Since on the MimoTel there are only columns of markers (and no
-     *  row), the maximum number of pixel along y is constant.
-     */ 
-    int _yMax;
 
-    //! Activate / Deactivate out of synch skipping
-    /*! In normal conditions all the boards should work perfectly
-     *  synchronized, but due to several reasons the synchronization
-     *  can be lost and the corresponding data might be
-     *  corrupted. Activating this switch, it is possible to remove
-     *  from the output file all events not properly synchronized.
-     * 
-     */
-    bool _skipOutOfSynch;
-
-    //! Out of synch threshold
+    //! Out of sync threshold for mimotel sensors
     /*! The definition of an out of synch event is based upon the
      *  value of pivot pixel address recorded by all the boards. An
      *  event is declared de-synchronized if the difference between the
      *  maximum and the minimum pivot pixel address is exceed this threshold.
      *
-     */ 
-    int _outOfSynchThr;
+     */
+    static const unsigned short _eudrbOutOfSynchThr;
+
+    //! Out of sync counter
+    /*! When converting events taken out of sync on purpose the
+     *  WARNING message printed at each event is a bit annoying, so it
+     *  is disabled after a certain number of consecutive showups.
+     *
+     */
+    static const unsigned short _eudrbMaxConsecutiveOutOfSynchWarning;
+
+    //! Previous warning event
+    unsigned int _eudrbPreviousOutOfSynchEvent;
+
+
   };
 
   //! A global instance of the processor
@@ -244,3 +231,5 @@ namespace eutelescope {
 }                               // end namespace eutelescope
 #endif
 #endif
+
+//  LocalWords:  eudrb
