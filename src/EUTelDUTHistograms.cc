@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// @version: $Id: EUTelDUTHistograms.cc,v 1.7 2008-05-22 15:24:32 bulgheroni Exp $
+// @version: $Id: EUTelDUTHistograms.cc,v 1.8 2008-08-18 09:09:45 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -327,7 +327,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   }
     
 
-  LCCollection* hitcol;
+  LCCollection* hitcol = NULL;
   bool _DUTok=true;
   try {
     hitcol = event->getCollection( _inputHitColName ) ;

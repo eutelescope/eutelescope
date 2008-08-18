@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitTuple.cc,v 1.3 2008-05-22 15:24:32 bulgheroni Exp $
+// Version: $Id: EUTelFitTuple.cc,v 1.4 2008-08-18 09:09:45 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -334,7 +334,7 @@ void EUTelFitTuple::processRunHeader( LCRunHeader* runHeader) {
   
   message<MESSAGE> ( log() << "Processing run header " << _nRun 
 		     << ", run nr " << _runNr );
-
+  
   const std::string detectorName = runHeader->getDetectorName();
   const std::string detectorDescription = runHeader->getDescription();
   const std::vector<std::string> * subDets = runHeader->getActiveSubdetectors();
@@ -378,7 +378,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
   }
     
 
-  LCCollection* hitcol;
+  LCCollection* hitcol = NULL;
   bool _DUTok=true;
 
   try {
