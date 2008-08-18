@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTELESCOPE.cc,v 1.18 2008-05-20 13:07:22 bulgheroni Exp $
+// Version: $Id: EUTELESCOPE.cc,v 1.19 2008-08-18 09:07:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -11,6 +11,10 @@
  */
 
 #include "EUTELESCOPE.h"
+
+// system includes
+#include <algorithm>
+
 
 using namespace eutelescope;
 
@@ -91,12 +95,12 @@ namespace eutelescope {
       if ( moreThanOne ) os << ", ";
       os << "kIncompleteCluster";
       moreThanOne = true;
-    } 
+    }
     if ( quality & kBorderCluster ) {
       if ( moreThanOne ) os << ", ";
       os << "kBorderCluster";
       moreThanOne = true;
-    } 
+    }
     if ( quality & kMergedCluster ) {
       if ( moreThanOne ) os << ", ";
       os << "kMergedCluster";
@@ -114,6 +118,114 @@ namespace eutelescope {
     os << " (" << static_cast<int> (type ) << ")";
     return os;
   }
-   
-  
+
+  std::string ucase( const std::string & inputString ) {
+
+#ifdef USE_EUDAQ
+
+    return eudaq::ucase( inputString );
+
+#else
+
+    std::string result( inputString );
+    transform( result.begin(), result.end(), result.begin, ::toupper);
+    return result;
+
+#endif
+  }
+
+  std::string lcase( const std::string & inputString ) {
+
+#ifdef USE_EUDAQ
+
+    return eudaq::lcase( inputString );
+
+#else
+
+    std::string result( inputString );
+    transform( result.begin(), result.end(), result.begin, ::tolower);
+    return result;
+
+#endif
+  }
+
+
+  std::string trim( const std::string & inputString ) {
+
+#ifdef USE_EUDAQ
+
+    return eudaq::trim( inputString );
+
+#else
+
+    // define all possible space types you want to remove
+    static const std::string spaces = "\t\n\r\v";
+    // find the first character that is not a space
+    size_t b = inputString.find_first_not_of( spaces );
+    // find the last character that is not a space
+    size_t e = inputString.find_first_not_of( spaces );
+    if ( b == std::string::npos || e == std::string::npos ) {
+      // the string is empty!
+      return "";
+    }
+    return std::string(s, b, e - b + 1 );
+
+#endif
+  }
+
+  std::string escape( const std::string & inputString ) {
+
+#ifdef USE_EUDAQ
+
+    return eudaq::escape( inputString );
+
+#else
+
+    std::ostringstream ret;
+    ret << std::setfill('0') << std::hex;
+    for ( size_t iPos = 0; iPos < s.length(); ++iPos ) {
+      if ( inputString[iPos] == '\\' ) ret << "\\\\";
+      else if ( inputString[iPos] < 32 ) ret << "\\x" << setw(2) << int( inputString[ iPos ] );
+      else ret << inputString[ iPos ] ;
+    }
+    return ret.str();
+
+#endif
+  }
+
+  std::string firstline( const std::string & inputString ) {
+
+#ifdef USE_EUDAQ
+
+    return eudaq::firstline( inputString );
+
+#else
+
+    size_t iPos = inputString.find( '\n' );
+    return inputString.substr( 0, iPos );
+
+#endif
+
+  }
+
+  std::vector<std::string > split( const std::string & inputString, const std::string & delim ) {
+
+#ifdef USE_EUDAQ
+
+    return eudaq::split( inputString, delim );
+
+#else
+
+    std::string copy( inputString );
+    std::vector<std::string > result;
+    size_t iPos;
+    while ( ( iPos = copy.find_first_of( delim ) ) != std::string::npos ) {
+      result.push_back( copy.substr( 0, iPos ) );
+      copy = copy.substr( iPos + 1 );
+    }
+    result.push_back( copy );
+    return result;
+
+#endif
+  }
 }

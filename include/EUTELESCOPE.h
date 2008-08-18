@@ -18,7 +18,7 @@
  *  develop both their DAQ and analysis/reconstruction software.
  *  
  *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
- *  @version $Id: EUTELESCOPE.h,v 1.21 2008-07-28 08:43:33 bulgheroni Exp $
+ *  @version $Id: EUTELESCOPE.h,v 1.22 2008-08-18 09:07:51 bulgheroni Exp $
  */
 
 namespace eutelescope {}
@@ -27,11 +27,18 @@ namespace eutelescope {}
 #ifndef EUTELESCOPE_H
 #define EUTELESCOPE_H
 
+#ifdef USE_EUDAQ
+# include <eudaq/Utils.hh>
+#else
+# include <iomanip>
+# include <sstream>
+#endif
+
+
 // system includes <>
 #include <iostream>
-
-// Useful preprocessor macro
-#define TOSTRING( s ) # s
+#include <string>
+#include <vector>
 
 namespace eutelescope
 {
@@ -45,7 +52,7 @@ namespace eutelescope
    * files.
    *
    * @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @version $Id: EUTELESCOPE.h,v 1.21 2008-07-28 08:43:33 bulgheroni Exp $
+   * @version $Id: EUTELESCOPE.h,v 1.22 2008-08-18 09:07:51 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -359,7 +366,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.21 2008-07-28 08:43:33 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.22 2008-08-18 09:07:51 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -406,7 +413,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.21 2008-07-28 08:43:33 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.22 2008-08-18 09:07:51 bulgheroni Exp $
    */ 
   
   enum ClusterQuality {
@@ -465,7 +472,7 @@ namespace eutelescope
    *  cluster during the clusterization process itself. 
    *  
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.21 2008-07-28 08:43:33 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.22 2008-08-18 09:07:51 bulgheroni Exp $
    */
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
@@ -480,12 +487,12 @@ namespace eutelescope
   /*! This enumerator is used to define the sparsified pixel type. 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.21 2008-07-28 08:43:33 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.22 2008-08-18 09:07:51 bulgheroni Exp $
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,
     kEUTelSimpleSparsePixel = 1,
-    // add here your implementation 
+    // add here your implementation
     kUnknownPixelType       = 31
   };
 
@@ -499,9 +506,99 @@ namespace eutelescope
    *  @return The input output stream
    */
   std::ostream& operator<<(std::ostream& os, const SparsePixelType& type) ;
+
+
+
+  // From here down a list of interesing utilities. Those are mainly
+  // copied from the eudaq library and in case Eutelescope is built
+  // w/o eudaq, than they are reimplemented here
+
+  //! Convert to upper case
+  /*! This function converts the input string into a full capital
+   *  string.
+   *
+   *  @param inputString The string to be transformed in capitol
+   *  letters.
+   *  @return A fully capitalized string
+   */
+  std::string ucase(const std::string & inputString) ;
+
+  //! Convert to lower case
+  /*! This function takes a string as an input and return the same
+   *  string written with all small letters
+   *
+   *  @param inputString The string to be transformed
+   *  @return A string with only small letters
+   */
+  std::string lcase(const std::string & inputString);
+
+  //! Trim a string
+  /*! This function removes the leading and trailing white spaces from
+   *  a string
+   *
+   *  @param inputString The string to be trimmed
+   *  @return The trimmed string
+   */
+  std::string trim(const std::string & inputString);
+
+  //! Escape a string
+  /*! This function replaces all the characters that need to be
+   *  escaped with the correct escape sequence.
+   *
+   *  @param inputString The string to be escaped
+   *  @return The escaped string
+   */
+  std::string escape(const std::string & inputString);
+
+  //! Get the first line of a text
+  /*! This function returns the first line of a string. If the input
+   *  string is made by only one line then the return string will be
+   *  identical to the input one.
+   *
+   *  @param inputString The input text
+   *  @return The first line of the input text
+   */
+  std::string firstline(const std::string & inputString);
+
+  //! Tokenize a string according to a delimiter
+  /*! This function takes an input string and returns a vector of
+   *  strings with the input string chopped in pieces according to the
+   *  defined delimiter
+   *
+   *  @param inputString The string to be split
+   *  @param delim The token delimiter
+   *  @return A vector of string
+   */
+  std::vector<std::string > split(const std::string & inputString, const std::string & delim);
+
+
+  //! Convert to string
+  /*! This very useful function converts any type to a string. There
+   *  must be a compatible streamer defined for this function to
+   *  work.
+   *
+   *  @param x The value to be converted
+   *  @param digits The number of digits the output string has to have
+   *  @return A string containing the input value
+   */
+  template <typename T>
+  std::string to_string( const T & x, int digits = 0 ) {
+
+#ifdef USE_EUDAQ
+
+    return eudaq::to_string( x, digits );
+
+#else
+
+    std::ostringstream s;
+    s << std::setfill('0') << set::setw( digits ) << x;
+    return s.str();
+
+#endif
+  }
+
+
 }
-
-
 
 
 
