@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelMimoTelDetector.cc,v 1.2 2008-08-10 12:14:42 bulgheroni Exp $
+// Version $Id: EUTelMimoTelDetector.cc,v 1.3 2008-08-18 15:03:23 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -14,7 +14,7 @@
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
-#include "EUTelMimoTelDetector.h" 
+#include "EUTelMimoTelDetector.h"
 
 // system includes <>
 #include <iostream>
@@ -29,10 +29,10 @@ EUTelMimoTelDetector::EUTelMimoTelDetector() : EUTelBaseDetector() {
 
   _xMin = 0;
   _xMax = 263;
-  
+
   _yMin = 0;
   _yMax = 255;
-  
+
   _markerPos.push_back( 0 );
   _markerPos.push_back( 1 );
   _markerPos.push_back( 66 );
@@ -55,7 +55,7 @@ EUTelMimoTelDetector::EUTelMimoTelDetector() : EUTelBaseDetector() {
   EUTelROI ch1wm(  66,  0, 131, 255 );
   EUTelROI ch2wm( 132,  0, 197, 255 );
   EUTelROI ch3wm( 198,  0, 263, 255 );
-  
+
   _subChannelsWithMarkers.push_back( ch0wm );
   _subChannelsWithMarkers.push_back( ch1wm );
   _subChannelsWithMarkers.push_back( ch2wm );
@@ -66,7 +66,7 @@ EUTelMimoTelDetector::EUTelMimoTelDetector() : EUTelBaseDetector() {
   EUTelROI ch1wom(  64,   0, 127,  255 );
   EUTelROI ch2wom( 128,   0, 191,  255 );
   EUTelROI ch3wom( 192,   0, 255,  255 );
-  
+
   _subChannelsWithoutMarkers.push_back( ch0wom );
   _subChannelsWithoutMarkers.push_back( ch1wom );
   _subChannelsWithoutMarkers.push_back( ch2wom );
@@ -76,13 +76,13 @@ EUTelMimoTelDetector::EUTelMimoTelDetector() : EUTelBaseDetector() {
 }
 
 void EUTelMimoTelDetector::setMode( string mode ) {
-  
+
   _mode = mode;
 
 }
 
 bool EUTelMimoTelDetector::hasSubChannels() const {
- 
+
   if (  _subChannelsWithoutMarkers.size() != 0 ) return true;
   else return false;
 
@@ -106,7 +106,7 @@ void EUTelMimoTelDetector::print( ostream& os ) const {
   size_t w = 35;
 
   string pol = "negative";
-  if ( _signalPolarity > 0 ) pol = "positive"; 
+  if ( _signalPolarity > 0 ) pol = "positive";
 
   os << setw( w ) << "Detector name" << _name << endl
      << setw( w ) << "Mode" << _mode << endl
@@ -114,7 +114,7 @@ void EUTelMimoTelDetector::print( ostream& os ) const {
      << setw( w ) << "Pixel along y from" << _yMin << " to " << _yMax << endl
      << setw( w ) << "Pixel pitches " << _xPitch << ", " << _yPitch << endl
      << setw( w ) << "Signal polarity" << pol << endl;
-   
+
   if ( hasMarker() ) {
 
     os << "Detector has the following colomns used as markers: "<< endl;
@@ -122,7 +122,7 @@ void EUTelMimoTelDetector::print( ostream& os ) const {
     vector< size_t >::const_iterator iter = getMarkerPosition().begin();
     while ( iter != getMarkerPosition().end() ) {
       os << "x = " << (*iter) << endl;
-      
+
       ++iter;
     }
 

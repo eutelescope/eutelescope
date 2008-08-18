@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelMimosa18Detector.cc,v 1.2 2008-08-10 12:14:42 bulgheroni Exp $
+// Version $Id: EUTelMimosa18Detector.cc,v 1.3 2008-08-18 15:04:06 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -14,7 +14,7 @@
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
-#include "EUTelMimosa18Detector.h" 
+#include "EUTelMimosa18Detector.h"
 
 // system includes <>
 #include <iostream>
@@ -29,10 +29,10 @@ EUTelMimosa18Detector::EUTelMimosa18Detector() : EUTelBaseDetector() {
 
   _xMin = 0;
   _xMax = 511;
-  
+
   _yMin = 0;
   _yMax = 511;
-  
+
   _markerPos.push_back( 0 );
   _markerPos.push_back( 1 );
   _markerPos.push_back( 510 );
@@ -45,18 +45,18 @@ EUTelMimosa18Detector::EUTelMimosa18Detector() : EUTelBaseDetector() {
   _xPitch = 0.01;
   _yPitch = 0.01;
 
-  // now the matrix boundaries with markers 
+  // now the matrix boundaries with markers
   EUTelROI ch0wm(   0,  0, 255, 255 );
   EUTelROI ch1wm( 256,  0, 511, 255 );
   EUTelROI ch2wm(   0,256, 255, 511 );
   EUTelROI ch3wm( 256,256, 511, 511 );
-  
+
   _subChannelsWithMarkers.push_back( ch0wm );
   _subChannelsWithMarkers.push_back( ch1wm );
   _subChannelsWithMarkers.push_back( ch2wm );
   _subChannelsWithMarkers.push_back( ch3wm );
 
-  // now the matrix boundaries without markers 
+  // now the matrix boundaries without markers
   EUTelROI ch0wom(   0,  0, 253, 255 );
   EUTelROI ch1wom( 254,  0, 507, 255 );
   EUTelROI ch2wom(   0,256, 253, 511 );
@@ -91,7 +91,7 @@ EUTelROI EUTelMimosa18Detector::getSubChannelBoundary( size_t iChan, bool withMa
 
 
 void EUTelMimosa18Detector::setMode( string mode ) {
-  
+
   _mode = mode;
 
 }
@@ -101,7 +101,7 @@ void EUTelMimosa18Detector::print( ostream& os ) const {
   size_t w = 35;
 
   string pol = "negative";
-  if ( _signalPolarity > 0 ) pol = "positive"; 
+  if ( _signalPolarity > 0 ) pol = "positive";
 
   os << setw( w ) << "Detector name" << _name << endl
      << setw( w ) << "Mode" << _mode << endl
@@ -109,7 +109,7 @@ void EUTelMimosa18Detector::print( ostream& os ) const {
      << setw( w ) << "Pixel along y from" << _yMin << " to " << _yMax << endl
      << setw( w ) << "Pixel pitches " << _xPitch << ", " << _yPitch << endl
      << setw( w ) << "Signal polarity" << pol << endl;
-   
+
   if ( hasMarker() ) {
 
     os << "Detector has the following colomns used as markers: "<< endl;
@@ -117,7 +117,7 @@ void EUTelMimosa18Detector::print( ostream& os ) const {
     vector< size_t >::const_iterator iter = getMarkerPosition().begin();
     while ( iter != getMarkerPosition().end() ) {
       os << "x = " << (*iter) << endl;
-      
+
       ++iter;
     }
 
