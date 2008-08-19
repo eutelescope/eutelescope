@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelMimosa18Detector.cc,v 1.3 2008-08-18 15:04:06 bulgheroni Exp $
+// Version $Id: EUTelMimosa18Detector.cc,v 1.4 2008-08-19 12:34:41 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -33,6 +33,7 @@ EUTelMimosa18Detector::EUTelMimosa18Detector() : EUTelBaseDetector() {
   _yMin = 0;
   _yMax = 511;
 
+  _markerPos.clear();
   _markerPos.push_back( 0 );
   _markerPos.push_back( 1 );
   _markerPos.push_back( 510 );
@@ -103,12 +104,12 @@ void EUTelMimosa18Detector::print( ostream& os ) const {
   string pol = "negative";
   if ( _signalPolarity > 0 ) pol = "positive";
 
-  os << setw( w ) << "Detector name" << _name << endl
+  os << setiosflags(ios::left) << setw( w ) << "Detector name" << _name << endl
      << setw( w ) << "Mode" << _mode << endl
      << setw( w ) << "Pixel along x from" << _xMin << " to " << _xMax << endl
      << setw( w ) << "Pixel along y from" << _yMin << " to " << _yMax << endl
      << setw( w ) << "Pixel pitches " << _xPitch << ", " << _yPitch << endl
-     << setw( w ) << "Signal polarity" << pol << endl;
+     << setw( w ) << "Signal polarity " << pol << resetiosflags(ios::left) << endl;
 
   if ( hasMarker() ) {
 
