@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelNativeReader.cc,v 1.3 2008-08-19 08:14:20 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.4 2008-08-19 11:49:01 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -20,6 +20,9 @@
 #include "EUTelBaseDetector.h"
 #include "EUTelMimoTelDetector.h"
 #include "EUTelMimosa18Detector.h"
+#include "EUTelSparseDataImpl.h"
+#include "EUTelSimpleSparsePixel.h"
+
 
 // marlin includes
 #include "marlin/Exceptions.h"
@@ -44,6 +47,7 @@
 // system includes
 #include <iostream>
 #include <cassert>
+#include <memory>
 
 using namespace std;
 using namespace marlin;
@@ -352,7 +356,7 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
           rawDataCollection->push_back( cdsFrame.release() );
 
         } else if ( currentMode == "RAW2" ) {
-          
+
           // ----------------------------------------------------------------------------------------------------
           //
           //                                           R A W 2   M O D E
@@ -370,7 +374,7 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
           for ( size_t iPixel = 0; iPixel < (unsigned) currentDetector->getXNoOfPixel() * currentDetector->getYNoOfPixel(); ++iPixel ) {
 
             // in RAW2 the two arrays are already sorted to make the
-            // proper difference 
+            // proper difference
             cdsValueVec.push_back( currentDetector->getSignalPolarity() * ( secondFrameVec[ iPixel ] - firstFrameVec[ iPixel ] ) );
 
           }
@@ -455,9 +459,106 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
       //
       // ----------------------------------------------------------------------------------------------------
 
+      zsDataEncoder["xMin"]     = currentDetector->getXMin();
+      zsDataEncoder["xMax"]     = currentDetector->getXMax() - currentDetector->getMarkerPosition().size();
+      zsDataEncoder["yMin"]     = currentDetector->getYMin();
+      zsDataEncoder["yMax"]     = currentDetector->getYMax() - currentDetector->getMarkerPosition().size();
+      zsDataEncoder["sensorID"] = iPlane;
+      zsDataEncoder["sparsePixelType"] = _eudrbSparsePixelType;
 
+      // get the total number of pixel. This is written in the
+      // eudrbBoard and to get it in a easy way pass through the eudrbDecoder
+      size_t nPixel = _eudrbDecoder->NumPixels( eudrbBoard );
+
+      // prepare a new TrackerData for the ZS data
+      auto_ptr<lcio::TrackerDataImpl > zsFrame( new lcio::TrackerDataImpl );
+      zsDataEncoder.setCellID( zsFrame.get() );
+
+      // depending on the sparse pixel type, now you have to do
+      // something different here. For the time being, only one kind
+      // of sparse pixel exists, so it is easy
+      if ( _eudrbSparsePixelType == kEUTelSimpleSparsePixel ) {
+
+        // this is the structure that will host the sparse pixel
+        auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >
+          sparseFrame( new EUTelSparseDataImpl<EUTelSimpleSparsePixel > ( zsFrame.get() ) );
+
+        // ready to get the data, but put the GetArrays into a
+        // try/catch box
+        try {
+
+          eudaq::EUDRBDecoder::arrays_t<short, short > array = _eudrbDecoder->GetArrays<short, short > ( eudrbBoard );
+
+          // prepare a sparse pixel to be added to the sparse data
+          auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
+          for ( size_t iPixel = 0; iPixel < nPixel; ++iPixel ) {
+
+            // the data contain also the markers, so we have to strip
+            // them out. First I need to have the original position
+            // (with markers in) and then calculate how many pixels I
+            // have to remove
+            size_t originalX = array.m_x[ iPixel ] ;
+            vector<size_t >::iterator markerBegin = currentDetector->getMarkerPosition().begin();
+            vector<size_t >::iterator markerEnd = currentDetector->getMarkerPosition().end();
+            if ( find( markerBegin, markerEnd, originalX ) == markerEnd ) {
+              // the original X is not on a marker column, so I need
+              // to remove a certain number of pixels depending on the
+              // position
+
+              // this counts the number of markers found on the left
+              // of the original X
+              short  diff = ( short ) count_if ( markerBegin, markerEnd, bind2nd(less<short> (), originalX ) );
+              sparsePixel->setXCoord( originalX - diff );
+
+              // no problem instead with the Y coordinate
+              sparsePixel->setYCoord( array.m_y[ iPixel ] );
+
+              // last the pixel charge. The CDS is automatically
+              // calculated by the EUDRB
+              sparsePixel->setSignal( array.m_adc[0][ iPixel ] );
+
+              // in case of DEBUG
+              streamlog_out ( DEBUG0 ) << ( *(sparsePixel.get() ) ) << endl;
+
+              // now add this pixel to the sparse frame
+              sparseFrame->addSparsePixel( sparsePixel.get() );
+            } else {
+              // the original X was on a marker column, so we don't
+              // need to process this pixel any further and of course
+              // we don't have to add it to the sparse frame.
+              streamlog_out ( DEBUG0 ) << "Found a sparse pixel ("<< iPixel
+                                       <<")  on a marker column. Not adding it to the frame" << endl
+                                       << (* (sparsePixel.get() ) ) << endl;
+            }
+
+          }
+
+          // perfect! Now add the TrackerData to the collection
+          zsDataCollection->push_back( zsFrame.release() );
+
+          // for the debug of the synchronization
+          pivotPixelPosVec.push_back( eudrbBoard.PivotPixel() );
+
+        } catch ( eudaq::Exception & e ) {
+          // very luckily this is a problem with the GetArrays. It means
+          // that one or more boards have been badly decoded, so it is
+          // better skipping the full events returning here
+          streamlog_out( ERROR ) << e.what() << endl << "Skipping the current event " << endl;
+          return;
+        }
+      }
+      /*
+
+        ADD HERE ANY NEW READOUT MODE
+        } else if ( currentMode == "myMode" ) {
+        ...
+
+      */
     } else {
-      // unrecognised detector mode
+      // leave this final else in case there is a modality that is not
+      // recognized.
+      streamlog_out ( ERROR ) << "The specified readout mode (" << currentMode << ") is unknown. Skipping the current event " << endl;
+      return;
 
     }
 
@@ -520,7 +621,21 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
       // purpose
       streamlog_out( WARNING0 ) << "The maximum number of consecutive unsychronized events has been reached. Assuming the run was taken in asynchronous mode" << endl;
     }
+
   }
+
+  // before leaving we have to add the two collections (raw and zs to
+  // the current event, but we do it only with not empty collections.
+  if ( rawDataCollection->size() ) {
+    // we have some rawdata...
+    eutelEvent->addCollection( rawDataCollection.release(), _eudrbRawModeOutputCollectionName );
+  }
+
+  if ( zsDataCollection->size() ) {
+    // we have some ZS data...
+    eutelEvent->addCollection( zsDataCollection.release(), _eudrbZSModeOutputCollectionName );
+  }
+
 }
 
 void EUTelNativeReader::processTLUDataEvent( eudaq::TLUEvent * tluEvent, EUTelEventImpl * eutelEvent ) {

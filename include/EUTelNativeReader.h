@@ -8,7 +8,7 @@
  *
  */
 
-#ifdef USE_EUDAQ 
+#ifdef USE_EUDAQ
 #ifndef EUTELNATIVEREADER_H
 #define EUTELNATIVEREADER_H 1
 
@@ -43,7 +43,7 @@ namespace eutelescope {
    *   The idea behind this reader is the universal replacement for
    *   the EUTelMimoTelReader that was focused on the conversion of
    *   events containing only mimotel sensors and finally also to
-   *   Mimosa 18. 
+   *   Mimosa 18.
    *
    *   The EUTelNativeReader will guess from the BORE which kind of
    *   sensors are present in the telescope setup and fill in a list
@@ -71,7 +71,7 @@ namespace eutelescope {
    *   them and respect the naming convention.
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelNativeReader.h,v 1.3 2008-08-19 08:14:20 bulgheroni Exp $
+   *   @version $Id: EUTelNativeReader.h,v 1.4 2008-08-19 11:49:01 bulgheroni Exp $
    *
    */
   class EUTelNativeReader : public marlin::DataSourceProcessor    {
@@ -160,7 +160,7 @@ namespace eutelescope {
     /*! This is the unique identification number of the telescope
      *  geometry. This identification number is saved in the run
      *  header and then crosscheck against the XML geometry
-     *  description during the reconstruction phase. 
+     *  description during the reconstruction phase.
      *
      *  In the future, this ID can be used to browse a geometry database.
      */
