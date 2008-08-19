@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelMimosa18Detector.cc,v 1.5 2008-08-19 12:45:53 bulgheroni Exp $
+// Version $Id: EUTelMimosa18Detector.cc,v 1.6 2008-08-19 15:39:43 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -104,12 +104,14 @@ void EUTelMimosa18Detector::print( ostream& os ) const {
   string pol = "negative";
   if ( _signalPolarity > 0 ) pol = "positive";
 
-  os << setiosflags(ios::left) << setw( w ) << "Detector name " << _name << endl
-     << setw( w ) << "Mode " << _mode << endl
-     << setw( w ) << "Pixel along x from " << _xMin << " to " << _xMax << endl
-     << setw( w ) << "Pixel along y from " << _yMin << " to " << _yMax << endl
-     << setw( w ) << "Pixel pitches " << _xPitch << ", " << _yPitch << endl
-     << setw( w ) << "Signal polarity " << pol << resetiosflags(ios::left) << endl;
+  os << resetiosflags(ios::right) 
+     << resetiosflags(ios::left) 
+     << setfill('.') << setw( w ) << setiosflags(ios::left) << "Detector name " << resetiosflags(ios::left) << _name << endl
+     << setw( w ) << setiosflags(ios::left) << "Mode " << resetiosflags(ios::left) << _mode << endl
+     << setw( w ) << setiosflags(ios::left) << "Pixel along x from " << resetiosflags(ios::left) << _xMin << " to " << _xMax << endl
+     << setw( w ) << setiosflags(ios::left) << "Pixel along y from " << resetiosflags(ios::left) << _yMin << " to " << _yMax << endl
+     << setw( w ) << setiosflags(ios::left) << "Pixel pitches " << resetiosflags(ios::left) << _xPitch << ", " << _yPitch << endl
+     << setw( w ) << setiosflags(ios::left) << "Signal polarity " << resetiosflags(ios::left) << pol <<  setfill('\0') << endl;
 
   if ( hasMarker() ) {
 
@@ -117,7 +119,9 @@ void EUTelMimosa18Detector::print( ostream& os ) const {
 
     vector< size_t >::const_iterator iter = _markerPos.begin();
     while ( iter != _markerPos.end() ) {
-      os << "x = " << (*iter) << endl;
+
+      os << "x = " // << resetiosflags(ios::left) 
+	 << setw( 15) << (*iter) << resetiosflags(ios::right) << endl;
 
       ++iter;
     }

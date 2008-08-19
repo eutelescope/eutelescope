@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelNativeReader.cc,v 1.5 2008-08-19 13:26:00 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.6 2008-08-19 15:39:43 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -591,11 +591,12 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
       // if the previous event out of sync was the previous event,
       // then we have to increment the counter
       ++_eudrbConsecutiveOutOfSyncWarning;
-
+      _eudrbPreviousOutOfSyncEvent = currentEventNumber;
     } else {
       // otherwise we can reset the warning counter
       _eudrbConsecutiveOutOfSyncWarning = 0;
     }
+
     if ( _eudrbConsecutiveOutOfSyncWarning < _eudrbMaxConsecutiveOutOfSyncWarning ) {
       // in this case we have the responsibility to tell the user that
       // the event was out of sync
@@ -604,21 +605,22 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
       vector<size_t >::iterator slaveBoardPivotAddress  = pivotPixelPosVec.begin();
       while ( slaveBoardPivotAddress < masterBoardPivotAddress ) {
         // print out all the slave boards first
-        streamlog_out( WARNING0 ) << setw(20) << " --> Board (S) " << to_string( slaveBoardPivotAddress - pivotPixelPosVec.begin() )
-                                  << " = " << setw(15) << (*slaveBoardPivotAddress) << " (" << setw(15) << (*masterBoardPivotAddress) - (*slaveBoardPivotAddress) << ")" << endl;
+        streamlog_out( WARNING0 ) << setw(20) << " --> Board (S) " <<  slaveBoardPivotAddress - pivotPixelPosVec.begin() 
+                                  << " = " << setw(15) << (*slaveBoardPivotAddress) << " (" << setw(15) << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << ")" << endl;
         ++slaveBoardPivotAddress;
       }
       // print out also the master. It is impossible that the master
       // is out of sync with respect to itself, but for completeness...
-      streamlog_out( WARNING0 )  << setw(20) << " --> Board (M) " << to_string( slaveBoardPivotAddress - pivotPixelPosVec.begin() )
-                                 << " = " << setw(15) << (*slaveBoardPivotAddress) << " (" << setw(15) << (*masterBoardPivotAddress) - (*slaveBoardPivotAddress) << ")" << endl;
+      streamlog_out( WARNING0 )  << setw(20) << " --> Board (M) " << slaveBoardPivotAddress - pivotPixelPosVec.begin() 
+                                 << " = " << setw(15) << (*slaveBoardPivotAddress) << " (" << setw(15) << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << ")" << endl;
 
     } else if ( _eudrbConsecutiveOutOfSyncWarning == _eudrbMaxConsecutiveOutOfSyncWarning ) {
       // if the number of consecutive warnings is equal to the maximum
       // allowed, don't bother the user anymore with this message,
       // because it's very luckily the run was taken unsynchronized on
       // purpose
-      streamlog_out( WARNING0 ) << "The maximum number of consecutive unsychronized events has been reached. Assuming the run was taken in asynchronous mode" << endl;
+      streamlog_out( WARNING0 ) << "The maximum number of consecutive unsychronized events has been reached." << endl
+				<< "Assuming the run was taken in asynchronous mode" << endl;
     }
 
   }
@@ -725,6 +727,14 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
       // before leaving, remember to assign the _eudrbDecoder
       _eudrbDecoder = new eudaq::EUDRBDecoder( *eudaqDetectorEvent );
 
+      // for clarity also display the telescope geometry
+      streamlog_out ( MESSAGE2 ) << "Telescope structure: " << endl << endl; 
+      for ( size_t iDetector = 0 ; iDetector < _eudrbDetectors.size(); ++iDetector ) {
+	streamlog_out ( MESSAGE2 ) << " Detector " << iDetector << endl
+				   << *(_eudrbDetectors.at( iDetector )) << endl
+				   << " -------------------------------------------- " << endl;
+      }
+
     } // this is the end of the EUDRBEvent
 
       // try now with a TLU event
@@ -741,29 +751,31 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
   Add here your own data producer following the examples above
 */
 
-    // before processing the run header we have to set the important
-    // information about the telescope (i.e. the EUDRBProcuder)
-    vector< int > xMin, xMax, yMin, yMax;
-    for ( size_t iPlane = 0; iPlane < _eudrbDetectors.size(); ++iPlane ) {
-      xMin.push_back( _eudrbDetectors.at( iPlane )->getXMin() );
-      xMax.push_back( _eudrbDetectors.at( iPlane )->getXMax() - _eudrbDetectors.at( iPlane )->getMarkerPosition().size() );
-      yMin.push_back( _eudrbDetectors.at( iPlane )->getYMin() );
-      yMax.push_back( _eudrbDetectors.at( iPlane )->getYMax() );
-    }
-    runHeader->setNoOfDetector( _eudrbDetectors.size() );
-    runHeader->setMinX( xMin );
-    runHeader->setMaxX( xMax );
-    runHeader->setMinY( yMin );
-    runHeader->setMaxY( yMax );
-    runHeader->lcRunHeader()->setDetectorName("EUTelescope");
-    runHeader->setGeoID( _geoID );
-    runHeader->setDateTime();
-    runHeader->addProcessor( type() );
-
-    ProcessorMgr::instance()->processRunHeader(lcHeader.get());
-    delete lcHeader.release();
   }
 
+  // before processing the run header we have to set the important
+  // information about the telescope (i.e. the EUDRBProcuder)
+  vector< int > xMin, xMax, yMin, yMax;
+  for ( size_t iPlane = 0; iPlane < _eudrbDetectors.size(); ++iPlane ) {
+    xMin.push_back( _eudrbDetectors.at( iPlane )->getXMin() );
+    xMax.push_back( _eudrbDetectors.at( iPlane )->getXMax() - _eudrbDetectors.at( iPlane )->getMarkerPosition().size() );
+    yMin.push_back( _eudrbDetectors.at( iPlane )->getYMin() );
+    yMax.push_back( _eudrbDetectors.at( iPlane )->getYMax() );
+  }
+  
+  runHeader->setNoOfDetector( _eudrbDetectors.size() );
+  runHeader->setMinX( xMin );
+  runHeader->setMaxX( xMax );
+  runHeader->setMinY( yMin );
+  runHeader->setMaxY( yMax );
+  runHeader->lcRunHeader()->setDetectorName("EUTelescope");
+  runHeader->setGeoID( _geoID );
+  runHeader->setDateTime();
+  runHeader->addProcessor( type() );
+  ProcessorMgr::instance()->processRunHeader(lcHeader.get());
+  delete lcHeader.release();
+  
+  
 }
 
 void EUTelNativeReader::end () {
