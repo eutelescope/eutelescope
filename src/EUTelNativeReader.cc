@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelNativeReader.cc,v 1.6 2008-08-19 15:39:43 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.7 2008-08-19 19:38:11 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -94,6 +94,11 @@ EUTelNativeReader::EUTelNativeReader (): DataSourceProcessor  ("EUTelNativeReade
                             _eudrbSparsePixelType , static_cast<int> ( 1 ) );
 
 
+  // to clean up the field justification
+  streamlog_out ( ERROR4 ) << setiosflags( ios::left );
+  streamlog_out ( ERROR4 ) << resetiosflags( ios::right );
+
+
 }
 
 EUTelNativeReader * EUTelNativeReader::newProcessor () {
@@ -130,16 +135,13 @@ void EUTelNativeReader::readDataSource (int numEvents) {
 
     // inform the user about the reading status
     if ( eventCounter % 10 == 0 )
-      streamlog_out ( MESSAGE4 ) << "Processing event "
-                                 << setw(6) << setiosflags(ios::right) << eudaqEvent->GetEventNumber() << " in run "
-                                 << setw(6) << setiosflags(ios::right) << setfill('0')  << eudaqEvent->GetRunNumber() << setfill(' ')
-                                 << " (Total = " << setw(10) << eventCounter << ")" << resetiosflags(ios::left) << endl;
-
-
-    // increment the event counter here. This number is not used to
-    // set the event number but only to count how many events have
-    // been processed to stop the conversion
-    ++eventCounter;
+      streamlog_out ( MESSAGE4 ) << "Processing event " 
+                                 << setw(6) << setiosflags( ios::right ) << eudaqEvent->GetEventNumber() << resetiosflags(ios::right)
+                                 << " in run "  << setw(6) 
+                                 << setiosflags( ios::right ) << setfill('0') << eudaqEvent->GetRunNumber() << resetiosflags(ios::right) 
+                                 << setfill(' ') << " (Total = " << setw(10) 
+                                 << setiosflags( ios::right ) << eventCounter << resetiosflags(ios::right) << ")"
+                                 << setiosflags( ios::left ) << endl;
 
     if ( eventCounter >= numEvents ) {
       // even if there are some more events in the input file, we
@@ -213,6 +215,11 @@ void EUTelNativeReader::readDataSource (int numEvents) {
         delete dummyEvent;
       }
     }
+
+    // increment the event counter here. This number is not used to
+    // set the event number but only to count how many events have
+    // been processed to stop the conversion
+    ++eventCounter;
   }
 }
 
@@ -459,10 +466,6 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
       //
       // ----------------------------------------------------------------------------------------------------
 
-      zsDataEncoder["xMin"]     = currentDetector->getXMin();
-      zsDataEncoder["xMax"]     = currentDetector->getXMax() - currentDetector->getMarkerPosition().size();
-      zsDataEncoder["yMin"]     = currentDetector->getYMin();
-      zsDataEncoder["yMax"]     = currentDetector->getYMax() - currentDetector->getMarkerPosition().size();
       zsDataEncoder["sensorID"] = iPlane;
       zsDataEncoder["sparsePixelType"] = _eudrbSparsePixelType;
 
@@ -605,14 +608,24 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
       vector<size_t >::iterator slaveBoardPivotAddress  = pivotPixelPosVec.begin();
       while ( slaveBoardPivotAddress < masterBoardPivotAddress ) {
         // print out all the slave boards first
-        streamlog_out( WARNING0 ) << setw(20) << " --> Board (S) " <<  slaveBoardPivotAddress - pivotPixelPosVec.begin() 
-                                  << " = " << setw(15) << (*slaveBoardPivotAddress) << " (" << setw(15) << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << ")" << endl;
+        streamlog_out( WARNING0 ) << " --> Board (S) " <<  setw(3) << setiosflags( ios::right )
+                                  << slaveBoardPivotAddress - pivotPixelPosVec.begin() << resetiosflags( ios::right )
+                                  << " = " << setw(15) << setiosflags( ios::right ) 
+                                  << (*slaveBoardPivotAddress) << resetiosflags( ios::right ) 
+                                  << " (" << setw(15) << setiosflags( ios::right ) 
+                                  << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << resetiosflags(ios::right)
+                                  << ")" << endl;
         ++slaveBoardPivotAddress;
       }
       // print out also the master. It is impossible that the master
       // is out of sync with respect to itself, but for completeness...
-      streamlog_out( WARNING0 )  << setw(20) << " --> Board (M) " << slaveBoardPivotAddress - pivotPixelPosVec.begin() 
-                                 << " = " << setw(15) << (*slaveBoardPivotAddress) << " (" << setw(15) << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << ")" << endl;
+      streamlog_out( WARNING0 )  << " --> Board (M) "  <<  setw(3) << setiosflags( ios::right ) 
+                                 << slaveBoardPivotAddress - pivotPixelPosVec.begin() << resetiosflags( ios::right )
+                                 << " = " << setw(15) << setiosflags( ios::right ) 
+                                 << (*slaveBoardPivotAddress) << resetiosflags( ios::right )  
+                                 << " (" << setw(15)  << setiosflags( ios::right )  
+                                 << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << resetiosflags(ios::right) 
+                                 << ")" << endl;
 
     } else if ( _eudrbConsecutiveOutOfSyncWarning == _eudrbMaxConsecutiveOutOfSyncWarning ) {
       // if the number of consecutive warnings is equal to the maximum
@@ -620,7 +633,7 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
       // because it's very luckily the run was taken unsynchronized on
       // purpose
       streamlog_out( WARNING0 ) << "The maximum number of consecutive unsychronized events has been reached." << endl
-				<< "Assuming the run was taken in asynchronous mode" << endl;
+                                << "Assuming the run was taken in asynchronous mode" << endl;
     }
 
   }
@@ -727,13 +740,6 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
       // before leaving, remember to assign the _eudrbDecoder
       _eudrbDecoder = new eudaq::EUDRBDecoder( *eudaqDetectorEvent );
 
-      // for clarity also display the telescope geometry
-      streamlog_out ( MESSAGE2 ) << "Telescope structure: " << endl << endl; 
-      for ( size_t iDetector = 0 ; iDetector < _eudrbDetectors.size(); ++iDetector ) {
-	streamlog_out ( MESSAGE2 ) << " Detector " << iDetector << endl
-				   << *(_eudrbDetectors.at( iDetector )) << endl
-				   << " -------------------------------------------- " << endl;
-      }
 
     } // this is the end of the EUDRBEvent
 
@@ -744,6 +750,7 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
       // this sub event was produced by the TLUProducer
       // nothing to do for the time being
       // ....
+      _tluDetectors.push_back( NULL );
       noOfTLUDetectors++;
     }
 
@@ -752,6 +759,30 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
 */
 
   }
+
+  // print a summary of all recognized producers:
+  // first the EUDRB producer
+  if ( _eudrbDetectors.size() == 0 ) {
+    streamlog_out( DEBUG0 ) << "No EUDRB producer found in this BORE" << endl;
+  } else {
+    streamlog_out ( MESSAGE2 ) << "EUDRBProducer: " << endl << endl;
+    for ( size_t iDetector = 0 ; iDetector < _eudrbDetectors.size(); ++iDetector ) {
+      streamlog_out ( MESSAGE2 ) << " Detector " << iDetector << endl
+                               << *(_eudrbDetectors.at( iDetector )) << endl
+                                 << " -------------------------------------------- " << endl;
+    }
+  }
+
+  // then the TLU producer
+  if ( _tluDetectors.size() == 0 ) {
+    streamlog_out( DEBUG0 ) << "No TLU producer found in this EORE" << endl;
+  } else {
+    streamlog_out( MESSAGE2 ) << "TLUProducer: " << endl << endl;
+    for ( size_t iDetector = 0 ; iDetector < _tluDetectors.size(); ++iDetector ) {
+      streamlog_out ( MESSAGE2 ) << " TLU " << iDetector << " found " << endl;
+    }
+  }
+
 
   // before processing the run header we have to set the important
   // information about the telescope (i.e. the EUDRBProcuder)
@@ -762,7 +793,7 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
     yMin.push_back( _eudrbDetectors.at( iPlane )->getYMin() );
     yMax.push_back( _eudrbDetectors.at( iPlane )->getYMax() );
   }
-  
+
   runHeader->setNoOfDetector( _eudrbDetectors.size() );
   runHeader->setMinX( xMin );
   runHeader->setMaxX( xMax );
@@ -774,8 +805,8 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
   runHeader->addProcessor( type() );
   ProcessorMgr::instance()->processRunHeader(lcHeader.get());
   delete lcHeader.release();
-  
-  
+
+
 }
 
 void EUTelNativeReader::end () {
