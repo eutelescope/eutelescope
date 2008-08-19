@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTELESCOPE.cc,v 1.20 2008-08-19 10:23:56 bulgheroni Exp $
+// Version: $Id: EUTELESCOPE.cc,v 1.21 2008-08-19 11:48:08 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -76,7 +76,7 @@ namespace eutelescope {
   ClusterQuality operator&(ClusterQuality a, ClusterQuality b) {
     return ClusterQuality( static_cast<int>(a) & static_cast<int>(b) );
   }
-  
+
   ClusterQuality operator|(ClusterQuality a, ClusterQuality b) {
     return ClusterQuality( static_cast<int>(a) | static_cast<int>(b) );
   }
