@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelMimosa18Detector.cc,v 1.4 2008-08-19 12:34:41 bulgheroni Exp $
+// Version $Id: EUTelMimosa18Detector.cc,v 1.5 2008-08-19 12:45:53 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -104,19 +104,19 @@ void EUTelMimosa18Detector::print( ostream& os ) const {
   string pol = "negative";
   if ( _signalPolarity > 0 ) pol = "positive";
 
-  os << setiosflags(ios::left) << setw( w ) << "Detector name" << _name << endl
-     << setw( w ) << "Mode" << _mode << endl
-     << setw( w ) << "Pixel along x from" << _xMin << " to " << _xMax << endl
-     << setw( w ) << "Pixel along y from" << _yMin << " to " << _yMax << endl
+  os << setiosflags(ios::left) << setw( w ) << "Detector name " << _name << endl
+     << setw( w ) << "Mode " << _mode << endl
+     << setw( w ) << "Pixel along x from " << _xMin << " to " << _xMax << endl
+     << setw( w ) << "Pixel along y from " << _yMin << " to " << _yMax << endl
      << setw( w ) << "Pixel pitches " << _xPitch << ", " << _yPitch << endl
      << setw( w ) << "Signal polarity " << pol << resetiosflags(ios::left) << endl;
 
   if ( hasMarker() ) {
 
-    os << "Detector has the following colomns used as markers: "<< endl;
+    os << "Detector has the following columns (" << _markerPos.size() << ") used as markers: "<< endl;
 
-    vector< size_t >::const_iterator iter = getMarkerPosition().begin();
-    while ( iter != getMarkerPosition().end() ) {
+    vector< size_t >::const_iterator iter = _markerPos.begin();
+    while ( iter != _markerPos.end() ) {
       os << "x = " << (*iter) << endl;
 
       ++iter;
