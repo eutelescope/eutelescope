@@ -18,7 +18,7 @@
  *  develop both their DAQ and analysis/reconstruction software.
  *  
  *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
- *  @version $Id: EUTELESCOPE.h,v 1.22 2008-08-18 09:07:51 bulgheroni Exp $
+ *  @version $Id: EUTELESCOPE.h,v 1.23 2008-08-19 10:23:56 bulgheroni Exp $
  */
 
 namespace eutelescope {}
@@ -52,7 +52,7 @@ namespace eutelescope
    * files.
    *
    * @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @version $Id: EUTELESCOPE.h,v 1.22 2008-08-18 09:07:51 bulgheroni Exp $
+   * @version $Id: EUTELESCOPE.h,v 1.23 2008-08-19 10:23:56 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -366,7 +366,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.22 2008-08-18 09:07:51 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.23 2008-08-19 10:23:56 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -413,7 +413,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.22 2008-08-18 09:07:51 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.23 2008-08-19 10:23:56 bulgheroni Exp $
    */ 
   
   enum ClusterQuality {
@@ -472,7 +472,7 @@ namespace eutelescope
    *  cluster during the clusterization process itself. 
    *  
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.22 2008-08-18 09:07:51 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.23 2008-08-19 10:23:56 bulgheroni Exp $
    */
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
@@ -487,7 +487,7 @@ namespace eutelescope
   /*! This enumerator is used to define the sparsified pixel type. 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.22 2008-08-18 09:07:51 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.23 2008-08-19 10:23:56 bulgheroni Exp $
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,
@@ -591,7 +591,7 @@ namespace eutelescope
 #else
 
     std::ostringstream s;
-    s << std::setfill('0') << set::setw( digits ) << x;
+    s << std::setfill('0') << std::setw( digits ) << x;
     return s.str();
 
 #endif

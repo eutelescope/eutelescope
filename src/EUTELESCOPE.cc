@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTELESCOPE.cc,v 1.19 2008-08-18 09:07:51 bulgheroni Exp $
+// Version: $Id: EUTELESCOPE.cc,v 1.20 2008-08-19 10:23:56 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -14,7 +14,7 @@
 
 // system includes
 #include <algorithm>
-
+#include <string>
 
 using namespace eutelescope;
 
@@ -128,7 +128,7 @@ namespace eutelescope {
 #else
 
     std::string result( inputString );
-    transform( result.begin(), result.end(), result.begin, ::toupper);
+    transform( result.begin(), result.end(), result.begin(), ::toupper);
     return result;
 
 #endif
@@ -143,7 +143,7 @@ namespace eutelescope {
 #else
 
     std::string result( inputString );
-    transform( result.begin(), result.end(), result.begin, ::tolower);
+    transform( result.begin(), result.end(), result.begin(), ::tolower);
     return result;
 
 #endif
@@ -168,7 +168,7 @@ namespace eutelescope {
       // the string is empty!
       return "";
     }
-    return std::string(s, b, e - b + 1 );
+    return std::string(inputString, b, e - b + 1 );
 
 #endif
   }
@@ -183,9 +183,9 @@ namespace eutelescope {
 
     std::ostringstream ret;
     ret << std::setfill('0') << std::hex;
-    for ( size_t iPos = 0; iPos < s.length(); ++iPos ) {
+    for ( size_t iPos = 0; iPos < inputString.length(); ++iPos ) {
       if ( inputString[iPos] == '\\' ) ret << "\\\\";
-      else if ( inputString[iPos] < 32 ) ret << "\\x" << setw(2) << int( inputString[ iPos ] );
+      else if ( inputString[iPos] < 32 ) ret << "\\x" << std::setw(2) << int( inputString[ iPos ] );
       else ret << inputString[ iPos ] ;
     }
     return ret.str();
