@@ -7,15 +7,16 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifndef EUTELROI_H 
+#ifndef EUTELROI_H
 #define EUTELROI_H 1
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTELESCOPE.h"
 #include "EUTelExceptions.h"
 
+
 namespace eutelescope {
- 
+
 
   //! EUTelescope Region of interest
   /*! A region of interest (ROI) is a part of the detector surface the user
@@ -33,8 +34,8 @@ namespace eutelescope {
    *  also provided.
    *
    *  @author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelROI.h,v 1.1 2007-06-29 15:07:46 bulgheroni Exp $ 
-   */ 
+   *  @version $Id: EUTelROI.h,v 1.2 2008-08-19 15:42:47 bulgheroni Exp $
+   */
   class EUTelROI {
 
   public:
@@ -43,16 +44,18 @@ namespace eutelescope {
      *  members, it also check the consistency of the provided data
      *
      *  @throw InvalidParameterException if it fails
-     */ 
-    EUTelROI(float xBottomLeft, float yBottomLeft, float xTopRight, float yTopRight) throw(InvalidParameterException) ;
-    
+     */
+    EUTelROI(float xBottomLeft, float yBottomLeft, float xTopRight, float yTopRight)
+      throw(InvalidParameterException)       ;
+
     //! Default constructor with the two corners and the detector ID
     /*! A part of assign all the value to the corresponding data
      *  members, it also check the consistency of the provided data
      *
      *  @throw InvalidParameterException if it fails
-     */ 
-    EUTelROI(int detectorID, float xBottomLeft, float yBottomLeft, float xTopRight, float yTopRight)  throw(InvalidParameterException);    
+     */
+    EUTelROI(int detectorID, float xBottomLeft, float yBottomLeft, float xTopRight, float yTopRight)
+      throw(InvalidParameterException) ;
 
     //! Get the two corners
     /*! This method allow to access to the boundaries of the ROI.
@@ -68,12 +71,12 @@ namespace eutelescope {
     /*! In the case the ROI belongs to a specific detector, this
      *  method returns the detector ID. In the case the detector ID
      *  was not set, then numeric_limits<int>::min is returned
-     * 
+     *
      *  @return The detector identification number or
      *  numeric_limits<int>::min if not set.
      */
     int  getDetectorID() const;
-    
+
     //! Check if the point is inside
     /*! This utility method checks if the point defined by @c x and @c
      *  y is inside a the ROI or not
@@ -81,7 +84,7 @@ namespace eutelescope {
      *  @param x Coordinate x of the point under test
      *  @param y Coordinate y of the point under test
      *  @return True if the point under test is inside the ROI
-     */ 
+     */
     bool isInside(float x, float y) const ;
 
     //! Check if the point is inside and on the same sensor
@@ -93,17 +96,17 @@ namespace eutelescope {
      *  @param detectorID The detector the point under test belongs
      *  to.
      *  @return True if the point under test is inside the ROI and on
-     *  the same detector 
-     */ 
+     *  the same detector
+     */
     bool isInside(int detectorID, float x, float y) const ;
 
     //! Streamer
     /*! Streamer method to output the content of a EUTelROI.
-     * 
+     *
      *  @param os The input ostream
      *  @param roi The EUTelROI to be streamed
      *  @return The output stream
-     */ 
+     */
     friend std::ostream& operator<< (std::ostream& os, EUTelROI roi ) ;
 
   private:
@@ -112,14 +115,15 @@ namespace eutelescope {
     /*! This private method is used to check the consistency of the
      *  data provided by the user. If the bottom corner is above the
      *  top one or similar an InvalidParameter exception is thrown.
-     *  
+     *
      *  throw InvalidParameterException is the consistency check fails
-     */ 
-    void consistencyCheck() const throw (InvalidParameterException)  ;
+     */
+    void consistencyCheck() const
+      throw(InvalidParameterException);
 
     //! Bottom left x
     /*! This is the bottom left x coordinate of the ROI
-     */ 
+     */
     float _xBottomLeft;
 
     //! Bottom left y
@@ -129,18 +133,18 @@ namespace eutelescope {
 
     //! Top right x
     /*! This is the top right x coordinate of the ROI
-     */ 
+     */
     float _xTopRight;
 
     //! Top right y
     /*! This is the top right y coordinate of the ROI
-     */ 
-    float _yTopRight;   
+     */
+    float _yTopRight;
 
-    //! Detector ID 
+    //! Detector ID
     /*! This is the detector ID in the geometry description. It is an
      *  optional parameter.
-     */ 
+     */
     int _detectorID;
 
 
