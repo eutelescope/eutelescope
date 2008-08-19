@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelNativeReader.cc,v 1.4 2008-08-19 11:49:01 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.5 2008-08-19 13:26:00 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -604,15 +604,14 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
       vector<size_t >::iterator slaveBoardPivotAddress  = pivotPixelPosVec.begin();
       while ( slaveBoardPivotAddress < masterBoardPivotAddress ) {
         // print out all the slave boards first
-        streamlog_out( WARNING0 ) << setw(20) << " --> Board (S)" << to_string( slaveBoardPivotAddress - pivotPixelPosVec.begin() )
-                                  << " = " << (*slaveBoardPivotAddress) << " (" << setw(7) << (*masterBoardPivotAddress) - (*slaveBoardPivotAddress) << ")" << endl;
+        streamlog_out( WARNING0 ) << setw(20) << " --> Board (S) " << to_string( slaveBoardPivotAddress - pivotPixelPosVec.begin() )
+                                  << " = " << setw(15) << (*slaveBoardPivotAddress) << " (" << setw(15) << (*masterBoardPivotAddress) - (*slaveBoardPivotAddress) << ")" << endl;
         ++slaveBoardPivotAddress;
       }
       // print out also the master. It is impossible that the master
       // is out of sync with respect to itself, but for completeness...
-      ++slaveBoardPivotAddress;
-      streamlog_out( WARNING0 )  << setw(20) << " --> Board (M)" << to_string( slaveBoardPivotAddress - pivotPixelPosVec.begin() )
-                                 << " = " << (*slaveBoardPivotAddress) << " (" << setw(7) << (*masterBoardPivotAddress) - (*slaveBoardPivotAddress) << ")" << endl;
+      streamlog_out( WARNING0 )  << setw(20) << " --> Board (M) " << to_string( slaveBoardPivotAddress - pivotPixelPosVec.begin() )
+                                 << " = " << setw(15) << (*slaveBoardPivotAddress) << " (" << setw(15) << (*masterBoardPivotAddress) - (*slaveBoardPivotAddress) << ")" << endl;
 
     } else if ( _eudrbConsecutiveOutOfSyncWarning == _eudrbMaxConsecutiveOutOfSyncWarning ) {
       // if the number of consecutive warnings is equal to the maximum
