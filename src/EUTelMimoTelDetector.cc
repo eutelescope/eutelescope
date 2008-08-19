@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelMimoTelDetector.cc,v 1.3 2008-08-18 15:03:23 bulgheroni Exp $
+// Version $Id: EUTelMimoTelDetector.cc,v 1.4 2008-08-19 19:37:11 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -33,6 +33,7 @@ EUTelMimoTelDetector::EUTelMimoTelDetector() : EUTelBaseDetector() {
   _yMin = 0;
   _yMax = 255;
 
+  _markerPos.clear();
   _markerPos.push_back( 0 );
   _markerPos.push_back( 1 );
   _markerPos.push_back( 66 );
@@ -108,20 +109,25 @@ void EUTelMimoTelDetector::print( ostream& os ) const {
   string pol = "negative";
   if ( _signalPolarity > 0 ) pol = "positive";
 
-  os << setw( w ) << "Detector name" << _name << endl
-     << setw( w ) << "Mode" << _mode << endl
-     << setw( w ) << "Pixel along x from" << _xMin << " to " << _xMax << endl
-     << setw( w ) << "Pixel along y from" << _yMin << " to " << _yMax << endl
-     << setw( w ) << "Pixel pitches " << _xPitch << ", " << _yPitch << endl
-     << setw( w ) << "Signal polarity" << pol << endl;
+  os << resetiosflags(ios::right)
+     << setiosflags(ios::left)
+     << setfill('.') << setw( w ) << setiosflags(ios::left) << "Detector name " << resetiosflags(ios::left) << " " << _name << endl
+     << setw( w ) << setiosflags(ios::left) << "Mode " << resetiosflags(ios::left) << " " << _mode << endl
+     << setw( w ) << setiosflags(ios::left) << "Pixel along x " << resetiosflags(ios::left) << " from " << _xMin << " to " << _xMax << endl
+     << setw( w ) << setiosflags(ios::left) << "Pixel along y " << resetiosflags(ios::left) << " from " << _yMin << " to " << _yMax << endl
+     << setw( w ) << setiosflags(ios::left) << "Pixel pitch along x " << resetiosflags(ios::left) << " " << _xPitch << "  mm  "  << endl
+     << setw( w ) << setiosflags(ios::left) << "Pixel pitch along y " << resetiosflags(ios::left) << " " << _yPitch << "  mm  "  << endl
+     << setw( w ) << setiosflags(ios::left) << "Signal polarity " << resetiosflags(ios::left) << " " << pol <<  setfill(' ') << endl;
 
   if ( hasMarker() ) {
 
-    os << "Detector has the following colomns used as markers: "<< endl;
+    os << resetiosflags( ios::right ) << setiosflags( ios::left );
+    os << "Detector has the following columns (" << _markerPos.size() << ")  used as markers: "<< endl;
 
-    vector< size_t >::const_iterator iter = getMarkerPosition().begin();
-    while ( iter != getMarkerPosition().end() ) {
-      os << "x = " << (*iter) << endl;
+    vector< size_t >::const_iterator iter = _markerPos.begin();
+    while ( iter != _markerPos.end() ) {
+
+      os << "x = " << setw( 15 ) << setiosflags(ios::right) << (*iter) << resetiosflags(ios::right) << endl;
 
       ++iter;
     }
