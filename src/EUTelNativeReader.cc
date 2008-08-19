@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelNativeReader.cc,v 1.2 2008-08-18 15:04:58 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.3 2008-08-19 08:14:20 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -43,19 +43,22 @@
 
 // system includes
 #include <iostream>
+#include <cassert>
 
 using namespace std;
 using namespace marlin;
 using namespace eutelescope;
 
 // initialize static members
-const unsigned short EUTelNativeReader::_eudrbOutOfSynchThr = 2;
-const unsigned short EUTelNativeReader::_eudrbMaxConsecutiveOutOfSynchWarning = 20;
+const unsigned short EUTelNativeReader::_eudrbOutOfSyncThr = 2;
+const unsigned short EUTelNativeReader::_eudrbMaxConsecutiveOutOfSyncWarning = 20;
 
 EUTelNativeReader::EUTelNativeReader (): DataSourceProcessor  ("EUTelNativeReader") {
 
   // initialize few variables
-  _eudrbPreviousOutOfSynchEvent = 0;
+  _eudrbPreviousOutOfSyncEvent      = 0;
+  _eudrbConsecutiveOutOfSyncWarning = 0;
+  _eudrbTotalOutOfSyncEvent         = 0;
 
   _description =
     "Reads data streams produced by EUDAQ and produced the corresponding LCIO output";
@@ -202,7 +205,7 @@ void EUTelNativeReader::readDataSource (int numEvents) {
         // pointer, so I have to release the auto_ptr but I have to
         // keep it in mind to delete it afterwards
         EUTelEventImpl * dummyEvent = eutelEvent.release();
-        ProcessorMgr::instance()->processEvent( static_cast< LCEventImpl *> ( dummyEvent ) );
+        ProcessorMgr::instance()->processEvent( static_cast< lcio::LCEventImpl *> ( dummyEvent ) );
         delete dummyEvent;
       }
     }
@@ -214,22 +217,24 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
   // here we have to process the EUDRB event
   //
   // prepare a collection for the raw data and one for the zs
-  auto_ptr< LCCollectionVec > rawDataCollection ( new LCCollectionVec (LCIO::TRACKERRAWDATA) ) ;
-  auto_ptr< LCCollectionVec > zsDataCollection  ( new LCCollectionVec (LCIO::TRACKERDATA) ) ;
+  auto_ptr< lcio::LCCollectionVec > rawDataCollection ( new LCCollectionVec (LCIO::TRACKERRAWDATA) ) ;
+  auto_ptr< lcio::LCCollectionVec > zsDataCollection  ( new LCCollectionVec (LCIO::TRACKERDATA) ) ;
 
   // set the proper cell encoder
   CellIDEncoder< TrackerRawDataImpl > rawDataEncoder ( EUTELESCOPE::MATRIXDEFAULTENCODING, rawDataCollection.get() );
   CellIDEncoder< TrackerDataImpl    > zsDataEncoder  ( EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection.get()  );
 
+  // to understand if we have problem with de-syncronisation, let
+  // me prepare a Boolean switch and a vector of size_t to contain the
+  // pivot pixel position
+  bool outOfSyncFlag = false;
+  vector<size_t > pivotPixelPosVec;
+
   // we can now loop over the boards contained into this EUDRB event
   for ( size_t iPlane = 0; iPlane < eudrbEvent->NumBoards(); ++iPlane ) {
 
-    // I need to have a EUDRBBoard 
+    // I need to have a EUDRBBoard
     eudaq::EUDRBBoard& eudrbBoard = eudrbEvent->GetBoard( iPlane );
-
-    // to understand if we have problem with de-synchronisation, let
-    // me prepare a Boolean switch
-    bool outOfSynchFlag = false;
 
     // get from the eudrb detectors the current one
     EUTelBaseDetector * currentDetector = _eudrbDetectors.at( iPlane );
@@ -237,36 +242,285 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
     // from now on we have to proceed in a different way depending if
     // the sensor was readout in RAW mode or in ZS
     string currentMode = currentDetector->getMode();
+
     if (  ( currentMode == "RAW" ) || ( currentMode == "RAW2" ) || ( currentMode == "RAW3" ) ) {
+
+      // ----------------------------------------------------------------------------------------------------
+      //
+      //                                           R A W   M O D E
+      //
+      // ----------------------------------------------------------------------------------------------------
+
       rawDataEncoder["xMin"]     = currentDetector->getXMin();
-      rawDataEncoder["xMax"]     = currentDetector->getXMax();
+      rawDataEncoder["xMax"]     = currentDetector->getXMax() - currentDetector->getMarkerPosition().size();
       rawDataEncoder["yMin"]     = currentDetector->getYMin();
-      rawDataEncoder["yMax"]     = currentDetector->getYMax();
+      rawDataEncoder["yMax"]     = currentDetector->getYMax() - currentDetector->getMarkerPosition().size();
       rawDataEncoder["sensorID"] = iPlane;
 
       // put a try/catch box here mainly for the EUDRBDecoder::GetArrays
-      try { 
-        
+      try {
+
         // get arrays may throw a eudaq::Exception in case the array
         // sizes are different. In this case we should catch the
         // exception, inform the user and then skip the event
         eudaq::EUDRBDecoder::arrays_t<short, short > array = _eudrbDecoder->GetArrays<short, short > ( eudrbBoard );
 
+        // this is the right point to split the processing of RAW2
+        // from the one of RAW3
+        if ( currentMode == "RAW3" ) {
+
+          // ----------------------------------------------------------------------------------------------------
+          //
+          //                                           R A W 3   M O D E
+          //
+          // ----------------------------------------------------------------------------------------------------
+
+          // let's start from the case of RAW3. I need to get the
+          // three arrays of short from the arrays_t struct and to
+          // create a vector of short for the CDS. The CDS calculation
+          // is done on the full matrix (markers included) and
+          // afterwards the markers are removed.
+          vector<short > cdsValueVec;
+          vector<short > firstFrameVec  = array.m_adc[0];
+          vector<short > secondFrameVec = array.m_adc[1];
+          vector<short > thirdFrameVec  = array.m_adc[2];
+
+          // ready to make the calculation
+          for ( size_t iPixel = 0; iPixel < (unsigned) currentDetector->getXNoOfPixel() * currentDetector->getYNoOfPixel(); ++iPixel ) {
+
+            // in RAW3 mode the CDS calculation is done using the
+            // pivot pixel
+            cdsValueVec.push_back( currentDetector->getSignalPolarity() *
+                                   ( ( -1 * array.m_pivot[iPixel]     ) * firstFrameVec[iPixel]  +
+                                     (  2 * array.m_pivot[iPixel] - 1 ) * secondFrameVec[iPixel] +
+                                     (  1 - array.m_pivot[iPixel]     ) * thirdFrameVec[iPixel]   ) );
+
+          }
+
+          // now we have to strip out the marker cols from the CDS
+          // value. To do this I need a vector of short large enough
+          // to accommodate the full matrix without the markers
+          vector<short > cdsStrippedVec( currentDetector->getYNoOfPixel() * ( currentDetector->getXNoOfPixel() - currentDetector->getMarkerPosition().size() ) );
+
+          // I need also two iterators, one for the stripped vec and
+          // one for the original one.
+          vector<short >::iterator currentCDSPos = cdsStrippedVec.begin();
+          vector<short >::iterator cdsBegin      = cdsValueVec.begin();
+
+          // now loop over all the pixels
+          for ( size_t y = 0; y < currentDetector->getYNoOfPixel(); ++y ) {
+            size_t offset = y * currentDetector->getXNoOfPixel();
+            vector<size_t >::iterator marker = currentDetector->getMarkerPosition().begin();
+
+            // first copy from the beginning of the row to the first
+            // marker column
+            currentCDSPos = copy( cdsBegin + offset, cdsBegin + ( *(marker) + offset ), currentCDSPos );
+
+            // now copy from the next column to the next marker into a
+            // while loop
+            while ( marker != currentDetector->getMarkerPosition().end() ) {
+              if ( marker < currentDetector->getMarkerPosition().end() - 1 ) {
+                currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + ( *(marker + 1) + offset ), currentCDSPos );
+              } else {
+                // now from the last marker column to the end of the
+                // row
+                currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + offset + currentDetector->getXNoOfPixel(), currentCDSPos );
+              }
+              ++marker;
+            }
+          }
+
+          // this is the right place to prepare the TrackerRawData
+          // object
+          auto_ptr< lcio::TrackerRawDataImpl > cdsFrame( new lcio::TrackerRawDataImpl );
+          rawDataEncoder.setCellID( cdsFrame.get() );
+
+          // add the cds stripped values to the current TrackerRawData
+          cdsFrame->setADCValues( cdsStrippedVec ) ;
+
+          // put the pivot pixel in the timestamp field of the
+          // TrackerRawData. I know that is not correct, but this is
+          // the only place where I can put this info
+          cdsFrame->setTime( eudrbBoard.PivotPixel() );
+
+          // this is also the right place to add the pivot pixel to
+          // the pivot pixel vector for synchronization checks
+          pivotPixelPosVec.push_back( eudrbBoard.PivotPixel() );
+
+          // now append the TrackerRawData object to the corresponding
+          // collection releasing the auto pointer
+          rawDataCollection->push_back( cdsFrame.release() );
+
+        } else if ( currentMode == "RAW2" ) {
+          
+          // ----------------------------------------------------------------------------------------------------
+          //
+          //                                           R A W 2   M O D E
+          //
+          // ----------------------------------------------------------------------------------------------------
+
+          // the procedure is quite similar to the one in RAW3, simply
+          // we need only 2 vectors instead of three and the CDS
+          // calculation is made easier
+          vector<short > cdsValueVec;
+          vector<short > firstFrameVec  = array.m_adc[0];
+          vector<short > secondFrameVec = array.m_adc[1];
+
+          // ready to make the calculation
+          for ( size_t iPixel = 0; iPixel < (unsigned) currentDetector->getXNoOfPixel() * currentDetector->getYNoOfPixel(); ++iPixel ) {
+
+            // in RAW2 the two arrays are already sorted to make the
+            // proper difference 
+            cdsValueVec.push_back( currentDetector->getSignalPolarity() * ( secondFrameVec[ iPixel ] - firstFrameVec[ iPixel ] ) );
+
+          }
+
+          // now we have to strip out the marker cols from the CDS
+          // value. To do this I need a vector of short large enough
+          // to accommodate the full matrix without the markers
+          vector<short > cdsStrippedVec( currentDetector->getYNoOfPixel() * ( currentDetector->getXNoOfPixel() - currentDetector->getMarkerPosition().size() ) );
+
+          // I need also two iterators, one for the stripped vec and
+          // one for the original one.
+          vector<short >::iterator currentCDSPos = cdsStrippedVec.begin();
+          vector<short >::iterator cdsBegin      = cdsValueVec.begin();
+
+          // now loop over all the pixels
+          for ( size_t y = 0; y < currentDetector->getYNoOfPixel(); ++y ) {
+            size_t offset = y * currentDetector->getXNoOfPixel();
+            vector<size_t >::iterator marker = currentDetector->getMarkerPosition().begin();
+
+            // first copy from the beginning of the row to the first
+            // marker column
+            currentCDSPos = copy( cdsBegin + offset, cdsBegin + ( *(marker) + offset ), currentCDSPos );
+
+            // now copy from the next column to the next marker into a
+            // while loop
+            while ( marker != currentDetector->getMarkerPosition().end() ) {
+              if ( marker < currentDetector->getMarkerPosition().end() - 1 ) {
+                currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + ( *(marker + 1) + offset ), currentCDSPos );
+              } else {
+                // now from the last marker column to the end of the
+                // row
+                currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + offset + currentDetector->getXNoOfPixel(), currentCDSPos );
+              }
+              ++marker;
+            }
+          }
+
+          // this is the right place to prepare the TrackerRawData
+          // object
+          auto_ptr< lcio::TrackerRawDataImpl > cdsFrame( new lcio::TrackerRawDataImpl );
+          rawDataEncoder.setCellID( cdsFrame.get() );
+
+          // add the cds stripped values to the current TrackerRawData
+          cdsFrame->setADCValues( cdsStrippedVec ) ;
+
+          // put the pivot pixel in the timestamp field of the
+          // TrackerRawData. I know that is not correct, but this is
+          // the only place where I can put this info
+          cdsFrame->setTime( eudrbBoard.PivotPixel() );
+
+          // this is also the right place to add the pivot pixel to
+          // the pivot pixel vector for synchronization checks
+          pivotPixelPosVec.push_back( eudrbBoard.PivotPixel() );
+
+          // now append the TrackerRawData object to the corresponding
+          // collection releasing the auto pointer
+          rawDataCollection->push_back( cdsFrame.release() );
+
+        } else {
+          // there shouldn't be any memory leak because of
+          // auto_ptr. Since we are inside a loop over the boards and
+          // other boards can be operated with a different modality,
+          // it is better to skip the full eudrb event returning here
+          streamlog_out ( ERROR0 ) << "The current mode " << currentMode << " has been recognised as RAW mode, but unable to process it" << endl;
+          return;
+        }
+
       } catch ( eudaq::Exception& e) {
+        // very luckily this is a problem with the GetArrays. It means
+        // that one or more boards have been badly decoded, so it is
+        // better skipping the full events returning here
         streamlog_out( ERROR ) << e.what() << endl << "Skipping the current event " << endl;
+        return;
       }
 
 
     } else if ( ( currentMode == "ZS" ) ) {
+
+      // ----------------------------------------------------------------------------------------------------
+      //
+      //                                            Z S   M O D E
+      //
+      // ----------------------------------------------------------------------------------------------------
 
 
     } else {
       // unrecognised detector mode
 
     }
+
+  } // end of the loop over all the planes into the telescope
+
+  // check if all the boards where running in synchronous mode or
+  // not. Remember that the last pivot pixel entry is the one of the
+  // master board.
+  vector<size_t >::iterator masterBoardPivotAddress = pivotPixelPosVec.end() - 1;
+  vector<size_t >::iterator slaveBoardPivotAddress  = pivotPixelPosVec.begin();
+  while ( slaveBoardPivotAddress < masterBoardPivotAddress ) {
+    if ( *slaveBoardPivotAddress - *masterBoardPivotAddress >=  _eudrbOutOfSyncThr ) {
+      outOfSyncFlag = true;
+
+      // we don't need to continue looping over all boards if one of
+      // them is already out of sync
+      break;
+    }
+    ++slaveBoardPivotAddress;
   }
+  if ( outOfSyncFlag ) {
 
+    // Increase the total out of sync counter
+    ++_eudrbTotalOutOfSyncEvent;
 
+    // in case the current event is out of sync then we have to tell
+    // it to the user, but not too often!
+    unsigned int currentEventNumber = eutelEvent->getEventNumber();
+    if ( currentEventNumber == _eudrbPreviousOutOfSyncEvent + 1 ) {
+      // if the previous event out of sync was the previous event,
+      // then we have to increment the counter
+      ++_eudrbConsecutiveOutOfSyncWarning;
+
+    } else {
+      // otherwise we can reset the warning counter
+      _eudrbConsecutiveOutOfSyncWarning = 0;
+    }
+    if ( _eudrbConsecutiveOutOfSyncWarning < _eudrbMaxConsecutiveOutOfSyncWarning ) {
+      // in this case we have the responsibility to tell the user that
+      // the event was out of sync
+      streamlog_out ( WARNING0 ) << "Event number " << eutelEvent->getEventNumber() << " seems to be out of sync" << endl;
+      vector<size_t >::iterator masterBoardPivotAddress = pivotPixelPosVec.end() - 1;
+      vector<size_t >::iterator slaveBoardPivotAddress  = pivotPixelPosVec.begin();
+      while ( slaveBoardPivotAddress < masterBoardPivotAddress ) {
+        // print out all the slave boards first
+        streamlog_out( WARNING0 ) << setw(20) << " --> Board (S)" << to_string( slaveBoardPivotAddress - pivotPixelPosVec.begin() )
+                                  << " = " << (*slaveBoardPivotAddress) << " (" << setw(7) << (*masterBoardPivotAddress) - (*slaveBoardPivotAddress) << ")" << endl;
+        ++slaveBoardPivotAddress;
+      }
+      // print out also the master. It is impossible that the master
+      // is out of sync with respect to itself, but for completeness...
+      ++slaveBoardPivotAddress;
+      streamlog_out( WARNING0 )  << setw(20) << " --> Board (M)" << to_string( slaveBoardPivotAddress - pivotPixelPosVec.begin() )
+                                 << " = " << (*slaveBoardPivotAddress) << " (" << setw(7) << (*masterBoardPivotAddress) - (*slaveBoardPivotAddress) << ")" << endl;
+
+    } else if ( _eudrbConsecutiveOutOfSyncWarning == _eudrbMaxConsecutiveOutOfSyncWarning ) {
+      // if the number of consecutive warnings is equal to the maximum
+      // allowed, don't bother the user anymore with this message,
+      // because it's very luckily the run was taken unsynchronized on
+      // purpose
+      streamlog_out( WARNING0 ) << "The maximum number of consecutive unsychronized events has been reached. Assuming the run was taken in asynchronous mode" << endl;
+    }
+  }
 }
 
 void EUTelNativeReader::processTLUDataEvent( eudaq::TLUEvent * tluEvent, EUTelEventImpl * eutelEvent ) {
@@ -399,7 +653,11 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
 }
 
 void EUTelNativeReader::end () {
-  message<MESSAGE> ("Successfully finished") ;
+
+  if ( _eudrbTotalOutOfSyncEvent != 0 ) {
+    streamlog_out ( MESSAGE ) << "Found " << _eudrbTotalOutOfSyncEvent << " events out of sync " << endl;
+  }
+  streamlog_out ( MESSAGE)  << "Successfully finished" << endl;
 }
 
 #endif
@@ -408,4 +666,4 @@ void EUTelNativeReader::end () {
 //  LocalWords:  serialiazer EUTelNativeReader MIMOTEL rawdata eudrb zsdata
 //  LocalWords:  EUBRDRawModeOutputCollection EUDRBZSModeOutputCollection xMin
 //  LocalWords:  EUDRBSparsePixelType sensorID xMax yMin yMax EUDRBBoard
-//  LocalWords:  EUDRBDecoder
+//  LocalWords:  EUDRBDecoder TrackerRawData

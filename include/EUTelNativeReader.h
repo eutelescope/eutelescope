@@ -71,7 +71,7 @@ namespace eutelescope {
    *   them and respect the naming convention.
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelNativeReader.h,v 1.2 2008-08-18 15:04:58 bulgheroni Exp $
+   *   @version $Id: EUTelNativeReader.h,v 1.3 2008-08-19 08:14:20 bulgheroni Exp $
    *
    */
   class EUTelNativeReader : public marlin::DataSourceProcessor    {
@@ -209,18 +209,22 @@ namespace eutelescope {
      *  maximum and the minimum pivot pixel address is exceed this threshold.
      *
      */
-    static const unsigned short _eudrbOutOfSynchThr;
+    static const unsigned short _eudrbOutOfSyncThr;
 
     //! Out of sync counter
-    /*! When converting events taken out of sync on purpose the
-     *  WARNING message printed at each event is a bit annoying, so it
-     *  is disabled after a certain number of consecutive showups.
-     *
+    /*! This variable is used to count how many events out of sync
+     *  have been found in the current run
      */
-    static const unsigned short _eudrbMaxConsecutiveOutOfSynchWarning;
+    unsigned int _eudrbTotalOutOfSyncEvent;
+
+    //! Out of sync consecutive counter
+    unsigned short _eudrbConsecutiveOutOfSyncWarning;
+
+    //! Max value of consecutive counter
+    static const unsigned short _eudrbMaxConsecutiveOutOfSyncWarning;
 
     //! Previous warning event
-    unsigned int _eudrbPreviousOutOfSynchEvent;
+    unsigned int _eudrbPreviousOutOfSyncEvent;
 
 
   };
