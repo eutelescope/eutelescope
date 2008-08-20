@@ -13,7 +13,7 @@
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
-#include "EUTelBaseDetector.h"
+#include "EUTelPixelDetector.h"
 
 // lcio includes <.h>
 
@@ -29,10 +29,10 @@ namespace eutelescope {
   /*!
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelMimoTelDetector.h,v 1.4 2008-08-19 15:43:53 bulgheroni Exp $
+   *  @version $Id: EUTelMimoTelDetector.h,v 1.5 2008-08-20 12:50:40 bulgheroni Exp $
    */
 
-  class EUTelMimoTelDetector : public EUTelBaseDetector {
+  class EUTelMimoTelDetector : public EUTelPixelDetector {
 
   public:
     //! Default constructor

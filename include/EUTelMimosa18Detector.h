@@ -13,7 +13,7 @@
 
 // personal includes ".h"
 #include "EUTELESCOPE.h"
-#include "EUTelBaseDetector.h"
+#include "EUTelPixelDetector.h"
 
 // lcio includes <.h>
 
@@ -25,14 +25,14 @@
 namespace eutelescope {
 
 
-  //! Virtual class to describe detector in the EUTelescope framework
+  //! Mimosa 18 detector in the EUTelescope framework
   /*!
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelMimosa18Detector.h,v 1.3 2008-08-18 15:02:22 bulgheroni Exp $
+   *  @version $Id: EUTelMimosa18Detector.h,v 1.4 2008-08-20 12:50:40 bulgheroni Exp $
    */
 
-  class EUTelMimosa18Detector : public EUTelBaseDetector {
+  class EUTelMimosa18Detector : public EUTelPixelDetector {
 
   public:
     //! Default constructor
