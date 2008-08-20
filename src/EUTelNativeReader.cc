@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelNativeReader.cc,v 1.7 2008-08-19 19:38:11 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.8 2008-08-20 11:25:12 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -265,7 +265,7 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
       rawDataEncoder["xMin"]     = currentDetector->getXMin();
       rawDataEncoder["xMax"]     = currentDetector->getXMax() - currentDetector->getMarkerPosition().size();
       rawDataEncoder["yMin"]     = currentDetector->getYMin();
-      rawDataEncoder["yMax"]     = currentDetector->getYMax() - currentDetector->getMarkerPosition().size();
+      rawDataEncoder["yMax"]     = currentDetector->getYMax();
       rawDataEncoder["sensorID"] = iPlane;
 
       // put a try/catch box here mainly for the EUDRBDecoder::GetArrays
