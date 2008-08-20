@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.28 2008-08-20 13:15:54 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.29 2008-08-20 13:51:52 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -827,7 +827,7 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
           for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
             if ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) {
               double pedeCorrected = adcValues[iPixel] - commonMode;
-              if ( std::abs( pedeCorrected - _tempPede[iDetector][iPixel] ) < _hitRejectionCut * _tempNoise[iDetector][iPixel] ) {
+              if ( std::abs( pedeCorrected - _pedestal[iDetector][iPixel] ) < _hitRejectionCut * _noise[iDetector][iPixel] ) {
                 if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
 
                   _tempEntries[iDetector][iPixel] = _tempEntries[iDetector][iPixel] + 1;
@@ -851,9 +851,9 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
           }
         }
       } else {
-        streamlog_out ( WARNING2 ) <<  "Skipping event " << _iEvt << " because of max number of rejected pixels exceeded. ("
-                                   << skippedPixel << ")" << endl;
-        ++_noOfSkippedEvent;
+	streamlog_out ( WARNING2 ) <<  "Skipping event " << _iEvt << " because of max number of rejected pixels exceeded. (" 
+				   << skippedPixel << ") on detector " << iDetector << endl;
+	++_noOfSkippedEvent;
       }
     }
     ++_iEvt;
