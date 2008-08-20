@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelNativeReader.cc,v 1.8 2008-08-20 11:25:12 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.9 2008-08-20 12:51:35 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -18,6 +18,7 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelBaseDetector.h"
+#include "EUTelPixelDetector.h"
 #include "EUTelMimoTelDetector.h"
 #include "EUTelMimosa18Detector.h"
 #include "EUTelSparseDataImpl.h"
@@ -248,7 +249,7 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
     eudaq::EUDRBBoard& eudrbBoard = eudrbEvent->GetBoard( iPlane );
 
     // get from the eudrb detectors the current one
-    EUTelBaseDetector * currentDetector = _eudrbDetectors.at( iPlane );
+    EUTelPixelDetector * currentDetector = _eudrbDetectors.at( iPlane );
 
     // from now on we have to proceed in a different way depending if
     // the sensor was readout in RAW mode or in ZS

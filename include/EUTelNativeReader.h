@@ -16,6 +16,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
 #include "EUTelBaseDetector.h"
+#include "EUTelPixelDetector.h"
 
 // marlin includes ".h"
 #include "marlin/DataSourceProcessor.h"
@@ -71,7 +72,7 @@ namespace eutelescope {
    *   them and respect the naming convention.
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelNativeReader.h,v 1.4 2008-08-19 11:49:01 bulgheroni Exp $
+   *   @version $Id: EUTelNativeReader.h,v 1.5 2008-08-20 12:51:35 bulgheroni Exp $
    *
    */
   class EUTelNativeReader : public marlin::DataSourceProcessor    {
@@ -182,7 +183,7 @@ namespace eutelescope {
     // from here below only private data members
 
     //! Vector of detectors readout by the EUDRBProducer
-    std::vector<EUTelBaseDetector * > _eudrbDetectors;
+    std::vector<EUTelPixelDetector * > _eudrbDetectors;
 
     //! Vector of detectors readout by the TLUProducer
     std::vector<EUTelBaseDetector * > _tluDetectors;
