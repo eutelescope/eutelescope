@@ -16,9 +16,9 @@
  *  nor the Marlin, not the standard namespaces. It contains all
  *  classes defined by the EUDET JRA1 collaboration in order to
  *  develop both their DAQ and analysis/reconstruction software.
- *  
+ *
  *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
- *  @version $Id: EUTELESCOPE.h,v 1.23 2008-08-19 10:23:56 bulgheroni Exp $
+ *  @version $Id: EUTELESCOPE.h,v 1.24 2008-08-21 12:27:29 bulgheroni Exp $
  */
 
 namespace eutelescope {}
@@ -32,6 +32,8 @@ namespace eutelescope {}
 #else
 # include <iomanip>
 # include <sstream>
+# include <exception>
+# include <stdexcept>
 #endif
 
 
@@ -52,19 +54,19 @@ namespace eutelescope
    * files.
    *
    * @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @version $Id: EUTELESCOPE.h,v 1.23 2008-08-19 10:23:56 bulgheroni Exp $
+   * @version $Id: EUTELESCOPE.h,v 1.24 2008-08-21 12:27:29 bulgheroni Exp $
    */
 
   class EUTELESCOPE
   {
 
   public:
-    //! Default destructor. 
+    //! Default destructor.
     /*! This is the default destructor, but it is actually a NO-OP
      *  since there is nothing to be destroyed.
      */
     virtual ~ EUTELESCOPE ()  {;  }
-    
+
   public:
 
     // PARAMETER NAMES USED IN THE HEADER IMPLEMENTATION
@@ -72,12 +74,12 @@ namespace eutelescope
     //! Parameter key to store/recall the header version number
     static const char * HEADERVERSION;
 
-    //! Parameter key to store/recall the data type 
+    //! Parameter key to store/recall the data type
     /*! The value of DATATYPE can be set using one of the static const
      *  defined in this class. Use DAQDATA for data coming from a real
      *  acquisition; SIMULDATA for data produced by a simulation job;
      *  CONVDATA for data converted from another data format.
-     *  
+     *
      *  @see EUTELESCOPE::DAQDATA, EUTELESCOPE::SIMULDATA, EUTELESCOPE::CONVDATA
      */
     static const char * DATATYPE;
@@ -96,13 +98,13 @@ namespace eutelescope
      */
     static const char * DAQHWNAME;
 
-    //! Parameter key to store/recall the DAQ hardware version 
+    //! Parameter key to store/recall the DAQ hardware version
     static const char * DAQHWVERSION;
 
     //! Parameter key to store/recall the DAQ software name
     /*! This parameter can be set using one of the const string
-     *  defined as well in this class (e.g. EUDAQ). 
-     *  
+     *  defined as well in this class (e.g. EUDAQ).
+     *
      *  @see EUTELESCOPE::EUDAQ
      */
     static const char * DAQSWNAME;
@@ -151,7 +153,7 @@ namespace eutelescope
 
     //! Parameter key to store/recall the user defined run header comment
     static const char * USERCOMMENT;
-    
+
     // standard name to be saved into the header
 
     //! Constant used to identify really acquired data
@@ -182,8 +184,8 @@ namespace eutelescope
     static const char * EUDRBDET;
 
     // PARAMETER NAMES USED IN THE EVENT IMPLEMENTATION
-    
-    //! Constant used to get/set the event type 
+
+    //! Constant used to get/set the event type
     static const char * EVENTTYPE;
 
 
@@ -211,7 +213,7 @@ namespace eutelescope
      *  detailed description of the algorithm
      */
     static const char * NOISEDISTRIBUTION;
-    
+
     //! Bad pixel masking algorithm identifier
     /*! @see EUTelPedestalNoiseProcessor::maskBadPixel() for a
      * detailed description of the algorithm.
@@ -225,7 +227,7 @@ namespace eutelescope
      *  as the mean value of each single pixel signal distribution,
      *  while the noise is given by the distribution RMS. The
      *  algorithm is based on the use of std::vector's
-     */ 
+     */
     static const char * MEANRMS;
 
     //! Pedestal calculation algorithm identifier
@@ -290,7 +292,7 @@ namespace eutelescope
     /*! This constant string is used with CellIDEncoder to define the
      *  encoding used for describe cells in a TrackerData object
      *  containing sparsified pixel.
-     *  
+     *
      *  The sparse pixel type is defined using the SparsePixelType
      *  enumeration.
      *
@@ -326,13 +328,13 @@ namespace eutelescope
      *  @see ClusterType
      */
     static const char * PULSEDEFAULTENCODING;
-    
+
     //! Zero suppress cluster default encoding
     /*! This encoding string is used for the TrackerData containing
      *  clusters made by sparsified pixels
      *
      *  "sensorID:5,clusterID:8,sparsePixelType:5,quality:5"
-     *  
+     *
      *  @see SparsePixelType
      *  @see ClusterQuality
      */
@@ -366,7 +368,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.23 2008-08-19 10:23:56 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.24 2008-08-21 12:27:29 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -413,9 +415,9 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.23 2008-08-19 10:23:56 bulgheroni Exp $
-   */ 
-  
+   *  @version $Id: EUTELESCOPE.h,v 1.24 2008-08-21 12:27:29 bulgheroni Exp $
+   */
+
   enum ClusterQuality {
     kGoodCluster       = 0,
     kIncompleteCluster = 1L << 0,
@@ -428,13 +430,13 @@ namespace eutelescope
    *  non good quality clusters. Bad quality clusters may be so for more
    *  than one reason simultaneously. This operator is used in the
    *  identification of such reasons.
-   *  
+   *
    *  @param a A cluster quality value
    *  @param b Another cluster quality value
    *  @return the bit wise and among @a a and @a b
    */
   ClusterQuality operator&(ClusterQuality a, ClusterQuality b);
-    
+
 
   //! Cluster quality bit-wise OR operator
   /*! This is a crucial operator for ClusterQuality since, during the
@@ -446,14 +448,14 @@ namespace eutelescope
    *  @param a A cluster quality value
    *  @param b Another cluster quality value
    *  @return the bit wise or among @a a and @a b
-   */ 
+   */
   ClusterQuality operator|(ClusterQuality a, ClusterQuality b);
 
 
-  //! Cluster quality self bit-wise OR operator 
+  //! Cluster quality self bit-wise OR operator
   /*! @see operator|(ClusterQuality a, ClusterQuality b)
    *  @bug Not working!!!! Have a look on the web...
-   */ 
+   */
   ClusterQuality operator|=(ClusterQuality a, ClusterQuality b);
 
   //! Cluster quality operator <<
@@ -469,25 +471,25 @@ namespace eutelescope
   //! Cluster type enum
   /*! This enum is used in the encoding of a TrackerPulse to describe
    *  which was the underlying class used for the description of the
-   *  cluster during the clusterization process itself. 
-   *  
+   *  cluster during the clusterization process itself.
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.23 2008-08-19 10:23:56 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.24 2008-08-21 12:27:29 bulgheroni Exp $
    */
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
     kEUTelSparseClusterImpl   = 1,
     kEUTelSparseCluster2Impl  = 2,
     // add here all the other cluster type numbering them in between 0
-    // and 31 unknown 
+    // and 31 unknown
     kUnknown                  = 31
   };
 
   //! Sparse pixel type enum
-  /*! This enumerator is used to define the sparsified pixel type. 
+  /*! This enumerator is used to define the sparsified pixel type.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.23 2008-08-19 10:23:56 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.24 2008-08-21 12:27:29 bulgheroni Exp $
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,
@@ -598,8 +600,124 @@ namespace eutelescope
   }
 
 
-}
+  //! Converts any type to a string in hexadecimal
+  /*! The input type needs to have a valid ostream streamer. 
+   *
+   *  @param x The value to be converted
+   *  @param digits The miimum number of digits, shorter numbers are
+   *  padded with zeroes
+   * 
+   *  @return A string representing the input value in hex
+   */
+  template< typename T>
+  inline std::string to_hex( const T & x, int digits = 0 ) {
 
+#ifdef USE_EUDAQ
+
+    return eudaq::to_hex( x, digits );
+
+#else
+    std::ostringstream s;
+    s << std::hex << std::setfill('0') << std::setw( digits ) << x;
+    return s.str();
+
+#endif
+  }
+
+  //! Template specialization for T = const unsigned char
+  template <>
+  inline std::string to_hex( const unsigned char & x, int digits ) {
+
+#ifdef USE_EUDAQ
+
+    return eudaq::to_hex( x, digits );
+
+#else
+
+    return to_hex( (int) x, digits );
+
+#endif
+  }
+
+  //! Template specialization for T = const signed char
+  template <>
+  inline std::string to_hex( const signed char & x, int digits ) {
+
+#ifdef USE_EUDAQ
+
+    return eudaq::to_hex( x, digits );
+
+#else
+
+    return to_hex( (int) x, digits );
+
+#endif
+  }
+
+  //! Template specialization for T = const char
+  template <>
+  inline std::string to_hex( const char & x, int digits ) {
+
+#ifdef USE_EUDAQ
+
+    return eudaq::to_hex( x, digits );
+
+#else
+
+    return to_hex( (unsigned char) x, digits );
+
+#endif
+  }
+
+  //! Converts a string to any type
+  /*! This template function is particularly useful when getting
+   *  parameters from GetTag
+   *
+   *  @param x The string to be converted
+   *  @param def The default value to be used in case of an invalid
+   *  string. This is also very useful to specify the proper template
+   *  type w/o having to specify it explicitly
+   * 
+   *  @return An object of type T with the value represented in x, or
+   *  it that is not valid then the value of def.
+   */
+  template <typename T>
+  inline T from_string( const std::string & x, const T & def = 0 ) {
+
+#ifdef USE_EUDAQ
+
+    return eudaq::from_string(x, def);
+
+#else
+
+    if (x == "") return def;
+    T ret = def;
+    std::istringstream s(x);
+    s >> ret;
+    char remain = '\0';
+    s >> remain;
+    if (remain) throw std::invalid_argument("Invalid argument: " + x);
+    return ret;
+#endif
+  }
+
+  //! Template specialization if T is a string
+  template <>
+  inline std::string from_string( const std::string & x, const std::string & def ) {
+
+#ifdef USE_EUDAQ
+    
+    return eudaq::from_string( x, def );
+
+#else 
+
+    return x == "" ? def : x;
+
+#endif
+  }
+
+
+}
 
 
 #endif
