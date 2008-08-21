@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.29 2008-08-20 13:51:52 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.30 2008-08-21 08:53:45 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -131,8 +131,13 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPed
                              "Perform an additional loop for bad pixel masking",
                              _additionalMaskingLoop, static_cast<bool> ( true ) );
 
+  registerOptionalParameter ("Preloop for hit rejection",
+                             "Perform a fast first loop to improve the efficiency of hit rejection",
+                             _preLoopSwitch, static_cast< bool > ( true ) ) ;
+
   _histogramSwitch = true;
 
+  
 }
 
 
@@ -147,7 +152,10 @@ void EUTelPedestalNoiseProcessor::init () {
 
   // set the pedestal flag to true and the loop counter to zero
   _doPedestal = true;
-  _iLoop = 0;
+
+  // set the loop counter
+  if ( _preLoopSwitch ) _iLoop = -1;
+  else _iLoop = 0;
 
   if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
     // reset the temporary arrays
@@ -165,6 +173,13 @@ void EUTelPedestalNoiseProcessor::init () {
     _pedestalAlgo = EUTELESCOPE::MEANRMS;
   }
 #endif
+
+  if ( _preLoopSwitch ) {
+    _maxValuePos.clear();
+    _maxValue.clear();
+    _minValuePos.clear();
+    _maxValue.clear();
+  }
 
 
   // reset all the final arrays
@@ -306,9 +321,6 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
 
     lcWriter->close();
 
-    // also book histos
-    bookHistos();
-
   }
 }
 
@@ -324,7 +336,9 @@ void EUTelPedestalNoiseProcessor::processEvent (LCEvent * evt) {
                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
-  if ( _iLoop == 0 ) firstLoop(evt);
+
+  if ( _iLoop == -1 ) preLoop( evt );
+  else if ( _iLoop == 0 ) firstLoop(evt);
   else if ( _additionalMaskingLoop ) {
     if ( _iLoop == _noOfCMIterations + 1 ) {
       additionalMaskingLoop(evt);
@@ -334,6 +348,8 @@ void EUTelPedestalNoiseProcessor::processEvent (LCEvent * evt) {
   } else {
     otherLoop(evt);
   }
+  
+  
 
 }
 
@@ -569,6 +585,93 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
 }
 
 
+void EUTelPedestalNoiseProcessor::preLoop( LCEvent * event ) {
+
+  // first re-cast to event to EUTelEventImpl for better access
+  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
+
+  // In case this is the last event, or it is the kEORE, then rewind
+  // the data and return immediately
+  if ( evt->getEventType() == kEORE ) {
+    streamlog_out ( DEBUG4 ) << "EORE found: calling finalizeProcessor()." << endl;
+    _iLoop = 0;
+    simpleRewind();
+    return;
+  }
+
+  if ( ( _lastEvent != -1 ) && ( _iEvt >= _lastEvent ) ) {
+    streamlog_out ( DEBUG4 ) << "Looping limited by _lastEvent: calling finalizeProcessor()." << endl;
+    _preLoopSwitch = false;
+    _iLoop = 0;
+    simpleRewind();
+    return;
+  }
+
+  // in case this event is before the first to be considered, just
+  // skip it
+  if ( _iEvt < _firstEvent ) {
+    ++_iEvt;
+    throw SkipEventException(this);
+  }
+
+  // tell the user where we are
+  if (_iEvt % 10 == 0)
+    streamlog_out( MESSAGE4 ) << "Processing event "
+                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left)
+                              << " - preloop "  <<  endl;
+
+  // here is the real begin
+  try {
+    LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
+  
+    if ( isFirstEvent() ) {
+     
+
+      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+   
+        TrackerRawData * trackerRawData = dynamic_cast< TrackerRawData * > ( collectionVec->getElementAt(  iDetector ) );
+        
+        ShortVec adcValues = trackerRawData->getADCValues ();
+
+        // we have to initialize all the vectors
+        ShortVec maxValue   ( adcValues.size(), numeric_limits< short >::min() );
+        ShortVec maxValuePos( adcValues.size(),                             -1 );
+        ShortVec minValue   ( adcValues.size(), numeric_limits< short >::max() );
+        ShortVec minValuePos( adcValues.size(),                             -1 );
+        
+        _maxValue.push_back   ( maxValue    );
+        _maxValuePos.push_back( maxValuePos );
+        _minValue.push_back   ( minValue    );
+        _minValuePos.push_back( minValuePos );
+      }
+      _isFirstEvent = false;
+    }
+
+    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt (iDetector));
+      ShortVec adcValues = trackerRawData->getADCValues ();
+      for ( size_t iPixel = 0; iPixel < adcValues.size(); ++iPixel ) {
+        short currentVal = adcValues[ iPixel ];
+        if ( currentVal > _maxValue[ iDetector ] [ iPixel ] ) {
+          _maxValue[ iDetector ] [ iPixel ] = currentVal;
+          _maxValuePos[ iDetector ] [ iPixel ] = _iEvt;
+        }
+        if ( currentVal < _minValue[ iDetector ] [ iPixel ] ) {
+          _minValue[ iDetector ] [ iPixel ] = currentVal;
+          _minValuePos[ iDetector ] [ iPixel ] = _iEvt;
+        }
+        
+      }
+    }
+  } catch (DataNotAvailableException& e) {
+    streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionName << " is not available in the current event" << endl;
+  }
+
+  ++_iEvt;
+}
+
 void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
@@ -614,6 +717,10 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
 
 
     if ( isFirstEvent() ) {
+
+      // first of all book histos
+      bookHistos();
+
       // the collection contains several TrackerRawData
 
       for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
@@ -688,7 +795,7 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
     } else {     // end of first event
 
       // after the firstEvent all temp vectors and the status one have
-      // the correct number of entries for both indeces
+      // the correct number of entries for both indexes
       // loop on the detectors
       for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
 
@@ -703,12 +810,23 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
           int iPixel = 0;
           for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
             for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
-              _tempEntries[iDetector][iPixel] =  _tempEntries[iDetector][iPixel] + 1;
-              _tempPede[iDetector][iPixel]    = ((_tempEntries[iDetector][iPixel] - 1) * _tempPede[iDetector][iPixel]
-                                                 + adcValues[iPixel]) / _tempEntries[iDetector][iPixel];
-              _tempNoise[iDetector][iPixel]   = sqrt(((_tempEntries[iDetector][iPixel] - 1) * pow(_tempNoise[iDetector][iPixel],2)
-                                                      + pow(adcValues[iPixel] - _tempPede[iDetector][iPixel], 2)) /
-                                                     _tempEntries[iDetector][iPixel]);
+              short currentVal = adcValues[iPixel];
+              bool use = true;
+              if ( _preLoopSwitch && ( ( _iEvt == _maxValuePos[ iDetector ] [ iPixel ] ) ||
+                                       ( _iEvt == _minValuePos[ iDetector ] [ iPixel ] ) )  ) {
+                use = false;
+              }
+
+              if ( use ) {
+
+                _tempEntries[iDetector][iPixel] =  _tempEntries[iDetector][iPixel] + 1;
+                _tempPede[iDetector][iPixel]    = ((_tempEntries[iDetector][iPixel] - 1) * _tempPede[iDetector][iPixel]
+                                                   +  currentVal) / _tempEntries[iDetector][iPixel];
+                _tempNoise[iDetector][iPixel]   = sqrt(((_tempEntries[iDetector][iPixel] - 1) * pow(_tempNoise[iDetector][iPixel],2)
+                                                        + pow( currentVal - _tempPede[iDetector][iPixel], 2)) /
+                                                       _tempEntries[iDetector][iPixel]);
+              }
+
               ++iPixel;
             } // end loop on xPixel
           }   // end loop on yPixel
@@ -722,11 +840,18 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
           int iPixel = 0;
           for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
             for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
-              if ( AIDA::IProfile2D* profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) )
-                profile->fill(static_cast<double> (xPixel), static_cast<double> (yPixel), static_cast<double> (adcValues[iPixel]));
-              else {
-                streamlog_out ( ERROR ) << "Irreversible error: " << ss.str() << " is not available. Sorry for quitting." << endl;
-                exit(-1);
+              bool use = true;
+              if ( _preLoopSwitch && ( ( _iEvt == _maxValuePos[ iDetector ] [ iPixel ] ) ||
+                                       ( _iEvt == _minValuePos[ iDetector ] [ iPixel ] ) )  ) {
+                use = false;
+              }
+              if ( use ) {
+                if ( AIDA::IProfile2D* profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) )
+                  profile->fill(static_cast<double> (xPixel), static_cast<double> (yPixel), static_cast<double> (adcValues[iPixel]));
+                else {
+                  streamlog_out ( ERROR ) << "Irreversible error: " << ss.str() << " is not available. Sorry for quitting." << endl;
+                  exit(-1);
+                }
               }
               ++iPixel;
             }
@@ -830,19 +955,32 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
               if ( std::abs( pedeCorrected - _pedestal[iDetector][iPixel] ) < _hitRejectionCut * _noise[iDetector][iPixel] ) {
                 if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
 
-                  _tempEntries[iDetector][iPixel] = _tempEntries[iDetector][iPixel] + 1;
-                  _tempPede[iDetector][iPixel]    = ((_tempEntries[iDetector][iPixel] - 1) * _tempPede[iDetector][iPixel]
-                                                     + pedeCorrected) / _tempEntries[iDetector][iPixel];
-                  _tempNoise[iDetector][iPixel]   = sqrt(((_tempEntries[iDetector][iPixel] - 1) * pow(_tempNoise[iDetector][iPixel],2)
-                                                          + pow(pedeCorrected - _tempPede[iDetector][iPixel], 2)) /
-                                                         _tempEntries[iDetector][iPixel]);
-                  
+                  bool use = true;
+                  if ( _preLoopSwitch && ( ( _iEvt == _maxValuePos[ iDetector ] [ iPixel ] ) ||
+                                           ( _iEvt == _minValuePos[ iDetector ] [ iPixel ] ) )  ) {
+                    use = false;
+                  }
+                  if ( use ) {
+                    _tempEntries[iDetector][iPixel] = _tempEntries[iDetector][iPixel] + 1;
+                    _tempPede[iDetector][iPixel]    = ((_tempEntries[iDetector][iPixel] - 1) * _tempPede[iDetector][iPixel]
+                                                       + pedeCorrected) / _tempEntries[iDetector][iPixel];
+                    _tempNoise[iDetector][iPixel]   = sqrt(((_tempEntries[iDetector][iPixel] - 1) * pow(_tempNoise[iDetector][iPixel],2)
+                                                            + pow(pedeCorrected - _tempPede[iDetector][iPixel], 2)) /
+                                                           _tempEntries[iDetector][iPixel]);
+                  }
                 } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE) {
 #ifdef MARLIN_USE_AIDA
-                  stringstream ss;
-                  ss << _tempProfile2DName << "-d" << iDetector;
-                  (dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]))
-                    ->fill(static_cast<double> (xPixel), static_cast<double> (yPixel), pedeCorrected);
+                  bool use = true;
+                  if ( _preLoopSwitch && ( ( _iEvt == _maxValuePos[ iDetector ] [ iPixel ] ) ||
+                                           ( _iEvt == _minValuePos[ iDetector ] [ iPixel ] ) )  ) {
+                    use = false;
+                  }
+                  if ( use ) {
+                    stringstream ss;
+                    ss << _tempProfile2DName << "-d" << iDetector;
+                    (dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]))
+                      ->fill(static_cast<double> (xPixel), static_cast<double> (yPixel), pedeCorrected);
+                  }
 #endif
                 }
               }
@@ -851,9 +989,9 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
           }
         }
       } else {
-	streamlog_out ( WARNING2 ) <<  "Skipping event " << _iEvt << " because of max number of rejected pixels exceeded. (" 
-				   << skippedPixel << ") on detector " << iDetector << endl;
-	++_noOfSkippedEvent;
+        streamlog_out ( WARNING2 ) <<  "Skipping event " << _iEvt << " because of max number of rejected pixels exceeded. ("
+                                   << skippedPixel << ") on detector " << iDetector << endl;
+        ++_noOfSkippedEvent;
       }
     }
     ++_iEvt;
@@ -1104,8 +1242,18 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 
 }
 
-void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
 
+void EUTelPedestalNoiseProcessor::simpleRewind() {
+
+  _isFirstEvent = true;
+  _iEvt = 0;
+
+  setReturnValue("IsPedestalFinished", false);
+  throw RewindDataFilesException(this);
+
+}
+
+void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
 
   if ( ! fromMaskingLoop ) {
 

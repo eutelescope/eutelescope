@@ -10,12 +10,12 @@
 #ifndef EUTELPEDESTALNOISEPROCESSOR_H
 #define EUTELPEDESTALNOISEPROCESSOR_H 1
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <EVENT/LCParameters.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerRawDataImpl.h>
@@ -29,7 +29,6 @@
 // system includes <>
 #include <string>
 #include <cmath>
-
 
 
 namespace eutelescope {
@@ -57,7 +56,7 @@ namespace eutelescope {
    *  yMin are different from 0 only in the case there are more than
    *  one sensor per plane or the detector is actually a channel of a
    *  bigger detector.
-   *  
+   *
    *  The user can choose which algorithm should be used for pedestal
    *  calculation. @see EUTelPedestalNoiseProcessor::_pedestalAlgo
    *  for a detailed description of the available methods.
@@ -66,13 +65,34 @@ namespace eutelescope {
    *  the value of _badPixelAlgo. @see
    *  EUTelPedestalNoiseProcessor::_badPixelAlgo
    *
-   *  <h4>Input collection</h4>
-   *  <b>Raw data</b> A collection of TrackerRawData 
+   *  <h4>Improved hit rejection</h4>
+   *  Very often during a test beam, pedestal files are taken in a
+   *  beam on condition and random trigger. Even if the probability of
+   *  having particles into an event is very low, a single particle
+   *  interaction can drastically increase the noise of a bunch of
+   *  pixels.
+   *  These pixels will then result so noisy to be masked out by the
+   *  bad pixel masking procedure. To avoid this misbehaviour a
+   *  two-fold hit rejection technique has been implemented. 
+   *  \li Removal of maximum and minimum values. The signal
+   *  distribution of each pixel with respect to the event number is
+   *  characterized by a maximum and a minimum value. In case this
+   *  pixel is hit by a particle in a specific event, its minimum
+   *  (maximum) signal will be a lot far away from the mean and hence
+   *  influencing the noise estimation. In case the pixel is never hit
+   *  by a particle, this procedure is simply removing two entries and
+   *  so not affecting too much the statistical distribution.
+   *  \li Not using pixels having suspiciously high signal in one
+   *  event. This is done only in the otherLoop because a first
+   *  estimation of the noise is required.
    *
-   *  <h4>Output file</h4> 
+   *  <h4>Input collection</h4>
+   *  <b>Raw data</b> A collection of TrackerRawData
+   *
+   *  <h4>Output file</h4>
    *  The output of this processor will be saved into a separate file
-   *  and can be reloaded using a condition processor. 
-   * 
+   *  and can be reloaded using a condition processor.
+   *
    *  @param RawDataCollectionName Name of the input data collection
    *  @param CalculationAlgorithm Name of the calculation algorithm used
    *  @param NoOfCMIteration Number of common suppression iterations
@@ -90,19 +110,19 @@ namespace eutelescope {
    *
    *  <h4>Typical steering file for pedestal production</h4> The
    *  following code can be used as a steering file for pedestal
-   *  production.  
-   *  
-   *  @code 
+   *  production.
+   *
+   *  @code
    *  <marlin>
-   *   <global> 
-   *    <parameter name="LCIOInputFiles"> pedestal-run.slcio  </parameter> 
+   *   <global>
+   *    <parameter name="LCIOInputFiles"> pedestal-run.slcio  </parameter>
    *    <parameter name="GearXMLFile" value="gear-telescope.xml"/>
-   *    <parameter name="MaxRecordNumber" value="5001"/> 
-   *    <parameter name="SkipNEvents" value="0 "/> 
-   *    <parameter name="SupressCheck" value="false"/> 
+   *    <parameter name="MaxRecordNumber" value="5001"/>
+   *    <parameter name="SkipNEvents" value="0 "/>
+   *    <parameter name="SupressCheck" value="false"/>
    *    <parameter name="Verbosity" value="MESSAGE"/>
    *   </global>
-   * 
+   *
    *   <execute>
    *    <processor name="AIDAHistogrammingInterface"/>
    *    <processor name="PedestalAndNoiseCalculator"/>
@@ -122,7 +142,7 @@ namespace eutelescope {
    *    <!-- type of output file xml (default) or root ( only OpenScientist)-->
    *    <parameter name="FileType" type="string" value="root"/>
    *   </processor>
-   *  
+   *
    *   <processor name="PedestalAndNoiseCalculator" type="EUTelPedestalNoiseProcessor">
    *    <!--EUTelPedestalNoiseProcessor computes the pedestal and noise values of a pixel detector-->
    *    <!--Input raw data collection-->
@@ -160,7 +180,7 @@ namespace eutelescope {
    *  saving the output pedestal file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.19 2007-09-26 15:15:52 bulgheroni Exp $ 
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.20 2008-08-21 08:53:45 bulgheroni Exp $
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -169,25 +189,23 @@ namespace eutelescope {
    *
    */
 
-  class EUTelPedestalNoiseProcessor:public marlin::Processor
-  {
+  class EUTelPedestalNoiseProcessor:public marlin::Processor   {
 
   public:
 
-     
+
     //! Returns a new instance of EUTelPedestalNoiseProcessor
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelPedestalNoiseProcess.
      */
-    virtual Processor * newProcessor ()
-    {
+    virtual Processor * newProcessor () {
       return new EUTelPedestalNoiseProcessor;
     }
 
-    //! Default constructor 
+    //! Default constructor
     EUTelPedestalNoiseProcessor ();
 
     //! Called at the job beginning.
@@ -206,7 +224,7 @@ namespace eutelescope {
      *  then important things like the number of detectors and the
      *  pixel detector boundaries are dumped from the file. After that
      *  the EUTelPedestalNoiseProcess::bookHistos() is called.
-     *  
+     *
      *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
@@ -229,7 +247,7 @@ namespace eutelescope {
      *  soon as the processEvent is over. It can be used to fill check
      *  plots. For the time being there is nothing to check and do in
      *  this slot.
-     * 
+     *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      *
      */
@@ -255,7 +273,7 @@ namespace eutelescope {
      *  be the noise of a bad pixel in her/his own system, it is not
      *  easy and clear which should be the _badPixelMaskCut to be used
      *  to obtain the same result.
-     *  
+     *
      *  \li <b>"AbsoluteNoiseValue"</b>. This second algorithm, even
      *  if it is less general than the "NoiseDistribution" one it
      *  offers to the user a higher degree of sensibility. With this
@@ -322,7 +340,7 @@ namespace eutelescope {
      *
      *  @param evt This is the current event passed by the
      *  EUTelPedestalNoiseProcessor::processEvent(LCEvent*).
-     * 
+     *
      *  @see EUTelPedestalNoiseProcessor::firstLoop(LCEvent*) for the
      *  description of available algorithms.
      */
@@ -333,8 +351,8 @@ namespace eutelescope {
      *  if the user wants to perform an additional (very fast) loop
      *  over the event looking for pixels firing too often. This has
      *  to be the last loop and both pedestal and noise are not
-     *  changed, only the status is updated. 
-     * 
+     *  changed, only the status is updated.
+     *
      *  A histogram is filled with the firing frequency distribution
      *  for each detector.
      *
@@ -357,7 +375,7 @@ namespace eutelescope {
      *  because for _iLoop == 0 there is no common mode suppression.
      *  This histo is not filled with the other because it needs to be
      *  updated every event.
-     * 
+     *
      *  @see EUTelPedestalNoiseProcessor::fillHistos() for the todos
      */
     void bookHistos();
@@ -386,12 +404,12 @@ namespace eutelescope {
      *
      */
     void fillHistos();
-    
+
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It
      *  is checking whether the calculation is properly finished or
-     *  not. 
+     *  not.
      *  A very common error occurs when the file finished without a
      *  EORE or when the MaxRecordNumber was set to low to loop over
      *  all the needed record. To check this is very easy because we
@@ -403,24 +421,24 @@ namespace eutelescope {
     /*! This utility is used to know if the current events is the last
      *  one. This is currently used in this process to allow data
      *  rewind and multiple loops on events.
-     *  
+     *
      *  @return true if this is the last event
      */
     inline virtual bool isLastEvent() const { return (_iEvt == _lastEvent); }
 
-    //! Finishes up the current loop 
+    //! Finishes up the current loop
     /*! This method is called at the end of the event loop, just
      *  before falling into the end() callback. Here we can perform
      *  all the needed operations to finish up the current loop and,
      *  if needed, restart the loop once more. It the case this was
      *  the last loop, just save the output results in an external
      *  file. Here comes a more detailed description:
-     *  
+     *
      *  \li In a way that depends on the calculation algorithm,
      *  pedestal and noise vectors are filled with the current loop
-     *  calculation results. 
+     *  calculation results.
      *
-     *  \li The bad pixel masking procedure is invoked. 
+     *  \li The bad pixel masking procedure is invoked.
      *
      *  \li Check histograms are filled.
      *
@@ -439,7 +457,7 @@ namespace eutelescope {
      *  @see EUTelPedestalNoiseProcessor::fillHistos() for a detailed
      *  description on histogram filling.
      *
-     *  @throw RewindDataException to restart the event loop 
+     *  @throw RewindDataException to restart the event loop
      *
      *  @throw StopProcessingException to stop the looping in the
      *  final number of looping is reached.
@@ -447,11 +465,17 @@ namespace eutelescope {
      */
     virtual void finalizeProcessor(bool fromMaskingLoop = false);
 
+    //! Performs a pre loop
+    virtual void preLoop( LCEvent * event );
+
+    //! Simple rewind
+    virtual void simpleRewind();
+
 
   protected:
 
     //! Input collection name.
-    /*! For the time being we have just one collection that can be used as input 
+    /*! For the time being we have just one collection that can be used as input
      */
     std::string _rawDataCollectionName;
 
@@ -484,13 +508,13 @@ namespace eutelescope {
      *  detector. To allow everyone to use her/his favorite method,
      *  this same processor can be used with different algorithm
      *  implementations. The user can select among the following
-     *  methods already implemented: 
-     * 
+     *  methods already implemented:
+     *
      *  \li <b>MeanRMS</b>. This method is based on the on line
      *  calculation of the pedestal and noise value as the mean and
      *  the RMS of each pixel signal distribution. The actual values
      *  of pedestal and noise are calculated.
-     *  
+     *
      *  \li <b>AIDAProfile</b>. This algorithm is the easiest one from
      *  the coding point of view since it relies on algorithm already
      *  coded into the used AIDA implementation. The idea behind is
@@ -502,7 +526,7 @@ namespace eutelescope {
      *  properly called before this processor. In the case one or both
      *  of these conditions are not fullfil the choice fall back on
      *  the very safe and always possible MeanRMS algorithm simply
-     *  alerting the user of the change.  
+     *  alerting the user of the change.
 
      *  @bug All debug tests have been done using RAIDA as AIDA
      *  implementation and due to a bug in the
@@ -511,7 +535,7 @@ namespace eutelescope {
      *
      *  @todo Implement all other methods according to user wishes. In
      *  particular, we can imagine to implement the ROOTProfile as
-     *  soon as the ROOTProcessor will be ready and fully tested. 
+     *  soon as the ROOTProcessor will be ready and fully tested.
      */
     std::string _pedestalAlgo;
 
@@ -522,8 +546,8 @@ namespace eutelescope {
     std::string _badPixelAlgo;
 
     //! Bad pixel masking cut
-    /*! This value is used to mask bad pixels.  
-     * 
+    /*! This value is used to mask bad pixels.
+     *
      *  @see EUTelPedestalNoiseProcess::maskBadPixel() for a detailed
      *  description about the implemented algorithm and the use of
      *  _badPixelMaskCut in all cases.
@@ -539,7 +563,7 @@ namespace eutelescope {
      */
     int _noOfCMIterations;
 
-   //! Hit rejection cut
+    //! Hit rejection cut
     /*! A.k.a. common mode cut. During the common mode suppression
      *  algorithm the average of all pixels signals is computed and
      *  then subtracted from their initial value. This is usually done
@@ -562,7 +586,7 @@ namespace eutelescope {
      *  indication of a "crazy" event and it is better to skip it.
      */
     int _maxNoOfRejectedPixels;
-    
+
     //! Current run number.
     /*! This number is used to store the current run number
      */
@@ -573,7 +597,7 @@ namespace eutelescope {
      * events are counted from 0 and on a run base
      */
     int _iEvt;
-    
+
     //! First event for pedestal calculation
     /*! This is the first event to be used for pedestal
      *  calculation. If the input file is not a specific pedestal run
@@ -614,12 +638,21 @@ namespace eutelescope {
      */
     bool _asciiOutputSwitch;
 
+
+    //! Boolean to activate the pre-loop for hit rejection
+    /*! In order to increase the efficiency of the hit rejection
+     *  algorithm a fast loop over all events is performed. The
+     *  maximum and minimum signals for each pixel are recorded and
+     *  will not be used for the real pedestal and noise estimation.
+     */
+    bool _preLoopSwitch;
+
   private:
 
     //! Detector name
     /*! This string is used to copy the detector name from the run
      *  header to the event "header"
-     */ 
+     */
     std::string _detectorName;
 
     //! Counter for skipped event due to common mode
@@ -711,13 +744,25 @@ namespace eutelescope {
      */
     std::vector < FloatVec > _noise;
 
-    //! Array to store the status 
+    //! Array to store the status
     /*! This is the place where the status of pixel is saved
      */
     std::vector < ShortVec > _status;
 
     //! Additional bad pixel masking vector
     std::vector < ShortVec > _hitCounter;
+
+    //! Preloop maximum value position
+    std::vector < ShortVec > _maxValuePos;
+
+    //! Preloop maximum value
+    std::vector < ShortVec > _maxValue;
+
+    //! Preloop minimum value position
+    std::vector < ShortVec > _minValuePos;
+
+    //! Preloop minimum value
+    std::vector < ShortVec > _minValue;
 
     //! Event loop counter
     /*! This is a counter for the number of loops. The processor will
@@ -796,11 +841,11 @@ namespace eutelescope {
     /*! This histogram contains the cumulative distribution of firing
      *  frequency. It is filled only if the additional masking loop is
      *  done.
-     */ 
+     */
     static std::string _fireFreqHistoName;
 
 
-#endif 
+#endif
 
     //! Histogram switch
     /*! Useful flag to switch on or off the histogramming
@@ -817,7 +862,7 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelPedestalNoiseProcessor gEUTelPedestalNoiseProcessor;      
+  EUTelPedestalNoiseProcessor gEUTelPedestalNoiseProcessor;
 
 }
 #endif
