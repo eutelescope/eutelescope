@@ -18,7 +18,7 @@
  *  develop both their DAQ and analysis/reconstruction software.
  *
  *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
- *  @version $Id: EUTELESCOPE.h,v 1.24 2008-08-21 12:27:29 bulgheroni Exp $
+ *  @version $Id: EUTELESCOPE.h,v 1.25 2008-08-21 12:30:37 bulgheroni Exp $
  */
 
 namespace eutelescope {}
@@ -54,7 +54,7 @@ namespace eutelescope
    * files.
    *
    * @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @version $Id: EUTELESCOPE.h,v 1.24 2008-08-21 12:27:29 bulgheroni Exp $
+   * @version $Id: EUTELESCOPE.h,v 1.25 2008-08-21 12:30:37 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -368,7 +368,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.24 2008-08-21 12:27:29 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.25 2008-08-21 12:30:37 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -415,7 +415,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.24 2008-08-21 12:27:29 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.25 2008-08-21 12:30:37 bulgheroni Exp $
    */
 
   enum ClusterQuality {
@@ -474,7 +474,7 @@ namespace eutelescope
    *  cluster during the clusterization process itself.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.24 2008-08-21 12:27:29 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.25 2008-08-21 12:30:37 bulgheroni Exp $
    */
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
@@ -489,7 +489,7 @@ namespace eutelescope
   /*! This enumerator is used to define the sparsified pixel type.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.24 2008-08-21 12:27:29 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.25 2008-08-21 12:30:37 bulgheroni Exp $
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,
@@ -601,12 +601,12 @@ namespace eutelescope
 
 
   //! Converts any type to a string in hexadecimal
-  /*! The input type needs to have a valid ostream streamer. 
+  /*! The input type needs to have a valid ostream streamer.
    *
    *  @param x The value to be converted
    *  @param digits The miimum number of digits, shorter numbers are
    *  padded with zeroes
-   * 
+   *
    *  @return A string representing the input value in hex
    */
   template< typename T>
@@ -677,7 +677,7 @@ namespace eutelescope
    *  @param def The default value to be used in case of an invalid
    *  string. This is also very useful to specify the proper template
    *  type w/o having to specify it explicitly
-   * 
+   *
    *  @return An object of type T with the value represented in x, or
    *  it that is not valid then the value of def.
    */
@@ -706,10 +706,10 @@ namespace eutelescope
   inline std::string from_string( const std::string & x, const std::string & def ) {
 
 #ifdef USE_EUDAQ
-    
+
     return eudaq::from_string( x, def );
 
-#else 
+#else
 
     return x == "" ? def : x;
 
