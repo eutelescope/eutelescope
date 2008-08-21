@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelNativeReader.cc,v 1.9 2008-08-20 12:51:35 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.10 2008-08-21 12:31:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -21,6 +21,7 @@
 #include "EUTelPixelDetector.h"
 #include "EUTelMimoTelDetector.h"
 #include "EUTelMimosa18Detector.h"
+#include "EUTelTLUDetector.h"
 #include "EUTelSparseDataImpl.h"
 #include "EUTelSimpleSparsePixel.h"
 
@@ -136,11 +137,11 @@ void EUTelNativeReader::readDataSource (int numEvents) {
 
     // inform the user about the reading status
     if ( eventCounter % 10 == 0 )
-      streamlog_out ( MESSAGE4 ) << "Processing event " 
+      streamlog_out ( MESSAGE4 ) << "Processing event "
                                  << setw(6) << setiosflags( ios::right ) << eudaqEvent->GetEventNumber() << resetiosflags(ios::right)
-                                 << " in run "  << setw(6) 
-                                 << setiosflags( ios::right ) << setfill('0') << eudaqEvent->GetRunNumber() << resetiosflags(ios::right) 
-                                 << setfill(' ') << " (Total = " << setw(10) 
+                                 << " in run "  << setw(6)
+                                 << setiosflags( ios::right ) << setfill('0') << eudaqEvent->GetRunNumber() << resetiosflags(ios::right)
+                                 << setfill(' ') << " (Total = " << setw(10)
                                  << setiosflags( ios::right ) << eventCounter << resetiosflags(ios::right) << ")"
                                  << setiosflags( ios::left ) << endl;
 
@@ -611,21 +612,21 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
         // print out all the slave boards first
         streamlog_out( WARNING0 ) << " --> Board (S) " <<  setw(3) << setiosflags( ios::right )
                                   << slaveBoardPivotAddress - pivotPixelPosVec.begin() << resetiosflags( ios::right )
-                                  << " = " << setw(15) << setiosflags( ios::right ) 
-                                  << (*slaveBoardPivotAddress) << resetiosflags( ios::right ) 
-                                  << " (" << setw(15) << setiosflags( ios::right ) 
+                                  << " = " << setw(15) << setiosflags( ios::right )
+                                  << (*slaveBoardPivotAddress) << resetiosflags( ios::right )
+                                  << " (" << setw(15) << setiosflags( ios::right )
                                   << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << resetiosflags(ios::right)
                                   << ")" << endl;
         ++slaveBoardPivotAddress;
       }
       // print out also the master. It is impossible that the master
       // is out of sync with respect to itself, but for completeness...
-      streamlog_out( WARNING0 )  << " --> Board (M) "  <<  setw(3) << setiosflags( ios::right ) 
+      streamlog_out( WARNING0 )  << " --> Board (M) "  <<  setw(3) << setiosflags( ios::right )
                                  << slaveBoardPivotAddress - pivotPixelPosVec.begin() << resetiosflags( ios::right )
-                                 << " = " << setw(15) << setiosflags( ios::right ) 
-                                 << (*slaveBoardPivotAddress) << resetiosflags( ios::right )  
-                                 << " (" << setw(15)  << setiosflags( ios::right )  
-                                 << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << resetiosflags(ios::right) 
+                                 << " = " << setw(15) << setiosflags( ios::right )
+                                 << (*slaveBoardPivotAddress) << resetiosflags( ios::right )
+                                 << " (" << setw(15)  << setiosflags( ios::right )
+                                 << (signed) (*masterBoardPivotAddress) - (signed) (*slaveBoardPivotAddress) << resetiosflags(ios::right)
                                  << ")" << endl;
 
     } else if ( _eudrbConsecutiveOutOfSyncWarning == _eudrbMaxConsecutiveOutOfSyncWarning ) {
@@ -751,7 +752,14 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
       // this sub event was produced by the TLUProducer
       // nothing to do for the time being
       // ....
-      _tluDetectors.push_back( NULL );
+      EUTelTLUDetector * tluDetector = new EUTelTLUDetector;
+      tluDetector->setAndMask ( from_string( eudaqTLUEvent->GetTag( "AndMask"  ), (unsigned int) 0x0) );
+      tluDetector->setOrMask  ( from_string( eudaqTLUEvent->GetTag( "OrMask"   ), (unsigned int) 0x0) );
+      tluDetector->setVetoMask( from_string( eudaqTLUEvent->GetTag( "VetoMask" ), (unsigned int) 0x0) );
+      tluDetector->setDUTMask ( from_string( eudaqTLUEvent->GetTag( "DutMask"  ), (unsigned int) 0x0) );
+      tluDetector->setFirmwareID  ( from_string( eudaqTLUEvent->GetTag( "FirmwareID" ), (unsigned int) 0x0) );
+      tluDetector->setTimeInterval( from_string( eudaqTLUEvent->GetTag( "TimeInterval" ), (unsigned short) 0x0) );
+      _tluDetectors.push_back( tluDetector );
       noOfTLUDetectors++;
     }
 
@@ -769,7 +777,7 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
     streamlog_out ( MESSAGE2 ) << "EUDRBProducer: " << endl << endl;
     for ( size_t iDetector = 0 ; iDetector < _eudrbDetectors.size(); ++iDetector ) {
       streamlog_out ( MESSAGE2 ) << " Detector " << iDetector << endl
-                               << *(_eudrbDetectors.at( iDetector )) << endl
+                                 << *(_eudrbDetectors.at( iDetector )) << endl
                                  << " -------------------------------------------- " << endl;
     }
   }
@@ -780,8 +788,11 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
   } else {
     streamlog_out( MESSAGE2 ) << "TLUProducer: " << endl << endl;
     for ( size_t iDetector = 0 ; iDetector < _tluDetectors.size(); ++iDetector ) {
-      streamlog_out ( MESSAGE2 ) << " TLU " << iDetector << " found " << endl;
+      streamlog_out ( MESSAGE2 ) << " TLU " << iDetector << " found " << endl
+                                 << *(_tluDetectors.at( iDetector ) ) << endl
+                                 << " -------------------------------------------- " << endl;
     }
+
   }
 
 
