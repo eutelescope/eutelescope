@@ -10,12 +10,12 @@
 #ifndef EUTELUPDATEPEDESTALNOISEPROCESSOR
 #define EUTELUPDATEPEDESTALNOISEPROCESSOR 1
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <LCIOTypes.h>
 #include <IMPL/LCCollectionVec.h>
 
@@ -63,10 +63,10 @@ namespace eutelescope {
    *  elements is kept constant to weight value. An analogous approach
    *  is used for the noise calculation.
    *
-   *  <h4>Input collections</h4> 
-   *  
+   *  <h4>Input collections</h4>
+   *
    *  <b>Raw data collection</b> the collection with the full raw data matrix.
-   * 
+   *
    *  <b>Pedestal collection</b> the current pedestal collection
    *
    *  <b>Noise collection </b> the current noise collection
@@ -88,7 +88,7 @@ namespace eutelescope {
    *  @param FixedWeightValue the value of the fixed weight
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelUpdatePedestalNoiseProcessor.h,v 1.6 2007-06-29 15:24:23 bulgheroni Exp $
+   *  @version $Id: EUTelUpdatePedestalNoiseProcessor.h,v 1.7 2008-08-23 12:30:51 bulgheroni Exp $
    *
    *  @todo Implement the status matrix update
    *
@@ -98,19 +98,19 @@ namespace eutelescope {
 
   public:
 
-     
+
     //! Returns a new instance of EUTelUpdatePedestalNoiseProcessor
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelUpdatePedestalNoiseProcessor.
      */
     virtual Processor * newProcessor() {
       return new EUTelUpdatePedestalNoiseProcessor;
     }
 
-    //! Default constructor 
+    //! Default constructor
     EUTelUpdatePedestalNoiseProcessor ();
 
     //! Called at the job beginning.
@@ -122,8 +122,8 @@ namespace eutelescope {
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
-     *  is incremented. 
-     * 
+     *  is incremented.
+     *
      *  @param run LCRunHeader of the this current run
      *
      *  @throw InvalidParameterException if a paramter is wrongly set
@@ -161,8 +161,8 @@ namespace eutelescope {
 
 
   protected:
-    
-    //! Fixed weight update algorithm 
+
+    //! Fixed weight update algorithm
     /*! This method is called by the processEvent if the _updateAlgo
      *  has been set to EUTELESCOPE::FIXEDWEIGHT. It has been set as
      *  protected because it has to called from within the class
@@ -209,7 +209,7 @@ namespace eutelescope {
      */
     void pixelMonitoring(LCEvent * evt);
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! Fill in AIDA DataPointSet for pixel monitoring
     /*! If, and only if Marlin is using AIDA and an AIDAProcessor has
      *  been called before this processor (as it is expected to be)
@@ -218,7 +218,7 @@ namespace eutelescope {
      *  evolution versus update iterations (read time).
      *
      *  This method is set protected since it is going to be called
-     *  only by the end() call back. 
+     *  only by the end() call back.
      *
      *  @todo It is probably better to allow the user to save the
      *  monitoring info also if the Marlin is not using AIDA
@@ -252,7 +252,7 @@ namespace eutelescope {
     //! Algorithm name
     /*! The name of the algorithm the user wants to apply. Suitable
      *  const string can be found within the EUTELESCOPE class.
-     * 
+     *
      *  @see EUTELESCOPE::FIXEDWEIGHT
      */
     std::string _updateAlgo;
@@ -289,14 +289,14 @@ namespace eutelescope {
      *  processor parameter and has to be positive. An update
      *  frequency of 0 is meaningless and will be automatically re-set
      *  to 1, i.e. updated every single event.
-     */ 
+     */
     int _updateFrequency;
 
 
     //! Fixed weight value
     /*! This integer number is used in the FixedWeight algorithm to
      *  update both pedestal and noise values.
-     *  
+     *
      *  @see fixedWeightUpdate(LCEvent*)
      */
     int _fixedWeight;
@@ -314,11 +314,11 @@ namespace eutelescope {
 
   private:
 
-    
+
   };
 
   //! A global instance of the processor
-  EUTelUpdatePedestalNoiseProcessor gEUTelUpdatePedestalNoiseProcessor;      
+  EUTelUpdatePedestalNoiseProcessor gEUTelUpdatePedestalNoiseProcessor;
 
 }
 #endif

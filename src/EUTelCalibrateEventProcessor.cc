@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.16 2007-09-24 01:20:06 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.17 2008-08-23 12:30:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,7 +10,7 @@
  *
  */
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTELESCOPE.h"
 #include "EUTelExceptions.h"
 #include "EUTelCalibrateEventProcessor.h"
@@ -22,7 +22,7 @@
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 // aida includes <.h>
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
@@ -30,7 +30,7 @@
 #include <AIDA/ITree.h>
 #endif
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <IMPL/TrackerRawDataImpl.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
@@ -48,11 +48,11 @@ using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 string EUTelCalibrateEventProcessor::_rawDataDistHistoName    = "RawDataDistHisto";
 string EUTelCalibrateEventProcessor::_dataDistHistoName       = "DataDistHisto";
 string EUTelCalibrateEventProcessor::_commonModeDistHistoName = "CommonModeDistHisto";
-#endif 
+#endif
 
 EUTelCalibrateEventProcessor::EUTelCalibrateEventProcessor () :Processor("EUTelCalibrateEventProcessor") {
 
@@ -62,44 +62,44 @@ EUTelCalibrateEventProcessor::EUTelCalibrateEventProcessor () :Processor("EUTelC
 
   // first of all we need to register the input collection
   registerInputCollection (LCIO::TRACKERRAWDATA, "RawDataCollectionName",
-			   "Input raw data collection",
-			   _rawDataCollectionName, string ("rawdata"));
+                           "Input raw data collection",
+                           _rawDataCollectionName, string ("rawdata"));
 
   registerInputCollection (LCIO::TRACKERDATA, "PedestalCollectionName",
-			   "Pedestal from the condition file",
-			   _pedestalCollectionName, string ("pedestal"));
+                           "Pedestal from the condition file",
+                           _pedestalCollectionName, string ("pedestal"));
 
   registerInputCollection (LCIO::TRACKERDATA, "NoiseCollectionName",
-			   "Noise from the condition file",
-			   _noiseCollectionName, string("noise"));
+                           "Noise from the condition file",
+                           _noiseCollectionName, string("noise"));
 
   registerInputCollection (LCIO::TRACKERRAWDATA, "StatusCollectionName",
-			   "Pixel status from the condition file",
-			   _statusCollectionName, string("status"));
+                           "Pixel status from the condition file",
+                           _statusCollectionName, string("status"));
 
   registerOutputCollection (LCIO::TRACKERDATA, "CalibratedDataCollectionName",
-			    "Name of the output calibrated data collection",
-			    _calibratedDataCollectionName, string("data"));
+                            "Name of the output calibrated data collection",
+                            _calibratedDataCollectionName, string("data"));
 
   // now the optional parameters
   registerProcessorParameter ("DebugHistoFilling",
-			      "Flag to switch on (1) or off (0) the detector debug histogram filling",
-			      _fillDebugHisto, static_cast<bool> (false));
-  
+                              "Flag to switch on (1) or off (0) the detector debug histogram filling",
+                              _fillDebugHisto, static_cast<bool> (false));
+
   registerProcessorParameter ("PerformCommonMode",
-			      "Flag to switch on (1) or off (0) the common mode suppression algorithm",
-			      _doCommonMode, static_cast<bool> (true));
+                              "Flag to switch on (1) or off (0) the common mode suppression algorithm",
+                              _doCommonMode, static_cast<bool> (true));
 
   registerProcessorParameter ("HitRejectionCut",
-			      "Threshold of pixel SNR for hit rejection",
-			      _hitRejectionCut, static_cast<float> (3.5));
+                              "Threshold of pixel SNR for hit rejection",
+                              _hitRejectionCut, static_cast<float> (3.5));
 
   registerProcessorParameter ("MaxNoOfRejectedPixels",
-			      "Maximum allowed number of rejected pixel per event",
-			      _maxNoOfRejectedPixels, static_cast<int> (3000));
+                              "Maximum allowed number of rejected pixel per event",
+                              _maxNoOfRejectedPixels, static_cast<int> (3000));
 
   registerProcessorParameter("HistoInfoFileName", "This is the name of the histogram information file",
-			     _histoInfoFileName, string( "histoinfo.xml" ) );
+                             _histoInfoFileName, string( "histoinfo.xml" ) );
 }
 
 
@@ -134,11 +134,11 @@ void EUTelCalibrateEventProcessor::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
-  if ( _iEvt % 10 == 0 ) 
-    streamlog_out ( MESSAGE4 ) << "Processing event " 
-			       << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-			       << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-			       << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  if ( _iEvt % 10 == 0 )
+    streamlog_out ( MESSAGE4 ) << "Processing event "
+                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
   ++_iEvt;
 
 
@@ -149,235 +149,235 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
     return;
   } else if ( evt->getEventType() == kUNKNOWN ) {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
-			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+                               << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
   if ( _eudrbGlobalMode == "ZS" ) {
-    if ( isFirstEvent() )   
+    if ( isFirstEvent() )
       streamlog_out( WARNING2 ) << "The input data file was taken in ZS mode. No need to apply pedestal correction" << endl;
     return;
   }
 
 
-    
+
   try {
-    
+
     LCCollectionVec * inputCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_rawDataCollectionName));
     LCCollectionVec * pedestalCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_pedestalCollectionName));
     LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
     LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
     CellIDDecoder<TrackerRawDataImpl> cellDecoder( inputCollectionVec );
-    
+
 
     if (isFirstEvent()) {
-      
+
       // until version v00-00-03 this was the right place to cross
       // check that the number of elements in the input collection,
       // the number of detector in the run header and the number of
-      // detector in the pedestal file were all equal. 
+      // detector in the pedestal file were all equal.
       // starting from v00-00-04 this is not true anymore since the
       // input file can contain also ZS frames for which the pedestal
-      // correction has not to be applied. 
+      // correction has not to be applied.
       // The crosscheck is done if and only if the EUDRB Global mode
       // was set to RAW3.
 
       if ( _eudrbGlobalMode == "RAW3" ) {
-	if ( (inputCollectionVec->getNumberOfElements() != pedestalCollectionVec->getNumberOfElements()) ||
-	     (inputCollectionVec->getNumberOfElements() != _noOfDetector) ) {
-	  stringstream ss;
-	  ss << "Input data and pedestal are incompatible\n"
-	     << "Input collection has    " << inputCollectionVec->getNumberOfElements()    << " detectors,\n" 
-	     << "Pedestal collection has " << pedestalCollectionVec->getNumberOfElements() << " detectors,\n" 
-	     << "The expected number is  " << _noOfDetector << endl;
-	  throw IncompatibleDataSetException(ss.str());
-	}
+        if ( (inputCollectionVec->getNumberOfElements() != pedestalCollectionVec->getNumberOfElements()) ||
+             (inputCollectionVec->getNumberOfElements() != _noOfDetector) ) {
+          stringstream ss;
+          ss << "Input data and pedestal are incompatible\n"
+             << "Input collection has    " << inputCollectionVec->getNumberOfElements()    << " detectors,\n"
+             << "Pedestal collection has " << pedestalCollectionVec->getNumberOfElements() << " detectors,\n"
+             << "The expected number is  " << _noOfDetector << endl;
+          throw IncompatibleDataSetException(ss.str());
+        }
       } else {
-	streamlog_out ( DEBUG4 ) << "EUDRB mode different from RAW3, skipping control on the detector number." << endl;
+        streamlog_out ( DEBUG4 ) << "EUDRB mode different from RAW3, skipping control on the detector number." << endl;
       }
-      
+
 
       for (unsigned int iDetector = 0; iDetector < inputCollectionVec->size(); iDetector++) {
 
-	TrackerRawDataImpl * rawData  = dynamic_cast < TrackerRawDataImpl * >(inputCollectionVec->getElementAt(iDetector));
-	int sensorID = cellDecoder(rawData)["sensorID"];
-	TrackerDataImpl    * pedestal = dynamic_cast < TrackerDataImpl * >   (pedestalCollectionVec->getElementAt(sensorID));
-	
-	if (rawData->getADCValues().size() != pedestal->getChargeValues().size()){
-	  stringstream ss;
-	  ss << "Input data and pedestal are incompatible\n" 
-	     << "Detector " << sensorID << " has " <<  rawData->getADCValues().size() << " pixels in the input data \n"
-	     << "while " << pedestal->getChargeValues().size() << " in the pedestal data " << endl;
-	  throw IncompatibleDataSetException(ss.str());
-	}
+        TrackerRawDataImpl * rawData  = dynamic_cast < TrackerRawDataImpl * >(inputCollectionVec->getElementAt(iDetector));
+        int sensorID = cellDecoder(rawData)["sensorID"];
+        TrackerDataImpl    * pedestal = dynamic_cast < TrackerDataImpl * >   (pedestalCollectionVec->getElementAt(sensorID));
 
-	// in the case MARLIN_USE_AIDA and the user wants to fill detector
-	// debug histogram, this is the right place to book them. As usual
-	// histograms are grouped in directory identifying the detector
+        if (rawData->getADCValues().size() != pedestal->getChargeValues().size()){
+          stringstream ss;
+          ss << "Input data and pedestal are incompatible\n"
+             << "Detector " << sensorID << " has " <<  rawData->getADCValues().size() << " pixels in the input data \n"
+             << "while " << pedestal->getChargeValues().size() << " in the pedestal data " << endl;
+          throw IncompatibleDataSetException(ss.str());
+        }
 
-#ifdef MARLIN_USE_AIDA
-	string basePath, tempHistoName;
-	{
-	  stringstream ss;
-	  ss << "detector-" << sensorID << "/";
-	  basePath = ss.str();
-	}
+        // in the case MARLIN_USE_AIDA and the user wants to fill detector
+        // debug histogram, this is the right place to book them. As usual
+        // histograms are grouped in directory identifying the detector
 
-	// prepare the histogram manager
-	auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
-	EUTelHistogramInfo    * histoInfo;
-	bool                    isHistoManagerAvailable;
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+        string basePath, tempHistoName;
+        {
+          stringstream ss;
+          ss << "detector-" << sensorID << "/";
+          basePath = ss.str();
+        }
 
-	try {
-	  isHistoManagerAvailable = histoMgr->init();
-	} catch ( ios::failure& e) {
-	  streamlog_out ( ERROR1 )  << "I/O problem with " << _histoInfoFileName << "\n"
-				    << "Continuing without histogram manager"    << endl;
-	  isHistoManagerAvailable = false;
-	} catch ( ParseException& e ) {
-	  streamlog_out ( ERROR1 )  << e.what() << "\n"
-				    << "Continuing without histogram manager" << endl;
-	  isHistoManagerAvailable = false;
-	}
+        // prepare the histogram manager
+        auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+        EUTelHistogramInfo    * histoInfo;
+        bool                    isHistoManagerAvailable;
 
-	if ( ( _fillDebugHisto == 1 ) ||
-	     ( _doCommonMode   == 1 ) ) {
-	  // it was changed from mkdir to mkdirs to be sure all
-	  // intermediate folders were properly created, but then I had
-	  // to come back to mkdir because this is the only supported in RAIDA.
-	  AIDAProcessor::tree(this)->mkdir(basePath.c_str());
-	}
+        try {
+          isHistoManagerAvailable = histoMgr->init();
+        } catch ( ios::failure& e) {
+          streamlog_out ( ERROR1 )  << "I/O problem with " << _histoInfoFileName << "\n"
+                                    << "Continuing without histogram manager"    << endl;
+          isHistoManagerAvailable = false;
+        } catch ( ParseException& e ) {
+          streamlog_out ( ERROR1 )  << e.what() << "\n"
+                                    << "Continuing without histogram manager" << endl;
+          isHistoManagerAvailable = false;
+        }
 
-	if (_fillDebugHisto == 1) {
-	  // book the raw data histogram
-	  {
-	    stringstream ss;
-	    ss << _rawDataDistHistoName << "-d" << sensorID;
-	    tempHistoName = ss.str();
-	  }
-	  int    rawDataDistHistoNBin = 4096;
-	  double rawDataDistHistoMin  = -2048.5;
-	  double rawDataDistHistoMax  = rawDataDistHistoMin + rawDataDistHistoNBin;
-	  string rawDataDistTitle     = "Raw data distribution"; 
-	  if ( isHistoManagerAvailable ) {
-	    histoInfo = histoMgr->getHistogramInfo(_rawDataDistHistoName);
-	    if ( histoInfo ) {
-	      streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
-	      rawDataDistHistoNBin = histoInfo->_xBin;
-	      rawDataDistHistoMin  = histoInfo->_xMin;
-	      rawDataDistHistoMax  = histoInfo->_xMax;
-	      if ( histoInfo->_title != "" ) rawDataDistTitle = histoInfo->_title;
-	    }
-	  }	  
-	  AIDA::IHistogram1D * rawDataDistHisto = 
-	    AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-								      rawDataDistHistoNBin, rawDataDistHistoMin, rawDataDistHistoMax);
-	  if ( rawDataDistHisto ) {
-	    _aidaHistoMap.insert(make_pair(tempHistoName, rawDataDistHisto));
-	    rawDataDistHisto->setTitle(rawDataDistTitle.c_str());
-	  } else {
-	    streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-				     << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-	    _fillDebugHisto = 0;
-	  }
+        if ( ( _fillDebugHisto == 1 ) ||
+             ( _doCommonMode   == 1 ) ) {
+          // it was changed from mkdir to mkdirs to be sure all
+          // intermediate folders were properly created, but then I had
+          // to come back to mkdir because this is the only supported in RAIDA.
+          AIDAProcessor::tree(this)->mkdir(basePath.c_str());
+        }
 
-	  // book the pedestal corrected data histogram
-	  {
-	    stringstream ss;
-	    ss << _dataDistHistoName << "-d" << sensorID;
-	    tempHistoName = ss.str();
-	  }
-	  int    dataDistHistoNBin =  5000;
-	  double dataDistHistoMin  = -500.;
-	  double dataDistHistoMax  =  500.;
-	  string dataDistTitle     = "Data (pedestal sub'ed) distribution";
-	  if ( isHistoManagerAvailable ) {
-	    histoInfo = histoMgr->getHistogramInfo(_dataDistHistoName);
-	    if ( histoInfo ) {
-	      streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
-	      dataDistHistoNBin = histoInfo->_xBin;
-	      dataDistHistoMin  = histoInfo->_xMin;
-	      dataDistHistoMax  = histoInfo->_xMax;
-	      if ( histoInfo->_title != "" ) dataDistTitle = histoInfo->_title;
-	    }
-	  }	  
-	  AIDA::IHistogram1D * dataDistHisto = 
-	    AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-								      dataDistHistoNBin, dataDistHistoMin, dataDistHistoMax);
-	  if ( dataDistHisto ) {
-	    _aidaHistoMap.insert(make_pair(tempHistoName, dataDistHisto));
-	    dataDistHisto->setTitle(dataDistTitle.c_str());
-	  } else {
-	    streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-				     << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-	    _fillDebugHisto = 0;
-	  }
+        if (_fillDebugHisto == 1) {
+          // book the raw data histogram
+          {
+            stringstream ss;
+            ss << _rawDataDistHistoName << "-d" << sensorID;
+            tempHistoName = ss.str();
+          }
+          int    rawDataDistHistoNBin = 4096;
+          double rawDataDistHistoMin  = -2048.5;
+          double rawDataDistHistoMax  = rawDataDistHistoMin + rawDataDistHistoNBin;
+          string rawDataDistTitle     = "Raw data distribution";
+          if ( isHistoManagerAvailable ) {
+            histoInfo = histoMgr->getHistogramInfo(_rawDataDistHistoName);
+            if ( histoInfo ) {
+              streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
+              rawDataDistHistoNBin = histoInfo->_xBin;
+              rawDataDistHistoMin  = histoInfo->_xMin;
+              rawDataDistHistoMax  = histoInfo->_xMax;
+              if ( histoInfo->_title != "" ) rawDataDistTitle = histoInfo->_title;
+            }
+          }
+          AIDA::IHistogram1D * rawDataDistHisto =
+            AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                      rawDataDistHistoNBin, rawDataDistHistoMin, rawDataDistHistoMax);
+          if ( rawDataDistHisto ) {
+            _aidaHistoMap.insert(make_pair(tempHistoName, rawDataDistHisto));
+            rawDataDistHisto->setTitle(rawDataDistTitle.c_str());
+          } else {
+            streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                     << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+            _fillDebugHisto = 0;
+          }
 
-	}
+          // book the pedestal corrected data histogram
+          {
+            stringstream ss;
+            ss << _dataDistHistoName << "-d" << sensorID;
+            tempHistoName = ss.str();
+          }
+          int    dataDistHistoNBin =  5000;
+          double dataDistHistoMin  = -500.;
+          double dataDistHistoMax  =  500.;
+          string dataDistTitle     = "Data (pedestal sub'ed) distribution";
+          if ( isHistoManagerAvailable ) {
+            histoInfo = histoMgr->getHistogramInfo(_dataDistHistoName);
+            if ( histoInfo ) {
+              streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
+              dataDistHistoNBin = histoInfo->_xBin;
+              dataDistHistoMin  = histoInfo->_xMin;
+              dataDistHistoMax  = histoInfo->_xMax;
+              if ( histoInfo->_title != "" ) dataDistTitle = histoInfo->_title;
+            }
+          }
+          AIDA::IHistogram1D * dataDistHisto =
+            AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                      dataDistHistoNBin, dataDistHistoMin, dataDistHistoMax);
+          if ( dataDistHisto ) {
+            _aidaHistoMap.insert(make_pair(tempHistoName, dataDistHisto));
+            dataDistHisto->setTitle(dataDistTitle.c_str());
+          } else {
+            streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                     << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+            _fillDebugHisto = 0;
+          }
 
-	if ( _doCommonMode == 1 ) {
-	  // book the common mode histo
-	  {
-	    stringstream ss;
-	    ss << _commonModeDistHistoName << "-d" << sensorID;
-	    tempHistoName = ss.str();
-	  } 
-	  int    commonModeDistHistoNBin = 100;
-	  double commonModeDistHistoMin  = -10;
-	  double commonModeDistHistoMax  = +10;
-	  string commonModeTitle         = "Common mode distribution";
-	  if ( isHistoManagerAvailable ) {
-	    histoInfo = histoMgr->getHistogramInfo(_commonModeDistHistoName);
-	    if ( histoInfo ) {
-	      streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
-	      commonModeDistHistoNBin = histoInfo->_xBin;
-	      commonModeDistHistoMin  = histoInfo->_xMin;
-	      commonModeDistHistoMax  = histoInfo->_xMax;
-	      if ( histoInfo->_title != "" ) commonModeTitle = histoInfo->_title;
-	    }
-	  }	  
-	  AIDA::IHistogram1D * commonModeDistHisto = 
-	    AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 
-								      commonModeDistHistoNBin, commonModeDistHistoMin, 
-								      commonModeDistHistoMax);
-	  if ( commonModeDistHisto ) {
-	    _aidaHistoMap.insert(make_pair(tempHistoName, commonModeDistHisto));
-	    commonModeDistHisto->setTitle(commonModeTitle.c_str());
-	  } else {
-	    streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-				     << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-	    // setting _fillDebugHisto to 0 is not solving the problem
-	    // because the common mode histogram is independent from
-	    // the debug histogram. And disabling the common mode
-	    // calculation is probably too much. The simplest solution
-	    // would be to add another switch to the class data
-	    // members. Since the fill() method is protected by a
-	    // previous check on the retrieved histogram pointer,
-	    // continue should be safe.
-	  }
-	}
-#endif    
+        }
+
+        if ( _doCommonMode == 1 ) {
+          // book the common mode histo
+          {
+            stringstream ss;
+            ss << _commonModeDistHistoName << "-d" << sensorID;
+            tempHistoName = ss.str();
+          }
+          int    commonModeDistHistoNBin = 100;
+          double commonModeDistHistoMin  = -10;
+          double commonModeDistHistoMax  = +10;
+          string commonModeTitle         = "Common mode distribution";
+          if ( isHistoManagerAvailable ) {
+            histoInfo = histoMgr->getHistogramInfo(_commonModeDistHistoName);
+            if ( histoInfo ) {
+              streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
+              commonModeDistHistoNBin = histoInfo->_xBin;
+              commonModeDistHistoMin  = histoInfo->_xMin;
+              commonModeDistHistoMax  = histoInfo->_xMax;
+              if ( histoInfo->_title != "" ) commonModeTitle = histoInfo->_title;
+            }
+          }
+          AIDA::IHistogram1D * commonModeDistHisto =
+            AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                      commonModeDistHistoNBin, commonModeDistHistoMin,
+                                                                      commonModeDistHistoMax);
+          if ( commonModeDistHisto ) {
+            _aidaHistoMap.insert(make_pair(tempHistoName, commonModeDistHisto));
+            commonModeDistHisto->setTitle(commonModeTitle.c_str());
+          } else {
+            streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                     << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+            // setting _fillDebugHisto to 0 is not solving the problem
+            // because the common mode histogram is independent from
+            // the debug histogram. And disabling the common mode
+            // calculation is probably too much. The simplest solution
+            // would be to add another switch to the class data
+            // members. Since the fill() method is protected by a
+            // previous check on the retrieved histogram pointer,
+            // continue should be safe.
+          }
+        }
+#endif
       }
       _isFirstEvent = false;
     }
-  
+
     LCCollectionVec * correctedDataCollection = new LCCollectionVec(LCIO::TRACKERDATA);
-    
+
     for (unsigned int iDetector = 0; iDetector < inputCollectionVec->size(); iDetector++) {
-      
+
       // reset quantity for the common mode.
       double pixelSum      = 0.;
       double commonMode    = 0.;
       int    goodPixel     = 0;
       int    skippedPixel  = 0;
-      
-      
+
+
       TrackerRawDataImpl  * rawData   = dynamic_cast < TrackerRawDataImpl * >(inputCollectionVec->getElementAt(iDetector));
       int sensorID                    = cellDecoder(rawData)["sensorID"];
 
       TrackerDataImpl     * pedestal  = dynamic_cast < TrackerDataImpl * >   (pedestalCollectionVec->getElementAt(sensorID));
       TrackerDataImpl     * noise     = dynamic_cast < TrackerDataImpl * >   (noiseCollectionVec->getElementAt(sensorID));
       TrackerRawDataImpl  * status    = dynamic_cast < TrackerRawDataImpl * >(statusCollectionVec->getElementAt(sensorID));
-      
+
       TrackerDataImpl     * corrected = new TrackerDataImpl;
       CellIDEncoder<TrackerDataImpl> idDataEncoder(EUTELESCOPE::MATRIXDEFAULTENCODING, correctedDataCollection);
       idDataEncoder["sensorID"] = sensorID;
@@ -386,106 +386,106 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
       idDataEncoder["yMin"]     = static_cast<int > (cellDecoder(rawData)["yMin"]);
       idDataEncoder["yMax"]     = static_cast<int > (cellDecoder(rawData)["yMax"]);
       idDataEncoder.setCellID(corrected);
-      
+
       ShortVec::const_iterator rawIter     = rawData->getADCValues().begin();
       FloatVec::const_iterator pedIter     = pedestal->getChargeValues().begin();
       FloatVec::const_iterator noiseIter   = noise->getChargeValues().begin();
       ShortVec::const_iterator statusIter  = status->getADCValues().begin();
-      
+
       if ( _doCommonMode == 1 ) {
-	while ( rawIter != rawData->getADCValues().end() ) {
-	  bool isHit   = ( ((*rawIter) - (*pedIter)) > _hitRejectionCut * (*noiseIter) );
-	  bool isGood  = ( (*statusIter) == EUTELESCOPE::GOODPIXEL );
-	  
-	  if ( !isHit && isGood ) {
-	    pixelSum += (*rawIter) - (*pedIter);
-	    ++goodPixel;
-	  } else if ( isHit ) {
-	    ++skippedPixel;
-	  }
-	  ++rawIter;
-	  ++pedIter;
-	  ++noiseIter;
-	  ++statusIter;
-	}
-      
-	if ( ( ( _maxNoOfRejectedPixels == -1 )  ||  ( skippedPixel < _maxNoOfRejectedPixels ) ) &&
-	     ( goodPixel != 0 ) ) {
-	  
-	  commonMode = pixelSum / goodPixel;
-#ifdef MARLIN_USE_AIDA
-	  string tempHistoName;
-	  {
-	    stringstream ss;
-	    ss << _commonModeDistHistoName << "-d" << sensorID;
-	    tempHistoName = ss.str();
-}
-	  if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
-	    histo->fill(commonMode);
+        while ( rawIter != rawData->getADCValues().end() ) {
+          bool isHit   = ( ((*rawIter) - (*pedIter)) > _hitRejectionCut * (*noiseIter) );
+          bool isGood  = ( (*statusIter) == EUTELESCOPE::GOODPIXEL );
+
+          if ( !isHit && isGood ) {
+            pixelSum += (*rawIter) - (*pedIter);
+            ++goodPixel;
+          } else if ( isHit ) {
+            ++skippedPixel;
+          }
+          ++rawIter;
+          ++pedIter;
+          ++noiseIter;
+          ++statusIter;
+        }
+
+        if ( ( ( _maxNoOfRejectedPixels == -1 )  ||  ( skippedPixel < _maxNoOfRejectedPixels ) ) &&
+             ( goodPixel != 0 ) ) {
+
+          commonMode = pixelSum / goodPixel;
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+          string tempHistoName;
+          {
+            stringstream ss;
+            ss << _commonModeDistHistoName << "-d" << sensorID;
+            tempHistoName = ss.str();
+          }
+          if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
+            histo->fill(commonMode);
 #endif
-	
-	} else {
-	  streamlog_out ( WARNING4 ) << "Skipping event " << _iEvt 
-				     << " because of common mode limit exceeded (" 
-				     << skippedPixel << ")" << endl;
-	  throw SkipEventException(this);
-	}
+
+        } else {
+          streamlog_out ( WARNING4 ) << "Skipping event " << _iEvt
+                                     << " because of common mode limit exceeded ("
+                                     << skippedPixel << ")" << endl;
+          throw SkipEventException(this);
+        }
       }
-      
-      
+
+
       rawIter     = rawData->getADCValues().begin();
       pedIter     = pedestal->getChargeValues().begin();
-      
-      while ( rawIter != rawData->getADCValues().end() )  {
-	double correctedValue = (*rawIter) - (*pedIter) - commonMode;
-	corrected->chargeValues().push_back(correctedValue);
-      
-      
-#ifdef MARLIN_USE_AIDA
-	if (_fillDebugHisto == 1) {
-	  string tempHistoName;
-	  {
-	    stringstream ss;
-	    ss << _rawDataDistHistoName << "-d" << sensorID;
-	    tempHistoName = ss.str();
-	  }
-	  if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
-	    histo->fill(*rawIter);
-	  else {
-	    streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName 
-				     << ".\nDisabling histogramming from now on " << endl;
-	    _fillDebugHisto = 0 ;
-	  }
 
-	  {
-	    stringstream ss;
-	    ss << _dataDistHistoName << "-d" << sensorID;
-	    tempHistoName = ss.str();
-	  }
-	  if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) ) 
-	    histo->fill(correctedValue);
-	  else {
-	    streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName 
-				     << ".\nDisabling histogramming from now on " << endl;
-	    _fillDebugHisto = 0 ;
-	  }
-	}
+      while ( rawIter != rawData->getADCValues().end() )  {
+        double correctedValue = (*rawIter) - (*pedIter) - commonMode;
+        corrected->chargeValues().push_back(correctedValue);
+
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+        if (_fillDebugHisto == 1) {
+          string tempHistoName;
+          {
+            stringstream ss;
+            ss << _rawDataDistHistoName << "-d" << sensorID;
+            tempHistoName = ss.str();
+          }
+          if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
+            histo->fill(*rawIter);
+          else {
+            streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName
+                                     << ".\nDisabling histogramming from now on " << endl;
+            _fillDebugHisto = 0 ;
+          }
+
+          {
+            stringstream ss;
+            ss << _dataDistHistoName << "-d" << sensorID;
+            tempHistoName = ss.str();
+          }
+          if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
+            histo->fill(correctedValue);
+          else {
+            streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName
+                                     << ".\nDisabling histogramming from now on " << endl;
+            _fillDebugHisto = 0 ;
+          }
+        }
 #endif
-	++rawIter;
-	++pedIter;
+        ++rawIter;
+        ++pedIter;
       }
       correctedDataCollection->push_back(corrected);
     }
     evt->addCollection(correctedDataCollection, _calibratedDataCollectionName);
-  
-  
+
+
   } catch (DataNotAvailableException& e) {
-    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber() 
-				<< " in run " << event->getRunNumber() << endl;
+    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
+                                << " in run " << event->getRunNumber() << endl;
   }
-  
+
 }
-  
+
 
 
 void EUTelCalibrateEventProcessor::check (LCEvent * evt) {

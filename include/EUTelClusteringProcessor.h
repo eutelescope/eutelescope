@@ -10,7 +10,7 @@
 #ifndef EUTELCLUSTERINGPROCESSOR_H
 #define EUTELCLUSTERINGPROCESSOR_H 1
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTelExceptions.h"
 #include "EUTELESCOPE.h"
 
@@ -18,11 +18,11 @@
 #include "marlin/Processor.h"
 
 // aida includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <IMPL/TrackerRawDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
 
@@ -60,7 +60,7 @@ namespace eutelescope {
    *  EUTelVirtualCluster, that is the base cluster class in the
    *  EUTelescope framework. All these classes are working according
    *  to the Decorator Pattern, and they have at least a TrackerData
-   *  pointer as data member.  
+   *  pointer as data member.
    *
    *  In order to write data on disk in the most general and
    *  consistent way, whatever object has been used during the
@@ -77,7 +77,7 @@ namespace eutelescope {
    *  @see processEvent(LCEvent*) for a detailed description of
    *  available algorithms.
    *
-   *  <h4>Input collections</h4> 
+   *  <h4>Input collections</h4>
    *
    *  <b>Data collection</b>: the input data TrackerData collection
    *  name. This collection is containing data pedestal subtracted
@@ -88,7 +88,7 @@ namespace eutelescope {
    *  the noise information of all pixels in all telescope
    *  detectors. Those numbers are used to calculate seed and cluster
    *  signal to noise ratio.
-   *  
+   *
    *  <b>Status collection</b>: the status TrackerData collection
    *  name as read from the Condition Processor. This object is used
    *  to exclude from the clustering procedure pixels defined as bad
@@ -106,7 +106,7 @@ namespace eutelescope {
    *  @param StatusCollectionName The name of the status collection.
    *
    *  @param PulseCollectionName The name of the output TrackerPulse collection.
-   * 
+   *
    *  @param ClusteringAlgo  This is a string representing which algorithm
    *  should be used for the clustering procedure.
    *
@@ -128,7 +128,7 @@ namespace eutelescope {
    *  containing the histogram booking information.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.19 2008-05-19 12:17:05 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.20 2008-08-23 12:30:51 bulgheroni Exp $
    *
    */
 
@@ -136,19 +136,19 @@ namespace eutelescope {
 
   public:
 
-     
+
     //! Returns a new instance of EUTelClusteringProcessor
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelClusteringProcessor.
      */
     virtual Processor * newProcessor() {
       return new EUTelClusteringProcessor;
     }
 
-    //! Default constructor 
+    //! Default constructor
     EUTelClusteringProcessor ();
 
     //! Called at the job beginning.
@@ -164,7 +164,7 @@ namespace eutelescope {
     /*! It is called for every run, and consequently the run counter
      *  is incremented. From the run header the number of detector is
      *  retrieved.
-     * 
+     *
      *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
@@ -174,7 +174,7 @@ namespace eutelescope {
      *  algorithm.
      *
      *  @see EUTelClusteringProcessor::fixedFrameClustering(LCEvent *)
-     * 
+     *
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
@@ -186,7 +186,7 @@ namespace eutelescope {
      *  soon as the processEvent is over. It can be used to fill check
      *  plots. For the time being there is nothing to check and do in
      *  this slot.
-     * 
+     *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
     virtual void check (LCEvent * evt);
@@ -217,13 +217,13 @@ namespace eutelescope {
      */
     void resetStatus(IMPL::TrackerRawDataImpl * status);
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! Book histograms
     /*! This method is used to prepare the needed directory structure
      *  within the current ITree folder and books all required
      *  histograms. Histogram pointers are stored into
      *  EUTelHistogramMaker::_aidaHistoMap so that they can be
-     *  recalled and filled from anywhere in the code.  
+     *  recalled and filled from anywhere in the code.
      */
     void bookHistos();
 
@@ -232,12 +232,12 @@ namespace eutelescope {
      *  information are inserted into specific AIDA histograms.
      *
      *  @param evt The current event object
-     */ 
+     */
     void fillHistos(LCEvent * evt);
 #endif
 
   protected:
-    
+
     //! Method for fixed frame clustering
     /*! This method is called by the processEvent method in the case
      *  the user selected the EUTELESCOPE::FIXEDFRAME algorithm for
@@ -247,7 +247,7 @@ namespace eutelescope {
      *  having a rectangular predefined maximum shape centered around
      *  the seed pixel. The seed pixel is defined as the one with the
      *  highest signal. Follows a brief description of the algorithm:
-     *  
+     *
      *  \li The full data matrix is scanned searching for seed pixel
      *  candidates. A seed candidate is defined as a pixel with a
      *  signal to noise ratio in excess the
@@ -255,7 +255,7 @@ namespace eutelescope {
      *  user. All candidates are added to a map
      *  (EUTelClusteringProcessor::_seedCandidateMap) where the first
      *  template element is the (float) pixel charge and the second is
-     *  the pixel index. 
+     *  the pixel index.
      *
      *  \li The use of a map has the advantage that the belonging
      *  elements are sorted according to the "key" value,
@@ -303,16 +303,16 @@ namespace eutelescope {
      *
      *  @param evt The LCIO event has passed by processEvent(LCEvent*)
      *  @param pulse The collection of pulses to append the found
-     *  clusters. 
+     *  clusters.
      */
     void fixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
     void zsFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
 
-    //! Method for sparse pixel re-clustering 
+    //! Method for sparse pixel re-clustering
     /*! This algorithm is based on the built-in proximity clustering
-     *  implemented in the EUTelSparseDataImpl class. 
+     *  implemented in the EUTelSparseDataImpl class.
      *
      *  The output of EUTelSparseDataImpl::findNeighbor is a list of
      *  list. Each of them is containing the indexes of pixels
@@ -326,13 +326,13 @@ namespace eutelescope {
      *
      *  @param evt The LCIO event has passed by processEvent(LCEvent*)
      *  @param pulse The collection of pulses to append the found
-     *  clusters. 
+     *  clusters.
      */
     void sparseClustering(LCEvent * evt, LCCollectionVec * pulse);
 
     //! Method for sparse pixel re-clustering with better performance
     /*! This algorithm is based on the built-in proximity clustering
-     *  implemented in the EUTelSparseDataImpl class. 
+     *  implemented in the EUTelSparseDataImpl class.
      *
      *  The output of EUTelSparseDataImpl::findNeighbor is a list of
      *  list. Each of them is containing the indexes of pixels
@@ -346,7 +346,7 @@ namespace eutelescope {
      *
      *  @param evt The LCIO event has passed by processEvent(LCEvent*)
      *  @param pulse The collection of pulses to append the found
-     *  clusters. 
+     *  clusters.
      */
     void sparseClustering2(LCEvent * evt, LCCollectionVec * pulse);
 
@@ -377,17 +377,17 @@ namespace eutelescope {
 
     //! Pulse collection name.
     /*! This is the name used to store the output cluster
-     *  collection. 
-     */ 
+     *  collection.
+     */
     std::string _pulseCollectionName;
 
-    
+
     //! Cluster collection name.
     /*! This is the name of the collection to store the in memory and
      *  on the disk the cluster. This will be a collection of
      *  TrackerData but it can be reimplemented depending on the
      *  clustering algorithm.
-     */ 
+     */
     std::string _dummyCollectionName;
 
 
@@ -481,13 +481,13 @@ namespace eutelescope {
     /*! This value is used to accept clusters coming from ZS data. To
      *  keep the framework as general as possible this variable is
      *  kept different from the corresponding rawmode one.
-     */ 
+     */
     float _zsClusterCut;
 
     //! Minimum distance of neighbor pixels
     /*! ZS pixel reclustering may need a minimum distance parameter to
      *  identify "close" pixels.
-     */ 
+     */
     float _minDistance;
 
     //! Current event number.
@@ -499,27 +499,27 @@ namespace eutelescope {
     //! Fill histogram switch
     /*! This boolean is used to switch on and off the filling of
      *  histograms.
-     */ 
+     */
     bool _fillHistos;
 
     //! The histogram information file
     /*! This string contain the name of the histogram information
      *  file. This is selected by the user in the steering file.
-     * 
+     *
      *  @see eutelescope::EUTelHistogramManager
      *  @see eutelescope::EUTelHistogramInfo
-     */ 
-    std::string _histoInfoFileName;    
+     */
+    std::string _histoInfoFileName;
 
 
   private:
 
-    //! The seed candidate pixel map. 
+    //! The seed candidate pixel map.
     /*! The map key is the pixel index in the matrix, while the float
      *  value the pixel signal
-     */ 
+     */
     std::map<float, unsigned int> _seedCandidateMap;
-    
+
 
     //! The current detector in the input collection
     /*! This int number represent the current detector being
@@ -552,25 +552,25 @@ namespace eutelescope {
      */
     IntVec _maxY;
 
-    //! Total cluster found 
+    //! Total cluster found
     /*! This array of int is used to store the total number of
      *  clusters found for each detector. The contents of this array
      *  is shown during the end()
-     */ 
+     */
     IntVec _totCluster;
 
     //! The number of detectors
     /*! The number of sensors in the telescope. This is retrieve from
      *  the run header
-     */ 
+     */
     int _noOfDetector;
 
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! List of cluster spectra N
     /*! This vector contains a list of cluster spectra we want to fill
-     *  in. 
-     */ 
+     *  in.
+     */
     std::vector<int > _clusterSpectraNVector;
 
     //! List of cluster spectra NxN
@@ -604,17 +604,17 @@ namespace eutelescope {
     //! Seed pixel signal histo name
     /*! This is the seed pixel spectrum histogram. To this name,
      *  the detector ID is added in order to make it unique.
-     */ 
+     */
     static std::string _seedSignalHistoName;
 
     //! Hit map histogram name
     /*! This is the hit map in pixel coordinate histogram name.
-     */ 
+     */
     static std::string _hitMapHistoName;
 
     //! Seed pixel SNR name
     /*! This is the seed pixel SNR histogram name
-     */ 
+     */
     static std::string _seedSNRHistoName;
 
     //! Cluster noise histogram name
@@ -640,7 +640,7 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelClusteringProcessor gEUTelClusteringProcessor;      
+  EUTelClusteringProcessor gEUTelClusteringProcessor;
 
 }
 #endif

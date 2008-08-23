@@ -13,7 +13,7 @@
 // built only if GEAR is used
 #ifdef USE_GEAR
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -22,12 +22,12 @@
 #include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
 
 // AIDA includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #include <AIDA/IHistogram2D.h>
 #include <AIDA/ICloud2D.h>
@@ -48,11 +48,11 @@ namespace eutelescope {
    *  separately.
    *  At the end of our study we'll have (n*n - n) histograms for X
    *  and (n*n - n) for Y ( n is the number of our detectors ). We
-   *  have this number of histograms because we don't create those 
+   *  have this number of histograms because we don't create those
    *  histograms where there will be the correlation between a
    *  detector and himself.
-   *  These histograms are put into different directories, 
-   *  one for X and one for Y, with cluster and hit correlation too. 
+   *  These histograms are put into different directories,
+   *  one for X and one for Y, with cluster and hit correlation too.
    *  For each directory we have pairs of histograms that differ only
    *  in the order of DetectorID and these result with X and Y
    *  reversed, but otherwise they are the same.
@@ -60,17 +60,17 @@ namespace eutelescope {
    *
    *  At 07/18/08 we do only cluster correlator, then we'll make hit
    *  correlator too.
-   *  
-   *  <h4>Input collections</h4> 
-   *  
+   *
+   *  <h4>Input collections</h4>
+   *
    *  <b>Cluster collection</b>: A collection with cluster
    *  produced by previous processors like EUTelClusteringProcessor or
-   *  EUTelClusterFilter. 
+   *  EUTelClusterFilter.
    *
    *
    *  @author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
    *  @author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-   *  @version $Id: EUTelCorrelator.h,v 1.3 2008-07-29 15:13:23 bulgheroni Exp $
+   *  @version $Id: EUTelCorrelator.h,v 1.4 2008-08-23 12:30:51 bulgheroni Exp $
    *
    */
 
@@ -78,19 +78,19 @@ namespace eutelescope {
 
   public:
 
-     
+
     //! Returns a new instance of EUTelCorrelator
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelCorrelator.
      */
     virtual Processor * newProcessor() {
       return new EUTelCorrelator;
     }
 
-    //! Default constructor 
+    //! Default constructor
     EUTelCorrelator ();
 
     //! Called at the job beginning.
@@ -101,8 +101,8 @@ namespace eutelescope {
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
-     *  is incremented. 
-     * 
+     *  is incremented.
+     *
      *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
@@ -114,7 +114,7 @@ namespace eutelescope {
      *  to the same sensors are used.
      *
      *  Histograms are booked in the first event.
-     * 
+     *
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
@@ -123,20 +123,20 @@ namespace eutelescope {
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
-     *  finished. 
+     *  finished.
      */
     virtual void end();
 
 
     //! Histogram booking
     /*! This method is used to book all the correlation histograms. It
-     *  is called by processEvent when processing the first event. 
-     */ 
+     *  is called by processEvent when processing the first event.
+     */
     void bookHistos();
 
 
   protected:
-    
+
     //! Input cluster collection name
     /*! This is the name of the collection containing the input clusters
      */
@@ -144,10 +144,10 @@ namespace eutelescope {
     std::string _inputHitCollectionName;
 
   private:
-    
-    //! Run number 
+
+    //! Run number
     int _iRun;
-    
+
     //! Event number
     int _iEvt;
 
@@ -187,36 +187,36 @@ namespace eutelescope {
      *
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
-     */ 
+     */
     gear::SiPlanesParameters * _siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geoemetry description. For each layer
      *  composing the telescope the relevant information are
      *  available.
-     *  
+     *
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
-     */ 
+     */
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
 
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
     //! AIDA histogram map
     /*! Instead of putting several pointers to AIDA histograms as
      *  class members, histograms are booked in the init() method and
      *  their pointers are inserted into this map keyed by their
-     *  names. 
+     *  names.
      *  The histogram filling can proceed recalling an object through
      *  its name
-     */ 
+     */
     std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
-    
+
     //! Correlation histogram matrix
     /*! This is used to store the pointers of each histogram
      */
-    std::vector< std::vector< AIDA::IHistogram2D *  > > _clusterXCorrelationMatrix; 
+    std::vector< std::vector< AIDA::IHistogram2D *  > > _clusterXCorrelationMatrix;
     std::vector< std::vector< AIDA::IHistogram2D *  > > _clusterYCorrelationMatrix;
 
 
@@ -231,13 +231,13 @@ namespace eutelescope {
 #endif
 
     bool _hasClusterCollection;
-    bool _hasHitCollection; 
+    bool _hasHitCollection;
 
   };
 
   //! A global instance of the processor
   EUTelCorrelator gEUTelCorrelator;
-      
+
 
 }
 

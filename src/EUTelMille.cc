@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.21 2008-07-29 13:38:48 bulgheroni Exp $
+// Version: $Id: EUTelMille.cc,v 1.22 2008-08-23 12:30:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -9,14 +9,10 @@
  *   header with author names in all development based on this file.
  *
  */
-
-// build only if ROOT is used
-#ifdef MARLIN_USE_ROOT
-
 // built only if GEAR is used
 #ifdef USE_GEAR
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTelMille.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
@@ -43,14 +39,14 @@
 #include <gear/SiPlanesParameters.h>
 
 // aida includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/ITree.h>
 #endif
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <IO/LCWriter.h>
 #include <UTIL/LCTime.h>
 #include <EVENT/LCCollection.h>
@@ -62,7 +58,9 @@
 #include <Exceptions.h>
 
 // ROOT includes
-#include <TRandom.h>
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
+# include <TRandom.h>
+#endif
 
 // system includes <>
 #include <string>
@@ -80,7 +78,7 @@ using namespace marlin;
 using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelMille::_numberTracksLocalname   = "NumberTracks";
 std::string EUTelMille::_chi2XLocalname          = "Chi2X";
 std::string EUTelMille::_chi2YLocalname          = "Chi2Y";
@@ -89,23 +87,23 @@ std::string EUTelMille::_residualYLocalname      = "ResidualY";
 #endif
 
 EUTelMille::EUTelMille () : Processor("EUTelMille") {
-  
+
   // modify processor description
   _description =
     "EUTelMille uses the MILLE program to write data files for MILLEPEDE II.";
 
   // choose input mode
   registerOptionalParameter("InputMode","Selects the source of input hits. 0 - hits read from hitfile with simple trackfinding. 1 - hits read from output of tracking processor. 2 - Test mode. Simple internal simulation and simple trackfinding.",_inputMode, static_cast <int> (0));
-  
+
   // input collections
 
   registerInputCollection(LCIO::TRACKERHIT,"HitCollectionName",
-			  "Hit collection name",
-			  _hitCollectionName,std::string("hit"));
+                          "Hit collection name",
+                          _hitCollectionName,std::string("hit"));
 
   registerInputCollection(LCIO::TRACK,"TrackCollectionName",
-			  "Track collection name",
-			  _trackCollectionName,std::string("fittracks"));
+                          "Track collection name",
+                          _trackCollectionName,std::string("fittracks"));
 
   // parameters
 
@@ -115,32 +113,32 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   std::vector<int> exclPlanes;
 
   registerOptionalParameter("ExcludePlanes","Exclude planes from fit."
-			    ,_excludePlanes , exclPlanes);
+                            ,_excludePlanes , exclPlanes);
 
   registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates."
-			    ,_maxTrackCandidates, static_cast <int> (2000));
+                            ,_maxTrackCandidates, static_cast <int> (2000));
 
   registerOptionalParameter("BinaryFilename","Name of the Millepede binary file."
-			    ,_binaryFilename, string ("mille.bin"));
+                            ,_binaryFilename, string ("mille.bin"));
 
   registerOptionalParameter("TelescopeResolution","Resolution of the telescope for Millepede."
-			    ,_telescopeResolution, static_cast <float> (3.0));
+                            ,_telescopeResolution, static_cast <float> (3.0));
 
   registerOptionalParameter("OnlySingleHitEvents","Use only events with one hit in every plane."
-			    ,_onlySingleHitEvents, static_cast <int> (0));
+                            ,_onlySingleHitEvents, static_cast <int> (0));
 
   registerOptionalParameter("OnlySingleTrackEvents","Use only events with one hit in every plane"
-			    ,_onlySingleTrackEvents, static_cast <int> (0));
+                            ,_onlySingleTrackEvents, static_cast <int> (0));
 
   registerOptionalParameter("AlignMode","Number of alignment constants used. Available mode are: 1 - shifts in the X and Y directions and a rotation around the Z axis, 2 - only shifts in the X and Y directions",
-			    _alignMode, static_cast <int> (1));
+                            _alignMode, static_cast <int> (1));
 
   registerOptionalParameter("UseResidualCuts","Use cuts on the residuals to reduce the combinatorial background. 0 for off (default), 1 for on"
-			    ,_useResidualCuts, static_cast <int> (0));
+                            ,_useResidualCuts, static_cast <int> (0));
 
-  registerOptionalParameter("AlignmentConstantLCIOFile","This is the name of the LCIO file name with the output alignment" 
-			    "constants (add .slcio)",
-			    _alignmentConstantLCIOFile, static_cast< string > ( "alignment.slcio" ) );
+  registerOptionalParameter("AlignmentConstantLCIOFile","This is the name of the LCIO file name with the output alignment"
+                            "constants (add .slcio)",
+                            _alignmentConstantLCIOFile, static_cast< string > ( "alignment.slcio" ) );
 
   FloatVec MinimalResidualsX;
   MinimalResidualsX.push_back(0.0);
@@ -175,28 +173,28 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   MaximalResidualsY.push_back(0.0);
 
   registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a track"
-			    ,_residualsXMin,MinimalResidualsX);
+                            ,_residualsXMin,MinimalResidualsX);
 
   registerOptionalParameter("ResidualsYMin","Minimal values of the hit residuals in the Y direction for a track"
-			    ,_residualsYMin,MinimalResidualsY);
+                            ,_residualsYMin,MinimalResidualsY);
 
   registerOptionalParameter("ResidualsXMax","Maximal values of the hit residuals in the X direction for a track"
-			    ,_residualsXMax,MaximalResidualsX);
+                            ,_residualsXMax,MaximalResidualsX);
 
   registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a track"
-			    ,_residualsYMax,MaximalResidualsY);
+                            ,_residualsYMax,MaximalResidualsY);
 
   registerOptionalParameter("GeneratePedeSteerfile","Generate a steering file for the pede program."
-			    ,_generatePedeSteerfile, static_cast <int> (0));
+                            ,_generatePedeSteerfile, static_cast <int> (0));
 
   registerOptionalParameter("PedeSteerfileName","Name of the steering file for the pede program."
-			    ,_pedeSteerfileName, string("steer_mille.txt"));
+                            ,_pedeSteerfileName, string("steer_mille.txt"));
 
   registerOptionalParameter("RunPede","Execute the pede program using the generated steering file."
-			    ,_runPede, static_cast <int> (0));
+                            ,_runPede, static_cast <int> (0));
 
   registerOptionalParameter("UsePedeUserStartValues","Give start values for pede by hand (0 - automatic calculation of start values, 1 - start values defined by user)."
-			    ,_usePedeUserStartValues, static_cast <int> (0));
+                            ,_usePedeUserStartValues, static_cast <int> (0));
 
   FloatVec PedeUserStartValuesX;
   PedeUserStartValuesX.push_back(0.0);
@@ -207,7 +205,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   PedeUserStartValuesX.push_back(0.0);
 
   registerOptionalParameter("PedeUserStartValuesX","Start values for the alignment for shifts in the X direction."
-			    ,_pedeUserStartValuesX,PedeUserStartValuesX);
+                            ,_pedeUserStartValuesX,PedeUserStartValuesX);
 
   FloatVec PedeUserStartValuesY;
   PedeUserStartValuesY.push_back(0.0);
@@ -218,7 +216,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   PedeUserStartValuesY.push_back(0.0);
 
   registerOptionalParameter("PedeUserStartValuesY","Start values for the alignment for shifts in the Y direction."
-			    ,_pedeUserStartValuesY,PedeUserStartValuesY);
+                            ,_pedeUserStartValuesY,PedeUserStartValuesY);
 
   FloatVec PedeUserStartValuesGamma;
   PedeUserStartValuesGamma.push_back(0.0);
@@ -229,16 +227,16 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   PedeUserStartValuesGamma.push_back(0.0);
 
   registerOptionalParameter("PedeUserStartValuesGamma","Start values for the alignment for the angle gamma."
-			    ,_pedeUserStartValuesGamma,PedeUserStartValuesGamma);
+                            ,_pedeUserStartValuesGamma,PedeUserStartValuesGamma);
 
   registerOptionalParameter("TestModeSensorResolution","Resolution assumed for the sensors in test mode."
-			    ,_testModeSensorResolution, static_cast <float> (3.0));
+                            ,_testModeSensorResolution, static_cast <float> (3.0));
 
   registerOptionalParameter("TestModeXTrackSlope","Width of the track slope distribution in the x direction"
-			    ,_testModeXTrackSlope, static_cast <float> (0.0005));
+                            ,_testModeXTrackSlope, static_cast <float> (0.0005));
 
   registerOptionalParameter("TestModeYTrackSlope","Width of the track slope distribution in the y direction"
-			    ,_testModeYTrackSlope, static_cast <float> (0.0005));
+                            ,_testModeYTrackSlope, static_cast <float> (0.0005));
 
   FloatVec SensorZPositions;
   SensorZPositions.push_back(20000.0);
@@ -249,7 +247,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   SensorZPositions.push_back(120000.0);
 
   registerOptionalParameter("TestModeSensorZPositions","Z positions of the sensors in test mode."
-			    ,_testModeSensorZPositions,SensorZPositions);
+                            ,_testModeSensorZPositions,SensorZPositions);
 
   FloatVec SensorXShifts;
   SensorXShifts.push_back(0.0);
@@ -268,10 +266,10 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   SensorYShifts.push_back(0.0);
 
   registerOptionalParameter("TestModeSensorXShifts","X shifts of the sensors in test mode (to be determined by the alignment)."
-			    ,_testModeSensorXShifts,SensorXShifts);
+                            ,_testModeSensorXShifts,SensorXShifts);
 
   registerOptionalParameter("TestModeSensorYShifts","Y shifts of the sensors in test mode (to be determined by the alignment)."
-			    ,_testModeSensorYShifts,SensorYShifts);
+                            ,_testModeSensorYShifts,SensorYShifts);
 
   FloatVec SensorGamma;
   SensorGamma.push_back(0.0);
@@ -282,7 +280,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   SensorGamma.push_back(0.0);
 
   registerOptionalParameter("TestModeSensorGamma","Rotation around the z axis of the sensors in test mode (to be determined by the alignment)."
-			    ,_testModeSensorGamma,SensorGamma);
+                            ,_testModeSensorGamma,SensorGamma);
 
   FloatVec SensorAlpha;
   SensorAlpha.push_back(0.0);
@@ -293,7 +291,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   SensorAlpha.push_back(0.0);
 
   registerOptionalParameter("TestModeSensorAlpha","Rotation around the x axis of the sensors in test mode (to be determined by the alignment)."
-			    ,_testModeSensorAlpha,SensorAlpha);
+                            ,_testModeSensorAlpha,SensorAlpha);
 
   FloatVec SensorBeta;
   SensorBeta.push_back(0.0);
@@ -304,7 +302,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   SensorBeta.push_back(0.0);
 
   registerOptionalParameter("TestModeSensorBeta","Rotation around the y axis of the sensors in test mode (to be determined by the alignment)."
-			    ,_testModeSensorBeta,SensorBeta);
+                            ,_testModeSensorBeta,SensorBeta);
 
 }
 
@@ -316,7 +314,7 @@ void EUTelMille::init() {
   // set to zero the run and event counters
   _iRun = 0;
   _iEvt = 0;
-  
+
   // Initialize number of excluded planes
   _nExcludePlanes = _excludePlanes.size();
 
@@ -328,28 +326,28 @@ void EUTelMille::init() {
 
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
-  
+
   streamlog_out ( ERROR2 ) << "Marlin was not built with GEAR support." << endl;
   streamlog_out ( ERROR2 ) << "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." << endl;
-  
+
   // I'm thinking if this is the case of throwing an exception or
   // not. This is a really error and not something that can
   // exceptionally happens. Still not sure what to do
   exit(-1);
-  
+
 #else
-  
+
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
     streamlog_out ( ERROR2) << "The GearMgr is not available, for an unknown reason." << endl;
     exit(-1);
   }
-  
+
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-  
+
   _histogramSwitch = true;
-  
+
 #endif
 
   _nPlanes = _siPlanesParameters->getSiPlanesNumber();
@@ -358,7 +356,7 @@ void EUTelMille::init() {
   _waferResidY = new double[_nPlanes];
   _xFitPos = new double[_nPlanes];
   _yFitPos = new double[_nPlanes];
-  
+
   _telescopeResolX = new double[_nPlanes];
   _telescopeResolY = new double[_nPlanes];
 
@@ -375,15 +373,15 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
 
   auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
   header->addProcessor( type() ) ;
-  
+
   // the run header contains the number of detectors. This number
   // should be in principle the same as the number of layers in the
   // geometry description
   if ( header->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) {
     streamlog_out ( ERROR2 ) << "Error during the geometry consistency check: " << endl;
     streamlog_out ( ERROR2 ) << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " << endl;
-    streamlog_out ( ERROR2 ) << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() 
-			     << " silicon planes" << endl;
+    streamlog_out ( ERROR2 ) << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber()
+                             << " silicon planes" << endl;
     string answer;
     while (true) {
       streamlog_out ( ERROR2 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
@@ -391,19 +389,19 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
       // put the answer in lower case before making the comparison.
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
       if ( answer == "q" ) {
-   	exit(-1);
+        exit(-1);
       } else if ( answer == "c" ) {
-   	break;
+        break;
       }
     }
   }
-  
+
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
   // beam test. The same number should be saved in the run header and
   // in the xml file. If the numbers are different, instead of barely
   // quitting ask the user what to do.
-  
+
   if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
     streamlog_out ( ERROR2 ) << "Error during the geometry consistency check: " << endl;
     streamlog_out ( ERROR2 ) << "The run header says the GeoID is " << header->getGeoID() << endl;
@@ -415,18 +413,18 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
       // put the answer in lower case before making the comparison.
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
       if ( answer == "q" ) {
-   	exit(-1);
+        exit(-1);
       } else if ( answer == "c" ) {
-   	break;
+        break;
       }
     }
   }
- 
-    
- 
+
+
+
   // increment the run counter
   ++_iRun;
-    
+
 }
 
 void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFitter[], double yResFitter[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]) {
@@ -438,7 +436,7 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
   } else {
     sizearray = nPlanesFitter;
   }
-  
+
   double * xPosFit = new double[sizearray];
   double * yPosFit = new double[sizearray];
   double * zPosFit = new double[sizearray];
@@ -448,15 +446,15 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
   int nPlanesFit = 0;
 
   for (int help = 0; help < nPlanesFitter; help++) {
-    
+
     int excluded = 0;
 
     // check if actual plane is excluded
     if (_nExcludePlanes > 0) {
       for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-	if (help == _excludePlanes[helphelp]) {
-	  excluded = 1;
-	}
+        if (help == _excludePlanes[helphelp]) {
+          excluded = 1;
+        }
       }
     }
 
@@ -475,93 +473,93 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
   // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // ++++++++++++ See Blobel Page 226 !!! +++++++++++++++++
   // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    
+
   int counter;
-    
+
   float S1[2]   = {0,0};
   float Sx[2]   = {0,0};
   float Xbar[2] = {0,0};
-    
+
   float * Zbar_X = new float[nPlanesFit];
   float * Zbar_Y = new float[nPlanesFit];
   for (counter = 0; counter < nPlanesFit; counter++){
     Zbar_X[counter] = 0.;
     Zbar_Y[counter] = 0.;
   }
-    
+
   float Sy[2]     = {0,0};
   float Ybar[2]   = {0,0};
   float Sxybar[2] = {0,0};
   float Sxxbar[2] = {0,0};
   float A2[2]     = {0,0};
-    
+
   // define S1
   for( counter = 0; counter < nPlanesFit; counter++ ){
     S1[0] = S1[0] + 1/pow(xResFit[counter],2);
     S1[1] = S1[1] + 1/pow(yResFit[counter],2);
   }
-    
+
   // define Sx
   for( counter = 0; counter < nPlanesFit; counter++ ){
     Sx[0] = Sx[0] + zPosFit[counter]/pow(xResFit[counter],2);
     Sx[1] = Sx[1] + zPosFit[counter]/pow(yResFit[counter],2);
   }
-    
+
   // define Xbar
   Xbar[0]=Sx[0]/S1[0];
   Xbar[1]=Sx[1]/S1[1];
-    
+
   // coordinate transformation !! -> bar
   for( counter = 0; counter < nPlanesFit; counter++ ){
     Zbar_X[counter] = zPosFit[counter]-Xbar[0];
     Zbar_Y[counter] = zPosFit[counter]-Xbar[1];
-  } 
-    
+  }
+
   // define Sy
   for( counter = 0; counter < nPlanesFit; counter++ ){
     Sy[0] = Sy[0] + xPosFit[counter]/pow(xResFit[counter],2);
     Sy[1] = Sy[1] + yPosFit[counter]/pow(yResFit[counter],2);
   }
-    
+
   // define Ybar
   Ybar[0]=Sy[0]/S1[0];
   Ybar[1]=Sy[1]/S1[1];
-    
+
   // define Sxybar
   for( counter = 0; counter < nPlanesFit; counter++ ){
     Sxybar[0] = Sxybar[0] + Zbar_X[counter] * xPosFit[counter]/pow(xResFit[counter],2);
     Sxybar[1] = Sxybar[1] + Zbar_Y[counter] * yPosFit[counter]/pow(yResFit[counter],2);
   }
-    
+
   // define Sxxbar
   for( counter = 0; counter < nPlanesFit; counter++ ){
     Sxxbar[0] = Sxxbar[0] + Zbar_X[counter] * Zbar_X[counter]/pow(xResFit[counter],2);
     Sxxbar[1] = Sxxbar[1] + Zbar_Y[counter] * Zbar_Y[counter]/pow(yResFit[counter],2);
   }
-    
+
   // define A2
   A2[0]=Sxybar[0]/Sxxbar[0];
   A2[1]=Sxybar[1]/Sxxbar[1];
-    
+
   // Calculate chi sqaured
-  // Chi^2 for X and Y coordinate for hits in all planes 
+  // Chi^2 for X and Y coordinate for hits in all planes
   for( counter = 0; counter < nPlanesFit; counter++ ){
     chi2Fit[0] += pow(-zPosFit[counter]*A2[0]
-		      +xPosFit[counter]-Ybar[0]+Xbar[0]*A2[0],2)/pow(xResFit[counter],2);
+                      +xPosFit[counter]-Ybar[0]+Xbar[0]*A2[0],2)/pow(xResFit[counter],2);
     chi2Fit[1] += pow(-zPosFit[counter]*A2[1]
-		      +yPosFit[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(yResFit[counter],2);
+                      +yPosFit[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(yResFit[counter],2);
   }
 
   for( counter = 0; counter < nPlanesFitter; counter++ ) {
 
     residXFit[counter] = (Ybar[0]-Xbar[0]*A2[0]+zPosFitter[counter]*A2[0])-xPosFitter[counter];
     residYFit[counter] = (Ybar[1]-Xbar[1]*A2[1]+zPosFitter[counter]*A2[1])-yPosFitter[counter];
-    
+
     // residXFit[counter] = xPosFitter[counter] - (Ybar[0]-Xbar[0]*A2[0]+zPosFitter[counter]*A2[0]);
     // residYFit[counter] = yPosFitter[counter] - (Ybar[1]-Xbar[1]*A2[1]+zPosFitter[counter]*A2[1]);
 
   }
-    
+
   // define angle
   angleFit[0] = atan(A2[0]);
   angleFit[1] = atan(A2[1]);
@@ -572,7 +570,7 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
   delete [] xPosFit;
   delete [] yResFit;
   delete [] xResFit;
-      
+
   delete [] Zbar_X;
   delete [] Zbar_Y;
 
@@ -586,12 +584,12 @@ void EUTelMille::processEvent (LCEvent * event) {
   for (int help = 0; help < _nPlanes; help++) {
     _telescopeResolX[help] = _telescopeResolution;
     _telescopeResolY[help] = _telescopeResolution;
-  }  
+  }
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
 
   streamlog_out ( MESSAGE2 ) << "Runnumber: " << event->getRunNumber() << " Eventnumber: " << event->getEventNumber() << endl;
-  
+
   if ( evt->getEventType() == kEORE ) {
     streamlog_out ( DEBUG2 ) << "EORE found: nothing else to do." << endl;
     return;
@@ -605,14 +603,14 @@ void EUTelMille::processEvent (LCEvent * event) {
       collection = event->getCollection(_hitCollectionName);
     }
   } catch (DataNotAvailableException& e) {
-    streamlog_out ( WARNING2 ) << "No input collection found for event " << event->getEventNumber() 
-				<< " in run " << event->getRunNumber() << endl;
+    streamlog_out ( WARNING2 ) << "No input collection found for event " << event->getEventNumber()
+                               << " in run " << event->getRunNumber() << endl;
     throw SkipEventException(this);
   }
 
   int detectorID    = -99; // it's a non sense
   int oldDetectorID = -100;
-  int layerIndex; 
+  int layerIndex;
 
   vector<EUTelMille::HitsInPlane > _hitsFirstPlane;
   vector<EUTelMille::HitsInPlane > _hitsSecondPlane;
@@ -620,7 +618,7 @@ void EUTelMille::processEvent (LCEvent * event) {
   vector<EUTelMille::HitsInPlane > _hitsFourthPlane;
   vector<EUTelMille::HitsInPlane > _hitsFifthPlane;
   vector<EUTelMille::HitsInPlane > _hitsSixthPlane;
-    
+
   HitsInPlane hitsInPlane;
 
   // check if running in input mode 0 or 2
@@ -628,65 +626,65 @@ void EUTelMille::processEvent (LCEvent * event) {
 
     // loop over all hits in collection
     for ( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ ) {
-      
+
       TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( collection->getElementAt(iHit) );
-      
+
       LCObjectVec clusterVector = hit->getRawHits();
-      
+
       EUTelVirtualCluster * cluster;
       if ( hit->getType() == kEUTelFFClusterImpl ) {
 
-	// fixed cluster implementation. Remember it can come from
-	// both RAW and ZS data
-	cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+        // fixed cluster implementation. Remember it can come from
+        // both RAW and ZS data
+        cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
       } else if ( hit->getType() == kEUTelSparseClusterImpl ) {
 
-	// ok the cluster is of sparse type, but we also need to know
-	// the kind of pixel description used. This information is
-	// stored in the corresponding original data collection.
+        // ok the cluster is of sparse type, but we also need to know
+        // the kind of pixel description used. This information is
+        // stored in the corresponding original data collection.
 
-	LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-	TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-	CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-	SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+        LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+        TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+        CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+        SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
 
-	// now we know the pixel type. So we can properly create a new
-	// instance of the sparse cluster
-	if ( pixelType == kEUTelSimpleSparsePixel ) {
-	  cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
-	    ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
-	} else {
-	  streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-	  throw UnknownDataTypeException("Pixel type unknown");
-	}
-      
+        // now we know the pixel type. So we can properly create a new
+        // instance of the sparse cluster
+        if ( pixelType == kEUTelSimpleSparsePixel ) {
+          cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+            ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+        } else {
+          streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+          throw UnknownDataTypeException("Pixel type unknown");
+        }
+
       } else {
-	throw UnknownDataTypeException("Unknown cluster type");
-      }
-      
-      detectorID = cluster->getDetectorID();
-      
-      if ( detectorID != oldDetectorID ) {
-	oldDetectorID = detectorID;
-	
-	if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
-	  // first of all try to see if this detectorID already belong to 
-	  if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
-	    // this means that this detector ID was not already inserted,
-	    // so this is the right place to do that
-	    for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
-	      if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
-		_conversionIdMap.insert( make_pair( detectorID, iLayer ) );
-		break;
-	      }
-	    }
-	  }
-	}
-	
+        throw UnknownDataTypeException("Unknown cluster type");
       }
 
-      layerIndex   = _conversionIdMap[detectorID];     
-      
+      detectorID = cluster->getDetectorID();
+
+      if ( detectorID != oldDetectorID ) {
+        oldDetectorID = detectorID;
+
+        if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
+          // first of all try to see if this detectorID already belong to
+          if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
+            // this means that this detector ID was not already inserted,
+            // so this is the right place to do that
+            for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
+              if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
+                _conversionIdMap.insert( make_pair( detectorID, iLayer ) );
+                break;
+              }
+            }
+          }
+        }
+
+      }
+
+      layerIndex   = _conversionIdMap[detectorID];
+
       // Getting positions of the hits.
       // ------------------------------
 
@@ -694,31 +692,33 @@ void EUTelMille::processEvent (LCEvent * event) {
       hitsInPlane.measuredY = 1000 * hit->getPosition()[1];
       hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
 
-      delete cluster; // <--- destroying the cluster   
+      delete cluster; // <--- destroying the cluster
 
       // Add Hits to vector
-      
+
       if (layerIndex == 0) {
-	_hitsFirstPlane.push_back(hitsInPlane);
+        _hitsFirstPlane.push_back(hitsInPlane);
       } else if (layerIndex == 1) {
-	_hitsSecondPlane.push_back(hitsInPlane);
+        _hitsSecondPlane.push_back(hitsInPlane);
       } else if (layerIndex == 2) {
-	_hitsThirdPlane.push_back(hitsInPlane);
+        _hitsThirdPlane.push_back(hitsInPlane);
       } else if (layerIndex == 3) {
-	_hitsFourthPlane.push_back(hitsInPlane);
+        _hitsFourthPlane.push_back(hitsInPlane);
       } else if (layerIndex == 4) {
-	_hitsFifthPlane.push_back(hitsInPlane);
+        _hitsFifthPlane.push_back(hitsInPlane);
       } else if (layerIndex == 5) {
-	_hitsSixthPlane.push_back(hitsInPlane);
+        _hitsSixthPlane.push_back(hitsInPlane);
       }
 
     } // end loop over all hits in collection
 
   } else if (_inputMode == 2) {
 
+#if defined( USE_ROOT ) || defined(MARLIN_USE_ROOT)
+
     const float resolX = _testModeSensorResolution;
     const float resolY = _testModeSensorResolution;
-    
+
     const float xhitpos = gRandom->Uniform(-3500.0,3500.0);
     const float yhitpos = gRandom->Uniform(-3500.0,3500.0);
 
@@ -728,65 +728,74 @@ void EUTelMille::processEvent (LCEvent * event) {
     // loop over all planes
     for (int help = 0; help < _nPlanes; help++) {
 
-      // The x and y positions are given by the sums of the measured hit positions, the detector resolution, the shifts of the planes and the effect due to the track slopes.
+      // The x and y positions are given by the sums of the measured
+      // hit positions, the detector resolution, the shifts of the
+      // planes and the effect due to the track slopes.
 
       if (help == 0) {
 
-	hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[0] + _testModeSensorZPositions[0] * tan(xslope) - _testModeSensorGamma[0] * yhitpos - _testModeSensorBeta[0] * _testModeSensorZPositions[0];
-	hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[0] + _testModeSensorZPositions[0] * tan(yslope) + _testModeSensorGamma[0] * xhitpos - _testModeSensorAlpha[0] * _testModeSensorZPositions[0];
-	hitsInPlane.measuredZ = _testModeSensorZPositions[0];
-	_hitsFirstPlane.push_back(hitsInPlane);
-	_telescopeResolX[help] = resolX;
-	_telescopeResolY[help] = resolY;
-	
+        hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[0] + _testModeSensorZPositions[0] * tan(xslope) - _testModeSensorGamma[0] * yhitpos - _testModeSensorBeta[0] * _testModeSensorZPositions[0];
+        hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[0] + _testModeSensorZPositions[0] * tan(yslope) + _testModeSensorGamma[0] * xhitpos - _testModeSensorAlpha[0] * _testModeSensorZPositions[0];
+        hitsInPlane.measuredZ = _testModeSensorZPositions[0];
+        _hitsFirstPlane.push_back(hitsInPlane);
+        _telescopeResolX[help] = resolX;
+        _telescopeResolY[help] = resolY;
+
       } else if (help == 1) {
 
-	hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[1] + _testModeSensorZPositions[1] * tan(xslope) - _testModeSensorGamma[1] * yhitpos - _testModeSensorBeta[1] * _testModeSensorZPositions[1];
-	hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[1] + _testModeSensorZPositions[1] * tan(yslope) + _testModeSensorGamma[1] * xhitpos - _testModeSensorAlpha[1] * _testModeSensorZPositions[1];
-	hitsInPlane.measuredZ = _testModeSensorZPositions[1];
-	_hitsSecondPlane.push_back(hitsInPlane);
-	_telescopeResolX[help] = resolX;
-	_telescopeResolY[help] = resolY;
+        hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[1] + _testModeSensorZPositions[1] * tan(xslope) - _testModeSensorGamma[1] * yhitpos - _testModeSensorBeta[1] * _testModeSensorZPositions[1];
+        hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[1] + _testModeSensorZPositions[1] * tan(yslope) + _testModeSensorGamma[1] * xhitpos - _testModeSensorAlpha[1] * _testModeSensorZPositions[1];
+        hitsInPlane.measuredZ = _testModeSensorZPositions[1];
+        _hitsSecondPlane.push_back(hitsInPlane);
+        _telescopeResolX[help] = resolX;
+        _telescopeResolY[help] = resolY;
 
       } else if (help == 2) {
-	
-	hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[2] + _testModeSensorZPositions[2] * tan(xslope) - _testModeSensorGamma[2] * yhitpos - _testModeSensorBeta[2] * _testModeSensorZPositions[2];
-	hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[2] + _testModeSensorZPositions[2] * tan(yslope) + _testModeSensorGamma[2] * xhitpos - _testModeSensorAlpha[2] * _testModeSensorZPositions[2];
-	hitsInPlane.measuredZ = _testModeSensorZPositions[2];
-	_hitsThirdPlane.push_back(hitsInPlane);
-	_telescopeResolX[help] = resolX;
-	_telescopeResolY[help] = resolY;
+
+        hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[2] + _testModeSensorZPositions[2] * tan(xslope) - _testModeSensorGamma[2] * yhitpos - _testModeSensorBeta[2] * _testModeSensorZPositions[2];
+        hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[2] + _testModeSensorZPositions[2] * tan(yslope) + _testModeSensorGamma[2] * xhitpos - _testModeSensorAlpha[2] * _testModeSensorZPositions[2];
+        hitsInPlane.measuredZ = _testModeSensorZPositions[2];
+        _hitsThirdPlane.push_back(hitsInPlane);
+        _telescopeResolX[help] = resolX;
+        _telescopeResolY[help] = resolY;
 
       } else if (help == 3) {
 
-	hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[3] + _testModeSensorZPositions[3] * tan(xslope) - _testModeSensorGamma[3] * yhitpos - _testModeSensorBeta[3] * _testModeSensorZPositions[3];
-	hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[3] + _testModeSensorZPositions[3] * tan(yslope) + _testModeSensorGamma[3] * xhitpos - _testModeSensorAlpha[3] * _testModeSensorZPositions[3];
-	hitsInPlane.measuredZ = _testModeSensorZPositions[3];
-	_hitsFourthPlane.push_back(hitsInPlane);
-	_telescopeResolX[help] = resolX;
-	_telescopeResolY[help] = resolY;
+        hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[3] + _testModeSensorZPositions[3] * tan(xslope) - _testModeSensorGamma[3] * yhitpos - _testModeSensorBeta[3] * _testModeSensorZPositions[3];
+        hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[3] + _testModeSensorZPositions[3] * tan(yslope) + _testModeSensorGamma[3] * xhitpos - _testModeSensorAlpha[3] * _testModeSensorZPositions[3];
+        hitsInPlane.measuredZ = _testModeSensorZPositions[3];
+        _hitsFourthPlane.push_back(hitsInPlane);
+        _telescopeResolX[help] = resolX;
+        _telescopeResolY[help] = resolY;
 
       } else if (help == 4) {
 
-	hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[4] + _testModeSensorZPositions[4] * tan(xslope) - _testModeSensorGamma[4] * yhitpos - _testModeSensorBeta[4] * _testModeSensorZPositions[4];
-	hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[4] + _testModeSensorZPositions[4] * tan(yslope) + _testModeSensorGamma[4] * xhitpos - _testModeSensorAlpha[4] * _testModeSensorZPositions[4];
-	hitsInPlane.measuredZ = _testModeSensorZPositions[4];
-	_hitsFifthPlane.push_back(hitsInPlane);
-	_telescopeResolX[help] = resolX;
-	_telescopeResolY[help] = resolY;
-	
+        hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[4] + _testModeSensorZPositions[4] * tan(xslope) - _testModeSensorGamma[4] * yhitpos - _testModeSensorBeta[4] * _testModeSensorZPositions[4];
+        hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[4] + _testModeSensorZPositions[4] * tan(yslope) + _testModeSensorGamma[4] * xhitpos - _testModeSensorAlpha[4] * _testModeSensorZPositions[4];
+        hitsInPlane.measuredZ = _testModeSensorZPositions[4];
+        _hitsFifthPlane.push_back(hitsInPlane);
+        _telescopeResolX[help] = resolX;
+        _telescopeResolY[help] = resolY;
+
       } else if (help == 5) {
 
-	hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[5] + _testModeSensorZPositions[5] * tan(xslope) - _testModeSensorGamma[5] * yhitpos - _testModeSensorBeta[5] * _testModeSensorZPositions[5];
-	hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[5] + _testModeSensorZPositions[5] * tan(yslope) + _testModeSensorGamma[5] * xhitpos - _testModeSensorAlpha[5] * _testModeSensorZPositions[5];
-	hitsInPlane.measuredZ = _testModeSensorZPositions[5];
-	_hitsSixthPlane.push_back(hitsInPlane);
-	_telescopeResolX[help] = resolX;
-	_telescopeResolY[help] = resolY;
+        hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[5] + _testModeSensorZPositions[5] * tan(xslope) - _testModeSensorGamma[5] * yhitpos - _testModeSensorBeta[5] * _testModeSensorZPositions[5];
+        hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[5] + _testModeSensorZPositions[5] * tan(yslope) + _testModeSensorGamma[5] * xhitpos - _testModeSensorAlpha[5] * _testModeSensorZPositions[5];
+        hitsInPlane.measuredZ = _testModeSensorZPositions[5];
+        _hitsSixthPlane.push_back(hitsInPlane);
+        _telescopeResolX[help] = resolX;
+        _telescopeResolY[help] = resolY;
 
       }
 
     } // end loop over all planes
+
+#else // USE_ROOT
+
+    throw MissingLibrary( this, "ROOT" );
+
+#endif
+
 
   } // end if check running in input mode 0 or 2
 
@@ -837,222 +846,222 @@ void EUTelMille::processEvent (LCEvent * event) {
     // ---------------------------------------------
     //
     // This is done separately for different numbers of planes.
-  
+
     // loop over all hits in first plane
     for (int firsthit = 0; uint(firsthit) < _hitsFirstPlane.size(); firsthit++) {
-      
+
       // loop over all hits in second plane
       for (int secondhit = 0; uint(secondhit) < _hitsSecondPlane.size(); secondhit++) {
 
-	distance12 = sqrt(pow(_hitsFirstPlane[firsthit].measuredX - _hitsSecondPlane[secondhit].measuredX,2) + pow(_hitsFirstPlane[firsthit].measuredY - _hitsSecondPlane[secondhit].measuredY,2));
+        distance12 = sqrt(pow(_hitsFirstPlane[firsthit].measuredX - _hitsSecondPlane[secondhit].measuredX,2) + pow(_hitsFirstPlane[firsthit].measuredY - _hitsSecondPlane[secondhit].measuredY,2));
 
-	distance_plane12 = _hitsSecondPlane[secondhit].measuredZ - _hitsFirstPlane[firsthit].measuredZ;
+        distance_plane12 = _hitsSecondPlane[secondhit].measuredZ - _hitsFirstPlane[firsthit].measuredZ;
 
-	distanceMax12 = _distanceMax * (distance_plane12 / 100000.0);
+        distanceMax12 = _distanceMax * (distance_plane12 / 100000.0);
 
-	if (_nPlanes == 2 && distance12 < distanceMax12 && _nTracks < _maxTrackCandidates) {
+        if (_nPlanes == 2 && distance12 < distanceMax12 && _nTracks < _maxTrackCandidates) {
 
-	  if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1)) {
+          if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1)) {
 
-	    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-	    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-	    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+            _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+            _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+            _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
 
-	    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-	    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-	    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+            _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+            _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+            _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
 
-	    _nTracks++;
+            _nTracks++;
 
-	  }
+          }
 
-	}
-	
-	// more than two planes
-	if (_nPlanes > 2) {
+        }
 
-	  // loop over all hits in third plane
-	  for (int thirdhit = 0; uint(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
+        // more than two planes
+        if (_nPlanes > 2) {
 
-	    distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
+          // loop over all hits in third plane
+          for (int thirdhit = 0; uint(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
 
-	    distance_plane23 = _hitsThirdPlane[thirdhit].measuredZ - _hitsSecondPlane[secondhit].measuredZ;
-	    
-	    distanceMax23 = _distanceMax * (distance_plane23 / 100000.0);
+            distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
 
-	    if (_nPlanes == 3 && distance12 < distanceMax12 && distance23 < distanceMax23 && _nTracks < _maxTrackCandidates) {
+            distance_plane23 = _hitsThirdPlane[thirdhit].measuredZ - _hitsSecondPlane[secondhit].measuredZ;
 
-	      if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1 && _hitsThirdPlane.size() == 1)) {
+            distanceMax23 = _distanceMax * (distance_plane23 / 100000.0);
 
-		_xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-		_yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-		_zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+            if (_nPlanes == 3 && distance12 < distanceMax12 && distance23 < distanceMax23 && _nTracks < _maxTrackCandidates) {
 
-		_xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-		_yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-		_zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+              if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1 && _hitsThirdPlane.size() == 1)) {
 
-		_xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-		_yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-		_zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+                _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+                _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+                _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
 
-		_nTracks++;
+                _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+                _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+                _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
 
-	      }
+                _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
+                _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
+                _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
 
-	    }
+                _nTracks++;
 
-	    // more than three planes
-	    if (_nPlanes > 3) {
-	    
-	      // loop over all hits in fourth plane
-	      for (int fourthhit = 0; uint(fourthhit) < _hitsFourthPlane.size(); fourthhit++) {
+              }
 
-		distance34 = sqrt(pow(_hitsThirdPlane[thirdhit].measuredX - _hitsFourthPlane[fourthhit].measuredX,2) + pow(_hitsThirdPlane[thirdhit].measuredY - _hitsFourthPlane[fourthhit].measuredY,2));
+            }
 
-		distance_plane34 = _hitsFourthPlane[fourthhit].measuredZ - _hitsThirdPlane[thirdhit].measuredZ;
+            // more than three planes
+            if (_nPlanes > 3) {
 
-		distanceMax34 = _distanceMax * (distance_plane34 / 100000.0);
+              // loop over all hits in fourth plane
+              for (int fourthhit = 0; uint(fourthhit) < _hitsFourthPlane.size(); fourthhit++) {
 
-		if (_nPlanes == 4 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && _nTracks < _maxTrackCandidates) {
+                distance34 = sqrt(pow(_hitsThirdPlane[thirdhit].measuredX - _hitsFourthPlane[fourthhit].measuredX,2) + pow(_hitsThirdPlane[thirdhit].measuredY - _hitsFourthPlane[fourthhit].measuredY,2));
 
-		  if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1 && _hitsThirdPlane.size() == 1 && _hitsFourthPlane.size() == 1)) {
+                distance_plane34 = _hitsFourthPlane[fourthhit].measuredZ - _hitsThirdPlane[thirdhit].measuredZ;
 
-		    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-		    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-		    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+                distanceMax34 = _distanceMax * (distance_plane34 / 100000.0);
 
-		    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-		    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-		    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+                if (_nPlanes == 4 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && _nTracks < _maxTrackCandidates) {
 
-		    _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-		    _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-		    _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+                  if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1 && _hitsThirdPlane.size() == 1 && _hitsFourthPlane.size() == 1)) {
 
-		    _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
-		    _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
-		    _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
+                    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+                    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+                    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
 
-		    _nTracks++;
+                    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+                    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+                    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
 
-		  }
+                    _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
+                    _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
+                    _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
 
-		}
-	    
-		// more than four planes
-		if (_nPlanes > 4) {
+                    _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
+                    _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
+                    _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
 
-		  // loop over all hits in fifth plane
-		  for (int fifthhit = 0; uint(fifthhit) < _hitsFifthPlane.size(); fifthhit++) {
+                    _nTracks++;
 
-		    distance45 = sqrt(pow(_hitsFourthPlane[fourthhit].measuredX - _hitsFifthPlane[fifthhit].measuredX,2) + pow(_hitsFourthPlane[fourthhit].measuredY - _hitsFifthPlane[fifthhit].measuredY,2));
+                  }
 
-		    distance_plane45 = _hitsFifthPlane[fifthhit].measuredZ - _hitsFourthPlane[fourthhit].measuredZ;
-	    
-		    distanceMax45 = _distanceMax * (distance_plane45 / 100000.0);
+                }
 
-		    if (_nPlanes == 5 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && _nTracks < _maxTrackCandidates) {
+                // more than four planes
+                if (_nPlanes > 4) {
 
-		      if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1 && _hitsThirdPlane.size() == 1 && _hitsFourthPlane.size() == 1 && _hitsFifthPlane.size() == 1)) {
+                  // loop over all hits in fifth plane
+                  for (int fifthhit = 0; uint(fifthhit) < _hitsFifthPlane.size(); fifthhit++) {
 
-			_xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-			_yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-			_zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+                    distance45 = sqrt(pow(_hitsFourthPlane[fourthhit].measuredX - _hitsFifthPlane[fifthhit].measuredX,2) + pow(_hitsFourthPlane[fourthhit].measuredY - _hitsFifthPlane[fifthhit].measuredY,2));
 
-			_xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-			_yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-			_zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+                    distance_plane45 = _hitsFifthPlane[fifthhit].measuredZ - _hitsFourthPlane[fourthhit].measuredZ;
 
-			_xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-			_yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-			_zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+                    distanceMax45 = _distanceMax * (distance_plane45 / 100000.0);
 
-			_xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
-			_yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
-			_zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
+                    if (_nPlanes == 5 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && _nTracks < _maxTrackCandidates) {
 
-			_xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
-			_yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
-			_zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
+                      if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1 && _hitsThirdPlane.size() == 1 && _hitsFourthPlane.size() == 1 && _hitsFifthPlane.size() == 1)) {
 
-			_nTracks++;
-		      
-		      }
+                        _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+                        _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+                        _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
 
-		    }
+                        _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+                        _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+                        _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
 
-		    // more than five planes
-		    if (_nPlanes > 5) {
+                        _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
+                        _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
+                        _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
 
-		      // loop over all hits in sixth plane
-		      for (int sixthhit = 0; uint(sixthhit) < _hitsSixthPlane.size(); sixthhit++) {
+                        _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
+                        _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
+                        _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
 
-			distance56 = sqrt(pow(_hitsFifthPlane[fifthhit].measuredX - _hitsSixthPlane[sixthhit].measuredX,2) + pow(_hitsFifthPlane[fifthhit].measuredY - _hitsSixthPlane[sixthhit].measuredY,2));
+                        _xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
+                        _yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
+                        _zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
 
-			distance_plane56 = _hitsSixthPlane[sixthhit].measuredZ - _hitsFifthPlane[fifthhit].measuredZ;
-	    
-			distanceMax56 = _distanceMax * (distance_plane56 / 100000.0);
+                        _nTracks++;
 
-			if (_nPlanes == 6 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && distance56 < distanceMax56 && _nTracks < _maxTrackCandidates) {
+                      }
 
-			  if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1 && _hitsThirdPlane.size() == 1 && _hitsFourthPlane.size() == 1 && _hitsFifthPlane.size() == 1 && _hitsSixthPlane.size() == 1)) {
+                    }
 
-			    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-			    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-			    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+                    // more than five planes
+                    if (_nPlanes > 5) {
 
-			    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-			    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-			    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+                      // loop over all hits in sixth plane
+                      for (int sixthhit = 0; uint(sixthhit) < _hitsSixthPlane.size(); sixthhit++) {
 
-			    _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-			    _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-			    _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-			  
-			    _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
-			    _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
-			    _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
+                        distance56 = sqrt(pow(_hitsFifthPlane[fifthhit].measuredX - _hitsSixthPlane[sixthhit].measuredX,2) + pow(_hitsFifthPlane[fifthhit].measuredY - _hitsSixthPlane[sixthhit].measuredY,2));
 
-			    _xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
-			    _yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
-			    _zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
+                        distance_plane56 = _hitsSixthPlane[sixthhit].measuredZ - _hitsFifthPlane[fifthhit].measuredZ;
 
-			    _xPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredX;
-			    _yPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredY;
-			    _zPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredZ;
+                        distanceMax56 = _distanceMax * (distance_plane56 / 100000.0);
 
-			    _nTracks++;
+                        if (_nPlanes == 6 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && distance56 < distanceMax56 && _nTracks < _maxTrackCandidates) {
 
-			  }
+                          if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1 && _hitsThirdPlane.size() == 1 && _hitsFourthPlane.size() == 1 && _hitsFifthPlane.size() == 1 && _hitsSixthPlane.size() == 1)) {
 
-			}
+                            _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+                            _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+                            _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
 
-		      } // end loop over all hits in sixth plane
+                            _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+                            _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+                            _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
 
-		    } // end if more than five planes
+                            _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
+                            _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
+                            _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
 
-		  } // end loop over all hits in fifth plane
+                            _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
+                            _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
+                            _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
 
-		} // end if more than four planes
+                            _xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
+                            _yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
+                            _zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
 
-	      } // end loop over all hits in fourth plane
+                            _xPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredX;
+                            _yPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredY;
+                            _zPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredZ;
 
-	    } // end if more than three planes
+                            _nTracks++;
 
-	  } // end loop over all hits in third plane
+                          }
 
-	} // end if more than two planes
+                        }
+
+                      } // end loop over all hits in sixth plane
+
+                    } // end if more than five planes
+
+                  } // end loop over all hits in fifth plane
+
+                } // end if more than four planes
+
+              } // end loop over all hits in fourth plane
+
+            } // end if more than three planes
+
+          } // end loop over all hits in third plane
+
+        } // end if more than two planes
 
       } // end loop over all hits in second plane
 
     } // end loop over all hits in first plane
 
-  // end check if running in input mode 0 or 2 => perform simple track finding
+    // end check if running in input mode 0 or 2 => perform simple track finding
   } else if (_inputMode == 1) {
 
     const int nTracksHere = collection->getNumberOfElements();
-    
+
     streamlog_out ( MESSAGE2 ) << "Number of tracks available in track collection: " << nTracksHere << endl;
 
     // loop over all tracks
@@ -1067,43 +1076,43 @@ void EUTelMille::processEvent (LCEvent * event) {
       // check for a hit in every plane
       if (_nPlanes == int(TrackHitsHere.size() / 2)) {
 
-	// assume hits are ordered in z! start counting from 0
-	int nPlaneHere = 0;
+        // assume hits are ordered in z! start counting from 0
+        int nPlaneHere = 0;
 
-	// loop over all hits and fill arrays
-	for (int nHits = 0; nHits < int(TrackHitsHere.size()); nHits++) {
+        // loop over all hits and fill arrays
+        for (int nHits = 0; nHits < int(TrackHitsHere.size()); nHits++) {
 
-	  TrackerHit *HitHere = TrackHitsHere.at(nHits);
+          TrackerHit *HitHere = TrackHitsHere.at(nHits);
 
-	  // hit positions
-	  const double *PositionsHere = HitHere->getPosition();
+          // hit positions
+          const double *PositionsHere = HitHere->getPosition();
 
-	  // assume fitted hits have type 32
-	  if ( HitHere->getType() == 32 ) {
-	  
-	    // fill hits to arrays
-	    _xPos[nTracksEvent][nPlaneHere] = PositionsHere[0] * 1000;
-	    _yPos[nTracksEvent][nPlaneHere] = PositionsHere[1] * 1000;
-	    _zPos[nTracksEvent][nPlaneHere] = PositionsHere[2] * 1000;
+          // assume fitted hits have type 32
+          if ( HitHere->getType() == 32 ) {
 
-	    nPlaneHere++;
+            // fill hits to arrays
+            _xPos[nTracksEvent][nPlaneHere] = PositionsHere[0] * 1000;
+            _yPos[nTracksEvent][nPlaneHere] = PositionsHere[1] * 1000;
+            _zPos[nTracksEvent][nPlaneHere] = PositionsHere[2] * 1000;
 
-	  } // end assume fitted hits have type 32
+            nPlaneHere++;
 
-	} // end loop over all hits and fill arrays
+          } // end assume fitted hits have type 32
 
-	_nTracks++;
+        } // end loop over all hits and fill arrays
+
+        _nTracks++;
 
       } else {
 
-	streamlog_out ( MESSAGE2 ) << "Dropping track " << nTracksEvent << " because there is not a hit in every plane assigned to it." << endl;
+        streamlog_out ( MESSAGE2 ) << "Dropping track " << nTracksEvent << " because there is not a hit in every plane assigned to it." << endl;
 
-      }	
+      }
 
     } // end loop over all tracks
 
   }
-  
+
   if (_nTracks == _maxTrackCandidates) {
     streamlog_out ( WARNING2 ) << "Maximum number of track candidates reached. Maybe further tracks were skipped" << endl;
   }
@@ -1129,9 +1138,9 @@ void EUTelMille::processEvent (LCEvent * event) {
       _zPosHere = new double[_nPlanes];
 
       for (int help = 0; help < _nPlanes; help++) {
-	_xPosHere[help] = _xPos[track][help];
-	_yPosHere[help] = _yPos[track][help];
-	_zPosHere[help] = _zPos[track][help];
+        _xPosHere[help] = _xPos[track][help];
+        _yPosHere[help] = _yPos[track][help];
+        _zPosHere[help] = _zPos[track][help];
       }
 
       streamlog_out ( MESSAGE2 ) << "Adding track using the following coordinates: ";
@@ -1139,20 +1148,20 @@ void EUTelMille::processEvent (LCEvent * event) {
       // loop over all planes
       for (int help = 0; help < _nPlanes; help++) {
 
-	int excluded = 0;
+        int excluded = 0;
 
-	// check if actual plane is excluded
-	if (_nExcludePlanes > 0) {
-	  for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-	    if (help == _excludePlanes[helphelp]) {
-	      excluded = 1;
-	    }
-	  }
-	}
+        // check if actual plane is excluded
+        if (_nExcludePlanes > 0) {
+          for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+            if (help == _excludePlanes[helphelp]) {
+              excluded = 1;
+            }
+          }
+        }
 
-	if (excluded == 0) {
-	streamlog_out ( MESSAGE2 ) << _xPosHere[help] << " " << _yPosHere[help] << " " << _zPosHere[help] << "   ";
-	}
+        if (excluded == 0) {
+          streamlog_out ( MESSAGE2 ) << _xPosHere[help] << " " << _yPosHere[help] << " " << _zPosHere[help] << "   ";
+        }
 
       } // end loop over all planes
 
@@ -1164,7 +1173,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       streamlog_out ( MESSAGE2 ) << "Residuals X: ";
 
       for (int help = 0; help < _nPlanes; help++) {
-	streamlog_out ( MESSAGE2 ) << _waferResidX[help] << " ";
+        streamlog_out ( MESSAGE2 ) << _waferResidX[help] << " ";
       }
 
       streamlog_out ( MESSAGE2 ) << endl;
@@ -1172,7 +1181,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       streamlog_out ( MESSAGE2 ) << "Residuals Y: ";
 
       for (int help = 0; help < _nPlanes; help++) {
-	streamlog_out ( MESSAGE2 ) << _waferResidY[help] << " ";
+        streamlog_out ( MESSAGE2 ) << _waferResidY[help] << " ";
       }
 
       streamlog_out ( MESSAGE2 ) << endl;
@@ -1183,288 +1192,288 @@ void EUTelMille::processEvent (LCEvent * event) {
       // check if residal cuts are used
       if (_useResidualCuts != 0) {
 
-	// loop over all sensors
-	for (int help = 0; help < _nPlanes; help++) {
-	    
-	  if (_waferResidX[help] < _residualsXMin[help] || _waferResidX[help] > _residualsXMax[help]) {
-	    residualsXOkay = 0;
-	  }
-	  if (_waferResidY[help] < _residualsYMin[help] || _waferResidY[help] > _residualsYMax[help]) {
-	    residualsYOkay = 0;
-	  }
+        // loop over all sensors
+        for (int help = 0; help < _nPlanes; help++) {
 
-	} // end loop over all sensors
+          if (_waferResidX[help] < _residualsXMin[help] || _waferResidX[help] > _residualsXMax[help]) {
+            residualsXOkay = 0;
+          }
+          if (_waferResidY[help] < _residualsYMin[help] || _waferResidY[help] > _residualsYMax[help]) {
+            residualsYOkay = 0;
+          }
+
+        } // end loop over all sensors
 
       } // end check if residual cuts are used
 
       if (_useResidualCuts != 0 && (residualsXOkay == 0 || residualsYOkay == 0)) {
-	streamlog_out ( MESSAGE2 ) << "Track did not pass the residual cuts." << endl;
+        streamlog_out ( MESSAGE2 ) << "Track did not pass the residual cuts." << endl;
       }
 
       // apply track cuts (at the moment only residuals)
       if (_useResidualCuts == 0 || (residualsXOkay == 1 && residualsYOkay == 1)) {
 
-	// Add track to Millepede
-	// ---------------------------
+        // Add track to Millepede
+        // ---------------------------
 
-	// Easy case: consider only shifts
-	if (_alignMode == 2) {
+        // Easy case: consider only shifts
+        if (_alignMode == 2) {
 
-	  const int nLC = 4; // number of local parameters
-	  const int nGL = (_nPlanes - _nExcludePlanes) * 2; // number of global parameters
+          const int nLC = 4; // number of local parameters
+          const int nGL = (_nPlanes - _nExcludePlanes) * 2; // number of global parameters
 
-	  float sigma = _telescopeResolution;
+          float sigma = _telescopeResolution;
 
-	  float *derLC = new float[nLC]; // array of derivatives for local parameters
-	  float *derGL = new float[nGL]; // array of derivatives for global parameters
+          float *derLC = new float[nLC]; // array of derivatives for local parameters
+          float *derGL = new float[nGL]; // array of derivatives for global parameters
 
-	  int *label = new int[nGL]; // array of labels
+          int *label = new int[nGL]; // array of labels
 
-	  float residual;
+          float residual;
 
-	  // create labels
-	  for (int help = 0; help < nGL; help++) {
-	    label[help] = help + 1;
-	  }
+          // create labels
+          for (int help = 0; help < nGL; help++) {
+            label[help] = help + 1;
+          }
 
-	  for (int help = 0; help < nGL; help++) {
-	    derGL[help] = 0;
-	  }
+          for (int help = 0; help < nGL; help++) {
+            derGL[help] = 0;
+          }
 
-	  for (int help = 0; help < nLC; help++) {
-	    derLC[help] = 0;
-	  }
+          for (int help = 0; help < nLC; help++) {
+            derLC[help] = 0;
+          }
 
-	  int nExcluded = 0;
+          int nExcluded = 0;
 
-	  // loop over all planes
-	  for (int help = 0; help < _nPlanes; help++) {
+          // loop over all planes
+          for (int help = 0; help < _nPlanes; help++) {
 
-	    int excluded = 0;
+            int excluded = 0;
 
-	    // check if actual plane is excluded
-	    if (_nExcludePlanes > 0) {
-	      for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-		if (help == _excludePlanes[helphelp]) {
-		  excluded = 1;
-		  nExcluded++;
-		}
-	      }
-	    }
+            // check if actual plane is excluded
+            if (_nExcludePlanes > 0) {
+              for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+                if (help == _excludePlanes[helphelp]) {
+                  excluded = 1;
+                  nExcluded++;
+                }
+              }
+            }
 
-	    // if plane is not excluded
-	    if (excluded == 0) {
+            // if plane is not excluded
+            if (excluded == 0) {
 
-	      int helphelp = help - nExcluded; // index of plane after
-					       // excluded planes have
-					       // been removed
+              int helphelp = help - nExcluded; // index of plane after
+                                               // excluded planes have
+                                               // been removed
 
-	      derGL[(helphelp * 2)] = -1;
-	      derLC[0] = 1;
-	      derLC[2] = _zPosHere[help];
-	      residual = _waferResidX[help];
+              derGL[(helphelp * 2)] = -1;
+              derLC[0] = 1;
+              derLC[2] = _zPosHere[help];
+              residual = _waferResidX[help];
 
-	      _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+              _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
-	      derGL[(helphelp * 2)] = 0;
-	      derLC[0] = 0;
-	      derLC[2] = 0;
+              derGL[(helphelp * 2)] = 0;
+              derLC[0] = 0;
+              derLC[2] = 0;
 
-	      derGL[((helphelp * 2) + 1)] = -1;
-	      derLC[1] = 1;
-	      derLC[3] = _zPosHere[help];
-	      residual = _waferResidY[help];
+              derGL[((helphelp * 2) + 1)] = -1;
+              derLC[1] = 1;
+              derLC[3] = _zPosHere[help];
+              residual = _waferResidY[help];
 
-	      _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+              _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
-	      derGL[((helphelp * 2) + 1)] = 0;
-	      derLC[1] = 0;
-	      derLC[3] = 0;
-	      
-	      _nMilleDataPoints++;
+              derGL[((helphelp * 2) + 1)] = 0;
+              derLC[1] = 0;
+              derLC[3] = 0;
 
-	    } // end if plane is not excluded
+              _nMilleDataPoints++;
 
-	  } // end loop over all planes
+            } // end if plane is not excluded
 
-	  // clean up
+          } // end loop over all planes
 
-	  delete [] derLC;
-	  delete [] derGL;
-	  delete [] label;
+          // clean up
 
-	// Slightly more complicated: add rotation around the z axis
-	} else if (_alignMode == 1) {
+          delete [] derLC;
+          delete [] derGL;
+          delete [] label;
 
-	  const int nLC = 4; // number of local parameters
-	  const int nGL = _nPlanes * 3; // number of global parameters
-  
-	  float sigma = _telescopeResolution;
+          // Slightly more complicated: add rotation around the z axis
+        } else if (_alignMode == 1) {
 
-	  float *derLC = new float[nLC]; // array of derivatives for local parameters
-	  float *derGL = new float[nGL]; // array of derivatives for global parameters
+          const int nLC = 4; // number of local parameters
+          const int nGL = _nPlanes * 3; // number of global parameters
 
-	  int *label = new int[nGL]; // array of labels
+          float sigma = _telescopeResolution;
 
-	  float residual;
+          float *derLC = new float[nLC]; // array of derivatives for local parameters
+          float *derGL = new float[nGL]; // array of derivatives for global parameters
 
-	  // create labels
-	  for (int help = 0; help < nGL; help++) {
-	    label[help] = help + 1;
-	  }
+          int *label = new int[nGL]; // array of labels
 
-	  for (int help = 0; help < nGL; help++) {
-	    derGL[help] = 0;
-	  }
+          float residual;
 
-	  for (int help = 0; help < nLC; help++) {
-	    derLC[help] = 0;
-	  }
+          // create labels
+          for (int help = 0; help < nGL; help++) {
+            label[help] = help + 1;
+          }
 
-	  int nExcluded = 0;
+          for (int help = 0; help < nGL; help++) {
+            derGL[help] = 0;
+          }
 
-	  // loop over all planes
-	  for (int help = 0; help < _nPlanes; help++) {
+          for (int help = 0; help < nLC; help++) {
+            derLC[help] = 0;
+          }
 
-	    int excluded = 0;
+          int nExcluded = 0;
 
-	    // check if actual plane is excluded
-	    if (_nExcludePlanes > 0) {
-	      for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-		if (help == _excludePlanes[helphelp]) {
-		  excluded = 1;
-		  nExcluded++;
-		}
-	      }
-	    }
+          // loop over all planes
+          for (int help = 0; help < _nPlanes; help++) {
 
-	    // if plane is not excluded
-	    if (excluded == 0) {
+            int excluded = 0;
 
-	      int helphelp = help - nExcluded; // index of plane after
-					       // excluded planes have
-					       // been removed
+            // check if actual plane is excluded
+            if (_nExcludePlanes > 0) {
+              for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+                if (help == _excludePlanes[helphelp]) {
+                  excluded = 1;
+                  nExcluded++;
+                }
+              }
+            }
 
-	      derGL[(helphelp * 3)] = -1;
-	      derGL[((helphelp * 3) + 2)] = _yPosHere[help];
-	      derLC[0] = 1;
-	      derLC[2] = _zPosHere[help];
-	      residual = _waferResidX[help];
+            // if plane is not excluded
+            if (excluded == 0) {
 
-	      _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+              int helphelp = help - nExcluded; // index of plane after
+                                               // excluded planes have
+                                               // been removed
 
-	      derGL[(helphelp * 3)] = 0;
-	      derGL[((helphelp * 3) + 2)] = 0;
-	      derLC[0] = 0;
-	      derLC[2] = 0;
+              derGL[(helphelp * 3)] = -1;
+              derGL[((helphelp * 3) + 2)] = _yPosHere[help];
+              derLC[0] = 1;
+              derLC[2] = _zPosHere[help];
+              residual = _waferResidX[help];
 
-	      derGL[((helphelp * 3) + 1)] = -1;
-	      derGL[((helphelp * 3) + 2)] = -1 * _xPosHere[help];
-	      derLC[1] = 1;
-	      derLC[3] = _zPosHere[help];
-	      residual = _waferResidY[help];
+              _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
-	      _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+              derGL[(helphelp * 3)] = 0;
+              derGL[((helphelp * 3) + 2)] = 0;
+              derLC[0] = 0;
+              derLC[2] = 0;
 
-	      derGL[((helphelp * 3) + 1)] = 0;
-	      derGL[((helphelp * 3) + 2)] = 0;
-	      derLC[1] = 0;
-	      derLC[3] = 0;
+              derGL[((helphelp * 3) + 1)] = -1;
+              derGL[((helphelp * 3) + 2)] = -1 * _xPosHere[help];
+              derLC[1] = 1;
+              derLC[3] = _zPosHere[help];
+              residual = _waferResidY[help];
 
-	      _nMilleDataPoints++;
+              _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
-	    } // end if plane is not excluded
+              derGL[((helphelp * 3) + 1)] = 0;
+              derGL[((helphelp * 3) + 2)] = 0;
+              derLC[1] = 0;
+              derLC[3] = 0;
 
-	  } // end loop over all planes
+              _nMilleDataPoints++;
 
-	  // clean up
-      
-	  delete [] derLC;
-	  delete [] derGL;
-	  delete [] label;
+            } // end if plane is not excluded
 
-	} else {
+          } // end loop over all planes
 
-	  streamlog_out ( ERROR2 ) << _alignMode << " is not a valid mode. Please choose 1 or 2." << endl;
+          // clean up
 
-	}
+          delete [] derLC;
+          delete [] derGL;
+          delete [] label;
 
-	_nGoodTracks++;
+        } else {
 
-	// end local fit
-	_mille->end();
-      
-	_nMilleTracks++;
+          streamlog_out ( ERROR2 ) << _alignMode << " is not a valid mode. Please choose 1 or 2." << endl;
 
-	// Fill histograms for individual tracks
-	// -------------------------------------
+        }
 
-#ifdef MARLIN_USE_AIDA
+        _nGoodTracks++;
 
-	string tempHistoName;
+        // end local fit
+        _mille->end();
 
-	if ( _histogramSwitch ) {
-	  {
-	    stringstream ss; 
-	    ss << _chi2XLocalname << endl;
-	  }
-	  if ( AIDA::IHistogram1D* chi2x_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2XLocalname]) )
-	    chi2x_histo->fill(Chiquare[0]);
-	  else {
-	    streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _chi2XLocalname << endl;
-	    streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	    _histogramSwitch = false;
-	  }       
-	}
-    
-	if ( _histogramSwitch ) {
-	  {
-	    stringstream ss; 
-	    ss << _chi2YLocalname << endl;
-	  }
-	  if ( AIDA::IHistogram1D* chi2y_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2YLocalname]) )
-	    chi2y_histo->fill(Chiquare[1]);
-	  else {
-	    streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _chi2YLocalname << endl;
-	    streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	    _histogramSwitch = false;
-	  }       
-	}
+        _nMilleTracks++;
 
-	// loop over all detector planes
-	for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
-	  
-	  if ( _histogramSwitch ) {
-	    {
-	      stringstream ss; 
-	      ss << _residualXLocalname << "_d" << iDetector; 
-	      tempHistoName=ss.str();
-	    }
-	    if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	      residx_histo->fill(_waferResidX[iDetector]);
-	    else {
-	      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
-	      streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	      _histogramSwitch = false;
-	    }       
-	  }
+        // Fill histograms for individual tracks
+        // -------------------------------------
 
-	  if ( _histogramSwitch ) {
-	    {
-	      stringstream ss; 
-	      ss << _residualYLocalname << "_d" << iDetector; 
-	      tempHistoName=ss.str();
-	    }
-	    if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	      residy_histo->fill(_waferResidY[iDetector]);
-	    else {
-	      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualYLocalname << endl;
-	      streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	      _histogramSwitch = false;
-	    }       
-	  }
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-	} // end loop over all detector planes
+        string tempHistoName;
+
+        if ( _histogramSwitch ) {
+          {
+            stringstream ss;
+            ss << _chi2XLocalname << endl;
+          }
+          if ( AIDA::IHistogram1D* chi2x_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2XLocalname]) )
+            chi2x_histo->fill(Chiquare[0]);
+          else {
+            streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _chi2XLocalname << endl;
+            streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+            _histogramSwitch = false;
+          }
+        }
+
+        if ( _histogramSwitch ) {
+          {
+            stringstream ss;
+            ss << _chi2YLocalname << endl;
+          }
+          if ( AIDA::IHistogram1D* chi2y_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2YLocalname]) )
+            chi2y_histo->fill(Chiquare[1]);
+          else {
+            streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _chi2YLocalname << endl;
+            streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+            _histogramSwitch = false;
+          }
+        }
+
+        // loop over all detector planes
+        for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
+
+          if ( _histogramSwitch ) {
+            {
+              stringstream ss;
+              ss << _residualXLocalname << "_d" << iDetector;
+              tempHistoName=ss.str();
+            }
+            if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+              residx_histo->fill(_waferResidX[iDetector]);
+            else {
+              streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
+              streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+              _histogramSwitch = false;
+            }
+          }
+
+          if ( _histogramSwitch ) {
+            {
+              stringstream ss;
+              ss << _residualYLocalname << "_d" << iDetector;
+              tempHistoName=ss.str();
+            }
+            if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+              residy_histo->fill(_waferResidY[iDetector]);
+            else {
+              streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualYLocalname << endl;
+              streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+              _histogramSwitch = false;
+            }
+          }
+
+        } // end loop over all detector planes
 
 #endif
 
@@ -1481,13 +1490,13 @@ void EUTelMille::processEvent (LCEvent * event) {
 
   streamlog_out ( MESSAGE2 ) << "Finished fitting tracks in event " << _iEvt << endl;
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   string tempHistoName;
 
   if ( _histogramSwitch ) {
     {
-      stringstream ss; 
+      stringstream ss;
       ss << _numberTracksLocalname << endl;
     }
     if ( AIDA::IHistogram1D* number_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_numberTracksLocalname]) )
@@ -1496,7 +1505,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _numberTracksLocalname << endl;
       streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
       _histogramSwitch = false;
-    }       
+    }
   }
 
 #endif
@@ -1511,16 +1520,16 @@ void EUTelMille::processEvent (LCEvent * event) {
   delete [] _zPos;
   delete [] _yPos;
   delete [] _xPos;
-  
+
   // count events
   ++_iEvt;
-    
+
   if ( isFirstEvent() ) _isFirstEvent = false;
-  
+
 }
 
 void EUTelMille::end() {
-  
+
   delete [] _telescopeResolY;
   delete [] _telescopeResolX;
   delete [] _yFitPos;
@@ -1542,37 +1551,37 @@ void EUTelMille::end() {
 
     // loop over all detector planes
     for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
-	  
+
       if ( _histogramSwitch ) {
-	{
-	  stringstream ss; 
-	  ss << _residualXLocalname << "_d" << iDetector; 
-	  tempHistoName=ss.str();
-	}
-	if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	  meanX[iDetector] = residx_histo->mean();
-	else {
-	  streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
-	  streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	  _histogramSwitch = false;
-	}       
+        {
+          stringstream ss;
+          ss << _residualXLocalname << "_d" << iDetector;
+          tempHistoName=ss.str();
+        }
+        if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+          meanX[iDetector] = residx_histo->mean();
+        else {
+          streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
+          streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+          _histogramSwitch = false;
+        }
       }
 
       if ( _histogramSwitch ) {
-	{
-	  stringstream ss; 
-	  ss << _residualYLocalname << "_d" << iDetector; 
-	  tempHistoName=ss.str();
-	}
-	if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	  meanY[iDetector] = residy_histo->mean();
-	else {
-	  streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualYLocalname << endl;
-	  streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	  _histogramSwitch = false;
-	}       
+        {
+          stringstream ss;
+          ss << _residualYLocalname << "_d" << iDetector;
+          tempHistoName=ss.str();
+        }
+        if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+          meanY[iDetector] = residy_histo->mean();
+        else {
+          streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualYLocalname << endl;
+          streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+          _histogramSwitch = false;
+        }
       }
-      
+
     } // end loop over all detector planes
 
     ofstream steerFile;
@@ -1587,22 +1596,22 @@ void EUTelMille::end() {
       // loop over all planes
       for (int help = 0; help < _nPlanes; help++) {
 
-	int excluded = 0;
+        int excluded = 0;
 
-	// loop over all excluded planes
-	for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-	  if (help == _excludePlanes[helphelp]) {
-	    excluded = 1;
-	  }
-	} // end loop over all excluded planes
+        // loop over all excluded planes
+        for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+          if (help == _excludePlanes[helphelp]) {
+            excluded = 1;
+          }
+        } // end loop over all excluded planes
 
-	if (excluded == 0 && firstnotexcl > help) {
-	  firstnotexcl = help;
-	}
+        if (excluded == 0 && firstnotexcl > help) {
+          firstnotexcl = help;
+        }
 
-	if (excluded == 0 && lastnotexcl < help) {
-	  lastnotexcl = help;
-	}
+        if (excluded == 0 && lastnotexcl < help) {
+          lastnotexcl = help;
+        }
       } // end loop over all planes
 
       // calculate average
@@ -1620,63 +1629,63 @@ void EUTelMille::end() {
       // loop over all planes
       for (int help = 0; help < _nPlanes; help++) {
 
-	int excluded = 0; // flag for excluded planes
+        int excluded = 0; // flag for excluded planes
 
-	// loop over all excluded planes
-	for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+        // loop over all excluded planes
+        for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
 
-	  if (help == _excludePlanes[helphelp]) {
-	    excluded = 1;
-	  }
+          if (help == _excludePlanes[helphelp]) {
+            excluded = 1;
+          }
 
-	} // end loop over all excluded planes
+        } // end loop over all excluded planes
 
-	// if plane not excluded
-	if (excluded == 0) {
-	  
-	  // if fixed planes
-	  if (help == firstnotexcl || help == lastnotexcl) {
-      
-	    if (_alignMode == 1) {
-	      steerFile << (counter * 3 + 1) << " 0.0 -1.0" << endl;
-	      steerFile << (counter * 3 + 2) << " 0.0 -1.0" << endl;
-	      steerFile << (counter * 3 + 3) << " 0.0 -1.0" << endl;
-	    } else if (_alignMode == 2) {
-	      steerFile << (counter * 2 + 1) << " 0.0 -1.0" << endl;
-	      steerFile << (counter * 2 + 2) << " 0.0 -1.0" << endl;
-	    }
+        // if plane not excluded
+        if (excluded == 0) {
 
-	  } else {
-	    
-	    if (_alignMode == 1) {
-	      
-	      if (_usePedeUserStartValues == 0) {
-		steerFile << (counter * 3 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
-		steerFile << (counter * 3 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
-		steerFile << (counter * 3 + 3) << " 0.0 0.0" << endl;
-	      } else {
-		steerFile << (counter * 3 + 1) << " " << _pedeUserStartValuesX[help] << " 0.0" << endl;
-		steerFile << (counter * 3 + 2) << " " << _pedeUserStartValuesY[help] << " 0.0" << endl;
-		steerFile << (counter * 3 + 3) << " " << _pedeUserStartValuesGamma[help] << " 0.0" << endl;
-	      }
+          // if fixed planes
+          if (help == firstnotexcl || help == lastnotexcl) {
 
-	    } else if (_alignMode == 2) {
-	      
-	      if (_usePedeUserStartValues == 0) {
-		steerFile << (counter * 2 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
-		steerFile << (counter * 2 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
-	      } else {
-		steerFile << (counter * 2 + 1) << " " << _pedeUserStartValuesX[help] << " 0.0" << endl;
-		steerFile << (counter * 2 + 2) << " " << _pedeUserStartValuesY[help] << " 0.0" << endl;
-	      }
+            if (_alignMode == 1) {
+              steerFile << (counter * 3 + 1) << " 0.0 -1.0" << endl;
+              steerFile << (counter * 3 + 2) << " 0.0 -1.0" << endl;
+              steerFile << (counter * 3 + 3) << " 0.0 -1.0" << endl;
+            } else if (_alignMode == 2) {
+              steerFile << (counter * 2 + 1) << " 0.0 -1.0" << endl;
+              steerFile << (counter * 2 + 2) << " 0.0 -1.0" << endl;
+            }
 
-	    }
+          } else {
 
-	  }
+            if (_alignMode == 1) {
 
-	  counter++;
+              if (_usePedeUserStartValues == 0) {
+                steerFile << (counter * 3 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
+                steerFile << (counter * 3 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
+                steerFile << (counter * 3 + 3) << " 0.0 0.0" << endl;
+              } else {
+                steerFile << (counter * 3 + 1) << " " << _pedeUserStartValuesX[help] << " 0.0" << endl;
+                steerFile << (counter * 3 + 2) << " " << _pedeUserStartValuesY[help] << " 0.0" << endl;
+                steerFile << (counter * 3 + 3) << " " << _pedeUserStartValuesGamma[help] << " 0.0" << endl;
+              }
 
-	} // end if plane not excluded
+            } else if (_alignMode == 2) {
+
+              if (_usePedeUserStartValues == 0) {
+                steerFile << (counter * 2 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
+                steerFile << (counter * 2 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
+              } else {
+                steerFile << (counter * 2 + 1) << " " << _pedeUserStartValuesX[help] << " 0.0" << endl;
+                steerFile << (counter * 2 + 2) << " " << _pedeUserStartValuesY[help] << " 0.0" << endl;
+              }
+
+            }
+
+          }
+
+          counter++;
+
+        } // end if plane not excluded
 
       } // end loop over all planes
 
@@ -1717,169 +1726,169 @@ void EUTelMille::end() {
 
       // before starting pede, let's check if it is in the path
       bool isPedeInPath = true;
-      
+
       // create a new process
       redi::ipstream which("which pede");
 
       // wait for the process to finish
       which.close();
-      
+
       // get the status
       // if it 255 then the program wasn't found in the path
       isPedeInPath = !( which.rdbuf()->status() == 255 );
-      
+
       if ( !isPedeInPath ) {
-	streamlog_out( ERROR ) << "Pede cannot be executed because not found in the path" << endl;
+        streamlog_out( ERROR ) << "Pede cannot be executed because not found in the path" << endl;
       } else {
-      
-	streamlog_out ( MESSAGE2 ) << endl;
-	streamlog_out ( MESSAGE2 ) << "Starting pede..." << endl;
 
-	redi::ipstream pede( command.c_str() );
-	string output;
-	while ( getline( pede, output ) ) {
-	  streamlog_out( MESSAGE2 ) << output << endl;
-	}
-	
-	// wait for the pede execution to finish
-	pede.close();
+        streamlog_out ( MESSAGE2 ) << endl;
+        streamlog_out ( MESSAGE2 ) << "Starting pede..." << endl;
 
-	// check the exit value of pede
-	if ( pede.rdbuf()->status() == 0 ) {
-	  streamlog_out ( MESSAGE2 ) << "Pede successfully finished" << endl;
-	} 
+        redi::ipstream pede( command.c_str() );
+        string output;
+        while ( getline( pede, output ) ) {
+          streamlog_out( MESSAGE2 ) << output << endl;
+        }
 
-	// reading back the millepede.res file and getting the
-	// results.
-	string millepedeResFileName = "millepede.res";
+        // wait for the pede execution to finish
+        pede.close();
 
-	streamlog_out ( MESSAGE2 ) << "Reading back the " << millepedeResFileName << endl
-				   << "Saving the alignment constant into " << _alignmentConstantLCIOFile << endl;
+        // check the exit value of pede
+        if ( pede.rdbuf()->status() == 0 ) {
+          streamlog_out ( MESSAGE2 ) << "Pede successfully finished" << endl;
+        }
 
-	// open the millepede ASCII output file
-	ifstream millepede( millepedeResFileName.c_str() );
-	
-	// reopen the LCIO file this time in append mode
-	LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
+        // reading back the millepede.res file and getting the
+        // results.
+        string millepedeResFileName = "millepede.res";
 
-	try {
-	  lcWriter->open( _alignmentConstantLCIOFile, LCIO::WRITE_NEW );
-	} catch ( IOException& e ) {
-	  streamlog_out ( ERROR4 ) << e.what() << endl
-				   << "Sorry for quitting. " << endl;
-	  exit(-1);
-	}
-	
-	// write an almost empty run header
-	LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
-	lcHeader->setRunNumber( 0 );
-	
+        streamlog_out ( MESSAGE2 ) << "Reading back the " << millepedeResFileName << endl
+                                   << "Saving the alignment constant into " << _alignmentConstantLCIOFile << endl;
 
-	lcWriter->writeRunHeader(lcHeader);
+        // open the millepede ASCII output file
+        ifstream millepede( millepedeResFileName.c_str() );
 
-	delete lcHeader;
+        // reopen the LCIO file this time in append mode
+        LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
 
-	LCEventImpl * event = new LCEventImpl;
-	event->setRunNumber( 0 );
-	event->setEventNumber( 0 );
+        try {
+          lcWriter->open( _alignmentConstantLCIOFile, LCIO::WRITE_NEW );
+        } catch ( IOException& e ) {
+          streamlog_out ( ERROR4 ) << e.what() << endl
+                                   << "Sorry for quitting. " << endl;
+          exit(-1);
+        }
 
-	LCTime * now = new LCTime;
-	event->setTimeStamp( now->timeStamp() );
-	delete now;
-	
-	LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
-	
-	
-	if ( millepede.bad() ) {
-	  streamlog_out ( ERROR4 ) << "Error opening the " << millepedeResFileName << endl
-				   << "The alignment slcio file cannot be saved" << endl;
-	} else {
-	  vector<double > tokens;
-	  stringstream tokenizer;
-	  string line;
-	  double buffer;
-	  
-	  // get the first line and throw it away since it is a
-	  // comment! 
-	  getline( millepede, line );
+        // write an almost empty run header
+        LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
+        lcHeader->setRunNumber( 0 );
 
-	  int sensorID = 0;
-	  
-	  while ( ! millepede.eof() ) {
-	    
-	    EUTelAlignmentConstant * constant = new EUTelAlignmentConstant;
-    
-	    constant->setSensorID( sensorID );
-	    ++sensorID;
 
-	    bool goodLine = true;
+        lcWriter->writeRunHeader(lcHeader);
 
- 	    for ( unsigned int iParam = 0 ; iParam < 3 ; ++iParam ) {
-	
- 	      getline( millepede, line );
+        delete lcHeader;
 
-	      if ( line.empty() ) {
-		goodLine = false;
-	      }
-      
-	      tokens.clear();
- 	      tokenizer.clear();
- 	      tokenizer.str( line );
-    
-	      while ( tokenizer >> buffer ) {
- 		tokens.push_back( buffer ) ;
- 	      }
+        LCEventImpl * event = new LCEventImpl;
+        event->setRunNumber( 0 );
+        event->setEventNumber( 0 );
 
-	      if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) ) {
-		goodLine = true;
-	      } else goodLine = false;
+        LCTime * now = new LCTime;
+        event->setTimeStamp( now->timeStamp() );
+        delete now;
 
-	      bool isFixed = ( tokens.size() == 3 );
- 	      if ( isFixed ) {
- 		streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << ( tokens[1] / 1000 ) 
- 					   << " (fixed)"  << endl;
- 	      } else {
- 		streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << (tokens[1] / 1000 )
-					 << " +/- " << ( tokens[4] / 1000 )  << endl;
- 	      }
-		   
-	      if ( iParam == 0 ) {
- 		constant->setXOffset( tokens[1] / 1000 );
-		if ( ! isFixed ) {
-		  double err  = tokens[4] / 1000;
-		  constant->setXOffsetError( err ) ;
-		}
-	      }
-	      if ( iParam == 1 ) {
-		constant->setYOffset( tokens[1] / 1000 ) ;
-		if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000 ) ;
-	      }
-	      if ( iParam == 2 ) {
-		constant->setGamma( tokens[1]  ) ;
-		if ( ! isFixed ) constant->setGammaError( tokens[4] ) ;
-	      }
+        LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
 
-	    }
-	    
-	    
 
-	    // right place to add the constant to the collection
-	    if ( goodLine ) {
-	      constantsCollection->push_back( constant );	    
-	      streamlog_out ( MESSAGE0 ) << (*constant) << endl;
-	    }
-	    else delete constant;
-	  }
-	  
-	}
-	event->addCollection( constantsCollection, "alignment" );
-	lcWriter->writeEvent( event );
-	delete event;
-	
-	lcWriter->close();
+        if ( millepede.bad() ) {
+          streamlog_out ( ERROR4 ) << "Error opening the " << millepedeResFileName << endl
+                                   << "The alignment slcio file cannot be saved" << endl;
+        } else {
+          vector<double > tokens;
+          stringstream tokenizer;
+          string line;
+          double buffer;
 
-	millepede.close();
-	
+          // get the first line and throw it away since it is a
+          // comment!
+          getline( millepede, line );
+
+          int sensorID = 0;
+
+          while ( ! millepede.eof() ) {
+
+            EUTelAlignmentConstant * constant = new EUTelAlignmentConstant;
+
+            constant->setSensorID( sensorID );
+            ++sensorID;
+
+            bool goodLine = true;
+
+            for ( unsigned int iParam = 0 ; iParam < 3 ; ++iParam ) {
+
+              getline( millepede, line );
+
+              if ( line.empty() ) {
+                goodLine = false;
+              }
+
+              tokens.clear();
+              tokenizer.clear();
+              tokenizer.str( line );
+
+              while ( tokenizer >> buffer ) {
+                tokens.push_back( buffer ) ;
+              }
+
+              if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) ) {
+                goodLine = true;
+              } else goodLine = false;
+
+              bool isFixed = ( tokens.size() == 3 );
+              if ( isFixed ) {
+                streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << ( tokens[1] / 1000 )
+                                         << " (fixed)"  << endl;
+              } else {
+                streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << (tokens[1] / 1000 )
+                                         << " +/- " << ( tokens[4] / 1000 )  << endl;
+              }
+
+              if ( iParam == 0 ) {
+                constant->setXOffset( tokens[1] / 1000 );
+                if ( ! isFixed ) {
+                  double err  = tokens[4] / 1000;
+                  constant->setXOffsetError( err ) ;
+                }
+              }
+              if ( iParam == 1 ) {
+                constant->setYOffset( tokens[1] / 1000 ) ;
+                if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000 ) ;
+              }
+              if ( iParam == 2 ) {
+                constant->setGamma( tokens[1]  ) ;
+                if ( ! isFixed ) constant->setGammaError( tokens[4] ) ;
+              }
+
+            }
+
+
+
+            // right place to add the constant to the collection
+            if ( goodLine ) {
+              constantsCollection->push_back( constant );
+              streamlog_out ( MESSAGE0 ) << (*constant) << endl;
+            }
+            else delete constant;
+          }
+
+        }
+        event->addCollection( constantsCollection, "alignment" );
+        lcWriter->writeEvent( event );
+        delete event;
+
+        lcWriter->close();
+
+        millepede.close();
+
       }
     } else {
 
@@ -1890,15 +1899,15 @@ void EUTelMille::end() {
   } // end if running pede using the generated steering file
 
   streamlog_out ( MESSAGE2 ) << endl;
-  streamlog_out ( MESSAGE2 ) << "Successfully finished" << endl;  
+  streamlog_out ( MESSAGE2 ) << "Successfully finished" << endl;
 
 }
 
 void EUTelMille::bookHistos() {
-  
-  
-#ifdef MARLIN_USE_AIDA
-  
+
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
   try {
     streamlog_out ( MESSAGE2 ) << "Booking histograms..." << endl;
 
@@ -1907,12 +1916,12 @@ void EUTelMille::bookHistos() {
     const double tracksMax = 19.5;
     const int    Chi2NBin = 10000000;
     const double Chi2Min  = 0.;
-    const double Chi2Max  = 10000000.;      
+    const double Chi2Max  = 10000000.;
     const int    NBin = 10000;
     const double Min  = -5000.;
     const double Max  = 5000.;
 
-    AIDA::IHistogram1D * numberTracksLocal = 
+    AIDA::IHistogram1D * numberTracksLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_numberTracksLocalname,tracksNBin,tracksMin,tracksMax);
     if ( numberTracksLocal ) {
       numberTracksLocal->setTitle("Number of tracks after #chi^{2} cut");
@@ -1923,7 +1932,7 @@ void EUTelMille::bookHistos() {
       _histogramSwitch = false;
     }
 
-    AIDA::IHistogram1D * chi2XLocal = 
+    AIDA::IHistogram1D * chi2XLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_chi2XLocalname,Chi2NBin,Chi2Min,Chi2Max);
     if ( chi2XLocal ) {
       chi2XLocal->setTitle("Chi2 X");
@@ -1933,8 +1942,8 @@ void EUTelMille::bookHistos() {
       streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
       _histogramSwitch = false;
     }
-    
-    AIDA::IHistogram1D * chi2YLocal = 
+
+    AIDA::IHistogram1D * chi2YLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_chi2YLocalname,Chi2NBin,Chi2Min,Chi2Max);
     if ( chi2YLocal ) {
       chi2YLocal->setTitle("Chi2 Y");
@@ -1949,62 +1958,62 @@ void EUTelMille::bookHistos() {
     string tempHistoName;
     string histoTitleXResid;
     string histoTitleYResid;
-    
+
     for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
-      
+
       {
-	stringstream ss; 
-	stringstream pp; 
-	stringstream tt;
-	
-	pp << "ResidualXLocal_d" << iDetector; 
-	tempHisto=pp.str();
-	ss << _residualXLocalname << "_d" << iDetector; 
-	tempHistoName=ss.str();
-	tt << "XResidual" << "_d" << iDetector; 
-	histoTitleXResid=tt.str();
-	
+        stringstream ss;
+        stringstream pp;
+        stringstream tt;
+
+        pp << "ResidualXLocal_d" << iDetector;
+        tempHisto=pp.str();
+        ss << _residualXLocalname << "_d" << iDetector;
+        tempHistoName=ss.str();
+        tt << "XResidual" << "_d" << iDetector;
+        histoTitleXResid=tt.str();
+
       }
-      
-      AIDA::IHistogram1D *  tempXHisto = 
-	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin, Min,Max);
+
+      AIDA::IHistogram1D *  tempXHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin, Min,Max);
       if ( tempXHisto ) {
-	tempXHisto->setTitle(histoTitleXResid);
-	_aidaHistoMap.insert( make_pair( tempHistoName, tempXHisto ) );
+        tempXHisto->setTitle(histoTitleXResid);
+        _aidaHistoMap.insert( make_pair( tempHistoName, tempXHisto ) );
       } else {
-	streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
-	streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-	_histogramSwitch = false;
+        streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+        streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
       }
-      
+
       {
-	stringstream ss; 
-	stringstream pp; 
-      	stringstream tt;
-	
-	pp << "ResidualYLocal_d" << iDetector; 
-	tempHisto=pp.str();
-	ss << _residualYLocalname << "_d" << iDetector; 
-	tempHistoName=ss.str();
-	tt << "YResidual" << "_d" << iDetector; 
-	histoTitleYResid=tt.str();
+        stringstream ss;
+        stringstream pp;
+        stringstream tt;
+
+        pp << "ResidualYLocal_d" << iDetector;
+        tempHisto=pp.str();
+        ss << _residualYLocalname << "_d" << iDetector;
+        tempHistoName=ss.str();
+        tt << "YResidual" << "_d" << iDetector;
+        histoTitleYResid=tt.str();
       }
-      
-      AIDA::IHistogram1D *  tempYHisto = 
-	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin, Min,Max);
+
+      AIDA::IHistogram1D *  tempYHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin, Min,Max);
       if ( tempYHisto ) {
-	tempYHisto->setTitle(histoTitleYResid);
-	_aidaHistoMap.insert( make_pair( tempHistoName, tempYHisto ) );
+        tempYHisto->setTitle(histoTitleYResid);
+        _aidaHistoMap.insert( make_pair( tempHistoName, tempYHisto ) );
       } else {
-	streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
-	streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-	_histogramSwitch = false;
+        streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+        streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
       }
-      
+
     }
 
   } catch (lcio::Exception& e ) {
-    
+
     streamlog_out ( ERROR2 ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
     string answer;
     while ( true ) {
@@ -2012,17 +2021,17 @@ void EUTelMille::bookHistos() {
       cin >> answer;
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
       if ( answer == "q" ) {
-	exit(-1);
+        exit(-1);
       } else if ( answer == "c" )
-	_histogramSwitch = false;
+        _histogramSwitch = false;
       break;
     }
-    
+
   }
 #endif
-  
-}
-  
-#endif
 
-#endif
+}
+
+#endif // USE_GEAR
+
+

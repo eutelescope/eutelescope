@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMultiLineFit.cc,v 1.21 2008-07-29 21:48:30 roloff Exp $
+// Version: $Id: EUTelMultiLineFit.cc,v 1.22 2008-08-23 12:30:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -13,7 +13,7 @@
 // built only if GEAR is used
 #ifdef USE_GEAR
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTelMultiLineFit.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
@@ -35,7 +35,7 @@
 #include <gear/SiPlanesParameters.h>
 
 // aida includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
@@ -44,7 +44,7 @@
 #include <AIDA/ITree.h>
 #endif
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/TrackImpl.h>
@@ -63,7 +63,7 @@ using namespace marlin;
 using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelMultiLineFit::_numberTracksLocalname   = "NumberTracks";
 std::string EUTelMultiLineFit::_chi2XLocalname          = "Chi2X";
 std::string EUTelMultiLineFit::_chi2YLocalname          = "Chi2Y";
@@ -78,33 +78,33 @@ std::string EUTelMultiLineFit::_hitDistanceLocalname    = "HitDistance";
 #endif
 
 EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
-  
+
   // modify processor description
   _description =
     "EUTelMultiLineFit will fit several straight lines";
-  
+
   // input collection
 
   registerInputCollection(LCIO::TRACKERHIT,"HitCollectionName",
-			  "Hit collection name",
-			  _hitCollectionName, string ( "hit" ));
+                          "Hit collection name",
+                          _hitCollectionName, string ( "hit" ));
 
   // output collection
 
   registerOutputCollection(LCIO::TRACK,"OutputTrackCollectionName",
-			   "Collection name for fitted tracks",
-			   _outputTrackColName, string ("fittracks"));
+                           "Collection name for fitted tracks",
+                           _outputTrackColName, string ("fittracks"));
 
   registerOutputCollection(LCIO::TRACKERHIT,"CorrectedHitCollectionName",
-			   "Collection name for corrected particle positions",
-			   _correctedHitColName, string ("corrfithits"));
+                           "Collection name for corrected particle positions",
+                           _correctedHitColName, string ("corrfithits"));
 
   registerOutputCollection(LCIO::TRACKERHIT,"OutputHitCollectionName",
-			   "Collection name for fitted particle hits (positions)",
-			   _outputHitColName, string ("fithits"));
+                           "Collection name for fitted particle hits (positions)",
+                           _outputHitColName, string ("fithits"));
 
   registerOptionalParameter("AlignmentMode","1 for constants from EUTelAlign (default), 2 for Millepede."
-			    ,_alignmentMode, static_cast <int> (1));
+                            ,_alignmentMode, static_cast <int> (1));
 
   // input parameters: take these from database later
 
@@ -149,53 +149,53 @@ EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
   constantsSixthLayer.push_back(0.0);
   constantsSixthLayer.push_back(0.0);
   constantsSixthLayer.push_back(0.0);
-  
+
   registerOptionalParameter("AlignmentConstantsSecondLayer","Alignment Constants for second Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z",
-			    _alignmentConstantsSecondLayer, constantsSecondLayer);
+                            _alignmentConstantsSecondLayer, constantsSecondLayer);
   registerOptionalParameter("AlignmentConstantsThirdLayer","Alignment Constants for third Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z",
-			    _alignmentConstantsThirdLayer, constantsThirdLayer);
+                            _alignmentConstantsThirdLayer, constantsThirdLayer);
   registerOptionalParameter("AlignmentConstantsFourthLayer","Alignment Constants for fourth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z",
-			    _alignmentConstantsFourthLayer, constantsFourthLayer);
+                            _alignmentConstantsFourthLayer, constantsFourthLayer);
   registerOptionalParameter("AlignmentConstantsFifthLayer","Alignment Constants for fifth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z"
-			    ,_alignmentConstantsFifthLayer, constantsFifthLayer);
+                            ,_alignmentConstantsFifthLayer, constantsFifthLayer);
   registerOptionalParameter("AlignmentConstantsSixthLayer","Alignment Constants for sixth Telescope Layer:\n off_x, off_y, theta_x, theta_y, theta_z"
-			    ,_alignmentConstantsSixthLayer, constantsSixthLayer);
+                            ,_alignmentConstantsSixthLayer, constantsSixthLayer);
 
   registerOptionalParameter("MillepedeConstantsFirstLayer","Millepede Constants for first Telescope Layer:\n x0, y0, alpha, beta, gamma",
-			    _millepedeConstantsFirstLayer, constantsFirstLayer);
+                            _millepedeConstantsFirstLayer, constantsFirstLayer);
   registerOptionalParameter("MillepedeConstantsSecondLayer","Millepede Constants for second Telescope Layer:\n x0, y0, alpha, beta, gamme",
-			    _millepedeConstantsSecondLayer, constantsSecondLayer);
+                            _millepedeConstantsSecondLayer, constantsSecondLayer);
   registerOptionalParameter("MillepedeConstantsThirdLayer","Millepede Constants for third Telescope Layer:\n x0, y0, alpha, beta, gamma",
-			    _millepedeConstantsThirdLayer, constantsThirdLayer);
+                            _millepedeConstantsThirdLayer, constantsThirdLayer);
   registerOptionalParameter("MillepedeConstantsFourthLayer","Millepede Constants for fourth Telescope Layer:\n x0, y0, alpha, beta, gamma",
-			    _millepedeConstantsFourthLayer, constantsFourthLayer);
+                            _millepedeConstantsFourthLayer, constantsFourthLayer);
   registerOptionalParameter("MillepedeConstantsFifthLayer","Millepede Constants for fifth Telescope Layer:\n x0, y0, alpha, beta, gamma"
-			    ,_millepedeConstantsFifthLayer, constantsFifthLayer);
+                            ,_millepedeConstantsFifthLayer, constantsFifthLayer);
   registerOptionalParameter("MillepedeConstantsSixthLayer","Millepede Constants for sixth Telescope Layer:\n x0, y0, alpha, beta, gamma"
-			    ,_millepedeConstantsSixthLayer, constantsSixthLayer);
+                            ,_millepedeConstantsSixthLayer, constantsSixthLayer);
 
   registerOptionalParameter("DistanceMax","Maximal allowed distance between hits entering the fit per 10 cm space between the planes.",
                             _distanceMax, static_cast <float> (2000.0));
 
   registerOptionalParameter("Chi2XMax","Maximal chi2 for fit of x coordinate."
-			    ,_chi2XMax, static_cast <float> (10000.0));
+                            ,_chi2XMax, static_cast <float> (10000.0));
 
   registerOptionalParameter("Chi2YMax","Maximal chi2 for fit of y coordinate."                             ,_chi2YMax, static_cast <float> (10000.0));
 
   registerOptionalParameter("ExcludePlane","Exclude plane from fit."
-			    ,_excludePlane, static_cast <int> (0));
+                            ,_excludePlane, static_cast <int> (0));
 
   registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates"
-			    ,_maxTrackCandidates, static_cast <int> (2000));
+                            ,_maxTrackCandidates, static_cast <int> (2000));
 
   registerOptionalParameter("MaxHitsPlane","Maximal number of hits per plane"
-			    ,_maxHitsPlane, static_cast <int> (100));
+                            ,_maxHitsPlane, static_cast <int> (100));
 
   registerOptionalParameter("HitDistanceXMax","Maximal |x| for calculation of efficiencies",
-			    _hitDistanceXMax, static_cast <float> (2500.0));
+                            _hitDistanceXMax, static_cast <float> (2500.0));
 
   registerOptionalParameter("HitDistanceYMax","Maximal |y| for calculation of efficiencies",
-			    _hitDistanceYMax, static_cast <float> (2500.0));
+                            _hitDistanceYMax, static_cast <float> (2500.0));
 
 }
 
@@ -203,11 +203,11 @@ void EUTelMultiLineFit::init() {
   // this method is called only once even when the rewind is active
   // usually a good idea to
   printParameters ();
-  
+
   // set to zero the run and event counters
   _iRun = 0;
   _iEvt = 0;
-  
+
   // set to zero hit efficiency counters
   _iHitDUT = 0;
   for ( int help = 0; help < 10; help++) {
@@ -216,28 +216,28 @@ void EUTelMultiLineFit::init() {
 
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
-  
+
   streamlog_out ( ERROR2 ) << "Marlin was not built with GEAR support." << endl;
   streamlog_out ( ERROR2 ) << "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." << endl;
-  
+
   // I'm thinking if this is the case of throwing an exception or
   // not. This is a really error and not something that can
   // exceptionally happens. Still not sure what to do
   exit(-1);
-  
+
 #else
-  
+
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
     streamlog_out ( ERROR2) << "The GearMgr is not available, for an unknown reason." << endl;
     exit(-1);
   }
-  
+
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-  
+
   _histogramSwitch = true;
-  
+
 #endif
 
   _nPlanes = _siPlanesParameters->getSiPlanesNumber();
@@ -246,18 +246,18 @@ void EUTelMultiLineFit::init() {
   _waferResidY = new double[_nPlanes];
   _xFitPos = new double[_nPlanes];
   _yFitPos = new double[_nPlanes];
-  
+
   _intrResolX = new double[_nPlanes];
   _intrResolY = new double[_nPlanes];
 
 }
 
 void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
-  
+
 
   auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
   header->addProcessor( type() ) ;
-  
+
   // the run header contains the number of detectors. This number
   // should be in principle the same as the number of layers in the
   // geometry description
@@ -272,19 +272,19 @@ void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
       // put the answer in lower case before making the comparison.
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
       if ( answer == "q" ) {
-   	exit(-1);
+        exit(-1);
       } else if ( answer == "c" ) {
-   	break;
+        break;
       }
     }
   }
-  
+
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
   // beam test. The same number should be saved in the run header and
   // in the xml file. If the numbers are different, instead of barely
   // quitting ask the user what to do.
-  
+
   if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
     streamlog_out ( ERROR2 ) << "Error during the geometry consistency check: " << endl;
     streamlog_out ( ERROR2 ) << "The run header says the GeoID is " << header->getGeoID() << endl;
@@ -296,16 +296,16 @@ void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
       // put the answer in lower case before making the comparison.
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
       if ( answer == "q" ) {
-   	exit(-1);
+        exit(-1);
       } else if ( answer == "c" ) {
-   	break;
+        break;
       }
     }
   }
-  
+
   // now book histograms plz...
   if ( isFirstEvent() )  bookHistos();
-  
+
   // increment the run counter
   ++_iRun;
 }
@@ -313,7 +313,7 @@ void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
 void EUTelMultiLineFit::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFitter[], double yResFitter[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]) {
 
   int sizearray;
-  
+
   if (_excludePlane == 0) {
     sizearray = nPlanesFitter;
   } else {
@@ -344,88 +344,88 @@ void EUTelMultiLineFit::FitTrack(int nPlanesFitter, double xPosFitter[], double 
   // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
   // ++++++++++++ See Blobel Page 226 !!! +++++++++++++++++
   // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-    
+
   int counter;
-    
+
   float S1[2]   = {0,0};
   float Sx[2]   = {0,0};
   float Xbar[2] = {0,0};
-    
+
   float * Zbar_X = new float[nPlanesFit];
   float * Zbar_Y = new float[nPlanesFit];
   for (counter = 0; counter < nPlanesFit; counter++){
     Zbar_X[counter] = 0.;
     Zbar_Y[counter] = 0.;
   }
-    
+
   float Sy[2]     = {0,0};
   float Ybar[2]   = {0,0};
   float Sxybar[2] = {0,0};
   float Sxxbar[2] = {0,0};
   float A2[2]     = {0,0};
-    
+
   // define S1
   for( counter = 0; counter < nPlanesFit; counter++ ){
     S1[0] = S1[0] + 1/pow(xResFit[counter],2);
     S1[1] = S1[1] + 1/pow(yResFit[counter],2);
   }
-    
+
   // define Sx
   for( counter = 0; counter < nPlanesFit; counter++ ){
     Sx[0] = Sx[0] + zPosFit[counter]/pow(xResFit[counter],2);
     Sx[1] = Sx[1] + zPosFit[counter]/pow(yResFit[counter],2);
   }
-    
+
   // define Xbar
   Xbar[0]=Sx[0]/S1[0];
   Xbar[1]=Sx[1]/S1[1];
-    
+
   // coordinate transformation !! -> bar
   for( counter = 0; counter < nPlanesFit; counter++ ){
     Zbar_X[counter] = zPosFit[counter]-Xbar[0];
     Zbar_Y[counter] = zPosFit[counter]-Xbar[1];
-  } 
-    
+  }
+
   // define Sy
   for( counter = 0; counter < nPlanesFit; counter++ ){
     Sy[0] = Sy[0] + xPosFit[counter]/pow(xResFit[counter],2);
     Sy[1] = Sy[1] + yPosFit[counter]/pow(yResFit[counter],2);
   }
-    
+
   // define Ybar
   Ybar[0]=Sy[0]/S1[0];
   Ybar[1]=Sy[1]/S1[1];
-    
+
   // define Sxybar
   for( counter = 0; counter < nPlanesFit; counter++ ){
     Sxybar[0] = Sxybar[0] + Zbar_X[counter] * xPosFit[counter]/pow(xResFit[counter],2);
     Sxybar[1] = Sxybar[1] + Zbar_Y[counter] * yPosFit[counter]/pow(yResFit[counter],2);
   }
-    
+
   // define Sxxbar
   for( counter = 0; counter < nPlanesFit; counter++ ){
     Sxxbar[0] = Sxxbar[0] + Zbar_X[counter] * Zbar_X[counter]/pow(xResFit[counter],2);
     Sxxbar[1] = Sxxbar[1] + Zbar_Y[counter] * Zbar_Y[counter]/pow(yResFit[counter],2);
   }
-    
+
   // define A2
   A2[0]=Sxybar[0]/Sxxbar[0];
   A2[1]=Sxybar[1]/Sxxbar[1];
-    
+
   // Calculate chi sqaured
-  // Chi^2 for X and Y coordinate for hits in all planes 
+  // Chi^2 for X and Y coordinate for hits in all planes
   for( counter = 0; counter < nPlanesFit; counter++ ){
     chi2Fit[0] += pow(-zPosFit[counter]*A2[0]
-		      +xPosFit[counter]-Ybar[0]+Xbar[0]*A2[0],2)/pow(xResFit[counter],2);
+                      +xPosFit[counter]-Ybar[0]+Xbar[0]*A2[0],2)/pow(xResFit[counter],2);
     chi2Fit[1] += pow(-zPosFit[counter]*A2[1]
-		      +yPosFit[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(yResFit[counter],2);
+                      +yPosFit[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(yResFit[counter],2);
   }
 
   for( counter = 0; counter < nPlanesFitter; counter++ ) {
     residXFit[counter] = (Ybar[0]-Xbar[0]*A2[0]+zPosFitter[counter]*A2[0])-xPosFitter[counter];
     residYFit[counter] = (Ybar[1]-Xbar[1]*A2[1]+zPosFitter[counter]*A2[1])-yPosFitter[counter];
   }
-    
+
   // define angle
   angleFit[0] = atan(A2[0]);
   angleFit[1] = atan(A2[1]);
@@ -436,7 +436,7 @@ void EUTelMultiLineFit::FitTrack(int nPlanesFitter, double xPosFitter[], double 
   delete [] xPosFit;
   delete [] yResFit;
   delete [] xResFit;
-      
+
   delete [] Zbar_X;
   delete [] Zbar_Y;
 
@@ -445,21 +445,21 @@ void EUTelMultiLineFit::FitTrack(int nPlanesFitter, double xPosFitter[], double 
 void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
   streamlog_out ( MESSAGE2 ) << "Processing event " << _iEvt << "..." << endl;
-  
+
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
-  
+
   if ( evt->getEventType() == kEORE ) {
     streamlog_out ( DEBUG2 ) << "EORE found: nothing else to do." << endl;
     return;
   }
 
   try {
-    
+
     LCCollectionVec * hitCollection     = static_cast<LCCollectionVec*> (event->getCollection( _hitCollectionName ));
-  
+
     int detectorID    = -99; // it's a non sense
     int oldDetectorID = -100;
-    int layerIndex; 
+    int layerIndex;
 
     double seedCharge = -1000.0;
     double clusterCharge = -1000.0;
@@ -470,80 +470,80 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     vector<EUTelMultiLineFit::HitsInPlane > _hitsFourthPlane;
     vector<EUTelMultiLineFit::HitsInPlane > _hitsFifthPlane;
     vector<EUTelMultiLineFit::HitsInPlane > _hitsSixthPlane;
-    
+
     HitsInPlane hitsInPlane;
 
     for ( int iHit = 0; iHit < hitCollection->getNumberOfElements(); iHit++ ) {
-      
+
       TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( hitCollection->getElementAt(iHit) );
-      
+
       LCObjectVec clusterVector = hit->getRawHits();
-      
+
       EUTelVirtualCluster * cluster;
 
       if ( hit->getType() == kEUTelFFClusterImpl ) {
-	
-	// fixed cluster implementation. Remember it can come from
-	// both RAW and ZS data
-	cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+
+        // fixed cluster implementation. Remember it can come from
+        // both RAW and ZS data
+        cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
 
       } else if ( hit->getType() == kEUTelSparseClusterImpl ) {
 
-	// ok the cluster is of sparse type, but we also need to know
-	// the kind of pixel description used. This information is
-	// stored in the corresponding original data collection.
+        // ok the cluster is of sparse type, but we also need to know
+        // the kind of pixel description used. This information is
+        // stored in the corresponding original data collection.
 
-	LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-	TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-	CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-	SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+        LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+        TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+        CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+        SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
 
-	// now we know the pixel type. So we can properly create a new
-	// instance of the sparse cluster
-	if ( pixelType == kEUTelSimpleSparsePixel ) {
-	  cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
-	    ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
-	} else {
-	  streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-	  throw UnknownDataTypeException("Pixel type unknown");
-	}
-	
+        // now we know the pixel type. So we can properly create a new
+        // instance of the sparse cluster
+        if ( pixelType == kEUTelSimpleSparsePixel ) {
+          cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+            ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+        } else {
+          streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+          throw UnknownDataTypeException("Pixel type unknown");
+        }
+
       } else {
-	throw UnknownDataTypeException("Unknown cluster type");
+        throw UnknownDataTypeException("Unknown cluster type");
       }
 
       seedCharge = cluster->getSeedCharge();
       clusterCharge = cluster->getTotalCharge();
 
       detectorID = cluster->getDetectorID();
-      
+
       if ( detectorID != oldDetectorID ) {
-	oldDetectorID = detectorID;
-	
-	if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
-	  // first of all try to see if this detectorID already belong to 
-	  if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
-	    // this means that this detector ID was not already inserted,
-	    // so this is the right place to do that
-	    for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
-	      if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
-		_conversionIdMap.insert( make_pair( detectorID, iLayer ) );
-		break;
-	      }
-	    }
-	  }
-	}
-	
-	// here we take intrinsic resolution from geometry database
-	
-	layerIndex   = _conversionIdMap[detectorID];     
-	_intrResolX[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
-	_intrResolY[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
-	
+        oldDetectorID = detectorID;
+
+        if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
+          // first of all try to see if this detectorID already belong to
+          if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
+            // this means that this detector ID was not already inserted,
+            // so this is the right place to do that
+            for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
+              if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
+                _conversionIdMap.insert( make_pair( detectorID, iLayer ) );
+                break;
+              }
+            }
+          }
+        }
+
+        // here we take intrinsic resolution from geometry database
+
+        layerIndex   = _conversionIdMap[detectorID];
+        _intrResolX[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
+        _intrResolY[layerIndex] = 1000*_siPlanesLayerLayout->getSensitiveResolution(layerIndex); //um
+
       }
 
-      layerIndex   = _conversionIdMap[detectorID];     
-      
+      layerIndex   = _conversionIdMap[detectorID];
+
       // Getting positions of the hits.
       // ------------------------------
       //
@@ -559,121 +559,121 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
       if (layerIndex == 0) {
 
-	off_x = 0.0;
-	off_y = 0.0;
-	theta_x = 0.0;
-	theta_y = 0.0;
-	theta_z = 0.0;
+        off_x = 0.0;
+        off_y = 0.0;
+        theta_x = 0.0;
+        theta_y = 0.0;
+        theta_z = 0.0;
 
-	x0 = _millepedeConstantsFirstLayer[0];
-	y0 = _millepedeConstantsFirstLayer[1];
-	alpha = _millepedeConstantsFirstLayer[2];
-	beta = _millepedeConstantsFirstLayer[3];
-	gamma = _millepedeConstantsFirstLayer[4];
+        x0 = _millepedeConstantsFirstLayer[0];
+        y0 = _millepedeConstantsFirstLayer[1];
+        alpha = _millepedeConstantsFirstLayer[2];
+        beta = _millepedeConstantsFirstLayer[3];
+        gamma = _millepedeConstantsFirstLayer[4];
 
       } else if (layerIndex == 1) {
-	  
-	off_x = _alignmentConstantsSecondLayer[0];
-	off_y = _alignmentConstantsSecondLayer[1];
-	theta_x = _alignmentConstantsSecondLayer[2];
-	theta_y = _alignmentConstantsSecondLayer[3];
-	theta_z = _alignmentConstantsSecondLayer[4];
 
-	x0 = _millepedeConstantsSecondLayer[0];
-	y0 = _millepedeConstantsSecondLayer[1];
-	alpha = _millepedeConstantsSecondLayer[2];
-	beta = _millepedeConstantsSecondLayer[3];
-	gamma = _millepedeConstantsSecondLayer[4];
-	
+        off_x = _alignmentConstantsSecondLayer[0];
+        off_y = _alignmentConstantsSecondLayer[1];
+        theta_x = _alignmentConstantsSecondLayer[2];
+        theta_y = _alignmentConstantsSecondLayer[3];
+        theta_z = _alignmentConstantsSecondLayer[4];
+
+        x0 = _millepedeConstantsSecondLayer[0];
+        y0 = _millepedeConstantsSecondLayer[1];
+        alpha = _millepedeConstantsSecondLayer[2];
+        beta = _millepedeConstantsSecondLayer[3];
+        gamma = _millepedeConstantsSecondLayer[4];
+
       } else if (layerIndex == 2) {
-	  
-	off_x = _alignmentConstantsThirdLayer[0];
-	off_y = _alignmentConstantsThirdLayer[1];
-	theta_x = _alignmentConstantsThirdLayer[2];
-	theta_y = _alignmentConstantsThirdLayer[3];
-	theta_z = _alignmentConstantsThirdLayer[4];
 
-	x0 = _millepedeConstantsThirdLayer[0];
-	y0 = _millepedeConstantsThirdLayer[1];
-	alpha = _millepedeConstantsThirdLayer[2];
-	beta = _millepedeConstantsThirdLayer[3];
-	gamma = _millepedeConstantsThirdLayer[4];
+        off_x = _alignmentConstantsThirdLayer[0];
+        off_y = _alignmentConstantsThirdLayer[1];
+        theta_x = _alignmentConstantsThirdLayer[2];
+        theta_y = _alignmentConstantsThirdLayer[3];
+        theta_z = _alignmentConstantsThirdLayer[4];
+
+        x0 = _millepedeConstantsThirdLayer[0];
+        y0 = _millepedeConstantsThirdLayer[1];
+        alpha = _millepedeConstantsThirdLayer[2];
+        beta = _millepedeConstantsThirdLayer[3];
+        gamma = _millepedeConstantsThirdLayer[4];
 
       } else if (layerIndex == 3) {
-	  
-	off_x = _alignmentConstantsFourthLayer[0];
-	off_y = _alignmentConstantsFourthLayer[1];
-	theta_x = _alignmentConstantsFourthLayer[2];
-	theta_y = _alignmentConstantsFourthLayer[3];
-	theta_z = _alignmentConstantsFourthLayer[4];
 
-	x0 = _millepedeConstantsFourthLayer[0];
-	y0 = _millepedeConstantsFourthLayer[1];
-	alpha = _millepedeConstantsFourthLayer[2];
-	beta = _millepedeConstantsFourthLayer[3];
-	gamma = _millepedeConstantsFourthLayer[4];
+        off_x = _alignmentConstantsFourthLayer[0];
+        off_y = _alignmentConstantsFourthLayer[1];
+        theta_x = _alignmentConstantsFourthLayer[2];
+        theta_y = _alignmentConstantsFourthLayer[3];
+        theta_z = _alignmentConstantsFourthLayer[4];
+
+        x0 = _millepedeConstantsFourthLayer[0];
+        y0 = _millepedeConstantsFourthLayer[1];
+        alpha = _millepedeConstantsFourthLayer[2];
+        beta = _millepedeConstantsFourthLayer[3];
+        gamma = _millepedeConstantsFourthLayer[4];
 
       } else if (layerIndex == 4) {
-	  
-	off_x = _alignmentConstantsFifthLayer[0];
-	off_y = _alignmentConstantsFifthLayer[1];
-	theta_x = _alignmentConstantsFifthLayer[2];
-	theta_y = _alignmentConstantsFifthLayer[3];
-	theta_z = _alignmentConstantsFifthLayer[4];
 
-	x0 = _millepedeConstantsFifthLayer[0];
-	y0 = _millepedeConstantsFifthLayer[1];
-	alpha = _millepedeConstantsFifthLayer[2];
-	beta = _millepedeConstantsFifthLayer[3];
-	gamma = _millepedeConstantsFifthLayer[4];
+        off_x = _alignmentConstantsFifthLayer[0];
+        off_y = _alignmentConstantsFifthLayer[1];
+        theta_x = _alignmentConstantsFifthLayer[2];
+        theta_y = _alignmentConstantsFifthLayer[3];
+        theta_z = _alignmentConstantsFifthLayer[4];
+
+        x0 = _millepedeConstantsFifthLayer[0];
+        y0 = _millepedeConstantsFifthLayer[1];
+        alpha = _millepedeConstantsFifthLayer[2];
+        beta = _millepedeConstantsFifthLayer[3];
+        gamma = _millepedeConstantsFifthLayer[4];
 
       } else if (layerIndex == 5) {
-	  
-	off_x = _alignmentConstantsSixthLayer[0];
-	off_y = _alignmentConstantsSixthLayer[1];
-	theta_x = _alignmentConstantsSixthLayer[2];
-	theta_y = _alignmentConstantsSixthLayer[3];
-	theta_z = _alignmentConstantsSixthLayer[4];
 
-	x0 = _millepedeConstantsSixthLayer[0];
-	y0 = _millepedeConstantsSixthLayer[1];
-	alpha = _millepedeConstantsSixthLayer[2];
-	beta = _millepedeConstantsSixthLayer[3];
-	gamma = _millepedeConstantsSixthLayer[4];
+        off_x = _alignmentConstantsSixthLayer[0];
+        off_y = _alignmentConstantsSixthLayer[1];
+        theta_x = _alignmentConstantsSixthLayer[2];
+        theta_y = _alignmentConstantsSixthLayer[3];
+        theta_z = _alignmentConstantsSixthLayer[4];
+
+        x0 = _millepedeConstantsSixthLayer[0];
+        y0 = _millepedeConstantsSixthLayer[1];
+        alpha = _millepedeConstantsSixthLayer[2];
+        beta = _millepedeConstantsSixthLayer[3];
+        gamma = _millepedeConstantsSixthLayer[4];
 
       } else {
-	  
-	off_x = 0.0;
-	off_y = 0.0;
-	theta_x = 0.0;
-	theta_y = 0.0;
-	theta_z = 0.0;
 
-	x0 = 0.0;
-	y0 = 0.0;
-	alpha = 0.0;
-	beta = 0.0;
-	gamma = 0.0;
+        off_x = 0.0;
+        off_y = 0.0;
+        theta_x = 0.0;
+        theta_y = 0.0;
+        theta_z = 0.0;
+
+        x0 = 0.0;
+        y0 = 0.0;
+        alpha = 0.0;
+        beta = 0.0;
+        gamma = 0.0;
 
       }
 
       if (_alignmentMode != 2) {
 
-	// For documentation of these formulas look at EUDET-Memo-2007-20
-	
-	hitsInPlane.measuredX = (cos(theta_y)*cos(theta_z)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z) + cos(theta_x)*sin(theta_z)) * hit->getPosition()[1] * 1000 + off_x;
-	hitsInPlane.measuredY = ((-1)*cos(theta_y)*sin(theta_z)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z) + cos(theta_x)*cos(theta_z)) * hit->getPosition()[1] * 1000 + off_y;
-	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
-	hitsInPlane.seedCharge = seedCharge;
-	hitsInPlane.clusterCharge = clusterCharge;
+        // For documentation of these formulas look at EUDET-Memo-2007-20
+
+        hitsInPlane.measuredX = (cos(theta_y)*cos(theta_z)) * hit->getPosition()[0] * 1000 + ((-1)*sin(theta_x)*sin(theta_y)*cos(theta_z) + cos(theta_x)*sin(theta_z)) * hit->getPosition()[1] * 1000 + off_x;
+        hitsInPlane.measuredY = ((-1)*cos(theta_y)*sin(theta_z)) * hit->getPosition()[0] * 1000 + (sin(theta_x)*sin(theta_y)*sin(theta_z) + cos(theta_x)*cos(theta_z)) * hit->getPosition()[1] * 1000 + off_y;
+        hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
+        hitsInPlane.seedCharge = seedCharge;
+        hitsInPlane.clusterCharge = clusterCharge;
 
       } else {
 
-	hitsInPlane.measuredX = 1000 * hit->getPosition()[0] + gamma * 1000 * hit->getPosition()[1] + beta * 1000 * hit->getPosition()[2] - x0;
-	hitsInPlane.measuredY = (-1) * gamma * 1000 * hit->getPosition()[0] + 1000 * hit->getPosition()[1] + alpha * 1000 * hit->getPosition()[2] - y0;
-	hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
-	hitsInPlane.seedCharge = seedCharge;
-	hitsInPlane.clusterCharge = clusterCharge;
+        hitsInPlane.measuredX = 1000 * hit->getPosition()[0] + gamma * 1000 * hit->getPosition()[1] + beta * 1000 * hit->getPosition()[2] - x0;
+        hitsInPlane.measuredY = (-1) * gamma * 1000 * hit->getPosition()[0] + 1000 * hit->getPosition()[1] + alpha * 1000 * hit->getPosition()[2] - y0;
+        hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
+        hitsInPlane.seedCharge = seedCharge;
+        hitsInPlane.clusterCharge = clusterCharge;
 
       }
 
@@ -682,17 +682,17 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       // Add Hits to vector
 
       if (layerIndex == 0) {
-	_hitsFirstPlane.push_back(hitsInPlane);
+        _hitsFirstPlane.push_back(hitsInPlane);
       } else if (layerIndex == 1) {
-	_hitsSecondPlane.push_back(hitsInPlane);
+        _hitsSecondPlane.push_back(hitsInPlane);
       } else if (layerIndex == 2) {
-	_hitsThirdPlane.push_back(hitsInPlane);
+        _hitsThirdPlane.push_back(hitsInPlane);
       } else if (layerIndex == 3) {
-	_hitsFourthPlane.push_back(hitsInPlane);
+        _hitsFourthPlane.push_back(hitsInPlane);
       } else if (layerIndex == 4) {
-	_hitsFifthPlane.push_back(hitsInPlane);
+        _hitsFifthPlane.push_back(hitsInPlane);
       } else if (layerIndex == 5) {
-	_hitsSixthPlane.push_back(hitsInPlane);
+        _hitsSixthPlane.push_back(hitsInPlane);
       }
 
     }
@@ -750,236 +750,236 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
       // loop over all hits in first plane
       for (int firsthit = 0; size_t(firsthit) < _hitsFirstPlane.size(); firsthit++) {
-      
-	// loop over all hits in second plane
-	for (int secondhit = 0; size_t(secondhit) < _hitsSecondPlane.size(); secondhit++) {
 
-	  distance12 = sqrt(pow(_hitsFirstPlane[firsthit].measuredX - _hitsSecondPlane[secondhit].measuredX,2) + pow(_hitsFirstPlane[firsthit].measuredY - _hitsSecondPlane[secondhit].measuredY,2));
+        // loop over all hits in second plane
+        for (int secondhit = 0; size_t(secondhit) < _hitsSecondPlane.size(); secondhit++) {
 
-	  distance_plane12 = _hitsSecondPlane[secondhit].measuredZ - _hitsFirstPlane[firsthit].measuredZ;
+          distance12 = sqrt(pow(_hitsFirstPlane[firsthit].measuredX - _hitsSecondPlane[secondhit].measuredX,2) + pow(_hitsFirstPlane[firsthit].measuredY - _hitsSecondPlane[secondhit].measuredY,2));
 
-	  distanceMax12 = _distanceMax * (distance_plane12 / 100000.0);
+          distance_plane12 = _hitsSecondPlane[secondhit].measuredZ - _hitsFirstPlane[firsthit].measuredZ;
 
-	  if (_nPlanes == 2 && distance12 < distanceMax12 && _nTracks < _maxTrackCandidates) {
+          distanceMax12 = _distanceMax * (distance_plane12 / 100000.0);
 
-	    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-	    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-	    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-	    _seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
-	    _clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
+          if (_nPlanes == 2 && distance12 < distanceMax12 && _nTracks < _maxTrackCandidates) {
 
-	    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-	    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-	    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-	    _seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
-	    _clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
+            _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+            _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+            _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+            _seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
+            _clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
 
-	    _nTracks++;
+            _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+            _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+            _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+            _seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
+            _clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
 
-	  }
-	
-	  // more than two planes
-	  if (_nPlanes > 2) {
+            _nTracks++;
 
-	    // loop over all hits in third plane
-	    for (int thirdhit = 0; size_t(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
+          }
 
-	      distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
+          // more than two planes
+          if (_nPlanes > 2) {
 
-	      distance_plane23 = _hitsThirdPlane[thirdhit].measuredZ - _hitsSecondPlane[secondhit].measuredZ;
-	    
-	      distanceMax23 = _distanceMax * (distance_plane23 / 100000.0);
+            // loop over all hits in third plane
+            for (int thirdhit = 0; size_t(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
 
-	      if (_nPlanes == 3 && distance12 < distanceMax12 && distance23 < distanceMax23 && _nTracks < _maxTrackCandidates) {
+              distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
 
-		_xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-		_yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-		_zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-		_seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
-		_clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
+              distance_plane23 = _hitsThirdPlane[thirdhit].measuredZ - _hitsSecondPlane[secondhit].measuredZ;
 
-		_xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-		_yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-		_zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-		_seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
-		_clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
+              distanceMax23 = _distanceMax * (distance_plane23 / 100000.0);
 
-		_xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-		_yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-		_zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-		_seedCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].seedCharge;
-		_clusterCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterCharge;
+              if (_nPlanes == 3 && distance12 < distanceMax12 && distance23 < distanceMax23 && _nTracks < _maxTrackCandidates) {
 
-		_nTracks++;
+                _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+                _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+                _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+                _seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
+                _clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
 
-	      }
+                _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+                _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+                _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+                _seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
+                _clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
 
-	      // more than three planes
-	      if (_nPlanes > 3) {
-	    
-		// loop over all hits in fourth plane
-		for (int fourthhit = 0; size_t(fourthhit) < _hitsFourthPlane.size(); fourthhit++) {
+                _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
+                _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
+                _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+                _seedCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].seedCharge;
+                _clusterCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterCharge;
 
-		  distance34 = sqrt(pow(_hitsThirdPlane[thirdhit].measuredX - _hitsFourthPlane[fourthhit].measuredX,2) + pow(_hitsThirdPlane[thirdhit].measuredY - _hitsFourthPlane[fourthhit].measuredY,2));
+                _nTracks++;
 
-		  distance_plane34 = _hitsFourthPlane[fourthhit].measuredZ - _hitsThirdPlane[thirdhit].measuredZ;
-	    
-		  distanceMax34 = _distanceMax * (distance_plane34 / 100000.0);
+              }
 
-		  if (_nPlanes == 4 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && _nTracks < _maxTrackCandidates) {
+              // more than three planes
+              if (_nPlanes > 3) {
 
-		    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-		    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-		    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-		    _seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
-		    _clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
+                // loop over all hits in fourth plane
+                for (int fourthhit = 0; size_t(fourthhit) < _hitsFourthPlane.size(); fourthhit++) {
 
-		    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-		    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-		    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-		    _seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
-		    _clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
+                  distance34 = sqrt(pow(_hitsThirdPlane[thirdhit].measuredX - _hitsFourthPlane[fourthhit].measuredX,2) + pow(_hitsThirdPlane[thirdhit].measuredY - _hitsFourthPlane[fourthhit].measuredY,2));
 
-		    _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-		    _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-		    _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-		    _seedCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].seedCharge;
-		    _clusterCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterCharge;
+                  distance_plane34 = _hitsFourthPlane[fourthhit].measuredZ - _hitsThirdPlane[thirdhit].measuredZ;
 
-		    _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
-		    _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
-		    _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
-		    _seedCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].seedCharge;
-		    _clusterCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterCharge;
+                  distanceMax34 = _distanceMax * (distance_plane34 / 100000.0);
 
-		    _nTracks++;
+                  if (_nPlanes == 4 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && _nTracks < _maxTrackCandidates) {
 
-		  }
-	    
-		  // more than four planes
-		  if (_nPlanes > 4) {
+                    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+                    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+                    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+                    _seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
+                    _clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
 
-		    // loop over all hits in fifth plane
-		    for (int fifthhit = 0; size_t(fifthhit) < _hitsFifthPlane.size(); fifthhit++) {
+                    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+                    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+                    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+                    _seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
+                    _clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
 
-		      distance45 = sqrt(pow(_hitsFourthPlane[fourthhit].measuredX - _hitsFifthPlane[fifthhit].measuredX,2) + pow(_hitsFourthPlane[fourthhit].measuredY - _hitsFifthPlane[fifthhit].measuredY,2));
+                    _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
+                    _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
+                    _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+                    _seedCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].seedCharge;
+                    _clusterCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterCharge;
 
-		      distance_plane45 = _hitsFifthPlane[fifthhit].measuredZ - _hitsFourthPlane[fourthhit].measuredZ;
-	    
-		      distanceMax45 = _distanceMax * (distance_plane45 / 100000.0);
+                    _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
+                    _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
+                    _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
+                    _seedCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].seedCharge;
+                    _clusterCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterCharge;
 
-		      if (_nPlanes == 5 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && _nTracks < _maxTrackCandidates) {
+                    _nTracks++;
 
-			_xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-			_yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-			_zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-			_seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
-			_clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
+                  }
 
-			_xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-			_yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-			_zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-			_seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
-			_clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
+                  // more than four planes
+                  if (_nPlanes > 4) {
 
-			_xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-			_yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-			_zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-			_seedCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].seedCharge;
-			_clusterCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterCharge;
+                    // loop over all hits in fifth plane
+                    for (int fifthhit = 0; size_t(fifthhit) < _hitsFifthPlane.size(); fifthhit++) {
 
-			_xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
-			_yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
-			_zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
-			_seedCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].seedCharge;
-			_clusterCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterCharge;
+                      distance45 = sqrt(pow(_hitsFourthPlane[fourthhit].measuredX - _hitsFifthPlane[fifthhit].measuredX,2) + pow(_hitsFourthPlane[fourthhit].measuredY - _hitsFifthPlane[fifthhit].measuredY,2));
 
-			_xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
-			_yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
-			_zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
-			_seedCharge[_nTracks][4] = _hitsFifthPlane[fifthhit].seedCharge;
-			_clusterCharge[_nTracks][4] = _hitsFifthPlane[fifthhit].clusterCharge;
+                      distance_plane45 = _hitsFifthPlane[fifthhit].measuredZ - _hitsFourthPlane[fourthhit].measuredZ;
 
-			_nTracks++;
+                      distanceMax45 = _distanceMax * (distance_plane45 / 100000.0);
 
-		      }
+                      if (_nPlanes == 5 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && _nTracks < _maxTrackCandidates) {
 
-		      // more than five planes
-		      if (_nPlanes > 5) {
+                        _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+                        _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+                        _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+                        _seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
+                        _clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
 
-			// loop over all hits in sixth plane
-			for (int sixthhit = 0; size_t(sixthhit) < _hitsSixthPlane.size(); sixthhit++) {
-			
-			  distance56 = sqrt(pow(_hitsFifthPlane[fifthhit].measuredX - _hitsSixthPlane[sixthhit].measuredX,2) + pow(_hitsFifthPlane[fifthhit].measuredY - _hitsSixthPlane[sixthhit].measuredY,2));
+                        _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+                        _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+                        _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+                        _seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
+                        _clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
 
-			  distance_plane56 = _hitsSixthPlane[sixthhit].measuredZ - _hitsFifthPlane[fifthhit].measuredZ;
-	    
-			  distanceMax56 = _distanceMax * (distance_plane56 / 100000.0);
+                        _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
+                        _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
+                        _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+                        _seedCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].seedCharge;
+                        _clusterCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterCharge;
 
-			  if (_nPlanes == 6 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && distance56 < distanceMax56 && _nTracks < _maxTrackCandidates) {
+                        _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
+                        _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
+                        _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
+                        _seedCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].seedCharge;
+                        _clusterCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterCharge;
 
-			    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-			    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-			    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-			    _seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
-			    _clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
+                        _xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
+                        _yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
+                        _zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
+                        _seedCharge[_nTracks][4] = _hitsFifthPlane[fifthhit].seedCharge;
+                        _clusterCharge[_nTracks][4] = _hitsFifthPlane[fifthhit].clusterCharge;
 
-			    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-			    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-			    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-			    _seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
-			    _clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
+                        _nTracks++;
 
-			    _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-			    _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-			    _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-			    _seedCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].seedCharge;
-			    _clusterCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterCharge;
+                      }
 
-			    _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
-			    _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
-			    _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
-			    _seedCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].seedCharge;
-			    _clusterCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterCharge;
+                      // more than five planes
+                      if (_nPlanes > 5) {
 
-			    _xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
-			    _yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
-			    _zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
-			    _seedCharge[_nTracks][4] = _hitsFifthPlane[fifthhit].seedCharge;
-			    _clusterCharge[_nTracks][4] = _hitsFifthPlane[fifthhit].clusterCharge;
+                        // loop over all hits in sixth plane
+                        for (int sixthhit = 0; size_t(sixthhit) < _hitsSixthPlane.size(); sixthhit++) {
 
-			    _xPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredX;
-			    _yPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredY;
-			    _zPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredZ;
-			    _seedCharge[_nTracks][5] = _hitsSixthPlane[sixthhit].seedCharge;
-			    _clusterCharge[_nTracks][5] = _hitsSixthPlane[sixthhit].clusterCharge;
+                          distance56 = sqrt(pow(_hitsFifthPlane[fifthhit].measuredX - _hitsSixthPlane[sixthhit].measuredX,2) + pow(_hitsFifthPlane[fifthhit].measuredY - _hitsSixthPlane[sixthhit].measuredY,2));
 
-			    _nTracks++;
+                          distance_plane56 = _hitsSixthPlane[sixthhit].measuredZ - _hitsFifthPlane[fifthhit].measuredZ;
 
-			  }
+                          distanceMax56 = _distanceMax * (distance_plane56 / 100000.0);
 
-			} // end loop over all hits in sixth plane
+                          if (_nPlanes == 6 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && distance56 < distanceMax56 && _nTracks < _maxTrackCandidates) {
 
-		      } // end if more than five planes
+                            _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
+                            _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
+                            _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
+                            _seedCharge[_nTracks][0] = _hitsFirstPlane[firsthit].seedCharge;
+                            _clusterCharge[_nTracks][0] = _hitsFirstPlane[firsthit].clusterCharge;
 
-		    } // end loop over all hits in fifth plane
+                            _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
+                            _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
+                            _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
+                            _seedCharge[_nTracks][1] = _hitsSecondPlane[secondhit].seedCharge;
+                            _clusterCharge[_nTracks][1] = _hitsSecondPlane[secondhit].clusterCharge;
 
-		  } // end if more than four planes
+                            _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
+                            _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
+                            _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
+                            _seedCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].seedCharge;
+                            _clusterCharge[_nTracks][2] = _hitsThirdPlane[thirdhit].clusterCharge;
 
-		} // end loop over all hits in fourth plane
+                            _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
+                            _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
+                            _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
+                            _seedCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].seedCharge;
+                            _clusterCharge[_nTracks][3] = _hitsFourthPlane[fourthhit].clusterCharge;
 
-	      } // end if more than three planes
+                            _xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
+                            _yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
+                            _zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
+                            _seedCharge[_nTracks][4] = _hitsFifthPlane[fifthhit].seedCharge;
+                            _clusterCharge[_nTracks][4] = _hitsFifthPlane[fifthhit].clusterCharge;
 
-	    } // end loop over all hits in third plane
+                            _xPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredX;
+                            _yPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredY;
+                            _zPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredZ;
+                            _seedCharge[_nTracks][5] = _hitsSixthPlane[sixthhit].seedCharge;
+                            _clusterCharge[_nTracks][5] = _hitsSixthPlane[sixthhit].clusterCharge;
 
-	  } // end if more than two planes
+                            _nTracks++;
 
-	} // end loop over all hits in second plane
+                          }
+
+                        } // end loop over all hits in sixth plane
+
+                      } // end if more than five planes
+
+                    } // end loop over all hits in fifth plane
+
+                  } // end if more than four planes
+
+                } // end loop over all hits in fourth plane
+
+              } // end if more than three planes
+
+            } // end loop over all hits in third plane
+
+          } // end if more than two planes
+
+        } // end loop over all hits in second plane
 
       } // end loop over all hits in first plane
 
     } else {
-      
+
       streamlog_out ( MESSAGE2 ) << "Too many hits. The event will be skipped." << endl;
 
     }
@@ -1001,7 +1001,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     LCCollectionVec     * fitpointvec  = new LCCollectionVec(LCIO::TRACKERHIT);
 
     // Set flag for storing track hits in track collection
-    LCFlagImpl flag(fittrackvec->getFlag()); 
+    LCFlagImpl flag(fittrackvec->getFlag());
     flag.setBit( LCIO::TRBIT_HITS );
     fittrackvec->setFlag(flag.getFlag());
 
@@ -1016,279 +1016,279 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       _zPosHere = new double[_nPlanes];
 
       for (int help = 0; help < _nPlanes; help++) {
-	_xPosHere[help] = _xPos[track][help];
-	_yPosHere[help] = _yPos[track][help];
-	_zPosHere[help] = _zPos[track][help];
+        _xPosHere[help] = _xPos[track][help];
+        _yPosHere[help] = _yPos[track][help];
+        _zPosHere[help] = _zPos[track][help];
       }
 
       streamlog_out ( MESSAGE2 ) << "Fitting track using the following coordinates: ";
 
       for (int help = 0; help < _nPlanes; help++) {
-	streamlog_out ( MESSAGE2 ) << _xPosHere[help] << " " << _yPosHere[help] << " " << _zPosHere[help] << "   ";
+        streamlog_out ( MESSAGE2 ) << _xPosHere[help] << " " << _yPosHere[help] << " " << _zPosHere[help] << "   ";
       }
 
       streamlog_out ( MESSAGE2 ) << endl;
 
       FitTrack(int(_nPlanes), _xPosHere, _yPosHere, _zPosHere, _intrResolX, _intrResolY, Chiquare, _waferResidX, _waferResidY, angle);
 
-#ifdef MARLIN_USE_AIDA
-    
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
       if ( _histogramSwitch ) {
-	{
-	  stringstream ss; 
-	  ss << _chi2XLocalname << endl;
-	}
-	if ( AIDA::IHistogram1D* chi2x_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2XLocalname]) )
-	  chi2x_histo->fill(Chiquare[0]);
-	else {
-	  streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _chi2XLocalname << endl;
-	  streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	  _histogramSwitch = false;
-	}       
+        {
+          stringstream ss;
+          ss << _chi2XLocalname << endl;
+        }
+        if ( AIDA::IHistogram1D* chi2x_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2XLocalname]) )
+          chi2x_histo->fill(Chiquare[0]);
+        else {
+          streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _chi2XLocalname << endl;
+          streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+          _histogramSwitch = false;
+        }
       }
-    
+
       if ( _histogramSwitch ) {
-	{
-	  stringstream ss; 
-	  ss << _chi2YLocalname << endl;
-	}
-	if ( AIDA::IHistogram1D* chi2y_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2YLocalname]) )
-	  chi2y_histo->fill(Chiquare[1]);
-	else {
-	  streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _chi2YLocalname << endl;
-	  streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	  _histogramSwitch = false;
-	}       
+        {
+          stringstream ss;
+          ss << _chi2YLocalname << endl;
+        }
+        if ( AIDA::IHistogram1D* chi2y_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2YLocalname]) )
+          chi2y_histo->fill(Chiquare[1]);
+        else {
+          streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _chi2YLocalname << endl;
+          streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+          _histogramSwitch = false;
+        }
       }
 #endif
 
       // chi2 cut
       if (Chiquare[0] <= _chi2XMax && Chiquare[1] <= _chi2YMax) {
 
-	_nGoodTracks++;
+        _nGoodTracks++;
 
-	// Save track to output file
-	// -------------------------
-    
-	// Write fit result out
-    
-	TrackImpl * fittrack = new TrackImpl();
-    
-	// Following parameters are not used for Telescope
-	// and are set to zero (just in case)
-	fittrack->setOmega(0.);     // curvature of the track
-	fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
-	fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
-	fittrack->setPhi(0.);       // phi of the track at reference point
-	fittrack->setTanLambda(0.); // dip angle of the track at reference point
-    
-	// Used class members
-    
-	fittrack->setChi2(Chiquare[0]);  // x Chi2 of the fit 
-	fittrack->setNdf(_nPlanes);
-    	//  fittrack->setNdf(nBestFired); // Number of planes fired (!)
-    
-	fittrack->setIsReferencePointPCA(false);  
-    
-	// Calculate positions of fitted track in every plane
-    
-	int counter;
+        // Save track to output file
+        // -------------------------
 
-	for( counter = 0; counter < _nPlanes; counter++ ){
-      
-	  TrackerHitImpl * corrpoint = new TrackerHitImpl;
-	  TrackerHitImpl * fitpoint  = new TrackerHitImpl;
+        // Write fit result out
 
-	  // Plane number stored as hit type
-	  // corrpoint->setType(counter+1);
-	  corrpoint->setType(counter+1);
-	  
-	  // Use hit type 32 to be compatible with analytic fitter
-	  fitpoint->setType(32);
+        TrackImpl * fittrack = new TrackImpl();
 
-	  double corrpos[3];
-	  corrpos[0] = _xPosHere[counter];
-	  corrpos[1] = _yPosHere[counter];
-	  corrpos[2] = _zPosHere[counter];
+        // Following parameters are not used for Telescope
+        // and are set to zero (just in case)
+        fittrack->setOmega(0.);     // curvature of the track
+        fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
+        fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
+        fittrack->setPhi(0.);       // phi of the track at reference point
+        fittrack->setTanLambda(0.); // dip angle of the track at reference point
 
-	  double fitpos[3];
-	  fitpos[0] = _waferResidX[counter] + _xPosHere[counter];
-	  fitpos[1] = _waferResidY[counter] + _yPosHere[counter];
-	  fitpos[2] = _zPosHere[counter];
-	  
-	  corrpoint->setPosition(corrpos);
-	  fitpoint->setPosition(fitpos);
-      
-	  // store corr and fit point 
-      
-	  corrpointvec->push_back(corrpoint);
-	  fitpointvec->push_back(fitpoint);
-      
-	  // add points to track
+        // Used class members
 
-	  fittrack->addHit(corrpoint);
-	  fittrack->addHit(fitpoint);
-      
-	}
-    
-	fittrackvec->addElement(fittrack);
+        fittrack->setChi2(Chiquare[0]);  // x Chi2 of the fit
+        fittrack->setNdf(_nPlanes);
+        //  fittrack->setNdf(nBestFired); // Number of planes fired (!)
 
-#ifdef MARLIN_USE_AIDA
+        fittrack->setIsReferencePointPCA(false);
 
-	string tempHistoName;
+        // Calculate positions of fitted track in every plane
 
-	// Fill x angle histogram
-	if ( _histogramSwitch ) {
-	  {
-	    stringstream ss; 
-	    ss << _angleXLocalname << endl;
-	  }
-	  if ( AIDA::IHistogram1D* anglex_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleXLocalname]) )
-	    anglex_histo->fill(angle[0]*180/M_PI);
-	  else {
-	    streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _angleXLocalname << endl;
-	    streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	    _histogramSwitch = false;
-	  }       
-	}
+        int counter;
 
-	// Fill y angle histogram
-	if ( _histogramSwitch ) {
-	  {
-	    stringstream ss; 
-	    ss << _angleYLocalname << endl;
-	  }
-	  if ( AIDA::IHistogram1D* angley_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleYLocalname]) )
-	    angley_histo->fill(angle[1]*180/M_PI);
-	  else {
-	    streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _angleYLocalname << endl;
-	    streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	    _histogramSwitch = false;
-	  }       
-	}
+        for( counter = 0; counter < _nPlanes; counter++ ){
 
-	// Fill hit distance histogram
-	if ( _excludePlane > 0) {
-	  
-	  // exclude border region
-	  if (fabs(_xPosHere[(_excludePlane - 1)]) < _hitDistanceXMax && fabs(_yPosHere[(_excludePlane - 1)]) < _hitDistanceYMax) {
+          TrackerHitImpl * corrpoint = new TrackerHitImpl;
+          TrackerHitImpl * fitpoint  = new TrackerHitImpl;
 
-	    double hitDistance = sqrt(_waferResidX[(_excludePlane - 1)] * _waferResidX[(_excludePlane - 1)] + _waferResidY[(_excludePlane - 1)] * _waferResidY[(_excludePlane - 1)]);
+          // Plane number stored as hit type
+          // corrpoint->setType(counter+1);
+          corrpoint->setType(counter+1);
 
-	    _iHitDUT = _iHitDUT + 1;
+          // Use hit type 32 to be compatible with analytic fitter
+          fitpoint->setType(32);
 
-	    // loop over all distance cuts
-	    for ( int help = 0; help < 10; help++ ) {
-	      // distance cut
-	      if ( hitDistance < (help * 20 + 20)) {
-		_iHitDUTDistanceCut[help] = _iHitDUTDistanceCut[help] + 1;
-	      } // end if distance cut
-	    } // end loop over all distance cuts
+          double corrpos[3];
+          corrpos[0] = _xPosHere[counter];
+          corrpos[1] = _yPosHere[counter];
+          corrpos[2] = _zPosHere[counter];
 
-	    if ( _histogramSwitch ) {
-	      {
-		stringstream ss; 
-		ss << _hitDistanceLocalname << endl;
-	      }
-	      if ( AIDA::IHistogram1D* hitdistance_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_hitDistanceLocalname]) )
-		hitdistance_histo->fill(hitDistance);
-	      else {
-		streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _hitDistanceLocalname << endl;
-		streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-		_histogramSwitch = false;
-	      }
-	    }
-	  
-	  } // end if exclude border region
+          double fitpos[3];
+          fitpos[0] = _waferResidX[counter] + _xPosHere[counter];
+          fitpos[1] = _waferResidY[counter] + _yPosHere[counter];
+          fitpos[2] = _zPosHere[counter];
 
-	}
+          corrpoint->setPosition(corrpos);
+          fitpoint->setPosition(fitpos);
 
-	// loop over all detector planes
-	for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
+          // store corr and fit point
 
-	  // fill x residuals histograms
-	  if ( _histogramSwitch ) {
-	    {
-	      stringstream ss; 
-	      ss << _residualXLocalname << "_d" << iDetector; 
-	      tempHistoName=ss.str();
-	    }
-	    if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	      residx_histo->fill(_waferResidX[iDetector]);
-	    else {
-	      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
-	      streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	      _histogramSwitch = false;
-	    }       
-	  }
+          corrpointvec->push_back(corrpoint);
+          fitpointvec->push_back(fitpoint);
 
-	  // fill y residuals histograms
-	  if ( _histogramSwitch ) {
-	    {
-	      stringstream ss; 
-	      ss << _residualYLocalname << "_d" << iDetector; 
-	      tempHistoName=ss.str();
-	    }
-	    if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	      residy_histo->fill(_waferResidY[iDetector]);
-	    else {
-	      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualYLocalname << endl;
-	      streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	      _histogramSwitch = false;
-	    }       
-	  }
+          // add points to track
 
-	  // fill seed charge histograms
-	  if ( _histogramSwitch ) {
-	    {
-	      stringstream ss; 
-	      ss << _seedChargeLocalname << "_d" << iDetector; 
-	      tempHistoName=ss.str();
-	    }
-	    if ( AIDA::IHistogram1D* seedsnr_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	      seedsnr_histo->fill(_seedCharge[track][iDetector]);
-	    else {
-	      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
-	      streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	      _histogramSwitch = false;
-	    }       
-	  }
+          fittrack->addHit(corrpoint);
+          fittrack->addHit(fitpoint);
 
-	  // fill cluster charge histograms
-	  if ( _histogramSwitch ) {
-	    {
-	      stringstream ss; 
-	      ss << _clusterChargeLocalname << "_d" << iDetector; 
-	      tempHistoName=ss.str();
-	    }
-	    if ( AIDA::IHistogram1D* clustersnr_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	      clustersnr_histo->fill(_clusterCharge[track][iDetector]);
-	    else {
-	      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
-	      streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	      _histogramSwitch = false;
-	    }       
-	  }
+        }
 
-	  // fill xy positions histograms
-	  if ( _histogramSwitch ) {
-	    {
-	      stringstream ss; 
-	      ss << _positionXYLocalname << "_d" << iDetector; 
-	      tempHistoName=ss.str();
-	    }
-	    if ( AIDA::IHistogram2D* positionxy_histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-	      positionxy_histo->fill(_waferResidX[iDetector] + _xPosHere[iDetector],_waferResidY[iDetector] + _yPosHere[iDetector]);
-	    else {
-	      streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _positionXYLocalname << endl;
-	      streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	      _histogramSwitch = false;
-	    }       
-	  }
+        fittrackvec->addElement(fittrack);
 
-	} // end loop over all detector planes
-	
-#endif 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
+        string tempHistoName;
+
+        // Fill x angle histogram
+        if ( _histogramSwitch ) {
+          {
+            stringstream ss;
+            ss << _angleXLocalname << endl;
+          }
+          if ( AIDA::IHistogram1D* anglex_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleXLocalname]) )
+            anglex_histo->fill(angle[0]*180/M_PI);
+          else {
+            streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _angleXLocalname << endl;
+            streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+            _histogramSwitch = false;
+          }
+        }
+
+        // Fill y angle histogram
+        if ( _histogramSwitch ) {
+          {
+            stringstream ss;
+            ss << _angleYLocalname << endl;
+          }
+          if ( AIDA::IHistogram1D* angley_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleYLocalname]) )
+            angley_histo->fill(angle[1]*180/M_PI);
+          else {
+            streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _angleYLocalname << endl;
+            streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+            _histogramSwitch = false;
+          }
+        }
+
+        // Fill hit distance histogram
+        if ( _excludePlane > 0) {
+
+          // exclude border region
+          if (fabs(_xPosHere[(_excludePlane - 1)]) < _hitDistanceXMax && fabs(_yPosHere[(_excludePlane - 1)]) < _hitDistanceYMax) {
+
+            double hitDistance = sqrt(_waferResidX[(_excludePlane - 1)] * _waferResidX[(_excludePlane - 1)] + _waferResidY[(_excludePlane - 1)] * _waferResidY[(_excludePlane - 1)]);
+
+            _iHitDUT = _iHitDUT + 1;
+
+            // loop over all distance cuts
+            for ( int help = 0; help < 10; help++ ) {
+              // distance cut
+              if ( hitDistance < (help * 20 + 20)) {
+                _iHitDUTDistanceCut[help] = _iHitDUTDistanceCut[help] + 1;
+              } // end if distance cut
+            } // end loop over all distance cuts
+
+            if ( _histogramSwitch ) {
+              {
+                stringstream ss;
+                ss << _hitDistanceLocalname << endl;
+              }
+              if ( AIDA::IHistogram1D* hitdistance_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_hitDistanceLocalname]) )
+                hitdistance_histo->fill(hitDistance);
+              else {
+                streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _hitDistanceLocalname << endl;
+                streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+                _histogramSwitch = false;
+              }
+            }
+
+          } // end if exclude border region
+
+        }
+
+        // loop over all detector planes
+        for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
+
+          // fill x residuals histograms
+          if ( _histogramSwitch ) {
+            {
+              stringstream ss;
+              ss << _residualXLocalname << "_d" << iDetector;
+              tempHistoName=ss.str();
+            }
+            if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+              residx_histo->fill(_waferResidX[iDetector]);
+            else {
+              streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
+              streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+              _histogramSwitch = false;
+            }
+          }
+
+          // fill y residuals histograms
+          if ( _histogramSwitch ) {
+            {
+              stringstream ss;
+              ss << _residualYLocalname << "_d" << iDetector;
+              tempHistoName=ss.str();
+            }
+            if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+              residy_histo->fill(_waferResidY[iDetector]);
+            else {
+              streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualYLocalname << endl;
+              streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+              _histogramSwitch = false;
+            }
+          }
+
+          // fill seed charge histograms
+          if ( _histogramSwitch ) {
+            {
+              stringstream ss;
+              ss << _seedChargeLocalname << "_d" << iDetector;
+              tempHistoName=ss.str();
+            }
+            if ( AIDA::IHistogram1D* seedsnr_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+              seedsnr_histo->fill(_seedCharge[track][iDetector]);
+            else {
+              streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
+              streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+              _histogramSwitch = false;
+            }
+          }
+
+          // fill cluster charge histograms
+          if ( _histogramSwitch ) {
+            {
+              stringstream ss;
+              ss << _clusterChargeLocalname << "_d" << iDetector;
+              tempHistoName=ss.str();
+            }
+            if ( AIDA::IHistogram1D* clustersnr_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+              clustersnr_histo->fill(_clusterCharge[track][iDetector]);
+            else {
+              streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
+              streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+              _histogramSwitch = false;
+            }
+          }
+
+          // fill xy positions histograms
+          if ( _histogramSwitch ) {
+            {
+              stringstream ss;
+              ss << _positionXYLocalname << "_d" << iDetector;
+              tempHistoName=ss.str();
+            }
+            if ( AIDA::IHistogram2D* positionxy_histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+              positionxy_histo->fill(_waferResidX[iDetector] + _xPosHere[iDetector],_waferResidY[iDetector] + _yPosHere[iDetector]);
+            else {
+              streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _positionXYLocalname << endl;
+              streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+              _histogramSwitch = false;
+            }
+          }
+
+        } // end loop over all detector planes
+
+#endif
 
       } // end if chi2 cut
 
@@ -1296,13 +1296,13 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       delete [] _zPosHere;
       delete [] _yPosHere;
       delete [] _xPosHere;
-      
+
     } // end loop over all track candidates
 
     if (_nGoodTracks > 0) {
-	event->addCollection(fittrackvec,_outputTrackColName);
-	event->addCollection(corrpointvec,_correctedHitColName);
-	event->addCollection(fitpointvec,_outputHitColName);
+      event->addCollection(fittrackvec,_outputTrackColName);
+      event->addCollection(corrpointvec,_correctedHitColName);
+      event->addCollection(fitpointvec,_outputHitColName);
     } else {
       delete fittrackvec;
       delete corrpointvec;
@@ -1311,20 +1311,20 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
     streamlog_out ( MESSAGE2 ) << "Finished fitting tracks in event " << _iEvt << endl;
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
     if ( _histogramSwitch ) {
       {
-	stringstream ss; 
-	ss << _numberTracksLocalname << endl;
+        stringstream ss;
+        ss << _numberTracksLocalname << endl;
       }
       if ( AIDA::IHistogram1D* number_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_numberTracksLocalname]) )
-	number_histo->fill(_nGoodTracks);
+        number_histo->fill(_nGoodTracks);
       else {
-	streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _numberTracksLocalname << endl;
-	streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-	_histogramSwitch = false;
-      }       
+        streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _numberTracksLocalname << endl;
+        streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+        _histogramSwitch = false;
+      }
     }
 
 #endif
@@ -1343,22 +1343,22 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
     delete [] _xPos;
     delete [] _seedCharge;
     delete [] _clusterCharge;
-    
+
   } catch (DataNotAvailableException& e) {
-    
-    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber() 
-				<< " in run " << event->getRunNumber() << endl;
-    
+
+    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
+                                << " in run " << event->getRunNumber() << endl;
+
   }
 
   ++_iEvt;
-    
+
   if ( isFirstEvent() ) _isFirstEvent = false;
-  
+
 }
 
 void EUTelMultiLineFit::end() {
-  
+
   delete [] _intrResolY;
   delete [] _intrResolX;
   delete [] _yFitPos;
@@ -1366,7 +1366,7 @@ void EUTelMultiLineFit::end() {
   delete [] _waferResidY;
   delete [] _waferResidX;
 
-  streamlog_out ( MESSAGE2 ) << "Successfully finished" << endl;  
+  streamlog_out ( MESSAGE2 ) << "Successfully finished" << endl;
 
   // information on DUT efficiency
   if (_excludePlane > 0) {
@@ -1379,16 +1379,16 @@ void EUTelMultiLineFit::end() {
 }
 
 void EUTelMultiLineFit::bookHistos() {
-  
-  
-#ifdef MARLIN_USE_AIDA
-  
+
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
   try {
     streamlog_out ( MESSAGE2 ) << "Booking histograms" << endl;
-    
+
     const int    NBin = 10000;
-    const double Chi2Min  = 0.0;      
-    const double Chi2Max  = 10000.0;      
+    const double Chi2Min  = 0.0;
+    const double Chi2Max  = 10000.0;
     const double Min  = -5000.0;
     const double Max  = 5000.0;
     const double angleMin  = -3.0;
@@ -1407,7 +1407,7 @@ void EUTelMultiLineFit::bookHistos() {
     const double positionYMin = -5000.0;
     const double positionYMax = 5000.0;
 
-    AIDA::IHistogram1D * numberTracksLocal = 
+    AIDA::IHistogram1D * numberTracksLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_numberTracksLocalname,20,tracksMin,tracksMax);
     if ( numberTracksLocal ) {
       numberTracksLocal->setTitle("Number of tracks after #chi^{2} cut");
@@ -1418,7 +1418,7 @@ void EUTelMultiLineFit::bookHistos() {
       _histogramSwitch = false;
     }
 
-    AIDA::IHistogram1D * chi2XLocal = 
+    AIDA::IHistogram1D * chi2XLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_chi2XLocalname,NBin,Chi2Min,Chi2Max);
     if ( chi2XLocal ) {
       chi2XLocal->setTitle("Chi2 X");
@@ -1428,8 +1428,8 @@ void EUTelMultiLineFit::bookHistos() {
       streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
       _histogramSwitch = false;
     }
-    
-    AIDA::IHistogram1D * chi2YLocal = 
+
+    AIDA::IHistogram1D * chi2YLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_chi2YLocalname,NBin,Chi2Min,Chi2Max);
     if ( chi2YLocal ) {
       chi2YLocal->setTitle("Chi2 Y");
@@ -1439,8 +1439,8 @@ void EUTelMultiLineFit::bookHistos() {
       streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
       _histogramSwitch = false;
     }
-    
-    AIDA::IHistogram1D * angleXLocal = 
+
+    AIDA::IHistogram1D * angleXLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_angleXLocalname,NBin,angleMin,angleMax);
     if ( angleXLocal ) {
       angleXLocal->setTitle("X Angle");
@@ -1450,8 +1450,8 @@ void EUTelMultiLineFit::bookHistos() {
       streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
       _histogramSwitch = false;
     }
-    
-    AIDA::IHistogram1D * angleYLocal = 
+
+    AIDA::IHistogram1D * angleYLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_angleYLocalname,NBin,angleMin,angleMax);
     if ( angleYLocal ) {
       angleYLocal->setTitle("Y Angle");
@@ -1462,7 +1462,7 @@ void EUTelMultiLineFit::bookHistos() {
       _histogramSwitch = false;
     }
 
-    AIDA::IHistogram1D * hitDistanceLocal = 
+    AIDA::IHistogram1D * hitDistanceLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_hitDistanceLocalname,NBinHitDistance,hitDistanceMin,hitDistanceMax);
     if ( hitDistanceLocal ) {
       angleYLocal->setTitle("Distance of hit to predicted position");
@@ -1480,137 +1480,137 @@ void EUTelMultiLineFit::bookHistos() {
     string histoTitleSeedCharge;
     string histoTitleClusterCharge;
     string histoTitleXYPosition;
-    
+
     for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
-      
+
       {
-	stringstream ss; 
-	stringstream pp; 
-	stringstream tt;
-	
-	pp << "ResidualXLocal_d" << iDetector; 
-	tempHisto=pp.str();
-	ss << _residualXLocalname << "_d" << iDetector; 
-	tempHistoName=ss.str();
-	tt << "XResidual" << "_d" << iDetector; 
-	histoTitleXResid=tt.str();
-	
+        stringstream ss;
+        stringstream pp;
+        stringstream tt;
+
+        pp << "ResidualXLocal_d" << iDetector;
+        tempHisto=pp.str();
+        ss << _residualXLocalname << "_d" << iDetector;
+        tempHistoName=ss.str();
+        tt << "XResidual" << "_d" << iDetector;
+        histoTitleXResid=tt.str();
+
       }
-      
-      AIDA::IHistogram1D *  tempXHisto = 
-	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin , Min,Max);
+
+      AIDA::IHistogram1D *  tempXHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin , Min,Max);
       if ( tempXHisto ) {
-	tempXHisto->setTitle(histoTitleXResid);
-	_aidaHistoMap.insert( make_pair( tempHistoName, tempXHisto ) );
+        tempXHisto->setTitle(histoTitleXResid);
+        _aidaHistoMap.insert( make_pair( tempHistoName, tempXHisto ) );
       } else {
-	streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
-	streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-	_histogramSwitch = false;
+        streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+        streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
       }
-      
+
       {
-	stringstream ss; 
-	stringstream pp; 
-      	stringstream tt;
-	
-	pp << "ResidualYLocal_d" << iDetector; 
-	tempHisto=pp.str();
-	ss << _residualYLocalname << "_d" << iDetector; 
-	tempHistoName=ss.str();
-	tt << "YResidual" << "_d" << iDetector; 
-	histoTitleYResid=tt.str();
+        stringstream ss;
+        stringstream pp;
+        stringstream tt;
+
+        pp << "ResidualYLocal_d" << iDetector;
+        tempHisto=pp.str();
+        ss << _residualYLocalname << "_d" << iDetector;
+        tempHistoName=ss.str();
+        tt << "YResidual" << "_d" << iDetector;
+        histoTitleYResid=tt.str();
       }
-      
-      AIDA::IHistogram1D *  tempYHisto = 
-	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin, Min,Max);
+
+      AIDA::IHistogram1D *  tempYHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin, Min,Max);
       if ( tempYHisto ) {
-	tempYHisto->setTitle(histoTitleYResid);
-	_aidaHistoMap.insert( make_pair( tempHistoName, tempYHisto ) );
+        tempYHisto->setTitle(histoTitleYResid);
+        _aidaHistoMap.insert( make_pair( tempHistoName, tempYHisto ) );
       } else {
-	streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
-	streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-	_histogramSwitch = false;
+        streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+        streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
       }
 
       {
-	stringstream ss; 
-	stringstream pp; 
-	stringstream tt;
-	
-	pp << "SeedChargeLocal_d" << iDetector; 
-	tempHisto=pp.str();
-	ss << _seedChargeLocalname << "_d" << iDetector; 
-	tempHistoName=ss.str();
-	tt << "SeedCharge" << "_d" << iDetector; 
-	histoTitleSeedCharge=tt.str();
-	
+        stringstream ss;
+        stringstream pp;
+        stringstream tt;
+
+        pp << "SeedChargeLocal_d" << iDetector;
+        tempHisto=pp.str();
+        ss << _seedChargeLocalname << "_d" << iDetector;
+        tempHistoName=ss.str();
+        tt << "SeedCharge" << "_d" << iDetector;
+        histoTitleSeedCharge=tt.str();
+
       }
-      
-      AIDA::IHistogram1D *  tempSeedChargeHisto = 
-	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin,snrMin,snrMax);
+
+      AIDA::IHistogram1D *  tempSeedChargeHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin,snrMin,snrMax);
       if ( tempSeedChargeHisto ) {
-	tempSeedChargeHisto->setTitle(histoTitleSeedCharge);
-	_aidaHistoMap.insert( make_pair( tempHistoName, tempSeedChargeHisto ) );
+        tempSeedChargeHisto->setTitle(histoTitleSeedCharge);
+        _aidaHistoMap.insert( make_pair( tempHistoName, tempSeedChargeHisto ) );
       } else {
-	streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
-	streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-	_histogramSwitch = false;
+        streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+        streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
       }
 
       {
-	stringstream ss; 
-	stringstream pp; 
-	stringstream tt;
-	
-	pp << "ClusterChargeLocal_d" << iDetector; 
-	tempHisto=pp.str();
-	ss << _clusterChargeLocalname << "_d" << iDetector; 
-	tempHistoName=ss.str();
-	tt << "ClusterCharge" << "_d" << iDetector; 
-	histoTitleClusterCharge=tt.str();
-	
+        stringstream ss;
+        stringstream pp;
+        stringstream tt;
+
+        pp << "ClusterChargeLocal_d" << iDetector;
+        tempHisto=pp.str();
+        ss << _clusterChargeLocalname << "_d" << iDetector;
+        tempHistoName=ss.str();
+        tt << "ClusterCharge" << "_d" << iDetector;
+        histoTitleClusterCharge=tt.str();
+
       }
-      
-      AIDA::IHistogram1D *  tempClusterChargeHisto = 
-	AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin,snrMin,snrMax);
+
+      AIDA::IHistogram1D *  tempClusterChargeHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin,snrMin,snrMax);
       if ( tempClusterChargeHisto ) {
-	tempClusterChargeHisto->setTitle(histoTitleClusterCharge);
-	_aidaHistoMap.insert( make_pair( tempHistoName, tempClusterChargeHisto ) );
+        tempClusterChargeHisto->setTitle(histoTitleClusterCharge);
+        _aidaHistoMap.insert( make_pair( tempHistoName, tempClusterChargeHisto ) );
       } else {
-	streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
-	streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-	_histogramSwitch = false;
+        streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+        streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
       }
 
       {
-	stringstream ss; 
-	stringstream pp; 
-	stringstream tt;
-	
-	pp << "PositionXYLocal_d" << iDetector; 
-	tempHisto=pp.str();
-	ss << _positionXYLocalname << "_d" << iDetector; 
-	tempHistoName=ss.str();
-	tt << "PositionXY" << "_d" << iDetector; 
-	histoTitleXYPosition=tt.str();
-	
+        stringstream ss;
+        stringstream pp;
+        stringstream tt;
+
+        pp << "PositionXYLocal_d" << iDetector;
+        tempHisto=pp.str();
+        ss << _positionXYLocalname << "_d" << iDetector;
+        tempHistoName=ss.str();
+        tt << "PositionXY" << "_d" << iDetector;
+        histoTitleXYPosition=tt.str();
+
       }
 
-      AIDA::IHistogram2D * tempXYHisto = 
-      AIDAProcessor::histogramFactory(this)->createHistogram2D(tempHistoName,NBin2D,positionXMin,positionXMax,NBin2D,positionYMin,positionYMax);
+      AIDA::IHistogram2D * tempXYHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram2D(tempHistoName,NBin2D,positionXMin,positionXMax,NBin2D,positionYMin,positionYMax);
       if ( tempXYHisto ) {
-	tempXYHisto->setTitle(histoTitleXYPosition);
-	_aidaHistoMap.insert( make_pair( tempHistoName, tempXYHisto ) );
+        tempXYHisto->setTitle(histoTitleXYPosition);
+        _aidaHistoMap.insert( make_pair( tempHistoName, tempXYHisto ) );
       } else {
-	streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
-	streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-	_histogramSwitch = false;
+        streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+        streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
       }
 
     }
-    
+
   } catch (lcio::Exception& e ) {
-    
+
     streamlog_out ( ERROR2 ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
     string answer;
     while ( true ) {
@@ -1618,16 +1618,16 @@ void EUTelMultiLineFit::bookHistos() {
       cin >> answer;
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
       if ( answer == "q" ) {
-	exit(-1);
+        exit(-1);
       } else if ( answer == "c" )
-	_histogramSwitch = false;
+        _histogramSwitch = false;
       break;
     }
-    
+
   }
 #endif
-  
+
 }
 
-  
+
 #endif

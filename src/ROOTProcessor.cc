@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: ROOTProcessor.cc,v 1.3 2007-05-21 11:42:14 bulgheroni Exp $
+// Version $Id: ROOTProcessor.cc,v 1.4 2008-08-23 12:30:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -9,7 +9,7 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifdef MARLIN_USE_ROOT
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
 
 // marlin includes ".h"
 #include "ROOTProcessor.h"
@@ -31,61 +31,61 @@
 
 using namespace std;
 using namespace eutelescope;
-using namespace marlin;  
+using namespace marlin;
 
 namespace eutelescope {
 
   //! A global instance
   ROOTProcessor aROOTProcessor ;
-  
+
   //! The ROOTProcessor singleton
   /*! Like for the AIDAProcessor, also the ROOTProcessor is a
    *  singleton class instanciated only once for each execution. This
    *  is to avoid of having multiple ROOT histogram interface running
    *  together and offer the advantage of interoperability among the
    *  different active processors.
-   */ 
+   */
   ROOTProcessor* ROOTProcessor::_me ;
 }
 
-ROOTProcessor::ROOTProcessor() : Processor("ROOTProcessor"), 
-				 _rootOutputFile(NULL)  {
-  
+ROOTProcessor::ROOTProcessor() : Processor("ROOTProcessor"),
+                                 _rootOutputFile(NULL)  {
+
   _listOfList = new TList();
-  
+
   _description = "Processor that handles ROOT files. Creates one directory per processor. "
-    " Within process you can create all TObjects you wish and you only need to use ROOTProcessor::addTObject() to have it save" 
+    " Within process you can create all TObjects you wish and you only need to use ROOTProcessor::addTObject() to have it save"
     " Needs to be the first ActiveProcessor" ;
-   
-  registerProcessorParameter( "FileName" , 
-			      "The output ROOT file name"  ,
-			      _fileName ,
-			      std::string("file.root") ) ;  
+
+  registerProcessorParameter( "FileName" ,
+                              "The output ROOT file name"  ,
+                              _fileName ,
+                              std::string("file.root") ) ;
 }
 
 
 
-Processor*  ROOTProcessor::newProcessor() { 
+Processor*  ROOTProcessor::newProcessor() {
   if( ! _me )
     _me = new ROOTProcessor ;
-  return _me ; 
+  return _me ;
 }
 
-void ROOTProcessor::init() { 
-  
-  printParameters() ;
-  
-} 
-  
-  
-void ROOTProcessor::processRunHeader( LCRunHeader* /*run*/) { /*NO-OP*/ ; } 
-  
-void ROOTProcessor::processEvent( LCEvent * /* evt */ )  { /*NO-OP*/ ; } 
+void ROOTProcessor::init() {
 
-void ROOTProcessor::check( LCEvent * /* evt */  ) { /*NO-OP*/ ; } 
-  
-void ROOTProcessor::end(){ 
-    
+  printParameters() ;
+
+}
+
+
+void ROOTProcessor::processRunHeader( LCRunHeader* /*run*/) { /*NO-OP*/ ; }
+
+void ROOTProcessor::processEvent( LCEvent * /* evt */ )  { /*NO-OP*/ ; }
+
+void ROOTProcessor::check( LCEvent * /* evt */  ) { /*NO-OP*/ ; }
+
+void ROOTProcessor::end(){
+
   _rootOutputFile = TFile::Open(_fileName.c_str(), "RECREATE");
 
   TIter nextList(_listOfList);
@@ -99,13 +99,13 @@ void ROOTProcessor::end(){
       TDirectory * baseDir = gDirectory;
       TObjArray *  array   = fullname.Tokenize("/");
       for (int iDir = 0; iDir < array->GetEntriesFast(); iDir++) {
-	TString      dir     = ((TObjString *) array->At(iDir))->GetString();
-	// if the directory doens't exist, create it!
-	if ( !baseDir->cd(dir) ) {
-	  baseDir->mkdir(dir);
-	  baseDir->cd(dir);
-	}
-	baseDir = gDirectory;
+        TString      dir     = ((TObjString *) array->At(iDir))->GetString();
+        // if the directory doens't exist, create it!
+        if ( !baseDir->cd(dir) ) {
+          baseDir->mkdir(dir);
+          baseDir->cd(dir);
+        }
+        baseDir = gDirectory;
       }
       list->Write();
       _rootOutputFile->cd(_rootOutputFile->GetPath());
@@ -115,20 +115,20 @@ void ROOTProcessor::end(){
       list->Write();
       _rootOutputFile->cd("..");
     }
-      
+
     _rootOutputFile->Close();
-    
+
   }
 }
-    
+
 void ROOTProcessor::addTObject(const marlin::Processor * proc, TObject * obj) {
-    
+
   _me->addTObject(proc,"",obj);
 
 }
 
 void ROOTProcessor::addTObject(const marlin::Processor * proc, const char * subfolder, TObject * obj) {
-    
+
   // first of all I need to prepare the the proper list name that is proc->name() + "/" + subfolder
   stringstream ss;
   if ( string(subfolder).size() == 0 ) {
@@ -139,17 +139,17 @@ void ROOTProcessor::addTObject(const marlin::Processor * proc, const char * subf
   string listName = ss.str();
 
   TList * list = dynamic_cast<TList*> (_me->_listOfList->FindObject(listName.c_str()));
-    
+
   if ( list == 0x0 ) {
     list = new TList();
     list->SetName(listName.c_str());
     _me->_listOfList->Add(list);
   }
-    
+
   list->Add(obj);
-  
+
 }
-    
+
 
 
 TObject * ROOTProcessor::getTObject(const marlin::Processor * proc, const char * objName) {
@@ -159,7 +159,7 @@ TObject * ROOTProcessor::getTObject(const marlin::Processor * proc, const char *
 
 
 TObject * ROOTProcessor::getTObject(const marlin::Processor * proc, const char * subfolder, const char * objName) {
-    
+
   // first of all I need to prepare the the proper list name that is proc->name() + "/" + subfolder
   stringstream ss;
   if ( string(subfolder).size() == 0 ) {
@@ -168,7 +168,7 @@ TObject * ROOTProcessor::getTObject(const marlin::Processor * proc, const char *
     ss << proc->name() << "/" << subfolder;
   }
   string listName = ss.str();
-    
+
   TList * list = dynamic_cast<TList*> (_me->_listOfList->FindObject(listName.c_str()));
 
   if ( list == 0x0 ) {
@@ -185,7 +185,7 @@ TObject * ROOTProcessor::getTObject(const marlin::Processor * proc, const char *
 
 
 TList * ROOTProcessor::getTList(const marlin::Processor * proc)  {
-    
+
   TList * list = dynamic_cast<TList*> (_me->_listOfList->FindObject(proc->name().c_str())) ;
 
   if ( list == 0x0 ) {
@@ -200,8 +200,8 @@ TList * ROOTProcessor::getTList(const marlin::Processor * proc)  {
   return list;
 }
 
- 
-    
+
+
 
 
 #endif

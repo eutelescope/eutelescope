@@ -18,11 +18,11 @@
 #include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include "lcio.h"
 
 // AIDA includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #include <AIDA/IHistogram1D.h>
 #endif
@@ -41,24 +41,24 @@ namespace eutelescope {
    * is used, taking into account multiple scattering in the telescope
    * planes. However, as there are usually multiple hits in each
    * plane, main task of the processor is to look for the best track
-   * candidate considering all fit possibilities. 
-   * 
+   * candidate considering all fit possibilities.
+   *
    *  \par Fit method
    *  Track fitting is performed separately in XZ and YZ planes (Z
    *  is defined along the beam axis direction). Track position in each
    *  telescope plane is found by solving matrix equation resulting from
-   *  \f$ \chi^{2} \f$ minimum condition. The following approximation is used: 
+   *  \f$ \chi^{2} \f$ minimum condition. The following approximation is used:
    *    \li all telescope planes are parallel to each other
    *    \li the incoming beam is perpendicular to the telescope planes
-   *    \li the incoming beam has a small angular spread 
+   *    \li the incoming beam has a small angular spread
    *    \li particle scattering angles in subsequent telescope layers
    *        are also small
    *    \li thicknesses of all material layers are very small compared
-   *        to the distances between planes 
+   *        to the distances between planes
    *    \li particle energy losses in telescope layers can be neglected
-   * 
    *
-   * \par Track finding algorithm  
+   *
+   * \par Track finding algorithm
    * \li Read measured track points from input \c TrackerHit collection
    *     and copy to local tables
    * \li Prepare lists of hits for each active sensor plane, apply
@@ -67,12 +67,12 @@ namespace eutelescope {
    * \li Calculate number of fit hypothesis (including missing hit possibility)
    * \li Search the list of fit hypotheses to find the one with best
    *     \f$ \chi^{2} \f$ (including ``penalties'' for missing hits or
-   *     skipped planes) 
+   *     skipped planes)
    * \li Accept the fit if \f$ \chi^{2} \f$ is below threshold
    * \li Write fitted track to output \c Track collection; measured
    *     particle positions corrected for alignment and fitted positions
-   *     are also written out as \c TrackerHit collections 
-   * \li Remove accepted track hits from hit list and repeat procedure 
+   *     are also written out as \c TrackerHit collections
+   * \li Remove accepted track hits from hit list and repeat procedure
    *
    * \par Geometry description
    * The processor does use GEAR input for telescope layers and DUT
@@ -80,20 +80,20 @@ namespace eutelescope {
    * description (alignment, removing layers from the fit, etc.) can
    * be applied with dedicated parameters (see below).
    *
-   * 
+   *
    * \par Output
-   * Fitted particle positions in all telescope planes are stored as 
+   * Fitted particle positions in all telescope planes are stored as
    * \c TrackerHit collection. If required, measured
    * particle positions corrected for alignment can also be stored as
    * a separate  \c TrackerHit collection. In addition fit results are
    * written in a \c Track collection. Following \c Track variables
-   * are filled:  
-   *  \li \f$ \chi^{2} \f$ of the fit 
+   * are filled:
+   *  \li \f$ \chi^{2} \f$ of the fit
    *  \li number of measured hits used in the track fit (as Ndf)
    *  \li reconstructed position at DUT  (as a track reference point)
-   *  \li vector of output hits (fitted particle positions in all planes)  
-   *  \li vector of input hits (corrected particle positions in fired planes)  
-   * 
+   *  \li vector of output hits (fitted particle positions in all planes)
+   *  \li vector of input hits (corrected particle positions in fired planes)
+   *
    *
    * \section parameters Control parameters
    * Below, parameters defining performance of the algorithm are
@@ -113,19 +113,19 @@ namespace eutelescope {
    *        corrected particle positions in telescope planes (hits),
    *        i.e. positions after alignment, as used in the fit
    * \param OutputHitsInTrack Flag for storing output (fitted) hits
-   *        together with the track.  
+   *        together with the track.
    *        Input and output hits can be distinguished by looking into
    *        hit type (type <=31 for measured hits, type >=32 for fitted).
    * \param OutputHitCollectionName Name of the output collection of
    *        fitted particle positions in telescope planes (hits)
    * \param DebugEventCount      Print out debug and information
    *        messages only for one out of given number of events. If
-   *        zero, no debug information is printed. 
+   *        zero, no debug information is printed.
    * \param HistoInfoFileName Name of the histogram information file.
-   *        Using this file histogram parameters can be changed without 
+   *        Using this file histogram parameters can be changed without
    *        recompiling the code.
    * \param Ebeam Beam energy in [GeV], needed to estimate multiple
-   *        scattering. 
+   *        scattering.
    *
    *
    *
@@ -136,11 +136,11 @@ namespace eutelescope {
    *        should not be included in the fit. Can be used to remove
    *        layers in front of and behind the telescope, which do not
    *        influence the fit, but can slow down the algorithm
-   *        (increase fit matrix size). 
+   *        (increase fit matrix size).
    *
    * \param PassiveLayerIDs Ids of layers which are described as
    *        active layers in GEAR but should be treated as passive in
-   *        the fit (their data should be ignored). 
+   *        the fit (their data should be ignored).
    *
    * \param AlignLayerIDs Ids of layers for which alignment corrections
    *        should be applied
@@ -148,10 +148,10 @@ namespace eutelescope {
    *        correct alignment of these layers.
    * \param AlignLayerShiftY Shifts in Y, which should be applied to
    *        correct alignment of these layers.
-   * \param AlignLayerRotZ Rotation around Z (beam) axis, which should 
+   * \param AlignLayerRotZ Rotation around Z (beam) axis, which should
    *        be applied to correct alignment of these layers.
    *
-   * 
+   *
    * \param WindowLayerIDs Ids of layers for which position cuts are
    *        defined. Only hits inside the defined "window" are accepted
    * \param WindowMinX   Lower window edge in X
@@ -183,7 +183,7 @@ namespace eutelescope {
    *
    * \param SearchMultipleTracks Flag for searching multiple tracks in
    *        events with multiple hits. If false, only best (lowest
-   *        \f$ \chi^{2} \f$) track is taken. 
+   *        \f$ \chi^{2} \f$) track is taken.
    *
    * \param AllowAmbiguousHits Allow same hit to be used in more than
    *        one track. Significantly improves algorithm
@@ -204,15 +204,15 @@ namespace eutelescope {
    *
    * \param AllowMissingHits Allowed number of hits missing in the track
    *        (sensor planes without hits or with hits removed from
-   *        given track) 
-   * \param MissingHitPenalty  "Penalty" added to track 
-   *        \f$ \chi^{2} \f$ for each 
+   *        given track)
+   * \param MissingHitPenalty  "Penalty" added to track
+   *        \f$ \chi^{2} \f$ for each
    *        missing hit (when no hit is left in active layer).
    * \param AllowSkipHits Allowed number of hits removed from the track
    *        (because of large \f$ \chi^{2} \f$ contribution)
-   * \param SkipHitPenalty  "Penalty" added to track 
+   * \param SkipHitPenalty  "Penalty" added to track
    *        \f$ \chi^{2} \f$ for each hit removed from the track
-   *        because of large \f$ \chi^{2} \f$ contribution. 
+   *        because of large \f$ \chi^{2} \f$ contribution.
    *
    * \section performance Performance issues
    * As described above, if multiple hits are found in telescope
@@ -221,7 +221,7 @@ namespace eutelescope {
    * optimized to a large extent, but still track finding can be slow
    * for large multiplicities. Here are some suggestions on how to
    * improve performance.
-   * 
+   *
    *  \li Remove addition layers from geometry description. At high
    *      energies, when multiple scattering can be neglected, only
    *      active telescope planes and DUTs are relevant. At low
@@ -237,9 +237,9 @@ namespace eutelescope {
    *      once and not for each track hypothesis.
    *
    *  \li Use beam constraint (set \e UseBeamConstraint to \e true ),
-   *      even if beam spread is large. With beam 
+   *      even if beam spread is large. With beam
    *      constraint first two hits are sufficent to recognize bad track
-   *      hypothesis. Without beam constraint at least 3 hits are needed. 
+   *      hypothesis. Without beam constraint at least 3 hits are needed.
    *      However, to use beam constraint telescope layers have to be
    *      aligned w.r.t. the beam direction (beam has to be perpendicular to
    *     telescope layers).
@@ -257,7 +257,7 @@ namespace eutelescope {
    *    performance at large multiplicities. The influence on the fit
    *    results is negligible, as probability of more than one track
    *    matching given hit is very, very small.
-   * 
+   *
    * \li Limit number of hits per plane. This should \b not be done by
    *    using \e MaxPlaneHits parameter, as it would bias plane
    *    efficiency calculation. Best way is to define position window
@@ -268,64 +268,64 @@ namespace eutelescope {
    *  \li Interface to LCCD (alignment)
    *
    * \author A.F.Zarnecki, University of Warsaw, zarnecki@fuw.edu.pl
-   * @version $Id: EUTelTestFitter.h,v 1.14 2008-05-21 20:28:36 zarnecki Exp $
-   * 
-   */ 
+   * @version $Id: EUTelTestFitter.h,v 1.15 2008-08-23 12:30:51 bulgheroni Exp $
+   *
+   */
 
 
   class EUTelTestFitter : public marlin::Processor {
-  
+
   public:
 
-  
-     
+
+
     //! Returns a new instance of EUTelTestFitter
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelTestFitter
      */
     virtual Processor*  newProcessor() { return new EUTelTestFitter ; }
-  
-    //! Default constructor 
+
+    //! Default constructor
     EUTelTestFitter() ;
-  
+
     //! Called at the job beginning.
-    /*! This is executed only once in the whole execution. 
-     *  
+    /*! This is executed only once in the whole execution.
+     *
      */
     virtual void init() ;
-  
+
     //! Called for every run.
     /*!
      * @param run the LCRunHeader of the current run
      */
     virtual void processRunHeader( LCRunHeader* run ) ;
-  
+
     //! Called every event
     /*! This is called for each event in the file.
-     * 
-     *  @param evt the current LCEvent event 
+     *
+     *  @param evt the current LCEvent event
      */
-    virtual void processEvent( LCEvent * evt ) ; 
-  
+    virtual void processEvent( LCEvent * evt ) ;
+
     //! Check event method
     /*! This method is called by the Marlin execution framework as
      *  soon as the processEvent is over. It can be used to fill check
      *  plots. For the time being there is nothing to check and do in
      *  this slot.
-     * 
+     *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check( LCEvent * evt ) ; 
-  
-  
+    virtual void check( LCEvent * evt ) ;
+
+
     //! Book histograms
     /*! This method is used to books all required
      *  histograms. Histogram pointers are stored into
-     *  _aidaHistoMap so that they can be recalled and filled 
-     * from anywhere in the code.  
+     *  _aidaHistoMap so that they can be recalled and filled
+     * from anywhere in the code.
      */
     void bookHistos();
 
@@ -334,17 +334,17 @@ namespace eutelescope {
     /*! Used to release memory allocated in init() step
      */
     virtual void end() ;
-  
+
   protected:
     // Fitting functions
 
-    //! Find track in XZ and YZ 
+    //! Find track in XZ and YZ
     /*! Fit track in two planes (XZ and YZ) by solving two matrix
      * equations and calculate \f$ \chi^{2} \f$
      */
     double MatrixFit();
 
-    //! Find track in XZ and YZ assuming nominal errors 
+    //! Find track in XZ and YZ assuming nominal errors
     /*! Fit track in two planes: XZ and YZ. When nominal position errors
      * are used, only one matrix equation has to be solved and the
      * inverse matrix can be applied to the second equation.
@@ -352,20 +352,20 @@ namespace eutelescope {
     double SingleFit();
 
 
-    //! Find track in all planes assuming nominal errors 
+    //! Find track in all planes assuming nominal errors
     /*! Fit track in two planes: XZ and YZ. When nominal position errors
      * are assumed and hits are found in all sensor planes, same inverse
      * matrix can be used for all events.
      */
     double NominalFit();
 
-    //! Fit particle track in one plane (XZ or YZ) 
+    //! Fit particle track in one plane (XZ or YZ)
     int DoAnalFit(double * pos, double *err);
 
     //! Calculate \f$ \chi^{2} \f$ of the fit
     /*! Calculate \f$ \chi^{2} \f$ of the fit taking into account measured particle
      *  positions in X and Y and fitted scattering angles in XZ and YZ
-     *  planes 
+     *  planes
      */
     double GetFitChi2();
 
@@ -382,26 +382,26 @@ namespace eutelescope {
      *
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
-     */ 
+     */
     gear::SiPlanesParameters * _siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geoemetry description. For each layer
      *  composing the telescope the relevant information are
      *  available.
-     *  
+     *
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
-     */ 
+     */
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
 
     //! The histogram information file
     /*! This string contain the name of the histogram information
      *  file. This is selected by the user in the steering file.
-     * 
+     *
      *  @see eutelescope::EUTelHistogramManager
      *  @see eutelescope::EUTelHistogramInfo
-     */ 
+     */
     std::string _histoInfoFileName;
 
 
@@ -472,7 +472,7 @@ namespace eutelescope {
     int _nTelPlanes;
     int _nActivePlanes;
     int _iDUT;
-  
+
     int * _planeSort;
     int * _planeID;
     double * _planeShiftX;
@@ -518,9 +518,9 @@ namespace eutelescope {
     double * _nominalFitArray ;
     double * _nominalError ;
 
- #ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map
-    /*! Used to refer to histograms by their names, i.e. to recall 
+    /*! Used to refer to histograms by their names, i.e. to recall
      *  a histogram pointer using histogram name.
      */
 
@@ -545,11 +545,11 @@ namespace eutelescope {
 
     static std::string _hitAmbiguityHistoName;
 
-#endif 
+#endif
 
- } ;
+  } ;
 
-  
+
   //! A global instance of the processor.
   EUTelTestFitter aEUTelTestFitter ;
 

@@ -18,7 +18,7 @@
  *  develop both their DAQ and analysis/reconstruction software.
  *
  *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
- *  @version $Id: EUTELESCOPE.h,v 1.25 2008-08-21 12:30:37 bulgheroni Exp $
+ *  @version $Id: EUTELESCOPE.h,v 1.26 2008-08-23 12:30:51 bulgheroni Exp $
  */
 
 namespace eutelescope {}
@@ -54,7 +54,7 @@ namespace eutelescope
    * files.
    *
    * @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @version $Id: EUTELESCOPE.h,v 1.25 2008-08-21 12:30:37 bulgheroni Exp $
+   * @version $Id: EUTELESCOPE.h,v 1.26 2008-08-23 12:30:51 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -239,7 +239,7 @@ namespace eutelescope
      *  phase. When the loop is complete, the mean value and the noise
      *  of each pixel is dumped from the IProfile2D to pedestal and
      *  noise std::vector's. Of course, the use of it is limited to
-     *  the cases in which MARLIN_USE_AIDA is defined. Otherwise, the
+     *  the cases in which USE_AIDA is defined. Otherwise, the
      *  algorithm will fall back to something, may be to so elegant,
      *  but definitely more standard (EUTELESCOPE::MEANRMS).
      */
@@ -368,7 +368,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.25 2008-08-21 12:30:37 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.26 2008-08-23 12:30:51 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -415,7 +415,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.25 2008-08-21 12:30:37 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.26 2008-08-23 12:30:51 bulgheroni Exp $
    */
 
   enum ClusterQuality {
@@ -474,7 +474,7 @@ namespace eutelescope
    *  cluster during the clusterization process itself.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.25 2008-08-21 12:30:37 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.26 2008-08-23 12:30:51 bulgheroni Exp $
    */
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
@@ -489,7 +489,7 @@ namespace eutelescope
   /*! This enumerator is used to define the sparsified pixel type.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.25 2008-08-21 12:30:37 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.26 2008-08-23 12:30:51 bulgheroni Exp $
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,

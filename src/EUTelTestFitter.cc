@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.24 2008-07-29 13:38:48 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.25 2008-08-23 12:30:51 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -23,7 +23,7 @@
 #include "EUTelHistogramManager.h"
 #include "EUTelExceptions.h"
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
@@ -65,7 +65,7 @@ using namespace marlin ;
 using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelTestFitter::_linChi2HistoName   = "linChi2";
 std::string EUTelTestFitter::_logChi2HistoName   = "logChi2";
 std::string EUTelTestFitter::_firstChi2HistoName = "firstChi2";
@@ -81,89 +81,89 @@ std::string EUTelTestFitter::_hitAmbiguityHistoName  = "nAmbig";
 
 
 EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
-  
+
   // modify processor description
   _description = "Analytical track fitting processor for EUDET telescope" ;
-  
 
-  // register steering parameters: 
+
+  // register steering parameters:
   //       name, description, class-variable, default value
 
   // input collection first:
 
   registerInputCollection( LCIO::TRACKERHIT,
-			   "InputCollectionName" , 
-			   "Name of the input TrackerHit collection"  ,
-			   _inputColName ,
-			   std::string("meshit") ) ;
+                           "InputCollectionName" ,
+                           "Name of the input TrackerHit collection"  ,
+                           _inputColName ,
+                           std::string("meshit") ) ;
 
   // output collection
 
   registerOutputCollection(LCIO::TRACK,"OutputTrackCollectionName",
-                             "Collection name for fitted tracks",
-                             _outputTrackColName, string ("testfittracks"));
+                           "Collection name for fitted tracks",
+                           _outputTrackColName, string ("testfittracks"));
 
   registerOutputCollection(LCIO::TRACKERHIT,"CorrectedHitCollectionName",
-                             "Collection name for corrected particle positions",
-                             _correctedHitColName, string ("corrfithits"));
+                           "Collection name for corrected particle positions",
+                           _correctedHitColName, string ("corrfithits"));
 
   registerOutputCollection(LCIO::TRACKERHIT,"OutputHitCollectionName",
-                             "Collection name for fitted particle hits (positions)",
-                             _outputHitColName, string ("testfithits"));
+                           "Collection name for fitted particle hits (positions)",
+                           _outputHitColName, string ("testfithits"));
 
   // compulsory parameters:
 
   registerProcessorParameter ("InputHitsInTrack",
-			      "Flag for storing input (measured) hits in track",
-			      _InputHitsInTrack,  static_cast < bool > (false));
+                              "Flag for storing input (measured) hits in track",
+                              _InputHitsInTrack,  static_cast < bool > (false));
 
   registerProcessorParameter ("OutputHitsInTrack",
-			      "Flag for storing output (fitted) hits in track",
-			      _OutputHitsInTrack,  static_cast < bool > (true));
+                              "Flag for storing output (fitted) hits in track",
+                              _OutputHitsInTrack,  static_cast < bool > (true));
 
   registerProcessorParameter ("DebugEventCount",
-			      "Print out every DebugEnevtCount event",
-			      _debugCount,  static_cast < int > (100));
+                              "Print out every DebugEnevtCount event",
+                              _debugCount,  static_cast < int > (100));
 
   registerProcessorParameter ("AllowMissingHits",
-			      "Allowed number of missing hits in the track",
-			      _allowMissingHits,  static_cast < int > (0));
+                              "Allowed number of missing hits in the track",
+                              _allowMissingHits,  static_cast < int > (0));
 
   registerProcessorParameter ("AllowSkipHits",
-			      "Allowed number of hits removed from the track",
-			      _allowSkipHits,  static_cast < int > (0));
+                              "Allowed number of hits removed from the track",
+                              _allowSkipHits,  static_cast < int > (0));
 
   registerProcessorParameter ("MaxPlaneHits",
-			      "Maximum number of considered hits per plane",
-			      _maxPlaneHits,  static_cast < int > (5));
+                              "Maximum number of considered hits per plane",
+                              _maxPlaneHits,  static_cast < int > (5));
 
   registerProcessorParameter ("MissingHitPenalty",
-			      "Chi2 penalty for missing hit in the track",
-			      _missingHitPenalty,  static_cast < double > (0.));
+                              "Chi2 penalty for missing hit in the track",
+                              _missingHitPenalty,  static_cast < double > (0.));
 
   registerProcessorParameter ("SkipHitPenalty",
-			      "Chi2 penalty for removing hit from the track",
-			      _skipHitPenalty,  static_cast < double > (100.));
+                              "Chi2 penalty for removing hit from the track",
+                              _skipHitPenalty,  static_cast < double > (100.));
 
   registerProcessorParameter ("Chi2Max",
-			      "Maximum Chi2 for accepted track fit",
-			      _chi2Max,  static_cast < double > (1000.));
+                              "Maximum Chi2 for accepted track fit",
+                              _chi2Max,  static_cast < double > (1000.));
 
   registerProcessorParameter ("UseNominalResolution",
-			      "Flag for using nominal resolution instead of position errors",
-			      _useNominalResolution,  static_cast < bool > (false));
+                              "Flag for using nominal resolution instead of position errors",
+                              _useNominalResolution,  static_cast < bool > (false));
 
   registerProcessorParameter ("UseDUT",
                               "Flag for including DUT measurement in the fit",
-			      _useDUT,  static_cast < bool > (false));
+                              _useDUT,  static_cast < bool > (false));
 
   registerProcessorParameter ("Ebeam",
-			      "Beam energy [GeV]",
-			      _eBeam,  static_cast < double > (6.0));
+                              "Beam energy [GeV]",
+                              _eBeam,  static_cast < double > (6.0));
 
-  registerProcessorParameter("HistoInfoFileName", 
+  registerProcessorParameter("HistoInfoFileName",
                              "Name of the histogram information file",
-			     _histoInfoFileName, string( "histoinfo.xml" ) );
+                             _histoInfoFileName, string( "histoinfo.xml" ) );
 
   // optional parameters
 
@@ -175,7 +175,7 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
                              _SkipLayerIDs, initLayerIDs);
 
   registerOptionalParameter ("PassiveLayerIDs",
-                          "Ids of layers which should be treated as passive in the fit",
+                             "Ids of layers which should be treated as passive in the fit",
                              _PassiveLayerIDs, initLayerIDs);
 
   registerOptionalParameter ("AlignLayerIDs",
@@ -237,7 +237,7 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
 
 
   registerOptionalParameter ("UseBeamConstraint",
-			     "Flag for using beam direction constraint in the fit",
+                             "Flag for using beam direction constraint in the fit",
                              _useBeamConstraint,  static_cast < bool > (false));
 
   registerOptionalParameter ("BeamSpread",
@@ -245,17 +245,17 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
                              _beamSpread,  static_cast < double > (0.1));
 
   registerOptionalParameter ("SearchMultipleTracks",
-			     "Flag for searching multiple tracks in events with multiple hits",
+                             "Flag for searching multiple tracks in events with multiple hits",
                              _searchMultipleTracks,  static_cast < bool > (false));
 
   registerOptionalParameter ("AllowAmbiguousHits",
-			     "Allow same hit to be used in more than one track",
+                             "Allow same hit to be used in more than one track",
                              _allowAmbiguousHits, static_cast < bool > (false));
 
 }
 
 
-void EUTelTestFitter::init() { 
+void EUTelTestFitter::init() {
 
   // usually a good idea to
   printParameters() ;
@@ -268,7 +268,7 @@ void EUTelTestFitter::init() {
 
   message<ERROR> ( "Marlin was not built with GEAR support." );
   message<ERROR> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
-  
+
   // I'm thinking if this is the case of throwing an exception or
   // not. This is a really error and not something that can
   // exceptionally happens. Still not sure what to do
@@ -293,11 +293,11 @@ void EUTelTestFitter::init() {
 
 // Test output
 
- if( _SkipLayerIDs.size() )
-      message<MESSAGE> ( log() <<  _SkipLayerIDs.size() << " layers should be skipped") ;
+  if( _SkipLayerIDs.size() )
+    message<MESSAGE> ( log() <<  _SkipLayerIDs.size() << " layers should be skipped") ;
 
- if( _PassiveLayerIDs.size() )
-      message<MESSAGE> ( log() <<  _PassiveLayerIDs.size() << " layers should be considered passive") ;
+  if( _PassiveLayerIDs.size() )
+    message<MESSAGE> ( log() <<  _PassiveLayerIDs.size() << " layers should be considered passive") ;
 
 // Active planes only:
 //  _nTelPlanes = _siPlanesParameters->getSiPlanesNumber();
@@ -307,13 +307,13 @@ void EUTelTestFitter::init() {
 
 // Check for DUT
 
-   if( _siPlanesParameters->getSiPlanesType()==_siPlanesParameters->TelescopeWithDUT )
-        {
+  if( _siPlanesParameters->getSiPlanesType()==_siPlanesParameters->TelescopeWithDUT )
+    {
       _iDUT = _nTelPlanes ;
       _nTelPlanes++;
-        }
-   else
-       _iDUT = -1 ;
+    }
+  else
+    _iDUT = -1 ;
 
 // Read position in Z (for sorting), skip layers if requested
 
@@ -324,53 +324,53 @@ void EUTelTestFitter::init() {
 
   for(int ipl=0; ipl <  _siPlanesLayerLayout->getNLayers(); ipl++)
     {
-    _planePosition[ipl-nSkip]=_siPlanesLayerLayout->getLayerPositionZ(ipl);
-    _planeSort[ipl-nSkip]=ipl;
+      _planePosition[ipl-nSkip]=_siPlanesLayerLayout->getLayerPositionZ(ipl);
+      _planeSort[ipl-nSkip]=ipl;
 
 // Check if not on "skip list"
 
-    int _plID = _siPlanesLayerLayout->getID(ipl);
+      int _plID = _siPlanesLayerLayout->getID(ipl);
 
-    for(int spl=0; spl< (int)_SkipLayerIDs.size() ; spl++)
-      if ( _SkipLayerIDs.at(spl) == _plID)
-       {
-       message<MESSAGE> ( log() <<  "Skipping layer ID " << _plID 
-       << " at Z = " << _siPlanesLayerLayout->getLayerPositionZ(ipl) ) ;
-       nSkip++;
-       break;
-       }
+      for(int spl=0; spl< (int)_SkipLayerIDs.size() ; spl++)
+        if ( _SkipLayerIDs.at(spl) == _plID)
+          {
+            message<MESSAGE> ( log() <<  "Skipping layer ID " << _plID
+                               << " at Z = " << _siPlanesLayerLayout->getLayerPositionZ(ipl) ) ;
+            nSkip++;
+            break;
+          }
 
     }
 
 
   _nTelPlanes-=nSkip;
-  
+
   if(_iDUT>0)
-      {
+    {
       _planePosition[_iDUT-nSkip]=_siPlanesLayerLayout->getDUTPositionZ();
       _planeSort[_iDUT-nSkip]=_iDUT;
-      }
+    }
 
- // Binary sorting
+  // Binary sorting
 
-   bool sorted;
-   do{
-   sorted=false;
-   for(int iz=0; iz<_nTelPlanes-1 ; iz++)
+  bool sorted;
+  do{
+    sorted=false;
+    for(int iz=0; iz<_nTelPlanes-1 ; iz++)
       if(_planePosition[iz]>_planePosition[iz+1])
-         {
-         double _posZ = _planePosition[iz];
-         _planePosition[iz] = _planePosition[iz+1];
-         _planePosition[iz+1] = _posZ;
+        {
+          double _posZ = _planePosition[iz];
+          _planePosition[iz] = _planePosition[iz+1];
+          _planePosition[iz+1] = _posZ;
 
-         int _idZ = _planeSort[iz];
-         _planeSort[iz] = _planeSort[iz+1];
-         _planeSort[iz+1] = _idZ;
+          int _idZ = _planeSort[iz];
+          _planeSort[iz] = _planeSort[iz+1];
+          _planeSort[iz+1] = _idZ;
 
-         sorted=true;
-         }
+          sorted=true;
+        }
 
-     }while(sorted);
+  }while(sorted);
 
 // Book local geometry arrays
 
@@ -399,18 +399,18 @@ void EUTelTestFitter::init() {
 // All dimensions are assumed to be in mm !!!
 
       if(ipl != _iDUT )
-         {
-      _planeID[iz]=_siPlanesLayerLayout->getID(ipl);
-      _planeThickness[iz]=_siPlanesLayerLayout->getLayerThickness(ipl);
-      _planeX0[iz]=_siPlanesLayerLayout->getLayerRadLength(ipl);
-      resolution = _siPlanesLayerLayout->getSensitiveResolution(ipl);
+        {
+          _planeID[iz]=_siPlanesLayerLayout->getID(ipl);
+          _planeThickness[iz]=_siPlanesLayerLayout->getLayerThickness(ipl);
+          _planeX0[iz]=_siPlanesLayerLayout->getLayerRadLength(ipl);
+          resolution = _siPlanesLayerLayout->getSensitiveResolution(ipl);
         }
       else
-         {
-      _planeID[iz]=_siPlanesLayerLayout->getDUTID();
-      _planeThickness[iz]=_siPlanesLayerLayout->getDUTThickness();
-      _planeX0[iz]=_siPlanesLayerLayout->getDUTRadLength();
-       resolution = _siPlanesLayerLayout->getDUTSensitiveResolution();
+        {
+          _planeID[iz]=_siPlanesLayerLayout->getDUTID();
+          _planeThickness[iz]=_siPlanesLayerLayout->getDUTThickness();
+          _planeX0[iz]=_siPlanesLayerLayout->getDUTRadLength();
+          resolution = _siPlanesLayerLayout->getDUTSensitiveResolution();
         }
 
       iActive = (resolution > 0);
@@ -419,66 +419,66 @@ void EUTelTestFitter::init() {
 
       for(int ppl=0; ppl< (int)_PassiveLayerIDs.size() ; ppl++)
         if ( _PassiveLayerIDs.at(ppl) == _planeID[iz])
-         {
-         message<MESSAGE> ( log() <<  "Force passive layer ID " << _planeID[iz] 
-          << " at Z = " << _planePosition[iz] ) ;
-          iActive = false;
-         break;
-         }
- 
- 
+          {
+            message<MESSAGE> ( log() <<  "Force passive layer ID " << _planeID[iz]
+                               << " at Z = " << _planePosition[iz] ) ;
+            iActive = false;
+            break;
+          }
+
+
       if(iActive && (ipl != _iDUT || _useDUT ))
-	{
-	  _isActive[iz] = true ;
-	  _planeResolution[iz]=resolution;
-	  _nActivePlanes++ ;
-	}
+        {
+          _isActive[iz] = true ;
+          _planeResolution[iz]=resolution;
+          _nActivePlanes++ ;
+        }
       else
-	{
+        {
           _isActive[iz] = false ;
           _planeResolution[iz]=0.;
-	}
+        }
 
 // No alignment corrections in GEAR file
 // Look in input options
 
-    _planeShiftX[iz]=0.;
-    _planeShiftY[iz]=0.;
-    _planeRotZ[iz]=0.;
+      _planeShiftX[iz]=0.;
+      _planeShiftY[iz]=0.;
+      _planeRotZ[iz]=0.;
 
-     for(int apl=0; apl< (int)_AlignLayerIDs.size() ; apl++)
-      if ( _AlignLayerIDs.at(apl) == _planeID[iz])
-       {
-       _planeShiftX[iz]=_AlignLayerShiftX.at(apl);
-       _planeShiftY[iz]=_AlignLayerShiftY.at(apl);
-       // Rotation can be skipped: check size
-       if(apl < (int)_AlignLayerRotZ.size())
+      for(int apl=0; apl< (int)_AlignLayerIDs.size() ; apl++)
+        if ( _AlignLayerIDs.at(apl) == _planeID[iz])
+          {
+            _planeShiftX[iz]=_AlignLayerShiftX.at(apl);
+            _planeShiftY[iz]=_AlignLayerShiftY.at(apl);
+            // Rotation can be skipped: check size
+            if(apl < (int)_AlignLayerRotZ.size())
               _planeRotZ[iz]=_AlignLayerRotZ.at(apl);
-       break;
-       }
+            break;
+          }
 
 // Check, if there are additional cuts defined for this plane
 
 
-     for(int wpl=0; wpl< (int)_WindowLayerIDs.size() ; wpl++)
-      if ( _WindowLayerIDs.at(wpl) == _planeID[iz])
-       _planeWindowIDs[iz].push_back(wpl);
+      for(int wpl=0; wpl< (int)_WindowLayerIDs.size() ; wpl++)
+        if ( _WindowLayerIDs.at(wpl) == _planeID[iz])
+          _planeWindowIDs[iz].push_back(wpl);
 
-     for(int mpl=0; mpl< (int)_MaskLayerIDs.size() ; mpl++)
-      if ( _MaskLayerIDs.at(mpl) == _planeID[iz])
-       _planeMaskIDs[iz].push_back(mpl);
+      for(int mpl=0; mpl< (int)_MaskLayerIDs.size() ; mpl++)
+        if ( _MaskLayerIDs.at(mpl) == _planeID[iz])
+          _planeMaskIDs[iz].push_back(mpl);
 
-     // End of plane loop
-   }
+      // End of plane loop
+    }
 
   // Get new DUT position (after sorting)
 
   for(int iz=0;iz< _nTelPlanes ; iz++)
     if(_planeSort[iz]==_iDUT)
-       {
+      {
         _iDUT=iz;
         break;
-       }
+      }
 
 
   // Print out geometry information
@@ -488,58 +488,58 @@ void EUTelTestFitter::init() {
 
   for(int ipl=0; ipl < _nTelPlanes; ipl++)
     {
-      stringstream ss ; 
+      stringstream ss ;
       if(ipl == _iDUT)
-	ss << "D.U.T.  plane" ;
+        ss << "D.U.T.  plane" ;
       else
-	if(_isActive[ipl])
-	  ss << "Active  plane" ;
-	else
-	  ss << "Passive plane" ; 
-      
+        if(_isActive[ipl])
+          ss << "Active  plane" ;
+        else
+          ss << "Passive plane" ;
+
       ss << "  ID = " << _planeID[ipl]
-         << "  at Z [mm] = " << _planePosition[ipl] 
-	 << " dZ [um] = " << _planeThickness[ipl]*1000. ;
-      
+         << "  at Z [mm] = " << _planePosition[ipl]
+         << " dZ [um] = " << _planeThickness[ipl]*1000. ;
+
       if(_isActive[ipl])
         {
-	ss << "  Res [um] = " << _planeResolution[ipl]*1000. ;
-      
-        if(_planeShiftX[ipl] !=0. || _planeShiftY[ipl] !=0. ) 
-	  ss << "\n  alignment corrections:" 
-             <<  " dX [mm] = " << _planeShiftX[ipl] 
-              << " dY [mm] = " << _planeShiftY[ipl] ;
-        if(_planeRotZ[ipl] !=0.) 
-           ss << " RotZ [rad] = " << _planeRotZ[ipl] ;
+          ss << "  Res [um] = " << _planeResolution[ipl]*1000. ;
+
+          if(_planeShiftX[ipl] !=0. || _planeShiftY[ipl] !=0. )
+            ss << "\n  alignment corrections:"
+               <<  " dX [mm] = " << _planeShiftX[ipl]
+               << " dY [mm] = " << _planeShiftY[ipl] ;
+          if(_planeRotZ[ipl] !=0.)
+            ss << " RotZ [rad] = " << _planeRotZ[ipl] ;
 
 
-        for(int wpl=0; wpl< (int)_planeWindowIDs[ipl].size() ; wpl++)
-	  {
-          int iwin= _planeWindowIDs[ipl].at(wpl);
-	  ss << "\n accepted window: X = " <<  _WindowMinX.at(iwin) 
-	     << " to " <<  _WindowMaxX.at(iwin) 
-	     << " Y = " <<  _WindowMinY.at(iwin) 
-	     << " to " <<  _WindowMaxY.at(iwin); 
-          }
+          for(int wpl=0; wpl< (int)_planeWindowIDs[ipl].size() ; wpl++)
+            {
+              int iwin= _planeWindowIDs[ipl].at(wpl);
+              ss << "\n accepted window: X = " <<  _WindowMinX.at(iwin)
+                 << " to " <<  _WindowMaxX.at(iwin)
+                 << " Y = " <<  _WindowMinY.at(iwin)
+                 << " to " <<  _WindowMaxY.at(iwin);
+            }
 
-        for(int mpl=0; mpl< (int)_planeMaskIDs[ipl].size() ; mpl++)
-	  {
-	  int imsk= _planeMaskIDs[ipl].at(mpl);
-	  ss << "\n imposed mask: X = " <<  _MaskMinX.at(imsk) 
-	     << " to " <<  _MaskMaxX.at(imsk) 
-	     << " Y = " <<  _MaskMinY.at(imsk) 
-	     << " to " <<  _MaskMaxY.at(imsk); 
-          }
+          for(int mpl=0; mpl< (int)_planeMaskIDs[ipl].size() ; mpl++)
+            {
+              int imsk= _planeMaskIDs[ipl].at(mpl);
+              ss << "\n imposed mask: X = " <<  _MaskMinX.at(imsk)
+                 << " to " <<  _MaskMaxX.at(imsk)
+                 << " Y = " <<  _MaskMinY.at(imsk)
+                 << " to " <<  _MaskMaxY.at(imsk);
+            }
 
-        
+
         }
 
       message<MESSAGE> ( log() << ss.str() );
     }
 
   message<MESSAGE> ( log() << "Total of " << _nActivePlanes << " active sensor planes " );
-  
-    // Allocate arrays for track fitting
+
+  // Allocate arrays for track fitting
 
   _planeHits   = new int[_nTelPlanes];
   _planeChoice = new int[_nTelPlanes];
@@ -565,7 +565,7 @@ void EUTelTestFitter::init() {
 
   _nominalError = new double[_nTelPlanes];
 
-  // Fill nominal fit matrices and 
+  // Fill nominal fit matrices and
   // calculate expected precision of track fitting
 
   // Planes are ordered in position along the beam line !
@@ -573,15 +573,15 @@ void EUTelTestFitter::init() {
   for(int ipl=0; ipl<_nTelPlanes ; ipl++)
     {
       if(ipl>0)
-	_planeDist[ipl-1]=1./(_planePosition[ipl] - _planePosition[ipl-1]) ;
+        _planeDist[ipl-1]=1./(_planePosition[ipl] - _planePosition[ipl-1]) ;
 
       _planeScat[ipl]= 0.0136/_eBeam * sqrt(_planeThickness[ipl]/_planeX0[ipl])
-	* (1.+0.038*std::log(_planeThickness[ipl]/_planeX0[ipl])) ;
+        * (1.+0.038*std::log(_planeThickness[ipl]/_planeX0[ipl])) ;
 
       if(ipl==0 && _useBeamConstraint)
-	_planeScat[ipl]= 1./(_planeScat[ipl]*_planeScat[ipl]+ _beamSpread*_beamSpread) ; 
+        _planeScat[ipl]= 1./(_planeScat[ipl]*_planeScat[ipl]+ _beamSpread*_beamSpread) ;
       else
-	_planeScat[ipl]= 1./(_planeScat[ipl] * _planeScat[ipl]) ; 
+        _planeScat[ipl]= 1./(_planeScat[ipl] * _planeScat[ipl]) ;
 
       _fitX[ipl] =_fitY[ipl] = 0. ;
       _nominalError[ipl]= _planeResolution[ipl];
@@ -601,32 +601,32 @@ void EUTelTestFitter::init() {
 
   message<MESSAGE> ( log() << "Expected position resolutions [um]: " ) ;
   stringstream ss;
-  for(int ipl=0; ipl<_nTelPlanes ; ipl++) 
+  for(int ipl=0; ipl<_nTelPlanes ; ipl++)
     ss << _nominalError[ipl]*1000. << "  " ;
   message<MESSAGE> ( log() << ss.str() );
 
 
 // Book histograms
 
-#ifdef MARLIN_USE_AIDA
-    bookHistos();
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+  bookHistos();
 #endif
 
 }
 
-void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) { 
+void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) {
 
   auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
   eutelHeader->addProcessor( type() );
-  
+
   _nRun++ ;
 
   // Decode and print out Run Header information - just a check
 
   int runNr = runHeader->getRunNumber();
-  
-  message<MESSAGE> ( log() << "Processing run header " << _nRun 
-		     << ", run nr " << runNr );
+
+  message<MESSAGE> ( log() << "Processing run header " << _nRun
+                     << ", run nr " << runNr );
 
   const std::string detectorName = runHeader->getDetectorName();
   const std::string detectorDescription = runHeader->getDescription();
@@ -641,10 +641,10 @@ void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) {
   for(int idet=0;idet<nDet;idet++)  message<MESSAGE> (log()  << idet+1 << " : " << subDets->at(idet) );
 
 
-} 
+}
 
-void EUTelTestFitter::processEvent( LCEvent * event ) { 
-  
+void EUTelTestFitter::processEvent( LCEvent * event ) {
+
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
   if ( euEvent->getEventType() == kEORE ) {
     message<DEBUG> ( "EORE found: nothing else to do." );
@@ -663,14 +663,14 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   try {
     col = event->getCollection( _inputColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    message<ERROR> ( log() << "Not able to get collection " 
-		     << _inputColName 
-		     << "\nfrom event " << event->getEventNumber()
-		     << " in run " << event->getRunNumber()  );
-   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
-   throw SkipEventException(this);
+    message<ERROR> ( log() << "Not able to get collection "
+                     << _inputColName
+                     << "\nfrom event " << event->getEventNumber()
+                     << " in run " << event->getRunNumber()  );
+    (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
+    throw SkipEventException(this);
   }
-    
+
 
   // Copy hits to local table
   // Assign hits to sensor planes
@@ -727,35 +727,35 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       hitPlane[ihit] = -1 ;
 
       for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	{
-	  double dist =  hitZ[ihit] - _planePosition[ipl] ;
+        {
+          double dist =  hitZ[ihit] - _planePosition[ipl] ;
 
-	  if(dist*dist < distMin*distMin)
-	    {
-	      hitPlane[ihit]=ipl;
-	      distMin=dist;
-	    }
-	}
+          if(dist*dist < distMin*distMin)
+            {
+              hitPlane[ihit]=ipl;
+              distMin=dist;
+            }
+        }
 
       // Ignore hits not matched to any plane
 
       if(hitPlane[ihit]<0) {
 
-	if(debug)
-            message<ERROR> ( log() << "Reconstructed hit outside sensor planes z [mm] = "  << hitZ[ihit] );
-	continue;
+        if(debug)
+          message<ERROR> ( log() << "Reconstructed hit outside sensor planes z [mm] = "  << hitZ[ihit] );
+        continue;
       }
 
       // Ignore hit, if plane not declared as active (i.e. not used in the fit)
 
       if(! _isActive[hitPlane[ihit]])
-	continue ;
+        continue ;
 
       // Ignore hit also, if maximum number of hits already matched to this plane
 
-      if(_maxPlaneHits>0 && 
-         _maxPlaneHits-planeHitID[hitPlane[ihit]].size()<=0) 
-	continue ;
+      if(_maxPlaneHits>0 &&
+         _maxPlaneHits-planeHitID[hitPlane[ihit]].size()<=0)
+        continue ;
 
       // Hit will be used: correct X and Y position for plane alignment
 
@@ -764,42 +764,42 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
       // Shift sign changed in 1.22 for consistency with alignment
       // processor
- 
+
       hitX[ihit] = pos[0]*cos(_planeRotZ[hitPlane[ihit]])
-                 + pos[1]*sin(_planeRotZ[hitPlane[ihit]])
-                 - _planeShiftX[hitPlane[ihit]];
+        + pos[1]*sin(_planeRotZ[hitPlane[ihit]])
+        - _planeShiftX[hitPlane[ihit]];
 
       hitY[ihit] = pos[1]*cos(_planeRotZ[hitPlane[ihit]])
-                 - pos[0]*sin(_planeRotZ[hitPlane[ihit]])
-                 - _planeShiftY[hitPlane[ihit]];
+        - pos[0]*sin(_planeRotZ[hitPlane[ihit]])
+        - _planeShiftY[hitPlane[ihit]];
 
       // Check Window and Mask cuts, if defined
 
       bool hitcut = false;
 
       for(int wpl=0; wpl< (int)_planeWindowIDs[hitPlane[ihit]].size() ; wpl++)
-	  {
+        {
           int iwin= _planeWindowIDs[hitPlane[ihit]].at(wpl);
 
-	  if(hitX[ihit] <  _WindowMinX.at(iwin)) hitcut = true;
+          if(hitX[ihit] <  _WindowMinX.at(iwin)) hitcut = true;
           if(hitX[ihit] >  _WindowMaxX.at(iwin)) hitcut = true;
- 	  if(hitY[ihit] <  _WindowMinY.at(iwin)) hitcut = true; 
-	  if(hitY[ihit] >  _WindowMaxY.at(iwin)) hitcut = true; 
-          }
+          if(hitY[ihit] <  _WindowMinY.at(iwin)) hitcut = true;
+          if(hitY[ihit] >  _WindowMaxY.at(iwin)) hitcut = true;
+        }
 
       if(hitcut)continue;
 
 
       for(int mpl=0; mpl< (int)_planeMaskIDs[hitPlane[ihit]].size() ; mpl++)
-	  {
-	  int imsk= _planeMaskIDs[hitPlane[ihit]].at(mpl);
+        {
+          int imsk= _planeMaskIDs[hitPlane[ihit]].at(mpl);
 
-	  if(hitX[ihit] >  _MaskMinX.at(imsk) &&
+          if(hitX[ihit] >  _MaskMinX.at(imsk) &&
              hitX[ihit] <  _MaskMaxX.at(imsk) &&
- 	     hitY[ihit] >  _MaskMinY.at(imsk) &&
-	     hitY[ihit] <  _MaskMaxY.at(imsk)) hitcut = true; 
-          }
-     
+             hitY[ihit] >  _MaskMinY.at(imsk) &&
+             hitY[ihit] <  _MaskMaxY.at(imsk)) hitcut = true;
+        }
+
       if(hitcut)continue;
 
 
@@ -813,25 +813,25 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       const EVENT::FloatVec cov = meshit->getCovMatrix();
 
       if(cov.at(0)>0.)
-	hitEx[ihit]=sqrt(cov.at(0));
+        hitEx[ihit]=sqrt(cov.at(0));
       else
-	hitEx[ihit]=_planeResolution[hitPlane[ihit]];
+        hitEx[ihit]=_planeResolution[hitPlane[ihit]];
 
       if(cov.at(2)>0.)
-	hitEy[ihit]=sqrt(cov.at(2));
+        hitEy[ihit]=sqrt(cov.at(2));
       else
-	hitEy[ihit]=_planeResolution[hitPlane[ihit]];
+        hitEy[ihit]=_planeResolution[hitPlane[ihit]];
 
       hitFits[ihit]=0;
 
       if(debug)message<DEBUG> ( log() << "Hit " << ihit
-		       << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]  
-		       << "   Y = " << hitY[ihit] << " +/- " << hitEy[ihit]  
-		       << "   Z = " << hitZ[ihit] << " (plane " << hitPlane[ihit] << ")" );
+                                << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]
+                                << "   Y = " << hitY[ihit] << " +/- " << hitEy[ihit]
+                                << "   Z = " << hitZ[ihit] << " (plane " << hitPlane[ihit] << ")" );
     }
 
 
- (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nAccHitHistoName]))->fill(nGoodHit);
+  (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nAccHitHistoName]))->fill(nGoodHit);
 
 
   // Main analysis loop: finding multiple tracks (if allowed)
@@ -843,7 +843,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   // Set flag for storing track hits in track collection
 
-  LCFlagImpl flag(fittrackvec->getFlag()); 
+  LCFlagImpl flag(fittrackvec->getFlag());
   flag.setBit( LCIO::TRBIT_HITS );
   fittrackvec->setFlag(flag.getFlag());
 
@@ -869,36 +869,36 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     for(int ipl=_nTelPlanes-1; ipl>=0 ;ipl--)
       {
-	_planeHits[ipl] = planeHitID[ipl].size() ;
+        _planeHits[ipl] = planeHitID[ipl].size() ;
 
-	if(_planeHits[ipl]>0)
-	  {
-	   nFiredPlanes++;
+        if(_planeHits[ipl]>0)
+          {
+            nFiredPlanes++;
 
-          _planeChoice[ipl]=_planeHits[ipl]+1;
-	  }
-	else
-	  _planeChoice[ipl]=1;
+            _planeChoice[ipl]=_planeHits[ipl]+1;
+          }
+        else
+          _planeChoice[ipl]=1;
 
         _planeMod[ipl]=nChoice;
 
-	nChoice*=_planeChoice[ipl];
+        nChoice*=_planeChoice[ipl];
 
       }
- 
+
     // Debug output
 
     if(firstTrack && debug )
       for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	if( _isActive[ipl] )
-	  {
-	    stringstream ss;
-	    ss << "Plane " << ipl << "  " << _planeHits[ipl] << " hit(s), hit IDs :";
+        if( _isActive[ipl] )
+          {
+            stringstream ss;
+            ss << "Plane " << ipl << "  " << _planeHits[ipl] << " hit(s), hit IDs :";
 
-	    for( int ihit=0; ihit < (int) planeHitID[ipl].size() ; ihit ++)
-	      ss << planeHitID[ipl].at(ihit) << " " ;
-	    message<DEBUG> ( log() << ss.str() );
-	  }
+            for( int ihit=0; ihit < (int) planeHitID[ipl].size() ; ihit ++)
+              ss << planeHitID[ipl].at(ihit) << " " ;
+            message<DEBUG> ( log() << ss.str() );
+          }
 
 
     // Check if fit can be done
@@ -906,32 +906,32 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     if(nFiredPlanes + _allowMissingHits < _nActivePlanes)
       {
         if( firstTrack ) {
-	  if(debug)message<DEBUG> ( log() << "Not enough planes hit to perform the fit " );
+          if(debug)message<DEBUG> ( log() << "Not enough planes hit to perform the fit " );
 
           (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
 
-	  // before throwing the exception I should clean up the
-	  // memory...
-	  delete [] bestEy;
-	  delete [] bestY;
-	  delete [] bestEx;
-	  delete [] bestX;
-	  delete [] planeHitID;
-	  delete [] hitPlane;
-	  delete [] hitFits;
-	  delete [] hitZ;
-	  delete [] hitEy;
-	  delete [] hitY;
-	  delete [] hitEx;
-	  delete [] hitX;
-	  throw SkipEventException(this);
-	}
+          // before throwing the exception I should clean up the
+          // memory...
+          delete [] bestEy;
+          delete [] bestY;
+          delete [] bestEx;
+          delete [] bestX;
+          delete [] planeHitID;
+          delete [] hitPlane;
+          delete [] hitFits;
+          delete [] hitZ;
+          delete [] hitEy;
+          delete [] hitY;
+          delete [] hitEx;
+          delete [] hitX;
+          throw SkipEventException(this);
+        }
       }
 
 
-    if( firstTrack && debug ) 
-           message<DEBUG> ( log() << nFiredPlanes << " active sensor planes hit, checking "
-				       << nChoice << " fit possibilities " );
+    if( firstTrack && debug )
+      message<DEBUG> ( log() << nFiredPlanes << " active sensor planes hit, checking "
+                       << nChoice << " fit possibilities " );
 
     // Check all track possibilities
 
@@ -948,47 +948,47 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     while(nmiss>0 || !_isActive[istart])
       {
-	if(_isActive[istart])nmiss--;
-	istart++;
+        if(_isActive[istart])nmiss--;
+        istart++;
       }
 
     for(int ichoice=nChoice-_planeMod[istart]-1; ichoice >=0 ; ichoice--)
       {
-	int nChoiceFired=0;
-	double choiceChi2=-1.;
-	double trackChi2=-1.;
+        int nChoiceFired=0;
+        double choiceChi2=-1.;
+        double trackChi2=-1.;
         int ifirst=-1;
         int ilast=0;
         int nleft=0;
 
-	// Fill position and error arrays for this hit configuration
+        // Fill position and error arrays for this hit configuration
 
-	for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	  {
-	    _planeX[ipl]=_planeY[ipl]=_planeEx[ipl]=_planeEy[ipl]=0.;
+        for(int ipl=0;ipl<_nTelPlanes;ipl++)
+          {
+            _planeX[ipl]=_planeY[ipl]=_planeEx[ipl]=_planeEy[ipl]=0.;
 
-	    if(_isActive[ipl])
-	      {
-		int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
+            if(_isActive[ipl])
+              {
+                int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
 
-		if(ihit<_planeHits[ipl])
-		  {
-		    int jhit = planeHitID[ipl].at(ihit);
-		    _planeX[ipl]=hitX[jhit];
-		    _planeY[ipl]=hitY[jhit];
-		    _planeEx[ipl]=(_useNominalResolution)?_planeResolution[ipl]:hitEx[jhit];
-		    _planeEy[ipl]=(_useNominalResolution)?_planeResolution[ipl]:hitEy[jhit];
+                if(ihit<_planeHits[ipl])
+                  {
+                    int jhit = planeHitID[ipl].at(ihit);
+                    _planeX[ipl]=hitX[jhit];
+                    _planeY[ipl]=hitY[jhit];
+                    _planeEx[ipl]=(_useNominalResolution)?_planeResolution[ipl]:hitEx[jhit];
+                    _planeEy[ipl]=(_useNominalResolution)?_planeResolution[ipl]:hitEy[jhit];
                     if(ifirst<0)ifirst=ipl;
                     ilast=ipl;
                     nleft=0;
-		    nChoiceFired++;
-		  }
+                    nChoiceFired++;
+                  }
                 else
                   nleft++;
-	      }
-	  }
+              }
+          }
 
-	// Check number of selected hits
+        // Check number of selected hits
         // =============================
 
         // No fit to 1 hit :-)
@@ -998,294 +998,294 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         // Fit with 2 hits make sense only with beam constraint, or
         // when 2 point fit is allowed
 
-        if(nChoiceFired==2 && !_useBeamConstraint 
-            && nChoiceFired + _allowMissingHits < _nActivePlanes) continue;
+        if(nChoiceFired==2 && !_useBeamConstraint
+           && nChoiceFired + _allowMissingHits < _nActivePlanes) continue;
 
         // Skip also if the fit can not be extended to proper number
         // of planes; no need to check remaining planes !!!
         if(nChoiceFired + nleft < _nActivePlanes - _allowMissingHits )
-	  {
-          ichoice-=_planeMod[ilast]-1;  
-          continue;
+          {
+            ichoice-=_planeMod[ilast]-1;
+            continue;
           }
 
 
-	// Select fit method
-	// "Nominal" fit only if all active planes used
+        // Select fit method
+        // "Nominal" fit only if all active planes used
 
-	if(_useNominalResolution && (nChoiceFired == _nActivePlanes))
+        if(_useNominalResolution && (nChoiceFired == _nActivePlanes))
           choiceChi2 = NominalFit();
-	else
-	  if(_useNominalResolution)
-	    choiceChi2 = SingleFit();
-	  else
-	    choiceChi2 = MatrixFit();
+        else
+          if(_useNominalResolution)
+            choiceChi2 = SingleFit();
+          else
+            choiceChi2 = MatrixFit();
 
-	// Fit failed ?
+        // Fit failed ?
 
-	if(choiceChi2 < 0.)
-	  {
-	    message<WARNING> ( log() << "Fit to " << nChoiceFired 
-         << " planes failed for event " << event->getEventNumber() 
-         << " in run " << event->getRunNumber()  );
+        if(choiceChi2 < 0.)
+          {
+            message<WARNING> ( log() << "Fit to " << nChoiceFired
+                               << " planes failed for event " << event->getEventNumber()
+                               << " in run " << event->getRunNumber()  );
 
-           continue ;
-	  }
+            continue ;
+          }
 
-	// Penalty for missing or skiped hits
+        // Penalty for missing or skiped hits
 
-	double penalty = (_nActivePlanes-nFiredPlanes)*_missingHitPenalty
-	  +   (nFiredPlanes-nChoiceFired)*_skipHitPenalty ;
+        double penalty = (_nActivePlanes-nFiredPlanes)*_missingHitPenalty
+          +   (nFiredPlanes-nChoiceFired)*_skipHitPenalty ;
 
 
         trackChi2 = choiceChi2+penalty;
 
-	if(nChoiceFired + _allowMissingHits >= _nActivePlanes &&
-	   nChoiceFired + _allowSkipHits    >= nFiredPlanes  &&
+        if(nChoiceFired + _allowMissingHits >= _nActivePlanes &&
+           nChoiceFired + _allowSkipHits    >= nFiredPlanes  &&
            trackChi2 < chi2min)
-                  chi2min=trackChi2;   
+          chi2min=trackChi2;
 
         // Check if better than best fit (or chi2Max if hit ambiguity allowed)
         // If not: skip also all track possibilities which include
         // this hit selection !!!
-        if((choiceChi2 >= _chi2Max) || 
+        if((choiceChi2 >= _chi2Max) ||
            (choiceChi2 >=  chi2best  && !ambiguityMode) )
-	  {
-          ichoice-=_planeMod[ilast]-1;  
-          continue;
+          {
+            ichoice-=_planeMod[ilast]-1;
+            continue;
           }
 
         //
         // Skip fit if could not be accepted (too few planes fired)
         //
-	if(nChoiceFired + _allowMissingHits < _nActivePlanes ||
-	   nChoiceFired + _allowSkipHits    < nFiredPlanes )
-	   continue;
+        if(nChoiceFired + _allowMissingHits < _nActivePlanes ||
+           nChoiceFired + _allowSkipHits    < nFiredPlanes )
+          continue;
 
-	// Best fit ?
+        // Best fit ?
 
-	if(trackChi2<chi2best)
+        if(trackChi2<chi2best)
           {
-	    chi2best=trackChi2;
-	    bestPenalty=penalty;
-	    ibest=ichoice;
-	    nBestFired=nChoiceFired;
-	    for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	      {
-		bestX[ipl]=_fitX[ipl];
-		bestY[ipl]=_fitY[ipl];
-		bestEx[ipl]=_fitEx[ipl];
-		bestEy[ipl]=_fitEy[ipl];
-	      }
-	  }
+            chi2best=trackChi2;
+            bestPenalty=penalty;
+            ibest=ichoice;
+            nBestFired=nChoiceFired;
+            for(int ipl=0;ipl<_nTelPlanes;ipl++)
+              {
+                bestX[ipl]=_fitX[ipl];
+                bestY[ipl]=_fitY[ipl];
+                bestEx[ipl]=_fitEx[ipl];
+                bestEy[ipl]=_fitEy[ipl];
+              }
+          }
 
         // If hit ambiguity allowed (same hit can be used in many
-        // tracks) - fill all tracks passing chi2 cut 
- 
-      if(trackChi2<_chi2Max   && ambiguityMode )
+        // tracks) - fill all tracks passing chi2 cut
+
+        if(trackChi2<_chi2Max   && ambiguityMode )
           {
 
-      if(debug)
-        {
-        message<DEBUG> ( log() << "Track reconstructed from " << nChoiceFired << " hits: " );
+            if(debug)
+              {
+                message<DEBUG> ( log() << "Track reconstructed from " << nChoiceFired << " hits: " );
 
 
-    // print out hits contributing to the fit
-
-      
-	for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	  {
-	    if(_isActive[ipl])
-	      {
-		int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
-
-		  if(ihit<_planeHits[ipl])
-		    {
-		    int jhit = planeHitID[ipl].at(ihit);
-                    message<DEBUG> ( log() << "Hit " << jhit
-		       << "   X = " << hitX[jhit] 
-		       << "   Y = " << hitY[jhit] 
-		       << "   Z = " << hitZ[jhit] << " (plane" << hitPlane[jhit] << ")" );
-		    }
-	      }
-	  }
+                // print out hits contributing to the fit
 
 
-	message<DEBUG> (log() << " Fitted positions in telescope planes:");
+                for(int ipl=0;ipl<_nTelPlanes;ipl++)
+                  {
+                    if(_isActive[ipl])
+                      {
+                        int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
 
-	for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	  message<DEBUG> ( log() << "  X = " << _fitX[ipl] << " +/- " << _fitEx[ipl] 
-			   << "  Y = " << _fitY[ipl] << " +/- " << _fitEy[ipl] 
-			   << "  at Z = " << _planePosition[ipl] ) ;
-	
-
-	message<DEBUG> ( log() << " Fit chi2 = " << trackChi2 << " including penalties of " << penalty );
-
-        }
-
-     // Fill Chi2 histograms
-
-	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_linChi2HistoName]))->fill(trackChi2);
-
-	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_logChi2HistoName]))->fill(log10(trackChi2));
-
-        if(_allowMissingHits && nBestFired==_nActivePlanes)
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_fullChi2HistoName]))->fill(log10(trackChi2));
-
-     // Fill hit histograms
-
-	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nHitHistoName]))->fill(nChoiceFired);
+                        if(ihit<_planeHits[ipl])
+                          {
+                            int jhit = planeHitID[ipl].at(ihit);
+                            message<DEBUG> ( log() << "Hit " << jhit
+                                             << "   X = " << hitX[jhit]
+                                             << "   Y = " << hitY[jhit]
+                                             << "   Z = " << hitZ[jhit] << " (plane" << hitPlane[jhit] << ")" );
+                          }
+                      }
+                  }
 
 
-	// Write fit result out
-	
-	TrackImpl * fittrack = new TrackImpl();
-	
-	// Following parameters are not used for Telescope
-	// and are set to zero (just in case)
-	fittrack->setOmega(0.);     // curvature of the track
-	fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
-	fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
-	fittrack->setPhi(0.);       // phi of the track at reference point
-	fittrack->setTanLambda(0.); // dip angle of the track at reference point
+                message<DEBUG> (log() << " Fitted positions in telescope planes:");
 
-	// Used class members
-
-	fittrack->setChi2(trackChi2);  // Chi2 of the fit (including penalties)
-	fittrack->setNdf(nChoiceFired); // Number of planes fired (!)
-
-	// Fitted position at DUT is stored as Reference Point
-	// (see below in loop over telescope planes)
-	// If no DUT present: use position in the first plane !
-
-	fittrack->setIsReferencePointPCA(false);  
-	float refpoint[3];
-
-	// Track points fitted in each plane are stored as track hits 
-
-	for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	  {
-	    TrackerHitImpl * fitpoint = new TrackerHitImpl;
-	    
-	    // Hit type is set to 32, to distinguish from measured
-	    // hits (hit type = cluster type = 0 ... 31)
-	    
-	    fitpoint->setType(32);
-
-	    // fitted position in a plane
-
-	    double pos[3];
-
-	    pos[0]=_fitX[ipl];
-	    pos[1]=_fitY[ipl];
-	    pos[2]=_planePosition[ipl];
-
-	    fitpoint->setPosition(pos);
-
-	    // Covariance matrix of the position 
-	    // (stored as lower triangle matrix, i.e.  cov(xx),cov(y,x),cov(y,y) ).
-
-	    float cov[TRKHITNCOVMATRIX];
-
-	    cov[0]=_fitEx[ipl]*_fitEx[ipl];
-	    cov[1]=0.;
-	    cov[2]=_fitEy[ipl]*_fitEy[ipl];
-	    cov[3]=cov[4]=0.;
-	    cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
-
-	    fitpoint->setCovMatrix(cov);
-
-	    // store fit point 
-
-	    fitpointvec->push_back(fitpoint);
-
-	    //   add fitted point to track
-
-            if(_OutputHitsInTrack)
-              fittrack->addHit(fitpoint);
+                for(int ipl=0;ipl<_nTelPlanes;ipl++)
+                  message<DEBUG> ( log() << "  X = " << _fitX[ipl] << " +/- " << _fitEx[ipl]
+                                   << "  Y = " << _fitY[ipl] << " +/- " << _fitEy[ipl]
+                                   << "  at Z = " << _planePosition[ipl] ) ;
 
 
-	    //		       << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]  
-	    //       << "   Y = " << hitY[ihit] << " +/- " <<
-	    //       hitEy[ihit]  
+                message<DEBUG> ( log() << " Fit chi2 = " << trackChi2 << " including penalties of " << penalty );
 
-            // add measured point to track (if found)
+              }
 
- 	    if(_InputHitsInTrack && _isActive[ipl])
-	      {
-		int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
+            // Fill Chi2 histograms
 
-		 if(ihit<_planeHits[ipl])
-		    {
-		    int jhit = planeHitID[ipl].at(ihit);
-                    TrackerHitImpl * meshit = dynamic_cast<TrackerHitImpl*>( col->getElementAt(jhit) ) ;
-	            TrackerHitImpl * corrhit = new TrackerHitImpl;
-		    //
-		    // Copy input hit data
-		    //
-                    corrhit->setType(meshit->getType());
-                    corrhit->setTime(meshit->getTime());
-                    corrhit->setdEdx(meshit->getdEdx());
-                    corrhit->rawHits()=meshit->getRawHits();
-		    // 
-		    // Use corrected position
-		    //
-	            pos[0]=hitX[jhit];
-                    pos[1]=hitY[jhit];
-	            pos[2]=_planePosition[ipl];
+            (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_linChi2HistoName]))->fill(trackChi2);
 
-	            corrhit->setPosition(pos);
-                    //
-		    // Include errors, as used in the fit
-		    //
-	            cov[0]=hitEx[jhit]*hitEx[jhit];
-   	            cov[1]=0.;
-	            cov[2]=hitEy[jhit]*hitEy[jhit];
-	            cov[3]=cov[4]=0.;
-	            cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
+            (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_logChi2HistoName]))->fill(log10(trackChi2));
 
- 	            corrhit->setCovMatrix(cov);
+            if(_allowMissingHits && nBestFired==_nActivePlanes)
+              (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_fullChi2HistoName]))->fill(log10(trackChi2));
 
-	            corrpointvec->push_back(corrhit);
+            // Fill hit histograms
 
-                    fittrack->addHit(corrhit);
-		    }
-	      }
+            (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nHitHistoName]))->fill(nChoiceFired);
 
-	    // Use position at DUT as a track reference point.
-	    // If no DUT present: use position in the first plane !
 
-	    if(ipl==_iDUT || (_iDUT<0 && ipl==0))
-	      for(int iref=0;iref<3;iref++)
-		refpoint[iref]=pos[iref];
-	  }
-	
-	// Store track reference point.
-	fittrack->setReferencePoint(refpoint);
-	
-	fittrackvec->addElement(fittrack);
+            // Write fit result out
 
-	// Count number of tracks for each hit
+            TrackImpl * fittrack = new TrackImpl();
 
-	for(int ipl=0;ipl<_nTelPlanes;ipl++)
- 	    if(_isActive[ipl])
-	      {
-		int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
+            // Following parameters are not used for Telescope
+            // and are set to zero (just in case)
+            fittrack->setOmega(0.);     // curvature of the track
+            fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
+            fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
+            fittrack->setPhi(0.);       // phi of the track at reference point
+            fittrack->setTanLambda(0.); // dip angle of the track at reference point
 
-		if(ihit<_planeHits[ipl])
-		    hitFits[planeHitID[ipl].at(ihit)]++;
-	      }
+            // Used class members
 
-	nFittedTracks++;
+            fittrack->setChi2(trackChi2);  // Chi2 of the fit (including penalties)
+            fittrack->setNdf(nChoiceFired); // Number of planes fired (!)
 
-	  }  // end of track filling - if(choiceChi2+penalty<_chi2Max   && ambiguityMode )
+            // Fitted position at DUT is stored as Reference Point
+            // (see below in loop over telescope planes)
+            // If no DUT present: use position in the first plane !
+
+            fittrack->setIsReferencePointPCA(false);
+            float refpoint[3];
+
+            // Track points fitted in each plane are stored as track hits
+
+            for(int ipl=0;ipl<_nTelPlanes;ipl++)
+              {
+                TrackerHitImpl * fitpoint = new TrackerHitImpl;
+
+                // Hit type is set to 32, to distinguish from measured
+                // hits (hit type = cluster type = 0 ... 31)
+
+                fitpoint->setType(32);
+
+                // fitted position in a plane
+
+                double pos[3];
+
+                pos[0]=_fitX[ipl];
+                pos[1]=_fitY[ipl];
+                pos[2]=_planePosition[ipl];
+
+                fitpoint->setPosition(pos);
+
+                // Covariance matrix of the position
+                // (stored as lower triangle matrix, i.e.  cov(xx),cov(y,x),cov(y,y) ).
+
+                float cov[TRKHITNCOVMATRIX];
+
+                cov[0]=_fitEx[ipl]*_fitEx[ipl];
+                cov[1]=0.;
+                cov[2]=_fitEy[ipl]*_fitEy[ipl];
+                cov[3]=cov[4]=0.;
+                cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
+
+                fitpoint->setCovMatrix(cov);
+
+                // store fit point
+
+                fitpointvec->push_back(fitpoint);
+
+                //   add fitted point to track
+
+                if(_OutputHitsInTrack)
+                  fittrack->addHit(fitpoint);
+
+
+                //                 << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]
+                //       << "   Y = " << hitY[ihit] << " +/- " <<
+                //       hitEy[ihit]
+
+                // add measured point to track (if found)
+
+                if(_InputHitsInTrack && _isActive[ipl])
+                  {
+                    int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
+
+                    if(ihit<_planeHits[ipl])
+                      {
+                        int jhit = planeHitID[ipl].at(ihit);
+                        TrackerHitImpl * meshit = dynamic_cast<TrackerHitImpl*>( col->getElementAt(jhit) ) ;
+                        TrackerHitImpl * corrhit = new TrackerHitImpl;
+                        //
+                        // Copy input hit data
+                        //
+                        corrhit->setType(meshit->getType());
+                        corrhit->setTime(meshit->getTime());
+                        corrhit->setdEdx(meshit->getdEdx());
+                        corrhit->rawHits()=meshit->getRawHits();
+                        //
+                        // Use corrected position
+                        //
+                        pos[0]=hitX[jhit];
+                        pos[1]=hitY[jhit];
+                        pos[2]=_planePosition[ipl];
+
+                        corrhit->setPosition(pos);
+                        //
+                        // Include errors, as used in the fit
+                        //
+                        cov[0]=hitEx[jhit]*hitEx[jhit];
+                        cov[1]=0.;
+                        cov[2]=hitEy[jhit]*hitEy[jhit];
+                        cov[3]=cov[4]=0.;
+                        cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
+
+                        corrhit->setCovMatrix(cov);
+
+                        corrpointvec->push_back(corrhit);
+
+                        fittrack->addHit(corrhit);
+                      }
+                  }
+
+                // Use position at DUT as a track reference point.
+                // If no DUT present: use position in the first plane !
+
+                if(ipl==_iDUT || (_iDUT<0 && ipl==0))
+                  for(int iref=0;iref<3;iref++)
+                    refpoint[iref]=pos[iref];
+              }
+
+            // Store track reference point.
+            fittrack->setReferencePoint(refpoint);
+
+            fittrackvec->addElement(fittrack);
+
+            // Count number of tracks for each hit
+
+            for(int ipl=0;ipl<_nTelPlanes;ipl++)
+              if(_isActive[ipl])
+                {
+                  int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
+
+                  if(ihit<_planeHits[ipl])
+                    hitFits[planeHitID[ipl].at(ihit)]++;
+                }
+
+            nFittedTracks++;
+
+          }  // end of track filling - if(choiceChi2+penalty<_chi2Max   && ambiguityMode )
 
 
 
       }
     // End of loop over track possibilities
 
-    if(firstTrack) 
+    if(firstTrack)
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_firstChi2HistoName]))->fill(log10(chi2min));
 
 
@@ -1308,235 +1308,235 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       delete [] hitEy;
       delete [] hitY;
       delete [] hitEx;
-      delete [] hitX;	
+      delete [] hitX;
       throw SkipEventException(this);
     }
-    
 
-     if(ibest>=0 && firstTrack && ambiguityMode )
-       {
-	if(_searchMultipleTracks)
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_bestChi2HistoName]))->fill(log10(chi2best));
 
-	if(_searchMultipleTracks)
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nBestHistoName]))->fill(nBestFired);
-       }
+    if(ibest>=0 && firstTrack && ambiguityMode )
+      {
+        if(_searchMultipleTracks)
+          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_bestChi2HistoName]))->fill(log10(chi2best));
+
+        if(_searchMultipleTracks)
+          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nBestHistoName]))->fill(nBestFired);
+      }
 
 
     if(ibest>=0 && !ambiguityMode )
       {
 
-      if(debug)
-        {
-        message<DEBUG> ( log() << "Track reconstructed from " << nBestFired << " hits: " );
+        if(debug)
+          {
+            message<DEBUG> ( log() << "Track reconstructed from " << nBestFired << " hits: " );
 
 
-    // print out hits contributing to the fit
-
-      
-	for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	  {
-	    if(_isActive[ipl])
-	      {
-		int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
-
-		  if(ihit<_planeHits[ipl])
-		    {
-		    int jhit = planeHitID[ipl].at(ihit);
-                    message<DEBUG> ( log() << "Hit " << jhit
-		       << "   X = " << hitX[jhit] 
-		       << "   Y = " << hitY[jhit] 
-		       << "   Z = " << hitZ[jhit] << " (plane" << hitPlane[jhit] << ")" );
-		    }
-	      }
-	  }
+            // print out hits contributing to the fit
 
 
-	message<DEBUG> (log() << " Fitted positions in telescope planes:");
+            for(int ipl=0;ipl<_nTelPlanes;ipl++)
+              {
+                if(_isActive[ipl])
+                  {
+                    int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
 
-	for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	  message<DEBUG> ( log() << "  X = " << bestX[ipl] << " +/- " << bestEx[ipl] 
-			   << "  Y = " << bestY[ipl] << " +/- " << bestEy[ipl] 
-			   << "  at Z = " << _planePosition[ipl] ) ;
-	
+                    if(ihit<_planeHits[ipl])
+                      {
+                        int jhit = planeHitID[ipl].at(ihit);
+                        message<DEBUG> ( log() << "Hit " << jhit
+                                         << "   X = " << hitX[jhit]
+                                         << "   Y = " << hitY[jhit]
+                                         << "   Z = " << hitZ[jhit] << " (plane" << hitPlane[jhit] << ")" );
+                      }
+                  }
+              }
 
-	message<DEBUG> ( log() << " Fit chi2 = " << chi2best << " including penalties of " << bestPenalty );
 
-        }
+            message<DEBUG> (log() << " Fitted positions in telescope planes:");
 
-     // Fill Chi2 histograms
+            for(int ipl=0;ipl<_nTelPlanes;ipl++)
+              message<DEBUG> ( log() << "  X = " << bestX[ipl] << " +/- " << bestEx[ipl]
+                               << "  Y = " << bestY[ipl] << " +/- " << bestEy[ipl]
+                               << "  at Z = " << _planePosition[ipl] ) ;
 
-	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_linChi2HistoName]))->fill(chi2best);
 
-	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_logChi2HistoName]))->fill(log10(chi2best));
+            message<DEBUG> ( log() << " Fit chi2 = " << chi2best << " including penalties of " << bestPenalty );
 
-	if(_searchMultipleTracks && firstTrack)
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_bestChi2HistoName]))->fill(log10(chi2best));
+          }
+
+        // Fill Chi2 histograms
+
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_linChi2HistoName]))->fill(chi2best);
+
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_logChi2HistoName]))->fill(log10(chi2best));
+
+        if(_searchMultipleTracks && firstTrack)
+          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_bestChi2HistoName]))->fill(log10(chi2best));
 
         if(_allowMissingHits && nBestFired==_nActivePlanes)
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_fullChi2HistoName]))->fill(log10(chi2best));
+          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_fullChi2HistoName]))->fill(log10(chi2best));
 
-     // Fill hit histograms
+        // Fill hit histograms
 
-	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nHitHistoName]))->fill(nBestFired);
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nHitHistoName]))->fill(nBestFired);
 
-	if(_searchMultipleTracks && firstTrack)
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nBestHistoName]))->fill(nBestFired);
+        if(_searchMultipleTracks && firstTrack)
+          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nBestHistoName]))->fill(nBestFired);
 
 
 
-	// Write fit result out
-	
-	TrackImpl * fittrack = new TrackImpl();
-	
-	// Following parameters are not used for Telescope
-	// and are set to zero (just in case)
-	fittrack->setOmega(0.);     // curvature of the track
-	fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
-	fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
-	fittrack->setPhi(0.);       // phi of the track at reference point
-	fittrack->setTanLambda(0.); // dip angle of the track at reference point
+        // Write fit result out
 
-	// Used class members
+        TrackImpl * fittrack = new TrackImpl();
 
-	fittrack->setChi2(chi2best);  // Chi2 of the fit (including penalties)
-	fittrack->setNdf(nBestFired); // Number of planes fired (!)
+        // Following parameters are not used for Telescope
+        // and are set to zero (just in case)
+        fittrack->setOmega(0.);     // curvature of the track
+        fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
+        fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
+        fittrack->setPhi(0.);       // phi of the track at reference point
+        fittrack->setTanLambda(0.); // dip angle of the track at reference point
 
-	// Fitted position at DUT is stored as Reference Point
-	// (see below in loop over telescope planes)
-	// If no DUT present: use position in the first plane !
+        // Used class members
 
-	fittrack->setIsReferencePointPCA(false);  
-	float refpoint[3];
+        fittrack->setChi2(chi2best);  // Chi2 of the fit (including penalties)
+        fittrack->setNdf(nBestFired); // Number of planes fired (!)
 
-	// Track points fitted in each plane are stored as track hits 
+        // Fitted position at DUT is stored as Reference Point
+        // (see below in loop over telescope planes)
+        // If no DUT present: use position in the first plane !
 
-	for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	  {
-	    TrackerHitImpl * fitpoint = new TrackerHitImpl;
-	    
-	    // Hit type is set to 32, to distinguish from measured
-	    // hits (hit type = cluster type = 0 ... 31)
-	    
-	    fitpoint->setType(32);
+        fittrack->setIsReferencePointPCA(false);
+        float refpoint[3];
 
-	    // fitted position in a plane
+        // Track points fitted in each plane are stored as track hits
 
-	    double pos[3];
+        for(int ipl=0;ipl<_nTelPlanes;ipl++)
+          {
+            TrackerHitImpl * fitpoint = new TrackerHitImpl;
 
-	    pos[0]=bestX[ipl];
-	    pos[1]=bestY[ipl];
-	    pos[2]=_planePosition[ipl];
+            // Hit type is set to 32, to distinguish from measured
+            // hits (hit type = cluster type = 0 ... 31)
 
-	    fitpoint->setPosition(pos);
+            fitpoint->setType(32);
 
-	    // Covariance matrix of the position 
-	    // (stored as lower triangle matrix, i.e.  cov(xx),cov(y,x),cov(y,y) ).
+            // fitted position in a plane
 
-	    float cov[TRKHITNCOVMATRIX];
+            double pos[3];
 
-	    cov[0]=bestEx[ipl]*bestEx[ipl];
-	    cov[1]=0.;
-	    cov[2]=bestEy[ipl]*bestEy[ipl];
-	    cov[3]=cov[4]=0.;
-	    cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
+            pos[0]=bestX[ipl];
+            pos[1]=bestY[ipl];
+            pos[2]=_planePosition[ipl];
 
-	    fitpoint->setCovMatrix(cov);
+            fitpoint->setPosition(pos);
 
-	    // store fit point 
+            // Covariance matrix of the position
+            // (stored as lower triangle matrix, i.e.  cov(xx),cov(y,x),cov(y,y) ).
 
-	    fitpointvec->push_back(fitpoint);
+            float cov[TRKHITNCOVMATRIX];
 
-	    //   add fitted point to track
+            cov[0]=bestEx[ipl]*bestEx[ipl];
+            cov[1]=0.;
+            cov[2]=bestEy[ipl]*bestEy[ipl];
+            cov[3]=cov[4]=0.;
+            cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
+
+            fitpoint->setCovMatrix(cov);
+
+            // store fit point
+
+            fitpointvec->push_back(fitpoint);
+
+            //   add fitted point to track
 
             if(_OutputHitsInTrack)
               fittrack->addHit(fitpoint);
 
 
-	    //		       << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]  
-	    //       << "   Y = " << hitY[ihit] << " +/- " <<
-	    //       hitEy[ihit]  
+            //                 << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]
+            //       << "   Y = " << hitY[ihit] << " +/- " <<
+            //       hitEy[ihit]
 
             // add measured point to track (if found)
 
- 	    if(_InputHitsInTrack && _isActive[ipl])
-	      {
-		int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
+            if(_InputHitsInTrack && _isActive[ipl])
+              {
+                int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
 
-		 if(ihit<_planeHits[ipl])
-		    {
-		    int jhit = planeHitID[ipl].at(ihit);
+                if(ihit<_planeHits[ipl])
+                  {
+                    int jhit = planeHitID[ipl].at(ihit);
                     TrackerHitImpl * meshit = dynamic_cast<TrackerHitImpl*>( col->getElementAt(jhit) ) ;
-	            TrackerHitImpl * corrhit = new TrackerHitImpl;
-		    //
-		    // Copy input hit data
-		    //
+                    TrackerHitImpl * corrhit = new TrackerHitImpl;
+                    //
+                    // Copy input hit data
+                    //
                     corrhit->setType(meshit->getType());
                     corrhit->setTime(meshit->getTime());
                     corrhit->setdEdx(meshit->getdEdx());
                     corrhit->rawHits()=meshit->getRawHits();
-		    // 
-		    // Use corrected position
-		    //
-	            pos[0]=hitX[jhit];
-                    pos[1]=hitY[jhit];
-	            pos[2]=_planePosition[ipl];
-
-	            corrhit->setPosition(pos);
                     //
-		    // Include errors, as used in the fit
-		    //
-	            cov[0]=hitEx[jhit]*hitEx[jhit];
-   	            cov[1]=0.;
-	            cov[2]=hitEy[jhit]*hitEy[jhit];
-	            cov[3]=cov[4]=0.;
-	            cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
+                    // Use corrected position
+                    //
+                    pos[0]=hitX[jhit];
+                    pos[1]=hitY[jhit];
+                    pos[2]=_planePosition[ipl];
 
- 	            corrhit->setCovMatrix(cov);
+                    corrhit->setPosition(pos);
+                    //
+                    // Include errors, as used in the fit
+                    //
+                    cov[0]=hitEx[jhit]*hitEx[jhit];
+                    cov[1]=0.;
+                    cov[2]=hitEy[jhit]*hitEy[jhit];
+                    cov[3]=cov[4]=0.;
+                    cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
 
-	            corrpointvec->push_back(corrhit);
+                    corrhit->setCovMatrix(cov);
+
+                    corrpointvec->push_back(corrhit);
 
                     fittrack->addHit(corrhit);
-		    }
-	      }
+                  }
+              }
 
-	    // Use position at DUT as a track reference point.
-	    // If no DUT present: use position in the first plane !
+            // Use position at DUT as a track reference point.
+            // If no DUT present: use position in the first plane !
 
-	    if(ipl==_iDUT || (_iDUT<0 && ipl==0))
-	      for(int iref=0;iref<3;iref++)
-		refpoint[iref]=pos[iref];
-	  }
-	
-	// Store track reference point.
-	fittrack->setReferencePoint(refpoint);
-	
-	fittrackvec->addElement(fittrack);
-	nFittedTracks++;
+            if(ipl==_iDUT || (_iDUT<0 && ipl==0))
+              for(int iref=0;iref<3;iref++)
+                refpoint[iref]=pos[iref];
+          }
+
+        // Store track reference point.
+        fittrack->setReferencePoint(refpoint);
+
+        fittrackvec->addElement(fittrack);
+        nFittedTracks++;
       }
-    
+
     // If multiple tracks allowed: remove hits from fitted track from the list
-    
+
     if(ibest>=0 && _searchMultipleTracks && !ambiguityMode )
       {
-	for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	  if(_isActive[ipl])
-	    {
-	      int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
+        for(int ipl=0;ipl<_nTelPlanes;ipl++)
+          if(_isActive[ipl])
+            {
+              int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
 
-	      if(ihit<_planeHits[ipl])
-		{
+              if(ihit<_planeHits[ipl])
+                {
                   planeHitID[ipl].erase(planeHitID[ipl].begin()+ihit);
                   nGoodHit--;
-		}
-	    }
+                }
+            }
       }
-    
+
     firstTrack=false;
   }
-  while(_searchMultipleTracks && ibest>=0 && 
-             nGoodHit + _allowMissingHits >= _nActivePlanes &&  !ambiguityMode );
-    
+  while(_searchMultipleTracks && ibest>=0 &&
+        nGoodHit + _allowMissingHits >= _nActivePlanes &&  !ambiguityMode );
+
   // End of track loop
 
   if(nFittedTracks > 0 )
@@ -1560,13 +1560,13 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   if ( ambiguityMode )
     {
-    for(int ihit=0; ihit< nHit ; ihit++)
-      if(_isActive[hitPlane[ihit]])
-       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_hitAmbiguityHistoName]))->fill(hitFits[ihit]);
+      for(int ihit=0; ihit< nHit ; ihit++)
+        if(_isActive[hitPlane[ihit]])
+          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_hitAmbiguityHistoName]))->fill(hitFits[ihit]);
     }
 
   // Clear all working arrays
-  
+
   delete [] bestEy;
   delete [] bestY;
   delete [] bestEx;
@@ -1586,19 +1586,19 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 
 
-void EUTelTestFitter::check( LCEvent * evt ) { 
+void EUTelTestFitter::check( LCEvent * evt ) {
   // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
-void EUTelTestFitter::end(){ 
-  
-  //   std::cout << "EUTelTestFitter::end()  " << name() 
-  // 	    << " processed " << _nEvt << " events in " << _nRun << " runs "
-  // 	    << std::endl ;
+void EUTelTestFitter::end(){
+
+  //   std::cout << "EUTelTestFitter::end()  " << name()
+  //        << " processed " << _nEvt << " events in " << _nRun << " runs "
+  //        << std::endl ;
 
 
-  // Clean memory 
+  // Clean memory
 
   delete [] _planeSort ;
   delete [] _planeID ;
@@ -1612,7 +1612,7 @@ void EUTelTestFitter::end(){
   delete [] _planeDist ;
   delete [] _planeScat ;
   delete [] _isActive ;
-   
+
   delete [] _planeHits ;
   delete [] _planeChoice ;
   delete [] _planeMod ;
@@ -1621,23 +1621,23 @@ void EUTelTestFitter::end(){
   delete [] _planeEx ;
   delete [] _planeY ;
   delete [] _planeEy ;
-   
+
   delete [] _fitX  ;
   delete [] _fitEx ;
   delete [] _fitY ;
   delete [] _fitEy ;
   delete [] _fitArray ;
-   
+
   delete [] _nominalFitArray ;
   delete [] _nominalError ;
 }
 
 
 
-void EUTelTestFitter::bookHistos() 
+void EUTelTestFitter::bookHistos()
 {
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   message<MESSAGE> ( log() << "Booking histograms " );
 
@@ -1652,88 +1652,88 @@ void EUTelTestFitter::bookHistos()
     isHistoManagerAvailable = histoMgr->init();
   } catch ( ios::failure& e) {
     message<ERROR> ( log() << "I/O problem with " << _histoInfoFileName << "\n"
-		     << "Continuing without histogram manager"    );
+                     << "Continuing without histogram manager"    );
     isHistoManagerAvailable = false;
   } catch ( ParseException& e ) {
     message<ERROR> ( log() << e.what() << "\n"
-		     << "Continuing without histogram manager" );
+                     << "Continuing without histogram manager" );
     isHistoManagerAvailable = false;
   }
 
- // Chi2 distribution for all accepted tracks (linear scale)
+  // Chi2 distribution for all accepted tracks (linear scale)
 
-    int    chi2NBin  = 1000;
-    double chi2Min   = 0.;
-    double chi2Max   = 200.;
-    string chi2Title = "Chi2 distribution";
+  int    chi2NBin  = 1000;
+  double chi2Min   = 0.;
+  double chi2Max   = 200.;
+  string chi2Title = "Chi2 distribution";
 
 
-    if ( isHistoManagerAvailable ) 
-      {
+  if ( isHistoManagerAvailable )
+    {
       histoInfo = histoMgr->getHistogramInfo(_linChi2HistoName);
-      if ( histoInfo ) 
-         {
-	 message<DEBUG> ( log() << (* histoInfo ) );
-	 chi2NBin = histoInfo->_xBin;
-	 chi2Min  = histoInfo->_xMin;
-	 chi2Max  = histoInfo->_xMax;
-	 if ( histoInfo->_title != "" ) chi2Title = histoInfo->_title;
-         }
-      }
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          chi2NBin = histoInfo->_xBin;
+          chi2Min  = histoInfo->_xMin;
+          chi2Max  = histoInfo->_xMax;
+          if ( histoInfo->_title != "" ) chi2Title = histoInfo->_title;
+        }
+    }
 
 
-   AIDA::IHistogram1D * linChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _linChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
+  AIDA::IHistogram1D * linChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _linChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
 
-     linChi2Histo->setTitle(chi2Title.c_str());
+  linChi2Histo->setTitle(chi2Title.c_str());
 
-    _aidaHistoMap.insert(make_pair(_linChi2HistoName, linChi2Histo));
-
-
- // log(Chi2) distribution for all accepted tracks
-
-    chi2NBin  = 100;
-    chi2Min   = -2.;
-    chi2Max   = 8.;
-    chi2Title = "log(Chi2) distribution";
+  _aidaHistoMap.insert(make_pair(_linChi2HistoName, linChi2Histo));
 
 
-    if ( isHistoManagerAvailable ) 
-      {
+  // log(Chi2) distribution for all accepted tracks
+
+  chi2NBin  = 100;
+  chi2Min   = -2.;
+  chi2Max   = 8.;
+  chi2Title = "log(Chi2) distribution";
+
+
+  if ( isHistoManagerAvailable )
+    {
       histoInfo = histoMgr->getHistogramInfo(_logChi2HistoName);
-      if ( histoInfo ) 
-         {
-	 message<DEBUG> ( log() << (* histoInfo ) );
-	 chi2NBin = histoInfo->_xBin;
-	 chi2Min  = histoInfo->_xMin;
-	 chi2Max  = histoInfo->_xMax;
-	 if ( histoInfo->_title != "" ) chi2Title = histoInfo->_title;
-         }
-      }
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          chi2NBin = histoInfo->_xBin;
+          chi2Min  = histoInfo->_xMin;
+          chi2Max  = histoInfo->_xMax;
+          if ( histoInfo->_title != "" ) chi2Title = histoInfo->_title;
+        }
+    }
 
 
-   AIDA::IHistogram1D * logChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _logChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
+  AIDA::IHistogram1D * logChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _logChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
 
-     logChi2Histo->setTitle(chi2Title.c_str());
+  logChi2Histo->setTitle(chi2Title.c_str());
 
-    _aidaHistoMap.insert(make_pair(_logChi2HistoName, logChi2Histo));
+  _aidaHistoMap.insert(make_pair(_logChi2HistoName, logChi2Histo));
 
 
 // Additional Chi2 histogram for first track candidate (without chi2 cut)
 
-      string firstchi2Title = chi2Title + ", first candidate (before cut)";
+  string firstchi2Title = chi2Title + ", first candidate (before cut)";
 
-      AIDA::IHistogram1D * firstChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _firstChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
+  AIDA::IHistogram1D * firstChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _firstChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
 
-      firstChi2Histo->setTitle(firstchi2Title.c_str());
+  firstChi2Histo->setTitle(firstchi2Title.c_str());
 
 
-      _aidaHistoMap.insert(make_pair(_firstChi2HistoName, firstChi2Histo));
+  _aidaHistoMap.insert(make_pair(_firstChi2HistoName, firstChi2Histo));
 
 
 // Chi2 histogram for best tracks in an event - use same binning
 
-	if(_searchMultipleTracks)
-	  {
+  if(_searchMultipleTracks)
+    {
       string bestchi2Title = chi2Title + ", best fit";
 
       AIDA::IHistogram1D * bestChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _bestChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
@@ -1742,13 +1742,13 @@ void EUTelTestFitter::bookHistos()
 
 
       _aidaHistoMap.insert(make_pair(_bestChi2HistoName, bestChi2Histo));
-      }
+    }
 
 
 // Another Chi2 histogram for all full tracks in an event - use same binning
 
-	if(_allowMissingHits)
-	  {
+  if(_allowMissingHits)
+    {
       string fullchi2Title = chi2Title + ", full tracks";
 
       AIDA::IHistogram1D * fullChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _fullChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
@@ -1756,172 +1756,172 @@ void EUTelTestFitter::bookHistos()
       fullChi2Histo->setTitle(fullchi2Title.c_str());
 
 
-	  _aidaHistoMap.insert(make_pair(_fullChi2HistoName, fullChi2Histo));
-      }
+      _aidaHistoMap.insert(make_pair(_fullChi2HistoName, fullChi2Histo));
+    }
 
 
- // Distribution of number of tracks
+  // Distribution of number of tracks
 
-    int    trkNBin  = 11;
-    double trkMin   = -0.5;
-    double trkMax   = 10.5;
-    string trkTitle = "Number of reconstructed tracks in an event";
+  int    trkNBin  = 11;
+  double trkMin   = -0.5;
+  double trkMax   = 10.5;
+  string trkTitle = "Number of reconstructed tracks in an event";
 
 
-    if ( isHistoManagerAvailable ) 
-      {
+  if ( isHistoManagerAvailable )
+    {
       histoInfo = histoMgr->getHistogramInfo(_nTrackHistoName);
-      if ( histoInfo ) 
-         {
-	 message<DEBUG> ( log() << (* histoInfo ) );
-	 trkNBin = histoInfo->_xBin;
-	 trkMin  = histoInfo->_xMin;
-	 trkMax  = histoInfo->_xMax;
-	 if ( histoInfo->_title != "" ) trkTitle = histoInfo->_title;
-         }
-      }
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          trkNBin = histoInfo->_xBin;
+          trkMin  = histoInfo->_xMin;
+          trkMax  = histoInfo->_xMax;
+          if ( histoInfo->_title != "" ) trkTitle = histoInfo->_title;
+        }
+    }
 
 
-   AIDA::IHistogram1D * nTrackHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nTrackHistoName.c_str(),trkNBin,trkMin,trkMax);
+  AIDA::IHistogram1D * nTrackHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nTrackHistoName.c_str(),trkNBin,trkMin,trkMax);
 
-     nTrackHisto->setTitle(trkTitle.c_str());
+  nTrackHisto->setTitle(trkTitle.c_str());
 
-    _aidaHistoMap.insert(make_pair(_nTrackHistoName, nTrackHisto));
-
-
-
- // Number of hits in input collection
-
-    int    hitNBin  = 1000;
-    double hitMin   = 0.;
-    double hitMax   = 1000.;
-    string hitTitle = "Number of hits in input collection";
+  _aidaHistoMap.insert(make_pair(_nTrackHistoName, nTrackHisto));
 
 
-    if ( isHistoManagerAvailable ) 
-      {
+
+  // Number of hits in input collection
+
+  int    hitNBin  = 1000;
+  double hitMin   = 0.;
+  double hitMax   = 1000.;
+  string hitTitle = "Number of hits in input collection";
+
+
+  if ( isHistoManagerAvailable )
+    {
       histoInfo = histoMgr->getHistogramInfo(_nAllHitHistoName);
-      if ( histoInfo ) 
-         {
-	 message<DEBUG> ( log() << (* histoInfo ) );
-	 hitNBin = histoInfo->_xBin;
-	 hitMin  = histoInfo->_xMin;
-	 hitMax  = histoInfo->_xMax;
-	 if ( histoInfo->_title != "" ) hitTitle = histoInfo->_title;
-         }
-      }
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          hitNBin = histoInfo->_xBin;
+          hitMin  = histoInfo->_xMin;
+          hitMax  = histoInfo->_xMax;
+          if ( histoInfo->_title != "" ) hitTitle = histoInfo->_title;
+        }
+    }
 
-   AIDA::IHistogram1D * nAllHitHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nAllHitHistoName.c_str(),hitNBin,hitMin,hitMax);
+  AIDA::IHistogram1D * nAllHitHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nAllHitHistoName.c_str(),hitNBin,hitMin,hitMax);
 
-     nAllHitHisto->setTitle(hitTitle.c_str());
+  nAllHitHisto->setTitle(hitTitle.c_str());
 
-    _aidaHistoMap.insert(make_pair(_nAllHitHistoName, nAllHitHisto));
-
-
-
- // Number of accepted hits
-
-    hitNBin  = 1000;
-    hitMin   = 0.;
-    hitMax   = 1000.;
-    hitTitle = "Number of hits accepted from input collection";
+  _aidaHistoMap.insert(make_pair(_nAllHitHistoName, nAllHitHisto));
 
 
-    if ( isHistoManagerAvailable ) 
-      {
+
+  // Number of accepted hits
+
+  hitNBin  = 1000;
+  hitMin   = 0.;
+  hitMax   = 1000.;
+  hitTitle = "Number of hits accepted from input collection";
+
+
+  if ( isHistoManagerAvailable )
+    {
       histoInfo = histoMgr->getHistogramInfo(_nAccHitHistoName);
-      if ( histoInfo ) 
-         {
-	 message<DEBUG> ( log() << (* histoInfo ) );
-	 hitNBin = histoInfo->_xBin;
-	 hitMin  = histoInfo->_xMin;
-	 hitMax  = histoInfo->_xMax;
-	 if ( histoInfo->_title != "" ) hitTitle = histoInfo->_title;
-         }
-      }
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          hitNBin = histoInfo->_xBin;
+          hitMin  = histoInfo->_xMin;
+          hitMax  = histoInfo->_xMax;
+          if ( histoInfo->_title != "" ) hitTitle = histoInfo->_title;
+        }
+    }
 
-   AIDA::IHistogram1D * nAccHitHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nAccHitHistoName.c_str(),hitNBin,hitMin,hitMax);
+  AIDA::IHistogram1D * nAccHitHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nAccHitHistoName.c_str(),hitNBin,hitMin,hitMax);
 
-     nAccHitHisto->setTitle(hitTitle.c_str());
+  nAccHitHisto->setTitle(hitTitle.c_str());
 
-    _aidaHistoMap.insert(make_pair(_nAccHitHistoName, nAccHitHisto));
-
-
-
- // Number of hits per track
-
-    hitNBin  = 11;
-    hitMin   = -0.5;
-    hitMax   = 10.5;
-    hitTitle = "Number of hits used to reconstruct the track";
+  _aidaHistoMap.insert(make_pair(_nAccHitHistoName, nAccHitHisto));
 
 
-    if ( isHistoManagerAvailable ) 
-      {
+
+  // Number of hits per track
+
+  hitNBin  = 11;
+  hitMin   = -0.5;
+  hitMax   = 10.5;
+  hitTitle = "Number of hits used to reconstruct the track";
+
+
+  if ( isHistoManagerAvailable )
+    {
       histoInfo = histoMgr->getHistogramInfo(_nHitHistoName);
-      if ( histoInfo ) 
-         {
-	 message<DEBUG> ( log() << (* histoInfo ) );
-	 hitNBin = histoInfo->_xBin;
-	 hitMin  = histoInfo->_xMin;
-	 hitMax  = histoInfo->_xMax;
-	 if ( histoInfo->_title != "" ) hitTitle = histoInfo->_title;
-         }
-      }
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          hitNBin = histoInfo->_xBin;
+          hitMin  = histoInfo->_xMin;
+          hitMax  = histoInfo->_xMax;
+          if ( histoInfo->_title != "" ) hitTitle = histoInfo->_title;
+        }
+    }
 
-   AIDA::IHistogram1D * nHitHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nHitHistoName.c_str(),hitNBin,hitMin,hitMax);
+  AIDA::IHistogram1D * nHitHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nHitHistoName.c_str(),hitNBin,hitMin,hitMax);
 
-     nHitHisto->setTitle(hitTitle.c_str());
+  nHitHisto->setTitle(hitTitle.c_str());
 
-    _aidaHistoMap.insert(make_pair(_nHitHistoName, nHitHisto));
+  _aidaHistoMap.insert(make_pair(_nHitHistoName, nHitHisto));
 
 
 
 // Additional hit number histogram for best tracks in an event - use same binning
 
-   if(_searchMultipleTracks)
-       {
-       string bestTitle = hitTitle + ", best fit";
+  if(_searchMultipleTracks)
+    {
+      string bestTitle = hitTitle + ", best fit";
 
-       AIDA::IHistogram1D * BestHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nBestHistoName.c_str(),hitNBin,hitMin,hitMax);
+      AIDA::IHistogram1D * BestHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nBestHistoName.c_str(),hitNBin,hitMin,hitMax);
 
-       BestHisto->setTitle(bestTitle.c_str());
+      BestHisto->setTitle(bestTitle.c_str());
 
 
-       _aidaHistoMap.insert(make_pair(_nBestHistoName, BestHisto));
-       }
+      _aidaHistoMap.insert(make_pair(_nBestHistoName, BestHisto));
+    }
 
 
 // Additional histogram for number of tracks fitted to given hit - use same binning
 
-   if(_allowAmbiguousHits && ( _allowMissingHits == 0 ))
-       {
-       string ambigTitle = "Number of tracks containing given hit (ambiguity)";
+  if(_allowAmbiguousHits && ( _allowMissingHits == 0 ))
+    {
+      string ambigTitle = "Number of tracks containing given hit (ambiguity)";
 
-       AIDA::IHistogram1D * AmbigHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _hitAmbiguityHistoName.c_str(),hitNBin,hitMin,hitMax);
+      AIDA::IHistogram1D * AmbigHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _hitAmbiguityHistoName.c_str(),hitNBin,hitMin,hitMax);
 
-       AmbigHisto->setTitle(ambigTitle.c_str());
+      AmbigHisto->setTitle(ambigTitle.c_str());
 
 
-       _aidaHistoMap.insert(make_pair(_hitAmbiguityHistoName, AmbigHisto));
-       }
+      _aidaHistoMap.insert(make_pair(_hitAmbiguityHistoName, AmbigHisto));
+    }
 
 
 // List all booked histogram - check of histogram map filling
 
-  message<MESSAGE> ( log() <<  _aidaHistoMap.size() << " histograms booked");  
+  message<MESSAGE> ( log() <<  _aidaHistoMap.size() << " histograms booked");
 
 
   map<string, AIDA::IBaseHistogram *>::iterator mapIter;
   for(mapIter = _aidaHistoMap.begin(); mapIter != _aidaHistoMap.end() ; mapIter++ )
-     message<DEBUG> ( log() <<  mapIter->first << " : " <<  (mapIter->second)->title() ) ;
+    message<DEBUG> ( log() <<  mapIter->first << " : " <<  (mapIter->second)->title() ) ;
 
-  message<DEBUG> ( log() << "Histogram booking completed \n\n");  
+  message<DEBUG> ( log() << "Histogram booking completed \n\n");
 #else
   message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
 #endif
 
-return;
+  return;
 }
 //
 // ===============================================================================
@@ -1974,8 +1974,8 @@ double EUTelTestFitter::SingleFit()
 
       _fitY[ipl]=0. ;
       for(int jpl=0; jpl<_nTelPlanes;jpl++)
-	if(_planeEy[jpl]>0.)
-	  _fitY[ipl]+=_fitArray[ipl+jpl*_nTelPlanes]*_planeY[jpl]/_planeEy[jpl]/_planeEy[jpl];
+        if(_planeEy[jpl]>0.)
+          _fitY[ipl]+=_fitArray[ipl+jpl*_nTelPlanes]*_planeY[jpl]/_planeEy[jpl]/_planeEy[jpl];
     }
 
   double chi2=GetFitChi2();
@@ -1992,12 +1992,12 @@ double EUTelTestFitter::NominalFit()
       _fitX[ipl]=0. ;
       _fitY[ipl]=0. ;
       for(int jpl=0; jpl<_nTelPlanes;jpl++)
-	{
-	  if(_planeEx[jpl]>0.)
-	    _fitX[ipl]+=_nominalFitArray[ipl+jpl*_nTelPlanes]*_planeX[jpl]/_planeEx[jpl]/_planeEx[jpl];
-	  if(_planeEy[jpl]>0.)
-	    _fitY[ipl]+=_nominalFitArray[ipl+jpl*_nTelPlanes]*_planeY[jpl]/_planeEy[jpl]/_planeEy[jpl];
-	}
+        {
+          if(_planeEx[jpl]>0.)
+            _fitX[ipl]+=_nominalFitArray[ipl+jpl*_nTelPlanes]*_planeX[jpl]/_planeEx[jpl]/_planeEx[jpl];
+          if(_planeEy[jpl]>0.)
+            _fitY[ipl]+=_nominalFitArray[ipl+jpl*_nTelPlanes]*_planeY[jpl]/_planeEy[jpl]/_planeEy[jpl];
+        }
     }
 
   double chi2=GetFitChi2();
@@ -2022,53 +2022,53 @@ int EUTelTestFitter::DoAnalFit(double * pos, double *err)
   for(int ipl=0; ipl<_nTelPlanes;ipl++)
     for(int jpl=0; jpl<_nTelPlanes;jpl++)
       {
-	int imx=ipl+jpl*_nTelPlanes;
+        int imx=ipl+jpl*_nTelPlanes;
 
-	_fitArray[imx] = 0.;
+        _fitArray[imx] = 0.;
 
-	if(jpl==ipl-2)
-	  _fitArray[imx] += _planeDist[ipl-2]*_planeDist[ipl-1]*_planeScat[ipl-1] ;
+        if(jpl==ipl-2)
+          _fitArray[imx] += _planeDist[ipl-2]*_planeDist[ipl-1]*_planeScat[ipl-1] ;
 
-	if(jpl==ipl+2)
-	  _fitArray[imx] += _planeDist[ipl]*_planeDist[ipl+1]*_planeScat[ipl+1] ;
+        if(jpl==ipl+2)
+          _fitArray[imx] += _planeDist[ipl]*_planeDist[ipl+1]*_planeScat[ipl+1] ;
 
-	if(jpl==ipl-1)
-	  {
-	    if(ipl>0 &&  ipl < _nTelPlanes-1)
+        if(jpl==ipl-1)
+          {
+            if(ipl>0 &&  ipl < _nTelPlanes-1)
               _fitArray[imx] -= _planeDist[ipl-1]*(_planeDist[ipl]+_planeDist[ipl-1])*_planeScat[ipl] ;
-	    if(ipl>1)
+            if(ipl>1)
               _fitArray[imx] -= _planeDist[ipl-1]*(_planeDist[ipl-1]+_planeDist[ipl-2])*_planeScat[ipl-1] ;
-	  }
+          }
 
-	if(jpl==ipl+1)
-	  {
-	    if(ipl>0 && ipl < _nTelPlanes-1)
-	      _fitArray[imx] -= _planeDist[ipl]*(_planeDist[ipl]+_planeDist[ipl-1])*_planeScat[ipl] ;
-	    if(ipl < _nTelPlanes-2)
-	      _fitArray[imx] -= _planeDist[ipl]*(_planeDist[ipl+1]+_planeDist[ipl])*_planeScat[ipl+1] ;
-	  }
+        if(jpl==ipl+1)
+          {
+            if(ipl>0 && ipl < _nTelPlanes-1)
+              _fitArray[imx] -= _planeDist[ipl]*(_planeDist[ipl]+_planeDist[ipl-1])*_planeScat[ipl] ;
+            if(ipl < _nTelPlanes-2)
+              _fitArray[imx] -= _planeDist[ipl]*(_planeDist[ipl+1]+_planeDist[ipl])*_planeScat[ipl+1] ;
+          }
 
-	if(jpl==ipl)
-	  {
+        if(jpl==ipl)
+          {
             _fitArray[imx] += err[ipl] ;
 
             if(ipl>0 && ipl<_nTelPlanes-1)
-	      _fitArray[imx] += _planeScat[ipl]*(_planeDist[ipl]+_planeDist[ipl-1])*(_planeDist[ipl]+_planeDist[ipl-1]) ;
+              _fitArray[imx] += _planeScat[ipl]*(_planeDist[ipl]+_planeDist[ipl-1])*(_planeDist[ipl]+_planeDist[ipl-1]) ;
 
             if(ipl > 1 )
-	      _fitArray[imx] += _planeScat[ipl-1]*_planeDist[ipl-1]*_planeDist[ipl-1] ;
+              _fitArray[imx] += _planeScat[ipl-1]*_planeDist[ipl-1]*_planeDist[ipl-1] ;
 
             if(ipl < _nTelPlanes-2)
-	      _fitArray[imx] += _planeScat[ipl+1]*_planeDist[ipl]*_planeDist[ipl] ;
-	  }
+              _fitArray[imx] += _planeScat[ipl+1]*_planeDist[ipl]*_planeDist[ipl] ;
+          }
 
-	// For beam constraint
+        // For beam constraint
 
-	if(ipl==jpl && ipl<2 && _useBeamConstraint)
-	  _fitArray[imx] += _planeScat[0]*_planeDist[0]*_planeDist[0] ;
+        if(ipl==jpl && ipl<2 && _useBeamConstraint)
+          _fitArray[imx] += _planeScat[0]*_planeDist[0]*_planeDist[0] ;
 
-	if(ipl+jpl==1 && _useBeamConstraint) 
-	  _fitArray[imx] -= _planeScat[0]*_planeDist[0]*_planeDist[0] ;
+        if(ipl+jpl==1 && _useBeamConstraint)
+          _fitArray[imx] -= _planeScat[0]*_planeDist[0]*_planeDist[0] ;
 
 
       }
@@ -2079,7 +2079,7 @@ int EUTelTestFitter::DoAnalFit(double * pos, double *err)
     {
       cerr << "Singular matrix in track fitting algorithm ! " << endl;
       for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	err[ipl]=0. ;
+        err[ipl]=0. ;
     }
   else
     for(int ipl=0;ipl<_nTelPlanes;ipl++)
@@ -2099,22 +2099,22 @@ double EUTelTestFitter::GetFitChi2()
   for(int ipl=0; ipl<_nTelPlanes;ipl++)
     if(_isActive[ipl])
       {
-	if(_planeEx[ipl]>0.)
-	  chi2+=(_fitX[ipl]-_planeX[ipl])*(_fitX[ipl]-_planeX[ipl])/_planeEx[ipl]/_planeEx[ipl] ;
+        if(_planeEx[ipl]>0.)
+          chi2+=(_fitX[ipl]-_planeX[ipl])*(_fitX[ipl]-_planeX[ipl])/_planeEx[ipl]/_planeEx[ipl] ;
 
-	if(_planeEy[ipl]>0.)
-	  chi2+=(_fitY[ipl]-_planeY[ipl])*(_fitY[ipl]-_planeY[ipl])/_planeEy[ipl]/_planeEy[ipl] ;
+        if(_planeEy[ipl]>0.)
+          chi2+=(_fitY[ipl]-_planeY[ipl])*(_fitY[ipl]-_planeY[ipl])/_planeEy[ipl]/_planeEy[ipl] ;
 
       }
 
   // Scattering angles
-  // Use approximate formulas, corresponding to the approximation 
+  // Use approximate formulas, corresponding to the approximation
   // used in fitting algorithm
 
   for(int ipl=1; ipl<_nTelPlanes-1;ipl++)
     {
       double th1,th2,dth;
-    
+
       th2=(_fitX[ipl+1]-_fitX[ipl])*_planeDist[ipl] ;
       th1=(_fitX[ipl]-_fitX[ipl-1])*_planeDist[ipl-1] ;
       //    dth=atan(th2)-atan(th1) ;
@@ -2133,7 +2133,7 @@ double EUTelTestFitter::GetFitChi2()
   if(_useBeamConstraint)
     {
       double dth;
-    
+
       //    dth=atan((_fitX[1]-_fitX[0])*_planeDist[0]) ;
       dth=(_fitX[1]-_fitX[0])*_planeDist[0] ;
       chi2 += _planeScat[0] * dth * dth;
@@ -2169,42 +2169,42 @@ int EUTelTestFitter::GaussjSolve(double *alfa,double *beta,int n)
     {
       big=0.;
       for(j=0;j<n;j++)
-	{
-	  if(ipiv[j]==1)continue;
-	  for(k=0;k<n;k++)
-	    {
-	      if(ipiv[k]!=0)continue;
-	      abs=fabs(alfa[n*j+k]);
-	      if(abs>big)
-		{
-		  big=abs;
-		  irow=j;
-		  icol=k;
-		}
-	    }
-	}
+        {
+          if(ipiv[j]==1)continue;
+          for(k=0;k<n;k++)
+            {
+              if(ipiv[k]!=0)continue;
+              abs=fabs(alfa[n*j+k]);
+              if(abs>big)
+                {
+                  big=abs;
+                  irow=j;
+                  icol=k;
+                }
+            }
+        }
       ipiv[icol]++;
 
       if(ipiv[icol]>1)
-	return 1;
+        return 1;
 
       if(irow!=icol)
-	{
-	  help=beta[irow];
-	  beta[irow]=beta[icol];
-	  beta[icol]=help;
-	  for(j=0;j<n;j++)
-	    {
-	      help=alfa[n*irow+j];
-	      alfa[n*irow+j]=alfa[n*icol+j];
-	      alfa[n*icol+j]=help;
-	    }
-	}
+        {
+          help=beta[irow];
+          beta[irow]=beta[icol];
+          beta[icol]=help;
+          for(j=0;j<n;j++)
+            {
+              help=alfa[n*irow+j];
+              alfa[n*irow+j]=alfa[n*icol+j];
+              alfa[n*icol+j]=help;
+            }
+        }
       indxr[i]=irow;
       indxc[i]=icol;
 
       if(alfa[n*icol+icol]==0.)
-	return 1;
+        return 1;
 
       help=alfa[n*icol+icol];
       pivinv=1./help;
@@ -2213,25 +2213,25 @@ int EUTelTestFitter::GaussjSolve(double *alfa,double *beta,int n)
       beta[icol]*=pivinv;
 
       for(j=0;j<n;j++)
-	{
-	  if(j==icol)continue;
-	  help=alfa[n*j+icol];
-	  alfa[n*j+icol]=0.;
-	  for(k=0;k<n;k++)
-	    alfa[n*j+k]-=alfa[n*icol+k]*help;
-	  beta[j]-=beta[icol]*help;
-	}
+        {
+          if(j==icol)continue;
+          help=alfa[n*j+icol];
+          alfa[n*j+icol]=0.;
+          for(k=0;k<n;k++)
+            alfa[n*j+k]-=alfa[n*icol+k]*help;
+          beta[j]-=beta[icol]*help;
+        }
     }
 
   for(i=n-1;i>=0;i--)
     {
       if(indxr[i]==indxc[i])continue;
       for(j=0;j<n;j++)
-	{
-	  help=alfa[n*j+indxr[i]];
-	  alfa[n*j+indxr[i]]=alfa[n*j+indxc[i]];
-	  alfa[n*j+indxc[i]]=help;
-	}
+        {
+          help=alfa[n*j+indxr[i]];
+          alfa[n*j+indxr[i]]=alfa[n*j+indxc[i]];
+          alfa[n*j+indxc[i]]=help;
+        }
     }
 
   delete [] ipiv;

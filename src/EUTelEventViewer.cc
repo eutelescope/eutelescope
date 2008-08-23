@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.6 2008-07-29 17:11:37 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.7 2008-08-23 12:30:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,7 +10,11 @@
  *
  */
 
-// eutelescope includes ".h" 
+// this processor is built only if EUTelescope is linked against
+// libMarlinUtil
+
+#ifdef USE_MARLINUTIL
+// eutelescope includes ".h"
 #include "EUTELESCOPE.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
@@ -20,11 +24,22 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
+#ifdef USE_GEAR
+// include Global only if we have gear, otherwise is completely
+// useless
+# include "marlin/Global.h"
+#endif
 
 // MarlinUtil
 #include "MarlinCED.h"
 #include "ClusterShapes.h"
 #include "ced_cli.h"
+
+#ifdef USE_GEAR
+// gear includes <.h>
+#include <gear/GearMgr.h>
+#include <gear/SiPlanesParameters.h>
+#endif
 
 // lcio includes <.h>
 #include <lcio.h>
@@ -46,52 +61,52 @@ using namespace eutelescope;
 EUTelEventViewer::EUTelEventViewer() : Processor("EUTelEventViewer") {
 
   _description = "Event display" ;
-  
+
   vector<string > trackerHitCollectionNameVecExample;
   trackerHitCollectionNameVecExample.push_back("hit");
   trackerHitCollectionNameVecExample.push_back("testfithit");
 
   registerInputCollections( LCIO::TRACKERHIT, "TrackerHitCollections",
-			    "Tracker hit collection names",  _trackerHitCollectionNameVec,
-			    trackerHitCollectionNameVecExample );
+                            "Tracker hit collection names",  _trackerHitCollectionNameVec,
+                            trackerHitCollectionNameVecExample );
 
 
   vector<string > trackCollectionNameVecExample;
   trackCollectionNameVecExample.push_back("testfittrack");
-  
+
   registerInputCollections( LCIO::TRACK, "TrackCollections",
-			    "Track collection names", _trackCollectionNameVec,
-			    trackCollectionNameVecExample );
+                            "Track collection names", _trackCollectionNameVec,
+                            trackCollectionNameVecExample );
 
-  registerProcessorParameter("LayerTrackerHit", 
-			     "Layer for Tracker Hits",
-			     _layerTrackerHit, 
-			     (int)-1);
+  registerProcessorParameter("LayerTrackerHit",
+                             "Layer for Tracker Hits",
+                             _layerTrackerHit,
+                             (int)-1);
 
-  registerProcessorParameter("LayerTracks", 
-			     "Layer for Tracks",
-			     _layerTrack, 
-			     (int)-1);
+  registerProcessorParameter("LayerTracks",
+                             "Layer for Tracks",
+                             _layerTrack,
+                             (int)-1);
 
   registerProcessorParameter("DetectorModel",
-			     "Detector Model",
-			     _detModel,
-			     (int)99999);
+                             "Detector Model",
+                             _detModel,
+                             (int)99999);
 
   registerProcessorParameter("WaitForKeyboard",
-			     "Wait for Keyboard before proceed",
-			     _waitForKeyboard,
-			     static_cast< bool > (true) );
+                             "Wait for Keyboard before proceed",
+                             _waitForKeyboard,
+                             static_cast< bool > (true) );
 
   registerProcessorParameter("ApplyAlignmentToPlane",
-			     "If true, the planes are shifted and rotated according to the alignment collections",
-			     _applyAlignmentToPlane,
-			     static_cast< bool > ( true ) );
-  
+                             "If true, the planes are shifted and rotated according to the alignment collections",
+                             _applyAlignmentToPlane,
+                             static_cast< bool > ( true ) );
+
   registerOptionalParameter("AlignmentConstantName",
-			    "Alignment constant from the condition file",
-			    _alignmentCollectionName, string ("alignment"));
-  
+                            "Alignment constant from the condition file",
+                            _alignmentCollectionName, string ("alignment"));
+
 
 
 }
@@ -107,51 +122,78 @@ void EUTelEventViewer::init() {
 }
 
 
-void EUTelEventViewer::processRunHeader( LCRunHeader * rdr ) { 
-  
+void EUTelEventViewer::processRunHeader( LCRunHeader * rdr ) {
+
   auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) );
   runHeader->addProcessor( type() );
 
-} 
+}
 
-void EUTelEventViewer::processEvent( LCEvent * evt ) { 
+void EUTelEventViewer::processEvent( LCEvent * evt ) {
 
-  streamlog_out( MESSAGE4 ) << "Processing event " 
-			    << setw(6) << setiosflags(ios::right) << evt->getEventNumber() << " in run "
-			    << setw(6) << setiosflags(ios::right) << setfill('0')  << evt->getRunNumber() << setfill(' ')
-			    << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  streamlog_out( MESSAGE4 ) << "Processing event "
+                            << setw(6) << setiosflags(ios::right) << evt->getEventNumber() << " in run "
+                            << setw(6) << setiosflags(ios::right) << setfill('0')  << evt->getRunNumber() << setfill(' ')
+                            << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
 
   EUTelEventImpl * event = static_cast<EUTelEventImpl *> ( evt );
-  
+
   if ( event->getEventType() == kEORE ) {
     streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return;
   } else if ( event->getEventType() == kUNKNOWN ) {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
-			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+                               << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+  }
+
+  // for convenience
+  int tempDetModel = _detModel;
+
+  // try to load the alignment collections
+  LCCollectionVec * alignmentCollectionVec = NULL;
+  try {
+
+    alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection(_alignmentCollectionName));
+
+  } catch ( DataNotAvailableException& e ) {
+
+    if ( _detModel == -1 ) {
+      // the user wants to draw the alignment corrected geometry, but
+      // no alignment collection found
+      streamlog_out ( WARNING2 ) << "No alignment condition found, using default ideal geometry model (99999)" << endl;
+      tempDetModel = 99999;
+    }
   }
 
 
   // Drawing Geometry
+  MarlinCED::newEvent( this, tempDetModel ) ;
 
-  MarlinCED::newEvent( this, _detModel ) ;
+  // in the case the user wants to draw the alignment corrected
+  // telescope planes ( tempDetModel == -1 ), then we have to draw
+  // manually from here the geoboxes
+  if ( tempDetModel == -1 ) {
+    
 
+  }
+
+  // Drawing hit collections
   if ( _layerTrackerHit > 0 ) {
     for ( unsigned int iCollection = 0; iCollection < _trackerHitCollectionNameVec.size(); iCollection++ ) {
       try {
-	LCCollection * collection = evt->getCollection( _trackerHitCollectionNameVec[iCollection].c_str() );
-	for ( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ ) {
-	  TrackerHitImpl * hit = dynamic_cast<TrackerHitImpl *> ( collection->getElementAt(iHit) ) ;
-	  float x = static_cast<float > ( hit->getPosition()[0] );
-	  float y = static_cast<float > ( hit->getPosition()[1] );
-	  float z = static_cast<float > ( hit->getPosition()[2] );
-	  unsigned int color =  returnColor(iCollection);
-	  ced_hit(x,y,z, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
-	}
+        LCCollection * collection = evt->getCollection( _trackerHitCollectionNameVec[iCollection].c_str() );
+        for ( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ ) {
+          TrackerHitImpl * hit = dynamic_cast<TrackerHitImpl *> ( collection->getElementAt(iHit) ) ;
+          float x = static_cast<float > ( hit->getPosition()[0] );
+          float y = static_cast<float > ( hit->getPosition()[1] );
+          float z = static_cast<float > ( hit->getPosition()[2] );
+          unsigned int color =  returnColor(iCollection);
+          ced_hit(x,y,z, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
+        }
       }  catch (DataNotAvailableException& e) {
-	streamlog_out ( WARNING2 ) << "No input collection (" << _trackerHitCollectionNameVec[iCollection] << " found on " 
-				   <<  event->getEventNumber() 
-				   << " in run " << event->getRunNumber() << endl;
+        streamlog_out ( WARNING2 ) << "No input collection (" << _trackerHitCollectionNameVec[iCollection] << " found on "
+                                   <<  event->getEventNumber()
+                                   << " in run " << event->getRunNumber() << endl;
       }
     }
   }
@@ -161,65 +203,65 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
   if (_layerTrack >= 0) {
     for ( unsigned int iCollection = 0; iCollection < _trackCollectionNameVec.size(); iCollection++ ) {
       try {
-	LCCollection * collection =    evt->getCollection(_trackCollectionNameVec[iCollection].c_str());
-	for ( int iTrack = 0; iTrack < collection->getNumberOfElements(); iTrack++ ) {
-	  TrackImpl * track = dynamic_cast<TrackImpl*> ( collection->getElementAt(iTrack) );
-	  TrackerHitVec hitvec = track->getTrackerHits();
-	
-	  unsigned int color =  returnColor(iCollection);
+        LCCollection * collection =    evt->getCollection(_trackCollectionNameVec[iCollection].c_str());
+        for ( int iTrack = 0; iTrack < collection->getNumberOfElements(); iTrack++ ) {
+          TrackImpl * track = dynamic_cast<TrackImpl*> ( collection->getElementAt(iTrack) );
+          TrackerHitVec hitvec = track->getTrackerHits();
 
-	  // ok now I have everything I'm interested in. The idea
-	  // behing is that for each hit in the hitvec having the type
-	  // set to 32 I will draw a hit and a line to the next plane.
-	  float xPrev = 0, yPrev = 0, zPrev = 0;
-	  float xNext, yNext, zNext;
-	
-	  for ( size_t iHit = 0; iHit < hitvec.size()  ; ++iHit ) {
-	    
-	    TrackerHitImpl * hit = dynamic_cast< TrackerHitImpl * > ( collection->getElementAt( iHit ) ) ;
-	    if ( iHit == 0) {
-	      
-	      xPrev = static_cast< float > ( hit->getPosition()[0] );
-	      yPrev = static_cast<float > ( hit->getPosition()[1] );
-	      zPrev = static_cast<float > ( hit->getPosition()[2] );
-	      ced_hit(xPrev, yPrev, zPrev, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
-	   
-	    } else {
-	   
-	      xNext = static_cast< float > ( hit->getPosition()[0] );
-	      yNext = static_cast<float > ( hit->getPosition()[1] );
-	      zNext = static_cast<float > ( hit->getPosition()[2] );
-	      ced_hit(xNext, yNext, zNext, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
-	      
-	      ced_line( xPrev, yPrev, zPrev, xNext, yNext, zNext, _layerTrack << CED_LAYER_SHIFT, 2, color );
-	      
-	      xPrev = xNext;
-	      yPrev = yNext;
-	      zPrev = zNext;
+          unsigned int color =  returnColor(iCollection);
+
+          // ok now I have everything I'm interested in. The idea
+          // behing is that for each hit in the hitvec having the type
+          // set to 32 I will draw a hit and a line to the next plane.
+          float xPrev = 0, yPrev = 0, zPrev = 0;
+          float xNext, yNext, zNext;
+
+          for ( size_t iHit = 0; iHit < hitvec.size()  ; ++iHit ) {
+
+            TrackerHitImpl * hit = dynamic_cast< TrackerHitImpl * > ( collection->getElementAt( iHit ) ) ;
+            if ( iHit == 0) {
+
+              xPrev = static_cast< float > ( hit->getPosition()[0] );
+              yPrev = static_cast<float > ( hit->getPosition()[1] );
+              zPrev = static_cast<float > ( hit->getPosition()[2] );
+              ced_hit(xPrev, yPrev, zPrev, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
+
+            } else {
+
+              xNext = static_cast< float > ( hit->getPosition()[0] );
+              yNext = static_cast<float > ( hit->getPosition()[1] );
+              zNext = static_cast<float > ( hit->getPosition()[2] );
+              ced_hit(xNext, yNext, zNext, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
+
+              ced_line( xPrev, yPrev, zPrev, xNext, yNext, zNext, _layerTrack << CED_LAYER_SHIFT, 2, color );
+
+              xPrev = xNext;
+              yPrev = yNext;
+              zPrev = zNext;
 
 
-	    }
+            }
 
-	  
-	    
-	  }
-	}
+
+
+          }
+        }
       }  catch(DataNotAvailableException &e) {
-	streamlog_out ( WARNING2 ) << "No input collection (" << _trackerHitCollectionNameVec[iCollection] << " found on " 
-				   <<  event->getEventNumber() 
-				   << " in run " << event->getRunNumber() << endl;
-      }	
+        streamlog_out ( WARNING2 ) << "No input collection (" << _trackerHitCollectionNameVec[iCollection] << " found on "
+                                   <<  event->getEventNumber()
+                                   << " in run " << event->getRunNumber() << endl;
+      }
     }
   }
-  
+
   MarlinCED::draw( this, _waitForKeyboard ) ;
 
 }
 
 
 void EUTelEventViewer::check( LCEvent * /* evt */ ) { }
-  
-void EUTelEventViewer::end(){ } 
+
+void EUTelEventViewer::end(){ }
 
 int EUTelEventViewer::returnColor(int counter) {
 
@@ -244,3 +286,5 @@ int EUTelEventViewer::returnColor(int counter) {
   return kcol;
 
 }
+
+#endif // USE_MARLINUTIL

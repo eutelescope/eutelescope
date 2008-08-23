@@ -10,18 +10,18 @@
 #ifndef EUTELCALCULATEETAPROCESSOR_H
 #define EUTELCALCULATEETAPROCESSOR_H 1
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTelPseudo1DHistogram.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
 // AIDA includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
 
-// lcio includes <.h> 
+// lcio includes <.h>
 
 // system includes <>
 #include <string>
@@ -29,10 +29,10 @@
 
 
 #undef MARLIN_USE_HISTOGRAM
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #define MARLIN_USE_HISTOGRAM
 #endif
-#ifdef MARLIN_USE_ROOT
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
 #define MARLIN_USE_HISTOGRAM
 #endif
 
@@ -50,7 +50,7 @@ namespace eutelescope {
    *
    *  The idea behind this non linear correction, is that in a normal
    *  experiment, the cluster center has to have a flat probability to
-   *  occurr over the full pixel area. 
+   *  occurr over the full pixel area.
    *
    *  As a general assumption we are considering the two geometric
    *  directions (x and y) as independent, so that the problem can be
@@ -62,7 +62,7 @@ namespace eutelescope {
    *  \li The (signed) distance between the seed pixel and the CoG is
    *  used to fill in a histogram (pseudo-histogram is used to avoid
    *  any dependency on a specific histogramming package). This
-   *  histogram is binned from minum half pitch to plus half picth. 
+   *  histogram is binned from minum half pitch to plus half picth.
    *
    *  \li When all clusters have been scanned, we can obtain the eta
    *  function as the integral of the produced histogram
@@ -70,19 +70,19 @@ namespace eutelescope {
    *  \li This eta function has to be normalized and shifted by half a
    *  pitch
    *
-   *  <h4>Input collections </h4> 
+   *  <h4>Input collections </h4>
    *  <b>ClusterCollection</b>. A collection of clusters (TrackerPulse)
-   *  
+   *
    *  <h4>Output colelctions</h4>
    *  None
-   *  
+   *
    *  <h4>Output file</h4>
    *  <b>OutputEtaFileName</b>. This is the name of the output LCIO
    *  file containing the eta calculation results. This file can be
    *  reloaded into Marlin via a condition processor.
    *
    *  @param ClusterCollectionName The name of the input cluster
-   *  collection.  
+   *  collection.
    *
    *  @param EventNumber The number of events to use for the
    *  calculation
@@ -95,20 +95,20 @@ namespace eutelescope {
    *  the quality of clusters used for Eta calculation. Reccomended is
    *  0 == kGoodCluster. To apply other, more elaborated selection
    *  criteria see eutelescope::EUTelClusterFilter.
-   * 
+   *
    *  @param ClusterTypeSelection This string is
    *  used to choose how the charge center of gravity is
    *  calculated. Type "FULL" to use the full cluster, whatever number
    *  of pixels or shape it has; type "NxMPixel" to use only pixels of
    *  the cluster belonging to a NxM region around the seed; type
    *  NPixel to use only the N pixels of the cluster having the
-   *  highest signal. 
+   *  highest signal.
    *
    *  @param NxMPixelClusterSize This parameter is used only when
    *  ClusterTypeSelection=="NxMPixel" and represents the size along x
    *  and y of the cluster region of interest. In case this is bigger
    *  or equal to the full cluster, then "FULL" is
-   *  used. 
+   *  used.
    *
    *  @param NPixelSize This parameter is used only when
    *  ClusterTypeSelection=="NPixel" and represents the number of
@@ -122,12 +122,12 @@ namespace eutelescope {
    *
    *  @param EtaYCollectionName This is the name of the collection of
    *  eta functions along the Y axis. This collection is saved in the
-   *  output file and not made available to the current event. 
+   *  output file and not made available to the current event.
    *
    *  @param OutputEtaFileName The name of the output file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.8 2007-06-29 15:24:23 bulgheroni Exp $
+   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.9 2008-08-23 12:30:51 bulgheroni Exp $
    *
    *
    */
@@ -136,19 +136,19 @@ namespace eutelescope {
 
   public:
 
-     
+
     //! Returns a new instance of EUTelCalculateEtaProcessor
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelCalculateEtaProcessor.
      */
     virtual Processor * newProcessor() {
       return new EUTelCalculateEtaProcessor;
     }
 
-    //! Default constructor 
+    //! Default constructor
     EUTelCalculateEtaProcessor ();
 
     //! Called at the job beginning.
@@ -162,7 +162,7 @@ namespace eutelescope {
     /*! It is called for every run, and consequently the run counter
      *  is incremented. From the run header the number of detector is
      *  retrieved and used to prepare the pseudo histogram vectors.
-     * 
+     *
      *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
@@ -170,7 +170,7 @@ namespace eutelescope {
     //! Called every event
     /*! This is called for each event in the file. Pseudohistograms
      *  are filled
-     * 
+     *
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      *
@@ -179,7 +179,7 @@ namespace eutelescope {
      */
     virtual void processEvent (LCEvent * evt);
 
-    //! Finish the eta calculation 
+    //! Finish the eta calculation
     /*! To calculate the eta function, a certain number of events has
      *  to accumulated, and only when this number
      *  (EUTelCalculateEtaProcessor::_nEvent) is reached the
@@ -199,7 +199,7 @@ namespace eutelescope {
      *  soon as the processEvent is over. It can be used to fill check
      *  plots. For the time being there is nothing to check and do in
      *  this slot.
-     * 
+     *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
     virtual void check (LCEvent * evt);
@@ -212,7 +212,7 @@ namespace eutelescope {
     //! Identifier of the last event to be used.
     /*! This method can be profitably used to identify which is the
      *  last event to be used for the eta calculation.
-     */ 
+     */
     inline bool isLastEvent() const { return ( _nEvent == _iEvt ) ; }
 
   protected:
@@ -258,7 +258,7 @@ namespace eutelescope {
      *
      *  In the case of not squared pixels, the binning along the two
      *  directions can be different.
-     */ 
+     */
     std::vector<int >  _noOfBin;
 
     //! Cluster quality selection
@@ -267,7 +267,7 @@ namespace eutelescope {
      *  only complete and not merging clustering. This integer value
      *  has to be converted to ClusterQuality to be compared with the
      *  value stored into the cluster object.
-     */ 
+     */
     int _clusterQuality;
 
     //! Cluster type selection
@@ -297,24 +297,24 @@ namespace eutelescope {
     /*! In the case the user selected the NPixel cluster type
      *  selection, this parameter represents the number of pixels in
      *  the cluster.
-     */ 
+     */
     int _nPixel;
 
     //! Eta X output collection name
     /*! This is the name of the output collection containing all the
      *  eta functions along x
-     */ 
+     */
     std::string _etaXCollectionName;
 
     //! Eta Y output collection name
     /*! This is the name of the output collection containing all the
      *  eta functions along y
-     */ 
+     */
     std::string _etaYCollectionName;
 
     //! The eta condition output file name
-    /*! The eta collections are saved within a collection 
-     */ 
+    /*! The eta collections are saved within a collection
+     */
     std::string _outputEtaFileName;
 
   private:
@@ -326,7 +326,7 @@ namespace eutelescope {
      *  result and to allow other processor to be executed. Until
      *  _nEvent, this boolean return value will be false, and will
      *  become true afterward.
-     */ 
+     */
     bool _isEtaCalculationFinished;
 
     //! Pseudo histograms for CoG along x
@@ -363,14 +363,14 @@ namespace eutelescope {
 
     //! Number of detector planes in the run
     /*! This is the total number of detector saved into this input
-     *  file 
+     *  file
      */
     int _noOfDetector;
 
     //! The detector name
     /*! This is got from the input header and copied into the
      *  condition file header
-     */ 
+     */
     std::string _detectorName;
 
     //! Current run number.
@@ -387,13 +387,13 @@ namespace eutelescope {
 #ifdef MARLIN_USE_HISTOGRAM
     //! Base name for CoG histogram along x
     static std::string _cogHistogramXName;
-    
+
     //! Base name for CoG histogram along y
     static std::string _cogHistogramYName;
 
     //! Base name for CoG integral histogram along x
     static std::string _cogIntegralXName;
-    
+
     //! Base name for CoG integral histogram along y
     static std::string _cogIntegralYName;
 
@@ -412,7 +412,7 @@ namespace eutelescope {
     static std::string _cogHisto2DName;
 #endif
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
     //! AIDA histogram map
     /*! The histogram filling procedure may occur in many different
@@ -432,7 +432,7 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelCalculateEtaProcessor gEUTelCalculateEtaProcessor;      
+  EUTelCalculateEtaProcessor gEUTelCalculateEtaProcessor;
 
 }
 #endif

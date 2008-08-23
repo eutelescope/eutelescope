@@ -18,11 +18,11 @@
 #include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include "lcio.h"
 
 // AIDA includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #include <AIDA/IHistogram1D.h>
 #endif
@@ -42,16 +42,16 @@ namespace eutelescope {
    * \par Geometry description
    * Geometry information is taken from GEAR.
    *
-   * \par Input  
+   * \par Input
    * \c Track collection with fit results and \c TrackerHit collection
-   * with DUT hits are taken as an input. 
-   * 
+   * with DUT hits are taken as an input.
+   *
    * \param InputTrackCollectionName  Name of the input Track collection
    *
    * \param InputHitCollectionName  Name of the input TrackerHit collection,
-   *  from which DUT hits are taken 
+   *  from which DUT hits are taken
    *
-   * \param UseManualDUT Flag for manual DUT selection 
+   * \param UseManualDUT Flag for manual DUT selection
    *                      i.e. ignoring GEAR definition
    *
    * \param ManualDUTid  Id of telescope layer which should be used as DUT
@@ -67,72 +67,72 @@ namespace eutelescope {
    * \param DUTpitchY Sensor pitch size in Y
    *
    * \param HistoInfoFileName Name of the histogram information file.
-   *        Using this file histogram parameters can be changed without 
+   *        Using this file histogram parameters can be changed without
    *        recompiling the code.
    *
    * \param DebugEventCount      Print out debug and information
    * messages only for one out of given number of events. If zero, no
-   * debug information is printed. 
+   * debug information is printed.
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelDUTHistograms.h,v 1.4 2008-05-12 21:26:41 zarnecki Exp $
+   * @version $Id: EUTelDUTHistograms.h,v 1.5 2008-08-23 12:30:51 bulgheroni Exp $
    *
-   */ 
+   */
 
 
   class EUTelDUTHistograms : public marlin::Processor {
-  
+
   public:
 
-  
-     
+
+
     //! Returns a new instance of EUTelDUTHistograms
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelDUTHistograms
      */
     virtual Processor*  newProcessor() { return new EUTelDUTHistograms ; }
-  
-    //! Default constructor 
+
+    //! Default constructor
     EUTelDUTHistograms() ;
-  
+
     //! Called at the job beginning.
-    /*! This is executed only once in the whole execution. 
-     *  
+    /*! This is executed only once in the whole execution.
+     *
      */
     virtual void init() ;
-  
+
     //! Called for every run.
     /*!
      * @param run the LCRunHeader of the current run
      */
     virtual void processRunHeader( LCRunHeader* run ) ;
-  
+
     //! Called every event
     /*! This is called for each event in the file.
-     * 
-     *  @param evt the current LCEvent event 
+     *
+     *  @param evt the current LCEvent event
      */
-    virtual void processEvent( LCEvent * evt ) ; 
-  
+    virtual void processEvent( LCEvent * evt ) ;
+
     //! Check event method
     /*! This method is called by the Marlin execution framework as
      *  soon as the processEvent is over. It can be used to fill check
      *  plots. For the time being there is nothing to check and do in
      *  this slot.
-     * 
+     *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check( LCEvent * evt ) ; 
-  
-  
+    virtual void check( LCEvent * evt ) ;
+
+
     //! Book histograms
     /*! This method is used to books all required
      *  histograms. Histogram pointers are stored into
-     *  _aidaHistoMap so that they can be recalled and filled 
-     * from anywhere in the code.  
+     *  _aidaHistoMap so that they can be recalled and filled
+     * from anywhere in the code.
      */
     void bookHistos();
 
@@ -141,7 +141,7 @@ namespace eutelescope {
     /*! Used to release memory allocated in init() step
      */
     virtual void end() ;
-  
+
   protected:
 
     //! Silicon planes parameters as described in GEAR
@@ -153,26 +153,26 @@ namespace eutelescope {
      *
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
-     */ 
+     */
     gear::SiPlanesParameters * _siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geoemetry description. For each layer
      *  composing the telescope the relevant information are
      *  available.
-     *  
+     *
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
-     */ 
+     */
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
 
     //! The histogram information file
     /*! This string contain the name of the histogram information
      *  file. This is selected by the user in the steering file.
-     * 
+     *
      *  @see eutelescope::EUTelHistogramManager
      *  @see eutelescope::EUTelHistogramInfo
-     */ 
+     */
     std::string _histoInfoFileName;
 
 
@@ -182,7 +182,7 @@ namespace eutelescope {
     //! Input \c TrackerHit collection name
     std::string _inputHitColName ;
 
-    //! Flag for manual DUT selection 
+    //! Flag for manual DUT selection
 
     bool _useManualDUT;
 
@@ -203,7 +203,7 @@ namespace eutelescope {
     int _nEvt ;
 
     int _iDUT;
-    double _zDUT;  
+    double _zDUT;
     double _distMax;
 
     double _pitchX;
@@ -227,9 +227,9 @@ namespace eutelescope {
     std::vector<float > _DUTalign;
 
 
- #ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map
-    /*! Used to refer to histograms by their names, i.e. to recall 
+    /*! Used to refer to histograms by their names, i.e. to recall
      *  a histogram pointer using histogram name.
      */
 
@@ -284,11 +284,11 @@ namespace eutelescope {
     static std::string _EtaY3DHistoName;
 
 
-#endif 
+#endif
 
- } ;
+  } ;
 
-  
+
   //! A global instance of the processor.
   EUTelDUTHistograms aEUTelDUTHistograms ;
 

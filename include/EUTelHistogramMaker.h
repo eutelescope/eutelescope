@@ -10,19 +10,19 @@
 #ifndef EUTELHISTOGRAMMAKER_H
 #define EUTELHISTOGRAMMAKER_H 1
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTELESCOPE.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerPulseImpl.h>
 #include <IMPL/TrackerDataImpl.h>
 
 // AIDA includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
 
@@ -37,7 +37,7 @@ namespace eutelescope {
   //! Histogram filler for EUTelescope
   /*! This processor has the task to fill many control histograms that
    *  can serve as benchmark to understand if the detectors are
-   *  working or not. 
+   *  working or not.
    *
    *  In the output histogram file, the user will find a folder for
    *  each of the detector in the telescope and a bunch of histograms
@@ -59,7 +59,7 @@ namespace eutelescope {
    *  @li <b> Seed pixel signal </b> (histo name = "seedSignal"). This
    *  is the signal spectrum of the highest pixel in the cluster. This
    *  is the place to look for the calibration peak.
-   
+
    *  @li <b> Hit map</b> (histo name = "hitMap"). This is a 2D plot
    *  with each bin representing one pixel in the sensor. The number
    *  of entries for each bin corresponds to the number of times a
@@ -78,33 +78,33 @@ namespace eutelescope {
    *  filled
    *
    *  @param ClusterN A vector containing the cluster N spectra to be filled.
-   *  
+   *
    *  <h4>Output collections </h4>
    *
    *  None
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHistogramMaker.h,v 1.6 2007-07-13 08:15:05 bulgheroni Exp $ 
+   *  @version $Id: EUTelHistogramMaker.h,v 1.7 2008-08-23 12:30:51 bulgheroni Exp $
    *
    */
-  
+
   class EUTelHistogramMaker : public marlin::Processor {
 
   public:
-    
-    
+
+
     //! Returns a new instance of EUTelHistogramMaker
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelPedestalNoiseProcess.
      */
     virtual Processor * newProcessor () {
       return new EUTelHistogramMaker;
     }
 
-    //! Default constructor 
+    //! Default constructor
     EUTelHistogramMaker ();
 
     //! Called at the job beginning.
@@ -123,7 +123,7 @@ namespace eutelescope {
      *  then important things like the number of detectors and the
      *  pixel detector boundaries are dumped from the file. After that
      *  the EUTelPedestalNoiseProcess::bookHistos() is called.
-     *  
+     *
      *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
@@ -139,7 +139,7 @@ namespace eutelescope {
 
     //! Check event method
     /*! Nothing to check
-     * 
+     *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      *
      */
@@ -150,7 +150,7 @@ namespace eutelescope {
      *  within the current ITree folder and books all required
      *  histograms. Histogram pointers are stored into
      *  EUTelHistogramMaker::_aidaHistoMap so that they can be
-     *  recalled and filled from anywhere in the code.  
+     *  recalled and filled from anywhere in the code.
      */
     void bookHistos();
 
@@ -188,18 +188,18 @@ namespace eutelescope {
     //! The histogram information file
     /*! This string contain the name of the histogram information
      *  file. This is selected by the user in the steering file.
-     * 
+     *
      *  @see eutelescope::EUTelHistogramManager
      *  @see eutelescope::EUTelHistogramInfo
-     */ 
+     */
     std::string _histoInfoFileName;
 
   private:
 
     //! List of cluster spectra N
     /*! This vector contains a list of cluster spectra we want to fill
-     *  in. 
-     */ 
+     *  in.
+     */
     std::vector<int > _clusterSpectraNVector;
 
     //! List of cluster spectra NxN
@@ -212,39 +212,39 @@ namespace eutelescope {
     //! The number of detectors
     /*! The number of sensors in the telescope. This is retrieve from
      *  the run header
-     */ 
+     */
     int _noOfDetector;
 
     //! The first pixel on the x side
     /*! One value for each detector.
-     */ 
+     */
     std::vector<int > _minX;
-    
+
     //! The first pixel on the y side
     /*! One value for each detector.
-     */ 
+     */
     std::vector<int > _minY;
 
     //! The last pixel on the x side
     /*! One value for each detector.
-     */ 
+     */
     std::vector<int > _maxX;
 
     //! The last pixel on the y side
     /*! One value for each detector.
-     */ 
+     */
     std::vector<int > _maxY;
-    
+
     //! Switch to turn on and off the noise histo filling
     /*! To fill noise and SNR related histograms, the presence of the
      *  noise and the status collections has to be verified first.
-     *   
+     *
      *  This switch, true by default, will be turned off if the noise
      *  and status collections are not found.
-     */ 
+     */
     bool _noiseHistoSwitch;
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map
     /*! The histogram filling procedure may occur in many different
      *  places, while it is usually a good reason to keep the booking
@@ -269,17 +269,17 @@ namespace eutelescope {
     //! Seed pixel signal histo name
     /*! This is the seed pixel spectrum histogram. To this name,
      *  the detector ID is added in order to make it unique.
-     */ 
+     */
     static std::string _seedSignalHistoName;
 
     //! Hit map histogram name
     /*! This is the hit map in pixel coordinate histogram name.
-     */ 
+     */
     static std::string _hitMapHistoName;
 
     //! Seed pixel SNR name
     /*! This is the seed pixel SNR histogram name
-     */ 
+     */
     static std::string _seedSNRHistoName;
 
     //! Cluster SNR histogram name
@@ -299,22 +299,22 @@ namespace eutelescope {
     /*! This is the full cluster noise histogram name
      */
     static std::string _clusterNoiseHistoName;
-#endif 
-    
+#endif
+
     //! Event counter
     /*! This is used to count the processed events
-     */ 
+     */
     int _iEvt;
 
     //! Run counter
     /*! This is used to count the processed run header
-     */ 
+     */
     int _iRun;
 
   };
 
   //! A global instance of the processor
-  EUTelHistogramMaker gEUTelHistogramMaker;      
+  EUTelHistogramMaker gEUTelHistogramMaker;
 
 }
 #endif

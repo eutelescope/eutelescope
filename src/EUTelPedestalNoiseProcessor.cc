@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.30 2008-08-21 08:53:45 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.31 2008-08-23 12:30:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -22,7 +22,7 @@
 #include "marlin/Exceptions.h"
 #include "marlin/Global.h"
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 // aida includes <.h>
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
@@ -58,7 +58,7 @@ using namespace eutelescope;
 
 
 // definition of static members mainly used to name histograms
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelPedestalNoiseProcessor::_pedeDistHistoName   = "PedeDist";
 std::string EUTelPedestalNoiseProcessor::_noiseDistHistoName  = "NoiseDist";
 std::string EUTelPedestalNoiseProcessor::_commonModeHistoName = "CommonMode";
@@ -137,7 +137,7 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPed
 
   _histogramSwitch = true;
 
-  
+
 }
 
 
@@ -348,8 +348,8 @@ void EUTelPedestalNoiseProcessor::processEvent (LCEvent * evt) {
   } else {
     otherLoop(evt);
   }
-  
-  
+
+
 
 }
 
@@ -377,7 +377,7 @@ void EUTelPedestalNoiseProcessor::end() {
 
 void EUTelPedestalNoiseProcessor::fillHistos() {
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   streamlog_out ( MESSAGE2 ) << "Filling final histograms " << endl;
 
   string tempHistoName;
@@ -560,7 +560,7 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
     for ( int iDetector = 0 ; iDetector < _noOfDetector; iDetector++ ) {
 
       for (unsigned int iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
         if ( _histogramSwitch ) {
           string tempHistoName;
           {
@@ -625,14 +625,14 @@ void EUTelPedestalNoiseProcessor::preLoop( LCEvent * event ) {
   // here is the real begin
   try {
     LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
-  
+
     if ( isFirstEvent() ) {
-     
+
 
       for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-   
+
         TrackerRawData * trackerRawData = dynamic_cast< TrackerRawData * > ( collectionVec->getElementAt(  iDetector ) );
-        
+
         ShortVec adcValues = trackerRawData->getADCValues ();
 
         // we have to initialize all the vectors
@@ -640,7 +640,7 @@ void EUTelPedestalNoiseProcessor::preLoop( LCEvent * event ) {
         ShortVec maxValuePos( adcValues.size(),                             -1 );
         ShortVec minValue   ( adcValues.size(), numeric_limits< short >::max() );
         ShortVec minValuePos( adcValues.size(),                             -1 );
-        
+
         _maxValue.push_back   ( maxValue    );
         _maxValuePos.push_back( maxValuePos );
         _minValue.push_back   ( minValue    );
@@ -662,7 +662,7 @@ void EUTelPedestalNoiseProcessor::preLoop( LCEvent * event ) {
           _minValue[ iDetector ] [ iPixel ] = currentVal;
           _minValuePos[ iDetector ] [ iPixel ] = _iEvt;
         }
-        
+
       }
     }
   } catch (DataNotAvailableException& e) {
@@ -757,7 +757,7 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
 
 
         } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
           // in the case of AIDAPROFILE we don't need any vectors since
           // everything is done by the IProfile2D automatically
           int iPixel = 0;
@@ -833,7 +833,7 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
 
         } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
           stringstream ss;
           ss << _tempProfile2DName << "-d" << iDetector;
 
@@ -942,7 +942,7 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
            ( goodPixel != 0 ) ) {
 
         commonMode = pixelSum / goodPixel;
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
         stringstream ss;
         ss << _commonModeHistoName << "-d" << iDetector << "-l" << _iLoop;
         (dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[ss.str()]))->fill(commonMode);
@@ -969,7 +969,7 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
                                                            _tempEntries[iDetector][iPixel]);
                   }
                 } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE) {
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
                   bool use = true;
                   if ( _preLoopSwitch && ( ( _iEvt == _maxValuePos[ iDetector ] [ iPixel ] ) ||
                                            ( _iEvt == _minValuePos[ iDetector ] [ iPixel ] ) )  ) {
@@ -1002,7 +1002,7 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
 
 void EUTelPedestalNoiseProcessor::bookHistos() {
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   // histograms are grouped in loops and detectors
   streamlog_out ( MESSAGE2 ) << "Booking histograms " << endl;
 
@@ -1274,7 +1274,7 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
 
     } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       _pedestal.clear();
       _noise.clear();
       for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
@@ -1466,7 +1466,7 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
       // in case the AIDAPROFILE algorithm is used, the only thing we
       // need to do is to clean up the previous loop histograms
       // remember to loop over all detectors
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
         stringstream ss;
         ss << _tempProfile2DName << "-d" << iDetector;

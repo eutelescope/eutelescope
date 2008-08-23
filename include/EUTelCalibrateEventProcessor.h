@@ -10,17 +10,17 @@
 #ifndef EUTELCALIBRATEEVENTPROCESSOR_H
 #define EUTELCALIBRATEEVENTPROCESSOR_H 1
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
 // AIDA includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
 
-// lcio includes <.h> 
+// lcio includes <.h>
 
 // system includes <>
 #include <string>
@@ -33,8 +33,8 @@ namespace eutelescope {
   /*! This processor is used in a standard analysis sequence to apply
    *  the calibration (mainly pedestal value) as previously saved into
    *  a condition file or database.
-   * 
-   *  The main things done by this processors are the following: 
+   *
+   *  The main things done by this processors are the following:
    *
    *  \li Cross check that the input data file and the condition
    *  calibration files are compatible. In other words, the number of
@@ -63,18 +63,18 @@ namespace eutelescope {
    *  <br><b>RawDataCollection</b>. This is a collection of
    *  TrackerRawData containing all pixel signals as they are readout
    *  by the DAQ system. This collection is coming from the input
-   *  slcio file.  
-   *  
+   *  slcio file.
+   *
    *  <br><b>PedestalCollection</b>. This is a collection of
    *  TrackerData containing all pixel pedestal values as they are
    *  calculated by EUTelPedestalNoiseProcessor. This collection is
    *  coming in from the condition file.
-   *  
+   *
    *  <br><b>NoiseCollection</b>. This is a collection of TrackerData
    *  contaning all pixel noise values as they are calculated by
    *  EUTelPedestalNoiseProcessor. This collection is coming from
    *  the condition file and is used only if the user switched on the
-   *  common mode calculation.  
+   *  common mode calculation.
    *
    *  <br><b>StatusCollection</b>. This is a collection of
    *  TrackerRawData containing the status of each pixels. This
@@ -82,7 +82,7 @@ namespace eutelescope {
    *  is used only if common mode flag is active.
    *
    *  <h4>Output</h4>
-   *  
+   *
    *  <br><b>DataCollection</b>. This is a collection of TrackerData
    *  containing the calibrated signal of each pixel. This is the
    *  entry point for cluster search. The user can decide the name of
@@ -92,7 +92,7 @@ namespace eutelescope {
    *  @param RawDataCollectionName Name of the input raw data collection
    *
    *  @param PedestalCollectionName Name of the input (condition)
-   *  pedestal collection 
+   *  pedestal collection
    *
    *  @param NoiseCollectionName Name of the input (condition) noise
    *  collection
@@ -121,7 +121,7 @@ namespace eutelescope {
    *  histogram information file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.8 2007-08-30 08:26:04 bulgheroni Exp $
+   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.9 2008-08-23 12:30:51 bulgheroni Exp $
    *
    *
    */
@@ -130,19 +130,19 @@ namespace eutelescope {
 
   public:
 
-     
+
     //! Returns a new instance of EUTelCalibrateEventProcessor
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelCalibrateEventProcessor.
      */
     virtual Processor * newProcessor() {
       return new EUTelCalibrateEventProcessor;
     }
 
-    //! Default constructor 
+    //! Default constructor
     EUTelCalibrateEventProcessor ();
 
     //! Called at the job beginning.
@@ -158,7 +158,7 @@ namespace eutelescope {
     /*! It is called for every run, and consequently the run counter
      *  is incremented. From the run header the number of detector is
      *  retrieved.
-     * 
+     *
      *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
@@ -174,7 +174,7 @@ namespace eutelescope {
      *
      *  @throw IncompatibleDataSetException in the case the two
      *  collections are found to be incompatible
-     * 
+     *
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
@@ -186,7 +186,7 @@ namespace eutelescope {
      *  soon as the processEvent is over. It can be used to fill check
      *  plots. For the time being there is nothing to check and do in
      *  this slot.
-     * 
+     *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
     virtual void check (LCEvent * evt);
@@ -201,7 +201,7 @@ namespace eutelescope {
   protected:
 
     //! Input collection name.
-    /*! For the time being we have just one collection that can be used as input 
+    /*! For the time being we have just one collection that can be used as input
      */
     std::string _rawDataCollectionName;
 
@@ -231,7 +231,7 @@ namespace eutelescope {
     //! Calibrated data collection name.
     /*! The name of the output calibrated data collection. Usually
      *  simply "data"
-     */ 
+     */
     std::string _calibratedDataCollectionName;
 
     //! Current run number.
@@ -261,11 +261,11 @@ namespace eutelescope {
      */
     bool _doCommonMode;
 
-    //! Hit rejection threshold 
+    //! Hit rejection threshold
     /*! In the case the user wants to suppress the common mode, we
      *  need to remove from the calculation all pixels having a SNR
      *  such that they can be considered hit pixels.
-     */ 
+     */
     float _hitRejectionCut;
 
     //! Maximum number of excluded pixels
@@ -286,10 +286,10 @@ namespace eutelescope {
     //! The histogram information file
     /*! This string contain the name of the histogram information
      *  file. This is selected by the user in the steering file.
-     * 
+     *
      *  @see eutelescope::EUTelHistogramManager
      *  @see eutelescope::EUTelHistogramInfo
-     */ 
+     */
     std::string _histoInfoFileName;
 
 
@@ -297,14 +297,14 @@ namespace eutelescope {
 
     //! Number of detector planes in the run
     /*! This is the total number of detector saved into this input
-     *  file 
+     *  file
      */
     int _noOfDetector;
 
     //! Global operational mode of the EUDRB
     std::string _eudrbGlobalMode;
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
     //! Name of the raw data histogram
     /*! This histogram contains the raw data value as they come in
@@ -343,7 +343,7 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelCalibrateEventProcessor gEUTelCalibrateEventProcessor;      
+  EUTelCalibrateEventProcessor gEUTelCalibrateEventProcessor;
 
 }
 #endif

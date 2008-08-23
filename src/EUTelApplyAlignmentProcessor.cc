@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.6 2008-07-30 13:43:48 bulgheroni Exp $
+// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.7 2008-08-23 12:30:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,7 +10,7 @@
  *
  */
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTelApplyAlignmentProcessor.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
@@ -20,7 +20,7 @@
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
@@ -46,26 +46,26 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor () :Processor("EUTelA
 
   // first of all we need to register the input collection
   registerInputCollection (LCIO::TRACKERHIT, "InputHitCollectionName",
-			   "The name of the input hit collection",
-			   _inputHitCollectionName, string ("hit"));
+                           "The name of the input hit collection",
+                           _inputHitCollectionName, string ("hit"));
 
   registerInputCollection (LCIO::LCGENERICOBJECT, "AlignmentConstantName",
-			   "Alignment constant from the condition file",
-			   _alignmentCollectionName, string ("alignment"));
+                           "Alignment constant from the condition file",
+                           _alignmentCollectionName, string ("alignment"));
 
   registerOutputCollection (LCIO::TRACKERHIT, "OutputHitCollectionName",
-			   "The name of the output hit collection",
-			   _outputHitCollectionName, string("correctedHit"));
+                            "The name of the output hit collection",
+                            _outputHitCollectionName, string("correctedHit"));
 
 
   // now the optional parameters
   registerProcessorParameter ("CorrectionMethod",
-			      "Available methods are:\n"
-			      " 0 --> shift only \n"
-			      " 1 --> rotation first \n"
-			      " 2 --> shift first ",
-			      _correctionMethod, static_cast<int > (1));
-  
+                              "Available methods are:\n"
+                              " 0 --> shift only \n"
+                              " 1 --> rotation first \n"
+                              " 2 --> shift first ",
+                              _correctionMethod, static_cast<int > (1));
+
 
 }
 
@@ -100,25 +100,25 @@ void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * rdr) {
 
   _hasZSData = false;
 
-  if ( ( eudrbGlobalMode == "zs" ) || 
+  if ( ( eudrbGlobalMode == "zs" ) ||
        ( eudrbGlobalMode == "mixed" ) ) {
     _hasZSData = true;
   }
 
   // increment the run counter
-  ++_iRun;  
+  ++_iRun;
 
 }
 
 
 void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
-  if ( _iEvt % 10 == 0 ) 
-    streamlog_out ( MESSAGE4 ) << "Processing event " 
-			       << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-			       << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
-			       << setfill(' ')
-			       << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  if ( _iEvt % 10 == 0 )
+    streamlog_out ( MESSAGE4 ) << "Processing event "
+                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
+                               << setfill(' ')
+                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
   ++_iEvt;
 
 
@@ -129,7 +129,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
     return;
   } else if ( evt->getEventType() == kUNKNOWN ) {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
-			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+                               << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
 
@@ -137,10 +137,10 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
   // the cell decoder to get the sensor ID
   CellIDDecoder<TrackerDataImpl> * clusterCellDecoder = NULL; //( originalZSDataCollectionVec );
   CellIDDecoder<TrackerDataImpl> * clusterZSCellDecoder = NULL;
-  
-    
+
+
   try {
-    
+
     LCCollectionVec * inputCollectionVec         = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputHitCollectionName));
     LCCollectionVec * alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection(_alignmentCollectionName));
 
@@ -148,7 +148,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
     LCCollectionVec * originalDataCollectionVec = NULL;
     LCCollectionVec * originalZSDataCollectionVec = NULL;
 
-    
+
     if ( _hasNZSData ) {
       originalDataCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection( "original_data" ) );
       clusterCellDecoder = new CellIDDecoder<TrackerDataImpl>(  originalDataCollectionVec );
@@ -159,18 +159,18 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
     }
 
 
-    
+
 
     if (isFirstEvent()) {
-      
-      
-      streamlog_out ( MESSAGE ) << "The alignment collection contains: " <<  alignmentCollectionVec->size() 
-				<< " planes " << endl;
+
+
+      streamlog_out ( MESSAGE ) << "The alignment collection contains: " <<  alignmentCollectionVec->size()
+                                << " planes " << endl;
 
       for ( size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos ) {
-       
-	EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) );
-	_lookUpTable[ alignment->getSensorID() ] = iPos;
+
+        EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) );
+        _lookUpTable[ alignment->getSensorID() ] = iPos;
 
       }
 
@@ -178,41 +178,41 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
       // print out the lookup table
       map< int , int >::iterator mapIter = _lookUpTable.begin();
       while ( mapIter != _lookUpTable.end() ) {
-	streamlog_out ( DEBUG ) << "Sensor ID = " << mapIter->first
-				  << " is in position " << mapIter->second << endl;
-	++mapIter;
+        streamlog_out ( DEBUG ) << "Sensor ID = " << mapIter->first
+                                << " is in position " << mapIter->second << endl;
+        ++mapIter;
       }
-#endif 
+#endif
 
       _isFirstEvent = false;
     }
-  
+
 
     LCCollectionVec * outputCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);
-    
+
     for (size_t iHit = 0; iHit < inputCollectionVec->size(); iHit++) {
-      
+
       TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( iHit ) ) ;
-      
-      // now we have to understand which layer this hit belongs to. 
+
+      // now we have to understand which layer this hit belongs to.
       LCObjectVec        clusterVec = inputHit->getRawHits();
       TrackerDataImpl  * cluster    = dynamic_cast< TrackerDataImpl *>  ( clusterVec[0] );
-    
+
       int sensorID;
-      
+
 //       if ( _hasZSData && _hasNZSData ) {
-// 	// it means that this is a MIXED run still I don't know what
-// 	// to do
-// 	streamlog_out ( ERROR ) << "This processor is unable to deal with MIXED data. Sorry for quitting..." << endl;
-// 	exit(-01);
+//      // it means that this is a MIXED run still I don't know what
+//      // to do
+//      streamlog_out ( ERROR ) << "This processor is unable to deal with MIXED data. Sorry for quitting..." << endl;
+//      exit(-01);
 //       }
       if ( _hasNZSData ) sensorID = (*clusterCellDecoder)( cluster ) ["sensorID"] ;
       if ( _hasZSData  ) sensorID = (*clusterZSCellDecoder)( cluster ) ["sensorID"]   ;
 
 
-      TrackerHitImpl   * outputHit  = new TrackerHitImpl;     
+      TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
-      outputHit->rawHits() = clusterVec; 
+      outputHit->rawHits() = clusterVec;
 
       // now that we know at which sensor the hit belongs to, we can
       // get the corresponding alignment constants
@@ -220,84 +220,84 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
       double * inputPosition      = const_cast< double * > ( inputHit->getPosition() ) ;
       double   outputPosition[3]  = { 0., 0., 0. };
-      
+
       if ( positionIter != _lookUpTable.end() ) {
 
-	EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > 
-	  ( alignmentCollectionVec->getElementAt( positionIter->second ) );
-	
-	if ( _correctionMethod == 0 ) {
-	  
-	  // this is the shift only case 
-	
-	  outputPosition[0] = inputPosition[0] - alignment->getXOffset();
-	  outputPosition[1] = inputPosition[1] - alignment->getYOffset();
-	  outputPosition[2] = inputPosition[2] - alignment->getZOffset();
-	  
-	} else if ( _correctionMethod == 1 ) {
-	  
-	  // this is the rotation first
-	  
-	  // first the rotation
-	  outputPosition[0] = inputPosition[0] + alignment->getGamma() * inputPosition[1] + alignment->getBeta() * inputPosition[2] ;
-	  outputPosition[1] = -1 * alignment->getGamma() * inputPosition[0] + inputPosition[1] + alignment->getAlpha() * inputPosition[2];
-	  outputPosition[2] = -1 * alignment->getBeta()  * inputPosition[0] + alignment->getAlpha() * inputPosition[1] + inputPosition[2];
-	  
-	  // second the shift
-	  outputPosition[0] -= alignment->getXOffset();
-	  outputPosition[1] -= alignment->getYOffset();
-	  outputPosition[2] -= alignment->getZOffset();
-	  
-	} else if ( _correctionMethod == 2 ) {
-	  
-	  // this is the translation first
-	  
-	  // first the shifts
-	  inputPosition[0] -= alignment->getXOffset();
-	  inputPosition[1] -= alignment->getYOffset();
-	  inputPosition[2] -= alignment->getZOffset();
-	  
-	  // second the rotation
-	  outputPosition[0] = inputPosition[0] + alignment->getGamma() * inputPosition[1] + alignment->getBeta() * inputPosition[2] ;
-	  outputPosition[1] = -1 * alignment->getGamma() * inputPosition[0] + inputPosition[1] + alignment->getAlpha() * inputPosition[2];
-	  outputPosition[2] = -1 * alignment->getBeta()  * inputPosition[0] + alignment->getAlpha() * inputPosition[1] + inputPosition[2];
-	  
-	}
-	
+        EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * >
+          ( alignmentCollectionVec->getElementAt( positionIter->second ) );
+
+        if ( _correctionMethod == 0 ) {
+
+          // this is the shift only case
+
+          outputPosition[0] = inputPosition[0] - alignment->getXOffset();
+          outputPosition[1] = inputPosition[1] - alignment->getYOffset();
+          outputPosition[2] = inputPosition[2] - alignment->getZOffset();
+
+        } else if ( _correctionMethod == 1 ) {
+
+          // this is the rotation first
+
+          // first the rotation
+          outputPosition[0] = inputPosition[0] + alignment->getGamma() * inputPosition[1] + alignment->getBeta() * inputPosition[2] ;
+          outputPosition[1] = -1 * alignment->getGamma() * inputPosition[0] + inputPosition[1] + alignment->getAlpha() * inputPosition[2];
+          outputPosition[2] = -1 * alignment->getBeta()  * inputPosition[0] + alignment->getAlpha() * inputPosition[1] + inputPosition[2];
+
+          // second the shift
+          outputPosition[0] -= alignment->getXOffset();
+          outputPosition[1] -= alignment->getYOffset();
+          outputPosition[2] -= alignment->getZOffset();
+
+        } else if ( _correctionMethod == 2 ) {
+
+          // this is the translation first
+
+          // first the shifts
+          inputPosition[0] -= alignment->getXOffset();
+          inputPosition[1] -= alignment->getYOffset();
+          inputPosition[2] -= alignment->getZOffset();
+
+          // second the rotation
+          outputPosition[0] = inputPosition[0] + alignment->getGamma() * inputPosition[1] + alignment->getBeta() * inputPosition[2] ;
+          outputPosition[1] = -1 * alignment->getGamma() * inputPosition[0] + inputPosition[1] + alignment->getAlpha() * inputPosition[2];
+          outputPosition[2] = -1 * alignment->getBeta()  * inputPosition[0] + alignment->getAlpha() * inputPosition[1] + inputPosition[2];
+
+        }
+
       } else {
 
-	// this hit belongs to a plane whose sensorID is not in the
-	// alignment constants. So the idea is to eventually advice
-	// the users if running in DEBUG and copy the not aligned hit
-	// in the new collection. 
-	streamlog_out ( DEBUG ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit " 
-				  << iHit << endl;
+        // this hit belongs to a plane whose sensorID is not in the
+        // alignment constants. So the idea is to eventually advice
+        // the users if running in DEBUG and copy the not aligned hit
+        // in the new collection.
+        streamlog_out ( DEBUG ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
+                                << iHit << endl;
 
-	for ( size_t i = 0; i < 3; ++i ) 
-	  outputPosition[i] = inputPosition[i];
-	
+        for ( size_t i = 0; i < 3; ++i )
+          outputPosition[i] = inputPosition[i];
+
       }
 
       outputHit->setPosition( outputPosition ) ;
-      outputCollectionVec->push_back( outputHit );  
+      outputCollectionVec->push_back( outputHit );
 
 
-    }    
+    }
 
     evt->addCollection( outputCollectionVec, _outputHitCollectionName );
-  
+
     delete clusterCellDecoder;
     delete clusterZSCellDecoder;
-  
+
   } catch (DataNotAvailableException& e) {
     if ( clusterCellDecoder ) delete clusterCellDecoder;
     if ( clusterZSCellDecoder ) delete clusterZSCellDecoder;
-    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber() 
-				<< " in run " << event->getRunNumber() << endl;
+    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
+                                << " in run " << event->getRunNumber() << endl;
   }
-  
+
 }
-  
+
 
 
 void EUTelApplyAlignmentProcessor::check (LCEvent * evt) {

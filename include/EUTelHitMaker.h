@@ -12,7 +12,7 @@
 
 // built only if GEAR is available
 #ifdef USE_GEAR
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -21,12 +21,12 @@
 #include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
 
 // AIDA includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
 
@@ -51,7 +51,7 @@ namespace eutelescope {
    *  according to the telescope description provided in the GEAR
    *  environment. For this reason, a cross check on the availability
    *  of a GEAR instance and of a GEAR geometry description XML file
-   *  is done during the init phase. 
+   *  is done during the init phase.
    *
    *  The center of the cluster can be calculate both using a standard
    *  linear procedure, or using the Eta function. In this case the
@@ -85,7 +85,7 @@ namespace eutelescope {
    *  \li The two FoRs are perfectly aligned:
    *     xPointing = {  1 ,  0 }
    *     yPointing = {  0 ,  1 }
-   * 
+   *
    *  \li The detector is oriented as in the figure above with the x
    *  axis horizontal going left to right and the y axis vertical
    *  going top to bottom.
@@ -97,14 +97,14 @@ namespace eutelescope {
    *  telescope mechanics. Those are described into the figure here
    *  below:
    *  \image html orientation.png "Four important orientations"
-   * 
+   *
    *  <b>Orientation 1</b> represents the case in which the sensor is
    *  inserted up right in the telescope setup and the beam is hitting
    *  the front surface of the sensor. This configuration corresponds
    *  to:<br>
    *      xPointing = { -1 ,  0 }
    *      yPointing = {  0 , -1 }
-   *  
+   *
    *  <b>Orientation 2</b> represents the case the sensor is inserted
    *  up side down facing the beam. This is coded as:<br>
    *      xPointing = {  1 ,  0 }
@@ -116,7 +116,7 @@ namespace eutelescope {
    *      yPointing = {  0 , -1 }
    *
    *  <b>Orientation 4</b> represents the sensor up side down and back
-   *  illuminated. This is obtained with:<br> 
+   *  illuminated. This is obtained with:<br>
    *      xPointing = { -1 ,  0 }
    *      yPointing = {  0 ,  1 }
    *
@@ -141,7 +141,7 @@ namespace eutelescope {
    *  @li <b>Density plot</b>: one global histogram, it contains into
    *  a 3D frame all detected hit. If the run contains enough hits and
    *  they are uniformly distributed on the sensor surface, this plot
-   *  should resemble the telescope geometry. 
+   *  should resemble the telescope geometry.
    *
    *  @li <b>Cluster center</b>: a 2D histogram containing the center
    *  of gravity within a pixel.
@@ -155,24 +155,24 @@ namespace eutelescope {
    *
    *  <h4>GEAR Geometry file</h4>
    *  The geometry information about plane positions and orientations
-   *  is 
-   *  
+   *  is
+   *
    *  <h4>Good programming note</h4>
-   *  
+   *
    *  This processor is useful if and only if it has access to
    *  geometry information through a GEAR implementation. Not all
    *  EUTelescope users will build Marlin using GEAR, especially who
    *  is interested to perform only single detector
    *  characterization. So to avoid compilation error and complains,
-   *  this class is enclosed within a 
-   *  \code 
-   *  \#ifdef USE_GEAR 
+   *  this class is enclosed within a
+   *  \code
+   *  \#ifdef USE_GEAR
    *     ....
-   *  \#endif 
+   *  \#endif
    *  \endcode  block.
    *
-   *  <h4>Input collections</h4> 
-   *  
+   *  <h4>Input collections</h4>
+   *
    *  <b>Tracker pulse</b>: A collection with cluster
    *  information. Along with that also the original TrackerData
    *  (suitably reimplemented as a EUTelVirtualCluster) should be
@@ -188,9 +188,9 @@ namespace eutelescope {
    *
    *  @param TrackerPulseCollectionName The name of the tracker pulse
    *  collection.
-   *  
+   *
    *  @param HitCollectionName The name of the output Tracker Hit
-   *  collection. 
+   *  collection.
    *
    *  @param EtaCollectionName A vector of strings with the name of
    *  the eta collection along x and y.
@@ -215,7 +215,7 @@ namespace eutelescope {
    *  pixel along x and y to be used.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHitMaker.h,v 1.8 2007-07-26 06:49:20 bulgheroni Exp $
+   *  @version $Id: EUTelHitMaker.h,v 1.9 2008-08-23 12:30:51 bulgheroni Exp $
    *
    */
 
@@ -223,19 +223,19 @@ namespace eutelescope {
 
   public:
 
-     
+
     //! Returns a new instance of EUTelHitMaker
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelHitMaker.
      */
     virtual Processor * newProcessor() {
       return new EUTelHitMaker;
     }
 
-    //! Default constructor 
+    //! Default constructor
     EUTelHitMaker ();
 
     //! Called at the job beginning.
@@ -251,7 +251,7 @@ namespace eutelescope {
      *  the one provided by the GEAR geometry description. In case the
      *  two are different, the user is asked to decide to quit or to
      *  continue with a description that might be wrong.
-     * 
+     *
      *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
@@ -260,13 +260,13 @@ namespace eutelescope {
     /*! This is called for each event in the file. Each element of the
      *  pulse collection is scanned and the center of the cluster is
      *  translated into the external frame of reference thanks to the
-     *  GEAR geometry description. 
+     *  GEAR geometry description.
      *
      *  The cluster center might be calculate using a standard linear
      *  charge center of gravity algortihm or applying a more
      *  sophisticated non linear eta function. This behaviour is
      *  regulated by the user from the steering file.
-     * 
+     *
      *  @throw UnknownDataTypeException if the cluster type is unknown
      *
      *  @param evt the current LCEvent event as passed by the
@@ -277,7 +277,7 @@ namespace eutelescope {
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
-     *  finished. 
+     *  finished.
      */
     virtual void end();
 
@@ -288,12 +288,12 @@ namespace eutelescope {
      *  output hits and also to understand if the frame of reference
      *  conversion has been properly done. Of course this method is
      *  effectively doing something only in the case MARLIN_USE_AIDA.
-     */ 
+     */
     void bookHistos();
 
 
   protected:
-    
+
     //! TrackerPulse collection name
     /*! This is the name of the collection holding the pulse
      *  information. The other collection containing the original
@@ -301,11 +301,11 @@ namespace eutelescope {
      *  TrackerPulse object. So no need to get it directly.
      */
     std::string _pulseCollectionName;
-    
+
     //! TrackerHit collection name
     /*! This is the name the user wants to give to the output hit
      *  collection.
-     */ 
+     */
     std::string _hitCollectionName;
 
     //! Eta function collection names
@@ -321,9 +321,9 @@ namespace eutelescope {
     /*! Eta correction is very important to obtain the maximum
      *  possibile spatial resolution, but having the possibility to
      *  switch off the correction might be usefull for debug
-     *  purposes. 
+     *  purposes.
      *
-     */ 
+     */
     bool _etaCorrection ;
 
     //! The algorithm for CoG calculation.
@@ -348,8 +348,8 @@ namespace eutelescope {
     /*! This number is used only when _cogAlgorithm is "NPixel"
      */
     int _nPixel;
-    
-    //! The submatrix size (x and y) 
+
+    //! The submatrix size (x and y)
     /*! This vector contains the size along x and along y of the
      *  cluster submatrix for CoG calculation only when _cogAlgorithm
      *  is "NxMPixel
@@ -357,21 +357,21 @@ namespace eutelescope {
     std::vector<int > _xyCluSize;
 
   private:
-    
-    //! Run number 
+
+    //! Run number
     int _iRun;
-    
+
     //! Event number
     int _iEvt;
 
-    //! Conversion ID map. 
+    //! Conversion ID map.
     /*! In the data file, each cluster is tagged with a detector ID
      *  identify the sensor it belongs to. In the geometry
      *  description, there are along with the sensors also "passive"
      *  layers and other stuff. Those are identify by a layerindex. So
      *  we need a conversion table to go from the detectorID to the
      *  layerindex.
-     */ 
+     */
     std::map< int, int > _conversionIdMap;
 
     //! Silicon planes parameters as described in GEAR
@@ -383,28 +383,28 @@ namespace eutelescope {
      *
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
-     */ 
+     */
     gear::SiPlanesParameters * _siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geoemetry description. For each layer
      *  composing the telescope the relevant information are
      *  available.
-     *  
+     *
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
-     */ 
+     */
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
-    
-#ifdef MARLIN_USE_AIDA
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map
     /*! Instead of putting several pointers to AIDA histograms as
      *  class members, histograms are booked in the init() method and
      *  their pointers are inserted into this map keyed by their
-     *  names. 
+     *  names.
      *  The histogram filling can proceed recalling an object through
      *  its name
-     */ 
+     */
     std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
 
     //! Name of the local hit map cloud
@@ -412,7 +412,7 @@ namespace eutelescope {
      *  axes correspond to the pixel detector axes in its own local
      *  frame of reference already converted in millimeter. There is
      *  a cloud like this for each detector in the geometry.
-     */ 
+     */
     static std::string _hitCloudLocalName;
 
     //! Name of the hit map cloud
@@ -420,15 +420,15 @@ namespace eutelescope {
      *  axes correspond to the pixel detector axes already in the
      *  telescope frame of reference. There is a cloud like this for
      *  each detector in the geometry.
-     */ 
+     */
     static std::string _hitCloudTelescopeName;
-    
+
     //! Name of the density plot
     /*! This is a very nice plot showing in a 3D frame where all hits
      *  have been found. If the run is sufficiently long and the hits
      *  are uniformly distributed on the sensor surface, this plot
-     *  should recall the shape of the telescope itself. 
-     */ 
+     *  should recall the shape of the telescope itself.
+     */
     static std::string _densityPlotName;
 
     //! Cluster center
@@ -442,7 +442,7 @@ namespace eutelescope {
     /*! This is the projection along the X axis of the previous plot.
      */
     static std::string _clusterCenterXHistoName;
-    
+
     //! Cluster center projection along Y
     /*! This is the projection along the Y axis of the previous plot.
      */
@@ -459,7 +459,7 @@ namespace eutelescope {
     /*! This is the projection along the X axis of the previous plot.
      */
     static std::string _clusterCenterEtaXHistoName;
-    
+
     //! Cluster center projection along Y (Eta corrected)
     /*! This is the projection along the Y axis of the previous plot.
      */
@@ -471,7 +471,7 @@ namespace eutelescope {
     /*! This boolean switch was initially introduced for debug reason
      *  but then we realized that it could stay there and protect
      *  against missing AIDA::Processor.
-     * 
+     *
      */
     bool _histogramSwitch;
 
@@ -479,7 +479,7 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelHitMaker gEUTelHitMaker;      
+  EUTelHitMaker gEUTelHitMaker;
 
 }
 #endif

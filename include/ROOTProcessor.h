@@ -7,7 +7,7 @@
  *   header with author names in all development based on this file.
  *
  */
-#ifdef MARLIN_USE_ROOT
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
 
 #ifndef ROOTPROCESSOR_H
 #define ROOTPROCESSOR_H
@@ -66,33 +66,33 @@ namespace eutelescope {
    *
    *  <h4>Input - Prerequisites</h4>
    *  None
-   * 
-   *  <h4>Output</h4> 
+   *
+   *  <h4>Output</h4>
    *  A ROOT file containing all the objects added by
    *  other processors.
    *
    *  @param ROOT file name
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: ROOTProcessor.h,v 1.3 2007-05-21 11:37:33 bulgheroni Exp $
+   *  @version $Id: ROOTProcessor.h,v 1.4 2008-08-23 12:30:51 bulgheroni Exp $
    */
   class ROOTProcessor : public marlin::Processor {
-    
+
   public:
 
     //! Default constructor
     /*! This is the default constructor. It is hidded among private
      *  members to avoid singleton breaking
-     */ 
+     */
     ROOTProcessor();
-    
+
     //! Return a new ROOTProcessor
     /*! ROOTProcessor needs to be a singleton, so in fact this is not
      *  returning a new processor, but returning the only static
      *  one. This is created right here if it doesn't exist.
-     */ 
+     */
     virtual Processor*  newProcessor() ;
-    
+
 
     //! Init method
     /*! This is called at the beginning, for the time being it is just
@@ -104,33 +104,33 @@ namespace eutelescope {
     /*! Nothing to do.
      */
     virtual void processRunHeader( LCRunHeader* /* run */ ) ;
-    
-    //! Process event 
+
+    //! Process event
     /*! Nothing to do.
      */
-    virtual void processEvent( LCEvent * /* evt */) ; 
+    virtual void processEvent( LCEvent * /* evt */) ;
 
     //! Check
     /*! Nothing to do.
      */
-    virtual void check( LCEvent * /* evt */ ) ; 
+    virtual void check( LCEvent * /* evt */ ) ;
 
 
     //! End method
     /*! This is called at the end of the data processing. This is the
      *  place where all TObjects are saved
-     */ 
+     */
     virtual void end() ;
 
     //! Add TObject to the output file
     /*! This static member is used to add any kind of TObject to the
      *  list of objects are going to be saved into the output ROOT
      *  file. This object will be saved into the main processor folder.
-     * 
+     *
      *  @param proc The processor is calling the addTObject method. So
      *  usually this.
      *  @param obj The TObject we want to add
-     */ 
+     */
     static void addTObject(const marlin::Processor * proc, TObject * obj);
 
     //! Add TObject to the the output file in a subfolder
@@ -143,11 +143,11 @@ namespace eutelescope {
      *  of relative path like "../" is not allowed.
      *
      *  @param proc The processor is calling the addTObject method. So
-     *  usually this.  
+     *  usually this.
      *  @param subfolder The name of the subfolder where the TObject
-     *  has to be saved 
+     *  has to be saved
      *  @param obj The TObject we want to add
-     */ 
+     */
     static void addTObject(const marlin::Processor * proc, const char * subfolder, TObject * obj);
 
     //! Get a TObject
@@ -160,7 +160,7 @@ namespace eutelescope {
      *
      *  @todo Consider the possibility to define and throw an
      *  exception if the object the user is looking for doesn't exist
-     */ 
+     */
     static TObject * getTObject(const marlin::Processor * proc, const char * objName) ;
 
     //! Get a TObject
@@ -175,13 +175,13 @@ namespace eutelescope {
      *
      *  @todo Consider the possibility to define and throw an
      *  exception if the object the user is looking for doesn't exist
-     */ 
+     */
     static TObject * getTObject(const marlin::Processor * proc, const char * subfolder, const char * objName );
 
     //! Get the TList of TObjects
     /*! This static member is used to get back a pointer to the list
      *  of objects created within a certain processor
-     *  
+     *
      *  @param proc A pointer to the processor calling the method
      *  @return A pointer to the TList containing all objects added by
      *  this processor
@@ -189,25 +189,25 @@ namespace eutelescope {
     static TList * getTList(const marlin::Processor * proc) ;
 
   protected:
-    
-    //! The output ROOT file name 
+
+    //! The output ROOT file name
     /*! This is the name of the output file. If the user wants to save
      *  the file into a different folder, the full path has to be
      *  specified in the file name. If the output file is saved on a
      *  remote host via a supported networking protocol (rootd,
      *  proofd, xrootd), then it has to specified in the file name as
      *  well.
-     */ 
+     */
     std::string _fileName ;
-  
-private:
-    
+
+  private:
+
     //! Static instance of the singleton
     static ROOTProcessor* _me ;
 
     //! A pointer to the output file
     /*! This a pointer to the output ROOT file.
-     */ 
+     */
     TFile * _rootOutputFile;
 
     //! A list of list
@@ -217,9 +217,9 @@ private:
     TList * _listOfList;
 
 
-} ;
+  } ;
 
-} // end namespace marlin 
+} // end namespace marlin
 #endif
 
 #endif

@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.6 2008-07-31 07:57:30 bulgheroni Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.7 2008-08-23 12:30:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -14,7 +14,7 @@
 // built only if GEAR is used
 #ifdef USE_GEAR
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTelCorrelator.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
@@ -29,7 +29,7 @@
 #include "marlin/Global.h"
 
 // aida includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram2D.h>
@@ -41,7 +41,7 @@
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerPulseImpl.h>
 #include <IMPL/TrackerHitImpl.h>
@@ -59,7 +59,7 @@ using namespace marlin;
 using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelCorrelator::_clusterXCorrelationHistoName   = "ClusterXCorrelationHisto";
 std::string EUTelCorrelator::_hitXCorrelationCloudName       = "HitXCorrelationCloud";
 std::string EUTelCorrelator::_hitYCorrelationCloudName       = "HitYCorrelationCloud";
@@ -73,14 +73,14 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
     "EUTelCorrelator fills histograms with correlation plots";
 
   registerInputCollection(LCIO::TRACKERPULSE,"InputClusterCollectionName",
-			  "Cluster (pulse) collection name",
-			  _inputClusterCollectionName, string ( "cluster" ));
-  
+                          "Cluster (pulse) collection name",
+                          _inputClusterCollectionName, string ( "cluster" ));
+
   registerInputCollection(LCIO::TRACKERHIT,"InputHitCollectionName",
-			  "Hit collection name",
-			  _inputHitCollectionName, string ( "hit" ));
-  
-  
+                          "Hit collection name",
+                          _inputHitCollectionName, string ( "hit" ));
+
+
 }
 
 
@@ -96,9 +96,9 @@ void EUTelCorrelator::init() {
 #ifndef USE_GEAR
 
   streamlog_out ( ERROR4 ) <<  "Marlin was not built with GEAR support." << endl
-			   <<  "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." 
-			   << endl;
-  
+                           <<  "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue."
+                           << endl;
+
   // I'm thinking if this is the case of throwing an exception or
   // not. This is a really error and not something that can
   // exceptionally happens. Still not sure what to do
@@ -118,16 +118,16 @@ void EUTelCorrelator::init() {
 
 #endif
 
-  
+
 
 }
 
 void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
 
 
-  EUTelRunHeaderImpl * runHeader = new EUTelRunHeaderImpl( rdr ) ; 
-  
-  _noOfDetectors = runHeader->getNoOfDetector(); 
+  EUTelRunHeaderImpl * runHeader = new EUTelRunHeaderImpl( rdr ) ;
+
+  _noOfDetectors = runHeader->getNoOfDetector();
 
   // the four vectors containing the first and the last pixel
   // along both the directions
@@ -142,29 +142,29 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
   // geometry description
   if ( runHeader->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) {
     streamlog_out ( ERROR4 ) << "Error during the geometry consistency check: " << endl
-			     << "The run header says there are " << runHeader->getNoOfDetector()
-			     << " silicon detectors " << endl
-			     << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber()
-			     << " silicon planes" << endl;
+                             << "The run header says there are " << runHeader->getNoOfDetector()
+                             << " silicon detectors " << endl
+                             << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber()
+                             << " silicon planes" << endl;
     exit(-1);
   }
-  
+
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
   // beam test. The same number should be saved in the run header and
   // in the xml file. If the numbers are different, instead of barely
   // quitting ask the user what to do.
 
-  if ( runHeader->getGeoID() == 0 ) 
+  if ( runHeader->getGeoID() == 0 )
     streamlog_out ( WARNING0 ) <<  "The geometry ID in the run header is set to zero." << endl
-			       <<  "This may mean that the GeoID parameter was not set" << endl;
-  
-  
+                               <<  "This may mean that the GeoID parameter was not set" << endl;
+
+
   if ( runHeader->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
     streamlog_out ( ERROR1 ) <<  "Error during the geometry consistency check: " << endl
-			     << "The run header says the GeoID is " << runHeader->getGeoID() << endl
-			     << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID()
-			     << endl;
+                             << "The run header says the GeoID is " << runHeader->getGeoID() << endl
+                             << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID()
+                             << endl;
     string answer;
     while (true) {
       streamlog_out ( ERROR1 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
@@ -172,9 +172,9 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
       // put the answer in lower case before making the comparison.
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
       if ( answer == "q" ) {
-  	exit(-1);
+        exit(-1);
       } else if ( answer == "c" ) {
-  	break;
+        break;
       }
     }
   }
@@ -189,51 +189,51 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelCorrelator::processEvent (LCEvent * event) {
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-  if (_iEvt % 10 == 0) 
-    streamlog_out( MESSAGE4 ) << "Processing event " 
-			      << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-			      << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() 
-			      << setfill(' ') << " (Total = " << setw(10) << _iEvt << ")" 
-			      << resetiosflags(ios::left) << endl;
+  if (_iEvt % 10 == 0)
+    streamlog_out( MESSAGE4 ) << "Processing event "
+                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
+                              << setfill(' ') << " (Total = " << setw(10) << _iEvt << ")"
+                              << resetiosflags(ios::left) << endl;
   ++_iEvt;
 
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
-  
+
   if ( evt->getEventType() == kEORE ) {
     streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return;
   } else if ( evt->getEventType() == kUNKNOWN ) {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
-			       << " is of unknown type. Continue considering it as a normal Data Event." 
-			       << endl;
+                               << " is of unknown type. Continue considering it as a normal Data Event."
+                               << endl;
   }
   // if the Event that we are looking is the first we create files
   // with histograms.
   if ( isFirstEvent() ) {
 
     try {
-    // let's check if we have cluster collections
+      // let's check if we have cluster collections
       event->getCollection( _inputClusterCollectionName );
 
       _hasClusterCollection = true;
 
     } catch ( lcio::Exception& e ) {
-      
+
       _hasClusterCollection = false;
     }
 
     try {
       // let's check if we have hit collections
-    
+
       event->getCollection( _inputHitCollectionName ) ;
 
       _hasHitCollection = true;
 
     } catch ( lcio::Exception& e ) {
-      
+
       _hasHitCollection = false;
     }
 
@@ -243,250 +243,250 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
   }
 
-  
+
 
   try {
 
     if ( _hasClusterCollection ) {
 
-      LCCollectionVec * inputClusterCollection   = static_cast<LCCollectionVec*> 
-	(event->getCollection( _inputClusterCollectionName ));
-      
+      LCCollectionVec * inputClusterCollection   = static_cast<LCCollectionVec*>
+        (event->getCollection( _inputClusterCollectionName ));
+
       CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder( inputClusterCollection );
-      
+
       // we have an external detector where we consider a cluster each
       // time (external cluster) that is correlated with another
-      // detector's clusters (internal cluster) 
+      // detector's clusters (internal cluster)
 
       for ( size_t iExt = 0 ; iExt < inputClusterCollection->size() ; ++iExt ) {
-	
-	TrackerPulseImpl * externalPulse = static_cast< TrackerPulseImpl * > 
-	  ( inputClusterCollection->getElementAt( iExt ) );
-	
-	EUTelVirtualCluster  * externalCluster;
-	
-	ClusterType type = static_cast<ClusterType>
-	  (static_cast<int>((pulseCellDecoder(externalPulse)["type"])));
-	// we check that the type of cluster is ok
 
-	if ( type == kEUTelFFClusterImpl ) {
-	  externalCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*>
-						    ( externalPulse->getTrackerData()) );
+        TrackerPulseImpl * externalPulse = static_cast< TrackerPulseImpl * >
+          ( inputClusterCollection->getElementAt( iExt ) );
 
-	} else if ( type == kEUTelSparseClusterImpl ) {
+        EUTelVirtualCluster  * externalCluster;
 
-	  // ok the cluster is of sparse type, but we also need to know
-	  // the kind of pixel description used. This information is
-	  // stored in the corresponding original data collection.
-	  
-	  LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-	  TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-	  CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-	  SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
-	  
-	  // now we know the pixel type. So we can properly create a new
-	  // instance of the sparse cluster
-	  if ( pixelType == kEUTelSimpleSparsePixel ) {
-	    externalCluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
-	      ( static_cast<TrackerDataImpl *> ( externalPulse->getTrackerData()  ) );
-	  } else {
-	    streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-	    throw UnknownDataTypeException("Pixel type unknown");
-	  }
+        ClusterType type = static_cast<ClusterType>
+          (static_cast<int>((pulseCellDecoder(externalPulse)["type"])));
+        // we check that the type of cluster is ok
 
-	} else {
-	  streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
-	  throw UnknownDataTypeException("Cluster type unknown");
-	}
-	
-	int externalSensorID = pulseCellDecoder( externalPulse ) [ "sensorID" ] ;
-	
-	float externalXCenter;
-	float externalYCenter;
+        if ( type == kEUTelFFClusterImpl ) {
+          externalCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*>
+                                                    ( externalPulse->getTrackerData()) );
 
-	// we catch the coordinates of the external seed  
+        } else if ( type == kEUTelSparseClusterImpl ) {
 
-	externalCluster->getCenterOfGravity( externalXCenter, externalYCenter ) ; 
+          // ok the cluster is of sparse type, but we also need to know
+          // the kind of pixel description used. This information is
+          // stored in the corresponding original data collection.
 
-	for ( size_t iInt = 0;  iInt <  inputClusterCollection->size() ; ++iInt ) {
+          LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+          TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+          CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+          SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
 
-	  TrackerPulseImpl * internalPulse = static_cast< TrackerPulseImpl * > 
-	    ( inputClusterCollection->getElementAt( iInt ) );
+          // now we know the pixel type. So we can properly create a new
+          // instance of the sparse cluster
+          if ( pixelType == kEUTelSimpleSparsePixel ) {
+            externalCluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+              ( static_cast<TrackerDataImpl *> ( externalPulse->getTrackerData()  ) );
+          } else {
+            streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+            throw UnknownDataTypeException("Pixel type unknown");
+          }
 
-	  EUTelVirtualCluster  * internalCluster;
+        } else {
+          streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
+          throw UnknownDataTypeException("Cluster type unknown");
+        }
 
-	  ClusterType type = static_cast<ClusterType>
-	    (static_cast<int>((pulseCellDecoder(internalPulse)["type"])));
-	  
-	  // we check that the type of cluster is ok
+        int externalSensorID = pulseCellDecoder( externalPulse ) [ "sensorID" ] ;
 
-	  if ( type == kEUTelFFClusterImpl ) {
-	    internalCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> 
-						      (internalPulse->getTrackerData()) );
-	  
-	  } else if ( type == kEUTelSparseClusterImpl ) {
+        float externalXCenter;
+        float externalYCenter;
 
-	    // ok the cluster is of sparse type, but we also need to know
-	    // the kind of pixel description used. This information is
-	    // stored in the corresponding original data collection.
-	    
-	    LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-	    TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-	    CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-	    SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
-	    
-	    // now we know the pixel type. So we can properly create a new
-	    // instance of the sparse cluster
-	    if ( pixelType == kEUTelSimpleSparsePixel ) {
-	      internalCluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
-		( static_cast<TrackerDataImpl *> ( internalPulse->getTrackerData()  ) );
-	    } else {
-	      streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-	      throw UnknownDataTypeException("Pixel type unknown");
-	    }
-	    
-	  } else {
-	    streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
-	    throw UnknownDataTypeException("Cluster type unknown");
-	  }
-	  int internalSensorID = pulseCellDecoder( internalPulse ) [ "sensorID" ] ;
+        // we catch the coordinates of the external seed
 
-	  if ( internalSensorID != externalSensorID ) {
+        externalCluster->getCenterOfGravity( externalXCenter, externalYCenter ) ;
 
-	    float internalXCenter;
-	    float internalYCenter;
+        for ( size_t iInt = 0;  iInt <  inputClusterCollection->size() ; ++iInt ) {
 
-	    // we catch the coordinates of the internal seed  
+          TrackerPulseImpl * internalPulse = static_cast< TrackerPulseImpl * >
+            ( inputClusterCollection->getElementAt( iInt ) );
 
-	    internalCluster->getCenterOfGravity( internalXCenter, internalYCenter ) ; 
+          EUTelVirtualCluster  * internalCluster;
 
-	    streamlog_out ( DEBUG ) << "Filling histo " << externalSensorID << " " << internalSensorID << endl;
-	  
+          ClusterType type = static_cast<ClusterType>
+            (static_cast<int>((pulseCellDecoder(internalPulse)["type"])));
 
-	    // we input the coordinates in the correlation matrix, one
-	    // for each type of coordinate: X and Y
+          // we check that the type of cluster is ok
 
-	    _clusterXCorrelationMatrix[ externalSensorID ][ internalSensorID ]->
-	      fill( externalXCenter, internalXCenter );
-	    _clusterYCorrelationMatrix[ externalSensorID ][ internalSensorID ]->
-	      fill( externalYCenter, internalYCenter ); 
-	  
-	  } // endif
-	  
-	  delete internalCluster;
+          if ( type == kEUTelFFClusterImpl ) {
+            internalCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*>
+                                                      (internalPulse->getTrackerData()) );
 
-	} // internal loop
+          } else if ( type == kEUTelSparseClusterImpl ) {
 
-	delete externalCluster;
+            // ok the cluster is of sparse type, but we also need to know
+            // the kind of pixel description used. This information is
+            // stored in the corresponding original data collection.
+
+            LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+            TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+            CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+            SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+
+            // now we know the pixel type. So we can properly create a new
+            // instance of the sparse cluster
+            if ( pixelType == kEUTelSimpleSparsePixel ) {
+              internalCluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+                ( static_cast<TrackerDataImpl *> ( internalPulse->getTrackerData()  ) );
+            } else {
+              streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+              throw UnknownDataTypeException("Pixel type unknown");
+            }
+
+          } else {
+            streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
+            throw UnknownDataTypeException("Cluster type unknown");
+          }
+          int internalSensorID = pulseCellDecoder( internalPulse ) [ "sensorID" ] ;
+
+          if ( internalSensorID != externalSensorID ) {
+
+            float internalXCenter;
+            float internalYCenter;
+
+            // we catch the coordinates of the internal seed
+
+            internalCluster->getCenterOfGravity( internalXCenter, internalYCenter ) ;
+
+            streamlog_out ( DEBUG ) << "Filling histo " << externalSensorID << " " << internalSensorID << endl;
+
+
+            // we input the coordinates in the correlation matrix, one
+            // for each type of coordinate: X and Y
+
+            _clusterXCorrelationMatrix[ externalSensorID ][ internalSensorID ]->
+              fill( externalXCenter, internalXCenter );
+            _clusterYCorrelationMatrix[ externalSensorID ][ internalSensorID ]->
+              fill( externalYCenter, internalYCenter );
+
+          } // endif
+
+          delete internalCluster;
+
+        } // internal loop
+
+        delete externalCluster;
       } // external loop
     } // endif hasCluster
 
-   
+
 
 
     if ( _hasHitCollection ) {
 
-      LCCollectionVec * inputHitCollection = static_cast< LCCollectionVec *> 
-	( event->getCollection( _inputHitCollectionName )) ;
-      
-      LCCollectionVec * originalDataCollectionVec = dynamic_cast< LCCollectionVec * > 
-	(evt->getCollection( "original_zsdata" ) );
-      
+      LCCollectionVec * inputHitCollection = static_cast< LCCollectionVec *>
+        ( event->getCollection( _inputHitCollectionName )) ;
+
+      LCCollectionVec * originalDataCollectionVec = dynamic_cast< LCCollectionVec * >
+        (evt->getCollection( "original_zsdata" ) );
+
       CellIDDecoder<TrackerDataImpl> originalCellDecoder( originalDataCollectionVec );
 
-     
+
       for ( size_t iExt = 0 ; iExt < inputHitCollection->size(); ++iExt ) {
 
-	// this is the external hit
-	TrackerHitImpl * externalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
-									 getElementAt( iExt ) );
-	
-	// now let me take the vector of clusters used to define this
-	// hit
-	LCObjectVec      externalClusterVec = externalHit->getRawHits();
-	
-	// actually there is only one cluster in this vector
-	TrackerDataImpl * externalCluster = dynamic_cast< TrackerDataImpl *> ( externalClusterVec[ 0 ] );
-	
-	int externalSensorID = originalCellDecoder( externalCluster ) ["sensorID"] ;
+        // this is the external hit
+        TrackerHitImpl * externalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
+                                                                         getElementAt( iExt ) );
 
-	double * externalPosition;
-	externalPosition = (double *) externalHit->getPosition();
-      
-	for ( size_t iInt = 0; iInt < inputHitCollection->size(); ++iInt ) {
+        // now let me take the vector of clusters used to define this
+        // hit
+        LCObjectVec      externalClusterVec = externalHit->getRawHits();
 
-	  TrackerHitImpl  * internalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
-									    getElementAt( iInt ) );
-	  
-	  LCObjectVec       internalClusterVec = internalHit->getRawHits();
-	  TrackerDataImpl * internalCluster    = dynamic_cast<TrackerDataImpl * > ( internalClusterVec[ 0 ] );
-	  
-	  int internalSensorID = originalCellDecoder( internalCluster ) [ "sensorID" ];
+        // actually there is only one cluster in this vector
+        TrackerDataImpl * externalCluster = dynamic_cast< TrackerDataImpl *> ( externalClusterVec[ 0 ] );
 
-	  if ( internalSensorID != externalSensorID ) {
-	    
-	    double * internalPosition;
-	    internalPosition = (double *) internalHit->getPosition(  );
-	    
-	    _hitXCorrelationMatrix[ externalSensorID ] [ internalSensorID ] ->
-	      fill ( externalPosition[0] , internalPosition[0] ) ;
-	    
-	    _hitYCorrelationMatrix[ externalSensorID ] [ internalSensorID ] ->
-	      fill( externalPosition[1], internalPosition[1] );
-       
-	  }
-	  
-	}
-	
+        int externalSensorID = originalCellDecoder( externalCluster ) ["sensorID"] ;
+
+        double * externalPosition;
+        externalPosition = (double *) externalHit->getPosition();
+
+        for ( size_t iInt = 0; iInt < inputHitCollection->size(); ++iInt ) {
+
+          TrackerHitImpl  * internalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
+                                                                            getElementAt( iInt ) );
+
+          LCObjectVec       internalClusterVec = internalHit->getRawHits();
+          TrackerDataImpl * internalCluster    = dynamic_cast<TrackerDataImpl * > ( internalClusterVec[ 0 ] );
+
+          int internalSensorID = originalCellDecoder( internalCluster ) [ "sensorID" ];
+
+          if ( internalSensorID != externalSensorID ) {
+
+            double * internalPosition;
+            internalPosition = (double *) internalHit->getPosition(  );
+
+            _hitXCorrelationMatrix[ externalSensorID ] [ internalSensorID ] ->
+              fill ( externalPosition[0] , internalPosition[0] ) ;
+
+            _hitYCorrelationMatrix[ externalSensorID ] [ internalSensorID ] ->
+              fill( externalPosition[1], internalPosition[1] );
+
+          }
+
+        }
+
       }
     }
 
 
   } catch (DataNotAvailableException& e  ) {
-   
-    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber() 
-				<< " in run " << event->getRunNumber() << endl;
+
+    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
+                                << " in run " << event->getRunNumber() << endl;
   }
 
-#endif 
+#endif
 
 }
 
 void EUTelCorrelator::end() {
-  
+
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
 
-#ifdef MARLIN_USE_AIDA
-  
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
   if ( _hasHitCollection ) {
     for ( int row = 0 ; row < _noOfDetectors; ++row ) {
       for ( int col = 0 ; col < _noOfDetectors; ++col ) {
-	
-	if ( col != row ) {
-	  AIDA::ICloud2D * cloud =   _hitXCorrelationMatrix[ row ] [ col ];
-	  if ( ! cloud->isConverted() ) cloud -> convertToHistogram();
-	  cloud =  _hitYCorrelationMatrix[ row ] [ col ] ;
-	  if ( ! cloud->isConverted() ) cloud -> convertToHistogram();
-	}
+
+        if ( col != row ) {
+          AIDA::ICloud2D * cloud =   _hitXCorrelationMatrix[ row ] [ col ];
+          if ( ! cloud->isConverted() ) cloud -> convertToHistogram();
+          cloud =  _hitYCorrelationMatrix[ row ] [ col ] ;
+          if ( ! cloud->isConverted() ) cloud -> convertToHistogram();
+        }
       }
     }
   }
 
 #endif
-  
+
 
 }
 
 void EUTelCorrelator::bookHistos() {
-  
+
   if ( !_hasClusterCollection && !_hasHitCollection ) return ;
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   try {
 
     streamlog_out ( MESSAGE4 ) <<  "Booking histograms" << endl;
-    
+
     // create all the directories first
     vector< string > dirNames;
 
@@ -504,12 +504,12 @@ void EUTelCorrelator::bookHistos() {
       AIDAProcessor::tree(this)->mkdir( dirNames[iPos].c_str() ) ;
 
     }
-     
-    
+
+
     string tempHistoName;
     string tempHistoTitle ;
 
-    
+
     for ( int row = 0 ; row < _noOfDetectors; ++row ) {
 
       vector< AIDA::IHistogram2D * > innerVectorXCluster;
@@ -517,166 +517,166 @@ void EUTelCorrelator::bookHistos() {
 
       map< unsigned int , AIDA::ICloud2D * > innerMapXHit;
       map< unsigned int , AIDA::ICloud2D * > innerMapYHit;
-      
-      
+
+
       for ( int col = 0 ; col < _noOfDetectors; ++col ) {
 
-	if ( col != row ) {
-	  
-	  //we create histograms for X and Y Cluster correlation 
-	  if ( _hasClusterCollection ) {
-	    {
-	      stringstream ss;
-	      ss << "ClusterX/" <<  _clusterXCorrelationHistoName << "_d" << row 
-		 << "_d" << col ;
-	      
-	      tempHistoName = ss.str();
-	    }
-	    
-	    streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
-	    
-	    int     xBin = _maxX[ col ] - _minX[ col ] + 1;
-	    double  xMin = static_cast<double >(_minX[ col ]) - 0.5;
-	    double  xMax = static_cast<double >(_maxX[ col ]) + 0.5;
-	    int     yBin = _maxX[ row ] - _minX[ row ] + 1;
-	    double  yMin = static_cast<double >(_minX[ row ]) - 0.5;
-	    double  yMax = static_cast<double >(_maxX[ row ]) + 0.5;
-	    
-	    AIDA::IHistogram2D * histo2D = 
-	      AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), 
-									xBin, xMin, xMax, yBin, yMin, yMax );
-	    
-	    {
+        if ( col != row ) {
 
-	      stringstream tt ;
-	      tt << "XClusterCorrelation" << "_d" << row 
-		 << "_d" << col ;
-	      tempHistoTitle = tt.str();
-	     
-	    }
+          //we create histograms for X and Y Cluster correlation
+          if ( _hasClusterCollection ) {
+            {
+              stringstream ss;
+              ss << "ClusterX/" <<  _clusterXCorrelationHistoName << "_d" << row
+                 << "_d" << col ;
 
-	    histo2D->setTitle( tempHistoTitle.c_str() );
-	    innerVectorXCluster.push_back ( histo2D );
-	    
-	    
-	    {
-	      stringstream ss;
-	      ss << "ClusterY/" <<  _clusterYCorrelationHistoName << "_d" << row 
-		 << "_d" << col ;
-	    
-	      tempHistoName = ss.str();
-	    }
-	  
-	    streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
-	  
-	    xBin = _maxY[ col ] - _minY[ col ] + 1;
-	    xMin = static_cast<double >(_minY[ col ]) - 0.5;
-	    xMax = static_cast<double >(_maxY[ col ]) + 0.5;
-	    yBin = _maxY[ row ] - _minY[ row ] + 1;
-	    yMin = static_cast<double >(_minY[ row ]) - 0.5;
-	    yMax = static_cast<double >(_maxY[ row ]) + 0.5;
-	  
-	  
-	    histo2D =
-	      AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), 
-									xBin, xMin, xMax, yBin, yMin, yMax );
-	    {
-	      stringstream tt ;
-	      tt << "YClusterCorrelation" << "_d" << row 
-		 << "_d" << col ;
-	      tempHistoTitle = tt.str();
-	    }
+              tempHistoName = ss.str();
+            }
 
-	    histo2D->setTitle( tempHistoTitle.c_str()) ;
-	       
-	    innerVectorYCluster.push_back ( histo2D );
-	     
-	  }
+            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
 
-	  //we create clouds for X and Y Hit correlation
-	  if ( _hasHitCollection ) {
+            int     xBin = _maxX[ col ] - _minX[ col ] + 1;
+            double  xMin = static_cast<double >(_minX[ col ]) - 0.5;
+            double  xMax = static_cast<double >(_maxX[ col ]) + 0.5;
+            int     yBin = _maxX[ row ] - _minX[ row ] + 1;
+            double  yMin = static_cast<double >(_minX[ row ]) - 0.5;
+            double  yMax = static_cast<double >(_maxX[ row ]) + 0.5;
+
+            AIDA::IHistogram2D * histo2D =
+              AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
+                                                                        xBin, xMin, xMax, yBin, yMin, yMax );
+
+            {
+
+              stringstream tt ;
+              tt << "XClusterCorrelation" << "_d" << row
+                 << "_d" << col ;
+              tempHistoTitle = tt.str();
+
+            }
+
+            histo2D->setTitle( tempHistoTitle.c_str() );
+            innerVectorXCluster.push_back ( histo2D );
 
 
-	    {
-	      stringstream ss;
-	      ss << "HitX/" << _hitXCorrelationCloudName << "_d" << row << "_d" << col;
-	      tempHistoName = ss.str();
+            {
+              stringstream ss;
+              ss << "ClusterY/" <<  _clusterYCorrelationHistoName << "_d" << row
+                 << "_d" << col ;
 
-	    }
+              tempHistoName = ss.str();
+            }
 
-	    streamlog_out( DEBUG ) << "Booking cloud " << tempHistoName << endl;
-	    
-	    string tempHistoTitle ;
-	    stringstream tt ;
-	    tt << "XHitCorrelation" << "_d" << row 
-	       << "_d" << col ;
-	    tempHistoTitle = tt.str();
+            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
 
-	    AIDA::ICloud2D * cloud2D = 
-	      AIDAProcessor::histogramFactory( this )->createCloud2D( tempHistoName.c_str(),
-								      tempHistoTitle.c_str(), 1000 );
-
-	    innerMapXHit[ _siPlanesLayerLayout->getID( col ) ] =  cloud2D ;
+            xBin = _maxY[ col ] - _minY[ col ] + 1;
+            xMin = static_cast<double >(_minY[ col ]) - 0.5;
+            xMax = static_cast<double >(_maxY[ col ]) + 0.5;
+            yBin = _maxY[ row ] - _minY[ row ] + 1;
+            yMin = static_cast<double >(_minY[ row ]) - 0.5;
+            yMax = static_cast<double >(_maxY[ row ]) + 0.5;
 
 
-	    {
-	      stringstream ss;
-	      ss << "HitY/" << _hitYCorrelationCloudName << "_d" << row << "_d" << col;
-	      tempHistoName = ss.str();
+            histo2D =
+              AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
+                                                                        xBin, xMin, xMax, yBin, yMin, yMax );
+            {
+              stringstream tt ;
+              tt << "YClusterCorrelation" << "_d" << row
+                 << "_d" << col ;
+              tempHistoTitle = tt.str();
+            }
 
-	    }
+            histo2D->setTitle( tempHistoTitle.c_str()) ;
 
-	    streamlog_out( DEBUG ) << "Booking cloud " << tempHistoName << endl;
-	    
-	    {
-	      stringstream tt ;
-	      tt << "YHitCorrelation" << "_d" << row 
-		 << "_d" << col ;
-	      tempHistoTitle = tt.str();
-	    }
+            innerVectorYCluster.push_back ( histo2D );
 
-	    cloud2D = AIDAProcessor::histogramFactory( this )->createCloud2D( tempHistoName.c_str(),
-									      tempHistoTitle.c_str(), 1000 );
-	    	    
-	    innerMapYHit[ _siPlanesLayerLayout->getID( col ) ] =  cloud2D ;
-	  }
+          }
 
-	} else {
-	  
-	  if ( _hasClusterCollection ) {
-	    innerVectorXCluster.push_back( NULL );
-	    innerVectorYCluster.push_back( NULL );
-	  }
+          //we create clouds for X and Y Hit correlation
+          if ( _hasHitCollection ) {
 
-	  if ( _hasHitCollection ) {
-	    innerMapXHit[ _siPlanesLayerLayout->getID( col )  ] = NULL ;	   
-	    innerMapYHit[ _siPlanesLayerLayout->getID( col )  ] = NULL ;
-	  }
 
-	}
+            {
+              stringstream ss;
+              ss << "HitX/" << _hitXCorrelationCloudName << "_d" << row << "_d" << col;
+              tempHistoName = ss.str();
+
+            }
+
+            streamlog_out( DEBUG ) << "Booking cloud " << tempHistoName << endl;
+
+            string tempHistoTitle ;
+            stringstream tt ;
+            tt << "XHitCorrelation" << "_d" << row
+               << "_d" << col ;
+            tempHistoTitle = tt.str();
+
+            AIDA::ICloud2D * cloud2D =
+              AIDAProcessor::histogramFactory( this )->createCloud2D( tempHistoName.c_str(),
+                                                                      tempHistoTitle.c_str(), 1000 );
+
+            innerMapXHit[ _siPlanesLayerLayout->getID( col ) ] =  cloud2D ;
+
+
+            {
+              stringstream ss;
+              ss << "HitY/" << _hitYCorrelationCloudName << "_d" << row << "_d" << col;
+              tempHistoName = ss.str();
+
+            }
+
+            streamlog_out( DEBUG ) << "Booking cloud " << tempHistoName << endl;
+
+            {
+              stringstream tt ;
+              tt << "YHitCorrelation" << "_d" << row
+                 << "_d" << col ;
+              tempHistoTitle = tt.str();
+            }
+
+            cloud2D = AIDAProcessor::histogramFactory( this )->createCloud2D( tempHistoName.c_str(),
+                                                                              tempHistoTitle.c_str(), 1000 );
+
+            innerMapYHit[ _siPlanesLayerLayout->getID( col ) ] =  cloud2D ;
+          }
+
+        } else {
+
+          if ( _hasClusterCollection ) {
+            innerVectorXCluster.push_back( NULL );
+            innerVectorYCluster.push_back( NULL );
+          }
+
+          if ( _hasHitCollection ) {
+            innerMapXHit[ _siPlanesLayerLayout->getID( col )  ] = NULL ;
+            innerMapYHit[ _siPlanesLayerLayout->getID( col )  ] = NULL ;
+          }
+
+        }
 
       }
 
       if ( _hasClusterCollection ) {
-	_clusterXCorrelationMatrix.push_back( innerVectorXCluster ) ;
-	_clusterYCorrelationMatrix.push_back( innerVectorYCluster ) ;
+        _clusterXCorrelationMatrix.push_back( innerVectorXCluster ) ;
+        _clusterYCorrelationMatrix.push_back( innerVectorYCluster ) ;
       }
 
       if ( _hasHitCollection ) {
-	_hitXCorrelationMatrix[ _siPlanesLayerLayout->getID( row ) ] = innerMapXHit;
-	_hitYCorrelationMatrix[ _siPlanesLayerLayout->getID( row ) ] = innerMapYHit;
+        _hitXCorrelationMatrix[ _siPlanesLayerLayout->getID( row ) ] = innerMapXHit;
+        _hitYCorrelationMatrix[ _siPlanesLayerLayout->getID( row ) ] = innerMapYHit;
       }
     }
-  
+
   } catch (lcio::Exception& e ) {
-    
+
     streamlog_out ( ERROR1 ) << "No AIDAProcessor initialized. Sorry for quitting..." << endl;
-    exit( -1 ); 
+    exit( -1 );
 
   }
 #endif
 }
 
-  
+
 
 #endif

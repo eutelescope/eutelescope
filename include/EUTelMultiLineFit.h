@@ -12,7 +12,7 @@
 
 // built only if GEAR is available
 #ifdef USE_GEAR
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -21,12 +21,12 @@
 #include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
 
 // AIDA includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
 
@@ -39,7 +39,7 @@
 namespace eutelescope {
 
   //! Straight line fit processor
-  /*! 
+  /*!
    *
    */
 
@@ -58,19 +58,19 @@ namespace eutelescope {
     };
 
     virtual void FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFit[], double yResFit[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]);
-     
+
     //! Returns a new instance of EUTelMultiLineFit
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelMultiLineFit.
      */
     virtual Processor * newProcessor() {
       return new EUTelMultiLineFit;
     }
 
-    //! Default constructor 
+    //! Default constructor
     EUTelMultiLineFit ();
 
     //! Called at the job beginning.
@@ -86,7 +86,7 @@ namespace eutelescope {
      *  the one provided by the GEAR geometry description. In case the
      *  two are different, the user is asked to decide to quit or to
      *  continue with a description that might be wrong.
-     * 
+     *
      *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
@@ -95,13 +95,13 @@ namespace eutelescope {
     /*! This is called for each event in the file. Each element of the
      *  pulse collection is scanned and the center of the cluster is
      *  translated into the external frame of reference thanks to the
-     *  GEAR geometry description. 
+     *  GEAR geometry description.
      *
      *  The cluster center might be calculate using a standard linear
      *  charge center of gravity algortihm or applying a more
      *  sophisticated non linear eta function. This behaviour is
      *  regulated by the user from the steering file.
-     * 
+     *
      *  @throw UnknownDataTypeException if the cluster type is unknown
      *
      *  @param evt the current LCEvent event as passed by the
@@ -112,7 +112,7 @@ namespace eutelescope {
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
-     *  finished. 
+     *  finished.
      */
     virtual void end();
 
@@ -123,25 +123,25 @@ namespace eutelescope {
      *  output hits and also to understand if the frame of reference
      *  conversion has been properly done. Of course this method is
      *  effectively doing something only in the case MARLIN_USE_AIDA.
-     */ 
+     */
     void bookHistos();
 
 
   protected:
-    
+
     //! TrackerHit collection name
     /*! Input collection with hits.
-     */ 
+     */
     std::string _hitCollectionName;
 
     //! TRACK collection name
     /*! Output collection with fitted tracks.
-     */ 
+     */
     std::string _outputTrackColName;
 
     //! TRACKERHIT collection name
     /*! Output collection with hits from fitted tracks.
-     */ 
+     */
     std::string _correctedHitColName;
     std::string _outputHitColName;
 
@@ -170,21 +170,21 @@ namespace eutelescope {
     float _hitDistanceYMax;
 
   private:
-    
-    //! Run number 
+
+    //! Run number
     int _iRun;
-    
+
     //! Event number
     int _iEvt;
 
-    //! Conversion ID map. 
+    //! Conversion ID map.
     /*! In the data file, each cluster is tagged with a detector ID
      *  identify the sensor it belongs to. In the geometry
      *  description, there are along with the sensors also "passive"
      *  layers and other stuff. Those are identify by a layerindex. So
      *  we need a conversion table to go from the detectorID to the
      *  layerindex.
-     */ 
+     */
     std::map< int, int > _conversionIdMap;
 
     //! Silicon planes parameters as described in GEAR
@@ -196,28 +196,28 @@ namespace eutelescope {
      *
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
-     */ 
+     */
     gear::SiPlanesParameters * _siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geoemetry description. For each layer
      *  composing the telescope the relevant information are
      *  available.
-     *  
+     *
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
-     */ 
+     */
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
-    
-#ifdef MARLIN_USE_AIDA
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map
     /*! Instead of putting several pointers to AIDA histograms as
      *  class members, histograms are booked in the init() method and
      *  their pointers are inserted into this map keyed by their
-     *  names. 
+     *  names.
      *  The histogram filling can proceed recalling an object through
      *  its name
-     */ 
+     */
     std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
 
     static std::string _numberTracksLocalname;
@@ -246,7 +246,7 @@ namespace eutelescope {
     double ** _zPos;
     double ** _seedCharge;
     double ** _clusterCharge;
-    
+
     double * _xPosHere;
     double * _yPosHere;
     double * _zPosHere;
@@ -269,7 +269,7 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelMultiLineFit gEUTelMultiLineFit;      
+  EUTelMultiLineFit gEUTelMultiLineFit;
 
 }
 #endif

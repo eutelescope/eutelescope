@@ -18,11 +18,11 @@
 #include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include "lcio.h"
 
 // AIDA includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #include <AIDA/IHistogram1D.h>
 #endif
@@ -38,92 +38,92 @@ namespace eutelescope {
   //! Fitted track analysis processor for EUDET Telescope
   /*! This processor was designed for checking track fitting results.
    *  Based on measured and fitted hit positions in telescope planes
-   *  alignment of the telescope is also verified. 
+   *  alignment of the telescope is also verified.
    *
    * \par Geometry description
    * Geometry information is taken from GEAR.
    *
-   * \par Input  
-   * \c Track collection is taken as an input. 
+   * \par Input
+   * \c Track collection is taken as an input.
    * For each track referenced \c TrackerHit entries are analysed.
    * Measured and fitted hits can be distinguished by looking into
-   * hit type (type <=31 for measured hits, type >=32 for fitted). 
-   * 
+   * hit type (type <=31 for measured hits, type >=32 for fitted).
+   *
    * \param InputCollectionName  Name of the input  Tracker collection
    *
-   * \param BeamReferenceID ID of the layer used to check alignment 
+   * \param BeamReferenceID ID of the layer used to check alignment
    *        relative to the beam direction
    *
-   * \param TelescopeReferenceIDs IDs of two layers used to check 
-   *        internal telescope alignment 
+   * \param TelescopeReferenceIDs IDs of two layers used to check
+   *        internal telescope alignment
    *
    * \param HistoInfoFileName Name of the histogram information file.
-   *        Using this file histogram parameters can be changed without 
+   *        Using this file histogram parameters can be changed without
    *        recompiling the code.
    * \param DebugEventCount      Print out debug and information
    * messages only for one out of given number of events. If zero, no
-   * debug information is printed. 
+   * debug information is printed.
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelFitHistograms.h,v 1.5 2007-10-23 21:28:13 zarnecki Exp $
+   * @version $Id: EUTelFitHistograms.h,v 1.6 2008-08-23 12:30:51 bulgheroni Exp $
    * \date 2007.09.10
    *
-   */ 
+   */
 
 
   class EUTelFitHistograms : public marlin::Processor {
-  
+
   public:
 
-  
-     
+
+
     //! Returns a new instance of EUTelFitHistograms
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelFitHistograms
      */
     virtual Processor*  newProcessor() { return new EUTelFitHistograms ; }
-  
-    //! Default constructor 
+
+    //! Default constructor
     EUTelFitHistograms() ;
-  
+
     //! Called at the job beginning.
-    /*! This is executed only once in the whole execution. 
-     *  
+    /*! This is executed only once in the whole execution.
+     *
      */
     virtual void init() ;
-  
+
     //! Called for every run.
     /*!
      * @param run the LCRunHeader of the current run
      */
     virtual void processRunHeader( LCRunHeader* run ) ;
-  
+
     //! Called every event
     /*! This is called for each event in the file.
-     * 
-     *  @param evt the current LCEvent event 
+     *
+     *  @param evt the current LCEvent event
      */
-    virtual void processEvent( LCEvent * evt ) ; 
-  
+    virtual void processEvent( LCEvent * evt ) ;
+
     //! Check event method
     /*! This method is called by the Marlin execution framework as
      *  soon as the processEvent is over. It can be used to fill check
      *  plots. For the time being there is nothing to check and do in
      *  this slot.
-     * 
+     *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
-    virtual void check( LCEvent * evt ) ; 
-  
-  
+    virtual void check( LCEvent * evt ) ;
+
+
     //! Book histograms
     /*! This method is used to books all required
      *  histograms. Histogram pointers are stored into
-     *  _aidaHistoMap so that they can be recalled and filled 
-     * from anywhere in the code.  
+     *  _aidaHistoMap so that they can be recalled and filled
+     * from anywhere in the code.
      */
     void bookHistos();
 
@@ -132,7 +132,7 @@ namespace eutelescope {
     /*! Used to release memory allocated in init() step
      */
     virtual void end() ;
-  
+
   protected:
 
     //! Silicon planes parameters as described in GEAR
@@ -144,26 +144,26 @@ namespace eutelescope {
      *
      *  This object is provided by GEAR during the init() phase and
      *  stored here for local use.
-     */ 
+     */
     gear::SiPlanesParameters * _siPlanesParameters;
 
     //! Silicon plane layer layout
     /*! This is the real geoemetry description. For each layer
      *  composing the telescope the relevant information are
      *  available.
-     *  
+     *
      *  This object is taken from the _siPlanesParameters during the
      *  init() phase and stored for local use
-     */ 
+     */
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
 
     //! The histogram information file
     /*! This string contain the name of the histogram information
      *  file. This is selected by the user in the steering file.
-     * 
+     *
      *  @see eutelescope::EUTelHistogramManager
      *  @see eutelescope::EUTelHistogramInfo
-     */ 
+     */
     std::string _histoInfoFileName;
 
 
@@ -190,7 +190,7 @@ namespace eutelescope {
 
     int _nTelPlanes;
     int _iDUT;
-  
+
     int * _planeSort;
     int * _planeID;
     double * _planePosition;
@@ -212,9 +212,9 @@ namespace eutelescope {
     int _nEvt ;
 
 
- #ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map
-    /*! Used to refer to histograms by their names, i.e. to recall 
+    /*! Used to refer to histograms by their names, i.e. to recall
      *  a histogram pointer using histogram name.
      */
 
@@ -263,11 +263,11 @@ namespace eutelescope {
     static std::string _meanSignalYHistoName;
     static std::string _meanSignalXYHistoName;
 
-#endif 
+#endif
 
- } ;
+  } ;
 
-  
+
   //! A global instance of the processor.
   EUTelFitHistograms aEUTelFitHistograms ;
 

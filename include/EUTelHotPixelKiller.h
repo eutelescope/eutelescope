@@ -10,17 +10,17 @@
 #ifndef EUTELHOTPIXELKILLER
 #define EUTELHOTPIXELKILLER 1
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <LCIOTypes.h>
 #include <IMPL/LCCollectionVec.h>
 
 // AIDA includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
 
@@ -34,13 +34,13 @@ namespace eutelescope {
   /*! This processor is used to keep hot matrix out from the analysis
    *  procedure. This processor is based on the idea that if a pixel
    *  is found to be a part of a cluster to often, probably it is a noisy
-   *  pixel and should be removed from the game. 
+   *  pixel and should be removed from the game.
    *
    *  The input status collection has to be writable, so if it is read
    *  in from a file, it has to be copied locally (EUTelCopyPedestalProcessor).
-   *  
-   *  <h4>Input collections</h4> 
-   *  
+   *
+   *  <h4>Input collections</h4>
+   *
    *  <b>Status collection </b> the current status collection
    *
    *  <h4>Output collections</h4>
@@ -50,9 +50,9 @@ namespace eutelescope {
    *  @param MaxAllowedFiringFreq This number [0,1] represents the
    *  maximum allowed firing frequency. Set it to a suitable value
    *  depending on the occupancy.
-   * 
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHotPixelKiller.h,v 1.2 2007-10-01 11:19:06 bulgheroni Exp $
+   *  @version $Id: EUTelHotPixelKiller.h,v 1.3 2008-08-23 12:30:51 bulgheroni Exp $
    *
    */
 
@@ -60,19 +60,19 @@ namespace eutelescope {
 
   public:
 
-     
+
     //! Returns a new instance of EUTelHotPixelKiller
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelHotPixelKiller.
      */
     virtual Processor * newProcessor() {
       return new EUTelHotPixelKiller;
     }
 
-    //! Default constructor 
+    //! Default constructor
     EUTelHotPixelKiller ();
 
     //! Called at the job beginning.
@@ -84,8 +84,8 @@ namespace eutelescope {
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
-     *  is incremented. 
-     * 
+     *  is incremented.
+     *
      *  @param run LCRunHeader of the this current run
      *
      *  @throw InvalidParameterException if a paramter is wrongly set
@@ -123,9 +123,9 @@ namespace eutelescope {
 
 
   protected:
-    
 
-#ifdef MARLIN_USE_AIDA
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! Histogram with the firing frequency 2D distribution
     static std::string _firing2DHistoName;
 
@@ -211,11 +211,11 @@ namespace eutelescope {
     //! A vector with the firing frequency value
     std::vector< std::vector< unsigned short > > _firingFreqVec;
 
-    
+
   };
 
   //! A global instance of the processor
-  EUTelHotPixelKiller gEUTelHotPixelKiller;      
+  EUTelHotPixelKiller gEUTelHotPixelKiller;
 
 }
 #endif

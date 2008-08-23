@@ -21,7 +21,7 @@
 #include <IMPL/TrackerRawDataImpl.h>
 
 // AIDA includes <.h>
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
 
@@ -73,7 +73,7 @@ namespace eutelescope {
    *  pixels.
    *  These pixels will then result so noisy to be masked out by the
    *  bad pixel masking procedure. To avoid this misbehaviour a
-   *  two-fold hit rejection technique has been implemented. 
+   *  two-fold hit rejection technique has been implemented.
    *  \li Removal of maximum and minimum values. The signal
    *  distribution of each pixel with respect to the event number is
    *  characterized by a maximum and a minimum value. In case this
@@ -180,7 +180,7 @@ namespace eutelescope {
    *  saving the output pedestal file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.20 2008-08-21 08:53:45 bulgheroni Exp $
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.21 2008-08-23 12:30:51 bulgheroni Exp $
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -305,7 +305,7 @@ namespace eutelescope {
      *  static const char EUTELESCOPE::AIDAPROFILE, or typing
      *  AIDAProfile in the steering file. To use this algorithm, Marlin
      *  and consequently Eutelescope, have to be linked against an
-     *  AIDA implementation. In the case MARLIN_USE_AIDA is undefined
+     *  AIDA implementation. In the case USE_AIDA is undefined
      *  and the user selects this algorithm, then the program will
      *  automatically fall back to MeanRMS. This algorithm is based on
      *  the use of a AIDA::IProfile2D. Such an object can be booked
@@ -773,7 +773,7 @@ namespace eutelescope {
      */
     int _iLoop;
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map
     /*! The histogram filling procedure may occur in many different
      *  places, while it is usually a good reason to keep the booking

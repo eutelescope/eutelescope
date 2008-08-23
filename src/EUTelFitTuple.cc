@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitTuple.cc,v 1.4 2008-08-18 09:09:45 bulgheroni Exp $
+// Version: $Id: EUTelFitTuple.cc,v 1.5 2008-08-23 12:30:51 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -25,7 +25,7 @@
 #include "EUTelHistogramManager.h"
 #include "EUTelExceptions.h"
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/ITupleFactory.h>
 #endif
@@ -64,57 +64,57 @@ using namespace marlin ;
 using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelFitTuple::_FitTupleName  = "EUFit";
 #endif
 
 
 EUTelFitTuple::EUTelFitTuple() : Processor("EUTelFitTuple") {
-  
+
   // modify processor description
   _description = "Prepare n-tuple with track fit results" ;
-  
 
-  // register steering parameters: 
+
+  // register steering parameters:
   //       name, description, class-variable, default value
 
   // input collection first:
 
   registerInputCollection( LCIO::TRACK,
-			   "InputCollectionName" , 
-			   "Name of the input Track collection"  ,
-			   _inputColName ,
-			   std::string("testfittracks") ) ;
+                           "InputCollectionName" ,
+                           "Name of the input Track collection"  ,
+                           _inputColName ,
+                           std::string("testfittracks") ) ;
 
-   registerInputCollection( LCIO::TRACKERHIT,
-			   "InputDUTCollectionName" , 
-			   "Name of the input DUT hit collection"  ,
-			   _inputDUTColName ,
-			   std::string("hit") ) ;
+  registerInputCollection( LCIO::TRACKERHIT,
+                           "InputDUTCollectionName" ,
+                           "Name of the input DUT hit collection"  ,
+                           _inputDUTColName ,
+                           std::string("hit") ) ;
 
   // other processor parameters:
 
 
   registerProcessorParameter ("DebugEventCount",
-			      "Print out every DebugEnevtCount event",
-			      _debugCount,  static_cast < int > (100));
+                              "Print out every DebugEnevtCount event",
+                              _debugCount,  static_cast < int > (100));
 
   registerProcessorParameter ("MissingValue",
-			      "Value used for missing measurements",
-			      _missingValue,  static_cast < double > (-100.));
+                              "Value used for missing measurements",
+                              _missingValue,  static_cast < double > (-100.));
 
 
   registerProcessorParameter ("UseManualDUT",
-            "Flag for manual DUT selection",
-			      _useManualDUT,  static_cast < bool > (false));
+                              "Flag for manual DUT selection",
+                              _useManualDUT,  static_cast < bool > (false));
 
   registerProcessorParameter ("ManualDUTid",
-            "Id of telescope layer which should be used as DUT",
-			      _manualDUTid,  static_cast < int > (0));
+                              "Id of telescope layer which should be used as DUT",
+                              _manualDUTid,  static_cast < int > (0));
 
   registerProcessorParameter ("DistMax",
-		 "Maximum allowed distance between fit and matched DUT hit",
-			      _distMax,  static_cast < double > (0.1));
+                              "Maximum allowed distance between fit and matched DUT hit",
+                              _distMax,  static_cast < double > (0.1));
 
 
   std::vector<float > initAlign;
@@ -123,13 +123,13 @@ EUTelFitTuple::EUTelFitTuple() : Processor("EUTelFitTuple") {
   initAlign.push_back(0.);
 
   registerProcessorParameter ("DUTalignment",
-     "Alignment corrections for DUT: shift in X, Y and rotation around Z",
-                            _DUTalign, initAlign);
+                              "Alignment corrections for DUT: shift in X, Y and rotation around Z",
+                              _DUTalign, initAlign);
 
 }
 
 
-void EUTelFitTuple::init() { 
+void EUTelFitTuple::init() {
 
   // usually a good idea to
   printParameters() ;
@@ -142,7 +142,7 @@ void EUTelFitTuple::init() {
 
   message<ERROR> ( "Marlin was not built with GEAR support." );
   message<ERROR> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
-  
+
   // I'm thinking if this is the case of throwing an exception or
   // not. This is a really error and not something that can
   // exceptionally happens. Still not sure what to do
@@ -170,13 +170,13 @@ void EUTelFitTuple::init() {
 
 // Check for DUT
 
-   if( _siPlanesParameters->getSiPlanesType()==_siPlanesParameters->TelescopeWithDUT )
-        {
+  if( _siPlanesParameters->getSiPlanesType()==_siPlanesParameters->TelescopeWithDUT )
+    {
       _iDUT = _nTelPlanes ;
       _nTelPlanes++;
-        }
-   else
-       _iDUT = -1 ;
+    }
+  else
+    _iDUT = -1 ;
 
 // Read position in Z (for sorting)
 
@@ -185,43 +185,43 @@ void EUTelFitTuple::init() {
 
   for(int ipl=0; ipl <  _siPlanesLayerLayout->getNLayers(); ipl++)
     {
-    _planePosition[ipl]=_siPlanesLayerLayout->getLayerPositionZ(ipl);
-    _planeSort[ipl]=ipl;
+      _planePosition[ipl]=_siPlanesLayerLayout->getLayerPositionZ(ipl);
+      _planeSort[ipl]=ipl;
     }
 
   if(_iDUT>0)
-      {
+    {
       _planePosition[_iDUT]=_siPlanesLayerLayout->getDUTPositionZ();
       _planeSort[_iDUT]=_iDUT;
-      }
+    }
 
- // Binary sorting
+  // Binary sorting
 
-   bool sorted;
-   do{
-   sorted=false;
-   for(int iz=0; iz<_nTelPlanes-1 ; iz++)
+  bool sorted;
+  do{
+    sorted=false;
+    for(int iz=0; iz<_nTelPlanes-1 ; iz++)
       if(_planePosition[iz]>_planePosition[iz+1])
-         {
-         double _posZ = _planePosition[iz];
-         _planePosition[iz] = _planePosition[iz+1];
-         _planePosition[iz+1] = _posZ;
+        {
+          double _posZ = _planePosition[iz];
+          _planePosition[iz] = _planePosition[iz+1];
+          _planePosition[iz+1] = _posZ;
 
-         int _idZ = _planeSort[iz];
-         _planeSort[iz] = _planeSort[iz+1];
-         _planeSort[iz+1] = _idZ;
+          int _idZ = _planeSort[iz];
+          _planeSort[iz] = _planeSort[iz+1];
+          _planeSort[iz+1] = _idZ;
 
-         sorted=true;
-         }
+          sorted=true;
+        }
 
-     }while(sorted);
+  }while(sorted);
 
 // Book local geometry arrays
 
   _planeID         = new int[_nTelPlanes];
   _isActive        = new bool[_nTelPlanes];
 
-// Fill remaining layer parameters 
+// Fill remaining layer parameters
 
   for(int iz=0; iz < _nTelPlanes ; iz++)
     {
@@ -230,50 +230,50 @@ void EUTelFitTuple::init() {
       double resolution;
 
       if(ipl != _iDUT )
-         {
-      _planeID[iz]=_siPlanesLayerLayout->getID(ipl);
-      resolution = _siPlanesLayerLayout->getSensitiveResolution(ipl);
+        {
+          _planeID[iz]=_siPlanesLayerLayout->getID(ipl);
+          resolution = _siPlanesLayerLayout->getSensitiveResolution(ipl);
         }
       else
-         {
-      _planeID[iz]=_siPlanesLayerLayout->getDUTID();
-       resolution = _siPlanesLayerLayout->getDUTSensitiveResolution();
+        {
+          _planeID[iz]=_siPlanesLayerLayout->getDUTID();
+          resolution = _siPlanesLayerLayout->getDUTSensitiveResolution();
         }
 
       _isActive[iz] = (resolution > 0);
 
- 
+
     }
 
   // Get new DUT position (after sorting)
 
   for(int iz=0;iz< _nTelPlanes ; iz++)
     if(_planeSort[iz]==_iDUT)
-       {
+      {
         _iDUT=iz;
         break;
-       }
+      }
 
   // DUT position can be changed by processor parameter
 
- if(_useManualDUT)
+  if(_useManualDUT)
     {
-    bool _manualOK=false;
+      bool _manualOK=false;
 
-    for(int iz=0; iz < _nTelPlanes ; iz++)
-       if(_planeID[iz]==_manualDUTid)
-         {
-         _iDUT=iz;
-         _manualOK=true;
-	 }
+      for(int iz=0; iz < _nTelPlanes ; iz++)
+        if(_planeID[iz]==_manualDUTid)
+          {
+            _iDUT=iz;
+            _manualOK=true;
+          }
 
-    if(!_manualOK)
-      {
-       message<ERROR> ( log() << "Manual DUT flag set, layer not found ID = " 
-	<< _manualDUTid	
-        << "\n Program will terminate! Correct geometry description!"); 
-       exit(-1);
-       }
+      if(!_manualOK)
+        {
+          message<ERROR> ( log() << "Manual DUT flag set, layer not found ID = "
+                           << _manualDUTid
+                           << "\n Program will terminate! Correct geometry description!");
+          exit(-1);
+        }
     }
 
   _zDUT=_planePosition[_iDUT];
@@ -285,23 +285,23 @@ void EUTelFitTuple::init() {
 
   for(int ipl=0; ipl < _nTelPlanes; ipl++)
     {
-      stringstream ss ; 
+      stringstream ss ;
       if(ipl == _iDUT)
-	ss << "D.U.T.  plane" ;
+        ss << "D.U.T.  plane" ;
       else
-	if(_isActive[ipl])
-	  ss << "Active  plane" ;
-	else
-	  ss << "Passive plane" ; 
-      
+        if(_isActive[ipl])
+          ss << "Active  plane" ;
+        else
+          ss << "Passive plane" ;
+
       ss << "  ID = " << _planeID[ipl]
-         << "  at Z [mm] = " << _planePosition[ipl]; 
-      
+         << "  at Z [mm] = " << _planePosition[ipl];
+
       message<MESSAGE> ( log() << ss.str() );
     }
 
-  
-    // Allocate arrays for track fitting
+
+  // Allocate arrays for track fitting
 
   _isMeasured      = new bool[_nTelPlanes];
   _isFitted        = new bool[_nTelPlanes];
@@ -315,26 +315,26 @@ void EUTelFitTuple::init() {
 
 // Book histograms
 
-#ifdef MARLIN_USE_AIDA
-    bookHistos();
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+  bookHistos();
 #endif
 
 }
 
-void EUTelFitTuple::processRunHeader( LCRunHeader* runHeader) { 
+void EUTelFitTuple::processRunHeader( LCRunHeader* runHeader) {
 
   auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
   eutelHeader->addProcessor( type() );
-  
+
   _nRun++ ;
 
   // Decode and print out Run Header information - just a check
 
   _runNr = runHeader->getRunNumber();
-  
-  message<MESSAGE> ( log() << "Processing run header " << _nRun 
-		     << ", run nr " << _runNr );
-  
+
+  message<MESSAGE> ( log() << "Processing run header " << _nRun
+                     << ", run nr " << _runNr );
+
   const std::string detectorName = runHeader->getDetectorName();
   const std::string detectorDescription = runHeader->getDescription();
   const std::vector<std::string> * subDets = runHeader->getActiveSubdetectors();
@@ -348,10 +348,10 @@ void EUTelFitTuple::processRunHeader( LCRunHeader* runHeader) {
   for(int idet=0;idet<nDet;idet++)  message<MESSAGE> (log()  << idet+1 << " : " << subDets->at(idet) );
 
 
-} 
+}
 
-void EUTelFitTuple::processEvent( LCEvent * event ) { 
-  
+void EUTelFitTuple::processEvent( LCEvent * event ) {
+
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
   if ( euEvent->getEventType() == kEORE ) {
     message<DEBUG> ( "EORE found: nothing else to do." );
@@ -370,13 +370,13 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
   try {
     col = event->getCollection( _inputColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    message<ERROR> ( log() << "Not able to get collection " 
-		     << _inputColName 
-		     << "\nfrom event " << event->getEventNumber()
-		     << " in run " << event->getRunNumber()  );
-   throw SkipEventException(this);
+    message<ERROR> ( log() << "Not able to get collection "
+                     << _inputColName
+                     << "\nfrom event " << event->getEventNumber()
+                     << " in run " << event->getRunNumber()  );
+    throw SkipEventException(this);
   }
-    
+
 
   LCCollection* hitcol = NULL;
   bool _DUTok=true;
@@ -384,10 +384,10 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
   try {
     hitcol = event->getCollection( _inputDUTColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    message<ERROR> ( log() << "Not able to get collection " 
-		     << _inputDUTColName 
-		     << "\nfrom event " << event->getEventNumber()
-		     << " in run " << event->getRunNumber()  );
+    message<ERROR> ( log() << "Not able to get collection "
+                     << _inputDUTColName
+                     << "\nfrom event " << event->getEventNumber()
+                     << " in run " << event->getRunNumber()  );
     _DUTok=false;
   }
 
@@ -412,22 +412,22 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
       std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getTrackerHits();
 
-  // Copy hits assign to the track to local table
-  // Assign hits to sensor planes
+      // Copy hits assign to the track to local table
+      // Assign hits to sensor planes
 
 
-   int nHit =   trackhits.size();
+      int nHit =   trackhits.size();
 
-   if(debug)message<DEBUG> ( log() << "Track " << itrack << " with " << nHit << " hits, Chi2 = "
-			     << fittrack->getChi2() << "/" << fittrack->getNdf());
+      if(debug)message<DEBUG> ( log() << "Track " << itrack << " with " << nHit << " hits, Chi2 = "
+                                << fittrack->getChi2() << "/" << fittrack->getNdf());
 
 
- // Clear plane tables
+      // Clear plane tables
 
       for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	{
-	  _isMeasured[ipl]=false;
-	  _isFitted[ipl]=false;
+        {
+          _isMeasured[ipl]=false;
+          _isFitted[ipl]=false;
 
           _measuredX[ipl]=_missingValue;
           _measuredY[ipl]=_missingValue;
@@ -439,187 +439,187 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
         }
 
 
- // Loop over hits and fill hit tables
+      // Loop over hits and fill hit tables
 
-  for(int ihit=0; ihit< nHit ; ihit++)
-    {
-      TrackerHit * meshit = trackhits.at(ihit); 
-
-      // Hit position
-
-      const double * pos = meshit->getPosition();
-
-      // We find plane number of the hit
-      // by looking at the Z position
-
-      double distMin = 1.;
-      int hitPlane = -1 ;
-
-      for(int ipl=0;ipl<_nTelPlanes;ipl++)
-	{
-	  double dist =  pos[2] - _planePosition[ipl] ;
-
-	  if(dist*dist < distMin*distMin)
-	    {
-	      hitPlane=ipl;
-	      distMin=dist;
-	    }
-	}
-
-      // Ignore hits not matched to any plane
-
-      if(hitPlane<0) 
+      for(int ihit=0; ihit< nHit ; ihit++)
         {
-	message<ERROR> ( log() << "Hit outside telescope plane at z [mm] = "  << pos[2] );
-        continue;
+          TrackerHit * meshit = trackhits.at(ihit);
+
+          // Hit position
+
+          const double * pos = meshit->getPosition();
+
+          // We find plane number of the hit
+          // by looking at the Z position
+
+          double distMin = 1.;
+          int hitPlane = -1 ;
+
+          for(int ipl=0;ipl<_nTelPlanes;ipl++)
+            {
+              double dist =  pos[2] - _planePosition[ipl] ;
+
+              if(dist*dist < distMin*distMin)
+                {
+                  hitPlane=ipl;
+                  distMin=dist;
+                }
+            }
+
+          // Ignore hits not matched to any plane
+
+          if(hitPlane<0)
+            {
+              message<ERROR> ( log() << "Hit outside telescope plane at z [mm] = "  << pos[2] );
+              continue;
+            }
+
+
+          if( meshit->getType() < 32 )
+            {
+              // Measured hits
+
+              _isMeasured[hitPlane]=true;
+
+              _measuredX[hitPlane]=pos[0];
+              _measuredY[hitPlane]=pos[1];
+
+              // Get cluster charge
+
+              _measuredQ[hitPlane]=0.;
+
+              EVENT::LCObjectVec rawdata =  meshit->getRawHits();
+
+              if(rawdata.size()>0 && rawdata.at(0)!=NULL )
+                {
+                  EUTelVirtualCluster * cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> (rawdata.at(0))) ;
+                  _measuredQ[hitPlane]=cluster->getTotalCharge();
+                }
+
+              if(debug)message<DEBUG> ( log() << "Measured hit in plane " << hitPlane << " at  X = "
+                                        << pos[0] << ", Y = " << pos[1] << ", Q = " << _measuredQ[hitPlane] );
+
+            }
+          else
+            {
+              // Fitted hits
+
+              _isFitted[hitPlane]=true;
+
+              _fittedX[hitPlane]=pos[0];
+              _fittedY[hitPlane]=pos[1];
+
+              if(debug)message<DEBUG> ( log() << "Fitted  hit  in plane " << hitPlane << " at  X = "
+                                        << pos[0] << ", Y = " << pos[1] );
+
+            }
+
+        }
+
+      // Fill n-tuple
+
+      _FitTuple->fill(0,_nEvt);
+      _FitTuple->fill(1,_runNr);
+      _FitTuple->fill(2,_evtNr);
+      _FitTuple->fill(3,fittrack->getNdf());
+      _FitTuple->fill(4,fittrack->getChi2());
+
+      int icol=5;
+      for(int ipl=0; ipl<_nTelPlanes;ipl++)
+        {
+          _FitTuple->fill(icol++,_measuredX[ipl]);
+          _FitTuple->fill(icol++,_measuredY[ipl]);
+          _FitTuple->fill(icol++,_measuredQ[ipl]);
+          _FitTuple->fill(icol++,_fittedX[ipl]);
+          _FitTuple->fill(icol++,_fittedY[ipl]);
+        }
+
+      //  Look for closest DUT hit
+
+
+      double dutX=_missingValue;
+      double dutY=_missingValue;
+      double dutR=_missingValue;
+      double dutQ=_missingValue;
+
+      if(_DUTok)
+        {
+          double distmin=_distMax*_distMax;
+          int imin=-1;
+
+          for(int ihit=0; ihit< nDUT ; ihit++)
+            {
+              TrackerHit * meshit = dynamic_cast<TrackerHit*>( hitcol->getElementAt(ihit) ) ;
+
+              // Hit position
+
+              const double * pos = meshit->getPosition();
+
+              double dist = pos[2] - _zDUT;
+
+              if(dist*dist < 1)
+                {
+                  // Apply alignment corrections
+
+                  double corrX  =   pos[0]*cos(_DUTalign.at(2))
+                    +pos[1]*sin(_DUTalign.at(2))
+                    +_DUTalign.at(0);
+
+                  double corrY  =  pos[1]*cos(_DUTalign.at(2))
+                    -pos[0]*sin(_DUTalign.at(2))
+                    +_DUTalign.at(1);
+
+                  double distXY=
+                    (corrX-_fittedX[_iDUT])*(corrX-_fittedX[_iDUT])
+                    + (corrY-_fittedY[_iDUT])*(corrY-_fittedY[_iDUT]);
+
+                  if(distXY<distmin)
+                    {
+                      imin=ihit;
+                      distmin=distXY;
+                      dutX=corrX;
+                      dutY=corrY;
+                    }
+
+                }
+
+            }
+
+          // Try to get DUT cluster charge
+
+          if(imin>=0)
+            {
+              TrackerHit * meshit = dynamic_cast<TrackerHit*>( hitcol->getElementAt(imin) ) ;
+
+              EVENT::LCObjectVec rawdata =  meshit->getRawHits();
+
+              if(rawdata.size()>0 && rawdata.at(0)!=NULL )
+                {
+                  EUTelVirtualCluster * cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> (rawdata.at(0))) ;
+                  dutQ=cluster->getTotalCharge();
+                }
+
+              dutR=sqrt(distmin);
+
+              if(debug)message<DEBUG> ( log() << "Matched DUT hit at X = " << dutX << "   Y = " << dutY
+                                        << "   Dxy = " << dutR << "   Q = " << dutQ );
+            }
+          else
+            if(debug)message<DEBUG> ( log() << "DUT hit not matched !" );
+
+
+          // End of if(_DUTok)
         }
 
 
-      if( meshit->getType() < 32 )
-        {
-	  // Measured hits
+      _FitTuple->fill(icol++,dutX);
+      _FitTuple->fill(icol++,dutY);
+      _FitTuple->fill(icol++,dutR);
+      _FitTuple->fill(icol++,dutQ);
 
-	  _isMeasured[hitPlane]=true;
+      _FitTuple->addRow();
 
-          _measuredX[hitPlane]=pos[0];
-          _measuredY[hitPlane]=pos[1];
-
-	  // Get cluster charge
-
-          _measuredQ[hitPlane]=0.;
-
-	  EVENT::LCObjectVec rawdata =  meshit->getRawHits();
-
-          if(rawdata.size()>0 && rawdata.at(0)!=NULL )
-	    {
-	    EUTelVirtualCluster * cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> (rawdata.at(0))) ;
-            _measuredQ[hitPlane]=cluster->getTotalCharge();
-	    }
-
-         if(debug)message<DEBUG> ( log() << "Measured hit in plane " << hitPlane << " at  X = " 
-			          << pos[0] << ", Y = " << pos[1] << ", Q = " << _measuredQ[hitPlane] );
-
-	}
-      else
-	{
-	  // Fitted hits
-
-	  _isFitted[hitPlane]=true;
-
-          _fittedX[hitPlane]=pos[0];
-          _fittedY[hitPlane]=pos[1];
-
-         if(debug)message<DEBUG> ( log() << "Fitted  hit  in plane " << hitPlane << " at  X = " 
-			          << pos[0] << ", Y = " << pos[1] );
-
-	}
-
-    }
-
-  // Fill n-tuple
-
-  _FitTuple->fill(0,_nEvt);
-  _FitTuple->fill(1,_runNr);
-  _FitTuple->fill(2,_evtNr);
-  _FitTuple->fill(3,fittrack->getNdf());
-  _FitTuple->fill(4,fittrack->getChi2());
-
-  int icol=5;
-   for(int ipl=0; ipl<_nTelPlanes;ipl++)
-     {
-     _FitTuple->fill(icol++,_measuredX[ipl]); 
-     _FitTuple->fill(icol++,_measuredY[ipl]); 
-     _FitTuple->fill(icol++,_measuredQ[ipl]); 
-     _FitTuple->fill(icol++,_fittedX[ipl]); 
-     _FitTuple->fill(icol++,_fittedY[ipl]); 
-     } 
-
-   //  Look for closest DUT hit
-
-  
-  double dutX=_missingValue;
-  double dutY=_missingValue;
-  double dutR=_missingValue;
-  double dutQ=_missingValue;
-
-  if(_DUTok)
-    {
-  double distmin=_distMax*_distMax;
-  int imin=-1;
-
-  for(int ihit=0; ihit< nDUT ; ihit++)
-    {
-     TrackerHit * meshit = dynamic_cast<TrackerHit*>( hitcol->getElementAt(ihit) ) ;
-
-      // Hit position
-
-      const double * pos = meshit->getPosition();
-
-      double dist = pos[2] - _zDUT;
-
-      if(dist*dist < 1)
-	{
-	  // Apply alignment corrections
-
-	 double corrX  =   pos[0]*cos(_DUTalign.at(2))
-       	                  +pos[1]*sin(_DUTalign.at(2))
-                          +_DUTalign.at(0);
-
-	 double corrY  =  pos[1]*cos(_DUTalign.at(2))
-       	                 -pos[0]*sin(_DUTalign.at(2))
-                         +_DUTalign.at(1);
-
-         double distXY=
-                   (corrX-_fittedX[_iDUT])*(corrX-_fittedX[_iDUT])
-		 + (corrY-_fittedY[_iDUT])*(corrY-_fittedY[_iDUT]);
-
-	  if(distXY<distmin)
-            {
-            imin=ihit;
-	    distmin=distXY;
-	    dutX=corrX;
-	    dutY=corrY;
-	    }
-
-	}
-
-    }
-
-  // Try to get DUT cluster charge
-
-  if(imin>=0)
-    {
-    TrackerHit * meshit = dynamic_cast<TrackerHit*>( hitcol->getElementAt(imin) ) ;
-
-    EVENT::LCObjectVec rawdata =  meshit->getRawHits();
-
-    if(rawdata.size()>0 && rawdata.at(0)!=NULL )
-      {
-      EUTelVirtualCluster * cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> (rawdata.at(0))) ;
-      dutQ=cluster->getTotalCharge();
-      }
-
-    dutR=sqrt(distmin);
-
-    if(debug)message<DEBUG> ( log() << "Matched DUT hit at X = " << dutX << "   Y = " << dutY 
-			      << "   Dxy = " << dutR << "   Q = " << dutQ );
-    }
-  else
-    if(debug)message<DEBUG> ( log() << "DUT hit not matched !" );
-
-
-  // End of if(_DUTok) 
-    }
-
-
-  _FitTuple->fill(icol++,dutX); 
-  _FitTuple->fill(icol++,dutY); 
-  _FitTuple->fill(icol++,dutR); 
-  _FitTuple->fill(icol++,dutQ); 
-
-  _FitTuple->addRow();
-
-  // End of loop over tracks
+      // End of loop over tracks
     }
 
 
@@ -628,24 +628,24 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
 
 
-void EUTelFitTuple::check( LCEvent * evt ) { 
+void EUTelFitTuple::check( LCEvent * evt ) {
   // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
 
-void EUTelFitTuple::end(){ 
-  
-  //   std::cout << "EUTelFitTuple::end()  " << name() 
-  // 	    << " processed " << _nEvt << " events in " << _nRun << " runs "
-  // 	    << std::endl ;
+void EUTelFitTuple::end(){
 
-#ifdef MARLIN_USE_AIDA
+  //   std::cout << "EUTelFitTuple::end()  " << name()
+  //        << " processed " << _nEvt << " events in " << _nRun << " runs "
+  //        << std::endl ;
 
-  message<MESSAGE> ( log() << "N-tuple with " 
-		     << _FitTuple->rows() << " rows created" );
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
- 
-  // Clean memory 
+  message<MESSAGE> ( log() << "N-tuple with "
+                     << _FitTuple->rows() << " rows created" );
+
+
+  // Clean memory
 
   delete [] _planeSort ;
   delete [] _planePosition ;
@@ -666,10 +666,10 @@ void EUTelFitTuple::end(){
 
 
 
-void EUTelFitTuple::bookHistos() 
+void EUTelFitTuple::bookHistos()
 {
 
-#ifdef MARLIN_USE_AIDA
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   message<MESSAGE> ( log() << "Booking fit n-tuple \n" );
 
@@ -695,38 +695,38 @@ void EUTelFitTuple::bookHistos()
 
   for(int ipl=0; ipl<_nTelPlanes;ipl++)
     for(int ivar=0; ivar<5;ivar++)
-    {
-      stringstream ss;
-      ss << _varName[ivar] << "_" << ipl;
-      _columnNames.push_back(ss.str());
-      _columnType.push_back("double");
-    }
+      {
+        stringstream ss;
+        ss << _varName[ivar] << "_" << ipl;
+        _columnNames.push_back(ss.str());
+        _columnType.push_back("double");
+      }
 
   // DUT variables
 
-   _columnNames.push_back("dutX");
-   _columnType.push_back("double");
+  _columnNames.push_back("dutX");
+  _columnType.push_back("double");
 
-   _columnNames.push_back("dutY");
-   _columnType.push_back("double");
+  _columnNames.push_back("dutY");
+  _columnType.push_back("double");
 
-   _columnNames.push_back("dutR");
-   _columnType.push_back("double");
+  _columnNames.push_back("dutR");
+  _columnType.push_back("double");
 
-   _columnNames.push_back("dutQ");
-   _columnType.push_back("double");
+  _columnNames.push_back("dutQ");
+  _columnType.push_back("double");
 
 
   _FitTuple=AIDAProcessor::tupleFactory(this)->create(_FitTupleName, _FitTupleName, _columnNames, _columnType, "");
 
 
   message<DEBUG> ( log() << "Booking completed \n\n");
-  
+
 #else
   message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
 #endif
 
-return;
+  return;
 }
 
 #endif
