@@ -10,13 +10,19 @@
 #ifndef EUTELEXCEPTIONS_H
 #define EUTELEXCEPTIONS_H 1
 
+// marlin includes
+#include <marlin/Processor.h>
+
+// lcio includes
 #include <lcio.h>
 #include <Exceptions.h>
+
+// system includes
 #include <string>
 
 
 namespace eutelescope {
-  
+
   //! Invalid parameter
   /*! This exception is thrown when a parameter is available in the
    *  run header / event or collection but it is not accepted. For *
@@ -25,18 +31,18 @@ namespace eutelescope {
    *  invalid algorithm then this exceptions is thrown
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.5 2007-05-25 05:14:40 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.6 2008-08-23 12:25:59 bulgheroni Exp $
    */
 
   class InvalidParameterException  : public lcio::Exception {
-    
+
   protected:
     //! Default constructor
     InvalidParameterException() { /* NO-OP */ ;}
   public:
     //! Default destructor
     virtual ~InvalidParameterException() throw() { /* NO-OP */ ;}
-    
+
     //! Default constructor with string argument
     /*! @param text Message shown by what().
      */
@@ -45,7 +51,7 @@ namespace eutelescope {
     }
   };
 
-  
+
   //! Incompatible data set
   /*! This exception is thrown all the times two data set are compared
    *  and not found to be compatible. A typical example is when you
@@ -54,18 +60,18 @@ namespace eutelescope {
    *  the number of detectors.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.5 2007-05-25 05:14:40 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.6 2008-08-23 12:25:59 bulgheroni Exp $
    */
   class IncompatibleDataSetException : public lcio::Exception {
-    
+
   protected:
     //! Default constructor
     IncompatibleDataSetException() { /* NO-OP */ ; }
-    
+
   public:
     //! Default destructor
     virtual ~IncompatibleDataSetException() throw() { /* NO - OP */ ; }
-    
+
     //! Default constructor with string argument
     /*! @param text Message shown by what().
      */
@@ -76,8 +82,8 @@ namespace eutelescope {
 
   //! Unknown data type
   /*! This exception is thrown when the code is not able to understand
-   *  the type of an object. 
-   *  
+   *  the type of an object.
+   *
    *  A typical example is the case of clusters. In the EUTelescope
    *  framework there is a virtual base class to describe a cluster
    *  inheriting from IMPL::TrackerDataImpl. There are several
@@ -90,21 +96,21 @@ namespace eutelescope {
    *  corresponding TrackerData needs to re-interpret according to the
    *  cluster type originally used. This is coded into the
    *  TrackerPulse cellID (ClusterType) with an enumeration
-   *  (eutelescope::ClusterType). 
+   *  (eutelescope::ClusterType).
    *
    *  Of course, if this information is missing the rest of the
    *  analysis procedure might not be able to continue and this
-   *  exception is thorwn.
+   *  exception is thrown.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.5 2007-05-25 05:14:40 bulgheroni Exp $
-   */ 
+   *  @version $Id: EUTelExceptions.h,v 1.6 2008-08-23 12:25:59 bulgheroni Exp $
+   */
   class UnknownDataTypeException : public lcio::Exception {
-    
+
   protected:
     //! Default constructor
     UnknownDataTypeException() { /* NO - OP */ ; }
-    
+
   public:
     //! Default destructor
     virtual ~UnknownDataTypeException() throw() { /* NO - OP */ ; }
@@ -113,11 +119,41 @@ namespace eutelescope {
     /*! This is the standard way to create this exception.
      *
      *  @param text Message to be shown by what()
-     */ 
+     */
     UnknownDataTypeException(const std::string& text) {
       message = "eutelescope::UnknownDataTypeException: " + text;
     }
   };
+
+  //! Missing library
+  /*! This exception is thrown by a processor having optional
+   *  dependency against specific library and this is missing.
+   *
+   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @version $Id: EUTelExceptions.h,v 1.6 2008-08-23 12:25:59 bulgheroni Exp $
+   */
+  class MissingLibraryException: public lcio::Exception {
+
+  protected:
+    //! Default constructor
+    MissingLibraryException() { /* NO - OP */ ; }
+
+  public:
+    //! Default destructor
+    virtual ~MissingLibraryException() throw() { /* NO - OP */ ; }
+
+    //! Default constructor with a processor and a string argument
+    /*! This is the standard way to create this exception.
+     *
+     *  @param proc This is the processor throwing the exception
+     *  @param missingLib This is the name of missing library
+     */
+    MissingLibraryException( marlin::Processor * proc, std::string missingLib ) {
+      message = "To execute this functionality " + proc->name() + " requires " + missingLib;
+    }
+  };
+
+
 }
 
 #endif
