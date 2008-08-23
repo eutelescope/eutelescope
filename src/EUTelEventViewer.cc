@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.7 2008-08-23 12:30:51 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.8 2008-08-23 18:46:53 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -12,8 +12,9 @@
 
 // this processor is built only if EUTelescope is linked against
 // libMarlinUtil
+// this is still working in progress
+#ifdef USE_GEAR
 
-#ifdef USE_MARLINUTIL
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
 #include "EUTelRunHeaderImpl.h"
@@ -46,6 +47,7 @@
 #include <IMPL/LCEventImpl.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/TrackImpl.h>
+#include <IMPL/LCCollectionVec.h>
 
 // system includes <>
 #include <vector>
@@ -173,7 +175,7 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
   // telescope planes ( tempDetModel == -1 ), then we have to draw
   // manually from here the geoboxes
   if ( tempDetModel == -1 ) {
-    
+
 
   }
 
@@ -287,4 +289,5 @@ int EUTelEventViewer::returnColor(int counter) {
 
 }
 
-#endif // USE_MARLINUTIL
+
+#endif // USE_GEAR
