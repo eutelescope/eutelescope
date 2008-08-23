@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMultiLineFit.cc,v 1.22 2008-08-23 12:30:51 bulgheroni Exp $
+// Version: $Id: EUTelMultiLineFit.cc,v 1.23 2008-08-23 19:16:06 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -1020,6 +1020,9 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
         _yPosHere[help] = _yPos[track][help];
         _zPosHere[help] = _zPos[track][help];
       }
+
+      Chiquare[0] = 0.0;
+      Chiquare[1] = 0.0;
 
       streamlog_out ( MESSAGE2 ) << "Fitting track using the following coordinates: ";
 
