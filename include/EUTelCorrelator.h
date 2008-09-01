@@ -10,17 +10,16 @@
 #ifndef EUTELCORRELATOR_H
 #define EUTELCORRELATOR_H
 
-// built only if GEAR is used
-#ifdef USE_GEAR
-
 // eutelescope includes ".h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
+#if defined(USE_GEAR)
 // gear includes <.h>
 #include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+#endif
 
 // lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
@@ -70,7 +69,7 @@ namespace eutelescope {
    *
    *  @author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
    *  @author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-   *  @version $Id: EUTelCorrelator.h,v 1.4 2008-08-23 12:30:51 bulgheroni Exp $
+   *  @version $Id: EUTelCorrelator.h,v 1.5 2008-09-01 15:26:39 bulgheroni Exp $
    *
    */
 
@@ -178,6 +177,7 @@ namespace eutelescope {
      */
     IntVec _maxY;
 
+#ifdef USE_GEAR
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
      *  @li A reference to the telescope geoemtry and layout
@@ -199,7 +199,7 @@ namespace eutelescope {
      *  init() phase and stored for local use
      */
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
-
+#endif
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -242,4 +242,4 @@ namespace eutelescope {
 }
 
 #endif
-#endif
+

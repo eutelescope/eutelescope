@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.7 2008-08-23 12:30:51 bulgheroni Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.8 2008-09-01 15:26:39 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,9 +10,6 @@
  *   header with author names in all development based on this file.
  *
  */
-
-// built only if GEAR is used
-#ifdef USE_GEAR
 
 // eutelescope includes ".h"
 #include "EUTelCorrelator.h"
@@ -37,9 +34,11 @@
 #include <AIDA/ITree.h>
 #endif
 
+#if defined(USE_GEAR)
 // gear includes <.h>
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
+#endif
 
 // lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
@@ -95,14 +94,9 @@ void EUTelCorrelator::init() {
 
 #ifndef USE_GEAR
 
-  streamlog_out ( ERROR4 ) <<  "Marlin was not built with GEAR support." << endl
-                           <<  "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue."
-                           << endl;
-
-  // I'm thinking if this is the case of throwing an exception or
-  // not. This is a really error and not something that can
-  // exceptionally happens. Still not sure what to do
-  exit(-1);
+  // GEAR is really needed only if we want to do correlation among
+  // hits. At this point, we still don't know if we will have to do
+  // hit correlation or not, keep the possibility still open.
 
 #else
 
@@ -136,6 +130,9 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
   _minY = runHeader->getMinY();
   _maxY = runHeader->getMaxY();
 
+
+  // perform some consistency check in case we have GEAR support
+#ifdef USE_GEAR
 
   // the run header contains the number of detectors. This number
   // should be in principle be the same as the number of layers in the
@@ -178,6 +175,8 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
       }
     }
   }
+
+#endif // USE_GEAR
 
 
   delete runHeader;
@@ -225,6 +224,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
       _hasClusterCollection = false;
     }
 
+#ifdef USE_GEAR
     try {
       // let's check if we have hit collections
 
@@ -236,6 +236,14 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
       _hasHitCollection = false;
     }
+
+#else
+    // if we don't have GEAR, so we can't process hit even if the hit
+    // collection is available in the file
+
+    _hasHitCollection = false;
+
+#endif // USE_GEAR
 
     bookHistos();
 
@@ -383,6 +391,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
 
 
+#ifdef USE_GEAR
 
     if ( _hasHitCollection ) {
 
@@ -441,6 +450,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
       }
     }
 
+#endif // USE_GEAR
+ 
 
   } catch (DataNotAvailableException& e  ) {
 
@@ -456,7 +467,8 @@ void EUTelCorrelator::end() {
 
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+#ifdef USE_GEAR
+# if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   if ( _hasHitCollection ) {
     for ( int row = 0 ; row < _noOfDetectors; ++row ) {
@@ -472,7 +484,8 @@ void EUTelCorrelator::end() {
     }
   }
 
-#endif
+# endif // USE_AIDA
+#endif // USE_GEAR
 
 
 }
@@ -494,6 +507,7 @@ void EUTelCorrelator::bookHistos() {
       dirNames.push_back ("ClusterX");
       dirNames.push_back ("ClusterY");
     }
+
     if ( _hasHitCollection ) {
       dirNames.push_back ("HitX");
       dirNames.push_back ("HitY");
@@ -593,7 +607,9 @@ void EUTelCorrelator::bookHistos() {
 
           }
 
-          //we create clouds for X and Y Hit correlation
+          // we create clouds for X and Y Hit correlation
+#ifdef USE_GEAR
+
           if ( _hasHitCollection ) {
 
 
@@ -641,6 +657,8 @@ void EUTelCorrelator::bookHistos() {
             innerMapYHit[ _siPlanesLayerLayout->getID( col ) ] =  cloud2D ;
           }
 
+#endif // USE_GEAR
+
         } else {
 
           if ( _hasClusterCollection ) {
@@ -649,8 +667,10 @@ void EUTelCorrelator::bookHistos() {
           }
 
           if ( _hasHitCollection ) {
+#ifdef USE_GEAR
             innerMapXHit[ _siPlanesLayerLayout->getID( col )  ] = NULL ;
             innerMapYHit[ _siPlanesLayerLayout->getID( col )  ] = NULL ;
+#endif
           }
 
         }
@@ -663,8 +683,10 @@ void EUTelCorrelator::bookHistos() {
       }
 
       if ( _hasHitCollection ) {
+#ifdef USE_GEAR
         _hitXCorrelationMatrix[ _siPlanesLayerLayout->getID( row ) ] = innerMapXHit;
         _hitYCorrelationMatrix[ _siPlanesLayerLayout->getID( row ) ] = innerMapYHit;
+#endif
       }
     }
 
@@ -677,6 +699,3 @@ void EUTelCorrelator::bookHistos() {
 #endif
 }
 
-
-
-#endif
