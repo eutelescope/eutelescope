@@ -26,7 +26,6 @@
 #include <string>
 #include <map>
 
-
 namespace eutelescope {
 
   //! Calibration processor for the EUTelescope
@@ -121,7 +120,7 @@ namespace eutelescope {
    *  histogram information file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.9 2008-08-23 12:30:51 bulgheroni Exp $
+   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.10 2008-09-01 15:37:00 bulgheroni Exp $
    *
    *
    */
