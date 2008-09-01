@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.23 2008-08-28 10:19:57 roloff Exp $
+// Version: $Id: EUTelMille.cc,v 1.24 2008-09-01 08:50:27 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -792,7 +792,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 #else // USE_ROOT
 
-    throw MissingLibrary( this, "ROOT" );
+    throw MissingLibraryException( this, "ROOT" );
 
 #endif
 
