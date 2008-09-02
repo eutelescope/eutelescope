@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.8 2008-08-23 18:46:53 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.9 2008-09-02 09:38:54 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,10 +10,9 @@
  *
  */
 
-// this processor is built only if EUTelescope is linked against
-// libMarlinUtil
-// this is still working in progress
-#ifdef USE_GEAR
+// this processor is built only if GEAR, CED are available, otherwise
+// it is simply skipped
+#if defined(USE_GEAR) //  && defined(USE_CED)
 
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
@@ -25,22 +24,17 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
-#ifdef USE_GEAR
-// include Global only if we have gear, otherwise is completely
-// useless
 # include "marlin/Global.h"
-#endif
 
 // MarlinUtil
 #include "MarlinCED.h"
 #include "ClusterShapes.h"
 #include "ced_cli.h"
 
-#ifdef USE_GEAR
 // gear includes <.h>
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
-#endif
+#include <gear/SiPlanesLayerLayout.h>
 
 // lcio includes <.h>
 #include <lcio.h>
@@ -173,9 +167,31 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
 
   // in the case the user wants to draw the alignment corrected
   // telescope planes ( tempDetModel == -1 ), then we have to draw
-  // manually from here the geoboxes
+  // manually from here the geoboxes. For the time being only shifts
+  // are applied. To apply rotations, one should rotated the box and
+  // this is still not possible with CED.
   if ( tempDetModel == -1 ) {
 
+    const gear::SiPlanesParameters&  siPlanesParameters  = Global::GEAR->getSiPlanesParameters();
+    const gear::SiPlanesLayerLayout& siPlanesLayerLayout = siPlanesParameters.getSiPlanesLayerLayout();
+
+    double * sizes  = new double[3];
+    double * center = new double[3];
+    unsigned int color = 0xFFFFFF;
+
+    for ( int iLayer = 0 ; iLayer < siPlanesLayerLayout.getNLayers() ; iLayer++ ) {
+      EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * >
+        ( alignmentCollectionVec->getElementAt( iLayer ) );
+      center[0] = siPlanesLayerLayout.getSensitivePositionX(iLayer) - alignment->getXOffset();
+      center[1] = siPlanesLayerLayout.getSensitivePositionY(iLayer) - alignment->getYOffset();
+      center[2] = siPlanesLayerLayout.getSensitivePositionZ(iLayer) - alignment->getZOffset();
+      sizes[0]  = siPlanesLayerLayout.getSensitiveSizeX(iLayer);
+      sizes[1]  = siPlanesLayerLayout.getSensitiveSizeY(iLayer);
+      sizes[2]  = siPlanesLayerLayout.getSensitiveThickness(iLayer) ;
+      ced_geobox( sizes, center, color );
+    }
+    delete [] center;
+    delete [] sizes;
 
   }
 
@@ -290,4 +306,4 @@ int EUTelEventViewer::returnColor(int counter) {
 }
 
 
-#endif // USE_GEAR
+#endif // USE_GEAR && USE_CED

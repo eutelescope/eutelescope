@@ -27,17 +27,17 @@ namespace eutelescope {
   //! Event viewer
   /*! This processor is used to display the content of a EUTelescope
    *  file into a graphical window using the information stored in
-   *  GEAR. 
-   *  
+   *  GEAR.
+   *
    *  The graphical environment is provided by CED (C Event Display)
    *  that is a server / client application. The server side that is
    *  implemented using openGL (glced) should be already running on
-   *  the computer, before Marlin is executed. 
+   *  the computer, before Marlin is executed.
    *
    *  This viewer is accessing MarlinCED, a singleton class playing
    *  the role of CED client, and forwarding there all the graphical
    *  objects. For every event, the graphical screen is reset and the
-   *  geometry re-drawn along with the current hits and tracks. 
+   *  geometry re-drawn along with the current hits and tracks.
    *
    *  The viewer can be used in a interactive way setting
    *  WaitForKeyboard to 1. In this way Marlin execution will be
@@ -47,10 +47,13 @@ namespace eutelescope {
    *  Several objects can be displayed together, since for each
    *  collection type multiple selections are possible.
    *
+   *  This processor is built only if GEAR and CED are available
+   *  (-DUSE_GEAR and -DUSE_CED).
+   *
    *  @image html CEDEvent.png "One event with a track candidate"
    *
    *  <h4>Input collections</h4>
-   * 
+   *
    *  <b>Track collections</b>: this is a vector of all the track
    *  collections the user wants to display.
    *
@@ -70,7 +73,7 @@ namespace eutelescope {
    *
    *  @param LayerTrack. The CED layer where tracks are drawn.Set
    *  to -1 to disable it
-   *  
+   *
    *  @param WaitForKeyboard. To stop the event loop at the end of
    *  each display waiting for any key from the keyboard to continue.
    *
@@ -79,38 +82,38 @@ namespace eutelescope {
    *  are then read from GEAR.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEventViewer.h,v 1.6 2008-07-29 17:11:37 bulgheroni Exp $ 
+   *  @version $Id: EUTelEventViewer.h,v 1.7 2008-09-02 09:38:54 bulgheroni Exp $
    */
   class EUTelEventViewer : public marlin::Processor {
-  
+
   public:
-    
+
     //! Create a new processor instance
     /*! @return a new processor instance
-     */ 
+     */
     virtual Processor*  newProcessor() { return new EUTelEventViewer ; }
-    
+
     //! Default constructor;
     EUTelEventViewer() ;
-    
+
     //! Init method;
     /*! It prints the parameters and initialize the MarlinCED
      *  interface.
      */
     virtual void init() ;
-    
+
     //! Process the run header
     /*! Nothing to do.
-     * 
+     *
      *  @param run The current run header
-     */ 
+     */
     virtual void processRunHeader( LCRunHeader* run ) ;
-    
+
     //! Process the current event
     /*! This is the real part of the class. The current event is taken
      *  and in case a EORE is found, the processor will immediately
      *  return. Otherwise, the current detector geometry is drawn in
-     *  the graphical window. 
+     *  the graphical window.
      *  After that each collections the user wants to display are
      *  drawn one by one on the corresponding layers.
      *
@@ -118,16 +121,16 @@ namespace eutelescope {
      *  to use the wait for keyboard switch.
      *
      *  @param evt The current event
-     */ 
-    virtual void processEvent( LCEvent * evt ) ; 
-    
+     */
+    virtual void processEvent( LCEvent * evt ) ;
+
     //! Check event
     /*! Nothing to do here
-     *  
+     *
      *  @param evt The current event
-     */ 
-    virtual void check( LCEvent * evt ) ; 
-  
+     */
+    virtual void check( LCEvent * evt ) ;
+
     //! Finish processing
     /*! Nothing to do here
      */
@@ -139,11 +142,11 @@ namespace eutelescope {
      *
      *  @param counter Collection number
      *  @return A proper color value
-     */ 
+     */
     int returnColor(int counter);
-    
+
   protected:
-    
+
     //! Tracker Hit collection names
     /*! This is the vector of tracker hit collection names. The user
      *  via the steering file can add as many collection she/he wish
@@ -151,7 +154,7 @@ namespace eutelescope {
      *  for that is the possibility to compare different tracking /
      *  clustering algorithms.
      *
-     */ 
+     */
     std::vector<std::string> _trackerHitCollectionNameVec;
 
     //! Track collection names
@@ -161,9 +164,9 @@ namespace eutelescope {
      *  for that is the possibility to compare different tracking /
      *  clustering algorithms.
      *
-     */ 
+     */
     std::vector<std::string> _trackCollectionNameVec;
-    
+
     //! Alignment constant collection
     /*! This is the collection containing the alignment
      *  constants. Those numbers are applied to the planes so that
@@ -173,32 +176,32 @@ namespace eutelescope {
      *
      *  When the planes are shifted, then the hits have to be
      *  corrected as well.
-     */ 
+     */
     std::string _alignmentCollectionName;
 
     //! CED TrackerHit layer
     /*! This number corresponds to the CED layer where tracker hit
      *  will be drawn. Setting it to a negative number means switching
      *  it of.
-     */ 
+     */
     int _layerTrackerHit;
 
     //! CED Track layer
     /*! This number corresponds to the CED layer where track will be
      *  drawn. Setting it to a negative number means switching it of.
-     */ 
+     */
     int _layerTrack;
 
     //! Wait for keyboard switch
     /*! Set it to true to pause the event processing at the end of each
      *  event
      */
-    bool _waitForKeyboard; 
+    bool _waitForKeyboard;
 
     //! Apply the alignment constants
     /*! Set it to true if you want to shift and rotate the planes
      *  according to what is contained in the alignement constants
-     *  collections. 
+     *  collections.
      */
     bool _applyAlignmentToPlane;
 
@@ -207,13 +210,13 @@ namespace eutelescope {
 
     //! Total event number
     int _iEvt;
-    
+
 
   } ;
 
   //! A global instance of the processor.
   EUTelEventViewer gEUTelEventViewer ;
-  
+
 }
 #endif
 
