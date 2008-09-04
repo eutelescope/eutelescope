@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// @version: $Id: EUTelDUTHistograms.cc,v 1.9 2008-08-23 12:30:51 bulgheroni Exp $
+// @version: $Id: EUTelDUTHistograms.cc,v 1.10 2008-09-04 15:33:17 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -422,6 +422,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   // Histograms of fitted positions
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
   for(int ifit=0;ifit<(int)_fittedX.size(); ifit++)
     {
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXHistoName]))->fill(_fittedX[ifit]);
@@ -437,6 +439,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
                                 << "   Y = " << _fittedY[ifit]) ;
     }
 
+#endif
 
 
 
@@ -477,6 +480,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
             nMatch++;
 
             // Histograms of measured-fitted shifts
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
             (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_BgShiftXHistoName]))->fill(_bgmeasuredX[besthit]-_bgfittedX[bestfit]);
 
@@ -492,6 +496,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
             (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_BgEfficiencyXYHistoName]))->fill(_bgfittedX[bestfit],_bgfittedY[bestfit],1.);
 
+#endif
 
             // Remove matched entries from the list (so the next matching pair
             // can be looked for)
@@ -507,7 +512,10 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
         // End of loop of matching background hits to fitted positions
       }
+
       while(distmin < _distMax*_distMax);
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
       // Background efficiency plots - tracks unmached to bg hits
 
@@ -520,7 +528,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
           (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_BgEfficiencyXYHistoName]))->fill(_bgfittedX[ifit],_bgfittedY[ifit],0.);
         }
 
-
+#endif
 
     }  // End of if(_nEvt > 1)  - end of background calculations
 
@@ -604,6 +612,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   // Histograms of measured positions
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA) 
+
   for(int ihit=0;ihit<(int)_measuredX.size(); ihit++)
     {
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredXHistoName]))->fill(_measuredX[ihit]);
@@ -618,6 +628,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
                                 << "   Y = " << _measuredY[ihit]) ;
     }
 
+#endif
 
 
   // Match measured and fitted positions
@@ -654,6 +665,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
         nMatch++;
 
         // Matched hits positions
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
         (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MatchedXHistoName]))->fill(_measuredX[besthit]);
 
@@ -696,6 +709,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
         // extend Eta histograms to 2 pitch range
 
+#endif
+
         if(_localX[besthit]<0)
           _localX[besthit]+=_pitchX;
         else
@@ -705,6 +720,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
           _localY[besthit]+=_pitchY;
         else
           _localY[besthit]-=_pitchY;
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaXHistoName]))->fill(_localX[besthit],_measuredX[besthit]-_fittedX[bestfit]);
 
@@ -732,6 +749,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
         (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_NoiseXYHistoName]))->fill(_measuredX[besthit],_measuredY[besthit],0.);
 
+#endif
 
         // Remove matched entries from the list (so the next matching pair
         // can be looked for)
@@ -763,6 +781,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   // Efficiency plots - unmatched tracks
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
   for(int ifit=0;ifit<(int)_fittedX.size(); ifit++)
     {
       (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyXHistoName]))->fill(_fittedX[ifit],0.);
@@ -771,6 +791,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
       (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EfficiencyXYHistoName]))->fill(_fittedX[ifit],_fittedY[ifit],0.);
     }
+
 
   // Noise plots - unmatched hits
 
@@ -793,6 +814,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_UnMatchedXYHistoName]))->fill(_measuredX[ihit],_measuredY[ihit]);
 
     }
+
+#endif
 
   return;
 }

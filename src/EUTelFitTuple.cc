@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitTuple.cc,v 1.5 2008-08-23 12:30:51 bulgheroni Exp $
+// Version: $Id: EUTelFitTuple.cc,v 1.6 2008-09-04 15:33:17 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -13,7 +13,8 @@
  *
  */
 
-#ifdef USE_GEAR
+// this processor is built only if USE_AIDA and USE_GEAR are defined
+#if defined(USE_GEAR) && ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) )
 
 // eutelescope inlcudes
 #include "EUTelFitTuple.h"
@@ -25,10 +26,9 @@
 #include "EUTelHistogramManager.h"
 #include "EUTelExceptions.h"
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+// aida includes <.h>
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/ITupleFactory.h>
-#endif
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -64,9 +64,7 @@ using namespace marlin ;
 using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelFitTuple::_FitTupleName  = "EUFit";
-#endif
 
 
 EUTelFitTuple::EUTelFitTuple() : Processor("EUTelFitTuple") {
@@ -137,18 +135,6 @@ void EUTelFitTuple::init() {
   _nRun = 0 ;
   _nEvt = 0 ;
 
-  // check if Marlin was built with GEAR support or not
-#ifndef USE_GEAR
-
-  message<ERROR> ( "Marlin was not built with GEAR support." );
-  message<ERROR> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
-
-  // I'm thinking if this is the case of throwing an exception or
-  // not. This is a really error and not something that can
-  // exceptionally happens. Still not sure what to do
-  exit(-1);
-
-#else
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
@@ -163,7 +149,6 @@ void EUTelFitTuple::init() {
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
-#endif
 
 // Take all layers defined in GEAR geometry
   _nTelPlanes = _siPlanesLayerLayout->getNLayers();
@@ -314,10 +299,8 @@ void EUTelFitTuple::init() {
 
 
 // Book histograms
-
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   bookHistos();
-#endif
+
 
 }
 
@@ -639,7 +622,6 @@ void EUTelFitTuple::end(){
   //        << " processed " << _nEvt << " events in " << _nRun << " runs "
   //        << std::endl ;
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   message<MESSAGE> ( log() << "N-tuple with "
                      << _FitTuple->rows() << " rows created" );
@@ -660,7 +642,6 @@ void EUTelFitTuple::end(){
   delete [] _fittedX ;
   delete [] _fittedY ;
 
-#endif
 
 }
 
@@ -669,7 +650,6 @@ void EUTelFitTuple::end(){
 void EUTelFitTuple::bookHistos()
 {
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   message<MESSAGE> ( log() << "Booking fit n-tuple \n" );
 
@@ -722,11 +702,7 @@ void EUTelFitTuple::bookHistos()
 
   message<DEBUG> ( log() << "Booking completed \n\n");
 
-#else
-  message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
-#endif
-
   return;
 }
 
-#endif
+#endif // GEAR && AIDA

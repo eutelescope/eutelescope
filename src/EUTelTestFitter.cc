@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.25 2008-08-23 12:30:51 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.26 2008-09-04 15:33:17 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -667,7 +667,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
                      << _inputColName
                      << "\nfrom event " << event->getEventNumber()
                      << " in run " << event->getRunNumber()  );
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)    
     (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
+#endif
     throw SkipEventException(this);
   }
 
@@ -681,11 +684,17 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   if(debug)message<DEBUG> ( log() << "Total of " << nHit << " tracker hits in input collection " );
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nAllHitHistoName]))->fill(nHit);
+#endif
 
   if(nHit + _allowMissingHits < _nActivePlanes) {
     if(debug)message<DEBUG> ( log() << "Not enough hits to perform the fit, exiting... " );
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
+#endif
+
     throw SkipEventException(this);
   }
 
@@ -830,9 +839,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
                                 << "   Z = " << hitZ[ihit] << " (plane " << hitPlane[ihit] << ")" );
     }
 
-
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nAccHitHistoName]))->fill(nGoodHit);
-
+#endif
 
   // Main analysis loop: finding multiple tracks (if allowed)
 
@@ -908,7 +917,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         if( firstTrack ) {
           if(debug)message<DEBUG> ( log() << "Not enough planes hit to perform the fit " );
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
           (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
+#endif
 
           // before throwing the exception I should clean up the
           // memory...
@@ -1123,6 +1134,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
               }
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
             // Fill Chi2 histograms
 
             (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_linChi2HistoName]))->fill(trackChi2);
@@ -1135,7 +1147,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
             // Fill hit histograms
 
             (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nHitHistoName]))->fill(nChoiceFired);
-
+#endif
 
             // Write fit result out
 
@@ -1285,15 +1297,17 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       }
     // End of loop over track possibilities
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     if(firstTrack)
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_firstChi2HistoName]))->fill(log10(chi2min));
-
+#endif
 
     if(ibest<0 && firstTrack) {
       if(debug)message<DEBUG> ( log() << "No track fulfilling search criteria found ! " );
 
-
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
+#endif
 
       // before throwing the exception I should clean up the
       // memory...
@@ -1315,11 +1329,15 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     if(ibest>=0 && firstTrack && ambiguityMode )
       {
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
         if(_searchMultipleTracks)
           (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_bestChi2HistoName]))->fill(log10(chi2best));
 
         if(_searchMultipleTracks)
           (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nBestHistoName]))->fill(nBestFired);
+#endif      
+
       }
 
 
@@ -1364,6 +1382,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
           }
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
         // Fill Chi2 histograms
 
         (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_linChi2HistoName]))->fill(chi2best);
@@ -1382,7 +1401,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
         if(_searchMultipleTracks && firstTrack)
           (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nBestHistoName]))->fill(nBestFired);
-
+#endif
 
 
         // Write fit result out
@@ -1552,17 +1571,25 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       delete corrpointvec;
     }
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   // Number of reconstructed tracks
 
   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(nFittedTracks);
+#endif
 
   // Hit ambiguity
 
   if ( ambiguityMode )
     {
-      for(int ihit=0; ihit< nHit ; ihit++)
-        if(_isActive[hitPlane[ihit]])
+      for(int ihit=0; ihit< nHit ; ihit++) {
+        if(_isActive[hitPlane[ihit]]) {
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
           (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_hitAmbiguityHistoName]))->fill(hitFits[ihit]);
+#endif
+	}
+      }
+
     }
 
   // Clear all working arrays

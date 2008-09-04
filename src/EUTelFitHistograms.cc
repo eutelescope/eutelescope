@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitHistograms.cc,v 1.9 2008-08-23 12:30:51 bulgheroni Exp $
+// Version: $Id: EUTelFitHistograms.cc,v 1.10 2008-09-04 15:33:17 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -13,9 +13,10 @@
  *
  */
 
-#ifdef USE_GEAR
+// this processor is built only if USE_GEAR and USE_AIDA
+#if defined(USE_GEAR) && ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) )
 
-// eutelescope inlcudes
+// eutelescope includes
 #include "EUTelFitHistograms.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
@@ -25,7 +26,7 @@
 #include "EUTelHistogramManager.h"
 #include "EUTelExceptions.h"
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+// aida includes <.h>
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
@@ -33,7 +34,7 @@
 #include <AIDA/IProfile1D.h>
 #include <AIDA/IProfile2D.h>
 #include <AIDA/ITree.h>
-#endif
+
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -70,7 +71,6 @@ using namespace marlin ;
 using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelFitHistograms::_MeasuredXHistoName  = "measuredX";
 std::string EUTelFitHistograms::_MeasuredYHistoName  = "measuredY";
 std::string EUTelFitHistograms::_MeasuredXYHistoName = "measuredXY";
@@ -112,9 +112,6 @@ std::string EUTelFitHistograms::_clusterSignalHistoName  = "clusterSignal";
 std::string EUTelFitHistograms::_meanSignalXHistoName  = "meanSignalX";
 std::string EUTelFitHistograms::_meanSignalYHistoName  = "meanSignalY";
 std::string EUTelFitHistograms::_meanSignalXYHistoName  = "meanSignalXY";
-
-#endif
-
 
 EUTelFitHistograms::EUTelFitHistograms() : Processor("EUTelFitHistograms") {
 
@@ -169,18 +166,6 @@ void EUTelFitHistograms::init() {
   _nRun = 0 ;
   _nEvt = 0 ;
 
-  // check if Marlin was built with GEAR support or not
-#ifndef USE_GEAR
-
-  message<ERROR> ( "Marlin was not built with GEAR support." );
-  message<ERROR> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
-
-  // I'm thinking if this is the case of throwing an exception or
-  // not. This is a really error and not something that can
-  // exceptionally happens. Still not sure what to do
-  exit(-1);
-
-#else
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
@@ -195,7 +180,6 @@ void EUTelFitHistograms::init() {
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
-#endif
 
 // Take all layers defined in GEAR geometry
   _nTelPlanes = _siPlanesLayerLayout->getNLayers();
@@ -333,9 +317,7 @@ void EUTelFitHistograms::init() {
 
 // Book histograms
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   bookHistos();
-#endif
 
 }
 
@@ -844,8 +826,6 @@ void EUTelFitHistograms::end(){
 
 void EUTelFitHistograms::bookHistos()
 {
-
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   message<MESSAGE> ( log() << "Booking histograms " );
 
@@ -2529,11 +2509,9 @@ void EUTelFitHistograms::bookHistos()
     message<DEBUG> ( log() <<  mapIter->first << " : " <<  (mapIter->second)->title() ) ;
 
   message<DEBUG> ( log() << "Histogram booking completed \n\n");
-#else
-  message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
-#endif
+
 
   return;
 }
 
-#endif
+#endif // GEAR && AIDA
