@@ -999,68 +999,49 @@ given <a href="http://www.ifh.de/linear_collider/">here</a>.
 
 @section install How to install
 
-Installation is even easier than downloading the source
-code. Actually, the installation process can take care of the source
-download as
-well. The <a href="http://www-flc.desy.de/ilcsoft/ilcsoftware/ilcinstall/psc_project_view">ilcinstall</a>
-can be used to install any Marlin package and consequently also the
-EUTelescope one. Within this installation script there is a module to
-download, build and install the EUTelescope package into Marlin
-directly. The only thing the user should do is to add a line like the
-following after the declaration of the Marlin module
+Installation is even easier than donwloading the source code because
+the The <a
+href="http://www-flc.desy.de/ilcsoft/ilcsoftware/ilcinstall/psc_project_view">ilcinstall</a>
+is helping you in donwload and install all the needed piecese of
+software needed by Eutelescope.<br>
+You can choose in between two different kinds of installation:
+@li <b>Minimal</b>. This has the minimum number of dependencies and
+can be done in a couple of minutes. Of course this is not offering all
+the bell and whistles that come along the Eutelescope, for example you
+will not have the graphical event viewer or the perform alignment
+calculation. The minimal configuration contains: <a
+href="http://ilcsoft.desy.de/portal/software_packages/lcio">lcio</a>,
+<a
+href="http://ilcsoft.desy.de/portal/software_packages/marlin">Marlin</a>,
+Java, CMake and CMakeModules. <br>
 
-@code
-ilcsoft.install(EUTelescope("HEAD"));
-@endcode
+@li <b>Complete</b>. This is the complete installation you have to do
+to fully enjoy Eutelescope. Along with the modules coming with the
+<b>Minimal</b> installation there are also the following packages: <a
+href="http://ilcsoft.desy.de/portal/software_packages/gear">GEAR</a>,
+ <a
+href="http://ilcsoft.desy.de/portal/software_packages/raida">RAIDA</a>,
+<a href="http://root.cern.ch">ROOT</a>, <a
+href="http://ilcsoft.desy.de/portal/software_packages/lccd">LCCD</a>,
+<a
+href="http://ilcsoft.desy.de/portal/software_packages/marlinutil">MarlinUtil</a>,
+<a href="http://ilcsoft.desy.de/portal/software_packages/ced">CED</a>,
+CLHEP, GSL and <a
+href="http://ilcsoft.desy.de/portal/software_packages/overlay">Overlay</a>,
+eudaq.
 
-where, of course, HEAD can be replaced by any valid CVS tag. The
-following options can also be added: 
+To install follow these steps:
 
-
-@li <b>Download type</b>: this can be used to specify to download the
-source code simply using @c wget or a CVS client like @c cvs or @c
-ccvssh (ilcsoft.module("EUTelescope").download.type="type").
-
-@li <b>Download username</b>: in the case, the download is going
-through CVS and the user is a EUTelescope developer, then it necessary
-to set also the username in order to gain read and write access to the
-repository (ilcsoft.module("EUTelescope").download.username="name").
-
-@li <b>Building the documentation</b>: in the case the user wants to
-build locally also this documentation, it is enough to set to true the
-buildDoc flag in this way: ilcsoft.module("EUTelescope").buildDoc=True
-
-@li <b>Building in DEBUG mode</b>: it is recommended to build the
-executable not optimized and with the debug symbols only during the
-debug and development phase. See the @ref performance section for a
-comparison of optimized and debug built. To set the debug mode on, add
-a line like the following: ilcsoft.module("EUTelescope").debug=True.
-
-@li <b>Other ILC packages dependencies</b>: a standard and minimal
-build of the EUTelescope package requires the following other ILC
-libraries: LCIO, Marlin, MarlinUtil and LCCD. Optionally the user can
-add the following dependencies: RAIDA, GEAR and GSL. Linking against
-RAIDA will allow to have histograms of relevant figures of merit
-filled during the processor execution. Linking against GEAR will allow
-the user to run the most advanced processors taking care of hit
-generation and track fitting. GSL (GNU Scientific Library) is used
-only in a couple of examples.
-
-@li <b>Other non ILC packages dependencies</b>: a typical example is
-the eudaq software. This is the DAQ software of the EUDET JRA1 and for
-the time being it cannot be installed using the ilcsoft. This means
-that the user has to install this package manually and before the
-execution of the ilcinstall script. To link against this package the
-following lines has to be added in the install configuration script.
-
-@code
-ilcsoft.module("EUTelescope").env="EUDAQ=/path/to/eudaq"
-ilcsoft.module("EUTelescope").envpath("PATH")="$EUDAQ/main"
-ilcsoft.module("EUTelescope").envpath("LD_LIBRARY_PATH")="$EUDAQ/main"
-ilcsoft.module("EUTelescope").envbuild("USERINCLUDES")="-DUSE_EUDAQ -DEUDAQ_FUNC=__PRETTY_FUNCTION__"
-ilcsoft.module("EUTelescope").envbuild("USERINCLUDES")="-DEUDAQ_PLATFORM=PF_LINUX -I $EUDAQ/main/include"
-ilcsoft.module("EUTelescope").envbuild("USERLIBS")="-L $EUDAQ/main -leudaq"
-@endcode
+@li Download <a
+href="http://www-flc.desy.de/ilcsoft/ilcsoftware/ilcinstall/psc_project_view">ilcinstall</a>
+@li Untar ilcinstall into the folder where you want to install the ilc
+software.
+@li Download one of the examplary configuration: <a
+href="minimal.cfg">minimal</a> or <a href="complete.cfg">complete</a>
+@li Open the configuration file into a text editor and modified the
+installation path (ilcsoft) and the location of the eudaq library
+(eudaqPath) according to your wishes.
+@li Run ./ilcinstall -i minimal.cfg (or complete.cfg)
 
 
 @section dcache Accessing data in the DESY dCache
@@ -1124,3 +1105,4 @@ first, second and third frames respectively.
 arrival and then it is 1 till the end. 
 
 */
+
