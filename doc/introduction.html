@@ -1005,7 +1005,7 @@ href="http://www-flc.desy.de/ilcsoft/ilcsoftware/ilcinstall/psc_project_view">il
 is helping you in donwload and install all the needed piecese of
 software needed by Eutelescope.<br>
 You can choose in between two different kinds of installation:
-@li <b>Minimal</b>. This has the minimum number of dependencies and
+@li <b>\ref minimal </b>. This has the minimum number of dependencies and
 can be done in a couple of minutes. Of course this is not offering all
 the bell and whistles that come along the Eutelescope, for example you
 will not have the graphical event viewer or the perform alignment
@@ -1015,7 +1015,7 @@ href="http://ilcsoft.desy.de/portal/software_packages/lcio">lcio</a>,
 href="http://ilcsoft.desy.de/portal/software_packages/marlin">Marlin</a>,
 Java, CMake and CMakeModules. <br>
 
-@li <b>Complete</b>. This is the complete installation you have to do
+@li <b>\ref complete</b>. This is the complete installation you have to do
 to fully enjoy Eutelescope. Along with the modules coming with the
 <b>Minimal</b> installation there are also the following packages: <a
 href="http://ilcsoft.desy.de/portal/software_packages/gear">GEAR</a>,
@@ -1036,8 +1036,8 @@ To install follow these steps:
 href="http://www-flc.desy.de/ilcsoft/ilcsoftware/ilcinstall/psc_project_view">ilcinstall</a>
 @li Untar ilcinstall into the folder where you want to install the ilc
 software.
-@li Download one of the examplary configuration: <a
-href="minimal.cfg">minimal</a> or <a href="complete.cfg">complete</a>
+@li Download one of the examplary configuration: \ref minimal
+ or \ref complete
 @li Open the configuration file into a text editor and modified the
 installation path (ilcsoft) and the location of the eudaq library
 (eudaqPath) according to your wishes.
@@ -1106,3 +1106,12 @@ arrival and then it is 1 till the end.
 
 */
 
+/**
+@page minimal Minimal configuration
+\include minimal.cfg
+*/
+
+/**
+@page complete Complete configuration
+\include complete.cfg
+*/
