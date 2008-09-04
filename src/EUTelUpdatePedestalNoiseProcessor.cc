@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.9 2008-08-23 12:30:51 bulgheroni Exp $
+// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.10 2008-09-04 11:02:56 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -294,14 +294,14 @@ void EUTelUpdatePedestalNoiseProcessor::fixedWeightUpdate(LCEvent * evt) {
 
 void EUTelUpdatePedestalNoiseProcessor::end() {
 
-  unsigned index  = 0;
-  unsigned iPixel = 0;
-
   if ( _monitoredPixelPedestal.size() == 0 ) {
     message<ERROR> ( "The update procedure failed." );
   } else {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+    unsigned index  = 0;
+    unsigned iPixel = 0;
+
     while ( index < _monitoredPixel.size() ) {
       int  iDetector = _monitoredPixel[index++];
       int  xCoord    = _monitoredPixel[index++];
