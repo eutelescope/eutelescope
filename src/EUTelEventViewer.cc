@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.9 2008-09-02 09:38:54 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.10 2008-09-04 10:13:03 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,9 +10,9 @@
  *
  */
 
-// this processor is built only if GEAR, CED are available, otherwise
+// this processor is built only if GEAR and MARLINUTIL are available, otherwise
 // it is simply skipped
-#if defined(USE_GEAR) //  && defined(USE_CED)
+#if defined(USE_GEAR) && defined(USE_MARLINUTIL)
 
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"

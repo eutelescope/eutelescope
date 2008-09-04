@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.24 2008-09-01 08:50:27 bulgheroni Exp $
+// Version: $Id: EUTelMille.cc,v 1.25 2008-09-04 10:13:03 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -9,8 +9,8 @@
  *   header with author names in all development based on this file.
  *
  */
-// built only if GEAR is used
-#ifdef USE_GEAR
+// built only if GEAR and MARLINUTIL are used
+#if defined(USE_GEAR) && defined(USE_MARLINUTIL) 
 
 // eutelescope includes ".h"
 #include "EUTelMille.h"

@@ -3,7 +3,7 @@
 #
 # Original author: J. Engels, DESY
 # Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# Version $Id: CMakeLists.txt,v 1.9 2008-06-05 13:30:38 bulgheroni Exp $
+# Version $Id: CMakeLists.txt,v 1.10 2008-09-04 10:13:03 bulgheroni Exp $
 ########################################################
 
 
@@ -40,7 +40,8 @@ OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" ON )
 
 # project dependencies
 # e.g. SET( ${PROJECT_NAME}_DEPENDS "Marlin MarlinUtil LCIO GEAR CLHEP GSL RAIDA ROOT" )
-SET( ${PROJECT_NAME}_DEPENDS "Marlin MarlinUtil LCIO GSL CLHEP" )
+#SET( ${PROJECT_NAME}_DEPENDS "Marlin MarlinUtil LCIO GSL CLHEP" )
+SET( ${PROJECT_NAME}_DEPENDS "Marlin LCIO" )
 
 # set default cmake build type to RelWithDebInfo
 # possible options are: None Debug Release RelWithDebInfo MinSizeRel
@@ -190,6 +191,25 @@ IF( DEFINED ${PROJECT_NAME}_DEPENDS OR DEFINED BUILD_WITH OR DEFINED LINK_WITH )
     INCLUDE( "${CMAKE_MODULE_PATH}/MacroCheckDeps.cmake" )
     CHECK_DEPS()
 ENDIF()
+
+# add preprocessor flag: USE_CED
+# this code can be deleted when CEDConfig.cmake exports the USE_CED # definition
+IF ( CED_FOUND ) 
+  ADD_DEFINITIONS("-DUSE_CED")
+ENDIF()
+
+# add preprocessor flag: USE_MARLINUTIL
+# this code can be deleted when MarlinUtilConfig.cmake exports the USE_MARLINUTIL # definition
+IF ( MarlinUtil_FOUND ) 
+  ADD_DEFINITIONS("-DUSE_MARLINUTIL")
+ENDIF()
+
+# add preprocessor flag: USE_GSL
+# this code can be deleted when GSLConfig.cmake exports the USE_GSL # definition
+IF ( GSL_FOUND ) 
+  ADD_DEFINITIONS("-DUSE_GSL")
+ENDIF()
+
 
 # LIBRARY
 ADD_LIBRARY( lib_${PROJECT_NAME} ${library_sources} )
