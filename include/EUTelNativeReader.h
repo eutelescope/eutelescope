@@ -72,7 +72,7 @@ namespace eutelescope {
    *   them and respect the naming convention.
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelNativeReader.h,v 1.5 2008-08-20 12:51:35 bulgheroni Exp $
+   *   @version $Id: EUTelNativeReader.h,v 1.6 2008-09-04 19:57:50 bulgheroni Exp $
    *
    */
   class EUTelNativeReader : public marlin::DataSourceProcessor    {
@@ -126,7 +126,7 @@ namespace eutelescope {
      *  End Of Run Event is found. A LCIO kEORE event is then passed
      *  to the ProcessorMgr.
      *
-     *  @para eore The eudaq event contaning the EORE
+     *  @param eore The eudaq event contaning the EORE
      */
     void processEORE( eudaq::Event * eore );
 

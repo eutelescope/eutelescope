@@ -1,4 +1,4 @@
-/* $Id: EUTelPStream.h,v 1.2 2008-07-09 14:35:09 bulgheroni Exp $
+/* $Id: EUTelPStream.h,v 1.3 2008-09-04 19:57:50 bulgheroni Exp $
 PStreams - POSIX Process I/O for C++
 Copyright (C) 2001,2002,2003,2004 Jonathan Wakely
 
@@ -20,7 +20,7 @@ along with PStreams; if not, write to the Free Software Foundation, Inc.,
 */
 
 /**
- * @file pstream.h
+ * @file EUTelPStream.h
  * @brief Declares all PStreams classes.
  * @author Jonathan Wakely
  *
