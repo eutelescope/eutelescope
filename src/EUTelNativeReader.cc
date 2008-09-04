@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelNativeReader.cc,v 1.10 2008-08-21 12:31:28 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.11 2008-09-04 16:22:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -78,7 +78,7 @@ EUTelNativeReader::EUTelNativeReader (): DataSourceProcessor  ("EUTelNativeReade
   // from here below only detector specific parameters.
 
   // ---------- //
-  //  MIMOTEL   //
+  //  EUDRB     //
   // ---------- //
 
   // first the compulsory parameters
@@ -503,16 +503,19 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
             // (with markers in) and then calculate how many pixels I
             // have to remove
             size_t originalX = array.m_x[ iPixel ] ;
-            vector<size_t >::iterator markerBegin = currentDetector->getMarkerPosition().begin();
-            vector<size_t >::iterator markerEnd = currentDetector->getMarkerPosition().end();
-            if ( find( markerBegin, markerEnd, originalX ) == markerEnd ) {
+            // vector<size_t >::iterator markerBegin = currentDetector->getMarkerPosition().begin();
+            // vector<size_t >::iterator markerEnd = currentDetector->getMarkerPosition().end();
+            if ( find( currentDetector->getMarkerPosition().begin(), 
+		       currentDetector->getMarkerPosition().end(), originalX )
+		 == currentDetector->getMarkerPosition().end() ) {
               // the original X is not on a marker column, so I need
               // to remove a certain number of pixels depending on the
               // position
 
               // this counts the number of markers found on the left
               // of the original X
-              short  diff = ( short ) count_if ( markerBegin, markerEnd, bind2nd(less<short> (), originalX ) );
+              short  diff = ( short ) count_if ( currentDetector->getMarkerPosition().begin(),
+						 currentDetector->getMarkerPosition().end(), bind2nd(less<short> (), originalX ) );
               sparsePixel->setXCoord( originalX - diff );
 
               // no problem instead with the Y coordinate
