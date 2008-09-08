@@ -71,8 +71,14 @@ namespace eutelescope {
    *   If you need to add private data members, carefully describe
    *   them and respect the naming convention.
    *
+   *   <b>Testing</b> 
+   *   This native reader has been tested and the output results have
+   *   been compared with the one obtained using the
+   *   EUTelMimoTelReader. To do so the <a href="http://confluence.slac.stanford.edu/display/ilc/LCIO+Command+Line+Tool">lcio</a> command line tool has
+   *   been using
+   *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelNativeReader.h,v 1.6 2008-09-04 19:57:50 bulgheroni Exp $
+   *   @version $Id: EUTelNativeReader.h,v 1.7 2008-09-08 13:23:41 bulgheroni Exp $
    *
    */
   class EUTelNativeReader : public marlin::DataSourceProcessor    {
