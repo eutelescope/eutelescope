@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.19 2008-08-19 15:48:49 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.20 2008-09-08 13:20:24 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -280,7 +280,7 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
             // there is no marker removal implemented for M18
             _xMax = 512;
             _yMax = 512;
-            xMaxVec = IntVec(noOfDetectors, _xMax - 1);
+            xMaxVec = IntVec(noOfDetectors, _xMax - _markerPositionVec.size() - 1);
             yMaxVec = IntVec(noOfDetectors, _yMax - 1);
             eudrbSubDet = vector<string > ( noOfDetectors, "MIMOSA18");
 
@@ -471,8 +471,9 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
                       // for the time being applying the marker
                       // removal only in the case of MimoTel sensors
 
-                      ( eudrbSubDet[iDetector] ==  "MIMOTEL" ) ) {
-
+                      (( eudrbSubDet[iDetector] ==  "MIMOTEL" ) || 
+		       ( eudrbSubDet[iDetector] ==  "MIMOSA18" ) )) {
+		  
                   // the idea behind the marker removal procedure is that:
                   // markers are occurring always at the same column
                   // position, so we can repeat the procedure into a loop
@@ -609,9 +610,11 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
                        // for the time being applying the marker
                        // removal only in the case of MimoTel sensors
 
-                       ( eudrbSubDet[iDetector] ==  "MIMOTEL" ) ) {
+                      (( eudrbSubDet[iDetector] ==  "MIMOTEL" ) || 
+		       ( eudrbSubDet[iDetector] ==  "MIMOSA18" ) )) {
 
 
+		    
                     // strip away the markers...
                     vector<short > cdsStrippedVec(  ( xMaxVec[iDetector] + 1 ) * ( yMaxVec[iDetector] + 1 ) );
                     vector<short >::iterator currentCDSPos = cdsStrippedVec.begin();
