@@ -453,7 +453,8 @@ WARN_LOGFILE           =
 
 INPUT                  = ../include ../src introduction.html \ 
 	                 ../steering-examples/minimal.cfg    \
-                         ../steering-examples/complete.cfg	
+                         ../steering-examples/complete.cfg   \
+	                 ../steering-examples/ChangeLog	
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
@@ -1050,7 +1051,9 @@ SKIP_FUNCTION_MACROS   = YES
 # If a tag file is not located in the directory in which doxygen 
 # is run, you must also specify the path to the tagfile here.
 
-TAGFILES               = 
+TAGFILES               = Marlin.tag=http://ilcsoft.desy.de/marlin/v00-10-03/doc/html \
+			 Gear.tag=http://ilcsoft.desy.de/gear/v00-09/doc/html \
+			 Lcio.tag=http://lcio.desy.de/v01-10/doc/doxygen_api/html
 
 # When a file name is specified after GENERATE_TAGFILE, doxygen will create 
 # a tag file that is based on the input files it reads.
@@ -1061,7 +1064,7 @@ GENERATE_TAGFILE       = Eutelescope.tag
 # in the class index. If set to NO only the inherited external classes 
 # will be listed.
 
-ALLEXTERNALS           = NO
+ALLEXTERNALS           = YES
 
 # If the EXTERNAL_GROUPS tag is set to YES all external groups will be listed 
 # in the modules index. If set to NO, only the current project's groups will 
