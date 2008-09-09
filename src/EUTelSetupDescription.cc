@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelSetupDescription.cc,v 1.1 2008-09-09 08:15:46 bulgheroni Exp $
+// Version $Id: EUTelSetupDescription.cc,v 1.2 2008-09-09 08:44:47 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -64,6 +64,7 @@ EUTelSetupDescription::EUTelSetupDescription(EUTelPixelDetector * detector)  :
 
   if ( modeS == "RAW2" ) modeE = kRAW2;
   else if ( modeS == "RAW3" ) modeE = kRAW3;
+  else if ( modeS == "ZS" )  modeE = kZS;
   else {
     throw UnknownDataTypeException( modeS + " is not a valid readout mode." );
   }
