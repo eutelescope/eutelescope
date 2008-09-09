@@ -2,7 +2,7 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelNativeReader.cc,v 1.12 2008-09-04 17:18:32 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.13 2008-09-09 08:46:01 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -24,7 +24,7 @@
 #include "EUTelTLUDetector.h"
 #include "EUTelSparseDataImpl.h"
 #include "EUTelSimpleSparsePixel.h"
-
+#include "EUTelSetupDescription.h"
 
 // marlin includes
 #include "marlin/Exceptions.h"
@@ -43,6 +43,7 @@
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerRawDataImpl.h>
 #include <IMPL/TrackerDataImpl.h>
+#include <IMPL/LCGenericObjectImpl.h>
 #include <IMPL/LCEventImpl.h>
 #include <UTIL/CellIDEncoder.h>
 
@@ -120,6 +121,9 @@ void EUTelNativeReader::readDataSource (int numEvents) {
   // greater than numEvents.
   int eventCounter = 0;
 
+  // by definition this is the first event! 
+  _isFirstEvent = true;
+
   // this is to make the output messages nicer
   streamlog::logscope scope(streamlog::out);
   scope.setName(name());
@@ -151,7 +155,7 @@ void EUTelNativeReader::readDataSource (int numEvents) {
       // and then stop the data reading
       processEORE( eudaqEvent.get() );
 
-      break; // this is breaking the loop on input evets
+      break; // this is breaking the loop on input events
     }
 
     if ( eudaqEvent->IsBORE() ) {
@@ -216,12 +220,16 @@ void EUTelNativeReader::readDataSource (int numEvents) {
         ProcessorMgr::instance()->processEvent( static_cast< lcio::LCEventImpl *> ( dummyEvent ) );
         delete dummyEvent;
       }
+
+      // in case this was the first event, toggle the boolean
+      if ( _isFirstEvent ) _isFirstEvent = false;
     }
 
     // increment the event counter here. This number is not used to
     // set the event number but only to count how many events have
     // been processed to stop the conversion
     ++eventCounter;
+
   }
 }
 
@@ -236,6 +244,21 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
   // set the proper cell encoder
   CellIDEncoder< TrackerRawDataImpl > rawDataEncoder ( EUTELESCOPE::MATRIXDEFAULTENCODING, rawDataCollection.get() );
   CellIDEncoder< TrackerDataImpl    > zsDataEncoder  ( EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection.get()  );
+
+  // if this is the first event we also have to prepare a collection
+  // of EUTelSetupDescription with the info of all the detectors
+  // readout by the EUDRBs
+  
+  if ( isFirstEvent() ) {
+
+    auto_ptr< lcio::LCCollectionVec > eudrbSetupCollection( new LCCollectionVec (LCIO::LCGENERICOBJECT) );
+
+    for ( size_t iDetector = 0; iDetector < _eudrbDetectors.size() ; iDetector++) {
+      EUTelSetupDescription * detector = new EUTelSetupDescription( _eudrbDetectors.at( iDetector ) );
+      eudrbSetupCollection->push_back( detector );
+    }
+    eutelEvent->addCollection( eudrbSetupCollection.release(), "eudrbSetup" );
+  }
 
   // to understand if we have problem with de-syncronisation, let
   // me prepare a Boolean switch and a vector of size_t to contain the
