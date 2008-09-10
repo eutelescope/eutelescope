@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.31 2008-08-23 12:30:51 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.32 2008-09-10 15:52:01 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -336,7 +336,6 @@ void EUTelPedestalNoiseProcessor::processEvent (LCEvent * evt) {
                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
-
   if ( _iLoop == -1 ) preLoop( evt );
   else if ( _iLoop == 0 ) firstLoop(evt);
   else if ( _additionalMaskingLoop ) {
@@ -626,6 +625,17 @@ void EUTelPedestalNoiseProcessor::preLoop( LCEvent * event ) {
   try {
     LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
 
+    if ( collectionVec->size() != (unsigned) _noOfDetector ) {
+      // the number of elements in the collection is not the expected
+      // one. Something very strange happened to this event, so skip
+      // it! 
+      streamlog_out( ERROR1 ) << "Event " << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() 
+			      << setfill(' ') << " is unusable. " << resetiosflags(ios::left) << endl;
+      throw SkipEventException(this);
+    }
+
+
     if ( isFirstEvent() ) {
 
 
@@ -715,6 +725,15 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
   try {
     LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
 
+    if ( collectionVec->size() != (unsigned) _noOfDetector ) {
+      // the number of elements in the collection is not the expected
+      // one. Something very strange happened to this event, so skip
+      // it! 
+      streamlog_out( ERROR1 ) << "Event " << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() 
+			      << setfill(' ') << " is unusable. " << resetiosflags(ios::left) << endl;
+      throw SkipEventException(this);
+    }
 
     if ( isFirstEvent() ) {
 
@@ -904,6 +923,16 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
   // for each detector plane in the telescope.
   try {
     LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
+
+    if ( collectionVec->size() != (unsigned) _noOfDetector ) {
+      // the number of elements in the collection is not the expected
+      // one. Something very strange happened to this event, so skip
+      // it! 
+      streamlog_out( ERROR1 ) << "Event " << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() 
+			      << setfill(' ') << " is unusable. " << resetiosflags(ios::left) << endl;
+      throw SkipEventException(this);
+    }
 
     for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
       // get the TrackerRawData object from the collection for this detector
@@ -1517,6 +1546,16 @@ void EUTelPedestalNoiseProcessor::additionalMaskingLoop(LCEvent * event) {
   // for each detector plane in the telescope.
   try {
     LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
+
+    if ( collectionVec->size() != (unsigned) _noOfDetector ) {
+      // the number of elements in the collection is not the expected
+      // one. Something very strange happened to this event, so skip
+      // it! 
+      streamlog_out( ERROR1 ) << "Event " << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() 
+			      << setfill(' ') << " is unusable. " << resetiosflags(ios::left) << endl;
+      throw SkipEventException(this);
+    }
 
     for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
       // get the TrackerRawData object from the collection for this detector
