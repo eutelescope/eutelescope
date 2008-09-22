@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.25 2008-09-04 10:13:03 bulgheroni Exp $
+// Version: $Id: EUTelMille.cc,v 1.26 2008-09-22 09:54:31 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -127,7 +127,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("OnlySingleHitEvents","Use only events with one hit in every plane."
                             ,_onlySingleHitEvents, static_cast <int> (0));
 
-  registerOptionalParameter("OnlySingleTrackEvents","Use only events with one hit in every plane"
+  registerOptionalParameter("OnlySingleTrackEvents","Use only events with one track candidate."
                             ,_onlySingleTrackEvents, static_cast <int> (0));
 
   registerOptionalParameter("AlignMode","Number of alignment constants used. Available mode are: 1 - shifts in the X and Y directions and a rotation around the Z axis, 2 - only shifts in the X and Y directions",
