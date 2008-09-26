@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.8 2008-09-01 15:26:39 bulgheroni Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.9 2008-09-26 22:50:47 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -109,6 +109,11 @@ void EUTelCorrelator::init() {
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*>
     ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
+
+  _siPlaneZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
+  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
+    _siPlaneZPosition[ iPlane ] = _siPlanesLayerLayout->getLayerPositionZ(iPlane);
+  }
 
 #endif
 
@@ -398,26 +403,13 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
       LCCollectionVec * inputHitCollection = static_cast< LCCollectionVec *>
         ( event->getCollection( _inputHitCollectionName )) ;
 
-      LCCollectionVec * originalDataCollectionVec = dynamic_cast< LCCollectionVec * >
-        (evt->getCollection( "original_zsdata" ) );
-
-      CellIDDecoder<TrackerDataImpl> originalCellDecoder( originalDataCollectionVec );
-
-
       for ( size_t iExt = 0 ; iExt < inputHitCollection->size(); ++iExt ) {
 
         // this is the external hit
         TrackerHitImpl * externalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
                                                                          getElementAt( iExt ) );
 
-        // now let me take the vector of clusters used to define this
-        // hit
-        LCObjectVec      externalClusterVec = externalHit->getRawHits();
-
-        // actually there is only one cluster in this vector
-        TrackerDataImpl * externalCluster = dynamic_cast< TrackerDataImpl *> ( externalClusterVec[ 0 ] );
-
-        int externalSensorID = originalCellDecoder( externalCluster ) ["sensorID"] ;
+        int externalSensorID = guessSensorID( externalHit );
 
         double * externalPosition;
         externalPosition = (double *) externalHit->getPosition();
@@ -427,10 +419,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           TrackerHitImpl  * internalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
                                                                             getElementAt( iInt ) );
 
-          LCObjectVec       internalClusterVec = internalHit->getRawHits();
-          TrackerDataImpl * internalCluster    = dynamic_cast<TrackerDataImpl * > ( internalClusterVec[ 0 ] );
-
-          int internalSensorID = originalCellDecoder( internalCluster ) [ "sensorID" ];
+          int internalSensorID = guessSensorID( internalHit );
 
           if ( internalSensorID != externalSensorID ) {
 
@@ -699,3 +688,22 @@ void EUTelCorrelator::bookHistos() {
 #endif
 }
 
+#ifdef USE_GEAR
+int EUTelCorrelator::guessSensorID( TrackerHitImpl * hit ) {
+
+  int sensorID = 0;
+  double minDistance =  numeric_limits< double >::max() ;
+  double * hitPosition = const_cast<double * > (hit->getPosition());
+
+  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
+    double distance = std::abs( hitPosition[2] - _siPlaneZPosition[ iPlane ] );
+    if ( distance < minDistance ) {
+      minDistance = distance;
+      sensorID = _siPlanesLayerLayout->getID( iPlane );
+    }
+  }
+
+
+  return sensorID;
+}
+#endif // USE_GEAR

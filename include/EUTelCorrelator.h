@@ -24,6 +24,9 @@
 // lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+#if defined(USE_GEAR)
+#include <IMPL/TrackerHitImpl.h>
+#endif
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -69,7 +72,7 @@ namespace eutelescope {
    *
    *  @author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
    *  @author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-   *  @version $Id: EUTelCorrelator.h,v 1.5 2008-09-01 15:26:39 bulgheroni Exp $
+   *  @version $Id: EUTelCorrelator.h,v 1.6 2008-09-26 22:50:47 bulgheroni Exp $
    *
    */
 
@@ -142,6 +145,15 @@ namespace eutelescope {
     std::string _inputClusterCollectionName;
     std::string _inputHitCollectionName;
 
+
+#ifdef USE_GEAR
+    //! A function to guess the sensorID of a hit
+    /*! It is checking against the distance of each plane assuming
+     *  that this hit is belonging to the plane at the closest distant.
+     */
+     int guessSensorID( TrackerHitImpl * hit ) ;
+#endif
+
   private:
 
     //! Run number
@@ -199,6 +211,9 @@ namespace eutelescope {
      *  init() phase and stored for local use
      */
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+
+    //! An array with the Z position of planes
+    double * _siPlaneZPosition;
 #endif
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
