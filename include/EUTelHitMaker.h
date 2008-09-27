@@ -215,7 +215,7 @@ namespace eutelescope {
    *  pixel along x and y to be used.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHitMaker.h,v 1.9 2008-08-23 12:30:51 bulgheroni Exp $
+   *  @version $Id: EUTelHitMaker.h,v 1.10 2008-09-27 17:17:19 bulgheroni Exp $
    *
    */
 
@@ -407,21 +407,21 @@ namespace eutelescope {
      */
     std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
 
-    //! Name of the local hit map cloud
-    /*! The histogram pointed by this name is a 2D cloud. The x and y
+    //! Name of the local hit map histo
+    /*! The histogram pointed by this name is a 2D histo. The x and y
      *  axes correspond to the pixel detector axes in its own local
      *  frame of reference already converted in millimeter. There is
-     *  a cloud like this for each detector in the geometry.
+     *  a histo like this for each detector in the geometry.
      */
-    static std::string _hitCloudLocalName;
+    static std::string _hitHistoLocalName;
 
-    //! Name of the hit map cloud
-    /*! The histogram pointed by this name is a 2D cloud. The x and y
+    //! Name of the hit map histo
+    /*! The histogram pointed by this name is a 2D histo. The x and y
      *  axes correspond to the pixel detector axes already in the
-     *  telescope frame of reference. There is a cloud like this for
+     *  telescope frame of reference. There is a histo like this for
      *  each detector in the geometry.
      */
-    static std::string _hitCloudTelescopeName;
+    static std::string _hitHistoTelescopeName;
 
     //! Name of the density plot
     /*! This is a very nice plot showing in a 3D frame where all hits

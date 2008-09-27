@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.21 2008-08-23 12:30:51 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.22 2008-09-27 17:17:19 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -39,9 +39,7 @@
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
-#include <AIDA/ICloud.h>
-#include <AIDA/ICloud2D.h>
-#include <AIDA/ICloud3D.h>
+#include <AIDA/IHistogram3D.h>
 #include <AIDA/ITree.h>
 #endif
 
@@ -66,8 +64,8 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-std::string EUTelHitMaker::_hitCloudLocalName          = "HitCloudLocal";
-std::string EUTelHitMaker::_hitCloudTelescopeName      = "HitCloudTelescope";
+std::string EUTelHitMaker::_hitHistoLocalName          = "HitHistoLocal";
+std::string EUTelHitMaker::_hitHistoTelescopeName      = "HitHistoTelescope";
 std::string EUTelHitMaker::_densityPlotName            = "DensityPlot";
 std::string EUTelHitMaker::_clusterCenterHistoName     = "ClusterCenter";
 std::string EUTelHitMaker::_clusterCenterXHistoName    = "ClusterCenterX";
@@ -609,11 +607,11 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       if ( _histogramSwitch ) {
         {
           stringstream ss;
-          ss << _hitCloudLocalName << "-" << detectorID ;
+          ss << _hitHistoLocalName << "-" << detectorID ;
           tempHistoName = ss.str();
         }
-        if ( AIDA::ICloud2D* cloud = dynamic_cast<AIDA::ICloud2D*>(_aidaHistoMap[ tempHistoName ]) )
-          cloud->fill(xDet, yDet);
+        if ( AIDA::IHistogram2D* histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[ tempHistoName ]) )
+          histo->fill(xDet, yDet);
         else {
           streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
                                     << ".\nDisabling histogramming from now on " << endl;
@@ -656,18 +654,18 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       if ( _histogramSwitch ) {
         {
           stringstream ss;
-          ss << _hitCloudTelescopeName << "-" << detectorID ;
+          ss << _hitHistoTelescopeName << "-" << detectorID ;
           tempHistoName = ss.str();
         }
-        AIDA::ICloud2D * cloud2D = dynamic_cast<AIDA::ICloud2D*> (_aidaHistoMap[ tempHistoName ] );
-        if ( cloud2D ) cloud2D->fill( telPos[0], telPos[1] );
+        AIDA::IHistogram2D * histo2D = dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[ tempHistoName ] );
+        if ( histo2D ) histo2D->fill( telPos[0], telPos[1] );
         else {
           streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
                                     << ".\nDisabling histogramming from now on " << endl;
           _histogramSwitch = false;
         }
-        AIDA::ICloud3D * cloud3D = dynamic_cast<AIDA::ICloud3D*> (_aidaHistoMap[ _densityPlotName ] );
-        if ( cloud3D ) cloud3D->fill( telPos[0], telPos[1], telPos[2] );
+        AIDA::IHistogram3D * histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotName ] );
+        if ( histo3D ) histo3D->fill( telPos[0], telPos[1], telPos[2] );
         else {
           streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
                                     << ".\nDisabling histogramming from now on " << endl;
@@ -708,24 +706,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
 void EUTelHitMaker::end() {
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-  if ( _histogramSwitch ) {
-
-    streamlog_out ( DEBUG4 )  << "Converting clouds to histograms before leaving " << endl;
-
-    map<string, AIDA::IBaseHistogram *>::iterator mapIter = _aidaHistoMap.begin();
-    while ( mapIter != _aidaHistoMap.end() ) {
-
-      AIDA::ICloud * cloud = dynamic_cast<AIDA::ICloud*> ( mapIter->second );
-      if ( cloud )  {
-        cloud->convertToHistogram();
-      }
-      ++mapIter;
-    }
-  }
-
-#endif
-
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
 }
 
@@ -753,13 +733,34 @@ void EUTelHitMaker::bookHistos() {
 
       {
         stringstream ss ;
-        ss <<  _hitCloudLocalName << "-" << iDet ;
+        ss <<  _hitHistoLocalName << "-" << iDet ;
         tempHistoName = ss.str();
       }
-      AIDA::ICloud2D * hitCloudLocal = AIDAProcessor::histogramFactory(this)->createCloud2D( (basePath + tempHistoName).c_str() );
-      if ( hitCloudLocal ) {
-        hitCloudLocal->setTitle("Hit map in the detector local frame of reference");
-        _aidaHistoMap.insert( make_pair( tempHistoName, hitCloudLocal ) );
+
+      // 2 should be enough because it
+      // means that the sensor is wrong
+      // by all its size.
+      double safetyFactor = 2.0;
+
+      double xMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( iDet ) -
+                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( iDet ) ));
+      double xMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( iDet ) +
+                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( iDet )));
+
+      double yMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( iDet ) -
+                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( iDet )));
+      double yMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( iDet ) +
+                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( iDet )) );
+
+      int xNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( iDet );
+      int yNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( iDet );
+
+
+      AIDA::IHistogram2D * hitHistoLocal = AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
+                                                                                                     xNBin, xMin, xMax, yNBin, yMin, yMax );
+      if ( hitHistoLocal ) {
+        hitHistoLocal->setTitle("Hit map in the detector local frame of reference");
+        _aidaHistoMap.insert( make_pair( tempHistoName, hitHistoLocal ) );
       } else {
         streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
                                   << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
@@ -770,13 +771,16 @@ void EUTelHitMaker::bookHistos() {
 
       {
         stringstream ss ;
-        ss <<  _hitCloudTelescopeName << "-" << iDet ;
+        ss <<  _hitHistoTelescopeName << "-" << iDet ;
         tempHistoName = ss.str();
       }
-      AIDA::ICloud2D * hitCloudTelescope = AIDAProcessor::histogramFactory(this)->createCloud2D( ( basePath + tempHistoName ).c_str() );
-      if ( hitCloudTelescope ) {
-        hitCloudTelescope->setTitle("Hit map in the telescope frame of reference");
-        _aidaHistoMap.insert( make_pair ( tempHistoName, hitCloudTelescope ) );
+      AIDA::IHistogram2D * hitHistoTelescope =
+        AIDAProcessor::histogramFactory(this)->createHistogram2D( ( basePath + tempHistoName ).c_str(),
+                                                                  xNBin, xMin, xMax, yNBin, yMin, yMax );
+
+      if ( hitHistoTelescope ) {
+        hitHistoTelescope->setTitle("Hit map in the telescope frame of reference");
+        _aidaHistoMap.insert( make_pair ( tempHistoName, hitHistoTelescope ) );
       } else {
         streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
                                   << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
@@ -784,7 +788,78 @@ void EUTelHitMaker::bookHistos() {
       }
     }
 
-    AIDA::ICloud3D * densityPlot = AIDAProcessor::histogramFactory(this)->createCloud3D( _densityPlotName );
+    // we have to found the boundaries of this histograms. Let's take
+    // the outer positions in all directions
+    double xMin  =      numeric_limits< double >::max();
+    double xMax  = -1 * numeric_limits< double >::max();
+    int    xNBin = numeric_limits< int >::min();
+
+    double yMin  =      numeric_limits< double >::max();
+    double yMax  = -1 * numeric_limits< double >::max();
+    int    yNBin = numeric_limits< int >::min();
+
+    double zMin =      numeric_limits< double >::max();
+    double zMax = -1 * numeric_limits< double >::max();
+
+    for ( int iPlane = 0 ; iPlane < _siPlanesParameters->getSiPlanesNumber(); ++iPlane ) {
+
+      // x axis
+      xMin  = min( _siPlanesLayerLayout->getSensitivePositionX( iPlane ) - ( 0.5  * _siPlanesLayerLayout->getSensitiveSizeX( iPlane )), xMin);
+      xMax  = max( _siPlanesLayerLayout->getSensitivePositionX( iPlane ) + ( 0.5  * _siPlanesLayerLayout->getSensitiveSizeX( iPlane )), xMax);
+      xNBin = max( _siPlanesLayerLayout->getSensitiveNpixelX( iPlane ), xNBin );
+
+      // y axis
+      yMin  = min( _siPlanesLayerLayout->getSensitivePositionY( iPlane ) - ( 0.5  * _siPlanesLayerLayout->getSensitiveSizeY( iPlane )), yMin);
+      xMax  = max( _siPlanesLayerLayout->getSensitivePositionY( iPlane ) + ( 0.5  * _siPlanesLayerLayout->getSensitiveSizeY( iPlane )), yMax);
+      yNBin = max( _siPlanesLayerLayout->getSensitiveNpixelY( iPlane ), yNBin );
+
+      // z axis
+      zMin  = min( _siPlanesLayerLayout->getSensitivePositionZ( iPlane ), zMin );
+      zMax  = max( _siPlanesLayerLayout->getSensitivePositionZ( iPlane ), zMax );
+
+    }
+
+    // since we may still have alignment problem, we have to take a
+    // safety factor on the x and y direction especially.
+    // here I take something less than 2 because otherwise I will have
+    // a 200MB histogram.
+    double safetyFactor = 1.2;
+
+    double xDistance = std::abs( xMax - xMin ) ;
+    double xCenter   = ( xMax + xMin ) / 2 ;
+    xMin  = xCenter - safetyFactor * ( xDistance / 2 );
+    xMax  = xCenter + safetyFactor * ( xDistance / 2 );
+    xNBin *= safetyFactor;
+
+    double yDistance = std::abs( yMax - yMin ) ;
+    double yCenter   = ( yMax + yMin ) / 2 ;
+    yMin  = yCenter - safetyFactor * ( yDistance / 2 );
+    yMax  = yCenter + safetyFactor * ( yDistance / 2 );
+    yNBin *= safetyFactor;
+
+    // the positioning in Z is rather precise so don't need to
+    // increase too much the histogram boundaries, just a couple of
+    // centimeter each side.
+    double safetyMargin = 20; // this is mm
+
+    zMin -= safetyMargin;
+    zMax -= safetyMargin;
+
+    // calculate the distance between the first and the last plane
+    double zDistance = std::abs( zMax - zMin );
+
+    // the number of bin in Z direction has to be limited, otherwise
+    // this histo will crash the memory. Putting one bin every
+    // centimeter.
+
+    int zNBin = static_cast< int > ( zDistance / 10 ) ; // divided 10 to go from mm to cm.
+    // in case we have one plane only, put at least one bin
+    if ( zNBin == 0 ) ++zNBin;
+
+    AIDA::IHistogram3D * densityPlot = AIDAProcessor::histogramFactory(this)->createHistogram3D( _densityPlotName ,
+                                                                                                 xNBin, xMin, xMax, yNBin, yMin, yMax,
+                                                                                                 zNBin, zMin, zMax);
+
     if ( densityPlot ) {
       densityPlot->setTitle("Hit position in the telescope frame of reference");
       _aidaHistoMap.insert( make_pair ( _densityPlotName, densityPlot ) ) ;
