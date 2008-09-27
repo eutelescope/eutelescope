@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.22 2008-09-27 17:17:19 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.23 2008-09-27 22:10:21 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -737,23 +737,16 @@ void EUTelHitMaker::bookHistos() {
         tempHistoName = ss.str();
       }
 
-      // 2 should be enough because it
-      // means that the sensor is wrong
-      // by all its size.
-      double safetyFactor = 2.0;
 
-      double xMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( iDet ) -
-                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( iDet ) ));
-      double xMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( iDet ) +
-                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( iDet )));
 
-      double yMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( iDet ) -
-                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( iDet )));
-      double yMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( iDet ) +
-                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( iDet )) );
+      double xMin =  0;
+      double xMax =  _siPlanesLayerLayout->getSensitiveSizeX ( iDet );
 
-      int xNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( iDet );
-      int yNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( iDet );
+      double yMin =  0;
+      double yMax =  _siPlanesLayerLayout->getSensitiveSizeY ( iDet );
+
+      int xNBin =  _siPlanesLayerLayout->getSensitiveNpixelX( iDet );
+      int yNBin =  _siPlanesLayerLayout->getSensitiveNpixelY( iDet );
 
 
       AIDA::IHistogram2D * hitHistoLocal = AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
@@ -767,7 +760,23 @@ void EUTelHitMaker::bookHistos() {
         _histogramSwitch = false;
       }
 
+      // 2 should be enough because it
+      // means that the sensor is wrong
+      // by all its size.
+      double safetyFactor = 2.0;
 
+      xMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( iDet ) -
+                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( iDet ) ));
+      xMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( iDet ) +
+                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( iDet )));
+
+      yMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( iDet ) -
+                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( iDet )));
+      yMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( iDet ) +
+                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( iDet )) );
+
+      xNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( iDet );
+      yNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( iDet );
 
       {
         stringstream ss ;
@@ -798,9 +807,6 @@ void EUTelHitMaker::bookHistos() {
     double yMax  = -1 * numeric_limits< double >::max();
     int    yNBin = numeric_limits< int >::min();
 
-    double zMin =      numeric_limits< double >::max();
-    double zMax = -1 * numeric_limits< double >::max();
-
     for ( int iPlane = 0 ; iPlane < _siPlanesParameters->getSiPlanesNumber(); ++iPlane ) {
 
       // x axis
@@ -810,15 +816,12 @@ void EUTelHitMaker::bookHistos() {
 
       // y axis
       yMin  = min( _siPlanesLayerLayout->getSensitivePositionY( iPlane ) - ( 0.5  * _siPlanesLayerLayout->getSensitiveSizeY( iPlane )), yMin);
-      xMax  = max( _siPlanesLayerLayout->getSensitivePositionY( iPlane ) + ( 0.5  * _siPlanesLayerLayout->getSensitiveSizeY( iPlane )), yMax);
+      yMax  = max( _siPlanesLayerLayout->getSensitivePositionY( iPlane ) + ( 0.5  * _siPlanesLayerLayout->getSensitiveSizeY( iPlane )), yMax);
       yNBin = max( _siPlanesLayerLayout->getSensitiveNpixelY( iPlane ), yNBin );
-
-      // z axis
-      zMin  = min( _siPlanesLayerLayout->getSensitivePositionZ( iPlane ), zMin );
-      zMax  = max( _siPlanesLayerLayout->getSensitivePositionZ( iPlane ), zMax );
 
     }
 
+    
     // since we may still have alignment problem, we have to take a
     // safety factor on the x and y direction especially.
     // here I take something less than 2 because otherwise I will have
@@ -829,49 +832,51 @@ void EUTelHitMaker::bookHistos() {
     double xCenter   = ( xMax + xMin ) / 2 ;
     xMin  = xCenter - safetyFactor * ( xDistance / 2 );
     xMax  = xCenter + safetyFactor * ( xDistance / 2 );
-    xNBin *= safetyFactor;
+    xNBin = static_cast< int > ( xNBin * safetyFactor );
+
+    // generate the x axis binning 
+    vector< double > xAxis;
+    double step = xDistance / xNBin;
+    for ( int i = 0 ; i < xNBin ; ++i ) {
+      xAxis.push_back ( xMin + i * step );
+    }
 
     double yDistance = std::abs( yMax - yMin ) ;
     double yCenter   = ( yMax + yMin ) / 2 ;
     yMin  = yCenter - safetyFactor * ( yDistance / 2 );
     yMax  = yCenter + safetyFactor * ( yDistance / 2 );
-    yNBin *= safetyFactor;
+    yNBin = static_cast< int > ( yNBin * safetyFactor );
 
-    // the positioning in Z is rather precise so don't need to
-    // increase too much the histogram boundaries, just a couple of
-    // centimeter each side.
-    double safetyMargin = 20; // this is mm
+    // generate the y axis binning
+    vector< double > yAxis;
+    step = yDistance / yNBin;
+     for ( int i = 0 ; i < yNBin ; ++i ) {
+       yAxis.push_back( yMin + i * step ) ;
+     }
+       
 
-    zMin -= safetyMargin;
-    zMax -= safetyMargin;
+    // generate the z axis but not equally spaced!
+    double safetyMargin = 10; // this is mm
+    vector< double > zAxis;
+    for ( int i = 0 ; i < 2 * _siPlanesParameters->getSiPlanesNumber(); ++i ) {
+      double zPos =  _siPlanesLayerLayout->getSensitivePositionZ( i/2 );
+      zAxis.push_back( zPos - safetyMargin) ;
+      ++i;
+      zAxis.push_back( zPos + safetyMargin );
+    }
 
-    // calculate the distance between the first and the last plane
-    double zDistance = std::abs( zMax - zMin );
 
-    // the number of bin in Z direction has to be limited, otherwise
-    // this histo will crash the memory. Putting one bin every
-    // centimeter.
-
-    int zNBin = static_cast< int > ( zDistance / 10 ) ; // divided 10 to go from mm to cm.
-    // in case we have one plane only, put at least one bin
-    if ( zNBin == 0 ) ++zNBin;
-
-    AIDA::IHistogram3D * densityPlot = AIDAProcessor::histogramFactory(this)->createHistogram3D( _densityPlotName ,
-                                                                                                 xNBin, xMin, xMax, yNBin, yMin, yMax,
-                                                                                                 zNBin, zMin, zMax);
-
+    AIDA::IHistogram3D * densityPlot = AIDAProcessor::histogramFactory(this)->createHistogram3D( _densityPlotName , 
+												 "Hit position in the telescope frame of reference",
+												 xAxis, yAxis, zAxis, "");
+											
     if ( densityPlot ) {
-      densityPlot->setTitle("Hit position in the telescope frame of reference");
       _aidaHistoMap.insert( make_pair ( _densityPlotName, densityPlot ) ) ;
     } else {
       streamlog_out ( ERROR1 )  << "Problem booking the " << (_densityPlotName) << ".\n"
                                 << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
       _histogramSwitch = false;
     }
-
-
-
-
 
   } catch (lcio::Exception& e ) {
 
