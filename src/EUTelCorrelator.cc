@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.10 2008-09-27 16:03:48 bulgheroni Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.11 2008-09-27 16:20:19 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -625,6 +625,7 @@ void EUTelCorrelator::bookHistos() {
 
             innerMapXHit[ _siPlanesLayerLayout->getID( col ) ] =  histo2D ;
 
+	   
             // now the hit on the Y direction
             rowMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( row ) -
                                       ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( row ) ));
@@ -661,7 +662,7 @@ void EUTelCorrelator::bookHistos() {
                                                                           rowNBin, rowMin, rowMax);
             histo2D->setTitle( tempHistoTitle.c_str() );
 
-            innerMapXHit[ _siPlanesLayerLayout->getID( col ) ] =  histo2D ;
+            innerMapYHit[ _siPlanesLayerLayout->getID( col ) ] =  histo2D ;
 
           }
 
