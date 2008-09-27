@@ -32,7 +32,6 @@
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #include <AIDA/IHistogram2D.h>
-#include <AIDA/ICloud2D.h>
 #endif
 
 
@@ -60,8 +59,6 @@ namespace eutelescope {
    *  reversed, but otherwise they are the same.
    *  We do the same for hit correlation.
    *
-   *  At 07/18/08 we do only cluster correlator, then we'll make hit
-   *  correlator too.
    *
    *  <h4>Input collections</h4>
    *
@@ -72,7 +69,7 @@ namespace eutelescope {
    *
    *  @author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
    *  @author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-   *  @version $Id: EUTelCorrelator.h,v 1.6 2008-09-26 22:50:47 bulgheroni Exp $
+   *  @version $Id: EUTelCorrelator.h,v 1.7 2008-09-27 16:03:48 bulgheroni Exp $
    *
    */
 
@@ -235,14 +232,14 @@ namespace eutelescope {
     std::vector< std::vector< AIDA::IHistogram2D *  > > _clusterYCorrelationMatrix;
 
 
-    std::map< unsigned int , std::map< unsigned int , AIDA::ICloud2D* > > _hitXCorrelationMatrix;
-    std::map< unsigned int , std::map< unsigned int , AIDA::ICloud2D* > > _hitYCorrelationMatrix;
+    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitXCorrelationMatrix;
+    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitYCorrelationMatrix;
 
     //! Base name of the correlation histogram
     static std::string _clusterXCorrelationHistoName;
     static std::string _clusterYCorrelationHistoName;
-    static std::string _hitXCorrelationCloudName;
-    static std::string _hitYCorrelationCloudName;
+    static std::string _hitXCorrelationHistoName;
+    static std::string _hitYCorrelationHistoName;
 #endif
 
     bool _hasClusterCollection;
