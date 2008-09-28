@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.26 2008-09-22 09:54:31 roloff Exp $
+// Version: $Id: EUTelMille.cc,v 1.27 2008-09-28 12:47:47 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,7 +10,7 @@
  *
  */
 // built only if GEAR and MARLINUTIL are used
-#if defined(USE_GEAR) && defined(USE_MARLINUTIL) 
+#if defined(USE_GEAR) && defined(USE_MARLINUTIL)
 
 // eutelescope includes ".h"
 #include "EUTelMille.h"
@@ -578,7 +578,14 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
 
 void EUTelMille::processEvent (LCEvent * event) {
 
-  streamlog_out ( MESSAGE2 ) << "Processing event " << _iEvt << "..." << endl;
+  if (_iEvt % 10 == 0) {
+    streamlog_out( MESSAGE4 ) << "Processing event "
+                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+    streamlog_out( MESSAGE2 ) << "Currently having " << _nMilleDataPoints << " in " << _nMilleTracks << endl;
+  }
+
 
   // fill resolution arrays
   for (int help = 0; help < _nPlanes; help++) {
@@ -587,8 +594,6 @@ void EUTelMille::processEvent (LCEvent * event) {
   }
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
-
-  streamlog_out ( MESSAGE2 ) << "Runnumber: " << event->getRunNumber() << " Eventnumber: " << event->getEventNumber() << endl;
 
   if ( evt->getEventType() == kEORE ) {
     streamlog_out ( DEBUG2 ) << "EORE found: nothing else to do." << endl;
@@ -1062,7 +1067,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
     const int nTracksHere = collection->getNumberOfElements();
 
-    streamlog_out ( MESSAGE2 ) << "Number of tracks available in track collection: " << nTracksHere << endl;
+    streamlog_out ( MESSAGE0 ) << "Number of tracks available in track collection: " << nTracksHere << endl;
 
     // loop over all tracks
     for (int nTracksEvent = 0; nTracksEvent < nTracksHere && nTracksEvent < _maxTrackCandidates; nTracksEvent++) {
@@ -1105,7 +1110,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
       } else {
 
-        streamlog_out ( MESSAGE2 ) << "Dropping track " << nTracksEvent << " because there is not a hit in every plane assigned to it." << endl;
+        streamlog_out ( MESSAGE0 ) << "Dropping track " << nTracksEvent << " because there is not a hit in every plane assigned to it." << endl;
 
       }
 
@@ -1117,9 +1122,9 @@ void EUTelMille::processEvent (LCEvent * event) {
     streamlog_out ( WARNING2 ) << "Maximum number of track candidates reached. Maybe further tracks were skipped" << endl;
   }
 
-  streamlog_out ( MESSAGE2 ) << "Number of hits in the individual planes: " << _hitsFirstPlane.size() << " " << _hitsSecondPlane.size() << " " << _hitsThirdPlane.size() << " " << _hitsFourthPlane.size() << " " << _hitsFifthPlane.size() << " " << _hitsSixthPlane.size() << endl;
+  streamlog_out ( MESSAGE0 ) << "Number of hits in the individual planes: " << _hitsFirstPlane.size() << " " << _hitsSecondPlane.size() << " " << _hitsThirdPlane.size() << " " << _hitsFourthPlane.size() << " " << _hitsFifthPlane.size() << " " << _hitsSixthPlane.size() << endl;
 
-  streamlog_out ( MESSAGE2 ) << "Number of track candidates found: " << _iEvt << ": " << _nTracks << endl;
+  streamlog_out ( MESSAGE0 ) << "Number of track candidates found: " << _iEvt << ": " << _nTracks << endl;
 
   // Perform fit for all found track candidates
   // ------------------------------------------
@@ -1146,7 +1151,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       Chiquare[0] = 0.0;
       Chiquare[1] = 0.0;
 
-      streamlog_out ( MESSAGE2 ) << "Adding track using the following coordinates: ";
+      streamlog_out ( MESSAGE0 ) << "Adding track using the following coordinates: ";
 
       // loop over all planes
       for (int help = 0; help < _nPlanes; help++) {
@@ -1163,31 +1168,31 @@ void EUTelMille::processEvent (LCEvent * event) {
         }
 
         if (excluded == 0) {
-          streamlog_out ( MESSAGE2 ) << _xPosHere[help] << " " << _yPosHere[help] << " " << _zPosHere[help] << "   ";
+          streamlog_out ( MESSAGE0 ) << _xPosHere[help] << " " << _yPosHere[help] << " " << _zPosHere[help] << "   ";
         }
 
       } // end loop over all planes
 
-      streamlog_out ( MESSAGE2 ) << endl;
+      streamlog_out ( MESSAGE0 ) << endl;
 
       // Calculate residuals
       FitTrack(int(_nPlanes), _xPosHere, _yPosHere, _zPosHere, _telescopeResolX, _telescopeResolY, Chiquare, _waferResidX, _waferResidY, angle);
 
-      streamlog_out ( MESSAGE2 ) << "Residuals X: ";
+      streamlog_out ( MESSAGE0 ) << "Residuals X: ";
 
       for (int help = 0; help < _nPlanes; help++) {
-        streamlog_out ( MESSAGE2 ) << _waferResidX[help] << " ";
+        streamlog_out ( MESSAGE0 ) << _waferResidX[help] << " ";
       }
 
-      streamlog_out ( MESSAGE2 ) << endl;
+      streamlog_out ( MESSAGE0 ) << endl;
 
-      streamlog_out ( MESSAGE2 ) << "Residuals Y: ";
+      streamlog_out ( MESSAGE0 ) << "Residuals Y: ";
 
       for (int help = 0; help < _nPlanes; help++) {
-        streamlog_out ( MESSAGE2 ) << _waferResidY[help] << " ";
+        streamlog_out ( MESSAGE0 ) << _waferResidY[help] << " ";
       }
 
-      streamlog_out ( MESSAGE2 ) << endl;
+      streamlog_out ( MESSAGE0 ) << endl;
 
       int residualsXOkay = 1;
       int residualsYOkay = 1;
@@ -1210,7 +1215,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       } // end check if residual cuts are used
 
       if (_useResidualCuts != 0 && (residualsXOkay == 0 || residualsYOkay == 0)) {
-        streamlog_out ( MESSAGE2 ) << "Track did not pass the residual cuts." << endl;
+        streamlog_out ( MESSAGE0 ) << "Track did not pass the residual cuts." << endl;
       }
 
       // apply track cuts (at the moment only residuals)
@@ -1491,7 +1496,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
   } // end if only one track or no single track event
 
-  streamlog_out ( MESSAGE2 ) << "Finished fitting tracks in event " << _iEvt << endl;
+  streamlog_out ( MESSAGE0 ) << "Finished fitting tracks in event " << _iEvt << endl;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -1546,7 +1551,7 @@ void EUTelMille::end() {
   // if write the pede steering file
   if (_generatePedeSteerfile) {
 
-    streamlog_out ( MESSAGE2 ) << endl << "Generating the steering file for the pede program..." << endl;
+    streamlog_out ( MESSAGE4 ) << endl << "Generating the steering file for the pede program..." << endl;
 
     string tempHistoName;
     double *meanX = new double[_nPlanes];
