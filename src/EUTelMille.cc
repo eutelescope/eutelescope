@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.27 2008-09-28 12:47:47 bulgheroni Exp $
+// Version: $Id: EUTelMille.cc,v 1.28 2008-09-28 13:57:59 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -1698,8 +1698,8 @@ void EUTelMille::end() {
       } // end loop over all planes
 
       steerFile << endl;
-      steerFile << "chiscut 5.0 2.5" << endl;
-      steerFile << "outlierdownweighting 4" << endl;
+      steerFile << "! chiscut 5.0 2.5" << endl;
+      steerFile << "! outlierdownweighting 4" << endl;
       steerFile << endl;
       steerFile << "method inversion 10 0.001" << endl;
       steerFile << endl;
