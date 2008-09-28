@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.10 2008-09-04 10:13:03 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.11 2008-09-28 17:33:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -206,7 +206,9 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
           float y = static_cast<float > ( hit->getPosition()[1] );
           float z = static_cast<float > ( hit->getPosition()[2] );
           unsigned int color =  returnColor(iCollection);
-          ced_hit(x,y,z, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
+	  unsigned int size  = 1;
+	  unsigned int type  = CED_HIT_STAR;
+          ced_hit(x,y,z,type ,size , color);
         }
       }  catch (DataNotAvailableException& e) {
         streamlog_out ( WARNING2 ) << "No input collection (" << _trackerHitCollectionNameVec[iCollection] << " found on "
