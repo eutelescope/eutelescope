@@ -3,7 +3,7 @@
 #
 # Original author: J. Engels, DESY
 # Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# Version $Id: CMakeLists.txt,v 1.13 2008-09-29 08:38:33 bulgheroni Exp $
+# Version $Id: CMakeLists.txt,v 1.14 2008-09-30 07:48:08 bulgheroni Exp $
 ########################################################
 
 
@@ -11,7 +11,7 @@
 # CMake compatibility issues: don't modify this, please!
 CMAKE_MINIMUM_REQUIRED( VERSION 2.4.6 )
 #SET( CMAKE_BACKWARDS_COMPATIBILITY 2.4.6 )
-MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
+ARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 # allow more human readable "if then else" constructs
 SET( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 ########################################################
@@ -195,18 +195,18 @@ SET( ${PROJECT_NAME}_VERSION
 
 # add library install path to the rpath list
 SET( CMAKE_INSTALL_RPATH "${CMAKE_INSTALL_PREFIX}/lib" )
-MARK_AS_ADVANCED( CMAKE_INSTALL_RPATH )
+ARK_AS_ADVANCED( CMAKE_INSTALL_RPATH )
 
 # append link pathes to rpath list
 SET( CMAKE_INSTALL_RPATH_USE_LINK_PATH 1 )
-MARK_AS_ADVANCED( CMAKE_INSTALL_RPATH_USE_LINK_PATH )
+ARK_AS_ADVANCED( CMAKE_INSTALL_RPATH_USE_LINK_PATH )
 
 # output directories
 SET( EXECUTABLE_OUTPUT_PATH "${PROJECT_BINARY_DIR}/bin" CACHE PATH
     "EXECUTABLE_OUTPUT_PATH" FORCE )
 SET( LIBRARY_OUTPUT_PATH "${PROJECT_BINARY_DIR}/lib" CACHE PATH
     "LIBRARY_OUTPUT_PATH" FORCE )
-MARK_AS_ADVANCED( EXECUTABLE_OUTPUT_PATH LIBRARY_OUTPUT_PATH )
+ARK_AS_ADVANCED( EXECUTABLE_OUTPUT_PATH LIBRARY_OUTPUT_PATH )
 
 # DEPENDENCIES: this code has to be placed before adding any library or
 # executable so that these are linked properly against the dependencies
@@ -289,21 +289,21 @@ CONFIGURE_FILE( "${PROJECT_SOURCE_DIR}/${PROJECT_NAME}Config.cmake.in"
 INSTALL( FILES "${PROJECT_BINARY_DIR}/${PROJECT_NAME}Config.cmake" DESTINATION . )
 
 # display status message for important variables
-MESSAGE( STATUS )
-MESSAGE( STATUS "-------------------------------------------------------------------------------" )
-MESSAGE( STATUS "BUILD_SHARED_LIBS = ${BUILD_SHARED_LIBS}" )
-MESSAGE( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
-MESSAGE( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
-MESSAGE( STATUS "CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}" )
+ESSAGE( STATUS )
+ESSAGE( STATUS "-------------------------------------------------------------------------------" )
+ESSAGE( STATUS "BUILD_SHARED_LIBS = ${BUILD_SHARED_LIBS}" )
+ESSAGE( STATUS "CMAKE_INSTALL_PREFIX = ${CMAKE_INSTALL_PREFIX}" )
+ESSAGE( STATUS "CMAKE_BUILD_TYPE = ${CMAKE_BUILD_TYPE}" )
+ESSAGE( STATUS "CMAKE_MODULE_PATH = ${CMAKE_MODULE_PATH}" )
 IF( CMAKE_SIZEOF_VOID_P EQUAL 8 )
     MESSAGE( STATUS "BUILD_32BIT_COMPATIBLE = ${BUILD_32BIT_COMPATIBLE}" )
 ENDIF()
-MESSAGE( STATUS "${PROJECT_NAME}_DEPENDS = \"${${PROJECT_NAME}_DEPENDS}\"" )
-MESSAGE( STATUS "BUILD_WITH = \"${BUILD_WITH}\"" )
-MESSAGE( STATUS "INSTALL_DOC = ${INSTALL_DOC}" )
-MESSAGE( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
-MESSAGE( STATUS "-------------------------------------------------------------------------------" )
-MESSAGE( STATUS )
+ESSAGE( STATUS "${PROJECT_NAME}_DEPENDS = \"${${PROJECT_NAME}_DEPENDS}\"" )
+ESSAGE( STATUS "BUILD_WITH = \"${BUILD_WITH}\"" )
+ESSAGE( STATUS "INSTALL_DOC = ${INSTALL_DOC}" )
+ESSAGE( STATUS "Change a value with: cmake -D<Variable>=<Value>" )
+ESSAGE( STATUS "-------------------------------------------------------------------------------" )
+ESSAGE( STATUS )
 
 # force some variables that could be defined in the command line
 # to be written to cache
