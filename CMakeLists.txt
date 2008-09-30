@@ -3,7 +3,7 @@
 #
 # Original author: J. Engels, DESY
 # Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# Version $Id: CMakeLists.txt,v 1.14 2008-09-30 07:48:08 bulgheroni Exp $
+# Version $Id: CMakeLists.txt,v 1.15 2008-09-30 15:09:58 bulgheroni Exp $
 ########################################################
 
 
@@ -11,7 +11,7 @@
 # CMake compatibility issues: don't modify this, please!
 CMAKE_MINIMUM_REQUIRED( VERSION 2.4.6 )
 #SET( CMAKE_BACKWARDS_COMPATIBILITY 2.4.6 )
-ARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
+MARK_AS_ADVANCED(CMAKE_BACKWARDS_COMPATIBILITY)
 # allow more human readable "if then else" constructs
 SET( CMAKE_ALLOW_LOOSE_LOOP_CONSTRUCTS TRUE )
 ########################################################
