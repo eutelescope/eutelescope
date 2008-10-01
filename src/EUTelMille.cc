@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.28 2008-09-28 13:57:59 roloff Exp $
+// Version: $Id: EUTelMille.cc,v 1.29 2008-10-01 19:08:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -66,6 +66,7 @@
 #include <string>
 #include <vector>
 #include <algorithm>
+#include <map>
 #include <memory>
 #include <cmath>
 #include <iostream>
@@ -1820,63 +1821,75 @@ void EUTelMille::end() {
           // comment!
           getline( millepede, line );
 
-          int sensorID = 0;
+	  // I need to create a map to convert plane position in
+	  // sensorID
+	  std::vector<int > lookUp;
+	  for ( int iPlane = 0; iPlane < _nPlanes ; iPlane++ ) {
+	    // if the plane in the exclude list
+	    if ( find( _excludePlanes.begin(), _excludePlanes.end(), iPlane ) ==  _excludePlanes.end() ) {
+	      lookUp.push_back( _siPlanesLayerLayout->getID(iPlane) );
+	    }
+	  }
+
+          int counter = 0;
 
           while ( ! millepede.eof() ) {
 
             EUTelAlignmentConstant * constant = new EUTelAlignmentConstant;
+ 
+	    bool goodLine = true;
 
-            constant->setSensorID( sensorID );
-            ++sensorID;
 
-            bool goodLine = true;
+	    constant->setSensorID( lookUp[counter] );
+	    ++ counter;
+	      
+	    for ( unsigned int iParam = 0 ; iParam < 3 ; ++iParam ) {
+		
+	      getline( millepede, line );
+		
+	      if ( line.empty() ) {
+		goodLine = false;
+	      }
+		
+	      tokens.clear();
+	      tokenizer.clear();
+	      tokenizer.str( line );
+		
+	      while ( tokenizer >> buffer ) {
+		tokens.push_back( buffer ) ;
+	      }
+		
+	      if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) ) {
+		goodLine = true;
+	      } else goodLine = false;
 
-            for ( unsigned int iParam = 0 ; iParam < 3 ; ++iParam ) {
-
-              getline( millepede, line );
-
-              if ( line.empty() ) {
-                goodLine = false;
-              }
-
-              tokens.clear();
-              tokenizer.clear();
-              tokenizer.str( line );
-
-              while ( tokenizer >> buffer ) {
-                tokens.push_back( buffer ) ;
-              }
-
-              if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) ) {
-                goodLine = true;
-              } else goodLine = false;
-
-              bool isFixed = ( tokens.size() == 3 );
-              if ( isFixed ) {
-                streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << ( tokens[1] / 1000 )
+	      bool isFixed = ( tokens.size() == 3 );
+	      if ( isFixed ) {
+		streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << ( tokens[1] / 1000 )
                                          << " (fixed)"  << endl;
-              } else {
+	      } else {
                 streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << (tokens[1] / 1000 )
                                          << " +/- " << ( tokens[4] / 1000 )  << endl;
-              }
-
-              if ( iParam == 0 ) {
-                constant->setXOffset( tokens[1] / 1000 );
-                if ( ! isFixed ) {
-                  double err  = tokens[4] / 1000;
-                  constant->setXOffsetError( err ) ;
-                }
-              }
-              if ( iParam == 1 ) {
-                constant->setYOffset( tokens[1] / 1000 ) ;
-                if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000 ) ;
-              }
-              if ( iParam == 2 ) {
-                constant->setGamma( tokens[1]  ) ;
-                if ( ! isFixed ) constant->setGammaError( tokens[4] ) ;
-              }
-
-            }
+	      }
+		
+	      if ( iParam == 0 ) {
+		constant->setXOffset( tokens[1] / 1000 );
+		if ( ! isFixed ) {
+		  double err  = tokens[4] / 1000;
+		  constant->setXOffsetError( err ) ;
+		}
+	      }
+	      if ( iParam == 1 ) {
+		constant->setYOffset( tokens[1] / 1000 ) ;
+		if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000 ) ;
+	      }
+	      if ( iParam == 2 ) {
+		constant->setGamma( tokens[1]  ) ;
+		if ( ! isFixed ) constant->setGammaError( tokens[4] ) ;
+	      }
+		
+	    }
+	    
 
 
 
