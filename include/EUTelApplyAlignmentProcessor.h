@@ -17,6 +17,18 @@
 
 // lcio includes <.h> 
 
+#if defined(USE_GEAR)
+// gear includes <.h>
+#include <gear/SiPlanesParameters.h>
+#include <gear/SiPlanesLayerLayout.h>
+#endif
+
+// AIDA includes <.h>
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+#include <AIDA/IBaseHistogram.h>
+#endif
+
+
 // system includes <>
 #include <iostream>
 #include <string>
@@ -58,7 +70,7 @@ namespace eutelescope {
    *  then rotated. 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelApplyAlignmentProcessor.h,v 1.3 2008-07-28 13:42:39 bulgheroni Exp $
+   *  @version $Id: EUTelApplyAlignmentProcessor.h,v 1.4 2008-10-01 14:54:06 bulgheroni Exp $
    *
    *
    */
@@ -123,6 +135,15 @@ namespace eutelescope {
      */
     virtual void end();
 
+    //! Histogram booking
+    /*! Some control histograms are filled during this procedure in
+     *  order to be able to perform easy check on the quality of the
+     *  output hits and also to understand if the frame of reference
+     *  conversion has been properly done. Of course this method is
+     *  effectively doing something only in the case MARLIN_USE_AIDA.
+     */
+    void bookHistos();
+
 
   protected:
 
@@ -182,6 +203,56 @@ namespace eutelescope {
      */
     bool _hasZSData;
 
+#if (defined(USE_AIDA) || defined(MARLIN_USE_AIDA)) 
+    //! AIDA histogram map
+    /*! Instead of putting several pointers to AIDA histograms as
+     *  class members, histograms are booked in the init() method and
+     *  their pointers are inserted into this map keyed by their
+     *  names.
+     *  The histogram filling can proceed recalling an object through
+     *  its name
+     */
+    std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
+
+
+    static std::string _densityPlotBeforeAlignName;
+    static std::string _densityPlotAfterAlignName ;
+    static std::string _hitHistoBeforeAlignName;
+    static std::string _hitHistoAfterAlignName;
+
+#endif
+
+#if defined(USE_GEAR)
+    //! Silicon planes parameters as described in GEAR
+    /*! This structure actually contains the following:
+     *  @li A reference to the telescope geoemtry and layout
+     *  @li An integer number saying if the telescope is w/ or w/o DUT
+     *  @li An integer number saying the number of planes in the
+     *  telescope.
+     *
+     *  This object is provided by GEAR during the init() phase and
+     *  stored here for local use.
+     */
+    gear::SiPlanesParameters * _siPlanesParameters;
+
+    //! Silicon plane layer layout
+    /*! This is the real geoemetry description. For each layer
+     *  composing the telescope the relevant information are
+     *  available.
+     *
+     *  This object is taken from the _siPlanesParameters during the
+     *  init() phase and stored for local use
+     */
+    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+#endif
+
+    //! Fill histogram switch
+    /*! This boolean switch was initially introduced for debug reason
+     *  but then we realized that it could stay there and protect
+     *  against missing AIDA::Processor.
+     *
+     */
+    bool _histogramSwitch;
 
   };
 
