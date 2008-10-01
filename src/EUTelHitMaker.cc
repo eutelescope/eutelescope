@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.23 2008-09-27 22:10:21 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.24 2008-10-01 10:21:47 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -99,6 +99,10 @@ EUTelHitMaker::EUTelHitMaker () : Processor("EUTelHitMaker") {
 
   registerOptionalParameter("NPixel", "The number of most significant pixels to be used if CoGAlgorithm is \"NPixel\"",
                             _nPixel, static_cast<int>( 9 ) );
+
+  registerOptionalParameter("Enable3DHisto","If true a 3D histo will be filled. It may require large memory",
+			    _3DHistoSwitch, static_cast<bool> ( true ) );
+
 
   vector<int > xyCluSizeExample(2,3);
   registerOptionalParameter("NxMPixel", "The submatrix size to be used for CoGAlgorithm = \"NxMPixel\"",
@@ -664,14 +668,16 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
                                     << ".\nDisabling histogramming from now on " << endl;
           _histogramSwitch = false;
         }
-        AIDA::IHistogram3D * histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotName ] );
-        if ( histo3D ) histo3D->fill( telPos[0], telPos[1], telPos[2] );
-        else {
-          streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
-                                    << ".\nDisabling histogramming from now on " << endl;
-          _histogramSwitch = false;
-        }
 
+	if ( _3DHistoSwitch ) {
+	  AIDA::IHistogram3D * histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotName ] );
+	  if ( histo3D ) histo3D->fill( telPos[0], telPos[1], telPos[2] );
+	  else {
+	    streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
+				      << ".\nDisabling histogramming from now on " << endl;
+	    _histogramSwitch = false;
+	  }
+	}
       }
 #endif
 
@@ -821,61 +827,62 @@ void EUTelHitMaker::bookHistos() {
 
     }
 
-    
-    // since we may still have alignment problem, we have to take a
-    // safety factor on the x and y direction especially.
-    // here I take something less than 2 because otherwise I will have
-    // a 200MB histogram.
-    double safetyFactor = 1.2;
-
-    double xDistance = std::abs( xMax - xMin ) ;
-    double xCenter   = ( xMax + xMin ) / 2 ;
-    xMin  = xCenter - safetyFactor * ( xDistance / 2 );
-    xMax  = xCenter + safetyFactor * ( xDistance / 2 );
-    xNBin = static_cast< int > ( xNBin * safetyFactor );
-
-    // generate the x axis binning 
-    vector< double > xAxis;
-    double step = xDistance / xNBin;
-    for ( int i = 0 ; i < xNBin ; ++i ) {
-      xAxis.push_back ( xMin + i * step );
-    }
-
-    double yDistance = std::abs( yMax - yMin ) ;
-    double yCenter   = ( yMax + yMin ) / 2 ;
-    yMin  = yCenter - safetyFactor * ( yDistance / 2 );
-    yMax  = yCenter + safetyFactor * ( yDistance / 2 );
-    yNBin = static_cast< int > ( yNBin * safetyFactor );
-
-    // generate the y axis binning
-    vector< double > yAxis;
-    step = yDistance / yNBin;
-     for ( int i = 0 ; i < yNBin ; ++i ) {
-       yAxis.push_back( yMin + i * step ) ;
-     }
-       
-
-    // generate the z axis but not equally spaced!
-    double safetyMargin = 10; // this is mm
-    vector< double > zAxis;
-    for ( int i = 0 ; i < 2 * _siPlanesParameters->getSiPlanesNumber(); ++i ) {
-      double zPos =  _siPlanesLayerLayout->getSensitivePositionZ( i/2 );
-      zAxis.push_back( zPos - safetyMargin) ;
-      ++i;
-      zAxis.push_back( zPos + safetyMargin );
-    }
-
-
-    AIDA::IHistogram3D * densityPlot = AIDAProcessor::histogramFactory(this)->createHistogram3D( _densityPlotName , 
-												 "Hit position in the telescope frame of reference",
-												 xAxis, yAxis, zAxis, "");
-											
-    if ( densityPlot ) {
-      _aidaHistoMap.insert( make_pair ( _densityPlotName, densityPlot ) ) ;
-    } else {
-      streamlog_out ( ERROR1 )  << "Problem booking the " << (_densityPlotName) << ".\n"
-                                << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-      _histogramSwitch = false;
+    if ( _3DHistoSwitch ) {
+      // since we may still have alignment problem, we have to take a
+      // safety factor on the x and y direction especially.
+      // here I take something less than 2 because otherwise I will have
+      // a 200MB histogram.
+      double safetyFactor = 1.2;
+      
+      double xDistance = std::abs( xMax - xMin ) ;
+      double xCenter   = ( xMax + xMin ) / 2 ;
+      xMin  = xCenter - safetyFactor * ( xDistance / 2 );
+      xMax  = xCenter + safetyFactor * ( xDistance / 2 );
+      xNBin = static_cast< int > ( xNBin * safetyFactor );
+      
+      // generate the x axis binning 
+      vector< double > xAxis;
+      double step = xDistance / xNBin;
+      for ( int i = 0 ; i < xNBin ; ++i ) {
+	xAxis.push_back ( xMin + i * step );
+      }
+      
+      double yDistance = std::abs( yMax - yMin ) ;
+      double yCenter   = ( yMax + yMin ) / 2 ;
+      yMin  = yCenter - safetyFactor * ( yDistance / 2 );
+      yMax  = yCenter + safetyFactor * ( yDistance / 2 );
+      yNBin = static_cast< int > ( yNBin * safetyFactor );
+      
+      // generate the y axis binning
+      vector< double > yAxis;
+      step = yDistance / yNBin;
+      for ( int i = 0 ; i < yNBin ; ++i ) {
+	yAxis.push_back( yMin + i * step ) ;
+      }
+      
+      
+      // generate the z axis but not equally spaced!
+      double safetyMargin = 10; // this is mm
+      vector< double > zAxis;
+      for ( int i = 0 ; i < 2 * _siPlanesParameters->getSiPlanesNumber(); ++i ) {
+	double zPos =  _siPlanesLayerLayout->getSensitivePositionZ( i/2 );
+	zAxis.push_back( zPos - safetyMargin) ;
+	++i;
+	zAxis.push_back( zPos + safetyMargin );
+      }
+      
+      
+      AIDA::IHistogram3D * densityPlot = AIDAProcessor::histogramFactory(this)->createHistogram3D( _densityPlotName , 
+												   "Hit position in the telescope frame of reference",
+												   xAxis, yAxis, zAxis, "");
+      
+      if ( densityPlot ) {
+	_aidaHistoMap.insert( make_pair ( _densityPlotName, densityPlot ) ) ;
+      } else {
+	streamlog_out ( ERROR1 )  << "Problem booking the " << (_densityPlotName) << ".\n"
+				  << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+	_histogramSwitch = false;
+      }
     }
 
   } catch (lcio::Exception& e ) {

@@ -214,8 +214,14 @@ namespace eutelescope {
    *  "NxMPixel". This vector contains respectively the number of
    *  pixel along x and y to be used.
    *
+   *  @param Enable3DHisto This parameter can be use to enable /
+   *  disable the filling of the density plot mentioned above. The
+   *  reason for this is that such an histogram may require a huge
+   *  amount of memory and consequently slowing down the full
+   *  processing. 
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHitMaker.h,v 1.10 2008-09-27 17:17:19 bulgheroni Exp $
+   *  @version $Id: EUTelHitMaker.h,v 1.11 2008-10-01 10:21:47 bulgheroni Exp $
    *
    */
 
@@ -325,6 +331,10 @@ namespace eutelescope {
      *
      */
     bool _etaCorrection ;
+
+    //! Switch to enable the filling of the density plot
+    bool _3DHistoSwitch;
+
 
     //! The algorithm for CoG calculation.
     /*! The algorithm for the calculation of the Center of Gravity is
