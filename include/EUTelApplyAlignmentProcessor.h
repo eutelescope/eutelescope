@@ -7,21 +7,22 @@
  *   header with author names in all development based on this file.
  *
  */
+// built only if USE_GEAR
+#if defined(USE_GEAR)
 #ifndef EUTELAPPLYALIGNMENTPROCESSOR_H
 #define EUTELAPPLYALIGNMENTPROCESSOR_H 1
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-// lcio includes <.h> 
+// lcio includes <.h>
+#include <IMPL/TrackerHitImpl.h>
 
-#if defined(USE_GEAR)
 // gear includes <.h>
 #include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
-#endif
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -38,25 +39,25 @@ namespace eutelescope {
 
   //! Apply the alignment correction to the input hit collection
   /*! The main goal of this processor is to apply the alignment
-   *  correction to the input hit collection. 
+   *  correction to the input hit collection.
    *
    *  The alignment constants are, as well, contained into collections
    *  of EUTelAlignmentConstant objects and can be loaded from an
-   *  external LCIO file or from a DB query. 
+   *  external LCIO file or from a DB query.
    *
    *  <h4>Input collections</h4>
-   *  <br><b>InputHit</b>. 
+   *  <br><b>InputHit</b>.
    *  This is a collection of TrackerHit containing all the hits that
    *  need to be corrected for misalignment.
-   *  
-   *  <br><b>AlignmentConstant</b>. 
+   *
+   *  <br><b>AlignmentConstant</b>.
    *  This is a collection of EUTelAlignmentConstant. This is a
    *  LCGenericObject  containing all the needed alignment constants
    *  calculated by previous processors.
-   *  
+   *
    *  <h4>Output</h4>
-   *  
-   *  <br><b>OutputHit</b>. 
+   *
+   *  <br><b>OutputHit</b>.
    *  This is a collection of TrackerHit with the correct hits.
    *
    *  @param CorrectionMethod There are actually several different
@@ -67,10 +68,10 @@ namespace eutelescope {
    *     1. <b>Rotation first</b> The rotational matrix is applied
    *  before the translation.
    *     2. <b>Translation first</b> The hits are first shifted and
-   *  then rotated. 
+   *  then rotated.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelApplyAlignmentProcessor.h,v 1.4 2008-10-01 14:54:06 bulgheroni Exp $
+   *  @version $Id: EUTelApplyAlignmentProcessor.h,v 1.5 2008-10-03 07:55:14 bulgheroni Exp $
    *
    *
    */
@@ -79,32 +80,32 @@ namespace eutelescope {
 
   public:
 
-     
+
     //! Returns a new instance of EUTelApplyAlignmentProcessor
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelApplyAlignmentProcessor.
      */
     virtual Processor * newProcessor() {
       return new EUTelApplyAlignmentProcessor;
     }
 
-    //! Default constructor 
+    //! Default constructor
     EUTelApplyAlignmentProcessor ();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters and reset all needed data
-     *  members. 
+     *  members.
      */
     virtual void init ();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
      *  is incremented.
-     * 
+     *
      *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
@@ -113,7 +114,7 @@ namespace eutelescope {
     /*! This is called for each event in the file. A few consistency
      *  checks are done on the first event to see if the alignment
      *  constants and the input collection are compatible.
-     * 
+     *
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
@@ -124,7 +125,7 @@ namespace eutelescope {
     /*! This method is called by the Marlin execution framework as
      *  soon as the processEvent is over. For the time being there is
      *  nothing to check and do in this slot.
-     * 
+     *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
     virtual void check (LCEvent * evt);
@@ -144,6 +145,11 @@ namespace eutelescope {
      */
     void bookHistos();
 
+    //! A function to guess the sensorID of a hit
+    /*! It is checking against the distance of each plane assuming
+     *  that this hit is belonging to the plane at the closest distant.
+     */
+    int guessSensorID( lcio::TrackerHitImpl * hit ) ;
 
   protected:
 
@@ -173,7 +179,7 @@ namespace eutelescope {
      *     1. <b>Rotation first</b> The rotational matrix is applied
      *  before the translation.
      *     2. <b>Translation first</b> The hits are first shifted and
-     *  then rotated. 
+     *  then rotated.
      */
     int _correctionMethod;
 
@@ -191,19 +197,7 @@ namespace eutelescope {
     //! Look Up Table for the sensor ID
     std::map< int, int > _lookUpTable;
 
-    //! Has NZS data
-    /*! This bool is true if the file contains non zero suppressed
-     *  data
-     */
-    bool _hasNZSData;
-
-    //! Has ZS data
-    /*! This bool is true if the file contains zero suppressed
-     *  data
-     */
-    bool _hasZSData;
-
-#if (defined(USE_AIDA) || defined(MARLIN_USE_AIDA)) 
+#if (defined(USE_AIDA) || defined(MARLIN_USE_AIDA))
     //! AIDA histogram map
     /*! Instead of putting several pointers to AIDA histograms as
      *  class members, histograms are booked in the init() method and
@@ -222,7 +216,6 @@ namespace eutelescope {
 
 #endif
 
-#if defined(USE_GEAR)
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
      *  @li A reference to the telescope geoemtry and layout
@@ -244,7 +237,9 @@ namespace eutelescope {
      *  init() phase and stored for local use
      */
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
-#endif
+
+    //! An array with the Z position of planes
+    double * _siPlaneZPosition;
 
     //! Fill histogram switch
     /*! This boolean switch was initially introduced for debug reason
@@ -257,7 +252,8 @@ namespace eutelescope {
   };
 
   //! A global instance of the processor
-  EUTelApplyAlignmentProcessor gEUTelApplyAlignmentProcessor;      
+  EUTelApplyAlignmentProcessor gEUTelApplyAlignmentProcessor;
 
 }
 #endif
+#endif // GEAR

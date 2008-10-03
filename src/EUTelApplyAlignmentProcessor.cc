@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.9 2008-10-01 15:02:16 bulgheroni Exp $
+// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.10 2008-10-03 07:55:14 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,6 +10,7 @@
  *
  */
 
+#ifdef USE_GEAR
 // eutelescope includes ".h"
 #include "EUTelApplyAlignmentProcessor.h"
 #include "EUTelRunHeaderImpl.h"
@@ -36,13 +37,10 @@
 #include <marlin/AIDAProcessor.h>
 #endif
 
-#ifdef USE_GEAR
 // gear includes <.h>
 #include "marlin/Global.h"
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
-#endif
-
 
 // system includes <>
 #include <iostream>
@@ -53,10 +51,7 @@ using namespace std;
 using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
-
-#if defined(USE_GEAR)
 using namespace gear;
-#endif
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelApplyAlignmentProcessor::_densityPlotBeforeAlignName = "DensityPlotBeforeAlign";
@@ -110,7 +105,6 @@ void EUTelApplyAlignmentProcessor::init () {
   _iRun = 0;
   _iEvt = 0;
 
-#if defined(USE_GEAR)
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
     streamlog_out ( ERROR4 ) <<  "The GearMgr is not available, for an unknown reason." << endl;
@@ -119,7 +113,11 @@ void EUTelApplyAlignmentProcessor::init () {
 
   _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-#endif
+
+  _siPlaneZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
+  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
+    _siPlaneZPosition[ iPlane ] = _siPlanesLayerLayout->getLayerPositionZ(iPlane);
+  }
 
 #if defined(MARLIN_USE_AIDA) || defined(USE_AIDA)
   _histogramSwitch = true;
@@ -128,28 +126,6 @@ void EUTelApplyAlignmentProcessor::init () {
 }
 
 void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * rdr) {
-
-  // convert the run header into something mode easy to digest
-  auto_ptr<EUTelRunHeaderImpl> runHeader( new EUTelRunHeaderImpl( rdr ) );
-
-  string eudrbGlobalMode = runHeader->getEUDRBMode() ;
-
-  transform( eudrbGlobalMode.begin(), eudrbGlobalMode.end(), eudrbGlobalMode.begin(), ::tolower);
-
-  _hasNZSData = false;
-
-  if ( ( eudrbGlobalMode == "raw2" ) ||
-       ( eudrbGlobalMode == "raw3" ) ||
-       ( eudrbGlobalMode == "mixed" ) ) {
-    _hasNZSData = true;
-  }
-
-  _hasZSData = false;
-
-  if ( ( eudrbGlobalMode == "zs" ) ||
-       ( eudrbGlobalMode == "mixed" ) ) {
-    _hasZSData = true;
-  }
 
   // increment the run counter
   ++_iRun;
@@ -179,33 +155,10 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
   }
 
 
-
-  // the cell decoder to get the sensor ID
-  CellIDDecoder<TrackerDataImpl> * clusterCellDecoder = NULL; //( originalZSDataCollectionVec );
-  CellIDDecoder<TrackerDataImpl> * clusterZSCellDecoder = NULL;
-
-
   try {
 
     LCCollectionVec * inputCollectionVec         = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputHitCollectionName));
     LCCollectionVec * alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection(_alignmentCollectionName));
-
-    // I also need the original data collection for ZS and NZS data
-    LCCollectionVec * originalDataCollectionVec = NULL;
-    LCCollectionVec * originalZSDataCollectionVec = NULL;
-
-
-    if ( _hasNZSData ) {
-      originalDataCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection( "original_data" ) );
-      clusterCellDecoder = new CellIDDecoder<TrackerDataImpl>(  originalDataCollectionVec );
-    }
-    if ( _hasZSData ) {
-      originalZSDataCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection( "original_zsdata" ) );
-      clusterZSCellDecoder = new CellIDDecoder<TrackerDataImpl>(  originalZSDataCollectionVec );
-    }
-
-
-
 
     if (isFirstEvent()) {
 
@@ -242,24 +195,12 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
       TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( iHit ) ) ;
 
       // now we have to understand which layer this hit belongs to.
-      LCObjectVec        clusterVec = inputHit->getRawHits();
-      TrackerDataImpl  * cluster    = dynamic_cast< TrackerDataImpl *>  ( clusterVec[0] );
+      int sensorID = guessSensorID( inputHit );
 
-      int sensorID;
-
-//       if ( _hasZSData && _hasNZSData ) {
-//      // it means that this is a MIXED run still I don't know what
-//      // to do
-//      streamlog_out ( ERROR ) << "This processor is unable to deal with MIXED data. Sorry for quitting..." << endl;
-//      exit(-01);
-//       }
-      if ( _hasNZSData ) sensorID = (*clusterCellDecoder)( cluster ) ["sensorID"] ;
-      if ( _hasZSData  ) sensorID = (*clusterZSCellDecoder)( cluster ) ["sensorID"]   ;
-
-
+      // copy the input to the output, at least for the common part
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
-      outputHit->rawHits() = clusterVec;
+      outputHit->rawHits() = inputHit->getRawHits();
 
       // now that we know at which sensor the hit belongs to, we can
       // get the corresponding alignment constants
@@ -270,7 +211,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
       if ( positionIter != _lookUpTable.end() ) {
 
-#if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) ) && defined(USE_GEAR)
+#if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) )
         string tempHistoName;
         if ( _histogramSwitch ) {
           {
@@ -334,7 +275,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
         }
 
-#if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) ) && defined(USE_GEAR)
+#if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) )
         if ( _histogramSwitch ) {
           {
             stringstream ss;
@@ -379,12 +320,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
     evt->addCollection( outputCollectionVec, _outputHitCollectionName );
 
-    delete clusterCellDecoder;
-    delete clusterZSCellDecoder;
-
   } catch (DataNotAvailableException& e) {
-    if ( clusterCellDecoder ) delete clusterCellDecoder;
-    if ( clusterZSCellDecoder ) delete clusterZSCellDecoder;
     streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
                                 << " in run " << event->getRunNumber() << endl;
   }
@@ -393,7 +329,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
 void EUTelApplyAlignmentProcessor::bookHistos() {
 
-#if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) ) && defined(USE_GEAR)
+#if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) )
 
   try {
     streamlog_out ( MESSAGE4 ) <<  "Booking histograms" << endl;
@@ -403,7 +339,7 @@ void EUTelApplyAlignmentProcessor::bookHistos() {
     // histograms are grouped into folders named after the
     // detector. This requires to loop on detector now.
     for (int iDet = 0 ; iDet < _siPlanesParameters->getSiPlanesNumber(); iDet++) {
-      
+
       int sensorID = _siPlanesLayerLayout->getID( iDet ) ;
 
       string basePath;
@@ -593,5 +529,31 @@ void EUTelApplyAlignmentProcessor::check (LCEvent * evt) {
 void EUTelApplyAlignmentProcessor::end() {
   streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
 
+  delete [] _siPlaneZPosition;
+
 }
 
+int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
+
+  int sensorID = -1;
+  double minDistance =  numeric_limits< double >::max() ;
+  double * hitPosition = const_cast<double * > (hit->getPosition());
+
+  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
+    double distance = std::abs( hitPosition[2] - _siPlaneZPosition[ iPlane ] );
+    if ( distance < minDistance ) {
+      minDistance = distance;
+      sensorID = _siPlanesLayerLayout->getID( iPlane );
+    }
+  }
+  if ( minDistance > 5 /* mm */ ) {
+    // advice the user that the guessing wasn't successful 
+    streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
+      "Please check the consistency of the data with the GEAR file" << endl;
+  }
+
+  return sensorID;
+}
+
+
+#endif
