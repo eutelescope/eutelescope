@@ -33,11 +33,17 @@
 #include <AIDA/IBaseHistogram.h>
 #endif
 
-
 // system includes <>
 #include <string>
 #include <vector>
 #include <map>
+
+// define a specific verbosity level for Millepede
+namespace streamlog {
+
+  DEFINE_STREAMLOG_LEVEL( MILLEMESSAGE,  "MILLEMESSAGE", message_base_level - 50 + 1 , STREAMLOG_MESSAGE_ACTIVE ) 
+
+}
 
 namespace eutelescope {
 
