@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.11 2008-09-27 16:20:19 bulgheroni Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.12 2008-10-03 07:20:26 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -455,6 +455,10 @@ void EUTelCorrelator::end() {
 
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
 
+#if defined(USE_GEAR)
+  delete [] _siPlaneZPosition;
+#endif
+
 }
 
 void EUTelCorrelator::bookHistos() {
@@ -711,7 +715,7 @@ void EUTelCorrelator::bookHistos() {
 #ifdef USE_GEAR
 int EUTelCorrelator::guessSensorID( TrackerHitImpl * hit ) {
 
-  int sensorID = 0;
+  int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
   double * hitPosition = const_cast<double * > (hit->getPosition());
 
@@ -722,7 +726,11 @@ int EUTelCorrelator::guessSensorID( TrackerHitImpl * hit ) {
       sensorID = _siPlanesLayerLayout->getID( iPlane );
     }
   }
-
+  if ( minDistance > 5 /* mm */ ) {
+    // advice the user that the guessing wasn't successful 
+    streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
+      "Please check the consistency of the data with the GEAR file" << endl;
+  }
 
   return sensorID;
 }

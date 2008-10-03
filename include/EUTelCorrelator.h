@@ -69,7 +69,7 @@ namespace eutelescope {
    *
    *  @author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
    *  @author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-   *  @version $Id: EUTelCorrelator.h,v 1.7 2008-09-27 16:03:48 bulgheroni Exp $
+   *  @version $Id: EUTelCorrelator.h,v 1.8 2008-10-03 07:20:26 bulgheroni Exp $
    *
    */
 
@@ -148,7 +148,7 @@ namespace eutelescope {
     /*! It is checking against the distance of each plane assuming
      *  that this hit is belonging to the plane at the closest distant.
      */
-     int guessSensorID( TrackerHitImpl * hit ) ;
+    int guessSensorID( TrackerHitImpl * hit ) ;
 #endif
 
   private:
