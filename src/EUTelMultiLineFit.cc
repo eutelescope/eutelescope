@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMultiLineFit.cc,v 1.24 2008-10-03 10:26:00 bulgheroni Exp $
+// Version: $Id: EUTelMultiLineFit.cc,v 1.25 2008-10-03 16:28:16 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -444,7 +444,13 @@ void EUTelMultiLineFit::FitTrack(int nPlanesFitter, double xPosFitter[], double 
 
 void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
-  streamlog_out ( MESSAGE2 ) << "Processing event " << _iEvt << "..." << endl;
+  if ( _iEvt % 10  == 0 ) {
+    streamlog_out( MESSAGE2 ) << "Processing event "
+                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+
+  }
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
 
@@ -980,7 +986,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
     } else {
 
-      streamlog_out ( MESSAGE2 ) << "Too many hits. The event will be skipped." << endl;
+      streamlog_out ( WARNING2 ) << "Too many hits. The event will be skipped." << endl;
 
     }
 
@@ -988,9 +994,9 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       streamlog_out ( WARNING2 ) << "Maximum number of track candidates reached. Maybe further tracks were skipped" << endl;
     }
 
-    streamlog_out ( MESSAGE2 ) << "Number of hits in the individual planes: " << _hitsFirstPlane.size() << " " << _hitsSecondPlane.size() << " " << _hitsThirdPlane.size() << " " << _hitsFourthPlane.size() << " " << _hitsFifthPlane.size() << " " << _hitsSixthPlane.size() << endl;
+    streamlog_out ( MULTIFITTERMESSAGE ) << "Number of hits in the individual planes: " << _hitsFirstPlane.size() << " " << _hitsSecondPlane.size() << " " << _hitsThirdPlane.size() << " " << _hitsFourthPlane.size() << " " << _hitsFifthPlane.size() << " " << _hitsSixthPlane.size() << endl;
 
-    streamlog_out ( MESSAGE2 ) << "Number of track candidates found: " << _iEvt << ": " << _nTracks << endl;
+    streamlog_out ( MULTIFITTERMESSAGE ) << "Number of track candidates found: " << _iEvt << ": " << _nTracks << endl;
 
     // Perform fit for all found track candidates
     // ------------------------------------------
@@ -1024,13 +1030,13 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       Chiquare[0] = 0.0;
       Chiquare[1] = 0.0;
 
-      streamlog_out ( MESSAGE2 ) << "Fitting track using the following coordinates: ";
+      streamlog_out ( MULTIFITTERMESSAGE ) << "Fitting track using the following coordinates: ";
 
       for (int help = 0; help < _nPlanes; help++) {
-        streamlog_out ( MESSAGE2 ) << _xPosHere[help] << " " << _yPosHere[help] << " " << _zPosHere[help] << "   ";
+        streamlog_out ( MULTIFITTERMESSAGE ) << _xPosHere[help] << " " << _yPosHere[help] << " " << _zPosHere[help] << "   ";
       }
 
-      streamlog_out ( MESSAGE2 ) << endl;
+      streamlog_out ( MULTIFITTERMESSAGE ) << endl;
 
       FitTrack(int(_nPlanes), _xPosHere, _yPosHere, _zPosHere, _intrResolX, _intrResolY, Chiquare, _waferResidX, _waferResidY, angle);
 
@@ -1314,7 +1320,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
       delete fitpointvec;
     }
 
-    streamlog_out ( MESSAGE2 ) << "Finished fitting tracks in event " << _iEvt << endl;
+    streamlog_out ( MULTIFITTERMESSAGE ) << "Finished fitting tracks in event " << _iEvt << endl;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 

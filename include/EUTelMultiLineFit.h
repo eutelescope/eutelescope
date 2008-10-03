@@ -36,6 +36,14 @@
 #include <vector>
 #include <map>
 
+// define a specific verbosity level for Multilinefitter
+namespace streamlog {
+
+  DEFINE_STREAMLOG_LEVEL( MULTIFITTERMESSAGE,  "MULTIFITTERMESSAGE", message_base_level - 50 + 2 , STREAMLOG_MESSAGE_ACTIVE ) 
+
+}
+
+
 namespace eutelescope {
 
   //! Straight line fit processor
