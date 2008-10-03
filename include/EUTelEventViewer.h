@@ -47,6 +47,9 @@ namespace eutelescope {
    *  Several objects can be displayed together, since for each
    *  collection type multiple selections are possible.
    *
+   *  Starting from EUTelescope version 0.0.7 also tracks can be
+   *  displayed as a spline connecting the fit hit. 
+   *
    *  This processor is built only if GEAR and CED are available
    *  (-DUSE_GEAR and -DUSE_CED).
    *
@@ -77,12 +80,16 @@ namespace eutelescope {
    *  @param WaitForKeyboard. To stop the event loop at the end of
    *  each display waiting for any key from the keyboard to continue.
    *
+   *  @param AutoForwardDelay. In case you set the WaitForKeyBoard to
+   *  false, then next event will be loaded automatically and the user
+   *  can choose a delay in second in between.
+   *
    *  @param DetModel. This is the ID used to choose the proper
    *  geometry. For the telescope use 99999. The geometry information
    *  are then read from GEAR.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEventViewer.h,v 1.7 2008-09-02 09:38:54 bulgheroni Exp $
+   *  @version $Id: EUTelEventViewer.h,v 1.8 2008-10-03 10:27:06 bulgheroni Exp $
    */
   class EUTelEventViewer : public marlin::Processor {
 
@@ -198,7 +205,15 @@ namespace eutelescope {
      */
     bool _waitForKeyboard;
 
-    //! Apply the alignment constants
+    //! Auto forward delay
+    /*! This is the time in second between two automatic event
+     *  display. 
+     *  This value is used only if _waitForKeyboard is false and has
+     *  to be set to zero to go at full speed.
+     */
+    double _autoForwardDelay;
+      
+     //! Apply the alignment constants
     /*! Set it to true if you want to shift and rotate the planes
      *  according to what is contained in the alignement constants
      *  collections.
