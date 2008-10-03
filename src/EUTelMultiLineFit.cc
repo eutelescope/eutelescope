@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMultiLineFit.cc,v 1.23 2008-08-23 19:16:06 roloff Exp $
+// Version: $Id: EUTelMultiLineFit.cc,v 1.24 2008-10-03 10:26:00 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -1109,15 +1109,17 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
           // Use hit type 32 to be compatible with analytic fitter
           fitpoint->setType(32);
 
+	  // positions in the track are saved in mm as everywhere else
+	  // in the code.
           double corrpos[3];
-          corrpos[0] = _xPosHere[counter];
-          corrpos[1] = _yPosHere[counter];
-          corrpos[2] = _zPosHere[counter];
+          corrpos[0] = _xPosHere[counter] / 1000.;
+          corrpos[1] = _yPosHere[counter] / 1000.;
+          corrpos[2] = _zPosHere[counter] / 1000.;
 
           double fitpos[3];
-          fitpos[0] = _waferResidX[counter] + _xPosHere[counter];
-          fitpos[1] = _waferResidY[counter] + _yPosHere[counter];
-          fitpos[2] = _zPosHere[counter];
+          fitpos[0] = (_waferResidX[counter] + _xPosHere[counter] ) / 1000.;
+          fitpos[1] = (_waferResidY[counter] + _yPosHere[counter] ) / 1000.;
+          fitpos[2] = (_zPosHere[counter] ) / 1000.;
 
           corrpoint->setPosition(corrpos);
           fitpoint->setPosition(fitpos);
