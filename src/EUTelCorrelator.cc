@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.12 2008-10-03 07:20:26 bulgheroni Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.13 2008-10-04 22:08:31 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -520,12 +520,12 @@ void EUTelCorrelator::bookHistos() {
 
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
 
-            int     xBin = _maxX[ col ] - _minX[ col ] + 1;
-            double  xMin = static_cast<double >(_minX[ col ]) - 0.5;
-            double  xMax = static_cast<double >(_maxX[ col ]) + 0.5;
-            int     yBin = _maxX[ row ] - _minX[ row ] + 1;
-            double  yMin = static_cast<double >(_minX[ row ]) - 0.5;
-            double  yMax = static_cast<double >(_maxX[ row ]) + 0.5;
+            int     xBin = _maxX[ row ] - _minX[ row ] + 1;
+            double  xMin = static_cast<double >(_minX[ row ]) - 0.5;
+            double  xMax = static_cast<double >(_maxX[ row ]) + 0.5;
+            int     yBin = _maxX[ col ] - _minX[ col ] + 1;
+            double  yMin = static_cast<double >(_minX[ col ]) - 0.5;
+            double  yMax = static_cast<double >(_maxX[ col ]) + 0.5;
 
             AIDA::IHistogram2D * histo2D =
               AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
@@ -554,12 +554,12 @@ void EUTelCorrelator::bookHistos() {
 
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
 
-            xBin = _maxY[ col ] - _minY[ col ] + 1;
-            xMin = static_cast<double >(_minY[ col ]) - 0.5;
-            xMax = static_cast<double >(_maxY[ col ]) + 0.5;
-            yBin = _maxY[ row ] - _minY[ row ] + 1;
-            yMin = static_cast<double >(_minY[ row ]) - 0.5;
-            yMax = static_cast<double >(_maxY[ row ]) + 0.5;
+            xBin = _maxY[ row ] - _minY[ row ] + 1;
+            xMin = static_cast<double >(_minY[ row ]) - 0.5;
+            xMax = static_cast<double >(_maxY[ row ]) + 0.5;
+            yBin = _maxY[ col ] - _minY[ col ] + 1;
+            yMin = static_cast<double >(_minY[ col ]) - 0.5;
+            yMax = static_cast<double >(_maxY[ col ]) + 0.5;
 
 
             histo2D =
