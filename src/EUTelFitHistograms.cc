@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitHistograms.cc,v 1.10 2008-09-04 15:33:17 bulgheroni Exp $
+// Version: $Id: EUTelFitHistograms.cc,v 1.11 2008-10-04 13:38:03 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -360,11 +360,13 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 
+  if ( _nEvt % 10  == 0 ) {
+    streamlog_out( MESSAGE2 ) << "Processing event "
+                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+                              << " (Total = " << setw(10) << _nEvt << ")" << resetiosflags(ios::left) << endl;
+  }
   _nEvt ++ ;
-  int evtNr = event->getEventNumber();
-
-
-  if(debug)message<DEBUG> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
 
   LCCollection* col;
   try {
@@ -650,8 +652,8 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
           if(_isMeasured[ipl] && _isFitted[ipl])
             {
               string tempHistoName;
-
-              stringstream nam;
+	      
+	      stringstream nam;
               nam << _ResidualXHistoName << "_" << ipl ;
               tempHistoName=nam.str();
               (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedX[ipl]-_measuredX[ipl]);
