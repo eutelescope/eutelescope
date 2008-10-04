@@ -32,6 +32,13 @@
 #include <vector>
 #include <map>
 
+// define a specific verbosity level for Millepede
+namespace streamlog {
+
+  DEFINE_STREAMLOG_LEVEL( TESTFITTERMESSAGE,  "TESTFITTERMESSAGE", message_base_level - 50 + 3 , STREAMLOG_MESSAGE_ACTIVE ) 
+
+}
+
 namespace eutelescope {
 
 
@@ -268,7 +275,7 @@ namespace eutelescope {
    *  \li Interface to LCCD (alignment)
    *
    * \author A.F.Zarnecki, University of Warsaw, zarnecki@fuw.edu.pl
-   * @version $Id: EUTelTestFitter.h,v 1.15 2008-08-23 12:30:51 bulgheroni Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.16 2008-10-04 12:28:53 bulgheroni Exp $
    *
    */
 
