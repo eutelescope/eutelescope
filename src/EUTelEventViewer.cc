@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.13 2008-10-04 12:46:09 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.14 2008-10-04 12:49:36 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -132,10 +132,12 @@ void EUTelEventViewer::processRunHeader( LCRunHeader * rdr ) {
 
 void EUTelEventViewer::processEvent( LCEvent * evt ) {
 
-  streamlog_out( MESSAGE4 ) << "Processing event "
-                            << setw(6) << setiosflags(ios::right) << evt->getEventNumber() << " in run "
-                            << setw(6) << setiosflags(ios::right) << setfill('0')  << evt->getRunNumber() << setfill(' ')
-                            << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  if ( _iEvt % 10 ) {
+    streamlog_out( MESSAGE4 ) << "Processing event "
+                              << setw(6) << setiosflags(ios::right) << evt->getEventNumber() << " in run "
+                              << setw(6) << setiosflags(ios::right) << setfill('0')  << evt->getRunNumber() << setfill(' ')
+                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  }
 
   EUTelEventImpl * event = static_cast<EUTelEventImpl *> ( evt );
 
@@ -289,9 +291,15 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
     }
   }
 
+  // draw the current event!
   MarlinCED::draw( this, _waitForKeyboard ) ;
+
+  // in case we don't have to wait for the kepyboard, so wait
+  // _autoForwardDelay second before continue
   if ( ! _waitForKeyboard ) usleep( static_cast< int > (_autoForwardDelay * 1000000) );
 
+  // increment the event number
+  ++_iEvt;
 }
 
 
