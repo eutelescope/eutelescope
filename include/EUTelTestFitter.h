@@ -32,13 +32,6 @@
 #include <vector>
 #include <map>
 
-// define a specific verbosity level for Millepede
-namespace streamlog {
-
-  DEFINE_STREAMLOG_LEVEL( TESTFITTERMESSAGE,  "TESTFITTERMESSAGE", message_base_level - 50 + 3 , STREAMLOG_MESSAGE_ACTIVE ) 
-
-}
-
 namespace eutelescope {
 
 
@@ -275,7 +268,7 @@ namespace eutelescope {
    *  \li Interface to LCCD (alignment)
    *
    * \author A.F.Zarnecki, University of Warsaw, zarnecki@fuw.edu.pl
-   * @version $Id: EUTelTestFitter.h,v 1.16 2008-10-04 12:28:53 bulgheroni Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.17 2008-10-04 15:54:46 bulgheroni Exp $
    *
    */
 
@@ -524,6 +517,26 @@ namespace eutelescope {
     double * _fitArray ;
     double * _nominalFitArray ;
     double * _nominalError ;
+
+    // few counter to show the final summary
+
+    //! Number of event w/o input hit
+    /*! It could happen that no input hit have passed the selection
+     *  criteria posed by previous processors.
+     */
+    int _noOfEventWOInputHit;
+
+    //! Number of events with out tracks
+    /*! This is the number of events in which the processor wasn't
+     *  able to reconstruct any tracks
+     */
+    int _noOfEventWOTrack;
+
+    //! Total number of reconstructed tracks
+    /*! This is the total number of tracks the processor was able to
+     * reconstruct.
+     */
+    int _noOfTracks;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map

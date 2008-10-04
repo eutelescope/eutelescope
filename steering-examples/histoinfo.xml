@@ -14,7 +14,7 @@
      Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
   -->
 
-     <!-- Version $Id: histoinfo.xml,v 1.5 2007-09-13 17:05:53 zarnecki Exp $	 -->
+     <!-- Version $Id: histoinfo.xml,v 1.6 2008-10-04 15:54:46 bulgheroni Exp $	 -->
 
 <HistogramManager>
   <histos>
@@ -81,6 +81,10 @@
 
     <histo name="beamRotX"    type="H1D" xBin="200" xMin="-5" xMax="5"/>
     <histo name="beamRotY"    type="H1D" xBin="200" xMin="-5" xMax="5"/>
+    <histo name="beamRotX2D"  type="H2D" xBin="100" xMin="-5" xMax="5"
+           yBin="100" yMin="-1" yMax="1" />
+    <histo name="beamRotY2D"  type="H2D" xBin="100" xMin="-5" xMax="5"
+           yBin="100" yMin="-1" yMax="1" />
 
   </histos>
 </HistogramManager>

@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitHistograms.cc,v 1.11 2008-10-04 13:38:03 bulgheroni Exp $
+// Version: $Id: EUTelFitHistograms.cc,v 1.12 2008-10-04 15:54:46 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -169,13 +169,12 @@ void EUTelFitHistograms::init() {
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
-    message<ERROR> ( "The GearMgr is not available, for an unknown reason." );
+    streamlog_out( ERROR ) <<  "The GearMgr is not available, for an unknown reason." << endl;
     exit(-1);
   }
 
   // Read geometry information from GEAR
-
-  message<MESSAGE> ( log() << "Reading telescope geometry description from GEAR ") ;
+  streamlog_out ( MESSAGE )  << "Reading telescope geometry description from GEAR " << endl;
 
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
@@ -282,7 +281,7 @@ void EUTelFitHistograms::init() {
 
   // Print out geometry information
 
-  message<MESSAGE> ( log() << "Telescope configuration with " << _nTelPlanes << " planes" );
+  streamlog_out ( MESSAGE ) << "Telescope configuration with " << _nTelPlanes << " planes" << endl;
 
 
   for(int ipl=0; ipl < _nTelPlanes; ipl++)
@@ -299,7 +298,7 @@ void EUTelFitHistograms::init() {
       ss << "  ID = " << _planeID[ipl]
          << "  at Z [mm] = " << _planePosition[ipl];
 
-      message<MESSAGE> ( log() << ss.str() );
+      streamlog_out ( MESSAGE ) << ss.str() << endl;
     }
 
 
@@ -332,20 +331,24 @@ void EUTelFitHistograms::processRunHeader( LCRunHeader* runHeader) {
 
   int runNr = runHeader->getRunNumber();
 
-  message<MESSAGE> ( log() << "Processing run header " << _nRun
-                     << ", run nr " << runNr );
+  streamlog_out( MESSAGE ) << "Processing run header " << _nRun
+                           << ", run nr " << runNr << endl;
 
   const std::string detectorName = runHeader->getDetectorName();
   const std::string detectorDescription = runHeader->getDescription();
   const std::vector<std::string> * subDets = runHeader->getActiveSubdetectors();
 
-  message<MESSAGE> ( log() << detectorName << " : " << detectorDescription ) ;
+  streamlog_out( MESSAGE ) << detectorName << " : " << detectorDescription << endl;
 
   int nDet = subDets->size();
 
-  if(nDet)message<MESSAGE> ( log() << nDet << " subdetectors defined :" );
+  if(nDet) {
+    streamlog_out( MESSAGE ) << nDet << " subdetectors defined :" << endl;
+  }
   stringstream ss;
-  for(int idet=0;idet<nDet;idet++)  message<MESSAGE> (log()  << idet+1 << " : " << subDets->at(idet) );
+  for(int idet=0;idet<nDet;idet++)  {
+    streamlog_out( MESSAGE )  << idet+1 << " : " << subDets->at(idet) << endl;
+  }
 
 
 }
@@ -354,7 +357,7 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
   if ( euEvent->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
+    streamlog_out( DEBUG ) << "EORE found: nothing else to do." << endl;
     return;
   }
 
@@ -372,11 +375,11 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
   try {
     col = event->getCollection( _inputColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    message<ERROR> ( log() << "Not able to get collection "
-                     << _inputColName
-                     << "\nfrom event " << event->getEventNumber()
-                     << " in run " << event->getRunNumber()  );
-    throw SkipEventException(this);
+    streamlog_out( WARNING ) << "Not able to get collection "
+                             << _inputColName
+                             << "\nfrom event " << event->getEventNumber()
+                             << " in run " << event->getRunNumber()  << endl;
+    return;
   }
 
 
@@ -384,8 +387,9 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
   int nTrack = col->getNumberOfElements()  ;
 
-  if(debug)message<DEBUG> ( log() << "Total of " << nTrack << " tracks in input collection " );
-
+  if(debug) {
+    streamlog_out ( TESTFITTERMESSAGE )  << "Total of " << nTrack << " tracks in input collection " << endl;
+  }
 
   for(int itrack=0; itrack< nTrack ; itrack++)
     {
@@ -401,7 +405,9 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
       int nHit =   trackhits.size();
 
-      if(debug)message<DEBUG> ( log() << "Track " << itrack << " with " << nHit << " hits " );
+      if(debug){
+        streamlog_out ( TESTFITTERMESSAGE )  << "Track " << itrack << " with " << nHit << " hits " << endl;
+      }
 
 
       // Clear plane tables
@@ -444,7 +450,7 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
           if(hitPlane<0)
             {
-              message<ERROR> ( log() << "Hit outside telescope plane at z [mm] = "  << pos[2] );
+              streamlog_out ( ERROR )  << "Hit outside telescope plane at z [mm] = "  << pos[2] << endl;
               continue;
             }
 
@@ -472,8 +478,10 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
 
 
-              if(debug)message<DEBUG> ( log() << "Measured hit in plane " << hitPlane << " at  X = "
-                                        << pos[0] << ", Y = " << pos[1] << ", Q = " << _measuredQ[hitPlane] );
+              if(debug) {
+                streamlog_out ( TESTFITTERMESSAGE )  << "Measured hit in plane " << hitPlane << " at  X = "
+                                                     << pos[0] << ", Y = " << pos[1] << ", Q = " << _measuredQ[hitPlane] << endl;
+              }
 
             }
           else
@@ -485,8 +493,10 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
               _fittedX[hitPlane]=pos[0];
               _fittedY[hitPlane]=pos[1];
 
-              if(debug)message<DEBUG> ( log() << "Fitted  hit  in plane " << hitPlane << " at  X = "
-                                        << pos[0] << ", Y = " << pos[1] );
+              if(debug) {
+                streamlog_out ( ERROR )   << "Fitted  hit  in plane " << hitPlane << " at  X = "
+                                          << pos[0] << ", Y = " << pos[1] << endl;
+              }
 
             }
 
@@ -652,8 +662,8 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
           if(_isMeasured[ipl] && _isFitted[ipl])
             {
               string tempHistoName;
-	      
-	      stringstream nam;
+
+              stringstream nam;
               nam << _ResidualXHistoName << "_" << ipl ;
               tempHistoName=nam.str();
               (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedX[ipl]-_measuredX[ipl]);
@@ -829,10 +839,10 @@ void EUTelFitHistograms::end(){
 void EUTelFitHistograms::bookHistos()
 {
 
-  message<MESSAGE> ( log() << "Booking histograms " );
+  streamlog_out ( MESSAGE ) << "Booking histograms " << endl;
 
 
-  message<MESSAGE> ( log() << "Histogram information searched in " << _histoInfoFileName);
+  streamlog_out ( MESSAGE ) << "Histogram information searched in " << _histoInfoFileName << endl;
 
   auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
   EUTelHistogramInfo    * histoInfo;
@@ -841,12 +851,12 @@ void EUTelFitHistograms::bookHistos()
   try {
     isHistoManagerAvailable = histoMgr->init();
   } catch ( ios::failure& e) {
-    message<ERROR> ( log() << "I/O problem with " << _histoInfoFileName << "\n"
-                     << "Continuing without histogram manager"    );
+    streamlog_out ( ERROR ) << "I/O problem with " << _histoInfoFileName << "\n"
+                            << "Continuing without histogram manager"    << endl;
     isHistoManagerAvailable = false;
   } catch ( ParseException& e ) {
-    message<ERROR> ( log() << e.what() << "\n"
-                     << "Continuing without histogram manager" );
+    streamlog_out ( ERROR ) << e.what() << "\n"
+                            << "Continuing without histogram manager" << endl;
     isHistoManagerAvailable = false;
   }
 
@@ -865,7 +875,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_MeasuredXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           measXNBin = histoInfo->_xBin;
           measXMin  = histoInfo->_xMin;
           measXMax  = histoInfo->_xMax;
@@ -913,7 +923,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_MeasuredYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           measYNBin = histoInfo->_xBin;
           measYMin  = histoInfo->_xMin;
           measYMax  = histoInfo->_xMax;
@@ -962,7 +972,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_MeasuredXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           measXNBin = histoInfo->_xBin;
           measXMin  = histoInfo->_xMin;
           measXMax  = histoInfo->_xMax;
@@ -1013,7 +1023,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_FittedXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           fitXNBin = histoInfo->_xBin;
           fitXMin  = histoInfo->_xMin;
           fitXMax  = histoInfo->_xMax;
@@ -1058,7 +1068,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_FittedYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           fitYNBin = histoInfo->_xBin;
           fitYMin  = histoInfo->_xMin;
           fitYMax  = histoInfo->_xMax;
@@ -1107,7 +1117,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_FittedXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           fitXNBin = histoInfo->_xBin;
           fitXMin  = histoInfo->_xMin;
           fitXMax  = histoInfo->_xMax;
@@ -1158,7 +1168,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_AngleXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           angleXNBin = histoInfo->_xBin;
           angleXMin  = histoInfo->_xMin;
           angleXMax  = histoInfo->_xMax;
@@ -1203,7 +1213,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_AngleYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           angleYNBin = histoInfo->_xBin;
           angleYMin  = histoInfo->_xMin;
           angleYMax  = histoInfo->_xMax;
@@ -1252,7 +1262,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_AngleXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           angleXNBin = histoInfo->_xBin;
           angleXMin  = histoInfo->_xMin;
           angleXMax  = histoInfo->_xMax;
@@ -1303,7 +1313,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ScatXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           scatXNBin = histoInfo->_xBin;
           scatXMin  = histoInfo->_xMin;
           scatXMax  = histoInfo->_xMax;
@@ -1348,7 +1358,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ScatYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           scatYNBin = histoInfo->_xBin;
           scatYMin  = histoInfo->_xMin;
           scatYMax  = histoInfo->_xMax;
@@ -1397,7 +1407,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ScatXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           scatXNBin = histoInfo->_xBin;
           scatXMin  = histoInfo->_xMin;
           scatXMax  = histoInfo->_xMax;
@@ -1446,7 +1456,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ResidualXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           residXNBin = histoInfo->_xBin;
           residXMin  = histoInfo->_xMin;
           residXMax  = histoInfo->_xMax;
@@ -1491,7 +1501,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ResidualYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           residYNBin = histoInfo->_xBin;
           residYMin  = histoInfo->_xMin;
           residYMax  = histoInfo->_xMax;
@@ -1540,7 +1550,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ResidualXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           residXNBin = histoInfo->_xBin;
           residXMin  = histoInfo->_xMin;
           residXMax  = histoInfo->_xMax;
@@ -1590,7 +1600,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_beamShiftXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -1635,7 +1645,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_beamShiftYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           shiftYNBin = histoInfo->_xBin;
           shiftYMin  = histoInfo->_xMin;
           shiftYMax  = histoInfo->_xMax;
@@ -1683,7 +1693,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_beamShiftXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -1734,7 +1744,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_beamRotXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           rotXNBin = histoInfo->_xBin;
           rotXMin  = histoInfo->_xMin;
           rotXMax  = histoInfo->_xMax;
@@ -1782,7 +1792,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_beamRotYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           rotYNBin = histoInfo->_xBin;
           rotYMin  = histoInfo->_xMin;
           rotYMax  = histoInfo->_xMax;
@@ -1830,7 +1840,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_beamRotX2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           rotXNBin = histoInfo->_xBin;
           rotXMin  = histoInfo->_xMin;
           rotXMax  = histoInfo->_xMax;
@@ -1880,7 +1890,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_beamRotY2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           rotYNBin = histoInfo->_xBin;
           rotYMin  = histoInfo->_xMin;
           rotYMax  = histoInfo->_xMax;
@@ -1931,7 +1941,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_beamRot2XHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           rotXNBin = histoInfo->_xBin;
           rotXMin  = histoInfo->_xMin;
           rotXMax  = histoInfo->_xMax;
@@ -1987,7 +1997,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_beamRot2YHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           rotXNBin = histoInfo->_xBin;
           rotXMin  = histoInfo->_xMin;
           rotXMax  = histoInfo->_xMax;
@@ -2037,7 +2047,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_relShiftXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -2083,7 +2093,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_relShiftYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           shiftYNBin = histoInfo->_xBin;
           shiftYMin  = histoInfo->_xMin;
           shiftYMax  = histoInfo->_xMax;
@@ -2131,7 +2141,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_relRotXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           rotXNBin = histoInfo->_xBin;
           rotXMin  = histoInfo->_xMin;
           rotXMax  = histoInfo->_xMax;
@@ -2180,7 +2190,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_relRotYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           rotYNBin = histoInfo->_xBin;
           rotYMin  = histoInfo->_xMin;
           rotYMax  = histoInfo->_xMax;
@@ -2230,7 +2240,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_relRotX2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           rotXNBin = histoInfo->_xBin;
           rotXMin  = histoInfo->_xMin;
           rotXMax  = histoInfo->_xMax;
@@ -2281,7 +2291,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_relRotY2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           rotYNBin = histoInfo->_xBin;
           rotYMin  = histoInfo->_xMin;
           rotYMax  = histoInfo->_xMax;
@@ -2329,7 +2339,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_clusterSignalHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           clusterNBin = histoInfo->_xBin;
           clusterMin  = histoInfo->_xMin;
           clusterMax  = histoInfo->_xMax;
@@ -2374,7 +2384,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_meanSignalXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           meanXNBin = histoInfo->_xBin;
           meanXMin  = histoInfo->_xMin;
           meanXMax  = histoInfo->_xMax;
@@ -2418,7 +2428,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_meanSignalYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           meanYNBin = histoInfo->_xBin;
           meanYMin  = histoInfo->_xMin;
           meanYMax  = histoInfo->_xMax;
@@ -2466,7 +2476,7 @@ void EUTelFitHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_meanSignalXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
           meanXNBin = histoInfo->_xBin;
           meanXMin  = histoInfo->_xMin;
           meanXMax  = histoInfo->_xMax;
@@ -2503,14 +2513,14 @@ void EUTelFitHistograms::bookHistos()
 
 // List all booked histogram - check of histogram map filling
 
-  message<MESSAGE> ( log() <<  _aidaHistoMap.size() << " histograms booked");
+  streamlog_out ( MESSAGE ) <<  _aidaHistoMap.size() << " histograms booked" << endl;
 
 
   map<string, AIDA::IBaseHistogram *>::iterator mapIter;
-  for(mapIter = _aidaHistoMap.begin(); mapIter != _aidaHistoMap.end() ; mapIter++ )
-    message<DEBUG> ( log() <<  mapIter->first << " : " <<  (mapIter->second)->title() ) ;
-
-  message<DEBUG> ( log() << "Histogram booking completed \n\n");
+  for(mapIter = _aidaHistoMap.begin(); mapIter != _aidaHistoMap.end() ; mapIter++ ) {
+    streamlog_out ( DEBUG ) <<  mapIter->first << " : " <<  (mapIter->second)->title() << endl;
+  }
+  streamlog_out ( DEBUG ) << "Histogram booking completed \n\n" << endl;
 
 
   return;

@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.30 2008-10-04 14:34:27 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.31 2008-10-04 15:54:46 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -253,8 +253,8 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
                              _allowAmbiguousHits, static_cast < bool > (false));
 
   // initialize all the counters
-  _noOfEventsWOHit   = 0;
-  _noOfEventsWOTrack = 0;
+  _noOfEventWOInputHit   = 0;
+  _noOfEventWOTrack = 0;
   _noOfTracks        = 0;
 
 }
@@ -667,7 +667,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
 #endif
-    ++_noOfEventsWOHit;
+    ++_noOfEventWOInputHit;
     return;
   }
 
@@ -693,7 +693,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
 #endif
-    ++_noOfEventsWOTrack;
+    ++_noOfEventWOTrack;
     return;
   }
 
@@ -935,7 +935,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         delete [] hitX;
         
         // increment the counter
-        ++_noOfEventsWOTrack;
+        ++_noOfEventWOTrack;
         return ;
       }
     }
@@ -1612,12 +1612,12 @@ void EUTelTestFitter::end(){
 
   // Print the summer
   streamlog_out( MESSAGE ) << "Total number of processed events:    " << setw(10) << setiosflags(ios::right) << _nEvt << resetiosflags(ios::right) << endl
-                           << "Total number of event w/o input hit: " << setw(10) << setiosflags(ios::right) << _noOfEventsWOHit << resetiosflags(ios::right)
-                           << endl
-                           << "Total number of event w/o track:     " << setw(10) << setiosflags(ios::right) << _noOfEventsWOTrack
+                           << "Total number of event w/o input hit: " << setw(10) << setiosflags(ios::right) << _noOfEventWOInputHit 
+                           << resetiosflags(ios::right) << endl
+                           << "Total number of event w/o track:     " << setw(10) << setiosflags(ios::right) << _noOfEventWOTrack
                            << resetiosflags(ios::right) << endl
                            << "Total number of reconstructed tracks " << setw(10) << setiosflags(ios::right) << _noOfTracks << resetiosflags(ios::right)
-                           << endl
+                           << endl;
 
 
   // Clean memory

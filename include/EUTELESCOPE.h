@@ -18,7 +18,7 @@
  *  develop both their DAQ and analysis/reconstruction software.
  *
  *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
- *  @version $Id: EUTELESCOPE.h,v 1.27 2008-09-09 08:15:46 bulgheroni Exp $
+ *  @version $Id: EUTELESCOPE.h,v 1.28 2008-10-04 15:54:46 bulgheroni Exp $
  */
 
 namespace eutelescope {}
@@ -36,6 +36,8 @@ namespace eutelescope {}
 # include <stdexcept>
 #endif
 
+// streamlog include
+#include "streamlog/streamlog.h"
 
 // system includes <>
 #include <iostream>
@@ -54,7 +56,7 @@ namespace eutelescope
    * files.
    *
    * @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @version $Id: EUTELESCOPE.h,v 1.27 2008-09-09 08:15:46 bulgheroni Exp $
+   * @version $Id: EUTELESCOPE.h,v 1.28 2008-10-04 15:54:46 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -348,7 +350,7 @@ namespace eutelescope
    *  type.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.27 2008-09-09 08:15:46 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.28 2008-10-04 15:54:46 bulgheroni Exp $
    */
   enum EUTelDetectorType {
     kTLU               =   0,
@@ -360,7 +362,7 @@ namespace eutelescope
   /*! This enumeration type is used to identify a readout mode
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.27 2008-09-09 08:15:46 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.28 2008-10-04 15:54:46 bulgheroni Exp $
    */
   enum EUTelReadoutMode {
     kRAW2             =   0,
@@ -395,7 +397,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.27 2008-09-09 08:15:46 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.28 2008-10-04 15:54:46 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -442,7 +444,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.27 2008-09-09 08:15:46 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.28 2008-10-04 15:54:46 bulgheroni Exp $
    */
 
   enum ClusterQuality {
@@ -501,7 +503,7 @@ namespace eutelescope
    *  cluster during the clusterization process itself.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.27 2008-09-09 08:15:46 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.28 2008-10-04 15:54:46 bulgheroni Exp $
    */
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
@@ -516,7 +518,7 @@ namespace eutelescope
   /*! This enumerator is used to define the sparsified pixel type.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.27 2008-09-09 08:15:46 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.28 2008-10-04 15:54:46 bulgheroni Exp $
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,
@@ -743,8 +745,17 @@ namespace eutelescope
 #endif
   }
 
-
 }
 
+// custom verbosity levels
+namespace streamlog {
+
+  //! Verbosity level for the EUTelTestFitter processor
+  DEFINE_STREAMLOG_LEVEL( TESTFITTERMESSAGE,  "TESTFITTERMESSAGE", message_base_level - 50 + 3 , STREAMLOG_MESSAGE_ACTIVE )
+
+  //! Verbosity level for the EUTelMille processor
+  DEFINE_STREAMLOG_LEVEL( MILLEMESSAGE,  "MILLEMESSAGE", message_base_level - 50 + 1 , STREAMLOG_MESSAGE_ACTIVE ) 
+
+}
 
 #endif
