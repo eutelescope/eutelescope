@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.12 2008-10-03 10:27:06 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.13 2008-10-04 12:46:09 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -97,7 +97,7 @@ EUTelEventViewer::EUTelEventViewer() : Processor("EUTelEventViewer") {
                              static_cast< bool > (true) );
 
   registerProcessorParameter("AutoForwardDelay","This is the time in second between two following display\n"
-			     "Enable only when WaitForKeybord is off", _autoForwardDelay, 4.0);
+                             "Enable only when WaitForKeybord is off", _autoForwardDelay, 4.0);
 
   registerProcessorParameter("ApplyAlignmentToPlane",
                              "If true, the planes are shifted and rotated according to the alignment collections",
@@ -211,8 +211,8 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
           float y = static_cast<float > ( hit->getPosition()[1] );
           float z = static_cast<float > ( hit->getPosition()[2] );
           unsigned int color =  returnColor(iCollection);
-	  unsigned int size  = 1;
-	  unsigned int type  = CED_HIT_STAR;
+          unsigned int size  = 1;
+          unsigned int type  = CED_HIT_STAR;
           ced_hit(x,y,z,type ,size , color);
         }
       }  catch (DataNotAvailableException& e) {
@@ -241,42 +241,42 @@ void EUTelEventViewer::processEvent( LCEvent * evt ) {
           float xPrev = 0, yPrev = 0, zPrev = 0;
           float xNext, yNext, zNext;
 
-	  bool first = true;
+          bool first = true;
 
           for ( size_t iHit = 0; iHit < hitvec.size()  ; ++iHit ) {
 
             TrackerHitImpl * hit;
-	    if ( (hit = dynamic_cast<TrackerHitImpl*> ( hitvec[ iHit ] )) != 0x0 ) {
-	    
+            if ( (hit = dynamic_cast<TrackerHitImpl*> ( hitvec[ iHit ] )) != 0x0 ) {
 
-	      // show only hit resulting from fit (type == 32) 
-	      if ( hit->getType() == 32 ) {
-		if ( first ) {
-		  
-		  first = false;
-		  xPrev = static_cast< float > ( hit->getPosition()[0] );
-		  yPrev = static_cast<float > ( hit->getPosition()[1] );
-		  zPrev = static_cast<float > ( hit->getPosition()[2] );
-		  ced_hit(xPrev, yPrev, zPrev, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
-		  
-		} else {
-		  
-		  xNext = static_cast< float > ( hit->getPosition()[0] );
-		  yNext = static_cast<float > ( hit->getPosition()[1] );
-		  zNext = static_cast<float > ( hit->getPosition()[2] );
-		  ced_hit(xNext, yNext, zNext, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
-		  
-		  ced_line( xPrev, yPrev, zPrev, xNext, yNext, zNext, _layerTrack << CED_LAYER_SHIFT, 2, color );
-		  
-		  xPrev = xNext;
-		  yPrev = yNext;
-		  zPrev = zNext;
-		  
-		  
-		}
-	      }
-	      
-	    }
+
+              // show only hit resulting from fit (type == 32)
+              if ( hit->getType() == 32 ) {
+                if ( first ) {
+
+                  first = false;
+                  xPrev = static_cast< float > ( hit->getPosition()[0] );
+                  yPrev = static_cast<float > ( hit->getPosition()[1] );
+                  zPrev = static_cast<float > ( hit->getPosition()[2] );
+                  ced_hit(xPrev, yPrev, zPrev, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
+
+                } else {
+
+                  xNext = static_cast< float > ( hit->getPosition()[0] );
+                  yNext = static_cast<float > ( hit->getPosition()[1] );
+                  zNext = static_cast<float > ( hit->getPosition()[2] );
+                  ced_hit(xNext, yNext, zNext, _layerTrackerHit << CED_LAYER_SHIFT,2,color);
+
+                  ced_line( xPrev, yPrev, zPrev, xNext, yNext, zNext, _layerTrack << CED_LAYER_SHIFT, 2, color );
+
+                  xPrev = xNext;
+                  yPrev = yNext;
+                  zPrev = zNext;
+
+
+                }
+              }
+
+            }
 
 
           }

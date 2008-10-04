@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.30 2008-10-03 16:09:07 bulgheroni Exp $
+// Version: $Id: EUTelMille.cc,v 1.31 2008-10-04 12:44:11 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -584,8 +584,8 @@ void EUTelMille::processEvent (LCEvent * event) {
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-    streamlog_out( MESSAGE2 ) << "Currently having " << _nMilleDataPoints << " data points in " 
-			      << _nMilleTracks << " tracks " << endl;
+    streamlog_out( MESSAGE2 ) << "Currently having " << _nMilleDataPoints << " data points in "
+                              << _nMilleTracks << " tracks " << endl;
   }
 
 
@@ -1822,75 +1822,75 @@ void EUTelMille::end() {
           // comment!
           getline( millepede, line );
 
-	  // I need to create a map to convert plane position in
-	  // sensorID
-	  std::vector<int > lookUp;
-	  for ( int iPlane = 0; iPlane < _nPlanes ; iPlane++ ) {
-	    // if the plane in the exclude list
-	    if ( find( _excludePlanes.begin(), _excludePlanes.end(), iPlane ) ==  _excludePlanes.end() ) {
-	      lookUp.push_back( _siPlanesLayerLayout->getID(iPlane) );
-	    }
-	  }
+          // I need to create a map to convert plane position in
+          // sensorID
+          std::vector<int > lookUp;
+          for ( int iPlane = 0; iPlane < _nPlanes ; iPlane++ ) {
+            // if the plane in the exclude list
+            if ( find( _excludePlanes.begin(), _excludePlanes.end(), iPlane ) ==  _excludePlanes.end() ) {
+              lookUp.push_back( _siPlanesLayerLayout->getID(iPlane) );
+            }
+          }
 
           int counter = 0;
 
           while ( ! millepede.eof() ) {
 
             EUTelAlignmentConstant * constant = new EUTelAlignmentConstant;
- 
-	    bool goodLine = true;
+
+            bool goodLine = true;
 
 
-	    constant->setSensorID( lookUp[counter] );
-	    ++ counter;
-	      
-	    for ( unsigned int iParam = 0 ; iParam < 3 ; ++iParam ) {
-		
-	      getline( millepede, line );
-		
-	      if ( line.empty() ) {
-		goodLine = false;
-	      }
-		
-	      tokens.clear();
-	      tokenizer.clear();
-	      tokenizer.str( line );
-		
-	      while ( tokenizer >> buffer ) {
-		tokens.push_back( buffer ) ;
-	      }
-		
-	      if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) ) {
-		goodLine = true;
-	      } else goodLine = false;
+            constant->setSensorID( lookUp[counter] );
+            ++ counter;
 
-	      bool isFixed = ( tokens.size() == 3 );
-	      if ( isFixed ) {
-		streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << ( tokens[1] / 1000 )
+            for ( unsigned int iParam = 0 ; iParam < 3 ; ++iParam ) {
+
+              getline( millepede, line );
+
+              if ( line.empty() ) {
+                goodLine = false;
+              }
+
+              tokens.clear();
+              tokenizer.clear();
+              tokenizer.str( line );
+
+              while ( tokenizer >> buffer ) {
+                tokens.push_back( buffer ) ;
+              }
+
+              if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) ) {
+                goodLine = true;
+              } else goodLine = false;
+
+              bool isFixed = ( tokens.size() == 3 );
+              if ( isFixed ) {
+                streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << ( tokens[1] / 1000 )
                                          << " (fixed)"  << endl;
-	      } else {
+              } else {
                 streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << (tokens[1] / 1000 )
                                          << " +/- " << ( tokens[4] / 1000 )  << endl;
-	      }
-		
-	      if ( iParam == 0 ) {
-		constant->setXOffset( tokens[1] / 1000 );
-		if ( ! isFixed ) {
-		  double err  = tokens[4] / 1000;
-		  constant->setXOffsetError( err ) ;
-		}
-	      }
-	      if ( iParam == 1 ) {
-		constant->setYOffset( tokens[1] / 1000 ) ;
-		if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000 ) ;
-	      }
-	      if ( iParam == 2 ) {
-		constant->setGamma( tokens[1]  ) ;
-		if ( ! isFixed ) constant->setGammaError( tokens[4] ) ;
-	      }
-		
-	    }
-	    
+              }
+
+              if ( iParam == 0 ) {
+                constant->setXOffset( tokens[1] / 1000 );
+                if ( ! isFixed ) {
+                  double err  = tokens[4] / 1000;
+                  constant->setXOffsetError( err ) ;
+                }
+              }
+              if ( iParam == 1 ) {
+                constant->setYOffset( tokens[1] / 1000 ) ;
+                if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000 ) ;
+              }
+              if ( iParam == 2 ) {
+                constant->setGamma( tokens[1]  ) ;
+                if ( ! isFixed ) constant->setGammaError( tokens[4] ) ;
+              }
+
+            }
+
 
 
 
