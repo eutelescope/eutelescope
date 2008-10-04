@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitHistograms.cc,v 1.12 2008-10-04 15:54:46 bulgheroni Exp $
+// Version: $Id: EUTelFitHistograms.cc,v 1.13 2008-10-04 21:07:19 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -494,8 +494,8 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
               _fittedY[hitPlane]=pos[1];
 
               if(debug) {
-                streamlog_out ( ERROR )   << "Fitted  hit  in plane " << hitPlane << " at  X = "
-                                          << pos[0] << ", Y = " << pos[1] << endl;
+                streamlog_out ( TESTFITTERMESSAGE )   << "Fitted  hit  in plane " << hitPlane << " at  X = "
+						      << pos[0] << ", Y = " << pos[1] << endl;
               }
 
             }
