@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.28 2008-10-04 12:28:53 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.29 2008-10-04 13:38:48 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -635,7 +635,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 
-  if ( _nEvt % 10  ) {
+  if ( _nEvt % 10 == 0 ) {
     streamlog_out( MESSAGE2 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
