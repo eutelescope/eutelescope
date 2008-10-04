@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.29 2008-10-04 13:38:48 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.30 2008-10-04 14:34:27 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -251,6 +251,11 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
   registerOptionalParameter ("AllowAmbiguousHits",
                              "Allow same hit to be used in more than one track",
                              _allowAmbiguousHits, static_cast < bool > (false));
+
+  // initialize all the counters
+  _noOfEventsWOHit   = 0;
+  _noOfEventsWOTrack = 0;
+  _noOfTracks        = 0;
 
 }
 
@@ -662,6 +667,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
 #endif
+    ++_noOfEventsWOHit;
     return;
   }
 
@@ -687,7 +693,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
 #endif
-
+    ++_noOfEventsWOTrack;
     return;
   }
 
@@ -927,6 +933,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         delete [] hitY;
         delete [] hitEx;
         delete [] hitX;
+        
+        // increment the counter
+        ++_noOfEventsWOTrack;
         return ;
       }
     }
@@ -1258,6 +1267,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         fittrack->setReferencePoint(refpoint);
 
         fittrackvec->addElement(fittrack);
+
+        // increment the total track counter
+        ++_noOfTracks;
 
         // Count number of tracks for each hit
 
@@ -1596,6 +1608,16 @@ void EUTelTestFitter::end(){
   //   std::cout << "EUTelTestFitter::end()  " << name()
   //        << " processed " << _nEvt << " events in " << _nRun << " runs "
   //        << std::endl ;
+
+
+  // Print the summer
+  streamlog_out( MESSAGE ) << "Total number of processed events:    " << setw(10) << setiosflags(ios::right) << _nEvt << resetiosflags(ios::right) << endl
+                           << "Total number of event w/o input hit: " << setw(10) << setiosflags(ios::right) << _noOfEventsWOHit << resetiosflags(ios::right)
+                           << endl
+                           << "Total number of event w/o track:     " << setw(10) << setiosflags(ios::right) << _noOfEventsWOTrack
+                           << resetiosflags(ios::right) << endl
+                           << "Total number of reconstructed tracks " << setw(10) << setiosflags(ios::right) << _noOfTracks << resetiosflags(ios::right)
+                           << endl
 
 
   // Clean memory
