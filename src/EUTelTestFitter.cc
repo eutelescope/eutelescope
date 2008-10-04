@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.31 2008-10-04 15:54:46 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.32 2008-10-04 21:08:14 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -1268,9 +1268,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
         fittrackvec->addElement(fittrack);
 
-        // increment the total track counter
-        ++_noOfTracks;
-
         // Count number of tracks for each hit
 
         for(int ipl=0;ipl<_nTelPlanes;ipl++) {
@@ -1523,6 +1520,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       fittrack->setReferencePoint(refpoint);
 
       fittrackvec->addElement(fittrack);
+      // increment the total track counter
+      ++_noOfTracks;
       nFittedTracks++;
     }
 
@@ -1553,6 +1552,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     delete fittrackvec;
     delete fitpointvec;
     delete corrpointvec;
+  }
+
+  if ( fittrackvec->size() == 0 ) {
+    ++_noOfEventWOTrack;
   }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
