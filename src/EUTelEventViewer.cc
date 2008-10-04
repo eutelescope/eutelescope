@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.14 2008-10-04 12:49:36 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.15 2008-10-04 13:37:15 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -132,7 +132,7 @@ void EUTelEventViewer::processRunHeader( LCRunHeader * rdr ) {
 
 void EUTelEventViewer::processEvent( LCEvent * evt ) {
 
-  if ( _iEvt % 10 ) {
+  if ( _iEvt % 10 == 0 ) {
     streamlog_out( MESSAGE4 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << evt->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << evt->getRunNumber() << setfill(' ')
