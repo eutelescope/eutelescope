@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.32 2008-10-04 21:08:14 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.33 2008-10-07 17:50:56 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -748,7 +748,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     if(hitPlane[ihit]<0) {
 
-      streamlog_out( WARNING0 )  << "Reconstructed hit outside sensor planes z [mm] = "  << hitZ[ihit] << endl;
+      if ( _isActive[hitPlane[ihit]] ) {
+	streamlog_out( WARNING0 )  << "Reconstructed hit outside sensor planes z [mm] = "  << hitZ[ihit] << endl;
+      }
       continue;
     }
 
