@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.15 2008-10-04 13:37:15 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.16 2008-10-07 18:03:11 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -48,7 +48,7 @@
 #include <string>
 #include <memory>
 #include <ctime>
-
+#include <unistd.h>
 
 using namespace std ;
 using namespace lcio ;
