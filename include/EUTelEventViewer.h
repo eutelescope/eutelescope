@@ -54,6 +54,7 @@ namespace eutelescope {
    *  (-DUSE_GEAR and -DUSE_CED).
    *
    *  @image html CEDEvent.png "One event with a track candidate"
+   
    *
    *  <h4>Input collections</h4>
    *
@@ -62,6 +63,12 @@ namespace eutelescope {
    *
    *  <b>Tracker hit collections</b>: this is a vector of all the
    *  tracker hit collections the user wants to display.
+   *
+   *  <b>Alignment Constants</b>: this is a LCGenericObject collection
+   *  containing the results of the alignment procedure. This is just
+   *  an optional collection and it is required only if the user
+   *  wants to plot the real telescope geometry. See also the DetModel
+   *  parameter. 
    *
    *  @param TrackerHitCollectionNameVec. This is a vector of string
    *  containing the names of all the TrackerHitCollection one would
@@ -86,10 +93,13 @@ namespace eutelescope {
    *
    *  @param DetModel. This is the ID used to choose the proper
    *  geometry. For the telescope use 99999. The geometry information
-   *  are then read from GEAR.
+   *  are then read from GEAR. If the users wants to plot the planes
+   *  taking into account the alignment corrections, than detector
+   *  model has to be set to -1 and a suitable alignment collection
+   *  has to be provided.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEventViewer.h,v 1.8 2008-10-03 10:27:06 bulgheroni Exp $
+   *  @version $Id: EUTelEventViewer.h,v 1.9 2008-10-08 10:47:13 bulgheroni Exp $
    */
   class EUTelEventViewer : public marlin::Processor {
 
