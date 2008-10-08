@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelEventViewer.cc,v 1.16 2008-10-07 18:03:11 bulgheroni Exp $
+// Version $Id: EUTelEventViewer.cc,v 1.17 2008-10-08 10:46:51 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -87,7 +87,9 @@ EUTelEventViewer::EUTelEventViewer() : Processor("EUTelEventViewer") {
                              (int)-1);
 
   registerProcessorParameter("DetectorModel",
-                             "Detector Model",
+                             "Detector Model:\n"
+			     " 99999 to draw the ideal model taken from the GEAR description\n"
+			     "    -1 to draw the model described by GEAR and corrected for alignment",
                              _detModel,
                              (int)99999);
 
@@ -98,11 +100,6 @@ EUTelEventViewer::EUTelEventViewer() : Processor("EUTelEventViewer") {
 
   registerProcessorParameter("AutoForwardDelay","This is the time in second between two following display\n"
                              "Enable only when WaitForKeybord is off", _autoForwardDelay, 4.0);
-
-  registerProcessorParameter("ApplyAlignmentToPlane",
-                             "If true, the planes are shifted and rotated according to the alignment collections",
-                             _applyAlignmentToPlane,
-                             static_cast< bool > ( true ) );
 
   registerOptionalParameter("AlignmentConstantName",
                             "Alignment constant from the condition file",
