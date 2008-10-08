@@ -54,7 +54,7 @@ namespace eutelescope {
    *  (-DUSE_GEAR and -DUSE_CED).
    *
    *  @image html CEDEvent.png "One event with a track candidate"
-   
+   *  @image html CEDTrack.png "One event with a reconstructed track"
    *
    *  <h4>Input collections</h4>
    *
@@ -99,7 +99,7 @@ namespace eutelescope {
    *  has to be provided.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEventViewer.h,v 1.9 2008-10-08 10:47:13 bulgheroni Exp $
+   *  @version $Id: EUTelEventViewer.h,v 1.10 2008-10-08 11:25:32 bulgheroni Exp $
    */
   class EUTelEventViewer : public marlin::Processor {
 
@@ -223,13 +223,6 @@ namespace eutelescope {
      */
     double _autoForwardDelay;
       
-     //! Apply the alignment constants
-    /*! Set it to true if you want to shift and rotate the planes
-     *  according to what is contained in the alignement constants
-     *  collections.
-     */
-    bool _applyAlignmentToPlane;
-
     //! The detector model
     int _detModel;
 
