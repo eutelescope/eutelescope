@@ -454,7 +454,8 @@ WARN_LOGFILE           =
 INPUT                  = ../include ../src introduction.html \ 
 	                 ../steering-examples/minimal.cfg    \
                          ../steering-examples/complete.cfg   \
-	                 ../steering-examples/ChangeLog	
+	                 ../steering-examples/ChangeLog	     \
+                         ../test/histograms
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
@@ -465,7 +466,8 @@ INPUT                  = ../include ../src introduction.html \
 
 FILE_PATTERNS          = *.h \
                          *.cc \
-			 *.hcc
+			 *.hcc \
+                         *.C
 
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories 
