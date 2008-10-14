@@ -1,0 +1,2254 @@
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
+/*
+ *   This source code is part of the Eutelescope package of Marlin.
+ *   You are free to use this source files for your own development as
+ *   long as it stays in a public research context. You are not
+ *   allowed to use it for commercial purpose. You must put this
+ *   header with author names in all development based on this file.
+ *
+ */
+#include "eutelescopeHistos.h"
+
+using namespace std;
+
+// implementations
+
+void showPedeNoisePlot( const char * filename, const char *  detector  ) {
+
+  // check if this file is already open
+  TFile * inputFile = closeAndReopenFile( filename );
+
+  // this function will create the following canvases:
+  //
+  // -> 1 general canvas with the pede map and pede histo (3 detectors per canvas)
+  // -> 1 general canvas with the noise map and noise histo for each detectors (3 detectors per canvas)
+  // -> 1 general canvas with the status map for each destector. (6 detectors per canvas )
+
+  // PEDE MAP and DIST
+  UInt_t nDetPerCanvas =  3;
+  TString pedeCanvasBaseName    = "PedeCanvas";
+
+  // close all canvases with these names
+  closeCanvases( pedeCanvasBaseName );
+
+  // look into the input file for a folder named
+  TDirectoryFile * pedeProcessorFolder = (TDirectoryFile*) inputFile->Get( pedeProcessorFolderName.Data() );
+
+  if ( pedeProcessorFolder == 0x0 ) {
+    cerr << "No pede/noise filter folder (" << pedeProcessorFolderName << ") found in " << filename << endl;
+    return;
+  }
+
+  Int_t loop = 1;
+  string loopFolderName = "loop-" + toString( loop );
+  TDirectoryFile * loopFolder = (TDirectoryFile *) pedeProcessorFolder->Get( loopFolderName.c_str() );
+
+  if ( loopFolder == 0 ) {
+    cerr << "No " << loopFolderName << " found in file " << filename << endl;
+    return ;
+  }
+
+  // guess the number of sensors from the number of subfolder in the loopfolder
+  UInt_t nDetector = loopFolder->GetListOfKeys()->GetSize();
+  UInt_t nCanvas   = nDetector / nDetPerCanvas;
+  if ( nDetector % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+
+  vector<TCanvas * > canvasVec;
+  vector<TPad * >    padVec;
+
+  Double_t titleHeight = 0.10;
+  Int_t canvasWidth  = 800;
+  Int_t canvasHeight = 800;
+
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+    string pedeCanvasName  = string(pedeCanvasBaseName.Data()) + "_" + toString(iCanvas);
+    string pedeCanvasTitle = string(runName) + " - Pedestal histograms " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+    TCanvas * pedeCanvas = new TCanvas( pedeCanvasName.c_str(), pedeCanvasTitle.c_str(), canvasWidth, canvasHeight);
+    pedeCanvas->Range(0,0,1,1);
+    pedeCanvas->SetBorderSize(0);
+    pedeCanvas->SetFrameFillColor(0);
+    pedeCanvas->SetBorderMode(0);
+    canvasVec.push_back( pedeCanvas );
+
+    // title pad
+    TPad * titlePad = new TPad("pedeTitle","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( pedeCanvasTitle.c_str() );
+    title->Draw();
+    pedeCanvas->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() <  2 * nDetector ) {
+        padVec.push_back( smallPad );
+      }
+    }
+  }
+
+  gStyle->SetTitleFontSize( 0.05 );
+  gStyle->SetTitleFillColor( kCyan - 9 );
+  gStyle->SetStatW(0.25);
+  gStyle->SetStatH(0.35);
+  gStyle->SetPalette( 1, 0 );
+  gStyle->SetOptStat("emr");
+
+  // now plot the histograms in the right pad, again starting from the pedestal
+  UInt_t iPad = 0;
+  string newTitle;
+  for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
+    string detectorFolderName = "detector-" + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) loopFolder->Get( detectorFolderName.c_str() );
+    if ( detectorFolder == 0x0 ) {
+      cout << "Folder " << detectorFolderName << " not found " << endl;
+      return ;
+    }
+
+    string  mapName = "PedeMap-d" + toString( iDetector ) + "-l" + toString( loop );
+    TH2D *  map = (TH2D* ) detectorFolder->Get( mapName.c_str() );
+    newTitle = string( map->GetTitle() ) + " - Detector " + toString( iDetector );
+    map->SetTitle( newTitle.c_str() );
+    map->SetXTitle("x [pixel]");
+    map->SetYTitle("y [pixel]");
+    map->SetStats( false );
+    padVec[iPad++]->cd();
+    map->Draw("colz");
+
+    string histoName = "PedeDist-d" + toString( iDetector ) + "-l" + toString( loop );
+    TH1D * histo = (TH1D*) detectorFolder->Get( histoName.c_str() );
+    newTitle = string( histo->GetTitle() ) + " - Detector " + toString( iDetector );
+    histo->SetTitle( newTitle.c_str() );
+    histo->SetXTitle("Pedestal [ADC]");
+    histo->SetFillColor( kCyan - 5 );
+    padVec[iPad++]->cd();
+    histo->Draw();
+  }
+
+  // now let's move to the noise histos and map. Again nDetPerCanvas = 3;
+  nDetPerCanvas = 3;
+  nCanvas   = nDetector / nDetPerCanvas;
+  if ( nDetector % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+
+  // reset the padVec
+  padVec.clear();
+
+  TString noiseCanvasBaseName   = "NoiseCanvas";
+  closeCanvases( noiseCanvasBaseName );
+
+  // prepare the new canvases
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+    string noiseCanvasName  = string(noiseCanvasBaseName.Data()) + "_" + toString(iCanvas);
+    string noiseCanvasTitle = string(runName) + " - Noise histograms " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+    TCanvas * noiseCanvas = new TCanvas( noiseCanvasName.c_str(), noiseCanvasTitle.c_str(), canvasWidth, canvasHeight);
+    noiseCanvas->Range(0,0,1,1);
+    noiseCanvas->SetBorderSize(0);
+    noiseCanvas->SetFrameFillColor(0);
+    noiseCanvas->SetBorderMode(0);
+    canvasVec.push_back( noiseCanvas );
+
+    // title pad
+    TPad * titlePad = new TPad("noiseTitle","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( noiseCanvasTitle.c_str() );
+    title->Draw();
+    noiseCanvas->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() <  2 * nDetector ) {
+        padVec.push_back( smallPad );
+      }
+    }
+  }
+
+  iPad = 0;
+  // now the same as above for the noise
+  for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
+    string detectorFolderName = "detector-" + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) loopFolder->Get( detectorFolderName.c_str() );
+
+    string  mapName = "NoiseMap-d" + toString( iDetector ) + "-l" + toString( loop );
+    TH2D *  map = (TH2D* ) detectorFolder->Get( mapName.c_str() );
+    newTitle = string( map->GetTitle() ) + " - Detector " + toString( iDetector );
+    map->SetTitle( newTitle.c_str() );
+    map->SetXTitle("x [pixel]");
+    map->SetYTitle("y [pixel]");
+    map->SetStats( false );
+    padVec[iPad++]->cd();
+    map->Draw("colz");
+
+    string histoName = "NoiseDist-d" + toString( iDetector ) + "-l" + toString( loop );
+    TH1D * histo = (TH1D*) detectorFolder->Get( histoName.c_str() );
+    newTitle = string( histo->GetTitle() ) + " - Detector " + toString( iDetector );
+    histo->SetTitle( newTitle.c_str() );
+    histo->SetXTitle("Noise [ADC]");
+    histo->SetFillColor( kCyan - 5 );
+    padVec[iPad++]->cd();
+    histo->Draw();
+  }
+
+
+  // now the status canvas. This has nDetPerCanvas = 6;
+  nDetPerCanvas = 6;
+  nCanvas   = nDetector / nDetPerCanvas;
+  if ( nDetector % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+  padVec.clear();
+  TString statusCanvasBaseName  = "StatusCanvas";
+  closeCanvases( statusCanvasBaseName );
+
+  // prepare all the needed canvases for the status
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+    string statusCanvasName  = string( statusCanvasBaseName.Data() ) + "_" + toString( iCanvas ) ;
+    string statusCanvasTitle = string( runName ) + " - Status map " + toString (iCanvas + 1) + " / " + toString( nCanvas );
+
+    TCanvas * statusCanvas  = new TCanvas( statusCanvasName.c_str(), statusCanvasTitle.c_str(), canvasWidth, canvasHeight);
+    statusCanvas->Range(0,0,1,1);
+    statusCanvas->SetBorderSize(0);
+    statusCanvas->SetFrameFillColor(0);
+    statusCanvas->SetBorderMode(0);
+    canvasVec.push_back( statusCanvas );
+
+    // title pad
+    TPad * titlePad = new TPad("pedeTitle","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( statusCanvasTitle.c_str() );
+    title->Draw();
+    statusCanvas->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() <  nDetector ) {
+        padVec.push_back( smallPad );
+      }
+    }
+  }
+
+  iPad = 0;
+  for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
+    string detectorFolderName = "detector-" + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) loopFolder->Get( detectorFolderName.c_str() );
+
+    string  mapName = "StatusMap-d" + toString( iDetector ) + "-l" + toString( loop );
+    TH2D *  map = (TH2D* ) detectorFolder->Get( mapName.c_str() );
+    newTitle = string( map->GetTitle() ) + " - Detector " + toString( iDetector );
+    map->SetTitle( newTitle.c_str() );
+    map->SetXTitle("x [pixel]");
+    map->SetYTitle("y [pixel]");
+    map->SetStats( false );
+    padVec[iPad++]->cd();
+    map->Draw("colz");
+
+  }
+
+  string detectorString( detector );
+  if ( detectorString == "mimotel" ) {
+
+    // a few global constants
+    // const UInt_t kXPixel = 256;
+    const UInt_t kYPixel = 256;
+
+    const UInt_t kNChan  = 4;
+    UInt_t xLimit[ kNChan + 1  ] = { 0, 64, 128 , 192, 256 };
+    Double_t channel[ kNChan ] ;
+
+    Double_t * meanNoise = new Double_t[ kNChan * nDetector ];
+    Double_t * rmsNoise = new Double_t[ kNChan * nDetector ];
+    const UInt_t kNColor = 10;
+
+    int kColor[kNColor] = {
+      kRed,
+      kBlue,
+      kBlack,
+      kGreen,
+      kTeal,
+      kOrange,
+      kPink
+    };
+
+    // in case the detector is a mimotel then we can make also the
+    // channel by channel analysis.
+    nDetPerCanvas =  3;
+    TString canvasBaseName = "AdvancedNoiseCanvas";
+
+    // close all canvases with these names;
+    closeCanvases( canvasBaseName );
+
+    nCanvas   = nDetector / nDetPerCanvas;
+    if ( nDetector % nDetPerCanvas != 0 ) {
+      ++nCanvas;
+    }
+
+    padVec.clear();
+
+    for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+      string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
+      string canvasTitle = string(runName) + " - Advanced noise histograms " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+      TCanvas * canvas = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth, canvasHeight);
+      canvas->Range(0,0,1,1);
+      canvas->SetBorderSize(0);
+      canvas->SetFrameFillColor(0);
+      canvas->SetBorderMode(0);
+      canvasVec.push_back( canvas );
+
+      // title pad
+      TPad * titlePad = new TPad("pedeTitle","title",0, 1 - titleHeight,1,1);
+      titlePad->Draw();
+      titlePad->SetBorderMode(0);
+      titlePad->SetBorderSize(0);
+      titlePad->SetFrameFillColor(0);
+      titlePad->cd();
+      TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+      title->SetBorderSize(1);
+      title->SetLabel( canvasTitle.c_str() );
+      title->Draw();
+      canvas->cd();
+
+      // big pad for the rest
+      TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+      bigPad->Draw();
+      bigPad->cd();
+      bigPad->SetBorderMode(0);
+      bigPad->SetBorderSize(0);
+      bigPad->SetFrameFillColor(0);
+
+      // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+      Int_t nX = 4, nY = 3;
+      bigPad->Divide(nX, nY);
+
+      for ( Int_t i = 0; i < nX * nY; i++ ) {
+        TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+        smallPad->SetBorderMode(0);
+        smallPad->SetBorderSize(0);
+        smallPad->SetFrameFillColor(0);
+        if ( padVec.size() <  4 * nDetector ) {
+          padVec.push_back( smallPad );
+        }
+      }
+    }
+
+    iPad = 0;
+    for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
+      string detectorFolderName = "detector-" + toString( iDetector );
+      TDirectoryFile * detectorFolder = (TDirectoryFile*) loopFolder->Get( detectorFolderName.c_str() );
+      if ( detectorFolder == 0x0 ) {
+        cout << "Folder " << detectorFolderName << " not found " << endl;
+        return ;
+      }
+
+      string  mapName = "NoiseMap-d" + toString( iDetector ) + "-l" + toString( loop );
+      TH2D *  map = (TH2D* ) detectorFolder->Get( mapName.c_str() );
+
+      for ( UInt_t iChan = 0 ; iChan < kNChan ; ++iChan ) {
+        if ( iDetector == 0 ) {
+          channel[iChan] = iChan - 0.5;
+        }
+
+        string tempName  = "Noise_Dist_d" + toString( iDetector ) + "_ch" + toString( iChan ) ;
+        string tempTitle = "Noise Det. " + toString(iDetector) + " - Ch. " + toString( iChan ) ;
+
+        TH1D * noiseDistCh = new TH1D( tempName.c_str(), tempTitle.c_str(), 50, 0., 10. );
+        noiseDistCh->SetXTitle( "Noise [ADC}");
+        noiseDistCh->SetFillColor( kColor[iDetector % kNColor]  );
+
+        // let's start looping on pixels now
+        for ( size_t yPixel = 1 ; yPixel <= kYPixel ; ++yPixel ) {
+          for ( size_t xPixel = xLimit[ iChan ] + 1; xPixel <= xLimit[ iChan +1 ] ; ++xPixel ) {
+            double noise = map->GetBinContent( xPixel , yPixel );
+            noiseDistCh->Fill( noise );
+          }
+        }
+        padVec[iPad]->cd();
+        noiseDistCh->Draw();
+        padVec[iPad]->Update();
+        TPaveText * padTitle = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+        padTitle->SetY1NDC(0.90);
+        padTitle->SetX2NDC(0.80);
+        padVec[iPad]->Modified( true );
+        meanNoise[kNChan * iDetector + iChan] = noiseDistCh->GetMean() ;
+        rmsNoise[kNChan * iDetector + iChan]  = noiseDistCh->GetRMS() ;
+
+        padVec[iPad]->Update();
+        TPaveStats * st = (TPaveStats*) noiseDistCh->GetListOfFunctions()->FindObject("stats");
+        st->SetX1NDC( 0.55 );
+        st->SetX2NDC( 0.98 );
+        st->SetY1NDC( 0.60 );
+        st->SetY2NDC( 0.85 );
+        padVec[iPad]->Modified();
+        ++iPad;
+      }
+    }
+
+
+    // create one more canvas for the comparison among different
+    // channels on different sensors
+    padVec.clear();
+
+    string canvasName  = "NoiseComparison";
+    string canvasTitle = "Noise comparison";
+    Int_t  canvasWidth1  = 1000;
+    Int_t  canvasHeight1 =  400;
+
+
+    TCanvas * canvas = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth1, canvasHeight1);
+    canvas->Range(0,0,1,1);
+    canvas->SetBorderSize(0);
+    canvas->SetFrameFillColor(0);
+    canvas->SetBorderMode(0);
+    canvasVec.push_back( canvas );
+
+    // title pad
+    TPad * titlePad = new TPad("pedeTitle","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( canvasTitle.c_str() );
+    title->Draw();
+    canvas->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    padVec.push_back( bigPad );
+
+    iPad = 0;
+
+    TMultiGraph * mg     = new TMultiGraph();
+    TLegend     * legend = new TLegend(0.6358, 0.6207, 0.7956, 0.9705);
+    mg->SetTitle("Channel by channel noise comparison");
+    Double_t * x = new Double_t[ kNChan ];
+    Double_t * errX = new Double_t[ kNChan ];
+    for ( UInt_t iDetector = 0; iDetector < nDetector; ++iDetector ) {
+      if ( iDetector == 0 ) {
+        for ( UInt_t iChan = 0; iChan < kNChan ; ++iChan ) {
+          x[iChan] =  +0.5 + iChan  ;
+          errX[iChan] = 0.5;
+        }
+      }
+
+      TGraphErrors * gr = new TGraphErrors( kNChan, x, &meanNoise[ iDetector * kNChan ], NULL, &rmsNoise[ iDetector * kNChan ] );
+      string grName   = "Detector_d" + toString( iDetector );
+      string grTitle  = "Detector " + toString( iDetector );
+      gr->GetHistogram()->SetBit( TH1::kNoTitle, true ) ;
+      gr->SetName( grName.c_str() );
+      gr->SetTitle( grTitle.c_str() );
+      gr->SetMarkerColor( kColor[ iDetector % kNColor ] );
+      gr->SetMarkerStyle( 20 + ( (iDetector + 1 ) % kNColor ) );
+      gr->GetXaxis()->SetNdivisions( 0 );
+      gr->GetXaxis()->SetRangeUser(-0.5, kNChan + 0.5 );
+      gr->GetYaxis()->SetTitle("Noise [ADC]");
+      legend->AddEntry( gr, gr->GetTitle(), "P" );
+      if ( iDetector == 0 )  mg->Add( gr, "AP1" );
+      else mg->Add( gr, "P1");
+      //gr->Draw("ALP");
+
+    }
+    padVec[iPad]->cd();
+    mg->SetBit( TH1::kNoTitle, true ) ;
+    mg->Draw(  );
+    legend->Draw();
+    Double_t step = 1.0 / kNChan;
+    Double_t xPos[kNChan] = { 0.17, 0.39, 0.63, 0.83 } ;
+    TPaveText * padTitle = new TPaveText(0.073, 0.8539, 0.599, 0.984,"NDC");
+    padTitle->AddText("Noise comparison channel per channel");
+    padTitle->Draw();
+    for ( UInt_t iChan = 0 ; iChan < kNChan ; ++iChan ) {
+      //
+      if ( iChan != 0 ) {
+        TLine * line = new TLine ;
+        TLine * line2 = line->DrawLineNDC(iChan * step ,0.10,iChan * step,0.90);
+        line2->SetLineStyle( 2 );
+      }
+
+      TPaveLabel * label = new TPaveLabel;
+      label->SetX1NDC( xPos[iChan] - 0.03 );
+      label->SetX2NDC( xPos[iChan] + 0.03 );
+      label->SetY1NDC( 0.01 );
+      label->SetY2NDC( 0.07);
+      label->SetOption("");
+      string l = "Ch. " + toString( iChan );
+      label->SetLabel( l.c_str() );
+      label->SetTextSize( 1.0) ;
+      label->Draw();
+    }
+
+  }
+
+
+  string path( prepareOutputFolder( "PedeNoise" ));
+  for ( UInt_t iCanvas = 0 ; iCanvas < canvasVec.size(); ++iCanvas ) {
+    string figName = path + canvasVec[iCanvas]->GetName() + ".png";
+    canvasVec[iCanvas]->SaveAs( figName.c_str() );
+  }
+
+}
+
+void showCorrelationPlot( const char * filename ) {
+
+  // check if this file is already open
+  TFile * inputFile = closeAndReopenFile( filename );
+
+  if ( inputFile == 0x0 ) {
+    cerr << "Problems opening file " << filename << endl;
+    return;
+  }
+
+  // this function will create the following canvases:
+  //
+  // --> ClusterXCanvas
+  // --> ClusterYCanvas
+  // --> HiXCanvas
+  // --> HitYCanvas
+
+  UInt_t nDetPerCanvas = 3;
+  UInt_t nDetector;
+  UInt_t nCanvas;
+  UInt_t iPad;
+  vector<TCanvas * > canvasVec;
+  vector<TPad *    > padVec;
+
+  // look into the input file for a folder named correlator
+  TDirectoryFile * correlatorFolder = (TDirectoryFile*) inputFile->Get( correlatorFolderName.Data() );
+
+  if ( correlatorFolder == 0x0 ) {
+    cerr << "No collerator  folder (" << correlatorFolderName << ") found in " << filename << endl;
+    return;
+  }
+
+  // this folder can contain up to 4 subfolder, one for x cluster, one
+  // for y cluster, one for x hit and last one for y hit.
+  TDirectoryFile * clusterXFolder = (TDirectoryFile*) correlatorFolder->Get("ClusterX");
+  if ( clusterXFolder != 0x0 ) {
+
+    TString canvasBaseName    = "ClusterXCanvas";
+    closeCanvases( canvasBaseName );
+
+    // ok there is a cluster x folder, let's do it!
+    padVec.clear();
+
+    UInt_t nHisto = clusterXFolder->GetListOfKeys()->GetSize();
+    nDetector = (UInt_t) (( 1. + TMath::Sqrt( 1. + 4* nHisto ) ) / 2);
+    nCanvas = nDetector / nDetPerCanvas;
+    if ( nDetector % nDetPerCanvas != 0 ) {
+      ++nCanvas;
+    }
+
+    Double_t titleHeight = 0.10;
+    Int_t canvasWidth  = 800;
+    Int_t canvasHeight = 800;
+    for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+      string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
+      string canvasTitle = string(runName) + " - Cluster correlation (x) " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+      TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth, canvasHeight);
+      c->Range(0,0,1,1);
+      c->SetBorderSize(0);
+      c->SetFrameFillColor(0);
+      c->SetBorderMode(0);
+      canvasVec.push_back( c );
+
+      // title pad
+      TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+      titlePad->Draw();
+      titlePad->SetBorderMode(0);
+      titlePad->SetBorderSize(0);
+      titlePad->SetFrameFillColor(0);
+      titlePad->cd();
+      TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+      title->SetBorderSize(1);
+      title->SetLabel( canvasTitle.c_str() );
+      title->Draw();
+      c->cd();
+
+      // big pad for the rest
+      TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+      bigPad->Draw();
+      bigPad->cd();
+      bigPad->SetBorderMode(0);
+      bigPad->SetBorderSize(0);
+      bigPad->SetFrameFillColor(0);
+
+      // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+      Int_t nX = 2, nY = 3;
+      bigPad->Divide(nX, nY);
+
+
+      for ( Int_t i = 0; i < nX * nY; i++ ) {
+        TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+        smallPad->SetBorderMode(0);
+        smallPad->SetBorderSize(0);
+        smallPad->SetFrameFillColor(0);
+        if ( padVec.size() < 2 * (nDetector - 1) ) {
+          padVec.push_back( smallPad);
+        }
+      }
+    }
+
+    gStyle->SetPalette(1,0);
+    gStyle->SetOptStat("e");
+    gStyle->SetOptFit(11);
+    gStyle->SetStatW(0.25);
+    gStyle->SetStatH(0.35);
+    gStyle->SetTitleFontSize( 0.05 );
+    gStyle->SetTitleFillColor( kCyan - 9 );
+
+    iPad = 0;
+    string newTitle;
+    for ( UInt_t iDetector = 0; iDetector < nDetector - 1; ++iDetector ) {
+      string histoName = "ClusterXCorrelationHisto_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      TH2D * histo = (TH2D*) clusterXFolder->Get(histoName.c_str());
+
+      newTitle = "Cluster X: " + toString( iDetector ) + " vs " + toString( iDetector + 1 );
+      histo->SetTitle( newTitle.c_str() );
+
+      newTitle = "Detector " + toString( iDetector ) + " [pixel] ";
+      histo->SetXTitle( newTitle.c_str() );
+      newTitle = "Detector " + toString( iDetector + 1) + " [pixel] ";
+      histo->SetYTitle( newTitle.c_str() );
+      padVec[iPad]->cd();
+      histo->Draw("colz");
+      padVec[iPad]->Update();
+      TPaveText * padTitle = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+      padTitle->SetX2NDC( 0.60 );
+      padTitle->SetY1NDC( 0.90 );
+      padVec[iPad]->Modified( true );
+
+      ++iPad;
+
+      // find xMin, xMax, yMin, yMax
+      Double_t xMin = histo->GetXaxis()->GetXmin();
+      Double_t xMax = histo->GetXaxis()->GetXmax();
+      Double_t yMin = histo->GetYaxis()->GetXmin();
+      Double_t yMax = histo->GetYaxis()->GetXmax();
+
+      // now make a slice of the histo in a 1 / 3 of the height
+      Int_t yBin = histo->GetYaxis()->FindBin( ( yMax - yMin ) / 3. ) ;
+      cout << "yBin =" << yBin  << endl;
+      string profName = string(histo->GetName()) + "_p1";
+      TH1D * profile = histo->ProjectionX( profName.c_str(), yBin, 1 + yBin );
+      Int_t xBin = profile->GetMaximumBin();
+
+      Double_t xA = profile->GetXaxis()->GetBinCenter( xBin );
+      Double_t yA = (yMax - yMin) / 3;
+
+      // now at 2 / 3
+      yBin = histo->GetYaxis()->FindBin( 2 * ( yMax - yMin ) / 3. ) ;
+      profName = string(histo->GetName()) + "_p2";
+      profile = histo->ProjectionX( profName.c_str(), yBin, 1 + yBin );
+      xBin = profile->GetMaximumBin();
+
+      Double_t xB = profile->GetXaxis()->GetBinCenter( xBin );
+      Double_t yB = 2 * ( yMax - yMin ) / 3.;
+
+      // cout << "A = (" << xA << ", " << yA << ") and B = (" << xB << ", " << yB << ")" << endl;
+
+      // this is the candidate for the correlation line
+      Double_t p1 = (yA - yB) / (xA - xB);
+      Double_t p0 = yA - p1 * xA;
+
+      // shift some pixels above
+      Double_t shiftUp = 15;
+      Double_t p1_up = p1;
+      Double_t p0_up = p0 + shiftUp;
+
+      // Point C:
+      Double_t xC, yC = 0;
+      xC = ( yMin - p0_up) / p1_up;
+      if ( xC < xMin ) {
+        xC = xMin;
+        yC = p1_up * xMin + p0_up;
+      } else if ( xC > xMin && xC <= xMax ) {
+        yC = yMin;
+      } else if ( xC > xMax ) {
+        xC = xMax;
+        yC = p1_up * xMax + p0_up;
+      }
+
+      // Point D
+      Double_t xD, yD = 0;
+      xD = (yMax - p0_up) / p1_up;
+      if ( xD > xMax ) {
+        xD = xMax;
+        yD = p1_up * xMax + p0_up;
+      } else if ( xD > xMin && xD <= xMax ) {
+        yD = yMax;
+      } else if ( xD < xMin ) {
+        xD = xMin;
+        yD = p1_up * xMin + p0_up;
+      }
+
+      // cout << "C = (" << xC << ", " << yC << ") and D = (" << xD << ", " << yD << ")" << endl;
+
+      // shift some pixels above
+      Double_t shiftDown = 15;
+      Double_t p1_down = p1;
+      Double_t p0_down = p0 - shiftDown;
+
+      // Point E
+      Double_t xE, yE = 0;
+      xE = ( yMax - p0_down ) / p1_down ;
+      if ( xE > xMax ) {
+        xE = xMax;
+        yE = p1_down * xMax + p0_down;
+      } else if ( xE > xMin && xE < xMax ) {
+        yE = yMax;
+      } else if ( xE < xMin ) {
+        xE = xMin;
+        yE = p1_down * xMin + p0_down;
+      }
+
+      // Point F
+      Double_t xF, yF = 0;
+      xF = ( yMin - p0_down ) / p1_down;
+      if ( xF > xMax) {
+        xF = xMax;
+        yF = p1_down * xMax + p0_down;
+      } else if ( xF > xMin && xF <= xMax ) {
+        yF = yMin;
+      } else if ( xF < xMin ) {
+        xF = xMin;
+        yF = p1_down * xMin + p0_down;
+      }
+
+      // cout << "E = (" << xE << ", " << yE << ") and F = (" << xF << ", " << yF << ")" << endl;
+
+      string cutName = "xCorrDiagonal_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      TCutG * diagonal = new TCutG(cutName.c_str(),5);
+      diagonal->SetPoint(0, xC, yC );
+      diagonal->SetPoint(1, xD, yD );
+      diagonal->SetPoint(2, xE, yE );
+      diagonal->SetPoint(3, xF, yF );
+      diagonal->SetPoint(4, xC, yC );
+      diagonal->SetLineColor( kRed );
+      diagonal->SetLineStyle( 2 );
+      diagonal->Draw("LP");
+
+
+      string correlationName = "xCorrClu_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      string option = "[" + cutName + "]";
+      TProfile * correlation = histo->ProfileX(correlationName.c_str(), 1, -1, option.c_str());
+      newTitle = "Fit (Det "  + toString( iDetector ) + " vs Det" + toString( iDetector + 1 ) + ")";
+      correlation->SetTitle( newTitle.c_str() );
+      newTitle = "Detector " + toString( iDetector + 1) + " [pixel] ";
+      correlation->SetYTitle( newTitle.c_str() );
+      padVec[iPad]->cd();
+      correlation->Fit("pol1");
+      TF1 * fitFunc = (TF1*) correlation->GetFunction( "pol1" );
+      fitFunc->SetLineColor( kBlue ) ;
+      fitFunc->SetLineStyle( 2 );
+      padVec[iPad]->Update();
+      padTitle = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+      padTitle->SetX2NDC( 0.60 );
+      padTitle->SetY1NDC( 0.90 );
+      TPaveStats * stats = (TPaveStats*) correlation->GetListOfFunctions()->FindObject("stats");
+      stats->SetX1NDC( 0.62 );
+      stats->SetY1NDC( 0.65 );
+
+      padVec[iPad]->Modified( true );
+
+      ++iPad;
+    }
+  }
+
+  TDirectoryFile * clusterYFolder = (TDirectoryFile*) correlatorFolder->Get("ClusterY");
+  if ( clusterYFolder != 0x0 ) {
+
+    TString canvasBaseName    = "ClusterYCanvas";
+    closeCanvases( canvasBaseName );
+
+    // ok there is a cluster x folder, let's do it!
+    padVec.clear();
+
+    UInt_t nHisto = clusterYFolder->GetListOfKeys()->GetSize();
+    nDetector = (UInt_t) (( 1. + TMath::Sqrt( 1. + 4* nHisto ) ) / 2);
+    nCanvas = nDetector / nDetPerCanvas;
+    if ( nDetector % nDetPerCanvas != 0 ) {
+      ++nCanvas;
+    }
+
+    Double_t titleHeight = 0.10;
+    Int_t canvasWidth  = 800;
+    Int_t canvasHeight = 800;
+    for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+      string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
+      string canvasTitle = string(runName) + " - Cluster correlation (y) " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+      TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth, canvasHeight);
+      c->Range(0,0,1,1);
+      c->SetBorderSize(0);
+      c->SetFrameFillColor(0);
+      c->SetBorderMode(0);
+      canvasVec.push_back( c );
+
+      // title pad
+      TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+      titlePad->Draw();
+      titlePad->SetBorderMode(0);
+      titlePad->SetBorderSize(0);
+      titlePad->SetFrameFillColor(0);
+      titlePad->cd();
+      TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+      title->SetBorderSize(1);
+      title->SetLabel( canvasTitle.c_str() );
+      title->Draw();
+      c->cd();
+
+      // big pad for the rest
+      TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+      bigPad->Draw();
+      bigPad->cd();
+      bigPad->SetBorderMode(0);
+      bigPad->SetBorderSize(0);
+      bigPad->SetFrameFillColor(0);
+
+      // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+      Int_t nX = 2, nY = 3;
+      bigPad->Divide(nX, nY);
+
+
+      for ( Int_t i = 0; i < nX * nY; i++ ) {
+        TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+        smallPad->SetBorderMode(0);
+        smallPad->SetBorderSize(0);
+        smallPad->SetFrameFillColor(0);
+        if ( padVec.size() < 2 * (nDetector - 1) ) {
+          padVec.push_back( smallPad);
+        }
+      }
+    }
+
+    gStyle->SetPalette(1,0);
+    gStyle->SetOptStat("e");
+    gStyle->SetOptFit(11);
+    gStyle->SetStatW(0.25);
+    gStyle->SetStatH(0.35);
+    gStyle->SetTitleFontSize( 0.05 );
+    gStyle->SetTitleFillColor( kCyan - 9 );
+
+    iPad = 0;
+    string newTitle;
+    for ( UInt_t iDetector = 0; iDetector < nDetector - 1; ++iDetector ) {
+      string histoName = "ClusterYCorrelationHisto_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      TH2D * histo = (TH2D*) clusterYFolder->Get(histoName.c_str());
+
+      newTitle = "Cluster Y: " + toString( iDetector ) + " vs " + toString( iDetector + 1 );
+      histo->SetTitle( newTitle.c_str() );
+
+      newTitle = "Detector " + toString( iDetector ) + " [pixel] ";
+      histo->SetXTitle( newTitle.c_str() );
+      newTitle = "Detector " + toString( iDetector + 1) + " [pixel] ";
+      histo->SetYTitle( newTitle.c_str() );
+      padVec[iPad]->cd();
+      histo->Draw("colz");
+      padVec[iPad]->Update();
+      TPaveText * padTitle = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+      padTitle->SetX2NDC( 0.60 );
+      padTitle->SetY1NDC( 0.90 );
+      padVec[iPad]->Modified( true );
+
+      ++iPad;
+
+      // find xMin, xMax, yMin, yMax
+      Double_t xMin = histo->GetXaxis()->GetXmin();
+      Double_t xMax = histo->GetXaxis()->GetXmax();
+      Double_t yMin = histo->GetYaxis()->GetXmin();
+      Double_t yMax = histo->GetYaxis()->GetXmax();
+
+      // now make a slice of the histo in a 1 / 3 of the height
+      Int_t yBin = histo->GetYaxis()->FindBin( ( yMax - yMin ) / 3. ) ;
+      string profName = string(histo->GetName()) + "_p1";
+      TH1D * profile = histo->ProjectionX( profName.c_str(), yBin, 1 + yBin );
+      Int_t xBin = profile->GetMaximumBin();
+
+      Double_t xA = profile->GetXaxis()->GetBinCenter( xBin );
+      Double_t yA = (yMax - yMin) / 3;
+
+      // now at 2 / 3
+      yBin = histo->GetYaxis()->FindBin( 2 * ( yMax - yMin ) / 3. ) ;
+      profName = string(histo->GetName()) + "_p2";
+      profile = histo->ProjectionX( profName.c_str(), yBin, 1 + yBin );
+      xBin = profile->GetMaximumBin();
+
+      Double_t xB = profile->GetXaxis()->GetBinCenter( xBin );
+      Double_t yB = 2 * ( yMax - yMin ) / 3.;
+
+      // cout << "A = (" << xA << ", " << yA << ") and B = (" << xB << ", " << yB << ")" << endl;
+
+      // this is the candidate for the correlation line
+      Double_t p1 = (yA - yB) / (xA - xB);
+      Double_t p0 = yA - p1 * xA;
+
+      // shift some pixels above
+      Double_t shiftUp = 15;
+      Double_t p1_up = p1;
+      Double_t p0_up = p0 + shiftUp;
+
+      // Point C:
+      Double_t xC, yC = 0;
+      xC = ( yMin - p0_up) / p1_up;
+      if ( xC < xMin ) {
+        xC = xMin;
+        yC = p1_up * xMin + p0_up;
+      } else if ( xC > xMin && xC <= xMax ) {
+        yC = yMin;
+      } else if ( xC > xMax ) {
+        xC = xMax;
+        yC = p1_up * xMax + p0_up;
+      }
+
+      // Point D
+      Double_t xD, yD = 0;
+      xD = (yMax - p0_up) / p1_up;
+      if ( xD > xMax ) {
+        xD = xMax;
+        yD = p1_up * xMax + p0_up;
+      } else if ( xD > xMin && xD <= xMax ) {
+        yD = yMax;
+      } else if ( xD < xMin ) {
+        xD = xMin;
+        yD = p1_up * xMin + p0_up;
+      }
+
+      // cout << "C = (" << xC << ", " << yC << ") and D = (" << xD << ", " << yD << ")" << endl;
+
+      // shift some pixels above
+      Double_t shiftDown = 15;
+      Double_t p1_down = p1;
+      Double_t p0_down = p0 - shiftDown;
+
+      // Point E
+      Double_t xE, yE = 0;
+      xE = ( yMax - p0_down ) / p1_down ;
+      if ( xE > xMax ) {
+        xE = xMax;
+        yE = p1_down * xMax + p0_down;
+      } else if ( xE > xMin && xE < xMax ) {
+        yE = yMax;
+      } else if ( xE < xMin ) {
+        xE = xMin;
+        yE = p1_down * xMin + p0_down;
+      }
+
+      // Point F
+      Double_t xF, yF = 0;
+      xF = ( yMin - p0_down ) / p1_down;
+      if ( xF > xMax) {
+        xF = xMax;
+        yF = p1_down * xMax + p0_down;
+      } else if ( xF > xMin && xF <= xMax ) {
+        yF = yMin;
+      } else if ( xF < xMin ) {
+        xF = xMin;
+        yF = p1_down * xMin + p0_down;
+      }
+
+      // cout << "E = (" << xE << ", " << yE << ") and F = (" << xF << ", " << yF << ")" << endl;
+
+      string cutName = "yCorrDiagonal_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      TCutG * diagonal = new TCutG(cutName.c_str(),5);
+      diagonal->SetPoint(0, xC, yC );
+      diagonal->SetPoint(1, xD, yD );
+      diagonal->SetPoint(2, xE, yE );
+      diagonal->SetPoint(3, xF, yF );
+      diagonal->SetPoint(4, xC, yC );
+      diagonal->SetLineColor( kRed );
+      diagonal->SetLineStyle( 2 );
+      diagonal->Draw("LP");
+
+
+      string correlationName = "yCorrClu_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      string option = "[" + cutName + "]";
+      TProfile * correlation = histo->ProfileX(correlationName.c_str(), 1, -1, option.c_str());
+      newTitle = "Fit (Det "  + toString( iDetector ) + " vs Det" + toString( iDetector + 1 ) + ")";
+      correlation->SetTitle( newTitle.c_str() );
+      newTitle = "Detector " + toString( iDetector + 1) + " [pixel] ";
+      correlation->SetYTitle( newTitle.c_str() );
+      padVec[iPad]->cd();
+      correlation->Fit("pol1");
+      TF1 * fitFunc = (TF1*) correlation->GetFunction( "pol1" );
+      fitFunc->SetLineColor( kBlue ) ;
+      fitFunc->SetLineStyle( 2 );
+      padVec[iPad]->Update();
+      padTitle = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+      padTitle->SetX2NDC( 0.60 );
+      padTitle->SetY1NDC( 0.90 );
+      TPaveStats * stats = (TPaveStats*) correlation->GetListOfFunctions()->FindObject("stats");
+      stats->SetX1NDC( 0.62 );
+      stats->SetY1NDC( 0.65 );
+
+      padVec[iPad]->Modified( true );
+
+      ++iPad;
+    }
+  }
+
+  TDirectoryFile * hitXFolder = (TDirectoryFile*) correlatorFolder->Get("HitX");
+  if ( hitXFolder != 0x0 ) {
+
+    TString canvasBaseName    = "HitXCanvas";
+    closeCanvases( canvasBaseName );
+
+    // ok there is a cluster x folder, let's do it!
+    padVec.clear();
+
+    UInt_t nHisto = hitXFolder->GetListOfKeys()->GetSize();
+    nDetector = (UInt_t) (( 1. + TMath::Sqrt( 1. + 4* nHisto ) ) / 2);
+    nCanvas = nDetector / nDetPerCanvas;
+    if ( nDetector % nDetPerCanvas != 0 ) {
+      ++nCanvas;
+    }
+
+    Double_t titleHeight = 0.10;
+    Int_t canvasWidth  = 800;
+    Int_t canvasHeight = 800;
+    for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+      string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
+      string canvasTitle = string(runName) + " - Hit correlation (x) " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+      TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth, canvasHeight);
+      c->Range(0,0,1,1);
+      c->SetBorderSize(0);
+      c->SetFrameFillColor(0);
+      c->SetBorderMode(0);
+      canvasVec.push_back( c );
+
+      // title pad
+      TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+      titlePad->Draw();
+      titlePad->SetBorderMode(0);
+      titlePad->SetBorderSize(0);
+      titlePad->SetFrameFillColor(0);
+      titlePad->cd();
+      TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+      title->SetBorderSize(1);
+      title->SetLabel( canvasTitle.c_str() );
+      title->Draw();
+      c->cd();
+
+      // big pad for the rest
+      TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+      bigPad->Draw();
+      bigPad->cd();
+      bigPad->SetBorderMode(0);
+      bigPad->SetBorderSize(0);
+      bigPad->SetFrameFillColor(0);
+
+      // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+      Int_t nX = 2, nY = 3;
+      bigPad->Divide(nX, nY);
+
+
+      for ( Int_t i = 0; i < nX * nY; i++ ) {
+        TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+        smallPad->SetBorderMode(0);
+        smallPad->SetBorderSize(0);
+        smallPad->SetFrameFillColor(0);
+        if ( padVec.size() < 2 * (nDetector - 1) ) {
+          padVec.push_back( smallPad);
+        }
+      }
+    }
+
+    gStyle->SetPalette(1,0);
+    gStyle->SetOptStat("e");
+    gStyle->SetOptFit(11);
+    gStyle->SetStatW(0.25);
+    gStyle->SetStatH(0.35);
+    gStyle->SetTitleFontSize( 0.05 );
+    gStyle->SetTitleFillColor( kCyan - 9 );
+
+    iPad = 0;
+    string newTitle;
+    for ( UInt_t iDetector = 0; iDetector < nDetector - 1; ++iDetector ) {
+      string histoName = "HitXCorrelationCloud_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      TH2D * histo = (TH2D*) hitXFolder->Get(histoName.c_str());
+
+      newTitle = "Hit X: " + toString( iDetector ) + " vs " + toString( iDetector + 1 );
+      histo->SetTitle( newTitle.c_str() );
+
+      newTitle = "Detector " + toString( iDetector ) + " [pixel] ";
+      histo->SetXTitle( newTitle.c_str() );
+      newTitle = "Detector " + toString( iDetector + 1) + " [pixel] ";
+      histo->SetYTitle( newTitle.c_str() );
+      padVec[iPad]->cd();
+      histo->Draw("colz");
+      padVec[iPad]->Update();
+      TPaveText * padTitle = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+      padTitle->SetX2NDC( 0.60 );
+      padTitle->SetY1NDC( 0.90 );
+      padVec[iPad]->Modified( true );
+
+      ++iPad;
+
+      // find xMin, xMax, yMin, yMax
+      Double_t xMin = histo->GetXaxis()->GetXmin();
+      Double_t xMax = histo->GetXaxis()->GetXmax();
+      Double_t yMin = histo->GetYaxis()->GetXmin();
+      Double_t yMax = histo->GetYaxis()->GetXmax();
+
+      // now make a slice of the histo in a 1 / 3 of the height
+      Int_t yBin = histo->GetYaxis()->FindBin( ( yMax - yMin ) / 3.  + yMin ) ;
+      cout << "yBin =" << yBin  << endl;
+      string profName = string(histo->GetName()) + "_p1";
+      TH1D * profile = histo->ProjectionX( profName.c_str(), yBin, 1 + yBin );
+      Int_t xBin = profile->GetMaximumBin();
+      cout << "xBin = " << xBin << endl;
+      Double_t xA = profile->GetXaxis()->GetBinCenter( xBin );
+      Double_t yA = (yMax - yMin) / 3 + yMin;
+
+      // now at 2 / 3
+      yBin = histo->GetYaxis()->FindBin( 2 * ( yMax - yMin ) / 3. + yMin ) ;
+      cout << "yBin =" << yBin  << endl;
+      profName = string(histo->GetName()) + "_p2";
+      profile = histo->ProjectionX( profName.c_str(), yBin, 1 + yBin );
+      xBin = profile->GetMaximumBin();
+      cout << "xBin = " << xBin << endl;
+      Double_t xB = profile->GetXaxis()->GetBinCenter( xBin );
+      Double_t yB = 2 * ( yMax - yMin ) / 3. + yMin;
+
+      cout << "A = (" << xA << ", " << yA << ") and B = (" << xB << ", " << yB << ")" << endl;
+
+      // this is the candidate for the correlation line
+      Double_t p1 = (yA - yB) / (xA - xB);
+      Double_t p0 = yA - p1 * xA;
+
+      // shift some pixels above
+      Double_t shiftUp = 0.5; // mm
+      Double_t p1_up = p1;
+      Double_t p0_up = p0 + shiftUp;
+
+      // Point C:
+      Double_t xC, yC = 0;
+      xC = ( yMin - p0_up) / p1_up;
+      if ( xC < xMin ) {
+        xC = xMin;
+        yC = p1_up * xMin + p0_up;
+      } else if ( xC > xMin && xC <= xMax ) {
+        yC = yMin;
+      } else if ( xC > xMax ) {
+        xC = xMax;
+        yC = p1_up * xMax + p0_up;
+      }
+
+      // Point D
+      Double_t xD, yD = 0;
+      xD = (yMax - p0_up) / p1_up;
+      if ( xD > xMax ) {
+        xD = xMax;
+        yD = p1_up * xMax + p0_up;
+      } else if ( xD > xMin && xD <= xMax ) {
+        yD = yMax;
+      } else if ( xD < xMin ) {
+        xD = xMin;
+        yD = p1_up * xMin + p0_up;
+      }
+
+      cout << "C = (" << xC << ", " << yC << ") and D = (" << xD << ", " << yD << ")" << endl;
+
+      // shift some pixels above
+      Double_t shiftDown = 0.5; // mm
+      Double_t p1_down = p1;
+      Double_t p0_down = p0 - shiftDown;
+
+      // Point E
+      Double_t xE, yE = 0;
+      xE = ( yMax - p0_down ) / p1_down ;
+      if ( xE > xMax ) {
+        xE = xMax;
+        yE = p1_down * xMax + p0_down;
+      } else if ( xE > xMin && xE < xMax ) {
+        yE = yMax;
+      } else if ( xE < xMin ) {
+        xE = xMin;
+        yE = p1_down * xMin + p0_down;
+      }
+
+      // Point F
+      Double_t xF, yF = 0;
+      xF = ( yMin - p0_down ) / p1_down;
+      if ( xF > xMax) {
+        xF = xMax;
+        yF = p1_down * xMax + p0_down;
+      } else if ( xF > xMin && xF <= xMax ) {
+        yF = yMin;
+      } else if ( xF < xMin ) {
+        xF = xMin;
+        yF = p1_down * xMin + p0_down;
+      }
+
+      cout << "E = (" << xE << ", " << yE << ") and F = (" << xF << ", " << yF << ")" << endl;
+
+      string cutName = "xHitCorrDiagonal_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      TCutG * diagonal = new TCutG(cutName.c_str(),5);
+      diagonal->SetPoint(0, xC, yC );
+      diagonal->SetPoint(1, xD, yD );
+      diagonal->SetPoint(2, xE, yE );
+      diagonal->SetPoint(3, xF, yF );
+      diagonal->SetPoint(4, xC, yC );
+      diagonal->SetLineColor( kRed );
+      diagonal->SetLineStyle( 2 );
+      diagonal->Draw("LP");
+
+
+      string correlationName = "xCorrHit_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      string option = "[" + cutName + "]";
+      TProfile * correlation = histo->ProfileX(correlationName.c_str(), 1, -1, option.c_str());
+      newTitle = "Fit (Det "  + toString( iDetector ) + " vs Det" + toString( iDetector + 1 ) + ")";
+      correlation->SetTitle( newTitle.c_str() );
+      newTitle = "Detector " + toString( iDetector + 1) + " [pixel] ";
+      correlation->SetYTitle( newTitle.c_str() );
+      padVec[iPad]->cd();
+      correlation->Fit("pol1");
+      TF1 * fitFunc = (TF1*) correlation->GetFunction( "pol1" );
+      fitFunc->SetLineColor( kBlue ) ;
+      fitFunc->SetLineStyle( 2 );
+      padVec[iPad]->Update();
+      padTitle = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+      padTitle->SetX2NDC( 0.60 );
+      padTitle->SetY1NDC( 0.90 );
+      TPaveStats * stats = (TPaveStats*) correlation->GetListOfFunctions()->FindObject("stats");
+      stats->SetX1NDC( 0.62 );
+      stats->SetY1NDC( 0.65 );
+
+      padVec[iPad]->Modified( true );
+
+      ++iPad;
+    }
+  }
+
+
+  TDirectoryFile * hitYFolder = (TDirectoryFile*) correlatorFolder->Get("HitY");
+  if ( hitYFolder != 0x0 ) {
+
+    TString canvasBaseName    = "HitYCanvas";
+    closeCanvases( canvasBaseName );
+
+    // ok there is a cluster x folder, let's do it!
+    padVec.clear();
+
+    UInt_t nHisto = hitYFolder->GetListOfKeys()->GetSize();
+    nDetector = (UInt_t) (( 1. + TMath::Sqrt( 1. + 4* nHisto ) ) / 2);
+    nCanvas = nDetector / nDetPerCanvas;
+    if ( nDetector % nDetPerCanvas != 0 ) {
+      ++nCanvas;
+    }
+
+    Double_t titleHeight = 0.10;
+    Int_t canvasWidth  = 800;
+    Int_t canvasHeight = 800;
+    for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+      string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
+      string canvasTitle = string(runName) + " - Hit correlation (y) " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+      TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth, canvasHeight);
+      c->Range(0,0,1,1);
+      c->SetBorderSize(0);
+      c->SetFrameFillColor(0);
+      c->SetBorderMode(0);
+      canvasVec.push_back( c );
+
+      // title pad
+      TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+      titlePad->Draw();
+      titlePad->SetBorderMode(0);
+      titlePad->SetBorderSize(0);
+      titlePad->SetFrameFillColor(0);
+      titlePad->cd();
+      TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+      title->SetBorderSize(1);
+      title->SetLabel( canvasTitle.c_str() );
+      title->Draw();
+      c->cd();
+
+      // big pad for the rest
+      TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+      bigPad->Draw();
+      bigPad->cd();
+      bigPad->SetBorderMode(0);
+      bigPad->SetBorderSize(0);
+      bigPad->SetFrameFillColor(0);
+
+      // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+      Int_t nX = 2, nY = 3;
+      bigPad->Divide(nX, nY);
+
+
+      for ( Int_t i = 0; i < nX * nY; i++ ) {
+        TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+        smallPad->SetBorderMode(0);
+        smallPad->SetBorderSize(0);
+        smallPad->SetFrameFillColor(0);
+        if ( padVec.size() < 2 * (nDetector - 1) ) {
+          padVec.push_back( smallPad);
+        }
+      }
+    }
+
+    gStyle->SetPalette(1,0);
+    gStyle->SetOptStat("e");
+    gStyle->SetOptFit(11);
+    gStyle->SetStatW(0.25);
+    gStyle->SetStatH(0.35);
+    gStyle->SetTitleFontSize( 0.05 );
+    gStyle->SetTitleFillColor( kCyan - 9 );
+
+    iPad = 0;
+    string newTitle;
+    for ( UInt_t iDetector = 0; iDetector < nDetector - 1; ++iDetector ) {
+      string histoName = "HitYCorrelationCloud_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      TH2D * histo = (TH2D*) hitYFolder->Get(histoName.c_str());
+
+      newTitle = "Hit Y: " + toString( iDetector ) + " vs " + toString( iDetector + 1 );
+      histo->SetTitle( newTitle.c_str() );
+
+      newTitle = "Detector " + toString( iDetector ) + " [pixel] ";
+      histo->SetXTitle( newTitle.c_str() );
+      newTitle = "Detector " + toString( iDetector + 1) + " [pixel] ";
+      histo->SetYTitle( newTitle.c_str() );
+      padVec[iPad]->cd();
+      histo->Draw("colz");
+      padVec[iPad]->Update();
+      TPaveText * padTitle = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+      padTitle->SetX2NDC( 0.60 );
+      padTitle->SetY1NDC( 0.90 );
+      padVec[iPad]->Modified( true );
+
+      ++iPad;
+
+      // find xMin, xMax, yMin, yMax
+      Double_t xMin = histo->GetXaxis()->GetXmin();
+      Double_t xMax = histo->GetXaxis()->GetXmax();
+      Double_t yMin = histo->GetYaxis()->GetXmin();
+      Double_t yMax = histo->GetYaxis()->GetXmax();
+
+      // now make a slice of the histo in a 1 / 3 of the height
+      Int_t yBin = histo->GetYaxis()->FindBin( ( yMax - yMin ) / 3.  + yMin ) ;
+      cout << "yBin =" << yBin  << endl;
+      string profName = string(histo->GetName()) + "_p1";
+      TH1D * profile = histo->ProjectionX( profName.c_str(), yBin, 1 + yBin );
+      Int_t xBin = profile->GetMaximumBin();
+      cout << "xBin = " << xBin << endl;
+      Double_t xA = profile->GetXaxis()->GetBinCenter( xBin );
+      Double_t yA = (yMax - yMin) / 3 + yMin;
+
+      // now at 2 / 3
+      yBin = histo->GetYaxis()->FindBin( 2 * ( yMax - yMin ) / 3. + yMin ) ;
+      cout << "yBin =" << yBin  << endl;
+      profName = string(histo->GetName()) + "_p2";
+      profile = histo->ProjectionX( profName.c_str(), yBin, 1 + yBin );
+      xBin = profile->GetMaximumBin();
+      cout << "xBin = " << xBin << endl;
+      Double_t xB = profile->GetXaxis()->GetBinCenter( xBin );
+      Double_t yB = 2 * ( yMax - yMin ) / 3. + yMin;
+
+      cout << "A = (" << xA << ", " << yA << ") and B = (" << xB << ", " << yB << ")" << endl;
+
+      // this is the candidate for the correlation line
+      Double_t p1 = (yA - yB) / (xA - xB);
+      Double_t p0 = yA - p1 * xA;
+
+      // shift some pixels above
+      Double_t shiftUp = 0.5; // mm
+      Double_t p1_up = p1;
+      Double_t p0_up = p0 + shiftUp;
+
+      // Point C:
+      Double_t xC, yC = 0;
+      xC = ( yMin - p0_up) / p1_up;
+      if ( xC < xMin ) {
+        xC = xMin;
+        yC = p1_up * xMin + p0_up;
+      } else if ( xC > xMin && xC <= xMax ) {
+        yC = yMin;
+      } else if ( xC > xMax ) {
+        xC = xMax;
+        yC = p1_up * xMax + p0_up;
+      }
+
+      // Point D
+      Double_t xD, yD = 0;
+      xD = (yMax - p0_up) / p1_up;
+      if ( xD > xMax ) {
+        xD = xMax;
+        yD = p1_up * xMax + p0_up;
+      } else if ( xD > xMin && xD <= xMax ) {
+        yD = yMax;
+      } else if ( xD < xMin ) {
+        xD = xMin;
+        yD = p1_up * xMin + p0_up;
+      }
+
+      cout << "C = (" << xC << ", " << yC << ") and D = (" << xD << ", " << yD << ")" << endl;
+
+      // shift some pixels above
+      Double_t shiftDown = 0.5; // mm
+      Double_t p1_down = p1;
+      Double_t p0_down = p0 - shiftDown;
+
+      // Point E
+      Double_t xE, yE = 0;
+      xE = ( yMax - p0_down ) / p1_down ;
+      if ( xE > xMax ) {
+        xE = xMax;
+        yE = p1_down * xMax + p0_down;
+      } else if ( xE > xMin && xE < xMax ) {
+        yE = yMax;
+      } else if ( xE < xMin ) {
+        xE = xMin;
+        yE = p1_down * xMin + p0_down;
+      }
+
+      // Point F
+      Double_t xF, yF = 0;
+      xF = ( yMin - p0_down ) / p1_down;
+      if ( xF > xMax) {
+        xF = xMax;
+        yF = p1_down * xMax + p0_down;
+      } else if ( xF > xMin && xF <= xMax ) {
+        yF = yMin;
+      } else if ( xF < xMin ) {
+        xF = xMin;
+        yF = p1_down * xMin + p0_down;
+      }
+
+      cout << "E = (" << xE << ", " << yE << ") and F = (" << xF << ", " << yF << ")" << endl;
+
+      string cutName = "yHitCorrDiagonal_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      TCutG * diagonal = new TCutG(cutName.c_str(),5);
+      diagonal->SetPoint(0, xC, yC );
+      diagonal->SetPoint(1, xD, yD );
+      diagonal->SetPoint(2, xE, yE );
+      diagonal->SetPoint(3, xF, yF );
+      diagonal->SetPoint(4, xC, yC );
+      diagonal->SetLineColor( kRed );
+      diagonal->SetLineStyle( 2 );
+      diagonal->Draw("LP");
+
+
+      string correlationName = "yCorrHit_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      string option = "[" + cutName + "]";
+      TProfile * correlation = histo->ProfileX(correlationName.c_str(), 1, -1, option.c_str());
+      newTitle = "Fit (Det "  + toString( iDetector ) + " vs Det" + toString( iDetector + 1 ) + ")";
+      correlation->SetTitle( newTitle.c_str() );
+      newTitle = "Detector " + toString( iDetector + 1) + " [pixel] ";
+      correlation->SetYTitle( newTitle.c_str() );
+      padVec[iPad]->cd();
+      correlation->Fit("pol1");
+      TF1 * fitFunc = (TF1*) correlation->GetFunction( "pol1" );
+      fitFunc->SetLineColor( kBlue ) ;
+      fitFunc->SetLineStyle( 2 );
+      padVec[iPad]->Update();
+      padTitle = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+      padTitle->SetX2NDC( 0.60 );
+      padTitle->SetY1NDC( 0.90 );
+      TPaveStats * stats = (TPaveStats*) correlation->GetListOfFunctions()->FindObject("stats");
+      stats->SetX1NDC( 0.62 );
+      stats->SetY1NDC( 0.65 );
+
+      padVec[iPad]->Modified( true );
+
+      ++iPad;
+    }
+  }
+
+  // save every canvases
+  string path( prepareOutputFolder( "Correlation" ) );
+  for ( UInt_t iCanvas = 0; iCanvas < canvasVec.size() ; ++iCanvas ) {
+    string figName = path + canvasVec[iCanvas]->GetName() + ".png";
+    canvasVec[iCanvas]->SaveAs( figName.c_str() );
+  }
+
+}
+
+void showClusterPlot( const char * filename ) {
+
+  // check if this file is already open
+  TFile * inputFile = closeAndReopenFile( filename );
+
+  if ( inputFile == 0x0 ) {
+    cerr << "Problems opening file " << filename << endl;
+    return;
+  }
+
+  // this function will create the following canvases:
+  //
+  // --> 1 canvas with SN plot (one every 3 detectors)
+  // --> 1 canvas with hitmaps (one every 6 detectors)
+  // --> 1 canvas with cluster noise (one every 6 detectors)
+  UInt_t nDetPerCanvas = 3;
+
+  TString snrCanvasBaseName    = "SNRCanvas";
+
+  // close all canvases with this name
+  closeCanvases( snrCanvasBaseName );
+
+  // look into the input file for a folder named
+  TDirectoryFile * clusterHistoFolder = (TDirectoryFile*) inputFile->Get( clusterHistoFolderName.Data() ) ;
+
+  if ( clusterHistoFolder == 0x0 ) {
+    cerr << "No cluster histo folder (" << clusterHistoFolderName << ") found in " << filename << endl;
+    return;
+  }
+
+  // this folder should contain one subfolder for each detector
+  // so guess the number of detectors
+  UInt_t nDetector = clusterHistoFolder->GetListOfKeys()->GetSize();
+  UInt_t nCanvas   = nDetector / nDetPerCanvas;
+  if ( nDetector % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+
+  vector<TCanvas * > canvasVec;
+  vector<TPad * >    padVec;
+  Double_t titleHeight = 0.10;
+  Int_t canvasWidth  = 800;
+  Int_t canvasHeight = 800;
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+    string canvasName  = string(snrCanvasBaseName.Data()) + "_" + toString(iCanvas);
+    string canvasTitle = string(runName) + " - SNR histograms " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+    TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth, canvasHeight);
+    c->Range(0,0,1,1);
+    c->SetBorderSize(0);
+    c->SetFrameFillColor(0);
+    c->SetBorderMode(0);
+    canvasVec.push_back( c );
+
+    // title pad
+    TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( canvasTitle.c_str() );
+    title->Draw();
+    c->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() < 2 * nDetector ) {
+        padVec.push_back( smallPad);
+      }
+    }
+  }
+
+  // set the style for these canvases
+  gStyle->SetOptStat("e");
+  gStyle->SetOptFit(111);
+  gStyle->SetStatW(0.25);
+  gStyle->SetStatH(0.35);
+  gStyle->SetTitleFontSize( 0.05 );
+  gStyle->SetTitleFillColor( kCyan - 9 );
+
+  // now plot the histograms in the right pad and make the fits
+  UInt_t iPad = 0;
+  string newTitle;
+  for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
+    string detectorFolderName = "detector-" + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) clusterHistoFolder->Get( detectorFolderName.c_str() );
+
+    string firstHistoName = "seedSNR-d" + toString( iDetector );
+    TH1D * firstHisto = (TH1D*) detectorFolder->Get( firstHistoName.c_str() );
+    newTitle = string(firstHisto->GetTitle()) + " - Detector " + toString( iDetector );
+    firstHisto->SetTitle( newTitle.c_str() );
+    firstHisto->SetXTitle("SNR");
+    firstHisto->SetFillColor( kCyan - 5 );
+    padVec[iPad]->cd();
+    firstHisto->Fit("landau");
+    firstHisto->GetFunction("landau")->SetLineColor( kRed );
+    ++iPad;
+
+
+
+    string secondHistoName = "clusterSNR3x3-d" + toString( iDetector );
+    TH1D * secondHisto     = (TH1D*) detectorFolder->Get( secondHistoName.c_str() );
+    newTitle = string(secondHisto->GetTitle()) + " - Detector " + toString( iDetector );
+    secondHisto->SetTitle( newTitle.c_str() );
+    secondHisto->SetXTitle("SNR");
+    secondHisto->SetFillColor( kCyan - 5 );
+    padVec[iPad]->cd();
+    secondHisto->Fit("landau");
+    secondHisto->GetFunction("landau")->SetLineColor( kRed );
+    ++iPad;
+
+
+  }
+
+  // now display the hit maps
+  nDetPerCanvas = 6;
+  TString hitMapCanvasBaseName = "HitMapCanvas";
+
+  // close all canvases with this name
+  closeCanvases( hitMapCanvasBaseName );
+
+  nCanvas   = nDetector / nDetPerCanvas;
+  if ( nDetector % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+
+  padVec.clear();
+
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+    string canvasName  = string(hitMapCanvasBaseName.Data()) + "_" + toString(iCanvas);
+    string canvasTitle = string(runName) + " - HitMap histograms " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+    TCanvas * c =  new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth, canvasHeight);
+    c->Range(0,0,1,1);
+    c->SetBorderSize(0);
+    c->SetFrameFillColor(0);
+    c->SetBorderMode(0);
+    canvasVec.push_back( c );
+
+    // title pad
+    TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( canvasTitle.c_str() );
+    title->Draw();
+    c->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() <  nDetector ) {
+        padVec.push_back( smallPad );
+      }
+    }
+  }
+
+  gStyle->SetPalette( 1, 0 );
+
+  // now plot the histograms in the right pad
+  iPad = 0;
+  for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
+    string detectorFolderName = "detector-" + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) clusterHistoFolder->Get( detectorFolderName.c_str() );
+
+    string histoName = "hitMap-d" + toString( iDetector );
+    TH2D * histo = (TH2D*) detectorFolder->Get( histoName.c_str() );
+    newTitle = string( histo->GetTitle() ) + " - Detector " + toString( iDetector );
+    histo->SetTitle( newTitle.c_str() );
+    histo->SetXTitle("x [pixel]");
+    histo->SetYTitle("y [pixel]");
+    histo->SetStats( false );
+    padVec[iPad]->cd();
+    histo->Draw("colz");
+    ++iPad;
+  }
+
+  // now display the noise histograms
+  nDetPerCanvas = 6;
+
+  TString noiseCanvasBaseName = "NoiseCanvas";
+
+  // close all canvases with this name
+  closeCanvases( noiseCanvasBaseName );
+
+  nCanvas   = nDetector / nDetPerCanvas;
+  if ( nDetector % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+
+  padVec.clear();
+
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+    string canvasName  = string(noiseCanvasBaseName.Data()) + "_" + toString(iCanvas);
+    string canvasTitle = string(runName) + " - Cluster noise histograms " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+    TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth, canvasHeight);
+    c->Range(0,0,1,1);
+    c->SetBorderSize(0);
+    c->SetFrameFillColor(0);
+    c->SetBorderMode(0);
+    canvasVec.push_back( c );
+
+    // title pad
+    TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( canvasTitle.c_str() );
+    title->Draw();
+    c->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() < nDetector ) {
+        padVec.push_back( smallPad);
+      }
+    }
+  }
+
+
+  iPad = 0;
+  for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
+    string detectorFolderName = "detector-" + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) clusterHistoFolder->Get( detectorFolderName.c_str() );
+
+    string histoName = "clusterNoise-d" + toString( iDetector );
+    TH1D * histo     = (TH1D*) detectorFolder->Get( histoName.c_str() );
+    newTitle = string(histo->GetTitle()) + " - Detector " + toString( iDetector );
+    histo->SetTitle( newTitle.c_str() );
+    histo->SetXTitle("Noise [ADC]");
+    histo->SetFillColor( kCyan - 5 );
+    padVec[iPad]->cd();
+    histo->Draw();
+    padVec[iPad]->Update();
+    TPaveStats * st = (TPaveStats*)  histo->GetListOfFunctions()->FindObject("stats");
+    st->SetOptStat(1110);
+    padVec[iPad]->Modified( true );
+    ++iPad;
+
+  }
+
+  // save every canvases
+  string path( prepareOutputFolder( "Cluster" ) );
+  for ( UInt_t iCanvas = 0; iCanvas < canvasVec.size() ; ++iCanvas ) {
+    string figName = path + canvasVec[iCanvas]->GetName() + ".png";
+    canvasVec[iCanvas]->SaveAs( figName.c_str() );
+  }
+
+  return;
+}
+
+void showEtaPlot( const char * filename ) {
+
+  // check if this file is already open
+  TFile * inputFile = closeAndReopenFile( filename );
+
+  if ( inputFile == 0x0 ) {
+    cerr << "Problems opening file " << filename << endl;
+    return;
+  }
+
+  // this function will create the following canvases:
+  //
+  // --> 1 canvas with CoG and ETA along x (one every 3 detectors)
+  // --> 1 canvas with CoG and ETA along y (one every 3 detectors)
+  // --> 1 canvas with 2D CoG map (one every 6 detectors);
+
+  UInt_t nDetPerCanvas   = 3;
+  TString canvasBaseName = "EtaXCanvas";
+
+  // close all canvases with this name
+  closeCanvases( canvasBaseName );
+
+  // look into the input file for a folder named ETA
+  TDirectoryFile * etaFolder = (TDirectoryFile*) inputFile->Get( etaFolderName.Data() );
+
+  if ( etaFolder == 0x0 ) {
+    cerr << "No ETA folder (" << etaFolderName << ") found in " << filename << endl;
+    return ;
+  }
+
+  // this folder should contain one subfolder for each detector
+  // so guess the number of detectors
+  UInt_t nDetector = etaFolder->GetListOfKeys()->GetSize();
+  UInt_t nCanvas   = nDetector / nDetPerCanvas;
+  if ( nDetector % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+
+  vector<TCanvas * > canvasVec;
+  vector<TPad * >    padVec;
+  Double_t titleHeight = 0.10;
+  Int_t canvasWidth  = 800;
+  Int_t canvasHeight = 800;
+
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+    string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
+    string canvasTitle = string(runName) + " - ETA X histograms " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+    TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth, canvasHeight);
+    c->Range(0,0,1,1);
+    c->SetBorderSize(0);
+    c->SetFrameFillColor(0);
+    c->SetBorderMode(0);
+    canvasVec.push_back( c );
+
+    // title pad
+    TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( canvasTitle.c_str() );
+    title->Draw();
+    c->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() < 2 * nDetector ) {
+        padVec.push_back( smallPad);
+      }
+    }
+  }
+
+  // set the style for these canvases
+  gStyle->SetOptStat("emr");
+  gStyle->SetStatW(0.25);
+  gStyle->SetStatH(0.35);
+  gStyle->SetTitleFontSize( 0.05 );
+  gStyle->SetTitleFillColor( kCyan - 9 );
+
+  UInt_t iPad = 0;
+  string newTitle;
+  for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
+    string detectorFolderName = "detector-" + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) etaFolder->Get( detectorFolderName.c_str() );
+
+    string cogHistoName = "CoG-X-" + toString( iDetector ) ;
+    TH1D * cogHisto = (TH1D*) detectorFolder->Get( cogHistoName.c_str() );
+    newTitle = string( cogHisto->GetTitle()) + " - Detector " + toString( iDetector );
+    cogHisto->SetTitle( newTitle.c_str() );
+    cogHisto->SetXTitle(" x [pitch unit] ");
+    cogHisto->SetFillColor( kCyan - 5 );
+    padVec[iPad++]->cd();
+    cogHisto->Draw();
+
+    string etaHistoName = "EtaProfile-X-" + toString( iDetector );
+    TProfile * etaHisto = (TProfile*) detectorFolder->Get( etaHistoName.c_str() );
+    newTitle = string( etaHisto->GetTitle()) + " - Detector " + toString( iDetector );
+    etaHisto->SetTitle( newTitle.c_str() );
+    etaHisto->SetXTitle(" x [picth unit] " );
+    etaHisto->SetLineColor( kRed );
+    padVec[iPad++]->cd();
+    etaHisto->Draw();
+  }
+
+  nDetPerCanvas   = 3;
+  canvasBaseName = "EtaYCanvas";
+
+  // close all canvases with this name
+  closeCanvases( canvasBaseName );
+
+  nCanvas   = nDetector / nDetPerCanvas;
+  if ( nDetector % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+
+  padVec.clear();
+
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+    string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
+    string canvasTitle = string(runName) + " - ETA Y histograms " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+    TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth, canvasHeight);
+    c->Range(0,0,1,1);
+    c->SetBorderSize(0);
+    c->SetFrameFillColor(0);
+    c->SetBorderMode(0);
+    canvasVec.push_back( c );
+
+    // title pad
+    TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( canvasTitle.c_str() );
+    title->Draw();
+    c->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() < 2 * nDetector ) {
+        padVec.push_back( smallPad);
+      }
+    }
+  }
+
+  // set the style for these canvases
+  gStyle->SetOptStat("emr");
+  gStyle->SetStatW(0.25);
+  gStyle->SetStatH(0.35);
+  gStyle->SetTitleFontSize( 0.05 );
+  gStyle->SetTitleFillColor( kCyan - 9 );
+
+  iPad = 0;
+  for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
+    string detectorFolderName = "detector-" + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) etaFolder->Get( detectorFolderName.c_str() );
+
+    string cogHistoName = "CoG-Y-" + toString( iDetector ) ;
+    TH1D * cogHisto = (TH1D*) detectorFolder->Get( cogHistoName.c_str() );
+    newTitle = string( cogHisto->GetTitle()) + " - Detector " + toString( iDetector );
+    cogHisto->SetTitle( newTitle.c_str() );
+    cogHisto->SetXTitle(" y [pitch unit] ");
+    cogHisto->SetFillColor( kCyan - 5 );
+    padVec[iPad++]->cd();
+    cogHisto->Draw();
+
+    string etaHistoName = "EtaProfile-Y-" + toString( iDetector );
+    TProfile * etaHisto = (TProfile*) detectorFolder->Get( etaHistoName.c_str() );
+    newTitle = string( etaHisto->GetTitle()) + " - Detector " + toString( iDetector );
+    etaHisto->SetTitle( newTitle.c_str() );
+    etaHisto->SetXTitle(" y [picth unit] " );
+    etaHisto->SetLineColor( kRed ) ;
+    padVec[iPad++]->cd();
+    etaHisto->Draw();
+  }
+
+  nDetPerCanvas = 6;
+  canvasBaseName = "CoGCanvas";
+
+  // close all canvases with this name
+  closeCanvases( canvasBaseName );
+
+  nCanvas   = nDetector / nDetPerCanvas;
+  if ( nDetector % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+
+  padVec.clear();
+
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+    string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
+    string canvasTitle = string(runName) + " - CoG histograms " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+    TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth, canvasHeight);
+    c->Range(0,0,1,1);
+    c->SetBorderSize(0);
+    c->SetFrameFillColor(0);
+    c->SetBorderMode(0);
+    canvasVec.push_back( c );
+
+    // title pad
+    TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( canvasTitle.c_str() );
+    title->Draw();
+    c->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() < 1 * nDetector ) {
+        padVec.push_back( smallPad);
+      }
+    }
+  }
+
+  gStyle->SetPalette(1,0);
+
+  iPad = 0;
+  for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
+    string detectorFolderName = "detector-" + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) etaFolder->Get( detectorFolderName.c_str() );
+
+    string cogHistoName = "CoG-Histo2D-" + toString( iDetector );
+    TH2D * cogHisto     = (TH2D*) detectorFolder->Get( cogHistoName.c_str() );
+    newTitle = string( cogHisto->GetTitle()) + " - Detector " + toString( iDetector );
+    cogHisto->SetTitle( newTitle.c_str() );
+    cogHisto->SetXTitle(" x [pitch unit] ");
+    cogHisto->SetYTitle(" y [pitch unit] ");
+    cogHisto->SetStats( false );
+    padVec[iPad++]->cd();
+    cogHisto->Draw("colz");
+
+  }
+
+  string path( prepareOutputFolder( "ETA" ));
+  for ( UInt_t iCanvas = 0 ; iCanvas < canvasVec.size(); ++iCanvas ) {
+    string figName = path + canvasVec[iCanvas]->GetName() + ".png";
+    canvasVec[iCanvas]->SaveAs( figName.c_str() );
+  }
+
+}
+
+TFile * closeAndReopenFile( const char * filename ) {
+
+  // check if the file is already opened
+  TList * listOfFiles = (TList*) gROOT->GetListOfFiles();
+
+  // loop over all files
+  for ( Int_t iFile = 0 ; iFile < listOfFiles->GetSize()  ; ++iFile ) {
+    TFile * currentFile = (TFile*) listOfFiles->At( iFile ) ;
+    TString currentFileName = currentFile->GetName() ;
+    TString filenameString( filename );
+    if ( currentFileName.EndsWith( filename ) ){
+      if ( currentFile != 0x0 ) {
+        return currentFile;
+      }
+    }
+  }
+
+  return TFile::Open( filename );
+
+}
+
+void closeCanvases( const char * canvasBaseName ) {
+
+  TList * listOfOpenedCanvas = (TList*) gROOT->GetListOfCanvases();
+  for ( int i = 0 ; i < listOfOpenedCanvas->GetSize() ; ++i ) {
+    TCanvas * canvas = (TCanvas*) listOfOpenedCanvas->At( i );
+    TString canvasName2 = canvas->GetName();
+    if ( canvasName2.Contains( canvasBaseName ) ) {
+      canvas->Close();
+    }
+  }
+
+}
+
+void setRunName( const char * name ) {
+  runName = name ;
+}
+
+const char * prepareOutputFolder( const char * type) {
+
+  // check if a folder "pics" exists
+  string pwd( gSystem->pwd() );
+
+
+  if ( !gSystem->cd("pics") ) {
+    // it doesn't exist, so create it
+    gSystem->mkdir( "pics" );
+    gSystem->cd("pics");
+  }
+
+  // replace blanks with "_" in the runname;
+  runName.ReplaceAll(" ", 1, "_", 1);
+
+  // check if a folder with this name already exists
+  if ( !gSystem->cd( runName.Data() ) ) {
+    // it doesn't exist, so create it
+    gSystem->mkdir( runName.Data() );
+    gSystem->cd( runName.Data() );
+  }
+
+  // check if a folder with the type specified already exists
+  if ( !gSystem->cd( type ) ) {
+    // it doesn't, create it!
+    gSystem->mkdir( type );
+    gSystem->cd( type );
+  }
+
+
+  string newFolder( gSystem->pwd() + string("/") );
+  gSystem->cd( pwd.c_str() );
+
+  return newFolder.c_str();
+}
+
+void usage() {
+
+  vector< string > listOfFunction;
+  listOfFunction.push_back( "void showPedeNoisePlot( const char * filename, const char * detector = \"mimotel\")" );
+  listOfFunction.push_back( "void showClusterPlot( const char * filename )" );
+  listOfFunction.push_back( "void showEtaPlot( const char * filename )" );
+  listOfFunction.push_back( "void showCorrelationPlot( const char * filename )");
+
+  cout << endl;
+  cout << "First set the overall run name using " << endl;
+  cout << "--->   setRunName( const char * ) " << endl;
+  cout << "Then you can use the following function to display commonly used histograms:" << endl;
+
+  vector< string >::iterator iter = listOfFunction.begin();
+  while ( iter!= listOfFunction.end() ) {
+    cout << "--->   " << (*iter++) << endl;
+  }
+
+}
