@@ -11,6 +11,7 @@
 
 using namespace std;
 
+
 // implementations
 
 void showPedeNoisePlot( const char * filename, const char *  detector  ) {
@@ -559,7 +560,7 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
 
   string path( prepareOutputFolder( "PedeNoise" ));
   for ( UInt_t iCanvas = 0 ; iCanvas < canvasVec.size(); ++iCanvas ) {
-    string figName = path + canvasVec[iCanvas]->GetName() + ".png";
+    string figName = path + canvasVec[iCanvas]->GetName() + pictureOutputFormat.Data();
     canvasVec[iCanvas]->SaveAs( figName.c_str() );
   }
 
@@ -1198,7 +1199,7 @@ void showCorrelationPlot( const char * filename ) {
       Double_t p0 = yA - p1 * xA;
 
       // shift some pixels above
-      Double_t shiftUp = 0.5; // mm
+      Double_t shiftUp = 0.25; // mm
       Double_t p1_up = p1;
       Double_t p0_up = p0 + shiftUp;
 
@@ -1231,7 +1232,7 @@ void showCorrelationPlot( const char * filename ) {
       cout << "C = (" << xC << ", " << yC << ") and D = (" << xD << ", " << yD << ")" << endl;
 
       // shift some pixels above
-      Double_t shiftDown = 0.5; // mm
+      Double_t shiftDown = 0.25; // mm
       Double_t p1_down = p1;
       Double_t p0_down = p0 - shiftDown;
 
@@ -1434,7 +1435,7 @@ void showCorrelationPlot( const char * filename ) {
       Double_t p0 = yA - p1 * xA;
 
       // shift some pixels above
-      Double_t shiftUp = 0.5; // mm
+      Double_t shiftUp = 0.25; // mm
       Double_t p1_up = p1;
       Double_t p0_up = p0 + shiftUp;
 
@@ -1467,7 +1468,7 @@ void showCorrelationPlot( const char * filename ) {
       cout << "C = (" << xC << ", " << yC << ") and D = (" << xD << ", " << yD << ")" << endl;
 
       // shift some pixels above
-      Double_t shiftDown = 0.5; // mm
+      Double_t shiftDown = 0.25; // mm
       Double_t p1_down = p1;
       Double_t p0_down = p0 - shiftDown;
 
@@ -1540,7 +1541,7 @@ void showCorrelationPlot( const char * filename ) {
   // save every canvases
   string path( prepareOutputFolder( "Correlation" ) );
   for ( UInt_t iCanvas = 0; iCanvas < canvasVec.size() ; ++iCanvas ) {
-    string figName = path + canvasVec[iCanvas]->GetName() + ".png";
+    string figName = path + canvasVec[iCanvas]->GetName() + pictureOutputFormat.Data();
     canvasVec[iCanvas]->SaveAs( figName.c_str() );
   }
 
@@ -1848,7 +1849,7 @@ void showClusterPlot( const char * filename ) {
   // save every canvases
   string path( prepareOutputFolder( "Cluster" ) );
   for ( UInt_t iCanvas = 0; iCanvas < canvasVec.size() ; ++iCanvas ) {
-    string figName = path + canvasVec[iCanvas]->GetName() + ".png";
+    string figName = path + canvasVec[iCanvas]->GetName() + pictureOutputFormat.Data();
     canvasVec[iCanvas]->SaveAs( figName.c_str() );
   }
 
@@ -2153,7 +2154,7 @@ void showEtaPlot( const char * filename ) {
 
   string path( prepareOutputFolder( "ETA" ));
   for ( UInt_t iCanvas = 0 ; iCanvas < canvasVec.size(); ++iCanvas ) {
-    string figName = path + canvasVec[iCanvas]->GetName() + ".png";
+    string figName = path + canvasVec[iCanvas]->GetName() + pictureOutputFormat.Data();
     canvasVec[iCanvas]->SaveAs( figName.c_str() );
   }
 
