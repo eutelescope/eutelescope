@@ -2160,6 +2160,480 @@ void showEtaPlot( const char * filename ) {
 
 }
 
+void showTrackerPlot( const char * filename ) {
+
+  // check if this file is already open
+  TFile * inputFile = closeAndReopenFile( filename );
+
+  if ( inputFile == 0x0 ) {
+    cerr << "Problems opening file " << filename << endl;
+    return;
+  }
+
+  // --> 1 canvas with reconstructed hit position (one every 6 det.)
+  // --> 1 canvas with rotation check plots (one every 3 det.)
+  // --> 1 canvas with shift check plot (one every 3 det. )
+
+  UInt_t nDetPerCanvas = 6;
+
+  // start from the hit reconstructed
+  TString canvasBaseName = "RecoHitCanvas";
+
+  // close all canvases with this name 
+  closeCanvases( canvasBaseName );
+
+  // look into the input file for a folder named
+  TDirectoryFile * trackerFolder = (TDirectoryFile*) inputFile->Get( trackerFolderName.Data() ) ;
+
+  if ( trackerFolder == 0x0 ) {
+    cerr << "No tracker histo folder (" << trackerFolderName << ") found in " << filename << endl;
+    return;
+  }
+
+  // guess the number of sensors
+  UInt_t nDetector = 0;
+  while ( true ) {
+    string name = "fittedXY_" + toString(nDetector);
+    TH2D * histo = (TH2D*) trackerFolder->Get(name.c_str());
+    if ( histo != 0x0 ) ++nDetector;
+    else break;
+  }
+  if ( nDetector == 0 ) {
+    cerr << "Something wrong with the number of detectors" << endl;
+    return;
+  }
+
+  UInt_t nCanvas = nDetector / nDetPerCanvas;
+  if ( nDetector % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+
+  vector<TCanvas * > canvasVec;
+  vector<TPad * >    padVec;
+  Double_t titleHeight = 0.10;
+  Int_t canvasWidth  = 800;
+  Int_t canvasHeight = 800;
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+    string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
+    string canvasTitle = string(runName) + " - Reconstructed hit position " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+    TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth, canvasHeight);
+    c->Range(0,0,1,1);
+    c->SetBorderSize(0);
+    c->SetFrameFillColor(0);
+    c->SetBorderMode(0);
+    canvasVec.push_back( c );
+
+    // title pad
+    TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( canvasTitle.c_str() );
+    title->Draw();
+    c->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() < 1 * nDetector ) {
+        padVec.push_back( smallPad);
+      }
+    }
+  }
+
+  // set the style for these canvases
+  gStyle->SetOptStat("e");
+  gStyle->SetOptFit(111);
+  gStyle->SetStatW(0.25);
+  gStyle->SetStatH(0.35);
+  gStyle->SetTitleFontSize( 0.05 );
+  gStyle->SetTitleFillColor( kCyan - 9 );
+  gStyle->SetPalette(1,0);
+
+  // now plot the histograms in the right pad and make the fits
+  UInt_t iPad = 0;
+  string newTitle;
+  for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
+
+    string histoName = "fittedXY_" + toString( iDetector );
+    TH2D * histo = (TH2D*) trackerFolder->Get( histoName.c_str() );
+    newTitle = "Reco hit map on detector " + toString( iDetector );
+    histo->SetTitle( newTitle.c_str());
+    histo->SetXTitle( "x [mm]" );
+    histo->SetYTitle( "y [mm]" );
+    padVec[iPad]->cd();
+    histo->Draw("colz");
+    padVec[iPad]->Update();
+    TPaveText * padTitle = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+    padTitle->SetX1NDC( 0.053 );
+    padTitle->SetY1NDC( 0.867 );
+    padTitle->SetX2NDC( 0.601 );
+    padTitle->SetY2NDC( 0.998 );
+    padVec[iPad]->Modified( true );
+    ++iPad;
+  }
+
+  nDetPerCanvas = 3;
+
+  canvasBaseName = "RotationCanvas";
+  closeCanvases( canvasBaseName );
+
+  // the number of histograms to plot is different from the number of
+  // but I can get the name from the input list
+  vector< string > rotX2DVec;
+  vector< string > rotY2DVec;
+  {
+    TIter next( trackerFolder->GetListOfKeys() );
+    while ( TObject * obj = next() ){
+      TString objName = obj->GetName();
+      if ( objName.BeginsWith( "relRotX2D_" ) ) {
+        rotX2DVec.push_back( objName.Data() );
+      }
+      if ( objName.BeginsWith( "relRotY2D_" ) ) {
+        rotY2DVec.push_back( objName.Data() );
+      }
+    }
+    sort( rotX2DVec.begin(), rotX2DVec.end() );
+    sort( rotY2DVec.begin(), rotY2DVec.end() );
+  }
+
+  nCanvas = rotX2DVec.size() / nDetPerCanvas;
+  if ( rotX2DVec.size() % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+ 
+  padVec.clear();
+
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+    string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
+    string canvasTitle = string(runName) + " - Rotation " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+ 
+    Int_t xShift = 50 * canvasVec.size();
+    if ( xShift > 600 ) xShift = 0;
+    TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), xShift, 0, canvasWidth, canvasHeight);
+    c->Range(0,0,1,1);
+    c->SetBorderSize(0);
+    c->SetFrameFillColor(0);
+    c->SetBorderMode(0);
+    canvasVec.push_back( c );
+
+    // title pad
+    TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( canvasTitle.c_str() );
+    title->Draw();
+    c->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() < 2 * rotX2DVec.size() ) {
+        padVec.push_back( smallPad);
+      }
+    }
+  }
+
+  iPad = 0;
+  TString oldTitle;
+  for ( UInt_t iDetector = 0 ; iDetector < rotX2DVec.size(); ++iDetector ) {
+
+    TH2D * histo = (TH2D*) trackerFolder->Get( rotX2DVec[iDetector].c_str() );
+
+    // dirty game to retype the title...
+    oldTitle = histo->GetTitle();
+    if ( !oldTitle.BeginsWith( "#Delta" ) ) {
+      TObjArray * objArray = oldTitle.Tokenize(" ");
+      for ( Int_t iToken = 0 ; iToken < objArray->GetSize(); ++iToken ) {
+        string objString = ((TObjString*) objArray->At(iToken))->GetString().Data();
+        if ( objString == "plane" ) {
+          newTitle = "#Deltax vs y on detector " + toString(  ((TObjString*) objArray->At(iToken + 1))->GetString().Data() );
+          break;
+        }
+      }
+      objArray->Delete();
+    } else {
+      newTitle = oldTitle.Data();
+    }
+    
+    histo->SetTitle( newTitle.c_str() );
+    histo->SetXTitle( "y [mm]" );
+    histo->SetYTitle( "#Deltax [mm]");
+    padVec[iPad]->cd();
+    histo->Draw("colz");
+    padVec[iPad]->Update();
+    TPaveText * padTitle1 = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+    padTitle1->SetX1NDC( 0.053 );
+    padTitle1->SetY1NDC( 0.867 );
+    padTitle1->SetX2NDC( 0.601 );
+    padTitle1->SetY2NDC( 0.998 );
+    padVec[iPad]->Modified( true );
+    ++iPad;
+
+    histo = (TH2D*) trackerFolder->Get( rotY2DVec[iDetector].c_str() );
+
+    oldTitle = histo->GetTitle();
+    cout << oldTitle << endl;
+    if ( !oldTitle.BeginsWith( "#Delta" ) ) {
+      TObjArray * objArray = oldTitle.Tokenize(" ");
+      for ( Int_t iToken = 0 ; iToken < objArray->GetSize(); ++iToken ) {
+        string objString = ((TObjString*) objArray->At(iToken))->GetString().Data();
+        if ( objString == "plane" ) {
+          newTitle = "#Deltay vs x on detector " + toString(  ((TObjString*) objArray->At(iToken + 1))->GetString().Data() );
+          break;
+        }
+      }
+      objArray->Delete();
+    } else {
+      newTitle = oldTitle.Data();
+    }
+
+    histo->SetTitle( newTitle.c_str() );
+    histo->SetXTitle( "x [mm]" );
+    histo->SetYTitle( "#Deltay [mm]");
+    padVec[iPad]->cd();
+    histo->Draw("colz");
+    padVec[iPad]->Update();
+    TPaveText * padTitle2 = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+    padTitle2->SetX1NDC( 0.053 );
+    padTitle2->SetY1NDC( 0.867 );
+    padTitle2->SetX2NDC( 0.601 );
+    padTitle2->SetY2NDC( 0.998 );
+    padVec[iPad]->Modified( true );
+
+    ++iPad;
+  }
+
+
+  canvasBaseName = "ShiftCanvas";
+  closeCanvases( canvasBaseName );
+
+  // the number of histograms to plot is different from the number of
+  // but I can get the name from the input list
+
+  vector< string > shiftXVec;
+  vector< string > shiftYVec;
+
+  {
+    TIter next( trackerFolder->GetListOfKeys() );
+    while ( TObject * obj = next() ){
+      TString objName = obj->GetName();
+      if ( objName.BeginsWith( "relShiftX_" ) ) {
+      shiftXVec.push_back( objName.Data() );
+      }
+      if ( objName.BeginsWith( "relShiftY_" ) ) {
+        shiftYVec.push_back( objName.Data() );
+      }
+    }
+    sort( shiftXVec.begin(), shiftXVec.end() );
+    sort( shiftYVec.begin(), shiftYVec.end() );
+  }
+
+
+  nCanvas = shiftXVec.size() /  nDetPerCanvas;
+  if ( rotX2DVec.size() % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+  
+  padVec.clear();
+
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+    string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
+    string canvasTitle = string(runName) + " - Shift " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+ 
+    Int_t xShift = 50 * canvasVec.size();
+    if ( xShift > 600 ) xShift = 0;
+    TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), xShift, 0, canvasWidth, canvasHeight);
+    c->Range(0,0,1,1);
+    c->SetBorderSize(0);
+    c->SetFrameFillColor(0);
+    c->SetBorderMode(0);
+    canvasVec.push_back( c );
+
+    // title pad
+    TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( canvasTitle.c_str() );
+    title->Draw();
+    c->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() < 2 * rotX2DVec.size() ) {
+        padVec.push_back( smallPad);
+      }
+    }
+  }
+
+  iPad = 0;
+  for ( UInt_t iDetector = 0 ; iDetector < shiftXVec.size(); ++iDetector ) {
+    
+    TH1D * histo = (TH1D*) trackerFolder->Get( shiftXVec[iDetector].c_str() );
+ 
+    // dirty game to retype the title...
+    oldTitle = histo->GetTitle();
+    if ( !oldTitle.BeginsWith("#Delta") ) {
+      TObjArray * objArray = oldTitle.Tokenize(" ");
+      for ( Int_t iToken = 0 ; iToken < objArray->GetSize(); ++iToken ) {
+        string objString = ((TObjString*) objArray->At(iToken))->GetString().Data();
+        if ( objString == "plane" ) {
+          newTitle = "#Deltax on detector " + toString(  ((TObjString*) objArray->At(iToken + 1))->GetString().Data() );
+          break;
+        }
+      }
+      objArray->Delete();
+    } else {
+      newTitle = oldTitle.Data();
+    }
+
+    histo->SetTitle( newTitle.c_str() );
+    histo->SetXTitle( "#Deltax [mm]" );
+    padVec[iPad]->cd();
+    histo->Fit("gaus");
+    histo->SetFillColor( kCyan - 5 );
+    padVec[iPad]->Update();
+    TPaveText * padTitle1 = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+    padTitle1->SetX1NDC( 0.050 );
+    padTitle1->SetY1NDC( 0.862 );
+    padTitle1->SetX2NDC( 0.509 );
+    padTitle1->SetY2NDC( 0.998 );
+
+    TPaveStats * st = (TPaveStats*) histo->GetListOfFunctions()->FindObject("stats");
+    st->SetOptFit(111);
+    st->SetX1NDC( 0.5476 );
+    st->SetY1NDC( 0.4790 );
+    st->SetX2NDC( 0.9792 );
+    st->SetY2NDC( 0.9983 );
+
+    TF1 * fitFunc = (TF1*) histo->GetListOfFunctions()->FindObject("gaus");
+    fitFunc->SetLineColor( kBlue );
+    Double_t mean = fitFunc->GetParameter(1);
+    Double_t rms  = fitFunc->GetParameter(2);
+
+    histo->GetXaxis()->SetRangeUser( mean - 5 * rms, mean + 5 * rms );
+    padVec[iPad]->Modified( true );
+    ++iPad;
+
+    histo = (TH1D*) trackerFolder->Get( shiftYVec[iDetector].c_str() );
+ 
+    // dirty game to retype the title...
+    oldTitle = histo->GetTitle();
+    if ( !oldTitle.BeginsWith( "#Delta" ) ) {
+      TObjArray * objArray = oldTitle.Tokenize(" ");
+      for ( Int_t iToken = 0 ; iToken < objArray->GetSize(); ++iToken ) {
+        string objString = ((TObjString*) objArray->At(iToken))->GetString().Data();
+        if ( objString == "plane" ) {
+          newTitle = "#Deltay on detector " + toString(  ((TObjString*) objArray->At(iToken + 1))->GetString().Data() );
+          break;
+        }
+      }
+      objArray->Delete();
+    } else {
+      newTitle = oldTitle.Data();
+    }
+
+    histo->SetTitle( newTitle.c_str() );
+    histo->SetXTitle( "#Deltay [mm]" );
+    padVec[iPad]->cd();
+    histo->Fit("gaus");
+    histo->SetFillColor( kCyan - 5 );
+    padVec[iPad]->Update();
+    padTitle1 = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+    padTitle1->SetX1NDC( 0.050 );
+    padTitle1->SetY1NDC( 0.862 );
+    padTitle1->SetX2NDC( 0.509 );
+    padTitle1->SetY2NDC( 0.998 );
+
+    st = (TPaveStats*) histo->GetListOfFunctions()->FindObject("stats");
+    st->SetOptFit(111);
+    st->SetX1NDC( 0.5476 );
+    st->SetY1NDC( 0.4790 );
+    st->SetX2NDC( 0.9792 );
+    st->SetY2NDC( 0.9983 );
+
+
+    fitFunc   = (TF1*) histo->GetListOfFunctions()->FindObject("gaus");
+    fitFunc->SetLineColor( kBlue );
+    mean      = fitFunc->GetParameter(1);
+    rms       = fitFunc->GetParameter(2);
+
+    histo->GetXaxis()->SetRangeUser( mean - 5 * rms, mean + 5 * rms );
+    padVec[iPad]->Modified( true );
+    ++iPad;
+  }
+
+  string path( prepareOutputFolder( "Tracker" ));
+  for ( UInt_t iCanvas = 0 ; iCanvas < canvasVec.size(); ++iCanvas ) {
+    string figName = path + canvasVec[iCanvas]->GetName() + pictureOutputFormat.Data();
+    canvasVec[iCanvas]->SaveAs( figName.c_str() );
+  }
+
+}
+
 TFile * closeAndReopenFile( const char * filename ) {
 
   // check if the file is already opened
