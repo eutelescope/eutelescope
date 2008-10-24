@@ -2179,7 +2179,7 @@ void showTrackerPlot( const char * filename ) {
   // start from the hit reconstructed
   TString canvasBaseName = "RecoHitCanvas";
 
-  // close all canvases with this name 
+  // close all canvases with this name
   closeCanvases( canvasBaseName );
 
   // look into the input file for a folder named
@@ -2269,6 +2269,10 @@ void showTrackerPlot( const char * filename ) {
   gStyle->SetTitleFontSize( 0.05 );
   gStyle->SetTitleFillColor( kCyan - 9 );
   gStyle->SetPalette(1,0);
+  gStyle->SetLabelOffset( 0.01 );
+  gStyle->SetLabelSize( 0.05 );
+  gStyle->SetTitleOffset( 0.96 );
+  gStyle->SetTitleSize( 0.05 );
 
   // now plot the histograms in the right pad and make the fits
   UInt_t iPad = 0;
@@ -2284,6 +2288,8 @@ void showTrackerPlot( const char * filename ) {
     padVec[iPad]->cd();
     histo->Draw("colz");
     padVec[iPad]->Update();
+    setDefaultAxis( histo->GetXaxis() );
+    setDefaultAxis( histo->GetYaxis() );
     TPaveText * padTitle = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
     padTitle->SetX1NDC( 0.053 );
     padTitle->SetY1NDC( 0.867 );
@@ -2321,7 +2327,7 @@ void showTrackerPlot( const char * filename ) {
   if ( rotX2DVec.size() % nDetPerCanvas != 0 ) {
     ++nCanvas;
   }
- 
+
   padVec.clear();
 
   for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
@@ -2329,7 +2335,7 @@ void showTrackerPlot( const char * filename ) {
     string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
     string canvasTitle = string(runName) + " - Rotation " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
 
- 
+
     Int_t xShift = 50 * canvasVec.size();
     if ( xShift > 600 ) xShift = 0;
     TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), xShift, 0, canvasWidth, canvasHeight);
@@ -2380,6 +2386,8 @@ void showTrackerPlot( const char * filename ) {
   for ( UInt_t iDetector = 0 ; iDetector < rotX2DVec.size(); ++iDetector ) {
 
     TH2D * histo = (TH2D*) trackerFolder->Get( rotX2DVec[iDetector].c_str() );
+    setDefaultAxis( histo->GetXaxis() );
+    setDefaultAxis( histo->GetYaxis() );
 
     // dirty game to retype the title...
     oldTitle = histo->GetTitle();
@@ -2396,7 +2404,7 @@ void showTrackerPlot( const char * filename ) {
     } else {
       newTitle = oldTitle.Data();
     }
-    
+
     histo->SetTitle( newTitle.c_str() );
     histo->SetXTitle( "y [mm]" );
     histo->SetYTitle( "#Deltax [mm]");
@@ -2412,6 +2420,8 @@ void showTrackerPlot( const char * filename ) {
     ++iPad;
 
     histo = (TH2D*) trackerFolder->Get( rotY2DVec[iDetector].c_str() );
+    setDefaultAxis( histo->GetXaxis() );
+    setDefaultAxis( histo->GetYaxis() );
 
     oldTitle = histo->GetTitle();
     cout << oldTitle << endl;
@@ -2460,7 +2470,7 @@ void showTrackerPlot( const char * filename ) {
     while ( TObject * obj = next() ){
       TString objName = obj->GetName();
       if ( objName.BeginsWith( "relShiftX_" ) ) {
-      shiftXVec.push_back( objName.Data() );
+        shiftXVec.push_back( objName.Data() );
       }
       if ( objName.BeginsWith( "relShiftY_" ) ) {
         shiftYVec.push_back( objName.Data() );
@@ -2475,7 +2485,7 @@ void showTrackerPlot( const char * filename ) {
   if ( rotX2DVec.size() % nDetPerCanvas != 0 ) {
     ++nCanvas;
   }
-  
+
   padVec.clear();
 
   for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
@@ -2483,7 +2493,7 @@ void showTrackerPlot( const char * filename ) {
     string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
     string canvasTitle = string(runName) + " - Shift " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
 
- 
+
     Int_t xShift = 50 * canvasVec.size();
     if ( xShift > 600 ) xShift = 0;
     TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), xShift, 0, canvasWidth, canvasHeight);
@@ -2531,9 +2541,10 @@ void showTrackerPlot( const char * filename ) {
 
   iPad = 0;
   for ( UInt_t iDetector = 0 ; iDetector < shiftXVec.size(); ++iDetector ) {
-    
+
     TH1D * histo = (TH1D*) trackerFolder->Get( shiftXVec[iDetector].c_str() );
- 
+    setDefaultAxis( histo->GetXaxis() );
+
     // dirty game to retype the title...
     oldTitle = histo->GetTitle();
     if ( !oldTitle.BeginsWith("#Delta") ) {
@@ -2579,7 +2590,8 @@ void showTrackerPlot( const char * filename ) {
     ++iPad;
 
     histo = (TH1D*) trackerFolder->Get( shiftYVec[iDetector].c_str() );
- 
+    setDefaultAxis( histo->GetXaxis() );
+
     // dirty game to retype the title...
     oldTitle = histo->GetTitle();
     if ( !oldTitle.BeginsWith( "#Delta" ) ) {
@@ -2615,7 +2627,6 @@ void showTrackerPlot( const char * filename ) {
     st->SetX2NDC( 0.9792 );
     st->SetY2NDC( 0.9983 );
 
-
     fitFunc   = (TF1*) histo->GetListOfFunctions()->FindObject("gaus");
     fitFunc->SetLineColor( kBlue );
     mean      = fitFunc->GetParameter(1);
@@ -2624,6 +2635,160 @@ void showTrackerPlot( const char * filename ) {
     histo->GetXaxis()->SetRangeUser( mean - 5 * rms, mean + 5 * rms );
     padVec[iPad]->Modified( true );
     ++iPad;
+  }
+
+  nDetPerCanvas = 3;
+  canvasBaseName = "ResidualCanvas";
+  closeCanvases( canvasBaseName );
+
+  // once again guess the number of sensors
+  nDetector = 0;
+  {
+    TIter next( trackerFolder->GetListOfKeys() );
+    while ( TObject * obj = next() ){
+      TString objName = obj->GetName();
+      if ( objName.BeginsWith( "residualX_" ) ) {
+        ++nDetector;
+      }
+    }
+  }
+
+  nCanvas = nDetector / nDetPerCanvas;
+  if ( nDetector % nDetPerCanvas != 0 ){
+    ++nCanvas;
+  }
+
+  padVec.clear();
+
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+    string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
+    string canvasTitle = string(runName) + " - Residual " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+    Int_t xShift = 50 * canvasVec.size();
+    if ( xShift > 600 ) xShift = 0;
+    TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), xShift, 0, canvasWidth, canvasHeight);
+    c->Range(0,0,1,1);
+    c->SetBorderSize(0);
+    c->SetFrameFillColor(0);
+    c->SetBorderMode(0);
+    canvasVec.push_back( c );
+
+    // title pad
+    TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( canvasTitle.c_str() );
+    title->Draw();
+    c->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() < 2 * nDetector ) {
+        cout << smallPad << endl;
+        padVec.push_back( smallPad);
+      }
+    }
+  }
+
+  iPad = 0;
+
+  for ( UInt_t iDetector = 0; iDetector < nDetector ; ++iDetector ) {
+
+    // residual x
+    string histoName   = "residualX_" + toString( iDetector );
+    string histoTitle  = "Residual X on plane " + toString( iDetector );
+    TH1D * histo = (TH1D*)  trackerFolder->Get( histoName.c_str() );
+    setDefaultAxis( histo->GetXaxis() );
+    histo->SetTitle( histoTitle.c_str() );
+    histo->SetXTitle( "#Deltax [mm]" );
+    histo->SetFillColor( kCyan - 5 );
+    padVec[iPad]->cd();
+    histo->Fit("gaus");
+    padVec[iPad]->Update();
+
+    TPaveText * padTitle = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+    padTitle->SetX1NDC( 0.050 );
+    padTitle->SetY1NDC( 0.862 );
+    padTitle->SetX2NDC( 0.509 );
+    padTitle->SetY2NDC( 0.998 );
+
+    TPaveStats * st = (TPaveStats*) histo->GetListOfFunctions()->FindObject("stats");
+    st->SetOptFit(111);
+    st->SetOptStat(10);
+    st->SetOptFit(111);
+    st->SetFitFormat("3.2e");
+    st->SetX1NDC( 0.5476 );
+    st->SetY1NDC( 0.4790 );
+    st->SetX2NDC( 0.9792 );
+    st->SetY2NDC( 0.9983 );
+
+    TF1 * fitFunc = (TF1*) histo->GetListOfFunctions()->FindObject("gaus");
+    fitFunc->SetLineColor( kBlue );
+    Double_t mean      = fitFunc->GetParameter(1);
+    Double_t rms       = fitFunc->GetParameter(2);
+
+    histo->GetXaxis()->SetRangeUser( mean - 5 * rms, mean + 5 * rms );
+    padVec[iPad]->Modified( true );
+    ++iPad;
+
+    // residual Y
+    histoName   = "residualY_" + toString( iDetector );
+    histoTitle  = "Residual Y on plane " + toString( iDetector );
+    histo = (TH1D*)  trackerFolder->Get( histoName.c_str() );
+    setDefaultAxis( histo->GetXaxis() );
+    histo->SetTitle( histoTitle.c_str() );
+    histo->SetXTitle( "#Deltay [mm]" );
+    histo->SetFillColor( kCyan - 5 );
+    padVec[iPad]->cd();
+    histo->Fit("gaus");
+    padVec[iPad]->Update();
+
+    padTitle = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+    padTitle->SetX1NDC( 0.050 );
+    padTitle->SetY1NDC( 0.862 );
+    padTitle->SetX2NDC( 0.509 );
+    padTitle->SetY2NDC( 0.998 );
+
+
+    st = (TPaveStats*) histo->GetListOfFunctions()->FindObject("stats");
+    st->SetOptFit(111);
+    st->SetOptStat(10);
+    st->SetFitFormat("3.2e");
+    st->SetX1NDC( 0.5476 );
+    st->SetY1NDC( 0.4790 );
+    st->SetX2NDC( 0.9792 );
+    st->SetY2NDC( 0.9983 );
+
+    fitFunc = (TF1*) histo->GetListOfFunctions()->FindObject("gaus");
+    fitFunc->SetLineColor( kBlue );
+    mean      = fitFunc->GetParameter(1);
+    rms       = fitFunc->GetParameter(2);
+
+    histo->GetXaxis()->SetRangeUser( mean - 5 * rms, mean + 5 * rms );
+    padVec[iPad]->Modified( true );
+    ++iPad;
+
   }
 
   string path( prepareOutputFolder( "Tracker" ));
@@ -2715,6 +2880,7 @@ void usage() {
   listOfFunction.push_back( "void showClusterPlot( const char * filename )" );
   listOfFunction.push_back( "void showEtaPlot( const char * filename )" );
   listOfFunction.push_back( "void showCorrelationPlot( const char * filename )");
+  listOfFunction.push_back( "void showTrackerPlot( const char * filename )" );
 
   cout << endl;
   cout << "First set the overall run name using " << endl;
@@ -2725,5 +2891,15 @@ void usage() {
   while ( iter!= listOfFunction.end() ) {
     cout << "--->   " << (*iter++) << endl;
   }
+
+}
+
+
+void setDefaultAxis(TAxis * axis ) {
+
+  axis->SetLabelOffset( 0.01 );
+  axis->SetLabelSize( 0.05 );
+  axis->SetTitleOffset( 0.96 );
+  axis->SetTitleSize( 0.05 );
 
 }

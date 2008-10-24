@@ -29,6 +29,7 @@
 #include <TMath.h>
 #include <TCutG.h>
 #include <TSystem.h>
+#include <TAxis.h>
 
 // system includes
 #include <iostream>
@@ -334,6 +335,9 @@ namespace eutelHistogram {
   /*! Simple function to print out which are the functions available.
    */
   void usage();
+
+  //! Set default size for histogram axis
+  void setDefaultAxis(TAxis * axis );
 
   //! Convert to string
   /*! This template function is used to convert to string any type
