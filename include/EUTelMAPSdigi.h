@@ -17,6 +17,10 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
+// Include for Track Detailed Simulation (temporarily in Eutelescope)
+
+#include "TDSPixelsChargeMap.h"
+
 // gear includes <.h>
 #include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
@@ -50,11 +54,19 @@ namespace eutelescope {
    *  reference frame of individual sensor (based on the GEAR geometry
    *  description) was adopted from EUTelHitMaker.
    *
-   *  Full documentation will be added with the first public version
-   *  of the code.
+   *  Each Mokka hit is divided into a number of smaller steps (based
+   *  on energy deposit and path length). For each step corresponding
+   *  charge deposit in sensor pixels is calculated by 2D integration
+   *  of the expected charge density over the pixel surface. Charge
+   *  capture in the silicon (signal attenuation) and charge
+   *  reflection from the epitaxial layer boundary are taken into
+   *  account. 
+   *
+   *  The core of the algorithm is implemented in TDS (Track Detailed
+   *  Simulation) package by Piotr Niezurawski (pniez@fuw.edu.pl)
    *
    *  @author Aleksander Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-   *  @version $Id: EUTelMAPSdigi.h,v 1.1 2008-11-11 09:18:11 bulgheroni Exp $
+   *  @version $Id: EUTelMAPSdigi.h,v 1.2 2008-11-11 19:12:41 zarnecki Exp $
    *
    */
 
@@ -96,7 +108,7 @@ namespace eutelescope {
     virtual void processRunHeader (LCRunHeader * run);
 
     //! Called every event
-    /*! This is called for each event in the file.
+    /*! This is called for each event in the file. 
      *
      *  Each simulated hit is translated from the global to the local
      *  frame of reference  thanks to the GEAR geometry description.
@@ -104,7 +116,7 @@ namespace eutelescope {
      *  The track segment is then divided into smaller fragments and
      *  the expected charge sharing between pixels is calculated based
      *  on the realistic parametrization.
-     *
+     *  
      *  Finally, all pixels fired are put into the output collection
      *  in the format corresponding to sparcified raw data.
      *
@@ -133,133 +145,179 @@ namespace eutelescope {
 
   protected:
 
+    // 
+    //  Definitions of the parameters needed by the Track Detailed
+    //  Simulation (TDS) algorithm  start here
     //
-    // Processor parameter definitions start here
+
+
+    //! Maxmimu charge per simulation step [e]
+    /*! Maximum charge for single integration step.
+     *  If more charge is deposited in a single Mokka step, the step
+     *  is divided into smaller ones.
+     */
+     double  _maxStepInCharge;
+
+    //! Maximum length of single simulation step
+    /*! Mokka hits with longer path have to be divided into smaller steps
+     */
+
+     double _maxStepInLength;
+
+     //! Maximum range in pixels for charge diffusion calculations
+     /*! Charge sharing is calculated for all pixels closer
+      * in length and width to the seed pixel than the maximum given
+      */
+
+     int _integMaxNumberPixelsAlongL;
+     int _integMaxNumberPixelsAlongW;
+
+     //! Attenuation length in silicon [mm]
+     /*! Lambda parameter describing charge attenuation in diffusion
+      */
+
+     double _chargeAttenuationLength;
+
+    //! Charge reflection coefficient
+    /*! Given fraction of the charge, spreading isotropically from the
+     *   ionization point is reflected from epitaxial layer boundary.
+     */
+
+     double _chargeReflectedContribution;
+
+    //! Number of GSL integration steps
+
+    int _gslFunctionCalls;
+
+     //! Numbers of bins in table storing integration results 
+     /*! To speed up charge integration results are stored in a 5D
+      * table. The more bins the more precise results, but more time
+      * is needed to fill the table. Once the table is filled
+      * simulation is very fast as no numerical integration has to be
+      * made any more. Different numbers of bins can be used in lenght
+      * and width of the sensor, and in depth.
+      */
+
+    int _integPixelSegmentsAlongL;
+    int _integPixelSegmentsAlongW;
+    int _integPixelSegmentsAlongH;
+
+    //! Flag for using one integrations storage 
+    /*! Integration can speed up significantly when using same
+     *  integration storage for all sensors. However, this makes sense
+     *  only if all sensors have same geometry.
+     */
+
+    bool _useCommonIntegrationStorage;
+
+    //! Ionization energy in silicon [eV]
+    /*! To account for Poisson charge fluctuations energy deposit
+     *   returned by Mokka has to be converted to units of elementary
+     *   charge 
+     */
+
+    double _ionizationEnergy;
+
+    //! Scaling of the deposited charge
+    /*! Because of additional charge losses, charge collected by the
+     *   detector can be smaller than expected from uniform
+     *   diffusion. This scaling factor can also be used to decrease or
+     *   increase effects of Poisson fluctuations.
+     */
+        
+    double _depositedChargeScaling;
+
+    //! Poisson smearing flag
+    /*! If this flag is set, charge collected on the pixel is smeared
+     *  according to the Poisson distribution.
+     */ 
+
+    bool _applyPoissonSmearing;
+
+    //! ADC gain  in ADC counts per unit charge
+    /*! Charge collected on the pixel is amplified and converted to
+     *   ADC counts. 
+     */
+
+    double _adcGain;
+
+    //! ADC gain variation
+    /*! ADC gain variation can be used to describe possible readout
+     *  fluctuations and other effects which result in effective
+     *  "noise" proportional to the signal
+     */
+
+    double _adcGainVariation;
+
+
+    //! ADC noise in ADC counts
+    /*! Readout noise, independent on the signal level, which is added
+     *  after charge conversion.
+     */
+
+    double _adcNoise;
+
+
+    //! Zero Suppression Threshold
+    /*! Threshold (in ADC counts) for removing empty pixels from pixel
+     *  collection. If set to 0 (default) no zero suppression is applied.
+     */
+
+    double _zeroSuppressionThreshold;
+
+
+    //! ADC offeset
+    /*! Constant pedestal value, which can be added to all pixels
+     *  after zero suppression and before storing in the output table
+     */ 
+
+    double _adcOffset;
+
+
+    //
+    // Other processor parameter definitions start here
     //
 
     //! SimTrackerHit collection name
     /*! This is the name of the collection holding the simulated hits
-     *  from Mokka.
+     *  from Mokka. 
      */
     std::string _simhitCollectionName;
 
-    //! Maxmimu energy per step [MeV]
-    /*! Maximum energy for single charge sharing calculation.
-     *  If more energy is deposited in single Mokka step, the step
-     *  is divided into smaller ones.
+
+    //! Output pixel collection name
+    /*! This is the name of the collection used to store the results
+     *  of digitization. 
      */
-    double _stepdEmax;
+    std::string _pixelCollectionName;
 
-    //! Maximum step length
-    /*! Longer Mokka hits have to be divided into smaller steps
-     */
-    double  _stepLmax;
-
-    //! Maximum diffusion range in pixels
-    /*! Charge sharing is calculated for all pixels closer
-     * in X and Y to the seed pixel than the maximum given
-     */
-
-    int _spreadRange;
-
-    //! Attenuation length
-    /*! Charge attenuation in diffusion
-     */
-
-    double _attenLength;
 
     //! Single Mokka hit output mode
     /*! Flag controling if pixel list should be written to output
-     *  file after each Mokka hit is processed or only after
+     *  file after each Mokka hit is processed or only after 
      *  the whole event
      */
 
-    bool _singleHitOutput;
+     bool _singleHitOutput;
 
-    //! Debug Event Count
+    //! Debug Event Count 
     /*! Print out debug and information
      *  messages only for one out of given number of events. If
      *  zero, no debug information is printed.
      */
-    int _debugCount ;
-
-
+   int _debugCount ;
+  
   private:
 
     // Local functions used in charge sharing calculations
 
-    //! Checks track segment start and end point
+    //! Checks track segment start and end point 
     /*! Track segment start and end points are compared with sensor
-     *  dimensions. Variables _pathStart and _pathEnd are set to
-     *  values providing that the trakck is inside the sensitive
-     *  volume.
+     *  dimensions. If track is going outside the segment, length of
+     *  the track and position of its center are corrected.
      */
 
     double CheckPathLimits();
-
-
-    //! Get energy deposited in one step
-    /*! Divides energy deposited in one Mokka hit into nStep deposits
-     *   in the sensor. Fluctuations can be taken into account
-     *   (not implemented yet).
-     */
-    double GetStepEnergy(int nStep);
-
-
-    //! Main routine calculating charge distribution
-
-    double CalculateChargeDistribtion(double stepCenter, double stepDeposit);
-
-
-    //! Storing calculated charge in pixel map
-
-    void AddPixelCharge(int ix, int iy, double dQ);
-
-
-    //! Number of stored (fired) pixels
-    /* Returns number of pixels stored in pixel charge map
-     */
-
-    inline unsigned int GetPixelNumber()
-      {
-        return _pixelChargeMap->size();
-      }
-
-
-    //! Pixel charge
-    /*! Returns charge attributed to given pixel.
-     *   Pixels are numbered with position in the pixel map, default
-     *   iterator is used.
-     */
-
-    double GetPixelCharge(int iPixel);
-
-
-    //! Pixel index
-    /*! Returns pixel index, coding its position in X-Y
-     *   Pixels are numbered with position in the pixel map, default
-     *   iterator is used.
-     */
-
-    int GetPixelIndex(int iPixel);
-
-
-    //! Pixel position in X
-
-    int GetPixelX(int iPixel);
-
-
-    //! Pixel position in Y
-
-    int GetPixelY(int iPixel);
-
-
-    //! Code pixel index
-
-    inline int PixelIndex(int ix, int iy)
-      {
-        return (ix<<16) + iy;
-      }
 
 
     //
@@ -356,7 +414,7 @@ namespace eutelescope {
      */
     bool _histogramSwitch;
 
-    /*!
+    /*! 
      *  Following variables contain information about Mokka hit
      *  transformed to the local (sensor) coordinate frame
      */
@@ -377,24 +435,11 @@ namespace eutelescope {
 
     double _mokkaPath;
 
-    //! Start position on the path
-    /*! Due to multiple scattering Mokka path can be longer than
-     *  the detector thickness. Start position tells us at which track
-     *  point the track segment enters the sensor. Should be 0 for
-     *  most hits. This is calculated in CheckPathLimits routine
-     */
-
-    double _pathStart;
-
-    //! Start position on the path
-
-    double _pathEnd;
-
     //! Energy deposit corresponding to Mokka hit
 
     double _mokkaDeposit;
 
-    /*!
+    /*! 
      *  Following variables contain information about sensor
      *  dimensions in the local coordinate frame
      */
@@ -408,22 +453,34 @@ namespace eutelescope {
 
     //! Sensor pitch in XY in local reference frame
     /*! Sensor pitch can be different in local reference frame
-     *  X can swap with Y due to rotation
+     *  X can swap with Y due to rotation 
      */
 
     double _localPitch[2];
 
-    //! Pixel Charge map
-    /*! Pixel charges calculated in subsequent steps are added to this
-     *  map. Each (fired) pixel is identified by an index coding X-Y
-     *  pixel position.
+    //! Pixel Charge Map from TDS
+    /*! Main structure used by Track Detailed Simulation (TDS)
+     *  package. Energy deposit given by Mokka is converted to pixel
+     *  charges and added to this map. Methods for adding
+     *  fluctuations, noise, taking into account gain and threshold
+     *  cut are also available.
      */
 
-    type_pixelChargeMap *_pixelChargeMap;
+   TDSPixelsChargeMap  *_pixelChargeMap;
 
-    type_pixelChargeMap::iterator _pixelIterator;
+   std::map< int,  TDSPixelsChargeMap *>  _pixelChargeMapCollection;
 
-    std::map< int,  type_pixelChargeMap *>  _pixelChargeMapCollection;
+    //! Vector of TDS pixels
+    /*! Vector of TDS pixels is used as output contained for Track
+     *   Detailed Simulation
+     */
+
+     vector<TDSPixel> _vectorOfPixels;
+     vector<TDSPixel>::iterator _pixelIterator;
+ 
+    //! Integration storage pointer for TDS
+
+    TDSIntegrationStorage * _integrationStorage;
 
   };
 
