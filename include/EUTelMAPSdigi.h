@@ -18,7 +18,6 @@
 #include "marlin/Processor.h"
 
 // Include for Track Detailed Simulation (temporarily in Eutelescope)
-
 #include "TDSPixelsChargeMap.h"
 
 // gear includes <.h>
@@ -41,8 +40,6 @@
 #include <map>
 
 
-typedef std::map<unsigned int, double> type_pixelChargeMap;
-
 namespace eutelescope {
 
   //! MAPS digitization processor
@@ -60,13 +57,13 @@ namespace eutelescope {
    *  of the expected charge density over the pixel surface. Charge
    *  capture in the silicon (signal attenuation) and charge
    *  reflection from the epitaxial layer boundary are taken into
-   *  account. 
+   *  account.
    *
    *  The core of the algorithm is implemented in TDS (Track Detailed
    *  Simulation) package by Piotr Niezurawski (pniez@fuw.edu.pl)
    *
    *  @author Aleksander Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-   *  @version $Id: EUTelMAPSdigi.h,v 1.2 2008-11-11 19:12:41 zarnecki Exp $
+   *  @version $Id: EUTelMAPSdigi.h,v 1.3 2008-11-12 14:36:57 bulgheroni Exp $
    *
    */
 
@@ -108,7 +105,7 @@ namespace eutelescope {
     virtual void processRunHeader (LCRunHeader * run);
 
     //! Called every event
-    /*! This is called for each event in the file. 
+    /*! This is called for each event in the file.
      *
      *  Each simulated hit is translated from the global to the local
      *  frame of reference  thanks to the GEAR geometry description.
@@ -116,7 +113,7 @@ namespace eutelescope {
      *  The track segment is then divided into smaller fragments and
      *  the expected charge sharing between pixels is calculated based
      *  on the realistic parametrization.
-     *  
+     *
      *  Finally, all pixels fired are put into the output collection
      *  in the format corresponding to sparcified raw data.
      *
@@ -145,7 +142,7 @@ namespace eutelescope {
 
   protected:
 
-    // 
+    //
     //  Definitions of the parameters needed by the Track Detailed
     //  Simulation (TDS) algorithm  start here
     //
@@ -189,7 +186,7 @@ namespace eutelescope {
 
     int _gslFunctionCalls;
 
-     //! Numbers of bins in table storing integration results 
+     //! Numbers of bins in table storing integration results
      /*! To speed up charge integration results are stored in a 5D
       * table. The more bins the more precise results, but more time
       * is needed to fill the table. Once the table is filled
@@ -202,7 +199,7 @@ namespace eutelescope {
     int _integPixelSegmentsAlongW;
     int _integPixelSegmentsAlongH;
 
-    //! Flag for using one integrations storage 
+    //! Flag for using one integrations storage
     /*! Integration can speed up significantly when using same
      *  integration storage for all sensors. However, this makes sense
      *  only if all sensors have same geometry.
@@ -213,7 +210,7 @@ namespace eutelescope {
     //! Ionization energy in silicon [eV]
     /*! To account for Poisson charge fluctuations energy deposit
      *   returned by Mokka has to be converted to units of elementary
-     *   charge 
+     *   charge
      */
 
     double _ionizationEnergy;
@@ -224,19 +221,19 @@ namespace eutelescope {
      *   diffusion. This scaling factor can also be used to decrease or
      *   increase effects of Poisson fluctuations.
      */
-        
+
     double _depositedChargeScaling;
 
     //! Poisson smearing flag
     /*! If this flag is set, charge collected on the pixel is smeared
      *  according to the Poisson distribution.
-     */ 
+     */
 
     bool _applyPoissonSmearing;
 
     //! ADC gain  in ADC counts per unit charge
     /*! Charge collected on the pixel is amplified and converted to
-     *   ADC counts. 
+     *   ADC counts.
      */
 
     double _adcGain;
@@ -269,7 +266,7 @@ namespace eutelescope {
     //! ADC offeset
     /*! Constant pedestal value, which can be added to all pixels
      *  after zero suppression and before storing in the output table
-     */ 
+     */
 
     double _adcOffset;
 
@@ -280,38 +277,38 @@ namespace eutelescope {
 
     //! SimTrackerHit collection name
     /*! This is the name of the collection holding the simulated hits
-     *  from Mokka. 
+     *  from Mokka.
      */
     std::string _simhitCollectionName;
 
 
     //! Output pixel collection name
     /*! This is the name of the collection used to store the results
-     *  of digitization. 
+     *  of digitization.
      */
     std::string _pixelCollectionName;
 
 
     //! Single Mokka hit output mode
     /*! Flag controling if pixel list should be written to output
-     *  file after each Mokka hit is processed or only after 
+     *  file after each Mokka hit is processed or only after
      *  the whole event
      */
 
      bool _singleHitOutput;
 
-    //! Debug Event Count 
+    //! Debug Event Count
     /*! Print out debug and information
      *  messages only for one out of given number of events. If
      *  zero, no debug information is printed.
      */
    int _debugCount ;
-  
+
   private:
 
     // Local functions used in charge sharing calculations
 
-    //! Checks track segment start and end point 
+    //! Checks track segment start and end point
     /*! Track segment start and end points are compared with sensor
      *  dimensions. If track is going outside the segment, length of
      *  the track and position of its center are corrected.
@@ -414,7 +411,7 @@ namespace eutelescope {
      */
     bool _histogramSwitch;
 
-    /*! 
+    /*!
      *  Following variables contain information about Mokka hit
      *  transformed to the local (sensor) coordinate frame
      */
@@ -439,7 +436,7 @@ namespace eutelescope {
 
     double _mokkaDeposit;
 
-    /*! 
+    /*!
      *  Following variables contain information about sensor
      *  dimensions in the local coordinate frame
      */
@@ -453,7 +450,7 @@ namespace eutelescope {
 
     //! Sensor pitch in XY in local reference frame
     /*! Sensor pitch can be different in local reference frame
-     *  X can swap with Y due to rotation 
+     *  X can swap with Y due to rotation
      */
 
     double _localPitch[2];
@@ -466,21 +463,21 @@ namespace eutelescope {
      *  cut are also available.
      */
 
-   TDSPixelsChargeMap  *_pixelChargeMap;
+    TDS::TDSPixelsChargeMap  *_pixelChargeMap;
 
-   std::map< int,  TDSPixelsChargeMap *>  _pixelChargeMapCollection;
+    std::map< int,  TDS::TDSPixelsChargeMap *>  _pixelChargeMapCollection;
 
     //! Vector of TDS pixels
     /*! Vector of TDS pixels is used as output contained for Track
      *   Detailed Simulation
      */
 
-     vector<TDSPixel> _vectorOfPixels;
-     vector<TDSPixel>::iterator _pixelIterator;
- 
+    std::vector<TDS::TDSPixel > _vectorOfPixels;
+    std::vector<TDS::TDSPixel >::iterator _pixelIterator;
+
     //! Integration storage pointer for TDS
 
-    TDSIntegrationStorage * _integrationStorage;
+    TDS::TDSIntegrationStorage * _integrationStorage;
 
   };
 

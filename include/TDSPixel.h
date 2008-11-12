@@ -1,75 +1,85 @@
 /* 
-Description: Pixel for Tracker Detailed Simulation - mainly for output
+   Description: Pixel for Tracker Detailed Simulation - mainly for output
 
-Author: Piotr Niezurawski
+   Author: Piotr Niezurawski
 
-Date: 2008-11-02
+   Date: 2008-11-02
 
-Comments:
- Coordinates used:
- L - length coordinate
- W - width coordinate
+   Comments:
+   Coordinates used:
+   L - length coordinate
+   W - width coordinate
 
-  ^
-  |---------------
-  |              |
-W |   sensitive  |
-  |              |
-0 ---------------->  Corner of pixel (1,1) has coordinates (0.,0.)
-  0      L
+   ^
+   |---------------
+   |              |
+   W |   sensitive  |
+   |              |
+   0 ---------------->  Corner of pixel (1,1) has coordinates (0.,0.)
+   0      L
 
 */
 
-class TDSPixel {
+#ifndef TDSPIXEL_H
+#define TDSPIXEL_H
 
-  friend class TDSPixelsChargeMap;
+namespace TDS {
 
- public:
-  // Constructor
-  inline TDSPixel() {};
 
-  // Destructor
-  inline ~TDSPixel() {};
+  class TDSPixel {
+
+    friend class TDSPixelsChargeMap;
+
+    public:
+    // Constructor
+    inline TDSPixel() {};
+
+    // Destructor
+    inline ~TDSPixel() {};
   
   
-  inline unsigned long int getIndexAlongL()
-  {
-    return indexAlongL;
-  };
+    inline unsigned long int getIndexAlongL()
+      {
+        return indexAlongL;
+      };
 
-  inline unsigned long int getIndexAlongW()
-  {
-    return indexAlongW;
-  };
+    inline unsigned long int getIndexAlongW()
+      {
+        return indexAlongW;
+      };
 
-  inline double getCoordL()
-  {
-    return coordL;
-  };
+    inline double getCoordL()
+      {
+        return coordL;
+      };
 
-  inline double getCoordW()
-  {
-    return coordW;
-  };
+    inline double getCoordW()
+      {
+        return coordW;
+      };
 
-  inline double getCharge()
-  {
-    return charge;
-  }
+    inline double getCharge()
+      {
+        return charge;
+      }
 
-  void print()
-  {
-    cout << "indexAlongL=" << indexAlongL << " " << "indexAlongW=" << indexAlongW << endl;
-    cout << "coordL=" << coordL << " " << "coordW=" << coordW << endl;
-    cout << "charge=" << charge << endl;
-  };
+    void print()
+      {
+        std::cout << "indexAlongL=" << indexAlongL << " " << "indexAlongW=" << indexAlongW << std::endl;
+        std::cout << "coordL=" << coordL << " " << "coordW=" << coordW << std::endl;
+        std::cout << "charge=" << charge << std::endl;
+      };
 
-  protected:
+    protected:
   
-  // Pixel index (L,W)
-  unsigned long int indexAlongL, indexAlongW;
-  // Coordinates of the geometrical center
-  double coordL, coordW;
-  // Charge
-  double charge;
-};
+    // Pixel index (L,W)
+    unsigned long int indexAlongL, indexAlongW;
+    // Coordinates of the geometrical center
+    double coordL, coordW;
+    // Charge
+    double charge;
+  };
+
+}
+
+#endif 

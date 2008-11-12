@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Aleksander Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version $Id: EUTelMAPSdigi.cc,v 1.2 2008-11-11 19:12:32 zarnecki Exp $
+// Version $Id: EUTelMAPSdigi.cc,v 1.3 2008-11-12 14:36:57 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -58,6 +58,7 @@
 using namespace std;
 using namespace marlin;
 using namespace gear;
+using namespace TDS;
 using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
@@ -77,7 +78,7 @@ EUTelMAPSdigi::EUTelMAPSdigi () : Processor("EUTelMAPSdigi") {
   registerInputCollection(LCIO::SIMTRACKERHIT,"SimHitCollectionName",
                           "Simulated (Mokka) hit collection name",
                           _simhitCollectionName, string ( "telEUTelescopeCollection" ));
- 
+
   registerOutputCollection(LCIO::TRACKERHIT,"PixelCollectionName",
                            "Collection name for simulated raw data",
                            _pixelCollectionName, string ("simEUTelescopeData"));
@@ -91,42 +92,42 @@ EUTelMAPSdigi::EUTelMAPSdigi () : Processor("EUTelMAPSdigi") {
   registerProcessorParameter ("MaxStepInLength",
                               "Maximum step length for single hit",
                               _maxStepInLength,  static_cast < double > (0.001));
-  
+
   registerProcessorParameter ("IntegMaxNumberPixelsAlongL",
                               "Maximum diffusion range in pixels along sensor length ",
                               _integMaxNumberPixelsAlongL,  static_cast < int > (9));
-  
+
   registerProcessorParameter ("IntegMaxNumberPixelsAlongW",
                               "Maximum diffusion range in pixels along sensor width ",
                               _integMaxNumberPixelsAlongW,  static_cast < int > (9));
-  
+
   registerProcessorParameter ("ChargeAttenuationLength",
                               "Charge attenuation length in diffusion",
                               _chargeAttenuationLength,  static_cast < double > (0.038));
-  
+
 
   registerProcessorParameter ("ChargeReflectedContribution",
                               "Charge reflection coefficient",
                               _chargeReflectedContribution,  static_cast < double > (1.0));
-  
+
   registerProcessorParameter ("GSL function calls",
                               "Number of function calls in one GSL integration",
                               _gslFunctionCalls,  static_cast < int > (5000));
-  
+
   registerProcessorParameter ("IntegPixelSegmentsAlongL",
                               "Number of bins along sensor lenght for storing integration results",
                               _integPixelSegmentsAlongL,  static_cast < int > (16));
-  
+
 
   registerProcessorParameter ("IntegPixelSegmentsAlongW",
                               "Number of bins along sensor width for storing integration results",
                               _integPixelSegmentsAlongW,  static_cast < int > (16));
-  
+
 
   registerProcessorParameter ("IntegPixelSegmentsAlongH",
                               "Number of bins along sensor depth for storing integration results",
                               _integPixelSegmentsAlongH,  static_cast < int > (16));
-  
+
 
   registerProcessorParameter ("Use common integration storage",
          "Common integration storage can be used for all sensors if they have same geometry",
@@ -136,13 +137,13 @@ EUTelMAPSdigi::EUTelMAPSdigi () : Processor("EUTelMAPSdigi") {
   registerProcessorParameter ("IonizationEnergy",
                               "Ionization energy in silicon [eV]",
                               _ionizationEnergy,  static_cast < double > (3.6));
-  
+
 
 
   registerProcessorParameter ("DepositedChargeScaling",
                               "Scaling of the deposited charge",
                              _depositedChargeScaling ,  static_cast < double > (1.0));
-  
+
 
 
   registerProcessorParameter ("ApplyPoissonSmearing",
@@ -153,30 +154,30 @@ EUTelMAPSdigi::EUTelMAPSdigi () : Processor("EUTelMAPSdigi") {
   registerProcessorParameter ("AdcGain",
                               "ADC gain  in ADC counts per unit charge",
                               _adcGain,  static_cast < double > (0.01));
-  
+
 
 
   registerProcessorParameter ("AdcGainVariation",
                               "ADC gain variation ",
                              _adcGainVariation ,  static_cast < double > (0.));
-  
+
 
 
   registerProcessorParameter ("AdcNoise",
                               "ADC noise in ADC counts",
                              _adcNoise ,  static_cast < double > (1.0));
-  
+
 
 
   registerProcessorParameter ("AdcOffset",
                               "Constant pedestal value in ADC couts",
                              _adcOffset ,  static_cast < double > (0.));
-  
+
 
   registerProcessorParameter ("ZeroSuppressionThreshold",
                               "Threshold (in ADC counts) for removing empty pixels",
                              _zeroSuppressionThreshold ,  static_cast < double > (3.));
-  
+
 
 
 // Other processor parameters
@@ -231,7 +232,7 @@ void EUTelMAPSdigi::init() {
 #endif
 
   // Book common integration storage for all sensors, if this was
-  // requested 
+  // requested
 
   if (_useCommonIntegrationStorage)
      {
@@ -248,15 +249,15 @@ void EUTelMAPSdigi::processRunHeader (LCRunHeader * rdr) {
 // Check if the input was generated with Mokka
 
 
-streamlog_out( MESSAGE4 )  << "  Run : " << rdr->getRunNumber() 
-                           << " - "      << rdr->getDetectorName() 
+streamlog_out( MESSAGE4 )  << "  Run : " << rdr->getRunNumber()
+                           << " - "      << rdr->getDetectorName()
                            << ":  "      << rdr->getDescription()  << endl ;
 
 string simulator = rdr->parameters().getStringVal("SimulatorName");
 
 if(simulator != "")
   {
-   streamlog_out( MESSAGE4 )  << simulator << " input file recognized, version  " 
+   streamlog_out( MESSAGE4 )  << simulator << " input file recognized, version  "
                               << rdr->parameters().getStringVal("SimulatorVersion")  << endl;
   }
 else
@@ -274,11 +275,11 @@ else
   // the run header contains the number of detectors. This number
   // should be in principle be the same as the number of layers in the
   // geometry description. But it is not always set for simulation output
-  if ( header->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) 
+  if ( header->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() )
     streamlog_out ( WARNING0 ) << "Warning during the geometry consistency check: " << endl
           << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " << endl
           << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() << " silicon planes" << endl;
- 
+
 
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
@@ -286,12 +287,12 @@ else
   // in the xml file.  But it is not always set for simulation output
 
 
-  if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) 
+  if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() )
     streamlog_out ( WARNING0 ) <<  "Warning during the geometry consistency check: " << endl
                              << "The run header says the GeoID is " << header->getGeoID() << endl
                              << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID() << endl;
 
-  
+
 
   // now book histograms plz...
   if ( isFirstEvent() )  bookHistos();
@@ -319,7 +320,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
   if ( evt->getEventType() == kEORE ) {
     streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return;
-  } 
+  }
 
 
   try {
@@ -348,7 +349,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
       if ( detectorID != oldDetectorID ) {
 
-	oldDetectorID = detectorID;
+        oldDetectorID = detectorID;
 
         if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
           // first of all try to see if this detectorID already belong to
@@ -391,7 +392,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
         }
 
-     }  // End of if ( detectorID != oldDetectorID ) 
+     }  // End of if ( detectorID != oldDetectorID )
 
 
       // get the position and momentum of particle generating energy deposit
@@ -400,7 +401,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
      const float*  hitmom = simhit->getMomentum();
 
   if (debug)
-    streamlog_out( DEBUG4 ) << "SimHit in global frame  at X = " <<  hitpos[0] 
+    streamlog_out( DEBUG4 ) << "SimHit in global frame  at X = " <<  hitpos[0]
                                                      <<  " Y = " <<  hitpos[1]
                                                      <<  " Z = " <<  hitpos[2] << endl;
 
@@ -441,7 +442,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       senspos[2] = hitpos[2] -  zZero;
 
      // now move to the sensor corner. Sign determines which way to move
-     
+
      // X axis
       double sign = 1;
 
@@ -481,7 +482,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
      _localPosition[2] = sign * senspos[2] ;
 
   if (debug)
-    streamlog_out( DEBUG4 ) << "Position in local frame at X = " << _localPosition[0] 
+    streamlog_out( DEBUG4 ) << "Position in local frame at X = " << _localPosition[0]
                                                      <<  " Y = " << _localPosition[1]
                                                      <<  " Z = " << _localPosition[2] << endl;
 
@@ -506,12 +507,12 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
       // momentum transformation (only rotation)
 
- 
+
      _localMomentum[0] =  yPointing[1]/sign * hitmom[0] - xPointing[1]/sign * hitmom[1] ;
      _localMomentum[1] = -yPointing[0]/sign * hitmom[0] + xPointing[0]/sign * hitmom[1] ;
      _localMomentum[2] = sign * hitmom[2] ;
 
-    // Normalized direction vector 
+    // Normalized direction vector
 
     double ptot;
      ptot=sqrt(_localMomentum[0]*_localMomentum[0]+_localMomentum[1]*_localMomentum[1]+_localMomentum[2]*_localMomentum[2]);
@@ -523,14 +524,14 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
      // Sensor size in the local (sensor) frame (X can swap with Y due to rotation!)
 
- 
+
      _localSize[0] =  yPointing[1]/sign * xSize - xPointing[1]/sign * ySize ;
      if(_localSize[0] < 0)_localSize[0] = -_localSize[0];
 
      _localSize[1] = -yPointing[0]/sign * xSize + xPointing[0]/sign * ySize ;
      if(_localSize[1] < 0)_localSize[1] = -_localSize[1];
 
-     
+
 
      _localSize[2] = zThickness;
 
@@ -548,8 +549,8 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
     ///////////////////////////////////////////////////////////////////////////
     //
-    // Now we are in the local coordinate frame, and we should have 
-    // all information needed for digitization 
+    // Now we are in the local coordinate frame, and we should have
+    // all information needed for digitization
     //
     //  Hit position in the local frame of reference:  _localPosition[3]
     //  Particle momentum [MeV] in local frame:  _localMomentum[3]
@@ -577,12 +578,12 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
             // this means that the map for was not defined yet,
             // so this is the right place to do that
 
-	    // current TDS requires that negative sensor thickness is given!
+            // current TDS requires that negative sensor thickness is given!
           _pixelChargeMap = new TDSPixelsChargeMap(_localSize[0],_localSize[1],-_localSize[2]);
 
           _pixelChargeMapCollection.insert( make_pair( detectorID,_pixelChargeMap) );
 
-	  // Set additional geometry parameters
+          // Set additional geometry parameters
           _pixelChargeMap->setPixelLength(_localPitch[0]);
           _pixelChargeMap->setPixelWidth(_localPitch[1]);
 
@@ -598,25 +599,25 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
                 _integMaxNumberPixelsAlongL, _integMaxNumberPixelsAlongW, _gslFunctionCalls);
 
 
-          streamlog_out( MESSAGE4 )  << " Pixel map initialized  for detectorID " 
+          streamlog_out( MESSAGE4 )  << " Pixel map initialized  for detectorID "
                                        << detectorID << endl;
 
 
           // Initialize integration storage
 
           if (!_useCommonIntegrationStorage)
-	    {
-	      _integrationStorage = new TDSIntegrationStorage(_integPixelSegmentsAlongL,
+            {
+              _integrationStorage = new TDSIntegrationStorage(_integPixelSegmentsAlongL,
                                    _integPixelSegmentsAlongW, _integPixelSegmentsAlongH);
 
-            streamlog_out( MESSAGE4 )  << " TDS integration storage initialized  for detectorID " 
+            streamlog_out( MESSAGE4 )  << " TDS integration storage initialized  for detectorID "
                                        << detectorID << endl;
 
             }
 
-	  _pixelChargeMap->setPointerToIntegrationStorage(_integrationStorage);
-	  }
-	}
+          _pixelChargeMap->setPointerToIntegrationStorage(_integrationStorage);
+          }
+        }
 
        // Get pointer to the TDS pixel charge map
         _pixelChargeMap = _pixelChargeMapCollection[detectorID];
@@ -637,7 +638,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
     //
 
     // Convert Mokka deposit [GeV] to charge in units of elementary
-    // charge 
+    // charge
 
     _mokkaDeposit *= 1000000000./_ionizationEnergy;
 
@@ -646,15 +647,15 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
     // thickness to keep direction unchanged
 
     TDSStep step(_localPosition[0], _localPosition[1], _localPosition[2]-_localSize[2],
-		 _localDirection[0],_localDirection[1],_localDirection[2],
+                 _localDirection[0],_localDirection[1],_localDirection[2],
                  _mokkaPath, _mokkaDeposit);
 
     // distribute charge among pixels (here all the work is done!)
- 
+
     _pixelChargeMap->update(step);
 
      if (debug)
-	streamlog_out( DEBUG4 ) << "Total charge deposited: " << _pixelChargeMap->getTotalCharge()
+        streamlog_out( DEBUG4 ) << "Total charge deposited: " << _pixelChargeMap->getTotalCharge()
                                 << " (Mokka deposit: " << _mokkaDeposit << " )" << endl;
 
      // Charge processing
@@ -664,7 +665,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
      if(_depositedChargeScaling!=1.)
        _pixelChargeMap->scaleCharge(_depositedChargeScaling);
 
- 
+
      // Poisson smearing (if requested)
 
      if(_applyPoissonSmearing)
@@ -672,7 +673,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
         _pixelChargeMap->applyPoissonFluctuations(false);
 
        if (debug)
-	 streamlog_out( DEBUG4 ) << "Charge after Poisson fluctuations: " 
+         streamlog_out( DEBUG4 ) << "Charge after Poisson fluctuations: "
                                  << _pixelChargeMap->getTotalCharge() << endl;
 
        }
@@ -684,13 +685,13 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
      // TDS allow for negative charges and negative thresholds.
      // However we assume here that threshold has to be
      // positive. If zero or negative threshold value is set, not
-     // threshold correction is applied. 
+     // threshold correction is applied.
 
      if(_zeroSuppressionThreshold>0)
         _pixelChargeMap->applyThresholdCut(_zeroSuppressionThreshold);
 
      if (debug)
-	 streamlog_out( DEBUG4 ) << "Total signal after gain and ZS: " 
+         streamlog_out( DEBUG4 ) << "Total signal after gain and ZS: "
                                  << _pixelChargeMap->getTotalCharge() << endl;
 
     // The last task is to put pixels with collected charge into
@@ -700,25 +701,25 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
    if( _singleHitOutput)
      {
      // Get vector of fired pixels
-     
+
      _vectorOfPixels = _pixelChargeMap->getVectorOfPixels();
 
      // Output to raw data structure
      //      To be added
      //      ===========
      // List all fired pixels
- 
+
      if (debug)
         {
         int nPixel = _vectorOfPixels.size() ;
 
-        streamlog_out( MESSAGE4 ) <<  "Detector ID = " << detectorID 
+        streamlog_out( MESSAGE4 ) <<  "Detector ID = " << detectorID
                                   << ", " << nPixel << " pixels fired " << endl;
 
        for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); _pixelIterator++)
-	   streamlog_out( DEBUG4 ) <<  " Pixel at  (" << _pixelIterator->getIndexAlongL() 
-                                   <<  "," <<  _pixelIterator->getIndexAlongW() 
-				   <<  ") with Q = " << _pixelIterator->getCharge()  << endl;
+           streamlog_out( DEBUG4 ) <<  " Pixel at  (" << _pixelIterator->getIndexAlongL()
+                                   <<  "," <<  _pixelIterator->getIndexAlongW()
+                                   <<  ") with Q = " << _pixelIterator->getCharge()  << endl;
 
 // Store pixel charges in the histogram
 // Only for events with debug output!
@@ -752,9 +753,9 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
 
 
-	}  // end of if (debug)
+        }  // end of if (debug)
 
-       // clear pixel map after output 
+       // clear pixel map after output
        _pixelChargeMap->clear();
        _vectorOfPixels.clear();
       }
@@ -763,17 +764,17 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
     }
        // end of loop over SimTrackerHit collection
 
-// Output all collected pixels 
+// Output all collected pixels
 // If single hit flag is not set, then hits are written out after the whole event
 
   if( ! _singleHitOutput)
      {
 
      // Loop over defined detectors
- 
+
      std::map< int,  TDSPixelsChargeMap *>::iterator mapIterator;
 
-      for(mapIterator = _pixelChargeMapCollection.begin(); 
+      for(mapIterator = _pixelChargeMapCollection.begin();
           mapIterator != _pixelChargeMapCollection.end(); mapIterator++)
         {
         detectorID = mapIterator->first;
@@ -789,19 +790,19 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
 
      // List all fired pixels
- 
+
      if (debug)
         {
         int nPixel = _vectorOfPixels.size() ;
 
-        streamlog_out( MESSAGE4 ) <<  "Detector ID = " << detectorID 
-                                  << ", " << nPixel << " pixels fired, " 
-				  << "total charge deposited: " << _pixelChargeMap->getTotalCharge() << endl;
+        streamlog_out( MESSAGE4 ) <<  "Detector ID = " << detectorID
+                                  << ", " << nPixel << " pixels fired, "
+                                  << "total charge deposited: " << _pixelChargeMap->getTotalCharge() << endl;
 
        for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); _pixelIterator++)
-	   streamlog_out( DEBUG4 ) <<  " Pixel at  (" << _pixelIterator->getIndexAlongL() 
-                                   <<  "," <<  _pixelIterator->getIndexAlongW() 
-				   <<  ") with Q = " << _pixelIterator->getCharge()  << endl;
+           streamlog_out( DEBUG4 ) <<  " Pixel at  (" << _pixelIterator->getIndexAlongL()
+                                   <<  "," <<  _pixelIterator->getIndexAlongW()
+                                   <<  ") with Q = " << _pixelIterator->getCharge()  << endl;
 
 // Store pixel charges in the histogram
 // Only for events with debug output!
@@ -946,7 +947,7 @@ void EUTelMAPSdigi::bookHistos() {
                                   << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
         _histogramSwitch = false;
       }
- 
+
      // Pixel map to show generated cluster shapes
 
       {
@@ -1008,7 +1009,7 @@ double EUTelMAPSdigi::CheckPathLimits()
   double pathStart=0.;
   double pathEnd=1.;
 
-  // Check all sensor dimensions ! 
+  // Check all sensor dimensions !
   // (Probably checking Z would be enough :-)
 
   for(int idim=0; idim<3 ; idim++)
@@ -1027,7 +1028,7 @@ double EUTelMAPSdigi::CheckPathLimits()
 
     }
 
-  // 
+  //
 
   if(  pathStart < 0. || pathStart > 1. || pathEnd < 0. || pathEnd > 1.)
        streamlog_out ( WARNING0 ) << "Warning in checking path limits: out of range " << endl
