@@ -27,6 +27,7 @@
 // lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+#include <IMPL/TrackerDataImpl.h>
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -63,7 +64,7 @@ namespace eutelescope {
    *  Simulation) package by Piotr Niezurawski (pniez@fuw.edu.pl)
    *
    *  @author Aleksander Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-   *  @version $Id: EUTelMAPSdigi.h,v 1.3 2008-11-12 14:36:57 bulgheroni Exp $
+   *  @version $Id: EUTelMAPSdigi.h,v 1.4 2008-11-12 18:36:58 bulgheroni Exp $
    *
    */
 
@@ -476,8 +477,11 @@ namespace eutelescope {
     std::vector<TDS::TDSPixel >::iterator _pixelIterator;
 
     //! Integration storage pointer for TDS
-
     TDS::TDSIntegrationStorage * _integrationStorage;
+
+
+    //! Map for the TrackerData output collection
+    std::map<int , lcio::TrackerDataImpl * > _trackerDataMap;
 
   };
 
