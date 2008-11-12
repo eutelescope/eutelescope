@@ -79,7 +79,7 @@ namespace eutelescope {
    *   been using
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelNativeReader.h,v 1.8 2008-11-12 12:01:37 furletova Exp $
+   *   @version $Id: EUTelNativeReader.h,v 1.9 2008-11-12 14:24:13 bulgheroni Exp $
    *
    */
   class EUTelNativeReader : public marlin::DataSourceProcessor    {
@@ -195,6 +195,9 @@ namespace eutelescope {
     std::string _eudrbZSModeOutputCollectionName;
 
 
+    //! The depfet output collection name
+    std::string _depfetOutputCollectionName;
+
   private:
     // from here below only private data members
 
@@ -221,8 +224,10 @@ namespace eutelescope {
     //! The EUDRBDecoder
     eudaq::EUDRBDecoder * _eudrbDecoder;
 
+#ifdef UNDERDEV
     //! The DEPFETDecoder
     eudaq::DEPFETDecoder * _depfetDecoder;
+#endif
 
     //! Out of sync threshold for mimotel sensors
     /*! The definition of an out of synch event is based upon the

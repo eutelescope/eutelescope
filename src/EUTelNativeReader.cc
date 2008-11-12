@@ -2,7 +2,8 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-// Version $Id: EUTelNativeReader.cc,v 1.14 2008-11-12 12:01:37 furletova Exp $
+
+// Version $Id: EUTelNativeReader.cc,v 1.15 2008-11-12 14:24:13 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -94,14 +95,13 @@ EUTelNativeReader::EUTelNativeReader (): DataSourceProcessor  ("EUTelNativeReade
                            "This si the mimotel output collection when read in ZS mode",
                            _eudrbZSModeOutputCollectionName, string("zsdata") );
 
+  registerOutputCollection(LCIO::TRACKERDATA, "DEPFETOutputCollection",
+                           "This is the depfet produced output collection",
+                           _depfetOutputCollectionName, string("rawdata_dep"));
+
   registerOptionalParameter("EUDRBSparsePixelType",
                             "Type of sparsified pixel data structure (use SparsePixelType enumerator)",
                             _eudrbSparsePixelType , static_cast<int> ( 1 ) );
-
-
-  // to clean up the field justification
-//  streamlog_out ( ERROR4 ) << setiosflags( ios::left );
-//  streamlog_out ( ERROR4 ) << resetiosflags( ios::right );
 
 
 }
@@ -123,7 +123,7 @@ void EUTelNativeReader::readDataSource (int numEvents) {
   // greater than numEvents.
   int eventCounter = 0;
 
-  // by definition this is the first event! 
+  // by definition this is the first event!
   _isFirstEvent = true;
 
   // this is to make the output messages nicer
@@ -197,30 +197,46 @@ void EUTelNativeReader::readDataSource (int numEvents) {
 
           // once again we have to guess the event type making several
           // dynamic recasting
-          //
-          // let's start from the EUDRBEvents
+
+
+          // ---------------------------------------------- //
+          //                                                //
+          //                 EUDRBEvent                     //
+          //                                                //
           eudaq::EUDRBEvent * eudrbEvent = dynamic_cast< eudaq::EUDRBEvent *> ( subEvent );
           if ( eudrbEvent ) {
             // ok, this is an eudrb event, get ready to process it!
             processEUDRBDataEvent( eudrbEvent, eutelEvent.get() ) ;
           }
+          // ---------------------------------------------- //
 
+
+
+          // ---------------------------------------------- //
+          //                                                //
+          //                 DEPFETEvent                    //
+          //                                                //
+          eudaq::DEPFETEvent * depfetEvent = dynamic_cast< eudaq::DEPFETEvent * > ( subEvent );
+          if ( depfetEvent ) {
+            // this is a DEPFET event, process it!
+            processDEPFETDataEvent( depfetEvent, eutelEvent.get() );
+          }
+          // ---------------------------------------------- //
+
+
+          // ---------------------------------------------- //
+          //                                                //
+          //                 TLUEvent                       //
+          //                                                //
           eudaq::TLUEvent * tluEvent = dynamic_cast< eudaq::TLUEvent * > ( subEvent );
           if ( tluEvent ) {
             // this is a TLU event, process it!
             processTLUDataEvent( tluEvent, eutelEvent.get() );
           }
+          // ---------------------------------------------- //
+
 
           /* Add here your event using the same procedure as above */
-
-
- 
-          eudaq::DEPFETEvent * depfetEvent = dynamic_cast< eudaq::DEPFETEvent * > ( subEvent );
-          if ( depfetEvent ) {
-            // this is a DEPFET event, process it!
-	      printf("DEPFET event found!!! \n ");
-            processDEPFETDataEvent( depfetEvent, eutelEvent.get() );
-          }
 
 
         }
@@ -261,7 +277,7 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
   // if this is the first event we also have to prepare a collection
   // of EUTelSetupDescription with the info of all the detectors
   // readout by the EUDRBs
-  
+
   if ( isFirstEvent() ) {
 
     auto_ptr< lcio::LCCollectionVec > eudrbSetupCollection( new LCCollectionVec (LCIO::LCGENERICOBJECT) );
@@ -539,7 +555,7 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
             // (with markers in) and then calculate how many pixels I
             // have to remove
             size_t originalX = array.m_x[ iPixel ] ;
-	    vector<size_t > markerVec = currentDetector->getMarkerPosition();
+            vector<size_t > markerVec = currentDetector->getMarkerPosition();
 
             if ( find( markerVec.begin(), markerVec.end(), originalX ) == markerVec.end() ) {
               // the original X is not on a marker column, so I need
@@ -695,64 +711,65 @@ void EUTelNativeReader::processTLUDataEvent( eudaq::TLUEvent * tluEvent, EUTelEv
 
 }
 void EUTelNativeReader::processDEPFETDataEvent( eudaq::DEPFETEvent * depfetEvent, EUTelEventImpl * eutelEvent ) {
-    auto_ptr< lcio::LCCollectionVec > rawDataCollection ( new LCCollectionVec (LCIO::TRACKERRAWDATA) ) ;
+
+#ifdef UNDERDEV
+  auto_ptr< lcio::LCCollectionVec > rawDataCollection ( new LCCollectionVec (LCIO::TRACKERRAWDATA) ) ;
 
   CellIDEncoder< TrackerRawDataImpl > rawDataEncoder ( EUTELESCOPE::MATRIXDEFAULTENCODING, rawDataCollection.get() );
   int DATA[64][128];
-    printf("DEPFET DATA Event \n");
-  
-    if(isFirstEvent()) {
-	printf("DEPFET DATA Event first 1\n");
-	
-	auto_ptr< lcio::LCCollectionVec > depfetSetupCollection( new LCCollectionVec (LCIO::LCGENERICOBJECT) );
-	
-	eutelEvent->addCollection( depfetSetupCollection.release(), "depfetSetup" );
-    }
-    
-    printf("DEPFET DATA Event first 2=%d \n",_depfetDetectors.size());
+  streamlog_out( DEBUG ) << "DEPFET DATA Event" << endl;
 
-    for ( size_t iDetector = 0; iDetector < _depfetDetectors.size() ; iDetector++) {
-	printf("DEPFET DATA Event loop %d numboards=%d \n",iDetector,depfetEvent->NumBoards());     
-	for(size_t iPlane=0; iPlane<depfetEvent->NumBoards(); ++iPlane){ 
-	    printf("DEPFET DATA:: iPlane loop %d \n",iPlane);     
-	    
-	    eudaq::DEPFETBoard&depfetBoard=depfetEvent->GetBoard(iPlane);
-	    eudaq::DEPFETDecoder::arrays_t<short, short > array = _depfetDecoder->GetArrays<short, short > ( depfetBoard );
-	    printf("DEPFET DATA:: GetBoard\n");     
-	    
-	    rawDataEncoder["sensorID"] = 8;
-	    rawDataEncoder["xMin"] = 0;
-	    rawDataEncoder["xMax"] = 64 - 1;
-	    rawDataEncoder["yMin"] = 0;
-	    rawDataEncoder["yMax"] = 128 - 1;
-            printf("call for get raw data\n");
-	    auto_ptr< lcio::TrackerRawDataImpl > rawData( new lcio::TrackerRawDataImpl );
-            printf("call for setcell id \n");
-	    rawDataEncoder.setCellID(rawData.get());
-	    for (int i = 0; i < 8192; i++) {
- 	 
-		    DATA[array.m_x[i]][array.m_y[i]]=array.m_adc[0][i];
-		    //	    printf("call for pushback ipix=%d  %d %d %d \n",i,array.m_x[i],array.m_y[i],array.m_adc[0][i] );
-//			if(iprint==6)printf("Det=%d ADCvalue=%d,  ipix=%d %d,\n",i,DATA[xPixel][yPixel],xPixel,yPixel);
-		
-	    }
-          
-	    for (int yPixel = 0; yPixel < 128; yPixel++) {
-		for (int xPixel = 0; xPixel < 64; xPixel++) {
-		    rawData->adcValues().push_back (DATA[xPixel][yPixel]);
-		}
-	    }
-	    
+  if(isFirstEvent()) {
+    streamlog_out( DEBUG4 ) << "DEPFET DATA Event first 1" << endl;;
+    auto_ptr< lcio::LCCollectionVec > depfetSetupCollection( new LCCollectionVec (LCIO::LCGENERICOBJECT) );
+    eutelEvent->addCollection( depfetSetupCollection.release(), "depfetSetup" );
+  }
 
-	    rawDataCollection->push_back(rawData.release());
-	}
+  streamlog_out( DEBUG ) << "DEPFET DATA Event first 2=" << ,_depfetDetectors.size() << endl;
 
+  for ( size_t iDetector = 0; iDetector < _depfetDetectors.size() ; iDetector++) {
+    streamlog_out( DEBUG4 ) << " DEPFET DATA Event loop " << iDetector << "  numboards= " << depfetEvent->NumBoards() << endl;
+    for(size_t iPlane=0; iPlane<depfetEvent->NumBoards(); ++iPlane){
+      streamlog_out( DEBUG ) << "DEPFET DATA:: iPlane loop " << iPlane << endl;
+
+      eudaq::DEPFETBoard&  depfetBoard=depfetEvent->GetBoard(iPlane);
+      eudaq::DEPFETDecoder::arrays_t<short, short > array = _depfetDecoder->GetArrays<short, short > ( depfetBoard );
+      streamlog_out( DEBUG ) << "DEPFET DATA:: GetBoard" << endl;
+
+      rawDataEncoder["sensorID"] = 8;
+      rawDataEncoder["xMin"] = 0;
+      rawDataEncoder["xMax"] = 64 - 1;
+      rawDataEncoder["yMin"] = 0;
+      rawDataEncoder["yMax"] = 128 - 1;
+      streamlog_out( DEBUG ) << "call for get raw data" << endl;
+      auto_ptr< lcio::TrackerRawDataImpl > rawData( new lcio::TrackerRawDataImpl );
+      streamlog_out( DEBUG ) << "call for setcell id " << endl;
+      rawDataEncoder.setCellID(rawData.get());
+      for (int i = 0; i < 8192; i++) {
+
+        DATA[array.m_x[i]][array.m_y[i]]=array.m_adc[0][i];
+        //      printf("call for pushback ipix=%d  %d %d %d \n",i,array.m_x[i],array.m_y[i],array.m_adc[0][i] );
+        //      if(iprint==6)printf("Det=%d ADCvalue=%d,  ipix=%d %d,\n",i,DATA[xPixel][yPixel],xPixel,yPixel);
+
+      }
+
+      for (int yPixel = 0; yPixel < 128; yPixel++) {
+        for (int xPixel = 0; xPixel < 64; xPixel++) {
+          rawData->adcValues().push_back (DATA[xPixel][yPixel]);
+        }
+      }
+
+
+      rawDataCollection->push_back(rawData.release());
     }
-    printf("rawDataCollection size= %d \n",rawDataCollection->size() );
-    if ( rawDataCollection->size() ) {
-	// we have some rawdata...
-	eutelEvent->addCollection( rawDataCollection.release(), "DEPFET" );
-    }
+
+  }
+  streamlog_out( DEBUG ) << "rawDataCollection size= " << rawDataCollection->size() << endl;
+  if ( rawDataCollection->size() ) {
+    // we have some rawdata...
+    eutelEvent->addCollection( rawDataCollection.release(), _depfetOutputCollectionName );
+  }
+#endif
 
 }
 
@@ -843,7 +860,7 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
 
     } // this is the end of the EUDRBEvent
 
-      // try now with a TLU event
+    // try now with a TLU event
     eudaq::TLUEvent * eudaqTLUEvent = dynamic_cast< eudaq::TLUEvent * > ( eudaqSubEvent ) ;
 
     if ( eudaqTLUEvent ) {
@@ -861,35 +878,28 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
       noOfTLUDetectors++;
     }
 
-/*
-  Add here your own data producer following the examples above
-*/
+    // try with a DEPFET event
     eudaq::DEPFETEvent * eudaqDEPFETEvent = dynamic_cast< eudaq::DEPFETEvent * > ( eudaqSubEvent ) ;
-
     if ( eudaqDEPFETEvent ) {
-      // this sub event was produced by the TLUProducer
-      // nothing to do for the time being
-      // ....
-	printf("JFadd====> DEPFET BOR Event found\n");
-     // now loop over all the detectors in the eudrb producer
-   
-/*     unsigned short localNoOfDEPFETDetectors =  eudaq::from_string( eudaqDEPFETEvent->GetTag("BOARDS"), 0 );
- 	printf("JFadd====> DEPFET BOR Event found det=%d\n",localNoOfDEPFETDetectors );
-	for ( size_t iDetector = 0 ; iDetector < localNoOfDEPFETDetectors; ++iDetector ) {
 
-	}
-        noOfDEPFETDetectors +=localNoOfDEPFETDetectors ;
-*/
-	
-	EUTelDEPFETDetector * detector = new EUTelDEPFETDetector;
-	_depfetDetectors.push_back( detector );     
-//	assert( noOfDEPFETDetectors == _depfetDetectors.size());
-	
-      // before leaving, remember to assign the _eudrbDecoder
-        _depfetDecoder = new eudaq::DEPFETDecoder( *eudaqDetectorEvent );
+      streamlog_out( DEBUG ) << "JFadd====> DEPFET BOR Event found "<<endl;
 
 
-  }
+      EUTelDEPFETDetector * detector = new EUTelDEPFETDetector;
+      _depfetDetectors.push_back( detector );
+      //      assert( noOfDEPFETDetectors == _depfetDetectors.size());
+
+#ifdef UNDERDEV
+      // before leaving, remember to assign the _depfetDecoder
+      _depfetDecoder = new eudaq::DEPFETDecoder( *eudaqDetectorEvent );
+#endif
+
+    }
+
+
+ /*
+   Add here your own data producer following the examples above
+ */
 
 
   }
@@ -908,7 +918,7 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
 
   // then the TLU producer
   if ( _tluDetectors.size() == 0 ) {
-    streamlog_out( DEBUG0 ) << "No TLU producer found in this EORE" << endl;
+    streamlog_out( DEBUG0 ) << "No TLU producer found in this BORE" << endl;
   } else {
     streamlog_out( MESSAGE2 ) << "TLUProducer: " << endl << endl;
     for ( size_t iDetector = 0 ; iDetector < _tluDetectors.size(); ++iDetector ) {
@@ -918,10 +928,17 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
     }
 
   }
+
   // then the DEPFET producer
   if ( _depfetDetectors.size() == 0 ) {
-      printf("depfet detector size=0\n");
-      streamlog_out( DEBUG0 ) << "No DEPFET producer found in this EORE" << endl;
+    streamlog_out( DEBUG0 ) << "No DEPFET producer found in this BORE" << endl;
+  } else {
+    streamlog_out( MESSAGE2 ) << "DEPFETProducer: " << endl << endl;
+    for ( size_t iDetector = 0 ; iDetector < _depfetDetectors.size(); ++iDetector ) {
+      streamlog_out ( MESSAGE2 ) << " Detector " << iDetector << endl
+                                 << *(_depfetDetectors.at( iDetector )) << endl
+                                 << " -------------------------------------------- " << endl;
+    }
   }
 
   // before processing the run header we have to set the important
