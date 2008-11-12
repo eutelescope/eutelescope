@@ -25,6 +25,7 @@
 #include <eudaq/Event.hh>
 #include <eudaq/EUDRBEvent.hh>
 #include <eudaq/TLUEvent.hh>
+#include <eudaq/DEPFETEvent.hh>
 
 // lcio includes <.h>
 
@@ -78,7 +79,7 @@ namespace eutelescope {
    *   been using
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelNativeReader.h,v 1.7 2008-09-08 13:23:41 bulgheroni Exp $
+   *   @version $Id: EUTelNativeReader.h,v 1.8 2008-11-12 12:01:37 furletova Exp $
    *
    */
   class EUTelNativeReader : public marlin::DataSourceProcessor    {
@@ -155,6 +156,15 @@ namespace eutelescope {
      */
     void processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, EUTelEventImpl * eutelEvent) ;
 
+    //! Process DEPFET data event
+    /*! This method is called whenever a DEPFET data event is found in
+     *  the input data stream
+     *
+     *  @param depfetEvent The DEPFETEvent with the input information
+     *  @param eutelEvent The output EUTelEventImpl
+     */
+    void processDEPFETDataEvent( eudaq::DEPFETEvent * depfetEvent, EUTelEventImpl * eutelEvent );
+
 
   protected:
 
@@ -194,6 +204,9 @@ namespace eutelescope {
     //! Vector of detectors readout by the TLUProducer
     std::vector<EUTelBaseDetector * > _tluDetectors;
 
+    //! Vector of detectors readout by the EUDRBProducer
+    std::vector<EUTelPixelDetector * > _depfetDetectors;
+
 
     // detector specific...................................
 
@@ -208,6 +221,8 @@ namespace eutelescope {
     //! The EUDRBDecoder
     eudaq::EUDRBDecoder * _eudrbDecoder;
 
+    //! The DEPFETDecoder
+    eudaq::DEPFETDecoder * _depfetDecoder;
 
     //! Out of sync threshold for mimotel sensors
     /*! The definition of an out of synch event is based upon the

@@ -120,7 +120,7 @@ namespace eutelescope {
    *  histogram information file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.10 2008-09-01 15:37:00 bulgheroni Exp $
+   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.11 2008-11-12 12:01:37 furletova Exp $
    *
    *
    */
@@ -230,7 +230,7 @@ namespace eutelescope {
     //! Calibrated data collection name.
     /*! The name of the output calibrated data collection. Usually
      *  simply "data"
-     */
+     */ 
     std::string _calibratedDataCollectionName;
 
     //! Current run number.
@@ -259,6 +259,20 @@ namespace eutelescope {
      *  pixels.
      */
     bool _doCommonMode;
+
+    /* Row wise common mode calculation */ 
+    int _CommonModeRowWise;
+
+    //! Last pixel along X
+    /*! This array of int is used to store the number of the last
+     *  pixel along the X direction
+     */
+    IntVec _maxX;
+    //! Last pixel along Y
+    /*! This array of int is used to store the number of the last
+     *  pixel along the Y direction
+     */
+    IntVec _maxY;
 
     //! Hit rejection threshold
     /*! In the case the user wants to suppress the common mode, we

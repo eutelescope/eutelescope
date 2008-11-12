@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMultiLineFit.cc,v 1.25 2008-10-03 16:28:16 bulgheroni Exp $
+// Version: $Id: EUTelMultiLineFit.cc,v 1.26 2008-11-12 12:01:37 furletova Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -444,13 +444,7 @@ void EUTelMultiLineFit::FitTrack(int nPlanesFitter, double xPosFitter[], double 
 
 void EUTelMultiLineFit::processEvent (LCEvent * event) {
 
-  if ( _iEvt % 10  == 0 ) {
-    streamlog_out( MESSAGE2 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-
-  }
+  streamlog_out ( MESSAGE2 ) << "Processing event " << _iEvt << "..." << endl;
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
 
