@@ -27,7 +27,7 @@
 #include <UTIL/LCTime.h>
 // #include <UTIL/LCTOOLS.h>
 
-// system includes 
+// system includes
 #include <fstream>
 #include <memory>
 #include <stdio.h>
@@ -36,6 +36,7 @@
 
 using namespace std;
 using namespace marlin;
+using namespace DEPFET;
 using namespace eutelescope;
 
 
@@ -47,7 +48,7 @@ DEPFETReader::DEPFETReader ():DataSourceProcessor  ("DEPFETReader") {
   _description =
     "Reads data files and creates LCEvent with TrackerRawData collection.\n"
     "Make sure to not specify any LCIOInputFiles in the steering in order to read DEPFET files.";
-  
+
 
   IntVec excludePlanes;
 
@@ -75,8 +76,8 @@ DEPFETReader::DEPFETReader ():DataSourceProcessor  ("DEPFETReader") {
                               _yearflag,static_cast < int >(07));
 
   registerProcessorParameter ("SkipStartGate",
-			      "Skip 4 rows after StartGate",
-			      _SkipStartGate, static_cast < int >(0));
+                              "Skip 4 rows after StartGate",
+                              _SkipStartGate, static_cast < int >(0));
 
 
 }
@@ -84,22 +85,22 @@ DEPFETReader::DEPFETReader ():DataSourceProcessor  ("DEPFETReader") {
 /*=====================================================================*/
  DEPFETReader * DEPFETReader::newProcessor () {
 /*=====================================================================*/
- 
+
    return new DEPFETReader;
 }
- 
+
 /*=====================================================================*/
  void DEPFETReader::init () {
 /*=====================================================================*/
- 
+
     printParameters ();
 }
 
 /*=====================================================================*/
  void DEPFETReader::readDataSource (int Ntrig) {
 /*=====================================================================*/
-    EUTelEventImpl *event;
-    LCCollectionVec *rawData;
+    EUTelEventImpl *event = NULL;
+    LCCollectionVec *rawData = NULL;
 
     TrackerRawDataImpl *rawMatrix[20];
     int rc,eventNumber;
@@ -111,7 +112,7 @@ DEPFETReader::DEPFETReader ():DataSourceProcessor  ("DEPFETReader") {
     Mod_DEPF *DEPFET[10];
     DEPFET_FR  *myfile;
     static int MOD2ID[32], ID2MOD[32];
-    
+
     sprintf(filename,"input.dat");
     myfile=new DEPFET_FR(filename,Ntrig,&rc);
     printf("RC=%d\n",rc);
@@ -128,33 +129,33 @@ DEPFETReader::DEPFETReader ():DataSourceProcessor  ("DEPFETReader") {
     year09a:;
      Nex=0; Ndet=0;
      for(i=0;i<SETUP_MAX;i++) {
-	 if (_setupPlane[i]<=0) break;
-	 ID2MOD[_setupPlane[i]]=-1;
-	 printf("-> ALL::  i=%d  Mod=%d  iMOD=%d \n"
-		,i,_setupPlane[i],ID2MOD[i]);
-	 for(int ii=0;ii<SETUP_MAX;ii++) {
-	     if(_excludePlane[ii]==_setupPlane[i]) { Nex+=1; goto excl; }
-	 }
-	 ID2MOD[Ndet]=_setupPlane[i];
-	 MOD2ID[_setupPlane[i]]=Ndet;
-	 printf("   SET::  i=%d  Mod=%d MOD2ID=%d iMOD=%d \n"
-		,i,_setupPlane[i],MOD2ID[_setupPlane[i]], ID2MOD[Ndet]);
+         if (_setupPlane[i]<=0) break;
+         ID2MOD[_setupPlane[i]]=-1;
+         printf("-> ALL::  i=%d  Mod=%d  iMOD=%d \n"
+                ,i,_setupPlane[i],ID2MOD[i]);
+         for(int ii=0;ii<SETUP_MAX;ii++) {
+             if(_excludePlane[ii]==_setupPlane[i]) { Nex+=1; goto excl; }
+         }
+         ID2MOD[Ndet]=_setupPlane[i];
+         MOD2ID[_setupPlane[i]]=Ndet;
+         printf("   SET::  i=%d  Mod=%d MOD2ID=%d iMOD=%d \n"
+                ,i,_setupPlane[i],MOD2ID[_setupPlane[i]], ID2MOD[Ndet]);
 
-	 DEPFET[Ndet] = new Mod_DEPF(ID2MOD[Ndet]);
-	 Ndet++;
+         DEPFET[Ndet] = new Mod_DEPF(ID2MOD[Ndet]);
+         Ndet++;
      excl:;
      }
      printf (" DEPFET  Init:: Ndet=%d Nex=%d\n",Ndet, Nex);
      if(_yearflag==9) goto year09b;
      kk=0;
      for( i=0;i<Nmodtot;i++) {
-	 myfile->READ_HEADER(iprint);
-	 printf("DEPFET_FR :: %d \n",  myfile->header.ModuleNo); 
-	 if (MOD2ID[myfile->header.ModuleNo]<0) continue;
-	 kk++;
-	 printf("MMMMM=%d \n",myfile->header.ModuleNo);
-	 printf(".i=%d, kk=%d, id2mod=%d, Modid=%d, mod2id=%d........\n"
-		,i,kk,ID2MOD[kk], myfile->header.ModuleNo,MOD2ID[myfile->header.ModuleNo]);
+         myfile->READ_HEADER(iprint);
+         printf("DEPFET_FR :: %d \n",  myfile->header.ModuleNo);
+         if (MOD2ID[myfile->header.ModuleNo]<0) continue;
+         kk++;
+         printf("MMMMM=%d \n",myfile->header.ModuleNo);
+         printf(".i=%d, kk=%d, id2mod=%d, Modid=%d, mod2id=%d........\n"
+                ,i,kk,ID2MOD[kk], myfile->header.ModuleNo,MOD2ID[myfile->header.ModuleNo]);
      }
  year09b:;
      printf ("================================== \n");
@@ -177,49 +178,49 @@ DEPFETReader::DEPFETReader ():DataSourceProcessor  ("DEPFETReader") {
      /*-------------Event Group HEADER----------------*/
      if(rc==100)  { // --goto skip_1;
 
-     if(!First) { 
-	 event->addCollection (rawData, "rawdata");
-	 ProcessorMgr::instance ()->processEvent (static_cast<LCEventImpl*> (event));
-	 delete event;
+     if(!First) {
+         event->addCollection (rawData, "rawdata");
+         ProcessorMgr::instance ()->processEvent (static_cast<LCEventImpl*> (event));
+         delete event;
      }
      /*---------BOR event---------*/
      else { First=0;
-	 printf("FIRST event:: start fill HEADER\n");
-	 // in the case it is the first run so we need to process and
-	 // write out the run header.
-	 
-	 auto_ptr<IMPL::LCRunHeaderImpl> lcHeader  ( new IMPL::LCRunHeaderImpl );
-	 auto_ptr<EUTelRunHeaderImpl>    runHeader ( new EUTelRunHeaderImpl (lcHeader.get()) );
-	 runHeader->addProcessor( type() );
-	 runHeader->lcRunHeader()->setDescription(" Events read from DEPFET input file: " + _fileName);
-	 runHeader->lcRunHeader()->setRunNumber (_runNumber);
-	 runHeader->setHeaderVersion (0.0001);
-	 runHeader->setDataType (EUTELESCOPE::CONVDATA);
-	 runHeader->setDateTime ();
-	 runHeader->addIntermediateFile (_fileName);
-	 runHeader->addProcessor (_processorName);
-	 // this is a mistake here only for testing....
-	 runHeader->setNoOfEvent(Ntrig);
-	 //////////////////////////////////////////////
-	 //////////////////////////////////////////////
-	 runHeader->setNoOfDetector(Ndet);
-	 runHeader->setMinX(IntVec(Ndet, 0));
-	 runHeader->setMaxX(IntVec(Ndet, _noOfXPixel - 1));
-	 runHeader->setMinY(IntVec(Ndet, 0));
-	 runHeader->setMaxY(IntVec(Ndet, _noOfYPixel - 1));
-	 
-	 runHeader->lcRunHeader()->setDetectorName("DEPFET");
-	 //UTIL::LCTOOLS::dumpRunHeader(runHeader);
-	 
-	 // process the run header
-	 ProcessorMgr::instance ()->processRunHeader ( static_cast<lcio::LCRunHeader*> ( lcHeader.release()) );
-	 
-	 // end of first event
-	 _isFirstEvent = false;
-	 printf("END BOR event:: \n");
-	 
+         printf("FIRST event:: start fill HEADER\n");
+         // in the case it is the first run so we need to process and
+         // write out the run header.
+
+         auto_ptr<IMPL::LCRunHeaderImpl> lcHeader  ( new IMPL::LCRunHeaderImpl );
+         auto_ptr<EUTelRunHeaderImpl>    runHeader ( new EUTelRunHeaderImpl (lcHeader.get()) );
+         runHeader->addProcessor( type() );
+         runHeader->lcRunHeader()->setDescription(" Events read from DEPFET input file: " + _fileName);
+         runHeader->lcRunHeader()->setRunNumber (_runNumber);
+         runHeader->setHeaderVersion (0.0001);
+         runHeader->setDataType (EUTELESCOPE::CONVDATA);
+         runHeader->setDateTime ();
+         runHeader->addIntermediateFile (_fileName);
+         runHeader->addProcessor (_processorName);
+         // this is a mistake here only for testing....
+         runHeader->setNoOfEvent(Ntrig);
+         //////////////////////////////////////////////
+         //////////////////////////////////////////////
+         runHeader->setNoOfDetector(Ndet);
+         runHeader->setMinX(IntVec(Ndet, 0));
+         runHeader->setMaxX(IntVec(Ndet, _noOfXPixel - 1));
+         runHeader->setMinY(IntVec(Ndet, 0));
+         runHeader->setMaxY(IntVec(Ndet, _noOfYPixel - 1));
+
+         runHeader->lcRunHeader()->setDetectorName("DEPFET");
+         //UTIL::LCTOOLS::dumpRunHeader(runHeader);
+
+         // process the run header
+         ProcessorMgr::instance ()->processRunHeader ( static_cast<lcio::LCRunHeader*> ( lcHeader.release()) );
+
+         // end of first event
+         _isFirstEvent = false;
+         printf("END BOR event:: \n");
+
      };    /*---------END BOR event---------*/
-     
+
      event = new EUTelEventImpl;
      event->setDetectorName("DEPFET");
      event->setEventType(kDE);
@@ -227,55 +228,55 @@ DEPFETReader::DEPFETReader ():DataSourceProcessor  ("DEPFETReader") {
      event->setTimeStamp(now->timeStamp());
      delete now;
      rawData = new LCCollectionVec (LCIO::TRACKERRAWDATA); //<---- Only for RAW data
-     
+
      eventNumber++;
      if(eventNumber%10==0) printf("Event number=%d  Trigger=%d \n",eventNumber,myfile->header.Triggernumber);
-     if(eventNumber%16==0) { printf("SKIP Event number=%d  Trigger=%d \n",eventNumber,myfile->header.Triggernumber); goto myskip;} 
-//	 eventNumber=myfile->header.Triggernumber;
+     if(eventNumber%16==0) { printf("SKIP Event number=%d  Trigger=%d \n",eventNumber,myfile->header.Triggernumber); goto myskip;}
+//       eventNumber=myfile->header.Triggernumber;
      if(iprint) printf("EventNumber=%d\n",eventNumber);
      event->setRunNumber (_runNumber);
      event->setEventNumber (eventNumber);
-     
-     
-     } // skip_1:  //--  if rc!=100  --> end group header 
-     
+
+
+     } // skip_1:  //--  if rc!=100  --> end group header
+
      kk=0;
-     do { idet++; 
-	 if(iprint) printf ("===============> idet= %d  rc=%d\n",idet,rc);
-	 rc=myfile->READ_EVENT_HEADER(iprint);
-	 if(iprint)printf("READ_DATA rc=%d \n",rc);
-	 /*-------------Module DATA HEADER----------------*/
-	 if(rc==1) goto aaa;
-	 if(rc==2) {   // goto skip_2;
+     do { idet++;
+         if(iprint) printf ("===============> idet= %d  rc=%d\n",idet,rc);
+         rc=myfile->READ_EVENT_HEADER(iprint);
+         if(iprint)printf("READ_DATA rc=%d \n",rc);
+         /*-------------Module DATA HEADER----------------*/
+         if(rc==1) goto aaa;
+         if(rc==2) {   // goto skip_2;
 
-	 if(myfile->READ_DEPFET_EVENT(iprint,_SkipStartGate,DATA)==1) goto aaa;
-	 int iMOD=MOD2ID[myfile->header.ModuleNo];
-	 if (iMOD<0) continue;
-	 if (iprint) 
-	     printf("Start %d %d,%d Trig=%d\n",iMOD, DEPFET[iMOD]->ModID(),myfile->header.ModuleNo,myfile->header.Triggernumber);
-	 
-	 rawMatrix[iMOD] = new TrackerRawDataImpl;
-	 CellIDEncoder < TrackerRawDataImpl > idEncoder (EUTELESCOPE::MATRIXDEFAULTENCODING, rawData);
-//	 idEncoder["sensorID"] = DEPFET[iMOD]->ModID();
-	 idEncoder["sensorID"] = iMOD;
-	 idEncoder["xMin"] = 0;
-	 idEncoder["xMax"] = _noOfXPixel - 1;
-	 idEncoder["yMin"] = 0;
-	 idEncoder["yMax"] = _noOfYPixel - 1;
-	 idEncoder.setCellID (rawMatrix[iMOD]);
+         if(myfile->READ_DEPFET_EVENT(iprint,_SkipStartGate,DATA)==1) goto aaa;
+         int iMOD=MOD2ID[myfile->header.ModuleNo];
+         if (iMOD<0) continue;
+         if (iprint)
+             printf("Start %d %d,%d Trig=%d\n",iMOD, DEPFET[iMOD]->ModID(),myfile->header.ModuleNo,myfile->header.Triggernumber);
 
-		 
-	 for (int yPixel = 0; yPixel < _noOfYPixel; yPixel++) {
-	     for (int xPixel = 0; xPixel < _noOfXPixel; xPixel++) {
-		 rawMatrix[iMOD]->adcValues ().push_back (DATA[xPixel][yPixel]);
-		 if(iprint==6)printf("Det=%d ADCvalue=%d,  ipix=%d %d,\n",i,DATA[xPixel][yPixel],xPixel,yPixel);
-	     }
-	 }
-//	 rawData->push_back (rawMatrix[iMOD]);
-	 
-	 }  // skip_2:  //end eventheader rc==2
+         rawMatrix[iMOD] = new TrackerRawDataImpl;
+         CellIDEncoder < TrackerRawDataImpl > idEncoder (EUTELESCOPE::MATRIXDEFAULTENCODING, rawData);
+//       idEncoder["sensorID"] = DEPFET[iMOD]->ModID();
+         idEncoder["sensorID"] = iMOD;
+         idEncoder["xMin"] = 0;
+         idEncoder["xMax"] = _noOfXPixel - 1;
+         idEncoder["yMin"] = 0;
+         idEncoder["yMax"] = _noOfYPixel - 1;
+         idEncoder.setCellID (rawMatrix[iMOD]);
 
-     myskip:;	 
+
+         for (int yPixel = 0; yPixel < _noOfYPixel; yPixel++) {
+             for (int xPixel = 0; xPixel < _noOfXPixel; xPixel++) {
+                 rawMatrix[iMOD]->adcValues ().push_back (DATA[xPixel][yPixel]);
+                 if(iprint==6)printf("Det=%d ADCvalue=%d,  ipix=%d %d,\n",i,DATA[xPixel][yPixel],xPixel,yPixel);
+             }
+         }
+//       rawData->push_back (rawMatrix[iMOD]);
+
+         }  // skip_2:  //end eventheader rc==2
+
+     myskip:;
      } while (idet!=Nmodtot);
      printf("-------------------------------\n");
      for (int ii=0;ii<Ndet;ii++)  rawData->push_back (rawMatrix[ii]);
@@ -296,11 +297,11 @@ DEPFETReader::DEPFETReader ():DataSourceProcessor  ("DEPFETReader") {
 
 
 /*=====================================================================*/
- 
+
  void DEPFETReader::end () {
    message<MESSAGE> ("Successfully finished") ;
  }
 
 /*=====================================================================*/
- 
+
 
