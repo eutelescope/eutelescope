@@ -578,6 +578,4 @@ TDSPrecluster TDSPixelsChargeMap::getPrecluster(unsigned int rectLength, unsigne
       return thePrecluster;
     }
 }
-#elif
-#WARNING TDSPixelsChargeMap will not be built because CLHEP is not available
 #endif
