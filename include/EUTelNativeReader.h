@@ -55,6 +55,12 @@ namespace eutelescope {
    *   For each group of sensors there will be a common output
    *   collection containing the raw data information.
    *
+   *   DEPFET (by Yulia Furletova)
+   *   Added all the needed pieces of code to convert at the same time
+   *   also the DEPFET detector
+   *
+   *   @since The DEPFET capability has been implemented the minimum
+   *   version of EUDAQ required is 469. 
    *   <b>What to do to add a new sensor</b>
    *
    *   First of all, you need to derive EUTelBaseDector into your own
@@ -79,7 +85,10 @@ namespace eutelescope {
    *   been using
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelNativeReader.h,v 1.9 2008-11-12 14:24:13 bulgheroni Exp $
+   *   @author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
+   *   @author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
+   *   @author Yulia Furletova, Uni-Bonn <mailto:yulia@mail.cern.ch>
+   *   @version $Id: EUTelNativeReader.h,v 1.10 2008-11-13 13:34:47 bulgheroni Exp $
    *
    */
   class EUTelNativeReader : public marlin::DataSourceProcessor    {
@@ -224,10 +233,8 @@ namespace eutelescope {
     //! The EUDRBDecoder
     eudaq::EUDRBDecoder * _eudrbDecoder;
 
-#ifdef UNDERDEV
     //! The DEPFETDecoder
     eudaq::DEPFETDecoder * _depfetDecoder;
-#endif
 
     //! Out of sync threshold for mimotel sensors
     /*! The definition of an out of synch event is based upon the

@@ -2,8 +2,8 @@
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
-
-// Version $Id: EUTelNativeReader.cc,v 1.15 2008-11-12 14:24:13 bulgheroni Exp $
+// Author Yulia Furletova, Uni-Bonn <mailto:yulia@mail.cern.ch>
+// Version $Id: EUTelNativeReader.cc,v 1.16 2008-11-13 13:34:47 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -712,7 +712,6 @@ void EUTelNativeReader::processTLUDataEvent( eudaq::TLUEvent * tluEvent, EUTelEv
 }
 void EUTelNativeReader::processDEPFETDataEvent( eudaq::DEPFETEvent * depfetEvent, EUTelEventImpl * eutelEvent ) {
 
-#ifdef UNDERDEV
   auto_ptr< lcio::LCCollectionVec > rawDataCollection ( new LCCollectionVec (LCIO::TRACKERRAWDATA) ) ;
 
   CellIDEncoder< TrackerRawDataImpl > rawDataEncoder ( EUTELESCOPE::MATRIXDEFAULTENCODING, rawDataCollection.get() );
@@ -725,7 +724,7 @@ void EUTelNativeReader::processDEPFETDataEvent( eudaq::DEPFETEvent * depfetEvent
     eutelEvent->addCollection( depfetSetupCollection.release(), "depfetSetup" );
   }
 
-  streamlog_out( DEBUG ) << "DEPFET DATA Event first 2=" << ,_depfetDetectors.size() << endl;
+  streamlog_out( DEBUG ) << "DEPFET DATA Event first 2=" << _depfetDetectors.size() << endl;
 
   for ( size_t iDetector = 0; iDetector < _depfetDetectors.size() ; iDetector++) {
     streamlog_out( DEBUG4 ) << " DEPFET DATA Event loop " << iDetector << "  numboards= " << depfetEvent->NumBoards() << endl;
@@ -769,7 +768,6 @@ void EUTelNativeReader::processDEPFETDataEvent( eudaq::DEPFETEvent * depfetEvent
     // we have some rawdata...
     eutelEvent->addCollection( rawDataCollection.release(), _depfetOutputCollectionName );
   }
-#endif
 
 }
 
@@ -886,13 +884,12 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
 
 
       EUTelDEPFETDetector * detector = new EUTelDEPFETDetector;
+      ++noOfDEPFETDetectors;
       _depfetDetectors.push_back( detector );
       //      assert( noOfDEPFETDetectors == _depfetDetectors.size());
 
-#ifdef UNDERDEV
       // before leaving, remember to assign the _depfetDecoder
       _depfetDecoder = new eudaq::DEPFETDecoder( *eudaqDetectorEvent );
-#endif
 
     }
 
