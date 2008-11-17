@@ -3,7 +3,7 @@
 #
 # Original author: J. Engels, DESY
 # Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# Version $Id: CMakeLists.txt,v 1.17 2008-11-13 16:34:21 bulgheroni Exp $
+# Version $Id: CMakeLists.txt,v 1.18 2008-11-17 10:42:06 bulgheroni Exp $
 ########################################################
 
 
@@ -43,6 +43,12 @@ OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" ON )
 # e.g. SET( ${PROJECT_NAME}_DEPENDS "Marlin MarlinUtil LCIO GEAR CLHEP GSL RAIDA ROOT" )
 #SET( ${PROJECT_NAME}_DEPENDS "Marlin MarlinUtil LCIO GSL CLHEP" )
 SET( ${PROJECT_NAME}_DEPENDS "Marlin LCIO" )
+
+IF( APPLE )
+ SET( ${PROJECT_NAME}_DEPENDS "${${PROJECT_NAME}_DEPENDS} streamlog" )
+ SET( streamlog_HOME "${Marlin_HOME}" CACHE PATH "Path to streamlog"
+       FORCE))
+ENDIF()
 
 # set default cmake build type to RelWithDebInfo
 # possible options are: None Debug Release RelWithDebInfo MinSizeRel
