@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Aleksander Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version $Id: EUTelMAPSdigi.cc,v 1.4 2008-11-12 18:36:58 bulgheroni Exp $
+// Version $Id: EUTelMAPSdigi.cc,v 1.5 2008-11-17 09:08:52 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -82,7 +82,7 @@ EUTelMAPSdigi::EUTelMAPSdigi () : Processor("EUTelMAPSdigi") {
                           "Simulated (Mokka) hit collection name",
                           _simhitCollectionName, string ( "telEUTelescopeCollection" ));
 
-  registerOutputCollection(LCIO::TRACKERHIT,"PixelCollectionName",
+  registerOutputCollection(LCIO::TRACKERDATA,"PixelCollectionName",
                            "Collection name for simulated raw data",
                            _pixelCollectionName, string ("simEUTelescopeData"));
 
