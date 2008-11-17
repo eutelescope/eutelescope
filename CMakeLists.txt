@@ -3,7 +3,7 @@
 #
 # Original author: J. Engels, DESY
 # Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# Version $Id: CMakeLists.txt,v 1.18 2008-11-17 10:42:06 bulgheroni Exp $
+# Version $Id: CMakeLists.txt,v 1.19 2008-11-17 10:49:40 bulgheroni Exp $
 ########################################################
 
 
@@ -46,8 +46,7 @@ SET( ${PROJECT_NAME}_DEPENDS "Marlin LCIO" )
 
 IF( APPLE )
  SET( ${PROJECT_NAME}_DEPENDS "${${PROJECT_NAME}_DEPENDS} streamlog" )
- SET( streamlog_HOME "${Marlin_HOME}" CACHE PATH "Path to streamlog"
-       FORCE))
+ SET( streamlog_HOME "${Marlin_HOME}" CACHE PATH "Path to streamlog" FORCE)
 ENDIF()
 
 # set default cmake build type to RelWithDebInfo
