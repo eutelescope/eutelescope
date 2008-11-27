@@ -33,6 +33,7 @@
 #include <stdio.h>
 #include <string.h>
 #include <unistd.h>
+#include <cstdlib>
 
 using namespace std;
 using namespace marlin;

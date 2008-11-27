@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.33 2008-10-07 17:50:56 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.34 2008-11-27 16:20:13 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -57,6 +57,7 @@
 #include <vector>
 #include <map>
 #include <cstdlib>
+#include <limits>
 
 
 using namespace std;

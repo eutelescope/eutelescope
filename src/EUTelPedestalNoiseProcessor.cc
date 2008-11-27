@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.32 2008-09-10 15:52:01 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.33 2008-11-27 16:20:13 zarnecki Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -49,6 +49,7 @@
 #include <iomanip>
 #include <memory>
 #include <cstdlib>
+#include <limits>
 
 
 using namespace std;
