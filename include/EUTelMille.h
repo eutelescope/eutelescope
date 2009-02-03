@@ -59,6 +59,15 @@ namespace eutelescope {
 
     virtual void FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFit[], double yResFit[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]);
 
+    //recursive method which searches for track candidates
+    virtual void findtracks(
+			    std::vector<std::vector<int> > &indexarray, //resulting vector of hit indizes
+			    std::vector<int> vec, //for internal use
+			    std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray, //contains all hits for each plane
+			    int i, //plane number
+			    int y //hit index number
+			    );
+
     //! Returns a new instance of EUTelMille
     /*! This method returns a new instance of this processor.  It is
      *  called by Marlin execution framework and it shouldn't be

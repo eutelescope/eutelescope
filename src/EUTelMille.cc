@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.31 2008-10-04 12:44:11 bulgheroni Exp $
+// Version: $Id: EUTelMille.cc,v 1.32 2009-02-03 15:09:59 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -89,6 +89,52 @@ std::string EUTelMille::_residualYLocalname      = "ResidualY";
 
 EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
+  //some default values
+  FloatVec MinimalResidualsX;
+  FloatVec MinimalResidualsY;
+  FloatVec MaximalResidualsX;
+  FloatVec MaximalResidualsY;
+
+  FloatVec PedeUserStartValuesX;
+  FloatVec PedeUserStartValuesY;
+
+  FloatVec PedeUserStartValuesGamma;
+
+  FloatVec SensorZPositions;
+
+  FloatVec SensorXShifts;
+  FloatVec SensorYShifts;
+
+  FloatVec SensorGamma;
+
+  FloatVec SensorAlpha;
+
+  FloatVec SensorBeta;
+  for(int i =0; i<_nPlanes;i++)
+    {
+      MinimalResidualsX.push_back(0.0);
+      MinimalResidualsY.push_back(0.0);
+      MaximalResidualsX.push_back(0.0);
+      MaximalResidualsY.push_back(0.0);
+
+      PedeUserStartValuesX.push_back(0.0);
+      PedeUserStartValuesY.push_back(0.0);
+
+      PedeUserStartValuesGamma.push_back(0.0);
+
+      float zpos = 20000.0 +  20000.0 * (float)i;
+      SensorZPositions.push_back(zpos);
+
+      SensorXShifts.push_back(0.0);
+      SensorYShifts.push_back(0.0);
+
+      SensorGamma.push_back(0.0);
+      SensorAlpha.push_back(0.0);
+      SensorBeta.push_back(0.0);
+    }
+
+
+
   // modify processor description
   _description =
     "EUTelMille uses the MILLE program to write data files for MILLEPEDE II.";
@@ -141,37 +187,6 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
                             "constants (add .slcio)",
                             _alignmentConstantLCIOFile, static_cast< string > ( "alignment.slcio" ) );
 
-  FloatVec MinimalResidualsX;
-  MinimalResidualsX.push_back(0.0);
-  MinimalResidualsX.push_back(0.0);
-  MinimalResidualsX.push_back(0.0);
-  MinimalResidualsX.push_back(0.0);
-  MinimalResidualsX.push_back(0.0);
-  MinimalResidualsX.push_back(0.0);
-
-  FloatVec MinimalResidualsY;
-  MinimalResidualsY.push_back(0.0);
-  MinimalResidualsY.push_back(0.0);
-  MinimalResidualsY.push_back(0.0);
-  MinimalResidualsY.push_back(0.0);
-  MinimalResidualsY.push_back(0.0);
-  MinimalResidualsY.push_back(0.0);
-
-  FloatVec MaximalResidualsX;
-  MaximalResidualsX.push_back(0.0);
-  MaximalResidualsX.push_back(0.0);
-  MaximalResidualsX.push_back(0.0);
-  MaximalResidualsX.push_back(0.0);
-  MaximalResidualsX.push_back(0.0);
-  MaximalResidualsX.push_back(0.0);
-
-  FloatVec MaximalResidualsY;
-  MaximalResidualsY.push_back(0.0);
-  MaximalResidualsY.push_back(0.0);
-  MaximalResidualsY.push_back(0.0);
-  MaximalResidualsY.push_back(0.0);
-  MaximalResidualsY.push_back(0.0);
-  MaximalResidualsY.push_back(0.0);
 
   registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a track"
                             ,_residualsXMin,MinimalResidualsX);
@@ -197,35 +212,11 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("UsePedeUserStartValues","Give start values for pede by hand (0 - automatic calculation of start values, 1 - start values defined by user)."
                             ,_usePedeUserStartValues, static_cast <int> (0));
 
-  FloatVec PedeUserStartValuesX;
-  PedeUserStartValuesX.push_back(0.0);
-  PedeUserStartValuesX.push_back(0.0);
-  PedeUserStartValuesX.push_back(0.0);
-  PedeUserStartValuesX.push_back(0.0);
-  PedeUserStartValuesX.push_back(0.0);
-  PedeUserStartValuesX.push_back(0.0);
-
   registerOptionalParameter("PedeUserStartValuesX","Start values for the alignment for shifts in the X direction."
                             ,_pedeUserStartValuesX,PedeUserStartValuesX);
 
-  FloatVec PedeUserStartValuesY;
-  PedeUserStartValuesY.push_back(0.0);
-  PedeUserStartValuesY.push_back(0.0);
-  PedeUserStartValuesY.push_back(0.0);
-  PedeUserStartValuesY.push_back(0.0);
-  PedeUserStartValuesY.push_back(0.0);
-  PedeUserStartValuesY.push_back(0.0);
-
   registerOptionalParameter("PedeUserStartValuesY","Start values for the alignment for shifts in the Y direction."
                             ,_pedeUserStartValuesY,PedeUserStartValuesY);
-
-  FloatVec PedeUserStartValuesGamma;
-  PedeUserStartValuesGamma.push_back(0.0);
-  PedeUserStartValuesGamma.push_back(0.0);
-  PedeUserStartValuesGamma.push_back(0.0);
-  PedeUserStartValuesGamma.push_back(0.0);
-  PedeUserStartValuesGamma.push_back(0.0);
-  PedeUserStartValuesGamma.push_back(0.0);
 
   registerOptionalParameter("PedeUserStartValuesGamma","Start values for the alignment for the angle gamma."
                             ,_pedeUserStartValuesGamma,PedeUserStartValuesGamma);
@@ -239,32 +230,8 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("TestModeYTrackSlope","Width of the track slope distribution in the y direction"
                             ,_testModeYTrackSlope, static_cast <float> (0.0005));
 
-  FloatVec SensorZPositions;
-  SensorZPositions.push_back(20000.0);
-  SensorZPositions.push_back(40000.0);
-  SensorZPositions.push_back(60000.0);
-  SensorZPositions.push_back(80000.0);
-  SensorZPositions.push_back(100000.0);
-  SensorZPositions.push_back(120000.0);
-
   registerOptionalParameter("TestModeSensorZPositions","Z positions of the sensors in test mode."
                             ,_testModeSensorZPositions,SensorZPositions);
-
-  FloatVec SensorXShifts;
-  SensorXShifts.push_back(0.0);
-  SensorXShifts.push_back(0.0);
-  SensorXShifts.push_back(0.0);
-  SensorXShifts.push_back(0.0);
-  SensorXShifts.push_back(0.0);
-  SensorXShifts.push_back(0.0);
-
-  FloatVec SensorYShifts;
-  SensorYShifts.push_back(0.0);
-  SensorYShifts.push_back(0.0);
-  SensorYShifts.push_back(0.0);
-  SensorYShifts.push_back(0.0);
-  SensorYShifts.push_back(0.0);
-  SensorYShifts.push_back(0.0);
 
   registerOptionalParameter("TestModeSensorXShifts","X shifts of the sensors in test mode (to be determined by the alignment)."
                             ,_testModeSensorXShifts,SensorXShifts);
@@ -272,42 +239,45 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("TestModeSensorYShifts","Y shifts of the sensors in test mode (to be determined by the alignment)."
                             ,_testModeSensorYShifts,SensorYShifts);
 
-  FloatVec SensorGamma;
-  SensorGamma.push_back(0.0);
-  SensorGamma.push_back(0.0);
-  SensorGamma.push_back(0.0);
-  SensorGamma.push_back(0.0);
-  SensorGamma.push_back(0.0);
-  SensorGamma.push_back(0.0);
 
   registerOptionalParameter("TestModeSensorGamma","Rotation around the z axis of the sensors in test mode (to be determined by the alignment)."
                             ,_testModeSensorGamma,SensorGamma);
-
-  FloatVec SensorAlpha;
-  SensorAlpha.push_back(0.0);
-  SensorAlpha.push_back(0.0);
-  SensorAlpha.push_back(0.0);
-  SensorAlpha.push_back(0.0);
-  SensorAlpha.push_back(0.0);
-  SensorAlpha.push_back(0.0);
+ 
 
   registerOptionalParameter("TestModeSensorAlpha","Rotation around the x axis of the sensors in test mode (to be determined by the alignment)."
                             ,_testModeSensorAlpha,SensorAlpha);
-
-  FloatVec SensorBeta;
-  SensorBeta.push_back(0.0);
-  SensorBeta.push_back(0.0);
-  SensorBeta.push_back(0.0);
-  SensorBeta.push_back(0.0);
-  SensorBeta.push_back(0.0);
-  SensorBeta.push_back(0.0);
+ 
 
   registerOptionalParameter("TestModeSensorBeta","Rotation around the y axis of the sensors in test mode (to be determined by the alignment)."
                             ,_testModeSensorBeta,SensorBeta);
-
+ 
 }
 
 void EUTelMille::init() {
+  // check if Marlin was built with GEAR support or not
+#ifndef USE_GEAR
+  
+  streamlog_out ( ERROR2 ) << "Marlin was not built with GEAR support." << endl;
+  streamlog_out ( ERROR2 ) << "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." << endl;
+
+    exit(-1);
+
+#else
+
+  // check if the GEAR manager pointer is not null!
+  if ( Global::GEAR == 0x0 ) {
+    streamlog_out ( ERROR2) << "The GearMgr is not available, for an unknown reason." << endl;
+    exit(-1);
+  }
+
+  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
+  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
+
+  _histogramSwitch = true;
+#endif
+
+  _nPlanes = _siPlanesParameters->getSiPlanesNumber();
+
   // this method is called only once even when the rewind is active
   // usually a good idea to
   printParameters ();
@@ -325,34 +295,6 @@ void EUTelMille::init() {
   _nMilleDataPoints = 0;
   _nMilleTracks = 0;
 
-  // check if Marlin was built with GEAR support or not
-#ifndef USE_GEAR
-
-  streamlog_out ( ERROR2 ) << "Marlin was not built with GEAR support." << endl;
-  streamlog_out ( ERROR2 ) << "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." << endl;
-
-  // I'm thinking if this is the case of throwing an exception or
-  // not. This is a really error and not something that can
-  // exceptionally happens. Still not sure what to do
-  exit(-1);
-
-#else
-
-  // check if the GEAR manager pointer is not null!
-  if ( Global::GEAR == 0x0 ) {
-    streamlog_out ( ERROR2) << "The GearMgr is not available, for an unknown reason." << endl;
-    exit(-1);
-  }
-
-  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
-
-  _histogramSwitch = true;
-
-#endif
-
-  _nPlanes = _siPlanesParameters->getSiPlanesNumber();
-
   _waferResidX = new double[_nPlanes];
   _waferResidY = new double[_nPlanes];
   _xFitPos = new double[_nPlanes];
@@ -361,12 +303,15 @@ void EUTelMille::init() {
   _telescopeResolX = new double[_nPlanes];
   _telescopeResolY = new double[_nPlanes];
 
+
   // booking histograms
   bookHistos();
 
   streamlog_out ( MESSAGE2 ) << "Initialising Mille..." << endl;
   _mille = new Mille(_binaryFilename.c_str());
   streamlog_out ( MESSAGE2 ) << "The filename for the binary file is: " << _binaryFilename.c_str() << endl;
+
+  //  exit(-1);
 
 }
 
@@ -421,11 +366,64 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
     }
   }
 
-
-
   // increment the run counter
   ++_iRun;
+}
 
+
+
+void EUTelMille::findtracks(
+			    std::vector<std::vector<int> > &indexarray,
+			    std::vector<int> vec,
+			    std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray,
+			    int i,
+			    int y
+			    )
+{
+  if(i>0)
+    vec.push_back(y);
+  for(size_t j =0; j < _hitsArray[i].size(); j++)
+    {
+      //if we are not in the last plane, call this method again
+      if(i<(int)(_hitsArray.size())-1) 
+	{
+	  findtracks(indexarray,vec, _hitsArray, i+1,(int)j);
+	}
+      else
+	{
+	  //we are in the last plane
+	  vec.push_back((int)j); //index of the cluster in the last plane
+	  
+	  //track candidate requirements
+	  bool taketrack = true;
+	  for(size_t e =0; e < vec.size()-1; e++)
+	    {
+	      double distance = sqrt(
+				     pow( _hitsArray[e][vec[e]].measuredX - _hitsArray[e+1][vec[e+1]].measuredX ,2) +
+				     pow( _hitsArray[e][vec[e]].measuredY - _hitsArray[e+1][vec[e+1]].measuredY ,2)
+				     );
+	      double distance_z = _hitsArray[e+1][vec[e+1]].measuredZ - _hitsArray[e][vec[e]].measuredZ;
+	      
+	      double distancemax = _distanceMax * ( distance_z / 100000.0);
+	      
+	      if( distance >= distancemax )
+		taketrack = false;
+		
+		if(_onlySingleHitEvents == 1 && (_hitsArray[e].size() != 1 || _hitsArray[e+1].size() != 1))
+		  taketrack = false;
+		
+	    }
+	  if((int)indexarray.size() >= _maxTrackCandidates)
+	    taketrack = false;
+	  
+	  if(taketrack)
+	    {
+	      indexarray.push_back(vec);
+	    }
+	  vec.pop_back(); //last element must be removed because the
+			  //vector is still used
+	}
+    }
 }
 
 void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFitter[], double yResFitter[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]) {
@@ -584,7 +582,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-    streamlog_out( MESSAGE2 ) << "Currently having " << _nMilleDataPoints << " data points in "
+    streamlog_out( MESSAGE2 ) << "Currently having " << _nMilleDataPoints << " funny data points in "
                               << _nMilleTracks << " tracks " << endl;
   }
 
@@ -619,12 +617,7 @@ void EUTelMille::processEvent (LCEvent * event) {
   int oldDetectorID = -100;
   int layerIndex;
 
-  vector<EUTelMille::HitsInPlane > _hitsFirstPlane;
-  vector<EUTelMille::HitsInPlane > _hitsSecondPlane;
-  vector<EUTelMille::HitsInPlane > _hitsThirdPlane;
-  vector<EUTelMille::HitsInPlane > _hitsFourthPlane;
-  vector<EUTelMille::HitsInPlane > _hitsFifthPlane;
-  vector<EUTelMille::HitsInPlane > _hitsSixthPlane;
+  std::vector<std::vector<EUTelMille::HitsInPlane> > _hitsArray(_nPlanes, std::vector<EUTelMille::HitsInPlane>());
 
   HitsInPlane hitsInPlane;
 
@@ -694,28 +687,13 @@ void EUTelMille::processEvent (LCEvent * event) {
 
       // Getting positions of the hits.
       // ------------------------------
-
       hitsInPlane.measuredX = 1000 * hit->getPosition()[0];
       hitsInPlane.measuredY = 1000 * hit->getPosition()[1];
       hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
 
       delete cluster; // <--- destroying the cluster
 
-      // Add Hits to vector
-
-      if (layerIndex == 0) {
-        _hitsFirstPlane.push_back(hitsInPlane);
-      } else if (layerIndex == 1) {
-        _hitsSecondPlane.push_back(hitsInPlane);
-      } else if (layerIndex == 2) {
-        _hitsThirdPlane.push_back(hitsInPlane);
-      } else if (layerIndex == 3) {
-        _hitsFourthPlane.push_back(hitsInPlane);
-      } else if (layerIndex == 4) {
-        _hitsFifthPlane.push_back(hitsInPlane);
-      } else if (layerIndex == 5) {
-        _hitsSixthPlane.push_back(hitsInPlane);
-      }
+      _hitsArray[layerIndex].push_back(hitsInPlane);
 
     } // end loop over all hits in collection
 
@@ -738,63 +716,12 @@ void EUTelMille::processEvent (LCEvent * event) {
       // The x and y positions are given by the sums of the measured
       // hit positions, the detector resolution, the shifts of the
       // planes and the effect due to the track slopes.
-
-      if (help == 0) {
-
-        hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[0] + _testModeSensorZPositions[0] * tan(xslope) - _testModeSensorGamma[0] * yhitpos - _testModeSensorBeta[0] * _testModeSensorZPositions[0];
-        hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[0] + _testModeSensorZPositions[0] * tan(yslope) + _testModeSensorGamma[0] * xhitpos - _testModeSensorAlpha[0] * _testModeSensorZPositions[0];
-        hitsInPlane.measuredZ = _testModeSensorZPositions[0];
-        _hitsFirstPlane.push_back(hitsInPlane);
-        _telescopeResolX[help] = resolX;
-        _telescopeResolY[help] = resolY;
-
-      } else if (help == 1) {
-
-        hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[1] + _testModeSensorZPositions[1] * tan(xslope) - _testModeSensorGamma[1] * yhitpos - _testModeSensorBeta[1] * _testModeSensorZPositions[1];
-        hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[1] + _testModeSensorZPositions[1] * tan(yslope) + _testModeSensorGamma[1] * xhitpos - _testModeSensorAlpha[1] * _testModeSensorZPositions[1];
-        hitsInPlane.measuredZ = _testModeSensorZPositions[1];
-        _hitsSecondPlane.push_back(hitsInPlane);
-        _telescopeResolX[help] = resolX;
-        _telescopeResolY[help] = resolY;
-
-      } else if (help == 2) {
-
-        hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[2] + _testModeSensorZPositions[2] * tan(xslope) - _testModeSensorGamma[2] * yhitpos - _testModeSensorBeta[2] * _testModeSensorZPositions[2];
-        hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[2] + _testModeSensorZPositions[2] * tan(yslope) + _testModeSensorGamma[2] * xhitpos - _testModeSensorAlpha[2] * _testModeSensorZPositions[2];
-        hitsInPlane.measuredZ = _testModeSensorZPositions[2];
-        _hitsThirdPlane.push_back(hitsInPlane);
-        _telescopeResolX[help] = resolX;
-        _telescopeResolY[help] = resolY;
-
-      } else if (help == 3) {
-
-        hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[3] + _testModeSensorZPositions[3] * tan(xslope) - _testModeSensorGamma[3] * yhitpos - _testModeSensorBeta[3] * _testModeSensorZPositions[3];
-        hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[3] + _testModeSensorZPositions[3] * tan(yslope) + _testModeSensorGamma[3] * xhitpos - _testModeSensorAlpha[3] * _testModeSensorZPositions[3];
-        hitsInPlane.measuredZ = _testModeSensorZPositions[3];
-        _hitsFourthPlane.push_back(hitsInPlane);
-        _telescopeResolX[help] = resolX;
-        _telescopeResolY[help] = resolY;
-
-      } else if (help == 4) {
-
-        hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[4] + _testModeSensorZPositions[4] * tan(xslope) - _testModeSensorGamma[4] * yhitpos - _testModeSensorBeta[4] * _testModeSensorZPositions[4];
-        hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[4] + _testModeSensorZPositions[4] * tan(yslope) + _testModeSensorGamma[4] * xhitpos - _testModeSensorAlpha[4] * _testModeSensorZPositions[4];
-        hitsInPlane.measuredZ = _testModeSensorZPositions[4];
-        _hitsFifthPlane.push_back(hitsInPlane);
-        _telescopeResolX[help] = resolX;
-        _telescopeResolY[help] = resolY;
-
-      } else if (help == 5) {
-
-        hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[5] + _testModeSensorZPositions[5] * tan(xslope) - _testModeSensorGamma[5] * yhitpos - _testModeSensorBeta[5] * _testModeSensorZPositions[5];
-        hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[5] + _testModeSensorZPositions[5] * tan(yslope) + _testModeSensorGamma[5] * xhitpos - _testModeSensorAlpha[5] * _testModeSensorZPositions[5];
-        hitsInPlane.measuredZ = _testModeSensorZPositions[5];
-        _hitsSixthPlane.push_back(hitsInPlane);
-        _telescopeResolX[help] = resolX;
-        _telescopeResolY[help] = resolY;
-
-      }
-
+      hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[help] + _testModeSensorZPositions[help] * tan(xslope) - _testModeSensorGamma[help] * yhitpos - _testModeSensorBeta[help] * _testModeSensorZPositions[0];
+      hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[help] + _testModeSensorZPositions[help] * tan(yslope) + _testModeSensorGamma[help] * xhitpos - _testModeSensorAlpha[help] * _testModeSensorZPositions[help];
+      hitsInPlane.measuredZ = _testModeSensorZPositions[help];
+      _hitsArray[help].push_back(hitsInPlane);
+      _telescopeResolX[help] = resolX;
+      _telescopeResolY[help] = resolY;
     } // end loop over all planes
 
 #else // USE_ROOT
@@ -806,26 +733,6 @@ void EUTelMille::processEvent (LCEvent * event) {
 
   } // end if check running in input mode 0 or 2
 
-  // Distances between hits in individual planes
-
-  double distance12 = 0.0;
-  double distance23 = 0.0;
-  double distance34 = 0.0;
-  double distance45 = 0.0;
-  double distance56 = 0.0;
-
-  double distance_plane12 = 0.0;
-  double distance_plane23 = 0.0;
-  double distance_plane34 = 0.0;
-  double distance_plane45 = 0.0;
-  double distance_plane56 = 0.0;
-
-  double distanceMax12 = 0.0;
-  double distanceMax23 = 0.0;
-  double distanceMax34 = 0.0;
-  double distanceMax45 = 0.0;
-  double distanceMax56 = 0.0;
-
   _xPos = new double *[_maxTrackCandidates];
   _yPos = new double *[_maxTrackCandidates];
   _zPos = new double *[_maxTrackCandidates];
@@ -835,9 +742,9 @@ void EUTelMille::processEvent (LCEvent * event) {
     _yPos[help] = new double[_nPlanes];
     _zPos[help] = new double[_nPlanes];
   }
-
-  int fitplane[6] = {0, 0, 0, 0, 0, 0};
-
+  
+  std::vector<int> fitplane(_nPlanes, 0);
+ 
   for (int help = 0; help < _nPlanes; help++) {
     fitplane[help] = 1;
   }
@@ -853,216 +760,20 @@ void EUTelMille::processEvent (LCEvent * event) {
     // ---------------------------------------------
     //
     // This is done separately for different numbers of planes.
-
-    // loop over all hits in first plane
-    for (int firsthit = 0; uint(firsthit) < _hitsFirstPlane.size(); firsthit++) {
-
-      // loop over all hits in second plane
-      for (int secondhit = 0; uint(secondhit) < _hitsSecondPlane.size(); secondhit++) {
-
-        distance12 = sqrt(pow(_hitsFirstPlane[firsthit].measuredX - _hitsSecondPlane[secondhit].measuredX,2) + pow(_hitsFirstPlane[firsthit].measuredY - _hitsSecondPlane[secondhit].measuredY,2));
-
-        distance_plane12 = _hitsSecondPlane[secondhit].measuredZ - _hitsFirstPlane[firsthit].measuredZ;
-
-        distanceMax12 = _distanceMax * (distance_plane12 / 100000.0);
-
-        if (_nPlanes == 2 && distance12 < distanceMax12 && _nTracks < _maxTrackCandidates) {
-
-          if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1)) {
-
-            _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-            _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-            _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-
-            _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-            _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-            _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-
-            _nTracks++;
-
-          }
-
-        }
-
-        // more than two planes
-        if (_nPlanes > 2) {
-
-          // loop over all hits in third plane
-          for (int thirdhit = 0; uint(thirdhit) < _hitsThirdPlane.size(); thirdhit++) {
-
-            distance23 = sqrt(pow(_hitsSecondPlane[secondhit].measuredX - _hitsThirdPlane[thirdhit].measuredX,2) + pow(_hitsSecondPlane[secondhit].measuredY - _hitsThirdPlane[thirdhit].measuredY,2));
-
-            distance_plane23 = _hitsThirdPlane[thirdhit].measuredZ - _hitsSecondPlane[secondhit].measuredZ;
-
-            distanceMax23 = _distanceMax * (distance_plane23 / 100000.0);
-
-            if (_nPlanes == 3 && distance12 < distanceMax12 && distance23 < distanceMax23 && _nTracks < _maxTrackCandidates) {
-
-              if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1 && _hitsThirdPlane.size() == 1)) {
-
-                _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-                _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-                _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-
-                _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-                _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-                _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-
-                _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-                _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-                _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-
-                _nTracks++;
-
-              }
-
-            }
-
-            // more than three planes
-            if (_nPlanes > 3) {
-
-              // loop over all hits in fourth plane
-              for (int fourthhit = 0; uint(fourthhit) < _hitsFourthPlane.size(); fourthhit++) {
-
-                distance34 = sqrt(pow(_hitsThirdPlane[thirdhit].measuredX - _hitsFourthPlane[fourthhit].measuredX,2) + pow(_hitsThirdPlane[thirdhit].measuredY - _hitsFourthPlane[fourthhit].measuredY,2));
-
-                distance_plane34 = _hitsFourthPlane[fourthhit].measuredZ - _hitsThirdPlane[thirdhit].measuredZ;
-
-                distanceMax34 = _distanceMax * (distance_plane34 / 100000.0);
-
-                if (_nPlanes == 4 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && _nTracks < _maxTrackCandidates) {
-
-                  if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1 && _hitsThirdPlane.size() == 1 && _hitsFourthPlane.size() == 1)) {
-
-                    _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-                    _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-                    _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-
-                    _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-                    _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-                    _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-
-                    _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-                    _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-                    _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-
-                    _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
-                    _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
-                    _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
-
-                    _nTracks++;
-
-                  }
-
-                }
-
-                // more than four planes
-                if (_nPlanes > 4) {
-
-                  // loop over all hits in fifth plane
-                  for (int fifthhit = 0; uint(fifthhit) < _hitsFifthPlane.size(); fifthhit++) {
-
-                    distance45 = sqrt(pow(_hitsFourthPlane[fourthhit].measuredX - _hitsFifthPlane[fifthhit].measuredX,2) + pow(_hitsFourthPlane[fourthhit].measuredY - _hitsFifthPlane[fifthhit].measuredY,2));
-
-                    distance_plane45 = _hitsFifthPlane[fifthhit].measuredZ - _hitsFourthPlane[fourthhit].measuredZ;
-
-                    distanceMax45 = _distanceMax * (distance_plane45 / 100000.0);
-
-                    if (_nPlanes == 5 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && _nTracks < _maxTrackCandidates) {
-
-                      if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1 && _hitsThirdPlane.size() == 1 && _hitsFourthPlane.size() == 1 && _hitsFifthPlane.size() == 1)) {
-
-                        _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-                        _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-                        _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-
-                        _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-                        _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-                        _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-
-                        _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-                        _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-                        _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-
-                        _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
-                        _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
-                        _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
-
-                        _xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
-                        _yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
-                        _zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
-
-                        _nTracks++;
-
-                      }
-
-                    }
-
-                    // more than five planes
-                    if (_nPlanes > 5) {
-
-                      // loop over all hits in sixth plane
-                      for (int sixthhit = 0; uint(sixthhit) < _hitsSixthPlane.size(); sixthhit++) {
-
-                        distance56 = sqrt(pow(_hitsFifthPlane[fifthhit].measuredX - _hitsSixthPlane[sixthhit].measuredX,2) + pow(_hitsFifthPlane[fifthhit].measuredY - _hitsSixthPlane[sixthhit].measuredY,2));
-
-                        distance_plane56 = _hitsSixthPlane[sixthhit].measuredZ - _hitsFifthPlane[fifthhit].measuredZ;
-
-                        distanceMax56 = _distanceMax * (distance_plane56 / 100000.0);
-
-                        if (_nPlanes == 6 && distance12 < distanceMax12 && distance23 < distanceMax23 && distance34 < distanceMax34 && distance45 < distanceMax45 && distance56 < distanceMax56 && _nTracks < _maxTrackCandidates) {
-
-                          if (_onlySingleHitEvents == 0 || (_hitsFirstPlane.size() == 1 && _hitsSecondPlane.size() == 1 && _hitsThirdPlane.size() == 1 && _hitsFourthPlane.size() == 1 && _hitsFifthPlane.size() == 1 && _hitsSixthPlane.size() == 1)) {
-
-                            _xPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredX;
-                            _yPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredY;
-                            _zPos[_nTracks][0] = _hitsFirstPlane[firsthit].measuredZ;
-
-                            _xPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredX;
-                            _yPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredY;
-                            _zPos[_nTracks][1] = _hitsSecondPlane[secondhit].measuredZ;
-
-                            _xPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredX;
-                            _yPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredY;
-                            _zPos[_nTracks][2] = _hitsThirdPlane[thirdhit].measuredZ;
-
-                            _xPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredX;
-                            _yPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredY;
-                            _zPos[_nTracks][3] = _hitsFourthPlane[fourthhit].measuredZ;
-
-                            _xPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredX;
-                            _yPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredY;
-                            _zPos[_nTracks][4] = _hitsFifthPlane[fifthhit].measuredZ;
-
-                            _xPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredX;
-                            _yPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredY;
-                            _zPos[_nTracks][5] = _hitsSixthPlane[sixthhit].measuredZ;
-
-                            _nTracks++;
-
-                          }
-
-                        }
-
-                      } // end loop over all hits in sixth plane
-
-                    } // end if more than five planes
-
-                  } // end loop over all hits in fifth plane
-
-                } // end if more than four planes
-
-              } // end loop over all hits in fourth plane
-
-            } // end if more than three planes
-
-          } // end loop over all hits in third plane
-
-        } // end if more than two planes
-
-      } // end loop over all hits in second plane
-
-    } // end loop over all hits in first plane
+    
+    std::vector<std::vector<int> > indexarray;
+    findtracks(indexarray, std::vector<int>(), _hitsArray, 0, 0);
+   
+    for(size_t i =0; i < indexarray.size(); i++)
+      {
+	for(size_t j =0; j < indexarray[i].size(); j++)
+	  {
+	    _xPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredX;
+	    _yPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredY;
+	    _zPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredZ;
+	  }
+      }
+    _nTracks = (int) indexarray.size();
 
     // end check if running in input mode 0 or 2 => perform simple track finding
   } else if (_inputMode == 1) {
@@ -1124,7 +835,10 @@ void EUTelMille::processEvent (LCEvent * event) {
     streamlog_out ( WARNING2 ) << "Maximum number of track candidates reached. Maybe further tracks were skipped" << endl;
   }
 
-  streamlog_out ( MILLEMESSAGE ) << "Number of hits in the individual planes: " << _hitsFirstPlane.size() << " " << _hitsSecondPlane.size() << " " << _hitsThirdPlane.size() << " " << _hitsFourthPlane.size() << " " << _hitsFifthPlane.size() << " " << _hitsSixthPlane.size() << endl;
+  streamlog_out ( MILLEMESSAGE ) << "Number of hits in the individual planes: ";
+  for(size_t i = 0; i < _hitsArray.size(); i++)
+    streamlog_out ( MILLEMESSAGE ) << _hitsArray[i].size() << " ";
+  streamlog_out ( MILLEMESSAGE ) << endl;
 
   streamlog_out ( MILLEMESSAGE ) << "Number of track candidates found: " << _iEvt << ": " << _nTracks << endl;
 
