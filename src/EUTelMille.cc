@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.32 2009-02-03 15:09:59 jbehr Exp $
+// Version: $Id: EUTelMille.cc,v 1.33 2009-02-04 09:37:01 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -582,7 +582,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-    streamlog_out( MESSAGE2 ) << "Currently having " << _nMilleDataPoints << " funny data points in "
+    streamlog_out( MESSAGE2 ) << "Currently having " << _nMilleDataPoints << " data points in "
                               << _nMilleTracks << " tracks " << endl;
   }
 
