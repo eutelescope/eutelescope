@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.33 2009-02-04 09:37:01 jbehr Exp $
+// Version: $Id: EUTelMille.cc,v 1.34 2009-02-27 09:31:19 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -110,7 +110,9 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   FloatVec SensorAlpha;
 
   FloatVec SensorBeta;
-  for(int i =0; i<_nPlanes;i++)
+
+  //maybe one has to chose a larger value than 6?
+  for(int i =0; i<6;i++)
     {
       MinimalResidualsX.push_back(0.0);
       MinimalResidualsY.push_back(0.0);
