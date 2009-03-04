@@ -1083,6 +1083,7 @@ void showCorrelationPlot( const char * filename ) {
       ++nCanvas;
     }
 
+
     Double_t titleHeight = 0.10;
     Int_t canvasWidth  = 800;
     Int_t canvasHeight = 800;
@@ -1146,7 +1147,7 @@ void showCorrelationPlot( const char * filename ) {
     iPad = 0;
     string newTitle;
     for ( UInt_t iDetector = 0; iDetector < nDetector - 1; ++iDetector ) {
-      string histoName = "HitXCorrelationCloud_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      string histoName = "HitXCorrelatioHisto_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
       TH2D * histo = (TH2D*) hitXFolder->Get(histoName.c_str());
 
       newTitle = "Hit X: " + toString( iDetector ) + " vs " + toString( iDetector + 1 );
@@ -1382,7 +1383,7 @@ void showCorrelationPlot( const char * filename ) {
     iPad = 0;
     string newTitle;
     for ( UInt_t iDetector = 0; iDetector < nDetector - 1; ++iDetector ) {
-      string histoName = "HitYCorrelationCloud_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
+      string histoName = "HitYCorrelationHisto_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
       TH2D * histo = (TH2D*) hitYFolder->Get(histoName.c_str());
 
       newTitle = "Hit Y: " + toString( iDetector ) + " vs " + toString( iDetector + 1 );
@@ -2640,18 +2641,6 @@ void showTrackerPlot( const char * filename ) {
   nDetPerCanvas = 3;
   canvasBaseName = "ResidualCanvas";
   closeCanvases( canvasBaseName );
-
-  // once again guess the number of sensors
-  nDetector = 0;
-  {
-    TIter next( trackerFolder->GetListOfKeys() );
-    while ( TObject * obj = next() ){
-      TString objName = obj->GetName();
-      if ( objName.BeginsWith( "residualX_" ) ) {
-        ++nDetector;
-      }
-    }
-  }
 
   nCanvas = nDetector / nDetPerCanvas;
   if ( nDetector % nDetPerCanvas != 0 ){
