@@ -2392,6 +2392,7 @@ void showTrackerPlot( const char * filename ) {
 
     // dirty game to retype the title...
     oldTitle = histo->GetTitle();
+    cout << "rotX " << oldTitle << endl;
     if ( !oldTitle.BeginsWith( "#Delta" ) ) {
       TObjArray * objArray = oldTitle.Tokenize(" ");
       for ( Int_t iToken = 0 ; iToken < objArray->GetSize(); ++iToken ) {
@@ -2424,8 +2425,8 @@ void showTrackerPlot( const char * filename ) {
     setDefaultAxis( histo->GetXaxis() );
     setDefaultAxis( histo->GetYaxis() );
 
+    cout << "rotY " << oldTitle << endl;
     oldTitle = histo->GetTitle();
-    cout << oldTitle << endl;
     if ( !oldTitle.BeginsWith( "#Delta" ) ) {
       TObjArray * objArray = oldTitle.Tokenize(" ");
       for ( Int_t iToken = 0 ; iToken < objArray->GetSize(); ++iToken ) {
