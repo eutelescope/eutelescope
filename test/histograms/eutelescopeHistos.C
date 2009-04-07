@@ -2313,11 +2313,16 @@ void showTrackerPlot( const char * filename ) {
     TIter next( trackerFolder->GetListOfKeys() );
     while ( TObject * obj = next() ){
       TString objName = obj->GetName();
-      if ( objName.BeginsWith( "relRotX2D_" ) ) {
-        rotX2DVec.push_back( objName.Data() );
+
+      if ( objName.BeginsWith( "relRotX2D_" )  ) {
+        if ( find( rotX2DVec.begin(), rotX2DVec.end(), objName.Data()) == rotX2DVec.end() ) {
+          rotX2DVec.push_back( objName.Data() );
+        }
       }
       if ( objName.BeginsWith( "relRotY2D_" ) ) {
-        rotY2DVec.push_back( objName.Data() );
+        if (  find( rotY2DVec.begin(), rotY2DVec.end(), objName.Data()) == rotY2DVec.end() ) {
+          rotY2DVec.push_back( objName.Data() );
+        }
       }
     }
     sort( rotX2DVec.begin(), rotX2DVec.end() );
@@ -2425,7 +2430,6 @@ void showTrackerPlot( const char * filename ) {
     setDefaultAxis( histo->GetXaxis() );
     setDefaultAxis( histo->GetYaxis() );
 
-    cout << "rotY " << oldTitle << endl;
     oldTitle = histo->GetTitle();
     if ( !oldTitle.BeginsWith( "#Delta" ) ) {
       TObjArray * objArray = oldTitle.Tokenize(" ");
@@ -2472,10 +2476,14 @@ void showTrackerPlot( const char * filename ) {
     while ( TObject * obj = next() ){
       TString objName = obj->GetName();
       if ( objName.BeginsWith( "relShiftX_" ) ) {
-        shiftXVec.push_back( objName.Data() );
+        if ( find( shiftXVec.begin(), shiftXVec.end(), objName.Data() ) == shiftXVec.end() ) {
+          shiftXVec.push_back( objName.Data() );
+        }
       }
       if ( objName.BeginsWith( "relShiftY_" ) ) {
-        shiftYVec.push_back( objName.Data() );
+        if ( find( shiftYVec.begin(), shiftYVec.end(), objName.Data() ) == shiftYVec.end() ) {
+          shiftYVec.push_back( objName.Data() );
+        }
       }
     }
     sort( shiftXVec.begin(), shiftXVec.end() );
