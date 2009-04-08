@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.21 2008-08-23 12:30:51 bulgheroni Exp $
+// Version: $Id: EUTelAlign.cc,v 1.22 2009-04-08 11:31:05 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -229,6 +229,8 @@ void EUTelAlign::processRunHeader (LCRunHeader * rdr) {
     message<ERROR> ( "Error during the geometry consistency check: " );
     message<ERROR> ( log() << "The run header says the GeoID is " << header->getGeoID() );
     message<ERROR> ( log() << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesNumber() );
+
+#ifdef EUTEL_INTERACTIVE
     string answer;
     while (true) {
       message<ERROR> ( "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" );
@@ -241,6 +243,8 @@ void EUTelAlign::processRunHeader (LCRunHeader * rdr) {
         break;
       }
     }
+#endif
+
   }
 
   // now book histograms plz...

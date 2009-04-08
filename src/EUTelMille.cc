@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.34 2009-02-27 09:31:19 jbehr Exp $
+// Version: $Id: EUTelMille.cc,v 1.35 2009-04-08 11:31:05 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -330,6 +330,8 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
     streamlog_out ( ERROR2 ) << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " << endl;
     streamlog_out ( ERROR2 ) << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber()
                              << " silicon planes" << endl;
+
+#ifdef EUTEL_INTERACTIVE
     string answer;
     while (true) {
       streamlog_out ( ERROR2 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
@@ -342,6 +344,7 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
         break;
       }
     }
+#endif
   }
 
   // this is the right place also to check the geometry ID. This is a
@@ -354,6 +357,8 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
     streamlog_out ( ERROR2 ) << "Error during the geometry consistency check: " << endl;
     streamlog_out ( ERROR2 ) << "The run header says the GeoID is " << header->getGeoID() << endl;
     streamlog_out ( ERROR2 ) << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesNumber() << endl;
+
+#ifdef EUTEL_INTERACTIVE
     string answer;
     while (true) {
       streamlog_out ( ERROR2 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
@@ -366,6 +371,8 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
         break;
       }
     }
+#endif
+
   }
 
   // increment the run counter

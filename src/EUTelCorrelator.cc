@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.13 2008-10-04 22:08:31 bulgheroni Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.14 2009-04-08 11:31:05 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -166,6 +166,8 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
                              << "The run header says the GeoID is " << runHeader->getGeoID() << endl
                              << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID()
                              << endl;
+   
+#ifdef EUTEL_INTERACTIVE
     string answer;
     while (true) {
       streamlog_out ( ERROR1 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
@@ -178,6 +180,7 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
         break;
       }
     }
+#endif
   }
 
 #endif // USE_GEAR
