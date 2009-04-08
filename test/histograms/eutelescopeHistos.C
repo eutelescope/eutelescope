@@ -2789,7 +2789,7 @@ void showTrackerPlot( const char * filename ) {
 
   }
 
-  string path( prepareOutputFolder( "Tracker" ));
+  string path( prepareOutputFolder( trackerFolderName.Data() ));
   for ( UInt_t iCanvas = 0 ; iCanvas < canvasVec.size(); ++iCanvas ) {
     string figName = path + canvasVec[iCanvas]->GetName() + pictureOutputFormat.Data();
     canvasVec[iCanvas]->SaveAs( figName.c_str() );
