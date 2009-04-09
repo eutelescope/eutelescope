@@ -3,7 +3,7 @@
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
 // Author Yulia Furletova, Uni-Bonn <mailto:yulia@mail.cern.ch>
-// Version $Id: EUTelNativeReader.cc,v 1.16 2008-11-13 13:34:47 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.17 2009-04-09 08:47:35 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -307,6 +307,8 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
     // from now on we have to proceed in a different way depending if
     // the sensor was readout in RAW mode or in ZS
     string currentMode = currentDetector->getMode();
+    vector<size_t > markerVec = currentDetector->getMarkerPosition();
+
 
     if (  ( currentMode == "RAW" ) || ( currentMode == "RAW2" ) || ( currentMode == "RAW3" ) ) {
 
@@ -317,7 +319,7 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
       // ----------------------------------------------------------------------------------------------------
 
       rawDataEncoder["xMin"]     = currentDetector->getXMin();
-      rawDataEncoder["xMax"]     = currentDetector->getXMax() - currentDetector->getMarkerPosition().size();
+      rawDataEncoder["xMax"]     = currentDetector->getXMax() - markerVec.size();
       rawDataEncoder["yMin"]     = currentDetector->getYMin();
       rawDataEncoder["yMax"]     = currentDetector->getYMax();
       rawDataEncoder["sensorID"] = iPlane;
@@ -365,7 +367,7 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
           // now we have to strip out the marker cols from the CDS
           // value. To do this I need a vector of short large enough
           // to accommodate the full matrix without the markers
-          vector<short > cdsStrippedVec( currentDetector->getYNoOfPixel() * ( currentDetector->getXNoOfPixel() - currentDetector->getMarkerPosition().size() ) );
+          vector<short > cdsStrippedVec( currentDetector->getYNoOfPixel() * ( currentDetector->getXNoOfPixel() - markerVec.size() ) );
 
           // I need also two iterators, one for the stripped vec and
           // one for the original one.
@@ -375,7 +377,7 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
           // now loop over all the pixels
           for ( size_t y = 0; y < currentDetector->getYNoOfPixel(); ++y ) {
             size_t offset = y * currentDetector->getXNoOfPixel();
-            vector<size_t >::iterator marker = currentDetector->getMarkerPosition().begin();
+            vector<size_t >::iterator marker = markerVec.begin();
 
             // first copy from the beginning of the row to the first
             // marker column
@@ -383,8 +385,8 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
 
             // now copy from the next column to the next marker into a
             // while loop
-            while ( marker != currentDetector->getMarkerPosition().end() ) {
-              if ( marker < currentDetector->getMarkerPosition().end() - 1 ) {
+            while ( marker != markerVec.end() ) {
+              if ( marker < markerVec.end() - 1 ) {
                 currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + ( *(marker + 1) + offset ), currentCDSPos );
               } else {
                 // now from the last marker column to the end of the
@@ -443,7 +445,7 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
           // now we have to strip out the marker cols from the CDS
           // value. To do this I need a vector of short large enough
           // to accommodate the full matrix without the markers
-          vector<short > cdsStrippedVec( currentDetector->getYNoOfPixel() * ( currentDetector->getXNoOfPixel() - currentDetector->getMarkerPosition().size() ) );
+          vector<short > cdsStrippedVec( currentDetector->getYNoOfPixel() * ( currentDetector->getXNoOfPixel() - markerVec.size() ) );
 
           // I need also two iterators, one for the stripped vec and
           // one for the original one.
@@ -453,7 +455,7 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
           // now loop over all the pixels
           for ( size_t y = 0; y < currentDetector->getYNoOfPixel(); ++y ) {
             size_t offset = y * currentDetector->getXNoOfPixel();
-            vector<size_t >::iterator marker = currentDetector->getMarkerPosition().begin();
+            vector<size_t >::iterator marker = markerVec.begin();
 
             // first copy from the beginning of the row to the first
             // marker column
@@ -461,8 +463,8 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
 
             // now copy from the next column to the next marker into a
             // while loop
-            while ( marker != currentDetector->getMarkerPosition().end() ) {
-              if ( marker < currentDetector->getMarkerPosition().end() - 1 ) {
+            while ( marker != markerVec.end() ) {
+              if ( marker < markerVec.end() - 1 ) {
                 currentCDSPos = copy( cdsBegin + ( *(marker) + 1 + offset ), cdsBegin + ( *(marker + 1) + offset ), currentCDSPos );
               } else {
                 // now from the last marker column to the end of the
@@ -555,7 +557,6 @@ void EUTelNativeReader::processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, E
             // (with markers in) and then calculate how many pixels I
             // have to remove
             size_t originalX = array.m_x[ iPixel ] ;
-            vector<size_t > markerVec = currentDetector->getMarkerPosition();
 
             if ( find( markerVec.begin(), markerVec.end(), originalX ) == markerVec.end() ) {
               // the original X is not on a marker column, so I need
