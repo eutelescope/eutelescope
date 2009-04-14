@@ -22,8 +22,8 @@
 
    <global>
       <parameter name="LCIOInputFiles"> </parameter>
-      <parameter name="GearXMLFile" value="gear_telescope_tbdesy08.xml"/>
-      <parameter name="MaxRecordNumber" value="50000"/>
+      <parameter name="GearXMLFile" value="gear_telescope.xml"/>
+      <parameter name="MaxRecordNumber" value="500000000"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE"/>
