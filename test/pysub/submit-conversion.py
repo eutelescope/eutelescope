@@ -4,7 +4,7 @@ import sys
 import string
 import re
 import os
-
+import popen2
 
 blue="\033[1;34m"
 black="\033[0m"
@@ -34,7 +34,7 @@ def usage( commandname ):
 
 
 # here starts the main
-print red, "Job submitter" , black
+print red, "Converion joob submitter" , black
 
 # default options
 optionAllLocal = 0
@@ -68,7 +68,7 @@ for arg in sys.argv[1:]:
         optionKeepInput = 1
         optionKeepOutput = 1
 
-    elif arg == "-r" or arg == "all-grid":
+    elif arg == "-r" or arg == "--all-grid":
         optionAllLocal = 0
         optionAllGrid  = 1
         optionCPULocal = 0
@@ -175,16 +175,25 @@ for run in runList[:]:
                 { "nativeFolder": gridFolderNative , "run": runString }
             returnvalue = os.system( command )
             if returnvalue != 0:
-                print red, "Problem getting the input file!", black
+                print red, "Problem getting the input file! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
                 continue
 
         # run Marlin in both all local and cpu local configuration
         print blue, "Running Marlin...",black
-        command = "Marlin universal-%(run)s.xml | tee universal-%(run)s.log" % { "run": runString }
-        try:
-            returnvalue = os.system( command )
-        except:
-            print red, "Problem executing Marlin!", black
+
+        # to properly get the return code I need to execute Marlin into a separete pipe
+        logfile = open( "universal-%(run)s.log " % { "run": runString }, "w" )
+        marlin = popen2.Popen4( "Marlin universal-%(run)s.xml" % { "run": runString } )
+        while marlin.poll() == -1:
+            line = marlin.fromchild.readline()
+            print line.strip()
+            logfile.write( line )
+
+        logfile.close()
+        returnvalue = marlin.poll()
+
+        if returnvalue != 0:
+            print red, "Problem executing Marlin! (errno %(returnvalue)s)" % {"returnvalue":returnvalue } , black
             continue
 
         # Copy to the GRID only in CPULocal mode
@@ -194,8 +203,7 @@ for run in runList[:]:
                 { "lciorawFolder": gridFolderLcioRaw , "run": runString }
             returnvalue = os.system( command )
             if returnvalue != 0:
-                print red, "Problem copying the lcio-raw file to the GRID!", black
-                continue
+                print red, "Problem copying the lcio-raw file to the GRID! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
             else:
                 copiedLCIOFile.append( "%(lciorawFolder)s/run%(run)s.slcio" % { "lciorawFolder": gridFolderLcioRaw , "run": runString } )
 
@@ -205,64 +213,64 @@ for run in runList[:]:
         # create a temporary folder
         command = "mkdir /tmp/universal-%(run)s" % { "run": runString }
         returnvalue = os.system( command )
-        if returnvalue == 1 or returnvalue == 0:
-            print red, "Problem creating the temporary folder!", black
-            continue
+        if returnvalue != 1 and returnvalue != 0:
+            print red, "Problem creating the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
+        else:
 
-        # copy there all the tarbal stuff
-        command = "cp universal-%(run)s* /tmp/universal-%(run)s" % { "run" : runString }
-        returnvalue = os.system( command )
-        if returnvalue != 0:
-            print red, "Problem copying the joboutput files in the temporary folder!", black
-            continue
-
-        # tar gzipped the temp folder
-        command = "tar czvf universal-%(run)s.tar.gz /tmp/universal-%(run)s"  % { "run" : runString }
-        returnvalue = os.system( command )
-        if returnvalue != 0:
-            print red, "Problem tar gzipping the temporary folder!", black
-            continue
-
-        # copy the tarbal to the GRID
-        if optionCPULocal == 1:
-            print blue, "Copying the joboutput tarbal to the GRID...", black
-            command = "lcg-cr -v -l lfn:%(joboutputFolder)s/universal-%(run)s.tar.gz file:$PWD/universal-%(run)s.tar.gz" % \
-                      { "joboutputFolder": gridFolderConvertJobout , "run": runString }
+            # copy there all the tarbal stuff
+            command = "cp universal-%(run)s* /tmp/universal-%(run)s" % { "run" : runString }
             returnvalue = os.system( command )
             if returnvalue != 0:
-                print red, "Problem copying to the GRID!", black
-                continue
+                print red, "Problem copying the joboutput files in the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
+            else:
 
-            copiedTARFile.append( "%(joboutputFolder)s/universal-%(run)s.tar.gz" \
-                                  %  { "joboutputFolder": gridFolderConvertJobout , "run": runString } )
+                # tar gzipped the temp folder
+                command = "tar czvf universal-%(run)s.tar.gz /tmp/universal-%(run)s"  % { "run" : runString }
+                returnvalue = os.system( command )
+                if returnvalue != 0:
+                    print red, "Problem tar gzipping the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
+                else:
+
+                    # copy the tarbal to the GRID
+                    if optionCPULocal == 1:
+                        print blue, "Copying the joboutput tarbal to the GRID...", black
+                        command = "lcg-cr -v -l lfn:%(joboutputFolder)s/universal-%(run)s.tar.gz file:$PWD/universal-%(run)s.tar.gz" % \
+                                  { "joboutputFolder": gridFolderConvertJobout , "run": runString }
+                        returnvalue = os.system( command )
+                        if returnvalue != 0:
+                            print red, "Problem copying to the GRID! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
+                        else:
+
+                            copiedTARFile.append( "%(joboutputFolder)s/universal-%(run)s.tar.gz" \
+                                                  %  { "joboutputFolder": gridFolderConvertJobout , "run": runString } )
         
         # clean up the execution envirotment
         print blue, "Cleaning up enviroment", black
         command = "rm -vrf /tmp/universal-%(run)s universal-%(run)s*" % { "run": runString }
-        os.system( command )
+        returnvalue = os.system( command )
         if returnvalue != 0:
-            print red, "Problem removing temporary files", black
+            print red, "Problem removing temporary files! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
             continue
 
         if optionKeepOutput == 0 and optionKeepInput == 0:
             command = "rm -v lcio-raw/run%(run)s.slcio native/run%(run)s.raw" % { "run": runString }
-            os.system( command )
+            returnvalue = os.system( command )
             if returnvalue != 0:
-                print red, "Problem removing the input and output files", black
+                print red, "Problem removing the input and output files! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
                 continue
 
         elif optionKeepOutput == 1 and optionKeepInput == 0:
             command = "rm -v native/run%(run)s.raw" % { "run": runString }
-            os.system( command )
+            returnvalue = os.system( command )
             if returnvalue != 0:
-                print red, "Problem removing the input file", black
+                print red, "Problem removing the input file! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
                 continue
 
         elif optionKeepOutput == 0 and optionKeepInput == 1:
             command = "rm -v lcio-raw/run%(run)s.slcio" % { "run": runString }
-            os.system( command )
+            returnvalue = os.system( command )
             if returnvalue != 0:
-                print red, "Problem remobint the output file", black
+                print red, "Problem removing the output file! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
                 continue
     else :
         print red, "All GRID submission not yet implemented!", blacl
@@ -272,7 +280,8 @@ if len(copiedLCIOFile) != 0 or len(copiedTARFile) != 0:
     print " The following lcio-raw file(s) were copied to the GRID:", blue
     for file in copiedLCIOFile[:] :
         print "\t ", file
-        print "\n", green , "The following tarbal(s) were copied to the GRID:", blue
+
+    print "\n", green , "The following tarbal(s) were copied to the GRID:", blue
     for file in copiedTARFile[:] :
         print "\t ", file
-        print black
+    print black
