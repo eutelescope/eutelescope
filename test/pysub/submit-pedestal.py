@@ -173,7 +173,7 @@ for run in runList[:]:
     if optionAllGrid == 0 :
 
         if optionCPULocal == 1:
-            print blue, "Getting the native raw file from the GRID...", black
+            print blue, "Getting the input lcio-raw file from the GRID...", black
             command = "lcg-cp -v lfn:%(inputFolder)s/run%(run)s.slcio file:$PWD/lcio-raw/run%(run)s.slcio" % \
                 { "inputFolder": gridFolderLcioRaw , "run": runString }
             returnvalue = os.system( command )
@@ -230,7 +230,7 @@ for run in runList[:]:
             print red, "Problem creating the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue}, black
         else:
             # copy there all the tarbal stuff
-            command = "cp pedestal-%(run)s* /tmp/pedestal-%(run)s" % { "run" : runString }
+            command = "cp pedestal-%(run)s* histo/run%(run)s-ped-histo.root /tmp/pedestal-%(run)s" % { "run" : runString }
             returnvalue = os.system( command )
             if returnvalue != 0:
                 print red, "Problem copying the joboutput files in the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
