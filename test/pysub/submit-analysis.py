@@ -172,7 +172,7 @@ if optionKeepOutput == 0:
 pedestalRunLongString  = "%(#)06d" % { "#": pedestalRun }
 pedestalRunShortString = "%(#)d" % { "#" : pedestalRun }
 
-if optionCPULocal == 1:
+if optionCPULocal == 1 and optionGenerateOnly == 0:
     print blue, "Getting the pedestal DB from the GRID...", black
     command = "lcg-cp -v lfn:%(inputFolder)s/run%(pederun)s-ped-db.slcio file:$PWD/db/run%(pederun)s-ped-db.slcio" \
               % { "inputFolder": gridFolderDB, "pederun" : pedestalRunLongString }
@@ -240,11 +240,11 @@ for run in runList[:]:
         # run001000-clu-p4340.slcio
         if optionCPULocal == 1:
             print blue, "Copying register the output file to the GRID...", black
-            command = "lcg-cr -v -l lfn:%(gridFolder)s/run%(run)s-clu--p%(pede)s.slcio file:$PWD/results/run%(run)s-clu-p%(pede)s.slcio" % \
+            command = "lcg-cr -v -l lfn:%(gridFolder)s/run%(run)s-clu-p%(pede)s.slcio file:$PWD/results/run%(run)s-clu-p%(pede)s.slcio" % \
                 { "gridFolder": gridFolderAnalysisResults , "run": runString , "pede": pedestalRunShortString }
             returnvalue = os.system( command )
             if returnvalue != 0:
-                print red, "Problem copying the pedestal DB file to the GRID! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
+                print red, "Problem copying the result file to the GRID! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
             else:
                 copiedResultFile.append( "%(gridFolder)s/run%(run)s-clu--p%(pede)s.slcio" \
                                          % { "gridFolder": gridFolderAnalysisResults , "run": runString, "pede": pedestalRunShortString } )
