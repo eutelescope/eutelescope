@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.22 2009-04-08 11:31:05 bulgheroni Exp $
+// Version: $Id: EUTelAlign.cc,v 1.23 2009-04-15 09:14:34 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -9,6 +9,8 @@
  *   header with author names in all development based on this file.
  *
  */
+
+#ifdef OBSOLETE
 
 // build only if ROOT is used
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
@@ -1170,3 +1172,5 @@ void EUTelAlign::bookHistos() {
 #endif // USE_GEAR
 
 #endif // USE_ROOT
+
+#endif // OBSOLETE

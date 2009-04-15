@@ -3,7 +3,7 @@
 #
 # Original author: J. Engels, DESY
 # Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# Version $Id: CMakeLists.txt,v 1.19 2008-11-17 10:49:40 bulgheroni Exp $
+# Version $Id: CMakeLists.txt,v 1.20 2009-04-15 09:14:34 bulgheroni Exp $
 ########################################################
 
 
@@ -267,14 +267,14 @@ INSTALL( TARGETS lib_${PROJECT_NAME} DESTINATION lib PERMISSIONS
         WORLD_READ WORLD_EXECUTE )
 
 # EXECUTABLE
-#ADD_EXECUTABLE( pede2lcio src/pede2lcio.cc )
-#TARGET_LINK_LIBRARIES( pede2lcio lib_${PROJECT_NAME} ${LCIO_LIB} )
+ADD_EXECUTABLE( pede2lcio src/pede2lcio.cc )
+TARGET_LINK_LIBRARIES( pede2lcio lib_${PROJECT_NAME} ${LCIO_LIB} )
 
 # install executable
-#INSTALL( TARGETS pede2lcio DESTINATION bin PERMISSIONS 
-#  OWNER_READ OWNER_WRITE OWNER_EXECUTE     
-#  GROUP_READ GROUP_EXECUTE
-#  WORLD_READ WORLD_EXECUTE )
+INSTALL( TARGETS pede2lcio DESTINATION bin PERMISSIONS 
+  OWNER_READ OWNER_WRITE OWNER_EXECUTE     
+  GROUP_READ GROUP_EXECUTE
+  WORLD_READ WORLD_EXECUTE )
 
 
 # create uninstall configuration file 
