@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitTuple.cc,v 1.6 2008-09-04 15:33:17 bulgheroni Exp $
+// Version: $Id: EUTelFitTuple.cc,v 1.7 2009-04-15 16:12:42 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -293,6 +293,7 @@ void EUTelFitTuple::init() {
 
   _measuredX     = new double[_nTelPlanes];
   _measuredY     = new double[_nTelPlanes];
+  _measuredZ     = new double[_nTelPlanes];
   _measuredQ     = new double[_nTelPlanes];
   _fittedX       = new double[_nTelPlanes];
   _fittedY       = new double[_nTelPlanes];
@@ -357,7 +358,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
                      << _inputColName
                      << "\nfrom event " << event->getEventNumber()
                      << " in run " << event->getRunNumber()  );
-    throw SkipEventException(this);
+    return;
   }
 
 
@@ -414,6 +415,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
           _measuredX[ipl]=_missingValue;
           _measuredY[ipl]=_missingValue;
+          _measuredZ[ipl]=_missingValue;
           _measuredQ[ipl]=_missingValue;
 
           _fittedX[ipl]=_missingValue;
@@ -466,6 +468,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
               _measuredX[hitPlane]=pos[0];
               _measuredY[hitPlane]=pos[1];
+              _measuredZ[hitPlane]=pos[2];
 
               // Get cluster charge
 
@@ -512,6 +515,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
         {
           _FitTuple->fill(icol++,_measuredX[ipl]);
           _FitTuple->fill(icol++,_measuredY[ipl]);
+          _FitTuple->fill(icol++,_measuredZ[ipl]);
           _FitTuple->fill(icol++,_measuredQ[ipl]);
           _FitTuple->fill(icol++,_fittedX[ipl]);
           _FitTuple->fill(icol++,_fittedY[ipl]);
@@ -638,6 +642,7 @@ void EUTelFitTuple::end(){
   delete [] _isFitted ;
   delete [] _measuredX  ;
   delete [] _measuredY  ;
+  delete [] _measuredZ  ;
   delete [] _measuredQ  ;
   delete [] _fittedX ;
   delete [] _fittedY ;
@@ -671,10 +676,10 @@ void EUTelFitTuple::bookHistos()
   _columnNames.push_back("Chi2");
   _columnType.push_back("float");
 
-  const char * _varName[] = { "measX", "measY" , "measQ", "fitX", "fitY" };
+  const char * _varName[] = { "measX", "measY" , "measZ", "measQ", "fitX", "fitY" };
 
   for(int ipl=0; ipl<_nTelPlanes;ipl++)
-    for(int ivar=0; ivar<5;ivar++)
+    for(int ivar=0; ivar<6;ivar++)
       {
         stringstream ss;
         ss << _varName[ivar] << "_" << ipl;

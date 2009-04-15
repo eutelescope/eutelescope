@@ -78,7 +78,7 @@ namespace eutelescope {
    *        zero, no debug information is printed.
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelFitTuple.h,v 1.2 2008-08-23 12:30:51 bulgheroni Exp $
+   * @version $Id: EUTelFitTuple.h,v 1.3 2009-04-15 16:12:42 bulgheroni Exp $
    * \date 2007.09.10
    *
    */
@@ -203,6 +203,7 @@ namespace eutelescope {
     bool   * _isMeasured;
     double * _measuredX;
     double * _measuredY;
+    double * _measuredZ;
     double * _measuredQ;
 
     bool   * _isFitted;
