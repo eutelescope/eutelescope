@@ -1563,6 +1563,7 @@ void showClusterPlot( const char * filename ) {
   // --> 1 canvas with SN plot (one every 3 detectors)
   // --> 1 canvas with hitmaps (one every 6 detectors)
   // --> 1 canvas with cluster noise (one every 6 detectors)
+  // --> 1 canvas with the cluster multiplicity (one every 6 detectors)
   UInt_t nDetPerCanvas = 3;
 
   TString snrCanvasBaseName    = "SNRCanvas";
@@ -1846,6 +1847,93 @@ void showClusterPlot( const char * filename ) {
     ++iPad;
 
   }
+
+  // now display the event multiplicity canvas
+  nDetPerCanvas = 6;
+
+  TString multiplicityCanvasBaseName = "MultiplicityCanvas";
+
+  // close all canvases with this name
+  closeCanvases( multiplicityCanvasBaseName );
+
+  nCanvas   = nDetector / nDetPerCanvas;
+  if ( nDetector % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+
+  padVec.clear();
+
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+    string canvasName  = string(multiplicityCanvasBaseName.Data()) + "_" + toString(iCanvas);
+    string canvasTitle = string(runName) + " - Cluster multiplicity histograms " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+    TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), canvasWidth, canvasHeight);
+    c->Range(0,0,1,1);
+    c->SetBorderSize(0);
+    c->SetFrameFillColor(0);
+    c->SetBorderMode(0);
+    canvasVec.push_back( c );
+
+    // title pad
+    TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( canvasTitle.c_str() );
+    title->Draw();
+    c->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() < nDetector ) {
+        padVec.push_back( smallPad);
+      }
+    }
+  }
+
+
+  iPad = 0;
+  for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
+    string detectorFolderName = "detector-" + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) clusterHistoFolder->Get( detectorFolderName.c_str() );
+
+    string histoName = "eventMultiplicity-d" + toString( iDetector );
+    TH1D * histo     = (TH1D*) detectorFolder->Get( histoName.c_str() );
+    newTitle = string(histo->GetTitle()) + " - Detector " + toString( iDetector );
+    histo->SetTitle( newTitle.c_str() );
+    histo->SetXTitle("Multiplicity [#]");
+    histo->SetFillColor( kCyan - 5 );
+    padVec[iPad]->cd();
+    histo->Draw();
+    padVec[iPad]->Update();
+    TPaveStats * st = (TPaveStats*)  histo->GetListOfFunctions()->FindObject("stats");
+    st->SetOptStat(1110);
+    padVec[iPad]->Modified( true );
+    ++iPad;
+
+  }
+
+
 
   // save every canvases
   string path( prepareOutputFolder( "Cluster" ) );
