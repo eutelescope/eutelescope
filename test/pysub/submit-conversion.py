@@ -119,8 +119,7 @@ if optionKeepInput == 0:
         if answer != "y" and answer != "yes" and answer != "n" and answer != "no":
             print red, "Invalid answer, please type y or n", black
             answer = raw_input( "--> " ).lower()
-            print "la risp dentro: ", answer
-        elif answer == "y" or answer == "yes":
+         elif answer == "y" or answer == "yes":
             goodAnswer = 1
         elif answer == "n" or answer == "no":
             goodAnswer = 1

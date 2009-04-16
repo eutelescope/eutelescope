@@ -146,7 +146,6 @@ if optionKeepInput == 0:
         if answer != "y" and answer != "yes" and answer != "n" and answer != "no":
             print red, "Invalid answer, please type y or n", black
             answer = raw_input( "--> " ).lower()
-            print "la risp dentro: ", answer
         elif answer == "y" or answer == "yes":
             goodAnswer = 1
         elif answer == "n" or answer == "no":
@@ -237,7 +236,7 @@ for run in runList[:]:
             continue
 
         # Copy to the GRID only in CPULocal mode
-        # run001000-clu-p4340.slcio
+        # run001000-filter-p4340.slcio
         if optionCPULocal == 1:
             print blue, "Copying register the output file to the GRID...", black
             command = "lcg-cr -v -l lfn:%(gridFolder)s/run%(run)s-filter-p%(pede)s.slcio file:$PWD/results/run%(run)s-filter-p%(pede)s.slcio" % \
@@ -246,37 +245,37 @@ for run in runList[:]:
             if returnvalue != 0:
                 print red, "Problem copying the result file to the GRID! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
             else:
-                copiedResultFile.append( "%(gridFolder)s/run%(run)s-clu--p%(pede)s.slcio" \
-                                         % { "gridFolder": gridFolderAnalysisResults , "run": runString, "pede": pedestalRunShortString } )
+                copiedResultFile.append( "%(gridFolder)s/run%(run)s-filter-p%(pede)s.slcio" \
+                                         % { "gridFolder": gridFolderFilterResults , "run": runString, "pede": pedestalRunShortString } )
 
             # Copy to the GRID the histo file as well
             # histo/run001000-clu-histo
             print blue, "Copying register the histogram file to the GRID...", black
-            command = "lcg-cr -v -l lfn:%(gridFolder)s/run%(run)s-clu-histo.root file:$PWD/histo/run%(run)s-clu-histo.root" % \
-                { "gridFolder": gridFolderAnalysisHisto , "run": runString }
+            command = "lcg-cr -v -l lfn:%(gridFolder)s/run%(run)s-filter-histo.root file:$PWD/histo/run%(run)s-filter-histo.root" % \
+                { "gridFolder": gridFolderFilterHisto , "run": runString }
             returnvalue = os.system( command )
             if returnvalue != 0 :
-                print red, "Problem copying the pedestal histogram file to the GRID! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
+                print red, "Problem copying the filter histogram file to the GRID! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
             else:
-                copiedHistoFile.append( "%(gridFolder)s/run%(run)s-clu-histo.root" %  { "gridFolder": gridFolderAnalysisHisto , "run": runString } )
+                copiedHistoFile.append( "%(gridFolder)s/run%(run)s-filter-histo.root" %  { "gridFolder": gridFolderFilterHisto , "run": runString } )
 
         # Prepare the tarbal in any local configurations
         print blue, "Preparing the joboutput tarbal...", black
 
         # create a temporary folder
-        command = "mkdir /tmp/analysis-%(run)s" % { "run": runString }
+        command = "mkdir /tmp/anafilter-%(run)s" % { "run": runString }
         returnvalue = os.system( command )
         if returnvalue != 1 and returnvalue != 0:
             print red, "Problem creating the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue}, black
         else:
             # copy there all the tarbal stuff
-            command = "cp analysis-%(run)s*  histo/run%(run)s-clu-histo.root /tmp/analysis-%(run)s" % { "run" : runString }
+            command = "cp anafilter-%(run)s*  histo/run%(run)s-filter-histo.root /tmp/anafilter-%(run)s" % { "run" : runString }
             returnvalue = os.system( command )
             if returnvalue != 0:
                 print red, "Problem copying the joboutput files in the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
             else:
                 # tar gzipped the temp folder
-                command = "tar czvf analysis-%(run)s.tar.gz /tmp/analysis-%(run)s"  % { "run" : runString }
+                command = "tar czvf anafilter-%(run)s.tar.gz /tmp/anafilter-%(run)s"  % { "run" : runString }
                 returnvalue = os.system( command )
                 if returnvalue != 0:
                     print red, "Problem tar gzipping the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
@@ -285,24 +284,24 @@ for run in runList[:]:
                     # copy the tarbal to the GRID
                     if optionCPULocal == 1:
                         print blue, "Copying the joboutput tarbal to the GRID...", black
-                        command = "lcg-cr -v -l lfn:%(gridFolder)s/analysis-%(run)s.tar.gz file:$PWD/analysis-%(run)s.tar.gz" % \
-                                  { "gridFolder": gridFolderAnalysisJobout , "run": runString }
+                        command = "lcg-cr -v -l lfn:%(gridFolder)s/anafilter-%(run)s.tar.gz file:$PWD/anafilter-%(run)s.tar.gz" % \
+                                  { "gridFolder": gridFolderFilterJobout , "run": runString }
                         returnvalue = os.system( command )
                         if returnvalue != 0:
                             print red, "Problem copying to the GRID! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
                         else:
-                            copiedTARFile.append( "%(gridFolder)s/analysis-%(run)s.tar.gz" \
-                                                  %  { "gridFolder": gridFolderAnalysisJobout , "run": runString } )
+                            copiedTARFile.append( "%(gridFolder)s/anafilter-%(run)s.tar.gz" \
+                                                  %  { "gridFolder": gridFolderFilterJobout , "run": runString } )
         
         # clean up the execution envirotment
         print blue, "Cleaning up enviroment", black
-        command = "rm -vrf /tmp/analysis-%(run)s pedestal-%(run)s*" % { "run": runString }
+        command = "rm -vrf /tmp/anafilter-%(run)s pedestal-%(run)s*" % { "run": runString }
         returnvalue = os.system( command )
         if returnvalue != 0:
             print red, "Problem removing temporary files! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
  
         if optionKeepOutput == 0 and optionKeepInput == 0:
-            command = "rm -v lcio-raw/run%(run)s.slcio histo/run%(run)s-clu-histo.root results/run%(run)s-clu-p%(pede)s.slcio" \
+            command = "rm -v lcio-raw/run%(run)s.slcio histo/run%(run)s-filter-histo.root results/run%(run)s-filter-p%(pede)s.slcio" \
                       % { "run": runString , "pede": pedestalRunShortString }
 
             returnvalue = os.system( command )
@@ -316,7 +315,7 @@ for run in runList[:]:
                 print red, "Problem removing the input file! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
 
         elif optionKeepOutput == 0 and optionKeepInput == 1:
-            command = "rm -v histo/run%(run)s-clu-histo.root results/run%(run)s-clu-p%(pede)s.slcio" \
+            command = "rm -v histo/run%(run)s-filter-histo.root results/run%(run)s-filter-p%(pede)s.slcio" \
                       % { "run": runString , "pede": pedestalRunShortString }
             returnvalue = os.system( command )
             if returnvalue != 0:
