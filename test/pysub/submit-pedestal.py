@@ -112,7 +112,11 @@ for i,arg in enumerate(sys.argv[1:]):
 if narg == 0:
     usage(sys.argv[0])
     sys.exit(0)
-    
+
+if len(runList) == 0:
+    print red, "The run list is empty, please specify at least one run to be processed", black
+    sys.exit(1)
+
 if optionKeepInput == 0:
     goodAnswer = 0
     while goodAnswer == 0:

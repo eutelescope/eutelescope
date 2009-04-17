@@ -137,6 +137,10 @@ if pedestalRun == -1:
     print red, "Pedestal run not specified. Please use option -p to specify a pedestal run", black
     sys.exit(1)
 
+if len(runList) == 0:
+    print red, "The run list is empty, please specify at least one run to be processed", black
+    sys.exit(1)
+
 if optionKeepInput == 0:
     goodAnswer = 0
     while goodAnswer == 0:
@@ -245,7 +249,7 @@ for run in runList[:]:
             if returnvalue != 0:
                 print red, "Problem copying the result file to the GRID! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
             else:
-                copiedResultFile.append( "%(gridFolder)s/run%(run)s-clu--p%(pede)s.slcio" \
+                copiedResultFile.append( "%(gridFolder)s/run%(run)s-clu-p%(pede)s.slcio" \
                                          % { "gridFolder": gridFolderAnalysisResults , "run": runString, "pede": pedestalRunShortString } )
 
             # Copy to the GRID the histo file as well
@@ -295,7 +299,7 @@ for run in runList[:]:
         
         # clean up the execution envirotment
         print blue, "Cleaning up enviroment", black
-        command = "rm -vrf /tmp/analysis-%(run)s pedestal-%(run)s*" % { "run": runString }
+        command = "rm -vrf /tmp/analysis-%(run)s analysis-%(run)s*" % { "run": runString }
         returnvalue = os.system( command )
         if returnvalue != 0:
             print red, "Problem removing temporary files! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
@@ -333,7 +337,7 @@ if optionKeepInput == 0:
 
 if len(copiedResultFile) != 0 or len(copiedTARFile) != 0 or len(copiedHistoFile) != 0:
     print green, "Summary"
-    print " The following pedestal-db file(s) were copied to the GRID:", blue
+    print " The following analysis file(s) were copied to the GRID:", blue
     for file in copiedResultFile[:] :
         print "\t ", file
 
