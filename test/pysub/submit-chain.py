@@ -26,6 +26,14 @@ def usage( commandname ):
 
              --only-generate      Simply genereate the steering file
 
+             --keep-input         Option not to delete the input files in case they are taken from
+                                  a remote localtion. By default remote input files are removed when
+                                  chaining is over. In case the files are local they are never deleted
+
+             --keep-output        Option to keep a copy of the output in case it is copied somewhere
+                                  remotely. By default remote output file is always deleted, while local
+                                  output file is not.
+
              The list-of-runs-to-be-merged is a file list that can be either local or remote.
              Remote files are identified by a prefix defining the transfer protocol.
              Available protocols are with the corresponding prefix are:
@@ -53,7 +61,8 @@ print red, "Chaining job submitter" , black
 
 # default options
 optionGenerateOnly = 0
-
+optionKeepInput    = 0
+optionKeepOutput   = 0
 # defaul GRID paths
 
 # parse the argmuments
@@ -63,6 +72,7 @@ fileListLocal      = []
 fileListRemoteGRID = []
 fileListRemoteSSH  = []
 fileListRemoteWEB  = []
+fileMapRemote      = []
 
 outputFileIndex    = -1
 
@@ -87,6 +97,12 @@ for i,arg in enumerate( goodArg ):
     elif arg == "-h" or arg == "--help":
         usage(sys.argv[0])
         sys.exit(0)
+
+    elif arg == "--keep-input":
+        optionKeepInput = 1
+
+    elif arg == "--keep-output":
+        optionKeepOutput = 1
 
     else :
 
@@ -154,6 +170,7 @@ if len( fileListRemoteGRID ) != 0 :
                 print red, "Problem getting %(file)s" % { "file": file }, black
             else:
                 fileList.append( "/tmp/remote-%(num)06d.slcio" % { "num": remoteCounter } )
+                fileMapRemote.append( ( "/tmp/remote-%(num)06d.slcio" % { "num": remoteCounter } , "%(file)s" % { "file":file } ) )
                 remoteCounter = remoteCounter + 1
 
 if len( fileListRemoteWEB ) != 0 :
@@ -172,6 +189,7 @@ if len( fileListRemoteWEB ) != 0 :
                 print red, "Problem getting %(file)s" % { "file": file }, black
             else:
                 fileList.append( "/tmp/remote-%(num)06d.slcio" % { "num": remoteCounter } )
+                fileMapRemote.append( ( "/tmp/remote-%(num)06d.slcio" % { "num": remoteCounter } , "%(file)s" % { "file":file } ) )
                 remoteCounter = remoteCounter + 1
 
 if len( fileListRemoteSSH ) != 0 :
@@ -190,6 +208,7 @@ if len( fileListRemoteSSH ) != 0 :
                 print red,  "Problem getting %(file)s" % { "file": file }, black
             else:
                 fileList.append( "/tmp/remote-%(num)06d.slcio" % { "num": remoteCounter } )
+                fileMapRemote.append( ( "/tmp/remote-%(num)06d.slcio" % { "num": remoteCounter } , "%(file)s" % { "file":file } ) )
                 remoteCounter = remoteCounter + 1
 
 if len( fileListLocal ) != 0 :
@@ -274,13 +293,16 @@ if optionGenerateOnly == 0:
             if returnvalue != 0:
                 print red, "Problem copying the output file to the GRID! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
             else :
-                # remove the output file
-                print blue, "Removing the local copy of the output file", black
-                command = "rm -v %(file)s" % { "file": outputFileName }
-                returnvalue = os.system( command )
-                if returnvalue != 0:
-                    print red, "Problem removing the local copy of the output file", black
-
+                if optionKeepOutput == 0:
+                    # remove the output file
+                    print blue, "Removing the local copy of the output file", black
+                    command = "rm -v %(file)s" % { "file": outputFileName }
+                    returnvalue = os.system( command )
+                    if returnvalue != 0:
+                        print red, "Problem removing the local copy of the output file", black
+                else :
+                    print blue, "The local copy of the output file is", outputFileName, black
+                    
         elif outputFileArg[:len("ssh:")] == "ssh:" :
             print blue, "Copying the output file via SSH...", black
             command = "scp %(file)s %(ssh)s" % {"file":outputFileName , "ssh": outputFileArg[ len("ssh:") : ] }
@@ -289,22 +311,29 @@ if optionGenerateOnly == 0:
             if returnvalue != 0:
                     print red, "Problem copying the output file via SSH! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
             else :
-                # remove the output file
-                print blue, "Removing the local copy of the output file", black
-                command = "rm -v %(file)s" % { "file": outputFileName }
-                returnvalue = os.system( command )
-                if returnvalue != 0:
-                    print red, "Problem removing the local copy of the output file", black
-
+                if optionKeepOutput == 0:
+                    # remove the output file
+                    print blue, "Removing the local copy of the output file", black
+                    command = "rm -v %(file)s" % { "file": outputFileName }
+                    returnvalue = os.system( command )
+                    if returnvalue != 0:
+                        print red, "Problem removing the local copy of the output file", black
+                else :
+                    print blue, "The local copy of the output file is", outputFileName, black
 
     # removing the non local input files
     if isInputFileAllLocal == 0:
-        print blue, "Removing the local copies of the remote input files...", black
-        command = "rm -r /tmp/remote-*.slcio"
-        returnvalue = os.system( command )
-        if returnvalue != 0:
-            print red, "Problem removing the local copies of the remote input files!  (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
-
+        if optionKeepInput == 0:
+            print blue, "Removing the local copies of the remote input files...", black
+            command = "rm -r /tmp/remote-*.slcio"
+            returnvalue = os.system( command )
+            if returnvalue != 0:
+                print red, "Problem removing the local copies of the remote input files!  (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
+        else :
+            print blue, "Local copy of the input files:"
+            for local,remote in fileMapRemote :
+                print "%(local)s ==> %(remote)s" % {"local":local, "remote":remote}
+            
     print blue, "Removing the steering and log files...", black
     command = "rm -r chain-%(output)s.*" % {"output" : outputFileNameShort }
     returnvalue = os.system( command )
