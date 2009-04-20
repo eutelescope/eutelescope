@@ -37,11 +37,11 @@ namespace eutelescope {
 
   //! Analytical track fitting processor for EUDET Telescope
   /*! This processor was designed for fitting tracks to hits
-   * reconstructed in the telescope sensor planes. Analytical approach
-   * is used, taking into account multiple scattering in the telescope
-   * planes. However, as there are usually multiple hits in each
-   * plane, main task of the processor is to look for the best track
-   * candidate considering all fit possibilities.
+   *  reconstructed in the telescope sensor planes. Analytical approach
+   *  is used, taking into account multiple scattering in the telescope
+   *  planes. However, as there are usually multiple hits in each
+   *  plane, main task of the processor is to look for the best track
+   *  candidate considering all fit possibilities.
    *
    *  \par Fit method
    *  Track fitting is performed separately in XZ and YZ planes (Z
@@ -57,52 +57,50 @@ namespace eutelescope {
    *        to the distances between planes
    *    \li particle energy losses in telescope layers can be neglected
    *
-   *
-   * \par Track finding algorithm
-   * \li Read measured track points from input \c TrackerHit collection
-   *     and copy to local tables
-   * \li Prepare lists of hits for each active sensor plane, apply
-   *     cuts on hit positions, if required
-   * \li Count hit numbers, return if not enough planes fired
-   * \li Calculate number of fit hypothesis (including missing hit possibility)
-   * \li Search the list of fit hypotheses to find the one with best
+   *  \par Track finding algorithm
+   *  \li Read measured track points from input \c TrackerHit collection
+   *      and copy to local tables
+   *  \li Prepare lists of hits for each active sensor plane, apply
+   *      cuts on hit positions, if required
+   *  \li Count hit numbers, return if not enough planes fired
+   *  \li Calculate number of fit hypothesis (including missing hit possibility)
+   *  \li Search the list of fit hypotheses to find the one with best
    *     \f$ \chi^{2} \f$ (including ``penalties'' for missing hits or
    *     skipped planes)
-   * \li Accept the fit if \f$ \chi^{2} \f$ is below threshold
-   * \li Write fitted track to output \c Track collection; measured
+   *  \li Accept the fit if \f$ \chi^{2} \f$ is below threshold
+   *  \li Write fitted track to output \c Track collection; measured
    *     particle positions corrected for alignment and fitted positions
    *     are also written out as \c TrackerHit collections
-   * \li Remove accepted track hits from hit list and repeat procedure
+   *  \li Remove accepted track hits from hit list and repeat procedure
    *
-   * \par Geometry description
-   * The processor does use GEAR input for telescope layers and DUT
-   * description. Corrections or modification to the geometry
-   * description (alignment, removing layers from the fit, etc.) can
-   * be applied with dedicated parameters (see below).
+   *  \par Geometry description
+   *  The processor does use GEAR input for telescope layers and DUT
+   *  description. Corrections or modification to the geometry
+   *  description (alignment, removing layers from the fit, etc.) can
+   *  be applied with dedicated parameters (see below).
    *
    *
-   * \par Output
-   * Fitted particle positions in all telescope planes are stored as
-   * \c TrackerHit collection. If required, measured
-   * particle positions corrected for alignment can also be stored as
-   * a separate  \c TrackerHit collection. In addition fit results are
-   * written in a \c Track collection. Following \c Track variables
-   * are filled:
+   *  \par Output
+   *  Fitted particle positions in all telescope planes are stored as
+   *  \c TrackerHit collection. If required, measured
+   *  particle positions corrected for alignment can also be stored as
+   *  a separate  \c TrackerHit collection. In addition fit results are
+   *  written in a \c Track collection. Following \c Track variables
+   *  are filled:
    *  \li \f$ \chi^{2} \f$ of the fit
    *  \li number of measured hits used in the track fit (as Ndf)
    *  \li reconstructed position at DUT  (as a track reference point)
    *  \li vector of output hits (fitted particle positions in all planes)
    *  \li vector of input hits (corrected particle positions in fired planes)
    *
+   *  \par Control parameters
+   *  Below, parameters defining performance of the algorithm are
+   *  described. Some suggestion for the optimal choice of parameters
+   *  are given in the next section.
    *
-   * \section parameters Control parameters
-   * Below, parameters defining performance of the algorithm are
-   * described. Some suggestion for the optimal choice of parameters
-   * are given in the next section.
    *
-   *
-   * \par Main algorithm parameters
-   *  Following parameters define input and output from the processor.
+   *  \par Main algorithm parameters
+   *   Following parameters define input and output from the processor.
    *
    * \param InputCollectionName  Name of the input TrackerHit collection
    * \param OutputTrackCollectionName Name of the output Track
@@ -214,7 +212,7 @@ namespace eutelescope {
    *        \f$ \chi^{2} \f$ for each hit removed from the track
    *        because of large \f$ \chi^{2} \f$ contribution.
    *
-   * \section performance Performance issues
+   * \par Performance issues
    * As described above, if multiple hits are found in telescope
    * layers or hit rejection is allowed, the algorithm checks all hits
    * selection possibilities (all track hypothesis). This task is
@@ -268,11 +266,9 @@ namespace eutelescope {
    *  \li Interface to LCCD (alignment)
    *
    * \author A.F.Zarnecki, University of Warsaw, zarnecki@fuw.edu.pl
-   * @version $Id: EUTelTestFitter.h,v 1.17 2008-10-04 15:54:46 bulgheroni Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.18 2009-04-20 22:01:25 bulgheroni Exp $
    *
    */
-
-
   class EUTelTestFitter : public marlin::Processor {
 
   public:
