@@ -1,0 +1,32 @@
+<gear>
+    <!--Gear XML file automatically created with GearXML::createXMLFile ....-->
+    <detectors>
+        <detector name="SiPlanes" geartype="SiPlanesParameters">
+            <siplanesID ID="11" />
+            <siplanesType type="TelescopeWithoutDUT" />
+            <siplanesNumber number="6" />
+            <layers>
+                <layer>
+                  <ladder ID="0" positionX="0.000000" positionY="0.000000" positionZ="-50.000000" sizeX="7.700000" sizeY="7.700000" thickness="0.686000" radLength="93.660734" />
+                  <sensitive ID="0" positionX="0.000000" positionY="0.000000" positionZ="-50.000000" sizeX="7.700000" sizeY="7.700000" thickness="0.014000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000" resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000" radLength="93.660734" />
+                </layer>
+                <layer>
+                  <ladder ID="1" positionX="0.000000" positionY="0.000000" positionZ="-25.000000" sizeX="7.700000" sizeY="7.700000" thickness="0.680000" radLength="93.660734" />
+                  <sensitive ID="1" positionX="0.000000" positionY="0.000000" positionZ="-25.000000" sizeX="7.700000" sizeY="7.700000" thickness="0.020000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000" resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000" radLength="93.660734" />
+                </layer>
+                <layer>
+                    <ladder ID="2" positionX="0.000000" positionY="0.000000" positionZ="0.0000" sizeX="7.700000" sizeY="7.700000" thickness="0.680000" radLength="93.660734" />
+                    <sensitive ID="2" positionX="0.000000" positionY="0.000000" positionZ="0.000000" sizeX="7.700000" sizeY="7.700000" thickness="0.020000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000" resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000" radLength="93.660734" />
+                </layer>
+                <layer>
+                  <ladder ID="3" positionX="0.000000" positionY="0.000000" positionZ="25.000000" sizeX="7.700000" sizeY="7.700000" thickness="0.680000" radLength="93.660734" />
+                  <sensitive ID="3" positionX="0.000000" positionY="0.000000" positionZ="25.000000" sizeX="7.700000" sizeY="7.700000" thickness="0.020000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000" resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000" radLength="93.660734" />
+                </layer>
+                <layer>
+                  <ladder ID="4" positionX="0.000000" positionY="0.000000" positionZ="50.000000" sizeX="7.700000" sizeY="7.700000" thickness="0.680000" radLength="93.660734" />
+                  <sensitive ID="4" positionX="0.000000" positionY="0.000000" positionZ="50.000000" sizeX="7.700000" sizeY="7.700000" thickness="0.020000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000" resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000" radLength="93.660734" />
+                </layer>
+            </layers>
+        </detector>
+    </detectors>
+</gear>
