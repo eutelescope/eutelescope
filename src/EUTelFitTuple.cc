@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitTuple.cc,v 1.7 2009-04-15 16:12:42 bulgheroni Exp $
+// Version: $Id: EUTelFitTuple.cc,v 1.8 2009-04-20 22:02:46 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -368,10 +368,10 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
   try {
     hitcol = event->getCollection( _inputDUTColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    message<ERROR> ( log() << "Not able to get collection "
-                     << _inputDUTColName
-                     << "\nfrom event " << event->getEventNumber()
-                     << " in run " << event->getRunNumber()  );
+//     message<ERROR> ( log() << "Not able to get collection "
+//                      << _inputDUTColName
+//                      << "\nfrom event " << event->getEventNumber()
+//                      << " in run " << event->getRunNumber()  );
     _DUTok=false;
   }
 
