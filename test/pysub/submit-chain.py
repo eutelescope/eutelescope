@@ -60,10 +60,9 @@ def usage( commandname ):
 print red, "Chaining job submitter" , black
 
 # default options
-optionGenerateOnly = 0
-optionKeepInput    = 0
-optionKeepOutput   = 0
-# defaul GRID paths
+optionGenerateOnly      = 0
+optionKeepInputForce    = 0
+optionKeepOutputForce   = 0
 
 # parse the argmuments
 narg = 0
@@ -99,10 +98,10 @@ for i,arg in enumerate( goodArg ):
         sys.exit(0)
 
     elif arg == "--keep-input":
-        optionKeepInput = 1
+        optionKeepInputForce = 1
 
     elif arg == "--keep-output":
-        optionKeepOutput = 1
+        optionKeepOutputForce = 1
 
     else :
 
@@ -134,6 +133,12 @@ for i,arg in enumerate( goodArg ):
             tempList = glob.glob( arg )
             for item in tempList:
                 fileListLocal.append( item )
+
+if optionKeepInputForce == 1 :
+    optionKeepInput = 1
+
+if optionKeepOutputForce == 1 :
+    optionKeepOutput = 1
 
 
 if narg == 0:

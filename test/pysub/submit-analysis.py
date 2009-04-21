@@ -45,8 +45,8 @@ optionCPULocal = 1
 
 optionGenerateOnly = 0
 
-optionKeepInput = 1
-optionKeepOutput = 1
+optionKeepInputForce  = 0
+optionKeepOutputForce = 0
 
 
 # defaul GRID paths
@@ -97,10 +97,10 @@ for i,arg in enumerate( goodArg ):
         optionKeepOutput = 0
 
     elif arg == "--keep-input":
-        optionKeepInput = 1
+        optionKeepInputForce = 1
 
     elif arg == "--keep-output":
-        optionKeepOutput = 1
+        optionKeepOutputForce = 1
 
     elif arg == "--only-generate":
         optionGenerateOnly = 1
@@ -128,6 +128,11 @@ for i,arg in enumerate( goodArg ):
         except ValueError:
             print red, "Unrecognized option (%(option)s), or invalid run number" % { "option": arg }, black
 
+if optionKeepInputForce ==1 :
+    optionKeepInput = 1
+
+if optionKeepOutputForce == 1:
+    optionKeepOutput = 1
 
 if narg == 0:
     usage(sys.argv[0])

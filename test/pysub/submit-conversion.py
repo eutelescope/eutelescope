@@ -34,7 +34,7 @@ def usage( commandname ):
 
 
 # here starts the main
-print red, "Converion joob submitter" , black
+print red, "Converion job submitter" , black
 
 # default options
 optionAllLocal = 0
@@ -43,9 +43,8 @@ optionCPULocal = 1
 
 optionGenerateOnly = 0
 
-optionKeepInput = 1
-optionKeepOutput = 1
-
+optionKeepInputForce   = 0
+optionKeepOutputForce  = 0
 
 # defaul GRID paths
 gridFolderNative        = "$LFC_HOME/2008/tb-cern-summer/native-depfet"
@@ -59,6 +58,8 @@ narg = 0
 runList = []
 copiedLCIOFile = []
 copiedTARFile = []
+
+
 for arg in sys.argv[1:]:
     narg = narg + 1
     if arg == "-l" or arg == "--all-local":
@@ -83,10 +84,10 @@ for arg in sys.argv[1:]:
         optionKeepOutput = 0
 
     elif arg == "--keep-input":
-        optionKeepInput = 1
+        optionKeepInputForce = 1
 
     elif arg == "--keep-output":
-        optionKeepOutput = 1
+        optionKeepOutputForce = 1
 
     elif arg == "--only-generate":
         optionGenerateOnly = 1
@@ -105,6 +106,12 @@ for arg in sys.argv[1:]:
         except ValueError:
             print red, "Unrecognized option (%(option)s), or invalid run number" % { "option": arg }
 
+if optionKeepOutputForce == 1 :
+    optionKeepOutput = 1
+
+if optionKeepInputForce == 1 :
+    optionKeepInput = 1
+    
 
 if narg == 0:
     usage(sys.argv[0])
