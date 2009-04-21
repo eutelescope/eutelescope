@@ -3,7 +3,7 @@
 #
 # Original author: J. Engels, DESY
 # Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# Version $Id: CMakeLists.txt,v 1.20 2009-04-15 09:14:34 bulgheroni Exp $
+# Version $Id: CMakeLists.txt,v 1.21 2009-04-21 20:49:25 bulgheroni Exp $
 ########################################################
 
 
@@ -268,7 +268,7 @@ INSTALL( TARGETS lib_${PROJECT_NAME} DESTINATION lib PERMISSIONS
 
 # EXECUTABLE
 ADD_EXECUTABLE( pede2lcio src/pede2lcio.cc )
-TARGET_LINK_LIBRARIES( pede2lcio lib_${PROJECT_NAME} ${LCIO_LIB} )
+TARGET_LINK_LIBRARIES( pede2lcio lib_${PROJECT_NAME} )
 
 # install executable
 INSTALL( TARGETS pede2lcio DESTINATION bin PERMISSIONS 
