@@ -137,6 +137,7 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
     map->SetYTitle("y [pixel]");
     map->SetStats( false );
     padVec[iPad++]->cd();
+    map->SetContour(99);
     map->Draw("colz");
 
     string histoName = "PedeDist-d" + toString( iDetector ) + "-l" + toString( loop );
@@ -225,6 +226,7 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
     map->SetYTitle("y [pixel]");
     map->SetStats( false );
     padVec[iPad++]->cd();
+    map->SetContour(99);
     map->Draw("colz");
 
     string histoName = "NoiseDist-d" + toString( iDetector ) + "-l" + toString( loop );
@@ -309,6 +311,7 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
     map->SetYTitle("y [pixel]");
     map->SetStats( false );
     padVec[iPad++]->cd();
+    map->SetContour(99);
     map->Draw("colz");
 
   }
