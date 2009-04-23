@@ -37,14 +37,17 @@ def usage( commandname ):
 print red, "Converion job submitter" , black
 
 # default options
-optionAllLocal = 0
+optionAllLocal = 1
 optionAllGrid  = 0
-optionCPULocal = 1
+optionCPULocal = 0
 
 optionGenerateOnly = 0
 
 optionKeepInputForce   = 0
 optionKeepOutputForce  = 0
+
+optionKeepInput   = -1
+optionKeepOutput  = -1
 
 # defaul GRID paths
 gridFolderNative        = "$LFC_HOME/2008/tb-cern-summer/native-depfet"

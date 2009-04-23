@@ -48,6 +48,8 @@ optionGenerateOnly = 0
 optionKeepInputForce  = 0
 optionKeepOutputForce = 0
 
+optionKeepInput  = -1
+optionKeepOutput = -1
 
 # defaul GRID paths
 gridFolderLcioRaw         = "$LFC_HOME/2008/tb-cern-summer/results-depfet/analysis"
