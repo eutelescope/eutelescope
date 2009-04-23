@@ -3,7 +3,7 @@
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
 // Author Yulia Furletova, Uni-Bonn <mailto:yulia@mail.cern.ch>
-// Version $Id: EUTelNativeReader.cc,v 1.17 2009-04-09 08:47:35 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.18 2009-04-23 06:39:03 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -832,7 +832,9 @@ void EUTelNativeReader::processBORE( eudaq::Event * bore ) {
         string detectorType = eudaqEUDRBEvent->GetTag( detectorFlag.c_str() );
         string modeFlag = "MODE" + to_string( iDetector );
         string modeType = eudaqEUDRBEvent->GetTag( modeFlag.c_str() );
-        if ( detectorType.compare( "MIMOTEL" ) == 0 ) {
+        if (  ( detectorType.compare( "MIMOTEL" ) == 0 ) ||
+              ( detectorType.compare("") == 0 ) ) { 
+          // at the very this flag was not set
           EUTelMimoTelDetector * detector = new EUTelMimoTelDetector;
           detector->setMode( modeType );
           _eudrbDetectors.push_back ( detector );
