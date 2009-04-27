@@ -56,9 +56,16 @@ namespace eutelescope {
    *
    *  <b>DUT hit collection</b>: A collection containing the DUT hits
    *
+   *  <h3>Warning</h3>
+   *  When doing the cross correlation after the fitting and then
+   *  using as a hit collection one of the two produced by the fitter
+   *  itself, <b>NEVER</b> use the @a fithit collection because this
+   *  contains also the extra- / inter- polated position at the DUT
+   *  plane. Instead use the @a corrfit or any other hit collection
+   *  available before the fitter.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelXCorrelator.h,v 1.2 2009-04-27 12:39:08 bulgheroni Exp $
+   *  @version $Id: EUTelXCorrelator.h,v 1.3 2009-04-27 12:46:45 bulgheroni Exp $
    *
    */
   class EUTelXCorrelator : public marlin::Processor {
