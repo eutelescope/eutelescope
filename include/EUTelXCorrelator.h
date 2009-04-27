@@ -58,7 +58,7 @@ namespace eutelescope {
    *
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelXCorrelator.h,v 1.1 2009-04-27 09:43:09 bulgheroni Exp $
+   *  @version $Id: EUTelXCorrelator.h,v 1.2 2009-04-27 12:39:08 bulgheroni Exp $
    *
    */
   class EUTelXCorrelator : public marlin::Processor {
@@ -128,6 +128,12 @@ namespace eutelescope {
 
     //! DUT input hit collection name
     std::string _inputDUTCollectionName;
+
+    //! A function to guess the sensorID of a hit
+    /*! It is checking against the distance of each plane assuming
+     *  that this hit is belonging to the plane at the closest distant.
+     */
+    int guessSensorID( TrackerHitImpl * hit ) ;
 
   private:
 

@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelXCorrelator.cc,v 1.1 2009-04-27 09:43:09 bulgheroni Exp $
+// Version $Id: EUTelXCorrelator.cc,v 1.2 2009-04-27 12:39:08 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -48,6 +48,7 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include <cmath>
 
 using namespace std;
 using namespace marlin;
@@ -223,12 +224,15 @@ void EUTelXCorrelator::processEvent (LCEvent * event) {
         TrackerHitImpl * telHit = static_cast< TrackerHitImpl * >
           ( inputTelescopeCollection->getElementAt( iTel ) ) ;
 
+        // guess the sensor ID 
+        int sensorID = guessSensorID( telHit );
+
         // get the position of the telescope plane
         const double * telHitPosition = telHit->getPosition();
 
         // fill the correlation histograms
-        _hitXCorrelationMatrix[ iTel ]->fill ( telHitPosition[0], dutHitPosition[0] ) ;
-        _hitYCorrelationMatrix[ iTel ]->fill ( telHitPosition[1], dutHitPosition[1] );
+        _hitXCorrelationMatrix[ sensorID ]->fill ( telHitPosition[0], dutHitPosition[0] ) ;
+        _hitYCorrelationMatrix[ sensorID ]->fill ( telHitPosition[1], dutHitPosition[1] );
 
       } // loop over of the tel hits
 
@@ -321,7 +325,7 @@ void EUTelXCorrelator::bookHistos() {
                                         ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( iTel )));
       int    telYNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( iTel );
 
-      tempHistoName = _hitXCorrelationHistoName + to_string( sensorID );
+      tempHistoName = dirNames[0] + "/" + _hitXCorrelationHistoName + to_string( sensorID );
       streamlog_out( DEBUG ) << "Booking histo " << tempHistoName ;
 
       tempHistoTitle = "Correlation of the DUT and the X detector " + to_string( sensorID );
@@ -334,10 +338,10 @@ void EUTelXCorrelator::bookHistos() {
 
       // add it to the associative map. I'm using iTel instead of
       // sensorID because it is way too practical
-      _hitXCorrelationMatrix[ iTel ] = histo2D;
+      _hitXCorrelationMatrix[ sensorID ] = histo2D;
 
       // repeat for the y direction
-      tempHistoName = _hitYCorrelationHistoName + to_string( sensorID );
+      tempHistoName = dirNames[1] + "/" + _hitYCorrelationHistoName + to_string( sensorID );
       streamlog_out( DEBUG ) << "Booking histo " << tempHistoName ;
 
       tempHistoTitle = "Correlation of the DUT and the Y detector " + to_string( sensorID );
@@ -349,8 +353,7 @@ void EUTelXCorrelator::bookHistos() {
 
       // add it to the associative map. I'm using iTel instead of
       // sensorID because it is way too practical
-      _hitYCorrelationMatrix[ iTel ] = histo2D;
-
+      _hitYCorrelationMatrix[ sensorID ] = histo2D;
 
     }
 
@@ -361,6 +364,31 @@ void EUTelXCorrelator::bookHistos() {
 
   }
 #endif
+}
+
+int EUTelXCorrelator::guessSensorID( TrackerHitImpl * hit ) {
+
+  int sensorID = -1;
+  double minDistance =  numeric_limits< double >::max() ;
+  double * hitPosition = const_cast<double * > (hit->getPosition());
+  double zPos = 0;
+
+  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
+    double distance = std::abs( hitPosition[2] - _siPlaneZPosition[ iPlane ] );
+    if ( distance < minDistance ) {
+      minDistance = distance;
+      sensorID = _siPlanesLayerLayout->getID( iPlane );
+      zPos = _siPlaneZPosition[ iPlane ];
+    }
+  }
+  if ( minDistance > 5 /* mm */ ) {
+    // advice the user that the guessing wasn't successful 
+    streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
+      "Please check the consistency of the data with the GEAR file" << endl;
+    streamlog_out( WARNING3 ) << "SensorID = " << sensorID << " expected pos = " << zPos << " meas pos = " << hitPosition[2] << endl;
+  }
+
+  return sensorID;
 }
 
 
