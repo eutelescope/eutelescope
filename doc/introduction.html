@@ -390,11 +390,44 @@ Again an configuration example for this processor.
 The alignment is a very crucial point for all tracking devices and we
 are provinding the DUT user a procedure for the alignment of the
 telescope planes and of the DUT planes itself. For this purpose the
-developers of the EUTelescope framework inclueded the powerful package
-MillePede2 (http://www.desy.de/~blobel/mptalks.html)
+developers of the EUTelescope framework included the powerful package
+MillePede2 (http://www.desy.de/~blobel/mptalks.html) in the MarlinUtil
+package and implemented the EUTelMille processor to execute the local
+track fitting and also the global fitting and parameter minimization.
+
+@todo The documentation of the EUTelMille class will be soon expanded,
+including also a procedure the user can follow to perform the
+telescope and the DUT alignment.
+
+When the alignment procedur is over, the constants are then transfered
+to a DB via a LCIO file (in the same way the pedestal / noise and
+status collection). Using the EUTelApplyAlignment it is possible to
+correct the hit position for the following processors 
 
 @section tracking The track fitting
+We actually have three different track fitting processor included into
+EUTelescope.
 
+\li EUTelLineFit to recostruct one (and only one) track per event
+using a straight line approximation.
+
+\li EUTelMultiLineFit as the previous, but the number of tracks per
+event can be greater than one.
+
+\li EUTelTestFitter is the implementation of the analytical approach
+keepin the multiple scattering contribution into account. This is the
+reccomended fitter in case of low energy particle beam.
+
+Once the fitting is done, the results are stored into a TrackImpl
+object and nice plots can be displayed using the EUTelFitHistograms
+and the EUTelDUTHistograms. We also offer the user the last chance of
+integration converting the output track collection into a NTuple using
+the EUTelFitTuple processor.
+
+To have a better feeling of the track results, the user can also
+profit from the EUTelEventViewer (requires a CED server running) to
+display the telescope geometry, the position of the hits and the
+obtained tracks. 
 
 
 @section outputfile Saving the results
