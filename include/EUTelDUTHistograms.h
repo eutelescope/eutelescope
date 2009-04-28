@@ -75,7 +75,7 @@ namespace eutelescope {
    * debug information is printed.
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelDUTHistograms.h,v 1.5 2008-08-23 12:30:51 bulgheroni Exp $
+   * @version $Id: EUTelDUTHistograms.h,v 1.6 2009-04-28 08:41:04 bulgheroni Exp $
    *
    */
 
@@ -275,6 +275,11 @@ namespace eutelescope {
     static std::string _ShiftYvsXHistoName;
     static std::string _ShiftXvsY2DHistoName;
     static std::string _ShiftYvsX2DHistoName;
+
+    static std::string _ShiftXvsXHistoName;
+    static std::string _ShiftYvsYHistoName;
+    static std::string _ShiftXvsX2DHistoName;
+    static std::string _ShiftYvsY2DHistoName;
 
     static std::string _EtaXHistoName;
     static std::string _EtaYHistoName;

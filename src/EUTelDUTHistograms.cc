@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// @version: $Id: EUTelDUTHistograms.cc,v 1.11 2008-10-07 17:51:42 bulgheroni Exp $
+// @version: $Id: EUTelDUTHistograms.cc,v 1.12 2009-04-28 08:41:04 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -107,6 +107,11 @@ std::string EUTelDUTHistograms::_ShiftXvsYHistoName    = "DUTshiftXvsY";
 std::string EUTelDUTHistograms::_ShiftYvsXHistoName    = "DUTshiftYvsX";
 std::string EUTelDUTHistograms::_ShiftXvsY2DHistoName    = "DUTshiftXvsY2D";
 std::string EUTelDUTHistograms::_ShiftYvsX2DHistoName    = "DUTshiftYvsX2D";
+
+std::string EUTelDUTHistograms::_ShiftYvsYHistoName    = "DUTshiftYvsY";
+std::string EUTelDUTHistograms::_ShiftXvsXHistoName    = "DUTshiftXvsX";
+std::string EUTelDUTHistograms::_ShiftXvsX2DHistoName    = "DUTshiftXvsX2D";
+std::string EUTelDUTHistograms::_ShiftYvsY2DHistoName    = "DUTshiftYvsY2D";
 
 std::string EUTelDUTHistograms::_EtaXHistoName      = "EtaX";
 std::string EUTelDUTHistograms::_EtaYHistoName      = "EtaY";
@@ -316,7 +321,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   int evtNr = event->getEventNumber();
 
 
-  if(debug)message<DEBUG> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
+  if(debug)message<MESSAGE> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
 
   //
   // Get input collections
@@ -368,7 +373,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   int nTrack = trackcol->getNumberOfElements()  ;
 
 
-  if(debug)message<DEBUG> ( log() << "Total of " << nTrack << " tracks in input collection " );
+  if(debug)message<MESSAGE> ( log() << "Total of " << nTrack << " tracks in input collection " );
 
 
 
@@ -425,14 +430,15 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       // End of loop over fitted tracks
     }
 
-  if(debug)message<DEBUG> ( log() << _fittedX.size()  << " fitted positions at DUT " );
+  if(debug)message<MESSAGE> ( log() << _fittedX.size()  << " fitted positions at DUT " );
 
   // Histograms of fitted positions
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
 
   for(int ifit=0;ifit<(int)_fittedX.size(); ifit++)
     {
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXHistoName]))->fill(_fittedX[ifit]);
 
 
@@ -441,12 +447,13 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_FittedXYHistoName]))->fill(_fittedX[ifit],_fittedY[ifit]);
 
 
-      if(debug)message<DEBUG> ( log() << "Fit " << ifit
+      if(debug)message<MESSAGE> ( log() << "Fit " << ifit
                                 << "   X = " << _fittedX[ifit]
                                 << "   Y = " << _fittedY[ifit]) ;
+#endif
     }
 
-#endif
+
 
 
 
@@ -558,7 +565,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   if(_DUTok) nHit = hitcol->getNumberOfElements();
 
-  if(debug)message<DEBUG> ( log() << "Total of " << nHit << " tracker hits in input collection " );
+  if(debug)message<MESSAGE> ( log() << "Total of " << nHit << " tracker hits in input collection " );
 
 
   for(int ihit=0; ihit< nHit ; ihit++)
@@ -614,28 +621,28 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
     }
 
 
-  if(debug)message<DEBUG> ( log() << _measuredX.size() << " hits at DUT " );
+  if(debug)message<MESSAGE> ( log() << _measuredX.size() << " hits at DUT " );
 
 
   // Histograms of measured positions
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA) 
 
   for(int ihit=0;ihit<(int)_measuredX.size(); ihit++)
     {
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA) 
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredXHistoName]))->fill(_measuredX[ihit]);
 
 
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredYHistoName]))->fill(_measuredY[ihit]);
 
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_MeasuredXYHistoName]))->fill(_measuredX[ihit],_measuredY[ihit]);
-
-      if(debug)message<DEBUG> ( log() << "Hit " << ihit
+#endif
+      if(debug)message<MESSAGE> ( log() << "Hit " << ihit
                                 << "   X = " << _measuredX[ihit]
                                 << "   Y = " << _measuredY[ihit]) ;
     }
 
-#endif
+
 
 
   // Match measured and fitted positions
@@ -693,6 +700,14 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_ShiftXvsYHistoName]))->fill(_fittedY[bestfit],_measuredX[besthit]-_fittedX[bestfit]);
 
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_ShiftYvsXHistoName]))->fill(_fittedX[bestfit],_measuredY[besthit]-_fittedY[bestfit]);
+
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ShiftXvsX2DHistoName]))->fill(_fittedX[bestfit], _measuredX[besthit]-_fittedX[bestfit]);
+
+        (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_ShiftXvsXHistoName]))->fill(_fittedX[bestfit], _measuredX[besthit]-_fittedX[bestfit]);
+
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ShiftYvsY2DHistoName]))->fill(_fittedY[bestfit], _measuredY[besthit]-_fittedY[bestfit]);
+
+        (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_ShiftYvsYHistoName]))->fill(_fittedY[bestfit], _measuredY[besthit]-_fittedY[bestfit]);
 
         (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ShiftXvsY2DHistoName]))->fill(_fittedY[bestfit],_measuredX[besthit]-_fittedX[bestfit]);
 
@@ -780,9 +795,9 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   if(debug)
     {
-      message<DEBUG> ( log() << nMatch << " DUT hits matched to fitted tracks ");
-      message<DEBUG> ( log() << _measuredX.size() << " DUT hits not matched to any track ");
-      message<DEBUG> ( log() << _fittedX.size() << " fitted tracks not matched to any DUT hit ");
+      message<MESSAGE> ( log() << nMatch << " DUT hits matched to fitted tracks ");
+      message<MESSAGE> ( log() << _measuredX.size() << " DUT hits not matched to any track ");
+      message<MESSAGE> ( log() << _fittedX.size() << " fitted tracks not matched to any DUT hit ");
     }
 
 
@@ -1230,6 +1245,30 @@ void EUTelDUTHistograms::bookHistos()
   _aidaHistoMap.insert(make_pair(_ShiftXvsYHistoName, shiftXvsYHisto));
 
 
+  // Measured - fitted position in X vs X
+  shiftXTitle = "Measured - fitted X position vs X"; 
+  if ( isHistoManagerAvailable )
+    {
+      histoInfo = histoMgr->getHistogramInfo(_ShiftXvsXHistoName);
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          shiftXNBin = histoInfo->_xBin;
+          shiftXMin  = histoInfo->_xMin;
+          shiftXMax  = histoInfo->_xMax;
+          shiftVMin  = histoInfo->_yMin;
+          shiftVMax  = histoInfo->_yMax;
+          if ( histoInfo->_title != "" ) shiftXTitle = histoInfo->_title;
+        }
+    }
+  
+  AIDA::IProfile1D * shiftXvsXHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_ShiftXvsXHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftVMin,shiftVMax);
+
+  shiftXvsXHisto->setTitle(shiftXTitle.c_str());
+
+  _aidaHistoMap.insert(make_pair(_ShiftXvsXHistoName, shiftXvsXHisto));
+
+
 
   // Measured - fitted position in Y vs X
 
@@ -1263,6 +1302,32 @@ void EUTelDUTHistograms::bookHistos()
   _aidaHistoMap.insert(make_pair(_ShiftYvsXHistoName, shiftYvsXHisto));
 
 
+
+  // Measured - fitted position in Y vs Y
+
+  shiftYTitle = "Measured - fitted Y position vs Y";
+
+
+  if ( isHistoManagerAvailable )
+    {
+      histoInfo = histoMgr->getHistogramInfo(_ShiftYvsYHistoName);
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          shiftYNBin = histoInfo->_xBin;
+          shiftYMin  = histoInfo->_xMin;
+          shiftYMax  = histoInfo->_xMax;
+          shiftVMin  = histoInfo->_yMin;
+          shiftVMax  = histoInfo->_yMax;
+          if ( histoInfo->_title != "" ) shiftYTitle = histoInfo->_title;
+        }
+    }
+
+  AIDA::IProfile1D * shiftYvsYHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_ShiftYvsYHistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax,shiftVMin,shiftVMax);
+
+  shiftYvsYHisto->setTitle(shiftYTitle.c_str());
+
+  _aidaHistoMap.insert(make_pair(_ShiftYvsYHistoName, shiftYvsYHisto));
 
 
   // Measured - fitted position in X  vs Y (2D plot)
@@ -1301,6 +1366,36 @@ void EUTelDUTHistograms::bookHistos()
 
 
 
+  // Measured - fitted position in X vs X (2D plot) 
+
+  shiftXTitle = "Measured - fitted X position vs X";
+
+
+  if ( isHistoManagerAvailable )
+    {
+      histoInfo = histoMgr->getHistogramInfo(_ShiftXvsX2DHistoName);
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          shiftXNBin = histoInfo->_xBin;
+          shiftXMin  = histoInfo->_xMin;
+          shiftXMax  = histoInfo->_xMax;
+          shiftVNBin = histoInfo->_yBin;
+          shiftVMin  = histoInfo->_yMin;
+          shiftVMax  = histoInfo->_yMax;
+          if ( histoInfo->_title != "" ) shiftXTitle = histoInfo->_title;
+        }
+    }
+
+
+  AIDA::IHistogram2D * shiftXvsX2DHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_ShiftXvsX2DHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftVNBin,shiftVMin,shiftVMax);
+
+  shiftXvsX2DHisto->setTitle(shiftXTitle.c_str());
+
+  _aidaHistoMap.insert(make_pair(_ShiftXvsX2DHistoName, shiftXvsX2DHisto));
+
+
+
   // Measured - fitted position in Y vs X  (2D plot)
 
   shiftYNBin  = 200;
@@ -1335,6 +1430,31 @@ void EUTelDUTHistograms::bookHistos()
   _aidaHistoMap.insert(make_pair(_ShiftYvsX2DHistoName, shiftYvsX2DHisto));
 
 
+  // Measured - fitted position in Y vs Y (2D plot)
+  shiftYTitle = "Measured - fitted Y position vs Y";
+
+
+  if ( isHistoManagerAvailable )
+    {
+      histoInfo = histoMgr->getHistogramInfo(_ShiftYvsY2DHistoName);
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          shiftYNBin = histoInfo->_xBin;
+          shiftYMin  = histoInfo->_xMin;
+          shiftYMax  = histoInfo->_xMax;
+          shiftVNBin = histoInfo->_yBin;
+          shiftVMin  = histoInfo->_yMin;
+          shiftVMax  = histoInfo->_yMax;
+          if ( histoInfo->_title != "" ) shiftYTitle = histoInfo->_title;
+        }
+    }
+
+  AIDA::IHistogram2D * shiftYvsY2DHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_ShiftYvsY2DHistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax,shiftVNBin,shiftVMin,shiftVMax);
+
+  shiftYvsY2DHisto->setTitle(shiftYTitle.c_str());
+
+  _aidaHistoMap.insert(make_pair(_ShiftYvsY2DHistoName, shiftYvsY2DHisto));
 
 
   // Measured - fitted position in X-Y
