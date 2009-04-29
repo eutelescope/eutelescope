@@ -63,6 +63,8 @@ print red, "Chaining job submitter" , black
 optionGenerateOnly      = 0
 optionKeepInputForce    = 0
 optionKeepOutputForce   = 0
+optionKeepInput         =-1
+optionKeepOutput        =-1
 
 # parse the argmuments
 narg = 0
