@@ -141,7 +141,7 @@ namespace eutelescope {
     //! TrackerHit collection name
     /*! Input collection with hits.
      */
-    std::string _hitCollectionName;
+    std::vector<std::string > _hitCollectionName;
 
     //! TRACK collection name
     /*! Output collection with fitted tracks.
