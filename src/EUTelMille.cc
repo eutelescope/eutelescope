@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.36 2009-04-29 15:14:05 jbehr Exp $
+// Version: $Id: EUTelMille.cc,v 1.37 2009-04-29 15:24:47 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -150,8 +150,8 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   //HitCollectionNameVecExample.push_back("testfithit");
 
   registerInputCollections(LCIO::TRACKERHIT,"HitCollectionName",
-                          "Hit collection name",
-                          _hitCollectionName,HitCollectionNameVecExample);
+			   "Hit collection name",
+			   _hitCollectionName,HitCollectionNameVecExample);
 
   registerInputCollection(LCIO::TRACK,"TrackCollectionName",
                           "Track collection name",
@@ -613,150 +613,150 @@ void EUTelMille::processEvent (LCEvent * event) {
   }
  
   std::vector<std::vector<EUTelMille::HitsInPlane> > _hitsArray(_nPlanes, std::vector<EUTelMille::HitsInPlane>());
-
-  for(size_t i =0;i < _hitCollectionName.size();i++)
-    {
+  if (_inputMode != 1) 
+    for(size_t i =0;i < _hitCollectionName.size();i++)
+      {
      
-      LCCollection* collection;
-      try {
-	//	if (_inputMode == 1) {
-	//	  collection = event->getCollection(_trackCollectionName);
-	//	} else {
-	collection = event->getCollection(_hitCollectionName[i]);
-	//}
-      } catch (DataNotAvailableException& e) {
-	streamlog_out ( WARNING2 ) << "No input collection " << _hitCollectionName[i] << " found for event " << event->getEventNumber()
-				   << " in run " << event->getRunNumber() << endl;
-	throw SkipEventException(this);
-      }
+	LCCollection* collection;
+	try {
+	  //	if (_inputMode == 1) {
+	  //	  collection = event->getCollection(_trackCollectionName);
+	  //	} else {
+	  collection = event->getCollection(_hitCollectionName[i]);
+	  //}
+	} catch (DataNotAvailableException& e) {
+	  streamlog_out ( WARNING2 ) << "No input collection " << _hitCollectionName[i] << " found for event " << event->getEventNumber()
+				     << " in run " << event->getRunNumber() << endl;
+	  throw SkipEventException(this);
+	}
 
-      int detectorID    = -99; // it's a non sense
-      int oldDetectorID = -100;
-      int layerIndex;
+	int detectorID    = -99; // it's a non sense
+	int oldDetectorID = -100;
+	int layerIndex;
 
 
       
-      HitsInPlane hitsInPlane;
+	HitsInPlane hitsInPlane;
  
-      // check if running in input mode 0 or 2
-      if (_inputMode == 0) {
+	// check if running in input mode 0 or 2
+	if (_inputMode == 0) {
  
-	// loop over all hits in collection
-	for ( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ ) {
+	  // loop over all hits in collection
+	  for ( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ ) {
 
-	  TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( collection->getElementAt(iHit) );
+	    TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( collection->getElementAt(iHit) );
  
-	  LCObjectVec clusterVector = hit->getRawHits();
+	    LCObjectVec clusterVector = hit->getRawHits();
 
-	  EUTelVirtualCluster * cluster;
-	  if ( hit->getType() == kEUTelFFClusterImpl ) {
+	    EUTelVirtualCluster * cluster;
+	    if ( hit->getType() == kEUTelFFClusterImpl ) {
 
-	    // fixed cluster implementation. Remember it can come from
-	    // both RAW and ZS data
-	    cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-	  } else if ( hit->getType() == kEUTelSparseClusterImpl ) {
+	      // fixed cluster implementation. Remember it can come from
+	      // both RAW and ZS data
+	      cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+	    } else if ( hit->getType() == kEUTelSparseClusterImpl ) {
 
-	    // ok the cluster is of sparse type, but we also need to know
-	    // the kind of pixel description used. This information is
-	    // stored in the corresponding original data collection.
+	      // ok the cluster is of sparse type, but we also need to know
+	      // the kind of pixel description used. This information is
+	      // stored in the corresponding original data collection.
 
-	    LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-	    TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-	    CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-	    SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+	      LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+	      TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+	      CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+	      SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
 	 
-	    // now we know the pixel type. So we can properly create a new
-	    // instance of the sparse cluster
-	    if ( pixelType == kEUTelSimpleSparsePixel ) {
+	      // now we know the pixel type. So we can properly create a new
+	      // instance of the sparse cluster
+	      if ( pixelType == kEUTelSimpleSparsePixel ) {
  
-	      cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
-		( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+		cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+		  ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+
+	      } else {
+		streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+		throw UnknownDataTypeException("Pixel type unknown");
+	      }
 
 	    } else {
-	      streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-	      throw UnknownDataTypeException("Pixel type unknown");
+	      throw UnknownDataTypeException("Unknown cluster type");
 	    }
+ 
+	    detectorID = cluster->getDetectorID();
+	    //std::cout << "detector id " << detectorID << " " << _hitCollectionName[i] << std::endl;
+	    if ( detectorID != oldDetectorID ) {
+	      oldDetectorID = detectorID;
 
-	  } else {
-	    throw UnknownDataTypeException("Unknown cluster type");
-	  }
- 
-	  detectorID = cluster->getDetectorID();
-	  //std::cout << "detector id " << detectorID << " " << _hitCollectionName[i] << std::endl;
-	  if ( detectorID != oldDetectorID ) {
-	    oldDetectorID = detectorID;
+	      if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
 
-	    if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
-
-	      // first of all try to see if this detectorID already belong to
-	      if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
+		// first of all try to see if this detectorID already belong to
+		if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
  
-		// this means that this detector ID was not already inserted,
-		// so this is the right place to do that
-		for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
+		  // this means that this detector ID was not already inserted,
+		  // so this is the right place to do that
+		  for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
  
-		  if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
+		    if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
  
-		    _conversionIdMap.insert( make_pair( detectorID, iLayer ) );
-		    break;
+		      _conversionIdMap.insert( make_pair( detectorID, iLayer ) );
+		      break;
+		    }
 		  }
 		}
 	      }
+ 
 	    }
- 
-	  }
 
-	  layerIndex   = _conversionIdMap[detectorID];
+	    layerIndex   = _conversionIdMap[detectorID];
 	  
-	  // Getting positions of the hits.
-	  // ------------------------------
-	  hitsInPlane.measuredX = 1000 * hit->getPosition()[0];
-	  hitsInPlane.measuredY = 1000 * hit->getPosition()[1];
-	  hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
+	    // Getting positions of the hits.
+	    // ------------------------------
+	    hitsInPlane.measuredX = 1000 * hit->getPosition()[0];
+	    hitsInPlane.measuredY = 1000 * hit->getPosition()[1];
+	    hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
  
-	  delete cluster; // <--- destroying the cluster
+	    delete cluster; // <--- destroying the cluster
  
-	  _hitsArray[layerIndex].push_back(hitsInPlane);
+	    _hitsArray[layerIndex].push_back(hitsInPlane);
  
-	} // end loop over all hits in collection
+	  } // end loop over all hits in collection
 
-      } else if (_inputMode == 2) {
+	} else if (_inputMode == 2) {
 
 #if defined( USE_ROOT ) || defined(MARLIN_USE_ROOT)
 
-	const float resolX = _testModeSensorResolution;
-	const float resolY = _testModeSensorResolution;
+	  const float resolX = _testModeSensorResolution;
+	  const float resolY = _testModeSensorResolution;
 
-	const float xhitpos = gRandom->Uniform(-3500.0,3500.0);
-	const float yhitpos = gRandom->Uniform(-3500.0,3500.0);
+	  const float xhitpos = gRandom->Uniform(-3500.0,3500.0);
+	  const float yhitpos = gRandom->Uniform(-3500.0,3500.0);
 
-	const float xslope = gRandom->Gaus(0.0,_testModeXTrackSlope);
-	const float yslope = gRandom->Gaus(0.0,_testModeYTrackSlope);
+	  const float xslope = gRandom->Gaus(0.0,_testModeXTrackSlope);
+	  const float yslope = gRandom->Gaus(0.0,_testModeYTrackSlope);
 
-	// loop over all planes
-	for (int help = 0; help < _nPlanes; help++) {
+	  // loop over all planes
+	  for (int help = 0; help < _nPlanes; help++) {
 
-	  // The x and y positions are given by the sums of the measured
-	  // hit positions, the detector resolution, the shifts of the
-	  // planes and the effect due to the track slopes.
-	  hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[help] + _testModeSensorZPositions[help] * tan(xslope) - _testModeSensorGamma[help] * yhitpos - _testModeSensorBeta[help] * _testModeSensorZPositions[0];
-	  hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[help] + _testModeSensorZPositions[help] * tan(yslope) + _testModeSensorGamma[help] * xhitpos - _testModeSensorAlpha[help] * _testModeSensorZPositions[help];
-	  hitsInPlane.measuredZ = _testModeSensorZPositions[help];
-	  _hitsArray[help].push_back(hitsInPlane);
-	  _telescopeResolX[help] = resolX;
-	  _telescopeResolY[help] = resolY;
-	} // end loop over all planes
+	    // The x and y positions are given by the sums of the measured
+	    // hit positions, the detector resolution, the shifts of the
+	    // planes and the effect due to the track slopes.
+	    hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[help] + _testModeSensorZPositions[help] * tan(xslope) - _testModeSensorGamma[help] * yhitpos - _testModeSensorBeta[help] * _testModeSensorZPositions[0];
+	    hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[help] + _testModeSensorZPositions[help] * tan(yslope) + _testModeSensorGamma[help] * xhitpos - _testModeSensorAlpha[help] * _testModeSensorZPositions[help];
+	    hitsInPlane.measuredZ = _testModeSensorZPositions[help];
+	    _hitsArray[help].push_back(hitsInPlane);
+	    _telescopeResolX[help] = resolX;
+	    _telescopeResolY[help] = resolY;
+	  } // end loop over all planes
 
 #else // USE_ROOT
 
-	throw MissingLibraryException( this, "ROOT" );
+	  throw MissingLibraryException( this, "ROOT" );
 
 #endif
 
 
-      } // end if check running in input mode 0 or 2
+	} // end if check running in input mode 0 or 2
 
-    }
+      }
  
   _xPos = new double *[_maxTrackCandidates];
   _yPos = new double *[_maxTrackCandidates];
@@ -806,7 +806,7 @@ void EUTelMille::processEvent (LCEvent * event) {
     LCCollection* collection;
     collection = event->getCollection(_trackCollectionName);
     const int nTracksHere = collection->getNumberOfElements();
-
+    
     streamlog_out ( MILLEMESSAGE ) << "Number of tracks available in track collection: " << nTracksHere << endl;
 
     // loop over all tracks
