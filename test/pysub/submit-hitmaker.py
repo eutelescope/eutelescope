@@ -27,7 +27,7 @@ def usage( commandname ):
              -o or --output-basename   The output file name for the hit file and the corresponding histogram file
                                        according to the following naming convention
 
-                                       hit File     --> restults/basename-hit.slcio
+                                       hit File     --> results/basename-hit.slcio
                                        Histo File   --> histo/basename-hit-histo.root
                                        
              -g or --gear-file         Specify a GEAR file to be used. In case it is not specified, gear_telescope.xml will be used
@@ -176,7 +176,7 @@ actualSteeringString = actualSteeringString.replace( "@EtaFile@", "%(eta)s" % { 
 actualSteeringString = actualSteeringString.replace( "@HistoFile@", "%(histo)s" % {"histo": histoFileName } )
 
 # add the output file name
-actualSteeringString = actualSteeringString.replace( "@OutputFile@", "%(output)s" % {"output": outpuFileName } )
+actualSteeringString = actualSteeringString.replace( "@OutputFile@", "%(output)s" % {"output": outputFileName } )
 
 # write the new file on disk
 actualSteeringFile = open( steeringFileName, "w" )
