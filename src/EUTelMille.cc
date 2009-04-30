@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.37 2009-04-29 15:24:47 jbehr Exp $
+// Version: $Id: EUTelMille.cc,v 1.38 2009-04-30 16:03:59 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -142,15 +142,14 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
     "EUTelMille uses the MILLE program to write data files for MILLEPEDE II.";
 
   // choose input mode
-  registerOptionalParameter("InputMode","Selects the source of input hits. 0 - hits read from hitfile with simple trackfinding. 1 - hits read from output of tracking processor. 2 - Test mode. Simple internal simulation and simple trackfinding.",_inputMode, static_cast <int> (0));
+  registerOptionalParameter("InputMode","Selects the source of input hits. 0 - hits read from hitfile with simple trackfinding. 1 - hits read from output of tracking processor. 2 - Test mode. Simple internal simulation and simple trackfinding. 3 - mixture of a track collection from the telescope and hit collections for the DUT (only one DUT layer can be used unfortunately)",_inputMode, static_cast <int> (0));
 
   // input collections
   std::vector<std::string > HitCollectionNameVecExample;
   HitCollectionNameVecExample.push_back("corrhits");
-  //HitCollectionNameVecExample.push_back("testfithit");
 
   registerInputCollections(LCIO::TRACKERHIT,"HitCollectionName",
-			   "Hit collection name",
+			   "Hit collections name",
 			   _hitCollectionName,HitCollectionNameVecExample);
 
   registerInputCollection(LCIO::TRACK,"TrackCollectionName",
@@ -279,10 +278,58 @@ void EUTelMille::init() {
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
   _histogramSwitch = true;
+
+  //lets guess the number of planes
+  if(_inputMode == 0 || _inputMode == 2)
+    {
+      _nPlanes = _siPlanesParameters->getSiPlanesNumber();
+      //assume that there is only one DUT layer and that his DUT
+      //layer is only used if more than 1 hit collections are used
+      if(_siPlanesParameters->getSiPlanesType() == 1 && _hitCollectionName.size() > 1)
+	{
+	  _nPlanes += (int)_hitCollectionName.size() - 1;
+	}
+    }
+  else if(_inputMode == 1)
+    {
+      _nPlanes = _siPlanesParameters->getSiPlanesNumber();
+    }
+  else if(_inputMode == 3)
+    {
+      _nPlanes = _siPlanesParameters->getSiPlanesNumber();
+      if(_siPlanesParameters->getSiPlanesType() == 1 && _hitCollectionName.size() >= 1)
+	{
+	  _nPlanes += (int)_hitCollectionName.size();
+	}
+    }
+  else
+    {
+      cout << "unknown input mode " << _inputMode << endl;
+      exit(-1);
+    }
+    
+  //lets create an array with the z positions of each layer
+  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ )
+    _siPlaneZPosition.push_back(_siPlanesLayerLayout->getLayerPositionZ(iPlane));
+      
+  //it seems that we also need the DUT!
+  if(_nPlanes != _siPlanesLayerLayout->getNLayers())
+    _siPlaneZPosition.push_back(_siPlanesLayerLayout->getDUTPositionZ());
+      
+  //lets sort the array with increasing z
+  sort(_siPlaneZPosition.begin(), _siPlaneZPosition.end());
+      
+  //consistency
+  if((int)_siPlaneZPosition.size() != _nPlanes)
+    {
+      streamlog_out ( ERROR2 ) << "the number of detected planes is " << _nPlanes << " but only " << _siPlaneZPosition.size() << " layer z positions were found!"  << endl;
+      exit(-1);
+    }
+
 #endif
-
-  _nPlanes = _siPlanesParameters->getSiPlanesNumber();
-
+  
+    
+ 
   // this method is called only once even when the rewind is active
   // usually a good idea to
   printParameters ();
@@ -300,6 +347,8 @@ void EUTelMille::init() {
   _nMilleDataPoints = 0;
   _nMilleTracks = 0;
 
+
+
   _waferResidX = new double[_nPlanes];
   _waferResidY = new double[_nPlanes];
   _xFitPos = new double[_nPlanes];
@@ -309,14 +358,25 @@ void EUTelMille::init() {
   _telescopeResolY = new double[_nPlanes];
 
 
+
+
   // booking histograms
   bookHistos();
 
   streamlog_out ( MESSAGE2 ) << "Initialising Mille..." << endl;
   _mille = new Mille(_binaryFilename.c_str());
   streamlog_out ( MESSAGE2 ) << "The filename for the binary file is: " << _binaryFilename.c_str() << endl;
+ 
+  
 
-  //  exit(-1);
+
+  for(int i = 0; i < _maxTrackCandidates; i++)
+    {
+      _xPos.push_back(std::vector<double>(_nPlanes,0.0));
+      _yPos.push_back(std::vector<double>(_nPlanes,0.0));
+      _zPos.push_back(std::vector<double>(_nPlanes,0.0));
+      
+    }
 
 }
 
@@ -437,6 +497,7 @@ void EUTelMille::findtracks(
 	}
     }
 }
+
 
 void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFitter[], double yResFitter[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]) {
 
@@ -589,6 +650,10 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
 
 void EUTelMille::processEvent (LCEvent * event) {
 
+ 
+
+
+
   if (_iEvt % 10 == 0) {
     streamlog_out( MESSAGE2 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
@@ -613,34 +678,25 @@ void EUTelMille::processEvent (LCEvent * event) {
   }
  
   std::vector<std::vector<EUTelMille::HitsInPlane> > _hitsArray(_nPlanes, std::vector<EUTelMille::HitsInPlane>());
-  if (_inputMode != 1) 
+
+  if (_inputMode != 1 && _inputMode != 3) 
     for(size_t i =0;i < _hitCollectionName.size();i++)
       {
      
 	LCCollection* collection;
 	try {
-	  //	if (_inputMode == 1) {
-	  //	  collection = event->getCollection(_trackCollectionName);
-	  //	} else {
 	  collection = event->getCollection(_hitCollectionName[i]);
-	  //}
 	} catch (DataNotAvailableException& e) {
 	  streamlog_out ( WARNING2 ) << "No input collection " << _hitCollectionName[i] << " found for event " << event->getEventNumber()
 				     << " in run " << event->getRunNumber() << endl;
 	  throw SkipEventException(this);
 	}
-
-	int detectorID    = -99; // it's a non sense
-	int oldDetectorID = -100;
-	int layerIndex;
-
-
-      
+	int layerIndex = -1;
 	HitsInPlane hitsInPlane;
  
 	// check if running in input mode 0 or 2
 	if (_inputMode == 0) {
- 
+	  
 	  // loop over all hits in collection
 	  for ( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ ) {
 
@@ -680,40 +736,32 @@ void EUTelMille::processEvent (LCEvent * event) {
 	    } else {
 	      throw UnknownDataTypeException("Unknown cluster type");
 	    }
- 
-	    detectorID = cluster->getDetectorID();
-	    //std::cout << "detector id " << detectorID << " " << _hitCollectionName[i] << std::endl;
-	    if ( detectorID != oldDetectorID ) {
-	      oldDetectorID = detectorID;
 
-	      if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
-
-		// first of all try to see if this detectorID already belong to
-		if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
- 
-		  // this means that this detector ID was not already inserted,
-		  // so this is the right place to do that
-		  for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
- 
-		    if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
- 
-		      _conversionIdMap.insert( make_pair( detectorID, iLayer ) );
-		      break;
-		    }
+	    double minDistance =  numeric_limits< double >::max() ;
+	    double * hitPosition = const_cast<double * > (hit->getPosition());
+	 	   
+	    for ( int i = 0 ; i < (int)_siPlaneZPosition.size(); i++ )
+	      {
+		double distance = std::abs( hitPosition[2] - _siPlaneZPosition[i] );
+		if ( distance < minDistance )
+		  {
+		    minDistance = distance;
+		    layerIndex = i;
 		  }
-		}
 	      }
- 
+	    if ( minDistance > 5 /* mm */ ) {
+	      // advice the user that the guessing wasn't successful 
+	      streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
+		"Please check the consistency of the data with the GEAR file" << endl;
 	    }
-
-	    layerIndex   = _conversionIdMap[detectorID];
-	  
+	    
+	   
 	    // Getting positions of the hits.
 	    // ------------------------------
 	    hitsInPlane.measuredX = 1000 * hit->getPosition()[0];
 	    hitsInPlane.measuredY = 1000 * hit->getPosition()[1];
 	    hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
- 
+	    
 	    delete cluster; // <--- destroying the cluster
  
 	    _hitsArray[layerIndex].push_back(hitsInPlane);
@@ -757,16 +805,6 @@ void EUTelMille::processEvent (LCEvent * event) {
 	} // end if check running in input mode 0 or 2
 
       }
- 
-  _xPos = new double *[_maxTrackCandidates];
-  _yPos = new double *[_maxTrackCandidates];
-  _zPos = new double *[_maxTrackCandidates];
- 
-  for (int help = 0; help < _maxTrackCandidates; help++) {
-    _xPos[help] = new double[_nPlanes];
-    _yPos[help] = new double[_nPlanes];
-    _zPos[help] = new double[_nPlanes];
-  } 
   
   std::vector<int> fitplane(_nPlanes, 0);
 
@@ -819,6 +857,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       std::vector<EVENT::TrackerHit*> TrackHitsHere = TrackHere->getTrackerHits();
 
       // check for a hit in every plane
+      
       if (_nPlanes == int(TrackHitsHere.size() / 2)) {
 
         // assume hits are ordered in z! start counting from 0
@@ -826,15 +865,15 @@ void EUTelMille::processEvent (LCEvent * event) {
 
         // loop over all hits and fill arrays
         for (int nHits = 0; nHits < int(TrackHitsHere.size()); nHits++) {
-
+	  
           TrackerHit *HitHere = TrackHitsHere.at(nHits);
-
+	  
           // hit positions
           const double *PositionsHere = HitHere->getPosition();
 
           // assume fitted hits have type 32
           if ( HitHere->getType() == 32 ) {
-
+	   
             // fill hits to arrays
             _xPos[nTracksEvent][nPlaneHere] = PositionsHere[0] * 1000;
             _yPos[nTracksEvent][nPlaneHere] = PositionsHere[1] * 1000;
@@ -856,8 +895,139 @@ void EUTelMille::processEvent (LCEvent * event) {
 
     } // end loop over all tracks
 
-  }
+  } else if (_inputMode == 3) {
+   
+    LCCollection* collection;
+    collection = event->getCollection(_trackCollectionName);
+    const int nTracksHere = collection->getNumberOfElements();
+    
+    streamlog_out ( MILLEMESSAGE ) << "Number of tracks available in track collection: " << nTracksHere << endl;
 
+    // loop over all tracks
+    for (int nTracksEvent = 0; nTracksEvent < nTracksHere && nTracksEvent < _maxTrackCandidates; nTracksEvent++) {
+
+      Track *TrackHere = dynamic_cast<Track*> (collection->getElementAt(nTracksEvent));
+
+      // hit list assigned to track
+      std::vector<EVENT::TrackerHit*> TrackHitsHere = TrackHere->getTrackerHits();
+
+      // check for a hit in every telescope plane
+      if (_siPlanesParameters->getSiPlanesNumber() == int(TrackHitsHere.size() / 2))
+	{
+	  for(size_t i =0;i < _hitCollectionName.size();i++)
+	    {
+	      LCCollection* collection;
+	      try {
+		collection = event->getCollection(_hitCollectionName[i]);
+	      } catch (DataNotAvailableException& e) {
+		streamlog_out ( WARNING2 ) << "No input collection " << _hitCollectionName[i] << " found for event " << event->getEventNumber()
+					   << " in run " << event->getRunNumber() << endl;
+		throw SkipEventException(this);
+	      }
+	      for ( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ )
+		{
+		  TrackerHitImpl *hit = static_cast<TrackerHitImpl*> ( collection->getElementAt(iHit) );
+		     
+		  LCObjectVec clusterVector = hit->getRawHits();
+		  EUTelVirtualCluster *cluster;
+		  if ( hit->getType() == kEUTelFFClusterImpl ) {
+		       
+		    // fixed cluster implementation. Remember it can come from
+		    // both RAW and ZS data
+		    cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+		  }
+		  else if ( hit->getType() == kEUTelSparseClusterImpl ) {
+		    //copy and paste from the inputmode 0
+		    // code. needs to be tested ...
+
+		    // ok the cluster is of sparse type, but we also need to know
+		    // the kind of pixel description used. This information is
+		    // stored in the corresponding original data collection.
+		       
+		    LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+		    TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+		    CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+		    SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+		       
+		    // now we know the pixel type. So we can properly create a new
+		    // instance of the sparse cluster
+		    if ( pixelType == kEUTelSimpleSparsePixel ) {
+			 
+		      cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+			( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+			 
+		    } else {
+		      streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+		      throw UnknownDataTypeException("Pixel type unknown");
+		    }
+		       
+		  } else {
+		    throw UnknownDataTypeException("Unknown cluster type");
+		  }
+		     		     
+		  std::vector<EUTelMille::HitsInPlane> hitsplane;
+
+		  hitsplane.push_back(
+				      EUTelMille::HitsInPlane(
+							      1000 * hit->getPosition()[0],
+							      1000 * hit->getPosition()[1],
+							      1000 * hit->getPosition()[2]
+							      )
+				      );
+		  double measuredz = hit->getPosition()[2];
+		     
+		  delete cluster; // <--- destroying the cluster
+		  for (int nHits = 0; nHits < int(TrackHitsHere.size()); nHits++)  // end loop over all hits and fill arrays
+		    {
+		      TrackerHit *HitHere = TrackHitsHere.at(nHits);
+			 
+		      // hit positions
+		      const double *PositionsHere = HitHere->getPosition();
+			 			 
+		      // assume that fitted hits have type 32.
+		      //the tracker hit will be excluded if the
+		      //distance to the hit from the hit collection
+		      //is larger than 5 mm. this requirement should reject
+		      //reconstructed hits in the DUT in order to
+		      //avoid double counting.
+		      if( std::abs( measuredz - PositionsHere[2] ) > 5.0 /* mm */)
+			if ( HitHere->getType()  == 32 ) 
+			  {
+			    hitsplane.push_back(
+						EUTelMille::HitsInPlane(
+									PositionsHere[0] * 1000,
+									PositionsHere[1] * 1000, 
+									PositionsHere[2] * 1000
+									)
+						);
+			  } // end assume fitted hits have type 32
+		    }
+		  //sort the array such that the hits are ordered
+		  //in z assuming that z is constant over all
+		  //events for each plane
+		  std::sort(hitsplane.begin(), hitsplane.end());
+		    
+		  //now the array is filled into the track
+		  //candidates array
+		  for(int i = 0; i < _nPlanes; i++)
+		    {
+		      _xPos[_nTracks][i] = hitsplane[i].measuredX;
+		      _yPos[_nTracks][i] = hitsplane[i].measuredY;
+		      _zPos[_nTracks][i] = hitsplane[i].measuredZ;
+		    }
+		  _nTracks++; //and we found an additional track candidate.
+		}
+	    }
+	  //end of the loop
+	} else {
+
+	  streamlog_out ( MILLEMESSAGE ) << "Dropping track " << nTracksEvent << " because there is not a hit in every plane assigned to it." << endl;
+	}
+
+    } // end loop over all tracks
+
+  }
+ 
   if (_nTracks == _maxTrackCandidates) {
     streamlog_out ( WARNING2 ) << "Maximum number of track candidates reached. Maybe further tracks were skipped" << endl;
   }
@@ -868,7 +1038,7 @@ void EUTelMille::processEvent (LCEvent * event) {
   streamlog_out ( MILLEMESSAGE ) << endl;
 
   streamlog_out ( MILLEMESSAGE ) << "Number of track candidates found: " << _iEvt << ": " << _nTracks << endl;
-
+ 
   // Perform fit for all found track candidates
   // ------------------------------------------
 
@@ -880,7 +1050,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
     // loop over all track candidates
     for (int track = 0; track < _nTracks; track++) {
-
+      
       _xPosHere = new double[_nPlanes];
       _yPosHere = new double[_nPlanes];
       _zPosHere = new double[_nPlanes];
@@ -890,17 +1060,17 @@ void EUTelMille::processEvent (LCEvent * event) {
         _yPosHere[help] = _yPos[track][help];
         _zPosHere[help] = _zPos[track][help];
       }
-
+      
       Chiquare[0] = 0.0;
       Chiquare[1] = 0.0;
 
       streamlog_out ( MILLEMESSAGE ) << "Adding track using the following coordinates: ";
-
+      
       // loop over all planes
       for (int help = 0; help < _nPlanes; help++) {
 
         int excluded = 0;
-
+	
         // check if actual plane is excluded
         if (_nExcludePlanes > 0) {
           for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
@@ -915,11 +1085,20 @@ void EUTelMille::processEvent (LCEvent * event) {
         }
 
       } // end loop over all planes
-
+	
       streamlog_out ( MILLEMESSAGE ) << endl;
 
       // Calculate residuals
-      FitTrack(int(_nPlanes), _xPosHere, _yPosHere, _zPosHere, _telescopeResolX, _telescopeResolY, Chiquare, _waferResidX, _waferResidY, angle);
+      FitTrack(int(_nPlanes),
+	       _xPosHere,
+	       _yPosHere,
+	       _zPosHere,
+	       _telescopeResolX,
+	       _telescopeResolY,
+	       Chiquare,
+	       _waferResidX,
+	       _waferResidY,
+	       angle);
 
       streamlog_out ( MILLEMESSAGE ) << "Residuals X: ";
 
@@ -1244,7 +1423,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   string tempHistoName;
-
+ 
   if ( _histogramSwitch ) {
     {
       stringstream ss;
@@ -1261,22 +1440,10 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 #endif
 
-  // clean up
-  for (int help = 0; help < _maxTrackCandidates; help++) {
-    delete [] _zPos[help];
-    delete [] _yPos[help];
-    delete [] _xPos[help];
-  }
-
-  delete [] _zPos;
-  delete [] _yPos;
-  delete [] _xPos;
-
   // count events
   ++_iEvt;
-
   if ( isFirstEvent() ) _isFirstEvent = false;
-
+ 
 }
 
 void EUTelMille::end() {

@@ -52,12 +52,40 @@ namespace eutelescope {
     //! Variables for hit parameters
     class HitsInPlane {
     public:
+      HitsInPlane(){
+	measuredX = 0.0;
+	measuredY = 0.0;
+	measuredZ = 0.0;
+      }
+      HitsInPlane(double x, double y, double z)
+      {
+	measuredX = x;
+	measuredY = y;
+	measuredZ = z;
+      }
+      bool operator<(const HitsInPlane& b) const 
+      {
+	return (measuredZ < b.measuredZ);
+      }
       double measuredX;
       double measuredY;
       double measuredZ;
     };
 
-    virtual void FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFit[], double yResFit[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]);
+ virtual void FitTrack(
+		       int nPlanesFitter,
+		       double xPosFitter[],
+		       double yPosFitter[],
+		       double zPosFitter[],
+		       double xResFit[],
+		       double yResFit[],
+		       double chi2Fit[2],
+		       double residXFit[],
+		       double residYFit[],
+		       double angleFit[2]
+		       );
+
+
 
     //recursive method which searches for track candidates
     virtual void findtracks(
@@ -265,9 +293,12 @@ namespace eutelescope {
 
     int _nPlanes;
 
-    double ** _xPos;
-    double ** _yPos;
-    double ** _zPos;
+   //  double ** _xPos;
+//     double ** _yPos;
+//     double ** _zPos;
+    std::vector<std::vector<double> > _xPos;
+    std::vector<std::vector<double> > _yPos;
+    std::vector<std::vector<double> > _zPos;
 
     double * _xPosHere;
     double * _yPosHere;
@@ -278,6 +309,8 @@ namespace eutelescope {
     double * _telescopeResolY;
     double * _xFitPos;
     double * _yFitPos;
+
+    std::vector<double> _siPlaneZPosition;
 
     //! Fill histogram switch
     /*! Only for debug reason
