@@ -176,7 +176,7 @@ actualSteeringString = actualSteeringString.replace( "@EtaFile@", "%(eta)s" % { 
 actualSteeringString = actualSteeringString.replace( "@HistoFile@", "%(histo)s" % {"histo": histoFileName } )
 
 # add the output file name
-actualSteeringString = actualSteeringString.replace( "@OutputFile@", "%(output)s" % {"output": histoFileName } )
+actualSteeringString = actualSteeringString.replace( "@OutputFile@", "%(output)s" % {"output": outpuFileName } )
 
 # write the new file on disk
 actualSteeringFile = open( steeringFileName, "w" )
