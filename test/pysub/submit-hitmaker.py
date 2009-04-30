@@ -205,7 +205,7 @@ if optionGenerateOnly == 0:
         sys.exit( 1 )
 
     print blue, "Removing the steering and log files...", black
-    command = "rm -r %(steer)s %(log) *" % {"steer" : steeringFileName , "log": logFileName }
+    command = "rm -r %(steer)s %(log)s" % {"steer" : steeringFileName , "log": logFileName }
     returnvalue = os.system( command )
     if returnvalue != 0:
         print red, "Problem removing the steering and log files...", black
