@@ -6,127 +6,226 @@ import re
 import os
 import popen2
 
+
+from optparse import OptionParser
+from optparse import OptionGroup
+
+
 blue="\033[1;34m"
 black="\033[0m"
 red="\033[1;31m"
 green="\033[1;32m"
 
 
-def usage( commandname ):
 
-    print green , "Usage:"
-    print commandname, "[ OPTIONS ] run-list"
-    print """
-          List of OPTIONS
-             -h or --help         Print this help message
+# parse options and arguments
+usage = "usage: %prog [options] run-list"
+ver   = "%prog $Revision: 1.8 $"
 
-             -l or --all-local    Execute the job(s) entirely locally
-             -r or --all-grid     Execute the job(s) entirely on the GRID
-             -c or --cpu-local    Execute the job(s) on the local CPU but get and put data to the GRID SE
+parser = OptionParser( usage=usage, version=ver )
 
-             --keep-input         Don't delete the input files when finished
-             --keep-output        Don't delete the output files when finished
-
-             --only-generate      Simply genereate the steering file
-
-    """
-    print black
+executionGroup = OptionGroup( parser, "Execution options",
+                              "Use these options to select where and how the jobs have to executed")
 
 
-# here starts the main
-print red, "Converion job submitter" , black
+executionHelp = """
+Select where to execute the job. all-local means: input and output files are stored locally and the job is executed on the local CPU. all-grid means: input and output files are taken from the storage element and the job will be submitted to the GRID. cpu-local means: input and output files are taken from the GRID SE, but the job will be executed on the local CPU
+"""
+executionGroup.add_option( "-x", "--execution",
+                           type="choice",
+                           action="store",
+                           choices=['all-local', 'all-grid', 'cpu-local','only-generate'],
+                           dest="execution",
+                           help=executionHelp,
+                           metavar="EXECUTION")
 
-# default options
-optionAllLocal = 1
-optionAllGrid  = 0
-optionCPULocal = 0
+parser.set_defaults(execution="all-local")
 
-optionGenerateOnly = 0
+executionGroup.add_option( "-l", "--all-local",
+                           action="store_const",
+                           const="all-local",
+                           dest="execution",
+                           help="Same as -x all-local")
 
-optionKeepInputForce   = 0
-optionKeepOutputForce  = 0
+executionGroup.add_option( "-r", "--all-grid",
+                           action="store_const",
+                           const="all-grid",
+                           dest="execution",
+                           help="Same as -x all-grid" )
 
-optionKeepInput   = -1
-optionKeepOutput  = -1
+executionGroup.add_option( "-c", "--cpu-local",
+                           action="store_const",
+                           const="cpu-local",
+                           dest="execution",
+                           help="Same as -x cpu-local")
 
-# defaul GRID paths
-gridFolderNative        = "$LFC_HOME/2008/tb-cern-summer/native-depfet"
-gridFolderLcioRaw       = "$LFC_HOME/2008/tb-cern-summer/lcio-raw-depfet"
-gridFolderConvertHisto  = "$LFC_HOME/2008/tb-cern-summer/joboutput/depfet/converter"
-gridFolderConvertJobout = "$LFC_HOME/2008/tb-cern-summer/joboutput/depfet/converter"
+executionGroup.add_option( "-s", "--only-generate",
+                           action="store_const",
+                           const="only-generate",
+                           dest="execution",
+                           help="Same as -x only-generate")
+
+parser.add_option_group( executionGroup )
 
 
-# parse the argmuments
-narg = 0
+ioGroup = OptionGroup( parser, "Input and output files related options",
+                       "Use these options to specify whether or not to keep the input and output files"
+                       "These values are overwriting the default configurations depending on the execution mode:"
+                       "  all-local = input and output files are kept "
+                       "  cpu-local = input and output files are removed. ")
+
+ioGroup.add_option( "--keep-input",
+                    action="store_true",
+                    dest="force_keep_input",
+                    help="Force not to delete the input files after finishing, independently of the execution mode")
+
+ioGroup.add_option( "--remove-input",
+                    action="store_false",
+                    dest="force_keep_input",
+                    help="Force to delete the input files after finishing, independently of the execution mode")
+
+ioGroup.add_option( "--keep-output",
+                    action="store_true",
+                    dest="force_keep_output",
+                    help="Force not to delete the output files after finishing, independently of the execution mode")
+
+ioGroup.add_option( "--remove-output",
+                    action="store_false",
+                    dest="force_keep_output",
+                    help="Force to delete the output files after finishing, independently of the execution mode")
+
+
+parser.set_defaults(force_keep_input=True)
+parser.set_defaults(force_keep_output=True)
+
+parser.add_option_group( ioGroup )
+
+configurationGroup = OptionGroup( parser, "Configuration option",
+                                  "Use these options to specify which configuration file you want to use,"
+                                  "and other additional external files" )
+
+configurationGroup.add_option( "-g", "--gear-file",
+                               action="store",
+                               dest="gear_file",
+                               help="Specify the GEAR file to be used")
+
+configurationGroup.add_option( "--config-file",
+                               action="store",
+                               dest="config_file",
+                               help="Specify the configuration file to be used")
+
+parser.add_option_group( configurationGroup )
+option, args = parser.parse_args()
+
+# end of options and arguments parsing.
+# now checking if there are errors in the arguments
+
+if len(args) == 0:
+    print red, "No input run provided", black
+    sys.exit( 0 )
+
+# verify that all the numbers are integers numbers
 runList = []
+for i in args :
+    try:
+        runList.append( int ( i ) )
+
+    except ValueError:
+        print red, "Invalid run number %(i)s" % { "i": i }
+        sys.exit( 1 )
+
+
+# this is just for now
+if option.execution == "all-grid" :
+    print red, "Full GRID submission not yet implemented", black
+    sys.exit( 1 )
+
+# load the configuration file
+config_file = ""
+if option.config_file == None :
+    # this means that the user didn't provide any config file
+    # check if the enviromental variable SUBMIT_CONFIG is defined
+    try: 
+        envirConfigFile = os.environ['SUBMIT_CONFIG']
+        if len(envirConfigFile ) == 0:
+            config_file = "template/config.py"
+        else:
+            config_file = envirConfigFile
+    except KeyError:
+        # the enviromental variable is not even defined
+        # use the default
+        config_file = "template/config.py"
+else:
+    config_file = option.config_file
+
+# verify that the config file does exists!
+if not os.path.exists( config_file ) :
+    print red, "The configuration file", config_file, "doesn't exist!", black
+    sys.exit ( 2 );
+else:
+    execfile( config_file )
+
+# set the grid paths to the default one
+gridFolderNative  = defaultGRIDFolderNative
+gridFolderLcioRaw = defaultGRIDFolderLcioRaw
+gridFolderConvertJobout = defaultGRIDFolderConvertJoboutput
+
+
+# verify if the user provided a specific gear file
+gear_file = ""
+if option.gear_file == None :
+    # no, use default then
+    gear_file = defaultGEARFile
+else:
+    gear_file = option.gear_file
+
+# in case the execution mode is really doing something, check that the gear file
+# exists before starting
+if option.execution != "only-generate" :
+    if not os.path.exists( gear_file ) :
+        print red, "GEAR file", gear_file, "doesn't exist!", black
+        sys.exit( 3 )
+
+
+# let's start now! 
+print red, "Conversion job submitter" , black
+
 copiedLCIOFile = []
 copiedTARFile = []
 
 
-for arg in sys.argv[1:]:
-    narg = narg + 1
-    if arg == "-l" or arg == "--all-local":
-        optionAllLocal = 1
-        optionAllGrid  = 0
-        optionCPULocal = 0
-        optionKeepInput = 1
-        optionKeepOutput = 1
+# set the default io configuration depending on the execution mode
+optionKeepInput  = True
+optionKeepOutput = True
 
-    elif arg == "-r" or arg == "--all-grid":
-        optionAllLocal = 0
-        optionAllGrid  = 1
-        optionCPULocal = 0
-        optionKeepInput = 0
-        optionKeepOutput = 0
+if option.execution == "all-local" :
+    optionKeepInput  = True
+    optionKeepOuput  = True
 
-    elif arg == "-c" or arg == "--cpu-local":
-        optionAllLocal = 0
-        optionAllGrid  = 0
-        optionCPULocal = 1
-        optionKeepInput = 0
-        optionKeepOutput = 0
+elif option.execution == "all-grid" :
+    # doens't really matter but set all to true
+    optionKeepInput  = True
+    optionKeepOuput  = True
 
-    elif arg == "--keep-input":
-        optionKeepInputForce = 1
+elif option.execution == "cpu-local" :
+    optionKeepInput  = False
+    optionKeepOuput  = False
 
-    elif arg == "--keep-output":
-        optionKeepOutputForce = 1
+# now overwrite the previous setting if the user wants
+if option.force_keep_input == True:
+    optionKeepInput = True
+else:
+    optionKeepInput = False
 
-    elif arg == "--only-generate":
-        optionGenerateOnly = 1
-        optionKeepInput = 1
-        optionKeepOutput = 1
+if option.force_keep_output == True:
+    optionKeepOutput = True
+else:
+    optionKeepOutput = False
 
-    elif arg == "-h" or arg == "--help":
-        usage(sys.argv[0])
-        sys.exit(0)
-
-    else :
-        # if it is not one of previuos, then it is a run number
-        try:
-            runList.append( int( arg ) )
-
-        except ValueError:
-            print red, "Unrecognized option (%(option)s), or invalid run number" % { "option": arg }
-
-if optionKeepOutputForce == 1 :
-    optionKeepOutput = 1
-
-if optionKeepInputForce == 1 :
-    optionKeepInput = 1
-    
-
-if narg == 0:
-    usage(sys.argv[0])
-    sys.exit(0)
-
-if len(runList) == 0:
-    print red, "The run list is empty, please specify at least one run to be processed", black
-    sys.exit(1)
-
-if optionKeepInput == 0:
-    goodAnswer = 0
-    while goodAnswer == 0:
+# ask to the users for confirmation about file removal
+if optionKeepInput == False and option.execution != "only-generate" and option.execution != "all-grid" :
+    goodAnswer = False
+    while goodAnswer == False:
         print green, "This script is going to delete the input file(s) when finished.\n" ,\
                   " Are you sure to continue? [y/n]", black
         answer = raw_input( "--> ").lower()
@@ -134,27 +233,25 @@ if optionKeepInput == 0:
             print red, "Invalid answer, please type y or n", black
             answer = raw_input( "--> " ).lower()
         elif answer == "y" or answer == "yes":
-            goodAnswer = 1
+            goodAnswer = True
         elif answer == "n" or answer == "no":
-            goodAnswer = 1
+            goodAnswer = True
             sys.exit("Aborted by the user")
 
-if optionKeepOutput == 0:
-    goodAnswer = 0
-    while goodAnswer == 0:
+if optionKeepOutput == False and option.execution != "only-generate" and option.execution != "all-grid":
+    goodAnswer = False
+    while goodAnswer == False:
         print green, "This script is going to delete the output file(s) when finished.\n" ,\
                   " Are you sure to continue? [y/n]", black
         answer = raw_input( "--> ").lower()
         if answer != "y" and answer != "yes" and answer != "n" and answer != "no":
             print red, "Invalid answer, please type y or n", black
             answer = raw_input( "--> " ).lower()
-            print "la risp dentro: ", answer
         elif answer == "y" or answer == "yes":
-            goodAnswer = 1
+            goodAnswer = True
         elif answer == "n" or answer == "no":
-            goodAnswer = 1
+            goodAnswer = True
             sys.exit("Aborted by the user")
-
 
 for run in runList[:]:
     returnvalue = 0
@@ -169,6 +266,7 @@ for run in runList[:]:
     templateSteeringString = templateSteeringFile.read()
 
     actualSteeringString = templateSteeringString.replace("@RunNumber@", runString )
+    actualSteeringString = actualSteeringString.replace("@GearFile@", gear_file )
 
     actualSteeringFile = open( "universal-%(run)s.xml" % { "run": runString }, "w" )
     actualSteeringFile.write( actualSteeringString )
@@ -177,19 +275,34 @@ for run in runList[:]:
 
     templateSteeringFile.close()
 
-    if optionGenerateOnly == 1 :
+    # if only-generate... then we are done already...
+    # continue to the next run
+    if option.execution == "only-generate" :
         continue
 
-    if optionAllGrid == 0 :
+    # this is the case for all-grid submission
+    if option.execution == "all-grid" :
+        # in principle we should never get to this point for the time being
+        # continue anyway
+        continue
 
-        if optionCPULocal == 1:
+    # this is the case for all-local and cpu-local
+    # since they are quite similar, I'll put the two in the same state
+    # of the state machine
+    if option.execution == "all-local" or option.execution == "cpu-local" :
+
+
+        # if cpu-local, we need the input file from the GRID
+        if option.execution == "cpu-local":
             print blue, "Getting the native raw file from the GRID...", black
             command = "lcg-cp -v lfn:%(nativeFolder)s/run%(run)s.raw file:$PWD/native/run%(run)s.raw" % \
-                { "nativeFolder": gridFolderNative , "run": runString }
+                      { "nativeFolder": gridFolderNative , "run": runString }
             returnvalue = os.system( command )
             if returnvalue != 0:
                 print red, "Problem getting the input file! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
                 continue
+
+
 
         # run Marlin in both all local and cpu local configuration
         print blue, "Running Marlin...",black
@@ -209,8 +322,8 @@ for run in runList[:]:
             print red, "Problem executing Marlin! (errno %(returnvalue)s)" % {"returnvalue":returnvalue } , black
             continue
 
-        # Copy to the GRID only in CPULocal mode
-        if optionCPULocal == 1:
+        # Copy to the GRID only in cpu-local mode
+        if option.execution == "cpu-local" :
             print blue, "Copying register the output file to the GRID...", black
             command = "lcg-cr -v -l lfn:%(lciorawFolder)s/run%(run)s.slcio file:$PWD/lcio-raw/run%(run)s.slcio" % \
                 { "lciorawFolder": gridFolderLcioRaw , "run": runString }
@@ -220,50 +333,62 @@ for run in runList[:]:
             else:
                 copiedLCIOFile.append( "%(lciorawFolder)s/run%(run)s.slcio" % { "lciorawFolder": gridFolderLcioRaw , "run": runString } )
 
-        # Prepare the tarbal in any local configurations
-        print blue, "Preparing the joboutput tarbal...", black
+            # Prepare the tarbal in any local configurations (only in cpu-local)
+            print blue, "Preparing the joboutput tarbal...", black
 
-        # create a temporary folder
-        command = "mkdir /tmp/universal-%(run)s" % { "run": runString }
-        returnvalue = os.system( command )
-        if returnvalue != 1 and returnvalue != 0:
-            print red, "Problem creating the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
-        else:
-
-            # copy there all the tarbal stuff
-            command = "cp universal-%(run)s* /tmp/universal-%(run)s" % { "run" : runString }
+            # create a temporary folder
+            command = "mkdir /tmp/universal-%(run)s" % { "run": runString }
             returnvalue = os.system( command )
-            if returnvalue != 0:
-                print red, "Problem copying the joboutput files in the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
+            if returnvalue != 1 and returnvalue != 0:
+                print red, "Problem creating the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
             else:
 
-                # tar gzipped the temp folder
-                command = "tar czvf universal-%(run)s.tar.gz /tmp/universal-%(run)s"  % { "run" : runString }
+                # copy there all the tarbal stuff
+                command = "cp universal-%(run)s* %(gear)s /tmp/universal-%(run)s" % { "gear": gear_file , "run" : runString }
                 returnvalue = os.system( command )
                 if returnvalue != 0:
-                    print red, "Problem tar gzipping the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
+                    print red, "Problem copying the joboutput files in the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
                 else:
 
-                    # copy the tarbal to the GRID
-                    if optionCPULocal == 1:
-                        print blue, "Copying the joboutput tarbal to the GRID...", black
-                        command = "lcg-cr -v -l lfn:%(joboutputFolder)s/universal-%(run)s.tar.gz file:$PWD/universal-%(run)s.tar.gz" % \
-                                  { "joboutputFolder": gridFolderConvertJobout , "run": runString }
-                        returnvalue = os.system( command )
-                        if returnvalue != 0:
-                            print red, "Problem copying to the GRID! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
-                        else:
+                    # tar gzipped the temp folder
+                    command = "tar czvf universal-%(run)s.tar.gz /tmp/universal-%(run)s"  % { "run" : runString }
+                    returnvalue = os.system( command )
+                    if returnvalue != 0:
+                        print red, "Problem tar gzipping the temporary folder! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
+                    else:
 
-                            copiedTARFile.append( "%(joboutputFolder)s/universal-%(run)s.tar.gz" \
-                                                  %  { "joboutputFolder": gridFolderConvertJobout , "run": runString } )
+                        # copy the tarbal to the GRID
+                        if optionCPULocal == 1:
+                            print blue, "Copying the joboutput tarbal to the GRID...", black
+                            command = "lcg-cr -v -l lfn:%(joboutputFolder)s/universal-%(run)s.tar.gz file:$PWD/universal-%(run)s.tar.gz" % \
+                                      { "joboutputFolder": gridFolderConvertJobout , "run": runString }
+                            returnvalue = os.system( command )
+                            if returnvalue != 0:
+                                print red, "Problem copying to the GRID! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
+                            else:
+                                # adding this file to the list of copied files
+                                copiedTARFile.append( "%(joboutputFolder)s/universal-%(run)s.tar.gz" \
+                                                      %  { "joboutputFolder": gridFolderConvertJobout , "run": runString } )
+                                # remove all the xml and log files from the local machine including the tarbal just copied
+                                command = "rm -vrf  universal-%(run)s.tar.gz" % { "run" : runString }
+                                returnvalue = os.system( command )
+                                if returnvalue != 0:
+                                    print red, "Problem removing the tarbal", black
         
-        # clean up the execution envirotment
+        # clean up the execution enviroment (both all-local and cpu-local)
         print blue, "Cleaning up enviroment", black
         command = "rm -vrf /tmp/universal-%(run)s universal-%(run)s*" % { "run": runString }
         returnvalue = os.system( command )
         if returnvalue != 0:
             print red, "Problem removing temporary files! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
-            continue
+
+        # copying the tarbal in the log folder only in all-local mode
+        if option.execution == "all-local":
+            print blue, "Copying the tarbal in the local log folder", black
+            command = "mv  universal-%(run)s.tar.gz logs/." % { "run" : runString }
+            returnvalue = os.system( command )
+            if returnvalue != 0:
+                print red, "Problem moving the tarbal to the local log folder (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
 
         if optionKeepOutput == 0 and optionKeepInput == 0:
             command = "rm -v lcio-raw/run%(run)s.slcio native/run%(run)s.raw" % { "run": runString }
@@ -285,8 +410,6 @@ for run in runList[:]:
             if returnvalue != 0:
                 print red, "Problem removing the output file! (errno %(returnvalue)s)" % {"returnvalue":returnvalue }, black
                 continue
-    else :
-        print red, "All GRID submission not yet implemented!", blacl
 
 if len(copiedLCIOFile) != 0 or len(copiedTARFile) != 0:
     print green, "Summary"
