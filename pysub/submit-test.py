@@ -17,6 +17,10 @@ def main() :
     submitTest = SubmitTest( parser )
 
     # now execute it! 
+    submitTest.execute()
+
+    # finish
+    submitTest.end()
 
 if __name__ == "__main__" :
     main()
