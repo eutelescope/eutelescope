@@ -62,11 +62,12 @@
 # it working.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.2 2009-05-09 06:53:40 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.3 2009-05-09 18:08:27 bulgheroni Exp $
 
 from optparse import OptionParser
 import ConfigParser
 import logging
+import time
 
 ## SubmitBase
 # This is the base class for all submitters
@@ -75,7 +76,7 @@ import logging
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.2 2009-05-09 06:53:40 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.3 2009-05-09 18:08:27 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -95,11 +96,15 @@ class SubmitBase :
         # create a logger, for the time being the logger is a simple
         # console handler, after the configuration is read, it will be
         # properly configured
-        self._logger = logging.getLogger( 'Logger' )
+        self._logger = logging.getLogger( 'Base' )
+        logging.addLevelName(15, "ALL" )
         self._logger.setLevel( logging.INFO )
         self._consoleHandler = logging.StreamHandler()
         self._consoleHandler.setLevel( logging.INFO )
         self._logger.addHandler( self._consoleHandler )
+
+        # defining the t_0 of the submitter
+        self._timeBegin = time.time()
 
         # load the configuration
         self.configure()
@@ -128,4 +133,7 @@ class SubmitBase :
     # housekeeping leaving the system clean and print the last line in
     # the log file
     def end( self ) :
-        pass
+        self._timeEnd = time.time()
+        message = "Submission completed in %(time)d seconds" % {
+            "time": self._timeEnd - self._timeBegin }
+        self._logger.info( message )
