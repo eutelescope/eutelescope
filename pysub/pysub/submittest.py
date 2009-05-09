@@ -58,6 +58,10 @@ class SubmitTest( SubmitBase ) :
         else:
             self._configFile = self._option.config_file
 
+        # do some verification on the command line options
+        if self._option.plus and self._option.minus :
+            self._optionParser.error( "Options --minus and --plus are mutually exclusive" )
+
         # before proceeding check if the configuration file 
         # really exists!
         if not os.path.exists( self._configFile ):
@@ -72,6 +76,6 @@ class SubmitTest( SubmitBase ) :
         
     def execute( self ) :
         print "Working very hard..."
-        time.sleep( 3 )
+        time.sleep( 1 )
 
 
