@@ -10,7 +10,7 @@ from optparse import OptionGroup
 # SubmitConverter and create an instance of this object.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-converter.py,v 1.2 2009-05-09 18:06:11 bulgheroni Exp $
+# @version $Id: submit-converter.py,v 1.3 2009-05-09 20:05:48 bulgheroni Exp $
 #
 def main() :
 
@@ -19,7 +19,7 @@ def main() :
 
 usage: %prog [execution-options] [io-options] [configuration-options] run-list
 """
-    cvsVersion = "$Revision: 1.2 $"
+    cvsVersion = "$Revision: 1.3 $"
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
         "\ncompiled on a " + os.name + " system"
 
@@ -32,12 +32,12 @@ usage: %prog [execution-options] [io-options] [configuration-options] run-list
                                   "Use these options to select where and how the jobs have to executed")
 
     executionHelp = """
-Select where to execute the job. 
-all-local means: input and output files are stored locally 
+Select where to execute the job.
+all-local means: input and output files are stored locally
 and the job is executed on the local CPU.
-all-grid means: input and output files are taken 
+all-grid means: input and output files are taken
 from the storage element and the job will be submitted to the GRID.
-cpu-local means: input and output files are taken 
+cpu-local means: input and output files are taken
 from the GRID SE, but the job will be executed on the local CPU
     """
     executionGroup.add_option( "-x", "--execution",
@@ -89,8 +89,8 @@ from the GRID SE, but the job will be executed on the local CPU
                         help="Force not to delete the input files after finishing, independently of the execution mode")
 
     ioGroup.add_option( "--remove-input",
-                        action="store_false",
-                        dest="force_keep_input",
+                        action="store_true",
+                        dest="force_remove_input",
                         help="Force to delete the input files after finishing, independently of the execution mode")
 
     ioGroup.add_option( "--keep-output",
@@ -99,13 +99,15 @@ from the GRID SE, but the job will be executed on the local CPU
                         help="Force not to delete the output files after finishing, independently of the execution mode")
 
     ioGroup.add_option( "--remove-output",
-                        action="store_false",
-                        dest="force_keep_output",
+                        action="store_true",
+                        dest="force_remove_output",
                         help="Force to delete the output files after finishing, independently of the execution mode")
 
 
-    parser.set_defaults(force_keep_input=True)
-    parser.set_defaults(force_keep_output=True)
+    parser.set_defaults(force_keep_input=False)
+    parser.set_defaults(force_keep_output=False)
+    parser.set_defaults(force_remove_input=False)
+    parser.set_defaults(force_remove_output=False)
 
     # adding a group will all the configuration options
     configurationGroup = OptionGroup( parser, "Configuration option",
@@ -135,7 +137,7 @@ from the GRID SE, but the job will be executed on the local CPU
     # execute it!
     submitConversion.execute()
 
-    # good bye! 
+    # good bye!
     submitConversion.end()
 
 if __name__ == "__main__" :

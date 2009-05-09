@@ -17,7 +17,7 @@ from submitbase import SubmitBase
 #
 #
 #
-#  @version $Id : $
+#  @version $Id: submitconverter.py,v 1.5 2009-05-09 20:05:48 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -84,18 +84,29 @@ class SubmitConverter( SubmitBase ) :
             # doesn't matter but leave both on
             pass
 
+        # do some checks on the command line options. 
+        if  self._option.force_keep_input and self._option.force_remove_input :
+            self._logger.critical( "Keep and remove input file options are mutually exclusive" )
+            self._optionParser.error( "Keep and remove input file options are mutually exclusive" )
+
+        if  self._option.force_keep_output and self._option.force_remove_output :
+            self._logger.critical( "Keep and remove output file options are mutually exclusive" )
+            self._optionParser.error( "Keep and remove output file options are mutually exclusive" )
+
         # now check if the user overwrites this setting in the options
-        if  self._option.force_keep_input == True:
+        if  self._option.force_keep_input and not self._keepInput:
             self._keepInput = True
             self._logger.info( "User forces to keep the input files" )
-        else:
+
+        if  self._option.force_remove_input and self._keepInput:
             self._keepInput = False
             self._logger.info( "User forces to remove the input files" )
 
-        if  self._option.force_keep_output == True:
+        if  self._option.force_keep_output and not self._keepOutput:
             self._keepOutput = True
             self._logger.info( "User forces to keep the output files" )
-        else:
+
+        if  self._option.force_remove_output and self._keepOutput:
             self._keepOutput = False
             self._logger.info( "User forces to remove the output files" )
 
