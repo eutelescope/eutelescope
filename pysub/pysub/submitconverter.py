@@ -10,33 +10,34 @@ import logging.handlers
 from submitbase import SubmitBase
 
 
-## Submit conversion jobs    
+## Submit conversion jobs
 #
 #  This class is responsible to submit jobs for native to lcio-raw format conversion.
 #  It is inheriting from SubmitBase and it is called by the submit-converter.py script
-#  
+#
+#
+#
 #  @version $Id : $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
 
 
+    ## General configure
+    #
+    # This method is called by the constructor itself and performs all the
+    # basic configurations from the configuration file.
+    # In particular is calling the configureLogger method to start the logging
+    # system in its full glory
+    #
     def configure( self ):
-        """
-        General configure
 
-        This method is called by the constructor itself and performs all the
-        basic configurations from the configuration file.
-        In particular is calling the configureLogger method to start the logging
-        system in its full glory
-
-        """
-
-        # first of all we need to see if we have a user defined configuration 
+        # first of all we need to see if we have a user defined configuration
         # file different from the template/config.cfg
-        # 
+        #
         # The configuration file can be passed either as a command line option
         # or via an enviromental variable
+        #
         self._configFile = ""
         if ( self._option.config_file == None ) :
             # not from the option, check from environ
@@ -48,7 +49,7 @@ class SubmitConverter( SubmitBase ) :
         else:
             self._configFile = self._option.config_file
 
-        # before proceeding check if the configuration file 
+        # before proceeding check if the configuration file
         # really exists!
         if not os.path.exists( self._configFile ):
             logging.critical( "Configuration file %(cfg)s doesn't exist!" % { "cfg": self._configFile } )
@@ -61,17 +62,9 @@ class SubmitConverter( SubmitBase ) :
         self.configureLogger()
 
         # now print the configuration to the log
-        self._logger.log(1, "Configuration file " )
-        for section in self._configParser.sections():
-            message = "Section: %(section)s" % {'section':section}
-            self._logger.log(1, message) 
-            for option in self._configParser.options(section):
-                message = " %(option)s = %(value)s " % { "option":option, "value":self._configParser.get( section, option) }
-                self._logger.log(1,  message )
-
+        self.logConfigurationFile()
 
         # now check the I/O options
-
         # default values depend on the execution mode
         self._keepInput  = True
         self._keepOutput = True
@@ -95,7 +88,7 @@ class SubmitConverter( SubmitBase ) :
         if  self._option.force_keep_input == True:
             self._keepInput = True
             self._logger.info( "User forces to keep the input files" )
-        else: 
+        else:
             self._keepInput = False
             self._logger.info( "User forces to remove the input files" )
 
@@ -147,17 +140,21 @@ class SubmitConverter( SubmitBase ) :
                     self._logger.info("Aborted by user")
                     sys.exit( 4 )
 
+
     ## Logger configurator
     #
     # This is another configure method that is called by the main configure
     # to properly set up the logging system.
     # Before calling this method only a very simple logging system is available
+    #
     def configureLogger( self ):
 
         if not self._configParser.has_section( "Logger" ) :
             logging.warning( "No Logger section in the configuration file, using default logging" )
             return
 
+        # rename the logger according to this module
+        self._logger = logging.getLogger( "Converter" )
         # set the global logging level
         self._logger.setLevel( self._configParser.getint( "Logger", "GlobalLoggerLevel" ))
 
@@ -166,28 +163,51 @@ class SubmitConverter( SubmitBase ) :
         if self._configParser.getboolean( "Logger", "ConsoleHandler" ):
             self._consoleHandler = logging.StreamHandler()
             self._consoleHandler.setLevel( self._configParser.getint( "Logger", "ConsoleHandlerLevel" ) )
-            self._consoleHandler.setFormatter( logging.Formatter("%(asctime)s - %(levelname)s - %(message)s") )
+            self._consoleHandler.setFormatter(logging.Formatter("%(asctime)s - %(name)-10s [%(levelname)-6s]: %(message)s","%a, %d %b %Y %H:%M:%S"
+                                                                ))
             self._logger.addHandler( self._consoleHandler )
 
         # configuring the time rotating file handler
         if self._configParser.getboolean( "Logger", "RotatingFileHandler" ):
-            timeRotatingHandler = logging.handlers.RotatingFileHandler(
+            rotatingHandler = logging.handlers.RotatingFileHandler(
                 filename = self._configParser.get( "Logger", "RotatingFileHandlerFileName" ),
                 maxBytes = self._configParser.getint( "Logger", "RotatingFileHandlerSize" ),
                 backupCount = 10)
-            timeRotatingHandler.setLevel( self._configParser.getint( "Logger", "RotatingFileHandlerLevel" ) )
-            timeRotatingHandler.setFormatter( logging.Formatter("%(asctime)s - %(levelname)s - %(message)s") )
-            self._logger.addHandler( timeRotatingHandler )
+            rotatingHandler.setLevel( self._configParser.getint( "Logger", "RotatingFileHandlerLevel" ) )
+            rotatingHandler.setFormatter( logging.Formatter("%(asctime)s -%(name)-10s [%(levelname)-6s]: %(message)s","%a, %d %b %Y %H:%M:%S") )
+            self._logger.addHandler( rotatingHandler )
 
-        self._logger.log( 1, "**********************************************************" )
-        self._logger.log( 1, "Started submit-converter" )
+        self._logger.log( 15, "**********************************************************" )
+        self._logger.log( 15, "Started submit-converter" )
+        self._logger.log( 15, "**********************************************************" )
 
+    ## Print the configuration file
+    #
+    # This method is used to print to the logger the options specified in
+    # the configuration file.
+    # The log level for this is ALL = 15 and it is usually not inclueded into the
+    # stdout
+    #
+    def logConfigurationFile( self ):
+        self._logger.log(15,"")
+        self._logger.log(15, "Logging the configuration file " )
+        for section in self._configParser.sections():
+            self._logger.log(15,"")
+            message = "[ Section: %(section)s ]" % {'section':section}
+            self._logger.log(15, message)
+            for option in self._configParser.options(section):
+                message = "    %(option)-35s = %(value)s " % { "option":option, "value":self._configParser.get( section, option) }
+                self._logger.log(15,  message )
+
+        self._logger.log(15, "---------------------------------------")
+        self._logger.log(15,"")
 
     ## Execute method
     #
     # This is the real method, responsible for the job submission
     # Actually this is just a sort of big switch calling the real submitter
     # depending of the execution mode
+    #
     def execute( self ) :
 
         # this is the real part
@@ -204,17 +224,16 @@ class SubmitConverter( SubmitBase ) :
 
         # now do something different depending on the execution option
         if self._option.execution == "all-grid" :
-            self.allGridSubmission()
+            self.executeAllGRID()
 
         elif self._option.execution == "all-local" :
-            self.allLocalSubmission()
+            self.executeAllLocal()
 
         elif self._option.execution == "cpu-local":
-            self.cpuLocalSubmission()
+            self.executeCPULocal()
 
         elif self._option.execution == "only-generate":
-            self.onlyGenerateSubmission()
-
+            self.executeOnlyGenerate()
 
     ## This is the real all-grid submitter
     def allGridSubmission( self ) :
@@ -224,7 +243,8 @@ class SubmitConverter( SubmitBase ) :
     #
     # This methods represents the sequence of commands that should be done while
     # submitting jobs on the local computer but using remote data
-    def cpuLocalSubmission( self ):
+    #
+    def executeCPULocal( self ):
 
         for run in self._runList :
             runString = "%(#)06d" % { "#" : run }
@@ -248,7 +268,7 @@ class SubmitConverter( SubmitBase ) :
                 continue
 
             # advice the user that Marlin is over
-            self._logger.info( "Marlin finished successfully") 
+            self._logger.info( "Marlin finished successfully")
 
             # prepare a tarbal for the records
             self.prepareTarball( runString )
@@ -275,7 +295,8 @@ class SubmitConverter( SubmitBase ) :
     #
     # This methods represents the sequence of commands that should be done while
     # submitting jobs on the local computer.
-    def allLocalSubmission( self ):
+    #
+    def executeAllLocal( self ):
 
         for run in self._runList :
             runString = "%(#)06d" % { "#" : run }
@@ -292,7 +313,7 @@ class SubmitConverter( SubmitBase ) :
                 continue
 
             # advice the user that Marlin is over
-            self._logger.info( "Marlin finished successfully") 
+            self._logger.info( "Marlin finished successfully")
 
 
             # prepare a tarbal for the records
@@ -305,7 +326,8 @@ class SubmitConverter( SubmitBase ) :
     #
     # This methods is responsibile of dry-run with only steering file
     # generation
-    def onlyGenerateSubmission( self ):
+    #
+    def executeOnlyGenerate( self ):
         for run in self._runList :
             runString = "%(#)06d" % { "#" : run }
 
@@ -325,11 +347,11 @@ class SubmitConverter( SubmitBase ) :
 
         localPath = "$PWD/native"
         command = "lcg-cp -v lfn:%(gridNativePath)s/run%(run)s.raw file:%(localPath)s/run%(run)s.raw" %  \
-                  { "gridNativePath" : gridNativePath, "run": runString, "localPath": localPath }
+            { "gridNativePath" : gridNativePath, "run": runString, "localPath": localPath }
         return  os.system( command )
 
     ## Put the output run to the GRID
-    def putRunOnGRID( self, runString ): 
+    def putRunOnGRID( self, runString ):
 
         self._logger.info(  "Putting the LCIO file to the GRID" )
 
@@ -434,7 +456,7 @@ class SubmitConverter( SubmitBase ) :
 
         # first check that the gear file exists
         if not os.path.exists( self._gear_file ) :
-            message = "The GEAR file %(gear)s doesn't exist!" % {"gear" : self._gear_file } 
+            message = "The GEAR file %(gear)s doesn't exist!" % {"gear" : self._gear_file }
             self._logger.error( message )
             return 3
 
