@@ -1,13 +1,29 @@
 #! /usr/bin/env python
-from pysub import *
+import os
+from pysub import SubmitConverter
 from optparse import OptionParser
 from optparse import OptionGroup
 
-
+## The converter submitter script.
+#
+# This script is simply defining all the input options for the
+# SubmitConverter and create an instance of this object.
+#
+# @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+# @version $Id: submit-converter.py,v 1.2 2009-05-09 18:06:11 bulgheroni Exp $
+#
 def main() :
 
-    usage   = "usage: %prog [execution-options] [io-options] [configuration-options] run-list"
-    version = "$Revision: 1.1 $"
+    usage   = """
+%prog is part of pysub the Job Sumbitter environment of EUTelescope.
+
+usage: %prog [execution-options] [io-options] [configuration-options] run-list
+"""
+    cvsVersion = "$Revision: 1.2 $"
+    version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
+        "\ncompiled on a " + os.name + " system"
+
+
     parser = OptionParser( version=version, usage = usage )
 
 
@@ -16,9 +32,13 @@ def main() :
                                   "Use these options to select where and how the jobs have to executed")
 
     executionHelp = """
-    Select where to execute the job. all-local means: input and output files are stored locally and the job is executed on the local CPU.
-    all-grid means: input and output files are taken from the storage element and the job will be submitted to the GRID.
-    cpu-local means: input and output files are taken from the GRID SE, but the job will be executed on the local CPU
+Select where to execute the job. 
+all-local means: input and output files are stored locally 
+and the job is executed on the local CPU.
+all-grid means: input and output files are taken 
+from the storage element and the job will be submitted to the GRID.
+cpu-local means: input and output files are taken 
+from the GRID SE, but the job will be executed on the local CPU
     """
     executionGroup.add_option( "-x", "--execution",
                                type="choice",
@@ -109,11 +129,14 @@ def main() :
     # end of options
 
 
-    # create the new submitter! 
+    # create the new submitter!
     submitConversion = SubmitConverter( parser )
 
     # execute it!
     submitConversion.execute()
+
+    # good bye! 
+    submitConversion.end()
 
 if __name__ == "__main__" :
     main()
