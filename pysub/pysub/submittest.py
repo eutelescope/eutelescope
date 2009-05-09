@@ -5,7 +5,8 @@ import logging
 import logging.handlers
 
 ## SubmitTest
-# 
+# @class SubmitTest
+#
 # This is a test submit class to understand how it works!
 class SubmitTest( SubmitBase ) :
     """ This is a test submit class to understand how it works! """

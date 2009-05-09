@@ -10,20 +10,27 @@ import logging.handlers
 from submitbase import SubmitBase
 
 
-
-## Submit conversion jobs
+## Submit conversion jobs    
 #
-# This is the class responsible of executing job conversions
+#  This class is responsible to submit jobs for native to lcio-raw format conversion.
+#  It is inheriting from SubmitBase and it is called by the submit-converter.py script
+#  
+#  @version $Id : $
+#  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+#
 class SubmitConverter( SubmitBase ) :
-    """ This is a test submit class to understand how it works! """
 
-    ## General configure
-    #
-    # This method is called by the constructor itself and performs all the
-    # basic configurations from the configuration file.
-    # In particular is calling the configureLogger method to start the logging
-    # system in its full glory
+
     def configure( self ):
+        """
+        General configure
+
+        This method is called by the constructor itself and performs all the
+        basic configurations from the configuration file.
+        In particular is calling the configureLogger method to start the logging
+        system in its full glory
+
+        """
 
         # first of all we need to see if we have a user defined configuration 
         # file different from the template/config.cfg
