@@ -3,6 +3,7 @@ from submitbase import SubmitBase
 import ConfigParser
 import logging
 import logging.handlers
+import time
 
 ## SubmitTest
 # @class SubmitTest
@@ -69,6 +70,8 @@ class SubmitTest( SubmitBase ) :
         # now we can properly set the logger.
         self.configureLogger()
         
-
+    def execute( self ) :
+        print "Working very hard..."
+        time.sleep( 3 )
 
 
