@@ -169,14 +169,18 @@ class SubmitConverter( SubmitBase ) :
 
         # configuring the time rotating file handler
         if self._configParser.getboolean( "Logger", "RotatingFileHandler" ):
-            rotatingHandler = logging.handlers.RotatingFileHandler(
-                filename = self._configParser.get( "Logger", "RotatingFileHandlerFileName" ),
-                maxBytes = self._configParser.getint( "Logger", "RotatingFileHandlerSize" ),
-                backupCount = 10)
-            rotatingHandler.setLevel( self._configParser.getint( "Logger", "RotatingFileHandlerLevel" ) )
-            rotatingHandler.setFormatter( logging.Formatter("%(asctime)s -%(name)-10s [%(levelname)-6s]: %(message)s","%a, %d %b %Y %H:%M:%S") )
-            self._logger.addHandler( rotatingHandler )
-
+            try:
+                rotatingHandler = logging.handlers.RotatingFileHandler(
+                    filename = self._configParser.get( "Logger", "RotatingFileHandlerFileName" ),
+                    maxBytes = self._configParser.getint( "Logger", "RotatingFileHandlerSize" ),
+                    backupCount = 10)
+                rotatingHandler.setLevel( self._configParser.getint( "Logger", "RotatingFileHandlerLevel" ) )
+                rotatingHandler.setFormatter( logging.Formatter("%(asctime)s -%(name)-10s [%(levelname)-6s]: %(message)s","%a, %d %b %Y %H:%M:%S") )
+                self._logger.addHandler( rotatingHandler )
+            except IOError, detail:
+                message = "IOError: %(detail)s" % { "detail":detail }
+                self._logger.error( message )
+                self._logger.error( "Impossible to open the rotating handler for logging" )
         self._logger.log( 15, "**********************************************************" )
         self._logger.log( 15, "Started submit-converter" )
         self._logger.log( 15, "**********************************************************" )
