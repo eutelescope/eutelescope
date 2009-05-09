@@ -455,7 +455,8 @@ INPUT                  = ../include ../src introduction.html \
 	                 ../steering-examples/minimal.cfg    \
                          ../steering-examples/complete.cfg   \
 	                 ../ChangeLog	     \
-                         ../test/histograms
+                         ../test/histograms  \
+                         ../pysub
 
 # If the value of the INPUT tag contains directories, you can use the 
 # FILE_PATTERNS tag to specify one or more wildcard pattern (like *.cpp 
@@ -467,7 +468,8 @@ INPUT                  = ../include ../src introduction.html \
 FILE_PATTERNS          = *.h \
                          *.cc \
 			 *.hcc \
-                         *.C
+                         *.C   \
+                         *.py
 
 
 # The RECURSIVE tag can be used to turn specify whether or not subdirectories 
