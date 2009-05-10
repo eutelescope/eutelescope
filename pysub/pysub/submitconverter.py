@@ -18,7 +18,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.11 2009-05-10 18:15:42 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.12 2009-05-10 20:09:36 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -522,7 +522,7 @@ class SubmitConverter( SubmitBase ) :
         if os.system( command ) != 0 :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, e, "LOCAL"
-            raise GRIDLCG_CRError( "lfn:%(gridFolder)s/universal-%(run)s.tar.gz"% \
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/universal-%(run)s.tar.gz"% \
                                        { "gridFolder": gridFolder, "run" : runString } )
         else:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
