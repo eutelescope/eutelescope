@@ -18,7 +18,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.7 2009-05-10 17:32:39 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.8 2009-05-10 17:45:39 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -335,7 +335,7 @@ class SubmitConverter( SubmitBase ) :
                 message = "The file (%(file)s) couldn't be copied on the GRID"  % { "file": error._filename }
                 self._logger.error( message )
 
-            except MissingJouboutFileError, error:
+            except MissingJouboutputFileError, error:
                 message = "The joboutput tarball (%(file)s) is missing, possible failure" % { "file": error._filename }
                 self._logger.error( message )
                 run, b, c, d, e, f = self._summaryNTuple[ index ]

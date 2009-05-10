@@ -38,7 +38,7 @@ class MissingOutputFileError( MissingFileError ):
 
 ## Missing joboutput file
 #
-class MissingJooutputFileError( MissingFileError ):
+class MissingJoboutputFileError( MissingFileError ):
     pass
 
 ## Problem copying file from GRID
