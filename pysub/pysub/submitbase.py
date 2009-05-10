@@ -62,7 +62,7 @@
 # it working.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.3 2009-05-09 18:08:27 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.4 2009-05-10 17:31:10 bulgheroni Exp $
 
 from optparse import OptionParser
 import ConfigParser
@@ -76,7 +76,7 @@ import time
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.3 2009-05-09 18:08:27 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.4 2009-05-10 17:31:10 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -109,6 +109,8 @@ class SubmitBase :
         # load the configuration
         self.configure()
 
+        # initialize a summary ntuple
+        self._summaryNTuple = [];
 
     ## The configure method
     #
@@ -133,7 +135,39 @@ class SubmitBase :
     # housekeeping leaving the system clean and print the last line in
     # the log file
     def end( self ) :
+
+        self._logger.info( "Finished loop on input runs" )
+        self.logSummary()
+
         self._timeEnd = time.time()
         message = "Submission completed in %(time)d seconds" % {
             "time": self._timeEnd - self._timeBegin }
         self._logger.info( message )
+
+
+    ## Log summary
+    # 
+    # This method is used to log the summary of the submission
+    # Remember that the ntuple is made in this way:
+    # run; inputFileStatus; marlinStatus ; outputFileStatus ; histoFileStatus ; joboutputFileStatus
+    #
+    def logSummary( self ):
+
+        if len( self._summaryNTuple) == 0 :
+            pass
+
+        else:
+            self._logger.info( "" ) 
+            self._logger.info( "== SUBMISSION SUMMARY =======================================================" )
+            message = "| %(run)6s | %(inputFileStatus)10s | %(marlinStatus)10s | %(outputFileStatus)11s | %(histoFileStatus)11s | %(joboutputFileStatus)10s |" \
+                % { "run": "Run", "inputFileStatus" : "Input File", "marlinStatus": "Marlin",
+                    "outputFileStatus": "Output File", "histoFileStatus": "Histo File", "joboutputFileStatus": "Joboutput" }
+            self._logger.info( message )
+            for entry in self._summaryNTuple :
+                run, inputFileStatus, marlinStatus, outputFileStatus, histoFileStatus, joboutputFileStatus = entry
+                message = "| %(run)6s | %(inputFileStatus)10s | %(marlinStatus)10s | %(outputFileStatus)11s | %(histoFileStatus)11s | %(joboutputFileStatus)10s |" \
+                    % { "run": run, "inputFileStatus" : inputFileStatus, "marlinStatus":marlinStatus,  
+                        "outputFileStatus": outputFileStatus, "histoFileStatus": histoFileStatus, "joboutputFileStatus":joboutputFileStatus }
+                self._logger.info( message )
+            self._logger.info("=============================================================================" )
+            self._logger.info( "" ) 
