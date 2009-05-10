@@ -10,7 +10,7 @@ from optparse import OptionGroup
 # SubmitConverter and create an instance of this object.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-converter.py,v 1.3 2009-05-09 20:05:48 bulgheroni Exp $
+# @version $Id: submit-converter.py,v 1.4 2009-05-10 12:30:22 bulgheroni Exp $
 #
 def main() :
 
@@ -19,7 +19,7 @@ def main() :
 
 usage: %prog [execution-options] [io-options] [configuration-options] run-list
 """
-    cvsVersion = "$Revision: 1.3 $"
+    cvsVersion = "$Revision: 1.4 $"
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
         "\ncompiled on a " + os.name + " system"
 
@@ -103,11 +103,18 @@ from the GRID SE, but the job will be executed on the local CPU
                         dest="force_remove_output",
                         help="Force to delete the output files after finishing, independently of the execution mode")
 
+    ioGroup.add_option( "--verify-output",
+                        action="store_true",
+                        dest="verify_output",
+                        help="Verify that the output files copied to the GRID are equal to the local ones" +
+                        "Option available on when working in cpu-local mode and requires more time" )
+
 
     parser.set_defaults(force_keep_input=False)
     parser.set_defaults(force_keep_output=False)
     parser.set_defaults(force_remove_input=False)
     parser.set_defaults(force_remove_output=False)
+    parser.set_defaults(verify_output=False)
 
     # adding a group will all the configuration options
     configurationGroup = OptionGroup( parser, "Configuration option",

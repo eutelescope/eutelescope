@@ -7,6 +7,7 @@ import popen2
 import ConfigParser
 import logging
 import logging.handlers
+import math
 from submitbase import SubmitBase
 
 
@@ -17,7 +18,7 @@ from submitbase import SubmitBase
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.5 2009-05-09 20:05:48 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.6 2009-05-10 12:30:22 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -64,6 +65,9 @@ class SubmitConverter( SubmitBase ) :
         # now print the configuration to the log
         self.logConfigurationFile()
 
+        # now log the run list
+        self.logRunList()
+
         # now check the I/O options
         # default values depend on the execution mode
         self._keepInput  = True
@@ -84,7 +88,7 @@ class SubmitConverter( SubmitBase ) :
             # doesn't matter but leave both on
             pass
 
-        # do some checks on the command line options. 
+        # do some checks on the command line options.
         if  self._option.force_keep_input and self._option.force_remove_input :
             self._logger.critical( "Keep and remove input file options are mutually exclusive" )
             self._optionParser.error( "Keep and remove input file options are mutually exclusive" )
@@ -92,6 +96,10 @@ class SubmitConverter( SubmitBase ) :
         if  self._option.force_keep_output and self._option.force_remove_output :
             self._logger.critical( "Keep and remove output file options are mutually exclusive" )
             self._optionParser.error( "Keep and remove output file options are mutually exclusive" )
+
+        if  self._option.verify_output and self._option.execution != "cpu-local" :
+            self._logger.warning( "Selected option verify output in an execution mode different from cpu-local is meaningless" )
+            self._option.verift_output = False
 
         # now check if the user overwrites this setting in the options
         if  self._option.force_keep_input and not self._keepInput:
@@ -186,7 +194,7 @@ class SubmitConverter( SubmitBase ) :
                     maxBytes = self._configParser.getint( "Logger", "RotatingFileHandlerSize" ),
                     backupCount = 10)
                 rotatingHandler.setLevel( self._configParser.getint( "Logger", "RotatingFileHandlerLevel" ) )
-                rotatingHandler.setFormatter( logging.Formatter("%(asctime)s -%(name)-10s [%(levelname)-6s]: %(message)s","%a, %d %b %Y %H:%M:%S") )
+                rotatingHandler.setFormatter( logging.Formatter("%(asctime)s - %(name)-10s [%(levelname)-6s]: %(message)s","%a, %d %b %Y %H:%M:%S") )
                 self._logger.addHandler( rotatingHandler )
             except IOError, detail:
                 message = "IOError: %(detail)s" % { "detail":detail }
@@ -216,6 +224,25 @@ class SubmitConverter( SubmitBase ) :
 
         self._logger.log(15, "---------------------------------------")
         self._logger.log(15,"")
+
+
+    ## Print the run list to the logger
+    #
+    # Simple method to print out on the log all the runs we are about to process
+    #
+    def logRunList( self ):
+        self._logger.log(15, "" )
+        self._logger.log(15, "Logging the run list ")
+        message = ""
+        i = 0
+        for j, run in enumerate( self._args ) :
+            message = "" 
+            for k in range(0,4):
+                if i < len( self._args) :
+                    message = message + "%(run)10s " % { "run": self._args[i] } 
+                    i = i + 1
+            if len(message) != 0:
+                self._logger.log(15, message )
 
     ## Execute method
     #
