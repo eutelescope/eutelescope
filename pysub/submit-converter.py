@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import os
 from pysub import SubmitConverter
+from pysub import StopExecutionError
 from optparse import OptionParser
 from optparse import OptionGroup
 
@@ -10,7 +11,7 @@ from optparse import OptionGroup
 # SubmitConverter and create an instance of this object.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-converter.py,v 1.4 2009-05-10 12:30:22 bulgheroni Exp $
+# @version $Id: submit-converter.py,v 1.5 2009-05-10 17:32:39 bulgheroni Exp $
 #
 def main() :
 
@@ -19,7 +20,7 @@ def main() :
 
 usage: %prog [execution-options] [io-options] [configuration-options] run-list
 """
-    cvsVersion = "$Revision: 1.4 $"
+    cvsVersion = "$Revision: 1.5 $"
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
         "\ncompiled on a " + os.name + " system"
 
@@ -142,7 +143,11 @@ from the GRID SE, but the job will be executed on the local CPU
     submitConversion = SubmitConverter( parser )
 
     # execute it!
-    submitConversion.execute()
+    try :
+        submitConversion.execute()
+
+    except StopExecutionError, error:
+        submitConversion._logger.critical( "Cannot continue the execution" )
 
     # good bye!
     submitConversion.end()

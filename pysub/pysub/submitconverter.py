@@ -9,7 +9,7 @@ import logging
 import logging.handlers
 import math
 from submitbase import SubmitBase
-
+from error import *
 
 ## Submit conversion jobs
 #
@@ -18,7 +18,7 @@ from submitbase import SubmitBase
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.6 2009-05-10 12:30:22 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.7 2009-05-10 17:32:39 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -182,7 +182,7 @@ class SubmitConverter( SubmitBase ) :
         if self._configParser.getboolean( "Logger", "ConsoleHandler" ):
             self._consoleHandler = logging.StreamHandler()
             self._consoleHandler.setLevel( self._configParser.getint( "Logger", "ConsoleHandlerLevel" ) )
-            self._consoleHandler.setFormatter(logging.Formatter("%(asctime)s - %(name)-10s [%(levelname)-6s]: %(message)s","%a, %d %b %Y %H:%M:%S"
+            self._consoleHandler.setFormatter(logging.Formatter("%(asctime)s - %(name)-10s [%(levelname)-8s]: %(message)s","%a, %d %b %Y %H:%M:%S"
                                                                 ))
             self._logger.addHandler( self._consoleHandler )
 
@@ -194,7 +194,7 @@ class SubmitConverter( SubmitBase ) :
                     maxBytes = self._configParser.getint( "Logger", "RotatingFileHandlerSize" ),
                     backupCount = 10)
                 rotatingHandler.setLevel( self._configParser.getint( "Logger", "RotatingFileHandlerLevel" ) )
-                rotatingHandler.setFormatter( logging.Formatter("%(asctime)s - %(name)-10s [%(levelname)-6s]: %(message)s","%a, %d %b %Y %H:%M:%S") )
+                rotatingHandler.setFormatter( logging.Formatter("%(asctime)s - %(name)-10s [%(levelname)-8s]: %(message)s","%a, %d %b %Y %H:%M:%S") )
                 self._logger.addHandler( rotatingHandler )
             except IOError, detail:
                 message = "IOError: %(detail)s" % { "detail":detail }
@@ -236,10 +236,10 @@ class SubmitConverter( SubmitBase ) :
         message = ""
         i = 0
         for j, run in enumerate( self._args ) :
-            message = "" 
+            message = ""
             for k in range(0,4):
                 if i < len( self._args) :
-                    message = message + "%(run)10s " % { "run": self._args[i] } 
+                    message = message + "%(run)10s " % { "run": self._args[i] }
                     i = i + 1
             if len(message) != 0:
                 self._logger.log(15, message )
@@ -258,24 +258,88 @@ class SubmitConverter( SubmitBase ) :
         for i in self._args:
             try:
                 self._runList.append( int( i  ) )
+
+                # if it is a good run number than we can prepare an entry for the summary ntuple
+                # the ntuple contains 6 variables:
+                # runNumber ; inputFileStatus ; marlinStatus ; outputFileStatus ; histoFileStatus ; joboutputFileStatus
+                entry = i , "Unknown", "Unknown", "Unknown", "Unknown", "Unknown"
+
+                # the current entry to the ntuple
+                self._summaryNTuple.append( entry )
+
             except ValueError:
                 message = "Invalid run number %(i)s" % { "i": i }
                 self._logger.critical( message )
                 sys.exit( 1 )
 
 
-        # now do something different depending on the execution option
-        if self._option.execution == "all-grid" :
-            self.executeAllGRID()
+        for index, run in enumerate( self._runList ) :
+            # prepare a string such 123456
+            runString = "%(run)06d" % { "run" : run }
 
-        elif self._option.execution == "all-local" :
-            self.executeAllLocal()
+            message = "Now processing run %(run)s [ %(i)d / %(n)d ] " % {
+                "run" : runString, "i": index + 1, "n": len(self._runList ) }
+            self._logger.info( message )
 
-        elif self._option.execution == "cpu-local":
-            self.executeCPULocal()
+            try:
 
-        elif self._option.execution == "only-generate":
-            self.executeOnlyGenerate()
+                # now do something different depending on the execution option
+                if self._option.execution == "all-grid" :
+                    self.executeAllGRID( index , runString )
+
+                elif self._option.execution == "all-local" :
+                    self.executeAllLocal( index , runString )
+
+                elif self._option.execution == "cpu-local":
+                    self.executeCPULocal( index , runString )
+
+                elif self._option.execution == "only-generate":
+                    self.executeOnlyGenerate( index , runString )
+
+            except GRID_LCG_CPError, error:
+                message = "Unable to copy %(file)s" % { "file": error._filename }
+                self._logger.error( message )
+                self._logger.error("Skipping to the next run ")
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, "Missing", "Skipped", d,e,f
+
+            except MissingInputFileError, error:
+                message = "Missing input file %(file)s" % { "file": error._filename }
+                self._logger.error( message )
+                self._logger.error("Skipping to the next run ")
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, "Missing", "Skipped", d,e,f
+
+            except MissingSteeringTemplateError, error:
+                message = "Steering template %(file)s unavailble. Quitting!" % { "file": error._filename }
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+            except MissingGEARFileError, error:
+                message = "Missing GEAR file %(file)s. Quitting! "  % { "file": error._filename }
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+            except MarlinError, error:
+                message = "Error with Marlin execution (%(msg)s - errno = %(errno)s )" % { "msg": error._message, "errno": error._errno }
+                self._logger.error( message )
+                self._logger.error("Skipping to the next run ")
+
+            except MissingOutputFileError, error:
+                message = "The output file (%(file)s) was not properly generated, possible failure" % { "file": error._filename }
+                self._logger.error( message )
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, b, c, "Missing", "N/A", f
+
+            except GRID_LCG_CRError, error:
+                message = "The file (%(file)s) couldn't be copied on the GRID"  % { "file": error._filename }
+                self._logger.error( message )
+
+            except MissingJouboutFileError, error:
+                message = "The joboutput tarball (%(file)s) is missing, possible failure" % { "file": error._filename }
+                self._logger.error( message )
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, b, c, d, e, "Missing"
 
     ## This is the real all-grid submitter
     def allGridSubmission( self ) :
@@ -286,51 +350,46 @@ class SubmitConverter( SubmitBase ) :
     # This methods represents the sequence of commands that should be done while
     # submitting jobs on the local computer but using remote data
     #
-    def executeCPULocal( self ):
+    def executeCPULocal( self, index , runString ):
 
-        for run in self._runList :
-            runString = "%(#)06d" % { "#" : run }
+        # get the input file from the GRID
+        self.getRunFromGRID( index, runString )
 
-            # get the input file from the GRID
-            if self.getRunFromGRID( runString ) != 0:
-                self._logger.error("Problem copying input file from the GRID, trying next!" )
-                continue
+        # double check the presence of the input file
+        self.checkInputFile( index, runString )
 
-            self._logger.info("Input file successfully copied from the GRID")
+        #  generate the steering file
+        self._steeringFileName = self.generateSteeringFile( runString )
 
-            #  generate the steering file
-            self._steeringFileName = self.generateSteeringFile( runString )
+        # prepare a separate file for logging the output of Marlin
+        self._logFileName = "universal-%(run)s.log" % { "run" : runString }
 
-            # prepare a separate file for logging the output of Marlin
-            self._logFileName = "universal-%(run)s.log" % { "run" : runString }
+        # run marlin
+        returnValue = self.runMarlin()
+        if returnValue == 0 :
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, "OK", "Missing", "Missing", "Missing"
 
-            # run marlin takes as inputs the steering file and the log file
-            if self.runMarlin( ) != 0 :
-                self._logger.error( "Problem executing Marlin, skipping to the next run" )
-                continue
+        # advice the user that Marlin is over
+        self._logger.info( "Marlin finished successfully")
 
-            # advice the user that Marlin is over
-            self._logger.info( "Marlin finished successfully")
+        # verify the presence of the output files
+        self.checkOutputFile( index, runString )
 
-            # prepare a tarbal for the records
-            self.prepareTarball( runString )
+        # prepare a tarbal for the records
+        self.prepareTarball( runString )
 
-            # copy the output LCIO file to the GRID
-            if self.putRunOnGRID( runString ) != 0:
-                self._logger.error("Problem copying output LCIO file to the GRID, trying next!" )
-                self._logger.error("Input and output files will be kept" )
-                continue
-            self._logger.info("Ouput file successfully copied from the GRID")
+        # copy the output LCIO file to the GRID
+        self.putRunOnGRID( index, runString )
+        run, b, c, d, e, f = self._summaryNTuple[ index ]
+        self._summaryNTuple[ index ] = run, b, c, "GRID", "N/A", f
 
-            # copy the joboutput file to the GRID
-            if self.putJoboutputOnGRID( runString ) != 0:
-                self._logger.error("Problem copying joboutput file to the GRID, trying next!" )
-                self._logger.error("Input and output files will be kept" )
-                continue
-            self._logger.info("Jobouput file successfully copied from the GRID")
+        # copy the joboutput file to the GRID
+        self.putJoboutputOnGRID( index, runString )
 
-            # clean up the local pc
-            self.cleanup( runString )
+
+        # clean up the local pc
+        self.cleanup( runString )
 
 
     ## Local submitter
@@ -338,92 +397,124 @@ class SubmitConverter( SubmitBase ) :
     # This methods represents the sequence of commands that should be done while
     # submitting jobs on the local computer.
     #
-    def executeAllLocal( self ):
+    def executeAllLocal( self, index , runString ):
 
-        for run in self._runList :
-            runString = "%(#)06d" % { "#" : run }
+        # before any futher, check we have the input file for this run
+        self.checkInputFile( index, runString )
 
-            # first generate the steering file
-            self._steeringFileName = self.generateSteeringFile( runString )
+        # first generate the steering file
+        self._steeringFileName = self.generateSteeringFile( runString )
 
-            # prepare a separate file for logging the output of Marlin
-            self._logFileName = "universal-%(run)s.log" % { "run" : runString }
+        # prepare a separate file for logging the output of Marlin
+        self._logFileName = "universal-%(run)s.log" % { "run" : runString }
 
-            # run marlin takes as inputs the steering file and the log file
-            if self.runMarlin( ) != 0 :
-                self._logger.error( "Problem executing Marlin, skipping to the next run" )
-                continue
+        # run marlin
+        if self.runMarlin() == 0 :
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, "OK", "Missing", "Missing", "Missing"
 
-            # advice the user that Marlin is over
-            self._logger.info( "Marlin finished successfully")
+        # advice the user that Marlin is over
+        self._logger.info( "Marlin finished successfully")
 
+        # verify the presence of the output files
+        self.checkOutputFile( index, runString )
 
-            # prepare a tarbal for the records
-            self.prepareTarball( runString )
+        # prepare a tarbal for the records
+        self.prepareTarball( runString )
 
-            # clean up the local pc
-            self.cleanup( runString )
+        # check the presence of the joboutput tarball
+        # this should be named something like
+        # universal-123456.tar.gz
+        self.checkJoboutputFile( index, runString )
+
+        # clean up the local pc
+        self.cleanup( runString )
 
     ## Generate only submitter
     #
     # This methods is responsibile of dry-run with only steering file
     # generation
     #
-    def executeOnlyGenerate( self ):
-        for run in self._runList :
-            runString = "%(#)06d" % { "#" : run }
+    def executeOnlyGenerate( self, index , runString ):
 
-            # just need to generate the steering file
-            self.generateSteeringFile( runString )
+        # just need to generate the steering file
+        self.generateSteeringFile( runString )
 
     ## Get the input run from the GRID
-    def getRunFromGRID(self, runString ) :
+    def getRunFromGRID(self, index, runString ) :
 
         self._logger.info(  "Getting the input file from the GRID" )
 
         try :
             gridNativePath = self._configParser.get( "GRID", "GRIDFolderNative" )
         except ConfigParser.NoOptionError :
-            self._logger.critical( "GRIDFolderNative missing in the configuration file. Quitting." )
-            sys.exit( 5 )
+            message = "GRIDFolderNative missing in the configuration file. Quitting."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
 
         localPath = "$PWD/native"
         command = "lcg-cp -v lfn:%(gridNativePath)s/run%(run)s.raw file:%(localPath)s/run%(run)s.raw" %  \
             { "gridNativePath" : gridNativePath, "run": runString, "localPath": localPath }
-        return  os.system( command )
+        if os.system( command ) != 0:
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, "Missing", c, d, "N/A", f
+            raise GRID_LCG_CPError( "lfn:%(gridNativePath)s/run%(run)s.raw" %   { "gridNativePath" : gridNativePath, "localPath": localPath } )
+        else:
+            self._logger.info("Input file successfully copied from the GRID")
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, "OK", c, d, "N/A", f
+
 
     ## Put the output run to the GRID
-    def putRunOnGRID( self, runString ):
+    def putRunOnGRID( self, index, runString ):
 
         self._logger.info(  "Putting the LCIO file to the GRID" )
 
         try :
             gridLcioRawPath = self._configParser.get( "GRID", "GRIDFolderLcioRaw")
         except ConfigParser.NoOptionError :
-            self._logger.critical( "GRIDFolderLcioRaw missing in the configuration file. Quitting." )
-            sys.exit( 5 )
+            message = "GRIDFolderLcioRaw missing in the configuration file. Quitting."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
 
         localPath = "$PWD/lcio-raw"
         command = "lcg-cr -v -l lfn:%(gridFolder)s/run%(run)s.slcio file:%(localFolder)s/run%(run)s.slcio" % \
             { "gridFolder": gridLcioRawPath, "localFolder": localPath, "run" : runString }
-        return os.system( command )
+        if os.system( command ) != 0 :
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, c, "LOCAL", "N/A", f
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s.slcio" % \
+                                        { "gridFolder": gridLcioRawPath, "run" : runString } )
+        else:
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, c, "GRID", "N/A", f
+            self._logger.info( "Output file successfully copied to the GRID" )
 
     ## Put the joboutput to the GRID
-    def putJoboutputOnGRID( self, runString ):
+    def putJoboutputOnGRID( self, index, runString ):
 
         self._logger.info(  "Putting the joboutput file to the GRID" )
 
         try :
             gridFolder = self._configParser.get( "GRID", "GRIDFolderConvertJoboutput")
         except ConfigParser.NoOptionError :
-            self._logger.critical( "GRIDFolderConvertJoboutput missing in the configuration file. Quitting." )
-            sys.exit( 5 )
+            message = "GRIDFolderConvertJoboutput missing in the configuration file. Quitting."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
 
         localPath = "$PWD"
         command = "lcg-cr -v -l lfn:%(gridFolder)s/universal-%(run)s.tar.gz file:%(localFolder)s/universal-%(run)s.tar.gz" % \
             { "gridFolder": gridFolder, "localFolder": localPath, "run" : runString }
 
-        return os.system( command )
+        if os.system( command ) != 0 :
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, c, d, e, "LOCAL"
+            raise GRIDLCG_CRError( "lfn:%(gridFolder)s/universal-%(run)s.tar.gz"% \
+                                       { "gridFolder": gridFolder, "run" : runString } )
+        else:
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, c, d, e, "GRID"
+            self._logger.info("Jobouput file successfully copied from the GRID")
 
     ## Generate the steering file
     def generateSteeringFile( self, runString  ) :
@@ -441,9 +532,7 @@ class SubmitConverter( SubmitBase ) :
 
         # check if the template exists
         if not os.path.exists( steeringFileTemplate ) :
-            message ="The steering template %(tmp)s is missing. Quitting!" % { "tmp":steeringFileTemplate }
-            self._logger.critical( message )
-            sys.exit( 2 )
+            raise MissingSteeringTemplateError ( steeringFileTemplate )
 
         # open the template for reading
         templateSteeringFile = open( steeringFileTemplate , "r")
@@ -498,9 +587,7 @@ class SubmitConverter( SubmitBase ) :
 
         # first check that the gear file exists
         if not os.path.exists( self._gear_file ) :
-            message = "The GEAR file %(gear)s doesn't exist!" % {"gear" : self._gear_file }
-            self._logger.error( message )
-            return 3
+            raise MissingGEARFileError(  self._gear_file  )
 
         # do some tricks for having the logfile
         logFile = open( self._logFileName, "w")
@@ -511,7 +598,11 @@ class SubmitConverter( SubmitBase ) :
             logFile.write( line )
 
         logFile.close()
-        return marlin.poll()
+        returnValue = marlin.poll()
+        if returnValue != 0:
+            raise MarlinError( "", returnValue )
+        else :
+            return returnValue
 
     ## Prepare the joboutput tarball
     def prepareTarball( self, runString ):
@@ -565,3 +656,42 @@ class SubmitConverter( SubmitBase ) :
 
         if self._keepOutput == False :
             os.remove( outputFile )
+
+    ## Check the input file
+    #
+    def checkInputFile( self, index, runString ) :
+        # the input file should be something like:
+        # native/run123456.raw
+
+        inputFileName = "native/run%(run)s.raw" % { "run": runString }
+        if not os.access( inputFileName, os.R_OK ):
+            message = "Problem accessing the input file (%(file)s), trying next run" % {"file": inputFileName }
+            self._logger.error( message )
+            raise MissingInputFileError( inputFileName )
+        else :
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, "OK", c, d, e, f
+
+    ## Check the output file
+    #
+    def checkOutputFile( self, index, runString ) :
+        # this should be named something like
+        # lcio-raw/run123456.slcio
+        outputFileName = "lcio-raw/run%(run)s.slcio" % { "run": runString }
+        if not os.access( outputFileName, os.R_OK ):
+            raise MissingOutputFileError( outputFileName )
+        else :
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, c, "OK", "N/A", f
+
+    ## Check the joboutput file
+    #
+    def checkJoboutputFile( self, index, runString) :
+        # this should be named something like
+        # universal-123456.tar.gz
+        tarballFileName = "universal-%(run)s.tar.gz" % { "run": runString }
+        if not os.access( tarballFileName, os.R_OK ):
+            raise MissingJoboutFileError( tarballFileName )
+        else:
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, c, d, e, "OK"
