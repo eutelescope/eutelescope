@@ -36,6 +36,11 @@ class MissingSteeringTemplateError( MissingFileError ):
 class MissingOutputFileError( MissingFileError ):
     pass
 
+## Missing joboutput file
+#
+class MissingJooutputFileError( MissingFileError ):
+    pass
+
 ## Problem copying file from GRID
 #
 class GRID_LCG_CPError( MissingFileError ):
