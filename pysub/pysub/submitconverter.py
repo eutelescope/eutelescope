@@ -18,7 +18,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.10 2009-05-10 17:47:13 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.11 2009-05-10 18:15:42 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -368,7 +368,7 @@ class SubmitConverter( SubmitBase ) :
         returnValue = self.runMarlin()
         if returnValue == 0 :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, "OK", "Missing", "Missing", "Missing"
+            self._summaryNTuple[ index ] = run, b, "OK", d, e, f
 
         # advice the user that Marlin is over
         self._logger.info( "Marlin finished successfully")
@@ -380,13 +380,26 @@ class SubmitConverter( SubmitBase ) :
         self.prepareTarball( runString )
 
         # copy the output LCIO file to the GRID
-        self.putRunOnGRID( index, runString )
-        run, b, c, d, e, f = self._summaryNTuple[ index ]
-        self._summaryNTuple[ index ] = run, b, c, "GRID", "N/A", f
+        try :
+            self.putRunOnGRID( index, runString )
+
+        except GRID_LCG_CRError, error:
+            message = "The file (%(file)s) couldn't be copied on the GRID"  % { "file": error._filename }
+            self._logger.error( message )
+
+            # copy the joboutput file to the GRID
+            try :
+                self.putJoboutputOnGRID( index, runString )
+            except GRID_LCG_CRError, error:
+                message = "The file (%(file)s) couldn't be copied on the GRID"  % { "file": error._filename }
+                self._logger.error( message )
 
         # copy the joboutput file to the GRID
-        self.putJoboutputOnGRID( index, runString )
-
+        try :
+            self.putJoboutputOnGRID( index, runString )
+        except GRID_LCG_CRError, error:
+            message = "The file (%(file)s) couldn't be copied on the GRID"  % { "file": error._filename }
+            self._logger.error( message )
 
         # clean up the local pc
         self.cleanup( runString )
@@ -411,7 +424,7 @@ class SubmitConverter( SubmitBase ) :
         # run marlin
         if self.runMarlin() == 0 :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, "OK", "Missing", "Missing", "Missing"
+            self._summaryNTuple[ index ] = run, b, "OK", d, e, f
 
         # advice the user that Marlin is over
         self._logger.info( "Marlin finished successfully")
