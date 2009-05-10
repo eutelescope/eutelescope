@@ -18,7 +18,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.9 2009-05-10 17:46:12 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.10 2009-05-10 17:47:13 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -458,7 +458,7 @@ class SubmitConverter( SubmitBase ) :
         if os.system( command ) != 0:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", c, d, "N/A", f
-            raise GRID_LCG_CPError( "lfn:%(gridNativePath)s/run%(run)s.raw" %   { "gridNativePath" : gridNativePath, "localPath": localPath } )
+            raise GRID_LCG_CPError( "lfn:%(gridNativePath)s/run%(run)s.raw" %   { "gridNativePath" : gridNativePath, "run": runString } )
         else:
             self._logger.info("Input file successfully copied from the GRID")
             run, b, c, d, e, f = self._summaryNTuple[ index ]
