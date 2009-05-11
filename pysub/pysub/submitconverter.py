@@ -18,7 +18,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.14 2009-05-11 10:07:28 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.15 2009-05-11 10:19:18 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -362,23 +362,20 @@ class SubmitConverter( SubmitBase ) :
         # prepare a tarbal for the records
         self.prepareTarball( runString )
 
-        # copy the output LCIO file to the GRID
         try :
+            # copy the output LCIO file to the GRID
             self.putRunOnGRID( index, runString )
 
-        except GRID_LCG_CRError, error:
-            message = "The file (%(file)s) couldn't be copied on the GRID"  % { "file": error._filename }
-            self._logger.error( message )
-
-        # copy the joboutput file to the GRID
-        try :
+            # copy the joboutput to the GRID
             self.putJoboutputOnGRID( index, runString )
+
+            # clean up the local pc
+            self.cleanup( runString )
+
         except GRID_LCG_CRError, error:
             message = "The file (%(file)s) couldn't be copied on the GRID"  % { "file": error._filename }
             self._logger.error( message )
 
-        # clean up the local pc
-        self.cleanup( runString )
 
 
     ## Local submitter
@@ -642,7 +639,7 @@ class SubmitConverter( SubmitBase ) :
 
         # prepare the list of files we want to copy.
         listOfFiles = []
-        listOfFiles.append( self._gear_file )
+        listOfFiles.append( os.path.join( self._gearPath, self._gear_file ) )
         listOfFiles.append( self._steeringFileName )
         listOfFiles.append( self._logFileName )
         listOfFiles.append( self._configFile )
