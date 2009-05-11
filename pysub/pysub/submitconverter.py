@@ -1,6 +1,7 @@
 import os
 import sys
 import shutil
+import sha
 import glob
 import tarfile
 import popen2
@@ -18,7 +19,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.15 2009-05-11 10:19:18 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.16 2009-05-11 12:47:51 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -414,6 +415,11 @@ class SubmitConverter( SubmitBase ) :
         # clean up the local pc
         self.cleanup( runString )
 
+    ## Execute all GRID
+    #
+    def executeAllGRID( self, index, runString ) :
+        pass
+
     ## Generate only submitter
     #
     # This methods is responsibile of dry-run with only steering file
@@ -482,6 +488,43 @@ class SubmitConverter( SubmitBase ) :
             self._summaryNTuple[ index ] = run, b, c, "GRID", "N/A", f
             self._logger.info( "Output file successfully copied to the GRID" )
 
+            # verify?
+            # if so, first calculate the sha of the local file
+            if self._option.verify_output :
+                self._logger.info ("Verifying the LCIO file integrity on the GRID" )
+                localCopy = open( "%(localFolder)s/run%(run)s.slcio" % { "localFolder": localPath, "run" : runString }, "r" ).read()
+                localCopyHash = sha.new( localCopy ).hexdigest()
+                message = "Local copy hash %(hash)s" % { "hash": localCopyHash }
+                self._logger.log( 15, message )
+
+                # now copy back the remote file 
+                # if so we need to copy back the file
+                command = "lcg-cp -v lfn:%(gridFolder)s/run%(run)s.slcio file:%(localFolder)s/run%(run)s-test.slcio" % \
+                          { "gridFolder": gridLcioRawPath, "localFolder": localPath, "run" : runString }
+                if os.system( command ) != 0 :
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, c, "LOCAL", "N/A", f
+                    raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s.slcio" % \
+                                    { "gridFolder": gridLcioRawPath, "run" : runString } )
+
+                remoteCopy = open( "%(localFolder)s/run%(run)s-test.slcio" % { "localFolder": localPath, "run" : runString }, "r" ).read()
+                remoteCopyHash = sha.new( remoteCopy ).hexdigest()
+                message = "Remote copy hash %(hash)s" % { "hash": remoteCopyHash }
+                self._logger.log( 15, message )
+
+                if remoteCopyHash == localCopyHash:
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, c, "GRID - Ver!", "N/A", f
+                    self._logger.info( "Verification successful" )
+                else:
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, c, "GRID - Fail!", "N/A", f
+                    self._logger.error( "Problem with the verification!" )
+
+                # anyway remove the test file
+                os.remove( "%(localFolder)s/run%(run)s-test.slcio" % { "localFolder": localPath, "run" : runString } )
+
+
     ## Put the joboutput to the GRID
     def putJoboutputOnGRID( self, index, runString ):
 
@@ -511,6 +554,42 @@ class SubmitConverter( SubmitBase ) :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, e, "GRID"
             self._logger.info("Jobouput file successfully copied from the GRID")
+
+            # verify?
+            # if so, first calculate the sha of the local file
+            if self._option.verify_output :
+                self._logger.info ("Verifying the joboutput file integrity on the GRID" )
+                localCopy = open( "%(localFolder)s/universal-%(run)s.tar.gz" % { "localFolder": localPath, "run" : runString }, "r" ).read()
+                localCopyHash = sha.new( localCopy ).hexdigest()
+                message = "Local copy hash %(hash)s" % { "hash": localCopyHash }
+                self._logger.log( 15, message )
+
+                # now copy back the remote file
+                # if so we need to copy back the file
+                command = "lcg-cp -v lfn:%(gridFolder)s/universal-%(run)s.tar.gz file:%(localFolder)s/universal-%(run)s-test.tar.gz" % \
+                          { "gridFolder": gridFolder, "localFolder": localPath, "run" : runString }
+                if os.system( command ) != 0 :
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, c, d, "N/A", "GRID - Fail!"
+                    raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s.slcio" % \
+                                    { "gridFolder": gridLcioRawPath, "run" : runString } )
+
+                remoteCopy = open( "%(localFolder)s/universal-%(run)s-test.tar.gz" % { "localFolder": localPath, "run" : runString }, "r" ).read()
+                remoteCopyHash = sha.new( remoteCopy ).hexdigest()
+                message = "Remote copy hash %(hash)s" % { "hash": remoteCopyHash }
+                self._logger.log( 15, message )
+
+                if remoteCopyHash == localCopyHash:
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, c, "GRID - Ver!", "N/A", f
+                    self._logger.info( "Verification successful" )
+                else:
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, c, "GRID - Fail!", "N/A", f
+                    self._logger.error( "Problem with the verification!" )
+
+                # anyway remove the test file
+                os.remove( "%(localFolder)s/universal-%(run)s-test.tar.gz" % { "localFolder": localPath, "run" : runString } )
 
     ## Generate the steering file
     def generateSteeringFile( self, runString  ) :
@@ -661,6 +740,7 @@ class SubmitConverter( SubmitBase ) :
             localFolder = self._configParser.get( "LOCAL", "LocalFolderConvertJoboutput")
         except ConfigParser.NoOptionError :
             localFolder = "log/"
+
         shutil.move( self._tarballFileName, localFolder )
 
     ## Cleanup after each run conversion
@@ -673,15 +753,21 @@ class SubmitConverter( SubmitBase ) :
         os.remove( self._logFileName )
 
         # remove the input and output file
-        inputFile  = "native/run%(run)s.raw" % { "run" : runString }
-        outputFile = "lcio-raw/run%(run)s.slcio" % { "run" : runString }
+        try :
+            inputFilePath = self._configParser.get( "LOCAL", "LocalFolderNative" )
+        except ConfigParser.NoOptionError :
+            inputFilePath = "native"
+        inputFile  = "run%(run)s.raw" % { "run" : runString }
+        if self._keepInput == False:
+            os.remove( os.path.join( inputFilePath, inputFile ))
 
-        # but before removing check if this is needed
-        if self._keepInput == False :
-            os.remove( inputFile )
-
+        try :
+            outputFilePath = self._configParser.get( "LOCAL", "LocalFolderLcioRaw" )
+        except ConfigParser.NoOptionError :
+            outputFilePath = "lcio-raw"
+        outputFile = "run%(run)s.slcio" % { "run" : runString }
         if self._keepOutput == False :
-            os.remove( outputFile )
+            os.remove( os.path.join(outputFilePath, outputFile ))
 
     ## Check the input file
     #
