@@ -18,7 +18,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.13 2009-05-11 08:41:18 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.14 2009-05-11 10:07:28 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -126,39 +126,25 @@ class SubmitConverter( SubmitBase ) :
             interactive = True
 
         if self._keepInput == False and interactive :
-            goodAnswer = False
-            while goodAnswer == False:
-                self._logger.warning("This script is going to delete the input file(s) when finished." )
-                self._logger.warning("Are you sure to continue? [y/n]")
-                answer = raw_input( "--> ").lower()
-                if answer != "y" and answer != "yes" and answer != "n" and answer != "no":
-                    self._logger.warning("Invalid answer, please type y or n")
-                    answer = raw_input( "--> " ).lower()
-                elif answer == "y" or answer == "yes":
-                    goodAnswer = True
-                    self._logger.info("User decide to continue removing input files")
-                elif answer == "n" or answer == "no":
-                    goodAnswer = True
-                    self._logger.info("Aborted by user")
-                    sys.exit( 4 )
+            self._logger.warning("This script is going to delete the input file(s) when finished." )
+            self._logger.warning("Are you sure to continue? [y/n]")
+            message = "--> "
+            if self.askYesNo(prompt = message ) == True:
+                self._logger.info("User decide to continue removing input files")
+            else:
+                self._logger.info("Aborted by user")
+                sys.exit( 4 )
+
 
         if self._keepOutput == False and interactive :
-            goodAnswer = False
-            while goodAnswer == False:
-                self._logger.warning("This script is going to delete the output file(s) when finished." )
-                self._logger.warning("Are you sure to continue? [y/n]")
-                answer = raw_input( "--> ").lower()
-                if answer != "y" and answer != "yes" and answer != "n" and answer != "no":
-                    self._logger.warning("Invalid answer, please type y or n")
-                    answer = raw_input( "--> " ).lower()
-                elif answer == "y" or answer == "yes":
-                    goodAnswer = True
-                    self._logger.info("User decide to continue removing output files")
-                elif answer == "n" or answer == "no":
-                    goodAnswer = True
-                    self._logger.info("Aborted by user")
-                    sys.exit( 4 )
-
+            self._logger.warning("This script is going to delete the output file(s) when finished." )
+            self._logger.warning("Are you sure to continue? [y/n]")
+            message = "--> "
+            if self.askYesNo(prompt = message ) == True:
+                self._logger.info("User decide to continue removing output files")
+            else:
+                self._logger.info("Aborted by user")
+                sys.exit( 4 )
 
     ## Logger configurator
     #
@@ -392,7 +378,7 @@ class SubmitConverter( SubmitBase ) :
             self._logger.error( message )
 
         # clean up the local pc
-        #self.cleanup( runString )
+        self.cleanup( runString )
 
 
     ## Local submitter
@@ -453,7 +439,11 @@ class SubmitConverter( SubmitBase ) :
             self._logger.critical( message )
             raise StopExecutionError( message )
 
-        localPath = "$PWD/native"
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderNative" )
+        except ConfigParser.NoOptionError :
+            localPath = "$PWD/native"
+
         command = "lcg-cp -v lfn:%(gridNativePath)s/run%(run)s.raw file:%(localPath)s/run%(run)s.raw" %  \
             { "gridNativePath" : gridNativePath, "run": runString, "localPath": localPath }
         if os.system( command ) != 0:
@@ -478,7 +468,11 @@ class SubmitConverter( SubmitBase ) :
             self._logger.critical( message )
             raise StopExecutionError( message )
 
-        localPath = "$PWD/lcio-raw"
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderLcioRaw" )
+        except ConfigParser.NoOptionError :
+            localPath = "$PWD/lcio-raw"
+
         command = "lcg-cr -v -l lfn:%(gridFolder)s/run%(run)s.slcio file:%(localFolder)s/run%(run)s.slcio" % \
             { "gridFolder": gridLcioRawPath, "localFolder": localPath, "run" : runString }
         if os.system( command ) != 0 :
@@ -503,7 +497,11 @@ class SubmitConverter( SubmitBase ) :
             self._logger.critical( message )
             raise StopExecutionError( message )
 
-        localPath = "$PWD"
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderConvertJoboutput")
+        except ConfigParser.NoOptionError :
+            localPath = "log/"
+
         command = "lcg-cr -v -l lfn:%(gridFolder)s/universal-%(run)s.tar.gz file:%(localFolder)s/universal-%(run)s.tar.gz" % \
             { "gridFolder": gridFolder, "localFolder": localPath, "run" : runString }
 
@@ -661,14 +659,17 @@ class SubmitConverter( SubmitBase ) :
         # remove the temporary folder
         shutil.rmtree( destFolder )
 
+        # copy the tarball in the log folder
+        try:
+            localFolder = self._configParser.get( "LOCAL", "LocalFolderConvertJoboutput")
+        except ConfigParser.NoOptionError :
+            localFolder = "log/"
+        shutil.move( self._tarballFileName, localFolder )
 
     ## Cleanup after each run conversion
     def cleanup( self, runString ):
 
         self._logger.info( "Cleaning up the local pc" )
-
-        # copy the tarball in the log folder
-        shutil.move( self._tarballFileName, "log/")
 
         # remove the log file and the steering file
         os.remove( self._steeringFileName )
@@ -733,7 +734,7 @@ class SubmitConverter( SubmitBase ) :
             outputFilePath = "log"
         tarballFileName = "universal-%(run)s.tar.gz" % { "run": runString }
         if not os.access( os.path.join( outputFilePath, tarballFileName), os.R_OK ):
-            raise MissingJoboutFileError( tarballFileName )
+            raise MissingJoboutputFileError( tarballFileName )
         else:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, e, "OK"
