@@ -18,7 +18,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.12 2009-05-10 20:09:36 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.13 2009-05-11 08:41:18 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -365,10 +365,7 @@ class SubmitConverter( SubmitBase ) :
         self._logFileName = "universal-%(run)s.log" % { "run" : runString }
 
         # run marlin
-        returnValue = self.runMarlin()
-        if returnValue == 0 :
-            run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, "OK", d, e, f
+        self.runMarlin( index, runString )
 
         # advice the user that Marlin is over
         self._logger.info( "Marlin finished successfully")
@@ -387,13 +384,6 @@ class SubmitConverter( SubmitBase ) :
             message = "The file (%(file)s) couldn't be copied on the GRID"  % { "file": error._filename }
             self._logger.error( message )
 
-            # copy the joboutput file to the GRID
-            try :
-                self.putJoboutputOnGRID( index, runString )
-            except GRID_LCG_CRError, error:
-                message = "The file (%(file)s) couldn't be copied on the GRID"  % { "file": error._filename }
-                self._logger.error( message )
-
         # copy the joboutput file to the GRID
         try :
             self.putJoboutputOnGRID( index, runString )
@@ -402,7 +392,7 @@ class SubmitConverter( SubmitBase ) :
             self._logger.error( message )
 
         # clean up the local pc
-        self.cleanup( runString )
+        #self.cleanup( runString )
 
 
     ## Local submitter
@@ -422,9 +412,7 @@ class SubmitConverter( SubmitBase ) :
         self._logFileName = "universal-%(run)s.log" % { "run" : runString }
 
         # run marlin
-        if self.runMarlin() == 0 :
-            run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, "OK", d, e, f
+        self.runMarlin( index, runString)
 
         # advice the user that Marlin is over
         self._logger.info( "Marlin finished successfully")
@@ -523,7 +511,7 @@ class SubmitConverter( SubmitBase ) :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, e, "LOCAL"
             raise GRID_LCG_CRError( "lfn:%(gridFolder)s/universal-%(run)s.tar.gz"% \
-                                       { "gridFolder": gridFolder, "run" : runString } )
+                                        { "gridFolder": gridFolder, "run" : runString } )
         else:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, e, "GRID"
@@ -555,7 +543,15 @@ class SubmitConverter( SubmitBase ) :
 
         # make all the changes
         actualSteeringString = templateSteeringString
-        actualSteeringString = actualSteeringString.replace("@RunNumber@", runString )
+
+        # replace the file paths
+        #
+        # first the gear path
+        try :
+            self._gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
+        except ConfigParser.NoOptionError :
+            self._gearPath = ""
+        actualSteeringString = actualSteeringString.replace("@GearPath@", self._gearPath )
 
         # find the gear file, first check the configuration file, then the commad line options
         # and last use a default gear_telescope.xml
@@ -580,6 +576,23 @@ class SubmitConverter( SubmitBase ) :
 
         actualSteeringString = actualSteeringString.replace("@GearFile@", self._gear_file )
 
+        # now replace the native folder path
+        try:
+            nativeFolder = self._configParser.get( "LOCAL", "LocalFolderNative" )
+        except ConfigParser.NoOptionError :
+            nativeFolder = "native"
+        actualSteeringString = actualSteeringString.replace("@NativeFolder@", nativeFolder )
+
+        # now replace the lcio-raw folder path
+        try:
+            lcioRawFolder = self._configParser.get("LOCAL", "LocalFolderLcioRaw")
+        except ConfigParser.NoOptionError :
+            lcioRawFolder = "lcio-raw"
+        actualSteeringString = actualSteeringString.replace("@LcioRawFolder@" ,lcioRawFolder )
+
+        # finally replace the run string !
+        actualSteeringString = actualSteeringString.replace("@RunNumber@", runString )
+
         # open the new steering file for writing
         steeringFileName = "universal-%(run)s.xml" % { "run" : runString }
         actualSteeringFile = open( steeringFileName, "w" )
@@ -594,13 +607,13 @@ class SubmitConverter( SubmitBase ) :
         return steeringFileName
 
     ## Execute Marlin
-    def runMarlin( self ) :
+    def runMarlin( self, index, runString  ) :
 
         self._logger.info( "Running Marlin" )
 
         # first check that the gear file exists
-        if not os.path.exists( self._gear_file ) :
-            raise MissingGEARFileError(  self._gear_file  )
+        if not os.path.exists( os.path.join( self._gearPath, self._gear_file )) :
+            raise MissingGEARFileError(   os.path.join( self._gearPath, self._gear_file ) )
 
         # do some tricks for having the logfile
         logFile = open( self._logFileName, "w")
@@ -615,6 +628,8 @@ class SubmitConverter( SubmitBase ) :
         if returnValue != 0:
             raise MarlinError( "", returnValue )
         else :
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, "OK", d, e, f
             return returnValue
 
     ## Prepare the joboutput tarball
@@ -676,8 +691,12 @@ class SubmitConverter( SubmitBase ) :
         # the input file should be something like:
         # native/run123456.raw
 
-        inputFileName = "native/run%(run)s.raw" % { "run": runString }
-        if not os.access( inputFileName, os.R_OK ):
+        try :
+            inputFilePath = self._configParser.get( "LOCAL", "LocalFolderNative" )
+        except ConfigParser.NoOptionError :
+            inputFilePath = "native"
+        inputFileName = "run%(run)s.raw" % { "run": runString }
+        if not os.access( os.path.join(inputFilePath, inputFileName) , os.R_OK ):
             message = "Problem accessing the input file (%(file)s), trying next run" % {"file": inputFileName }
             self._logger.error( message )
             raise MissingInputFileError( inputFileName )
@@ -690,8 +709,13 @@ class SubmitConverter( SubmitBase ) :
     def checkOutputFile( self, index, runString ) :
         # this should be named something like
         # lcio-raw/run123456.slcio
-        outputFileName = "lcio-raw/run%(run)s.slcio" % { "run": runString }
-        if not os.access( outputFileName, os.R_OK ):
+
+        try :
+            outputFilePath = self._configParser.get( "LOCAL", "LocalFolderLcioRaw" )
+        except ConfigParser.NoOptionError :
+            outputFilePath = "lcio-raw"
+        outputFileName = "run%(run)s.slcio" % { "run": runString }
+        if not os.access( os.path.join( outputFilePath , outputFileName) , os.R_OK ):
             raise MissingOutputFileError( outputFileName )
         else :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
@@ -702,8 +726,13 @@ class SubmitConverter( SubmitBase ) :
     def checkJoboutputFile( self, index, runString) :
         # this should be named something like
         # universal-123456.tar.gz
+
+        try :
+            outputFilePath = self._configParser.get( "LOCAL", "LocalFolderConvertJoboutput" )
+        except ConfigParser.NoOptionError :
+            outputFilePath = "log"
         tarballFileName = "universal-%(run)s.tar.gz" % { "run": runString }
-        if not os.access( tarballFileName, os.R_OK ):
+        if not os.access( os.path.join( outputFilePath, tarballFileName), os.R_OK ):
             raise MissingJoboutFileError( tarballFileName )
         else:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
