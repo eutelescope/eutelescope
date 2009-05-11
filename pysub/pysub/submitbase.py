@@ -62,7 +62,7 @@
 # it working.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.4 2009-05-10 17:31:10 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.5 2009-05-11 10:06:39 bulgheroni Exp $
 
 from optparse import OptionParser
 import ConfigParser
@@ -76,7 +76,7 @@ import time
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.4 2009-05-10 17:31:10 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.5 2009-05-11 10:06:39 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -144,6 +144,17 @@ class SubmitBase :
             "time": self._timeEnd - self._timeBegin }
         self._logger.info( message )
 
+    ## Ask yes or no
+    #
+    def askYesNo( self, prompt, complaint= "Yes or no please", retries = 4 ): 
+        while True:
+            ok = raw_input( prompt )
+            ok = ok.lower()
+            if ok in ['y','yes','yea','yeap']  : return True
+            if ok in ['n','no',"nope" ] : return False
+            retries = retries - 1
+            if retries < 0 : raise IOError, "Wrong answer"
+            print complaint 
 
     ## Log summary
     # 
@@ -170,4 +181,4 @@ class SubmitBase :
                         "outputFileStatus": outputFileStatus, "histoFileStatus": histoFileStatus, "joboutputFileStatus":joboutputFileStatus }
                 self._logger.info( message )
             self._logger.info("=============================================================================" )
-            self._logger.info( "" ) 
+            self._logger.info( "" )
