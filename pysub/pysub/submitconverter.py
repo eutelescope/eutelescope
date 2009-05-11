@@ -19,7 +19,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.16 2009-05-11 12:47:51 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.17 2009-05-11 17:16:17 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -254,6 +254,10 @@ class SubmitConverter( SubmitBase ) :
                 # the current entry to the ntuple
                 self._summaryNTuple.append( entry )
 
+                # do the same also for the GRID NTuple
+                entry = i , "Unknown"
+                self._gridJobNTuple.append( entry )
+
             except ValueError:
                 message = "Invalid run number %(i)s" % { "i": i }
                 self._logger.critical( message )
@@ -297,6 +301,20 @@ class SubmitConverter( SubmitBase ) :
                 run, b, c, d, e, f = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, "Missing", "Skipped", d,e,f
 
+            except MissingFileOnGRIDError, error:
+                message = "Missing input file %(file)s on the SE" % { "file":error._filename }
+                self._logger.error( message )
+                self._logger.error( "Skipping to the next run " )
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, "Missing", c, d, "N/A", f
+
+            except FileAlreadyOnGRIDError, error:
+                message ="File %(file)s already on SE" % { "file":error._filename }
+                self._logger.error( message )
+                self._logger.error( "Skipping to the next run" )
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, b, "Skipped", "GRID",  "N/A", f
+
             except MissingSteeringTemplateError, error:
                 message = "Steering template %(file)s unavailble. Quitting!" % { "file": error._filename }
                 self._logger.critical( message )
@@ -311,6 +329,13 @@ class SubmitConverter( SubmitBase ) :
                 message = "Error with Marlin execution (%(msg)s - errno = %(errno)s )" % { "msg": error._message, "errno": error._errno }
                 self._logger.error( message )
                 self._logger.error("Skipping to the next run ")
+
+            except GRIDSubmissionError, error:
+                message = error._message
+                self._logger.error( message )
+                self._logger.error( "Skipping to the next run ")
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, b, "Failed", f, e, f
 
             except MissingOutputFileError, error:
                 message = "The output file (%(file)s) was not properly generated, possible failure" % { "file": error._filename }
@@ -328,9 +353,6 @@ class SubmitConverter( SubmitBase ) :
                 run, b, c, d, e, f = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, b, c, d, e, "Missing"
 
-    ## This is the real all-grid submitter
-    def allGridSubmission( self ) :
-        pass
 
     ## CPU Local submitter
     #
@@ -418,7 +440,250 @@ class SubmitConverter( SubmitBase ) :
     ## Execute all GRID
     #
     def executeAllGRID( self, index, runString ) :
-        pass
+
+        # firs log the voms-proxy-info
+        self._logger.info( "Logging the voms-proxy-info" )
+        info = popen2.Popen4("voms-proxy-info")
+        while info.poll() == -1:
+            line = info.fromchild.readline()
+            self._logger.info( line.strip() )
+
+        if info.poll() != 0:
+            message = "Problem with the GRID_UI"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        # also check that the proxy is still valid
+        if os.system( "voms-proxy-info -e" ) != 0:
+            message = "Expired proxy"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+        else:
+            self._logger.info( "Valid proxy found" )
+
+        # get all the needed path from the configuration file
+        try :
+            inputPathGRID     = self._configParser.get("GRID", "GRIDFolderNative")
+            outputPathGRID    = self._configParser.get("GRID", "GRIDFolderLcioRaw" )
+            joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderConvertJoboutput")
+        except ConfigParser.NoOptionError:
+            message = "Missing path from the configuration file"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        # check if the input file is on the GRID, otherwise go to next run
+        command = "lfc-ls %(inputPathGRID)s/run%(run)s.raw" % { "inputPathGRID" : inputPathGRID,  "run": runString }
+        lfc = popen2.Popen4( command )
+        while lfc.poll() == -1:
+            pass
+        if lfc.poll() == 0:
+            self._logger.info( "Input file found on the SE" )
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, "GRID", c, d, "N/A", f
+        else:
+            self._logger.error( "Input file NOT found on the SE. Trying next run" )
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, "Missing", c, d, "N/A", f
+            raise MissingFileOnGRIDError( "%(inputPathGRID)s/run%(run)s.raw" % { "inputPathGRID" : inputPathGRID,  "run": runString } )
+
+        # check if the output file already exists
+        command = "lfc-ls %(outputPathGRID)s/run%(run)s.slcio" % { "outputPathGRID": outputPathGRID, "run": runString }
+        lfc = popen2.Popen4( command )
+        while lfc.poll() == -1:
+            pass
+        if lfc.poll() == 0:
+            self._logger.warning( "Output file %(outputPathGRID)s/run%(run)s.slcio already exists" % { "outputPathGRID": outputPathGRID, "run": runString } )
+            if self._configParser.get("General","Interactive" ):
+                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s.slcio from the GRID"
+                                       % { "outputPathGRID": outputPathGRID, "run": runString } )
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s.slcio" % { "outputPathGRID": outputPathGRID, "run": runString }
+                    os.system( command )
+                else :
+                    raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s.slcio from the GRID"
+                                                  % { "outputPathGRID": outputPathGRID, "run": runString } )
+            else :
+                raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s.slcio from the GRID"
+                                              % { "outputPathGRID": outputPathGRID, "run": runString } )
+
+        # check if the job output file already exists
+        command = "lfc-ls %(outputPathGRID)s/universal-%(run)s.tar.gz" % { "outputPathGRID": joboutputPathGRID, "run": runString }
+        lfc = popen2.Popen4( command )
+        while lfc.poll() == -1:
+            pass
+        if lfc.poll() == 0:
+            self._logger.warning( "Output file %(outputPathGRID)s/universal-%(run)s.tar.gz already exists"
+                                  % { "outputPathGRID": joboutputPathGRID, "run": runString } )
+            if self._configParser.get("General","Interactive" ):
+                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/universal-%(run)s.tar.gz from the GRID"
+                                       % { "outputPathGRID": joboutputPathGRID, "run": runString } )
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/universal-%(run)s.tar.gz" % { "outputPathGRID": joboutputPathGRID, "run": runString }
+                    os.system( command )
+                else :
+                    raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/universal-%(run)s.tar.gz from the GRID"
+                                                  % { "outputPathGRID": joboutputPathGRID, "run": runString } )
+            else :
+                raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/universal-%(run)s.tar.gz from the GRID"
+                                              % { "outputPathGRID": joboutputPathGRID, "run": runString } )
+
+        # now prepare the jdl file from the template
+        # read the template file
+        message = "Generating the JDL file universal-%(run)s.jdl" % { "run": runString }
+        self._logger.info( message )
+        try :
+            jdlTemplate = self._configParser.get("GRID", "GRIDJDLTemplate" )
+        except ConfigParser.NoOptionError:
+            jdlTemplate = "grid/jdl-tmp.jdl"
+            if os.path.exists ( jdlTemplate ) :
+                message = "Using JDL template (%(file)s) " % { "file": jdlTemplate }
+                self._logger.info( message )
+            else:
+                message = "Unable to find a valid JDL template"
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+        jdlTemplateString = open( jdlTemplate, "r" ).read()
+        jdlActualString = jdlTemplateString
+
+        # modify the executable name
+        jdlActualString = jdlActualString.replace( "@Executable@", "universal-%(run)s.sh" % { "run": runString } )
+
+        # the gear file!
+        # try to read it from the config file, then from the command line option
+        try :
+            self._gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
+        except ConfigParser.NoOptionError :
+            self._gearPath = ""
+        jdlActualString = jdlActualString.replace("@GearPath@", self._gearPath )
+
+        try:
+            self._gear_file = self._configParser.get( "General", "GEARFile" )
+        except ConfigParser.NoOptionError :
+            self._logger.debug( "No GEAR file in the configuration file" )
+
+        if self._option.gear_file != None :
+            # this means that the user wants to override the configuration file
+            self._gear_file = self._option.gear_file
+            self._logger.debug( "Using command line GEAR file" )
+
+
+        if self._gear_file == "" :
+            # using default GEAR file
+            defaultGEARFile = "gear_telescope.xml"
+            self._gear_file = defaultGEARFile
+            message = "Using default GEAR file %(gear)s" %{ "gear": defaultGEARFile }
+            self._logger.warning( message )
+
+        jdlActualString = jdlActualString.replace( "@GearFile@", "%(path)s/%(gear)s" % { "path": self._gearPath, "gear": self._gear_file } )
+
+        # replace the steering file
+        jdlActualString = jdlActualString.replace( "@SteeringFile@", "universal-%(run)s.xml" % { "run" : runString } )
+
+        # replace the GRIDLib 
+        try :
+            gridLibraryTarball = self._configParser.get( "GRID", "GRIDLibraryTarball" )
+            gridLibraryTarballPath = self._configParser.get( "GRID", "GRIDLibraryTarballPath" )
+        except ConfigParser.NoOptionError :
+            message = "GRID library tarball unavailable!"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+        jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", "%(path)s/%(file)s" %
+                                                   { "path": gridLibraryTarballPath, "file":gridLibraryTarball } )
+
+        # replace the VO
+        try:
+            vo = self._configParser.get( "GRID" , "GRIDVO" )
+        except ConfigParser.NoOptionError :
+            self._logger.warning( "Unable to find the GRIDVO. Using ilc" )
+            vo = "ilc"
+        jdlActualString = jdlActualString.replace( "@GRIDVO@", vo )
+
+        # replace the ILCSoftVestion
+        try :
+            ilcsoftVersion = self._configParser.get( "GRID" , "GRIDILCSoftVersion" )
+        except ConfigParser.NoOptionError :
+            self._logger.warning( "Unable to find the GRIDILCSoftVersion. Using v01-06" )
+            ilcsoftVersion = "v01-06"
+        jdlActualString = jdlActualString.replace( "@GRIDILCSoftVersion@", ilcsoftVersion )
+
+        self._jdlFilename = "universal-%(run)s.jdl" % { "run": runString }
+        jdlActualFile = open( self._jdlFilename, "w" )
+        jdlActualFile.write( jdlActualString )
+        jdlActualFile.close()
+
+
+        # now generate the run-job!
+        message = "Generating the executable universal-%(run)s.sh" % { "run": runString }
+        self._logger.info( message )
+        try :
+            runTemplate = self._configParser.get( "SteeringTemplate", "ConverterGRIDScript" )
+        except ConfigParser.NoOptionError:
+            message = "Unable to find a valid executable template"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        runTemplateString = open( runTemplate, "r" ).read()
+        runActualString = runTemplateString
+
+        # replace the runString
+        runActualString = runActualString.replace( "@RunString@", runString )
+
+        variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
+                         "GRIDFolderBase", "GRIDFolderNative", "GRIDFolderLcioRaw",
+                         "GRIDFolderConvertJoboutput", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+        for variable in variableList:
+            try:
+                value = self._configParser.get( "GRID", variable )
+                if variable == "GRIDCE":
+                    gridCE = value
+                runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
+            except ConfigParser.NoOptionError:
+                message = "Unable to find variable %(var)s in the config file" % { "var" : variable }
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+        self._runScriptFilename = "universal-%(run)s.sh" % { "run": runString }
+        runActualFile = open( self._runScriptFilename, "w" )
+        runActualFile.write( runActualString )
+        runActualFile.close()
+
+        # change the mode of the run script to 0777
+        os.chmod(self._runScriptFilename, 0777)
+
+        # don't forget to generate the steering file!
+        self._steeringFileName = self.generateSteeringFile( runString )
+
+        # finally ready to submit! Let's do it...!
+        self._logger.info("Submitting the job to the GRID")
+        command = "glite-wms-job-submit -a -r %(GRIDCE)s -o universal-%(run)s.jid universal-%(run)s.jdl" % {
+            "run": runString , "GRIDCE":gridCE }
+        glite = popen2.Popen4( command )
+        while glite.poll() == -1:
+            message = glite.fromchild.readline().strip()
+            self._logger.log(15, message )
+
+        if glite.poll() == 0:
+            self._logger.info( "Job successfully submitted to the GRID" )
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, "Submit'd", d, "N/A", f
+        else :
+            raise GRIDSubmissionError ( "universal-%(run)s.jdl" % { "run": runString } )
+
+        # read back the the job id file
+        # this is made by two lines only the first is comment, the second
+        # is what we are interested in !
+        jidFile = open( "universal-%(run)s.jid" % { "run": runString } )
+        jidFile.readline()
+        run, b = self._gridJobNTuple[ index ]
+        self._gridJobNTuple[ index ] = run, jidFile.readline()
+        jidFile.close()
+
+        # prepare a tarball with all the ancillaries
+        self.prepareTarball( runString )
+
+        # cleaning up the system
+        self.cleanup( runString )
 
     ## Generate only submitter
     #
@@ -428,7 +693,7 @@ class SubmitConverter( SubmitBase ) :
     def executeOnlyGenerate( self, index , runString ):
 
         # just need to generate the steering file
-        self.generateSteeringFile( runString )
+        self.generateSteeringile( runString )
 
     ## Get the input run from the GRID
     def getRunFromGRID(self, index, runString ) :
@@ -621,10 +886,14 @@ class SubmitConverter( SubmitBase ) :
         # replace the file paths
         #
         # first the gear path
-        try :
-            self._gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
-        except ConfigParser.NoOptionError :
-            self._gearPath = ""
+        if self._option.execution == "all-grid" :
+            self._gearPath = "."
+        else: 
+            try :
+                self._gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
+            except ConfigParser.NoOptionError :
+                self._gearPath = ""
+
         actualSteeringString = actualSteeringString.replace("@GearPath@", self._gearPath )
 
         # find the gear file, first check the configuration file, then the commad line options
@@ -651,17 +920,23 @@ class SubmitConverter( SubmitBase ) :
         actualSteeringString = actualSteeringString.replace("@GearFile@", self._gear_file )
 
         # now replace the native folder path
-        try:
-            nativeFolder = self._configParser.get( "LOCAL", "LocalFolderNative" )
-        except ConfigParser.NoOptionError :
+        if self._option.execution == "all-grid" :
             nativeFolder = "native"
+        else :
+            try:
+                nativeFolder = self._configParser.get( "LOCAL", "LocalFolderNative" )
+            except ConfigParser.NoOptionError :
+                nativeFolder = "native"
         actualSteeringString = actualSteeringString.replace("@NativeFolder@", nativeFolder )
 
         # now replace the lcio-raw folder path
-        try:
-            lcioRawFolder = self._configParser.get("LOCAL", "LocalFolderLcioRaw")
-        except ConfigParser.NoOptionError :
+        if self._option.execution == "all-grid" :
             lcioRawFolder = "lcio-raw"
+        else:
+            try:
+                lcioRawFolder = self._configParser.get("LOCAL", "LocalFolderLcioRaw")
+            except ConfigParser.NoOptionError :
+                lcioRawFolder = "lcio-raw"
         actualSteeringString = actualSteeringString.replace("@LcioRawFolder@" ,lcioRawFolder )
 
         # finally replace the run string !
@@ -719,9 +994,9 @@ class SubmitConverter( SubmitBase ) :
         # prepare the list of files we want to copy.
         listOfFiles = []
         listOfFiles.append( os.path.join( self._gearPath, self._gear_file ) )
-        listOfFiles.append( self._steeringFileName )
-        listOfFiles.append( self._logFileName )
         listOfFiles.append( self._configFile )
+        for file in glob.glob( "universal-*" ):
+            listOfFiles.append( file )
 
         for file in listOfFiles :
             shutil.copy( file , destFolder )
@@ -749,8 +1024,9 @@ class SubmitConverter( SubmitBase ) :
         self._logger.info( "Cleaning up the local pc" )
 
         # remove the log file and the steering file
-        os.remove( self._steeringFileName )
-        os.remove( self._logFileName )
+        for file in glob.glob( "universal-*" ):
+            os.remove( file )
+
 
         # remove the input and output file
         try :

@@ -62,7 +62,7 @@
 # it working.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.5 2009-05-11 10:06:39 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.6 2009-05-11 17:16:17 bulgheroni Exp $
 
 from optparse import OptionParser
 import ConfigParser
@@ -76,7 +76,7 @@ import time
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.5 2009-05-11 10:06:39 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.6 2009-05-11 17:16:17 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -111,6 +111,9 @@ class SubmitBase :
 
         # initialize a summary ntuple
         self._summaryNTuple = [];
+
+        # initialize the grid job ntuple
+        self._gridJobNTuple = [];
 
     ## The configure method
     #
@@ -180,5 +183,18 @@ class SubmitBase :
                     % { "run": run, "inputFileStatus" : inputFileStatus, "marlinStatus":marlinStatus,  
                         "outputFileStatus": outputFileStatus, "histoFileStatus": histoFileStatus, "joboutputFileStatus":joboutputFileStatus }
                 self._logger.info( message )
+            self._logger.info("=============================================================================" )
+            self._logger.info( "" )
+
+        if len( self._gridJobNTuple ) == 0 :
+            pass
+        else :
+            self._logger.info( "" )
+            self._logger.info( "== GRID JOB ID =============================================================" )
+            for entry in self._gridJobNTuple :
+                run, jid = entry
+                message = "| %(run)6s | %(jid)40s |" % { "run" : run, "jid":jid }
+                self._logger.info( message )
+
             self._logger.info("=============================================================================" )
             self._logger.info( "" )

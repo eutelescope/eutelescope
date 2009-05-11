@@ -11,7 +11,14 @@ class MarlinError( PysubError ):
         self._message = message
         self._errno   = errno
 
+## Problem with the GRID submission
+class GRIDSubmissionError( PysubError ):
+
+    def __init__ (self, message):
+        self._message = message
+
 ## Missing generic file
+#
 class MissingFileError ( PysubError ):
     def __init__ (self, filename ):
         self._filename = filename
@@ -39,6 +46,16 @@ class MissingOutputFileError( MissingFileError ):
 ## Missing joboutput file
 #
 class MissingJoboutputFileError( MissingFileError ):
+    pass
+
+## Missing file on the GRID
+#
+class MissingFileOnGRIDError( MissingFileError ):
+    pass
+
+## File already on the GRID
+#
+class FileAlreadyOnGRIDError( MissingFileError ):
     pass
 
 ## Problem copying file from GRID
