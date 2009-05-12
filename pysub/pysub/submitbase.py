@@ -62,7 +62,7 @@
 # it working.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.6 2009-05-11 17:16:17 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.7 2009-05-12 16:46:21 bulgheroni Exp $
 
 from optparse import OptionParser
 import ConfigParser
@@ -76,7 +76,7 @@ import time
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.6 2009-05-11 17:16:17 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.7 2009-05-12 16:46:21 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -186,15 +186,4 @@ class SubmitBase :
             self._logger.info("=============================================================================" )
             self._logger.info( "" )
 
-        if len( self._gridJobNTuple ) == 0 :
-            pass
-        else :
-            self._logger.info( "" )
-            self._logger.info( "== GRID JOB ID =============================================================" )
-            for entry in self._gridJobNTuple :
-                run, jid = entry
-                message = "| %(run)6s | %(jid)40s |" % { "run" : run, "jid":jid }
-                self._logger.info( message )
 
-            self._logger.info("=============================================================================" )
-            self._logger.info( "" )
