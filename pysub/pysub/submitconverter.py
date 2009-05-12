@@ -19,7 +19,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.17 2009-05-11 17:16:17 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.18 2009-05-12 13:02:59 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -441,7 +441,10 @@ class SubmitConverter( SubmitBase ) :
     #
     def executeAllGRID( self, index, runString ) :
 
-        # firs log the voms-proxy-info
+        # do preliminary checks
+        self.doPreliminaryTest( index, runString )
+
+        # first log the voms-proxy-info
         self._logger.info( "Logging the voms-proxy-info" )
         info = popen2.Popen4("voms-proxy-info")
         while info.poll() == -1:
@@ -684,6 +687,26 @@ class SubmitConverter( SubmitBase ) :
 
         # cleaning up the system
         self.cleanup( runString )
+
+
+    ## Preliminary checks
+    #
+    # This method performs some preliminary checks
+    # before starting a full GRID submission. 
+    # In particular, it checks that the proxy exists and it is still valid,
+    # the input file is available on the GRID at the specified path and that 
+    # all the output files are not already on the Storage Element.
+    # 
+    # In case the proxy is missing or expired a StopExecutionError will be raised,
+    # while other errors will be thrown in case of non existing input files or 
+    # already existing output files.
+    #
+    # @throw StopExecutionError
+    # 
+    def doPreliminaryTest( self, index, runString ) :
+
+        pass
+
 
     ## Generate only submitter
     #
