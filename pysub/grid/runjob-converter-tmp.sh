@@ -1,10 +1,16 @@
 #!/bin/sh
-
 # A template of converter job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-converter-tmp.sh,v 1.2 2009-05-12 16:48:20 bulgheroni Exp $
+# @version $Id: runjob-converter-tmp.sh,v 1.3 2009-05-12 20:34:24 bulgheroni Exp $
 #
+# errno  0: No error.
+# errno  1: Unable to get the input file from the SE.
+# errno 20: Problem during Marlin execution.
+# errno 30: Problem copying and registering the LCIO output to the SE.
+# errno 31: Problem copying and registering the Joboutput to the SE.
+#
+
 
 #############
 # Defining a function to output a command line message
@@ -50,7 +56,17 @@ putOnGRID() {
 }
 
 
-# This is the begin!
+## Run the job
+#
+# This is the real executable. It doesn't take any argument and 
+# it return 0 in case of successful execution or the following error
+# codes in case of problems
+#
+# errno  1: Unable to get the input file from the SE
+# errno 20: Problem during Marlin execution
+# errno 30: Problem copying and registering the LCIO output to the SE
+# errno 31: Problem copying and registering the Joboutput to the SE
+
 echo "Starting universal-$RunString at `date `"
 
 # To be replaced with the runString in the format %(run)06d
@@ -134,7 +150,14 @@ doCommand "ls -al"
 # ready to run marlin
 echo "Starting Marlin `date`"
 c="Marlin $SteeringFile | tee $LogFile"
-doCommand $c
+echo $c
+$c
+r=$?
+
+if [ $r -ne 0 ] ; then
+    echo "Problem running Marlin"
+    exit 20
+fi
 
 # remove the input file
 doCommand "rm ${InputRawLocal}"
@@ -145,18 +168,18 @@ doCommand "putOnGRID ${OutputLcioLocal} ${OutputLcioLFN} ${GRIDSE}"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "Problem copying the ${OutputLcioLocal} to the GRID"
-    exit 2
+    exit 30
 fi
 
 echo "Preparing the joboutput tarball"
 doCommand "tar czvf ${OutputJoboutputLocal} *.log *.xml"
 
 echo "Copying and registering the tarball to SE"
-doCommand "putOnGRID  ${OutputJoboutputLocal} ${OutputJoboutputLNF} ${GRIDSE}"
+doCommand "putOnGRID  ${OutputJoboutputLocal} ${OutputJoboutputLFN} ${GRIDSE}"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "Problem copying the ${OutputJoboutputLocal} to the GRID"
-    exit 3
+    exit 31
 fi
 
 # Job finished
