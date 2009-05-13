@@ -20,12 +20,12 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.25 2009-05-13 16:43:28 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.26 2009-05-13 16:53:18 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
 
-    cvsVersion = "$Revision: 1.25 $"
+    cvsVersion = "$Revision: 1.26 $"
 
     ## General configure
     #
@@ -205,19 +205,26 @@ class SubmitConverter( SubmitBase ) :
                 run, b, c, d, e, f = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, "Missing", "Skipped", d,e,f
 
-            except MissingFileOnGRIDError, error:
-                message = "Missing input file %(file)s on the SE" % { "file":error._filename }
+            except MissingInputFileOnGRIDError, error:
+                message = "Missing input file %(file)s" % { "file": error._filename }
                 self._logger.error( message )
-                self._logger.error( "Skipping to the next run " )
-                run, b, c, d, e, f = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, "Missing", c, d, "N/A", f
+                self._logger.error("Skipping to the next run ")
+                run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, "Missing", "Skipped", output, histo, tarball
 
-            except FileAlreadyOnGRIDError, error:
+            except OutputFileAlreadyOnGRIDError, error:
                 message ="File %(file)s already on SE" % { "file":error._filename }
                 self._logger.error( message )
                 self._logger.error( "Skipping to the next run" )
                 run, b, c, d, e, f = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, b, "Skipped", "GRID",  "N/A", f
+
+            except JoboutputFileAlreadyOnGRIDError, error:
+                message ="File %(file)s already on SE" % { "file":error._filename }
+                self._logger.error( message )
+                self._logger.error( "Skipping to the next run" )
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, b, "Skipped", "d",  "N/A", "GRID"
 
             except MissingSteeringTemplateError, error:
                 message = "Steering template %(file)s unavailble. Quitting!" % { "file": error._filename }
@@ -432,7 +439,7 @@ class SubmitConverter( SubmitBase ) :
             self._logger.error( "Input file NOT found on the SE. Trying next run" )
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", c, d, "N/A", f
-            raise MissingFileOnGRIDError( "%(inputPathGRID)s/run%(run)s.raw" % { "inputPathGRID" : self._inputPathGRID,  "run": runString } )
+            raise MissingInputFileOnGRIDError( "%(inputPathGRID)s/run%(run)s.raw" % { "inputPathGRID" : self._inputPathGRID,  "run": runString } )
 
         # check if the output file already exists
         command = "lfc-ls %(outputPathGRID)s/run%(run)s.slcio" % { "outputPathGRID": self._outputPathGRID, "run": runString }
@@ -448,10 +455,10 @@ class SubmitConverter( SubmitBase ) :
                     command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s.slcio" % { "outputPathGRID": self._outputPathGRID, "run": runString }
                     os.system( command )
                 else :
-                    raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s.slcio on the GRID"
+                    raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s.slcio on the GRID"
                                                   % { "outputPathGRID": self._outputPathGRID, "run": runString } )
             else :
-                raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s.slcio on the GRID"
+                raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s.slcio on the GRID"
                                               % { "outputPathGRID": self._outputPathGRID, "run": runString } )
 
         # check if the job output file already exists
@@ -469,10 +476,10 @@ class SubmitConverter( SubmitBase ) :
                     command = "lcg-del -a lfn:%(outputPathGRID)s/universal-%(run)s.tar.gz" % { "outputPathGRID": self._joboutputPathGRID, "run": runString }
                     os.system( command )
                 else :
-                    raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/universal-%(run)s.tar.gz on the GRID"
+                    raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/universal-%(run)s.tar.gz on the GRID"
                                                   % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
             else :
-                raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/universal-%(run)s.tar.gz on the GRID"
+                raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/universal-%(run)s.tar.gz on the GRID"
                                               % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
 
 
