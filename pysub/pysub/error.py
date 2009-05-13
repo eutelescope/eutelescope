@@ -23,6 +23,10 @@ class MissingFileError ( PysubError ):
     def __init__ (self, filename ):
         self._filename = filename
 
+## Missing configuration file
+# 
+class MissingConfigurationFileError( MissingFileError ):
+    pass
 
 ## Missing input file
 #

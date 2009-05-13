@@ -1,8 +1,11 @@
 from optparse import OptionParser
+from error    import *
 import ConfigParser
 import logging
 import time
 import os
+import sys
+
 
 ## SubmitBase
 # This is the base class for all submitters
@@ -11,7 +14,7 @@ import os
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.8 2009-05-13 09:21:01 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.9 2009-05-13 09:35:32 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -42,7 +45,11 @@ class SubmitBase :
         self._timeBegin = time.time()
 
         # load the configuration
-        self.configure()
+        try: 
+            self.configure()
+        except MissingConfigurationFileError, error:
+            logging.critical( "Configuration file %(cfg)s doesn't exist!" % { "cfg": error._filename } )
+            sys.exit( 1 )
 
         # initialize a summary ntuple
         self._summaryNTuple = [];
@@ -66,14 +73,14 @@ class SubmitBase :
             except KeyError:
                 # no way, just use the default one
                 self._configFile = "config/config.cfg"
-            else:
-                self._configFile = self._option.config_file
+        else:
+            self._configFile = self._option.config_file
+
 
         # before proceeding check if the configuration file
         # really exists!
         if not os.path.exists( self._configFile ):
-            logging.critical( "Configuration file %(cfg)s doesn't exist!" % { "cfg": self._configFile } )
-            raise MissingConfigurationFile( self._configFile )
+            raise MissingConfigurationFileError( self._configFile )
 
         # if it exists, then I can read it!!!
         self._configParser = ConfigParser.SafeConfigParser()
