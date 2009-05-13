@@ -71,10 +71,32 @@ class MissingJoboutputFileError( MissingFileError ):
 class MissingFileOnGRIDError( MissingFileError ):
     pass
 
+## Missing input file on the GRID
+#
+class MissingInputFileOnGRIDError ( MissingFileOnGRIDError ):
+    pass
+
 ## File already on the GRID
 #
 class FileAlreadyOnGRIDError( MissingFileError ):
     pass
+
+
+## Output file already on the GRID
+#
+class OutputFileAlreadyOnGRIDError( FileAlreadyOnGRIDError ):
+    pass
+
+## Histogram file already on the GRID
+#
+class HistogramFileAlreadyOnGRIDError( FileAlreadyOnGRIDError ):
+    pass
+
+## Joboutput file already on the GRID
+#
+class JoboutputFileAlreadyOnGRIDError( FileAlreadyOnGRIDError ) :
+    pass
+
 
 ## Problem copying file from GRID
 #
