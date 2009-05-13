@@ -56,6 +56,11 @@ class MissingSteeringTemplateError( MissingFileError ):
 class MissingOutputFileError( MissingFileError ):
     pass
 
+## Missing histogram file
+# 
+class MissingHistogramFileError( MissingFileError ):
+    pass
+
 ## Missing joboutput file
 #
 class MissingJoboutputFileError( MissingFileError ):
