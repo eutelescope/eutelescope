@@ -12,7 +12,7 @@ from optparse import OptionGroup
 # SubmitConverter and create an instance of this object.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-converter.py,v 1.8 2009-05-13 09:47:32 bulgheroni Exp $
+# @version $Id: submit-converter.py,v 1.9 2009-05-13 15:17:04 bulgheroni Exp $
 #
 def main() :
 
@@ -21,7 +21,7 @@ def main() :
 
 usage: %prog [execution-options] [io-options] [configuration-options] run-list
 """
-    cvsVersion = "$Revision: 1.8 $"
+    cvsVersion = "$Revision: 1.9 $"
     submitConverterCVSVersion = SubmitConverter.cvsVersion
     submitBaseCVSVersion = SubmitBase.cvsVersion
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
@@ -115,12 +115,18 @@ from the GRID SE, but the job will be executed on the local CPU
                         help="Verify that the output files copied to the GRID are equal to the local ones" +
                         "Option available on when working in cpu-local mode and requires more time" )
 
+    ioGroup.add_option( "-v", "--verbose",
+                        action="store_true",
+                        dest="verbose",
+                        help="sake the output of GRID commands verbose" )
+
 
     parser.set_defaults(force_keep_input=False)
     parser.set_defaults(force_keep_output=False)
     parser.set_defaults(force_remove_input=False)
     parser.set_defaults(force_remove_output=False)
     parser.set_defaults(verify_output=False)
+    parser.set_defaults(verbose=False)
 
     parser.add_option_group( ioGroup )
 

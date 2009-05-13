@@ -20,12 +20,12 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.23 2009-05-13 14:46:17 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.24 2009-05-13 15:17:04 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
 
-    cvsVersion = "$Revision: 1.23 $"
+    cvsVersion = "$Revision: 1.24 $"
 
     ## General configure
     #
@@ -660,8 +660,12 @@ class SubmitConverter( SubmitBase ) :
         except ConfigParser.NoOptionError :
             localPath = "$PWD/native"
 
-        command = "lcg-cp -v lfn:%(gridNativePath)s/run%(run)s.raw file:%(localPath)s/run%(run)s.raw" %  \
-            { "gridNativePath" : gridNativePath, "run": runString, "localPath": localPath }
+        baseCommand = "lcg-cp "
+        if self._option.verbose :
+            baseCommand = baseCommand + " -v "
+
+        command = "%(base)s lfn:%(gridNativePath)s/run%(run)s.raw file:%(localPath)s/run%(run)s.raw" %  \
+            { "base": baseCommand, "gridNativePath" : gridNativePath, "run": runString, "localPath": localPath }
         if os.system( command ) != 0:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", c, d, "N/A", f
@@ -689,8 +693,12 @@ class SubmitConverter( SubmitBase ) :
         except ConfigParser.NoOptionError :
             localPath = "$PWD/lcio-raw"
 
-        command = "lcg-cr -v -l lfn:%(gridFolder)s/run%(run)s.slcio file:%(localFolder)s/run%(run)s.slcio" % \
-            { "gridFolder": gridLcioRawPath, "localFolder": localPath, "run" : runString }
+        baseCommand = "lcg-cr "
+        if self._option.verbose :
+            baseCommand = baseCommand + " -v "
+
+        command = "%(base)s -l lfn:%(gridFolder)s/run%(run)s.slcio file:%(localFolder)s/run%(run)s.slcio" % \
+            { "base": baseCommand, "gridFolder": gridLcioRawPath, "localFolder": localPath, "run" : runString }
         if os.system( command ) != 0 :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, "LOCAL", "N/A", f
@@ -712,8 +720,12 @@ class SubmitConverter( SubmitBase ) :
 
                 # now copy back the remote file
                 # if so we need to copy back the file
-                command = "lcg-cp -v lfn:%(gridFolder)s/run%(run)s.slcio file:%(localFolder)s/run%(run)s-test.slcio" % \
-                          { "gridFolder": gridLcioRawPath, "localFolder": localPath, "run" : runString }
+                baseCommand = "lcg-cp "
+                if self._option.verbose :
+                    baseCommand = baseCommand + " -v "
+
+                command = "%(base)s lfn:%(gridFolder)s/run%(run)s.slcio file:%(localFolder)s/run%(run)s-test.slcio" % \
+                          { "base": baseCommand, "gridFolder": gridLcioRawPath, "localFolder": localPath, "run" : runString }
                 if os.system( command ) != 0 :
                     run, b, c, d, e, f = self._summaryNTuple[ index ]
                     self._summaryNTuple[ index ] = run, b, c, "LOCAL", "N/A", f
@@ -755,6 +767,10 @@ class SubmitConverter( SubmitBase ) :
         except ConfigParser.NoOptionError :
             localPath = "log/"
 
+        baseCommand = "lcg-cp "
+        if self._option.verbose :
+            baseCommand = baseCommand + " -v "
+
         command = "lcg-cr -v -l lfn:%(gridFolder)s/universal-%(run)s.tar.gz file:%(localFolder)s/universal-%(run)s.tar.gz" % \
             { "gridFolder": gridFolder, "localFolder": localPath, "run" : runString }
 
@@ -779,8 +795,12 @@ class SubmitConverter( SubmitBase ) :
 
                 # now copy back the remote file
                 # if so we need to copy back the file
-                command = "lcg-cp -v lfn:%(gridFolder)s/universal-%(run)s.tar.gz file:%(localFolder)s/universal-%(run)s-test.tar.gz" % \
-                          { "gridFolder": gridFolder, "localFolder": localPath, "run" : runString }
+                baseCommand = "lcg-cp "
+                if self._option.verbose :
+                    baseCommand = baseCommand + " -v "
+
+                command = "%(base)s lfn:%(gridFolder)s/universal-%(run)s.tar.gz file:%(localFolder)s/universal-%(run)s-test.tar.gz" % \
+                          { "base": base, "gridFolder": gridFolder, "localFolder": localPath, "run" : runString }
                 if os.system( command ) != 0 :
                     run, b, c, d, e, f = self._summaryNTuple[ index ]
                     self._summaryNTuple[ index ] = run, b, c, d, "N/A", "GRID - Fail!"
