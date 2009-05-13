@@ -1,3 +1,7 @@
+## @package pysub.error
+# This package contains all the errors defined and used
+# within the pysub @package.
+
 ## Base class for errors in Pysub
 #
 class PysubError( Exception ):
