@@ -12,7 +12,7 @@ from optparse import OptionGroup
 # SubmiNativeCopy and create an instance of this object
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-native-copy.py,v 1.3 2009-05-13 09:47:32 bulgheroni Exp $
+# @version $Id: submit-native-copy.py,v 1.4 2009-05-13 12:41:18 bulgheroni Exp $
 
 def main() :
 
@@ -21,7 +21,7 @@ def main() :
 
 usage: %prog [options] [configuration-options] run-list
 """
-    cvsVersion = "$Revision: 1.3 $"
+    cvsVersion = "$Revision: 1.4 $"
     submitNativeCopyCVSVersion = SubmitNativeCopy.cvsVersion
     submitBaseCVSVersion = SubmitBase.cvsVersion
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
@@ -29,8 +29,14 @@ usage: %prog [options] [configuration-options] run-list
         "\nSubmitBase class version " + submitBaseCVSVersion[10:len(submitBaseCVSVersion)-1] + \
         "\ncompiled on a " + os.name + " system"
 
-
     parser = OptionParser( version=version, usage = usage )
+
+    # adding the verbose option
+    parser.add_option( "-v", "--verbose",
+                       action="store_true",
+                       dest="verbose",
+                       help="sake the output of GRID commands verbose" )
+
 
     # adding a group will all the configuration options
     configurationGroup = OptionGroup( parser, "Configuration option",
@@ -39,7 +45,7 @@ usage: %prog [options] [configuration-options] run-list
     configurationGroup.add_option( "--config-file",
                                    action="store",
                                    dest="config_file",
-                                   help="Specify the configuration file to be used")
+                                   help="specify the configuration file to be used")
 
     parser.add_option_group( configurationGroup )
 
