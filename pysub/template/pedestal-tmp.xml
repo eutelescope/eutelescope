@@ -21,8 +21,8 @@
    </execute>
 
    <global>
-      <parameter name="LCIOInputFiles"> lcio-raw/run@RunNumber@.slcio </parameter>
-      <parameter name="GearXMLFile" value="gear_telescope.xml"/>
+      <parameter name="LCIOInputFiles"> @LcioRawPath@/run@RunNumber@.slcio </parameter>
+      <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
       <parameter name="MaxRecordNumber" value="50000001"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
@@ -34,7 +34,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="histo/run@RunNumber@-ped-histo"/>
+  <parameter name="FileName" type="string" value="@HistoPath@/run@RunNumber@-ped-histo"/>
   <!-- type of output file xml (default) or root ( only OpenScientist)-->
   <parameter name="FileType" type="string" value="root"/>
 </processor>
@@ -78,7 +78,7 @@
   <!--Noise collection name-->
   <parameter name="NoiseCollectionName" type="string" value="noiseDB"/>
   <!--The filename (w/o .slcio) to store the pedestal file-->
-  <parameter name="OutputPedeFile" type="string" value="db/run@RunNumber@-ped-db"/>
+  <parameter name="OutputPedeFile" type="string" value="@DBPath@/run@RunNumber@-ped-db"/>
   <!--Pedestal collection name-->
   <parameter name="PedestalCollectionName" type="string" value="pedestalDB"/>
   <!--Lower threshold for bad pixel identification using DEADPIXEL-->
