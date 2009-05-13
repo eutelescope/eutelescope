@@ -2,7 +2,7 @@
 # A template of converter job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-converter-tmp.sh,v 1.3 2009-05-12 20:34:24 bulgheroni Exp $
+# @version $Id: runjob-converter-tmp.sh,v 1.4 2009-05-13 08:55:29 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -14,12 +14,14 @@
 
 #############
 # Defining a function to output a command line message
-# 
+#
 # It takes exactly one string
 doCommand() {
     echo "> $1 "
     $1
-    return $?
+    r=$?
+    echo
+    return $r
 }
 
 
@@ -32,10 +34,11 @@ doCommand() {
 # $2: the local file name
 #
 getFromGRID(){
-    echo "Copying $1 in $2 "
 
     doCommand "lcg-cp -v lfn:$1 file:$2"
-    return $?
+    r=$?
+    return $r
+
 
 }
 
@@ -49,8 +52,6 @@ getFromGRID(){
 # $3: the SE
 #
 putOnGRID() {
-    echo "Copying and registering $1 in $2 on $3"
-
     doCommand "lcg-cr -v -d $3 -l lfn:$2 file:$1"
     return $?
 }
@@ -58,7 +59,7 @@ putOnGRID() {
 
 ## Run the job
 #
-# This is the real executable. It doesn't take any argument and 
+# This is the real executable. It doesn't take any argument and
 # it return 0 in case of successful execution or the following error
 # codes in case of problems
 #
@@ -67,7 +68,6 @@ putOnGRID() {
 # errno 30: Problem copying and registering the LCIO output to the SE
 # errno 31: Problem copying and registering the Joboutput to the SE
 
-echo "Starting universal-$RunString at `date `"
 
 # To be replaced with the runString in the format %(run)06d
 RunString="@RunString@"
@@ -96,9 +96,19 @@ OutputJoboutputLocal=$PWD/log/universal-$RunString.tar.gz
 SteeringFile=universal-$RunString.xml
 LogFile=universal-$RunString.log
 
+echo
+echo "########################################################################"
+echo "# Starting universal-$RunString at `date `"
+echo "########################################################################"
+echo
 
 # prepare the directory structure as local
-echo "Preparing the directory structure..."
+echo
+echo "########################################################################"
+echo "# Preparing the directory structure..."
+echo "########################################################################"
+echo
+
 doCommand "mkdir native"
 doCommand "mkdir lcio-raw"
 doCommand "mkdir results"
@@ -108,6 +118,11 @@ doCommand "mkdir db"
 doCommand "mkdir log"
 
 # unpack the library
+echo
+echo "########################################################################"
+echo "# Uncompressing the job tarball..."
+echo "########################################################################"
+echo
 doCommand "tar xzvf $GRIDLibraryTarball"
 
 # rename the simjob.slcio because otherwise it gets delete
@@ -119,15 +134,16 @@ doCommand "$BASH ./ilc-grid-test-sys.sh || abort \"system tests failed!\" "
 doCommand ". $VO_ILC_SW_DIR/initILCSOFT.sh $GRIDILCSoftVersion"
 doCommand "$BASH ./ilc-grid-test-sw.sh"
 r=$?
-if [ $r -ne 0 ] ; then 
-    echo "ERROR: " ; cat ./ilc-grid-test-sw.log
+if [ $r -ne 0 ] ; then
+    echo "******* ERROR: " ; cat ./ilc-grid-test-sw.log
     abort "software tests failed!"
 fi
 # ILCSOFT ready
-echo " "
-echo " ILCSOFT ready to use "
-echo " ------------------------------------------"
-echo " "
+echo
+echo "########################################################################"
+echo "# ILCSOFT ready to use"
+echo "########################################################################"
+echo
 
 # now it's safe to rename the simjob to the original
 doCommand "mv simjob.slcio.keepme simjob.slcio"
@@ -148,39 +164,67 @@ fi
 doCommand "ls -al"
 
 # ready to run marlin
-echo "Starting Marlin `date`"
-c="Marlin $SteeringFile | tee $LogFile"
+echo
+echo "########################################################################"
+echo "# Starting Marlin `date`"
+echo "########################################################################"
+echo
+c="Marlin $SteeringFile"
 echo $c
 $c
 r=$?
 
 if [ $r -ne 0 ] ; then
-    echo "Problem running Marlin"
+    echo "****** Problem running Marlin"
     exit 20
 fi
+
+echo
+echo "########################################################################"
+echo "# Marlin successfully finished `date `"
+echo "########################################################################"
+echo
+
 
 # remove the input file
 doCommand "rm ${InputRawLocal}"
 
 # put back the files to the GRID
-echo "Copying and registering the output file to SE"
+echo
+echo "########################################################################"
+echo "# Copying and registering the output file to SE"
+echo "########################################################################"
+echo
 doCommand "putOnGRID ${OutputLcioLocal} ${OutputLcioLFN} ${GRIDSE}"
 r=$?
 if [ $r -ne 0 ] ; then
-    echo "Problem copying the ${OutputLcioLocal} to the GRID"
+    echo "****** Problem copying the ${OutputLcioLocal} to the GRID"
     exit 30
 fi
 
-echo "Preparing the joboutput tarball"
-doCommand "tar czvf ${OutputJoboutputLocal} *.log *.xml"
+echo
+echo "########################################################################"
+echo "# Preparing the joboutput tarball"
+echo "########################################################################"
+echo
+doCommand "tar czvf ${OutputJoboutputLocal} *.log *.xml out err"
 
-echo "Copying and registering the tarball to SE"
+echo
+echo "########################################################################"
+echo "# Copying and registering the tarball to SE"
+echo "########################################################################"
+echo
 doCommand "putOnGRID  ${OutputJoboutputLocal} ${OutputJoboutputLFN} ${GRIDSE}"
 r=$?
 if [ $r -ne 0 ] ; then
-    echo "Problem copying the ${OutputJoboutputLocal} to the GRID"
+    echo "****** Problem copying the ${OutputJoboutputLocal} to the GRID"
     exit 31
 fi
 
 # Job finished
-echo "Job finished at `date`"
+echo
+echo "########################################################################"
+echo "# Job ($RunString) finished at `date`"
+echo "########################################################################"
+echo
+
