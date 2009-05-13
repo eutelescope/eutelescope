@@ -19,12 +19,12 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.1 2009-05-13 14:47:05 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.2 2009-05-13 15:20:00 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
 
-    cvsVersion = "$Revision: 1.1 $"
+    cvsVersion = "$Revision: 1.2 $"
 
     ## General configure
     #
@@ -285,12 +285,195 @@ class SubmitPedestal( SubmitBase ):
         # clean up the local pc
         self.cleanup( runString )
 
+    ## CPU Local submitter
+    #
+    # This methods represents the sequence of commands that should be done while
+    # submitting jobs on the local computer but using remote data
+    #
+    def executeCPULocal( self, index , runString ):
+
+        # get the input file from the GRID
+        self.getRunFromGRID( index, runString )
+
+        # double check the presence of the input file
+        self.checkInputFile( index, runString )
+
+        #  generate the steering file
+        self._steeringFileName = self.generateSteeringFile( runString )
+
+        # prepare a separate file for logging the output of Marlin
+        self._logFileName = "pedestal-%(run)s.log" % { "run" : runString }
+
+        # run marlin
+        self.runMarlin( index, runString )
+
+        # advice the user that Marlin is over
+        self._logger.info( "Marlin finished successfully")
+
+        # verify the presence of the output files
+        self.checkOutputFile( index, runString )
+
+        # prepare a tarbal for the records
+        self.prepareTarball( runString )
+
+        try :
+            # copy the DB file to the GRID
+            self.putDBOnGRID( index, runString )
+
+            # copy the histogram file to the GRID
+            self.putHistogramOnGRID( index, runString )
+
+            # copy the joboutput to the GRID
+            self.putJoboutputOnGRID( index, runString )
+
+            # clean up the local pc
+            self.cleanup( runString )
+
+        except GRID_LCG_CRError, error:
+            message = "The file (%(file)s) couldn't be copied on the GRID"  % { "file": error._filename }
+            self._logger.error( message )
+
+    ## Get the input run from the GRID
+    def getRunFromGRID(self, index, runString ) :
+
+        self._logger.info(  "Getting the input file from the GRID" )
+
+        try :
+            lcioRawPath = self._configParser.get( "GRID", "GRIDFolderLcioRaw" )
+        except ConfigParser.NoOptionError :
+            message = "GRIDFolderNative missing in the configuration file. Quitting."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderLcioRaw" )
+        except ConfigParser.NoOptionError :
+            localPath = "$PWD/lcio-raw"
+
+        baseCommand = "lcg-cp "
+        if self._option.verbose :
+            baseCommand = baseCommand + " -v "
+
+        command = "%(base)s lfn:%(gridPath)s/run%(run)s.slcio file:%(localPath)s/run%(run)s.slcio" %  \
+            { "base": baseCommand, "gridPath" : lcioRawPath, "run": runString, "localPath": localPath }
+        if os.system( command ) != 0:
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
+            raise GRID_LCG_CPError( "lfn:%(gridPath)s/run%(run)s.slcio" % \
+                                        { "gridPath" : lcioRawPath, "run": runString } )
+        else:
+            self._logger.info("Input file successfully copied from the GRID")
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, "OK", c, d, "N/A", f
+
+
+    ## Put the output run to the GRID
+    def putRunOnGRID( self, index, runString ):
+
+        self._logger.info(  "Putting the LCIO file to the GRID" )
+
+        try :
+            gridPath = self._configParser.get( "GRID", "GRIDFolderDB")
+        except ConfigParser.NoOptionError :
+            message = "GRIDFolderDB missing in the configuration file. Quitting."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderDB" )
+        except ConfigParser.NoOptionError :
+            localPath = "$PWD/db"
+
+        baseCommand = "lcg-cr "
+        if self._option.verbose :
+            baseCommand = baseCommand + " -v "
+
+        command = "%(base)s -l lfn:%(gridFolder)s/run%(run)s-ped-db.slcio file:%(localFolder)s/run%(run)s-ped-db.slcio" % \
+            { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : runString }
+        if os.system( command ) != 0 :
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, c, "LOCAL", e, f
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s-ped-db.slcio" % \
+                                        { "gridFolder": gridPath, "run" : runString } )
+        else:
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, c, "GRID", e, f
+            self._logger.info( "Output file successfully copied to the GRID" )
+
+    ## Put the histograms file to the GRID
+    def putHistogramOnGRID( self, index, runString ):
+
+        self._logger.info( "Putting the histogram file to the GRID" )
+
+        try:
+            gridPath = self._configParser.get( "GRID", "GRIDFolderPedestalHisto")
+        except ConfigParser.NoOptionError :
+            message = "GRIDFolderPedestalHisto missing in the configuration file. Quitting."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderPedestalHisto" )
+        except ConfigParser.NoOptionError :
+            localPath = "$PWD/histo"
+
+        baseCommand = "lcg-cr "
+        if self._option.verbose :
+            baseCommand = baseCommand + " -v "
+
+        command = "%(base)s -l lfn:%(gridFolder)s/run%(run)s-ped-histo.root file:%(localFolder)s/run%(run)s-ped-histo.root" % \
+            { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : runString }
+        if os.system( command ) != 0 :
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, c, d, "LOCAL", f
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s-ped-histo.root" % \
+                                        { "gridFolder": gridPath, "run" : runString } )
+        else:
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, c, d, "GRID", f
+            self._logger.info( "Histogram file successfully copied to the GRID" )
+
+    ## Put the joboutput file to the GRID
+    def putJoboutputOnGRID( self, index, runString ):
+
+        self._logger.info( "Putting the joboutput file to the GRID" )
+
+        try:
+            gridPath = self._configParser.get( "GRID", "GRIDFolderPedestalJoboutput")
+        except ConfigParser.NoOptionError :
+            message = "GRIDFolderPedestalJoboutout missing in the configuration file. Quitting."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderPedestalJoboutput" )
+        except ConfigParser.NoOptionError :
+            localPath = "$PWD/log"
+
+
+        baseCommand = "lcg-cr "
+        if self._option.verbose :
+            baseCommand = baseCommand + " -v "
+
+        command = "%(base)s -l lfn:%(gridFolder)s/pedestal-%(run)s.tar.gz file:%(localFolder)s/pedestal-%(run)s.tar.gz" % \
+            { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : runString }
+        if os.system( command ) != 0 :
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, c, d, e, "LOCAL"
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/pedestal-%(run)s.tar.gz" % \
+                                        { "gridFolder": gridPath, "run" : runString } )
+        else:
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, c, d, e, "GRID"
+            self._logger.info( "Joboutput file successfully copied to the GRID" )
 
     ## Check the input file
     #
     def checkInputFile( self, index, runString ) :
         # the input file should be something like:
         # lcio-raw/run123456.slcio
+
+        self._logger.info( "Checking the input file" )
 
         try :
             inputFilePath = self._configParser.get( "LOCAL", "LocalFolderLcioRaw" )
