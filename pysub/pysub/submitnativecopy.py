@@ -9,6 +9,7 @@ import ConfigParser
 import logging
 import logging.handlers
 import datetime
+import time
 from submitbase import SubmitBase
 from error import *
 
@@ -22,12 +23,12 @@ from error import *
 # which are the newly added files
 #
 #
-# @version $Id: submitnativecopy.py,v 1.3 2009-05-13 11:19:17 bulgheroni Exp $
+# @version $Id: submitnativecopy.py,v 1.4 2009-05-13 12:42:48 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitNativeCopy( SubmitBase ) :
 
-    cvsVersion = "$Revision: 1.3 $"
+    cvsVersion = "$Revision: 1.4 $"
 
     ## General configure
     #
@@ -102,11 +103,11 @@ class SubmitNativeCopy( SubmitBase ) :
                     run, input, output, verification = self._summaryNTuple[ index ]
                     self._summaryNTuple[ index ] = run, input, "Already", verification
 
-                    # make the verification
-                    self.verify( index, runString )
+                else :
 
-                # do the copy
-                self.copyRunOnGRID( index, runString )
+                    # do the copy
+                    self.copyRunOnGRID( index, runString )
+
 
                 # make the verification
                 self.verify( index, runString )
@@ -207,8 +208,12 @@ class SubmitNativeCopy( SubmitBase ) :
             self._gridse = "dcache-se-desy.desy.de"
             self._logger.warning("Using the default one (%(gridse)s)." % { "gridse": self._gridse } )
 
-        command = "lcg-cr -v -d %(gridse)s -l lfn:%(gridFolder)s/run%(runString)s.raw file:%(inputFolder)s/run%(runString)s.raw" \
-            % {  "gridse": self._gridse, "gridFolder" : self._outputPathGRID,   "runString": runString, 
+        baseCommand = "lcg-cr "
+        if self._option.verbose:
+            baseCommand = baseCommand + "-v "
+
+        command = "%(base)s -d %(gridse)s -l lfn:%(gridFolder)s/run%(runString)s.raw file:%(inputFolder)s/run%(runString)s.raw" \
+            % {  "base": baseCommand, "gridse": self._gridse, "gridFolder" : self._outputPathGRID,   "runString": runString, 
                  "inputFolder" : self._inputFilePath }
         if os.system( command ) != 0:
             raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(runString)s.raw" % { "gridFolder" : self._outputPathGRID, "runString": runString } )
@@ -229,8 +234,12 @@ class SubmitNativeCopy( SubmitBase ) :
 
         # now copy back the remote file
         # if so we need to copy back the file
-        command = "lcg-cp -v lfn:%(gridFolder)s/run%(run)s.raw file:%(localFolder)s/run%(run)s-test.raw" % \
-            { "gridFolder": self._outputPathGRID, "localFolder": self._inputFilePath, "run" : runString }
+        baseCommand = "lcg-cp "
+        if self._option.verbose:
+            baseCommand = baseCommand + "-v "
+
+        command = "%(base)s lfn:%(gridFolder)s/run%(run)s.raw file:%(localFolder)s/run%(run)s-test.raw" % \
+            { "base": baseCommand, "gridFolder": self._outputPathGRID, "localFolder": self._inputFilePath, "run" : runString }
 
         if os.system( command ) != 0 :
             raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s.raw" % \
@@ -256,10 +265,14 @@ class SubmitNativeCopy( SubmitBase ) :
     def end( self ) :
 
         self._logger.info( "Finished loop on input runs" )
+
+        # print summary
         self.logSummary()
 
-        # print the summary 
-        self.logSummary()
+        self._timeEnd = time.time()
+        message = "Submission completed in %(time)d seconds" % {
+            "time": self._timeEnd - self._timeBegin }
+        self._logger.info( message )
 
 
 
@@ -273,12 +286,12 @@ class SubmitNativeCopy( SubmitBase ) :
         else:
             self._logger.info( "" ) 
             self._logger.info( "== SUBMISSION SUMMARY =======================================================" )
-            message = "| %(run)6s | %(inputFileStatus)10s | %(outputFileStatus)11s | %(verification)11s |" \
+            message = "| %(run)13s | %(inputFileStatus)17s | %(outputFileStatus)17s | %(verification)17s |" \
                 % { "run": "Run", "inputFileStatus" : "Input File",
                     "outputFileStatus": "Output File", "verification": "Verification" }
             self._logger.info( message )
             for run, input, output, verification in self._summaryNTuple :
-                message = "| %(run)6s | %(inputFileStatus)10s | %(outputFileStatus)11s | %(verification)11s |" \
+                message = "| %(run)13s | %(inputFileStatus)17s | %(outputFileStatus)17s | %(verification)17s |" \
                     % { "run": run, "inputFileStatus" : input, "outputFileStatus": output, "verification": verification }
                 self._logger.info( message )
             self._logger.info("=============================================================================" )
