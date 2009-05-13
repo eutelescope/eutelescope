@@ -22,12 +22,12 @@ from error import *
 # which are the newly added files
 #
 #
-# @version $Id: submitnativecopy.py,v 1.2 2009-05-13 09:21:01 bulgheroni Exp $
+# @version $Id: submitnativecopy.py,v 1.3 2009-05-13 11:19:17 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitNativeCopy( SubmitBase ) :
 
-    cvsVersion = "$Revision: 1.2 $"
+    cvsVersion = "$Revision: 1.3 $"
 
     ## General configure
     #
@@ -52,3 +52,234 @@ class SubmitNativeCopy( SubmitBase ) :
 
         # now log the run list
         SubmitBase.logRunList( self )
+
+    ## Execute method
+    #
+    # This is the real method, responsible for the job submission
+    # Actually this is just a sort of big switch calling the real submitter
+    # depending of the execution mode
+    #
+    def execute( self ) : 
+
+        # this is the real part 
+        # convert all the arguments into an integer number
+        self._runList = [] ;
+        for i in self._args:
+            try:
+                self._runList.append( int( i  ) )
+
+                # prepare also the entry for the summaryNTuple 
+                # this is formatted in the way
+                # runNumber, localFile, GRIDFile, Verification
+                entry = i, "Unknown",  "Unknown",  "Unknown"
+                self._summaryNTuple.append( entry )
+
+            except ValueError:
+                message = "Invalid run number %(i)s" % { "i": i }
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+        for index, run in enumerate( self._runList ) :
+
+            # prepare a string such 123456
+            runString = "%(run)06d" % { "run" : run }
+
+            message = "Now processing run %(run)s [ %(i)d / %(n)d ] " % {
+                "run" : runString, "i": index + 1, "n": len(self._runList ) }
+            self._logger.info( message )
+
+            try:
+                # check the presence of the input file
+                self.checkInputFile( index, runString )
+
+                # check if the file already exists on the GRID
+                try :
+                    self.checkAlreadyOnGRID( index, runString )
+                except  FileAlreadyOnGRIDError, error:
+                    message = "File %(file)s already on SE" % { "file":error._filename }
+                    self._logger.warning( message )
+                    self._logger.warning( "Skipping the copy and do directly the verification" )
+                    run, input, output, verification = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, input, "Already", verification
+
+                    # make the verification
+                    self.verify( index, runString )
+
+                # do the copy
+                self.copyRunOnGRID( index, runString )
+
+                # make the verification
+                self.verify( index, runString )
+
+            except MissingInputFileError, error:
+                message = "Missing input file %(file)s" % { "file": error._filename }
+                self._logger.error( message )
+                self._logger.error("Skipping to the next run ")
+                run, input, output, verification = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, "Missing", output, verification
+
+            except GRID_LCG_CRError, error:
+                message = "Unable to copy %(file)s" % { "file": error._filename }
+                self._logger.error( message )
+                self._logger.error("Skipping to the next run ")
+                run, input, output, verification = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, input, "Failed", "Failed"
+
+            except GRID_LCG_CPError, error:
+                message = "Unable to copy %(file)s" % { "file": error._filename }
+                self._logger.error( message )
+                self._logger.error("Skipping to the next run ")
+                run, input, output, verification = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, input, output, "Failed"
+
+            except VerificationError, error:
+                message = "The verification failed!"
+                self._logger.error( message )
+                self._logger.error("Skipping to the next run ")
+                run, input, output, verification = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, input, output, "Failed"
+
+    ## Check the input file
+    #
+    def checkInputFile( self, index, runString ) :
+        # the input file should be something like:
+        # native/run123456.raw
+
+        self._logger.info( "Checking if the input run exists" )
+        try :
+            self._inputFilePath = self._configParser.get( "LOCAL", "LocalFolderNative" )
+        except ConfigParser.NoOptionError :
+            self._inputFilePath = "native"
+            self._logger.warning( "Unable to find the local native folder in the configuration file" )
+            self._logger.warning( "Using default one (%(path)s)" % { "path": self._inputFilePath } )
+        inputFileName = "run%(run)s.raw" % { "run": runString }
+        if not os.access( os.path.join( self._inputFilePath, inputFileName) , os.R_OK ):
+            message = "Problem accessing the input file (%(file)s), trying next run" % {"file": inputFileName }
+            self._logger.error( message )
+            raise MissingInputFileError( inputFileName )
+        else :
+            run, input, output, verification = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, "OK", output, verification
+
+
+    ## Check if a file already is already on the GRID
+    #
+    def checkAlreadyOnGRID( self, index, runString ):
+
+        self._logger.info( "Checking if the input run is already on the GRID" )
+        try :
+            self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderNative" )
+        except ConfigParser.NoOptionError:
+            message = "Missing path from the configuration file"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        command = "lfc-ls %(outputPathGRID)s/run%(run)s.raw" % { "outputPathGRID": self._outputPathGRID, "run": runString }
+        lfc = popen2.Popen4( command )
+        while lfc.poll() == -1:
+            pass
+        if lfc.poll() == 0:
+            self._logger.warning( "File %(outputPathGRID)s/run%(run)s.raw already on GRID"
+                                  % { "outputPathGRID": self._outputPathGRID, "run": runString } )
+
+            if self._configParser.get("General","Interactive" ):
+                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s.raw from the GRID"
+                                       % { "outputPathGRID": self._outputPathGRID, "run": runString } )
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s.raw" % { "outputPathGRID": self._outputPathGRID, "run": runString }
+                    os.system( command )
+                else :
+                    raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s.raw from the GRID"
+                                                  % { "outputPathGRID": self._outputPathGRID, "run": runString } )
+            else :
+                raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s.raw from the GRID"
+                                              % { "outputPathGRID": self._outputPathGRID, "run": runString } )
+
+    ## Copy on GRID
+    #
+    def copyRunOnGRID( self, index, runString ) :
+
+        self._logger.info( "Started copy to the GRID" )
+        try :
+            self._gridse = self._configParser.get( "GRID", "GRIDSE" )
+        except ConfigParser.NoOptionError :
+            self._logger.warning("Unable to get the GRIDSE from the configuration file.")
+            self._gridse = "dcache-se-desy.desy.de"
+            self._logger.warning("Using the default one (%(gridse)s)." % { "gridse": self._gridse } )
+
+        command = "lcg-cr -v -d %(gridse)s -l lfn:%(gridFolder)s/run%(runString)s.raw file:%(inputFolder)s/run%(runString)s.raw" \
+            % {  "gridse": self._gridse, "gridFolder" : self._outputPathGRID,   "runString": runString, 
+                 "inputFolder" : self._inputFilePath }
+        if os.system( command ) != 0:
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(runString)s.raw" % { "gridFolder" : self._outputPathGRID, "runString": runString } )
+        else :
+            run, input, output, verification = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, input, "OK", verification
+
+    ## Verify the copy
+    #
+    def verify( self, index, runString ):
+        self._logger.info( "Doing verification..." )
+
+        # calculate the sha1sum of the local copy
+        localCopy = open( "%(localFolder)s/run%(run)s.raw" % { "localFolder" : self._inputFilePath, "run": runString }, "r" ).read()
+        localCopyHash = sha.new( localCopy ).hexdigest()
+        message = "Local copy hash %(hash)s" % { "hash": localCopyHash }
+        self._logger.log( 15, message )
+
+        # now copy back the remote file
+        # if so we need to copy back the file
+        command = "lcg-cp -v lfn:%(gridFolder)s/run%(run)s.raw file:%(localFolder)s/run%(run)s-test.raw" % \
+            { "gridFolder": self._outputPathGRID, "localFolder": self._inputFilePath, "run" : runString }
+
+        if os.system( command ) != 0 :
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s.raw" % \
+                                        { "gridFolder": self._inputFilePath, "run" : runString } )
+
+        # calculate the sha1sum of the remote file 
+        remoteCopy = open( "%(localFolder)s/run%(run)s-test.raw" % { "localFolder": self._inputFilePath, "run" : runString }, "r" ).read()
+        remoteCopyHash = sha.new( remoteCopy ).hexdigest()
+        message = "Remote copy hash %(hash)s" % { "hash": remoteCopyHash }
+        self._logger.log( 15, message )
+
+        if remoteCopyHash == localCopyHash:
+            run, input, output, verification = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, input, output, "OK"
+        else :
+            raise VerificationError
+
+        # if successful remove the test file
+        os.remove( "%(localFolder)s/run%(run)s-test.raw" % { "localFolder": self._inputFilePath, "run" : runString } )
+
+    ## Final method
+    #
+    def end( self ) :
+
+        self._logger.info( "Finished loop on input runs" )
+        self.logSummary()
+
+        # print the summary 
+        self.logSummary()
+
+
+
+    ## Log the summary
+    #
+    def logSummary( self ):
+
+        if len( self._summaryNTuple) == 0 :
+            pass
+
+        else:
+            self._logger.info( "" ) 
+            self._logger.info( "== SUBMISSION SUMMARY =======================================================" )
+            message = "| %(run)6s | %(inputFileStatus)10s | %(outputFileStatus)11s | %(verification)11s |" \
+                % { "run": "Run", "inputFileStatus" : "Input File",
+                    "outputFileStatus": "Output File", "verification": "Verification" }
+            self._logger.info( message )
+            for run, input, output, verification in self._summaryNTuple :
+                message = "| %(run)6s | %(inputFileStatus)10s | %(outputFileStatus)11s | %(verification)11s |" \
+                    % { "run": run, "inputFileStatus" : input, "outputFileStatus": output, "verification": verification }
+                self._logger.info( message )
+            self._logger.info("=============================================================================" )
+            self._logger.info( "" )
