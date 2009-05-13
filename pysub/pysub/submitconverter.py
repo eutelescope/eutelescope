@@ -20,12 +20,12 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.24 2009-05-13 15:17:04 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.25 2009-05-13 16:43:28 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
 
-    cvsVersion = "$Revision: 1.24 $"
+    cvsVersion = "$Revision: 1.25 $"
 
     ## General configure
     #
@@ -267,6 +267,9 @@ class SubmitConverter( SubmitBase ) :
     #
     def executeCPULocal( self, index , runString ):
 
+        # perform preliminary checks
+        self.doPreliminaryTest( index, runString )
+
         # get the input file from the GRID
         self.getRunFromGRID( index, runString )
 
@@ -445,10 +448,10 @@ class SubmitConverter( SubmitBase ) :
                     command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s.slcio" % { "outputPathGRID": self._outputPathGRID, "run": runString }
                     os.system( command )
                 else :
-                    raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s.slcio from the GRID"
+                    raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s.slcio on the GRID"
                                                   % { "outputPathGRID": self._outputPathGRID, "run": runString } )
             else :
-                raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s.slcio from the GRID"
+                raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s.slcio on the GRID"
                                               % { "outputPathGRID": self._outputPathGRID, "run": runString } )
 
         # check if the job output file already exists
@@ -466,10 +469,10 @@ class SubmitConverter( SubmitBase ) :
                     command = "lcg-del -a lfn:%(outputPathGRID)s/universal-%(run)s.tar.gz" % { "outputPathGRID": self._joboutputPathGRID, "run": runString }
                     os.system( command )
                 else :
-                    raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/universal-%(run)s.tar.gz from the GRID"
+                    raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/universal-%(run)s.tar.gz on the GRID"
                                                   % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
             else :
-                raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/universal-%(run)s.tar.gz from the GRID"
+                raise FileAlreadyOnGRIDError( "%(outputPathGRID)s/universal-%(run)s.tar.gz on the GRID"
                                               % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
 
 
