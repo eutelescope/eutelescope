@@ -19,12 +19,12 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.2 2009-05-13 15:20:00 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.3 2009-05-13 16:46:34 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
 
-    cvsVersion = "$Revision: 1.2 $"
+    cvsVersion = "$Revision: 1.3 $"
 
     ## General configure
     #
@@ -197,6 +197,34 @@ class SubmitPedestal( SubmitBase ):
                 run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, "Missing", "Skipped", output, histo, tarball
 
+            except MissingInputFileOnGRIDError, error:
+                message = "Missing input file %(file)s" % { "file": error._filename }
+                self._logger.error( message )
+                self._logger.error("Skipping to the next run ")
+                run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, "Missing", "Skipped", output, histo, tarball
+
+            except OutputFileAlreadyOnGRIDError, error:
+                message = "Output file %(file)s already on GRID" % { "file": error._filename }
+                self._logger.error( message )
+                self._logger.error("Skipping to the next run ")
+                run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, input, "Skipped", "GRID", histo, tarball
+
+            except HistogramFileAlreadyOnGRIDError, error:
+                message = "Histogram file %(file)s already on GRID" % { "file": error._filename }
+                self._logger.error( message )
+                self._logger.error("Skipping to the next run ")
+                run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, input, "Skipped", output, "GRID", tarball
+
+            except JoboutputFileAlreadyOnGRIDError, error:
+                message = "Joboutput file %(file)s already on GRID" % { "file": error._filename }
+                self._logger.error( message )
+                self._logger.error("Skipping to the next run ")
+                run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, input, "Skipped", output, histo, "GRID"
+
             except MissingSteeringTemplateError, error:
                 message = "Steering template %(file)s unavailble. Quitting!" % { "file": error._filename }
                 self._logger.critical( message )
@@ -232,6 +260,13 @@ class SubmitPedestal( SubmitBase ):
                 self._logger.error( message )
                 run, b, c, d, e, f = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, b, c, d, e, "Missing"
+
+            except GRID_LCG_CPError, error:
+                message = "Problem copying the input file (%(file)s)" % { "file": error._filename }
+                self._logger.error( message )
+                self._logger.error( "Skipping to the next run " )
+                run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, "Missing", marlin, output, histo, tarball
 
 
 
@@ -275,7 +310,7 @@ class SubmitPedestal( SubmitBase ):
         self.checkHistogramFile( index, runString )
 
         # prepare a tarbal for the records
-        self.prepareTarball( index,  runString )
+        self.prepareTarball( runString )
 
         # check the presence of the joboutput tarball
         # this should be named something like
@@ -291,6 +326,9 @@ class SubmitPedestal( SubmitBase ):
     # submitting jobs on the local computer but using remote data
     #
     def executeCPULocal( self, index , runString ):
+
+        # do preliminary checks
+        self.doPreliminaryTest( index, runString )
 
         # get the input file from the GRID
         self.getRunFromGRID( index, runString )
@@ -364,13 +402,13 @@ class SubmitPedestal( SubmitBase ):
         else:
             self._logger.info("Input file successfully copied from the GRID")
             run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, "OK", c, d, "N/A", f
+            self._summaryNTuple[ index ] = run, "OK", c, d, e, f
 
 
-    ## Put the output run to the GRID
-    def putRunOnGRID( self, index, runString ):
+    ## Put the DB to the GRID
+    def putDBOnGRID( self, index, runString ):
 
-        self._logger.info(  "Putting the LCIO file to the GRID" )
+        self._logger.info(  "Putting the DB file to the GRID" )
 
         try :
             gridPath = self._configParser.get( "GRID", "GRIDFolderDB")
@@ -398,7 +436,7 @@ class SubmitPedestal( SubmitBase ):
         else:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, "GRID", e, f
-            self._logger.info( "Output file successfully copied to the GRID" )
+            self._logger.info( "DB file successfully copied to the GRID" )
 
     ## Put the histograms file to the GRID
     def putHistogramOnGRID( self, index, runString ):
@@ -661,7 +699,7 @@ class SubmitPedestal( SubmitBase ):
             self._summaryNTuple[ index ] = run, b, c, d, "OK", f
 
     ## Prepare the joboutput tarball
-    def prepareTarball( self, index, runString ) :
+    def prepareTarball( self, runString ) :
         self._logger.info("Preparing the joboutput tarball" )
 
         # first prepare a folder to store them temporary
@@ -796,3 +834,131 @@ class SubmitPedestal( SubmitBase ):
 
         self._logger.info("=============================================================================" )
         self._logger.info( "" )
+
+
+## Preliminary checks
+    #
+    # This method performs some preliminary checks
+    # before starting a full GRID or a CPU local submission
+    # In particular, it checks that the proxy exists and it is still valid,
+    # the input file is available on the GRID at the specified path and that
+    # all the output files are not already on the Storage Element.
+    #
+    # In case the proxy is missing or expired a StopExecutionError will be raised,
+    # while other errors will be thrown in case of non existing input files or
+    # already existing output files.
+    #
+    # @throw StopExecutionError
+    # @throw MissingFileOnGRIDError
+    # @throw FileAlreadyOnGRIDError
+    #
+    def doPreliminaryTest( self, index, runString ) :
+        # first log the voms-proxy-info
+        self._logger.info( "Logging the voms-proxy-info" )
+        info = popen2.Popen4("voms-proxy-info -all")
+        while info.poll() == -1:
+            line = info.fromchild.readline()
+            self._logger.info( line.strip() )
+
+        if info.poll() != 0:
+            message = "Problem with the GRID_UI"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        # also check that the proxy is still valid
+        if os.system( "voms-proxy-info -e" ) != 0:
+            message = "Expired proxy"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+        else:
+            self._logger.info( "Valid proxy found" )
+
+        # get all the needed path from the configuration file
+        try :
+            self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderLcioRaw")
+            self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderDB" )
+            self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderPedestalJoboutput")
+            self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderPedestalHisto")
+        except ConfigParser.NoOptionError:
+            message = "Missing path from the configuration file"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        # check if the input file is on the GRID, otherwise go to next run
+        command = "lfc-ls %(inputPathGRID)s/run%(run)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  "run": runString }
+        lfc = popen2.Popen4( command )
+        while lfc.poll() == -1:
+            pass
+        if lfc.poll() == 0:
+            self._logger.info( "Input file found on the SE" )
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, "GRID", c, d, e, f
+        else:
+            self._logger.error( "Input file NOT found on the SE. Trying next run" )
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
+            raise MissingFileOnGRIDError( "%(inputPathGRID)s/run%(run)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  "run": runString } )
+
+        # check if the output file already exists
+        command = "lfc-ls %(outputPathGRID)s/run%(run)s-ped-db.slcio" % { "outputPathGRID": self._outputPathGRID, "run": runString }
+        lfc = popen2.Popen4( command )
+        while lfc.poll() == -1:
+            pass
+        if lfc.poll() == 0:
+            self._logger.warning( "Output file %(outputPathGRID)s/run%(run)s-ped-db.slcio already exists"
+                                  % { "outputPathGRID": self._outputPathGRID, "run": runString } )
+            if self._configParser.get("General","Interactive" ):
+                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-ped-db.slcio from the GRID"
+                                       % { "outputPathGRID": self._outputPathGRID, "run": runString } )
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-ped-db.slcio" % { "outputPathGRID": self._outputPathGRID, "run": runString }
+                    os.system( command )
+                else :
+                    raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-ped-db.slcio on the GRID"
+                                                  % { "outputPathGRID": self._outputPathGRID, "run": runString } )
+            else :
+                raise OutputAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-ped-db.slcio on the GRID"
+                                              % { "outputPathGRID": self._outputPathGRID, "run": runString } )
+
+        # check if the job output file already exists
+        command = "lfc-ls %(outputPathGRID)s/pedestal-%(run)s.tar.gz" % { "outputPathGRID": self._joboutputPathGRID, "run": runString }
+        lfc = popen2.Popen4( command )
+        while lfc.poll() == -1:
+            pass
+        if lfc.poll() == 0:
+            self._logger.warning( "Joboutput file %(outputPathGRID)s/pedestal-%(run)s.tar.gz already exists"
+                                  % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+            if self._configParser.get("General","Interactive" ):
+                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/pedestal-%(run)s.tar.gz from the GRID"
+                                       % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/pedestal-%(run)s.tar.gz" % { "outputPathGRID": self._joboutputPathGRID, "run": runString }
+                    os.system( command )
+                else :
+                    raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/pedestal-%(run)s.tar.gz on the GRID"
+                                                  % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+            else :
+                raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/pedestal-%(run)s.tar.gz on the GRID"
+                                              % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+
+
+        # check if the histogram file already exists
+        command = "lfc-ls %(outputPathGRID)s/run%(run)s-ped-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
+        lfc = popen2.Popen4( command )
+        while lfc.poll() == -1:
+            pass
+        if lfc.poll() == 0:
+            self._logger.warning( "Histogram file %(outputPathGRID)s/run%(run)s-ped-histo.root already exists"
+                                  % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
+            if self._configParser.get("General","Interactive" ):
+                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-ped-histo.root from the GRID"
+                                       % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-ped-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
+                    os.system( command )
+                else :
+                    raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-ped-histo.root on the GRID"
+                                                  % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
+            else :
+                raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-ped-histo.root on the GRID"
+                                              % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
