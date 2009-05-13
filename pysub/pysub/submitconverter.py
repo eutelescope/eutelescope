@@ -20,12 +20,12 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.22 2009-05-13 11:18:31 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.23 2009-05-13 14:46:17 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
 
-    cvsVersion = "$Revision: 1.22 $"
+    cvsVersion = "$Revision: 1.23 $"
 
     ## General configure
     #
@@ -233,6 +233,8 @@ class SubmitConverter( SubmitBase ) :
                 message = "Error with Marlin execution (%(msg)s - errno = %(errno)s )" % { "msg": error._message, "errno": error._errno }
                 self._logger.error( message )
                 self._logger.error("Skipping to the next run ")
+                run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, input, "Failed", "Missing", "Missing", "Missing"
 
             except GRIDSubmissionError, error:
                 message = error._message
@@ -639,7 +641,7 @@ class SubmitConverter( SubmitBase ) :
     def executeOnlyGenerate( self, index , runString ):
 
         # just need to generate the steering file
-        self.generateSteeringile( runString )
+        self.generateSteeringFile( runString )
 
     ## Get the input run from the GRID
     def getRunFromGRID(self, index, runString ) :
@@ -1035,7 +1037,7 @@ class SubmitConverter( SubmitBase ) :
     #
     def checkJoboutputFile( self, index, runString) :
         # this should be named something like
-        # universal-123456.tar.gz
+        # log/universal-123456.tar.gz
 
         try :
             outputFilePath = self._configParser.get( "LOCAL", "LocalFolderConvertJoboutput" )
