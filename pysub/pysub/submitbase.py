@@ -14,9 +14,11 @@ import sys
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.9 2009-05-13 09:35:32 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.10 2009-05-13 09:39:58 bulgheroni Exp $
 #
 class SubmitBase :
+
+    cvsVersion = "$Revision: 1.10 $"
 
     ## The base class constructor
     #
