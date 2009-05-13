@@ -20,12 +20,12 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.21 2009-05-13 09:21:01 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.22 2009-05-13 11:18:31 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
 
-    cvsVersion = "$Revision: 1.21 $"
+    cvsVersion = "$Revision: 1.22 $"
 
     ## General configure
     #
@@ -166,8 +166,7 @@ class SubmitConverter( SubmitBase ) :
             except ValueError:
                 message = "Invalid run number %(i)s" % { "i": i }
                 self._logger.critical( message )
-                sys.exit( 1 )
-
+                raise StopExecutionError( message )
 
         for index, run in enumerate( self._runList ) :
             # prepare a string such 123456
@@ -415,7 +414,7 @@ class SubmitConverter( SubmitBase ) :
             self._logger.critical( message )
             raise StopExecutionError( message )
 
-                # check if the input file is on the GRID, otherwise go to next run
+        # check if the input file is on the GRID, otherwise go to next run
         command = "lfc-ls %(inputPathGRID)s/run%(run)s.raw" % { "inputPathGRID" : self._inputPathGRID,  "run": runString }
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
@@ -733,7 +732,7 @@ class SubmitConverter( SubmitBase ) :
                     self._summaryNTuple[ index ] = run, b, c, "GRID - Fail!", "N/A", f
                     self._logger.error( "Problem with the verification!" )
 
-                # anyway remove the test file
+                # if successful remove the test file
                 os.remove( "%(localFolder)s/run%(run)s-test.slcio" % { "localFolder": localPath, "run" : runString } )
 
 
