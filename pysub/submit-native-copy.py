@@ -1,17 +1,18 @@
 #! /usr/bin/env python
 import os
 from pysub import SubmitNativeCopy
+from pysub import SubmitBase
 from pysub import StopExecutionError
 from optparse import OptionParser
 from optparse import OptionGroup
 
 ## The native copy submitter script.
-# 
-# This script is simply defining all the input options for the 
+#
+# This script is simply defining all the input options for the
 # SubmiNativeCopy and create an instance of this object
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-native-copy.py,v 1.2 2009-05-13 09:22:00 bulgheroni Exp $
+# @version $Id: submit-native-copy.py,v 1.3 2009-05-13 09:47:32 bulgheroni Exp $
 
 def main() :
 
@@ -20,10 +21,12 @@ def main() :
 
 usage: %prog [options] [configuration-options] run-list
 """
-    cvsVersion = "$Revision: 1.2 $"
-    classCVSVersion = SubmitNativeCopy.cvsVersion
+    cvsVersion = "$Revision: 1.3 $"
+    submitNativeCopyCVSVersion = SubmitNativeCopy.cvsVersion
+    submitBaseCVSVersion = SubmitBase.cvsVersion
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
-        "\nclass version " + classCVSVersion[10:len(classCVSVersion)-1] + \
+        "\nSubmitNativeCopy version " + submitNativeCopyCVSVersion[10:len(submitNativeCopyCVSVersion)-1] + \
+        "\nSubmitBase class version " + submitBaseCVSVersion[10:len(submitBaseCVSVersion)-1] + \
         "\ncompiled on a " + os.name + " system"
 
 
@@ -42,7 +45,7 @@ usage: %prog [options] [configuration-options] run-list
 
     submitNativeCopy = SubmitNativeCopy( parser )
 
-    try : 
+    try :
         submitNativeCopy.execute()
 
     except StopExecutionError, error:

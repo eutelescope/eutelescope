@@ -1,6 +1,7 @@
 #! /usr/bin/env python
 import os
 from pysub import SubmitConverter
+from pysub import SubmitBase
 from pysub import StopExecutionError
 from optparse import OptionParser
 from optparse import OptionGroup
@@ -11,7 +12,7 @@ from optparse import OptionGroup
 # SubmitConverter and create an instance of this object.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-converter.py,v 1.7 2009-05-13 09:21:35 bulgheroni Exp $
+# @version $Id: submit-converter.py,v 1.8 2009-05-13 09:47:32 bulgheroni Exp $
 #
 def main() :
 
@@ -20,10 +21,12 @@ def main() :
 
 usage: %prog [execution-options] [io-options] [configuration-options] run-list
 """
-    cvsVersion = "$Revision: 1.7 $"
-    classCVSVersion = SubmitConverter.cvsVersion
+    cvsVersion = "$Revision: 1.8 $"
+    submitConverterCVSVersion = SubmitConverter.cvsVersion
+    submitBaseCVSVersion = SubmitBase.cvsVersion
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
-        "\nclass version " + classCVSVersion[10:len(classCVSVersion)-1] + \
+        "\nSubmitConverter class version " + submitConverterCVSVersion[10:len(submitConverterCVSVersion)-1] + \
+        "\nSubmitBase class version " + submitBaseCVSVersion[10:len(submitBaseCVSVersion)-1] + \
         "\ncompiled on a " + os.name + " system"
 
 
