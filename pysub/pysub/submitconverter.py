@@ -20,11 +20,12 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.19 2009-05-12 16:50:08 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.20 2009-05-13 08:25:41 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
 
+    cvsVersion = "$Revision: 1.20 $"
 
     ## General configure
     #
