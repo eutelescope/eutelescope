@@ -17,6 +17,11 @@ class GRIDSubmissionError( PysubError ):
     def __init__ (self, message):
         self._message = message
 
+## Problem with file verification
+class VerificationError( PysubError ):
+    pass
+
+
 ## Missing generic file
 #
 class MissingFileError ( PysubError ):
