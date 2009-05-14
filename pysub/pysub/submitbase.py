@@ -15,7 +15,7 @@ import popen2
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.13 2009-05-14 14:27:46 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.14 2009-05-14 15:09:20 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -24,7 +24,7 @@ class SubmitBase :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.13 $"
+    cvsVersion = "$Revision: 1.14 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -262,11 +262,8 @@ class SubmitBase :
         except ConfigParser.NoOptionError :
             interactive = True
 
-        command = "lfc-ls %(folder)s" % { "folder": folder }
-        lfc = popen2.Popen4( command )
-        while lfc.poll() == -1:
-            pass
-        if lfc.poll() == 0 :
+        command = "lfc-ls %(folder)s > /dev/null 2>&1" % { "folder": folder }
+        if os.system( command ) == 0:
             self._logger.log(15, "Found folder %(folder)s" % { "folder": folder } )
             return True
         else :
