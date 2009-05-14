@@ -2,7 +2,7 @@
 # A template of pedestal job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-pedestal-tmp.sh,v 1.1 2009-05-14 10:11:52 bulgheroni Exp $
+# @version $Id: runjob-pedestal-tmp.sh,v 1.2 2009-05-14 15:18:48 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -73,6 +73,11 @@ putOnGRID() {
 # To be replaced with the runString in the format %(run)06d
 RunString="@RunString@"
 
+# To be replace with the job name used for the identification of 
+# all files. It should be something like converter
+Name="@Name@"
+
+
 # Define here all the variables modified by the submitter
 GRIDCE="@GRIDCE@"
 GRIDSE="@GRIDSE@"
@@ -88,20 +93,20 @@ GRIDLibraryTarball="@GRIDLibraryTarball@"
 GRIDILCSoftVersion="@GRIDILCSoftVersion@"
 
 InputLcioRawLFN=$GRIDFolderLcioRaw/run$RunString.slcio
-OutputDBLFN=$GRIDFolderDB/run$RunString-ped-db.slcio
-OutputJoboutputLFN=$GRIDFolderPedestalJoboutput/pedestal-$RunString.tar.gz
+$OutputDBLFN=$GRIDFolderDB/run$RunString-ped-db.slcio
+OutputJoboutputLFN=$GRIDFolderPedestalJoboutput/$Name-$RunString.tar.gz
 OutputHistoLFN=$GRIDFolderPedestalHisto/run$RunString-ped-histo.root
 
 InputLcioRawLocal=$PWD/lcio-raw/run$RunString.slcio
 OutputDBLocal=$PWD/db/run$RunString-ped-db.slcio
-OutputJoboutputLocal=$PWD/log/pedestal-$RunString.tar.gz
+OutputJoboutputLocal=$PWD/log/$Name-$RunString.tar.gz
 OutputHistoLocal=$PWD/histo/run$RunString-ped-histo.root
-SteeringFile=pedestal-$RunString.xml
-LogFile=pedestal-$RunString.log
+SteeringFile=$Name-$RunString.xml
+LogFile=$Name-$RunString.log
 
 echo
 echo "########################################################################"
-echo "# Starting pedestal-$RunString at `date `"
+echo "# Starting $Name-$RunString at `date `"
 echo "########################################################################"
 echo
 

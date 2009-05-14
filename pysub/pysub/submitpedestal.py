@@ -19,12 +19,25 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.7 2009-05-14 13:55:41 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.8 2009-05-14 15:18:48 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
 
-    cvsVersion = "$Revision: 1.7 $"
+    ## Version
+    # This number is used when printing out the version of the package.
+    #
+    # Static member.
+    #
+    cvsVersion = "$Revision: 1.8 $"
+
+    ## Name
+    # This is the namer of the class. It is used in flagging all the log entries
+    # and preparing all the file
+    #
+    # Static member.
+    #
+    name = "pedestal"
 
     ## General configure
     #
@@ -44,11 +57,11 @@ class SubmitPedestal( SubmitBase ):
         SubmitBase.configure( self )
 
         # now we can properly set the logger.
-        SubmitBase.configureLogger( self, "Pedestal" )
+        SubmitBase.configureLogger( self, self.name )
 
         # print the welcome message!
         self._logger.log( 15, "**********************************************************" )
-        self._logger.log( 15, "Started submit-pedestal" )
+        self._logger.log( 15, "Started submit-%(name)s" % { "name": self.name }  )
         self._logger.log( 15, "**********************************************************" )
 
         # now print the configuration to the log
@@ -295,7 +308,7 @@ class SubmitPedestal( SubmitBase ):
         self._steeringFileName = self.generateSteeringFile( runString )
 
         # prepare a separate file for logging the output of Marlin
-        self._logFileName = "pedestal-%(run)s.log" % { "run" : runString }
+        self._logFileName = "%(name)s-%(run)s.log" % { "name": self.name, "run" : runString }
 
         # run marlin
         self.runMarlin( index, runString)
@@ -340,7 +353,7 @@ class SubmitPedestal( SubmitBase ):
         self._steeringFileName = self.generateSteeringFile( runString )
 
         # prepare a separate file for logging the output of Marlin
-        self._logFileName = "pedestal-%(run)s.log" % { "run" : runString }
+        self._logFileName = "%(name)S-%(run)s.log" % { "name": self.name,"run" : runString }
 
         # run marlin
         self.runMarlin( index, runString )
@@ -493,13 +506,13 @@ class SubmitPedestal( SubmitBase ):
         if self._option.verbose :
             baseCommand = baseCommand + " -v "
 
-        command = "%(base)s -l lfn:%(gridFolder)s/pedestal-%(run)s.tar.gz file:%(localFolder)s/pedestal-%(run)s.tar.gz" % \
-            { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : runString }
+        command = "%(base)s -l lfn:%(gridFolder)s/%(name)s-%(run)s.tar.gz file:%(localFolder)s/%(name)s-%(run)s.tar.gz" % \
+            { "name": self.name, "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : runString }
         if os.system( command ) != 0 :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, e, "LOCAL"
-            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/pedestal-%(run)s.tar.gz" % \
-                                        { "gridFolder": gridPath, "run" : runString } )
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(name)s-%(run)s.tar.gz" % \
+                                        { "name": self.name, "gridFolder": gridPath, "run" : runString } )
         else:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, e, "GRID"
@@ -529,14 +542,14 @@ class SubmitPedestal( SubmitBase ):
 
     ## Generate the steering file
     def generateSteeringFile( self, runString  ) :
-        message = "Generating the steering file (pedestal-%(run)s.xml) " % { "run" : runString }
+        message = "Generating the steering file (%(name)s-%(run)s.xml) " % { "name": self.name, "run" : runString }
         self._logger.info( message )
 
         steeringFileTemplate =  ""
         try:
             steeringFileTemplate = self._configParser.get( "SteeringTemplate", "PedestalSteeringFile" )
         except ConfigParser.NoOptionError :
-            steeringFileTemplate = "template/pedestal-tmp.xml"
+            steeringFileTemplate = "template/%(name)s-tmp.xml" % { "name": self.name }
 
         message = "Using %(file)s as steering template" %{ "file": steeringFileTemplate }
         self._logger.debug( message )
@@ -624,7 +637,7 @@ class SubmitPedestal( SubmitBase ):
         actualSteeringString = actualSteeringString.replace("@RunNumber@", runString )
 
         # open the new steering file for writing
-        steeringFileName = "pedestal-%(run)s.xml" % { "run" : runString }
+        steeringFileName = "%(name)s-%(run)s.xml" % { "name": self.name, "run" : runString }
         actualSteeringFile = open( steeringFileName, "w" )
 
         # write the new steering file
@@ -703,7 +716,7 @@ class SubmitPedestal( SubmitBase ):
         self._logger.info("Preparing the joboutput tarball" )
 
         # first prepare a folder to store them temporary
-        destFolder = "pedestal-%(run)s" %{ "run": runString}
+        destFolder = "%(name)s-%(run)s" %{ "name": self.name, "run": runString }
         shutil.rmtree( destFolder, True )
         os.mkdir( destFolder )
 
@@ -715,7 +728,7 @@ class SubmitPedestal( SubmitBase ):
         listOfFiles.append( self._configFile )
 
         # all files starting with pedestal-123456 in the local folder
-        for file in glob.glob( "pedestal-*.*" ):
+        for file in glob.glob( "%(name)s-*.*" % {"name": self.name } ):
             message = "Adding %(file)s to the joboutput tarball" % { "file": file }
             self._logger.debug( message )
             listOfFiles.append( file )
@@ -741,7 +754,7 @@ class SubmitPedestal( SubmitBase ):
             shutil.copy( file, destFolder )
 
         # do the tarball
-        self._tarballFileName = "pedestal-%(run)s.tar.gz" % { "run": runString }
+        self._tarballFileName = "%(name)s-%(run)s.tar.gz" % { "name": self.name, "run": runString }
         tarball = tarfile.open( self._tarballFileName, "w:gz" )
         tarball.add( destFolder )
         tarball.close()
@@ -768,7 +781,7 @@ class SubmitPedestal( SubmitBase ):
             outputFilePath = self._configParser.get( "LOCAL", "LocalFolderPedestalJoboutput" )
         except ConfigParser.NoOptionError :
             outputFilePath = "log"
-        tarballFileName = "pedestal-%(run)s.tar.gz" % { "run": runString }
+        tarballFileName = "%(name)s-%(run)s.tar.gz" % { "name": self.name, "run": runString }
         if not os.access( os.path.join( outputFilePath, tarballFileName), os.R_OK ):
             raise MissingJoboutputFileError( tarballFileName )
         else:
@@ -782,7 +795,7 @@ class SubmitPedestal( SubmitBase ):
         self._logger.info( "Cleaning up the local pc" )
 
         # remove the log file and the steering file
-        for file in glob.glob( "pedestal-*" ):
+        for file in glob.glob( "%(name)s-*" % {"name": self.name}):
             os.remove( file )
 
 
@@ -837,14 +850,15 @@ class SubmitPedestal( SubmitBase ):
 
     def prepareJIDFile( self ):
         unique = datetime.datetime.fromtimestamp( self._timeBegin ).strftime("%Y%m%d-%H%M%S")
-        self._logger.info("Preparing the JID for this submission (pedestal-%(date)s.jid)" % { "date" : unique } )
+        self._logger.info("Preparing the JID for this submission (%(name)s-%(date)s.jid)" % {
+                "name": self.name, "date" : unique } )
 
         try :
             localPath = self._configParser.get( "LOCAL", "LocalFolderPedestalJoboutput")
         except ConfigParser.NoOptionError :
             localPath = "log/"
 
-        jidFile = open( os.path.join( localPath, "pedestal-%(date)s.jid" % { "date": unique } ), "w" )
+        jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
         for run, jid in self._gridJobNTuple:
             jidFile.write( jid )
 
@@ -901,16 +915,6 @@ class SubmitPedestal( SubmitBase ):
             self._logger.critical( message )
             raise StopExecutionError( message )
 
-        # check the existence of the folders
-        try :
-            for folder in folderList:
-                self.checkGRIDFolder( folder )
-
-        except MissingGRIDFolderError, error :
-            message = "Folder %(folder)s is unavailable. Quitting" % { "folder": error._filename }
-            self._logger.critical( message )
-            raise StopExecutionError( message )
-
         # check if the input file is on the GRID, otherwise go to next run
         command = "lfc-ls %(inputPathGRID)s/run%(run)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  "run": runString }
         lfc = popen2.Popen4( command )
@@ -925,6 +929,17 @@ class SubmitPedestal( SubmitBase ):
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
             raise MissingInputFileOnGRIDError( "%(inputPathGRID)s/run%(run)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  "run": runString } )
+
+        # check the existence of the folders
+        try :
+            for folder in folderList:
+                self.checkGRIDFolder( folder )
+
+        except MissingGRIDFolderError, error :
+            message = "Folder %(folder)s is unavailable. Quitting" % { "folder": error._filename }
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
 
         # check if the output file already exists
         command = "lfc-ls %(outputPathGRID)s/run%(run)s-ped-db.slcio" % { "outputPathGRID": self._outputPathGRID, "run": runString }
@@ -948,25 +963,27 @@ class SubmitPedestal( SubmitBase ):
                                               % { "outputPathGRID": self._outputPathGRID, "run": runString } )
 
         # check if the job output file already exists
-        command = "lfc-ls %(outputPathGRID)s/pedestal-%(run)s.tar.gz" % { "outputPathGRID": self._joboutputPathGRID, "run": runString }
+        command = "lfc-ls %(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % { 
+            "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString }
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
             pass
         if lfc.poll() == 0:
-            self._logger.warning( "Joboutput file %(outputPathGRID)s/pedestal-%(run)s.tar.gz already exists"
-                                  % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+            self._logger.warning( "Joboutput file %(outputPathGRID)s/%(name)s-%(run)s.tar.gz already exists"
+                                  % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
             if self._configParser.get("General","Interactive" ):
                 if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/pedestal-%(run)s.tar.gz from the GRID"
-                                       % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/pedestal-%(run)s.tar.gz" % { "outputPathGRID": self._joboutputPathGRID, "run": runString }
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/%(name)s-%(run)s.tar.gz from the GRID"
+                                       % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % { 
+                        "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString }
                     os.system( command )
                 else :
-                    raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/pedestal-%(run)s.tar.gz on the GRID"
-                                                  % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+                    raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz on the GRID"
+                                                  % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
             else :
-                raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/pedestal-%(run)s.tar.gz on the GRID"
-                                              % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+                raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz on the GRID"
+                                              % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
 
 
         # check if the histogram file already exists
@@ -1020,7 +1037,7 @@ class SubmitPedestal( SubmitBase ):
     # This method is called to generate a JDL file
     #
     def generateJDLFile( self, index, runString ):
-        message = "Generating the JDL file (pedestal-%(run)s.jdl)" % { "run": runString }
+        message = "Generating the JDL file (%(name)s-%(run)s.jdl)" % { "name": self.name,"run": runString }
         self._logger.info( message )
         try :
             jdlTemplate = self._configParser.get("GRID", "GRIDJDLTemplate" )
@@ -1038,7 +1055,7 @@ class SubmitPedestal( SubmitBase ):
         jdlActualString = jdlTemplateString
 
         # modify the executable name
-        jdlActualString = jdlActualString.replace( "@Executable@", "pedestal-%(run)s.sh" % { "run": runString } )
+        jdlActualString = jdlActualString.replace( "@Executable@", "%(name)s-%(run)s.sh" % { "name": self.name, "run": runString } )
 
         # the gear file!
         # try to read it from the config file, then from the command line option
@@ -1070,7 +1087,7 @@ class SubmitPedestal( SubmitBase ):
                                                    % { "path": self._gearPath, "gear": self._gear_file } )
 
         # replace the steering file
-        jdlActualString = jdlActualString.replace( "@SteeringFile@", "pedestal-%(run)s.xml" % { "run" : runString } )
+        jdlActualString = jdlActualString.replace( "@SteeringFile@", "%(name)s-%(run)s.xml" % { "name": self.name, "run" : runString } )
 
         # replace the GRIDLib
         try :
@@ -1099,7 +1116,7 @@ class SubmitPedestal( SubmitBase ):
             ilcsoftVersion = "v01-06"
         jdlActualString = jdlActualString.replace( "@GRIDILCSoftVersion@", ilcsoftVersion )
 
-        self._jdlFilename = "pedestal-%(run)s.jdl" % { "run": runString }
+        self._jdlFilename = "%(name)s-%(run)s.jdl" % { "name": self.name, "run": runString }
         jdlActualFile = open( self._jdlFilename, "w" )
         jdlActualFile.write( jdlActualString )
         jdlActualFile.close()
@@ -1110,7 +1127,7 @@ class SubmitPedestal( SubmitBase ):
     # This method is used to generate the run job script
     #
     def generateRunjobFile( self, index, runString ):
-        message = "Generating the executable (pedestal-%(run)s.sh)" % { "run": runString }
+        message = "Generating the executable (%(name)s-%(run)s.sh)" % { "name": self.name, "run": runString }
         self._logger.info( message )
         try :
             runTemplate = self._configParser.get( "SteeringTemplate", "PedestalGRIDScript" )
@@ -1124,6 +1141,9 @@ class SubmitPedestal( SubmitBase ):
 
         # replace the runString
         runActualString = runActualString.replace( "@RunString@", runString )
+
+        # replace the job name
+        runActualString = runActualString.replace( "@Name@", self.name )
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
                          "GRIDFolderBase", "GRIDFolderDB", "GRIDFolderLcioRaw", "GRIDFolderPedestalHisto",
@@ -1139,7 +1159,7 @@ class SubmitPedestal( SubmitBase ):
                 self._logger.critical( message )
                 raise StopExecutionError( message )
 
-        self._runScriptFilename = "pedestal-%(run)s.sh" % { "run": runString }
+        self._runScriptFilename = "%(name)s-%(run)s.sh" % { "name": self.name, "run": runString }
         runActualFile = open( self._runScriptFilename, "w" )
         runActualFile.write( runActualString )
         runActualFile.close()
@@ -1154,8 +1174,8 @@ class SubmitPedestal( SubmitBase ):
     #
     def submitJDL( self, index, runString ) :
         self._logger.info("Submitting the job to the GRID")
-        command = "glite-wms-job-submit -a -r %(GRIDCE)s -o pedestal-%(run)s.jid pedestal-%(run)s.jdl" % {
-            "run": runString , "GRIDCE":self._gridCE }
+        command = "glite-wms-job-submit -a -r %(GRIDCE)s -o %(name)s-%(run)s.jid %(name)s-%(run)s.jdl" % {
+            "name": self.name, "run": runString , "GRIDCE":self._gridCE }
         glite = popen2.Popen4( command )
         while glite.poll() == -1:
             message = glite.fromchild.readline().strip()
@@ -1166,12 +1186,12 @@ class SubmitPedestal( SubmitBase ):
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, "Submit'd", d, e, f
         else :
-            raise GRIDSubmissionError ( "pedestal-%(run)s.jdl" % { "run": runString } )
+            raise GRIDSubmissionError ( "%(name)s-%(run)s.jdl" % { "name": self.name,"run": runString } )
 
         # read back the the job id file
         # this is made by two lines only the first is comment, the second
         # is what we are interested in !
-        jidFile = open( "pedestal-%(run)s.jid" % { "run": runString } )
+        jidFile = open( "%(name)s-%(run)s.jid" % { "name": self.name, "run": runString } )
         jidFile.readline()
         run, b = self._gridJobNTuple[ index ]
         self._gridJobNTuple[ index ] = run, jidFile.readline()
