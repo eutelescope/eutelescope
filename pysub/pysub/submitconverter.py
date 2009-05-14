@@ -20,7 +20,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.28 2009-05-14 14:27:46 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.29 2009-05-14 15:11:28 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -30,7 +30,7 @@ class SubmitConverter( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.28 $"
+    cvsVersion = "$Revision: 1.29 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -440,16 +440,6 @@ class SubmitConverter( SubmitBase ) :
             self._logger.critical( message )
             raise StopExecutionError( message )
 
-        # verify that those folders really exists
-        try :
-            for folder in folderList:
-                self.checkGRIDFolder( folder )
-
-        except MissingGRIDFolderError, error :
-            message = "Folder %(folder)s is unavailable. Quitting" % { "folder": error._filename }
-            self._logger.critical( message )
-            raise StopExecutionError( message )
-
         # check if the input file is on the GRID, otherwise go to next run
         command = "lfc-ls %(inputPathGRID)s/run%(run)s.raw" % { "inputPathGRID" : self._inputPathGRID,  "run": runString }
         lfc = popen2.Popen4( command )
@@ -464,6 +454,17 @@ class SubmitConverter( SubmitBase ) :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", c, d, "N/A", f
             raise MissingInputFileOnGRIDError( "%(inputPathGRID)s/run%(run)s.raw" % { "inputPathGRID" : self._inputPathGRID,  "run": runString } )
+
+        # verify that those folders really exists
+        self._logger.info( "Checking the presence of the output folders on the GRID" )
+        try :
+            for folder in folderList:
+                self.checkGRIDFolder( folder )
+
+        except MissingGRIDFolderError, error :
+            message = "Folder %(folder)s is unavailable. Quitting" % { "folder": error._filename }
+            self._logger.critical( message )
+            raise StopExecutionError( message )
 
         # check if the output file already exists
         command = "lfc-ls %(outputPathGRID)s/run%(run)s.slcio" % { "outputPathGRID": self._outputPathGRID, "run": runString }
