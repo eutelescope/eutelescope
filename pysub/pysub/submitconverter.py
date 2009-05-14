@@ -20,12 +20,12 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.26 2009-05-13 16:53:18 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.27 2009-05-14 09:30:31 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
 
-    cvsVersion = "$Revision: 1.26 $"
+    cvsVersion = "$Revision: 1.27 $"
 
     ## General configure
     #
@@ -421,8 +421,19 @@ class SubmitConverter( SubmitBase ) :
             self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderNative")
             self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderLcioRaw" )
             self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderConvertJoboutput")
+            folderList = [self._inputPathGRID , self._outputPathGRID, self._joboutputPathGRID ]
         except ConfigParser.NoOptionError:
             message = "Missing path from the configuration file"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        # verify that those folders really exists
+        try :
+            for folder in folderList:
+                self.checkGRIDFolder( folder )
+
+        except MissingGRIDFolderError, error :
+            message = "Folder %(folder)s is unavailable. Quitting" % { "folder": error._filename }
             self._logger.critical( message )
             raise StopExecutionError( message )
 
