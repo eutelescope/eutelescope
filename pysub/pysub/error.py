@@ -66,6 +66,11 @@ class MissingHistogramFileError( MissingFileError ):
 class MissingJoboutputFileError( MissingFileError ):
     pass
 
+## Missing GRID folder
+#
+class MissingGRIDFolderError( MissingFileError ) :
+    pass
+
 ## Missing file on the GRID
 #
 class MissingFileOnGRIDError( MissingFileError ):
