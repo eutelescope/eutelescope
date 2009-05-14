@@ -2,7 +2,7 @@
 # A template of converter job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-converter-tmp.sh,v 1.5 2009-05-14 14:27:46 bulgheroni Exp $
+# @version $Id: runjob-converter-tmp.sh,v 1.6 2009-05-14 16:46:36 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -228,7 +228,7 @@ fi
 # Job finished
 echo
 echo "########################################################################"
-echo "# Job ($RunString) finished at `date`"
+echo "# Job ($Name-$RunString) finished at `date`"
 echo "########################################################################"
 echo
 
