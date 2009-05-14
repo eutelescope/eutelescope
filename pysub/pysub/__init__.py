@@ -62,11 +62,12 @@
 # it working.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: __init__.py,v 1.6 2009-05-13 14:44:59 bulgheroni Exp $
+# @version $Id: __init__.py,v 1.7 2009-05-14 18:54:02 bulgheroni Exp $
 #
 from submitbase       import SubmitBase
 from submitconverter  import SubmitConverter
 from submittest       import SubmitTest
 from submitnativecopy import SubmitNativeCopy
 from submitpedestal   import SubmitPedestal
+from submitclusearch  import SubmitCluSearch
 from error            import *

@@ -48,7 +48,12 @@ class MissingGEARFileError( MissingFileError ):
     pass
 
 ## Missing Steering template
+#
 class MissingSteeringTemplateError( MissingFileError ):
+    pass
+
+## Missing pedestal file
+class MissingPedestalFileError( MissingFileError ):
     pass
 
 ## Missing output file
@@ -79,6 +84,11 @@ class MissingFileOnGRIDError( MissingFileError ):
 ## Missing input file on the GRID
 #
 class MissingInputFileOnGRIDError ( MissingFileOnGRIDError ):
+    pass
+
+## Missing pedestal file on the GRID
+#
+class MissingPedestalFileOnGRIDError ( MissingFileOnGRIDError ) :
     pass
 
 ## File already on the GRID
