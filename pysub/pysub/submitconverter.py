@@ -20,12 +20,25 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.27 2009-05-14 09:30:31 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.28 2009-05-14 14:27:46 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
 
-    cvsVersion = "$Revision: 1.27 $"
+    ## Version
+    # This number is used when printing out the version of the package.
+    #
+    # Static member.
+    #
+    cvsVersion = "$Revision: 1.28 $"
+
+    ## Name
+    # This is the namer of the class. It is used in flagging all the log entries
+    # and preparing all the file
+    #
+    # Static member.
+    #
+    name = "converter"
 
     ## General configure
     #
@@ -45,11 +58,11 @@ class SubmitConverter( SubmitBase ) :
         SubmitBase.configure( self )
 
         # now we can properly set the logger.
-        SubmitBase.configureLogger( self, "Converter" )
+        SubmitBase.configureLogger( self, self.name )
 
         # print the welcome message!
         self._logger.log( 15, "**********************************************************" )
-        self._logger.log( 15, "Started submit-converter" )
+        self._logger.log( 15, "Started submit-%(name)s" % { "name": self.name } )
         self._logger.log( 15, "**********************************************************" )
 
         # now print the configuration to the log
@@ -287,7 +300,7 @@ class SubmitConverter( SubmitBase ) :
         self._steeringFileName = self.generateSteeringFile( runString )
 
         # prepare a separate file for logging the output of Marlin
-        self._logFileName = "universal-%(run)s.log" % { "run" : runString }
+        self._logFileName = "%(name)s-%(run)s.log" % { "name": self.name, "run" : runString }
 
         # run marlin
         self.runMarlin( index, runString )
@@ -331,7 +344,7 @@ class SubmitConverter( SubmitBase ) :
         self._steeringFileName = self.generateSteeringFile( runString )
 
         # prepare a separate file for logging the output of Marlin
-        self._logFileName = "universal-%(run)s.log" % { "run" : runString }
+        self._logFileName = "%(name)s-%(run)s.log" % { "name": self.name, "run" : runString }
 
         # run marlin
         self.runMarlin( index, runString)
@@ -347,7 +360,7 @@ class SubmitConverter( SubmitBase ) :
 
         # check the presence of the joboutput tarball
         # this should be named something like
-        # universal-123456.tar.gz
+        # converter-123456.tar.gz
         self.checkJoboutputFile( index, runString )
 
         # clean up the local pc
@@ -473,25 +486,28 @@ class SubmitConverter( SubmitBase ) :
                                               % { "outputPathGRID": self._outputPathGRID, "run": runString } )
 
         # check if the job output file already exists
-        command = "lfc-ls %(outputPathGRID)s/universal-%(run)s.tar.gz" % { "outputPathGRID": self._joboutputPathGRID, "run": runString }
+        command = "lfc-ls %(outputPathGRID)s/%(name)s-%(run)s.tar.gz" \
+            % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString }
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
             pass
         if lfc.poll() == 0:
-            self._logger.warning( "Output file %(outputPathGRID)s/universal-%(run)s.tar.gz already exists"
-                                  % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+            self._logger.warning( "Output file %(outputPathGRID)s/%(name)s-%(run)s.tar.gz already exists"
+                                  % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
             if self._configParser.get("General","Interactive" ):
                 if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/universal-%(run)s.tar.gz from the GRID"
-                                       % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/universal-%(run)s.tar.gz" % { "outputPathGRID": self._joboutputPathGRID, "run": runString }
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/%(name)s-%(run)s.tar.gz from the GRID"
+                                       % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % \
+                        { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString }
                     os.system( command )
                 else :
-                    raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/universal-%(run)s.tar.gz on the GRID"
-                                                  % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+                    raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz on the GRID"
+                                                  % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, 
+                                                      "run": runString } )
             else :
-                raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/universal-%(run)s.tar.gz on the GRID"
-                                              % { "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+                raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz on the GRID"
+                                              % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
 
 
     ## Generate JDL file
@@ -499,7 +515,7 @@ class SubmitConverter( SubmitBase ) :
     # This method is called to generate a JDL file
     #
     def generateJDLFile( self, index, runString ):
-        message = "Generating the JDL file (universal-%(run)s.jdl)" % { "run": runString }
+        message = "Generating the JDL file (%(name)s-%(run)s.jdl)" % { "name": self.name, "run": runString }
         self._logger.info( message )
         try :
             jdlTemplate = self._configParser.get("GRID", "GRIDJDLTemplate" )
@@ -517,7 +533,7 @@ class SubmitConverter( SubmitBase ) :
         jdlActualString = jdlTemplateString
 
         # modify the executable name
-        jdlActualString = jdlActualString.replace( "@Executable@", "universal-%(run)s.sh" % { "run": runString } )
+        jdlActualString = jdlActualString.replace( "@Executable@", "%(name)s-%(run)s.sh" % { "name": self.name, "run": runString } )
 
         # the gear file!
         # try to read it from the config file, then from the command line option
@@ -548,7 +564,7 @@ class SubmitConverter( SubmitBase ) :
         jdlActualString = jdlActualString.replace( "@GearFile@", "%(path)s/%(gear)s" % { "path": self._gearPath, "gear": self._gear_file } )
 
         # replace the steering file
-        jdlActualString = jdlActualString.replace( "@SteeringFile@", "universal-%(run)s.xml" % { "run" : runString } )
+        jdlActualString = jdlActualString.replace( "@SteeringFile@", "%(name)s-%(run)s.xml" % {"name": self.name, "run" : runString } )
 
         # replace the GRIDLib
         try :
@@ -577,7 +593,7 @@ class SubmitConverter( SubmitBase ) :
             ilcsoftVersion = "v01-06"
         jdlActualString = jdlActualString.replace( "@GRIDILCSoftVersion@", ilcsoftVersion )
 
-        self._jdlFilename = "universal-%(run)s.jdl" % { "run": runString }
+        self._jdlFilename = "%(name)s-%(run)s.jdl" % { "name": self.name, "run": runString }
         jdlActualFile = open( self._jdlFilename, "w" )
         jdlActualFile.write( jdlActualString )
         jdlActualFile.close()
@@ -588,7 +604,7 @@ class SubmitConverter( SubmitBase ) :
     # This method is used to generate the run job script
     #
     def generateRunjobFile( self, index, runString ):
-        message = "Generating the executable (universal-%(run)s.sh)" % { "run": runString }
+        message = "Generating the executable (%(name)s-%(run)s.sh)" % { "name": self.name, "run": runString }
         self._logger.info( message )
         try :
             runTemplate = self._configParser.get( "SteeringTemplate", "ConverterGRIDScript" )
@@ -602,6 +618,9 @@ class SubmitConverter( SubmitBase ) :
 
         # replace the runString
         runActualString = runActualString.replace( "@RunString@", runString )
+
+        # replace the job name
+        runActualString = runActualString.replace( "@Name@", self.name )
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
                          "GRIDFolderBase", "GRIDFolderNative", "GRIDFolderLcioRaw",
@@ -617,7 +636,7 @@ class SubmitConverter( SubmitBase ) :
                 self._logger.critical( message )
                 raise StopExecutionError( message )
 
-        self._runScriptFilename = "universal-%(run)s.sh" % { "run": runString }
+        self._runScriptFilename = "%(name)s-%(run)s.sh" % { "name": self.name, "run": runString }
         runActualFile = open( self._runScriptFilename, "w" )
         runActualFile.write( runActualString )
         runActualFile.close()
@@ -631,8 +650,8 @@ class SubmitConverter( SubmitBase ) :
     #
     def submitJDL( self, index, runString ) :
         self._logger.info("Submitting the job to the GRID")
-        command = "glite-wms-job-submit -a -r %(GRIDCE)s -o universal-%(run)s.jid universal-%(run)s.jdl" % {
-            "run": runString , "GRIDCE":self._gridCE }
+        command = "glite-wms-job-submit -a -r %(GRIDCE)s -o %(name)s-%(run)s.jid %(name)s-%(run)s.jdl" % {
+            "name": self.name, "run": runString , "GRIDCE":self._gridCE }
         glite = popen2.Popen4( command )
         while glite.poll() == -1:
             message = glite.fromchild.readline().strip()
@@ -643,12 +662,12 @@ class SubmitConverter( SubmitBase ) :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, "Submit'd", d, "N/A", f
         else :
-            raise GRIDSubmissionError ( "universal-%(run)s.jdl" % { "run": runString } )
+            raise GRIDSubmissionError ( "%(name)s-%(run)s.jdl" % { "name": self.name, "run": runString } )
 
         # read back the the job id file
         # this is made by two lines only the first is comment, the second
         # is what we are interested in !
-        jidFile = open( "universal-%(run)s.jid" % { "run": runString } )
+        jidFile = open( "%(name)s-%(run)s.jid" % { "name": self.name, "run": runString } )
         jidFile.readline()
         run, b = self._gridJobNTuple[ index ]
         self._gridJobNTuple[ index ] = run, jidFile.readline()
@@ -792,14 +811,14 @@ class SubmitConverter( SubmitBase ) :
         if self._option.verbose :
             baseCommand = baseCommand + " -v "
 
-        command = "lcg-cr -v -l lfn:%(gridFolder)s/universal-%(run)s.tar.gz file:%(localFolder)s/universal-%(run)s.tar.gz" % \
-            { "gridFolder": gridFolder, "localFolder": localPath, "run" : runString }
+        command = "lcg-cr -v -l lfn:%(gridFolder)s/%(name)s-%(run)s.tar.gz file:%(localFolder)s/%(name)s-%(run)s.tar.gz" % \
+            { "name": self.name, "gridFolder": gridFolder, "localFolder": localPath, "run" : runString }
 
         if os.system( command ) != 0 :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, e, "LOCAL"
-            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/universal-%(run)s.tar.gz"% \
-                                        { "gridFolder": gridFolder, "run" : runString } )
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(name)s-%(run)s.tar.gz"% \
+                                        { "name": self.name, "gridFolder": gridFolder, "run" : runString } )
         else:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, e, "GRID"
@@ -809,7 +828,8 @@ class SubmitConverter( SubmitBase ) :
             # if so, first calculate the sha of the local file
             if self._option.verify_output :
                 self._logger.info ("Verifying the joboutput file integrity on the GRID" )
-                localCopy = open( "%(localFolder)s/universal-%(run)s.tar.gz" % { "localFolder": localPath, "run" : runString }, "r" ).read()
+                localCopy = open( "%(localFolder)s/%(name)s-%(run)s.tar.gz" % { 
+                        "name": self.name, "localFolder": localPath, "run" : runString }, "r" ).read()
                 localCopyHash = sha.new( localCopy ).hexdigest()
                 message = "Local copy hash %(hash)s" % { "hash": localCopyHash }
                 self._logger.log( 15, message )
@@ -820,15 +840,16 @@ class SubmitConverter( SubmitBase ) :
                 if self._option.verbose :
                     baseCommand = baseCommand + " -v "
 
-                command = "%(base)s lfn:%(gridFolder)s/universal-%(run)s.tar.gz file:%(localFolder)s/universal-%(run)s-test.tar.gz" % \
-                          { "base": base, "gridFolder": gridFolder, "localFolder": localPath, "run" : runString }
+                command = "%(base)s lfn:%(gridFolder)s/%(name)s-%(run)s.tar.gz file:%(localFolder)s/%(name)s-%(run)s-test.tar.gz" % \
+                          {"name": self.name, "base": base, "gridFolder": gridFolder, "localFolder": localPath, "run" : runString }
                 if os.system( command ) != 0 :
                     run, b, c, d, e, f = self._summaryNTuple[ index ]
                     self._summaryNTuple[ index ] = run, b, c, d, "N/A", "GRID - Fail!"
                     raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s.slcio" % \
                                     { "gridFolder": gridLcioRawPath, "run" : runString } )
 
-                remoteCopy = open( "%(localFolder)s/universal-%(run)s-test.tar.gz" % { "localFolder": localPath, "run" : runString }, "r" ).read()
+                remoteCopy = open( "%(localFolder)s/%(name)s-%(run)s-test.tar.gz" % { 
+                        "name": self.name, "localFolder": localPath, "run" : runString }, "r" ).read()
                 remoteCopyHash = sha.new( remoteCopy ).hexdigest()
                 message = "Remote copy hash %(hash)s" % { "hash": remoteCopyHash }
                 self._logger.log( 15, message )
@@ -843,18 +864,18 @@ class SubmitConverter( SubmitBase ) :
                     self._logger.error( "Problem with the verification!" )
 
                 # anyway remove the test file
-                os.remove( "%(localFolder)s/universal-%(run)s-test.tar.gz" % { "localFolder": localPath, "run" : runString } )
+                os.remove( "%(localFolder)s/%(name)s-%(run)s-test.tar.gz" % { "name": self.name, "localFolder": localPath, "run" : runString } )
 
     ## Generate the steering file
     def generateSteeringFile( self, runString  ) :
-        message = "Generating the steering file (universal-%(run)s.xml) " % { "run" : runString }
+        message = "Generating the steering file (%(name)s-%(run)s.xml) " % { "name": self.name, "run" : runString }
         self._logger.info( message )
 
         steeringFileTemplate =  ""
         try:
             steeringFileTemplate = self._configParser.get( "SteeringTemplate", "ConverterSteeringFile" )
         except ConfigParser.NoOptionError :
-            steeringFileTemplate = "template/universal-tmp.xml"
+            steeringFileTemplate = "template/%(name)s-tmp.xml" % { "name": self.name }
 
         message = "Using %(file)s as steering template" %{ "file": steeringFileTemplate }
         self._logger.debug( message )
@@ -932,7 +953,7 @@ class SubmitConverter( SubmitBase ) :
         actualSteeringString = actualSteeringString.replace("@RunNumber@", runString )
 
         # open the new steering file for writing
-        steeringFileName = "universal-%(run)s.xml" % { "run" : runString }
+        steeringFileName = "%(name)s-%(run)s.xml" % { "name": self.name, "run" : runString }
         actualSteeringFile = open( steeringFileName, "w" )
 
         # write the new steering file
@@ -976,7 +997,7 @@ class SubmitConverter( SubmitBase ) :
         self._logger.info("Preparing the joboutput tarball" )
 
         # first prepare a folder to store them temporary
-        destFolder = "universal-%(run)s" %{ "run": runString}
+        destFolder = "%(name)s-%(run)s" %{ "name": self.name, "run": runString}
         shutil.rmtree( destFolder, True )
         os.mkdir( destFolder )
 
@@ -984,7 +1005,7 @@ class SubmitConverter( SubmitBase ) :
         listOfFiles = []
         listOfFiles.append( os.path.join( self._gearPath, self._gear_file ) )
         listOfFiles.append( self._configFile )
-        for file in glob.glob( "universal-*.*" ):
+        for file in glob.glob( "%(name)s-*.*" % {"name": self.name} ):
             message = "Adding %(file)s to the joboutput tarball" % { "file": file } 
             self._logger.debug( message )
             listOfFiles.append( file )
@@ -993,7 +1014,7 @@ class SubmitConverter( SubmitBase ) :
             shutil.copy( file , destFolder )
 
         # do the tarball
-        self._tarballFileName = "universal-%(run)s.tar.gz" % {"run": runString }
+        self._tarballFileName = "%(name)s-%(run)s.tar.gz" % {"name": self.name,"run": runString }
         tarball = tarfile.open( self._tarballFileName, "w:gz" )
         tarball.add( destFolder )
         tarball.close()
@@ -1017,7 +1038,7 @@ class SubmitConverter( SubmitBase ) :
         self._logger.info( "Cleaning up the local pc" )
 
         # remove the log file and the steering file
-        for file in glob.glob( "universal-*" ):
+        for file in glob.glob( "%(name)s-*"  % {"name": self.name}):
             os.remove( file )
 
 
@@ -1078,13 +1099,13 @@ class SubmitConverter( SubmitBase ) :
     #
     def checkJoboutputFile( self, index, runString) :
         # this should be named something like
-        # log/universal-123456.tar.gz
+        # log/converter-123456.tar.gz
 
         try :
             outputFilePath = self._configParser.get( "LOCAL", "LocalFolderConvertJoboutput" )
         except ConfigParser.NoOptionError :
             outputFilePath = "log"
-        tarballFileName = "universal-%(run)s.tar.gz" % { "run": runString }
+        tarballFileName = "%(name)s-%(run)s.tar.gz" % { "name": self.name,"run": runString }
         if not os.access( os.path.join( outputFilePath, tarballFileName), os.R_OK ):
             raise MissingJoboutputFileError( tarballFileName )
         else:
@@ -1113,14 +1134,14 @@ class SubmitConverter( SubmitBase ) :
 
     def prepareJIDFile( self ):
         unique = datetime.datetime.fromtimestamp( self._timeBegin ).strftime("%Y%m%d-%H%M%S")
-        self._logger.info("Preparing the JID for this submission (universal-%(date)s.jid)" % { "date" : unique } )
+        self._logger.info("Preparing the JID for this submission (%(name)s-%(date)s.jid)" % { "name": self.name, "date" : unique } )
 
         try :
             localPath = self._configParser.get( "LOCAL", "LocalFolderConvertJoboutput")
         except ConfigParser.NoOptionError :
             localPath = "log/"
 
-        jidFile = open( os.path.join( localPath, "universal-%(date)s.jid" % { "date": unique } ), "w" )
+        jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name,"date": unique } ), "w" )
         for run, jid in self._gridJobNTuple:
             jidFile.write( jid )
 

@@ -15,11 +15,24 @@ import popen2
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.12 2009-05-14 09:42:50 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.13 2009-05-14 14:27:46 bulgheroni Exp $
 #
 class SubmitBase :
 
-    cvsVersion = "$Revision: 1.12 $"
+    ## Version
+    # This number is used when printing out the version of the package.
+    #
+    # Static member.
+    #
+    cvsVersion = "$Revision: 1.13 $"
+
+    ## Name
+    # This is the namer of the class. It is used in flagging all the log entries
+    # and preparing all the file
+    #
+    # Static member.
+    #
+    name = "base"
 
     ## The base class constructor
     #
@@ -37,7 +50,7 @@ class SubmitBase :
         # create a logger, for the time being the logger is a simple
         # console handler, after the configuration is read, it will be
         # properly configured
-        self._logger = logging.getLogger( 'Base' )
+        self._logger = logging.getLogger( self.name )
         logging.addLevelName(15, "ALL" )
         self._logger.setLevel( logging.INFO )
         self._consoleHandler = logging.StreamHandler()

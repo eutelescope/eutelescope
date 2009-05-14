@@ -2,7 +2,7 @@
 # A template of converter job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-converter-tmp.sh,v 1.4 2009-05-13 08:55:29 bulgheroni Exp $
+# @version $Id: runjob-converter-tmp.sh,v 1.5 2009-05-14 14:27:46 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -72,6 +72,10 @@ putOnGRID() {
 # To be replaced with the runString in the format %(run)06d
 RunString="@RunString@"
 
+# To be replace with the job name used for the identification of 
+# all files. It should be something like converter
+Name="@Name@"
+
 # Define here all the variables modified by the submitter
 GRIDCE="@GRIDCE@"
 GRIDSE="@GRIDSE@"
@@ -87,18 +91,18 @@ GRIDILCSoftVersion="@GRIDILCSoftVersion@"
 
 InputRawLFN=$GRIDFolderNative/run$RunString.raw
 OutputLcioLFN=$GRIDFolderLcioRaw/run$RunString.slcio
-OutputJoboutputLFN=$GRIDFolderConvertJoboutput/universal-$RunString.tar.gz
+OutputJoboutputLFN=$GRIDFolderConvertJoboutput/$Name-$RunString.tar.gz
 
 
 InputRawLocal=$PWD/native/run$RunString.raw
 OutputLcioLocal=$PWD/lcio-raw/run$RunString.slcio
-OutputJoboutputLocal=$PWD/log/universal-$RunString.tar.gz
-SteeringFile=universal-$RunString.xml
-LogFile=universal-$RunString.log
+OutputJoboutputLocal=$PWD/log/$Name-$RunString.tar.gz
+SteeringFile=$Name-$RunString.xml
+LogFile=$Name-$RunString.log
 
 echo
 echo "########################################################################"
-echo "# Starting universal-$RunString at `date `"
+echo "# Starting $Name-$RunString at `date `"
 echo "########################################################################"
 echo
 
