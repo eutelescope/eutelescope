@@ -2,7 +2,7 @@
 # A template of pedestal job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-pedestal-tmp.sh,v 1.3 2009-05-14 16:46:36 bulgheroni Exp $
+# @version $Id: runjob-pedestal-tmp.sh,v 1.4 2009-05-14 18:04:03 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -93,7 +93,7 @@ GRIDLibraryTarball="@GRIDLibraryTarball@"
 GRIDILCSoftVersion="@GRIDILCSoftVersion@"
 
 InputLcioRawLFN=$GRIDFolderLcioRaw/run$RunString.slcio
-$OutputDBLFN=$GRIDFolderDB/run$RunString-ped-db.slcio
+OutputDBLFN=$GRIDFolderDB/run$RunString-ped-db.slcio
 OutputJoboutputLFN=$GRIDFolderPedestalJoboutput/$Name-$RunString.tar.gz
 OutputHistoLFN=$GRIDFolderPedestalHisto/run$RunString-ped-histo.root
 
