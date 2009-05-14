@@ -23,12 +23,25 @@ from error import *
 # which are the newly added files
 #
 #
-# @version $Id: submitnativecopy.py,v 1.4 2009-05-13 12:42:48 bulgheroni Exp $
+# @version $Id: submitnativecopy.py,v 1.5 2009-05-14 15:23:04 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitNativeCopy( SubmitBase ) :
 
-    cvsVersion = "$Revision: 1.4 $"
+    ## Version
+    # This number is used when printing out the version of the package.
+    #
+    # Static member.
+    #
+    cvsVersion = "$Revision: 1.5 $"
+
+        ## Name
+    # This is the namer of the class. It is used in flagging all the log entries
+    # and preparing all the file
+    #
+    # Static member.
+    #
+    name = "nativecopy"
 
     ## General configure
     #
@@ -41,11 +54,11 @@ class SubmitNativeCopy( SubmitBase ) :
         SubmitBase.configure( self )
 
         # set up the logger according to the configuration file just read
-        SubmitBase.configureLogger( self, "NativeCopy" )
+        SubmitBase.configureLogger( self, self.name )
 
         # print the welcome message!
         self._logger.log( 15, "**********************************************************" )
-        self._logger.log( 15, "Started submit-native-copy" )
+        self._logger.log( 15, "Started submit-%(name)s" % { "name" : self.name } )
         self._logger.log( 15, "**********************************************************" )
 
         # now print the configuration to the log
