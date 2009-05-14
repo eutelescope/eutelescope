@@ -19,12 +19,12 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.6 2009-05-14 10:12:56 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.7 2009-05-14 13:55:41 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
 
-    cvsVersion = "$Revision: 1.6 $"
+    cvsVersion = "$Revision: 1.7 $"
 
     ## General configure
     #
@@ -924,7 +924,7 @@ class SubmitPedestal( SubmitBase ):
             self._logger.error( "Input file NOT found on the SE. Trying next run" )
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
-            raise MissingFileOnGRIDError( "%(inputPathGRID)s/run%(run)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  "run": runString } )
+            raise MissingInputFileOnGRIDError( "%(inputPathGRID)s/run%(run)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  "run": runString } )
 
         # check if the output file already exists
         command = "lfc-ls %(outputPathGRID)s/run%(run)s-ped-db.slcio" % { "outputPathGRID": self._outputPathGRID, "run": runString }
@@ -1164,7 +1164,7 @@ class SubmitPedestal( SubmitBase ):
         if glite.poll() == 0:
             self._logger.info( "Job successfully submitted to the GRID" )
             run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, "Submit'd", d, "N/A", f
+            self._summaryNTuple[ index ] = run, b, "Submit'd", d, e, f
         else :
             raise GRIDSubmissionError ( "pedestal-%(run)s.jdl" % { "run": runString } )
 
