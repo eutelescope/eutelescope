@@ -19,12 +19,12 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.5 2009-05-14 09:42:50 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.6 2009-05-14 10:12:56 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
 
-    cvsVersion = "$Revision: 1.5 $"
+    cvsVersion = "$Revision: 1.6 $"
 
     ## General configure
     #
@@ -776,7 +776,7 @@ class SubmitPedestal( SubmitBase ):
             self._summaryNTuple[ index ] = run, b, c, d, e, "OK"
 
 
-    ## Cleanup after each run conversion
+    ## Cleanup after each run pedestal calculation
     def cleanup( self, runString ):
 
         self._logger.info( "Cleaning up the local pc" )
@@ -834,6 +834,22 @@ class SubmitPedestal( SubmitBase ):
 
         self._logger.info("=============================================================================" )
         self._logger.info( "" )
+
+    def prepareJIDFile( self ):
+        unique = datetime.datetime.fromtimestamp( self._timeBegin ).strftime("%Y%m%d-%H%M%S")
+        self._logger.info("Preparing the JID for this submission (pedestal-%(date)s.jid)" % { "date" : unique } )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderPedestalJoboutput")
+        except ConfigParser.NoOptionError :
+            localPath = "log/"
+
+        jidFile = open( os.path.join( localPath, "pedestal-%(date)s.jid" % { "date": unique } ), "w" )
+        for run, jid in self._gridJobNTuple:
+            jidFile.write( jid )
+
+        jidFile.close()
+
 
 
     ## Preliminary checks
@@ -973,3 +989,190 @@ class SubmitPedestal( SubmitBase ):
             else :
                 raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-ped-histo.root on the GRID"
                                               % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
+    ## Execute all GRID
+    #
+    def executeAllGRID( self, index, runString ) :
+
+        # do preliminary checks
+        self.doPreliminaryTest( index, runString )
+
+        # now prepare the jdl file from the template
+        self.generateJDLFile( index, runString )
+
+        # now generate the run job script
+        self.generateRunjobFile( index, runString )
+
+        # don't forget to generate the steering file!
+        self._steeringFileName = self.generateSteeringFile( runString )
+
+        # finally ready to submit! Let's do it...!
+        self.submitJDL( index, runString )
+
+        # prepare a tarball with all the ancillaries
+        self.prepareTarball( runString )
+
+        # cleaning up the system
+        self.cleanup( runString )
+
+
+    ## Generate JDL file
+    #
+    # This method is called to generate a JDL file
+    #
+    def generateJDLFile( self, index, runString ):
+        message = "Generating the JDL file (pedestal-%(run)s.jdl)" % { "run": runString }
+        self._logger.info( message )
+        try :
+            jdlTemplate = self._configParser.get("GRID", "GRIDJDLTemplate" )
+        except ConfigParser.NoOptionError:
+            jdlTemplate = "grid/jdl-tmp.jdl"
+            if os.path.exists ( jdlTemplate ) :
+                message = "Using JDL template (%(file)s) " % { "file": jdlTemplate }
+                self._logger.info( message )
+            else:
+                message = "Unable to find a valid JDL template"
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+        jdlTemplateString = open( jdlTemplate, "r" ).read()
+        jdlActualString = jdlTemplateString
+
+        # modify the executable name
+        jdlActualString = jdlActualString.replace( "@Executable@", "pedestal-%(run)s.sh" % { "run": runString } )
+
+        # the gear file!
+        # try to read it from the config file, then from the command line option
+        try :
+            self._gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
+        except ConfigParser.NoOptionError :
+            self._gearPath = ""
+        jdlActualString = jdlActualString.replace("@GearPath@", self._gearPath )
+
+        try:
+            self._gear_file = self._configParser.get( "General", "GEARFile" )
+        except ConfigParser.NoOptionError :
+            self._logger.debug( "No GEAR file in the configuration file" )
+
+        if self._option.gear_file != None :
+            # this means that the user wants to override the configuration file
+            self._gear_file = self._option.gear_file
+            self._logger.debug( "Using command line GEAR file" )
+
+
+        if self._gear_file == "" :
+            # using default GEAR file
+            defaultGEARFile = "gear_telescope.xml"
+            self._gear_file = defaultGEARFile
+            message = "Using default GEAR file %(gear)s" %{ "gear": defaultGEARFile }
+            self._logger.warning( message )
+
+        jdlActualString = jdlActualString.replace( "@GearFile@", "%(path)s/%(gear)s"
+                                                   % { "path": self._gearPath, "gear": self._gear_file } )
+
+        # replace the steering file
+        jdlActualString = jdlActualString.replace( "@SteeringFile@", "pedestal-%(run)s.xml" % { "run" : runString } )
+
+        # replace the GRIDLib
+        try :
+            gridLibraryTarball = self._configParser.get( "GRID", "GRIDLibraryTarball" )
+            gridLibraryTarballPath = self._configParser.get( "GRID", "GRIDLibraryTarballPath" )
+        except ConfigParser.NoOptionError :
+            message = "GRID library tarball unavailable!"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+        jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", "%(path)s/%(file)s" %
+                                                   { "path": gridLibraryTarballPath, "file":gridLibraryTarball } )
+
+        # replace the VO
+        try:
+            vo = self._configParser.get( "GRID" , "GRIDVO" )
+        except ConfigParser.NoOptionError :
+            self._logger.warning( "Unable to find the GRIDVO. Using ilc" )
+            vo = "ilc"
+        jdlActualString = jdlActualString.replace( "@GRIDVO@", vo )
+
+        # replace the ILCSoftVestion
+        try :
+            ilcsoftVersion = self._configParser.get( "GRID" , "GRIDILCSoftVersion" )
+        except ConfigParser.NoOptionError :
+            self._logger.warning( "Unable to find the GRIDILCSoftVersion. Using v01-06" )
+            ilcsoftVersion = "v01-06"
+        jdlActualString = jdlActualString.replace( "@GRIDILCSoftVersion@", ilcsoftVersion )
+
+        self._jdlFilename = "pedestal-%(run)s.jdl" % { "run": runString }
+        jdlActualFile = open( self._jdlFilename, "w" )
+        jdlActualFile.write( jdlActualString )
+        jdlActualFile.close()
+
+
+    ## Generate the run job
+    #
+    # This method is used to generate the run job script
+    #
+    def generateRunjobFile( self, index, runString ):
+        message = "Generating the executable (pedestal-%(run)s.sh)" % { "run": runString }
+        self._logger.info( message )
+        try :
+            runTemplate = self._configParser.get( "SteeringTemplate", "PedestalGRIDScript" )
+        except ConfigParser.NoOptionError:
+            message = "Unable to find a valid executable template"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        runTemplateString = open( runTemplate, "r" ).read()
+        runActualString = runTemplateString
+
+        # replace the runString
+        runActualString = runActualString.replace( "@RunString@", runString )
+
+        variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
+                         "GRIDFolderBase", "GRIDFolderDB", "GRIDFolderLcioRaw", "GRIDFolderPedestalHisto",
+                         "GRIDFolderPedestalJoboutput", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+        for variable in variableList:
+            try:
+                value = self._configParser.get( "GRID", variable )
+                if variable == "GRIDCE":
+                    self._gridCE = value
+                runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
+            except ConfigParser.NoOptionError:
+                message = "Unable to find variable %(var)s in the config file" % { "var" : variable }
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+        self._runScriptFilename = "pedestal-%(run)s.sh" % { "run": runString }
+        runActualFile = open( self._runScriptFilename, "w" )
+        runActualFile.write( runActualString )
+        runActualFile.close()
+
+        # change the mode of the run script to 0777
+        os.chmod(self._runScriptFilename, 0777)
+
+
+    ## Do the real submission
+    #
+    # This is doing the job submission
+    #
+    def submitJDL( self, index, runString ) :
+        self._logger.info("Submitting the job to the GRID")
+        command = "glite-wms-job-submit -a -r %(GRIDCE)s -o pedestal-%(run)s.jid pedestal-%(run)s.jdl" % {
+            "run": runString , "GRIDCE":self._gridCE }
+        glite = popen2.Popen4( command )
+        while glite.poll() == -1:
+            message = glite.fromchild.readline().strip()
+            self._logger.log(15, message )
+
+        if glite.poll() == 0:
+            self._logger.info( "Job successfully submitted to the GRID" )
+            run, b, c, d, e, f = self._summaryNTuple[ index ]
+            self._summaryNTuple[ index ] = run, b, "Submit'd", d, "N/A", f
+        else :
+            raise GRIDSubmissionError ( "pedestal-%(run)s.jdl" % { "run": runString } )
+
+        # read back the the job id file
+        # this is made by two lines only the first is comment, the second
+        # is what we are interested in !
+        jidFile = open( "pedestal-%(run)s.jid" % { "run": runString } )
+        jidFile.readline()
+        run, b = self._gridJobNTuple[ index ]
+        self._gridJobNTuple[ index ] = run, jidFile.readline()
+        jidFile.close()
