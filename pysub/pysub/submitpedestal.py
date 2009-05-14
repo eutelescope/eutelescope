@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.8 2009-05-14 15:18:48 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.9 2009-05-14 16:45:59 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.8 $"
+    cvsVersion = "$Revision: 1.9 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -353,7 +353,7 @@ class SubmitPedestal( SubmitBase ):
         self._steeringFileName = self.generateSteeringFile( runString )
 
         # prepare a separate file for logging the output of Marlin
-        self._logFileName = "%(name)S-%(run)s.log" % { "name": self.name,"run" : runString }
+        self._logFileName = "%(name)s-%(run)s.log" % { "name": self.name,"run" : runString }
 
         # run marlin
         self.runMarlin( index, runString )
