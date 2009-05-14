@@ -5,6 +5,7 @@ import logging
 import time
 import os
 import sys
+import popen2
 
 
 ## SubmitBase
@@ -14,11 +15,11 @@ import sys
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.10 2009-05-13 09:39:58 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.11 2009-05-14 09:29:51 bulgheroni Exp $
 #
 class SubmitBase :
 
-    cvsVersion = "$Revision: 1.10 $"
+    cvsVersion = "$Revision: 1.11 $"
 
     ## The base class constructor
     #
@@ -235,3 +236,39 @@ class SubmitBase :
             self._logger.info( "" )
 
 
+    ## Verify the existence of a GRID folder
+    #  
+    # @return True if the folder exists
+    # @throw MissingGRIDFolder in case it doesn't
+    #
+    def checkGRIDFolder( self, folder ) :
+
+        # first check if it is in interactive mode or it is just a ROBOT
+        try :
+            interactive = self._configParser.getboolean( "General", "Interactive" )
+        except ConfigParser.NoOptionError :
+            interactive = True
+
+        command = "lfc-ls %(folder)s" % { "folder": folder }
+        lfc = popen2.Popen4( command )
+        while lfc.poll() == -1:
+            pass
+        if lfc.poll() == 0 :
+            self._logger.info( "Found folder %(folder)s" % { "folder": folder } )
+            return True
+        else :
+            if interactive : 
+                # ask the user if he wants to create the folder or not
+                self._logger.error( "Unable to find folder %(folder)s" % { "folder": folder })
+                if self.askYesNo( "Do you want to create it?" ) :
+                    self._logger.info( "User deficed to create folder %(folder)s" % { "folder": folder } 
+                    command = "lfc-mkdir -p %(folder)s " % { "folder" :folder } )
+                    if os.system( command ) == 0 :
+                        return True
+                    else :
+                        self._logger.critical("Unable to create folder %(folder)s" % { "folder": folder } )
+                        raise MissingGRIDFolderError( folder )
+                else:
+                    raise MissingGRIDFolderError( folder )
+            else :
+                raise MissingGRIDFolderError( folder ) 
