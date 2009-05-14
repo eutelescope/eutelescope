@@ -11,7 +11,7 @@
                                ==> clusearch-tmp.xml <===
 
 Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-Version: $Id: clusearch-tmp.xml,v 1.2 2009-05-14 18:21:58 bulgheroni Exp $
+Version: $Id: clusearch-tmp.xml,v 1.3 2009-05-14 18:37:18 bulgheroni Exp $
 ==========================================================================================
 
 --> 
@@ -302,7 +302,7 @@ within the selected number of event per cycle-->
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="results/run@RunNumber@-clu-p@PedeRunNumber@.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@ResultPath@/run@RunNumber@-clu-p@PedeRunNumber@.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
