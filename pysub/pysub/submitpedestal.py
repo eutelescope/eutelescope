@@ -19,12 +19,12 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.4 2009-05-14 09:30:31 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.5 2009-05-14 09:42:50 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
 
-    cvsVersion = "$Revision: 1.4 $"
+    cvsVersion = "$Revision: 1.5 $"
 
     ## General configure
     #
@@ -886,7 +886,7 @@ class SubmitPedestal( SubmitBase ):
             raise StopExecutionError( message )
 
         # check the existence of the folders
-                try :
+        try :
             for folder in folderList:
                 self.checkGRIDFolder( folder )
 

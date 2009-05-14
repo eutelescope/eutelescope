@@ -15,11 +15,11 @@ import popen2
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.11 2009-05-14 09:29:51 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.12 2009-05-14 09:42:50 bulgheroni Exp $
 #
 class SubmitBase :
 
-    cvsVersion = "$Revision: 1.11 $"
+    cvsVersion = "$Revision: 1.12 $"
 
     ## The base class constructor
     #
@@ -254,15 +254,15 @@ class SubmitBase :
         while lfc.poll() == -1:
             pass
         if lfc.poll() == 0 :
-            self._logger.info( "Found folder %(folder)s" % { "folder": folder } )
+            self._logger.log(15, "Found folder %(folder)s" % { "folder": folder } )
             return True
         else :
-            if interactive : 
+            if interactive :
                 # ask the user if he wants to create the folder or not
                 self._logger.error( "Unable to find folder %(folder)s" % { "folder": folder })
                 if self.askYesNo( "Do you want to create it?" ) :
-                    self._logger.info( "User deficed to create folder %(folder)s" % { "folder": folder } 
-                    command = "lfc-mkdir -p %(folder)s " % { "folder" :folder } )
+                    self._logger.info( "User decided to create folder %(folder)s" % { "folder": folder } )
+                    command = "lfc-mkdir -p %(folder)s " % { "folder" :folder } 
                     if os.system( command ) == 0 :
                         return True
                     else :
