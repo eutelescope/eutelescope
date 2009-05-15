@@ -62,7 +62,7 @@
 # it working.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: __init__.py,v 1.7 2009-05-14 18:54:02 bulgheroni Exp $
+# @version $Id: __init__.py,v 1.8 2009-05-15 14:42:20 bulgheroni Exp $
 #
 from submitbase       import SubmitBase
 from submitconverter  import SubmitConverter
@@ -70,4 +70,5 @@ from submittest       import SubmitTest
 from submitnativecopy import SubmitNativeCopy
 from submitpedestal   import SubmitPedestal
 from submitclusearch  import SubmitCluSearch
+from submitfilter     import SubmitFilter
 from error            import *
