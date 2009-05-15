@@ -20,7 +20,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.29 2009-05-14 15:11:28 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.30 2009-05-15 11:29:02 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -30,7 +30,7 @@ class SubmitConverter( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.29 $"
+    cvsVersion = "$Revision: 1.30 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -510,94 +510,6 @@ class SubmitConverter( SubmitBase ) :
                 raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz on the GRID"
                                               % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
 
-
-    ## Generate JDL file
-    #
-    # This method is called to generate a JDL file
-    #
-    def generateJDLFile( self, index, runString ):
-        message = "Generating the JDL file (%(name)s-%(run)s.jdl)" % { "name": self.name, "run": runString }
-        self._logger.info( message )
-        try :
-            jdlTemplate = self._configParser.get("GRID", "GRIDJDLTemplate" )
-        except ConfigParser.NoOptionError:
-            jdlTemplate = "grid/jdl-tmp.jdl"
-            if os.path.exists ( jdlTemplate ) :
-                message = "Using JDL template (%(file)s) " % { "file": jdlTemplate }
-                self._logger.info( message )
-            else:
-                message = "Unable to find a valid JDL template"
-                self._logger.critical( message )
-                raise StopExecutionError( message )
-
-        jdlTemplateString = open( jdlTemplate, "r" ).read()
-        jdlActualString = jdlTemplateString
-
-        # modify the executable name
-        jdlActualString = jdlActualString.replace( "@Executable@", "%(name)s-%(run)s.sh" % { "name": self.name, "run": runString } )
-
-        # the gear file!
-        # try to read it from the config file, then from the command line option
-        try :
-            self._gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
-        except ConfigParser.NoOptionError :
-            self._gearPath = ""
-        jdlActualString = jdlActualString.replace("@GearPath@", self._gearPath )
-
-        try:
-            self._gear_file = self._configParser.get( "General", "GEARFile" )
-        except ConfigParser.NoOptionError :
-            self._logger.debug( "No GEAR file in the configuration file" )
-
-        if self._option.gear_file != None :
-            # this means that the user wants to override the configuration file
-            self._gear_file = self._option.gear_file
-            self._logger.debug( "Using command line GEAR file" )
-
-
-        if self._gear_file == "" :
-            # using default GEAR file
-            defaultGEARFile = "gear_telescope.xml"
-            self._gear_file = defaultGEARFile
-            message = "Using default GEAR file %(gear)s" %{ "gear": defaultGEARFile }
-            self._logger.warning( message )
-
-        jdlActualString = jdlActualString.replace( "@GearFile@", "%(path)s/%(gear)s" % { "path": self._gearPath, "gear": self._gear_file } )
-
-        # replace the steering file
-        jdlActualString = jdlActualString.replace( "@SteeringFile@", "%(name)s-%(run)s.xml" % {"name": self.name, "run" : runString } )
-
-        # replace the GRIDLib
-        try :
-            gridLibraryTarball = self._configParser.get( "GRID", "GRIDLibraryTarball" )
-            gridLibraryTarballPath = self._configParser.get( "GRID", "GRIDLibraryTarballPath" )
-        except ConfigParser.NoOptionError :
-            message = "GRID library tarball unavailable!"
-            self._logger.critical( message )
-            raise StopExecutionError( message )
-        jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", "%(path)s/%(file)s" %
-                                                   { "path": gridLibraryTarballPath, "file":gridLibraryTarball } )
-
-        # replace the VO
-        try:
-            vo = self._configParser.get( "GRID" , "GRIDVO" )
-        except ConfigParser.NoOptionError :
-            self._logger.warning( "Unable to find the GRIDVO. Using ilc" )
-            vo = "ilc"
-        jdlActualString = jdlActualString.replace( "@GRIDVO@", vo )
-
-        # replace the ILCSoftVestion
-        try :
-            ilcsoftVersion = self._configParser.get( "GRID" , "GRIDILCSoftVersion" )
-        except ConfigParser.NoOptionError :
-            self._logger.warning( "Unable to find the GRIDILCSoftVersion. Using v01-06" )
-            ilcsoftVersion = "v01-06"
-        jdlActualString = jdlActualString.replace( "@GRIDILCSoftVersion@", ilcsoftVersion )
-
-        self._jdlFilename = "%(name)s-%(run)s.jdl" % { "name": self.name, "run": runString }
-        jdlActualFile = open( self._jdlFilename, "w" )
-        jdlActualFile.write( jdlActualString )
-        jdlActualFile.close()
 
 
     ## Generate the run job
