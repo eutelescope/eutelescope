@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.5 2009-05-15 10:10:11 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.6 2009-05-15 10:17:03 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.5 $"
+    cvsVersion = "$Revision: 1.6 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -373,7 +373,7 @@ class SubmitCluSearch( SubmitBase ):
         self._steeringFileName = self.generateSteeringFile( runString )
 
         # prepare a separate file for logging the output of Marlin
-        self._logFileName = "%(name)S-%(run)s.log" % { "name": self.name,"run" : runString }
+        self._logFileName = "%(name)s-%(run)s.log" % { "name": self.name,"run" : runString }
 
         # run marlin
         self.runMarlin( index, runString )
@@ -469,7 +469,7 @@ class SubmitCluSearch( SubmitBase ):
         else:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, "GRID", e, f
-            self._logger.info( "DB file successfully copied to the GRID" )
+            self._logger.info( "Output file successfully copied to the GRID" )
 
     ## Put the histograms file to the GRID
     def putHistogramOnGRID( self, index, runString ):
@@ -517,10 +517,9 @@ class SubmitCluSearch( SubmitBase ):
             raise StopExecutionError( message )
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderClusearchlJoboutput" )
+            localPath = self._configParser.get( "LOCAL", "LocalFolderClusearchJoboutput" )
         except ConfigParser.NoOptionError :
             localPath = "$PWD/log"
-
 
         baseCommand = "lcg-cr "
         if self._option.verbose :
@@ -658,7 +657,7 @@ class SubmitCluSearch( SubmitBase ):
             dbFolder = "db"
         else:
             try:
-                dbFolder = self._configParser.get("LOCAL", "LocalFolderDB")
+                dbFolder = self._configParser.get("LOCAL", "LocalFolderDBPede")
             except ConfigParser.NoOptionError :
                 dbFolder = "db"
         actualSteeringString = actualSteeringString.replace("@DBPath@" ,dbFolder )
@@ -812,6 +811,7 @@ class SubmitCluSearch( SubmitBase ):
         try:
             localFolder = self._configParser.get( "LOCAL", "LocalFolderClusearchJoboutput")
         except ConfigParser.NoOptionError :
+            self._logger.debug( "LocalFolderClusearchJoboutput not available, using $PWD/log ")
             localFolder = "log/"
 
         shutil.move( self._tarballFileName, localFolder )
@@ -1288,7 +1288,7 @@ class SubmitCluSearch( SubmitBase ):
         # db/run123456-ped-db.slcio
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderDB" )
+            localPath = self._configParser.get( "LOCAL", "LocalFolderDBPede" )
         except ConfigParser.NoOptionError :
             localPath = "db"
 
@@ -1307,10 +1307,31 @@ class SubmitCluSearch( SubmitBase ):
         except ConfigParser.NoOptionError :
             message = "Unable to find the GRIDFolderDBPede."
             self._logger.critical( message )
-            raise StopExecution( message )
+            raise StopExecutionError( message )
 
-        command = "lfc-ls %(gridPath)s/%(file)s > /dev/null 2>&1 "
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderDBPede" )
+        except ConfigParser.NoOptionError :
+            localPath = "db"
+
+        command = "lfc-ls %(gridPath)s/%(file)s > /dev/null 2>&1 " % {
+            "gridPath": gridPath, "file": self._pedeFilename }
         if os.system( command ) != 0:
-            message = "Missing pedestal file %(file)" %{ "pede": self._pedeFilename }
+            message = "Missing pedestal file %(file)s" %{ "file": self._pedeFilename }
             self._logger.critical ( message )
             raise MissingPedestalFileOnGRIDError( self._pedeFilename )
+
+        if self._option.execution == "cpu-local":
+
+            # get the file then
+            baseCommand = "lcg-cp "
+            if self._option.verbose :
+                baseCommand = baseCommand + " -v "
+                command = baseCommand + "  lfn:%(gridPath)s/%(file)s file:%(localPath)s/%(file)s " % {
+                    "gridPath" : gridPath, "file": self._pedeFilename, "localPath": localPath }
+
+            self._logger.info( "Getting the pedestal file %(file)s" % { "file": self._pedeFilename } )
+            if os.system( command ) != 0:
+                message = "Problem getting the pedestal file from the GRID"
+                self._logger.critical( message  )
+                raise StopExecutionError( message )
