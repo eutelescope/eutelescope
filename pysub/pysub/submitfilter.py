@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.2 2009-05-15 15:10:46 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.3 2009-05-15 16:08:12 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.2 $"
+    cvsVersion = "$Revision: 1.3 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1121,7 +1121,7 @@ class SubmitFilter( SubmitBase ):
         message = "Generating the executable (%(name)s-%(run)s.sh)" % { "name": self.name, "run": runString }
         self._logger.info( message )
         try :
-            runTemplate = self._configParser.get( "SteeringTemplate", "ClusearchGRIDScript" )
+            runTemplate = self._configParser.get( "SteeringTemplate", "FilterGRIDScript" )
         except ConfigParser.NoOptionError:
             message = "Unable to find a valid executable template"
             self._logger.critical( message )
@@ -1140,8 +1140,8 @@ class SubmitFilter( SubmitBase ):
         runActualString = runActualString.replace( "@Name@", self.name )
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
-                         "GRIDFolderBase", "GRIDFolderLcioRaw", "GRIDFolderDBPede", "GRIDFolderClusearchResults",
-                         "GRIDFolderClusearchJoboutput", "GRIDFolderClusearchHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+                         "GRIDFolderBase", "GRIDFolderClusearchResults", "GRIDFolderDBPede", "GRIDFolderFilterResults",
+                         "GRIDFolderFilterJoboutput", "GRIDFolderFilterHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
         for variable in variableList:
             try:
                 value = self._configParser.get( "GRID", variable )
@@ -1152,6 +1152,18 @@ class SubmitFilter( SubmitBase ):
                 message = "Unable to find variable %(var)s in the config file" % { "var" : variable }
                 self._logger.critical( message )
                 raise StopExecutionError( message )
+
+        # prepare the run list
+        if not self._option.merge:
+            runActualString = runActualString.replace( "@RunList@", runString)
+            runActualString = runActualString.replace( "@Merge@", "no" )
+            runActualString = runActualString.replace( "@Base@", runString )
+        else :
+            for run in self._runStringList :
+                runActualString = runActualString.replace( "@RunList@", "%(run)s @RunList@" % { "run": run } )
+            runActualString = runActualString.replace( "@RunList@", "" )
+            runActualString = runActualString.replace( "@Merge@", "yes" )
+            runActualString = runActualString.replace( "@Base@", self._option.output )
 
         self._runScriptFilename = "%(name)s-%(run)s.sh" % { "name": self.name, "run": runString }
         runActualFile = open( self._runScriptFilename, "w" )
