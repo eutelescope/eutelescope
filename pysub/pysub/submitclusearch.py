@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.6 2009-05-15 10:17:03 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.7 2009-05-15 11:30:10 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.6 $"
+    cvsVersion = "$Revision: 1.7 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -778,7 +778,13 @@ class SubmitCluSearch( SubmitBase ):
 
         # the gear file, the histo info and the config.cfg
         listOfFiles.append( os.path.join( self._gearPath, self._gear_file ) )
-        listOfFiles.append( os.path.join( self._histoinfoPath, self._histoinfoFilename ))
+        if self._option.execution == "all-grid" :
+            try :
+                histoinfoPath = self._configParser.get( "LOCAL", "LocalFolderHistoinfo" )
+            except ConfigParser.NoOptionError :
+                histoinfoPath = ""
+        if os.access( os.path.join( histoinfoPath, self._histoinfoFilename ), os.R_OK ) :
+            listOfFiles.append( os.path.join( histoinfoPath, self._histoinfoFilename ))
         listOfFiles.append( self._configFile )
 
         # all files starting with clusearch-123456 in the local folder
@@ -1091,94 +1097,6 @@ class SubmitCluSearch( SubmitBase ):
         self.cleanup( runString )
 
 
-    ## Generate JDL file
-    #
-    # This method is called to generate a JDL file
-    #
-    def generateJDLFile( self, index, runString ):
-        message = "Generating the JDL file (%(name)s-%(run)s.jdl)" % { "name": self.name,"run": runString }
-        self._logger.info( message )
-        try :
-            jdlTemplate = self._configParser.get("GRID", "GRIDJDLTemplate" )
-        except ConfigParser.NoOptionError:
-            jdlTemplate = "grid/jdl-tmp.jdl"
-            if os.path.exists ( jdlTemplate ) :
-                message = "Using JDL template (%(file)s) " % { "file": jdlTemplate }
-                self._logger.info( message )
-            else:
-                message = "Unable to find a valid JDL template"
-                self._logger.critical( message )
-                raise StopExecutionError( message )
-
-        jdlTemplateString = open( jdlTemplate, "r" ).read()
-        jdlActualString = jdlTemplateString
-
-        # modify the executable name
-        jdlActualString = jdlActualString.replace( "@Executable@", "%(name)s-%(run)s.sh" % { "name": self.name, "run": runString } )
-
-        # the gear file!
-        # try to read it from the config file, then from the command line option
-        try :
-            self._gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
-        except ConfigParser.NoOptionError :
-            self._gearPath = ""
-        jdlActualString = jdlActualString.replace("@GearPath@", self._gearPath )
-
-        try:
-            self._gear_file = self._configParser.get( "General", "GEARFile" )
-        except ConfigParser.NoOptionError :
-            self._logger.debug( "No GEAR file in the configuration file" )
-
-        if self._option.gear_file != None :
-            # this means that the user wants to override the configuration file
-            self._gear_file = self._option.gear_file
-            self._logger.debug( "Using command line GEAR file" )
-
-
-        if self._gear_file == "" :
-            # using default GEAR file
-            defaultGEARFile = "gear_telescope.xml"
-            self._gear_file = defaultGEARFile
-            message = "Using default GEAR file %(gear)s" %{ "gear": defaultGEARFile }
-            self._logger.warning( message )
-
-        jdlActualString = jdlActualString.replace( "@GearFile@", "%(path)s/%(gear)s"
-                                                   % { "path": self._gearPath, "gear": self._gear_file } )
-
-        # replace the steering file
-        jdlActualString = jdlActualString.replace( "@SteeringFile@", "%(name)s-%(run)s.xml" % { "name": self.name, "run" : runString } )
-
-        # replace the GRIDLib
-        try :
-            gridLibraryTarball = self._configParser.get( "GRID", "GRIDLibraryTarball" )
-            gridLibraryTarballPath = self._configParser.get( "GRID", "GRIDLibraryTarballPath" )
-        except ConfigParser.NoOptionError :
-            message = "GRID library tarball unavailable!"
-            self._logger.critical( message )
-            raise StopExecutionError( message )
-        jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", "%(path)s/%(file)s" %
-                                                   { "path": gridLibraryTarballPath, "file":gridLibraryTarball } )
-
-        # replace the VO
-        try:
-            vo = self._configParser.get( "GRID" , "GRIDVO" )
-        except ConfigParser.NoOptionError :
-            self._logger.warning( "Unable to find the GRIDVO. Using ilc" )
-            vo = "ilc"
-        jdlActualString = jdlActualString.replace( "@GRIDVO@", vo )
-
-        # replace the ILCSoftVestion
-        try :
-            ilcsoftVersion = self._configParser.get( "GRID" , "GRIDILCSoftVersion" )
-        except ConfigParser.NoOptionError :
-            self._logger.warning( "Unable to find the GRIDILCSoftVersion. Using v01-06" )
-            ilcsoftVersion = "v01-06"
-        jdlActualString = jdlActualString.replace( "@GRIDILCSoftVersion@", ilcsoftVersion )
-
-        self._jdlFilename = "%(name)s-%(run)s.jdl" % { "name": self.name, "run": runString }
-        jdlActualFile = open( self._jdlFilename, "w" )
-        jdlActualFile.write( jdlActualString )
-        jdlActualFile.close()
 
 
     ## Generate the run job
@@ -1189,7 +1107,7 @@ class SubmitCluSearch( SubmitBase ):
         message = "Generating the executable (%(name)s-%(run)s.sh)" % { "name": self.name, "run": runString }
         self._logger.info( message )
         try :
-            runTemplate = self._configParser.get( "SteeringTemplate", "PedestalGRIDScript" )
+            runTemplate = self._configParser.get( "SteeringTemplate", "ClusearchGRIDScript" )
         except ConfigParser.NoOptionError:
             message = "Unable to find a valid executable template"
             self._logger.critical( message )
