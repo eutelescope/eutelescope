@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.12 2009-05-15 12:37:17 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.13 2009-05-15 12:45:29 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.12 $"
+    cvsVersion = "$Revision: 1.13 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -744,11 +744,12 @@ class SubmitPedestal( SubmitBase ):
             listOfFiles.append( file )
 
         # the histogram file
-        try :
-            histoFilePath = self._configParser.get( "LOCAL", "LocalFolderPedestalHisto" )
-        except ConfigParser.NoOptionError :
-            histoFilePath = "histo"
-        listOfFiles.append( os.path.join( histoFilePath, "run%(run)s-ped-histo.root" % { "run": runString } ) )
+        if self._option.execution == "all-local" or self._option.execution == "cpu-local":
+            try :
+                histoFilePath = self._configParser.get( "LOCAL", "LocalFolderPedestalHisto" )
+            except ConfigParser.NoOptionError :
+                histoFilePath = "histo"
+                listOfFiles.append( os.path.join( histoFilePath, "run%(run)s-ped-histo.root" % { "run": runString } ) )
 
         for file in listOfFiles :
             shutil.copy( file, destFolder )
