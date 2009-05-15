@@ -15,7 +15,7 @@ import popen2
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.15 2009-05-15 11:27:59 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.16 2009-05-15 17:51:16 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -24,7 +24,7 @@ class SubmitBase :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.15 $"
+    cvsVersion = "$Revision: 1.16 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -270,7 +270,7 @@ class SubmitBase :
             if interactive :
                 # ask the user if he wants to create the folder or not
                 self._logger.error( "Unable to find folder %(folder)s" % { "folder": folder })
-                if self.askYesNo( "Do you want to create it?" ) :
+                if self.askYesNo( "Do you want to create it? " ) :
                     self._logger.info( "User decided to create folder %(folder)s" % { "folder": folder } )
                     command = "lfc-mkdir -p %(folder)s " % { "folder" :folder } 
                     if os.system( command ) == 0 :
