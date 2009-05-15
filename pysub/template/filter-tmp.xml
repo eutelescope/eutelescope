@@ -10,7 +10,7 @@
                                ==> filter-tmp.xml <===
 
 Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-Version: $Id: filter-tmp.xml,v 1.2 2009-05-15 14:42:20 bulgheroni Exp $
+Version: $Id: filter-tmp.xml,v 1.3 2009-05-15 17:49:37 bulgheroni Exp $
 ==========================================================================================
 
 --> 
@@ -42,7 +42,7 @@ Version: $Id: filter-tmp.xml,v 1.2 2009-05-15 14:42:20 bulgheroni Exp $
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistoPath@/run@RunNumber@-filter-histo"/>
+  <parameter name="FileName" type="string" value="@HistoPath@/@Base@@RunNumber@-filter-histo"/>
   <!-- type of output file xml (default) or root ( only OpenScientist)-->
   <parameter name="FileType" type="string" value="root"/>
 </processor>
@@ -278,7 +278,7 @@ within the selected number of event per cycle-->
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@ResultPath@/run@RunNumber@-filter-p@PedeRunNumber@.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@ResultPath@/@Base@@RunNumber@-filter-p@PedeRunNumber@.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
