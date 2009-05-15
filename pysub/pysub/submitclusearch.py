@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.8 2009-05-15 12:38:51 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.9 2009-05-15 13:10:14 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.8 $"
+    cvsVersion = "$Revision: 1.9 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -479,7 +479,7 @@ class SubmitCluSearch( SubmitBase ):
         try:
             gridPath = self._configParser.get( "GRID", "GRIDFolderClusearchHisto")
         except ConfigParser.NoOptionError :
-            message = "GRIDFolderPedestalHisto missing in the configuration file. Quitting."
+            message = "GRIDFolderClusearchHisto missing in the configuration file. Quitting."
             self._logger.critical( message )
             raise StopExecutionError( message )
 
@@ -652,7 +652,7 @@ class SubmitCluSearch( SubmitBase ):
                 lcioRawFolder = "lcio-raw"
         actualSteeringString = actualSteeringString.replace("@LcioRawPath@", lcioRawFolder )
 
-        # now replace the lcio-raw folder path
+        # now replace the pedestal folder path
         if self._option.execution == "all-grid" :
             dbFolder = "db"
         else:
