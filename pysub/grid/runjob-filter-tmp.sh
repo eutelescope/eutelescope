@@ -2,7 +2,7 @@
 # A template of filtering job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-filter-tmp.sh,v 1.1 2009-05-15 16:08:47 bulgheroni Exp $
+# @version $Id: runjob-filter-tmp.sh,v 1.2 2009-05-15 17:17:08 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -115,11 +115,11 @@ InputPedeLocal=$PWD/db/run$PedeString-ped-db.slcio
 # This runjob needs to have a special definition of input files because they could be many!
 # moreover the naming convention is rather different from the standard one when merging. 
 
-if [ $merge == "no" ] ; then
+if [ $Merge == "no" ] ; then
     OutputLcioLFN=$GRIDFolderFilterResults/run$RunString-filter-p$PedeString.slcio
     OutputJoboutputLFN=$GRIDFolderFilterJoboutput/$Name-$RunString.tar.gz
     OutputHistoLFN=$GRIDFolderFilterHisto/run$RunString-filter-histo.root
-
+#
     OutputLcioLocal=$PWD/results/run$RunString-filter-p$PedeString.slcio
     OutputJoboutputLocal=$PWD/log/$Name-$RunString.tar.gz
     OutputHistoLocal=$PWD/histo/run$RunString-filter-histo.root
@@ -129,7 +129,7 @@ else
     OutputLcioLFN=$GRIDFolderFilterResults/$Base-filter-p$PedeString.slcio
     OutputJoboutputLFN=$GRIDFolderFilterJoboutput/$Name-$Base.tar.gz
     OutputHistoLFN=$GRIDFolderFilterHisto/$Base-filter-histo.root
-
+#
     OutputLcioLocal=$PWD/results/$Base-filter-p$PedeString.slcio
     OutputJoboutputLocal=$PWD/log/$Name-$Base.tar.gz
     OutputHistoLocal=$PWD/histo/$Base-filter-histo.root
@@ -253,7 +253,7 @@ echo
 
 
 # remove the input files
-doCommand "rm ${InputLcioRawLocal}"
+doCommand "rm ${InputLcioLocal}"
 doCommand "rm ${InputPedeLocal}"
 
 
