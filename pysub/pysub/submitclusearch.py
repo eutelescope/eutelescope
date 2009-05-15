@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.7 2009-05-15 11:30:10 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.8 2009-05-15 12:38:51 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.7 $"
+    cvsVersion = "$Revision: 1.8 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -794,11 +794,12 @@ class SubmitCluSearch( SubmitBase ):
             listOfFiles.append( file )
 
         # the histogram file
-        try :
-            histoFilePath = self._configParser.get( "LOCAL", "LocalFolderClusearchHisto" )
-        except ConfigParser.NoOptionError :
-            histoFilePath = "histo"
-        listOfFiles.append( os.path.join( histoFilePath, "run%(run)s-clu-histo.root" % { "run": runString } ) )
+        if self._option.execution != "all-grid":
+            try :
+                histoFilePath = self._configParser.get( "LOCAL", "LocalFolderClusearchHisto" )
+            except ConfigParser.NoOptionError :
+                histoFilePath = "histo"
+                listOfFiles.append( os.path.join( histoFilePath, "run%(run)s-clu-histo.root" % { "run": runString } ) )
 
         # copy everything into a temporary folder
         for file in listOfFiles :
@@ -915,13 +916,14 @@ class SubmitCluSearch( SubmitBase ):
                 "name": self.name, "date" : unique } )
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderPedestalJoboutput")
+            localPath = self._configParser.get( "LOCAL", "LocalFolderClusearchJoboutput")
         except ConfigParser.NoOptionError :
             localPath = "log/"
 
         jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
         for run, jid in self._gridJobNTuple:
-            jidFile.write( jid )
+            if jid != "Unknown":
+                jidFile.write( jid )
 
         jidFile.close()
 
