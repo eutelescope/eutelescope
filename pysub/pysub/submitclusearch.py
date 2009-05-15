@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.3 2009-05-15 08:04:54 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.4 2009-05-15 08:28:12 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.3 $"
+    cvsVersion = "$Revision: 1.4 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -389,7 +389,7 @@ class SubmitCluSearch( SubmitBase ):
 
         try :
             # copy the DB file to the GRID
-            self.putDBOnGRID( index, runString )
+            self.putOutputOnGRID( index, runString )
 
             # copy the histogram file to the GRID
             self.putHistogramOnGRID( index, runString )
@@ -439,33 +439,33 @@ class SubmitCluSearch( SubmitBase ):
 
 
     ## Put the DB to the GRID
-    def putDBOnGRID( self, index, runString ):
+    def putOutputOnGRID( self, index, runString ):
 
-        self._logger.info(  "Putting the DB file to the GRID" )
+        self._logger.info(  "Putting the output file to the GRID" )
 
         try :
-            gridPath = self._configParser.get( "GRID", "GRIDFolderDB")
+            gridPath = self._configParser.get( "GRID", "GRIDFolderClusearchResults")
         except ConfigParser.NoOptionError :
-            message = "GRIDFolderDB missing in the configuration file. Quitting."
+            message = "GRIDFolderClusearchResults missing in the configuration file. Quitting."
             self._logger.critical( message )
             raise StopExecutionError( message )
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderDB" )
+            localPath = self._configParser.get( "LOCAL", "LocalFolderClusearchResults" )
         except ConfigParser.NoOptionError :
-            localPath = "$PWD/db"
+            localPath = "$PWD/results"
 
         baseCommand = "lcg-cr "
         if self._option.verbose :
             baseCommand = baseCommand + " -v "
 
-        command = "%(base)s -l lfn:%(gridFolder)s/run%(run)s-ped-db.slcio file:%(localFolder)s/run%(run)s-ped-db.slcio" % \
-            { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : runString }
+        command = "%(base)s -l lfn:%(gridFolder)s/run%(run)s-clu-p%(pede)s.slcio file:%(localFolder)s/run%(run)s-clu-p%(pede)s.slcio" % \
+            { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : runString , "pede": self._pedeString }
         if os.system( command ) != 0 :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, "LOCAL", e, f
-            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s-ped-db.slcio" % \
-                                        { "gridFolder": gridPath, "run" : runString } )
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s-clu-p%(pede)s.slcio" % \
+                                        { "gridFolder": gridPath, "run" : runString , "pede": self._pedeString} )
         else:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, "GRID", e, f
@@ -477,14 +477,14 @@ class SubmitCluSearch( SubmitBase ):
         self._logger.info( "Putting the histogram file to the GRID" )
 
         try:
-            gridPath = self._configParser.get( "GRID", "GRIDFolderPedestalHisto")
+            gridPath = self._configParser.get( "GRID", "GRIDFolderClusearchHisto")
         except ConfigParser.NoOptionError :
             message = "GRIDFolderPedestalHisto missing in the configuration file. Quitting."
             self._logger.critical( message )
             raise StopExecutionError( message )
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderPedestalHisto" )
+            localPath = self._configParser.get( "LOCAL", "LocalFolderClusearchHisto" )
         except ConfigParser.NoOptionError :
             localPath = "$PWD/histo"
 
@@ -492,12 +492,12 @@ class SubmitCluSearch( SubmitBase ):
         if self._option.verbose :
             baseCommand = baseCommand + " -v "
 
-        command = "%(base)s -l lfn:%(gridFolder)s/run%(run)s-ped-histo.root file:%(localFolder)s/run%(run)s-ped-histo.root" % \
+        command = "%(base)s -l lfn:%(gridFolder)s/run%(run)s-clu-histo.root file:%(localFolder)s/run%(run)s-clu-histo.root" % \
             { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : runString }
         if os.system( command ) != 0 :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, "LOCAL", f
-            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s-ped-histo.root" % \
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s-clu-histo.root" % \
                                         { "gridFolder": gridPath, "run" : runString } )
         else:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
@@ -510,14 +510,14 @@ class SubmitCluSearch( SubmitBase ):
         self._logger.info( "Putting the joboutput file to the GRID" )
 
         try:
-            gridPath = self._configParser.get( "GRID", "GRIDFolderPedestalJoboutput")
+            gridPath = self._configParser.get( "GRID", "GRIDFolderClusearchJoboutput")
         except ConfigParser.NoOptionError :
-            message = "GRIDFolderPedestalJoboutout missing in the configuration file. Quitting."
+            message = "GRIDFolderClusearchJoboutout missing in the configuration file. Quitting."
             self._logger.critical( message )
             raise StopExecutionError( message )
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderPedestalJoboutput" )
+            localPath = self._configParser.get( "LOCAL", "LocalFolderClusearchlJoboutput" )
         except ConfigParser.NoOptionError :
             localPath = "$PWD/log"
 
@@ -961,17 +961,18 @@ class SubmitCluSearch( SubmitBase ):
         # get all the needed path from the configuration file
         try :
             self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderLcioRaw")
-            self._pedePathGRID      = self._configParser.get("GRID", "GRIDFolderDB" )
-            self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolder" )
-            self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderPedestalJoboutput")
-            self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderPedestalHisto")
-            folderList = [self._inputPathGRID, self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID ] 
+            self._pedePathGRID      = self._configParser.get("GRID", "GRIDFolderDBPede" )
+            self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderClusearchResults" )
+            self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderClusearchJoboutput")
+            self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderClusearchHisto")
+            folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID ]
         except ConfigParser.NoOptionError:
             message = "Missing path from the configuration file"
             self._logger.critical( message )
             raise StopExecutionError( message )
 
         # check if the input file is on the GRID, otherwise go to next run
+        # the existence of the pedestal run has been assured already.
         command = "lfc-ls %(inputPathGRID)s/run%(run)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  "run": runString }
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
@@ -998,25 +999,27 @@ class SubmitCluSearch( SubmitBase ):
 
 
         # check if the output file already exists
-        command = "lfc-ls %(outputPathGRID)s/run%(run)s-ped-db.slcio" % { "outputPathGRID": self._outputPathGRID, "run": runString }
+        command = "lfc-ls %(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "outputPathGRID": self._outputPathGRID, 
+                                                                                 "pede": self._pedeString, "run": runString }
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
             pass
         if lfc.poll() == 0:
-            self._logger.warning( "Output file %(outputPathGRID)s/run%(run)s-ped-db.slcio already exists"
-                                  % { "outputPathGRID": self._outputPathGRID, "run": runString } )
+            self._logger.warning( "Output file %(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio already exists"
+                                  % { "outputPathGRID": self._outputPathGRID, "run": runString, "pede": self._pedeString, } )
             if self._configParser.get("General","Interactive" ):
                 if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-ped-db.slcio from the GRID"
-                                       % { "outputPathGRID": self._outputPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-ped-db.slcio" % { "outputPathGRID": self._outputPathGRID, "run": runString }
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio from the GRID"
+                                       % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "outputPathGRID": self._outputPathGRID, 
+                                                                                                     "pede": self._pedeString, "run": runString }
                     os.system( command )
                 else :
-                    raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-ped-db.slcio on the GRID"
-                                                  % { "outputPathGRID": self._outputPathGRID, "run": runString } )
+                    raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio on the GRID"
+                                                  % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
             else :
-                raise OutputAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-ped-db.slcio on the GRID"
-                                              % { "outputPathGRID": self._outputPathGRID, "run": runString } )
+                raise OutputAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio on the GRID"
+                                              % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
 
         # check if the job output file already exists
         command = "lfc-ls %(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % { 
@@ -1043,24 +1046,24 @@ class SubmitCluSearch( SubmitBase ):
 
 
         # check if the histogram file already exists
-        command = "lfc-ls %(outputPathGRID)s/run%(run)s-ped-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
+        command = "lfc-ls %(outputPathGRID)s/run%(run)s-clu-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
             pass
         if lfc.poll() == 0:
-            self._logger.warning( "Histogram file %(outputPathGRID)s/run%(run)s-ped-histo.root already exists"
+            self._logger.warning( "Histogram file %(outputPathGRID)s/run%(run)s-clu-histo.root already exists"
                                   % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
             if self._configParser.get("General","Interactive" ):
                 if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-ped-histo.root from the GRID"
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-clu-histo.root from the GRID"
                                        % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-ped-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-clu-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
                     os.system( command )
                 else :
-                    raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-ped-histo.root on the GRID"
+                    raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-histo.root on the GRID"
                                                   % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
             else :
-                raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-ped-histo.root on the GRID"
+                raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-histo.root on the GRID"
                                               % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
     ## Execute all GRID
     #
@@ -1297,9 +1300,9 @@ class SubmitCluSearch( SubmitBase ):
     def checkPedestalFileGRID( self ):
 
         try :
-            gridPath = self._configParser.get( "GRID" , "GRIDFolderDB" )
+            gridPath = self._configParser.get( "GRID" , "GRIDFolderDBPede" )
         except ConfigParser.NoOptionError :
-            message = "Unable to find the GRIDFolderDB."
+            message = "Unable to find the GRIDFolderDBPede."
             self._logger.critical( message )
             raise StopExecution( message )
 
