@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.9 2009-05-15 13:10:14 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.10 2009-05-15 14:03:51 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.9 $"
+    cvsVersion = "$Revision: 1.10 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -868,7 +868,7 @@ class SubmitCluSearch( SubmitBase ):
             except ConfigParser.NoOptionError :
                 outputFilePath = "results"
 
-            outputFile = "run%(run)s*" % { "run" : runString }
+            outputFile = "run%(run)s-clu-p%(pede)s.slcio" % { "run" : runString, "pede": self._pedeString }
             for file in glob.glob( os.path.join( outputFilePath , outputFile ) ):
                 os.remove( file )
 
