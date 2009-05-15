@@ -20,7 +20,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.30 2009-05-15 11:29:02 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.31 2009-05-15 12:37:17 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -30,7 +30,7 @@ class SubmitConverter( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.30 $"
+    cvsVersion = "$Revision: 1.31 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1056,6 +1056,7 @@ class SubmitConverter( SubmitBase ) :
 
         jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name,"date": unique } ), "w" )
         for run, jid in self._gridJobNTuple:
-            jidFile.write( jid )
+            if jib != "Unknown":
+                jidFile.write( jid )
 
         jidFile.close()

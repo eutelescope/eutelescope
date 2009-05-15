@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.11 2009-05-15 11:29:02 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.12 2009-05-15 12:37:17 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.11 $"
+    cvsVersion = "$Revision: 1.12 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -860,7 +860,8 @@ class SubmitPedestal( SubmitBase ):
 
         jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
         for run, jid in self._gridJobNTuple:
-            jidFile.write( jid )
+            if jib != "Unknown":
+                jidFile.write( jid )
 
         jidFile.close()
 
