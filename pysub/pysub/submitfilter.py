@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.3 2009-05-15 16:08:12 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.4 2009-05-15 17:50:40 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.3 $"
+    cvsVersion = "$Revision: 1.4 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -184,12 +184,52 @@ class SubmitFilter( SubmitBase ):
             self.executeSingleRun()
 
 
+    ## Execute in case of merge
+    def executeMerge( self ) :
+
+        self._runStringList = []
+        for i in self._args:
+            try:
+                self._runStringList.append( "%(run)06d" % { "run": int( i ) } )
+                entry = i, "Unknown", "Unknown", "Unknown", "Unknown", "Unknown"
+
+                # the current entry to the ntuple
+                self._summaryNTuple.append( entry )
+            except ValueError:
+                message = "Invalid run number %(i)s. Skipping to the next." % { "i": i }
+                self._logger.warning( message )
+
+        entry = self._option.output, "N/A",  "Unknown", "Unknown", "Unknown", "Unknown"
+        self._summaryNTuple.append( entry )
+
+        self._logger.info( "Starting the merging run %(output)s" % { "output": self._option.output } )
+
+        # now do something different depending on the execution option
+        try:
+            if self._option.execution == "all-grid" :
+                self.executeMergeAllGRID( )
+
+            elif self._option.execution == "all-local" :
+                self.executeMergeAllLocal( )
+
+            elif self._option.execution == "cpu-local":
+                self.executeMergeCPULocal( )
+
+            elif self._option.execution == "only-generate":
+                self.executeMergeOnlyGenerate( )
+
+        except MissingSteeringTemplateError, error:
+            message = "Steering template %(file)s unavailble. Quitting!" % { "file": error._filename }
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+
     ## Execute in case of single runs
     #
     # this is the real part
     # convert all the argumets into a run string compatible with the file name convention
     def executeSingleRun( self ):
-        self._runList = [];
+        self._runList = []
         for i in self._args:
             try:
                 self._runList.append( int( i  ) )
@@ -312,7 +352,11 @@ class SubmitFilter( SubmitBase ):
                 run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, "Missing", marlin, output, histo, tarball
 
+    ## Generate only submitter with merging
+    def executeMergeOnlyGenerate( self ) :
 
+        # just need to generate the steerign file
+        self.generateSteeringFileMerge()
 
     ## Generate only submitter
     #
@@ -364,6 +408,32 @@ class SubmitFilter( SubmitBase ):
         # clean up the local pc
         self.cleanup( runString )
 
+    ## All local submitter with merge option
+    def executeMergeAllLocal( self ):
+
+        # before any futher, check all the input files
+        for index, runString in enumerate( self._runStringList ) :
+            try:
+                self.checkInputFile( index, runString )
+            except MissingInputFileError, error:
+                self._logger.error( "The input file %(file)s is not available" % { "file": error._filename } )
+
+                if self._configParser.get( "General", "Interactive" ):
+                    if self.askYesNo( "Would you like to continue w/o this file? [y/n] " ):
+                        self._logger.info( "User decided to continue w/o %(file)s" % { "file": error._filename } )
+                        run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                        self._summaryNTuple[ index ] = run, "Skipped", "Skipped", "Skipped", "Skipped", "Skipped"
+                        self._runStringList[ index ] = "DEADFACE"
+                    else :
+                        raise StopExecutionError( "Cannot continue" )
+                else :
+                    self._logger.warning( "Skipping %(file)s because missing" % { "file": error._filename } )
+                    run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, "Skipped", "Skipped", "Skipped", "Skipped", "Skipped"
+
+
+        # generate the steering file
+        self._steeringFileName = self.generateSteeringFileMerge( )
     ## CPU Local submitter
     #
     # This methods represents the sequence of commands that should be done while
@@ -696,11 +766,172 @@ class SubmitFilter( SubmitBase ):
                 resultFolder = "results"
         actualSteeringString = actualSteeringString.replace( "@ResultPath@", resultFolder )
 
+        # now fix the issue with the name of the outputs
+        actualSteeringString = actualSteeringString.replace( "@Base@", "run" )
+
         # finally replace the run string !
         actualSteeringString = actualSteeringString.replace("@RunNumber@", runString )
 
         # open the new steering file for writing
         steeringFileName = "%(name)s-%(run)s.xml" % { "name": self.name, "run" : runString }
+        actualSteeringFile = open( steeringFileName, "w" )
+
+        # write the new steering file
+        actualSteeringFile.write( actualSteeringString )
+
+        # close both files
+        actualSteeringFile.close()
+        templateSteeringFile.close()
+
+        return steeringFileName
+
+    ## Generate the steering file for merging
+    def generateSteeringFileMerge( self ):
+        self._logger.info( "Generating the steering file (%(name)s-%(output)s.xml) " %
+                           { "name": self.name, "output": self._option.output } )
+
+        steeringFileTemplate =  ""
+        try:
+            steeringFileTemplate = self._configParser.get( "SteeringTemplate", "FilterSteeringFile" )
+        except ConfigParser.NoOptionError :
+            steeringFileTemplate = "template/%(name)s-tmp.xml" % { "name": self.name }
+
+        message = "Using %(file)s as steering template" %{ "file": steeringFileTemplate }
+        self._logger.debug( message )
+
+        # check if the template exists
+        if not os.path.exists( steeringFileTemplate ) :
+            raise MissingSteeringTemplateError ( steeringFileTemplate )
+
+        # open the template for reading
+        templateSteeringFile = open( steeringFileTemplate , "r")
+
+        # read the whole content
+        templateSteeringString = templateSteeringFile.read()
+
+        # make all the changes
+        actualSteeringString = templateSteeringString
+
+        # replace the file paths
+        #
+        # first the gear path
+        if self._option.execution == "all-grid" :
+            self._gearPath = "."
+        else:
+            try :
+                self._gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
+            except ConfigParser.NoOptionError :
+                self._gearPath = ""
+
+        actualSteeringString = actualSteeringString.replace("@GearPath@", self._gearPath )
+
+        # find the gear file, first check the configuration file, then the commad line options
+        # and last use a default gear_telescope.xml
+        self._gear_file = ""
+        try:
+            self._gear_file = self._configParser.get( "General", "GEARFile" )
+        except ConfigParser.NoOptionError :
+            self._logger.debug( "No GEAR file in the configuration file" )
+
+        if self._option.gear_file != None :
+            # this means that the user wants to override the configuration file
+            self._gear_file = self._option.gear_file
+            self._logger.debug( "Using command line GEAR file" )
+
+
+        if self._gear_file == "" :
+            # using default GEAR file
+            defaultGEARFile = "gear_telescope.xml"
+            self._gear_file = defaultGEARFile
+            message = "Using default GEAR file %(gear)s" %{ "gear": defaultGEARFile }
+            self._logger.warning( message )
+
+        actualSteeringString = actualSteeringString.replace("@GearFile@", self._gear_file )
+
+        # now repeat the game with the histo info xml file even if it is not compulsory to have it
+        if self._option.execution == "all-grid" :
+            self._histoinfoPath = "."
+        else:
+            try :
+                self._histoinfoPath = self._configParser.get( "LOCAL", "LocalFolderHistoinfo" )
+            except ConfigParser.NoOptionError :
+                self._histoinfoPath = ""
+
+        actualSteeringString = actualSteeringString.replace("@HistoInfoPath@", self._histoinfoPath )
+
+        self._histoinfoFilename = ""
+        try:
+            self._histoinfoFilename = self._configParser.get( "General", "Histoinfo" )
+        except ConfigParser.NoOptionError :
+            self._logger.debug( "No histoinfo file in the configuration file, using default histoinfo.xml" )
+            self._histoinfoFilename = "histoinfo.xml"
+
+        actualSteeringString = actualSteeringString.replace("@HistoInfo@", self._histoinfoFilename )
+
+        # now replace the pedestal folder path
+        if self._option.execution == "all-grid" :
+            dbFolder = "db"
+        else:
+            try:
+                dbFolder = self._configParser.get("LOCAL", "LocalFolderDBPede")
+            except ConfigParser.NoOptionError :
+                dbFolder = "db"
+        actualSteeringString = actualSteeringString.replace("@DBPath@" ,dbFolder )
+
+        # now replace the histo folder path
+        if self._option.execution == "all-grid" :
+            histoFolder = "histo"
+        else:
+            try:
+                histoFolder = self._configParser.get("LOCAL", "LocalFolderFilterHisto")
+            except ConfigParser.NoOptionError :
+                histoFolder = "histo"
+        actualSteeringString = actualSteeringString.replace("@HistoPath@" ,histoFolder )
+
+        # now replace the output folder path
+        if self._option.execution == "all-grid" :
+            resultFolder = "results"
+        else :
+            try :
+                resultFolder = self._configParser.get("LOCAL", "LocalFolderFilterResults")
+            except ConfigParser.NoOptionError :
+                resultFolder = "results"
+        actualSteeringString = actualSteeringString.replace( "@ResultPath@", resultFolder )
+
+
+        # now fix the issue with the name of the outputs
+        actualSteeringString = actualSteeringString.replace( "@Base@@RunNumber@", self._option.output )
+
+        # now we simply need to fix the input files
+        goodMerging = False
+        for index, runString in enumerate(self._runStringList):
+            if runString != "DEADFACE":
+                goodMerging = goodMerging or True
+                if self._option.execution == "all-grid":
+                    inputFolder = "results"
+                else:
+                    try:
+                        inputFolder = self._configParser.get( "LOCAL", "LocalFolderClusearchResults" )
+                    except ConfigParser.NoOptionError :
+                        inputFolder = "results"
+                actualSteeringString = actualSteeringString.replace( "@InputPath@", inputFolder )
+                actualSteeringString = actualSteeringString.replace( "@RunNumber@", runString )
+                actualSteeringString = actualSteeringString.replace( "@PedeRunNumber@", self._pedeString )
+                file = "%(path)s/run%(run)s-clu-p%(pede)s.slcio" % { "path" : inputFolder, "run": runString, "pede": self._pedeString }
+                actualSteeringString = actualSteeringString.replace( file, file + " @InputPath@/run@RunNumber@-clu-p@PedeRunNumber@.slcio" )
+
+        if not goodMerging:
+            message = "No available input files!"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        actualSteeringString = actualSteeringString.replace( " @InputPath@/run@RunNumber@-clu-p@PedeRunNumber@.slcio", "" )
+
+        # in case there are still some un-replaced pederunnumber do it now!
+        actualSteeringString = actualSteeringString.replace( "@PedeRunNumber@", self._pedeString )
+
+        # open the new steering file for writing
+        steeringFileName = "%(name)s-%(base)s.xml" % { "name": self.name, "base" : self._option.output }
         actualSteeringFile = open( steeringFileName, "w" )
 
         # write the new steering file
