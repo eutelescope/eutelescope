@@ -2,7 +2,7 @@
 # A template of pedestal job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-pedestal-tmp.sh,v 1.4 2009-05-14 18:04:03 bulgheroni Exp $
+# @version $Id: runjob-pedestal-tmp.sh,v 1.5 2009-05-15 08:04:54 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -73,7 +73,7 @@ putOnGRID() {
 # To be replaced with the runString in the format %(run)06d
 RunString="@RunString@"
 
-# To be replace with the job name used for the identification of 
+# To be replace with the job name used for the identification of
 # all files. It should be something like converter
 Name="@Name@"
 
@@ -86,14 +86,14 @@ GRIDVO="@GRIDVO@"
 LFC_HOME="/grid/ilc/eudet-jra1"
 GRIDFolderBase="@GRIDFolderBase@"
 GRIDFolderLcioRaw="@GRIDFolderLcioRaw@"
-GRIDFolderDB="@GRIDFolderDB@"
+GRIDFolderDBPede="@GRIDFolderDBPede@"
 GRIDFolderPedestalJoboutput="@GRIDFolderPedestalJoboutput@"
 GRIDFolderPedestalHisto="@GRIDFolderPedestalHisto@"
 GRIDLibraryTarball="@GRIDLibraryTarball@"
 GRIDILCSoftVersion="@GRIDILCSoftVersion@"
 
 InputLcioRawLFN=$GRIDFolderLcioRaw/run$RunString.slcio
-OutputDBLFN=$GRIDFolderDB/run$RunString-ped-db.slcio
+OutputDBLFN=$GRIDFolderDBPede/run$RunString-ped-db.slcio
 OutputJoboutputLFN=$GRIDFolderPedestalJoboutput/$Name-$RunString.tar.gz
 OutputHistoLFN=$GRIDFolderPedestalHisto/run$RunString-ped-histo.root
 

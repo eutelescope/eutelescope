@@ -16,10 +16,10 @@ from error import *
 ## Submit cluster searching jobs
 #
 # This calss is responsible to submit jobs for pedestal and noise calculation.
-# It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
+# It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.2 2009-05-15 07:31:24 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.3 2009-05-15 08:04:54 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.2 $"
+    cvsVersion = "$Revision: 1.3 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -961,7 +961,8 @@ class SubmitCluSearch( SubmitBase ):
         # get all the needed path from the configuration file
         try :
             self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderLcioRaw")
-            self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderDB" )
+            self._pedePathGRID      = self._configParser.get("GRID", "GRIDFolderDB" )
+            self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolder" )
             self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderPedestalJoboutput")
             self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderPedestalHisto")
             folderList = [self._inputPathGRID, self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID ] 
