@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.9 2009-05-14 16:45:59 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.10 2009-05-15 08:27:21 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.9 $"
+    cvsVersion = "$Revision: 1.10 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -424,9 +424,9 @@ class SubmitPedestal( SubmitBase ):
         self._logger.info(  "Putting the DB file to the GRID" )
 
         try :
-            gridPath = self._configParser.get( "GRID", "GRIDFolderDB")
+            gridPath = self._configParser.get( "GRID", "GRIDFolderPedeDB")
         except ConfigParser.NoOptionError :
-            message = "GRIDFolderDB missing in the configuration file. Quitting."
+            message = "GRIDFolderDBPede missing in the configuration file. Quitting."
             self._logger.critical( message )
             raise StopExecutionError( message )
 
@@ -906,7 +906,7 @@ class SubmitPedestal( SubmitBase ):
         # get all the needed path from the configuration file
         try :
             self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderLcioRaw")
-            self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderDB" )
+            self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderDBPede" )
             self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderPedestalJoboutput")
             self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderPedestalHisto")
             folderList = [self._inputPathGRID, self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID ] 
@@ -1146,7 +1146,7 @@ class SubmitPedestal( SubmitBase ):
         runActualString = runActualString.replace( "@Name@", self.name )
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
-                         "GRIDFolderBase", "GRIDFolderDB", "GRIDFolderLcioRaw", "GRIDFolderPedestalHisto",
+                         "GRIDFolderBase", "GRIDFolderDBPede", "GRIDFolderLcioRaw", "GRIDFolderPedestalHisto",
                          "GRIDFolderPedestalJoboutput", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
         for variable in variableList:
             try:
