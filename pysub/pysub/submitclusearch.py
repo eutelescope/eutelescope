@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.1 2009-05-14 18:54:02 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.2 2009-05-15 07:31:24 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.1 $"
+    cvsVersion = "$Revision: 1.2 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1286,7 +1286,7 @@ class SubmitCluSearch( SubmitBase ):
             localPath = "db"
 
         if not os.access( os.path.join( localPath, self._pedeFilename ), os.R_OK ):
-            message = "Missing pedestal file %(pede)" % { "pede": self._pedeFilename }
+            message = "Missing pedestal file %(pede)s" % { "pede": self._pedeFilename }
             self._logger.critical ( message )
             raise MissingPedestalFileError( self._pedeFilename )
 
