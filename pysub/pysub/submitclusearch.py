@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.4 2009-05-15 08:28:12 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.5 2009-05-15 10:10:11 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.4 $"
+    cvsVersion = "$Revision: 1.5 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -999,7 +999,7 @@ class SubmitCluSearch( SubmitBase ):
 
 
         # check if the output file already exists
-        command = "lfc-ls %(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "outputPathGRID": self._outputPathGRID, 
+        command = "lfc-ls %(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "outputPathGRID": self._outputPathGRID,
                                                                                  "pede": self._pedeString, "run": runString }
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
@@ -1201,12 +1201,15 @@ class SubmitCluSearch( SubmitBase ):
         # replace the runString
         runActualString = runActualString.replace( "@RunString@", runString )
 
+        # replace the pedeString as well
+        runActualString = runActualString.replace( "@PedeString@", self._pedeString )
+
         # replace the job name
         runActualString = runActualString.replace( "@Name@", self.name )
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
-                         "GRIDFolderBase", "GRIDFolderDB", "GRIDFolderLcioRaw", "GRIDFolderPedestalHisto",
-                         "GRIDFolderPedestalJoboutput", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+                         "GRIDFolderBase", "GRIDFolderLcioRaw", "GRIDFolderDBPede", "GRIDFolderClusearchResults",
+                         "GRIDFolderClusearchJoboutput", "GRIDFolderClusearchHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
         for variable in variableList:
             try:
                 value = self._configParser.get( "GRID", variable )
