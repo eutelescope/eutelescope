@@ -20,7 +20,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.31 2009-05-15 12:37:17 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.32 2009-05-16 20:00:20 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -30,7 +30,7 @@ class SubmitConverter( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.31 $"
+    cvsVersion = "$Revision: 1.32 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -699,7 +699,7 @@ class SubmitConverter( SubmitBase ) :
                     self._summaryNTuple[ index ] = run, b, c, "GRID - Fail!", "N/A", f
                     self._logger.error( "Problem with the verification!" )
 
-                # if successful remove the test file
+                # remove the test file
                 os.remove( "%(localFolder)s/run%(run)s-test.slcio" % { "localFolder": localPath, "run" : runString } )
 
 

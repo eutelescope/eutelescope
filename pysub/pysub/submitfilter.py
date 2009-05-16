@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.15 2009-05-16 16:28:31 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.16 2009-05-16 20:00:20 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.15 $"
+    cvsVersion = "$Revision: 1.16 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -838,7 +838,7 @@ class SubmitFilter( SubmitBase ):
                 self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail!", histogram, tarball
                 self._logger.error( "Problem with the verification!" )
                 raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
-            
+
             remoteCopy = open( os.path.join( localPath, filenametest ) ).read()
             remoteCopyHash = sha.new( remoteCopy ).hexdigest()
             self._logger.log( 15, "Remote copy hash is %(hash)s" % { "hash" : remoteCopyHash } )
