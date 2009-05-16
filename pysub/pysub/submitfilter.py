@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.9 2009-05-16 12:39:03 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.10 2009-05-16 12:51:56 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.9 $"
+    cvsVersion = "$Revision: 1.10 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -571,13 +571,14 @@ class SubmitFilter( SubmitBase ):
     def executeMergeCPULocal( self ) :
 
         # do preliminary test over all input runs
+        self._doFullCheck = True
         try:
             for index, runString in enumerate( self._runStringList ) :
                 try :
-                    self.doPreliminaryTest( index, runString, index < 1 )
+                    self.doPreliminaryTest( index, runString, self._fullCheckDone )
 
                 except MissingInputFileOnGRIDError, error:
-                    self._logger.error( "THe input file %(file)s is not available" % { "file": error._filename } )
+                    self._logger.error( "The input file %(file)s is not available" % { "file": error._filename } )
 
                     if self._configParser.get( "General", "Interactive" ):
                         if self.askYesNo( "Would you like to continue w/o this file? [y/n] " ):
@@ -1333,6 +1334,9 @@ class SubmitFilter( SubmitBase ):
     def doPreliminaryTest( self, index, runString, fullCheck = True ) :
 
         if fullCheck :
+            self._logger.log(15, "Performing a full check" )
+
+        if fullCheck :
             # first log the voms-proxy-info
             self._logger.info( "Logging the voms-proxy-info" )
             info = popen2.Popen4("voms-proxy-info -all")
@@ -1371,6 +1375,9 @@ class SubmitFilter( SubmitBase ):
         # the existence of the pedestal run has been assured already.
         command = "lfc-ls %(inputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  
                                                                                 "pede": self._pedeString, "run": runString }
+
+        self._logger.log(15, "Check input file %(path)/run%(run)s-clu-p%(pede)s.slcio" % { "path" : self._inputPathGRID,  
+                                                                                           "pede": self._pedeString, "run": runString } )
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
             pass
@@ -1403,6 +1410,8 @@ class SubmitFilter( SubmitBase ):
         else:
             outputFilename = "run%(run)s-filter-p%(pede)s.slcio" % { "pede": self._pedeString, "run": runString }
 
+        self._logger.log(15, "Check output file %(path)s/%(file)s" % {"path":  self._outputPathGRID, "file": outputFilename } )
+
         if fullCheck:
             command = "lfc-ls %(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._outputPathGRID, "file": outputFilename }
             lfc = popen2.Popen4( command )
@@ -1419,9 +1428,9 @@ class SubmitFilter( SubmitBase ):
                     else :
                         raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
                                                   % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
-            else :
-                raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
-                                              % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
+                else :
+                    raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
+                                                        % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
 
             # check if the job output file already exists
             if self._option.merge:
@@ -1429,6 +1438,7 @@ class SubmitFilter( SubmitBase ):
             else:
                 outputFilename =  "%(name)s-%(run)s.tar.gz" % { "pede": self._pedeString, "run": runString }
 
+            self._logger.log(15, "Check joboutput file %(path)s/%(file)s" % {"path":  self._joboutputPathGRID, "file": outputFilename } )
             command = "lfc-ls %(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._joboutputPathGRID, "file": outputFilename }
             lfc = popen2.Popen4( command )
             while lfc.poll() == -1:
@@ -1445,9 +1455,9 @@ class SubmitFilter( SubmitBase ):
                     else :
                         raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
                                                                % { "outputPathGRID": self._joboutputPathGRID, "file": outputFilename } )
-            else :
-                raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
-                                                       % {"outputPathGRID": self._joboutputPathGRID,"file": outputFilename} )
+                else :
+                    raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
+                                                           % {"outputPathGRID": self._joboutputPathGRID,"file": outputFilename} )
 
 
             # check if the histogram file already exists
@@ -1456,6 +1466,7 @@ class SubmitFilter( SubmitBase ):
             else:
                 outputFilename =  "run%(run)s-filter-histo.root" % { "run": runString }
 
+            self._logger.log(15, "Check histogram file %(path)s/%(file)s" % {"path":  self._histogramPathGRID, "file": outputFilename } )
             command = "lfc-ls %(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename }
             lfc = popen2.Popen4( command )
             while lfc.poll() == -1:
@@ -1472,9 +1483,12 @@ class SubmitFilter( SubmitBase ):
                     else :
                         raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
                                                                % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename } )
-            else :
-                raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
-                                                       % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename } )
+                else :
+                    raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
+                                                           % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename } )
+
+
+        self._doFullCheck = False
 
     ## Execute all GRID
     #
