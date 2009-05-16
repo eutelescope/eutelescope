@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.14 2009-05-16 15:49:30 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.15 2009-05-16 16:28:31 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.14 $"
+    cvsVersion = "$Revision: 1.15 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -827,32 +827,32 @@ class SubmitFilter( SubmitBase ):
                 baseCommand = baseCommand + " -v "
 
             if self._option.merge :
-                filename = "%(run)s-filter-p%(pede)s-test.slcio" % { "run": runString, "pede": self._pedeString }
+                filenametest = "%(run)s-filter-p%(pede)s-test.slcio" % { "run": runString, "pede": self._pedeString }
             else:
-                filename = "run%(run)s-filter-p%(pede)s-test.slcio" % { "run": runString, "pede": self._pedeString }
+                filenametest = "run%(run)s-filter-p%(pede)s-test.slcio" % { "run": runString, "pede": self._pedeString }
 
-            command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(file)s" % \
-                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename }
+            command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
+                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename, "filetest":filenametest }
             if os.system( command ) != 0 : 
-                run, input, marlin, output, histogram, tarbal = self._summaryNTuple[ index ]
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail!", histogram, tarball
                 self._logger.error( "Problem with the verification!" )
                 raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
-
-            remoteCopy = open( os.path.join( localPath, filename ) ).read()
+            
+            remoteCopy = open( os.path.join( localPath, filenametest ) ).read()
             remoteCopyHash = sha.new( remoteCopy ).hexdigest()
             self._logger.log( 15, "Remote copy hash is %(hash)s" % { "hash" : remoteCopyHash } )
 
             if remoteCopyHash == localCopyHash:
-                run, input, marlin, output, histogram, tarbal = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, "GRID - Ver!", histogram, tarball
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, input, marlin, "GRID - Ver", histogram, tarball
                 self._logger.info( "Verification successful" )
             else :
-                run, input, marlin, output, histogram, tarbal = self._summaryNTuple[ index ]
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail!", histogram, tarball
                 self._logger.error( "Problem with the verification!" )
 
-            os.remove( os.path.join( localPath, filename ) )
+            os.remove( os.path.join( localPath, filenametest ) )
 
     ## Put the histograms file to the GRID
     def putHistogramOnGRID( self, index, runString ):
@@ -904,32 +904,32 @@ class SubmitFilter( SubmitBase ):
                 baseCommand = baseCommand + " -v "
 
             if self._option.merge :
-                filename = "%(run)s-filter-histo-test.root" % { "run": runString }
+                filenametest = "%(run)s-filter-histo-test.root" % { "run": runString }
             else:
-                filename = "run%(run)s-filter-histo-test.root" % { "run": runString }
+                filenametest = "run%(run)s-filter-histo-test.root" % { "run": runString }
 
-            command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(file)s" % \
-                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename }
+            command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
+                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest, "file" : filename }
             if os.system( command ) != 0 : 
-                run, input, marlin, output, histogram, tarbal = self._summaryNTuple[ index ]
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail!", tarball
                 self._logger.error( "Problem with the verification!" )
                 raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
 
-            remoteCopy = open( os.path.join( localPath, filename ) ).read()
+            remoteCopy = open( os.path.join( localPath, filenametest ) ).read()
             remoteCopyHash = sha.new( remoteCopy ).hexdigest()
             self._logger.log( 15, "Remote copy hash is %(hash)s" % { "hash" : remoteCopyHash } )
 
             if remoteCopyHash == localCopyHash:
-                run, input, marlin, output, histogram, tarbal = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Ver!", tarball
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Ver", tarball
                 self._logger.info( "Verification successful" )
             else :
-                run, input, marlin, output, histogram, tarbal = self._summaryNTuple[ index ]
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail!", tarball
                 self._logger.error( "Problem with the verification!" )
 
-            os.remove( os.path.join( localPath, filename ) )
+            os.remove( os.path.join( localPath, filenametest ) )
 
     ## Put the joboutput file to the GRID
     def putJoboutputOnGRID( self, index, runString ):
@@ -966,6 +966,7 @@ class SubmitFilter( SubmitBase ):
 
         if self._option.verify_output:
             self._logger.info( "Verifying the joboutput integrity on the GRID" )
+            filename = "%(name)s-%(run)s.tar.gz" % { "name": self.name,  "run" : runString }
             localCopy = open( os.path.join( localPath, filename ) ).read()
             localCopyHash = sha.new( localCopy ).hexdigest() 
             self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
@@ -975,29 +976,29 @@ class SubmitFilter( SubmitBase ):
             if self._option.verbose :
                 baseCommand = baseCommand + " -v "
 
-            filename = "%(name)s-%(run)s-test.tar.gz" % { "name": self.name,  "run" : runString }
-            command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(file)s" % \
-                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename }
+            filenametest = "%(name)s-%(run)s-test.tar.gz" % { "name": self.name,  "run" : runString }
+            command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
+                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest,"file" : filename }
             if os.system( command ) != 0 : 
-                run, input, marlin, output, histogram, tarbal = self._summaryNTuple[ index ]
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, output, histogram, "GRID - Fail!"
                 self._logger.error( "Problem with the verification!" )
                 raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
 
-            remoteCopy = open( os.path.join( localPath, filename ) ).read()
+            remoteCopy = open( os.path.join( localPath, filenametest ) ).read()
             remoteCopyHash = sha.new( remoteCopy ).hexdigest()
             self._logger.log( 15, "Remote copy hash is %(hash)s" % { "hash" : remoteCopyHash } )
 
             if remoteCopyHash == localCopyHash:
-                run, input, marlin, output, histogram, tarbal = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, output, histogram, "GRID - Verl!"
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, input, marlin, output, histogram, "GRID - Ver"
                 self._logger.info( "Verification successful" )
             else :
-                run, input, marlin, output, histogram, tarbal = self._summaryNTuple[ index ]
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, output, histogram, "GRID - Fail!"
                 self._logger.error( "Problem with the verification!" )
 
-            os.remove( os.path.join( localPath, filename ) )
+            os.remove( os.path.join( localPath, filenametest ) )
 
 
     ## Check the input file
@@ -1934,7 +1935,7 @@ class SubmitFilter( SubmitBase ):
             baseCommand = "lcg-cp "
             if self._option.verbose :
                 baseCommand = baseCommand + " -v "
-                command = baseCommand + "  lfn:%(gridPath)s/%(file)s file:%(localPath)s/%(file)s " % {
+            command = baseCommand + "  lfn:%(gridPath)s/%(file)s file:%(localPath)s/%(file)s " % {
                     "gridPath" : gridPath, "file": self._pedeFilename, "localPath": localPath }
 
             self._logger.info( "Getting the pedestal file %(file)s" % { "file": self._pedeFilename } )
