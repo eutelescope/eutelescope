@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.15 2009-05-16 16:49:58 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.16 2009-05-16 16:52:25 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.15 $"
+    cvsVersion = "$Revision: 1.16 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -424,7 +424,7 @@ class SubmitPedestal( SubmitBase ):
         self._logger.info(  "Putting the DB file to the GRID" )
 
         try :
-            gridPath = self._configParser.get( "GRID", "GRIDFolderPedeDB")
+            gridPath = self._configParser.get( "GRID", "GRIDFolderDBPede")
         except ConfigParser.NoOptionError :
             message = "GRIDFolderDBPede missing in the configuration file. Quitting."
             self._logger.critical( message )
