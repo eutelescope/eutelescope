@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.12 2009-05-16 17:12:01 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.13 2009-05-16 18:09:12 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.12 $"
+    cvsVersion = "$Revision: 1.13 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -995,7 +995,7 @@ class SubmitCluSearch( SubmitBase ):
         if self._keepInput == False :
             # remove also the pedestal run
             try:
-                dbFilePath = self._configParser.get( "LOCAL", "LocalFodlerDB" )
+                dbFilePath = self._configParser.get( "LOCAL", "LocalFolderDBPede" )
             except ConfigParser.NoOptionError :
                 dbFilePath = "db"
 
