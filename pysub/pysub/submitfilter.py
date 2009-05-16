@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.12 2009-05-16 13:29:12 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.13 2009-05-16 15:22:09 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.12 $"
+    cvsVersion = "$Revision: 1.13 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -724,14 +724,14 @@ class SubmitFilter( SubmitBase ):
         try : 
             self.putOutputOnGRID( len( self._summaryNTuple ) - 1,  self._option.output )
             self.putJoboutputOnGRID( len( self._summaryNTuple ) - 1,  self._option.output )
-            self.putHistogramOnGRIDO( len( self._summaryNTuple ) - 1,  self._option.output )
+            self.putHistogramOnGRID( len( self._summaryNTuple ) - 1,  self._option.output )
 
         except GRID_LCG_CRError, error :
             self._logger.error( "Problem copying and registering output files to the GRID." )
             self._logger.error( "Leaving them locally")
 
         else:
-            self.cleanup()
+            self.cleanup( self._option.output )
 
 
     ## Get the input run from the GRID
@@ -755,7 +755,7 @@ class SubmitFilter( SubmitBase ):
         if self._option.verbose :
             baseCommand = baseCommand + " -v "
 
-        command = "%(base)s lfn:%(gridPath)s/run%(run)s-clu-p%(pede)s.slcio file:%(localPath)s/run%(run)s.slcio" %  \
+        command = "%(base)s lfn:%(gridPath)s/run%(run)s-clu-p%(pede)s.slcio file:%(localPath)s/run%(run)s-clu-p%(pede)s.slcio" %  \
             { "base": baseCommand, "gridPath" : inputPath, "pede": self._pedeString, "run": runString, "localPath": localPath }
         if os.system( command ) != 0:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
@@ -1371,9 +1371,9 @@ class SubmitFilter( SubmitBase ):
                 inputFilePath = "results"
 
             if self._option.merge :
-                for runString in self._runStringList:
-                    if runString != "DEADFACE" :
-                        inputFile  = "run%(run)s-clu-p%(pede)s.slcio" % { "run" : runString, "pede": self._pedeString }
+                for run in self._runStringList:
+                    if run != "DEADFACE" :
+                        inputFile  = "run%(run)s-clu-p%(pede)s.slcio" % { "run" : run, "pede": self._pedeString }
                         os.remove( os.path.join( inputFilePath, inputFile ))
             else :
                 inputFile  = "run%(run)s-clu-p%(pede)s.slcio" % { "run" : runString, "pede": self._pedeString }
@@ -1386,7 +1386,7 @@ class SubmitFilter( SubmitBase ):
                 outputFilePath = "results"
 
             if self._option.merge:
-                outputFile = "%(run)s-filter-p%(pede)s.slcio" % { "run" : runString, "pede": self._pedeString }
+                outputFile = "%(run)s-filter-p%(pede)s.slcio" % { "run" : self._option.output, "pede": self._pedeString }
             else:
                 outputFile = "run%(run)s-filter-p%(pede)s.slcio" % { "run" : runString, "pede": self._pedeString }
             for file in glob.glob( os.path.join( outputFilePath , outputFile ) ):
@@ -1398,7 +1398,7 @@ class SubmitFilter( SubmitBase ):
                 histoFilePath = "histo"
 
             if self._option.merge:
-                histoFile = "%(run)s-filter-histo.root" % { "run": runString }
+                histoFile = "%(run)s-filter-histo.root" % { "run": self._option.output }
             else:
                 histoFile = "run%(run)s-filter-histo.root" % { "run": runString }
             os.remove( os.path.join( histoFilePath, histoFile ) )
@@ -1409,7 +1409,7 @@ class SubmitFilter( SubmitBase ):
         if self._keepInput == False :
             # remove also the pedestal run
             try:
-                dbFilePath = self._configParser.get( "LOCAL", "LocalFodlerDB" )
+                dbFilePath = self._configParser.get( "LOCAL", "LocalFolderDBPede" )
             except ConfigParser.NoOptionError :
                 dbFilePath = "db"
 
