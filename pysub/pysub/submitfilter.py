@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.10 2009-05-16 12:51:56 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.11 2009-05-16 13:05:44 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.10 $"
+    cvsVersion = "$Revision: 1.11 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -575,8 +575,8 @@ class SubmitFilter( SubmitBase ):
         try:
             for index, runString in enumerate( self._runStringList ) :
                 try :
-                    self.doPreliminaryTest( index, runString, self._fullCheckDone )
-
+                    self.doPreliminaryTest( index, runString, self._doFullCheck )
+                    self._doFullCheck = False
                 except MissingInputFileOnGRIDError, error:
                     self._logger.error( "The input file %(file)s is not available" % { "file": error._filename } )
 
@@ -592,6 +592,8 @@ class SubmitFilter( SubmitBase ):
                         self._logger.warning( "Skipping %(file)s because missing" % { "file": error._filename } )
                         run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
                         self._summaryNTuple[ index ] = run, "Skipped", "Skipped", "Skipped", "Skipped", "Skipped"
+
+
 
         except OutputFileAlreadyOnGRIDError, error: 
             self._logger.critical( "Output file %(file)s already on GRID" % { "file": error._filename } )
@@ -1376,7 +1378,7 @@ class SubmitFilter( SubmitBase ):
         command = "lfc-ls %(inputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  
                                                                                 "pede": self._pedeString, "run": runString }
 
-        self._logger.log(15, "Check input file %(path)/run%(run)s-clu-p%(pede)s.slcio" % { "path" : self._inputPathGRID,  
+        self._logger.log(15, "Check input file %(path)s/run%(run)s-clu-p%(pede)s.slcio" % { "path" : self._inputPathGRID,  
                                                                                            "pede": self._pedeString, "run": runString } )
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
@@ -1434,9 +1436,9 @@ class SubmitFilter( SubmitBase ):
 
             # check if the job output file already exists
             if self._option.merge:
-                outputFilename =  "%(name)s-%(run)s.tar.gz" % { "pede": self._pedeString, "run": self._option.output }
+                outputFilename =  "%(name)s-%(run)s.tar.gz" % { "name": self.name, "run": self._option.output }
             else:
-                outputFilename =  "%(name)s-%(run)s.tar.gz" % { "pede": self._pedeString, "run": runString }
+                outputFilename =  "%(name)s-%(run)s.tar.gz" % { "name": self.name, "run": runString }
 
             self._logger.log(15, "Check joboutput file %(path)s/%(file)s" % {"path":  self._joboutputPathGRID, "file": outputFilename } )
             command = "lfc-ls %(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._joboutputPathGRID, "file": outputFilename }
@@ -1487,8 +1489,6 @@ class SubmitFilter( SubmitBase ):
                     raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
                                                            % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename } )
 
-
-        self._doFullCheck = False
 
     ## Execute all GRID
     #
