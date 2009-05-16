@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.4 2009-05-15 17:50:40 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.5 2009-05-16 06:19:10 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.4 $"
+    cvsVersion = "$Revision: 1.5 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1308,7 +1308,7 @@ class SubmitFilter( SubmitBase ):
                 if self.askYesNo( "Would you like to remove it?  [y/n] " ):
                     self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-filter-histo.root from the GRID"
                                        % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-clu-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-filter-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
                     os.system( command )
                 else :
                     raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-filter-histo.root on the GRID"
