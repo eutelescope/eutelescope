@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.8 2009-05-16 12:24:44 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.9 2009-05-16 12:39:03 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.8 $"
+    cvsVersion = "$Revision: 1.9 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -426,7 +426,7 @@ class SubmitFilter( SubmitBase ):
                         self._summaryNTuple[ index ] = run, "Skipped", "Skipped", "Skipped", "Skipped", "Skipped"
                         self._runStringList[ index ] = "DEADFACE"
                     else :
-                        raise StopExecutionError( "Cannot continue" )
+                        raise StopExecutionError( "Aborted by user" )
                 else :
                     self._logger.warning( "Skipping %(file)s because missing" % { "file": error._filename } )
                     run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
@@ -571,9 +571,39 @@ class SubmitFilter( SubmitBase ):
     def executeMergeCPULocal( self ) :
 
         # do preliminary test over all input runs
-        for index, runString in enumerate( self._runStringList ) :
+        try:
+            for index, runString in enumerate( self._runStringList ) :
+                try :
+                    self.doPreliminaryTest( index, runString, index < 1 )
 
-            self.doPreliminaryTest( index, runString, index < 1 )
+                except MissingInputFileOnGRIDError, error:
+                    self._logger.error( "THe input file %(file)s is not available" % { "file": error._filename } )
+
+                    if self._configParser.get( "General", "Interactive" ):
+                        if self.askYesNo( "Would you like to continue w/o this file? [y/n] " ):
+                            self._logger.info( "User decided to continue w/o %(file)s" % { "file": error._filename } )
+                            run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                            self._summaryNTuple[ index ] = run, "Skipped", "Skipped", "Skipped", "Skipped", "Skipped"
+                            self._runStringList[ index ] = "DEADFACE"
+                        else :
+                            raise StopExecutionError( "Aborted by user" )
+                    else :
+                        self._logger.warning( "Skipping %(file)s because missing" % { "file": error._filename } )
+                        run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                        self._summaryNTuple[ index ] = run, "Skipped", "Skipped", "Skipped", "Skipped", "Skipped"
+
+        except OutputFileAlreadyOnGRIDError, error: 
+            self._logger.critical( "Output file %(file)s already on GRID" % { "file": error._filename } )
+            raise StopExecutionError( "Cannot continue" )
+
+        except JoboutputFileAlreadyOnGRIDError, error: 
+            self._logger.critical( "Joboutput file %(file)s already on GRID" % { "file": error._filename } )
+            raise StopExecutionError( "Cannot continue" )
+
+        except HistogramFileAlreadyOnGRIDError, error: 
+            self._logger.critical( "Histogram file %(file)s already on GRID" % { "file": error._filename } )
+            raise StopExecutionError( "Cannot continue" )
+        # end of preliminary checks
 
 
     ## Get the input run from the GRID
