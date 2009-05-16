@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.7 2009-05-16 09:52:41 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.8 2009-05-16 12:24:44 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.7 $"
+    cvsVersion = "$Revision: 1.8 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1390,7 +1390,7 @@ class SubmitFilter( SubmitBase ):
                         raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
                                                   % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
             else :
-                raise OutputAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
+                raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
                                               % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
 
             # check if the job output file already exists
