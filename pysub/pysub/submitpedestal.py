@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.16 2009-05-16 16:52:25 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.17 2009-05-16 17:09:28 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.16 $"
+    cvsVersion = "$Revision: 1.17 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -454,7 +454,7 @@ class SubmitPedestal( SubmitBase ):
         if self._option.verify_output:
             self._logger.info( "Verifying the DB integrity on the GRID" )
 
-            filename = "run%(run)s-ped-db.slcio" % { runString }
+            filename = "run%(run)s-ped-db.slcio" % { "run": runString }
             localCopy = open( os.path.join( localPath, filename ) ).read()
             localCopyHash = sha.new( localCopy ).hexdigest()
             self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } ) 
@@ -464,7 +464,7 @@ class SubmitPedestal( SubmitBase ):
             if self._option.verbose :
                 baseCommand = baseCommand + " -v "
 
-            filenametest = "run%(run)s-ped-db-test.slcio" % { runString }
+            filenametest = "run%(run)s-ped-db-test.slcio" % { "run": runString }
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename, "filetest":filenametest }
             if os.system( command ) != 0 : 
@@ -525,7 +525,7 @@ class SubmitPedestal( SubmitBase ):
         if self._option.verify_output:
             self._logger.info( "Verifying the histogram integrity on the GRID" ) 
             filename = "run%(run)s-ped-histo.root" % { "run" : runString }
-            localCopy = open( os.path.join( localPath, filename ) )
+            localCopy = open( os.path.join( localPath, filename ) ).read( )
             localCopyHash = sha.new( localCopy ).hexdigest()
             self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
 
@@ -534,7 +534,7 @@ class SubmitPedestal( SubmitBase ):
             if self._option.verbose :
                 baseCommand = baseCommand + " -v "
 
-            filename = "run%(run)s-ped-histo-test.root" % { "run" : runString }
+            filenametest = "run%(run)s-ped-histo-test.root" % { "run" : runString }
 
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest, "file" : filename }
