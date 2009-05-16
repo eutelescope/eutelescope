@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.14 2009-05-16 16:42:09 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.15 2009-05-16 16:49:58 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.14 $"
+    cvsVersion = "$Revision: 1.15 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -431,7 +431,7 @@ class SubmitPedestal( SubmitBase ):
             raise StopExecutionError( message )
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderDB" )
+            localPath = self._configParser.get( "LOCAL", "LocalFolderDBPede" )
         except ConfigParser.NoOptionError :
             localPath = "$PWD/db"
 
@@ -729,7 +729,7 @@ class SubmitPedestal( SubmitBase ):
             dbFolder = "db"
         else:
             try:
-                dbFolder = self._configParser.get("LOCAL", "LocalFolderDB")
+                dbFolder = self._configParser.get("LOCAL", "LocalFolderDBPede")
             except ConfigParser.NoOptionError :
                 dbFolder = "db"
         actualSteeringString = actualSteeringString.replace("@DBPath@" ,dbFolder )
@@ -795,7 +795,7 @@ class SubmitPedestal( SubmitBase ):
         # db/run123456-ped-db.slcio
 
         try :
-            outputFilePath = self._configParser.get( "LOCAL", "LocalFolderDB" )
+            outputFilePath = self._configParser.get( "LOCAL", "LocalFolderDBPede" )
         except ConfigParser.NoOptionError :
             outputFilePath = "db"
         outputFileName = "run%(run)s-ped-db.slcio" % { "run": runString }
@@ -846,7 +846,7 @@ class SubmitPedestal( SubmitBase ):
 
         # all files like db/run123456-*dat
         try :
-            outputFilePath = self._configParser.get( "LOCAL", "LocalFolderDB" )
+            outputFilePath = self._configParser.get( "LOCAL", "LocalFolderDBPede" )
         except ConfigParser.NoOptionError :
             outputFilePath = "db"
         for file in glob.glob( outputFilePath + "run%(run)s*dat" % { "run" : runString } ) :
@@ -923,7 +923,7 @@ class SubmitPedestal( SubmitBase ):
 
         if self._keepOutput == False :
             try :
-                outputFilePath = self._configParser.get( "LOCAL", "LocalFolderDB" )
+                outputFilePath = self._configParser.get( "LOCAL", "LocalFolderDBPede" )
             except ConfigParser.NoOptionError :
                 outputFilePath = "db"
 
