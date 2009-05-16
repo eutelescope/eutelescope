@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.6 2009-05-16 08:03:29 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.7 2009-05-16 09:52:41 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.6 $"
+    cvsVersion = "$Revision: 1.7 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -565,6 +565,16 @@ class SubmitFilter( SubmitBase ):
         except GRID_LCG_CRError, error:
             message = "The file (%(file)s) couldn't be copied on the GRID"  % { "file": error._filename }
             self._logger.error( message )
+
+    ## CPU Local submitter with merge
+    # 
+    def executeMergeCPULocal( self ) :
+
+        # do preliminary test over all input runs
+        for index, runString in enumerate( self._runStringList ) :
+
+            self.doPreliminaryTest( index, runString, index < 1 )
+
 
     ## Get the input run from the GRID
     def getRunFromGRID(self, index, runString ) :
@@ -1290,39 +1300,42 @@ class SubmitFilter( SubmitBase ):
     # @throw MissingFileOnGRIDError
     # @throw FileAlreadyOnGRIDError
     #
-    def doPreliminaryTest( self, index, runString ) :
-        # first log the voms-proxy-info
-        self._logger.info( "Logging the voms-proxy-info" )
-        info = popen2.Popen4("voms-proxy-info -all")
-        while info.poll() == -1:
-            line = info.fromchild.readline()
-            self._logger.info( line.strip() )
+    def doPreliminaryTest( self, index, runString, fullCheck = True ) :
 
-        if info.poll() != 0:
-            message = "Problem with the GRID_UI"
-            self._logger.critical( message )
-            raise StopExecutionError( message )
+        if fullCheck :
+            # first log the voms-proxy-info
+            self._logger.info( "Logging the voms-proxy-info" )
+            info = popen2.Popen4("voms-proxy-info -all")
+            while info.poll() == -1:
+                line = info.fromchild.readline()
+                self._logger.info( line.strip() )
 
-        # also check that the proxy is still valid
-        if os.system( "voms-proxy-info -e" ) != 0:
-            message = "Expired proxy"
-            self._logger.critical( message )
-            raise StopExecutionError( message )
-        else:
-            self._logger.info( "Valid proxy found" )
+            if info.poll() != 0:
+                message = "Problem with the GRID_UI"
+                self._logger.critical( message )
+                raise StopExecutionError( message )
 
-        # get all the needed path from the configuration file
-        try :
-            self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderClusearchResults")
-            self._pedePathGRID      = self._configParser.get("GRID", "GRIDFolderDBPede" )
-            self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderFilterResults" )
-            self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderFilterJoboutput")
-            self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderFilterHisto")
-            folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID ]
-        except ConfigParser.NoOptionError:
-            message = "Missing path from the configuration file"
-            self._logger.critical( message )
-            raise StopExecutionError( message )
+            # also check that the proxy is still valid
+            if os.system( "voms-proxy-info -e" ) != 0:
+                message = "Expired proxy"
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+            else:
+                self._logger.info( "Valid proxy found" )
+
+            # get all the needed path from the configuration file
+            try :
+                self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderClusearchResults")
+                self._pedePathGRID      = self._configParser.get("GRID", "GRIDFolderDBPede" )
+                self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderFilterResults" )
+                self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderFilterJoboutput")
+                self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderFilterHisto")
+                folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID ]
+            except ConfigParser.NoOptionError:
+                message = "Missing path from the configuration file"
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
 
         # check if the input file is on the GRID, otherwise go to next run
         # the existence of the pedestal run has been assured already.
@@ -1342,84 +1355,97 @@ class SubmitFilter( SubmitBase ):
             raise MissingInputFileOnGRIDError( "%(inputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  
                                                                                                       "pede": self._pedeString, "run": runString } )
 
-        # check the existence of the folders
-        try :
-            for folder in folderList:
-                self.checkGRIDFolder( folder )
+        if fullCheck :
+            # check the existence of the folders
+            try :
+                for folder in folderList:
+                    self.checkGRIDFolder( folder )
 
-        except MissingGRIDFolderError, error :
-            message = "Folder %(folder)s is unavailable. Quitting" % { "folder": error._filename }
-            self._logger.critical( message )
-            raise StopExecutionError( message )
+            except MissingGRIDFolderError, error :
+                message = "Folder %(folder)s is unavailable. Quitting" % { "folder": error._filename }
+                self._logger.critical( message )
+                raise StopExecutionError( message )
 
 
         # check if the output file already exists
-        command = "lfc-ls %(outputPathGRID)s/run%(run)s-filter-p%(pede)s.slcio" % { "outputPathGRID": self._outputPathGRID,
-                                                                                 "pede": self._pedeString, "run": runString }
-        lfc = popen2.Popen4( command )
-        while lfc.poll() == -1:
-            pass
-        if lfc.poll() == 0:
-            self._logger.warning( "Output file %(outputPathGRID)s/run%(run)s-filter-p%(pede)s.slcio already exists"
-                                  % { "outputPathGRID": self._outputPathGRID, "run": runString, "pede": self._pedeString, } )
-            if self._configParser.get("General","Interactive" ):
-                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-filter-p%(pede)s.slcio from the GRID"
-                                       % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-filter-p%(pede)s.slcio" % { "outputPathGRID": self._outputPathGRID, 
-                                                                                                        "pede": self._pedeString, "run": runString }
-                    os.system( command )
-                else :
-                    raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-filter-p%(pede)s.slcio on the GRID"
-                                                  % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
-            else :
-                raise OutputAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-filter-p%(pede)s.slcio on the GRID"
-                                              % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
+        if self._option.merge:
+            outputFilename = "%(run)s-filter-p%(pede)s.slcio" % { "pede": self._pedeString, "run": self._option.output }
+        else:
+            outputFilename = "run%(run)s-filter-p%(pede)s.slcio" % { "pede": self._pedeString, "run": runString }
 
-        # check if the job output file already exists
-        command = "lfc-ls %(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % { 
-            "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString }
-        lfc = popen2.Popen4( command )
-        while lfc.poll() == -1:
-            pass
-        if lfc.poll() == 0:
-            self._logger.warning( "Joboutput file %(outputPathGRID)s/%(name)s-%(run)s.tar.gz already exists"
-                                  % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
-            if self._configParser.get("General","Interactive" ):
-                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/%(name)s-%(run)s.tar.gz from the GRID"
-                                       % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % { 
-                        "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString }
-                    os.system( command )
-                else :
-                    raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz on the GRID"
-                                                  % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+        if fullCheck:
+            command = "lfc-ls %(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._outputPathGRID, "file": outputFilename }
+            lfc = popen2.Popen4( command )
+            while lfc.poll() == -1:
+                pass
+            if lfc.poll() == 0:
+                self._logger.warning( "Output file %(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._outputPathGRID, "file": outputFilename })
+                if self._configParser.get("General","Interactive" ):
+                    if self.askYesNo( "Would you like to remove it?  [y/n] " ):
+                        self._logger.info( "User decided to remove %(outputPathGRID)s/%(file)s from the GRID"
+                                           % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
+                        command = "lcg-del -a lfn:%(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._outputPathGRID, "file": outputFilename }
+                        os.system( command )
+                    else :
+                        raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
+                                                  % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
             else :
-                raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz on the GRID"
-                                              % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+                raise OutputAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
+                                              % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
+
+            # check if the job output file already exists
+            if self._option.merge:
+                outputFilename =  "%(name)s-%(run)s.tar.gz" % { "pede": self._pedeString, "run": self._option.output }
+            else:
+                outputFilename =  "%(name)s-%(run)s.tar.gz" % { "pede": self._pedeString, "run": runString }
+
+            command = "lfc-ls %(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._joboutputPathGRID, "file": outputFilename }
+            lfc = popen2.Popen4( command )
+            while lfc.poll() == -1:
+                pass
+            if lfc.poll() == 0:
+                self._logger.warning( "Joboutput file %(outputPathGRID)s/%(file)s already exists"
+                                      % {"outputPathGRID": self._joboutputPathGRID, "file": outputFilename } )
+                if self._configParser.get("General","Interactive" ):
+                    if self.askYesNo( "Would you like to remove it?  [y/n] " ):
+                        self._logger.info( "User decided to remove %(outputPathGRID)s/%(file)s from the GRID"
+                                           % { "outputPathGRID": self._joboutputPathGRID, "file": outputFilename } )
+                        command = "lcg-del -a lfn:%(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._joboutputPathGRID, "file": outputFilename }
+                        os.system( command )
+                    else :
+                        raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
+                                                               % { "outputPathGRID": self._joboutputPathGRID, "file": outputFilename } )
+            else :
+                raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
+                                                       % {"outputPathGRID": self._joboutputPathGRID,"file": outputFilename} )
 
 
-        # check if the histogram file already exists
-        command = "lfc-ls %(outputPathGRID)s/run%(run)s-filter-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
-        lfc = popen2.Popen4( command )
-        while lfc.poll() == -1:
-            pass
-        if lfc.poll() == 0:
-            self._logger.warning( "Histogram file %(outputPathGRID)s/run%(run)s-filter-histo.root already exists"
-                                  % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
-            if self._configParser.get("General","Interactive" ):
-                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-filter-histo.root from the GRID"
-                                       % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-filter-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
-                    os.system( command )
-                else :
-                    raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-filter-histo.root on the GRID"
-                                                  % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
+            # check if the histogram file already exists
+            if self._option.merge:
+                outputFilename =  "%(run)s-filter-histo.root" % { "run": self._option.output }
+            else:
+                outputFilename =  "run%(run)s-filter-histo.root" % { "run": runString }
+
+            command = "lfc-ls %(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename }
+            lfc = popen2.Popen4( command )
+            while lfc.poll() == -1:
+                pass
+            if lfc.poll() == 0:
+                self._logger.warning( "Histogram file %(outputPathGRID)s/%(file)s already exists"
+                                      % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename } )
+                if self._configParser.get("General","Interactive" ):
+                    if self.askYesNo( "Would you like to remove it?  [y/n] " ):
+                        self._logger.info( "User decided to remove %(outputPathGRID)s/%(file)s from the GRID"
+                                           % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename } )
+                        command = "lcg-del -a lfn:%(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename }
+                        os.system( command )
+                    else :
+                        raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
+                                                               % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename } )
             else :
-                raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-filter-histo.root on the GRID"
-                                              % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
+                raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
+                                                       % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename } )
+
     ## Execute all GRID
     #
     def executeSingleRunAllGRID( self, index, runString ) :
