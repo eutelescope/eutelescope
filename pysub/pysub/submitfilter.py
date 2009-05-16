@@ -10,6 +10,7 @@ import logging
 import logging.handlers
 import math
 import datetime
+import time
 from submitbase import SubmitBase
 from error import *
 
@@ -19,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.5 2009-05-16 06:19:10 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.6 2009-05-16 08:03:29 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -29,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.5 $"
+    cvsVersion = "$Revision: 1.6 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -434,6 +435,86 @@ class SubmitFilter( SubmitBase ):
 
         # generate the steering file
         self._steeringFileName = self.generateSteeringFileMerge( )
+
+        # prepare a separate file for logging the output of Marlin. This should be in the form:
+        # %(name)s-%(output)s.log
+        self._logFileName = "%(name)s-%(output)s.log" % { "name": self.name, "output": self._option.output }
+
+        # run Marlin, this is exactly the same for the single run but these two 
+        # small differences:
+        #
+        # 1. the index it is used only for filling the summaryNTuple, 
+        #    let's use the very last index of the table.
+        # 2. the runString is not used at all. Passing ""
+        try :
+            self.runMarlin( len( self._summaryNTuple ) - 1, None )
+
+        except MarlinError, error:
+            # this is critical, because for sure we can't continue 
+            self._logger.critical( "Error with Marlin execution (%(msg)s - errno = %(errno)s )" \
+                    % { "msg": error._message, "errno": error._errno } )
+
+            # fix the summary table and stop
+            for index, entry in enumerate ( self._summaryNTuple ):
+                run, input, marlin, output, histo, tarball = entry
+                if input != "Skipped" :
+                    marlin  = "Failed"
+                    output  = "Missing"
+                    histo   = "Missing"
+                    tarball = "Missing"
+                    self._summaryNTuple[ index ] = run, input, marlin, output, histo, tarball
+
+            # stop here
+            raise StopExecutionError( "Error with Marlin. Terminating!" )
+
+        # we need anyway to clean up the summaryNTuple
+        for index, entry in enumerate ( self._summaryNTuple ):
+            run, input, marlin, output, histo, tarball = entry
+            if input != "Skipped" :
+                marlin = "OK"
+                if index < len( self._summaryNTuple ) -1 :
+                    output  = "Merged"
+                    histo   = "Merged"
+                    tarball = "Merged"
+                self._summaryNTuple[ index ] = run, input, marlin, output, histo, tarball
+
+        # check the presence of the output file. This time it is one only
+        try :
+            self.checkOutputFile( len( self._summaryNTuple ) - 1, None )
+        except MissingOutputFileError, error:
+            self._logger.critical( "Missing output file %(file)s " % { "file": error._filename } )
+            # fixing the summary table and stop the execution
+            run, input, marlin, output, histo, tarball =  self._summaryNTuple[ len( self._summaryNTuple ) - 1]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, "Missing", histo, tarball
+            raise StopExecutionError( "No output file was produced. Terminating" )
+
+        # check the presence of the histogram file
+        try :
+            self.checkHistogramFile( len( self._summaryNTuple ) - 1, None )
+        except MissingHistogramFileError, error:
+            self._logger.critical( "Missing histogram file %(file)s " % { "file": error._filename } )
+            # fixing the summary table and stop the execution
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, output, "Missing", tarball
+            raise StopExecutionError( "No histogram file was produced. Terminating" )
+
+
+        # prepare the tarball
+        self.prepareTarball( self._option.output )
+
+        # check the presence of the joboutput file
+        try:
+            self.checkJoboutputFile( len( self._summaryNTuple ) - 1,  self._option.output  )
+        except MissingJoboutputFileError, error:
+            # fixing the summary table and stop the execution
+            self._logger.critical( "Missing joboutput file %(file)s " % { "file": error._filename } )
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, output, histo, "Missing"
+            raise StopExecutionError( "No joboutput file was produced. Terminating" )
+
+        # cleanup
+        self.cleanup( self._option.output )
+
     ## CPU Local submitter
     #
     # This methods represents the sequence of commands that should be done while
@@ -969,20 +1050,23 @@ class SubmitFilter( SubmitBase ):
             self._summaryNTuple[ index ] = run, b, "OK", d, e, f
             return returnValue
 
-
-
     ## Check the output file
     #
     def checkOutputFile( self, index, runString ) :
         # this should be named something like
-        # results/run123456-filter-p654321.slcio
+        # results/run123456-filter-p654321.slcio or 
+        # results/%(output)s-filter-p654321.slcio
 
         try :
             outputFilePath = self._configParser.get( "LOCAL", "LocalFolderFilterResults" )
         except ConfigParser.NoOptionError :
             outputFilePath = "results"
 
-        outputFileName = "run%(run)s-filter-p%(pede)s.slcio" % { "run": runString, "pede": self._pedeString }
+        if self._option.merge :
+            outputFileName = "%(output)s-filter-p%(pede)s.slcio"  % { "output": self._option.output, "pede": self._pedeString }
+        else :
+            outputFileName = "run%(run)s-filter-p%(pede)s.slcio" % { "run": runString, "pede": self._pedeString }
+        self._logger.log(15, "Checking for file %(file)s " % { "file":  os.path.join( outputFilePath , outputFileName) })
         if not os.access( os.path.join( outputFilePath , outputFileName) , os.R_OK ):
             raise MissingOutputFileError( outputFileName )
         else :
@@ -999,7 +1083,11 @@ class SubmitFilter( SubmitBase ):
             histoFilePath = self._configParser.get( "LOCAL", "LocalFolderFilterHisto" )
         except ConfigParser.NoOptionError :
             histoFilePath = "histo"
-        histoFileName = "run%(run)s-filter-histo.root" % { "run": runString }
+        if self._option.merge :
+            histoFileName = "%(output)s-filter-histo.root" % { "output": self._option.output }
+        else:
+            histoFileName = "run%(run)s-filter-histo.root" % { "run": runString }
+
         if not os.access( os.path.join( histoFilePath , histoFileName ) , os.R_OK ):
             raise MissingHistogramFileError( histoFileName )
         else:
@@ -1040,7 +1128,11 @@ class SubmitFilter( SubmitBase ):
                 histoFilePath = self._configParser.get( "LOCAL", "LocalFolderFilterHisto" )
             except ConfigParser.NoOptionError :
                 histoFilePath = "histo"
-                listOfFiles.append( os.path.join( histoFilePath, "run%(run)s-filter-histo.root" % { "run": runString } ) )
+                if self._option.merge:
+                    histoFileName = "%(output)s-filter-histo.root" % { "output": self._option.output }
+                else :
+                    histoFileName =  "run%(run)s-filter-histo.root" % { "run": runString }
+                listOfFiles.append( os.path.join( histoFilePath, histoFileName ) )
 
         # copy everything into a temporary folder
         for file in listOfFiles :
@@ -1072,7 +1164,7 @@ class SubmitFilter( SubmitBase ):
         # log/filter-123456.tar.gz
 
         try :
-            outputFilePath = self._configParser.get( "LOCAL", "LocalFolderClusearchJoboutput" )
+            outputFilePath = self._configParser.get( "LOCAL", "LocalFolderFilterJoboutput" )
         except ConfigParser.NoOptionError :
             outputFilePath = "log"
         tarballFileName = "%(name)s-%(run)s.tar.gz" % { "name": self.name, "run": runString }
@@ -1100,8 +1192,14 @@ class SubmitFilter( SubmitBase ):
             except ConfigParser.NoOptionError :
                 inputFilePath = "results"
 
-            inputFile  = "run%(run)s-clu-p%(pede)s.slcio" % { "run" : runString, "pede": self._pedeString }
-            os.remove( os.path.join( inputFilePath, inputFile ))
+            if self._option.merge :
+                for runString in self._runStringList:
+                    if runString != "DEADFACE" :
+                        inputFile  = "run%(run)s-clu-p%(pede)s.slcio" % { "run" : runString, "pede": self._pedeString }
+                        os.remove( os.path.join( inputFilePath, inputFile ))
+            else :
+                inputFile  = "run%(run)s-clu-p%(pede)s.slcio" % { "run" : runString, "pede": self._pedeString }
+                os.remove( os.path.join( inputFilePath, inputFile ))
 
         if self._keepOutput == False :
             try :
@@ -1109,7 +1207,10 @@ class SubmitFilter( SubmitBase ):
             except ConfigParser.NoOptionError :
                 outputFilePath = "results"
 
-            outputFile = "run%(run)s-filter-p%(pede)s.slcio*" % { "run" : runString, "pede": self._pedeString }
+            if self._option.merge:
+                outputFile = "%(run)s-filter-p%(pede)s.slcio" % { "run" : runString, "pede": self._pedeString }
+            else:
+                outputFile = "run%(run)s-filter-p%(pede)s.slcio" % { "run" : runString, "pede": self._pedeString }
             for file in glob.glob( os.path.join( outputFilePath , outputFile ) ):
                 os.remove( file )
 
@@ -1118,7 +1219,10 @@ class SubmitFilter( SubmitBase ):
             except ConfigParser.NoOptionError :
                 histoFilePath = "histo"
 
-            histoFile = "run%(run)s-filter-histo.root" % { "run": runString }
+            if self._option.merge:
+                histoFile = "%(run)s-filter-histo.root" % { "run": runString }
+            else:
+                histoFile = "run%(run)s-filter-histo.root" % { "run": runString }
             os.remove( os.path.join( histoFilePath, histoFile ) )
 
 
@@ -1157,7 +1261,7 @@ class SubmitFilter( SubmitBase ):
                 "name": self.name, "date" : unique } )
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderClusearchJoboutput")
+            localPath = self._configParser.get( "LOCAL", "LocalFolderFilterJoboutput")
         except ConfigParser.NoOptionError :
             localPath = "log/"
 
