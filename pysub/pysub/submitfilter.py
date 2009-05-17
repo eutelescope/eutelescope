@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.16 2009-05-16 20:00:20 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.17 2009-05-17 09:31:27 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.16 $"
+    cvsVersion = "$Revision: 1.17 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -149,7 +149,7 @@ class SubmitFilter( SubmitBase ):
                 sys.exit( 4 )
 
         # it the user wants to merge the inputs in one output file
-        # we also need to have a -o option specifying the base name of the output 
+        # we also need to have a -o option specifying the base name of the output
         # files. Check this...
         if self._option.merge :
             if self._option.output == None :
@@ -203,6 +203,11 @@ class SubmitFilter( SubmitBase ):
 
                 # the current entry to the ntuple
                 self._summaryNTuple.append( entry )
+
+                # do the same also for the GRID NTuple
+                entry = i, "See below"
+                self._gridJobNTuple.append( entry )
+
             except ValueError:
                 message = "Invalid run number %(i)s. Skipping to the next." % { "i": i }
                 self._logger.warning( message )
@@ -447,19 +452,19 @@ class SubmitFilter( SubmitBase ):
         # %(name)s-%(output)s.log
         self._logFileName = "%(name)s-%(output)s.log" % { "name": self.name, "output": self._option.output }
 
-        # run Marlin, this is exactly the same for the single run but these two 
+        # run Marlin, this is exactly the same for the single run but these two
         # small differences:
         #
-        # 1. the index it is used only for filling the summaryNTuple, 
+        # 1. the index it is used only for filling the summaryNTuple,
         #    let's use the very last index of the table.
         # 2. the runString is not used at all. Passing ""
         try :
             self.runMarlin( len( self._summaryNTuple ) - 1, None )
 
         except MarlinError, error:
-            # this is critical, because for sure we can't continue 
+            # this is critical, because for sure we can't continue
             self._logger.critical( "Error with Marlin execution (%(msg)s - errno = %(errno)s )" \
-                    % { "msg": error._message, "errno": error._errno } )
+                                       % { "msg": error._message, "errno": error._errno } )
 
             # fix the summary table and stop
             for index, entry in enumerate ( self._summaryNTuple ):
@@ -573,6 +578,68 @@ class SubmitFilter( SubmitBase ):
             message = "The file (%(file)s) couldn't be copied on the GRID"  % { "file": error._filename }
             self._logger.error( message )
 
+    ## All GRID submitter with merge
+    #
+    def executeMergeAllGRID( self ):
+        # do preliminary test over all input runs
+        self._doFullCheck = True
+        try:
+            for index, runString in enumerate( self._runStringList ) :
+                try :
+                    self.doPreliminaryTest( index, runString, self._doFullCheck )
+                    self._doFullCheck = False
+                except MissingInputFileOnGRIDError, error:
+                    self._logger.error( "The input file %(file)s is not available" % { "file": error._filename } )
+
+                    if self._configParser.get( "General", "Interactive" ):
+                        if self.askYesNo( "Would you like to continue w/o this file? [y/n] " ):
+                            self._logger.info( "User decided to continue w/o %(file)s" % { "file": error._filename } )
+                            run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                            self._summaryNTuple[ index ] = run, "Skipped", "Skipped", "Skipped", "Skipped", "Skipped"
+                            self._runStringList[ index ] = "DEADFACE"
+                        else :
+                            raise StopExecutionError( "Aborted by user" )
+                    else :
+                        self._logger.warning( "Skipping %(file)s because missing" % { "file": error._filename } )
+                        run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                        self._summaryNTuple[ index ] = run, "Skipped", "Skipped", "Skipped", "Skipped", "Skipped"
+
+
+
+        except OutputFileAlreadyOnGRIDError, error:
+            self._logger.critical( "Output file %(file)s already on GRID" % { "file": error._filename } )
+            raise StopExecutionError( "Cannot continue" )
+
+        except JoboutputFileAlreadyOnGRIDError, error:
+            self._logger.critical( "Joboutput file %(file)s already on GRID" % { "file": error._filename } )
+            raise StopExecutionError( "Cannot continue" )
+
+        except HistogramFileAlreadyOnGRIDError, error:
+            self._logger.critical( "Histogram file %(file)s already on GRID" % { "file": error._filename } )
+            raise StopExecutionError( "Cannot continue" )
+        # end of preliminary checks
+
+
+        # generate the JDL file
+        # index is actually not used, while runString is used for the name
+        # so pass any number, followed by %(output)s
+        self.generateJDLFile( 0, self._option.output );
+
+        # now the run job script same as above the arguments
+        self.generateRunjobFile( 0, self._option.output )
+
+        # the steering file is relatively easy
+        self._steeringFileName = self.generateSteeringFileMerge( )
+
+        # finally ready to submit...
+        self.submitJDL( len( self._summaryNTuple ) - 1, self._option.output   )
+
+        # prepare a tarball with all the ancillaries
+        self.prepareTarball( self._option.output )
+
+        # cleaning up the system
+        self.cleanup( self._option.output )
+
     ## CPU Local submitter with merge
     #
     def executeMergeCPULocal( self ) :
@@ -602,7 +669,7 @@ class SubmitFilter( SubmitBase ):
 
 
 
-        except OutputFileAlreadyOnGRIDError, error: 
+        except OutputFileAlreadyOnGRIDError, error:
             self._logger.critical( "Output file %(file)s already on GRID" % { "file": error._filename } )
             raise StopExecutionError( "Cannot continue" )
 
@@ -629,7 +696,7 @@ class SubmitFilter( SubmitBase ):
         for index, runString in enumerate( self._runStringList ) :
             if runString != "DEADFACE" :
                 try:
-                    self.checkInputFile( index, runString ) 
+                    self.checkInputFile( index, runString )
 
                 except MissingInputFileError, error:
                     self._logger.error( "The input file %(file)s is not available" % { "file": error._filename } )
@@ -655,19 +722,19 @@ class SubmitFilter( SubmitBase ):
         # %(name)s-%(output)s.log
         self._logFileName = "%(name)s-%(output)s.log" % { "name": self.name, "output": self._option.output }
 
-        # run Marlin, this is exactly the same for the single run but these two 
+        # run Marlin, this is exactly the same for the single run but these two
         # small differences:
         #
-        # 1. the index it is used only for filling the summaryNTuple, 
+        # 1. the index it is used only for filling the summaryNTuple,
         #    let's use the very last index of the table.
         # 2. the runString is not used at all. Passing ""
         try :
             self.runMarlin( len( self._summaryNTuple ) - 1, None )
 
         except MarlinError, error:
-            # this is critical, because for sure we can't continue 
+            # this is critical, because for sure we can't continue
             self._logger.critical( "Error with Marlin execution (%(msg)s - errno = %(errno)s )" \
-                    % { "msg": error._message, "errno": error._errno } )
+                                       % { "msg": error._message, "errno": error._errno } )
 
             # fix the summary table and stop
             for index, entry in enumerate ( self._summaryNTuple ):
@@ -728,7 +795,7 @@ class SubmitFilter( SubmitBase ):
             raise StopExecutionError( "No joboutput file was produced. Terminating" )
 
         # now that we are sure about all the output files we can copy them back to the GRID.
-        try : 
+        try :
             self.putOutputOnGRID( len( self._summaryNTuple ) - 1,  self._option.output )
             self.putJoboutputOnGRID( len( self._summaryNTuple ) - 1,  self._option.output )
             self.putHistogramOnGRID( len( self._summaryNTuple ) - 1,  self._option.output )
@@ -818,7 +885,7 @@ class SubmitFilter( SubmitBase ):
         if self._option.verify_output:
             self._logger.info( "Verifying the output file integrity on the GRID" )
             localCopy = open( os.path.join( localPath, filename ) ).read()
-            localCopyHash = sha.new( localCopy ).hexdigest() 
+            localCopyHash = sha.new( localCopy ).hexdigest()
             self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
 
             # now copying back the just copied file.
@@ -833,7 +900,7 @@ class SubmitFilter( SubmitBase ):
 
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename, "filetest":filenametest }
-            if os.system( command ) != 0 : 
+            if os.system( command ) != 0 :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail!", histogram, tarball
                 self._logger.error( "Problem with the verification!" )
@@ -895,7 +962,7 @@ class SubmitFilter( SubmitBase ):
         if self._option.verify_output:
             self._logger.info( "Verifying the histogram integrity on the GRID" )
             localCopy = open( os.path.join( localPath, filename ) ).read()
-            localCopyHash = sha.new( localCopy ).hexdigest() 
+            localCopyHash = sha.new( localCopy ).hexdigest()
             self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
 
             # now copying back the just copied file.
@@ -910,7 +977,7 @@ class SubmitFilter( SubmitBase ):
 
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest, "file" : filename }
-            if os.system( command ) != 0 : 
+            if os.system( command ) != 0 :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail!", tarball
                 self._logger.error( "Problem with the verification!" )
@@ -968,7 +1035,7 @@ class SubmitFilter( SubmitBase ):
             self._logger.info( "Verifying the joboutput integrity on the GRID" )
             filename = "%(name)s-%(run)s.tar.gz" % { "name": self.name,  "run" : runString }
             localCopy = open( os.path.join( localPath, filename ) ).read()
-            localCopyHash = sha.new( localCopy ).hexdigest() 
+            localCopyHash = sha.new( localCopy ).hexdigest()
             self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
 
             # now copying back the just copied file.
@@ -979,7 +1046,7 @@ class SubmitFilter( SubmitBase ):
             filenametest = "%(name)s-%(run)s-test.tar.gz" % { "name": self.name,  "run" : runString }
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest,"file" : filename }
-            if os.system( command ) != 0 : 
+            if os.system( command ) != 0 :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, output, histogram, "GRID - Fail!"
                 self._logger.error( "Problem with the verification!" )
@@ -1356,7 +1423,7 @@ class SubmitFilter( SubmitBase ):
     #
     def checkOutputFile( self, index, runString ) :
         # this should be named something like
-        # results/run123456-filter-p654321.slcio or 
+        # results/run123456-filter-p654321.slcio or
         # results/%(output)s-filter-p654321.slcio
 
         try :
@@ -1634,11 +1701,11 @@ class SubmitFilter( SubmitBase ):
 
         # check if the input file is on the GRID, otherwise go to next run
         # the existence of the pedestal run has been assured already.
-        command = "lfc-ls %(inputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  
+        command = "lfc-ls %(inputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "inputPathGRID" : self._inputPathGRID,
                                                                                 "pede": self._pedeString, "run": runString }
 
-        self._logger.log(15, "Check input file %(path)s/run%(run)s-clu-p%(pede)s.slcio" % { "path" : self._inputPathGRID,  
-                                                                                           "pede": self._pedeString, "run": runString } )
+        self._logger.log(15, "Check input file %(path)s/run%(run)s-clu-p%(pede)s.slcio" % { "path" : self._inputPathGRID,
+                                                                                            "pede": self._pedeString, "run": runString } )
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
             pass
@@ -1650,7 +1717,7 @@ class SubmitFilter( SubmitBase ):
             self._logger.error( "Input file NOT found on the SE. Trying next run" )
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
-            raise MissingInputFileOnGRIDError( "%(inputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  
+            raise MissingInputFileOnGRIDError( "%(inputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "inputPathGRID" : self._inputPathGRID,
                                                                                                       "pede": self._pedeString, "run": runString } )
 
         if fullCheck :
@@ -1688,7 +1755,7 @@ class SubmitFilter( SubmitBase ):
                         os.system( command )
                     else :
                         raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
-                                                  % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
+                                                            % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
                 else :
                     raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
                                                         % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
@@ -1869,7 +1936,7 @@ class SubmitFilter( SubmitBase ):
 
 
     ## Check the existence of the pedestal file
-    # 
+    #
     # Differently from the check input and output methods, this is done
     # once only at the very beginning before entering in the loop on runs.
     #
@@ -1880,7 +1947,7 @@ class SubmitFilter( SubmitBase ):
         # run123456-ped-db.slcio
         self._pedeFilename = "run%(run)s-ped-db.slcio" % { "run": self._pedeString }
 
-        # where to check, depends from the execution mode! 
+        # where to check, depends from the execution mode!
 
         if self._option.execution == "all-local":
             self.checkPedestalFileLocally()
@@ -1936,7 +2003,7 @@ class SubmitFilter( SubmitBase ):
             if self._option.verbose :
                 baseCommand = baseCommand + " -v "
             command = baseCommand + "  lfn:%(gridPath)s/%(file)s file:%(localPath)s/%(file)s " % {
-                    "gridPath" : gridPath, "file": self._pedeFilename, "localPath": localPath }
+                "gridPath" : gridPath, "file": self._pedeFilename, "localPath": localPath }
 
             self._logger.info( "Getting the pedestal file %(file)s" % { "file": self._pedeFilename } )
             if os.system( command ) != 0:
