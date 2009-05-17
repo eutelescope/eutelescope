@@ -2,7 +2,7 @@
 # A template of filtering job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-filter-tmp.sh,v 1.2 2009-05-15 17:17:08 bulgheroni Exp $
+# @version $Id: runjob-filter-tmp.sh,v 1.3 2009-05-17 21:18:08 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -85,7 +85,7 @@ PedeString="@PedeString@"
 Name="@Name@"
 
 # Run list (actually used only when merging...)
-RunList=@RunList@
+RunList="@RunList@"
 
 # Merging ?
 Merge="@Merge@"
@@ -202,6 +202,7 @@ echo
 for run in $RunList; do
 
     echo "--> $run"
+    echo
     InputLcioLFN=$GRIDFolderClusearchResults/run$run-clu-p$PedeString.slcio
     InputLcioLocal=$PWD/results/run$run-clu-p$PedeString.slcio
 

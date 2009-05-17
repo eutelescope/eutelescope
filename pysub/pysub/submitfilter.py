@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.17 2009-05-17 09:31:27 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.18 2009-05-17 21:18:08 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.17 $"
+    cvsVersion = "$Revision: 1.18 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -214,6 +214,9 @@ class SubmitFilter( SubmitBase ):
 
         entry = self._option.output, "N/A",  "Unknown", "Unknown", "Unknown", "Unknown"
         self._summaryNTuple.append( entry )
+
+        entry = self._option.output, "Unknown"
+        self._gridJobNTuple.append( entry )
 
         self._logger.info( "Starting the merging run %(output)s" % { "output": self._option.output } )
 
@@ -632,7 +635,7 @@ class SubmitFilter( SubmitBase ):
         self._steeringFileName = self.generateSteeringFileMerge( )
 
         # finally ready to submit...
-        self.submitJDL( len( self._summaryNTuple ) - 1, self._option.output   )
+        self.submitJDL( len( self._gridJobNTuple ) - 1, self._option.output   )
 
         # prepare a tarball with all the ancillaries
         self.prepareTarball( self._option.output )
