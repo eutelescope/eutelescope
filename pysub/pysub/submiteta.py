@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-eta.py script
 #
 #
-# @version $Id: submiteta.py,v 1.4 2009-05-18 12:08:35 bulgheroni Exp $
+# @version $Id: submiteta.py,v 1.5 2009-05-18 13:03:11 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitEta( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitEta( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.4 $"
+    cvsVersion = "$Revision: 1.5 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -278,8 +278,7 @@ class SubmitEta( SubmitBase ):
             self._logger.error( "Skipping to the next run " )
             run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", marlin, output, histo, tarball
-
-
+            raise StopExecutionError( message )
 
     ## Generate only submitter
     #
@@ -937,7 +936,7 @@ class SubmitEta( SubmitBase ):
             self._summaryNTuple[ index ] = run, b, c, d, e, "OK"
 
 
-    ## Cleanup after each run pedestal calculation
+    ## Cleanup after each calculation
     def cleanup( self, runString ):
 
         self._logger.info( "Cleaning up the local pc" )
@@ -1197,7 +1196,7 @@ class SubmitEta( SubmitBase ):
         message = "Generating the executable (%(name)s-%(run)s.sh)" % { "name": self.name, "run": runString }
         self._logger.info( message )
         try :
-            runTemplate = self._configParser.get( "SteeringTemplate", "ClusearchGRIDScript" )
+            runTemplate = self._configParser.get( "SteeringTemplate", "EtaGRIDScript" )
         except ConfigParser.NoOptionError:
             message = "Unable to find a valid executable template"
             self._logger.critical( message )
@@ -1206,18 +1205,19 @@ class SubmitEta( SubmitBase ):
         runTemplateString = open( runTemplate, "r" ).read()
         runActualString = runTemplateString
 
-        # replace the runString
-        runActualString = runActualString.replace( "@RunString@", runString )
+        # replace the input file name. Again strip away any possible path from this.
+        trash, filename = os.path.split( self._args[0] )
+        runActualString = runActualString.replace ("@Filename@", filename )
 
-        # replace the pedeString as well
-        runActualString = runActualString.replace( "@PedeString@", self._pedeString )
+        # replace the output base
+        runActualString = runActualString.replace( "@OutputBase@", self._option.output )
 
         # replace the job name
         runActualString = runActualString.replace( "@Name@", self.name )
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
-                         "GRIDFolderBase", "GRIDFolderLcioRaw", "GRIDFolderDBPede", "GRIDFolderClusearchResults",
-                         "GRIDFolderClusearchJoboutput", "GRIDFolderClusearchHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+                         "GRIDFolderBase", "GRIDFolderFilterResults", "GRIDFolderDBEta", "GRIDFolderEtaJoboutput",
+                         "GRIDFolderEtaJoboutput", "GRIDFolderEtaHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
         for variable in variableList:
             try:
                 value = self._configParser.get( "GRID", variable )
