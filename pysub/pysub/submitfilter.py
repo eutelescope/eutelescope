@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.21 2009-05-18 10:51:02 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.22 2009-05-18 13:23:47 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.21 $"
+    cvsVersion = "$Revision: 1.22 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -153,7 +153,7 @@ class SubmitFilter( SubmitBase ):
         # files. Check this...
         if self._option.merge :
             if self._option.output == None :
-                self._logger.critical( "When working in merge mode, specify the a basename for the output using -o" )
+                self._logger.critical( "When working in merge mode, specify a basename for the output using -o" )
                 sys.exit( 5 )
 
     ## Execute method
@@ -640,7 +640,7 @@ class SubmitFilter( SubmitBase ):
         # beautify the summary table...
         for index, entry in enumerate( self._summaryNTuple ) :
             run, input, marlin, output, histo, tarball = entry
-            if input != "Missing":
+            if marlin != "Skipped":
                 marlin = "Merging"
                 self._summaryNTuple[ index ] = run, input, marlin, output, histo, tarball
 
