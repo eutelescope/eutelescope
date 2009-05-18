@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-eta.py script
 #
 #
-# @version $Id: submiteta.py,v 1.5 2009-05-18 13:03:11 bulgheroni Exp $
+# @version $Id: submiteta.py,v 1.6 2009-05-18 16:12:12 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitEta( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitEta( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.5 $"
+    cvsVersion = "$Revision: 1.6 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -890,7 +890,7 @@ class SubmitEta( SubmitBase ):
         # the histogram file
         if self._option.execution != "all-grid":
             try :
-                histoFilePath = self._configParser.get( "LOCAL", "LocalFolderClusearchHisto" )
+                histoFilePath = self._configParser.get( "LOCAL", "LocalFolderEtaHisto" )
             except ConfigParser.NoOptionError :
                 histoFilePath = "histo"
                 listOfFiles.append( os.path.join( histoFilePath, "%(run)s-eta-histo.root" % { "run": runString } ) )
