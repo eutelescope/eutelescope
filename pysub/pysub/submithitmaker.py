@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-hitmaker.py script
 #
 #
-# @version $Id: submithitmaker.py,v 1.3 2009-05-18 17:26:47 bulgheroni Exp $
+# @version $Id: submithitmaker.py,v 1.4 2009-05-18 17:50:03 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitHitMaker( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitHitMaker( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.3 $"
+    cvsVersion = "$Revision: 1.4 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -133,7 +133,7 @@ class SubmitHitMaker( SubmitBase ):
             self._logger.warning("Are you sure to continue? [y/n]")
             message = "--> "
             if self.askYesNo(prompt = message ) == True:
-                self._logger.info("User decide to continue removing input files")
+                self._logger.info("User decided to continue removing input files")
             else:
                 self._logger.info("Aborted by user")
                 sys.exit( 4 )
@@ -143,7 +143,7 @@ class SubmitHitMaker( SubmitBase ):
             self._logger.warning("Are you sure to continue? [y/n]")
             message = "--> "
             if self.askYesNo(prompt = message ) == True:
-                self._logger.info("User decide to continue removing output files")
+                self._logger.info("User decided to continue removing output files")
             else:
                 self._logger.info("Aborted by user")
                 sys.exit( 4 )
@@ -410,7 +410,34 @@ class SubmitHitMaker( SubmitBase ):
             raise StopExecutionError( message )
 
     ## Get the input run from the GRID
-    def getRunFromGRID(self, index, runString ) :
+    def getRunFromGRID( self ) :
+
+        self._logger.info( "Getting the Eta file from the GRID" )
+        try :
+            inputPath = self._configParser.get( "GRID", "GRIDFolderDBEta" )
+        except ConfigParser.NoOptionError :
+            message = "GRIDFolderDBEta missing in the configuration file. Quitting."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderDBEta" )
+        except ConfigParser.NoOptionError :
+            localPath = "$PWD/db"
+
+        baseCommand = "lcg-cp "
+        if self._option.verbose :
+            baseCommand = baseCommand + " -v "
+
+        command = "%(base)s lfn:%(gridPath)s/%(file)s file:%(localPath)s/%(file)s" %  \
+                      { "base": baseCommand, "gridPath" : inputPath, "file": os.path.basename( self._option.eta ), "localPath": localPath }
+
+        if os.system( command ) != 0:
+            message = "Unable to get the Eta file. Terminating!"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+        else:
+            self._logger.info( "Eta file successfully copied from the GRID" )
 
         self._logger.info(  "Getting the input file from the GRID" )
 
@@ -449,7 +476,7 @@ class SubmitHitMaker( SubmitBase ):
 
 
     ## Put the DB to the GRID
-    def putOutputOnGRID( ):
+    def putOutputOnGRID( self ):
 
         self._logger.info(  "Putting the output file to the GRID" )
 
@@ -478,7 +505,7 @@ class SubmitHitMaker( SubmitBase ):
             { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : file  }
         if os.system( command ) != 0 :
             self._logger.critical( "Problem copying the output file %(file)s to the GRID" % {"file" : file} )
-            for index, entry in self._summaryNTuple:
+            for index, entry in enumerate ( self._summaryNTuple ):
                 run, input, marlin, output, histo, tarball = entry
                 self._summaryNTuple[ index ] = run, input, marlin, "See below", histo, tarball
 
@@ -487,7 +514,7 @@ class SubmitHitMaker( SubmitBase ):
             raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(file)s" % { "gridFolder": gridPath, "file" : file } )
         else:
             self._logger.info( "Output file successfully copied to the GRID" )
-            for index, entry in self._summaryNTuple:
+            for index, entry in enumerate( self._summaryNTuple ):
                 run, input, marlin, output, histo, tarball = entry
                 self._summaryNTuple[ index ] = run, input, marlin, "See below", histo, tarball
 
@@ -543,7 +570,7 @@ class SubmitHitMaker( SubmitBase ):
             raise StopExecutionError( message )
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderHitHisto" )
+            localPath = self._configParser.get( "LOCAL", "LocalFolderHitmakerHisto" )
         except ConfigParser.NoOptionError :
             localPath = "$PWD/histo"
 
@@ -555,7 +582,7 @@ class SubmitHitMaker( SubmitBase ):
             { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : self._option.output }
         if os.system( command ) != 0 :
             self._logger.critical( "Problem copying the histogram file %(run)s-hit-histo.root to the GRID" % {"run" : self._option.output} )
-            for index, entry in self._summaryNTuple:
+            for index, entry in enumerate( self._summaryNTuple ):
                 run, input, marlin, output, histo, tarball = entry
                 self._summaryNTuple[ index ] = run, input, marlin, output, "See below", tarball
 
@@ -564,7 +591,7 @@ class SubmitHitMaker( SubmitBase ):
             raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s-hit-histo.root" %   { "gridFolder": gridPath, "run" : self._option.output } )
         else:
             self._logger.info("Histogram file sucessfully copied to the GRID" )
-            for index, entry in self._summaryNTuple:
+            for index, entry in enumerate( self._summaryNTuple ):
                 run, input, marlin, output, histo, tarball = entry
                 self._summaryNTuple[ index ] = run, input, marlin, output, "See below", tarball
 
@@ -635,7 +662,7 @@ class SubmitHitMaker( SubmitBase ):
         if os.system( command ) != 0 :
             self._logger.critical( "Problem copying the joboutput file %(name)s-%(run)s.tar.gz to the GRID" % {
                      "name": self.name, "run" : self._option.output } )
-            for index, entry in self._summaryNTuple:
+            for index, entry in enumerate( self._summaryNTuple ):
                 run, input, marlin, output, histo, tarball = entry
                 self._summaryNTuple[ index ] = run, input, marlin, output, histo, "See below"
 
@@ -645,7 +672,7 @@ class SubmitHitMaker( SubmitBase ):
 
         else:
             self._logger.info("Joboutput file sucessfully copied to the GRID" )
-            for index, entry in self._summaryNTuple:
+            for index, entry in enumerate( self._summaryNTuple ):
                 run, input, marlin, output, histo, tarball = entry
                 self._summaryNTuple[ index ] = run, input, marlin, output, histo, "See below"
 
@@ -1027,7 +1054,7 @@ class SubmitHitMaker( SubmitBase ):
         # remove the input and output file
         if self._keepInput == False:
 
-            for index, file in self._inputFileList:
+            for index, file in enumerate( self._inputFileList ):
                 if file != "DEADFACE" :
                     os.remove( self._fqInputFileList[ index ] )
 
@@ -1142,11 +1169,26 @@ class SubmitHitMaker( SubmitBase ):
             self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderHitmakerResults" )
             self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderHitmakerJoboutput")
             self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderHitmakerHisto")
+            self._etaPathGRID       = self._configParser.get("GRID", "GRIDFolderDBEta")
             folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID ]
         except ConfigParser.NoOptionError:
             message = "Missing path from the configuration file"
             self._logger.critical( message )
             raise StopExecutionError( message )
+
+        # check if the eta file is on the GRID
+        etaFile = os.path.basename( self._option.eta )
+        command = "lfc-ls %(etaPathGRID)s/%(etaFile)s" % {"etaPathGRID" : self._etaPathGRID , "etaFile": etaFile }
+        lfc = popen2.Popen4( command )
+        while lfc.poll() == -1:
+            pass
+        if lfc.poll() == 0:
+            self._logger.info( "Eta file found on SE" )
+        else:
+            message = "Eta file NOT found on SE. Terminating"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
 
         # check if the input files is on the GRID
         for index, inputFile in enumerate( self._inputFileList ):
@@ -1198,15 +1240,15 @@ class SubmitHitMaker( SubmitBase ):
                                   % { "outputPathGRID": self._outputPathGRID, "run": self._option.output } )
             if self._configParser.get("General","Interactive" ):
                 if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/%(run)s-eta-db.slcio from the GRID"
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/%(run)s-hit.slcio from the GRID"
                                        % { "outputPathGRID": self._outputPathGRID, "run": self._option.output } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/%(run)s-eta-db.slcio" % { "outputPathGRID": self._outputPathGRID,"run": self._option.output }
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/%(run)s-hit.slcio" % { "outputPathGRID": self._outputPathGRID,"run": self._option.output }
                     os.system( command )
                 else :
-                    raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(run)s-eta-db.slcio on the GRID"
+                    raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(run)s-hit.slcio on the GRID"
                                                   % { "outputPathGRID": self._outputPathGRID, "run": self._option.output } )
             else :
-                raise OutputAlreadyOnGRIDError( "%(outputPathGRID)s/%(run)s-eta-db.slcio on the GRID"
+                raise OutputAlreadyOnGRIDError( "%(outputPathGRID)s/%(run)s-hit.slcio on the GRID"
                                               % { "outputPathGRID": self._outputPathGRID, "run": self._option.output } )
 
         # check if the job output file already exists
