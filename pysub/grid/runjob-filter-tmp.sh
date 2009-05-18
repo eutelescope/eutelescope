@@ -2,7 +2,7 @@
 # A template of filtering job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-filter-tmp.sh,v 1.3 2009-05-17 21:18:08 bulgheroni Exp $
+# @version $Id: runjob-filter-tmp.sh,v 1.4 2009-05-18 07:40:49 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -254,7 +254,12 @@ echo
 
 
 # remove the input files
-doCommand "rm ${InputLcioLocal}"
+
+for run in $RunList; do
+    InputLcioLocal=$PWD/results/run$run-clu-p$PedeString.slcio
+    doCommand "rm ${InputLcioLocal}"
+done
+
 doCommand "rm ${InputPedeLocal}"
 
 
