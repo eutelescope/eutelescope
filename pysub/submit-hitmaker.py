@@ -13,7 +13,7 @@ from optparse import OptionGroup
 # the SubmitHitMaker and create an instance of this object.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-hitmaker.py,v 1.1 2009-05-18 13:29:57 bulgheroni Exp $
+# @version $Id: submit-hitmaker.py,v 1.2 2009-05-18 16:12:37 bulgheroni Exp $
 
 def main() :
 
@@ -22,8 +22,8 @@ def main() :
 
 usage: %prog [execution-options] [io-options] [configuration-options] -o basename-output input-file
 """
-    cvsVersion = "$Revision: 1.1 $"
-    submitHitMakerCVSVersion = SubmitEta.cvsVersion
+    cvsVersion = "$Revision: 1.2 $"
+    submitHitMakerCVSVersion = SubmitHitMaker.cvsVersion
     submitBaseCVSVersion = SubmitBase.cvsVersion
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
         "\nSubmitHitMaker class version " + submitHitMakerCVSVersion[10:len(submitHitMakerCVSVersion)-1] + \
@@ -39,6 +39,9 @@ usage: %prog [execution-options] [io-options] [configuration-options] -o basenam
                        " Hit LCIO file ==> OUTPUT-hit.slcio, histogram file ==> OUTPUT-hit-histo.root "
                        )
 
+    parser.add_option( "-e", "--eta-file", type="string", action="store", dest="eta", metavar="ETA",
+                       help = "This is the ETA file to be used for correcting the cluster center position in the "
+                       "hit making procedure." )
 
     # adding in a group with all the execution options.
     # adding in a group all the execution options.
