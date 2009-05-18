@@ -2,7 +2,7 @@
 # A template of eta job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-eta-tmp.sh,v 1.2 2009-05-18 13:40:40 bulgheroni Exp $
+# @version $Id: runjob-eta-tmp.sh,v 1.3 2009-05-18 14:22:15 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -98,7 +98,7 @@ GRIDILCSoftVersion="@GRIDILCSoftVersion@"
 InputLFN=$GRIDFolderFilterResults/$Filename
 OutputLFN=$GRIDFolderDBEta/$OutputBase-eta-db.slcio
 OutputJoboutputLFN=$GRIDFolderEtaJoboutput/$Name-$OutpubBase.tar.gz
-OutputHistoLFN=$GRIDFolderEtaHisto/$OutpubBase-eta-histo.root
+OutputHistoLFN=$GRIDFolderEtaHisto/$OutputBase-eta-histo.root
 
 InputLocal=$PWD/results/$Filename
 OutputLocal=$PWD/db/$OutputBase-eta-db.slcio
