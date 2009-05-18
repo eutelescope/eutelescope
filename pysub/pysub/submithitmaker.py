@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-hitmaker.py script
 #
 #
-# @version $Id: submithitmaker.py,v 1.2 2009-05-18 17:03:06 bulgheroni Exp $
+# @version $Id: submithitmaker.py,v 1.3 2009-05-18 17:26:47 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitHitMaker( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitHitMaker( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.2 $"
+    cvsVersion = "$Revision: 1.3 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1051,6 +1051,16 @@ class SubmitHitMaker( SubmitBase ):
 
 
     def end( self ) :
+
+        if self._keepInput == False :
+            # remove also the eta file
+            try:
+                dbFilePath = self._configParser.get( "LOCAL", "LocalFolderDBEta" )
+            except ConfigParser.NoOptionError :
+                dbFilePath = "db"
+
+            os.remove( os.path.join( dbFilePath , os.path.abspath( self._option.eta)  ) )
+
 
         if self._option.execution == "all-grid" :
             self.prepareJIDFile()
