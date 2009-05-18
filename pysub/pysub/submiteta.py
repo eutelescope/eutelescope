@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-eta.py script
 #
 #
-# @version $Id: submiteta.py,v 1.3 2009-05-18 10:48:24 bulgheroni Exp $
+# @version $Id: submiteta.py,v 1.4 2009-05-18 12:08:35 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitEta( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitEta( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.3 $"
+    cvsVersion = "$Revision: 1.4 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -446,8 +446,8 @@ class SubmitEta( SubmitBase ):
 
         # the input file name is given by the user via the command line.
         # it could be that the user provided file with a piece of path
-        # attached. So remove it before proceeding...
-        file = "%(output)s-eta-db.slcio" % { "output" = self._option.output }
+        # attached. So remove it before proceeding....
+        file = "%(output)s-eta-db.slcio" % { "output" : self._option.output }
 
         command = "%(base)s -l lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(file)s" % \
             { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : file  }
@@ -472,12 +472,12 @@ class SubmitEta( SubmitBase ):
             if self._option.verbose :
                 baseCommand = baseCommand + " -v "
 
-            filenametest = "%(output)s-eta-db-test.slcio"
+            filenametest = "%(output)s-eta-db-test.slcio" % { "output" : self._option.output }
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename, "filetest":filenametest }
             if os.system( command ) != 0 :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail!", histogram, tarball
+                self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail", histogram, tarball
                 self._logger.error( "Problem with the verification!" )
                 raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
 
@@ -491,7 +491,7 @@ class SubmitEta( SubmitBase ):
                 self._logger.info( "Verification successful" )
             else :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail!", histogram, tarball
+                self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail", histogram, tarball
                 self._logger.error( "Problem with the verification!" )
 
             os.remove( os.path.join( localPath, filenametest ) )
@@ -517,13 +517,12 @@ class SubmitEta( SubmitBase ):
         if self._option.verbose :
             baseCommand = baseCommand + " -v "
 
-        command = "%(base)s -l lfn:%(gridFolder)s/run%(run)s-clu-histo.root file:%(localFolder)s/%(run)s-eta-histo.root" % \
+        command = "%(base)s -l lfn:%(gridFolder)s/%(run)s-eta-histo.root file:%(localFolder)s/%(run)s-eta-histo.root" % \
             { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : runString }
         if os.system( command ) != 0 :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, "LOCAL", f
-            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s-clu-histo.root" % \
-                                        { "gridFolder": gridPath, "run" : runString } )
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s-eta-histo.root" %   { "gridFolder": gridPath, "run" : runString } )
         else:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, "GRID", f
@@ -531,7 +530,7 @@ class SubmitEta( SubmitBase ):
 
         if self._option.verify_output:
             self._logger.info( "Verifying the histogram integrity on the GRID" )
-            filename = "run%(run)s-clu-histo.root"  % { "run" : runString }
+            filename = "%(run)s-eta-histo.root"  % { "run" : runString }
 
             localCopy = open( os.path.join( localPath, filename ) ).read()
             localCopyHash = sha.new( localCopy ).hexdigest() 
@@ -548,7 +547,7 @@ class SubmitEta( SubmitBase ):
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest, "file" : filename }
             if os.system( command ) != 0 : 
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail!", tarball
+                self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail", tarball
                 self._logger.error( "Problem with the verification!" )
                 raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
 
@@ -562,7 +561,7 @@ class SubmitEta( SubmitBase ):
                 self._logger.info( "Verification successful" )
             else :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail!", tarball
+                self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail", tarball
                 self._logger.error( "Problem with the verification!" )
 
             os.remove( os.path.join( localPath, filenametest ) )
@@ -617,7 +616,7 @@ class SubmitEta( SubmitBase ):
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest,"file" : filename }
             if os.system( command ) != 0 : 
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, output, histogram, "GRID - Fail!"
+                self._summaryNTuple[ index ] = run, input, marlin, output, histogram, "GRID - Fail"
                 self._logger.error( "Problem with the verification!" )
                 raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
 
@@ -631,7 +630,7 @@ class SubmitEta( SubmitBase ):
                 self._logger.info( "Verification successful" )
             else :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, output, histogram, "GRID - Fail!"
+                self._summaryNTuple[ index ] = run, input, marlin, output, histogram, "GRID - Fail"
                 self._logger.error( "Problem with the verification!" )
 
             os.remove( os.path.join( localPath, filenametest ) )
@@ -654,9 +653,9 @@ class SubmitEta( SubmitBase ):
         if self._option.execution == "cpu-local" :
             path = os.path.join( inputFilePath, inputFileName )
         else:
-            path = os.path.join(inputFilePath, os.path.abspath( inputFileName )
+            path = os.path.join(inputFilePath, os.path.abspath( inputFileName ) )
 
-        if not os.access( path ) , os.R_OK ):
+        if not os.access( path  , os.R_OK ):
             message = "Problem accessing the input file (%(file)s), trying next run" % {"file": inputFileName }
             self._logger.error( message )
             raise MissingInputFileError( inputFileName )
@@ -757,7 +756,7 @@ class SubmitEta( SubmitBase ):
                 folder = "results"
 
             # compose the fully qualified input file
-            if self._option.execute == "cpu-local":
+            if self._option.execution == "cpu-local":
                 self._fqInputFile = os.path.join( folder,  self._args[0]  )
             else:
                 self._fqInputFile = os.path.join( folder, os.path.abspath( self._args[0] ) )
@@ -956,7 +955,7 @@ class SubmitEta( SubmitBase ):
                 inputFilePath = "results"
 
             # the input file is taken from the command line
-            trash, inputfile = os.path.split( self._args[0] )
+            trash, inputFile = os.path.split( self._args[0] )
             os.remove( os.path.join( inputFilePath, inputFile ))
 
         if self._keepOutput == False :
@@ -965,7 +964,7 @@ class SubmitEta( SubmitBase ):
             except ConfigParser.NoOptionError :
                 outputFilePath = "db"
 
-            outputFile = "%(run)s-eta-db.slcio" % { "run" : runString, "pede": self._pedeString }
+            outputFile = "%(run)s-eta-db.slcio" % { "run" : runString }
             for file in glob.glob( os.path.join( outputFilePath , outputFile ) ):
                 os.remove( file )
 
