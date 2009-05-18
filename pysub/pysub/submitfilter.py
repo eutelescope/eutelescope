@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.18 2009-05-17 21:18:08 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.19 2009-05-18 07:34:07 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.18 $"
+    cvsVersion = "$Revision: 1.19 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1639,7 +1639,7 @@ class SubmitFilter( SubmitBase ):
 
         jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
         for run, jid in self._gridJobNTuple:
-            if jid != "Unknown":
+            if jid != "Unknown" and jid != "See below":
                 jidFile.write( jid )
 
         jidFile.close()
