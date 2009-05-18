@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-eta.py script
 #
 #
-# @version $Id: submiteta.py,v 1.1 2009-05-18 08:58:02 bulgheroni Exp $
+# @version $Id: submiteta.py,v 1.2 2009-05-18 09:23:36 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitEta( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitEta( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.1 $"
+    cvsVersion = "$Revision: 1.2 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -195,10 +195,10 @@ class SubmitEta( SubmitBase ):
 
         except MissingInputFileError, error:
             message = "Missing input file %(file)s" % { "file": error._filename }
-            self._logger.error( message )
-            self._logger.error("Skipping to the next run ")
+            self._logger.critical( message )
             run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", "Skipped", output, histo, tarball
+            raise StopExecutionError( message )
 
         except MissingInputFileOnGRIDError, error:
             message = "Missing input file %(file)s" % { "file": error._filename }
@@ -245,24 +245,28 @@ class SubmitEta( SubmitBase ):
             self._logger.error("Skipping to the next run ")
             run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, input, "Failed", "Missing", "Missing", "Missing"
+            raise StopExecutionError( message )
 
         except MissingOutputFileError, error:
             message = "The output file (%(file)s) was not properly generated, possible failure" % { "file": error._filename }
             self._logger.error( message )
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, "Missing", d, f
+            raise StopExecutionError( message )
 
         except MissingHistogramFileError, error:
             message = "The output file (%(file)s) was not properly generated, possible failure" % { "file": error._filename }
             self._logger.error( message )
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, "Missing", f
+            raise StopExecutionError( message )
 
         except MissingJoboutputFileError, error:
             message = "The joboutput tarball (%(file)s) is missing, possible failure" % { "file": error._filename }
             self._logger.error( message )
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, d, e, "Missing"
+            raise StopExecutionError( message )
 
         except GRID_LCG_CPError, error:
             message = "Problem copying the input file (%(file)s)" % { "file": error._filename }
@@ -292,7 +296,9 @@ class SubmitEta( SubmitBase ):
     def executeAllLocal( self, index , runString ):
 
         # before any futher, check we have the input file for this run
-        self.checkInputFile( index, runString )
+        # runString is not used in this case, since the input file is provided 
+        # directly by the user via the command line
+        self.checkInputFile( index, None )
 
         # first generate the steering file
         self._steeringFileName = self.generateSteeringFile( runString )
@@ -626,11 +632,13 @@ class SubmitEta( SubmitBase ):
         self._logger.info( "Checking the input file" )
 
         try :
-            inputFilePath = self._configParser.get( "LOCAL", "LocalFolderLcioRaw" )
+            inputFilePath = self._configParser.get( "LOCAL", "LocalFolderFilterResults" )
         except ConfigParser.NoOptionError :
-            inputFilePath = "lcio-raw"
-        inputFileName = "run%(run)s.slcio" % { "run": runString }
-        if not os.access( os.path.join(inputFilePath, inputFileName) , os.R_OK ):
+            inputFilePath = "results"
+
+        # the input file name is the one provided by the user in the command line
+        inputFileName = self._args[0]
+        if not os.access( os.path.join(inputFilePath, os.path.abspath( inputFileName ) ) , os.R_OK ):
             message = "Problem accessing the input file (%(file)s), trying next run" % {"file": inputFileName }
             self._logger.error( message )
             raise MissingInputFileError( inputFileName )
@@ -803,14 +811,14 @@ class SubmitEta( SubmitBase ):
     #
     def checkOutputFile( self, index, runString ) :
         # this should be named something like
-        # results/run123456-clu-p654321.slcio
+        # db/output-eta-db.slcio
 
         try :
-            outputFilePath = self._configParser.get( "LOCAL", "LocalFolderClusearchResults" )
+            outputFilePath = self._configParser.get( "LOCAL", "LocalFolderDBEta" )
         except ConfigParser.NoOptionError :
-            outputFilePath = "results"
+            outputFilePath = "db"
 
-        outputFileName = "run%(run)s-clu-p%(pede)s.slcio" % { "run": runString, "pede": self._pedeString }
+        outputFileName = "%(run)s-eta-db.slcio" % { "run": runString, }
         if not os.access( os.path.join( outputFilePath , outputFileName) , os.R_OK ):
             raise MissingOutputFileError( outputFileName )
         else :
@@ -821,13 +829,13 @@ class SubmitEta( SubmitBase ):
     #
     def checkHistogramFile( self, index, runString ) :
         # this should be named something like
-        # histo/run123456-clu-histo.root
+        # histo/output-eta-histo.root
 
         try :
-            histoFilePath = self._configParser.get( "LOCAL", "LocalFolderClusearchHisto" )
+            histoFilePath = self._configParser.get( "LOCAL", "LocalFolderEtaHisto" )
         except ConfigParser.NoOptionError :
             histoFilePath = "histo"
-        histoFileName = "run%(run)s-clu-histo.root" % { "run": runString }
+        histoFileName = "%(run)s-eta-histo.root" % { "run": runString }
         if not os.access( os.path.join( histoFilePath , histoFileName ) , os.R_OK ):
             raise MissingHistogramFileError( histoFileName )
         else:
@@ -852,8 +860,6 @@ class SubmitEta( SubmitBase ):
             histoinfoPath = self._configParser.get( "LOCAL", "LocalFolderHistoinfo" )
         except ConfigParser.NoOptionError :
             histoinfoPath = ""
-        if os.access( os.path.join( histoinfoPath, self._histoinfoFilename ), os.R_OK ) :
-            listOfFiles.append( os.path.join( histoinfoPath, self._histoinfoFilename ))
         listOfFiles.append( self._configFile )
 
         # all files starting with clusearch-123456 in the local folder
@@ -868,7 +874,7 @@ class SubmitEta( SubmitBase ):
                 histoFilePath = self._configParser.get( "LOCAL", "LocalFolderClusearchHisto" )
             except ConfigParser.NoOptionError :
                 histoFilePath = "histo"
-                listOfFiles.append( os.path.join( histoFilePath, "run%(run)s-clu-histo.root" % { "run": runString } ) )
+                listOfFiles.append( os.path.join( histoFilePath, "%(run)s-eta-histo.root" % { "run": runString } ) )
 
         # copy everything into a temporary folder
         for file in listOfFiles :
@@ -885,7 +891,7 @@ class SubmitEta( SubmitBase ):
 
         # copy the tarball in the log folder
         try:
-            localFolder = self._configParser.get( "LOCAL", "LocalFolderClusearchJoboutput")
+            localFolder = self._configParser.get( "LOCAL", "LocalFolderEtaJoboutput")
         except ConfigParser.NoOptionError :
             self._logger.debug( "LocalFolderClusearchJoboutput not available, using $PWD/log ")
             localFolder = "log/"
@@ -897,10 +903,10 @@ class SubmitEta( SubmitBase ):
     #
     def checkJoboutputFile( self, index, runString) :
         # this should be named something like
-        # log/clusearch-123456.tar.gz
+        # log/eta-output.tar.gz
 
         try :
-            outputFilePath = self._configParser.get( "LOCAL", "LocalFolderClusearchJoboutput" )
+            outputFilePath = self._configParser.get( "LOCAL", "LocalFolderEtaJoboutput" )
         except ConfigParser.NoOptionError :
             outputFilePath = "log"
         tarballFileName = "%(name)s-%(run)s.tar.gz" % { "name": self.name, "run": runString }
