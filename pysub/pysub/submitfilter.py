@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.19 2009-05-18 07:34:07 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.20 2009-05-18 07:44:55 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.19 $"
+    cvsVersion = "$Revision: 1.20 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -636,6 +636,13 @@ class SubmitFilter( SubmitBase ):
 
         # finally ready to submit...
         self.submitJDL( len( self._gridJobNTuple ) - 1, self._option.output   )
+
+        # beautify the summary table...
+        for index, entry in enumerate( self._summaryNTuple ) :
+            run, input, marlin, output, histo, tarball = entry
+            if input != "Missing":
+                marlin = "Merging"
+                self._summaryNTuple[ index ] = run, input, marlin, output, histo, tarball
 
         # prepare a tarball with all the ancillaries
         self.prepareTarball( self._option.output )
