@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-eta.py script
 #
 #
-# @version $Id: submiteta.py,v 1.2 2009-05-18 09:23:36 bulgheroni Exp $
+# @version $Id: submiteta.py,v 1.3 2009-05-18 10:48:24 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitEta( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitEta( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.2 $"
+    cvsVersion = "$Revision: 1.3 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -206,6 +206,7 @@ class SubmitEta( SubmitBase ):
             self._logger.error("Skipping to the next run ")
             run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", "Skipped", output, histo, tarball
+            raise StopExecutionError( message )
 
         except OutputFileAlreadyOnGRIDError, error:
             message = "Output file %(file)s already on GRID" % { "file": error._filename }
@@ -213,6 +214,7 @@ class SubmitEta( SubmitBase ):
             self._logger.error("Skipping to the next run ")
             run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, input, "Skipped", "GRID", histo, tarball
+            raise StopExecutionError( message )
 
         except HistogramFileAlreadyOnGRIDError, error:
             message = "Histogram file %(file)s already on GRID" % { "file": error._filename }
@@ -220,6 +222,7 @@ class SubmitEta( SubmitBase ):
             self._logger.error("Skipping to the next run ")
             run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, input, "Skipped", output, "GRID", tarball
+            raise StopExecutionError( message )
 
         except JoboutputFileAlreadyOnGRIDError, error:
             message = "Joboutput file %(file)s already on GRID" % { "file": error._filename }
@@ -227,6 +230,7 @@ class SubmitEta( SubmitBase ):
             self._logger.error("Skipping to the next run ")
             run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, input, "Skipped", output, histo, "GRID"
+            raise StopExecutionError( message )
 
         except MissingSteeringTemplateError, error:
             message = "Steering template %(file)s unavailble. Quitting!" % { "file": error._filename }
@@ -386,28 +390,33 @@ class SubmitEta( SubmitBase ):
         self._logger.info(  "Getting the input file from the GRID" )
 
         try :
-            lcioRawPath = self._configParser.get( "GRID", "GRIDFolderLcioRaw" )
+            inputPath = self._configParser.get( "GRID", "GRIDFolderFilterResults" )
         except ConfigParser.NoOptionError :
-            message = "GRIDFolderNative missing in the configuration file. Quitting."
+            message = "GRIDFolderFilterResults missing in the configuration file. Quitting."
             self._logger.critical( message )
             raise StopExecutionError( message )
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderLcioRaw" )
+            localPath = self._configParser.get( "LOCAL", "LocalFolderFilterResults" )
         except ConfigParser.NoOptionError :
-            localPath = "$PWD/lcio-raw"
+            localPath = "$PWD/results"
 
         baseCommand = "lcg-cp "
         if self._option.verbose :
             baseCommand = baseCommand + " -v "
 
-        command = "%(base)s lfn:%(gridPath)s/run%(run)s.slcio file:%(localPath)s/run%(run)s.slcio" %  \
-            { "base": baseCommand, "gridPath" : lcioRawPath, "run": runString, "localPath": localPath }
+        # the input file name is given by the user via the command line.
+        # it could be that the user provided file with a piece of path
+        # attached. So remove it before proceeding...
+        trash, file = os.path.split( self._args[0] )
+
+        command = "%(base)s lfn:%(gridPath)s/%(file)s file:%(localPath)s/%(file)s" %  \
+            { "base": baseCommand, "gridPath" : inputPath, "file": file, "localPath": localPath }
         if os.system( command ) != 0:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
-            raise GRID_LCG_CPError( "lfn:%(gridPath)s/run%(run)s.slcio" % \
-                                        { "gridPath" : lcioRawPath, "run": runString } )
+            raise GRID_LCG_CPError( "lfn:%(gridPath)s/%(file)s" % \
+                                        { "gridPath" : inputPath, "run": runString } )
         else:
             self._logger.info("Input file successfully copied from the GRID")
             run, b, c, d, e, f = self._summaryNTuple[ index ]
@@ -420,28 +429,32 @@ class SubmitEta( SubmitBase ):
         self._logger.info(  "Putting the output file to the GRID" )
 
         try :
-            gridPath = self._configParser.get( "GRID", "GRIDFolderClusearchResults")
+            gridPath = self._configParser.get( "GRID", "GRIDFolderDBEta")
         except ConfigParser.NoOptionError :
-            message = "GRIDFolderClusearchResults missing in the configuration file. Quitting."
+            message = "GRIDFolderDBEta missing in the configuration file. Quitting."
             self._logger.critical( message )
             raise StopExecutionError( message )
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderClusearchResults" )
+            localPath = self._configParser.get( "LOCAL", "LocalFolderDBEta" )
         except ConfigParser.NoOptionError :
-            localPath = "$PWD/results"
+            localPath = "$PWD/db"
 
         baseCommand = "lcg-cr "
         if self._option.verbose :
             baseCommand = baseCommand + " -v "
 
-        command = "%(base)s -l lfn:%(gridFolder)s/run%(run)s-clu-p%(pede)s.slcio file:%(localFolder)s/run%(run)s-clu-p%(pede)s.slcio" % \
-            { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : runString , "pede": self._pedeString }
+        # the input file name is given by the user via the command line.
+        # it could be that the user provided file with a piece of path
+        # attached. So remove it before proceeding...
+        file = "%(output)s-eta-db.slcio" % { "output" = self._option.output }
+
+        command = "%(base)s -l lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(file)s" % \
+            { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : file  }
         if os.system( command ) != 0 :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, "LOCAL", e, f
-            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s-clu-p%(pede)s.slcio" % \
-                                        { "gridFolder": gridPath, "run" : runString , "pede": self._pedeString} )
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(file)s" % { "gridFolder": gridPath, "file" : file } )
         else:
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, c, "GRID", e, f
@@ -449,7 +462,7 @@ class SubmitEta( SubmitBase ):
 
         if self._option.verify_output:
             self._logger.info( "Verifying the output file integrity on the GRID" )
-            filename = "run%(run)s-clu-p%(pede)s.slcio" % { "run" : runString , "pede": self._pedeString }
+            filename = file
             localCopy = open( os.path.join( localPath, filename ) ).read()
             localCopyHash = sha.new( localCopy ).hexdigest() 
             self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
@@ -459,10 +472,10 @@ class SubmitEta( SubmitBase ):
             if self._option.verbose :
                 baseCommand = baseCommand + " -v "
 
-            filenametest = "run%(run)s-clu-p%(pede)s-test.slcio" % { "run" : runString , "pede": self._pedeString }
+            filenametest = "%(output)s-eta-db-test.slcio"
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename, "filetest":filenametest }
-            if os.system( command ) != 0 : 
+            if os.system( command ) != 0 :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail!", histogram, tarball
                 self._logger.error( "Problem with the verification!" )
@@ -489,14 +502,14 @@ class SubmitEta( SubmitBase ):
         self._logger.info( "Putting the histogram file to the GRID" )
 
         try:
-            gridPath = self._configParser.get( "GRID", "GRIDFolderClusearchHisto")
+            gridPath = self._configParser.get( "GRID", "GRIDFolderEtaHisto")
         except ConfigParser.NoOptionError :
-            message = "GRIDFolderClusearchHisto missing in the configuration file. Quitting."
+            message = "GRIDFolderEtaHisto missing in the configuration file. Quitting."
             self._logger.critical( message )
             raise StopExecutionError( message )
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderClusearchHisto" )
+            localPath = self._configParser.get( "LOCAL", "LocalFolderEtaHisto" )
         except ConfigParser.NoOptionError :
             localPath = "$PWD/histo"
 
@@ -504,7 +517,7 @@ class SubmitEta( SubmitBase ):
         if self._option.verbose :
             baseCommand = baseCommand + " -v "
 
-        command = "%(base)s -l lfn:%(gridFolder)s/run%(run)s-clu-histo.root file:%(localFolder)s/run%(run)s-clu-histo.root" % \
+        command = "%(base)s -l lfn:%(gridFolder)s/run%(run)s-clu-histo.root file:%(localFolder)s/%(run)s-eta-histo.root" % \
             { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : runString }
         if os.system( command ) != 0 :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
@@ -529,7 +542,7 @@ class SubmitEta( SubmitBase ):
             if self._option.verbose :
                 baseCommand = baseCommand + " -v "
 
-            filenametest = "run%(run)s-clu-histo-test.root"  % { "run" : runString }
+            filenametest = "%(run)s-eta-histo-test.root"  % { "run" : runString }
 
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest, "file" : filename }
@@ -560,14 +573,14 @@ class SubmitEta( SubmitBase ):
         self._logger.info( "Putting the joboutput file to the GRID" )
 
         try:
-            gridPath = self._configParser.get( "GRID", "GRIDFolderClusearchJoboutput")
+            gridPath = self._configParser.get( "GRID", "GRIDFolderEtaJoboutput")
         except ConfigParser.NoOptionError :
-            message = "GRIDFolderClusearchJoboutout missing in the configuration file. Quitting."
+            message = "GRIDFolderEtaJoboutput missing in the configuration file. Quitting."
             self._logger.critical( message )
             raise StopExecutionError( message )
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderClusearchJoboutput" )
+            localPath = self._configParser.get( "LOCAL", "LocalFolderEtaJoboutput" )
         except ConfigParser.NoOptionError :
             localPath = "$PWD/log"
 
@@ -627,7 +640,7 @@ class SubmitEta( SubmitBase ):
     #
     def checkInputFile( self, index, runString ) :
         # the input file should be something like:
-        # lcio-raw/run123456.slcio
+        # results/%(file)s
 
         self._logger.info( "Checking the input file" )
 
@@ -638,7 +651,12 @@ class SubmitEta( SubmitBase ):
 
         # the input file name is the one provided by the user in the command line
         inputFileName = self._args[0]
-        if not os.access( os.path.join(inputFilePath, os.path.abspath( inputFileName ) ) , os.R_OK ):
+        if self._option.execution == "cpu-local" :
+            path = os.path.join( inputFilePath, inputFileName )
+        else:
+            path = os.path.join(inputFilePath, os.path.abspath( inputFileName )
+
+        if not os.access( path ) , os.R_OK ):
             message = "Problem accessing the input file (%(file)s), trying next run" % {"file": inputFileName }
             self._logger.error( message )
             raise MissingInputFileError( inputFileName )
@@ -738,8 +756,11 @@ class SubmitEta( SubmitBase ):
             except ConfigParser.NoOptionError :
                 folder = "results"
 
-            # compose the fully qualified input file 
-            self._fqInputFile = os.path.join( folder, os.path.abspath( self._args[0] ) )
+            # compose the fully qualified input file
+            if self._option.execute == "cpu-local":
+                self._fqInputFile = os.path.join( folder,  self._args[0]  )
+            else:
+                self._fqInputFile = os.path.join( folder, os.path.abspath( self._args[0] ) )
 
         actualSteeringString = actualSteeringString.replace("@InputFile@", self._fqInputFile )
 
@@ -930,42 +951,34 @@ class SubmitEta( SubmitBase ):
         # remove the input and output file
         if self._keepInput == False:
             try :
-                inputFilePath = self._configParser.get( "LOCAL", "LocalFolderLcioRaw" )
+                inputFilePath = self._configParser.get( "LOCAL", "LocalFolderFilterResults" )
             except ConfigParser.NoOptionError :
-                inputFilePath = "lcio-raw"
+                inputFilePath = "results"
 
-            inputFile  = "run%(run)s.slcio" % { "run" : runString }
+            # the input file is taken from the command line
+            trash, inputfile = os.path.split( self._args[0] )
             os.remove( os.path.join( inputFilePath, inputFile ))
 
         if self._keepOutput == False :
             try :
-                outputFilePath = self._configParser.get( "LOCAL", "LocalFolderClusearchResults" )
+                outputFilePath = self._configParser.get( "LOCAL", "LocalFolderDBEta" )
             except ConfigParser.NoOptionError :
-                outputFilePath = "results"
+                outputFilePath = "db"
 
-            outputFile = "run%(run)s-clu-p%(pede)s.slcio" % { "run" : runString, "pede": self._pedeString }
+            outputFile = "%(run)s-eta-db.slcio" % { "run" : runString, "pede": self._pedeString }
             for file in glob.glob( os.path.join( outputFilePath , outputFile ) ):
                 os.remove( file )
 
             try :
-                histoFilePath = self._configParser.get( "LOCAL", "LocalFolderClusearchHisto" )
+                histoFilePath = self._configParser.get( "LOCAL", "LocalFolderEtaHisto" )
             except ConfigParser.NoOptionError :
                 histoFilePath = "histo"
 
-            histoFile = "run%(run)s-clu-histo.root" % { "run": runString }
+            histoFile = "%(run)s-eta-histo.root" % { "run": runString }
             os.remove( os.path.join( histoFilePath, histoFile ) )
 
 
     def end( self ) :
-
-        if self._keepInput == False :
-            # remove also the pedestal run
-            try:
-                dbFilePath = self._configParser.get( "LOCAL", "LocalFolderDBPede" )
-            except ConfigParser.NoOptionError :
-                dbFilePath = "db"
-
-            os.remove( os.path.join( dbFilePath , self._pedeFilename ) )
 
         if self._option.execution == "all-grid" :
             self.prepareJIDFile()
@@ -1043,20 +1056,23 @@ class SubmitEta( SubmitBase ):
 
         # get all the needed path from the configuration file
         try :
-            self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderLcioRaw")
-            self._pedePathGRID      = self._configParser.get("GRID", "GRIDFolderDBPede" )
-            self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderClusearchResults" )
-            self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderClusearchJoboutput")
-            self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderClusearchHisto")
+            self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderFilterResults")
+            self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderDBEta" )
+            self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderEtaJoboutput")
+            self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderEtaHisto")
             folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID ]
         except ConfigParser.NoOptionError:
             message = "Missing path from the configuration file"
             self._logger.critical( message )
             raise StopExecutionError( message )
 
-        # check if the input file is on the GRID, otherwise go to next run
-        # the existence of the pedestal run has been assured already.
-        command = "lfc-ls %(inputPathGRID)s/run%(run)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  "run": runString }
+        # check if the input file is on the GRID,
+        # the input file name is given by the user via the command line.
+        # it could be that the user provided file with a piece of path
+        # attached. So remove it before proceeding...
+        trash, file = os.path.split( self._args[0] )
+        command = "lfc-ls %(inputPathGRID)s/%(file)s" % { "inputPathGRID" : self._inputPathGRID,  "file": file }
+
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
             pass
@@ -1068,7 +1084,7 @@ class SubmitEta( SubmitBase ):
             self._logger.error( "Input file NOT found on the SE. Trying next run" )
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
-            raise MissingInputFileOnGRIDError( "%(inputPathGRID)s/run%(run)s.slcio" % { "inputPathGRID" : self._inputPathGRID,  "run": runString } )
+            raise MissingInputFileOnGRIDError( "%(inputPathGRID)s/%(file)s" % { "inputPathGRID" : self._inputPathGRID,  "file": file } )
 
         # check the existence of the folders
         try :
@@ -1082,27 +1098,25 @@ class SubmitEta( SubmitBase ):
 
 
         # check if the output file already exists
-        command = "lfc-ls %(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "outputPathGRID": self._outputPathGRID,
-                                                                                 "pede": self._pedeString, "run": runString }
+        command = "lfc-ls %(outputPathGRID)s/%(run)s-eta-db.slcio" % { "outputPathGRID": self._outputPathGRID, "run": runString }
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
             pass
         if lfc.poll() == 0:
-            self._logger.warning( "Output file %(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio already exists"
-                                  % { "outputPathGRID": self._outputPathGRID, "run": runString, "pede": self._pedeString, } )
+            self._logger.warning( "Output file %(outputPathGRID)s/%(run)s-eta-db.slcio already exists"
+                                  % { "outputPathGRID": self._outputPathGRID, "run": runString } )
             if self._configParser.get("General","Interactive" ):
                 if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio from the GRID"
-                                       % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "outputPathGRID": self._outputPathGRID, 
-                                                                                                     "pede": self._pedeString, "run": runString }
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/%(run)s-eta-db.slcio from the GRID"
+                                       % { "outputPathGRID": self._outputPathGRID, "run": runString } )
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/%(run)s-eta-db.slcio" % { "outputPathGRID": self._outputPathGRID,"run": runString }
                     os.system( command )
                 else :
-                    raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio on the GRID"
-                                                  % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
+                    raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(run)s-eta-db.slcio on the GRID"
+                                                  % { "outputPathGRID": self._outputPathGRID, "run": runString } )
             else :
-                raise OutputAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio on the GRID"
-                                              % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
+                raise OutputAlreadyOnGRIDError( "%(outputPathGRID)s/%(run)s-eta-db.slcio on the GRID"
+                                              % { "outputPathGRID": self._outputPathGRID, "run": runString } )
 
         # check if the job output file already exists
         command = "lfc-ls %(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % { 
@@ -1129,25 +1143,25 @@ class SubmitEta( SubmitBase ):
 
 
         # check if the histogram file already exists
-        command = "lfc-ls %(outputPathGRID)s/run%(run)s-clu-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
+        command = "lfc-ls %(outputPathGRID)s/%(run)s-eta-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
             pass
         if lfc.poll() == 0:
-            self._logger.warning( "Histogram file %(outputPathGRID)s/run%(run)s-clu-histo.root already exists"
+            self._logger.warning( "Histogram file %(outputPathGRID)s/%(run)s-eta-histo.root already exists"
                                   % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
             if self._configParser.get("General","Interactive" ):
                 if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-clu-histo.root from the GRID"
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/%(run)s-eta-histo.root from the GRID"
                                        % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-clu-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/%(run)s-eta-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
                     os.system( command )
                 else :
                     raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-histo.root on the GRID"
-                                                  % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
+                                                           % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
             else :
-                raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-histo.root on the GRID"
-                                              % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
+                raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(run)s-eta-histo.root on the GRID"
+                                                       % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
     ## Execute all GRID
     #
     def executeAllGRID( self, index, runString ) :
