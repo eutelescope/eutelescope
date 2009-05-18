@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.20 2009-05-18 07:44:55 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.21 2009-05-18 10:51:02 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.20 $"
+    cvsVersion = "$Revision: 1.21 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1901,7 +1901,8 @@ class SubmitFilter( SubmitBase ):
             runActualString = runActualString.replace( "@Base@", runString )
         else :
             for run in self._runStringList :
-                runActualString = runActualString.replace( "@RunList@", "%(run)s @RunList@" % { "run": run } )
+                if run != "DEADFACE" :
+                    runActualString = runActualString.replace( "@RunList@", "%(run)s @RunList@" % { "run": run } )
             runActualString = runActualString.replace( "@RunList@", "" )
             runActualString = runActualString.replace( "@Merge@", "yes" )
             runActualString = runActualString.replace( "@Base@", self._option.output )
