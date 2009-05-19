@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-hitmaker.py script
 #
 #
-# @version $Id: submithitmaker.py,v 1.5 2009-05-19 08:31:44 bulgheroni Exp $
+# @version $Id: submithitmaker.py,v 1.6 2009-05-19 15:12:17 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitHitMaker( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitHitMaker( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.5 $"
+    cvsVersion = "$Revision: 1.6 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -972,7 +972,13 @@ class SubmitHitMaker( SubmitBase ):
         listOfFiles = []
 
         # the gear file, the histo info and the config.cfg
-        listOfFiles.append( os.path.join( self._gearPath, self._gear_file ) )
+        try :
+            gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
+        except ConfigParser.NoOptionError :
+            gearPath = ""
+
+        listOfFiles.append( os.path.join( gearPath, self._gear_file ) )
+
         try :
             histoinfoPath = self._configParser.get( "LOCAL", "LocalFolderHistoinfo" )
         except ConfigParser.NoOptionError :
@@ -1091,7 +1097,8 @@ class SubmitHitMaker( SubmitBase ):
             else:
                 etaFile = os.path.abspath( self._option.eta)
 
-            os.remove( os.path.join( dbFilePath , etaFile ) )
+            if os.access( os.path.join( dbFilePath , etaFile ), os.W_OK ):
+                os.remove( os.path.join( dbFilePath , etaFile ) )
 
 
         if self._option.execution == "all-grid" :
@@ -1124,7 +1131,7 @@ class SubmitHitMaker( SubmitBase ):
 
         jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
         for run, jid in self._gridJobNTuple:
-            if jid != "Unknown":
+            if jid != "See below" and jid != "Unknown":
                 jidFile.write( jid )
 
         jidFile.close()
@@ -1305,25 +1312,25 @@ class SubmitHitMaker( SubmitBase ):
     def executeAllGRID( self  ) :
 
         # do preliminary checks
-        self.doPreliminaryTest( index, self._option.output )
+        self.doPreliminaryTest( )
 
         # now prepare the jdl file from the template
-        self.generateJDLFile( index, self._option.output )
+        self.generateJDLFile( 0, self._option.output )
 
         # now generate the run job script
-        self.generateRunjobFile( index, self._option.output )
+        self.generateRunjobFile(  )
 
         # don't forget to generate the steering file!
-        self._steeringFileName = self.generateSteeringFile( self._option.output )
+        self._steeringFileName = self.generateSteeringFile( )
 
         # finally ready to submit! Let's do it...!
-        self.submitJDL( index, self._option.output )
+        self.submitJDL(  )
 
         # prepare a tarball with all the ancillaries
-        self.prepareTarball( self._option.output )
+        self.prepareTarball(  )
 
         # cleaning up the system
-        self.cleanup( self._option.output )
+        self.cleanup(  )
 
 
 
@@ -1336,7 +1343,7 @@ class SubmitHitMaker( SubmitBase ):
         message = "Generating the executable (%(name)s-%(run)s.sh)" % { "name": self.name, "run": self._option.output }
         self._logger.info( message )
         try :
-            runTemplate = self._configParser.get( "SteeringTemplate", "EtaGRIDScript" )
+            runTemplate = self._configParser.get( "SteeringTemplate", "HitmakerGRIDScript" )
         except ConfigParser.NoOptionError:
             message = "Unable to find a valid executable template"
             self._logger.critical( message )
@@ -1345,19 +1352,25 @@ class SubmitHitMaker( SubmitBase ):
         runTemplateString = open( runTemplate, "r" ).read()
         runActualString = runTemplateString
 
-        # replace the input file name. Again strip away any possible path from this.
-        trash, filename = os.path.split( self._args[0] )
-        runActualString = runActualString.replace ("@Filename@", filename )
-
-        # replace the output base
-        runActualString = runActualString.replace( "@OutputBase@", self._option.output )
-
-        # replace the job name
+        # replace the name prefix
         runActualString = runActualString.replace( "@Name@", self.name )
 
+        # replace the output prefix.
+        runActualString = runActualString.replace( "@Output@", self._option.output )
+
+        # replace the input file names
+        for index, inputFile in enumerate( self._inputFileList ) :
+            if inputFile != "DEADFACE" :
+                runActualString = runActualString.replace( "@InputFileList@", "%(file)s @InputFileList@" % {"file": self._justInputFileList[index] } )
+        runActualString = runActualString.replace( "@InputFileList@" , "" )
+
+        # replace the eta file. Again strip away any possible path from this
+        etaFile = os.path.basename( self._option.eta )
+        runActualString = runActualString.replace( "@EtaFile@", etaFile )
+
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
-                         "GRIDFolderBase", "GRIDFolderFilterResults", "GRIDFolderDBEta", "GRIDFolderEtaJoboutput",
-                         "GRIDFolderEtaJoboutput", "GRIDFolderEtaHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+                         "GRIDFolderBase", "GRIDFolderFilterResults", "GRIDFolderDBEta", "GRIDFolderHitmakerResults",
+                         "GRIDFolderHitmakerJoboutput", "GRIDFolderHitmakerHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
         for variable in variableList:
             try:
                 value = self._configParser.get( "GRID", variable )
@@ -1377,7 +1390,6 @@ class SubmitHitMaker( SubmitBase ):
         # change the mode of the run script to 0777
         os.chmod(self._runScriptFilename, 0777)
 
-
     ## Do the real submission
     #
     # This is doing the job submission
@@ -1393,9 +1405,20 @@ class SubmitHitMaker( SubmitBase ):
 
         if glite.poll() == 0:
             self._logger.info( "Job successfully submitted to the GRID" )
-            run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, "Submit'd", d, e, f
+            for index, inputFile in enumerate( self._inputFileList ):
+                if inputFile != "DEADFACE":
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, "See below", d, e, f
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, "Submit'd", output, histo, tarball
+
         else :
+            for index, inputFile in enumerate( self._inputFileList ):
+                if inputFile != "DEADFACE":
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, "See below", d, e, f
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, "Failed", output, histo, tarball
             raise GRIDSubmissionError ( "%(name)s-%(run)s.jdl" % { "name": self.name,"run": self._option.output } )
 
         # read back the the job id file
@@ -1403,8 +1426,12 @@ class SubmitHitMaker( SubmitBase ):
         # is what we are interested in !
         jidFile = open( "%(name)s-%(run)s.jid" % { "name": self.name, "run": self._option.output} )
         jidFile.readline()
-        run, b = self._gridJobNTuple[ index ]
-        self._gridJobNTuple[ index ] = run, jidFile.readline()
+        for index, inputFile in enumerate ( self._inputFileList ) :
+            if inputFile != "DEADFACE":
+                run, b = self._gridJobNTuple[ index ]
+                self._gridJobNTuple[ index ] = run, "See below"
+        run, b = self._gridJobNTuple[ len( self._gridJobNTuple ) - 1 ]
+        self._gridJobNTuple[ len( self._gridJobNTuple ) - 1  ] = run, jidFile.readline()
         jidFile.close()
 
 
