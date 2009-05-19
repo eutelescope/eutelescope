@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-hitmaker.py script
 #
 #
-# @version $Id: submithitmaker.py,v 1.4 2009-05-18 17:50:03 bulgheroni Exp $
+# @version $Id: submithitmaker.py,v 1.5 2009-05-19 08:31:44 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitHitMaker( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitHitMaker( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.4 $"
+    cvsVersion = "$Revision: 1.5 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -600,7 +600,7 @@ class SubmitHitMaker( SubmitBase ):
 
         if self._option.verify_output:
             self._logger.info( "Verifying the histogram integrity on the GRID" )
-            filename = "%(run)s-hit-histo.root"  % { "run" : runString }
+            filename = "%(run)s-hit-histo.root"  % { "run" : self._option.output }
 
             localCopy = open( os.path.join( localPath, filename ) ).read()
             localCopyHash = sha.new( localCopy ).hexdigest() 
@@ -611,7 +611,7 @@ class SubmitHitMaker( SubmitBase ):
             if self._option.verbose :
                 baseCommand = baseCommand + " -v "
 
-            filenametest = "%(run)s-hit-histo-test.root"  % { "run" : runString }
+            filenametest = "%(run)s-hit-histo-test.root"  % { "run" : self._option.output }
 
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest, "file" : filename }
@@ -1086,7 +1086,12 @@ class SubmitHitMaker( SubmitBase ):
             except ConfigParser.NoOptionError :
                 dbFilePath = "db"
 
-            os.remove( os.path.join( dbFilePath , os.path.abspath( self._option.eta)  ) )
+            if self._option.execution == "cpu-local":
+                etaFile = os.path.basename( self._option.eta )
+            else:
+                etaFile = os.path.abspath( self._option.eta)
+
+            os.remove( os.path.join( dbFilePath , etaFile ) )
 
 
         if self._option.execution == "all-grid" :
@@ -1276,24 +1281,24 @@ class SubmitHitMaker( SubmitBase ):
 
 
         # check if the histogram file already exists
-        command = "lfc-ls %(outputPathGRID)s/%(run)s-eta-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": self._option.output }
+        command = "lfc-ls %(outputPathGRID)s/%(run)s-hit-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": self._option.output }
         lfc = popen2.Popen4( command )
         while lfc.poll() == -1:
             pass
         if lfc.poll() == 0:
-            self._logger.warning( "Histogram file %(outputPathGRID)s/%(run)s-eta-histo.root already exists"
+            self._logger.warning( "Histogram file %(outputPathGRID)s/%(run)s-hit-histo.root already exists"
                                   % { "outputPathGRID": self._histogramPathGRID, "run": self._option.output } )
             if self._configParser.get("General","Interactive" ):
                 if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/%(run)s-eta-histo.root from the GRID"
+                    self._logger.info( "User decided to remove %(outputPathGRID)s/%(run)s-hit-histo.root from the GRID"
                                        % { "outputPathGRID": self._histogramPathGRID, "run": self._option.output } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/%(run)s-eta-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": self._option.output }
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/%(run)s-hit-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": self._option.output }
                     os.system( command )
                 else :
-                    raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-histo.root on the GRID"
+                    raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-hit-histo.root on the GRID"
                                                            % { "outputPathGRID": self._histogramPathGRID, "run": self._option.output } )
             else :
-                raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(run)s-eta-histo.root on the GRID"
+                raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(run)s-hit-histo.root on the GRID"
                                                        % { "outputPathGRID": self._histogramPathGRID, "run": self._option.output } )
     ## Execute all GRID
     #
@@ -1403,78 +1408,6 @@ class SubmitHitMaker( SubmitBase ):
         jidFile.close()
 
 
-    ## Check the existence of the pedestal file
-    # 
-    # Differently from the check input and output methods, this is done
-    # once only at the very beginning before entering in the loop on runs.
-    #
-    def checkPedestalFile( self ) :
-        self._logger.info( "Checking the pedestal file (run%(file)s-ped-db.slcio)" % { "file": self._pedeString } )
-
-        # the pedestal file should be something like this
-        # run123456-ped-db.slcio
-        self._pedeFilename = "run%(run)s-ped-db.slcio" % { "run": self._pedeString }
-
-        # where to check, depends from the execution mode! 
-
-        if self._option.execution == "all-local":
-            self.checkPedestalFileLocally()
-        elif self._option.execution == "cpu-local" or self._option.execution == "all-grid" :
-            self.checkPedestalFileGRID()
 
 
-    ## Check locally for the pedestal file
-    #
-    def checkPedestalFileLocally( self ):
 
-        # the pedestal file should be something like this
-        # db/run123456-ped-db.slcio
-
-        try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderDBPede" )
-        except ConfigParser.NoOptionError :
-            localPath = "db"
-
-        if not os.access( os.path.join( localPath, self._pedeFilename ), os.R_OK ):
-            message = "Missing pedestal file %(pede)s" % { "pede": self._pedeFilename }
-            self._logger.critical ( message )
-            raise MissingPedestalFileError( self._pedeFilename )
-
-
-    ## Check on GRID for the pedestal file
-    #
-    def checkPedestalFileGRID( self ):
-
-        try :
-            gridPath = self._configParser.get( "GRID" , "GRIDFolderDBPede" )
-        except ConfigParser.NoOptionError :
-            message = "Unable to find the GRIDFolderDBPede."
-            self._logger.critical( message )
-            raise StopExecutionError( message )
-
-        try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderDBPede" )
-        except ConfigParser.NoOptionError :
-            localPath = "db"
-
-        command = "lfc-ls %(gridPath)s/%(file)s > /dev/null 2>&1 " % {
-            "gridPath": gridPath, "file": self._pedeFilename }
-        if os.system( command ) != 0:
-            message = "Missing pedestal file %(file)s" %{ "file": self._pedeFilename }
-            self._logger.critical ( message )
-            raise MissingPedestalFileOnGRIDError( self._pedeFilename )
-
-        if self._option.execution == "cpu-local":
-
-            # get the file then
-            baseCommand = "lcg-cp "
-            if self._option.verbose :
-                baseCommand = baseCommand + " -v "
-                command = baseCommand + "  lfn:%(gridPath)s/%(file)s file:%(localPath)s/%(file)s " % {
-                    "gridPath" : gridPath, "file": self._pedeFilename, "localPath": localPath }
-
-            self._logger.info( "Getting the pedestal file %(file)s" % { "file": self._pedeFilename } )
-            if os.system( command ) != 0:
-                message = "Problem getting the pedestal file from the GRID"
-                self._logger.critical( message  )
-                raise StopExecutionError( message )
