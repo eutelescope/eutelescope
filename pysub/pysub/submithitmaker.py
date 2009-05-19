@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-hitmaker.py script
 #
 #
-# @version $Id: submithitmaker.py,v 1.6 2009-05-19 15:12:17 bulgheroni Exp $
+# @version $Id: submithitmaker.py,v 1.7 2009-05-19 18:00:19 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitHitMaker( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitHitMaker( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.6 $"
+    cvsVersion = "$Revision: 1.7 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -997,7 +997,7 @@ class SubmitHitMaker( SubmitBase ):
                 histoFilePath = self._configParser.get( "LOCAL", "LocalFolderHitmakerHisto" )
             except ConfigParser.NoOptionError :
                 histoFilePath = "histo"
-                listOfFiles.append( os.path.join( histoFilePath, "%(run)s-hit-histo.root" % { "run": self._option.output } ) )
+            listOfFiles.append( os.path.join( histoFilePath, "%(run)s-hit-histo.root" % { "run": self._option.output } ) )
 
         # copy everything into a temporary folder
         for file in listOfFiles :
