@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-align.py script
 #
 #
-# @version $Id: submitalign.py,v 1.3 2009-05-20 12:05:36 bulgheroni Exp $
+# @version $Id: submitalign.py,v 1.4 2009-05-20 15:39:47 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitAlign( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitAlign( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.3 $"
+    cvsVersion = "$Revision: 1.4 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -196,6 +196,9 @@ class SubmitAlign( SubmitBase ):
         self._inputFileList = []
         self._fqInputFileList = []
         self._justInputFileList = []
+        if self._isSplitting:
+            self._gridSplitNTuple = []
+
         for index, inputFile in enumerate( self._args ):
 
             # this is the list of basename
@@ -1032,6 +1035,165 @@ class SubmitAlign( SubmitBase ):
 
         self._steeringFileName = steeringFileName
 
+
+    def generateSteeringFileSplitting( self, index  ):
+        message = "Generating the steering file (%(name)s-%(output)s-s%(index)06d.xml) " % {
+            "name": self.name, "output" : self._option.output, "index": index }
+
+        self._logger.info( message )
+
+        steeringFileTemplate =  ""
+        try:
+            steeringFileTemplate = self._configParser.get( "SteeringTemplate", "AlignSteeringFile" )
+        except ConfigParser.NoOptionError :
+            steeringFileTemplate = "template/%(name)s-tmp.xml" % { "name": self.name }
+
+        message = "Using %(file)s as steering template" %{ "file": steeringFileTemplate }
+        self._logger.debug( message )
+
+        # check if the template exists
+        if not os.path.exists( steeringFileTemplate ) :
+            raise MissingSteeringTemplateError ( steeringFileTemplate )
+
+        # open the template for reading
+        templateSteeringFile = open( steeringFileTemplate , "r")
+
+        # read the whole content
+        templateSteeringString = templateSteeringFile.read()
+
+        # make all the changes
+        actualSteeringString = templateSteeringString
+
+        # replace the file paths
+        #
+        # first the gear path
+        if self._option.execution == "all-grid" :
+            self._gearPath = "."
+        else:
+            try :
+                self._gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
+            except ConfigParser.NoOptionError :
+                self._gearPath = ""
+
+        actualSteeringString = actualSteeringString.replace("@GearPath@", self._gearPath )
+
+        # find the gear file, first check the configuration file, then the commad line options
+        # and last use a default gear_telescope.xml
+        self._gear_file = ""
+        try:
+            self._gear_file = self._configParser.get( "General", "GEARFile" )
+        except ConfigParser.NoOptionError :
+            self._logger.debug( "No GEAR file in the configuration file" )
+
+        if self._option.gear_file != None :
+            # this means that the user wants to override the configuration file
+            self._gear_file = self._option.gear_file
+            self._logger.debug( "Using command line GEAR file" )
+
+
+        if self._gear_file == "" :
+            # using default GEAR file
+            defaultGEARFile = "gear_telescope.xml"
+            self._gear_file = defaultGEARFile
+            message = "Using default GEAR file %(gear)s" %{ "gear": defaultGEARFile }
+            self._logger.warning( message )
+
+        actualSteeringString = actualSteeringString.replace("@GearFile@", self._gear_file )
+
+        for index2, inputFile in enumerate( self._inputFileList ):
+            if inputFile != "DEADFACE":
+                actualSteeringString = actualSteeringString.replace("@InputFile@", "%(fqfn)s @InputFile@" % { "fqfn": self._fqInputFileList[ index2 ] } )
+
+        actualSteeringString = actualSteeringString.replace( "@InputFile@", "" )
+
+        # Replace the record number
+        actualSteeringString = actualSteeringString.replace( "@RecordNumber@", "%(v)d" % {
+            "v": self._option.split_size } )
+
+        # don't skip any record
+        actualSteeringString = actualSteeringString.replace( "@SkipNEvents@", "%(v)d" %{
+            "v" : index * self._option.split_size })
+
+        # now replace the output folder path
+        if self._option.execution == "all-grid" :
+            outputFolder = "results"
+        else:
+            try :
+                outputFolder =  self._configParser.get("LOCAL", "LocalFolderAlignResults")
+            except ConfigParser.NoOptionError :
+                outputFolder = "results"
+        actualSteeringString = actualSteeringString.replace ("@ResultsPath@", outputFolder )
+
+
+        # now replace the histo folder path
+        if self._option.execution == "all-grid" :
+            histoFolder = "histo"
+        else:
+            try:
+                histoFolder = self._configParser.get("LOCAL", "LocalFolderAlignHisto")
+            except ConfigParser.NoOptionError :
+                histoFolder = "histo"
+        actualSteeringString = actualSteeringString.replace("@HistoPath@" ,histoFolder )
+
+
+        # now replace the DB folder path
+        if self._option.execution == "all-grid" :
+            dbPath = "db"
+        else:
+            try:
+                dbPath = self._configParser.get("LOCAL", "LocalFolderDBAlign" )
+            except  ConfigParser.NoOptionError :
+                dbPath = "db"
+        actualSteeringString = actualSteeringString.replace("@DBPath@", dbPath )
+
+        # finally replace the run string !
+        actualSteeringString = actualSteeringString.replace("@Output@", "%(output)s-s%(index)06d" %
+                                                            { "output": self._option.output, "index": index } )
+
+        # now the align specific options
+        # run pede ?
+        if self._isRunPede:
+            value = 1
+        else:
+            value = 0
+        actualSteeringString = actualSteeringString.replace("@RunPede@", "%(v)s" % { "v" : value } )
+
+        # residual cuts ?
+        if self._isResidualCut :
+            value = 1
+        else:
+            value = 0
+        actualSteeringString = actualSteeringString.replace("@UseResidualCuts@", "%(v)d" % { "v" : value } )
+
+        # and the residual values
+        try :
+            maxX = self._configParser.get( "AlignOptions", "ResidualXMax" )
+            minX = self._configParser.get( "AlignOptions", "ResidualXMin" )
+            maxY = self._configParser.get( "AlignOptions", "ResidualYMax" )
+            minY = self._configParser.get( "AlignOptions", "ResidualYMin" )
+        except  ConfigParser.NoOptionError :
+            message = "No residual cuts found in the configuration file, terminating!"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        actualSteeringString = actualSteeringString.replace( "@ResidualXMax@", maxX )
+        actualSteeringString = actualSteeringString.replace( "@ResidualXMin@", minX )
+        actualSteeringString = actualSteeringString.replace( "@ResidualYMax@", maxY )
+        actualSteeringString = actualSteeringString.replace( "@ResidualYMin@", minY )
+
+        # open the new steering file for writing
+        steeringFileName = "%(name)s-%(run)s-s%(v)06d.xml" % { "v": index , "name": self.name, "run" : self._option.output }
+        actualSteeringFile = open( steeringFileName, "w" )
+
+        # write the new steering file
+        actualSteeringFile.write( actualSteeringString )
+
+        # close both files
+        actualSteeringFile.close()
+        templateSteeringFile.close()
+
+        self._steeringFileName = steeringFileName
+
     ## Execute Marlin
     def runMarlin( self ) :
 
@@ -1192,7 +1354,7 @@ class SubmitAlign( SubmitBase ):
             histoinfoPath = ""
         listOfFiles.append( self._configFile )
 
-        # all files starting with clusearch-123456 in the local folder
+        # all files starting with align-123456 in the local folder
         for file in glob.glob( "%(name)s-*.*" % {"name": self.name } ):
             message = "Adding %(file)s to the joboutput tarball" % { "file": file }
             self._logger.debug( message )
@@ -1323,8 +1485,12 @@ class SubmitAlign( SubmitBase ):
     def end( self ) :
 
         if self._option.execution == "all-grid" :
-            self.prepareJIDFile()
-            self.logGRIDJobs( )
+            if not self._isSplitting :
+                self.prepareJIDFile()
+                self.logGRIDJobs( )
+            else:
+                self.prepareJIDFileSplitting()
+                self.logGRIDJobsSplitting( )
 
         SubmitBase.end( self )
 
@@ -1333,6 +1499,17 @@ class SubmitAlign( SubmitBase ):
         self._logger.info( "" )
         self._logger.info( "== GRID JOB ID ==============================================================" )
         for entry in self._gridJobNTuple :
+            run, jid = entry
+            message = "| %(run)6s | %(jid)64s |" % { "run" : run, "jid":jid.strip() }
+            self._logger.info( message )
+
+        self._logger.info("=============================================================================" )
+        self._logger.info( "" )
+
+    def logGRIDJobsSplitting( self ):
+        self._logger.info( "" )
+        self._logger.info( "== GRID JOB ID ==============================================================" )
+        for entry in self._gridSplitNTuple :
             run, jid = entry
             message = "| %(run)6s | %(jid)64s |" % { "run" : run, "jid":jid.strip() }
             self._logger.info( message )
@@ -1357,6 +1534,111 @@ class SubmitAlign( SubmitBase ):
 
         jidFile.close()
 
+    def prepareJIDFileSplitting( self ):
+        unique = datetime.datetime.fromtimestamp( self._timeBegin ).strftime("%Y%m%d-%H%M%S")
+        self._logger.info("Preparing the JID for this submission (%(name)s-%(date)s.jid)" % {
+                "name": self.name, "date" : unique } )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderClusearchJoboutput")
+        except ConfigParser.NoOptionError :
+            localPath = "log/"
+
+        jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
+        for run, jid in self._gridSplitNTuple:
+            jidFile.write( jid )
+
+        jidFile.close()
+
+
+    ## Preliminary checks for splitting
+    def doPreliminaryTestSplitting( self, i, fullCheck ):
+
+
+        if fullCheck :
+            # first log the voms-proxy-info
+            self._logger.info( "Logging the voms-proxy-info" )
+            info = popen2.Popen4("voms-proxy-info -all")
+            while info.poll() == -1:
+                line = info.fromchild.readline()
+                self._logger.info( line.strip() )
+
+            if info.poll() != 0:
+                message = "Problem with the GRID_UI"
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+            # also check that the proxy is still valid
+            if os.system( "voms-proxy-info -e" ) != 0:
+                message = "Expired proxy"
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+            else:
+                self._logger.info( "Valid proxy found" )
+
+            # get all the needed path from the configuration file
+            try :
+                self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderHitmakerResults")
+                self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderAlignResults" )
+                self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderAlignJoboutput")
+                self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderAlignHisto")
+                self._dbAlignGRID       = self._configParser.get("GRID", "GRIDFolderDBAlign")
+                folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID, self._dbAlignGRID ]
+            except ConfigParser.NoOptionError:
+                message = "Missing path from the configuration file"
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+
+            # check if the input files is on the GRID
+            for index, inputFile in enumerate( self._inputFileList ):
+                if inputFile != "DEADFACE" :
+                    justFile = self._justInputFileList[ index ] 
+                    command = "lfc-ls %(inputPathGRID)s/%(file)s" % { "inputPathGRID" : self._inputPathGRID,  "file": justFile  }
+
+                    lfc = popen2.Popen4( command )
+                    while lfc.poll() == -1:
+                        pass
+
+                    if lfc.poll() == 0:
+                        self._logger.info( "Input file %(justFile)s found on the SE" % {"justFile": justFile } )
+                        run, b, c, d, e, f = self._summaryNTuple[ index ]
+                        self._summaryNTuple[ index ] = run, "GRID", c, d, e, f
+                    else:
+                        self._logger.error( "Input file %(justFile)s NOT found on the SE" % {"justFile": justFile } )
+                        run, b, c, d, e, f = self._summaryNTuple[ index ]
+                        self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
+                        self._inputFileList[ index ] = "DEADFACE"
+                        if self._configParser.get("General","Interactive" ):
+                            if not self.AskYesNo( "Would you like to skip it and continue? [y/n] " ) :
+                                message = "User decided to stop here"
+                                self._logger.critical( message )
+                                raise StopExecutionError( message )
+                            else :
+                                self._logger.info( "Skipping to the next run" )
+                        else:
+                            self._logger.info( "Skipping to the next run" )
+
+            # check the existence of the folders
+            try :
+                for folder in folderList:
+                    self.checkGRIDFolder( folder )
+
+            except MissingGRIDFolderError, error :
+                message = "Folder %(folder)s is unavailable. Quitting" % { "folder": error._filename }
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+        filenameList = []
+        if self._isRunPede:
+            filenameList.append( "%(outputPathGRID)s/%(output)s-s%(v)06d-align-db.slcio"       % { "v": i, "outputPathGRID": self._dbAlignGRID, "output": self._option.output } )
+        filenameList.append( "%(outputPathGRID)s/%(output)s-s%(v)06d-pede-steer.txt"       % { "v": i, "outputPathGRID": self._outputPathGRID, "output": self._option.output } )
+        filenameList.append( "%(outputPathGRID)s/%(output)s-s%(v)06d-align-mille.bin"      % { "v": i, "outputPathGRID": self._outputPathGRID, "output": self._option.output } )
+        filenameList.append( "%(outputPathGRID)s/%(name)s-%(output)s-s%(v)06d.tar.gz"      % { "v": i, "outputPathGRID": self._joboutputPathGRID,
+                                                                                              "name": self.name, "output": self._option.output } )
+        filenameList.append( "%(outputPathGRID)s/%(output)s-s%(v)06d-align-histo.root"     % { "v": i, "outputPathGRID": self._histogramPathGRID, "output": self._option.output } )
+        for filename in filenameList:
+            self.checkGRIDFile( filename )
 
 
     ## Preliminary checks
@@ -1458,7 +1740,8 @@ class SubmitAlign( SubmitBase ):
         # results/%(output)s-mille.bin
         # log/%(name)s-%(output)s.tar.gz
         filenameList = []
-        filenameList.append( "%(outputPathGRID)s/%(output)s-align-db.slcio"       % { "outputPathGRID": self._dbAlignGRID, "output": self._option.output } )
+        if self._isRunPede:
+            filenameList.append( "%(outputPathGRID)s/%(output)s-align-db.slcio"       % { "outputPathGRID": self._dbAlignGRID, "output": self._option.output } )
         filenameList.append( "%(outputPathGRID)s/%(output)s-pede-steer.txt"       % { "outputPathGRID": self._outputPathGRID, "output": self._option.output } )
         filenameList.append( "%(outputPathGRID)s/%(output)s-align-mille.bin"      % { "outputPathGRID": self._outputPathGRID, "output": self._option.output } )
         filenameList.append( "%(outputPathGRID)s/%(name)s-%(output)s.tar.gz"      % { "outputPathGRID": self._joboutputPathGRID,
@@ -1473,6 +1756,44 @@ class SubmitAlign( SubmitBase ):
     #
     def executeAllGRID( self  ) :
 
+
+        if self._isSplitting :
+            self.executeAllGRIDSplitting()
+
+        else:
+            self.executeAllGRIDSingleJob()
+
+    def executeAllGRIDSplitting( self ) :
+
+        fullCheck = True
+        for index in range( self._option.split_job ):
+
+            try :
+                # do some particular preliminary testing
+                self.doPreliminaryTestSplitting( index, fullCheck )
+            except PysubError, error:
+                fullCheck = True
+                raise error
+            else:
+                fullCheck = False
+
+        for index in range( self._option.split_job ):
+            self.generateJDLFile( 0, "%(output)s-s%(index)06d" % {
+                "output": self._option.output, "index": index } )
+
+            self.generateRunjobFileSplitting( index )
+
+            self.generateSteeringFileSplitting( index )
+
+            self.submitJDLSplitting( index  ) 
+
+
+        self.prepareTarball( )
+
+        self.cleanup( )
+
+    def executeAllGRIDSingleJob( self ) :
+
         # do preliminary checks
         self.doPreliminaryTest( )
 
@@ -1480,13 +1801,13 @@ class SubmitAlign( SubmitBase ):
         self.generateJDLFile( 0, self._option.output )
 
         # now generate the run job script
-        self.generateRunjobFile(  )
+        self.generateRunjobFileSingleJob(  )
 
         # don't forget to generate the steering file!
-        self.generateSteeringFile( )
+        self.generateSteeringFileSingleJob( )
 
         # finally ready to submit! Let's do it...!
-        self.submitJDL(  )
+        self.submitJDLSingleJob(  )
 
         # prepare a tarball with all the ancillaries
         self.prepareTarball(  )
@@ -1501,11 +1822,11 @@ class SubmitAlign( SubmitBase ):
     #
     # This method is used to generate the run job script
     #
-    def generateRunjobFile( self ):
+    def generateRunjobFileSingleJob( self ):
         message = "Generating the executable (%(name)s-%(run)s.sh)" % { "name": self.name, "run": self._option.output }
         self._logger.info( message )
         try :
-            runTemplate = self._configParser.get( "SteeringTemplate", "HitmakerGRIDScript" )
+            runTemplate = self._configParser.get( "SteeringTemplate", "AlignGRIDScript" )
         except ConfigParser.NoOptionError:
             message = "Unable to find a valid executable template"
             self._logger.critical( message )
@@ -1526,13 +1847,16 @@ class SubmitAlign( SubmitBase ):
                 runActualString = runActualString.replace( "@InputFileList@", "%(file)s @InputFileList@" % {"file": self._justInputFileList[index] } )
         runActualString = runActualString.replace( "@InputFileList@" , "" )
 
-        # replace the eta file. Again strip away any possible path from this
-        etaFile = os.path.basename( self._option.eta )
-        runActualString = runActualString.replace( "@EtaFile@", etaFile )
+        # replace the RunPede
+        if self._isRunPede :
+            value = "yes"
+        else:
+            value = "no"
+        runActualString = runActualString.replace( "@RunPede@", value )
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
-                         "GRIDFolderBase", "GRIDFolderFilterResults", "GRIDFolderDBEta", "GRIDFolderHitmakerResults",
-                         "GRIDFolderHitmakerJoboutput", "GRIDFolderHitmakerHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+                         "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderAlignResults",
+                         "GRIDFolderAlignJoboutput", "GRIDFolderAlignHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
         for variable in variableList:
             try:
                 value = self._configParser.get( "GRID", variable )
@@ -1552,11 +1876,70 @@ class SubmitAlign( SubmitBase ):
         # change the mode of the run script to 0777
         os.chmod(self._runScriptFilename, 0777)
 
+    ## Generate the run job splitting
+    #
+    # This method is used to generate the run job script
+    #
+    def generateRunjobFileSplitting( self , i ):
+        message = "Generating the executable (%(name)s-%(run)s-s%(i)06d.sh)" % { "i": i, "name": self.name, "run": self._option.output }
+        self._logger.info( message )
+        try :
+            runTemplate = self._configParser.get( "SteeringTemplate", "AlignGRIDScript" )
+        except ConfigParser.NoOptionError:
+            message = "Unable to find a valid executable template"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        runTemplateString = open( runTemplate, "r" ).read()
+        runActualString = runTemplateString
+
+        # replace the name prefix
+        runActualString = runActualString.replace( "@Name@", self.name )
+
+        # replace the output prefix.
+        runActualString = runActualString.replace( "@Output@", "%(output)s-s%(i)06d" %
+                                                   { "i": i, "output": self._option.output } )
+
+        # replace the input file names
+        for index, inputFile in enumerate( self._inputFileList ) :
+            if inputFile != "DEADFACE" :
+                runActualString = runActualString.replace( "@InputFileList@", "%(file)s @InputFileList@" % {"file": self._justInputFileList[index] } )
+        runActualString = runActualString.replace( "@InputFileList@" , "" )
+
+        # replace the RunPede
+        if self._isRunPede :
+            value = "yes"
+        else:
+            value = "no"
+        runActualString = runActualString.replace( "@RunPede@", value )
+
+        variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
+                         "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderAlignResults",
+                         "GRIDFolderAlignJoboutput", "GRIDFolderAlignHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+        for variable in variableList:
+            try:
+                value = self._configParser.get( "GRID", variable )
+                if variable == "GRIDCE":
+                    self._gridCE = value
+                runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
+            except ConfigParser.NoOptionError:
+                message = "Unable to find variable %(var)s in the config file" % { "var" : variable }
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+        self._runScriptFilename = "%(name)s-%(run)s-s%(i)06d.sh" % { "i": i, "name": self.name, "run": self._option.output }
+        runActualFile = open( self._runScriptFilename, "w" )
+        runActualFile.write( runActualString )
+        runActualFile.close()
+
+        # change the mode of the run script to 0777
+        os.chmod(self._runScriptFilename, 0777)
+
     ## Do the real submission
     #
     # This is doing the job submission
     #
-    def submitJDL( self ) :
+    def submitJDLSingleJob( self ) :
         self._logger.info("Submitting the job to the GRID")
         command = "glite-wms-job-submit -a -r %(GRIDCE)s -o %(name)s-%(run)s.jid %(name)s-%(run)s.jdl" % {
             "name": self.name, "run": self._option.output , "GRIDCE":self._gridCE }
@@ -1599,4 +1982,42 @@ class SubmitAlign( SubmitBase ):
 
 
 
+    ## Do the real submission
+    #
+    # This is doing the job submission
+    #
+    def submitJDLSplitting( self, i ) :
+        self._logger.info("Submitting the job to the GRID")
+        command = "glite-wms-job-submit -a -r %(GRIDCE)s -o %(name)s-%(run)s-s%(i)06d.jid %(name)s-%(run)s-s%(i)06d.jdl" % {
+            "name": self.name, "run": self._option.output , "GRIDCE":self._gridCE , "i": i}
+        glite = popen2.Popen4( command )
+        while glite.poll() == -1:
+            message = glite.fromchild.readline().strip()
+            self._logger.log(15, message )
+
+        if glite.poll() == 0:
+            self._logger.info( "Job successfully submitted to the GRID" )
+            for index, inputFile in enumerate( self._inputFileList ):
+                if inputFile != "DEADFACE":
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, "See below", d, e, f
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, "Splitted", output, histo, tarball
+
+        else :
+            for index, inputFile in enumerate( self._inputFileList ):
+                if inputFile != "DEADFACE":
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, "See below", d, e, f
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, "Failed", output, histo, tarball
+            raise GRIDSubmissionError ( "%(name)s-%(run)s.jdl" % { "name": self.name,"run": self._option.output } )
+
+        # read back the the job id file
+        # this is made by two lines only the first is comment, the second
+        # is what we are interested in !
+        jidFile = open( "%(name)s-%(run)s-s%(i)06d.jid" % { "name": self.name, "run": self._option.output, "i":i} )
+        jidFile.readline()
+        entry = i , jidFile.readline()
+        self._gridSplitNTuple.append( entry )
 
