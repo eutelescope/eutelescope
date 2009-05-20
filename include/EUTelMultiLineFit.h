@@ -169,6 +169,7 @@ namespace eutelescope {
     std::vector<float > _millepedeConstantsSixthLayer;
 
     float _distanceMax;
+    float _distanceDUTMax;
     float _chi2XMax;
     float _chi2YMax;
     int _excludePlane;

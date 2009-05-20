@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMultiLineFit.cc,v 1.27 2008-11-14 09:09:54 bulgheroni Exp $
+// Version: $Id: EUTelMultiLineFit.cc,v 1.28 2009-05-20 16:30:23 roloff Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -177,6 +177,9 @@ EUTelMultiLineFit::EUTelMultiLineFit () : Processor("EUTelMultiLineFit") {
   registerOptionalParameter("DistanceMax","Maximal allowed distance between hits entering the fit per 10 cm space between the planes.",
                             _distanceMax, static_cast <float> (2000.0));
 
+  registerOptionalParameter("DistanceDUTMax","Distance used for DUT hit matching.",
+			    _distanceDUTMax, static_cast <float> (50.0));
+
   registerOptionalParameter("Chi2XMax","Maximal chi2 for fit of x coordinate."
                             ,_chi2XMax, static_cast <float> (10000.0));
 
@@ -285,6 +288,7 @@ void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
   // in the xml file. If the numbers are different, instead of barely
   // quitting ask the user what to do.
 
+  /*
   if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
     streamlog_out ( ERROR2 ) << "Error during the geometry consistency check: " << endl;
     streamlog_out ( ERROR2 ) << "The run header says the GeoID is " << header->getGeoID() << endl;
@@ -302,6 +306,7 @@ void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
       }
     }
   }
+  */
 
   // now book histograms plz...
   if ( isFirstEvent() )  bookHistos();
@@ -1217,37 +1222,42 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
         // loop over all detector planes
         for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
 
-          // fill x residuals histograms
-          if ( _histogramSwitch ) {
-            {
-              stringstream ss;
-              ss << _residualXLocalname << "_d" << iDetector;
-              tempHistoName=ss.str();
-            }
-            if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-              residx_histo->fill(_waferResidX[iDetector]);
-            else {
-              streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
-              streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-              _histogramSwitch = false;
-            }
-          }
+	  // distance matching for DUT plane
+	  if ((iDetector == (_excludePlane - 1) && sqrt(_waferResidX[iDetector] * _waferResidX[iDetector] + _waferResidY[iDetector] * _waferResidY[iDetector]) < _distanceDUTMax) || iDetector != (_excludePlane - 1)) { 
 
-          // fill y residuals histograms
-          if ( _histogramSwitch ) {
-            {
-              stringstream ss;
-              ss << _residualYLocalname << "_d" << iDetector;
-              tempHistoName=ss.str();
-            }
-            if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-              residy_histo->fill(_waferResidY[iDetector]);
-            else {
-              streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualYLocalname << endl;
-              streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
-              _histogramSwitch = false;
-            }
-          }
+	    // fill x residuals histograms
+	    if ( _histogramSwitch ) {
+	      {
+		stringstream ss;
+		ss << _residualXLocalname << "_d" << iDetector;
+		tempHistoName=ss.str();
+	      }
+	      if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+		residx_histo->fill(_waferResidX[iDetector]);
+	      else {
+		streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
+		streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+		_histogramSwitch = false;
+	      }
+	    }
+
+	    // fill y residuals histograms
+	    if ( _histogramSwitch ) {
+	      {
+		stringstream ss;
+		ss << _residualYLocalname << "_d" << iDetector;
+		tempHistoName=ss.str();
+	      }
+	      if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+		residy_histo->fill(_waferResidY[iDetector]);
+	      else {
+		streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualYLocalname << endl;
+		streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+		_histogramSwitch = false;
+	      }
+	    }
+
+	  } // end if distance matching for DUT plane
 
           // fill seed charge histograms
           if ( _histogramSwitch ) {
