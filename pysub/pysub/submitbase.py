@@ -15,7 +15,7 @@ import popen2
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.16 2009-05-15 17:51:16 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.17 2009-05-20 12:05:36 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -24,7 +24,7 @@ class SubmitBase :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.16 $"
+    cvsVersion = "$Revision: 1.17 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -247,6 +247,29 @@ class SubmitBase :
                 self._logger.info( message )
             self._logger.info("=============================================================================" )
             self._logger.info( "" )
+
+
+    ## Verify the existence of a file on the GRID
+    #
+    #
+    def checkGRIDFile( self, filename  ):
+        self._logger.info( "Checking file %(file)s" % { "file": filename } )
+        command = "lfc-ls %(file)s" % { "file": filename }
+        lfc = popen2.Popen4( command )
+        while lfc.poll() == -1:
+            pass
+        if lfc.poll() == 0:
+            self._logger.warning( "%(file)s already on GRID" % { "file": filename } )
+            if self._configParser.get("General","Interactive" ):
+                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
+                    self._logger.info( "User decided to remove %(file)s " % { "file": filename } )
+                    command = "lcg-del -a lfn:%(file)s" % { "file": filename } 
+                    os.system( command )
+                    return True
+                else :
+                    raise OutputFileAlreadyOnGRIDError( "%(file)s on the GRID" % { "file": filename } )
+            else :
+                raise OutputFileAlreadyOnGRIDError( "%(file)s" % {"file": filename } )
 
 
     ## Verify the existence of a GRID folder
