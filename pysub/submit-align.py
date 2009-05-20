@@ -13,7 +13,7 @@ from optparse import OptionGroup
 # the SubmitAlign and create an instance of this object.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-align.py,v 1.1 2009-05-19 18:01:39 bulgheroni Exp $
+# @version $Id: submit-align.py,v 1.2 2009-05-20 10:05:14 bulgheroni Exp $
 
 def main() :
 
@@ -22,7 +22,7 @@ def main() :
 
 usage: %prog [execution-options] [io-options] [configuration-options] [align-options] -o basename-output input-files
 """
-    cvsVersion = "$Revision: 1.1 $"
+    cvsVersion = "$Revision: 1.2 $"
     submitAlignCVSVersion = SubmitAlign.cvsVersion
     submitBaseCVSVersion = SubmitBase.cvsVersion
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
@@ -49,6 +49,9 @@ usage: %prog [execution-options] [io-options] [configuration-options] [align-opt
                            " in the steering file. This option is overriding the value stored in the configuration file. Anyway the residual cuts have "
                            " to be defined in the configuration file.")
 
+    alignGroup.add_option( "--records", action="store", type="int", dest="records", help="Use this parameter to set the number of record to process. Used only when the job is not "
+                           " split into sub-jobs. Default is 10 millions. ")
+
     alignGroup.add_option( "--split-job", action="store", type="int", dest="split_job", help="Use this option to define how many alignment job you want to submit."
                            " This option can be used only whe working in all-grid mode and pede will not be executed at the end of Marlin. It will be user responsibility "
                            "to retrieve from the GRID the mille.bin files and the pede-steer file. Use this option along with --split-size to set how many record each job has to read." )
@@ -60,6 +63,7 @@ usage: %prog [execution-options] [io-options] [configuration-options] [align-opt
     parser.set_defaults( residual_cuts=False )
     parser.set_defaults( split_job=1 )
     parser.set_defaults( split_size=1000 )
+    parser.set_defaults( records=10000000 )
 
     parser.add_option_group( alignGroup )
 

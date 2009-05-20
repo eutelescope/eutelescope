@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-align.py script
 #
 #
-# @version $Id: submitalign.py,v 1.1 2009-05-19 18:01:39 bulgheroni Exp $
+# @version $Id: submitalign.py,v 1.2 2009-05-20 10:05:14 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitAlign( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitAlign( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.1 $"
+    cvsVersion = "$Revision: 1.2 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -833,7 +833,14 @@ class SubmitAlign( SubmitBase ):
         actualSteeringString = actualSteeringString.replace( "@InputFile@", "" )
 
         # since we don't want to split, replace the RecordNumber with a big number
-        actualSteeringString = actualSteeringString.replace( "@RecordNumber@", "10" ) # 10 millions
+        try :
+            record = self._configParser.get("AlignOptions", "Records")
+        except ConfigParser.NoOptionError :
+            record = 10000000
+        if self._option.records != 10000000:
+            record = self._option.records
+
+        actualSteeringString = actualSteeringString.replace( "@RecordNumber@", "%(v)s" % {"v": record } )
 
         # don't skip any record
         actualSteeringString = actualSteeringString.replace( "@SkipNEvents@", "0" )
@@ -879,7 +886,7 @@ class SubmitAlign( SubmitBase ):
             value = 1
         else:
             value = 0
-        actualSteeringString = actualSteeringString.replace("@RunPede@", "%(v)d" % { "v" : value } )
+        actualSteeringString = actualSteeringString.replace("@RunPede@", "%(v)s" % { "v" : value } )
 
         # residual cuts ?
         if self._isResidualCut :
@@ -1004,6 +1011,11 @@ class SubmitAlign( SubmitBase ):
 
 
         if self._isRunPede :
+
+            try :
+                outputFilePath = self._configParser.get( "LOCAL", "LocalFolderDBAlign" )
+            except ConfigParser.NoOptionError:
+                outputFilePath = "db"
 
             outputFileName = "%(run)s-align-db.slcio" % { "run": self._option.output  }
             if not os.access( os.path.join( outputFilePath , outputFileName) , os.R_OK ):
@@ -1159,6 +1171,9 @@ class SubmitAlign( SubmitBase ):
         for file in glob.glob( "%(name)s-*" % {"name": self.name}):
             os.remove( file )
 
+        if self._isRunPede :
+            for file in glob.glob("mille*") :
+                os.remove( file )
 
         # remove the input and output file
         if self._keepInput == False:
