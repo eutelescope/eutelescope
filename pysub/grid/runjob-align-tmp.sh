@@ -2,7 +2,7 @@
 # A template of alignment job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-align-tmp.sh,v 1.1 2009-05-20 15:39:47 bulgheroni Exp $
+# @version $Id: runjob-align-tmp.sh,v 1.2 2009-05-21 12:26:00 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -111,7 +111,7 @@ OutputMilleLFN=$GRIDFolderAlignResults/$Output-align-mille.bin
 OutputJoboutputLFN=$GRIDFolderAlignJoboutput/$Name-$Output.tar.gz
 OutputHistoLFN=$GRIDFolderAlignHisto/$Output-align-histo.root
 
-OutputDBLocal=$PWD/results/$Output-align-db.slcio
+OutputDBLocal=$PWD/db/$Output-align-db.slcio
 OutputSteerLocal=$PWD/results/$Output-pede-steer.txt
 OutputMilleLocal=$PWD/results/$Output-align-mille.bin
 OutputJoboutputLocal=$PWD/log/$Name-$Output.tar.gz
