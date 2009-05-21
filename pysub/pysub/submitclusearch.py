@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.13 2009-05-16 18:09:12 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.14 2009-05-21 17:16:02 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.13 $"
+    cvsVersion = "$Revision: 1.14 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -887,7 +887,11 @@ class SubmitCluSearch( SubmitBase ):
         listOfFiles = []
 
         # the gear file, the histo info and the config.cfg
-        listOfFiles.append( os.path.join( self._gearPath, self._gear_file ) )
+        try :
+            gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
+        except ConfigParser.NoOptionError :
+            gearPath = ""
+        listOfFiles.append( os.path.join( gearPath, self._gear_file ) )
         try :
             histoinfoPath = self._configParser.get( "LOCAL", "LocalFolderHistoinfo" )
         except ConfigParser.NoOptionError :
