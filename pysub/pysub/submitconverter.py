@@ -20,7 +20,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.32 2009-05-16 20:00:20 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.33 2009-05-21 13:45:15 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -30,7 +30,7 @@ class SubmitConverter( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.32 $"
+    cvsVersion = "$Revision: 1.33 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -916,7 +916,11 @@ class SubmitConverter( SubmitBase ) :
 
         # prepare the list of files we want to copy.
         listOfFiles = []
-        listOfFiles.append( os.path.join( self._gearPath, self._gear_file ) )
+        try :
+            gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
+        except ConfigParser.NoOptionError :
+            gearPath = ""
+        listOfFiles.append( os.path.join( gearPath, self._gear_file ) )
         listOfFiles.append( self._configFile )
         for file in glob.glob( "%(name)s-*.*" % {"name": self.name} ):
             message = "Adding %(file)s to the joboutput tarball" % { "file": file } 
@@ -1056,7 +1060,7 @@ class SubmitConverter( SubmitBase ) :
 
         jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name,"date": unique } ), "w" )
         for run, jid in self._gridJobNTuple:
-            if jib != "Unknown":
+            if jid != "Unknown":
                 jidFile.write( jid )
 
         jidFile.close()
