@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-align.py script
 #
 #
-# @version $Id: submitalign.py,v 1.4 2009-05-20 15:39:47 bulgheroni Exp $
+# @version $Id: submitalign.py,v 1.5 2009-05-21 12:26:53 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitAlign( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitAlign( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.4 $"
+    cvsVersion = "$Revision: 1.5 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1610,7 +1610,7 @@ class SubmitAlign( SubmitBase ):
                         self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
                         self._inputFileList[ index ] = "DEADFACE"
                         if self._configParser.get("General","Interactive" ):
-                            if not self.AskYesNo( "Would you like to skip it and continue? [y/n] " ) :
+                            if not self.askYesNo( "Would you like to skip it and continue? [y/n] " ) :
                                 message = "User decided to stop here"
                                 self._logger.critical( message )
                                 raise StopExecutionError( message )
@@ -1712,7 +1712,7 @@ class SubmitAlign( SubmitBase ):
                     self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
                     self._inputFileList[ index ] = "DEADFACE"
                     if self._configParser.get("General","Interactive" ):
-                        if not self.AskYesNo( "Would you like to skip it and continue? [y/n] " ) :
+                        if not self.askYesNo( "Would you like to skip it and continue? [y/n] " ) :
                             message = "User decided to stop here"
                             self._logger.critical( message )
                             raise StopExecutionError( message )
