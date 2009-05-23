@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.22 2009-05-18 13:23:47 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.23 2009-05-23 12:23:29 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.22 $"
+    cvsVersion = "$Revision: 1.23 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1486,7 +1486,13 @@ class SubmitFilter( SubmitBase ):
         listOfFiles = []
 
         # the gear file, the histo info and the config.cfg
-        listOfFiles.append( os.path.join( self._gearPath, self._gear_file ) )
+        # the gear file, the histo info and the config.cfg
+        try :
+            gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
+        except ConfigParser.NoOptionError :
+            gearPath = ""
+        listOfFiles.append( os.path.join( gearPath, self._gear_file ) )
+
         try :
             histoinfoPath = self._configParser.get( "LOCAL", "LocalFolderHistoinfo" )
         except ConfigParser.NoOptionError :
