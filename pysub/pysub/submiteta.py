@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-eta.py script
 #
 #
-# @version $Id: submiteta.py,v 1.6 2009-05-18 16:12:12 bulgheroni Exp $
+# @version $Id: submiteta.py,v 1.7 2009-05-23 14:55:14 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitEta( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitEta( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.6 $"
+    cvsVersion = "$Revision: 1.7 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -196,40 +196,40 @@ class SubmitEta( SubmitBase ):
         except MissingInputFileError, error:
             message = "Missing input file %(file)s" % { "file": error._filename }
             self._logger.critical( message )
-            run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, "Missing", "Skipped", output, histo, tarball
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, "Missing", "Skipped", output, histo, tarball
             raise StopExecutionError( message )
 
         except MissingInputFileOnGRIDError, error:
             message = "Missing input file %(file)s" % { "file": error._filename }
             self._logger.error( message )
             self._logger.error("Skipping to the next run ")
-            run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, "Missing", "Skipped", output, histo, tarball
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, "Missing", "Skipped", output, histo, tarball
             raise StopExecutionError( message )
 
         except OutputFileAlreadyOnGRIDError, error:
             message = "Output file %(file)s already on GRID" % { "file": error._filename }
             self._logger.error( message )
             self._logger.error("Skipping to the next run ")
-            run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, input, "Skipped", "GRID", histo, tarball
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, "Skipped", "GRID", histo, tarball
             raise StopExecutionError( message )
 
         except HistogramFileAlreadyOnGRIDError, error:
             message = "Histogram file %(file)s already on GRID" % { "file": error._filename }
             self._logger.error( message )
             self._logger.error("Skipping to the next run ")
-            run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, input, "Skipped", output, "GRID", tarball
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, "Skipped", output, "GRID", tarball
             raise StopExecutionError( message )
 
         except JoboutputFileAlreadyOnGRIDError, error:
             message = "Joboutput file %(file)s already on GRID" % { "file": error._filename }
             self._logger.error( message )
             self._logger.error("Skipping to the next run ")
-            run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, input, "Skipped", output, histo, "GRID"
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, "Skipped", output, histo, "GRID"
             raise StopExecutionError( message )
 
         except MissingSteeringTemplateError, error:
@@ -247,37 +247,37 @@ class SubmitEta( SubmitBase ):
                 % { "msg": error._message, "errno": error._errno }
             self._logger.error( message )
             self._logger.error("Skipping to the next run ")
-            run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, input, "Failed", "Missing", "Missing", "Missing"
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, "Failed", "Missing", "Missing", "Missing"
             raise StopExecutionError( message )
 
         except MissingOutputFileError, error:
             message = "The output file (%(file)s) was not properly generated, possible failure" % { "file": error._filename }
             self._logger.error( message )
-            run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, c, "Missing", d, f
+            run, b, c, d, e, f = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, b, c, "Missing", d, f
             raise StopExecutionError( message )
 
         except MissingHistogramFileError, error:
             message = "The output file (%(file)s) was not properly generated, possible failure" % { "file": error._filename }
             self._logger.error( message )
-            run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, c, d, "Missing", f
+            run, b, c, d, e, f = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, b, c, d, "Missing", f
             raise StopExecutionError( message )
 
         except MissingJoboutputFileError, error:
             message = "The joboutput tarball (%(file)s) is missing, possible failure" % { "file": error._filename }
             self._logger.error( message )
-            run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, c, d, e, "Missing"
+            run, b, c, d, e, f = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, b, c, d, e, "Missing"
             raise StopExecutionError( message )
 
         except GRID_LCG_CPError, error:
             message = "Problem copying the input file (%(file)s)" % { "file": error._filename }
             self._logger.error( message )
             self._logger.error( "Skipping to the next run " )
-            run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, "Missing", marlin, output, histo, tarball
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, "Missing", marlin, output, histo, tarball
             raise StopExecutionError( message )
 
     ## Generate only submitter
@@ -874,7 +874,12 @@ class SubmitEta( SubmitBase ):
         listOfFiles = []
 
         # the gear file, the histo info and the config.cfg
-        listOfFiles.append( os.path.join( self._gearPath, self._gear_file ) )
+        try :
+            gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
+        except ConfigParser.NoOptionError :
+            gearPath = ""
+        listOfFiles.append( os.path.join( gearPath, self._gear_file ) )
+       
         try :
             histoinfoPath = self._configParser.get( "LOCAL", "LocalFolderHistoinfo" )
         except ConfigParser.NoOptionError :
