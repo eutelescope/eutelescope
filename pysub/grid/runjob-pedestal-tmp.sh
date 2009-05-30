@@ -2,7 +2,7 @@
 # A template of pedestal job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-pedestal-tmp.sh,v 1.5 2009-05-15 08:04:54 bulgheroni Exp $
+# @version $Id: runjob-pedestal-tmp.sh,v 1.6 2009-05-30 15:34:05 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -196,6 +196,10 @@ echo
 
 # remove the input file
 doCommand "rm ${InputLcioRawLocal}"
+
+# fixing the histograms
+doCommand "hadd -f temp.root empty.root ${OutputHistoLocal}"
+doCommand "mv temp.root ${OutputHistoLocal}"
 
 # put back the files to the GRID
 echo
