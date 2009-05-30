@@ -2,7 +2,7 @@
 # A template of hit maker job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-hitmaker-tmp.sh,v 1.1 2009-05-21 12:25:21 bulgheroni Exp $
+# @version $Id: runjob-hitmaker-tmp.sh,v 1.2 2009-05-30 15:39:28 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -237,6 +237,9 @@ done
 # remove the eta file
 doCommand "rm ${InputEtaLocal}"
 
+# fix the histogram file
+doCommand "hadd -f temp.root empty.root ${OutputHistoLocal}"
+doCommand "mv temp.root ${OutputHistoLocal}"
 
 # put back the files to the GRID
 echo

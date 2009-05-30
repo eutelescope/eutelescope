@@ -2,7 +2,7 @@
 # A template of eta job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-eta-tmp.sh,v 1.4 2009-05-18 14:24:23 bulgheroni Exp $
+# @version $Id: runjob-eta-tmp.sh,v 1.5 2009-05-30 15:37:54 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -205,6 +205,10 @@ echo
 
 # remove the input file
 doCommand "rm ${InputLocal}"
+
+# fix the histogram file
+doCommand "hadd -f temp.root empty.root ${OutputHistoLocal}"
+doCommand "mv temp.root ${OutputHistoLocal}"
 
 # put back the files to the GRID
 echo
