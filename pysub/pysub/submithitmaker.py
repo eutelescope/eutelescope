@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-hitmaker.py script
 #
 #
-# @version $Id: submithitmaker.py,v 1.7 2009-05-19 18:00:19 bulgheroni Exp $
+# @version $Id: submithitmaker.py,v 1.8 2009-05-30 14:38:51 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitHitMaker( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitHitMaker( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.7 $"
+    cvsVersion = "$Revision: 1.8 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -286,16 +286,12 @@ class SubmitHitMaker( SubmitBase ):
             raise StopExecutionError( message )
 
 
-
-
-
-
-
-
-
-        
-
-
+        except GRIDSubmissionError, error:
+            message ="Unable to perform the job submission (%(error)s) " % { "error": error._filename }
+            self._logger.critical( message )  
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len(self._summaryNTuple) - 1 ]
+            self._summaryNTuple[ len(self._summaryNTuple) - 1 ] = run, input, "Failed", output, histo, tarball
+            raise StopExecutionError( message )
 
         except GRID_LCG_CPError, error:
             message = "Problem copying the input file (%(file)s)" % { "file": error._filename }
