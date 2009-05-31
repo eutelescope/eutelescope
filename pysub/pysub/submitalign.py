@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-align.py script
 #
 #
-# @version $Id: submitalign.py,v 1.5 2009-05-21 12:26:53 bulgheroni Exp $
+# @version $Id: submitalign.py,v 1.6 2009-05-31 09:20:12 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitAlign( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitAlign( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.5 $"
+    cvsVersion = "$Revision: 1.6 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -318,6 +318,13 @@ class SubmitAlign( SubmitBase ):
             self._summaryNTuple[ index ] = run, "Missing", marlin, output, histo, tarball
             raise StopExecutionError( message )
 
+        except GRIDSubmissionError, error:
+            message ="Unable to perform the job submission (%(error)s) " % { "error": error._message }
+            self._logger.critical( message )
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len(self._summaryNTuple) - 1 ]
+            self._summaryNTuple[ len(self._summaryNTuple) - 1 ] = run, input, "Failed", output, histo, tarball
+            raise StopExecutionError( message )
+        
     ## Generate only submitter
     #
     # This methods is responsibile of dry-run with only steering file
@@ -1785,8 +1792,12 @@ class SubmitAlign( SubmitBase ):
 
             self.generateSteeringFileSplitting( index )
 
-            self.submitJDLSplitting( index  ) 
-
+            try :
+                self.submitJDLSplitting( index  )
+                
+            except GRIDSubmissionError, error:
+                self._logger.error( "Problem submitting %(file)s. Skipping it" % { "file":error._message } )
+                
 
         self.prepareTarball( )
 
@@ -2009,8 +2020,6 @@ class SubmitAlign( SubmitBase ):
                 if inputFile != "DEADFACE":
                     run, b, c, d, e, f = self._summaryNTuple[ index ]
                     self._summaryNTuple[ index ] = run, b, "See below", d, e, f
-            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
-            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, "Failed", output, histo, tarball
             raise GRIDSubmissionError ( "%(name)s-%(run)s.jdl" % { "name": self.name,"run": self._option.output } )
 
         # read back the the job id file
