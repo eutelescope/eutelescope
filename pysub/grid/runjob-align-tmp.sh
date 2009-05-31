@@ -2,16 +2,17 @@
 # A template of alignment job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-align-tmp.sh,v 1.3 2009-05-30 15:40:35 bulgheroni Exp $
+# @version $Id: runjob-align-tmp.sh,v 1.4 2009-05-31 09:20:39 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
 # errno 20: Problem during Marlin execution.
+# errno 21: Problem during pede execution.
 # errno 30: Problem copying and registering the DB output to the SE.
-# errno 31: Problem copying and registering the pede steering file
-# errno 32: Problem copying and registering the mille binary file
-# errno 33: Problem copying and registering the joboutput file
-# errno 34: Problem copying and registering the histogram file
+# errno 31: Problem copying and registering the pede steering file.
+# errno 32: Problem copying and registering the mille binary file.
+# errno 33: Problem copying and registering the joboutput file.
+# errno 34: Problem copying and registering the histogram file.
 #
 
 #############
@@ -68,11 +69,12 @@ putOnGRID() {
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
 # errno 20: Problem during Marlin execution.
+# errno 21: Problem during pede execution.
 # errno 30: Problem copying and registering the DB output to the SE.
-# errno 31: Problem copying and registering the pede steering file
-# errno 32: Problem copying and registering the mille binary file
-# errno 33: Problem copying and registering the joboutput file
-# errno 34: Problem copying and registering the histogram file
+# errno 31: Problem copying and registering the pede steering file.
+# errno 32: Problem copying and registering the mille binary file.
+# errno 33: Problem copying and registering the joboutput file.
+# errno 34: Problem copying and registering the histogram file.
 #
 
 # To be replaced with the output suffix
@@ -225,6 +227,42 @@ echo "# Marlin successfully finished `date `"
 echo "########################################################################"
 echo
 
+if [ $RunPede == "yes" ] : then
+    echo
+    echo "########################################################################"
+    echo "# Rerunning pede for the second iteration"
+    echo "########################################################################"
+    echo
+
+    # we need to put the results of the first iteration in the new steering file
+    # first replace the millebinfile
+    sed -e "s|@MilleBinFile@|$OutputMilleLocal|" < pede-steer-tmp.txt > pede-steer-tmp.working
+ 
+    # now read every line of the millepede.res and add it to the template
+    cat millepede.res | while read line ; do
+        value=$line"\n@Parameters@"
+        sed -e "s|@Parameters@|$value|" < pede-steer-tmp.working > pede-steer-tmp.working2
+        mv pede-steer-tmp.working2 pede-steer-tmp.working
+    done
+
+    # now remove any other additional @Parameters@
+    sed -e "s|@Parameters@||" < pede-steer-tmp.working > pede-steer.txt
+
+    # remove working copy of the steering template
+    rm pede-steer-tmp.working*
+
+    # running pede
+    # I'm not sure if pede is really using the return value
+    # but anyway read it back
+    c="pede pede-steer.txt"
+    $c
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem running pede"
+        exit 21
+    fi
+     
+fi 
 
 # remove the input file
 for file in $InputFileList; do
@@ -280,7 +318,7 @@ echo "########################################################################"
 echo "# Preparing the joboutput tarball"
 echo "########################################################################"
 echo
-doCommand "tar czvf ${OutputJoboutputLocal} *.log *.xml out err mille* histo/*root"
+doCommand "tar czvf ${OutputJoboutputLocal} *.log *.xml *.txt out err mille* histo/*root"
 
 echo
 echo "########################################################################"
