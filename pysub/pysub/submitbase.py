@@ -15,7 +15,7 @@ import popen2
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.17 2009-05-20 12:05:36 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.18 2009-05-31 09:17:31 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -24,7 +24,7 @@ class SubmitBase :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.17 $"
+    cvsVersion = "$Revision: 1.18 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -311,7 +311,7 @@ class SubmitBase :
     #
     # This method is called to generate a JDL file
     #
-    def generateJDLFile( self, index, runString ):
+    def generateJDLFile( self, index, runString, *other ):
         message = "Generating the JDL file (%(name)s-%(run)s.jdl)" % { "name": self.name,"run": runString }
         self._logger.info( message )
         try :
@@ -390,6 +390,12 @@ class SubmitBase :
             self._logger.warning( "Unable to find the GRIDILCSoftVersion. Using v01-06" )
             ilcsoftVersion = "v01-06"
         jdlActualString = jdlActualString.replace( "@GRIDILCSoftVersion@", ilcsoftVersion )
+
+        # replace any other additional arguments:
+        for arg in other:
+            jdlActualString = jdlActualString.replace( "@Others@", ", \"%(arg)s\" @Others@" % { "arg": arg } )
+        # remove spare others
+        jdlActualString = jdlActualString.replace( "@Others@", "" )
 
         self._jdlFilename = "%(name)s-%(run)s.jdl" % { "name": self.name, "run": runString }
         jdlActualFile = open( self._jdlFilename, "w" )
