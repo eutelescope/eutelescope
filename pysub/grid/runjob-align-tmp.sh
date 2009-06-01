@@ -2,7 +2,7 @@
 # A template of alignment job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-align-tmp.sh,v 1.4 2009-05-31 09:20:39 bulgheroni Exp $
+# @version $Id: runjob-align-tmp.sh,v 1.5 2009-06-01 19:41:04 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -89,6 +89,7 @@ InputFileList="@InputFileList@"
 
 # To be replace with yes or no
 RunPede="@RunPede@"
+PedeSteerTemplate="@PedeSteerTemplate@"
 
 # Define here all the variables modified by the submitter
 GRIDCE="@GRIDCE@"
@@ -116,6 +117,7 @@ OutputHistoLFN=$GRIDFolderAlignHisto/$Output-align-histo.root
 OutputDBLocal=$PWD/db/$Output-align-db.slcio
 OutputSteerLocal=$PWD/results/$Output-pede-steer.txt
 OutputMilleLocal=$PWD/results/$Output-align-mille.bin
+OutputMilleShort=results/$Output-align-mille.bin
 OutputJoboutputLocal=$PWD/log/$Name-$Output.tar.gz
 OutputHistoLocal=$PWD/histo/$Output-align-histo.root
 SteeringFile=$Name-$Output.xml
@@ -227,18 +229,32 @@ echo "# Marlin successfully finished `date `"
 echo "########################################################################"
 echo
 
-if [ $RunPede == "yes" ] : then
+echo "before"
+if [ $RunPede == "yes" ] ; then
     echo
     echo "########################################################################"
-    echo "# Rerunning pede for the second iteration"
+    echo "# Rerunning pede `date`"
     echo "########################################################################"
     echo
 
-    # we need to put the results of the first iteration in the new steering file
-    # first replace the millebinfile
-    sed -e "s|@MilleBinFile@|$OutputMilleLocal|" < pede-steer-tmp.txt > pede-steer-tmp.working
- 
-    # now read every line of the millepede.res and add it to the template
+    echo "Preparing the new steering file ${PedeSteerTemplate}"
+    if  test -f $PedeSteerTemplate ; then
+        echo "Pede steering template found"
+     else
+        echo "****** Missing pede steering template"
+        exit 22
+    fi
+
+    echo "Replacing the mille binary file"
+    sed -e "s|@MilleBinFile@|$OutputMilleShort|" < $PedeSteerTemplate > pede-steer-tmp.working
+
+    echo "Replacing the starting points"
+    if test -f millepede.res ; then 
+        echo "Previous pede iteration results file found"
+    else 
+        echo "****** Missing millepede.res file"
+        exit 23
+    fi
     cat millepede.res | while read line ; do
         value=$line"\n@Parameters@"
         sed -e "s|@Parameters@|$value|" < pede-steer-tmp.working > pede-steer-tmp.working2
@@ -246,22 +262,47 @@ if [ $RunPede == "yes" ] : then
     done
 
     # now remove any other additional @Parameters@
-    sed -e "s|@Parameters@||" < pede-steer-tmp.working > pede-steer.txt
+    echo "Cleaning up the steering file"
+    sed -e "s|@Parameters@||" < pede-steer-tmp.working > pede-steer-tmp.final
+
+    echo "New steering file ready to be used"
+    # now rename the initial pede steering file in something else, that will be archieved
+    doCommand "mv ${OutputSteerLocal} $PWD/results/$Output-pede-steer-iter-0.txt"
+
+    # rename the final steering in the current one
+    doCommand "mv pede-steer-tmp.final ${OutputSteerLocal}"
 
     # remove working copy of the steering template
-    rm pede-steer-tmp.working*
+    doCommand "rm pede-steer-tmp.working*"
 
     # running pede
     # I'm not sure if pede is really using the return value
     # but anyway read it back
-    c="pede pede-steer.txt"
+    c="pede ${OutputSteerLocal}"
+    echo $c
     $c
     r=$?
     if [ $r -ne 0 ] ; then
         echo "****** Problem running pede"
         exit 21
     fi
-     
+
+    # copying the old db file in a backup file 
+    doCommand "mv db/$Output-align-db.slcio db/$Output-align-db-iter-0.slcio"
+    
+    # run the pede2lcio utility
+    doCommand "pede2lcio millepede.res db/$Output-align-db.slcio"
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem running pede2lcio"
+        exit 24
+    fi
+
+    echo
+    echo "########################################################################"
+    echo "# Second iteration of  pede finished at `date`"
+    echo "########################################################################"
+    echo
 fi 
 
 # remove the input file
@@ -318,7 +359,7 @@ echo "########################################################################"
 echo "# Preparing the joboutput tarball"
 echo "########################################################################"
 echo
-doCommand "tar czvf ${OutputJoboutputLocal} *.log *.xml *.txt out err mille* histo/*root"
+doCommand "tar czvf ${OutputJoboutputLocal} *.log *.xml *.txt out err mille* db/*iter* histo/*root"
 
 echo
 echo "########################################################################"
