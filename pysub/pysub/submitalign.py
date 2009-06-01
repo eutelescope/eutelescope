@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-align.py script
 #
 #
-# @version $Id: submitalign.py,v 1.6 2009-05-31 09:20:12 bulgheroni Exp $
+# @version $Id: submitalign.py,v 1.7 2009-06-01 19:43:14 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitAlign( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitAlign( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.6 $"
+    cvsVersion = "$Revision: 1.7 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1535,11 +1535,15 @@ class SubmitAlign( SubmitBase ):
             localPath = "log/"
 
         jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
+        currentJIDFile = open( "current.jid" , "a" )
         for run, jid in self._gridJobNTuple:
-            if jid != "See below" and jid != "Unknown":
+            if jid != "Unknown" and jid != "See below":
                 jidFile.write( jid )
-
+                currentJIDFile.write( "# %(name)s %(output)s %(unique)s\n" % {"name":self.name, "output": self._option.output, "unique": unique } )
+                currentJIDFile.write( jid )
         jidFile.close()
+        currentJIDFile.close()
+                                                                        
 
     def prepareJIDFileSplitting( self ):
         unique = datetime.datetime.fromtimestamp( self._timeBegin ).strftime("%Y%m%d-%H%M%S")
@@ -1552,11 +1556,15 @@ class SubmitAlign( SubmitBase ):
             localPath = "log/"
 
         jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
+        currentJIDFile = open( "current.jid" , "a" )
         for run, jid in self._gridSplitNTuple:
-            jidFile.write( jid )
-
+            if jid != "Unknown" and jid != "See below":
+                jidFile.write( jid )
+                currentJIDFile.write( "# %(name)s %(output)s %(unique)s %(run)d\n" % {"run": run, "name":self.name, "output": self._option.output, "unique": unique } )
+                currentJIDFile.write( jid )
         jidFile.close()
-
+        currentJIDFile.close()
+        
 
     ## Preliminary checks for splitting
     def doPreliminaryTestSplitting( self, i, fullCheck ):
@@ -1784,10 +1792,17 @@ class SubmitAlign( SubmitBase ):
             else:
                 fullCheck = False
 
-        for index in range( self._option.split_job ):
-            self.generateJDLFile( 0, "%(output)s-s%(index)06d" % {
-                "output": self._option.output, "index": index } )
+        # get the pede-steer-tmp.txt from the configuration file
+        try :
+            pedeSteerTemplate       = self._configParser.get("SteeringTemplate", "PedeSteeringFile" )
+        except ConfigParser.NoOptionError:
+            message = "Missing pede steering file in the configuration"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
 
+        for index in range( self._option.split_job ):
+            self.generateJDLFile( 0, "%(output)s-s%(index)06d" % {"output": self._option.output, "index": index }, pedeSteerTemplate)
+            
             self.generateRunjobFileSplitting( index )
 
             self.generateSteeringFileSplitting( index )
@@ -1808,8 +1823,16 @@ class SubmitAlign( SubmitBase ):
         # do preliminary checks
         self.doPreliminaryTest( )
 
+        # get the pede-steer-tmp.txt from the configuration file
+        try :
+            pedeSteerTemplate       = self._configParser.get("SteeringTemplate", "PedeSteeringFile" )
+        except ConfigParser.NoOptionError:
+            message = "Missing pede steering file in the configuration"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+                                                    
         # now prepare the jdl file from the template
-        self.generateJDLFile( 0, self._option.output )
+        self.generateJDLFile( 0, self._option.output, pedeSteerTemplate )
 
         # now generate the run job script
         self.generateRunjobFileSingleJob(  )
@@ -1852,6 +1875,15 @@ class SubmitAlign( SubmitBase ):
         # replace the output prefix.
         runActualString = runActualString.replace( "@Output@", self._option.output )
 
+        # replace the Pede steering file template
+        try :
+            pedeSteerTemplate       = self._configParser.get("SteeringTemplate", "PedeSteeringFile" )
+        except ConfigParser.NoOptionError:
+            message = "Missing pede steering file in the configuration"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+        runActualString = runActualString.replace( "@PedeSteerTemplate@", os.path.basename( pedeSteerTemplate ) ) 
+        
         # replace the input file names
         for index, inputFile in enumerate( self._inputFileList ) :
             if inputFile != "DEADFACE" :

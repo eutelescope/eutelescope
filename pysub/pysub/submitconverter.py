@@ -20,7 +20,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.33 2009-05-21 13:45:15 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.34 2009-06-01 19:43:14 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -30,7 +30,7 @@ class SubmitConverter( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.33 $"
+    cvsVersion = "$Revision: 1.34 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1058,9 +1058,13 @@ class SubmitConverter( SubmitBase ) :
         except ConfigParser.NoOptionError :
             localPath = "log/"
 
-        jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name,"date": unique } ), "w" )
+        jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
+        currentJIDFile = open( "current.jid" , "a" )
         for run, jid in self._gridJobNTuple:
-            if jid != "Unknown":
+            if jid != "Unknown" and jid != "See below":
                 jidFile.write( jid )
-
+                currentJIDFile.write( "# %(name)s %(run)s %(unique)s\n" % {"name":self.name, "run":run , "unique": unique } )
+                currentJIDFile.write( jid )
         jidFile.close()
+        currentJIDFile.close()
+                                                                        

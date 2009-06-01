@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-eta.py script
 #
 #
-# @version $Id: submiteta.py,v 1.8 2009-06-01 09:51:11 bulgheroni Exp $
+# @version $Id: submiteta.py,v 1.9 2009-06-01 19:43:14 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitEta( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitEta( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.8 $"
+    cvsVersion = "$Revision: 1.9 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -278,6 +278,13 @@ class SubmitEta( SubmitBase ):
             self._logger.error( "Skipping to the next run " )
             run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
             self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, "Missing", marlin, output, histo, tarball
+            raise StopExecutionError( message )
+
+        except GRIDSubmissionError, error:
+            message = "Problem submitting the job to the GRID (%(value)s)" % { "value": error._message }
+            self._logger.critical( message )
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, "Failed", marlin, output, histo, tarball
             raise StopExecutionError( message )
 
     ## Generate only submitter
@@ -1013,11 +1020,12 @@ class SubmitEta( SubmitBase ):
 
         jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
         currentJIDFile = open( "current.jid" , "a" )
-        currentJIDFile.write( "# %(name)s %(output)s %(unique)s\n" % {"name":self.name, "output": self._option.output, "unique": unique } ) 
         for run, jid in self._gridJobNTuple:
             if jid != "Unknown" and jid != "See below":
                 jidFile.write( jid )
+                currentJIDFile.write( "# %(name)s %(output)s %(unique)s\n" % {"name":self.name, "output": self._option.output, "unique": unique } ) 
                 currentJIDFile.write( jid )
+                
         jidFile.close()
         currentJIDFile.close()
 

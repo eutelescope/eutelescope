@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-hitmaker.py script
 #
 #
-# @version $Id: submithitmaker.py,v 1.9 2009-05-31 09:18:44 bulgheroni Exp $
+# @version $Id: submithitmaker.py,v 1.10 2009-06-01 19:43:14 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitHitMaker( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitHitMaker( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.9 $"
+    cvsVersion = "$Revision: 1.10 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1126,13 +1126,15 @@ class SubmitHitMaker( SubmitBase ):
             localPath = "log/"
 
         jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
+        currentJIDFile = open( "current.jid" , "a" )
         for run, jid in self._gridJobNTuple:
-            if jid != "See below" and jid != "Unknown":
+            if jid != "Unknown" and jid != "See below":
                 jidFile.write( jid )
-
+                currentJIDFile.write( "# %(name)s %(output)s %(unique)s\n" % {"name":self.name, "output": self._option.output, "unique": unique } )
+                currentJIDFile.write( jid )
         jidFile.close()
-
-
+        currentJIDFile.close()
+        
 
     ## Preliminary checks
     #
@@ -1218,7 +1220,7 @@ class SubmitHitMaker( SubmitBase ):
                     self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
                     self._inputFileList[ index ] = "DEADFACE"
                     if self._configParser.get("General","Interactive" ):
-                        if not self.AskYesNo( "Would you like to skip it and continue? [y/n] " ) :
+                        if not self.askYesNo( "Would you like to skip it and continue? [y/n] " ) :
                             message = "User decided to stop here"
                             self._logger.critical( message )
                             raise StopExecutionError( message )

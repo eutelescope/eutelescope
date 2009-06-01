@@ -78,4 +78,3 @@ class SubmitTest( SubmitBase ) :
         print "Working very hard..."
         time.sleep( 1 )
 
-

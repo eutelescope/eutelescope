@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.14 2009-05-21 17:16:02 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.15 2009-06-01 19:43:14 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.14 $"
+    cvsVersion = "$Revision: 1.15 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -243,6 +243,13 @@ class SubmitCluSearch( SubmitBase ):
                 self._logger.error("Skipping to the next run ")
                 run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, "Skipped", "GRID", histo, tarball
+
+            except GRIDSubmissionError, error:
+                message = "Problem submitting job to the GRID (%(value)s) "% { "value": error._message }
+                self._logger.error( message )
+                self._logger.error("Skipping to the next run " )
+                run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, input, "Failed", output, histo, tarball
 
             except HistogramFileAlreadyOnGRIDError, error:
                 message = "Histogram file %(file)s already on GRID" % { "file": error._filename }
@@ -1034,13 +1041,15 @@ class SubmitCluSearch( SubmitBase ):
             localPath = "log/"
 
         jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
+        currentJIDFile = open( "current.jid" , "a" )
         for run, jid in self._gridJobNTuple:
-            if jid != "Unknown":
+            if jid != "Unknown" and jid != "See below":
                 jidFile.write( jid )
-
+                currentJIDFile.write( "# %(name)s %(run)s %(unique)s\n" % {"name":self.name, "run": run, "unique": unique } )
+                currentJIDFile.write( jid )
         jidFile.close()
-
-
+        currentJIDFile.close()
+        
 
     ## Preliminary checks
     #
