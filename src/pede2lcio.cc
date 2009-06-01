@@ -58,7 +58,7 @@ int main( int argc, char ** argv ) {
   if ( pedeFile.fail() ) {
 
     cerr << "Error opening the " << pedeFileName << endl;
-    return -1;
+    return 1;
 
   } else {
 
@@ -69,7 +69,7 @@ int main( int argc, char ** argv ) {
       lcWriter->open( lcioFileName.c_str() , lcio::LCIO::WRITE_NEW );
     } catch ( lcio::IOException& e ) {
       cerr << e.what() << endl;
-      return -2;
+      return 2;
     }
 
     // write an almost empty run header
