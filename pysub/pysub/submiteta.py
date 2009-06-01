@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-eta.py script
 #
 #
-# @version $Id: submiteta.py,v 1.7 2009-05-23 14:55:14 bulgheroni Exp $
+# @version $Id: submiteta.py,v 1.8 2009-06-01 09:51:11 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitEta( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitEta( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.7 $"
+    cvsVersion = "$Revision: 1.8 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1012,12 +1012,14 @@ class SubmitEta( SubmitBase ):
             localPath = "log/"
 
         jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
+        currentJIDFile = open( "current.jid" , "a" )
+        currentJIDFile.write( "# %(name)s %(output)s %(unique)s\n" % {"name":self.name, "output": self._option.output, "unique": unique } ) 
         for run, jid in self._gridJobNTuple:
-            if jid != "Unknown":
+            if jid != "Unknown" and jid != "See below":
                 jidFile.write( jid )
-
+                currentJIDFile.write( jid )
         jidFile.close()
-
+        currentJIDFile.close()
 
 
     ## Preliminary checks
