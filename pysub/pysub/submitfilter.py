@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.23 2009-05-23 12:23:29 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.24 2009-06-01 09:04:47 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.23 $"
+    cvsVersion = "$Revision: 1.24 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -239,6 +239,11 @@ class SubmitFilter( SubmitBase ):
             self._logger.critical( message )
             raise StopExecutionError( message )
 
+        except GRIDSubmissionError, error:
+            message = "Problem with the GRID submission (%(value)s) " % { "value": error._message } 
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
 
     ## Execute in case of single runs
     #
@@ -322,6 +327,13 @@ class SubmitFilter( SubmitBase ):
                 message = "Joboutput file %(file)s already on GRID" % { "file": error._filename }
                 self._logger.error( message )
                 self._logger.error("Skipping to the next run ")
+                run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, input, "Skipped", output, histo, "GRID"
+
+            except GRIDSubmissionError, error:
+                message = "Problem with the GRID submission (%(value)s) " % { "value": error._message }
+                self._logger.error( message )
+                self._logger.error("Skipping to the next run " )
                 run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, "Skipped", output, histo, "GRID"
 
