@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-align.py script
 #
 #
-# @version $Id: submitalign.py,v 1.8 2009-06-03 10:36:29 bulgheroni Exp $
+# @version $Id: submitalign.py,v 1.9 2009-06-03 11:09:17 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitAlign( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitAlign( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.8 $"
+    cvsVersion = "$Revision: 1.9 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1997,7 +1997,7 @@ class SubmitAlign( SubmitBase ):
     #
     def submitJDLSingleJob( self ) :
         self._logger.info("Submitting the job to the GRID")
-        
+
         command = "glite-wms-job-submit %(del)s -r %(GRIDCE)s -o %(name)s-%(run)s.jid %(name)s-%(run)s.jdl" % {
             "name": self.name, "run": self._option.output , "GRIDCE":self._gridCE , "del": self._jobDelegation }
         glite = popen2.Popen4( command )

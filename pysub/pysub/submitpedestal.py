@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.19 2009-06-01 19:43:14 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.20 2009-06-03 11:09:17 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.19 $"
+    cvsVersion = "$Revision: 1.20 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1024,6 +1024,9 @@ class SubmitPedestal( SubmitBase ):
         else:
             self._logger.info( "Valid proxy found" )
 
+        # check if we have already a delegation proxy
+        self.checkDelegationProxy()
+
         # get all the needed path from the configuration file
         try :
             self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderLcioRaw")
@@ -1205,8 +1208,8 @@ class SubmitPedestal( SubmitBase ):
     #
     def submitJDL( self, index, runString ) :
         self._logger.info("Submitting the job to the GRID")
-        command = "glite-wms-job-submit -a -r %(GRIDCE)s -o %(name)s-%(run)s.jid %(name)s-%(run)s.jdl" % {
-            "name": self.name, "run": runString , "GRIDCE":self._gridCE }
+        command = "glite-wms-job-submit %(del)s -r %(GRIDCE)s -o %(name)s-%(run)s.jid %(name)s-%(run)s.jdl" % {
+            "name": self.name, "run": runString , "GRIDCE":self._gridCE, "del": self._jobDelegation }
         glite = popen2.Popen4( command )
         while glite.poll() == -1:
             message = glite.fromchild.readline().strip()
