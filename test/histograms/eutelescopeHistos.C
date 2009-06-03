@@ -3072,11 +3072,12 @@ void showMillePlot( const char * filename ) {
   Double_t xMean = (*xMeanBegin + *(xMeanEnd - 1) ) / 2;
   Double_t yMean = (*yMeanBegin + *(yMeanEnd - 1) ) / 2;
 
+  cout << setw(20) << "Detector" << setw(20) << "x" << setw(20) << "y" << endl;
   for ( size_t iPos = 0 ; iPos < xMeanVec.size(); ++iPos ) {
     if ( ( iPos == 0 ) || ( iPos == xMeanVec.size() - 1 ) ) {
-      cout << iPos << " 0 0 " << endl;
+      cout << setw(20) << iPos << setw(20)<< "0" << setw(20) << "0" << endl;
     } else {
-      cout << iPos << " " << xMean - xMeanVec.at( iPos ) << " " << yMean - yMeanVec.at( iPos ) << endl;
+      cout << setw(20) << iPos << setw(20) << xMean - xMeanVec.at( iPos ) << setw(20) << yMean - yMeanVec.at( iPos ) << endl;
     }
   }
 
