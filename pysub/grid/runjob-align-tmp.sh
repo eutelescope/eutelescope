@@ -2,7 +2,7 @@
 # A template of alignment job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-align-tmp.sh,v 1.5 2009-06-01 19:41:04 bulgheroni Exp $
+# @version $Id: runjob-align-tmp.sh,v 1.6 2009-06-03 09:34:17 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -229,7 +229,6 @@ echo "# Marlin successfully finished `date `"
 echo "########################################################################"
 echo
 
-echo "before"
 if [ $RunPede == "yes" ] ; then
     echo
     echo "########################################################################"
