@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-align.py script
 #
 #
-# @version $Id: submitalign.py,v 1.7 2009-06-01 19:43:14 bulgheroni Exp $
+# @version $Id: submitalign.py,v 1.8 2009-06-03 10:36:29 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitAlign( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitAlign( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.7 $"
+    cvsVersion = "$Revision: 1.8 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1591,6 +1591,9 @@ class SubmitAlign( SubmitBase ):
             else:
                 self._logger.info( "Valid proxy found" )
 
+            # check if we have already a delegation proxy
+            self.checkDelegationProxy()
+
             # get all the needed path from the configuration file
             try :
                 self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderHitmakerResults")
@@ -1943,6 +1946,16 @@ class SubmitAlign( SubmitBase ):
         runActualString = runActualString.replace( "@Output@", "%(output)s-s%(i)06d" %
                                                    { "i": i, "output": self._option.output } )
 
+        # replace the Pede steering file template
+        try :
+            pedeSteerTemplate       = self._configParser.get("SteeringTemplate", "PedeSteeringFile" )
+        except ConfigParser.NoOptionError:
+            message = "Missing pede steering file in the configuration"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+        runActualString = runActualString.replace( "@PedeSteerTemplate@", os.path.basename( pedeSteerTemplate ) ) 
+
+
         # replace the input file names
         for index, inputFile in enumerate( self._inputFileList ) :
             if inputFile != "DEADFACE" :
@@ -1984,8 +1997,9 @@ class SubmitAlign( SubmitBase ):
     #
     def submitJDLSingleJob( self ) :
         self._logger.info("Submitting the job to the GRID")
-        command = "glite-wms-job-submit -a -r %(GRIDCE)s -o %(name)s-%(run)s.jid %(name)s-%(run)s.jdl" % {
-            "name": self.name, "run": self._option.output , "GRIDCE":self._gridCE }
+        
+        command = "glite-wms-job-submit %(del)s -r %(GRIDCE)s -o %(name)s-%(run)s.jid %(name)s-%(run)s.jdl" % {
+            "name": self.name, "run": self._option.output , "GRIDCE":self._gridCE , "del": self._jobDelegation }
         glite = popen2.Popen4( command )
         while glite.poll() == -1:
             message = glite.fromchild.readline().strip()
@@ -2031,8 +2045,8 @@ class SubmitAlign( SubmitBase ):
     #
     def submitJDLSplitting( self, i ) :
         self._logger.info("Submitting the job to the GRID")
-        command = "glite-wms-job-submit -a -r %(GRIDCE)s -o %(name)s-%(run)s-s%(i)06d.jid %(name)s-%(run)s-s%(i)06d.jdl" % {
-            "name": self.name, "run": self._option.output , "GRIDCE":self._gridCE , "i": i}
+        command = "glite-wms-job-submit %(del)s -r %(GRIDCE)s -o %(name)s-%(run)s-s%(i)06d.jid %(name)s-%(run)s-s%(i)06d.jdl" % {
+            "name": self.name, "run": self._option.output , "GRIDCE":self._gridCE , "i": i, "del": self._jobDelegation}
         glite = popen2.Popen4( command )
         while glite.poll() == -1:
             message = glite.fromchild.readline().strip()
@@ -2062,3 +2076,5 @@ class SubmitAlign( SubmitBase ):
         entry = i , jidFile.readline()
         self._gridSplitNTuple.append( entry )
 
+
+        

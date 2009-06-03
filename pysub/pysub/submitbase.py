@@ -15,7 +15,7 @@ import popen2
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.19 2009-06-01 09:03:12 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.20 2009-06-03 10:36:29 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -24,7 +24,7 @@ class SubmitBase :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.19 $"
+    cvsVersion = "$Revision: 1.20 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -420,4 +420,28 @@ class SubmitBase :
         jdlActualFile.write( jdlActualString )
         jdlActualFile.close()
 
+
+    def checkDelegationProxy( self ) :
+        self._logger.info( "Checking for an existing delegation proxy")
+        delegation = popen2.Popen4( "glite-wms-job-info -d $USER" , -1 )
+        rtr = delegation.wait()
+        output = delegation.fromchild.read()
+        for line in output.splitlines():
+            self._logger.log( 15, line.strip() )
+
+        if rtr != 0:
+            self._logger.info( "Generating a new delegate proxy" )
+            # prepare a delegation proxy
+            delegation = popen2.Popen4(  "glite-wms-job-delegate-proxy -d $USER", -1  )
+            rtr = delegation.wait()
+            output = delegation.fromchild.read()
+            for line in output.splitlines():
+                self._logger.log( 15, line.strip() )
+            if rtr != 0:
+                self._logger.warning( "Unable to do job proxy delegation. Using auto-delegation" )
+                self._jobDelegation  = " -a "
+            else :
+                self._jobDelegation  = " -d $USER "
+        else:
+            self._jobDelegation = " -d $USER "
 
