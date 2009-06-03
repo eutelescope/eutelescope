@@ -3006,7 +3006,10 @@ void showMillePlot( const char * filename ) {
     histo->SetXTitle( "#Deltax [#mum]" );
     padVec[iPad]->cd();
     histo->SetFillColor( kCyan - 5 );
+    histo->Draw();
     padVec[iPad]->Update();
+    Double_t xMax = histo->GetBinCenter( histo->GetMaximumBin() );
+    histo->GetXaxis()->SetRangeUser( xMax - 300, xMax + 300 );
 
     TPaveText * padTitle1 = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
     padTitle1->SetX1NDC( 0.050 );
@@ -3021,6 +3024,7 @@ void showMillePlot( const char * filename ) {
     st->SetX2NDC( 0.9792 );
     st->SetY2NDC( 0.9983 );
     padVec[iPad]->Modified( true );
+    
     ++iPad;
 
     histoName = "ResidualY_d" + toString( iDetector );
@@ -3031,7 +3035,10 @@ void showMillePlot( const char * filename ) {
     histo->SetXTitle( "#Deltay [#mum]" );
     padVec[iPad]->cd();
     histo->SetFillColor( kCyan - 5 );
+    histo->Draw();
     padVec[iPad]->Update();
+    xMax = histo->GetBinCenter( histo->GetMaximumBin() );
+    histo->GetXaxis()->SetRangeUser( xMax - 300, xMax + 300 );
 
     padTitle1 = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
     padTitle1->SetX1NDC( 0.050 );
@@ -3046,8 +3053,8 @@ void showMillePlot( const char * filename ) {
     st->SetX2NDC( 0.9792 );
     st->SetY2NDC( 0.9983 );
     padVec[iPad]->Modified( true );
-    ++iPad;
 
+    ++iPad;
   }
 
   string path( prepareOutputFolder( milleFolderName.Data() ));
