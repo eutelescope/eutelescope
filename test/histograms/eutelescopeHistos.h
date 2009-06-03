@@ -162,6 +162,9 @@ namespace eutelHistogram {
   //! Global variable with the TestFitter folder
   TString trackerFolderName = "TestFitter";
 
+  //! Global variable for the Alignment folder
+  TString milleFolderName = "Align";
+
   //! Global variable with the picture output format
   TString pictureOutputFormat = ".png";
 
@@ -301,6 +304,12 @@ namespace eutelHistogram {
    *  tracker performance and to verify the tracker alignment.
    */
   void showTrackerPlot( const char * filename );
+
+  //! Show Mille histogram
+  /*! This function is plotting the output histograms of the Mille
+   *  processor.
+   */
+  void showMillePlot( const char * filename );
 
   // utility prototypes
   //! Open a ROOT file

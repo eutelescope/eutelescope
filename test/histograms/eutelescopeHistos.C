@@ -2888,6 +2888,176 @@ void showTrackerPlot( const char * filename ) {
 
 }
 
+
+void showMillePlot( const char * filename ) {
+
+  // check if this file is already open
+  TFile * inputFile = closeAndReopenFile( filename );
+
+  if ( inputFile == 0x0 ) {
+    cerr << "Problems opening file " << filename << endl;
+    return;
+  }
+
+  // --> 1 canvas with residuals (one every 3 det. )
+
+  UInt_t nDetPerCanvas = 3;
+
+  // canvas name
+  TString canvasBaseName = "MilleResiduals";
+
+  // close all canvases with this name
+  closeCanvases( canvasBaseName );
+
+  // look into the input file for a folder named
+  TDirectoryFile * milleFolder = (TDirectoryFile*) inputFile->Get( milleFolderName.Data() ) ;
+
+  if ( milleFolder == 0x0 ) {
+    cerr << "No Mille histo folder (" << milleFolderName << ") found in " << filename << endl;
+    return ;
+  }
+
+    // guess the number of sensors
+  UInt_t nDetector = 0;
+  while ( true ) {
+    string name = "ResidualX_d" + toString(nDetector);
+    TH2D * histo = (TH2D*) milleFolder->Get(name.c_str());
+    if ( histo != 0x0 ) ++nDetector;
+    else break;
+  }
+
+  if ( nDetector == 0 ) {
+    cerr << "Something wrong with the number of detectors" << endl;
+    return;
+  }
+
+  UInt_t nCanvas = nDetector / nDetPerCanvas;
+  if ( nDetector % nDetPerCanvas != 0 ) {
+    ++nCanvas;
+  }
+
+  vector<TCanvas * > canvasVec;
+  vector<TPad * >    padVec;
+  Double_t titleHeight = 0.10;
+  Int_t canvasWidth  = 800;
+  Int_t canvasHeight = 800;
+
+  padVec.clear();
+
+  for ( UInt_t iCanvas = 0; iCanvas < nCanvas; iCanvas++ ) {
+
+    string canvasName  = string(canvasBaseName.Data()) + "_" + toString(iCanvas);
+    string canvasTitle = string(runName) + " - Mille residuals " + toString(iCanvas + 1) + " / " +  toString( nCanvas );
+
+
+    Int_t xShift = 50 * canvasVec.size();
+    if ( xShift > 600 ) xShift = 0;
+    TCanvas * c = new TCanvas( canvasName.c_str(), canvasTitle.c_str(), xShift, 0, canvasWidth, canvasHeight);
+    c->Range(0,0,1,1);
+    c->SetBorderSize(0);
+    c->SetFrameFillColor(0);
+    c->SetBorderMode(0);
+    canvasVec.push_back( c );
+
+    // title pad
+    TPad * titlePad = new TPad("title","title",0, 1 - titleHeight,1,1);
+    titlePad->Draw();
+    titlePad->SetBorderMode(0);
+    titlePad->SetBorderSize(0);
+    titlePad->SetFrameFillColor(0);
+    titlePad->cd();
+    TPaveLabel * title = new TPaveLabel(0.10,0.10,0.90,0.90,"arc");
+    title->SetBorderSize(1);
+    title->SetLabel( canvasTitle.c_str() );
+    title->Draw();
+    c->cd();
+
+    // big pad for the rest
+    TPad * bigPad = new TPad("bigPad","bigPad", 0, 0, 1, 1 - titleHeight );
+    bigPad->Draw();
+    bigPad->cd();
+    bigPad->SetBorderMode(0);
+    bigPad->SetBorderSize(0);
+    bigPad->SetFrameFillColor(0);
+
+    // divide the bigPad in 2 x 3 TPad and add them to the subpad list
+    Int_t nX = 2, nY = 3;
+    bigPad->Divide(nX, nY);
+
+    for ( Int_t i = 0; i < nX * nY; i++ ) {
+      TPad * smallPad =  dynamic_cast<TPad*> (bigPad->cd( 1 + i ));
+      smallPad->SetBorderMode(0);
+      smallPad->SetBorderSize(0);
+      smallPad->SetFrameFillColor(0);
+      if ( padVec.size() < 2 * nDetector ) {
+        padVec.push_back( smallPad );
+      }
+    }
+  }
+
+  UInt_t iPad = 0;
+  for ( UInt_t iDetector = 0 ; iDetector < nDetector ; ++iDetector ) {
+
+    string histoName  = "ResidualX_d" + toString( iDetector );
+    string histoTitle = "Residual along X for detector " + toString( iDetector );
+    TH1D * histo = (TH1D*) milleFolder->Get( histoName.c_str() );
+    histo->SetTitle( histoTitle.c_str() );
+    setDefaultAxis( histo->GetXaxis() );
+    histo->SetXTitle( "#Deltax [#mum]" );
+    padVec[iPad]->cd();
+    histo->SetFillColor( kCyan - 5 );
+    padVec[iPad]->Update();
+
+    TPaveText * padTitle1 = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+    padTitle1->SetX1NDC( 0.050 );
+    padTitle1->SetY1NDC( 0.862 );
+    padTitle1->SetX2NDC( 0.509 );
+    padTitle1->SetY2NDC( 0.998 );
+
+    TPaveStats * st = (TPaveStats*) histo->GetListOfFunctions()->FindObject("stats");
+    st->SetOptFit(111);
+    st->SetX1NDC( 0.5476 );
+    st->SetY1NDC( 0.4790 );
+    st->SetX2NDC( 0.9792 );
+    st->SetY2NDC( 0.9983 );
+    padVec[iPad]->Modified( true );
+    ++iPad;
+
+    histoName = "ResidualY_d" + toString( iDetector );
+    histoTitle = "Residual along Y for detector " + toString( iDetector );
+    histo = (TH1D*) milleFolder->Get(  histoName.c_str() );
+    histo->SetTitle( histoTitle.c_str() );
+    setDefaultAxis( histo->GetXaxis() );
+    histo->SetXTitle( "#Deltay [#mum]" );
+    padVec[iPad]->cd();
+    histo->SetFillColor( kCyan - 5 );
+    padVec[iPad]->Update();
+
+    padTitle1 = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
+    padTitle1->SetX1NDC( 0.050 );
+    padTitle1->SetY1NDC( 0.862 );
+    padTitle1->SetX2NDC( 0.509 );
+    padTitle1->SetY2NDC( 0.998 );
+
+    st = (TPaveStats*) histo->GetListOfFunctions()->FindObject("stats");
+    st->SetOptFit(111);
+    st->SetX1NDC( 0.5476 );
+    st->SetY1NDC( 0.4790 );
+    st->SetX2NDC( 0.9792 );
+    st->SetY2NDC( 0.9983 );
+    padVec[iPad]->Modified( true );
+    ++iPad;
+
+  }
+
+  string path( prepareOutputFolder( milleFolderName.Data() ));
+  for ( UInt_t iCanvas = 0 ; iCanvas < canvasVec.size(); ++iCanvas ) {
+    string figName = path + canvasVec[iCanvas]->GetName() + pictureOutputFormat.Data();
+    canvasVec[iCanvas]->SaveAs( figName.c_str() );
+  }
+
+}
+
 TFile * closeAndReopenFile( const char * filename ) {
 
   // check if the file is already opened
@@ -2970,6 +3140,7 @@ void usage() {
   listOfFunction.push_back( "void showEtaPlot( const char * filename )" );
   listOfFunction.push_back( "void showCorrelationPlot( const char * filename )");
   listOfFunction.push_back( "void showTrackerPlot( const char * filename )" );
+  listOfFunction.push_back( "void showMillePlot( const char * filename )" );
 
   cout << endl;
   cout << "First set the overall run name using " << endl;
