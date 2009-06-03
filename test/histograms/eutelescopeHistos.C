@@ -2996,6 +2996,7 @@ void showMillePlot( const char * filename ) {
   }
 
   UInt_t iPad = 0;
+  vector< Double_t > xMeanVec, yMeanVec;
   for ( UInt_t iDetector = 0 ; iDetector < nDetector ; ++iDetector ) {
 
     string histoName  = "ResidualX_d" + toString( iDetector );
@@ -3010,6 +3011,7 @@ void showMillePlot( const char * filename ) {
     padVec[iPad]->Update();
     Double_t xMax = histo->GetBinCenter( histo->GetMaximumBin() );
     histo->GetXaxis()->SetRangeUser( xMax - 300, xMax + 300 );
+    xMeanVec.push_back( histo->GetMean() );
 
     TPaveText * padTitle1 = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
     padTitle1->SetX1NDC( 0.050 );
@@ -3039,6 +3041,8 @@ void showMillePlot( const char * filename ) {
     padVec[iPad]->Update();
     xMax = histo->GetBinCenter( histo->GetMaximumBin() );
     histo->GetXaxis()->SetRangeUser( xMax - 300, xMax + 300 );
+    yMeanVec.push_back( histo->GetMean() );
+
 
     padTitle1 = (TPaveText*) padVec[iPad]->GetListOfPrimitives()->FindObject("title");
     padTitle1->SetX1NDC( 0.050 );
@@ -3056,6 +3060,27 @@ void showMillePlot( const char * filename ) {
 
     ++iPad;
   }
+
+  // printing the expected starting value.
+  vector<Double_t >::iterator xMeanBegin = xMeanVec.begin();
+  vector<Double_t >::iterator xMeanEnd   = xMeanVec.end();
+  vector<Double_t >::iterator yMeanBegin = yMeanVec.begin();
+  vector<Double_t >::iterator yMeanEnd   = yMeanVec.end();
+
+  vector<Double_t >::iterator iter = xMeanVec.begin();
+
+  Double_t xMean = (*xMeanBegin + *(xMeanEnd - 1) ) / 2;
+  Double_t yMean = (*yMeanBegin + *(yMeanEnd - 1) ) / 2;
+
+  for ( size_t iPos = 0 ; iPos < xMeanVec.size(); ++iPos ) {
+    if ( ( iPos == 0 ) || ( iPos == xMeanVec.size() - 1 ) ) {
+      cout << iPos << " 0 0 " << endl;
+    } else {
+      cout << iPos << " " << xMean - xMeanVec.at( iPos ) << " " << yMean - yMeanVec.at( iPos ) << endl;
+    }
+  }
+
+
 
   string path( prepareOutputFolder( milleFolderName.Data() ));
   for ( UInt_t iCanvas = 0 ; iCanvas < canvasVec.size(); ++iCanvas ) {
