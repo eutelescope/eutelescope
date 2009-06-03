@@ -7,7 +7,7 @@
 #  pysub
 #
 #  Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-#  Version: $Id: myjob-status.py,v 1.1 2009-06-02 20:33:54 bulgheroni Exp $
+#  Version: $Id: myjob-status.py,v 1.2 2009-06-03 09:22:07 bulgheroni Exp $
 
 from optparse import OptionParser
 import os
@@ -16,7 +16,7 @@ import time
 
 def main() :
     usage = "%prog [options] JID-files"
-    version = "$Revision: 1.1 $"
+    version = "$Revision: 1.2 $"
     parser = OptionParser( usage=usage, version=version[10:])
 
 
@@ -52,11 +52,12 @@ def main() :
             goodFile.append( file )
 
     repeat = True
+    first = True
     while repeat :
 
         if options.type == "detailed" :
 
-            print "-" * 94
+            print "=" * 94
             print "| %(id)4s | %(desc)-60s | %(status)-20s |" % { "id": "ID", "desc": "Description", "status": "Status" }
             print "-" * 94
 
@@ -91,16 +92,24 @@ def main() :
                         lineList = output.splitlines()
                         for currLine in lineList:
                             if  currLine.find("Current Status:") != -1 :
-                                status = currLine.lstrip( "Current Status:" ).strip()
+                                status = currLine.replace("Current Status:","").strip()
                                 break
 
-                    print "| %(id)4d | %(desc)-60s | %(status)20s |" % { "id": id, "desc": description, "status": status }
+                    print "| %(id)4d | %(desc)-60s | %(status)-20s |" % { "id": id, "desc": description, "status": status }
 
                     id = id + 1
 
                 file.close()
-
+            print "=" * 94
+            
         elif options.type == "summary" :
+
+            if first:
+                print "="*73
+                print "| %(scheduled)-15s | %(running)-15s | %(done)-15s | %(aborted)-15s | " \
+                      % { "scheduled": "Scheduled", "running": "Running", "done": "Done", "aborted": "Aborted" }
+                print "-"*73
+                first = False
 
             scheduled = 0
             done = 0
@@ -123,10 +132,8 @@ def main() :
                     outputFile.close()
                     
                 file.close()
-
-            print "| %(scheduled)-15s | %(running)-15s | %(done)-15s | %(aborted)-15s | " \
-            % { "scheduled": "Scheduled", "running": "Running", "done": "Done", "aborted": "Aborted" }
             print "| %(scheduled)-15d | %(running)-15d | %(done)-15d | %(aborted)-15d | " % { "scheduled": scheduled, "running": running, "done": done, "aborted": aborted }
+            print "-"*73
 
         repeat = options.repeat
         if repeat:
