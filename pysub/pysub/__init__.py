@@ -62,7 +62,7 @@
 # it working.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: __init__.py,v 1.12 2009-05-19 17:59:50 bulgheroni Exp $
+# @version $Id: __init__.py,v 1.13 2009-06-04 17:16:50 bulgheroni Exp $
 #
 from submitbase       import SubmitBase
 from submitconverter  import SubmitConverter
@@ -74,5 +74,6 @@ from submitfilter     import SubmitFilter
 from submiteta        import SubmitEta
 from submithitmaker   import SubmitHitMaker
 from submitalign      import SubmitAlign
+from submitfitter     import SubmitFitter
 from error            import *
 
