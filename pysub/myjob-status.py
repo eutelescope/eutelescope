@@ -7,7 +7,7 @@
 #  pysub
 #
 #  Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-#  Version: $Id: myjob-status.py,v 1.2 2009-06-03 09:22:07 bulgheroni Exp $
+#  Version: $Id: myjob-status.py,v 1.3 2009-06-04 17:15:27 bulgheroni Exp $
 
 from optparse import OptionParser
 import os
@@ -16,8 +16,10 @@ import time
 
 def main() :
     usage = "%prog [options] JID-files"
-    version = "$Revision: 1.2 $"
-    parser = OptionParser( usage=usage, version=version[10:])
+    version = "$Revision: 1.3 $"
+    version = version.replace("$Revision:", "")
+    version = version.replace("$", "")
+    parser = OptionParser( usage=usage, version=version.strip())
 
 
     parser.add_option( "-t", "--type" ,  type="choice",
