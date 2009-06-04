@@ -13,7 +13,7 @@ from optparse import OptionGroup
 # the SubmitAlign and create an instance of this object.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-align.py,v 1.2 2009-05-20 10:05:14 bulgheroni Exp $
+# @version $Id: submit-align.py,v 1.3 2009-06-04 17:15:53 bulgheroni Exp $
 
 def main() :
 
@@ -22,7 +22,7 @@ def main() :
 
 usage: %prog [execution-options] [io-options] [configuration-options] [align-options] -o basename-output input-files
 """
-    cvsVersion = "$Revision: 1.2 $"
+    cvsVersion = "$Revision: 1.3 $"
     submitAlignCVSVersion = SubmitAlign.cvsVersion
     submitBaseCVSVersion = SubmitBase.cvsVersion
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
@@ -35,9 +35,7 @@ usage: %prog [execution-options] [io-options] [configuration-options] [align-opt
 
     parser.add_option( "-o", "--output", type="string", action="store", dest="output", metavar="OUTPUT",
                        help = "This is the base name of the output file. This string will be used to generate"
-                       " the name of the output files according the following naming convention:"
-                       " Hit LCIO file ==> OUTPUT-hit.slcio, histogram file ==> OUTPUT-hit-histo.root "
-                       )
+                       " the name of the output files according to the standard naming convention." )
 
     # adding a group with alignment related options
     alignGroup = OptionGroup( parser, "Alignment options", "Use these options to modify the behaviour of the alignment processor")
@@ -53,7 +51,7 @@ usage: %prog [execution-options] [io-options] [configuration-options] [align-opt
                            " split into sub-jobs. Default is 10 millions. ")
 
     alignGroup.add_option( "--split-job", action="store", type="int", dest="split_job", help="Use this option to define how many alignment job you want to submit."
-                           " This option can be used only whe working in all-grid mode and pede will not be executed at the end of Marlin. It will be user responsibility "
+                           " This option can be used only when working in all-grid mode. It will be user responsibility "
                            "to retrieve from the GRID the mille.bin files and the pede-steer file. Use this option along with --split-size to set how many record each job has to read." )
 
     alignGroup.add_option( "--split-size", action="store", type="int", dest="split_size", help="Use this option to define how many records should be analyzed by each alignment job" )
