@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-fitter.py script
 #
 #
-# @version $Id: submitfitter.py,v 1.2 2009-06-05 16:15:42 bulgheroni Exp $
+# @version $Id: submitfitter.py,v 1.3 2009-06-05 17:15:19 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 
@@ -31,7 +31,7 @@ class SubmitFitter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.2 $"
+    cvsVersion = "$Revision: 1.3 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -187,7 +187,7 @@ class SubmitFitter( SubmitBase ):
             self._gridSplitNTuple = []
 
         # check the existence of the alignment file
-        self.checkAlignmetFile( ) 
+        self.checkAlignmentFile( ) 
 
         for index, inputFile in enumerate( self._args ):
 
@@ -217,8 +217,9 @@ class SubmitFitter( SubmitBase ):
                 self._fqInputFileList.append(folder + file)
             else :
                 try:
-                    folder = self._configParser.get( "LOCAL", "LocalHitFilterResults" )
+                    folder = self._configParser.get( "LOCAL", "LocalFolderHitmakerResults" )
                 except ConfigParser.NoOptionError :
+                    self._logger.debug("LocalFolderHitmakerResults not found")
                     folder = "results"
 
                 if self._option.execution == "cpu-local":
@@ -877,6 +878,7 @@ class SubmitFitter( SubmitBase ):
         try :
             inputFilePath = self._configParser.get( "LOCAL", "LocalFolderHitmakerResults" )
         except ConfigParser.NoOptionError :
+            self._logger.debug( "LocalFolderHitmakerResults not found" )
             inputFilePath = "results"
 
         # loop over all the input files
@@ -1109,6 +1111,14 @@ class SubmitFitter( SubmitBase ):
                 if file != "DEADFACE" :
                     os.remove( self._fqInputFileList[ index ] )
 
+            try:
+                dbPath = self._configParser.get( "LOCAL", "LocalFolderDBAlign" )
+            except ConfigParser.NoOptionError :
+                dbPath = "db"
+
+            dbFile = "%(run)s" % {"run": os.path.basename( self._option.alignment_file ) }
+            os.remove( os.path.join( dbPath, dbFile ) )
+
         if self._keepOutput == False :
             try :
                 outputFilePath = self._configParser.get( "LOCAL", "LocalFolderFitterResults" )
@@ -1128,13 +1138,6 @@ class SubmitFitter( SubmitBase ):
             os.remove( os.path.join( histoFilePath, histoFile ) )
 
 
-            try: 
-                dbPath = self._configParser.get( "LOCAL", "LocalFolderDBAlign" )
-            except ConfigParser.NoOptionError :
-                dbPath = "db"
-
-            dbFile = "%(run)s-align-db.slcio" % {"run": self._option.alignment_file }
-            os.remove( os.path.join( dbPath, dbFile ) )
 
     def end( self ) :
 
@@ -1241,6 +1244,7 @@ class SubmitFitter( SubmitBase ):
         try :
             localPath = self._configParser.get( "LOCAL", "LocalFolderHitmakerResults" )
         except ConfigParser.NoOptionError :
+            self._logger.debug( "LocalFolderHitmakerResults not found" )
             localPath = "$PWD/results"
 
         baseCommand = "lcg-cp "
@@ -1285,10 +1289,10 @@ class SubmitFitter( SubmitBase ):
         if self._option.verbose :
             baseCommand = baseCommand + " -v "
 
-        fileglob = "%(output)s-track.[0-9][0-9][0-9].slcio" % { "output" : self._option.output }
+        fileglob = "%(localPath)s/%(output)s-track.[0-9][0-9][0-9].slcio" % { "localPath": localPath, "output" : self._option.output }
         for file in glob.glob( fileglob ) :
 
-
+            file = os.path.basename( file )
             command = "%(base)s -l lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(file)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : file  }
             if os.system( command ) != 0 :
@@ -1512,7 +1516,7 @@ class SubmitFitter( SubmitBase ):
     # once only at the very beginning before entering in the loop on runs.
     #
     def checkAlignmentFile( self ) :
-        self._logger.info( "Checking the alignment file (%(file)s)" % { "file": self._alignment_file } )
+        self._logger.info( "Checking the alignment file (%(file)s)" % { "file": self._option.alignment_file } )
 
         # where to check, depends from the execution mode!
 
@@ -1531,10 +1535,10 @@ class SubmitFitter( SubmitBase ):
         except ConfigParser.NoOptionError :
             localPath = "db"
 
-        if not os.access( os.path.join( localPath, self._alignment_file ), os.R_OK ):
-            message = "Missing alignment file %(file)s" % { "file": self._alignment_file }
+        if not os.access( os.path.join( localPath, self._option.alignment_file ), os.R_OK ):
+            message = "Missing alignment file %(file)s" % { "file": self._option.alignment_file }
             self._logger.critical ( message )
-            raise MissingAlignmentFileError( self._alignment_file )
+            raise MissingAlignmentFileError( self._option.alignment_file )
 
 
     ## Check on GRID for the alignment file
@@ -1554,11 +1558,11 @@ class SubmitFitter( SubmitBase ):
             localPath = "db"
 
         command = "lfc-ls %(gridPath)s/%(file)s > /dev/null 2>&1 " % {
-            "gridPath": gridPath, "file": os.path.basename( self._alignment_file ) }
+            "gridPath": gridPath, "file": os.path.basename( self._option.alignment_file ) }
         if os.system( command ) != 0:
-            message = "Missing alignment file %(file)s" %{ "file": os.path.basename( self._alignment_file ) }
+            message = "Missing alignment file %(file)s" %{ "file": os.path.basename( self._option.alignment_file ) }
             self._logger.critical ( message )
-            raise MissingAlignmentFileError( self._alignment_file )
+            raise MissingAlignmentFileError( self._option.alignment_file )
 
         if self._option.execution == "cpu-local":
 
@@ -1567,9 +1571,9 @@ class SubmitFitter( SubmitBase ):
             if self._option.verbose :
                 baseCommand = baseCommand + " -v "
             command = baseCommand + "  lfn:%(gridPath)s/%(file)s file:%(localPath)s/%(file)s " % {
-                "gridPath" : gridPath, "file": os.path.basename( self._alignment_file ) , "localPath": localPath }
+                "gridPath" : gridPath, "file": os.path.basename( self._option.alignment_file ) , "localPath": localPath }
 
-            self._logger.info( "Getting the alignment file %(file)s" % { "file": os.path.basename( self._alignment_file )  } )
+            self._logger.info( "Getting the alignment file %(file)s" % { "file": os.path.basename( self._option.alignment_file )  } )
             if os.system( command ) != 0:
                 message = "Problem getting the alignment file from the GRID"
                 self._logger.critical( message  )
@@ -1673,7 +1677,7 @@ class SubmitFitter( SubmitBase ):
         pattern = re.compile( "%(output)s-track.[0-9]{3}.slcio" % { "output": self._option.output } )
         for line in list :
             if pattern.search( line ) != None:
-                filenameList.append( line )
+                filenameList.append( "%(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._outputPathGRID, "file": line })
 
         filenameList.append( "%(outputPathGRID)s/%(name)s-%(output)s.tar.gz"      % { "outputPathGRID": self._joboutputPathGRID,
                                                                                       "name": self.name, "output": self._option.output } )
