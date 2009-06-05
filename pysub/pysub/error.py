@@ -91,6 +91,11 @@ class MissingInputFileOnGRIDError ( MissingFileOnGRIDError ):
 class MissingPedestalFileOnGRIDError ( MissingFileOnGRIDError ) :
     pass
 
+## Missing alignment file on the GRID
+#
+class MissingAlignmentFileOnGRIDError ( MissingFileOnGRIDError ) :
+    pass
+
 ## File already on the GRID
 #
 class FileAlreadyOnGRIDError( MissingFileError ):
