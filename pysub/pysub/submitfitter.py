@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-fitter.py script
 #
 #
-# @version $Id: submitfitter.py,v 1.3 2009-06-05 17:15:19 bulgheroni Exp $
+# @version $Id: submitfitter.py,v 1.4 2009-06-05 17:57:29 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 
@@ -31,7 +31,7 @@ class SubmitFitter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.3 $"
+    cvsVersion = "$Revision: 1.4 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1685,3 +1685,366 @@ class SubmitFitter( SubmitBase ):
 
         for filename in filenameList:
             self.checkGRIDFile( filename )
+
+
+    ## Execute all GRID
+    #
+    def executeAllGRID( self  ) :
+
+
+        if self._isSplitting :
+            self.executeAllGRIDSplitting()
+
+        else:
+            self.executeAllGRIDSingleJob()
+
+
+    def executeAllGRIDSingleJob( self ) :
+
+        # do preliminary checks
+        self.doPreliminaryTest( )
+
+        # now prepare the jdl file from the template
+        self.generateJDLFile( 0, self._option.output )
+
+        # now generate the run job script
+        self.generateRunjobFileSingleJob(  )
+
+        # don't forget to generate the steering file!
+        self.generateSteeringFileSingleJob( )
+
+        # finally ready to submit! Let's do it...!
+        self.submitJDLSingleJob(  )
+
+        # prepare a tarball with all the ancillaries
+        self.prepareTarball(  )
+
+        # cleaning up the system
+        self.cleanup(  )
+
+    ## Generate the run job
+    #
+    # This method is used to generate the run job script
+    #
+    def generateRunjobFileSingleJob( self ):
+        message = "Generating the executable (%(name)s-%(run)s.sh)" % { "name": self.name, "run": self._option.output }
+        self._logger.info( message )
+        try :
+            runTemplate = self._configParser.get( "SteeringTemplate", "FitterGRIDScript" )
+        except ConfigParser.NoOptionError:
+            message = "Unable to find a valid executable template"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        runTemplateString = open( runTemplate, "r" ).read()
+        runActualString = runTemplateString
+
+        # replace the name prefix
+        runActualString = runActualString.replace( "@Name@", self.name )
+
+        # replace the output prefix.
+        runActualString = runActualString.replace( "@Output@", self._option.output )
+
+        # replace the input file names
+        for index, inputFile in enumerate( self._inputFileList ) :
+            if inputFile != "DEADFACE" :
+                runActualString = runActualString.replace( "@InputFileList@", "%(file)s @InputFileList@" % {"file": self._justInputFileList[index] } )
+        runActualString = runActualString.replace( "@InputFileList@" , "" )
+
+        variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
+                         "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderFitterResults",
+                         "GRIDFolderFitterJoboutput", "GRIDFolderFitterHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+        for variable in variableList:
+            try:
+                value = self._configParser.get( "GRID", variable )
+                if variable == "GRIDCE":
+                    self._gridCE = value
+                runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
+            except ConfigParser.NoOptionError:
+                message = "Unable to find variable %(var)s in the config file" % { "var" : variable }
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+        self._runScriptFilename = "%(name)s-%(run)s.sh" % { "name": self.name, "run": self._option.output }
+        runActualFile = open( self._runScriptFilename, "w" )
+        runActualFile.write( runActualString )
+        runActualFile.close()
+
+        # change the mode of the run script to 0777
+        os.chmod(self._runScriptFilename, 0777)
+
+    ## Do the real submission
+    #
+    # This is doing the job submission
+    #
+    def submitJDLSingleJob( self ) :
+        self._logger.info("Submitting the job to the GRID")
+
+        command = "glite-wms-job-submit %(del)s -r %(GRIDCE)s -o %(name)s-%(run)s.jid %(name)s-%(run)s.jdl" % {
+            "name": self.name, "run": self._option.output , "GRIDCE":self._gridCE , "del": self._jobDelegation }
+        glite = popen2.Popen4( command )
+        while glite.poll() == -1:
+            message = glite.fromchild.readline().strip()
+            self._logger.log(15, message )
+
+        if glite.poll() == 0:
+            self._logger.info( "Job successfully submitted to the GRID" )
+            for index, inputFile in enumerate( self._inputFileList ):
+                if inputFile != "DEADFACE":
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, "See below", d, e, f
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, "Submit'd", output, histo, tarball
+
+        else :
+            for index, inputFile in enumerate( self._inputFileList ):
+                if inputFile != "DEADFACE":
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, "See below", d, e, f
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, "Failed", output, histo, tarball
+            raise GRIDSubmissionError ( "%(name)s-%(run)s.jdl" % { "name": self.name,"run": self._option.output } )
+
+        # read back the the job id file
+        # this is made by two lines only the first is comment, the second
+        # is what we are interested in !
+        jidFile = open( "%(name)s-%(run)s.jid" % { "name": self.name, "run": self._option.output} )
+        jidFile.readline()
+        for index, inputFile in enumerate ( self._inputFileList ) :
+            if inputFile != "DEADFACE":
+                run, b = self._gridJobNTuple[ index ]
+                self._gridJobNTuple[ index ] = run, "See below"
+        run, b = self._gridJobNTuple[ len( self._gridJobNTuple ) - 1 ]
+        self._gridJobNTuple[ len( self._gridJobNTuple ) - 1  ] = run, jidFile.readline()
+        jidFile.close()
+
+
+    def executeAllGRIDSplitting( self ) :
+
+        fullCheck = True
+        for index in range( self._option.split_job ):
+
+            try :
+                # do some particular preliminary testing
+                self.doPreliminaryTestSplitting( index, fullCheck )
+            except PysubError, error:
+                fullCheck = True
+                raise error
+            else:
+                fullCheck = False
+
+        # get the pede-steer-tmp.txt from the configuration file
+        try :
+            pedeSteerTemplate       = self._configParser.get("SteeringTemplate", "PedeSteeringFile" )
+        except ConfigParser.NoOptionError:
+            message = "Missing pede steering file in the configuration"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        for index in range( self._option.split_job ):
+            self.generateJDLFile( 0, "%(output)s-s%(index)06d" % {"output": self._option.output, "index": index } )
+
+            self.generateRunjobFileSplitting( index )
+
+            self.generateSteeringFileSplitting( index )
+
+            try :
+                self.submitJDLSplitting( index  )
+
+            except GRIDSubmissionError, error:
+                self._logger.error( "Problem submitting %(file)s. Skipping it" % { "file":error._message } )
+
+
+        self.prepareTarball( )
+
+        self.cleanup( )
+
+
+    ## Preliminary checks for splitting
+    def doPreliminaryTestSplitting( self, i, fullCheck ):
+
+        if fullCheck :
+            # first log the voms-proxy-info
+            self._logger.info( "Logging the voms-proxy-info" )
+            info = popen2.Popen4("voms-proxy-info -all")
+            while info.poll() == -1:
+                line = info.fromchild.readline()
+                self._logger.info( line.strip() )
+
+            if info.poll() != 0:
+                message = "Problem with the GRID_UI"
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+            # also check that the proxy is still valid
+            if os.system( "voms-proxy-info -e" ) != 0:
+                message = "Expired proxy"
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+            else:
+                self._logger.info( "Valid proxy found" )
+
+            # check if we have already a delegation proxy
+            self.checkDelegationProxy()
+
+            # get all the needed path from the configuration file
+            try :
+                self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderHitmakerResults")
+                self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderFitterResults" )
+                self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderFitterJoboutput")
+                self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderFitterHisto")
+                self._dbAlignGRID       = self._configParser.get("GRID", "GRIDFolderDBAlign")
+                folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID, self._dbAlignGRID ]
+            except ConfigParser.NoOptionError:
+                message = "Missing path from the configuration file"
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+
+            # check if the input files is on the GRID
+            for index, inputFile in enumerate( self._inputFileList ):
+                if inputFile != "DEADFACE" :
+                    justFile = self._justInputFileList[ index ] 
+                    command = "lfc-ls %(inputPathGRID)s/%(file)s" % { "inputPathGRID" : self._inputPathGRID,  "file": justFile  }
+
+                    lfc = popen2.Popen4( command )
+                    while lfc.poll() == -1:
+                        pass
+
+                    if lfc.poll() == 0:
+                        self._logger.info( "Input file %(justFile)s found on the SE" % {"justFile": justFile } )
+                        run, b, c, d, e, f = self._summaryNTuple[ index ]
+                        self._summaryNTuple[ index ] = run, "GRID", c, d, e, f
+                    else:
+                        self._logger.error( "Input file %(justFile)s NOT found on the SE" % {"justFile": justFile } )
+                        run, b, c, d, e, f = self._summaryNTuple[ index ]
+                        self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
+                        self._inputFileList[ index ] = "DEADFACE"
+                        if self._configParser.get("General","Interactive" ):
+                            if not self.askYesNo( "Would you like to skip it and continue? [y/n] " ) :
+                                message = "User decided to stop here"
+                                self._logger.critical( message )
+                                raise StopExecutionError( message )
+                            else :
+                                self._logger.info( "Skipping to the next run" )
+                        else:
+                            self._logger.info( "Skipping to the next run" )
+
+            # check the existence of the folders
+            try :
+                for folder in folderList:
+                    self.checkGRIDFolder( folder )
+
+            except MissingGRIDFolderError, error :
+                message = "Folder %(folder)s is unavailable. Quitting" % { "folder": error._filename }
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+        filenameList = []
+        lfcls = popen2.Popen4( "lfc-ls %(outputPathGRID)s" % { "outputPathGRID": self._outputPathGRID } )
+        lfcls.wait()
+        list = lfcls.fromchild.read().splitlines() 
+        pattern = re.compile( "%(output)s-s%(v)06d-track.[0-9]{3}.slcio" % { "v": i, "outputPathGRID": self._dbAlignGRID, "output": self._option.output } )
+        for line in list :
+            if pattern.search( line ) != None:
+                filenameList.append( "%(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._outputPathGRID, "file": line })
+        filenameList.append( "%(outputPathGRID)s/%(name)s-%(output)s-s%(v)06d.tar.gz"      % { "outputPathGRID": self._joboutputPathGRID,
+                                                                                               "name": self.name, "output": self._option.output, "v": i } )
+        filenameList.append( "%(outputPathGRID)s/%(output)s-s%(v)06d-track-histo.root"     % { "outputPathGRID": self._histogramPathGRID,
+                                                                                               "output": self._option.output, "v": i  } )
+        for filename in filenameList:
+            self.checkGRIDFile( filename )
+
+
+    ## Generate the run job splitting
+    #
+    # This method is used to generate the run job script
+    #
+    def generateRunjobFileSplitting( self , i ):
+        message = "Generating the executable (%(name)s-%(run)s-s%(i)06d.sh)" % { "i": i, "name": self.name, "run": self._option.output }
+        self._logger.info( message )
+        try :
+            runTemplate = self._configParser.get( "SteeringTemplate", "FitterGRIDScript" )
+        except ConfigParser.NoOptionError:
+            message = "Unable to find a valid executable template"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        runTemplateString = open( runTemplate, "r" ).read()
+        runActualString = runTemplateString
+
+        # replace the name prefix
+        runActualString = runActualString.replace( "@Name@", self.name )
+
+        # replace the output prefix.
+        runActualString = runActualString.replace( "@Output@", "%(output)s-s%(i)06d" %
+                                                   { "i": i, "output": self._option.output } )
+
+        # replace the input file names
+        for index, inputFile in enumerate( self._inputFileList ) :
+            if inputFile != "DEADFACE" :
+                runActualString = runActualString.replace( "@InputFileList@", "%(file)s @InputFileList@" % {"file": self._justInputFileList[index] } )
+        runActualString = runActualString.replace( "@InputFileList@" , "" )
+
+
+        variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
+                         "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderFitterResults",
+                         "GRIDFolderFitterJoboutput", "GRIDFolderFitterHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+
+        for variable in variableList:
+            try:
+                value = self._configParser.get( "GRID", variable )
+                if variable == "GRIDCE":
+                    self._gridCE = value
+                runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
+            except ConfigParser.NoOptionError:
+                message = "Unable to find variable %(var)s in the config file" % { "var" : variable }
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+        self._runScriptFilename = "%(name)s-%(run)s-s%(i)06d.sh" % { "i": i, "name": self.name, "run": self._option.output }
+        runActualFile = open( self._runScriptFilename, "w" )
+        runActualFile.write( runActualString )
+        runActualFile.close()
+
+        # change the mode of the run script to 0777
+        os.chmod(self._runScriptFilename, 0777)
+
+
+    ## Do the real submission
+    #
+    # This is doing the job submission
+    #
+    def submitJDLSplitting( self, i ) :
+        self._logger.info("Submitting the job to the GRID")
+        command = "glite-wms-job-submit %(del)s -r %(GRIDCE)s -o %(name)s-%(run)s-s%(i)06d.jid %(name)s-%(run)s-s%(i)06d.jdl" % {
+            "name": self.name, "run": self._option.output , "GRIDCE":self._gridCE , "i": i, "del": self._jobDelegation}
+        glite = popen2.Popen4( command )
+        while glite.poll() == -1:
+            message = glite.fromchild.readline().strip()
+            self._logger.log(15, message )
+
+        if glite.poll() == 0:
+            self._logger.info( "Job successfully submitted to the GRID" )
+            for index, inputFile in enumerate( self._inputFileList ):
+                if inputFile != "DEADFACE":
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, "See below", d, e, f
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, "Splitted", output, histo, tarball
+
+        else :
+            for index, inputFile in enumerate( self._inputFileList ):
+                if inputFile != "DEADFACE":
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, b, "See below", d, e, f
+            raise GRIDSubmissionError ( "%(name)s-%(run)s.jdl" % { "name": self.name,"run": self._option.output } )
+
+        # read back the the job id file
+        # this is made by two lines only the first is comment, the second
+        # is what we are interested in !
+        jidFile = open( "%(name)s-%(run)s-s%(i)06d.jid" % { "name": self.name, "run": self._option.output, "i":i} )
+        jidFile.readline()
+        entry = i , jidFile.readline()
+        self._gridSplitNTuple.append( entry )
+
