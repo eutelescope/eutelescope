@@ -10,6 +10,7 @@ import logging
 import logging.handlers
 import math
 import datetime
+import re
 from submitbase import SubmitBase
 from error import *
 
@@ -19,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-fitter.py script
 #
 #
-# @version $Id: submitfitter.py,v 1.1 2009-06-04 17:19:42 bulgheroni Exp $
+# @version $Id: submitfitter.py,v 1.2 2009-06-05 16:15:42 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 
@@ -30,7 +31,7 @@ class SubmitFitter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.1 $"
+    cvsVersion = "$Revision: 1.2 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -184,6 +185,9 @@ class SubmitFitter( SubmitBase ):
         self._justInputFileList = []
         if self._isSplitting:
             self._gridSplitNTuple = []
+
+        # check the existence of the alignment file
+        self.checkAlignmetFile( ) 
 
         for index, inputFile in enumerate( self._args ):
 
@@ -1166,3 +1170,514 @@ class SubmitFitter( SubmitBase ):
 
         self._logger.info("=============================================================================" )
         self._logger.info( "" )
+
+    ## CPU Local submitter
+    #
+    # This methods represents the sequence of commands that should be done while
+    # submitting jobs on the local computer but using remote data
+    #
+    def executeCPULocal( self ):
+
+        # do preliminary checks
+        self.doPreliminaryTest(  )
+
+        # get the input files from the GRID
+        self.getRunFromGRID( )
+
+        # double check the presence of the input files
+        self.checkInputFile( )
+
+        #  generate the steering file
+        self.generateSteeringFile(  )
+
+        # prepare a separate file for logging the output of Marlin
+        self._logFileName = "%(name)s-%(run)s.log" % { "name": self.name,"run" : self._option.output }
+
+        # remove the already existing output files
+        self.removeOutputFiles( ) 
+
+        # run marlin
+        self.runMarlin( )
+
+        # advice the user that Marlin is over
+        self._logger.info( "Marlin finished successfully")
+
+        # verify the presence of the output files
+        self.checkOutputFile(  )
+
+        # prepare a tarbal for the records
+        self.prepareTarball(  )
+
+        try :
+            # copy the output files
+            self.putOutputOnGRID( )
+
+            # copy the histogram file to the GRID
+            self.putHistogramOnGRID(  )
+
+            # copy the joboutput to the GRID
+            self.putJoboutputOnGRID(  )
+
+            # clean up the local pc
+            self.cleanup(  )
+
+        except GRID_LCG_CRError, error:
+            message = "The file (%(file)s) couldn't be copied on the GRID"  % { "file": error._filename }
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+    ## Get the input run from the GRID
+    def getRunFromGRID( self ) :
+
+        self._logger.info(  "Getting the input file from the GRID" )
+
+        try :
+            inputPath = self._configParser.get( "GRID", "GRIDFolderHitmakerResults" )
+        except ConfigParser.NoOptionError :
+            message = "GRIDFolderHitmakerResults missing in the configuration file. Quitting."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderHitmakerResults" )
+        except ConfigParser.NoOptionError :
+            localPath = "$PWD/results"
+
+        baseCommand = "lcg-cp "
+        if self._option.verbose :
+            baseCommand = baseCommand + " -v "
+
+        for index, inputFile in enumerate( self._inputFileList) :
+            if inputFile != "DEADFACE" :
+                command = "%(base)s lfn:%(gridPath)s/%(file)s file:%(localPath)s/%(file)s" %  \
+                    { "base": baseCommand, "gridPath" : inputPath, "file": self._justInputFileList[ index ], "localPath": localPath }
+                if os.system( command ) != 0:
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
+                    self._logger.error( "Error copying file %(file)s, skipping it" % { "file": self._justInputFileList[ index ] } )
+                    self._inputFileList[ index ] = "DEADFACE"
+                else:
+                    self._logger.info("Input file %(file)s successfully copied from the GRID" % { "file": self._justInputFileList[ index ] } )
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, "OK", c, d, e, f
+
+        run, b, c, d, e, f = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+        self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, "See above", c, d, e, f
+
+    # Put the output track file on the GRID
+    def putOutputOnGRID( self ):
+
+        self._logger.info(  "Putting the output file to the GRID" )
+
+        try :
+            gridPath = self._configParser.get( "GRID", "GRIDFolderFitterResults")
+        except ConfigParser.NoOptionError :
+            message = "GRIDFolderFitterResults missing in the configuration file. Quitting."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderFitterResults" )
+        except ConfigParser.NoOptionError :
+            localPath = "$PWD/results"
+
+        baseCommand = "lcg-cr "
+        if self._option.verbose :
+            baseCommand = baseCommand + " -v "
+
+        fileglob = "%(output)s-track.[0-9][0-9][0-9].slcio" % { "output" : self._option.output }
+        for file in glob.glob( fileglob ) :
+
+
+            command = "%(base)s -l lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(file)s" % \
+                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : file  }
+            if os.system( command ) != 0 :
+                self._logger.critical( "Problem copying the output file %(file)s to the GRID" % {"file" : file} )
+                for index, entry in enumerate ( self._summaryNTuple ):
+                    run, input, marlin, output, histo, tarball = entry
+                    self._summaryNTuple[ index ] = run, input, marlin, "See below", histo, tarball
+
+                run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+                self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, "Local", histo, tarball
+                raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(file)s" % { "gridFolder": gridPath, "file" : file } )
+            else:
+                self._logger.info( "Output file %(file)s successfully copied to the GRID" % { "file": file } )
+                for index, entry in enumerate( self._summaryNTuple ):
+                    run, input, marlin, output, histo, tarball = entry
+                    self._summaryNTuple[ index ] = run, input, marlin, "See below", histo, tarball
+
+                run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+                self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, "GRID", histo, tarball
+
+            if self._option.verify_output:
+                self._logger.info( "Verifying the output file %(file)s integrity on the GRID" % { "file": file }  )
+                filename = file
+                localCopy = open( os.path.join( localPath, filename ) ).read()
+                localCopyHash = sha.new( localCopy ).hexdigest() 
+                self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
+
+                # now copying back the just copied file.
+                baseCommand = "lcg-cp "
+                if self._option.verbose :
+                    baseCommand = baseCommand + " -v "
+
+                filenametest = "%(file)s.test" % { "file" : filename }
+                command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
+                    { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename, "filetest":filenametest }
+                if os.system( command ) != 0 :
+                    run, input, marlin, output, histogram, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+                    self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, "GRID - Fail", histogram, tarball
+                    self._logger.error( "Problem with the verification!" )
+                    raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
+
+                remoteCopy = open( os.path.join( localPath, filenametest ) ).read()
+                remoteCopyHash = sha.new( remoteCopy ).hexdigest()
+                self._logger.log( 15, "Remote copy hash is %(hash)s" % { "hash" : remoteCopyHash } )
+
+                if remoteCopyHash == localCopyHash:
+                    run, input, marlin, output, histogram, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+                    self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, "GRID - Ver", histogram, tarball
+                    self._logger.info( "Verification successful" )
+                else :
+                    run, input, marlin, output, histogram, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+                    self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, "GRID - Fail", histogram, tarball
+                    self._logger.error( "Problem with the verification!" )
+
+                    os.remove( os.path.join( localPath, filenametest ) )
+
+
+    ## Put the histograms file to the GRID
+    def putHistogramOnGRID( self ):
+
+        self._logger.info( "Putting the histogram file to the GRID" )
+
+        try:
+            gridPath = self._configParser.get( "GRID", "GRIDFolderFitterHisto")
+        except ConfigParser.NoOptionError :
+            message = "GRIDFolderFitterHisto missing in the configuration file. Quitting."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderFitterHisto" )
+        except ConfigParser.NoOptionError :
+            localPath = "$PWD/histo"
+
+        baseCommand = "lcg-cr "
+        if self._option.verbose :
+            baseCommand = baseCommand + " -v "
+
+        command = "%(base)s -l lfn:%(gridFolder)s/%(run)s-track-histo.root file:%(localFolder)s/%(run)s-track-histo.root" % \
+            { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : self._option.output }
+        if os.system( command ) != 0 :
+            self._logger.critical( "Problem copying the histogram file %(run)s-track-histo.root to the GRID" % {"run" : self._option.output} )
+            for index, entry in enumerate( self._summaryNTuple ):
+                run, input, marlin, output, histo, tarball = entry
+                self._summaryNTuple[ index ] = run, input, marlin, output, "See below", tarball
+
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, output, "Local", tarball
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s-track-histo.root" %   { "gridFolder": gridPath, "run" : self._option.output } )
+        else:
+            self._logger.info("Histogram file sucessfully copied to the GRID" )
+            for index, entry in enumerate( self._summaryNTuple ):
+                run, input, marlin, output, histo, tarball = entry
+                self._summaryNTuple[ index ] = run, input, marlin, output, "See below", tarball
+
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, output, "GRID", tarball
+
+        if self._option.verify_output:
+            self._logger.info( "Verifying the histogram integrity on the GRID" )
+            filename = "%(run)s-track-histo.root"  % { "run" : self._option.output }
+
+            localCopy = open( os.path.join( localPath, filename ) ).read()
+            localCopyHash = sha.new( localCopy ).hexdigest() 
+            self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
+
+            # now copying back the just copied file.
+            baseCommand = "lcg-cp "
+            if self._option.verbose :
+                baseCommand = baseCommand + " -v "
+
+            filenametest = "%(run)s-track-histo-test.root"  % { "run" : self._option.output }
+
+            command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
+                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest, "file" : filename }
+            if os.system( command ) != 0 : 
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail", tarball
+                self._logger.error( "Problem with the verification!" )
+                raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
+
+            remoteCopy = open( os.path.join( localPath, filenametest ) ).read()
+            remoteCopyHash = sha.new( remoteCopy ).hexdigest()
+            self._logger.log( 15, "Remote copy hash is %(hash)s" % { "hash" : remoteCopyHash } )
+
+            if remoteCopyHash == localCopyHash:
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+                self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, output, "GRID - Ver", tarball
+                self._logger.info( "Verification successful" )
+            else :
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+                self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, output, "GRID - Fail", tarball
+                self._logger.error( "Problem with the verification!" )
+
+            os.remove( os.path.join( localPath, filenametest ) )
+
+
+    ## Put the joboutput file to the GRID
+    def putJoboutputOnGRID( self ):
+
+        self._logger.info( "Putting the joboutput file to the GRID" )
+
+        try:
+            gridPath = self._configParser.get( "GRID", "GRIDFolderFitterJoboutput")
+        except ConfigParser.NoOptionError :
+            message = "GRIDFolderFitterJoboutput missing in the configuration file. Quitting."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderFitterJoboutput" )
+        except ConfigParser.NoOptionError :
+            localPath = "$PWD/log"
+
+        baseCommand = "lcg-cr "
+        if self._option.verbose :
+            baseCommand = baseCommand + " -v "
+
+        command = "%(base)s -l lfn:%(gridFolder)s/%(name)s-%(run)s.tar.gz file:%(localFolder)s/%(name)s-%(run)s.tar.gz" % \
+            { "name": self.name, "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : self._option.output }
+        if os.system( command ) != 0 :
+            self._logger.critical( "Problem copying the joboutput file %(name)s-%(run)s.tar.gz to the GRID" % {
+                     "name": self.name, "run" : self._option.output } )
+            for index, entry in enumerate( self._summaryNTuple ):
+                run, input, marlin, output, histo, tarball = entry
+                self._summaryNTuple[ index ] = run, input, marlin, output, histo, "See below"
+
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, output, histo, "Local"
+            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(name)s-%(run)s.tar.gz" %   { "name": self.name, "gridFolder": gridPath, "run" : self._option.output } )
+
+        else:
+            self._logger.info("Joboutput file sucessfully copied to the GRID" )
+            for index, entry in enumerate( self._summaryNTuple ):
+                run, input, marlin, output, histo, tarball = entry
+                self._summaryNTuple[ index ] = run, input, marlin, output, histo, "See below"
+
+            run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+            self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, output, histo, "GRID"
+
+        if self._option.verify_output:
+            self._logger.info( "Verifying the joboutput integrity on the GRID" )
+            filename = "%(name)s-%(run)s.tar.gz" % { "name": self.name, "run" : self._option.output  }
+            localCopy = open( os.path.join( localPath, filename ) ).read()
+            localCopyHash = sha.new( localCopy ).hexdigest()
+            self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
+
+            # now copying back the just copied file.
+            baseCommand = "lcg-cp "
+            if self._option.verbose :
+                baseCommand = baseCommand + " -v "
+
+            filenametest = "%(name)s-%(run)s-test.tar.gz" % { "name": self.name,  "run" : self._option.output  }
+            command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
+                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest,"file" : filename }
+            if os.system( command ) != 0 : 
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+                self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, output, histogram, "GRID - Fail"
+                self._logger.error( "Problem with the verification!" )
+                raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
+
+            remoteCopy = open( os.path.join( localPath, filenametest ) ).read()
+            remoteCopyHash = sha.new( remoteCopy ).hexdigest()
+            self._logger.log( 15, "Remote copy hash is %(hash)s" % { "hash" : remoteCopyHash } )
+
+            if remoteCopyHash == localCopyHash:
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+                self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, output, histogram, "GRID - Ver"
+                self._logger.info( "Verification successful" )
+            else :
+                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
+                self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, output, histogram, "GRID - Fail"
+                self._logger.error( "Problem with the verification!" )
+
+            os.remove( os.path.join( localPath, filenametest ) )
+
+
+    ## Check the existence of the alignment file
+    #
+    # Differently from the check input and output methods, this is done
+    # once only at the very beginning before entering in the loop on runs.
+    #
+    def checkAlignmentFile( self ) :
+        self._logger.info( "Checking the alignment file (%(file)s)" % { "file": self._alignment_file } )
+
+        # where to check, depends from the execution mode!
+
+        if self._option.execution == "all-local":
+            self.checkAlignmentFileLocally()
+        elif self._option.execution == "cpu-local" or self._option.execution == "all-grid" :
+            self.checkAlignmentFileGRID()
+
+
+    ## Check locally for the alignment file
+    #
+    def checkAlignmentFileLocally( self ):
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderDBAlign" )
+        except ConfigParser.NoOptionError :
+            localPath = "db"
+
+        if not os.access( os.path.join( localPath, self._alignment_file ), os.R_OK ):
+            message = "Missing alignment file %(file)s" % { "file": self._alignment_file }
+            self._logger.critical ( message )
+            raise MissingAlignmentFileError( self._alignment_file )
+
+
+    ## Check on GRID for the alignment file
+    #
+    def checkAlignmentFileGRID( self ):
+
+        try :
+            gridPath = self._configParser.get( "GRID" , "GRIDFolderDBAlign" )
+        except ConfigParser.NoOptionError :
+            message = "Unable to find the GRIDFolderDBAlign."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderDBAlign" )
+        except ConfigParser.NoOptionError :
+            localPath = "db"
+
+        command = "lfc-ls %(gridPath)s/%(file)s > /dev/null 2>&1 " % {
+            "gridPath": gridPath, "file": os.path.basename( self._alignment_file ) }
+        if os.system( command ) != 0:
+            message = "Missing alignment file %(file)s" %{ "file": os.path.basename( self._alignment_file ) }
+            self._logger.critical ( message )
+            raise MissingAlignmentFileError( self._alignment_file )
+
+        if self._option.execution == "cpu-local":
+
+            # get the file then
+            baseCommand = "lcg-cp "
+            if self._option.verbose :
+                baseCommand = baseCommand + " -v "
+            command = baseCommand + "  lfn:%(gridPath)s/%(file)s file:%(localPath)s/%(file)s " % {
+                "gridPath" : gridPath, "file": os.path.basename( self._alignment_file ) , "localPath": localPath }
+
+            self._logger.info( "Getting the alignment file %(file)s" % { "file": os.path.basename( self._alignment_file )  } )
+            if os.system( command ) != 0:
+                message = "Problem getting the alignment file from the GRID"
+                self._logger.critical( message  )
+                raise StopExecutionError( message )
+
+
+    ## Preliminary checks
+    #
+    # This method performs some preliminary checks
+    # before starting a full GRID or a CPU local submission
+    # In particular, it checks that the proxy exists and it is still valid,
+    # the input file is available on the GRID at the specified path and that
+    # all the output files are not already on the Storage Element.
+    #
+    # In case the proxy is missing or expired a StopExecutionError will be raised,
+    # while other errors will be thrown in case of non existing input files or
+    # already existing output files.
+    #
+    #
+    def doPreliminaryTest( self ) :
+        # first log the voms-proxy-info
+        self._logger.info( "Logging the voms-proxy-info" )
+        info = popen2.Popen4("voms-proxy-info -all")
+        while info.poll() == -1:
+            line = info.fromchild.readline()
+            self._logger.info( line.strip() )
+
+        if info.poll() != 0:
+            message = "Problem with the GRID_UI"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        # also check that the proxy is still valid
+        if os.system( "voms-proxy-info -e" ) != 0:
+            message = "Expired proxy"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+        else:
+            self._logger.info( "Valid proxy found" )
+
+        # get all the needed path from the configuration file
+        try :
+            self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderHitmakerResults")
+            self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderFitterResults" )
+            self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderFitterJoboutput")
+            self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderFitterHisto")
+            self._dbAlignGRID       = self._configParser.get("GRID", "GRIDFolderDBAlign")
+            folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID ]
+        except ConfigParser.NoOptionError:
+            message = "Missing path from the configuration file"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+
+        # check if the input files is on the GRID
+        for index, inputFile in enumerate( self._inputFileList ):
+            if inputFile != "DEADFACE" :
+                justFile = self._justInputFileList[ index ] 
+                command = "lfc-ls %(inputPathGRID)s/%(file)s" % { "inputPathGRID" : self._inputPathGRID,  "file": justFile  }
+
+                lfc = popen2.Popen4( command )
+                while lfc.poll() == -1:
+                    pass
+
+                if lfc.poll() == 0:
+                    self._logger.info( "Input file %(justFile)s found on the SE" % {"justFile": justFile } )
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, "GRID", c, d, e, f
+                else:
+                    self._logger.error( "Input file %(justFile)s NOT found on the SE" % {"justFile": justFile } )
+                    run, b, c, d, e, f = self._summaryNTuple[ index ]
+                    self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
+                    self._inputFileList[ index ] = "DEADFACE"
+                    if self._configParser.get("General","Interactive" ):
+                        if not self.askYesNo( "Would you like to skip it and continue? [y/n] " ) :
+                            message = "User decided to stop here"
+                            self._logger.critical( message )
+                            raise StopExecutionError( message )
+                        else :
+                            self._logger.info( "Skipping to the next run" )
+                    else:
+                        self._logger.info( "Skipping to the next run" )
+
+        # check the existence of the folders
+        try :
+            for folder in folderList:
+                self.checkGRIDFolder( folder )
+
+        except MissingGRIDFolderError, error :
+            message = "Folder %(folder)s is unavailable. Quitting" % { "folder": error._filename }
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+
+        # check if the output file already exists
+        #
+        filenameList = []
+        lfcls = popen2.Popen4( "lfc-ls %(outputPathGRID)s" % { "outputPathGRID": self._outputPathGRID } )
+        lfcls.wait()
+        list = lfcls.fromchild.read().splitlines()
+        pattern = re.compile( "%(output)s-track.[0-9]{3}.slcio" % { "output": self._option.output } )
+        for line in list :
+            if pattern.search( line ) != None:
+                filenameList.append( line )
+
+        filenameList.append( "%(outputPathGRID)s/%(name)s-%(output)s.tar.gz"      % { "outputPathGRID": self._joboutputPathGRID,
+                                                                                      "name": self.name, "output": self._option.output } )
+        filenameList.append( "%(outputPathGRID)s/%(output)s-track-histo.root"     % { "outputPathGRID": self._histogramPathGRID, "output": self._option.output } )
+
+        for filename in filenameList:
+            self.checkGRIDFile( filename )
