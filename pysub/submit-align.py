@@ -13,7 +13,7 @@ from optparse import OptionGroup
 # the SubmitAlign and create an instance of this object.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-align.py,v 1.3 2009-06-04 17:15:53 bulgheroni Exp $
+# @version $Id: submit-align.py,v 1.4 2009-06-06 11:46:09 bulgheroni Exp $
 
 def main() :
 
@@ -22,7 +22,7 @@ def main() :
 
 usage: %prog [execution-options] [io-options] [configuration-options] [align-options] -o basename-output input-files
 """
-    cvsVersion = "$Revision: 1.3 $"
+    cvsVersion = "$Revision: 1.4 $"
     submitAlignCVSVersion = SubmitAlign.cvsVersion
     submitBaseCVSVersion = SubmitBase.cvsVersion
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
@@ -50,6 +50,9 @@ usage: %prog [execution-options] [io-options] [configuration-options] [align-opt
     alignGroup.add_option( "--records", action="store", type="int", dest="records", help="Use this parameter to set the number of record to process. Used only when the job is not "
                            " split into sub-jobs. Default is 10 millions. ")
 
+    alignGroup.add_option( "--skip", action="store", type="int", dest="skip", help="Use this parameter to skip some records from the beginning of the input files" )
+
+
     alignGroup.add_option( "--split-job", action="store", type="int", dest="split_job", help="Use this option to define how many alignment job you want to submit."
                            " This option can be used only when working in all-grid mode. It will be user responsibility "
                            "to retrieve from the GRID the mille.bin files and the pede-steer file. Use this option along with --split-size to set how many record each job has to read." )
@@ -62,6 +65,7 @@ usage: %prog [execution-options] [io-options] [configuration-options] [align-opt
     parser.set_defaults( split_job=1 )
     parser.set_defaults( split_size=1000 )
     parser.set_defaults( records=10000000 )
+    parser.set_defaults( skip=0 )
 
     parser.add_option_group( alignGroup )
 
