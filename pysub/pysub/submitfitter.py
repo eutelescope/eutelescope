@@ -21,7 +21,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-fitter.py script
 #
 #
-# @version $Id: submitfitter.py,v 1.8 2009-06-06 13:29:22 bulgheroni Exp $
+# @version $Id: submitfitter.py,v 1.9 2009-06-06 16:01:54 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 
@@ -32,7 +32,7 @@ class SubmitFitter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.8 $"
+    cvsVersion = "$Revision: 1.9 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1610,7 +1610,7 @@ class SubmitFitter( SubmitBase ):
         # also check that the proxy is still valid
         command = "voms-proxy-info -e"
         status, output = commands.getstatusoutput( command )
-        if status!= 0:
+        if status != 0:
             message = "Expired proxy"
             self._logger.critical( message )
             raise StopExecutionError( message )
@@ -1639,7 +1639,6 @@ class SubmitFitter( SubmitBase ):
             if inputFile != "DEADFACE" :
                 justFile = self._justInputFileList[ index ] 
                 command = "lfc-ls %(inputPathGRID)s/%(file)s" % { "inputPathGRID" : self._inputPathGRID,  "file": justFile  }
-
                 status, output = commands.getstatusoutput( command )
                 if status == 0:
                     self._logger.info( "Input file %(justFile)s found on the SE" % {"justFile": justFile } )
@@ -1865,26 +1864,6 @@ class SubmitFitter( SubmitBase ):
 
 
     ## Preliminary checks for splitting
-    def doPreliminaryTestSplitting( self, i, fullCheck ):
-
-        if fullCheck :
-            # first log the voms-proxy-info
-            self._logger.info( "Logging the voms-proxy-info" )
-            command = "voms-proxy-info -all"
-            status, output = commands.getstatusoutput( command )
-            for line in output.splitlines():
-                self._logger.info( line.strip() )
-
-            if status != 0:
-                message = "Problem with the GRID_UI"
-                self._logger.critical( message )
-                raise StopExecutionError( message )
-
-            # also check that the proxy is still valid
-            command =  "voms-proxy-info -e" 
-            status, output = commands.getstatusoutput( command )
-
-            if status != 0:
                 message = "Expired proxy"
                 self._logger.critical( message )
                 raise StopExecutionError( message )

@@ -5,6 +5,7 @@ import sha
 import glob
 import tarfile
 import popen2
+import commands
 import ConfigParser
 import logging
 import logging.handlers
@@ -20,7 +21,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.27 2009-06-03 11:09:17 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.28 2009-06-06 16:01:54 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -30,7 +31,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.27 $"
+    cvsVersion = "$Revision: 1.28 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1697,18 +1698,20 @@ class SubmitFilter( SubmitBase ):
         if fullCheck :
             # first log the voms-proxy-info
             self._logger.info( "Logging the voms-proxy-info" )
-            info = popen2.Popen4("voms-proxy-info -all")
-            while info.poll() == -1:
-                line = info.fromchild.readline()
+            command = "voms-proxy-info -all"
+            status, output = commands.getstatusoutput( command )
+            for line in output.splitlines():
                 self._logger.info( line.strip() )
 
-            if info.poll() != 0:
+            if status != 0:
                 message = "Problem with the GRID_UI"
                 self._logger.critical( message )
                 raise StopExecutionError( message )
 
             # also check that the proxy is still valid
-            if os.system( "voms-proxy-info -e" ) != 0:
+            command = "voms-proxy-info -e"
+            status, output = commands.getstatusoutput( command )
+            if status != 0:
                 message = "Expired proxy"
                 self._logger.critical( message )
                 raise StopExecutionError( message )
@@ -1947,12 +1950,10 @@ class SubmitFilter( SubmitBase ):
         self._logger.info("Submitting the job to the GRID")
         command = "glite-wms-job-submit %(del)s -r %(GRIDCE)s -o %(name)s-%(run)s.jid %(name)s-%(run)s.jdl" % {
             "name": self.name, "run": runString , "GRIDCE":self._gridCE, "del":self._jobDelegation }
-        glite = popen2.Popen4( command )
-        while glite.poll() == -1:
-            message = glite.fromchild.readline().strip()
-            self._logger.log(15, message )
-
-        if glite.poll() == 0:
+        status, output = commands.getstatusoutput( command )
+        for line in output.splitlines():
+            self._logger.log( 15, line.strip() )
+        if status == 0:
             self._logger.info( "Job successfully submitted to the GRID" )
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, "Submit'd", d, e, f

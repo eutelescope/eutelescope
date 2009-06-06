@@ -4,7 +4,7 @@ import shutil
 import sha
 import glob
 import tarfile
-import popen2
+import commands
 import ConfigParser
 import logging
 import logging.handlers
@@ -23,7 +23,7 @@ from error import *
 # which are the newly added files
 #
 #
-# @version $Id: submitnativecopy.py,v 1.5 2009-05-14 15:23:04 bulgheroni Exp $
+# @version $Id: submitnativecopy.py,v 1.6 2009-06-06 16:01:54 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitNativeCopy( SubmitBase ) :
@@ -33,7 +33,7 @@ class SubmitNativeCopy( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.5 $"
+    cvsVersion = "$Revision: 1.6 $"
 
         ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -189,10 +189,9 @@ class SubmitNativeCopy( SubmitBase ) :
             raise StopExecutionError( message )
 
         command = "lfc-ls %(outputPathGRID)s/run%(run)s.raw" % { "outputPathGRID": self._outputPathGRID, "run": runString }
-        lfc = popen2.Popen4( command )
-        while lfc.poll() == -1:
-            pass
-        if lfc.poll() == 0:
+        status, output = commands.getstatusoutput( command )
+
+        if status == 0:
             self._logger.warning( "File %(outputPathGRID)s/run%(run)s.raw already on GRID"
                                   % { "outputPathGRID": self._outputPathGRID, "run": runString } )
 
