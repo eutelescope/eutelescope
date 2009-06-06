@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-fitter.py script
 #
 #
-# @version $Id: submitfitter.py,v 1.4 2009-06-05 17:57:29 bulgheroni Exp $
+# @version $Id: submitfitter.py,v 1.5 2009-06-06 11:48:46 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 
@@ -31,7 +31,7 @@ class SubmitFitter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.4 $"
+    cvsVersion = "$Revision: 1.5 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1614,6 +1614,9 @@ class SubmitFitter( SubmitBase ):
         else:
             self._logger.info( "Valid proxy found" )
 
+        # check if we have already a delegation proxy
+        self.checkDelegationProxy()
+
         # get all the needed path from the configuration file
         try :
             self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderHitmakerResults")
@@ -1750,6 +1753,9 @@ class SubmitFitter( SubmitBase ):
             if inputFile != "DEADFACE" :
                 runActualString = runActualString.replace( "@InputFileList@", "%(file)s @InputFileList@" % {"file": self._justInputFileList[index] } )
         runActualString = runActualString.replace( "@InputFileList@" , "" )
+
+        # replace the alignment file
+        runActualString = runActualString.replace( "@AlignFile@",os.path.basename( self._option.alignment_file ) )
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
                          "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderFitterResults",
@@ -1986,7 +1992,9 @@ class SubmitFitter( SubmitBase ):
                 runActualString = runActualString.replace( "@InputFileList@", "%(file)s @InputFileList@" % {"file": self._justInputFileList[index] } )
         runActualString = runActualString.replace( "@InputFileList@" , "" )
 
-
+        # replace the alignment file
+        runActualString = runActualString.replace( "@AlignFile@",os.path.basename( self._option.alignment_file ) )
+        
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
                          "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderFitterResults",
                          "GRIDFolderFitterJoboutput", "GRIDFolderFitterHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
@@ -2048,3 +2056,42 @@ class SubmitFitter( SubmitBase ):
         entry = i , jidFile.readline()
         self._gridSplitNTuple.append( entry )
 
+    def prepareJIDFileSplitting( self ):
+        unique = datetime.datetime.fromtimestamp( self._timeBegin ).strftime("%Y%m%d-%H%M%S")
+        self._logger.info("Preparing the JID for this submission (%(name)s-%(date)s.jid)" % {
+            "name": self.name, "date" : unique } )
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderFitterJoboutput")
+        except ConfigParser.NoOptionError :
+            localPath = "log/"
+
+        jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
+        currentJIDFile = open( "current.jid" , "a" )
+        for run, jid in self._gridSplitNTuple:
+            if jid != "Unknown" and jid != "See below":
+                jidFile.write( jid )
+                currentJIDFile.write( "# %(name)s %(output)s %(unique)s %(run)d\n" % {"run": run, "name":self.name, "output": self._option.output, "unique": unique } )
+                currentJIDFile.write( jid )
+        jidFile.close()
+        currentJIDFile.close()
+
+    def prepareJIDFile( self ):
+        unique = datetime.datetime.fromtimestamp( self._timeBegin ).strftime("%Y%m%d-%H%M%S")
+        self._logger.info("Preparing the JID for this submission (%(name)s-%(date)s.jid)" % {
+                "name": self.name, "date" : unique } )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderFitterJoboutput")
+        except ConfigParser.NoOptionError :
+            localPath = "log/"
+
+        jidFile = open( os.path.join( localPath, "%(name)s-%(date)s.jid" % { "name": self.name, "date": unique } ), "w" )
+        currentJIDFile = open( "current.jid" , "a" )
+        for run, jid in self._gridJobNTuple:
+            if jid != "Unknown" and jid != "See below":
+                jidFile.write( jid )
+                currentJIDFile.write( "# %(name)s %(output)s %(unique)s\n" % {"name":self.name, "output": self._option.output, "unique": unique } )
+                currentJIDFile.write( jid )
+        jidFile.close()
+        currentJIDFile.close()
+                                                                        
