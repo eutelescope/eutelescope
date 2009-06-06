@@ -7,7 +7,7 @@
 #  pysub
 #
 #  Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-#  Version: $Id: myjob-status.py,v 1.3 2009-06-04 17:15:27 bulgheroni Exp $
+#  Version: $Id: myjob-status.py,v 1.4 2009-06-06 11:45:18 bulgheroni Exp $
 
 from optparse import OptionParser
 import os
@@ -16,7 +16,7 @@ import time
 
 def main() :
     usage = "%prog [options] JID-files"
-    version = "$Revision: 1.3 $"
+    version = "$Revision: 1.4 $"
     version = version.replace("$Revision:", "")
     version = version.replace("$", "")
     parser = OptionParser( usage=usage, version=version.strip())
@@ -39,11 +39,18 @@ def main() :
 
     parser.add_option( "-f", "--filter", action="store", dest="filter", help="Apply a filter to the input files")
 
+    parser.add_option( "-w", "--wait", action="store", type="int", dest="wait", help="Time to wait between one loop and the next when working in continuos mode")
+
 
     parser.set_defaults( type="detailed" )
     parser.set_defaults( repeat=False )
+    parser.set_defaults( wait=10 )
+
 
     options, args = parser.parse_args()
+
+    if options.wait < 10 :
+        options.wait = 10
 
     # check if the input files exist or not
     goodFile = []
@@ -139,7 +146,7 @@ def main() :
 
         repeat = options.repeat
         if repeat:
-            time.sleep( 10 )
+            time.sleep( options.wait )
         
 if __name__ == "__main__":
     main()
