@@ -1,3 +1,5 @@
+Type                = "Job";
+JobType             = "Normal";
 Executable          = "@Executable@" ;
 Arguments           = "" ;
 StdOutput           = "out" ;
@@ -6,3 +8,4 @@ InputSandbox        = { "@SteeringFile@", "@Executable@", "@GearFile@", "@HistoI
 OutputSandbox       = { "out", "err" };
 VirtualOrganisation = "@GRIDVO@";
 Requirements        = Member( "VO-ilc-ilcsoft-@GRIDILCSoftVersion@-sl4", other.GlueHostApplicationSoftwareRunTimeEnvironment) ;
+ShallowRetryCount   = 3;
