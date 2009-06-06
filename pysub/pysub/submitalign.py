@@ -19,7 +19,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-align.py script
 #
 #
-# @version $Id: submitalign.py,v 1.9 2009-06-03 11:09:17 bulgheroni Exp $
+# @version $Id: submitalign.py,v 1.10 2009-06-06 11:48:06 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitAlign( SubmitBase ):
@@ -29,7 +29,7 @@ class SubmitAlign( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.9 $"
+    cvsVersion = "$Revision: 1.10 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -958,10 +958,15 @@ class SubmitAlign( SubmitBase ):
         if self._option.records != 10000000:
             record = self._option.records
 
-        actualSteeringString = actualSteeringString.replace( "@RecordNumber@", "%(v)s" % {"v": record } )
+        actualSteeringString = actualSteeringString.replace( "@RecordNumber@", "%(v)d" % {"v": record } )
 
-        # don't skip any record
-        actualSteeringString = actualSteeringString.replace( "@SkipNEvents@", "0" )
+        try:
+            skip = self._configParser.getint("AlignOptions","Skip")
+        except ConfigParser.NoOptionError:
+            skip = 0
+        if self._option.skip != 0:
+            skip = self._option.skip
+        actualSteeringString = actualSteeringString.replace( "@SkipNEvents@", "%(v)d" % {"v": skip } )
 
         # now replace the output folder path
         if self._option.execution == "all-grid" :
@@ -1530,7 +1535,7 @@ class SubmitAlign( SubmitBase ):
                 "name": self.name, "date" : unique } )
 
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderClusearchJoboutput")
+            localPath = self._configParser.get( "LOCAL", "LocalFolderAlignJoboutput")
         except ConfigParser.NoOptionError :
             localPath = "log/"
 
@@ -1548,10 +1553,9 @@ class SubmitAlign( SubmitBase ):
     def prepareJIDFileSplitting( self ):
         unique = datetime.datetime.fromtimestamp( self._timeBegin ).strftime("%Y%m%d-%H%M%S")
         self._logger.info("Preparing the JID for this submission (%(name)s-%(date)s.jid)" % {
-                "name": self.name, "date" : unique } )
-
+            "name": self.name, "date" : unique } )
         try :
-            localPath = self._configParser.get( "LOCAL", "LocalFolderClusearchJoboutput")
+            localPath = self._configParser.get( "LOCAL", "LocalFolderAlignJoboutput")
         except ConfigParser.NoOptionError :
             localPath = "log/"
 
@@ -1695,6 +1699,9 @@ class SubmitAlign( SubmitBase ):
             raise StopExecutionError( message )
         else:
             self._logger.info( "Valid proxy found" )
+
+        # check if we have already a delegation proxy
+        self.checkDelegationProxy()
 
         # get all the needed path from the configuration file
         try :
