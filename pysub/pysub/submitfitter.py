@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-fitter.py script
 #
 #
-# @version $Id: submitfitter.py,v 1.5 2009-06-06 11:48:46 bulgheroni Exp $
+# @version $Id: submitfitter.py,v 1.6 2009-06-06 12:38:40 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 
@@ -31,7 +31,7 @@ class SubmitFitter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.5 $"
+    cvsVersion = "$Revision: 1.6 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -684,8 +684,8 @@ class SubmitFitter( SubmitBase ):
 
         actualSteeringString = actualSteeringString.replace( "@RecordNumber@", "%(v)s" % {"v": record } )
 
-        # don't skip any record
-        actualSteeringString = actualSteeringString.replace( "@SkipNEvents@", "0" )
+        # set how many records should be skipped from the beginning of the input file
+        actualSteeringString = actualSteeringString.replace( "@SkipNEvents@", "%(v)d" % { "v": self._option.skip } )
 
         # now replace the output folder path
         if self._option.execution == "all-grid" :

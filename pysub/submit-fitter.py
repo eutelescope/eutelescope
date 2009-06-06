@@ -13,7 +13,7 @@ from optparse import OptionGroup
 # the SubmitFitter and create an instance of this object.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-fitter.py,v 1.1 2009-06-05 08:25:23 bulgheroni Exp $
+# @version $Id: submit-fitter.py,v 1.2 2009-06-06 12:38:40 bulgheroni Exp $
 
 def main() :
 
@@ -22,7 +22,7 @@ def main() :
 
 usage: %prog [execution-options] [io-options] [configuration-options] [fitter-options] -o basename-output -a alignment-file input-files
 """
-    cvsVersion = "$Revision: 1.1 $"
+    cvsVersion = "$Revision: 1.2 $"
     submitFitterCVSVersion = SubmitFitter.cvsVersion
     submitBaseCVSVersion = SubmitBase.cvsVersion
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
@@ -53,9 +53,12 @@ usage: %prog [execution-options] [io-options] [configuration-options] [fitter-op
     fitterGroup.add_option( "--split-size", action="store", type="int", dest="split_size",
                             help="Use this option to define how many records should be analyzed by each fitting job" )
 
+    fitterGroup.add_option( "--skip", action="store", type="int", dest="skip", help="Use this parameter to skip some records from the beginning of the input files" )
+
 
     parser.set_defaults( split_job=1 )
     parser.set_defaults( split_size=1000 )
+    parser.set_defaults( skip=0 )
 
     parser.add_option_group( fitterGroup )
 
