@@ -5,6 +5,7 @@ import sha
 import glob
 import tarfile
 import popen2
+import commands
 import ConfigParser
 import logging
 import logging.handlers
@@ -20,7 +21,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-fitter.py script
 #
 #
-# @version $Id: submitfitter.py,v 1.6 2009-06-06 12:38:40 bulgheroni Exp $
+# @version $Id: submitfitter.py,v 1.7 2009-06-06 13:13:11 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 
@@ -31,7 +32,7 @@ class SubmitFitter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.6 $"
+    cvsVersion = "$Revision: 1.7 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1596,18 +1597,20 @@ class SubmitFitter( SubmitBase ):
     def doPreliminaryTest( self ) :
         # first log the voms-proxy-info
         self._logger.info( "Logging the voms-proxy-info" )
-        info = popen2.Popen4("voms-proxy-info -all")
-        while info.poll() == -1:
-            line = info.fromchild.readline()
+        command = "voms-proxy-info -all"
+        status, output = commands.getstatusoutput( command )
+        for line in output.splitlines():
             self._logger.info( line.strip() )
 
-        if info.poll() != 0:
+        if status != 0:
             message = "Problem with the GRID_UI"
             self._logger.critical( message )
             raise StopExecutionError( message )
 
         # also check that the proxy is still valid
-        if os.system( "voms-proxy-info -e" ) != 0:
+        command = "voms-proxy-info -e"
+        status, output = commands.getstatusoutput( command )
+        if status!= 0:
             message = "Expired proxy"
             self._logger.critical( message )
             raise StopExecutionError( message )
