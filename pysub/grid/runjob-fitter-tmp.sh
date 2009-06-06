@@ -2,13 +2,13 @@
 # A template of fitter job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-fitter-tmp.sh,v 1.1 2009-06-05 17:37:30 bulgheroni Exp $
+# @version $Id: runjob-fitter-tmp.sh,v 1.2 2009-06-06 11:47:02 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
 # errno  2: Unable to get the alignment file from the SE.
 # errno 20: Problem during Marlin execution.
-# errno 30: Problem copying and registering the DB output to the SE.
+# errno 30: Problem copying and registering the LCIO output to the SE.
 # errno 31: Problem copying and registering the Joboutput to the SE.
 # errno 32: Problem copying and registering the histogram to the SE
 #
@@ -95,7 +95,7 @@ GRIDFolderHitmakerResults="@GRIDFolderHitmakerResults@"
 GRIDFolderDBAlign="@GRIDFolderDBAlign@"
 GRIDFolderFitterResults="@GRIDFolderFitterResults@"
 GRIDFolderFitterJoboutput="@GRIDFolderFitterJoboutput@"
-GRIDFolderFitterrHisto="@GRIDFolderFitterHisto@"
+GRIDFolderFitterHisto="@GRIDFolderFitterHisto@"
 GRIDLibraryTarball="@GRIDLibraryTarball@"
 GRIDILCSoftVersion="@GRIDILCSoftVersion@"
 
@@ -177,7 +177,7 @@ for file in $InputFileList; do
 
     echo "--> $file"
     echo
-    InputLFN=$GRIDFolderFilterResults/$file
+    InputLFN=$GRIDFolderHitmakerResults/$file
     InputLocal=$PWD/results/$file
 
     doCommand "getFromGRID ${InputLFN} ${InputLocal}"
@@ -251,11 +251,13 @@ echo
 # OutputLocal=$PWD/results/$Output-track.[0-9][0-9][0-9].slcio
 # OutputLFN=$GRIDFolderFitterResults/$Output-track.[0-9][0-9][0-9].slcio
 for file in `ls $PWD/results/$Output-track.[0-9][0-9][0-9].slcio` ; do
-    echo "--> $file"
+    
+    basefile=`basename $file`
+    echo "--> $basefile"
     echo
 
-    OutputLocal= $PWD/results/$file
-    OutputLFN=$GRIDFolderFitterResults/$file
+    OutputLocal=$file
+    OutputLFN=$GRIDFolderFitterResults/$basefile
 
     doCommand "putOnGRID ${OutputLocal} ${OutputLFN} ${GRIDSE}"
     r=$?
