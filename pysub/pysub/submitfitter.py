@@ -21,7 +21,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-fitter.py script
 #
 #
-# @version $Id: submitfitter.py,v 1.10 2009-06-07 05:59:00 bulgheroni Exp $
+# @version $Id: submitfitter.py,v 1.11 2009-06-07 06:41:39 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 
@@ -32,7 +32,7 @@ class SubmitFitter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.10 $"
+    cvsVersion = "$Revision: 1.11 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -424,9 +424,9 @@ class SubmitFitter( SubmitBase ):
         actualSteeringString = actualSteeringString.replace("@HistoInfo@", self._histoinfoFilename )
 
         # input files
-        for index, inputFile in enumerate( self._inputFileList ):
+        for i, inputFile in enumerate( self._inputFileList ):
             if inputFile != "DEADFACE":
-                actualSteeringString = actualSteeringString.replace("@InputFile@", "%(fqfn)s @InputFile@" % { "fqfn": self._fqInputFileList[ index] } )
+                actualSteeringString = actualSteeringString.replace("@InputFile@", "%(fqfn)s @InputFile@" % { "fqfn": self._fqInputFileList[ i ] } )
 
         actualSteeringString = actualSteeringString.replace( "@InputFile@", "" )
 
