@@ -21,7 +21,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-fitter.py script
 #
 #
-# @version $Id: submitfitter.py,v 1.9 2009-06-06 16:01:54 bulgheroni Exp $
+# @version $Id: submitfitter.py,v 1.10 2009-06-07 05:59:00 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 
@@ -32,7 +32,7 @@ class SubmitFitter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.9 $"
+    cvsVersion = "$Revision: 1.10 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1864,6 +1864,27 @@ class SubmitFitter( SubmitBase ):
 
 
     ## Preliminary checks for splitting
+    def doPreliminaryTestSplitting( self, i, fullCheck ):
+
+
+        if fullCheck :
+            # first log the voms-proxy-info
+            self._logger.info( "Logging the voms-proxy-info" )
+            command = "voms-proxy-info -all"
+            status, output = commands.getstatusoutput( command )
+            for line in output.splitlines():
+                self._logger.info( line.strip() )
+
+            if status != 0:
+                message = "Problem with the GRID_UI"
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+            # also check that the proxy is still valid
+            command =  "voms-proxy-info -e" 
+            status, output = commands.getstatusoutput( command )
+
+            if status != 0:
                 message = "Expired proxy"
                 self._logger.critical( message )
                 raise StopExecutionError( message )
