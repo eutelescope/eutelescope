@@ -21,7 +21,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.36 2009-06-06 16:01:54 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.37 2009-06-12 18:02:01 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -31,7 +31,7 @@ class SubmitConverter( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.36 $"
+    cvsVersion = "$Revision: 1.37 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -566,7 +566,7 @@ class SubmitConverter( SubmitBase ) :
         command = "glite-wms-job-submit %(del)s -r %(GRIDCE)s -o %(name)s-%(run)s.jid %(name)s-%(run)s.jdl" % {
             "name": self.name, "run": runString , "GRIDCE":self._gridCE, "del": self._jobDelegation }
         status, output = commands.getstatusoutput( command )
-        for line in output.splitline():
+        for line in output.splitlines():
             self._logger.log( 15, line.strip() )
 
         if status == 0 :
