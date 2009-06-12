@@ -13,7 +13,7 @@ import sys
 def main() :
 
     usage = "usage: %prog [options] additional-files"
-    cvsVersion = "$Revision: 1.2 $"
+    cvsVersion = "$Revision: 1.3 $"
     version = "%prog version" +  cvsVersion[10:len(cvsVersion)-1] 
     parser = OptionParser( usage = usage, version = version )
 
@@ -57,7 +57,7 @@ def main() :
 
     for otherFile in args:
         if not os.access( otherFile, os.R_OK ):
-            print "Problem accessing file %(file)s " %{ "file":file }
+            print "Problem accessing file %(file)s " %{ "file":otherFile }
             sys.exit( 3 )
         else :
             goodList.append( otherFile )
