@@ -8,11 +8,12 @@ import shutil
 import tarfile
 import tempfile
 import glob
+import sys
 
 def main() :
 
     usage = "usage: %prog [options] additional-files"
-    cvsVersion = "$Revision: 1.1 $"
+    cvsVersion = "$Revision: 1.2 $"
     version = "%prog version" +  cvsVersion[10:len(cvsVersion)-1] 
     parser = OptionParser( usage = usage, version = version )
 
@@ -38,7 +39,7 @@ def main() :
 
     if not os.access( configFile, os.R_OK ):
         print "Problem accessing the configuration file. Please use either the -c option or the SUBMIT_CONFIG variable"
-        exit( 1 )
+        sys.exit( 1 )
 
     configParser = ConfigParser.SafeConfigParser()
     configParser.read( configFile ) 
@@ -49,7 +50,7 @@ def main() :
     for key, file in fileList:
         if not os.access( file, os.R_OK ):
             print "Problem accessing file %(key)s = %(file)s " % { "key":key, "file":file }
-            exit( 2 )
+            sys.exit( 2 )
         else :
             goodList.append( file )
 
@@ -57,7 +58,7 @@ def main() :
     for otherFile in args:
         if not os.access( otherFile, os.R_OK ):
             print "Problem accessing file %(file)s " %{ "file":file }
-            exit( 3 )
+            sys.exit( 3 )
         else :
             goodList.append( otherFile )
 
