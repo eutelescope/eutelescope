@@ -10,6 +10,7 @@ import logging
 import logging.handlers
 import datetime
 import time
+import tempfile
 from submitbase import SubmitBase
 from error import *
 
@@ -23,7 +24,7 @@ from error import *
 # which are the newly added files
 #
 #
-# @version $Id: submitnativecopy.py,v 1.6 2009-06-06 16:01:54 bulgheroni Exp $
+# @version $Id: submitnativecopy.py,v 1.7 2009-06-13 10:42:36 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitNativeCopy( SubmitBase ) :
@@ -33,7 +34,7 @@ class SubmitNativeCopy( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.6 $"
+    cvsVersion = "$Revision: 1.7 $"
 
         ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -84,7 +85,7 @@ class SubmitNativeCopy( SubmitBase ) :
 
                 # prepare also the entry for the summaryNTuple 
                 # this is formatted in the way
-                # runNumber, localFile, GRIDFile, Verification
+                # runNumber, localFile, GRIDFile, Verifyon
                 entry = i, "Unknown",  "Unknown",  "Unknown"
                 self._summaryNTuple.append( entry )
 
@@ -250,15 +251,16 @@ class SubmitNativeCopy( SubmitBase ) :
         if self._option.verbose:
             baseCommand = baseCommand + "-v "
 
+        tempFolder = tempfile.mkdtemp( prefix =self.name )
         command = "%(base)s lfn:%(gridFolder)s/run%(run)s.raw file:%(localFolder)s/run%(run)s-test.raw" % \
-            { "base": baseCommand, "gridFolder": self._outputPathGRID, "localFolder": self._inputFilePath, "run" : runString }
+            { "base": baseCommand, "gridFolder": self._outputPathGRID, "localFolder": tempFolder, "run" : runString }
 
         if os.system( command ) != 0 :
             raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s.raw" % \
                                         { "gridFolder": self._inputFilePath, "run" : runString } )
 
         # calculate the sha1sum of the remote file 
-        remoteCopy = open( "%(localFolder)s/run%(run)s-test.raw" % { "localFolder": self._inputFilePath, "run" : runString }, "r" ).read()
+        remoteCopy = open( "%(localFolder)s/run%(run)s-test.raw" % { "localFolder": tempFolder, "run" : runString }, "r" ).read()
         remoteCopyHash = sha.new( remoteCopy ).hexdigest()
         message = "Remote copy hash %(hash)s" % { "hash": remoteCopyHash }
         self._logger.log( 15, message )
@@ -270,7 +272,7 @@ class SubmitNativeCopy( SubmitBase ) :
             raise VerificationError
 
         # if successful remove the test file
-        os.remove( "%(localFolder)s/run%(run)s-test.raw" % { "localFolder": self._inputFilePath, "run" : runString } )
+        shutil.rmtree( tempFolder )
 
     ## Final method
     #
