@@ -24,7 +24,7 @@ from error import *
 # which are the newly added files
 #
 #
-# @version $Id: submitnativecopy.py,v 1.7 2009-06-13 10:42:36 bulgheroni Exp $
+# @version $Id: submitnativecopy.py,v 1.8 2009-06-20 10:45:01 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitNativeCopy( SubmitBase ) :
@@ -34,7 +34,7 @@ class SubmitNativeCopy( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.7 $"
+    cvsVersion = "$Revision: 1.8 $"
 
         ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -225,7 +225,14 @@ class SubmitNativeCopy( SubmitBase ) :
         if self._option.verbose:
             baseCommand = baseCommand + "-v "
 
-        command = "%(base)s -d %(gridse)s -l lfn:%(gridFolder)s/run%(runString)s.raw file:%(inputFolder)s/run%(runString)s.raw" \
+        # check if we have a specific destination
+        if self._gridse.startswith( "srm://"):
+             self._gridse = "-d " + self._gridse.rstrip("/") + "/run%(runString)s.raw" % { "runString": runString }
+         else:
+             self._gridse = ""
+ 
+ 
+        command = "%(base)s %(gridse)s -l lfn:%(gridFolder)s/run%(runString)s.raw file:%(inputFolder)s/run%(runString)s.raw" \
             % {  "base": baseCommand, "gridse": self._gridse, "gridFolder" : self._outputPathGRID,   "runString": runString, 
                  "inputFolder" : self._inputFilePath }
         if os.system( command ) != 0:
