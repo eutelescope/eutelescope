@@ -24,7 +24,7 @@ from error import *
 # which are the newly added files
 #
 #
-# @version $Id: submitnativecopy.py,v 1.8 2009-06-20 10:45:01 bulgheroni Exp $
+# @version $Id: submitnativecopy.py,v 1.9 2009-06-26 09:45:14 jbehr Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitNativeCopy( SubmitBase ) :
@@ -34,7 +34,7 @@ class SubmitNativeCopy( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.8 $"
+    cvsVersion = "$Revision: 1.9 $"
 
         ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -228,7 +228,7 @@ class SubmitNativeCopy( SubmitBase ) :
         # check if we have a specific destination
         if self._gridse.startswith( "srm://"):
              self._gridse = "-d " + self._gridse.rstrip("/") + "/run%(runString)s.raw" % { "runString": runString }
-         else:
+        else:
              self._gridse = ""
  
  
