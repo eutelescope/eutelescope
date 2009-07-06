@@ -37,6 +37,7 @@
 #include <vector>
 #include <string>
 #include <sstream>
+#include <set>
 
 #ifdef DOXY
 //! The histogram namespace

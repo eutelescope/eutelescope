@@ -697,8 +697,8 @@ void showCorrelationPlot( const char * filename ) {
   // --> HitYCanvas
 
   UInt_t nDetPerCanvas = 3;
-  UInt_t nDetector;
-  UInt_t nCanvas;
+  UInt_t nDetector = 0;
+  UInt_t nCanvas = 0;
   UInt_t iPad;
   vector<TCanvas * > canvasVec;
   vector<TPad *    > padVec;
@@ -723,7 +723,17 @@ void showCorrelationPlot( const char * filename ) {
     padVec.clear();
 
     UInt_t nHisto = clusterXFolder->GetListOfKeys()->GetSize();
-    nDetector = (UInt_t) (( 1. + TMath::Sqrt( 1. + 4* nHisto ) ) / 2);
+    set< int > sensorIDSet;
+    string separator = "-_";
+
+    for ( size_t i = 0 ; i < nHisto; ++i ) {
+      string name  = clusterXFolder->GetListOfKeys()->At( i )->GetName();
+      size_t last  = name.find_last_not_of( separator );
+      size_t first = name.find_last_not_of( separator, last );
+      sensorIDSet.insert( atoi( name.substr( first, last ).c_str() ) );
+    }
+
+    nDetector = sensorIDSet.size();
     nCanvas = nDetector / nDetPerCanvas;
     if ( nDetector % nDetPerCanvas != 0 ) {
       ++nCanvas;
@@ -791,7 +801,10 @@ void showCorrelationPlot( const char * filename ) {
 
     iPad = 0;
     string newTitle;
-    for ( UInt_t iDetector = 0; iDetector < nDetector - 1; ++iDetector ) {
+    set< int >::iterator iter = sensorIDSet.begin();
+    for ( size_t i = 0 ; i < sensorIDSet.size() - 1 ; ++i, ++iter ) {
+      int iDetector = *iter;
+
       string histoName = "ClusterXCorrelationHisto_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
       TH2D * histo = (TH2D*) clusterXFolder->Get(histoName.c_str());
 
@@ -947,6 +960,7 @@ void showCorrelationPlot( const char * filename ) {
     }
   }
 
+
   TDirectoryFile * clusterYFolder = (TDirectoryFile*) correlatorFolder->Get("ClusterY");
   if ( clusterYFolder != 0x0 ) {
 
@@ -957,7 +971,17 @@ void showCorrelationPlot( const char * filename ) {
     padVec.clear();
 
     UInt_t nHisto = clusterYFolder->GetListOfKeys()->GetSize();
-    nDetector = (UInt_t) (( 1. + TMath::Sqrt( 1. + 4* nHisto ) ) / 2);
+    set< int > sensorIDSet;
+    string separator = "-_";
+
+    for ( size_t i = 0 ; i < nHisto; ++i ) {
+      string name  = clusterYFolder->GetListOfKeys()->At( i )->GetName();
+      size_t last  = name.find_last_not_of( separator );
+      size_t first = name.find_last_not_of( separator, last );
+      sensorIDSet.insert( atoi( name.substr( first, last ).c_str() ) );
+    }
+
+    nDetector = sensorIDSet.size();
     nCanvas = nDetector / nDetPerCanvas;
     if ( nDetector % nDetPerCanvas != 0 ) {
       ++nCanvas;
@@ -1025,7 +1049,9 @@ void showCorrelationPlot( const char * filename ) {
 
     iPad = 0;
     string newTitle;
-    for ( UInt_t iDetector = 0; iDetector < nDetector - 1; ++iDetector ) {
+    set< int >::iterator iter = sensorIDSet.begin();
+    for ( size_t i = 0 ; i < sensorIDSet.size() - 1 ; ++i, ++iter ) {
+      int iDetector = *iter;
       string histoName = "ClusterYCorrelationHisto_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
       TH2D * histo = (TH2D*) clusterYFolder->Get(histoName.c_str());
 
@@ -1190,7 +1216,17 @@ void showCorrelationPlot( const char * filename ) {
     padVec.clear();
 
     UInt_t nHisto = hitXFolder->GetListOfKeys()->GetSize();
-    nDetector = (UInt_t) (( 1. + TMath::Sqrt( 1. + 4* nHisto ) ) / 2);
+    set< int > sensorIDSet;
+    string separator = "-_";
+
+    for ( size_t i = 0 ; i < nHisto; ++i ) {
+      string name  = hitXFolder->GetListOfKeys()->At( i )->GetName();
+      size_t last  = name.find_last_not_of( separator );
+      size_t first = name.find_last_not_of( separator, last );
+      sensorIDSet.insert( atoi( name.substr( first, last ).c_str() ) );
+    }
+
+    nDetector = sensorIDSet.size();
     nCanvas = nDetector / nDetPerCanvas;
     if ( nDetector % nDetPerCanvas != 0 ) {
       ++nCanvas;
@@ -1259,7 +1295,9 @@ void showCorrelationPlot( const char * filename ) {
 
     iPad = 0;
     string newTitle;
-    for ( UInt_t iDetector = 0; iDetector < nDetector - 1; ++iDetector ) {
+    set< int >::iterator iter = sensorIDSet.begin();
+    for ( size_t i = 0 ; i < sensorIDSet.size() - 1 ; ++i, ++iter ) {
+      int iDetector = *iter;
       string histoName = "HitXCorrelatioHisto_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
       TH2D * histo = (TH2D*) hitXFolder->Get(histoName.c_str());
 
@@ -1427,11 +1465,22 @@ void showCorrelationPlot( const char * filename ) {
     padVec.clear();
 
     UInt_t nHisto = hitYFolder->GetListOfKeys()->GetSize();
-    nDetector = (UInt_t) (( 1. + TMath::Sqrt( 1. + 4* nHisto ) ) / 2);
+    set< int > sensorIDSet;
+    string separator = "-_";
+
+    for ( size_t i = 0 ; i < nHisto; ++i ) {
+      string name  = hitYFolder->GetListOfKeys()->At( i )->GetName();
+      size_t last  = name.find_last_not_of( separator );
+      size_t first = name.find_last_not_of( separator, last );
+      sensorIDSet.insert( atoi( name.substr( first, last ).c_str() ) );
+    }
+
+    nDetector = sensorIDSet.size();
     nCanvas = nDetector / nDetPerCanvas;
     if ( nDetector % nDetPerCanvas != 0 ) {
       ++nCanvas;
     }
+
 
     Double_t titleHeight = 0.10;
     Int_t canvasWidth  = 800;
@@ -1495,7 +1544,9 @@ void showCorrelationPlot( const char * filename ) {
 
     iPad = 0;
     string newTitle;
-    for ( UInt_t iDetector = 0; iDetector < nDetector - 1; ++iDetector ) {
+    set< int >::iterator iter = sensorIDSet.begin();
+    for ( size_t i = 0 ; i < sensorIDSet.size() - 1 ; ++i, ++iter ) {
+      int iDetector = *iter;
       string histoName = "HitYCorrelationHisto_d" + toString( iDetector ) + "_d" + toString( iDetector + 1 );
       TH2D * histo = (TH2D*) hitYFolder->Get(histoName.c_str());
 
