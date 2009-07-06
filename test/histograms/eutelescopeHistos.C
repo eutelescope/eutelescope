@@ -41,16 +41,39 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
   }
 
   Int_t loop = 1;
-  string loopFolderName = "loop-" + toString( loop );
-  TDirectoryFile * loopFolder = (TDirectoryFile *) pedeProcessorFolder->Get( loopFolderName.c_str() );
+  vector< string > loopFolderNames;
+  loopFolderNames.push_back( "loop-" + toString( loop ) );
+  loopFolderNames.push_back( "loop_" + toString( loop ) ) ;
 
-  if ( loopFolder == 0 ) {
-    cerr << "No " << loopFolderName << " found in file " << filename << endl;
-    return ;
+
+  TDirectoryFile * loopFolder = NULL;
+  for ( size_t iName = 0; iName < loopFolderNames.size() ; ++iName ) {
+
+    loopFolder = (TDirectoryFile *) pedeProcessorFolder->Get( loopFolderNames.at( iName ).c_str() );
+
+    if ( loopFolder != NULL ) break;
+  }
+
+  if ( loopFolder == NULL ) {
+    cerr << "None of the loop folder possibilities:" << endl;
+    for ( size_t iName = 0; iName < loopFolderNames.size() ; ++iName ) {
+      cerr << "\t" << loopFolderNames.at( iName ) << endl;
+    }
+    cerr << "was found in " << filename << endl;
+    return;
   }
 
   // guess the number of sensors from the number of subfolder in the loopfolder
   UInt_t nDetector = loopFolder->GetListOfKeys()->GetSize();
+  vector< string > detectorFolderNames;
+  vector< int >    sensorIDs;
+  string separator = "-_";
+
+  for ( size_t i = 0 ; i < nDetector; ++i ) {
+    string name( loopFolder->GetListOfKeys()->At( i )->GetName() );
+    detectorFolderNames.push_back( name );
+    sensorIDs.push_back( atoi(name.substr( name.find_last_not_of( separator ),  name.length() ).c_str()) );
+  }
   UInt_t nCanvas   = nDetector / nDetPerCanvas;
   if ( nDetector % nDetPerCanvas != 0 ) {
     ++nCanvas;
@@ -121,17 +144,29 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
   // now plot the histograms in the right pad, again starting from the pedestal
   UInt_t iPad = 0;
   string newTitle;
+
   for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
-    string detectorFolderName = "detector-" + toString( iDetector );
-    TDirectoryFile * detectorFolder = (TDirectoryFile*) loopFolder->Get( detectorFolderName.c_str() );
-    if ( detectorFolder == 0x0 ) {
-      cout << "Folder " << detectorFolderName << " not found " << endl;
-      return ;
+
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) loopFolder->Get( detectorFolderNames.at(iDetector).c_str() );
+    vector< string > mapNames;
+    mapNames.push_back( "PedeMap-d" + toString( sensorIDs.at( iDetector ) ) + "-l" + toString( loop ) );
+    mapNames.push_back( "PedeMap_d" + toString( sensorIDs.at( iDetector ) ) + "_l" + toString( loop ) );
+
+    TH2D * map = NULL;
+    for ( size_t iName = 0 ; iName < mapNames.size(); ++iName ) {
+      map = (TH2D* ) detectorFolder->Get( mapNames.at( iName ).c_str() );
+      if ( map != NULL ) break;
+    }
+    if ( map == NULL ) {
+      cerr << "None of the map histo name possibilities:" << endl;
+      for ( size_t iName = 0; iName < mapNames.size() ; ++iName ) {
+        cerr << "\t" << mapNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return;
     }
 
-    string  mapName = "PedeMap-d" + toString( iDetector ) + "-l" + toString( loop );
-    TH2D *  map = (TH2D* ) detectorFolder->Get( mapName.c_str() );
-    newTitle = string( map->GetTitle() ) + " - Detector " + toString( iDetector );
+    newTitle = string( map->GetTitle() ) + " - Detector " + toString( sensorIDs.at( iDetector ) );
     map->SetTitle( newTitle.c_str() );
     map->SetXTitle("x [pixel]");
     map->SetYTitle("y [pixel]");
@@ -140,9 +175,26 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
     map->SetContour(99);
     map->Draw("colz");
 
-    string histoName = "PedeDist-d" + toString( iDetector ) + "-l" + toString( loop );
-    TH1D * histo = (TH1D*) detectorFolder->Get( histoName.c_str() );
-    newTitle = string( histo->GetTitle() ) + " - Detector " + toString( iDetector );
+
+    vector< string > histoNames;
+    histoNames.push_back( "PedeDist-d" + toString( sensorIDs.at( iDetector ) ) + "-l" + toString( loop ) );
+    histoNames.push_back( "PedeDist_d" + toString( sensorIDs.at( iDetector ) ) + "_l" + toString( loop ) );
+
+    TH1D * histo = NULL;
+    for ( size_t iName = 0 ; iName < histoNames.size(); ++iName ) {
+      histo  = (TH1D*) detectorFolder->Get( histoNames.at( iName ).c_str() );
+      if ( histo != NULL ) break;
+    }
+    if ( histo == NULL ) {
+      cerr << "None of the histo name possibilities:" << endl;
+      for ( size_t iName = 0; iName < histoNames.size() ; ++iName ) {
+        cerr << "\t" << histoNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return;
+    }
+
+    newTitle = string( histo->GetTitle() ) + " - Detector " + toString( sensorIDs.at( iDetector ) );
     histo->SetTitle( newTitle.c_str() );
     histo->SetXTitle("Pedestal [ADC]");
     histo->SetFillColor( kCyan - 5 );
@@ -215,12 +267,28 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
   iPad = 0;
   // now the same as above for the noise
   for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
-    string detectorFolderName = "detector-" + toString( iDetector );
-    TDirectoryFile * detectorFolder = (TDirectoryFile*) loopFolder->Get( detectorFolderName.c_str() );
 
-    string  mapName = "NoiseMap-d" + toString( iDetector ) + "-l" + toString( loop );
-    TH2D *  map = (TH2D* ) detectorFolder->Get( mapName.c_str() );
-    newTitle = string( map->GetTitle() ) + " - Detector " + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) loopFolder->Get( detectorFolderNames.at(iDetector).c_str() );
+
+    vector< string > mapNames;
+    mapNames.push_back(  "NoiseMap-d" + toString( sensorIDs.at( iDetector ) ) + "-l" + toString( loop ) );
+    mapNames.push_back(  "NoiseMap_d" + toString( sensorIDs.at( iDetector ) ) + "_l" + toString( loop ) );
+    TH2D *  map = NULL;
+    for ( size_t iName = 0 ; iName < mapNames.size(); ++iName ) {
+      map = (TH2D* ) detectorFolder->Get( mapNames.at( iName) .c_str() );
+      if ( map != NULL ) break;
+    }
+    if ( map == NULL ) {
+      cerr << "None of the map histo name possibilities:" << endl;
+      for ( size_t iName = 0; iName < mapNames.size() ; ++iName ) {
+        cerr << "\t" << mapNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return;
+    }
+
+
+    newTitle = string( map->GetTitle() ) + " - Detector " + toString( sensorIDs.at( iDetector ) );
     map->SetTitle( newTitle.c_str() );
     map->SetXTitle("x [pixel]");
     map->SetYTitle("y [pixel]");
@@ -229,9 +297,25 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
     map->SetContour(99);
     map->Draw("colz");
 
-    string histoName = "NoiseDist-d" + toString( iDetector ) + "-l" + toString( loop );
-    TH1D * histo = (TH1D*) detectorFolder->Get( histoName.c_str() );
-    newTitle = string( histo->GetTitle() ) + " - Detector " + toString( iDetector );
+    vector< string > histoNames;
+    histoNames.push_back( "NoiseDist-d" + toString( sensorIDs.at( iDetector ) ) + "-l" + toString( loop ) );
+    histoNames.push_back( "NoiseDist_d" + toString( sensorIDs.at( iDetector ) ) + "_l" + toString( loop ) );
+
+    TH1D * histo = NULL;
+    for ( size_t iName = 0 ; iName < histoNames.size(); ++iName ) {
+      histo  = (TH1D*) detectorFolder->Get( histoNames.at( iName ).c_str() );
+      if ( histo != NULL ) break;
+    }
+    if ( histo == NULL ) {
+      cerr << "None of the histo name possibilities:" << endl;
+      for ( size_t iName = 0; iName < histoNames.size() ; ++iName ) {
+        cerr << "\t" << histoNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return;
+    }
+
+    newTitle = string( histo->GetTitle() ) + " - Detector " + toString( sensorIDs.at( iDetector ) );
     histo->SetTitle( newTitle.c_str() );
     histo->SetXTitle("Noise [ADC]");
     histo->SetFillColor( kCyan - 5 );
@@ -300,12 +384,28 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
 
   iPad = 0;
   for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
-    string detectorFolderName = "detector-" + toString( iDetector );
-    TDirectoryFile * detectorFolder = (TDirectoryFile*) loopFolder->Get( detectorFolderName.c_str() );
 
-    string  mapName = "StatusMap-d" + toString( iDetector ) + "-l" + toString( loop );
-    TH2D *  map = (TH2D* ) detectorFolder->Get( mapName.c_str() );
-    newTitle = string( map->GetTitle() ) + " - Detector " + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) loopFolder->Get( detectorFolderNames.at(iDetector).c_str() );
+
+    vector< string > mapNames;
+    mapNames.push_back( "StatusMap-d" + toString( sensorIDs.at( iDetector ) ) + "-l" + toString( loop ) );
+    mapNames.push_back( "StatusMap_d" + toString( sensorIDs.at( iDetector ) ) + "_l" + toString( loop ) );
+
+    TH2D * map = NULL;
+    for ( size_t iName = 0 ; iName < mapNames.size(); ++iName ) {
+      map = (TH2D* ) detectorFolder->Get( mapNames.at( iName) .c_str() );
+      if ( map != NULL ) break;
+    }
+    if ( map == NULL ) {
+      cerr << "None of the map histo name possibilities:" << endl;
+      for ( size_t iName = 0; iName < mapNames.size() ; ++iName ) {
+        cerr << "\t" << mapNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return;
+    }
+
+    newTitle = string( map->GetTitle() ) + " - Detector " + toString( sensorIDs.at( iDetector ) );
     map->SetTitle( newTitle.c_str() );
     map->SetXTitle("x [pixel]");
     map->SetYTitle("y [pixel]");
@@ -406,23 +506,33 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
 
     iPad = 0;
     for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
-      string detectorFolderName = "detector-" + toString( iDetector );
-      TDirectoryFile * detectorFolder = (TDirectoryFile*) loopFolder->Get( detectorFolderName.c_str() );
-      if ( detectorFolder == 0x0 ) {
-        cout << "Folder " << detectorFolderName << " not found " << endl;
-        return ;
-      }
 
-      string  mapName = "NoiseMap-d" + toString( iDetector ) + "-l" + toString( loop );
-      TH2D *  map = (TH2D* ) detectorFolder->Get( mapName.c_str() );
+      TDirectoryFile * detectorFolder = (TDirectoryFile*) loopFolder->Get( detectorFolderNames.at(iDetector).c_str() );
+
+      vector< string > mapNames;
+      mapNames.push_back(  "NoiseMap-d" + toString( sensorIDs.at( iDetector ) ) + "-l" + toString( loop ) );
+      mapNames.push_back(  "NoiseMap_d" + toString( sensorIDs.at( iDetector ) ) + "_l" + toString( loop ) );
+      TH2D *  map = NULL;
+      for ( size_t iName = 0 ; iName < mapNames.size(); ++iName ) {
+        map = (TH2D* ) detectorFolder->Get( mapNames.at( iName) .c_str() );
+        if ( map != NULL ) break;
+      }
+      if ( map == NULL ) {
+        cerr << "None of the map histo name possibilities:" << endl;
+        for ( size_t iName = 0; iName < mapNames.size() ; ++iName ) {
+          cerr << "\t" << mapNames.at( iName ) << endl;
+        }
+        cerr << "was found in " << filename << endl;
+        return;
+      }
 
       for ( UInt_t iChan = 0 ; iChan < kNChan ; ++iChan ) {
         if ( iDetector == 0 ) {
           channel[iChan] = iChan - 0.5;
         }
 
-        string tempName  = "Noise_Dist_d" + toString( iDetector ) + "_ch" + toString( iChan ) ;
-        string tempTitle = "Noise Det. " + toString(iDetector) + " - Ch. " + toString( iChan ) ;
+        string tempName  = "Noise_Dist_d" + toString( sensorIDs.at( iDetector ) ) + "_ch" + toString( iChan ) ;
+        string tempTitle = "Noise Det. " + toString( sensorIDs.at( iDetector ) ) + " - Ch. " + toString( iChan ) ;
 
         TH1D * noiseDistCh = new TH1D( tempName.c_str(), tempTitle.c_str(), 50, 0., 10. );
         noiseDistCh->SetXTitle( "Noise [ADC}");
@@ -513,8 +623,8 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
       }
 
       TGraphErrors * gr = new TGraphErrors( kNChan, x, &meanNoise[ iDetector * kNChan ], NULL, &rmsNoise[ iDetector * kNChan ] );
-      string grName   = "Detector_d" + toString( iDetector );
-      string grTitle  = "Detector " + toString( iDetector );
+      string grName   = "Detector_d" + toString( sensorIDs.at( iDetector ) );
+      string grTitle  = "Detector " + toString( sensorIDs.at( iDetector ) );
       gr->GetHistogram()->SetBit( TH1::kNoTitle, true ) ;
       gr->SetName( grName.c_str() );
       gr->SetTitle( grTitle.c_str() );
@@ -1585,6 +1695,15 @@ void showClusterPlot( const char * filename ) {
   // this folder should contain one subfolder for each detector
   // so guess the number of detectors
   UInt_t nDetector = clusterHistoFolder->GetListOfKeys()->GetSize();
+  vector< string > detectorFolderNames;
+  vector< int >    sensorIDs;
+  string separator = "-_";
+
+  for ( size_t i = 0 ; i < nDetector; ++i ) {
+    string name( clusterHistoFolder->GetListOfKeys()->At( i )->GetName() );
+    detectorFolderNames.push_back( name ) ;
+    sensorIDs.push_back( atoi( name.substr( name.find_last_not_of( separator ),  name.length() ).c_str()) );
+  }
   UInt_t nCanvas   = nDetector / nDetPerCanvas;
   if ( nDetector % nDetPerCanvas != 0 ) {
     ++nCanvas;
@@ -1655,12 +1774,28 @@ void showClusterPlot( const char * filename ) {
   UInt_t iPad = 0;
   string newTitle;
   for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
-    string detectorFolderName = "detector-" + toString( iDetector );
-    TDirectoryFile * detectorFolder = (TDirectoryFile*) clusterHistoFolder->Get( detectorFolderName.c_str() );
 
-    string firstHistoName = "seedSNR-d" + toString( iDetector );
-    TH1D * firstHisto = (TH1D*) detectorFolder->Get( firstHistoName.c_str() );
-    newTitle = string(firstHisto->GetTitle()) + " - Detector " + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) clusterHistoFolder->Get( detectorFolderNames.at(iDetector).c_str() );
+
+    vector< string > firstHistoNames;
+    firstHistoNames.push_back( "seedSNR-d" + toString( sensorIDs.at(iDetector) ) );
+    firstHistoNames.push_back( "seedSNR_d" + toString( sensorIDs.at(iDetector) ) );
+
+    TH1D * firstHisto = NULL;
+    for ( size_t iName = 0 ; iName < firstHistoNames.size(); ++iName ) {
+      firstHisto =  (TH1D*) detectorFolder->Get( firstHistoNames.at( iName ).c_str() );
+      if ( firstHisto != NULL ) break;
+    }
+    if ( firstHisto == NULL ) {
+      cerr << "None of the histo name possibilities: " << endl;
+      for ( size_t iName = 0; iName < firstHistoNames.size() ; ++iName ) {
+        cerr << "\t" << firstHistoNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return ;
+    }
+
+    newTitle = string(firstHisto->GetTitle()) + " - Detector " + toString( sensorIDs.at( iDetector ) );
     firstHisto->SetTitle( newTitle.c_str() );
     firstHisto->SetXTitle("SNR");
     firstHisto->SetFillColor( kCyan - 5 );
@@ -1670,10 +1805,25 @@ void showClusterPlot( const char * filename ) {
     ++iPad;
 
 
+    vector< string > secondHistoNames;
+    secondHistoNames.push_back( "clusterSNR3x3-d" + toString( sensorIDs.at(iDetector) ) );
+    secondHistoNames.push_back( "clusterSNR3x3_d" + toString( sensorIDs.at(iDetector) ) );
 
-    string secondHistoName = "clusterSNR3x3-d" + toString( iDetector );
-    TH1D * secondHisto     = (TH1D*) detectorFolder->Get( secondHistoName.c_str() );
-    newTitle = string(secondHisto->GetTitle()) + " - Detector " + toString( iDetector );
+    TH1D * secondHisto     = NULL;
+    for ( size_t iName = 0; iName < secondHistoNames.size(); ++iName ) {
+      secondHisto =   (TH1D*) detectorFolder->Get( secondHistoNames.at( iName ).c_str() );
+      if ( secondHisto != NULL ) break;
+    }
+    if ( secondHisto == NULL ) {
+      cerr << "None of the histo name possibilities:" << endl;
+      for ( size_t iName = 0; iName < secondHistoNames.size() ; ++iName ) {
+        cerr << "\t" << secondHistoNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return;
+    }
+
+    newTitle = string(secondHisto->GetTitle()) + " - Detector " + toString(  sensorIDs.at(iDetector) );
     secondHisto->SetTitle( newTitle.c_str() );
     secondHisto->SetXTitle("SNR");
     secondHisto->SetFillColor( kCyan - 5 );
@@ -1681,7 +1831,6 @@ void showClusterPlot( const char * filename ) {
     secondHisto->Fit("landau");
     secondHisto->GetFunction("landau")->SetLineColor( kRed );
     ++iPad;
-
 
   }
 
@@ -1751,12 +1900,28 @@ void showClusterPlot( const char * filename ) {
   // now plot the histograms in the right pad
   iPad = 0;
   for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
-    string detectorFolderName = "detector-" + toString( iDetector );
-    TDirectoryFile * detectorFolder = (TDirectoryFile*) clusterHistoFolder->Get( detectorFolderName.c_str() );
 
-    string histoName = "hitMap-d" + toString( iDetector );
-    TH2D * histo = (TH2D*) detectorFolder->Get( histoName.c_str() );
-    newTitle = string( histo->GetTitle() ) + " - Detector " + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) clusterHistoFolder->Get( detectorFolderNames.at(iDetector).c_str() );
+
+    vector< string > histoNames;
+    histoNames.push_back( "hitMap-d" + toString( sensorIDs.at( iDetector )   ) );
+    histoNames.push_back( "hitMap_d" + toString( sensorIDs.at( iDetector )   ) );
+
+    TH2D * histo = NULL;
+    for ( size_t iName = 0; iName < histoNames.size(); ++iName ) {
+      histo =  (TH2D*) detectorFolder->Get( histoNames.at( iName ).c_str() );
+      if ( histo != NULL ) break;
+    }
+    if ( histo == NULL ) {
+      cerr << "None of the map histo name possibilities:" << endl;
+      for ( size_t iName = 0; iName < histoNames.size() ; ++iName ) {
+        cerr << "\t" << histoNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return;
+    }
+
+    newTitle = string( histo->GetTitle() ) + " - Detector " + toString(  sensorIDs.at( iDetector ) );
     histo->SetTitle( newTitle.c_str() );
     histo->SetXTitle("x [pixel]");
     histo->SetYTitle("y [pixel]");
@@ -1832,12 +1997,27 @@ void showClusterPlot( const char * filename ) {
 
   iPad = 0;
   for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
-    string detectorFolderName = "detector-" + toString( iDetector );
-    TDirectoryFile * detectorFolder = (TDirectoryFile*) clusterHistoFolder->Get( detectorFolderName.c_str() );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) clusterHistoFolder->Get( detectorFolderNames.at( iDetector ).c_str() );
 
-    string histoName = "clusterNoise-d" + toString( iDetector );
-    TH1D * histo     = (TH1D*) detectorFolder->Get( histoName.c_str() );
-    newTitle = string(histo->GetTitle()) + " - Detector " + toString( iDetector );
+    vector< string > histoNames;
+    histoNames.push_back( "clusterNoise-d" + toString( sensorIDs.at( iDetector )   ) );
+    histoNames.push_back( "clusterNoise_d" + toString( sensorIDs.at( iDetector )   ) );
+
+    TH1D * histo = NULL;
+    for ( size_t iName = 0; iName < histoNames.size(); ++iName ) {
+      histo =  (TH1D*) detectorFolder->Get( histoNames.at( iName ).c_str() );
+      if ( histo != NULL ) break;
+    }
+    if ( histo == NULL ) {
+      cerr << "None of the map histo name possibilities:" << endl;
+      for ( size_t iName = 0; iName < histoNames.size() ; ++iName ) {
+        cerr << "\t" << histoNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return;
+    }
+
+    newTitle = string(histo->GetTitle()) + " - Detector " + toString( sensorIDs.at( iDetector ) );
     histo->SetTitle( newTitle.c_str() );
     histo->SetXTitle("Noise [ADC]");
     histo->SetFillColor( kCyan - 5 );
@@ -1917,12 +2097,28 @@ void showClusterPlot( const char * filename ) {
 
   iPad = 0;
   for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
-    string detectorFolderName = "detector-" + toString( iDetector );
-    TDirectoryFile * detectorFolder = (TDirectoryFile*) clusterHistoFolder->Get( detectorFolderName.c_str() );
 
-    string histoName = "eventMultiplicity-d" + toString( iDetector );
-    TH1D * histo     = (TH1D*) detectorFolder->Get( histoName.c_str() );
-    newTitle = string(histo->GetTitle()) + " - Detector " + toString( iDetector );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) clusterHistoFolder->Get( detectorFolderNames.at(iDetector).c_str() );
+
+    vector< string > histoNames;
+    histoNames.push_back( "eventMultiplicity-d" + toString( sensorIDs.at( iDetector )   ) );
+    histoNames.push_back( "eventMultiplicity_d" + toString( sensorIDs.at( iDetector )   ) );
+
+    TH1D * histo = NULL;
+    for ( size_t iName = 0; iName < histoNames.size(); ++iName ) {
+      histo =  (TH1D*) detectorFolder->Get( histoNames.at( iName ).c_str() );
+      if ( histo != NULL ) break;
+    }
+    if ( histo == NULL ) {
+      cerr << "None of the map histo name possibilities:" << endl;
+      for ( size_t iName = 0; iName < histoNames.size() ; ++iName ) {
+        cerr << "\t" << histoNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return;
+    }
+
+    newTitle = string(histo->GetTitle()) + " - Detector " + toString( sensorIDs.at( iDetector )  );
     histo->SetTitle( newTitle.c_str() );
     histo->SetXTitle("Multiplicity [#]");
     histo->SetFillColor( kCyan - 5 );
@@ -2917,7 +3113,7 @@ void showMillePlot( const char * filename ) {
     return ;
   }
 
-    // guess the number of sensors
+  // guess the number of sensors
   UInt_t nDetector = 0;
   while ( true ) {
     string name = "ResidualX_d" + toString(nDetector);
@@ -3026,7 +3222,7 @@ void showMillePlot( const char * filename ) {
     st->SetX2NDC( 0.9792 );
     st->SetY2NDC( 0.9983 );
     padVec[iPad]->Modified( true );
-    
+
     ++iPad;
 
     histoName = "ResidualY_d" + toString( iDetector );
