@@ -10,90 +10,222 @@
 #define TDSPRECLUSTER_H
 
 #include <vector>
+#include <iostream>
+#include <map>
+#include <iterator>
+#include <cmath>
+
+#include <TDSPixel.h>
 
 namespace TDS {
+
+
+//! Precluster for Tracker Detailed Simulation
+/*! 
+   Simple rectangular precluster from the charge deposits
+   stored in map.
+   A few useful methods for charge distribution analysis are present.
+
+   @author Piotr Niezurawski
+
+   Date: 2008-12-11
+*/
   class TDSPrecluster {
 
     friend class TDSPixelsChargeMap;
+    
+  public:
 
-    public:
-    // Constructor
+
+    //! Constructor
     inline TDSPrecluster(bool val_empty=true): empty(val_empty) {};
 
-    // Destructor
+
+    //! Destructor
     inline ~TDSPrecluster() {};
   
+
+    //! Is empty?
     inline bool isEmpty()
       {
         return empty;
       };
 
-    inline unsigned long int getPixelL()
+
+    //! Returns seed-pixel's index along L
+    inline unsigned long int getSeedIndexAlongL()
       {
         return pixelL;
       };
 
-    inline unsigned long int getPixelW()
+
+    //! Returns seed-pixel's index along W
+    inline unsigned long int getSeedIndexAlongW()
       {
         return pixelW;
       };
 
-    inline double getCoordL()
+
+    //! Returns seed-pixel's coordinate L (middle of the seed pixel)
+    inline double getSeedCoordL()
       {
         return coordL;
       };
 
-    inline double getCoordW()
+
+    //! Returns seed-pixel's coordinate W (middle of the seed pixel)
+    inline double getSeedCoordW()
       {
         return coordW;
       };
 
+
+    //! Returns index along L of the leftmost pixels
     inline unsigned long int getRectLmin()
       {
         return rectLmin;
       };
 
+
+    //! Returns index along L of the rightmost pixels
     inline unsigned long int getRectLmax()
       {
         return rectLmax;
       };
 
+
+    //! Returns index along W of the bottom pixels
     inline unsigned long int getRectWmin()
       {
         return rectWmin;
       };
 
+
+    //! Returns index along W of the top pixels
     inline unsigned long int getRectWmax()
       {
         return rectWmax;
       };
 
-    inline std::vector<double > getPixelsCharges()
+
+    //! Returns L coordinate of the charge center
+    inline double getCoordL_chargeCenter()
+    {
+      return coordL_chargeCenter;
+    }
+
+
+    //! Returns W coordinate of the charge center
+    inline double getCoordW_chargeCenter()
+    {
+      return coordW_chargeCenter;
+    }
+
+
+    //! Vector of pixels belonging to the precluster
+    inline std::vector<TDSPixel> getVectorOfPixels()
       {
-        return pixelsCharges;
+        return vectorOfPixels;
       }
 
-    void print()
-      {
-        std::cout << "pixelL=" << pixelL << " " << "pixelW=" << pixelW << std::endl;
-        std::cout << "coordL=" << coordL << " " << "coordW=" << coordW << std::endl;
-        std::cout << "pixelsCharges.size()=" << pixelsCharges.size() << std::endl;
-      };
+
+    //! Vector of pixels' charges sorted in charge in descending order
+    std::vector<double> getVecCharges_DescendingInCharge();
+
+
+    //! Vector of pixels' charges sorted in |charge| in descending order
+    std::vector<double> getVecCharges_DescendingInAbsCharge();
+
+
+    //! Vector of pixels' charges sorted in charge/distance_from_seed in descending order
+    std::vector<double> getVecCharges_DescendingInChargeByDistance();
+
+
+    //! Vector of pixels' charges sorted in |charge|/distance_from_seed in descending order
+    std::vector<double> getVecCharges_DescendingInAbsChargeByDistance();
+
+
+    //! Print to stdout some info about precluster
+    void print();
+
 
     protected:
   
-    // Flag
+    //! Flag
     bool empty;
-    // Core pixel (greatest |charge|) - integer coordinates. This is the center of the rectangle (rectLength/2 pixels on the left, rectLength/2 on the right etc.; sometimes - at the layer border some pixels can be absent).
-    unsigned long int pixelL, pixelW;
-    // Coordinates (at the beginning just center of the core pixel)
-    double coordL, coordW;
-    // Sides of the rectangle (as you wish)
-    unsigned int rectLength, rectWidth;
-    // Actual (take into account borders)
-    unsigned long int rectLmin, rectLmax, rectWmin, rectWmax;
-    // Vector of pixels' charges. Integer coords: (L,W). First in the vector is (1,1) then (1,2), (1,3), (1,rectWidth), (2,1) ...
-    std::vector<double > pixelsCharges;
+
+
+    //! Index of the seed pixel along L. 
+    /*! This is the center of the rectangle (rectLength/2 pixels on the left, rectLength/2 on the right etc.; 
+        sometimes - at the layer border some pixels can be absent). 
+     */
+    unsigned long int pixelL;
+
+
+    //! Index of the seed pixel along W. 
+    /*! This is the center of the rectangle (rectLength/2 pixels on the left, rectLength/2 on the right etc.; 
+        sometimes - at the layer border some pixels can be absent). 
+     */
+    unsigned long int pixelW;
+
+
+    //! Coordinate L of the center of the seed pixel
+    double coordL;
+
+
+    //! Coordinate W of the center of the seed pixel
+    double coordW;
+
+
+    //! Side L of the rectangle (expected)
+    unsigned int rectLength;
+
+
+    //! Side W of the rectangle (expected)
+    unsigned int rectWidth;
+
+
+    //! Actual leftmost-pixels' index of pixels' rectangle (borders are taken into account)
+    unsigned long int rectLmin;
+
+
+    //! Actual rightmost-pixels' index of pixels' rectangle (borders are taken into account)
+    unsigned long int rectLmax;
+
+
+    //! Actual bottom-pixels' index of pixels' rectangle (borders are taken into account)
+    unsigned long int rectWmin;
+
+
+    //! Actual top-pixels' index of pixels' rectangle (borders are taken into account)
+    unsigned long int rectWmax;
+
+
+    //! L coordinate of the charge center 
+    /*! Mean of the charge distribution over pixels.
+        In calculation it is assumed that charge in the pixel is in the geometrical center of that pixel.
+    */
+    double coordL_chargeCenter;
+
+
+    //! W coordinate of the charge center
+    /*! Mean of the charge distribution over pixels.
+        In calculation it is assumed that charge in the pixel is in the geometrical center of that pixel.
+    */
+    double coordW_chargeCenter;
+
+    
+    //! Vector of pixels belonging to the precluster
+    /*! Provide pixels sorted in charge in descending order (e.g.: +10., +5., -1., -20.).
+     */
+
+    std::vector<TDSPixel> vectorOfPixels;
+
+
+    //! Vector of pixels' charges. Integer coords: (L,W). First in the vector is (0,0) then (0,1), (0,2), (1,rectWidth-1), (1,0) ...
+    // std::vector<double> pixelsCharges;
+    
+    
   };
 
 }

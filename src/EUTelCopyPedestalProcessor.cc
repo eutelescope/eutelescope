@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCopyPedestalProcessor.cc,v 1.6 2007-09-24 01:20:06 bulgheroni Exp $
+// Version $Id: EUTelCopyPedestalProcessor.cc,v 1.7 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,7 +10,7 @@
  *
  */
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTelCopyPedestalProcessor.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
@@ -19,7 +19,7 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <IMPL/TrackerRawDataImpl.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
@@ -35,9 +35,9 @@ using namespace eutelescope;
 
 
 EUTelCopyPedestalProcessor::EUTelCopyPedestalProcessor () : Processor("EUTelCopyPedestalProcessor"),
-							    _pedestalCollectionVec(NULL),
-							    _noiseCollectionVec(NULL),
-							    _statusCollectionVec(NULL) {
+                                                            _pedestalCollectionVec(NULL),
+                                                            _noiseCollectionVec(NULL),
+                                                            _statusCollectionVec(NULL) {
 
   // modify processor description
   _description =
@@ -45,28 +45,28 @@ EUTelCopyPedestalProcessor::EUTelCopyPedestalProcessor () : Processor("EUTelCopy
 
   // first of all we need to register the input collection
   registerInputCollection (LCIO::TRACKERDATA, "PedestalConditionName",
-			   "Pedestal input condition",
-			   _pedestalConditionName, string ("pedestalDB"));
+                           "Pedestal input condition",
+                           _pedestalConditionName, string ("pedestalDB"));
 
   registerInputCollection (LCIO::TRACKERDATA, "NoiseConditionName",
-			   "Noise input condition",
-			   _noiseConditionName, string ("noiseDB"));
+                           "Noise input condition",
+                           _noiseConditionName, string ("noiseDB"));
 
   registerInputCollection (LCIO::TRACKERRAWDATA, "StatusConditionName",
-			   "Status input condition",
-			   _statusConditionName, string ("statusDB"));
-  
+                           "Status input condition",
+                           _statusConditionName, string ("statusDB"));
+
   registerOutputCollection (LCIO::TRACKERDATA, "PedestalCollectionName",
-			   "Pedestal local collection",
-			   _pedestalCollectionName, string ("pedestal"));
+                            "Pedestal local collection",
+                            _pedestalCollectionName, string ("pedestal"));
 
   registerOutputCollection (LCIO::TRACKERDATA, "NoiseCollectionName",
-			   "Noise local collection",
-			   _noiseCollectionName, string("noise"));
+                            "Noise local collection",
+                            _noiseCollectionName, string("noise"));
 
   registerOutputCollection (LCIO::TRACKERRAWDATA, "StatusCollectionName",
-			   "Pixel status collection",
-			   _statusCollectionName, string("status"));
+                            "Pixel status collection",
+                            _statusCollectionName, string("status"));
 }
 
 
@@ -101,7 +101,7 @@ void EUTelCopyPedestalProcessor::processEvent (LCEvent * event) {
     return;
   } else if ( evt->getEventType() == kUNKNOWN ) {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
-			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+                               << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
 
@@ -156,9 +156,9 @@ void EUTelCopyPedestalProcessor::processEvent (LCEvent * event) {
   evt->takeCollection(_statusCollectionName);
 
   ++_iEvt;
-  
+
 }
-  
+
 
 
 
@@ -167,7 +167,7 @@ void EUTelCopyPedestalProcessor::end() {
   delete _pedestalCollectionVec;
   delete _noiseCollectionVec;
   delete _statusCollectionVec;
-  
+
   streamlog_out ( MESSAGE2 )  << "Successfully finished" << endl;
 }
 

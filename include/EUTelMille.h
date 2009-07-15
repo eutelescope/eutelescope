@@ -293,9 +293,6 @@ namespace eutelescope {
 
     int _nPlanes;
 
-   //  double ** _xPos;
-//     double ** _yPos;
-//     double ** _zPos;
     std::vector<std::vector<double> > _xPos;
     std::vector<std::vector<double> > _yPos;
     std::vector<std::vector<double> > _zPos;

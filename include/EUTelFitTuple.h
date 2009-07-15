@@ -78,7 +78,7 @@ namespace eutelescope {
    *        zero, no debug information is printed.
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelFitTuple.h,v 1.3 2009-04-15 16:12:42 bulgheroni Exp $
+   * @version $Id: EUTelFitTuple.h,v 1.4 2009-07-15 17:21:28 bulgheroni Exp $
    * \date 2007.09.10
    *
    */

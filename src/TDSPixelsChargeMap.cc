@@ -1,12 +1,14 @@
-/*
+/*!
+
 Description: Map of charge distribution in pixels for Tracker Detailed Simulation
 
 Author: Piotr Niezurawski
 
 Date: 2008-11-07
+
 */
 
-#include "TDSPixelsChargeMap.h"
+#include <TDSPixelsChargeMap.h>
 
 #ifdef USE_CLHEP
 #include <CLHEP/Random/RandGauss.h>
@@ -16,8 +18,8 @@ using namespace TDS;
 using namespace std;
 
 // Constructor
-TDSPixelsChargeMap::TDSPixelsChargeMap(const double length, const double width, const double height, const double firstPixelCoordL, const double firstPixelCoordW) :
-  length(length), width(width), height(height), firstPixelCoordL(firstPixelCoordL), firstPixelCoordW(firstPixelCoordW)
+TDSPixelsChargeMap::TDSPixelsChargeMap(const double length, const double width, const double height, const double firstPixelCornerCoordL, const double firstPixelCornerCoordW) :
+  length(length), width(width), height(height), firstPixelCornerCoordL(firstPixelCornerCoordL), firstPixelCornerCoordW(firstPixelCornerCoordW)
 {
   if( height > 0. )
     {
@@ -25,19 +27,28 @@ TDSPixelsChargeMap::TDSPixelsChargeMap(const double length, const double width, 
       exit(1);
     };
 
+  setDetectorType();
+  theParamsOfFunChargeDistribution.height = height;
+  setLambda();
+  setReflectedContribution();
+
   // By default no integration storage is used
   useIntegrationStorage = false;
 
-  theParamsOfFunChargeDistribution.height = height;
-  theParamsOfFunChargeDistribution.lambda = 30.;
-  theParamsOfFunChargeDistribution.reflectedContribution = 0.;
-  theParamsOfFunChargeDistribution.addReflectedContribution = false;
+  // Integration should be initialized by user
+  isIntegrationInitialized = false;
+
+  // Pixels' dimensions not set
+  isPixelLengthSet = isPixelWidthSet = false;
 }
 
 // Destructor
 TDSPixelsChargeMap::~TDSPixelsChargeMap()
 {
-  gsl_monte_miser_free (gsl_s); // Free allocated memory (GSL)
+  if (isIntegrationInitialized)
+    {
+      gsl_monte_miser_free (gsl_s); // Free allocated memory (GSL)
+    }
 }
 
 
@@ -56,6 +67,7 @@ void TDSPixelsChargeMap::setPixelLength(const double val)
       cout << "Too many pixels to consider (more than 999999999 at least along length)!" << endl;
       exit(1);
     }
+  isPixelLengthSet = true;
 }
 
 
@@ -72,6 +84,7 @@ void TDSPixelsChargeMap::setPixelWidth (const double val) {
       cout << "Too many pixels to consider (more than 999999999 at least along width)!" << endl;
       exit(1);
     }
+  isPixelWidthSet = true;
 }
 
 
@@ -116,6 +129,8 @@ void TDSPixelsChargeMap::initializeIntegration(const double val_integMaxStepInDi
   gsl_s = gsl_monte_miser_alloc (2);
   // Number of MISER calls per one integration
   gsl_calls = val_gsl_calls;
+
+  isIntegrationInitialized = true;
 }
 
 
@@ -159,6 +174,19 @@ void TDSPixelsChargeMap::setIntegMaxNumberPixelsAlongW(const unsigned int val)
 // Function which adds charge contribution to pixels
 void TDSPixelsChargeMap::update(const TDSStep & step)
 {
+
+  if ( ( ! isPixelLengthSet ) || ( ! isPixelWidthSet ) )
+    {
+      cout << "Error: Pixels' dimensions are not set!" << endl;
+      exit (1);
+    }
+
+  if ( ! isIntegrationInitialized )
+    {
+      cout << "Error: Integration is not initialized!" << endl;
+      exit(1);
+    }
+
   if (step.geomLength == 0.)    // Return (and take next step)
     {
       cout << "Warning: Step length = 0." << endl;
@@ -205,13 +233,13 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
 
       // Determine integer coordinates of the main (core) pixel (under which the current point is placed)
       unsigned long int iL, iW;
-      iL = (unsigned long int)((currentPoint[0]-firstPixelCoordL)/pixelLength) + 1;
-      iW = (unsigned long int)((currentPoint[1]-firstPixelCoordW)/pixelWidth) + 1;
-      // cout << "iL: " << iL << " " << (long unsigned int)((currentPoint[0]-firstPixelCoordL)/pixelLength)  << endl;
-      // cout << "iW: " << iW << " " << (long unsigned int)((currentPoint[1]-firstPixelCoordW)/pixelWidth)  << endl;
-      if ( iL < 1  ||  iL > numberPixelsAlongL  ||  iW < 1  ||  iW > numberPixelsAlongW )
+      iL = (unsigned long int)((currentPoint[0]-firstPixelCornerCoordL)/pixelLength);
+      iW = (unsigned long int)((currentPoint[1]-firstPixelCornerCoordW)/pixelWidth);
+      // cout << "iL: " << iL << " " << (long unsigned int)((currentPoint[0]-firstPixelCornerCoordL)/pixelLength)  << endl;
+      // cout << "iW: " << iW << " " << (long unsigned int)((currentPoint[1]-firstPixelCornerCoordW)/pixelWidth)  << endl;
+      if ( iL < 0  ||  iL >= numberPixelsAlongL  ||  iW < 0  ||  iW >= numberPixelsAlongW )
         {
-          cout << "Error: Pixel outside the boundary of Length-Width plane!" << endl;
+          cout << "Error: Core pixel (and step) outside the boundary of Length-Width plane!" << endl;
           //      exit(1);
           break;
         }
@@ -234,18 +262,18 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
         {
           // Determine pixel segment for integration results storage
           // Unreduced segments
-          segmentL = (unsigned int)( integrationStorage->integPixelSegmentsAlongL * ((currentPoint[0]-firstPixelCoordL-pixelLength*(iL-1) ) / pixelLength) ) + 1;
-          segmentW = (unsigned int)( integrationStorage->integPixelSegmentsAlongW * ((currentPoint[1]-firstPixelCoordW-pixelWidth *(iW-1) ) / pixelWidth ) ) + 1;
-          segmentH = (unsigned int)( integrationStorage->integPixelSegmentsAlongH * (abs(currentPoint[2]) / height ) ) + 1;
+          segmentL = (unsigned int)( integrationStorage->integPixelSegmentsAlongL * ((currentPoint[0]-firstPixelCornerCoordL-pixelLength*iL ) / pixelLength) );
+          segmentW = (unsigned int)( integrationStorage->integPixelSegmentsAlongW * ((currentPoint[1]-firstPixelCornerCoordW-pixelWidth *iW ) / pixelWidth ) ) ;
+          segmentH = (unsigned int)( integrationStorage->integPixelSegmentsAlongH * (abs(currentPoint[2]) / height ) );
           // Thanks to symmetry we can reduce L and W segments (we have to reduce pixels then, too!)
-          if (segmentL > integrationStorage->integPixelSegmentsAlongL/2)
+          if (segmentL >= integrationStorage->integPixelSegmentsAlongL/2)
             {
-              segmentL = integrationStorage->integPixelSegmentsAlongL - segmentL + 1;
+              segmentL = integrationStorage->integPixelSegmentsAlongL - segmentL - 1;
               segmentL_reduced = true;
             };
-          if (segmentW > integrationStorage->integPixelSegmentsAlongW/2)
+          if (segmentW >= integrationStorage->integPixelSegmentsAlongW/2)
             {
-              segmentW = integrationStorage->integPixelSegmentsAlongW - segmentW + 1;
+              segmentW = integrationStorage->integPixelSegmentsAlongW - segmentW - 1;
               segmentW_reduced = true;
             }
         }
@@ -261,13 +289,13 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
       // Limits take into account borders of the pixel plane (rectangle)
       long int temp;
       temp = iL - integMaxNumberPixelsAlongL / 2;
-      temp < 1 ? imin = 1 : imin = temp;
+      temp < 0 ? imin = 0 : imin = temp;
       temp = iL + integMaxNumberPixelsAlongL / 2;
-      temp > (long int)numberPixelsAlongL ? imax = numberPixelsAlongL : imax = temp;
+      temp >= (long int)numberPixelsAlongL ? imax = numberPixelsAlongL - 1 : imax = temp;
       temp = iW - integMaxNumberPixelsAlongW / 2;
-      temp < 1 ? jmin = 1 : jmin = temp;
+      temp < 0 ? jmin = 0 : jmin = temp;
       temp = iW + integMaxNumberPixelsAlongW / 2;
-      temp > (long int)numberPixelsAlongW ? jmax = numberPixelsAlongW : jmax = temp;
+      temp >= (long int)numberPixelsAlongW ? jmax = numberPixelsAlongW - 1 : jmax = temp;
 
       // Loops over important pixels
       // (borders of a layer part taken into account - see above)
@@ -278,20 +306,20 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
       // ULLONG_MAX = 18 446 744 073 709 551 615
       //                           ^           ^
       // pixID = 10^10*i + j - key for the pixel (i,j) which is used in map<> container [(i,j) <-> (L,W)]
-      unsigned long long int pixID;
+      type_PixelID pixID;
 
       for (i = imin ; i <= imax ; i++ )
         {
           // cout << "i = " << i << endl;
           // L limits of integral
-          limitsLow[0] = firstPixelCoordL + (i-1)*pixelLength - currentPoint[0];
+          limitsLow[0] = firstPixelCornerCoordL + i*pixelLength - currentPoint[0];
           limitsUp[0]  = limitsLow[0] + pixelLength;
 
           for (j = jmin ; j <= jmax ; j++ )
             {
               // cout << "j = " << j << endl;
               // W limits of integral
-              limitsLow[1] = firstPixelCoordW + (j-1)*pixelWidth - currentPoint[1];
+              limitsLow[1] = firstPixelCornerCoordW + j*pixelWidth - currentPoint[1];
               limitsUp[1]  = limitsLow[1] + pixelWidth;
 
 
@@ -300,18 +328,19 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
                 {
 
                   // cout << "Integration-results storage is used!" << endl;
+
                   // Relative integer coordinates of pixel from main pixel
                   unsigned int pixelL, pixelW;
                   // Thanks to symmetry we can reduce L and W pixels indexes. We have to reduce segments simultaneously!
-                  pixelL = (long int)(i) - (long int)(iL) + integMaxNumberPixelsAlongL / 2 + 1;
+                  pixelL = (long int)(i) - (long int)(iL) + integMaxNumberPixelsAlongL / 2;
                   if ( segmentL_reduced   &&  i != iL )
                     {
-                      pixelL = integMaxNumberPixelsAlongL - pixelL + 1;
+                      pixelL = integMaxNumberPixelsAlongL - pixelL - 1;
                     }
-                  pixelW = (long int)(j) - (long int)(iW) + integMaxNumberPixelsAlongW / 2 + 1;
+                  pixelW = (long int)(j) - (long int)(iW) + integMaxNumberPixelsAlongW / 2;
                   if ( segmentW_reduced   &&  j != iW )
                     {
-                      pixelW = integMaxNumberPixelsAlongW - pixelW + 1;
+                      pixelW = integMaxNumberPixelsAlongW - pixelW - 1;
                     }
 
                   unsigned long long int integSegID = integSegmentID(segmentL, segmentW, segmentH, pixelL, pixelW);
@@ -364,7 +393,7 @@ void TDSPixelsChargeMap::print(string filename)
 
 double TDSPixelsChargeMap::getPixelCharge(unsigned long int indexAlongL, unsigned long int indexAlongW)
 {
-  unsigned long long int pixID;
+  type_PixelID pixID;
   pixID = tenTo10*indexAlongL + indexAlongW ;
   if (pixelsChargeMap.find(pixID) == pixelsChargeMap.end() )
     {
@@ -375,6 +404,166 @@ double TDSPixelsChargeMap::getPixelCharge(unsigned long int indexAlongL, unsigne
       return pixelsChargeMap[pixID];
     }
 }
+
+
+double TDSPixelsChargeMap::getPixelCharge(type_PixelID pixID)
+{
+  if (pixelsChargeMap.find(pixID) == pixelsChargeMap.end() )
+    {
+      cout << "Error: pixID not found in the map!" << endl;
+      exit(1);
+    }
+  else
+    {
+      return pixelsChargeMap[pixID];
+    }
+}
+
+
+unsigned long int TDSPixelsChargeMap::getPixelIndexAlongL(type_PixelID pixID)
+{
+  if (pixelsChargeMap.find(pixID) == pixelsChargeMap.end() )
+    {
+      cout << "Error: pixID not found in the map!" << endl;
+      exit(1);
+    }
+  else
+    {
+      return pixID/tenTo10;
+    }
+}  
+
+
+unsigned long int TDSPixelsChargeMap::getPixelIndexAlongW(type_PixelID pixID)
+{
+  if (pixelsChargeMap.find(pixID) == pixelsChargeMap.end() )
+    {
+      cout << "Error: pixID not found in the map!" << endl;
+      exit(1);
+    }
+  else
+    {
+      return pixID%tenTo10;
+    }
+}  
+
+
+double TDSPixelsChargeMap::getPixelCoordL(unsigned long int indexAlongL)
+{
+  if ( indexAlongL < 0 || indexAlongL >= numberPixelsAlongL )
+    {
+      cout << "Error: Pixel index outside the allowed range!" << endl;
+      exit(1);
+    }
+  else
+    {
+      return ((double)(indexAlongL)+0.5)*pixelLength + firstPixelCornerCoordL;
+    }
+}  
+
+
+double TDSPixelsChargeMap::getPixelCoordL(type_PixelID pixID)
+{
+  if (pixelsChargeMap.find(pixID) == pixelsChargeMap.end() )
+    {
+      cout << "Error: pixID not found in the map!" << endl;
+      exit(1);
+    }
+  else
+    {
+      return ((double)(pixID/tenTo10)+0.5)*pixelLength + firstPixelCornerCoordL;
+    }
+}  
+
+
+double TDSPixelsChargeMap::getPixelCoordW(unsigned long int indexAlongW)
+{
+  if ( indexAlongW < 0 || indexAlongW >= numberPixelsAlongW )
+    {
+      cout << "Error: Pixel index outside the allowed range!" << endl;
+      exit(1);
+    }
+  else
+    {
+      return ((double)(indexAlongW)+0.5)*pixelWidth + firstPixelCornerCoordW;
+    }
+}  
+
+
+double TDSPixelsChargeMap::getPixelCoordW(type_PixelID pixID)
+{
+  if (pixelsChargeMap.find(pixID) == pixelsChargeMap.end() )
+    {
+      cout << "Error: pixID not found in the map!" << endl;
+      exit(1);
+    }
+  else
+    {
+      return ((double)(pixID%tenTo10)+0.5)*pixelWidth + firstPixelCornerCoordW;
+    }
+}  
+
+
+type_PixelID TDSPixelsChargeMap::getPixelID_maxDeposit()
+{
+  type_PixelsChargeMap::iterator i_maxDep;
+
+  i_maxDep = max_element(pixelsChargeMap.begin(), pixelsChargeMap.end(), TDSPixelsChargeMap::smallerDeposit);
+
+  return i_maxDep != pixelsChargeMap.end() ? i_maxDep->first : -1000;
+}
+
+
+type_PixelID TDSPixelsChargeMap::getPixelID_maxCharge()
+{
+  type_PixelsChargeMap::iterator i_maxCharge;
+
+  i_maxCharge = max_element(pixelsChargeMap.begin(), pixelsChargeMap.end(), TDSPixelsChargeMap::smallerCharge);
+
+  return i_maxCharge != pixelsChargeMap.end() ? i_maxCharge->first : -1000;
+}
+
+
+type_PixelID TDSPixelsChargeMap::getPixelID_minCharge()
+{
+  type_PixelsChargeMap::iterator i_minCharge;
+
+  i_minCharge = min_element(pixelsChargeMap.begin(), pixelsChargeMap.end(), TDSPixelsChargeMap::smallerCharge);
+
+  return i_minCharge != pixelsChargeMap.end() ? i_minCharge->first : -1000;
+}
+
+
+void TDSPixelsChargeMap::erasePixel(type_PixelID pixID)
+{
+  pixelsChargeMap.erase(pixID);
+}
+
+
+void TDSPixelsChargeMap::erasePixel(unsigned long int indexAlongL, unsigned long int indexAlongW)
+{
+  type_PixelID pixID = tenTo10*indexAlongL + indexAlongW;
+  erasePixel(pixID);
+
+}
+
+
+std::vector<type_PixelID> TDSPixelsChargeMap::getVectorOfPixelsIDs()
+{
+  type_PixelsChargeMap::iterator i;
+
+  vector<type_PixelID> vectorOfPixelsIDs;
+
+  // Speed-up vector filling
+  vectorOfPixelsIDs.reserve(pixelsChargeMap.size());
+
+  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
+    {
+      vectorOfPixelsIDs.push_back(i->first);
+    }
+  return vectorOfPixelsIDs;
+}
+
 
 
 // Get total charge collected in the whole map
@@ -390,6 +579,7 @@ double TDSPixelsChargeMap::getTotalCharge()
     }
   return totalCharge;
 }
+
 
 // Scale charge deposited in map
 double TDSPixelsChargeMap::scaleCharge(double scaleFactor)
@@ -414,28 +604,28 @@ double TDSPixelsChargeMap::scaleCharge(double scaleFactor)
 
   type_PixelsChargeMap::iterator i = pixelsChargeMap.begin();
 
-  while( i != pixelsChargeMap.end())
+  while( i != pixelsChargeMap.end() )
      {
      double charge =  abs(i->second);
      double varCharge;
      if (charge > 1000.)
        { // assume Gaussian
-       double sigma = sqrt(charge);
-       varCharge = double(CLHEP::RandGauss::shoot(charge,sigma));
+	 double sigma = std::sqrt(charge);
+	 varCharge = double(CLHEP::RandGauss::shoot(charge,sigma));
        }
      else
        { // assume Poisson
-       varCharge = double(CLHEP::RandPoisson::shoot(charge));
+	 varCharge = double(CLHEP::RandPoisson::shoot(charge));
        }
 
-     if( i->second < 0.)varCharge = -varCharge;
+     if ( i->second < 0.) varCharge = -varCharge;
 
       if (varCharge == 0. && doCleaning)
         pixelsChargeMap.erase(i++);
       else
         {
-        i->second = varCharge;
-        i++;
+	  i->second = varCharge;
+	  i++;
         }
     }
 
@@ -444,42 +634,46 @@ double TDSPixelsChargeMap::scaleCharge(double scaleFactor)
 
   // Convert deposited charge to expected charge output
 
-  void TDSPixelsChargeMap::applyGain(double gain, double gainVariation, double noise, double offset)
+void TDSPixelsChargeMap::applyGain(double gain, double gainVariation, double noise, double offset)
 {
   type_PixelsChargeMap::iterator i;
 
   for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
     {
-    double charge =  i->second;
-
-    double varGain = double(CLHEP::RandGauss::shoot(gain,gainVariation));
-
-    double varNoise = double(CLHEP::RandGauss::shoot(offset,noise));
-
-    i->second = varGain*charge + varNoise;
+      double charge =  i->second;
+      
+      double varGain = double(CLHEP::RandGauss::shoot(gain,gainVariation));
+      
+      double varNoise = double(CLHEP::RandGauss::shoot(offset,noise));
+      
+      i->second = varGain*charge + varNoise;
     }
 
   return;
 }
 
 
-  // Apply threshold cut to all deposits in the map
+// Apply threshold cut to all deposits in the map
 
-  void TDSPixelsChargeMap::applyThresholdCut(double  adcThreshold)
+void TDSPixelsChargeMap::applyThresholdCut(double threshold)
 {
   // As pixels will be removed we can not do simple for loop
 
   type_PixelsChargeMap::iterator i = pixelsChargeMap.begin();
 
-  while( i != pixelsChargeMap.end())
+  while( i != pixelsChargeMap.end() )
     {
     double charge =  i->second;
 
-    if ( (adcThreshold > 0 && charge < adcThreshold) ||
-         (adcThreshold < 0 && charge > adcThreshold) )
-      pixelsChargeMap.erase(i++);
+    if ( (threshold > 0 && charge < threshold) ||
+         (threshold < 0 && charge > threshold) )
+      {
+	pixelsChargeMap.erase(i++);
+      }
     else
-      i++;
+      {
+	i++;
+      }
     }
 
   return;
@@ -494,88 +688,129 @@ vector<TDSPixel> TDSPixelsChargeMap::getVectorOfPixels()
   TDSPixel thePixel;
   vector<TDSPixel> vectorOfPixels;
 
+  // Speed-up vector filling
+  vectorOfPixels.reserve(pixelsChargeMap.size());
+
   for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
     {
       thePixel.indexAlongL = i->first/tenTo10;
       thePixel.indexAlongW = i->first%tenTo10;
-      thePixel.coordL = ((double)(thePixel.indexAlongL)-0.5)*pixelLength + firstPixelCoordL;
-      thePixel.coordW = ((double)(thePixel.indexAlongW)-0.5)*pixelWidth  + firstPixelCoordW;
+      thePixel.coordL = ((double)(thePixel.indexAlongL)+0.5)*pixelLength + firstPixelCornerCoordL;
+      thePixel.coordW = ((double)(thePixel.indexAlongW)+0.5)*pixelWidth  + firstPixelCornerCoordW;
       thePixel.charge = i->second;
       vectorOfPixels.push_back(thePixel);
     }
+
+  // Sort pixels in descending order.
+  // Use for example reverse(v.begin(), v.end()) to have ascending ordering.
+  sort(vectorOfPixels.begin(), vectorOfPixels.end(), TDSPixel::greaterCharge);
+  
   return vectorOfPixels;
 }
 
-// Get rectangular precluster (for clustering cheater)
-// maxNumberOfPixels is the maximal number of pixels with deposit larger than ThresholdCharge.
-// ThresholdCharge is only for maxNumberOfPixels cut. In precluster can be included pixels with smaller deposits.
-TDSPrecluster TDSPixelsChargeMap::getPrecluster(unsigned int rectLength, unsigned int rectWidth, unsigned int maxNumberOfPixels, double ThresholdCharge)
+
+
+// Get rectangular precluster
+TDSPrecluster TDSPixelsChargeMap::getPrecluster(unsigned long int seedIndexAlongL, unsigned long int seedIndexAlongW, unsigned int rectLength, unsigned int rectWidth, bool removePixels)
 {
-  type_PixelsChargeMap::iterator i, icore;
-
-  unsigned int n=0;
-
-  // First pixel
-  icore = pixelsChargeMap.begin();
-  double greatestDeposit = abs(icore->second);
-
-  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
+  // Checks
+  if (rectLength < 1)
     {
-      if (abs(i->second) > abs(ThresholdCharge))
-        {
-          n++;
-
-          if (abs(i->second) > abs(greatestDeposit))
-            {
-              greatestDeposit = i->second;
-              icore = i;
-            }
-        }
+      cout << "Error: rectLength < 1" << endl;
+      exit(1);
+    }
+  if (rectWidth < 1)
+    {
+      cout << "Error: rectWidth < 1" << endl;
+      exit(1);
+    }
+  if ( seedIndexAlongL < 0 || seedIndexAlongL >= numberPixelsAlongL )
+    {
+      cout << "Error: Seed-pixel-index outside the allowed range!" << endl;
+      exit(1);
+    }
+  if ( seedIndexAlongW < 0 || seedIndexAlongW >= numberPixelsAlongW )
+    {
+      cout << "Error: Seed-pixel-index outside the allowed range!" << endl;
+      exit(1);
     }
 
   TDSPrecluster thePrecluster;
+  
+  // Fill precluster
+  thePrecluster.pixelL = seedIndexAlongL;
+  thePrecluster.pixelW = seedIndexAlongW;
+  thePrecluster.coordL = getPixelCoordL(seedIndexAlongL);
+  thePrecluster.coordW = getPixelCoordW(seedIndexAlongW);
+  thePrecluster.rectLength = rectLength;
+  thePrecluster.rectWidth  = rectWidth;
 
-  if ( n == 0  ||  n > maxNumberOfPixels )
+  unsigned  long int l, lmin, lmax, w, wmin, wmax;
+  long int temp;
+  temp = thePrecluster.pixelL-rectLength/2;
+  temp < 0 ? lmin = 0 : lmin = temp;
+  temp = thePrecluster.pixelL+rectLength/2;
+  temp >= (long int)numberPixelsAlongL ? lmax = numberPixelsAlongL - 1 : lmax = temp;
+  temp = thePrecluster.pixelW-rectWidth/2;
+  temp < 0 ? wmin = 0 : wmin = temp;
+  temp = thePrecluster.pixelW+rectWidth/2;
+  temp >= (long int)numberPixelsAlongW ? wmax = numberPixelsAlongL - 1 : wmax = temp;
+
+  thePrecluster.rectLmin = lmin;
+  thePrecluster.rectLmax = lmax;
+  thePrecluster.rectWmin = wmin;
+  thePrecluster.rectWmax = wmax;
+
+  // Speed-up vector filling
+  thePrecluster.vectorOfPixels.reserve((lmax-lmin+1)*(wmax-wmin+1));
+
+  // For center of charge calculations
+  double tempL = 0., tempW = 0.;
+  double preclusterCharge = 0., tempCharge;
+      
+  for (l=lmin; l<=lmax; l++)
     {
-      // Empty precluster
-      return thePrecluster;
-    }
-  else
+      for (w=wmin; w<=wmax; w++)
+	{
+	  if ( isPixelStored(l,w) )
+	    {
+	      tempCharge = getPixelCharge(l,w);
+	      preclusterCharge += tempCharge;
+	      tempL += tempCharge * getPixelCoordL(l);
+	      tempW += tempCharge * getPixelCoordW(w);
+	      
+	      // Fill vector of pixels
+	      thePrecluster.vectorOfPixels.push_back( TDSPixel( l, w, getPixelCoordL(l), getPixelCoordW(w), getPixelCharge(l,w) ) );
+
+	      if ( removePixels ) erasePixel(l,w);
+	      
+	    }
+	} // for w
+    } // for l
+
+  if ( thePrecluster.vectorOfPixels.size() != 0 )
     {
-      // Fill precluster
       thePrecluster.empty = false;
-      thePrecluster.pixelL = (icore->first)/tenTo10;
-      thePrecluster.pixelW = (icore->first)%tenTo10;
-      thePrecluster.coordL = ((double)(thePrecluster.pixelL)-0.5)*pixelLength + firstPixelCoordL;
-      thePrecluster.coordW = ((double)(thePrecluster.pixelW)-0.5)*pixelWidth  + firstPixelCoordW;
-      thePrecluster.rectLength = rectLength;
-      thePrecluster.rectWidth  = rectWidth;
-
-      unsigned  long int l, lmin, lmax, w, wmin, wmax;
-      long int temp;
-      temp = thePrecluster.pixelL-rectLength/2;
-      temp < 1 ? lmin = 1 : lmin = temp;
-      temp = thePrecluster.pixelL+rectLength/2;
-      temp > (long int)numberPixelsAlongL ? lmax = numberPixelsAlongL : lmax = temp;
-      temp = thePrecluster.pixelW-rectWidth/2;
-      temp < 1 ? wmin = 1 : wmin = temp;
-      temp = thePrecluster.pixelW+rectWidth/2;
-      temp > (long int)numberPixelsAlongW ? wmax = numberPixelsAlongL : wmax = temp;
-
-      thePrecluster.rectLmin = lmin;
-      thePrecluster.rectLmax = lmax;
-      thePrecluster.rectWmin = wmin;
-      thePrecluster.rectWmax = wmax;
-
-      for (l=lmin; l<=lmax; l++)
-        {
-          for (w=wmin; w<=wmax; w++)
-            {
-              thePrecluster.pixelsCharges.push_back(getPixelCharge(l,w));
-            }
-        }
-
-      return thePrecluster;
+  
+      thePrecluster.coordL_chargeCenter = tempL / preclusterCharge;
+      thePrecluster.coordW_chargeCenter = tempW / preclusterCharge;
+  
+      // Sort pixels in descending order.
+      // Use for example reverse(v.begin(), v.end()) to have ascending ordering.
+      sort(thePrecluster.vectorOfPixels.begin(), thePrecluster.vectorOfPixels.end(), TDSPixel::greaterCharge);
     }
+
+  return thePrecluster;
 }
+
+
+// Get rectangular precluster
+TDSPrecluster TDSPixelsChargeMap::getPrecluster(type_PixelID seedPixelID, unsigned int rectLength, unsigned int rectWidth, bool removePixels)
+{
+  return getPrecluster(getPixelIndexAlongL(seedPixelID), getPixelIndexAlongW(seedPixelID), rectLength, rectWidth, removePixels);
+}
+
+
+#else
+#warning TDSPixelsChargeMap will not be built because CLHEP is not available
 #endif

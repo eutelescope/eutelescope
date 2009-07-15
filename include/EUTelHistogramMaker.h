@@ -84,7 +84,7 @@ namespace eutelescope {
    *  None
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHistogramMaker.h,v 1.7 2008-08-23 12:30:51 bulgheroni Exp $
+   *  @version $Id: EUTelHistogramMaker.h,v 1.8 2009-07-15 17:21:28 bulgheroni Exp $
    *
    */
 
@@ -154,6 +154,16 @@ namespace eutelescope {
      */
     void bookHistos();
 
+    //! Initialize the geometry
+    /*! Get the geometry information, detector size and sensor ID from
+     *  the noise collection. Since version v00-00-09, the user must
+     *  provide valid noise and status collections. In case the real
+     *  pedestal is missing, the user can generate a fake one by using
+     *  the EUTelAutoPedestalNoiseProcessor.
+     *
+     *  @param event An LCIO event.
+     */
+    void initializeGeometry( LCEvent * event );
 
     //! Called after data processing.
     /*! This method is called when the loop on events is finished. It
@@ -215,32 +225,43 @@ namespace eutelescope {
      */
     int _noOfDetector;
 
+    //! The ancillary map
+    /*! This is a map relating the sensorID and the position of such a
+     *  sensorID in the noise / status collection.
+     */
+    std::map< int, int > _ancillaryMap;
+
+    //! SensorID vector
+    /*! This is a vector of sensorID
+     */
+    std::vector< int > _sensorIDVec;
+
+    //! Geometry ready flag
+    bool _isGeometryReady;
+
     //! The first pixel on the x side
     /*! One value for each detector.
      */
-    std::vector<int > _minX;
+    std::map< int, int > _minX;
 
     //! The first pixel on the y side
     /*! One value for each detector.
      */
-    std::vector<int > _minY;
+    std::map< int, int > _minY;
 
     //! The last pixel on the x side
     /*! One value for each detector.
      */
-    std::vector<int > _maxX;
+    std::map< int, int > _maxX;
 
     //! The last pixel on the y side
     /*! One value for each detector.
      */
-    std::vector<int > _maxY;
+    std::map< int, int > _maxY;
 
     //! Switch to turn on and off the noise histo filling
     /*! To fill noise and SNR related histograms, the presence of the
      *  noise and the status collections has to be verified first.
-     *
-     *  This switch, true by default, will be turned off if the noise
-     *  and status collections are not found.
      */
     bool _noiseHistoSwitch;
 

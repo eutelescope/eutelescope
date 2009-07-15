@@ -57,6 +57,7 @@ namespace eutelescope {
    *        to the distances between planes
    *    \li particle energy losses in telescope layers can be neglected
    *
+   *
    *  \par Track finding algorithm
    *  \li Read measured track points from input \c TrackerHit collection
    *      and copy to local tables
@@ -266,7 +267,7 @@ namespace eutelescope {
    *  \li Interface to LCCD (alignment)
    *
    * \author A.F.Zarnecki, University of Warsaw, zarnecki@fuw.edu.pl
-   * @version $Id: EUTelTestFitter.h,v 1.18 2009-04-20 22:01:25 bulgheroni Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.19 2009-07-15 17:21:28 bulgheroni Exp $
    *
    */
   class EUTelTestFitter : public marlin::Processor {

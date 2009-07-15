@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.11 2008-11-27 16:20:13 zarnecki Exp $
+// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.12 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -49,6 +49,8 @@
 #include <cstdlib>
 #include <limits>
 #include <algorithm>
+#include <memory>
+
 
 using namespace std;
 using namespace lcio;
@@ -129,6 +131,9 @@ void EUTelApplyAlignmentProcessor::init () {
 }
 
 void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * rdr) {
+
+  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) ) ;
+  runHeader->addProcessor( type() );
 
   // increment the run counter
   ++_iRun;

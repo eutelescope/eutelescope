@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.10 2008-09-04 11:02:56 bulgheroni Exp $
+// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.11 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -106,7 +106,7 @@ void EUTelUpdatePedestalNoiseProcessor::init () {
   }
 
   if ( _updateFrequency <= 0 ) {
-    message<WARNING> ( "The update frequency has to be greater than 0. Set it to 1.");
+    streamlog_out( WARNING2 ) <<  "The update frequency has to be greater than 0. Set it to 1." << endl;
     _updateFrequency = 1;
   }
 
@@ -121,7 +121,7 @@ void EUTelUpdatePedestalNoiseProcessor::init () {
 #ifdef MARLINDEBUG
   vector<int >::iterator iter = _monitoredPixel.begin();
   while ( iter != _monitoredPixel.end() ) {
-    message<DEBUG> ( log() << "Monitoring pixel " << (*iter) );
+    streamlog_out( DEBUG )  << "Monitoring pixel " << (*iter) endl;
     ++iter;
   }
 #endif
@@ -146,7 +146,7 @@ void EUTelUpdatePedestalNoiseProcessor::processEvent (LCEvent * event) {
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
   if ( evt->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
+    streamlog_out( DEBUG ) <<  "EORE found: nothing else to do." << endl;
     return;
   }
 
@@ -197,7 +197,7 @@ void EUTelUpdatePedestalNoiseProcessor::processEvent (LCEvent * event) {
       }
     }
   } catch ( DataNotAvailableException& e) {
-    message<WARNING> ( log() << "Collection not available in this event" );
+    streamlog_out( WARNING2 )  << "Collection not available in this event" << endl;
   }
 
 
@@ -207,7 +207,7 @@ void EUTelUpdatePedestalNoiseProcessor::processEvent (LCEvent * event) {
     if ( _updateAlgo == EUTELESCOPE::FIXEDWEIGHT )
       fixedWeightUpdate(evt);
 
-    message<MESSAGE> ( "Updating pedestal and noise ... ok" );
+    streamlog_out( MESSAGE ) << "Updating pedestal and noise ... ok" << endl;
 
   }
   ++_iEvt;
@@ -285,7 +285,7 @@ void EUTelUpdatePedestalNoiseProcessor::fixedWeightUpdate(LCEvent * evt) {
       }
     }
   }  catch ( DataNotAvailableException& e) {
-    message<WARNING> ( log() << "Collection not available in this event" );
+    streamlog_out( WARNING2 )  << "Collection not available in this event"  << endl;
   }
 
 }
@@ -295,7 +295,7 @@ void EUTelUpdatePedestalNoiseProcessor::fixedWeightUpdate(LCEvent * evt) {
 void EUTelUpdatePedestalNoiseProcessor::end() {
 
   if ( _monitoredPixelPedestal.size() == 0 ) {
-    message<ERROR> ( "The update procedure failed." );
+    streamlog_out( ERROR ) <<  "The update procedure failed." << endl;
   } else {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -303,32 +303,22 @@ void EUTelUpdatePedestalNoiseProcessor::end() {
     unsigned iPixel = 0;
 
     while ( index < _monitoredPixel.size() ) {
-      int  iDetector = _monitoredPixel[index++];
+      int  sensorID  = _monitoredPixel[index++];
       int  xCoord    = _monitoredPixel[index++];
       int  yCoord    = _monitoredPixel[index++];
 
-      string name;
-      string title;
-
-      {
-        stringstream namestream;
-        namestream << "PedestalMonitor-" << iDetector << "-" << xCoord << "-" << yCoord;
-        name = namestream.str();
-
-        stringstream titlestream;
-        titlestream << "Pedestal monitoring on detector " << iDetector << "(" << xCoord << "," << yCoord << ")";
-        title = titlestream.str();
-      }
+      string name  = "PedestalMonitor_" + to_string( sensorID ) + "_" + to_string( xCoord ) +  "_" + to_string( yCoord );
+      string title = "Pedestal monitoring on detector " + to_string( sensorID ) +  "(" + to_string( xCoord ) + "," + to_string( yCoord ) + ")";
 
       //    AIDA::IDataPointSet * pedestalDPS = AIDAProcessor::dataPointSetFactory(this)->create(name,title,1);
 
       {
         stringstream namestream;
-        namestream << "NoiseMonitor-" << iDetector << "-" << xCoord << "-" << yCoord;
+        namestream << "NoiseMonitor-" << sensorID << "-" << xCoord << "-" << yCoord;
         name = namestream.str();
 
         stringstream titlestream;
-        titlestream << "Noise monitoring on detector " << iDetector << "(" << xCoord << "," << yCoord << ")";
+        titlestream << "Noise monitoring on detector " << sensorID << "(" << xCoord << "," << yCoord << ")";
         title = titlestream.str();
       }
 

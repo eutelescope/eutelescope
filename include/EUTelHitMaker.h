@@ -24,6 +24,7 @@
 // lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+#include <EVENT/LCCollection.h>
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -35,6 +36,7 @@
 #include <string>
 #include <vector>
 #include <map>
+#include <set>
 
 namespace eutelescope {
 
@@ -221,7 +223,7 @@ namespace eutelescope {
    *  processing. 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHitMaker.h,v 1.11 2008-10-01 10:21:47 bulgheroni Exp $
+   *  @version $Id: EUTelHitMaker.h,v 1.12 2009-07-15 17:21:28 bulgheroni Exp $
    *
    */
 
@@ -294,8 +296,15 @@ namespace eutelescope {
      *  output hits and also to understand if the frame of reference
      *  conversion has been properly done. Of course this method is
      *  effectively doing something only in the case MARLIN_USE_AIDA.
+     *
+     *  @since v00-00-09 the histogram booking is done on-the-fly,
+     *  in the meaning the each time a new sensorID is encoutered 
+     *  all the corresponding histograms are booked.
      */
-    void bookHistos();
+    void bookHistos(int sensorID, bool isDUT, lcio::LCCollection * xEtaCol, lcio::LCCollection * yEtaCol);
+
+    //! Book the 3D hitogram
+    void book3DHisto();
 
 
   protected:
@@ -383,6 +392,19 @@ namespace eutelescope {
      *  layerindex.
      */
     std::map< int, int > _conversionIdMap;
+
+    //! Eta function map
+    std::map< int, int > _etaMap;
+
+    //! Eta function version
+    int _etaVersion;
+
+    //! Set of booked histogram
+    /*  This helper set is used 
+     *  by the on-the-fly histogram booking 
+     *  procedure.
+     */
+    std::set< int > _alreadyBookedSensorID;
 
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
@@ -484,6 +506,13 @@ namespace eutelescope {
      *
      */
     bool _histogramSwitch;
+
+    //! The ordered sensor ID vector
+    /*! This vector contains the sensorID of all the detectors in the
+     *  input collection in the same order as they appear. This vector
+     *  has to be used to number the histogram booking and filling.
+     */
+    std::vector< int > _orderedSensorIDVec;
 
 
   };

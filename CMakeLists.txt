@@ -3,7 +3,7 @@
 #
 # Original author: J. Engels, DESY
 # Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# Version $Id: CMakeLists.txt,v 1.21 2009-04-21 20:49:25 bulgheroni Exp $
+# Version $Id: CMakeLists.txt,v 1.22 2009-07-15 17:21:28 bulgheroni Exp $
 ########################################################
 
 
@@ -29,7 +29,7 @@ PROJECT( Eutelescope )
 # project version
 SET( ${PROJECT_NAME}_MAJOR_VERSION 0 )
 SET( ${PROJECT_NAME}_MINOR_VERSION 0 )
-SET( ${PROJECT_NAME}_PATCH_LEVEL 8 )
+SET( ${PROJECT_NAME}_PATCH_LEVEL 9 )
 
 
 ### SETTINGS #################################################################
@@ -42,7 +42,7 @@ OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" ON )
 # project dependencies
 # e.g. SET( ${PROJECT_NAME}_DEPENDS "Marlin MarlinUtil LCIO GEAR CLHEP GSL RAIDA ROOT" )
 #SET( ${PROJECT_NAME}_DEPENDS "Marlin MarlinUtil LCIO GSL CLHEP" )
-SET( ${PROJECT_NAME}_DEPENDS "Marlin LCIO" )
+SET( ${PROJECT_NAME}_DEPENDS "Marlin LCIO GEAR" )
 
 IF( APPLE )
  SET( ${PROJECT_NAME}_DEPENDS "${${PROJECT_NAME}_DEPENDS} streamlog" )
@@ -151,7 +151,7 @@ ADD_DEFINITIONS( "-Wno-long-long" )
 #ENDIF()
 
 # get list of all source files
-AUX_SOURCE_DIRECTORY( src library_sources )
+AUX_SOURCE_DIRECTORY( src/ library_sources )
 
 
 ### DOCUMENTATION ############################################################
@@ -267,11 +267,20 @@ INSTALL( TARGETS lib_${PROJECT_NAME} DESTINATION lib PERMISSIONS
         WORLD_READ WORLD_EXECUTE )
 
 # EXECUTABLE
-ADD_EXECUTABLE( pede2lcio src/pede2lcio.cc )
-TARGET_LINK_LIBRARIES( pede2lcio lib_${PROJECT_NAME} )
+ADD_EXECUTABLE( pede2lcio src/exec/pede2lcio.cxx )
+TARGET_LINK_LIBRARIES( pede2lcio lib_${PROJECT_NAME}  )
+
+ADD_EXECUTABLE( pedestalmerge src/exec/pedestalmerge.cxx )
+TARGET_LINK_LIBRARIES( pedestalmerge lib_${PROJECT_NAME}  )
+
 
 # install executable
 INSTALL( TARGETS pede2lcio DESTINATION bin PERMISSIONS 
+  OWNER_READ OWNER_WRITE OWNER_EXECUTE     
+  GROUP_READ GROUP_EXECUTE
+  WORLD_READ WORLD_EXECUTE )
+
+INSTALL( TARGETS pedestalmerge DESTINATION bin PERMISSIONS 
   OWNER_READ OWNER_WRITE OWNER_EXECUTE     
   GROUP_READ GROUP_EXECUTE
   WORLD_READ WORLD_EXECUTE )

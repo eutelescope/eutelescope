@@ -10,13 +10,13 @@
 #ifndef EUTELRAWDATASPARSIFIER_H
 #define EUTELRAWDATASPARSIFIER_H 1
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTELESCOPE.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-// lcio includes <.h> 
+// lcio includes <.h>
 
 // system includes <>
 #include <vector>
@@ -43,29 +43,29 @@ namespace eutelescope {
    *  @see EUTelBaseSparsePixel
    *  @see SparsePixelType
    *
-   *  
+   *
    *  the calibration (mainly pedestal value) as previously saved into
    *  a condition file or database.
-   * 
-   *  The main things done by this processors are the following: 
+   *
+   *  The main things done by this processors are the following:
    *
    *
    *  <h4>Input collections</h4>
    *  <br><b>RawDataCollection</b>. This is a collection of
    *  TrackerRawData containing all pixel signals as they are readout
    *  by the DAQ system. This collection is coming from the input
-   *  slcio file.  
-   *  
+   *  slcio file.
+   *
    *  <br><b>PedestalCollection</b>. This is a collection of
    *  TrackerData containing all pixel pedestal values as they are
    *  calculated by EUTelPedestalNoiseProcessor. This collection is
    *  coming in from the condition file.
-   *  
+   *
    *  <br><b>NoiseCollection</b>. This is a collection of TrackerData
    *  contaning all pixel noise values as they are calculated by
    *  EUTelPedestalNoiseProcessor. This collection is coming from
    *  the condition file and is used only if the user switched on the
-   *  common mode calculation.  
+   *  common mode calculation.
    *
    *  <br><b>StatusCollection</b>. This is a collection of
    *  TrackerRawData containing the status of each pixels. This
@@ -73,7 +73,7 @@ namespace eutelescope {
    *  is used only if common mode flag is active.
    *
    *  <h4>Output</h4>
-   *  
+   *
    *  <br><b>SparseDataCollection</b>. This is a collection of TrackerData
    *  containing sparsified pixel of the type the user selected with
    *  only pixels having signal in excess the sigma value multiplied
@@ -82,7 +82,7 @@ namespace eutelescope {
    *  @param RawDataCollectionName Name of the input raw data collection
    *
    *  @param PedestalCollectionName Name of the input (condition)
-   *  pedestal collection 
+   *  pedestal collection
    *
    *  @param NoiseCollectionName Name of the input (condition) noise
    *  collection
@@ -97,7 +97,7 @@ namespace eutelescope {
    *  @param SigmaCutVector This is a vector of float with one
    *  component per plane. Each floating number is used as a
    *  multiplicative factor in the definition of the selection
-   *  threshold according to 
+   *  threshold according to
    *
    *  @code
    *  Threshold[iPixel][iPlane] = Sigma[iPlane] * Noise[iPixel][iPlane]
@@ -106,41 +106,56 @@ namespace eutelescope {
    *  @param SparseDataCollectionName The name of the output
    *  zero suppressed data collection
    *
+   *  @warning This processor assumes that the input rawData, the
+   *  pedestal, the noise and the status collection are aligned
+   *  according to the sensorID. In other words, the i-th element of
+   *  all the input collections has the same sensorID. If, this is not
+   *  the case, <b>DO NOT USE</b> this processor and ask to the
+   *  developers for a better implementation.
+   *
+   *  @todo Whenever we will have some few minutes to spare, the
+   *  reason for the above warning message can be easily removed
+   *  preparing a map for each ancillary collection (pede, noise,
+   *  status) linking the position of each element and its sensorID.
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelRawDataSparsifier.h,v 1.1 2007-08-19 15:38:22 bulgheroni Exp $
+   *  @version $Id: EUTelRawDataSparsifier.h,v 1.2 2009-07-15 17:21:28 bulgheroni Exp $
    */
 
   class EUTelRawDataSparsifier:public marlin::Processor {
 
   public:
 
-     
+
     //! Returns a new instance of EUTelRawDataSparsifier
     /*! This method returns an new instance of the this processor.  It
      *  is called by Marlin execution framework and it shouldn't be
      *  called/used by the final user.
-     *  
+     *
      *  @return a new EUTelRawDataSparsifier.
      */
     virtual Processor * newProcessor() {
       return new EUTelRawDataSparsifier;
     }
 
-    //! Default constructor 
+    //! Default constructor
     EUTelRawDataSparsifier ();
 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution. It prints
      *  out the processor parameters and reset all needed data
-     *  members. 
+     *  members.
      */
     virtual void init ();
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter
-     *  is incremented. From the run header the number of detector is
-     *  retrieved.
-     * 
+     *  is incremented.
+     *
+     *  @since v00-00-09 the total number of detector is no more taken
+     *  from the run header but it is guessed from the number of
+     *  elements in the input collection.
+     *
      *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
@@ -156,7 +171,7 @@ namespace eutelescope {
      *
      *  @throw IncompatibleDataSetException in the case the two
      *  collections are found to be incompatible
-     * 
+     *
      *  @param evt the current LCEvent event as passed by the
      *  ProcessMgr
      */
@@ -168,7 +183,7 @@ namespace eutelescope {
      *  soon as the processEvent is over. It can be used to fill check
      *  plots. For the time being there is nothing to check and do in
      *  this slot.
-     * 
+     *
      *  @param evt The LCEvent event as passed by the ProcessMgr
      */
     virtual void check (LCEvent * evt);
@@ -183,7 +198,7 @@ namespace eutelescope {
   protected:
 
     //! Input collection name.
-    /*! For the time being we have just one collection that can be used as input 
+    /*! For the time being we have just one collection that can be used as input
      */
     std::string _rawDataCollectionName;
 
@@ -213,7 +228,7 @@ namespace eutelescope {
     //! Sparsified data collection name.
     /*! The name of the output sparsified data collection. Usually
      *  simply "data"
-     */ 
+     */
     std::string _sparsifiedDataCollectionName;
 
     //! Type of sparsified pixel
@@ -245,13 +260,13 @@ namespace eutelescope {
 
     //! Number of detector planes in the run
     /*! This is the total number of detector saved into this input
-     *  file 
+     *  file
      */
-    int _noOfDetector;
+    size_t _noOfDetector;
   };
 
   //! A global instance of the processor
-  EUTelRawDataSparsifier gEUTelRawDataSparsifier;      
+  EUTelRawDataSparsifier gEUTelRawDataSparsifier;
 
 }
 #endif

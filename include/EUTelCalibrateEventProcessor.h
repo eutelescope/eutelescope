@@ -14,6 +14,7 @@
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
+#include "marlin/Exceptions.h"
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -120,7 +121,7 @@ namespace eutelescope {
    *  histogram information file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.11 2008-11-12 12:01:37 furletova Exp $
+   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.12 2009-07-15 17:21:28 bulgheroni Exp $
    *
    *
    */
@@ -196,6 +197,20 @@ namespace eutelescope {
      */
     virtual void end();
 
+    //! Initialize the geometry information
+    /*! This method is called to initialize the geometry information,
+     *  namely the order in which the sensorID are organized into the
+     *  input collection. In this function  the _ancillaryIndexMap
+     *  is filled to get the correct pedestal frame object for the input data.
+     *
+     *  @param event The LCEvent to be used for geometry
+     *  initialization.
+     *
+     *  @throw In case the @event does not contain all the needed
+     *  information, a SkipEventException is thrown and the geometry
+     *  will be initialize with the following event.
+     */
+    void initializeGeometry( LCEvent * event ) throw ( marlin::SkipEventException );
 
   protected:
 
@@ -230,7 +245,7 @@ namespace eutelescope {
     //! Calibrated data collection name.
     /*! The name of the output calibrated data collection. Usually
      *  simply "data"
-     */ 
+     */
     std::string _calibratedDataCollectionName;
 
     //! Current run number.
@@ -258,21 +273,10 @@ namespace eutelescope {
      *  done on a detector base and it is rejecting possible hit
      *  pixels.
      */
-    bool _doCommonMode;
+    int _doCommonMode;
 
-    /* Row wise common mode calculation */ 
+    /* Row wise common mode calculation */
     int _CommonModeRowWise;
-
-    //! Last pixel along X
-    /*! This array of int is used to store the number of the last
-     *  pixel along the X direction
-     */
-    IntVec _maxX;
-    //! Last pixel along Y
-    /*! This array of int is used to store the number of the last
-     *  pixel along the Y direction
-     */
-    IntVec _maxY;
 
     //! Hit rejection threshold
     /*! In the case the user wants to suppress the common mode, we
@@ -296,6 +300,20 @@ namespace eutelescope {
      */
     int _maxNoOfRejectedPixels;
 
+    //! Maximum number of excluded pixels per row
+    /*! This is the maximum allowed number of pixel exceeding the
+     *  common mode cut in a line. Used only when common mode
+     *  algorithm is RowWise.
+     */
+    int _maxNoOfRejectedPixelPerRow;
+
+    //! Maximum number of skipped row
+    /*! This is the maximum allowed number of skipped rows per event
+    //! in the common mode rejection. Used only when common mode
+    //! algorithm is RowWise.
+    */
+    int _maxNoOfSkippedRow;
+
     //! The histogram information file
     /*! This string contain the name of the histogram information
      *  file. This is selected by the user in the steering file.
@@ -305,17 +323,33 @@ namespace eutelescope {
      */
     std::string _histoInfoFileName;
 
-
   private:
-
-    //! Number of detector planes in the run
-    /*! This is the total number of detector saved into this input
-     *  file
+    
+   //! First pixel along X
+    /*! This array of int is used to store the number of the first
+     *  pixel along the X direction
      */
-    int _noOfDetector;
+    IntVec _minX;
 
-    //! Global operational mode of the EUDRB
-    std::string _eudrbGlobalMode;
+    //! Last pixel along X
+    /*! This array of int is used to store the number of the last
+     *  pixel along the X direction
+     */
+    IntVec _maxX;
+
+    //! First pixel along Y
+    /*! This array of int is used to store the number of the first
+     *  pixel along the Y direction
+     */
+    IntVec _minY;
+
+    //! Last pixel along Y
+    /*! This array of int is used to store the number of the last
+     *  pixel along the Y direction
+     */
+    IntVec _maxY;
+
+
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -353,6 +387,20 @@ namespace eutelescope {
      */
     std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
 #endif
+
+    //! Map relating ancillary collection position and sensorID
+    /*! The first element is the sensor ID, while the second is the
+     *  position of such a sensorID in all the ancillary collections
+     *  (noise, pedestal and status).
+     */
+    std::map< int, int > _ancillaryIndexMap;
+
+    //! Geometry ready switch
+    /*! This boolean reveals if the geometry has been properly
+     *  initialized or not.
+     */
+    bool _isGeometryReady;
+
   };
 
   //! A global instance of the processor

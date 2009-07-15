@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelMimoTelReader.cc,v 1.20 2008-09-08 13:20:24 bulgheroni Exp $
+// Version $Id: EUTelMimoTelReader.cc,v 1.21 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -9,6 +9,8 @@
  *   header with author names in all development based on this file.
  *
  */
+
+#ifdef OBSOLETE
 
 #ifdef USE_EUDAQ
 // personal includes
@@ -793,3 +795,4 @@ void EUTelMimoTelReader::end () {
 
 #endif
 
+#endif // OBSOLETE

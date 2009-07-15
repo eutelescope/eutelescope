@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.34 2008-11-27 16:20:13 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.35 2009-07-15 17:21:28 bulgheroni Exp $
 // Date 2007.06.04
 
 /*

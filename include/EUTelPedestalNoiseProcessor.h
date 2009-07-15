@@ -29,6 +29,7 @@
 // system includes <>
 #include <string>
 #include <cmath>
+#include <list>
 
 
 namespace eutelescope {
@@ -62,8 +63,21 @@ namespace eutelescope {
    *  for a detailed description of the available methods.
    *
    *  The user can select the bad pixel masking algorithm, changing
-   *  the value of _badPixelAlgo. @see
-   *  EUTelPedestalNoiseProcessor::_badPixelAlgo
+   *  the value of _badPixelAlgoVec. @see
+   *  EUTelPedestalNoiseProcessor::_badPixelAlgoVec
+   *
+   *  <h4>Firing frequency loop</h4>
+   *  In a pedestal run, one would expect to have pixel with a SNR
+   *  suspiciously high definitely low and explained by standard
+   *  statistical fluctuations. If a pixel or a group of pixels is
+   *  firing too frequently, this can be due to a bad behaving element
+   *  in the sensor matrix that is wilding jumping from one output
+   *  value to another. The user can decide to mask these "hot" pixels
+   *  activating the additional hot pixel killer loop and properly
+   *  setting a maximum firing frequency. Take into account that a
+   *  normal (in the meaning of a Gaussian behaving) pixel is expected
+   *  to have a signal exceeding the <b>3 sigma</b> cut with a
+   *  frequency below 0.15%. @see EUTelHotPixelKiller.
    *
    *  <h4>Improved hit rejection</h4>
    *  Very often during a test beam, pedestal files are taken in a
@@ -86,101 +100,88 @@ namespace eutelescope {
    *  event. This is done only in the otherLoop because a first
    *  estimation of the noise is required.
    *
-   *  <h4>Input collection</h4>
-   *  <b>Raw data</b> A collection of TrackerRawData
    *
-   *  <h4>Output file</h4>
+   *  @since Since version v00-00-09 the geometrical information
+   *  (namely the number of detectors and the min and max along X and
+   *  Y) are retrieved from the input collection and no more from the
+   *  run header. Another new features is the possibility to have
+   *  several input raw data collection. In this way, the pedestal,
+   *  noise and status of both the telescope planes and the DUT can be
+   *  calculated in one go.
+   *  Also the histogram manager support has been added for those
+   *  histograms not bound to the sensor dimension.
+   *
+   *  <h2>Input collections</h2>
+   *  <b>Raw data</b> List of input collections.
+   *
+   *  <h2>Output file</h2>
    *  The output of this processor will be saved into a separate file
    *  and can be reloaded using a condition processor.
    *
+   *  <h2>Collection names</h2>
    *  @param RawDataCollectionName Name of the input data collection
-   *  @param CalculationAlgorithm Name of the calculation algorithm used
-   *  @param NoOfCMIteration Number of common suppression iterations
-   *  @param HitRejectionCut Value of the SNR of a pixel to be considered a hit
-   *  @param MaxNoOfRejectedPixels Maximum allowed number of rejected pixels per event
-   *  @param BadPixelMaskCut Threshold for bad pixel identification
-   *  @param FirstEvent First event to be used for pedestal calculation
-   *  @param LastEvent Last event to be used for pedestal calculation
    *  @param PedestalCollectionName Name of the output pedestal collection
    *  @param NoiseCollectionName Name of the output noise collection
    *  @param StatusCollectionName Name of the output pixel status collection
+   *
+   *  <h2>Pedestal and noise calculation method</h2>
+   *  @param CalculationAlgorithm Name of the calculation algorithm to
+   *  be used. Possible values are: MeanRMS, AIDAProfile
+   *
+   *  <h2>Common mode rejection</h2>
+   *  @param CommonModeAlgorithm Name of the algorithm used for common
+   *  mode suppression; possible values are: FullFrame, RowWise.
+   *  @param NoOfCMIterantion Number of common mode suppression
+   *  iterations.
+   *  @param HitRejectionCut Value in SNR units of pixels to be
+   *  considered hit candidates and not used in the common mode
+   *  calculation.
+   *  @param MaxNoOfRejectedPixel Maximum allowed value of pixels
+   *  exceeding the @a HitRejectionCut; used when FullFrame is
+   *  selected.
+   *  @param MaxNoOfRejectedPixelPerRow Maximum allowed value of
+   *  pixels exceeding the @a HitRejectionCut in a row; used when
+   *  RowWise is selected.
+   *  @param MaxNoOfSkippedRow Maximum allowed value of skipped rows
+   *  to retain the current event; used when RowWise is selected.
+   *
+   *  <h2>Bad / hot / dead pixel masking</h2>
+   *  @param BadPixelMaskingAlgorithm A vector of names of masking
+   *  algorithm; possible values are: NoiseDistribution,
+   *  AbsoluteNoiseValue, DeadPixel, AbsolutePedeValue.
+   *  @param PixelMaskUpperNoiseCut Upper threshold for bad pixel
+   *  identification using NoiseDistribution.
+   *  @param PixelMaskUpperAbsNoiseCut Upper threshold for bad pixel
+   *  identification using AbsoluteNoiseValue.
+   *  @param PixelMaskLowerAbsNoiseCut Lower threshold for bad pixel
+   *  identification using DeadPixel.
+   *  @param PixelMaskUpperAbsPedeCut Upper threshold for bad pixel
+   *  identification using AbsolutePedeValue.
+   *  @param PixelMaskLowerAbsPedeCut Lower threshold for bad pixel
+   *  identification using AbsolutePedeValue.
+   *  @param PixelMaskMaxFiringFrequency Maximum allowed firing
+   *  frequency (%), being the 0.1% the Gaussian limit; used only
+   *  during the additional masking loop.
+   *  @param AdditionalMaskingLoop Switch to activate / deactivate an
+   *  additional masking loop based on firing frequency at the end.
+   *  @param HitRejectionPreLoop Switch to activate / deactivate an
+   *  additional loop to better identify hit candidate; to be
+   *  performed when calculating pedestal from beam runs.
+   *
+   *  <h2>Other controls</h2>
+   *  @param FirstEvent First event to be used for pedestal calculation
+   *  @param LastEvent Last event to be used for pedestal calculation
    *  @param OutputPedeFile Name of the output pedestal file
    *  @param ASCIIOutputSwitch To enable/disable the generation of
    *  ASCII output files
    *
-   *  <h4>Typical steering file for pedestal production</h4> The
-   *  following code can be used as a steering file for pedestal
-   *  production.
-   *
-   *  @code
-   *  <marlin>
-   *   <global>
-   *    <parameter name="LCIOInputFiles"> pedestal-run.slcio  </parameter>
-   *    <parameter name="GearXMLFile" value="gear-telescope.xml"/>
-   *    <parameter name="MaxRecordNumber" value="5001"/>
-   *    <parameter name="SkipNEvents" value="0 "/>
-   *    <parameter name="SupressCheck" value="false"/>
-   *    <parameter name="Verbosity" value="MESSAGE"/>
-   *   </global>
-   *
-   *   <execute>
-   *    <processor name="AIDAHistogrammingInterface"/>
-   *    <processor name="PedestalAndNoiseCalculator"/>
-   *   </execute>
-   *
-   *   <processor name="AIDAHistogrammingInterface" type="AIDAProcessor">
-   *    <!--
-   *      Processor that handles AIDA files. Creates on directory per
-   *      processor. Processors only need to create and fill the
-   *      histograms, clouds and tuples. Needs to be the first
-   *      ActiveProcessor
-   *    -->
-   *    <!-- compression of output file 0: false >0: true (default) -->
-   *    <parameter name="Compress" type="int" value="1"/>
-   *    <!-- filename without extension-->
-   *    <parameter name="FileName" type="string" value="pedestal-histo"/>
-   *    <!-- type of output file xml (default) or root ( only OpenScientist)-->
-   *    <parameter name="FileType" type="string" value="root"/>
-   *   </processor>
-   *
-   *   <processor name="PedestalAndNoiseCalculator" type="EUTelPedestalNoiseProcessor">
-   *    <!--EUTelPedestalNoiseProcessor computes the pedestal and noise values of a pixel detector-->
-   *    <!--Input raw data collection-->
-   *    <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData"> rawdata </parameter>
-   *    <!--Threshold for bad pixel identification-->
-   *    <parameter name="BadPixelMaskCut" type="float" value="3.5"/>
-   *    <!--Select the algorithm for bad pixel masking-->
-   *    <parameter name="BadPixelMaskingAlgorithm" type="string" value="NoiseDistribution"/>
-   *    <!--Select the algorithm for pede/noise calculation-->
-   *    <parameter name="CalculationAlgorithm" type="string" value="MeanRMS"/>
-   *    <!--First event for pedestal calculation-->
-   *    <parameter name="FirstEvent" type="int" value="0"/>
-   *    <!--Threshold for rejection of hit pixel (SNR units)-->
-   *    <parameter name="HitRejectionCut" type="float" value="4"/>
-   *    <!--Last event for pedestal calculation-->
-   *    <parameter name="LastEvent" type="int" value="-1"/>
-   *    <!--Maximum allowed number of rejected pixels per event-->
-   *    <parameter name="MaxNoOfRejectedPixels" type="int" value="1000"/>
-   *    <!--Number of common mode suppression iterations-->
-   *    <parameter name="NoOfCMIteration" type="int" value="1"/>
-   *    <!--Noise collection name-->
-   *    <!--parameter name="NoiseCollectionName" type="string" value="noiseDB"/-->
-   *    <!--The filename (w/o .slcio) to store the pedestal file-->
-   *    <parameter name="OutputPedeFile" type="string" value="pedestal-db"/>
-   *    <!--Pedestal collection name-->
-   *    <!--parameter name="PedestalCollectionName" type="string" value="pedestalDB"/-->
-   *    <!--Status collection name-->
-   *    <!--parameter name="StatusCollectionName" type="string" value="statusDB"/-->
-   *   </processor>
-   *  </marlin>
-   *  @endcode
-   *
-   *  Note that you don't need a LCIOOutputProcessor at the end since
+   *  Note that you don't need a LCIOOutputProcessor or an
+   *  EUTelOutputProcessor at the end since
    *  it is the EUTelPedestalNoiseProcessor itself taking care of
    *  saving the output pedestal file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.21 2008-08-23 12:30:51 bulgheroni Exp $
+   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.22 2009-07-15 17:21:28 bulgheroni Exp $
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
@@ -262,30 +263,54 @@ namespace eutelescope {
      *  of all implemented algorithms:
      *
      *  \li <b>"NoiseDistribution"</b>. As a first thing both the
-     *  <i>mean</i> and the <i>RMS</i> of the distribution are
+     *  <i>mean</i> and the <i>RMS</i> of the noise distribution are
      *  calculated. Then the region in the distribution with pixel
-     *  having a noise exceeding <code>_badPixelMaskCut * RMS +
+     *  having a noise exceeding <code>_pixelMaskUpperNoiseCut * RMS +
      *  mean</code> is considered bad. This algorithm has the
      *  advantage of being pretty robust and system independent since
      *  it does not use any system unit as ADC or ENC, but, at the
      *  same time, as the disadvantage of being difficult to tune. In
      *  fact, while the general user has a natural idea of what could
      *  be the noise of a bad pixel in her/his own system, it is not
-     *  easy and clear which should be the _badPixelMaskCut to be used
+     *  easy and clear which should be the _pixelMaskUpperNoiseCut to be used
      *  to obtain the same result.
      *
      *  \li <b>"AbsoluteNoiseValue"</b>. This second algorithm, even
      *  if it is less general than the "NoiseDistribution" one it
      *  offers to the user a higher degree of sensibility. With this
-     *  algorithm, the user has to provide as a _badPixelMaskCut the
+     *  algorithm, the user has to provide as a _pixelMaskUpperNoiseCut the
      *  maximum acceptable value of noise in ADC units. At the
      *  pedestal calculation level, it is still impossible to provide
      *  any reasonable "calibration" able to provide a conversion
      *  factor from ADC units to equivalent noise charge.
      *
+     *  \li <b>"DeadPixel"</b>. Pixels having a suspiciously low noise
+     *  are very likely to be dead or very little reacting to external
+     *  signals. When using this algorithm, the user can select the
+     *  lower acceptable noise level in absolute unit.
+     *
+     *  \li <b>"PedeDistribution"</b>. This is the equivalent of the
+     *  <b>"NoiseDistrubion"</b> but using the pedestal value as a
+     *  figure of merit.
+     *
+     *  \li <b>"AbsolutePedeValue"</b>. Again this is the equivalent
+     *  of the <b>"AbsoluteNoiseValue"</b> but using the pedestal as a
+     *  figure of merit and using two thresholds: one for the lowest
+     *  and one for the highest acceptable value.
+     *
      *  @todo Ask other teams about their favorite masking algorithm.
      */
     void maskBadPixel();
+
+    //! Set the bad pixel algorithm switches
+    /*! @since v00-00-09 the user can select multiple bad pixel
+     *  algorithm at the same time. The algorithms are chosen in the
+     *  steering file by name and inserted into a vector of
+     *  string. When this method is called, all the components of the
+     *  _badPixelAlgoVec are parsed and the corresponding boolean
+     *  switch is turned on or off respectively.
+     */
+    void setBadPixelAlgoSwitches();
 
     //! Calculation done in the first loop
     /*! This method is called within the
@@ -471,13 +496,21 @@ namespace eutelescope {
     //! Simple rewind
     virtual void simpleRewind();
 
+    //! Initialize the geometry
+    /*! This method is used to get from the current event.
+     *
+     *  @param event The current LCEvent.
+     */
+    virtual void initializeGeometry( LCEvent * event );
+
 
   protected:
 
-    //! Input collection name.
-    /*! For the time being we have just one collection that can be used as input
+    //! Input collection names.
+    /*! A vector containing all the collection names to be used in the
+     *  calculation.
      */
-    std::string _rawDataCollectionName;
+    std::vector< std::string > _rawDataCollectionNameVec;
 
     //! Pedestal collection name.
     /*! We have three different output collections that are going to be
@@ -540,19 +573,107 @@ namespace eutelescope {
     std::string _pedestalAlgo;
 
     //! Bad pixel masking algorithm
-    /*! The selected algorithm for bad pixel masking. @see
+    /*! This is a vector of string declaring which algorithms should
+     *  be used in masking the bad pixels.
+     *  @since v00-00-09 it is possible to have more than one
+     *  algorithm in used.
+     *  The selected algorithm for bad pixel masking. @see
      *  EUTelPedestalNoiseProcessor::maskBadPixel()
      */
-    std::string _badPixelAlgo;
+    std::vector<std::string > _badPixelAlgoVec;
 
-    //! Bad pixel masking cut
-    /*! This value is used to mask bad pixels.
+    //! Common mode calculation algorithm
+    /*! This is a label identifying which algorithm is going to be
+     *  used for the common mode calculation. Available algorithms
+     *  are:
+     *  \li FullFrame: All the pixels in the frame are averaged.
+     *  \li RowWise:   Pixels are averaged line by line.
+     */
+    std::string _commonModeAlgo;
+
+    //! Switch for the NoiseDistribution
+    /*! This switch is true when the user wants to mask bad pixels
+     *  using the noise distribution algorithm.
+     */
+    bool _badPixelNoiseDistributionSwitch;
+
+    //! Switch for the AbsoluteNoiseValue
+    /*! This switch is true when the user wants to mask bad pixels
+     *  using an absolute noise value.
+     */
+    bool _badPixelAbsNoiseSwitch;
+
+    //! Switch for the DeadPixel
+    /*! This switch is true when the user wants to mask dead (very
+     *  little noisy) pixels
+     */
+    bool _badPixelDeadPixelSwitch;
+
+    //! Switch for the AbsolutePedeValue
+    /*! This switch is true when the user wants to mask bad pixels
+     *  using two absolute values for the pedestal.
+     */
+    bool _badPixelAbsPedeSwitch;
+
+    //! Upper noise cut in sigma unit
+    /*! This value is used to mask bad pixels when the
+     *  NoiseDistribution algorithm is selected.
      *
      *  @see EUTelPedestalNoiseProcess::maskBadPixel() for a detailed
-     *  description about the implemented algorithm and the use of
-     *  _badPixelMaskCut in all cases.
+     *  description about the implemented algorithm.
      */
-    float _badPixelMaskCut;
+    float _pixelMaskUpperNoiseCut;
+
+    //! Upper noise cut in absolute value
+    /*! This value is used to mask bad pixels when the
+     *  AbsoluteNoiseValue algorithm is selected.
+     *
+     *  @see EUTelPedestalNoiseProcess::maskBadPixel() for a detailed
+     *  description about the implemented algorithm.
+     */
+    float _pixelMaskUpperAbsNoiseCut;
+
+    //! Lower noise cut in absolute value
+    /*! This value is used to mask bad pixels when the
+     *  DeadPixel algorithm is selected.
+     *
+     *  @see EUTelPedestalNoiseProcess::maskBadPixel() for a detailed
+     *  description about the implemented algorithm.
+     */
+    float _pixelMaskLowerAbsNoiseCut;
+
+    //! Upper pedestal cut in absolute value
+    /*! This value is used to mask bad pixels when the
+     *  AbsolutePedeValue algorithm is selected.
+     *
+     *  @see EUTelPedestalNoiseProcess::maskBadPixel() for a detailed
+     *  description about the implemented algorithm.
+     */
+    float _pixelMaskUpperAbsPedeCut;
+
+    //! Lower pedestal cut in absolute value
+    /*! This value is used to mask bad pixels when the
+     *  AbsolutePedeValue algorithm is selected.
+     *
+     *  @see EUTelPedestalNoiseProcess::maskBadPixel() for a detailed
+     *  description about the implemented algorithm.
+     */
+    float _pixelMaskLowerAbsPedeCut;
+
+    //! Maximum firing frequency
+    /*! This is the maximum allowed frequency at which a pixel can
+     *  fire. In a pedestal file, the output of pixel should oscillate
+     *  around its pedestal value. Assuming a Guassian distribution
+     *  for this signal and setting a 3 sigma cut, only in 1 event
+     *  over 1000, the pixel actual output signal is exceeding this
+     *  threshold and could be confused as a particle hit.
+     *
+     *  If a pixel is exceeding this threshold too often (more than
+     *  0.1%), then it means that there is something weird with this,
+     *  (not Gaussian behavior, baseline instability...) and it should
+     *  be better masked out.
+     */
+    float _maxFiringFreq;
 
     //! Common mode suppression iterations
     /*! This is the number of times the common mode suppression
@@ -586,6 +707,33 @@ namespace eutelescope {
      *  indication of a "crazy" event and it is better to skip it.
      */
     int _maxNoOfRejectedPixels;
+
+    //! Maximum number of excluded pixels per row
+    /*! This is the maximum allowed number of pixel exceeding the
+     *  common mode cut in a line. Used only when common mode
+     *  algorithm is RowWise.
+     */
+    int _maxNoOfRejectedPixelPerRow;
+
+    //! Maximum number of skipped row
+    /*! This is the maximum allowed number of skipped rows per event
+    //! in the common mode rejection. Used only when common mode
+    //! algorithm is RowWise.
+    */
+    int _maxNoOfSkippedRow;
+
+
+    //! List of skipped events
+    /*! This list contains the event number corresponding to events
+     *  skipped because of common mode reasons. Those events are not
+     *  used in the additional masking loop.
+     */
+    std::list< int > _skippedEventList;
+
+    //! Iterator to the skipped event list
+    /*! This iterator points to the next event to be skipped.
+     */
+    std::list< int >::iterator _nextEventToSkip;
 
     //! Current run number.
     /*! This number is used to store the current run number
@@ -655,26 +803,19 @@ namespace eutelescope {
      */
     std::string _detectorName;
 
-    //! Counter for skipped event due to common mode
-    /*! This counter is used to enumerate how many events in the run
-     *  have been skipped because of a number of hit pixels exceeding
-     *  _maxNoOfRejectedPixels. At the end of the procedure this
-     *  number is shown to the user who can decide to keep or to drop
-     *  the pedestal noise. As mentioned already, if properly set
-     *  _maxNoOfRejectedPixels is a good indicator of an event in
-     *  which something went badly wrong; consequently having a large
-     *  number of skipped events is a good indicator that the run was
-     *  somehow screw up! @see EUTelPedestalNoiseProcessor::_maxNoOfRejectedPixels.
-     */
-    int _noOfSkippedEvent;
-
     //! Number of detector planes in the run
     /*! This is the total number of detector saved into this input
      *  file <br>NOTE: Pedestal, noise and especially common mode
      *  suppression is * done on a detector base. It is retrieved from
      *  a runHeader * parameter.
      */
-    int _noOfDetector;
+    size_t _noOfDetector;
+
+    //! Vector of detector numbers
+    /*! One entry for each input collection
+     */
+    std::vector< size_t > _noOfDetectorVec;
+
 
     //! First pixel along X
     /*! This array of int is used to store the number of the first
@@ -773,6 +914,9 @@ namespace eutelescope {
      */
     int _iLoop;
 
+    //! Geometry ready switch
+    bool _isGeometryReady;
+
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! AIDA histogram map
     /*! The histogram filling procedure may occur in many different
@@ -836,7 +980,6 @@ namespace eutelescope {
      */
     static std::string _statusMapHistoName;
 
-
     //! Firing frequency histogram
     /*! This histogram contains the cumulative distribution of firing
      *  frequency. It is filled only if the additional masking loop is
@@ -844,6 +987,17 @@ namespace eutelescope {
      */
     static std::string _fireFreqHistoName;
 
+    //! A pixel histogram name
+    /*! The histogram of a certain pixel output signal.
+     */
+    static std::string _aPixelHistoName;
+
+    //! The ordered sensor ID vector
+    /*! This vector contains the sensorID of all the detectors in the
+     *  input collection in the same order as they appear. This vector
+     *  has to be used to number the histogram booking and filling.
+     */
+    std::vector< int > _orderedSensorIDVec;
 
 #endif
 
@@ -856,6 +1010,10 @@ namespace eutelescope {
      */
     bool _histogramSwitch;
 
+    //! Histogram information file
+    std::string _histoInfoFileName;
+
+
     //! Additional bad masking loop
     bool _additionalMaskingLoop;
 
@@ -865,4 +1023,5 @@ namespace eutelescope {
   EUTelPedestalNoiseProcessor gEUTelPedestalNoiseProcessor;
 
 }
+
 #endif

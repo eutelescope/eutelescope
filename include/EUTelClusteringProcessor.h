@@ -10,12 +10,21 @@
 #ifndef EUTELCLUSTERINGPROCESSOR_H
 #define EUTELCLUSTERINGPROCESSOR_H 1
 
+// since v00-00-09 built only if GEAR is available
+#ifdef USE_GEAR
+
 // eutelescope includes ".h"
 #include "EUTelExceptions.h"
 #include "EUTELESCOPE.h"
 
 // marlin includes ".h"
+#include "marlin/EventModifier.h"
 #include "marlin/Processor.h"
+#include "marlin/Exceptions.h"
+
+// gear includes <.h>
+#include <gear/SiPlanesParameters.h>
+#include <gear/SiPlanesLayerLayout.h>
 
 // aida includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -127,12 +136,17 @@ namespace eutelescope {
    *  @param HistoInfoFileName This is the name of the XML file
    *  containing the histogram booking information.
    *
+   *  @since Since version v00-00-09, this processor requires GEAR to
+   *  be initialized because the geometry information are no more
+   *  taken from the input file Run Header but they are gathered from
+   *  the GEAR description.
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.20 2008-08-23 12:30:51 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.21 2009-07-15 17:21:28 bulgheroni Exp $
    *
    */
 
-  class EUTelClusteringProcessor :public marlin::Processor {
+  class EUTelClusteringProcessor :public marlin::Processor , public marlin::EventModifier {
 
   public:
 
@@ -147,6 +161,8 @@ namespace eutelescope {
     virtual Processor * newProcessor() {
       return new EUTelClusteringProcessor;
     }
+
+    virtual const std::string & name() const { return Processor::name() ; }
 
     //! Default constructor
     EUTelClusteringProcessor ();
@@ -179,7 +195,13 @@ namespace eutelescope {
      *  ProcessMgr
      */
     virtual void processEvent (LCEvent * evt);
-
+    
+    //! Modify event method
+    /*! Actually don't used
+     *
+     *  @param evt the current LCEvent event as passed by the ProcessMgr
+     */
+    virtual void modifyEvent( LCEvent * evt ) ;
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -235,6 +257,25 @@ namespace eutelescope {
      */
     void fillHistos(LCEvent * evt);
 #endif
+
+
+    //! Initialize the geometry information
+    /*! This method is called to initialize the geometry information,
+     *  namely the total number of sensors to be used in the cluster
+     *  search and the boundaries for each sensors.
+     *  In case of NZS data these information are contained also in
+     *  the cell ID of the input collection, but in case of ZS only
+     *  the sensor ID is available there.
+     *
+     *  @param event The LCEvent to be used for geometry
+     *  initialization.
+     *
+     *  @throw In case the @event does not contain all the needed
+     *  information, a SkipEventException is thrown and the geometry
+     *  will be initialize with the following event.
+     */
+    void initializeGeometry( LCEvent * event ) throw ( marlin::SkipEventException );
+
 
   protected:
 
@@ -520,44 +561,12 @@ namespace eutelescope {
      */
     std::map<float, unsigned int> _seedCandidateMap;
 
-
-    //! The current detector in the input collection
-    /*! This int number represent the current detector being
-     *  analyzed. It has been declared as a class data member because
-     *  it is frequently used by several different methods.
-     */
-    int _iDetector;
-
-    //! First pixel along X
-    /*! This array of int is used to store the number of the first
-     *  pixel along the X direction
-     */
-    IntVec _minX;
-
-    //! Last pixel along X
-    /*! This array of int is used to store the number of the last
-     *  pixel along the X direction
-     */
-    IntVec _maxX;
-
-    //! First pixel along Y
-    /*! This array of int is used to store the number of the first
-     *  pixel along the Y direction
-     */
-    IntVec _minY;
-
-    //! Last pixel along Y
-    /*! This array of int is used to store the number of the last
-     *  pixel along the Y direction
-     */
-    IntVec _maxY;
-
     //! Total cluster found
-    /*! This array of int is used to store the total number of
-     *  clusters found for each detector. The contents of this array
-     *  is shown during the end()
+    /*! This is a map correlating the sensorID number and the 
+     *  total number of clusters found on that sensor.
+     *  The content of this map is show during end().
      */
-    IntVec _totCluster;
+    std::map< int, int > _totClusterMap;
 
     //! The number of detectors
     /*! The number of sensors in the telescope. This is retrieve from
@@ -637,10 +646,76 @@ namespace eutelescope {
 
 #endif
 
+    // gear stuff goes in here
+    //! Silicon planes parameters as described in GEAR
+    /*! This structure actually contains the following:
+     *  @li A reference to the telescope geoemtry and layout
+     *  @li An integer number saying if the telescope is w/ or w/o DUT
+     *  @li An integer number saying the number of planes in the
+     *  telescope.
+     *
+     *  This object is provided by GEAR during the init() phase and
+     *  stored here for local use.
+     */
+    gear::SiPlanesParameters * _siPlanesParameters;
+
+    //! Silicon plane layer layout
+    /*! This is the real geoemetry description. For each layer
+     *  composing the telescope the relevant information are
+     *  available.
+     *
+     *  This object is taken from the _siPlanesParameters during the
+     *  init() phase and stored for local use
+     */
+    gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
+
+    //! Geometry ready switch
+    /*! This boolean reveals if the geometry has been properly
+     *  initialized or not.
+     */
+    bool _isGeometryReady;
+
+    //! Map relating telescope layer index and sensorID.
+    /*! The first element is the sensor ID, while the second is the
+     *  position of such a sensorID in the GEAR description.
+     */
+    std::map< int , int > _layerIndexMap;
+
+    //! Map relating the DUT layer index and sensorID
+    /*! The first element is the sensor ID, while the second is the
+     *  position of such a sensorID in the DUT section of the GEAR
+     *  description.
+     *  So far, the DUT section had no more than one entry, but in the
+     *  future this could be extended.
+     *
+     *  For the time being this map is created and properly filled but
+     *  not yet used.
+     */
+    std::map< int, int > _dutLayerIndexMap;
+
+    //! Map relating ancillary collection position and sensorID
+    /*! The first element is the sensor ID, while the second is the
+     *  position of such a sensorID in all the ancillary collections
+     *  (noise, pedestal and status).
+     */
+    std::map< int, int > _ancillaryIndexMap;
+
+    //! Inverse vector relation
+    /*! This is the inverse relation with respect to the
+     *  _ancillaryIndexMap. It contains the ordered list of sensorID
+     */
+    std::vector< int > _orderedSensorIDVec;
+
+    //! SensorID vector
+    /*! This is a vector of sensorID
+     */
+    std::vector< int > _sensorIDVec;
+
   };
 
   //! A global instance of the processor
   EUTelClusteringProcessor gEUTelClusteringProcessor;
 
 }
+#endif // USE_GEAR
 #endif

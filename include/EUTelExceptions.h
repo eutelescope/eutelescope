@@ -31,7 +31,7 @@ namespace eutelescope {
    *  invalid algorithm then this exceptions is thrown
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.7 2009-04-27 09:41:10 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.8 2009-07-15 17:21:28 bulgheroni Exp $
    */
 
   class InvalidParameterException  : public lcio::Exception {
@@ -60,7 +60,7 @@ namespace eutelescope {
    *  the number of detectors.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.7 2009-04-27 09:41:10 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.8 2009-07-15 17:21:28 bulgheroni Exp $
    */
   class IncompatibleDataSetException : public lcio::Exception {
 
@@ -103,7 +103,7 @@ namespace eutelescope {
    *  exception is thrown.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.7 2009-04-27 09:41:10 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.8 2009-07-15 17:21:28 bulgheroni Exp $
    */
   class UnknownDataTypeException : public lcio::Exception {
 
@@ -130,7 +130,7 @@ namespace eutelescope {
    *  dependency against specific library and this is missing.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.7 2009-04-27 09:41:10 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.8 2009-07-15 17:21:28 bulgheroni Exp $
    */
   class MissingLibraryException: public lcio::Exception {
 
@@ -153,14 +153,15 @@ namespace eutelescope {
     }
   };
 
+
   //! Invalid geometry
   /*! This exception is thrown when the processor is expecting to have
    *  a different telescope geometry compared to the one described in
    *  the GEAR file
-   *  
+   *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.7 2009-04-27 09:41:10 bulgheroni Exp $
-   */ 
+   *  @version $Id: EUTelExceptions.h,v 1.8 2009-07-15 17:21:28 bulgheroni Exp $
+   */
   class InvalidGeometryException: public lcio::Exception {
 
   public:
@@ -174,6 +175,7 @@ namespace eutelescope {
     //! Default destructor
     ~InvalidGeometryException() throw()  { /* NO - OP */ ; }
   };
+
 
 }
 

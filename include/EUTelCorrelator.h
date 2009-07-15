@@ -9,24 +9,21 @@
  */
 #ifndef EUTELCORRELATOR_H
 #define EUTELCORRELATOR_H
+#if defined(USE_GEAR)
 
 // eutelescope includes ".h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-#if defined(USE_GEAR)
 // gear includes <.h>
 #include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
-#endif
 
 // lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
-#if defined(USE_GEAR)
 #include <IMPL/TrackerHitImpl.h>
-#endif
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -69,7 +66,7 @@ namespace eutelescope {
    *
    *  @author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
    *  @author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-   *  @version $Id: EUTelCorrelator.h,v 1.8 2008-10-03 07:20:26 bulgheroni Exp $
+   *  @version $Id: EUTelCorrelator.h,v 1.9 2009-07-15 17:21:28 bulgheroni Exp $
    *
    */
 
@@ -142,14 +139,11 @@ namespace eutelescope {
     std::string _inputClusterCollectionName;
     std::string _inputHitCollectionName;
 
-
-#ifdef USE_GEAR
     //! A function to guess the sensorID of a hit
     /*! It is checking against the distance of each plane assuming
      *  that this hit is belonging to the plane at the closest distant.
      */
     int guessSensorID( TrackerHitImpl * hit ) ;
-#endif
 
   private:
 
@@ -163,30 +157,32 @@ namespace eutelescope {
     int _noOfDetectors;
 
     //! First pixel along X
-    /*! This array of int is used to store the number of the first
-     *  pixel along the X direction
+    /*! This is an associative map relating the sensorID to the first 
+     *  pixel along X
      */
-    IntVec _minX;
+    std::map< int, int> _minX;
 
     //! Last pixel along X
-    /*! This array of int is used to store the number of the last
-     *  pixel along the X direction
+    /*! This is an associative map relating the sensorID to the last 
+     *  pixel along X
      */
-    IntVec _maxX;
+
+    std::map< int, int> _maxX;
 
     //! First pixel along Y
-    /*! This array of int is used to store the number of the first
-     *  pixel along the Y direction
+    /*! This is an associative map relating the sensorID to the first 
+     *  pixel along Y
      */
-    IntVec _minY;
+
+    std::map< int, int> _minY;
 
     //! Last pixel along Y
-    /*! This array of int is used to store the number of the last
-     *  pixel along the Y direction
+    /*! This is an associative map relating the sensorID to the last 
+     *  pixel along Y
      */
-    IntVec _maxY;
 
-#ifdef USE_GEAR
+    std::map< int, int> _maxY;
+
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
      *  @li A reference to the telescope geoemtry and layout
@@ -211,7 +207,10 @@ namespace eutelescope {
 
     //! An array with the Z position of planes
     double * _siPlaneZPosition;
-#endif
+
+
+    //! Sensor ID vector
+    std::vector< int > _sensorIDVec;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -253,5 +252,5 @@ namespace eutelescope {
 
 }
 
+#endif // USE_GEAR
 #endif
-

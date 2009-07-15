@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelAlignmentConstant.cc,v 1.2 2008-07-10 16:06:00 bulgheroni Exp $
+// Version $Id: EUTelAlignmentConstant.cc,v 1.3 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,7 +10,7 @@
  *
  */
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTelAlignmentConstant.h"
 
 // lcio includes <.h>
@@ -40,19 +40,19 @@ EUTelAlignmentConstant::EUTelAlignmentConstant() : IMPL::LCGenericObjectImpl( AL
 }
 
 EUTelAlignmentConstant::EUTelAlignmentConstant( int sensorID,
-					       double xOff,   double yOff,   double zOff,
-					       double alpha, double beta, double gamma,
-					       double xOffErr,double yOffErr,double zOffErr,
-					       double alphaErr, double betaErr, double gammaErr )  : 
-  
+                                                double xOff,   double yOff,   double zOff,
+                                                double alpha, double beta, double gamma,
+                                                double xOffErr,double yOffErr,double zOffErr,
+                                                double alphaErr, double betaErr, double gammaErr )  :
+
   IMPL::LCGenericObjectImpl(ALIGN_CONST_MAX_SIZE,0,ALIGN_CONST_MAX_SIZE) {
-  
+
   _typeName        = "Alignment constant";
   _dataDescription = "sensorID,\n"
     "xOff,    yOff,    zOff,    alpha,    beta,    gamma\n"
     "xOffErr, yOffErr, zOffErr, alphaErr, betaErr, gammaErr";
   _isFixedSize     = true;
-  
+
   for ( size_t iPos = 0; iPos < ALIGN_CONST_MAX_SIZE; ++iPos ) {
     setIntVal   ( iPos, 0   );
     setDoubleVal( iPos, 0.0 );
@@ -65,7 +65,7 @@ EUTelAlignmentConstant::EUTelAlignmentConstant( int sensorID,
   setDoubleVal( 0, xOff );
   setDoubleVal( 1, yOff );
   setDoubleVal( 2, zOff );
-  
+
   // set the sensor angles
   setDoubleVal( 3, alpha );
   setDoubleVal( 4, beta );
@@ -75,7 +75,7 @@ EUTelAlignmentConstant::EUTelAlignmentConstant( int sensorID,
   setDoubleVal( 6, xOffErr );
   setDoubleVal( 7, yOffErr );
   setDoubleVal( 8, zOffErr );
-  
+
   // set the sensor angles
   setDoubleVal( 9, alphaErr );
   setDoubleVal( 10, betaErr );
@@ -120,12 +120,12 @@ double EUTelAlignmentConstant::getBetaError() const { return getDoubleVal( 10 ) 
 double EUTelAlignmentConstant::getGammaError() const { return getDoubleVal( 11 ) ; }
 
 void EUTelAlignmentConstant::print(ostream & os ) const {
-  
+
   const int maxFieldNo = 7;
   const int narrowWidth = 10;
   const int largeWidth = 14;
   const int lineWidth  = largeWidth * maxFieldNo;
-  
+
   string dashline( lineWidth, '-' );
 
   os << dashline << endl
@@ -139,14 +139,14 @@ void EUTelAlignmentConstant::print(ostream & os ) const {
      << setw(largeWidth) << " Y angle "
      << setw(largeWidth) << " Z angle "
      << endl
-     << setw(largeWidth) << getXOffset() 
+     << setw(largeWidth) << getXOffset()
      << setw(largeWidth) << getYOffset()
      << setw(largeWidth) << getZOffset()
      << setw(largeWidth) << getAlpha()
      << setw(largeWidth) << getBeta()
      << setw(largeWidth) << getGamma()
      << endl
-     << setw(largeWidth) << getXOffsetError() 
+     << setw(largeWidth) << getXOffsetError()
      << setw(largeWidth) << getYOffsetError()
      << setw(largeWidth) << getZOffsetError()
      << setw(largeWidth) << getAlphaError()

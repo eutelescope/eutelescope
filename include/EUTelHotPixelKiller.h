@@ -52,7 +52,7 @@ namespace eutelescope {
    *  depending on the occupancy.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHotPixelKiller.h,v 1.3 2008-08-23 12:30:51 bulgheroni Exp $
+   *  @version $Id: EUTelHotPixelKiller.h,v 1.4 2009-07-15 17:21:28 bulgheroni Exp $
    *
    */
 
@@ -104,6 +104,13 @@ namespace eutelescope {
      *  are inconsistence
      */
     virtual void processEvent (LCEvent * evt);
+
+    //! Initialize geometry
+    /*! Set the number of detectors in the setup and their boundaries.
+     *
+     *  @param evt The LCIO event
+     */
+    virtual void initializeGeometry( LCEvent * evt ) ;
 
     //! Check call back
     /*! This method is called every event just after the processEvent
@@ -165,37 +172,36 @@ namespace eutelescope {
     int _iEvt;
 
     //! Number of detector planes in the run
-    /*! This is the total number of detector saved into this input
-     *  file <br>NOTE: Pedestal, noise and especially common mode
-     *  suppression is * done on a detector base. It is retrieved from
-     *  a runHeader * parameter.
+    /*! It is the total number of elements in the status collection.
      */
     int _noOfDetectors;
 
     //! First pixel along X
-    /*! This array of int is used to store the number of the first
-     *  pixel along the X direction
+    /*! An associative map between sensorID and the corresponding
+     *  minimum X pixel.
      */
-    IntVec _minX;
+    std::map<int, int > _minX;
 
     //! Last pixel along X
-    /*! This array of int is used to store the number of the last
-     *  pixel along the X direction
+    /*! An associative map between sensorID and the corresponding
+     *  maximum X pixel.
      */
-    IntVec _maxX;
+    std::map<int, int > _maxX;
 
     //! First pixel along Y
-    /*! This array of int is used to store the number of the first
-     *  pixel along the Y direction
+    /*! An associative map between sensorID and the corresponding
+     *  minimum Y pixel.
      */
-    IntVec _minY;
+    std::map<int, int > _minY;
 
     //! Last pixel along Y
-    /*! This array of int is used to store the number of the last
-     *  pixel along the Y direction
+    /*! An associative map between sensorID and the corresponding
+     *  maximum Y pixel.
      */
-    IntVec _maxY;
+    std::map<int, int > _maxY;
 
+    //! Sensor ID vector
+    std::vector< int > _sensorIDVec;
 
     //! Total number of cycle
     int _totalNoOfCycle;

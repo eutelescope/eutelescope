@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTELESCOPE.cc,v 1.21 2008-08-19 11:48:08 bulgheroni Exp $
+// Version: $Id: EUTELESCOPE.cc,v 1.22 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -57,6 +57,10 @@ const int      EUTELESCOPE::MISSINGPIXEL        =  2;
 const int      EUTELESCOPE::FIRINGPIXEL         =  3;
 const char *   EUTELESCOPE::ABSOLUTENOISEVALUE  = "AbsoluteNoiseValue";
 const char *   EUTELESCOPE::NOISEDISTRIBUTION   = "NoiseDistribution";
+const char *   EUTELESCOPE::DEADPIXEL           = "DeadPixel";
+const char *   EUTELESCOPE::ABSOLUTEPEDEVALUE   = "AbsolutePedeValue";
+const char *   EUTELESCOPE::FULLFRAME           = "FullFrame";
+const char *   EUTELESCOPE::ROWWISE             = "RowWise";
 const char *   EUTELESCOPE::MEANRMS             = "MeanRMS";
 const char *   EUTELESCOPE::AIDAPROFILE         = "AIDAProfile";
 const char *   EUTELESCOPE::FIXEDFRAME          = "FixedFrame";

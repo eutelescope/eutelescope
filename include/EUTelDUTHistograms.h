@@ -75,7 +75,7 @@ namespace eutelescope {
    * debug information is printed.
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelDUTHistograms.h,v 1.6 2009-04-28 08:41:04 bulgheroni Exp $
+   * @version $Id: EUTelDUTHistograms.h,v 1.7 2009-07-15 17:21:28 bulgheroni Exp $
    *
    */
 

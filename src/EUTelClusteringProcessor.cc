@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.40 2008-08-23 12:30:51 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.41 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -9,6 +9,11 @@
  *   header with author names in all development based on this file.
  *
  */
+
+// since v00-00-09 this processor is built only if Marlin has GEAR
+// support. In theory, since that version EUTelescope require GEAR,
+// but it is better being sure
+#ifdef USE_GEAR
 
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
@@ -26,10 +31,15 @@
 #include "EUTelSparseData2Impl.h"
 #include "EUTelSparseCluster2Impl.h"
 
+// gear includes <.h>
+#include <gear/GearMgr.h>
+#include <gear/SiPlanesParameters.h>
+
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/AIDAProcessor.h"
 #include "marlin/Exceptions.h"
+#include "marlin/Global.h" // this is because we want to use GEAR.
 
 // lcio includes <.h>
 #include <UTIL/CellIDEncoder.h>
@@ -52,7 +62,6 @@
 #include <cassert>
 #endif
 #include <string>
-#include <sstream>
 #include <vector>
 #include <memory>
 #include <list>
@@ -210,7 +219,9 @@ void EUTelClusteringProcessor::init () {
   _iRun = 0;
   _iEvt = 0;
 
-
+  // the geometry is not yet initialized, so set the corresponding
+  // switch to false
+  _isGeometryReady = false;
 
 }
 
@@ -221,25 +232,112 @@ void EUTelClusteringProcessor::processRunHeader (LCRunHeader * rdr) {
 
   runHeader->addProcessor( type() );
 
-  // the four vectors containing the first and the last pixel
-  // along both the directions
-  _minX = runHeader->getMinX();
-  _maxX = runHeader->getMaxX();
-  _minY = runHeader->getMinY();
-  _maxY = runHeader->getMaxY();
-
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-  // let me get from the run header all the available parameter
-  _noOfDetector = runHeader->getNoOfDetector();
-#endif
-
-
-
   // increment the run counter
   ++_iRun;
 
 }
 
+void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( marlin::SkipEventException ) {
+
+  // set the total number of detector to zero. This number can be
+  // different from the one written in the gear description because
+  // the input collection can contain only a fraction of all the
+  // sensors.
+  //
+  // we assume that the no of detectors is the sum of the elements in
+  // the NZS input collection and the in ZS one.
+  _noOfDetector = 0;
+  _sensorIDVec.clear();
+
+  streamlog_out( MESSAGE4 ) << "Initializing geometry" << endl;
+
+  try {
+    LCCollectionVec * collection = dynamic_cast< LCCollectionVec * > (event->getCollection( _nzsDataCollectionName ) );
+    _noOfDetector += collection->getNumberOfElements();
+
+    CellIDDecoder<TrackerDataImpl > cellDecoder( collection );
+    for ( size_t i = 0 ; i < collection->size(); ++i ) {
+      TrackerDataImpl * data = dynamic_cast< TrackerDataImpl * > ( collection->getElementAt( i ) );
+      _sensorIDVec.push_back( cellDecoder( data ) ["sensorID"] );
+    }
+
+  } catch ( lcio::DataNotAvailableException ) {
+    // do nothing
+  }
+
+  try {
+    LCCollectionVec * collection = dynamic_cast< LCCollectionVec * > ( event->getCollection( _zsDataCollectionName ) ) ;
+    _noOfDetector += collection->getNumberOfElements();
+
+    CellIDDecoder<TrackerDataImpl > cellDecoder( collection );
+    for ( size_t i = 0; i < collection->size(); ++i ) {
+      TrackerDataImpl * data = dynamic_cast< TrackerDataImpl * > ( collection->getElementAt( i ) ) ;
+      _sensorIDVec.push_back( cellDecoder( data )[ "sensorID" ] );
+      _totClusterMap.insert( make_pair( cellDecoder( data )[ "sensorID" ] , 0 ));
+    }
+
+  } catch ( lcio::DataNotAvailableException ) {
+    // do nothing again
+  }
+
+  _siPlanesParameters  = const_cast< gear::SiPlanesParameters*  > ( &(Global::GEAR->getSiPlanesParameters()));
+  _siPlanesLayerLayout = const_cast< gear::SiPlanesLayerLayout* > ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
+
+  // now let's build a map relating the position in the layerindex
+  // with the sensorID.
+  _layerIndexMap.clear();
+  for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); ++iLayer ) {
+    _layerIndexMap.insert( make_pair( _siPlanesLayerLayout->getID( iLayer ), iLayer ) );
+  }
+
+  // check if there is a DUT section or not
+  _dutLayerIndexMap.clear();
+  if( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT )    {
+
+    // for the time being this is quite useless since, if there is a
+    // DUT this is just one, but anyway it will become useful in a
+    // short time.
+    _dutLayerIndexMap.insert( make_pair( _siPlanesLayerLayout->getDUTID(), 0 ) );
+  }
+
+
+
+  // now another map relating the position in the ancillary
+  // collections (noise, pedestal and status) with the sensorID
+  _ancillaryIndexMap.clear();
+  _orderedSensorIDVec.clear();
+
+  try {
+    // this is the exemplary ancillary collection
+    LCCollectionVec * noiseCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _noiseCollectionName ) );
+
+    // prepare also a cell decoder
+    CellIDDecoder< TrackerDataImpl > noiseDecoder( noiseCollectionVec );
+
+    for ( size_t iDetector = 0 ; iDetector < noiseCollectionVec->size(); ++iDetector ) {
+      TrackerDataImpl * noise = dynamic_cast< TrackerDataImpl * > ( noiseCollectionVec->getElementAt ( iDetector ) );
+      _ancillaryIndexMap.insert( make_pair( noiseDecoder( noise ) ["sensorID"], iDetector ) );
+      _orderedSensorIDVec.push_back( noiseDecoder( noise ) ["sensorID"] );
+    }
+  } catch (  lcio::DataNotAvailableException ) {
+    streamlog_out( WARNING2 ) << "Unable to initialize the geometry. Trying with the following event" << endl;
+    _isGeometryReady = false;
+    throw SkipEventException( this ) ;
+  }
+
+
+  if ( _noOfDetector == 0 ) {
+    streamlog_out( WARNING2 ) << "Unable to initialize the geometry. Trying with the following event" << endl;
+    _isGeometryReady = false;
+    throw SkipEventException( this );
+  } else {
+    _isGeometryReady = true;
+  }
+}
+
+void EUTelClusteringProcessor::modifyEvent( LCEvent * event ){ 
+  return;
+}
 
 void EUTelClusteringProcessor::processEvent (LCEvent * event) {
 
@@ -251,12 +349,10 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
   ++_iEvt;
 
 
-
-  // things to be done only once!
-  if ( isFirstEvent() ) {
-    // prepare a vector to store the number of clusters found for
-    _totCluster.clear();
-    _totCluster.resize( _noOfDetector, 0 );
+  // first of all we need to be sure that the geometry is properly
+  // initialized!
+  if ( !_isGeometryReady ) {
+    initializeGeometry( event ) ;
   }
 
 
@@ -351,8 +447,16 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
   // this is the equivalent of the dummyCollection in the fixed frame
   // clustering. BTW we should consider changing that "meaningful"
   // name! This contains cluster and not yet pulses
-  auto_ptr<LCCollectionVec > sparseClusterCollectionVec ( new  LCCollectionVec(LCIO::TRACKERDATA) );
-  CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec.get()  );
+  bool isDummyAlreadyExisting = false;
+  LCCollectionVec * sparseClusterCollectionVec = NULL;
+  try {
+    sparseClusterCollectionVec = dynamic_cast< LCCollectionVec* > ( evt->getCollection( "original_zsdata") );
+    isDummyAlreadyExisting = true ;
+  } catch (lcio::DataNotAvailableException& e) {
+    sparseClusterCollectionVec =  new LCCollectionVec(LCIO::TRACKERDATA);
+    isDummyAlreadyExisting = false;
+  }
+  CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec  );
 
   // prepare an encoder also for the pulse collection
   CellIDEncoder<TrackerPulseImpl> idZSPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
@@ -372,14 +476,36 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
     // contains.
     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
-    _iDetector               = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
+
+    int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
+
+    // now that we know which is the sensorID, we can ask to GEAR
+    // which are the minX, minY, maxX and maxY.
+    int minX, minY, maxX, maxY;
+    minX = 0;
+    minY = 0;
+
+    // this sensorID can be either a reference plane or a DUT, do it
+    // differently...
+    if ( _layerIndexMap.find( sensorID ) != _layerIndexMap.end() ){
+      // this is a reference plane
+      maxX = _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ sensorID ] ) - 1;
+      maxY = _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ sensorID ] ) - 1;
+    } else if ( _dutLayerIndexMap.find( sensorID ) != _dutLayerIndexMap.end() ) {
+      // ok it is a DUT plane
+      maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
+      maxY = _siPlanesLayerLayout->getDUTSensitiveNpixelY() - 1;
+    } else {
+      // this is not a reference plane neither a DUT... what's that?
+      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
+    }
 
     // reset the cluster counter for the clusterID
     int clusterID = 0;
 
     // get the noise and the status matrix with the right detectorID
-    TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt(_iDetector));
-    TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt(_iDetector));
+    TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
+    TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
 
     // reset the status
     resetStatus(status);
@@ -400,7 +526,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
       auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >
         sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
 
-      streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << _iDetector << " with "
+      streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                << sparseData->size() << " pixels " << endl;
 
       // loop over all pixels in the sparseData object.
@@ -449,8 +575,8 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
           for (int yPixel = seedY - (_yClusterSize / 2); yPixel <= seedY + (_yClusterSize / 2); yPixel++) {
             for (int xPixel =  seedX - (_xClusterSize / 2); xPixel <= seedX + (_xClusterSize / 2); xPixel++) {
               // always check we are still within the sensor!!!
-              if ( ( xPixel >= _minX[_iDetector] )  &&  ( xPixel <= _maxX[_iDetector] ) &&
-                   ( yPixel >= _minY[_iDetector] )  &&  ( yPixel <= _maxY[_iDetector] ) ) {
+              if ( ( xPixel >= minX )  &&  ( xPixel <= maxX ) &&
+                   ( yPixel >= minY )  &&  ( yPixel <= maxY ) ) {
                 int index = matrixDecoder.getIndexFromXY(xPixel, yPixel);
 
                 bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
@@ -498,7 +624,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
             // TrackerPulseImpl in order to be algorithm independent
             TrackerPulseImpl * pulse = new TrackerPulseImpl;
             CellIDEncoder<TrackerPulseImpl> idPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
-            idPulseEncoder["sensorID"]      = _iDetector;
+            idPulseEncoder["sensorID"]      = sensorID;
             idPulseEncoder["clusterID"]     = clusterID;
             idPulseEncoder["xSeed"]         = seedX;
             idPulseEncoder["ySeed"]         = seedY;
@@ -508,8 +634,8 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
             idPulseEncoder.setCellID(pulse);
 
             TrackerDataImpl * cluster = new TrackerDataImpl;
-            CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec.get());
-            idClusterEncoder["sensorID"]      = _iDetector;
+            CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec );
+            idClusterEncoder["sensorID"]      = sensorID;
             idClusterEncoder["clusterID"]     = clusterID;
             idClusterEncoder["xSeed"]         = seedX;
             idClusterEncoder["ySeed"]         = seedY;
@@ -541,13 +667,13 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
             pulseCollection->push_back(pulse);
 
             // increment the cluster counters
-            _totCluster[_iDetector] += 1;
+            _totClusterMap[ sensorID ] += 1;
             ++clusterID;
             if ( clusterID >= 256 ) {
               ++limitExceed;
               --clusterID;
               streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
-                                         << " on detector " << _iDetector
+                                         << " on detector " << sensorID
                                          << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
             }
           }
@@ -559,8 +685,12 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
 
   // if the sparseClusterCollectionVec isn't empty add it to the
   // current event. The pulse collection will be added afterwards
+  if ( ! isDummyAlreadyExisting ) {
   if ( sparseClusterCollectionVec->size() != 0 ) {
-    evt->addCollection( sparseClusterCollectionVec.release(), "original_zsdata" );
+      evt->addCollection( sparseClusterCollectionVec, "original_zsdata" );
+    } else {
+      delete sparseClusterCollectionVec;
+    }
   }
 
 }
@@ -582,8 +712,17 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
   // this is the equivalent of the dummyCollection in the fixed frame
   // clustering. BTW we should consider changing that "meaningful"
   // name! This contains cluster and not yet pulses
-  auto_ptr<LCCollectionVec > sparseClusterCollectionVec ( new  LCCollectionVec(LCIO::TRACKERDATA) );
-  CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec.get()  );
+  bool isDummyAlreadyExisting = false;
+  LCCollectionVec * sparseClusterCollectionVec = NULL;
+  try {
+    sparseClusterCollectionVec = dynamic_cast< LCCollectionVec* > ( evt->getCollection( "original_zsdata") );
+    isDummyAlreadyExisting = true ;
+  } catch (lcio::DataNotAvailableException& e) {
+    sparseClusterCollectionVec =  new LCCollectionVec(LCIO::TRACKERDATA);
+    isDummyAlreadyExisting = false;
+  }
+
+  CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec );
 
   // prepare an encoder also for the pulse collection
   CellIDEncoder<TrackerPulseImpl> idZSPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
@@ -606,13 +745,13 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
     // contains.
     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
-    _iDetector               = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
+    int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
 
     // reset the cluster counter for the clusterID
     int clusterID = 0;
 
     // get the noise matrix with the right detectorID
-    TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt(_iDetector));
+    TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
 
     // prepare the matrix decoder
     EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
@@ -625,7 +764,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
       auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >
         sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
 
-      streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << _iDetector << " with "
+      streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
                                << sparseData->size() << " pixels " << endl;
 
       // get from the sparse data the list of neighboring pixels
@@ -674,7 +813,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
 
           // ok good cluster....
           // set the ID for this zsCluster
-          idZSClusterEncoder["sensorID"] = _iDetector;
+          idZSClusterEncoder["sensorID"] = sensorID;
           idZSClusterEncoder["clusterID"] = clusterID;
           idZSClusterEncoder["sparsePixelType"] = static_cast<int> ( type );
           idZSClusterEncoder["quality"] = 0;
@@ -689,7 +828,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
           sparseCluster->getClusterSize(xSize, ySize);
 
           auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
-          idZSPulseEncoder["sensorID"]  = _iDetector;
+          idZSPulseEncoder["sensorID"]  = sensorID;
           idZSPulseEncoder["clusterID"] = clusterID;
           idZSPulseEncoder["xSeed"]     = xSeed;
           idZSPulseEncoder["ySeed"]     = ySeed;
@@ -705,13 +844,13 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
 
 
           // last but not least increment the clusterID
-          _totCluster[_iDetector] += 1;
+          _totClusterMap[ sensorID ] += 1;
           ++clusterID;
           if ( clusterID > 256 ) {
             --clusterID;
             ++limitExceed;
             streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
-                                       << " on detector " << _iDetector
+                                       << " on detector " << sensorID
                                        << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
           }
 
@@ -741,8 +880,12 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
 
   // if the sparseClusterCollectionVec isn't empty add it to the
   // current event. The pulse collection will be added afterwards
+  if ( ! isDummyAlreadyExisting ) {
   if ( sparseClusterCollectionVec->size() != 0 ) {
-    evt->addCollection( sparseClusterCollectionVec.release(), "original_zsdata" );
+      evt->addCollection( sparseClusterCollectionVec, "original_zsdata" );
+    } else {
+      delete sparseClusterCollectionVec;
+    }
   }
 
 }
@@ -762,8 +905,16 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
   // this is the equivalent of the dummyCollection in the fixed frame
   // clustering. BTW we should consider changing that "meaningful"
   // name! This contains cluster and not yet pulses
-  auto_ptr<LCCollectionVec > sparseClusterCollectionVec ( new  LCCollectionVec(LCIO::TRACKERDATA) );
-  CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec.get()  );
+    bool isDummyAlreadyExisting = false;
+  LCCollectionVec * sparseClusterCollectionVec = NULL;
+  try {
+    sparseClusterCollectionVec = dynamic_cast< LCCollectionVec* > ( evt->getCollection( "original_zsdata") );
+    isDummyAlreadyExisting = true ;
+  } catch (lcio::DataNotAvailableException& e) {
+    sparseClusterCollectionVec =  new LCCollectionVec(LCIO::TRACKERDATA);
+    isDummyAlreadyExisting = false;
+  }
+  CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec  );
 
   // prepare an encoder also for the pulse collection
   CellIDEncoder<TrackerPulseImpl> idZSPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
@@ -786,13 +937,13 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
     // contains.
     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
-    _iDetector               = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
+    int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
 
     // reset the cluster counter for the clusterID
     int clusterID = 0;
 
     // get the noise matrix with the right detectorID
-    TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt(_iDetector));
+    TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
 
     // prepare the matrix decoder
     EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
@@ -803,7 +954,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
       auto_ptr<EUTelSparseData2Impl<EUTelSimpleSparsePixel > >
         sparseData(new EUTelSparseData2Impl<EUTelSimpleSparsePixel> ( zsData ));
 
-      streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << _iDetector << " with "
+      streamlog_out ( DEBUG2 ) << "Processing sparse data on detector " << sensorID << " with "
                                << sparseData->size() << " pixels " << endl;
 
       // get from the sparse data the list of neighboring pixels
@@ -852,7 +1003,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
 
           // ok good cluster....
           // set the ID for this zsCluster
-          idZSClusterEncoder["sensorID"] = _iDetector;
+          idZSClusterEncoder["sensorID"]  = sensorID;
           idZSClusterEncoder["clusterID"] = clusterID;
           idZSClusterEncoder["sparsePixelType"] = static_cast<int> ( type );
           idZSClusterEncoder["quality"] = 0;
@@ -867,7 +1018,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
           sparseCluster->getClusterSize(xSize, ySize);
 
           auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
-          idZSPulseEncoder["sensorID"]  = _iDetector;
+          idZSPulseEncoder["sensorID"]  = sensorID;
           idZSPulseEncoder["clusterID"] = clusterID;
           idZSPulseEncoder["xSeed"]     = xSeed;
           idZSPulseEncoder["ySeed"]     = ySeed;
@@ -883,13 +1034,13 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
 
 
           // last but not least increment the clusterID
-          _totCluster[_iDetector] += 1;
+          _totClusterMap[ sensorID ] += 1;
           ++clusterID;
           if ( clusterID > 256 ) {
             --clusterID;
             ++limitExceed;
             streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
-                                       << " on detector " << _iDetector
+                                       << " on detector " << sensorID
                                        << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
           }
 
@@ -919,8 +1070,12 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
 
   // if the sparseClusterCollectionVec isn't empty add it to the
   // current event. The pulse collection will be added afterwards
+  if ( ! isDummyAlreadyExisting ) {
   if ( sparseClusterCollectionVec->size() != 0 ) {
-    evt->addCollection( sparseClusterCollectionVec.release(), "original_zsdata" );
+      evt->addCollection( sparseClusterCollectionVec, "original_zsdata" );
+    } else {
+      delete sparseClusterCollectionVec;
+    }
   }
 
 }
@@ -945,8 +1100,8 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
       TrackerDataImpl    * nzsData = dynamic_cast<TrackerDataImpl* > ( nzsInputCollectionVec->getElementAt( i ) );
       int detectorID     = cellDecoder( nzsData ) ["sensorID"];
 
-      TrackerDataImpl    * noise   = dynamic_cast<TrackerDataImpl* >    ( noiseCollectionVec->getElementAt( detectorID ) );
-      TrackerRawDataImpl * status  = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt( detectorID ) );
+      TrackerDataImpl    * noise   = dynamic_cast<TrackerDataImpl* >    ( noiseCollectionVec->getElementAt( _ancillaryIndexMap[ detectorID ] ) );
+      TrackerRawDataImpl * status  = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt( _ancillaryIndexMap[ detectorID ] ) );
 
       if ( ( noise->chargeValues().size() != status->adcValues().size() ) ||
            ( noise->chargeValues().size() != nzsData->chargeValues().size() ) ) {
@@ -964,22 +1119,52 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 
   streamlog_out ( DEBUG0 ) << "Event " << _iEvt << endl;
 
-  LCCollectionVec * dummyCollection = new LCCollectionVec(LCIO::TRACKERDATA);
+  bool isDummyAlreadyExisting = false;
+  LCCollectionVec * dummyCollection = NULL;
+  try {
+    dummyCollection = dynamic_cast< LCCollectionVec* > ( evt->getCollection( _dummyCollectionName ) );
+    isDummyAlreadyExisting = true;
+
+  } catch (lcio::DataNotAvailableException& e) {
+    dummyCollection =  new LCCollectionVec(LCIO::TRACKERDATA);
+    isDummyAlreadyExisting = false;
+  }
 
   for ( int i = 0; i < nzsInputCollectionVec->getNumberOfElements(); i++) {
 
     // get the calibrated data
     TrackerDataImpl    * nzsData = dynamic_cast<TrackerDataImpl*>  (nzsInputCollectionVec->getElementAt( i ) );
-    _iDetector = cellDecoder( nzsData ) ["sensorID"];
+    int sensorID                 = cellDecoder( nzsData ) ["sensorID"];
 
-    streamlog_out ( DEBUG0 ) << "  Working on detector " << _iDetector << endl;
+    // now that we know which is the sensorID, we can ask to GEAR
+    // which are the minX, minY, maxX and maxY.
+    int minX, minY, maxX, maxY;
+    minX = 0;
+    minY = 0;
+
+    // this sensorID can be either a reference plane or a DUT, do it
+    // differently...
+    if ( _layerIndexMap.find( sensorID ) != _layerIndexMap.end() ){
+      // this is a reference plane
+      maxX = _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ sensorID ] ) - 1;
+      maxY = _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ sensorID ] ) - 1;
+    } else if ( _dutLayerIndexMap.find( sensorID ) != _dutLayerIndexMap.end() ) {
+      // ok it is a DUT plane
+      maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
+      maxY = _siPlanesLayerLayout->getDUTSensitiveNpixelY() - 1;
+    } else {
+      // this is not a reference plane neither a DUT... what's that?
+      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
+    }
+
+    streamlog_out ( DEBUG0 ) << "  Working on detector " << sensorID << endl;
 
 #ifdef MARLINDEBUG
-    /// /* DEBUG */ message<DEBUG> ( logfile << "  Working on detector " << _iDetector );
+    /// /* DEBUG */ message<DEBUG> ( logfile << "  Working on detector " << iDetector );
 #endif
 
-    TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt(_iDetector));
-    TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt(_iDetector));
+    TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
+    TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
 
     // prepare the matrix decoder
     EUTelMatrixDecoder matrixDecoder(cellDecoder, nzsData);
@@ -1038,8 +1223,8 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
           for (int yPixel = seedY - (_yClusterSize / 2); yPixel <= seedY + (_yClusterSize / 2); yPixel++) {
             for (int xPixel =  seedX - (_xClusterSize / 2); xPixel <= seedX + (_xClusterSize / 2); xPixel++) {
               // always check we are still within the sensor!!!
-              if ( ( xPixel >= _minX[_iDetector] )  &&  ( xPixel <= _maxX[_iDetector] ) &&
-                   ( yPixel >= _minY[_iDetector] )  &&  ( yPixel <= _maxY[_iDetector] ) ) {
+              if ( ( xPixel >= minX )  &&  ( xPixel <= maxX ) &&
+                   ( yPixel >= minY )  &&  ( yPixel <= maxY ) ) {
                 int index = matrixDecoder.getIndexFromXY(xPixel, yPixel);
 
                 bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
@@ -1085,7 +1270,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
             // TrackerPulseImpl in order to be algorithm independent
             TrackerPulseImpl * pulse = new TrackerPulseImpl;
             CellIDEncoder<TrackerPulseImpl> idPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
-            idPulseEncoder["sensorID"]      = _iDetector;
+            idPulseEncoder["sensorID"]      = sensorID;
             idPulseEncoder["clusterID"]     = clusterCounter;
             idPulseEncoder["xSeed"]         = seedX;
             idPulseEncoder["ySeed"]         = seedY;
@@ -1097,7 +1282,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 
             TrackerDataImpl * cluster = new TrackerDataImpl;
             CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, dummyCollection);
-            idClusterEncoder["sensorID"]      = _iDetector;
+            idClusterEncoder["sensorID"]      = sensorID;
             idClusterEncoder["clusterID"]     = clusterCounter;
             idClusterEncoder["xSeed"]         = seedX;
             idClusterEncoder["ySeed"]         = seedY;
@@ -1146,13 +1331,13 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
             pulseCollection->push_back(pulse);
 
             // increment the cluster counters
-            _totCluster[_iDetector] += 1;
+            _totClusterMap[ sensorID ] += 1;
             ++clusterCounter;
             if ( clusterCounter > 256 ) {
               ++limitExceed;
               --clusterCounter;
               streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
-                                         << " on detector " << _iDetector
+                                         << " on detector " << sensorID
                                          << " contains more than 256 cluster (" << clusterCounter + limitExceed << ")" << endl;
             }
           } else {
@@ -1164,10 +1349,12 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     }
   }
 
+  if ( ! isDummyAlreadyExisting ) {
   if ( dummyCollection->size() != 0 ) {
     evt->addCollection(dummyCollection,_dummyCollectionName);
   } else {
     delete dummyCollection;
+  }
   }
 
 }
@@ -1183,11 +1370,15 @@ void EUTelClusteringProcessor::end() {
 
   streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
 
-  for (_iDetector = 0; _iDetector < (signed) _totCluster.size() ; _iDetector++) {
+  map< int, int >::iterator iter = _totClusterMap.begin();
+  while ( iter != _totClusterMap.end() ) {
+
 #ifdef MARLINDEBUG
-    /// /* DEBUG */    message<DEBUG> ( logfile << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector );
+    /// /* DEBUG */    message<DEBUG> ( logfile << "Found " << iter->second << " clusters on detector " << iter->first );
 #endif
-    streamlog_out ( MESSAGE2 ) << "Found " << _totCluster[_iDetector] << " clusters on detector " << _iDetector << endl;
+    streamlog_out ( MESSAGE2 ) << "Found " << iter->second << " clusters on detector " << iter->first << endl;
+    ++iter;
+
   }
 #ifdef MARLINDEBUG
   /// /* DEBUG */  logfile.close();
@@ -1220,8 +1411,10 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
     streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
     return ;
   } else if ( type == kUNKNOWN ) {
-    streamlog_out ( WARNING2 )  << "Event number " << evt->getEventNumber()
-                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+    // if it is unknown we had already issued a warning to the user at
+    // the beginning of the processEvent. If we get to here, it means
+    // that the assumption that the event was a data event was
+    // correct, so no harm to continue...
   }
 
   try {
@@ -1266,52 +1459,33 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
       int detectorID = cluster->getDetectorID();
 
       // increment of one unit the event counter for this plane
-      eventCounterVec[detectorID]++;
+      eventCounterVec[ _ancillaryIndexMap[ detectorID] ]++;
 
       string tempHistoName;
-
-      {
-        stringstream ss;
-        ss << _clusterSignalHistoName << "-d" << detectorID;
-        tempHistoName = ss.str();
-      }
+      tempHistoName = _clusterSignalHistoName + "_d" + to_string( detectorID ) ;
       (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getTotalCharge());
 
-      {
-        stringstream ss;
-        ss << _seedSignalHistoName << "-d" << detectorID;
-        tempHistoName = ss.str();
-      }
+      tempHistoName = _seedSignalHistoName + "_d" + to_string( detectorID ) ;
       (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getSeedCharge());
 
       vector<float > charges = cluster->getClusterCharge(_clusterSpectraNVector);
       for ( unsigned int i = 0; i < charges.size() ; i++ ) {
-        {
-          stringstream ss;
-          ss << _clusterSignalHistoName << _clusterSpectraNVector[i] << "-d" << detectorID;
-          tempHistoName = ss.str();
-        }
+        tempHistoName = _clusterSignalHistoName + to_string( _clusterSpectraNVector[i] )
+          + "_d" + to_string( detectorID );
         (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))
           ->fill(charges[i]);
       }
 
       vector<int >::iterator iter = _clusterSpectraNxNVector.begin();
       while ( iter != _clusterSpectraNxNVector.end() ) {
-        {
-          stringstream ss;
-          ss << _clusterSignalHistoName << (*iter) << "x" << (*iter) << "-d" << detectorID;
-          tempHistoName = ss.str();
-        }
+        tempHistoName = _clusterSignalHistoName + to_string( *iter ) + "x"
+          + to_string( *iter ) + "_d" + to_string( detectorID );
         (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))
           ->fill(cluster->getClusterCharge((*iter), (*iter)));
         ++iter;
       }
 
-      {
-        stringstream ss;
-        ss << _hitMapHistoName << "-d" << detectorID;
-        tempHistoName = ss.str();
-      }
+      tempHistoName = _hitMapHistoName + "_d" + to_string( detectorID );
       int xSeed, ySeed;
       cluster->getCenterCoord(xSeed, ySeed);
       (dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[tempHistoName]))
@@ -1322,19 +1496,37 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 
       // get the noise TrackerDataImpl corresponding to the detector
       // under analysis and the status matrix as well
-      TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl *>    (noiseCollectionVec->getElementAt(detectorID) );
-      TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> (statusCollectionVec->getElementAt(detectorID) );
+      TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl *>    (noiseCollectionVec->getElementAt(  _ancillaryIndexMap[ detectorID ]) );
+      TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> (statusCollectionVec->getElementAt( _ancillaryIndexMap[ detectorID ]) );
 
       // prepare also a MatrixDecoder for this matrix
       EUTelMatrixDecoder noiseMatrixDecoder(noiseDecoder, noiseMatrix);
+      int minX, minY, maxX, maxY;
+      minX = 0;
+      minY = 0;
+
+      // this sensorID can be either a reference plane or a DUT, do it
+      // differently...
+      if ( _layerIndexMap.find( detectorID ) != _layerIndexMap.end() ){
+        // this is a reference plane
+        maxX = _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ detectorID ] ) - 1;
+        maxY = _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ detectorID ] ) - 1;
+      } else if ( _dutLayerIndexMap.find( detectorID ) != _dutLayerIndexMap.end() ) {
+        // ok it is a DUT plane
+        maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
+        maxY = _siPlanesLayerLayout->getDUTSensitiveNpixelY() - 1;
+      } else {
+        // this is not a reference plane neither a DUT... what's that?
+        throw  InvalidGeometryException ("Unknown sensorID " + to_string( detectorID ));
+      }
 
       vector<float > noiseValues;
       if ( type == kEUTelFFClusterImpl ) {
         for ( int yPixel = ySeed - ( _yClusterSize / 2 ); yPixel <= ySeed + ( _yClusterSize / 2 ); yPixel++ ) {
           for ( int xPixel = xSeed - ( _xClusterSize / 2 ); xPixel <= xSeed + ( _xClusterSize / 2 ); xPixel++ ) {
             // always check we are still within the sensor!!!
-            if ( ( xPixel >= _minX[detectorID] )  &&  ( xPixel <= _maxX[detectorID] ) &&
-                 ( yPixel >= _minY[detectorID] )  &&  ( yPixel <= _maxY[detectorID] ) ) {
+            if ( ( xPixel >= minX )  &&  ( xPixel <= maxX ) &&
+                 ( yPixel >= minY )  &&  ( yPixel <= maxY ) ) {
               int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
               // the corresponding position in the status matrix has to be HITPIXEL
               bool isHit      = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::HITPIXEL );
@@ -1379,33 +1571,19 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
       if ( fillSNRSwitch ) {
 
         AIDA::IHistogram1D * histo;
-
-        {
-          stringstream ss;
-          ss << _clusterNoiseHistoName << "-d" << detectorID;
-          tempHistoName = ss.str();
-        }
+        tempHistoName = _clusterNoiseHistoName + "_d" + to_string( detectorID );
         histo = dynamic_cast<AIDA::IHistogram1D* > ( _aidaHistoMap[tempHistoName] );
         if ( histo ) {
           histo->fill( cluster->getClusterNoise() );
         }
 
-
-        {
-          stringstream ss;
-          ss << _clusterSNRHistoName << "-d" << detectorID;
-          tempHistoName = ss.str();
-        }
+        tempHistoName = _clusterSNRHistoName + "_d" + to_string( detectorID );
         histo = dynamic_cast<AIDA::IHistogram1D* > ( _aidaHistoMap[tempHistoName] );
         if ( histo ) {
           histo->fill( cluster->getClusterSNR() );
         }
 
-        {
-          stringstream ss;
-          ss << _seedSNRHistoName << "-d" << detectorID;
-          tempHistoName = ss.str();
-        }
+        tempHistoName = _seedSNRHistoName + "_d" + to_string( detectorID );
         histo = dynamic_cast<AIDA::IHistogram1D * > ( _aidaHistoMap[tempHistoName] );
         if ( histo ) {
           histo->fill( cluster->getSeedSNR() );
@@ -1413,11 +1591,8 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 
         vector<int >::iterator iter = _clusterSpectraNxNVector.begin();
         while ( iter != _clusterSpectraNxNVector.end() ) {
-          {
-            stringstream ss;
-            ss << _clusterSNRHistoName << (*iter) << "x" << (*iter) << "-d" << detectorID;
-            tempHistoName = ss.str();
-          }
+          tempHistoName = _clusterSNRHistoName + to_string( *iter ) + "x"
+            + to_string( *iter ) + "_d" + to_string( detectorID );
           histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName] ) ;
           if ( histo ) {
             histo->fill(cluster->getClusterSNR( (*iter), (*iter) ));
@@ -1427,11 +1602,8 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 
         vector<float > snrs = cluster->getClusterSNR(_clusterSpectraNVector);
         for ( unsigned int i = 0; i < snrs.size() ; i++ ) {
-          {
-            stringstream ss;
-            ss << _clusterSNRHistoName << _clusterSpectraNVector[i] << "-d" << detectorID;
-            tempHistoName = ss.str();
-          }
+          tempHistoName = _clusterSNRHistoName + to_string( _clusterSpectraNVector[i] )
+            + "_d" + to_string( detectorID );
           histo = dynamic_cast<AIDA::IHistogram1D * > ( _aidaHistoMap[tempHistoName] ) ;
           if ( histo ) {
             histo->fill( snrs[i] );
@@ -1445,11 +1617,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
     // fill the event multiplicity here
     string tempHistoName;
     for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++ ) {
-      {
-        stringstream ss;
-        ss << _eventMultiplicityHistoName << "-d" << iDetector;
-        tempHistoName = ss.str();
-      }
+      tempHistoName = _eventMultiplicityHistoName + "_d" + to_string( iDetector );
       AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D *> ( _aidaHistoMap[tempHistoName] );
       if ( histo ) {
         histo->fill( eventCounterVec[iDetector] );
@@ -1487,13 +1655,31 @@ void EUTelClusteringProcessor::bookHistos() {
 
   string tempHistoName;
   string basePath;
-  for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+  for (size_t iDetector = 0; iDetector < _sensorIDVec.size(); iDetector++) {
+    
+    int sensorID = _sensorIDVec.at( iDetector );
 
-    {
-      stringstream ss;
-      ss << "detector-" << iDetector;
-      basePath = ss.str();
+    // the min and max information are taken from GEAR.
+    int minX, minY, maxX, maxY;
+    minX = 0;
+    minY = 0;
+
+    // this sensorID can be either a reference plane or a DUT, do it
+    // differently...
+    if ( _layerIndexMap.find( sensorID ) != _layerIndexMap.end() ){
+      // this is a reference plane
+      maxX = _siPlanesLayerLayout->getSensitiveNpixelX( sensorID ) - 1;
+      maxY = _siPlanesLayerLayout->getSensitiveNpixelY( sensorID ) - 1;
+    } else if ( _dutLayerIndexMap.find( sensorID )  != _dutLayerIndexMap.end() ) {
+      // ok it is a DUT plane
+      maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
+      maxY = _siPlanesLayerLayout->getDUTSensitiveNpixelY() - 1;
+    } else {
+      // this is not a reference plane neither a DUT... what's that?
+      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
     }
+
+    basePath = "detector_" + to_string( sensorID );
     AIDAProcessor::tree(this)->mkdir(basePath.c_str());
     basePath.append("/");
 
@@ -1528,11 +1714,7 @@ void EUTelClusteringProcessor::bookHistos() {
     }
 
     // cluster signal
-    {
-      stringstream ss;
-      ss << _clusterSignalHistoName << "-d" << iDetector;
-      tempHistoName = ss.str();
-    }
+    tempHistoName = _clusterSignalHistoName + "_d" + to_string( sensorID );
     AIDA::IHistogram1D * clusterSignalHisto =
       AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                 clusterNBin,clusterMin,clusterMax);
@@ -1540,11 +1722,7 @@ void EUTelClusteringProcessor::bookHistos() {
     clusterSignalHisto->setTitle(clusterTitle.c_str());
 
     // cluster SNR
-    {
-      stringstream ss;
-      ss << _clusterSNRHistoName << "-d" << iDetector;
-      tempHistoName = ss.str();
-    }
+    tempHistoName = _clusterSNRHistoName + "_d" + to_string( sensorID );
     AIDA::IHistogram1D * clusterSNRHisto =
       AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                 clusterSNRNBin, clusterSNRMin, clusterSNRMax);
@@ -1555,38 +1733,21 @@ void EUTelClusteringProcessor::bookHistos() {
     vector<int >::iterator iter = _clusterSpectraNVector.begin();
     while ( iter != _clusterSpectraNVector.end() ) {
       // this is for the signal
-      {
-        stringstream ss;
-        ss << _clusterSignalHistoName << (*iter) << "-d" << iDetector;
-        tempHistoName = ss.str();
-      }
+      tempHistoName = _clusterSignalHistoName + to_string( *iter ) + "_d" + to_string( sensorID );
       AIDA::IHistogram1D * clusterSignalNHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                   clusterNBin, clusterMin, clusterMax);
       _aidaHistoMap.insert(make_pair(tempHistoName, clusterSignalNHisto) );
-      string tempTitle;
-      {
-        stringstream ss;
-        ss << "Cluster spectrum with the " << (*iter) << " most significant pixels ";
-        tempTitle = ss.str();
-      }
+      string tempTitle = "Cluster spectrum with the " + to_string( *iter ) + " most significant pixels ";
       clusterSignalNHisto->setTitle(tempTitle.c_str());
 
 
       // this is for the SNR
-      {
-        stringstream ss;
-        ss << _clusterSNRHistoName << (*iter) << "-d" << iDetector;
-        tempHistoName = ss.str();
-      }
+      tempHistoName = _clusterSNRHistoName + to_string( *iter ) + "_d" + to_string( sensorID );
       AIDA::IHistogram1D * clusterSNRNHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                   clusterSNRNBin, clusterSNRMin, clusterSNRMax);
-      {
-        stringstream ss;
-        ss << "Cluster SNR with the " << (*iter) << " most significant pixels";
-        tempTitle = ss.str();
-      }
+      tempTitle = "Cluster SNR with the " + to_string(*iter ) + " most significant pixels";
       _aidaHistoMap.insert( make_pair( tempHistoName, clusterSNRNHisto ) );
       clusterSNRNHisto->setTitle(tempTitle.c_str());
 
@@ -1597,49 +1758,30 @@ void EUTelClusteringProcessor::bookHistos() {
     while ( iter != _clusterSpectraNxNVector.end() ) {
 
       // first the signal
-      {
-        stringstream ss;
-        ss << _clusterSignalHistoName << (*iter) << "x" << (*iter) << "-d" << iDetector;
-        tempHistoName = ss.str();
-      }
+      tempHistoName = _clusterSignalHistoName + to_string( *iter ) + "x"
+        + to_string( *iter ) + "_d" + to_string( sensorID );
       AIDA::IHistogram1D * clusterSignalNxNHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                   clusterNBin, clusterMin, clusterMax);
       _aidaHistoMap.insert(make_pair(tempHistoName, clusterSignalNxNHisto) );
-      string tempTitle;
-      {
-        stringstream ss;
-        ss << "Cluster spectrum with " << (*iter) << " by " << (*iter) << " pixels ";
-        tempTitle = ss.str();
-      }
+      string tempTitle = "Cluster spectrum with " + to_string( *iter ) + " by " +  to_string( *iter ) + " pixels ";
       clusterSignalNxNHisto->setTitle(tempTitle.c_str());
 
       // then the SNR
-      {
-        stringstream ss;
-        ss << _clusterSNRHistoName << (*iter) << "x" << (*iter) << "-d" << iDetector;
-        tempHistoName = ss.str();
-      }
+      tempHistoName = _clusterSNRHistoName + to_string( *iter ) + "x"
+        + to_string( *iter ) + "_d" + to_string( sensorID );
       AIDA::IHistogram1D * clusterSNRNxNHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                   clusterSNRNBin, clusterSNRMin, clusterSNRMax);
       _aidaHistoMap.insert(make_pair(tempHistoName, clusterSNRNxNHisto) );
-      {
-        stringstream ss;
-        ss << "SNR with " << (*iter) << " by " << (*iter) << " pixels ";
-        tempTitle = ss.str();
-      }
+      tempTitle = "SNR with " + to_string( *iter ) + " by " + to_string( *iter ) + " pixels ";
       clusterSNRNxNHisto->setTitle(tempTitle.c_str());
 
 
       ++iter;
     }
 
-    {
-      stringstream ss;
-      ss << _seedSignalHistoName << "-d" << iDetector;
-      tempHistoName = ss.str();
-    }
+    tempHistoName = _seedSignalHistoName + "_d" + to_string( sensorID );
     int    seedNBin  = 500;
     double seedMin   = 0.;
     double seedMax   = 500.;
@@ -1659,12 +1801,7 @@ void EUTelClusteringProcessor::bookHistos() {
                                                                 seedNBin, seedMin, seedMax);
     _aidaHistoMap.insert(make_pair(tempHistoName, seedSignalHisto));
     seedSignalHisto->setTitle(seedTitle.c_str());
-
-    {
-      stringstream ss;
-      ss << _seedSNRHistoName << "-d" << iDetector;
-      tempHistoName = ss.str();
-    }
+    tempHistoName = _seedSNRHistoName + "_d" + to_string( sensorID ) ;
     int    seedSNRNBin  =  300;
     double seedSNRMin   =    0.;
     double seedSNRMax   =  200.;
@@ -1685,12 +1822,7 @@ void EUTelClusteringProcessor::bookHistos() {
     _aidaHistoMap.insert( make_pair(tempHistoName, seedSNRHisto ));
     seedSNRHisto->setTitle(seedSNRTitle.c_str());
 
-
-    {
-      stringstream ss;
-      ss << _clusterNoiseHistoName << "-d" << iDetector;
-      tempHistoName = ss.str();
-    }
+    tempHistoName = _clusterNoiseHistoName + "_d" + to_string( sensorID );
     int    clusterNoiseNBin  =  300;
     double clusterNoiseMin   =    0.;
     double clusterNoiseMax   =  200.;
@@ -1711,29 +1843,20 @@ void EUTelClusteringProcessor::bookHistos() {
     _aidaHistoMap.insert( make_pair(tempHistoName, clusterNoiseHisto ));
     clusterNoiseHisto->setTitle(clusterNoiseTitle.c_str());
 
-
-    {
-      stringstream ss;
-      ss << _hitMapHistoName << "-d" << iDetector;
-      tempHistoName = ss.str();
-    }
-    int     xBin = _maxX[iDetector] - _minX[iDetector] + 1;
-    double  xMin = static_cast<double >(_minX[iDetector]) - 0.5;
-    double  xMax = static_cast<double >(_maxX[iDetector]) + 0.5;
-    int     yBin = _maxY[iDetector] - _minY[iDetector] + 1;
-    double  yMin = static_cast<double >(_minY[iDetector]) - 0.5;
-    double  yMax = static_cast<double >(_maxY[iDetector]) + 0.5;
+    tempHistoName = _hitMapHistoName + "_d" + to_string( sensorID );
+    int     xBin = maxX - minX + 1;
+    double  xMin = static_cast<double >( minX ) - 0.5 ;
+    double  xMax = static_cast<double >( maxX ) + 0.5;
+    int     yBin = maxY - minY + 1;
+    double  yMin = static_cast<double >( minY ) - 0.5;
+    double  yMax = static_cast<double >( maxY ) + 0.5;
     AIDA::IHistogram2D * hitMapHisto =
       AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
                                                                 xBin, xMin, xMax,yBin, yMin, yMax);
     _aidaHistoMap.insert(make_pair(tempHistoName, hitMapHisto));
     hitMapHisto->setTitle("Hit map");
 
-    {
-      stringstream ss;
-      ss << _eventMultiplicityHistoName << "-d" << iDetector;
-      tempHistoName = ss.str();
-    }
+    tempHistoName = _eventMultiplicityHistoName + "_d" + to_string( sensorID );
     int     eventMultiNBin  = 30;
     double  eventMultiMin   =  0.;
     double  eventMultiMax   = 30.;
@@ -1758,3 +1881,4 @@ void EUTelClusteringProcessor::bookHistos() {
 
 }
 #endif
+#endif // USE_GEAR

@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.25 2009-04-08 11:31:05 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.26 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -101,7 +101,7 @@ EUTelHitMaker::EUTelHitMaker () : Processor("EUTelHitMaker") {
                             _nPixel, static_cast<int>( 9 ) );
 
   registerOptionalParameter("Enable3DHisto","If true a 3D histo will be filled. It may require large memory",
-			    _3DHistoSwitch, static_cast<bool> ( true ) );
+                            _3DHistoSwitch, static_cast<bool> ( true ) );
 
 
   vector<int > xyCluSizeExample(2,3);
@@ -157,6 +157,11 @@ void EUTelHitMaker::init() {
   _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
+  _orderedSensorIDVec.clear();
+  for ( int iPlane = 0 ; iPlane < _siPlanesParameters->getSiPlanesNumber() ; ++iPlane ) {
+    _orderedSensorIDVec.push_back( _siPlanesLayerLayout->getID( iPlane ) );
+  }
+
   _histogramSwitch = true;
 
 #endif
@@ -169,15 +174,6 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
   auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
   header->addProcessor( type() );
 
-  // the run header contains the number of detectors. This number
-  // should be in principle be the same as the number of layers in the
-  // geometry description
-  if ( header->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) {
-    streamlog_out ( ERROR4 ) << "Error during the geometry consistency check: " << endl
-                             << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " << endl
-                             << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() << " silicon planes" << endl;
-    exit(-1);
-  }
 
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
@@ -207,11 +203,11 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
         break;
       }
     }
- 
 #endif
- }
+  }
+
   // now book histograms plz...
-  if ( isFirstEvent() )  bookHistos();
+  if ( isFirstEvent() )  book3DHisto();
 
   // increment the run counter
   ++_iRun;
@@ -219,6 +215,7 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
 
 
 void EUTelHitMaker::processEvent (LCEvent * event) {
+
 
   if (_iEvt % 10 == 0)
     streamlog_out( MESSAGE4 ) << "Processing event "
@@ -238,14 +235,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
-
   try {
 
-    LCCollectionVec * pulseCollection   = static_cast<LCCollectionVec*> (event->getCollection( _pulseCollectionName ));
-    LCCollectionVec * hitCollection     = new LCCollectionVec(LCIO::TRACKERHIT);
     LCCollectionVec * xEtaCollection = 0x0, * yEtaCollection = 0x0;
-
-    CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder(pulseCollection);
 
     if ( _etaCorrection == 1 ) {
       // this means that the user wants to apply the eta correction to
@@ -269,141 +261,136 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       }
     }
 
-    if ( isFirstEvent() && _etaCorrection == 1) {
-      if ( ( xEtaCollection->getNumberOfElements() != _siPlanesParameters->getSiPlanesNumber() ) ||
-           ( yEtaCollection->getNumberOfElements() != _siPlanesParameters->getSiPlanesNumber() ) ) {
-        streamlog_out ( ERROR1 ) <<  "The eta collections contain a different number of elements wrt to "
-                                 << _siPlanesParameters->getSiPlanesNumber() << endl
-                                 << "Continuing without eta correction " << endl;
-        _etaCorrection = 0;
+
+    if ( isFirstEvent() && ( _etaCorrection == 1 )) {
+
+      EUTelEtaFunctionImpl * func = static_cast< EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt( 0 ) );
+
+      if ( func->getNInt() != 0 ) {
+        _etaVersion = 2;
       } else {
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-        // this is also the right place to book the eta specific
-        // histograms.
-        if ( _histogramSwitch ) {
-          for ( int iDet = 0 ; iDet < _siPlanesParameters->getSiPlanesNumber(); iDet++) {
-            string basePath;
-            {
-              stringstream ss ;
-              ss << "plane-" << iDet << "/";
-              basePath = ss.str();
-            }
-
-            EUTelEtaFunctionImpl * xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt(iDet) );
-            EUTelEtaFunctionImpl * yEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( yEtaCollection->getElementAt(iDet) );
-            int xNoOfBin = xEtaFunc->getNoOfBin();
-            int yNoOfBin = yEtaFunc->getNoOfBin();
-            string tempHistoName;
-            {
-              stringstream ss;
-              ss << _clusterCenterEtaHistoName << "-" << iDet;
-              tempHistoName = ss.str();
-            }
-            AIDA::IHistogram2D * clusterCenterEta =
-              AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName ).c_str(),
-                                                                        1* xNoOfBin, -.5, +.5, 1 * yNoOfBin, -.5, +.5);
-            if ( clusterCenterEta ) {
-              clusterCenterEta->setTitle("Position of the cluster center (Eta corrected)");
-              _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEta ) );
-            } else {
-              streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                        << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-              _histogramSwitch = false;
-            }
+        _etaVersion = 1;
+      }
 
 
-            {
-              stringstream ss;
-              ss << _clusterCenterHistoName << "-" << iDet;
-              tempHistoName = ss.str();
-            }
-            AIDA::IHistogram2D * clusterCenter =
-              AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName ).c_str(),
-                                                                        1* xNoOfBin, -.5, +.5, 1 * yNoOfBin, -.5, +.5);
-            if ( clusterCenter ) {
-              clusterCenterEta->setTitle("Position of the cluster center");
-              _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenter ) );
-            } else {
-              streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                        << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-              _histogramSwitch = false;
-            }
+      for ( size_t iDet = 0 ; iDet < xEtaCollection->size(); iDet++) {
 
+        EUTelEtaFunctionImpl * xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt(iDet) );
 
-            {
-              stringstream ss;
-              ss << _clusterCenterEtaXHistoName << "-" << iDet;
-              tempHistoName = ss.str();
-            }
-            AIDA::IHistogram1D * clusterCenterEtaX =
-              AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                        1 * xNoOfBin, -0.5, +0.5 );
-            if ( clusterCenterEtaX ) {
-              clusterCenterEtaX->setTitle("Projection along X of the cluster center (Eta corrected)");
-              _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEtaX ) );
-            } else {
-              streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                        << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-              _histogramSwitch = false;
-            }
-
-            {
-              stringstream ss;
-              ss << _clusterCenterXHistoName << "-" << iDet;
-              tempHistoName = ss.str();
-            }
-            AIDA::IHistogram1D * clusterCenterX =
-              AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                        1 * xNoOfBin, -0.5, +0.5 );
-            if ( clusterCenterX ) {
-              clusterCenterX->setTitle("Projection along X of the cluster center");
-              _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterX ) );
-            } else {
-              streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                        << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-              _histogramSwitch = false;
-            }
-
-            {
-              stringstream ss;
-              ss << _clusterCenterEtaYHistoName << "-" << iDet;
-              tempHistoName = ss.str();
-            }
-            AIDA::IHistogram1D * clusterCenterEtaY =
-              AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                        1 * xNoOfBin, -0.5, +0.5 );
-            if ( clusterCenterEtaY ) {
-              clusterCenterEtaY->setTitle("Projection along Y of the cluster center (Eta corrected)");
-              _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEtaY ) );
-            } else {
-              streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                        << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-              _histogramSwitch = false;
-            }
-
-            {
-              stringstream ss;
-              ss << _clusterCenterYHistoName << "-" << iDet;
-              tempHistoName = ss.str();
-            }
-            AIDA::IHistogram1D * clusterCenterY =
-              AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                        1 * xNoOfBin, -0.5, +0.5 );
-            if ( clusterCenterY ) {
-              clusterCenterY->setTitle("Projection along Y of the cluster center");
-              _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterY ) );
-            } else {
-              streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                        << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-              _histogramSwitch = false;
-            }
-
-          }
+        if ( _etaVersion == 2 ) {
+          _etaMap[ xEtaFunc->getSensorID() ] = iDet;
         }
-#endif
 
       }
+
+/*
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+      // this is also the right place to book the eta specific
+      // histograms.
+      if ( _histogramSwitch ) {
+        for ( int iDet = 0 ; iDet < _siPlanesParameters->getSiPlanesNumber(); iDet++) {
+          string basePath = "plane_" + to_string( _orderedSensorIDVec.at( iDet ) ) + "/";
+          EUTelEtaFunctionImpl * xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt(iDet) );
+          EUTelEtaFunctionImpl * yEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( yEtaCollection->getElementAt(iDet) );
+
+          if ( _etaVersion == 2 ) {
+            _etaMap[ xEtaFunc->getSensorID() ] = iDet;
+          }
+
+          int xNoOfBin = xEtaFunc->getNoOfBin();
+          int yNoOfBin = yEtaFunc->getNoOfBin();
+          string tempHistoName = _clusterCenterEtaHistoName + "_" + to_string( _orderedSensorIDVec.at( iDet ) );
+
+          AIDA::IHistogram2D * clusterCenterEta =
+            AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName ).c_str(),
+                                                                      1* xNoOfBin, -.5, +.5, 1 * yNoOfBin, -.5, +.5);
+          if ( clusterCenterEta ) {
+            clusterCenterEta->setTitle("Position of the cluster center (Eta corrected)");
+            _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEta ) );
+          } else {
+            streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                      << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+            _histogramSwitch = false;
+          }
+
+
+          tempHistoName = _clusterCenterHistoName + "_" + to_string( _orderedSensorIDVec.at( iDet ) );
+          AIDA::IHistogram2D * clusterCenter =
+            AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName ).c_str(),
+                                                                      1* xNoOfBin, -.5, +.5, 1 * yNoOfBin, -.5, +.5);
+          if ( clusterCenter ) {
+            clusterCenterEta->setTitle("Position of the cluster center");
+            _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenter ) );
+          } else {
+            streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                      << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+            _histogramSwitch = false;
+          }
+
+
+          tempHistoName = _clusterCenterEtaXHistoName + "_" + to_string( _orderedSensorIDVec.at( iDet ));
+          AIDA::IHistogram1D * clusterCenterEtaX =
+            AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                      1 * xNoOfBin, -0.5, +0.5 );
+          if ( clusterCenterEtaX ) {
+            clusterCenterEtaX->setTitle("Projection along X of the cluster center (Eta corrected)");
+            _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEtaX ) );
+          } else {
+            streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                      << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+            _histogramSwitch = false;
+          }
+
+          tempHistoName = _clusterCenterXHistoName + "_" + to_string( _orderedSensorIDVec.at( iDet ));
+          AIDA::IHistogram1D * clusterCenterX =
+            AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                      1 * xNoOfBin, -0.5, +0.5 );
+          if ( clusterCenterX ) {
+            clusterCenterX->setTitle("Projection along X of the cluster center");
+            _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterX ) );
+          } else {
+            streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                      << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+            _histogramSwitch = false;
+          }
+
+          tempHistoName = _clusterCenterEtaYHistoName + "_" + to_string( _orderedSensorIDVec.at( iDet ) );
+
+          AIDA::IHistogram1D * clusterCenterEtaY =
+            AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                      1 * xNoOfBin, -0.5, +0.5 );
+          if ( clusterCenterEtaY ) {
+            clusterCenterEtaY->setTitle("Projection along Y of the cluster center (Eta corrected)");
+            _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEtaY ) );
+          } else {
+            streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                      << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+            _histogramSwitch = false;
+          }
+
+          tempHistoName =  _clusterCenterYHistoName + "_" + to_string( _orderedSensorIDVec.at( iDet ) );
+          AIDA::IHistogram1D * clusterCenterY =
+            AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                      1 * xNoOfBin, -0.5, +0.5 );
+          if ( clusterCenterY ) {
+            clusterCenterY->setTitle("Projection along Y of the cluster center");
+            _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterY ) );
+          } else {
+            streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                      << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+            _histogramSwitch = false;
+          }
+
+        }
+      }
+#endif
+*/
+
     }
+
+    LCCollectionVec * pulseCollection   = static_cast<LCCollectionVec*> (event->getCollection( _pulseCollectionName ));
+    LCCollectionVec * hitCollection     = new LCCollectionVec(LCIO::TRACKERHIT);
+    CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder(pulseCollection);
 
     int detectorID    = -99; // it's a non sense
     int oldDetectorID = -100;
@@ -461,35 +448,71 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       if ( detectorID != oldDetectorID ) {
         oldDetectorID = detectorID;
 
-        if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
-          // first of all try to see if this detectorID already belong to
-          if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
-            // this means that this detector ID was not already inserted,
-            // so this is the right place to do that
-            for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
-              if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
-                _conversionIdMap.insert( make_pair( detectorID, iLayer ) );
-                break;
+        // check if this telescope setup has a DUT
+        if ( ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) && 
+             ( _siPlanesLayerLayout->getDUTID() == detectorID ) ) {
+          xZero        = _siPlanesLayerLayout->getDUTSensitivePositionX(); // mm
+          yZero        = _siPlanesLayerLayout->getDUTSensitivePositionY(); // mm
+          zZero        = _siPlanesLayerLayout->getDUTSensitivePositionZ(); // mm
+          zThickness   = _siPlanesLayerLayout->getDUTSensitiveThickness(); // mm
+          xPitch       = _siPlanesLayerLayout->getDUTSensitivePitchX();    // mm
+          yPitch       = _siPlanesLayerLayout->getDUTSensitivePitchY();    // mm
+          xSize        = _siPlanesLayerLayout->getDUTSensitiveSizeX();     // mm
+          ySize        = _siPlanesLayerLayout->getDUTSensitiveSizeY();     // mm
+          xPointing[0] = _siPlanesLayerLayout->getDUTSensitiveRotation1(); // was -1 ;
+          xPointing[1] = _siPlanesLayerLayout->getDUTSensitiveRotation2(); // was  0 ;
+          yPointing[0] = _siPlanesLayerLayout->getDUTSensitiveRotation3(); // was  0 ;
+          yPointing[1] = _siPlanesLayerLayout->getDUTSensitiveRotation4(); // was
+
+          // check if the histos for this sensor ID have been booked
+          // already.
+          if ( _alreadyBookedSensorID.find( detectorID ) == _alreadyBookedSensorID.end() ) {
+            // we need to book now!
+            bookHistos( detectorID, true, xEtaCollection, yEtaCollection );
+          }
+
+        } else {
+
+
+          if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
+            // first of all try to see if this detectorID already belong to
+            if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
+              // this means that this detector ID was not already inserted,
+              // so this is the right place to do that
+              for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
+                if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
+                  _conversionIdMap.insert( make_pair( detectorID, iLayer ) );
+                  break;
+                }
               }
             }
           }
-        }
 
-        // perfect! The full geometry description is now coming from the
-        // GEAR interface. Let's keep the finger xed!
-        layerIndex   = _conversionIdMap[detectorID];
-        xZero        = _siPlanesLayerLayout->getSensitivePositionX(layerIndex); // mm
-        yZero        = _siPlanesLayerLayout->getSensitivePositionY(layerIndex); // mm
-        zZero        = _siPlanesLayerLayout->getSensitivePositionZ(layerIndex); // mm
-        zThickness   = _siPlanesLayerLayout->getSensitiveThickness(layerIndex); // mm
-        xPitch       = _siPlanesLayerLayout->getSensitivePitchX(layerIndex);    // mm
-        yPitch       = _siPlanesLayerLayout->getSensitivePitchY(layerIndex);    // mm
-        xSize        = _siPlanesLayerLayout->getSensitiveSizeX(layerIndex);     // mm
-        ySize        = _siPlanesLayerLayout->getSensitiveSizeY(layerIndex);     // mm
-        xPointing[0] = _siPlanesLayerLayout->getSensitiveRotation1(layerIndex); // was -1 ;
-        xPointing[1] = _siPlanesLayerLayout->getSensitiveRotation2(layerIndex); // was  0 ;
-        yPointing[0] = _siPlanesLayerLayout->getSensitiveRotation3(layerIndex); // was  0 ;
-        yPointing[1] = _siPlanesLayerLayout->getSensitiveRotation4(layerIndex); // was -1 ;
+          // perfect! The full geometry description is now coming from the
+          // GEAR interface. Let's keep the finger xed!
+
+          // check if the histos for this sensor ID have been booked
+          // already.
+          if ( _alreadyBookedSensorID.find( detectorID ) == _alreadyBookedSensorID.end() ) {
+            // we need to book now!
+            bookHistos( detectorID, false, xEtaCollection, yEtaCollection );
+          }
+
+          layerIndex   = _conversionIdMap[detectorID];
+          xZero        = _siPlanesLayerLayout->getSensitivePositionX(layerIndex); // mm
+          yZero        = _siPlanesLayerLayout->getSensitivePositionY(layerIndex); // mm
+          zZero        = _siPlanesLayerLayout->getSensitivePositionZ(layerIndex); // mm
+          zThickness   = _siPlanesLayerLayout->getSensitiveThickness(layerIndex); // mm
+          xPitch       = _siPlanesLayerLayout->getSensitivePitchX(layerIndex);    // mm
+          yPitch       = _siPlanesLayerLayout->getSensitivePitchY(layerIndex);    // mm
+          xSize        = _siPlanesLayerLayout->getSensitiveSizeX(layerIndex);     // mm
+          ySize        = _siPlanesLayerLayout->getSensitiveSizeY(layerIndex);     // mm
+          xPointing[0] = _siPlanesLayerLayout->getSensitiveRotation1(layerIndex); // was -1 ;
+          xPointing[1] = _siPlanesLayerLayout->getSensitiveRotation2(layerIndex); // was  0 ;
+          yPointing[0] = _siPlanesLayerLayout->getSensitiveRotation3(layerIndex); // was  0 ;
+          yPointing[1] = _siPlanesLayerLayout->getSensitiveRotation4(layerIndex); // was -1 ;
+
+        }
 
         if (  ( xPointing[0] == xPointing[1] ) && ( xPointing[0] == 0 ) ) {
           streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
@@ -524,8 +547,16 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
       if ( _etaCorrection == 1 ) {
 
-        EUTelEtaFunctionImpl * xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt(detectorID) );
-        EUTelEtaFunctionImpl * yEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( yEtaCollection->getElementAt(detectorID) );
+        EUTelEtaFunctionImpl * xEtaFunc = NULL;
+        EUTelEtaFunctionImpl * yEtaFunc = NULL;
+
+        if ( _etaVersion == 1 ) {
+          xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt(detectorID) );
+          yEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( yEtaCollection->getElementAt(detectorID) );
+        } else {
+          xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt( _etaMap[ detectorID ]) );
+          yEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( yEtaCollection->getElementAt( _etaMap[ detectorID ]) );
+        }
 
         bool anomalous = false;
         if ( ( xShift >= -0.5 ) && ( xShift <= 0.5 ) ) {
@@ -543,59 +574,36 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           streamlog_out ( DEBUG2 ) << "Found anomalous cluster\n" << ( * cluster ) << endl;
         }
 
+
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
         string tempHistoName;
         if ( _histogramSwitch ) {
-          {
-            stringstream ss;
-            ss  << _clusterCenterEtaHistoName << "-" << detectorID ;
-            tempHistoName = ss.str();
-          }
+          tempHistoName =  _clusterCenterEtaHistoName + "_" + to_string( detectorID ) ;
           if ( AIDA::IHistogram2D * histo = dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[ tempHistoName ] )) {
             histo->fill( xCorrection, yCorrection );
           }
 
-          {
-            stringstream ss;
-            ss  << _clusterCenterHistoName << "-" << detectorID ;
-            tempHistoName = ss.str();
-          }
+          tempHistoName =  _clusterCenterHistoName + "_" + to_string( detectorID ) ;
           if ( AIDA::IHistogram2D * histo = dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[ tempHistoName ] )) {
             histo->fill( xShift, yShift );
           }
 
-          {
-            stringstream ss;
-            ss << _clusterCenterEtaXHistoName << "-" << detectorID ;
-            tempHistoName = ss.str();
-          }
+          tempHistoName =  _clusterCenterEtaXHistoName + "_" + to_string( detectorID );
           if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ tempHistoName ] )) {
             histo->fill( xCorrection );
           }
 
-          {
-            stringstream ss;
-            ss << _clusterCenterXHistoName << "-" << detectorID ;
-            tempHistoName = ss.str();
-          }
+          tempHistoName = _clusterCenterXHistoName + "_" + to_string( detectorID );
           if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ tempHistoName ] )) {
             histo->fill( xShift );
           }
 
-          {
-            stringstream ss;
-            ss << _clusterCenterEtaYHistoName << "-" << detectorID ;
-            tempHistoName = ss.str();
-          }
+          tempHistoName = _clusterCenterEtaYHistoName + "_" + to_string( detectorID );
           if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ tempHistoName ] )) {
             histo->fill( yCorrection );
           }
 
-          {
-            stringstream ss;
-            ss << _clusterCenterYHistoName << "-" << detectorID ;
-            tempHistoName = ss.str();
-          }
+          tempHistoName = _clusterCenterYHistoName + "_" + to_string( detectorID );
           if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ tempHistoName ] )) {
             histo->fill( yShift );
           }
@@ -611,11 +619,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       string tempHistoName;
       if ( _histogramSwitch ) {
-        {
-          stringstream ss;
-          ss << _hitHistoLocalName << "-" << detectorID ;
-          tempHistoName = ss.str();
-        }
+        tempHistoName =  _hitHistoLocalName + "_" + to_string( detectorID );
         if ( AIDA::IHistogram2D* histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[ tempHistoName ]) )
           histo->fill(xDet, yDet);
         else {
@@ -639,30 +643,27 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       // not sure about the sign. At least it is working for the current
       // configuration but we need to double check it
       double sign = 0;
-      if      ( xPointing[0] < 0 )       sign = -1 ;
-      else if ( xPointing[0] > 0 )       sign =  1 ;
+      if      ( xPointing[0] < -0.7 )       sign = -1 ;
+      else if ( xPointing[0] > 0.7 )       sign =  1 ;
       else {
-        if       ( xPointing[1] < 0 )    sign = -1 ;
-        else if  ( xPointing[1] > 0 )    sign =  1 ;
+        if       ( xPointing[1] < -0.7 )    sign = -1 ;
+        else if  ( xPointing[1] > 0.7 )    sign =  1 ;
       }
-      telPos[0] -= sign * ( xZero + xSize/2 );
+      telPos[0] += xZero - sign * xSize/2;
 
-      if      ( yPointing[0] < 0 )       sign = -1 ;
-      else if ( yPointing[0] > 0 )       sign =  1 ;
+      if      ( yPointing[0] < -0.7 )       sign = -1 ;
+      else if ( yPointing[0] > 0.7 )       sign =  1 ;
       else {
-        if       ( yPointing[1] < 0 )    sign = -1 ;
-        else if  ( yPointing[1] > 0 )    sign =  1 ;
+        if       ( yPointing[1] < -0.7 )    sign = -1 ;
+        else if  ( yPointing[1] > 0.7 )    sign =  1 ;
       }
-      telPos[1] -= sign * ( yZero + ySize/2 );
+      telPos[1] += yZero - sign * ySize/2;
+
       telPos[2] = zZero + 0.5 * zThickness;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       if ( _histogramSwitch ) {
-        {
-          stringstream ss;
-          ss << _hitHistoTelescopeName << "-" << detectorID ;
-          tempHistoName = ss.str();
-        }
+        tempHistoName = _hitHistoTelescopeName + "_" + to_string( detectorID );
         AIDA::IHistogram2D * histo2D = dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[ tempHistoName ] );
         if ( histo2D ) histo2D->fill( telPos[0], telPos[1] );
         else {
@@ -671,15 +672,15 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           _histogramSwitch = false;
         }
 
-	if ( _3DHistoSwitch ) {
-	  AIDA::IHistogram3D * histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotName ] );
-	  if ( histo3D ) histo3D->fill( telPos[0], telPos[1], telPos[2] );
-	  else {
-	    streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
-				      << ".\nDisabling histogramming from now on " << endl;
-	    _histogramSwitch = false;
-	  }
-	}
+        if ( _3DHistoSwitch ) {
+          AIDA::IHistogram3D * histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotName ] );
+          if ( histo3D ) histo3D->fill( telPos[0], telPos[1], telPos[2] );
+          else {
+            streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
+                                      << ".\nDisabling histogramming from now on " << endl;
+            _histogramSwitch = false;
+          }
+        }
       }
 #endif
 
@@ -717,94 +718,188 @@ void EUTelHitMaker::end() {
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
 }
 
-void EUTelHitMaker::bookHistos() {
+void EUTelHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection * xEtaCollection, LCCollection * yEtaCollection) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-  try {
-    streamlog_out ( MESSAGE4 ) <<  "Booking histograms" << endl;
+  int layerIndex = 0;
+  if ( !isDUT ) {
+    layerIndex   = _conversionIdMap[ sensorID ];
+  }
 
-    string tempHistoName;
+  string tempHistoName;
+  string basePath = "plane_" + to_string( sensorID ) ;
+  AIDAProcessor::tree(this)->mkdir(basePath.c_str());
+  basePath = basePath + "/";
 
-    // histograms are grouped into folders named after the
-    // detector. This requires to loop on detector now.
-    for (int iDet = 0 ; iDet < _siPlanesParameters->getSiPlanesNumber(); iDet++) {
+  tempHistoName = _hitHistoLocalName + "_" + to_string( sensorID ) ;
 
-      string basePath;
-      {
-        stringstream ss ;
-        ss << "plane-" << iDet;
-        basePath = ss.str();
-      }
-      AIDAProcessor::tree(this)->mkdir(basePath.c_str());
-      basePath = basePath + "/";
+  double xMin =  0;
+  double xMax =  (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveSizeX() : _siPlanesLayerLayout->getSensitiveSizeX ( layerIndex );
 
-      {
-        stringstream ss ;
-        ss <<  _hitHistoLocalName << "-" << iDet ;
-        tempHistoName = ss.str();
-      }
+  double yMin =  0;
+  double yMax =  (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveSizeY() :_siPlanesLayerLayout->getSensitiveSizeY ( layerIndex );
+
+  int xNBin =  (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveNpixelX() : _siPlanesLayerLayout->getSensitiveNpixelX( layerIndex );
+  int yNBin =  (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveNpixelY() : _siPlanesLayerLayout->getSensitiveNpixelY( layerIndex );
 
 
+  AIDA::IHistogram2D * hitHistoLocal = AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
+                                                                                                 xNBin, xMin, xMax, yNBin, yMin, yMax );
+  if ( hitHistoLocal ) {
+    hitHistoLocal->setTitle("Hit map in the detector local frame of reference");
+    _aidaHistoMap.insert( make_pair( tempHistoName, hitHistoLocal ) );
+  } else {
+    streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                              << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+    _histogramSwitch = false;
+  }
 
-      double xMin =  0;
-      double xMax =  _siPlanesLayerLayout->getSensitiveSizeX ( iDet );
+  // 2 should be enough because it
+  // means that the sensor is wrong
+  // by all its size.
+  double safetyFactor = 2.0;
+  double xPosition = (isDUT) ? _siPlanesLayerLayout->getDUTSensitivePositionX( ) : _siPlanesLayerLayout->getSensitivePositionX( layerIndex );
+  double yPosition = (isDUT) ? _siPlanesLayerLayout->getDUTSensitivePositionY( ) : _siPlanesLayerLayout->getSensitivePositionY( layerIndex );
+  double xSize     = (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveSizeX ( )    : _siPlanesLayerLayout->getSensitiveSizeX ( layerIndex );
+  double ySize     = (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveSizeY ( )    : _siPlanesLayerLayout->getSensitiveSizeY ( layerIndex );
+  int xBin         = (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveNpixelX( )   : _siPlanesLayerLayout->getSensitiveNpixelX( layerIndex );
+  int yBin         = (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveNpixelY( )   : _siPlanesLayerLayout->getSensitiveNpixelY( layerIndex );
 
-      double yMin =  0;
-      double yMax =  _siPlanesLayerLayout->getSensitiveSizeY ( iDet );
+  xMin = safetyFactor * ( xPosition - ( 0.5 * xSize ));
+  xMax = safetyFactor * ( xPosition + ( 0.5 * xSize ));
 
-      int xNBin =  _siPlanesLayerLayout->getSensitiveNpixelX( iDet );
-      int yNBin =  _siPlanesLayerLayout->getSensitiveNpixelY( iDet );
+  yMin = safetyFactor * ( yPosition - ( 0.5 * ySize ));
+  yMax = safetyFactor * ( yPosition + ( 0.5 * ySize ));
+
+  xNBin = static_cast< int > ( safetyFactor  * xBin );
+  yNBin = static_cast< int > ( safetyFactor  * yBin );
+
+  tempHistoName =  _hitHistoTelescopeName + "_" + to_string( sensorID );
+  AIDA::IHistogram2D * hitHistoTelescope =
+    AIDAProcessor::histogramFactory(this)->createHistogram2D( ( basePath + tempHistoName ).c_str(),
+                                                              xNBin, xMin, xMax, yNBin, yMin, yMax );
+
+  if ( hitHistoTelescope ) {
+    hitHistoTelescope->setTitle("Hit map in the telescope frame of reference");
+    _aidaHistoMap.insert( make_pair ( tempHistoName, hitHistoTelescope ) );
+  } else {
+    streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                              << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+    _histogramSwitch = false;
+  }
 
 
-      AIDA::IHistogram2D * hitHistoLocal = AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
-                                                                                                     xNBin, xMin, xMax, yNBin, yMin, yMax );
-      if ( hitHistoLocal ) {
-        hitHistoLocal->setTitle("Hit map in the detector local frame of reference");
-        _aidaHistoMap.insert( make_pair( tempHistoName, hitHistoLocal ) );
-      } else {
-        streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                  << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-        _histogramSwitch = false;
-      }
+  if ( _etaCorrection && xEtaCollection != NULL && yEtaCollection != NULL ) {
 
-      // 2 should be enough because it
-      // means that the sensor is wrong
-      // by all its size.
-      double safetyFactor = 2.0;
+    EUTelEtaFunctionImpl * xEtaFunc = NULL, * yEtaFunc = NULL;
 
-      xMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( iDet ) -
-                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( iDet ) ));
-      xMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( iDet ) +
-                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( iDet )));
+    if ( _etaVersion >= 2 ) {
 
-      yMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( iDet ) -
-                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( iDet )));
-      yMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( iDet ) +
-                                     ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( iDet )) );
+      xEtaFunc = static_cast< EUTelEtaFunctionImpl * > ( xEtaCollection->getElementAt( _etaMap[ sensorID ] ) );
+      yEtaFunc = static_cast< EUTelEtaFunctionImpl * > ( yEtaCollection->getElementAt( _etaMap[ sensorID ] ) );
 
-      xNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( iDet );
-      yNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( iDet );
+    } else {
 
-      {
-        stringstream ss ;
-        ss <<  _hitHistoTelescopeName << "-" << iDet ;
-        tempHistoName = ss.str();
-      }
-      AIDA::IHistogram2D * hitHistoTelescope =
-        AIDAProcessor::histogramFactory(this)->createHistogram2D( ( basePath + tempHistoName ).c_str(),
-                                                                  xNBin, xMin, xMax, yNBin, yMin, yMax );
+      xEtaFunc = static_cast< EUTelEtaFunctionImpl * > ( xEtaCollection->getElementAt( sensorID  ) );
+      yEtaFunc = static_cast< EUTelEtaFunctionImpl * > ( yEtaCollection->getElementAt( sensorID  ) );
+    }
+ 
+      int xNoOfBin = xEtaFunc->getNoOfBin();
+      int yNoOfBin = yEtaFunc->getNoOfBin();
+      string tempHistoName = _clusterCenterEtaHistoName + "_" + to_string( sensorID ) ;
 
-      if ( hitHistoTelescope ) {
-        hitHistoTelescope->setTitle("Hit map in the telescope frame of reference");
-        _aidaHistoMap.insert( make_pair ( tempHistoName, hitHistoTelescope ) );
-      } else {
-        streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                  << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-        _histogramSwitch = false;
-      }
+    AIDA::IHistogram2D * clusterCenterEta =
+      AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName ).c_str(),
+                                                                1* xNoOfBin, -.5, +.5, 1 * yNoOfBin, -.5, +.5);
+    if ( clusterCenterEta ) {
+      clusterCenterEta->setTitle("Position of the cluster center (Eta corrected)");
+      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEta ) );
+    } else {
+      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+      _histogramSwitch = false;
     }
 
+
+    tempHistoName = _clusterCenterHistoName + "_" + to_string( sensorID );
+    AIDA::IHistogram2D * clusterCenter =
+      AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName ).c_str(),
+                                                                1* xNoOfBin, -.5, +.5, 1 * yNoOfBin, -.5, +.5);
+    if ( clusterCenter ) {
+      clusterCenterEta->setTitle("Position of the cluster center");
+      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenter ) );
+    } else {
+      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+      _histogramSwitch = false;
+    }
+
+
+    tempHistoName = _clusterCenterEtaXHistoName + "_" + to_string( sensorID );
+    AIDA::IHistogram1D * clusterCenterEtaX =
+      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                1 * xNoOfBin, -0.5, +0.5 );
+    if ( clusterCenterEtaX ) {
+      clusterCenterEtaX->setTitle("Projection along X of the cluster center (Eta corrected)");
+      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEtaX ) );
+    } else {
+      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+      _histogramSwitch = false;
+    }
+
+    tempHistoName = _clusterCenterXHistoName + "_" + to_string( sensorID );
+    AIDA::IHistogram1D * clusterCenterX =
+      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                1 * xNoOfBin, -0.5, +0.5 );
+    if ( clusterCenterX ) {
+      clusterCenterX->setTitle("Projection along X of the cluster center");
+      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterX ) );
+    } else {
+      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+      _histogramSwitch = false;
+    }
+
+    tempHistoName = _clusterCenterEtaYHistoName + "_" + to_string( sensorID );
+
+    AIDA::IHistogram1D * clusterCenterEtaY =
+      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                1 * xNoOfBin, -0.5, +0.5 );
+    if ( clusterCenterEtaY ) {
+      clusterCenterEtaY->setTitle("Projection along Y of the cluster center (Eta corrected)");
+      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEtaY ) );
+    } else {
+      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+      _histogramSwitch = false;
+    }
+
+    tempHistoName =  _clusterCenterYHistoName + "_" + to_string( sensorID );
+    AIDA::IHistogram1D * clusterCenterY =
+      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                1 * xNoOfBin, -0.5, +0.5 );
+    if ( clusterCenterY ) {
+      clusterCenterY->setTitle("Projection along Y of the cluster center");
+      _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterY ) );
+    } else {
+      streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+      _histogramSwitch = false;
+    }
+
+    }
+
+  _alreadyBookedSensorID.insert( sensorID );
+  
+#endif // AIDA
+
+}
+
+void EUTelHitMaker::book3DHisto() {
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     // we have to found the boundaries of this histograms. Let's take
     // the outer positions in all directions
     double xMin  =      numeric_limits< double >::max();
@@ -829,81 +924,88 @@ void EUTelHitMaker::bookHistos() {
 
     }
 
+    if  ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
+      // x axis
+      xMin  = min( _siPlanesLayerLayout->getDUTSensitivePositionX(  ) - ( 0.5  * _siPlanesLayerLayout->getDUTSensitiveSizeX(  )), xMin);
+      xMax  = max( _siPlanesLayerLayout->getDUTSensitivePositionX(  ) + ( 0.5  * _siPlanesLayerLayout->getDUTSensitiveSizeX(  )), xMax);
+      xNBin = max( _siPlanesLayerLayout->getDUTSensitiveNpixelX(  ), xNBin );
+
+      // y axis
+      yMin  = min( _siPlanesLayerLayout->getDUTSensitivePositionY(  ) - ( 0.5  * _siPlanesLayerLayout->getDUTSensitiveSizeY(  )), yMin);
+      yMax  = max( _siPlanesLayerLayout->getDUTSensitivePositionY(  ) + ( 0.5  * _siPlanesLayerLayout->getDUTSensitiveSizeY(  )), yMax);
+      yNBin = max( _siPlanesLayerLayout->getDUTSensitiveNpixelY(  ), yNBin );
+
+    }
+
     if ( _3DHistoSwitch ) {
       // since we may still have alignment problem, we have to take a
       // safety factor on the x and y direction especially.
       // here I take something less than 2 because otherwise I will have
       // a 200MB histogram.
       double safetyFactor = 1.2;
-      
+
       double xDistance = std::abs( xMax - xMin ) ;
       double xCenter   = ( xMax + xMin ) / 2 ;
       xMin  = xCenter - safetyFactor * ( xDistance / 2 );
       xMax  = xCenter + safetyFactor * ( xDistance / 2 );
       xNBin = static_cast< int > ( xNBin * safetyFactor );
-      
-      // generate the x axis binning 
+
+      // generate the x axis binning
       vector< double > xAxis;
       double step = xDistance / xNBin;
       for ( int i = 0 ; i < xNBin ; ++i ) {
-	xAxis.push_back ( xMin + i * step );
+        xAxis.push_back ( xMin + i * step );
       }
-      
+
       double yDistance = std::abs( yMax - yMin ) ;
       double yCenter   = ( yMax + yMin ) / 2 ;
       yMin  = yCenter - safetyFactor * ( yDistance / 2 );
       yMax  = yCenter + safetyFactor * ( yDistance / 2 );
       yNBin = static_cast< int > ( yNBin * safetyFactor );
-      
+
       // generate the y axis binning
       vector< double > yAxis;
       step = yDistance / yNBin;
       for ( int i = 0 ; i < yNBin ; ++i ) {
-	yAxis.push_back( yMin + i * step ) ;
+        yAxis.push_back( yMin + i * step ) ;
       }
-      
-      
+
+
       // generate the z axis but not equally spaced!
       double safetyMargin = 10; // this is mm
       vector< double > zAxis;
-      for ( int i = 0 ; i < 2 * _siPlanesParameters->getSiPlanesNumber(); ++i ) {
-	double zPos =  _siPlanesLayerLayout->getSensitivePositionZ( i/2 );
-	zAxis.push_back( zPos - safetyMargin) ;
-	++i;
-	zAxis.push_back( zPos + safetyMargin );
+
+      vector< double > zPos;
+      for ( int i = 0 ; i < _siPlanesParameters->getSiPlanesNumber(); ++i ) {
+        zPos.push_back( _siPlanesLayerLayout->getSensitivePositionZ( i ) );
       }
-      
-      
-      AIDA::IHistogram3D * densityPlot = AIDAProcessor::histogramFactory(this)->createHistogram3D( _densityPlotName , 
-												   "Hit position in the telescope frame of reference",
-												   xAxis, yAxis, zAxis, "");
-      
+
+      if ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
+        zPos.push_back(  _siPlanesLayerLayout->getDUTSensitivePositionZ(  ) );
+      }
+
+      sort( zPos.begin(), zPos.end() );
+
+      for ( size_t pos = 0; pos < zPos.size(); ++pos ) {
+        zAxis.push_back( zPos.at( pos ) - safetyMargin );
+        zAxis.push_back( zPos.at( pos ) + safetyMargin );
+      }
+
+      AIDA::IHistogram3D * densityPlot = AIDAProcessor::histogramFactory(this)->createHistogram3D( _densityPlotName ,
+                                                                                                   "Hit position in the telescope frame of reference",
+                                                                                                   xAxis, yAxis, zAxis, "");
+
       if ( densityPlot ) {
-	_aidaHistoMap.insert( make_pair ( _densityPlotName, densityPlot ) ) ;
+        _aidaHistoMap.insert( make_pair ( _densityPlotName, densityPlot ) ) ;
       } else {
-	streamlog_out ( ERROR1 )  << "Problem booking the " << (_densityPlotName) << ".\n"
-				  << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-	_histogramSwitch = false;
+        streamlog_out ( ERROR1 )  << "Problem booking the " << (_densityPlotName) << ".\n"
+                                  << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
       }
     }
 
-  } catch (lcio::Exception& e ) {
-
-    streamlog_out ( ERROR1 ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
-    string answer;
-    while ( true ) {
-      streamlog_out ( ERROR1 ) <<  "[q]/[c]" << endl;
-      cin >> answer;
-      transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
-      if ( answer == "q" ) {
-        exit(-1);
-      } else if ( answer == "c" )
-        _histogramSwitch = false;
-      break;
-    }
-  }
-#endif
+#endif // AIDA
 }
 
 
-#endif
+#endif // GEAR

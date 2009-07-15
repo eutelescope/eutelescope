@@ -26,6 +26,7 @@
 // system includes <>
 #include <string>
 #include <map>
+#include <set>
 
 
 #undef MARLIN_USE_HISTOGRAM
@@ -127,7 +128,7 @@ namespace eutelescope {
    *  @param OutputEtaFileName The name of the output file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.9 2008-08-23 12:30:51 bulgheroni Exp $
+   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.10 2009-07-15 17:21:28 bulgheroni Exp $
    *
    *
    */
@@ -330,36 +331,35 @@ namespace eutelescope {
     bool _isEtaCalculationFinished;
 
     //! Pseudo histograms for CoG along x
-    /*! This is a vector of pointers to pseudo histogram objects one
-     *  for each detector in the telescope. Those histograms are
-     *  filled with signed distanced between the CoG and the seed
-     *  coordinates
+    /*! This is an associative collection of pseudo histogram
+     *  pointer. The key value is the sensor ID.
      */
-    std::vector<EUTelPseudo1DHistogram* > _cogHistogramX;
+    std::map< int, EUTelPseudo1DHistogram * > _cogHistogramX;
+
 
     //! Pseudo histograms for CoG along y
-    /*! This is a vector of pointers to pseudo histogram objects one
-     *  for each detector in the telescope. Those histograms are
-     *  filled with signed distanced between the CoG and the seed
-     *  coordinates
+    /*! This is an associative collection of pseudo histogram
+     *  pointer. The key value is the sensor ID.
      */
-    std::vector<EUTelPseudo1DHistogram* > _cogHistogramY;
+    std::map< int, EUTelPseudo1DHistogram * > _cogHistogramY;
 
     //! Pseudo histograms with the CoG integral along x
-    /*! This is a vector of pointers to pseudo histogram objects one
-     *  for each detector in the telescope. Those pseudo histograms
+    /*! This is an associative collection of pseudo histogram
+     *  pointer. The key value is the sensor ID.
+     *  Those pseudo histograms
      *  will be filled during the end() with the integral function of
      *  _cogHistogramX
      */
-    std::vector<EUTelPseudo1DHistogram* > _integralHistoX;
+    std::map< int,EUTelPseudo1DHistogram* > _integralHistoX;
 
     //! Pseudo histograms with the CoG integral along y
-    /*! This is a vector of pointers to pseudo histogram objects one
-     *  for each detector in the telescope. Those pseudo histograms
+    /*! This is an associative collection of pseudo histogram
+     *  pointer. The key value is the sensor ID.
+     *  Those pseudo histograms
      *  will be filled during the end() with the integral function of
      *  _cogHistogramY
      */
-    std::vector<EUTelPseudo1DHistogram* > _integralHistoY;
+    std::map<int, EUTelPseudo1DHistogram* > _integralHistoY;
 
     //! Number of detector planes in the run
     /*! This is the total number of detector saved into this input
@@ -383,6 +383,13 @@ namespace eutelescope {
      * events are counted from 0 and on a run base
      */
     int _iEvt;
+
+    //! The left end of the pseudo histogram
+    static const double _min;
+
+    //! The right end of the pseudo histogram
+    static const double _max;
+
 
 #ifdef MARLIN_USE_HISTOGRAM
     //! Base name for CoG histogram along x
@@ -427,7 +434,12 @@ namespace eutelescope {
      *  their original cast.
      */
     std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
+
+
 #endif
+
+    //! Already booked SensorID
+    std::set< int > _alreadyBookedSensorID;
 
   };
 

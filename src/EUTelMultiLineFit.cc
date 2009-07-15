@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMultiLineFit.cc,v 1.28 2009-05-20 16:30:23 roloff Exp $
+// Version: $Id: EUTelMultiLineFit.cc,v 1.29 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -288,11 +288,12 @@ void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
   // in the xml file. If the numbers are different, instead of barely
   // quitting ask the user what to do.
 
-  /*
   if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
     streamlog_out ( ERROR2 ) << "Error during the geometry consistency check: " << endl;
     streamlog_out ( ERROR2 ) << "The run header says the GeoID is " << header->getGeoID() << endl;
     streamlog_out ( ERROR2 ) << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID() << endl;
+
+#ifdef EUTEL_INTERACTIVE
     string answer;
     while (true) {
       streamlog_out ( ERROR2 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
@@ -305,8 +306,8 @@ void EUTelMultiLineFit::processRunHeader (LCRunHeader * rdr) {
         break;
       }
     }
-  }
-  */
+#endif
+}
 
   // now book histograms plz...
   if ( isFirstEvent() )  bookHistos();

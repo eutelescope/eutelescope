@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.14 2009-04-08 11:31:05 bulgheroni Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.15 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,6 +10,11 @@
  *   header with author names in all development based on this file.
  *
  */
+
+// since v00-00-09, this processor requires GEAR
+// mainly for geometry initialization.
+
+#if defined(USE_GEAR)
 
 // eutelescope includes ".h"
 #include "EUTelCorrelator.h"
@@ -33,11 +38,9 @@
 #include <AIDA/ITree.h>
 #endif
 
-#if defined(USE_GEAR)
 // gear includes <.h>
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
-#endif
 
 // lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
@@ -59,9 +62,9 @@ using namespace eutelescope;
 // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelCorrelator::_clusterXCorrelationHistoName   = "ClusterXCorrelationHisto";
+std::string EUTelCorrelator::_clusterYCorrelationHistoName   = "ClusterYCorrelationHisto";
 std::string EUTelCorrelator::_hitXCorrelationHistoName       = "HitXCorrelatioHisto";
 std::string EUTelCorrelator::_hitYCorrelationHistoName       = "HitYCorrelationHisto";
-std::string EUTelCorrelator::_clusterYCorrelationHistoName   = "ClusterYCorrelationHisto";
 #endif
 
 EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
@@ -87,17 +90,12 @@ void EUTelCorrelator::init() {
   // usually a good idea to
   printParameters ();
 
+  // clear the sensor ID vector
+  _sensorIDVec.clear();
+
   // set to zero the run and event counters
   _iRun = 0;
   _iEvt = 0;
-
-#ifndef USE_GEAR
-
-  // GEAR is really needed only if we want to do correlation among
-  // hits. At this point, we still don't know if we will have to do
-  // hit correlation or not, keep the possibility still open.
-
-#else
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
@@ -112,10 +110,16 @@ void EUTelCorrelator::init() {
   _siPlaneZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
   for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
     _siPlaneZPosition[ iPlane ] = _siPlanesLayerLayout->getLayerPositionZ(iPlane);
+    int sensorID = _siPlanesLayerLayout->getID( iPlane );
+
+    _sensorIDVec.push_back( sensorID );
+    _minX[ sensorID ] = 0;
+    _minY[ sensorID ] = 0;
+    _maxX[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelX( iPlane ) - 1;
+    _maxY[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelY( iPlane ) - 1;
+
+
   }
-
-#endif
-
 
 
 }
@@ -124,31 +128,6 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
 
 
   EUTelRunHeaderImpl * runHeader = new EUTelRunHeaderImpl( rdr ) ;
-
-  _noOfDetectors = runHeader->getNoOfDetector();
-
-  // the four vectors containing the first and the last pixel
-  // along both the directions
-  _minX = runHeader->getMinX();
-  _maxX = runHeader->getMaxX();
-  _minY = runHeader->getMinY();
-  _maxY = runHeader->getMaxY();
-
-
-  // perform some consistency check in case we have GEAR support
-#ifdef USE_GEAR
-
-  // the run header contains the number of detectors. This number
-  // should be in principle be the same as the number of layers in the
-  // geometry description
-  if ( runHeader->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) {
-    streamlog_out ( ERROR4 ) << "Error during the geometry consistency check: " << endl
-                             << "The run header says there are " << runHeader->getNoOfDetector()
-                             << " silicon detectors " << endl
-                             << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber()
-                             << " silicon planes" << endl;
-    exit(-1);
-  }
 
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
@@ -166,7 +145,7 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
                              << "The run header says the GeoID is " << runHeader->getGeoID() << endl
                              << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID()
                              << endl;
-   
+
 #ifdef EUTEL_INTERACTIVE
     string answer;
     while (true) {
@@ -180,11 +159,9 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
         break;
       }
     }
-#endif
+
+#endif // EUTEL_INTERACTIVE
   }
-
-#endif // USE_GEAR
-
 
   delete runHeader;
 
@@ -231,7 +208,6 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
       _hasClusterCollection = false;
     }
 
-#ifdef USE_GEAR
     try {
       // let's check if we have hit collections
 
@@ -243,14 +219,6 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
       _hasHitCollection = false;
     }
-
-#else
-    // if we don't have GEAR, so we can't process hit even if the hit
-    // collection is available in the file
-
-    _hasHitCollection = false;
-
-#endif // USE_GEAR
 
     bookHistos();
 
@@ -398,8 +366,6 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
 
 
-#ifdef USE_GEAR
-
     if ( _hasHitCollection ) {
 
       LCCollectionVec * inputHitCollection = static_cast< LCCollectionVec *>
@@ -441,9 +407,6 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
       }
     }
 
-#endif // USE_GEAR
-
-
   } catch (DataNotAvailableException& e  ) {
 
     streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
@@ -457,11 +420,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 void EUTelCorrelator::end() {
 
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
-
-#if defined(USE_GEAR)
   delete [] _siPlaneZPosition;
-#endif
-
 }
 
 void EUTelCorrelator::bookHistos() {
@@ -498,7 +457,9 @@ void EUTelCorrelator::bookHistos() {
     string tempHistoTitle ;
 
 
-    for ( int row = 0 ; row < _noOfDetectors; ++row ) {
+    for ( size_t r = 0 ; r < _sensorIDVec.size(); ++r ) {
+
+      int row = _sensorIDVec.at( r );
 
       vector< AIDA::IHistogram2D * > innerVectorXCluster;
       vector< AIDA::IHistogram2D * > innerVectorYCluster;
@@ -507,19 +468,16 @@ void EUTelCorrelator::bookHistos() {
       map< unsigned int , AIDA::IHistogram2D * > innerMapYHit;
 
 
-      for ( int col = 0 ; col < _noOfDetectors; ++col ) {
+      for ( size_t c = 0 ; c < _sensorIDVec.size(); ++c ) {
+
+        int col = _sensorIDVec.at( c );
 
         if ( col != row ) {
 
           //we create histograms for X and Y Cluster correlation
           if ( _hasClusterCollection ) {
-            {
-              stringstream ss;
-              ss << "ClusterX/" <<  _clusterXCorrelationHistoName << "_d" << row
-                 << "_d" << col ;
-
-              tempHistoName = ss.str();
-            }
+            tempHistoName = "ClusterX/" + _clusterXCorrelationHistoName + "_d"
+              + to_string( row ) + "_d" + to_string( col );
 
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
 
@@ -534,26 +492,11 @@ void EUTelCorrelator::bookHistos() {
               AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
                                                                         xBin, xMin, xMax, yBin, yMin, yMax );
 
-            {
-
-              stringstream tt ;
-              tt << "XClusterCorrelation" << "_d" << row
-                 << "_d" << col ;
-              tempHistoTitle = tt.str();
-
-            }
-
+            tempHistoTitle = "XClusterCorrelation_d" + to_string( row ) + "_d" + to_string( col );
             histo2D->setTitle( tempHistoTitle.c_str() );
             innerVectorXCluster.push_back ( histo2D );
 
-
-            {
-              stringstream ss;
-              ss << "ClusterY/" <<  _clusterYCorrelationHistoName << "_d" << row
-                 << "_d" << col ;
-
-              tempHistoName = ss.str();
-            }
+            tempHistoName =  "ClusterY/" +  _clusterYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
 
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
 
@@ -568,21 +511,13 @@ void EUTelCorrelator::bookHistos() {
             histo2D =
               AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
                                                                         xBin, xMin, xMax, yBin, yMin, yMax );
-            {
-              stringstream tt ;
-              tt << "YClusterCorrelation" << "_d" << row
-                 << "_d" << col ;
-              tempHistoTitle = tt.str();
-            }
-
+            tempHistoTitle =  "ClusterY/" +  _clusterYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             histo2D->setTitle( tempHistoTitle.c_str()) ;
 
             innerVectorYCluster.push_back ( histo2D );
 
           }
 
-
-#ifdef USE_GEAR
 
           // the idea of using ICloud2D instead of H2D is interesting,
           // but because of a problem when the clouds is converted, I
@@ -597,33 +532,23 @@ void EUTelCorrelator::bookHistos() {
             double safetyFactor = 2.0; // 2 should be enough because it
             // means that the sensor is wrong
             // by all its size.
-            double rowMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( row ) -
-                                             ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( row ) ));
-            double rowMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( row ) +
-                                             ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( row )));
+            double rowMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( r ) -
+                                             ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( r ) ));
+            double rowMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( r ) +
+                                             ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( r )));
 
-            double colMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( col ) -
-                                             ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( col )));
+            double colMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( c ) -
+                                             ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( c )));
             double colMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( col ) +
-                                             ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( col )) );
+                                             ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( c )) );
 
-            int colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( col );
-            int rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( row );
+            int colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( c );
+            int rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( r );
 
-            {
-              stringstream ss;
-              ss << "HitX/" << _hitXCorrelationHistoName << "_d" << row << "_d" << col;
-              tempHistoName = ss.str();
-
-            }
-
+            tempHistoName =  "HitX/" +  _hitXCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
 
-            string tempHistoTitle ;
-            stringstream tt ;
-            tt << "XHitCorrelation" << "_d" << row
-               << "_d" << col ;
-            tempHistoTitle = tt.str();
+            string tempHistoTitle =  "HitX/" +  _hitXCorrelationHistoName + "_d" + to_string( row ) + "_d" +  to_string( col );
 
             AIDA::IHistogram2D * histo2D =
               AIDAProcessor::histogramFactory( this )->createHistogram2D( tempHistoName.c_str(), colNBin, colMin, colMax,
@@ -632,38 +557,23 @@ void EUTelCorrelator::bookHistos() {
 
             innerMapXHit[ _siPlanesLayerLayout->getID( col ) ] =  histo2D ;
 
-	   
             // now the hit on the Y direction
-            rowMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( row ) -
-                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( row ) ));
-            rowMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( row ) +
-                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( row )));
+            rowMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( r ) -
+                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( r ) ));
+            rowMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( r ) +
+                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( r )));
 
-            colMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( col ) -
-                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( col )));
-            colMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( col ) +
-                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( col )) );
+            colMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( c ) -
+                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( c )));
+            colMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( c ) +
+                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( c )) );
 
-            colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( col );
-            rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( row );
+            colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( c );
+            rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( r );
 
-            {
-              stringstream ss;
-              ss << "HitY/" << _hitYCorrelationHistoName << "_d" << row << "_d" << col;
-              tempHistoName = ss.str();
-
-            }
-
-
+            tempHistoName =  "HitY/" + _hitYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             streamlog_out( DEBUG ) << "Booking cloud " << tempHistoName << endl;
-
-            {
-              stringstream tt ;
-              tt << "YHitCorrelation" << "_d" << row
-                 << "_d" << col ;
-              tempHistoTitle = tt.str();
-            }
-
+            tempHistoTitle = "YHitCorrelation_d" + to_string( row ) + "_d" + to_string( col ) ;
             histo2D =
               AIDAProcessor::histogramFactory( this )->createHistogram2D( tempHistoName.c_str(), colNBin, colMin, colMax,
                                                                           rowNBin, rowMin, rowMax);
@@ -673,8 +583,6 @@ void EUTelCorrelator::bookHistos() {
 
           }
 
-#endif // USE_GEAR
-
         } else {
 
           if ( _hasClusterCollection ) {
@@ -683,10 +591,8 @@ void EUTelCorrelator::bookHistos() {
           }
 
           if ( _hasHitCollection ) {
-#ifdef USE_GEAR
-            innerMapXHit[ _siPlanesLayerLayout->getID( col )  ] = NULL ;
-            innerMapYHit[ _siPlanesLayerLayout->getID( col )  ] = NULL ;
-#endif
+            innerMapXHit[ col ] = NULL ;
+            innerMapYHit[ col  ] = NULL ;
           }
 
         }
@@ -699,10 +605,8 @@ void EUTelCorrelator::bookHistos() {
       }
 
       if ( _hasHitCollection ) {
-#ifdef USE_GEAR
-        _hitXCorrelationMatrix[ _siPlanesLayerLayout->getID( row ) ] = innerMapXHit;
-        _hitYCorrelationMatrix[ _siPlanesLayerLayout->getID( row ) ] = innerMapYHit;
-#endif
+        _hitXCorrelationMatrix[ row ] = innerMapXHit;
+        _hitYCorrelationMatrix[ row ] = innerMapYHit;
       }
     }
 
@@ -715,7 +619,7 @@ void EUTelCorrelator::bookHistos() {
 #endif
 }
 
-#ifdef USE_GEAR
+
 int EUTelCorrelator::guessSensorID( TrackerHitImpl * hit ) {
 
   int sensorID = -1;
@@ -737,4 +641,5 @@ int EUTelCorrelator::guessSensorID( TrackerHitImpl * hit ) {
 
   return sensorID;
 }
+
 #endif // USE_GEAR

@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.20 2008-08-23 12:30:51 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.21 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -59,6 +59,7 @@
 #include <sstream>
 #include <memory>
 #include <cstdlib>
+#include <map>
 
 using namespace std;
 using namespace lcio;
@@ -66,14 +67,17 @@ using namespace marlin;
 using namespace eutelescope;
 
 #ifdef MARLIN_USE_HISTOGRAM
-string EUTelCalculateEtaProcessor::_cogHistogramXName = "CoG-X";
-string EUTelCalculateEtaProcessor::_cogHistogramYName = "CoG-Y";
-string EUTelCalculateEtaProcessor::_cogIntegralXName  = "Integral-CoG-X";
-string EUTelCalculateEtaProcessor::_cogIntegralYName  = "Integral-CoG-Y";
-string EUTelCalculateEtaProcessor::_etaHistoXName     = "EtaProfile-X";
-string EUTelCalculateEtaProcessor::_etaHistoYName     = "EtaProfile-Y";
-string EUTelCalculateEtaProcessor::_cogHisto2DName    = "CoG-Histo2D";
+string EUTelCalculateEtaProcessor::_cogHistogramXName = "CoG_X";
+string EUTelCalculateEtaProcessor::_cogHistogramYName = "CoG_Y";
+string EUTelCalculateEtaProcessor::_cogIntegralXName  = "Integral_CoG_X";
+string EUTelCalculateEtaProcessor::_cogIntegralYName  = "Integral_CoG_Y";
+string EUTelCalculateEtaProcessor::_etaHistoXName     = "EtaProfile_X";
+string EUTelCalculateEtaProcessor::_etaHistoYName     = "EtaProfile_Y";
+string EUTelCalculateEtaProcessor::_cogHisto2DName    = "CoG_Histo2D";
 #endif
+
+const double EUTelCalculateEtaProcessor::_min = -0.5;
+const double EUTelCalculateEtaProcessor::_max =  0.5;
 
 EUTelCalculateEtaProcessor::EUTelCalculateEtaProcessor () : Processor("EUTelCalculateEtaProcessor") {
 
@@ -173,212 +177,43 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
 
   if ( !_isEtaCalculationFinished ) {
 
-    // For this specific processor the binning information are not
-    // taken from the EUTelHistogramManager since the histo boundiares
-    // are fixed from -1/2 to 1/2 and the number of divisions is an
-    // important parameter available in the steering file.
+    // prepare the output file
+    LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
 
-    const double min = -0.5;
-    const double max = +0.5;
-    int xNoOfBin =  _noOfBin[0];
-    int yNoOfBin =  _noOfBin[1];
-
-    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-      // the pseudo histograms are the tools used for the
-      // calculation. A priori we don't know if the user has any
-      // histogram interface active or not, we need to use something
-      // that is for sure available like the EUTelPseudo1DHistogram
-      EUTelPseudo1DHistogram * histoX = new EUTelPseudo1DHistogram(xNoOfBin, min, max);
-      _cogHistogramX.push_back(histoX);
-
-      EUTelPseudo1DHistogram * histoY = new EUTelPseudo1DHistogram(yNoOfBin, min, max);
-      _cogHistogramY.push_back(histoY);
-
-      EUTelPseudo1DHistogram * integralX = new EUTelPseudo1DHistogram(xNoOfBin, min, max);
-      _integralHistoX.push_back(integralX);
-
-      EUTelPseudo1DHistogram * integralY = new EUTelPseudo1DHistogram(yNoOfBin, min, max);
-      _integralHistoY.push_back(integralY);
-
-      // prepare the output file
-      LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
-
-      try {
-        lcWriter->open( _outputEtaFileName, LCIO::WRITE_NEW );
-      } catch (IOException& e) {
-        streamlog_out ( ERROR4 ) << e.what() << endl
-                                 << "Sorry for quitting." << endl;
-        exit(-1);
-      }
-
-      LCRunHeaderImpl    * lcHeader  = new LCRunHeaderImpl;
-      EUTelRunHeaderImpl * newHeader = new EUTelRunHeaderImpl(lcHeader);
-      newHeader->lcRunHeader()->setRunNumber(runHeader->lcRunHeader()->getRunNumber());
-      newHeader->lcRunHeader()->setDetectorName(runHeader->lcRunHeader()->getDetectorName());
-      newHeader->setHeaderVersion(runHeader->getHeaderVersion());
-      newHeader->setDataType(runHeader->getDataType());
-      newHeader->setDateTime();
-      newHeader->setDAQHWName(runHeader->getDAQHWName());
-      newHeader->setDAQHWVersion(runHeader->getDAQHWVersion());
-      newHeader->setDAQSWName(runHeader->getDAQSWName());
-      newHeader->setDAQSWVersion(runHeader->getDAQSWVersion());
-      newHeader->setNoOfEvent(runHeader->getNoOfEvent());
-      newHeader->setNoOfDetector(runHeader->getNoOfDetector());
-      newHeader->setMinX(runHeader->getMinY());
-      newHeader->setMaxX(runHeader->getMaxX());
-      newHeader->setMinY(runHeader->getMinY());
-      newHeader->setMaxY(runHeader->getMaxY());
-      newHeader->addProcessor( type());
-      newHeader->setGeoID(runHeader->getGeoID());
-
-      lcWriter->writeRunHeader(lcHeader);
-      delete newHeader;
-      delete lcHeader;
-      lcWriter->close();
-
-
-// #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
-//       {
-//      string name, title, path;
-//      {
-//        stringstream sname;
-//        sname  << _cogHistogramXName << "-" << iDetector ;
-//        name = sname.str();
-
-//        stringstream stitle;
-//        stitle << "CoG shift along X on detector " << iDetector;
-//        title = stitle.str();
-
-//        stringstream spath;
-//        spath << "detector-" << iDetector << "/" ;
-//        path = spath.str();
-//      }
-//      TH1D * cogHistoX = new TH1D(name.c_str(), title.c_str(), xNoOfBin, min, max);
-//      ROOTProcessor::addTObject(this, cogHistoX);
-
-//      // ** TO BE COMPLETED ** //
-//      //
-//      // As soon as the ROOTProcess will be in an advanced
-//      // developement stage, all histogramming functions will be
-//      // made both for AIDA and also for ROOT
-
-//       }
-// #endif
-
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-      if ( isFirstEvent() ) {
-        {
-          string name, title, path;
-          {
-            stringstream sname;
-            sname  << _cogHistogramXName << "-" << iDetector ;
-            name = sname.str();
-
-            stringstream stitle;
-            stitle << "CoG shift along X on detector " << iDetector;
-            title = stitle.str();
-
-            stringstream spath;
-            spath << "detector-" << iDetector << "/" ;
-            path = spath.str();
-          }
-
-          AIDAProcessor::tree(this)->mkdir(path.c_str());
-
-          AIDA::IHistogram1D * cogHistoX = AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), xNoOfBin,
-                                                                                                     min, max);
-          cogHistoX->setTitle(title.c_str());
-          _aidaHistoMap.insert( make_pair(name, cogHistoX) );
-
-          {
-            stringstream sname;
-            sname  << _cogHistogramYName << "-" << iDetector ;
-            name = sname.str();
-
-            stringstream stitle;
-            stitle << "CoG shift along Y on detector " << iDetector;
-            title = stitle.str();
-          }
-
-          AIDA::IHistogram1D * cogHistoY = AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), yNoOfBin,
-                                                                                                     min, max);
-          cogHistoY->setTitle(title.c_str());
-          _aidaHistoMap.insert( make_pair(name, cogHistoY) );
-
-          {
-            stringstream sname;
-            sname  << _cogIntegralXName << "-" << iDetector ;
-            name = sname.str();
-
-            stringstream stitle;
-            stitle << "Integral CoG (x) shift histogram on " << iDetector;
-            title = stitle.str();
-          }
-          AIDA::IHistogram1D * cogIntegralHistoX =
-            AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), xNoOfBin, min, max);
-          cogIntegralHistoX->setTitle(title.c_str());
-          _aidaHistoMap.insert( make_pair(name, cogIntegralHistoX) );
-
-          {
-            stringstream sname;
-            sname  << _cogIntegralYName << "-" << iDetector ;
-            name = sname.str();
-
-            stringstream stitle;
-            stitle << "Integral CoG (y) shift histogram on " << iDetector;
-            title = stitle.str();
-          }
-          AIDA::IHistogram1D * cogIntegralHistoY =
-            AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), yNoOfBin, min, max);
-          cogIntegralHistoY->setTitle(title.c_str());
-          _aidaHistoMap.insert( make_pair(name, cogIntegralHistoY) );
-
-          {
-            stringstream sname;
-            sname << _etaHistoXName << "-" << iDetector ;
-            name = sname.str();
-
-            stringstream stitle;
-            stitle << "Eta profile x for detector " << iDetector;
-            title = stitle.str();
-          }
-          AIDA::IProfile1D * etaHistoX = AIDAProcessor::histogramFactory(this)
-            ->createProfile1D( (path + name).c_str(), xNoOfBin, min, max, min, max);
-          etaHistoX->setTitle(title.c_str());
-          _aidaHistoMap.insert( make_pair(name, etaHistoX) );
-
-          {
-            stringstream sname;
-            sname << _etaHistoYName << "-" << iDetector ;
-            name = sname.str();
-
-            stringstream stitle;
-            stitle << "Eta profile y for detector " << iDetector;
-            title = stitle.str();
-          }
-          AIDA::IProfile1D * etaHistoY = AIDAProcessor::histogramFactory(this)
-            ->createProfile1D( (path + name).c_str(), yNoOfBin, min, max, min, max);
-          etaHistoY->setTitle(title.c_str());
-          _aidaHistoMap.insert( make_pair(name, etaHistoY) );
-
-          {
-            stringstream sname;
-            sname << _cogHisto2DName << "-" << iDetector ;
-            name = sname.str();
-
-            stringstream stitle;
-            stitle << "2D Histo with the CoG within the seed pixel for detector " << iDetector;
-            title = stitle.str();
-          }
-          AIDA::IHistogram2D * cogHisto2D = AIDAProcessor::histogramFactory(this)
-            ->createHistogram2D( (path + name).c_str(), xNoOfBin, min, max, yNoOfBin, min, max);
-          cogHisto2D->setTitle(title.c_str());
-          _aidaHistoMap.insert( make_pair(name, cogHisto2D) );
-        }
-      }
-#endif
+    try {
+      lcWriter->open( _outputEtaFileName, LCIO::WRITE_NEW );
+    } catch (IOException& e) {
+      streamlog_out ( ERROR4 ) << e.what() << endl
+                               << "Sorry for quitting." << endl;
+      exit(-1);
     }
+
+    LCRunHeaderImpl    * lcHeader  = new LCRunHeaderImpl;
+    EUTelRunHeaderImpl * newHeader = new EUTelRunHeaderImpl(lcHeader);
+    newHeader->lcRunHeader()->setRunNumber(runHeader->lcRunHeader()->getRunNumber());
+    newHeader->lcRunHeader()->setDetectorName(runHeader->lcRunHeader()->getDetectorName());
+    newHeader->setHeaderVersion(runHeader->getHeaderVersion());
+    newHeader->setDataType(runHeader->getDataType());
+    newHeader->setDateTime();
+    newHeader->setDAQHWName(runHeader->getDAQHWName());
+    newHeader->setDAQHWVersion(runHeader->getDAQHWVersion());
+    newHeader->setDAQSWName(runHeader->getDAQSWName());
+    newHeader->setDAQSWVersion(runHeader->getDAQSWVersion());
+    newHeader->setNoOfEvent(runHeader->getNoOfEvent());
+    newHeader->setNoOfDetector(runHeader->getNoOfDetector());
+    newHeader->setMinX(runHeader->getMinY());
+    newHeader->setMaxX(runHeader->getMaxX());
+    newHeader->setMinY(runHeader->getMinY());
+    newHeader->setMaxY(runHeader->getMaxY());
+    newHeader->addProcessor( type());
+    newHeader->setGeoID(runHeader->getGeoID());
+
+    lcWriter->writeRunHeader(lcHeader);
+    delete newHeader;
+    delete lcHeader;
+    lcWriter->close();
   }
+
 
   // increment the run counter
   ++_iRun;
@@ -467,46 +302,101 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
             cluster->getCenterOfGravityShift(xShift, yShift, _nPixel);
           }
 
+          // look for the proper pseudo histogram before filling
+          // it. In case the corresponding pseudo histogram is not yet
+          // available, book it on the fly!
+          if ( _cogHistogramX.find( detectorID ) == _cogHistogramX.end() ) {
+            _cogHistogramX[ detectorID ]  = new EUTelPseudo1DHistogram(_noOfBin[0], _min, _max);
+            _integralHistoX[ detectorID ] = new EUTelPseudo1DHistogram(_noOfBin[0], _min, _max);
+          }
+          if ( _cogHistogramY.find( detectorID ) == _cogHistogramY.end() ) {
+            _cogHistogramY[ detectorID ] = new EUTelPseudo1DHistogram(_noOfBin[1], _min, _max);
+            _integralHistoY[ detectorID ] = new EUTelPseudo1DHistogram(_noOfBin[0], _min, _max);
+          }
+
           _cogHistogramX[detectorID]->fill(static_cast<double>(xShift), 1.0);
           _cogHistogramY[detectorID]->fill(static_cast<double>(yShift), 1.0);
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
           {
-            string name;
-            {
-              stringstream ss;
-              ss << _cogHistogramXName << "-" << detectorID;
-              name = ss.str();
+
+            if ( _alreadyBookedSensorID.find( detectorID ) == _alreadyBookedSensorID.end() ) {
+              // need booking!
+
+              // the path first!
+              string path = "detector_" + to_string( detectorID ) ;
+              AIDAProcessor::tree( this )->mkdir( path.c_str() );
+              path.append( "/" );
+
+              // Center of gravity along X
+              string name  = _cogHistogramXName + "_" + to_string(detectorID);
+              string title =  "CoG shift along X on detector " + to_string( detectorID );
+              AIDA::IHistogram1D * cogHistoX =
+                AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), _noOfBin[0], _min, _max);
+              cogHistoX->setTitle(title.c_str());
+              _aidaHistoMap.insert( make_pair(name, cogHistoX) );
+
+              // Center of gravity along y
+              name  = _cogHistogramYName + "_" + to_string(detectorID);
+              title =  "CoG shift along Y on detector " + to_string( detectorID );
+              AIDA::IHistogram1D * cogHistoY =
+                AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), _noOfBin[1], _min, _max);
+              cogHistoY->setTitle(title.c_str());
+              _aidaHistoMap.insert( make_pair(name, cogHistoY) );
+
+              // Integral along x
+              name  =  _cogIntegralXName + "_" + to_string( detectorID ) ;
+              title = "Integral CoG (x) shift histogram on " + to_string( detectorID );
+              AIDA::IHistogram1D * cogIntegralHistoX =
+                AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), _noOfBin[0], _min, _max);
+              cogIntegralHistoX->setTitle(title.c_str());
+              _aidaHistoMap.insert( make_pair(name, cogIntegralHistoX) );
+
+              // Integral along y
+              name  = _cogIntegralYName + "_" + to_string( detectorID ) ;
+              title = "Integral CoG (y) shift histogram on " + to_string( detectorID );
+              AIDA::IHistogram1D * cogIntegralHistoY =
+                AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), _noOfBin[1], _min, _max);
+              cogIntegralHistoY->setTitle(title.c_str());
+              _aidaHistoMap.insert( make_pair(name, cogIntegralHistoY) );
+
+              // Eta histogram along x
+              name  = _etaHistoXName + "_" + to_string( detectorID ) ;
+              title = "Eta profile x for detector " + to_string( detectorID ) ;
+              AIDA::IProfile1D * etaHistoX =
+                AIDAProcessor::histogramFactory(this)->createProfile1D( (path + name).c_str(), _noOfBin[0], _min, _max, _min, _max);
+              etaHistoX->setTitle(title.c_str());
+              _aidaHistoMap.insert( make_pair(name, etaHistoX) );
+
+              // Eta histogram along y
+              name  = _etaHistoYName + "_" + to_string( detectorID ) ;
+              title = "Eta profile y for detector " + to_string( detectorID ) ;
+              AIDA::IProfile1D * etaHistoY =
+                AIDAProcessor::histogramFactory(this)->createProfile1D( (path + name).c_str(), _noOfBin[1], _min, _max, _min, _max);
+              etaHistoY->setTitle(title.c_str());
+              _aidaHistoMap.insert( make_pair(name, etaHistoY) );
+
+              // 2D histo with CoG
+              name  = _cogHisto2DName + "_" + to_string( detectorID ) ;
+              title = "2D Histo with the CoG within the seed pixel for detector " + to_string( detectorID ) ;
+              AIDA::IHistogram2D * cogHisto2D = AIDAProcessor::histogramFactory(this)
+                ->createHistogram2D( (path + name).c_str(), _noOfBin[0], _min, _max, _noOfBin[1], _min, _max);
+              cogHisto2D->setTitle(title.c_str());
+              _aidaHistoMap.insert( make_pair(name, cogHisto2D) );
+
+              _alreadyBookedSensorID.insert( detectorID ) ;
             }
+
+            string name = _cogHistogramXName + "_" + to_string( detectorID );
             (dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]))->fill(xShift);
 
-            {
-              stringstream ss;
-              ss << _cogHistogramYName << "-" << detectorID;
-              name = ss.str();
-            }
+            name = _cogHistogramYName + "_" + to_string( detectorID );
             (dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]))->fill(yShift);
 
-            {
-              stringstream ss;
-              ss << _cogHisto2DName << "-" << detectorID ;
-              name = ss.str();
-            }
+            name = _cogHisto2DName + "_" + to_string( detectorID );
             (dynamic_cast< AIDA::IHistogram2D* > (_aidaHistoMap[name]))->fill(xShift, yShift);
           }
 #endif
-
-// #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
-//        {
-//          string name;
-//          {
-//            stringstream ss;
-//            ss << _cogHistogramXName << "-" << detectorID;
-//            name = ss.str();
-//          }
-//          (dynamic_cast<TH1D*> (ROOTProcessor::getTObject(this, name.c_str())))->Fill(xShift);
-//        }
-// #endif
         }
         delete cluster;
       }
@@ -558,7 +448,10 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
   LCCollectionVec * etaXCollection = new LCCollectionVec(LCIO::LCGENERICOBJECT);
   LCCollectionVec * etaYCollection = new LCCollectionVec(LCIO::LCGENERICOBJECT);
 
-  for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+  map< int, EUTelPseudo1DHistogram * >::iterator iter = _cogHistogramX.begin();
+  while ( iter != _cogHistogramX.end() ) {
+
+    int iDetector = iter->first;
 
     for (int iBin = 1; iBin <= _cogHistogramX[iDetector]->getNumberOfBins(); iBin++ ) {
       double x = _cogHistogramX[iDetector]->getBinCenter(iBin);
@@ -577,6 +470,9 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
 
 
     EUTelEtaFunctionImpl * etaX = new EUTelEtaFunctionImpl(etaBinCenter.size(), etaBinCenter, etaBinValue);
+#if ETA_VERSION >= 2
+    etaX->setSensorID( iDetector ) ;
+#endif
     etaXCollection->push_back(etaX);
 
     etaBinCenter.clear();
@@ -594,24 +490,18 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
     }
 
     EUTelEtaFunctionImpl * etaY = new EUTelEtaFunctionImpl(etaBinCenter.size(), etaBinCenter, etaBinValue);
+#if ETA_VERSION >= 2
+    etaY->setSensorID( iDetector ) ;
+#endif
     etaYCollection->push_back(etaY);
 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     integral = 0;
-    string name;
-    {
-      stringstream ss;
-      ss << _cogIntegralXName << "-" << iDetector;
-      name = ss.str();
-    }
+    string name = _cogIntegralXName + "_" + to_string( iDetector );
     AIDA::IHistogram1D * integralHisto = dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]);
 
-    {
-      stringstream ss;
-      ss << _cogHistogramXName << "-" << iDetector;
-      name = ss.str();
-    }
+    name = _cogHistogramXName + "_" + to_string( iDetector );
     AIDA::IHistogram1D * cogHisto = dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]);
 
     integral = 0;
@@ -621,31 +511,19 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
       integralHisto->fill(x, integral);
     }
 
-    {
-      stringstream ss;
-      ss << _etaHistoXName << "-" << iDetector ;
-      name = ss.str();
-    }
+    name = _etaHistoXName + "_" + to_string( iDetector );
     AIDA::IProfile1D * etaXHisto = dynamic_cast< AIDA::IProfile1D* > (_aidaHistoMap[name]);
 
     for (int iBin = 0; iBin < integralHisto->axis().bins(); iBin++) {
       double x = integralHisto->axis().binLowerEdge(iBin) + 0.5 * integralHisto->axis().binWidth(iBin);
       double v = integralHisto->binHeight(iBin);
-      etaXHisto->fill(x, v/integral - 0.5 ); // - 0.5);
+      etaXHisto->fill(x, v/integral - 0.5 );
     }
 
-    {
-      stringstream ss;
-      ss << _cogIntegralYName << "-" << iDetector;
-      name = ss.str();
-    }
+    name = _cogIntegralYName + "_" + to_string( iDetector );
     integralHisto = dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]);
 
-    {
-      stringstream ss;
-      ss << _cogHistogramYName << "-" << iDetector;
-      name = ss.str();
-    }
+    name = _cogHistogramYName  + "_" + to_string( iDetector );
     cogHisto = dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]);
 
     integral = 0;
@@ -655,21 +533,18 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
       integralHisto->fill(y, integral);
     }
 
-    {
-      stringstream ss;
-      ss << _etaHistoYName << "-" << iDetector ;
-      name = ss.str();
-    }
+    name =  _etaHistoYName  + "_" + to_string( iDetector );
     AIDA::IProfile1D * etaYHisto = dynamic_cast< AIDA::IProfile1D* > (_aidaHistoMap[name]);
 
     for (int iBin = 0; iBin < integralHisto->axis().bins(); iBin++) {
       double y = integralHisto->axis().binLowerEdge(iBin) + 0.5 * integralHisto->axis().binWidth(iBin);
       double v = integralHisto->binHeight(iBin);
-      etaYHisto->fill(y, v/integral - 0.5 ); // - 0.5);
+      etaYHisto->fill(y, v/integral - 0.5 );
     }
 
 #endif
 
+    ++iter;
   }
 
   event->addCollection(etaXCollection, _etaXCollectionName);

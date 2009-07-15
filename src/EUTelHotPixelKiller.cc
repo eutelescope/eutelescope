@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHotPixelKiller.cc,v 1.4 2008-08-23 12:30:51 bulgheroni Exp $
+// Version $Id: EUTelHotPixelKiller.cc,v 1.5 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -97,16 +97,6 @@ void EUTelHotPixelKiller::processRunHeader (LCRunHeader * rdr ) {
   auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl ( rdr ) );
   runHeader->addProcessor( type() );
 
-  // let me get from the run header all the available parameter
-  _noOfDetectors = runHeader->getNoOfDetector();
-
-  // now the four vectors containing the first and the last pixel
-  // along both the directions
-  _minX = runHeader->getMinX();
-  _maxX = runHeader->getMaxX();
-  _minY = runHeader->getMinY();
-  _maxY = runHeader->getMaxY();
-
   // increment the run counter
   ++_iRun;
 
@@ -115,6 +105,28 @@ void EUTelHotPixelKiller::processRunHeader (LCRunHeader * rdr ) {
 
 }
 
+void EUTelHotPixelKiller::initializeGeometry( LCEvent * event ) {
+
+  LCCollectionVec * collection = dynamic_cast< LCCollectionVec *> ( event->getCollection( _statusCollectionName ) );
+
+  _noOfDetectors = collection->size();
+
+  CellIDDecoder<TrackerRawDataImpl > decoder( collection );
+
+  for ( size_t iDetector = 0 ; iDetector < collection->size() ; ++iDetector ) {
+
+    TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( collection->getElementAt( iDetector ) ) ;
+    int sensorID = decoder( status ) [ "sensorID" ] ;
+
+    _minX[ sensorID ] = decoder( status ) [ "xMin" ];
+    _minY[ sensorID ] = decoder( status ) [ "yMin" ];
+    _maxX[ sensorID ] = decoder( status ) [ "xMax" ];
+    _maxY[ sensorID ] = decoder( status ) [ "yMax" ];
+
+    _sensorIDVec.push_back( sensorID );
+
+  }
+}
 
 void EUTelHotPixelKiller::processEvent (LCEvent * event) {
 
@@ -142,6 +154,13 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event) {
     CellIDDecoder<TrackerRawDataImpl>      statusCellDecoder( statusCollectionVec );
 
 
+    if ( isFirstEvent() ) {
+
+      initializeGeometry( event );
+      _isFirstEvent = false;
+
+    }
+
     if ( _iEvt == 0 ) {
 
       _firingFreqVec.clear();
@@ -152,19 +171,17 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event) {
         _firingFreqVec.push_back( dummyVector );
       }
 
-      _isFirstEvent = false;
     }
 
     for ( int iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) {
 
       TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
-      int sensorID = statusCellDecoder( status )[ "sensorID" ];
       vector< short > statusVec = status->adcValues();
 
       for ( unsigned int iPixel = 0; iPixel < statusVec.size(); iPixel++ ) {
 
         if ( statusVec[ iPixel ] == EUTELESCOPE::HITPIXEL ) {
-          _firingFreqVec[ sensorID ][ iPixel ]++;
+          _firingFreqVec[ iDetector ][ iPixel ]++;
         }
 
       }
@@ -201,9 +218,14 @@ string EUTelHotPixelKiller::printSummary() const {
     singleLine << "-";
   }
 
+  if ( _killedPixelVec.size() == 0 ) {
+    return "" ;
+  }
+
   ss << doubleLine.str() << endl
      << " Hot pixel killer summary " << endl
      << doubleLine.str() << endl;
+
 
   for ( unsigned int iCycle = 0 ; iCycle < _killedPixelVec[0].size(); iCycle++ ) {
     ss << " " << setiosflags( ios::left ) << setw(bigSpacer) << "Cycle num:"
@@ -224,6 +246,7 @@ void EUTelHotPixelKiller::check( LCEvent * event ) {
 
   if ( _iEvt == _noOfEventPerCycle -1 ) {
 
+
     try {
 
       LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) );
@@ -242,7 +265,7 @@ void EUTelHotPixelKiller::check( LCEvent * event ) {
         for ( unsigned int iPixel = 0; iPixel < _firingFreqVec[iDetector].size(); iPixel++ ) {
 
           if ( _firingFreqVec[iDetector][iPixel] / ( (double) _iEvt ) > _maxAllowedFiringFreq ) {
-            streamlog_out ( DEBUG3 ) << " Pixel " << iPixel << " on detector " << iDetector
+            streamlog_out ( DEBUG3 ) << " Pixel " << iPixel << " on detector " << _sensorIDVec.at( iDetector )
                                      << " is firing too often (" << _firingFreqVec[iDetector][iPixel] / ((double) _iEvt )
                                      << "). Masking it now on! " << endl;
             status->adcValues()[iPixel] = EUTELESCOPE::FIRINGPIXEL;
@@ -282,42 +305,30 @@ void EUTelHotPixelKiller::bookAndFillHistos() {
 
   string tempHistoName, basePath;
   for ( int iDetector = 0; iDetector < _noOfDetectors; iDetector++ ) {
-    {
-      stringstream ss;
-      ss << "detector-" << iDetector;
-      basePath = ss.str();
-    }
+    basePath = "detector_" + to_string( _sensorIDVec.at( iDetector ) ) ;
     AIDAProcessor::tree(this)->mkdir(basePath.c_str());
 
-    {
-      stringstream ss;
-      ss << basePath  << "/" << "cycle-" << _iCycle;
-      basePath = ss.str();
-    }
+    basePath += "/cycle_" + to_string( _iCycle );
     AIDAProcessor::tree(this)->mkdir(basePath.c_str());
     basePath.append("/");
 
-    {
-      stringstream ss;
-      ss << _firing2DHistoName << "-d" << iDetector << "-c" << _iCycle ;
-      tempHistoName = ss.str();
-    }
-    int     xBin = _maxX[iDetector] - _minX[iDetector] + 1;
-    double  xMin = static_cast<double >(_minX[iDetector]) - 0.5;
-    double  xMax = static_cast<double >(_maxX[iDetector]) + 0.5;
-    int     yBin = _maxY[iDetector] - _minY[iDetector] + 1;
-    double  yMin = static_cast<double >(_minY[iDetector]) - 0.5;
-    double  yMax = static_cast<double >(_maxY[iDetector]) + 0.5;
+
+
+    tempHistoName = _firing2DHistoName + "_d" + to_string( _sensorIDVec.at(iDetector)) + "_c" + to_string( _iCycle ) ;
+    int     xBin = _maxX[_sensorIDVec.at( iDetector )] - _minX[_sensorIDVec.at( iDetector )] + 1;
+    double  xMin = static_cast<double >(_minX[_sensorIDVec.at( iDetector )]) - 0.5;
+    double  xMax = static_cast<double >(_maxX[_sensorIDVec.at( iDetector )]) + 0.5;
+    int     yBin = _maxY[_sensorIDVec.at( iDetector )] - _minY[_sensorIDVec.at( iDetector )] + 1;
+    double  yMin = static_cast<double >(_minY[_sensorIDVec.at( iDetector )]) - 0.5;
+    double  yMax = static_cast<double >(_maxY[_sensorIDVec.at( iDetector )]) + 0.5;
+
     AIDA::IHistogram2D * firing2DHisto =
       AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
                                                                 xBin, xMin, xMax,yBin, yMin, yMax);
     firing2DHisto->setTitle("Firing frequency map");
 
-    {
-      stringstream ss;
-      ss << _firing1DHistoName << "-d" << iDetector << "-c" << _iCycle ;
-      tempHistoName = ss.str();
-    }
+    tempHistoName = _firing1DHistoName + "_d" + to_string( _sensorIDVec.at( iDetector) ) + "_c" + to_string( _iCycle );
+
     int nBin = 100;
     double min = 0;
     double max = 1;
@@ -327,8 +338,9 @@ void EUTelHotPixelKiller::bookAndFillHistos() {
     firing1DHisto->setTitle("Firing frequency distribution");
 
     int iPixel = 0;
-    for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
-      for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
+
+    for (int yPixel = _minY[_sensorIDVec.at( iDetector)]; yPixel <= _maxY[_sensorIDVec.at( iDetector)]; yPixel++) {
+      for (int xPixel = _minX[_sensorIDVec.at( iDetector)]; xPixel <= _maxX[_sensorIDVec.at( iDetector)]; xPixel++) {
         firing2DHisto->fill(xPixel, yPixel, _firingFreqVec[ iDetector ][ iPixel ] );
         firing1DHisto->fill( _firingFreqVec[ iDetector ][ iPixel ] / ( (double)  _noOfEventPerCycle ));
         ++iPixel;

@@ -64,7 +64,7 @@ namespace eutelescope {
    *  Simulation) package by Piotr Niezurawski (pniez@fuw.edu.pl)
    *
    *  @author Aleksander Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-   *  @version $Id: EUTelMAPSdigi.h,v 1.4 2008-11-12 18:36:58 bulgheroni Exp $
+   *  @version $Id: EUTelMAPSdigi.h,v 1.5 2009-07-15 17:21:28 bulgheroni Exp $
    *
    */
 
@@ -139,6 +139,23 @@ namespace eutelescope {
      *  effectively doing something only in the case MARLIN_USE_AIDA.
      */
     void bookHistos();
+
+    void bookHist1D(std::string HistoName, std::string HistoTitle, int iDet,
+                    int xNBin, double xMin, double xMax);
+
+    void bookProf1D(std::string HistoName, std::string HistoTitle, int iDet,
+                    int xNBin, double xMin, double xMax, double vMin, double vMax);
+
+    void bookHist2D(std::string HistoName, std::string HistoTitle, int iDet,
+                    int xNBin, double xMin, double xMax, int yNBin, double yMin, double yMax);
+
+    //! Histogram filling
+
+    void fillHist1D(std::string HistName, int layerIndex, double xVal, double wVal=1.);
+
+    void fillProf1D(std::string HistName, int layerIndex, double xVal, double wVal);
+
+    void fillHist2D(std::string HistName, int layerIndex, double xVal, double yVal, double wVal=1.);
 
 
   protected:
@@ -216,6 +233,17 @@ namespace eutelescope {
 
     double _ionizationEnergy;
 
+    //! Digitized detector ID list
+    /*! Different digitization parameters (charge scaling, poisson
+     *  fluctuations, gain, noise) can be used for each detector
+     *  layer. This vector gives order of detector IDs for following
+     *  parameter vectors. If this vector is empty, same values are
+     *  used for all planes (first elements of parameter vectors)
+     */
+
+    std::vector< int >   _DigiLayerIDs;
+
+
     //! Scaling of the deposited charge
     /*! Because of additional charge losses, charge collected by the
      *   detector can be smaller than expected from uniform
@@ -223,21 +251,21 @@ namespace eutelescope {
      *   increase effects of Poisson fluctuations.
      */
 
-    double _depositedChargeScaling;
+    std::vector< float > _depositedChargeScaling;
 
     //! Poisson smearing flag
     /*! If this flag is set, charge collected on the pixel is smeared
      *  according to the Poisson distribution.
      */
 
-    bool _applyPoissonSmearing;
+    std::vector< int >  _applyPoissonSmearing;
 
     //! ADC gain  in ADC counts per unit charge
     /*! Charge collected on the pixel is amplified and converted to
      *   ADC counts.
      */
 
-    double _adcGain;
+    std::vector< float > _adcGain;
 
     //! ADC gain variation
     /*! ADC gain variation can be used to describe possible readout
@@ -245,7 +273,7 @@ namespace eutelescope {
      *  "noise" proportional to the signal
      */
 
-    double _adcGainVariation;
+    std::vector< float > _adcGainVariation;
 
 
     //! ADC noise in ADC counts
@@ -253,7 +281,7 @@ namespace eutelescope {
      *  after charge conversion.
      */
 
-    double _adcNoise;
+    std::vector< float > _adcNoise;
 
 
     //! Zero Suppression Threshold
@@ -261,7 +289,7 @@ namespace eutelescope {
      *  collection. If set to 0 (default) no zero suppression is applied.
      */
 
-    double _zeroSuppressionThreshold;
+    std::vector< float > _zeroSuppressionThreshold;
 
 
     //! ADC offeset
@@ -269,7 +297,7 @@ namespace eutelescope {
      *  after zero suppression and before storing in the output table
      */
 
-    double _adcOffset;
+    std::vector< float > _adcOffset;
 
 
     //
@@ -290,20 +318,22 @@ namespace eutelescope {
     std::string _pixelCollectionName;
 
 
-    //! Single Mokka hit output mode
-    /*! Flag controling if pixel list should be written to output
-     *  file after each Mokka hit is processed or only after
-     *  the whole event
-     */
-
-     bool _singleHitOutput;
-
     //! Debug Event Count
     /*! Print out debug and information
      *  messages only for one out of given number of events. If
      *  zero, no debug information is printed.
      */
    int _debugCount ;
+
+    //! Flag for filling charge profiles
+    /*! Charge profiles present average pixel charge, as a function of
+     *  pixel number in cluster. Pixels in cluster are sorted either
+     *  by |charge| or by |charge|/distance_to_seed (weighted
+     *  profile). Filling profiles can be time consuming as it
+     *  requires sorting pixel collection few times.
+     */
+
+    bool _fillChargeProfiles;
 
   private:
 
@@ -338,6 +368,12 @@ namespace eutelescope {
      *  layerindex.
      */
     std::map< int, int > _conversionIdMap;
+
+    //! Digitization layer ID map.
+    /*! This map is used to match input digitization parameters read
+     *  from steering file to detector ID. 
+     */
+    std::map< int, int > _digiIdMap;
 
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
@@ -395,12 +431,26 @@ namespace eutelescope {
      */
     static std::string _pixelHistoName;
 
-    //! Name of the density plot
-    /*! This is a very nice plot showing in a 3D frame where all hits
-     *  have been found. If the run is sufficiently long and the hits
-     *  are uniformly distributed on the sensor surface, this plot
-     *  should recall the shape of the telescope itself.
-     */
+    //! Name for the collected charge distribution
+
+    static std::string _chargeHistoName;
+
+    //! Name for the total ADC signal distribution
+
+    static std::string _signalHistoName;
+
+    //! Name for the pixel multiplicity distribution
+
+    static std::string _multipHistoName;
+
+    //! Name for the cluster charge profile (ordered in charge)
+
+    static std::string _chargeProfileName;
+
+    //! Name for the cluster charge profile (ordered in
+    //! charge/seed_distance ratio)
+
+    static std::string _weightedProfileName;
 
 #endif
 

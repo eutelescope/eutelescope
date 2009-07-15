@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// @version: $Id: EUTelDUTHistograms.cc,v 1.12 2009-04-28 08:41:04 bulgheroni Exp $
+// @version: $Id: EUTelDUTHistograms.cc,v 1.13 2009-07-15 17:21:28 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.

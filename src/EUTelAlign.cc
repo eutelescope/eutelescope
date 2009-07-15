@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelAlign.cc,v 1.23 2009-04-15 09:14:34 bulgheroni Exp $
+// Version: $Id: EUTelAlign.cc,v 1.24 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -567,7 +567,7 @@ void EUTelAlign::processEvent (LCEvent * event) {
 
       }
 
-      delete cluster; // <--- destroying the cluster  
+      delete cluster; // <--- destroying the cluster
 
     } // End loop over all hits
 

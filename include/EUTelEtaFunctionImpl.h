@@ -11,6 +11,8 @@
 #ifndef EUTELETAFUNCTIONIMPL_H
 #define EUTELETAFUNCTIONIMPL_H
 
+#define ETA_VERSION 2
+
 // lcio includes <.h>
 #include <lcio.h>
 #include <IMPL/LCGenericObjectImpl.h>
@@ -20,7 +22,7 @@
 
 namespace eutelescope {
 
-  //! Eta function LCIO implementation 
+  //! Eta function LCIO implementation
   /*! The Eta function calculated by the EUTelCalculateEtaProcessor is
    *  saved into a Condition file using this implementation.
    *  EUTelEtaFunctionImpl is nothing more than a sub-class of
@@ -33,8 +35,8 @@ namespace eutelescope {
    *  to set/get the full bin center and the full eta value vectors
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEtaFunctionImpl.h,v 1.6 2008-07-09 14:35:09 bulgheroni Exp $
-   */ 
+   *  @version $Id: EUTelEtaFunctionImpl.h,v 1.7 2009-07-15 17:21:28 bulgheroni Exp $
+   */
   class EUTelEtaFunctionImpl : public IMPL::LCGenericObjectImpl {
 
   public:
@@ -56,6 +58,18 @@ namespace eutelescope {
      *  @param valueVec This is a STL vector of double with the eta values
      */ 
     EUTelEtaFunctionImpl(int nBin, std::vector<double > centerVec, std::vector<double > valueVec);
+
+
+    //! Constructor with all the needed parameters
+    /*! This convenience constructor can be used to create the object
+     *  and immediately set both the bin center and the value vectors
+     *
+     *  @param sensorID The is the sensorID of this sensor.
+     *  @param nBin This is the number of bins used in the calculation of the Eta function
+     *  @param centerVec This is a STL vector of double with the bin centers.
+     *  @param valueVec This is a STL vector of double with the eta values
+     */ 
+    EUTelEtaFunctionImpl(int sensorID, int nBin, std::vector<double > centerVec, std::vector<double > valueVec);
 
     //! Default destructor
     virtual ~EUTelEtaFunctionImpl() { /* NO-OP */ ; }
@@ -87,6 +101,16 @@ namespace eutelescope {
     /*! @return A STL vector of double with the eta values
      */ 
     const std::vector<double > getEtaValueVector() const;
+
+    //! Set the sensor ID
+    /*! @param sensorID The sensor ID
+     */
+    void setSensorID( int sensorID ) ;
+
+    //! Get the sensor ID 
+    /*! @return the sensor ID
+     */
+    int getSensorID( ) const; 
 
 
     //! Get Eta for a given CoG value
@@ -151,11 +175,8 @@ namespace eutelescope {
 
   private:
 
-    void getNInt()   {;}
     void getNFloat() {;}
-    void getIntVal() {;}
     void getFloatVal() {;}
-    void setIntVal(unsigned int, int) {;}
     void setFloatVal(unsigned int, float) {;}
     void isFixedSize() {;}
 

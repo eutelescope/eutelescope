@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.33 2008-11-27 16:20:13 zarnecki Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.34 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -15,6 +15,7 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelPedestalNoiseProcessor.h"
+#include "EUTelHistogramManager.h"
 #include "EUTELESCOPE.h"
 
 // marlin includes ".h"
@@ -36,6 +37,7 @@
 #include <lcio.h>
 #include <UTIL/LCTOOLS.h>
 #include <UTIL/CellIDEncoder.h>
+#include <UTIL/CellIDDecoder.h>
 #include <UTIL/LCTime.h>
 #include <IMPL/LCEventImpl.h>
 #include <IMPL/TrackerRawDataImpl.h>
@@ -50,7 +52,7 @@
 #include <memory>
 #include <cstdlib>
 #include <limits>
-
+#include <algorithm>
 
 using namespace std;
 using namespace lcio;
@@ -67,7 +69,8 @@ std::string EUTelPedestalNoiseProcessor::_pedeMapHistoName    = "PedeMap";
 std::string EUTelPedestalNoiseProcessor::_noiseMapHistoName   = "NoiseMap";
 std::string EUTelPedestalNoiseProcessor::_statusMapHistoName  = "StatusMap";
 std::string EUTelPedestalNoiseProcessor::_tempProfile2DName   = "TempProfile2D";
-std::string EUTelPedestalNoiseProcessor::_fireFreqHistoName   = "Firing frequency";
+std::string EUTelPedestalNoiseProcessor::_fireFreqHistoName   = "FiringFrequency";
+std::string EUTelPedestalNoiseProcessor::_aPixelHistoName     = "APixelHisto";
 #endif
 
 EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPedestalNoiseProcessor") {
@@ -76,22 +79,28 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPed
   _description =
     "EUTelPedestalNoiseProcessor computes the pedestal and noise values of a pixel detector";
 
+
+  vector< string > rawDataCollectionNameVecExample;
+  rawDataCollectionNameVecExample.push_back( "rawdata" );
+
   // first of all we need to register the input collection
-  registerInputCollection (LCIO::TRACKERRAWDATA, "RawDataCollectionName",
-                           "Input raw data collection",
-                           _rawDataCollectionName, string ("rawdata"));
+  registerInputCollections (LCIO::TRACKERRAWDATA, "RawDataCollectionNameVec",
+                            "Input raw data collection",
+                            _rawDataCollectionNameVec, rawDataCollectionNameVecExample );
 
   // register compulsory parameters
   registerProcessorParameter ("CalculationAlgorithm",
                               "Select the algorithm for pede/noise calculation",
                               _pedestalAlgo,
                               string (EUTELESCOPE::MEANRMS));
-  registerProcessorParameter("BadPixelMaskingAlgorithm",
-                             "Select the algorithm for bad pixel masking. Possible values are:\n"
-                             " NOISEDISTRIBUTION: based on the noise distribution\n"
-                             " ABSOLUTENOISEVALUE: based on the abs noise value",
-                             _badPixelAlgo,
-                             string (EUTELESCOPE::NOISEDISTRIBUTION));
+
+  registerProcessorParameter("CommonModeAlgorithm",
+                             "Select the algorithm for the common mode calculation. Possible values are:\n"
+                             " FullFrame: all pixels in the frame are averaged\n"
+                             " RowWise: pixels are averaged line by line",
+                             _commonModeAlgo, string( "FullFrame" ));
+
+
   registerProcessorParameter ("NoOfCMIteration",
                               "Number of common mode suppression iterations",
                               _noOfCMIterations, static_cast < int >(1));
@@ -102,9 +111,58 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPed
                               "Maximum allowed number of rejected pixels per event",
                               _maxNoOfRejectedPixels,
                               static_cast < int >(1000));
-  registerProcessorParameter ("BadPixelMaskCut",
-                              "Threshold for bad pixel identification",
-                              _badPixelMaskCut, static_cast < float >(3.5));
+
+  registerProcessorParameter("MaxNoOfRejectedPixelPerRow",
+                             "Maximum allowed number of rejected pixels per row (only with RowWise)",
+                             _maxNoOfRejectedPixelPerRow,
+                             static_cast < int > (25) );
+  registerProcessorParameter("MaxNoOfSkippedRow",
+                             "Maximum allowed number of skipped rows (only with RowWise)",
+                             _maxNoOfSkippedRow,
+                             static_cast< int > ( 15 ) );
+
+  // new names for the pixel masking algorithms
+  // since v00-00-09, the user can select multiple bad pixel
+  // algorithms. The _badPixelAlgo has been changed into a
+  // _badPixelAlgoVec.
+  vector< string > badPixelAlgoVecExample;
+  badPixelAlgoVecExample.push_back( "NOISEDISTRIBUTION" );
+  badPixelAlgoVecExample.push_back( "DEADPIXEL" );
+  registerProcessorParameter("BadPixelMaskingAlgorithm",
+                             "Select the algorithm for bad pixel masking. Possible values are:\n"
+                             " NoiseDistribution: removing pixels with noise above PixelMaskUpperNoiseCut in sigma unit\n"
+                             " AbsoluteNoiseValue: removing pixels with noise above PixelMaskUpperAbsNoiseCut in ADC value\n"
+                             " DeadPixel: removing pixels with noise below PixelMaskLowerAbsNoiseCut in ADC value\n"
+                             " AbsolutePedeValue: removing pixels having pedestal too low or high using PixelMaskUpperAbsPedeCut and PixelMaskLowerAbsPedeCut",
+                             _badPixelAlgoVec, badPixelAlgoVecExample);
+
+  registerProcessorParameter ("PixelMaskUpperNoiseCut",
+                              "Upper threshold for bad pixel identification using NOISEDISTRIBUTION",
+                              _pixelMaskUpperNoiseCut, static_cast < float >(3.5));
+  registerProcessorParameter ("PixelMaskUpperAbsNoiseCut",
+                              "Upper threshold for bad pixel identification using ABSOLUTENOISEVALUE",
+                              _pixelMaskUpperAbsNoiseCut, static_cast < float >(3.5));
+  registerProcessorParameter ("PixelMaskLowerAbsNoiseCut",
+                              "Lower threshold for bad pixel identification using DEADPIXEL",
+                              _pixelMaskLowerAbsNoiseCut, static_cast < float >(0.2));
+  registerProcessorParameter ("PixelMaskUpperAbsPedeCut",
+                              "Upper threshold for bad pixel identification using ABSOLUTEPEDEVALUE",
+                              _pixelMaskUpperAbsPedeCut, static_cast< float > ( 15 ) );
+  registerProcessorParameter ("PixelMaskLowerAbsPedeCut",
+                              "Lower threshold for bad pixel identification using ABSOLUTEPEDEVALUE",
+                              _pixelMaskLowerAbsPedeCut, static_cast< float > ( -15 ) );
+  registerProcessorParameter("PixelMaskMaxFiringFrequency",
+                             "This is the maximum allowed firing % frequency, being 0.1% the Gaussian limit\n"
+                             "Used only during the additional masking loop",
+                             _maxFiringFreq, static_cast< float > ( 0.2 ) ) ;
+  registerOptionalParameter ("AdditionalMaskingLoop",
+                             "Perform an additional loop for bad pixel masking",
+                             _additionalMaskingLoop, static_cast<bool> ( true ) );
+  registerOptionalParameter ("HitRejectionPreLoop",
+                             "Perform a fast first loop to improve the efficiency of hit rejection",
+                             _preLoopSwitch, static_cast< bool > ( true ) ) ;
+
+
   registerProcessorParameter ("FirstEvent",
                               "First event for pedestal calculation",
                               _firstEvent, static_cast < int > (0));
@@ -117,6 +175,9 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPed
   registerProcessorParameter ("ASCIIOutputSwitch","Set to true if the pedestal should also be saved as ASCII files",
                               _asciiOutputSwitch, static_cast< bool > ( true ) );
 
+  registerProcessorParameter("HistoInfoFileName", "This is the name of the histogram information file",
+                             _histoInfoFileName, string( "histoinfo.xml" ) );
+
   // now the optional parameters
   registerOptionalParameter ("PedestalCollectionName",
                              "Pedestal collection name",
@@ -128,16 +189,7 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPed
                              "Status collection name",
                              _statusCollectionName, string ("statusDB"));
 
-  registerOptionalParameter ("AdditionalMaskingLoop",
-                             "Perform an additional loop for bad pixel masking",
-                             _additionalMaskingLoop, static_cast<bool> ( true ) );
-
-  registerOptionalParameter ("Preloop for hit rejection",
-                             "Perform a fast first loop to improve the efficiency of hit rejection",
-                             _preLoopSwitch, static_cast< bool > ( true ) ) ;
-
   _histogramSwitch = true;
-
 
 }
 
@@ -153,6 +205,9 @@ void EUTelPedestalNoiseProcessor::init () {
 
   // set the pedestal flag to true and the loop counter to zero
   _doPedestal = true;
+
+  // set the geometry ready switch to false
+  _isGeometryReady = false;
 
   // set the loop counter
   if ( _preLoopSwitch ) _iLoop = -1;
@@ -188,8 +243,12 @@ void EUTelPedestalNoiseProcessor::init () {
   _noise.clear();
   _status.clear();
 
-  // clean up things related to CM
-  _noOfSkippedEvent = 0;
+  // set all the bad pixel masking switches
+  setBadPixelAlgoSwitches();
+
+  // reset the skip event list
+  _skippedEventList.clear();
+  _nextEventToSkip = _skippedEventList.begin();
 
 }
 
@@ -204,29 +263,12 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
   // increment the run counter
   ++_iRun;
 
-  // let me get from the run header all the available parameter
-  _noOfDetector = runHeader->getNoOfDetector();
-
-  // now the four vectors containing the first and the last pixel
-  // along both the directions
-  _minX = runHeader->getMinX();
-  _maxX = runHeader->getMaxX();
-  _minY = runHeader->getMinY();
-  _maxY = runHeader->getMaxY();
-
   // make some test on parameters
   if ( ( _pedestalAlgo != EUTELESCOPE::MEANRMS ) &&
        ( _pedestalAlgo != EUTELESCOPE::AIDAPROFILE)
     ) {
     throw InvalidParameterException(string("_pedestalAlgo cannot be " + _pedestalAlgo));
   }
-
-  if ( ( _badPixelAlgo != EUTELESCOPE::NOISEDISTRIBUTION ) &&
-       ( _badPixelAlgo != EUTELESCOPE::ABSOLUTENOISEVALUE )
-    ) {
-    throw InvalidParameterException(string("_badPixelAlgo cannot be " + _badPixelAlgo));
-  }
-
 
   // the user can decide to limit the pedestal calculation on a
   // sub range of events for many reasons. The most common one is that
@@ -309,11 +351,7 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
     newHeader->setDAQSWName(runHeader->getDAQSWName());
     newHeader->setDAQSWVersion(runHeader->getDAQSWVersion());
     newHeader->setNoOfEvent(runHeader->getNoOfEvent());
-    newHeader->setNoOfDetector(runHeader->getNoOfDetector());
-    newHeader->setMinX(runHeader->getMinY());
-    newHeader->setMaxX(runHeader->getMaxX());
-    newHeader->setMinY(runHeader->getMinY());
-    newHeader->setMaxY(runHeader->getMaxY());
+
     newHeader->addProcessor(name());
 
     lcWriter->writeRunHeader(lcHeader);
@@ -326,11 +364,62 @@ void EUTelPedestalNoiseProcessor::processRunHeader (LCRunHeader * rdr) {
 }
 
 
+void EUTelPedestalNoiseProcessor::initializeGeometry( LCEvent * evt ) {
+
+  // starting from this version (v00-00-08-toto) the processor is
+  // accepting multiple input collections.
+  //
+  // The number of sensors will be the sum of the elements of all the
+  // input collections, while the detector boundaries are taken from
+  // each rawdata cellid.
+
+  _noOfDetector = 0;
+  _noOfDetectorVec.clear();
+
+  for ( size_t iCol = 0 ; iCol < _rawDataCollectionNameVec.size(); ++iCol ) {
+
+    try {
+      LCCollectionVec * collectionVec = dynamic_cast< LCCollectionVec * > ( evt->getCollection( _rawDataCollectionNameVec.at( iCol ) ) ) ;
+      _noOfDetector  += collectionVec->size();
+      _noOfDetectorVec.push_back( collectionVec->size() );
+
+
+      // now to fill in the _minX, _maxX, _minY and _maxY vectors we
+      // have to go through all the collection elements.
+      CellIDDecoder< TrackerRawDataImpl > rawDataDecoder( collectionVec );
+      for ( size_t iDetector = 0; iDetector < collectionVec->size() ; ++iDetector ) {
+        TrackerRawDataImpl * rawData = dynamic_cast< TrackerRawDataImpl * > ( collectionVec->getElementAt( iDetector ) );
+        _minX.push_back( rawDataDecoder( rawData ) ["xMin"] ) ;
+        _maxX.push_back( rawDataDecoder( rawData ) ["xMax"] ) ;
+        _minY.push_back( rawDataDecoder( rawData ) ["yMin"] ) ;
+        _maxY.push_back( rawDataDecoder( rawData ) ["yMax"] ) ;
+        _orderedSensorIDVec.push_back( rawDataDecoder( rawData ) ["sensorID"] );
+      }
+
+    } catch (DataNotAvailableException& e) {
+      streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionNameVec.at( iCol ) << " is not available in the current event" << endl
+                                 << "If this collection is not present in the input file, please remove it from the steering file" << endl
+                                 << "Geometry initialization impossible, skipping the event" << endl;
+
+      _isGeometryReady = false;
+      throw SkipEventException(this);
+
+    }
+
+  }
+
+  _isGeometryReady = true;
+
+}
+
 void EUTelPedestalNoiseProcessor::processEvent (LCEvent * evt) {
 
   EUTelEventImpl * eutelEvent = static_cast<EUTelEventImpl*> (evt);
   EventType type              = eutelEvent->getEventType();
 
+  if ( ! _isGeometryReady ) {
+    initializeGeometry(evt);
+  }
 
   if ( type == kUNKNOWN ) {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
@@ -381,16 +470,12 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
   streamlog_out ( MESSAGE2 ) << "Filling final histograms " << endl;
 
   string tempHistoName;
-  for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+  for (size_t iDetector = 0; iDetector < _noOfDetector; iDetector++) {
     int iPixel = 0;
     for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
       for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
         if ( _histogramSwitch ) {
-          {
-            stringstream ss;
-            ss << _statusMapHistoName << "-d" << iDetector << "-l" << _iLoop;
-            tempHistoName = ss.str();
-          }
+          tempHistoName =  _statusMapHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( _iLoop );
           if ( AIDA::IHistogram2D * histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[tempHistoName]) )
             histo->fill(static_cast<double>(xPixel), static_cast<double>(yPixel), static_cast<double> (_status[iDetector][iPixel]));
           else {
@@ -403,11 +488,7 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
 
         if ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL) {
           if ( _histogramSwitch ) {
-            {
-              stringstream ss;
-              ss << _pedeDistHistoName << "-d" << iDetector << "-l" << _iLoop;
-              tempHistoName = ss.str();
-            }
+            tempHistoName = _pedeDistHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( _iLoop );
             if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]) )
               histo->fill(_pedestal[iDetector][iPixel]);
             else {
@@ -419,16 +500,12 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
 
           if ( streamlog::out.write< streamlog::DEBUG0 > () ) {
             if ( (xPixel == 10) && (yPixel == 10 )) {
-              streamlog::out()  << "Detector " << iDetector << " pedestal " << (_pedestal[iDetector][iPixel]) << endl;
+              streamlog::out()  << "Detector " << _orderedSensorIDVec.at( iDetector ) << " pedestal " << (_pedestal[iDetector][iPixel]) << endl;
             }
           }
 
           if ( _histogramSwitch ) {
-            {
-              stringstream ss;
-              ss << _noiseDistHistoName << "-d" << iDetector << "-l" << _iLoop;
-              tempHistoName = ss.str();
-            }
+            tempHistoName = _noiseDistHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( _iLoop );
             if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]) )
               histo->fill(_noise[iDetector][iPixel]);
             else {
@@ -439,11 +516,7 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
           }
 
           if ( _histogramSwitch ) {
-            {
-              stringstream ss;
-              ss << _pedeMapHistoName << "-d" << iDetector << "-l" << _iLoop;
-              tempHistoName = ss.str();
-            }
+            tempHistoName = _pedeMapHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( _iLoop );
             if ( AIDA::IHistogram2D * histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[tempHistoName]) )
               histo-> fill(static_cast<double>(xPixel), static_cast<double>(yPixel), _pedestal[iDetector][iPixel]);
             else {
@@ -454,11 +527,7 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
           }
 
           if ( _histogramSwitch ) {
-            {
-              stringstream ss;
-              ss << _noiseMapHistoName << "-d" << iDetector << "-l" << _iLoop;
-              tempHistoName = ss.str();
-            }
+            tempHistoName = _noiseMapHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( _iLoop );
             if ( AIDA::IHistogram2D* histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[tempHistoName]) )
               histo->fill(static_cast<double>(xPixel), static_cast<double>(yPixel), _noise[iDetector][iPixel]);
             else {
@@ -483,25 +552,43 @@ void EUTelPedestalNoiseProcessor::fillHistos() {
 void EUTelPedestalNoiseProcessor::maskBadPixel() {
 
 
+  // a global counter of bad pixels
+  vector<int >  badPixelCounterVec( _noOfDetector, 0 );
+
   if ( ( !_additionalMaskingLoop ) ||
        ( _iLoop < _noOfCMIterations + 1 )) {
 
-    vector<double > thresholdVec;
-    int    badPixelCounter = 0;
+    // prepare vectors of thresholds
+    //
+    // thresholdNoiseDistVec is the vector of threshold for the
+    // NOISEDISTRIBUTION algorithm
+    vector<double > thresholdNoiseDistVec;
 
+    // thresholdAbsNoiseVec is the vector of threshold for the
+    // ABSOLUTENOISEVALUE algorithm
+    vector<double > thresholdAbsNoiseVec( _noOfDetector,  _pixelMaskUpperAbsNoiseCut );
 
-    if ( _badPixelAlgo == EUTELESCOPE::NOISEDISTRIBUTION ) {
+    // thresholdDeadPixelVec is the vector of threshold for the
+    // DEADPIXEL algorithm
+    vector<double > thresholdDeadPixelVec( _noOfDetector, _pixelMaskLowerAbsNoiseCut );
+
+    // thresholdLowerAbsPedeVec is the vector of threshold for the
+    // ABSOLUTEPEDEVALUE algorithm
+    vector<double > thresholdLowerAbsPedeVec( _noOfDetector, _pixelMaskLowerAbsPedeCut );
+    vector<double > thresholdUpperAbsPedeVec( _noOfDetector, _pixelMaskUpperAbsPedeCut );
+
+    if ( _badPixelNoiseDistributionSwitch ) {
       // to do it we need to know the mean value and the RMS of the noise
       // vector.
 
-      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      for (size_t iDetector = 0; iDetector < _noOfDetector; iDetector++) {
 
         double sumw  = 0;
         double sumw2 = 0;
         double num   = 0;
 
         // begin a first loop on all pixel to calculate the masking threshold
-        for (unsigned int iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
+        for ( size_t iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
           if ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) {
             sumw  += _noise[iDetector][iPixel];
             sumw2 += pow(_noise[iDetector][iPixel],2);
@@ -511,76 +598,129 @@ void EUTelPedestalNoiseProcessor::maskBadPixel() {
         double meanw      = sumw  / num;
         double meanw2     = sumw2 / num;
         double rms        = sqrt( meanw2 - pow(meanw,2));
-        thresholdVec.push_back(meanw + (rms * _badPixelMaskCut) );
+        thresholdNoiseDistVec.push_back( meanw + (rms * _pixelMaskUpperNoiseCut) );
         streamlog_out ( DEBUG4 ) << "Mean noise value is " << meanw << " ADC\n"
           "RMS of noise is " << rms << " ADC\n"
-          "Masking threshold is set to " << thresholdVec[iDetector] << endl;
+          "Masking threshold is set to " << thresholdNoiseDistVec[iDetector] << endl;
 
-
+        // now reloop on pixels to mask the bad out
+        for ( size_t iPixel = 0; iPixel < _status[iDetector].size(); ++iPixel ) {
+          if (  ( _noise[iDetector][iPixel]  > thresholdNoiseDistVec[iDetector] ) &&
+                ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) ) {
+            // first of all make the pixel bad
+            _status[iDetector][iPixel] = EUTELESCOPE::BADPIXEL;
+            streamlog_out ( DEBUG0 ) <<  "Masking pixel number " << iPixel
+                                     << " on detector " << _orderedSensorIDVec.at( iDetector )
+                                     << " (" << _noise[iDetector][iPixel]
+                                     << " > " << thresholdNoiseDistVec[iDetector] << ")" << endl;
+            badPixelCounterVec[iDetector]++;
+          }
+        }
       }
-    } else if ( _badPixelAlgo == EUTELESCOPE::ABSOLUTENOISEVALUE ) {
+    }
 
-      for ( int iDetector = 0 ; iDetector < _noOfDetector; iDetector++ )    thresholdVec.push_back(_badPixelMaskCut);
+
+    if ( _badPixelAbsNoiseSwitch ) {
+
+      for ( size_t iDetector = 0 ; iDetector < _noOfDetector; iDetector++ )  {
+        for ( size_t iPixel = 0; iPixel < _status[iDetector].size(); ++iPixel ) {
+          if ( ( _noise[iDetector][iPixel] > thresholdAbsNoiseVec[iDetector] ) &&
+               ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) ) {
+            _status[iDetector][iPixel] = EUTELESCOPE::BADPIXEL;
+            streamlog_out ( DEBUG0 ) <<  "Masking pixel number " << iPixel
+                                     << " on detector " << _orderedSensorIDVec.at( iDetector )
+                                     << " (" << _noise[iDetector][iPixel]
+                                     << " > " << thresholdAbsNoiseVec[iDetector] << ")" << endl;
+            badPixelCounterVec[iDetector]++;
+          }
+        }
+      }
 
     }
 
-    const float lowerThreshold = 0.2;
-    streamlog_out ( MESSAGE2 ) << "Marking as bad also dead pixels (noise < " << lowerThreshold << " ADC)" << endl;
 
+    if ( _badPixelDeadPixelSwitch ) {
 
-    // scan the noise vector again and apply the cut
-    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-      for (unsigned int iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
-        if ( (
-               ( _noise[iDetector][iPixel] > thresholdVec[iDetector] ) ||
-               ( _noise[iDetector][iPixel] < lowerThreshold )
-               ) &&
-             ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) ) {
-          _status[iDetector][iPixel] = EUTELESCOPE::BADPIXEL;
-          streamlog_out ( DEBUG0 ) <<  "Masking pixel number " << iPixel
-                                   << " on detector " << iDetector
-                                   << " (" << _noise[iDetector][iPixel]
-                                   << " > " << thresholdVec[iDetector] << ")" << endl;
-          ++badPixelCounter;
+      for ( size_t iDetector = 0 ; iDetector < _noOfDetector; ++iDetector ) {
+        for ( size_t iPixel = 0; iPixel < _status[iDetector].size(); ++iPixel ) {
+          if ( ( _noise[iDetector][iPixel]  < thresholdDeadPixelVec[iDetector] ) &&
+               ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) ) {
+            _status[iDetector][iPixel] = EUTELESCOPE::BADPIXEL;
+            streamlog_out ( DEBUG0 ) <<  "Masking pixel number " << iPixel
+                                     << " on detector " << _orderedSensorIDVec.at( iDetector )
+                                     << " (" << _noise[iDetector][iPixel]
+                                     << " > " << thresholdDeadPixelVec[iDetector] << ")" << endl;
+            badPixelCounterVec[iDetector]++;
+          }
         }
       }
-    } // end loop on detector;
-    streamlog_out ( MESSAGE4 )  << "Masked " << badPixelCounter << " bad pixels " << endl;
+
+    }
+
+
+    if ( _badPixelAbsPedeSwitch ) {
+
+      for ( size_t iDetector = 0; iDetector < _noOfDetector ; ++iDetector ) {
+        for ( size_t iPixel = 0; iPixel < _status[iDetector].size(); ++iPixel ) {
+          if ( ( ( _pedestal[iDetector][iPixel] > thresholdUpperAbsPedeVec[iDetector] ) ||
+                 ( _pedestal[iDetector][iPixel] < thresholdLowerAbsPedeVec[iDetector] ) ) &&
+               _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) {
+            _status[iDetector][iPixel] = EUTELESCOPE::BADPIXEL;
+            streamlog_out( DEBUG0 ) << "Masking pixel number " << iPixel
+                                    << " on detector " << _orderedSensorIDVec.at( iDetector ) << endl;
+            badPixelCounterVec[iDetector]++;
+          }
+        }
+
+
+      }
+    }
+
+    streamlog_out ( MESSAGE4 )  << "Masking summary after loop " << _iLoop << ": " << endl;
+    int totalBad = 0;
+    int total    = 0;
+    for ( size_t iDetector = 0; iDetector < _noOfDetector; ++iDetector ) {
+      streamlog_out ( MESSAGE4 ) << "Detector ID " << setw(4) << _orderedSensorIDVec[ iDetector ] << " has "
+                                 << setw(8) << badPixelCounterVec[iDetector] << " bad pixels (" << 100 * (1.0 * badPixelCounterVec[iDetector] )/ _status[iDetector].size()
+                                 << "%). " << endl;
+      totalBad += badPixelCounterVec[iDetector];
+      total    += _status[iDetector].size();
+    }
+    streamlog_out ( MESSAGE4 ) << "Total masked pixels = " << totalBad << " (" << 100 * (1.0 * totalBad) / total << "%). " << endl;
   }
-
-
-
 
   if ( (  _additionalMaskingLoop ) &&
        ( _iLoop == _noOfCMIterations + 1 )) {
     // now masking relying on the additional loop
-    // for the time being this is hardcoded
-    float _maxFreq = 0.25;
-    int badPixelCounter = 0;
-    for ( int iDetector = 0 ; iDetector < _noOfDetector; iDetector++ ) {
+    for ( size_t iDetector = 0 ; iDetector < _noOfDetector; iDetector++ ) {
 
       for (unsigned int iPixel = 0; iPixel < _status[iDetector].size(); iPixel++) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
         if ( _histogramSwitch ) {
           string tempHistoName;
-          {
-            stringstream ss;
-            ss << _fireFreqHistoName << "-d" << iDetector << "-l" << _iLoop;
-            tempHistoName = ss.str();
-          }
+          tempHistoName = _fireFreqHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( _iLoop );
           if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ tempHistoName ] ))
-            histo->fill( (static_cast<double> ( _hitCounter[ iDetector ][ iPixel ] )) / _iEvt );
-
+            histo->fill( (static_cast<double> ( _hitCounter[ iDetector ][ iPixel ] )) / _iEvt * 100. );
         }
 #endif
-        if ( _hitCounter[ iDetector ][ iPixel ] > _maxFreq * _iEvt ) {
+        if ( static_cast< double > ( _hitCounter[ iDetector ][ iPixel ] ) / _iEvt * 100. > _maxFiringFreq  ) {
           _status[ iDetector ][ iPixel ] = EUTELESCOPE::BADPIXEL;
-          ++badPixelCounter;
+          badPixelCounterVec[iDetector]++;
         }
       }
 
     } // end loop on detector
-    streamlog_out ( MESSAGE4 ) << "Masked " << badPixelCounter << " bad pixels " << endl;
+    streamlog_out ( MESSAGE4 )  << "Masking summary after loop " << _iLoop << ": " << endl;
+    int totalBad = 0;
+    int total    = 0;
+    for ( size_t iDetector = 0; iDetector < _noOfDetector; ++iDetector ) {
+      streamlog_out ( MESSAGE4 ) << "Detector ID " << setw(4) << _orderedSensorIDVec[ iDetector ] << " has "
+                                 << setw(8) << badPixelCounterVec[iDetector] << " bad pixels (" << 100 * (1.0 * badPixelCounterVec[iDetector] )/ _status[iDetector].size()
+                                 << "%). " << endl;
+      totalBad += badPixelCounterVec[iDetector];
+      total    += _status[iDetector].size();
+    }
+    streamlog_out ( MESSAGE4 ) << "Total masked pixels = " << totalBad << " (" << 100 * (1.0 * totalBad) / total << "%). " << endl;
   }
 }
 
@@ -593,14 +733,14 @@ void EUTelPedestalNoiseProcessor::preLoop( LCEvent * event ) {
   // In case this is the last event, or it is the kEORE, then rewind
   // the data and return immediately
   if ( evt->getEventType() == kEORE ) {
-    streamlog_out ( DEBUG4 ) << "EORE found: calling finalizeProcessor()." << endl;
+    streamlog_out ( DEBUG4 ) << "EORE found: calling simpleRewind()." << endl;
     _iLoop = 0;
     simpleRewind();
     return;
   }
 
   if ( ( _lastEvent != -1 ) && ( _iEvt >= _lastEvent ) ) {
-    streamlog_out ( DEBUG4 ) << "Looping limited by _lastEvent: calling finalizeProcessor()." << endl;
+    streamlog_out ( DEBUG4 ) << "Looping limited by _lastEvent: calling simpleRewind()." << endl;
     _preLoopSwitch = false;
     _iLoop = 0;
     simpleRewind();
@@ -622,62 +762,79 @@ void EUTelPedestalNoiseProcessor::preLoop( LCEvent * event ) {
                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left)
                               << " - preloop "  <<  endl;
 
-  // here is the real begin
-  try {
-    LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
+  // make some initialization (only in the first event
+  if ( isFirstEvent() ) {
 
-    if ( collectionVec->size() != (unsigned) _noOfDetector ) {
-      // the number of elements in the collection is not the expected
-      // one. Something very strange happened to this event, so skip
-      // it! 
-      streamlog_out( ERROR1 ) << "Event " << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() 
-			      << setfill(' ') << " is unusable. " << resetiosflags(ios::left) << endl;
-      throw SkipEventException(this);
+    for ( size_t iCol = 0;  iCol < _rawDataCollectionNameVec.size(); ++iCol ) {
+
+      try {
+        LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection( _rawDataCollectionNameVec.at( iCol ) ));
+
+        for ( size_t iDetector = 0; iDetector < collectionVec->size(); iDetector++) {
+
+          TrackerRawData * trackerRawData = dynamic_cast< TrackerRawData * > ( collectionVec->getElementAt(  iDetector ) );
+
+          ShortVec adcValues = trackerRawData->getADCValues ();
+
+          // we have to initialize all the vectors only if this is the
+          // first collection
+          ShortVec maxValue   ( adcValues.size(), numeric_limits< short >::min() );
+          ShortVec maxValuePos( adcValues.size(),                             -1 );
+          ShortVec minValue   ( adcValues.size(), numeric_limits< short >::max() );
+          ShortVec minValuePos( adcValues.size(),                             -1 );
+
+
+          _maxValue.push_back   ( maxValue    );
+          _maxValuePos.push_back( maxValuePos );
+          _minValue.push_back   ( minValue    );
+          _minValuePos.push_back( minValuePos );
+        }
+
+      } catch (DataNotAvailableException& e) {
+        streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionNameVec.at( iCol ) << " is not available in the current event" << endl;
+      }
     }
 
+    _isFirstEvent = false;
+  }
 
-    if ( isFirstEvent() ) {
 
+  // here is the real begin
+  for ( size_t iCol = 0 ; iCol < _rawDataCollectionNameVec.size(); ++iCol ) {
 
-      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+    try {
 
-        TrackerRawData * trackerRawData = dynamic_cast< TrackerRawData * > ( collectionVec->getElementAt(  iDetector ) );
+      LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection( _rawDataCollectionNameVec.at( iCol ) ));
 
+      for ( size_t iDetector = 0 ; iDetector < collectionVec->size() ; iDetector++) {
+
+        size_t detectorOffset = ( iCol == 0 ) ? 0 : _noOfDetectorVec.at( iCol - 1 );
+
+        TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt( iDetector ) );
         ShortVec adcValues = trackerRawData->getADCValues ();
 
-        // we have to initialize all the vectors
-        ShortVec maxValue   ( adcValues.size(), numeric_limits< short >::min() );
-        ShortVec maxValuePos( adcValues.size(),                             -1 );
-        ShortVec minValue   ( adcValues.size(), numeric_limits< short >::max() );
-        ShortVec minValuePos( adcValues.size(),                             -1 );
+        for ( size_t iPixel = 0; iPixel < adcValues.size(); ++iPixel ) {
+          short currentVal = adcValues[ iPixel ];
 
-        _maxValue.push_back   ( maxValue    );
-        _maxValuePos.push_back( maxValuePos );
-        _minValue.push_back   ( minValue    );
-        _minValuePos.push_back( minValuePos );
-      }
-      _isFirstEvent = false;
-    }
+          if ( currentVal > _maxValue[ iDetector + detectorOffset] [ iPixel ] ) {
+            _maxValue   [ iDetector + detectorOffset ] [ iPixel ] = currentVal;
+            _maxValuePos[ iDetector + detectorOffset ] [ iPixel ] = _iEvt;
+          }
 
-    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-      TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt (iDetector));
-      ShortVec adcValues = trackerRawData->getADCValues ();
-      for ( size_t iPixel = 0; iPixel < adcValues.size(); ++iPixel ) {
-        short currentVal = adcValues[ iPixel ];
-        if ( currentVal > _maxValue[ iDetector ] [ iPixel ] ) {
-          _maxValue[ iDetector ] [ iPixel ] = currentVal;
-          _maxValuePos[ iDetector ] [ iPixel ] = _iEvt;
-        }
-        if ( currentVal < _minValue[ iDetector ] [ iPixel ] ) {
-          _minValue[ iDetector ] [ iPixel ] = currentVal;
-          _minValuePos[ iDetector ] [ iPixel ] = _iEvt;
+          if ( currentVal < _minValue[ iDetector + detectorOffset ] [ iPixel ] ) {
+            _minValue   [ iDetector + detectorOffset ] [ iPixel ] = currentVal;
+            _minValuePos[ iDetector + detectorOffset ] [ iPixel ] = _iEvt;
+          }
+
         }
 
       }
+
+    } catch (DataNotAvailableException& e) {
+      streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionNameVec.at( iCol ) << " is not available in the current event ("
+                                 << event->getEventNumber() << ")" << endl;
     }
-  } catch (DataNotAvailableException& e) {
-    streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionName << " is not available in the current event" << endl;
+
   }
 
   ++_iEvt;
@@ -686,7 +843,6 @@ void EUTelPedestalNoiseProcessor::preLoop( LCEvent * event ) {
 void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
-
 
   // do some checks in order to see if we have to continue or to stop
   // with the processor.
@@ -721,172 +877,180 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left)
                               << " - loop " << _iLoop <<  endl;
 
-  // let me get the rawDataCollection. This is should contain a TrackerRawDataObject
-  // for each detector plane in the telescope.
-  try {
-    LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
+  if ( isFirstEvent() ) {
 
-    if ( collectionVec->size() != (unsigned) _noOfDetector ) {
-      // the number of elements in the collection is not the expected
-      // one. Something very strange happened to this event, so skip
-      // it! 
-      streamlog_out( ERROR1 ) << "Event " << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() 
-			      << setfill(' ') << " is unusable. " << resetiosflags(ios::left) << endl;
-      throw SkipEventException(this);
-    }
+    for ( size_t iCol = 0; iCol < _rawDataCollectionNameVec.size() ; ++iCol ) {
 
-    if ( isFirstEvent() ) {
+      try {
 
-      // first of all book histos
-      bookHistos();
+        LCCollectionVec * collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionNameVec.at( iCol ) ));
 
-      // the collection contains several TrackerRawData
+        for ( size_t iDetector = 0 ; iDetector < collectionVec->size() ; ++iDetector ) {
 
-      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-        // _tempPedestal, _tempNoise, _tempEntries are vector of vector.
-        // they have been already cleared in the init() method we are
-        // already looping on detectors, so we just need to push back a
-        // vector empty for each cycle
-        //
-        // _tempPedestal should be initialized with the adcValues, while
-        // _tempNoise and _tempEntries must be initialized to zero. Since
-        // adcValues is a vector of shorts, we need to copy each
-        // elements into _tempPedestal with a suitable re-casting
+          // _tempPedestal, _tempNoise, _tempEntries are vector of vector.
+          // they have been already cleared in the init() method we are
+          // already looping on detectors, so we just need to push back a
+          // vector empty for each cycle
+          //
+          // _tempPedestal should be initialized with the adcValues, while
+          // _tempNoise and _tempEntries must be initialized to zero. Since
+          // adcValues is a vector of shorts, we need to copy each
+          // elements into _tempPedestal with a suitable re-casting
 
-        // get the TrackerRawData object from the collection for this detector
+          // get the TrackerRawData object from the collection for this detector
 
-        TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt (iDetector));
-        ShortVec adcValues = trackerRawData->getADCValues ();
+          TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt (iDetector));
+          ShortVec adcValues = trackerRawData->getADCValues ();
 
-        if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
-          // in the case of MEANRMS we have to deal with the standard
-          // vectors
-          ShortVec::iterator iter = adcValues.begin();
-          FloatVec tempDoubleVec;
-          while ( iter != adcValues.end() ) {
-            tempDoubleVec.push_back( static_cast< double > (*iter));
-            ++iter;
-          }
-          _tempPede.push_back(tempDoubleVec);
-
-          // initialize _tempNoise and _tempEntries with all zeros and
-          // ones
-          _tempNoise.push_back(FloatVec(adcValues.size(), 0.));
-          _tempEntries.push_back(IntVec(adcValues.size(), 1));
-
-
-        } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-          // in the case of AIDAPROFILE we don't need any vectors since
-          // everything is done by the IProfile2D automatically
-          int iPixel = 0;
-          stringstream ss;
-          ss << _tempProfile2DName << "-d" << iDetector;
-          for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
-            for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
-              double temp = static_cast<double> (adcValues[iPixel]);
-              if ( AIDA::IProfile2D * profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) )
-                profile ->fill(static_cast<double> (xPixel), static_cast<double> (yPixel), temp);
-              else {
-                streamlog_out ( ERROR4 )  << "Irreversible error: " << ss.str() << " is not available. Sorry for quitting." << endl;
-                exit(-1);
-              }
-              ++iPixel;
+          if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
+            // in the case of MEANRMS we have to deal with the standard
+            // vectors
+            ShortVec::iterator iter = adcValues.begin();
+            FloatVec tempDoubleVec;
+            while ( iter != adcValues.end() ) {
+              tempDoubleVec.push_back( static_cast< double > (*iter));
+              ++iter;
             }
-          }
-#endif
-        }
+            _tempPede.push_back(tempDoubleVec);
 
-        // the status vector can be initialize as well with all
-        // GOODPIXEL
-        _status.push_back(ShortVec(adcValues.size(), EUTELESCOPE::GOODPIXEL));
-
-        // if the user wants to add an additional loop on events to
-        // mask pixels singing too loud, so the corresponding counter
-        // vector should be reset
-        if ( _additionalMaskingLoop ) _hitCounter.push_back( ShortVec( adcValues.size(), 0) );
-
-      } // end of detector loop
-
-      // nothing else to do in the first event
-      _isFirstEvent = false;
-
-    } else {     // end of first event
-
-      // after the firstEvent all temp vectors and the status one have
-      // the correct number of entries for both indexes
-      // loop on the detectors
-      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-
-        // get the TrackerRawData object from the collection for this plane
-        TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt (iDetector));
-        ShortVec adcValues = trackerRawData->getADCValues ();
+            // initialize _tempNoise and _tempEntries with all zeros and
+            // ones
+            _tempNoise.push_back(FloatVec(adcValues.size(), 0.));
+            _tempEntries.push_back(IntVec(adcValues.size(), 1));
 
 
-        if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
-
-          // start looping on all pixels
-          int iPixel = 0;
-          for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
-            for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
-              short currentVal = adcValues[iPixel];
-              bool use = true;
-              if ( _preLoopSwitch && ( ( _iEvt == _maxValuePos[ iDetector ] [ iPixel ] ) ||
-                                       ( _iEvt == _minValuePos[ iDetector ] [ iPixel ] ) )  ) {
-                use = false;
-              }
-
-              if ( use ) {
-
-                _tempEntries[iDetector][iPixel] =  _tempEntries[iDetector][iPixel] + 1;
-                _tempPede[iDetector][iPixel]    = ((_tempEntries[iDetector][iPixel] - 1) * _tempPede[iDetector][iPixel]
-                                                   +  currentVal) / _tempEntries[iDetector][iPixel];
-                _tempNoise[iDetector][iPixel]   = sqrt(((_tempEntries[iDetector][iPixel] - 1) * pow(_tempNoise[iDetector][iPixel],2)
-                                                        + pow( currentVal - _tempPede[iDetector][iPixel], 2)) /
-                                                       _tempEntries[iDetector][iPixel]);
-              }
-
-              ++iPixel;
-            } // end loop on xPixel
-          }   // end loop on yPixel
-
-        } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
+          } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-          stringstream ss;
-          ss << _tempProfile2DName << "-d" << iDetector;
-
-          int iPixel = 0;
-          for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
-            for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
-              bool use = true;
-              if ( _preLoopSwitch && ( ( _iEvt == _maxValuePos[ iDetector ] [ iPixel ] ) ||
-                                       ( _iEvt == _minValuePos[ iDetector ] [ iPixel ] ) )  ) {
-                use = false;
-              }
-              if ( use ) {
-                if ( AIDA::IProfile2D* profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) )
-                  profile->fill(static_cast<double> (xPixel), static_cast<double> (yPixel), static_cast<double> (adcValues[iPixel]));
-                else {
-                  streamlog_out ( ERROR ) << "Irreversible error: " << ss.str() << " is not available. Sorry for quitting." << endl;
+            // in the case of AIDAPROFILE we don't need any vectors since
+            // everything is done by the IProfile2D automatically
+            int iPixel = 0;
+            size_t detectorOffset = ( iCol == 0 ) ? 0 : _noOfDetectorVec.at( iCol - 1 );
+            stringstream ss;
+            ss << _tempProfile2DName << "_d" << _orderedSensorIDVec.at( iDetector + detectorOffset );
+            for (int yPixel = _minY[ iDetector + detectorOffset ]; yPixel <= _maxY[ iDetector + detectorOffset ]; yPixel++) {
+              for (int xPixel = _minX[ iDetector + detectorOffset ]; xPixel <= _maxX[ iDetector + detectorOffset ]; xPixel++) {
+                double temp = static_cast<double> (adcValues[iPixel]);
+                if ( AIDA::IProfile2D * profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) ) {
+                  profile ->fill(static_cast<double> (xPixel), static_cast<double> (yPixel), temp);
+                } else {
+                  streamlog_out ( ERROR4 )  << "Irreversible error: " << ss.str() << " is not available. Sorry for quitting." << endl;
                   exit(-1);
                 }
+                ++iPixel;
               }
-              ++iPixel;
             }
-          }
 #endif
-        }
+          }
 
-      }     // end loop on detectors
+          // the status vector can be initialize as well with all
+          // GOODPIXEL
+          _status.push_back(ShortVec(adcValues.size(), EUTELESCOPE::GOODPIXEL));
+
+          // if the user wants to add an additional loop on events to
+          // mask pixels singing too loud, so the corresponding counter
+          // vector should be reset
+          if ( _additionalMaskingLoop ) _hitCounter.push_back( ShortVec( adcValues.size(), 0) );
+
+        } // end of detector loop
+
+      } catch (DataNotAvailableException& e) {
+        streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionNameVec.at( iCol ) << " is not available in the current event" << endl;
+      }
+
     }
 
-    // increment the event counter
+    bookHistos();
+
+    _isFirstEvent = false;
+
+  } else {
+
+    // this is when it is not the first event
+    for ( size_t iCol = 0 ; iCol < _rawDataCollectionNameVec.size() ; ++iCol ) {
+
+      try {
+        LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionNameVec.at( iCol ) ));
+
+        // after the firstEvent all temp vectors and the status one have
+        // the correct number of entries for both indexes
+        // loop on the detectors
+        for ( size_t iDetector = 0; iDetector < collectionVec->size() ; iDetector++) {
+
+          // get the TrackerRawData object from the collection for this plane
+          TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt (iDetector));
+          ShortVec adcValues = trackerRawData->getADCValues ();
+
+          size_t detectorOffset = ( iCol == 0 ) ? 0 : _noOfDetectorVec.at( iCol - 1 );
+
+          if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
+
+            // start looping on all pixels
+            int iPixel = 0;
+            for (int yPixel = _minY[ iDetector + detectorOffset ]; yPixel <= _maxY[ iDetector + detectorOffset ]; yPixel++) {
+              for (int xPixel = _minX[ iDetector + detectorOffset ]; xPixel <= _maxX[ iDetector + detectorOffset ]; xPixel++) {
+                short currentVal = adcValues[iPixel];
+                bool use = true;
+                if ( _preLoopSwitch && ( ( _iEvt == _maxValuePos[ iDetector + detectorOffset ] [ iPixel ] ) ||
+                                         ( _iEvt == _minValuePos[ iDetector + detectorOffset ] [ iPixel ] ) )  ) {
+                  use = false;
+                }
+
+                if ( use ) {
+
+                  _tempEntries[iDetector + detectorOffset][iPixel]    =   _tempEntries[iDetector + detectorOffset][iPixel] + 1;
+                  _tempPede   [iDetector + detectorOffset][iPixel]    = ((_tempEntries[iDetector + detectorOffset][iPixel] - 1)
+                                                                         * _tempPede[iDetector + detectorOffset][iPixel]
+                                                                         +  currentVal) / _tempEntries[iDetector+detectorOffset][iPixel];
+                  _tempNoise  [iDetector + detectorOffset][iPixel]   = sqrt(((_tempEntries[iDetector+detectorOffset][iPixel] - 1)
+                                                                             * pow(_tempNoise[iDetector+detectorOffset][iPixel],2)
+                                                                             + pow( currentVal - _tempPede[iDetector+detectorOffset][iPixel], 2)) /
+                                                                            _tempEntries[iDetector+detectorOffset][iPixel]);
+                }
+
+                ++iPixel;
+              } // end loop on xPixel
+            }   // end loop on yPixel
+
+
+          } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE ) {
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+            stringstream ss;
+            ss << _tempProfile2DName << "_d" << _orderedSensorIDVec.at( iDetector + detectorOffset );
+
+            int iPixel = 0;
+            for (int yPixel = _minY[iDetector+detectorOffset]; yPixel <= _maxY[iDetector+detectorOffset]; yPixel++) {
+              for (int xPixel = _minX[iDetector+detectorOffset]; xPixel <= _maxX[iDetector+detectorOffset]; xPixel++) {
+                bool use = true;
+                if ( _preLoopSwitch && ( ( _iEvt == _maxValuePos[ iDetector + detectorOffset ] [ iPixel ] ) ||
+                                         ( _iEvt == _minValuePos[ iDetector + detectorOffset ] [ iPixel ] ) )  ) {
+                  use = false;
+                }
+                if ( use ) {
+                  if ( AIDA::IProfile2D* profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) )
+                    profile->fill(static_cast<double> (xPixel), static_cast<double> (yPixel), static_cast<double> (adcValues[iPixel]));
+                  else {
+                    streamlog_out ( ERROR ) << "Irreversible error: " << ss.str() << " is not available. Sorry for quitting." << endl;
+                    exit(-1);
+                  }
+                }
+                ++iPixel;
+              }
+            }
+#endif
+          }
+
+        }     // end loop on detectors
+
+      } catch (DataNotAvailableException& e) {
+        streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionNameVec.at( iCol ) << " is not available in the current event" << endl;
+      }
+
+    }
+    // increment the event number
     ++_iEvt;
-  } catch (DataNotAvailableException& e) {
-    streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionName << " is not available in the current event" << endl;
-  }
+  } // end elif firstEvent
 
 }
 
@@ -920,114 +1084,200 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left)
                               << " - loop " << _iLoop <<  endl;
 
-  // let me get the rawDataCollection. This is should contain a TrackerRawDataObject
-  // for each detector plane in the telescope.
-  try {
-    LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
 
-    if ( collectionVec->size() != (unsigned) _noOfDetector ) {
-      // the number of elements in the collection is not the expected
-      // one. Something very strange happened to this event, so skip
-      // it! 
-      streamlog_out( ERROR1 ) << "Event " << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() 
-			      << setfill(' ') << " is unusable. " << resetiosflags(ios::left) << endl;
-      throw SkipEventException(this);
-    }
+  for ( size_t iCol = 0 ; iCol < _rawDataCollectionNameVec.size() ; ++iCol ) {
 
-    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-      // get the TrackerRawData object from the collection for this detector
-      TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt (iDetector));
-      ShortVec adcValues = trackerRawData->getADCValues ();
+    // let me get the rawDataCollection. This is should contain a TrackerRawDataObject
+    // for each detector plane in the telescope.
+    try {
+      LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionNameVec.at( iCol )));
 
-      // prepare stuff for common mode calculation: pixelSum is the
-      // sum of all good pixel signals. Pixels are identify as good if
-      // their status is good and it they are not recognized as hit
-      // pixel by the hit rejection threshold. goodPixel is the number
-      // of good pixel in this detector used for common mode
-      // calculation. commonMode is, indeed, the mean value of the
-      // pixel signals pedestal sub'ed. iPixel is a pixel counter
-      double pixelSum     = 0.;
-      double commonMode   = 0.;
-      int    goodPixel    = 0;
-      int    skippedPixel = 0;
-      int    iPixel       = 0;
+      for ( size_t iDetector = 0; iDetector < collectionVec->size(); iDetector++) {
 
-      // start looping on all pixels for hit rejection
-      for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
-        for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
-          bool isHit  = ( ( adcValues[iPixel] - _pedestal[iDetector][iPixel] ) > _hitRejectionCut * _noise[iDetector][iPixel] );
-          bool isGood = ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL );
-          if ( !isHit && isGood ) {
-            pixelSum += adcValues[iPixel] - _pedestal[iDetector][iPixel];
-            ++goodPixel;
-          } else if ( isHit ) {
-            ++skippedPixel;
+        // get the TrackerRawData object from the collection for this detector
+        TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt (iDetector));
+        ShortVec adcValues = trackerRawData->getADCValues ();
+
+        // new approach for a better common mode calculation. The idea
+        // is that instead of using, as before, a single value of
+        // common mode per matrix, we will have a vector of floats
+        // containing the common mode correction for each pixel
+        vector< float > commonModeCorVec;
+        commonModeCorVec.clear();
+
+        bool isEventValid = true;
+        int    skippedPixel = 0;
+        int    skippedRow   = 0;
+
+        size_t detectorOffset = ( iCol == 0 ) ? 0 : _noOfDetectorVec.at( iCol - 1 );
+
+        if ( _commonModeAlgo == EUTELESCOPE::FULLFRAME ) {
+
+          double pixelSum     = 0.;
+          double commonMode   = 0.;
+          int    goodPixel    = 0;
+          int    iPixel       = 0;
+
+          // start looping on all pixels for hit rejection
+          for (int yPixel = _minY[iDetector + detectorOffset ]; yPixel <= _maxY[iDetector + detectorOffset ]; yPixel++) {
+            for (int xPixel = _minX[iDetector + detectorOffset ]; xPixel <= _maxX[iDetector + detectorOffset ]; xPixel++) {
+              bool isHit  = ( ( adcValues[iPixel] - _pedestal[iDetector + detectorOffset][iPixel] ) > _hitRejectionCut * _noise[iDetector + detectorOffset][iPixel] );
+              bool isGood = ( _status[iDetector + detectorOffset ][iPixel] == EUTELESCOPE::GOODPIXEL );
+              if ( !isHit && isGood ) {
+                pixelSum += adcValues[iPixel] - _pedestal[iDetector + detectorOffset ][iPixel];
+                ++goodPixel;
+              } else if ( isHit ) {
+                ++skippedPixel;
+              }
+              ++iPixel;
+            }
           }
-          ++iPixel;
+
+          if ( ( skippedPixel < _maxNoOfRejectedPixels ) &&
+               ( goodPixel != 0 ) ) {
+
+            commonMode = pixelSum / goodPixel;
+            commonModeCorVec.insert( commonModeCorVec.begin(), iPixel + 1 , commonMode );
+            isEventValid = true;
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+            stringstream ss;
+            ss << _commonModeHistoName << "_d" << _orderedSensorIDVec.at( iDetector + detectorOffset ) << "_l" << _iLoop;
+            (dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[ss.str()]))->fill(commonMode);
+#endif
+
+          } else {
+
+            isEventValid = false;
+
+          }
+
+        } else if ( _commonModeAlgo == EUTELESCOPE::ROWWISE ) {
+
+          int    iPixel       = 0;
+          int    colCounter   = 0;
+          int    rowLength    = _maxX[iDetector + detectorOffset] -  _minX[iDetector + detectorOffset] + 1;
+
+          for (int yPixel = _minY[iDetector + detectorOffset]; yPixel <= _maxY[iDetector + detectorOffset]; yPixel++) {
+
+            double pixelSum           = 0.;
+            double commonMode         = 0.;
+            int    goodPixel          = 0;
+            int    skippedPixelPerRow = 0;
+
+            for ( int xPixel = _minX[iDetector + detectorOffset]; xPixel <= _maxX[iDetector + detectorOffset]; xPixel++) {
+              bool isHit  = ( ( adcValues[iPixel] - _pedestal[iDetector + detectorOffset][iPixel] ) > _hitRejectionCut * _noise[iDetector + detectorOffset][iPixel] );
+              bool isGood = ( _status[iDetector + detectorOffset][iPixel] == EUTELESCOPE::GOODPIXEL );
+              if ( !isHit && isGood ) {
+                pixelSum += adcValues[iPixel] - _pedestal[iDetector + detectorOffset][iPixel];
+                ++goodPixel;
+              } else if ( isHit ) {
+                ++skippedPixelPerRow;
+                ++skippedPixel;
+              }
+              ++iPixel;
+            }
+
+            // we are now at the end of the row, so let's calculate the
+            // common mode
+            if ( ( skippedPixelPerRow < _maxNoOfRejectedPixelPerRow ) &&
+                 ( goodPixel != 0 ) ) {
+              commonMode = pixelSum / goodPixel ;
+              commonModeCorVec.insert( commonModeCorVec.begin() + colCounter * rowLength, rowLength, commonMode );
+            } else {
+              commonModeCorVec.insert( commonModeCorVec.begin() + colCounter * rowLength, rowLength, 0. );
+              ++skippedRow;
+            }
+
+            ++colCounter;
+          }
+
+
+          if ( skippedRow < _maxNoOfSkippedRow ) {
+
+            isEventValid = true;
+
+          } else {
+
+            isEventValid = false;
+
+          }
+
+        } else {
+          streamlog_out ( ERROR4 ) << "Unknown common mode algorithm. Using flat null correction" << endl;
+          commonModeCorVec.insert( commonModeCorVec.begin(),
+                                   ( _maxY[iDetector + detectorOffset] - _minY[iDetector + detectorOffset] + 1 ) *
+                                   ( _maxX[iDetector + detectorOffset] - _minX[iDetector + detectorOffset] + 1 ),
+                                   0. );
+          isEventValid = true;
         }
-      }
 
-      if ( ( skippedPixel < _maxNoOfRejectedPixels ) &&
-           ( goodPixel != 0 ) ) {
 
-        commonMode = pixelSum / goodPixel;
+        if ( isEventValid ) {
+
+          int iPixel = 0;
+          for (int yPixel = _minY[iDetector + detectorOffset]; yPixel <= _maxY[iDetector + detectorOffset]; yPixel++) {
+            for (int xPixel = _minX[iDetector + detectorOffset]; xPixel <= _maxX[iDetector + detectorOffset]; xPixel++) {
+              if ( _status[iDetector + detectorOffset][iPixel] == EUTELESCOPE::GOODPIXEL ) {
+                double pedeCorrected = adcValues[iPixel] - commonModeCorVec[iPixel];
+                if ( std::abs( pedeCorrected - _pedestal[iDetector + detectorOffset][iPixel] ) < _hitRejectionCut * _noise[iDetector + detectorOffset][iPixel] ) {
+                  if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
+
+                    bool use = true;
+                    if ( _preLoopSwitch && ( ( _iEvt == _maxValuePos[ iDetector  + detectorOffset ] [ iPixel ] ) ||
+                                             ( _iEvt == _minValuePos[ iDetector  + detectorOffset ] [ iPixel ] ) )  ) {
+                      use = false;
+                    }
+                    if ( use ) {
+                      _tempEntries[iDetector + detectorOffset][iPixel] = _tempEntries[iDetector + detectorOffset][iPixel] + 1;
+                      _tempPede[iDetector + detectorOffset][iPixel]    = ((_tempEntries[iDetector + detectorOffset][iPixel] - 1)
+                                                                          * _tempPede[iDetector + detectorOffset][iPixel]
+                                                                          + pedeCorrected) / _tempEntries[iDetector + detectorOffset][iPixel];
+                      _tempNoise[iDetector + detectorOffset][iPixel]   = sqrt(((_tempEntries[iDetector + detectorOffset][iPixel] - 1)
+                                                                               * pow(_tempNoise[iDetector + detectorOffset][iPixel],2)
+                                                                               + pow(pedeCorrected - _tempPede[iDetector + detectorOffset][iPixel], 2)) /
+                                                                              _tempEntries[iDetector + detectorOffset][iPixel]);
+                    }
+                  } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-        stringstream ss;
-        ss << _commonModeHistoName << "-d" << iDetector << "-l" << _iLoop;
-        (dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[ss.str()]))->fill(commonMode);
+                    bool use = true;
+                    if ( _preLoopSwitch && ( ( _iEvt == _maxValuePos[ iDetector  + detectorOffset ] [ iPixel ] ) ||
+                                             ( _iEvt == _minValuePos[ iDetector  + detectorOffset ] [ iPixel ] ) )  ) {
+                      use = false;
+                    }
+                    if ( use ) {
+                      stringstream ss;
+                      ss << _tempProfile2DName << "_d" << _orderedSensorIDVec.at( iDetector  + detectorOffset );
+                      (dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]))
+                        ->fill(static_cast<double> (xPixel), static_cast<double> (yPixel), pedeCorrected);
+                    }
 #endif
-        iPixel = 0;
-        for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
-          for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
-            if ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) {
-              double pedeCorrected = adcValues[iPixel] - commonMode;
-              if ( std::abs( pedeCorrected - _pedestal[iDetector][iPixel] ) < _hitRejectionCut * _noise[iDetector][iPixel] ) {
-                if ( _pedestalAlgo == EUTELESCOPE::MEANRMS ) {
-
-                  bool use = true;
-                  if ( _preLoopSwitch && ( ( _iEvt == _maxValuePos[ iDetector ] [ iPixel ] ) ||
-                                           ( _iEvt == _minValuePos[ iDetector ] [ iPixel ] ) )  ) {
-                    use = false;
                   }
-                  if ( use ) {
-                    _tempEntries[iDetector][iPixel] = _tempEntries[iDetector][iPixel] + 1;
-                    _tempPede[iDetector][iPixel]    = ((_tempEntries[iDetector][iPixel] - 1) * _tempPede[iDetector][iPixel]
-                                                       + pedeCorrected) / _tempEntries[iDetector][iPixel];
-                    _tempNoise[iDetector][iPixel]   = sqrt(((_tempEntries[iDetector][iPixel] - 1) * pow(_tempNoise[iDetector][iPixel],2)
-                                                            + pow(pedeCorrected - _tempPede[iDetector][iPixel], 2)) /
-                                                           _tempEntries[iDetector][iPixel]);
-                  }
-                } else if ( _pedestalAlgo == EUTELESCOPE::AIDAPROFILE) {
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-                  bool use = true;
-                  if ( _preLoopSwitch && ( ( _iEvt == _maxValuePos[ iDetector ] [ iPixel ] ) ||
-                                           ( _iEvt == _minValuePos[ iDetector ] [ iPixel ] ) )  ) {
-                    use = false;
-                  }
-                  if ( use ) {
-                    stringstream ss;
-                    ss << _tempProfile2DName << "-d" << iDetector;
-                    (dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]))
-                      ->fill(static_cast<double> (xPixel), static_cast<double> (yPixel), pedeCorrected);
-                  }
-#endif
                 }
               }
+              ++iPixel;
             }
-            ++iPixel;
           }
+        } else {
+          if ( _commonModeAlgo == EUTELESCOPE::FULLFRAME ) {
+            streamlog_out ( WARNING2 ) <<  "Skipping event " << _iEvt << " because of max number of rejected pixels exceeded. ("
+                                       << skippedPixel << ") on detector " << _orderedSensorIDVec.at( iDetector ) << endl;
+          } else if ( _commonModeAlgo == EUTELESCOPE::ROWWISE ) {
+            streamlog_out ( WARNING2 ) <<  "Skipping event " << _iEvt << " because of max number of skipped rows is reached. ("
+                                       << skippedRow << ") on detector " << _orderedSensorIDVec.at( iDetector ) << endl;
+          }
+
+          // the event has been skipped, so add this event number to the
+          // skipped list
+          _skippedEventList.push_back( _iEvt );
         }
-      } else {
-        streamlog_out ( WARNING2 ) <<  "Skipping event " << _iEvt << " because of max number of rejected pixels exceeded. ("
-                                   << skippedPixel << ") on detector " << iDetector << endl;
-        ++_noOfSkippedEvent;
       }
+    } catch (DataNotAvailableException& e) {
+      streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionNameVec.at( iCol ) << " is not available in the current event" << endl;
     }
-    ++_iEvt;
-  } catch (DataNotAvailableException& e) {
-    streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionName << " is not available in the current event" << endl;
   }
+  ++_iEvt;
+
 }
 
 void EUTelPedestalNoiseProcessor::bookHistos() {
@@ -1035,6 +1285,21 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   // histograms are grouped in loops and detectors
   streamlog_out ( MESSAGE2 ) << "Booking histograms " << endl;
+
+  auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+  EUTelHistogramInfo    * histoInfo;
+  bool                    isHistoManagerAvailable;
+
+  try {
+    isHistoManagerAvailable = histoMgr->init();
+  } catch ( ios::failure& e) {
+    streamlog_out ( ERROR1 )  << "I/O problem with " << _histoInfoFileName << endl
+                              << "Continuing without histogram manager"   << endl;
+    isHistoManagerAvailable = false;
+  } catch ( ParseException& e ) {
+    streamlog_out ( ERROR1 )  << e.what() << endl  << "Continuing without histogram manager" << endl;
+    isHistoManagerAvailable = false;
+  }
 
 
   string tempHistoName;
@@ -1045,37 +1310,33 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 
     // prepare the name of the current loop directory and add it the
     // the current ITree
-    string loopDirName;
-    {
-      stringstream ss;
-      ss << "loop-" << iLoop;
-      loopDirName = ss.str();
-    }
+    string loopDirName = "loop_" + to_string( iLoop );
     AIDAProcessor::tree(this)->mkdir(loopDirName.c_str());
 
     // start looping on detectors
-    for (int iDetector = 0; iDetector < _noOfDetector;  iDetector++) {
+    for ( size_t iDetector = 0; iDetector < _noOfDetector;  iDetector++) {
 
       // prepare the name of the current detector and add it to the
       // current ITree inside the current loop folder
-      string detectorDirName;
-      {
-        stringstream ss;
-        ss << "detector-" << iDetector;
-        detectorDirName = ss.str();
-      }
+      string detectorDirName = "detector_" + to_string( _orderedSensorIDVec.at( iDetector ) );
       string basePath = loopDirName + "/" + detectorDirName + "/";
       AIDAProcessor::tree(this)->mkdir(basePath.c_str());
 
       // book an histogram for the pedestal distribution
-      const int    pedeDistHistoNBin   = 100;
-      const double pedeDistHistoMin    = -20.;
-      const double pedeDistHistoMax    =  29.;
-      {
-        stringstream ss;
-        ss << _pedeDistHistoName << "-d" << iDetector << "-l" << iLoop;
-        tempHistoName = ss.str();
+      int    pedeDistHistoNBin   = 100;
+      double pedeDistHistoMin    = -20.;
+      double pedeDistHistoMax    =  29.;
+      tempHistoName = _pedeDistHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( iLoop );
+      if ( isHistoManagerAvailable ) {
+        histoInfo = histoMgr->getHistogramInfo( _pedeDistHistoName );
+        if ( histoInfo ) {
+          streamlog_out ( DEBUG1 ) << (*histoInfo) << endl;
+          pedeDistHistoNBin  = histoInfo->_xBin;
+          pedeDistHistoMin   = histoInfo->_xMin;
+          pedeDistHistoMax   = histoInfo->_xMax;
+        }
       }
+
       AIDA::IHistogram1D * pedeDistHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                   pedeDistHistoNBin, pedeDistHistoMin, pedeDistHistoMax);
@@ -1089,13 +1350,19 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
       }
 
       // book an histogram for the noise distribution
-      const int    noiseDistHistoNBin  =  100;
-      const double noiseDistHistoMin   =  -5.;
-      const double noiseDistHistoMax   =  15.;
-      {
-        stringstream ss;
-        ss << _noiseDistHistoName << "-d" << iDetector << "-l" << iLoop;
-        tempHistoName = ss.str();
+      int    noiseDistHistoNBin  =  100;
+      double noiseDistHistoMin   =  -5.;
+      double noiseDistHistoMax   =  15.;
+      tempHistoName = _noiseDistHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( iLoop );
+
+      if ( isHistoManagerAvailable ) {
+        histoInfo = histoMgr->getHistogramInfo(_noiseDistHistoName);
+        if ( histoInfo ) {
+          streamlog_out ( DEBUG1 )  << (* histoInfo ) << endl;
+          noiseDistHistoNBin = histoInfo->_xBin;
+          noiseDistHistoMin  = histoInfo->_xMin;
+          noiseDistHistoMax  = histoInfo->_xMax;
+        }
       }
       AIDA::IHistogram1D * noiseDistHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
@@ -1111,13 +1378,18 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
 
       // book a 1d histo for common mode only if loop >= 1
       if (iLoop >= 1) {
-        const int    commonModeHistoNBin = 100;
-        const double commonModeHistoMin  =  -2;
-        const double commonModeHistoMax  =   2;
-        {
-          stringstream ss;
-          ss << _commonModeHistoName << "-d" << iDetector << "-l" << iLoop;
-          tempHistoName = ss.str();
+        int    commonModeHistoNBin = 100;
+        double commonModeHistoMin  =  -2;
+        double commonModeHistoMax  =   2;
+        tempHistoName = _commonModeHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( iLoop );
+        if ( isHistoManagerAvailable ) {
+          histoInfo = histoMgr->getHistogramInfo(_commonModeHistoName);
+          if ( histoInfo ) {
+            streamlog_out ( DEBUG1 )  << (* histoInfo ) << endl;
+            commonModeHistoNBin = histoInfo->_xBin;
+            commonModeHistoMin  = histoInfo->_xMin;
+            commonModeHistoMax  = histoInfo->_xMax;
+          }
         }
         AIDA::IHistogram1D * commonModeHisto =
           AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
@@ -1139,11 +1411,7 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
       const double xMax       =  xMin + xNoOfPixel;
       const double yMin       = _minY[iDetector] - 0.5;
       const double yMax       =  yMin + yNoOfPixel;
-      {
-        stringstream ss;
-        ss << _pedeMapHistoName << "-d" << iDetector << "-l" << iLoop;
-        tempHistoName = ss.str();
-      }
+      tempHistoName = _pedeMapHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( iLoop );
       AIDA::IHistogram2D * pedeMapHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
                                                                   xNoOfPixel, xMin, xMax, yNoOfPixel, yMin, yMax);
@@ -1157,11 +1425,7 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
       }
 
       // book a 2d histogram for noise map
-      {
-        stringstream ss;
-        ss << _noiseMapHistoName << "-d" << iDetector << "-l" << iLoop;
-        tempHistoName = ss.str();
-      }
+      tempHistoName = _noiseMapHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( iLoop );
       AIDA::IHistogram2D * noiseMapHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
                                                                   xNoOfPixel, xMin, xMax, yNoOfPixel, yMin, yMax);
@@ -1175,11 +1439,7 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
       }
 
       // book a 2d histogram for status map
-      {
-        stringstream ss;
-        ss << _statusMapHistoName << "-d" << iDetector << "-l" << iLoop;
-        tempHistoName = ss.str();
-      }
+      tempHistoName = _statusMapHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( iLoop );
       AIDA::IHistogram2D * statusMapHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
                                                                   xNoOfPixel, xMin, xMax, yNoOfPixel, yMin, yMax);
@@ -1197,11 +1457,7 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
         // we just need to prepare such a 2d profile only in the case
         // we are using the AIDAPROFILE calculation algorithm and we
         // need just one copy of it for each detector.
-        {
-          stringstream ss;
-          ss << _tempProfile2DName << "-d" << iDetector;
-          tempHistoName = ss.str();
-        }
+        tempHistoName = _tempProfile2DName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) ;
         AIDA::IProfile2D * tempProfile2D =
           AIDAProcessor::histogramFactory(this)->createProfile2D( (basePath + tempHistoName).c_str(),
                                                                   xNoOfPixel, xMin, xMax, yNoOfPixel, yMin, yMax,-1000,1000);
@@ -1222,42 +1478,65 @@ void EUTelPedestalNoiseProcessor::bookHistos() {
   if ( _additionalMaskingLoop ) {
 
     int iLoop = _noOfCMIterations + 1 ;
-    string loopDirName;
-    {
-      stringstream ss;
-      ss << "loop-" << iLoop;
-      loopDirName = ss.str();
-    }
+    string loopDirName = "loop_" + to_string( iLoop ) ;
     AIDAProcessor::tree(this)->mkdir(loopDirName.c_str());
 
-    for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++ ) {
+    for ( size_t iDetector = 0; iDetector < _noOfDetector; iDetector++ ) {
 
       // prepare the name of the current detector and add it to the
       // current ITree inside the current loop folder
-      string detectorDirName;
-      {
-        stringstream ss;
-        ss << "detector-" << iDetector;
-        detectorDirName = ss.str();
-      }
+      string detectorDirName = "detector_" + to_string( _orderedSensorIDVec.at( iDetector ) ) ;
       string basePath = loopDirName + "/" + detectorDirName + "/";
       AIDAProcessor::tree(this)->mkdir(basePath.c_str());
 
       // book an histogram for the firing frequency
       const int    fireFreqHistoNBin   = 100;
       const double fireFreqHistoMin    =  0.0;
-      const double fireFreqHistoMax    =  1.0;
-      {
-        stringstream ss;
-        ss << _fireFreqHistoName << "-d" << iDetector << "-l" << iLoop;
-        tempHistoName = ss.str();
-      }
+      const double fireFreqHistoMax    =  100;
+      tempHistoName = _fireFreqHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( iLoop );
       AIDA::IHistogram1D * fireFreqHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                   fireFreqHistoNBin, fireFreqHistoMin, fireFreqHistoMax);
       if ( fireFreqHisto ) {
         _aidaHistoMap.insert(make_pair(tempHistoName, fireFreqHisto));
         fireFreqHisto->setTitle("Firing frequency distribution");
+      } else {
+        streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                 << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
+      }
+
+      // preparing a histogram containing the signal on all the events
+      tempHistoName = _aPixelHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( iLoop );
+      const int    aPixelNBin =    1000;
+      const double aPixelMin  =  -499.5;
+      const double aPixelMax  =   500.5;
+      AIDA::IHistogram1D * aPixelHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName ).c_str(),
+                                                                  aPixelNBin, aPixelMin, aPixelMax );
+      if ( aPixelHisto ) {
+        _aidaHistoMap.insert( make_pair( tempHistoName, aPixelHisto ) );
+        aPixelHisto->setTitle("Output signal of a pixel");
+      } else {
+        streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                 << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
+      }
+
+      // book a 2d histogram for status map
+      const int    xNoOfPixel = abs( _maxX[iDetector] - _minX[iDetector] + 1);
+      const int    yNoOfPixel = abs( _maxY[iDetector] - _minY[iDetector] + 1);
+      const double xMin       = _minX[iDetector] - 0.5;
+      const double xMax       =  xMin + xNoOfPixel;
+      const double yMin       = _minY[iDetector] - 0.5;
+      const double yMax       =  yMin + yNoOfPixel;
+      tempHistoName = _statusMapHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( iLoop );
+      AIDA::IHistogram2D * statusMapHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
+                                                                  xNoOfPixel, xMin, xMax, yNoOfPixel, yMin, yMax);
+      if ( statusMapHisto ) {
+        _aidaHistoMap.insert(make_pair(tempHistoName, statusMapHisto));
+        statusMapHisto->setTitle("Status map");
       } else {
         streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
                                  << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
@@ -1285,6 +1564,14 @@ void EUTelPedestalNoiseProcessor::simpleRewind() {
 
 void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
 
+  if ( _iLoop > 0 ) {
+    _skippedEventList.sort();
+    _nextEventToSkip = _skippedEventList.begin();
+    streamlog_out( MESSAGE4 ) << "Skipped " << _skippedEventList.size() << " event because of common mode ("
+                              << static_cast< double > ( _skippedEventList.size() ) / _iEvt * 100
+                              << "%)" << endl;
+  }
+
   if ( ! fromMaskingLoop ) {
 
     // this is the case in which the function is called from a loop
@@ -1307,9 +1594,9 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       _pedestal.clear();
       _noise.clear();
-      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      for ( size_t iDetector = 0; iDetector < _noOfDetector; iDetector++) {
         stringstream ss;
-        ss << _tempProfile2DName << "-d" << iDetector;
+        ss << _tempProfile2DName << "_d" << _orderedSensorIDVec.at( iDetector );
         FloatVec tempPede;
         FloatVec tempNoise;
         for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
@@ -1347,6 +1634,29 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
 
     // here refill the status histoMap
     maskBadPixel();
+
+#if defined(MARLIN_USE_AIDA) || defined(USE_AIDA)
+    // fill only the status map histograms
+    string tempHistoName;
+    for (size_t iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      int iPixel = 0;
+      for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
+        for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
+          if ( _histogramSwitch ) {
+            tempHistoName =  _statusMapHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector ) ) + "_l" + to_string( _iLoop );
+            if ( AIDA::IHistogram2D * histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[tempHistoName]) ) {
+              histo->fill(static_cast<double>(xPixel), static_cast<double>(yPixel), static_cast<double> (_status[iDetector][iPixel]));
+            } else {
+              streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
+                                        << ".\nDisabling histogramming from now on " << endl;
+              _histogramSwitch = false;
+            }
+            ++iPixel;
+          }
+        }
+      }
+    }
+#endif
   }
 
 
@@ -1388,7 +1698,7 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
     LCCollectionVec * noiseCollection    = new LCCollectionVec(LCIO::TRACKERDATA);
     LCCollectionVec * statusCollection   = new LCCollectionVec(LCIO::TRACKERRAWDATA);
 
-    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+    for ( size_t iDetector = 0; iDetector < _noOfDetector; iDetector++) {
 
       TrackerDataImpl    * pedestalMatrix = new TrackerDataImpl;
       TrackerDataImpl    * noiseMatrix    = new TrackerDataImpl;
@@ -1398,9 +1708,9 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
       CellIDEncoder<TrackerDataImpl>    idNoiseEncoder(EUTELESCOPE::MATRIXDEFAULTENCODING, noiseCollection);
       CellIDEncoder<TrackerRawDataImpl> idStatusEncoder(EUTELESCOPE::MATRIXDEFAULTENCODING, statusCollection);
 
-      idPedestalEncoder["sensorID"] = iDetector;
-      idNoiseEncoder["sensorID"]    = iDetector;
-      idStatusEncoder["sensorID"]   = iDetector;
+      idPedestalEncoder["sensorID"] = _orderedSensorIDVec.at( iDetector );
+      idNoiseEncoder["sensorID"]    = _orderedSensorIDVec.at( iDetector );
+      idStatusEncoder["sensorID"]   = _orderedSensorIDVec.at( iDetector );
       idPedestalEncoder["xMin"]     = _minX[iDetector];
       idNoiseEncoder["xMin"]        = _minX[iDetector];
       idStatusEncoder["xMin"]       = _minX[iDetector];
@@ -1488,7 +1798,7 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
       _tempPede  = _pedestal;
       _tempNoise = _noise;
 
-      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      for ( size_t iDetector = 0; iDetector < _noOfDetector; iDetector++) {
         _tempEntries.push_back(IntVec( _noise[iDetector].size(), 1));
       }
 
@@ -1497,9 +1807,9 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
       // need to do is to clean up the previous loop histograms
       // remember to loop over all detectors
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-      for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
+      for ( size_t iDetector = 0; iDetector < _noOfDetector; iDetector++) {
         stringstream ss;
-        ss << _tempProfile2DName << "-d" << iDetector;
+        ss << _tempProfile2DName << "_d" << _orderedSensorIDVec.at( iDetector );
         if ( AIDA::IProfile2D* profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) )
           profile->reset();
         else {
@@ -1543,37 +1853,85 @@ void EUTelPedestalNoiseProcessor::additionalMaskingLoop(LCEvent * event) {
                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left)
                               << " - loop " << _iLoop <<  endl;
 
+  if ( *_nextEventToSkip == _iEvt ) {
+    streamlog_out( MESSAGE4 ) << "Event " << _iEvt << " is skipped because labelled bad by the common mode procedure." << endl;
+    ++_nextEventToSkip;
+    return;
+  }
+
   // let me get the rawDataCollection. This is should contain a TrackerRawDataObject
   // for each detector plane in the telescope.
-  try {
-    LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionName));
+  for ( size_t iCol = 0 ; iCol < _rawDataCollectionNameVec.size(); ++iCol ) {
 
-    if ( collectionVec->size() != (unsigned) _noOfDetector ) {
-      // the number of elements in the collection is not the expected
-      // one. Something very strange happened to this event, so skip
-      // it! 
-      streamlog_out( ERROR1 ) << "Event " << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() 
-			      << setfill(' ') << " is unusable. " << resetiosflags(ios::left) << endl;
-      throw SkipEventException(this);
-    }
+    size_t detectorOffset = ( iCol == 0 ) ? 0 : _noOfDetectorVec.at( iCol - 1 );
 
-    for (int iDetector = 0; iDetector < _noOfDetector; iDetector++) {
-      // get the TrackerRawData object from the collection for this detector
-      TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt (iDetector));
-      ShortVec adcValues = trackerRawData->getADCValues ();
-      for ( unsigned int iPixel = 0 ; iPixel < adcValues.size(); iPixel++ ) {
-        if ( _status[iDetector][iPixel] == EUTELESCOPE::GOODPIXEL ) {
-          float correctedValue = adcValues[iPixel] - _pedestal[iDetector][iPixel];
-          float threshold      = _noise[iDetector][iPixel] *  (0.5 * _hitRejectionCut );
-          if ( correctedValue > threshold ) {
-            _hitCounter[iDetector][iPixel]++;
+    try {
+      LCCollectionVec *collectionVec = dynamic_cast < LCCollectionVec * >(evt->getCollection (_rawDataCollectionNameVec.at( iCol )));
+
+      for ( size_t iDetector = 0; iDetector < collectionVec->size(); iDetector++) {
+        // get the TrackerRawData object from the collection for this detector
+        TrackerRawData *trackerRawData = dynamic_cast < TrackerRawData * >(collectionVec->getElementAt (iDetector));
+        ShortVec adcValues = trackerRawData->getADCValues ();
+        for ( unsigned int iPixel = 0 ; iPixel < adcValues.size(); iPixel++ ) {
+          if ( _status[iDetector + detectorOffset][iPixel] == EUTELESCOPE::GOODPIXEL ) {
+            float correctedValue = adcValues[iPixel] - _pedestal[iDetector + detectorOffset][iPixel];
+            float threshold      = _noise[iDetector + detectorOffset][iPixel] * 3.0 ;
+#if defined(MARLIN_USE_AIDA) || defined(USE_AIDA)
+            if ( _histogramSwitch  && iPixel == 1 + (adcValues.size() / 10)) {
+              string tempHistoName = _aPixelHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector  + detectorOffset ) ) + "_l" + to_string( _iLoop ) ;
+              if ( AIDA::IHistogram1D * histo = dynamic_cast< AIDA::IHistogram1D*> ( _aidaHistoMap[ tempHistoName ] ) )
+                histo->fill( correctedValue );
+              else {
+                streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
+                                          << ".\nDisabling histogramming from now on " << endl;
+                _histogramSwitch = false;
+              }
+            }
+#endif
+            if ( correctedValue > threshold ) {
+              _hitCounter[iDetector + detectorOffset][iPixel]++;
+            }
           }
         }
       }
+    } catch (DataNotAvailableException& e) {
+      streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionNameVec.at( iCol ) << " is not available in the current event" << endl;
     }
     ++_iEvt;
-  } catch (DataNotAvailableException& e) {
-    streamlog_out ( WARNING2 ) << "No input collection " << _rawDataCollectionName << " is not available in the current event" << endl;
   }
 }
+
+
+void EUTelPedestalNoiseProcessor::setBadPixelAlgoSwitches() {
+
+  if ( find( _badPixelAlgoVec.begin(), _badPixelAlgoVec.end(), EUTELESCOPE::NOISEDISTRIBUTION ) != _badPixelAlgoVec.end() ) {
+    _badPixelNoiseDistributionSwitch = true;
+    streamlog_out( DEBUG4 ) << "Using " << EUTELESCOPE::NOISEDISTRIBUTION << " algorithm" << endl;
+  } else {
+    _badPixelNoiseDistributionSwitch = false;
+  }
+
+  if ( find( _badPixelAlgoVec.begin(), _badPixelAlgoVec.end(), EUTELESCOPE::ABSOLUTENOISEVALUE ) != _badPixelAlgoVec.end() ) {
+    _badPixelAbsNoiseSwitch = true;
+    streamlog_out( DEBUG4 ) << "Using " << EUTELESCOPE::ABSOLUTENOISEVALUE << " algorithm" << endl;
+  } else {
+    _badPixelAbsNoiseSwitch = false;
+  }
+
+  if ( find( _badPixelAlgoVec.begin(), _badPixelAlgoVec.end(), EUTELESCOPE::DEADPIXEL ) != _badPixelAlgoVec.end() ) {
+    _badPixelDeadPixelSwitch = true;
+    streamlog_out( DEBUG4 ) << "Using " << EUTELESCOPE::DEADPIXEL << " algorithm" << endl;
+  } else {
+    _badPixelDeadPixelSwitch = false;
+  }
+
+  if ( find( _badPixelAlgoVec.begin(), _badPixelAlgoVec.end(), EUTELESCOPE::ABSOLUTEPEDEVALUE ) != _badPixelAlgoVec.end() ) {
+    _badPixelAbsPedeSwitch = true;
+    streamlog_out( DEBUG4 ) << "Using " << EUTELESCOPE::ABSOLUTEPEDEVALUE << " algorithm" << endl;
+  } else {
+    _badPixelAbsPedeSwitch = false;
+  }
+
+
+}
+

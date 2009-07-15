@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Aleksander Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version $Id: EUTelMAPSdigi.cc,v 1.5 2008-11-17 09:08:52 bulgheroni Exp $
+// Version $Id: EUTelMAPSdigi.cc,v 1.6 2009-07-15 17:21:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -41,6 +41,7 @@
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
 #include <AIDA/IHistogram3D.h>
+#include <AIDA/IProfile1D.h>
 #include <AIDA/ITree.h>
 #endif
 
@@ -69,7 +70,13 @@ using namespace eutelescope;
 std::string EUTelMAPSdigi::_hitHistoLocalName          = "HitHistoLocal";
 std::string EUTelMAPSdigi::_hitHistoTelescopeName      = "HitHistoTelescope";
 std::string EUTelMAPSdigi::_pixelHistoName             = "PixelHisto";
+std::string EUTelMAPSdigi::_chargeHistoName             = "ChargeHisto";
+std::string EUTelMAPSdigi::_signalHistoName             = "SignalHisto";
+std::string EUTelMAPSdigi::_multipHistoName             = "MultiplicityHisto";
+std::string EUTelMAPSdigi::_chargeProfileName             = "ChargeProfile";
+std::string EUTelMAPSdigi::_weightedProfileName             = "WeightedCharge";
 #endif
+
 
 EUTelMAPSdigi::EUTelMAPSdigi () : Processor("EUTelMAPSdigi") {
 
@@ -90,24 +97,23 @@ EUTelMAPSdigi::EUTelMAPSdigi () : Processor("EUTelMAPSdigi") {
 
   registerProcessorParameter ("MaxStepInCharge",
                               "Maximum charge per simulation step [e]",
-                              _maxStepInCharge,  static_cast < double > (300.));
+                              _maxStepInCharge,  static_cast < double > (100.));
 
   registerProcessorParameter ("MaxStepInLength",
                               "Maximum step length for single hit",
-                              _maxStepInLength,  static_cast < double > (0.001));
+                              _maxStepInLength,  static_cast < double > (0.002));
 
   registerProcessorParameter ("IntegMaxNumberPixelsAlongL",
                               "Maximum diffusion range in pixels along sensor length ",
-                              _integMaxNumberPixelsAlongL,  static_cast < int > (9));
+                              _integMaxNumberPixelsAlongL,  static_cast < int > (5));
 
   registerProcessorParameter ("IntegMaxNumberPixelsAlongW",
                               "Maximum diffusion range in pixels along sensor width ",
-                              _integMaxNumberPixelsAlongW,  static_cast < int > (9));
+                              _integMaxNumberPixelsAlongW,  static_cast < int > (5));
 
   registerProcessorParameter ("ChargeAttenuationLength",
                               "Charge attenuation length in diffusion",
-                              _chargeAttenuationLength,  static_cast < double > (0.038));
-
+                              _chargeAttenuationLength,  static_cast < double > (0.055));
 
   registerProcessorParameter ("ChargeReflectedContribution",
                               "Charge reflection coefficient",
@@ -115,7 +121,7 @@ EUTelMAPSdigi::EUTelMAPSdigi () : Processor("EUTelMAPSdigi") {
 
   registerProcessorParameter ("GSL function calls",
                               "Number of function calls in one GSL integration",
-                              _gslFunctionCalls,  static_cast < int > (5000));
+                              _gslFunctionCalls,  static_cast < int > (500));
 
   registerProcessorParameter ("IntegPixelSegmentsAlongL",
                               "Number of bins along sensor lenght for storing integration results",
@@ -136,64 +142,92 @@ EUTelMAPSdigi::EUTelMAPSdigi () : Processor("EUTelMAPSdigi") {
                               "Common integration storage can be used for all sensors if they have same geometry",
                               _useCommonIntegrationStorage,  static_cast < bool > (true));
 
-
   registerProcessorParameter ("IonizationEnergy",
                               "Ionization energy in silicon [eV]",
                               _ionizationEnergy,  static_cast < double > (3.6));
 
+  // Digitization parameters
+
+  std::vector< int > initLayerIDs;
+
+  std::vector< float > initLayerScaling;
+  initLayerScaling.push_back(1.0);
+
+  std::vector< int > initLayerFlag;
+  initLayerFlag.push_back(0);
+
+  std::vector< float > initLayerGain;
+  initLayerGain.push_back(0.4);
+
+  std::vector< float > initLayerGainVar;
+  initLayerGainVar.push_back(0.);
+
+  std::vector< float > initLayerNoise;
+  initLayerNoise.push_back(3.);
+
+  std::vector< float > initLayerOffset;
+  initLayerOffset.push_back(0.);
+
+  std::vector< float > initLayerThreshold;
+  initLayerThreshold.push_back(0.);
+
+
+  registerOptionalParameter ("DigiLayerIDs",
+                             "Ids of layers which are considered in digitization",
+                             _DigiLayerIDs, initLayerIDs);
 
 
   registerProcessorParameter ("DepositedChargeScaling",
                               "Scaling of the deposited charge",
-                              _depositedChargeScaling ,  static_cast < double > (1.0));
-
+                              _depositedChargeScaling , initLayerScaling );
 
 
   registerProcessorParameter ("ApplyPoissonSmearing",
                               "Flag for applying Poisson smearing of the collected charge",
-                              _applyPoissonSmearing,  static_cast < bool > (true));
+                              _applyPoissonSmearing,  initLayerFlag );
 
 
   registerProcessorParameter ("AdcGain",
                               "ADC gain  in ADC counts per unit charge",
-                              _adcGain,  static_cast < double > (0.01));
+                              _adcGain,  initLayerGain );
 
 
 
   registerProcessorParameter ("AdcGainVariation",
                               "ADC gain variation ",
-                              _adcGainVariation ,  static_cast < double > (0.));
+                              _adcGainVariation ,  initLayerGainVar );
 
 
 
   registerProcessorParameter ("AdcNoise",
                               "ADC noise in ADC counts",
-                              _adcNoise ,  static_cast < double > (1.0));
+                              _adcNoise ,  initLayerNoise );
 
 
 
   registerProcessorParameter ("AdcOffset",
                               "Constant pedestal value in ADC couts",
-                              _adcOffset ,  static_cast < double > (0.));
+                              _adcOffset ,  initLayerOffset );
 
 
   registerProcessorParameter ("ZeroSuppressionThreshold",
                               "Threshold (in ADC counts) for removing empty pixels",
-                              _zeroSuppressionThreshold ,  static_cast < double > (3.));
+                              _zeroSuppressionThreshold ,  initLayerThreshold );
 
 
 
   // Other processor parameters
 
 
-  registerProcessorParameter ("SingleHitOutput",
-                              "Flag controling pixel list output after each Mokka hit",
-                              _singleHitOutput,  static_cast < bool > (true));
-
-
   registerProcessorParameter ("DebugEventCount",
                               "Print out every DebugEnevtCount event",
                               _debugCount,  static_cast < int > (10));
+
+
+  registerProcessorParameter ("Fill charge distribution profiles",
+                              "Charge profiles present average pixel charge, as a function of pixel number in cluster",
+                              _fillChargeProfiles,  static_cast < bool > (false));
+
 
 }
 
@@ -233,6 +267,54 @@ void EUTelMAPSdigi::init() {
   _histogramSwitch = true;
 
 #endif
+
+  // Check if digitization parameters are not missing (!)
+
+  if(_depositedChargeScaling.size() == 0 ||
+     _applyPoissonSmearing.size() == 0 ||
+     _adcGain.size() == 0 ||
+     _adcGainVariation.size() == 0 ||
+     _adcNoise.size() == 0 ||
+     _zeroSuppressionThreshold.size() == 0 ||
+     _adcOffset.size() == 0 )
+    {
+  streamlog_out ( ERROR4 ) <<  "Digitization parameters not given!" << endl
+                    <<  "You have to specify all digitization parameters" << endl;
+  exit(-1);
+    }
+
+  
+  // Check if correct number of digitization parameters is given
+ 
+  unsigned int nTelPlanes = _siPlanesParameters->getSiPlanesNumber();
+
+  if(_DigiLayerIDs.size()>0 && _DigiLayerIDs.size()!=nTelPlanes)
+    {
+  streamlog_out ( ERROR4 ) <<  "Wrong number of Layer IDs for digitization" << endl
+                  <<  "Size of DigiLayerIDs have to match GEAR description" << endl;
+  exit(-1);
+    }
+
+  if(_DigiLayerIDs.size()==0)nTelPlanes=1;
+
+  if(_depositedChargeScaling.size() != nTelPlanes ||
+     _applyPoissonSmearing.size() != nTelPlanes ||
+     _adcGain.size() != nTelPlanes ||
+     _adcGainVariation.size() != nTelPlanes ||
+     _adcNoise.size() != nTelPlanes ||
+     _zeroSuppressionThreshold.size() != nTelPlanes ||
+     _adcOffset.size() != nTelPlanes )
+    {
+ streamlog_out ( ERROR4 ) <<  "Wrong size of digitization parameter vector" << endl;
+  exit(-1);
+    }
+
+  // prepare digitization parameter index map
+
+  if(_DigiLayerIDs.size() > 0 )
+    for(unsigned int id=0; id<nTelPlanes; id++)
+      _digiIdMap.insert( make_pair(_DigiLayerIDs.at(id), id ) );
+
 
   // Book common integration storage for all sensors, if this was
   // requested
@@ -275,15 +357,6 @@ void EUTelMAPSdigi::processRunHeader (LCRunHeader * rdr) {
   auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
   header->addProcessor( type() );
 
-  // the run header contains the number of detectors. This number
-  // should be in principle be the same as the number of layers in the
-  // geometry description. But it is not always set for simulation output
-  if ( header->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() )
-    streamlog_out ( WARNING0 ) << "Warning during the geometry consistency check: " << endl
-                               << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " << endl
-                               << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() << " silicon planes" << endl;
-
-
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
   // beam test. The same number should be saved in the run header and
@@ -316,6 +389,8 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
 
   ++_iEvt;
+
+  event->parameters().setValue( "EventType",2);
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
 
@@ -412,28 +487,14 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       if (debug)
         streamlog_out( DEBUG4 ) << "SimHit in global frame  at X = " <<  hitpos[0]
                                 <<  " Y = " <<  hitpos[1]
-                                <<  " Z = " <<  hitpos[2] << endl;
+                                <<  " Z = " <<  hitpos[2]
+                                <<  "  detector ID = " << detectorID << endl;
 
       // 2D histograms of simulated hits in global (telescope) reference frame
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-      if ( _histogramSwitch ) {
-        string tempHistoName;
-        {
-          stringstream ss;
-          ss << _hitHistoTelescopeName << "-" << layerIndex ;
-          tempHistoName = ss.str();
-        }
-        AIDA::IHistogram2D * histo2D = dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[ tempHistoName ] );
-        if ( histo2D ) histo2D->fill( hitpos[0], hitpos[1] );
-        else {
-          streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
-                                    << ".\nDisabling histogramming from now on " << endl;
-          _histogramSwitch = false;
-        }
+      fillHist2D(_hitHistoTelescopeName,layerIndex,hitpos[0], hitpos[1] );
 
-      }
-#endif
+
 
       // transform position and momentum to local (sensor) reference frame
       // sensor rotation is described by two vectors (from implementation in HitMaker):
@@ -455,22 +516,22 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       // X axis
       double sign = 1;
 
-      if      ( xPointing[0] < 0 )       sign = -1 ;
-      else if ( xPointing[0] > 0 )       sign =  1 ;
+      if      ( xPointing[0] < -0.7 )       sign = -1 ;
+      else if ( xPointing[0] >  0.7 )       sign =  1 ;
       else {
-        if       ( xPointing[1] < 0 )    sign = -1 ;
-        else if  ( xPointing[1] > 0 )    sign =  1 ;
+        if       ( xPointing[1] < -0.7 )    sign = -1 ;
+        else if  ( xPointing[1] >  0.7 )    sign =  1 ;
       }
 
       senspos[0] +=  sign * xSize/2;
 
       // Y axis
 
-      if      ( yPointing[0] < 0 )       sign = -1 ;
-      else if ( yPointing[0] > 0 )       sign =  1 ;
+      if      ( yPointing[0] < -0.7 )       sign = -1 ;
+      else if ( yPointing[0] >  0.7 )       sign =  1 ;
       else {
-        if       ( yPointing[1] < 0 )    sign = -1 ;
-        else if  ( yPointing[1] > 0 )    sign =  1 ;
+        if       ( yPointing[1] < -0.7 )    sign = -1 ;
+        else if  ( yPointing[1] >  0.7 )    sign =  1 ;
       }
 
       senspos[1] +=  sign * ySize/2;
@@ -482,7 +543,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       senspos[2] += sign * zThickness/2;
 
       // Last step: rotation taking into account sensor orientation.
-      // Reverse rotation has to be aplied!
+      // Reverse rotation has to be applied!
       // "sign" is the determinant of the rotation matrix
 
 
@@ -495,24 +556,11 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
                                 <<  " Y = " << _localPosition[1]
                                 <<  " Z = " << _localPosition[2] << endl;
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-      string tempHistoName;
-      if ( _histogramSwitch ) {
-        {
-          stringstream ss;
-          ss << _hitHistoLocalName << "-" << layerIndex ;
-          tempHistoName = ss.str();
-        }
-        if ( AIDA::IHistogram2D* histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[ tempHistoName ]) )
-          histo->fill(_localPosition[0], _localPosition[1]);
-        else {
-          streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
-                                    << ".\nDisabling histogramming from now on " << endl;
-          _histogramSwitch = false;
-        }
 
-      }
-#endif
+      // Fill local position histogram
+
+      fillHist2D(_hitHistoLocalName,layerIndex,_localPosition[0], _localPosition[1]);
+
 
       // momentum transformation (only rotation)
 
@@ -639,270 +687,338 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
       double pathFrac = CheckPathLimits();
 
-      if (debug && pathFrac!=1.)
+      if (debug && pathFrac < 0.9999)
         streamlog_out( DEBUG4 ) << "Track path inside sensor reduced by factor " << pathFrac << endl;
+
+      if (pathFrac <= 0.)
+        streamlog_out( WARNING4 ) << "Track path outside sensor !? " << endl 
+                                  << "Position in local frame at X = " << _localPosition[0]
+                                  <<  " Y = " << _localPosition[1]
+                                  <<  " Z = " << _localPosition[2] << endl;
 
       //
       //  Here comes the core of the algorithm
       //
 
-      // Convert Mokka deposit [GeV] to charge in units of elementary
-      // charge
+      if(_mokkaPath > 0 && _mokkaDeposit > 0.)
+	{
+        // Convert Mokka deposit [GeV] to charge in units of elementary
+        // charge
 
-      _mokkaDeposit *= 1000000000./_ionizationEnergy;
+        _mokkaDeposit *= 1000000000./_ionizationEnergy;
 
-      // Set the Geant/Mokka step to be considered
-      // TDS requires position in depth to be negative ! Shift it by
-      // thickness to keep direction unchanged
+        // Set the Geant/Mokka step to be considered
+        // TDS requires position in depth to be negative ! Shift it by
+        // thickness to keep direction unchanged
 
-      TDSStep step(_localPosition[0], _localPosition[1], _localPosition[2]-_localSize[2],
-                   _localDirection[0],_localDirection[1],_localDirection[2],
-                   _mokkaPath, _mokkaDeposit);
+        TDSStep step(_localPosition[0], _localPosition[1], _localPosition[2]-_localSize[2],
+                     _localDirection[0],_localDirection[1],_localDirection[2],
+                     _mokkaPath, _mokkaDeposit);
 
-      // distribute charge among pixels (here all the work is done!)
+        // distribute charge among pixels (here all the work is done!)
 
-      _pixelChargeMap->update(step);
+        _pixelChargeMap->update(step);
 
-      if (debug)
-        streamlog_out( DEBUG4 ) << "Total charge deposited: " << _pixelChargeMap->getTotalCharge()
-                                << " (Mokka deposit: " << _mokkaDeposit << " )" << endl;
-
-      // Charge processing
-
-      // Scaling of charge deposited at each pixel
-
-      if(_depositedChargeScaling!=1.)
-        _pixelChargeMap->scaleCharge(_depositedChargeScaling);
-
-
-      // Poisson smearing (if requested)
-
-      if(_applyPoissonSmearing)
-        {
-          _pixelChargeMap->applyPoissonFluctuations(false);
-
-          if (debug)
-            streamlog_out( DEBUG4 ) << "Charge after Poisson fluctuations: "
-                                    << _pixelChargeMap->getTotalCharge() << endl;
-
-        }
-
-      // ADC gain, noise, pedestal
-
-      _pixelChargeMap->applyGain(_adcGain, _adcGainVariation, _adcNoise, _adcOffset);
-
-      // TDS allow for negative charges and negative thresholds.
-      // However we assume here that threshold has to be
-      // positive. If zero or negative threshold value is set, not
-      // threshold correction is applied.
-
-      if(_zeroSuppressionThreshold>0)
-        _pixelChargeMap->applyThresholdCut(_zeroSuppressionThreshold);
-
-      if (debug)
-        streamlog_out( DEBUG4 ) << "Total signal after gain and ZS: "
-                                << _pixelChargeMap->getTotalCharge() << endl;
-
-      // The last task is to put pixels with collected charge into
-      // output data collection. This is done either for each Mokka hit (here)
-      // or after the whole event is completed.
-
-      if( _singleHitOutput)
-        {
-          // Get vector of fired pixels
-
-          _vectorOfPixels = _pixelChargeMap->getVectorOfPixels();
-
-          // Output to raw data structure
-          //      To be added
-          //      ===========
-          // List all fired pixels
-
-          if (debug)
-            {
-              int nPixel = _vectorOfPixels.size() ;
-
-              streamlog_out( MESSAGE4 ) <<  "Detector ID = " << detectorID
-                                        << ", " << nPixel << " pixels fired " << endl;
-
-              for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); _pixelIterator++)
-                streamlog_out( DEBUG4 ) <<  " Pixel at  (" << _pixelIterator->getIndexAlongL()
-                                        <<  "," <<  _pixelIterator->getIndexAlongW()
-                                        <<  ") with Q = " << _pixelIterator->getCharge()  << endl;
-
-// Store pixel charges in the histogram
-// Only for events with debug output!
-
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-              string tempHistoName;
-              if ( _histogramSwitch ) {
-
-                {
-                  stringstream ss;
-                  ss << _pixelHistoName << "-" << layerIndex ;
-                  tempHistoName = ss.str();
-                }
-                if ( AIDA::IHistogram2D* histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[ tempHistoName ]) )
-                  {
-                    for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); _pixelIterator++)
-                      {
-                        double xpixel = _pixelIterator->getIndexAlongL() + 0.5;
-                        double ypixel = _pixelIterator->getIndexAlongW() + 0.5;
-                        histo->fill(xpixel,ypixel,_pixelIterator->getCharge());
-                      }
-                  }
-                else {
-                  streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
-                                            << ".\nDisabling histogramming from now on " << endl;
-                  _histogramSwitch = false;
-                }
-
-              }
-#endif
-
-
-
-            }  // end of if (debug)
-
-          // clear pixel map after output
-          _pixelChargeMap->clear();
-          _vectorOfPixels.clear();
-        }
-
-
+        if (debug)
+          streamlog_out( DEBUG4 ) << "Adding Mokka deposit of " << _mokkaDeposit <<  endl;
+	}
     }
     // end of loop over SimTrackerHit collection
 
-// Output all collected pixels
-// If single hit flag is not set, then hits are written out after the whole event
 
-    if( ! _singleHitOutput)
+//====================================================================
+//
+// Process collected charges and write all pixels to output collection
+//
+//====================================================================
+
+    // prepare the output TrackerData to host the SparsePixel
+
+    // check if the we already have a tracker data for this
+    // detector id
+    for ( int iDetector = 0 ; iDetector < _siPlanesParameters->getSiPlanesNumber(); iDetector++ ) {
+      TrackerDataImpl * zsFrame          = new TrackerDataImpl;
+      zsDataEncoder[ "sensorID" ]        = _siPlanesLayerLayout->getSensitiveID(iDetector);
+      zsDataEncoder[ "sparsePixelType" ] = kEUTelSimpleSparsePixel;
+      zsDataEncoder.setCellID( zsFrame );
+      _trackerDataMap[ _siPlanesLayerLayout->getSensitiveID(iDetector) ] = zsFrame;
+    }
+
+
+    // Loop over defined detectors
+
+    std::map< int,  TDSPixelsChargeMap *>::iterator mapIterator;
+
+    for(mapIterator = _pixelChargeMapCollection.begin();
+        mapIterator != _pixelChargeMapCollection.end(); mapIterator++)
       {
+        detectorID = mapIterator->first;
+        layerIndex   = _conversionIdMap[detectorID];
 
-        // Loop over defined detectors
+        int digiIndex = 0;
 
-        std::map< int,  TDSPixelsChargeMap *>::iterator mapIterator;
+        if(_DigiLayerIDs.size() > 0 )digiIndex = _digiIdMap[detectorID];
 
-        for(mapIterator = _pixelChargeMapCollection.begin();
-            mapIterator != _pixelChargeMapCollection.end(); mapIterator++)
+        _pixelChargeMap = mapIterator->second;
+
+
+        // Charge processing
+
+        double totalCharge=_pixelChargeMap->getTotalCharge();
+
+        if (debug)
+          streamlog_out( DEBUG4 ) << "Total charge collected in detector " << detectorID <<
+            " : " <<   totalCharge <<  endl;
+
+        // Collected charge histogram
+
+        fillHist1D(_chargeHistoName, layerIndex, totalCharge);
+
+        // Scaling of charge deposited at each pixel
+
+        if(_depositedChargeScaling[digiIndex]!=1.)
+          _pixelChargeMap->scaleCharge((double)_depositedChargeScaling[digiIndex]);
+
+
+        // Poisson smearing (if requested)
+
+        if(_applyPoissonSmearing[digiIndex])
           {
-            detectorID = mapIterator->first;
-            layerIndex   = _conversionIdMap[detectorID];
-
-            _pixelChargeMap = mapIterator->second;
-
-            _vectorOfPixels = _pixelChargeMap->getVectorOfPixels();
-
-            // check if the we already have a tracker data for this
-            // detector id
-            TrackerDataImpl * zsFrame = NULL;
-            if ( _trackerDataMap.find( detectorID ) == _trackerDataMap.end() ) {
-              // this is the first time we have to deal with such a
-              // detector. so first of all let's create the
-              // corresponding TrackerData
-              zsFrame                            = new TrackerDataImpl;
-              _trackerDataMap[ detectorID ]      = zsFrame;
-              zsDataEncoder[ "sensorID" ]        = detectorID;
-              zsDataEncoder[ "sparsePixelType" ] = kEUTelSimpleSparsePixel;
-              zsDataEncoder.setCellID( zsFrame );
-            } else {
-              zsFrame = _trackerDataMap[ detectorID ];
-            }
-
-
-            // now I have to prepare a temporary storage for the
-            // sparse pixel
-            auto_ptr<EUTelSparseDataImpl< EUTelSimpleSparsePixel > > sparseFrame( new EUTelSparseDataImpl<EUTelSimpleSparsePixel > ( zsFrame ) );
-            // and also a temporary storage for the sparse pixel
-            auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
-            for ( _pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); ++_pixelIterator ) {
-
-              // move the pixel information from the pixelIterator to
-              // the sparsePixel
-              sparsePixel->setXCoord( _pixelIterator->getIndexAlongL() );
-              sparsePixel->setYCoord( _pixelIterator->getIndexAlongW() );
-              sparsePixel->setSignal( _pixelIterator->getCharge() );
-
-              // add the sparse pixel to the sparse frame
-              sparseFrame->addSparsePixel( sparsePixel.get() );
-
-            }
-
-            // Output to raw data structure
-            //      To be added
-            //      ===========
-
-
-            // List all fired pixels
+            _pixelChargeMap->applyPoissonFluctuations(false);
 
             if (debug)
-              {
-                int nPixel = _vectorOfPixels.size() ;
+              streamlog_out( DEBUG4 ) << "Charge after Poisson fluctuations: "
+                                      << _pixelChargeMap->getTotalCharge() << endl;
 
-                streamlog_out( MESSAGE4 ) <<  "Detector ID = " << detectorID
-                                          << ", " << nPixel << " pixels fired, "
-                                          << "total charge deposited: " << _pixelChargeMap->getTotalCharge() << endl;
+          }
 
-                for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); _pixelIterator++)
-                  streamlog_out( DEBUG4 ) <<  " Pixel at  (" << _pixelIterator->getIndexAlongL()
-                                          <<  "," <<  _pixelIterator->getIndexAlongW()
-                                          <<  ") with Q = " << _pixelIterator->getCharge()  << endl;
+        // ADC gain, noise, pedestal
 
-// Store pixel charges in the histogram
+        _pixelChargeMap->applyGain((double)_adcGain[digiIndex], (double)_adcGainVariation[digiIndex], (double)_adcNoise[digiIndex], (double)_adcOffset[digiIndex]);
+
+        // TDS allow for negative charges and negative thresholds.
+        // However we assume here that threshold has to be
+        // positive. If zero or negative threshold value is set, not
+        // threshold correction is applied.
+
+        if(_zeroSuppressionThreshold[digiIndex]>0)
+          _pixelChargeMap->applyThresholdCut((double)_zeroSuppressionThreshold[digiIndex]);
+
+        totalCharge=_pixelChargeMap->getTotalCharge();
+
+        if (debug)
+          streamlog_out( DEBUG4 ) << "Total signal after gain and ZS: "
+                                  << totalCharge << endl;
+
+
+        // Signal histogram (charge after procession and ADC conversions)
+
+        fillHist1D(_signalHistoName, layerIndex, totalCharge);
+
+
+        // Get vector of fired pixels from map
+
+        _vectorOfPixels = _pixelChargeMap->getVectorOfPixels();
+
+
+        // Pixel multiplicity histogram
+
+        fillHist1D(_multipHistoName, layerIndex, (double)_vectorOfPixels.size());
+
+
+        // Data copying to output stream starts here
+        // =========================================
+
+        // check if the we already have a tracker data for this
+        // detector id
+        TrackerDataImpl * zsFrame = NULL;
+        if ( _trackerDataMap.find( detectorID ) == _trackerDataMap.end() ) {
+          // this is the first time we have to deal with such a
+          // detector. so first of all let's create the
+          // corresponding TrackerData
+          //
+          // unable to find the proper zsFrame
+          streamlog_out ( ERROR4 ) << "Unable to find the TrackerData corresponding to detectorID " << detectorID << endl;
+          throw SkipEventException(this);
+        } else {
+          zsFrame = _trackerDataMap[ detectorID ];
+        }
+
+
+        // now I have to prepare a temporary storage for the
+        // sparse pixel
+        auto_ptr<EUTelSparseDataImpl< EUTelSimpleSparsePixel > > sparseFrame( new EUTelSparseDataImpl<EUTelSimpleSparsePixel > ( zsFrame ) );
+        // and also a temporary storage for the sparse pixel
+        auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
+        for ( _pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); ++_pixelIterator ) {
+
+          // move the pixel information from the pixelIterator to
+          // the sparsePixel
+          sparsePixel->setXCoord( _pixelIterator->getIndexAlongL() );
+          sparsePixel->setYCoord( _pixelIterator->getIndexAlongW() );
+          sparsePixel->setSignal( _pixelIterator->getCharge() );
+
+          // add the sparse pixel to the sparse frame
+          sparseFrame->addSparsePixel( sparsePixel.get() );
+
+        }
+        // end of data copying
+
+
+
+        // List all fired pixels
+
+        int nPixel = _vectorOfPixels.size() ;
+
+        if (debug)
+          {
+            streamlog_out( MESSAGE4 ) <<  "Detector ID = " << detectorID
+                                      << ", " << nPixel << " pixels fired, "
+                                      << "total charge deposited: " << totalCharge << endl;
+
+            for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); _pixelIterator++)
+              streamlog_out( DEBUG4 ) <<  " Pixel at  (" << _pixelIterator->getIndexAlongL()
+                                      <<  "," <<  _pixelIterator->getIndexAlongW()
+                                      <<  ") with Q = " << _pixelIterator->getCharge() << endl;
+
+
+// Store pixel charges in the 2D histogram (charge map)
 // Only for events with debug output!
 
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-                string tempHistoName;
-                if ( _histogramSwitch ) {
-
-                  {
-                    stringstream ss;
-                    ss << _pixelHistoName << "-" << layerIndex ;
-                    tempHistoName = ss.str();
-                  }
-                  if ( AIDA::IHistogram2D* histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[ tempHistoName ]) )
-                    {
-                      for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); _pixelIterator++)
-                        {
-                          double xpixel = _pixelIterator->getIndexAlongL() + 0.5;
-                          double ypixel = _pixelIterator->getIndexAlongW() + 0.5;
-                          histo->fill(xpixel,ypixel,_pixelIterator->getCharge());
-                        }
-                    }
-                  else {
-                    streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
-                                              << ".\nDisabling histogramming from now on " << endl;
-                    _histogramSwitch = false;
-                  }
-
-                }
-#endif
+            for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); _pixelIterator++)
+              {
+                double xpixel = _pixelIterator->getIndexAlongL() + 0.5;
+                double ypixel = _pixelIterator->getIndexAlongW() + 0.5;
+                fillHist2D(_pixelHistoName, layerIndex, xpixel,ypixel,_pixelIterator->getCharge());
+              }
 
 
-              }// end of if (debug)
+          }// end of if (debug)
 
-            // clear stored pixel map
-            _pixelChargeMap->clear();
-            _vectorOfPixels.clear();
 
-          } // end of loop over defined pixel maps
-        
+        // charge profile filling (for algorithm tuning)
+        // consider only pixels around the highest pixel
+        // to make this selection we have to sort pixels again
+        // skip cases when there is no or one pixel only (unlikely)
+
+        if(_fillChargeProfiles && nPixel > 1 )
+          {
+	    // Maps for pixel sorting in abs(charge) and in
+	    // abs(charge)/distance_to_seed^2 
+
+	    std::multimap<double,double, std::greater<double> > pixelAbsMap;
+	    std::multimap<double,double, std::greater<double> > pixelWeightedMap;
+
+
+	    std::multimap<double,double, std::greater<double> >::iterator pixelAbsIterator;
+	    std::multimap<double,double, std::greater<double> >::iterator pixelWeightedIterator;
+
+
+            int dLmax = _integMaxNumberPixelsAlongL/2;
+            int dWmax = _integMaxNumberPixelsAlongW/2;
+
+	    // In the new TDS version
+	    // TDSPixelsChargeMap::getVectorOfPixels() returns  sorted
+	    // vector of pixels, starting from the highest deposit -
+	    // it can be used as a seed pixel (assuming we consider
+	    // one cluster only)
+
+            int seedL =   _vectorOfPixels[0].getIndexAlongL();
+            int seedW =   _vectorOfPixels[0].getIndexAlongW();
+
+            double clusterCharge=0.;
+            int intClusterCharge=0.;
+
+            // store cluster pixels in maps for sorting (maps are
+            // sorted by the key value)
+
+            for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); )
+              {
+                int pixelL = _pixelIterator->getIndexAlongL();
+                int pixelW = _pixelIterator->getIndexAlongW();
+
+                if(pixelL > seedL+dLmax || pixelL < seedL-dLmax ||
+                   pixelW > seedW+dWmax || pixelW < seedW-dWmax )
+                  _pixelIterator++;
+                else
+		  {
+                   double dist = (pixelL-seedL)*(pixelL-seedL)+(pixelW-seedW)*(pixelW-seedW);
+                   double charge = _pixelIterator->getCharge();
+
+		   // ADC digitization simulation
+
+                   int icharge = (int) charge;
+                   if(charge<0.) icharge--;
+
+                   // double absCharge = fabs(charge);
+                   double absCharge = abs(icharge);
+
+		   double weight = absCharge;
+                   if(dist>0.5)weight/=sqrt(dist);
+
+		   pixelAbsMap.insert( make_pair( absCharge, (double) icharge));
+		   pixelWeightedMap.insert( make_pair( weight, (double) icharge));
+                  
+                   clusterCharge+=charge;
+                   intClusterCharge+=icharge;
+                   _pixelIterator++;
+		  }
+              }
+
+
+            // fill charge profiles (maps are sorted by definition!)
+
+           int iPixel=0;
+           for(pixelAbsIterator=pixelAbsMap.begin(); 
+               pixelAbsIterator != pixelAbsMap.end(); pixelAbsIterator++)
+              {
+              fillProf1D(_chargeProfileName,layerIndex,iPixel+0.5, pixelAbsIterator->second);
+              iPixel++;
+	      }
+
+
+           iPixel=0;
+           for(pixelWeightedIterator=pixelWeightedMap.begin(); 
+               pixelWeightedIterator != pixelWeightedMap.end(); pixelWeightedIterator++)
+              {
+              fillProf1D(_weightedProfileName,layerIndex,iPixel+0.5, pixelWeightedIterator->second);
+              iPixel++;
+	      }
+
+
+            // Test output at the end of processing
+            //
+            if(debug)
+                streamlog_out( DEBUG4 ) <<  "Seed at L = " << seedL << " W = " << seedW
+                               << ", " << pixelAbsMap.size() << " pixels in cluster " << endl
+                               << "Total cluster charge: " << clusterCharge 
+                               << ", integer cluster charge: " << intClusterCharge << endl;
+
+          }
+        // end of if(_fillChargeProfiles...)
+
+        // clear stored pixel map
+        _pixelChargeMap->clear();
+        _vectorOfPixels.clear();
+
+      } // end of loop over defined pixel maps
+
         // before clearing the content of the trackerDataMap, I need
         // to push back to the output collection all the trackerdata I
         // have
-        map< int, TrackerDataImpl * >::iterator trackerDataIter = _trackerDataMap.begin();
-        while ( trackerDataIter != _trackerDataMap.end() ) {
+    map< int, TrackerDataImpl * >::iterator trackerDataIter = _trackerDataMap.begin();
+    while ( trackerDataIter != _trackerDataMap.end() ) {
 
-          zsDataCollection->push_back( trackerDataIter->second ) ;
+      zsDataCollection->push_back( trackerDataIter->second ) ;
 
-          ++trackerDataIter;
-        }
-        _trackerDataMap.clear();
+      ++trackerDataIter;
+    }
 
-        // now, dulcis in fundo, add this collection to the event!
-        event->addCollection( zsDataCollection.release(), _pixelCollectionName );
 
-      } // end of  if( ! _singleHitOutput)
+    _trackerDataMap.clear();
+
+    // now, dulcis in fundo, add this collection to the event!
+    event->addCollection( zsDataCollection.release(), _pixelCollectionName );
 
 
 
@@ -919,35 +1035,240 @@ void EUTelMAPSdigi::end() {
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
 }
 
-void EUTelMAPSdigi::bookHistos() {
+void EUTelMAPSdigi::fillHist1D(string HistName, int layerIndex, double xVal, double wVal)
+{
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+  string tempHistoName;
+  if ( _histogramSwitch ) {
+    {
+      stringstream ss;
+      ss << HistName << "_" << layerIndex ;
+      tempHistoName = ss.str();
+    }
+    if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[ tempHistoName ]) )
+      histo->fill(xVal,wVal);
+    else {
+      streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
+                                << ".\nDisabling histogramming from now on " << endl;
+      _histogramSwitch = false;
+    }
+
+  }
+#endif
+
+}
+
+void EUTelMAPSdigi::fillHist2D(string HistName, int layerIndex, double xVal, double yVal, double wVal)
+{
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+  string tempHistoName;
+  if ( _histogramSwitch ) {
+    {
+      stringstream ss;
+      ss << HistName << "_" << layerIndex ;
+      tempHistoName = ss.str();
+    }
+    if ( AIDA::IHistogram2D* histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[ tempHistoName ]) )
+      histo->fill(xVal,yVal,wVal);
+    else {
+      streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
+                                << ".\nDisabling histogramming from now on " << endl;
+      _histogramSwitch = false;
+    }
+
+  }
+#endif
+
+}
+
+void EUTelMAPSdigi::fillProf1D(string HistName, int layerIndex, double xVal, double wVal)
+{
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+  string tempHistoName;
+  if ( _histogramSwitch ) {
+    {
+      stringstream ss;
+      ss << HistName << "_" << layerIndex ;
+      tempHistoName = ss.str();
+    }
+    if ( AIDA::IProfile1D* histo = dynamic_cast<AIDA::IProfile1D*>(_aidaHistoMap[ tempHistoName ]) )
+      histo->fill(xVal,wVal);
+    else {
+      streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
+                                << ".\nDisabling histogramming from now on " << endl;
+      _histogramSwitch = false;
+    }
+
+  }
+#endif
+
+}
+
+void EUTelMAPSdigi::bookHist1D(string HistoName, string HistoTitle, int iDet,
+                               int xNBin, double xMin, double xMax)
+{
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-  try {
-    streamlog_out ( MESSAGE4 ) <<  "Booking histograms" << endl;
+  if ( _histogramSwitch ) {
 
-    string tempHistoName;
+    try {
+      string tempHistoName;
 
-    // histograms are grouped into folders named after the
-    // detector. This requires to loop on detector now.
-    for (int iDet = 0 ; iDet < _siPlanesParameters->getSiPlanesNumber(); iDet++) {
-
-      string basePath;
-      {
-        stringstream ss ;
-        ss << "plane-" << iDet;
-        basePath = ss.str();
-      }
-      AIDAProcessor::tree(this)->mkdir(basePath.c_str());
-      basePath = basePath + "/";
 
       {
         stringstream ss ;
-        ss <<  _hitHistoLocalName << "-" << iDet ;
+        ss <<  HistoName << "_" << iDet ;
         tempHistoName = ss.str();
       }
 
+      AIDA::IHistogram1D * Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),xNBin, xMin, xMax);
+      if ( Histo ) {
+        Histo->setTitle(HistoTitle);
+        _aidaHistoMap.insert( make_pair( tempHistoName, Histo ) );
+      } else {
+        streamlog_out ( ERROR1 )  << "Problem booking the " << tempHistoName << ".\n"
+                                  << "Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
+      }
 
+    } catch (lcio::Exception& e ) {
+
+      streamlog_out ( ERROR1 ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
+      string answer;
+      while ( true ) {
+        streamlog_out ( ERROR1 ) <<  "[q]/[c]" << endl;
+        cin >> answer;
+        transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
+        if ( answer == "q" ) {
+          exit(-1);
+        } else if ( answer == "c" )
+          _histogramSwitch = false;
+        break;
+      }
+    }
+
+  }
+
+#endif
+
+}
+
+
+void EUTelMAPSdigi::bookHist2D(string HistoName, string HistoTitle, int iDet,
+                               int xNBin, double xMin, double xMax, int yNBin, double yMin, double yMax)
+{
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
+  if ( _histogramSwitch ) {
+
+    try {
+      string tempHistoName;
+
+
+      {
+        stringstream ss ;
+        ss <<  HistoName << "_" << iDet ;
+        tempHistoName = ss.str();
+      }
+
+      AIDA::IHistogram2D * Histo = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
+                                                                                             xNBin, xMin, xMax, yNBin, yMin, yMax );
+      if ( Histo ) {
+        Histo->setTitle(HistoTitle);
+        _aidaHistoMap.insert( make_pair( tempHistoName, Histo ) );
+      } else {
+        streamlog_out ( ERROR1 )  << "Problem booking the " << tempHistoName << ".\n"
+                                  << "Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
+      }
+
+    } catch (lcio::Exception& e ) {
+
+      streamlog_out ( ERROR1 ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
+      string answer;
+      while ( true ) {
+        streamlog_out ( ERROR1 ) <<  "[q]/[c]" << endl;
+        cin >> answer;
+        transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
+        if ( answer == "q" ) {
+          exit(-1);
+        } else if ( answer == "c" )
+          _histogramSwitch = false;
+        break;
+      }
+    }
+
+  }
+
+#endif
+
+}
+
+
+void EUTelMAPSdigi::bookProf1D(string HistoName, string HistoTitle, int iDet,
+                               int xNBin, double xMin, double xMax, double vMin, double vMax)
+{
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
+  if ( _histogramSwitch ) {
+
+    try {
+      string tempHistoName;
+
+
+      {
+        stringstream ss ;
+        ss <<  HistoName << "_" << iDet ;
+        tempHistoName = ss.str();
+      }
+
+      AIDA::IProfile1D * Histo = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),xNBin, xMin, xMax, vMin, vMax);
+      if ( Histo ) {
+        Histo->setTitle(HistoTitle);
+        _aidaHistoMap.insert( make_pair( tempHistoName, Histo ) );
+      } else {
+        streamlog_out ( ERROR1 )  << "Problem booking the " << tempHistoName << ".\n"
+                                  << "Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
+      }
+
+    } catch (lcio::Exception& e ) {
+
+      streamlog_out ( ERROR1 ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
+      string answer;
+      while ( true ) {
+        streamlog_out ( ERROR1 ) <<  "[q]/[c]" << endl;
+        cin >> answer;
+        transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
+        if ( answer == "q" ) {
+          exit(-1);
+        } else if ( answer == "c" )
+          _histogramSwitch = false;
+        break;
+      }
+    }
+
+  }
+
+#endif
+
+}
+
+
+void EUTelMAPSdigi::bookHistos() {
+
+  streamlog_out ( MESSAGE4 ) <<  "Booking histograms " << endl;
+
+  for (int iDet = 0 ; iDet < _siPlanesParameters->getSiPlanesNumber(); iDet++)
+    {
+
+      // 2D position in local frame
 
       double xMin =  0;
       double xMax =  _siPlanesLayerLayout->getSensitiveSizeX ( iDet );
@@ -955,20 +1276,14 @@ void EUTelMAPSdigi::bookHistos() {
       double yMin =  0;
       double yMax =  _siPlanesLayerLayout->getSensitiveSizeY ( iDet );
 
-      int xNBin =  _siPlanesLayerLayout->getSensitiveNpixelX( iDet );
-      int yNBin =  _siPlanesLayerLayout->getSensitiveNpixelY( iDet );
+      int xNBin =  200;
+      int yNBin =  200;
+
+      bookHist2D(_hitHistoLocalName,"Hit map in the detector local frame of reference",
+                 iDet,xNBin, xMin, xMax, yNBin, yMin, yMax );
 
 
-      AIDA::IHistogram2D * hitHistoLocal = AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
-                                                                                                     xNBin, xMin, xMax, yNBin, yMin, yMax );
-      if ( hitHistoLocal ) {
-        hitHistoLocal->setTitle("Hit map in the detector local frame of reference");
-        _aidaHistoMap.insert( make_pair( tempHistoName, hitHistoLocal ) );
-      } else {
-        streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                  << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-        _histogramSwitch = false;
-      }
+      // 2D position in telescope frame
 
       // 2 should be enough because it
       // means that the sensor is wrong
@@ -985,37 +1300,61 @@ void EUTelMAPSdigi::bookHistos() {
       yMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( iDet ) +
                               ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( iDet )) );
 
-      xNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( iDet );
-      yNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( iDet );
+      xNBin = 400.;
+      yNBin = 400.;
 
-      {
-        stringstream ss ;
-        ss <<  _hitHistoTelescopeName << "-" << iDet ;
-        tempHistoName = ss.str();
-      }
-      AIDA::IHistogram2D * hitHistoTelescope =
-        AIDAProcessor::histogramFactory(this)->createHistogram2D( ( basePath + tempHistoName ).c_str(),
-                                                                  xNBin, xMin, xMax, yNBin, yMin, yMax );
+      bookHist2D(_hitHistoTelescopeName,"Hit map in the telescope frame of reference",
+                 iDet,xNBin, xMin, xMax, yNBin, yMin, yMax );
 
-      if ( hitHistoTelescope ) {
-        hitHistoTelescope->setTitle("Hit map in the telescope frame of reference");
-        _aidaHistoMap.insert( make_pair ( tempHistoName, hitHistoTelescope ) );
-      } else {
-        streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                  << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-        _histogramSwitch = false;
-      }
+
+      // Collected charge deposit
+
+      xNBin =  500;
+      xMin =  0;
+      xMax = 5000.;
+
+      bookHist1D(_chargeHistoName, "Collected charge", iDet,xNBin, xMin, xMax);
+
+      // Final sensor signal
+
+      int detectorID=_siPlanesLayerLayout->getSensitiveID(iDet);
+      int digiIndex = 0;
+
+      if(_DigiLayerIDs.size() > 0 )digiIndex = _digiIdMap[detectorID];
+      xMax*=_depositedChargeScaling[digiIndex]*_adcGain[digiIndex];
+
+      bookHist1D(_signalHistoName, "Sensor signal", iDet,xNBin, xMin, xMax);
+
+      // Pixel multiplicity
+
+      xNBin = 200;
+
+      xMin = -0.5;
+      xMax = 199.5;
+
+      bookHist1D(_multipHistoName, "Pixel multiplicity", iDet,xNBin, xMin, xMax);
+
+      // Charge profiles
+
+      if(_fillChargeProfiles)
+        {
+
+          xNBin = _integMaxNumberPixelsAlongL*_integMaxNumberPixelsAlongL;
+          xMin = 0;
+          xMax = xNBin;
+          yMin = -1000000;
+          yMax = +1000000;
+
+          bookProf1D(_chargeProfileName, "Charge profile, sorted by |Q|", iDet,xNBin, xMin, xMax, yMin, yMax);
+
+          bookProf1D(_weightedProfileName, "Charge profile, sorted by |Q|/r", iDet,xNBin, xMin, xMax, yMin, yMax);
+        }
+
 
       // Pixel map to show generated cluster shapes
 
-      {
-        stringstream ss ;
-        ss <<  _pixelHistoName << "-" << iDet ;
-        tempHistoName = ss.str();
-      }
-
-      xNBin =  _siPlanesLayerLayout->getSensitiveNpixelX( iDet );
-      yNBin =  _siPlanesLayerLayout->getSensitiveNpixelY( iDet );
+      xNBin =  _siPlanesLayerLayout->getSensitiveNpixelX(iDet);
+      yNBin =  _siPlanesLayerLayout->getSensitiveNpixelY(iDet);
 
       xMin =  0;
       xMax =  xNBin;
@@ -1023,35 +1362,11 @@ void EUTelMAPSdigi::bookHistos() {
       yMin =  0;
       yMax =  yNBin;
 
-      AIDA::IHistogram2D * pixelHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
-                                                                                                  xNBin, xMin, xMax, yNBin, yMin, yMax );
-      if ( pixelHisto ) {
-        pixelHisto->setTitle("Pixel map");
-        _aidaHistoMap.insert( make_pair( tempHistoName, pixelHisto ) );
-      } else {
-        streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                  << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-        _histogramSwitch = false;
-      }
+      bookHist2D(_pixelHistoName,"Pixel map",
+                 iDet,xNBin, xMin, xMax, yNBin, yMin, yMax );
 
-    }
+    } // end of loop over layers
 
-  } catch (lcio::Exception& e ) {
-
-    streamlog_out ( ERROR1 ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
-    string answer;
-    while ( true ) {
-      streamlog_out ( ERROR1 ) <<  "[q]/[c]" << endl;
-      cin >> answer;
-      transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
-      if ( answer == "q" ) {
-        exit(-1);
-      } else if ( answer == "c" )
-        _histogramSwitch = false;
-      break;
-    }
-  }
-#endif
 }
 //
 // ===============================================================================
@@ -1097,6 +1412,14 @@ double EUTelMAPSdigi::CheckPathLimits()
   if(  pathEnd < 0. ) pathEnd = 0.;
   if(  pathEnd > 1. ) pathEnd = 1.;
 
+  // To avoid numerical problems
+
+  if(pathEnd < pathStart)
+    {
+      _mokkaPath=0.;
+      return 0.;
+    }
+       
   // Apply corrections to track length and track position
 
   double midShift=(pathEnd+pathStart-1.)/2.;
