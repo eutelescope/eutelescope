@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.20 2009-07-16 09:44:17 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.21 2009-07-16 09:56:31 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -475,6 +475,12 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
                ( goodPixel != 0 ) ) {
             commonMode = pixelSum / goodPixel ;
             commonModeCorVec.insert( commonModeCorVec.begin() + colCounter * rowLength, rowLength, commonMode );
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+            string tempHistoName = _commonModeDistHistoName + "_d" + to_string( sensorID );
+            if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
+              histo->fill(commonMode);
+#endif
           } else {
             commonModeCorVec.insert( commonModeCorVec.begin() + colCounter * rowLength, rowLength, 0. );
             ++skippedRow;
