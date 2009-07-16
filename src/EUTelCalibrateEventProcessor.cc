@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.18 2009-07-15 17:21:28 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.19 2009-07-16 08:30:15 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -503,18 +503,18 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
                 if (_fillDebugHisto == 1) {
                   string tempHistoName = _rawDataDistHistoName + "_d" + to_string( sensorID );
-                  if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
+                  if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) ) {
                     histo->fill(adcValues[iPixel]);
-                  else {
+                  } else {
                     streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName
                                              << ".\nDisabling histogramming from now on " << endl;
                     _fillDebugHisto = 0 ;
                   }
 
                   tempHistoName = _dataDistHistoName + "_d" + to_string( sensorID );
-                  if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
+                  if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) ) {
                     histo->fill(correctedValue);
-                  else {
+                  } else {
                     streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName
                                              << ".\nDisabling histogramming from now on " << endl;
                     _fillDebugHisto = 0 ;
@@ -538,18 +538,18 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
               if (_fillDebugHisto == 1) {
                 string tempHistoName = _rawDataDistHistoName + "_d" + to_string( sensorID );
-                if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
+                if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) ) {
                   histo->fill(*rawIter);
-                else {
+                } else {
                   streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName
                                            << ".\nDisabling histogramming from now on " << endl;
                   _fillDebugHisto = 0 ;
                 }
 
                 tempHistoName = _dataDistHistoName + "_d" + to_string( sensorID );
-                if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
+                if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) ) {
                   histo->fill(correctedValue);
-                else {
+                } else {
                   streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName
                                            << ".\nDisabling histogramming from now on " << endl;
                   _fillDebugHisto = 0 ;
