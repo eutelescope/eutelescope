@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.12 2009-07-15 17:21:28 bulgheroni Exp $
+// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.13 2009-07-16 09:21:55 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -50,7 +50,6 @@
 #include <limits>
 #include <algorithm>
 #include <memory>
-
 
 using namespace std;
 using namespace lcio;
