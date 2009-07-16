@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.19 2009-07-16 08:30:15 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.20 2009-07-16 09:44:17 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -406,6 +406,8 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
       bool isEventValid = true;
       if ( _doCommonMode == 1 ) {
+
+        // FULLFRAME common mode
         while ( rawIter != rawData->getADCValues().end() ) {
           bool isHit   = ( ((*rawIter) - (*pedIter)) > _hitRejectionCut * (*noiseIter) );
           bool isGood  = ( (*statusIter) == EUTELESCOPE::GOODPIXEL );
@@ -433,13 +435,12 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 #endif
 
         } else {
-          streamlog_out ( WARNING4 ) << "Skipping event " << _iEvt
-                                     << " because of common mode limit exceeded ("
-                                     << skippedPixel << ")" << endl;
-          throw SkipEventException(this);
           isEventValid = false;
         }
+
       } else if ( _doCommonMode == 2 ) {
+
+        // ROWWISE common mode
         ShortVec adcValues = rawData->getADCValues ();
         FloatVec _pedestal     = pedestal->getChargeValues();
         ShortVec _status  = status->getADCValues();
@@ -481,65 +482,31 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
           ++colCounter;
         }
-        if ( skippedRow > _maxNoOfSkippedRow )
+        if ( skippedRow > _maxNoOfSkippedRow ) {
           isEventValid = false;
-      }
+        }
 
-      if(isEventValid)
-        if(_doCommonMode == 2)
-          {
-            ShortVec adcValues = rawData->getADCValues ();
-            FloatVec _pedestal = pedestal->getChargeValues();
+      } // end if on _doCommonMode
 
-            int iPixel = 0;
+      if(isEventValid) {
+        if(_doCommonMode == 2) {
+          ShortVec adcValues = rawData->getADCValues ();
+          FloatVec _pedestal = pedestal->getChargeValues();
 
-            for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
-              for ( int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
+          int iPixel = 0;
 
-                double correctedValue = adcValues[iPixel] - _pedestal[iPixel] - commonModeCorVec[iPixel];
-                corrected->chargeValues().push_back(correctedValue);
+          for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
+            for ( int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
 
-                ++iPixel;
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-                if (_fillDebugHisto == 1) {
-                  string tempHistoName = _rawDataDistHistoName + "_d" + to_string( sensorID );
-                  if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) ) {
-                    histo->fill(adcValues[iPixel]);
-                  } else {
-                    streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName
-                                             << ".\nDisabling histogramming from now on " << endl;
-                    _fillDebugHisto = 0 ;
-                  }
-
-                  tempHistoName = _dataDistHistoName + "_d" + to_string( sensorID );
-                  if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) ) {
-                    histo->fill(correctedValue);
-                  } else {
-                    streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName
-                                             << ".\nDisabling histogramming from now on " << endl;
-                    _fillDebugHisto = 0 ;
-                  }
-                }
-#endif
-
-              }
-            }
-          }
-        else
-          {
-            rawIter     = rawData->getADCValues().begin();
-            pedIter     = pedestal->getChargeValues().begin();
-
-            while ( rawIter != rawData->getADCValues().end() )  {
-              double correctedValue = (*rawIter) - (*pedIter) - commonMode;
+              double correctedValue = adcValues[iPixel] - _pedestal[iPixel] - commonModeCorVec[iPixel];
               corrected->chargeValues().push_back(correctedValue);
 
-
+              ++iPixel;
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
               if (_fillDebugHisto == 1) {
                 string tempHistoName = _rawDataDistHistoName + "_d" + to_string( sensorID );
                 if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) ) {
-                  histo->fill(*rawIter);
+                  histo->fill(adcValues[iPixel]);
                 } else {
                   streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName
                                            << ".\nDisabling histogramming from now on " << endl;
@@ -556,10 +523,69 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
                 }
               }
 #endif
-              ++rawIter;
-              ++pedIter;
             }
           }
+        } else {
+
+          // that's the case the user wants to apply the FullFrame
+          // common mode or doesn't want to apply any correction at
+          // all. In this last case the value of the commonMode
+          // variable is taken directly from the initialization ( = 0 ).
+
+          rawIter     = rawData->getADCValues().begin();
+          pedIter     = pedestal->getChargeValues().begin();
+
+          while ( rawIter != rawData->getADCValues().end() )  {
+
+            double correctedValue = (*rawIter) - (*pedIter) - commonMode;
+            corrected->chargeValues().push_back(correctedValue);
+
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+            if (_fillDebugHisto == 1) {
+              string tempHistoName = _rawDataDistHistoName + "_d" + to_string( sensorID );
+              if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) ) {
+                histo->fill(*rawIter);
+              } else {
+                streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName
+                                         << ".\nDisabling histogramming from now on " << endl;
+                _fillDebugHisto = 0 ;
+              }
+
+              tempHistoName = _dataDistHistoName + "_d" + to_string( sensorID );
+              if ( AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) ) {
+                histo->fill(correctedValue);
+              } else {
+                streamlog_out ( ERROR1 ) << "Not able to retrieve histogram pointer for " << tempHistoName
+                                         << ".\nDisabling histogramming from now on " << endl;
+                _fillDebugHisto = 0 ;
+              }
+            }
+#endif
+            ++rawIter;
+            ++pedIter;
+          }
+        }
+
+      } else {
+        // this is the case the event is not valid because of common
+        // mode. This is the right place to throw a SkipEventException
+        // possibly motivating the reason.
+
+        if ( _doCommonMode == 1 ) {
+          streamlog_out ( WARNING4 ) << "Skipping event " << evt->getEventNumber() << " because of maximum number of pixel exceeded (" << skippedPixel << ")" << endl;
+        } else if ( _doCommonMode == 2 ) {
+          streamlog_out ( WARNING4 ) << "Skipping event " << evt->getEventNumber() << " because of maximum number of skipped row exceeded (" << skippedRow << ")" << endl;
+        } else {
+          streamlog_out ( WARNING4 ) << "Skipping event " << evt->getEventNumber() << " for an unknown reason " << endl;
+        }
+
+        throw SkipEventException( this );
+
+      }
+
+
+
       correctedDataCollection->push_back(corrected);
     }
     evt->addCollection(correctedDataCollection, _calibratedDataCollectionName);
