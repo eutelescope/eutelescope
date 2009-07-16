@@ -53,48 +53,48 @@ namespace eutelescope {
     class HitsInPlane {
     public:
       HitsInPlane(){
-	measuredX = 0.0;
-	measuredY = 0.0;
-	measuredZ = 0.0;
+        measuredX = 0.0;
+        measuredY = 0.0;
+        measuredZ = 0.0;
       }
       HitsInPlane(double x, double y, double z)
-      {
-	measuredX = x;
-	measuredY = y;
-	measuredZ = z;
-      }
-      bool operator<(const HitsInPlane& b) const 
-      {
-	return (measuredZ < b.measuredZ);
-      }
+        {
+          measuredX = x;
+          measuredY = y;
+          measuredZ = z;
+        }
+      bool operator<(const HitsInPlane& b) const
+        {
+          return (measuredZ < b.measuredZ);
+        }
       double measuredX;
       double measuredY;
       double measuredZ;
     };
 
- virtual void FitTrack(
-		       int nPlanesFitter,
-		       double xPosFitter[],
-		       double yPosFitter[],
-		       double zPosFitter[],
-		       double xResFit[],
-		       double yResFit[],
-		       double chi2Fit[2],
-		       double residXFit[],
-		       double residYFit[],
-		       double angleFit[2]
-		       );
+    virtual void FitTrack(
+      int nPlanesFitter,
+      double xPosFitter[],
+      double yPosFitter[],
+      double zPosFitter[],
+      double xResFit[],
+      double yResFit[],
+      double chi2Fit[2],
+      double residXFit[],
+      double residYFit[],
+      double angleFit[2]
+      );
 
 
 
     //recursive method which searches for track candidates
     virtual void findtracks(
-			    std::vector<std::vector<int> > &indexarray, //resulting vector of hit indizes
-			    std::vector<int> vec, //for internal use
-			    std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray, //contains all hits for each plane
-			    int i, //plane number
-			    int y //hit index number
-			    );
+      std::vector<std::vector<int> > &indexarray, //resulting vector of hit indizes
+      std::vector<int> vec, //for internal use
+      std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray, //contains all hits for each plane
+      int i, //plane number
+      int y //hit index number
+      );
 
     //! Returns a new instance of EUTelMille
     /*! This method returns a new instance of this processor.  It is
@@ -165,6 +165,16 @@ namespace eutelescope {
 
 
   protected:
+
+
+    //! Ordered sensor ID
+    /*! Within the processor all the loops are done up to _nPlanes and
+     *  according to their position along the Z axis (beam axis).
+     *
+     *  This vector is containing the sensorID sorted according to the
+     *  same rule.
+     */
+    std::vector< int > _orderedSensorID;
 
     //! TrackerHit collection name
     /*! Input collection with hits.

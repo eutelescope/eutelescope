@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.38 2009-04-30 16:03:59 jbehr Exp $
+// Version: $Id: EUTelMille.cc,v 1.39 2009-07-16 15:20:04 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -75,7 +75,6 @@
 using namespace std;
 using namespace lcio;
 using namespace marlin;
-// using namespace gear;
 using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
@@ -142,15 +141,20 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
     "EUTelMille uses the MILLE program to write data files for MILLEPEDE II.";
 
   // choose input mode
-  registerOptionalParameter("InputMode","Selects the source of input hits. 0 - hits read from hitfile with simple trackfinding. 1 - hits read from output of tracking processor. 2 - Test mode. Simple internal simulation and simple trackfinding. 3 - mixture of a track collection from the telescope and hit collections for the DUT (only one DUT layer can be used unfortunately)",_inputMode, static_cast <int> (0));
+  registerOptionalParameter("InputMode","Selects the source of input hits."
+                            "\n0 - hits read from hitfile with simple trackfinding. "
+                            "\n1 - hits read from output of tracking processor. "
+                            "\n2 - Test mode. Simple internal simulation and simple trackfinding. "
+                            "\n3 - Mixture of a track collection from the telescope and hit collections for the DUT (only one DUT layer can be used unfortunately)",
+                            _inputMode, static_cast <int> (0));
 
   // input collections
   std::vector<std::string > HitCollectionNameVecExample;
   HitCollectionNameVecExample.push_back("corrhits");
 
   registerInputCollections(LCIO::TRACKERHIT,"HitCollectionName",
-			   "Hit collections name",
-			   _hitCollectionName,HitCollectionNameVecExample);
+                           "Hit collections name",
+                           _hitCollectionName,HitCollectionNameVecExample);
 
   registerInputCollection(LCIO::TRACK,"TrackCollectionName",
                           "Track collection name",
@@ -163,104 +167,84 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   std::vector<int> exclPlanes;
 
-  registerOptionalParameter("ExcludePlanes","Exclude planes from fit."
-                            ,_excludePlanes , exclPlanes);
+  registerOptionalParameter("ExcludePlanes","Exclude planes from fit.",_excludePlanes , exclPlanes);
 
-  registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates."
-                            ,_maxTrackCandidates, static_cast <int> (2000));
+  registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates.",_maxTrackCandidates, static_cast <int> (2000));
 
-  registerOptionalParameter("BinaryFilename","Name of the Millepede binary file."
-                            ,_binaryFilename, string ("mille.bin"));
+  registerOptionalParameter("BinaryFilename","Name of the Millepede binary file.",_binaryFilename, string ("mille.bin"));
 
-  registerOptionalParameter("TelescopeResolution","Resolution of the telescope for Millepede."
-                            ,_telescopeResolution, static_cast <float> (3.0));
+  registerOptionalParameter("TelescopeResolution","Resolution of the telescope for Millepede.",_telescopeResolution, static_cast <float> (3.0));
 
-  registerOptionalParameter("OnlySingleHitEvents","Use only events with one hit in every plane."
-                            ,_onlySingleHitEvents, static_cast <int> (0));
+  registerOptionalParameter("OnlySingleHitEvents","Use only events with one hit in every plane.",_onlySingleHitEvents, static_cast <int> (0));
 
-  registerOptionalParameter("OnlySingleTrackEvents","Use only events with one track candidate."
-                            ,_onlySingleTrackEvents, static_cast <int> (0));
+  registerOptionalParameter("OnlySingleTrackEvents","Use only events with one track candidate.",_onlySingleTrackEvents, static_cast <int> (0));
 
-  registerOptionalParameter("AlignMode","Number of alignment constants used. Available mode are: 1 - shifts in the X and Y directions and a rotation around the Z axis, 2 - only shifts in the X and Y directions",
+  registerOptionalParameter("AlignMode","Number of alignment constants used. Available mode are: "
+                            "\n1 - shifts in the X and Y directions and a rotation around the Z axis,"
+                            "\n2 - only shifts in the X and Y directions",
                             _alignMode, static_cast <int> (1));
 
-  registerOptionalParameter("UseResidualCuts","Use cuts on the residuals to reduce the combinatorial background. 0 for off (default), 1 for on"
-                            ,_useResidualCuts, static_cast <int> (0));
+  registerOptionalParameter("UseResidualCuts","Use cuts on the residuals to reduce the combinatorial background. 0 for off (default), 1 for on",_useResidualCuts,
+                            static_cast <int> (0));
 
   registerOptionalParameter("AlignmentConstantLCIOFile","This is the name of the LCIO file name with the output alignment"
-                            "constants (add .slcio)",
-                            _alignmentConstantLCIOFile, static_cast< string > ( "alignment.slcio" ) );
+                            "constants (add .slcio)",_alignmentConstantLCIOFile, static_cast< string > ( "alignment.slcio" ) );
+
+  registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a track",_residualsXMin,MinimalResidualsX);
+
+  registerOptionalParameter("ResidualsYMin","Minimal values of the hit residuals in the Y direction for a track",_residualsYMin,MinimalResidualsY);
+
+  registerOptionalParameter("ResidualsXMax","Maximal values of the hit residuals in the X direction for a track",_residualsXMax,MaximalResidualsX);
+
+  registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a track",_residualsYMax,MaximalResidualsY);
+
+  registerOptionalParameter("GeneratePedeSteerfile","Generate a steering file for the pede program.",_generatePedeSteerfile, static_cast <int> (0));
+
+  registerOptionalParameter("PedeSteerfileName","Name of the steering file for the pede program.",_pedeSteerfileName, string("steer_mille.txt"));
+
+  registerOptionalParameter("RunPede","Execute the pede program using the generated steering file.",_runPede, static_cast <int> (0));
+
+  registerOptionalParameter("UsePedeUserStartValues","Give start values for pede by hand (0 - automatic calculation of start values, 1 - start values defined by user).",
+                            _usePedeUserStartValues, static_cast <int> (0));
+
+  registerOptionalParameter("PedeUserStartValuesX","Start values for the alignment for shifts in the X direction.",_pedeUserStartValuesX,PedeUserStartValuesX);
+
+  registerOptionalParameter("PedeUserStartValuesY","Start values for the alignment for shifts in the Y direction.",_pedeUserStartValuesY,PedeUserStartValuesY);
+
+  registerOptionalParameter("PedeUserStartValuesGamma","Start values for the alignment for the angle gamma.",_pedeUserStartValuesGamma,PedeUserStartValuesGamma);
+
+  registerOptionalParameter("TestModeSensorResolution","Resolution assumed for the sensors in test mode.",_testModeSensorResolution, static_cast <float> (3.0));
+
+  registerOptionalParameter("TestModeXTrackSlope","Width of the track slope distribution in the x direction",_testModeXTrackSlope, static_cast <float> (0.0005));
+
+  registerOptionalParameter("TestModeYTrackSlope","Width of the track slope distribution in the y direction",_testModeYTrackSlope, static_cast <float> (0.0005));
+
+  registerOptionalParameter("TestModeSensorZPositions","Z positions of the sensors in test mode.",_testModeSensorZPositions,SensorZPositions);
+
+  registerOptionalParameter("TestModeSensorXShifts","X shifts of the sensors in test mode (to be determined by the alignment).",
+                            _testModeSensorXShifts,SensorXShifts);
+
+  registerOptionalParameter("TestModeSensorYShifts","Y shifts of the sensors in test mode (to be determined by the alignment).",
+                            _testModeSensorYShifts,SensorYShifts);
 
 
-  registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a track"
-                            ,_residualsXMin,MinimalResidualsX);
-
-  registerOptionalParameter("ResidualsYMin","Minimal values of the hit residuals in the Y direction for a track"
-                            ,_residualsYMin,MinimalResidualsY);
-
-  registerOptionalParameter("ResidualsXMax","Maximal values of the hit residuals in the X direction for a track"
-                            ,_residualsXMax,MaximalResidualsX);
-
-  registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a track"
-                            ,_residualsYMax,MaximalResidualsY);
-
-  registerOptionalParameter("GeneratePedeSteerfile","Generate a steering file for the pede program."
-                            ,_generatePedeSteerfile, static_cast <int> (0));
-
-  registerOptionalParameter("PedeSteerfileName","Name of the steering file for the pede program."
-                            ,_pedeSteerfileName, string("steer_mille.txt"));
-
-  registerOptionalParameter("RunPede","Execute the pede program using the generated steering file."
-                            ,_runPede, static_cast <int> (0));
-
-  registerOptionalParameter("UsePedeUserStartValues","Give start values for pede by hand (0 - automatic calculation of start values, 1 - start values defined by user)."
-                            ,_usePedeUserStartValues, static_cast <int> (0));
-
-  registerOptionalParameter("PedeUserStartValuesX","Start values for the alignment for shifts in the X direction."
-                            ,_pedeUserStartValuesX,PedeUserStartValuesX);
-
-  registerOptionalParameter("PedeUserStartValuesY","Start values for the alignment for shifts in the Y direction."
-                            ,_pedeUserStartValuesY,PedeUserStartValuesY);
-
-  registerOptionalParameter("PedeUserStartValuesGamma","Start values for the alignment for the angle gamma."
-                            ,_pedeUserStartValuesGamma,PedeUserStartValuesGamma);
-
-  registerOptionalParameter("TestModeSensorResolution","Resolution assumed for the sensors in test mode."
-                            ,_testModeSensorResolution, static_cast <float> (3.0));
-
-  registerOptionalParameter("TestModeXTrackSlope","Width of the track slope distribution in the x direction"
-                            ,_testModeXTrackSlope, static_cast <float> (0.0005));
-
-  registerOptionalParameter("TestModeYTrackSlope","Width of the track slope distribution in the y direction"
-                            ,_testModeYTrackSlope, static_cast <float> (0.0005));
-
-  registerOptionalParameter("TestModeSensorZPositions","Z positions of the sensors in test mode."
-                            ,_testModeSensorZPositions,SensorZPositions);
-
-  registerOptionalParameter("TestModeSensorXShifts","X shifts of the sensors in test mode (to be determined by the alignment)."
-                            ,_testModeSensorXShifts,SensorXShifts);
-
-  registerOptionalParameter("TestModeSensorYShifts","Y shifts of the sensors in test mode (to be determined by the alignment)."
-                            ,_testModeSensorYShifts,SensorYShifts);
+  registerOptionalParameter("TestModeSensorGamma","Rotation around the z axis of the sensors in test mode (to be determined by the alignment).",
+                            _testModeSensorGamma,SensorGamma);
 
 
-  registerOptionalParameter("TestModeSensorGamma","Rotation around the z axis of the sensors in test mode (to be determined by the alignment)."
-                            ,_testModeSensorGamma,SensorGamma);
- 
+  registerOptionalParameter("TestModeSensorAlpha","Rotation around the x axis of the sensors in test mode (to be determined by the alignment).",
+                            _testModeSensorAlpha,SensorAlpha);
 
-  registerOptionalParameter("TestModeSensorAlpha","Rotation around the x axis of the sensors in test mode (to be determined by the alignment)."
-                            ,_testModeSensorAlpha,SensorAlpha);
- 
 
-  registerOptionalParameter("TestModeSensorBeta","Rotation around the y axis of the sensors in test mode (to be determined by the alignment)."
-                            ,_testModeSensorBeta,SensorBeta);
- 
+  registerOptionalParameter("TestModeSensorBeta","Rotation around the y axis of the sensors in test mode (to be determined by the alignment).",
+                            _testModeSensorBeta,SensorBeta);
+
 }
 
 void EUTelMille::init() {
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
-  
+
   streamlog_out ( ERROR2 ) << "Marlin was not built with GEAR support." << endl;
   streamlog_out ( ERROR2 ) << "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." << endl;
 
@@ -280,15 +264,17 @@ void EUTelMille::init() {
   _histogramSwitch = true;
 
   //lets guess the number of planes
-  if(_inputMode == 0 || _inputMode == 2)
+  if(_inputMode == 0 || _inputMode == 2) 
     {
+
+      // the number of planes is got from the GEAR description and is
+      // the sum of the telescope reference planes and the DUT (if
+      // any)
       _nPlanes = _siPlanesParameters->getSiPlanesNumber();
-      //assume that there is only one DUT layer and that his DUT
-      //layer is only used if more than 1 hit collections are used
-      if(_siPlanesParameters->getSiPlanesType() == 1 && _hitCollectionName.size() > 1)
-	{
-	  _nPlanes += (int)_hitCollectionName.size() - 1;
-	}
+      if ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
+        ++_nPlanes;
+      }
+
     }
   else if(_inputMode == 1)
     {
@@ -296,29 +282,47 @@ void EUTelMille::init() {
     }
   else if(_inputMode == 3)
     {
+
+      // the number of planes is got from the GEAR description and is
+      // the sum of the telescope reference planes and the DUT (if
+      // any)
       _nPlanes = _siPlanesParameters->getSiPlanesNumber();
-      if(_siPlanesParameters->getSiPlanesType() == 1 && _hitCollectionName.size() >= 1)
-	{
-	  _nPlanes += (int)_hitCollectionName.size();
-	}
+      if ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
+        ++_nPlanes;
+      }
+
     }
   else
     {
       cout << "unknown input mode " << _inputMode << endl;
       exit(-1);
     }
-    
+
+
+  // an associative map for getting also the sensorID ordered
+  map< double, int > sensorIDMap;
   //lets create an array with the z positions of each layer
-  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ )
+  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
     _siPlaneZPosition.push_back(_siPlanesLayerLayout->getLayerPositionZ(iPlane));
-      
-  //it seems that we also need the DUT!
-  if(_nPlanes != _siPlanesLayerLayout->getNLayers())
+    sensorIDMap.insert( make_pair( _siPlanesLayerLayout->getLayerPositionZ(iPlane), _siPlanesLayerLayout->getID(iPlane) ) );
+  }
+
+  if  ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
     _siPlaneZPosition.push_back(_siPlanesLayerLayout->getDUTPositionZ());
-      
+    sensorIDMap.insert( make_pair( _siPlanesLayerLayout->getDUTPositionZ(),  _siPlanesLayerLayout->getDUTID() ) ) ;
+  }
+
   //lets sort the array with increasing z
   sort(_siPlaneZPosition.begin(), _siPlaneZPosition.end());
-      
+
+  // strip from the map the sensor id already sorted.
+  map< double, int >::iterator iter = sensorIDMap.begin();
+  while ( iter != sensorIDMap.end() ) {
+    _orderedSensorID.push_back( iter->second );
+    ++iter;
+  }
+
+
   //consistency
   if((int)_siPlaneZPosition.size() != _nPlanes)
     {
@@ -327,9 +331,9 @@ void EUTelMille::init() {
     }
 
 #endif
-  
-    
- 
+
+
+
   // this method is called only once even when the rewind is active
   // usually a good idea to
   printParameters ();
@@ -366,8 +370,8 @@ void EUTelMille::init() {
   streamlog_out ( MESSAGE2 ) << "Initialising Mille..." << endl;
   _mille = new Mille(_binaryFilename.c_str());
   streamlog_out ( MESSAGE2 ) << "The filename for the binary file is: " << _binaryFilename.c_str() << endl;
- 
-  
+
+
 
 
   for(int i = 0; i < _maxTrackCandidates; i++)
@@ -375,7 +379,7 @@ void EUTelMille::init() {
       _xPos.push_back(std::vector<double>(_nPlanes,0.0));
       _yPos.push_back(std::vector<double>(_nPlanes,0.0));
       _zPos.push_back(std::vector<double>(_nPlanes,0.0));
-      
+
     }
 
 }
@@ -385,30 +389,6 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
   auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
   header->addProcessor( type() ) ;
 
-  // the run header contains the number of detectors. This number
-  // should be in principle the same as the number of layers in the
-  // geometry description
-  if ( header->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) {
-    streamlog_out ( ERROR2 ) << "Error during the geometry consistency check: " << endl;
-    streamlog_out ( ERROR2 ) << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " << endl;
-    streamlog_out ( ERROR2 ) << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber()
-                             << " silicon planes" << endl;
-
-#ifdef EUTEL_INTERACTIVE
-    string answer;
-    while (true) {
-      streamlog_out ( ERROR2 ) << "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" << endl;
-      cin >> answer;
-      // put the answer in lower case before making the comparison.
-      transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
-      if ( answer == "q" ) {
-        exit(-1);
-      } else if ( answer == "c" ) {
-        break;
-      }
-    }
-#endif
-  }
 
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
@@ -445,56 +425,56 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
 
 
 void EUTelMille::findtracks(
-			    std::vector<std::vector<int> > &indexarray,
-			    std::vector<int> vec,
-			    std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray,
-			    int i,
-			    int y
-			    )
+  std::vector<std::vector<int> > &indexarray,
+  std::vector<int> vec,
+  std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray,
+  int i,
+  int y
+  )
 {
   if(i>0)
     vec.push_back(y);
   for(size_t j =0; j < _hitsArray[i].size(); j++)
     {
       //if we are not in the last plane, call this method again
-      if(i<(int)(_hitsArray.size())-1) 
-	{
-	  findtracks(indexarray,vec, _hitsArray, i+1,(int)j);
-	}
+      if(i<(int)(_hitsArray.size())-1)
+        {
+          findtracks(indexarray,vec, _hitsArray, i+1,(int)j);
+        }
       else
-	{
-	  //we are in the last plane
-	  vec.push_back((int)j); //index of the cluster in the last plane
-	  
-	  //track candidate requirements
-	  bool taketrack = true;
-	  for(size_t e =0; e < vec.size()-1; e++)
-	    {
-	      double distance = sqrt(
-				     pow( _hitsArray[e][vec[e]].measuredX - _hitsArray[e+1][vec[e+1]].measuredX ,2) +
-				     pow( _hitsArray[e][vec[e]].measuredY - _hitsArray[e+1][vec[e+1]].measuredY ,2)
-				     );
-	      double distance_z = _hitsArray[e+1][vec[e+1]].measuredZ - _hitsArray[e][vec[e]].measuredZ;
-	      
-	      double distancemax = _distanceMax * ( distance_z / 100000.0);
-	      
-	      if( distance >= distancemax )
-		taketrack = false;
-		
-	      if(_onlySingleHitEvents == 1 && (_hitsArray[e].size() != 1 || _hitsArray[e+1].size() != 1))
-		taketrack = false;
-		
-	    }
-	  if((int)indexarray.size() >= _maxTrackCandidates)
-	    taketrack = false;
-	  
-	  if(taketrack)
-	    {
-	      indexarray.push_back(vec);
-	    }
-	  vec.pop_back(); //last element must be removed because the
-			  //vector is still used
-	}
+        {
+          //we are in the last plane
+          vec.push_back((int)j); //index of the cluster in the last plane
+
+          //track candidate requirements
+          bool taketrack = true;
+          for(size_t e =0; e < vec.size()-1; e++)
+            {
+              double distance = sqrt(
+                pow( _hitsArray[e][vec[e]].measuredX - _hitsArray[e+1][vec[e+1]].measuredX ,2) +
+                pow( _hitsArray[e][vec[e]].measuredY - _hitsArray[e+1][vec[e+1]].measuredY ,2)
+                );
+              double distance_z = _hitsArray[e+1][vec[e+1]].measuredZ - _hitsArray[e][vec[e]].measuredZ;
+
+              double distancemax = _distanceMax * ( distance_z / 100000.0);
+
+              if( distance >= distancemax )
+                taketrack = false;
+
+              if(_onlySingleHitEvents == 1 && (_hitsArray[e].size() != 1 || _hitsArray[e+1].size() != 1))
+                taketrack = false;
+
+            }
+          if((int)indexarray.size() >= _maxTrackCandidates)
+            taketrack = false;
+
+          if(taketrack)
+            {
+              indexarray.push_back(vec);
+            }
+          vec.pop_back(); //last element must be removed because the
+                          //vector is still used
+        }
     }
 }
 
@@ -650,7 +630,7 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
 
 void EUTelMille::processEvent (LCEvent * event) {
 
- 
+
 
 
 
@@ -676,136 +656,136 @@ void EUTelMille::processEvent (LCEvent * event) {
     streamlog_out ( DEBUG2 ) << "EORE found: nothing else to do." << endl;
     return;
   }
- 
+
   std::vector<std::vector<EUTelMille::HitsInPlane> > _hitsArray(_nPlanes, std::vector<EUTelMille::HitsInPlane>());
 
-  if (_inputMode != 1 && _inputMode != 3) 
+  if (_inputMode != 1 && _inputMode != 3)
     for(size_t i =0;i < _hitCollectionName.size();i++)
       {
-     
-	LCCollection* collection;
-	try {
-	  collection = event->getCollection(_hitCollectionName[i]);
-	} catch (DataNotAvailableException& e) {
-	  streamlog_out ( WARNING2 ) << "No input collection " << _hitCollectionName[i] << " found for event " << event->getEventNumber()
-				     << " in run " << event->getRunNumber() << endl;
-	  throw SkipEventException(this);
-	}
-	int layerIndex = -1;
-	HitsInPlane hitsInPlane;
- 
-	// check if running in input mode 0 or 2
-	if (_inputMode == 0) {
-	  
-	  // loop over all hits in collection
-	  for ( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ ) {
 
-	    TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( collection->getElementAt(iHit) );
- 
-	    LCObjectVec clusterVector = hit->getRawHits();
+        LCCollection* collection;
+        try {
+          collection = event->getCollection(_hitCollectionName[i]);
+        } catch (DataNotAvailableException& e) {
+          streamlog_out ( WARNING2 ) << "No input collection " << _hitCollectionName[i] << " found for event " << event->getEventNumber()
+                                     << " in run " << event->getRunNumber() << endl;
+          throw SkipEventException(this);
+        }
+        int layerIndex = -1;
+        HitsInPlane hitsInPlane;
 
-	    EUTelVirtualCluster * cluster;
-	    if ( hit->getType() == kEUTelFFClusterImpl ) {
+        // check if running in input mode 0 or 2
+        if (_inputMode == 0) {
 
-	      // fixed cluster implementation. Remember it can come from
-	      // both RAW and ZS data
-	      cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-	    } else if ( hit->getType() == kEUTelSparseClusterImpl ) {
+          // loop over all hits in collection
+          for ( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ ) {
 
-	      // ok the cluster is of sparse type, but we also need to know
-	      // the kind of pixel description used. This information is
-	      // stored in the corresponding original data collection.
+            TrackerHitImpl * hit = static_cast<TrackerHitImpl*> ( collection->getElementAt(iHit) );
 
-	      LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-	      TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-	      CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-	      SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
-	 
-	      // now we know the pixel type. So we can properly create a new
-	      // instance of the sparse cluster
-	      if ( pixelType == kEUTelSimpleSparsePixel ) {
- 
-		cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
-		  ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+            LCObjectVec clusterVector = hit->getRawHits();
 
-	      } else {
-		streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-		throw UnknownDataTypeException("Pixel type unknown");
-	      }
+            EUTelVirtualCluster * cluster;
+            if ( hit->getType() == kEUTelFFClusterImpl ) {
 
-	    } else {
-	      throw UnknownDataTypeException("Unknown cluster type");
-	    }
+              // fixed cluster implementation. Remember it can come from
+              // both RAW and ZS data
+              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+            } else if ( hit->getType() == kEUTelSparseClusterImpl ) {
 
-	    double minDistance =  numeric_limits< double >::max() ;
-	    double * hitPosition = const_cast<double * > (hit->getPosition());
-	 	   
-	    for ( int i = 0 ; i < (int)_siPlaneZPosition.size(); i++ )
-	      {
-		double distance = std::abs( hitPosition[2] - _siPlaneZPosition[i] );
-		if ( distance < minDistance )
-		  {
-		    minDistance = distance;
-		    layerIndex = i;
-		  }
-	      }
-	    if ( minDistance > 5 /* mm */ ) {
-	      // advice the user that the guessing wasn't successful 
-	      streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-		"Please check the consistency of the data with the GEAR file" << endl;
-	    }
-	    
-	   
-	    // Getting positions of the hits.
-	    // ------------------------------
-	    hitsInPlane.measuredX = 1000 * hit->getPosition()[0];
-	    hitsInPlane.measuredY = 1000 * hit->getPosition()[1];
-	    hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
-	    
-	    delete cluster; // <--- destroying the cluster
- 
-	    _hitsArray[layerIndex].push_back(hitsInPlane);
- 
-	  } // end loop over all hits in collection
+              // ok the cluster is of sparse type, but we also need to know
+              // the kind of pixel description used. This information is
+              // stored in the corresponding original data collection.
 
-	} else if (_inputMode == 2) {
+              LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+              TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+              CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+              SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+
+              // now we know the pixel type. So we can properly create a new
+              // instance of the sparse cluster
+              if ( pixelType == kEUTelSimpleSparsePixel ) {
+
+                cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+                  ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+
+              } else {
+                streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+                throw UnknownDataTypeException("Pixel type unknown");
+              }
+
+            } else {
+              throw UnknownDataTypeException("Unknown cluster type");
+            }
+
+            double minDistance =  numeric_limits< double >::max() ;
+            double * hitPosition = const_cast<double * > (hit->getPosition());
+
+            for ( int i = 0 ; i < (int)_siPlaneZPosition.size(); i++ )
+              {
+                double distance = std::abs( hitPosition[2] - _siPlaneZPosition[i] );
+                if ( distance < minDistance )
+                  {
+                    minDistance = distance;
+                    layerIndex = i;
+                  }
+              }
+            if ( minDistance > 5 /* mm */ ) {
+              // advice the user that the guessing wasn't successful
+              streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
+                "Please check the consistency of the data with the GEAR file" << endl;
+            }
+
+
+            // Getting positions of the hits.
+            // ------------------------------
+            hitsInPlane.measuredX = 1000 * hit->getPosition()[0];
+            hitsInPlane.measuredY = 1000 * hit->getPosition()[1];
+            hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
+
+            delete cluster; // <--- destroying the cluster
+
+            _hitsArray[layerIndex].push_back(hitsInPlane);
+
+          } // end loop over all hits in collection
+
+        } else if (_inputMode == 2) {
 
 #if defined( USE_ROOT ) || defined(MARLIN_USE_ROOT)
 
-	  const float resolX = _testModeSensorResolution;
-	  const float resolY = _testModeSensorResolution;
+          const float resolX = _testModeSensorResolution;
+          const float resolY = _testModeSensorResolution;
 
-	  const float xhitpos = gRandom->Uniform(-3500.0,3500.0);
-	  const float yhitpos = gRandom->Uniform(-3500.0,3500.0);
+          const float xhitpos = gRandom->Uniform(-3500.0,3500.0);
+          const float yhitpos = gRandom->Uniform(-3500.0,3500.0);
 
-	  const float xslope = gRandom->Gaus(0.0,_testModeXTrackSlope);
-	  const float yslope = gRandom->Gaus(0.0,_testModeYTrackSlope);
+          const float xslope = gRandom->Gaus(0.0,_testModeXTrackSlope);
+          const float yslope = gRandom->Gaus(0.0,_testModeYTrackSlope);
 
-	  // loop over all planes
-	  for (int help = 0; help < _nPlanes; help++) {
+          // loop over all planes
+          for (int help = 0; help < _nPlanes; help++) {
 
-	    // The x and y positions are given by the sums of the measured
-	    // hit positions, the detector resolution, the shifts of the
-	    // planes and the effect due to the track slopes.
-	    hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[help] + _testModeSensorZPositions[help] * tan(xslope) - _testModeSensorGamma[help] * yhitpos - _testModeSensorBeta[help] * _testModeSensorZPositions[0];
-	    hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[help] + _testModeSensorZPositions[help] * tan(yslope) + _testModeSensorGamma[help] * xhitpos - _testModeSensorAlpha[help] * _testModeSensorZPositions[help];
-	    hitsInPlane.measuredZ = _testModeSensorZPositions[help];
-	    _hitsArray[help].push_back(hitsInPlane);
-	    _telescopeResolX[help] = resolX;
-	    _telescopeResolY[help] = resolY;
-	  } // end loop over all planes
+            // The x and y positions are given by the sums of the measured
+            // hit positions, the detector resolution, the shifts of the
+            // planes and the effect due to the track slopes.
+            hitsInPlane.measuredX = xhitpos + gRandom->Gaus(0.0,resolX) + _testModeSensorXShifts[help] + _testModeSensorZPositions[help] * tan(xslope) - _testModeSensorGamma[help] * yhitpos - _testModeSensorBeta[help] * _testModeSensorZPositions[0];
+            hitsInPlane.measuredY = yhitpos + gRandom->Gaus(0.0,resolY) + _testModeSensorYShifts[help] + _testModeSensorZPositions[help] * tan(yslope) + _testModeSensorGamma[help] * xhitpos - _testModeSensorAlpha[help] * _testModeSensorZPositions[help];
+            hitsInPlane.measuredZ = _testModeSensorZPositions[help];
+            _hitsArray[help].push_back(hitsInPlane);
+            _telescopeResolX[help] = resolX;
+            _telescopeResolY[help] = resolY;
+          } // end loop over all planes
 
 #else // USE_ROOT
 
-	  throw MissingLibraryException( this, "ROOT" );
+          throw MissingLibraryException( this, "ROOT" );
 
 #endif
 
 
-	} // end if check running in input mode 0 or 2
+        } // end if check running in input mode 0 or 2
 
       }
-  
+
   std::vector<int> fitplane(_nPlanes, 0);
 
   for (int help = 0; help < _nPlanes; help++) {
@@ -823,28 +803,28 @@ void EUTelMille::processEvent (LCEvent * event) {
     // ---------------------------------------------
     //
     // This is done separately for different numbers of planes.
-    
+
     std::vector<std::vector<int> > indexarray;
     findtracks(indexarray, std::vector<int>(), _hitsArray, 0, 0);
- 
+
     for(size_t i =0; i < indexarray.size(); i++)
       {
-	for(size_t j =0; j < indexarray[i].size(); j++)
-	  {
-	    _xPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredX;
-	    _yPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredY;
-	    _zPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredZ;
-	  }
+        for(size_t j =0; j < indexarray[i].size(); j++)
+          {
+            _xPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredX;
+            _yPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredY;
+            _zPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredZ;
+          }
       }
- 
+
     _nTracks = (int) indexarray.size();
- 
+
     // end check if running in input mode 0 or 2 => perform simple track finding
   } else if (_inputMode == 1) {
     LCCollection* collection;
     collection = event->getCollection(_trackCollectionName);
     const int nTracksHere = collection->getNumberOfElements();
-    
+
     streamlog_out ( MILLEMESSAGE ) << "Number of tracks available in track collection: " << nTracksHere << endl;
 
     // loop over all tracks
@@ -857,7 +837,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       std::vector<EVENT::TrackerHit*> TrackHitsHere = TrackHere->getTrackerHits();
 
       // check for a hit in every plane
-      
+
       if (_nPlanes == int(TrackHitsHere.size() / 2)) {
 
         // assume hits are ordered in z! start counting from 0
@@ -865,15 +845,15 @@ void EUTelMille::processEvent (LCEvent * event) {
 
         // loop over all hits and fill arrays
         for (int nHits = 0; nHits < int(TrackHitsHere.size()); nHits++) {
-	  
+
           TrackerHit *HitHere = TrackHitsHere.at(nHits);
-	  
+
           // hit positions
           const double *PositionsHere = HitHere->getPosition();
 
           // assume fitted hits have type 32
           if ( HitHere->getType() == 32 ) {
-	   
+
             // fill hits to arrays
             _xPos[nTracksEvent][nPlaneHere] = PositionsHere[0] * 1000;
             _yPos[nTracksEvent][nPlaneHere] = PositionsHere[1] * 1000;
@@ -896,11 +876,11 @@ void EUTelMille::processEvent (LCEvent * event) {
     } // end loop over all tracks
 
   } else if (_inputMode == 3) {
-   
+
     LCCollection* collection;
     collection = event->getCollection(_trackCollectionName);
     const int nTracksHere = collection->getNumberOfElements();
-    
+
     streamlog_out ( MILLEMESSAGE ) << "Number of tracks available in track collection: " << nTracksHere << endl;
 
     // loop over all tracks
@@ -913,121 +893,121 @@ void EUTelMille::processEvent (LCEvent * event) {
 
       // check for a hit in every telescope plane
       if (_siPlanesParameters->getSiPlanesNumber() == int(TrackHitsHere.size() / 2))
-	{
-	  for(size_t i =0;i < _hitCollectionName.size();i++)
-	    {
-	      LCCollection* collection;
-	      try {
-		collection = event->getCollection(_hitCollectionName[i]);
-	      } catch (DataNotAvailableException& e) {
-		streamlog_out ( WARNING2 ) << "No input collection " << _hitCollectionName[i] << " found for event " << event->getEventNumber()
-					   << " in run " << event->getRunNumber() << endl;
-		throw SkipEventException(this);
-	      }
-	      for ( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ )
-		{
-		  TrackerHitImpl *hit = static_cast<TrackerHitImpl*> ( collection->getElementAt(iHit) );
-		     
-		  LCObjectVec clusterVector = hit->getRawHits();
-		  EUTelVirtualCluster *cluster;
-		  if ( hit->getType() == kEUTelFFClusterImpl ) {
-		       
-		    // fixed cluster implementation. Remember it can come from
-		    // both RAW and ZS data
-		    cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-		  }
-		  else if ( hit->getType() == kEUTelSparseClusterImpl ) {
-		    //copy and paste from the inputmode 0
-		    // code. needs to be tested ...
+        {
+          for(size_t i =0;i < _hitCollectionName.size();i++)
+            {
+              LCCollection* collection;
+              try {
+                collection = event->getCollection(_hitCollectionName[i]);
+              } catch (DataNotAvailableException& e) {
+                streamlog_out ( WARNING2 ) << "No input collection " << _hitCollectionName[i] << " found for event " << event->getEventNumber()
+                                           << " in run " << event->getRunNumber() << endl;
+                throw SkipEventException(this);
+              }
+              for ( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ )
+                {
+                  TrackerHitImpl *hit = static_cast<TrackerHitImpl*> ( collection->getElementAt(iHit) );
 
-		    // ok the cluster is of sparse type, but we also need to know
-		    // the kind of pixel description used. This information is
-		    // stored in the corresponding original data collection.
-		       
-		    LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-		    TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-		    CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-		    SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
-		       
-		    // now we know the pixel type. So we can properly create a new
-		    // instance of the sparse cluster
-		    if ( pixelType == kEUTelSimpleSparsePixel ) {
-			 
-		      cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
-			( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
-			 
-		    } else {
-		      streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-		      throw UnknownDataTypeException("Pixel type unknown");
-		    }
-		       
-		  } else {
-		    throw UnknownDataTypeException("Unknown cluster type");
-		  }
-		     		     
-		  std::vector<EUTelMille::HitsInPlane> hitsplane;
+                  LCObjectVec clusterVector = hit->getRawHits();
+                  EUTelVirtualCluster *cluster;
+                  if ( hit->getType() == kEUTelFFClusterImpl ) {
 
-		  hitsplane.push_back(
-				      EUTelMille::HitsInPlane(
-							      1000 * hit->getPosition()[0],
-							      1000 * hit->getPosition()[1],
-							      1000 * hit->getPosition()[2]
-							      )
-				      );
-		  double measuredz = hit->getPosition()[2];
-		     
-		  delete cluster; // <--- destroying the cluster
-		  for (int nHits = 0; nHits < int(TrackHitsHere.size()); nHits++)  // end loop over all hits and fill arrays
-		    {
-		      TrackerHit *HitHere = TrackHitsHere.at(nHits);
-			 
-		      // hit positions
-		      const double *PositionsHere = HitHere->getPosition();
-			 			 
-		      // assume that fitted hits have type 32.
-		      //the tracker hit will be excluded if the
-		      //distance to the hit from the hit collection
-		      //is larger than 5 mm. this requirement should reject
-		      //reconstructed hits in the DUT in order to
-		      //avoid double counting.
-		      if( std::abs( measuredz - PositionsHere[2] ) > 5.0 /* mm */)
-			if ( HitHere->getType()  == 32 ) 
-			  {
-			    hitsplane.push_back(
-						EUTelMille::HitsInPlane(
-									PositionsHere[0] * 1000,
-									PositionsHere[1] * 1000, 
-									PositionsHere[2] * 1000
-									)
-						);
-			  } // end assume fitted hits have type 32
-		    }
-		  //sort the array such that the hits are ordered
-		  //in z assuming that z is constant over all
-		  //events for each plane
-		  std::sort(hitsplane.begin(), hitsplane.end());
-		    
-		  //now the array is filled into the track
-		  //candidates array
-		  for(int i = 0; i < _nPlanes; i++)
-		    {
-		      _xPos[_nTracks][i] = hitsplane[i].measuredX;
-		      _yPos[_nTracks][i] = hitsplane[i].measuredY;
-		      _zPos[_nTracks][i] = hitsplane[i].measuredZ;
-		    }
-		  _nTracks++; //and we found an additional track candidate.
-		}
-	    }
-	  //end of the loop
-	} else {
+                    // fixed cluster implementation. Remember it can come from
+                    // both RAW and ZS data
+                    cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+                  }
+                  else if ( hit->getType() == kEUTelSparseClusterImpl ) {
+                    //copy and paste from the inputmode 0
+                    // code. needs to be tested ...
 
-	  streamlog_out ( MILLEMESSAGE ) << "Dropping track " << nTracksEvent << " because there is not a hit in every plane assigned to it." << endl;
-	}
+                    // ok the cluster is of sparse type, but we also need to know
+                    // the kind of pixel description used. This information is
+                    // stored in the corresponding original data collection.
+
+                    LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+                    TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+                    CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+                    SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+
+                    // now we know the pixel type. So we can properly create a new
+                    // instance of the sparse cluster
+                    if ( pixelType == kEUTelSimpleSparsePixel ) {
+
+                      cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+                        ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+
+                    } else {
+                      streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+                      throw UnknownDataTypeException("Pixel type unknown");
+                    }
+
+                  } else {
+                    throw UnknownDataTypeException("Unknown cluster type");
+                  }
+
+                  std::vector<EUTelMille::HitsInPlane> hitsplane;
+
+                  hitsplane.push_back(
+                    EUTelMille::HitsInPlane(
+                      1000 * hit->getPosition()[0],
+                      1000 * hit->getPosition()[1],
+                      1000 * hit->getPosition()[2]
+                      )
+                    );
+                  double measuredz = hit->getPosition()[2];
+
+                  delete cluster; // <--- destroying the cluster
+                  for (int nHits = 0; nHits < int(TrackHitsHere.size()); nHits++)  // end loop over all hits and fill arrays
+                    {
+                      TrackerHit *HitHere = TrackHitsHere.at(nHits);
+
+                      // hit positions
+                      const double *PositionsHere = HitHere->getPosition();
+
+                      // assume that fitted hits have type 32.
+                      //the tracker hit will be excluded if the
+                      //distance to the hit from the hit collection
+                      //is larger than 5 mm. this requirement should reject
+                      //reconstructed hits in the DUT in order to
+                      //avoid double counting.
+                      if( std::abs( measuredz - PositionsHere[2] ) > 5.0 /* mm */)
+                        if ( HitHere->getType()  == 32 )
+                          {
+                            hitsplane.push_back(
+                              EUTelMille::HitsInPlane(
+                                PositionsHere[0] * 1000,
+                                PositionsHere[1] * 1000,
+                                PositionsHere[2] * 1000
+                                )
+                              );
+                          } // end assume fitted hits have type 32
+                    }
+                  //sort the array such that the hits are ordered
+                  //in z assuming that z is constant over all
+                  //events for each plane
+                  std::sort(hitsplane.begin(), hitsplane.end());
+
+                  //now the array is filled into the track
+                  //candidates array
+                  for(int i = 0; i < _nPlanes; i++)
+                    {
+                      _xPos[_nTracks][i] = hitsplane[i].measuredX;
+                      _yPos[_nTracks][i] = hitsplane[i].measuredY;
+                      _zPos[_nTracks][i] = hitsplane[i].measuredZ;
+                    }
+                  _nTracks++; //and we found an additional track candidate.
+                }
+            }
+          //end of the loop
+        } else {
+
+        streamlog_out ( MILLEMESSAGE ) << "Dropping track " << nTracksEvent << " because there is not a hit in every plane assigned to it." << endl;
+      }
 
     } // end loop over all tracks
 
   }
- 
+
   if (_nTracks == _maxTrackCandidates) {
     streamlog_out ( WARNING2 ) << "Maximum number of track candidates reached. Maybe further tracks were skipped" << endl;
   }
@@ -1038,7 +1018,7 @@ void EUTelMille::processEvent (LCEvent * event) {
   streamlog_out ( MILLEMESSAGE ) << endl;
 
   streamlog_out ( MILLEMESSAGE ) << "Number of track candidates found: " << _iEvt << ": " << _nTracks << endl;
- 
+
   // Perform fit for all found track candidates
   // ------------------------------------------
 
@@ -1050,7 +1030,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
     // loop over all track candidates
     for (int track = 0; track < _nTracks; track++) {
-      
+
       _xPosHere = new double[_nPlanes];
       _yPosHere = new double[_nPlanes];
       _zPosHere = new double[_nPlanes];
@@ -1060,17 +1040,17 @@ void EUTelMille::processEvent (LCEvent * event) {
         _yPosHere[help] = _yPos[track][help];
         _zPosHere[help] = _zPos[track][help];
       }
-      
+
       Chiquare[0] = 0.0;
       Chiquare[1] = 0.0;
 
       streamlog_out ( MILLEMESSAGE ) << "Adding track using the following coordinates: ";
-      
+
       // loop over all planes
       for (int help = 0; help < _nPlanes; help++) {
 
         int excluded = 0;
-	
+
         // check if actual plane is excluded
         if (_nExcludePlanes > 0) {
           for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
@@ -1085,20 +1065,20 @@ void EUTelMille::processEvent (LCEvent * event) {
         }
 
       } // end loop over all planes
-	
+
       streamlog_out ( MILLEMESSAGE ) << endl;
 
       // Calculate residuals
       FitTrack(int(_nPlanes),
-	       _xPosHere,
-	       _yPosHere,
-	       _zPosHere,
-	       _telescopeResolX,
-	       _telescopeResolY,
-	       Chiquare,
-	       _waferResidX,
-	       _waferResidY,
-	       angle);
+               _xPosHere,
+               _yPosHere,
+               _zPosHere,
+               _telescopeResolX,
+               _telescopeResolY,
+               Chiquare,
+               _waferResidX,
+               _waferResidY,
+               angle);
 
       streamlog_out ( MILLEMESSAGE ) << "Residuals X: ";
 
@@ -1343,10 +1323,6 @@ void EUTelMille::processEvent (LCEvent * event) {
         string tempHistoName;
 
         if ( _histogramSwitch ) {
-          {
-            stringstream ss;
-            ss << _chi2XLocalname << endl;
-          }
           if ( AIDA::IHistogram1D* chi2x_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2XLocalname]) )
             chi2x_histo->fill(Chiquare[0]);
           else {
@@ -1357,10 +1333,6 @@ void EUTelMille::processEvent (LCEvent * event) {
         }
 
         if ( _histogramSwitch ) {
-          {
-            stringstream ss;
-            ss << _chi2YLocalname << endl;
-          }
           if ( AIDA::IHistogram1D* chi2y_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2YLocalname]) )
             chi2y_histo->fill(Chiquare[1]);
           else {
@@ -1373,12 +1345,10 @@ void EUTelMille::processEvent (LCEvent * event) {
         // loop over all detector planes
         for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
 
+          int sensorID = _orderedSensorID.at( iDetector );
+
           if ( _histogramSwitch ) {
-            {
-              stringstream ss;
-              ss << _residualXLocalname << "_d" << iDetector;
-              tempHistoName=ss.str();
-            }
+            tempHistoName = _residualXLocalname + "_d" + to_string( sensorID );
             if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
               residx_histo->fill(_waferResidX[iDetector]);
             else {
@@ -1389,11 +1359,7 @@ void EUTelMille::processEvent (LCEvent * event) {
           }
 
           if ( _histogramSwitch ) {
-            {
-              stringstream ss;
-              ss << _residualYLocalname << "_d" << iDetector;
-              tempHistoName=ss.str();
-            }
+            tempHistoName = _residualYLocalname + "_d" + to_string( sensorID );
             if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
               residy_histo->fill(_waferResidY[iDetector]);
             else {
@@ -1423,7 +1389,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   string tempHistoName;
- 
+
   if ( _histogramSwitch ) {
     {
       stringstream ss;
@@ -1443,7 +1409,7 @@ void EUTelMille::processEvent (LCEvent * event) {
   // count events
   ++_iEvt;
   if ( isFirstEvent() ) _isFirstEvent = false;
- 
+
 }
 
 void EUTelMille::end() {
@@ -1470,12 +1436,10 @@ void EUTelMille::end() {
     // loop over all detector planes
     for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
 
+      int sensorID = _orderedSensorID.at( iDetector );
+
       if ( _histogramSwitch ) {
-        {
-          stringstream ss;
-          ss << _residualXLocalname << "_d" << iDetector;
-          tempHistoName=ss.str();
-        }
+        tempHistoName =  _residualXLocalname + "_d" + to_string( sensorID );
         if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
           meanX[iDetector] = residx_histo->mean();
         else {
@@ -1486,11 +1450,7 @@ void EUTelMille::end() {
       }
 
       if ( _histogramSwitch ) {
-        {
-          stringstream ss;
-          ss << _residualYLocalname << "_d" << iDetector;
-          tempHistoName=ss.str();
-        }
+        tempHistoName =  _residualYLocalname + "_d" + to_string( sensorID );
         if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
           meanY[iDetector] = residy_histo->mean();
         else {
@@ -1730,16 +1690,6 @@ void EUTelMille::end() {
           // comment!
           getline( millepede, line );
 
-          // I need to create a map to convert plane position in
-          // sensorID
-          std::vector<int > lookUp;
-          for ( int iPlane = 0; iPlane < _nPlanes ; iPlane++ ) {
-            // if the plane in the exclude list
-            if ( find( _excludePlanes.begin(), _excludePlanes.end(), iPlane ) ==  _excludePlanes.end() ) {
-              lookUp.push_back( _siPlanesLayerLayout->getID(iPlane) );
-            }
-          }
-
           int counter = 0;
 
           while ( ! millepede.eof() ) {
@@ -1748,8 +1698,7 @@ void EUTelMille::end() {
 
             bool goodLine = true;
 
-
-            constant->setSensorID( lookUp[counter] );
+            constant->setSensorID( _orderedSensorID.at( counter ) );
             ++ counter;
 
             for ( unsigned int iParam = 0 ; iParam < 3 ; ++iParam ) {
@@ -1884,26 +1833,17 @@ void EUTelMille::bookHistos() {
       _histogramSwitch = false;
     }
 
-    string tempHisto;
     string tempHistoName;
     string histoTitleXResid;
     string histoTitleYResid;
 
     for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
 
-      {
-        stringstream ss;
-        stringstream pp;
-        stringstream tt;
+      // this is the sensorID corresponding to this plane
+      int sensorID = _orderedSensorID.at( iDetector );
 
-        pp << "ResidualXLocal_d" << iDetector;
-        tempHisto=pp.str();
-        ss << _residualXLocalname << "_d" << iDetector;
-        tempHistoName=ss.str();
-        tt << "XResidual" << "_d" << iDetector;
-        histoTitleXResid=tt.str();
-
-      }
+      tempHistoName     =  _residualXLocalname + "_d" + to_string( sensorID );
+      histoTitleXResid  =  "XResidual_d" + to_string( sensorID ) ;
 
       AIDA::IHistogram1D *  tempXHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin, Min,Max);
@@ -1916,18 +1856,8 @@ void EUTelMille::bookHistos() {
         _histogramSwitch = false;
       }
 
-      {
-        stringstream ss;
-        stringstream pp;
-        stringstream tt;
-
-        pp << "ResidualYLocal_d" << iDetector;
-        tempHisto=pp.str();
-        ss << _residualYLocalname << "_d" << iDetector;
-        tempHistoName=ss.str();
-        tt << "YResidual" << "_d" << iDetector;
-        histoTitleYResid=tt.str();
-      }
+      tempHistoName     =  _residualYLocalname + "_d" + to_string( sensorID );
+      histoTitleYResid  =  "YResidual_d" + to_string( sensorID ) ;
 
       AIDA::IHistogram1D *  tempYHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram1D(tempHistoName,NBin, Min,Max);
@@ -1944,6 +1874,8 @@ void EUTelMille::bookHistos() {
 
   } catch (lcio::Exception& e ) {
 
+
+#ifdef EUTEL_INTERACTIVE
     streamlog_out ( ERROR2 ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
     string answer;
     while ( true ) {
@@ -1956,6 +1888,11 @@ void EUTelMille::bookHistos() {
         _histogramSwitch = false;
       break;
     }
+#else
+    streamlog_out( WARNING2 ) << "No AIDAProcessor initialized. Continue without histogramming" << endl;
+
+#endif
+
 
   }
 #endif

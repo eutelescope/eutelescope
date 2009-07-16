@@ -3166,12 +3166,19 @@ void showMillePlot( const char * filename ) {
 
   // guess the number of sensors
   UInt_t nDetector = 0;
-  while ( true ) {
-    string name = "ResidualX_d" + toString(nDetector);
-    TH2D * histo = (TH2D*) milleFolder->Get(name.c_str());
-    if ( histo != 0x0 ) ++nDetector;
-    else break;
+  vector< int > sensorIDs;
+  string separator = "_-" ;
+
+
+  for ( int i = 0 ; i < milleFolder->GetListOfKeys()->GetSize(); ++i ) {
+    string name( milleFolder->GetListOfKeys()->At( i )->GetName() );
+    string compName = "ResidualX_d";
+
+    if ( name.compare( 0, compName.length(), compName ) == 0 ) {
+      sensorIDs.push_back( atoi( name.substr( name.find_last_not_of( separator ), name.length()).c_str()) );
+    }
   }
+  nDetector = sensorIDs.size();
 
   if ( nDetector == 0 ) {
     cerr << "Something wrong with the number of detectors" << endl;
@@ -3246,8 +3253,8 @@ void showMillePlot( const char * filename ) {
   vector< Double_t > xMeanVec, yMeanVec;
   for ( UInt_t iDetector = 0 ; iDetector < nDetector ; ++iDetector ) {
 
-    string histoName  = "ResidualX_d" + toString( iDetector );
-    string histoTitle = "Residual along X for detector " + toString( iDetector );
+    string histoName  = "ResidualX_d" + toString( sensorIDs.at( iDetector ) );
+    string histoTitle = "Residual along X for detector " + toString( sensorIDs.at( iDetector ) );
     TH1D * histo = (TH1D*) milleFolder->Get( histoName.c_str() );
     histo->SetTitle( histoTitle.c_str() );
     setDefaultAxis( histo->GetXaxis() );
@@ -3276,8 +3283,8 @@ void showMillePlot( const char * filename ) {
 
     ++iPad;
 
-    histoName = "ResidualY_d" + toString( iDetector );
-    histoTitle = "Residual along Y for detector " + toString( iDetector );
+    histoName = "ResidualY_d" + toString( sensorIDs.at( iDetector ) );
+    histoTitle = "Residual along Y for detector " + toString( sensorIDs.at( iDetector ) );
     histo = (TH1D*) milleFolder->Get(  histoName.c_str() );
     histo->SetTitle( histoTitle.c_str() );
     setDefaultAxis( histo->GetXaxis() );
@@ -3322,9 +3329,9 @@ void showMillePlot( const char * filename ) {
   cout << setw(20) << "Detector" << setw(20) << "x" << setw(20) << "y" << endl;
   for ( size_t iPos = 0 ; iPos < xMeanVec.size(); ++iPos ) {
     if ( ( iPos == 0 ) || ( iPos == xMeanVec.size() - 1 ) ) {
-      cout << setw(20) << iPos << setw(20)<< "0" << setw(20) << "0" << endl;
+      cout << setw(20) << sensorIDs.at( iPos ) << setw(20)<< "0" << setw(20) << "0" << endl;
     } else {
-      cout << setw(20) << iPos << setw(20) << xMean - xMeanVec.at( iPos ) << setw(20) << yMean - yMeanVec.at( iPos ) << endl;
+      cout << setw(20) << sensorIDs.at( iPos ) << setw(20) << xMean - xMeanVec.at( iPos ) << setw(20) << yMean - yMeanVec.at( iPos ) << endl;
     }
   }
 
@@ -3419,8 +3426,9 @@ void usage() {
   listOfFunction.push_back( "void showClusterPlot( const char * filename )" );
   listOfFunction.push_back( "void showEtaPlot( const char * filename )" );
   listOfFunction.push_back( "void showCorrelationPlot( const char * filename )");
-  listOfFunction.push_back( "void showTrackerPlot( const char * filename )" );
   listOfFunction.push_back( "void showMillePlot( const char * filename )" );
+  listOfFunction.push_back( "void showTrackerPlot( const char * filename )" );
+
 
   cout << endl;
   cout << "First set the overall run name using " << endl;
