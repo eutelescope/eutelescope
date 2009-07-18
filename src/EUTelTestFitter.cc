@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.35 2009-07-15 17:21:28 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.36 2009-07-18 12:40:05 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -39,7 +39,7 @@
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
 
-
+// LCIO includes <.h>
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <IMPL/LCCollectionVec.h>
@@ -48,6 +48,7 @@
 #include <IMPL/LCFlagImpl.h>
 #include <Exceptions.h>
 
+// system includes <>
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -297,7 +298,7 @@ void EUTelTestFitter::init() {
 
 #endif
 
-// Test output
+  // Test output
 
   if( _SkipLayerIDs.size() ) {
     streamlog_out ( MESSAGE0 )  <<  _SkipLayerIDs.size() << " layers should be skipped" << endl;
@@ -307,14 +308,10 @@ void EUTelTestFitter::init() {
     streamlog_out ( MESSAGE0 ) <<  _PassiveLayerIDs.size() << " layers should be considered passive" << endl;
   }
 
-// Active planes only:
-//  _nTelPlanes = _siPlanesParameters->getSiPlanesNumber();
-
-// Take all layers defined in GEAR geometry
+  // Take all layers defined in GEAR geometry
   _nTelPlanes = _siPlanesLayerLayout->getNLayers();
 
-// Check for DUT
-
+  // Check for DUT
   if( _siPlanesParameters->getSiPlanesType()==_siPlanesParameters->TelescopeWithDUT )    {
     _iDUT = _nTelPlanes ;
     _nTelPlanes++;
@@ -322,7 +319,10 @@ void EUTelTestFitter::init() {
     _iDUT = -1 ;
   }
 
-// Read position in Z (for sorting), skip layers if requested
+
+  // _nTelPlanes is the total number of sensitive layers in the setup
+  // summing both the telescopes and the DUT 
+  // Read position in Z (for sorting), skip layers if requested
 
   _planeSort = new int[_nTelPlanes];
   _planePosition   = new double[_nTelPlanes];
@@ -356,7 +356,8 @@ void EUTelTestFitter::init() {
   }
 
   // Binary sorting
-
+  //
+  // Note: all this code can in principle be replaced by a simple sort 
   bool sorted;
   do {
     sorted=false;
@@ -375,8 +376,11 @@ void EUTelTestFitter::init() {
     }
   } while(sorted);
 
-// Book local geometry arrays
-
+  // Book local geometry arrays
+  //
+  // N.B. the plane ID array is containing the sensorID sorted
+  // according to the position along Z. We will be using this array
+  // for histogram booking and filling.
   _planeID         = new int[_nTelPlanes];
   _planeShiftX     = new double[_nTelPlanes];
   _planeShiftY     = new double[_nTelPlanes];
@@ -390,7 +394,7 @@ void EUTelTestFitter::init() {
 
   _nActivePlanes = 0 ;
 
-// Fill arrays with parameters of layer, sorted in Z
+  // Fill arrays with parameters of layer, sorted in Z
 
   for(int iz=0; iz < _nTelPlanes ; iz++) {
     int ipl=_planeSort[iz];
@@ -398,7 +402,7 @@ void EUTelTestFitter::init() {
     int iActive;
     double resolution;
 
-// All dimensions are assumed to be in mm !!!
+    // All dimensions are assumed to be in mm !!!
 
     if(ipl != _iDUT )    {
       _planeID[iz]=_siPlanesLayerLayout->getID(ipl);
@@ -414,8 +418,7 @@ void EUTelTestFitter::init() {
 
     iActive = (resolution > 0);
 
-// Check passive layer list
-
+    // Check passive layer list
     for(int ppl=0; ppl< (int)_PassiveLayerIDs.size() ; ppl++) {
       if ( _PassiveLayerIDs.at(ppl) == _planeID[iz])    {
         streamlog_out ( MESSAGE0 ) <<  "Force passive layer ID " << _planeID[iz]
@@ -434,8 +437,8 @@ void EUTelTestFitter::init() {
       _planeResolution[iz]=0.;
     }
 
-// No alignment corrections in GEAR file
-// Look in input options
+    // No alignment corrections in GEAR file
+    // Look in input options
 
     _planeShiftX[iz]=0.;
     _planeShiftY[iz]=0.;
@@ -453,9 +456,7 @@ void EUTelTestFitter::init() {
       }
     }
 
-// Check, if there are additional cuts defined for this plane
-
-
+    // Check, if there are additional cuts defined for this plane
     for(int wpl=0; wpl< (int)_WindowLayerIDs.size() ; wpl++) {
       if ( _WindowLayerIDs.at(wpl) == _planeID[iz]) {
         _planeWindowIDs[iz].push_back(wpl);
@@ -470,7 +471,6 @@ void EUTelTestFitter::init() {
   }
 
   // Get new DUT position (after sorting)
-
   for(int iz=0;iz< _nTelPlanes ; iz++) {
     if(_planeSort[iz]==_iDUT)  {
       _iDUT=iz;
@@ -1668,8 +1668,6 @@ void EUTelTestFitter::bookHistos()
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   streamlog_out ( MESSAGE2 ) <<  "Booking histograms " << endl;
-
-
   streamlog_out ( MESSAGE2 ) << "Histogram information searched in " << _histoInfoFileName << endl;
 
   auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
@@ -1711,9 +1709,7 @@ void EUTelTestFitter::bookHistos()
 
 
   AIDA::IHistogram1D * linChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _linChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
-
   linChi2Histo->setTitle(chi2Title.c_str());
-
   _aidaHistoMap.insert(make_pair(_linChi2HistoName, linChi2Histo));
 
 
@@ -1737,29 +1733,19 @@ void EUTelTestFitter::bookHistos()
           if ( histoInfo->_title != "" ) chi2Title = histoInfo->_title;
         }
     }
-
-
   AIDA::IHistogram1D * logChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _logChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
-
   logChi2Histo->setTitle(chi2Title.c_str());
-
   _aidaHistoMap.insert(make_pair(_logChi2HistoName, logChi2Histo));
 
 
-// Additional Chi2 histogram for first track candidate (without chi2 cut)
-
+  // Additional Chi2 histogram for first track candidate (without chi2 cut)
   string firstchi2Title = chi2Title + ", first candidate (before cut)";
-
   AIDA::IHistogram1D * firstChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _firstChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
-
   firstChi2Histo->setTitle(firstchi2Title.c_str());
-
-
   _aidaHistoMap.insert(make_pair(_firstChi2HistoName, firstChi2Histo));
 
 
-// Chi2 histogram for best tracks in an event - use same binning
-
+  // Chi2 histogram for best tracks in an event - use same binning
   if(_searchMultipleTracks)
     {
       string bestchi2Title = chi2Title + ", best fit";
@@ -1773,17 +1759,12 @@ void EUTelTestFitter::bookHistos()
     }
 
 
-// Another Chi2 histogram for all full tracks in an event - use same binning
-
+  // Another Chi2 histogram for all full tracks in an event - use same binning
   if(_allowMissingHits)
     {
       string fullchi2Title = chi2Title + ", full tracks";
-
       AIDA::IHistogram1D * fullChi2Histo = AIDAProcessor::histogramFactory(this)->createHistogram1D( _fullChi2HistoName.c_str(),chi2NBin,chi2Min,chi2Max);
-
       fullChi2Histo->setTitle(fullchi2Title.c_str());
-
-
       _aidaHistoMap.insert(make_pair(_fullChi2HistoName, fullChi2Histo));
     }
 
@@ -1811,20 +1792,14 @@ void EUTelTestFitter::bookHistos()
 
 
   AIDA::IHistogram1D * nTrackHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nTrackHistoName.c_str(),trkNBin,trkMin,trkMax);
-
   nTrackHisto->setTitle(trkTitle.c_str());
-
   _aidaHistoMap.insert(make_pair(_nTrackHistoName, nTrackHisto));
 
-
-
   // Number of hits in input collection
-
   int    hitNBin  = 1000;
   double hitMin   = 0.;
   double hitMax   = 1000.;
   string hitTitle = "Number of hits in input collection";
-
 
   if ( isHistoManagerAvailable )
     {
@@ -1840,15 +1815,10 @@ void EUTelTestFitter::bookHistos()
     }
 
   AIDA::IHistogram1D * nAllHitHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nAllHitHistoName.c_str(),hitNBin,hitMin,hitMax);
-
   nAllHitHisto->setTitle(hitTitle.c_str());
-
   _aidaHistoMap.insert(make_pair(_nAllHitHistoName, nAllHitHisto));
 
-
-
   // Number of accepted hits
-
   hitNBin  = 1000;
   hitMin   = 0.;
   hitMax   = 1000.;
@@ -1869,20 +1839,14 @@ void EUTelTestFitter::bookHistos()
     }
 
   AIDA::IHistogram1D * nAccHitHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nAccHitHistoName.c_str(),hitNBin,hitMin,hitMax);
-
   nAccHitHisto->setTitle(hitTitle.c_str());
-
   _aidaHistoMap.insert(make_pair(_nAccHitHistoName, nAccHitHisto));
 
-
-
   // Number of hits per track
-
   hitNBin  = 11;
   hitMin   = -0.5;
   hitMax   = 10.5;
   hitTitle = "Number of hits used to reconstruct the track";
-
 
   if ( isHistoManagerAvailable )
     {
@@ -1898,55 +1862,42 @@ void EUTelTestFitter::bookHistos()
     }
 
   AIDA::IHistogram1D * nHitHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nHitHistoName.c_str(),hitNBin,hitMin,hitMax);
-
   nHitHisto->setTitle(hitTitle.c_str());
-
   _aidaHistoMap.insert(make_pair(_nHitHistoName, nHitHisto));
 
-
-
-// Additional hit number histogram for best tracks in an event - use same binning
-
+  // Additional hit number histogram for best tracks in an event - use same binning
   if(_searchMultipleTracks)
     {
       string bestTitle = hitTitle + ", best fit";
-
       AIDA::IHistogram1D * BestHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _nBestHistoName.c_str(),hitNBin,hitMin,hitMax);
-
       BestHisto->setTitle(bestTitle.c_str());
-
-
       _aidaHistoMap.insert(make_pair(_nBestHistoName, BestHisto));
     }
 
 
-// Additional histogram for number of tracks fitted to given hit - use same binning
-
+  // Additional histogram for number of tracks fitted to given hit - use same binning
   if(_allowAmbiguousHits && ( _allowMissingHits == 0 ))
     {
       string ambigTitle = "Number of tracks containing given hit (ambiguity)";
-
       AIDA::IHistogram1D * AmbigHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _hitAmbiguityHistoName.c_str(),hitNBin,hitMin,hitMax);
-
       AmbigHisto->setTitle(ambigTitle.c_str());
-
-
       _aidaHistoMap.insert(make_pair(_hitAmbiguityHistoName, AmbigHisto));
     }
 
 
-// List all booked histogram - check of histogram map filling
-
-  streamlog_out ( MESSAGE0 ) <<  _aidaHistoMap.size() << " histograms booked" << endl;
-
+  // List all booked histogram - check of histogram map filling
+  streamlog_out ( DEBUG ) <<  _aidaHistoMap.size() << " histograms booked" << endl;
 
   map<string, AIDA::IBaseHistogram *>::iterator mapIter;
   for(mapIter = _aidaHistoMap.begin(); mapIter != _aidaHistoMap.end() ; mapIter++ )
     streamlog_out ( DEBUG ) <<  mapIter->first << " : " <<  (mapIter->second)->title()  << endl;
 
   streamlog_out ( DEBUG ) << "Histogram booking completed \n\n" << endl;
+
 #else
+
   streamlog_out ( MESSAGE4 ) << "No histogram produced because Marlin doesn't use AIDA" << endl;
+
 #endif
 
   return;
