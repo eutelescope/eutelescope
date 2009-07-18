@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHitMaker.cc,v 1.26 2009-07-15 17:21:28 bulgheroni Exp $
+// Version $Id: EUTelHitMaker.cc,v 1.27 2009-07-18 10:45:58 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -282,109 +282,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         }
 
       }
-
-/*
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-      // this is also the right place to book the eta specific
-      // histograms.
-      if ( _histogramSwitch ) {
-        for ( int iDet = 0 ; iDet < _siPlanesParameters->getSiPlanesNumber(); iDet++) {
-          string basePath = "plane_" + to_string( _orderedSensorIDVec.at( iDet ) ) + "/";
-          EUTelEtaFunctionImpl * xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt(iDet) );
-          EUTelEtaFunctionImpl * yEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( yEtaCollection->getElementAt(iDet) );
-
-          if ( _etaVersion == 2 ) {
-            _etaMap[ xEtaFunc->getSensorID() ] = iDet;
-          }
-
-          int xNoOfBin = xEtaFunc->getNoOfBin();
-          int yNoOfBin = yEtaFunc->getNoOfBin();
-          string tempHistoName = _clusterCenterEtaHistoName + "_" + to_string( _orderedSensorIDVec.at( iDet ) );
-
-          AIDA::IHistogram2D * clusterCenterEta =
-            AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName ).c_str(),
-                                                                      1* xNoOfBin, -.5, +.5, 1 * yNoOfBin, -.5, +.5);
-          if ( clusterCenterEta ) {
-            clusterCenterEta->setTitle("Position of the cluster center (Eta corrected)");
-            _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEta ) );
-          } else {
-            streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                      << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-            _histogramSwitch = false;
-          }
-
-
-          tempHistoName = _clusterCenterHistoName + "_" + to_string( _orderedSensorIDVec.at( iDet ) );
-          AIDA::IHistogram2D * clusterCenter =
-            AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName ).c_str(),
-                                                                      1* xNoOfBin, -.5, +.5, 1 * yNoOfBin, -.5, +.5);
-          if ( clusterCenter ) {
-            clusterCenterEta->setTitle("Position of the cluster center");
-            _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenter ) );
-          } else {
-            streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                      << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-            _histogramSwitch = false;
-          }
-
-
-          tempHistoName = _clusterCenterEtaXHistoName + "_" + to_string( _orderedSensorIDVec.at( iDet ));
-          AIDA::IHistogram1D * clusterCenterEtaX =
-            AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                      1 * xNoOfBin, -0.5, +0.5 );
-          if ( clusterCenterEtaX ) {
-            clusterCenterEtaX->setTitle("Projection along X of the cluster center (Eta corrected)");
-            _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEtaX ) );
-          } else {
-            streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                      << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-            _histogramSwitch = false;
-          }
-
-          tempHistoName = _clusterCenterXHistoName + "_" + to_string( _orderedSensorIDVec.at( iDet ));
-          AIDA::IHistogram1D * clusterCenterX =
-            AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                      1 * xNoOfBin, -0.5, +0.5 );
-          if ( clusterCenterX ) {
-            clusterCenterX->setTitle("Projection along X of the cluster center");
-            _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterX ) );
-          } else {
-            streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                      << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-            _histogramSwitch = false;
-          }
-
-          tempHistoName = _clusterCenterEtaYHistoName + "_" + to_string( _orderedSensorIDVec.at( iDet ) );
-
-          AIDA::IHistogram1D * clusterCenterEtaY =
-            AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                      1 * xNoOfBin, -0.5, +0.5 );
-          if ( clusterCenterEtaY ) {
-            clusterCenterEtaY->setTitle("Projection along Y of the cluster center (Eta corrected)");
-            _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEtaY ) );
-          } else {
-            streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                      << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-            _histogramSwitch = false;
-          }
-
-          tempHistoName =  _clusterCenterYHistoName + "_" + to_string( _orderedSensorIDVec.at( iDet ) );
-          AIDA::IHistogram1D * clusterCenterY =
-            AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                      1 * xNoOfBin, -0.5, +0.5 );
-          if ( clusterCenterY ) {
-            clusterCenterY->setTitle("Projection along Y of the cluster center");
-            _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterY ) );
-          } else {
-            streamlog_out ( ERROR1 )  << "Problem booking the " << (basePath + tempHistoName) << ".\n"
-                                      << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
-            _histogramSwitch = false;
-          }
-
-        }
-      }
-#endif
-*/
 
     }
 
