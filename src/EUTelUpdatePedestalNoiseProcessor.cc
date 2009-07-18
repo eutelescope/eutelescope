@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.11 2009-07-15 17:21:28 bulgheroni Exp $
+// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.12 2009-07-18 09:08:01 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -121,7 +121,7 @@ void EUTelUpdatePedestalNoiseProcessor::init () {
 #ifdef MARLINDEBUG
   vector<int >::iterator iter = _monitoredPixel.begin();
   while ( iter != _monitoredPixel.end() ) {
-    streamlog_out( DEBUG )  << "Monitoring pixel " << (*iter) endl;
+    streamlog_out( DEBUG )  << "Monitoring pixel " << (*iter) << endl;
     ++iter;
   }
 #endif
