@@ -2,7 +2,7 @@
 # A template of fitter job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-fitter-tmp.sh,v 1.2 2009-06-06 11:47:02 bulgheroni Exp $
+# @version $Id: runjob-fitter-tmp.sh,v 1.3 2009-07-18 17:24:06 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -164,7 +164,7 @@ echo
 doCommand "mv simjob.slcio.keepme simjob.slcio"
 
 # set the list of Marlin plugins and the LD_LIBRARY_PATH
-doCommand "export MARLIN_DLL=$PWD/libEutelescope.so.0.0.8"
+doCommand "export MARLIN_DLL=$PWD/libEutelescope.so"
 doCommand "export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH"
 
 echo
