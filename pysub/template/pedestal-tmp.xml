@@ -10,7 +10,7 @@
                                ==> pedestal-tmp.xml <===
 
 Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-Version: $Id: pedestal-tmp.xml,v 1.5 2009-07-18 19:37:29 bulgheroni Exp $
+Version: $Id: pedestal-tmp.xml,v 1.6 2009-07-18 20:29:18 bulgheroni Exp $
 ==========================================================================================
 
 --> 
@@ -54,7 +54,7 @@ Version: $Id: pedestal-tmp.xml,v 1.5 2009-07-18 19:37:29 bulgheroni Exp $
  AbsoluteNoiseValue: removing pixels with noise above PixelMaskUpperAbsNoiseCut in ADC value
  DeadPixel: removing pixels with noise below PixelMaskLowerAbsNoiseCut in ADC value
  AbsolutePedeValue: removing pixels having pedestal too low or high using PixelMaskUpperAbsPedeCut and PixelMaskLowerAbsPedeCut-->
-  <parameter name="BadPixelMaskingAlgorithm" type="StringVec"> NOISEDISTRIBUTION DEADPIXEL </parameter>
+  <parameter name="BadPixelMaskingAlgorithm" type="StringVec"> NoiseDistribution DeadPixel </parameter>
   <!--Select the algorithm for pede/noise calculation-->
   <parameter name="CalculationAlgorithm" type="string" value="MeanRMS"/>
   <!--Select the algorithm for the common mode calculation. Possible values are:
@@ -89,9 +89,8 @@ Version: $Id: pedestal-tmp.xml,v 1.5 2009-07-18 19:37:29 bulgheroni Exp $
   <parameter name="PixelMaskLowerAbsNoiseCut" type="float" value="0.2"/>
   <!--Lower threshold for bad pixel identification using ABSOLUTEPEDEVALUE-->
   <parameter name="PixelMaskLowerAbsPedeCut" type="float" value="-15"/>
-  <!--This is the maximum allowed firing % frequency, being 0.1% the Gaussian limit
-Used only during the additional masking loop-->
-  <parameter name="PixelMaskMaxFiringFrequency" type="float" value="0.2"/>
+  <!--This is the maximum allowed firing % frequency for the additional masking loop-->
+  <parameter name="PixelMaskMaxFiringFrequency" type="float" value="1.0"/>
   <!--Upper threshold for bad pixel identification using ABSOLUTENOISEVALUE-->
   <parameter name="PixelMaskUpperAbsNoiseCut" type="float" value="3.5"/>
   <!--Upper threshold for bad pixel identification using ABSOLUTEPEDEVALUE-->
