@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelXCorrelator.cc,v 1.2 2009-04-27 12:39:08 bulgheroni Exp $
+// Version $Id: EUTelXCorrelator.cc,v 1.3 2009-07-18 09:09:46 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -49,6 +49,8 @@
 #include <iostream>
 #include <iomanip>
 #include <cmath>
+#include <limits>
+#include <cstdlib>
 
 using namespace std;
 using namespace marlin;
@@ -93,8 +95,7 @@ void EUTelXCorrelator::init() {
   }
 
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*>
-    ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
+  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> (&(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
   _siPlaneZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
   for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
@@ -112,20 +113,7 @@ void EUTelXCorrelator::processRunHeader (LCRunHeader * rdr) {
 
 
   EUTelRunHeaderImpl * runHeader = new EUTelRunHeaderImpl( rdr ) ;
-
-  // perform some consistency check in case we have GEAR support
-
-  // the run header contains the number of detectors. This number
-  // should be in principle be the same as the number of layers in the
-  // geometry description
-  if ( runHeader->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) {
-    streamlog_out ( ERROR4 ) << "Error during the geometry consistency check: " << endl
-                             << "The run header says there are " << runHeader->getNoOfDetector()
-                             << " silicon detectors " << endl
-                             << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber()
-                             << " silicon planes" << endl;
-    exit(-1);
-  }
+  runHeader->addProcessor( type() );
 
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
