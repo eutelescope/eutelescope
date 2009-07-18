@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitHistograms.cc,v 1.13 2008-10-04 21:07:19 bulgheroni Exp $
+// Version: $Id: EUTelFitHistograms.cc,v 1.14 2009-07-18 14:17:17 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -211,7 +211,6 @@ void EUTelFitHistograms::init() {
     }
 
   // Binary sorting
-
   bool sorted;
   do{
     sorted=false;
@@ -495,7 +494,7 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
               if(debug) {
                 streamlog_out ( TESTFITTERMESSAGE )   << "Fitted  hit  in plane " << hitPlane << " at  X = "
-						      << pos[0] << ", Y = " << pos[1] << endl;
+                                                      << pos[0] << ", Y = " << pos[1] << endl;
               }
 
             }
@@ -511,39 +510,39 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
               string tempHistoName;
 
               stringstream nam;
-              nam << _MeasuredXHistoName << "_" << ipl ;
+              nam << _MeasuredXHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam.str();
               (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl]);
 
               stringstream nam2;
-              nam2 << _MeasuredYHistoName << "_" << ipl ;
+              nam2 << _MeasuredYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam2.str();
               (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredY[ipl]);
 
               stringstream nam3;
-              nam3 << _MeasuredXYHistoName << "_" << ipl ;
+              nam3 << _MeasuredXYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam3.str();
               (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl],_measuredY[ipl]);
 
               stringstream nam4;
-              nam4 << _clusterSignalHistoName << "_" << ipl ;
+              nam4 << _clusterSignalHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam4.str();
               (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredQ[ipl]);
 
               stringstream nam5;
-              nam5 << _meanSignalXHistoName << "_" << ipl ;
+              nam5 << _meanSignalXHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam5.str();
               (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl],_measuredQ[ipl]);
 
 
               stringstream nam6;
-              nam6 << _meanSignalYHistoName << "_" << ipl ;
+              nam6 << _meanSignalYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam6.str();
               (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredY[ipl],_measuredQ[ipl]);
 
 
               stringstream nam7;
-              nam7 << _meanSignalXYHistoName << "_" << ipl ;
+              nam7 << _meanSignalXYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam7.str();
               (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl],_measuredY[ipl],_measuredQ[ipl]);
 
@@ -562,17 +561,17 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
               string tempHistoName;
 
               stringstream nam;
-              nam << _FittedXHistoName << "_" << ipl ;
+              nam << _FittedXHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam.str();
               (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedX[ipl]);
 
               stringstream nam2;
-              nam2 << _FittedYHistoName << "_" << ipl ;
+              nam2 << _FittedYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam2.str();
               (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedY[ipl]);
 
               stringstream nam3;
-              nam3 << _FittedXYHistoName << "_" << ipl ;
+              nam3 << _FittedXYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam3.str();
               (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedX[ipl],_fittedY[ipl]);
 
@@ -596,17 +595,17 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
                 (_planePosition[ipl]- _planePosition[ipl-1]);
 
               stringstream nam;
-              nam << _AngleXHistoName << "_" << ipl ;
+              nam << _AngleXHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam.str();
               (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(angleX);
 
               stringstream nam2;
-              nam2 << _AngleYHistoName << "_" << ipl ;
+              nam2 << _AngleYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam2.str();
               (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(angleY);
 
               stringstream nam3;
-              nam3 << _AngleXYHistoName << "_" << ipl ;
+              nam3 << _AngleXYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam3.str();
               (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(angleX,angleY);
 
@@ -636,17 +635,17 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
                          (_planePosition[ipl]- _planePosition[ipl-1]);
 
               stringstream nam;
-              nam << _ScatXHistoName << "_" << ipl ;
+              nam << _ScatXHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam.str();
               (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(scatX);
 
               stringstream nam2;
-              nam2 << _ScatYHistoName << "_" << ipl ;
+              nam2 << _ScatYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam2.str();
               (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(scatY);
 
               stringstream nam3;
-              nam3 << _ScatXYHistoName << "_" << ipl ;
+              nam3 << _ScatXYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam3.str();
               (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(scatX,scatY);
 
@@ -664,17 +663,17 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
               string tempHistoName;
 
               stringstream nam;
-              nam << _ResidualXHistoName << "_" << ipl ;
+              nam << _ResidualXHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam.str();
               (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedX[ipl]-_measuredX[ipl]);
 
               stringstream nam2;
-              nam2 << _ResidualYHistoName << "_" << ipl ;
+              nam2 << _ResidualYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam2.str();
               (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedY[ipl]-_measuredY[ipl]);
 
               stringstream nam3;
-              nam3 << _ResidualXYHistoName << "_" << ipl ;
+              nam3 << _ResidualXYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam3.str();
               (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedX[ipl]-_measuredX[ipl],_fittedY[ipl]-_measuredY[ipl]);
 
@@ -694,47 +693,47 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
                   string tempHistoName;
 
                   stringstream nam;
-                  nam << _beamShiftXHistoName << "_" << ipl ;
+                  nam << _beamShiftXHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam.str();
                   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl]-_measuredX[_beamID]);
 
                   stringstream nam1;
-                  nam1 << _beamShiftYHistoName << "_" << ipl ;
+                  nam1 << _beamShiftYHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam1.str();
                   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredY[ipl]-_measuredY[_beamID]);
 
                   stringstream nam2;
-                  nam2 << _beamShiftXYHistoName << "_" << ipl ;
+                  nam2 << _beamShiftXYHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam2.str();
                   (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl]-_measuredX[_beamID],_measuredY[ipl]-_measuredY[_beamID]);
 
                   stringstream nam3;
-                  nam3 << _beamRotXHistoName << "_" << ipl ;
+                  nam3 << _beamRotXHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam3.str();
                   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredY[_beamID],_measuredX[ipl]-_measuredX[_beamID]);
 
                   stringstream nam4;
-                  nam4 << _beamRotYHistoName << "_" << ipl ;
+                  nam4 << _beamRotYHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam4.str();
                   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[_beamID],_measuredY[ipl]-_measuredY[_beamID]);
 
                   stringstream nam5;
-                  nam5 << _beamRot2XHistoName << "_" << ipl ;
+                  nam5 << _beamRot2XHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam5.str();
                   (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[_beamID],_measuredY[_beamID],_measuredX[ipl]-_measuredX[_beamID]);
 
                   stringstream nam6;
-                  nam6 << _beamRot2YHistoName << "_" << ipl ;
+                  nam6 << _beamRot2YHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam6.str();
                   (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[_beamID],_measuredY[_beamID],_measuredY[ipl]-_measuredY[_beamID]);
 
                   stringstream nam7;
-                  nam7 << _beamRotX2DHistoName << "_" << ipl ;
+                  nam7 << _beamRotX2DHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam7.str();
                   (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredY[_beamID],_measuredX[ipl]-_measuredX[_beamID]);
 
                   stringstream nam8;
-                  nam8 << _beamRotY2DHistoName << "_" << ipl ;
+                  nam8 << _beamRotY2DHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam8.str();
                   (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[_beamID],_measuredY[ipl]-_measuredY[_beamID]);
 
@@ -764,31 +763,31 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
                     (_planePosition[_referenceID1]- _planePosition[_referenceID0]);
 
                   stringstream nam;
-                  nam << _relShiftXHistoName << "_" << ipl ;
+                  nam << _relShiftXHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam.str();
                   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl]-lineX);
 
                   stringstream nam2;
-                  nam2 << _relShiftYHistoName << "_" << ipl ;
+                  nam2 << _relShiftYHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam2.str();
                   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredY[ipl]-lineY);
 
                   stringstream nam3;
-                  nam3 << _relRotXHistoName << "_" << ipl ;
+                  nam3 << _relRotXHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam3.str();
                   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[tempHistoName]))->fill(lineY,_measuredX[ipl]-lineX);
 
                   stringstream nam4;
-                  nam4 << _relRotYHistoName << "_" << ipl ;
+                  nam4 << _relRotYHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam4.str();
                   (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[tempHistoName]))->fill(lineX,_measuredY[ipl]-lineY);
                   stringstream nam5;
-                  nam5 << _relRotX2DHistoName << "_" << ipl ;
+                  nam5 << _relRotX2DHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam5.str();
                   (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(lineY,_measuredX[ipl]-lineX);
 
                   stringstream nam6;
-                  nam6 << _relRotY2DHistoName << "_" << ipl ;
+                  nam6 << _relRotY2DHistoName << "_" << _planeID[ ipl ] ;
                   tempHistoName=nam6.str();
                   (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(lineX,_measuredY[ipl]-lineY);
                 }
@@ -887,27 +886,16 @@ void EUTelFitHistograms::bookHistos()
   string tempHistoTitle;
   string tempHistoName;
 
-  for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _MeasuredXHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << measXTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),measXNBin,measXMin,measXMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
+  for(int ipl=0;ipl<_nTelPlanes; ipl++)    {
+    if(_isActive[ipl]) {
+      tempHistoName  = _MeasuredXHistoName +  "_"  + to_string( _planeID[ ipl ] );
+      tempHistoTitle =  measXTitle + " for plane " + to_string( _planeID[ ipl ] );
+      AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),measXNBin,measXMin,measXMax);
+      tempHisto->setTitle(tempHistoTitle.c_str());
+      _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
     }
+
+  }
 
 
   // Measured position in Y
@@ -932,32 +920,17 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _MeasuredYHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << measYTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),measYNBin,measYMin,measYMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
+  for(int ipl=0;ipl<_nTelPlanes; ipl++) {
+    if(_isActive[ipl]) {
+      tempHistoName   =  _MeasuredYHistoName + "_" + to_string( _planeID[ ipl ] ) ;
+      tempHistoTitle  =  measYTitle + " for plane " + to_string( _planeID[ ipl ] ) ;
+      AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),measYNBin,measYMin,measYMax);
+      tempHisto->setTitle(tempHistoTitle.c_str());
+      _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
     }
-
-
+  }
 
   // Measured position in X-Y
-
   measXNBin  = 100;
   measXMin   = -5.;
   measXMax   = 5.;
@@ -984,27 +957,16 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _MeasuredXYHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << measXYTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),measXNBin,measXMin,measXMax,measYNBin,measYMin,measYMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
+  for(int ipl=0;ipl<_nTelPlanes; ipl++) {
+    if(_isActive[ipl])   {
+      tempHistoName   =  _MeasuredXYHistoName + "_" +  to_string( _planeID[ ipl ] ) ; ;
+      tempHistoTitle  =   measXYTitle + " for plane " + to_string( _planeID[ ipl ] ) ;
+      AIDA::IHistogram2D * tempHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),measXNBin,measXMin,measXMax,measYNBin,measYMin,measYMax);
+      tempHisto->setTitle(tempHistoTitle.c_str());
+      _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
     }
+  }
 
 
 
@@ -1032,27 +994,15 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _FittedXHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << fitXTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),fitXNBin,fitXMin,fitXMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
+  for(int ipl=0;ipl<_nTelPlanes; ipl++)    {
+    if(_isActive[ipl])        {
+      tempHistoName  = _FittedXHistoName + to_string( _planeID[ ipl ] ) ;
+      tempHistoTitle = fitXTitle + " for plane "  + to_string( _planeID[ ipl ] ) ;
+      AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),fitXNBin,fitXMin,fitXMax);
+      tempHisto->setTitle(tempHistoTitle.c_str());
+      _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
     }
+  }
 
 
   // Fitted position in Y
@@ -1077,27 +1027,15 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _FittedYHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << fitYTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),fitYNBin,fitYMin,fitYMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
+  for(int ipl=0;ipl<_nTelPlanes; ipl++){
+    if(_isActive[ipl])        {
+      tempHistoName  = _FittedYHistoName + "_" + to_string( _planeID[ ipl ] ) ;
+      tempHistoTitle = fitYTitle + " for plane " + to_string( _planeID[ ipl ] ) ;
+      AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),fitYNBin,fitYMin,fitYMax);
+      tempHisto->setTitle(tempHistoTitle.c_str());
+      _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
     }
+  }
 
 
 
@@ -1129,31 +1067,15 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _FittedXYHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << fitXYTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),fitXNBin,fitXMin,fitXMax,fitYNBin,fitYMin,fitYMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
+  for(int ipl=0;ipl<_nTelPlanes; ipl++)    {
+    if(_isActive[ipl])        {
+      tempHistoName  = _FittedXYHistoName + "_" + to_string( _planeID[ ipl ] ) ;
+      tempHistoTitle = fitXYTitle + " for plane " + to_string( _planeID[ ipl ] ) ;
+      AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),fitXNBin,fitXMin,fitXMax,fitYNBin,fitYMin,fitYMax);
+      tempHisto->setTitle(tempHistoTitle.c_str());
+      _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
     }
-
-
-
-
+  }
 
   // Incident X angle
 
@@ -1177,27 +1099,15 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=1;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _AngleXHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << angleXTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),angleXNBin,angleXMin,angleXMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
+  for(int ipl=1;ipl<_nTelPlanes; ipl++)  {
+    if(_isActive[ipl])  {
+      tempHistoName  = _AngleXHistoName + "_" + to_string( _planeID[ ipl ] ) ;
+      tempHistoTitle = angleXTitle + " for plane " + to_string( _planeID[ ipl ] ) ;
+      AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),angleXNBin,angleXMin,angleXMax);
+      tempHisto->setTitle(tempHistoTitle.c_str());
+      _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
     }
+  }
 
 
   // Incident angle in Y
@@ -1222,27 +1132,15 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=1;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _AngleYHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << angleYTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),angleYNBin,angleYMin,angleYMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
+  for(int ipl=1;ipl<_nTelPlanes; ipl++){
+    if(_isActive[ipl])        {
+      tempHistoName  = _AngleYHistoName + "_" + to_string( _planeID[ ipl ] ) ;
+      tempHistoTitle = angleYTitle + " for plane " + to_string( _planeID[ ipl ] ) ;
+      AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),angleYNBin,angleYMin,angleYMax);
+      tempHisto->setTitle(tempHistoTitle.c_str());
+      _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
     }
+  }
 
 
 
@@ -1274,30 +1172,16 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=1;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _AngleXYHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << angleXYTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),angleXNBin,angleXMin,angleXMax,angleYNBin,angleYMin,angleYMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
+  for(int ipl=1;ipl<_nTelPlanes; ipl++)  {
+    if(_isActive[ipl])   {
+      tempHistoName  = _AngleXYHistoName + "_" + to_string( _planeID[ ipl ] ) ;
+      tempHistoTitle = angleXYTitle + " for plane " + to_string( _planeID[ ipl ] ) ;
+      AIDA::IHistogram2D * tempHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),angleXNBin,angleXMin,angleXMax,angleYNBin,angleYMin,angleYMax);
+      tempHisto->setTitle(tempHistoTitle.c_str());
+      _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
     }
-
-
-
+  }
 
 
   // Scattering angle in X
@@ -1322,27 +1206,15 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=1;ipl<_nTelPlanes-1; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _ScatXHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << scatXTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),scatXNBin,scatXMin,scatXMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
+  for(int ipl=1;ipl<_nTelPlanes-1; ipl++) {
+    if(_isActive[ipl])        {
+      tempHistoName  = _ScatXHistoName + "_" + to_string( _planeID[ ipl ] ) ;
+      tempHistoTitle = scatXTitle + " for plane " + to_string( _planeID[ ipl ] ) ;
+      AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),scatXNBin,scatXMin,scatXMax);
+      tempHisto->setTitle(tempHistoTitle.c_str());
+      _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
     }
+  }
 
 
   // Scattering angle in Y
@@ -1367,27 +1239,15 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=1;ipl<_nTelPlanes-1; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _ScatYHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << scatYTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),scatYNBin,scatYMin,scatYMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
+  for(int ipl=1;ipl<_nTelPlanes-1; ipl++) {
+    if(_isActive[ipl]) {
+      tempHistoName  = _ScatYHistoName + "_" + to_string( _planeID[ ipl ] ) ;
+      tempHistoTitle = scatYTitle + " for plane " + to_string( _planeID[ ipl ] ) ;
+      AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),scatYNBin,scatYMin,scatYMax);
+      tempHisto->setTitle(tempHistoTitle.c_str());
+      _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
     }
+  }
 
 
 
@@ -1419,26 +1279,15 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=1;ipl<_nTelPlanes-1; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _ScatXYHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << scatXYTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),scatXNBin,scatXMin,scatXMax,scatYNBin,scatYMin,scatYMax);
-
+  for(int ipl=1;ipl<_nTelPlanes-1; ipl++) {
+      if(_isActive[ipl])         {
+      tempHistoName  = _ScatXYHistoName + "_" + to_string( _planeID[ ipl ] ) ;
+      tempHistoTitle = scatXYTitle + " for plane " + to_string( _planeID[ ipl ] ) ;
+          AIDA::IHistogram2D * tempHisto =
+            AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),scatXNBin,scatXMin,scatXMax,scatYNBin,scatYMin,scatYMax);
           tempHisto->setTitle(tempHistoTitle.c_str());
-
           _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
         }
-
     }
 
 
@@ -1465,26 +1314,14 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _ResidualXHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << residXTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
+  for(int ipl=0;ipl<_nTelPlanes; ipl++){
+      if(_isActive[ipl]){
+      tempHistoName  = _ResidualXHistoName + "_" + to_string( _planeID[ ipl ] ) ;
+      tempHistoTitle = residXTitle + " for plane " + to_string( _planeID[ ipl ] ) ;
           AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),residXNBin,residXMin,residXMax);
-
           tempHisto->setTitle(tempHistoTitle.c_str());
-
           _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
         }
-
     }
 
 
@@ -1510,26 +1347,14 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _ResidualYHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << residYTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
+  for(int ipl=0;ipl<_nTelPlanes; ipl++)  {
+      if(_isActive[ipl])  {
+      tempHistoName  = _ResidualYHistoName + "_" + to_string( _planeID[ ipl ] ) ;
+      tempHistoTitle = residYTitle + " for plane " + to_string( _planeID[ ipl ] ) ;
           AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),residYNBin,residYMin,residYMax);
-
           tempHisto->setTitle(tempHistoTitle.c_str());
-
           _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
         }
-
     }
 
 
@@ -1562,26 +1387,16 @@ void EUTelFitHistograms::bookHistos()
     }
 
 
-  for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
+  for(int ipl=0;ipl<_nTelPlanes; ipl++){
+      if(_isActive[ipl]){
 
-          nam << _ResidualXYHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
-
-          tit << residXYTitle << " for plane " << ipl ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),residXNBin,residXMin,residXMax,residYNBin,residYMin,residYMax);
-
+      tempHistoName  = _ResidualXYHistoName + "_" + to_string( _planeID[ ipl ] ) ;
+      tempHistoTitle = residXYTitle + " for plane " + to_string( _planeID[ ipl ] ) ;
+          AIDA::IHistogram2D * tempHisto = 
+AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),residXNBin,residXMin,residXMax,residYNBin,residYMin,residYMax);
           tempHisto->setTitle(tempHistoTitle.c_str());
-
           _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
         }
-
     }
 
 
@@ -1610,20 +1425,14 @@ void EUTelFitHistograms::bookHistos()
 
 
   for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl] && ipl!=_beamID)
-        {
-          stringstream nam,tit;
+  {
+      if(_isActive[ipl] && ipl!=_beamID)        {
 
-          nam << _beamShiftXHistoName << "_" << ipl ;
-          tempHistoName=nam.str();
+        tempHistoName  = _beamShiftXHistoName + "_" + to_string( _planeID[ ipl ] ) ;
+        tempHistoTitle = shiftXTitle + " for plane " + to_string( _planeID[ ipl ] ) + " w.r.t. " + to_string( _planeID[ _beamID ] ) ;
+        AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
 
-          tit << shiftXTitle << " for plane " << ipl << " w.r.t. plane " << _beamID ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
+        tempHisto->setTitle(tempHistoTitle.c_str());
 
           _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
 
@@ -1660,10 +1469,10 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _beamShiftYHistoName << "_" << ipl ;
+          nam << _beamShiftYHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << shiftYTitle <<  " for plane " << ipl << " w.r.t. plane " << _beamID ;
+          tit << shiftYTitle <<  " for plane " << _planeID[ ipl ] << " w.r.t. plane " << _planeID[ _beamID ];
           tempHistoTitle=tit.str();
 
           AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
@@ -1711,10 +1520,10 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _beamShiftXYHistoName << "_" << ipl ;
+          nam << _beamShiftXYHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << shiftXYTitle <<  " for plane " << ipl << " w.r.t. plane " << _beamID ;
+          tit << shiftXYTitle <<  " for plane " << _planeID[ ipl ] << " w.r.t. plane " << _planeID[_beamID] ;
           tempHistoTitle=tit.str();
 
           AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
@@ -1760,10 +1569,10 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _beamRotXHistoName << "_" << ipl ;
+          nam << _beamRotXHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << rotXTitle << " for plane " << ipl << " w.r.t. plane " << _beamID ;
+          tit << rotXTitle << " for plane " << _planeID[ ipl ] << " w.r.t. plane " << _planeID[ _beamID ] ;
           tempHistoTitle=tit.str();
 
           AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotVMin,rotVMax);
@@ -1808,10 +1617,10 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _beamRotYHistoName << "_" << ipl ;
+          nam << _beamRotYHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << rotYTitle << " for plane " << ipl << " w.r.t. plane " << _beamID ;
+          tit << rotYTitle << " for plane " << _planeID[ ipl ] << " w.r.t. plane " << _planeID[ _beamID ];
           tempHistoTitle=tit.str();
 
           AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),rotYNBin,rotYMin,rotYMax,rotVMin,rotVMax);
@@ -1857,10 +1666,10 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _beamRotX2DHistoName << "_" << ipl ;
+          nam << _beamRotX2DHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << rotXTitle << " for plane " << ipl << " w.r.t. plane " << _beamID ;
+          tit << rotXTitle << " for plane " << _planeID[ ipl ] << " w.r.t. plane " << _planeID[ _beamID ];
           tempHistoTitle=tit.str();
 
           AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotVNBin,rotVMin,rotVMax);
@@ -1907,10 +1716,10 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _beamRotY2DHistoName << "_" << ipl ;
+          nam << _beamRotY2DHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << rotYTitle << " for plane " << ipl << " w.r.t. plane " << _beamID ;
+          tit << rotYTitle << " for plane " << _planeID[ ipl ] << " w.r.t. plane " << _planeID[ _beamID ];
           tempHistoTitle=tit.str();
 
           AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),rotYNBin,rotYMin,rotYMax,rotVNBin,rotVMin,rotVMax);
@@ -1960,10 +1769,10 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _beamRot2XHistoName << "_" << ipl ;
+          nam << _beamRot2XHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << rotXTitle << " for plane " << ipl << " w.r.t. plane " << _beamID ;
+          tit << rotXTitle << " for plane " << _planeID[ ipl ] << " w.r.t. plane " << _planeID[ _beamID ];
           tempHistoTitle=tit.str();
 
           AIDA::IProfile2D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile2D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotYNBin,rotYMin,rotYMax,rotVMin,rotVMax);
@@ -2016,10 +1825,10 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _beamRot2YHistoName << "_" << ipl ;
+          nam << _beamRot2YHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << rotYTitle << " for plane " << ipl << " w.r.t. plane " << _beamID ;
+          tit << rotYTitle << " for plane " << _planeID[ ipl ] << " w.r.t. plane " << _planeID[ _beamID ] ;
           tempHistoTitle=tit.str();
 
           AIDA::IProfile2D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile2D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotYNBin,rotYMin,rotYMax,rotVMin,rotVMax);
@@ -2062,11 +1871,11 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _relShiftXHistoName << "_" << ipl ;
+          nam << _relShiftXHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << shiftXTitle << " for plane " << ipl << " w.r.t. planes "
-              << _referenceID0 << " and " << _referenceID1 ;
+          tit << shiftXTitle << " for plane " << _planeID[ ipl ] << " w.r.t. planes "
+              << _planeID[ _referenceID0 ] << " and " << _planeID[ _referenceID1 ] ;
           tempHistoTitle=tit.str();
 
           AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
@@ -2108,11 +1917,11 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _relShiftYHistoName << "_" << ipl ;
+          nam << _relShiftYHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << shiftYTitle <<  " for plane " << ipl << " w.r.t. planes "
-              << _referenceID0 << " and " << _referenceID1 ;
+          tit << shiftYTitle <<  " for plane " << _planeID[ ipl ] << " w.r.t. planes "
+              << _planeID[ _referenceID0 ] << " and " << _planeID[ _referenceID1 ];
           tempHistoTitle=tit.str();
 
           AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
@@ -2157,11 +1966,11 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _relRotXHistoName << "_" << ipl ;
+          nam << _relRotXHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << rotXTitle << " for plane " << ipl << " w.r.t. planes "
-              << _referenceID0 << " and " << _referenceID1 ;
+          tit << rotXTitle << " for plane " << _planeID[ ipl ] << " w.r.t. planes "
+              << _planeID[ _referenceID0 ] << " and " << _planeID[ _referenceID1 ] ;
           tempHistoTitle=tit.str();
 
           AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotVMin,rotVMax);
@@ -2206,11 +2015,11 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _relRotYHistoName << "_" << ipl ;
+          nam << _relRotYHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << rotYTitle << " for plane " << ipl << " w.r.t. planes "
-              << _referenceID0 << " and " << _referenceID1 ;
+          tit << rotYTitle << " for plane " << _planeID[ ipl ] << " w.r.t. planes "
+              << _planeID[ _referenceID0 ] << " and " << _planeID[ _referenceID1 ] ;
           tempHistoTitle=tit.str();
 
           AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(),rotYNBin,rotYMin,rotYMax,rotVMin,rotVMax);
@@ -2257,11 +2066,11 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _relRotX2DHistoName << "_" << ipl ;
+          nam << _relRotX2DHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << rotXTitle << " for plane " << ipl << " w.r.t. planes "
-              << _referenceID0 << " and " << _referenceID1 ;
+          tit << rotXTitle << " for plane " << _planeID[ ipl ] << " w.r.t. planes "
+              << _planeID[ _referenceID0 ] << " and " << _planeID[ _referenceID1 ];
           tempHistoTitle=tit.str();
 
           AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),rotXNBin,rotXMin,rotXMax,rotVNBin,rotVMin,rotVMax);
@@ -2308,11 +2117,11 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _relRotY2DHistoName << "_" << ipl ;
+          nam << _relRotY2DHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << rotYTitle << " for plane " << ipl << " w.r.t. planes "
-              << _referenceID0 << " and " << _referenceID1 ;
+          tit << rotYTitle << " for plane " << _planeID[ ipl ] << " w.r.t. planes "
+              << _planeID[ _referenceID0 ] << " and " << _planeID[ _referenceID1 ];
           tempHistoTitle=tit.str();
 
           AIDA::IHistogram2D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),rotYNBin,rotYMin,rotYMax,rotVNBin,rotVMin,rotVMax);
@@ -2354,10 +2163,10 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _clusterSignalHistoName << "_" << ipl ;
+          nam << _clusterSignalHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << clusterTitle << " for plane " << ipl ;
+          tit << clusterTitle << " for plane " << _planeID[ ipl ] ;
           tempHistoTitle=tit.str();
 
           AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), clusterNBin,clusterMin,clusterMax);
@@ -2399,10 +2208,10 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _meanSignalXHistoName << "_" << ipl ;
+          nam << _meanSignalXHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << meanXTitle << " for plane " << ipl ;
+          tit << meanXTitle << " for plane " << _planeID[ ipl ] ;
           tempHistoTitle=tit.str();
 
           AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(), meanXNBin,meanXMin,meanXMax);
@@ -2443,10 +2252,10 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _meanSignalYHistoName << "_" << ipl ;
+          nam << _meanSignalYHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << meanYTitle << " for plane " << ipl ;
+          tit << meanYTitle << " for plane " << _planeID[ ipl ] ;
           tempHistoTitle=tit.str();
 
           AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(), meanYNBin,meanYMin,meanYMax);
@@ -2494,10 +2303,10 @@ void EUTelFitHistograms::bookHistos()
         {
           stringstream nam,tit;
 
-          nam << _meanSignalXYHistoName << "_" << ipl ;
+          nam << _meanSignalXYHistoName << "_" << _planeID[ ipl ] ;
           tempHistoName=nam.str();
 
-          tit << meanXYTitle << " for plane " << ipl ;
+          tit << meanXYTitle << " for plane " << _planeID[ ipl ] ;
           tempHistoTitle=tit.str();
 
           AIDA::IProfile2D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile2D( tempHistoName.c_str(), meanXNBin,meanXMin,meanXMax,  meanYNBin,meanYMin,meanYMax);

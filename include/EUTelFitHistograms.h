@@ -65,7 +65,7 @@ namespace eutelescope {
    * debug information is printed.
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelFitHistograms.h,v 1.6 2008-08-23 12:30:51 bulgheroni Exp $
+   * @version $Id: EUTelFitHistograms.h,v 1.7 2009-07-18 14:17:17 bulgheroni Exp $
    * \date 2007.09.10
    *
    */
@@ -165,7 +165,6 @@ namespace eutelescope {
      *  @see eutelescope::EUTelHistogramInfo
      */
     std::string _histoInfoFileName;
-
 
     //! Input \c Track collection name
     std::string _inputColName ;
