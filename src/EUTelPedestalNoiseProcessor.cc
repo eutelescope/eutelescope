@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.34 2009-07-15 17:21:28 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.35 2009-07-19 14:43:39 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -126,8 +126,8 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPed
   // algorithms. The _badPixelAlgo has been changed into a
   // _badPixelAlgoVec.
   vector< string > badPixelAlgoVecExample;
-  badPixelAlgoVecExample.push_back( "NOISEDISTRIBUTION" );
-  badPixelAlgoVecExample.push_back( "DEADPIXEL" );
+  badPixelAlgoVecExample.push_back( "NoiseDistribution" );
+  badPixelAlgoVecExample.push_back( "DeadPixel" );
   registerProcessorParameter("BadPixelMaskingAlgorithm",
                              "Select the algorithm for bad pixel masking. Possible values are:\n"
                              " NoiseDistribution: removing pixels with noise above PixelMaskUpperNoiseCut in sigma unit\n"
@@ -137,19 +137,19 @@ EUTelPedestalNoiseProcessor::EUTelPedestalNoiseProcessor () :Processor("EUTelPed
                              _badPixelAlgoVec, badPixelAlgoVecExample);
 
   registerProcessorParameter ("PixelMaskUpperNoiseCut",
-                              "Upper threshold for bad pixel identification using NOISEDISTRIBUTION",
+                              "Upper threshold for bad pixel identification using NoiseDistribution",
                               _pixelMaskUpperNoiseCut, static_cast < float >(3.5));
   registerProcessorParameter ("PixelMaskUpperAbsNoiseCut",
-                              "Upper threshold for bad pixel identification using ABSOLUTENOISEVALUE",
+                              "Upper threshold for bad pixel identification using NoiseDistribution",
                               _pixelMaskUpperAbsNoiseCut, static_cast < float >(3.5));
   registerProcessorParameter ("PixelMaskLowerAbsNoiseCut",
-                              "Lower threshold for bad pixel identification using DEADPIXEL",
+                              "Lower threshold for bad pixel identification using DeadPixel",
                               _pixelMaskLowerAbsNoiseCut, static_cast < float >(0.2));
   registerProcessorParameter ("PixelMaskUpperAbsPedeCut",
-                              "Upper threshold for bad pixel identification using ABSOLUTEPEDEVALUE",
+                              "Upper threshold for bad pixel identification using AbsolutePedeValue",
                               _pixelMaskUpperAbsPedeCut, static_cast< float > ( 15 ) );
   registerProcessorParameter ("PixelMaskLowerAbsPedeCut",
-                              "Lower threshold for bad pixel identification using ABSOLUTEPEDEVALUE",
+                              "Lower threshold for bad pixel identification using AbsolutePedeValue",
                               _pixelMaskLowerAbsPedeCut, static_cast< float > ( -15 ) );
   registerProcessorParameter("PixelMaskMaxFiringFrequency",
                              "This is the maximum allowed firing % frequency, being 0.1% the Gaussian limit\n"
@@ -437,8 +437,6 @@ void EUTelPedestalNoiseProcessor::processEvent (LCEvent * evt) {
   } else {
     otherLoop(evt);
   }
-
-
 
 }
 
@@ -1141,9 +1139,12 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
             isEventValid = true;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-            stringstream ss;
-            ss << _commonModeHistoName << "_d" << _orderedSensorIDVec.at( iDetector + detectorOffset ) << "_l" << _iLoop;
-            (dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[ss.str()]))->fill(commonMode);
+              string histoname = _commonModeHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector + detectorOffset ) )
+                + "_l" + to_string( _iLoop );
+              AIDA::IHistogram1D * histo = (dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[ histoname ]));
+              if ( histo ) {
+                histo->fill(commonMode);
+              }
 #endif
 
           } else {
@@ -1184,6 +1185,16 @@ void EUTelPedestalNoiseProcessor::otherLoop(LCEvent * event) {
                  ( goodPixel != 0 ) ) {
               commonMode = pixelSum / goodPixel ;
               commonModeCorVec.insert( commonModeCorVec.begin() + colCounter * rowLength, rowLength, commonMode );
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+              string histoname = _commonModeHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector + detectorOffset ) )
+                + "_l" + to_string( _iLoop );
+              AIDA::IHistogram1D * histo = (dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[ histoname ]));
+              if ( histo ) {
+                histo->fill(commonMode);
+              }
+#endif
+
             } else {
               commonModeCorVec.insert( commonModeCorVec.begin() + colCounter * rowLength, rowLength, 0. );
               ++skippedRow;
