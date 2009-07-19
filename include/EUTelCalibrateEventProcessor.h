@@ -121,7 +121,7 @@ namespace eutelescope {
    *  histogram information file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.12 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.13 2009-07-19 14:46:05 bulgheroni Exp $
    *
    *
    */
@@ -324,8 +324,8 @@ namespace eutelescope {
     std::string _histoInfoFileName;
 
   private:
-    
-   //! First pixel along X
+
+    //! First pixel along X
     /*! This array of int is used to store the number of the first
      *  pixel along the X direction
      */
@@ -349,15 +349,30 @@ namespace eutelescope {
      */
     IntVec _maxY;
 
+    //! Maximum number of consecutive missing events
+    /*! This processor only applies to RAW data input collections, but
+     *  not to break the generality, it will be active also in the
+     *  case of ZS data analysis. In such a case after @a
+     *  _maxNoOfConsecutiveMissing events, the warning message is not
+     *  issued anymore.
+     */
+    static const unsigned short _maxNoOfConsecutiveMissing;
 
+    //! Number of consecutive missing
+    /*! This is a counter of events with missing input
+     *  collection. This value is compared with
+     *  _maxNoOfConsecutiveMissing to issue or not the warning
+     *  message.
+     */
+    unsigned short _noOfConsecutiveMissing;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-    //! Name of the raw data histogram
-    /*! This histogram contains the raw data value as they come in
-     *  without any processing. It is useful only in the debug phase
-     *  of the DAQ and for low level detector characterization.
-     */
+      //! Name of the raw data histogram
+      /*! This histogram contains the raw data value as they come in
+      *  without any processing. It is useful only in the debug phase
+      *  of the DAQ and for low level detector characterization.
+      */
     static std::string _rawDataDistHistoName;
 
 
@@ -372,6 +387,15 @@ namespace eutelescope {
 
     //! Common mode distribution histograms
     static std::string _commonModeDistHistoName;
+
+    //! Skipped pixel histogram
+    static std::string _skippedPixelDistHistoName;
+
+    //! Skipped row histogram
+    static std::string _skippedRowDistHistoName;
+
+    //! Skipped pixel per row histogram
+    static std::string _skippedPixelPerRowDistHistoName;
 
     //! AIDA histogram map
     /*! The histogram filling procedure may occur in many different
@@ -394,6 +418,15 @@ namespace eutelescope {
      *  (noise, pedestal and status).
      */
     std::map< int, int > _ancillaryIndexMap;
+
+    //! Map relating the sensorID and pixels
+    std::map< int, unsigned int > _noOfPixelMap;
+
+    //! Map relating the sensorID and pixels per row
+    std::map< int, unsigned int > _noOfPixelPerRowMap;
+
+    //! Map relating the sensorID and the rows
+    std::map< int, unsigned int > _noOfRowMap;
 
     //! Geometry ready switch
     /*! This boolean reveals if the geometry has been properly

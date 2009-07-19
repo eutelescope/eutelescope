@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.21 2009-07-16 09:56:31 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.22 2009-07-19 14:46:05 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -49,10 +49,15 @@ using namespace marlin;
 using namespace eutelescope;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-string EUTelCalibrateEventProcessor::_rawDataDistHistoName    = "RawDataDistHisto";
-string EUTelCalibrateEventProcessor::_dataDistHistoName       = "DataDistHisto";
-string EUTelCalibrateEventProcessor::_commonModeDistHistoName = "CommonModeDistHisto";
+string EUTelCalibrateEventProcessor::_rawDataDistHistoName            = "RawDataDistHisto";
+string EUTelCalibrateEventProcessor::_dataDistHistoName               = "DataDistHisto";
+string EUTelCalibrateEventProcessor::_commonModeDistHistoName         = "CommonModeDistHisto";
+string EUTelCalibrateEventProcessor::_skippedRowDistHistoName         = "SkippedRowDistHisto";
+string EUTelCalibrateEventProcessor::_skippedPixelDistHistoName       = "SkippedPixelDistHisto";
+string EUTelCalibrateEventProcessor::_skippedPixelPerRowDistHistoName = "SkippedPixelPerRowDistHisto";
 #endif
+
+const unsigned short EUTelCalibrateEventProcessor::_maxNoOfConsecutiveMissing = 10;
 
 EUTelCalibrateEventProcessor::EUTelCalibrateEventProcessor () :Processor("EUTelCalibrateEventProcessor") {
 
@@ -128,6 +133,8 @@ void EUTelCalibrateEventProcessor::init () {
 
   _isGeometryReady = false;
 
+  // reset the number of consecutive missing events
+  _noOfConsecutiveMissing = 0;
 }
 
 void EUTelCalibrateEventProcessor::processRunHeader (LCRunHeader * rdr) {
@@ -150,7 +157,22 @@ void EUTelCalibrateEventProcessor::initializeGeometry(LCEvent * event) throw ( m
     CellIDDecoder< TrackerDataImpl > pedestalDecoder( pedestalCol ) ;
     for ( size_t iDetector = 0; iDetector < pedestalCol->size(); ++iDetector ) {
       TrackerDataImpl * pedestal = dynamic_cast< TrackerDataImpl * > ( pedestalCol->getElementAt( iDetector ) ) ;
-      _ancillaryIndexMap.insert( make_pair(  pedestalDecoder( pedestal )["sensorID"] , iDetector ) );
+
+      int sensorID = pedestalDecoder( pedestal )["sensorID"];
+
+      _ancillaryIndexMap.insert( make_pair( sensorID, iDetector ) );
+
+      unsigned int noOfPixel = ( pedestalDecoder( pedestal )["xMax"] - pedestalDecoder( pedestal )["xMin"] + 1 ) *
+        ( pedestalDecoder( pedestal )["yMax"] - pedestalDecoder( pedestal )["yMin"] + 1 );
+
+      _noOfPixelMap.insert( make_pair( sensorID, noOfPixel ) );
+
+      unsigned int noOfPixelPerRow = ( pedestalDecoder( pedestal )["xMax"] - pedestalDecoder( pedestal )["xMin"] + 1 );
+      _noOfPixelPerRowMap.insert( make_pair ( sensorID, noOfPixelPerRow ));
+
+      unsigned int noOfRow =  ( pedestalDecoder( pedestal )["yMax"] - pedestalDecoder( pedestal )["yMin"] + 1 );
+      _noOfRowMap.insert( make_pair( sensorID, noOfRow ) );
+
     }
   } catch ( lcio::DataNotAvailableException ) {
     streamlog_out( WARNING2 ) << "Unable to initialize the geometry with the current event. Trying with the next one" << endl;
@@ -194,6 +216,8 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
     LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
     CellIDDecoder<TrackerRawDataImpl> cellDecoder( inputCollectionVec );
 
+    // reset the number of consecutive missing
+    _noOfConsecutiveMissing = 0;
 
     if (isFirstEvent()) {
 
@@ -351,6 +375,72 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
             // continue should be safe.
           }
         }
+
+
+        if ( _doCommonMode == 1 ) {
+
+          // book full frame common mode histograms
+          tempHistoName  = _skippedPixelDistHistoName + "_d" + to_string( sensorID );
+
+          int     skippedPixelDistHistoNBin = static_cast< int > ( _noOfPixelMap[ sensorID ] / 100. );
+          double  skippedPixelDistHistoMin  = 0.;
+          double  skippedPixelDistHistoMax  = static_cast< double > ( _noOfPixelMap[ sensorID ] );
+          string  skippedPixelDistTitle     = "Pixel exceeding the hit rejection cut";
+
+          AIDA::IHistogram1D * skippedPixelDistHisto =
+            AIDAProcessor::histogramFactory( this )->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                        skippedPixelDistHistoNBin, skippedPixelDistHistoMin,skippedPixelDistHistoMax) ;
+          if ( skippedPixelDistHisto ) {
+            _aidaHistoMap.insert( make_pair( tempHistoName, skippedPixelDistHisto ) );
+            skippedPixelDistHisto->setTitle( skippedPixelDistTitle );
+          } else {
+            streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                     << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+          }
+        }
+
+
+        if ( _doCommonMode == 2 ) {
+
+          // book row wise common mode histograms
+          tempHistoName = _skippedPixelPerRowDistHistoName + "_d" + to_string( sensorID );
+
+          int     skippedPixelPerRowDistHistoNBin = _noOfPixelPerRowMap[ sensorID ] + 1 ;
+          double  skippedPixelPerRowDistHistoMin  = -0.5;
+          double  skippedPixelPerRowDistHistoMax  = _noOfPixelPerRowMap[ sensorID ] + 0.5 ;
+          string  skippedPixelPerRowDistTitle     = "Pixel in a row exceeding the hit rejection cut";
+
+          AIDA::IHistogram1D * skippedPixelPerRowDistHisto =
+            AIDAProcessor::histogramFactory( this )->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                        skippedPixelPerRowDistHistoNBin, skippedPixelPerRowDistHistoMin, skippedPixelPerRowDistHistoMax );
+          if ( skippedPixelPerRowDistHisto ) {
+            _aidaHistoMap.insert( make_pair( tempHistoName, skippedPixelPerRowDistHisto ) );
+            skippedPixelPerRowDistHisto->setTitle( skippedPixelPerRowDistTitle );
+          } else {
+            streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                     << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+          }
+
+
+          tempHistoName = _skippedRowDistHistoName + "_d" + to_string( sensorID );
+
+          int     skippedRowDistHistoNBin = _noOfRowMap[ sensorID ] + 1 ;
+          double  skippedRowDistHistoMin  = -0.5;
+          double  skippedRowDistHistoMax  = _noOfRowMap[ sensorID ] + 0.5 ;
+          string  skippedRowDistTitle     = "Row rejected in common mode calculation";
+
+          AIDA::IHistogram1D * skippedRowDistHisto = 
+            AIDAProcessor::histogramFactory( this )->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                        skippedRowDistHistoNBin, skippedRowDistHistoMin, skippedRowDistHistoMax );
+          if ( skippedRowDistHisto ) {
+            _aidaHistoMap.insert( make_pair( tempHistoName, skippedRowDistHisto ));
+            skippedRowDistHisto->setTitle( skippedRowDistTitle ) ;
+          } else {
+            streamlog_out ( ERROR1 ) << "Problem booking the " << (basePath + tempHistoName) << ".\n"
+                                     << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+          }
+        }
+
 #endif
       }
       _isFirstEvent = false;
@@ -437,6 +527,12 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
         } else {
           isEventValid = false;
         }
+
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+        string tempHistoName = _skippedPixelDistHistoName + "_d" + to_string( sensorID ) ;
+        if ( AIDA::IHistogram1D* histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName]) )
+          histo->fill( skippedPixel );
+#endif
 
       } else if ( _doCommonMode == 2 ) {
 
@@ -598,8 +694,14 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
 
   } catch (DataNotAvailableException& e) {
-    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
-                                << " in run " << event->getRunNumber() << endl;
+    if ( _noOfConsecutiveMissing <= _maxNoOfConsecutiveMissing ) {
+      streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
+                                  << " in run " << event->getRunNumber() << endl;
+      if ( _noOfConsecutiveMissing == _maxNoOfConsecutiveMissing ) {
+        streamlog_out ( MESSAGE2 ) << "Assuming the run was taken in ZS. Not issuing any other warning" << endl;
+      }
+      ++_noOfConsecutiveMissing;
+    }
   }
 
 }
