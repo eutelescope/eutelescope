@@ -11,7 +11,7 @@
                                ==> clusearch-tmp.xml <===
 
 Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-Version: $Id: clusearch-tmp.xml,v 1.3 2009-05-14 18:37:18 bulgheroni Exp $
+Version: $Id: clusearch-tmp.xml,v 1.4 2009-07-19 11:17:43 bulgheroni Exp $
 ==========================================================================================
 
 --> 
@@ -82,27 +82,53 @@ Version: $Id: clusearch-tmp.xml,v 1.3 2009-05-14 18:37:18 bulgheroni Exp $
 </processor>
 
  <processor name="ApplyPedestal" type="EUTelCalibrateEventProcessor">
- <!--EUTelCalibrateEventProcessor subtracts the pedestal value from the input data-->
-  <!--Noise from the condition file-->
-  <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise </parameter>
-  <!--Pedestal from the condition file-->
-  <parameter name="PedestalCollectionName" type="string" lcioInType="TrackerData"> pedestal </parameter>
-  <!--Input raw data collection-->
-  <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData"> rawdata </parameter>
-  <!--Pixel status from the condition file-->
-  <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
-  <!--Name of the output calibrated data collection-->
-  <parameter name="CalibratedDataCollectionName" type="string" lcioOutType="TrackerData"> data </parameter>
-  <!--Flag to switch on (1) or off (0) the detector debug histogram filling-->
-  <parameter name="DebugHistoFilling" type="bool" value="false"/>
-  <!--This is the name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
-  <!--Threshold of pixel SNR for hit rejection-->
-  <parameter name="HitRejectionCut" type="float" value="3.5"/>
-  <!--Maximum allowed number of rejected pixel per event-->
-  <parameter name="MaxNoOfRejectedPixels" type="int" value="15000"/>
-  <!--Flag to switch on (1) or off (0) the common mode suppression algorithm-->
-  <parameter name="PerformCommonMode" type="bool" value="true"/>
+   <!--EUTelCalibrateEventProcessor subtracts the pedestal value from the input data-->
+
+   <!--
+       INPUT & OUTPUT 
+   -->
+
+   <!--Noise from the condition file-->
+   <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise </parameter>
+   <!--Pedestal from the condition file-->
+   <parameter name="PedestalCollectionName" type="string" lcioInType="TrackerData"> pedestal </parameter>
+   <!--Input raw data collection-->
+   <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData"> rawdata </parameter>
+   <!--Pixel status from the condition file-->
+   <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
+   <!--Name of the output calibrated data collection-->
+   <parameter name="CalibratedDataCollectionName" type="string" lcioOutType="TrackerData"> data </parameter>
+   
+   <!--
+       GENERAL PARAMETERS
+   -->
+   <!--Threshold of pixel SNR for hit rejection-->
+   <parameter name="HitRejectionCut" type="float" value="3.5"/>
+   <!--Flag to switch on the common mode suppression algorithm. 0 -> off, 1 -> full frame,  2 -> row wise-->
+   <parameter name="PerformCommonMode" type="int" value="1"/>
+
+   <!--
+       FULL FRAME PARAMETERS
+   -->
+   <!--Maximum allowed number of rejected pixel per event-->
+   <parameter name="MaxNoOfRejectedPixels" type="int" value="15000"/>
+
+   <!--
+       ROW WISE PARAMETERS
+   -->
+   <!--Maximum allowed number of rejected pixels per row (only with RowWise)-->
+   <parameter name="MaxNoOfRejectedPixelPerRow" type="int" value="25"/>
+   <!--Maximum allowed number of skipped rows (only with RowWise)-->
+   <parameter name="MaxNoOfSkippedRow" type="int" value="15"/>
+
+   <!-- 
+        HISTOGRAMS
+   -->
+   <!--Flag to switch on (1) or off (0) the detector debug histogram filling-->
+   <parameter name="DebugHistoFilling" type="bool" value="false"/>
+   <!--This is the name of the histogram information file-->
+   <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
+  
 </processor>
 
  <processor name="UpdatePedestalNoise" type="EUTelUpdatePedestalNoiseProcessor">
