@@ -10,7 +10,7 @@
                                ==> pedestal-tmp.xml <===
 
 Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-Version: $Id: pedestal-tmp.xml,v 1.6 2009-07-18 20:29:18 bulgheroni Exp $
+Version: $Id: pedestal-tmp.xml,v 1.7 2009-07-19 07:31:21 bulgheroni Exp $
 ==========================================================================================
 
 --> 
@@ -48,7 +48,7 @@ Version: $Id: pedestal-tmp.xml,v 1.6 2009-07-18 20:29:18 bulgheroni Exp $
   <!--Set to true if the pedestal should also be saved as ASCII files-->
   <parameter name="ASCIIOutputSwitch" type="bool" value="true"/>
   <!--Perform an additional loop for bad pixel masking-->
-  <parameter name="AdditionalMaskingLoop" type="bool" value="false"/>
+  <parameter name="AdditionalMaskingLoop" type="bool" value="true"/>
   <!--Select the algorithm for bad pixel masking. Possible values are:
  NoiseDistribution: removing pixels with noise above PixelMaskUpperNoiseCut in sigma unit
  AbsoluteNoiseValue: removing pixels with noise above PixelMaskUpperAbsNoiseCut in ADC value
