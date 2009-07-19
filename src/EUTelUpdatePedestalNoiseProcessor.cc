@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.12 2009-07-18 09:08:01 bulgheroni Exp $
+// Version $Id: EUTelUpdatePedestalNoiseProcessor.cc,v 1.13 2009-07-19 14:47:43 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -45,6 +45,8 @@
 using namespace std;
 using namespace marlin;
 using namespace eutelescope;
+
+const unsigned short EUTelUpdatePedestalNoiseProcessor::_maxNoOfConsecutiveMissing = 10;
 
 
 EUTelUpdatePedestalNoiseProcessor::EUTelUpdatePedestalNoiseProcessor () : Processor("EUTelUpdatePedestalNoiseProcessor") {
@@ -125,6 +127,9 @@ void EUTelUpdatePedestalNoiseProcessor::init () {
     ++iter;
   }
 #endif
+
+  // reset the missing collection counter
+  _noOfConsecutiveMissing = 0;
 
 }
 
@@ -261,7 +266,7 @@ void EUTelUpdatePedestalNoiseProcessor::fixedWeightUpdate(LCEvent * evt) {
     LCCollectionVec * rawDataCollection  = dynamic_cast < LCCollectionVec * > (evt->getCollection(_rawDataCollectionName));
     CellIDDecoder<TrackerRawDataImpl>      rawDataDecoder( rawDataCollection );
 
-
+    _noOfConsecutiveMissing = 0;
 
     for (int i = 0; i < rawDataCollection->getNumberOfElements(); i++) {
 
@@ -285,7 +290,13 @@ void EUTelUpdatePedestalNoiseProcessor::fixedWeightUpdate(LCEvent * evt) {
       }
     }
   }  catch ( DataNotAvailableException& e) {
-    streamlog_out( WARNING2 )  << "Collection not available in this event"  << endl;
+    if ( _noOfConsecutiveMissing <= _maxNoOfConsecutiveMissing ) {
+      streamlog_out( WARNING2 )  << "Collection not available in this event " << endl;
+      if ( _noOfConsecutiveMissing == _maxNoOfConsecutiveMissing ) {
+        streamlog_out ( MESSAGE2 ) << "Assuming the run was taken in ZS. Not issuing any other warning" << endl;
+      }
+      ++_noOfConsecutiveMissing;
+    }
   }
 
 }

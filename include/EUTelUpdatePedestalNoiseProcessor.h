@@ -88,7 +88,7 @@ namespace eutelescope {
    *  @param FixedWeightValue the value of the fixed weight
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelUpdatePedestalNoiseProcessor.h,v 1.7 2008-08-23 12:30:51 bulgheroni Exp $
+   *  @version $Id: EUTelUpdatePedestalNoiseProcessor.h,v 1.8 2009-07-19 14:47:43 bulgheroni Exp $
    *
    *  @todo Implement the status matrix update
    *
@@ -311,6 +311,23 @@ namespace eutelescope {
      * events are counted from 0 and on a run base
      */
     int _iEvt;
+
+    //! Maximum number of consecutive missing events
+    /*! This processor only applies to RAW data input collections, but
+     *  not to break the generality, it will be active also in the
+     *  case of ZS data analysis. In such a case after @a
+     *  _maxNoOfConsecutiveMissing events, the warning message is not
+     *  issued anymore.
+     */
+    static const unsigned short _maxNoOfConsecutiveMissing;
+
+    //! Number of consecutive missing
+    /*! This is a counter of events with missing input
+     *  collection. This value is compared with
+     *  _maxNoOfConsecutiveMissing to issue or not the warning
+     *  message.
+     */
+    unsigned short _noOfConsecutiveMissing;
 
   private:
 
