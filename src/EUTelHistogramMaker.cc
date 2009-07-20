@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.20 2009-07-15 17:21:28 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.21 2009-07-20 08:22:16 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -305,14 +305,16 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
       (dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[tempHistoName]))->fill(static_cast<double >(xSeed), static_cast<double >(ySeed), 1.);
 
       if ( _noiseHistoSwitch ) {
+
+        // define a noise decoder
+        CellIDDecoder<TrackerDataImpl> noiseDecoder(noiseCollectionVec);
+
         // get the noise TrackerDataImpl corresponding to the detector
         // under analysis and the status matrix as well
         TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl *>    (noiseCollectionVec->getElementAt(_ancillaryMap[detectorID]) );
         TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> (statusCollectionVec->getElementAt(_ancillaryMap[detectorID]) );
 
-        EUTelMatrixDecoder noiseMatrixDecoder( _maxX[detectorID] - _minX[detectorID] + 1,
-                                               _maxY[detectorID] - _minY[detectorID] + 1,
-                                               _minX[detectorID] , _minY[detectorID] );
+        EUTelMatrixDecoder noiseMatrixDecoder( noiseDecoder, noiseMatrix);
 
         vector<float > noiseValues;
         if ( type == kEUTelFFClusterImpl ) {
@@ -324,8 +326,8 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
             for ( int xPixel = xSeed - ( xClusterSize / 2 ); xPixel <= xSeed + ( xClusterSize / 2 ); xPixel++ ) {
 
               // always check we are still within the sensor!!!
-              if ( ( xPixel >= _minX[detectorID] )  &&  ( xPixel <= _maxX[detectorID] ) &&
-                   ( yPixel >= _minY[detectorID] )  &&  ( yPixel <= _maxY[detectorID] ) ) {
+              if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <=  noiseMatrixDecoder.getMaxX()) &&
+                   ( yPixel >=  noiseMatrixDecoder.getMinY() )  &&  ( yPixel <=  noiseMatrixDecoder.getMaxY()) ) {
                 int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
 
                 // the corresponding position in the status matrix has to be HITPIXEL
@@ -382,7 +384,7 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
           histo->fill( cluster->getClusterNoise() );
         }
 
-        tempHistoName =  _clusterNoiseHistoName + "_d" + to_string( detectorID );
+        tempHistoName =  _clusterSNRHistoName + "_d" + to_string( detectorID );
         histo = dynamic_cast<AIDA::IHistogram1D* > ( _aidaHistoMap[tempHistoName] );
         if ( histo ) {
           histo->fill( cluster->getClusterSNR() );
