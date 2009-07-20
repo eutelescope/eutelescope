@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.17 2009-07-15 17:21:28 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.18 2009-07-20 08:22:46 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -1119,14 +1119,14 @@ bool EUTelClusterFilter::isAboveNxNMinSNR(EUTelVirtualCluster * cluster) const {
   int detectorPos = _ancillaryIndexMap [ detectorID ];
   vector<float >::const_iterator iter = _minNxNSNRVec.begin();
   while ( iter != _minNxNSNRVec.end() ) {
-     int nxnPixel    = static_cast<int > ( *iter ) ;
-     float snr       = cluster->getClusterSNR(nxnPixel, nxnPixel);
-     float threshold = (* ( iter + detectorPos + 1 )) ;
-     if ( ( threshold <= 0) || (snr > threshold) ) {
-       iter += _noOfDetectors + 1;
-     } else {
-       streamlog_out ( DEBUG2 )  << "Rejected cluster because its SNR within a " << (*iter) << " x " << (*iter)
-                                 << " subcluster is " << snr << " and the threshold is " << threshold << endl;
+    int nxnPixel    = static_cast<int > ( *iter ) ;
+    float snr       = cluster->getClusterSNR(nxnPixel, nxnPixel);
+    float threshold = (* ( iter + detectorPos + 1 )) ;
+    if ( ( threshold <= 0) || (snr > threshold) ) {
+      iter += _noOfDetectors + 1;
+    } else {
+      streamlog_out ( DEBUG2 )  << "Rejected cluster because its SNR within a " << (*iter) << " x " << (*iter)
+                                << " subcluster is " << snr << " and the threshold is " << threshold << endl;
       _rejectionMap["MinNxNSNRCut"][detectorPos]++;
       return false;
     }
@@ -1226,7 +1226,7 @@ bool EUTelClusterFilter::isInsideROI(EUTelVirtualCluster * cluster) const {
   while ( true ) {
 
     // the HasSameID requires the sensorID, so don't replace it with
-    // detectorPos 
+    // detectorPos
     iter = find_if( iter, end, HasSameID(detectorID));
     if ( iter != end ) {
       if ( (*iter).isInside(x,y) ) {
