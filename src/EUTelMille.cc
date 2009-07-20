@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.39 2009-07-16 15:20:04 bulgheroni Exp $
+// Version: $Id: EUTelMille.cc,v 1.40 2009-07-20 15:24:35 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -1698,11 +1698,7 @@ void EUTelMille::end() {
 
             bool goodLine = true;
 
-            constant->setSensorID( _orderedSensorID.at( counter ) );
-            ++ counter;
-
             for ( unsigned int iParam = 0 ; iParam < 3 ; ++iParam ) {
-
               getline( millepede, line );
 
               if ( line.empty() ) {
@@ -1749,10 +1745,10 @@ void EUTelMille::end() {
             }
 
 
-
-
             // right place to add the constant to the collection
             if ( goodLine ) {
+              constant->setSensorID( _orderedSensorID.at( counter ) );
+              ++ counter;
               constantsCollection->push_back( constant );
               streamlog_out ( MESSAGE0 ) << (*constant) << endl;
             }
@@ -1774,6 +1770,7 @@ void EUTelMille::end() {
       streamlog_out ( ERROR2 ) << "Unable to run pede. No steering file has been generated." << endl;
 
     }
+
 
   } // end if running pede using the generated steering file
 
