@@ -21,7 +21,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.28 2009-06-06 16:01:54 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.29 2009-07-20 08:34:25 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -31,7 +31,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.28 $"
+    cvsVersion = "$Revision: 1.29 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1746,11 +1746,11 @@ class SubmitFilter( SubmitBase ):
         while lfc.poll() == -1:
             pass
         if lfc.poll() == 0:
-            self._logger.info( "Input file found on the SE" )
+            self._logger.info( "Input file (run%(run)s-clu-p%(pede)s.slcio) found on the SE" % {"pede": self._pedeString, "run": runString} )
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "GRID", c, d, e, f
         else:
-            self._logger.error( "Input file NOT found on the SE. Trying next run" )
+            self._logger.error( "Input file (run%(run)s-clu-p%(pede)s.slcio) NOT found on the SE. Trying next run" % {"pede": self._pedeString, "run": runString} )
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
             raise MissingInputFileOnGRIDError( "%(inputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "inputPathGRID" : self._inputPathGRID,
