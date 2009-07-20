@@ -2228,6 +2228,16 @@ void showEtaPlot( const char * filename ) {
   // this folder should contain one subfolder for each detector
   // so guess the number of detectors
   UInt_t nDetector = etaFolder->GetListOfKeys()->GetSize();
+  vector< string > detectorFolderNames;
+  vector< int >    sensorIDs;
+  string separator = "-_";
+
+  for ( size_t i = 0; i < nDetector; ++i ) {
+    string name( etaFolder->GetListOfKeys()->At( i )->GetName() );
+    detectorFolderNames.push_back( name );
+    sensorIDs.push_back( atoi( name.substr( name.find_last_not_of( separator ),  name.length() ).c_str()) );
+  }
+
   UInt_t nCanvas   = nDetector / nDetPerCanvas;
   if ( nDetector % nDetPerCanvas != 0 ) {
     ++nCanvas;
@@ -2297,11 +2307,28 @@ void showEtaPlot( const char * filename ) {
   UInt_t iPad = 0;
   string newTitle;
   for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
-    string detectorFolderName = "detector-" + toString( iDetector );
-    TDirectoryFile * detectorFolder = (TDirectoryFile*) etaFolder->Get( detectorFolderName.c_str() );
 
-    string cogHistoName = "CoG-X-" + toString( iDetector ) ;
-    TH1D * cogHisto = (TH1D*) detectorFolder->Get( cogHistoName.c_str() );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) etaFolder->Get( detectorFolderNames.at(iDetector).c_str() );
+
+    vector< string > cogHistoNames;
+    cogHistoNames.push_back( "CoG-X-" + toString( sensorIDs.at(iDetector)) );
+    cogHistoNames.push_back( "CoG_X_" + toString( sensorIDs.at(iDetector)) );
+
+    TH1D * cogHisto = NULL;
+
+    for ( size_t iName = 0 ; iName < cogHistoNames.size(); ++iName ) {
+      cogHisto =  (TH1D*) detectorFolder->Get( cogHistoNames.at( iName ).c_str() );
+      if ( cogHisto != NULL ) break;
+    }
+    if ( cogHisto == NULL ) {
+      cerr << "None of the histo name possibilities: " << endl;
+      for ( size_t iName = 0; iName < cogHistoNames.size() ; ++iName ) {
+        cerr << "\t" << cogHistoNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return ;
+    }
+
     newTitle = string( cogHisto->GetTitle()) + " - Detector " + toString( iDetector );
     cogHisto->SetTitle( newTitle.c_str() );
     cogHisto->SetXTitle(" x [pitch unit] ");
@@ -2309,8 +2336,24 @@ void showEtaPlot( const char * filename ) {
     padVec[iPad++]->cd();
     cogHisto->Draw();
 
-    string etaHistoName = "EtaProfile-X-" + toString( iDetector );
-    TProfile * etaHisto = (TProfile*) detectorFolder->Get( etaHistoName.c_str() );
+    vector< string > etaHistoNames;
+    etaHistoNames.push_back( "EtaProfile-X-" + toString( sensorIDs.at(iDetector) ));
+    etaHistoNames.push_back( "EtaProfile_X_" + toString( sensorIDs.at(iDetector) ));
+
+    TProfile * etaHisto = NULL;
+    for ( size_t iName = 0 ; iName < etaHistoNames.size(); ++iName ) {
+      etaHisto =  (TProfile*) detectorFolder->Get( etaHistoNames.at( iName ).c_str() );
+      if ( etaHisto != NULL ) break;
+    }
+    if ( etaHisto == NULL ) {
+      cerr << "None of the histo name possibilities: " << endl;
+      for ( size_t iName = 0; iName < etaHistoNames.size() ; ++iName ) {
+        cerr << "\t" << etaHistoNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return ;
+    }
+
     newTitle = string( etaHisto->GetTitle()) + " - Detector " + toString( iDetector );
     etaHisto->SetTitle( newTitle.c_str() );
     etaHisto->SetXTitle(" x [picth unit] " );
@@ -2389,11 +2432,28 @@ void showEtaPlot( const char * filename ) {
 
   iPad = 0;
   for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
-    string detectorFolderName = "detector-" + toString( iDetector );
-    TDirectoryFile * detectorFolder = (TDirectoryFile*) etaFolder->Get( detectorFolderName.c_str() );
 
-    string cogHistoName = "CoG-Y-" + toString( iDetector ) ;
-    TH1D * cogHisto = (TH1D*) detectorFolder->Get( cogHistoName.c_str() );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) etaFolder->Get( detectorFolderNames.at(iDetector).c_str() );
+
+    vector< string > cogHistoNames;
+    cogHistoNames.push_back( "CoG-Y-" + toString( sensorIDs.at(iDetector)) );
+    cogHistoNames.push_back( "CoG_Y_" + toString( sensorIDs.at(iDetector)) );
+
+    TH1D * cogHisto = NULL;
+
+    for ( size_t iName = 0 ; iName < cogHistoNames.size(); ++iName ) {
+      cogHisto =  (TH1D*) detectorFolder->Get( cogHistoNames.at( iName ).c_str() );
+      if ( cogHisto != NULL ) break;
+    }
+    if ( cogHisto == NULL ) {
+      cerr << "None of the histo name possibilities: " << endl;
+      for ( size_t iName = 0; iName < cogHistoNames.size() ; ++iName ) {
+        cerr << "\t" << cogHistoNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return ;
+    }
+
     newTitle = string( cogHisto->GetTitle()) + " - Detector " + toString( iDetector );
     cogHisto->SetTitle( newTitle.c_str() );
     cogHisto->SetXTitle(" y [pitch unit] ");
@@ -2401,8 +2461,24 @@ void showEtaPlot( const char * filename ) {
     padVec[iPad++]->cd();
     cogHisto->Draw();
 
-    string etaHistoName = "EtaProfile-Y-" + toString( iDetector );
-    TProfile * etaHisto = (TProfile*) detectorFolder->Get( etaHistoName.c_str() );
+ vector< string > etaHistoNames;
+    etaHistoNames.push_back( "EtaProfile-Y-" + toString( sensorIDs.at(iDetector) ));
+    etaHistoNames.push_back( "EtaProfile_Y_" + toString( sensorIDs.at(iDetector) ));
+
+    TProfile * etaHisto = NULL;
+    for ( size_t iName = 0 ; iName < etaHistoNames.size(); ++iName ) {
+      etaHisto =  (TProfile*) detectorFolder->Get( etaHistoNames.at( iName ).c_str() );
+      if ( etaHisto != NULL ) break;
+    }
+    if ( etaHisto == NULL ) {
+      cerr << "None of the histo name possibilities: " << endl;
+      for ( size_t iName = 0; iName < etaHistoNames.size() ; ++iName ) {
+        cerr << "\t" << etaHistoNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return ;
+    }
+
     newTitle = string( etaHisto->GetTitle()) + " - Detector " + toString( iDetector );
     etaHisto->SetTitle( newTitle.c_str() );
     etaHisto->SetXTitle(" y [picth unit] " );
@@ -2476,11 +2552,28 @@ void showEtaPlot( const char * filename ) {
 
   iPad = 0;
   for ( UInt_t iDetector = 0 ; iDetector < nDetector; ++iDetector ) {
-    string detectorFolderName = "detector-" + toString( iDetector );
-    TDirectoryFile * detectorFolder = (TDirectoryFile*) etaFolder->Get( detectorFolderName.c_str() );
 
-    string cogHistoName = "CoG-Histo2D-" + toString( iDetector );
-    TH2D * cogHisto     = (TH2D*) detectorFolder->Get( cogHistoName.c_str() );
+    TDirectoryFile * detectorFolder = (TDirectoryFile*) etaFolder->Get( detectorFolderNames.at(iDetector).c_str() );
+
+    vector< string > cogHistoNames;
+    cogHistoNames.push_back( "CoG-Histo2D-" + toString( sensorIDs.at(iDetector)) );
+    cogHistoNames.push_back( "CoG_Histo2D_" + toString( sensorIDs.at(iDetector)) );
+
+    TH2D * cogHisto = NULL;
+
+    for ( size_t iName = 0 ; iName < cogHistoNames.size(); ++iName ) {
+      cogHisto =  (TH2D*) detectorFolder->Get( cogHistoNames.at( iName ).c_str() );
+      if ( cogHisto != NULL ) break;
+    }
+    if ( cogHisto == NULL ) {
+      cerr << "None of the histo name possibilities: " << endl;
+      for ( size_t iName = 0; iName < cogHistoNames.size() ; ++iName ) {
+        cerr << "\t" << cogHistoNames.at( iName ) << endl;
+      }
+      cerr << "was found in " << filename << endl;
+      return ;
+    }
+
     newTitle = string( cogHisto->GetTitle()) + " - Detector " + toString( iDetector );
     cogHisto->SetTitle( newTitle.c_str() );
     cogHisto->SetXTitle(" x [pitch unit] ");
