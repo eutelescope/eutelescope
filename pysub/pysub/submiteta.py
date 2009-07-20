@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-eta.py script
 #
 #
-# @version $Id: submiteta.py,v 1.11 2009-06-06 16:01:54 bulgheroni Exp $
+# @version $Id: submiteta.py,v 1.12 2009-07-20 09:19:20 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitEta( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitEta( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.11 $"
+    cvsVersion = "$Revision: 1.12 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1096,11 +1096,11 @@ class SubmitEta( SubmitBase ):
         while lfc.poll() == -1:
             pass
         if lfc.poll() == 0:
-            self._logger.info( "Input file found on the SE" )
+            self._logger.info( "Input file (%(file)s) found on the SE" % { "file": file } )
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "GRID", c, d, e, f
         else:
-            self._logger.error( "Input file NOT found on the SE. Trying next run" )
+            self._logger.error( "Input file (%(file)s) NOT found on the SE. Trying next run" % { "file": file } )
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
             raise MissingInputFileOnGRIDError( "%(inputPathGRID)s/%(file)s" % { "inputPathGRID" : self._inputPathGRID,  "file": file } )
