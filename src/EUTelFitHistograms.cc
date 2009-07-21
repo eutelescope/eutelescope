@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitHistograms.cc,v 1.14 2009-07-18 14:17:17 bulgheroni Exp $
+// Version: $Id: EUTelFitHistograms.cc,v 1.15 2009-07-21 13:58:22 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -376,11 +376,10 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
   } catch (lcio::DataNotAvailableException& e) {
     streamlog_out( WARNING ) << "Not able to get collection "
                              << _inputColName
-                             << "\nfrom event " << event->getEventNumber()
+                             << " from event " << event->getEventNumber()
                              << " in run " << event->getRunNumber()  << endl;
     return;
   }
-
 
   // Loop over tracks in input collections
 
@@ -389,6 +388,7 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
   if(debug) {
     streamlog_out ( TESTFITTERMESSAGE )  << "Total of " << nTrack << " tracks in input collection " << endl;
   }
+
 
   for(int itrack=0; itrack< nTrack ; itrack++)
     {
@@ -404,6 +404,8 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
       int nHit =   trackhits.size();
 
+
+
       if(debug){
         streamlog_out ( TESTFITTERMESSAGE )  << "Track " << itrack << " with " << nHit << " hits " << endl;
       }
@@ -416,7 +418,6 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
           _isMeasured[ipl]=false;
           _isFitted[ipl]=false;
         }
-
 
       // Loop over hits and fill hit tables
 
@@ -551,7 +552,6 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
         }
 
 
-
       // Histograms of fitted positions
 
       for(int ipl=0;ipl<_nTelPlanes; ipl++)
@@ -563,21 +563,26 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
               stringstream nam;
               nam << _FittedXHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam.str();
-              (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedX[ipl]);
+              AIDA::IHistogram1D* histo = (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]));
+              if ( histo ) histo->fill(_fittedX[ipl]);
+              else cout << tempHistoName << endl;
 
               stringstream nam2;
               nam2 << _FittedYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam2.str();
-              (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedY[ipl]);
+              histo = (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName]));
+              if ( histo) histo->fill(_fittedY[ipl]);
+              else cout << tempHistoName << endl;
 
               stringstream nam3;
               nam3 << _FittedXYHistoName << "_" << _planeID[ ipl ] ;
               tempHistoName=nam3.str();
-              (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]))->fill(_fittedX[ipl],_fittedY[ipl]);
+              AIDA::IHistogram2D * histo2D = (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[tempHistoName]));
+              if ( histo2D ) histo2D->fill(_fittedX[ipl],_fittedY[ipl]);
+              else cout << tempHistoName << endl;
 
             }
         }
-
 
 
       // Histograms of incident particle angle
@@ -996,7 +1001,7 @@ void EUTelFitHistograms::bookHistos()
 
   for(int ipl=0;ipl<_nTelPlanes; ipl++)    {
     if(_isActive[ipl])        {
-      tempHistoName  = _FittedXHistoName + to_string( _planeID[ ipl ] ) ;
+      tempHistoName  = _FittedXHistoName + "_" +  to_string( _planeID[ ipl ] ) ;
       tempHistoTitle = fitXTitle + " for plane "  + to_string( _planeID[ ipl ] ) ;
       AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(),fitXNBin,fitXMin,fitXMax);
       tempHisto->setTitle(tempHistoTitle.c_str());
