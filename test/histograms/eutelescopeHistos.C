@@ -19,6 +19,19 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
   // check if this file is already open
   TFile * inputFile = closeAndReopenFile( filename );
 
+  // typical names for the processor folder
+  vector< string > folderNames;
+  folderNames.push_back( pedeProcessorFolderName.Data() );
+  folderNames.push_back( "Pedestal" );
+
+  // DUT related folder names
+  string dutFolderName = pedeProcessorFolderName.Data() + toString( "_dut" );
+  folderNames.push_back( dutFolderName );
+  dutFolderName = pedeProcessorFolderName.Data() + toString( "_dep" );
+  folderNames.push_back( dutFolderName );
+  dutFolderName = pedeProcessorFolderName.Data() + toString( "_taki" );
+  folderNames.push_back( dutFolderName );
+
   // this function will create the following canvases:
   //
   // -> 1 general canvas with the pede map and pede histo (3 detectors per canvas)
@@ -33,10 +46,8 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
   closeCanvases( pedeCanvasBaseName );
 
   // look into the input file for a folder named
-  TDirectoryFile * pedeProcessorFolder = (TDirectoryFile*) inputFile->Get( pedeProcessorFolderName.Data() );
-
+  TDirectoryFile * pedeProcessorFolder = checkFolder( folderNames, inputFile );
   if ( pedeProcessorFolder == 0x0 ) {
-    cerr << "No pede/noise filter folder (" << pedeProcessorFolderName << ") found in " << filename << endl;
     return;
   }
 
@@ -689,6 +700,20 @@ void showCorrelationPlot( const char * filename ) {
     return;
   }
 
+  // typical names for the processor folder
+  vector< string > folderNames;
+  folderNames.push_back( correlatorFolderName.Data() );
+  folderNames.push_back( "Correlation" ) ;
+  folderNames.push_back( "CorrelationAfterFilter" ) ;
+  folderNames.push_back( "CorrelationBeforeFilter" ) ;
+
+  string dutFolderName = correlatorFolderName.Data() + toString( "_dut" );
+  folderNames.push_back( dutFolderName );
+  dutFolderName = correlatorFolderName.Data() + toString( "_dep" );
+  folderNames.push_back( dutFolderName );
+  dutFolderName = correlatorFolderName.Data() + toString( "_taki" );
+  folderNames.push_back( dutFolderName );
+
   // this function will create the following canvases:
   //
   // --> ClusterXCanvas
@@ -704,10 +729,8 @@ void showCorrelationPlot( const char * filename ) {
   vector<TPad *    > padVec;
 
   // look into the input file for a folder named correlator
-  TDirectoryFile * correlatorFolder = (TDirectoryFile*) inputFile->Get( correlatorFolderName.Data() );
-
+  TDirectoryFile * correlatorFolder = checkFolder( folderNames, inputFile ) ;
   if ( correlatorFolder == 0x0 ) {
-    cerr << "No collerator  folder (" << correlatorFolderName << ") found in " << filename << endl;
     return;
   }
 
@@ -1722,6 +1745,21 @@ void showClusterPlot( const char * filename ) {
     return;
   }
 
+  // typical names for the processor folder
+  vector< string > folderNames;
+  folderNames.push_back( clusterHistoFolderName.Data() );
+  folderNames.push_back( "Clustering"   );
+  folderNames.push_back( "FilterHisto"  );
+  folderNames.push_back( "ClusterHisto" );
+
+  string dutFolderName =  clusterHistoFolderName.Data()  + toString( "_dut" );
+  folderNames.push_back( dutFolderName );
+  dutFolderName = clusterHistoFolderName.Data()  + toString( "_dep" );
+  folderNames.push_back( dutFolderName );
+  dutFolderName = clusterHistoFolderName.Data()  + toString( "_taki" );
+  folderNames.push_back( dutFolderName );
+
+
   // this function will create the following canvases:
   //
   // --> 1 canvas with SN plot (one every 3 detectors)
@@ -1736,11 +1774,9 @@ void showClusterPlot( const char * filename ) {
   closeCanvases( snrCanvasBaseName );
 
   // look into the input file for a folder named
-  TDirectoryFile * clusterHistoFolder = (TDirectoryFile*) inputFile->Get( clusterHistoFolderName.Data() ) ;
-
+  TDirectoryFile * clusterHistoFolder = checkFolder( folderNames, inputFile );
   if ( clusterHistoFolder == 0x0 ) {
-    cerr << "No cluster histo folder (" << clusterHistoFolderName << ") found in " << filename << endl;
-    return;
+    return ;
   }
 
   // this folder should contain one subfolder for each detector
@@ -2183,8 +2219,6 @@ void showClusterPlot( const char * filename ) {
 
   }
 
-
-
   // save every canvases
   string path( prepareOutputFolder( "Cluster" ) );
   for ( UInt_t iCanvas = 0; iCanvas < canvasVec.size() ; ++iCanvas ) {
@@ -2205,6 +2239,16 @@ void showEtaPlot( const char * filename ) {
     return;
   }
 
+  vector< string > folderNames;
+  folderNames.push_back( etaFolderName.Data() );
+
+  string dutFolderName = etaFolderName.Data() + toString( "_dut" );
+  folderNames.push_back( dutFolderName );
+  dutFolderName = etaFolderName.Data() + toString( "_dep" );
+  folderNames.push_back( dutFolderName );
+  dutFolderName = etaFolderName.Data() + toString( "_taki" );
+  folderNames.push_back( dutFolderName );
+
   // this function will create the following canvases:
   //
   // --> 1 canvas with CoG and ETA along x (one every 3 detectors)
@@ -2218,10 +2262,8 @@ void showEtaPlot( const char * filename ) {
   closeCanvases( canvasBaseName );
 
   // look into the input file for a folder named ETA
-  TDirectoryFile * etaFolder = (TDirectoryFile*) inputFile->Get( etaFolderName.Data() );
-
+  TDirectoryFile * etaFolder = checkFolder( folderNames, inputFile );
   if ( etaFolder == 0x0 ) {
-    cerr << "No ETA folder (" << etaFolderName << ") found in " << filename << endl;
     return ;
   }
 
@@ -2601,6 +2643,15 @@ void showTrackerPlot( const char * filename ) {
     cerr << "Problems opening file " << filename << endl;
     return;
   }
+  vector< string > folderNames;
+  folderNames.push_back( trackerFolderName.Data() );
+
+  string dutFolderName = trackerFolderName.Data() + toString( "_dut" );
+  folderNames.push_back( dutFolderName );
+  dutFolderName = trackerFolderName.Data() + toString( "_dep" );
+  folderNames.push_back( dutFolderName );
+  dutFolderName = trackerFolderName.Data() + toString( "_taki" );
+  folderNames.push_back( dutFolderName );
 
   // --> 1 canvas with reconstructed hit position (one every 6 det.)
   // --> 1 canvas with rotation check plots (one every 3 det.)
@@ -2615,10 +2666,9 @@ void showTrackerPlot( const char * filename ) {
   closeCanvases( canvasBaseName );
 
   // look into the input file for a folder named
-  TDirectoryFile * trackerFolder = (TDirectoryFile*) inputFile->Get( trackerFolderName.Data() ) ;
+  TDirectoryFile * trackerFolder = checkFolder( folderNames, inputFile );
 
   if ( trackerFolder == 0x0 ) {
-    cerr << "No tracker histo folder (" << trackerFolderName << ") found in " << filename << endl;
     return;
   }
 
@@ -3239,6 +3289,18 @@ void showMillePlot( const char * filename ) {
     return;
   }
 
+  // typical names for the processor folder
+  vector< string > folderNames;
+  folderNames.push_back( milleFolderName.Data() );
+  folderNames.push_back( "Mille" );
+
+  string dutFolderName = milleFolderName.Data() + toString( "_dut" );
+  folderNames.push_back( dutFolderName );
+  dutFolderName = milleFolderName.Data() + toString( "_dep" );
+  folderNames.push_back( dutFolderName );
+  dutFolderName = milleFolderName.Data() + toString( "_taki" );
+  folderNames.push_back( dutFolderName );
+
   // --> 1 canvas with residuals (one every 3 det. )
 
   UInt_t nDetPerCanvas = 3;
@@ -3250,10 +3312,8 @@ void showMillePlot( const char * filename ) {
   closeCanvases( canvasBaseName );
 
   // look into the input file for a folder named
-  TDirectoryFile * milleFolder = (TDirectoryFile*) inputFile->Get( milleFolderName.Data() ) ;
-
+  TDirectoryFile * milleFolder = checkFolder( folderNames, inputFile );
   if ( milleFolder == 0x0 ) {
-    cerr << "No Mille histo folder (" << milleFolderName << ") found in " << filename << endl;
     return ;
   }
 
@@ -3542,5 +3602,116 @@ void setDefaultAxis(TAxis * axis ) {
   axis->SetLabelSize( 0.05 );
   axis->SetTitleOffset( 0.96 );
   axis->SetTitleSize( 0.05 );
+
+}
+
+TDirectoryFile * checkFolder( vector< string >& candidateNames, TFile * inputFile ) {
+
+  vector< string >::iterator iter = candidateNames.begin();
+  vector< string > goodFolders;
+  while ( iter != candidateNames.end() ) {
+    if ( dynamic_cast< TDirectoryFile * > ( inputFile->Get( (*iter).c_str() ) ) ) {
+      goodFolders.push_back( *iter );
+    }
+    ++iter;
+  }
+
+  if ( goodFolders.size() == 0 ) {
+    cerr << "None of the following folders were found in the input file: " << endl;
+    iter = candidateNames.begin();
+    while ( iter != candidateNames.end() ) {
+      cerr << " --> " << (*iter) << endl;
+      ++iter;
+    }
+
+    // print out the directory contained into this file:
+    TIter iterator( inputFile->GetListOfKeys() );
+    cerr << endl << "This file contains the following folders: " << endl;
+    size_t counter = 0;
+    vector< string > availableFolders;
+    while ( TKey * key = (TKey*) iterator() ) {
+      string keyClassName = key->GetClassName();
+      if ( keyClassName == "TDirectoryFile" ) {
+        cerr << " " << counter << " --> " << key->GetName() << endl;
+        availableFolders.push_back( key->GetName() );
+        ++counter;
+      }
+    }
+    cerr << " q --> to exit " << endl;
+
+    bool badChoice = true;
+    string selectedName;
+    string ans;
+    while ( badChoice ) {
+      cout << "Choose one by the corresponding number [ 0 - " << counter - 1 << " ] " << endl;
+      cin >> ans;
+
+      if ( ans == "q" ) {
+        cout << "Exiting " << endl;
+        return NULL;
+      } else {
+
+        TString choice( ans );
+        choice.ReplaceAll( " ", 1 , "", 0 );
+        if ( choice.IsDigit() ) {
+          try {
+            selectedName = availableFolders.at( choice.Atoi() );
+            badChoice = false;
+            return  dynamic_cast< TDirectoryFile * > ( inputFile->Get( selectedName.c_str() ) );
+          } catch ( std::exception  output_of_range ) {
+            cout << "Invalid answer " << endl;
+            badChoice = true;
+          }
+
+        }
+      }
+    }
+
+  } else if ( goodFolders.size() == 1 ) {
+
+    return dynamic_cast< TDirectoryFile * > ( inputFile->Get( goodFolders.at( 0 ).c_str() ) );
+
+  } else if ( goodFolders.size() > 1 ) {
+
+    cout << "Found more than one folder candidate. Plz choose one of the following:" << endl;
+    iter = goodFolders.begin();
+    size_t counter = 0;
+    while ( iter != goodFolders.end() ) {
+      cout << " " << counter << ". --> " << (*iter ) << endl;
+      ++iter;
+      ++counter;
+    }
+    cerr << " q --> to exit " << endl;
+
+    bool badChoice = true;
+    string selectedName;
+    string ans;
+    while ( badChoice ) {
+      cout << "Choose one by the corresponding number [ 0 - " << counter - 1 << " ] " << endl;
+      cin >> ans;
+
+      if ( ans == "q" ) {
+        cout << "Exiting " << endl;
+        return NULL;
+      } else {
+
+        TString choice( ans );
+        choice.ReplaceAll( " ", 1 , "", 0 );
+        if ( choice.IsDigit() ) {
+          try {
+            selectedName = goodFolders.at( choice.Atoi() );
+            badChoice = false;
+            return  dynamic_cast< TDirectoryFile * > ( inputFile->Get( selectedName.c_str() ) );
+          } catch ( std::exception  output_of_range ) {
+            cout << "Invalid answer " << endl;
+            badChoice = true;
+          }
+
+        }
+      }
+    }
+  } else {
+    return NULL;
+  }
 
 }

@@ -10,6 +10,7 @@
 // root includes
 #include <TFile.h>
 #include <TList.h>
+#include <TKey.h>
 #include <TROOT.h>
 #include <TCanvas.h>
 #include <TString.h>
@@ -349,6 +350,22 @@ namespace eutelHistogram {
 
   //! Set default size for histogram axis
   void setDefaultAxis(TAxis * axis );
+
+  //! Check the folder existence
+  /*! The AIDA processor is creating in every ROOT file a folder named
+   *  after the name of the processor generating the histograms. Every
+   *  users can in principle change the name of the processor without
+   *  changing the functionality. This function is checking among a
+   *  list of possible names for a folder in the input file. If none
+   *  of them is found, then an error message is shown and it returns
+   *  NULL. If more than one is found, a list of good
+   *  folders is presented to the user who has to take a decision.
+   *
+   *  @param candidateNames A list of all names to look for
+   *  @param inputFile A pointer to the ROOT input file name
+   *  @return A pointer to the folder
+   */
+  TDirectoryFile * checkFolder( std::vector< string >& candidateNames, TFile * inputFile );
 
   //! Convert to string
   /*! This template function is used to convert to string any type
