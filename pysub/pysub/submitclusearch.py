@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.17 2009-06-06 16:01:54 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.18 2009-07-22 13:54:31 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.17 $"
+    cvsVersion = "$Revision: 1.18 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1366,8 +1366,8 @@ class SubmitCluSearch( SubmitBase ):
             baseCommand = "lcg-cp "
             if self._option.verbose :
                 baseCommand = baseCommand + " -v "
-                command = baseCommand + "  lfn:%(gridPath)s/%(file)s file:%(localPath)s/%(file)s " % {
-                    "gridPath" : gridPath, "file": self._pedeFilename, "localPath": localPath }
+            command = baseCommand + "  lfn:%(gridPath)s/%(file)s file:%(localPath)s/%(file)s " % {
+                "gridPath" : gridPath, "file": self._pedeFilename, "localPath": localPath }
 
             self._logger.info( "Getting the pedestal file %(file)s" % { "file": self._pedeFilename } )
             if os.system( command ) != 0:
