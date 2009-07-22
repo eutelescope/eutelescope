@@ -3,7 +3,7 @@
 #
 # Original author: J. Engels, DESY
 # Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# Version $Id: CMakeLists.txt,v 1.23 2009-07-16 10:01:03 bulgheroni Exp $
+# Version $Id: CMakeLists.txt,v 1.24 2009-07-22 17:31:28 bulgheroni Exp $
 ########################################################
 
 
@@ -28,8 +28,8 @@ PROJECT( Eutelescope )
 
 # project version
 SET( ${PROJECT_NAME}_MAJOR_VERSION 0 )
-SET( ${PROJECT_NAME}_MINOR_VERSION 0 )
-SET( ${PROJECT_NAME}_PATCH_LEVEL 10 )
+SET( ${PROJECT_NAME}_MINOR_VERSION 2 )
+SET( ${PROJECT_NAME}_PATCH_LEVEL  0 )
 
 
 ### SETTINGS #################################################################
