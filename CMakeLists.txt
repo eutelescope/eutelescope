@@ -3,7 +3,7 @@
 #
 # Original author: J. Engels, DESY
 # Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# Version $Id: CMakeLists.txt,v 1.24 2009-07-22 17:31:28 bulgheroni Exp $
+# Version $Id: CMakeLists.txt,v 1.25 2009-07-22 21:24:23 bulgheroni Exp $
 ########################################################
 
 
@@ -227,10 +227,19 @@ IF( DEFINED ${PROJECT_NAME}_DEPENDS OR DEFINED BUILD_WITH OR DEFINED LINK_WITH )
     CHECK_DEPS()
 ENDIF()
 
+IF( EUDAQ_INCLUDE_DIR AND EUDAQ_LIB)
+    MESSAGE(STATUS "EUDAQ found" )
+ENDIF()
+
 # add preprocessor flag: USE_CED
 # this code can be deleted when CEDConfig.cmake exports the USE_CED # definition
 IF ( CED_FOUND ) 
   ADD_DEFINITIONS("-DUSE_CED")
+ENDIF()
+
+# add preprocessof flag: USE_MARLIN
+IF ( Marlin_FOUND)
+  ADD_DEFINITIONS("-DUSE_MARLIN")
 ENDIF()
 
 # add preprocessor flag: USE_MARLINUTIL

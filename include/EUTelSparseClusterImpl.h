@@ -19,8 +19,10 @@
 #include "EUTelSparseDataImpl.h"
 #include "EUTelExceptions.h"
 
+#ifdef USE_MARLIN
 // marling includes ".h"
 #include <marlin/Exceptions.h>
+#endif
 
 // lcio includes <.h>
 #include <LCIOTypes.h>

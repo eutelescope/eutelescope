@@ -30,7 +30,7 @@ namespace eutelescope {
   /*!
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPixelDetector.h,v 1.1 2008-08-20 13:20:09 bulgheroni Exp $
+   *  @version $Id: EUTelPixelDetector.h,v 1.2 2009-07-22 21:24:23 bulgheroni Exp $
    */
 
   class EUTelPixelDetector : public EUTelBaseDetector {
@@ -74,6 +74,9 @@ namespace eutelescope {
 
     //! Get RO mode
     virtual std::string getMode() const = 0;
+
+    //! Set RO mode
+    virtual void setMode( std::string m )  = 0;
 
     //! Get marker position
     virtual std::vector< size_t > getMarkerPosition() const = 0;

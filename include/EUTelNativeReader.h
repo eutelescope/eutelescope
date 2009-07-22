@@ -22,7 +22,6 @@
 #include "marlin/DataSourceProcessor.h"
 
 // eudaq includes <.hh>
-#include <eudaq/Info.hh>
 #include <eudaq/Event.hh>
 #include <eudaq/EUDRBEvent.hh>
 #include <eudaq/TLUEvent.hh>
@@ -89,7 +88,7 @@ namespace eutelescope {
    *   @author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
    *   @author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
    *   @author Yulia Furletova, Uni-Bonn <mailto:yulia@mail.cern.ch>
-   *   @version $Id: EUTelNativeReader.h,v 1.11 2009-07-15 17:21:28 bulgheroni Exp $
+   *   @version $Id: EUTelNativeReader.h,v 1.12 2009-07-22 21:24:23 bulgheroni Exp $
    *
    */
   class EUTelNativeReader : public marlin::DataSourceProcessor    {
@@ -136,7 +135,7 @@ namespace eutelescope {
      *
      *  @param bore The eudaq event containg the BORE
      */
-    void processBORE( eudaq::Event * bore );
+    void processBORE( const eudaq::DetectorEvent & bore );
 
     //! Process EORE
     /*! This method is called whenever in the input data stream an
@@ -166,7 +165,6 @@ namespace eutelescope {
      */
     void processEUDRBDataEvent( eudaq::EUDRBEvent * eudrbEvent, EUTelEventImpl * eutelEvent) ;
 
-#if EUDAQ_DEPFET_DECODER == 1
     //! Process DEPFET data event
     /*! This method is called whenever a DEPFET data event is found in
      *  the input data stream
@@ -175,7 +173,7 @@ namespace eutelescope {
      *  @param eutelEvent The output EUTelEventImpl
      */
     void processDEPFETDataEvent( eudaq::DEPFETEvent * depfetEvent, EUTelEventImpl * eutelEvent );
-#endif
+
 
   protected:
 
@@ -205,23 +203,6 @@ namespace eutelescope {
      */
     std::string _eudrbZSModeOutputCollectionName;
 
-    //! The eudrb vector of sensorID
-    /*! Each sensor is uniquely identified in the geometry description
-     *  (GEAR) via unique integer number called sensorID. The user has
-     *  to give a sensorID to each detector readout by the EUDRB
-     *  producer.
-     */
-    std::vector< int > _eudrbSensorIDVec;
-
-#if EUDAQ_DEPFET_DECODER == 1
-    //! The DEPFET vector of sensorID
-    /*! Each sensor is uniquely identified in the geometry description
-     *  (GEAR) via unique integer number called sensorID. The user has
-     *  to give a sensorID to each detector readout by the DEPFET
-     *  producer.
-     */
-    std::vector< int > _depfetSensorIDVec;
-#endif
 
     //! The depfet output collection name
     std::string _depfetOutputCollectionName;
@@ -235,13 +216,9 @@ namespace eutelescope {
     //! Vector of detectors readout by the TLUProducer
     std::vector<EUTelBaseDetector * > _tluDetectors;
 
-#if EUDAQ_DEPFET_DECODER == 1
     //! Vector of detectors readout by the EUDRBProducer
     std::vector<EUTelPixelDetector * > _depfetDetectors;
 
-     int  D_MOD2ID[32];
-     int  D_ID2MOD[32];
-#endif
 
     // detector specific...................................
 
@@ -253,13 +230,6 @@ namespace eutelescope {
      */
     int _eudrbSparsePixelType;
 
-    //! The EUDRBDecoder
-    eudaq::EUDRBDecoder * _eudrbDecoder;
-
-#if EUDAQ_DEPFET_DECODER == 1
-    //! The DEPFETDecoder
-    eudaq::DEPFETDecoder * _depfetDecoder;
-#endif
 
     //! Out of sync threshold for mimotel sensors
     /*! The definition of an out of synch event is based upon the
@@ -292,7 +262,8 @@ namespace eutelescope {
   EUTelNativeReader gEUTelNativeReader;
 
 }                               // end namespace eutelescope
-#endif
+
+# endif
 #endif
 
 //  LocalWords:  eudrb

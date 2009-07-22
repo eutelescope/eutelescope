@@ -11,7 +11,9 @@
 #define EUTELEXCEPTIONS_H 1
 
 // marlin includes
+#ifdef USE_MARLIN
 #include <marlin/Processor.h>
+#endif
 
 // lcio includes
 #include <lcio.h>
@@ -31,7 +33,7 @@ namespace eutelescope {
    *  invalid algorithm then this exceptions is thrown
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.8 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.9 2009-07-22 21:24:23 bulgheroni Exp $
    */
 
   class InvalidParameterException  : public lcio::Exception {
@@ -60,7 +62,7 @@ namespace eutelescope {
    *  the number of detectors.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.8 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $
    */
   class IncompatibleDataSetException : public lcio::Exception {
 
@@ -103,7 +105,7 @@ namespace eutelescope {
    *  exception is thrown.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.8 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.9 2009-07-22 21:24:23 bulgheroni Exp $
    */
   class UnknownDataTypeException : public lcio::Exception {
 
@@ -125,12 +127,13 @@ namespace eutelescope {
     }
   };
 
+#ifdef USE_MARLIN
   //! Missing library
   /*! This exception is thrown by a processor having optional
    *  dependency against specific library and this is missing.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.8 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.9 2009-07-22 21:24:23 bulgheroni Exp $
    */
   class MissingLibraryException: public lcio::Exception {
 
@@ -152,7 +155,7 @@ namespace eutelescope {
       message = "To execute this functionality " + proc->name() + " requires " + missingLib;
     }
   };
-
+#endif
 
   //! Invalid geometry
   /*! This exception is thrown when the processor is expecting to have
@@ -160,7 +163,7 @@ namespace eutelescope {
    *  the GEAR file
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.8 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id: EUTelExceptions.h,v 1.9 2009-07-22 21:24:23 bulgheroni Exp $
    */
   class InvalidGeometryException: public lcio::Exception {
 
