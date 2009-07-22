@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.18 2009-07-22 13:54:31 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.19 2009-07-22 16:36:36 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.18 $"
+    cvsVersion = "$Revision: 1.19 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -483,7 +483,7 @@ class SubmitCluSearch( SubmitBase ):
             self._logger.info( "Verifying the output file integrity on the GRID" )
             filename = "run%(run)s-clu-p%(pede)s.slcio" % { "run" : runString , "pede": self._pedeString }
             localCopy = open( os.path.join( localPath, filename ) ).read()
-            localCopyHash = sha.new( localCopy ).hexdigest() 
+            localCopyHash = sha.new( localCopy ).hexdigest()
             self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
 
             # now copying back the just copied file.
@@ -494,7 +494,7 @@ class SubmitCluSearch( SubmitBase ):
             filenametest = "run%(run)s-clu-p%(pede)s-test.slcio" % { "run" : runString , "pede": self._pedeString }
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename, "filetest":filenametest }
-            if os.system( command ) != 0 : 
+            if os.system( command ) != 0 :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail!", histogram, tarball
                 self._logger.error( "Problem with the verification!" )
@@ -553,7 +553,7 @@ class SubmitCluSearch( SubmitBase ):
             filename = "run%(run)s-clu-histo.root"  % { "run" : runString }
 
             localCopy = open( os.path.join( localPath, filename ) ).read()
-            localCopyHash = sha.new( localCopy ).hexdigest() 
+            localCopyHash = sha.new( localCopy ).hexdigest()
             self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
 
             # now copying back the just copied file.
@@ -565,7 +565,7 @@ class SubmitCluSearch( SubmitBase ):
 
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest, "file" : filename }
-            if os.system( command ) != 0 : 
+            if os.system( command ) != 0 :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail!", tarball
                 self._logger.error( "Problem with the verification!" )
@@ -634,7 +634,7 @@ class SubmitCluSearch( SubmitBase ):
             filenametest = "%(name)s-%(run)s-test.tar.gz" % { "name": self.name,  "run" : runString }
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest,"file" : filename }
-            if os.system( command ) != 0 : 
+            if os.system( command ) != 0 :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, output, histogram, "GRID - Fail!"
                 self._logger.error( "Problem with the verification!" )
@@ -1050,7 +1050,7 @@ class SubmitCluSearch( SubmitBase ):
                 currentJIDFile.write( jid )
         jidFile.close()
         currentJIDFile.close()
-        
+
 
     ## Preliminary checks
     #
@@ -1143,18 +1143,18 @@ class SubmitCluSearch( SubmitBase ):
                 if self.askYesNo( "Would you like to remove it?  [y/n] " ):
                     self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio from the GRID"
                                        % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "outputPathGRID": self._outputPathGRID, 
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "outputPathGRID": self._outputPathGRID,
                                                                                                      "pede": self._pedeString, "run": runString }
                     os.system( command )
                 else :
                     raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio on the GRID"
-                                                  % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
+                                                        % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
             else :
                 raise OutputAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio on the GRID"
-                                              % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
+                                                % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
 
         # check if the job output file already exists
-        command = "lfc-ls %(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % { 
+        command = "lfc-ls %(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % {
             "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString }
 
         status, output = commands.getstatusoutput( command )
@@ -1165,15 +1165,15 @@ class SubmitCluSearch( SubmitBase ):
                 if self.askYesNo( "Would you like to remove it?  [y/n] " ):
                     self._logger.info( "User decided to remove %(outputPathGRID)s/%(name)s-%(run)s.tar.gz from the GRID"
                                        % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % { 
+                    command = "lcg-del -a lfn:%(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % {
                         "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString }
                     os.system( command )
                 else :
                     raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz on the GRID"
-                                                  % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+                                                           % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
             else :
                 raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz on the GRID"
-                                              % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+                                                       % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
 
 
         # check if the histogram file already exists
@@ -1190,10 +1190,10 @@ class SubmitCluSearch( SubmitBase ):
                     os.system( command )
                 else :
                     raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-histo.root on the GRID"
-                                                  % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
+                                                           % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
             else :
                 raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-histo.root on the GRID"
-                                              % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
+                                                       % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
     ## Execute all GRID
     #
     def executeAllGRID( self, index, runString ) :
@@ -1300,7 +1300,7 @@ class SubmitCluSearch( SubmitBase ):
 
 
     ## Check the existence of the pedestal file
-    # 
+    #
     # Differently from the check input and output methods, this is done
     # once only at the very beginning before entering in the loop on runs.
     #
@@ -1311,7 +1311,7 @@ class SubmitCluSearch( SubmitBase ):
         # run123456-ped-db.slcio
         self._pedeFilename = "run%(run)s-ped-db.slcio" % { "run": self._pedeString }
 
-        # where to check, depends from the execution mode! 
+        # where to check, depends from the execution mode!
 
         if self._option.execution == "all-local":
             self.checkPedestalFileLocally()
