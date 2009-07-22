@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.41 2009-07-15 17:21:28 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.42 2009-07-22 17:26:09 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -137,34 +137,34 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
                               "-> FixedFrame: for cluster with a given size",
                               _zsClusteringAlgo, string(EUTELESCOPE::SPARSECLUSTER));
 
-  registerProcessorParameter ("ClusterSizeX",
+  registerProcessorParameter ("FFClusterSizeX",
                               "Maximum allowed cluster size along x (only odd numbers)",
-                              _xClusterSize, static_cast<int> (5));
+                              _ffXClusterSize, static_cast<int> (5));
 
-  registerProcessorParameter ("ClusterSizeY",
+  registerProcessorParameter ("FFClusterSizeY",
                               "Maximum allowed cluster size along y (only odd numbers)",
-                              _yClusterSize, static_cast<int> (5));
+                              _ffYClusterSize, static_cast<int> (5));
 
-  registerProcessorParameter ("SeedPixelCut",
+  registerProcessorParameter ("FFSeedCut",
                               "Threshold in SNR for seed pixel identification",
-                              _seedPixelCut, static_cast<float> (4.5));
+                              _ffSeedCut, static_cast<float> (4.5));
 
-  registerProcessorParameter ("ClusterCut",
+  registerProcessorParameter ("FFClusterCut",
                               "Threshold in SNR for cluster identification",
-                              _clusterCut, static_cast<float> (3.0));
+                              _ffClusterCut, static_cast<float> (3.0));
 
   registerProcessorParameter("HistoInfoFileName", "This is the name of the histogram information file",
                              _histoInfoFileName, string( "histoinfo.xml" ) );
 
 
-  registerProcessorParameter("ZSSeedCut","Threshold in SNR for seed pixel contained in ZS data",
-                             _zsSeedCut, static_cast<float > (4.5));
+  registerProcessorParameter("SparseSeedCut","Threshold in SNR for seed pixel contained in ZS data",
+                             _sparseSeedCut, static_cast<float > (4.5));
 
-  registerProcessorParameter("ZSClusterCut","Threshold in SNR for clusters contained in ZS data",
-                             _zsClusterCut, static_cast<float > (3.0) );
+  registerProcessorParameter("SparseClusterCut","Threshold in SNR for clusters contained in ZS data",
+                             _sparseClusterCut, static_cast<float > (3.0) );
 
-  registerProcessorParameter("MinDistance","Minimum distance between sparsified pixel ( touching == sqrt(2)) ",
-                             _minDistance, static_cast<float > (0.0 ) );
+  registerProcessorParameter("SparseMinDistance","Minimum distance between sparsified pixel ( touching == sqrt(2)) ",
+                             _sparseMinDistance, static_cast<float > (0.0 ) );
 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -201,17 +201,17 @@ void EUTelClusteringProcessor::init () {
   printParameters ();
 
   // in the case the FIXEDFRAME algorithm is selected, the check if
-  // the _xClusterSize and the _yClusterSize are odd numbers
+  // the _ffXClusterSize and the _ffYClusterSize are odd numbers
   if ( _nzsClusteringAlgo == EUTELESCOPE::FIXEDFRAME ) {
-    bool isZero = ( _xClusterSize <= 0 );
-    bool isEven = ( _xClusterSize % 2 == 0 );
+    bool isZero = ( _ffXClusterSize <= 0 );
+    bool isEven = ( _ffXClusterSize % 2 == 0 );
     if ( isZero || isEven ) {
-      throw InvalidParameterException("_xClusterSize has to be positive and odd");
+      throw InvalidParameterException("_ffXClusterSize has to be positive and odd");
     }
-    isZero = ( _yClusterSize <= 0 );
-    isEven = ( _yClusterSize % 2 == 0 );
+    isZero = ( _ffYClusterSize <= 0 );
+    isEven = ( _ffYClusterSize % 2 == 0 );
     if ( isZero || isEven ) {
-      throw InvalidParameterException("_yClusterSize has to be positive and odd");
+      throw InvalidParameterException("_ffYClusterSize has to be positive and odd");
     }
   }
 
@@ -536,7 +536,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
         int   index  = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
         float signal = sparsePixel->getSignal();
         dataVec[ index  ] = signal;
-        if (  ( signal  > _seedPixelCut * noise->getChargeValues()[ index ] ) &&
+        if (  ( signal  > _ffSeedCut * noise->getChargeValues()[ index ] ) &&
               ( status->getADCValues()[ index ] == EUTELESCOPE::GOODPIXEL ) ) {
           seedCandidateMap.insert ( make_pair ( signal, index ) );
           streamlog_out ( DEBUG1 ) << "Added pixel " << sparsePixel->getXCoord()
@@ -572,8 +572,8 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
           // start looping around the seed pixel. Remember that the seed
           // pixel has to stay in the center of cluster
           ClusterQuality cluQuality = kGoodCluster;
-          for (int yPixel = seedY - (_yClusterSize / 2); yPixel <= seedY + (_yClusterSize / 2); yPixel++) {
-            for (int xPixel =  seedX - (_xClusterSize / 2); xPixel <= seedX + (_xClusterSize / 2); xPixel++) {
+          for (int yPixel = seedY - (_ffYClusterSize / 2); yPixel <= seedY + (_ffYClusterSize / 2); yPixel++) {
+            for (int xPixel =  seedX - (_ffXClusterSize / 2); xPixel <= seedX + (_ffXClusterSize / 2); xPixel++) {
               // always check we are still within the sensor!!!
               if ( ( xPixel >= minX )  &&  ( xPixel <= maxX ) &&
                    ( yPixel >= minY )  &&  ( yPixel <= maxY ) ) {
@@ -615,7 +615,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
           }
           // at this point we have built the cluster candidate,
           // we need to validate it
-          if ( clusterCandidateSignal > _clusterCut * sqrt( clusterCandidateNoise2 ) ) {
+          if ( clusterCandidateSignal > _ffClusterCut * sqrt( clusterCandidateNoise2 ) ) {
             // the cluster candidate is a good cluster
             // mark all pixels belonging to the cluster as hit
             IntVec::iterator indexIter = clusterCandidateIndeces.begin();
@@ -628,8 +628,8 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
             idPulseEncoder["clusterID"]     = clusterID;
             idPulseEncoder["xSeed"]         = seedX;
             idPulseEncoder["ySeed"]         = seedY;
-            idPulseEncoder["xCluSize"]      = _xClusterSize;
-            idPulseEncoder["yCluSize"]      = _yClusterSize;
+            idPulseEncoder["xCluSize"]      = _ffXClusterSize;
+            idPulseEncoder["yCluSize"]      = _ffYClusterSize;
             idPulseEncoder["type"]          = static_cast<int>(kEUTelFFClusterImpl);
             idPulseEncoder.setCellID(pulse);
 
@@ -639,8 +639,8 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
             idClusterEncoder["clusterID"]     = clusterID;
             idClusterEncoder["xSeed"]         = seedX;
             idClusterEncoder["ySeed"]         = seedY;
-            idClusterEncoder["xCluSize"]      = _xClusterSize;
-            idClusterEncoder["yCluSize"]      = _yClusterSize;
+            idClusterEncoder["xCluSize"]      = _ffXClusterSize;
+            idClusterEncoder["yCluSize"]      = _ffYClusterSize;
             idClusterEncoder["quality"]       = static_cast<int>(cluQuality);
             idClusterEncoder.setCellID(cluster);
 
@@ -768,7 +768,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
                                << sparseData->size() << " pixels " << endl;
 
       // get from the sparse data the list of neighboring pixels
-      list<list< unsigned int> > listOfList = sparseData->findNeighborPixels( _minDistance );
+      list<list< unsigned int> > listOfList = sparseData->findNeighborPixels( _sparseMinDistance );
 
       // prepare a vector to store the noise values
       vector<float > noiseValueVec;
@@ -808,8 +808,8 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
         sparseCluster->setNoiseValues( noiseValueVec );
 
         // verify if the cluster candidates can become a good cluster
-        if ( ( sparseCluster->getSeedSNR() >= _zsSeedCut ) &&
-             ( sparseCluster->getClusterSNR() >= _zsClusterCut ) ) {
+        if ( ( sparseCluster->getSeedSNR() >= _sparseSeedCut ) &&
+             ( sparseCluster->getClusterSNR() >= _sparseClusterCut ) ) {
 
           // ok good cluster....
           // set the ID for this zsCluster
@@ -958,7 +958,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
                                << sparseData->size() << " pixels " << endl;
 
       // get from the sparse data the list of neighboring pixels
-      list<list< unsigned int> > listOfList = sparseData->findNeighborPixels( _minDistance );
+      list<list< unsigned int> > listOfList = sparseData->findNeighborPixels( _sparseMinDistance );
 
       // prepare a vector to store the noise values
       vector<float > noiseValueVec;
@@ -997,8 +997,8 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
         sparseCluster->setNoiseValues( noiseValueVec );
 
         // verify if the cluster candidates can become a good cluster
-        if ( ( sparseCluster->getSeedSNR() >= _zsSeedCut ) &&
-             ( sparseCluster->getClusterSNR() >= _zsClusterCut ) ) {
+        if ( ( sparseCluster->getSeedSNR() >= _sparseSeedCut ) &&
+             ( sparseCluster->getClusterSNR() >= _sparseClusterCut ) ) {
 
 
           // ok good cluster....
@@ -1185,7 +1185,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 
     for (unsigned int iPixel = 0; iPixel < nzsData->getChargeValues().size(); iPixel++) {
       if (status->getADCValues()[iPixel] == EUTELESCOPE::GOODPIXEL) {
-        if ( nzsData->getChargeValues()[iPixel] > _seedPixelCut * noise->getChargeValues()[iPixel]) {
+        if ( nzsData->getChargeValues()[iPixel] > _ffSeedCut * noise->getChargeValues()[iPixel]) {
           _seedCandidateMap.insert(make_pair( nzsData->getChargeValues()[iPixel], iPixel));
         }
       }
@@ -1220,8 +1220,8 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
           // start looping around the seed pixel. Remember that the seed
           // pixel has to stay in the center of cluster
           ClusterQuality cluQuality = kGoodCluster;
-          for (int yPixel = seedY - (_yClusterSize / 2); yPixel <= seedY + (_yClusterSize / 2); yPixel++) {
-            for (int xPixel =  seedX - (_xClusterSize / 2); xPixel <= seedX + (_xClusterSize / 2); xPixel++) {
+          for (int yPixel = seedY - (_ffYClusterSize / 2); yPixel <= seedY + (_ffYClusterSize / 2); yPixel++) {
+            for (int xPixel =  seedX - (_ffXClusterSize / 2); xPixel <= seedX + (_ffXClusterSize / 2); xPixel++) {
               // always check we are still within the sensor!!!
               if ( ( xPixel >= minX )  &&  ( xPixel <= maxX ) &&
                    ( yPixel >= minY )  &&  ( yPixel <= maxY ) ) {
@@ -1261,7 +1261,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 
           // at this point we have built the cluster candidate,
           // we need to validate it
-          if ( clusterCandidateSignal > _clusterCut * sqrt(clusterCandidateNoise2) ) {
+          if ( clusterCandidateSignal > _ffClusterCut * sqrt(clusterCandidateNoise2) ) {
             // the cluster candidate is a good cluster
             // mark all pixels belonging to the cluster as hit
             IntVec::iterator indexIter = clusterCandidateIndeces.begin();
@@ -1274,8 +1274,8 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
             idPulseEncoder["clusterID"]     = clusterCounter;
             idPulseEncoder["xSeed"]         = seedX;
             idPulseEncoder["ySeed"]         = seedY;
-            idPulseEncoder["xCluSize"]      = _xClusterSize;
-            idPulseEncoder["yCluSize"]      = _yClusterSize;
+            idPulseEncoder["xCluSize"]      = _ffXClusterSize;
+            idPulseEncoder["yCluSize"]      = _ffYClusterSize;
             idPulseEncoder["type"]          = static_cast<int>(kEUTelFFClusterImpl);
             idPulseEncoder.setCellID(pulse);
 
@@ -1286,8 +1286,8 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
             idClusterEncoder["clusterID"]     = clusterCounter;
             idClusterEncoder["xSeed"]         = seedX;
             idClusterEncoder["ySeed"]         = seedY;
-            idClusterEncoder["xCluSize"]      = _xClusterSize;
-            idClusterEncoder["yCluSize"]      = _yClusterSize;
+            idClusterEncoder["xCluSize"]      = _ffXClusterSize;
+            idClusterEncoder["yCluSize"]      = _ffYClusterSize;
             idClusterEncoder["quality"]       = static_cast<int>(cluQuality);
             idClusterEncoder.setCellID(cluster);
 
@@ -1522,8 +1522,8 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 
       vector<float > noiseValues;
       if ( type == kEUTelFFClusterImpl ) {
-        for ( int yPixel = ySeed - ( _yClusterSize / 2 ); yPixel <= ySeed + ( _yClusterSize / 2 ); yPixel++ ) {
-          for ( int xPixel = xSeed - ( _xClusterSize / 2 ); xPixel <= xSeed + ( _xClusterSize / 2 ); xPixel++ ) {
+        for ( int yPixel = ySeed - ( _ffYClusterSize / 2 ); yPixel <= ySeed + ( _ffYClusterSize / 2 ); yPixel++ ) {
+          for ( int xPixel = xSeed - ( _ffXClusterSize / 2 ); xPixel <= xSeed + ( _ffXClusterSize / 2 ); xPixel++ ) {
             // always check we are still within the sensor!!!
             if ( ( xPixel >= minX )  &&  ( xPixel <= maxX ) &&
                  ( yPixel >= minY )  &&  ( yPixel <= maxY ) ) {

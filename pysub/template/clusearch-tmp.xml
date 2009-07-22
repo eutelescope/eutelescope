@@ -11,7 +11,7 @@ Steering file template for the pysub framework
 ==> clusearch-tmp.xml <===
 
 Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-Version: $Id: clusearch-tmp.xml,v 1.5 2009-07-19 15:12:28 bulgheroni Exp $
+Version: $Id: clusearch-tmp.xml,v 1.6 2009-07-22 17:26:09 bulgheroni Exp $
 ==========================================================================================
 
 -->
@@ -190,23 +190,23 @@ Version: $Id: clusearch-tmp.xml,v 1.5 2009-07-19 15:12:28 bulgheroni Exp $
         FIXED FRAME ( for both NZS and ZS )
     -->
     <!--Threshold in SNR for seed pixel identification-->
-    <parameter name="SeedPixelCut" type="float" value="3.5"/>
+    <parameter name="FFSeedCut" type="float" value="3.5"/>
     <!--Threshold in SNR for cluster identification-->
-    <parameter name="ClusterCut" type="float" value="2.5"/>
+    <parameter name="FFClusterCut" type="float" value="2.5"/>
     <!--Maximum allowed cluster size along x (only odd numbers)-->
-    <parameter name="ClusterSizeX" type="int" value="3"/>
+    <parameter name="FFClusterSizeX" type="int" value="3"/>
     <!--Maximum allowed cluster size along y (only odd numbers)-->
-    <parameter name="ClusterSizeY" type="int" value="3"/>
+    <parameter name="FFClusterSizeY" type="int" value="3"/>
 
     <!--
         SPARSECLUSTER and SPARSECLUSTER2 (use with care)
     -->
     <!--Threshold in SNR for clusters contained in ZS data-->
-    <parameter name="ZSClusterCut" type="float" value="2.5"/>
+    <parameter name="SparseClusterCut" type="float" value="2.5"/>
     <!--Threshold in SNR for seed pixel contained in ZS data-->
-    <parameter name="ZSSeedCut" type="float" value="3.5"/>
+    <parameter name="SparseSeedCut" type="float" value="3.5"/>
     <!--Minimum distance between sparsified pixel ( touching == sqrt(2)) -->
-    <parameter name="MinDistance" type="float" value="0"/>
+    <parameter name="SparseMinDistance" type="float" value="0"/>
 
     <!--
         HISTOGRAMMING

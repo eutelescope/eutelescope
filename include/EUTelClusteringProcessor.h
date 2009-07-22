@@ -142,7 +142,7 @@ namespace eutelescope {
    *  the GEAR description.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.21 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.22 2009-07-22 17:26:09 bulgheroni Exp $
    *
    */
 
@@ -195,7 +195,7 @@ namespace eutelescope {
      *  ProcessMgr
      */
     virtual void processEvent (LCEvent * evt);
-    
+
     //! Modify event method
     /*! Actually don't used
      *
@@ -482,7 +482,7 @@ namespace eutelescope {
      *  cluster can have along x. It has to be an odd number since the
      *  seed pixel has to lay in the cluster center.
      */
-    int _xClusterSize;
+    int _ffXClusterSize;
 
     //! Cluster size along y in pixel
     /*! This parameter is used in the case the _clusteringAlgo is set
@@ -490,46 +490,51 @@ namespace eutelescope {
      *  cluster can have along y. It has to be an odd number since the
      *  seed pixel has to lay in the cluster center.
      */
-    int _yClusterSize;
+    int _ffYClusterSize;
 
     //! Threshold for seed pixel identification
     /*! This float number represents the threshold in SNR units for
-     *  the identification of seed pixels. All pixels passing this
-     *  threshold are considered seed pixel candidates and added to
-     *  the candidate map. They are eventually removed from the map,
-     *  if they are found to wing pixels surrounding a higher seed
-     *  pixel.
+     *  the identification of seed pixels for Fixed Frame
+     *  Algorithm. All pixels passing this threshold are considered
+     *  seed pixel candidates and added to the candidate map. They are
+     *  eventually removed from the map, if they are found to wing
+     *  pixels surrounding a higher seed pixel.
      */
-    float _seedPixelCut;
+    float _ffSeedCut;
 
-    //! Threshold for seed pixel in ZS cluster
+    //! Threshold for seed pixel in SparseCluster
     /*! The zero suppress reclustering algorithm may need a threshold
      *  for seed pixel SNR. To keep the framework as general as
      *  possible this value is different from the raw mode clustering
-     *  threshold.
+     *  threshold. Used only with EUTELESCOPE::SPARSECLUSTER and
+     *  EUTELESCOPE::SPARSECLUSTER2.
      */
-    float _zsSeedCut;
+    float _sparseSeedCut;
 
     //! Threshold for cluster identification
     /*! This float number represents the threshold in SNR units for
-     *  the cluster identification. Once a cluster candidate is built
-     *  centered around its seed, to be considered a real cluster the
-     *  total SNR has to pass this cluster threshold.
+     *  the cluster identification (Used only with Fixed Frame
+     *  Algorithm). Once a cluster candidate is built centered around
+     *  its seed, to be considered a real cluster the total SNR has to
+     *  pass this cluster threshold.
      */
-    float _clusterCut;
+    float _ffClusterCut;
 
-    //! Threshold for cluster SNR in ZS data
+    //! Threshold for cluster SNR in SparseCluster
     /*! This value is used to accept clusters coming from ZS data. To
      *  keep the framework as general as possible this variable is
-     *  kept different from the corresponding rawmode one.
+     *  kept different from the corresponding rawmode one. Used only
+     *  with EUTELESCOPE::SPARSECLUSTER and
+     *  EUTELESCOPE::SPARSECLUSTER2.
      */
-    float _zsClusterCut;
+    float _sparseClusterCut;
 
-    //! Minimum distance of neighbor pixels
+    //! Minimum distance of neighbor pixels in SparseCluster
     /*! ZS pixel reclustering may need a minimum distance parameter to
-     *  identify "close" pixels.
+     *  identify "close" pixels. Used only with
+     *  EUTELESCOPE::SPARSECLUSTER and EUTELESCOPE::SPARSECLUSTER2.
      */
-    float _minDistance;
+    float _sparseMinDistance;
 
     //! Current event number.
     /*! This number is used to store the current event number NOTE that
@@ -562,7 +567,7 @@ namespace eutelescope {
     std::map<float, unsigned int> _seedCandidateMap;
 
     //! Total cluster found
-    /*! This is a map correlating the sensorID number and the 
+    /*! This is a map correlating the sensorID number and the
      *  total number of clusters found on that sensor.
      *  The content of this map is show during end().
      */
