@@ -88,7 +88,7 @@ namespace eutelescope {
    *   @author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
    *   @author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
    *   @author Yulia Furletova, Uni-Bonn <mailto:yulia@mail.cern.ch>
-   *   @version $Id: EUTelNativeReader.h,v 1.12 2009-07-22 21:24:23 bulgheroni Exp $
+   *   @version $Id: EUTelNativeReader.h,v 1.13 2009-07-23 19:46:40 bulgheroni Exp $
    *
    */
   class EUTelNativeReader : public marlin::DataSourceProcessor    {
@@ -144,7 +144,7 @@ namespace eutelescope {
      *
      *  @param eore The eudaq event contaning the EORE
      */
-    void processEORE( eudaq::Event * eore );
+    void processEORE( const eudaq::DetectorEvent & eore );
 
 
     //! Process TLU data event
