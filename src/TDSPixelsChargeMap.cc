@@ -431,7 +431,7 @@ unsigned long int TDSPixelsChargeMap::getPixelIndexAlongL(type_PixelID pixID)
     {
       return pixID/tenTo10;
     }
-}  
+}
 
 
 unsigned long int TDSPixelsChargeMap::getPixelIndexAlongW(type_PixelID pixID)
@@ -445,7 +445,7 @@ unsigned long int TDSPixelsChargeMap::getPixelIndexAlongW(type_PixelID pixID)
     {
       return pixID%tenTo10;
     }
-}  
+}
 
 
 double TDSPixelsChargeMap::getPixelCoordL(unsigned long int indexAlongL)
@@ -459,7 +459,7 @@ double TDSPixelsChargeMap::getPixelCoordL(unsigned long int indexAlongL)
     {
       return ((double)(indexAlongL)+0.5)*pixelLength + firstPixelCornerCoordL;
     }
-}  
+}
 
 
 double TDSPixelsChargeMap::getPixelCoordL(type_PixelID pixID)
@@ -473,7 +473,7 @@ double TDSPixelsChargeMap::getPixelCoordL(type_PixelID pixID)
     {
       return ((double)(pixID/tenTo10)+0.5)*pixelLength + firstPixelCornerCoordL;
     }
-}  
+}
 
 
 double TDSPixelsChargeMap::getPixelCoordW(unsigned long int indexAlongW)
@@ -487,7 +487,7 @@ double TDSPixelsChargeMap::getPixelCoordW(unsigned long int indexAlongW)
     {
       return ((double)(indexAlongW)+0.5)*pixelWidth + firstPixelCornerCoordW;
     }
-}  
+}
 
 
 double TDSPixelsChargeMap::getPixelCoordW(type_PixelID pixID)
@@ -501,7 +501,7 @@ double TDSPixelsChargeMap::getPixelCoordW(type_PixelID pixID)
     {
       return ((double)(pixID%tenTo10)+0.5)*pixelWidth + firstPixelCornerCoordW;
     }
-}  
+}
 
 
 type_PixelID TDSPixelsChargeMap::getPixelID_maxDeposit()
@@ -510,7 +510,7 @@ type_PixelID TDSPixelsChargeMap::getPixelID_maxDeposit()
 
   i_maxDep = max_element(pixelsChargeMap.begin(), pixelsChargeMap.end(), TDSPixelsChargeMap::smallerDeposit);
 
-  return i_maxDep != pixelsChargeMap.end() ? i_maxDep->first : -1000;
+  return i_maxDep->first;
 }
 
 
@@ -520,7 +520,7 @@ type_PixelID TDSPixelsChargeMap::getPixelID_maxCharge()
 
   i_maxCharge = max_element(pixelsChargeMap.begin(), pixelsChargeMap.end(), TDSPixelsChargeMap::smallerCharge);
 
-  return i_maxCharge != pixelsChargeMap.end() ? i_maxCharge->first : -1000;
+  return i_maxCharge->first ;
 }
 
 
@@ -530,7 +530,7 @@ type_PixelID TDSPixelsChargeMap::getPixelID_minCharge()
 
   i_minCharge = min_element(pixelsChargeMap.begin(), pixelsChargeMap.end(), TDSPixelsChargeMap::smallerCharge);
 
-  return i_minCharge != pixelsChargeMap.end() ? i_minCharge->first : -1000;
+  return i_minCharge->first ;
 }
 
 
@@ -610,12 +610,12 @@ double TDSPixelsChargeMap::scaleCharge(double scaleFactor)
      double varCharge;
      if (charge > 1000.)
        { // assume Gaussian
-	 double sigma = std::sqrt(charge);
-	 varCharge = double(CLHEP::RandGauss::shoot(charge,sigma));
+         double sigma = std::sqrt(charge);
+         varCharge = double(CLHEP::RandGauss::shoot(charge,sigma));
        }
      else
        { // assume Poisson
-	 varCharge = double(CLHEP::RandPoisson::shoot(charge));
+         varCharge = double(CLHEP::RandPoisson::shoot(charge));
        }
 
      if ( i->second < 0.) varCharge = -varCharge;
@@ -624,8 +624,8 @@ double TDSPixelsChargeMap::scaleCharge(double scaleFactor)
         pixelsChargeMap.erase(i++);
       else
         {
-	  i->second = varCharge;
-	  i++;
+          i->second = varCharge;
+          i++;
         }
     }
 
@@ -641,11 +641,11 @@ void TDSPixelsChargeMap::applyGain(double gain, double gainVariation, double noi
   for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
     {
       double charge =  i->second;
-      
+
       double varGain = double(CLHEP::RandGauss::shoot(gain,gainVariation));
-      
+
       double varNoise = double(CLHEP::RandGauss::shoot(offset,noise));
-      
+
       i->second = varGain*charge + varNoise;
     }
 
@@ -668,11 +668,11 @@ void TDSPixelsChargeMap::applyThresholdCut(double threshold)
     if ( (threshold > 0 && charge < threshold) ||
          (threshold < 0 && charge > threshold) )
       {
-	pixelsChargeMap.erase(i++);
+        pixelsChargeMap.erase(i++);
       }
     else
       {
-	i++;
+        i++;
       }
     }
 
@@ -704,7 +704,7 @@ vector<TDSPixel> TDSPixelsChargeMap::getVectorOfPixels()
   // Sort pixels in descending order.
   // Use for example reverse(v.begin(), v.end()) to have ascending ordering.
   sort(vectorOfPixels.begin(), vectorOfPixels.end(), TDSPixel::greaterCharge);
-  
+
   return vectorOfPixels;
 }
 
@@ -736,7 +736,7 @@ TDSPrecluster TDSPixelsChargeMap::getPrecluster(unsigned long int seedIndexAlong
     }
 
   TDSPrecluster thePrecluster;
-  
+
   // Fill precluster
   thePrecluster.pixelL = seedIndexAlongL;
   thePrecluster.pixelW = seedIndexAlongW;
@@ -767,34 +767,34 @@ TDSPrecluster TDSPixelsChargeMap::getPrecluster(unsigned long int seedIndexAlong
   // For center of charge calculations
   double tempL = 0., tempW = 0.;
   double preclusterCharge = 0., tempCharge;
-      
+
   for (l=lmin; l<=lmax; l++)
     {
       for (w=wmin; w<=wmax; w++)
-	{
-	  if ( isPixelStored(l,w) )
-	    {
-	      tempCharge = getPixelCharge(l,w);
-	      preclusterCharge += tempCharge;
-	      tempL += tempCharge * getPixelCoordL(l);
-	      tempW += tempCharge * getPixelCoordW(w);
-	      
-	      // Fill vector of pixels
-	      thePrecluster.vectorOfPixels.push_back( TDSPixel( l, w, getPixelCoordL(l), getPixelCoordW(w), getPixelCharge(l,w) ) );
+        {
+          if ( isPixelStored(l,w) )
+            {
+              tempCharge = getPixelCharge(l,w);
+              preclusterCharge += tempCharge;
+              tempL += tempCharge * getPixelCoordL(l);
+              tempW += tempCharge * getPixelCoordW(w);
 
-	      if ( removePixels ) erasePixel(l,w);
-	      
-	    }
-	} // for w
+              // Fill vector of pixels
+              thePrecluster.vectorOfPixels.push_back( TDSPixel( l, w, getPixelCoordL(l), getPixelCoordW(w), getPixelCharge(l,w) ) );
+
+              if ( removePixels ) erasePixel(l,w);
+
+            }
+        } // for w
     } // for l
 
   if ( thePrecluster.vectorOfPixels.size() != 0 )
     {
       thePrecluster.empty = false;
-  
+
       thePrecluster.coordL_chargeCenter = tempL / preclusterCharge;
       thePrecluster.coordW_chargeCenter = tempW / preclusterCharge;
-  
+
       // Sort pixels in descending order.
       // Use for example reverse(v.begin(), v.end()) to have ascending ordering.
       sort(thePrecluster.vectorOfPixels.begin(), thePrecluster.vectorOfPixels.end(), TDSPixel::greaterCharge);

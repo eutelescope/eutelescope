@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Aleksander Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version $Id: EUTelMAPSdigi.cc,v 1.6 2009-07-15 17:21:28 bulgheroni Exp $
+// Version $Id: EUTelMAPSdigi.cc,v 1.7 2009-07-23 12:35:15 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -283,9 +283,9 @@ void EUTelMAPSdigi::init() {
   exit(-1);
     }
 
-  
+
   // Check if correct number of digitization parameters is given
- 
+
   unsigned int nTelPlanes = _siPlanesParameters->getSiPlanesNumber();
 
   if(_DigiLayerIDs.size()>0 && _DigiLayerIDs.size()!=nTelPlanes)
@@ -691,7 +691,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
         streamlog_out( DEBUG4 ) << "Track path inside sensor reduced by factor " << pathFrac << endl;
 
       if (pathFrac <= 0.)
-        streamlog_out( WARNING4 ) << "Track path outside sensor !? " << endl 
+        streamlog_out( WARNING4 ) << "Track path outside sensor !? " << endl
                                   << "Position in local frame at X = " << _localPosition[0]
                                   <<  " Y = " << _localPosition[1]
                                   <<  " Z = " << _localPosition[2] << endl;
@@ -701,7 +701,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       //
 
       if(_mokkaPath > 0 && _mokkaDeposit > 0.)
-	{
+        {
         // Convert Mokka deposit [GeV] to charge in units of elementary
         // charge
 
@@ -721,7 +721,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
         if (debug)
           streamlog_out( DEBUG4 ) << "Adding Mokka deposit of " << _mokkaDeposit <<  endl;
-	}
+        }
     }
     // end of loop over SimTrackerHit collection
 
@@ -856,7 +856,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
           // the sparsePixel
           sparsePixel->setXCoord( _pixelIterator->getIndexAlongL() );
           sparsePixel->setYCoord( _pixelIterator->getIndexAlongW() );
-          sparsePixel->setSignal( _pixelIterator->getCharge() );
+          sparsePixel->setSignal( static_cast< int > ( _pixelIterator->getCharge()) );
 
           // add the sparse pixel to the sparse frame
           sparseFrame->addSparsePixel( sparsePixel.get() );
@@ -903,31 +903,31 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
         if(_fillChargeProfiles && nPixel > 1 )
           {
-	    // Maps for pixel sorting in abs(charge) and in
-	    // abs(charge)/distance_to_seed^2 
+            // Maps for pixel sorting in abs(charge) and in
+            // abs(charge)/distance_to_seed^2
 
-	    std::multimap<double,double, std::greater<double> > pixelAbsMap;
-	    std::multimap<double,double, std::greater<double> > pixelWeightedMap;
+            std::multimap<double,double, std::greater<double> > pixelAbsMap;
+            std::multimap<double,double, std::greater<double> > pixelWeightedMap;
 
 
-	    std::multimap<double,double, std::greater<double> >::iterator pixelAbsIterator;
-	    std::multimap<double,double, std::greater<double> >::iterator pixelWeightedIterator;
+            std::multimap<double,double, std::greater<double> >::iterator pixelAbsIterator;
+            std::multimap<double,double, std::greater<double> >::iterator pixelWeightedIterator;
 
 
             int dLmax = _integMaxNumberPixelsAlongL/2;
             int dWmax = _integMaxNumberPixelsAlongW/2;
 
-	    // In the new TDS version
-	    // TDSPixelsChargeMap::getVectorOfPixels() returns  sorted
-	    // vector of pixels, starting from the highest deposit -
-	    // it can be used as a seed pixel (assuming we consider
-	    // one cluster only)
+            // In the new TDS version
+            // TDSPixelsChargeMap::getVectorOfPixels() returns  sorted
+            // vector of pixels, starting from the highest deposit -
+            // it can be used as a seed pixel (assuming we consider
+            // one cluster only)
 
             int seedL =   _vectorOfPixels[0].getIndexAlongL();
             int seedW =   _vectorOfPixels[0].getIndexAlongW();
 
             double clusterCharge=0.;
-            int intClusterCharge=0.;
+            int intClusterCharge=0;
 
             // store cluster pixels in maps for sorting (maps are
             // sorted by the key value)
@@ -941,11 +941,11 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
                    pixelW > seedW+dWmax || pixelW < seedW-dWmax )
                   _pixelIterator++;
                 else
-		  {
+                  {
                    double dist = (pixelL-seedL)*(pixelL-seedL)+(pixelW-seedW)*(pixelW-seedW);
                    double charge = _pixelIterator->getCharge();
 
-		   // ADC digitization simulation
+                   // ADC digitization simulation
 
                    int icharge = (int) charge;
                    if(charge<0.) icharge--;
@@ -953,37 +953,37 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
                    // double absCharge = fabs(charge);
                    double absCharge = abs(icharge);
 
-		   double weight = absCharge;
+                   double weight = absCharge;
                    if(dist>0.5)weight/=sqrt(dist);
 
-		   pixelAbsMap.insert( make_pair( absCharge, (double) icharge));
-		   pixelWeightedMap.insert( make_pair( weight, (double) icharge));
-                  
+                   pixelAbsMap.insert( make_pair( absCharge, (double) icharge));
+                   pixelWeightedMap.insert( make_pair( weight, (double) icharge));
+
                    clusterCharge+=charge;
                    intClusterCharge+=icharge;
                    _pixelIterator++;
-		  }
+                  }
               }
 
 
             // fill charge profiles (maps are sorted by definition!)
 
            int iPixel=0;
-           for(pixelAbsIterator=pixelAbsMap.begin(); 
+           for(pixelAbsIterator=pixelAbsMap.begin();
                pixelAbsIterator != pixelAbsMap.end(); pixelAbsIterator++)
               {
               fillProf1D(_chargeProfileName,layerIndex,iPixel+0.5, pixelAbsIterator->second);
               iPixel++;
-	      }
+              }
 
 
            iPixel=0;
-           for(pixelWeightedIterator=pixelWeightedMap.begin(); 
+           for(pixelWeightedIterator=pixelWeightedMap.begin();
                pixelWeightedIterator != pixelWeightedMap.end(); pixelWeightedIterator++)
               {
               fillProf1D(_weightedProfileName,layerIndex,iPixel+0.5, pixelWeightedIterator->second);
               iPixel++;
-	      }
+              }
 
 
             // Test output at the end of processing
@@ -991,7 +991,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
             if(debug)
                 streamlog_out( DEBUG4 ) <<  "Seed at L = " << seedL << " W = " << seedW
                                << ", " << pixelAbsMap.size() << " pixels in cluster " << endl
-                               << "Total cluster charge: " << clusterCharge 
+                               << "Total cluster charge: " << clusterCharge
                                << ", integer cluster charge: " << intClusterCharge << endl;
 
           }
@@ -1300,8 +1300,8 @@ void EUTelMAPSdigi::bookHistos() {
       yMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( iDet ) +
                               ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( iDet )) );
 
-      xNBin = 400.;
-      yNBin = 400.;
+      xNBin = 400;
+      yNBin = 400;
 
       bookHist2D(_hitHistoTelescopeName,"Hit map in the telescope frame of reference",
                  iDet,xNBin, xMin, xMax, yNBin, yMin, yMax );
@@ -1419,7 +1419,7 @@ double EUTelMAPSdigi::CheckPathLimits()
       _mokkaPath=0.;
       return 0.;
     }
-       
+
   // Apply corrections to track length and track position
 
   double midShift=(pathEnd+pathStart-1.)/2.;
