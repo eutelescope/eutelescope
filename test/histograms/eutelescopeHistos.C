@@ -3714,4 +3714,6 @@ TDirectoryFile * checkFolder( vector< string >& candidateNames, TFile * inputFil
     return NULL;
   }
 
+
+  return NULL;
 }
