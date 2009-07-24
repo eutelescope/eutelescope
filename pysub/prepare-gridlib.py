@@ -13,8 +13,8 @@ import sys
 def main() :
 
     usage = "usage: %prog [options] additional-files"
-    cvsVersion = "$Revision: 1.3 $"
-    version = "%prog version" +  cvsVersion[10:len(cvsVersion)-1] 
+    cvsVersion = "$Revision: 1.4 $"
+    version = "%prog version" +  cvsVersion[10:len(cvsVersion)-1]
     parser = OptionParser( usage = usage, version = version )
 
     parser.add_option( "-o", "--output", type="string", action="store", dest="output",
@@ -22,6 +22,9 @@ def main() :
 
     parser.add_option("-c", "--config-file", type="string", action="store", dest="config",
                       help="The configuration file")
+
+    parser.add_option("-v", "--verbose", action="store_true", dest="verbose",
+                      help="Make the script verbose")
 
     parser.set_defaults( output="gridlib.tar.gz" )
 
@@ -42,17 +45,21 @@ def main() :
         sys.exit( 1 )
 
     configParser = ConfigParser.SafeConfigParser()
-    configParser.read( configFile ) 
+    configParser.read( configFile )
 
 
     goodList = []
+    linkList = []
     fileList = configParser.items( "GRIDLibraryContent" )
     for key, file in fileList:
-        if not os.access( file, os.R_OK ):
-            print "Problem accessing file %(key)s = %(file)s " % { "key":key, "file":file }
-            sys.exit( 2 )
-        else :
-            goodList.append( file )
+        if len(glob.glob( file )) == 0:
+            print "Problem accessing file %(key)s = %(file)s. Skipping " % { "key":key, "file":file }
+        # in principle each file in the list maybe a glob
+        for file1 in glob.glob( file ):
+            if os.path.islink( file1 ):
+                linkList.append( file1 )
+            else :
+                goodList.append( file1 )
 
 
     for otherFile in args:
@@ -63,21 +70,32 @@ def main() :
             goodList.append( otherFile )
 
     tempDir = tempfile.mkdtemp()
+
+    # first copy the real file
     for goodFile in goodList :
         shutil.copy( goodFile, tempDir )
-        
+
+    # now copy the links
+    for link in linkList:
+        dest   = os.path.join( tempDir , os.path.basename ( link )  )
+        linkto = os.readlink( link )
+        os.symlink(linkto, dest)
+
+
     tarball = tarfile.open( options.output, "w:gz" )
- 
+
     for i in glob.glob( "%(dir)s/*" % { "dir": tempDir } ):
+        if options.verbose :
+            print "Adding %(i)s" % { "i": os.path.basename( i ) }
         tarball.add( i , os.path.basename( i ) )
 
     tarball.close()
     shutil.rmtree( tempDir )
-            
-    
+
+
 
 if __name__ == "__main__" :
     main()
-    
+
 
 
