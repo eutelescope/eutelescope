@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.24 2009-07-25 16:11:11 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.25 2009-07-25 16:23:56 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.24 $"
+    cvsVersion = "$Revision: 1.25 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -456,7 +456,7 @@ class SubmitPedestal( SubmitBase ):
 
         listOfFilesTBC = []
         if self._hasDUT:
-                        if self._option.dut_only:
+            if self._option.dut_only:
                 listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": self._dutSuffix } ) );
             else:
                 # it has the telescope, the DUT and the merged file
