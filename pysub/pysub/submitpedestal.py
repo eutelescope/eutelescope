@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.22 2009-06-20 10:45:01 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.23 2009-07-25 14:25:15 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.22 $"
+    cvsVersion = "$Revision: 1.23 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -133,7 +133,7 @@ class SubmitPedestal( SubmitBase ):
             self._logger.warning("Are you sure to continue? [y/n]")
             message = "--> "
             if self.askYesNo(prompt = message ) == True:
-                self._logger.info("User decide to continue removing input files")
+                self._logger.info("User decided to continue removing input files")
             else:
                 self._logger.info("Aborted by user")
                 sys.exit( 4 )
@@ -143,10 +143,28 @@ class SubmitPedestal( SubmitBase ):
             self._logger.warning("Are you sure to continue? [y/n]")
             message = "--> "
             if self.askYesNo(prompt = message ) == True:
-                self._logger.info("User decide to continue removing output files")
+                self._logger.info("User decided to continue removing output files")
             else:
                 self._logger.info("Aborted by user")
                 sys.exit( 4 )
+
+        # dut related stuff
+        if self._option.dut == None:
+            # no DUT analysis for this run
+            self._hasDUT = False
+        else:
+            self._hasDUT    = True
+            # remove the first "_", in case there is one
+            self._dutSuffix =  self._option.dut.lstrip( "_" )
+            if self._dutSuffix == "telescope":
+                self._logger.error( "Invalid DUT suffix. \"telescope\" cannot be used as DUT suffix")
+                sys.exit( 6 )
+            self._logger.info( "Doing simultaneous analysis of a %(dut)s DUT" % { "dut": self._dutSuffix } )
+
+        if self._option.dut_only and not self._hasDUT:
+            self._logger.error( "User asked for a DUT only submission without providing the DUT suffix.")
+            self._logger.error( "Please use --dut SUFFIX --dut-only" )
+            sys.exit( 5 )
 
 
     ## Execute method
@@ -306,7 +324,7 @@ class SubmitPedestal( SubmitBase ):
         self.checkInputFile( index, runString )
 
         # first generate the steering file
-        self._steeringFileName = self.generateSteeringFile( runString )
+        self.generateSteeringFile( runString )
 
         # prepare a separate file for logging the output of Marlin
         self._logFileName = "%(name)s-%(run)s.log" % { "name": self.name, "run" : runString }
@@ -351,7 +369,7 @@ class SubmitPedestal( SubmitBase ):
         self.checkInputFile( index, runString )
 
         #  generate the steering file
-        self._steeringFileName = self.generateSteeringFile( runString )
+        self.generateSteeringFile( runString )
 
         # prepare a separate file for logging the output of Marlin
         self._logFileName = "%(name)s-%(run)s.log" % { "name": self.name,"run" : runString }
@@ -609,7 +627,7 @@ class SubmitPedestal( SubmitBase ):
             filenametest = "%(name)s-%(run)s-test.tar.gz" % { "name": self.name,  "run" : runString }
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest,"file" : filename }
-            if os.system( command ) != 0 : 
+            if os.system( command ) != 0 :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, output, histogram, "GRID - Fail!"
                 self._logger.error( "Problem with the verification!" )
@@ -651,10 +669,45 @@ class SubmitPedestal( SubmitBase ):
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "OK", c, d, e, f
 
-
     ## Generate the steering file
-    def generateSteeringFile( self, runString  ) :
-        message = "Generating the steering file (%(name)s-%(run)s.xml) " % { "name": self.name, "run" : runString }
+    #
+    # This is behaving differently depending if the user wants to have 
+    # telescope only, telescope + DUT or DUT only
+    #
+    def generateSteeringFile( self, runString ) :
+
+        # this method is actually calling the generateSteeringFileExt
+        # which has the following prototype:
+        #
+        # generateSteeringFileExt( runString, isDUT, filenameSuffix, dutSuffix )
+
+        if self._hasDUT :
+
+            if self._option.dut_only :
+                self._steeringFileNameDUT = self.generateSteeringFileExt( runString, isDUT = True,
+                                              filenameSuffix = self._dutSuffix, dutSuffix = self._dutSuffix )
+
+            else :
+
+                self._steeringFileName = self.generateSteeringFileExt( runString, isDUT = False,
+                                              filenameSuffix = "telescope", dutSuffix = None )
+                self._steeringFileNameDUT = self.generateSteeringFileExt( runString, isDUT = True,
+                                              filenameSuffix = self._dutSuffix, dutSuffix = self._dutSuffix )
+
+        else :
+            self._steeringFileName =  self.generateSteeringFileExt( runString, isDUT = False, filenameSuffix = None, dutSuffix = None )
+
+    ## Generate the steering file for the telescope
+    def generateSteeringFileExt( self, runString, isDUT, filenameSuffix, dutSuffix  ) :
+
+        if isDUT :
+            message = "Generating the steering file (%(name)s-%(run)s-%(filenamesuffix)s.xml) " % { "name": self.name, "run" : runString, "filenamesuffix": filenameSuffix }
+        else :
+            if filenameSuffix == None:
+                message = "Generating the steering file (%(name)s-%(run)s.xml) " % { "name": self.name, "run" : runString }
+            else :
+                message = "Generating the steering file (%(name)s-%(run)s-%(filenamesuffix)s.xml) " % { "name": self.name, "run" : runString, "filenamesuffix": filenameSuffix }
+
         self._logger.info( message )
 
         steeringFileTemplate =  ""
@@ -678,6 +731,37 @@ class SubmitPedestal( SubmitBase ):
 
         # make all the changes
         actualSteeringString = templateSteeringString
+
+        if isDUT :
+
+            actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", dutSuffix )
+            actualSteeringString = actualSteeringString.replace( "@DUTHyphen@","-" )
+            actualSteeringString = actualSteeringString.replace( "@DUTUnderscore@", "_" )
+
+            if filenameSuffix == None:
+                actualSteeringString = actualSteeringString.replace( "@FilenameSuffix@", "" )
+                actualSteeringString = actualSteeringString.replace( "@FilenameHyphen@", "" )
+                actualSteeringString = actualSteeringString.replace( "@FilenameUnderscore@", "" )
+            else :
+                actualSteeringString = actualSteeringString.replace( "@FilenameSuffix@", filenameSuffix )
+                actualSteeringString = actualSteeringString.replace( "@FilenameHyphen@", "-" )
+                actualSteeringString = actualSteeringString.replace( "@FilenameUnderscore@", "_" )
+
+
+        else:
+            # in this case we simply have to remove the DUT related keywords
+            actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", "" )
+            actualSteeringString = actualSteeringString.replace( "@DUTHyphen@","" )
+            actualSteeringString = actualSteeringString.replace( "@DUTUnderscore@", "" )
+
+            if filenameSuffix == None:
+                actualSteeringString = actualSteeringString.replace( "@FilenameSuffix@", "" )
+                actualSteeringString = actualSteeringString.replace( "@FilenameHyphen@", "" )
+                actualSteeringString = actualSteeringString.replace( "@FilenameUnderscore@", "" )
+            else :
+                actualSteeringString = actualSteeringString.replace( "@FilenameSuffix@", filenameSuffix )
+                actualSteeringString = actualSteeringString.replace( "@FilenameHyphen@", "-" )
+                actualSteeringString = actualSteeringString.replace( "@FilenameUnderscore@", "_" )
 
         # replace the file paths
         #
@@ -749,7 +833,14 @@ class SubmitPedestal( SubmitBase ):
         actualSteeringString = actualSteeringString.replace("@RunNumber@", runString )
 
         # open the new steering file for writing
-        steeringFileName = "%(name)s-%(run)s.xml" % { "name": self.name, "run" : runString }
+        if isDUT :
+            steeringFileName = "%(name)s-%(run)s-%(dut)s.xml"  % { "name": self.name, "run" : runString, "dut": filenameSuffix }
+        else:
+            if filenameSuffix == None:
+                steeringFileName = "%(name)s-%(run)s.xml" % { "name": self.name, "run" : runString }
+            else: 
+                steeringFileName = "%(name)s-%(run)s-%(dut)s.xml"  % { "name": self.name, "run" : runString, "dut": filenameSuffix }
+
         actualSteeringFile = open( steeringFileName, "w" )
 
         # write the new steering file
@@ -770,23 +861,78 @@ class SubmitPedestal( SubmitBase ):
         if not os.path.exists( os.path.join( self._gearPath, self._gear_file )) :
             raise MissingGEARFileError(   os.path.join( self._gearPath, self._gear_file ) )
 
-        # do some tricks for having the logfile
-        logFile = open( self._logFileName, "w")
-        marlin  = popen2.Popen4( "Marlin %(steer)s" % { "steer": self._steeringFileName } )
-        while marlin.poll() == -1:
-            line = marlin.fromchild.readline()
-            print line.strip()
-            logFile.write( line )
+        returnValue = 0;
 
-        logFile.close()
-        returnValue = marlin.poll()
+        # first process the telescope pedestal
+        if not self._option.dut_only :
+
+            # do some tricks for having the logfile
+            logFile = open( self._logFileName, "w")
+            marlin  = popen2.Popen4( "Marlin %(steer)s" % { "steer": self._steeringFileName } )
+            while marlin.poll() == -1:
+                line = marlin.fromchild.readline()
+                print line.strip()
+                logFile.write( line )
+
+            logFile.close()
+            returnValue = returnValue + marlin.poll()
+
+        # now do the processing of the DUT
+        if self._hasDUT:
+
+            logFile = open( self._logFileName, "a" )
+            marlin  = popen2.Popen4( "Marlin %(steer)s" % { "steer": self._steeringFileNameDUT } )
+            while marlin.poll() == -1:
+                line = marlin.fromchild.readline()
+                print line.strip()
+                logFile.write( line )
+
+            logFile.close()
+            returnValue = returnValue + marlin.poll()
+
         if returnValue != 0:
             raise MarlinError( "", returnValue )
         else :
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, b, "OK", d, e, f
-            return returnValue
 
+        if self._hasDUT and not self._option.dut_only :
+            # it means that we have two histograms files and two db files.
+            try :
+                histoFilePath = self._configParser.get( "LOCAL", "LocalFolderPedestalHisto" )
+            except ConfigParser.NoOptionError :
+                histoFilePath = "histo"
+            dutHistoFile = os.path.join( histoFilePath, "run%(run)s-ped-%(dut)s-histo.root" % { "run" : runString, "dut" : self._dutSuffix } )
+            telHistoFile = os.path.join( histoFilePath, "run%(run)s-ped-%(dut)s-histo.root" % { "run" : runString, "dut" : "telescope" } )
+            totHistoFile = os.path.join( histoFilePath, "run%(run)s-ped-histo.root" % { "run" : runString } )
+
+            self._logger.info( "Merging the histogram files" )
+            command = "hadd -f %(tot)s %(tel)s %(dut)s" %{ "tot": totHistoFile, "tel": telHistoFile , "dut" : dutHistoFile  }
+            status, output = commands.getstatusoutput( command )
+            if self._option.verbose:
+                for line in output.splitlines():
+                    self._logger.info( line.strip() );
+
+            if status != 0:
+                self._logger.error( "Error merging the histogram files, try to do it manually...")
+
+            try :
+                dbFilePath = self._configParser.get( "LOCAL", "LocalFolderDBPede" )
+            except ConfigParser.NoOptionError :
+                dbFilePath = "histo"
+            dutDBFile = os.path.join( dbFilePath, "run%(run)s-ped-%(dut)s-db.slcio" % { "run" : runString, "dut" : self._dutSuffix } )
+            telDBFile = os.path.join( dbFilePath, "run%(run)s-ped-%(dut)s-db.slcio" % { "run" : runString, "dut" : "telescope" } )
+            totDBFile = os.path.join( dbFilePath, "run%(run)s-ped-db.slcio" % { "run" : runString } )
+
+            self._logger.info( "Merging the DB files" )
+            command = "pedestalmerge -o %(tot)s %(tel)s %(dut)s" %{ "tot": totDBFile, "tel": telDBFile , "dut" : dutDBFile  }
+            status, output = commands.getstatusoutput( command )
+            if self._option.verbose:
+                for line in output.splitlines():
+                    self._logger.info( line.strip() );
+
+            if status != 0 :
+                self._logger.error( "Error merging the DB files, try to do it manually..." )
 
 
     ## Check the output file
@@ -799,12 +945,26 @@ class SubmitPedestal( SubmitBase ):
             outputFilePath = self._configParser.get( "LOCAL", "LocalFolderDBPede" )
         except ConfigParser.NoOptionError :
             outputFilePath = "db"
-        outputFileName = "run%(run)s-ped-db.slcio" % { "run": runString }
-        if not os.access( os.path.join( outputFilePath , outputFileName) , os.R_OK ):
-            raise MissingOutputFileError( outputFileName )
+
+        listOfFilesTBC = [];
+        if self._hasDUT:
+            if self._option.dut_only:
+                listOfFilesTBC.append( os.path.join( outputFilePath, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": self._dutSuffix } ) );
+            else:
+                # it has the telescope, the DUT and the merged file
+                listOfFilesTBC.append( os.path.join( outputFilePath, "run%(run)s-ped-db.slcio" % { "run": runString } ) );
+                listOfFilesTBC.append( os.path.join( outputFilePath, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": self._dutSuffix } ) );
+                listOfFilesTBC.append( os.path.join( outputFilePath, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": "telescope" } ) );
         else :
-            run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, c, "OK", e, f
+            listOfFilesTBC.append( os.path.join( outputFilePath, "run%(run)s-ped-db.slcio" % { "run": runString } ) );
+
+        for file in listOfFilesTBC:
+            if not os.access( file , os.R_OK ):
+                raise MissingOutputFileError( file )
+            else :
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, b, c, "OK", e, f
+
 
     ## Check the histo file
     #
@@ -816,12 +976,25 @@ class SubmitPedestal( SubmitBase ):
             histoFilePath = self._configParser.get( "LOCAL", "LocalFolderPedestalHisto" )
         except ConfigParser.NoOptionError :
             histoFilePath = "histo"
-        histoFileName = "run%(run)s-ped-histo.root" % { "run": runString }
-        if not os.access( os.path.join( histoFilePath , histoFileName ) , os.R_OK ):
-            raise MissingHistogramFileError( histoFileName )
-        else:
-            run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, c, d, "OK", f
+
+        listOfFilesTBC = [];
+        if self._hasDUT:
+            if self._option.dut_only:
+                listOfFilesTBC.append( os.path.join( histoFilePath, "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": self._dutSuffix } ) );
+            else:
+                # it has the telescope, the DUT and the merged file
+                listOfFilesTBC.append( os.path.join( histoFilePath, "run%(run)s-ped-histo.root" % { "run": runString } ) );
+                listOfFilesTBC.append( os.path.join( histoFilePath, "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": self._dutSuffix } ) );
+                listOfFilesTBC.append( os.path.join( histoFilePath, "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": "telescope" } ) );
+        else :
+            listOfFilesTBC.append( os.path.join( histoFilePath, "run%(run)s-ped-histo.root" % { "run": runString } ) );
+
+        for file in listOfFilesTBC:
+            if not os.access( file , os.R_OK ):
+                raise MissingHistogramFileError( file )
+            else:
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, b, c, d, "OK", f
 
     ## Prepare the joboutput tarball
     def prepareTarball( self, runString ) :
@@ -865,7 +1038,8 @@ class SubmitPedestal( SubmitBase ):
                 histoFilePath = self._configParser.get( "LOCAL", "LocalFolderPedestalHisto" )
             except ConfigParser.NoOptionError :
                 histoFilePath = "histo"
-                listOfFiles.append( os.path.join( histoFilePath, "run%(run)s-ped-histo.root" % { "run": runString } ) )
+            for file in glob.glob( os.path.join( histoFilePath, "run%(run)s-ped-*histo.root" % { "run": runString } )):
+                listOfFiles.append( file )
 
         for file in listOfFiles :
             shutil.copy( file, destFolder )
@@ -941,9 +1115,8 @@ class SubmitPedestal( SubmitBase ):
             except ConfigParser.NoOptionError :
                 histoFilePath = "histo"
 
-            histoFile = "run%(run)s-ped-histo.root" % { "run": runString }
-            os.remove( os.path.join( histoFilePath, histoFile ) )
-
+            for file in glob.glob( os.path.join( histoFilePath, "run%(run)s-ped-histo.root" % { "run": runString } ) ):
+                os.remove( file )
 
     def end( self ) :
 
@@ -1139,7 +1312,7 @@ class SubmitPedestal( SubmitBase ):
         self.generateRunjobFile( index, runString )
 
         # don't forget to generate the steering file!
-        self._steeringFileName = self.generateSteeringFile( runString )
+        self.generateSteeringFile( runString )
 
         # finally ready to submit! Let's do it...!
         self.submitJDL( index, runString )
