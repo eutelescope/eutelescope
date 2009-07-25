@@ -31,6 +31,8 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
   folderNames.push_back( dutFolderName );
   dutFolderName = pedeProcessorFolderName.Data() + toString( "_taki" );
   folderNames.push_back( dutFolderName );
+  dutFolderName = pedeProcessorFolderName.Data() + toString( "_tel" );
+  folderNames.push_back( dutFolderName );
 
   // this function will create the following canvases:
   //
@@ -83,7 +85,7 @@ void showPedeNoisePlot( const char * filename, const char *  detector  ) {
   for ( size_t i = 0 ; i < nDetector; ++i ) {
     string name( loopFolder->GetListOfKeys()->At( i )->GetName() );
     detectorFolderNames.push_back( name );
-    sensorIDs.push_back( atoi(name.substr( name.find_last_not_of( separator ),  name.length() ).c_str()) );
+    sensorIDs.push_back( atoi(name.substr( name.find_last_of( separator ) + 1,  name.length() ).c_str()) );
   }
   UInt_t nCanvas   = nDetector / nDetPerCanvas;
   if ( nDetector % nDetPerCanvas != 0 ) {
@@ -1789,7 +1791,7 @@ void showClusterPlot( const char * filename ) {
   for ( size_t i = 0 ; i < nDetector; ++i ) {
     string name( clusterHistoFolder->GetListOfKeys()->At( i )->GetName() );
     detectorFolderNames.push_back( name ) ;
-    sensorIDs.push_back( atoi( name.substr( name.find_last_not_of( separator ),  name.length() ).c_str()) );
+    sensorIDs.push_back( atoi(name.substr( name.find_last_of( separator ) + 1,  name.length() ).c_str()) );
   }
   UInt_t nCanvas   = nDetector / nDetPerCanvas;
   if ( nDetector % nDetPerCanvas != 0 ) {
@@ -2277,7 +2279,7 @@ void showEtaPlot( const char * filename ) {
   for ( size_t i = 0; i < nDetector; ++i ) {
     string name( etaFolder->GetListOfKeys()->At( i )->GetName() );
     detectorFolderNames.push_back( name );
-    sensorIDs.push_back( atoi( name.substr( name.find_last_not_of( separator ),  name.length() ).c_str()) );
+    sensorIDs.push_back( atoi(name.substr( name.find_last_of( separator ) + 1,  name.length() ).c_str()) );
   }
 
   UInt_t nCanvas   = nDetector / nDetPerCanvas;
