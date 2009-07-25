@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.23 2009-07-25 14:25:15 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.24 2009-07-25 16:11:11 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.23 $"
+    cvsVersion = "$Revision: 1.24 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -454,58 +454,71 @@ class SubmitPedestal( SubmitBase ):
         except ConfigParser.NoOptionError :
             localPath = "$PWD/db"
 
+        listOfFilesTBC = []
+        if self._hasDUT:
+                        if self._option.dut_only:
+                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": self._dutSuffix } ) );
+            else:
+                # it has the telescope, the DUT and the merged file
+                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-db.slcio" % { "run": runString } ) );
+                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": self._dutSuffix } ) );
+                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": "telescope" } ) );
+        else :
+            listOfFilesTBC.append( os.path.join( outputFilePath, "run%(run)s-ped-db.slcio" % { "run": runString } ) );
+
         baseCommand = "lcg-cr "
         if self._option.verbose :
             baseCommand = baseCommand + " -v "
 
-        command = "%(base)s -l lfn:%(gridFolder)s/run%(run)s-ped-db.slcio file:%(localFolder)s/run%(run)s-ped-db.slcio" % \
-            { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : runString }
-        if os.system( command ) != 0 :
-            run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, c, "LOCAL", e, f
-            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s-ped-db.slcio" % \
-                                        { "gridFolder": gridPath, "run" : runString } )
-        else:
-            run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, c, "GRID", e, f
-            self._logger.info( "DB file successfully copied to the GRID" )
+        for file in listOfFilesTBC:
+            command = "%(base)s -l lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(files)" % \
+                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file": file }
+            if os.system( command ) != 0 :
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, b, c, "LOCAL", e, f
+                raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(file)s" % \
+                                            { "gridFolder": gridPath, "file" : file } )
+            else:
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, b, c, "GRID", e, f
+                self._logger.info( "DB file successfully copied to the GRID" )
 
-        if self._option.verify_output:
-            self._logger.info( "Verifying the DB integrity on the GRID" )
+                if self._option.verify_output:
+                    self._logger.info( "Verifying the DB integrity on the GRID" )
 
-            filename = "run%(run)s-ped-db.slcio" % { "run": runString }
-            localCopy = open( os.path.join( localPath, filename ) ).read()
-            localCopyHash = sha.new( localCopy ).hexdigest()
-            self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } ) 
+                    filename = file
+                    localCopy = open( os.path.join( localPath, filename ) ).read()
+                    localCopyHash = sha.new( localCopy ).hexdigest()
+                    self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } ) 
 
-            # now copying back the just copied file
-            baseCommand = "lcg-cp "
-            if self._option.verbose :
-                baseCommand = baseCommand + " -v "
+                    # now copying back the just copied file
+                    baseCommand = "lcg-cp "
+                    if self._option.verbose :
+                        baseCommand = baseCommand + " -v "
 
-            filenametest = "run%(run)s-ped-db-test.slcio" % { "run": runString }
-            command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
-                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename, "filetest":filenametest }
-            if os.system( command ) != 0 : 
-                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail!", histogram, tarball
-                self._logger.error( "Problem with the verification!" )
-                raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
+                    filenametest = "%(file)s-test" % { "file": filename }
+                    command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
+                        { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename, "filetest":filenametest }
+                    if os.system( command ) != 0 : 
+                        run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
+                        self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail!", histogram, tarball
+                        self._logger.error( "Problem with the verification!" )
+                        raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
 
-            remoteCopy = open( os.path.join( localPath, filenametest ) ).read()
-            remoteCopyHash = sha.new( remoteCopy ).hexdigest()
-            self._logger.log( 15, "Remote copy hash is %(hash)s" % { "hash" : remoteCopyHash } )
+                    remoteCopy = open( os.path.join( localPath, filenametest ) ).read()
+                    remoteCopyHash = sha.new( remoteCopy ).hexdigest()
+                    self._logger.log( 15, "Remote copy hash is %(hash)s" % { "hash" : remoteCopyHash } )
 
-            if remoteCopyHash == localCopyHash:
-                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, "GRID - Ver", histogram, tarball
-                self._logger.info( "Verification successful" )
-            else :
-                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail!", histogram, tarball
-                self._logger.error( "Problem with the verification!" )
+                    if remoteCopyHash == localCopyHash:
+                        run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
+                        self._summaryNTuple[ index ] = run, input, marlin, "GRID - Ver", histogram, tarball
+                        self._logger.info( "Verification successful" )
+                    else :
+                        run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
+                        self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail!", histogram, tarball
+                        self._logger.error( "Problem with the verification!" )
 
-            os.remove( os.path.join( localPath, filenametest ) )
+                    os.remove( os.path.join( localPath, filenametest ) )
 
 
     ## Put the histograms file to the GRID
@@ -525,58 +538,71 @@ class SubmitPedestal( SubmitBase ):
         except ConfigParser.NoOptionError :
             localPath = "$PWD/histo"
 
+        listOfFilesTBC = []
+        if self._hasDUT:
+            if self._option.dut_only:
+                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": self._dutSuffix } ) );
+            else:
+                # it has the telescope, the DUT and the merged file
+                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-histo.root" % { "run": runString } ) );
+                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": self._dutSuffix } ) );
+                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": "telescope" } ) );
+        else :
+            listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-histo.root" % { "run": runString } ) );
+
+
         baseCommand = "lcg-cr "
         if self._option.verbose :
             baseCommand = baseCommand + " -v "
 
-        command = "%(base)s -l lfn:%(gridFolder)s/run%(run)s-ped-histo.root file:%(localFolder)s/run%(run)s-ped-histo.root" % \
-            { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : runString }
-        if os.system( command ) != 0 :
-            run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, c, d, "LOCAL", f
-            raise GRID_LCG_CRError( "lfn:%(gridFolder)s/run%(run)s-ped-histo.root" % \
-                                        { "gridFolder": gridPath, "run" : runString } )
-        else:
-            run, b, c, d, e, f = self._summaryNTuple[ index ]
-            self._summaryNTuple[ index ] = run, b, c, d, "GRID", f
-            self._logger.info( "Histogram file successfully copied to the GRID" )
+        for filename in listOfFilesTBC:
+            command = "%(base)s -l lfn:%(gridFolder)s/%(filename)s file:%(localFolder)s/%(filename)s" % \
+                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filename" : filename }
+            if os.system( command ) != 0 :
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, b, c, d, "LOCAL", f
+                raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(filename)s" % \
+                                            { "gridFolder": gridPath, "filename" : filename } )
+            else:
+                run, b, c, d, e, f = self._summaryNTuple[ index ]
+                self._summaryNTuple[ index ] = run, b, c, d, "GRID", f
+                self._logger.info( "Histogram file successfully copied to the GRID" )
 
-        if self._option.verify_output:
-            self._logger.info( "Verifying the histogram integrity on the GRID" ) 
-            filename = "run%(run)s-ped-histo.root" % { "run" : runString }
-            localCopy = open( os.path.join( localPath, filename ) ).read( )
-            localCopyHash = sha.new( localCopy ).hexdigest()
-            self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
+                if self._option.verify_output:
+                    self._logger.info( "Verifying the histogram integrity on the GRID" ) 
+                    localCopy = open( os.path.join( localPath, filename ) ).read( )
+                    localCopyHash = sha.new( localCopy ).hexdigest()
+                    self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
 
-            # now copying back the just copied file.
-            baseCommand = "lcg-cp "
-            if self._option.verbose :
-                baseCommand = baseCommand + " -v "
+                    # now copying back the just copied file.
+                    baseCommand = "lcg-cp "
+                    if self._option.verbose :
+                        baseCommand = baseCommand + " -v "
 
-            filenametest = "run%(run)s-ped-histo-test.root" % { "run" : runString }
+                    filenametest = "%(filename)s-test" % { "filename" : filename }
 
-            command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
-                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest, "file" : filename }
-            if os.system( command ) != 0 : 
-                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail!", tarball
-                self._logger.error( "Problem with the verification!" )
-                raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
+                    command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
+                        { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest, "file" : filename }
+                    if os.system( command ) != 0 : 
+                        run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
+                        self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail!", tarball
+                        self._logger.error( "Problem with the verification!" )
+                        raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(run)s" % { "gridFolder": gridPath, "run" : filename } )
 
-            remoteCopy = open( os.path.join( localPath, filenametest ) ).read()
-            remoteCopyHash = sha.new( remoteCopy ).hexdigest()
-            self._logger.log( 15, "Remote copy hash is %(hash)s" % { "hash" : remoteCopyHash } )
+                    remoteCopy = open( os.path.join( localPath, filenametest ) ).read()
+                    remoteCopyHash = sha.new( remoteCopy ).hexdigest()
+                    self._logger.log( 15, "Remote copy hash is %(hash)s" % { "hash" : remoteCopyHash } )
 
-            if remoteCopyHash == localCopyHash:
-                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Ver", tarball
-                self._logger.info( "Verification successful" )
-            else :
-                run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
-                self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail!", tarball
-                self._logger.error( "Problem with the verification!" )
+                    if remoteCopyHash == localCopyHash:
+                        run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
+                        self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Ver", tarball
+                        self._logger.info( "Verification successful" )
+                    else :
+                        run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
+                        self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail!", tarball
+                        self._logger.error( "Problem with the verification!" )
 
-            os.remove( os.path.join( localPath, filenametest ) )
+                    os.remove( os.path.join( localPath, filenametest ) )
 
     ## Put the joboutput file to the GRID
     def putJoboutputOnGRID( self, index, runString ):
@@ -946,7 +972,7 @@ class SubmitPedestal( SubmitBase ):
         except ConfigParser.NoOptionError :
             outputFilePath = "db"
 
-        listOfFilesTBC = [];
+        listOfFilesTBC = []
         if self._hasDUT:
             if self._option.dut_only:
                 listOfFilesTBC.append( os.path.join( outputFilePath, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": self._dutSuffix } ) );
@@ -977,7 +1003,7 @@ class SubmitPedestal( SubmitBase ):
         except ConfigParser.NoOptionError :
             histoFilePath = "histo"
 
-        listOfFilesTBC = [];
+        listOfFilesTBC = []
         if self._hasDUT:
             if self._option.dut_only:
                 listOfFilesTBC.append( os.path.join( histoFilePath, "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": self._dutSuffix } ) );
@@ -1238,66 +1264,29 @@ class SubmitPedestal( SubmitBase ):
             self._logger.critical( message )
             raise StopExecutionError( message )
 
+        listOfFilesTBC = []
+        if self._hasDUT:
+            if self._option.dut_only:
+                listOfFilesTBC.append( os.path.join( self._histogramPathGRID, "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": self._dutSuffix } ) );
+                listOfFilesTBC.append( os.path.join( self._outputPathGRID, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": self._dutSuffix } ) );
+            else:
+                # it has the telescope, the DUT and the merged file
+                listOfFilesTBC.append( os.path.join( self._histogramPathGRID, "run%(run)s-ped-histo.root" % { "run": runString } ) );
+                listOfFilesTBC.append( os.path.join( self._histogramPathGRID, "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": self._dutSuffix } ) );
+                listOfFilesTBC.append( os.path.join( self._histogramPathGRID, "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": "telescope" } ) );
+                listOfFilesTBC.append( os.path.join( self._outputPathGRID, "run%(run)s-ped-db.slcio" % { "run": runString } ) );
+                listOfFilesTBC.append( os.path.join( self._outputPathGRID, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": self._dutSuffix } ) );
+                listOfFilesTBC.append( os.path.join( self._outputPathGRID, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": "telescope" } ) );
+        else :
+            listOfFilesTBC.append( os.path.join( self._histogramPathGRID, "run%(run)s-ped-histo.root" % { "run": runString } ) );
+            listOfFilesTBC.append( os.path.join( self._outputPathGRID, "run%(run)s-ped-db.slcio" % { "run": runString } ) );
 
-        # check if the output file already exists
-        command = "lfc-ls %(outputPathGRID)s/run%(run)s-ped-db.slcio" % { "outputPathGRID": self._outputPathGRID, "run": runString }
-        status, output = commands.getstatusoutput( command )
-        if status == 0:
-            self._logger.warning( "Output file %(outputPathGRID)s/run%(run)s-ped-db.slcio already exists"
-                                  % { "outputPathGRID": self._outputPathGRID, "run": runString } )
-            if self._configParser.get("General","Interactive" ):
-                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-ped-db.slcio from the GRID"
-                                       % { "outputPathGRID": self._outputPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-ped-db.slcio" % { "outputPathGRID": self._outputPathGRID, "run": runString }
-                    os.system( command )
-                else :
-                    raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-ped-db.slcio on the GRID"
-                                                  % { "outputPathGRID": self._outputPathGRID, "run": runString } )
-            else :
-                raise OutputAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-ped-db.slcio on the GRID"
-                                              % { "outputPathGRID": self._outputPathGRID, "run": runString } )
+        listOfFilesTBC.append( os.path.join( self._joboutputPathGRID, "%(name)s-%(run)s.tar.gz" % { "name": self.name, "run": runString } ) )
 
-        # check if the job output file already exists
-        command = "lfc-ls %(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % { 
-            "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString }
-        status, output = commands.getstatusoutput( command )
-        if status == 0:
-            self._logger.warning( "Joboutput file %(outputPathGRID)s/%(name)s-%(run)s.tar.gz already exists"
-                                  % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
-            if self._configParser.get("General","Interactive" ):
-                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/%(name)s-%(run)s.tar.gz from the GRID"
-                                       % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % { 
-                        "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString }
-                    os.system( command )
-                else :
-                    raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz on the GRID"
-                                                  % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
-            else :
-                raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz on the GRID"
-                                              % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+        for file in listOfFilesTBC:
+            self.checkGRIDFile( file )
 
 
-        # check if the histogram file already exists
-        command = "lfc-ls %(outputPathGRID)s/run%(run)s-ped-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
-        status, output = commands.getstatusoutput( command )
-        if status == 0:
-            self._logger.warning( "Histogram file %(outputPathGRID)s/run%(run)s-ped-histo.root already exists"
-                                  % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
-            if self._configParser.get("General","Interactive" ):
-                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-ped-histo.root from the GRID"
-                                       % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-ped-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
-                    os.system( command )
-                else :
-                    raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-ped-histo.root on the GRID"
-                                                  % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
-            else :
-                raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-ped-histo.root on the GRID"
-                                              % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
     ## Execute all GRID
     #
     def executeAllGRID( self, index, runString ) :
