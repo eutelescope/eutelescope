@@ -119,7 +119,7 @@ class JoboutputFileAlreadyOnGRIDError( FileAlreadyOnGRIDError ) :
 
 ## Not enough file for continue 
 #
-class NotEnoughFilesError( ):
+class NotEnoughFilesError( PysubError ):
     pass
 
 ## Problem copying file from GRID
