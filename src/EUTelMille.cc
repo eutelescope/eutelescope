@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.40 2009-07-20 15:24:35 bulgheroni Exp $
+// Version: $Id: EUTelMille.cc,v 1.41 2009-07-26 15:02:32 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -297,8 +297,7 @@ void EUTelMille::init() {
       cout << "unknown input mode " << _inputMode << endl;
       exit(-1);
     }
-
-
+  
   // an associative map for getting also the sensorID ordered
   map< double, int > sensorIDMap;
   //lets create an array with the z positions of each layer
@@ -317,10 +316,25 @@ void EUTelMille::init() {
 
   // strip from the map the sensor id already sorted.
   map< double, int >::iterator iter = sensorIDMap.begin();
+  int counter = 0;
   while ( iter != sensorIDMap.end() ) {
+    bool excluded = false;
+    for (size_t i = 0; i < _excludePlanes.size(); i++)
+      {
+        if(_excludePlanes[i] == counter)
+          {
+            excluded = true;
+            break;
+          }
+      }
+    if(!excluded)
+      _orderedSensorID_wo_excluded.push_back( iter->second );
     _orderedSensorID.push_back( iter->second );
+    
     ++iter;
+    ++counter;
   }
+  //
 
 
   //consistency
@@ -1747,7 +1761,7 @@ void EUTelMille::end() {
 
             // right place to add the constant to the collection
             if ( goodLine ) {
-              constant->setSensorID( _orderedSensorID.at( counter ) );
+              constant->setSensorID( _orderedSensorID_wo_excluded.at( counter ) );
               ++ counter;
               constantsCollection->push_back( constant );
               streamlog_out ( MESSAGE0 ) << (*constant) << endl;

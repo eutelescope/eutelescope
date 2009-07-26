@@ -175,6 +175,7 @@ namespace eutelescope {
      *  same rule.
      */
     std::vector< int > _orderedSensorID;
+    std::vector< int > _orderedSensorID_wo_excluded;
 
     //! TrackerHit collection name
     /*! Input collection with hits.
