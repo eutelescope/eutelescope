@@ -13,7 +13,7 @@ import sys
 def main() :
 
     usage = "usage: %prog [options] additional-files"
-    cvsVersion = "$Revision: 1.4 $"
+    cvsVersion = "$Revision: 1.5 $"
     version = "%prog version" +  cvsVersion[10:len(cvsVersion)-1]
     parser = OptionParser( usage = usage, version = version )
 
@@ -52,7 +52,7 @@ def main() :
     linkList = []
     fileList = configParser.items( "GRIDLibraryContent" )
     for key, file in fileList:
-        if len(glob.glob( file )) == 0:
+        if len(glob.glob( os.path.expandvars( os.path.expanduser( file )))) == 0:
             print "Problem accessing file %(key)s = %(file)s. Skipping " % { "key":key, "file":file }
         # in principle each file in the list maybe a glob
         for file1 in glob.glob( file ):
