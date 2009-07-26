@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.25 2009-07-25 16:23:56 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.26 2009-07-26 17:33:17 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.25 $"
+    cvsVersion = "$Revision: 1.26 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -457,27 +457,27 @@ class SubmitPedestal( SubmitBase ):
         listOfFilesTBC = []
         if self._hasDUT:
             if self._option.dut_only:
-                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": self._dutSuffix } ) );
+                listOfFilesTBC.append(  "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": self._dutSuffix } );
             else:
                 # it has the telescope, the DUT and the merged file
-                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-db.slcio" % { "run": runString } ) );
-                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": self._dutSuffix } ) );
-                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": "telescope" } ) );
+                listOfFilesTBC.append(  "run%(run)s-ped-db.slcio" % { "run": runString } );
+                listOfFilesTBC.append(  "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": self._dutSuffix } ) ;
+                listOfFilesTBC.append(  "run%(run)s-ped-%(dut)s-db.slcio" % { "run": runString, "dut": "telescope" } ) ;
         else :
-            listOfFilesTBC.append( os.path.join( outputFilePath, "run%(run)s-ped-db.slcio" % { "run": runString } ) );
+            listOfFilesTBC.append(  "run%(run)s-ped-db.slcio" % { "run": runString } ) ;
 
         baseCommand = "lcg-cr "
         if self._option.verbose :
             baseCommand = baseCommand + " -v "
 
         for file in listOfFilesTBC:
-            command = "%(base)s -l lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(files)" % \
-                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file": file }
+            command = "%(base)s -l lfn:%(gridFolder)s/%(file)s file:%(fqfile)s" % \
+                { "base": baseCommand, "gridFolder": gridPath, "file": file, "fqfile": os.path.join( localPath, file ) }
             if os.system( command ) != 0 :
                 run, b, c, d, e, f = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, b, c, "LOCAL", e, f
                 raise GRID_LCG_CRError( "lfn:%(gridFolder)s/%(file)s" % \
-                                            { "gridFolder": gridPath, "file" : file } )
+                                            { "gridFolder": gridPath, "file" : file, "fqfile": os.path.join( localPath, file ) } )
             else:
                 run, b, c, d, e, f = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, b, c, "GRID", e, f
@@ -497,8 +497,8 @@ class SubmitPedestal( SubmitBase ):
                         baseCommand = baseCommand + " -v "
 
                     filenametest = "%(file)s-test" % { "file": filename }
-                    command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
-                        { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename, "filetest":filenametest }
+                    command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(filetest)s" % \
+                        { "base": baseCommand, "gridFolder": gridPath, "file" : filename, "filetest": os.path.join( localPath, filenametest) }
                     if os.system( command ) != 0 : 
                         run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                         self._summaryNTuple[ index ] = run, input, marlin, "GRID - Fail!", histogram, tarball
@@ -541,14 +541,14 @@ class SubmitPedestal( SubmitBase ):
         listOfFilesTBC = []
         if self._hasDUT:
             if self._option.dut_only:
-                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": self._dutSuffix } ) );
+                listOfFilesTBC.append( "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": self._dutSuffix } );
             else:
                 # it has the telescope, the DUT and the merged file
-                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-histo.root" % { "run": runString } ) );
-                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": self._dutSuffix } ) );
-                listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": "telescope" } ) );
+                listOfFilesTBC.append( "run%(run)s-ped-histo.root" % { "run": runString } ) ;
+                listOfFilesTBC.append( "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": self._dutSuffix } ) ;
+                listOfFilesTBC.append( "run%(run)s-ped-%(dut)s-histo.root" % { "run": runString, "dut": "telescope" } ) ;
         else :
-            listOfFilesTBC.append( os.path.join( localPath, "run%(run)s-ped-histo.root" % { "run": runString } ) );
+            listOfFilesTBC.append( "run%(run)s-ped-histo.root" % { "run": runString } ) ;
 
 
         baseCommand = "lcg-cr "
@@ -556,8 +556,8 @@ class SubmitPedestal( SubmitBase ):
             baseCommand = baseCommand + " -v "
 
         for filename in listOfFilesTBC:
-            command = "%(base)s -l lfn:%(gridFolder)s/%(filename)s file:%(localFolder)s/%(filename)s" % \
-                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filename" : filename }
+            command = "%(base)s -l lfn:%(gridFolder)s/%(filename)s file:%(fqfilename)s" % \
+                { "base": baseCommand, "gridFolder": gridPath,  "filename" : filename , "fqfilename" : os.path.join( localPath, filename )}
             if os.system( command ) != 0 :
                 run, b, c, d, e, f = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, b, c, d, "LOCAL", f
@@ -579,10 +579,10 @@ class SubmitPedestal( SubmitBase ):
                     if self._option.verbose :
                         baseCommand = baseCommand + " -v "
 
-                    filenametest = "%(filename)s-test" % { "filename" : filename }
+                    filenametest = os.join.path( localPath, "%(filename)s-test" % { "filename" : filename })
 
-                    command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
-                        { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest, "file" : filename }
+                    command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(filetest)s" % \
+                        { "base": baseCommand, "gridFolder": gridPath,  "filetest": filenametest, "file" : filename }
                     if os.system( command ) != 0 : 
                         run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                         self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail!", tarball
