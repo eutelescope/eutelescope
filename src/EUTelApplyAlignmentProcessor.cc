@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.13 2009-07-16 09:21:55 bulgheroni Exp $
+// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.14 2009-07-26 16:19:26 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -220,6 +220,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
 #if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) )
         string tempHistoName;
+        AIDA::IHistogram3D *histo3D; 
         if ( _histogramSwitch ) {
           {
             stringstream ss;
@@ -229,15 +230,19 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
           if ( AIDA::IHistogram2D * histo = dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[ tempHistoName ] )) {
             histo->fill( inputPosition[0], inputPosition[1] );
           }
-        }
-
-
-        AIDA::IHistogram3D * histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotBeforeAlignName ] );
-        if ( histo3D ) histo3D->fill( inputPosition[0], inputPosition[1], inputPosition[2] );
-        else {
-          streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
-                                    << ".\nDisabling histogramming from now on " << endl;
-          _histogramSwitch = false;
+          else
+            {
+              streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
+                                        << ".\nDisabling histogramming from now on " << endl;
+              _histogramSwitch = false;
+            }
+          histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotBeforeAlignName ] );
+          if ( histo3D ) histo3D->fill( inputPosition[0], inputPosition[1], inputPosition[2] );
+          else {
+            streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << _densityPlotBeforeAlignName
+                                      << ".\nDisabling histogramming from now on " << endl;
+            _histogramSwitch = false;
+          }
         }
 #endif
 
@@ -282,7 +287,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
         }
 
-#if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) )
+#if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) ) 
         if ( _histogramSwitch ) {
           {
             stringstream ss;
@@ -292,15 +297,18 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
           if ( AIDA::IHistogram2D * histo = dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[ tempHistoName ] )) {
             histo->fill( outputPosition[0], outputPosition[1] );
           }
-        }
-
-
-        histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotAfterAlignName ] );
-        if ( histo3D ) histo3D->fill( outputPosition[0], outputPosition[1], outputPosition[2] );
-        else {
-          streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
-                                    << ".\nDisabling histogramming from now on " << endl;
-          _histogramSwitch = false;
+          else {
+            streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
+                                      << ".\nDisabling histogramming from now on " << endl;
+            _histogramSwitch = false;
+          }
+          histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotAfterAlignName ] );
+          if ( histo3D ) histo3D->fill( outputPosition[0], outputPosition[1], outputPosition[2] );
+          else {
+            streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << _densityPlotAfterAlignName
+                                      << ".\nDisabling histogramming from now on " << endl;
+            _histogramSwitch = false;
+          }
         }
 #endif
 
