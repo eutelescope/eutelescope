@@ -33,7 +33,7 @@ class MissingFileError ( PysubError ):
         self._filename = filename
 
 ## Missing configuration file
-# 
+#
 class MissingConfigurationFileError( MissingFileError ):
     pass
 
@@ -43,7 +43,7 @@ class MissingInputFileError( MissingFileError ):
     pass
 
 ## Missing GEAR file
-# 
+#
 class MissingGEARFileError( MissingFileError ):
     pass
 
@@ -62,7 +62,7 @@ class MissingOutputFileError( MissingFileError ):
     pass
 
 ## Missing histogram file
-# 
+#
 class MissingHistogramFileError( MissingFileError ):
     pass
 
@@ -117,6 +117,10 @@ class HistogramFileAlreadyOnGRIDError( FileAlreadyOnGRIDError ):
 class JoboutputFileAlreadyOnGRIDError( FileAlreadyOnGRIDError ) :
     pass
 
+## Not enough file for continue 
+#
+class NotEnoughFilesError( ):
+    pass
 
 ## Problem copying file from GRID
 #
@@ -131,7 +135,7 @@ class GRID_LCG_CRError( MissingFileError ):
 ## Stop execution error
 #
 # This error is so critical that the execution has to
-# be terminated. 
+# be terminated.
 #
 class StopExecutionError( PysubError ):
     def __init__( self, message ):

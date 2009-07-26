@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-align.py script
 #
 #
-# @version $Id: submitalign.py,v 1.12 2009-06-20 10:45:01 bulgheroni Exp $
+# @version $Id: submitalign.py,v 1.13 2009-07-26 14:58:09 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitAlign( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitAlign( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.12 $"
+    cvsVersion = "$Revision: 1.13 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -214,7 +214,7 @@ class SubmitAlign( SubmitBase ):
             entry = os.path.basename( inputFile )[:6] , "Unknown"
             self._gridJobNTuple.append( entry )
 
-            self._inputFileList.append( inputFile ) 
+            self._inputFileList.append( inputFile )
 
             # now replace the input file name. This is a bit peculiar compared with the previous.
             # the full path will be assembled here and replaced in one go
@@ -235,7 +235,7 @@ class SubmitAlign( SubmitBase ):
                 if self._option.execution == "cpu-local":
                     self._fqInputFileList.append( os.path.join( folder,  inputFile  ) )
                 else:
-                    self._fqInputFileList.append( os.path.join( folder, os.path.abspath( inputFile ) ) )
+                    self._fqInputFileList.append( os.path.join( folder,  inputFile  ) )
 
 
         entry = self._option.output,  "Unknown", "Unknown", "Unknown", "Unknown", "Unknown"
@@ -325,7 +325,11 @@ class SubmitAlign( SubmitBase ):
             run, input, marlin, output, histo, tarball = self._summaryNTuple[ len(self._summaryNTuple) - 1 ]
             self._summaryNTuple[ len(self._summaryNTuple) - 1 ] = run, input, "Failed", output, histo, tarball
             raise StopExecutionError( message )
-        
+
+        except NotEnoughFileError, error:
+            self._logger.critical( "Not enough input file to continue" )
+            raise StopExecutionError( message )
+
     ## Generate only submitter
     #
     # This methods is responsibile of dry-run with only steering file
@@ -345,7 +349,7 @@ class SubmitAlign( SubmitBase ):
     def executeAllLocal( self ):
 
         # before any futher, check we have the input file for this run
-        # runString is not used in this case, since the input file is provided 
+        # runString is not used in this case, since the input file is provided
         # directly by the user via the command line
         self.checkInputFile(  )
 
@@ -459,7 +463,7 @@ class SubmitAlign( SubmitBase ):
                     run, b, c, d, e, f = self._summaryNTuple[ index ]
                     self._summaryNTuple[ index ] = run, "Missing", c, d, e, f
                     self._logger.error( "Error copying file %(file)s, skipping it" % { "file": self._justInputFileList[ index ] } )
-                    self._inputFileList[ index ] = "DEADFACE" 
+                    self._inputFileList[ index ] = "DEADFACE"
                 else:
                     self._logger.info("Input file %(file)s successfully copied from the GRID" % { "file": self._justInputFileList[ index ] } )
                     run, b, c, d, e, f = self._summaryNTuple[ index ]
@@ -519,7 +523,7 @@ class SubmitAlign( SubmitBase ):
             self._logger.info( "Verifying the output file %(file)s integrity on the GRID" % { "file": file }  )
             filename = file
             localCopy = open( os.path.join( localPath, filename ) ).read()
-            localCopyHash = sha.new( localCopy ).hexdigest() 
+            localCopyHash = sha.new( localCopy ).hexdigest()
             self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
 
             # now copying back the just copied file.
@@ -580,7 +584,7 @@ class SubmitAlign( SubmitBase ):
             self._logger.info( "Verifying the output file %(file)s integrity on the GRID" % { "file": file } )
             filename = file
             localCopy = open( os.path.join( localPath, filename ) ).read()
-            localCopyHash = sha.new( localCopy ).hexdigest() 
+            localCopyHash = sha.new( localCopy ).hexdigest()
             self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
 
             # now copying back the just copied file.
@@ -631,7 +635,7 @@ class SubmitAlign( SubmitBase ):
                 baseCommand = baseCommand + " -v "
 
             command = "%(base)s -l lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(file)s" % \
-                      { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : file  }
+                { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : file  }
             if os.system( command ) != 0 :
                 self._logger.critical( "Problem copying the output file %(file)s to the GRID" % {"file" : file} )
                 for index, entry in enumerate ( self._summaryNTuple ):
@@ -654,7 +658,7 @@ class SubmitAlign( SubmitBase ):
                 self._logger.info( "Verifying the output file %(file)s integrity on the GRID" % { "file": file } )
                 filename = file
                 localCopy = open( os.path.join( localPath, filename ) ).read()
-                localCopyHash = sha.new( localCopy ).hexdigest() 
+                localCopyHash = sha.new( localCopy ).hexdigest()
                 self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
 
                 # now copying back the just copied file.
@@ -664,7 +668,7 @@ class SubmitAlign( SubmitBase ):
 
                 filenametest = "%(output)s-align-db-test.slcio" % { "output" : self._option.output }
                 command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
-                          { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename, "filetest":filenametest }
+                    { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "file" : filename, "filetest":filenametest }
                 if os.system( command ) != 0 :
                     run, input, marlin, output, histogram, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
                     self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, "GRID - Fail", histogram, tarball
@@ -732,7 +736,7 @@ class SubmitAlign( SubmitBase ):
             filename = "%(run)s-align-histo.root"  % { "run" : self._option.output }
 
             localCopy = open( os.path.join( localPath, filename ) ).read()
-            localCopyHash = sha.new( localCopy ).hexdigest() 
+            localCopyHash = sha.new( localCopy ).hexdigest()
             self._logger.log( 15, "Local copy hash is %(hash)s" % { "hash" : localCopyHash } )
 
             # now copying back the just copied file.
@@ -744,7 +748,7 @@ class SubmitAlign( SubmitBase ):
 
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest, "file" : filename }
-            if os.system( command ) != 0 : 
+            if os.system( command ) != 0 :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, input, marlin, output, "GRID - Fail", tarball
                 self._logger.error( "Problem with the verification!" )
@@ -790,7 +794,7 @@ class SubmitAlign( SubmitBase ):
             { "name": self.name, "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "run" : self._option.output }
         if os.system( command ) != 0 :
             self._logger.critical( "Problem copying the joboutput file %(name)s-%(run)s.tar.gz to the GRID" % {
-                     "name": self.name, "run" : self._option.output } )
+                    "name": self.name, "run" : self._option.output } )
             for index, entry in enumerate( self._summaryNTuple ):
                 run, input, marlin, output, histo, tarball = entry
                 self._summaryNTuple[ index ] = run, input, marlin, output, histo, "See below"
@@ -823,7 +827,7 @@ class SubmitAlign( SubmitBase ):
             filenametest = "%(name)s-%(run)s-test.tar.gz" % { "name": self.name,  "run" : self._option.output  }
             command = "%(base)s lfn:%(gridFolder)s/%(file)s file:%(localFolder)s/%(filetest)s" % \
                 { "base": baseCommand, "gridFolder": gridPath, "localFolder": localPath, "filetest": filenametest,"file" : filename }
-            if os.system( command ) != 0 : 
+            if os.system( command ) != 0 :
                 run, input, marlin, output, histogram, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
                 self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, input, marlin, output, histogram, "GRID - Fail"
                 self._logger.error( "Problem with the verification!" )
@@ -854,6 +858,8 @@ class SubmitAlign( SubmitBase ):
         except ConfigParser.NoOptionError :
             inputFilePath = "results"
 
+        self._hasAtLeastOneInputFile = false;
+
         # loop over all the input files
         for index, inputFile in enumerate( self._inputFileList ):
             if inputFile == "DEADFACE":
@@ -868,11 +874,17 @@ class SubmitAlign( SubmitBase ):
                 self._summaryNTuple[ index ] = run, "Missing", marlin, output, histo, tarball
 
             else :
+                if not self._hasAtLeastOneInputFile:
+                    self._hasAtLeastoneInputFile = True
                 run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, "OK", marlin, output, histo, tarball
 
         run, input, marlin, output, histo, tarball = self._summaryNTuple[ len( self._summaryNTuple ) - 1 ]
         self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, "See above", marlin, output, histo, tarball
+
+        if not self._hasAtLeastOneInputFile:
+            raise NotEnoughFileError ;
+
 
     ## Generate the steering file
     def generateSteeringFile( self ) :
@@ -1121,11 +1133,11 @@ class SubmitAlign( SubmitBase ):
 
         # Replace the record number
         actualSteeringString = actualSteeringString.replace( "@RecordNumber@", "%(v)d" % {
-            "v": self._option.split_size } )
+                "v": self._option.split_size } )
 
         # don't skip any record
         actualSteeringString = actualSteeringString.replace( "@SkipNEvents@", "%(v)d" %{
-            "v" : index * self._option.split_size })
+                "v" : index * self._option.split_size })
 
         # now replace the output folder path
         if self._option.execution == "all-grid" :
@@ -1486,7 +1498,7 @@ class SubmitAlign( SubmitBase ):
             os.remove( os.path.join( histoFilePath, histoFile ) )
 
 
-            try: 
+            try:
                 dbPath = self._configParser.get( "LOCAL", "LocalFolderDBAlign" )
             except ConfigParser.NoOptionError :
                 dbPath = "db"
@@ -1549,12 +1561,12 @@ class SubmitAlign( SubmitBase ):
                 currentJIDFile.write( jid )
         jidFile.close()
         currentJIDFile.close()
-                                                                        
+
 
     def prepareJIDFileSplitting( self ):
         unique = datetime.datetime.fromtimestamp( self._timeBegin ).strftime("%Y%m%d-%H%M%S")
         self._logger.info("Preparing the JID for this submission (%(name)s-%(date)s.jid)" % {
-            "name": self.name, "date" : unique } )
+                "name": self.name, "date" : unique } )
         try :
             localPath = self._configParser.get( "LOCAL", "LocalFolderAlignJoboutput")
         except ConfigParser.NoOptionError :
@@ -1569,7 +1581,7 @@ class SubmitAlign( SubmitBase ):
                 currentJIDFile.write( jid )
         jidFile.close()
         currentJIDFile.close()
-        
+
 
     ## Preliminary checks for splitting
     def doPreliminaryTestSplitting( self, i, fullCheck ):
@@ -1589,7 +1601,7 @@ class SubmitAlign( SubmitBase ):
                 raise StopExecutionError( message )
 
             # also check that the proxy is still valid
-            command =  "voms-proxy-info -e" 
+            command =  "voms-proxy-info -e"
             status, output = commands.getstatusoutput( command )
 
             if status != 0:
@@ -1619,7 +1631,7 @@ class SubmitAlign( SubmitBase ):
             # check if the input files is on the GRID
             for index, inputFile in enumerate( self._inputFileList ):
                 if inputFile != "DEADFACE" :
-                    justFile = self._justInputFileList[ index ] 
+                    justFile = self._justInputFileList[ index ]
                     command = "lfc-ls %(inputPathGRID)s/%(file)s" % { "inputPathGRID" : self._inputPathGRID,  "file": justFile  }
 
                     lfc = popen2.Popen4( command )
@@ -1661,7 +1673,7 @@ class SubmitAlign( SubmitBase ):
         filenameList.append( "%(outputPathGRID)s/%(output)s-s%(v)06d-pede-steer.txt"       % { "v": i, "outputPathGRID": self._outputPathGRID, "output": self._option.output } )
         filenameList.append( "%(outputPathGRID)s/%(output)s-s%(v)06d-align-mille.bin"      % { "v": i, "outputPathGRID": self._outputPathGRID, "output": self._option.output } )
         filenameList.append( "%(outputPathGRID)s/%(name)s-%(output)s-s%(v)06d.tar.gz"      % { "v": i, "outputPathGRID": self._joboutputPathGRID,
-                                                                                              "name": self.name, "output": self._option.output } )
+                                                                                               "name": self.name, "output": self._option.output } )
         filenameList.append( "%(outputPathGRID)s/%(output)s-s%(v)06d-align-histo.root"     % { "v": i, "outputPathGRID": self._histogramPathGRID, "output": self._option.output } )
         for filename in filenameList:
             self.checkGRIDFile( filename )
@@ -1726,7 +1738,7 @@ class SubmitAlign( SubmitBase ):
         # check if the input files is on the GRID
         for index, inputFile in enumerate( self._inputFileList ):
             if inputFile != "DEADFACE" :
-                justFile = self._justInputFileList[ index ] 
+                justFile = self._justInputFileList[ index ]
                 command = "lfc-ls %(inputPathGRID)s/%(file)s" % { "inputPathGRID" : self._inputPathGRID,  "file": justFile  }
 
                 lfc = popen2.Popen4( command )
@@ -1818,17 +1830,17 @@ class SubmitAlign( SubmitBase ):
 
         for index in range( self._option.split_job ):
             self.generateJDLFile( 0, "%(output)s-s%(index)06d" % {"output": self._option.output, "index": index }, pedeSteerTemplate)
-            
+
             self.generateRunjobFileSplitting( index )
 
             self.generateSteeringFileSplitting( index )
 
             try :
                 self.submitJDLSplitting( index  )
-                
+
             except GRIDSubmissionError, error:
                 self._logger.error( "Problem submitting %(file)s. Skipping it" % { "file":error._message } )
-                
+
 
         self.prepareTarball( )
 
@@ -1846,7 +1858,7 @@ class SubmitAlign( SubmitBase ):
             message = "Missing pede steering file in the configuration"
             self._logger.critical( message )
             raise StopExecutionError( message )
-                                                    
+
         # now prepare the jdl file from the template
         self.generateJDLFile( 0, self._option.output, pedeSteerTemplate )
 
@@ -1898,8 +1910,8 @@ class SubmitAlign( SubmitBase ):
             message = "Missing pede steering file in the configuration"
             self._logger.critical( message )
             raise StopExecutionError( message )
-        runActualString = runActualString.replace( "@PedeSteerTemplate@", os.path.basename( pedeSteerTemplate ) ) 
-        
+        runActualString = runActualString.replace( "@PedeSteerTemplate@", os.path.basename( pedeSteerTemplate ) )
+
         # replace the input file names
         for index, inputFile in enumerate( self._inputFileList ) :
             if inputFile != "DEADFACE" :
@@ -1966,7 +1978,7 @@ class SubmitAlign( SubmitBase ):
             message = "Missing pede steering file in the configuration"
             self._logger.critical( message )
             raise StopExecutionError( message )
-        runActualString = runActualString.replace( "@PedeSteerTemplate@", os.path.basename( pedeSteerTemplate ) ) 
+        runActualString = runActualString.replace( "@PedeSteerTemplate@", os.path.basename( pedeSteerTemplate ) )
 
 
         # replace the input file names
@@ -2086,4 +2098,4 @@ class SubmitAlign( SubmitBase ):
         self._gridSplitNTuple.append( entry )
 
 
-        
+
