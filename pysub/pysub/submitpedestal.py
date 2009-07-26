@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.26 2009-07-26 17:33:17 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.27 2009-07-26 20:46:15 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.26 $"
+    cvsVersion = "$Revision: 1.27 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1330,13 +1330,30 @@ class SubmitPedestal( SubmitBase ):
         runTemplateString = open( runTemplate, "r" ).read()
         runActualString = runTemplateString
 
+        # start from DUT related things
+        if self._hasDUT :
+            runActualString = runActualString.replace( "@DUTSuffix@", self._dutSuffix )
+            if self._option.dut_only :
+                runActualString = runActualString.replace( "@IsTelescopeOnly@","no" )
+                runActualString = runActualString.replace( "@IsTelescopeAndDUT@","no" )
+                runActualString = runActualString.replace( "@IsDUTOnly@","yes" )
+            else:
+                runActualString = runActualString.replace( "@IsTelescopeOnly@","no" )
+                runActualString = runActualString.replace( "@IsTelescopeAndDUT@","yes" )
+                runActualString = runActualString.replace( "@IsDUTOnly@","no" )
+        else:
+            runActualString = runActualString.replace( "@DUTSuffix@", None )
+            runActualString = runActualString.replace( "@IsTelescopeOnly@","yes" )
+            runActualString = runActualString.replace( "@IsTelescopeAndDUT@","no" )
+            runActualString = runActualString.replace( "@IsDUTOnly@","no" )
+
         # replace the runString
         runActualString = runActualString.replace( "@RunString@", runString )
 
         # replace the job name
         runActualString = runActualString.replace( "@Name@", self.name )
 
-        variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
+        variableList = [ "GRIDCE", "GRIDSE", "GRIDStorePrtocol", "GRIDVO",
                          "GRIDFolderBase", "GRIDFolderDBPede", "GRIDFolderLcioRaw", "GRIDFolderPedestalHisto",
                          "GRIDFolderPedestalJoboutput", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
         for variable in variableList:
@@ -1385,3 +1402,127 @@ class SubmitPedestal( SubmitBase ):
         run, b = self._gridJobNTuple[ index ]
         self._gridJobNTuple[ index ] = run, jidFile.readline()
         jidFile.close()
+
+
+    ## Generate JDL file
+    #
+    # This method is called to generate a JDL file
+    #
+    def generateJDLFile( self, index, runString, *args ):
+        message = "Generating the JDL file (%(name)s-%(run)s.jdl)" % { "name": self.name,"run": runString }
+        self._logger.info( message )
+        try :
+            jdlTemplate = self._configParser.get("GRID", "GRIDJDLTemplate" )
+        except ConfigParser.NoOptionError:
+            jdlTemplate = "grid/jdl-tmp.jdl"
+            if os.path.exists ( jdlTemplate ) :
+                message = "Using JDL template (%(file)s) " % { "file": jdlTemplate }
+                self._logger.info( message )
+            else:
+                message = "Unable to find a valid JDL template"
+                self._logger.critical( message )
+                raise StopExecutionError( message )
+
+        jdlTemplateString = open( jdlTemplate, "r" ).read()
+        jdlActualString = jdlTemplateString
+
+        # modify the executable name
+        jdlActualString = jdlActualString.replace( "@Executable@", "%(name)s-%(run)s.sh" % { "name": self.name, "run": runString } )
+
+        # the gear file!
+        # try to read it from the config file, then from the command line option
+        try :
+            self._gearPath = self._configParser.get( "LOCAL", "LocalFolderGear" )
+        except ConfigParser.NoOptionError :
+            self._gearPath = ""
+        jdlActualString = jdlActualString.replace("@GearPath@", self._gearPath )
+
+        try:
+            self._gear_file = self._configParser.get( "General", "GEARFile" )
+        except ConfigParser.NoOptionError :
+            self._logger.debug( "No GEAR file in the configuration file" )
+
+        if self._option.gear_file != None :
+            # this means that the user wants to override the configuration file
+            self._gear_file = self._option.gear_file
+            self._logger.debug( "Using command line GEAR file" )
+
+
+        if self._gear_file == "" :
+            # using default GEAR file
+            defaultGEARFile = "gear_telescope.xml"
+            self._gear_file = defaultGEARFile
+            message = "Using default GEAR file %(gear)s" %{ "gear": defaultGEARFile }
+            self._logger.warning( message )
+
+        jdlActualString = jdlActualString.replace( "@GearFile@", "%(path)s/%(gear)s"
+                                                   % { "path": self._gearPath, "gear": self._gear_file } )
+
+        # replace the steering file
+        # this is critical with pedestal
+        if self._hasDUT:
+            if self.option.dut_only :
+                string = "%(name)s-%(run)s-%(suffix)s.xml" % { "name": self.name, "run" : runString, "suffix": self._dutSuffix }
+            else:
+                string = "%(name)s-%(run)s-telescope.xml, %(name)s-%(run)s-%(suffix)s.xml" % { "name": self.name, "run" : runString, "suffix": self._dutSuffix }
+        else:
+            string = "%(name)s-%(run)s.xml" % { "name": self.name, "run" : runString }
+
+        jdlActualString = jdlActualString.replace( "@SteeringFile@", string )
+
+        # replace the GRIDLib
+        try :
+            gridLibraryTarball = self._configParser.get( "GRID", "GRIDLibraryTarball" )
+            gridLibraryTarballPath = self._configParser.get( "GRID", "GRIDLibraryTarballPath" )
+        except ConfigParser.NoOptionError :
+            message = "GRID library tarball unavailable!"
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+        jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", "%(path)s/%(file)s" %
+                                                   { "path": gridLibraryTarballPath, "file":gridLibraryTarball } )
+
+        # replace the histoinfo file
+        try:
+            histoinfo = self._configParser.get("General","Histoinfo")
+        except ConfigParser.NoOptionError :
+            self._logger.debug( "No histoinfo file in the configuration file" )
+            histoinfo = ""
+
+        try:
+            histoinfoPath = self._configParser.get("LOCAL", "LocalFolderHistoinfo")
+        except ConfigParser.NoOptionError :
+            self._logger.debug( "No histoinfo path file in the configuration file" )
+            histoinfoPath = "./"
+
+        # check if it exists:
+        if os.access( os.path.join( histoinfoPath, histoinfo), os.R_OK ) :
+            jdlActualString = jdlActualString.replace( "@HistoInfo@", os.path.join( histoinfoPath, histoinfo) )
+        else:
+            jdlActualString = jdlActualString.replace( "@HistoInfo@", "" )
+
+        # replace the VO
+        try:
+            vo = self._configParser.get( "GRID" , "GRIDVO" )
+        except ConfigParser.NoOptionError :
+            self._logger.warning( "Unable to find the GRIDVO. Using ilc" )
+            vo = "ilc"
+        jdlActualString = jdlActualString.replace( "@GRIDVO@", vo )
+
+        # replace the ILCSoftVestion
+        try :
+            ilcsoftVersion = self._configParser.get( "GRID" , "GRIDILCSoftVersion" )
+        except ConfigParser.NoOptionError :
+            self._logger.warning( "Unable to find the GRIDILCSoftVersion. Using v01-06" )
+            ilcsoftVersion = "v01-06"
+        jdlActualString = jdlActualString.replace( "@GRIDILCSoftVersion@", ilcsoftVersion )
+
+        # replace any other additional arguments:
+        for arg in args:
+            jdlActualString = jdlActualString.replace( "@Others@", ", \"%(arg)s\" @Others@" % { "arg": arg } )
+        # remove spare others
+        jdlActualString = jdlActualString.replace( "@Others@", "" )
+
+        self._jdlFilename = "%(name)s-%(run)s.jdl" % { "name": self.name, "run": runString }
+        jdlActualFile = open( self._jdlFilename, "w" )
+        jdlActualFile.write( jdlActualString )
+        jdlActualFile.close()

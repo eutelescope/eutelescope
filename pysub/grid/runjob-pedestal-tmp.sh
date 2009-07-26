@@ -2,14 +2,22 @@
 # A template of pedestal job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-pedestal-tmp.sh,v 1.7 2009-07-18 17:24:06 bulgheroni Exp $
+# @version $Id: runjob-pedestal-tmp.sh,v 1.8 2009-07-26 20:46:15 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
-# errno 20: Problem during Marlin execution.
-# errno 30: Problem copying and registering the DB output to the SE.
-# errno 31: Problem copying and registering the Joboutput to the SE.
-# errno 32: Problem copying and registering the histogram to the SE
+# errno 20: Problem during Marlin execution (telescope only)
+# errno 21: Problem during Marlin execution (telescope part)
+# errno 22: Problem during Marlin execution (dut part)
+# errno 23: Problem during Marlin execution (dut only)
+# errno 24: Problem running pedestalmerge
+# errno 30: Problem copying and registering the DB (full file) output to the SE.
+# errno 31: Problem copying and registering the DB (telescope file) output to the SE.
+# errno 32: Problem copying and registering the DB (DUT file) output to the SE.
+# errno 33: Problem copying and registering the Joboutput to the SE.
+# errno 34: Problem copying and registering the histogram (full file) to the SE
+# errno 35: Problem copying and registering the histogram (full file) to the SE
+# errno 36: Problem copying and registering the histogram (full file) to the SE
 #
 
 
@@ -64,10 +72,20 @@ putOnGRID() {
 # it return 0 in case of successful execution or the following error
 # codes in case of problems
 #
-# errno  1: Unable to get the input file from the SE
-# errno 20: Problem during Marlin execution
-# errno 30: Problem copying and registering the LCIO output to the SE
-# errno 31: Problem copying and registering the Joboutput to the SE
+# errno  0: No error.
+# errno  1: Unable to get the input file from the SE.
+# errno 20: Problem during Marlin execution (telescope only)
+# errno 21: Problem during Marlin execution (telescope part)
+# errno 22: Problem during Marlin execution (dut part)
+# errno 23: Problem during Marlin execution (dut only)
+# errno 24: Problem running pedestalmerge
+# errno 30: Problem copying and registering the DB (full file) output to the SE.
+# errno 31: Problem copying and registering the DB (telescope file) output to the SE.
+# errno 32: Problem copying and registering the DB (DUT file) output to the SE.
+# errno 33: Problem copying and registering the Joboutput to the SE.
+# errno 34: Problem copying and registering the histogram (full file) to the SE
+# errno 35: Problem copying and registering the histogram (full file) to the SE
+# errno 36: Problem copying and registering the histogram (full file) to the SE
 
 
 # To be replaced with the runString in the format %(run)06d
@@ -77,6 +95,14 @@ RunString="@RunString@"
 # all files. It should be something like converter
 Name="@Name@"
 
+# Depending on the presence or not of the DUT, set the following
+# variables
+IsTelescopeOnly="@IsTelescopeOnly@"
+IsTelescopeAndDUT="@IsTelescopeAndDUT@"
+IsDUTOnly="@IsDUTOnly@"
+
+# the DUT Suffix
+DUTSuffix="@DUTSuffix@"
 
 # Define here all the variables modified by the submitter
 GRIDCE="@GRIDCE@"
@@ -92,16 +118,66 @@ GRIDFolderPedestalHisto="@GRIDFolderPedestalHisto@"
 GRIDLibraryTarball="@GRIDLibraryTarball@"
 GRIDILCSoftVersion="@GRIDILCSoftVersion@"
 
-InputLcioRawLFN=$GRIDFolderLcioRaw/run$RunString.slcio
-OutputDBLFN=$GRIDFolderDBPede/run$RunString-ped-db.slcio
-OutputJoboutputLFN=$GRIDFolderPedestalJoboutput/$Name-$RunString.tar.gz
-OutputHistoLFN=$GRIDFolderPedestalHisto/run$RunString-ped-histo.root
-
+# Input file local and lfn
 InputLcioRawLocal=$PWD/lcio-raw/run$RunString.slcio
-OutputDBLocal=$PWD/db/run$RunString-ped-db.slcio
-OutputJoboutputLocal=$PWD/log/$Name-$RunString.tar.gz
-OutputHistoLocal=$PWD/histo/run$RunString-ped-histo.root
+InputLcioRawLFN=$GRIDFolderLcioRaw/run$RunString.slcio
+
+# output db local and lfn
+OutputDBLocal=""
+OutputDB_TEL_Local=""
+OutputDB_DUT_Local=""
+OutputDBLFN=""
+OutputDB_TEL_LFN=""
+OutputDB_DUT_LFN=""
+
+# output histo file local and lfn
+OutputHistoLocal=""
+OutputHisto_TEL_Local=""
+OutputHisto_DUT_Local=""
+OutputHistoLFN=""
+OutputHisto_TEL_LFN=""
+OutputHisto_DUT_LFN=""
+
+# steering file
 SteeringFile=$Name-$RunString.xml
+SteeringFile_TEL=$Name-$RusString-telescope.xml
+SteeringFile_DUT=$Name-$RunString-$DUTSuffix.xml
+
+if [ $IsTelescopeOnly == "yes" ] ;
+    OutputDBLocal=$PWD/db/run$RunString-ped-db.slcio
+    OutputDBLFN=$GRIDFolderDBPede/run$RunString-ped-db.slcio
+#
+    OutputHistoLocal=$PWD/histo/run$RunString-ped-histo.root
+    OutputHistoLFN=$GRIDFolderPedestalHisto/run$RunString-ped-histo.root
+fi
+
+if [ $IsTelescopeAndDUT == "yes" ] ;
+    OutputDBLocal=$PWD/db/run$RunString-ped-db.slcio
+    OutputDB_TEL_Local=$PWD/db/run$RunString-ped-telescope-db.slcio
+    OutputDB_DUT_Local=$PWD/db/run$RunString-ped-$DUTSuffix-db.slcio
+    OutputDBLFN=$GRIDFolderDBPede/run$RunString-ped-db.slcio
+    OutputDB_TEL_LFN=$GRIDFolderDBPede/run$RunString-ped-telescope-db.slcio
+    OutputDB_DUT_LFN=$GRIDFolderDBPede/run$RunString-ped--$DUTSuffix-db.slcio
+#
+    OutputHistoLocal=$PWD/histo/run$RunString-ped-histo.root
+    OutputHisto_TEL_Local=$PWD/histo/run$RunString-ped-telescope-histo.root
+    OutputHisto_DUT_Local=$PWD/histo/run$RunString-ped-$DUTSuffix-histo.root
+    OutputHistoLFN=$GRIDFolderPedestalHisto/run$RunString-ped-histo.root
+    OutputHisto_TEL_LFN=$GRIDFolderPedestalHisto/run$RunString-ped-telescope-histo.root
+    OutputHisto_DUT_LFN=$GRIDFolderPedestalHisto/run$RunString-ped-$DUTSuffix-histo.root
+fi
+
+if [ $IsDUTOnly == "yes" ] ;
+    OutputDB_DUT_LFN=$GRIDFolderDBPede/run$RunString-ped--$DUTSuffix-db.slcio
+#
+    OutputHisto_DUT_LFN=$GRIDFolderPedestalHisto/run$RunString-ped-$DUTSuffix-histo.root
+fi
+
+# joboutput file local and lfn
+OutputJoboutputLocal=$PWD/log/$Name-$RunString.tar.gz
+OutputJoboutputLFN=$GRIDFolderPedestalJoboutput/$Name-$RunString.tar.gz
+
+# log file name
 LogFile=$Name-$RunString.log
 
 echo
@@ -177,14 +253,60 @@ echo "########################################################################"
 echo "# Starting Marlin `date`"
 echo "########################################################################"
 echo
-c="Marlin $SteeringFile"
-echo $c
-$c
-r=$?
 
-if [ $r -ne 0 ] ; then
-    echo "****** Problem running Marlin"
-    exit 20
+if [ $IsTelescopeOnly == "yes" ] ;
+    c="Marlin $SteeringFile"
+    echo $c
+    $c
+    r=$?
+
+
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem running Marlin (telescope only)"
+        exit 20
+    fi
+fi
+
+if [ $IsTelescopeAndDUT== "yes" ] ; 
+    c="Marlin $SteeringFile_TEL"
+    echo $c
+    $c
+    r=$?
+
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem running Marlin for the telescope part"
+        exit 21
+    fi
+
+    c="Marlin $SteeringFile_DUT"
+    echo $c
+    $c
+    r=$?
+
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem running Marlin for the DUT part"
+        exit 22
+    fi
+
+    # merge the db
+    doCommand "pedestalmerge -v -o ${OutputDBLocal} ${OutputDB_TEL_Local} ${OutputDB_DUT_Local}"
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem running the pedestal merge"
+        exit 24
+    fi
+fi
+
+if [ $IsDUTOnly == "yes" ] ;
+    c="Marlin $SteeringFile_DUT"
+    echo $c
+    $c
+    r=$?
+
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem running Marlin for the DUT part"
+        exit 23
+    fi
 fi
 
 echo
@@ -198,8 +320,19 @@ echo
 doCommand "rm ${InputLcioRawLocal}"
 
 # fixing the histograms
-doCommand "hadd -f temp.root empty.root ${OutputHistoLocal}"
-doCommand "mv temp.root ${OutputHistoLocal}"
+if [ $IsTelescopeOnly == "yes" ] ;
+    doCommand "hadd -f temp.root empty.root ${OutputHistoLocal}"
+    doCommand "mv temp.root ${OutputHistoLocal}"
+fi
+
+if [ $IsTelescopeAndDUT == "yes" ] ;
+    doCommand "hadd -f ${OutputHistoLocal} ${OutputHisto_TEL_Local} ${OutputHisto_DUT_Local}"
+fi
+
+if [ $IsDUTOnly == "yes" ] ;
+    doCommand "hadd -f temp.root empty.root ${OutputHisto_DUT_Local}"
+    doCommand "mv temp.root ${OutputHisto_DUT_Local}"
+fi
 
 # put back the files to the GRID
 echo
@@ -207,12 +340,48 @@ echo "########################################################################"
 echo "# Copying and registering the output file to SE"
 echo "########################################################################"
 echo
-doCommand "putOnGRID ${OutputDBLocal} ${OutputDBLFN} ${GRIDSE}"
-r=$?
-if [ $r -ne 0 ] ; then
-    echo "****** Problem copying the ${OutputDBLocal} to the GRID"
-    exit 30
+
+if [ $IsTelescopeOnly == "yes" ] ;
+    doCommand "putOnGRID ${OutputDBLocal} ${OutputDBLFN} ${GRIDSE}"
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem copying the ${OutputDBLocal} to the GRID"
+        exit 30
+    fi
 fi
+
+if [ $IsTelescopeAndDUT == "yes" ] ;
+    doCommand "putOnGRID ${OutputDBLocal} ${OutputDBLFN} ${GRIDSE}"
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem copying the ${OutputDBLocal} to the GRID"
+        exit 30
+    fi
+
+    doCommand "putOnGRID ${OutputDB_TEL_Local} ${OutputDB_TEL_LFN} ${GRIDSE}"
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem copying the ${OutputDB_TEL_Local} to the GRID"
+        exit 31
+    fi
+
+    doCommand "putOnGRID ${OutputDB_DUT_Local} ${OutputDB_DUT_LFN} ${GRIDSE}"
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem copying the ${OutputDB_DUT_Local} to the GRID"
+        exit 32
+    fi
+fi
+
+if [$IsDUTOnly == "yes" ] ;
+    doCommand "putOnGRID ${OutputDB_DUT_Local} ${OutputDB_DUT_LFN} ${GRIDSE}"
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem copying the ${OutputDB_DUT_Local} to the GRID"
+        exit 32
+    fi
+fi
+
 
 echo
 echo "########################################################################"
@@ -230,7 +399,7 @@ doCommand "putOnGRID  ${OutputJoboutputLocal} ${OutputJoboutputLFN} ${GRIDSE}"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "****** Problem copying the ${OutputJoboutputLocal} to the GRID"
-    exit 31
+    exit 33
 fi
 
 echo
@@ -238,11 +407,46 @@ echo "########################################################################"
 echo "# Copying and registering the histogram file to SE"
 echo "########################################################################"
 echo
-doCommand "putOnGRID ${OutputHistoLocal} ${OutputHistoLFN} ${GRIDSE}"
-r=$?
-if [ $r -ne 0 ] ; then
-    echo "****** Problem copying the ${OutputHistoLocal} to the GRID"
-    exit 32
+
+if [ $IsTelescopeOnly == "yes" ] ;
+    doCommand "putOnGRID ${OutputHistoLocal} ${OutputHistoLFN} ${GRIDSE}"
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem copying the ${OutputHistoLocal} to the GRID"
+        exit 34
+    fi
+fi
+
+if [ $IsTelescopeAndDUT == "yes" ] ;
+    doCommand "putOnGRID ${OutputHistoLocal} ${OutputHistoLFN} ${GRIDSE}"
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem copying the ${OutputHistoLocal} to the GRID"
+        exit 34
+    fi
+
+    doCommand "putOnGRID ${OutputHisto_TEL_Local} ${OutputHisto_TEL_LFN} ${GRIDSE}"
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem copying the ${OutputHisto_TEL_Local} to the GRID"
+        exit 35
+    fi
+
+    doCommand "putOnGRID ${OutputHisto_DUT_Local} ${OutputHisto_DUT_LFN} ${GRIDSE}"
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem copying the ${OutputHisto_DUT_Local} to the GRID"
+        exit 36
+    fi
+fi
+
+if [ $IsDUTOnly == "yes" ] ;
+    doCommand "putOnGRID ${OutputHisto_DUT_Local} ${OutputHisto_DUT_LFN} ${GRIDSE}"
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "****** Problem copying the ${OutputHisto_DUT_Local} to the GRID"
+        exit 36
+    fi
 fi
 
 # Job finished
