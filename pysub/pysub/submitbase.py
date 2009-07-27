@@ -6,7 +6,7 @@ import time
 import os
 import sys
 import popen2
-
+import commands
 
 ## SubmitBase
 # This is the base class for all submitters
@@ -15,7 +15,7 @@ import popen2
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.21 2009-07-27 14:24:14 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.22 2009-07-27 14:31:30 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -24,7 +24,7 @@ class SubmitBase :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.21 $"
+    cvsVersion = "$Revision: 1.22 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -375,13 +375,13 @@ class SubmitBase :
         # guess if the library is locally on the computer, or if it is already on the GRID
         if gridLibraryTarballPath.startswith( "lfn:" ):
             # it's on the storage element, check if it is there:
-            command = "lfc-ls -v %(path)s/%(file)s" % { "path": gridLibraryTarballPath, "file": gridLibraryTarball }
+            command = "lfc-ls  %(path)s/%(file)s" % { "path": gridLibraryTarballPath.lstrip("lfn:"), "file": gridLibraryTarball }
             status, output = commands.getstatusoutput( command )
             if self._option.verbose:
                 for line in output.splitlines():
                     self._logger.info( line.strip() )
             if status != 0:
-                raise MissingLibraryFileError ( "%(path)s/%(file)s" % { "path": gridLibraryTarballPath, "file": gridLibraryTarbal } )
+                raise MissingLibraryFileError ( "%(path)s/%(file)s" % { "path": gridLibraryTarballPath, "file": gridLibraryTarball } )
             jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", "" )
 
         else :
