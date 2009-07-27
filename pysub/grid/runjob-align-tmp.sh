@@ -2,7 +2,7 @@
 # A template of alignment job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-align-tmp.sh,v 1.7 2009-07-18 17:24:06 bulgheroni Exp $
+# @version $Id: runjob-align-tmp.sh,v 1.8 2009-07-27 12:12:30 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -151,7 +151,7 @@ echo "# Uncompressing the job tarball..."
 echo "########################################################################"
 echo
 doCommand "tar xzvf $GRIDLibraryTarball"
-doCommand "chmod 777 pede"
+doCommand "chmod 777 pede pede2lcio"
 
 # rename the simjob.slcio because otherwise it gets delete
 doCommand "mv simjob.slcio simjob.slcio.keepme"

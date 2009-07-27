@@ -2,7 +2,7 @@
 # A template of pedestal job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-pedestal-tmp.sh,v 1.8 2009-07-26 20:46:15 bulgheroni Exp $
+# @version $Id: runjob-pedestal-tmp.sh,v 1.9 2009-07-27 12:12:30 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the input file from the SE.
@@ -140,10 +140,10 @@ OutputHisto_DUT_LFN=""
 
 # steering file
 SteeringFile=$Name-$RunString.xml
-SteeringFile_TEL=$Name-$RusString-telescope.xml
+SteeringFile_TEL=$Name-$RunString-telescope.xml
 SteeringFile_DUT=$Name-$RunString-$DUTSuffix.xml
 
-if [ $IsTelescopeOnly == "yes" ] ;
+if [ $IsTelescopeOnly == "yes" ] ; then
     OutputDBLocal=$PWD/db/run$RunString-ped-db.slcio
     OutputDBLFN=$GRIDFolderDBPede/run$RunString-ped-db.slcio
 #
@@ -151,13 +151,13 @@ if [ $IsTelescopeOnly == "yes" ] ;
     OutputHistoLFN=$GRIDFolderPedestalHisto/run$RunString-ped-histo.root
 fi
 
-if [ $IsTelescopeAndDUT == "yes" ] ;
+if [ $IsTelescopeAndDUT == "yes" ] ; then
     OutputDBLocal=$PWD/db/run$RunString-ped-db.slcio
     OutputDB_TEL_Local=$PWD/db/run$RunString-ped-telescope-db.slcio
     OutputDB_DUT_Local=$PWD/db/run$RunString-ped-$DUTSuffix-db.slcio
     OutputDBLFN=$GRIDFolderDBPede/run$RunString-ped-db.slcio
     OutputDB_TEL_LFN=$GRIDFolderDBPede/run$RunString-ped-telescope-db.slcio
-    OutputDB_DUT_LFN=$GRIDFolderDBPede/run$RunString-ped--$DUTSuffix-db.slcio
+    OutputDB_DUT_LFN=$GRIDFolderDBPede/run$RunString-ped-$DUTSuffix-db.slcio
 #
     OutputHistoLocal=$PWD/histo/run$RunString-ped-histo.root
     OutputHisto_TEL_Local=$PWD/histo/run$RunString-ped-telescope-histo.root
@@ -167,9 +167,11 @@ if [ $IsTelescopeAndDUT == "yes" ] ;
     OutputHisto_DUT_LFN=$GRIDFolderPedestalHisto/run$RunString-ped-$DUTSuffix-histo.root
 fi
 
-if [ $IsDUTOnly == "yes" ] ;
-    OutputDB_DUT_LFN=$GRIDFolderDBPede/run$RunString-ped--$DUTSuffix-db.slcio
+if [ $IsDUTOnly == "yes" ] ; then
+    OutputDB_DUT_Local=$PWD/db/run$RunString-ped-$DUTSuffix-db.slcio
+    OutputDB_DUT_LFN=$GRIDFolderDBPede/run$RunString-ped-$DUTSuffix-db.slcio
 #
+    OutputHisto_DUT_Local=$PWD/histo/run$RunString-ped-$DUTSuffix-histo.root
     OutputHisto_DUT_LFN=$GRIDFolderPedestalHisto/run$RunString-ped-$DUTSuffix-histo.root
 fi
 
@@ -209,9 +211,6 @@ echo "########################################################################"
 echo
 doCommand "tar xzvf $GRIDLibraryTarball"
 
-# rename the simjob.slcio because otherwise it gets delete
-doCommand "mv simjob.slcio simjob.slcio.keepme"
-
 # from now on doing things to get access to ESA
 doCommand "source ./ilc-grid-config.sh"
 doCommand "$BASH ./ilc-grid-test-sys.sh || abort \"system tests failed!\" "
@@ -229,12 +228,11 @@ echo "# ILCSOFT ready to use"
 echo "########################################################################"
 echo
 
-# now it's safe to rename the simjob to the original
-doCommand "mv simjob.slcio.keepme simjob.slcio"
 
 # set the list of Marlin plugins and the LD_LIBRARY_PATH
 doCommand "export MARLIN_DLL=$PWD/libEutelescope.so"
 doCommand "export LD_LIBRARY_PATH=$PWD:$LD_LIBRARY_PATH"
+doCommand "export PATH=$PWD:$PATH"
 
 # get the input raw file
 doCommand "getFromGRID ${InputLcioRawLFN} ${InputLcioRawLocal}"
@@ -254,7 +252,7 @@ echo "# Starting Marlin `date`"
 echo "########################################################################"
 echo
 
-if [ $IsTelescopeOnly == "yes" ] ;
+if [ $IsTelescopeOnly == "yes" ] ; then
     c="Marlin $SteeringFile"
     echo $c
     $c
@@ -267,7 +265,7 @@ if [ $IsTelescopeOnly == "yes" ] ;
     fi
 fi
 
-if [ $IsTelescopeAndDUT== "yes" ] ; 
+if [ $IsTelescopeAndDUT == "yes" ] ; then 
     c="Marlin $SteeringFile_TEL"
     echo $c
     $c
@@ -297,7 +295,7 @@ if [ $IsTelescopeAndDUT== "yes" ] ;
     fi
 fi
 
-if [ $IsDUTOnly == "yes" ] ;
+if [ $IsDUTOnly == "yes" ] ; then
     c="Marlin $SteeringFile_DUT"
     echo $c
     $c
@@ -320,16 +318,16 @@ echo
 doCommand "rm ${InputLcioRawLocal}"
 
 # fixing the histograms
-if [ $IsTelescopeOnly == "yes" ] ;
+if [ $IsTelescopeOnly == "yes" ] ; then
     doCommand "hadd -f temp.root empty.root ${OutputHistoLocal}"
     doCommand "mv temp.root ${OutputHistoLocal}"
 fi
 
-if [ $IsTelescopeAndDUT == "yes" ] ;
+if [ $IsTelescopeAndDUT == "yes" ] ; then
     doCommand "hadd -f ${OutputHistoLocal} ${OutputHisto_TEL_Local} ${OutputHisto_DUT_Local}"
 fi
 
-if [ $IsDUTOnly == "yes" ] ;
+if [ $IsDUTOnly == "yes" ] ; then
     doCommand "hadd -f temp.root empty.root ${OutputHisto_DUT_Local}"
     doCommand "mv temp.root ${OutputHisto_DUT_Local}"
 fi
@@ -341,7 +339,7 @@ echo "# Copying and registering the output file to SE"
 echo "########################################################################"
 echo
 
-if [ $IsTelescopeOnly == "yes" ] ;
+if [ $IsTelescopeOnly == "yes" ] ; then
     doCommand "putOnGRID ${OutputDBLocal} ${OutputDBLFN} ${GRIDSE}"
     r=$?
     if [ $r -ne 0 ] ; then
@@ -350,7 +348,7 @@ if [ $IsTelescopeOnly == "yes" ] ;
     fi
 fi
 
-if [ $IsTelescopeAndDUT == "yes" ] ;
+if [ $IsTelescopeAndDUT == "yes" ] ; then
     doCommand "putOnGRID ${OutputDBLocal} ${OutputDBLFN} ${GRIDSE}"
     r=$?
     if [ $r -ne 0 ] ; then
@@ -373,7 +371,7 @@ if [ $IsTelescopeAndDUT == "yes" ] ;
     fi
 fi
 
-if [$IsDUTOnly == "yes" ] ;
+if [ $IsDUTOnly == "yes" ] ; then
     doCommand "putOnGRID ${OutputDB_DUT_Local} ${OutputDB_DUT_LFN} ${GRIDSE}"
     r=$?
     if [ $r -ne 0 ] ; then
@@ -408,7 +406,7 @@ echo "# Copying and registering the histogram file to SE"
 echo "########################################################################"
 echo
 
-if [ $IsTelescopeOnly == "yes" ] ;
+if [ $IsTelescopeOnly == "yes" ] ; then
     doCommand "putOnGRID ${OutputHistoLocal} ${OutputHistoLFN} ${GRIDSE}"
     r=$?
     if [ $r -ne 0 ] ; then
@@ -417,7 +415,7 @@ if [ $IsTelescopeOnly == "yes" ] ;
     fi
 fi
 
-if [ $IsTelescopeAndDUT == "yes" ] ;
+if [ $IsTelescopeAndDUT == "yes" ] ; then
     doCommand "putOnGRID ${OutputHistoLocal} ${OutputHistoLFN} ${GRIDSE}"
     r=$?
     if [ $r -ne 0 ] ; then
@@ -440,7 +438,7 @@ if [ $IsTelescopeAndDUT == "yes" ] ;
     fi
 fi
 
-if [ $IsDUTOnly == "yes" ] ;
+if [ $IsDUTOnly == "yes" ] ; then
     doCommand "putOnGRID ${OutputHisto_DUT_Local} ${OutputHisto_DUT_LFN} ${GRIDSE}"
     r=$?
     if [ $r -ne 0 ] ; then

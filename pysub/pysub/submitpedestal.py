@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.27 2009-07-26 20:46:15 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.28 2009-07-27 12:12:30 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.27 $"
+    cvsVersion = "$Revision: 1.28 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1342,7 +1342,7 @@ class SubmitPedestal( SubmitBase ):
                 runActualString = runActualString.replace( "@IsTelescopeAndDUT@","yes" )
                 runActualString = runActualString.replace( "@IsDUTOnly@","no" )
         else:
-            runActualString = runActualString.replace( "@DUTSuffix@", None )
+            runActualString = runActualString.replace( "@DUTSuffix@", "None" )
             runActualString = runActualString.replace( "@IsTelescopeOnly@","yes" )
             runActualString = runActualString.replace( "@IsTelescopeAndDUT@","no" )
             runActualString = runActualString.replace( "@IsDUTOnly@","no" )
@@ -1353,7 +1353,7 @@ class SubmitPedestal( SubmitBase ):
         # replace the job name
         runActualString = runActualString.replace( "@Name@", self.name )
 
-        variableList = [ "GRIDCE", "GRIDSE", "GRIDStorePrtocol", "GRIDVO",
+        variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
                          "GRIDFolderBase", "GRIDFolderDBPede", "GRIDFolderLcioRaw", "GRIDFolderPedestalHisto",
                          "GRIDFolderPedestalJoboutput", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
         for variable in variableList:
@@ -1461,10 +1461,10 @@ class SubmitPedestal( SubmitBase ):
         # replace the steering file
         # this is critical with pedestal
         if self._hasDUT:
-            if self.option.dut_only :
+            if self._option.dut_only :
                 string = "%(name)s-%(run)s-%(suffix)s.xml" % { "name": self.name, "run" : runString, "suffix": self._dutSuffix }
             else:
-                string = "%(name)s-%(run)s-telescope.xml, %(name)s-%(run)s-%(suffix)s.xml" % { "name": self.name, "run" : runString, "suffix": self._dutSuffix }
+                string = "%(name)s-%(run)s-telescope.xml\", \"%(name)s-%(run)s-%(suffix)s.xml" % { "name": self.name, "run" : runString, "suffix": self._dutSuffix }
         else:
             string = "%(name)s-%(run)s.xml" % { "name": self.name, "run" : runString }
 
