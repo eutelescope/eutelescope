@@ -7,7 +7,7 @@
 #  pysub
 #
 #  Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-#  Version: $Id: myjob-status.py,v 1.5 2009-07-27 15:17:26 bulgheroni Exp $
+#  Version: $Id: myjob-status.py,v 1.6 2009-07-27 15:18:45 bulgheroni Exp $
 
 from optparse import OptionParser
 import os
@@ -16,7 +16,7 @@ import time
 
 def main() :
     usage = "%prog [options] JID-files"
-    version = "$Revision: 1.5 $"
+    version = "$Revision: 1.6 $"
     version = version.replace("$Revision:", "")
     version = version.replace("$", "")
     parser = OptionParser( usage=usage, version=version.strip())
@@ -41,7 +41,7 @@ def main() :
 
     parser.add_option( "-w", "--wait", action="store", type="int", dest="wait", help="Time to wait between one loop and the next when working in continuos mode")
 
-    parser.add_option( "-i", help="Does nothing, only for backward compatibility" )
+    parser.add_option( "-i", action="store_true", help="Does nothing, only for backward compatibility" )
 
 
     parser.set_defaults( type="detailed" )
