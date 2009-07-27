@@ -15,7 +15,7 @@ import popen2
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.20 2009-06-03 10:36:29 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.21 2009-07-27 14:24:14 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -24,7 +24,7 @@ class SubmitBase :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.20 $"
+    cvsVersion = "$Revision: 1.21 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -61,7 +61,7 @@ class SubmitBase :
         self._timeBegin = time.time()
 
         # load the configuration
-        try: 
+        try:
             self.configure()
         except MissingConfigurationFileError, error:
             logging.critical( "Configuration file %(cfg)s doesn't exist!" % { "cfg": error._filename } )
@@ -211,7 +211,7 @@ class SubmitBase :
 
     ## Ask yes or no
     #
-    def askYesNo( self, prompt, complaint= "Yes or no please", retries = 4 ): 
+    def askYesNo( self, prompt, complaint= "Yes or no please", retries = 4 ):
         while True:
             ok = raw_input( prompt )
             ok = ok.lower()
@@ -219,10 +219,10 @@ class SubmitBase :
             if ok in ['n','no',"nope" ] : return False
             retries = retries - 1
             if retries < 0 : raise IOError, "Wrong answer"
-            print complaint 
+            print complaint
 
     ## Log summary
-    # 
+    #
     # This method is used to log the summary of the submission
     # Remember that the ntuple is made in this way:
     # run; inputFileStatus; marlinStatus ; outputFileStatus ; histoFileStatus ; joboutputFileStatus
@@ -233,7 +233,7 @@ class SubmitBase :
             pass
 
         else:
-            self._logger.info( "" ) 
+            self._logger.info( "" )
             self._logger.info( "== SUBMISSION SUMMARY =======================================================" )
             message = "| %(run)6s | %(inputFileStatus)10s | %(marlinStatus)10s | %(outputFileStatus)11s | %(histoFileStatus)11s | %(joboutputFileStatus)10s |" \
                 % { "run": "Run", "inputFileStatus" : "Input File", "marlinStatus": "Marlin",
@@ -242,7 +242,7 @@ class SubmitBase :
             for entry in self._summaryNTuple :
                 run, inputFileStatus, marlinStatus, outputFileStatus, histoFileStatus, joboutputFileStatus = entry
                 message = "| %(run)6s | %(inputFileStatus)10s | %(marlinStatus)10s | %(outputFileStatus)11s | %(histoFileStatus)11s | %(joboutputFileStatus)10s |" \
-                    % { "run": run, "inputFileStatus" : inputFileStatus, "marlinStatus":marlinStatus,  
+                    % { "run": run, "inputFileStatus" : inputFileStatus, "marlinStatus":marlinStatus,
                         "outputFileStatus": outputFileStatus, "histoFileStatus": histoFileStatus, "joboutputFileStatus":joboutputFileStatus }
                 self._logger.info( message )
             self._logger.info("=============================================================================" )
@@ -263,7 +263,7 @@ class SubmitBase :
             if self._configParser.get("General","Interactive" ):
                 if self.askYesNo( "Would you like to remove it?  [y/n] " ):
                     self._logger.info( "User decided to remove %(file)s " % { "file": filename } )
-                    command = "lcg-del -a lfn:%(file)s" % { "file": filename } 
+                    command = "lcg-del -a lfn:%(file)s" % { "file": filename }
                     os.system( command )
                     return True
                 else :
@@ -273,7 +273,7 @@ class SubmitBase :
 
 
     ## Verify the existence of a GRID folder
-    #  
+    #
     # @return True if the folder exists
     # @throw MissingGRIDFolder in case it doesn't
     #
@@ -295,7 +295,7 @@ class SubmitBase :
                 self._logger.error( "Unable to find folder %(folder)s" % { "folder": folder })
                 if self.askYesNo( "Do you want to create it? " ) :
                     self._logger.info( "User decided to create folder %(folder)s" % { "folder": folder } )
-                    command = "lfc-mkdir -p %(folder)s " % { "folder" :folder } 
+                    command = "lfc-mkdir -p %(folder)s " % { "folder" :folder }
                     if os.system( command ) == 0 :
                         return True
                     else :
@@ -304,7 +304,7 @@ class SubmitBase :
                 else:
                     raise MissingGRIDFolderError( folder )
             else :
-                raise MissingGRIDFolderError( folder ) 
+                raise MissingGRIDFolderError( folder )
 
     ## Generate JDL file
     #
@@ -371,8 +371,22 @@ class SubmitBase :
             message = "GRID library tarball unavailable!"
             self._logger.critical( message )
             raise StopExecutionError( message )
-        jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", "%(path)s/%(file)s" %
-                                                   { "path": gridLibraryTarballPath, "file":gridLibraryTarball } )
+
+        # guess if the library is locally on the computer, or if it is already on the GRID
+        if gridLibraryTarballPath.startswith( "lfn:" ):
+            # it's on the storage element, check if it is there:
+            command = "lfc-ls -v %(path)s/%(file)s" % { "path": gridLibraryTarballPath, "file": gridLibraryTarball }
+            status, output = commands.getstatusoutput( command )
+            if self._option.verbose:
+                for line in output.splitlines():
+                    self._logger.info( line.strip() )
+            if status != 0:
+                raise MissingLibraryFileError ( "%(path)s/%(file)s" % { "path": gridLibraryTarballPath, "file": gridLibraryTarbal } )
+            jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", "" )
+
+        else :
+            jdlActualString = jdlActualString.replace( ", @GRIDLibraryTarball@", "%(path)s/%(file)s" %
+                                                       { "path": gridLibraryTarballPath, "file":gridLibraryTarball } )
 
         # replace the histoinfo file
         try:
