@@ -190,7 +190,10 @@ namespace eutelescope {
     // parameters
 
     float _distanceMax;
-    std::vector<int > _excludePlanes;
+    std::vector<int > _excludePlanes; //only for internal usage
+    std::vector<int > _excludePlanes_sensorIDs; //this is going to be
+                                                //set by the user.
+    
     int _maxTrackCandidates;
 
     std::string _binaryFilename;

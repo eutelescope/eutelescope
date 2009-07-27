@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.41 2009-07-26 15:02:32 jbehr Exp $
+// Version: $Id: EUTelMille.cc,v 1.42 2009-07-27 12:25:43 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -165,9 +165,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("DistanceMax","Maximal allowed distance between hits entering the fit per 10 cm space between the planes.",
                             _distanceMax, static_cast <float> (2000.0));
 
-  std::vector<int> exclPlanes;
-
-  registerOptionalParameter("ExcludePlanes","Exclude planes from fit.",_excludePlanes , exclPlanes);
+  registerOptionalParameter("ExcludePlanes","Exclude planes from fit according to their sensor ids.",_excludePlanes_sensorIDs ,std::vector<int>());
 
   registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates.",_maxTrackCandidates, static_cast <int> (2000));
 
@@ -314,6 +312,25 @@ void EUTelMille::init() {
   //lets sort the array with increasing z
   sort(_siPlaneZPosition.begin(), _siPlaneZPosition.end());
 
+  
+  //the user is giving sensor ids for the planes to be excluded. this
+  //sensor ids have to be converted to a local index according to the
+  //planes positions along the z axis.
+  for (size_t i = 0; i < _excludePlanes_sensorIDs.size(); i++)
+    {
+      map< double, int >::iterator iter = sensorIDMap.begin();
+      int counter = 0;
+      while ( iter != sensorIDMap.end() ) {
+        if( iter->second == _excludePlanes_sensorIDs[i])
+          {
+            _excludePlanes.push_back(counter);
+            break;
+          }
+        ++iter;
+        ++counter;
+      }
+    }
+  
   // strip from the map the sensor id already sorted.
   map< double, int >::iterator iter = sensorIDMap.begin();
   int counter = 0;
@@ -617,7 +634,6 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
   }
 
   for( counter = 0; counter < nPlanesFitter; counter++ ) {
-
     residXFit[counter] = (Ybar[0]-Xbar[0]*A2[0]+zPosFitter[counter]*A2[0])-xPosFitter[counter];
     residYFit[counter] = (Ybar[1]-Xbar[1]*A2[1]+zPosFitter[counter]*A2[1])-yPosFitter[counter];
 
@@ -1364,8 +1380,10 @@ void EUTelMille::processEvent (LCEvent * event) {
           if ( _histogramSwitch ) {
             tempHistoName = _residualXLocalname + "_d" + to_string( sensorID );
             if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-              residx_histo->fill(_waferResidX[iDetector]);
-            else {
+              {
+                residx_histo->fill(_waferResidX[iDetector]);
+              }
+              else {
               streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
               streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
               _histogramSwitch = false;
