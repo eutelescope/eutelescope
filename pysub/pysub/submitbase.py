@@ -15,7 +15,7 @@ import commands
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.22 2009-07-27 14:31:30 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.23 2009-07-27 14:35:56 gelin Exp $
 #
 class SubmitBase :
 
@@ -24,7 +24,7 @@ class SubmitBase :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.22 $"
+    cvsVersion = "$Revision: 1.23 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -385,7 +385,7 @@ class SubmitBase :
             jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", "" )
 
         else :
-            jdlActualString = jdlActualString.replace( ", @GRIDLibraryTarball@", "%(path)s/%(file)s" %
+            jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", ", \"%(path)s/%(file)s\" " %
                                                        { "path": gridLibraryTarballPath, "file":gridLibraryTarball } )
 
         # replace the histoinfo file
