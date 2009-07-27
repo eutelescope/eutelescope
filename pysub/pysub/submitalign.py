@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-align.py script
 #
 #
-# @version $Id: submitalign.py,v 1.13 2009-07-26 14:58:09 bulgheroni Exp $
+# @version $Id: submitalign.py,v 1.14 2009-07-27 09:52:28 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitAlign( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitAlign( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.13 $"
+    cvsVersion = "$Revision: 1.14 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -326,7 +326,7 @@ class SubmitAlign( SubmitBase ):
             self._summaryNTuple[ len(self._summaryNTuple) - 1 ] = run, input, "Failed", output, histo, tarball
             raise StopExecutionError( message )
 
-        except NotEnoughFileError, error:
+        except NotEnoughFilesError, error:
             self._logger.critical( "Not enough input file to continue" )
             raise StopExecutionError( message )
 
