@@ -2,7 +2,7 @@
 # A template of converter job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-converter-tmp.sh,v 1.8 2009-07-27 13:22:54 bulgheroni Exp $
+# @version $Id: runjob-converter-tmp.sh,v 1.9 2009-07-27 15:08:53 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the GRID library tarball from the SE
@@ -132,7 +132,7 @@ doCommand "mkdir db"
 doCommand "mkdir log"
 
 # check if we need to get the tarbal or not
-if [ HasLocalGRIDLibraryTarball == "no" ] ; then
+if [ $HasLocalGRIDLibraryTarball == "no" ] ; then
 
     doCommand "getFromGRID ${GRIDLibraryLFN} ${GRIDLibraryLocal} "
     r=$?
