@@ -10,7 +10,7 @@
                                ==> fitter-tmp.xml <===
 
 Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-Version: $Id: fitter-tmp.xml,v 1.3 2009-06-05 12:51:10 bulgheroni Exp $
+Version: $Id: fitter-tmp.xml,v 1.4 2009-07-27 16:36:23 jbehr Exp $
 ==========================================================================================
 
 --> 
@@ -177,7 +177,7 @@ Version: $Id: fitter-tmp.xml,v 1.3 2009-06-05 12:51:10 bulgheroni Exp $
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> @DUTHitCollectionName@ </parameter>
   <!--Name of the input Track collection-->
   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track </parameter>
-  <!--Alignment corrections for DUT: shift in X, Y and rotation around Z-->
+  <!--Alignment corrections for DUT: shift (in mm) in X, Y and rotation around Z-->
   <parameter name="DUTalignment" type="FloatVec"> @DUTAlignment@ </parameter>
   <!--DUT sensor pitch in X-->
   <parameter name="DUTpitchX" type="double" value="0.03"/>

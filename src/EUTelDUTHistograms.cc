@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// @version: $Id: EUTelDUTHistograms.cc,v 1.13 2009-07-15 17:21:28 bulgheroni Exp $
+// @version: $Id: EUTelDUTHistograms.cc,v 1.14 2009-07-27 16:36:23 jbehr Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -177,7 +177,7 @@ EUTelDUTHistograms::EUTelDUTHistograms() : Processor("EUTelDUTHistograms") {
   initAlign.push_back(0.);
 
   registerProcessorParameter ("DUTalignment",
-                              "Alignment corrections for DUT: shift in X, Y and rotation around Z",
+                              "Alignment corrections for DUT: shift (in mm) in X, Y and rotation around Z",
                               _DUTalign, initAlign);
 
   registerProcessorParameter("HistoInfoFileName",
