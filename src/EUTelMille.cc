@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.43 2009-07-27 12:52:55 jbehr Exp $
+// Version: $Id: EUTelMille.cc,v 1.44 2009-07-27 14:35:38 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -920,10 +920,13 @@ void EUTelMille::processEvent (LCEvent * event) {
       // hit list assigned to track
       std::vector<EVENT::TrackerHit*> TrackHitsHere = TrackHere->getTrackerHits();
 
+      int number_of_planes = int(TrackHitsHere.size() / 2);
+      if ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
+        ++number_of_planes;
+      }
       // check for a hit in every telescope plane
-      if (_siPlanesParameters->getSiPlanesNumber() == (int(TrackHitsHere.size() / 2)+_nExcludePlanes))
+      if (_siPlanesParameters->getSiPlanesNumber() == number_of_planes)
         {
-         
           for(size_t i =0;i < _hitCollectionName.size();i++)
             {
               LCCollection* collection;
@@ -984,6 +987,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                       1000 * hit->getPosition()[2]
                       )
                     );
+
                   double measuredz = hit->getPosition()[2];
 
                   delete cluster; // <--- destroying the cluster
@@ -994,14 +998,15 @@ void EUTelMille::processEvent (LCEvent * event) {
                       // hit positions
                       const double *PositionsHere = HitHere->getPosition();
 
-                      // assume that fitted hits have type 32.
+                      //assume that fitted hits have type 32.
                       //the tracker hit will be excluded if the
                       //distance to the hit from the hit collection
                       //is larger than 5 mm. this requirement should reject
                       //reconstructed hits in the DUT in order to
                       //avoid double counting.
                       if( std::abs( measuredz - PositionsHere[2] ) > 5.0 /* mm */)
-                        if ( HitHere->getType()  == 32 )
+                        {
+                          if ( HitHere->getType()  == 32 )
                           {
                             hitsplane.push_back(
                               EUTelMille::HitsInPlane(
@@ -1011,12 +1016,13 @@ void EUTelMille::processEvent (LCEvent * event) {
                                 )
                               );
                           } // end assume fitted hits have type 32
+                        }
                     }
                   //sort the array such that the hits are ordered
                   //in z assuming that z is constant over all
                   //events for each plane
                   std::sort(hitsplane.begin(), hitsplane.end());
-
+                                    
                   //now the array is filled into the track
                   //candidates array
                   for(int i = 0; i < _nPlanes; i++)
