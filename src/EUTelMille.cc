@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.42 2009-07-27 12:25:43 jbehr Exp $
+// Version: $Id: EUTelMille.cc,v 1.43 2009-07-27 12:52:55 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -288,7 +288,6 @@ void EUTelMille::init() {
       if ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
         ++_nPlanes;
       }
-
     }
   else
     {
@@ -911,7 +910,7 @@ void EUTelMille::processEvent (LCEvent * event) {
     collection = event->getCollection(_trackCollectionName);
     const int nTracksHere = collection->getNumberOfElements();
 
-    streamlog_out ( MILLEMESSAGE ) << "Number of tracks available in track collection: " << nTracksHere << endl;
+    //cout << "Number of tracks available in track collection: " << nTracksHere << endl;
 
     // loop over all tracks
     for (int nTracksEvent = 0; nTracksEvent < nTracksHere && nTracksEvent < _maxTrackCandidates; nTracksEvent++) {
@@ -922,8 +921,9 @@ void EUTelMille::processEvent (LCEvent * event) {
       std::vector<EVENT::TrackerHit*> TrackHitsHere = TrackHere->getTrackerHits();
 
       // check for a hit in every telescope plane
-      if (_siPlanesParameters->getSiPlanesNumber() == int(TrackHitsHere.size() / 2))
+      if (_siPlanesParameters->getSiPlanesNumber() == (int(TrackHitsHere.size() / 2)+_nExcludePlanes))
         {
+         
           for(size_t i =0;i < _hitCollectionName.size();i++)
             {
               LCCollection* collection;
