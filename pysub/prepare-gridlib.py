@@ -8,12 +8,13 @@ import shutil
 import tarfile
 import tempfile
 import glob
+import commands
 import sys
 
 def main() :
 
     usage = "usage: %prog [options] additional-files"
-    cvsVersion = "$Revision: 1.6 $"
+    cvsVersion = "$Revision: 1.7 $"
     version = "%prog version" +  cvsVersion[10:len(cvsVersion)-1]
     parser = OptionParser( usage = usage, version = version )
 
@@ -102,14 +103,15 @@ def main() :
 
     if not isTarballLocal:
         print "Copying to the GRID..."
-        command = "lcg-cr -v lfn:%(lfn)s file:$PWD/%(local)s" % { "lfn": options.output, "local": filename }
+        command = "lcg-cr -v -l %(lfn)s file:$PWD/%(local)s" % { "lfn": options.output, "local": filename }
+        print command
         status, output = commands.getstatusoutput( command )
 
         if options.verbose :
             for line in output.splitlines():
                 print line.strip()
 
-        shutil.rm( filename )
+        os.remove( filename )
 
 if __name__ == "__main__" :
     main()
