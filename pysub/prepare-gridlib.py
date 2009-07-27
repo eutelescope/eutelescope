@@ -14,12 +14,13 @@ import sys
 def main() :
 
     usage = "usage: %prog [options] additional-files"
-    cvsVersion = "$Revision: 1.7 $"
+    cvsVersion = "$Revision: 1.8 $"
     version = "%prog version" +  cvsVersion[10:len(cvsVersion)-1]
     parser = OptionParser( usage = usage, version = version )
 
     parser.add_option( "-o", "--output", type="string", action="store", dest="output",
-                       help="The name of the output GRIDLib tarball" )
+                       help="The name of the output GRIDLib tarball. If this is starting with lfn:"
+                       " then it will be copied to the default storage element and registered with this logical filename" )
 
     parser.add_option("-c", "--config-file", type="string", action="store", dest="config",
                       help="The configuration file")
