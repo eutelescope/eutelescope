@@ -21,7 +21,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.37 2009-06-12 18:02:01 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.38 2009-07-27 13:22:54 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -31,7 +31,7 @@ class SubmitConverter( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.37 $"
+    cvsVersion = "$Revision: 1.38 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -279,6 +279,10 @@ class SubmitConverter( SubmitBase ) :
                 self._logger.error( message )
                 run, b, c, d, e, f = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, b, c, d, e, "Missing"
+
+            except MissingLibraryFileError, error:
+                self._logger.critical( "The GRID lib (%(file)s) is not avaialable. Can't continue" % { "file": error._filename } )
+                raise StopExecutionError( "Missing library" )
 
 
     ## CPU Local submitter
@@ -537,13 +541,19 @@ class SubmitConverter( SubmitBase ) :
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
                          "GRIDFolderBase", "GRIDFolderNative", "GRIDFolderLcioRaw",
-                         "GRIDFolderConvertJoboutput", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+                         "GRIDFolderConvertJoboutput", "GRIDLibraryTarball", "GRIDLibraryTarballPath", "GRIDILCSoftVersion" ]
         for variable in variableList:
             try:
                 value = self._configParser.get( "GRID", variable )
                 if variable == "GRIDCE":
                     self._gridCE = value
                 runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
+
+                if variable == "GRIDLibraryTarballPath" and variable.startswith( "lfn:" ) :
+                    runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
+                else:
+                    runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
+
             except ConfigParser.NoOptionError:
                 message = "Unable to find variable %(var)s in the config file" % { "var" : variable }
                 self._logger.critical( message )

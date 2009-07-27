@@ -42,6 +42,10 @@ class MissingConfigurationFileError( MissingFileError ):
 class MissingInputFileError( MissingFileError ):
     pass
 
+## Missing grid library file
+class MissingLibraryFileError( MissingFileError ):
+    pass
+
 ## Missing GEAR file
 #
 class MissingGEARFileError( MissingFileError ):

@@ -13,7 +13,7 @@ import sys
 def main() :
 
     usage = "usage: %prog [options] additional-files"
-    cvsVersion = "$Revision: 1.5 $"
+    cvsVersion = "$Revision: 1.6 $"
     version = "%prog version" +  cvsVersion[10:len(cvsVersion)-1]
     parser = OptionParser( usage = usage, version = version )
 
@@ -81,8 +81,16 @@ def main() :
         linkto = os.readlink( link )
         os.symlink(linkto, dest)
 
+    # check if the ouptut is a local file or a lfn
+    isTarballLocal = True
+    if options.output.startswith( "lfn:" ):
+        isTarballLocal = False
+        filename = os.path.basename( options.output )
+    else :
+        isTarballLocal = True
+        filename = options.output
 
-    tarball = tarfile.open( options.output, "w:gz" )
+    tarball = tarfile.open( filename, "w:gz" )
 
     for i in glob.glob( "%(dir)s/*" % { "dir": tempDir } ):
         if options.verbose :
@@ -92,7 +100,16 @@ def main() :
     tarball.close()
     shutil.rmtree( tempDir )
 
+    if not isTarballLocal:
+        print "Copying to the GRID..."
+        command = "lcg-cr -v lfn:%(lfn)s file:$PWD/%(local)s" % { "lfn": options.output, "local": filename }
+        status, output = commands.getstatusoutput( command )
 
+        if options.verbose :
+            for line in output.splitlines():
+                print line.strip()
+
+        shutil.rm( filename )
 
 if __name__ == "__main__" :
     main()
