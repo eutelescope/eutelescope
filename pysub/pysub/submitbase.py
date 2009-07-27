@@ -15,7 +15,7 @@ import commands
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.23 2009-07-27 14:35:56 gelin Exp $
+# @version $Id: submitbase.py,v 1.24 2009-07-27 16:21:05 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -24,7 +24,7 @@ class SubmitBase :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.23 $"
+    cvsVersion = "$Revision: 1.24 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -386,7 +386,7 @@ class SubmitBase :
 
         else :
             jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", ", \"%(path)s/%(file)s\" " %
-                                                       { "path": gridLibraryTarballPath, "file":gridLibraryTarball } )
+                                                       { "path": gridLibraryTarballPath.lstrip("lfn:"), "file":gridLibraryTarball } )
 
         # replace the histoinfo file
         try:
