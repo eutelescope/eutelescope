@@ -177,6 +177,8 @@ namespace eutelescope {
     std::vector< int > _orderedSensorID;
     std::vector< int > _orderedSensorID_wo_excluded;
 
+
+
     //! TrackerHit collection name
     /*! Input collection with hits.
      */
@@ -193,7 +195,12 @@ namespace eutelescope {
     std::vector<int > _excludePlanes; //only for internal usage
     std::vector<int > _excludePlanes_sensorIDs; //this is going to be
                                                 //set by the user.
+    std::vector<int > _FixedPlanes; //only for internal usage
+    std::vector<int > _FixedPlanes_sensorIDs; //this is going to be
+    //set by the user.
     
+
+
     int _maxTrackCandidates;
 
     std::string _binaryFilename;

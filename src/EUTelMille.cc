@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.44 2009-07-27 14:35:38 jbehr Exp $
+// Version: $Id: EUTelMille.cc,v 1.45 2009-07-28 14:55:39 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -167,6 +167,10 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   registerOptionalParameter("ExcludePlanes","Exclude planes from fit according to their sensor ids.",_excludePlanes_sensorIDs ,std::vector<int>());
 
+  registerOptionalParameter("FixedPlanes","Fix sensor planes in the fit according to their sensor ids.",_FixedPlanes_sensorIDs ,std::vector<int>());
+
+
+
   registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates.",_maxTrackCandidates, static_cast <int> (2000));
 
   registerOptionalParameter("BinaryFilename","Name of the Millepede binary file.",_binaryFilename, string ("mille.bin"));
@@ -315,6 +319,20 @@ void EUTelMille::init() {
   //the user is giving sensor ids for the planes to be excluded. this
   //sensor ids have to be converted to a local index according to the
   //planes positions along the z axis.
+  for (size_t i = 0; i < _FixedPlanes_sensorIDs.size(); i++)
+    {
+      map< double, int >::iterator iter = sensorIDMap.begin();
+      int counter = 0;
+      while ( iter != sensorIDMap.end() ) {
+        if( iter->second == _FixedPlanes_sensorIDs[i])
+          {
+            _FixedPlanes.push_back(counter);
+            break;
+          }
+        ++iter;
+        ++counter;
+      }
+    }
   for (size_t i = 0; i < _excludePlanes_sensorIDs.size(); i++)
     {
       map< double, int >::iterator iter = sensorIDMap.begin();
@@ -1558,21 +1576,29 @@ void EUTelMille::end() {
 
         // if plane not excluded
         if (excluded == 0) {
-
-          // if fixed planes
-          if (help == firstnotexcl || help == lastnotexcl) {
-
-            if (_alignMode == 1) {
-              steerFile << (counter * 3 + 1) << " 0.0 -1.0" << endl;
-              steerFile << (counter * 3 + 2) << " 0.0 -1.0" << endl;
-              steerFile << (counter * 3 + 3) << " 0.0 -1.0" << endl;
-            } else if (_alignMode == 2) {
-              steerFile << (counter * 2 + 1) << " 0.0 -1.0" << endl;
-              steerFile << (counter * 2 + 2) << " 0.0 -1.0" << endl;
+          
+          bool fixed = false;
+          for(size_t i = 0;i< _FixedPlanes.size(); i++)
+            {
+              if(_FixedPlanes[i] == help)
+                fixed = true;
             }
-
-          } else {
-
+          
+          // if fixed planes
+          // if (help == firstnotexcl || help == lastnotexcl) {
+          if( fixed || (_FixedPlanes.size() == 0 && (help == firstnotexcl || help == lastnotexcl) ) )
+            {
+              if (_alignMode == 1) {
+                steerFile << (counter * 3 + 1) << " 0.0 -1.0" << endl;
+                steerFile << (counter * 3 + 2) << " 0.0 -1.0" << endl;
+                steerFile << (counter * 3 + 3) << " 0.0 -1.0" << endl;
+              } else if (_alignMode == 2) {
+                steerFile << (counter * 2 + 1) << " 0.0 -1.0" << endl;
+                steerFile << (counter * 2 + 2) << " 0.0 -1.0" << endl;
+              }
+              
+            } else {
+            
             if (_alignMode == 1) {
 
               if (_usePedeUserStartValues == 0) {
