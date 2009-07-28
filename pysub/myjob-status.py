@@ -7,16 +7,17 @@
 #  pysub
 #
 #  Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-#  Version: $Id: myjob-status.py,v 1.6 2009-07-27 15:18:45 bulgheroni Exp $
+#  Version: $Id: myjob-status.py,v 1.7 2009-07-28 23:25:42 bulgheroni Exp $
 
 from optparse import OptionParser
 import os
 import popen2
 import time
+import datetime
 
 def main() :
     usage = "%prog [options] JID-files"
-    version = "$Revision: 1.6 $"
+    version = "$Revision: 1.7 $"
     version = version.replace("$Revision:", "")
     version = version.replace("$", "")
     parser = OptionParser( usage=usage, version=version.strip())
@@ -68,8 +69,10 @@ def main() :
 
         if options.type == "detailed" :
 
+            status = "Status @ %(time)s" % { "time":datetime.datetime.now().strftime("%H:%M:%S") }
+
             print "=" * 94
-            print "| %(id)4s | %(desc)-60s | %(status)-20s |" % { "id": "ID", "desc": "Description", "status": "Status" }
+            print "| %(id)4s | %(desc)-60s | %(status)-20s |" % { "id": "ID", "desc": "Description", "status": status }
             print "-" * 94
 
             id = 1
