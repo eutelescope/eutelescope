@@ -2,10 +2,11 @@
 # A template of alignment job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-align-tmp.sh,v 1.8 2009-07-27 12:12:30 bulgheroni Exp $
+# @version $Id: runjob-align-tmp.sh,v 1.9 2009-07-28 00:13:59 bulgheroni Exp $
 #
 # errno  0: No error.
-# errno  1: Unable to get the input file from the SE.
+# errno  1: Unable to get the GRID library tarball from the SE
+# errno  2: Unable to get the input file from the SE.
 # errno 20: Problem during Marlin execution.
 # errno 21: Problem during pede execution.
 # errno 30: Problem copying and registering the DB output to the SE.
@@ -67,7 +68,8 @@ putOnGRID() {
 # codes in case of problems
 #
 # errno  0: No error.
-# errno  1: Unable to get the input file from the SE.
+# errno  1: Unable to get the GRID library tarball from the SE
+# errno  2: Unable to get the input file from the SE.
 # errno 20: Problem during Marlin execution.
 # errno 21: Problem during pede execution.
 # errno 30: Problem copying and registering the DB output to the SE.
@@ -103,8 +105,16 @@ GRIDFolderDBAlign="@GRIDFolderDBAlign@"
 GRIDFolderAlignResults="@GRIDFolderAlignResults@"
 GRIDFolderAlignJoboutput="@GRIDFolderAlignJoboutput@"
 GRIDFolderAlignHisto="@GRIDFolderAlignHisto@"
-GRIDLibraryTarball="@GRIDLibraryTarball@"
 GRIDILCSoftVersion="@GRIDILCSoftVersion@"
+
+# GRID Tarball
+# LocalGRIDLibraryTarball --> "yes" means that the tarball is uploaded along with the JDL file
+#                         --> "no" means that it has to be downloaded from a SE
+HasLocalGRIDLibraryTarball="@HasLocalGRIDLibraryTarball@"
+GRIDLibraryTarball="@GRIDLibraryTarball@"
+GRIDLibraryTarballPath="@GRIDLibraryTarballPath@"
+GRIDLibraryLocal=$PWD/$GRIDLibraryTarball
+GRIDLibraryLFN=$GRIDLibraryTarballPath/$GRIDLibraryTarball
 
 # end of things to be replaced from the main script
 
@@ -143,6 +153,23 @@ doCommand "mkdir histo"
 doCommand "mkdir pics"
 doCommand "mkdir db"
 doCommand "mkdir log"
+
+# check if we need to get the tarbal or not
+if [ $HasLocalGRIDLibraryTarball == "no" ] ; then
+
+    echo
+    echo "########################################################################"
+    echo "# Getting the lib tarball..."
+    echo "########################################################################"
+    echo
+
+    doCommand "getFromGRID ${GRIDLibraryLFN} ${GRIDLibraryLocal} "
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "Problem copying ${GRIDLibraryLFN}. Exiting with error"
+        exit 1
+    fi
+fi
 
 # unpack the library
 echo
@@ -198,7 +225,7 @@ for file in $InputFileList; do
     r=$?
     if [ $r -ne 0 ] ; then
         echo "Problem copying ${InputLFN}. Exiting with error."
-        exit 1
+        exit 2
     fi
 
 done 

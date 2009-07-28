@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.28 2009-07-27 12:12:30 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.29 2009-07-28 00:13:59 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.28 $"
+    cvsVersion = "$Revision: 1.29 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1355,13 +1355,22 @@ class SubmitPedestal( SubmitBase ):
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
                          "GRIDFolderBase", "GRIDFolderDBPede", "GRIDFolderLcioRaw", "GRIDFolderPedestalHisto",
-                         "GRIDFolderPedestalJoboutput", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+                         "GRIDFolderPedestalJoboutput", "GRIDLibraryTarball", "GRIDLibraryTarballPath", "GRIDILCSoftVersion" ]
+
+
         for variable in variableList:
             try:
                 value = self._configParser.get( "GRID", variable )
                 if variable == "GRIDCE":
                     self._gridCE = value
+                if variable == "GRIDLibraryTarballPath":
+                    if  value.startswith( "lfn:" ) :
+                        runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
+                        value = value.lstrip("lfn:")
+                    else:
+                        runActualString = srunActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
                 runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
+
             except ConfigParser.NoOptionError:
                 message = "Unable to find variable %(var)s in the config file" % { "var" : variable }
                 self._logger.critical( message )
@@ -1478,8 +1487,24 @@ class SubmitPedestal( SubmitBase ):
             message = "GRID library tarball unavailable!"
             self._logger.critical( message )
             raise StopExecutionError( message )
-        jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", "%(path)s/%(file)s" %
-                                                   { "path": gridLibraryTarballPath, "file":gridLibraryTarball } )
+
+        # guess if the library is locally on the computer, or if it is already on the GRID
+        if gridLibraryTarballPath.startswith( "lfn:" ):
+            # it's on the storage element, check if it is there:
+            command = "lfc-ls  %(path)s/%(file)s" % { "path": gridLibraryTarballPath.lstrip("lfn:"), "file": gridLibraryTarball }
+            status, output = commands.getstatusoutput( command )
+            if self._option.verbose:
+                for line in output.splitlines():
+                    self._logger.info( line.strip() )
+            if status != 0:
+                raise MissingLibraryFileError ( "%(path)s/%(file)s" % { "path": gridLibraryTarballPath, "file": gridLibraryTarball } )
+
+            jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", "" )
+
+        else :
+
+            jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", ", \"%(path)s/%(file)s\" " %
+                                                       { "path": gridLibraryTarballPath, "file":gridLibraryTarball } )
 
         # replace the histoinfo file
         try:

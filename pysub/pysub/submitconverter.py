@@ -21,7 +21,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.38 2009-07-27 13:22:54 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.39 2009-07-28 00:13:59 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -31,7 +31,7 @@ class SubmitConverter( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.38 $"
+    cvsVersion = "$Revision: 1.39 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -547,12 +547,15 @@ class SubmitConverter( SubmitBase ) :
                 value = self._configParser.get( "GRID", variable )
                 if variable == "GRIDCE":
                     self._gridCE = value
+                if variable == "GRIDLibraryTarballPath":
+                    if  value.startswith( "lfn:" ) :
+                        runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
+                        value = value.lstrip("lfn:")
+                    else:
+                        runActualString = srunActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
+
                 runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
 
-                if variable == "GRIDLibraryTarballPath" and variable.startswith( "lfn:" ) :
-                    runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
-                else:
-                    runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
 
             except ConfigParser.NoOptionError:
                 message = "Unable to find variable %(var)s in the config file" % { "var" : variable }

@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.19 2009-07-22 16:36:36 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.20 2009-07-28 00:13:59 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.19 $"
+    cvsVersion = "$Revision: 1.20 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1250,13 +1250,22 @@ class SubmitCluSearch( SubmitBase ):
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
                          "GRIDFolderBase", "GRIDFolderLcioRaw", "GRIDFolderDBPede", "GRIDFolderClusearchResults",
-                         "GRIDFolderClusearchJoboutput", "GRIDFolderClusearchHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+                         "GRIDFolderClusearchJoboutput", "GRIDFolderClusearchHisto", "GRIDLibraryTarball",
+                         "GRIDLibraryTarballPath" , "GRIDILCSoftVersion" ]
         for variable in variableList:
             try:
                 value = self._configParser.get( "GRID", variable )
                 if variable == "GRIDCE":
                     self._gridCE = value
+                if variable == "GRIDLibraryTarballPath":
+                    if  value.startswith( "lfn:" ) :
+                        runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
+                        value = value.lstrip("lfn:")
+                    else:
+                        runActualString = srunActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
+
                 runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
+
             except ConfigParser.NoOptionError:
                 message = "Unable to find variable %(var)s in the config file" % { "var" : variable }
                 self._logger.critical( message )

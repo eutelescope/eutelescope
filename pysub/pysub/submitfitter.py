@@ -21,7 +21,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-fitter.py script
 #
 #
-# @version $Id: submitfitter.py,v 1.11 2009-06-07 06:41:39 bulgheroni Exp $
+# @version $Id: submitfitter.py,v 1.12 2009-07-28 00:13:59 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 
@@ -32,7 +32,7 @@ class SubmitFitter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.11 $"
+    cvsVersion = "$Revision: 1.12 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1758,13 +1758,22 @@ class SubmitFitter( SubmitBase ):
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
                          "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderFitterResults",
-                         "GRIDFolderFitterJoboutput", "GRIDFolderFitterHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+                         "GRIDFolderFitterJoboutput", "GRIDFolderFitterHisto", "GRIDLibraryTarball",
+                         "GRIDLibraryTarballPath", "GRIDILCSoftVersion" ]
         for variable in variableList:
             try:
                 value = self._configParser.get( "GRID", variable )
                 if variable == "GRIDCE":
                     self._gridCE = value
+                if variable == "GRIDLibraryTarballPath":
+                    if  value.startswith( "lfn:" ) :
+                        runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
+                        value = value.lstrip("lfn:")
+                    else:
+                        runActualString = srunActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
+
                 runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
+
             except ConfigParser.NoOptionError:
                 message = "Unable to find variable %(var)s in the config file" % { "var" : variable }
                 self._logger.critical( message )
@@ -1991,17 +2000,26 @@ class SubmitFitter( SubmitBase ):
 
         # replace the alignment file
         runActualString = runActualString.replace( "@AlignFile@",os.path.basename( self._option.alignment_file ) )
-        
+
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
                          "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderFitterResults",
-                         "GRIDFolderFitterJoboutput", "GRIDFolderFitterHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+                         "GRIDFolderFitterJoboutput", "GRIDFolderFitterHisto", "GRIDLibraryTarball",
+                         "GRIDLibraryTarballPath","GRIDILCSoftVersion" ]
 
         for variable in variableList:
             try:
                 value = self._configParser.get( "GRID", variable )
                 if variable == "GRIDCE":
                     self._gridCE = value
+                if variable == "GRIDLibraryTarballPath":
+                    if  value.startswith( "lfn:" ) :
+                        runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
+                        value = value.lstrip("lfn:")
+                    else:
+                        runActualString = srunActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
+
                 runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
+
             except ConfigParser.NoOptionError:
                 message = "Unable to find variable %(var)s in the config file" % { "var" : variable }
                 self._logger.critical( message )

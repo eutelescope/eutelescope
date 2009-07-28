@@ -2,10 +2,11 @@
 # A template of pedestal job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-pedestal-tmp.sh,v 1.9 2009-07-27 12:12:30 bulgheroni Exp $
+# @version $Id: runjob-pedestal-tmp.sh,v 1.10 2009-07-28 00:13:59 bulgheroni Exp $
 #
 # errno  0: No error.
-# errno  1: Unable to get the input file from the SE.
+# errno  1: Unable to get the GRID library tarball from the SE
+# errno  2: Unable to get the input file from the SE.
 # errno 20: Problem during Marlin execution (telescope only)
 # errno 21: Problem during Marlin execution (telescope part)
 # errno 22: Problem during Marlin execution (dut part)
@@ -73,7 +74,8 @@ putOnGRID() {
 # codes in case of problems
 #
 # errno  0: No error.
-# errno  1: Unable to get the input file from the SE.
+# errno  1: Unable to get the GRID library tarball from the SE
+# errno  2: Unable to get the input file from the SE.
 # errno 20: Problem during Marlin execution (telescope only)
 # errno 21: Problem during Marlin execution (telescope part)
 # errno 22: Problem during Marlin execution (dut part)
@@ -115,8 +117,16 @@ GRIDFolderLcioRaw="@GRIDFolderLcioRaw@"
 GRIDFolderDBPede="@GRIDFolderDBPede@"
 GRIDFolderPedestalJoboutput="@GRIDFolderPedestalJoboutput@"
 GRIDFolderPedestalHisto="@GRIDFolderPedestalHisto@"
-GRIDLibraryTarball="@GRIDLibraryTarball@"
 GRIDILCSoftVersion="@GRIDILCSoftVersion@"
+
+# GRID Tarball
+# LocalGRIDLibraryTarball --> "yes" means that the tarball is uploaded along with the JDL file
+#                         --> "no" means that it has to be downloaded from a SE
+HasLocalGRIDLibraryTarball="@HasLocalGRIDLibraryTarball@"
+GRIDLibraryTarball="@GRIDLibraryTarball@"
+GRIDLibraryTarballPath="@GRIDLibraryTarballPath@"
+GRIDLibraryLocal=$PWD/$GRIDLibraryTarball
+GRIDLibraryLFN=$GRIDLibraryTarballPath/$GRIDLibraryTarball
 
 # Input file local and lfn
 InputLcioRawLocal=$PWD/lcio-raw/run$RunString.slcio
@@ -203,6 +213,25 @@ doCommand "mkdir pics"
 doCommand "mkdir db"
 doCommand "mkdir log"
 
+
+# check if we need to get the tarbal or not
+if [ $HasLocalGRIDLibraryTarball == "no" ] ; then
+
+    echo
+    echo "########################################################################"
+    echo "# Getting the lib tarball..."
+    echo "########################################################################"
+    echo
+
+    doCommand "getFromGRID ${GRIDLibraryLFN} ${GRIDLibraryLocal} "
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "Problem copying ${GRIDLibraryLFN}. Exiting with error"
+        exit 1
+    fi
+fi
+
+
 # unpack the library
 echo
 echo "########################################################################"
@@ -239,7 +268,7 @@ doCommand "getFromGRID ${InputLcioRawLFN} ${InputLcioRawLocal}"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "Problem copying ${InputLcioRawLFN}. Exiting with error."
-    exit 1
+    exit 0
 fi
 
 # list all the files available

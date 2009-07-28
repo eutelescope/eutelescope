@@ -2,11 +2,12 @@
 # A template of pedestal job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-clusearch-tmp.sh,v 1.3 2009-07-18 17:24:06 bulgheroni Exp $
+# @version $Id: runjob-clusearch-tmp.sh,v 1.4 2009-07-28 00:13:59 bulgheroni Exp $
 #
 # errno  0: No error.
-# errno  1: Unable to get the input file from the SE.
-# errno  2: Unable to get the pedestal file from the SE.
+# errno  1: Unable to get the GRID library tarball from the SE
+# errno  2: Unable to get the input file from the SE.
+# errno  3: Unable to get the pedestal file from the SE.
 # errno 20: Problem during Marlin execution.
 # errno 30: Problem copying and registering the LCIO output to the SE.
 # errno 31: Problem copying and registering the Joboutput to the SE.
@@ -66,8 +67,9 @@ putOnGRID() {
 # codes in case of problems
 #
 # errno  0: No error.
-# errno  1: Unable to get the input file from the SE.
-# errno  2: Unable to get the pedestal file from the SE.
+# errno  1: Unable to get the GRID library tarball from the SE
+# errno  2: Unable to get the input file from the SE.
+# errno  3: Unable to get the pedestal file from the SE.
 # errno 20: Problem during Marlin execution.
 # errno 30: Problem copying and registering the LCIO output to the SE.
 # errno 31: Problem copying and registering the Joboutput to the SE.
@@ -96,8 +98,16 @@ GRIDFolderDBPede="@GRIDFolderDBPede@"
 GRIDFolderClusearchResults="@GRIDFolderClusearchResults@"
 GRIDFolderClusearchJoboutput="@GRIDFolderClusearchJoboutput@"
 GRIDFolderClusearchHisto="@GRIDFolderClusearchHisto@"
-GRIDLibraryTarball="@GRIDLibraryTarball@"
 GRIDILCSoftVersion="@GRIDILCSoftVersion@"
+
+# GRID Tarball
+# LocalGRIDLibraryTarball --> "yes" means that the tarball is uploaded along with the JDL file
+#                         --> "no" means that it has to be downloaded from a SE
+HasLocalGRIDLibraryTarball="@HasLocalGRIDLibraryTarball@"
+GRIDLibraryTarball="@GRIDLibraryTarball@"
+GRIDLibraryTarballPath="@GRIDLibraryTarballPath@"
+GRIDLibraryLocal=$PWD/$GRIDLibraryTarball
+GRIDLibraryLFN=$GRIDLibraryTarballPath/$GRIDLibraryTarball
 
 InputLcioRawLFN=$GRIDFolderLcioRaw/run$RunString.slcio
 InputPedeLFN=$GRIDFolderDBPede/run$PedeString-ped-db.slcio
@@ -134,6 +144,23 @@ doCommand "mkdir pics"
 doCommand "mkdir db"
 doCommand "mkdir log"
 
+# check if we need to get the tarbal or not
+if [ $HasLocalGRIDLibraryTarball == "no" ] ; then
+
+    echo
+    echo "########################################################################"
+    echo "# Getting the lib tarball..."
+    echo "########################################################################"
+    echo
+
+    doCommand "getFromGRID ${GRIDLibraryLFN} ${GRIDLibraryLocal} "
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "Problem copying ${GRIDLibraryLFN}. Exiting with error"
+        exit 1
+    fi
+fi
+
 # unpack the library
 echo
 echo "########################################################################"
@@ -141,9 +168,6 @@ echo "# Uncompressing the job tarball..."
 echo "########################################################################"
 echo
 doCommand "tar xzvf $GRIDLibraryTarball"
-
-# rename the simjob.slcio because otherwise it gets delete
-doCommand "mv simjob.slcio simjob.slcio.keepme"
 
 # from now on doing things to get access to ESA
 doCommand "source ./ilc-grid-config.sh"
@@ -162,8 +186,6 @@ echo "# ILCSOFT ready to use"
 echo "########################################################################"
 echo
 
-# now it's safe to rename the simjob to the original
-doCommand "mv simjob.slcio.keepme simjob.slcio"
 
 # set the list of Marlin plugins and the LD_LIBRARY_PATH
 doCommand "export MARLIN_DLL=$PWD/libEutelescope.so"
@@ -179,7 +201,7 @@ doCommand "getFromGRID ${InputLcioRawLFN} ${InputLcioRawLocal}"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "Problem copying ${InputLcioRawLFN}. Exiting with error."
-    exit 1
+    exit 2
 fi
 
 echo
@@ -191,7 +213,7 @@ doCommand "getFromGRID ${InputPedeLFN} ${InputPedeLocal}"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "Problem copying ${InputPedeLFN}. Exiting with error."
-    exit 2
+    exit 3
 fi
 
 # list all the files available

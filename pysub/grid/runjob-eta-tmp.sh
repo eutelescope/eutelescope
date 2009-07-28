@@ -2,10 +2,11 @@
 # A template of eta job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-eta-tmp.sh,v 1.6 2009-07-18 17:24:06 bulgheroni Exp $
+# @version $Id: runjob-eta-tmp.sh,v 1.7 2009-07-28 00:13:59 bulgheroni Exp $
 #
 # errno  0: No error.
-# errno  1: Unable to get the input file from the SE.
+# errno  1: Unable to get the GRID library tarball from the SE
+# errno  2: Unable to get the input file from the SE.
 # errno 20: Problem during Marlin execution.
 # errno 30: Problem copying and registering the DB output to the SE.
 # errno 31: Problem copying and registering the Joboutput to the SE.
@@ -64,7 +65,9 @@ putOnGRID() {
 # it return 0 in case of successful execution or the following error
 # codes in case of problems
 #
-# errno  1: Unable to get the input file from the SE
+# errno  0: No error.
+# errno  1: Unable to get the GRID library tarball from the SE
+# errno  2: Unable to get the input file from the SE.
 # errno 20: Problem during Marlin execution
 # errno 30: Problem copying and registering the LCIO output to the SE
 # errno 31: Problem copying and registering the Joboutput to the SE
@@ -92,8 +95,17 @@ GRIDFolderFilterResults="@GRIDFolderFilterResults@"
 GRIDFolderDBEta="@GRIDFolderDBEta@"
 GRIDFolderEtaJoboutput="@GRIDFolderEtaJoboutput@"
 GRIDFolderEtaHisto="@GRIDFolderEtaHisto@"
-GRIDLibraryTarball="@GRIDLibraryTarball@"
 GRIDILCSoftVersion="@GRIDILCSoftVersion@"
+
+# GRID Tarball
+# LocalGRIDLibraryTarball --> "yes" means that the tarball is uploaded along with the JDL file
+#                         --> "no" means that it has to be downloaded from a SE
+HasLocalGRIDLibraryTarball="@HasLocalGRIDLibraryTarball@"
+GRIDLibraryTarball="@GRIDLibraryTarball@"
+GRIDLibraryTarballPath="@GRIDLibraryTarballPath@"
+GRIDLibraryLocal=$PWD/$GRIDLibraryTarball
+GRIDLibraryLFN=$GRIDLibraryTarballPath/$GRIDLibraryTarball
+
 
 InputLFN=$GRIDFolderFilterResults/$Filename
 OutputLFN=$GRIDFolderDBEta/$OutputBase-eta-db.slcio
@@ -128,6 +140,24 @@ doCommand "mkdir histo"
 doCommand "mkdir pics"
 doCommand "mkdir db"
 doCommand "mkdir log"
+
+# check if we need to get the tarbal or not
+if [ $HasLocalGRIDLibraryTarball == "no" ] ; then
+
+    echo
+    echo "########################################################################"
+    echo "# Getting the lib tarball..."
+    echo "########################################################################"
+    echo
+
+    doCommand "getFromGRID ${GRIDLibraryLFN} ${GRIDLibraryLocal} "
+    r=$?
+    if [ $r -ne 0 ] ; then
+        echo "Problem copying ${GRIDLibraryLFN}. Exiting with error"
+        exit 1
+    fi
+fi
+
 
 # unpack the library
 echo
@@ -174,7 +204,7 @@ doCommand "getFromGRID ${InputLFN} ${InputLocal}"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "Problem copying ${InputLFN}. Exiting with error."
-    exit 1
+    exit 2
 fi
 
 # list all the files available

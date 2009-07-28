@@ -2,7 +2,7 @@
 # A template of converter job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-converter-tmp.sh,v 1.9 2009-07-27 15:08:53 bulgheroni Exp $
+# @version $Id: runjob-converter-tmp.sh,v 1.10 2009-07-28 00:13:59 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the GRID library tarball from the SE
@@ -63,6 +63,7 @@ putOnGRID() {
 # This is the real executable. It doesn't take any argument and
 # it return 0 in case of successful execution or the following error
 # codes in case of problems
+#
 #
 # errno  1: Unable to get the GRID library tarball from the SE
 # errno  2: Unable to get the input file from the SE.
@@ -133,6 +134,12 @@ doCommand "mkdir log"
 
 # check if we need to get the tarbal or not
 if [ $HasLocalGRIDLibraryTarball == "no" ] ; then
+
+    echo
+    echo "########################################################################"
+    echo "# Getting the lib tarball..."
+    echo "########################################################################"
+    echo
 
     doCommand "getFromGRID ${GRIDLibraryLFN} ${GRIDLibraryLocal} "
     r=$?

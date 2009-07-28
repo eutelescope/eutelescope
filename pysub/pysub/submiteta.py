@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-eta.py script
 #
 #
-# @version $Id: submiteta.py,v 1.12 2009-07-20 09:19:20 bulgheroni Exp $
+# @version $Id: submiteta.py,v 1.13 2009-07-28 00:13:59 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitEta( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitEta( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.12 $"
+    cvsVersion = "$Revision: 1.13 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1238,13 +1238,22 @@ class SubmitEta( SubmitBase ):
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
                          "GRIDFolderBase", "GRIDFolderFilterResults", "GRIDFolderDBEta", "GRIDFolderEtaJoboutput",
-                         "GRIDFolderEtaJoboutput", "GRIDFolderEtaHisto", "GRIDLibraryTarball", "GRIDILCSoftVersion" ]
+                         "GRIDFolderEtaJoboutput", "GRIDFolderEtaHisto", "GRIDLibraryTarball",
+                         "GRIDLibraryTarballPath", "GRIDILCSoftVersion" ]
         for variable in variableList:
             try:
                 value = self._configParser.get( "GRID", variable )
                 if variable == "GRIDCE":
                     self._gridCE = value
+                if variable == "GRIDLibraryTarballPath":
+                    if  value.startswith( "lfn:" ) :
+                        runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
+                        value = value.lstrip("lfn:")
+                    else:
+                        runActualString = srunActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
+
                 runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
+
             except ConfigParser.NoOptionError:
                 message = "Unable to find variable %(var)s in the config file" % { "var" : variable }
                 self._logger.critical( message )

@@ -11,10 +11,23 @@ import glob
 import commands
 import sys
 
+
+## Ask yes or no
+#
+def askYesNo(  prompt, complaint= "Yes or no please", retries = 4 ):
+    while True:
+        ok = raw_input( prompt )
+        ok = ok.lower()
+        if ok in ['y','yes','yea','yeap']  : return True
+        if ok in ['n','no',"nope" ] : return False
+        retries = retries - 1
+        if retries < 0 : raise IOError, "Wrong answer"
+        print complaint
+
 def main() :
 
     usage = "usage: %prog [options] additional-files"
-    cvsVersion = "$Revision: 1.8 $"
+    cvsVersion = "$Revision: 1.9 $"
     version = "%prog version" +  cvsVersion[10:len(cvsVersion)-1]
     parser = OptionParser( usage = usage, version = version )
 
@@ -57,7 +70,7 @@ def main() :
         if len(glob.glob( os.path.expandvars( os.path.expanduser( file )))) == 0:
             print "Problem accessing file %(key)s = %(file)s. Skipping " % { "key":key, "file":file }
         # in principle each file in the list maybe a glob
-        for file1 in glob.glob( file ):
+        for file1 in glob.glob( os.path.expandvars( os.path.expanduser( file ) )):
             if os.path.islink( file1 ):
                 linkList.append( file1 )
             else :
@@ -103,19 +116,37 @@ def main() :
     shutil.rmtree( tempDir )
 
     if not isTarballLocal:
+        # check if the file already exists on the GRID
+        command = "lfc-ls %(file)s" % { "file": options.output.lstrip("lfn:") }
+        status, output = commands.getstatusoutput( command )
+        if options.verbose:
+            for line in output.splitlines():
+                print line.strip()
+
+        if status == 0:
+            prompt = "File %(file)s is already on the GRID, do you want to remove it? [y/n]" % { "file": options.output.lstrip("lfn:") }
+            if askYesNo( prompt ):
+                command = "lcg-del -a %(lfn)s" %{ "lfn": options.output }
+                status, output = commands.getstatusoutput( command )
+                if options.verbose:
+                    for line in output.splitlines():
+                        print line.strip()
+
+            else:
+                sys.exit( 1 )
+
         print "Copying to the GRID..."
         command = "lcg-cr -v -l %(lfn)s file:$PWD/%(local)s" % { "lfn": options.output, "local": filename }
-        print command
         status, output = commands.getstatusoutput( command )
 
         if options.verbose :
             for line in output.splitlines():
                 print line.strip()
 
-        os.remove( filename )
 
 if __name__ == "__main__" :
     main()
+
 
 
 
