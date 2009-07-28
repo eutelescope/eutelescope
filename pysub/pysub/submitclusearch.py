@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.22 2009-07-28 12:46:38 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.23 2009-07-28 15:58:48 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.22 $"
+    cvsVersion = "$Revision: 1.23 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -165,6 +165,18 @@ class SubmitCluSearch( SubmitBase ):
             self._logger.error( "User asked for a DUT only submission without providing the DUT suffix.")
             self._logger.error( "Please use --dut SUFFIX --dut-only" )
             sys.exit( 5 )
+
+        self._isTelescopeOnly   = False
+        self._isTelescopeAndDUT = False
+        self._isDUTOnly         = False
+        if self._hasDUT and not self._option.dut_only:
+            self._isTelescopeAndDUT = True
+
+        if self._option.dut_only:
+            self._isDUTOnly = True
+
+        if not self._hasDUT:
+            self._isTelescopeOnly = True
 
     ## Execute method
     #
@@ -722,14 +734,47 @@ class SubmitCluSearch( SubmitBase ):
         actualSteeringString = templateSteeringString
 
         # make all the DUT changes here:
-        if self._hasDUT:
-            actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", self._dutSuffix )
-            actualSteeringString = actualSteeringString.replace( "@DUTCommentLeft@" , "" )
-            actualSteeringString = actualSteeringString.replace( "@DUTCommentRight@", "" )
-        else:
+        if self._isTelescopeOnly:
+            # Un comment all the Telescope parts
+            actualSteeringString = actualSteeringString.replace( "@TELCommentLeft@", ""  )
+            actualSteeringString = actualSteeringString.replace( "@TELCommentRight@", "" )
+
+            # comment all the DUT parts
+            actualSteeringString  = actualSteeringString.replace( "@DUTCommentLeft@" , "!--" )
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentRight@", "--"  )
             actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", "None" )
-            actualSteeringString = actualSteeringString.replace( "@DUTCommentLeft@" , "!--" )
-            actualSteeringString = actualSteeringString.replace( "@DUTCommentRight@", "--" )
+
+            # don't need any filename suffix
+            actualSteeringString = actualSteeringString.replace( "@FilenameSuffix@", "" )
+            actualSteeringString = actualSteeringString.replace( "@FilenameHyphen@", "" )
+
+        if self._isTelescopeAndDUT:
+            # Un-comment all the Telescope parts
+            actualSteeringString = actualSteeringString.replace( "@TELCommentLeft@", ""  )
+            actualSteeringString = actualSteeringString.replace( "@TELCommentRight@", "" )
+
+            # Un-comment all the DUT parts
+            actualSteeringString  = actualSteeringString.replace( "@DUTCommentLeft@" , "" )
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentRight@", ""  )
+            actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", self._dutSuffix )
+
+            # don't need any filename suffix
+            actualSteeringString = actualSteeringString.replace( "@FilenameSuffix@", "" )
+            actualSteeringString = actualSteeringString.replace( "@FilenameHyphen@", "" )
+
+        if self._isDUTOnly:
+            # comment all the Telescope parts
+            actualSteeringString = actualSteeringString.replace( "@TELCommentLeft@", "!--"  )
+            actualSteeringString = actualSteeringString.replace( "@TELCommentRight@", "--" )
+
+            # Un-comment all the DUT parts
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentLeft@" , "" )
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentRight@", ""  )
+            actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", self._dutSuffix )
+
+            # need a filename suffix
+            actualSteeringString = actualSteeringString.replace( "@FilenameSuffix@", self._dutSuffix )
+            actualSteeringString = actualSteeringString.replace( "@FilenameHyphen@", "-" )
 
         # replace the file paths
         #
@@ -885,7 +930,10 @@ class SubmitCluSearch( SubmitBase ):
         except ConfigParser.NoOptionError :
             outputFilePath = "results"
 
-        outputFileName = "run%(run)s-clu-p%(pede)s.slcio" % { "run": runString, "pede": self._pedeString }
+        if self._isDUTOnly:
+            outputFileName = "run%(run)s-clu-%(suffix)s-p%(pede)s.slcio" % { "suffix": self._dutSuffix, "run": runString, "pede": self._pedeString }
+        else:
+            outputFileName = "run%(run)s-clu-p%(pede)s.slcio" % { "run": runString, "pede": self._pedeString }
         if not os.access( os.path.join( outputFilePath , outputFileName) , os.R_OK ):
             raise MissingOutputFileError( outputFileName )
         else :
@@ -902,7 +950,11 @@ class SubmitCluSearch( SubmitBase ):
             histoFilePath = self._configParser.get( "LOCAL", "LocalFolderClusearchHisto" )
         except ConfigParser.NoOptionError :
             histoFilePath = "histo"
-        histoFileName = "run%(run)s-clu-histo.root" % { "run": runString }
+
+        if self._isDUTOnly:
+            histoFileName = "run%(run)s-clu-%(suffix)s-histo.root" % { "suffix": self._dutSuffix, "run": runString }
+        else:
+            histoFileName = "run%(run)s-clu-histo.root" % { "run": runString }
         if not os.access( os.path.join( histoFilePath , histoFileName ) , os.R_OK ):
             raise MissingHistogramFileError( histoFileName )
         else:
@@ -1265,6 +1317,26 @@ class SubmitCluSearch( SubmitBase ):
 
         runTemplateString = open( runTemplate, "r" ).read()
         runActualString = runTemplateString
+
+        # start from DUT related things
+        if self._isTelescopeOnly:
+            runActualString = runActualString.replace( "@DUTSuffix@", "" )
+            runActualString = runActualString.replace( "@IsTelescopeOnly@","yes" )
+            runActualString = runActualString.replace( "@IsTelescopeAndDUT@","no" )
+            runActualString = runActualString.replace( "@IsDUTOnly@","no" )
+
+        if self._isTelescopeAndDUT:
+            runActualString = runActualString.replace( "@DUTSuffix@", self._dutSuffix )
+            runActualString = runActualString.replace( "@IsTelescopeOnly@","no" )
+            runActualString = runActualString.replace( "@IsTelescopeAndDUT@","yes" )
+            runActualString = runActualString.replace( "@IsDUTOnly@","no" )
+
+        if self._isDUTOnly:
+            runActualString = runActualString.replace( "@DUTSuffix@", self._dutSuffix )
+            runActualString = runActualString.replace( "@IsTelescopeOnly@","no" )
+            runActualString = runActualString.replace( "@IsTelescopeAndDUT@","no" )
+            runActualString = runActualString.replace( "@IsDUTOnly@","yes" )
+
 
         # replace the runString
         runActualString = runActualString.replace( "@RunString@", runString )
