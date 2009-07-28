@@ -11,7 +11,7 @@ Steering file template for the pysub framework
 ==> clusearch-tmp.xml <===
 
 Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-Version: $Id: clusearch-tmp.xml,v 1.6 2009-07-22 17:26:09 bulgheroni Exp $
+Version: $Id: clusearch-tmp.xml,v 1.7 2009-07-28 12:46:38 bulgheroni Exp $
 ==========================================================================================
 
 -->
@@ -21,9 +21,13 @@ Version: $Id: clusearch-tmp.xml,v 1.6 2009-07-22 17:26:09 bulgheroni Exp $
   <execute>
     <processor name="AIDA"/>
     <processor name="LoadPedestal"/>
+    <@DUTCommentLeft@processor name="LoadPedestal_@DUTSuffix@"/@DUTCommentRight@>
     <processor name="CopyPedestal"/>
+    <@DUTCommentLeft@processor name="CopyPedestal_@DUTSuffix@"/@DUTCommentRight@>
     <processor name="ApplyPedestal"/>
+    <@DUTCommentLeft@processor name="ApplyPedestal_@DUTSuffix@"/@DUTCommentRight@>
     <processor name="Clustering"/>
+    <@DUTCommentLeft@processor name="Clustering_@DUTSuffix@"/@DUTCommentRight@>
     <processor name="Correlator"/>
     <processor name="HotPixelKiller"/>
     <processor name="UpdatePedestalNoise"/>
@@ -65,6 +69,23 @@ Version: $Id: clusearch-tmp.xml,v 1.6 2009-07-22 17:26:09 bulgheroni Exp $
     <parameter name="SimpleFileHandler" type="StringVec"> pedestalDB @DBPath@/run@PedeRunNumber@-ped-db.slcio pedestalDB </parameter>
   </processor>
 
+  <processor name="LoadPedestal_@DUTSuffix@" type="ConditionsProcessor">
+    <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+    <!--Initialization of a conditions database handler-->
+    <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
+    <!--Initialization of a conditions db file handler-->
+    <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
+    <!--Initialization string for conditions database-->
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
+    <!--Initialization of a data file handler-->
+    <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
+    <!--Initialization of a simple conditions file handler-->
+    <parameter name="SimpleFileHandler" type="StringVec"> statusDB_@DUTSuffix@ @DBPath@/run@PedeRunNumber@-ped-db.slcio statusDB_@DUTSuffix@ </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> noiseDB_@DUTSuffix@ @DBPath@/run@PedeRunNumber@-ped-db.slcio noiseDB_@DUTSuffix@ </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> pedestalDB_@DUTSuffix@ @DBPath@/run@PedeRunNumber@-ped-db.slcio pedestalDB_@DUTSuffix@ </parameter>
+  </processor>
+
+
   <processor name="CopyPedestal" type="EUTelCopyPedestalProcessor">
     <!--EUTelCopyPedestalProcessor copies the condition data into local writable collections-->
     <!--Noise input condition-->
@@ -79,6 +100,22 @@ Version: $Id: clusearch-tmp.xml,v 1.6 2009-07-22 17:26:09 bulgheroni Exp $
     <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData"> pedestal </parameter>
     <!--Pixel status collection-->
     <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> status </parameter>
+  </processor>
+
+  <processor name="CopyPedestal_@DUTSuffix@" type="EUTelCopyPedestalProcessor">
+    <!--EUTelCopyPedestalProcessor copies the condition data into local writable collections-->
+    <!--Noise input condition-->
+    <parameter name="NoiseConditionName" type="string" lcioInType="TrackerData"> noiseDB_@DUTSuffix@ </parameter>
+    <!--Pedestal input condition-->
+    <parameter name="PedestalConditionName" type="string" lcioInType="TrackerData"> pedestalDB_@DUTSuffix@ </parameter>
+    <!--Status input condition-->
+    <parameter name="StatusConditionName" type="string" lcioInType="TrackerRawData"> statusDB_@DUTSuffix@ </parameter>
+    <!--Noise local collection-->
+    <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> noise_@DUTSuffix@ </parameter>
+    <!--Pedestal local collection-->
+    <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData"> pedestal_@DUTSuffix@ </parameter>
+    <!--Pixel status collection-->
+    <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> status_@DUTSuffix@ </parameter>
   </processor>
 
   <processor name="ApplyPedestal" type="EUTelCalibrateEventProcessor">
@@ -98,6 +135,57 @@ Version: $Id: clusearch-tmp.xml,v 1.6 2009-07-22 17:26:09 bulgheroni Exp $
     <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
     <!--Name of the output calibrated data collection-->
     <parameter name="CalibratedDataCollectionName" type="string" lcioOutType="TrackerData"> data </parameter>
+
+    <!--
+        GENERAL PARAMETERS
+    -->
+    <!--Threshold of pixel SNR for hit rejection-->
+    <parameter name="HitRejectionCut" type="float" value="3.5"/>
+    <!--Flag to switch on the common mode suppression algorithm. 0 -> off, 1 -> full frame,  2 -> row wise-->
+    <parameter name="PerformCommonMode" type="int" value="1"/>
+
+    <!--
+        FULL FRAME PARAMETERS
+    -->
+    <!--Maximum allowed number of rejected pixel per event-->
+    <parameter name="MaxNoOfRejectedPixels" type="int" value="15000"/>
+
+    <!--
+        ROW WISE PARAMETERS
+    -->
+    <!--Maximum allowed number of rejected pixels per row (only with RowWise)-->
+    <parameter name="MaxNoOfRejectedPixelPerRow" type="int" value="25"/>
+    <!--Maximum allowed number of skipped rows (only with RowWise)-->
+    <parameter name="MaxNoOfSkippedRow" type="int" value="15"/>
+
+    <!--
+        HISTOGRAMS
+    -->
+    <!--Flag to switch on (1) or off (0) the detector debug histogram filling-->
+    <parameter name="DebugHistoFilling" type="bool" value="false"/>
+    <!--This is the name of the histogram information file-->
+    <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
+
+  </processor>
+
+
+  <processor name="ApplyPedestal_@DUTSuffix@" type="EUTelCalibrateEventProcessor">
+    <!--EUTelCalibrateEventProcessor subtracts the pedestal value from the input data-->
+
+    <!--
+        INPUT & OUTPUT
+    -->
+
+    <!--Noise from the condition file-->
+    <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise_@DUTSuffix@ </parameter>
+    <!--Pedestal from the condition file-->
+    <parameter name="PedestalCollectionName" type="string" lcioInType="TrackerData"> pedestal_@DUTSuffix@ </parameter>
+    <!--Input raw data collection-->
+    <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData"> rawdata_@DUTSuffix@ </parameter>
+    <!--Pixel status from the condition file-->
+    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status_@DUTSuffix@ </parameter>
+    <!--Name of the output calibrated data collection-->
+    <parameter name="CalibratedDataCollectionName" type="string" lcioOutType="TrackerData"> data_@DUTSuffix@ </parameter>
 
     <!--
         GENERAL PARAMETERS
@@ -169,6 +257,76 @@ Version: $Id: clusearch-tmp.xml,v 1.6 2009-07-22 17:26:09 bulgheroni Exp $
     <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata </parameter>
     <!--Cluster (output) collection name-->
     <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster </parameter>
+
+    <!--
+        Clustering algorithm
+    -->
+    <!--Select here which algorithm should be used for NZS clustering.
+        Available algorithms are:
+        -> FixedFrame: for custer with a given size-->
+    <parameter name="ClusteringAlgo" type="string" value="FixedFrame"/>
+
+    <!--Select here which algorithm should be used for ZS clustering.
+        Available algorithms are:
+        -> SparseCluster: for cluster in ZS frame
+        -> SparseCluster2: for cluster in ZS frame with better performance
+        -> FixedFrame: for cluster with a given size-->
+    <parameter name="ZSClusteringAlgo" type="string" value="FixedFrame"/>
+
+
+    <!--
+        FIXED FRAME ( for both NZS and ZS )
+    -->
+    <!--Threshold in SNR for seed pixel identification-->
+    <parameter name="FFSeedCut" type="float" value="3.5"/>
+    <!--Threshold in SNR for cluster identification-->
+    <parameter name="FFClusterCut" type="float" value="2.5"/>
+    <!--Maximum allowed cluster size along x (only odd numbers)-->
+    <parameter name="FFClusterSizeX" type="int" value="3"/>
+    <!--Maximum allowed cluster size along y (only odd numbers)-->
+    <parameter name="FFClusterSizeY" type="int" value="3"/>
+
+    <!--
+        SPARSECLUSTER and SPARSECLUSTER2 (use with care)
+    -->
+    <!--Threshold in SNR for clusters contained in ZS data-->
+    <parameter name="SparseClusterCut" type="float" value="2.5"/>
+    <!--Threshold in SNR for seed pixel contained in ZS data-->
+    <parameter name="SparseSeedCut" type="float" value="3.5"/>
+    <!--Minimum distance between sparsified pixel ( touching == sqrt(2)) -->
+    <parameter name="SparseMinDistance" type="float" value="0"/>
+
+    <!--
+        HISTOGRAMMING
+    -->
+    <!--Switch on or off the histogram filling-->
+    <parameter name="HistogramFilling" type="bool" value="true"/>
+    <!--This is the name of the histogram information file-->
+    <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
+    <!--The list of cluster N to be filled.For example 7 means filling the cluster spectra with the 7 most significant pixels-->
+    <parameter name="ClusterN" type="IntVec" value="4 6 8 9"/>
+    <!--The list of cluster NxN to be filled.For example 3 means filling the 3x3 histogram spectrum-->
+    <parameter name="ClusterNxN" type="IntVec" value="3"/>
+
+  </processor>
+
+
+  <processor name="Clustering_@DUTSuffix@" type="EUTelClusteringProcessor">
+    <!--EUTelClusteringProcessor is looking for clusters into a calibrated pixel matrix.-->
+
+    <!--
+        INPUT / OUTPUT
+    -->
+    <!--Input calibrated data not zero suppressed collection name-->
+    <parameter name="NZSDataCollectionName" type="string" lcioInType="TrackerData"> data_@DUTSuffix@ </parameter>
+    <!--Noise (input) collection name-->
+    <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise_@DUTSuffix@ </parameter>
+    <!--Pixel status (input) collection name-->
+    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status_@DUTSuffix@ </parameter>
+    <!--Input of Zero Suppressed data-->
+    <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_@DUTSuffix@ </parameter>
+    <!--Cluster (output) collection name-->
+    <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_@DUTSuffix@ </parameter>
 
     <!--
         Clustering algorithm

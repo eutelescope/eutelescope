@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-pedestal.py script
 #
 #
-# @version $Id: submitpedestal.py,v 1.30 2009-07-28 09:24:41 bulgheroni Exp $
+# @version $Id: submitpedestal.py,v 1.31 2009-07-28 12:46:38 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitPedestal( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitPedestal( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.30 $"
+    cvsVersion = "$Revision: 1.31 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -299,6 +299,10 @@ class SubmitPedestal( SubmitBase ):
                 self._logger.error( "Skipping to the next run " )
                 run, input, marlin, output, histo, tarball = self._summaryNTuple[ index ]
                 self._summaryNTuple[ index ] = run, "Missing", marlin, output, histo, tarball
+
+            except MissingLibraryFileError, error:
+                self._logger.critical( "The GRID lib (%(file)s) is not avaialable. Can't continue" % { "file": error._filename } )
+                raise StopExecutionError( "Missing library" )
 
 
 
@@ -1505,6 +1509,23 @@ class SubmitPedestal( SubmitBase ):
 
             jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", ", \"%(path)s/%(file)s\" " %
                                                        { "path": gridLibraryTarballPath, "file":gridLibraryTarball } )
+
+        # guess if the library is locally on the computer, or if it is already on the GRID
+        if gridLibraryTarballPath.startswith( "lfn:" ):
+            # it's on the storage element, check if it is there:
+            command = "lfc-ls -v %(path)s/%(file)s" % { "path": gridLibraryTarballPath, "file": gridLibraryTarball }
+            status, output = commands.getstatusoutput( command )
+            if self._option.verbose:
+                for line in output.splitlines():
+                    self._logger.info( line.strip() )
+            if status != 0:
+                raise MissingLibraryFileError ( "%(path)s/%(file)s" % { "path": gridLibraryTarballPath, "file": gridLibraryTarbal } )
+            jdlActualString = jdlActualString.replace( "@GRIDLibraryTarball@", "" )
+
+        else :
+            jdlActualString = jdlActualString.replace( ", @GRIDLibraryTarball@", "%(path)s/%(file)s" %
+                                                       { "path": gridLibraryTarballPath, "file":gridLibraryTarball } )
+
 
         # replace the histoinfo file
         try:

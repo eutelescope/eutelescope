@@ -9,11 +9,11 @@ from optparse import OptionGroup
 
 ## The pedestal submitter script.
 #
-# This script is simply defining all the input options for 
+# This script is simply defining all the input options for
 # the SubmitPedestal and create an instance of this object.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-pedestal.py,v 1.3 2009-07-25 14:25:15 bulgheroni Exp $
+# @version $Id: submit-pedestal.py,v 1.4 2009-07-28 12:46:38 bulgheroni Exp $
 
 def main() :
 
@@ -22,7 +22,7 @@ def main() :
 
 usage: %prog [execution-options] [io-options] [configuration-options] run-list
 """
-    cvsVersion = "$Revision: 1.3 $"
+    cvsVersion = "$Revision: 1.4 $"
     submitPedestalCVSVersion = SubmitPedestal.cvsVersion
     submitBaseCVSVersion = SubmitBase.cvsVersion
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
@@ -121,7 +121,7 @@ from the GRID SE, but the job will be executed on the local CPU
                         dest="verbose",
                         help="sake the output of GRID commands verbose" )
 
-    dutGroup = OptionGroup( parser, "DUT related options", 
+    dutGroup = OptionGroup( parser, "DUT related options",
                             "Use these options to specify whether a DUT data sample should be simultaneously analyzed. "
                             "For pedestal production the strategy is to generate two steering files (one for the telescope)"
                             " and one for the DUT, run Marlin twice and finally merge the two DB files and the corresponding "

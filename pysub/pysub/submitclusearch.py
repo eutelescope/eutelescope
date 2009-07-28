@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.21 2009-07-28 09:16:12 gelin Exp $
+# @version $Id: submitclusearch.py,v 1.22 2009-07-28 12:46:38 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.21 $"
+    cvsVersion = "$Revision: 1.22 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -148,6 +148,23 @@ class SubmitCluSearch( SubmitBase ):
                 self._logger.info("Aborted by user")
                 sys.exit( 4 )
 
+        # dut related stuff
+        if self._option.dut == None:
+            # no DUT analysis for this run
+            self._hasDUT = False
+        else:
+            self._hasDUT    = True
+            # remove the first "_", in case there is one
+            self._dutSuffix =  self._option.dut.lstrip( "_" )
+            if self._dutSuffix == "telescope":
+                self._logger.error( "Invalid DUT suffix. \"telescope\" cannot be used as DUT suffix")
+                sys.exit( 6 )
+            self._logger.info( "Doing simultaneous analysis of a %(dut)s DUT" % { "dut": self._dutSuffix } )
+
+        if self._option.dut_only and not self._hasDUT:
+            self._logger.error( "User asked for a DUT only submission without providing the DUT suffix.")
+            self._logger.error( "Please use --dut SUFFIX --dut-only" )
+            sys.exit( 5 )
 
     ## Execute method
     #
@@ -703,6 +720,16 @@ class SubmitCluSearch( SubmitBase ):
 
         # make all the changes
         actualSteeringString = templateSteeringString
+
+        # make all the DUT changes here:
+        if self._hasDUT:
+            actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", self._dutSuffix )
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentLeft@" , "" )
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentRight@", "" )
+        else:
+            actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", "None" )
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentLeft@" , "!--" )
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentRight@", "--" )
 
         # replace the file paths
         #
