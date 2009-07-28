@@ -2,7 +2,7 @@
 # A template of pedestal job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-clusearch-tmp.sh,v 1.4 2009-07-28 00:13:59 bulgheroni Exp $
+# @version $Id: runjob-clusearch-tmp.sh,v 1.5 2009-07-28 15:54:50 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the GRID library tarball from the SE
@@ -86,6 +86,15 @@ PedeString="@PedeString@"
 # all files. It should be something like converter
 Name="@Name@"
 
+# Depending on the presence or not of the DUT, set the following
+# variables
+IsTelescopeOnly="@IsTelescopeOnly@"
+IsTelescopeAndDUT="@IsTelescopeAndDUT@"
+IsDUTOnly="@IsDUTOnly@"
+
+# DUTSuffix
+DUTSuffix="@DUTSuffix@"
+
 # Define here all the variables modified by the submitter
 GRIDCE="@GRIDCE@"
 GRIDSE="@GRIDSE@"
@@ -109,17 +118,41 @@ GRIDLibraryTarballPath="@GRIDLibraryTarballPath@"
 GRIDLibraryLocal=$PWD/$GRIDLibraryTarball
 GRIDLibraryLFN=$GRIDLibraryTarballPath/$GRIDLibraryTarball
 
+if [ $IsDUTOnly == "yes" ] ; then
+
+    # lfn
+    OutputLcioLFN=$GRIDFolderClusearchResults/run$RunString-clu-$DUTSuffix-p$PedeString.slcio
+    OutputHistoLFN=$GRIDFolderClusearchHisto/run$RunString-clu-$DUTSuffix-histo.root
+    OutputJoboutputLFN=$GRIDFolderClusearchJoboutput/$Name-$RunString-$DUTSuffix.tar.gz
+
+    # local
+    OutputLcioLocal=$PWD/results/run$RunString-clu-$DUTSuffix-p$PedeString.slcio
+    OutputHistoLocal=$PWD/histo/run$RunString-clu-$DUTSuffix-histo.root
+    OutputJoboutputLocal=$PWD/log/$Name-$RunString-$DUTSuffix.tar.gz
+
+else
+
+    # lfn
+    OutputLcioLFN=$GRIDFolderClusearchResults/run$RunString-clu-p$PedeString.slcio
+    OutputHistoLFN=$GRIDFolderClusearchHisto/run$RunString-clu-histo.root
+    OutputJoboutputLFN=$GRIDFolderClusearchJoboutput/$Name-$RunString.tar.gz
+
+    # local
+    OutputLcioLocal=$PWD/results/run$RunString-clu-p$PedeString.slcio
+    OutputHistoLocal=$PWD/histo/run$RunString-clu-histo.root
+    OutputJoboutputLocal=$PWD/log/$Name-$RunString.tar.gz
+
+fi
+
+# lfn
 InputLcioRawLFN=$GRIDFolderLcioRaw/run$RunString.slcio
 InputPedeLFN=$GRIDFolderDBPede/run$PedeString-ped-db.slcio
-OutputLcioLFN=$GRIDFolderClusearchResults/run$RunString-clu-p$PedeString.slcio
-OutputJoboutputLFN=$GRIDFolderClusearchJoboutput/$Name-$RunString.tar.gz
-OutputHistoLFN=$GRIDFolderClusearchHisto/run$RunString-clu-histo.root
 
+# local
 InputLcioRawLocal=$PWD/lcio-raw/run$RunString.slcio
 InputPedeLocal=$PWD/db/run$PedeString-ped-db.slcio
-OutputLcioLocal=$PWD/results/run$RunString-clu-p$PedeString.slcio
-OutputJoboutputLocal=$PWD/log/$Name-$RunString.tar.gz
-OutputHistoLocal=$PWD/histo/run$RunString-clu-histo.root
+
+# Steering and log
 SteeringFile=$Name-$RunString.xml
 LogFile=$Name-$RunString.log
 
