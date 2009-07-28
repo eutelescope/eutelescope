@@ -11,7 +11,7 @@ Steering file template for the pysub framework
 ==> clusearch-tmp.xml <===
 
 Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-Version: $Id: clusearch-tmp.xml,v 1.7 2009-07-28 12:46:38 bulgheroni Exp $
+Version: $Id: clusearch-tmp.xml,v 1.8 2009-07-28 15:56:35 bulgheroni Exp $
 ==========================================================================================
 
 -->
@@ -20,17 +20,17 @@ Version: $Id: clusearch-tmp.xml,v 1.7 2009-07-28 12:46:38 bulgheroni Exp $
 
   <execute>
     <processor name="AIDA"/>
-    <processor name="LoadPedestal"/>
+    <@TELCommentLeft@processor name="LoadPedestal"/@TELCommentRight@>
     <@DUTCommentLeft@processor name="LoadPedestal_@DUTSuffix@"/@DUTCommentRight@>
-    <processor name="CopyPedestal"/>
+    <@TELCommentLeft@processor name="CopyPedestal"/@TELCommentRight@>
     <@DUTCommentLeft@processor name="CopyPedestal_@DUTSuffix@"/@DUTCommentRight@>
-    <processor name="ApplyPedestal"/>
+    <@TELCommentLeft@processor name="ApplyPedestal"/@TELCommentRight@>
     <@DUTCommentLeft@processor name="ApplyPedestal_@DUTSuffix@"/@DUTCommentRight@>
-    <processor name="Clustering"/>
+    <@TELCommentLeft@processor name="Clustering"/@TELCommentRight@>
     <@DUTCommentLeft@processor name="Clustering_@DUTSuffix@"/@DUTCommentRight@>
-    <processor name="Correlator"/>
-    <processor name="HotPixelKiller"/>
-    <processor name="UpdatePedestalNoise"/>
+    <@TELCommentLeft@processor name="Correlator"/@TELCommentRight@>
+    <@TELCommentLeft@processor name="HotPixelKiller"/@TELCommentRight@>
+    <@TELCommentLeft@processor name="UpdatePedestalNoise"/@TELCommentRight@>
     <processor name="Save"/>
   </execute>
 
@@ -48,7 +48,7 @@ Version: $Id: clusearch-tmp.xml,v 1.7 2009-07-28 12:46:38 bulgheroni Exp $
     <!-- compression of output file 0: false >0: true (default) -->
     <parameter name="Compress" type="int" value="1"/>
     <!-- filename without extension-->
-    <parameter name="FileName" type="string" value= "@HistoPath@/run@RunNumber@-clu-histo"/>
+    <parameter name="FileName" type="string" value= "@HistoPath@/run@RunNumber@-clu@FilenameHyphen@@FilenameSuffix@-histo"/>
     <!-- type of output file xml (default) or root ( only OpenScientist)-->
     <parameter name="FileType" type="string" value="root"/>
   </processor>
@@ -412,7 +412,7 @@ Version: $Id: clusearch-tmp.xml,v 1.7 2009-07-28 12:46:38 bulgheroni Exp $
     <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
     <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
     <!-- name of output file -->
-    <parameter name="LCIOOutputFile" type="string" value="@ResultPath@/run@RunNumber@-clu-p@PedeRunNumber@.slcio"/>
+    <parameter name="LCIOOutputFile" type="string" value="@ResultPath@/run@RunNumber@-clu@FilenameHyphen@@FilenameSuffix@-p@PedeRunNumber@.slcio"/>
     <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
     <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
     <!--Set it to true to remove intermediate EORE in merged runs-->
