@@ -15,7 +15,7 @@ import commands
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.25 2009-07-28 00:13:59 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.26 2009-07-28 07:36:37 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -24,7 +24,7 @@ class SubmitBase :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.25 $"
+    cvsVersion = "$Revision: 1.26 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -72,6 +72,16 @@ class SubmitBase :
 
         # initialize the grid job ntuple
         self._gridJobNTuple = [];
+
+        # set a couple of usefull information from the configuration file
+        self._isInteractive = False;
+        self._isForceYes    = False;
+        try :
+            self._isInteractive = self._configParsers.getboolean( "General", "Interactive" )
+            self._isForceYes    = self._configParsers.getboolean( "General", "ForceYes" )
+        except ConfigParser.NoOptionError:
+            self._logger.degub( "Unable to find interactive keys in the configuration file" )
+
 
     ## The configure method
     #
@@ -212,6 +222,9 @@ class SubmitBase :
     ## Ask yes or no
     #
     def askYesNo( self, prompt, complaint= "Yes or no please", retries = 4 ):
+        if self._isForceYes :
+            return True
+
         while True:
             ok = raw_input( prompt )
             ok = ok.lower()
