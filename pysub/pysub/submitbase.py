@@ -15,7 +15,7 @@ import commands
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.26 2009-07-28 07:36:37 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.27 2009-07-28 08:12:39 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -24,7 +24,7 @@ class SubmitBase :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.26 $"
+    cvsVersion = "$Revision: 1.27 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -77,10 +77,10 @@ class SubmitBase :
         self._isInteractive = False;
         self._isForceYes    = False;
         try :
-            self._isInteractive = self._configParsers.getboolean( "General", "Interactive" )
-            self._isForceYes    = self._configParsers.getboolean( "General", "ForceYes" )
+            self._isInteractive = self._configParser.getboolean( "General", "Interactive" )
+            self._isForceYes    = self._configParser.getboolean( "General", "ForceYes" )
         except ConfigParser.NoOptionError:
-            self._logger.degub( "Unable to find interactive keys in the configuration file" )
+            self._logger.debug( "Unable to find interactive keys in the configuration file" )
 
 
     ## The configure method
