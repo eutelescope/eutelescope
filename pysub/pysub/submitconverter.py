@@ -21,7 +21,7 @@ from error import *
 #
 #
 #
-#  @version $Id: submitconverter.py,v 1.39 2009-07-28 00:13:59 bulgheroni Exp $
+#  @version $Id: submitconverter.py,v 1.40 2009-07-28 09:24:41 bulgheroni Exp $
 #  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitConverter( SubmitBase ) :
@@ -31,7 +31,7 @@ class SubmitConverter( SubmitBase ) :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.39 $"
+    cvsVersion = "$Revision: 1.40 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -552,7 +552,7 @@ class SubmitConverter( SubmitBase ) :
                         runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
                         value = value.lstrip("lfn:")
                     else:
-                        runActualString = srunActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
+                        runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
 
                 runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
 

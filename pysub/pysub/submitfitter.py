@@ -21,7 +21,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-fitter.py script
 #
 #
-# @version $Id: submitfitter.py,v 1.12 2009-07-28 00:13:59 bulgheroni Exp $
+# @version $Id: submitfitter.py,v 1.13 2009-07-28 09:24:41 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 
@@ -32,7 +32,7 @@ class SubmitFitter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.12 $"
+    cvsVersion = "$Revision: 1.13 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1770,7 +1770,7 @@ class SubmitFitter( SubmitBase ):
                         runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
                         value = value.lstrip("lfn:")
                     else:
-                        runActualString = srunActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
+                        runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
 
                 runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
 
@@ -2016,7 +2016,7 @@ class SubmitFitter( SubmitBase ):
                         runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
                         value = value.lstrip("lfn:")
                     else:
-                        runActualString = srunActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
+                        runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
 
                 runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
 

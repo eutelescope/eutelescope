@@ -10,7 +10,7 @@
                                ==> fitter-tmp.xml <===
 
 Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-Version: $Id: fitter-tmp.xml,v 1.4 2009-07-27 16:36:23 jbehr Exp $
+Version: $Id: fitter-tmp.xml,v 1.5 2009-07-28 09:24:41 bulgheroni Exp $
 ==========================================================================================
 
 --> 
@@ -23,8 +23,8 @@ Version: $Id: fitter-tmp.xml,v 1.4 2009-07-27 16:36:23 jbehr Exp $
       <processor name="ApplyAlignment"/>
       <processor name="Fitter"/>
       <processor name="FitterHisto"/>
-      <processor name="DUTHisto"/>
-      <processor name="NTuple"/>
+      <Xprocessor name="DUTHisto"/>
+      <Xprocessor name="NTuple"/>
       <processor name="Save"/>
    </execute>
 

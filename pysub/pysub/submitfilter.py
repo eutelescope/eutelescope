@@ -21,7 +21,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.30 2009-07-28 00:13:59 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.31 2009-07-28 09:24:41 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -31,7 +31,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.30 $"
+    cvsVersion = "$Revision: 1.31 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1920,7 +1920,7 @@ class SubmitFilter( SubmitBase ):
                         runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "no" )
                         value = value.lstrip("lfn:")
                     else:
-                        runActualString = srunActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
+                        runActualString = runActualString.replace( "@HasLocalGRIDLibraryTarball@", "yes" )
 
                 runActualString = runActualString.replace( "@%(value)s@" % {"value":variable} , value )
 
