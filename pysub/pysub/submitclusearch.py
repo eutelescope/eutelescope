@@ -20,7 +20,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-clusearch.py script
 #
 #
-# @version $Id: submitclusearch.py,v 1.23 2009-07-28 15:58:48 bulgheroni Exp $
+# @version $Id: submitclusearch.py,v 1.24 2009-07-28 23:27:14 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitCluSearch( SubmitBase ):
@@ -30,7 +30,7 @@ class SubmitCluSearch( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.23 $"
+    cvsVersion = "$Revision: 1.24 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -1210,69 +1210,26 @@ class SubmitCluSearch( SubmitBase ):
             self._logger.critical( message )
             raise StopExecutionError( message )
 
+        listOfFilesTBC = []
+        if self._isDUTOnly:
+            listOfFilesTBC.append( "%(outputPathGRID)s/run%(run)s-clu-%(suffix)s-p%(pede)s.slcio" % {
+                "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString, "suffix": self._dutSuffix } )
+            listOfFilesTBC.append( "%(outputPathGRID)s/%(name)s-%(run)s-%(suffix)s.tar.gz" % {
+                "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString , "suffix": self._dutSuffix} )
+            listOfFilesTBC.append( "%(outputPathGRID)s/run%(run)s-clu-%(suffix)s-histo.root" % {
+                "outputPathGRID": self._histogramPathGRID, "run": runString , "suffix": self._dutSuffix} )
+        else:
+            listOfFilesTBC.append( "%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % {
+                "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
+            listOfFilesTBC.append( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % {
+                "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+            listOfFilesTBC.append( "%(outputPathGRID)s/run%(run)s-clu-histo.root" % {
+                "outputPathGRID": self._histogramPathGRID, "run": runString } )
 
-        # check if the output file already exists
-        command = "lfc-ls %(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "outputPathGRID": self._outputPathGRID,
-                                                                                 "pede": self._pedeString, "run": runString }
-        status, output = commands.getstatusoutput( command )
-        if status == 0:
-            self._logger.warning( "Output file %(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio already exists"
-                                  % { "outputPathGRID": self._outputPathGRID, "run": runString, "pede": self._pedeString, } )
-            if self._configParser.get("General","Interactive" ):
-                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio from the GRID"
-                                       % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % { "outputPathGRID": self._outputPathGRID,
-                                                                                                     "pede": self._pedeString, "run": runString }
-                    os.system( command )
-                else :
-                    raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio on the GRID"
-                                                        % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
-            else :
-                raise OutputAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio on the GRID"
-                                                % { "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
-
-        # check if the job output file already exists
-        command = "lfc-ls %(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % {
-            "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString }
-
-        status, output = commands.getstatusoutput( command )
-        if status == 0:
-            self._logger.warning( "Joboutput file %(outputPathGRID)s/%(name)s-%(run)s.tar.gz already exists"
-                                  % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
-            if self._configParser.get("General","Interactive" ):
-                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/%(name)s-%(run)s.tar.gz from the GRID"
-                                       % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % {
-                        "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString }
-                    os.system( command )
-                else :
-                    raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz on the GRID"
-                                                           % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
-            else :
-                raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz on the GRID"
-                                                       % { "name": self.name, "outputPathGRID": self._joboutputPathGRID, "run": runString } )
+        for file in listOfFilesTBC:
+            self.checkGRIDFile ( file )
 
 
-        # check if the histogram file already exists
-        command = "lfc-ls %(outputPathGRID)s/run%(run)s-clu-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
-        status, output = commands.getstatusoutput( command )
-        if status == 0:
-            self._logger.warning( "Histogram file %(outputPathGRID)s/run%(run)s-clu-histo.root already exists"
-                                  % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
-            if self._configParser.get("General","Interactive" ):
-                if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                    self._logger.info( "User decided to remove %(outputPathGRID)s/run%(run)s-clu-histo.root from the GRID"
-                                       % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
-                    command = "lcg-del -a lfn:%(outputPathGRID)s/run%(run)s-clu-histo.root" % { "outputPathGRID": self._histogramPathGRID, "run": runString }
-                    os.system( command )
-                else :
-                    raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-histo.root on the GRID"
-                                                           % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
-            else :
-                raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/run%(run)s-clu-histo.root on the GRID"
-                                                       % { "outputPathGRID": self._histogramPathGRID, "run": runString } )
     ## Execute all GRID
     #
     def executeAllGRID( self, index, runString ) :
