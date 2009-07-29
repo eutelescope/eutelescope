@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.36 2009-07-18 12:40:05 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.37 2009-07-29 09:06:08 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -137,7 +137,7 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
 
   registerProcessorParameter ("MaxPlaneHits",
                               "Maximum number of considered hits per plane",
-                              _maxPlaneHits,  static_cast < int > (5));
+                              _maxPlaneHits,  static_cast < int > (100));
 
   registerProcessorParameter ("MissingHitPenalty",
                               "Chi2 penalty for missing hit in the track",
@@ -149,11 +149,11 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
 
   registerProcessorParameter ("Chi2Max",
                               "Maximum Chi2 for accepted track fit",
-                              _chi2Max,  static_cast < double > (1000.));
+                              _chi2Max,  static_cast < double > (100.));
 
   registerProcessorParameter ("UseNominalResolution",
                               "Flag for using nominal resolution instead of position errors",
-                              _useNominalResolution,  static_cast < bool > (false));
+                              _useNominalResolution,  static_cast < bool > (true));
 
   registerProcessorParameter ("UseDUT",
                               "Flag for including DUT measurement in the fit",
@@ -437,8 +437,8 @@ void EUTelTestFitter::init() {
       _planeResolution[iz]=0.;
     }
 
-    // No alignment corrections in GEAR file
-    // Look in input options
+    // Alignment corrections should already be added in HitMaker
+    // But look in input options for possible adjustments
 
     _planeShiftX[iz]=0.;
     _planeShiftY[iz]=0.;
@@ -535,7 +535,7 @@ void EUTelTestFitter::init() {
 
   _planeHits   = new int[_nTelPlanes];
   _planeChoice = new int[_nTelPlanes];
-  _planeMod    = new int[_nTelPlanes];
+  _planeMod    = new type_fitcount[_nTelPlanes];
 
   _planeX  = new double[_nTelPlanes];
   _planeEx = new double[_nTelPlanes];
@@ -861,7 +861,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   int nFittedTracks = 0 ;
   bool firstTrack = true ;
-  int ibest;
+  type_fitcount ibest;
 
   // In the current implementation ambiguity mode works only for full
   // tracks, i.e. when _allowMissingHits == 0
@@ -873,7 +873,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     // Count planes active in this event and number of fit possibilities
 
     int nFiredPlanes = 0;
-    int nChoice = 1;
+    type_fitcount nChoice = 1;
     ibest=-1;
 
     // Count from the last plane, to allow for "smart" track finding
@@ -969,7 +969,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       istart++;
     }
 
-    for(int ichoice=nChoice-_planeMod[istart]-1; ichoice >=0 ; ichoice--)  {
+    for(type_fitcount ichoice=nChoice-_planeMod[istart]-1; ichoice >=0 ; ichoice--)  {
       int nChoiceFired=0;
       double choiceChi2=-1.;
       double trackChi2=-1.;

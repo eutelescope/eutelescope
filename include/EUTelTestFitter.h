@@ -34,6 +34,9 @@
 
 namespace eutelescope {
 
+  //! Type used for numbering of fit possibilities (can be large)
+  typedef long long int type_fitcount;
+
 
   //! Analytical track fitting processor for EUDET Telescope
   /*! This processor was designed for fitting tracks to hits
@@ -168,15 +171,14 @@ namespace eutelescope {
    *
    * \par Fit performance parameters
    * \param MaxPlaneHits Maximum number of hits considered per
-   *        plane. The algorithm slows down if this number is
-   *        too large. However, the real limitation comes from
-   *        numerical precision. To find the best track fit hypothesis
-   *        have to be numbered and long integer number is used for this
-   *        purpose. However this allows for maximum of \f$ 2^{31} \f$
-   *        hypothesis only. To avoid this limit the number of hits in
-   *        single plane has to be constrained. Maximum number is 34
-   *        for 6 planes used in the fit, 72 for 5 planes, 214 for 4 planes.
-   *        Never use higher values!
+   *        plane. Should be large (default is 100) for high track
+   *        finding efficiency even in events with high hit
+   *        multiplicities (but have a look at preformance issues
+   *        below). For low values algorithm runs much faster
+   *        (reduced number of hit hypothesis), but the efficiency is
+   *        lower. In the current version limitation coming from
+   *        numerical precision (numbering of fit hypothesis) is no
+   *        longer relevant.
    *
    * \param Chi2Max Maximum \f$ \chi^{2} \f$ for accepted track fit.
    *
@@ -267,7 +269,7 @@ namespace eutelescope {
    *  \li Interface to LCCD (alignment)
    *
    * \author A.F.Zarnecki, University of Warsaw, zarnecki@fuw.edu.pl
-   * @version $Id: EUTelTestFitter.h,v 1.19 2009-07-15 17:21:28 bulgheroni Exp $
+   * @version $Id: EUTelTestFitter.h,v 1.20 2009-07-29 09:06:08 zarnecki Exp $
    *
    */
   class EUTelTestFitter : public marlin::Processor {
@@ -494,7 +496,7 @@ namespace eutelescope {
 
     int * _planeHits;
     int * _planeChoice;
-    int * _planeMod;
+    type_fitcount * _planeMod;
 
     // Fitting algorithm arrays
 
