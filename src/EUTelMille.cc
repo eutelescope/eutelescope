@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.45 2009-07-28 14:55:39 jbehr Exp $
+// Version: $Id: EUTelMille.cc,v 1.46 2009-07-29 11:36:42 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -923,13 +923,16 @@ void EUTelMille::processEvent (LCEvent * event) {
     } // end loop over all tracks
 
   } else if (_inputMode == 3) {
-
     LCCollection* collection;
-    collection = event->getCollection(_trackCollectionName);
+    try {
+      collection = event->getCollection(_trackCollectionName);
+    } catch (DataNotAvailableException& e) {
+      streamlog_out ( WARNING2 ) << "No input track collection " << _trackCollectionName  << " found for event " << event->getEventNumber()
+                                 << " in run " << event->getRunNumber() << endl;
+      throw SkipEventException(this);
+    }
     const int nTracksHere = collection->getNumberOfElements();
-
-    //cout << "Number of tracks available in track collection: " << nTracksHere << endl;
-
+    
     // loop over all tracks
     for (int nTracksEvent = 0; nTracksEvent < nTracksHere && nTracksEvent < _maxTrackCandidates; nTracksEvent++) {
 
