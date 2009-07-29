@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitHistograms.cc,v 1.15 2009-07-21 13:58:22 bulgheroni Exp $
+// Version: $Id: EUTelFitHistograms.cc,v 1.16 2009-07-29 10:23:49 zarnecki Exp $
 // Date 2007.09.10
 
 /*
@@ -91,6 +91,11 @@ std::string EUTelFitHistograms::_AngleXHistoName = "incangleX";
 std::string EUTelFitHistograms::_AngleYHistoName = "incangleY";
 std::string EUTelFitHistograms::_AngleXYHistoName = "incangleXY";
 
+std::string EUTelFitHistograms::_clusterSignalHistoName  = "clusterSignal";
+std::string EUTelFitHistograms::_meanSignalXHistoName  = "meanSignalX";
+std::string EUTelFitHistograms::_meanSignalYHistoName  = "meanSignalY";
+std::string EUTelFitHistograms::_meanSignalXYHistoName  = "meanSignalXY";
+
 std::string EUTelFitHistograms::_beamShiftXHistoName  = "beamShiftX";
 std::string EUTelFitHistograms::_beamShiftYHistoName  = "beamShiftY";
 std::string EUTelFitHistograms::_beamShiftXYHistoName = "beamShiftXY";
@@ -107,11 +112,6 @@ std::string EUTelFitHistograms::_relRotXHistoName   = "relRotX";
 std::string EUTelFitHistograms::_relRotYHistoName   = "relRotY";
 std::string EUTelFitHistograms::_relRotX2DHistoName   = "relRotX2D";
 std::string EUTelFitHistograms::_relRotY2DHistoName   = "relRotY2D";
-
-std::string EUTelFitHistograms::_clusterSignalHistoName  = "clusterSignal";
-std::string EUTelFitHistograms::_meanSignalXHistoName  = "meanSignalX";
-std::string EUTelFitHistograms::_meanSignalYHistoName  = "meanSignalY";
-std::string EUTelFitHistograms::_meanSignalXYHistoName  = "meanSignalXY";
 
 EUTelFitHistograms::EUTelFitHistograms() : Processor("EUTelFitHistograms") {
 
@@ -137,10 +137,13 @@ EUTelFitHistograms::EUTelFitHistograms() : Processor("EUTelFitHistograms") {
                              "Name of the histogram information file",
                              _histoInfoFileName, string( "histoinfo.xml" ) );
 
+  registerProcessorParameter ("AlignCheckHistograms",
+                              "Flag for producing additional histograms for alignment consistency check",
+                              _alignCheckHistograms,  static_cast < bool > (false));
+
   registerProcessorParameter ("BeamReferenceID",
                               "ID of the layer used for beam based alignment check",
                               _BeamReferenceID,  static_cast < int > (0));
-
 
   std::vector<int > initLayerIDs;
   initLayerIDs.push_back(0);
@@ -687,9 +690,9 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
 
 
-      // Alignment w.r.t the beam direction
+      // Alignment w.r.t the beam direction check histograms; only if requested
 
-      if(_isMeasured[_beamID])
+      if(_isMeasured[_beamID] && _alignCheckHistograms )
         {
           for(int ipl=0;ipl<_nTelPlanes; ipl++)
             {
@@ -747,9 +750,9 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
         }
 
 
-      // Alignment w.r.t two selected planes
+      // Alignment check w.r.t two selected planes; only if requested
 
-      if(_isMeasured[_referenceID0] && _isMeasured[_referenceID1] )
+      if(_isMeasured[_referenceID0] && _isMeasured[_referenceID1]  && _alignCheckHistograms)
         {
           for(int ipl=0;ipl<_nTelPlanes; ipl++)
             {
@@ -1405,6 +1408,200 @@ AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
     }
 
 
+
+
+
+  //
+  // Cluster signal distribution
+  //
+
+  int    clusterNBin  = 1000;
+  double clusterMin   = 0.;
+  double clusterMax   = 1000.;
+  string clusterTitle = "Cluster spectrum with all pixels";
+
+  if ( isHistoManagerAvailable )
+    {
+      histoInfo = histoMgr->getHistogramInfo(_clusterSignalHistoName);
+      if ( histoInfo )
+        {
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
+          clusterNBin = histoInfo->_xBin;
+          clusterMin  = histoInfo->_xMin;
+          clusterMax  = histoInfo->_xMax;
+          if ( histoInfo->_title != "" ) clusterTitle = histoInfo->_title;
+        }
+    }
+
+
+  for(int ipl=0;ipl<_nTelPlanes; ipl++)
+    {
+      if(_isActive[ipl])
+        {
+          stringstream nam,tit;
+
+          nam << _clusterSignalHistoName << "_" << _planeID[ ipl ] ;
+          tempHistoName=nam.str();
+
+          tit << clusterTitle << " for plane " << _planeID[ ipl ] ;
+          tempHistoTitle=tit.str();
+
+          AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), clusterNBin,clusterMin,clusterMax);
+
+          tempHisto->setTitle(tempHistoTitle.c_str());
+
+          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+    }
+
+  //
+  // Mean cluster signal vs X
+  //
+
+  int    meanXNBin  = 100;
+  double meanXMin   = -5.;
+  double meanXMax   = 5.;
+  string meanXTitle = "Mean cluster signal vs X ";
+
+  if ( isHistoManagerAvailable )
+    {
+      histoInfo = histoMgr->getHistogramInfo(_meanSignalXHistoName);
+      if ( histoInfo )
+        {
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
+          meanXNBin = histoInfo->_xBin;
+          meanXMin  = histoInfo->_xMin;
+          meanXMax  = histoInfo->_xMax;
+          if ( histoInfo->_title != "" ) meanXTitle = histoInfo->_title;
+        }
+    }
+
+
+  for(int ipl=0;ipl<_nTelPlanes; ipl++)
+    {
+      if(_isActive[ipl])
+        {
+          stringstream nam,tit;
+
+          nam << _meanSignalXHistoName << "_" << _planeID[ ipl ] ;
+          tempHistoName=nam.str();
+
+          tit << meanXTitle << " for plane " << _planeID[ ipl ] ;
+          tempHistoTitle=tit.str();
+
+          AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(), meanXNBin,meanXMin,meanXMax);
+
+          tempHisto->setTitle(tempHistoTitle.c_str());
+
+          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+    }
+  //
+  // Mean cluster signal vs Y
+  //
+
+  int    meanYNBin  = 100;
+  double meanYMin   = -5.;
+  double meanYMax   = 5.;
+  string meanYTitle = "Mean cluster signal vs Y ";
+
+  if ( isHistoManagerAvailable )
+    {
+      histoInfo = histoMgr->getHistogramInfo(_meanSignalYHistoName);
+      if ( histoInfo )
+        {
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
+          meanYNBin = histoInfo->_xBin;
+          meanYMin  = histoInfo->_xMin;
+          meanYMax  = histoInfo->_xMax;
+          if ( histoInfo->_title != "" ) meanYTitle = histoInfo->_title;
+        }
+    }
+
+
+  for(int ipl=0;ipl<_nTelPlanes; ipl++)
+    {
+      if(_isActive[ipl])
+        {
+          stringstream nam,tit;
+
+          nam << _meanSignalYHistoName << "_" << _planeID[ ipl ] ;
+          tempHistoName=nam.str();
+
+          tit << meanYTitle << " for plane " << _planeID[ ipl ] ;
+          tempHistoTitle=tit.str();
+
+          AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(), meanYNBin,meanYMin,meanYMax);
+
+          tempHisto->setTitle(tempHistoTitle.c_str());
+
+          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+    }
+
+  //
+  // Mean cluster signal vs XY
+  //
+
+  meanXNBin  = 100;
+  meanXMin   = -5.;
+  meanXMax   = 5.;
+  meanYNBin  = 100;
+  meanYMin   = -5.;
+  meanYMax   = 5.;
+  string meanXYTitle = "Mean cluster signal vs XY ";
+
+  if ( isHistoManagerAvailable )
+    {
+      histoInfo = histoMgr->getHistogramInfo(_meanSignalXYHistoName);
+      if ( histoInfo )
+        {
+          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
+          meanXNBin = histoInfo->_xBin;
+          meanXMin  = histoInfo->_xMin;
+          meanXMax  = histoInfo->_xMax;
+          meanYNBin = histoInfo->_yBin;
+          meanYMin  = histoInfo->_yMin;
+          meanYMax  = histoInfo->_yMax;
+          if ( histoInfo->_title != "" ) meanXYTitle = histoInfo->_title;
+        }
+    }
+
+
+  for(int ipl=0;ipl<_nTelPlanes; ipl++)
+    {
+      if(_isActive[ipl])
+        {
+          stringstream nam,tit;
+
+          nam << _meanSignalXYHistoName << "_" << _planeID[ ipl ] ;
+          tempHistoName=nam.str();
+
+          tit << meanXYTitle << " for plane " << _planeID[ ipl ] ;
+          tempHistoTitle=tit.str();
+
+          AIDA::IProfile2D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile2D( tempHistoName.c_str(), meanXNBin,meanXMin,meanXMax,  meanYNBin,meanYMin,meanYMax);
+
+          tempHisto->setTitle(tempHistoTitle.c_str());
+
+          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+
+        }
+
+    }
+
+
+  // 
+  // Book alignment check histograms only if requested
+  // =================================================
+
+  if(_alignCheckHistograms){
 
 
   // Beam alignment histograms: shift in X
@@ -2139,190 +2336,7 @@ AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
 
     }
 
-  //
-  // Cluster signal distribution
-  //
-
-  int    clusterNBin  = 1000;
-  double clusterMin   = 0.;
-  double clusterMax   = 1000.;
-  string clusterTitle = "Cluster spectrum with all pixels";
-
-  if ( isHistoManagerAvailable )
-    {
-      histoInfo = histoMgr->getHistogramInfo(_clusterSignalHistoName);
-      if ( histoInfo )
-        {
-          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
-          clusterNBin = histoInfo->_xBin;
-          clusterMin  = histoInfo->_xMin;
-          clusterMax  = histoInfo->_xMax;
-          if ( histoInfo->_title != "" ) clusterTitle = histoInfo->_title;
-        }
-    }
-
-
-  for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _clusterSignalHistoName << "_" << _planeID[ ipl ] ;
-          tempHistoName=nam.str();
-
-          tit << clusterTitle << " for plane " << _planeID[ ipl ] ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IHistogram1D * tempHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), clusterNBin,clusterMin,clusterMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
-    }
-
-  //
-  // Mean cluster signal vs X
-  //
-
-  int    meanXNBin  = 100;
-  double meanXMin   = -5.;
-  double meanXMax   = 5.;
-  string meanXTitle = "Mean cluster signal vs X ";
-
-  if ( isHistoManagerAvailable )
-    {
-      histoInfo = histoMgr->getHistogramInfo(_meanSignalXHistoName);
-      if ( histoInfo )
-        {
-          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
-          meanXNBin = histoInfo->_xBin;
-          meanXMin  = histoInfo->_xMin;
-          meanXMax  = histoInfo->_xMax;
-          if ( histoInfo->_title != "" ) meanXTitle = histoInfo->_title;
-        }
-    }
-
-
-  for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _meanSignalXHistoName << "_" << _planeID[ ipl ] ;
-          tempHistoName=nam.str();
-
-          tit << meanXTitle << " for plane " << _planeID[ ipl ] ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(), meanXNBin,meanXMin,meanXMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
-    }
-  //
-  // Mean cluster signal vs Y
-  //
-
-  int    meanYNBin  = 100;
-  double meanYMin   = -5.;
-  double meanYMax   = 5.;
-  string meanYTitle = "Mean cluster signal vs Y ";
-
-  if ( isHistoManagerAvailable )
-    {
-      histoInfo = histoMgr->getHistogramInfo(_meanSignalYHistoName);
-      if ( histoInfo )
-        {
-          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
-          meanYNBin = histoInfo->_xBin;
-          meanYMin  = histoInfo->_xMin;
-          meanYMax  = histoInfo->_xMax;
-          if ( histoInfo->_title != "" ) meanYTitle = histoInfo->_title;
-        }
-    }
-
-
-  for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _meanSignalYHistoName << "_" << _planeID[ ipl ] ;
-          tempHistoName=nam.str();
-
-          tit << meanYTitle << " for plane " << _planeID[ ipl ] ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(), meanYNBin,meanYMin,meanYMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
-    }
-
-  //
-  // Mean cluster signal vs XY
-  //
-
-  meanXNBin  = 100;
-  meanXMin   = -5.;
-  meanXMax   = 5.;
-  meanYNBin  = 100;
-  meanYMin   = -5.;
-  meanYMax   = 5.;
-  string meanXYTitle = "Mean cluster signal vs XY ";
-
-  if ( isHistoManagerAvailable )
-    {
-      histoInfo = histoMgr->getHistogramInfo(_meanSignalXYHistoName);
-      if ( histoInfo )
-        {
-          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
-          meanXNBin = histoInfo->_xBin;
-          meanXMin  = histoInfo->_xMin;
-          meanXMax  = histoInfo->_xMax;
-          meanYNBin = histoInfo->_yBin;
-          meanYMin  = histoInfo->_yMin;
-          meanYMax  = histoInfo->_yMax;
-          if ( histoInfo->_title != "" ) meanXYTitle = histoInfo->_title;
-        }
-    }
-
-
-  for(int ipl=0;ipl<_nTelPlanes; ipl++)
-    {
-      if(_isActive[ipl])
-        {
-          stringstream nam,tit;
-
-          nam << _meanSignalXYHistoName << "_" << _planeID[ ipl ] ;
-          tempHistoName=nam.str();
-
-          tit << meanXYTitle << " for plane " << _planeID[ ipl ] ;
-          tempHistoTitle=tit.str();
-
-          AIDA::IProfile2D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile2D( tempHistoName.c_str(), meanXNBin,meanXMin,meanXMax,  meanYNBin,meanYMin,meanYMax);
-
-          tempHisto->setTitle(tempHistoTitle.c_str());
-
-          _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
-
-        }
-
-    }
+  } // end of alignment histogram booking if:  if(_alignCheckHistograms){
 
 
 // List all booked histogram - check of histogram map filling

@@ -65,7 +65,7 @@ namespace eutelescope {
    * debug information is printed.
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelFitHistograms.h,v 1.7 2009-07-18 14:17:17 bulgheroni Exp $
+   * @version $Id: EUTelFitHistograms.h,v 1.8 2009-07-29 10:23:49 zarnecki Exp $
    * \date 2007.09.10
    *
    */
@@ -169,6 +169,9 @@ namespace eutelescope {
     //! Input \c Track collection name
     std::string _inputColName ;
 
+    //! Flag for alignment control histograms
+    bool _alignCheckHistograms;
+
     //! ID of the layer used for beam based alignment check
     int _BeamReferenceID;
 
@@ -243,6 +246,11 @@ namespace eutelescope {
     static std::string _beamShiftYHistoName;
     static std::string _beamShiftXYHistoName;
 
+    static std::string _clusterSignalHistoName;
+    static std::string _meanSignalXHistoName;
+    static std::string _meanSignalYHistoName;
+    static std::string _meanSignalXYHistoName;
+
     static std::string _beamRotXHistoName;
     static std::string _beamRotYHistoName;
     static std::string _beamRotX2DHistoName;
@@ -256,11 +264,6 @@ namespace eutelescope {
     static std::string _relRotYHistoName;
     static std::string _relRotX2DHistoName;
     static std::string _relRotY2DHistoName;
-
-    static std::string _clusterSignalHistoName;
-    static std::string _meanSignalXHistoName;
-    static std::string _meanSignalYHistoName;
-    static std::string _meanSignalXYHistoName;
 
 #endif
 
