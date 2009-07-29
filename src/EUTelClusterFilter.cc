@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.18 2009-07-20 08:22:46 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.19 2009-07-29 11:05:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -1270,7 +1270,7 @@ bool EUTelClusterFilter::isOutsideROI(EUTelVirtualCluster * cluster) const {
 
 }
 
-void EUTelClusterFilter::check (LCEvent * evt) {
+void EUTelClusterFilter::check (LCEvent * /* evt */ ) {
   // nothing to check here - could be used to fill check plots in reconstruction processor
 }
 

@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.14 2009-07-26 16:19:26 jbehr Exp $
+// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.15 2009-07-29 11:05:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -536,7 +536,7 @@ void EUTelApplyAlignmentProcessor::bookHistos() {
 }
 
 
-void EUTelApplyAlignmentProcessor::check (LCEvent * evt) {
+void EUTelApplyAlignmentProcessor::check (LCEvent * /* evt */ ) {
   // nothing to check here - could be used to fill check plots in reconstruction processor
 }
 

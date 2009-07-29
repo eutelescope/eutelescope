@@ -3,7 +3,7 @@
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
 // Author Yulia Furletova, Uni-Bonn <mailto:yulia@mail.cern.ch>
-// Version $Id: EUTelNativeReader.cc,v 1.21 2009-07-23 19:46:40 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.22 2009-07-29 11:05:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -149,7 +149,7 @@ void EUTelNativeReader::readDataSource(int numEvents) {
   }
 
 
-  while ( reader.NextEvent() ) {
+  while ( reader.NextEvent() && (eventCounter < numEvents ) ) {
 
     // inform the user about the reading status
     if ( eventCounter % 10 == 0 )

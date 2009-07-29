@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.22 2009-07-19 14:46:05 bulgheroni Exp $
+// Version $Id: EUTelCalibrateEventProcessor.cc,v 1.23 2009-07-29 11:05:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -708,7 +708,7 @@ void EUTelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
 
 
-void EUTelCalibrateEventProcessor::check (LCEvent * evt) {
+void EUTelCalibrateEventProcessor::check (LCEvent * /* evt */ ) {
   // nothing to check here - could be used to fill check plots in reconstruction processor
 }
 

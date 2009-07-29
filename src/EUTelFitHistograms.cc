@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitHistograms.cc,v 1.16 2009-07-29 10:23:49 zarnecki Exp $
+// Version: $Id: EUTelFitHistograms.cc,v 1.17 2009-07-29 11:05:02 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -812,7 +812,7 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
 
 
 
-void EUTelFitHistograms::check( LCEvent * evt ) {
+void EUTelFitHistograms::check( LCEvent * /* evt  */ ) {
   // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 

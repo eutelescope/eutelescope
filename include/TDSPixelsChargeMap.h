@@ -2,7 +2,7 @@
 /*
  *
  * Description:
- * Determination of charge distribution in pixels for tracker 
+ * Determination of charge distribution in pixels for tracker
  *
  * Author: Piotr Niezurawski
  *
@@ -16,8 +16,8 @@
  *
  */
 
-/*! 
-   \example testTDSPixelsChargeMap.cxx  
+/*!
+   \example testTDSPixelsChargeMap.cxx
    \brief This is an example of how to use TrackerDetailedSimulation package.
 */
 
@@ -47,7 +47,7 @@
 
 //! Namespace
 /*!
-    Namespace of Tracker Detailed Simulation 
+    Namespace of Tracker Detailed Simulation
 */
 namespace TDS {
 
@@ -63,10 +63,10 @@ namespace TDS {
 
 
   //! Pixels Charge Map for Tracker Detailed Simulation
-  /*! 
+  /*!
    * <pre>
    *  Track Detailed Simulation (TDS) tools are developed for realistic
-   *  simulation of charged distribution in pixel detectors. 
+   *  simulation of charged distribution in pixel detectors.
    *  TDSPixelChargeMap is the core of this package.
    *
    *  Each input hit (Geant step) is divided into a number of smaller steps
@@ -128,7 +128,7 @@ namespace TDS {
     //! Constructor.
     /*!
       Constructor takes dimensions (obligatory) and coordinates of the corner (optional).
-      Convention: height < 0, as the H axis direction is layer -> readout -> outside, with readout plane at H = 0. 
+      Convention: height < 0, as the H axis direction is layer -> readout -> outside, with readout plane at H = 0.
     */
     TDSPixelsChargeMap(const double length, const double width, const double height, const double firstPixelCornerCoordL=0, const double firstPixelCornerCoordW=0);
 
@@ -194,15 +194,15 @@ namespace TDS {
 
     inline void setReflectedContribution(const double val = 1.0)
       {
-	if ( val != 0.0 )
-	  {
-	    theParamsOfFunChargeDistribution.reflectedContribution = val;
-	    theParamsOfFunChargeDistribution.addReflectedContribution = true;
-	  }
-	else
-	  {
-	    theParamsOfFunChargeDistribution.addReflectedContribution = false;
-	  }
+        if ( val != 0.0 )
+          {
+            theParamsOfFunChargeDistribution.reflectedContribution = val;
+            theParamsOfFunChargeDistribution.addReflectedContribution = true;
+          }
+        else
+          {
+            theParamsOfFunChargeDistribution.addReflectedContribution = false;
+          }
       }
 
 
@@ -251,7 +251,7 @@ namespace TDS {
 
 
     //! Set maximal range along L of considered pixels during integration
-    /*! Considered are integMaxNumberPixelsAlongL/2 left, the same right, 
+    /*! Considered are integMaxNumberPixelsAlongL/2 left, the same right,
      *  integMaxNumberPixelsAlongW/2 down, the same up from the pixel
      *  under which there is the current point considered. Actual range
      *  can be smaller if the 'core' pixel is near to the layer border.
@@ -261,7 +261,7 @@ namespace TDS {
 
 
     //! Set maximal range along W of considered pixels during integration
-    /*! Considered are integMaxNumberPixelsAlongL/2 left, the same right, 
+    /*! Considered are integMaxNumberPixelsAlongL/2 left, the same right,
      *  integMaxNumberPixelsAlongW/2 down, the same up from the pixel
      *  under which there is the current point considered. Actual range
      *  can be smaller if the 'core' pixel is near to the layer border.
@@ -326,8 +326,8 @@ namespace TDS {
 
     //! Apply Poisson fluctuations to the charge deposited in single pixels
     /*! It is assumed that the expected stored charge is in the units of
-     * elementary charge. 
-     <br> 
+     * elementary charge.
+     <br>
      * If doCleaning flag is set, pixels with no
      * deposited charge are removed from map.
      */
@@ -343,10 +343,10 @@ namespace TDS {
      *   added. <br>
      Procedure: <br> <pre>
 
-     varGain  is from Gauss(gain, gainVariation) 
-     
+     varGain  is from Gauss(gain, gainVariation)
+
      varNoise is from Gauss(offset, noise)
-     
+
      new_charge = varGain * charge + varNoise </pre>
      */
 
@@ -387,7 +387,7 @@ namespace TDS {
       return pixelsChargeMap.find(pixID) != pixelsChargeMap.end();
     }
 
-    
+
     //! Is pixel stored in the map?
 
     inline bool isPixelStored(unsigned long int indexAlongL, unsigned long int indexAlongW)
@@ -405,7 +405,7 @@ namespace TDS {
 
 
     //! Get charge deposited in single pixel
-    /*! indexAlongL is a number between 0 and numberPixelsAlongL-1; 
+    /*! indexAlongL is a number between 0 and numberPixelsAlongL-1;
         indexAlongW is a number between 0 and numberPixelsAlongW-1
      */
 
@@ -416,7 +416,7 @@ namespace TDS {
 
     double getPixelCharge(type_PixelID pixID);
 
-    
+
     //! Get pixel index along L
     /*! pixelIndexAlongL is a number between 0 and numberPixelsAlongL-1
      */
@@ -434,19 +434,19 @@ namespace TDS {
     //! Get pixel coordinate along L (in the middle of the pixel)
     /*! indexAlongL is a number between 0 and numberPixelsAlongL-1
      */
-    
+
     double getPixelCoordL(unsigned long int indexAlongL);
 
 
     //! Get pixel coordinate along L (in the middle of the pixel)
-    
+
     double getPixelCoordL(type_PixelID pixID);
 
 
     //! Get pixel coordinate along W (in the middle of the pixel)
     /*! indexAlongW is a number between 0 and numberPixelsAlongW-1
      */
-    
+
     double getPixelCoordW(unsigned long int indexAlongW);
 
 
@@ -454,8 +454,8 @@ namespace TDS {
 
     double getPixelCoordW(type_PixelID pixID);
 
-    
-    //! Get ID of the pixel with maximal deposit 
+
+    //! Get ID of the pixel with maximal deposit
     /*! Returns ID (internal identification code) of the pixel with the greatest deposit (i.e. greatest absolute value of charge: |10| < |-100|)
      *  or the first pixel of many with the same, biggest deposit.
      */
@@ -470,14 +470,14 @@ namespace TDS {
     }
 
 
-    //! Get ID of the pixel with maximal charge 
+    //! Get ID of the pixel with maximal charge
     /*! Returns ID (internal identification code) of the pixel with the greatest charge (here 10 > -100)
      *  or the first pixel of many with the same, maximal charge.
      */
 
     type_PixelID getPixelID_maxCharge();
 
-    
+
     //! Comparison function - used for maximum/minimum finding
     static bool smallerCharge( std::pair<type_PixelID, double>  a, std::pair<type_PixelID, double> b)
     {
@@ -485,7 +485,7 @@ namespace TDS {
     }
 
 
-    //! Get ID of the pixel with minimal charge 
+    //! Get ID of the pixel with minimal charge
     /*! Returns ID (internal identification code) of the pixel with the smallest charge (here 10 > -100)
      *  or the first pixel of many with the same, minimal charge.
      */
@@ -494,18 +494,18 @@ namespace TDS {
 
 
     //! Erase a pixel
-    /*! indexAlongL is a number between 0 and numberPixelsAlongL-1; 
+    /*! indexAlongL is a number between 0 and numberPixelsAlongL-1;
         indexAlongW is a number between 0 and numberPixelsAlongW-1
      */
-    
+
     void erasePixel(unsigned long int indexAlongL, unsigned long int indexAlongW);
 
 
     //! Erase a pixel
-    
+
     void erasePixel(type_PixelID pixID);
 
-    
+
     //! Get vector of pixels IDs
     /*! Vector contains current IDs of pixels.
      */
@@ -593,7 +593,7 @@ namespace TDS {
     size_t gsl_calls;
 
 
-    // Do not insert this in DOXYGEN-generated documentation 
+    // Do not insert this in DOXYGEN-generated documentation
     /// @cond
     // Internal stuct - to provide parameters of charge distribution to function through GSL machinery
     struct ParamsOfFunChargeDistribution
@@ -606,11 +606,11 @@ namespace TDS {
       std::string detectorType;
     } theParamsOfFunChargeDistribution;
     /// @endcond
-   
+
 
     // Function describing charge distribution in the silicon
     // k[0] = L, k[1] = W, dim - dimension, *p - struct with parameters
-    static double funChargeDistribution (double *k, size_t dim, void * p)
+    static double funChargeDistribution (double *k, size_t /* dim */ , void * p)
     {
       ParamsOfFunChargeDistribution * gp = (ParamsOfFunChargeDistribution *)p;
 
@@ -618,30 +618,30 @@ namespace TDS {
       double A;
 
       // Calculate charge distribution
-	
+
       if ( gp->detectorType == "MAPS" )
-	{
-	  // MAPS
-	  double r2 = k[0]*k[0] + k[1]*k[1] + (gp->H)*(gp->H);
-	  double r  = std::sqrt(r2);
-	  //   std::cout << " r = " << r << " lambda = " << gp->lambda << " H = " << gp->H <<std::endl;
-	  // Function = exp(-r/\lambda) |H| / r^3 / (4\pi)
-	  A  = std::exp( - r / gp->lambda ) * std::abs(gp->H) / (r2*r) / (4*M_PI);
-	  if (gp->addReflectedContribution)
-	    {
-	      // Reflection with the same angle (Remember: gp->H < 0  AND gp->height < 0)
-	      double rimage2 = k[0]*k[0] + k[1]*k[1] + (2*gp->height - gp->H)*(2*gp->height - gp->H);
-	      double rimage  = std::sqrt(rimage2);
-	      A += gp->reflectedContribution * std::exp( - rimage / gp->lambda ) * std::abs(2*gp->height - gp->H) / (rimage2*rimage) / (4*M_PI);
-	    };
-	}
+        {
+          // MAPS
+          double r2 = k[0]*k[0] + k[1]*k[1] + (gp->H)*(gp->H);
+          double r  = std::sqrt(r2);
+          //   std::cout << " r = " << r << " lambda = " << gp->lambda << " H = " << gp->H <<std::endl;
+          // Function = exp(-r/\lambda) |H| / r^3 / (4\pi)
+          A  = std::exp( - r / gp->lambda ) * std::abs(gp->H) / (r2*r) / (4*M_PI);
+          if (gp->addReflectedContribution)
+            {
+              // Reflection with the same angle (Remember: gp->H < 0  AND gp->height < 0)
+              double rimage2 = k[0]*k[0] + k[1]*k[1] + (2*gp->height - gp->H)*(2*gp->height - gp->H);
+              double rimage  = std::sqrt(rimage2);
+              A += gp->reflectedContribution * std::exp( - rimage / gp->lambda ) * std::abs(2*gp->height - gp->H) / (rimage2*rimage) / (4*M_PI);
+            };
+        }
       //
       // Other detectors...
       else
-	{
-	 std::cout << "Error: Detector type " << gp->detectorType << " not found!" <<std::endl;
-	  exit(1);
-	}
+        {
+         std::cout << "Error: Detector type " << gp->detectorType << " not found!" <<std::endl;
+          exit(1);
+        }
       //   std::cout << "A= " << A << std::endl;
         // Because integration hangs up if function result is 0 everywhere in the integration region:
         return (A <= 0.0) ? 1e-100 : A;
@@ -663,4 +663,4 @@ namespace TDS {
 } // end of TDS namespace
 
 #endif // USE_GSL
-#endif // 
+#endif //

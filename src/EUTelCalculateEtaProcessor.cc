@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.21 2009-07-15 17:21:28 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.22 2009-07-29 11:05:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -414,7 +414,7 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
 
 
 
-void EUTelCalculateEtaProcessor::check (LCEvent * evt) {
+void EUTelCalculateEtaProcessor::check (LCEvent * /* evt */ ) {
   // nothing to check here - could be used to fill check plots in reconstruction processor
 }
 

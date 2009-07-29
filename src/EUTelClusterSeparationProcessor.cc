@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.15 2008-07-29 13:38:48 bulgheroni Exp $
+// Version $Id: EUTelClusterSeparationProcessor.cc,v 1.16 2009-07-29 11:05:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -10,7 +10,7 @@
  *
  */
 
-// eutelescope includes ".h" 
+// eutelescope includes ".h"
 #include "EUTELESCOPE.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
@@ -22,7 +22,7 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-// lcio includes <.h> 
+// lcio includes <.h>
 #include <IMPL/TrackerPulseImpl.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
@@ -49,23 +49,23 @@ EUTelClusterSeparationProcessor::EUTelClusterSeparationProcessor () :Processor("
 
   // first of all we need to register the input collection
   registerInputCollection (LCIO::TRACKERPULSE, "ClusterCollectionName",
-			   "Cluster collection name ",
-			   _clusterCollectionName, string ("cluster"));
+                           "Cluster collection name ",
+                           _clusterCollectionName, string ("cluster"));
 
   // and the output collection
   registerOutputCollection (LCIO::TRACKERPULSE, "ClusterOutputCollectionName",
-			    "Cluster output collection name",
-			    _clusterOutputCollectionName, string ("splitcluster" ));
+                            "Cluster output collection name",
+                            _clusterOutputCollectionName, string ("splitcluster" ));
 
   // now the optional parameters
   registerProcessorParameter ("SeparationAlgorithm",
-			      "Select which algorithm to use for cluster separation",
-			      _separationAlgo, string(EUTELESCOPE::FLAGONLY));
+                              "Select which algorithm to use for cluster separation",
+                              _separationAlgo, string(EUTELESCOPE::FLAGONLY));
 
   registerProcessorParameter ("MinimumDistance",
-			      "Minimum distance allowed between separated clusters (0 == only touching clusters)",
-			      _minimumDistance, static_cast<float> (0));
-    
+                              "Minimum distance allowed between separated clusters (0 == only touching clusters)",
+                              _minimumDistance, static_cast<float> (0));
+
 }
 
 
@@ -93,11 +93,11 @@ void EUTelClusterSeparationProcessor::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
 
-  if (_iEvt % 10 == 0) 
-    streamlog_out( MESSAGE4 ) << "Processing event " 
-			      << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-			      << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-			      << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  if (_iEvt % 10 == 0)
+    streamlog_out( MESSAGE4 ) << "Processing event "
+                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
   ++_iEvt;
 
 
@@ -108,7 +108,7 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
     return;
   } else if ( evt->getEventType() == kUNKNOWN ) {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
-			       << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+                               << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
   LCCollectionVec * clusterCollectionVec;
@@ -131,88 +131,88 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
 
     TrackerPulseImpl   * pulse   = dynamic_cast<TrackerPulseImpl *>   ( clusterCollectionVec->getElementAt(iCluster) );
     ClusterType          type    = static_cast<ClusterType> (static_cast<int>( cellDecoder(pulse)["type"] ) );
-    
+
     // all clusters have to inherit from the virtual cluster (that is
     // a TrackerDataImpl with some utility methods).
-    EUTelVirtualCluster    * cluster; 
-    
-    if ( type == kEUTelFFClusterImpl ) { 
+    EUTelVirtualCluster    * cluster;
+
+    if ( type == kEUTelFFClusterImpl ) {
       cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ) ;
-    
+
     } else if ( type == kEUTelSparseClusterImpl ) {
-      
+
       // ok the cluster is of sparse type, but we also need to know
       // the kind of pixel description used. This information is
       // stored in the corresponding original data collection.
-      
+
       LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
       TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
       CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
       SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
-      
+
       // now we know the pixel type. So we can properly create a new
       // instance of the sparse cluster
       if ( pixelType == kEUTelSimpleSparsePixel ) {
-	cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
-	  ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
+        cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+          ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
       } else {
-	streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-	throw UnknownDataTypeException("Pixel type unknown");
+        streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+        throw UnknownDataTypeException("Pixel type unknown");
       }
-              
+
     } else {
       streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
       throw UnknownDataTypeException("Cluster type unknown");
     }
-    
+
     int  iOtherCluster     = iCluster + 1;
     bool isExisisting      = (iOtherCluster < clusterCollectionVec->getNumberOfElements() );
     bool isOnSameDetector  = true;
 
-    
+
     while ( isOnSameDetector && isExisisting ) {
 
       // get the next cluster in the collection
       TrackerPulseImpl    * otherPulse   = dynamic_cast<TrackerPulseImpl *> (clusterCollectionVec->getElementAt(iOtherCluster)) ;
       EUTelVirtualCluster * otherCluster;
-      
-      if ( type == kEUTelFFClusterImpl ) 
-	otherCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (otherPulse->getTrackerData()) );
+
+      if ( type == kEUTelFFClusterImpl )
+        otherCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (otherPulse->getTrackerData()) );
       else {
-	streamlog_out ( ERROR4 ) << "Unknown cluster type. Sorry for quitting" << endl;
-	throw UnknownDataTypeException("Cluster type unknown");
+        streamlog_out ( ERROR4 ) << "Unknown cluster type. Sorry for quitting" << endl;
+        throw UnknownDataTypeException("Cluster type unknown");
       }
-      
+
       // check if the two are on the same detector
       if ( cluster->getDetectorID() == otherCluster->getDetectorID() ) {
-	
-	if ( _minimumDistance == 0 ) {
-	  // ok we need to calculate the touching distance
-	  float radius      = cluster->getExternalRadius();
-	  float otherRadius = otherCluster->getExternalRadius();
-	  _minimumDistance  = radius + otherRadius;
-	}
 
-	// ok they are on the same plane, so it makes sense check it
-	// they are merging
-	float distance = cluster->getDistance(otherCluster);
-	
-	if ( distance < _minimumDistance ) {
-	  // they are merging! we need to apply the separation
-	  // algorithm
-	  mergingPairVector.push_back( make_pair(iCluster, iOtherCluster) );
-	}
+        if ( _minimumDistance == 0 ) {
+          // ok we need to calculate the touching distance
+          float radius      = cluster->getExternalRadius();
+          float otherRadius = otherCluster->getExternalRadius();
+          _minimumDistance  = radius + otherRadius;
+        }
+
+        // ok they are on the same plane, so it makes sense check it
+        // they are merging
+        float distance = cluster->getDistance(otherCluster);
+
+        if ( distance < _minimumDistance ) {
+          // they are merging! we need to apply the separation
+          // algorithm
+          mergingPairVector.push_back( make_pair(iCluster, iOtherCluster) );
+        }
 
       } else {
-	isOnSameDetector = false;
+        isOnSameDetector = false;
       }
       isExisisting = (++iOtherCluster <  clusterCollectionVec->getNumberOfElements() );
       delete otherCluster;
-    }  
-    
+    }
+
     delete cluster;
   }
-  
+
   // at this point we have inserted into the mergingPairVector all the
   // pairs of merging clusters. we can try to put together all groups
   // of clusters, but only in the case the mergingPairVector has a non
@@ -230,13 +230,13 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
       newPulse->setCharge ( pulse->getCharge() );
       newPulse->setQuality( pulse->getQuality() );
       newPulse->setTrackerData( pulse->getTrackerData() );
-      
+
       outputCollectionVec->push_back( newPulse );
     }
     evt->addCollection( outputCollectionVec, _clusterOutputCollectionName );
     return ;
   }
-  
+
   // all merging clusters are collected into a vector of set. Each set
   // is a group of clusters all merging.
   vector< set<int > > mergingSetVector;
@@ -245,13 +245,13 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
   applySeparationAlgorithm(mergingSetVector, clusterCollectionVec, outputCollectionVec);
   evt->addCollection( outputCollectionVec, _clusterOutputCollectionName );
 
-  
-}
-  
 
-bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::set <int > > setVector, 
-							       LCCollectionVec * inputCollectionVec,
-							       LCCollectionVec * outputCollectionVec) const {
+}
+
+
+bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::set <int > > setVector,
+                                                               LCCollectionVec * inputCollectionVec,
+                                                               LCCollectionVec * outputCollectionVec) const {
 
   //  message<DEBUG> ( log() << "Applying cluster separation algorithm
   //  " << _separationAlgo );
@@ -275,17 +275,17 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
       newPulse->setCharge ( pulse->getCharge() );
       newPulse->setQuality( pulse->getQuality() );
       newPulse->setTrackerData( pulse->getTrackerData() );
-      
+
       outputCollectionVec->push_back( newPulse );
     }
-   
-    
+
+
     CellIDDecoder<TrackerPulseImpl> cellDecoder(outputCollectionVec);
-    
 
-    int iCounter = 0;    
 
-    vector<set <int > >::iterator vectorIterator = setVector.begin();    
+    int iCounter = 0;
+
+    vector<set <int > >::iterator vectorIterator = setVector.begin();
     while ( vectorIterator != setVector.end() ) {
 
 
@@ -293,30 +293,30 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 
       set <int >::iterator setIterator = (*vectorIterator).begin();
       while ( setIterator != (*vectorIterator).end() ) {
-	TrackerPulseImpl    * pulse   = dynamic_cast<TrackerPulseImpl * > ( outputCollectionVec->getElementAt( *setIterator ) ) ;
-	ClusterType           type    = static_cast<ClusterType> (static_cast<int>( cellDecoder(pulse)["type"] ) );
-	
-	EUTelVirtualCluster * cluster;
-	
-	if ( type == kEUTelFFClusterImpl ) 
-	  cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
-	else {
-	  message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
-	  throw UnknownDataTypeException("Cluster type unknown");
-	}
+        TrackerPulseImpl    * pulse   = dynamic_cast<TrackerPulseImpl * > ( outputCollectionVec->getElementAt( *setIterator ) ) ;
+        ClusterType           type    = static_cast<ClusterType> (static_cast<int>( cellDecoder(pulse)["type"] ) );
 
-	streamlog_out ( DEBUG4 ) << ( * cluster ) << endl; 
-	
-	try {
-	  cluster->setClusterQuality ( cluster->getClusterQuality() | kMergedCluster );
-	} catch (lcio::ReadOnlyException& e) {
-	  streamlog_out ( WARNING2 )  << "Attempt to change the cluster quality on the original data\n"
-	    "This is possible only when the " << name() << " is not applied to data already on tape\n"
-	    "In this case only the pulse containing this cluster will have the proper quality" << endl;
-	}
-	pulse->setQuality ( static_cast<int> (ClusterQuality( pulse->getQuality() | kMergedCluster )) );
-	++setIterator;
-	delete cluster;
+        EUTelVirtualCluster * cluster;
+
+        if ( type == kEUTelFFClusterImpl )
+          cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
+        else {
+          message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
+          throw UnknownDataTypeException("Cluster type unknown");
+        }
+
+        streamlog_out ( DEBUG4 ) << ( * cluster ) << endl;
+
+        try {
+          cluster->setClusterQuality ( cluster->getClusterQuality() | kMergedCluster );
+        } catch (lcio::ReadOnlyException& e) {
+          streamlog_out ( WARNING2 )  << "Attempt to change the cluster quality on the original data\n"
+            "This is possible only when the " << name() << " is not applied to data already on tape\n"
+            "In this case only the pulse containing this cluster will have the proper quality" << endl;
+        }
+        pulse->setQuality ( static_cast<int> (ClusterQuality( pulse->getQuality() | kMergedCluster )) );
+        ++setIterator;
+        delete cluster;
       }
       ++vectorIterator;
     }
@@ -328,8 +328,8 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 
 }
 
-void EUTelClusterSeparationProcessor::groupingMergingPairs(std::vector< std::pair<int , int> > pairVector, 
-							   std::vector< std::set<int > > * setVector) const {
+void EUTelClusterSeparationProcessor::groupingMergingPairs(std::vector< std::pair<int , int> > pairVector,
+                                                           std::vector< std::set<int > > * setVector) const {
 
   streamlog_out ( DEBUG0 ) << "Grouping merging pairs of clusters " << endl;
 
@@ -343,17 +343,17 @@ void EUTelClusterSeparationProcessor::groupingMergingPairs(std::vector< std::pai
 
     vector<vector< pair<int, int> >::iterator > tempIterVec;
     tempIterVec.push_back(iter);
-     
+
     if ( iter + 1 != pairVector.end() ) {
       vector< pair<int, int> >::iterator otherIter = iter + 1;
       while (otherIter != pairVector.end() ) {
- 	if ( ( tempSet.find(otherIter->first)  != tempSet.end() ) ||
- 	     ( tempSet.find(otherIter->second) != tempSet.end() ) ) {
- 	  tempSet.insert(otherIter->first);
- 	  tempSet.insert(otherIter->second);
- 	  tempIterVec.push_back(otherIter);
-	}
-	++otherIter;
+        if ( ( tempSet.find(otherIter->first)  != tempSet.end() ) ||
+             ( tempSet.find(otherIter->second) != tempSet.end() ) ) {
+          tempSet.insert(otherIter->first);
+          tempSet.insert(otherIter->second);
+          tempIterVec.push_back(otherIter);
+        }
+        ++otherIter;
       }
     }
     setVector->push_back(tempSet);
@@ -367,7 +367,7 @@ void EUTelClusterSeparationProcessor::groupingMergingPairs(std::vector< std::pai
   }
 }
 
-void EUTelClusterSeparationProcessor::check (LCEvent * evt) {
+void EUTelClusterSeparationProcessor::check (LCEvent * /* evt */ ) {
   // nothing to check here - could be used to fill check plots in reconstruction processor
 }
 

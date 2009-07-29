@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.37 2009-07-29 09:06:08 zarnecki Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.38 2009-07-29 11:05:02 bulgheroni Exp $
 // Date 2007.06.04
 
 /*
@@ -1604,7 +1604,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 
 
-void EUTelTestFitter::check( LCEvent * evt ) {
+void EUTelTestFitter::check( LCEvent * /* evt */  ) {
   // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 

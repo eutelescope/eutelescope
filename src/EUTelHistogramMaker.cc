@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.21 2009-07-20 08:22:16 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.22 2009-07-29 11:05:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -445,7 +445,7 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 
 }
 
-void EUTelHistogramMaker::check (LCEvent * evt) {
+void EUTelHistogramMaker::check (LCEvent * /*  evt */) {
   // nothing to check here - could be used to fill check plots in reconstruction processor
 }
 

@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.35 2009-07-19 14:43:39 bulgheroni Exp $
+// Version $Id: EUTelPedestalNoiseProcessor.cc,v 1.36 2009-07-29 11:05:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -442,7 +442,7 @@ void EUTelPedestalNoiseProcessor::processEvent (LCEvent * evt) {
 
 
 
-void EUTelPedestalNoiseProcessor::check (LCEvent * evt) {
+void EUTelPedestalNoiseProcessor::check (LCEvent * /* evt */ ) {
   // nothing to check here - could be used to fill check plots in reconstruction processor
 }
 

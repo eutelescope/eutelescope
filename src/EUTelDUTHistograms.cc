@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// @version: $Id: EUTelDUTHistograms.cc,v 1.14 2009-07-27 16:36:23 jbehr Exp $
+// @version: $Id: EUTelDUTHistograms.cc,v 1.15 2009-07-29 11:05:02 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -844,7 +844,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 
 
-void EUTelDUTHistograms::check( LCEvent * evt ) {
+void EUTelDUTHistograms::check( LCEvent * /* evt */ ) {
   // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
