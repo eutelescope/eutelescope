@@ -66,7 +66,7 @@ namespace eutelescope {
    *
    *  @author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
    *  @author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-   *  @version $Id: EUTelCorrelator.h,v 1.9 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id: EUTelCorrelator.h,v 1.10 2009-07-29 09:36:49 gelin Exp $
    *
    */
 
@@ -146,6 +146,9 @@ namespace eutelescope {
     int guessSensorID( TrackerHitImpl * hit ) ;
 
   private:
+
+    //! Initialization flag
+    bool _isInitialize;
 
     //! Run number
     int _iRun;

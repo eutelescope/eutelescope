@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.15 2009-07-15 17:21:28 bulgheroni Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.16 2009-07-29 09:36:49 gelin Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -122,6 +122,8 @@ void EUTelCorrelator::init() {
   }
 
 
+  _isInitialize = false;
+
 }
 
 void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
@@ -195,7 +197,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
   }
   // if the Event that we are looking is the first we create files
   // with histograms.
-  if ( isFirstEvent() ) {
+  if ( !_isInitialize ) {
 
     try {
       // let's check if we have cluster collections
@@ -220,9 +222,22 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
       _hasHitCollection = false;
     }
 
-    bookHistos();
 
-    _isFirstEvent = false;
+    // check if we have at least one collection.
+    if ( ! _hasClusterCollection && ! _hasHitCollection  &&  !_isInitialize) {
+
+      // this is the case we didn't find any collection in this
+      // event, so keep the first event flag to true in order to try
+      // again with the next event. 
+      _isInitialize = false;
+      return;
+
+    } else {
+    
+      bookHistos();
+      
+      _isInitialize = true;
+    }
 
   }
 
@@ -412,6 +427,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
     streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
                                 << " in run " << event->getRunNumber() << endl;
   }
+
 
 #endif
 
