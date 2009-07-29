@@ -240,7 +240,7 @@ namespace eutelescope {
    *  the current event.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterFilter.h,v 1.9 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id: EUTelClusterFilter.h,v 1.10 2009-07-29 20:41:31 bulgheroni Exp $
    *
    *
    */
@@ -372,7 +372,7 @@ namespace eutelescope {
      *  @return True if the @c cluster has a charge below its own threshold.
      *
      */
-    bool isBelowMaxTotalCharge(EUTelVirtualCluster * cluster) const { return true; }
+    bool isBelowMaxTotalCharge(EUTelVirtualCluster * /* cluster */ ) const { return true; }
 
 
     //! Check against the charge collected by N pixels
@@ -869,7 +869,7 @@ namespace eutelescope {
      *  in find_if.
      *
      *  @author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
-     *  @version $Id: EUTelClusterFilter.h,v 1.9 2009-07-15 17:21:28 bulgheroni Exp $
+     *  @version $Id: EUTelClusterFilter.h,v 1.10 2009-07-29 20:41:31 bulgheroni Exp $
      */
     class HasSameID {
     public:

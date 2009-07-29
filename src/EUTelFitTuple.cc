@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitTuple.cc,v 1.8 2009-04-20 22:02:46 bulgheroni Exp $
+// Version: $Id: EUTelFitTuple.cc,v 1.9 2009-07-29 20:41:31 bulgheroni Exp $
 // Date 2007.09.10
 
 /*
@@ -615,7 +615,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
 
 
-void EUTelFitTuple::check( LCEvent * evt ) {
+void EUTelFitTuple::check( LCEvent * /* evt */ ) {
   // nothing to check here - could be used to fill checkplots in reconstruction processor
 }
 
