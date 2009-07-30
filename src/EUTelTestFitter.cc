@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.38 2009-07-29 11:05:02 bulgheroni Exp $
+// Version: $Id: EUTelTestFitter.cc,v 1.39 2009-07-30 14:00:19 zarnecki Exp $
 // Date 2007.06.04
 
 /*
@@ -2142,7 +2142,7 @@ int EUTelTestFitter::GaussjSolve(double *alfa,double *beta,int n)
   indxr = new int[n];
   indxc = new int[n];
 
-  for(i=0;i<n;ipiv[i++]=0);
+  for(i=0;i<n;i++)ipiv[i]=0;
 
   for(i=0;i<n;i++)
     {
@@ -2188,7 +2188,8 @@ int EUTelTestFitter::GaussjSolve(double *alfa,double *beta,int n)
       help=alfa[n*icol+icol];
       pivinv=1./help;
       alfa[n*icol+icol]=1.;
-      for(j=0;j<n;alfa[n*icol+(j++)]*=pivinv);
+      for(j=0;j<n;j++) alfa[n*icol+j]*=pivinv;
+
       beta[icol]*=pivinv;
 
       for(j=0;j<n;j++)
