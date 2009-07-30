@@ -1,7 +1,7 @@
 
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.22 2009-07-15 17:21:28 bulgheroni Exp $
+// Version: $Id: EUTelFFClusterImpl.cc,v 1.23 2009-07-30 14:50:18 bulgheroni Exp $
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -394,7 +394,7 @@ float EUTelFFClusterImpl::getClusterSNR(int nPixel) const {
 std::vector<float > EUTelFFClusterImpl::getClusterSNR( std::vector<int > nPixels ) const {
 
   if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
-  map<float, int > clusterSignalMap;
+  multimap<float, int > clusterSignalMap;
   vector<float >::const_iterator iter = _trackerData->getChargeValues().begin();
   int index = 0;
   while ( iter != _trackerData->getChargeValues().end() ) {
