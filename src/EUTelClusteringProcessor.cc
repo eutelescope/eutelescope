@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.43 2009-07-29 11:05:02 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.44 2009-07-30 23:34:48 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -456,10 +456,15 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
     sparseClusterCollectionVec =  new LCCollectionVec(LCIO::TRACKERDATA);
     isDummyAlreadyExisting = false;
   }
-  CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec  );
+  size_t dummyCollectionInitialSize = sparseClusterCollectionVec->size();
+
+  // prepare an encoder also for the dummy collection.
+  // even if it is a sparse data set, since the clustering is FF apply
+  // the standard CLUSTERDEFAULTENCODING
+  CellIDEncoder<TrackerDataImpl> idClusterEncoder( EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec  );
 
   // prepare an encoder also for the pulse collection
-  CellIDEncoder<TrackerPulseImpl> idZSPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
+  CellIDEncoder<TrackerPulseImpl> idPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
 
   // utility
   short limitExceed    = 0;
@@ -623,7 +628,6 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
             // the final result of the clustering will enter in a
             // TrackerPulseImpl in order to be algorithm independent
             TrackerPulseImpl * pulse = new TrackerPulseImpl;
-            CellIDEncoder<TrackerPulseImpl> idPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
             idPulseEncoder["sensorID"]      = sensorID;
             idPulseEncoder["clusterID"]     = clusterID;
             idPulseEncoder["xSeed"]         = seedX;
@@ -634,7 +638,6 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
             idPulseEncoder.setCellID(pulse);
 
             TrackerDataImpl * cluster = new TrackerDataImpl;
-            CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec );
             idClusterEncoder["sensorID"]      = sensorID;
             idClusterEncoder["clusterID"]     = clusterID;
             idClusterEncoder["xSeed"]         = seedX;
@@ -686,7 +689,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
   // if the sparseClusterCollectionVec isn't empty add it to the
   // current event. The pulse collection will be added afterwards
   if ( ! isDummyAlreadyExisting ) {
-  if ( sparseClusterCollectionVec->size() != 0 ) {
+    if ( sparseClusterCollectionVec->size() != dummyCollectionInitialSize ) {
       evt->addCollection( sparseClusterCollectionVec, "original_zsdata" );
     } else {
       delete sparseClusterCollectionVec;
