@@ -12,6 +12,8 @@
 	The interdistance in between the two arms (DUT allocated space) has been increased by 60 mm
 	with respect v1.1. The left arm is left unchanged, while the planes in the right arm are all
 	moved down the beam of 60 mm.
+
+        The sensor thickness was taken into account and the planes were moved by this value.
 	
     Author: Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
     Date:   27/07/2009

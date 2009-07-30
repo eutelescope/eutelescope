@@ -1,6 +1,6 @@
 <gear>
 
-    <!-- 
+    <!--
 
 
     GEAR file generated for the 2009 CERN test beam campain. It assumes a telescope made
@@ -12,10 +12,12 @@
     
 	The interdistance in between the two arms (DUT allocated space) was found to be 19 mm instead of 20 mm,
 	as a consenquece, all the distances are streched with respect to v1.0
+
+        The sensor thickness was taken into account and the planes were moved by this value.
     Author: Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
     Date:   27/07/2009
     Version: 1.1
-	CVSVersion: $Id: gear_telescope_2009_v1.1.xml,v 1.1 2009-07-27 09:01:29 bulgheroni Exp $
+	CVSVersion: $Id: gear_telescope_2009_v1.1.xml,v 1.2 2009-07-30 13:59:14 jbehr Exp $
 
     -->
     
@@ -31,10 +33,10 @@
               <!-- PLANE 0 --> 
                 <layer>
                   <ladder ID="0" positionX="0.000000" positionY="0.000000" 
-					positionZ="-309.500000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
+					positionZ="-308.814" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
 					
                   <!-- CHIP 45: 20 um -->
-                  <sensitive ID="0" positionX="0.000000" positionY="0.000000" positionZ="-309.500000" sizeX="7.680000"
+                  <sensitive ID="0" positionX="0.000000" positionY="0.000000" positionZ="-308.81400000" sizeX="7.680000"
 					sizeY="7.680000" thickness="0.020000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000"
 					resolution="0.003000" rotation1="1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
 					radLength="93.660734" />
@@ -43,10 +45,10 @@
                 <!-- PLANE 1 --> 
                 <layer>
                   <ladder ID="1" positionX="0.000000" positionY="0.000000" 
-					positionZ="-209.500000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
+					positionZ="-208.81400000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
 
                   <!-- CHIP 38: 14 um -->
-                  <sensitive ID="1" positionX="0.000000" positionY="0.000000" positionZ="-209.500000" sizeX="7.680000"
+                  <sensitive ID="1" positionX="0.000000" positionY="0.000000" positionZ="-208.81400000" sizeX="7.680000"
 					sizeY="7.680000" thickness="0.014000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000"
 					resolution="0.003000" rotation1="1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
 					radLength="93.660734" />
@@ -55,10 +57,10 @@
                 <!-- PLANE 2 --> 
                 <layer>
                     <ladder ID="2" positionX="0.000000" positionY="0.000000" 
-						positionZ="-109.500000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
+						positionZ="-108.81400000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
 
                   <!-- CHIP 37: 14 um -->
-                  <sensitive ID="2" positionX="0.000000" positionY="0.000000" positionZ="-109.500000" sizeX="7.680000"
+                  <sensitive ID="2" positionX="0.000000" positionY="0.000000" positionZ="-108.81400000" sizeX="7.680000"
 					sizeY="7.680000" thickness="0.014000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000"
 					resolution="0.003000" rotation1="1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
 					radLength="93.660734" />
@@ -71,10 +73,10 @@
                 <!-- PLANE 3 --> 
                 <layer>
                   <ladder ID="3" positionX="0.000000" positionY="0.000000" 
-					positionZ="109.500000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
+					positionZ="108.8140000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
 
                   <!-- CHIP 17: 20 um -->
-                  <sensitive ID="3" positionX="0.000000" positionY="0.000000" positionZ="109.500000" sizeX="7.680000" 
+                  <sensitive ID="3" positionX="0.000000" positionY="0.000000" positionZ="108.81400000" sizeX="7.680000" 
 					sizeY="7.680000" thickness="0.020000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000"
 					resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
 					radLength="93.660734" />
@@ -83,10 +85,10 @@
                 <!-- PLANE 4 --> 
                 <layer>
                   <ladder ID="4" positionX="0.000000" positionY="0.000000" 
-					positionZ="209.500000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
+					positionZ="208.81400000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
                   
 				  <!-- CHIP 18: 20 um -->
-                  <sensitive ID="4" positionX="0.000000" positionY="0.000000" positionZ="209.500000" sizeX="7.680000" 
+                  <sensitive ID="4" positionX="0.000000" positionY="0.000000" positionZ="208.81400000" sizeX="7.680000" 
 					sizeY="7.680000" thickness="0.020000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000"
 					resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
 					radLength="93.660734" />
@@ -94,11 +96,11 @@
 
                 <!-- PLANE 5 --> 
                 <layer>
-                  <ladder ID="5" positionX="0.000000" positionY="0.000000" positionZ="309.500000" 
+                  <ladder ID="5" positionX="0.000000" positionY="0.000000" positionZ="308.81400000" 
 					sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
                   
 				  <!-- CHIP 20: 20 um  (the blob chip!) -->
-                  <sensitive ID="5" positionX="0.000000" positionY="0.000000" positionZ="309.500000" sizeX="7.680000" 
+                  <sensitive ID="5" positionX="0.000000" positionY="0.000000" positionZ="308.81400000" sizeX="7.680000" 
 					sizeY="7.680000" thickness="0.020000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000"
 					resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
 					radLength="93.660734" />
