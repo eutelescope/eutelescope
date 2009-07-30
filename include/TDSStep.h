@@ -28,6 +28,8 @@
 
 */
 
+#include<cstdlib>
+
 #ifndef TDSSTEP_H 
 #define TDSSTEP_H
 
@@ -94,15 +96,15 @@ namespace TDS {
 
 
     //! Get L coordinate of the middle point of the step
-    inline const double getMidL() { return midL; }
+    inline double getMidL() { return midL; }
 
 
     //! Get W coordinate of the middle point of the step
-    inline const double getMidW() { return midW; }
+    inline double getMidW() { return midW; }
 
 
     //! Get H coordinate of the middle point of the step
-    inline const double getMidH() { return midH; }
+    inline double getMidH() { return midH; }
 
 
     //! Get vector to the middle point of the step

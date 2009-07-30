@@ -28,7 +28,7 @@ namespace TDS {
 
    @author Piotr Niezurawski
 
-   Date: 2008-12-11
+   Date: 2009-01-13
 */
   class TDSPrecluster {
 
@@ -122,6 +122,13 @@ namespace TDS {
     }
 
 
+    //! Returns charge of the precluster
+    inline double getCharge()
+    {
+      return charge;
+    }
+
+
     //! Vector of pixels belonging to the precluster
     inline std::vector<TDSPixel> getVectorOfPixels()
       {
@@ -147,6 +154,13 @@ namespace TDS {
 
     //! Print to stdout some info about precluster
     void print();
+
+
+    //! Comparison function - used for sorting
+    static bool greaterCharge( TDSPrecluster a, TDSPrecluster b)
+    {
+      return a.charge > b.charge;
+    }
 
 
     protected:
@@ -215,6 +229,10 @@ namespace TDS {
     double coordW_chargeCenter;
 
     
+    //! Total charge of the precluster
+    double charge;
+
+
     //! Vector of pixels belonging to the precluster
     /*! Provide pixels sorted in charge in descending order (e.g.: +10., +5., -1., -20.).
      */

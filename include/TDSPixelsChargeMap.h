@@ -21,6 +21,11 @@
    \brief This is an example of how to use TrackerDetailedSimulation package.
 */
 
+/*! 
+   \example testTDSPreclustering.cxx
+   \brief This is an example of how to use TrackerDetailedSimulation package.
+*/
+
 
 #ifndef TDSPixelsChargeMap_H
 #define TDSPixelsChargeMap_H 1
@@ -208,12 +213,12 @@ namespace TDS {
 
     //! Return number of pixels in the sensor along Length
 
-    inline const unsigned long int getNumberPixelsAlongL() { return numberPixelsAlongL; };
+    inline unsigned long int getNumberPixelsAlongL() { return numberPixelsAlongL; };
 
 
     //! Return number of pixels in the sensor along Width
 
-    inline const unsigned long int getNumberPixelsAlongW() { return numberPixelsAlongW; };
+    inline unsigned long int getNumberPixelsAlongW() { return numberPixelsAlongW; };
 
 
     //! Return parameter of charge distribution parametrization
@@ -378,6 +383,14 @@ namespace TDS {
       {
         return pixelsChargeMap.size();
       }
+
+
+    //! Is any pixel stored in the map?
+
+    inline bool isPixelStored()
+    {
+      return pixelsChargeMap.size() != 0;
+    }
 
 
     //! Is pixel stored in the map?
@@ -549,6 +562,17 @@ namespace TDS {
     TDSPrecluster getPrecluster(type_PixelID seedPixelID, unsigned int rectLength, unsigned int rectWidth, bool removePixels = false);
 
 
+    //! Get vector of rectangular preclusters
+    /*! Create vector of simple rectangular preclusters from the charge deposits
+     * stored in map. Very simple algorithm is implemented at the moment.
+     * Precluster is created around the pixel with greatest deposit; pixels belonging to this precluster are then removed from the map; the next hottest pixel is found etc.
+     * Preclusters are sorted in charge in descending order (e.g.: +10., +5., -1., -20.).
+     * Use for example reverse(v.begin(), v.end()) to have ascending ordering.
+     */
+
+    std::vector<TDSPrecluster> getVectorOfPreclusters(unsigned int rectLength, unsigned int rectWidth);
+
+
   private:
 
 
@@ -609,7 +633,7 @@ namespace TDS {
 
 
     // Function describing charge distribution in the silicon
-    // k[0] = L, k[1] = W, dim - dimension, *p - struct with parameters
+    // k[0] = L, k[1] = W, dim - dimension (not used), *p - struct with parameters
     static double funChargeDistribution (double *k, size_t /* dim */ , void * p)
     {
       ParamsOfFunChargeDistribution * gp = (ParamsOfFunChargeDistribution *)p;
@@ -662,5 +686,7 @@ namespace TDS {
 
 } // end of TDS namespace
 
+#else
+#warning WARNING: GSL not available! TDS will not compile.
 #endif // USE_GSL
 #endif //
