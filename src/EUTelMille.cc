@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.46 2009-07-29 11:36:42 jbehr Exp $
+// Version: $Id: EUTelMille.cc,v 1.47 2009-07-30 16:37:13 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -1043,7 +1043,8 @@ void EUTelMille::processEvent (LCEvent * event) {
                   //in z assuming that z is constant over all
                   //events for each plane
                   std::sort(hitsplane.begin(), hitsplane.end());
-                                    
+                          
+          
                   //now the array is filled into the track
                   //candidates array
                   for(int i = 0; i < _nPlanes; i++)

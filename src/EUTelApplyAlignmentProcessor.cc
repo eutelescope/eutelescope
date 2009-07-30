@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.15 2009-07-29 11:05:02 bulgheroni Exp $
+// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.16 2009-07-30 16:37:13 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -126,7 +126,7 @@ void EUTelApplyAlignmentProcessor::init () {
 #if defined(MARLIN_USE_AIDA) || defined(USE_AIDA)
   _histogramSwitch = true;
 #endif
-
+  _isFirstEvent = true;
 }
 
 void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * rdr) {
@@ -166,19 +166,19 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
     LCCollectionVec * inputCollectionVec         = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputHitCollectionName));
     LCCollectionVec * alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection(_alignmentCollectionName));
-
-    if (isFirstEvent()) {
+    
+    static bool fevent = true;
+    if (fevent) {
 
       bookHistos();
 
       streamlog_out ( MESSAGE ) << "The alignment collection contains: " <<  alignmentCollectionVec->size()
                                 << " planes " << endl;
-
+      
       for ( size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos ) {
-
+        
         EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) );
         _lookUpTable[ alignment->getSensorID() ] = iPos;
-
       }
 
 #ifndef NDEBUG
@@ -192,6 +192,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 #endif
 
       _isFirstEvent = false;
+      fevent = false;
     }
 
 
@@ -218,13 +219,13 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
       if ( positionIter != _lookUpTable.end() ) {
 
+
 #if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) )
         string tempHistoName;
         AIDA::IHistogram3D *histo3D; 
         if ( _histogramSwitch ) {
           {
             stringstream ss;
-            ss  << _hitHistoBeforeAlignName << "_" << sensorID ;
             tempHistoName = ss.str();
           }
           if ( AIDA::IHistogram2D * histo = dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[ tempHistoName ] )) {
@@ -248,7 +249,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
         EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * >
           ( alignmentCollectionVec->getElementAt( positionIter->second ) );
-
+        
         if ( _correctionMethod == 0 ) {
 
           // this is the shift only case
@@ -329,8 +330,6 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
       outputHit->setPosition( outputPosition ) ;
       outputCollectionVec->push_back( outputHit );
-
-
     }
 
     evt->addCollection( outputCollectionVec, _outputHitCollectionName );
@@ -561,10 +560,19 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
       sensorID = _siPlanesLayerLayout->getID( iPlane );
     }
   }
+  if  ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
+    double distance = std::abs( hitPosition[2] - _siPlanesLayerLayout->getDUTPositionZ() );
+    if( distance < minDistance )
+      {
+        minDistance = distance;
+        sensorID = _siPlanesLayerLayout->getDUTID();
+      }
+  }
   if ( minDistance > 5 /* mm */ ) {
     // advice the user that the guessing wasn't successful 
     streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-      "Please check the consistency of the data with the GEAR file" << endl;
+      "Please check the consistency of the data with the GEAR file " << hitPosition[2]<< endl;
+    throw SkipEventException(this);
   }
 
   return sensorID;
