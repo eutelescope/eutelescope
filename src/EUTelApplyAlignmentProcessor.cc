@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.16 2009-07-30 16:37:13 jbehr Exp $
+// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.17 2009-07-30 17:19:19 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -226,6 +226,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
         if ( _histogramSwitch ) {
           {
             stringstream ss;
+            ss  << _hitHistoBeforeAlignName << "_" << sensorID ;
             tempHistoName = ss.str();
           }
           if ( AIDA::IHistogram2D * histo = dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[ tempHistoName ] )) {
@@ -571,7 +572,7 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
   if ( minDistance > 5 /* mm */ ) {
     // advice the user that the guessing wasn't successful 
     streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-      "Please check the consistency of the data with the GEAR file " << hitPosition[2]<< endl;
+      "Please check the consistency of the data with the GEAR file " << endl;
     throw SkipEventException(this);
   }
 
