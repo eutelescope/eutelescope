@@ -3,7 +3,7 @@
 // Author Loretta Negrini, Univ. Insubria <mailto:loryneg@gmail.com>
 // Author Silvia Bonfanti, Univ. Insubria <mailto:silviafisica@gmail.com>
 // Author Yulia Furletova, Uni-Bonn <mailto:yulia@mail.cern.ch>
-// Version $Id: EUTelNativeReader.cc,v 1.22 2009-07-29 11:05:02 bulgheroni Exp $
+// Version $Id: EUTelNativeReader.cc,v 1.23 2009-07-31 09:45:49 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -30,6 +30,7 @@
 #include "EUTelPixelDetector.h"
 #include "EUTelMimoTelDetector.h"
 #include "EUTelMimosa18Detector.h"
+#include "EUTelMimosa26Detector.h"
 #include "EUTelTLUDetector.h"
 #include "EUTelDEPFETDetector.h"
 #include "EUTelSparseDataImpl.h"

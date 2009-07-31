@@ -18,7 +18,7 @@
  *  develop both their DAQ and analysis/reconstruction software.
  *
  *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
- *  @version $Id: EUTELESCOPE.h,v 1.30 2009-07-22 21:24:23 bulgheroni Exp $
+ *  @version $Id: EUTELESCOPE.h,v 1.31 2009-07-31 09:45:49 bulgheroni Exp $
  */
 
 namespace eutelescope {}
@@ -58,7 +58,7 @@ namespace eutelescope
    * files.
    *
    * @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @version $Id: EUTELESCOPE.h,v 1.30 2009-07-22 21:24:23 bulgheroni Exp $
+   * @version $Id: EUTELESCOPE.h,v 1.31 2009-07-31 09:45:49 bulgheroni Exp $
    */
 
   class EUTELESCOPE
@@ -369,24 +369,26 @@ namespace eutelescope
    *  type.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.30 2009-07-22 21:24:23 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.31 2009-07-31 09:45:49 bulgheroni Exp $
    */
   enum EUTelDetectorType {
     kTLU               =   0,
     kMimoTel           = 100,
-    kMimosa18          = 101
+    kMimosa18          = 101,
+    kMimosa26          = 102
   } ;
 
   //! Readout mode
   /*! This enumeration type is used to identify a readout mode
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.30 2009-07-22 21:24:23 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.31 2009-07-31 09:45:49 bulgheroni Exp $
    */
   enum EUTelReadoutMode {
     kRAW2             =   0,
     kRAW3             =   1,
-    kZS               = 100
+    kZS               = 100,
+    kZS2              = 101
   };
 
 
@@ -416,7 +418,7 @@ namespace eutelescope
    *  existing parameter will return 0.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.30 2009-07-22 21:24:23 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.31 2009-07-31 09:45:49 bulgheroni Exp $
    */
   enum EventType {
     kUNKNOWN  = 0,
@@ -463,7 +465,7 @@ namespace eutelescope
    *  future to mark other different kind of bad quality clusters.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.30 2009-07-22 21:24:23 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.31 2009-07-31 09:45:49 bulgheroni Exp $
    */
 
   enum ClusterQuality {
@@ -522,7 +524,7 @@ namespace eutelescope
    *  cluster during the clusterization process itself.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.30 2009-07-22 21:24:23 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.31 2009-07-31 09:45:49 bulgheroni Exp $
    */
   enum ClusterType {
     kEUTelFFClusterImpl       = 0,
@@ -537,7 +539,7 @@ namespace eutelescope
   /*! This enumerator is used to define the sparsified pixel type.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTELESCOPE.h,v 1.30 2009-07-22 21:24:23 bulgheroni Exp $
+   *  @version $Id: EUTELESCOPE.h,v 1.31 2009-07-31 09:45:49 bulgheroni Exp $
    */
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,
