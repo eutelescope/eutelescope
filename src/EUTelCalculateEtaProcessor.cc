@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.22 2009-07-29 11:05:02 bulgheroni Exp $
+// Version $Id: EUTelCalculateEtaProcessor.cc,v 1.23 2009-07-31 08:51:18 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -170,7 +170,7 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
                      Global::parameters->getIntVal("MaxRecordNumber") ) - 1;
   }
 
-  if ( ( _nEvent == -1 ) || ( _nEvent >= tempEvent ) ) {
+  if ( ( _nEvent == -1 ) || ( _nEvent >= tempEvent  && tempEvent > 0 ) ) {
     _nEvent = tempEvent;
   }
 
@@ -404,6 +404,12 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
     } catch ( lcio::DataNotAvailableException & e) {
       return ;
     }
+  }
+
+  if(_iEvt>=_nEvent &&  !_isEtaCalculationFinished ){
+    streamlog_out (  DEBUG4 ) << _nEvent << " events done, calling finalizeProcessor()" << endl;
+    finalizeProcessor();
+    return;
   }
 
   if ( isFirstEvent() ) _isFirstEvent = false;
