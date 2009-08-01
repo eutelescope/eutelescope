@@ -15,7 +15,7 @@ import commands
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.27 2009-07-28 08:12:39 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.28 2009-08-01 12:27:41 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -24,7 +24,7 @@ class SubmitBase :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.27 $"
+    cvsVersion = "$Revision: 1.28 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -111,6 +111,7 @@ class SubmitBase :
         # if it exists, then I can read it!!!
         self._configParser = ConfigParser.SafeConfigParser()
         self._configParser.read( self._configFile )
+
 
 
     ## Logger configurator
@@ -222,8 +223,18 @@ class SubmitBase :
     ## Ask yes or no
     #
     def askYesNo( self, prompt, complaint= "Yes or no please", retries = 4 ):
-        if self._isForceYes :
-            return True
+
+        try :
+            self._isForceYes
+
+        except AttributeError:
+
+            pass
+
+        else:
+
+            if self._isForceYes :
+                return True
 
         while True:
             ok = raw_input( prompt )
