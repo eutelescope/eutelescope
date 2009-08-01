@@ -7,7 +7,7 @@
 #  pysub
 #
 #  Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-#  Version: $Id: myjob-status.py,v 1.7 2009-07-28 23:25:42 bulgheroni Exp $
+#  Version: $Id: myjob-status.py,v 1.8 2009-08-01 10:40:23 bulgheroni Exp $
 
 from optparse import OptionParser
 import os
@@ -17,7 +17,7 @@ import datetime
 
 def main() :
     usage = "%prog [options] JID-files"
-    version = "$Revision: 1.7 $"
+    version = "$Revision: 1.8 $"
     version = version.replace("$Revision:", "")
     version = version.replace("$", "")
     parser = OptionParser( usage=usage, version=version.strip())
@@ -83,7 +83,7 @@ def main() :
                     if line == '' :
                         break
                     if line.startswith( "#" ) :
-                        description = line.strip()
+                        description = line.strip()[0:58]
                         jid = file.readline()
                     elif line.startswith("https") :
                         description  = "None"
