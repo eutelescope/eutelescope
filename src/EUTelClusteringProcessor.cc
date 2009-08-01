@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.44 2009-07-30 23:34:48 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.45 2009-08-01 14:11:28 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -399,7 +399,19 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
   }
 
   // prepare a pulse collection to add all clusters found
-  LCCollectionVec * pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
+  // this can be either a new collection or already existing in the
+  // event
+  LCCollectionVec * pulseCollection;
+  bool pulseCollectionExists = false;
+  _initialPulseCollectionSize = 0;
+
+  try {
+    pulseCollection = dynamic_cast< LCCollectionVec * > ( evt->getCollection( _pulseCollectionName ) );
+    pulseCollectionExists = true;
+    _initialPulseCollectionSize = pulseCollection->size();
+  } catch ( lcio::DataNotAvailableException& e ) {
+    pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
+  }
 
   // first look for cluster in RAW mode frames
   if ( hasNZSData ) {
@@ -416,9 +428,11 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
   }
 
   // if the pulseCollection is not empty add it to the event
-  if ( pulseCollection->size() != 0 ) {
-    evt->addCollection(pulseCollection,_pulseCollectionName);
+  if ( ! pulseCollectionExists ) {
+    evt->addCollection( pulseCollection, _pulseCollectionName );
+  }
 
+  if ( pulseCollection->size() != _initialPulseCollectionSize ) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     if ( _fillHistos ) fillHistos(event);
 #endif
@@ -1432,7 +1446,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 
     vector<unsigned short> eventCounterVec( _noOfDetector, 0 );
 
-    for ( int iPulse = 0; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ ) {
+    for ( int iPulse = _initialPulseCollectionSize; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ ) {
       TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl*> ( pulseCollectionVec->getElementAt(iPulse) );
       ClusterType        type  = static_cast<ClusterType> ( static_cast<int> ( cellDecoder(pulse)["type"] ));
       SparsePixelType    pixelType = static_cast<SparsePixelType> (0);

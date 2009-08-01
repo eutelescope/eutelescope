@@ -142,7 +142,7 @@ namespace eutelescope {
    *  the GEAR description.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.22 2009-07-22 17:26:09 bulgheroni Exp $
+   *  @version $Id: EUTelClusteringProcessor.h,v 1.23 2009-08-01 14:11:28 bulgheroni Exp $
    *
    */
 
@@ -422,6 +422,8 @@ namespace eutelescope {
      */
     std::string _pulseCollectionName;
 
+    //! Pulse collection size
+    size_t _initialPulseCollectionSize;
 
     //! Cluster collection name.
     /*! This is the name of the collection to store the in memory and
