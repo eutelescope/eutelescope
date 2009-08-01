@@ -1763,7 +1763,9 @@ void showClusterPlot( const char * filename ) {
   folderNames.push_back( toString("FilterHisto") + toString("_dut") );
   folderNames.push_back( toString("FilterHisto") + toString("_dep") );
   folderNames.push_back( toString("FilterHisto") + toString("_tel") );
-
+  folderNames.push_back( toString("Clustering") +  toString("_dut") );
+  folderNames.push_back( toString("Clustering") +  toString("_tel") );
+  folderNames.push_back( toString("Clustering") +  toString("_dep") );
 
 
   // this function will create the following canvases:
