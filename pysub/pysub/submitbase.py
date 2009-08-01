@@ -15,7 +15,7 @@ import commands
 # inheriting from this.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submitbase.py,v 1.28 2009-08-01 12:27:41 bulgheroni Exp $
+# @version $Id: submitbase.py,v 1.29 2009-08-01 15:14:15 bulgheroni Exp $
 #
 class SubmitBase :
 
@@ -24,7 +24,7 @@ class SubmitBase :
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.28 $"
+    cvsVersion = "$Revision: 1.29 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -73,15 +73,6 @@ class SubmitBase :
         # initialize the grid job ntuple
         self._gridJobNTuple = [];
 
-        # set a couple of usefull information from the configuration file
-        self._isInteractive = False;
-        self._isForceYes    = False;
-        try :
-            self._isInteractive = self._configParser.getboolean( "General", "Interactive" )
-            self._isForceYes    = self._configParser.getboolean( "General", "ForceYes" )
-        except ConfigParser.NoOptionError:
-            self._logger.debug( "Unable to find interactive keys in the configuration file" )
-
 
     ## The configure method
     #
@@ -112,6 +103,14 @@ class SubmitBase :
         self._configParser = ConfigParser.SafeConfigParser()
         self._configParser.read( self._configFile )
 
+        # set a couple of usefull information from the configuration file
+        self._isInteractive = False;
+        self._isForceYes    = False;
+        try :
+            self._isInteractive = self._configParser.getboolean( "General", "Interactive" )
+            self._isForceYes    = self._configParser.getboolean( "General", "ForceYes" )
+        except ConfigParser.NoOptionError:
+            self._logger.debug( "Unable to find interactive keys in the configuration file" )
 
 
     ## Logger configurator
