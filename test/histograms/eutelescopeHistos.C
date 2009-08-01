@@ -1760,6 +1760,10 @@ void showClusterPlot( const char * filename ) {
   folderNames.push_back( dutFolderName );
   dutFolderName = clusterHistoFolderName.Data()  + toString( "_taki" );
   folderNames.push_back( dutFolderName );
+  folderNames.push_back( toString("FilterHisto") + toString("_dut") );
+  folderNames.push_back( toString("FilterHisto") + toString("_dep") );
+  folderNames.push_back( toString("FilterHisto") + toString("_tel") );
+
 
 
   // this function will create the following canvases:
