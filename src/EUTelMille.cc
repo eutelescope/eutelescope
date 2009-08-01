@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Version: $Id: EUTelMille.cc,v 1.47 2009-07-30 16:37:13 jbehr Exp $
+// Version: $Id: EUTelMille.cc,v 1.48 2009-08-01 10:49:46 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -191,6 +191,9 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   registerOptionalParameter("AlignmentConstantLCIOFile","This is the name of the LCIO file name with the output alignment"
                             "constants (add .slcio)",_alignmentConstantLCIOFile, static_cast< string > ( "alignment.slcio" ) );
+
+  registerOptionalParameter("AlignmentConstantCollectionName", "This is the name of the alignment collection to be saved into the slcio file",
+                            _alignmentConstantCollectionName, static_cast< string > ( "alignment" ));
 
   registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a track",_residualsXMin,MinimalResidualsX);
 
@@ -676,9 +679,6 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
 }
 
 void EUTelMille::processEvent (LCEvent * event) {
-
-
-
 
 
   if (_iEvt % 10 == 0) {
@@ -1824,7 +1824,7 @@ void EUTelMille::end() {
           }
 
         }
-        event->addCollection( constantsCollection, "alignment" );
+        event->addCollection( constantsCollection, _alignmentConstantCollectionName );
         lcWriter->writeEvent( event );
         delete event;
 
