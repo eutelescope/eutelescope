@@ -40,6 +40,7 @@
 #include <map>
 #include <cmath>
 #include <vector>
+#include <list>
 
 namespace eutelescope {
 
@@ -142,13 +143,144 @@ namespace eutelescope {
    *  the GEAR description.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusteringProcessor.h,v 1.23 2009-08-01 14:11:28 bulgheroni Exp $
+   *  @version $$
    *
    */
 
   class EUTelClusteringProcessor :public marlin::Processor , public marlin::EventModifier {
 
   public:
+
+    //a helper class for faster digital cluster finding on the sensors
+    //(basically a two dimensional array)
+    template <class T>
+    class dim2array
+    {
+    public:
+      dim2array() : size_x(0), size_y(0)
+      {
+        createarray();
+      }
+      dim2array(int x, int y) : size_x(x), size_y(y)
+      {
+        createarray();
+      }
+      dim2array(const unsigned int x, const unsigned int y, T value) : size_x(x), size_y(y)
+      {
+        createarray();
+        for(unsigned int i =0; i < (size_x * size_y); ++i)
+          array[i] = value;
+      }
+      dim2array(const dim2array &a)
+      {
+        size_x = a.size_x;
+        size_y = a.size_y;
+        createarray();
+        for(unsigned int i =0; i < size_x*size_y; ++i)
+          array[i] = a.array[i];
+      }
+      dim2array& operator = (const dim2array &a)
+      {
+        size_x = a.size_x;
+        size_y = a.size_y;
+        delete [] array;
+        createarray();
+        for(unsigned int i =0; i < size_x*size_y; ++i)
+          array[i] = a.array[i];
+        return *this;  
+      }
+      T at(const int i, const int j) const
+      {
+        int index = i * size_x + j;
+        return array[index];
+      }
+      void pad(T *v)
+      {
+        for(unsigned int i =0; i < size_x*size_y; ++i)
+          array[i] = v;
+      }
+      unsigned int sizeX() const
+      {
+        return (size_x);
+      }
+      unsigned int sizeY() const
+      {
+        return (size_y);
+      }
+      void set(const unsigned int i, const unsigned int j, T value)
+      {
+        int index = i * size_x + j;
+        array[index] = value;
+      }
+  
+      ~dim2array()
+      {
+        delete [] array;
+      }
+  
+    private:
+      void createarray()
+      {
+        array = new T[size_x * size_y];
+      }
+
+      T *array;
+
+      unsigned int size_x;
+      unsigned int size_y;
+    };
+    //std::vector< dim2array<bool> > sensormatrix;
+
+
+    class pixel
+    {
+    public:
+      pixel(){}
+      pixel(unsigned int tmp_x, unsigned int tmp_y)
+      {
+        x = tmp_x;
+        y = tmp_y;
+      }
+      unsigned int x;
+      unsigned int y;
+    };
+    
+    //class of seed candidates
+    class seed
+    {
+    public:
+      seed(unsigned int tmp_x, unsigned int tmp_y, unsigned int tmp_nb, unsigned int cp)
+      {
+        x = tmp_x;
+        y = tmp_y;
+        neighbours = tmp_nb;
+        p = cp;
+      }
+      //this operator is needed for the sort algorithm. the first
+      //criteria is the number of neighbouring pixels and then the
+      //second criteria is the number of fired pixel in a cluster
+      //around the seed
+      bool operator<(const seed& b) const 
+      {
+        //return (measuredZ < b.measuredZ);
+        bool r = true;
+        if(neighbours == b.neighbours)
+          {   
+            if(p < b.p)
+              r = false;
+          }
+        else 
+          if(neighbours < b.neighbours)
+            r = false;
+        return r;
+      }
+      unsigned int x; //x coordinate
+      unsigned int y;//y coordinate
+      unsigned int neighbours; //number of neighbours
+      unsigned int p; //total number of fired pixel in the cluster formed by
+      //this seed pixel candidate
+    };
+
 
 
     //! Returns a new instance of EUTelClusteringProcessor
@@ -349,6 +481,8 @@ namespace eutelescope {
     void fixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
     void zsFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
+
+    void digitalFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
 
     //! Method for sparse pixel re-clustering

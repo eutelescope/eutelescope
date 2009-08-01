@@ -94,7 +94,7 @@ namespace eutelescope {
    *  encoding of fixed frame clusters
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelFFClusterImpl.h,v 1.16 2008-07-09 14:35:09 bulgheroni Exp $
+   *  @version $Id: EUTelFFClusterImpl.h,v 1.17 2009-08-01 21:05:03 jbehr Exp $
    */ 
 
   class EUTelFFClusterImpl : public EUTelVirtualCluster {
@@ -459,7 +459,7 @@ namespace eutelescope {
      */
     void print(std::ostream& os)  const;
 
-  private:
+  protected:
     
     //! Noise values vector
     std::vector<float > _noiseValues;

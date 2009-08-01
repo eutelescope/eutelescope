@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTELESCOPE.cc,v 1.22 2009-07-15 17:21:28 bulgheroni Exp $
+// Version: $Id: EUTELESCOPE.cc,v 1.23 2009-08-01 21:05:03 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -64,6 +64,7 @@ const char *   EUTELESCOPE::ROWWISE             = "RowWise";
 const char *   EUTELESCOPE::MEANRMS             = "MeanRMS";
 const char *   EUTELESCOPE::AIDAPROFILE         = "AIDAProfile";
 const char *   EUTELESCOPE::FIXEDFRAME          = "FixedFrame";
+const char *   EUTELESCOPE::DFIXEDFRAME          = "DFixedFrame";
 const char *   EUTELESCOPE::SPARSECLUSTER       = "SparseCluster";
 const char *   EUTELESCOPE::SPARSECLUSTER2      = "SparseCluster2";
 const char *   EUTELESCOPE::FLAGONLY            = "FlagOnly";
