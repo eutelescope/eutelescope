@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusteringProcessor.cc,v 1.45 2009-08-01 14:11:28 bulgheroni Exp $
+// Version $Id: EUTelClusteringProcessor.cc,v 1.46 2009-08-01 16:47:29 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -428,7 +428,7 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
   }
 
   // if the pulseCollection is not empty add it to the event
-  if ( ! pulseCollectionExists ) {
+  if ( ! pulseCollectionExists && ( pulseCollection->size() != _initialPulseCollectionSize )) {
     evt->addCollection( pulseCollection, _pulseCollectionName );
   }
 
@@ -436,10 +436,12 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     if ( _fillHistos ) fillHistos(event);
 #endif
+  }
 
-  } else {
+  if ( ! pulseCollectionExists && ( pulseCollection->size() == _initialPulseCollectionSize ) ) {
     delete pulseCollection;
   }
+
 
   _isFirstEvent = false;
 
@@ -1477,7 +1479,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 
       // increment of one unit the event counter for this plane
       eventCounterVec[ _ancillaryIndexMap[ detectorID] ]++;
-
+      
       string tempHistoName;
       tempHistoName = _clusterSignalHistoName + "_d" + to_string( detectorID ) ;
       (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getTotalCharge());
@@ -1634,8 +1636,9 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
     // fill the event multiplicity here
     string tempHistoName;
     for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++ ) {
-      tempHistoName = _eventMultiplicityHistoName + "_d" + to_string( iDetector );
+      tempHistoName = _eventMultiplicityHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector) );
       AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D *> ( _aidaHistoMap[tempHistoName] );
+    
       if ( histo ) {
         histo->fill( eventCounterVec[iDetector] );
       }
