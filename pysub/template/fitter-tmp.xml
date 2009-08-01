@@ -10,7 +10,7 @@
                                ==> fitter-tmp.xml <===
 
 Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-Version: $Id: fitter-tmp.xml,v 1.5 2009-07-28 09:24:41 bulgheroni Exp $
+Version: $Id: fitter-tmp.xml,v 1.6 2009-08-01 13:59:16 bulgheroni Exp $
 ==========================================================================================
 
 --> 
@@ -160,6 +160,8 @@ Version: $Id: fitter-tmp.xml,v 1.5 2009-07-28 09:24:41 bulgheroni Exp $
  <!--Histogram track fit results-->
   <!--Name of the input Track collection-->
   <parameter name="InputCollectionName" type="string" lcioInType="Track"> track </parameter>
+  <!--Flag for producing additional histograms for alignment consistency check-->
+  <parameter name="AlignCheckHistograms" type="bool">false </parameter>
   <!--ID of the layer used for beam based alignment check-->
   <parameter name="BeamReferenceID" type="int" value="0"/>
   <!--Print out every DebugEnevtCount event-->
