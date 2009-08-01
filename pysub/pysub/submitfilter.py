@@ -21,7 +21,7 @@ from error import *
 # It is inheriting from SubmitBase and it is called by the submit-filter.py script
 #
 #
-# @version $Id: submitfilter.py,v 1.31 2009-07-28 09:24:41 bulgheroni Exp $
+# @version $Id: submitfilter.py,v 1.32 2009-08-01 10:44:30 bulgheroni Exp $
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 #
 class SubmitFilter( SubmitBase ):
@@ -31,7 +31,7 @@ class SubmitFilter( SubmitBase ):
     #
     # Static member.
     #
-    cvsVersion = "$Revision: 1.31 $"
+    cvsVersion = "$Revision: 1.32 $"
 
     ## Name
     # This is the namer of the class. It is used in flagging all the log entries
@@ -156,6 +156,36 @@ class SubmitFilter( SubmitBase ):
             if self._option.output == None :
                 self._logger.critical( "When working in merge mode, specify a basename for the output using -o" )
                 sys.exit( 5 )
+
+        # dut related stuff
+        if self._option.dut == None:
+            # no DUT analysis for this run
+            self._hasDUT = False
+        else:
+            self._hasDUT    = True
+            # remove the first "_", in case there is one
+            self._dutSuffix =  self._option.dut.lstrip( "_" )
+            if self._dutSuffix == "telescope":
+                self._logger.error( "Invalid DUT suffix. \"telescope\" cannot be used as DUT suffix")
+                sys.exit( 6 )
+            self._logger.info( "Doing simultaneous analysis of a %(dut)s DUT" % { "dut": self._dutSuffix } )
+
+        if self._option.dut_only and not self._hasDUT:
+            self._logger.error( "User asked for a DUT only submission without providing the DUT suffix.")
+            self._logger.error( "Please use --dut SUFFIX --dut-only" )
+            sys.exit( 7 )
+
+        self._isTelescopeOnly   = False
+        self._isTelescopeAndDUT = False
+        self._isDUTOnly         = False
+        if self._hasDUT and not self._option.dut_only:
+            self._isTelescopeAndDUT = True
+
+        if self._option.dut_only:
+            self._isDUTOnly = True
+
+        if not self._hasDUT:
+            self._isTelescopeOnly = True
 
     ## Execute method
     #
@@ -1140,6 +1170,50 @@ class SubmitFilter( SubmitBase ):
         # make all the changes
         actualSteeringString = templateSteeringString
 
+        # make all the DUT changes here:
+        if self._isTelescopeOnly:
+            # Un comment all the Telescope parts
+            actualSteeringString = actualSteeringString.replace( "@TELCommentLeft@", ""  )
+            actualSteeringString = actualSteeringString.replace( "@TELCommentRight@", "" )
+
+            # comment all the DUT parts
+            actualSteeringString  = actualSteeringString.replace( "@DUTCommentLeft@" , "!--" )
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentRight@", "--"  )
+            actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", "None" )
+
+            # don't need any filename suffix
+            actualSteeringString = actualSteeringString.replace( "@FilenameSuffix@", "" )
+            actualSteeringString = actualSteeringString.replace( "@FilenameHyphen@", "" )
+
+        if self._isTelescopeAndDUT:
+            # Un-comment all the Telescope parts
+            actualSteeringString = actualSteeringString.replace( "@TELCommentLeft@", ""  )
+            actualSteeringString = actualSteeringString.replace( "@TELCommentRight@", "" )
+
+            # Un-comment all the DUT parts
+            actualSteeringString  = actualSteeringString.replace( "@DUTCommentLeft@" , "" )
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentRight@", ""  )
+            actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", self._dutSuffix )
+
+            # don't need any filename suffix
+            actualSteeringString = actualSteeringString.replace( "@FilenameSuffix@", "" )
+            actualSteeringString = actualSteeringString.replace( "@FilenameHyphen@", "" )
+
+        if self._isDUTOnly:
+            # comment all the Telescope parts
+            actualSteeringString = actualSteeringString.replace( "@TELCommentLeft@", "!--"  )
+            actualSteeringString = actualSteeringString.replace( "@TELCommentRight@", "--" )
+
+            # Un-comment all the DUT parts
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentLeft@" , "" )
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentRight@", ""  )
+            actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", self._dutSuffix )
+
+            # need a filename suffix
+            actualSteeringString = actualSteeringString.replace( "@FilenameSuffix@", self._dutSuffix )
+            actualSteeringString = actualSteeringString.replace( "@FilenameHyphen@", "-" )
+
+
         # replace the file paths
         #
         # first the gear path
@@ -1284,6 +1358,49 @@ class SubmitFilter( SubmitBase ):
 
         # make all the changes
         actualSteeringString = templateSteeringString
+
+        # make all the DUT changes here:
+        if self._isTelescopeOnly:
+            # Un comment all the Telescope parts
+            actualSteeringString = actualSteeringString.replace( "@TELCommentLeft@", ""  )
+            actualSteeringString = actualSteeringString.replace( "@TELCommentRight@", "" )
+
+            # comment all the DUT parts
+            actualSteeringString  = actualSteeringString.replace( "@DUTCommentLeft@" , "!--" )
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentRight@", "--"  )
+            actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", "None" )
+
+            # don't need any filename suffix
+            actualSteeringString = actualSteeringString.replace( "@FilenameSuffix@", "" )
+            actualSteeringString = actualSteeringString.replace( "@FilenameHyphen@", "" )
+
+        if self._isTelescopeAndDUT:
+            # Un-comment all the Telescope parts
+            actualSteeringString = actualSteeringString.replace( "@TELCommentLeft@", ""  )
+            actualSteeringString = actualSteeringString.replace( "@TELCommentRight@", "" )
+
+            # Un-comment all the DUT parts
+            actualSteeringString  = actualSteeringString.replace( "@DUTCommentLeft@" , "" )
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentRight@", ""  )
+            actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", self._dutSuffix )
+
+            # don't need any filename suffix
+            actualSteeringString = actualSteeringString.replace( "@FilenameSuffix@", "" )
+            actualSteeringString = actualSteeringString.replace( "@FilenameHyphen@", "" )
+
+        if self._isDUTOnly:
+            # comment all the Telescope parts
+            actualSteeringString = actualSteeringString.replace( "@TELCommentLeft@", "!--"  )
+            actualSteeringString = actualSteeringString.replace( "@TELCommentRight@", "--" )
+
+            # Un-comment all the DUT parts
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentLeft@" , "" )
+            actualSteeringString = actualSteeringString.replace( "@DUTCommentRight@", ""  )
+            actualSteeringString = actualSteeringString.replace( "@DUTSuffix@", self._dutSuffix )
+
+            # need a filename suffix
+            actualSteeringString = actualSteeringString.replace( "@FilenameSuffix@", self._dutSuffix )
+            actualSteeringString = actualSteeringString.replace( "@FilenameHyphen@", "-" )
 
         # replace the file paths
         #
@@ -1455,9 +1572,17 @@ class SubmitFilter( SubmitBase ):
             outputFilePath = "results"
 
         if self._option.merge :
-            outputFileName = "%(output)s-filter-p%(pede)s.slcio"  % { "output": self._option.output, "pede": self._pedeString }
+            if self._isDUTOnly:
+                outputFileName = "%(output)s-filter-%(suffix)s-p%(pede)s.slcio"  % { "suffix": self._dutSuffix,
+                                                                                     "output": self._option.output, "pede": self._pedeString }
+            else:
+                outputFileName = "%(output)s-filter-p%(pede)s.slcio"  % { "output": self._option.output, "pede": self._pedeString }
         else :
-            outputFileName = "run%(run)s-filter-p%(pede)s.slcio" % { "run": runString, "pede": self._pedeString }
+            if self._isDUTOnly:
+                outputFileName = "run%(run)s-filter-%(suffix)s-p%(pede)s.slcio" % { "suffix": self._dutSuffix, "run": runString, "pede": self._pedeString }
+            else:
+                outputFileName = "run%(run)s-filter-p%(pede)s.slcio" % { "run": runString, "pede": self._pedeString }
+
         self._logger.log(15, "Checking for file %(file)s " % { "file":  os.path.join( outputFilePath , outputFileName) })
         if not os.access( os.path.join( outputFilePath , outputFileName) , os.R_OK ):
             raise MissingOutputFileError( outputFileName )
@@ -1476,9 +1601,15 @@ class SubmitFilter( SubmitBase ):
         except ConfigParser.NoOptionError :
             histoFilePath = "histo"
         if self._option.merge :
-            histoFileName = "%(output)s-filter-histo.root" % { "output": self._option.output }
+            if self._isDUTOnly:
+                histoFileName = "%(output)s-filter-%(suffix)s-histo.root" % { "suffix": self._dutSuffix, "output": self._option.output }
+            else:
+                histoFileName = "%(output)s-filter-histo.root" % { "output": self._option.output }
         else:
-            histoFileName = "run%(run)s-filter-histo.root" % { "run": runString }
+            if self._isDUTOnly:
+                histoFileName = "run%(run)s-filter-%(suffix)s-histo.root" % { "suffix": self._dutSuffix, "run": runString }
+            else:
+                histoFileName = "run%(run)s-filter-histo.root" % { "run": runString }
 
         if not os.access( os.path.join( histoFilePath , histoFileName ) , os.R_OK ):
             raise MissingHistogramFileError( histoFileName )
@@ -1672,7 +1803,7 @@ class SubmitFilter( SubmitBase ):
                 currentJIDFile.write( jid )
         jidFile.close()
         currentJIDFile.close()
-                                                                            
+
 
     ## Preliminary checks
     #
@@ -1767,89 +1898,51 @@ class SubmitFilter( SubmitBase ):
                 self._logger.critical( message )
                 raise StopExecutionError( message )
 
-
-        # check if the output file already exists
-        if self._option.merge:
-            outputFilename = "%(run)s-filter-p%(pede)s.slcio" % { "pede": self._pedeString, "run": self._option.output }
-        else:
-            outputFilename = "run%(run)s-filter-p%(pede)s.slcio" % { "pede": self._pedeString, "run": runString }
-
-        self._logger.log(15, "Check output file %(path)s/%(file)s" % {"path":  self._outputPathGRID, "file": outputFilename } )
-
         if fullCheck:
-            command = "lfc-ls %(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._outputPathGRID, "file": outputFilename }
-            lfc = popen2.Popen4( command )
-            while lfc.poll() == -1:
-                pass
-            if lfc.poll() == 0:
-                self._logger.warning( "Output file %(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._outputPathGRID, "file": outputFilename })
-                if self._configParser.get("General","Interactive" ):
-                    if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                        self._logger.info( "User decided to remove %(outputPathGRID)s/%(file)s from the GRID"
-                                           % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
-                        command = "lcg-del -a lfn:%(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._outputPathGRID, "file": outputFilename }
-                        os.system( command )
-                    else :
-                        raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
-                                                            % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
-                else :
-                    raise OutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
-                                                        % { "outputPathGRID": self._outputPathGRID, "file": outputFilename } )
+            # check if the output file already exists
+            listOfFilesTBC = []
+            if self._option.merge:
+                if self._isDUTOnly:
+                    outputFilename = "%(run)s-filter-%(suffix)s-p%(pede)s.slcio" % { "suffix": self._dutSuffix, "pede": self._pedeString, "run": self._option.output }
+                else:
+                    outputFilename = "%(run)s-filter-p%(pede)s.slcio" % { "pede": self._pedeString, "run": self._option.output }
+            else:
+                if self._isDUTOnly:
+                    outputFilename = "run%(run)s-filter-%(suffix)s-p%(pede)s.slcio" % { "suffix": self._dutSuffix, "pede": self._pedeString, "run": runString }
+                else:
+                    outputFilename = "run%(run)s-filter-p%(pede)s.slcio" % { "pede": self._pedeString, "run": runString }
+
+            listOfFilesTBC.append( os.path.join( self._outputPathGRID, outputFilename ) )
 
             # check if the job output file already exists
             if self._option.merge:
-                outputFilename =  "%(name)s-%(run)s.tar.gz" % { "name": self.name, "run": self._option.output }
+                if self._isDUTOnly:
+                    outputFilename =  "%(name)s-%(run)s-%(suffix)s.tar.gz" % { "suffix": self._dutSuffix, "name": self.name, "run": self._option.output }
+                else:
+                    outputFilename =  "%(name)s-%(run)s.tar.gz" % { "name": self.name, "run": self._option.output }
             else:
-                outputFilename =  "%(name)s-%(run)s.tar.gz" % { "name": self.name, "run": runString }
-
-            self._logger.log(15, "Check joboutput file %(path)s/%(file)s" % {"path":  self._joboutputPathGRID, "file": outputFilename } )
-            command = "lfc-ls %(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._joboutputPathGRID, "file": outputFilename }
-            lfc = popen2.Popen4( command )
-            while lfc.poll() == -1:
-                pass
-            if lfc.poll() == 0:
-                self._logger.warning( "Joboutput file %(outputPathGRID)s/%(file)s already exists"
-                                      % {"outputPathGRID": self._joboutputPathGRID, "file": outputFilename } )
-                if self._configParser.get("General","Interactive" ):
-                    if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                        self._logger.info( "User decided to remove %(outputPathGRID)s/%(file)s from the GRID"
-                                           % { "outputPathGRID": self._joboutputPathGRID, "file": outputFilename } )
-                        command = "lcg-del -a lfn:%(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._joboutputPathGRID, "file": outputFilename }
-                        os.system( command )
-                    else :
-                        raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
-                                                               % { "outputPathGRID": self._joboutputPathGRID, "file": outputFilename } )
-                else :
-                    raise JoboutputFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
-                                                           % {"outputPathGRID": self._joboutputPathGRID,"file": outputFilename} )
-
+                if self._isDUTOnly:
+                    outputFilename =  "%(name)s-%(run)s-%(suffix)s.tar.gz" % { "suffix": self._dutSuffix,  "name": self.name, "run": runString }
+                else:
+                    outputFilename =  "%(name)s-%(run)s.tar.gz" % { "name": self.name, "run": runString }
+            listOfFilesTBC.append( os.path.join( self._joboutputPathGRID , outputFilename ))
 
             # check if the histogram file already exists
             if self._option.merge:
-                outputFilename =  "%(run)s-filter-histo.root" % { "run": self._option.output }
+                if self._isDUTOnly:
+                    outputFilename =  "%(run)s-filter-%(suffix)s-histo.root" % { "suffix": self._dutSuffix, "run": self._option.output }
+                else:
+                    outputFilename =  "%(run)s-filter-histo.root" % { "run": self._option.output }
             else:
-                outputFilename =  "run%(run)s-filter-histo.root" % { "run": runString }
+                if self._isDUTOnly:
+                    outputFilename =  "run%(run)s-filter-%(suffix)s-histo.root" % { "suffix": self._dutSuffix,  "run": runString }
+                else:
+                    outputFilename =  "run%(run)s-filter-histo.root" % { "run": runString }
 
-            self._logger.log(15, "Check histogram file %(path)s/%(file)s" % {"path":  self._histogramPathGRID, "file": outputFilename } )
-            command = "lfc-ls %(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename }
-            lfc = popen2.Popen4( command )
-            while lfc.poll() == -1:
-                pass
-            if lfc.poll() == 0:
-                self._logger.warning( "Histogram file %(outputPathGRID)s/%(file)s already exists"
-                                      % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename } )
-                if self._configParser.get("General","Interactive" ):
-                    if self.askYesNo( "Would you like to remove it?  [y/n] " ):
-                        self._logger.info( "User decided to remove %(outputPathGRID)s/%(file)s from the GRID"
-                                           % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename } )
-                        command = "lcg-del -a lfn:%(outputPathGRID)s/%(file)s" % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename }
-                        os.system( command )
-                    else :
-                        raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
-                                                               % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename } )
-                else :
-                    raise HistogramFileAlreadyOnGRIDError( "%(outputPathGRID)s/%(file)s on the GRID"
-                                                           % { "outputPathGRID": self._histogramPathGRID, "file": outputFilename } )
+            listOfFilesTBC.append( os.path.join( self._histogramPathGRID , outputFilename ))
+
+            for file in listOfFilesTBC:
+                self.checkGRIDFile( file )
 
 
     ## Execute all GRID
@@ -1896,6 +1989,25 @@ class SubmitFilter( SubmitBase ):
 
         runTemplateString = open( runTemplate, "r" ).read()
         runActualString = runTemplateString
+
+        # start from DUT related things
+        if self._isTelescopeOnly:
+            runActualString = runActualString.replace( "@DUTSuffix@", "" )
+            runActualString = runActualString.replace( "@IsTelescopeOnly@","yes" )
+            runActualString = runActualString.replace( "@IsTelescopeAndDUT@","no" )
+            runActualString = runActualString.replace( "@IsDUTOnly@","no" )
+
+        if self._isTelescopeAndDUT:
+            runActualString = runActualString.replace( "@DUTSuffix@", self._dutSuffix )
+            runActualString = runActualString.replace( "@IsTelescopeOnly@","no" )
+            runActualString = runActualString.replace( "@IsTelescopeAndDUT@","yes" )
+            runActualString = runActualString.replace( "@IsDUTOnly@","no" )
+
+        if self._isDUTOnly:
+            runActualString = runActualString.replace( "@DUTSuffix@", self._dutSuffix )
+            runActualString = runActualString.replace( "@IsTelescopeOnly@","no" )
+            runActualString = runActualString.replace( "@IsTelescopeAndDUT@","no" )
+            runActualString = runActualString.replace( "@IsDUTOnly@","yes" )
 
         # replace the runString
         runActualString = runActualString.replace( "@RunString@", runString )

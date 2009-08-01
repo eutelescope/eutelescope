@@ -13,7 +13,7 @@ from optparse import OptionGroup
 # the SubmitFilter and create an instance of this object.
 #
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: submit-filter.py,v 1.1 2009-05-15 14:42:20 bulgheroni Exp $
+# @version $Id: submit-filter.py,v 1.2 2009-08-01 10:44:30 bulgheroni Exp $
 
 def main() :
 
@@ -22,7 +22,7 @@ def main() :
 
 usage: %prog [execution-options] [io-options] [configuration-options] -p pede-run run-list
 """
-    cvsVersion = "$Revision: 1.1 $"
+    cvsVersion = "$Revision: 1.2 $"
     submitFilterCVSVersion = SubmitFilter.cvsVersion
     submitBaseCVSVersion = SubmitBase.cvsVersion
     version = "%prog version" + cvsVersion[10:len(cvsVersion)-1] + \
@@ -138,6 +138,26 @@ from the GRID SE, but the job will be executed on the local CPU
                        "a list of numbers. The output files will be named in this way: lcio ==> BASENAME-filter-pPEDE.slcio, " +
                        "histo ==> BASENAME-filter-histo.root, steeringfile ==> filter-BASENAME.xml, logfile --> filter-BASENAME.log " +
                        "tarball ==> filter-BASENAME.tar.gz" )
+
+    dutGroup = OptionGroup( parser, "DUT related options",
+                            "Use these options to specify whether a DUT data sample should be simultaneously analyzed. "
+                            "For pedestal production the strategy is to generate two steering files (one for the telescope)"
+                            " and one for the DUT, run Marlin twice and finally merge the two DB files and the corresponding "
+                            "histograms." )
+
+
+    dutGroup.add_option( "-d", "--dut",
+                         action="store",
+                         dest="dut",
+                         help="Activate the simultaneous analysis of a DUT. Provide here the suffix of the I/O collection")
+
+    dutGroup.add_option( "--dut-only",
+                         action="store_true",
+                         dest="dut_only",
+                         help="Activate this to make DUT only submission.")
+
+    parser.set_defaults(dut_only=False)
+
 
     parser.set_defaults(force_keep_input=False)
     parser.set_defaults(force_keep_output=False)

@@ -2,7 +2,7 @@
 # A template of filtering job
 #
 # @author Antonio Bulgheroni <mailto:antonio.bulgheroni@gmail.com>
-# @version $Id: runjob-filter-tmp.sh,v 1.7 2009-07-28 00:13:59 bulgheroni Exp $
+# @version $Id: runjob-filter-tmp.sh,v 1.8 2009-08-01 10:44:30 bulgheroni Exp $
 #
 # errno  0: No error.
 # errno  1: Unable to get the GRID library tarball from the SE
@@ -95,6 +95,15 @@ Merge="@Merge@"
 # Base name (actually used only when merging...)
 Base="@Base@"
 
+# Depending on the presence or not of the DUT, set the following
+# variables
+IsTelescopeOnly="@IsTelescopeOnly@"
+IsTelescopeAndDUT="@IsTelescopeAndDUT@"
+IsDUTOnly="@IsDUTOnly@"
+
+# DUTSuffix
+DUTSuffix="@DUTSuffix@"
+
 # Define here all the variables modified by the submitter
 GRIDCE="@GRIDCE@"
 GRIDSE="@GRIDSE@"
@@ -125,23 +134,47 @@ InputPedeLocal=$PWD/db/run$PedeString-ped-db.slcio
 # moreover the naming convention is rather different from the standard one when merging. 
 
 if [ $Merge == "no" ] ; then
-    OutputLcioLFN=$GRIDFolderFilterResults/run$RunString-filter-p$PedeString.slcio
-    OutputJoboutputLFN=$GRIDFolderFilterJoboutput/$Name-$RunString.tar.gz
-    OutputHistoLFN=$GRIDFolderFilterHisto/run$RunString-filter-histo.root
+
+    if [ $IsDUTOnly == "yes" ] ; then
+        OutputLcioLFN=$GRIDFolderFilterResults/run$RunString-filter-$DUTSuffix-p$PedeString.slcio
+        OutputJoboutputLFN=$GRIDFolderFilterJoboutput/$Name-$RunString-$DUTSuffix.tar.gz
+        OutputHistoLFN=$GRIDFolderFilterHisto/run$RunString-filter-$DUTSuffix-histo.root
 #
-    OutputLcioLocal=$PWD/results/run$RunString-filter-p$PedeString.slcio
-    OutputJoboutputLocal=$PWD/log/$Name-$RunString.tar.gz
-    OutputHistoLocal=$PWD/histo/run$RunString-filter-histo.root
+        OutputLcioLocal=$PWD/results/run$RunString-filter-$DUTSuffix-p$PedeString.slcio
+        OutputJoboutputLocal=$PWD/log/$Name-$RunString-$DUTSuffix.tar.gz
+        OutputHistoLocal=$PWD/histo/run$RunString-filter-$DUTSuffix-histo.root
+    else
+        OutputLcioLFN=$GRIDFolderFilterResults/run$RunString-filter-p$PedeString.slcio
+        OutputJoboutputLFN=$GRIDFolderFilterJoboutput/$Name-$RunString.tar.gz
+        OutputHistoLFN=$GRIDFolderFilterHisto/run$RunString-filter-histo.root
+#
+        OutputLcioLocal=$PWD/results/run$RunString-filter-p$PedeString.slcio
+        OutputJoboutputLocal=$PWD/log/$Name-$RunString.tar.gz
+        OutputHistoLocal=$PWD/histo/run$RunString-filter-histo.root
+    fi
+
     SteeringFile=$Name-$RunString.xml
     LogFile=$Name-$RunString.log
 else
-    OutputLcioLFN=$GRIDFolderFilterResults/$Base-filter-p$PedeString.slcio
-    OutputJoboutputLFN=$GRIDFolderFilterJoboutput/$Name-$Base.tar.gz
-    OutputHistoLFN=$GRIDFolderFilterHisto/$Base-filter-histo.root
+
+    if [ $IsDUTOnly == "yes" ] ; then
+        OutputLcioLFN=$GRIDFolderFilterResults/$Base-filter-$DUTSuffix-p$PedeString.slcio
+        OutputJoboutputLFN=$GRIDFolderFilterJoboutput/$Name-$Base-$DUTSuffix.tar.gz
+        OutputHistoLFN=$GRIDFolderFilterHisto/$Base-filter-$DUTSuffix-histo.root
 #
-    OutputLcioLocal=$PWD/results/$Base-filter-p$PedeString.slcio
-    OutputJoboutputLocal=$PWD/log/$Name-$Base.tar.gz
-    OutputHistoLocal=$PWD/histo/$Base-filter-histo.root
+        OutputLcioLocal=$PWD/results/$Base-filter-$DUTSuffix-p$PedeString.slcio
+        OutputJoboutputLocal=$PWD/log/$Name-$Base-$DUTSuffix.tar.gz
+        OutputHistoLocal=$PWD/histo/$Base-filter-$DUTSuffix-histo.root
+    else
+        OutputLcioLFN=$GRIDFolderFilterResults/$Base-filter-p$PedeString.slcio
+        OutputJoboutputLFN=$GRIDFolderFilterJoboutput/$Name-$Base.tar.gz
+        OutputHistoLFN=$GRIDFolderFilterHisto/$Base-filter-histo.root
+#
+        OutputLcioLocal=$PWD/results/$Base-filter-p$PedeString.slcio
+        OutputJoboutputLocal=$PWD/log/$Name-$Base.tar.gz
+        OutputHistoLocal=$PWD/histo/$Base-filter-histo.root
+    fi
+
     SteeringFile=$Name-$Base.xml
     LogFile=$Name-$Base.log
 fi
