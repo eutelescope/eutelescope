@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
 // Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-// Version $Id: EUTelCorrelator.cc,v 1.16 2009-07-29 09:36:49 gelin Exp $
+// Version $Id: EUTelCorrelator.cc,v 1.16 2009/07/29 09:36:49 gelin Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -23,6 +23,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelDFFClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelExceptions.h"
 
@@ -266,11 +267,14 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
         ClusterType type = static_cast<ClusterType>
           (static_cast<int>((pulseCellDecoder(externalPulse)["type"])));
         // we check that the type of cluster is ok
-
-        if ( type == kEUTelFFClusterImpl ) {
+        
+        if ( type == kEUTelDFFClusterImpl ) {
+          externalCluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*>
+                                                    ( externalPulse->getTrackerData()) );
+        } else if ( type == kEUTelFFClusterImpl ) {
           externalCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*>
                                                     ( externalPulse->getTrackerData()) );
-
+            
         } else if ( type == kEUTelSparseClusterImpl ) {
 
           // ok the cluster is of sparse type, but we also need to know
@@ -317,8 +321,11 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             (static_cast<int>((pulseCellDecoder(internalPulse)["type"])));
 
           // we check that the type of cluster is ok
+          if ( type == kEUTelDFFClusterImpl ) {
+            internalCluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*>
+                                                       (internalPulse->getTrackerData()) );
 
-          if ( type == kEUTelFFClusterImpl ) {
+          } else if ( type == kEUTelFFClusterImpl ) {
             internalCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*>
                                                       (internalPulse->getTrackerData()) );
 
