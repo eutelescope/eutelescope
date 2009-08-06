@@ -186,6 +186,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
   clusterNExample.push_back(14);
   clusterNExample.push_back(19);
   clusterNExample.push_back(25);
+
   registerOptionalParameter("ClusterN", "The list of cluster N to be filled."
                             "For example 7 means filling the cluster spectra with the 7 most significant pixels",
                             _clusterSpectraNVector, clusterNExample );
@@ -194,7 +195,9 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
   registerProcessorParameter("HistogramFilling","Switch on or off the histogram filling",
                              _fillHistos, static_cast< bool > ( true ) );
 
-
+  registerOptionalParameter("ExcludedPlanes", "The list of sensor ids that have to be excluded from the clustering.",
+                        
+                            _ExcludePlanes, std::vector<int> () );
   _isFirstEvent = true;
 }
 
@@ -395,7 +398,6 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
     bookHistos();
   }
 #endif
-
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
   if ( evt->getEventType() == kEORE ) {
     streamlog_out ( DEBUG4 ) <<  "EORE found: nothing else to do." <<  endl;
@@ -404,14 +406,13 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber()
                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
-
+  
   // prepare a pulse collection to add all clusters found
   // this can be either a new collection or already existing in the
   // event
   LCCollectionVec * pulseCollection;
   bool pulseCollectionExists = false;
   _initialPulseCollectionSize = 0;
-
   try {
     pulseCollection = dynamic_cast< LCCollectionVec * > ( evt->getCollection( _pulseCollectionName ) );
     pulseCollectionExists = true;
@@ -419,7 +420,6 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
   } catch ( lcio::DataNotAvailableException& e ) {
     pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
   }
-
   // first look for cluster in RAW mode frames
   if ( hasNZSData ) {
     // put here all the possible algorithm applicable to NZS data
@@ -433,81 +433,100 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
     else if ( _zsClusteringAlgo == EUTELESCOPE::FIXEDFRAME )     zsFixedFrameClustering(evt, pulseCollection);
     else if ( _zsClusteringAlgo == EUTELESCOPE::DFIXEDFRAME )    digitalFixedFrameClustering(evt, pulseCollection);
   }
-
   // if the pulseCollection is not empty add it to the event
   if ( ! pulseCollectionExists && ( pulseCollection->size() != _initialPulseCollectionSize )) {
     evt->addCollection( pulseCollection, _pulseCollectionName );
   }
-
   if ( pulseCollection->size() != _initialPulseCollectionSize ) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     if ( _fillHistos ) fillHistos(event);
 #endif
   }
-
   if ( ! pulseCollectionExists && ( pulseCollection->size() == _initialPulseCollectionSize ) ) {
     delete pulseCollection;
   }
-
-
+  
   _isFirstEvent = false;
 
 }
 void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
   streamlog_out ( DEBUG4 ) << "Looking for clusters in the zs data with digital FixedFrame algorithm " << endl;
-
   // get the collections of interest from the event.
   LCCollectionVec * zsInputCollectionVec  = dynamic_cast < LCCollectionVec * > (evt->getCollection( _zsDataCollectionName ));
   LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
   // prepare some decoders
   CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputCollectionVec );
   CellIDDecoder<TrackerDataImpl> statusDecoder( statusCollectionVec );
-
+ 
   // this is the equivalent of the dummyCollection in the fixed frame
   // clustering. BTW we should consider changing that "meaningful"
   // name! This contains cluster and not yet pulses
-  auto_ptr<LCCollectionVec > sparseClusterCollectionVec ( new  LCCollectionVec(LCIO::TRACKERDATA) );
-  CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec.get()  );
+  bool isDummyAlreadyExisting = false;
+  LCCollectionVec * sparseClusterCollectionVec = NULL;
+  try {
+    sparseClusterCollectionVec = dynamic_cast< LCCollectionVec* > ( evt->getCollection( "original_zsdata") );
+    isDummyAlreadyExisting = true ;
+  } catch (lcio::DataNotAvailableException& e) {
+    sparseClusterCollectionVec =  new LCCollectionVec(LCIO::TRACKERDATA);
+    isDummyAlreadyExisting = false;
+  }
+  size_t dummyCollectionInitialSize = sparseClusterCollectionVec->size();
 
+
+
+  //auto_ptr<LCCollectionVec > sparseClusterCollectionVec ( new  LCCollectionVec(LCIO::TRACKERDATA) );
+  CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec  );
   // prepare an encoder also for the pulse collection
   CellIDEncoder<TrackerPulseImpl> idZSPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
-
   // utility
   short limitExceed    = 0;
 
   if ( isFirstEvent() ) {
 
     // For the time being nothing to do specifically in the first
-    // event.
+    // event. 
+   
 
   }
   dim2array<bool> pixelmatrix(_ffXClusterSize, _ffYClusterSize, false);
- 
   for ( unsigned int i = 0 ; i < zsInputCollectionVec->size(); i++ ) {
     // get the TrackerData and guess which kind of sparsified data it
     // contains.
     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
     int _sensorID              = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
+    int sensorID   =_sensorID;
+    
+    //if this is an excluded sensor go to the next element
+    bool foundexcludedsensor = false;
+    for(size_t j = 0; j < _ExcludedPlanes.size(); ++j)
+      {
+        if(_ExcludedPlanes[j] == _sensorID)
+          {
+            foundexcludedsensor = true; 
+          }
+      }
+    if(foundexcludedsensor)
+      continue;
 
     // reset the cluster counter for the clusterID
     int clusterID = 0;
 
     // get the noise and the status matrix with the right detectorID
-    TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt(_sensorID));
-    TrackerDataImpl * status2 = dynamic_cast<TrackerDataImpl*>(statusCollectionVec->getElementAt(_sensorID));
-
+    TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ]));
+    TrackerDataImpl * status2 = dynamic_cast<TrackerDataImpl*>(statusCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ]));
+    
     // reset the status
     resetStatus(status);
-  
-    int sensorID                 = cellDecoder( zsData ) ["sensorID"];
-
+    
+    //    int sensorID                 = cellDecoder( zsData ) ["sensorID"];
+    
  // now that we know which is the sensorID, we can ask to GEAR
     // which are the minX, minY, maxX and maxY.
     int _minX, _minY, _maxX, _maxY;
     _minX = 0;
     _minY = 0;
-
+    
     // this sensorID can be either a reference plane or a DUT, do it
     // differently...
     if ( _layerIndexMap.find( sensorID ) != _layerIndexMap.end() ){
@@ -662,7 +681,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                         if(index_x >= 0 && index_x < sensormatrix.sizeX()
                            && index_y >= 0 && index_y < sensormatrix.sizeY()
                            )
-                          //if this pixel was not used until now, use
+                          //if this pixel was not used before, use
                           //it ...
                           if(
                              sensormatrix.at(index_x,index_y)
@@ -698,7 +717,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                       {
                         //remove pixels, that were assigned to this
                         //cluster from the dummy sensor map. this
-                        //pixel will then not be used in other clusters
+                        //pixel will then not be used then in other clusters
                         sensormatrix.set(pix[j].x,pix[j].y,false);
                         
                         //dont forget to apply the offset correction!
@@ -742,7 +761,11 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                         //set the hits. all other pixels are by
                         //default false. the seed pixel is in the
                         //center of this matrix.
-                        pixelmatrix.set( pix[j].x + xoffset - seedX + (int)(_ffXClusterSize / 2), pix[j].y + yoffset - seedY + (int)(_ffYClusterSize / 2),true);
+                        pixelmatrix.set(
+                                        pix[j].x + xoffset - seedX + (int)(_ffXClusterSize / 2),
+                                        pix[j].y + yoffset - seedY + (int)(_ffYClusterSize / 2),
+                                        true
+                                        );
                       }
                     //loop over the cluster pixels and fill them into
                     //the 1d array. The ordering of the two loops is
@@ -758,31 +781,31 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                           }
                       }
 
-                    //some debug output to check the CoG shift and the
-                    //encoding of pixelmatrix, clusterCandidateCharges
-                    //                  cout << endl;
-                    //                     cout << "x=vertical, y=horizontal" << endl;
-                    //                     for(unsigned int j = 0; j < pixelmatrix.size(); ++j)
-                    //                       {
-                    //                         cout << "  " << j ;
-                    //                       }
-                    //                     cout << endl;
-                    //                     for(unsigned int j = 0; j < pixelmatrix.size(); ++j)
-                    //                       {
-                    //                         cout << "----";
-                    //                       }
-                    //                     cout << endl;
-                    //                      for(int xPixel = 0; xPixel < _ffXClusterSize; xPixel++)
-                    //                       {
-                    //                         for(int yPixel = 0; yPixel < _ffYClusterSize; yPixel++)
-                    //                           {
-                    //                             if(pixelmatrix[xPixel][yPixel])
-                    //                               cout << "  1";
-                    //                             else
-                    //                               cout << "  0";
-                    //                           }
-                    //                         cout << " | " << xPixel << endl;
-                    //                       }
+ //                    //some debug output to check the CoG shift and the
+//                     //encoding of pixelmatrix, clusterCandidateCharges
+//                      cout << endl;
+//                      cout << "x=vertical, y=horizontal" << endl;
+//                      for(unsigned int j = 0; j < pixelmatrix.sizeX(); ++j)
+//                        {
+//                          cout << "  " << j ;
+//                        }
+//                      cout << endl;
+//                      for(unsigned int j = 0; j < pixelmatrix.sizeY(); ++j)
+//                        {
+//                          cout << "----";
+//                        }
+//                      cout << endl;
+//                      for(int xPixel = 0; xPixel < _ffXClusterSize; xPixel++)
+//                        {
+//                          for(int yPixel = 0; yPixel < _ffYClusterSize; yPixel++)
+//                            {
+//                              if(pixelmatrix.at(xPixel,yPixel))
+//                                cout << "  1";
+//                              else
+//                                cout << "  0";
+//                            }
+//                          cout << " | " << xPixel << endl;
+//                        }
                     
 
                     //check whether this cluster is partly outside
@@ -811,7 +834,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                     idPulseEncoder.setCellID(pulse);
                     
                     TrackerDataImpl * cluster = new TrackerDataImpl;
-                    CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec.get());
+                    CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec);
                     idClusterEncoder["sensorID"]      = _sensorID;
                     idClusterEncoder["clusterID"]     = clusterID;
                     idClusterEncoder["xSeed"]         = seedX;
@@ -834,10 +857,10 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                     
                     EUTelDFFClusterImpl * eutelCluster = new EUTelDFFClusterImpl( cluster );
                     pulse->setCharge(eutelCluster->getTotalCharge());
-                    //  float cogx =0.0;
-                    //                     float cogy = 0.0;
-                    //                     eutelCluster->getCenterOfGravityShift(cogx, cogy);
-                    //                     cout << "CoG shift = " << cogx << " " << cogy << endl;
+//                     float cogx =0.0;
+//                     float cogy = 0.0;
+//                     eutelCluster->getCenterOfGravityShift(cogx, cogy);
+//                     cout << "CoG shift = " << cogx << " " << cogy << endl;
                     delete eutelCluster;
 
                     pulse->setQuality(static_cast<int>(cluQuality));
@@ -861,8 +884,18 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
   }
   // if the sparseClusterCollectionVec isn't empty add it to the
   // current event. The pulse collection will be added afterwards
-  if ( sparseClusterCollectionVec->size() != 0 ) {
-    evt->addCollection( sparseClusterCollectionVec.release(), "original_zsdata" );
+ //  if ( sparseClusterCollectionVec->size() != 0 ) {
+//     evt->addCollection( sparseClusterCollectionVec.release(), "original_zsdata" );
+//   }
+
+  // if the sparseClusterCollectionVec isn't empty add it to the
+  // current event. The pulse collection will be added afterwards
+  if ( ! isDummyAlreadyExisting ) {
+    if ( sparseClusterCollectionVec->size() != dummyCollectionInitialSize ) {
+      evt->addCollection( sparseClusterCollectionVec, "original_zsdata" );
+    } else {
+      delete sparseClusterCollectionVec;
+    }
   }
 
 }
@@ -917,7 +950,17 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
 
     int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
-
+    //if this is an excluded sensor go to the next element
+    bool foundexcludedsensor = false;
+    for(size_t i = 0; i < _ExcludedPlanes.size(); ++i)
+      {
+        if(_ExcludedPlanes[i] == sensorID)
+          {
+            foundexcludedsensor = true; 
+          }
+      }
+    if(foundexcludedsensor)
+      continue;
     // now that we know which is the sensorID, we can ask to GEAR
     // which are the minX, minY, maxX and maxY.
     int minX, minY, maxX, maxY;
@@ -1183,7 +1226,17 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
     int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
-
+ //if this is an excluded sensor go to the next element
+    bool foundexcludedsensor = false;
+    for(size_t i = 0; i < _ExcludedPlanes.size(); ++i)
+      {
+        if(_ExcludedPlanes[i] == sensorID)
+          {
+            foundexcludedsensor = true; 
+          }
+      }
+    if(foundexcludedsensor)
+      continue;
     // reset the cluster counter for the clusterID
     int clusterID = 0;
 
@@ -1375,7 +1428,17 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
     int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
-
+ //if this is an excluded sensor go to the next element
+    bool foundexcludedsensor = false;
+    for(size_t i = 0; i < _ExcludedPlanes.size(); ++i)
+      {
+        if(_ExcludedPlanes[i] == sensorID)
+          {
+            foundexcludedsensor = true; 
+          }
+      }
+    if(foundexcludedsensor)
+      continue;
     // reset the cluster counter for the clusterID
     int clusterID = 0;
 
@@ -1536,7 +1599,17 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     for ( unsigned int i = 0 ; i < nzsInputCollectionVec->size(); i++ ) {
       TrackerDataImpl    * nzsData = dynamic_cast<TrackerDataImpl* > ( nzsInputCollectionVec->getElementAt( i ) );
       int detectorID     = cellDecoder( nzsData ) ["sensorID"];
-
+ //if this is an excluded sensor go to the next element
+    bool foundexcludedsensor = false;
+    for(size_t i = 0; i < _ExcludedPlanes.size(); ++i)
+      {
+        if(_ExcludedPlanes[i] == detectorID)
+          {
+            foundexcludedsensor = true; 
+          }
+      }
+    if(foundexcludedsensor)
+      continue;
       TrackerDataImpl    * noise   = dynamic_cast<TrackerDataImpl* >    ( noiseCollectionVec->getElementAt( _ancillaryIndexMap[ detectorID ] ) );
       TrackerRawDataImpl * status  = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt( _ancillaryIndexMap[ detectorID ] ) );
 
@@ -1572,7 +1645,17 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     // get the calibrated data
     TrackerDataImpl    * nzsData = dynamic_cast<TrackerDataImpl*>  (nzsInputCollectionVec->getElementAt( i ) );
     int sensorID                 = cellDecoder( nzsData ) ["sensorID"];
-
+ //if this is an excluded sensor go to the next element
+    bool foundexcludedsensor = false;
+    for(size_t i = 0; i < _ExcludedPlanes.size(); ++i)
+      {
+        if(_ExcludedPlanes[i] == sensorID)
+          {
+            foundexcludedsensor = true; 
+          }
+      }
+    if(foundexcludedsensor)
+      continue;
     // now that we know which is the sensorID, we can ask to GEAR
     // which are the minX, minY, maxX and maxY.
     int minX, minY, maxX, maxY;
@@ -1820,7 +1903,6 @@ void EUTelClusteringProcessor::end() {
 #ifdef MARLINDEBUG
   /// /* DEBUG */  logfile.close();
 #endif
-
 }
 
 
@@ -1896,7 +1978,17 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
       }
 
       int detectorID = cluster->getDetectorID();
-
+      //if this is an excluded sensor go to the next element
+      bool foundexcludedsensor = false;
+      for(size_t i = 0; i < _ExcludedPlanes.size(); ++i)
+        {
+          if(_ExcludedPlanes[i] == detectorID)
+            {
+              foundexcludedsensor = true; 
+            }
+        }
+    if(foundexcludedsensor)
+      continue;
       // increment of one unit the event counter for this plane
       eventCounterVec[ _ancillaryIndexMap[ detectorID] ]++;
 
@@ -2318,7 +2410,7 @@ void EUTelClusteringProcessor::bookHistos() {
     eventMultiHisto->setTitle( eventMultiTitle.c_str() );
 
   }
-
+  streamlog_out ( MESSAGE0 )  << "end of Booking histograms " << endl;
 }
 #endif
 #endif // USE_GEAR

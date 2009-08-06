@@ -157,24 +157,24 @@ namespace eutelescope {
     class dim2array
     {
     public:
-      dim2array() : size_x(0), size_y(0)
+      dim2array() : array(0), size_x(0), size_y(0)
       {
         createarray();
       }
-      dim2array(int x, int y) : size_x(x), size_y(y)
+      dim2array(int x, int y) : array(0), size_x(x), size_y(y)
       {
         createarray();
       }
-      dim2array(const unsigned int x, const unsigned int y, T value) : size_x(x), size_y(y)
+      dim2array(const unsigned int x, const unsigned int y, T value) : array(0), size_x(x), size_y(y)
       {
         createarray();
         for(unsigned int i =0; i < (size_x * size_y); ++i)
           array[i] = value;
       }
-      dim2array(const dim2array &a)
+      dim2array(const dim2array &a) : array(0), size_x(a.size_x), size_y(a.size_y)
       {
-        size_x = a.size_x;
-        size_y = a.size_y;
+        //size_x = a.size_x;
+        //size_y = a.size_y;
         createarray();
         for(unsigned int i =0; i < size_x*size_y; ++i)
           array[i] = a.array[i];
@@ -191,10 +191,14 @@ namespace eutelescope {
       }
       T at(const int i, const int j) const
       {
-        int index = i * size_x + j;
+        int index = j * size_x + i;
+       //  if (index < 0 || index >= (size_x * size_y)) {
+//           std::cout << "debug i x " << i << " " << j << std::endl;
+//           abort();
+//         }
         return array[index];
       }
-      void pad(T *v)
+      void pad(T v)
       {
         for(unsigned int i =0; i < size_x*size_y; ++i)
           array[i] = v;
@@ -209,7 +213,7 @@ namespace eutelescope {
       }
       void set(const unsigned int i, const unsigned int j, T value)
       {
-        int index = i * size_x + j;
+        int index = j * size_x + i;
         array[index] = value;
       }
   
@@ -693,6 +697,11 @@ namespace eutelescope {
      */
     std::string _histoInfoFileName;
 
+    //! The excluded planes list
+    /*! This is a list of sensor ids for planes that have to be
+     *   excluded from the clustering.
+     */
+    std::vector<int> _ExcludePlanes;
 
   private:
 
@@ -714,7 +723,12 @@ namespace eutelescope {
      *  the run header
      */
     int _noOfDetector;
-
+    
+    //! List of excluded planes.
+    /*! This vector contains a list of sensor ids for planes that have
+     *   to be excluded from the clustering.
+     */
+    std::vector<int > _ExcludedPlanes;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! List of cluster spectra N
