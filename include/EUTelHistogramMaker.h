@@ -84,7 +84,7 @@ namespace eutelescope {
    *  None
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHistogramMaker.h,v 1.8 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id: EUTelHistogramMaker.h,v 1.8 2009/07/15 17:21:28 bulgheroni Exp $
    *
    */
 
@@ -184,7 +184,7 @@ namespace eutelescope {
      *  compulsory. If it is found in the event, then also the "noise"
      *  related histograms are filled, otherwise those are skipped.
      */
-    std::string _noiseCollectionName;
+    std::vector<std::string> _noiseCollectionName;
 
     //! Status collection name.
     /*! This is the name of the TrackerRawData collection containing
@@ -193,7 +193,7 @@ namespace eutelescope {
      *  this processor. Having the status collection will allow the
      *  filling the of noise related histograms.
      */
-    std::string _statusCollectionName;
+    std::vector<std::string> _statusCollectionName;
 
     //! The histogram information file
     /*! This string contain the name of the histogram information
@@ -320,6 +320,13 @@ namespace eutelescope {
     /*! This is the full cluster noise histogram name
      */
     static std::string _clusterNoiseHistoName;
+
+
+    //! Number of hit pixel
+    /*! This is a histogram showing the number of hit pixel inside
+     *  a digital fixed frame cluster
+     */
+    static std::string _clusterNumberOfHitPixelName;
 #endif
 
     //! Event counter

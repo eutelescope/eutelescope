@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelHistogramMaker.cc,v 1.22 2009-07-29 11:05:02 bulgheroni Exp $
+// Version $Id: EUTelHistogramMaker.cc,v 1.22 2009/07/29 11:05:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -15,6 +15,7 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelDFFClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelSimpleSparsePixel.h"
 #include "EUTELESCOPE.h"
@@ -65,6 +66,7 @@ std::string EUTelHistogramMaker::_seedSNRHistoName            = "seedSNR";
 std::string EUTelHistogramMaker::_clusterNoiseHistoName       = "clusterNoise";
 std::string EUTelHistogramMaker::_clusterSNRHistoName         = "clusterSNR";
 std::string EUTelHistogramMaker::_eventMultiplicityHistoName  = "eventMultiplicity";
+std::string EUTelHistogramMaker::_clusterNumberOfHitPixelName  = "numberofhitpixel";
 #endif
 
 EUTelHistogramMaker::EUTelHistogramMaker () : Processor("EUTelHistogramMaker") {
@@ -79,11 +81,16 @@ EUTelHistogramMaker::EUTelHistogramMaker () : Processor("EUTelHistogramMaker") {
                            _pulseCollectionName, string("pulse"));
 
   // since v00-00-09 the noise and status collections are compulsory.
-  registerInputCollection(LCIO::TRACKERDATA, "NoiseCollectionName", "The name of the noise collection",
-                          _noiseCollectionName, string( "noise" ) );
+  std::vector<std::string > NoiseCollectionNameVecExample;
+  NoiseCollectionNameVecExample.push_back("noise");
+  std::vector<std::string > StatusCollectionNameVecExample;
+  StatusCollectionNameVecExample.push_back("status");
+  //LCIO::TRACKERDATA
+  registerInputCollections(LCIO::TRACKERDATA, "NoiseCollectionName", "The name of the noise collections",
+                          _noiseCollectionName, NoiseCollectionNameVecExample );
 
-  registerInputCollection(LCIO::TRACKERRAWDATA, "StatusCollectionName","The name of the status collection.",
-                          _statusCollectionName, string( "status" ) );
+  registerInputCollections(LCIO::TRACKERRAWDATA, "StatusCollectionName","The name of the status collections.",
+                          _statusCollectionName, StatusCollectionNameVecExample );
 
   registerProcessorParameter("HistoInfoFileName", "This is the name of the histogram information file",
                              _histoInfoFileName, string( "histoinfo.xml" ) );
@@ -149,30 +156,29 @@ void EUTelHistogramMaker::initializeGeometry( LCEvent * event ) {
   //
   // all these information are taken from the noise collection
   streamlog_out( MESSAGE2 ) << "Initializing geometry... "<< endl;
-
+  
   try {
-
-    LCCollectionVec * collection = dynamic_cast< LCCollectionVec * > ( event->getCollection( _noiseCollectionName ) );
-    _noOfDetector   = collection->size();
-
-    CellIDDecoder< TrackerDataImpl > decoder( collection );
-    for ( size_t iDetector = 0 ; iDetector < collection->size(); ++iDetector ) {
-      TrackerDataImpl * data = dynamic_cast< TrackerDataImpl * > ( collection->getElementAt( iDetector ) );
-
-      int sensorID = decoder( data ) [ "sensorID" ];
-
-      // the look up tables
-      _ancillaryMap.insert( make_pair( sensorID, iDetector ) );
-      _sensorIDVec.push_back( sensorID );
-
-      // the boundaries
-      _minX.insert( make_pair( sensorID, decoder( data ) [ "xMin" ] ) );
-      _minY.insert( make_pair( sensorID, decoder( data ) [ "yMin" ] ) );
-      _maxX.insert( make_pair( sensorID, decoder( data ) [ "xMax" ] ) );
-      _maxY.insert( make_pair( sensorID, decoder( data ) [ "yMax" ] ) );
-
-    }
-
+    for(size_t i = 0; i < _noiseCollectionName.size();++i)
+      {
+        LCCollectionVec * collection = dynamic_cast< LCCollectionVec * > ( event->getCollection( _noiseCollectionName[i] ) );
+        _noOfDetector   += collection->size();
+        CellIDDecoder< TrackerDataImpl > decoder( collection );
+        for ( size_t iDetector = 0 ; iDetector < collection->size(); ++iDetector ) {
+          TrackerDataImpl * data = dynamic_cast< TrackerDataImpl * > ( collection->getElementAt( iDetector ) );
+          
+          int sensorID = decoder( data ) [ "sensorID" ];
+          // the look up tables
+          _ancillaryMap.insert( make_pair( sensorID, iDetector ) );
+          _sensorIDVec.push_back( sensorID );
+          
+          // the boundaries
+          _minX.insert( make_pair( sensorID, decoder( data ) [ "xMin" ] ) );
+          _minY.insert( make_pair( sensorID, decoder( data ) [ "yMin" ] ) );
+          _maxX.insert( make_pair( sensorID, decoder( data ) [ "xMax" ] ) );
+          _maxY.insert( make_pair( sensorID, decoder( data ) [ "yMax" ] ) );
+          
+        }
+      }
   } catch ( lcio::DataNotAvailableException ) {
     streamlog_out( WARNING2 ) << "Unable to initialize the geometry with the current event. Trying with the next one" << endl;
     _isGeometryReady = false;
@@ -211,21 +217,31 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
-  LCCollectionVec * noiseCollectionVec = 0x0, * statusCollectionVec = 0x0;
-
+  std::vector<LCCollectionVec *> noiseCollectionVec; //noiseCollectionVec = 0x0, * statusCollectionVec = 0x0;
+  std::vector<LCCollectionVec *> statusCollectionVec;
   if ( _noiseHistoSwitch ) {
-    try {
-      noiseCollectionVec  = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _noiseCollectionName ) );
-    } catch (lcio::DataNotAvailableException& e) {
-      streamlog_out ( ERROR1 ) <<  e.what() << endl << "Switching off the noise histogram filling and continuing" << endl;
-      _noiseHistoSwitch &= false;
-    }
-    try {
-      statusCollectionVec = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _statusCollectionName ) );
-    } catch (lcio::DataNotAvailableException& e) {
-      streamlog_out ( ERROR1 ) << e.what() << endl  << "Switching off the noise histogram filling and continuing" << endl;
-      _noiseHistoSwitch &= false;
-    }
+   
+      
+    //noiseCollectionVec  = dynamic_cast<LCCollectionVec *> (
+    //evt->getCollection( _noiseCollectionName ) );
+    for(size_t i = 0; i < _noiseCollectionName.size(); ++i)
+      {
+        try {
+          noiseCollectionVec.push_back(dynamic_cast<LCCollectionVec *> (
+                                                                        evt->getCollection( _noiseCollectionName[i] ) ));
+        }
+        catch (lcio::DataNotAvailableException& e) {
+          streamlog_out ( ERROR1 ) <<  e.what() << endl << "Switching off the noise histogram filling and continuing" << endl;
+          _noiseHistoSwitch &= false;
+        }
+        
+        try {
+          statusCollectionVec.push_back(dynamic_cast<LCCollectionVec *> ( evt->getCollection( _statusCollectionName[i] ) ));
+        } catch (lcio::DataNotAvailableException& e) {
+          streamlog_out ( ERROR1 ) << e.what() << endl  << "Switching off the noise histogram filling and continuing" << endl;
+          _noiseHistoSwitch &= false;
+        }
+      }
   }
 
   if ( isFirstEvent() ) {
@@ -240,18 +256,18 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
 
     // prepare and reset the hit counter
     map<int, int> eventCounterMap;
-
     for ( int iPulse = 0; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ ) {
       TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl*> ( pulseCollectionVec->getElementAt(iPulse) );
       ClusterType        type  = static_cast<ClusterType> ( static_cast<int> ( cellDecoder(pulse)["type"] ));
       SparsePixelType    pixelType = static_cast<SparsePixelType> (0);
 
       EUTelVirtualCluster * cluster;
-
-      if ( type == kEUTelFFClusterImpl ) {
-
+      if ( type == kEUTelDFFClusterImpl ) {
+        cluster = new EUTelDFFClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
+      } else if ( type == kEUTelFFClusterImpl ) {
+        
         cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
-
+        
       } else if ( type == kEUTelSparseClusterImpl ) {
         LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
         TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
@@ -274,12 +290,16 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
       }
 
       int detectorID = cluster->getDetectorID();
-
       // increment of one unit the event counter for this plane
       eventCounterMap[detectorID]++;
 
       string tempHistoName = _clusterSignalHistoName + "_d" + to_string( detectorID );
       (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getTotalCharge());
+
+      if(type == kEUTelDFFClusterImpl ) {
+        tempHistoName = _clusterNumberOfHitPixelName + "_d" + to_string( detectorID );
+        (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getTotalCharge());
+      }
 
       tempHistoName = _seedSignalHistoName + "_d" + to_string( detectorID );
       (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getSeedCharge());
@@ -304,77 +324,136 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
       cluster->getCenterCoord(xSeed, ySeed);
       (dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[tempHistoName]))->fill(static_cast<double >(xSeed), static_cast<double >(ySeed), 1.);
 
-      if ( _noiseHistoSwitch ) {
-
-        // define a noise decoder
-        CellIDDecoder<TrackerDataImpl> noiseDecoder(noiseCollectionVec);
-
-        // get the noise TrackerDataImpl corresponding to the detector
-        // under analysis and the status matrix as well
-        TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl *>    (noiseCollectionVec->getElementAt(_ancillaryMap[detectorID]) );
-        TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> (statusCollectionVec->getElementAt(_ancillaryMap[detectorID]) );
-
-        EUTelMatrixDecoder noiseMatrixDecoder( noiseDecoder, noiseMatrix);
-
-        vector<float > noiseValues;
-        if ( type == kEUTelFFClusterImpl ) {
-
-          int xClusterSize, yClusterSize;
-          cluster->getClusterSize(xClusterSize, yClusterSize);
-
-          for ( int yPixel = ySeed - ( yClusterSize / 2 ); yPixel <= ySeed + ( yClusterSize / 2 ); yPixel++ ) {
-            for ( int xPixel = xSeed - ( xClusterSize / 2 ); xPixel <= xSeed + ( xClusterSize / 2 ); xPixel++ ) {
-
-              // always check we are still within the sensor!!!
-              if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <=  noiseMatrixDecoder.getMaxX()) &&
-                   ( yPixel >=  noiseMatrixDecoder.getMinY() )  &&  ( yPixel <=  noiseMatrixDecoder.getMaxY()) ) {
-                int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
-
-                // the corresponding position in the status matrix has to be HITPIXEL
-                // in the EUTelClusteringProcessor, we verify also that
-                // the pixel isHit, but this cannot be done in this
-                // processor, since the status matrix could have been reset
-                //
-                // bool isHit  = ( statusMatrix->getADCValues()[index] ==
-                // EUTELESCOPE::HITPIXEL );
-                //
-                bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
-                if ( !isBad ) {
-                  noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
-                } else {
-                  noiseValues.push_back( 0. );
-                }
-              } else {
-                noiseValues.push_back( 0. );
+      if ( _noiseHistoSwitch ) 
+      {
+        TrackerDataImpl    * noiseMatrix = NULL;
+        TrackerRawDataImpl * statusMatrix = NULL;
+        bool found = false;
+        size_t i = 0;
+        while(!found && i < noiseCollectionVec.size())
+          {
+            // define a noise decoder
+            CellIDDecoder<TrackerDataImpl> noiseDecoder(noiseCollectionVec[i]);
+            
+            // get the noise TrackerDataImpl corresponding to the detector
+            // under analysis and the status matrix as well
+            
+            if( noiseCollectionVec[i]->getNumberOfElements() > _ancillaryMap[detectorID] )
+              {
+                noiseMatrix  = dynamic_cast<TrackerDataImpl *>    (noiseCollectionVec[i]->getElementAt(_ancillaryMap[detectorID]) );
+                statusMatrix = dynamic_cast<TrackerRawDataImpl *> (statusCollectionVec[i]->getElementAt(_ancillaryMap[detectorID]) );
+                
+                CellIDDecoder< TrackerDataImpl > noiseDecoder2( noiseCollectionVec[i] ) ;
+                int sensorID = noiseDecoder2(  noiseMatrix  ) [ "sensorID" ];
+                if(sensorID == detectorID)
+                  {
+                    found = true;
+                  }
+                else
+                  {
+                    i++;
+                  }
               }
-            }
+            else
+              {
+                i++;
+              }
           }
-        } else if ( type == kEUTelSparseClusterImpl ) {
-
-          if ( pixelType == kEUTelSimpleSparsePixel ) {
-
-            EUTelSparseClusterImpl<EUTelSimpleSparsePixel > * recasted =
-              dynamic_cast< EUTelSparseClusterImpl<EUTelSimpleSparsePixel > * > ( cluster );
-
-            auto_ptr<EUTelSimpleSparsePixel> sparsePixel( new EUTelSimpleSparsePixel );
-            for ( unsigned int iPixel = 0; iPixel < recasted->size() ; iPixel++ ) {
-              recasted->getSparsePixelAt( iPixel, sparsePixel.get() ) ;
-              int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
-              noiseValues.push_back( noiseMatrix->getChargeValues()[ index ] );
-            }
-
+        if(!found)
+          {
+            cout << "no noise and status maps were found for sensor " << detectorID << endl;
+            exit(-1);
           }
 
-        }
 
-        try {
-          cluster->setNoiseValues( noiseValues );
-        } catch ( IncompatibleDataSetException& e ) {
-          streamlog_out ( ERROR1 )  << e.what() << endl <<  "Continuing without filling the noise histograms" << endl;
-          _noiseHistoSwitch = false;
-        }
-      }
-
+        CellIDDecoder< TrackerDataImpl > noiseDecoder( noiseCollectionVec[i] ) ;
+        EUTelMatrixDecoder noiseMatrixDecoder( noiseDecoder, noiseMatrix);
+            
+        vector<float > noiseValues;
+        if ( type == kEUTelDFFClusterImpl )
+          {
+            int xClusterSize, yClusterSize;
+              cluster->getClusterSize(xClusterSize, yClusterSize);
+              
+              for ( int yPixel = ySeed - ( yClusterSize / 2 ); yPixel <= ySeed + ( yClusterSize / 2 ); yPixel++ ) {
+                for ( int xPixel = xSeed - ( xClusterSize / 2 ); xPixel <= xSeed + ( xClusterSize / 2 ); xPixel++ ) {
+                  
+                  // always check we are still within the sensor!!!
+                  if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <=  noiseMatrixDecoder.getMaxX()) &&
+                       ( yPixel >=  noiseMatrixDecoder.getMinY() )  &&  ( yPixel <=  noiseMatrixDecoder.getMaxY()) ) {
+                    int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
+                    
+                    bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
+                    if ( !isBad ) {
+                      noiseValues.push_back( 1.0 );
+                    } else {
+                      noiseValues.push_back( 0. );
+                    }
+                  } else {
+                    noiseValues.push_back( 0. );
+                  }
+                }
+              }
+          }
+        else if ( type == kEUTelFFClusterImpl ) {
+          
+              int xClusterSize, yClusterSize;
+              cluster->getClusterSize(xClusterSize, yClusterSize);
+              
+              for ( int yPixel = ySeed - ( yClusterSize / 2 ); yPixel <= ySeed + ( yClusterSize / 2 ); yPixel++ ) {
+                for ( int xPixel = xSeed - ( xClusterSize / 2 ); xPixel <= xSeed + ( xClusterSize / 2 ); xPixel++ ) {
+                  
+                  // always check we are still within the sensor!!!
+                  if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <=  noiseMatrixDecoder.getMaxX()) &&
+                       ( yPixel >=  noiseMatrixDecoder.getMinY() )  &&  ( yPixel <=  noiseMatrixDecoder.getMaxY()) ) {
+                    int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
+                    
+                    // the corresponding position in the status matrix has to be HITPIXEL
+                    // in the EUTelClusteringProcessor, we verify also that
+                    // the pixel isHit, but this cannot be done in this
+                    // processor, since the status matrix could have been reset
+                    //
+                    // bool isHit  = ( statusMatrix->getADCValues()[index] ==
+                    // EUTELESCOPE::HITPIXEL );
+                    //
+                    bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
+                    if ( !isBad ) {
+                      noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
+                    } else {
+                      noiseValues.push_back( 0. );
+                    }
+                  } else {
+                    noiseValues.push_back( 0. );
+                  }
+                }
+              }
+            } else if ( type == kEUTelSparseClusterImpl ) {
+              
+              if ( pixelType == kEUTelSimpleSparsePixel ) {
+                
+                EUTelSparseClusterImpl<EUTelSimpleSparsePixel > * recasted =
+                  dynamic_cast< EUTelSparseClusterImpl<EUTelSimpleSparsePixel > * > ( cluster );
+                
+                auto_ptr<EUTelSimpleSparsePixel> sparsePixel( new EUTelSimpleSparsePixel );
+                for ( unsigned int iPixel = 0; iPixel < recasted->size() ; iPixel++ ) {
+                  recasted->getSparsePixelAt( iPixel, sparsePixel.get() ) ;
+                  int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
+                  noiseValues.push_back( noiseMatrix->getChargeValues()[ index ] );
+                }
+                
+              }
+              
+            }
+            
+            try {
+              cluster->setNoiseValues( noiseValues );
+            } catch ( IncompatibleDataSetException& e ) {
+              streamlog_out ( ERROR1 )  << e.what() << endl <<  "Continuing without filling the histograms" << endl;
+              _noiseHistoSwitch = false;
+            }
+          }
+      
+      
       if ( _noiseHistoSwitch ) {
         AIDA::IHistogram1D * histo;
 
@@ -488,7 +567,6 @@ void EUTelHistogramMaker::bookHistos() {
 
 
     tempHistoName =  _clusterSignalHistoName + "_d" + to_string( _sensorIDVec.at( iDetector ) ) ;
-
     int    clusterNBin  = 1000;
     double clusterMin   = 0.;
     double clusterMax   = 1000.;
@@ -508,6 +586,37 @@ void EUTelHistogramMaker::bookHistos() {
                                                                 clusterNBin,clusterMin,clusterMax);
     _aidaHistoMap.insert(make_pair(tempHistoName, clusterSignalHisto));
     clusterSignalHisto->setTitle(clusterTitle.c_str());
+
+
+
+    tempHistoName =  _clusterNumberOfHitPixelName + "_d" + to_string( _sensorIDVec.at( iDetector ) ) ;
+    
+    int    nhitsNBin  = 20;
+    double nhitsMin   = 0.;
+    double nhitsMax   = 20.;
+    string nhitsTitle = "Number of hit pixel inside the digital cluster";
+    if ( isHistoManagerAvailable ) {
+      histoInfo = histoMgr->getHistogramInfo(_clusterNumberOfHitPixelName);
+      if ( histoInfo ) {
+        streamlog_out ( DEBUG1 )  << (* histoInfo ) << endl;
+        clusterNBin = histoInfo->_xBin;
+        clusterMin  = histoInfo->_xMin;
+        clusterMax  = histoInfo->_xMax;
+        if ( histoInfo->_title != "" ) nhitsTitle = histoInfo->_title;
+      }
+    }
+    AIDA::IHistogram1D * nhitsHisto =
+      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                nhitsNBin,nhitsMin,nhitsMax);
+    _aidaHistoMap.insert(make_pair(tempHistoName, nhitsHisto));
+    nhitsHisto->setTitle(nhitsTitle.c_str());
+
+
+
+
+
+
+
 
     int    clusterSNRNBin  = 300;
     double clusterSNRMin   = 0.;
