@@ -240,7 +240,7 @@ namespace eutelescope {
    *  the current event.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterFilter.h,v 1.10 2009-07-29 20:41:31 bulgheroni Exp $
+   *  @version $Id: EUTelClusterFilter.h,v 1.10 2009/07/29 20:41:31 bulgheroni Exp $
    *
    *
    */
@@ -373,6 +373,9 @@ namespace eutelescope {
      *
      */
     bool isBelowMaxTotalCharge(EUTelVirtualCluster * /* cluster */ ) const { return true; }
+
+
+    bool isAboveNumberOfHitPixel(EUTelVirtualCluster * cluster) const;
 
 
     //! Check against the charge collected by N pixels
@@ -843,6 +846,8 @@ namespace eutelescope {
     //! The number of detectors
     size_t _noOfDetectors;
 
+    //! Switch for the minimum hit pixel
+    bool _dffnhitsswitch;
 
     //! Ancillary index map
     mutable std::map< int, int > _ancillaryIndexMap;
@@ -861,6 +866,8 @@ namespace eutelescope {
     //! Rejection summary map
     mutable std::map<std::string, std::vector<unsigned int > > _rejectionMap;
 
+    //digital fixed frame cuts
+    std::vector<int> _DFFNHitsCuts;
   public:
 
     //! Helper predicate class
@@ -869,7 +876,7 @@ namespace eutelescope {
      *  in find_if.
      *
      *  @author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
-     *  @version $Id: EUTelClusterFilter.h,v 1.10 2009-07-29 20:41:31 bulgheroni Exp $
+     *  @version $Id: EUTelClusterFilter.h,v 1.10 2009/07/29 20:41:31 bulgheroni Exp $
      */
     class HasSameID {
     public:

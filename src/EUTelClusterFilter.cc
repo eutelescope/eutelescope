@@ -1,6 +1,6 @@
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
+#// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: EUTelClusterFilter.cc,v 1.19 2009-07-29 11:05:02 bulgheroni Exp $
+// Version $Id: EUTelClusterFilter.cc,v 1.19 2009/07/29 11:05:02 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -14,6 +14,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelDFFClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelSparseCluster2Impl.h"
 #include "EUTelRunHeaderImpl.h"
@@ -236,6 +237,16 @@ EUTelClusterFilter::EUTelClusterFilter () :Processor("EUTelClusterFilter") {
   _noiseRelatedCuts = true;
 
 
+ 
+
+  registerProcessorParameter("DFFNumberOfHits","This is a cut on the number of hit pixels inside the digital fixed frame\n"
+                             "cluster algorithm. One cut for each sensor plane.\n",
+                           
+                             _DFFNHitsCuts, std::vector<int>(9, 0) );
+
+
+
+
 }
 
 void EUTelClusterFilter::init () {
@@ -356,6 +367,14 @@ void EUTelClusterFilter::init () {
   } else {
     _maxClusterNoSwitch = false;
   }
+  
+  // number of hit pixel inside a cluster for DFF cluser
+  if ( count_if(_DFFNHitsCuts.begin(), _DFFNHitsCuts.end(), bind2nd(greater<int>(), 0) ) != 0 ) {
+    _dffnhitsswitch = true;
+  } else {
+    _dffnhitsswitch = false;
+  }
+
 
   streamlog_out( DEBUG2 )  << "MaxClusterNoSwitch " << _maxClusterNoSwitch << endl;
 
@@ -639,6 +658,22 @@ void EUTelClusterFilter::checkCriteria() {
     }
   }
 
+  if ( _dffnhitsswitch ) {
+    if ( _DFFNHitsCuts.size() != (unsigned) _noOfDetectors ) {
+      streamlog_out ( ERROR1 ) << "The minimum hit pixel vector did not match the right size \n"
+                               << "The number of planes is " << _noOfDetectors << " while the thresholds are "
+                               << _DFFNHitsCuts.size() <<  "\n"
+                               <<  "Disabling the selection criterion and continue without" << endl;
+      _dffnhitsswitch = false;
+    } else {
+      streamlog_out ( DEBUG1 ) << "Minimum hit pixel number criterion verified and switched on" << endl;
+      vector<unsigned int > rejectedCounter(_noOfDetectors, 0);
+      _rejectionMap.insert( make_pair("MinHitPixel", rejectedCounter ));
+    }
+  }
+
+
+
   if ( _insideROISwitch ) {
     streamlog_out ( DEBUG1 ) << "Inside ROI criterion verified and switched on" << endl;
     vector<unsigned int > rejectedCounter( _noOfDetectors, 0 );
@@ -720,7 +755,10 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
       EUTelVirtualCluster * cluster;
       SparsePixelType       pixelType;
 
-      if ( type == kEUTelFFClusterImpl )  {
+      if ( type == kEUTelDFFClusterImpl )  {
+        cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
+      }
+      else if ( type == kEUTelFFClusterImpl )  {
         cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
 
         if ( _noiseRelatedCuts ) {
@@ -840,17 +878,23 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
 
       bool isAccepted = true;
 
-
-      isAccepted &= isAboveMinTotalCharge(cluster);
-      isAccepted &= isAboveMinTotalSNR(cluster);
-      isAccepted &= isAboveNMinCharge(cluster);
-      isAccepted &= isAboveNMinSNR(cluster);
-      isAccepted &= isAboveNxNMinCharge(cluster);
-      isAccepted &= isAboveNxNMinSNR(cluster);
-      isAccepted &= isAboveMinSeedCharge(cluster);
-      isAccepted &= isAboveMinSeedSNR(cluster);
+      if ( type == kEUTelDFFClusterImpl ) 
+        {
+          isAccepted &= isAboveNumberOfHitPixel(cluster);
+        }
+      else
+        {
+          isAccepted &= isAboveMinTotalCharge(cluster);
+          isAccepted &= isAboveMinTotalSNR(cluster);
+          isAccepted &= isAboveNMinCharge(cluster);
+          isAccepted &= isAboveNMinSNR(cluster);
+          isAccepted &= isAboveNxNMinCharge(cluster);
+          isAccepted &= isAboveNxNMinSNR(cluster);
+          isAccepted &= isAboveMinSeedCharge(cluster);
+          isAccepted &= isAboveMinSeedSNR(cluster);
+          isAccepted &= isBelowMaxClusterNoise(cluster);
+        }
       isAccepted &= hasQuality(cluster);
-      isAccepted &= isBelowMaxClusterNoise(cluster);
       isAccepted &= isInsideROI(cluster);
       isAccepted &= isOutsideROI(cluster);
 
@@ -989,6 +1033,24 @@ bool EUTelClusterFilter::hasSameNumberOfHit(std::vector<int > clusterNoVec) cons
 
   return hasSameNumber;
 }
+
+bool EUTelClusterFilter::isAboveNumberOfHitPixel(EUTelVirtualCluster * cluster) const {
+  if ( !_dffnhitsswitch ) {
+    return true;
+  }
+  streamlog_out ( DEBUG1 ) << "Filtering against number of hit pixel inside a cluster " << endl;
+  int detectorID = cluster->getDetectorID();
+
+  if ( (int)(cluster->getTotalCharge()) >= _DFFNHitsCuts[detectorID] ) return true;
+  else {
+    streamlog_out ( DEBUG2 )  << "Rejected cluster because the number of hit pixel is " << (int)(cluster->getTotalCharge())
+                              << " and the threshold is " << _DFFNHitsCuts[detectorID] << endl;
+    _rejectionMap["MinHitPixel"][detectorID]++;
+    return false;
+  }
+}
+
+
 
 bool EUTelClusterFilter::isAboveMinTotalCharge(EUTelVirtualCluster * cluster) const {
 
