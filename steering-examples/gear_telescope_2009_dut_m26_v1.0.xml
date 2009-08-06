@@ -1,0 +1,152 @@
+<gear>
+    <!-- 
+
+
+    GEAR file generated for the 2009 CERN test beam campain. It assumes a telescope made
+    of 6 MimoTels sensors with different epi thickness.
+
+    The size of the sensors have been already corrected for the 7.7 bug.
+
+    The origin of the telescope frame of reference is in the middle of the DUT allocated space. 
+    
+	The interdistance in between the two arms (DUT allocated space) has been increased by 60 mm
+	with respect v1.1. The left arm is left unchanged, while the planes in the right arm are all
+	moved down the beam of 60 mm.
+
+        The sensor thickness was taken into account and the planes were moved by this value.
+	
+
+        Three Mimosa 26 planes as DUTs. Rotations of the Mimosa 26 sensors still have to be figured out ... Mimosa 26 thickness was considered.
+
+    Author: Joerg Behr
+    Date:   04/08/2009
+   
+    -->
+    
+	<global detectorName="EUTelescope" />
+    <BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
+    <detectors>
+        <detector name="SiPlanes" geartype="SiPlanesParameters">
+            <siplanesID ID="25" />
+            <siplanesType type="TelescopeWithoutDUT" />
+            <siplanesNumber number="9" />
+            <layers>
+
+              <!-- PLANE 0 --> 
+                <layer>
+                  <ladder ID="0" positionX="0.000000" positionY="0.000000" 
+					positionZ="-308.81400000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
+					
+                  <!-- CHIP 45: 20 um -->
+                  <sensitive ID="0" positionX="0.000000" positionY="0.000000" positionZ="-308.81400000" sizeX="7.680000"
+					sizeY="7.680000" thickness="0.020000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000"
+					resolution="0.003000" rotation1="1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
+					radLength="93.660734" />
+                </layer>
+
+                <!-- PLANE 1 --> 
+                <layer>
+                  <ladder ID="1" positionX="0.000000" positionY="0.000000" 
+					positionZ="-208.81400000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
+
+                  <!-- CHIP 38: 14 um -->
+                  <sensitive ID="1" positionX="0.000000" positionY="0.000000" positionZ="-208.81400000" sizeX="7.680000"
+					sizeY="7.680000" thickness="0.014000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000"
+					resolution="0.003000" rotation1="1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
+					radLength="93.660734" />
+                </layer>
+
+                <!-- PLANE 2 --> 
+                <layer>
+                    <ladder ID="2" positionX="0.000000" positionY="0.000000" 
+						positionZ="-108.81400000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
+
+                  <!-- CHIP 37: 14 um -->
+                  <sensitive ID="2" positionX="0.000000" positionY="0.000000" positionZ="-108.81400000" sizeX="7.680000"
+					sizeY="7.680000" thickness="0.014000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000"
+					resolution="0.003000" rotation1="1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
+					radLength="93.660734" />
+                </layer>
+
+                
+                <!-- now the 3 mimosa 26 sensors -->
+                <layer>
+                  <ladder ID="6" positionX="0.000000" positionY="0.000000" positionZ="-22.714"
+                          sizeX="21.20000" sizeY="10.60000"
+                          thickness="0.686000"
+                          radLength="93.660734" />
+                  <sensitive ID="6" positionX="0.000000" positionY="0.000000" positionZ="-22.714"
+                             sizeX="21.20000" sizeY="10.60000"
+                             thickness="0.020000"
+                             npixelX="1152" npixelY="576"
+                             pitchX="0.018402778" pitchY="0.018402778"
+                             resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
+			     radLength="93.660734" />
+                </layer>
+                
+                <layer>
+                  <ladder ID="7" positionX="0.000000" positionY="0.000000" positionZ="2.386"
+                          sizeX="21.20000" sizeY="10.60000"
+                          thickness="0.686000"
+                          radLength="93.660734" />
+                  <sensitive ID="7" positionX="0.000000" positionY="0.000000" positionZ="2.386"
+                             sizeX="21.20000" sizeY="10.60000"
+                             thickness="0.020000"
+                             npixelX="1152" npixelY="576"
+                             pitchX="0.018402778" pitchY="0.018402778"
+                             resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
+			     radLength="93.660734" />
+                </layer>
+
+                <layer>
+                  <ladder ID="8" positionX="0.000000" positionY="0.000000" positionZ="27.486"
+                          sizeX="21.20000" sizeY="10.60000"
+                          thickness="0.686000"
+                          radLength="93.660734" />
+                  <sensitive ID="8" positionX="0.000000" positionY="0.000000" positionZ="27.486"
+                             sizeX="21.20000" sizeY="10.60000"
+                             thickness="0.020000"
+                             npixelX="1152" npixelY="576"
+                             pitchX="0.018402778" pitchY="0.018402778"
+                             resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
+			     radLength="93.660734" />
+                </layer>
+                <!-- PLANE 3 --> 
+                <layer>
+                  <ladder ID="3" positionX="0.000000" positionY="0.000000" 
+					positionZ="168.81400000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
+
+                  <!-- CHIP 17: 20 um -->
+                  <sensitive ID="3" positionX="0.000000" positionY="0.000000" positionZ="168.81400000" sizeX="7.680000" 
+					sizeY="7.680000" thickness="0.020000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000"
+					resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
+					radLength="93.660734" />
+                </layer>
+
+                <!-- PLANE 4 --> 
+                <layer>
+                  <ladder ID="4" positionX="0.000000" positionY="0.000000" 
+					positionZ="268.814000" sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
+                  
+				  <!-- CHIP 18: 20 um -->
+                  <sensitive ID="4" positionX="0.000000" positionY="0.000000" positionZ="268.81400000" sizeX="7.680000" 
+					sizeY="7.680000" thickness="0.020000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000"
+					resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
+					radLength="93.660734" />
+                </layer>
+
+                <!-- PLANE 5 --> 
+                <layer>
+                  <ladder ID="5" positionX="0.000000" positionY="0.000000" positionZ="368.814000" 
+					sizeX="7.680000" sizeY="7.680000" thickness="0.686000" radLength="93.660734" />
+                  
+				  <!-- CHIP 20: 20 um  (the blob chip!) -->
+                  <sensitive ID="5" positionX="0.000000" positionY="0.000000" positionZ="368.8140000" sizeX="7.680000" 
+					sizeY="7.680000" thickness="0.020000" npixelX="256" npixelY="256" pitchX="0.030000" pitchY="0.030000"
+					resolution="0.003000" rotation1="-1.000000" rotation2="0.000000" rotation3="0.000000" rotation4="-1.000000"
+					radLength="93.660734" />
+                </layer>
+            </layers>
+        </detector>
+    </detectors>
+</gear>
