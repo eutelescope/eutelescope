@@ -17,6 +17,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelDFFClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelEtaFunctionImpl.h"
 #include "EUTelPseudo1DHistogram.h"
@@ -256,7 +257,13 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
         // all clusters have to inherit from the virtual cluster (that is
         // a TrackerDataImpl with some utility methods).
         EUTelVirtualCluster    * cluster;
+        if ( type == kEUTelDFFClusterImpl ) {
 
+          // digital fixed cluster implementation. Remember it can come from
+          // both RAW and ZS data
+          cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
+
+        } else
         if ( type == kEUTelFFClusterImpl ) {
 
           // fixed cluster implementation. Remember it can come from

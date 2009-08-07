@@ -483,9 +483,9 @@ void EUTelCorrelator::bookHistos() {
     for ( size_t r = 0 ; r < _sensorIDVec.size(); ++r ) {
 
       int row = _sensorIDVec.at( r );
-
-      vector< AIDA::IHistogram2D * > innerVectorXCluster;
-      vector< AIDA::IHistogram2D * > innerVectorYCluster;
+      
+      map< unsigned int , AIDA::IHistogram2D * > innerMapXCluster;
+      map< unsigned int , AIDA::IHistogram2D * > innerMapYCluster;
 
       map< unsigned int , AIDA::IHistogram2D * > innerMapXHit;
       map< unsigned int , AIDA::IHistogram2D * > innerMapYHit;
@@ -517,8 +517,7 @@ void EUTelCorrelator::bookHistos() {
 
             tempHistoTitle = "XClusterCorrelation_d" + to_string( row ) + "_d" + to_string( col );
             histo2D->setTitle( tempHistoTitle.c_str() );
-            innerVectorXCluster.push_back ( histo2D );
-
+            innerMapXCluster[ col  ] =  histo2D ;
             tempHistoName =  "ClusterY/" +  _clusterYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
 
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
@@ -537,8 +536,7 @@ void EUTelCorrelator::bookHistos() {
             tempHistoTitle =  "ClusterY/" +  _clusterYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             histo2D->setTitle( tempHistoTitle.c_str()) ;
 
-            innerVectorYCluster.push_back ( histo2D );
-
+            innerMapYCluster[ col  ] =  histo2D ;
           }
 
 
@@ -564,9 +562,16 @@ void EUTelCorrelator::bookHistos() {
                                              ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( c )));
             double colMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( col ) +
                                              ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( c )) );
+            
+            //lets limit the memory usage
+            int colNBin = 512;
+            int rowNBin = 512;
+            
+            if(_siPlanesLayerLayout->getSensitiveNpixelX( c ) < 255)
+              colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( c );
 
-            int colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( c );
-            int rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( r );
+            if(_siPlanesLayerLayout->getSensitiveNpixelX( r ) < 255)
+              rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( r );
 
             tempHistoName =  "HitX/" +  _hitXCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
@@ -578,7 +583,7 @@ void EUTelCorrelator::bookHistos() {
                                                                           rowNBin, rowMin, rowMax);
             histo2D->setTitle( tempHistoTitle.c_str() );
 
-            innerMapXHit[ _siPlanesLayerLayout->getID( col ) ] =  histo2D ;
+            innerMapXHit[ col  ] =  histo2D ;
 
             // now the hit on the Y direction
             rowMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( r ) -
@@ -590,9 +595,14 @@ void EUTelCorrelator::bookHistos() {
                                       ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( c )));
             colMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( c ) +
                                       ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( c )) );
+            
+            colNBin = 512;
+            rowNBin = 512;
+            if(_siPlanesLayerLayout->getSensitiveNpixelY( c ) < 255)
+              colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( c );
 
-            colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( c );
-            rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( r );
+            if(_siPlanesLayerLayout->getSensitiveNpixelY( r ) < 255)
+              rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( r );
 
             tempHistoName =  "HitY/" + _hitYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             streamlog_out( DEBUG ) << "Booking cloud " << tempHistoName << endl;
@@ -602,15 +612,16 @@ void EUTelCorrelator::bookHistos() {
                                                                           rowNBin, rowMin, rowMax);
             histo2D->setTitle( tempHistoTitle.c_str() );
 
-            innerMapYHit[ _siPlanesLayerLayout->getID( col ) ] =  histo2D ;
+            innerMapYHit[  col  ] =  histo2D ;
 
           }
 
         } else {
 
           if ( _hasClusterCollection ) {
-            innerVectorXCluster.push_back( NULL );
-            innerVectorYCluster.push_back( NULL );
+            innerMapXCluster[ col ] = NULL ;
+            innerMapYCluster[ col ] = NULL ;
+            
           }
 
           if ( _hasHitCollection ) {
@@ -623,8 +634,10 @@ void EUTelCorrelator::bookHistos() {
       }
 
       if ( _hasClusterCollection ) {
-        _clusterXCorrelationMatrix.push_back( innerVectorXCluster ) ;
-        _clusterYCorrelationMatrix.push_back( innerVectorYCluster ) ;
+        _clusterXCorrelationMatrix[ row ] = innerMapXCluster  ;
+        _clusterYCorrelationMatrix[ row ] = innerMapYCluster  ;
+
+        
       }
 
       if ( _hasHitCollection ) {

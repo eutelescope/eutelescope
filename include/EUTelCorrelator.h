@@ -230,9 +230,8 @@ namespace eutelescope {
     //! Correlation histogram matrix
     /*! This is used to store the pointers of each histogram
      */
-    std::vector< std::vector< AIDA::IHistogram2D *  > > _clusterXCorrelationMatrix;
-    std::vector< std::vector< AIDA::IHistogram2D *  > > _clusterYCorrelationMatrix;
-
+    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _clusterXCorrelationMatrix;
+    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _clusterYCorrelationMatrix;
 
     std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitXCorrelationMatrix;
     std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitYCorrelationMatrix;

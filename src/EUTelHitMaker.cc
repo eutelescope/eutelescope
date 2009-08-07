@@ -20,6 +20,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelDFFClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelSparseCluster2Impl.h"
 #include "EUTelExceptions.h"
@@ -305,7 +306,12 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       EUTelVirtualCluster  * cluster;
       ClusterType type = static_cast<ClusterType>(static_cast<int>((pulseCellDecoder(pulse)["type"])));
 
-      if ( type == kEUTelFFClusterImpl ) {
+      if ( type == kEUTelDFFClusterImpl ) {
+        
+        // digital fixed cluster implementation. Remember it can come from
+        // both RAW and ZS data
+        cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
+      } else if ( type == kEUTelFFClusterImpl ) {
 
         // fixed cluster implementation. Remember it can come from
         // both RAW and ZS data
