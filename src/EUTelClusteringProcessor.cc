@@ -2090,15 +2090,15 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
       }
 
       bool fillSNRSwitch = true;
-      if(!kEUTelDFFClusterImpl)
-      try {
-        cluster->setNoiseValues(noiseValues);
-      } catch ( IncompatibleDataSetException& e ) {
-        streamlog_out ( WARNING2 ) << e.what() << endl
-                                   << "Continuing without filling the noise histograms" << endl;
-        fillSNRSwitch = false;
-      }
-
+      if(type != kEUTelDFFClusterImpl)
+        try {
+          cluster->setNoiseValues(noiseValues);
+        } catch ( IncompatibleDataSetException& e ) {
+          streamlog_out ( WARNING2 ) << e.what() << endl
+                                     << "Continuing without filling the noise histograms" << endl;
+          fillSNRSwitch = false;
+        }
+      
 
       if ( fillSNRSwitch ) {
 
@@ -2114,7 +2114,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
         if ( histo ) {
           histo->fill( cluster->getClusterSNR() );
         }
-
+        
         tempHistoName = _seedSNRHistoName + "_d" + to_string( detectorID );
         histo = dynamic_cast<AIDA::IHistogram1D * > ( _aidaHistoMap[tempHistoName] );
         if ( histo ) {
