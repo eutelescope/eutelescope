@@ -16,7 +16,7 @@
         The sensor thickness was taken into account and the planes were moved by this value.
 	
 
-        Three Mimosa 26 planes as DUTs. Rotations of the Mimosa 26 sensors still have to be figured out ... Mimosa 26 thickness was considered.
+        Three Mimosa 26 planes as DUTs. Rotations of the Mimosa 26 sensors still have to be figured out but it seems that it is correct ... Mimosa 26 thickness was considered.
 
     Author: Joerg Behr
     Date:   04/08/2009
