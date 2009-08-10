@@ -403,8 +403,6 @@ void EUTelMille::init() {
   _nMilleDataPoints = 0;
   _nMilleTracks = 0;
 
-
-
   _waferResidX = new double[_nPlanes];
   _waferResidY = new double[_nPlanes];
   _xFitPos = new double[_nPlanes];
@@ -433,6 +431,7 @@ void EUTelMille::init() {
       _zPos.push_back(std::vector<double>(_nPlanes,0.0));
 
     }
+  streamlog_out ( MESSAGE2 ) << "end of init" << endl;
 
 }
 
@@ -491,7 +490,31 @@ void EUTelMille::findtracks(
       //if we are not in the last plane, call this method again
       if(i<(int)(_hitsArray.size())-1)
         {
-          findtracks(indexarray,vec, _hitsArray, i+1,(int)j);
+          vec.push_back((int)j); //index of the cluster in the last plane
+         
+          //track candidate requirements
+          bool taketrack = true;
+          const int e = vec.size()-2;
+          if(e >= 0)
+            {
+              double distance = sqrt(
+                                     pow( _hitsArray[e][vec[e]].measuredX - _hitsArray[e+1][vec[e+1]].measuredX ,2) +
+                                     pow( _hitsArray[e][vec[e]].measuredY - _hitsArray[e+1][vec[e+1]].measuredY ,2)
+                                     );
+              double distance_z = _hitsArray[e+1][vec[e+1]].measuredZ - _hitsArray[e][vec[e]].measuredZ;
+              
+              double distancemax = _distanceMax * ( distance_z / 100000.0);
+              
+              if( distance >= distancemax )
+                taketrack = false;
+              
+              if(_onlySingleHitEvents == 1 && (_hitsArray[e].size() != 1 || _hitsArray[e+1].size() != 1))
+                taketrack = false;
+            }
+          vec.pop_back(); 
+          
+          if(taketrack)
+            findtracks(indexarray,vec, _hitsArray, i+1,(int)j);
         }
       else
         {
@@ -1872,9 +1895,9 @@ void EUTelMille::bookHistos() {
     const int    tracksNBin = 20;
     const double tracksMin = -0.5;
     const double tracksMax = 19.5;
-    const int    Chi2NBin = 10000000;
+    const int    Chi2NBin = 100;
     const double Chi2Min  = 0.;
-    const double Chi2Max  = 10000000.;
+    const double Chi2Max  = 100.;
     const int    NBin = 10000;
     const double Min  = -5000.;
     const double Max  = 5000.;
