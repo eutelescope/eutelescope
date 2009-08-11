@@ -196,13 +196,13 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("AlignmentConstantCollectionName", "This is the name of the alignment collection to be saved into the slcio file",
                             _alignmentConstantCollectionName, static_cast< string > ( "alignment" ));
 
-  registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a track",_residualsXMin,MinimalResidualsX);
+  registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMin,MinimalResidualsX);
 
-  registerOptionalParameter("ResidualsYMin","Minimal values of the hit residuals in the Y direction for a track",_residualsYMin,MinimalResidualsY);
+  registerOptionalParameter("ResidualsYMin","Minimal values of the hit residuals in the Y direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMin,MinimalResidualsY);
 
-  registerOptionalParameter("ResidualsXMax","Maximal values of the hit residuals in the X direction for a track",_residualsXMax,MaximalResidualsX);
+  registerOptionalParameter("ResidualsXMax","Maximal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMax,MaximalResidualsX);
 
-  registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a track",_residualsYMax,MaximalResidualsY);
+  registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMax,MaximalResidualsY);
 
   registerOptionalParameter("GeneratePedeSteerfile","Generate a steering file for the pede program.",_generatePedeSteerfile, static_cast <int> (0));
 
