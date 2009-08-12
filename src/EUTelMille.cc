@@ -899,7 +899,13 @@ void EUTelMille::processEvent (LCEvent * event) {
     // end check if running in input mode 0 or 2 => perform simple track finding
   } else if (_inputMode == 1) {
     LCCollection* collection;
-    collection = event->getCollection(_trackCollectionName);
+    try {
+      collection = event->getCollection(_trackCollectionName);
+    } catch (DataNotAvailableException& e) {
+      streamlog_out ( WARNING2 ) << "No input track collection " << _trackCollectionName  << " found for event " << event->getEventNumber()
+                                 << " in run " << event->getRunNumber() << endl;
+      throw SkipEventException(this);
+    }
     const int nTracksHere = collection->getNumberOfElements();
 
     streamlog_out ( MILLEMESSAGE ) << "Number of tracks available in track collection: " << nTracksHere << endl;
