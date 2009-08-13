@@ -1006,14 +1006,6 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
     // prepare the matrix decoder
     EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
 
-    for(int i = 0; i < 250; i++)
-      {
-        int   index  = matrixDecoder.getIndexFromXY( i,i );
-        //  status->getADCValues()[ index ] == EUTELESCOPE::GOODPIXEL 
-        status->adcValues()[index] = EUTELESCOPE::HITPIXEL;
-
-      }
-
     // prepare a data vector mimicking the TrackerData data of the
     // standard FixedFrameClustering. Initialize all the entries to zero.
     vector<float > dataVec( noise->getChargeValues().size(), 0. );
