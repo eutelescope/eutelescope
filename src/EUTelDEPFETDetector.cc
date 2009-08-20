@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Julia Furletova, INFN <mailto:julia@mail.desy.de>
-// Version $Id: EUTelDEPFETDetector.cc,v 1.1 2008-11-12 12:03:16 furletova Exp $
+// Version $Id: EUTelDEPFETDetector.cc,v 1.1 2008/11/12 12:03:16 furletova Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -29,12 +29,12 @@ EUTelDEPFETDetector::EUTelDEPFETDetector() : EUTelPixelDetector()  {
   _xMax = 63;
 
   _yMin = 0;
-  _yMax = 127;
+  _yMax = 255;
 
 
   _name = "DEPFET";
 
-  _xPitch = 0.032;
+  _xPitch = 0.024;
   _yPitch = 0.024;
 
 }

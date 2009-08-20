@@ -382,7 +382,8 @@ namespace eutelescope
     kTLU               =   0,
     kMimoTel           = 100,
     kMimosa18          = 101,
-    kMimosa26          = 102
+    kMimosa26          = 102,
+    kDEPFET            = 103
   } ;
 
   //! Readout mode
