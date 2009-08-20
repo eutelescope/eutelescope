@@ -25,6 +25,8 @@
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
+#include "EUTelDFFClusterImpl.h"
+
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelExceptions.h"
 
@@ -414,7 +416,14 @@ void EUTelAlign::processEvent (LCEvent * event) {
       LCObjectVec clusterVector = measHit->getRawHits();
 
       EUTelVirtualCluster * cluster;
-      if ( measHit->getType() == kEUTelFFClusterImpl ) {
+      
+      if ( measHit->getType() == kEUTelDFFClusterImpl ) {
+
+        // fixed cluster implementation. Remember it can come from
+        // both RAW and ZS data
+        cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+
+      } else if ( measHit->getType() == kEUTelFFClusterImpl ) {
 
         // fixed cluster implementation. Remember it can come from
         // both RAW and ZS data
