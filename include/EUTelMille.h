@@ -38,6 +38,13 @@
 #include <vector>
 #include <map>
 
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
+#include <TMinuit.h>
+#include <TSystem.h>
+#include <TMath.h>
+#endif
+
+
 namespace eutelescope {
 
   //! Straight line fit processor
@@ -48,6 +55,97 @@ namespace eutelescope {
   class EUTelMille : public marlin::Processor {
 
   public:
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
+class hit
+{
+public:
+  hit()
+  {
+  }
+  hit(double tx, double ty, double tz, int i)
+  {
+    x = tx;
+    y = ty;
+    z = tz;
+    planenumber = i;
+  }
+  double x;
+  double y;
+  double z;
+  int planenumber;
+};
+
+class trackfitter
+{
+public:
+  ~trackfitter()
+  {}
+  trackfitter()
+  {}
+  trackfitter(std::vector<hit> &h)
+  {
+    hitsarray = h;
+  }
+  double dot(const double *a, const double *b) const
+  {
+    return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]);
+  }
+  double fit (double *x, double *p)
+  {
+    double chi2 = 0.0;
+    static int test = 0;
+    test++;
+    //cout << "call " << test << " par: " <<  x[0] << " " << x[1] << " " << x[2] <<  " " << x[3] << endl;
+
+    const unsigned int n = 3;
+
+    const double b0 = x[0];
+    const double b1 = x[1];
+    const double b2 = 0.0;
+    
+    const double alpha = x[2];
+    const double beta =  x[3];
+
+    const double c0 = TMath::Sin(beta);
+    const double c1 = -1.0*TMath::Cos(beta) * TMath::Sin(alpha);
+    const double c2 = TMath::Cos(alpha) * TMath::Cos(beta);
+    
+    double c[n] = {c0, c1, c2}; 
+    for(size_t i = 0; i < hitsarray.size();i++)
+      {
+
+        const double p0 = hitsarray[i].x;
+        const double p1 = hitsarray[i].y;
+        const double p2 = hitsarray[i].z;
+        
+        const double p[n] = {p0, p1, p2}; 
+        
+        const double pmb[n] = {p0-b0, p1-b1, p2-b2}; //p - b
+        
+        const double coeff = dot(c, pmb);
+
+        const double t[n] = {
+          b0 + c0 * coeff - p0,
+          b1 + c1 * coeff - p1,
+          b2 + c2 * coeff - p2
+        }; 
+       //  const double abs_d = sqrt(dot(t,t));
+//         chi2 +=  abs_d * abs_d;
+        chi2 += t[0]*t[0] + t[1]*t[1] + t[2]*t[2];
+        
+      }
+    // cout << "chi2 = " << chi2 << endl;
+   
+   
+ 
+    return chi2;
+  }
+private:
+  std::vector<hit> hitsarray;
+ 
+  
+};
+#endif
 
     //! Variables for hit parameters
     class HitsInPlane {
@@ -323,8 +421,10 @@ namespace eutelescope {
     double * _zPosHere;
     double * _waferResidX;
     double * _waferResidY;
+    double * _waferResidZ;
     double * _telescopeResolX;
     double * _telescopeResolY;
+    double * _telescopeResolZ;
     double * _xFitPos;
     double * _yFitPos;
 
