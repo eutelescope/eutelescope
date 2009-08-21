@@ -60,10 +60,7 @@
 
 // ROOT includes
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
-#include <TRandom.h>
-#include <TMinuit.h>
-#include <TSystem.h>
-#include <TMath.h>
+# include <TRandom.h>
 #endif
 
 // system includes <>
@@ -81,24 +78,6 @@ using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
-
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
-std::vector<EUTelMille::hit> hitsarray;
-void fcn_wrapper(int &npar, double *gin, double &f, double *par, int iflag)
-{
-  EUTelMille::trackfitter fobj(hitsarray);
-  double p[4];
-  p[0] = 0.0;
-  p[1] = 0.0;
-  p[2] = 0.0;
-  p[3] = 0.0;
-  f = fobj.fit(par,p);
-}
-#endif
-
-
-
-
 // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelMille::_numberTracksLocalname   = "NumberTracks";
@@ -107,9 +86,6 @@ std::string EUTelMille::_chi2YLocalname          = "Chi2Y";
 std::string EUTelMille::_residualXLocalname      = "ResidualX";
 std::string EUTelMille::_residualYLocalname      = "ResidualY";
 #endif
-
-
-
 
 EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
@@ -208,8 +184,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   registerOptionalParameter("AlignMode","Number of alignment constants used. Available mode are: "
                             "\n1 - shifts in the X and Y directions and a rotation around the Z axis,"
-                            "\n2 - only shifts in the X and Y directions"
-                            "\n3 - (EXPERIMENTAL) shifts in the X,Y and Z directions and rotations around all three axis",
+                            "\n2 - only shifts in the X and Y directions",
                             _alignMode, static_cast <int> (1));
 
   registerOptionalParameter("UseResidualCuts","Use cuts on the residuals to reduce the combinatorial background. 0 for off (default), 1 for on",_useResidualCuts,
@@ -288,15 +263,6 @@ void EUTelMille::init() {
     streamlog_out ( ERROR2) << "The GearMgr is not available, for an unknown reason." << endl;
     exit(-1);
   }
-
-
-#if !defined(USE_ROOT) && !defined(MARLIN_USE_ROOT)
-  if(_alignMode == 3)
-    {
-      streamlog_out ( ERROR2) << "alignMode == 3 was chosen but Eutelescope was not build with ROOT support!" << endl;
-      exit(-1);   
-    }  
-#endif
 
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
@@ -439,14 +405,11 @@ void EUTelMille::init() {
 
   _waferResidX = new double[_nPlanes];
   _waferResidY = new double[_nPlanes];
-  _waferResidZ = new double[_nPlanes];
-  
   _xFitPos = new double[_nPlanes];
   _yFitPos = new double[_nPlanes];
 
   _telescopeResolX = new double[_nPlanes];
   _telescopeResolY = new double[_nPlanes];
-  _telescopeResolZ = new double[_nPlanes];
 
 
 
@@ -513,12 +476,12 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
 
 
 void EUTelMille::findtracks(
-                            std::vector<std::vector<int> > &indexarray,
-                            std::vector<int> vec,
-                            std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray,
-                            int i,
-                            int y
-                            )
+  std::vector<std::vector<int> > &indexarray,
+  std::vector<int> vec,
+  std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray,
+  int i,
+  int y
+  )
 {
   if(i>0)
     vec.push_back(y);
@@ -563,9 +526,9 @@ void EUTelMille::findtracks(
           for(size_t e =0; e < vec.size()-1; e++)
             {
               double distance = sqrt(
-                                     pow( _hitsArray[e][vec[e]].measuredX - _hitsArray[e+1][vec[e+1]].measuredX ,2) +
-                                     pow( _hitsArray[e][vec[e]].measuredY - _hitsArray[e+1][vec[e+1]].measuredY ,2)
-                                     );
+                pow( _hitsArray[e][vec[e]].measuredX - _hitsArray[e+1][vec[e+1]].measuredX ,2) +
+                pow( _hitsArray[e][vec[e]].measuredY - _hitsArray[e+1][vec[e+1]].measuredY ,2)
+                );
               double distance_z = _hitsArray[e+1][vec[e+1]].measuredZ - _hitsArray[e][vec[e]].measuredZ;
 
               double distancemax = _distanceMax * ( distance_z / 100000.0);
@@ -1082,12 +1045,12 @@ void EUTelMille::processEvent (LCEvent * event) {
                   std::vector<EUTelMille::HitsInPlane> hitsplane;
 
                   hitsplane.push_back(
-                                      EUTelMille::HitsInPlane(
-                                                              1000 * hit->getPosition()[0],
-                                                              1000 * hit->getPosition()[1],
-                                                              1000 * hit->getPosition()[2]
-                                                              )
-                                      );
+                    EUTelMille::HitsInPlane(
+                      1000 * hit->getPosition()[0],
+                      1000 * hit->getPosition()[1],
+                      1000 * hit->getPosition()[2]
+                      )
+                    );
 
                   double measuredz = hit->getPosition()[2];
 
@@ -1108,15 +1071,15 @@ void EUTelMille::processEvent (LCEvent * event) {
                       if( std::abs( measuredz - PositionsHere[2] ) > 5.0 /* mm */)
                         {
                           if ( HitHere->getType()  == 32 )
-                            {
-                              hitsplane.push_back(
-                                                  EUTelMille::HitsInPlane(
-                                                                          PositionsHere[0] * 1000,
-                                                                          PositionsHere[1] * 1000,
-                                                                          PositionsHere[2] * 1000
-                                                                          )
-                                                  );
-                            } // end assume fitted hits have type 32
+                          {
+                            hitsplane.push_back(
+                              EUTelMille::HitsInPlane(
+                                PositionsHere[0] * 1000,
+                                PositionsHere[1] * 1000,
+                                PositionsHere[2] * 1000
+                                )
+                              );
+                          } // end assume fitted hits have type 32
                         }
                     }
                   //sort the array such that the hits are ordered
@@ -1205,163 +1168,19 @@ void EUTelMille::processEvent (LCEvent * event) {
       } // end loop over all planes
 
       streamlog_out ( MILLEMESSAGE ) << endl;
-      
-      if(_alignMode == 3)
-        {
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
-          //use minuit to find tracks
-          
-          hitsarray.clear();
-          for (int help = 0; help < _nPlanes; help++) {
-            bool excluded = false;
-            // check if actual plane is excluded
-            if (_nExcludePlanes > 0) {
-              for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-                if (help == _excludePlanes[helphelp]) {
-                  excluded = true;
-                }
-              }
-            }
-            if(!excluded)
-              {
-                const double x = _xPos[track][help];
-                const double y = _yPos[track][help];
-                const double z = _zPos[track][help];
-                hitsarray.push_back(hit(x, y, z, help));
-              }
-          }
-          
-          gSystem->Load("libMinuit");
-          TMinuit *gMinuit = new TMinuit(4);  //initialize TMinuit with a maximum of 4 params
-          
 
-          //  set print level (-1 = quiet, 0 = normal, 1 = verbose)
-          //gMinuit->SetPrintLevel(-1);
-  
-          //gMinuit->SetFCN(fcn_wrapper);
-          
-          double arglist[10];
-          int ierflg = 0;
+      // Calculate residuals
+      FitTrack(int(_nPlanes),
+               _xPosHere,
+               _yPosHere,
+               _zPosHere,
+               _telescopeResolX,
+               _telescopeResolY,
+               Chiquare,
+               _waferResidX,
+               _waferResidY,
+               angle);
 
-   
-          // minimization strategy (1 = standard, 2 = slower)
-          arglist[0] = 2;
-          //gMinuit->mnexcm("SET STR",arglist,2,ierflg);
-          
-          // set error definition (1 = for chi square)
-          arglist[0] = 1;
-          //gMinuit->mnexcm("SET ERR",arglist,1,ierflg);
-          
-          //  Set starting values and step sizes for parameters
-          double vstart[4] = {0.0, 0.0, 0.0, 0.0};
-          double step[4] = {0.1, 0.01, 0.01, 0.01};
-          
-          //gMinuit->mnparm(0, "b0", vstart[0], step[0], 0,0,ierflg);
-          //gMinuit->mnparm(1, "b1", vstart[1], step[1], 0,0,ierflg);
-          //gMinuit->mnparm(2, "delta", vstart[2], step[2], -1.0*TMath::Pi(), 1.0*TMath::Pi(),ierflg);
-          //gMinuit->mnparm(3, "psi", vstart[3], step[3], -1.0*TMath::Pi(), 1.0*TMath::Pi(),ierflg);
-          
-          
-          
-          //gMinuit->FixParameter(2);
-          //gMinuit->FixParameter(3);
-          
-          //  Now ready for minimization step
-          arglist[0] = 8000;
-          arglist[1] = 1.0;
-          //gMinuit->mnexcm("MIGRAD", arglist ,1,ierflg);
-          
-          //gMinuit->Release(2);
-          //gMinuit->Release(3);
-          
-          //  Now ready for minimization step
-          arglist[0] = 8000;
-          arglist[1] = 1.0;
-          //gMinuit->mnexcm("MIGRAD", arglist ,1,ierflg);
-          
-          bool ok = true;
-          
-          if(ierflg != 0)
-            {
-              ok = false;
-              //      cout << "migrad flag = " << ierflg << endl;
-              //       exit(-1);
-            }
-          
-          // cout << " now minos" << endl; 
-          
-          //    calculate errors using MINOS
-          arglist[0] = 2000;
-          arglist[1] = 0.1;
-          //gMinuit->mnexcm("MINOS",arglist,1,ierflg);
-          
-          //   get results from migrad
-          double b0 = 0.0;
-          double b1 = 0.0;
-          double delta = 0.0;
-          double psi = 0.0;
-          double b0_error = 0.0;
-          double b1_error = 0.0;
-          double delta_error = 0.0;
-          double psi_error = 0.0;
-          
-          //gMinuit->GetParameter(0,b0,b0_error);
-          //gMinuit->GetParameter(1,b1,b1_error);
-          //gMinuit->GetParameter(2,delta,delta_error);
-          //gMinuit->GetParameter(3,psi,psi_error);
-          
-          if(ok)
-            {
-              const double c0 = TMath::Sin(psi);
-              const double c1 = -1.0*TMath::Cos(psi) * TMath::Sin(delta);
-              const double c2 = TMath::Cos(delta) * TMath::Cos(psi);
-              
-              const double y_a1_rec = c1 / c2;
-              const double x_a1_rec = c0 / c2;
-              
-              //    cout <<"b0 = " << b0 << " " << b0_error << endl;
-              //    cout <<"b1 = " << b1 << " " << b1_error << endl;
-              //    cout <<"c0 = " << c0  << endl;
-              //    cout <<"c1 = " << c1  << endl;
-              //    cout <<"c2 = " << c2  << endl;
-              //    cout << "check " << TMath::Sqrt(c0*c0 + c1*c1+c2*c2) << endl;
-              
-           //    const double ratio_0 = y_a1_rec / y_a1;
-//               const double ratio_1 = x_a1_rec / x_a1;
-//               const double ratio_2 = y_a0 / b1;
-//               const double ratio_3 = x_a0 / b0;
-              
-            }
-          
-          // Print results
-          double amin,edm,errdef;
-          int nvpar,nparx,icstat;
-          //   //gMinuit->mnstat(amin,edm,errdef,nvpar,nparx,icstat);
-          //   //gMinuit->mnprin(3,amin);
-          //    cout << "icstat " << icstat << endl;
- //          if(icstat != 0)
-//             {
-//               cout << "error"<< endl;
-//               exit(-1);
-//             }
-          
-          //delete gMinuit;
-#endif
-        }
-      else
-        {
-          // Calculate residuals
-          FitTrack(int(_nPlanes),
-                   _xPosHere,
-                   _yPosHere,
-                   _zPosHere,
-                   _telescopeResolX,
-                   _telescopeResolY,
-                   Chiquare,
-                   _waferResidX,
-                   _waferResidY,
-                   angle);
-        }
       streamlog_out ( MILLEMESSAGE ) << "Residuals X: ";
 
       for (int help = 0; help < _nPlanes; help++) {
@@ -1584,11 +1403,9 @@ void EUTelMille::processEvent (LCEvent * event) {
           delete [] derGL;
           delete [] label;
 
-        } else if (_alignMode == 3) {
-          
         } else {
 
-          streamlog_out ( ERROR2 ) << _alignMode << " is not a valid mode. Please choose 1,2 or 3." << endl;
+          streamlog_out ( ERROR2 ) << _alignMode << " is not a valid mode. Please choose 1 or 2." << endl;
 
         }
 
@@ -1637,7 +1454,7 @@ void EUTelMille::processEvent (LCEvent * event) {
               {
                 residx_histo->fill(_waferResidX[iDetector]);
               }
-            else {
+              else {
               streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
               streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
               _histogramSwitch = false;
@@ -1702,13 +1519,10 @@ void EUTelMille::end() {
 
   delete [] _telescopeResolY;
   delete [] _telescopeResolX;
-  delete [] _telescopeResolZ;
   delete [] _yFitPos;
   delete [] _xFitPos;
   delete [] _waferResidY;
   delete [] _waferResidX;
-  delete [] _waferResidZ;
-  
 
   // close the output file
   delete _mille;
@@ -1828,13 +1642,6 @@ void EUTelMille::end() {
               } else if (_alignMode == 2) {
                 steerFile << (counter * 2 + 1) << " 0.0 -1.0" << endl;
                 steerFile << (counter * 2 + 2) << " 0.0 -1.0" << endl;
-              } else if (_alignMode == 3) {
-                steerFile << (counter * 6 + 1) << " 0.0 -1.0" << endl;
-                steerFile << (counter * 6 + 2) << " 0.0 -1.0" << endl;
-                steerFile << (counter * 6 + 3) << " 0.0 -1.0" << endl;
-                steerFile << (counter * 6 + 4) << " 0.0 -1.0" << endl;
-                steerFile << (counter * 6 + 5) << " 0.0 -1.0" << endl;
-                steerFile << (counter * 6 + 6) << " 0.0 -1.0" << endl;
               }
               
             } else {
@@ -1861,13 +1668,6 @@ void EUTelMille::end() {
                 steerFile << (counter * 2 + 2) << " " << _pedeUserStartValuesY[help] << " 0.0" << endl;
               }
 
-            } else if (_alignMode == 3) {
-              steerFile << (counter * 6 + 1) << " 0.0 0.0" << endl;
-              steerFile << (counter * 6 + 2) << " 0.0 0.0" << endl;
-              steerFile << (counter * 6 + 3) << " 0.0 0.0" << endl;
-              steerFile << (counter * 6 + 4) << " 0.0 0.0" << endl;
-              steerFile << (counter * 6 + 5) << " 0.0 0.0" << endl;
-              steerFile << (counter * 6 + 6) << " 0.0 0.0" << endl;
             }
 
           }
