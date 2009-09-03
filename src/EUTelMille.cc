@@ -977,14 +977,14 @@ void EUTelMille::processEvent (LCEvent * event) {
       // hit list assigned to track
       std::vector<EVENT::TrackerHit*> TrackHitsHere = TrackHere->getTrackerHits();
 
-      int number_of_planes = int(TrackHitsHere.size() / 2);
+      int number_of_planes = int((TrackHitsHere.size() - _excludePlanes.size() )/ 2);
       if ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
         ++number_of_planes;
       }
       // check for a hit in every telescope plane. this needs probably
       // some further investigations. perhaps it fails if some planes
-      // were excluded in the track fitter.
-      if (_nPlanes == number_of_planes)
+      // were excluded in the track fitter. but it should work
+      if ((_nPlanes  - _excludePlanes.size())== number_of_planes)
         {
           for(size_t i =0;i < _hitCollectionName.size();i++)
             {
