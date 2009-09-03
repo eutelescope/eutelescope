@@ -981,8 +981,10 @@ void EUTelMille::processEvent (LCEvent * event) {
       if ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
         ++number_of_planes;
       }
-      // check for a hit in every telescope plane
-      if (_siPlanesParameters->getSiPlanesNumber() == number_of_planes)
+      // check for a hit in every telescope plane. this needs probably
+      // some further investigations. perhaps it fails if some planes
+      // were excluded in the track fitter.
+      if (_nPlanes == number_of_planes)
         {
           for(size_t i =0;i < _hitCollectionName.size();i++)
             {
