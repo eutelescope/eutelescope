@@ -549,7 +549,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     }
 
     //todo: declare a vector of sensormatrizes as a class member in
-    //order to not allocate a new objects for each loop iteration.
+    //order to not allocate a new object for each loop iteration.
     //sensormatrix.push_back(dim2array<bool>((unsigned int)(_maxX+1 - _minX), (unsigned int)(_maxY+1 - _minY), false));
     dim2array<bool> sensormatrix((unsigned int)(_maxX+1 - _minX), (unsigned int)(_maxY+1 - _minY), false);
 
@@ -745,13 +745,17 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                             //this is a neighbour pixel!
                             //nothing to do?
                           }
-                        //fill the pixel index in the corresponding array
-                        //for the digital fixed frame cluster
-                        clusterCandidateIndeces.push_back(index);
-                        
+                       
                         bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
                         bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
                         
+                        //fill the pixel index in the corresponding array
+                        //for the digital fixed frame cluster
+                        if(isGood)
+                          clusterCandidateIndeces.push_back(index);
+                        else
+                          clusterCandidateIndeces.push_back(-1);
+
                         if ( isGood && !isHit ) {
                         } else if (isHit) {
                           cluQuality = cluQuality | kIncompleteCluster | kMergedCluster ;
@@ -859,7 +863,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                    
                     IntVec::iterator indexIter = clusterCandidateIndeces.begin();
                     while ( indexIter != clusterCandidateIndeces.end() ) {
-                      status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+                      if((*indexIter) != -1)
+                        status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
                       ++indexIter;
                     }
                     // copy the candidate charges inside the cluster
@@ -1074,6 +1079,12 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
 
                 bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
                 bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
+
+                if(isGood)
+                  clusterCandidateIndeces.push_back(index);
+                else
+                  clusterCandidateIndeces.push_back(-1);
+
                 if ( isGood && !isHit ) {
                   // if the pixel wasn't selected, then its signal
                   // will be 0.0. Mark it in the status
@@ -1082,7 +1093,6 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
                   clusterCandidateSignal += dataVec[ index ] ;
                   clusterCandidateNoise2 += pow ( noise->getChargeValues() [ index ], 2 );
                   clusterCandidateCharges.push_back( dataVec[ index ] );
-                  clusterCandidateIndeces.push_back( index );
                 } else if ( isHit ) {
                   // this can be a good place to flag the current
                   // cluster as kMergedCluster, but it would introduce
@@ -1140,7 +1150,8 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
 
             
             while ( indexIter != clusterCandidateIndeces.end() ) {
-              status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+              if((*indexIter) != -1)
+                status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
               ++indexIter;
             }
 
@@ -1760,7 +1771,12 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 
                 bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
                 bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
-                clusterCandidateIndeces.push_back(index);
+                
+                if(isGood)
+                  clusterCandidateIndeces.push_back(index);
+                else
+                  clusterCandidateIndeces.push_back(-1);
+                
                 if ( isGood && !isHit ) {
                   clusterCandidateSignal += nzsData->getChargeValues()[index];
                   clusterCandidateNoise2 += pow(noise->getChargeValues()[index] , 2);
