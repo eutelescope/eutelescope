@@ -21,28 +21,60 @@
    
     -->
     
-	<global detectorName="EUTelescope" />
+    <global detectorName="EUTelescope" />
     <BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
     <detectors>
-        <detector name="SiPlanes" geartype="SiPlanesParameters">
-            <siplanesID ID="32" />
-            <siplanesType type="TelescopeWithDUT" />
-            <siplanesNumber number="6" />
-            
-	    <dut> <!-- z position is uncorrect and must be adjusted! -->
-                    <dut_ladder ID="6" 
-                    positionX="0.000000" positionY="0.000000" positionZ="200.000" 
-                    sizeX="2.68800" sizeY="0.67200" thickness="0.80000" 
-                    radLength="93.660734" />
-                    
-                    <dut_sensitive ID="6" positionX="0.000000"
-                    positionY="0.000000" positionZ="200.000"
-                    sizeX="2.688000" sizeY="0.6720" thickness="0.8000"
-                    npixelX="128" npixelY="128" pitchX="0.021000"
-                    pitchY="0.021000" pitchY1="0.021000" pitchY2="0.021000"  
-                    resolution="0.003000" rotation1="1.000000" rotation2="0.000000"
-                    rotation3="0.000000" rotation4="1.000000"
-                    radLength="93.660734" />
+      <detector name="SiPlanes" geartype="SiPlanesParameters">
+        <siplanesID ID="32" />
+        <siplanesType type="TelescopeWithDUT" />
+        <siplanesNumber number="6" />
+        
+	<dut> 
+          <!--
+              Let Box1 be hit by the beam first.
+                    Let us stand in front of the telescope with Box1 on the right, Box2 on the left, DUT in the middle.
+
+                    Distance Box2 to DUT case (approx. to the point where the chip hides behind): 14.70 cm = 147.0 mm
+                    Distance Box1 to DUT case (approx. to the point where the chip hides behind): 18.85 cm = 188.5 mm
+                    Thickness DUT case: 2.42 cm = 24.2 mm
+
+                    Sum: 35.97 cm = 359.7 mm
+                    Measured Box distance: 35.925 cm = 359.25 mm
+
+                    Distance DUT case (outer border, same as in measurements above, on the RIGHT side) to top of Sensor chip: 1.53 cm = 15.3 mm
+                    => Distance Box1 to top of Sensorchip: 20.38 cm ( = 18.85 cm + 1.53 cm)
+                    => distance to sensor in box1: 203.8+100.0-0.686=303.114 mm
+                -->
+
+
+                <!-- thickness DUT ladder: silicon chip and PCB = 0.15 cm = 0.08 cm Chip + 0.07 cm PCB   = 1.5 mm   -->
+                <!-- thickness DUT sensitive region _inside_ chip: 20um = 0.020 mm = 0.0020 cm           = 0.020 mm -->
+
+
+                <!--
+                    SizeX and SizeY still has to be set correctly.
+                    to ( #Pixels * PixelPitch ) ?
+                    SizeX should be alright.
+                  -->
+
+                <!--
+                    This time the pixel sensor seemed to face Box1 instead of Box2 like last time.
+                    So rotation1 should be -1 again??
+                -->
+
+                <dut_ladder ID="6" 
+                            positionX="0.000000" positionY="0.000000" positionZ="194.300" 
+                            sizeX="2.68800" sizeY="0.67200" thickness="1.5" 
+                            radLength="93.660734" />
+                
+                <dut_sensitive ID="6" positionX="0.000000"
+                               positionY="0.000000" positionZ="194.3000"
+                               sizeX="2.688000" sizeY="2.688000" thickness="0.02000"
+                               npixelX="128" npixelY="128" pitchX="0.021000"
+                               pitchY="0.021000" pitchY1="0.021000" pitchY2="0.021000"  
+                               resolution="0.003000" rotation1="-1.000000" rotation2="0.000000"
+                               rotation3="0.000000" rotation4="1.000000"
+                               radLength="93.660734" />
             </dut>
 
             <layers>
