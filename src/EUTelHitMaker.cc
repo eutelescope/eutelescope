@@ -21,6 +21,7 @@
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
+#include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelSparseCluster2Impl.h"
 #include "EUTelExceptions.h"
@@ -338,6 +339,12 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           throw UnknownDataTypeException("Pixel type unknown");
         }
 
+      } else if ( type == kEUTelBrickedClusterImpl ) { //!HACK TAKI
+
+        //  bricked cluster implementation.
+        //! Remember it can come from both RAW and ZS data!
+        cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ); //!HACK TAKI
+
       } else {
         streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
         throw UnknownDataTypeException("Cluster type unknown");
@@ -444,6 +451,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         cluster->getCenterOfGravityShift( xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
       }
 
+      
       double xCorrection = static_cast<double> (xShift) ;
       double yCorrection = static_cast<double> (yShift) ;
 

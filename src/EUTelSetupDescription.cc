@@ -57,6 +57,7 @@ EUTelSetupDescription::EUTelSetupDescription(EUTelPixelDetector * detector)  :
   else if ( typeS == "MimoTel") typeE = kMimoTel;
   else if ( typeS == "Mimosa26") typeE = kMimosa26;
   else if ( typeS == "DEPFET") typeE = kDEPFET;
+  else if ( typeS == "Taki") typeE = kTaki;
   else {
     throw UnknownDataTypeException( typeS + " is not a valid detector type." );
   }

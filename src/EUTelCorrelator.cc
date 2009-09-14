@@ -24,6 +24,7 @@
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
+#include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelExceptions.h"
 
@@ -271,6 +272,9 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
         if ( type == kEUTelDFFClusterImpl ) {
           externalCluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*>
                                                     ( externalPulse->getTrackerData()) );
+        } else if ( type == kEUTelBrickedClusterImpl ) {
+          externalCluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*>
+                                                    ( externalPulse->getTrackerData()) );
         } else if ( type == kEUTelFFClusterImpl ) {
           externalCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*>
                                                     ( externalPulse->getTrackerData()) );
@@ -323,6 +327,10 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           // we check that the type of cluster is ok
           if ( type == kEUTelDFFClusterImpl ) {
             internalCluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*>
+                                                       (internalPulse->getTrackerData()) );
+
+          } else if ( type == kEUTelBrickedClusterImpl ) {
+            internalCluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*>
                                                        (internalPulse->getTrackerData()) );
 
           } else if ( type == kEUTelFFClusterImpl ) {

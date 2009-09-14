@@ -16,6 +16,7 @@
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
+#include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelSimpleSparsePixel.h"
 #include "EUTELESCOPE.h"
@@ -156,7 +157,7 @@ void EUTelHistogramMaker::initializeGeometry( LCEvent * event ) {
   //
   // all these information are taken from the noise collection
   streamlog_out( MESSAGE2 ) << "Initializing geometry... "<< endl;
-  
+
   try {
     for(size_t i = 0; i < _noiseCollectionName.size();++i)
       {
@@ -165,18 +166,18 @@ void EUTelHistogramMaker::initializeGeometry( LCEvent * event ) {
         CellIDDecoder< TrackerDataImpl > decoder( collection );
         for ( size_t iDetector = 0 ; iDetector < collection->size(); ++iDetector ) {
           TrackerDataImpl * data = dynamic_cast< TrackerDataImpl * > ( collection->getElementAt( iDetector ) );
-          
+
           int sensorID = decoder( data ) [ "sensorID" ];
           // the look up tables
           _ancillaryMap.insert( make_pair( sensorID, iDetector ) );
           _sensorIDVec.push_back( sensorID );
-          
+
           // the boundaries
           _minX.insert( make_pair( sensorID, decoder( data ) [ "xMin" ] ) );
           _minY.insert( make_pair( sensorID, decoder( data ) [ "yMin" ] ) );
           _maxX.insert( make_pair( sensorID, decoder( data ) [ "xMax" ] ) );
           _maxY.insert( make_pair( sensorID, decoder( data ) [ "yMax" ] ) );
-          
+
         }
       }
   } catch ( lcio::DataNotAvailableException ) {
@@ -264,7 +265,11 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
       EUTelVirtualCluster * cluster;
       if ( type == kEUTelDFFClusterImpl ) {
         cluster = new EUTelDFFClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
-      } else if ( type == kEUTelFFClusterImpl ) {
+      }
+      else if ( type == kEUTelBrickedClusterImpl ) {
+        cluster = new EUTelBrickedClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
+      }
+      else if ( type == kEUTelFFClusterImpl ) {
         
         cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
         
@@ -395,8 +400,8 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
                 }
               }
           }
-        else if ( type == kEUTelFFClusterImpl ) {
-          
+                                                 //! not sure if this is 100% correct for bricked clusters here
+        else if ( type == kEUTelFFClusterImpl || type == kEUTelBrickedClusterImpl ) {
               int xClusterSize, yClusterSize;
               cluster->getClusterSize(xClusterSize, yClusterSize);
               

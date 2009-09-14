@@ -15,6 +15,7 @@
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
+#include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelSparseCluster2Impl.h"
 #include "EUTelRunHeaderImpl.h"
@@ -757,6 +758,82 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
 
       if ( type == kEUTelDFFClusterImpl )  {
         cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
+      }
+      else if ( type == kEUTelBrickedClusterImpl )  {
+        cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
+        
+        if ( _noiseRelatedCuts ) 
+          {
+            // the EUTelBrickedClusterImpl doesn't contain the noise and status 
+            // information in the TrackerData object. So this is the right
+            // place to attach to the cluster the noise information.
+            //! ---
+            //! ((NOTE)): TAKI ACTUALLY I THINK EACH CLUSTER DOES CONTAINS ITS OWN NOISE VALUES ALREADY! 
+            //! EACH CANDIDATE THAT WAS CREATED IN CLUSEARCH ALREADY HAD ITS NOISE SET PROPERLY!
+            //! NOT SURE WHAT HAPPENED TO THE STATUS, THOUGH!
+            //! WELL... THIS ROUTINE HERE SEEMS TO SET THE NOISE AGAIN BUT WILL SET NOISE = 0, IF A PIXEL IS A BAD ONE.
+            //! THIS MIGHT CAUSE THE BRICKED CLUSTER TO SEE SOME PIXELS WITH NOISE = 0 AGAIN!
+            //! ---
+
+            try 
+              {
+                LCCollectionVec * noiseCollectionVec  = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _noiseCollectionName )) ;
+                LCCollectionVec * statusCollectionVec = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _statusCollectionName )) ;
+                CellIDDecoder<TrackerDataImpl> noiseDecoder(noiseCollectionVec);
+
+                int detectorID  = cluster->getDetectorID();
+                int detectorPos = _ancillaryIndexMap[ detectorID ];
+                TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl    *> ( noiseCollectionVec->getElementAt(detectorPos) );
+                TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt(detectorPos) );
+                EUTelMatrixDecoder   noiseMatrixDecoder(noiseDecoder, noiseMatrix);
+
+                int xSeed, ySeed, xClusterSize, yClusterSize;
+                cluster->getCenterCoord(xSeed, ySeed);
+                cluster->getClusterSize(xClusterSize, yClusterSize);
+                vector<float > noiseValues;
+                for ( int yPixel = ySeed - ( yClusterSize / 2 ); yPixel <= ySeed + ( yClusterSize / 2 ); yPixel++ ) 
+                  {
+                    for ( int xPixel = xSeed - ( xClusterSize / 2 ); xPixel <= xSeed + ( xClusterSize / 2 ); xPixel++ ) 
+                      {
+
+                        // always check we are still within the sensor!!!
+                        if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <= noiseMatrixDecoder.getMaxX() ) &&
+                             ( yPixel >= noiseMatrixDecoder.getMinY() )  &&  ( yPixel <= noiseMatrixDecoder.getMaxY() ) ) 
+                          {
+                            int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
+
+                            // the corresponding position in the status matrix has to be HITPIXEL
+                            // in the EUTelClusteringProcessor, we verify also that
+                            // the pixel isHit, but this cannot be done in this
+                            // processor, since the status matrix could have been reset
+                            //
+                            // bool isHit  = ( statusMatrix->getADCValues()[index] ==
+                            // EUTELESCOPE::HITPIXEL );
+                            //
+                            bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
+                            if ( !isBad ) 
+                              {
+                                noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
+                              } 
+                            else 
+                              {
+                                noiseValues.push_back( 0. );
+                              }
+                          } 
+                        else 
+                          {
+                            noiseValues.push_back( 0. );
+                          }
+                      }
+                  }
+                cluster->setNoiseValues( noiseValues );
+              }
+            catch ( lcio::Exception& e )   
+              {
+                streamlog_out ( ERROR1 ) << e.what() << endl << "Continuing w/o noise based cuts" << endl;
+                _noiseRelatedCuts = false;
+              }
+          }
       }
       else if ( type == kEUTelFFClusterImpl )  {
         cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );

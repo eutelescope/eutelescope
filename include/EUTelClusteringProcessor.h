@@ -489,6 +489,29 @@ namespace eutelescope {
     void digitalFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
 
+    //!HACK TAKI
+    //! Methods for bricked pixel clustering
+    /*! This method is called by the processEvent method in the case
+     *  the user selected the EUTELESCOPE::BRICKEDCLUSTER algorithm for
+     *  clustering.
+     *
+     *  This algorithm is based on the reconstruction of clusters
+     *  surrounding the seed pixel in a bricked pixel structure.
+     *  Similar to fixed frame clustering.
+     *  At the moment(!) implemented for the nearest six neighbours
+     *  only!
+     *
+     *  @throw IncompatibleDataSetException in the case the two
+     *  collections are found to be incompatible
+     *
+     *  @param evt The LCIO event has passed by processEvent(LCEvent*)
+     *  @param pulse The collection of pulses to append the found
+     *  clusters.
+     */
+    void zsBrickedClustering(LCEvent * evt, LCCollectionVec * pulse);
+    void nzsBrickedClustering(LCEvent * evt, LCCollectionVec * pulse);
+
+
     //! Method for sparse pixel re-clustering
     /*! This algorithm is based on the built-in proximity clustering
      *  implemented in the EUTelSparseDataImpl class.
@@ -595,6 +618,12 @@ namespace eutelescope {
      *  assigned to a cluster, to avoid double counting, it cannot be
      *  assigned to any other clusters and is removed from further
      *  operations.
+     *
+     *  !HACK TAKI
+     *  \li <b>Bricked</b>: Selectable also using the
+     *  EUTELESCOPE::BRICKED static constant, it allows to
+     *  select clusters within a bricked pixel structure.
+     *  It will store the six surrounding pixels.
      */
     std::string _nzsClusteringAlgo;
 
@@ -612,6 +641,13 @@ namespace eutelescope {
      *  \li <b>SparseCluster2</b>:  Selectable also using the
      *  EUTELESCOPE::SPARSECLUSTER2 static constant. It works as
      *  SparseCluster but with improved performance.
+     *
+     *  !HACK TAKI
+     *  \li <b>Bricked</b>: Selectable also using the
+     *  EUTELESCOPE::BRICKED static constant, it allows to
+     *  select clusters within a bricked pixel structure.
+     *  For ZS data it will use as many pixels as it can
+     *  find around the seed pixel (up to 6).
      */
     std::string _zsClusteringAlgo;
 

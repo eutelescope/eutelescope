@@ -1,4 +1,4 @@
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog -*-
+#// -*- mode: c++; mode: auto-fill; mode: flyspell-prog -*-
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -292,6 +292,13 @@ namespace eutelescope
      */
     static const char * SPARSECLUSTER2;
 
+    //! Bricked cluster fixed frame algorithm
+    /*! For a detailed description @see
+     *  EUTelClusteringProcessor::_clusteringAlgo
+     *  HACK TAKI
+     */
+    static const char * BRICKEDCLUSTER;
+
     //! Fixed weight algorithm for the pedestal / noise update
     /*! The name for the pedestal and noise update algorithm. @see
      *  EUTelUpdatePedestalNoiseProcessor
@@ -383,7 +390,8 @@ namespace eutelescope
     kMimoTel           = 100,
     kMimosa18          = 101,
     kMimosa26          = 102,
-    kDEPFET            = 103
+    kDEPFET            = 103,
+    kTaki              = 104
   } ;
 
   //! Readout mode
@@ -538,7 +546,8 @@ namespace eutelescope
     kEUTelFFClusterImpl       = 0,
     kEUTelSparseClusterImpl   = 1,
     kEUTelSparseCluster2Impl  = 2,
-    kEUTelDFFClusterImpl       = 3,
+    kEUTelDFFClusterImpl      = 3,
+    kEUTelBrickedClusterImpl  = 4,
     // add here all the other cluster type numbering them in between 0
     // and 31 unknown
     kUnknown                  = 31

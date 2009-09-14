@@ -24,7 +24,7 @@
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
-
+#include "EUTelBrickedClusterImpl.h"
 #include "EUTelExceptions.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelMatrixDecoder.h"
@@ -129,7 +129,8 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
   registerProcessorParameter ("ClusteringAlgo",
                               "Select here which algorithm should be used for clustering.\n"
                               "Available algorithms are:\n"
-                              "-> FixedFrame: for custer with a given size",
+                              "-> FixedFrame: for custer with a given size\n"
+                              "-> BrickedCluster: for bricked clustering on raw data",
                               _nzsClusteringAlgo, string(EUTELESCOPE::FIXEDFRAME));
 
   registerProcessorParameter ("ZSClusteringAlgo",
@@ -137,8 +138,9 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
                               "Available algorithms are:\n"
                               "-> SparseCluster: for cluster in ZS frame\n"
                               "-> SparseCluster2: for cluster in ZS frame with better performance\n"
-                              "-> FixedFrame: for cluster with a given size"
-                              "-> DFixedFrame: for digital cluster with a given size",
+                              "-> FixedFrame: for cluster with a given size\n"
+                              "-> DFixedFrame: for digital cluster with a given size\n"
+                              "-> BrickedCluster: for bricked clustering on zs data\n",
                               _zsClusteringAlgo, string(EUTELESCOPE::SPARSECLUSTER));
 
   registerProcessorParameter ("FFClusterSizeX",
@@ -223,6 +225,18 @@ void EUTelClusteringProcessor::init () {
       throw InvalidParameterException("_ffYClusterSize has to be positive and odd");
     }
   }
+
+
+  if (  _nzsClusteringAlgo == EUTELESCOPE::BRICKEDCLUSTER  ||
+        _zsClusteringAlgo == EUTELESCOPE::BRICKEDCLUSTER
+        )
+    {
+      if ( ! (_ffXClusterSize == 3 ) && (_ffYClusterSize == 3 ) )
+        {
+          streamlog_out ( ERROR2 ) << "[init()] For bricked pixel clustering the cluster size has to be 3x3 at the moment(!). Sorry!";
+          throw InvalidParameterException("Set cluster size to 3x3 for bricked clustering!");
+        }
+    }
 
   // set to zero the run and event counters
   _iRun = 0;
@@ -425,6 +439,11 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
     // put here all the possible algorithm applicable to NZS data
     if ( _nzsClusteringAlgo == EUTELESCOPE::FIXEDFRAME )     fixedFrameClustering(evt, pulseCollection);
 
+    if ( _nzsClusteringAlgo == EUTELESCOPE::BRICKEDCLUSTER )
+      {
+        //streamlog_out ( MESSAGE2 ) << "DOING nzsBrickedClustering!" << endl;
+        nzsBrickedClustering(evt, pulseCollection); //force to 3x3 already done above!
+      }
   }
   if ( hasZSData ) {
     // put here all the possible algorithm applicable to ZS data
@@ -432,6 +451,11 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
     else if ( _zsClusteringAlgo == EUTELESCOPE::SPARSECLUSTER2 ) sparseClustering2(evt, pulseCollection);
     else if ( _zsClusteringAlgo == EUTELESCOPE::FIXEDFRAME )     zsFixedFrameClustering(evt, pulseCollection);
     else if ( _zsClusteringAlgo == EUTELESCOPE::DFIXEDFRAME )    digitalFixedFrameClustering(evt, pulseCollection);
+    else if ( _zsClusteringAlgo == EUTELESCOPE::BRICKEDCLUSTER )
+      {
+        //streamlog_out ( MESSAGE2 ) << "DOING zsBrickedClustering!" << endl;
+        zsBrickedClustering(evt, pulseCollection); //force to 3x3 already done above!
+      }
   }
   // if the pulseCollection is not empty add it to the event
   if ( ! pulseCollectionExists && ( pulseCollection->size() != _initialPulseCollectionSize )) {
@@ -518,7 +542,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     int clusterID = 0;
 
     // get the noise and the status matrix with the right detectorID
-    TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ]));
+    TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
     //the noise map. we only need this map for decoding issues.
     TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
         
@@ -559,13 +583,13 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
     //insert some noise pixel by hand. was only used for debugging.
     // for(int i = 0; i < 250; i++)
-//       {
-//         int   index  = matrixDecoder.getIndexFromXY( i,i );
-//         status->adcValues()[index] = EUTELESCOPE::HITPIXEL;
-//       }
+    //       {
+    //         int   index  = matrixDecoder.getIndexFromXY( i,i );
+    //         status->adcValues()[index] = EUTELESCOPE::HITPIXEL;
+    //       }
 
     // prepare a data vector mimicking the TrackerData data of the
-    // standard FixedFrameClustering. Initialize all the entries to zero.
+    // standard digitalFixedFrameClustering. Initialize all the entries to zero.
     vector<float > dataVec( status->getADCValues().size(), 0. );
 
     //seed candidates
@@ -576,6 +600,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     
     bool firstfoundhitpixel = true;
    
+    
     if ( type == kEUTelSimpleSparsePixel ) {
       // now prepare the EUTelescope interface to sparsified data.
       auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >
@@ -583,6 +608,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
       streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << _sensorID << " with "
                                << sparseData->size() << " pixels " << endl;
+
+      
 
       // loop over all pixels in the sparseData object.
       auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
@@ -752,10 +779,10 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                         //fill the pixel index in the corresponding array
                         //for the digital fixed frame cluster
                         if(isGood)
-                          clusterCandidateIndeces.push_back(index);
+                        clusterCandidateIndeces.push_back(index);
                         else
                           clusterCandidateIndeces.push_back(-1);
-
+                        
                         if ( isGood && !isHit ) {
                         } else if (isHit) {
                           cluQuality = cluQuality | kIncompleteCluster | kMergedCluster ;
@@ -796,31 +823,31 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                           }
                       }
 
- //                    //some debug output to check the CoG shift and the
-//                     //encoding of pixelmatrix, clusterCandidateCharges
-//                      cout << endl;
-//                      cout << "x=vertical, y=horizontal" << endl;
-//                      for(unsigned int j = 0; j < pixelmatrix.sizeX(); ++j)
-//                        {
-//                          cout << "  " << j ;
-//                        }
-//                      cout << endl;
-//                      for(unsigned int j = 0; j < pixelmatrix.sizeY(); ++j)
-//                        {
-//                          cout << "----";
-//                        }
-//                      cout << endl;
-//                      for(int xPixel = 0; xPixel < _ffXClusterSize; xPixel++)
-//                        {
-//                          for(int yPixel = 0; yPixel < _ffYClusterSize; yPixel++)
-//                            {
-//                              if(pixelmatrix.at(xPixel,yPixel))
-//                                cout << "  1";
-//                              else
-//                                cout << "  0";
-//                            }
-//                          cout << " | " << xPixel << endl;
-//                        }
+                    //                    //some debug output to check the CoG shift and the
+                    //                     //encoding of pixelmatrix, clusterCandidateCharges
+                    //                      cout << endl;
+                    //                      cout << "x=vertical, y=horizontal" << endl;
+                    //                      for(unsigned int j = 0; j < pixelmatrix.sizeX(); ++j)
+                    //                        {
+                    //                          cout << "  " << j ;
+                    //                        }
+                    //                      cout << endl;
+                    //                      for(unsigned int j = 0; j < pixelmatrix.sizeY(); ++j)
+                    //                        {
+                    //                          cout << "----";
+                    //                        }
+                    //                      cout << endl;
+                    //                      for(int xPixel = 0; xPixel < _ffXClusterSize; xPixel++)
+                    //                        {
+                    //                          for(int yPixel = 0; yPixel < _ffYClusterSize; yPixel++)
+                    //                            {
+                    //                              if(pixelmatrix.at(xPixel,yPixel))
+                    //                                cout << "  1";
+                    //                              else
+                    //                                cout << "  0";
+                    //                            }
+                    //                          cout << " | " << xPixel << endl;
+                    //                        }
                     
 
                     //check whether this cluster is partly outside
@@ -830,7 +857,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                        || (seedX + stepx ) > _maxX
                        || (seedY - stepy ) < _minY
                        || (seedY + stepy ) > _maxY
-                       )
+                        )
                       cluQuality = cluQuality | kBorderCluster;
 
                     //the final cluster creation
@@ -864,7 +891,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                     IntVec::iterator indexIter = clusterCandidateIndeces.begin();
                     while ( indexIter != clusterCandidateIndeces.end() ) {
                       if((*indexIter) != -1)
-                        status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+                      status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
                       ++indexIter;
                     }
                     // copy the candidate charges inside the cluster
@@ -873,10 +900,10 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                     
                     EUTelDFFClusterImpl * eutelCluster = new EUTelDFFClusterImpl( cluster );
                     pulse->setCharge(eutelCluster->getTotalCharge());
-//                     float cogx =0.0;
-//                     float cogy = 0.0;
-//                     eutelCluster->getCenterOfGravityShift(cogx, cogy);
-//                     cout << "CoG shift = " << cogx << " " << cogy << endl;
+                    //                     float cogx =0.0;
+                    //                     float cogy = 0.0;
+                    //                     eutelCluster->getCenterOfGravityShift(cogx, cogy);
+                    //                     cout << "CoG shift = " << cogx << " " << cogy << endl;
                     delete eutelCluster;
 
                     pulse->setQuality(static_cast<int>(cluQuality));
@@ -900,9 +927,9 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
   }
   // if the sparseClusterCollectionVec isn't empty add it to the
   // current event. The pulse collection will be added afterwards
- //  if ( sparseClusterCollectionVec->size() != 0 ) {
-//     evt->addCollection( sparseClusterCollectionVec.release(), "original_zsdata" );
-//   }
+  //  if ( sparseClusterCollectionVec->size() != 0 ) {
+  //     evt->addCollection( sparseClusterCollectionVec.release(), "original_zsdata" );
+  //   }
 
   // if the sparseClusterCollectionVec isn't empty add it to the
   // current event. The pulse collection will be added afterwards
@@ -1034,6 +1061,8 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
         int   index  = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
         float signal = sparsePixel->getSignal();
         dataVec[ index  ] = signal;
+
+
         if (  ( signal  > _ffSeedCut * noise->getChargeValues()[ index ] ) &&
               ( status->getADCValues()[ index ] == EUTELESCOPE::GOODPIXEL ) ) {
           seedCandidateMap.insert ( make_pair ( signal, index ) );
@@ -1151,7 +1180,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
             
             while ( indexIter != clusterCandidateIndeces.end() ) {
               if((*indexIter) != -1)
-                status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+              status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
               ++indexIter;
             }
 
@@ -1183,8 +1212,10 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
         ++rMapIter;
       }
     }
-  }
+    
 
+  }
+  
   // if the sparseClusterCollectionVec isn't empty add it to the
   // current event. The pulse collection will be added afterwards
   if ( ! isDummyAlreadyExisting ) {
@@ -1198,6 +1229,378 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
 }
 
 
+void EUTelClusteringProcessor::zsBrickedClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
+
+  streamlog_out ( DEBUG4 ) << "Looking for clusters in the zs data with zsBrickedClustering algorithm " << endl;
+
+  // get the collections of interest from the event.
+  LCCollectionVec * zsInputCollectionVec  = dynamic_cast < LCCollectionVec * > (evt->getCollection( _zsDataCollectionName ));
+  LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
+  LCCollectionVec * statusCollectionVec   = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
+  // prepare some decoders
+  CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputCollectionVec );
+  CellIDDecoder<TrackerDataImpl> noiseDecoder( noiseCollectionVec );
+
+  // this is the equivalent of the dummyCollection in the fixed frame
+  // clustering. BTW we should consider changing that "meaningful"
+  // name! This contains cluster and not yet pulses
+  bool isDummyAlreadyExisting = false;
+  LCCollectionVec * sparseClusterCollectionVec = NULL;
+  try
+    {
+      sparseClusterCollectionVec = dynamic_cast< LCCollectionVec* > ( evt->getCollection( "original_zsdata") );
+      isDummyAlreadyExisting = true ;
+    }
+  catch (lcio::DataNotAvailableException& e)
+    {
+      sparseClusterCollectionVec =  new LCCollectionVec(LCIO::TRACKERDATA);
+      isDummyAlreadyExisting = false;
+    }
+  CellIDEncoder<TrackerDataImpl> idZSClusterEncoder( EUTELESCOPE::ZSCLUSTERDEFAULTENCODING, sparseClusterCollectionVec  );
+
+  // prepare an encoder also for the pulse collection
+  CellIDEncoder<TrackerPulseImpl> idZSPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
+
+  // utility
+  short limitExceed    = 0;
+
+  if ( isFirstEvent() )
+    {
+
+      // For the time being nothing to do specifically in the first
+      // event.
+
+    }
+
+  for ( unsigned int i = 0 ; i < zsInputCollectionVec->size(); i++ )
+    {
+      // get the TrackerData and guess which kind of sparsified data it
+      // contains.
+      TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
+      SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
+      int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
+
+      // now that we know which is the sensorID, we can ask to GEAR
+      // which are the minX, minY, maxX and maxY.
+      int minX, minY, maxX, maxY;
+      minX = 0;
+      minY = 0;
+
+      // this sensorID can be either a reference plane or a DUT, do it
+      // differently...
+      if ( _layerIndexMap.find( sensorID ) != _layerIndexMap.end() )
+        {
+          // this is a reference plane
+          maxX = _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ sensorID ] ) - 1;
+          maxY = _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ sensorID ] ) - 1;
+        }
+      else if ( _dutLayerIndexMap.find( sensorID ) != _dutLayerIndexMap.end() )
+        {
+          // ok it is a DUT plane
+          maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
+          maxY = _siPlanesLayerLayout->getDUTSensitiveNpixelY() - 1;
+        }
+      else
+        {
+          // this is not a reference plane neither a DUT... what's that?
+          throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
+        }
+
+      // reset the cluster counter for the clusterID
+      int clusterID = 0;
+
+      // get the noise and the status matrix with the right detectorID
+      TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
+      TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
+
+      // reset the status
+      resetStatus(status);
+
+      // prepare the matrix decoder
+      EUTelMatrixDecoder matrixDecoder( noiseDecoder , noise );
+
+      // prepare a data vector mimicking the TrackerData data of the
+      // standard FixedFrameClustering. Initialize all the entries to zero.
+      vector<float > dataVec( noise->getChargeValues().size(), 0. );
+
+      // prepare a multimap for the seed candidates
+      multimap<float , int > seedCandidateMap;
+
+      if ( type == kEUTelSimpleSparsePixel )
+        {
+
+          // now prepare the EUTelescope interface to sparsified data.
+          auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >
+            sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+
+          streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << sensorID << " with "
+                                   << sparseData->size() << " pixels " << endl;
+
+          // loop over all pixels in the sparseData object.
+          auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
+          for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ )
+            {
+              sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
+              int   index  = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
+              float signal = sparsePixel->getSignal();
+              dataVec[ index ] = signal;
+              if (  ( signal  > _ffSeedCut * noise->getChargeValues()[ index ] ) &&
+                    ( status->getADCValues()[ index ] == EUTELESCOPE::GOODPIXEL ) )
+                {
+                  seedCandidateMap.insert ( make_pair ( signal, index ) );
+                  streamlog_out ( DEBUG1 ) << "Added pixel " << sparsePixel->getXCoord()
+                                           << ", " << sparsePixel->getYCoord()
+                                           << " with signal " << signal
+                                           << " to the seedCandidateMap" << endl;
+                }
+
+            }
+        }
+      else
+        {
+          throw UnknownDataTypeException("Unknown sparsified pixel");
+        }
+
+      if ( seedCandidateMap.size() != 0 )
+        {
+
+          streamlog_out ( DEBUG0 ) << "  Seed candidates " << seedCandidateMap.size() << endl;
+
+          // now build up a cluster for each seed candidate
+          multimap<float, int >::reverse_iterator rMapIter = seedCandidateMap.rbegin();
+          while ( rMapIter != seedCandidateMap.rend() )
+            {
+              if ( status->adcValues()[ (*rMapIter).second ] == EUTELESCOPE::GOODPIXEL )
+                {
+                  // if we enter here, this means that at least the seed pixel
+                  // wasn't added yet to another cluster.  Note that now we need
+                  // to build a candidate cluster that has to pass the
+                  // clusterCut to be considered a good cluster
+                  ClusterQuality cluQuality = kGoodCluster; // (so far)
+
+                  //gather signal and noise around seed pixel:
+                  // prepare a vector to store the noise values
+                  vector<float > noiseValueVec;
+                  FloatVec clusterCandidateCharges;
+                  IntVec   clusterCandidateIndeces;
+
+                  // start looping around the seed pixel. Remember that the seed
+                  // pixel has to stay in the center of cluster
+                  int seedX, seedY;
+                  matrixDecoder.getXYFromIndex ( (*rMapIter).second, seedX, seedY );
+
+                  for (int yPixel = seedY - (_ffYClusterSize / 2); yPixel <= seedY + (_ffYClusterSize / 2); yPixel++)
+                    {
+                      //!HACK TAKI
+                      //streamlog_out ( MESSAGE4 ) <<
+                      //" y=" << setw(4) << yPixel << ", x= (" << seedX - (_ffXClusterSize / 2) << "-"<< seedX + (_ffXClusterSize / 2) << ") \t";
+                      //!HACK TAKI
+
+                      for (int xPixel =  seedX - (_ffXClusterSize / 2); xPixel <= seedX + (_ffXClusterSize / 2); xPixel++)
+                        {
+                          // always check we are still within the sensor!!!
+                          if ( ( xPixel >= minX )  &&  ( xPixel <= maxX ) &&
+                               ( yPixel >= minY )  &&  ( yPixel <= maxY ) )
+                            {
+
+                              //linear (1D) index of current (2D) pixel
+                              int index = matrixDecoder.getIndexFromXY(xPixel, yPixel);
+
+                              //get noise for each and every pixel! (because it's available)
+                              noiseValueVec.push_back(noise->getChargeValues()[ index ]);
+                              clusterCandidateIndeces.push_back( index ); //used to flag used pixels afterwards!
+
+                              bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  ); //this is set for pixels already used for another cluster
+                              bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
+
+                              if ( isGood && !isHit ) //normal case
+                                {
+                                  clusterCandidateCharges.push_back( dataVec[ index ] );
+
+                                  // if the pixel wasn't selected, then its signal
+                                  // will be 0.0. Mark it in the status
+                                  if ( dataVec[ index ] == 0.0 )
+                                    status->adcValues()[ index ] = EUTELESCOPE::MISSINGPIXEL ;
+
+                                  //!HACK TAKI
+                                  //streamlog_out ( MESSAGE4 ) << setw(4) << dataVec[ index ];
+                                  //!HACK TAKI
+
+                                }
+                              else if ( isHit )
+                                {
+                                  // this can be a good place to flag the current
+                                  // cluster as kMergedCluster, but it would introduce
+                                  // a bias since the at least another cluster (the
+                                  // one which this pixel belong to) is not flagged.
+                                  //
+                                  // In order to flag all merged clusters and possibly
+                                  // try to separate the different contributions use
+                                  // the EUTelSeparateClusterProcessor. In this
+                                  // processor not all the merged clusters will be
+                                  // flagged as kMergedCluster | kIncompleteCluster
+                                  cluQuality = cluQuality | kIncompleteCluster | kMergedCluster ;
+                                  clusterCandidateCharges.push_back(0.);
+                                }
+                              else if ( !isGood )
+                                {
+                                  cluQuality = cluQuality | kIncompleteCluster;
+                                  clusterCandidateCharges.push_back(0.);
+                                }
+                            }
+                          else //the pixel was outside the matrix!
+                            {
+                              //!no index to push back here
+                              cluQuality = cluQuality | kBorderCluster;
+                              clusterCandidateCharges.push_back(0.);
+                              noiseValueVec.push_back(0.);
+                            }
+                        }
+                      //!HACK TAKI
+                      //streamlog_out ( MESSAGE4 ) << endl;
+                      //!HACK TAKI
+                    } //END  //gathering values  //for (int yPixel = seedY - (_ffYClusterSize / 2); yPixel <= seedY + (_ffYClusterSize / 2); yPixel++)
+
+                  //! build a cluster candidate object from the values obtained
+                  if ( ! ( (clusterCandidateCharges.size()==9)&&(noiseValueVec.size()==9) ) )
+                    {
+                      //the crucial one is clusterCandidateCharges!
+                      streamlog_out ( ERROR2 ) << "In event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+                                               << " on detector " << sensorID << ":" << endl
+                                               << "NOT ENOUGH/TOO MUCH DATA GATHERED TO FORM A 3x3 CLUSTER!! SORRY" << endl
+                                               << "There should be 9 noise values,            but there are" << noiseValueVec.size() << "."<< endl
+                                               << "There should be 9 signal values,           but there are" << clusterCandidateCharges.size() << "."<< endl
+                                               << "There are " << clusterCandidateIndeces.size() << " candidate pixel indeces." << endl;
+                      throw IncompatibleDataSetException("NOT ENOUGH/TOO MUCH DATA GATHERED TO FORM A 3x3 CLUSTER");
+                    }
+
+                  // the final result of the clustering will enter in a
+                  // TrackerPulseImpl in order to be algorithm independent
+                  TrackerPulseImpl* pulse = new TrackerPulseImpl; //this will be deleted if the candidate does NOT make it through the cluster cut check, otherwise it will be added to a collection
+                  CellIDEncoder<TrackerPulseImpl> idPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
+                  idPulseEncoder["sensorID"]      = sensorID;
+                  idPulseEncoder["clusterID"]     = clusterID;
+                  idPulseEncoder["xSeed"]         = seedX;
+                  idPulseEncoder["ySeed"]         = seedY;
+                  idPulseEncoder["xCluSize"]      = _ffXClusterSize;
+                  idPulseEncoder["yCluSize"]      = _ffYClusterSize;
+                  //streamlog_out (MESSAGE2) << "  idPulseEncoder:   setting: _ffXClusterSize=" <<  _ffXClusterSize << " _ffYClusterSize " << _ffYClusterSize << endl;
+                  idPulseEncoder["type"]          = static_cast<int>(kEUTelBrickedClusterImpl);
+                  idPulseEncoder.setCellID(pulse);
+
+                  TrackerDataImpl* clusterData = new TrackerDataImpl; //this will be deleted if the candidate does NOT make it through the cluster cut check, otherwise it will be added to a collection
+                  CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec );
+                  idClusterEncoder["sensorID"]      = sensorID;
+                  idClusterEncoder["clusterID"]     = clusterID;
+                  idClusterEncoder["xSeed"]         = seedX;
+                  idClusterEncoder["ySeed"]         = seedY;
+                  idClusterEncoder["xCluSize"]      = _ffXClusterSize;
+                  idClusterEncoder["yCluSize"]      = _ffYClusterSize;
+                  //streamlog_out (MESSAGE2) << "  idClusterEncoder:   setting: _ffXClusterSize=" <<  _ffXClusterSize << " _ffYClusterSize " << _ffYClusterSize << endl;
+                  idClusterEncoder["quality"]       = static_cast<int>(cluQuality);
+                  idClusterEncoder.setCellID(clusterData);
+
+
+                  clusterData->setChargeValues(clusterCandidateCharges); //copy data in
+                  EUTelBrickedClusterImpl* brickedClusterCandidate = new EUTelBrickedClusterImpl(clusterData); //this will be deleted in any case
+                  brickedClusterCandidate->setNoiseValues(noiseValueVec);
+                  pulse->setCharge(brickedClusterCandidate->getTotalCharge());
+
+
+                  // we need to validate the cluster candidate:
+                  //if ( brickedClusterCandidate->getClusterSNR() > _ffClusterCut )
+                  if ( brickedClusterCandidate->getClusterSNR(3) > _ffClusterCut ) //!HACK TAKI !! important
+                    {
+                      // the cluster candidate is a good cluster
+                      // mark all pixels belonging to the cluster as hit
+
+                      //! need to leave a few pixels untouched: (again this is only the 3x3 implementation with even rows skewed left!!)
+                      int indexToSkip1, indexToSkip2;
+                      if (seedY % 2 == 0)
+                        {
+                          indexToSkip1 = 2; //3rd pixel = top right
+                          indexToSkip2 = 8; //9th pixel = bottom right
+                        }
+                      else
+                        {
+                          indexToSkip1 = 0; //1st pixel = top left
+                          indexToSkip2 = 6; //7th pixel = bottom left
+                        }
+
+                      IntVec::iterator indexIter = clusterCandidateIndeces.begin();
+                      while ( indexIter != clusterCandidateIndeces.end() )
+                        {
+                          if (indexIter == clusterCandidateIndeces.begin()+indexToSkip1
+                              ||
+                              indexIter == clusterCandidateIndeces.begin()+indexToSkip2)
+                            {
+                              //nothing
+                            }
+                          else
+                            {
+                              status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+                            }
+                          ++indexIter;
+                        }
+
+                      //!HACK TAKI DEBUG OUTPUT
+                      /*
+                        streamlog_out (MESSAGE4) << "=== CREATED A CLUSTER THAT MADE IT THROUGH THE CLUSTER_CUT_CHECK ===" << endl;
+                        streamlog_out (MESSAGE4) << " == INFO BEGIN:" << endl;
+                        streamlog_out (MESSAGE4) << "  = Run#: " << evt->getRunNumber() << " Evt#: " << evt->getEventNumber() << " Clu_ID: " << clusterID << endl;
+                        brickedClusterCandidate->debugOutput();
+                        streamlog_out (MESSAGE4) << " == INFO END." << endl;
+                      */
+                      //!HACK TAKI DEBUG OUTPUT
+
+                      sparseClusterCollectionVec->push_back(clusterData); //taki: don't really understand, what this is good for
+                      pulse->setQuality(static_cast<int>(cluQuality));
+                      pulse->setTrackerData(clusterData);
+                      pulseCollection->push_back(pulse);
+
+                      // increment the cluster counters
+                      _totClusterMap[ sensorID ] += 1;
+                      ++clusterID;
+                      if ( clusterID >= 256 )
+                        {
+                          ++limitExceed;
+                          --clusterID;
+                          streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+                                                     << " on detector " << sensorID
+                                                     << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
+                        }
+                    } //END: if ( brickedClusterCandidate->getClusterSNR() > _ffClusterCut )
+                  else
+                    {
+                      delete clusterData;
+                      delete pulse;
+                    }
+
+                  delete brickedClusterCandidate;
+
+                } //END: if ( currentSeedpixelcandidate == EUTELESCOPE::GOODPIXEL )
+
+              ++rMapIter;
+
+            } //END: while (not all seed candidates in the map have been processed) ((while ( rMapIter != seedCandidateMap.rend() )))
+        } //END: if ( seedCandidateMap.size() != 0 )
+    } //for ( unsigned int i = 0 ; i < zsInputCollectionVec->size(); i++ )
+
+  // if the sparseClusterCollectionVec isn't empty add it to the
+  // current event. The pulse collection will be added afterwards
+  if ( ! isDummyAlreadyExisting )
+    {
+      if ( sparseClusterCollectionVec->size() != 0 )
+        {
+          evt->addCollection( sparseClusterCollectionVec, "original_zsdata" );
+        }
+      else
+        {
+          delete sparseClusterCollectionVec;
+        }
+    }
+
+}
 
 void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
 
@@ -1248,7 +1651,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
     int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
- //if this is an excluded sensor go to the next element
+    //if this is an excluded sensor go to the next element
     bool foundexcludedsensor = false;
     for(size_t i = 0; i < _ExcludedPlanes.size(); ++i)
       {
@@ -1393,7 +1796,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
   // if the sparseClusterCollectionVec isn't empty add it to the
   // current event. The pulse collection will be added afterwards
   if ( ! isDummyAlreadyExisting ) {
-  if ( sparseClusterCollectionVec->size() != 0 ) {
+    if ( sparseClusterCollectionVec->size() != 0 ) {
       evt->addCollection( sparseClusterCollectionVec, "original_zsdata" );
     } else {
       delete sparseClusterCollectionVec;
@@ -1417,7 +1820,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
   // this is the equivalent of the dummyCollection in the fixed frame
   // clustering. BTW we should consider changing that "meaningful"
   // name! This contains cluster and not yet pulses
-    bool isDummyAlreadyExisting = false;
+  bool isDummyAlreadyExisting = false;
   LCCollectionVec * sparseClusterCollectionVec = NULL;
   try {
     sparseClusterCollectionVec = dynamic_cast< LCCollectionVec* > ( evt->getCollection( "original_zsdata") );
@@ -1450,7 +1853,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
     int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
- //if this is an excluded sensor go to the next element
+    //if this is an excluded sensor go to the next element
     bool foundexcludedsensor = false;
     for(size_t i = 0; i < _ExcludedPlanes.size(); ++i)
       {
@@ -1593,7 +1996,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
   // if the sparseClusterCollectionVec isn't empty add it to the
   // current event. The pulse collection will be added afterwards
   if ( ! isDummyAlreadyExisting ) {
-  if ( sparseClusterCollectionVec->size() != 0 ) {
+    if ( sparseClusterCollectionVec->size() != 0 ) {
       evt->addCollection( sparseClusterCollectionVec, "original_zsdata" );
     } else {
       delete sparseClusterCollectionVec;
@@ -1621,17 +2024,17 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     for ( unsigned int i = 0 ; i < nzsInputCollectionVec->size(); i++ ) {
       TrackerDataImpl    * nzsData = dynamic_cast<TrackerDataImpl* > ( nzsInputCollectionVec->getElementAt( i ) );
       int detectorID     = cellDecoder( nzsData ) ["sensorID"];
- //if this is an excluded sensor go to the next element
-    bool foundexcludedsensor = false;
-    for(size_t i = 0; i < _ExcludedPlanes.size(); ++i)
-      {
-        if(_ExcludedPlanes[i] == detectorID)
-          {
-            foundexcludedsensor = true; 
-          }
-      }
-    if(foundexcludedsensor)
-      continue;
+      //if this is an excluded sensor go to the next element
+      bool foundexcludedsensor = false;
+      for(size_t i = 0; i < _ExcludedPlanes.size(); ++i)
+        {
+          if(_ExcludedPlanes[i] == detectorID)
+            {
+              foundexcludedsensor = true; 
+            }
+        }
+      if(foundexcludedsensor)
+        continue;
       TrackerDataImpl    * noise   = dynamic_cast<TrackerDataImpl* >    ( noiseCollectionVec->getElementAt( _ancillaryIndexMap[ detectorID ] ) );
       TrackerRawDataImpl * status  = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt( _ancillaryIndexMap[ detectorID ] ) );
 
@@ -1667,7 +2070,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     // get the calibrated data
     TrackerDataImpl    * nzsData = dynamic_cast<TrackerDataImpl*>  (nzsInputCollectionVec->getElementAt( i ) );
     int sensorID                 = cellDecoder( nzsData ) ["sensorID"];
- //if this is an excluded sensor go to the next element
+    //if this is an excluded sensor go to the next element
     bool foundexcludedsensor = false;
     for(size_t i = 0; i < _ExcludedPlanes.size(); ++i)
       {
@@ -1773,7 +2176,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
                 bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
                 
                 if(isGood)
-                  clusterCandidateIndeces.push_back(index);
+                clusterCandidateIndeces.push_back(index);
                 else
                   clusterCandidateIndeces.push_back(-1);
                 
@@ -1897,15 +2300,414 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
   }
 
   if ( ! isDummyAlreadyExisting ) {
-  if ( dummyCollection->size() != 0 ) {
-    evt->addCollection(dummyCollection,_dummyCollectionName);
-  } else {
-    delete dummyCollection;
-  }
+    if ( dummyCollection->size() != 0 ) {
+      evt->addCollection(dummyCollection,_dummyCollectionName);
+    } else {
+      delete dummyCollection;
+    }
   }
 
 }
 
+void EUTelClusteringProcessor::nzsBrickedClustering(LCEvent * evt, LCCollectionVec * pulseCollection) 
+{
+  streamlog_out ( DEBUG4 ) << "Looking for clusters in the RAW data with nzsBrickedClustering algorithm " << endl;
+
+  // get the collections of interest from the event.
+  LCCollectionVec * nzsInputCollectionVec  = dynamic_cast < LCCollectionVec * > (evt->getCollection( _nzsDataCollectionName ));
+  LCCollectionVec * noiseCollectionVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
+  LCCollectionVec * statusCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_statusCollectionName));
+
+  CellIDDecoder<TrackerDataImpl> cellDecoder( nzsInputCollectionVec );
+
+  if (isFirstEvent())
+    {
+      // check if for each TrackerData into the NZS corresponds one
+      // TrackerData with noise information having the same number of
+      // pixels.
+
+      for ( unsigned int i = 0 ; i < nzsInputCollectionVec->size(); i++ )
+        {
+          TrackerDataImpl    * nzsData = dynamic_cast<TrackerDataImpl* > ( nzsInputCollectionVec->getElementAt( i ) );
+          int detectorID     = cellDecoder( nzsData ) ["sensorID"];
+
+          TrackerDataImpl    * noise   = dynamic_cast<TrackerDataImpl* >    ( noiseCollectionVec->getElementAt( _ancillaryIndexMap[ detectorID ] ) );
+          TrackerRawDataImpl * status  = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt( _ancillaryIndexMap[ detectorID ] ) );
+
+          if ( ( noise->chargeValues().size() != status->adcValues().size() ) ||
+               ( noise->chargeValues().size() != nzsData->chargeValues().size() ) )
+            {
+              throw IncompatibleDataSetException("NZS data and noise/status size mismatch");
+            }
+        }
+      //DEBUG:
+      //logfile.open("clustering.log");
+    }
+
+#ifdef MARLINDEBUG
+  //DEBUG:
+  //message<DEBUG> ( logfile << "Event " << _iEvt );
+#endif
+
+  streamlog_out ( DEBUG0 ) << "nzsBrickedClustering: Event " << _iEvt << endl;
+
+
+  bool isDummyAlreadyExisting = false;
+  LCCollectionVec * dummyCollection = NULL;
+  try
+    {
+      dummyCollection = dynamic_cast< LCCollectionVec* > ( evt->getCollection( _dummyCollectionName ) );
+      isDummyAlreadyExisting = true;
+    }
+  catch (lcio::DataNotAvailableException& e)
+    {
+      dummyCollection =  new LCCollectionVec(LCIO::TRACKERDATA);
+      isDummyAlreadyExisting = false;
+    }
+
+  // prepare an encoder also for the pulse collection
+  CellIDEncoder<TrackerPulseImpl> idZSPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
+
+
+  // utility
+  short limitExceed    = 0;
+  if ( isFirstEvent() )
+    {
+      // For the time being nothing to do specifically in the first
+      // event.
+    }
+
+
+  for ( int i = 0; i < nzsInputCollectionVec->getNumberOfElements(); i++)
+    {
+      // get the calibrated data
+      TrackerDataImpl    * nzsData = dynamic_cast<TrackerDataImpl*>  (nzsInputCollectionVec->getElementAt( i ) );
+      EUTelMatrixDecoder matrixDecoder(cellDecoder, nzsData);
+      int sensorID                 = static_cast<int > ( cellDecoder( nzsData )["sensorID"] );
+
+      // now that we know which is the sensorID, we can ask to GEAR
+      // which are the minX, minY, maxX and maxY.
+      int minX, minY, maxX, maxY;
+      minX = 0;
+      minY = 0;
+
+      // this sensorID can be either a reference plane or a DUT, do it
+      // differently...
+      if ( _layerIndexMap.find( sensorID ) != _layerIndexMap.end() )
+        {
+          // this is a reference plane
+          maxX = _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ sensorID ] ) - 1;
+          maxY = _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ sensorID ] ) - 1;
+        }
+      else if ( _dutLayerIndexMap.find( sensorID ) != _dutLayerIndexMap.end() )
+        {
+          // ok it is a DUT plane
+          maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
+          maxY = _siPlanesLayerLayout->getDUTSensitiveNpixelY() - 1;
+        }
+      else
+        {
+          // this is not a reference plane neither a DUT... what's that?
+          throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
+        }
+
+      // get the noise and the status matrix with the right detectorID
+      TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
+      TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
+
+      // reset the cluster counter for the clusterID
+      int clusterID = 0;
+
+      // reset the status
+      resetStatus(status);
+
+      // prepare a multimap for the seed candidates
+      multimap<float , int > seedCandidateMap;
+
+      // fill the seed candidate map
+      for (unsigned int iPixel = 0; iPixel < nzsData->getChargeValues().size(); iPixel++)
+        {
+          if (status->getADCValues()[iPixel] == EUTELESCOPE::GOODPIXEL)
+            {
+              //! CUT 1
+              if ( nzsData->getChargeValues()[iPixel] > _ffSeedCut * noise->getChargeValues()[iPixel])
+                {
+                  seedCandidateMap.insert(make_pair( nzsData->getChargeValues()[iPixel], iPixel));
+                  streamlog_out ( MESSAGE2 )
+                    << "Added pixel at (index=" << iPixel
+                    << ") with signal " << nzsData->getChargeValues()[iPixel]
+                    << " to the seedCandidateMap" << endl;
+
+//                    if ( noise->getChargeValues()[ iPixel ] < 0.01 )
+//                     {
+//                       streamlog_out ( ERROR2 )    << "ZERO NOISE SEED PIXEL ADDED!"
+//                                                   << "\n x=" << sparsePixel->getXCoord()
+//                                                   << "\n y=" << sparsePixel->getYCoord()
+//                                                   << "\n amp=" << signal
+//                                                   << "\n status=" << status->getADCValues()[ index ]
+//                                                   <<    " GOODP   =  0,"
+//                                                   <<    " BAD     =  1,"
+//                                                   <<    " HIT     = -1,"
+//                                                   <<    " MISSING =  2,"
+//                                                   <<    " FIRING  =  3.";
+//                     }
+                }
+            }
+        }
+
+      streamlog_out ( DEBUG0 ) << "  Number of seed candidates: " << seedCandidateMap.size() << endl;
+
+      if ( seedCandidateMap.size() != 0 )
+        {
+          // now build up a cluster for each seed candidate
+          multimap<float, int >::reverse_iterator rMapIter = seedCandidateMap.rbegin();
+          while ( rMapIter != seedCandidateMap.rend() )
+            {
+              if ( status->adcValues()[ (*rMapIter).second ] == EUTELESCOPE::GOODPIXEL )
+                {
+                  // if we enter here, this means that at least the seed pixel
+                  // wasn't added yet to another cluster.  Note that now we need
+                  // to build a candidate cluster that has to pass the
+                  // clusterCut to be considered a good cluster
+                  ClusterQuality cluQuality = kGoodCluster; // (so far)
+
+                  //gather signal and noise around seed pixel:
+                  // prepare a vector to store the noise values
+                  vector<float > noiseValueVec;
+                  FloatVec clusterCandidateCharges;
+                  IntVec   clusterCandidateIndeces;
+
+                  // start looping around the seed pixel. Remember that the seed
+                  // pixel has to stay in the center of cluster
+                  int seedX, seedY;
+                  matrixDecoder.getXYFromIndex ( (*rMapIter).second, seedX, seedY );
+
+                  for (int yPixel = seedY - (_ffYClusterSize / 2); yPixel <= seedY + (_ffYClusterSize / 2); yPixel++)
+                    {
+                      //!HACK TAKI
+                      //streamlog_out ( MESSAGE4 ) <<
+                      //" y=" << setw(4) << yPixel << ", x= (" << seedX - (_ffXClusterSize / 2) << "-"<< seedX + (_ffXClusterSize / 2) << ") \t";
+                      //!HACK TAKI
+
+                      for (int xPixel =  seedX - (_ffXClusterSize / 2); xPixel <= seedX + (_ffXClusterSize / 2); xPixel++)
+                        {
+                          // always check we are still within the sensor!!!
+                          if ( ( xPixel >= minX )  &&  ( xPixel <= maxX ) &&
+                               ( yPixel >= minY )  &&  ( yPixel <= maxY ) )
+                            {
+
+                              //linear (1D) index of current (2D) pixel
+                              int index = matrixDecoder.getIndexFromXY(xPixel, yPixel);
+
+                              //get noise for each and every pixel! (because it's available)
+                              noiseValueVec.push_back(noise->getChargeValues()[ index ]);
+
+                              bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  ); //this is set for pixels already used for another cluster
+                              bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
+
+                              if ( isGood && !isHit ) //normal case
+                                {
+                                  clusterCandidateCharges.push_back( nzsData->getChargeValues()[index] );
+                                  clusterCandidateIndeces.push_back( index ); //used to flag used pixels afterwards!
+
+                                  //no need to check the signal presence here
+                                  //(compare to zs (bricked) clustering where we take a look, if dataVec[...] has changed here!)
+
+                                  //!HACK TAKI
+                                  //streamlog_out ( MESSAGE4 ) << setw(4) << dataVec[ index ];
+                                  //!HACK TAKI
+
+                                }
+                              else if ( isHit )
+                                {
+                                  // this can be a good place to flag the current
+                                  // cluster as kMergedCluster, but it would introduce
+                                  // a bias since the at least another cluster (the
+                                  // one which this pixel belong to) is not flagged.
+                                  //
+                                  // In order to flag all merged clusters and possibly
+                                  // try to separate the different contributions use
+                                  // the EUTelSeparateClusterProcessor. In this
+                                  // processor not all the merged clusters will be
+                                  // flagged as kMergedCluster | kIncompleteCluster
+                                  cluQuality = cluQuality | kIncompleteCluster | kMergedCluster ;
+                                  clusterCandidateCharges.push_back(0.0);
+                                  clusterCandidateIndeces.push_back( -1 ); //used to flag used pixels afterwards!
+                                }
+                              else if ( !isGood )
+                                {
+                                  cluQuality = cluQuality | kIncompleteCluster;
+                                  clusterCandidateCharges.push_back(0.0);
+                                  clusterCandidateIndeces.push_back( -1 ); //used to flag used pixels afterwards!
+                                }
+                            }
+                          else //the pixel was outside the matrix!
+                            {
+                              //!no index to push back here, still have to push something in!
+                              clusterCandidateIndeces.push_back( -1 ); //used to flag used pixels afterwards!
+                              cluQuality = cluQuality | kBorderCluster;
+                              clusterCandidateCharges.push_back(0.0);
+                              noiseValueVec.push_back(0.0);
+                            }
+                        }
+                      //!HACK TAKI
+                      //streamlog_out ( MESSAGE4 ) << endl;
+                      //!HACK TAKI
+                    } //END  //gathering values  //for (int yPixel = seedY - (_ffYClusterSize / 2); yPixel <= seedY + (_ffYClusterSize / 2); yPixel++)
+
+                  //! build a cluster candidate object from the values obtained
+                  if ( ! ( (clusterCandidateCharges.size()==9)&&(noiseValueVec.size()==9) ) )
+                    {
+                      //the crucial one is clusterCandidateCharges!
+                      streamlog_out ( ERROR2 ) << "In event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+                                               << " on detector " << sensorID << ":" << endl
+                                               << "NOT ENOUGH/TOO MUCH DATA GATHERED TO FORM A 3x3 CLUSTER!! SORRY" << endl
+                                               << "There should be 9 noise values,            but there are" << noiseValueVec.size() << "."<< endl
+                                               << "There should be 9 signal values,           but there are" << clusterCandidateCharges.size() << "."<< endl
+                                               << "There are " << clusterCandidateIndeces.size() << " candidate pixel indeces." << endl;
+                      throw IncompatibleDataSetException("NOT ENOUGH/TOO MUCH DATA GATHERED TO FORM A 3x3 CLUSTER");
+                    }
+
+                  // the final result of the clustering will enter in a
+                  // TrackerPulseImpl in order to be algorithm independent
+                  TrackerPulseImpl* pulse = new TrackerPulseImpl; //this will be deleted if the candidate does NOT make it through the cluster cut check, otherwise it will be added to a collection
+                  CellIDEncoder<TrackerPulseImpl> idPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
+                  idPulseEncoder["sensorID"]      = sensorID;
+                  idPulseEncoder["clusterID"]     = clusterID;
+                  idPulseEncoder["xSeed"]         = seedX;
+                  idPulseEncoder["ySeed"]         = seedY;
+                  idPulseEncoder["xCluSize"]      = _ffXClusterSize;
+                  idPulseEncoder["yCluSize"]      = _ffYClusterSize;
+                  //streamlog_out (MESSAGE2) << "  idPulseEncoder:   setting: _ffXClusterSize=" <<  _ffXClusterSize << " _ffYClusterSize " << _ffYClusterSize << endl;
+                  idPulseEncoder["type"]          = static_cast<int>(kEUTelBrickedClusterImpl);
+                  idPulseEncoder.setCellID(pulse);
+
+                  TrackerDataImpl* clusterData = new TrackerDataImpl; //this will be deleted if the candidate does NOT make it through the cluster cut check, otherwise it will be added to a collection
+                  CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, dummyCollection ); //GOBACK
+                  idClusterEncoder["sensorID"]      = sensorID;
+                  idClusterEncoder["clusterID"]     = clusterID;
+                  idClusterEncoder["xSeed"]         = seedX;
+                  idClusterEncoder["ySeed"]         = seedY;
+                  idClusterEncoder["xCluSize"]      = _ffXClusterSize;
+                  idClusterEncoder["yCluSize"]      = _ffYClusterSize;
+                  //streamlog_out (MESSAGE2) << "  idClusterEncoder:   setting: _ffXClusterSize=" <<  _ffXClusterSize << " _ffYClusterSize " << _ffYClusterSize << endl;
+                  idClusterEncoder["quality"]       = static_cast<int>(cluQuality);
+                  idClusterEncoder.setCellID(clusterData);
+
+
+                  //!TAKI:
+                  //!I THINK IT IS VERY IMPORTANT TO BE SURE,
+                  //!THAT IN clusterCandidateCharges THE PIXELS ARE REALLY SORTED FROM TOP LEFT TO BOTTOM RIGHT (in a 1D way but still)!
+                  //!IF THEY ARE NOT, THEN THE WHOLE CLUSTER WILL BE MESSED UP. The for-in-for loop above should ensure that tho.
+                  clusterData->setChargeValues(clusterCandidateCharges); //copy data in
+                  EUTelBrickedClusterImpl* brickedClusterCandidate = new EUTelBrickedClusterImpl(clusterData); //this will be deleted in any case
+                  brickedClusterCandidate->setNoiseValues(noiseValueVec);
+                  pulse->setCharge(brickedClusterCandidate->getTotalCharge());
+
+                  //! CUT 2
+                  // we need to validate the cluster candidate:
+                  //if ( brickedClusterCandidate->getClusterSNR() > _ffClusterCut )
+                  if ( brickedClusterCandidate->getClusterSNR(3) > _ffClusterCut ) //!HACK TAKI !! important
+                    {
+                      //! the cluster candidate is a good cluster
+                      //! mark all pixels belonging to the cluster as hit
+
+                      // need to leave a few pixels untouched!!
+                      // (again this is only good for the 3x3 implementation with even rows skewed left!!)
+                      int pixelNumberInsideClusterToSkip1, pixelNumberInsideClusterToSkip2;
+                      if (seedY % 2 == 0) //!NOTE
+                        //! IT IS ESSENTIAL HERE, THAT THE INDICES ARE PUSHED IN IN THE CORRECT ORDER!
+                        //! (indices representing small y to big y, small x to big x - and y in the outer for-loop, x in the inner)
+                        //! x=-1,y=-1 -> x=0,y=-1 -> x=+1,y=-1 -> x=-1,y=0 -> x=0,y=0 -> x=+1,y=0 -> x=-1,y=+1 -> x=0,y=+1 -> x=+1,y=+1
+                        //! and there must not be any index missing!!
+                        {
+                          pixelNumberInsideClusterToSkip1 = 2; //3rd pixel = top right
+                          pixelNumberInsideClusterToSkip2 = 8; //9th pixel = bottom right
+                        }
+                      else
+                        {
+                          pixelNumberInsideClusterToSkip1 = 0; //1st pixel = top left
+                          pixelNumberInsideClusterToSkip2 = 6; //7th pixel = bottom left
+                        }
+
+                      IntVec::iterator indexIter = clusterCandidateIndeces.begin();
+                      while ( indexIter != clusterCandidateIndeces.end() )
+                        {
+                          if (
+                              (indexIter == clusterCandidateIndeces.begin()+pixelNumberInsideClusterToSkip1)
+                              ||
+                              (indexIter == clusterCandidateIndeces.begin()+pixelNumberInsideClusterToSkip2)
+                              )
+                            {
+                              //nothing
+                            }
+                          else
+                            {
+                              if ( (*indexIter) != -1 )
+                                {
+                                  status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+                                }
+                            }
+                          ++indexIter;
+                        }
+
+                      //!HACK TAKI DEBUG OUTPUT
+                      /*
+                        streamlog_out (MESSAGE4) << "=== CREATED A CLUSTER THAT MADE IT THROUGH THE CLUSTER_CUT_CHECK ===" << endl;
+                        streamlog_out (MESSAGE4) << " == INFO BEGIN:" << endl;
+                        streamlog_out (MESSAGE4) << "  = Run#: " << evt->getRunNumber() << " Evt#: " << evt->getEventNumber() << " Clu_ID: " << clusterID << endl;
+                        brickedClusterCandidate->debugOutput();
+                        streamlog_out (MESSAGE4) << " == INFO END." << endl;
+                      */
+                      //!HACK TAKI DEBUG OUTPUT
+
+                      dummyCollection->push_back(clusterData); //taki: don't really understand, what this is good for
+                      pulse->setQuality(static_cast<int>(cluQuality));
+                      pulse->setTrackerData(clusterData);
+                      pulseCollection->push_back(pulse);
+
+                      // increment the cluster counters
+                      _totClusterMap[ sensorID ] += 1;
+                      ++clusterID;
+                      if ( clusterID >= 256 )
+                        {
+                          ++limitExceed;
+                          --clusterID;
+                          streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+                                                     << " on detector " << sensorID
+                                                     << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
+                        }
+                    } //END: if ( brickedClusterCandidate->getClusterSNR() > _ffClusterCut )
+                  else
+                    {
+                      delete clusterData;
+                      delete pulse;
+                    }
+
+                  delete brickedClusterCandidate;
+
+                } //END: if ( currentSeedpixelcandidate == EUTELESCOPE::GOODPIXEL )
+
+              ++rMapIter;
+
+            } //END: while (not all seed candidates in the map have been processed) ((while ( rMapIter != seedCandidateMap.rend() )))
+        } //END: if ( seedCandidateMap.size() != 0 )
+    } //for ( unsigned int i = 0 ; i < zsInputCollectionVec->size(); i++ )
+
+  // if the sparseClusterCollectionVec isn't empty add it to the
+  // current event. The pulse collection will be added afterwards
+  if ( ! isDummyAlreadyExisting )
+    {
+      if ( dummyCollection->size() != 0 )
+        {
+          evt->addCollection( dummyCollection, _dummyCollectionName );
+        }
+      else
+        {
+          delete dummyCollection;
+        }
+    }
+}
 
 
 void EUTelClusteringProcessor::check (LCEvent * /* evt */) {
@@ -1983,6 +2785,8 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 
       if ( type == kEUTelFFClusterImpl ) {
         cluster = new EUTelFFClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
+      } else if (type == kEUTelBrickedClusterImpl) { //!HACK TAKI
+        cluster = new EUTelBrickedClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
       } else if ( type == kEUTelDFFClusterImpl ) {
         cluster = new EUTelDFFClusterImpl ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
       } else if ( type == kEUTelSparseClusterImpl ) {
@@ -2014,8 +2818,8 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
               foundexcludedsensor = true; 
             }
         }
-    if(foundexcludedsensor)
-      continue;
+      if(foundexcludedsensor)
+        continue;
       // increment of one unit the event counter for this plane
       eventCounterVec[ _ancillaryIndexMap[ detectorID] ]++;
 
@@ -2079,7 +2883,8 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
       }
 
       vector<float > noiseValues;
-      if ( type == kEUTelFFClusterImpl ) {
+      //! not sure if this is 100% correct for bricked clusters here
+      if ( type == kEUTelFFClusterImpl || type == kEUTelBrickedClusterImpl ) {
         for ( int yPixel = ySeed - ( _ffYClusterSize / 2 ); yPixel <= ySeed + ( _ffYClusterSize / 2 ); yPixel++ ) {
           for ( int xPixel = xSeed - ( _ffXClusterSize / 2 ); xPixel <= xSeed + ( _ffXClusterSize / 2 ); xPixel++ ) {
             // always check we are still within the sensor!!!

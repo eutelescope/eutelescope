@@ -20,6 +20,7 @@
 #include "EUTelVirtualCluster.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
+#include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelSparseCluster2Impl.h"
 #include "EUTelExceptions.h"
@@ -757,7 +758,12 @@ void EUTelMille::processEvent (LCEvent * event) {
 
             EUTelVirtualCluster * cluster;
 
-            if ( hit->getType() == kEUTelDFFClusterImpl ) {
+            if ( hit->getType() == kEUTelBrickedClusterImpl ) {
+              
+              // fixed cluster implementation. Remember it can come from
+              // both RAW and ZS data
+              cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+            } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
               
               // fixed cluster implementation. Remember it can come from
               // both RAW and ZS data
@@ -1003,7 +1009,13 @@ void EUTelMille::processEvent (LCEvent * event) {
                   LCObjectVec clusterVector = hit->getRawHits();
                   EUTelVirtualCluster *cluster;
 
-                  if ( hit->getType() == kEUTelDFFClusterImpl ) {
+                  if ( hit->getType() == kEUTelBrickedClusterImpl ) {
+
+                    // fixed cluster implementation. Remember it can come from
+                    // both RAW and ZS data
+                    cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+                  }
+                  else if ( hit->getType() == kEUTelDFFClusterImpl ) {
 
                     // fixed cluster implementation. Remember it can come from
                     // both RAW and ZS data
