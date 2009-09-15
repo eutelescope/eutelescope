@@ -494,7 +494,7 @@ float EUTelBrickedClusterImpl::getSeedSNR() const {
   vector<float >::const_iterator chargeBegin    = _trackerData->getChargeValues().begin();
   vector<float >::const_iterator seedChargeIter = max_element( chargeBegin, _trackerData->getChargeValues().end() );
   vector<float >::const_iterator seedNoiseIter  = _noiseValues.begin() + ( seedChargeIter - chargeBegin );
-  if (*seedNoiseIter==0)
+  if (*seedNoiseIter==0.0)
   {
         streamlog_out( ERROR4 ) << "[getSeedSNR()] Just found a noise value == 0.0 !" << endl;
         return 0;
@@ -545,7 +545,7 @@ float EUTelBrickedClusterImpl::getClusterSNR(int nPixel) const {
   {
     signal += mapIter->second;
     noise2 += pow( _noiseValues[mapIter->first], 2 );
-    if (_noiseValues[mapIter->first]==0)
+    if (_noiseValues[mapIter->first]==0.0)
     {
         streamlog_out( ERROR4 ) << "[getClusterSNR(int nPixel)] Just found a noise value == 0.0 !" << endl;
     }
@@ -659,7 +659,7 @@ std::vector<float > EUTelBrickedClusterImpl::getClusterSNR( std::vector<int> nPi
             streamlog_out( ERROR4 ) << "  Seed Coord: x=" << xSeed << ", y=" << ySeed << "." << endl;
             streamlog_out( ERROR4 ) << endl << endl;
         }
-        if ( _noiseValues[ mapIter->second ] == 0. )
+        if ( _noiseValues[ mapIter->second ] == 0.0 )
         {
             streamlog_out( ERROR4 ) << endl << "[getClusterSNR( std::vector<int > nPixels )] Possible error in noise map or pixel status!" << endl;
             streamlog_out( ERROR4 ) << "  Just found a noise value == 0.0 !" << endl;
@@ -717,8 +717,8 @@ float EUTelBrickedClusterImpl::getClusterCharge(int xSize, int ySize) const {
 
 void EUTelBrickedClusterImpl::print(std::ostream& os ) const {
 
-    int /*xSize, ySize,*/ xSeed, ySeed;
-    float xShift, yShift, xShift2, yShift2; /*xShift3x3, yShift3x3*/
+    int xSeed, ySeed;  //xSize, ySize
+    float xShift, yShift, xShift2, yShift2; //xShift3x3, yShift3x3
     ClusterQuality quality = getClusterQuality();
     //getClusterSize(xSize,ySize);
     getSeedCoord(xSeed, ySeed);
@@ -726,7 +726,7 @@ void EUTelBrickedClusterImpl::print(std::ostream& os ) const {
     getCenterOfGravityShift(xShift2, yShift2, 2);
     //getCenterOfGravityShift(xShift3x3, yShift3x3, 3, 3);
 
-    float noise = 0., SNR = 0., SNR2 = 0. ;/*, SNR3x3 = 0.*/
+    float noise = 0., SNR = 0., SNR2 = 0. ;//SNR3x3 = 0.
     if ( _noiseSetSwitch ) {
     noise  = getClusterNoise();
     SNR    = getClusterSNR();
@@ -744,11 +744,13 @@ void EUTelBrickedClusterImpl::print(std::ostream& os ) const {
         <<  setw(bigspacer) <<  "Cluster charge (2) " << getClusterCharge(2) << "\n"
         //<<  setw(bigspacer) <<  "Cluster charge (3x3) " << getClusterCharge(3,3) << "\n"
         <<  setw(bigspacer) <<  "Seed charge " << getSeedCharge() << " in (" << xSeed << ", " << ySeed << ")\n"
-        <<  setw(bigspacer) <<  "CoG shift "<< "(" << xShift << ", " << yShift << ")\n"
-        <<  setw(bigspacer) <<  "CoG(9) shift " << "(" << xShift2 << ", " << yShift2 << ")\n"
+        <<  setw(bigspacer) <<  "CoG shift       "<< "(" << xShift << ", " << yShift << ")\n"
+        <<  setw(bigspacer) <<  "CoG shift (2MSP)" << "(" << xShift2 << ", " << yShift2 << ")\n"
         ;//<<  setw(bigspacer) <<  "CoG(3x3) shift " << "(" << xShift3x3 << ", " << yShift3x3 << ")\n" ;
-    if ( _noiseSetSwitch ) {
-    os << setw(bigspacer)  <<  "Cluster noise " << noise << "\n"
+
+    if ( _noiseSetSwitch )
+    {
+     os << setw(bigspacer)  <<  "Cluster noise " << noise << "\n"
         << setw(bigspacer)  <<  "Cluster SNR " << SNR << "\n"
         << setw(bigspacer)  <<  "Cluster SNR(9) " << SNR2 << "\n"
         ;//<< setw(bigspacer)  <<  "Cluster SNR(3x3) " << SNR3x3 << "\n";

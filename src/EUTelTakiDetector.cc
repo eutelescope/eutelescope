@@ -28,7 +28,7 @@ EUTelTakiDetector::EUTelTakiDetector() : EUTelPixelDetector()  {
   _xMax = 127;
 
   _yMin = 0;
-  _yMax = 127;//is this number correct?
+  _yMax = 127; //is this number correct?
 
 
   _name = "Taki"; // "SUSHVPIX"

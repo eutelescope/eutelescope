@@ -1,4 +1,4 @@
-#// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
+// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Version $Id: EUTelClusterFilter.cc,v 1.19 2009/07/29 11:05:02 bulgheroni Exp $
 /*
@@ -238,11 +238,11 @@ EUTelClusterFilter::EUTelClusterFilter () :Processor("EUTelClusterFilter") {
   _noiseRelatedCuts = true;
 
 
- 
+
 
   registerProcessorParameter("DFFNumberOfHits","This is a cut on the number of hit pixels inside the digital fixed frame\n"
                              "cluster algorithm. One cut for each sensor plane.\n",
-                           
+
                              _DFFNHitsCuts, std::vector<int>(9, 0) );
 
 
@@ -368,7 +368,7 @@ void EUTelClusterFilter::init () {
   } else {
     _maxClusterNoSwitch = false;
   }
-  
+
   // number of hit pixel inside a cluster for DFF cluser
   if ( count_if(_DFFNHitsCuts.begin(), _DFFNHitsCuts.end(), bind2nd(greater<int>(), 0) ) != 0 ) {
     _dffnhitsswitch = true;
@@ -711,332 +711,379 @@ void EUTelClusterFilter::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelClusterFilter::processEvent (LCEvent * event) {
 
-  if (_iEvt % 10 == 0)
-    streamlog_out ( MESSAGE4 )  << "Processing event "
-                                << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                                << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+    if (_iEvt % 10 == 0)
+        streamlog_out ( MESSAGE4 )  << "Processing event "
+                                    << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                                    << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+                                    << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
 
-  ++_iEvt;
+    ++_iEvt;
 
-  if ( isFirstEvent() ) {
+    if ( isFirstEvent() )
+    {
+        // try to guess the total number of sensors
+        initializeGeometry( event );
+        checkCriteria();
+        _isFirstEvent = false;
+    }
 
-    // try to guess the total number of sensors
-    initializeGeometry( event );
 
-    checkCriteria();
-    _isFirstEvent = false;
-  }
-
-
-  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> ( event );
-  if ( evt->getEventType() == kEORE ) {
-    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
-    return ;
-  } else if ( evt->getEventType() == kUNKNOWN ) {
-    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+    EUTelEventImpl * evt = static_cast<EUTelEventImpl*> ( event );
+    if ( evt->getEventType() == kEORE )
+    {
+        streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
+        return ;
+    }
+    else if ( evt->getEventType() == kUNKNOWN )
+    {
+        streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
-  }
+    }
 
-  try {
+    try
+    {
+        LCCollectionVec * pulseCollectionVec    =   dynamic_cast <LCCollectionVec *> (evt->getCollection(_inputPulseCollectionName));
+        LCCollectionVec * filteredCollectionVec =   new LCCollectionVec(LCIO::TRACKERPULSE);
+        CellIDEncoder<TrackerPulseImpl> outputEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, filteredCollectionVec);
+        CellIDDecoder<TrackerPulseImpl> inputDecoder(pulseCollectionVec);
 
-    LCCollectionVec * pulseCollectionVec    =   dynamic_cast <LCCollectionVec *> (evt->getCollection(_inputPulseCollectionName));
-    LCCollectionVec * filteredCollectionVec =   new LCCollectionVec(LCIO::TRACKERPULSE);
-    CellIDEncoder<TrackerPulseImpl> outputEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, filteredCollectionVec);
-    CellIDDecoder<TrackerPulseImpl> inputDecoder(pulseCollectionVec);
+        vector<int > acceptedClusterVec;
+        vector<int > clusterNoVec(_noOfDetectors, 0);
 
-    vector<int > acceptedClusterVec;
-    vector<int > clusterNoVec(_noOfDetectors, 0);
+        // CLUSTER BASED CUTS
+        for ( int iPulse = 0; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ )
+        {
+            streamlog_out ( DEBUG1 ) << "Filtering cluster " << iPulse + 1  << " / " << pulseCollectionVec->getNumberOfElements() << endl;
+            TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl* > (pulseCollectionVec->getElementAt(iPulse));
+            ClusterType type         = static_cast<ClusterType> (static_cast<int> ( inputDecoder(pulse)["type"] ));
+            EUTelVirtualCluster * cluster;
+            SparsePixelType       pixelType;
 
-    // CLUSTER BASED CUTS
-    for ( int iPulse = 0; iPulse < pulseCollectionVec->getNumberOfElements(); iPulse++ ) {
-      streamlog_out ( DEBUG1 ) << "Filtering cluster " << iPulse + 1  << " / " << pulseCollectionVec->getNumberOfElements() << endl;
-      TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl* > (pulseCollectionVec->getElementAt(iPulse));
-      ClusterType type         = static_cast<ClusterType> (static_cast<int> ( inputDecoder(pulse)["type"] ));
-      EUTelVirtualCluster * cluster;
-      SparsePixelType       pixelType;
+            if ( type == kEUTelDFFClusterImpl )
+            {
+                cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
+            }
+            else if ( type == kEUTelBrickedClusterImpl )
+            {
+                cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
 
-      if ( type == kEUTelDFFClusterImpl )  {
-        cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
-      }
-      else if ( type == kEUTelBrickedClusterImpl )  {
-        cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
-        
-        if ( _noiseRelatedCuts ) 
-          {
-            // the EUTelBrickedClusterImpl doesn't contain the noise and status 
-            // information in the TrackerData object. So this is the right
-            // place to attach to the cluster the noise information.
-            //! ---
-            //! ((NOTE)): TAKI ACTUALLY I THINK EACH CLUSTER DOES CONTAINS ITS OWN NOISE VALUES ALREADY! 
-            //! EACH CANDIDATE THAT WAS CREATED IN CLUSEARCH ALREADY HAD ITS NOISE SET PROPERLY!
-            //! NOT SURE WHAT HAPPENED TO THE STATUS, THOUGH!
-            //! WELL... THIS ROUTINE HERE SEEMS TO SET THE NOISE AGAIN BUT WILL SET NOISE = 0, IF A PIXEL IS A BAD ONE.
-            //! THIS MIGHT CAUSE THE BRICKED CLUSTER TO SEE SOME PIXELS WITH NOISE = 0 AGAIN!
-            //! ---
+                if ( _noiseRelatedCuts )
+                {
+                    // the EUTelBrickedClusterImpl doesn't contain the noise and status
+                    // information in the TrackerData object. So this is the right
+                    // place to attach to the cluster the noise information.
+                    //! ---
+                    //! ((NOTE TAKI)): actually i think each cluster does contain its own noise values already!
+                    //! each candidate, that was created in clusearch, already had its noise set properly!
+                    //! is this information kept when storing the clusters inside the corresponding collection?
+                    //! not sure what happened to the status, as well!
+                    //! well... this routine here seems to set the noise again but will set noise = 0, if a pixel is a bad one.
+                    //! this might cause the bricked cluster to see some pixels with noise = 0 again!
+                    //! ---
 
-            try 
-              {
-                LCCollectionVec * noiseCollectionVec  = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _noiseCollectionName )) ;
-                LCCollectionVec * statusCollectionVec = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _statusCollectionName )) ;
-                CellIDDecoder<TrackerDataImpl> noiseDecoder(noiseCollectionVec);
+                    try
+                    {
+                        LCCollectionVec * noiseCollectionVec  = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _noiseCollectionName )) ;
+                        LCCollectionVec * statusCollectionVec = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _statusCollectionName )) ;
+                        CellIDDecoder<TrackerDataImpl> noiseDecoder(noiseCollectionVec);
 
-                int detectorID  = cluster->getDetectorID();
-                int detectorPos = _ancillaryIndexMap[ detectorID ];
-                TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl    *> ( noiseCollectionVec->getElementAt(detectorPos) );
-                TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt(detectorPos) );
-                EUTelMatrixDecoder   noiseMatrixDecoder(noiseDecoder, noiseMatrix);
+                        int detectorID  = cluster->getDetectorID();
+                        int detectorPos = _ancillaryIndexMap[ detectorID ];
+                        TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl    *> ( noiseCollectionVec->getElementAt(detectorPos) );
+                        TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt(detectorPos) );
+                        EUTelMatrixDecoder   noiseMatrixDecoder(noiseDecoder, noiseMatrix);
 
-                int xSeed, ySeed, xClusterSize, yClusterSize;
-                cluster->getCenterCoord(xSeed, ySeed);
-                cluster->getClusterSize(xClusterSize, yClusterSize);
-                vector<float > noiseValues;
-                for ( int yPixel = ySeed - ( yClusterSize / 2 ); yPixel <= ySeed + ( yClusterSize / 2 ); yPixel++ ) 
-                  {
-                    for ( int xPixel = xSeed - ( xClusterSize / 2 ); xPixel <= xSeed + ( xClusterSize / 2 ); xPixel++ ) 
-                      {
+                        int xSeed, ySeed, xClusterSize, yClusterSize;
+                        cluster->getCenterCoord(xSeed, ySeed);
+                        cluster->getClusterSize(xClusterSize, yClusterSize);
+                        vector<float > noiseValues;
+                        for ( int yPixel = ySeed - ( yClusterSize / 2 ); yPixel <= ySeed + ( yClusterSize / 2 ); yPixel++ )
+                        {
+                            for ( int xPixel = xSeed - ( xClusterSize / 2 ); xPixel <= xSeed + ( xClusterSize / 2 ); xPixel++ )
+                            {
 
-                        // always check we are still within the sensor!!!
-                        if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <= noiseMatrixDecoder.getMaxX() ) &&
-                             ( yPixel >= noiseMatrixDecoder.getMinY() )  &&  ( yPixel <= noiseMatrixDecoder.getMaxY() ) ) 
-                          {
-                            int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
+                                // always check we are still within the sensor!!!
+                                if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <= noiseMatrixDecoder.getMaxX() ) &&
+                                     ( yPixel >= noiseMatrixDecoder.getMinY() )  &&  ( yPixel <= noiseMatrixDecoder.getMaxY() ) )
+                                {
+                                    int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
 
-                            // the corresponding position in the status matrix has to be HITPIXEL
-                            // in the EUTelClusteringProcessor, we verify also that
-                            // the pixel isHit, but this cannot be done in this
-                            // processor, since the status matrix could have been reset
-                            //
-                            // bool isHit  = ( statusMatrix->getADCValues()[index] ==
-                            // EUTELESCOPE::HITPIXEL );
-                            //
-                            bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
-                            if ( !isBad ) 
-                              {
-                                noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
-                              } 
-                            else 
-                              {
-                                noiseValues.push_back( 0. );
-                              }
-                          } 
-                        else 
-                          {
-                            noiseValues.push_back( 0. );
-                          }
-                      }
-                  }
-                cluster->setNoiseValues( noiseValues );
-              }
-            catch ( lcio::Exception& e )   
-              {
-                streamlog_out ( ERROR1 ) << e.what() << endl << "Continuing w/o noise based cuts" << endl;
-                _noiseRelatedCuts = false;
-              }
-          }
-      }
-      else if ( type == kEUTelFFClusterImpl )  {
-        cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
+                                    // the corresponding position in the status matrix has to be HITPIXEL
+                                    // in the EUTelClusteringProcessor, we verify also that
+                                    // the pixel isHit, but this cannot be done in this
+                                    // processor, since the status matrix could have been reset
+                                    //
+                                    // bool isHit  = ( statusMatrix->getADCValues()[index] ==
+                                    // EUTELESCOPE::HITPIXEL );
+                                    //
+                                    bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
+                                    if ( !isBad )
+                                    {
+                                        noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
+                                    }
+                                    else
+                                    {
+                                        noiseValues.push_back( 0. );
+                                    }
 
-        if ( _noiseRelatedCuts ) {
-
-          // the EUTelFFClusterImpl doesn't contain the noise and status
-          // information in the TrackerData object. So this is the right
-          // place to attach to the cluster the noise information.
-          try {
-            LCCollectionVec * noiseCollectionVec  = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _noiseCollectionName )) ;
-            LCCollectionVec * statusCollectionVec = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _statusCollectionName )) ;
-            CellIDDecoder<TrackerDataImpl> noiseDecoder(noiseCollectionVec);
-
-            int detectorID  = cluster->getDetectorID();
-            int detectorPos = _ancillaryIndexMap[ detectorID ];
-            TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl    *> ( noiseCollectionVec->getElementAt(detectorPos) );
-            TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt(detectorPos) );
-            EUTelMatrixDecoder   noiseMatrixDecoder(noiseDecoder, noiseMatrix);
-
-            int xSeed, ySeed, xClusterSize, yClusterSize;
-            cluster->getCenterCoord(xSeed, ySeed);
-            cluster->getClusterSize(xClusterSize, yClusterSize);
-            vector<float > noiseValues;
-            for ( int yPixel = ySeed - ( yClusterSize / 2 ); yPixel <= ySeed + ( yClusterSize / 2 ); yPixel++ ) {
-              for ( int xPixel = xSeed - ( xClusterSize / 2 ); xPixel <= xSeed + ( xClusterSize / 2 ); xPixel++ ) {
-
-                // always check we are still within the sensor!!!
-                if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <= noiseMatrixDecoder.getMaxX() ) &&
-                     ( yPixel >= noiseMatrixDecoder.getMinY() )  &&  ( yPixel <= noiseMatrixDecoder.getMaxY() ) ) {
-                  int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
-
-                  // the corresponding position in the status matrix has to be HITPIXEL
-                  // in the EUTelClusteringProcessor, we verify also that
-                  // the pixel isHit, but this cannot be done in this
-                  // processor, since the status matrix could have been reset
-                  //
-                  // bool isHit  = ( statusMatrix->getADCValues()[index] ==
-                  // EUTELESCOPE::HITPIXEL );
-                  //
-                  bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
-                  if ( !isBad ) {
-                    noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
-                  } else {
-                    noiseValues.push_back( 0. );
-                  }
-
-                } else {
-                  noiseValues.push_back( 0. );
+                                }
+                                else
+                                {
+                                    noiseValues.push_back( 0. );
+                                }
+                            }
+                        }
+                        cluster->setNoiseValues( noiseValues );
+                    }
+                    catch ( lcio::Exception& e )
+                    {
+                        streamlog_out ( ERROR1 ) << e.what() << endl << "Continuing w/o noise based cuts" << endl;
+                        _noiseRelatedCuts = false;
+                    }
                 }
-              }
             }
-            cluster->setNoiseValues( noiseValues );
-          }
-          catch ( lcio::Exception& e )   {
-            streamlog_out ( ERROR1 ) << e.what() << endl << "Continuing w/o noise based cuts" << endl;
-            _noiseRelatedCuts = false;
-          }
-        }
+            else if ( type == kEUTelFFClusterImpl )
+            {
+                cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData() ) );
 
-      } else if ( type == kEUTelSparseClusterImpl ) {
+                if ( _noiseRelatedCuts )
+                {
+                    // the EUTelFFClusterImpl doesn't contain the noise and status
+                    // information in the TrackerData object. So this is the right
+                    // place to attach to the cluster the noise information.
+                    try
+                    {
+                        LCCollectionVec * noiseCollectionVec  = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _noiseCollectionName )) ;
+                        LCCollectionVec * statusCollectionVec = dynamic_cast<LCCollectionVec * > ( evt->getCollection( _statusCollectionName )) ;
+                        CellIDDecoder<TrackerDataImpl> noiseDecoder(noiseCollectionVec);
 
-        // knowing that is a sparse cluster is not enough we need also
-        // to know also the sparse pixel type. This information is
-        // available in the "original_zsdata" collection. Let's get it!
-        LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-        TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-        CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-        pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
-        if ( pixelType == kEUTelSimpleSparsePixel ) {
-          cluster = new EUTelSparseClusterImpl<EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl* > (pulse->getTrackerData() ));
+                        int detectorID  = cluster->getDetectorID();
+                        int detectorPos = _ancillaryIndexMap[ detectorID ];
+                        TrackerDataImpl    * noiseMatrix  = dynamic_cast<TrackerDataImpl    *> ( noiseCollectionVec->getElementAt(detectorPos) );
+                        TrackerRawDataImpl * statusMatrix = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt(detectorPos) );
+                        EUTelMatrixDecoder   noiseMatrixDecoder(noiseDecoder, noiseMatrix);
 
-          EUTelSparseClusterImpl<EUTelSimpleSparsePixel > * recasted =
-            dynamic_cast<EUTelSparseClusterImpl<EUTelSimpleSparsePixel > *> ( cluster );
+                        int xSeed, ySeed, xClusterSize, yClusterSize;
+                        cluster->getCenterCoord(xSeed, ySeed);
+                        cluster->getClusterSize(xClusterSize, yClusterSize);
+                        vector<float > noiseValues;
+                        for ( int yPixel = ySeed - ( yClusterSize / 2 ); yPixel <= ySeed + ( yClusterSize / 2 ); yPixel++ )
+                        {
+                            for ( int xPixel = xSeed - ( xClusterSize / 2 ); xPixel <= xSeed + ( xClusterSize / 2 ); xPixel++ )
+                            {
 
-          if ( _noiseRelatedCuts ) {
-            // the EUTelSparseClusterImpl<EUTelSimpleSparsePixel>
-            // doesn't contain any intrinsic noise information. So we
-            // need to get them from the input noise collection.
+                                // always check we are still within the sensor!!!
+                                if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <= noiseMatrixDecoder.getMaxX() ) &&
+                                     ( yPixel >= noiseMatrixDecoder.getMinY() )  &&  ( yPixel <= noiseMatrixDecoder.getMaxY() ) )
+                                {
+                                    int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
 
-            try {
-              LCCollectionVec * noiseCollectionVec = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _noiseCollectionName ));
-              CellIDDecoder<TrackerDataImpl > noiseDecoder( noiseCollectionVec ) ;
+                                    // the corresponding position in the status matrix has to be HITPIXEL
+                                    // in the EUTelClusteringProcessor, we verify also that
+                                    // the pixel isHit, but this cannot be done in this
+                                    // processor, since the status matrix could have been reset
+                                    //
+                                    // bool isHit  = ( statusMatrix->getADCValues()[index] ==
+                                    // EUTELESCOPE::HITPIXEL );
+                                    //
+                                    bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
+                                    if ( !isBad )
+                                    {
+                                        noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
+                                    }
+                                    else
+                                    {
+                                        noiseValues.push_back( 0. );
+                                    }
 
-              int detectorID = cluster->getDetectorID();
-              int detectorPos = _ancillaryIndexMap[ detectorID ];
-              TrackerDataImpl    * noiseMatrix = dynamic_cast<TrackerDataImpl *> ( noiseCollectionVec->getElementAt( detectorPos ));
-              EUTelMatrixDecoder   noiseMatrixDecoder( noiseDecoder, noiseMatrix ) ;
-
-              auto_ptr<EUTelSimpleSparsePixel>  sparsePixel(new EUTelSimpleSparsePixel);
-              vector<float > noiseValues;
-              for ( unsigned int iPixel = 0 ; iPixel < recasted->size() ; iPixel++ )  {
-                recasted->getSparsePixelAt( iPixel, sparsePixel.get() ) ;
-                int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
-                noiseValues.push_back( noiseMatrix->getChargeValues()[ index ] );
-              }
-              cluster->setNoiseValues( noiseValues ) ;
-
-
-            } catch ( lcio::Exception&  e )  {
-              streamlog_out ( ERROR1 )  << e.what() << "\n" << "Continuing without noise based cuts" << endl;
-              _noiseRelatedCuts = false;
+                                }
+                                else
+                                {
+                                    noiseValues.push_back( 0. );
+                                }
+                            }
+                        }
+                        cluster->setNoiseValues( noiseValues );
+                    }
+                    catch ( lcio::Exception& e )
+                    {
+                        streamlog_out ( ERROR1 ) << e.what() << endl << "Continuing w/o noise based cuts" << endl;
+                        _noiseRelatedCuts = false;
+                    }
+                }
             }
-            streamlog_out ( DEBUG1 ) << "Noise related cuts may be used" << endl;
-          }
+            else if ( type == kEUTelSparseClusterImpl )
+            {
+                // knowing that is a sparse cluster is not enough we need also
+                // to know also the sparse pixel type. This information is
+                // available in the "original_zsdata" collection. Let's get it!
+                LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+                TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+                CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+                pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
 
-        } else {
-          streamlog_out ( ERROR4 ) << "Unknown pixel type. Sorry for quitting" << endl;
-          throw UnknownDataTypeException("Cluster type unknown");
+                if ( pixelType == kEUTelSimpleSparsePixel )
+                {
+                    cluster = new EUTelSparseClusterImpl<EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl* > (pulse->getTrackerData() ));
+
+                    EUTelSparseClusterImpl<EUTelSimpleSparsePixel > * recasted =
+                    dynamic_cast<EUTelSparseClusterImpl<EUTelSimpleSparsePixel > *> ( cluster );
+
+                    if ( _noiseRelatedCuts )
+                    {
+                        // the EUTelSparseClusterImpl<EUTelSimpleSparsePixel>
+                        // doesn't contain any intrinsic noise information. So we
+                        // need to get them from the input noise collection.
+                        try
+                        {
+                            LCCollectionVec * noiseCollectionVec = dynamic_cast<LCCollectionVec *> ( evt->getCollection( _noiseCollectionName ));
+                            CellIDDecoder<TrackerDataImpl > noiseDecoder( noiseCollectionVec ) ;
+
+                            int detectorID = cluster->getDetectorID();
+                            int detectorPos = _ancillaryIndexMap[ detectorID ];
+                            TrackerDataImpl    * noiseMatrix = dynamic_cast<TrackerDataImpl *> ( noiseCollectionVec->getElementAt( detectorPos ));
+                            EUTelMatrixDecoder   noiseMatrixDecoder( noiseDecoder, noiseMatrix ) ;
+
+                            auto_ptr<EUTelSimpleSparsePixel>  sparsePixel(new EUTelSimpleSparsePixel);
+                            vector<float > noiseValues;
+                            for ( unsigned int iPixel = 0 ; iPixel < recasted->size() ; iPixel++ )
+                            {
+                                recasted->getSparsePixelAt( iPixel, sparsePixel.get() ) ;
+                                int index = noiseMatrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
+                                noiseValues.push_back( noiseMatrix->getChargeValues()[ index ] );
+                            }
+                            cluster->setNoiseValues( noiseValues ) ;
+                        }
+                        catch ( lcio::Exception&  e )
+                        {
+                            streamlog_out ( ERROR1 )  << e.what() << "\n" << "Continuing without noise based cuts" << endl;
+                            _noiseRelatedCuts = false;
+                        }
+                        streamlog_out ( DEBUG1 ) << "Noise related cuts may be used" << endl;
+                    }
+                }
+                else
+                {
+                  streamlog_out ( ERROR4 ) << "Unknown pixel type. Sorry for quitting" << endl;
+                  throw UnknownDataTypeException("Cluster type unknown");
+                }
+
+            }
+            else
+            {
+                streamlog_out ( ERROR4 ) << "Unknown cluster type. Sorry for quitting" << endl;
+                throw UnknownDataTypeException("Cluster type unknown");
+            }
+
+            // increment the event counter
+            _totalClusterCounter[ _ancillaryIndexMap[ cluster->getDetectorID() ] ]++;
+
+            bool isAccepted = true;
+
+            if ( type == kEUTelDFFClusterImpl )
+            {
+                isAccepted &= isAboveNumberOfHitPixel(cluster);
+            }
+            else
+            {
+                isAccepted &= isAboveMinTotalCharge(cluster);
+                isAccepted &= isAboveMinTotalSNR(cluster);
+                isAccepted &= isAboveNMinCharge(cluster);
+                isAccepted &= isAboveNMinSNR(cluster);
+                isAccepted &= isAboveNxNMinCharge(cluster);
+                isAccepted &= isAboveNxNMinSNR(cluster);
+                isAccepted &= isAboveMinSeedCharge(cluster);
+                isAccepted &= isAboveMinSeedSNR(cluster);
+                isAccepted &= isBelowMaxClusterNoise(cluster);
+            }
+            isAccepted &= hasQuality(cluster);
+            isAccepted &= isInsideROI(cluster);
+            isAccepted &= isOutsideROI(cluster);
+
+            if ( isAccepted )  acceptedClusterVec.push_back(iPulse);
+
+            delete cluster;
+
         }
 
-      } else {
-        streamlog_out ( ERROR4 ) << "Unknown cluster type. Sorry for quitting" << endl;
-        throw UnknownDataTypeException("Cluster type unknown");
-      }
-
-      // increment the event counter
-      _totalClusterCounter[ _ancillaryIndexMap[ cluster->getDetectorID() ] ]++;
-
-      bool isAccepted = true;
-
-      if ( type == kEUTelDFFClusterImpl ) 
+        vector<int >::iterator cluIter = acceptedClusterVec.begin();
+        while ( cluIter != acceptedClusterVec.end() )
         {
-          isAccepted &= isAboveNumberOfHitPixel(cluster);
+            TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl* > (pulseCollectionVec->getElementAt(*cluIter));
+            int detectorID  = inputDecoder(pulse)["sensorID"];
+            clusterNoVec[ _ancillaryIndexMap[ detectorID ] ]++;
+            ++cluIter;
         }
-      else
+
+        bool areClusterEnoughTemp     = areClusterEnough(clusterNoVec);
+        bool areClusterTooManyTemp    = areClusterTooMany(clusterNoVec);
+        bool hasSameNumberOfHitTemp   = hasSameNumberOfHit(clusterNoVec);
+        bool isEventAccepted = areClusterEnoughTemp && !areClusterTooManyTemp;
+        isEventAccepted &= hasSameNumberOfHitTemp;
+
+        if ( ! isEventAccepted ) acceptedClusterVec.clear();
+
+        if ( acceptedClusterVec.empty() )
         {
-          isAccepted &= isAboveMinTotalCharge(cluster);
-          isAccepted &= isAboveMinTotalSNR(cluster);
-          isAccepted &= isAboveNMinCharge(cluster);
-          isAccepted &= isAboveNMinSNR(cluster);
-          isAccepted &= isAboveNxNMinCharge(cluster);
-          isAccepted &= isAboveNxNMinSNR(cluster);
-          isAccepted &= isAboveMinSeedCharge(cluster);
-          isAccepted &= isAboveMinSeedSNR(cluster);
-          isAccepted &= isBelowMaxClusterNoise(cluster);
+            delete filteredCollectionVec;
+            if ( ! areClusterEnoughTemp )
+            {
+                streamlog_out ( DEBUG1 ) << "Not enough clusters passed the selection " << endl;
+            }
+            else if ( areClusterTooManyTemp )
+            {
+               streamlog_out ( DEBUG1 ) << "Too many clusters passed the selection " << endl;
+            }
+            else
+            {
+                streamlog_out ( DEBUG1 ) << "No clusters passed the selection" << endl;
+            }
+            if ( _skipEmptyEvent )
+            {
+                if ( ! areClusterEnoughTemp )
+                {
+                    streamlog_out (WARNING0 ) << "Skipping event because too few clusters passed the selection" << endl;
+                }
+                else if ( areClusterTooManyTemp )
+                {
+                    streamlog_out (WARNING0 ) << "Skipping event because too many clusters passed the selection" << endl;
+                }
+                else
+                {
+                    streamlog_out ( WARNING0 ) << "Skipping event because no clusters passed the selection" << endl;
+                }
+                throw SkipEventException(this);
+            }
+            else
+            {
+                return;
+            }
         }
-      isAccepted &= hasQuality(cluster);
-      isAccepted &= isInsideROI(cluster);
-      isAccepted &= isOutsideROI(cluster);
-
-      if ( isAccepted )  acceptedClusterVec.push_back(iPulse);
-
-      delete cluster;
-
-    }
-
-    vector<int >::iterator cluIter = acceptedClusterVec.begin();
-    while ( cluIter != acceptedClusterVec.end() ) {
-      TrackerPulseImpl * pulse = dynamic_cast<TrackerPulseImpl* > (pulseCollectionVec->getElementAt(*cluIter));
-      int detectorID  = inputDecoder(pulse)["sensorID"];
-      clusterNoVec[ _ancillaryIndexMap[ detectorID ] ]++;
-      ++cluIter;
-    }
-
-    bool areClusterEnoughTemp     = areClusterEnough(clusterNoVec);
-    bool areClusterTooManyTemp    = areClusterTooMany(clusterNoVec);
-    bool hasSameNumberOfHitTemp   = hasSameNumberOfHit(clusterNoVec);
-    bool isEventAccepted = areClusterEnoughTemp && !areClusterTooManyTemp;
-    isEventAccepted &= hasSameNumberOfHitTemp;
-
-    if ( ! isEventAccepted ) acceptedClusterVec.clear();
-
-    if ( acceptedClusterVec.empty() ) {
-      delete filteredCollectionVec;
-      if ( ! areClusterEnoughTemp ) {
-        streamlog_out ( DEBUG1 ) << "Not enough clusters passed the selection " << endl;
-      } else if ( areClusterTooManyTemp ) {
-        streamlog_out ( DEBUG1 ) << "Too many clusters passed the selection " << endl;
-      } else {
-        streamlog_out ( DEBUG1 ) << "No clusters passed the selection" << endl;
-      }
-      if ( _skipEmptyEvent ) {
-        if ( ! areClusterEnoughTemp ) {
-          streamlog_out (WARNING0 ) << "Skipping event because too few clusters passed the selection" << endl;
-        } else if ( areClusterTooManyTemp ) {
-          streamlog_out (WARNING0 ) << "Skipping event because too many clusters passed the selection" << endl;
-        } else {
-          streamlog_out ( WARNING0 ) << "Skipping event because no clusters passed the selection" << endl;
+        else
+        {
+            vector<int >::iterator iter = acceptedClusterVec.begin();
+            while ( iter != acceptedClusterVec.end() )
+            {
+                TrackerPulseImpl * pulse     = dynamic_cast<TrackerPulseImpl *> ( pulseCollectionVec->getElementAt( *iter ) );
+                TrackerPulseImpl * accepted  = new TrackerPulseImpl;
+                accepted->setCellID0( pulse->getCellID0() );
+                accepted->setCellID1( pulse->getCellID1() );
+                accepted->setTime(    pulse->getTime()    );
+                accepted->setCharge(  pulse->getCharge()  );
+                accepted->setQuality( pulse->getQuality() );
+                accepted->setTrackerData( pulse->getTrackerData() );
+                filteredCollectionVec->push_back(accepted);
+                _acceptedClusterCounter[ _ancillaryIndexMap[ inputDecoder(pulse)["sensorID"] ] ]++;
+                ++iter;
+            }
+            evt->addCollection(filteredCollectionVec, _outputPulseCollectionName);
         }
-        throw SkipEventException(this);
-      }  else return;
-    } else {
-      vector<int >::iterator iter = acceptedClusterVec.begin();
-      while ( iter != acceptedClusterVec.end() ) {
-        TrackerPulseImpl * pulse     = dynamic_cast<TrackerPulseImpl *> ( pulseCollectionVec->getElementAt( *iter ) );
-        TrackerPulseImpl * accepted  = new TrackerPulseImpl;
-        accepted->setCellID0( pulse->getCellID0() );
-        accepted->setCellID1( pulse->getCellID1() );
-        accepted->setTime(    pulse->getTime()    );
-        accepted->setCharge(  pulse->getCharge()  );
-        accepted->setQuality( pulse->getQuality() );
-        accepted->setTrackerData( pulse->getTrackerData() );
-        filteredCollectionVec->push_back(accepted);
-        _acceptedClusterCounter[ _ancillaryIndexMap[ inputDecoder(pulse)["sensorID"] ] ]++;
-        ++iter;
-      }
-      evt->addCollection(filteredCollectionVec, _outputPulseCollectionName);
     }
-  } catch (DataNotAvailableException& e ) {
-    streamlog_out ( WARNING2 )  << "Input collection not found in the current event." << endl;
-    return;
-  }
+    catch (DataNotAvailableException& e )
+    {
+        streamlog_out ( WARNING2 )  << "Input collection not found in the current event." << endl;
+        return;
+    }
 }
 
 

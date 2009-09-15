@@ -172,7 +172,7 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
                                                 //runHeader->getNoOfEvent()
                                                 //is always eq 0???
                      Global::parameters->getIntVal("MaxRecordNumber") ) - 1;
-  }
+ }
 
   if ( ( _nEvent == -1 ) || ( _nEvent >= tempEvent  && tempEvent > 0 ) ) {
     _nEvent = tempEvent;
@@ -260,25 +260,25 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
         // all clusters have to inherit from the virtual cluster (that is
         // a TrackerDataImpl with some utility methods).
         EUTelVirtualCluster    * cluster;
-        if ( type == kEUTelBrickedClusterImpl ) {
-
-          // digital fixed cluster implementation. Remember it can come from
-          // both RAW and ZS data
-          cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
-
-        } else
         if ( type == kEUTelDFFClusterImpl ) {
 
           // digital fixed cluster implementation. Remember it can come from
           // both RAW and ZS data
           cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
 
-        } else
-        if ( type == kEUTelFFClusterImpl ) {
+        } else if ( type == kEUTelFFClusterImpl ) {
 
           // fixed cluster implementation. Remember it can come from
           // both RAW and ZS data
           cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
+          //streamlog_out ( MESSAGE2 ) <<  "seen a kEUTelFFClusterImpl" << endl; //!HACK TAKI
+
+        } else if ( type == kEUTelBrickedClusterImpl ) {
+
+          // bricked cluster implementation
+          // Remember it can come from both RAW and ZS data
+          cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ); //!HACK TAKI
+          //streamlog_out ( MESSAGE2 ) <<  "seen a kEUTelBrickedClusterImpl" << endl; //!HACK TAKI
 
         } else if ( type == kEUTelSparseClusterImpl ) {
 
@@ -300,23 +300,67 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
             streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
             throw UnknownDataTypeException("Pixel type unknown");
           }
+          //streamlog_out ( MESSAGE2 ) <<  "seen a kEUTelSparseClusterImpl" << endl; //!HACK TAKI
 
         } else {
           streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
           throw UnknownDataTypeException("Cluster type unknown");
         }
-
+        
         int detectorID = cluster->getDetectorID();
         float xShift, yShift;
 
-        if ( cluster->getClusterQuality() == static_cast<ClusterQuality> (_clusterQuality) ) {
+
+
+        if ( cluster->getClusterQuality() == static_cast<ClusterQuality> (_clusterQuality) )
+        {
+
+          EUTelBrickedClusterImpl* p_tmpBrickedCluster = NULL;
+          if ( type == kEUTelBrickedClusterImpl )
+          {
+                p_tmpBrickedCluster = (EUTelBrickedClusterImpl*) cluster;
+                //Static of cluster to EUTelBrickedClusterImpl* was done for sure in the case of
+                //( type == kEUTelBrickedClusterImpl ).
+                //So this cast must work as well!
+                //This is just a (different) pointer to the same memory as "cluster". So no additional delete needed.
+          }
 
           if ( _clusterTypeSelection == "FULL" ) {
+
+                if (p_tmpBrickedCluster)
+                {
+                    streamlog_out ( MESSAGE2 ) <<  "DEBUG: doing eta FULL on a bricked cluster!" << endl;
+                    p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift, yShift);
+                }
+                else
+                {
             cluster->getCenterOfGravityShift(xShift, yShift);
+                }
+
           } else if ( _clusterTypeSelection == "NxMPixel" ) {
+
+                if (p_tmpBrickedCluster)
+                {
+                    streamlog_out ( WARNING4 ) <<  "NxM not applicable for a bricked cluster!! Doing FULL!" << endl;
+                    p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift, yShift);
+                }
+                else
+                {
             cluster->getCenterOfGravityShift(xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
+                }
+
           } else if ( _clusterTypeSelection == "NPixel" ) {
+
+                if (p_tmpBrickedCluster)
+                {
+                    streamlog_out ( MESSAGE2 ) <<  "DEBUG: doing eta NPixel on a bricked cluster!" << endl;
+                    p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift, yShift, _nPixel);
+                }
+                else
+                {
             cluster->getCenterOfGravityShift(xShift, yShift, _nPixel);
+          }
+
           }
 
           // look for the proper pseudo histogram before filling
@@ -422,7 +466,7 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
       return ;
     }
   }
-  
+
   if(_iEvt>=_nEvent && _nEvent != -1 && !_isEtaCalculationFinished ){
     streamlog_out (  DEBUG4 ) << _nEvent << " events done, calling finalizeProcessor()" << endl;
     finalizeProcessor();
