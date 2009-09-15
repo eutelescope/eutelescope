@@ -168,7 +168,9 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
   if ( Global::parameters->getIntVal("MaxRecordNumber") == 0 ) {
     tempEvent = runHeader->getNoOfEvent();
   } else {
-    tempEvent = min( runHeader->getNoOfEvent(),
+    tempEvent = min( runHeader->getNoOfEvent(), //seems that
+                                                //runHeader->getNoOfEvent()
+                                                //is always eq 0???
                      Global::parameters->getIntVal("MaxRecordNumber") ) - 1;
   }
 
@@ -420,8 +422,8 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
       return ;
     }
   }
-
-  if(_iEvt>=_nEvent &&  !_isEtaCalculationFinished ){
+  
+  if(_iEvt>=_nEvent && _nEvent != -1 && !_isEtaCalculationFinished ){
     streamlog_out (  DEBUG4 ) << _nEvent << " events done, calling finalizeProcessor()" << endl;
     finalizeProcessor();
     return;
@@ -585,9 +587,12 @@ void EUTelCalculateEtaProcessor::finalizeProcessor() {
 
 
 void EUTelCalculateEtaProcessor::end() {
+
+  if(!_isEtaCalculationFinished ){
+    streamlog_out (  DEBUG4 ) << "calling finalizeProcessor()" << endl;
+    finalizeProcessor();
+  }
+
   streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
-
-
-
 }
 
