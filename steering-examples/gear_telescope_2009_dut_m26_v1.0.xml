@@ -16,7 +16,7 @@
         The sensor thickness was taken into account and the planes were moved by this value.
 	
 
-        Three Mimosa 26 planes as DUTs. Rotations of the Mimosa 26 sensors still have to be figured out but it seems that it is correct ... Mimosa 26 thickness was considered.
+        Three Mimosa 26 planes as DUTs. Rotations of the Mimosa 26 sensors still have to be figured out ... Mimosa 26 thickness was considered.
 
     Author: Joerg Behr
     Date:   04/08/2009
@@ -71,11 +71,11 @@
                 
                 <!-- now the 3 mimosa 26 sensors -->
                 <layer>
-                  <ladder ID="6" positionX="0.000000" positionY="0.000000" positionZ="-22.714"
+                  <ladder ID="6" positionX="0.000000" positionY="0.000000" positionZ="-24.086"
                           sizeX="21.20000" sizeY="10.60000"
                           thickness="0.686000"
                           radLength="93.660734" />
-                  <sensitive ID="6" positionX="0.000000" positionY="0.000000" positionZ="-22.714"
+                  <sensitive ID="6" positionX="0.000000" positionY="0.000000" positionZ="-24.086"
                              sizeX="21.20000" sizeY="10.60000"
                              thickness="0.020000"
                              npixelX="1152" npixelY="576"
@@ -85,11 +85,11 @@
                 </layer>
                 
                 <layer>
-                  <ladder ID="7" positionX="0.000000" positionY="0.000000" positionZ="2.386"
+                  <ladder ID="7" positionX="0.000000" positionY="0.000000" positionZ="1.014"
                           sizeX="21.20000" sizeY="10.60000"
                           thickness="0.686000"
                           radLength="93.660734" />
-                  <sensitive ID="7" positionX="0.000000" positionY="0.000000" positionZ="2.386"
+                  <sensitive ID="7" positionX="0.000000" positionY="0.000000" positionZ="1.014"
                              sizeX="21.20000" sizeY="10.60000"
                              thickness="0.020000"
                              npixelX="1152" npixelY="576"
@@ -99,11 +99,11 @@
                 </layer>
 
                 <layer>
-                  <ladder ID="8" positionX="0.000000" positionY="0.000000" positionZ="27.486"
+                  <ladder ID="8" positionX="0.000000" positionY="0.000000" positionZ="26.1140"
                           sizeX="21.20000" sizeY="10.60000"
                           thickness="0.686000"
                           radLength="93.660734" />
-                  <sensitive ID="8" positionX="0.000000" positionY="0.000000" positionZ="27.486"
+                  <sensitive ID="8" positionX="0.000000" positionY="0.000000" positionZ="26.1140"
                              sizeX="21.20000" sizeY="10.60000"
                              thickness="0.020000"
                              npixelX="1152" npixelY="576"
