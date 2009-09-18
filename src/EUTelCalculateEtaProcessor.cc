@@ -237,9 +237,16 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
   if ( evt->getEventType() == kEORE ) {
-    streamlog_out ( DEBUG4 ) << "Found kEORE, calling finalizeProcessor()" << endl;
+
+    //streamlog_out ( DEBUG4 ) << "Found kEORE, calling finalizeProcessor()" << endl;
+    //finalizeProcessor();
+    //return;
+
+
+    streamlog_out ( DEBUG4 ) << "Found kEORE, calling finalizeProcessor() now!" << endl;
     finalizeProcessor();
     return;
+
   } else if ( evt->getEventType() == kUNKNOWN ) {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
@@ -306,7 +313,7 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
           streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
           throw UnknownDataTypeException("Cluster type unknown");
         }
-        
+
         int detectorID = cluster->getDetectorID();
         float xShift, yShift;
 
@@ -329,12 +336,12 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
 
                 if (p_tmpBrickedCluster)
                 {
-                    streamlog_out ( MESSAGE2 ) <<  "DEBUG: doing eta FULL on a bricked cluster!" << endl;
+                    //streamlog_out ( MESSAGE2 ) <<  "DEBUG: doing eta FULL on a bricked cluster!" << endl;
                     p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift, yShift);
                 }
                 else
                 {
-            cluster->getCenterOfGravityShift(xShift, yShift);
+                    cluster->getCenterOfGravityShift(xShift, yShift);
                 }
 
           } else if ( _clusterTypeSelection == "NxMPixel" ) {
@@ -346,22 +353,34 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
                 }
                 else
                 {
-            cluster->getCenterOfGravityShift(xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
+                    cluster->getCenterOfGravityShift(xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
                 }
 
           } else if ( _clusterTypeSelection == "NPixel" ) {
 
                 if (p_tmpBrickedCluster)
                 {
-                    streamlog_out ( MESSAGE2 ) <<  "DEBUG: doing eta NPixel on a bricked cluster!" << endl;
+                    //streamlog_out ( MESSAGE2 ) <<  "DEBUG: doing eta NPixel on a bricked cluster!" << endl;
                     p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift, yShift, _nPixel);
                 }
                 else
                 {
-            cluster->getCenterOfGravityShift(xShift, yShift, _nPixel);
-          }
+                    cluster->getCenterOfGravityShift(xShift, yShift, _nPixel);
+                }
 
           }
+
+
+//#define TAKI_DEBUG_ETA 1
+#ifdef TAKI_DEBUG_ETA
+            if (p_tmpBrickedCluster)
+            {
+                    streamlog_out ( MESSAGE2 ) << endl;
+                    streamlog_out ( MESSAGE2 ) <<  "Just done ETA on a BrickedCluster!" << endl;
+                    p_tmpBrickedCluster->debugOutput();
+            }
+#endif //TAKI_DEBUG_ETA
+
 
           // look for the proper pseudo histogram before filling
           // it. In case the corresponding pseudo histogram is not yet
@@ -459,6 +478,11 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
           }
 #endif
         }
+        else
+        {
+            //streamlog_out ( MESSAGE2 ) <<  "CLUSTER QUALITY NOT GOOD ENOUGH!!!" << endl;
+        }
+
         delete cluster;
       }
 

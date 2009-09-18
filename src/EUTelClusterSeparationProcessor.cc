@@ -14,6 +14,7 @@
 #include "EUTELESCOPE.h"
 #include "EUTelFFClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
+#include "EUTelBrickedClusterImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelClusterSeparationProcessor.h"
@@ -136,10 +137,15 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
     // a TrackerDataImpl with some utility methods).
     EUTelVirtualCluster    * cluster;
 
-    if ( type == kEUTelFFClusterImpl ) {
+    if ( type == kEUTelFFClusterImpl )
+    {
       cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ) ;
-
-    } else if ( type == kEUTelSparseClusterImpl ) {
+    }
+    else if ( type == kEUTelBrickedClusterImpl )
+    {
+      cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ) ;
+    }
+    else if ( type == kEUTelSparseClusterImpl ) {
 
       // ok the cluster is of sparse type, but we also need to know
       // the kind of pixel description used. This information is
@@ -156,7 +162,7 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
         cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
           ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
       } else {
-        streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+        streamlog_out ( ERROR4 ) << "Unknown pixel type. Sorry for quitting." << endl;
         throw UnknownDataTypeException("Pixel type unknown");
       }
 
@@ -178,7 +184,10 @@ void EUTelClusterSeparationProcessor::processEvent (LCEvent * event) {
 
       if ( type == kEUTelFFClusterImpl )
         otherCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (otherPulse->getTrackerData()) );
-      else {
+      else if ( type == kEUTelBrickedClusterImpl )
+        otherCluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (otherPulse->getTrackerData()) );
+      else
+      {
         streamlog_out ( ERROR4 ) << "Unknown cluster type. Sorry for quitting" << endl;
         throw UnknownDataTypeException("Cluster type unknown");
       }
@@ -300,7 +309,10 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
 
         if ( type == kEUTelFFClusterImpl )
           cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
-        else {
+        else if ( type == kEUTelBrickedClusterImpl )
+          cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
+        else
+        {
           message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
           throw UnknownDataTypeException("Cluster type unknown");
         }
