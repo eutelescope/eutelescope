@@ -73,7 +73,7 @@
                                npixelX="128" npixelY="128" pitchX="0.021000"
                                pitchY="0.021000" pitchY1="0.021000" pitchY2="0.021000"  
                                resolution="0.003000" rotation1="-1.000000" rotation2="0.000000"
-                               rotation3="0.000000" rotation4="1.000000"
+                               rotation3="0.000000" rotation4="-1.000000"
                                radLength="93.660734" />
             </dut>
 
