@@ -308,7 +308,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       ClusterType type = static_cast<ClusterType>(static_cast<int>((pulseCellDecoder(pulse)["type"])));
 
       if ( type == kEUTelDFFClusterImpl ) {
-        
+
         // digital fixed cluster implementation. Remember it can come from
         // both RAW and ZS data
         cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
@@ -342,7 +342,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       } else if ( type == kEUTelBrickedClusterImpl ) { //!HACK TAKI
 
         //  bricked cluster implementation.
-        //! Remember it can come from both RAW and ZS data!
         cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ); //!HACK TAKI
 
       } else {
@@ -359,7 +358,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         oldDetectorID = detectorID;
 
         // check if this telescope setup has a DUT
-        if ( ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) && 
+        if ( ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) &&
              ( _siPlanesLayerLayout->getDUTID() == detectorID ) ) {
           xZero        = _siPlanesLayerLayout->getDUTSensitivePositionX(); // mm
           yZero        = _siPlanesLayerLayout->getDUTSensitivePositionY(); // mm
@@ -434,6 +433,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
       }
 
+
       // get the position of the seed pixel. This is in pixel number.
       int xCluCenter, yCluCenter;
       cluster->getCenterCoord(xCluCenter, yCluCenter);
@@ -442,20 +442,67 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       // from the seed pixel center due to the charge distribution. Those
       // two numbers are the correction values in the case the Eta
       // correction is not applied.
-      float xShift, yShift;
-      if ( _cogAlgorithm == "full" ) {
-        cluster->getCenterOfGravityShift( xShift, yShift );
-      } else if ( _cogAlgorithm == "npixel" ) {
-        cluster->getCenterOfGravityShift( xShift, yShift, _nPixel );
-      } else if ( _cogAlgorithm == "nxmpixel") {
-        cluster->getCenterOfGravityShift( xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
+
+
+
+      //!HACK TAKI:
+      //! In case of a bricked cluster, we have to make sure to get the normal CoG first.
+      //! The one without the global seed coordinate correction (caused by pixel rows being skewed).
+      //! That one has to be eta-corrected and the global coordinate correction has to be applied on top of that!
+      //! So prepare a brickedCluster pointer now:
+
+      EUTelBrickedClusterImpl* p_tmpBrickedCluster = NULL;
+      if ( type == kEUTelBrickedClusterImpl )
+      {
+            p_tmpBrickedCluster = (EUTelBrickedClusterImpl*) cluster;
       }
 
-      
+      float xShift, yShift;
+      if ( _cogAlgorithm == "full" )
+      {
+        if (_etaCorrection == 1 && p_tmpBrickedCluster != NULL)
+        {
+            p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift,yShift);
+        }
+        else
+        {
+            cluster->getCenterOfGravityShift( xShift, yShift );
+        }
+      }
+      else if ( _cogAlgorithm == "npixel" )
+      {
+        if (_etaCorrection == 1 && p_tmpBrickedCluster != NULL)
+        {
+            p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift,yShift,_nPixel);
+        }
+        else
+        {
+            cluster->getCenterOfGravityShift( xShift, yShift, _nPixel );
+        }
+      }
+      else if ( _cogAlgorithm == "nxmpixel")
+      {
+        if (_etaCorrection == 1 && p_tmpBrickedCluster != NULL)
+        {
+            streamlog_out ( WARNING2 ) << " .Bricked Cluster to be asked for CoG Without Global Seed Coord Correction." << endl;
+            streamlog_out ( WARNING2 ) << " .This is not implemented for the NxMPixel algo, cause it does not make much sense for a bricked cluster." << endl;
+            streamlog_out ( WARNING2 ) << " .Doing FULL instead." << endl;
+            p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift, yShift);
+        }
+        else
+        {
+            //will be okay for a brickedClusterImpl! accounted for such a call internally.
+            cluster->getCenterOfGravityShift( xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
+        }
+      }
+
       double xCorrection = static_cast<double> (xShift) ;
       double yCorrection = static_cast<double> (yShift) ;
+      //!HACK TAKI if (_etaCorrection==1 && p_tmpBrickedCluster != NULL) THEN DO NOT FORGET
+      //!     TO APPLY THE GLOBAL SEED COORD CORRECTION ON TOP AFTERWARDS!
 
 
+      //if etaCorrection is to applied, then it will overwrite the two Corrections in here:
       if ( _etaCorrection == 1 ) {
 
         EUTelEtaFunctionImpl * xEtaFunc = NULL;
@@ -481,10 +528,21 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           anomalous = true;
         }
 
-        if ( anomalous )  {
-          streamlog_out ( DEBUG2 ) << "Found anomalous cluster\n" << ( * cluster ) << endl;
+        if ( anomalous )
+        {
+          streamlog_out ( WARNING4 ) << "Found anomalous cluster\n" << ( * cluster ) << endl;
         }
 
+        //! HACK TAKI (see above)
+        if (type == kEUTelBrickedClusterImpl)
+        {
+            int seedX, seedY;
+            cluster->getSeedCoord(seedX, seedY);
+            if (seedY %2 == 0)
+            {
+                xCorrection += 0.5f;
+            }
+        }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
         string tempHistoName;
@@ -520,6 +578,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           }
         }
 #endif
+
+
+
 
       }
 
@@ -715,7 +776,7 @@ void EUTelHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection * xEtaColl
       xEtaFunc = static_cast< EUTelEtaFunctionImpl * > ( xEtaCollection->getElementAt( sensorID  ) );
       yEtaFunc = static_cast< EUTelEtaFunctionImpl * > ( yEtaCollection->getElementAt( sensorID  ) );
     }
- 
+
       int xNoOfBin = xEtaFunc->getNoOfBin();
       int yNoOfBin = yEtaFunc->getNoOfBin();
       string tempHistoName = _clusterCenterEtaHistoName + "_" + to_string( sensorID ) ;
@@ -723,6 +784,7 @@ void EUTelHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection * xEtaColl
     AIDA::IHistogram2D * clusterCenterEta =
       AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName ).c_str(),
                                                                 1* xNoOfBin, -.5, +.5, 1 * yNoOfBin, -.5, +.5);
+
     if ( clusterCenterEta ) {
       clusterCenterEta->setTitle("Position of the cluster center (Eta corrected)");
       _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenterEta ) );
@@ -737,6 +799,7 @@ void EUTelHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection * xEtaColl
     AIDA::IHistogram2D * clusterCenter =
       AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName ).c_str(),
                                                                 1* xNoOfBin, -.5, +.5, 1 * yNoOfBin, -.5, +.5);
+
     if ( clusterCenter ) {
       clusterCenterEta->setTitle("Position of the cluster center");
       _aidaHistoMap.insert( make_pair( tempHistoName, clusterCenter ) );
@@ -803,7 +866,7 @@ void EUTelHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection * xEtaColl
     }
 
   _alreadyBookedSensorID.insert( sensorID );
-  
+
 #endif // AIDA
 
 }
