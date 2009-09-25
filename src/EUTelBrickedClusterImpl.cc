@@ -717,103 +717,68 @@ float EUTelBrickedClusterImpl::getClusterCharge(int xSize, int ySize) const {
 
 void EUTelBrickedClusterImpl::print(std::ostream& os ) const {
 
-    int xSeed, ySeed;  //xSize, ySize
-    float xShift, yShift, xShift2, yShift2; //xShift3x3, yShift3x3
+    int xSeed, ySeed, xSize, ySize;
+    float xShift, yShift, xShift2, yShift2, xShift3, yShift3; //xShift3x3, yShift3x3
     ClusterQuality quality = getClusterQuality();
-    //getClusterSize(xSize,ySize);
+    getClusterSize(xSize,ySize);
+    if (xSize != 3 || ySize != 3)
+    {
+        streamlog_out( ERROR2 ) << "[EUTelBrickedClusterImpl::print(std::ostream& os )] Wrong Cluster Size!!!" << endl;
+        return; //TODO ADJUST THIS IF YOU IMPLEMENT A VARIABLE SIZE
+    }
+
     getSeedCoord(xSeed, ySeed);
     getCenterOfGravityShift(xShift, yShift);
     getCenterOfGravityShift(xShift2, yShift2, 2);
+    getCenterOfGravityShift(xShift3, yShift3, 3);
     //getCenterOfGravityShift(xShift3x3, yShift3x3, 3, 3);
 
-    float noise = 0., SNR = 0., SNR2 = 0. ;//SNR3x3 = 0.
-    if ( _noiseSetSwitch ) {
-    noise  = getClusterNoise();
-    SNR    = getClusterSNR();
-    SNR2   = getClusterSNR(2);
-    //SNR3x3 = getClusterSNR(3,3);
+    float noise = 0., SNR = 0., SNR2 = 0., SNR3 = 0. ;//SNR3x3 = 0.
+    if ( _noiseSetSwitch )
+    {
+        noise  = getClusterNoise();
+        SNR    = getClusterSNR();
+        SNR2   = getClusterSNR(2);
+        SNR3   = getClusterSNR(3);
+        //SNR3x3 = getClusterSNR(3,3);
     }
 
     int bigspacer = 23;
 
-    os   <<  setw(bigspacer) << setiosflags(ios::left) << "Bricked pixel cluster "<< "( one surrounding layer of neighbour pixels )\n"
+    os  <<  setw(bigspacer) << setiosflags(ios::left) << "Bricked pixel cluster "<< "( one surrounding layer of neighbour pixels )\n"
                                                                                     //NOTE adjust this if you implement a variable size
-        <<  setw(bigspacer) <<  "Cluster ID " << getClusterID() << " on detector " << getDetectorID() << "\n"
-        <<  setw(bigspacer) <<  "Cluster quality " << quality << "\n"
-        <<  setw(bigspacer) <<  "Cluster total charge " << getTotalCharge() << "\n"
-        <<  setw(bigspacer) <<  "Cluster charge (2) " << getClusterCharge(2) << "\n"
-        //<<  setw(bigspacer) <<  "Cluster charge (3x3) " << getClusterCharge(3,3) << "\n"
-        <<  setw(bigspacer) <<  "Seed charge " << getSeedCharge() << " in (" << xSeed << ", " << ySeed << ")\n"
-        <<  setw(bigspacer) <<  "CoG shift       "<< "(" << xShift << ", " << yShift << ")\n"
-        <<  setw(bigspacer) <<  "CoG shift (2MSP)" << "(" << xShift2 << ", " << yShift2 << ")\n"
+        <<  setw(bigspacer) <<  "Cluster ID: " << getClusterID() << " on detector " << getDetectorID() << ":\n"
+        <<  setw(bigspacer) <<  "Cluster quality: " << quality << "\n"
+        <<  setw(bigspacer) <<  "Seed coords: " << "x=" << xSeed << ", y=" << ySeed << "\n"
+        <<  setw(bigspacer) <<  "Seed charge: " << getSeedCharge() << " in (" << xSeed << ", " << ySeed << ")\n"
+        <<  setw(bigspacer) <<  "Total charge: " << getTotalCharge() << "\n"
+        <<  setw(bigspacer) <<  "2MSP charge: " << getClusterCharge(2) << "\n"
+        <<  setw(bigspacer) <<  "3MSP charge: " << getClusterCharge(3) << "\n"
+        //<<  setw(bigspacer) <<  "3x3-Charge       " << getClusterCharge(3,3) << "\n"
+        <<  setw(bigspacer) <<  "CoG shift FULL: " << "(" << xShift  << ", " << yShift  << ")\n"
+        <<  setw(bigspacer) <<  "CoG shift 2MSP: " << "(" << xShift2 << ", " << yShift2 << ")\n"
+        <<  setw(bigspacer) <<  "CoG shift 3MSP: " << "(" << xShift3 << ", " << yShift3 << ")\n"
         ;//<<  setw(bigspacer) <<  "CoG(3x3) shift " << "(" << xShift3x3 << ", " << yShift3x3 << ")\n" ;
+
 
     if ( _noiseSetSwitch )
     {
-     os << setw(bigspacer)  <<  "Cluster noise " << noise << "\n"
-        << setw(bigspacer)  <<  "Cluster SNR " << SNR << "\n"
-        << setw(bigspacer)  <<  "Cluster SNR(9) " << SNR2 << "\n"
-        ;//<< setw(bigspacer)  <<  "Cluster SNR(3x3) " << SNR3x3 << "\n";
+       os << setw(bigspacer)  <<  "Cluster noise: " << noise << "\n"
+          << setw(bigspacer)  <<  "Cluster SNR: " << SNR  << "\n"
+          << setw(bigspacer)  <<  "2MSP SNR: " << SNR2 << "\n"
+          << setw(bigspacer)  <<  "3MSP SNR: " << SNR3 << "\n"
+          ;//<< setw(bigspacer)  <<  "Cluster SNR(3x3) " << SNR3x3 << "\n";
+    }
+    else
+    {
+         os << setw(bigspacer)  <<  "(Cluster noise not set)\n";
     }
 
-    os   << resetiosflags(ios::left);
-
-    //NOTE adjust this:
-    /*
-    int spacer = 14;
-
-    os << "|";
-    for ( int i = 0; i < spacer - 1; i++ ) {
-    os << "-";
-    }
-
-    for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
-    os << "|";
-    for ( int i = 0; i < spacer - 1; i++ ) {
-        os << "-";
-    }
-    }
-    os <<"|\n"
-        << "|" << setw(spacer - 1) << " x / y ";
-    for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
-    os << "|" << setw(spacer - 1 ) << xSeed - ( -1 * xPixel );
-    }
-    os << "|\n";
-    os << "|";
-    for ( int i = 0; i < spacer - 1; i++ ) {
-    os << "-";
-    }
-    for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
-    os << "|";
-    for ( int i = 0; i < spacer - 1; i++ ) {
-        os << "-";
-    }
-    }
-    os <<"|\n";
-    int iPixel = 0;
-    for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
-    os << "|" << setw(spacer - 1) << ySeed - ( -1 * yPixel ) << "|";
-    for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
-        os <<  setw(spacer - 1) << _trackerData->getChargeValues()[iPixel] << "|" ;
-        ++iPixel;
-    }
-    os << "\n";
-    os << "|";
-    for ( int i = 0; i < spacer - 1; i++ ) {
-        os << "-";
-    }
-    for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
-        os << "|";
-        for ( int i = 0; i < spacer - 1; i++ ) {
-        os << "-";
-        }
-    }
-    if ( yPixel == (ySize / 2) ) os << "|";
-    else os << "|\n";
-    */
+    os << "--- Signal Values ---" << endl;
+    FloatVec vectorCopy(_trackerData->getChargeValues());
+    outputBricked3x3MatrixFromVector( static_cast< std::vector< float>& > (vectorCopy) );
 
 }
-
 
 
 void EUTelBrickedClusterImpl::setOutsiderValuesInVectorInterpretedAsBrickedMatrix(std::vector<float>& v, float val) const
@@ -889,6 +854,8 @@ void EUTelBrickedClusterImpl::setOutsiderValuesInVectorInterpretedAsBrickedMatri
             }
         }
     }
+
+
 }
 
 
@@ -985,6 +952,27 @@ void EUTelBrickedClusterImpl::debugOutput() const
 
 void EUTelBrickedClusterImpl::outputBricked3x3MatrixFromVector(const std::vector<float>& v) const
 {
+
+    /**
+    *
+    * Short explanation on how the output works:
+    * a) seedRow is even:
+    *    .even rows are substracted 0.5 from their x pixel coordinate number
+    *    .so odd rows are the refernce here
+    *    .so the seedRow (and other even rows if the cluster is bigger than just one surroundling layer, aka 3x3)
+    *     is virtually shifted left by 0.5 because that is the case in reality as well.
+    *    .for this output we can only shift stuff right tough. so we shift the other (odd) rows right
+    *     and leave the rest (including the pixel coordinate "header" of our small table in place)
+    *
+    * b) seedRow is odd:
+    *    .even Rows are substracted 0.5 from their x pixel coordinate number as well
+    *    .so odd rows are the refernce here as well
+    *    .so the (other!) even rows next to the seed row are
+    *     virtually shifted left by 0.5 because that is the case in reality as well.
+    *    .for this output we can only shift stuff right tough. so we shift the seedRow right
+    *     and leave the rest (including the pixel coordinate "header" of our small table in place)
+    */
+
     if (v.size() != 9)
     {
         streamlog_out( ERROR2 ) << "    [outputBricked3x3MatrixFromVector(std::vector<float>& v)] Wrong vectorSize!!!" << endl;
@@ -993,54 +981,60 @@ void EUTelBrickedClusterImpl::outputBricked3x3MatrixFromVector(const std::vector
 
     int xSeed, ySeed;
     getSeedCoord(xSeed, ySeed);
-    streamlog_out( ERROR4 ) << "    ----------------------------" << endl;
+
+    streamlog_out( ERROR4 ) << "-----------------------------------------------------" << endl;
+    streamlog_out( ERROR4 ) << "| x=      |" //11 long
+                            << "     " << setw(3) << xSeed-1 << "     |"
+                            << "     " << setw(3) << xSeed-0 << "     |"
+                            << "     " << setw(3) << xSeed+1 << "     |"
+                            << endl;
+
+    streamlog_out( ERROR4 ) << "-----------------------------------------------------" << endl;
     if (ySeed % 2 == 0)
     {
-        streamlog_out( ERROR4 ) << "     ";
-        streamlog_out( ERROR4 ) << "   "
-                                  << setw(6) << v[0] << ", "
-                                  << setw(6) << v[1] << ", "
-                                  << "(" << setw(6) << v[2] << ")";
+        streamlog_out( ERROR4 ) << "| " << "y= " << setw(4) << ySeed-1 << " |"  //2+3+4+2=11 long
+                                << "      "  //! EXTRA SPACE HERE (THE SKEW)
+                                << setw(13) << v[0] << ","
+                                << setw(13) << v[1] << ","
+                                << "(" << setw(11) << v[2] << ")"
+                                << endl << "|" << endl;
 
-        streamlog_out( ERROR4 ) << endl;
+        streamlog_out( ERROR4 ) << "| " << "y= " << setw(4) << ySeed-0 << " |"
+                                << setw(13) << v[3] << ","
+                                << setw(13) << v[4] << ","
+                                << setw(13) << v[5]
+                                << endl << "|" << endl;
 
-        streamlog_out( ERROR4 ) << "    ";
-        streamlog_out( ERROR4 ) << setw(6) << v[3] << ", "
-                                  << setw(6) << v[4] << ", "
-                                  << setw(6) << v[5];
-
-        streamlog_out( ERROR4 ) << endl;
-
-        streamlog_out( ERROR4 ) << "     ";
-        streamlog_out( ERROR4 ) << "   "
-                                  << setw(6) << v[6] << ", "
-                                  << setw(6) << v[7] << ", "
-                                  << "(" << setw(6) << v[8] << ") ";
+        streamlog_out( ERROR4 ) << "| " << "y= " << setw(4) << ySeed+1 << " |"
+                                << "      " //! EXTRA SPACE HERE (THE SKEW)
+                                << setw(13) << v[6] << ","
+                                << setw(13) << v[7] << ","
+                                << "(" << setw(11) << v[8] << ")";
     }
     else
     {
-        streamlog_out( ERROR4 ) << "     ";
-        streamlog_out( ERROR4 ) << "(" << setw(6) << v[0] << "), "
-                                  << setw(6) << v[1] << ", "
-                                  << setw(6) << v[2];
+        streamlog_out( ERROR4 ) << "| " << "y= " << setw(4) << ySeed-1 << " |"
+                                << "(" << setw(11) << v[0] << "),"
+                                << setw(13) << v[1] << ","
+                                << setw(13) << v[2]
+                                << endl << "|" << endl;
 
-        streamlog_out( ERROR4 ) << endl;
+        streamlog_out( ERROR4 ) << "| " << "y= " << setw(4) << ySeed+0 << " |"
+                                << "      "  //! EXTRA SPACE HERE (THE SKEW)
+                                << setw(13) << v[3] << ","
+                                << setw(13) << v[4] << ","
+                                << setw(13) << v[5]
+                                << endl << "|" << endl;
 
-        streamlog_out( ERROR4 ) << "     ";
-        streamlog_out( ERROR4 ) << "       "
-                                  << setw(6) << v[3] << ", "
-                                  << setw(6) << v[4] << ", "
-                                  << setw(6) << v[5];
-
-        streamlog_out( ERROR4 ) << endl;
-
-        streamlog_out( ERROR4 ) << "     ";
-        streamlog_out( ERROR4 ) << "(" << setw(6) << v[6] << "), "
-                                  << setw(6) << v[7] << ", "
-                                  << setw(6) << v[8];
+        streamlog_out( ERROR4 ) << "| " << "y= " << setw(4) << ySeed+1 << " |"
+                                << "(" << setw(11) << v[6] << "),"
+                                << setw(13) << v[7] << ","
+                                << setw(13) << v[8];
     }
     streamlog_out( ERROR4 ) << endl;
-    streamlog_out( ERROR4 ) << "    ----------------------------" << endl;
+    streamlog_out( ERROR4 ) << "-----------------------------------------------------" << endl;
+
+
     return;
 
 }
