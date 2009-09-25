@@ -197,6 +197,9 @@ namespace eutelescope {
     //! Look Up Table for the sensor ID
     std::map< int, int > _lookUpTable;
 
+    //! boolean to mark the first processed event
+    bool fevent;
+
 #if (defined(USE_AIDA) || defined(MARLIN_USE_AIDA))
     //! AIDA histogram map
     /*! Instead of putting several pointers to AIDA histograms as

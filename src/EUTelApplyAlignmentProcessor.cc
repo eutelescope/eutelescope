@@ -127,6 +127,7 @@ void EUTelApplyAlignmentProcessor::init () {
   _histogramSwitch = true;
 #endif
   _isFirstEvent = true;
+  fevent = true;
 }
 
 void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * rdr) {
@@ -167,7 +168,6 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
     LCCollectionVec * inputCollectionVec         = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputHitCollectionName));
     LCCollectionVec * alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection(_alignmentCollectionName));
     
-    static bool fevent = true;
     if (fevent) {
 
       bookHistos();
@@ -272,7 +272,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
           outputPosition[0] -= alignment->getXOffset();
           outputPosition[1] -= alignment->getYOffset();
           outputPosition[2] -= alignment->getZOffset();
-
+          
         } else if ( _correctionMethod == 2 ) {
 
           // this is the translation first
@@ -354,9 +354,8 @@ void EUTelApplyAlignmentProcessor::bookHistos() {
     // histograms are grouped into folders named after the
     // detector. This requires to loop on detector now.
     for (int iDet = 0 ; iDet < _siPlanesParameters->getSiPlanesNumber(); iDet++) {
-
       int sensorID = _siPlanesLayerLayout->getID( iDet ) ;
-
+ 
       string basePath;
       {
         stringstream ss ;
