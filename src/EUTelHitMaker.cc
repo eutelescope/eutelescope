@@ -455,6 +455,11 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       if ( type == kEUTelBrickedClusterImpl )
       {
             p_tmpBrickedCluster = (EUTelBrickedClusterImpl*) cluster;
+            if (p_tmpBrickedCluster == NULL)
+            {
+                streamlog_out ( ERROR4 ) << " .COULD NOT CREATE EUTelBrickedClusterImpl* !!!" << endl;
+                throw UnknownDataTypeException("COULD NOT CREATE EUTelBrickedClusterImpl* !!!");
+            }
       }
 
       float xShift, yShift;
@@ -533,14 +538,15 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           streamlog_out ( WARNING4 ) << "Found anomalous cluster\n" << ( * cluster ) << endl;
         }
 
-        //! HACK TAKI (see above)
+        //! HACK TAKI (see above):
+        //! APPLY THE GLOBAL SEED COORD CORRECTION ON TOP NOW
         if (type == kEUTelBrickedClusterImpl)
         {
             int seedX, seedY;
             cluster->getSeedCoord(seedX, seedY);
             if (seedY %2 == 0)
             {
-                xCorrection += 0.5f;
+                xCorrection -= 0.5f;
             }
         }
 
@@ -578,9 +584,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           }
         }
 #endif
-
-
-
 
       }
 
@@ -730,7 +733,7 @@ void EUTelHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection * xEtaColl
   // 2 should be enough because it
   // means that the sensor is wrong
   // by all its size.
-  double safetyFactor = 2.0;
+  double safetyFactor = 5.0;
   double xPosition = (isDUT) ? _siPlanesLayerLayout->getDUTSensitivePositionX( ) : _siPlanesLayerLayout->getSensitivePositionX( layerIndex );
   double yPosition = (isDUT) ? _siPlanesLayerLayout->getDUTSensitivePositionY( ) : _siPlanesLayerLayout->getSensitivePositionY( layerIndex );
   double xSize     = (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveSizeX ( )    : _siPlanesLayerLayout->getSensitiveSizeX ( layerIndex );
