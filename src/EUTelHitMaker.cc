@@ -733,7 +733,7 @@ void EUTelHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection * xEtaColl
   // 2 should be enough because it
   // means that the sensor is wrong
   // by all its size.
-  double safetyFactor = 5.0;
+  double safetyFactor = 2.0;
   double xPosition = (isDUT) ? _siPlanesLayerLayout->getDUTSensitivePositionX( ) : _siPlanesLayerLayout->getSensitivePositionX( layerIndex );
   double yPosition = (isDUT) ? _siPlanesLayerLayout->getDUTSensitivePositionY( ) : _siPlanesLayerLayout->getSensitivePositionY( layerIndex );
   double xSize     = (isDUT) ? _siPlanesLayerLayout->getDUTSensitiveSizeX ( )    : _siPlanesLayerLayout->getSensitiveSizeX ( layerIndex );
