@@ -2971,7 +2971,8 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
           fillSNRSwitch = false;
         }
 
-
+      if(type == kEUTelDFFClusterImpl)
+        fillSNRSwitch = false;
       if ( fillSNRSwitch ) {
 
         AIDA::IHistogram1D * histo;
