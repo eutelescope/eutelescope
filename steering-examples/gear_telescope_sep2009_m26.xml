@@ -16,7 +16,7 @@ Rotations still unclear.
     <BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
     <detectors>
         <detector name="SiPlanes" geartype="SiPlanesParameters">
-            <siplanesID ID="25" />
+            <siplanesID ID="40" />
             <siplanesType type="TelescopeWithoutDUT" />
             <siplanesNumber number="6" />
             <layers>
