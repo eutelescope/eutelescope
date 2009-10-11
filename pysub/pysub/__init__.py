@@ -69,11 +69,11 @@ from submitconverter  import SubmitConverter
 from submittest       import SubmitTest
 from submitnativecopy import SubmitNativeCopy
 from submitpedestal   import SubmitPedestal
-from submitclusearch  import SubmitCluSearch
-from submitfilter     import SubmitFilter
-from submiteta        import SubmitEta
-from submithitmaker   import SubmitHitMaker
-from submitalign      import SubmitAlign
-from submitfitter     import SubmitFitter
+from submitclusearch_nopede  import SubmitCluSearch
+from submitfilter_nopede     import SubmitFilter
+from submiteta_nopede        import SubmitEta
+from submithitmaker_nopede   import SubmitHitMaker
+from submitalign_nopede      import SubmitAlign
+from submitfitter_nopede     import SubmitFitter
 from error            import *
 
