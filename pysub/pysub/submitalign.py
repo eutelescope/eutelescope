@@ -327,7 +327,8 @@ class SubmitAlign( SubmitBase ):
             raise StopExecutionError( message )
 
         except NotEnoughFilesError, error:
-            self._logger.critical( "Not enough input file to continue" )
+            message = "Not enough input file to continue" 
+            self._logger.critical( message  )
             raise StopExecutionError( message )
 
     ## Generate only submitter
@@ -858,7 +859,7 @@ class SubmitAlign( SubmitBase ):
         except ConfigParser.NoOptionError :
             inputFilePath = "results"
 
-        self._hasAtLeastOneInputFile = false;
+        self._hasAtLeastOneInputFile = False;
 
         # loop over all the input files
         for index, inputFile in enumerate( self._inputFileList ):
@@ -883,7 +884,7 @@ class SubmitAlign( SubmitBase ):
         self._summaryNTuple[ len( self._summaryNTuple ) - 1 ] = run, "See above", marlin, output, histo, tarball
 
         if not self._hasAtLeastOneInputFile:
-            raise NotEnoughFileError ;
+            raise NotEnoughFilesError ;
 
 
     ## Generate the steering file
