@@ -1048,10 +1048,36 @@ class SubmitAlign( SubmitBase ):
             self._logger.critical( message )
             raise StopExecutionError( message )
 
+
         actualSteeringString = actualSteeringString.replace( "@ResidualXMax@", maxX )
         actualSteeringString = actualSteeringString.replace( "@ResidualXMin@", minX )
         actualSteeringString = actualSteeringString.replace( "@ResidualYMax@", maxY )
         actualSteeringString = actualSteeringString.replace( "@ResidualYMin@", minY )
+ 
+        # add planes to be excluded from the alignment 
+        try :
+            ExcludePlanes = self._configParser.get( "AlignOptions", "ExcludePlanes" )
+        except  ConfigParser.NoOptionError :
+            message = "No Planes to exclude!"
+            self._logger.info( message )
+            ExcludePlanes = ""
+#            raise StopExecutionError( message )
+
+        actualSteeringString = actualSteeringString.replace( "@ExcludePlanes@",ExcludePlanes )
+
+
+        # add planes to be excluded from the alignment 
+        try :
+            ExcludePlanes = self._configParser.get( "AlignOptions", "ExcludePlanes" )
+        except  ConfigParser.NoOptionError :
+            message = "No Planes to exclude!"
+            self._logger.info( message )
+            ExcludePlanes = ""
+#            raise StopExecutionError( message )
+
+
+        actualSteeringString = actualSteeringString.replace( "@ExcludePlanes@",ExcludePlanes )
+
 
         # open the new steering file for writing
         steeringFileName = "%(name)s-%(run)s.xml" % { "name": self.name, "run" : self._option.output }
@@ -1211,6 +1237,18 @@ class SubmitAlign( SubmitBase ):
         actualSteeringString = actualSteeringString.replace( "@ResidualXMin@", minX )
         actualSteeringString = actualSteeringString.replace( "@ResidualYMax@", maxY )
         actualSteeringString = actualSteeringString.replace( "@ResidualYMin@", minY )
+
+        # add planes to be excluded from the alignment 
+        try :
+            ExcludePlanes = self._configParser.get( "AlignOptions", "ExcludePlanes" )
+        except  ConfigParser.NoOptionError :
+            message = "No Planes to exclude!"
+            self._logger.info( message )
+            ExcludePlanes = ""
+#            raise StopExecutionError( message )
+
+        actualSteeringString = actualSteeringString.replace( "@ExcludePlanes@",ExcludePlanes )
+
 
         # open the new steering file for writing
         steeringFileName = "%(name)s-%(run)s-s%(v)06d.xml" % { "v": index , "name": self.name, "run" : self._option.output }
