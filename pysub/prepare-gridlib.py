@@ -106,6 +106,7 @@ def main() :
         filename = options.output
 
     tarball = tarfile.open( filename, "w:gz" )
+    tarball.dereference=True
 
     for i in glob.glob( "%(dir)s/*" % { "dir": tempDir } ):
         if options.verbose :
