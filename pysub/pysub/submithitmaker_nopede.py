@@ -157,7 +157,8 @@ class SubmitHitMaker( SubmitBase ):
         # issue another critical error in case the user didn't provide an eta file
         if self._option.eta == None:
             self._logger.critical("No ETA file provided. Pleasure use -e option to specify it" )
-            sys.exit( 6 )
+            self._option.eta = ""
+#            sys.exit( 6 )
 
 
     ## Execute method
