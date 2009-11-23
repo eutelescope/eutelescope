@@ -576,6 +576,7 @@ void EUTelMille::findtracks(
                  if(_onlySingleHitEvents == 1 && (_hitsArray[e].size() != 1 || _hitsArray[e+1].size() != 1))
                    taketrack = false;
                }
+             excluded = 0;
           }
           
           if((int)indexarray.size() >= _maxTrackCandidates)
