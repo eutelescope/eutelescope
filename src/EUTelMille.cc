@@ -552,44 +552,34 @@ void EUTelMille::findtracks(
           int excluded = 0; //1 = excluded,  0 = not excluded     
           for(size_t e =0; e < vec.size()-1; e++) 
           {
-
-              double distance = sqrt(
-                pow( _hitsArray[e][vec[e]].measuredX - _hitsArray[e+1][vec[e+1]].measuredX ,2) +
-                pow( _hitsArray[e][vec[e]].measuredY - _hitsArray[e+1][vec[e+1]].measuredY ,2)
-                );
-              double distance_z = _hitsArray[e+1][vec[e+1]].measuredZ - _hitsArray[e][vec[e]].measuredZ;
-
-              double distancemax = _distanceMax * ( distance_z / 100000.0);
-
-              if( distance >= distancemax )
-                taketrack = false;
-
-              if(_onlySingleHitEvents == 1 && (_hitsArray[e].size() != 1 || _hitsArray[e+1].size() != 1))
-                taketrack = false;
-
-
-              if (_nExcludePlanes > 0) {
+             if (_nExcludePlanes > 0) {
                  for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
                       
-                      if (e == _excludePlanes[helphelp] || (e+1) == _excludePlanes[helphelp]) { //sensors with index e or e+1 must be excluded
+                      if (e == _excludePlanes[helphelp] || (e+1) == _excludePlanes[helphelp]) { //check whether one sensor was excluded
                           excluded = 1;//this plane is excluded
                       }
                   }
               }
+             if(excluded == 0)
+               {
+                 double distance = sqrt(
+                                        pow( _hitsArray[e][vec[e]].measuredX - _hitsArray[e+1][vec[e+1]].measuredX ,2) +
+                                        pow( _hitsArray[e][vec[e]].measuredY - _hitsArray[e+1][vec[e+1]].measuredY ,2)
+                                        );
+                 double distance_z = _hitsArray[e+1][vec[e+1]].measuredZ - _hitsArray[e][vec[e]].measuredZ;
+                 
+                 double distancemax = _distanceMax * ( distance_z / 100000.0);
+                 
+                 if( distance >= distancemax )
+                   taketrack = false;
+                 
+                 if(_onlySingleHitEvents == 1 && (_hitsArray[e].size() != 1 || _hitsArray[e+1].size() != 1))
+                   taketrack = false;
+               }
           }
           
           if((int)indexarray.size() >= _maxTrackCandidates)
             taketrack = false;
-
-
-          if (_nExcludePlanes > 0)
-          {
-             if(excluded == 1)
-              {
-                  taketrack = true;
-              }
-          }
-          
          
           if(taketrack)
             {
