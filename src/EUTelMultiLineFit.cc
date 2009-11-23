@@ -1408,11 +1408,11 @@ void EUTelMultiLineFit::bookHistos() {
   try {
     streamlog_out ( MESSAGE2 ) << "Booking histograms" << endl;
 
-    const int    NBin = 10000;
+    const int    NBin = 20000;
     const double Chi2Min  = 0.0;
     const double Chi2Max  = 10000.0;
-    const double Min  = -5000.0;
-    const double Max  = 5000.0;
+    const double Min  = -10000.0;
+    const double Max  = 10000.0;
     const double angleMin  = -3.0;
     const double angleMax  = 3.0;
     const int    NBinHitDistance = 3000;
@@ -1424,10 +1424,10 @@ void EUTelMultiLineFit::bookHistos() {
     const double snrMax = 10000.0;
 
     const int NBin2D = 100;
-    const double positionXMin = -5000.0;
-    const double positionXMax = 5000.0;
-    const double positionYMin = -5000.0;
-    const double positionYMax = 5000.0;
+    const double positionXMin = -10000.0;
+    const double positionXMax = 10000.0;
+    const double positionYMin = -10000.0;
+    const double positionYMax = 10000.0;
 
     AIDA::IHistogram1D * numberTracksLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_numberTracksLocalname,20,tracksMin,tracksMax);
