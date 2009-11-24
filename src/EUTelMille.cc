@@ -525,18 +525,18 @@ void EUTelMille::findtracks(
            }
           vec.pop_back(); 
           
-          if (_nExcludePlanes > 0)
+          if ( _nExcludePlanes > 0 )
           {
               int excluded = 0; //1 = excluded,  0 = not excluded
               for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-                  if (e == _excludePlanes[helphelp] || (e+1) == _excludePlanes[helphelp]) { //sensors with index e or e+1 must be excluded
+//                  if (e == _excludePlanes[helphelp] || (e+1) == _excludePlanes[helphelp]) { //sensors with index e or e+1 must be excluded
+                  if( i == _excludePlanes[helphelp] ){
                       excluded = 1;//this plane is excluded
+                      taketrack = true;
+//                      streamlog_out(MESSAGE) << "Excluding plane " << i << " in findtracks() " << endl;
+                      break;
                   }
-              }
-              if(excluded == 1)
-              {
-                  taketrack = true;
-              }
+              }             
           }
           
           if(taketrack)
@@ -550,19 +550,24 @@ void EUTelMille::findtracks(
           //track candidate requirements
           bool taketrack = true;
           int excluded = 0; //1 = excluded,  0 = not excluded     
-          for(size_t e =0; e < vec.size()-1; e++) 
+          
+          if (_nExcludePlanes > 0) 
           {
-             if (_nExcludePlanes > 0) {
                  for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-                      
-                      if (e == _excludePlanes[helphelp] || (e+1) == _excludePlanes[helphelp]) { //check whether one sensor was excluded
+                   if( i == _excludePlanes[helphelp] ){
+//                 if (e == _excludePlanes[helphelp] || (e+1) == _excludePlanes[helphelp]) { //check whether one sensor was excluded
                           excluded = 1;//this plane is excluded
-                      }
-                  }
-              }
-             if(excluded == 0)
-               {
-                 double distance = sqrt(
+//                       streamlog_out(MESSAGE) << "Excluding plane " << i << " in findtracks() " << endl;
+                       break;
+                   }
+                 }
+          }
+ 
+          if(excluded == 0)
+          {          
+              for(int e =0; e < (static_cast<int>(vec.size())-1); e++) 
+              {
+                double distance = sqrt(
                                         pow( _hitsArray[e][vec[e]].measuredX - _hitsArray[e+1][vec[e+1]].measuredX ,2) +
                                         pow( _hitsArray[e][vec[e]].measuredY - _hitsArray[e+1][vec[e+1]].measuredY ,2)
                                         );
@@ -575,13 +580,15 @@ void EUTelMille::findtracks(
                  
                  if(_onlySingleHitEvents == 1 && (_hitsArray[e].size() != 1 || _hitsArray[e+1].size() != 1))
                    taketrack = false;
-               }
-             excluded = 0;
+              }
+//             excluded = 0;
           }
           
-          if((int)indexarray.size() >= _maxTrackCandidates)
+          if(static_cast<int>(indexarray.size()) >= _maxTrackCandidates)
             taketrack = false;
-         
+        
+//          streamlog_out (MESSAGE) << "track: " << taketrack << " exclude:" << excluded << " nExcludePlanes:" << to_string(_excludePlanes) << endl;
+          
           if(taketrack)
             {
               indexarray.push_back(vec);
@@ -788,6 +795,7 @@ void EUTelMille::processEvent (LCEvent * event) {
         // check if running in input mode 0 or 2
         if (_inputMode == 0) {
 
+           streamlog_out ( DEBUG ) << "Loop over all hits in collection, inputMode=0" << endl;
           // loop over all hits in collection
           for ( int iHit = 0; iHit < collection->getNumberOfElements(); iHit++ ) {
 
@@ -795,7 +803,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
             LCObjectVec clusterVector = hit->getRawHits();
 
-            EUTelVirtualCluster * cluster;
+            EUTelVirtualCluster *cluster = 0;
 
             if ( hit->getType() == kEUTelBrickedClusterImpl ) {
               
@@ -827,16 +835,18 @@ void EUTelMille::processEvent (LCEvent * event) {
               // now we know the pixel type. So we can properly create a new
               // instance of the sparse cluster
                 
-              if ( pixelType == kEUTelSimpleSparsePixel ) {
+/*              if ( pixelType == kEUTelSimpleSparsePixel || pixelType == kEUTelAPIXSimpleSparsePixel) {
                   
                 cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
                   ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+                streamlog_out ( DEBUG ) << "Created new sparse cluster" << endl;
+
                   
               } else {
                 streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
                 throw UnknownDataTypeException("Pixel type unknown");
               }
-             
+  */           
             
             } else {
               throw UnknownDataTypeException("Unknown cluster type");
@@ -868,9 +878,12 @@ void EUTelMille::processEvent (LCEvent * event) {
             hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
 
 
+
             delete cluster; // <--- destroying the cluster
 
             _hitsArray[layerIndex].push_back(hitsInPlane);
+
+            streamlog_out ( DEBUG ) << "hit at "<<hitsInPlane.measuredX<<","<<hitsInPlane.measuredY<<","<<hitsInPlane.measuredZ<<" added" << endl;
 
           } // end loop over all hits in collection
 
@@ -915,9 +928,13 @@ void EUTelMille::processEvent (LCEvent * event) {
   //add this somewhere around line 871 directly in front of std::vector<int> fitplane(_nPlanes, 0);
   //if at least one plane is excluded
  
+  streamlog_out ( DEBUG ) << "There are  "<<_nExcludePlanes<<" planes excluded" << endl;
+
+  
   if (_nExcludePlanes > 0)
   {
-      for(int help = 0; _hitsArray.size(); help++) //loop over all
+
+     for(int help = 0; help < static_cast<int>(_hitsArray.size()); help++) //loop over all
           //planes in order to
           //find the excluded planes         
       {
@@ -925,8 +942,10 @@ void EUTelMille::processEvent (LCEvent * event) {
           for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
               if (help == _excludePlanes[helphelp]) {
                   excluded = 1;//this plane is excluded
+                  break;
               }
           }
+          streamlog_out ( DEBUG ) << "Plane "<<help << " excluded="<<excluded<< endl;
           //if the plane is EXCLUDED and NO hit was found in the plane
           //add an arbritary fake hit. this fake hit will be ignored
           //afterwards in fittrack(), because this plane is excluded.
@@ -937,10 +956,13 @@ void EUTelMille::processEvent (LCEvent * event) {
               hitsInPlane.measuredY = 0.0;
               hitsInPlane.measuredZ = 0.0;
               _hitsArray[help].push_back(hitsInPlane);
+              streamlog_out ( MILLEMESSAGE ) << "Added fake hit to plane "<<help << endl;
           }
+          
       }
   }  
  
+
   std::vector<int> fitplane(_nPlanes, 0);
 
   for (int help = 0; help < _nPlanes; help++) {
@@ -960,20 +982,26 @@ void EUTelMille::processEvent (LCEvent * event) {
     //
     // This is done separately for different numbers of planes.
 
+     streamlog_out ( MESSAGE ) << "Finding tracks by distance" << endl;
+
     std::vector<std::vector<int> > indexarray;
     findtracks(indexarray, std::vector<int>(), _hitsArray, 0, 0);
 
+    streamlog_out ( DEBUG ) << "Found simple tracks:" << endl;
     for(size_t i =0; i < indexarray.size(); i++)
       {
+         streamlog_out ( DEBUG ) << "Track "<<i<<" position: " << endl;
         for(size_t j =0; j < indexarray[i].size(); j++)
           {
             _xPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredX;
             _yPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredY;
             _zPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredZ;
+            streamlog_out ( DEBUG ) << " params " << _xPos[i][j] << ", "<< _yPos[i][j]<<", "<< _zPos[i][j] << endl;            
           }
       }
 
     _nTracks = (int) indexarray.size();
+    
 
     // end check if running in input mode 0 or 2 => perform simple track finding
   } else if (_inputMode == 1) {
@@ -1063,7 +1091,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       // check for a hit in every telescope plane. this needs probably
       // some further investigations. perhaps it fails if some planes
       // were excluded in the track fitter. but it should work
-      if ((_nPlanes  - _excludePlanes.size())== number_of_planes)
+      if ((_nPlanes  - static_cast<int>(_excludePlanes.size()))== number_of_planes)
         {
           for(size_t i =0;i < _hitCollectionName.size();i++)
             {
@@ -1080,7 +1108,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                   TrackerHitImpl *hit = static_cast<TrackerHitImpl*> ( collection->getElementAt(iHit) );
 
                   LCObjectVec clusterVector = hit->getRawHits();
-                  EUTelVirtualCluster *cluster;
+                  EUTelVirtualCluster *cluster = 0;
 
                   if ( hit->getType() == kEUTelBrickedClusterImpl ) {
 
@@ -1116,7 +1144,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                     // now we know the pixel type. So we can properly create a new
                     // instance of the sparse cluster
                  
-                    if ( pixelType == kEUTelSimpleSparsePixel ) {
+/*                    if ( pixelType == kEUTelSimpleSparsePixel ) {
 
                       cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
                         ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
@@ -1125,7 +1153,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                       streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
                       throw UnknownDataTypeException("Pixel type unknown");
                     }
-                      
+  */                    
                       
                   } else {
                     throw UnknownDataTypeException("Unknown cluster type");
@@ -1208,6 +1236,13 @@ void EUTelMille::processEvent (LCEvent * event) {
   streamlog_out ( MILLEMESSAGE ) << endl;
 
   streamlog_out ( MILLEMESSAGE ) << "Number of track candidates found: " << _iEvt << ": " << _nTracks << endl;
+
+  streamlog_out ( MESSAGE ) << "Number of hits in the individual planes: ";
+  for(size_t i = 0; i < _hitsArray.size(); i++)
+    streamlog_out ( MESSAGE ) << _hitsArray[i].size() << " ";
+  streamlog_out ( MESSAGE ) << endl;
+
+  streamlog_out ( MESSAGE ) << "Number of track candidates found: " << _iEvt << ": " << _nTracks << endl;
 
   // Perform fit for all found track candidates
   // ------------------------------------------
