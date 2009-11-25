@@ -736,18 +736,21 @@ void EUTelMille::processEvent (LCEvent * event) {
 
   std::vector<std::vector<EUTelMille::HitsInPlane> > _hitsArray(_nPlanes - _nExcludePlanes, std::vector<EUTelMille::HitsInPlane>());
   std::vector<int> indexconverter (_nPlanes,-1);
-   if ( _nExcludePlanes > 0 )
+  //if ( _nExcludePlanes > 0 )
      {
        int icounter = 0;
        for(int i =0; i < _nPlanes; i++)
          {
            int excluded = 0; //0 - not excluded, 1 - excluded
-           for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-             if (i == _excludePlanes[helphelp] ) {
-               excluded = 1;
-               break;//leave the for loop
+           if ( _nExcludePlanes > 0 )
+             {
+               for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+                 if (i == _excludePlanes[helphelp] ) {
+                   excluded = 1;
+                   break;//leave the for loop
+                 }
+               }
              }
-           }
            if(excluded == 1)
              indexconverter[i] = -1;
            else
