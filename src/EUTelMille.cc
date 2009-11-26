@@ -1264,17 +1264,25 @@ void EUTelMille::processEvent (LCEvent * event) {
 
       // check if residal cuts are used
       if (_useResidualCuts != 0) {
-
         // loop over all sensors
         for (int help = 0; help < _nPlanes; help++) {
-
-          if (_waferResidX[help] < _residualsXMin[help] || _waferResidX[help] > _residualsXMax[help]) {
-            residualsXOkay = 0;
+          int excluded = 0; //0 not excluded, 1 excluded
+          if (_nExcludePlanes > 0) {
+            for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+              if (help == _excludePlanes[helphelp]) {
+                excluded = 1;
+              }
+            }
           }
-          if (_waferResidY[help] < _residualsYMin[help] || _waferResidY[help] > _residualsYMax[help]) {
-            residualsYOkay = 0;
-          }
-
+          if(excluded == 0)
+            {
+              if (_waferResidX[help] < _residualsXMin[help] || _waferResidX[help] > _residualsXMax[help]) {
+                residualsXOkay = 0;
+              }
+              if (_waferResidY[help] < _residualsYMin[help] || _waferResidY[help] > _residualsYMax[help]) {
+                residualsYOkay = 0;
+              }
+            }
         } // end loop over all sensors
 
       } // end check if residual cuts are used
