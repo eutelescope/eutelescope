@@ -134,6 +134,11 @@ EUTelCalculateEtaProcessor::EUTelCalculateEtaProcessor () : Processor("EUTelCalc
   registerProcessorParameter("OutputEtaFileName",
                              "This is the name of the output condition file",
                              _outputEtaFileName, string("etafile"));
+
+  registerOptionalParameter("RejectSinglePixelCluster","reject single pixel cluster. 1=reject, 0=keep, 2=reject clusters with two pixels, where the second pixel is not diagonal to the seed. ",_rejectsingplepixelcluster, static_cast <int> (0));
+
+
+
 }
 
 
@@ -152,6 +157,11 @@ void EUTelCalculateEtaProcessor::init () {
   _integralHistoX.clear();
   _integralHistoY.clear();
 
+  if(_rejectsingplepixelcluster != 0 && _rejectsingplepixelcluster != 1 && _rejectsingplepixelcluster != 2)
+    {
+      streamlog_out ( ERROR4 ) << "the parameter RejectSinglePixelCluster must set to 0,1 or 2, but it is "<<  _rejectsingplepixelcluster<< endl;
+      exit(-1);
+    }
 }
 
 void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
@@ -172,7 +182,7 @@ void EUTelCalculateEtaProcessor::processRunHeader (LCRunHeader * rdr) {
                                                 //runHeader->getNoOfEvent()
                                                 //is always eq 0???
                      Global::parameters->getIntVal("MaxRecordNumber") ) - 1;
- }
+  }
 
   if ( ( _nEvent == -1 ) || ( _nEvent >= tempEvent  && tempEvent > 0 ) ) {
     _nEvent = tempEvent;
@@ -320,168 +330,189 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
 
 
         if ( cluster->getClusterQuality() == static_cast<ClusterQuality> (_clusterQuality) )
-        {
-
-          EUTelBrickedClusterImpl* p_tmpBrickedCluster = NULL;
-          if ( type == kEUTelBrickedClusterImpl )
           {
+
+            EUTelBrickedClusterImpl* p_tmpBrickedCluster = NULL;
+            if ( type == kEUTelBrickedClusterImpl )
+              {
                 p_tmpBrickedCluster = (EUTelBrickedClusterImpl*) cluster;
                 //Static of cluster to EUTelBrickedClusterImpl* was done for sure in the case of
                 //( type == kEUTelBrickedClusterImpl ).
                 //So this cast must work as well!
                 //This is just a (different) pointer to the same memory as "cluster". So no additional delete needed.
-          }
+              }
 
-          if ( _clusterTypeSelection == "FULL" ) {
+            if ( _clusterTypeSelection == "FULL" ) {
 
-                if (p_tmpBrickedCluster)
+              if (p_tmpBrickedCluster)
                 {
-                    //streamlog_out ( MESSAGE2 ) <<  "DEBUG: doing eta FULL on a bricked cluster!" << endl;
-                    p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift, yShift);
+                  //streamlog_out ( MESSAGE2 ) <<  "DEBUG: doing eta FULL on a bricked cluster!" << endl;
+                  p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift, yShift);
                 }
-                else
+              else
                 {
-                    cluster->getCenterOfGravityShift(xShift, yShift);
-                }
-
-          } else if ( _clusterTypeSelection == "NxMPixel" ) {
-
-                if (p_tmpBrickedCluster)
-                {
-                    streamlog_out ( WARNING4 ) <<  "NxM not applicable for a bricked cluster!! Doing FULL!" << endl;
-                    p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift, yShift);
-                }
-                else
-                {
-                    cluster->getCenterOfGravityShift(xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
+                  cluster->getCenterOfGravityShift(xShift, yShift);
                 }
 
-          } else if ( _clusterTypeSelection == "NPixel" ) {
+            } else if ( _clusterTypeSelection == "NxMPixel" ) {
 
-                if (p_tmpBrickedCluster)
+              if (p_tmpBrickedCluster)
                 {
-                    //streamlog_out ( MESSAGE2 ) <<  "DEBUG: doing eta NPixel on a bricked cluster!" << endl;
-                    p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift, yShift, _nPixel);
+                  streamlog_out ( WARNING4 ) <<  "NxM not applicable for a bricked cluster!! Doing FULL!" << endl;
+                  p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift, yShift);
                 }
-                else
+              else
                 {
-                    cluster->getCenterOfGravityShift(xShift, yShift, _nPixel);
+                  cluster->getCenterOfGravityShift(xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
                 }
 
-          }
+            } else if ( _clusterTypeSelection == "NPixel" ) {
+
+              if (p_tmpBrickedCluster)
+                {
+                  //streamlog_out ( MESSAGE2 ) <<  "DEBUG: doing eta NPixel on a bricked cluster!" << endl;
+                  p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift, yShift, _nPixel);
+                }
+              else
+                {
+                  cluster->getCenterOfGravityShift(xShift, yShift, _nPixel);
+                }
+
+            }
 
 
-//#define TAKI_DEBUG_ETA 1
+            //#define TAKI_DEBUG_ETA 1
 #ifdef TAKI_DEBUG_ETA
             if (p_tmpBrickedCluster)
-            {
-                    streamlog_out ( MESSAGE2 ) << endl;
-                    streamlog_out ( MESSAGE2 ) <<  "Just done ETA on a BrickedCluster!" << endl;
-                    p_tmpBrickedCluster->debugOutput();
-            }
+              {
+                streamlog_out ( MESSAGE2 ) << endl;
+                streamlog_out ( MESSAGE2 ) <<  "Just done ETA on a BrickedCluster!" << endl;
+                p_tmpBrickedCluster->debugOutput();
+              }
 #endif //TAKI_DEBUG_ETA
 
 
-          // look for the proper pseudo histogram before filling
-          // it. In case the corresponding pseudo histogram is not yet
-          // available, book it on the fly!
-          if ( _cogHistogramX.find( detectorID ) == _cogHistogramX.end() ) {
-            _cogHistogramX[ detectorID ]  = new EUTelPseudo1DHistogram(_noOfBin[0], _min, _max);
-            _integralHistoX[ detectorID ] = new EUTelPseudo1DHistogram(_noOfBin[0], _min, _max);
-          }
-          if ( _cogHistogramY.find( detectorID ) == _cogHistogramY.end() ) {
-            _cogHistogramY[ detectorID ] = new EUTelPseudo1DHistogram(_noOfBin[1], _min, _max);
-            _integralHistoY[ detectorID ] = new EUTelPseudo1DHistogram(_noOfBin[0], _min, _max);
-          }
-
-          _cogHistogramX[detectorID]->fill(static_cast<double>(xShift), 1.0);
-          _cogHistogramY[detectorID]->fill(static_cast<double>(yShift), 1.0);
-
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-          {
-
-            if ( _alreadyBookedSensorID.find( detectorID ) == _alreadyBookedSensorID.end() ) {
-              // need booking!
-
-              // the path first!
-              string path = "detector_" + to_string( detectorID ) ;
-              AIDAProcessor::tree( this )->mkdir( path.c_str() );
-              path.append( "/" );
-
-              // Center of gravity along X
-              string name  = _cogHistogramXName + "_" + to_string(detectorID);
-              string title =  "CoG shift along X on detector " + to_string( detectorID );
-              AIDA::IHistogram1D * cogHistoX =
-                AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), _noOfBin[0], _min, _max);
-              cogHistoX->setTitle(title.c_str());
-              _aidaHistoMap.insert( make_pair(name, cogHistoX) );
-
-              // Center of gravity along y
-              name  = _cogHistogramYName + "_" + to_string(detectorID);
-              title =  "CoG shift along Y on detector " + to_string( detectorID );
-              AIDA::IHistogram1D * cogHistoY =
-                AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), _noOfBin[1], _min, _max);
-              cogHistoY->setTitle(title.c_str());
-              _aidaHistoMap.insert( make_pair(name, cogHistoY) );
-
-              // Integral along x
-              name  =  _cogIntegralXName + "_" + to_string( detectorID ) ;
-              title = "Integral CoG (x) shift histogram on " + to_string( detectorID );
-              AIDA::IHistogram1D * cogIntegralHistoX =
-                AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), _noOfBin[0], _min, _max);
-              cogIntegralHistoX->setTitle(title.c_str());
-              _aidaHistoMap.insert( make_pair(name, cogIntegralHistoX) );
-
-              // Integral along y
-              name  = _cogIntegralYName + "_" + to_string( detectorID ) ;
-              title = "Integral CoG (y) shift histogram on " + to_string( detectorID );
-              AIDA::IHistogram1D * cogIntegralHistoY =
-                AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), _noOfBin[1], _min, _max);
-              cogIntegralHistoY->setTitle(title.c_str());
-              _aidaHistoMap.insert( make_pair(name, cogIntegralHistoY) );
-
-              // Eta histogram along x
-              name  = _etaHistoXName + "_" + to_string( detectorID ) ;
-              title = "Eta profile x for detector " + to_string( detectorID ) ;
-              AIDA::IProfile1D * etaHistoX =
-                AIDAProcessor::histogramFactory(this)->createProfile1D( (path + name).c_str(), _noOfBin[0], _min, _max, _min, _max);
-              etaHistoX->setTitle(title.c_str());
-              _aidaHistoMap.insert( make_pair(name, etaHistoX) );
-
-              // Eta histogram along y
-              name  = _etaHistoYName + "_" + to_string( detectorID ) ;
-              title = "Eta profile y for detector " + to_string( detectorID ) ;
-              AIDA::IProfile1D * etaHistoY =
-                AIDAProcessor::histogramFactory(this)->createProfile1D( (path + name).c_str(), _noOfBin[1], _min, _max, _min, _max);
-              etaHistoY->setTitle(title.c_str());
-              _aidaHistoMap.insert( make_pair(name, etaHistoY) );
-
-              // 2D histo with CoG
-              name  = _cogHisto2DName + "_" + to_string( detectorID ) ;
-              title = "2D Histo with the CoG within the seed pixel for detector " + to_string( detectorID ) ;
-              AIDA::IHistogram2D * cogHisto2D = AIDAProcessor::histogramFactory(this)
-                ->createHistogram2D( (path + name).c_str(), _noOfBin[0], _min, _max, _noOfBin[1], _min, _max);
-              cogHisto2D->setTitle(title.c_str());
-              _aidaHistoMap.insert( make_pair(name, cogHisto2D) );
-
-              _alreadyBookedSensorID.insert( detectorID ) ;
+            // look for the proper pseudo histogram before filling
+            // it. In case the corresponding pseudo histogram is not yet
+            // available, book it on the fly!
+            if ( _cogHistogramX.find( detectorID ) == _cogHistogramX.end() ) {
+              _cogHistogramX[ detectorID ]  = new EUTelPseudo1DHistogram(_noOfBin[0], _min, _max);
+              _integralHistoX[ detectorID ] = new EUTelPseudo1DHistogram(_noOfBin[0], _min, _max);
             }
+            if ( _cogHistogramY.find( detectorID ) == _cogHistogramY.end() ) {
+              _cogHistogramY[ detectorID ] = new EUTelPseudo1DHistogram(_noOfBin[1], _min, _max);
+              _integralHistoY[ detectorID ] = new EUTelPseudo1DHistogram(_noOfBin[0], _min, _max);
+            }
+            //is this a single pixel cluster? 
+       
+            bool spc_cut = false;
+            if( _rejectsingplepixelcluster == 2)
+              {
+                spc_cut = type != kEUTelDFFClusterImpl &&
+                  (abs(static_cast<double>(xShift)) < numeric_limits< double >::min()  ||
+                   abs(static_cast<double>(yShift)) <  numeric_limits< double >::min());
+              }
+            else if(_rejectsingplepixelcluster == 1)
+              {
+                spc_cut = type != kEUTelDFFClusterImpl &&
+                  abs(static_cast<double>(xShift)) < numeric_limits< double >::min()  &&
+                  abs(static_cast<double>(yShift)) <  numeric_limits< double >::min(); 
+              }
 
-            string name = _cogHistogramXName + "_" + to_string( detectorID );
-            (dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]))->fill(xShift);
+            if(!spc_cut)
+              {
+                _cogHistogramX[detectorID]->fill(static_cast<double>(xShift), 1.0);
+                _cogHistogramY[detectorID]->fill(static_cast<double>(yShift), 1.0);
+              }
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+            {
 
-            name = _cogHistogramYName + "_" + to_string( detectorID );
-            (dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]))->fill(yShift);
+              if ( _alreadyBookedSensorID.find( detectorID ) == _alreadyBookedSensorID.end()) {
+                // need booking!
 
-            name = _cogHisto2DName + "_" + to_string( detectorID );
-            (dynamic_cast< AIDA::IHistogram2D* > (_aidaHistoMap[name]))->fill(xShift, yShift);
-          }
+                // the path first!
+                string path = "detector_" + to_string( detectorID ) ;
+                AIDAProcessor::tree( this )->mkdir( path.c_str() );
+                path.append( "/" );
+
+                // Center of gravity along X
+                string name  = _cogHistogramXName + "_" + to_string(detectorID);
+                string title =  "CoG shift along X on detector " + to_string( detectorID );
+                AIDA::IHistogram1D * cogHistoX =
+                  AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), _noOfBin[0], _min, _max);
+                cogHistoX->setTitle(title.c_str());
+                _aidaHistoMap.insert( make_pair(name, cogHistoX) );
+
+                // Center of gravity along y
+                name  = _cogHistogramYName + "_" + to_string(detectorID);
+                title =  "CoG shift along Y on detector " + to_string( detectorID );
+                AIDA::IHistogram1D * cogHistoY =
+                  AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), _noOfBin[1], _min, _max);
+                cogHistoY->setTitle(title.c_str());
+                _aidaHistoMap.insert( make_pair(name, cogHistoY) );
+
+                // Integral along x
+                name  =  _cogIntegralXName + "_" + to_string( detectorID ) ;
+                title = "Integral CoG (x) shift histogram on " + to_string( detectorID );
+                AIDA::IHistogram1D * cogIntegralHistoX =
+                  AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), _noOfBin[0], _min, _max);
+                cogIntegralHistoX->setTitle(title.c_str());
+                _aidaHistoMap.insert( make_pair(name, cogIntegralHistoX) );
+
+                // Integral along y
+                name  = _cogIntegralYName + "_" + to_string( detectorID ) ;
+                title = "Integral CoG (y) shift histogram on " + to_string( detectorID );
+                AIDA::IHistogram1D * cogIntegralHistoY =
+                  AIDAProcessor::histogramFactory(this)->createHistogram1D( (path + name).c_str(), _noOfBin[1], _min, _max);
+                cogIntegralHistoY->setTitle(title.c_str());
+                _aidaHistoMap.insert( make_pair(name, cogIntegralHistoY) );
+
+                // Eta histogram along x
+                name  = _etaHistoXName + "_" + to_string( detectorID ) ;
+                title = "Eta profile x for detector " + to_string( detectorID ) ;
+                AIDA::IProfile1D * etaHistoX =
+                  AIDAProcessor::histogramFactory(this)->createProfile1D( (path + name).c_str(), _noOfBin[0], _min, _max, _min, _max);
+                etaHistoX->setTitle(title.c_str());
+                _aidaHistoMap.insert( make_pair(name, etaHistoX) );
+
+                // Eta histogram along y
+                name  = _etaHistoYName + "_" + to_string( detectorID ) ;
+                title = "Eta profile y for detector " + to_string( detectorID ) ;
+                AIDA::IProfile1D * etaHistoY =
+                  AIDAProcessor::histogramFactory(this)->createProfile1D( (path + name).c_str(), _noOfBin[1], _min, _max, _min, _max);
+                etaHistoY->setTitle(title.c_str());
+                _aidaHistoMap.insert( make_pair(name, etaHistoY) );
+
+                // 2D histo with CoG
+                name  = _cogHisto2DName + "_" + to_string( detectorID ) ;
+                title = "2D Histo with the CoG within the seed pixel for detector " + to_string( detectorID ) ;
+                AIDA::IHistogram2D * cogHisto2D = AIDAProcessor::histogramFactory(this)
+                  ->createHistogram2D( (path + name).c_str(), _noOfBin[0], _min, _max, _noOfBin[1], _min, _max);
+                cogHisto2D->setTitle(title.c_str());
+                _aidaHistoMap.insert( make_pair(name, cogHisto2D) );
+
+                _alreadyBookedSensorID.insert( detectorID ) ;
+              }
+           
+
+              if(!spc_cut)
+                {
+                  string name = _cogHistogramXName + "_" + to_string( detectorID );
+                  (dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]))->fill(xShift);
+
+                  name = _cogHistogramYName + "_" + to_string( detectorID );
+                  (dynamic_cast< AIDA::IHistogram1D* > (_aidaHistoMap[name]))->fill(yShift);
+
+                  name = _cogHisto2DName + "_" + to_string( detectorID );
+                  (dynamic_cast< AIDA::IHistogram2D* > (_aidaHistoMap[name]))->fill(xShift, yShift);
+                }
+            }
 #endif
-        }
+          }
         else
-        {
+          {
             //streamlog_out ( MESSAGE2 ) <<  "CLUSTER QUALITY NOT GOOD ENOUGH!!!" << endl;
-        }
+          }
 
         delete cluster;
       }

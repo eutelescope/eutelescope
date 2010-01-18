@@ -410,6 +410,10 @@ namespace eutelescope {
     //! Base name for the Eta histogram along x
     static std::string _etaHistoYName;
 
+
+    //! Reject singple pixel cluster from the eta calculation
+    int _rejectsingplepixelcluster;
+
     //! Base name for the CoG histo 2D
     /*! This 2D histogram is used to show where the charge center of
      *  gravity is found within the seed pixel. It is telling if there

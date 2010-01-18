@@ -50,6 +50,8 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <parameter name="GeoID" type="int" value="10"/>
   <!--This is the input file name-->
   <parameter name="InputFileName" type="string" value="@NativeFolder@/run@RunNumber@.raw  "/>
+  <!--Resynchronize the events based on the TLU trigger ID-->
+  <parameter name="SyncTriggerID" type="bool" value="false"/>
 </processor>
 
  <processor name="Save" type="EUTelOutputProcessor">
