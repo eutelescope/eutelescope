@@ -192,6 +192,12 @@ namespace eutelescope {
      */
     int _geoID;
 
+    //! Synchronize input events.
+    /*! If set to true, this causes the events in the input file to be resynchronized
+     *  based on the TLU trigger ID.
+     */
+    bool _syncTriggerID;
+
     //! The eudrb output collection name
     /*! This is the name of the eudrb output collection.
      */

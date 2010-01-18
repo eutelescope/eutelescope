@@ -109,6 +109,10 @@ EUTelNativeReader::EUTelNativeReader (): DataSourceProcessor  ("EUTelNativeReade
                             "Type of sparsified pixel data structure (use SparsePixelType enumerator)",
                             _eudrbSparsePixelType , static_cast<int> ( 1 ) );
 
+  registerProcessorParameter("SyncTriggerID", "Resynchronize the events based on the TLU trigger ID",
+                             _syncTriggerID, false );
+
+
 
 }
 
@@ -138,7 +142,7 @@ void EUTelNativeReader::readDataSource(int numEvents) {
   streamlog_out( DEBUG4 ) << "Reading " << _fileName << " with eudaq file deserializer " << endl;
 
   // open the input file with the eudaq reader
-  eudaq::FileReader reader( _fileName );
+  eudaq::FileReader reader( _fileName, "", _syncTriggerID );
 
   if ( reader.Event().IsBORE() ) {
     eudaq::PluginManager::Initialize(  reader.Event() );
