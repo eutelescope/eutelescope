@@ -3073,8 +3073,8 @@ void EUTelClusteringProcessor::bookHistos() {
     // differently...
     if ( _layerIndexMap.find( sensorID ) != _layerIndexMap.end() ){
       // this is a reference plane
-      maxX = _siPlanesLayerLayout->getSensitiveNpixelX( sensorID ) - 1;
-      maxY = _siPlanesLayerLayout->getSensitiveNpixelY( sensorID ) - 1;
+      maxX = _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ sensorID ] ) - 1;
+      maxY = _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ sensorID ] ) - 1;
     } else if ( _dutLayerIndexMap.find( sensorID )  != _dutLayerIndexMap.end() ) {
       // ok it is a DUT plane
       maxX = _siPlanesLayerLayout->getDUTSensitiveNpixelX() - 1;
