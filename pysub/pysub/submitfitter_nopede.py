@@ -545,6 +545,14 @@ class SubmitFitter( SubmitBase ):
             value = ""
         actualSteeringString = actualSteeringString.replace( "@PassiveLayerIDs@", value )
 
+        # skip layers
+        try:
+            value = self._configParser.get( "FitterOptions", "SkipLayerIDs" )
+            if value == "None":
+                value = ""
+        except ConfigParser.NoOptionError :
+            value = ""
+        actualSteeringString = actualSteeringString.replace( "@SkipLayerIDs@", value )
 
         # DUTHitCollectionName
         try:
@@ -794,6 +802,14 @@ class SubmitFitter( SubmitBase ):
             value = ""
         actualSteeringString = actualSteeringString.replace( "@PassiveLayerIDs@", value )
 
+        # skip layers
+        try:
+            value = self._configParser.get( "FitterOptions", "SkipLayerIDs" )
+            if value == "None":
+                value = ""
+        except ConfigParser.NoOptionError :
+            value = ""
+        actualSteeringString = actualSteeringString.replace( "@SkipLayerIDs@", value )
 
         # DUTHitCollectionName
         try:
@@ -972,7 +988,9 @@ class SubmitFitter( SubmitBase ):
         marlin  = popen2.Popen4( "Marlin %(steer)s" % { "steer": self._steeringFileName } )
         while marlin.poll() == -1:
             line = marlin.fromchild.readline()
-            print line.strip()
+            l = line.strip()
+            if( len(l) != 0 ):
+              print l
             logFile.write( line )
 
         logFile.close()
