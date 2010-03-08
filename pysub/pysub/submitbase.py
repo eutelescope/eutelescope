@@ -82,6 +82,7 @@ class SubmitBase :
     #
     def configure( self ) :
 
+        # get the config file 
         self._configFile = ""
         if ( self._option.config_file == None ) :
             # not from the option, check from environ
@@ -93,6 +94,17 @@ class SubmitBase :
         else:
             self._configFile = self._option.config_file
 
+        # get the range to process 
+        self._eventRange = ""
+        if ( self._option.event_range == None ) :
+            # not from the option, check from environ
+            self._eventRange_begin = 0
+            self._eventRange_end   = 10000000
+            seld._eventRange = 10000000
+        else:
+            self._eventRange_string = self._option.event_range.split("-")
+            self._eventRange_begin  = self._eventRange_string[0]
+            self._eventRange_end    = self._eventRange_string[1]
 
         # before proceeding check if the configuration file
         # really exists!
@@ -463,6 +475,7 @@ class SubmitBase :
     def checkDelegationProxy( self ) :
         self._logger.info( "Checking for an existing delegation proxy")
         delegation = popen2.Popen4( "glite-wms-job-info -d $USER" , -1 )
+#        delegation = popen2.Popen4(  "glite-wms-job-delegate-proxy -d $USER", -1  )
         rtr = delegation.wait()
         output = delegation.fromchild.read()
         for line in output.splitlines():
