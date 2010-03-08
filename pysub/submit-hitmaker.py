@@ -43,6 +43,7 @@ usage: %prog [execution-options] [io-options] [configuration-options] -o basenam
                        help = "This is the ETA file to be used for correcting the cluster center position in the "
                        "hit making procedure." )
 
+   
     # adding in a group with all the execution options.
     # adding in a group all the execution options.
     executionGroup = OptionGroup( parser, "Execution options",
@@ -131,6 +132,7 @@ from the GRID SE, but the job will be executed on the local CPU
                         dest="verbose",
                         help="sake the output of GRID commands verbose" )
 
+
     parser.set_defaults(force_keep_input=False)
     parser.set_defaults(force_keep_output=False)
     parser.set_defaults(force_remove_input=False)
@@ -154,6 +156,12 @@ from the GRID SE, but the job will be executed on the local CPU
                                    action="store",
                                    dest="config_file",
                                    help="Specify the configuration file to be used")
+
+    configurationGroup.add_option( "--event-range",
+                                   action="store",
+                                   dest="event_range",
+                                   help="Set the event range to process")
+
 
     parser.add_option_group( configurationGroup )
 
