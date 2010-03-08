@@ -23,15 +23,15 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
       <!--processor name="HitMakerWithEta3x3"/-->
       <processor name="HitMakerWithOutEta"/>
       <!--processor name="Correlator"/--> 
- <processor name="CorrelatorWithoutEta"/> 
+      <processor name="CorrelatorWithoutEta"/> 
       <processor name="Save"/>
    </execute>
 
    <global>
       <parameter name="LCIOInputFiles"> @InputFile@  </parameter>
       <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
-      <parameter name="MaxRecordNumber" value="1000000000"/>
-      <parameter name="SkipNEvents" value="0"/>
+      <parameter name="MaxRecordNumber" value="@LastEvent@"/>
+      <parameter name="SkipNEvents" value="@FirstEvent@"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE"/>
    </global>
