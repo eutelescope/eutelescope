@@ -433,7 +433,7 @@ class SubmitHitMaker( SubmitBase ):
         if os.system( command ) != 0:
             message = "Unable to get the Eta file. Terminating!"
             self._logger.critical( message )
-            raise StopExecutionError( message )
+#            raise StopExecutionError( message )
         else:
             self._logger.info( "Eta file successfully copied from the GRID" )
 
@@ -858,6 +858,10 @@ class SubmitHitMaker( SubmitBase ):
         # finally replace the run string !
         actualSteeringString = actualSteeringString.replace("@Output@", self._option.output )
 
+        # replace the event range
+        actualSteeringString = actualSteeringString.replace( "@FirstEvent@", self._eventRange_begin  )
+        actualSteeringString = actualSteeringString.replace( "@LastEvent@",  self._eventRange_end  )
+ 
         # open the new steering file for writing
         steeringFileName = "%(name)s-%(run)s.xml" % { "name": self.name, "run" : self._option.output }
         actualSteeringFile = open( steeringFileName, "w" )
@@ -885,7 +889,9 @@ class SubmitHitMaker( SubmitBase ):
         marlin  = popen2.Popen4( "Marlin %(steer)s" % { "steer": self._steeringFileName } )
         while marlin.poll() == -1:
             line = marlin.fromchild.readline()
-            print line.strip()
+            l = line.strip()
+            if(len(l) !=0):
+              print l
             logFile.write( line )
 
         logFile.close()
@@ -1196,16 +1202,14 @@ class SubmitHitMaker( SubmitBase ):
         # check if the eta file is on the GRID
         etaFile = os.path.basename( self._option.eta )
         command = "lfc-ls %(etaPathGRID)s/%(etaFile)s" % {"etaPathGRID" : self._etaPathGRID , "etaFile": etaFile }
+#        print command
         lfc = popen2.Popen4( command )
-        while lfc.poll() == -1:
-            pass
         if lfc.poll() == 0:
             self._logger.info( "Eta file found on SE" )
         else:
             message = "Eta file NOT found on SE. Terminating"
             self._logger.critical( message )
-            raise StopExecutionError( message )
-
+#            raise StopExecutionError( message )
 
         # check if the input files is on the GRID
         for index, inputFile in enumerate( self._inputFileList ):
@@ -1363,6 +1367,10 @@ class SubmitHitMaker( SubmitBase ):
         # replace the output prefix.
         runActualString = runActualString.replace( "@Output@", self._option.output )
 
+        # replace the event range
+        runActualString = runActualString.replace( "@FirstEvent@",        self._eventRange_begin  )
+        runActualString = runActualString.replace( "@LastEvent@",        self._eventRange_end  )
+        
         # replace the input file names
         for index, inputFile in enumerate( self._inputFileList ) :
             if inputFile != "DEADFACE" :
