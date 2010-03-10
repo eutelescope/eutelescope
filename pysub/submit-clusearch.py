@@ -167,6 +167,12 @@ from the GRID SE, but the job will be executed on the local CPU
                                    dest="config_file",
                                    help="Specify the configuration file to be used")
 
+    configurationGroup.add_option( "--event-range",
+                                   action="store",
+                                   dest="event_range",
+                                   help="Set the event range to process")
+
+
     parser.add_option_group( configurationGroup )
 
     # end of options
