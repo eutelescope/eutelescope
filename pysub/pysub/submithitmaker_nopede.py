@@ -859,8 +859,10 @@ class SubmitHitMaker( SubmitBase ):
         actualSteeringString = actualSteeringString.replace("@Output@", self._option.output )
 
         # replace the event range
-        actualSteeringString = actualSteeringString.replace( "@FirstEvent@", self._eventRange_begin  )
-        actualSteeringString = actualSteeringString.replace( "@LastEvent@",  self._eventRange_end  )
+#        print self._eventRange_begin
+#        print self._eventRange_end
+#        actualSteeringString = actualSteeringString.replace( "@FirstEvent@", self._eventRange_begin  )
+#        actualSteeringString = actualSteeringString.replace( "@LastEvent@",  self._eventRange_end  )
  
         # open the new steering file for writing
         steeringFileName = "%(name)s-%(run)s.xml" % { "name": self.name, "run" : self._option.output }
