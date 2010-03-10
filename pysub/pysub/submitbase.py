@@ -100,7 +100,7 @@ class SubmitBase :
             # not from the option, check from environ
             self._eventRange_begin = 0
             self._eventRange_end   = 10000000
-            seld._eventRange = 10000000
+            self._eventRange = 10000000
         else:
             self._eventRange_string = self._option.event_range.split("-")
             self._eventRange_begin  = self._eventRange_string[0]
