@@ -1163,13 +1163,15 @@ bool EUTelClusterFilter::isAboveNumberOfHitPixel(EUTelVirtualCluster * cluster) 
     return true;
   }
   streamlog_out ( DEBUG1 ) << "Filtering against number of hit pixel inside a cluster " << endl;
-  int detectorID = cluster->getDetectorID();
 
-  if ( (int)(cluster->getTotalCharge()) >= _DFFNHitsCuts[detectorID] ) return true;
+  int detectorID = cluster->getDetectorID();
+  int detectorPos = _ancillaryIndexMap[ detectorID ];
+
+  if ( (int)(cluster->getTotalCharge()) >= _DFFNHitsCuts[detectorPos] ) return true;
   else {
     streamlog_out ( DEBUG2 )  << "Rejected cluster because the number of hit pixel is " << (int)(cluster->getTotalCharge())
-                              << " and the threshold is " << _DFFNHitsCuts[detectorID] << endl;
-    _rejectionMap["MinHitPixel"][detectorID]++;
+                              << " and the threshold is " << _DFFNHitsCuts[detectorPos] << endl;
+    _rejectionMap["MinHitPixel"][detectorPos]++;
     return false;
   }
 }
