@@ -391,7 +391,9 @@ namespace eutelescope
     kMimosa18          = 101,
     kMimosa26          = 102,
     kDEPFET            = 103,
-    kTaki              = 104
+    kTaki              = 104,
+    kAPIXMC            = 105,
+    kFortis            = 106
   } ;
 
   //! Readout mode
