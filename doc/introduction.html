@@ -29,6 +29,9 @@ you take have a look at the following pages:
 
 @li @ref downinst
 
+@li @ref ilcinstall
+
+
 <br><br> Have a look at the \ref changelog
 
 <br><br> If those information are not yet enough, consider contact us
@@ -1030,14 +1033,13 @@ processor using as input the output of the previous step.
 @endcode
 
 */
-
 *****************************************************************************
 
 /**
 
 @page downinst Download and installation
 
-@section donwload How to download
+@section download How to download
 
 To download the source code of the EUTelescope project there at least
 two possibility. The first and easiest one is to get a Tarball of the
@@ -1105,6 +1107,127 @@ Add to your environment script the following line:
 export LD_PRELOAD=/opt/products/lib/libpdcap.so
 @endcode
 where the path to libpdcap.so may depend from one machine to the other. 
+
+*/
+
+
+*****************************************************************************
+
+/**
+
+@page ilcinstall Use ilcinstall scripts (Recommended)
+
+@section setenv Environment
+
+Most likely you will need both EUDAQ and EUTelescope packages. <br>
+EUTelescope
+package can be installed within a set of ILC software called simply "ilcsoft".
+Let's define envornment variables EUDAQ and ILCSOFT by the full path to the
+folders where the packages will be installed, say
+@li export TB_ANALYSIS=/data/TestBeam/Analysis 
+@li export EUDAQ=${TB_ANALYSIS}/EUDAQ
+@li export ILCSOFT=${TB_ANALYSIS}/ilcsoft 
+
+Create these folders if they do not exist.
+
+
+@section install_eudaq Install EUDAQ
+
+Change current folder to $EUDAQ and get the EUDAQ source code from the
+repository:
+
+@li cd $EUDAQ
+@li svn co http://svn.hepforge.org/eudaq/trunk trunk  
+@li cd trunk
+@li make sure that USE_LCIO and USE_EUTELESCOPE lines in the main/Makefile are
+switched OFF (set to =0)
+   <ul> 
+<li>  USE_LCIO := 0
+<li>  USE_EUTELESCOPE := 0
+   </ul>
+@li  build EUDAQ with
+   <ul>   
+<li>  make main
+   </ul>  
+@li  the EUDAQ library should appear as $EUDAQ/trunk/bin/libeudaq.so
+     
+ 
+@section download_ilcinstall Download the ilcinstall scripts            
+Change folder to the global analysis folder and check the ilcinstall scripts (v01-08-01) 
+    
+@li cd $TB_ANALYSIS
+@li svn co https://svnsrv.desy.de/desy/ilctools/ilcinstall/tags/v01-08-01 ilcinstall_v01-08-01 
+@li cd ilcinstall_v01-08-01
+@li wget http://www-zeus.desy.de/~rubinsky/EUTelescope/complete_20100610.cfg 
+
+      
+Edit manually your local configuration file "complete_20100610.cfg".<br>
+     
+@li ilcsoft = ILCSoft("/data/TestBeam/Analysis/ilcsoft/")
+@li ilcsoft.module("Eutelescope").env["EUDAQ_HOME"]="/data/TestBeam/Analysis/eudaq/trunk"
+@li ilcsoft.module("Eutelescope").env["EUDAQ"]="/data/TestBeam/Analysis/eudaq/trunk"
+     
+
+Check if the installation looks concistent from the script/environment
+viewpoint:
+    
+@li  ilcsoft-install complete_20100610.cfg
+     
+Read carefully the output screen. If no apparent problem is detected, run:
+     
+@li ilcsoft-install -i complete_20100610.cfg
+      
+Depending one your hardware/OS performance the installation can last for about
+half an hour.
+
+@section setenv_eutelescope Set EUTelescope environment
+
+Before any(!) attempt to use ilcsoft and EUTelescope in a meaningful way one must
+load the environemnt variables:
+
+@li cd $ILCSOFT/EUTelescope/HEAD/
+@li source build_env.sh
+
+if you are running csh or tcsh Shell you should source a build_env.csh.
+The script fills PATH and LD_LIBRARY_PATH variables.
+A $EUTELESCOPE variable is also introduced there.
+
+
+
+@section recompile_eudaq Recompile EUDAQ    
+
+@li Change dir to $EUDAQ/trunk 
+@li Edit the main/Makefile to build with LCIO and EUTelescope libs:
+  <ul> 
+<li>  USE_LCIO := 1
+<li>  USE_EUTELESCOPE := 1
+   </ul>
+@li  build EUDAQ with
+   <ul>   
+<li>  make main
+   </ul>  
+
+@section recompile_eutelescope Recompile EUTelescope     
+
+@li Change dir to $EUTELESCOPE/build 
+@li simply rebuild the EUTelescope library:
+  <ul> 
+<li>  make install
+  </ul>
+@li check that you can see EUDAQ library definitions in the EUTelescope lib:
+
+  <ul> 
+<li>  nm ../lib/libEutelescope.so | grep eudaq
+  </ul>
+  you should get a non empty output.
+
+@section work How does it work?
+
+First, do not forget to load "source build_env.sh" when starting a new EUTelescope
+session.
+
+All important scripts are contained in $EUTELESCOPE/pysub folder, which should
+be considered a working folder for all testbeam analysis jobs.
 
 */
 
