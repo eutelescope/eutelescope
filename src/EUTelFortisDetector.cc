@@ -25,16 +25,16 @@ using namespace eutelescope;
 EUTelFortisDetector::EUTelFortisDetector() : EUTelPixelDetector()  {
 
   _xMin = 0;
-  _xMax = 17;
+  _xMax = 512;
 
   _yMin = 0;
-  _yMax = 159; 
+  _yMax = 512; 
 
 
   _name = "FORTIS"; // "SUSHVPIX"
 
-  _xPitch = 0.05;
-  _yPitch = 0.40;
+  _xPitch = 0.015;
+  _yPitch = 0.015;
 
 }
 
