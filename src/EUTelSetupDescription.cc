@@ -59,6 +59,8 @@ EUTelSetupDescription::EUTelSetupDescription(EUTelPixelDetector * detector)  :
   else if ( typeS == "DEPFET") typeE = kDEPFET;
   else if ( typeS == "Taki") typeE = kTaki;
   else if ( typeS == "FORTIS") typeE = kFortis;
+  else if ( typeS == "APIXMC") typeE = kAPIX;  
+  else if ( typeS == "APIX-MC") typeE = kAPIX;  
   else {
     throw UnknownDataTypeException( typeS + " is not a valid detector type." );
   }

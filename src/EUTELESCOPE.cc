@@ -74,6 +74,7 @@ const char *   EUTELESCOPE::CLUSTERDEFAULTENCODING   = "sensorID:5,clusterID:8,x
 const char *   EUTELESCOPE::PULSEDEFAULTENCODING     = "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,type:5";
 const char *   EUTELESCOPE::ZSDATADEFAULTENCODING    = "sensorID:5,sparsePixelType:5";
 const char *   EUTELESCOPE::ZSCLUSTERDEFAULTENCODING = "sensorID:5,clusterID:8,sparsePixelType:5,quality:5";
+const char *   EUTELESCOPE::ZSAPIXCLUSTERENCODING    = "sensorID:5,clusterID:8,sparsePixelType:5,type:6";
 const char *   EUTELESCOPE::FIXEDWEIGHT              = "FixedWeight";
 
 
@@ -119,6 +120,7 @@ namespace eutelescope {
   std::ostream& operator<<(std::ostream& os, const SparsePixelType& type) {
     if ( type == kEUTelBaseSparsePixel ) os << "kEUTelBaseSparsePixel" ;
     else if ( type == kEUTelSimpleSparsePixel ) os << "kEUTelSimpleSparsePixel";
+	 else if ( type == kEUTelAPIXSparsePixel ) os << "kEUTelAPIXSparsePixel";
     // add here your type
     else if ( type == kUnknownPixelType ) os << "kUnknownPixelType";
     os << " (" << static_cast<int> (type ) << ")";

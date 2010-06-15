@@ -375,6 +375,18 @@ namespace eutelescope
      */
     static const char * ZSCLUSTERDEFAULTENCODING;
 
+    //! Zero suppress cluster encoding for ATLAS-Pixel clusters
+    /*! This encoding string is used for the TrackerData containing
+     *  clusters made by ATLAS PIXEL pixels
+     *
+     *  "sensorID:17,clusterID:8,sparsePixelType:5"
+     *
+     *  @see SparsePixelType
+     *  @see ClusterQuality
+     */
+    static const char * ZSAPIXCLUSTERENCODING;
+
+
   };
 
 
@@ -392,7 +404,7 @@ namespace eutelescope
     kMimosa26          = 102,
     kDEPFET            = 103,
     kTaki              = 104,
-    kAPIXMC            = 105,
+    kAPIX              = 105,
     kFortis            = 106
   } ;
 
@@ -550,6 +562,7 @@ namespace eutelescope
     kEUTelSparseCluster2Impl  = 2,
     kEUTelDFFClusterImpl      = 3,
     kEUTelBrickedClusterImpl  = 4,
+    kEUTelAPIXClusterImpl     = 5, 
     // add here all the other cluster type numbering them in between 0
     // and 31 unknown
     kUnknown                  = 31
@@ -564,6 +577,7 @@ namespace eutelescope
   enum SparsePixelType {
     kEUTelBaseSparsePixel   = 0,
     kEUTelSimpleSparsePixel = 1,
+    kEUTelAPIXSparsePixel   = 2,
     // add here your implementation
     kUnknownPixelType       = 31
   };
