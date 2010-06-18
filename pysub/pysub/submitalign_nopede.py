@@ -1054,6 +1054,19 @@ class SubmitAlign( SubmitBase ):
         actualSteeringString = actualSteeringString.replace( "@ResidualYMax@", maxY )
         actualSteeringString = actualSteeringString.replace( "@ResidualYMin@", minY )
  
+        # set maximum Distance to include the hits for the alignment internal
+        # track fit 
+        try :
+            DistanceMax = self._configParser.get( "AlignOptions", "DistanceMax" )
+        except  ConfigParser.NoOptionError :
+            message = "The DistanceMax not defined, taking a default value (=5000)."
+            self._logger.info( message )
+            DistanceMax = "5000"
+#            raise StopExecutionError( message )
+
+        actualSteeringString = actualSteeringString.replace( "@DistanceMax@",DistanceMax )
+
+
         # add planes to be excluded from the alignment 
         try :
             ExcludePlanes = self._configParser.get( "AlignOptions", "ExcludePlanes" )
@@ -1063,20 +1076,20 @@ class SubmitAlign( SubmitBase ):
             ExcludePlanes = ""
 #            raise StopExecutionError( message )
 
+
         actualSteeringString = actualSteeringString.replace( "@ExcludePlanes@",ExcludePlanes )
 
-
-        # add planes to be excluded from the alignment 
+        # add planes to be Fixed in the alignment 
         try :
-            ExcludePlanes = self._configParser.get( "AlignOptions", "ExcludePlanes" )
+            FixedPlanes = self._configParser.get( "AlignOptions", "FixedPlanes" )
         except  ConfigParser.NoOptionError :
             message = "No Planes to exclude!"
             self._logger.info( message )
-            ExcludePlanes = ""
+            FixedPlanes = ""
 #            raise StopExecutionError( message )
 
 
-        actualSteeringString = actualSteeringString.replace( "@ExcludePlanes@",ExcludePlanes )
+        actualSteeringString = actualSteeringString.replace("@FixedPlanes@",FixedPlanes )
 
 
         # open the new steering file for writing
@@ -1238,6 +1251,19 @@ class SubmitAlign( SubmitBase ):
         actualSteeringString = actualSteeringString.replace( "@ResidualYMax@", maxY )
         actualSteeringString = actualSteeringString.replace( "@ResidualYMin@", minY )
 
+        # set maximum Distance to include the hits for the alignment internal
+        # track fit 
+        try :
+            DistanceMax = self._configParser.get( "AlignOptions", "DistanceMax" )
+        except  ConfigParser.NoOptionError :
+            message = "The DistanceMax not defined, taking a default value (=5000)."
+            self._logger.info( message )
+            DistanceMax = "5000"
+#            raise StopExecutionError( message )
+
+        actualSteeringString = actualSteeringString.replace( "@DistanceMax@",DistanceMax )
+
+
         # add planes to be excluded from the alignment 
         try :
             ExcludePlanes = self._configParser.get( "AlignOptions", "ExcludePlanes" )
@@ -1248,6 +1274,19 @@ class SubmitAlign( SubmitBase ):
 #            raise StopExecutionError( message )
 
         actualSteeringString = actualSteeringString.replace( "@ExcludePlanes@",ExcludePlanes )
+
+
+        # add planes to be Fixed in the alignment 
+        try :
+            FixedPlanes = self._configParser.get( "AlignOptions", "FixedPlanes" )
+        except  ConfigParser.NoOptionError :
+            message = "No Planes to exclude!"
+            self._logger.info( message )
+            FixedPlanes = ""
+#            raise StopExecutionError( message )
+
+
+        actualSteeringString = actualSteeringString.replace("@FixedPlanes@",FixedPlanes )
 
 
         # open the new steering file for writing
@@ -1277,7 +1316,9 @@ class SubmitAlign( SubmitBase ):
         marlin  = popen2.Popen4( "Marlin %(steer)s" % { "steer": self._steeringFileName } )
         while marlin.poll() == -1:
             line = marlin.fromchild.readline()
-            print line.strip()
+            l =  line.strip()
+            if(len(l) !=0 ):
+               print l
             logFile.write( line )
 
         logFile.close()
