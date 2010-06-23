@@ -35,7 +35,7 @@ doCommand() {
 # $2: the local file name
 #
 getFromGRID(){
-
+#    echo      "lcg-cp -v lfn:$1 file:$2"    
     doCommand "lcg-cp -v lfn:$1 file:$2"
     r=$?
     return $r
@@ -53,7 +53,34 @@ getFromGRID(){
 # $3: the SE
 #
 putOnGRID() {
-    doCommand "lcg-cr -v -d $3 -l lfn:$2 file:$1"
+    echo      "lcg-cr -v -d $3 -l lfn:$2 file:$1"   
+    if [ -e $1 ] ; then
+      doCommand "lcg-cr -v -d $3 -l lfn:$2 file:$1"
+    else
+      for i in $(seq 1 999)
+      do
+         stringZfrom=$1
+         stringZto=$2
+         
+         if [ $i -lt 10 ] ; then
+           a="00"$i
+         elif [ $i -lt 100 ] ; then
+           a="0"$i
+         elif [ $i -lt 1000 ] ; then
+           a=$i
+         fi  
+          
+         stringAfrom=${stringZfrom/slcio/$a".slcio"}
+         stringAto=${stringZto/slcio/$a".slcio"}
+         
+         if [ -e $stringAfrom ] ;then
+#           echo "doCommand lcg-cr -v -d $3 -l lfn:$stringAto file:$stringAfrom"            
+           doCommand "lcg-cr -v -d $3 -l lfn:$stringAto file:$stringAfrom"            
+         fi
+#         echo $stringA         
+      done      
+    fi
+    
     return $?
 }
 

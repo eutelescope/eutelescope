@@ -245,8 +245,9 @@ echo
 doCommand "getFromGRID ${InputPedeLFN} ${InputPedeLocal}"
 r=$?
 if [ $r -ne 0 ] ; then
-    echo "Problem copying ${InputPedeLFN}. Exiting with error."
-    exit 3
+    echo "Problem copying ${InputPedeLFN}. WARNING! in case of Analog sensors
+    it's an ERROR!"
+#    exit 3
 fi
 
 # list all the files available
