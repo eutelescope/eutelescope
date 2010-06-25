@@ -71,6 +71,9 @@ using namespace marlin ;
 using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
+std::string EUTelFitHistograms::_ShiftXvsYHistoName    = "deltaXvsY";
+std::string EUTelFitHistograms::_ShiftYvsXHistoName    = "deltaYvsX";
+
 std::string EUTelFitHistograms::_MeasuredXHistoName  = "measuredX";
 std::string EUTelFitHistograms::_MeasuredYHistoName  = "measuredY";
 std::string EUTelFitHistograms::_MeasuredXYHistoName = "measuredXY";
@@ -550,7 +553,15 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
               tempHistoName=nam7.str();
               (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl],_measuredY[ipl],_measuredQ[ipl]);
 
+              stringstream nam8;
+              nam8 << _ShiftXvsYHistoName << "_" << _planeID[ ipl ] ;
+              tempHistoName=nam8.str();
+              (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredX[ipl], _measuredY[ipl] - _fittedY[ipl]);
 
+              stringstream nam9;
+              nam9 << _ShiftYvsXHistoName << "_" << _planeID[ ipl ] ;
+              tempHistoName=nam9.str();
+              (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[tempHistoName]))->fill(_measuredY[ipl], _measuredX[ipl] - _fittedX[ipl]);
             }
         }
 
@@ -866,6 +877,86 @@ void EUTelFitHistograms::bookHistos()
                             << "Continuing without histogram manager" << endl;
     isHistoManagerAvailable = false;
   }
+
+
+
+  //
+  {
+    int    shiftXNBin  = 200;
+    double  shiftXMin  = -5.;
+    double  shiftXMax  = 5.;
+
+    string shiftXTitle = "Measured - fitted X position vs Y";
+
+    if ( isHistoManagerAvailable )
+      {
+        histoInfo = histoMgr->getHistogramInfo(_ShiftXvsYHistoName);
+        if ( histoInfo )
+          {
+            streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
+            shiftXNBin = histoInfo->_xBin;
+            shiftXMin  = histoInfo->_xMin;
+            shiftXMax  = histoInfo->_xMax;
+            if ( histoInfo->_title != "" ) shiftXTitle = histoInfo->_title;
+          }
+      }
+
+
+    string tempHistoTitle;
+    string tempHistoName;
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)    {
+      if(_isActive[ipl]) {
+        tempHistoName  = _ShiftXvsYHistoName +  "_"  + to_string( _planeID[ ipl ] );
+        tempHistoTitle =  shiftXTitle + " for plane " + to_string( _planeID[ ipl ] );
+        AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(), shiftXNBin,shiftXMin,shiftXMax);
+      
+        tempHisto->setTitle(tempHistoTitle.c_str());
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+        
+      }
+    }
+  }
+
+  //
+  {
+    int    shiftYNBin  = 200;
+    double  shiftYMin  = -5.;
+    double  shiftYMax  = 5.;
+
+    string shiftYTitle = "Measured - fitted Y position vs X";
+
+    if ( isHistoManagerAvailable )
+      {
+        histoInfo = histoMgr->getHistogramInfo(_ShiftYvsXHistoName);
+        if ( histoInfo )
+          {
+            streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
+            shiftYNBin = histoInfo->_xBin;
+            shiftYMin  = histoInfo->_xMin;
+            shiftYMax  = histoInfo->_xMax;
+            if ( histoInfo->_title != "" ) shiftYTitle = histoInfo->_title;
+          }
+      }
+
+
+    string tempHistoTitle;
+    string tempHistoName;
+
+    for(int ipl=0;ipl<_nTelPlanes; ipl++)    {
+      if(_isActive[ipl]) {
+        tempHistoName  = _ShiftYvsXHistoName +  "_"  + to_string( _planeID[ ipl ] );
+        tempHistoTitle =  shiftYTitle + " for plane " + to_string( _planeID[ ipl ] );
+        AIDA::IProfile1D * tempHisto = AIDAProcessor::histogramFactory(this)->createProfile1D( tempHistoName.c_str(), shiftYNBin,shiftYMin,shiftYMax);
+        
+        tempHisto->setTitle(tempHistoTitle.c_str());
+        _aidaHistoMap.insert(make_pair(tempHistoName, tempHisto));
+        
+      }
+    }
+  }
+
+
 
 
 
