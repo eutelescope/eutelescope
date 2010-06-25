@@ -38,7 +38,17 @@
 #include <vector>
 #include <map>
 
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
+#include "TMinuit.h"
+#include <TSystem.h>
+#include <TMath.h>
+class TMinuit;
+#endif
+
+
 namespace eutelescope {
+
+ 
 
   //! Straight line fit processor
   /*!
@@ -48,6 +58,110 @@ namespace eutelescope {
   class EUTelMille : public marlin::Processor {
 
   public:
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
+    class hit
+    {
+    public:
+      hit()
+      {
+      }
+      hit(double tx, double ty, double tz, double rx, double ry, double rz,int i)
+      {
+        x = tx;
+        y = ty;
+        z = tz;
+        resolution_x = rx;
+        resolution_y = ry;
+        resolution_z = rz;
+    
+        planenumber = i;
+      }
+      double x;
+      double y;
+      double z;
+      double resolution_x;
+      double resolution_y;
+      double resolution_z;
+  
+      int planenumber;
+    };
+
+   
+
+    class trackfitter
+    {
+    public:
+      ~trackfitter()
+      {}
+      trackfitter()
+      {}
+     //  trackfitter(std::vector<hit> &h)
+//       {
+//         hitsarray = h;
+//       }
+      trackfitter(hit *h, unsigned int num)
+      {
+        hitsarray = h;
+        n = num;
+      }
+
+      double dot(const double *a, const double *b) const
+      {
+        return (a[0] * b[0] + a[1] * b[1] + a[2] * b[2]);
+      }
+      double fit (double *x, double *p)
+      {
+        double chi2 = 0.0;
+   
+        const unsigned int n = 3;
+
+        const double b0 = x[0];
+        const double b1 = x[1];
+        const double b2 = 0.0;
+    
+        const double alpha = x[2];
+        const double beta =  x[3];
+
+        const double c0 = TMath::Sin(beta);
+        const double c1 = -1.0*TMath::Cos(beta) * TMath::Sin(alpha);
+        const double c2 = TMath::Cos(alpha) * TMath::Cos(beta);
+    
+        double c[n] = {c0, c1, c2}; 
+        for(size_t i = 0; i < n;i++)
+          {
+            const double p0 = hitsarray[i].x;
+            const double p1 = hitsarray[i].y;
+            const double p2 = hitsarray[i].z;
+        
+            const double resol_x = hitsarray[i].resolution_x;
+            const double resol_y = hitsarray[i].resolution_y;
+            const double resol_z = hitsarray[i].resolution_z;
+        
+            const double p[n] = {p0, p1, p2}; 
+        
+            const double pmb[n] = {p0-b0, p1-b1, p2-b2}; //p - b
+        
+            const double coeff = dot(c, pmb);
+            const double t[n] = {
+              b0 + c0 * coeff - p0,
+              b1 + c1 * coeff - p1,
+              b2 + c2 * coeff - p2
+            }; 
+        
+            //sum of distances divided by resolution^2
+            chi2 += t[0]*t[0] / pow(resol_x,2) 
+              + t[1]*t[1] / pow(resol_y,2) 
+              + t[2]*t[2] / pow(resol_z,2);
+          }
+ 
+        return chi2;
+      }
+    private:
+      //std::vector<hit> hitsarray;
+    hit *hitsarray;
+    unsigned int n;
+    };
+#endif
 
     //! Variables for hit parameters
     class HitsInPlane {
@@ -58,43 +172,43 @@ namespace eutelescope {
         measuredZ = 0.0;
       }
       HitsInPlane(double x, double y, double z)
-        {
-          measuredX = x;
-          measuredY = y;
-          measuredZ = z;
-        }
+      {
+        measuredX = x;
+        measuredY = y;
+        measuredZ = z;
+      }
       bool operator<(const HitsInPlane& b) const
-        {
-          return (measuredZ < b.measuredZ);
-        }
+      {
+        return (measuredZ < b.measuredZ);
+      }
       double measuredX;
       double measuredY;
       double measuredZ;
     };
 
     virtual void FitTrack(
-      int nPlanesFitter,
-      double xPosFitter[],
-      double yPosFitter[],
-      double zPosFitter[],
-      double xResFit[],
-      double yResFit[],
-      double chi2Fit[2],
-      double residXFit[],
-      double residYFit[],
-      double angleFit[2]
-      );
+                          int nPlanesFitter,
+                          double xPosFitter[],
+                          double yPosFitter[],
+                          double zPosFitter[],
+                          double xResFit[],
+                          double yResFit[],
+                          double chi2Fit[2],
+                          double residXFit[],
+                          double residYFit[],
+                          double angleFit[2]
+                          );
 
 
 
     //recursive method which searches for track candidates
     virtual void findtracks(
-      std::vector<std::vector<int> > &indexarray, //resulting vector of hit indizes
-      std::vector<int> vec, //for internal use
-      std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray, //contains all hits for each plane
-      int i, //plane number
-      int y //hit index number
-      );
+                            std::vector<std::vector<int> > &indexarray, //resulting vector of hit indizes
+                            std::vector<int> vec, //for internal use
+                            std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray, //contains all hits for each plane
+                            int i, //plane number
+                            int y //hit index number
+                            );
 
     //! Returns a new instance of EUTelMille
     /*! This method returns a new instance of this processor.  It is
@@ -192,6 +306,7 @@ namespace eutelescope {
     // parameters
 
     float _distanceMax;
+    std::vector<float> _distanceMaxVec;
     std::vector<int > _excludePlanes; //only for internal usage
     std::vector<int > _excludePlanes_sensorIDs; //this is going to be
                                                 //set by the user.
@@ -216,12 +331,23 @@ namespace eutelescope {
     std::vector<float > _residualsXMax;
     std::vector<float > _residualsYMax;
 
+    std::vector<float> _resolutionX;
+    std::vector<float> _resolutionY;
+    std::vector<float> _resolutionZ;
+
+     std::vector<int> _FixParameter;
+
+
     int _generatePedeSteerfile;
     std::string _pedeSteerfileName;
     int _runPede;
     int _usePedeUserStartValues;
     std::vector<float > _pedeUserStartValuesX;
     std::vector<float > _pedeUserStartValuesY;
+    std::vector<float > _pedeUserStartValuesZ;
+    
+    std::vector<float > _pedeUserStartValuesAlpha;
+    std::vector<float > _pedeUserStartValuesBeta;
     std::vector<float > _pedeUserStartValuesGamma;
 
     int _inputMode;
@@ -308,8 +434,7 @@ namespace eutelescope {
 
     static std::string _residualXLocalname;
     static std::string _residualYLocalname;
-
-
+    static std::string _residualZLocalname;
 #endif
 
     int _nPlanes;
@@ -323,8 +448,10 @@ namespace eutelescope {
     double * _zPosHere;
     double * _waferResidX;
     double * _waferResidY;
+    double * _waferResidZ;
     double * _telescopeResolX;
     double * _telescopeResolY;
+    double * _telescopeResolZ;
     double * _xFitPos;
     double * _yFitPos;
 
