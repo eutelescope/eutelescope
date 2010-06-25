@@ -221,6 +221,9 @@ namespace eutelescope {
      */
 
     std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
+    
+    static std::string _ShiftXvsYHistoName;
+    static std::string _ShiftYvsXHistoName;
 
     static std::string _MeasuredXHistoName;
     static std::string _MeasuredYHistoName;
