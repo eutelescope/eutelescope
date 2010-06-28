@@ -24,7 +24,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <processor name="Fitter"/>
       <processor name="FitterHisto"/>
       <!--processor name="DUTHisto"/-->
-      <!--processor name="NTuple"/-->
+      <processor name="NTuple"/>
       <processor name="Save"/>
    </execute>
 
@@ -34,7 +34,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <parameter name="MaxRecordNumber" value="@RecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
-      <parameter name="Verbosity" value="TESTFITTERMESSAGE"/>
+      <parameter name="Verbosity" value="MESSAGE"/>
    </global>
 
  <processor name="AIDA" type="AIDAProcessor">
