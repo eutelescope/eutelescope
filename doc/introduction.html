@@ -9,34 +9,23 @@ to run the EUTelescope processors within Marlin.
 If you know already something about this software project, then you
 can browse the documentation clicking on the button above or putting a
 keyword in the search field in top right corner of this page.
-<br><br>
-
-Version v00-02-00 of EUTelescope, a.k.a. Better User Integration (BUI) comes
-with the following features:
-
-@li Capability to run the same processors also on user devices
-@li Python based submission scripts
-@li Histogramming package for a better and easier results visualization
-
+<br>
 If you feel you don't know enough about the EUTelescope software then we encourage
 you to have a look at the following pages:
 
-
 @li @ref intro
-
 @li @ref ilcinstall
 <ul>
 <li> @ref downinst
 </ul>
-
-@li Analysis basics (prepared for Analog sensors - MimoTel / Mimosa 18)
+@li Analysis basics (prepared for Analog sensors - MimoTel/Mimosa-18, many steps
+are still valid for the digital sensors/Mimosa-26)
 <ul>
 <li> @ref preparation
 <li> @ref analysis
 </ul>
-
 @li @ref pythonScripts 
-
+@li @ref gridtools
 <!--
  @li @ref preparation
  @li @ref analysis
@@ -44,11 +33,36 @@ you to have a look at the following pages:
  @li @ref downinst
  @li @ref ilcinstall -->
 
+The EUTelescope library comes with the following features:
+
+<b>[Pro]</b> Version v00-02-01 
+@li Millepede II based alignment processor extended to align tilted sensors (full 6D gears, 3 coordinate shifts and 3 angle rotations)
+@li Added APIX sensors description and clustering
+@li Added FORTIS sensors description 
+@li Several minor updates:
+<ul>
+<li> GRID submition scripts do not require Pedestal runs any more (ERROR downgraded to a WARNING) 
+<li> Default configuration file config.cfg updated
+<li> New: an example gear file for a CERN June-2010 APIX/FORTIS (hardware) setup
+<li> Several bug fixes
+<li> Documentation update
+</ul>
+
+<b>[Old]</b> Previous release (v00-02-00), a.k.a. Better User Integration (BUI):
+
+@li Capability to run the same processors also on user devices
+@li Python based submission scripts
+@li Histogramming package for a better and easier results visualization
+@li Several minor updates:
+<ul>
+<li> New: templates for the python scripts to analyse digital sensors (Mimosa 26)
+<li> A gear file for Mimosa 26 CERN September-2009 setup updated (only 6 M26 sensors)
+</ul>
+
 
 <br><br> Have a look at the \ref changelog
 
-<br><br> If those information are not yet enough, consider contact us
-on the Linear Collider <a href="http://forum.linearcollider.org/index.php?t=threadt&frm_id=43">Forum</a>.
+<br><br> If those information are not yet enough, contact us on the Linear Collider <a href="http://forum.linearcollider.org/index.php?t=threadt&frm_id=43">Forum</a>.
 
 */
 
@@ -1051,7 +1065,7 @@ processor using as input the output of the previous step.
 
 /**
 
-@page downinst Download and installation
+@page downinst Download and installation (old page)
 
 @section download How to download
 
@@ -1067,11 +1081,11 @@ given <a href="http://www.ifh.de/linear_collider/">here</a>.
 
 Installation is even easier than donwloading the source code because
 the The <a
-href="http://www-flc.desy.de/ilcsoft/ilcsoftware/ilcinstall/psc_project_view">ilcinstall</a>
+href="http://ilcsoft.desy.de/portal/software_packages/ilcinstall/">ilcinstall</a>
 is helping you in donwload and install all the needed piecese of
 software needed by Eutelescope.<br>
 You can choose in between two different kinds of installation:
-@li <b>\ref minimal </b>. This has the minimum number of dependencies and
+@li <b>\ref minimal_config </b>. This has the minimum number of dependencies and
 can be done in a couple of minutes. Of course this is not offering all
 the bell and whistles that come along the Eutelescope, for example you
 will not have the graphical event viewer or the perform alignment
@@ -1081,7 +1095,7 @@ href="http://ilcsoft.desy.de/portal/software_packages/lcio">lcio</a>,
 href="http://ilcsoft.desy.de/portal/software_packages/marlin">Marlin</a>,
 Java, CMake and CMakeModules. <br>
 
-@li <b>\ref complete</b>. This is the complete installation you have to do
+@li <b>\ref complete_config</b>. This is the complete installation you have to do
 to fully enjoy Eutelescope. Along with the modules coming with the
 <b>Minimal</b> installation there are also the following packages: <a
 href="http://ilcsoft.desy.de/portal/software_packages/gear">GEAR</a>,
@@ -1099,15 +1113,16 @@ eudaq.
 To install follow these steps:
 
 @li Download <a
-href="http://www-flc.desy.de/ilcsoft/ilcsoftware/ilcinstall/psc_project_view">ilcinstall</a>
+href="http://ilcsoft.desy.de/portal/software_packages/ilcinstall/">ilcinstall</a>
 @li Untar ilcinstall into the folder where you want to install the ilc
 software.
-@li Download one of the examplary configuration: \ref minimal
- or \ref complete
+@li Download one of the examplary configuration: <a href="minimal.cfg">
+minimal.cfg </a> or <a href="complete.cfg">complete.cfg </a>
 @li Open the configuration file into a text editor and modified the
 installation path (ilcsoft) and the location of the eudaq library
 (eudaqPath) according to your wishes.
-@li Run ./ilcinstall -i minimal.cfg (or complete.cfg)
+@li Run ./ilcinstall -i <a href="minimal.cfg">minimal.cfg</a> (or <a href="complete.cfg">complete.cfg </a>)
+    
 
 
 @section dcache Accessing data in the DESY dCache
@@ -1129,7 +1144,7 @@ where the path to libpdcap.so may depend from one machine to the other.
 
 /**
 
-@page ilcinstall Use ilcinstall scripts (Recommended)
+@page ilcinstall Installation - use ilcinstall scripts (Recommended)
 
 @section setenv Environment
 
@@ -1335,6 +1350,93 @@ Further on consider this folder as current = (./).
 in example lines below
 </ul>
 <li> Analysis job templates are stored in:
+
+<ul>
+<li> ./template_m26_telescope/
+</ul>
+<li> Python scripts are in:
+<ul>
+<li> ./ (current folder = $EUTELESCOPE/pysub)
+<li> ./pysub/ (one level down - library of the python routines to be called by
+main scripts)
+</ul>
+
+
+</ul>
+<li> Several data format conversion operations:
+<ul>
+<li> Converter - convert a run from RAW (.raw) into LCIO (.slcio) format.
+@code
+ ./submit-converter.py  --config=config/config-DUT_ID-gear_ID.cfg 1001
+ # --config= defines the config file to be taken (default = config.cfg)
+ # 1001 - run number 
+@endcode 
+<li> Clustering - depending on the  sensor active area geometry and readout type
+several algorithms are available.
+@code
+ ./submit-clusearch.py  --config=config/config-DUT_ID-gear_ID.cfg 1001
+ # --config= defines the config file to be taken (default = config.cfg)
+ # 1001 - run number 
+@endcode 
+<li> Filtering - prune cluster selection 
+@code
+ ./submit-filter.py  --config=config/config-DUT_ID-gear_ID.cfg 1001
+ # 1001 - run number 
+@endcode 
+
+<li> Hitmaker - translate clusters into space points (we call them Hits)
+@code
+ ./submit-hitmaker.py  --config=config/config-DUT_ID-gear_ID.cfg -o 1001  run001001-filter.slcio 
+ # -o 1001 - specify the output filename ( 1001-hit.slcio) 
+ # run0010001-filter.lscio - intput filename  
+@endcode 
+
+</ul>
+<li> Build tracks, first to get all sensors aligned relative to each
+other, then get final tracks.
+<ul>
+<li> Alignment - correct sensors 3D position and orientation. It is very important to
+align the sensor  X and Y global coordinates and possible rotation in X-Y plane.
+@code
+ ./submit-align.py  --config=config/config-DUT_ID-gear_ID.cfg -o 1001  1001-hit.slcio 
+ # -o 1001 - output filename ( 1001-align-db.slcio )
+ # 1001-hit.slcio - input filename 
+@endcode 
+
+<li> Fitter - based on the aligned clusters position one can reconstruct tracks
+from the beam particles and interpolate (extrapolate) the track to a DUT
+surface. 
+@code
+ ./submit-fitter.py  --config=config/config-DUT_ID-gear_ID.cfg -o 1001 -a  1001-align-db.slcio 1001-hit.slcio
+ # -o 1001 - outputfilename (1001-fitter.slcio)
+ # -a 1001-align-db.slcio - input file (alignment constants)
+ # 1001-hit.slcio - input filename (with hits) 
+@endcode 
+</ul>
+</ul>
+
+*/
+
+*****************************************************************************
+
+
+*****************************************************************************
+
+/**
+
+@page gridtools How to run python scripts on GRID. 
+
+First install the gridtools scripts:
+@code
+svn co https://svnsrv.desy.de/public/ilctools/gridtools/tags/LCSoftGridScripts-v01-00 gridtools
+@endcode
+
+*/
+
+*****************************************************************************
+
+
+
 /**
 
 @page cdsPage CDS calculation
@@ -1384,16 +1486,16 @@ arrival and then it is 1 till the end.
 */
 
 /**
-@page minimal Minimal configuration
+@page minimal_config Minimal configuration
 \include minimal.cfg
 */
 
 /**
-@page complete Complete configuration
-\include complete.cfg
+@page complete_config Complete configuration
+\include complete_20100610.cfg
 */
 
 /**
-@page changelog History (CVS changelog)
+@page changelog History (SVN changelog)
 \include ChangeLog
 */
