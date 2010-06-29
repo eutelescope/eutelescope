@@ -2628,7 +2628,7 @@ void EUTelMille::end() {
                 tokens.push_back( buffer ) ;
               }
 
-              if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) ) {
+              if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) || (tokens.size() == 5) ) {
                 goodLine = true;
               } else goodLine = false;
 
