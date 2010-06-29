@@ -1370,8 +1370,8 @@ class SubmitHitMaker( SubmitBase ):
         runActualString = runActualString.replace( "@Output@", self._option.output )
 
         # replace the event range
-        runActualString = runActualString.replace( "@FirstEvent@",        self._eventRange_begin  )
-        runActualString = runActualString.replace( "@LastEvent@",        self._eventRange_end  )
+        # runActualString = runActualString.replace( "@FirstEvent@",        self._eventRange_begin  )
+        # runActualString = runActualString.replace( "@LastEvent@",        self._eventRange_end  )
         
         # replace the input file names
         for index, inputFile in enumerate( self._inputFileList ) :
