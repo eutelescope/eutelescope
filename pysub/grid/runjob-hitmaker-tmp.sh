@@ -221,8 +221,9 @@ echo
 doCommand "getFromGRID ${InputEtaLFN} ${InputEtaLocal}"
 r=$?
 if [ $r -ne 0 ] ; then
-    echo "Problem copying ${InputEtaLFN}. Exiting with error."
-    exit 3
+    echo "Problem copying ${InputEtaLFN}. Warning! If the data under question is
+    from an Analog source this Warning should be treated as an ERROR."
+#    exit 3
 fi
 
 # list all the files available
