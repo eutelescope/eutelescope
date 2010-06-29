@@ -245,8 +245,8 @@ echo
 doCommand "getFromGRID ${InputPedeLFN} ${InputPedeLocal}"
 r=$?
 if [ $r -ne 0 ] ; then
-    echo "Problem copying ${InputPedeLFN}. WARNING! in case of Analog sensors
-    it's an ERROR!"
+   echo "Problem copying ${InputPedeLFN}. Warning! If the data under question is
+   from an Analog source this Warning should be treated as an ERROR."
 #    exit 3
 fi
 
