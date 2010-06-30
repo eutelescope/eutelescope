@@ -35,7 +35,13 @@ are still valid for the digital sensors/Mimosa-26)
 
 The EUTelescope library comes with the following features:
 
-<b>[Pro]</b> Version v00-02-01 
+<b>[Pro]</b> Version v00-02-02 
+@li Millepede II based alignment processor fix introduced to be compatible with the official Millepede II versions. Backward compatibility is kept.
+
+<b>[Old]</b> Version v00-02-01a
+@li Minor documentation fix.
+
+<b>[Old]</b> Version v00-02-01 
 @li Millepede II based alignment processor extended to align tilted sensors (full 6D gears, 3 coordinate shifts and 3 angle rotations)
 @li Added APIX sensors description and clustering
 @li Added FORTIS sensors description 
@@ -1272,16 +1278,26 @@ The Millepede II source code can be downloaded from here:
 
 @code 
   cd $ILCSOFT
-  mkdir MillepedeII_for_Eutelescope
-  cd MillepedeII_for_Eutelescope
-  wget http://www-zeus.desy.de/~rubinsky/EUTelescope/MillepedeII_joerg/mille.tar.bz2
-  tar -jxvf mille.tar.bz2
+  mkdir MillepedeII
+  cd MillepedeII
+  svn co https://svnsrv.desy.de/desy/MillepedeII/tags/V03-02-02 V03-02-02
 @endcode
 
-The code is amended to the EUTelescope data format. As all temporary solutions
-this lasts already for a while. In one of the future EUTelescope releases its
-alignment file data format will be synchronised with the official Millepede II
-format. 
+You should add the $ILCSOFT/MillepedeII/V03-02-02 path to your environment $PATH
+or put a  soft link in your  $EUTELESCOPE/bin/ folder:
+
+@code
+  cd $EUTELESCOPE/bin/
+  ln -sf $ILCSOFT/MillepedeII/V03-02-02/pede .
+@endcode
+
+Then, your $EUTELESCOPE/pysub/config/config.cfg file should contain:
+
+@code
+  Pede           =  $EUTELESCOPE/bin/pede
+@endcode
+
+Replace the $EUTELESCOPE with the full path string corresponding to your setup.
 
 There is an official Millepede II web page maintained by Terascale Statistics
 group <a href="https://www.wiki.terascale.de/index.php/Millepede_II">Physics at
