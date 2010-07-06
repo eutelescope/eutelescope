@@ -84,6 +84,7 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG) const
   int xSize, ySize;
   getClusterSize(xSize, ySize);
 
+ 
   float normalization = 0;
   float tempX = 0;
   float tempY = 0;
@@ -92,9 +93,11 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG) const
   for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
     for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
       normalization += _trackerData->getChargeValues()[iPixel];
-      tempX         += xPixel * _trackerData->getChargeValues()[iPixel];
-      tempY         += yPixel * _trackerData->getChargeValues()[iPixel];
-      ++iPixel;
+      if( _trackerData->getChargeValues()[iPixel] > 0 ){
+          tempX         += xPixel * _trackerData->getChargeValues()[iPixel];
+          tempY         += yPixel * _trackerData->getChargeValues()[iPixel];
+      }
+      iPixel++;
     }
   }
 
@@ -105,6 +108,7 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG) const
     xCoG = 0;
     yCoG = 0;
   }
+
 
 }
 
@@ -142,6 +146,7 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int x
     xCoG = 0;
     yCoG = 0;
   }
+
 }
 
 
