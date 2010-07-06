@@ -489,6 +489,7 @@ namespace eutelescope {
     void digitalFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
 
+
     //!HACK TAKI
     //! Methods for bricked pixel clustering
     /*! This method is called by the processEvent method in the case
@@ -801,6 +802,22 @@ namespace eutelescope {
      */
     static std::string _clusterSignalHistoName;
 
+    //! Cluster signal histogram base name (size along X).
+    /*! This is the name of the cluster signal histogram. To this
+     *  name, the detector number is added in order to make it
+     *  unique. This is used also for the other cluster spectra.
+     */
+    static std::string _clusterSizeXHistoName;
+
+
+    //! Cluster signal histogram base name (size along Y).
+    /*! This is the name of the cluster signal histogram. To this
+     *  name, the detector number is added in order to make it
+     *  unique. This is used also for the other cluster spectra.
+     */
+    static std::string _clusterSizeYHistoName;
+
+ 
     //! Seed pixel signal histo name
     /*! This is the seed pixel spectrum histogram. To this name,
      *  the detector ID is added in order to make it unique.

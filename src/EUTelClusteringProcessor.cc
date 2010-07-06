@@ -83,6 +83,8 @@ using namespace eutelescope;
 // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 std::string EUTelClusteringProcessor::_clusterSignalHistoName      = "clusterSignal";
+std::string EUTelClusteringProcessor::_clusterSizeXHistoName       = "clusterSizeX";
+std::string EUTelClusteringProcessor::_clusterSizeYHistoName       = "clusterSizeY";
 std::string EUTelClusteringProcessor::_seedSignalHistoName         = "seedSignal";
 std::string EUTelClusteringProcessor::_hitMapHistoName             = "hitMap";
 std::string EUTelClusteringProcessor::_seedSNRHistoName            = "seedSNR";
@@ -211,8 +213,10 @@ void EUTelClusteringProcessor::init () {
 
   // in the case the FIXEDFRAME algorithm is selected, the check if
   // the _ffXClusterSize and the _ffYClusterSize are odd numbers
-  if ( _nzsClusteringAlgo == EUTELESCOPE::FIXEDFRAME  || _zsClusteringAlgo == EUTELESCOPE::FIXEDFRAME
-       || _nzsClusteringAlgo == EUTELESCOPE::DFIXEDFRAME  || _nzsClusteringAlgo == EUTELESCOPE::DFIXEDFRAME
+  if ( 
+          _nzsClusteringAlgo == EUTELESCOPE::FIXEDFRAME  || _zsClusteringAlgo == EUTELESCOPE::FIXEDFRAME
+          ||
+          _nzsClusteringAlgo == EUTELESCOPE::DFIXEDFRAME  || _nzsClusteringAlgo == EUTELESCOPE::DFIXEDFRAME
        ) {
     bool isZero = ( _ffXClusterSize <= 0 );
     bool isEven = ( _ffXClusterSize % 2 == 0 );
@@ -473,6 +477,11 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
   _isFirstEvent = false;
 
 }
+
+
+
+
+
 void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
   streamlog_out ( DEBUG4 ) << "Looking for clusters in the zs data with digital FixedFrame algorithm " << endl;
 
@@ -510,21 +519,21 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
   short limitExceed    = 0;
 
   if ( isFirstEvent() ) {
-
     // For the time being nothing to do specifically in the first
     // event.
-
-
   }
+  
+  
   dim2array<bool> pixelmatrix(_ffXClusterSize, _ffYClusterSize, false);
-  for ( unsigned int i = 0 ; i < zsInputCollectionVec->size(); i++ ) {
+  for ( unsigned int i = 0 ; i < zsInputCollectionVec->size(); i++ ) 
+  {
     // get the TrackerData and guess which kind of sparsified data it
     // contains.
     TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
 
-    int _sensorID              = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
-    int sensorID   =_sensorID;
+    int _sensorID            = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
+    int  sensorID            = _sensorID;
 
     //if this is an excluded sensor go to the next element
     bool foundexcludedsensor = false;
@@ -645,16 +654,6 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
     const int stepx = (int)(_ffXClusterSize / 2);
     const int stepy = (int)(_ffYClusterSize / 2);
-
-    //  if(firstfoundhitpixel)
-    //       {
-    //         sensormatrix.pad(false);
-    //       }
-    //else //only proceed if at least one hit was found
-    //for(unsigned int i = 0; i < sensormatrix.sizeX(); ++i)
-    //  {
-    //    for(unsigned int j = 0; j < sensormatrix.sizeY(); ++j)
-    //      {
 
     std::map<unsigned int, std::map<unsigned int, bool> >::iterator pos;
     for(pos = sensormatrix.begin(); pos != sensormatrix.end(); ++pos) 
@@ -1006,12 +1005,12 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                     streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
                                                << " on detector " << _sensorID
                                                << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
-                  }
+                  }                
                 }
             }
+          }
       }
   }
-}
 // if the sparseClusterCollectionVec isn't empty add it to the
 // current event. The pulse collection will be added afterwards
 //  if ( sparseClusterCollectionVec->size() != 0 ) {
@@ -1020,15 +1019,23 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
 // if the sparseClusterCollectionVec isn't empty add it to the
 // current event. The pulse collection will be added afterwards
-if ( ! isDummyAlreadyExisting ) {
-  if ( sparseClusterCollectionVec->size() != dummyCollectionInitialSize ) {
-    evt->addCollection( sparseClusterCollectionVec, "original_zsdata" );
-  } else {
-    delete sparseClusterCollectionVec;
+
+  if ( ! isDummyAlreadyExisting ) 
+  {
+      if ( sparseClusterCollectionVec->size() != dummyCollectionInitialSize ) 
+      {
+          evt->addCollection( sparseClusterCollectionVec, "original_zsdata" );
+      } 
+      else 
+      {
+          delete sparseClusterCollectionVec;
+      }
   }
- }
 
 }
+
+
+
 void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
 
   streamlog_out ( DEBUG4 ) << "Looking for clusters in the zs data with FixedFrame algorithm " << endl;
@@ -2950,10 +2957,22 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
       // increment of one unit the event counter for this plane
       eventCounterVec[ _ancillaryIndexMap[ detectorID] ]++;
 
-      string tempHistoName;
+      string tempHistoName="";
+
+      // plot the cluster total charge
       tempHistoName = _clusterSignalHistoName + "_d" + to_string( detectorID ) ;
       (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getTotalCharge());
 
+      // get the cluster size in X and Y separately and plot it:
+      int xSize, ySize;
+      cluster->getClusterSize(xSize,ySize);
+      tempHistoName = _clusterSizeXHistoName + "_d" + to_string( detectorID ) ;
+      (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(xSize);
+
+      tempHistoName = _clusterSizeYHistoName + "_d" + to_string( detectorID ) ;
+      (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(ySize);
+
+      // plot the seed charge
       tempHistoName = _seedSignalHistoName + "_d" + to_string( detectorID ) ;
       (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getSeedCharge());
 
@@ -3190,6 +3209,37 @@ void EUTelClusteringProcessor::bookHistos() {
       }
     }
 
+    int    clusterXNBin  = 1000;
+    double clusterXMin   = 0.;
+    double clusterXMax   = 1000.;
+    string clusterXTitle = "Cluster X spectrum with all pixels";
+    if ( isHistoManagerAvailable ) {
+      histoInfo = histoMgr->getHistogramInfo( _clusterSizeXHistoName );
+      if ( histoInfo ) {
+        streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
+        clusterXNBin = histoInfo->_xBin;
+        clusterXMin  = histoInfo->_xMin;
+        clusterXMax  = histoInfo->_xMax;
+        if ( histoInfo->_title != "" ) clusterXTitle = histoInfo->_title;
+      }
+    }
+
+
+    int    clusterYNBin  = 1000;
+    double clusterYMin   = 0.;
+    double clusterYMax   = 1000.;
+    string clusterYTitle = "Cluster Y spectrum with all pixels";
+    if ( isHistoManagerAvailable ) {
+      histoInfo = histoMgr->getHistogramInfo( _clusterSizeYHistoName );
+      if ( histoInfo ) {
+        streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
+        clusterYNBin = histoInfo->_xBin;
+        clusterYMin  = histoInfo->_xMin;
+        clusterYMax  = histoInfo->_xMax;
+        if ( histoInfo->_title != "" ) clusterYTitle = histoInfo->_title;
+      }
+    }
+
     int    clusterSNRNBin  = 300;
     double clusterSNRMin   = 0.;
     double clusterSNRMax   = 200;
@@ -3212,6 +3262,24 @@ void EUTelClusteringProcessor::bookHistos() {
                                                                 clusterNBin,clusterMin,clusterMax);
     _aidaHistoMap.insert(make_pair(tempHistoName, clusterSignalHisto));
     clusterSignalHisto->setTitle(clusterTitle.c_str());
+
+    // cluster signal along X
+    tempHistoName = _clusterSizeXHistoName + "_d" + to_string( sensorID );
+    AIDA::IHistogram1D * clusterSizeXHisto =
+      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                clusterXNBin,clusterXMin,clusterXMax);
+    _aidaHistoMap.insert(make_pair(tempHistoName, clusterSizeXHisto));
+    clusterSizeXHisto->setTitle(clusterXTitle.c_str());
+
+    // cluster signal along Y
+    tempHistoName = _clusterSizeYHistoName + "_d" + to_string( sensorID );
+    AIDA::IHistogram1D * clusterSizeYHisto =
+      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+                                                                clusterYNBin,clusterYMin,clusterYMax);
+    _aidaHistoMap.insert(make_pair(tempHistoName, clusterSizeYHisto));
+    clusterSizeYHisto->setTitle(clusterYTitle.c_str());
+
+
 
     // cluster SNR
     tempHistoName = _clusterSNRHistoName + "_d" + to_string( sensorID );
@@ -3259,6 +3327,9 @@ void EUTelClusteringProcessor::bookHistos() {
       string tempTitle = "Cluster spectrum with " + to_string( *iter ) + " by " +  to_string( *iter ) + " pixels ";
       clusterSignalNxNHisto->setTitle(tempTitle.c_str());
 
+
+
+      
       // then the SNR
       tempHistoName = _clusterSNRHistoName + to_string( *iter ) + "x"
         + to_string( *iter ) + "_d" + to_string( sensorID );
@@ -3349,9 +3420,9 @@ void EUTelClusteringProcessor::bookHistos() {
     hitMapHisto->setTitle("Hit map");
 
     tempHistoName = _eventMultiplicityHistoName + "_d" + to_string( sensorID );
-    int     eventMultiNBin  = 30;
+    int     eventMultiNBin  = 60;
     double  eventMultiMin   =  0.;
-    double  eventMultiMax   = 30.;
+    double  eventMultiMax   = 60.;
     string  eventMultiTitle = "Event multiplicity";
     if ( isHistoManagerAvailable ) {
       histoInfo = histoMgr->getHistogramInfo(  _eventMultiplicityHistoName );
