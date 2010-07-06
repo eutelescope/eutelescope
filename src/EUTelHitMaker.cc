@@ -435,8 +435,11 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
 
       // get the position of the seed pixel. This is in pixel number.
-      int xCluCenter, yCluCenter;
-      cluster->getCenterCoord(xCluCenter, yCluCenter);
+//      int xCluCenter, yCluCenter;
+//      cluster->getCenterCoord(xCluCenter, yCluCenter);
+      int xCluSeed, yCluSeed;
+      cluster->getSeedCoord(xCluSeed, yCluSeed);
+
 
       // with the charge center of gravity calculation, we get a shift
       // from the seed pixel center due to the charge distribution. Those
@@ -463,6 +466,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       }
 
       float xShift, yShift;
+
       if ( _cogAlgorithm == "full" )
       {
         if (_etaCorrection == 1 && p_tmpBrickedCluster != NULL)
@@ -472,6 +476,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         else
         {
             cluster->getCenterOfGravityShift( xShift, yShift );
+//            printf("I: xShift:%8.3f yShift:%8.3f  _xycluSize: %7d %7d \n", xShift, yShift);
         }
       }
       else if ( _cogAlgorithm == "npixel" )
@@ -483,7 +488,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         else
         {
             cluster->getCenterOfGravityShift( xShift, yShift, _nPixel );
-        }
+//            printf("M: xShift:%8.3f yShift:%8.3f  _xycluSize: %7d %7d \n", xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
+       }
       }
       else if ( _cogAlgorithm == "nxmpixel")
       {
@@ -498,9 +504,16 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         {
             //will be okay for a brickedClusterImpl! accounted for such a call internally.
             cluster->getCenterOfGravityShift( xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
+//            printf("X: xShift:%8.3f yShift:%8.3f  _xycluSize: %7d %7d \n", xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
         }
       }
-
+/*
+      if(cluster->getTotalCharge() > 1) {         
+          printf("-------------------------------------------\n");
+          printf("etaCorrecion: %2d  Bricked: %p \n", _etaCorrection, p_tmpBrickedCluster );
+          printf("xShift:%8.3f yShift:%8.3f type: %5d\n",xShift,yShift, type);
+      }
+  */   
       double xCorrection = static_cast<double> (xShift) ;
       double yCorrection = static_cast<double> (yShift) ;
       //!HACK TAKI if (_etaCorrection==1 && p_tmpBrickedCluster != NULL) THEN DO NOT FORGET
@@ -588,9 +601,25 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       }
 
       // rescale the pixel number in millimeter
-      double xDet = ( static_cast<double> (xCluCenter) + xCorrection + 0.5 ) * xPitch ;
-      double yDet = ( static_cast<double> (yCluCenter) + yCorrection + 0.5 ) * yPitch ;
+//      double xDet = ( static_cast<double> (xCluCenter) + xCorrection + 0.5 ) * xPitch ;
+//      double yDet = ( static_cast<double> (yCluCenter) + yCorrection + 0.5 ) * yPitch ;
+      double xDet = ( static_cast<double> (xCluSeed) + xCorrection + 0.5 ) * xPitch ;
+      double yDet = ( static_cast<double> (yCluSeed) + yCorrection + 0.5 ) * yPitch ;
 
+/*
+      if(cluster->getTotalCharge() > 1) {         
+          printf("-------------------------------------------\n");
+          printf("%10s \n", _cogAlgorithm.c_str());
+          printf("run:%8d    event:%8d  charge: %8.3f \n (xZero: %8.3f yZero:%8.3f zZero:%8.3f)\n", 
+                  event->getRunNumber(), event->getEventNumber(), 
+                  cluster->getTotalCharge(),  xZero, yZero, zZero
+                  );
+          printf("xCluSeed: %-8d xCorr: %-8.3f xPitch(%-8.3f) xDet(%-8.3f) \n", xCluSeed, xCorrection, xPitch, xDet);
+          printf("yCluSeed: %-8d yCorr: %-8.3f yPitch(%-8.3f) yDet(%-8.3f) \n", yCluSeed, yCorrection, yPitch, yDet);
+
+      }
+*/
+      
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       string tempHistoName;
       if ( _histogramSwitch ) {
