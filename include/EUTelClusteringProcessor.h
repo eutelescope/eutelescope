@@ -489,7 +489,6 @@ namespace eutelescope {
     void digitalFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
 
-
     //!HACK TAKI
     //! Methods for bricked pixel clustering
     /*! This method is called by the processEvent method in the case
@@ -652,6 +651,23 @@ namespace eutelescope {
      */
     std::string _zsClusteringAlgo;
 
+    //! Data format type options.
+    /*! This string is used to optimise the clustering performance.
+     *  The following types are known:
+     *
+     *  \li <b>Analog</b>: The data from the sensors is analog.
+     *  Implies: any value in the range from Min to Max should be expected.
+     *
+     *  \li <b>Digital</b>: The data from the sensors is digital.
+     *  Implies: the values in the range from Min to Max are expected to have
+     *  some regular step.
+     *
+     *  \li <b>Binary</b>: The data from the sensors is binary.
+     *  Implies: there are only two values of the signal possible - 0 and 1. 
+     *  
+     */
+    std::string _dataFormatType;
+
 
     //! Cluster size along x in pixel
     /*! This parameter is used in the case the _clusteringAlgo is set
@@ -747,6 +763,13 @@ namespace eutelescope {
      *  value the pixel signal
      */
     std::map<float, unsigned int> _seedCandidateMap;
+
+    //!
+    /*!
+     * .
+     * .
+     */
+    std::map< int, int > _indexMap;
 
     //! Total cluster found
     /*! This is a map correlating the sensorID number and the

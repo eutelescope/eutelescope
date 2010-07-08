@@ -145,6 +145,15 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
                               "-> BrickedCluster: for bricked clustering on zs data\n",
                               _zsClusteringAlgo, string(EUTELESCOPE::SPARSECLUSTER));
 
+  registerProcessorParameter ("DataFormatType",
+                              "Select herewith the type of the data format you are expecting from the sensors.\n"
+                              "Available types of the data format:\n"
+                              "-> Analog: smooth distribution of pixel ADC values from Min to Max\n"
+                              "-> Digital: descrete distribution of pixel ADC values from Min to Max\n"
+                              "-> Binary: only two values of the signal - 0 and 1\n",
+                              _dataFormatType, string(EUTELESCOPE::BINARY));
+
+
   registerProcessorParameter ("FFClusterSizeX",
                               "Maximum allowed cluster size along x (only odd numbers)",
                               _ffXClusterSize, static_cast<int> (5));
@@ -461,6 +470,8 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
         zsBrickedClustering(evt, pulseCollection); //force to 3x3 already done above!
       }
   }
+
+
   // if the pulseCollection is not empty add it to the event
   if ( ! pulseCollectionExists && ( pulseCollection->size() != _initialPulseCollectionSize )) {
     evt->addCollection( pulseCollection, _pulseCollectionName );
@@ -551,12 +562,24 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     int clusterID = 0;
 
     // get the noise and the status matrix with the right detectorID
-    TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
+    TrackerRawDataImpl * status = 0;
+    // the noise map. we only need this map for decoding issues.
+    TrackerDataImpl    * noise  = 0;
+   
+    // get the noise and the status matrix with the right detectorID
+    status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));        
     //the noise map. we only need this map for decoding issues.
-    TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
+    noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
+
+
+    if( _dataFormatType == EUTELESCOPE::BINARY )
+    {
+        status->adcValues().clear();
+    }
 
     // reset the status
-    resetStatus(status);
+    resetStatus(status);       
+
 
     // now that we know which is the sensorID, we can ask to GEAR
     // which are the minX, minY, maxX and maxY.
@@ -602,7 +625,9 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
     // prepare a data vector mimicking the TrackerData data of the
     // standard digitalFixedFrameClustering. Initialize all the entries to zero.
-    vector<float > dataVec( status->getADCValues().size(), 0. );
+//    vector<float > dataVec( status->getADCValues().size(), 0. );
+    vector<float > dataVec( noise->getChargeValues().size(), 0. );
+
 
     //seed candidates
     list<seed> seedcandidates;
@@ -613,7 +638,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     //    bool firstfoundhitpixel = true;
 
 
-    if ( type == kEUTelSimpleSparsePixel ) {
+    if ( type == kEUTelSimpleSparsePixel ) 
+    {
       // now prepare the EUTelescope interface to sparsified data.
       auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >
         sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
@@ -625,14 +651,35 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
       // loop over all pixels in the sparseData object.
       auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
-      for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) {
-        sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
-        int   index  = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
-        float signal = sparsePixel->getSignal();
-        dataVec[ index  ] = signal;
+      for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
+      {
+          
+          sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
+          int   index       = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
+          float fsignal     = sparsePixel->getSignal();
+          dataVec[ index  ] = fsignal;
+ 
 
-        if ( status->getADCValues()[ index ] == EUTELESCOPE::GOODPIXEL )  {
-          if(signal > 0.00001)
+          int pixel_type = 0;
+
+          if( _dataFormatType == EUTELESCOPE::BINARY )
+          {    
+              if( _indexMap.find(index) != 0)
+              {
+                  int adc_size = status->adcValues().size();
+                  status->adcValues().resize( adc_size + 1 );
+                  _indexMap.insert ( make_pair ( index, status->getADCValues().size() -1 ) );
+                  status->adcValues()[ _indexMap[index]  ] = EUTELESCOPE::GOODPIXEL ;
+              }
+              pixel_type = status->adcValues()[ _indexMap[index]  ];
+          }else{
+              pixel_type = status->adcValues()[ index  ];
+          }
+              
+
+        if ( pixel_type )
+        {
+          if(fsignal > 0.00001)
             {
               // if(firstfoundhitpixel)
               //                 {
@@ -646,6 +693,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
           //else
           // sensormatrix.set(sparsePixel->getXCoord(),sparsePixel->getYCoord(), false);
         }
+
       }
     } else {
       throw UnknownDataTypeException("Unknown sparsified pixel");
@@ -655,6 +703,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     const int stepx = (int)(_ffXClusterSize / 2);
     const int stepy = (int)(_ffYClusterSize / 2);
 
+    
     std::map<unsigned int, std::map<unsigned int, bool> >::iterator pos;
     for(pos = sensormatrix.begin(); pos != sensormatrix.end(); ++pos) 
       {
@@ -763,7 +812,14 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     //sort the list of seed pixel candidates. the first criteria is
     //the number of neighbours without diagonal neighbours. then the
     //second criteria is the total number of neighbours
-    seedcandidates.sort();
+
+ 
+    // not needed for M26 ?! which is binary !
+    if( _dataFormatType == EUTELESCOPE::ANALOG  || _dataFormatType == EUTELESCOPE::DIGITAL )
+    {
+        seedcandidates.sort(); 
+    }
+
     //end of seed pixel finding!
 
     //if at least one seed pixel candidate was found, then ...
@@ -835,7 +891,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
                   //loop over all hit pixels inside this cluster
                   for(unsigned int j = 0; j < pix.size(); j++)
-                    {
+                  {
                       //remove pixels, that were assigned to this
                       //cluster from the dummy sensor map. this
                       //pixel will then not be used then in other clusters
@@ -858,10 +914,19 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                           //this is a neighbour pixel!
                           //nothing to do?
                         }
+ 
+                      bool isHit  = true;
+                      bool isGood = true;
+
+                      if( _dataFormatType == EUTELESCOPE::BINARY )
+                      {
+                          isHit  = ( status->getADCValues()[ _indexMap[index] ] == EUTELESCOPE::HITPIXEL  );
+                          isGood = ( status->getADCValues()[ _indexMap[index] ] == EUTELESCOPE::GOODPIXEL );
+                      }else{
+                          isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
+                          isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
+                      }
                        
-                      bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
-                      bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
-                        
                       //fill the pixel index in the corresponding array
                       //for the digital fixed frame cluster
                       if(isGood)
@@ -873,8 +938,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                       } else if (isHit) {
                         cluQuality = cluQuality | kIncompleteCluster | kMergedCluster ;
                       }
-
-                    }
+                  
+                  }
                   //sanity check
                   if(seedX == -1 || seedY == -1)
                     {
@@ -975,9 +1040,17 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                   streamlog_out (DEBUG0) << "  Cluster no " <<  clusterID << " seedX " << seedX << " seedY " << seedY << endl;
 
                   IntVec::iterator indexIter = clusterCandidateIndeces.begin();
-                  while ( indexIter != clusterCandidateIndeces.end() ) {
+                  while ( indexIter != clusterCandidateIndeces.end() ) 
+                  {
                     if((*indexIter) != -1)
-                      status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+                    {
+                        if( _dataFormatType == EUTELESCOPE::BINARY )
+                        { 
+                            status->adcValues()[ _indexMap[(*indexIter)] ] = EUTELESCOPE::HITPIXEL;
+                        }else{
+                            status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+                        }
+                    }
                     ++indexIter;
                   }
                   // copy the candidate charges inside the cluster
@@ -1010,6 +1083,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
             }
           }
       }
+
+ 
   }
 // if the sparseClusterCollectionVec isn't empty add it to the
 // current event. The pulse collection will be added afterwards
@@ -1944,6 +2019,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
   // get the collections of interest from the event.
   LCCollectionVec * zsInputCollectionVec  = dynamic_cast < LCCollectionVec * > (evt->getCollection( _zsDataCollectionName ));
   LCCollectionVec * noiseCollectionVec    = dynamic_cast < LCCollectionVec * > (evt->getCollection(_noiseCollectionName));
+ 
 
   // prepare some decoders
   CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputCollectionVec );
@@ -2047,7 +2123,6 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
           sparseData->getSparsePixelSortedAt( (*listIter ), pixel );
           sparseCluster->addSparsePixel( pixel );
           noiseValueVec.push_back(noise->getChargeValues()[ matrixDecoder.getIndexFromXY ( pixel->getXCoord(), pixel->getYCoord() ) ]);
-
           // remember the iterator++
           ++listIter;
         }
@@ -2079,8 +2154,8 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
           idZSPulseEncoder["clusterID"] = clusterID;
           idZSPulseEncoder["xSeed"]     = xSeed;
           idZSPulseEncoder["ySeed"]     = ySeed;
-          idZSPulseEncoder["xCluSize"]  = (xSize < 32 ? xSize : 31 );
-          idZSPulseEncoder["yCluSize"]  = (ySize < 32 ? ySize : 31 );
+          idZSPulseEncoder["xCluSize"]  = (xSize < 32 ? xSize : 31 );  // why 31 ??
+          idZSPulseEncoder["yCluSize"]  = (ySize < 32 ? ySize : 31 );  // why 31 ??
           idZSPulseEncoder["type"]      = static_cast<int>(kEUTelSparseClusterImpl);
           idZSPulseEncoder.setCellID( zsPulse.get() );
 
@@ -2865,27 +2940,36 @@ void EUTelClusteringProcessor::end() {
 }
 
 
+
+
 void EUTelClusteringProcessor::resetStatus(IMPL::TrackerRawDataImpl * status) {
 
-  ShortVec::iterator iter = status->adcValues().begin();
-  while ( iter != status->adcValues().end() )
+    int i = 0;
+    ShortVec::iterator iter = status->adcValues().begin();
+    while ( iter != status->adcValues().end() )
     {
-      if ( *iter == EUTELESCOPE::HITPIXEL )
+        if ( *iter == EUTELESCOPE::HITPIXEL )
         {
-          *iter = EUTELESCOPE::GOODPIXEL;
+            *iter = EUTELESCOPE::GOODPIXEL;
         }
-      else if ( *iter == EUTELESCOPE::MISSINGPIXEL )
+        else if ( *iter == EUTELESCOPE::MISSINGPIXEL )
         {
-          *iter = EUTELESCOPE::GOODPIXEL;
+            *iter = EUTELESCOPE::GOODPIXEL;
         }
-      ++iter;
+        ++iter;
+        i++;
     }
-
+  
 }
+
+
+
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 
+
+    
   EUTelEventImpl * eutelEvent = static_cast<EUTelEventImpl*> (evt);
   EventType type              = eutelEvent->getEventType();
 
@@ -2898,6 +2982,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
     // that the assumption that the event was a data event was
     // correct, so no harm to continue...
   }
+
 
   try {
 

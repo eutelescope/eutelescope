@@ -299,6 +299,24 @@ namespace eutelescope
      */
     static const char * BRICKEDCLUSTER;
 
+    //! Analog type of the data readout
+    /*! For a detailed description @see
+     *  EUTelClusteringProcessor::_dataFormatType
+     */
+    static const char *   ANALOG;
+ 
+    //! Digital type of the data readout
+    /*! For a detailed description @see
+     *  EUTelClusteringProcessor::_dataFormatType
+     */
+    static const char *   DIGITAL;
+ 
+    //! Binary type of the data readout
+    /*! For a detailed description @see
+     *  EUTelClusteringProcessor::_dataFormatType
+     */
+    static const char *   BINARY;
+
     //! Fixed weight algorithm for the pedestal / noise update
     /*! The name for the pedestal and noise update algorithm. @see
      *  EUTelUpdatePedestalNoiseProcessor
