@@ -112,7 +112,7 @@ namespace eutelescope {
 
     int xSeed, ySeed;
     getSeedCoord(xSeed, ySeed);
-    
+   
     PixelType * pixel = new PixelType;
     for ( unsigned int index = 0; index < size() ; index++ ) {
       getSparsePixelAt( index, pixel );

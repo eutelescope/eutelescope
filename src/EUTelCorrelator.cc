@@ -364,7 +364,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           }
           int internalSensorID = pulseCellDecoder( internalPulse ) [ "sensorID" ] ;
 
-          if ( internalSensorID != externalSensorID ) {
+          if ( internalSensorID != externalSensorID && internalSensorID+1 == externalSensorID) {
 
             float internalXCenter;
             float internalYCenter;

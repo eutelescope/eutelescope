@@ -78,13 +78,15 @@ namespace eutelescope {
     void setSignal(short signal) { _signal = signal ; }
 
     //! Getter for the x coordinate
-    short getXCoord() const { return _xCoord ; } 
+    inline short getXCoord() const { return _xCoord ; } 
 
     //! Getter for the y coordinate
-    short getYCoord() const { return _yCoord ; } 
+    inline short getYCoord() const { return _yCoord ; } 
 
     //! Getter for the signal
-    float getSignal() const { return static_cast<float> (_signal) ; } 
+//    inline float getSignal() const { return static_cast<float> (_signal) ; } 
+    inline float getSignal() const { return static_cast<float> (_signal) ; } 
+
 
   private:
     
