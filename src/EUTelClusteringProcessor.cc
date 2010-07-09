@@ -677,7 +677,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
           }
               
 
-        if ( pixel_type )
+        if ( pixel_type == EUTELESCOPE::GOODPIXEL )
         {
           if(fsignal > 0.00001)
             {
