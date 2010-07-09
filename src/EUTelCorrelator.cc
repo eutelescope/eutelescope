@@ -503,7 +503,7 @@ void EUTelCorrelator::bookHistos() {
 
         int col = _sensorIDVec.at( c );
 
-        if ( col != row ) {
+        if ( col != row && col+1 == row) {
 
           //we create histograms for X and Y Cluster correlation
           if ( _hasClusterCollection ) {
