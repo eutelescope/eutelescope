@@ -787,7 +787,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                               }
                           }
                       }
-                     if(j>=1)
+                    if(j>=1)
                     for(unsigned int index_y = j-1; index_y <= (j + 1); index_y++)
                       {
                         if(index_y >= 0)
@@ -814,11 +814,11 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     //second criteria is the total number of neighbours
 
  
-    // not needed for M26 ?! which is binary !
-    if( _dataFormatType == EUTELESCOPE::ANALOG  || _dataFormatType == EUTELESCOPE::DIGITAL )
-    {
-        seedcandidates.sort(); 
-    }
+    // sorts the seed list according to the "operator<" definition in the seed class
+//    if( _dataFormatType != EUTELESCOPE::BINARY )
+//    {
+       seedcandidates.sort();       
+//    }
 
     //end of seed pixel finding!
 
