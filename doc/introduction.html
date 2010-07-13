@@ -35,7 +35,14 @@ are still valid for the digital sensors/Mimosa-26)
 
 The EUTelescope library comes with the following features:
 
-<b>[Pro]</b> Version v00-02-02 
+<b>[Pro]</b> Version v00-02-03 
+@li Optimisation of the status collection (speedup for the Digital Fixed Frame Clustering).
+@li Fix of the cluster center position in the HitMaker, it makes no difference for DFF
+and make much sense for the SparseClustering(2). The hit coordinates are
+expected to be identical for small clusters (smaller then defined by the DFF
+algo input settings).  
+
+<b>[Old]</b> Version v00-02-02 
 @li Millepede II based alignment processor fix introduced to be compatible with the official Millepede II versions. Backward compatibility is kept.
 
 <b>[Old]</b> Version v00-02-01a
