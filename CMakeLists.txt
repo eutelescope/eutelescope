@@ -29,7 +29,7 @@ PROJECT( Eutelescope )
 # project version
 SET( ${PROJECT_NAME}_MAJOR_VERSION 0 )
 SET( ${PROJECT_NAME}_MINOR_VERSION 2 )
-SET( ${PROJECT_NAME}_PATCH_LEVEL  0 )
+SET( ${PROJECT_NAME}_PATCH_LEVEL   3 )
 
 
 ### SETTINGS #################################################################
@@ -137,6 +137,12 @@ IF( DEFINED EUDAQ_HOME OR DEFINED ENV{EUDAQ} )
         MESSAGE( STATUS "WARNING: failed to configure ${PROJECT_NAME} with EUDAQ!!" )
     ENDIF()
 ENDIF()
+
+#used for alignment if Eutelescope was build with ROOT suppor
+IF(BUILD_WITH MATCHES ROOT)
+    LINK_LIBRARIES("Minuit")
+ENDIF()
+
 
 # require proper c++
 ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
