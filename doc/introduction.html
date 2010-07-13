@@ -37,8 +37,9 @@ The EUTelescope library comes with the following features:
 
 <b>[Pro]</b> Version v00-02-03 
 @li Optimisation of the status collection (speedup for the Digital Fixed Frame Clustering).
-@li Fix of the cluster center position in the HitMaker, it makes no difference for DFF
-and make much sense for the SparseClustering2 (SP2). The hit coordinates are expected to be identical for small clusters (smaller then defined by the DFF algo input settings).  
+@li Fix of the cluster center position in the HitMaker, it makes no effect for
+DFF, was buggy for the SparseClustering2 (SP2). 
+The hit coordinates are expected to be identical for small clusters (smaller then defined by the DFF algo input settings).  
 In principle the SP2 clustering algorithm could be used in some cases as the default one for M26.
 
 <b>[Old]</b> Version v00-02-02 
