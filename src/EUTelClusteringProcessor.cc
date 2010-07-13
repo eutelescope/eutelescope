@@ -664,7 +664,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
           if( _dataFormatType == EUTELESCOPE::BINARY )
           {    
-              if( _indexMap.find(index) != 0)
+              if( _indexMap.find(index) != _indexMap.end() )
               {
                   int adc_size = status->adcValues().size();
                   status->adcValues().resize( adc_size + 1 );
