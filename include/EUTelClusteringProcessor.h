@@ -868,6 +868,12 @@ namespace eutelescope {
      */
     static std::string _clusterSNRHistoName;
 
+    //! Cluster vs Seed SNR histogram name
+    /*! This is the name of the 2D histogram containing the cluster pixel
+     *  SNR vs the seed pixel SNR
+     */
+    static std::string _cluster_vs_seedSNRHistoName;
+
     //! Event multiplicity histogram name
     /*! There is one of this histogram for each plane in the telescope
      *  setup. For each event this histogram is filled with the number

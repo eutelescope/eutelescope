@@ -90,6 +90,7 @@ std::string EUTelClusteringProcessor::_hitMapHistoName             = "hitMap";
 std::string EUTelClusteringProcessor::_seedSNRHistoName            = "seedSNR";
 std::string EUTelClusteringProcessor::_clusterNoiseHistoName       = "clusterNoise";
 std::string EUTelClusteringProcessor::_clusterSNRHistoName         = "clusterSNR";
+std::string EUTelClusteringProcessor::_cluster_vs_seedSNRHistoName = "cluster_vs_seedSNR";
 std::string EUTelClusteringProcessor::_eventMultiplicityHistoName  = "eventMultiplicity";
 #endif
 
@@ -3185,6 +3186,12 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
           histo->fill( cluster->getSeedSNR() );
         }
 
+        tempHistoName = _cluster_vs_seedSNRHistoName + "_d" + to_string( detectorID );
+        AIDA::IHistogram2D *histo2d = dynamic_cast<AIDA::IHistogram2D * > ( _aidaHistoMap[tempHistoName] );
+        if ( histo2d ) {
+          histo2d->fill( cluster->getSeedSNR(), cluster->getClusterSNR() );
+        }
+
         vector<int >::iterator iter = _clusterSpectraNxNVector.begin();
         while ( iter != _clusterSpectraNxNVector.end() ) {
           tempHistoName = _clusterSNRHistoName + to_string( *iter ) + "x"
@@ -3340,6 +3347,32 @@ void EUTelClusteringProcessor::bookHistos() {
       }
     }
 
+    int    cluster_vs_seedSNRNBin_X  = 30;
+    double cluster_vs_seedSNRMin_X   = 0.;
+    double cluster_vs_seedSNRMax_X   = 100;
+    int    cluster_vs_seedSNRNBin_Y  = 30;
+    double cluster_vs_seedSNRMin_Y   = 0.;
+    double cluster_vs_seedSNRMax_Y   = 100;
+
+    string cluster_vs_seedSNRTitle = "Cluster vs Seed SNR";
+    if ( isHistoManagerAvailable ) {
+      histoInfo = histoMgr->getHistogramInfo( _cluster_vs_seedSNRHistoName );
+      if ( histoInfo ) {
+        streamlog_out ( DEBUG2 ) << (* histoInfo ) << endl;
+        cluster_vs_seedSNRNBin_X = histoInfo->_xBin;
+        cluster_vs_seedSNRMin_X  = histoInfo->_xMin;
+        cluster_vs_seedSNRMax_X = histoInfo->_xMax;
+        cluster_vs_seedSNRNBin_Y = histoInfo->_yBin;
+        cluster_vs_seedSNRMin_Y  = histoInfo->_yMin;
+        cluster_vs_seedSNRMax_Y = histoInfo->_yMax;
+
+        if ( histoInfo->_title != "" ) cluster_vs_seedSNRTitle = histoInfo->_title;
+      }
+    }
+
+
+
+
     // cluster signal
     tempHistoName = _clusterSignalHistoName + "_d" + to_string( sensorID );
     AIDA::IHistogram1D * clusterSignalHisto =
@@ -3374,7 +3407,17 @@ void EUTelClusteringProcessor::bookHistos() {
     _aidaHistoMap.insert( make_pair(tempHistoName, clusterSNRHisto) ) ;
     clusterSNRHisto->setTitle(clusterSNRTitle.c_str());
 
+    
+   // cluster vs seed SNR
+    tempHistoName = _cluster_vs_seedSNRHistoName + "_d" + to_string( sensorID );
+    AIDA::IHistogram2D * cluster_vs_seedSNRHisto =
+      AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
+                                                                cluster_vs_seedSNRNBin_X,cluster_vs_seedSNRMin_X,cluster_vs_seedSNRMax_X,
+                                                                cluster_vs_seedSNRNBin_Y,cluster_vs_seedSNRMin_Y,cluster_vs_seedSNRMax_Y);
+    _aidaHistoMap.insert( make_pair(tempHistoName, cluster_vs_seedSNRHisto) ) ;
+    cluster_vs_seedSNRHisto->setTitle(cluster_vs_seedSNRTitle);
 
+    
     vector<int >::iterator iter = _clusterSpectraNVector.begin();
     while ( iter != _clusterSpectraNVector.end() ) {
       // this is for the signal
