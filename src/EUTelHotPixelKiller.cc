@@ -301,16 +301,20 @@ void EUTelHotPixelKiller::check( LCEvent * event ) {
 
 void EUTelHotPixelKiller::bookAndFillHistos() {
 
+
   streamlog_out ( MESSAGE0 ) << "Booking and filling histograms for cycle " << _iCycle << endl;
 
   string tempHistoName, basePath;
-  for ( int iDetector = 0; iDetector < _noOfDetectors; iDetector++ ) {
+  for ( int iDetector = 0; iDetector < _noOfDetectors; iDetector++ ) 
+  { 
+      
     basePath = "detector_" + to_string( _sensorIDVec.at( iDetector ) ) ;
     AIDAProcessor::tree(this)->mkdir(basePath.c_str());
 
     basePath += "/cycle_" + to_string( _iCycle );
     AIDAProcessor::tree(this)->mkdir(basePath.c_str());
     basePath.append("/");
+
 
 
 
@@ -321,6 +325,8 @@ void EUTelHotPixelKiller::bookAndFillHistos() {
     int     yBin = _maxY[_sensorIDVec.at( iDetector )] - _minY[_sensorIDVec.at( iDetector )] + 1;
     double  yMin = static_cast<double >(_minY[_sensorIDVec.at( iDetector )]) - 0.5;
     double  yMax = static_cast<double >(_maxY[_sensorIDVec.at( iDetector )]) + 0.5;
+
+
 
     AIDA::IHistogram2D * firing2DHisto =
       AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
@@ -339,11 +345,18 @@ void EUTelHotPixelKiller::bookAndFillHistos() {
 
     int iPixel = 0;
 
-    for (int yPixel = _minY[_sensorIDVec.at( iDetector)]; yPixel <= _maxY[_sensorIDVec.at( iDetector)]; yPixel++) {
-      for (int xPixel = _minX[_sensorIDVec.at( iDetector)]; xPixel <= _maxX[_sensorIDVec.at( iDetector)]; xPixel++) {
-        firing2DHisto->fill(xPixel, yPixel, _firingFreqVec[ iDetector ][ iPixel ] );
-        firing1DHisto->fill( _firingFreqVec[ iDetector ][ iPixel ] / ( (double)  _noOfEventPerCycle ));
-        ++iPixel;
+
+    
+    for (int yPixel = _minY[_sensorIDVec.at( iDetector)]; yPixel <= _maxY[_sensorIDVec.at( iDetector)]; yPixel++) 
+    {
+      for (int xPixel = _minX[_sensorIDVec.at( iDetector)]; xPixel <= _maxX[_sensorIDVec.at( iDetector)]; xPixel++) 
+      {
+          if( _firingFreqVec[ iDetector ][ iPixel ] > 0 )
+          {
+              firing2DHisto->fill(xPixel, yPixel, _firingFreqVec[ iDetector ][ iPixel ] );
+              firing1DHisto->fill( _firingFreqVec[ iDetector ][ iPixel ] / ( (double)  _noOfEventPerCycle ));
+              ++iPixel;
+          }
       }
     }
   }
