@@ -290,29 +290,30 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
         Available algorithms are:
         -> SparseCluster: for cluster in ZS frame
         -> SparseCluster2: for cluster in ZS frame with better performance
-        -> FixedFrame: for cluster with a given size-->
-    <parameter name="ZSClusteringAlgo" type="string" value="DFixedFrame"/>
+        -> FixedFrame: for cluster with a given size
+        -> DFixedFrame: for cluster with a given size-->
+    <parameter name="ZSClusteringAlgo" type="string" value="SparseCluster2"/>
 
 
     <!--
         FIXED FRAME ( for both NZS and ZS )
     -->
     <!--Threshold in SNR for seed pixel identification-->
-    <parameter name="FFSeedCut" type="float" value="3.5"/>
+    <parameter name="FFSeedCut" type="float" value="0.0"/>
     <!--Threshold in SNR for cluster identification-->
-    <parameter name="FFClusterCut" type="float" value="2.5"/>
+    <parameter name="FFClusterCut" type="float" value="0.0"/>
     <!--Maximum allowed cluster size along x (only odd numbers)-->
-    <parameter name="FFClusterSizeX" type="int" value="3"/>
+    <parameter name="FFClusterSizeX" type="int" value="9"/>
     <!--Maximum allowed cluster size along y (only odd numbers)-->
-    <parameter name="FFClusterSizeY" type="int" value="3"/>
+    <parameter name="FFClusterSizeY" type="int" value="9"/>
 
     <!--
         SPARSECLUSTER and SPARSECLUSTER2 (use with care)
     -->
     <!--Threshold in SNR for clusters contained in ZS data-->
-    <parameter name="SparseClusterCut" type="float" value="2.5"/>
+    <parameter name="SparseClusterCut" type="float" value="0.0"/>
     <!--Threshold in SNR for seed pixel contained in ZS data-->
-    <parameter name="SparseSeedCut" type="float" value="3.5"/>
+    <parameter name="SparseSeedCut" type="float" value="0.0"/>
     <!--Minimum distance between sparsified pixel ( touching == sqrt(2)) -->
     <parameter name="SparseMinDistance" type="float" value="0"/>
 
@@ -361,16 +362,16 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
         -> SparseCluster: for cluster in ZS frame
         -> SparseCluster2: for cluster in ZS frame with better performance
         -> FixedFrame: for cluster with a given size-->
-    <parameter name="ZSClusteringAlgo" type="string" value="FixedFrame"/>
+    <parameter name="ZSClusteringAlgo" type="string" value="SparseCluster2"/>
 
 
     <!--
         FIXED FRAME ( for both NZS and ZS )
     -->
     <!--Threshold in SNR for seed pixel identification-->
-    <parameter name="FFSeedCut" type="float" value="3.5"/>
+    <parameter name="FFSeedCut" type="float" value="0.0"/>
     <!--Threshold in SNR for cluster identification-->
-    <parameter name="FFClusterCut" type="float" value="2.5"/>
+    <parameter name="FFClusterCut" type="float" value="0.0"/>
     <!--Maximum allowed cluster size along x (only odd numbers)-->
     <parameter name="FFClusterSizeX" type="int" value="3"/>
     <!--Maximum allowed cluster size along y (only odd numbers)-->
@@ -380,9 +381,9 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
         SPARSECLUSTER and SPARSECLUSTER2 (use with care)
     -->
     <!--Threshold in SNR for clusters contained in ZS data-->
-    <parameter name="SparseClusterCut" type="float" value="2.5"/>
+    <parameter name="SparseClusterCut" type="float" value="0.0"/>
     <!--Threshold in SNR for seed pixel contained in ZS data-->
-    <parameter name="SparseSeedCut" type="float" value="3.5"/>
+    <parameter name="SparseSeedCut" type="float" value="0.0"/>
     <!--Minimum distance between sparsified pixel ( touching == sqrt(2)) -->
     <parameter name="SparseMinDistance" type="float" value="0"/>
 
@@ -414,7 +415,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> m26_status </parameter>
     <!--This float number [0,1] represents the maximum allowed firing frequency
         within the selected number of event per cycle-->
-    <parameter name="MaxAllowedFiringFreq" type="float" value="0.15"/>
+    <parameter name="MaxAllowedFiringFreq" type="float" value="0.10"/>
     <!--The number of events to be considered for each update cycle-->
     <parameter name="NoOfEventPerCycle" type="int" value="100"/>
     <!--The total number of hot pixel cycle-->

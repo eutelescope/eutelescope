@@ -578,6 +578,7 @@ class SubmitConverter( SubmitBase ) :
         self._logger.info("Submitting the job to the GRID")
         command = "glite-wms-job-submit %(del)s -r %(GRIDCE)s -o %(name)s-%(run)s.jid %(name)s-%(run)s.jdl" % {
             "name": self.name, "run": runString , "GRIDCE":self._gridCE, "del": self._jobDelegation }
+        self._logger.info( command )
         status, output = commands.getstatusoutput( command )
         for line in output.splitlines():
             self._logger.log( 15, line.strip() )

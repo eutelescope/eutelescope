@@ -769,6 +769,14 @@ namespace eutelescope {
      * .
      * .
      */
+//    std::map<unsigned int, std::map<unsigned int, bool> > sensormatrix;
+//    std::vector< dim2array<bool> > sensormatrix;
+
+    //!
+    /*!
+     * .
+     * .
+     */
     std::map< int, int > _indexMap;
 
     //! Total cluster found

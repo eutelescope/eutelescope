@@ -568,7 +568,7 @@ void EUTelCorrelator::bookHistos() {
 
             double colMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( c ) -
                                              ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( c )));
-            double colMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( col ) +
+            double colMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( c ) +
                                              ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( c )) );
             
             //lets limit the memory usage
