@@ -164,10 +164,10 @@ Version: $Id: filter-tmp.xml,v 1.5 2009-08-01 10:44:30 bulgheroni Exp $
     -->
     <!--This is the minimum allowed charge that the seed pixel of a cluster has to have.
         One floating number for each detector-->
-    <parameter name="SeedMinCharge" type="FloatVec"> 0 0 0 0 0 </parameter>
+    <parameter name="SeedMinCharge" type="FloatVec"> 0 0 0 0 0 0</parameter>
     <!--This is the minimum allowed SNR that the seed pixel of a cluster has to have.
         One floating number for each detector. Set to 0 to disable-->
-    <parameter name="SeedMinSNR" type="FloatVec"> 5.5 5.5 5.5 5.5 5.5 6.5 </parameter>
+    <parameter name="SeedMinSNR" type="FloatVec">  0 0 0 0 0 0 </parameter>
 
     <!--
         CLUSTER CHARGE
@@ -197,18 +197,18 @@ Version: $Id: filter-tmp.xml,v 1.5 2009-08-01 10:44:30 bulgheroni Exp $
     <!--This is the minimum SNR that a cluster of N times N pixels has to have.
         The first figure is the subcluster size in pixels (odd number), then one floating number for each
         planes. To switch this selection off, set at least the first number to zero.-->
-    <parameter name="ClusterNxNMinSNR" type="FloatVec"> 3 5.5 5.0 5.0 6.0 5.5 6.0 </parameter>
+    <parameter name="ClusterNxNMinSNR" type="FloatVec"> 0 0 0 0 0 0 </parameter>
     
     <!--
         CLUSTER NOISE AND QUALITY
     -->
     <!--This is maximum allowed cluster noise.
         One floating number for each detector. Write a negative number to disable the cut-->
-    <parameter name="MaxClusterNoise" type="FloatVec"> -1 -1 -1 -1 -1 </parameter>
+    <parameter name="MaxClusterNoise" type="FloatVec"> -1 -1 -1 -1 -1 -1 </parameter>
     <!--This is the required quality for the cluster.
         One integer number for each detector according to ClusterQuality.
         Put a negative number to disable the cut-->
-    <parameter name="ClusterQuality" type="IntVec"> -1 -1 -1 -1 -1 </parameter>
+    <parameter name="ClusterQuality" type="IntVec"> -1 -1 -1 -1 -1 -1</parameter>
 
     <!--
         NUMBER OF CLUSTERS
@@ -218,7 +218,7 @@ Version: $Id: filter-tmp.xml,v 1.5 2009-08-01 10:44:30 bulgheroni Exp $
     <parameter name="MaxClusterPerPlane" type="IntVec"> 100 100 100 100 100 100 </parameter>
     <!--This is the minimum required number of cluster per plane.
         One integer number for each detector. Write 0 to disable the cut-->
-    <parameter name="MinClusterPerPlane" type="IntVec"> 0 0 0 0 0 </parameter>
+    <parameter name="MinClusterPerPlane" type="IntVec"> 0 0 0 0 0 0</parameter>
     <!--Setting this to true will select only events having the same number
         of hits for each plane.-->
     <parameter name="SameNumberOfHits" type="bool" value="false"/>
@@ -294,7 +294,7 @@ Version: $Id: filter-tmp.xml,v 1.5 2009-08-01 10:44:30 bulgheroni Exp $
     <parameter name="SeedMinCharge" type="FloatVec"> 0  </parameter>
     <!--This is the minimum allowed SNR that the seed pixel of a cluster has to have.
         One floating number for each detector. Set to 0 to disable-->
-    <parameter name="SeedMinSNR" type="FloatVec"> 5.5 </parameter>
+    <parameter name="SeedMinSNR" type="FloatVec">   0 </parameter>
 
     <!--
         CLUSTER CHARGE
@@ -324,7 +324,7 @@ Version: $Id: filter-tmp.xml,v 1.5 2009-08-01 10:44:30 bulgheroni Exp $
     <!--This is the minimum SNR that a cluster of N times N pixels has to have.
         The first figure is the subcluster size in pixels (odd number), then one floating number for each
         planes. To switch this selection off, set at least the first number to zero.-->
-    <parameter name="ClusterNxNMinSNR" type="FloatVec"> 3 5.5  </parameter>
+    <parameter name="ClusterNxNMinSNR" type="FloatVec"> 0 0  </parameter>
     
     <!--
         CLUSTER NOISE AND QUALITY
@@ -403,7 +403,7 @@ Version: $Id: filter-tmp.xml,v 1.5 2009-08-01 10:44:30 bulgheroni Exp $
     <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
     <!--This float number [0,1] represents the maximum allowed firing frequency
         within the selected number of event per cycle-->
-    <parameter name="MaxAllowedFiringFreq" type="float" value="0.15"/>
+    <parameter name="MaxAllowedFiringFreq" type="float" value="0.05"/>
     <!--The number of events to be considered for each update cycle-->
     <parameter name="NoOfEventPerCycle" type="int" value="100"/>
     <!--The total number of hot pixel cycle-->
