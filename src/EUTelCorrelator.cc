@@ -95,6 +95,10 @@ void EUTelCorrelator::init() {
   // clear the sensor ID vector
   _sensorIDVec.clear();
 
+  // clear the sensor ID vector (z-axis order)
+  _sensorIDVecZOrder.clear();
+
+
   // set to zero the run and event counters
   _iRun = 0;
   _iEvt = 0;
@@ -115,15 +119,28 @@ void EUTelCorrelator::init() {
     int sensorID = _siPlanesLayerLayout->getID( iPlane );
 
     _sensorIDVec.push_back( sensorID );
+
+    // count number of the sensors to the left of the current one:
+    int _sensors_to_the_left = 0;
+    for ( int jPlane = 0 ; jPlane < _siPlanesLayerLayout->getNLayers(); jPlane++ ) 
+    {
+        if( _siPlanesLayerLayout->getLayerPositionZ(jPlane) + 1e-06 < _siPlaneZPosition[ iPlane ] )
+        {
+            _sensors_to_the_left++;
+        }
+    }
+    printf("iPlane %5d,  sensor_#_along_Z_axis %5d  [z= %8.3f] [sensorID %5d] \n", iPlane, _sensors_to_the_left, _siPlaneZPosition[ iPlane ], sensorID);
+
+    _sensorIDVecZOrder.push_back( _sensors_to_the_left );
+    _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
+
     _minX[ sensorID ] = 0;
     _minY[ sensorID ] = 0;
     _maxX[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelX( iPlane ) - 1;
     _maxY[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelY( iPlane ) - 1;
-
-
   }
 
-
+ 
   _isInitialize = false;
 
 }
@@ -364,7 +381,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           }
           int internalSensorID = pulseCellDecoder( internalPulse ) [ "sensorID" ] ;
 
-          if ( internalSensorID != externalSensorID && internalSensorID+1 == externalSensorID) {
+          if ( _sensorIDtoZOrderMap[internalSensorID] == _sensorIDtoZOrderMap[externalSensorID] +1) {
 
             float internalXCenter;
             float internalYCenter;
@@ -419,16 +436,14 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
           int internalSensorID = guessSensorID( internalHit );
 
-          if ( internalSensorID != externalSensorID ) {
+          if ( _sensorIDtoZOrderMap[internalSensorID] == _sensorIDtoZOrderMap[externalSensorID] +1 ) {
 
             double * internalPosition;
             internalPosition = (double *) internalHit->getPosition(  );
 
-            _hitXCorrelationMatrix[ externalSensorID ] [ internalSensorID ] ->
-              fill ( externalPosition[0] , internalPosition[0] ) ;
+            _hitXCorrelationMatrix[ externalSensorID ] [ internalSensorID ] -> fill ( externalPosition[0], internalPosition[0] ) ;
 
-            _hitYCorrelationMatrix[ externalSensorID ] [ internalSensorID ] ->
-              fill( externalPosition[1], internalPosition[1] );
+            _hitYCorrelationMatrix[ externalSensorID ] [ internalSensorID ] -> fill ( externalPosition[1], internalPosition[1] ) ;
 
           }
 
@@ -503,7 +518,7 @@ void EUTelCorrelator::bookHistos() {
 
         int col = _sensorIDVec.at( c );
 
-        if ( col != row && col+1 == row) {
+          if ( _sensorIDtoZOrderMap[ col ] == _sensorIDtoZOrderMap[ row ] +1 ) {
 
           //we create histograms for X and Y Cluster correlation
           if ( _hasClusterCollection ) {

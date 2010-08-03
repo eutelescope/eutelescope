@@ -215,6 +215,18 @@ namespace eutelescope {
     //! Sensor ID vector
     std::vector< int > _sensorIDVec;
 
+    //! Sensor ID vector, 
+    /*! it's position along Z axis
+     */ 
+    std::vector< int > _sensorIDVecZOrder;
+
+    //! sensor ID to position along Z id
+    /*!
+     * 
+     */
+    std::map<int, int> _sensorIDtoZOrderMap;
+
+
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
     //! AIDA histogram map
