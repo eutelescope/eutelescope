@@ -259,8 +259,10 @@ void EUTelClusteringProcessor::init () {
   // the geometry is not yet initialized, so set the corresponding
   // switch to false
   _isGeometryReady = false;
-
+   
 }
+
+
 
 void EUTelClusteringProcessor::processRunHeader (LCRunHeader * rdr) {
 
@@ -373,23 +375,29 @@ void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( mar
   }
 }
 
-void EUTelClusteringProcessor::modifyEvent( LCEvent * /* event */ ){
+void EUTelClusteringProcessor::modifyEvent( LCEvent * /* event */ )
+{
   return;
 }
 
-void EUTelClusteringProcessor::processEvent (LCEvent * event) {
+
+void EUTelClusteringProcessor::processEvent (LCEvent * event) 
+{
 
   if (_iEvt % 10 == 0)
+  {
     streamlog_out( MESSAGE4 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  }
   ++_iEvt;
 
 
   // first of all we need to be sure that the geometry is properly
   // initialized!
-  if ( !_isGeometryReady ) {
+  if ( !_isGeometryReady ) 
+  {
     initializeGeometry( event ) ;
   }
 
@@ -397,23 +405,30 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
   // in the current event it is possible to have either full frame and
   // zs data. Here is the right place to guess what we have
   bool hasNZSData = true;
-  try {
+  try 
+  {
     event->getCollection(_nzsDataCollectionName);
 
-  } catch (lcio::DataNotAvailableException& e) {
+  } 
+  catch (lcio::DataNotAvailableException& e) 
+  {
     hasNZSData = false;
     streamlog_out ( DEBUG4 ) << "No NZS data found in the event" << endl;
   }
 
   bool hasZSData = true;
-  try {
+  try 
+  {
     event->getCollection( _zsDataCollectionName ) ;
-  } catch (lcio::DataNotAvailableException& e ) {
+  } 
+  catch (lcio::DataNotAvailableException& e ) 
+  {
     hasZSData = false;
     streamlog_out ( DEBUG4 ) << "No ZS data found in the event" << endl;
   }
 
-  if ( !hasNZSData && !hasZSData ) {
+  if ( !hasNZSData && !hasZSData ) 
+  {
     streamlog_out ( MESSAGE2 ) << "The current event doesn't contain neither ZS nor NZS data collections" << endl
                                << "Leaving this event without any further processing" << endl;
     return ;
@@ -494,7 +509,8 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event) {
 
 
 
-void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulseCollection) {
+void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulseCollection) 
+{
   streamlog_out ( DEBUG4 ) << "Looking for clusters in the zs data with digital FixedFrame algorithm " << endl;
 
   // get the collections of interest from the event.
@@ -530,7 +546,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
   // utility
   short limitExceed    = 0;
 
-  if ( isFirstEvent() ) {
+  if ( isFirstEvent() ) 
+  {
     // For the time being nothing to do specifically in the first
     // event.
   }
@@ -582,7 +599,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     }
 
     // reset the status
-    resetStatus(status);       
+    resetStatus(status);
 
 
     // now that we know which is the sensorID, we can ask to GEAR
@@ -668,11 +685,11 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
           if( _dataFormatType == EUTELESCOPE::BINARY )
           {    
-              if( _indexMap.find(index) != _indexMap.end() )
+              if( _indexMap.find(index) == _indexMap.end() )
               {
                   int adc_size = status->adcValues().size();
                   status->adcValues().resize( adc_size + 1 );
-                  _indexMap.insert ( make_pair ( index, status->getADCValues().size() -1 ) );
+                  _indexMap.insert ( make_pair ( index, adc_size ) );                  
                   status->adcValues()[ _indexMap[index]  ] = EUTELESCOPE::GOODPIXEL ;
               }
               pixel_type = status->adcValues()[ _indexMap[index]  ];
@@ -710,13 +727,13 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     
     std::map<unsigned int, std::map<unsigned int, bool> >::iterator pos;
     for(pos = sensormatrix.begin(); pos != sensormatrix.end(); ++pos) 
-      {
+    {
         std::map<unsigned int, bool>::iterator sec;
         for (sec = sensormatrix[(*pos).first].begin(); sec != sensormatrix[(*pos).first].end(); ++sec) 
-          {
+        {
             //              if(sensormatrix.at(i,j))
             if(sensormatrix[pos->first][sec->first]) 
-              {
+            {
                 const unsigned int i = pos->first;
                 const unsigned int j = sec->first;
                 int nb = 0; //number of neighbours
@@ -726,9 +743,9 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
                 //first npixel_cl will be determined
                 for(unsigned int index_x = i-stepx; index_x <= (i + stepx); index_x++)
-                  {
+                {
                     for(unsigned int index_y = j-stepy; index_y <= (j + stepy);index_y++)
-                      {
+                    {
                         //  if(index_x >= 0 && index_x < sensormatrix.sizeX()
                         //                              && index_y >= 0 && index_y < sensormatrix.sizeY()
                         //                              )
@@ -738,12 +755,12 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                         //                               npixel_cl++;
 
                         if(index_x > 0 && index_y > 0)
-                          {
+                        {
                             std::map<unsigned int, std::map<unsigned int, bool> >::const_iterator z = sensormatrix.find(index_x);
                             if(z!=sensormatrix.end() && z->second.find(index_y)!=z->second.end())
-                              {
+                            {
                                 if(sensormatrix[index_x][index_y])
-                                  {
+                                {
                                     npixel_cl++;
 
                                     // if(index_y == j)
@@ -756,11 +773,12 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 //                                         {
 //                                           nb++;
 //                                         }
-                                  }
-                              }
-                          }
-                      }
-                  }
+                               
+                                }
+                            }
+                        }
+                    }
+                }
                 //second the number of neighbours ignoring diagonal
                 //neighbours must be counted
                 //                  for(unsigned int index_x = i-1; index_x <= (i + 1); index_x++)
@@ -777,34 +795,35 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                 //                     }
 
                 if(npixel_cl > 1)
-                  {
+                {
                     if(i>=1)
                     for(unsigned int index_x = i-1; index_x <= (i + 1); index_x++)
-                      {
+                    {
                         if(index_x >= 0)
-                          {
+                        {
                             std::map<unsigned int, std::map<unsigned int, bool> >::const_iterator z = sensormatrix.find(index_x);
                             if(z!=sensormatrix.end() && z->second.find(j)!=z->second.end())
-                              {
+                            {
                                 if(sensormatrix[index_x][j])
                                   nb++;
-                              }
-                          }
-                      }
+                            }
+                        }
+                    }
+                    
                     if(j>=1)
                     for(unsigned int index_y = j-1; index_y <= (j + 1); index_y++)
-                      {
+                    {
                         if(index_y >= 0)
-                          {
+                        {
                             std::map<unsigned int, std::map<unsigned int, bool> >::const_iterator z = sensormatrix.find(i);
                             if(z!=sensormatrix.end() && z->second.find(index_y)!=z->second.end())
-                              {
+                            {
                                 if(sensormatrix[i][index_y])
                                   nb++;
-                              }
-                          }
-                      }
-                  }       
+                            }
+                        }
+                    }
+                }       
                 
                 
 
@@ -2409,12 +2428,15 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     /// /* DEBUG */                  << "\nMin signal " << (*min_element(nzsData->getChargeValues().begin(), nzsData->getChargeValues().end())) );
 #endif
 
-    for (unsigned int iPixel = 0; iPixel < nzsData->getChargeValues().size(); iPixel++) {
-      if (status->getADCValues()[iPixel] == EUTELESCOPE::GOODPIXEL) {
-        if ( nzsData->getChargeValues()[iPixel] > _ffSeedCut * noise->getChargeValues()[iPixel]) {
-          _seedCandidateMap.insert(make_pair( nzsData->getChargeValues()[iPixel], iPixel));
+    for (unsigned int iPixel = 0; iPixel < nzsData->getChargeValues().size(); iPixel++) 
+    {
+        if (status->getADCValues()[iPixel] == EUTELESCOPE::GOODPIXEL) 
+        {
+            if ( nzsData->getChargeValues()[iPixel] > _ffSeedCut * noise->getChargeValues()[iPixel]) 
+            {
+                _seedCandidateMap.insert(make_pair( nzsData->getChargeValues()[iPixel], iPixel));
+            }
         }
-      }
     }
 
     // continue only if seed candidate map is not empty!
