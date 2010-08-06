@@ -412,7 +412,6 @@ namespace eutelescope {
      */
     void initializeGeometry( LCEvent * event ) throw ( marlin::SkipEventException );
 
-
   protected:
 
     //! Method for fixed frame clustering
@@ -484,13 +483,20 @@ namespace eutelescope {
      */
     void fixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
+    //! Method for zs Fixed Frame Clustering
+    /*! This method is called by the processEvent method in the case
+     */ 
     void zsFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
+    //! Method for digital Fixed Frame Clustering
+    /*! This method is called by the processEvent method in the case
+     */ 
     void digitalFixedFrameClustering(LCEvent * evt, LCCollectionVec * pulse);
 
 
     //!HACK TAKI
     //! Methods for bricked pixel clustering
+    //! zs Bricked Clustering
     /*! This method is called by the processEvent method in the case
      *  the user selected the EUTELESCOPE::BRICKEDCLUSTER algorithm for
      *  clustering.
@@ -509,10 +515,15 @@ namespace eutelescope {
      *  clusters.
      */
     void zsBrickedClustering(LCEvent * evt, LCCollectionVec * pulse);
+
+    //!HACK TAKI
+    //! Methods for bricked pixel clustering
+    //! nzs Bricked Clustering
     void nzsBrickedClustering(LCEvent * evt, LCCollectionVec * pulse);
 
 
     //! Method for sparse pixel re-clustering
+    //! Original idea implementation
     /*! This algorithm is based on the built-in proximity clustering
      *  implemented in the EUTelSparseDataImpl class.
      *
@@ -533,6 +544,7 @@ namespace eutelescope {
     void sparseClustering(LCEvent * evt, LCCollectionVec * pulse);
 
     //! Method for sparse pixel re-clustering with better performance
+    //! Improved implementation 
     /*! This algorithm is based on the built-in proximity clustering
      *  implemented in the EUTelSparseDataImpl class.
      *
