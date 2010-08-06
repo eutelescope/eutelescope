@@ -437,72 +437,84 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event)
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   // book the histograms now
-  if ( _fillHistos && isFirstEvent() ) {
+  if ( _fillHistos && isFirstEvent() ) 
+  {
     bookHistos();
   }
 #endif
+
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
-  if ( evt->getEventType() == kEORE ) {
+  if ( evt->getEventType() == kEORE ) 
+  {
     streamlog_out ( DEBUG4 ) <<  "EORE found: nothing else to do." <<  endl;
     return;
-  } else if ( evt->getEventType() == kUNKNOWN ) {
+  }
+  else if ( evt->getEventType() == kUNKNOWN ) 
+  {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber()
                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
   // prepare a pulse collection to add all clusters found
   // this can be either a new collection or already existing in the
-  // event
+  // event  
   LCCollectionVec * pulseCollection;
   bool pulseCollectionExists = false;
   _initialPulseCollectionSize = 0;
-  try {
+  try 
+  {
     pulseCollection = dynamic_cast< LCCollectionVec * > ( evt->getCollection( _pulseCollectionName ) );
     pulseCollectionExists = true;
     _initialPulseCollectionSize = pulseCollection->size();
-  } catch ( lcio::DataNotAvailableException& e ) {
+  } 
+  catch ( lcio::DataNotAvailableException& e ) 
+  {
     pulseCollection = new LCCollectionVec(LCIO::TRACKERPULSE);
   }
-  // first look for cluster in RAW mode frames
-  if ( hasNZSData ) {
+
+  // 
+  // non Zero Suppresed (RAW data)
+  // 
+  if ( hasNZSData ) 
+  {
     // put here all the possible algorithm applicable to NZS data
     if ( _nzsClusteringAlgo == EUTELESCOPE::FIXEDFRAME )     fixedFrameClustering(evt, pulseCollection);
-
-    if ( _nzsClusteringAlgo == EUTELESCOPE::BRICKEDCLUSTER )
-      {
-        //streamlog_out ( MESSAGE2 ) << "DOING nzsBrickedClustering!" << endl;
-        nzsBrickedClustering(evt, pulseCollection); //force to 3x3 already done above!
-      }
+    if ( _nzsClusteringAlgo == EUTELESCOPE::BRICKEDCLUSTER ) nzsBrickedClustering(evt, pulseCollection);   // force 3x3 clusters         
   }
-  if ( hasZSData ) {
+
+  // 
+  // ZS data
+  //
+  if ( hasZSData ) 
+  {
     // put here all the possible algorithm applicable to ZS data
-    if ( _zsClusteringAlgo == EUTELESCOPE::SPARSECLUSTER )       sparseClustering(evt, pulseCollection);
+    if      ( _zsClusteringAlgo == EUTELESCOPE::SPARSECLUSTER  ) sparseClustering(evt, pulseCollection);
     else if ( _zsClusteringAlgo == EUTELESCOPE::SPARSECLUSTER2 ) sparseClustering2(evt, pulseCollection);
-    else if ( _zsClusteringAlgo == EUTELESCOPE::FIXEDFRAME )     zsFixedFrameClustering(evt, pulseCollection);
-    else if ( _zsClusteringAlgo == EUTELESCOPE::DFIXEDFRAME )    digitalFixedFrameClustering(evt, pulseCollection);
-    else if ( _zsClusteringAlgo == EUTELESCOPE::BRICKEDCLUSTER )
-      {
-        //streamlog_out ( MESSAGE2 ) << "DOING zsBrickedClustering!" << endl;
-        zsBrickedClustering(evt, pulseCollection); //force to 3x3 already done above!
-      }
-  }
+    else if ( _zsClusteringAlgo == EUTELESCOPE::FIXEDFRAME     ) zsFixedFrameClustering(evt, pulseCollection);
+    else if ( _zsClusteringAlgo == EUTELESCOPE::DFIXEDFRAME    ) digitalFixedFrameClustering(evt, pulseCollection);
 
+    // the bricked clustering type is solely needed for TAKI sensors type 
+    else if ( _zsClusteringAlgo == EUTELESCOPE::BRICKEDCLUSTER ) zsBrickedClustering(evt, pulseCollection); // force 3x3 clusters      
+  }
 
   // if the pulseCollection is not empty add it to the event
-  if ( ! pulseCollectionExists && ( pulseCollection->size() != _initialPulseCollectionSize )) {
+  if ( ! pulseCollectionExists && ( pulseCollection->size() != _initialPulseCollectionSize )) 
+  {
     evt->addCollection( pulseCollection, _pulseCollectionName );
   }
-  if ( pulseCollection->size() != _initialPulseCollectionSize ) {
+  
+  if ( pulseCollection->size() != _initialPulseCollectionSize ) 
+  {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     if ( _fillHistos ) fillHistos(event);
 #endif
   }
-  if ( ! pulseCollectionExists && ( pulseCollection->size() == _initialPulseCollectionSize ) ) {
+  if ( ! pulseCollectionExists && ( pulseCollection->size() == _initialPulseCollectionSize ) ) 
+  {
     delete pulseCollection;
   }
 
   _isFirstEvent = false;
-
 }
 
 
@@ -698,28 +710,25 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
           }
               
 
-        if ( pixel_type == EUTELESCOPE::GOODPIXEL )
-        {
-          if(fsignal > 0.00001)
-            {
-              // if(firstfoundhitpixel)
-              //                 {
-              //                   //reset the 2d sensor array
-              //                   sensormatrix.pad(false);
-              //                   firstfoundhitpixel = false;
-              //                 }
-              sensormatrix[sparsePixel->getXCoord()][sparsePixel->getYCoord()] = true;
-              //              sensormatrix.set(sparsePixel->getXCoord(),sparsePixel->getYCoord(), true);
-            }
-          //else
-          // sensormatrix.set(sparsePixel->getXCoord(),sparsePixel->getYCoord(), false);
-        }
-
+          if ( pixel_type == EUTELESCOPE::GOODPIXEL )
+          {
+              if(fsignal > 1.0e-12)
+              {
+                  sensormatrix[sparsePixel->getXCoord()][sparsePixel->getYCoord()] = true;
+              }
+          }
       }
-    } else {
+    }
+    else 
+    {
       throw UnknownDataTypeException("Unknown sparsified pixel");
     }
-    //now here the seed pixel finding!!
+
+    
+    
+    // ------------------------------------------------------------------------------------------------------------------
+    // now the seed pixel finding !!
+    // 
 
     const int stepx = (int)(_ffXClusterSize / 2);
     const int stepy = (int)(_ffYClusterSize / 2);
@@ -736,23 +745,19 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
             {
                 const unsigned int i = pos->first;
                 const unsigned int j = sec->first;
-                int nb = 0; //number of neighbours
-                int npixel_cl = 0; //total number of pixels in a
-                //           cluster around the seed candidate (also
-                //           diagonal elements are counted)
+ 
+                // number of neighbours
+                int nb = 0; 
+ 
+                // total number of pixels in a cluster around the seed candidate 
+                // (also diagonal elements are counted)
+                int npixel_cl = 0; 
 
-                //first npixel_cl will be determined
+                // first npixel_cl will be determined
                 for(unsigned int index_x = i-stepx; index_x <= (i + stepx); index_x++)
                 {
                     for(unsigned int index_y = j-stepy; index_y <= (j + stepy);index_y++)
                     {
-                        //  if(index_x >= 0 && index_x < sensormatrix.sizeX()
-                        //                              && index_y >= 0 && index_y < sensormatrix.sizeY()
-                        //                              )
-                        //                             if(
-                        //                                sensormatrix.at(index_x,index_y)
-                        //                                )
-                        //                               npixel_cl++;
 
                         if(index_x > 0 && index_y > 0)
                         {
@@ -761,38 +766,12 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                             {
                                 if(sensormatrix[index_x][index_y])
                                 {
-                                    npixel_cl++;
-
-                                    // if(index_y == j)
-//                                       if((index_x+1) == i || index_x == (i+1))
-//                                         {
-//                                           nb++;
-//                                         }
-//                                     if(index_x == i)
-//                                       if((index_y+1) == j || index_y == (j+1))
-//                                         {
-//                                           nb++;
-//                                         }
-                               
+                                    npixel_cl++;                                    
                                 }
                             }
                         }
                     }
                 }
-                //second the number of neighbours ignoring diagonal
-                //neighbours must be counted
-                //                  for(unsigned int index_x = i-1; index_x <= (i + 1); index_x++)
-                //                     {
-                //                       if(index_x >= 0 && index_x < sensormatrix.sizeX())
-                //                         if(index_x != i && sensormatrix.at(index_x,j))
-                //                           nb++;
-                //                     }
-                //                   for(unsigned int index_y = j-1; index_y <= (j + 1); index_y++)
-                //                     {
-                //                       if(index_y >= 0 && index_y < sensormatrix.sizeY())
-                //                         if(index_y != j && sensormatrix.at(i,index_y))
-                //                           nb++;
-                //                     }
 
                 if(npixel_cl > 1)
                 {
@@ -832,283 +811,272 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
               }
           }
       }
-    //sort the list of seed pixel candidates. the first criteria is
-    //the number of neighbours without diagonal neighbours. then the
-    //second criteria is the total number of neighbours
 
+    // sort the list of seed pixel candidates. the first criteria is
+    // the number of neighbours without diagonal neighbours. then the
+    // second criteria is the total number of neighbours
  
     // sorts the seed list according to the "operator<" definition in the seed class
-//    if( _dataFormatType != EUTELESCOPE::BINARY )
-//    {
-       seedcandidates.sort();       
-//    }
+    seedcandidates.sort();       
 
     //end of seed pixel finding!
 
     //if at least one seed pixel candidate was found, then ...
     if(seedcandidates.size() >0)
-      {
+    {
         list<seed>::iterator i;
         //loop over all found seed pixel candidates
         for( i = seedcandidates.begin(); i != seedcandidates.end(); ++i)
-          {
+        {
             //check that this pixel was not used before.
             
             std::map<unsigned int, std::map<unsigned int, bool> >::const_iterator z = sensormatrix.find( i->x );
-        if(z!=sensormatrix.end() && z->second.find( i->y )!=z->second.end())
-          if(sensormatrix[i->x][i->y])
-            //if(
-            //  sensormatrix.at( i->x , i->y )
-            //  )
-            {
-              std::vector<pixel> pix;
-              //select pixels around the seed pixel
-              if(i->x >= (unsigned int) stepx && i->y >= (unsigned int) stepy)
-                for(unsigned int index_x = i->x - stepx; index_x <= (i->x + stepx); index_x++)
-                  {
-                    for(unsigned int index_y = i->y - stepy; index_y <= (i->y + stepy);index_y++)
-                      {
-                      //  //check that we are inside the sensor matrix
-                      //                         if(index_x >= 0 && index_x < sensormatrix.sizeX()
-                      //                            && index_y >= 0 && index_y < sensormatrix.sizeY()
-                      //                            )
-                      //                           //if this pixel was not used before, use
-                      //                           //it ...
-                      //                           if(
-                      //                              sensormatrix.at(index_x,index_y)
-                      //                              )
-                      //                             {
-                      //                               pix.push_back(pixel(index_x, index_y));
-                      //                             }
-                      if(index_x >= 0 && index_y >= 0)
-                        {
-                          std::map<unsigned int, std::map<unsigned int, bool> >::const_iterator z = sensormatrix.find( index_x );
-                          if(z!=sensormatrix.end() && z->second.find( index_y )!=z->second.end())
-                            if(sensormatrix[index_x][index_y])
-                              {
-                                pix.push_back(pixel(index_x, index_y));
-                              }
-                        }
-                    }
-                }
-              //pix is a vector with all found "good" pixel, that
-              //were not used before in a different cluster.
-              if(pix.size() >= 1) //cut on the number of pixel. dont
-                //apply this cut here, use it in the
-                //filtering processor?
+            if(z!=sensormatrix.end() && z->second.find( i->y )!=z->second.end())
+            { 
+                if(sensormatrix[i->x][i->y])
                 {
-                  //we found a cluster ...
-                  IntVec   clusterCandidateIndeces;
-                  FloatVec clusterCandidateCharges;
-                  ClusterQuality cluQuality = kGoodCluster;
+                    std::vector<pixel> pix;
+                    // select pixels around the seed pixel
 
-                  //the pixel coordinates of the seed pixels are
-                  //needed later
-                  int seedX = -1;
-                  int seedY = -1;
-
-                  //reset the pixel matrix
-                  //a matrix of pixel for this cluster. it is needed
-                  //for decoding issues.
-                  pixelmatrix.pad(false);
-
-                  //loop over all hit pixels inside this cluster
-                  for(unsigned int j = 0; j < pix.size(); j++)
-                  {
-                      //remove pixels, that were assigned to this
-                      //cluster from the dummy sensor map. this
-                      //pixel will then not be used then in other clusters
-                      //sensormatrix.set(pix[j].x,pix[j].y,false);
-                      std::map<unsigned int, std::map<unsigned int, bool> >::const_iterator z = sensormatrix.find( pix[j].x );
-                      if(z!=sensormatrix.end() && z->second.find( pix[j].y )!=z->second.end())
-                        sensormatrix[pix[j].x][pix[j].y] = false;
-                        
-                      //dont forget to apply the offset correction!
-                      int index = matrixDecoder.getIndexFromXY(pix[j].x + xoffset, pix[j].y + yoffset);
-
-                      if(pix[j].x == i->x  && pix[j].y == i->y)
+                    if(i->x >= (unsigned int) stepx && i->y >= (unsigned int) stepy)
+                    {
+                        for(unsigned int index_x = i->x - stepx; index_x <= (i->x + stepx); index_x++)
                         {
-                          //this is the seed pixel!
-                          seedX = pix[j].x + xoffset;
-                          seedY = pix[j].y + yoffset;
+                            for(unsigned int index_y = i->y - stepy; index_y <= (i->y + stepy);index_y++)
+                            {
+                                if(index_x >= 0 && index_y >= 0)
+                                {
+                                    std::map<unsigned int, std::map<unsigned int, bool> >::const_iterator z = sensormatrix.find( index_x );
+                                    if(z!=sensormatrix.end() && z->second.find( index_y )!=z->second.end())
+                                    {
+                                        if(sensormatrix[index_x][index_y])
+                                        {
+                                            pix.push_back(pixel(index_x, index_y));
+                                        }
+                                    }
+                                }
+                            }
                         }
-                      else
+                    }
+                          
+
+                    // pix is a vector with all found "good" pixel, that
+                    // were not used before in a different cluster.
+
+                    // cut on the number of pixel. dont
+                    // apply this cut here, use it in the
+                    // filtering processor?
+
+                    if(pix.size() >= 1) 
+                    {
+                        // we found a cluster ...
+
+                        IntVec   clusterCandidateIndeces;
+                        FloatVec clusterCandidateCharges;
+                        ClusterQuality cluQuality = kGoodCluster;
+
+                        // the pixel coordinates of the seed pixels are
+                        // needed later
+                        int seedX = -1;
+                        int seedY = -1;
+
+                        // reset the pixel matrix
+                        // a matrix of pixel for this cluster. it is needed
+                        // for decoding issues.
+                        pixelmatrix.pad(false);
+
+                        // loop over all hit pixels inside this cluster
+                        for(unsigned int j = 0; j < pix.size(); j++)
                         {
-                          //this is a neighbour pixel!
-                          //nothing to do?
+                            // remove pixels, that were assigned to this
+                            // cluster from the dummy sensor map. this
+                            // pixel will then not be used then in other clusters
+                            // sensormatrix.set(pix[j].x,pix[j].y,false);
+
+                            std::map<unsigned int, std::map<unsigned int, bool> >::const_iterator z = sensormatrix.find( pix[j].x );
+                            if(z!=sensormatrix.end() && z->second.find( pix[j].y )!=z->second.end())
+                            {
+                                sensormatrix[pix[j].x][pix[j].y] = false;
+                            }   
+
+                            // dont forget to apply the offset correction!
+                            int index = matrixDecoder.getIndexFromXY(pix[j].x + xoffset, pix[j].y + yoffset);
+
+                            if(pix[j].x == i->x  && pix[j].y == i->y)
+                            {
+                                // this is the seed pixel!
+                                seedX = pix[j].x + xoffset;
+                                seedY = pix[j].y + yoffset;
+                            }
+                            else
+                            {
+                                // this is a neighbour pixel!
+                                // nothing to do?
+                            }
+
+                            bool isHit  = true;
+                            bool isGood = true;
+
+                            if( _dataFormatType == EUTELESCOPE::BINARY )
+                            {
+                                isHit  = ( status->getADCValues()[ _indexMap[index] ] == EUTELESCOPE::HITPIXEL  );
+                                isGood = ( status->getADCValues()[ _indexMap[index] ] == EUTELESCOPE::GOODPIXEL );
+                            }
+                            else
+                            {
+                                isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
+                                isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
+                            }            
+                    
+                            
+                            // fill the pixel index in the corresponding array
+                            // for the digital fixed frame cluster
+                            if(isGood)
+                            {
+                                clusterCandidateIndeces.push_back(index);
+                            }
+                            else
+                            {
+                                clusterCandidateIndeces.push_back(-1);
+                            }
+
+                            if ( isGood && !isHit ) 
+                            {
+                            }
+                            else if (isHit) 
+                            {
+                                cluQuality = cluQuality | kIncompleteCluster | kMergedCluster ;
+                            }
                         }
- 
-                      bool isHit  = true;
-                      bool isGood = true;
-
-                      if( _dataFormatType == EUTELESCOPE::BINARY )
-                      {
-                          isHit  = ( status->getADCValues()[ _indexMap[index] ] == EUTELESCOPE::HITPIXEL  );
-                          isGood = ( status->getADCValues()[ _indexMap[index] ] == EUTELESCOPE::GOODPIXEL );
-                      }else{
-                          isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
-                          isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
-                      }
-                       
-                      //fill the pixel index in the corresponding array
-                      //for the digital fixed frame cluster
-                      if(isGood)
-                        clusterCandidateIndeces.push_back(index);
-                      else
-                        clusterCandidateIndeces.push_back(-1);
-
-                      if ( isGood && !isHit ) {
-                      } else if (isHit) {
-                        cluQuality = cluQuality | kIncompleteCluster | kMergedCluster ;
-                      }
-                  
-                  }
-                  //sanity check
-                  if(seedX == -1 || seedY == -1)
-                    {
-                      cout << "a cluster was found but no seed pixel coordinates!" << endl;
-                      cout << pix.size() << " " << i->x << " " << i->y << endl;
-                      exit(-1);
-                    }
-                  //now lets fill the cluster pixel matrix, which is required
-                  //by the decoding of the cluster into a 1d array (clusterCandidateCharges).
-                  for(unsigned int j = 0; j < pix.size(); j++)
-                    {
-                      //set the hits. all other pixels are by
-                      //default false. the seed pixel is in the
-                      //center of this matrix.
-                      pixelmatrix.set(
-                                      pix[j].x + xoffset - seedX + (int)(_ffXClusterSize / 2),
-                                      pix[j].y + yoffset - seedY + (int)(_ffYClusterSize / 2),
-                                      true
-                                      );
-                    }
-                  //loop over the cluster pixels and fill them into
-                  //the 1d array. The ordering of the two loops is
-                  //copied from the CoG shift method of the class EUTelDFFClusterImpl
-                  for(int yPixel = 0; yPixel < _ffYClusterSize; yPixel++)
-                    {
-                      for(int xPixel = 0; xPixel < _ffXClusterSize; xPixel++)
+                
+                        // sanity check
+                        if(seedX == -1 || seedY == -1)
                         {
-                          if(pixelmatrix.at(xPixel,yPixel))
-                            clusterCandidateCharges.push_back(1.0);
-                          else
-                            clusterCandidateCharges.push_back(0.0);
+                            cout << "a cluster was found but no seed pixel coordinates!" << endl;
+                            cout << pix.size() << " " << i->x << " " << i->y << endl;
+                            exit(-1);
                         }
-                    }
 
-                  //                    //some debug output to check the CoG shift and the
-                  //                     //encoding of pixelmatrix, clusterCandidateCharges
-                  //                      cout << endl;
-                  //                      cout << "x=vertical, y=horizontal" << endl;
-                  //                      for(unsigned int j = 0; j < pixelmatrix.sizeX(); ++j)
-                  //                        {
-                  //                          cout << "  " << j ;
-                  //                        }
-                  //                      cout << endl;
-                  //                      for(unsigned int j = 0; j < pixelmatrix.sizeY(); ++j)
-                  //                        {
-                  //                          cout << "----";
-                  //                        }
-                  //                      cout << endl;
-                  //                      for(int xPixel = 0; xPixel < _ffXClusterSize; xPixel++)
-                  //                        {
-                  //                          for(int yPixel = 0; yPixel < _ffYClusterSize; yPixel++)
-                  //                            {
-                  //                              if(pixelmatrix.at(xPixel,yPixel))
-                  //                                cout << "  1";
-                  //                              else
-                  //                                cout << "  0";
-                  //                            }
-                  //                          cout << " | " << xPixel << endl;
-                  //                        }
+                        // now lets fill the cluster pixel matrix, which is required
+                        // by the decoding of the cluster into a 1d array (clusterCandidateCharges).
+                        for(unsigned int j = 0; j < pix.size(); j++)
+                        {
+                            // set the hits. all other pixels are by
+                            // default false. the seed pixel is in the
+                            // center of this matrix.
 
-
-                  //check whether this cluster is partly outside
-                  //the sensor matrix
-                  if(
-                     (seedX - stepx ) < _minX
-                     || (seedX + stepx ) > _maxX
-                     || (seedY - stepy ) < _minY
-                     || (seedY + stepy ) > _maxY
-                     )
-                    cluQuality = cluQuality | kBorderCluster;
-
-                  //the final cluster creation
-
-                  // the final result of the clustering will enter in a
-                  // TrackerPulseImpl in order to be algorithm independent
-                  TrackerPulseImpl * pulse = new TrackerPulseImpl;
-                  CellIDEncoder<TrackerPulseImpl> idPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
-                  idPulseEncoder["sensorID"]      = _sensorID;
-                  idPulseEncoder["clusterID"]     = clusterID;
-                  idPulseEncoder["xSeed"]         = seedX;
-                  idPulseEncoder["ySeed"]         = seedY;
-                  idPulseEncoder["xCluSize"]      = _ffXClusterSize;
-                  idPulseEncoder["yCluSize"]      = _ffYClusterSize;
-                  idPulseEncoder["type"]          = static_cast<int>(kEUTelDFFClusterImpl);
-                  idPulseEncoder.setCellID(pulse);
-
-                  TrackerDataImpl * cluster = new TrackerDataImpl;
-                  CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec);
-                  idClusterEncoder["sensorID"]      = _sensorID;
-                  idClusterEncoder["clusterID"]     = clusterID;
-                  idClusterEncoder["xSeed"]         = seedX;
-                  idClusterEncoder["ySeed"]         = seedY;
-                  idClusterEncoder["xCluSize"]      = _ffXClusterSize;
-                  idClusterEncoder["yCluSize"]      = _ffYClusterSize;
-                  idClusterEncoder["quality"]       = static_cast<int>(cluQuality);
-                  idClusterEncoder.setCellID(cluster);
-
-                  streamlog_out (DEBUG0) << "  Cluster no " <<  clusterID << " seedX " << seedX << " seedY " << seedY << endl;
-
-                  IntVec::iterator indexIter = clusterCandidateIndeces.begin();
-                  while ( indexIter != clusterCandidateIndeces.end() ) 
-                  {
-                    if((*indexIter) != -1)
-                    {
-                        if( _dataFormatType == EUTELESCOPE::BINARY )
-                        { 
-                            status->adcValues()[ _indexMap[(*indexIter)] ] = EUTELESCOPE::HITPIXEL;
-                        }else{
-                            status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+                            pixelmatrix.set(
+                                    pix[j].x + xoffset - seedX + (int)(_ffXClusterSize / 2),
+                                    pix[j].y + yoffset - seedY + (int)(_ffYClusterSize / 2),
+                                    true
+                                    );
                         }
+
+                        // loop over the cluster pixels and fill them into
+                        // the 1d array. The ordering of the two loops is
+                        // copied from the CoG shift method of the class EUTelDFFClusterImpl
+                           
+                        for(int yPixel = 0; yPixel < _ffYClusterSize; yPixel++)
+                        {
+                            for(int xPixel = 0; xPixel < _ffXClusterSize; xPixel++)
+                            {
+                                if(pixelmatrix.at(xPixel,yPixel))
+                                    clusterCandidateCharges.push_back(1.0);
+                                else
+                                    clusterCandidateCharges.push_back(0.0);
+                            }
+                        }
+
+
+                        // check whether this cluster is partly outside
+                        // the sensor matrix
+
+                        if(
+                                   (seedX - stepx ) < _minX
+                                || (seedX + stepx ) > _maxX
+                                || (seedY - stepy ) < _minY
+                                || (seedY + stepy ) > _maxY
+                                )
+                            cluQuality = cluQuality | kBorderCluster;
+
+     
+                        // the final cluster creation
+
+                        // the final result of the clustering will enter in a
+                        // TrackerPulseImpl in order to be algorithm independent
+
+                        TrackerPulseImpl * pulse = new TrackerPulseImpl;
+                        CellIDEncoder<TrackerPulseImpl> idPulseEncoder(EUTELESCOPE::PULSEDEFAULTENCODING, pulseCollection);
+                        idPulseEncoder["sensorID"]      = _sensorID;
+                        idPulseEncoder["clusterID"]     = clusterID;
+                        idPulseEncoder["xSeed"]         = seedX;
+                        idPulseEncoder["ySeed"]         = seedY;
+                        idPulseEncoder["xCluSize"]      = _ffXClusterSize;
+                        idPulseEncoder["yCluSize"]      = _ffYClusterSize;
+                        idPulseEncoder["type"]          = static_cast<int>(kEUTelDFFClusterImpl);
+                        idPulseEncoder.setCellID(pulse);
+
+                        TrackerDataImpl * cluster = new TrackerDataImpl;
+                        CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec);
+                        idClusterEncoder["sensorID"]      = _sensorID;
+                        idClusterEncoder["clusterID"]     = clusterID;
+                        idClusterEncoder["xSeed"]         = seedX;
+                        idClusterEncoder["ySeed"]         = seedY;
+                        idClusterEncoder["xCluSize"]      = _ffXClusterSize;
+                        idClusterEncoder["yCluSize"]      = _ffYClusterSize;
+                        idClusterEncoder["quality"]       = static_cast<int>(cluQuality);
+                        idClusterEncoder.setCellID(cluster);
+
+                        streamlog_out (DEBUG0) << "  Cluster no " <<  clusterID << " seedX " << seedX << " seedY " << seedY << endl;
+
+                        IntVec::iterator indexIter = clusterCandidateIndeces.begin();
+                        while ( indexIter != clusterCandidateIndeces.end() ) 
+                        {
+                            if((*indexIter) != -1)
+                            {
+                                if( _dataFormatType == EUTELESCOPE::BINARY )
+                                { 
+                                    status->adcValues()[ _indexMap[(*indexIter)] ] = EUTELESCOPE::HITPIXEL;
+                                }else{
+                                    status->adcValues()[(*indexIter)] = EUTELESCOPE::HITPIXEL;
+                                }
+                            }
+                            ++indexIter;
+                        }
+
+                        // copy the candidate charges inside the cluster
+                        cluster->setChargeValues(clusterCandidateCharges);
+                        sparseClusterCollectionVec->push_back(cluster);
+
+                        EUTelDFFClusterImpl * eutelCluster = new EUTelDFFClusterImpl( cluster );
+                        pulse->setCharge(eutelCluster->getTotalCharge());
+
+                        delete eutelCluster;
+
+                        pulse->setQuality(static_cast<int>(cluQuality));
+                        pulse->setTrackerData(cluster);
+                        pulseCollection->push_back(pulse);
+
+                        // increment the cluster counters
+                        _totClusterMap[ sensorID ] += 1;
+                        ++clusterID;
+                        if ( clusterID >= 256 ) {
+                            ++limitExceed;
+                            --clusterID;
+                            streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+                                << " on detector " << _sensorID
+                                << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
+                            
+                        } 
                     }
-                    ++indexIter;
-                  }
-                  // copy the candidate charges inside the cluster
-                  cluster->setChargeValues(clusterCandidateCharges);
-                  sparseClusterCollectionVec->push_back(cluster);
-
-                  EUTelDFFClusterImpl * eutelCluster = new EUTelDFFClusterImpl( cluster );
-                  pulse->setCharge(eutelCluster->getTotalCharge());
-                  //                     float cogx =0.0;
-                  //                     float cogy = 0.0;
-                  //                     eutelCluster->getCenterOfGravityShift(cogx, cogy);
-                  //                     cout << "CoG shift = " << cogx << " " << cogy << endl;
-                  delete eutelCluster;
-
-                  pulse->setQuality(static_cast<int>(cluQuality));
-                  pulse->setTrackerData(cluster);
-                  pulseCollection->push_back(pulse);
-
-                  // increment the cluster counters
-                  _totClusterMap[ sensorID ] += 1;
-                  ++clusterID;
-                  if ( clusterID >= 256 ) {
-                    ++limitExceed;
-                    --clusterID;
-                    streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
-                                               << " on detector " << _sensorID
-                                               << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
-                  }                
                 }
             }
-          }
-      }
-
+        } //loop over all found seed pixel candidates :: END
+    } // LOOP over all seedcandidates :: END
+  } // for ( unsigned int i = 0 ; i < zsInputCollectionVec->size(); i++ ) :: END
+  
  
-  }
+
 // if the sparseClusterCollectionVec isn't empty add it to the
 // current event. The pulse collection will be added afterwards
 //  if ( sparseClusterCollectionVec->size() != 0 ) {
