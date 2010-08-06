@@ -47,7 +47,9 @@ string EUTelHotPixelKiller::_firing2DHistoName = "Firing2D";
 string EUTelHotPixelKiller::_firing1DHistoName = "Firing1D";
 #endif
 
-EUTelHotPixelKiller::EUTelHotPixelKiller () : Processor("EUTelHotPixelKiller") {
+
+EUTelHotPixelKiller::EUTelHotPixelKiller () : Processor("EUTelHotPixelKiller") 
+{
 
   // modify processor description
   _description =
@@ -72,7 +74,9 @@ EUTelHotPixelKiller::EUTelHotPixelKiller () : Processor("EUTelHotPixelKiller") {
 }
 
 
-void EUTelHotPixelKiller::init () {
+
+void EUTelHotPixelKiller::init () 
+{
   // this method is called only once even when the rewind is active
   // usually a good idea to
   printParameters ();
@@ -105,16 +109,17 @@ void EUTelHotPixelKiller::processRunHeader (LCRunHeader * rdr ) {
 
 }
 
-void EUTelHotPixelKiller::initializeGeometry( LCEvent * event ) {
 
+void EUTelHotPixelKiller::initializeGeometry( LCEvent * event ) 
+{
   LCCollectionVec * collection = dynamic_cast< LCCollectionVec *> ( event->getCollection( _statusCollectionName ) );
 
   _noOfDetectors = collection->size();
 
   CellIDDecoder<TrackerRawDataImpl > decoder( collection );
 
-  for ( size_t iDetector = 0 ; iDetector < collection->size() ; ++iDetector ) {
-
+  for ( size_t iDetector = 0 ; iDetector < collection->size() ; ++iDetector ) 
+  {
     TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( collection->getElementAt( iDetector ) ) ;
     int sensorID = decoder( status ) [ "sensorID" ] ;
 
@@ -124,11 +129,12 @@ void EUTelHotPixelKiller::initializeGeometry( LCEvent * event ) {
     _maxY[ sensorID ] = decoder( status ) [ "yMax" ];
 
     _sensorIDVec.push_back( sensorID );
-
-  }
+  }  
 }
 
-void EUTelHotPixelKiller::processEvent (LCEvent * event) {
+
+void EUTelHotPixelKiller::processEvent (LCEvent * event) 
+{
 
   if ( _iCycle > (unsigned short) _totalNoOfCycle )  return;
 
@@ -138,57 +144,69 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event) {
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
                               << " (Total = " << setw(10) << (_iCycle * _noOfEventPerCycle) + _iEvt << ")"
                               << resetiosflags(ios::left) << endl;
-
+  
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
-  if ( evt->getEventType() == kEORE ) {
+  if ( evt->getEventType() == kEORE ) 
+  {
     streamlog_out ( DEBUG4 ) <<  "EORE found: nothing else to do." <<  endl;
     return;
-  } else if ( evt->getEventType() == kUNKNOWN ) {
+  }
+  else if ( evt->getEventType() == kUNKNOWN ) 
+  {
     streamlog_out ( WARNING2 ) << "Event number " << event->getEventNumber()
                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
-
-  try {
+  
+  try 
+  {
 
     LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) );
     CellIDDecoder<TrackerRawDataImpl>      statusCellDecoder( statusCollectionVec );
 
+    // 
+    // if first event initilize 
+    // sensorIDVec and sensors boundaries [min,max] for [X, Y]
+    //  
+    if ( isFirstEvent() ) 
+    {
+        initializeGeometry( event );
+        _isFirstEvent = false;
 
-    if ( isFirstEvent() ) {
-
-      initializeGeometry( event );
-      _isFirstEvent = false;
-
-    }
-
-    if ( _iEvt == 0 ) {
-
-      _firingFreqVec.clear();
-
-      for ( int iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) {
-        TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
-        vector< unsigned short > dummyVector( status->getADCValues().size(), 0 );
-        _firingFreqVec.push_back( dummyVector );
-      }
-
-    }
-
-    for ( int iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) {
-
-      TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
-      vector< short > statusVec = status->adcValues();
-
-      for ( unsigned int iPixel = 0; iPixel < statusVec.size(); iPixel++ ) {
-
-        if ( statusVec[ iPixel ] == EUTELESCOPE::HITPIXEL ) {
-          _firingFreqVec[ iDetector ][ iPixel ]++;
+        _firingFreqVec.clear();
+        for ( int iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) 
+        {
+            TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
+            vector< unsigned short > dummyVector( status->getADCValues().size(), 0 );
+            _firingFreqVec.push_back( dummyVector );
         }
-
-      }
-
     }
+    else
+    {
+        for ( int iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) 
+        {
+            TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
+            _firingFreqVec[iDetector].resize(status->getADCValues().size()  )  ;
+        }
+    }
+    
+    for ( int iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) 
+    {
+        TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
+        vector< short > statusVec = status->adcValues();
+        
+        for ( unsigned int index = 0; index < statusVec.size(); index++ ) 
+        {
+            if( statusVec[ index ] == EUTELESCOPE::HITPIXEL ) 
+            {
+                _firingFreqVec[ iDetector ][ index ] += 1;
+            }
+        }
+    }
+    
     ++_iEvt;
-  } catch (lcio::DataNotAvailableException& e ) {
+  } 
+  catch (lcio::DataNotAvailableException& e ) 
+  {
     streamlog_out ( WARNING2 )  << "Input collection not found in the current event. Skipping..." << endl;
     return;
   }
@@ -240,42 +258,51 @@ string EUTelHotPixelKiller::printSummary() const {
   return ss.str();
 }
 
-void EUTelHotPixelKiller::check( LCEvent * event ) {
+void EUTelHotPixelKiller::check( LCEvent * event ) 
+{
 
-  if ( _iCycle > (unsigned short) _totalNoOfCycle )  return;
+    if ( _iCycle > (unsigned short) _totalNoOfCycle )  
+    {
+        return;
+    }
 
-  if ( _iEvt == _noOfEventPerCycle -1 ) {
+//    printf("\n\n\n EUTelHotPixelKiller::check  \n");
+    
+    if ( _iEvt == _noOfEventPerCycle -1 ) 
+    {
+        try 
+        {
+            
+            LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) );
+            CellIDDecoder<TrackerRawDataImpl>      statusCellDecoder( statusCollectionVec );
 
+            
+            for ( unsigned int iDetector = 0; iDetector < _firingFreqVec.size(); iDetector++ ) 
+            {
+                if ( _iCycle == 0 ) 
+                {
+                    _killedPixelVec.push_back( vector< unsigned short > (0, 0) );
+                }
 
-    try {
+                TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
+                vector< short > statusVec = status->adcValues();
+                unsigned short killerCounter = 0;
 
-      LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) );
-      CellIDDecoder<TrackerRawDataImpl>      statusCellDecoder( statusCollectionVec );
-
-      for ( unsigned int iDetector = 0; iDetector < _firingFreqVec.size(); iDetector++ ) {
-
-        if ( _iCycle == 0 ) {
-          _killedPixelVec.push_back( vector< unsigned short > (0, 0) );
-        }
-
-        TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
-        vector< short > statusVec = status->adcValues();
-        unsigned short killerCounter = 0;
-
-        for ( unsigned int iPixel = 0; iPixel < _firingFreqVec[iDetector].size(); iPixel++ ) {
-
-          if ( _firingFreqVec[iDetector][iPixel] / ( (double) _iEvt ) > _maxAllowedFiringFreq ) {
-            streamlog_out ( DEBUG3 ) << " Pixel " << iPixel << " on detector " << _sensorIDVec.at( iDetector )
-                                     << " is firing too often (" << _firingFreqVec[iDetector][iPixel] / ((double) _iEvt )
-                                     << "). Masking it now on! " << endl;
-            status->adcValues()[iPixel] = EUTELESCOPE::FIRINGPIXEL;
-            ++killerCounter;
-          }
-
-        }
-
-        _killedPixelVec[ iDetector ].push_back( killerCounter );
-      }
+                for ( unsigned int iPixel = 0; iPixel < _firingFreqVec[iDetector].size(); iPixel++ ) 
+                {
+                    
+                    if ( _firingFreqVec[iDetector][iPixel] / ( (double) _iEvt ) > _maxAllowedFiringFreq ) 
+                    {
+                        streamlog_out ( DEBUG3 ) << " Pixel " << iPixel << " on detector " << _sensorIDVec.at( iDetector )
+                            << " is firing too often (" << _firingFreqVec[iDetector][iPixel] / ((double) _iEvt )
+                            << "). Masking it now on! " << endl;
+                        status->adcValues()[iPixel] = EUTELESCOPE::FIRINGPIXEL;
+                        ++killerCounter;
+                    }
+                }
+                
+                _killedPixelVec[ iDetector ].push_back( killerCounter );
+            }
 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
