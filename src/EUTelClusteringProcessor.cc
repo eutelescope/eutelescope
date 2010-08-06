@@ -1075,16 +1075,9 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     } // LOOP over all seedcandidates :: END
   } // for ( unsigned int i = 0 ; i < zsInputCollectionVec->size(); i++ ) :: END
   
- 
 
-// if the sparseClusterCollectionVec isn't empty add it to the
-// current event. The pulse collection will be added afterwards
-//  if ( sparseClusterCollectionVec->size() != 0 ) {
-//     evt->addCollection( sparseClusterCollectionVec.release(), "original_zsdata" );
-//   }
-
-// if the sparseClusterCollectionVec isn't empty add it to the
-// current event. The pulse collection will be added afterwards
+  // if the sparseClusterCollectionVec isn't empty add it to the
+  // current event. The pulse collection will be added afterwards
 
   if ( ! isDummyAlreadyExisting ) 
   {
