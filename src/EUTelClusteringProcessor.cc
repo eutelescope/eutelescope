@@ -210,8 +210,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
                              _fillHistos, static_cast< bool > ( true ) );
 
   registerOptionalParameter("ExcludedPlanes", "The list of sensor ids that have to be excluded from the clustering.",
-
-                            _ExcludePlanes, std::vector<int> () );
+                             _ExcludedPlanes, std::vector<int> () );
   _isFirstEvent = true;
 }
 
@@ -658,7 +657,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
     // prepare a data vector mimicking the TrackerData data of the
     // standard digitalFixedFrameClustering. Initialize all the entries to zero.
-//    vector<float > dataVec( status->getADCValues().size(), 0. );
+    //    vector<float > dataVec( status->getADCValues().size(), 0. );
     vector<float > dataVec( noise->getChargeValues().size(), 0. );
 
 
@@ -669,7 +668,6 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     const int yoffset = _minY;
 
     //    bool firstfoundhitpixel = true;
-
 
     if ( type == kEUTelSimpleSparsePixel ) 
     {
@@ -990,15 +988,15 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
                         // check whether this cluster is partly outside
                         // the sensor matrix
-
                         if(
                                    (seedX - stepx ) < _minX
                                 || (seedX + stepx ) > _maxX
                                 || (seedY - stepy ) < _minY
                                 || (seedY + stepy ) > _maxY
                                 )
+                        {
                             cluQuality = cluQuality | kBorderCluster;
-
+                        }
      
                         // the final cluster creation
 
@@ -3627,5 +3625,6 @@ void EUTelClusteringProcessor::bookHistos() {
   }
   streamlog_out ( MESSAGE0 )  << "end of Booking histograms " << endl;
 }
+
 #endif
 #endif // USE_GEAR

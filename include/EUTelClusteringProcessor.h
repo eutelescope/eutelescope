@@ -762,11 +762,6 @@ namespace eutelescope {
      */
     std::string _histoInfoFileName;
 
-    //! The excluded planes list
-    /*! This is a list of sensor ids for planes that have to be
-     *   excluded from the clustering.
-     */
-    std::vector<int> _ExcludePlanes;
 
   private:
 
@@ -968,6 +963,8 @@ namespace eutelescope {
      */
     std::vector< int > _sensorIDVec;
 
+    
+    
   };
 
   //! A global instance of the processor
