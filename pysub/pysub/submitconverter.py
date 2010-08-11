@@ -878,6 +878,38 @@ class SubmitConverter( SubmitBase ) :
         # finally replace the run string !
         actualSteeringString = actualSteeringString.replace("@RunNumber@", runString )
 
+        # if one runs the HotPixelKiller at this stage (with converter) 
+        # now replace the histo folder path
+        if self._option.execution == "all-grid" :
+            self._logger.debug( " all-grid is true" )      
+            histoFolder = "histo"
+        else:
+            self._logger.debug( " all-grid is NOT true" )      
+            try:
+                histoFolder = self._configParser.get("LOCAL", "LocalFolderConvertHisto")
+            except ConfigParser.NoOptionError :
+                histoFolder = "histo"
+        actualSteeringString = actualSteeringString.replace("@HistoPath@" ,histoFolder )
+
+        # now replace the DB folder path
+        if self._option.execution == "all-grid" :
+            dbPath = "db"
+        else:
+            try:
+                dbPath = self._configParser.get("LOCAL", "LocalFolderDBAlign" )
+            except  ConfigParser.NoOptionError :
+                dbPath = "db"
+        actualSteeringString = actualSteeringString.replace("@DBPath@", dbPath )
+
+        # replace the run string !
+        actualSteeringString = actualSteeringString.replace("@Output@", "%(output)s" %
+                                                            { "output": self._option.output } )
+
+        # replace the run string !
+        actualSteeringString = actualSteeringString.replace("@RunNumber@", runString )
+
+        #-----------------------------
+
         # open the new steering file for writing
         steeringFileName = "%(name)s-%(run)s.xml" % { "name": self.name, "run" : runString }
         actualSteeringFile = open( steeringFileName, "w" )
