@@ -32,6 +32,9 @@ usage: %prog [execution-options] [io-options] [configuration-options] run-list
 
     parser = OptionParser( version=version, usage = usage )
 
+    parser.add_option( "-o", "--output", type="string", action="store", dest="output", metavar="OUTPUT",
+                       help = "This is the base name of the output file. This string will be used to generate"
+                       " the name of the output files according to the standard naming convention." )
 
     # adding in a group all the execution options.
     executionGroup = OptionGroup( parser, "Execution options",
@@ -81,6 +84,7 @@ from the GRID SE, but the job will be executed on the local CPU
                                help="Same as -x only-generate")
 
     parser.add_option_group( executionGroup )
+
 
     # adding a group with all the I/O options
     ioGroup = OptionGroup( parser, "Input and output files related options",
