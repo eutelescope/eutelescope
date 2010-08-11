@@ -11,6 +11,8 @@
 #define EUTELHOTPIXELKILLER 1
 
 // eutelescope includes ".h"
+#include "EUTelEventImpl.h"
+#include "EUTelSimpleSparsePixel.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -112,6 +114,13 @@ namespace eutelescope {
      */
     virtual void initializeGeometry( LCEvent * evt ) ;
 
+    //! HotPixelFinder
+    /*!
+     */
+    void HotPixelFinder(EUTelEventImpl *input);
+    
+    int getBuildHotPixelDatabase() const   { return _flagBuildHotPixelDatabase; }
+    
     //! Check call back
     /*! This method is called every event just after the processEvent
      *  one. For the time being it is just calling the pixel
@@ -149,10 +158,37 @@ namespace eutelescope {
     std::string printSummary() const ;
 
 
-    //! Status collection name
-    /*! Input status collection name. Default value is status.
+
+    //! Input collection name for ZS data
+    /*! The input collection is the calibrated data one coming from
+     *  the input data file. It is, usually, called
+     *  "zsdata" and it is a collection of TrackerData
+     */
+    std::string _zsDataCollectionName;
+
+    //! Noise collection name.
+    /*! See _pedestalCollectionName for the detailed description
+     */
+    std::string _noiseCollectionName;
+
+    //! Status collection name.
+    /*! See _pedestalCollectionName for the detailed description
      */
     std::string _statusCollectionName;
+
+    //! Hot pixel collection name.
+    /*! 
+     * this collection is saved in a db file to be used at the clustering level
+     */
+    std::string _hotPixelCollectionName;
+
+ 
+    //! The excluded planes list
+    /*! This is a list of sensor ids for planes that have to be
+     *   excluded from the clustering.
+     */
+    std::vector<int> _ExcludedPlanes;
+
 
     //! Number of events for update cycle
     int _noOfEventPerCycle;
@@ -160,6 +196,48 @@ namespace eutelescope {
     //! Maximum allowed firing frequency
     float _maxAllowedFiringFreq;
 
+    //! Map relating ancillary collection position and sensorID
+    /*! The first element is the sensor ID, while the second is the
+     *  position of such a sensorID in all the ancillary collections
+     *  (noise, pedestal and status).
+     */
+    std::map< int, int > _ancillaryIndexMap;
+
+ 
+    //! Vector of map arrays, keeps record of hit pixels 
+    /*! The vector elements are sorted by Detector ID
+     *  For each Detector unique ID element a map of pixels is created. 
+     *  Key is the sequential (counter) id of a hit,
+     *  Value - (sensor) unique pixel Id.
+     */
+
+    std::vector< std::map< int, int > > _hitIndexMapVec;
+  
+        
+    //! Vector of map arrays, keeps record of hit pixels 
+    /*! The vector elements are sorted by Detector ID
+     *  For each Detector unique ID element a map of pixels is created (inverse
+     *  mapping to _hitIndexMapVec). 
+     *  Key is a (sensor) unique pixel Id 
+     *  Value - sequential (counter) id of a hit.
+     */
+    
+    std::vector< std::map< int, int > > _inverse_hitIndexMapVec;
+
+    
+    //! Vector of map arrays, keeps record of hit pixels 
+    /*! The vector elements are sorted by Detector ID
+     *  For each Detector unique ID element a map of pixels is created. 
+     *  Key is a (sensor) unique pixel Id (to be addressed via
+     *  _inverse_hitIndexMapVec)
+     *  Value - EUTelSimpleSparsePixel pointer.
+     */
+    
+    std::vector< std::map< int, EUTelSimpleSparsePixel* > > _pixelMapVec;
+
+
+
+    
     //! Current run number.
     /*! This number is used to store the current run number
      */
@@ -206,6 +284,8 @@ namespace eutelescope {
     //! Total number of cycle
     int _totalNoOfCycle;
 
+    std::string _hotpixelDBFile;
+
   private:
 
     //! The current updating cycle number
@@ -216,6 +296,16 @@ namespace eutelescope {
 
     //! A vector with the firing frequency value
     std::vector< std::vector< unsigned short > > _firingFreqVec;
+
+    //! Simple data decoding and HotPixel database
+    /*
+     */
+    int _flagBuildHotPixelDatabase; 
+    
+    //! write out the list of hot pixels
+    /*!
+     */
+    void HotPixelDBWriter(LCEvent * event);
 
 
   };
