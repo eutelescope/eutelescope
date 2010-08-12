@@ -299,6 +299,7 @@ class SubmitBase :
                 if self.askYesNo( "Would you like to remove it?  [y/n] " ):
                     self._logger.info( "User decided to remove %(file)s " % { "file": filename } )
                     command = "lcg-del -a lfn:%(file)s" % { "file": filename }
+                    self._logger.info( command )
                     os.system( command )
                     return True
                 else :
