@@ -20,7 +20,7 @@ def main() :
     usage = """
 %prog is part of pysub the Job Sumbitter environment of EUTelescope.
 
-usage: %prog [execution-options] [io-options] [configuration-options] -p pede-run run-list
+usage: %prog [execution-options] [io-options] [configuration-options] -p pedestal-run --hotpixel hotpixel-run run-list 
 """
     cvsVersion = "$Revision: 1.2 $"
     submitCluSearchCVSVersion = SubmitCluSearch.cvsVersion
@@ -35,6 +35,9 @@ usage: %prog [execution-options] [io-options] [configuration-options] -p pede-ru
 
     parser.add_option( "-p", "--pedestal", type="int", action="store", dest="pedestal", metavar="PEDE",
                        help = "This is the run to be used as pedestal"  )
+
+    parser.add_option( "", "--hotpixel", type="int", action="store",
+    dest="hotpixel", metavar="HOTPIXEL", help = "This is the run to be used as control run to get the hotpixel list"  )
 
 
     # adding in a group with all the execution options.
