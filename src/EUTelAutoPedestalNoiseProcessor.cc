@@ -150,13 +150,16 @@ void EUTelAutoPedestalNoiseProcessor::processEvent (LCEvent * event) {
   }
 
 
-  if (isFirstEvent()) {
+  if (isFirstEvent()) 
+  {
 
     _pedestalCollectionVec = new LCCollectionVec(LCIO::TRACKERDATA);
     _noiseCollectionVec    = new LCCollectionVec(LCIO::TRACKERDATA);
     _statusCollectionVec   = new LCCollectionVec(LCIO::TRACKERRAWDATA);
 
-    for (unsigned int iDetector = 0; iDetector < _initPedestal.size(); iDetector++) {
+   
+    for (unsigned int iDetector = 0; iDetector < _initPedestal.size(); iDetector++) 
+    {
 
       int nPixel = ( _maxX[iDetector] - _minX[iDetector] + 1 ) * ( _maxY[iDetector] - _minY[iDetector] + 1 ) ;
 
@@ -168,7 +171,8 @@ void EUTelAutoPedestalNoiseProcessor::processEvent (LCEvent * event) {
       statusEncoder["xMax"]     = _maxX[iDetector];
       statusEncoder["yMax"]     = _maxY[iDetector];
       statusEncoder.setCellID(status);
-      ShortVec statusVec(nPixel, EUTELESCOPE::GOODPIXEL);
+      ShortVec statusVec(0, EUTELESCOPE::GOODPIXEL);
+//      ShortVec statusVec(nPixel, EUTELESCOPE::GOODPIXEL);
       status->setADCValues(statusVec);
       _statusCollectionVec->push_back(status);
 

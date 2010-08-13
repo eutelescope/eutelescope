@@ -284,6 +284,7 @@ namespace eutelescope {
     //! Total number of cycle
     int _totalNoOfCycle;
 
+    //! Hot Pixel DB output file
     std::string _hotpixelDBFile;
 
   private:

@@ -129,7 +129,11 @@ void EUTelCorrelator::init() {
             _sensors_to_the_left++;
         }
     }
-    printf("iPlane %5d,  sensor_#_along_Z_axis %5d  [z= %8.3f] [sensorID %5d] \n", iPlane, _sensors_to_the_left, _siPlaneZPosition[ iPlane ], sensorID);
+    streamlog_out (MESSAGE4) << 
+        "iPlane " << iPlane << 
+        " sensor_#_along_Z_axis " << _sensors_to_the_left << 
+        " [z= " << _siPlaneZPosition[ iPlane ] << 
+        "] [sensorID " << sensorID << "] " << endl; 
 
     _sensorIDVecZOrder.push_back( _sensors_to_the_left );
     _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
@@ -140,7 +144,6 @@ void EUTelCorrelator::init() {
     _maxY[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelY( iPlane ) - 1;
   }
 
- 
   _isInitialize = false;
 
 }

@@ -110,7 +110,7 @@ EUTelHotPixelKiller::EUTelHotPixelKiller () : Processor("EUTelHotPixelKiller")
                              _ExcludedPlanes, std::vector<int> () );
 
   registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
-                            _hotPixelCollectionName, static_cast< string > ( "hotpixel" ));
+                             _hotPixelCollectionName, static_cast< string > ( "hotpixel" ));
 
 
 }
@@ -159,51 +159,71 @@ void EUTelHotPixelKiller::processRunHeader (LCRunHeader * rdr ) {
 
 void EUTelHotPixelKiller::initializeGeometry( LCEvent * event ) 
 {
-  LCCollectionVec * collection = dynamic_cast< LCCollectionVec *> ( event->getCollection( _statusCollectionName ) );
 
-  _noOfDetectors = collection->size();
-
-  CellIDDecoder<TrackerRawDataImpl > decoder( collection );
-
-  for ( size_t iDetector = 0 ; iDetector < collection->size() ; ++iDetector ) 
-  {
-    TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( collection->getElementAt( iDetector ) ) ;
-    int sensorID = decoder( status ) [ "sensorID" ] ;
-
-    _minX[ sensorID ] = decoder( status ) [ "xMin" ];
-    _minY[ sensorID ] = decoder( status ) [ "yMin" ];
-    _maxX[ sensorID ] = decoder( status ) [ "xMax" ];
-    _maxY[ sensorID ] = decoder( status ) [ "yMax" ];
-
-    _sensorIDVec.push_back( sensorID );
-  }  
-
-
-  // now another map relating the position in the ancillary
-  // collections (noise, pedestal and status) with the sensorID
-  _ancillaryIndexMap.clear();
-
-  try {
-    // this is the exemplary ancillary collection
-    LCCollectionVec * noiseCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _noiseCollectionName ) );
-
-    // prepare also a cell decoder
-    CellIDDecoder< TrackerDataImpl > noiseDecoder( noiseCollectionVec );
-
-    for ( size_t iDetector = 0 ; iDetector < noiseCollectionVec->size(); ++iDetector ) {
-      TrackerDataImpl * noise = dynamic_cast< TrackerDataImpl * > ( noiseCollectionVec->getElementAt ( iDetector ) );
-      _ancillaryIndexMap.insert( make_pair( noiseDecoder( noise ) ["sensorID"], iDetector ) );
+    LCCollectionVec * collection = dynamic_cast< LCCollectionVec *> ( event->getCollection( _statusCollectionName ) );
+    if ( collection == 0 )
+    { 
+        streamlog_out( WARNING2 ) <<  " statusCollectionVec is not found " <<  endl;       
     }
-  } catch (  lcio::DataNotAvailableException ) {
-    streamlog_out( WARNING2 ) << "Unable to initialize the geometry. Trying with the following event" << endl;
-    throw SkipEventException( this ) ;
-  }
+
+    _noOfDetectors = collection->size();
+
+    CellIDDecoder<TrackerRawDataImpl > decoder( collection );
+
+    for ( size_t iDetector = 0 ; iDetector < collection->size() ; ++iDetector ) 
+    {
+        TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( collection->getElementAt( iDetector ) ) ;
+        int sensorID = decoder( status ) [ "sensorID" ] ;
+
+        _minX[ sensorID ] = decoder( status ) [ "xMin" ];
+        _minY[ sensorID ] = decoder( status ) [ "yMin" ];
+        _maxX[ sensorID ] = decoder( status ) [ "xMax" ];
+        _maxY[ sensorID ] = decoder( status ) [ "yMax" ];
+
+        _sensorIDVec.push_back( sensorID );
+    }  
 
 
+    // 
+    // now another map relating the position in the ancillary
+    // collections (noise, pedestal and status) with the sensorID
+    // 
+    _ancillaryIndexMap.clear();
+
+    // 
+    // if HotPixelKiller is intended to run standalone 
+    // open the noise collection and create the _ancillaryIndexMap
+    //     
+    if( getBuildHotPixelDatabase() != 0 )    
+    {
+        try
+        {
+            // this is the exemplary ancillary collection
+            LCCollectionVec * noiseCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _noiseCollectionName ) );
+
+            // prepare also a cell decoder
+            CellIDDecoder< TrackerDataImpl > noiseDecoder( noiseCollectionVec );
+
+            for ( size_t iDetector = 0 ; iDetector < noiseCollectionVec->size(); ++iDetector ) 
+            {
+                TrackerDataImpl * noise = dynamic_cast< TrackerDataImpl * > ( noiseCollectionVec->getElementAt ( iDetector ) );
+                if( noise == 0 )
+                {
+                    streamlog_out( WARNING2 ) <<  " noise TrackerDataImpl is not found " <<  endl;
+                }
+                _ancillaryIndexMap.insert( make_pair( noiseDecoder( noise ) ["sensorID"], iDetector ) );
+            }
+        } catch (  lcio::DataNotAvailableException ) {
+            streamlog_out( WARNING2 ) << "Unable to initialize the geometry. Trying with the following event" << endl;
+            throw SkipEventException( this ) ;
+        }
+    }
 }
 
 
-
+// 
+// this method will run only standalone
+// 
 void EUTelHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
 {
     if (evt == 0 )
@@ -271,12 +291,10 @@ void EUTelHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
         auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > >  sparseData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
 
         streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << _sensorID << " with "
-                               << sparseData->size() << " pixels " << endl;
-
-       
+                                 << sparseData->size() << " pixels " << endl;
+        
         for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
         {
-
             // loop over all pixels in the sparseData object.      
             EUTelSimpleSparsePixel *sparsePixel =  new EUTelSimpleSparsePixel() ;
 
@@ -318,38 +336,53 @@ void EUTelHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
 void EUTelHotPixelKiller::processEvent (LCEvent * event) 
 {
 
-  if ( _iCycle > (unsigned short) _totalNoOfCycle )  return;
+    if( event == 0 )
+    {
+        streamlog_out ( WARNING2 ) <<  "event does not exist!. skip " <<  endl;       
+        return;
+    }
+    
+    if ( _iCycle > (unsigned short) _totalNoOfCycle )  return;
 
-  if (_iEvt % 10 == 0)
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << (_iCycle * _noOfEventPerCycle) + _iEvt << ")"
-                              << resetiosflags(ios::left) << endl;
-  
-  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
-  if ( evt->getEventType() == kEORE ) 
-  {
-    streamlog_out ( DEBUG4 ) <<  "EORE found: nothing else to do." <<  endl;
-    return;
-  }
-  else if ( evt->getEventType() == kUNKNOWN ) 
-  {
-    streamlog_out ( WARNING2 ) << "Event number " << event->getEventNumber()
-                               << " is of unknown type. Continue considering it as a normal Data Event." << endl;
-  }
+    if (_iEvt % 10 == 0)
+        streamlog_out( MESSAGE4 ) << "Processing event "
+            << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+            << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+            << " (Total = " << setw(10) << (_iCycle * _noOfEventPerCycle) + _iEvt << ")"
+            << resetiosflags(ios::left) << endl;
+    
+    EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
+    if ( evt->getEventType() == kEORE ) 
+    {
+        streamlog_out ( DEBUG4 ) <<  "EORE found: nothing else to do." <<  endl;
+        return;
+    }
+    else if ( evt->getEventType() == kUNKNOWN ) 
+    {
+        streamlog_out ( WARNING2 ) << "Event number " << event->getEventNumber()
+            << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+    }
 
-  
-  try 
-  {
-    LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) );
-    CellIDDecoder<TrackerRawDataImpl>      statusCellDecoder( statusCollectionVec );
+    try 
+    {
+        LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) );
+    }
+    catch(...)
+    {
+        std::cout <<  "Input collection not found in the current event. Skipping..." << std::endl;
+    }
+
+    try 
+    {
+        LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) );
+        CellIDDecoder<TrackerRawDataImpl>      statusCellDecoder( statusCollectionVec );
 
     // if first event initilize 
     // sensorIDVec and sensors boundaries [min,max] for [X, Y]
     //  
     if ( isFirstEvent() ) 
     {
+//        printf("in initializeGeometry : %p\n", event );
         initializeGeometry( event );
 
         _firingFreqVec.clear();
@@ -376,7 +409,6 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
         _isFirstEvent = false;
     }
     
-
     if( getBuildHotPixelDatabase() != 0 )
     {
         HotPixelFinder(evt);
@@ -440,7 +472,13 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
   catch (lcio::DataNotAvailableException& e ) 
   {
     streamlog_out ( WARNING2 )  << "Input collection not found in the current event. Skipping..." << endl;
-    return;
+    std::cout <<  "Input collection not found in the current event. Skipping..." << std::endl;
+    return;    
+  } 
+  catch ( ParseException& e ) 
+  {
+      std::cout <<  e.what() << "\n" << std::endl;
+      return;     
   }
 
 }
@@ -490,6 +528,8 @@ string EUTelHotPixelKiller::printSummary() const {
   return ss.str();
 }
 
+
+
 void EUTelHotPixelKiller::check( LCEvent * event ) 
 {
 
@@ -502,11 +542,9 @@ void EUTelHotPixelKiller::check( LCEvent * event )
     if ( _iEvt == _noOfEventPerCycle -1 ) 
     {
         try 
-        {
-            
+        {            
             LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) );
             CellIDDecoder<TrackerRawDataImpl>      statusCellDecoder( statusCollectionVec );
-
             
             for ( unsigned int iDetector = 0; iDetector < _firingFreqVec.size(); iDetector++ ) 
             {
@@ -518,13 +556,12 @@ void EUTelHotPixelKiller::check( LCEvent * event )
                 TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
                 vector< short > statusVec = status->adcValues();
                 unsigned short killerCounter = 0;
-
                 
                 for ( unsigned int iPixel = 0; iPixel < _firingFreqVec[iDetector].size(); iPixel++ ) 
                 {
                     if ( _firingFreqVec[iDetector][ iPixel ] / ( (double) _iEvt ) > _maxAllowedFiringFreq ) 
                     {
-                        streamlog_out ( DEBUG3 ) << " Pixel " << iPixel << " on detector " << _sensorIDVec.at( iDetector )
+                        streamlog_out ( DEBUG ) << " Pixel " << iPixel << " on detector " << _sensorIDVec.at( iDetector )
                             << " is firing too often (" << _firingFreqVec[iDetector][iPixel] / ((double) _iEvt )
                             << "). Masking it now on! " << endl;
                         status->adcValues()[ iPixel ] = EUTELESCOPE::FIRINGPIXEL;
@@ -548,18 +585,16 @@ void EUTelHotPixelKiller::check( LCEvent * event )
           HotPixelDBWriter(event );
       }
 
-
       // reset the _iEvt counter
       _iEvt = 0;
-
 
     } catch (lcio::DataNotAvailableException& e ) {
       streamlog_out ( WARNING2 )  << "Input collection not found in the current event. Skipping..." << endl;
       return;
-
     }
   }
 }
+
 
 void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
 {    
@@ -605,7 +640,7 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
     // create new or open existing hotpixel collection
     try 
     {
-        hotPixelCollection = static_cast< LCCollectionVec* > ( event->getCollection( "hotpixel_m26" ) );
+        hotPixelCollection = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
     }
     catch ( lcio::DataNotAvailableException& e ) 
     {

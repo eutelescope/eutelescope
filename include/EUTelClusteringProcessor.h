@@ -410,8 +410,20 @@ namespace eutelescope {
      *  information, a SkipEventException is thrown and the geometry
      *  will be initialize with the following event.
      */
-    void initializeGeometry( LCEvent * event ) throw ( marlin::SkipEventException );
+    void initializeGeometry( LCEvent * evt ) throw ( marlin::SkipEventException );
 
+    //! initialize statusCollection
+    /*! values from hotpixel DB file are read into the statusCollection
+     * hot pixels get status FiringPixel
+     */
+    void initializeStatusCollection();
+   
+    //! initialize HotPixelMapVec
+    /*! values from hotpixel DB file are read into a vector of mapped
+     * unique pixel index
+     */
+    void initializeHotPixelMapVec();
+ 
   protected:
 
     //! Method for fixed frame clustering
@@ -595,6 +607,13 @@ namespace eutelescope {
      */
     std::string _pulseCollectionName;
 
+    //! Optional; HotPixel Collection Name.
+    /*! This is the name used to store the output cluster
+     *  collection.
+     */
+    std::string _hotPixelCollectionName;
+
+ 
     //! Pulse collection size
     size_t _initialPulseCollectionSize;
 
@@ -764,6 +783,11 @@ namespace eutelescope {
 
 
   private:
+
+    //! read secondary collections
+    /*!
+     */
+    void readCollections(LCEvent *evt);
 
     //! The seed candidate pixel map.
     /*! The map key is the pixel index in the matrix, while the float
@@ -963,7 +987,45 @@ namespace eutelescope {
      */
     std::vector< int > _sensorIDVec;
 
+    //
+    //! Zero Suppressed Data Collection
+    LCCollectionVec *zsInputDataCollectionVec;
+ 
+    //
+    //! Non Zero Suppressed Data Collection
+    LCCollectionVec *nzsInputDataCollectionVec;
     
+    //
+    //! pulse Collection 
+    LCCollectionVec *pulseCollectionVec;
+    
+    //
+    //! noise Collection 
+    LCCollectionVec *noiseCollectionVec;
+    
+    //
+    //! status Collection 
+    LCCollectionVec *statusCollectionVec;
+
+
+
+    //! Hot Pixel Collection 
+    LCCollectionVec *hotPixelCollectionVec;
+
+    //! keep what we have: Non ZS data (true/false)
+    bool hasNZSData;
+ 
+    //! keep what we have: ZS data (true/false)
+    bool hasZSData;
+  
+    //! Vector of map arrays, keeps record of hit pixels 
+    /*! The vector elements are sorted by Detector ID
+     *  For each Detector unique ID element a map of pixels is created. 
+     *  Key <int> is the sequential (counter) id of a hit,
+     *  Value <int> - always status value = firing pixel
+     */
+
+    std::vector< std::map< int, int > > _hitIndexMapVec;          
     
   };
 

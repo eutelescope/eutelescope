@@ -2613,19 +2613,28 @@ void EUTelMille::end() {
               numpars = 3;
             else
               numpars = 6;
+
+            bool _nonzero_tokens = false;
+
+
             for ( unsigned int iParam = 0 ; iParam < numpars ; ++iParam ) {
               getline( millepede, line );
 
               if ( line.empty() ) {
                 goodLine = false;
+                continue;
               }
 
               tokens.clear();
               tokenizer.clear();
               tokenizer.str( line );
+//              std::cout << line << std::endl;
 
+              // check that all parts of the line are non zero
               while ( tokenizer >> buffer ) {
                 tokens.push_back( buffer ) ;
+                if(buffer> 1e-12) _nonzero_tokens = true;
+//                printf("buffer = %8.3f\n", buffer);
               }
 
               if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) || (tokens.size() == 5) ) {
@@ -2640,9 +2649,10 @@ void EUTelMille::end() {
                 streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << (tokens[1] / 1000 )
                                          << " +/- " << ( tokens[4] / 1000 )  << endl;
               }
-              if(_alignMode != 3)
+
+             if(_alignMode != 3)
                 {
-                  if ( iParam == 0 ) {
+                 if ( iParam == 0 ) {
                     constant->setXOffset( tokens[1] / 1000 );
                     if ( ! isFixed ) constant->setXOffsetError( tokens[4] / 1000 ) ;
                   }
@@ -2657,7 +2667,7 @@ void EUTelMille::end() {
                 }
               else
                 {
-                  if ( iParam == 0 ) {
+                 if ( iParam == 0 ) {
                     constant->setXOffset( -1.0*tokens[1] / 1000 );
                     if ( ! isFixed ) constant->setXOffsetError( tokens[4] / 1000 ) ;                    
                   }
@@ -2688,7 +2698,7 @@ void EUTelMille::end() {
 
 
             // right place to add the constant to the collection
-            if ( goodLine ) {
+            if ( goodLine  ) {
               constant->setSensorID( _orderedSensorID_wo_excluded.at( counter ) );
               ++ counter;
               constantsCollection->push_back( constant );
