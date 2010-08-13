@@ -1547,7 +1547,9 @@ class SubmitFilter( SubmitBase ):
         marlin  = popen2.Popen4( "Marlin %(steer)s" % { "steer": self._steeringFileName } )
         while marlin.poll() == -1:
             line = marlin.fromchild.readline()
-            print line.strip()
+            l = line.strip()
+            if(len(l) !=0):
+              print l
             logFile.write( line )
 
         logFile.close()

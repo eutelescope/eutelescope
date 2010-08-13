@@ -186,13 +186,20 @@ class SubmitCluSearch( SubmitBase ):
     #
     def execute( self ) :
 
+        self._hotpixelString = ""
+        # first of all verify that the hotpixel run was provided, otherwise stop immediately
+        if self._option.hotpixel == None:
+            message = "Hotpixel run not provided. Please use option -h to specify the hotpixel run (if required by your setup)"
+            self._logger.warning( message )
+        else :
+            self._hotpixelString = "%(hotpixel)06d" % { "hotpixel": self._option.hotpixel }
+            self._logger.warning(  self._hotpixelString )
+
         self._pedeString = ""
         # first of all verify that the pedestal run was provided, otherwise stop immediately
         if self._option.pedestal == None:
             message = "Pedestal run not provided. Please use option -p to specify the pedestal run (if required by your setup)"
-#            self._logger.critical( message )
-#            raise StopExecutionError( message )
-
+            self._logger.warning( message )
         else :
             self._pedeString = "%(pede)06d" % { "pede":  self._option.pedestal }
 
@@ -705,7 +712,6 @@ class SubmitCluSearch( SubmitBase ):
             run, b, c, d, e, f = self._summaryNTuple[ index ]
             self._summaryNTuple[ index ] = run, "OK", c, d, e, f
 
-
     ## Generate the steering file
     def generateSteeringFile( self, runString  ) :
         message = "Generating the steering file (%(name)s-%(run)s.xml) " % { "name": self.name, "run" : runString }
@@ -852,6 +858,11 @@ class SubmitCluSearch( SubmitBase ):
                 dbFolder = "db"
         actualSteeringString = actualSteeringString.replace("@DBPath@" ,dbFolder )
 
+
+        # that's a good place to also replace the pedestal run number
+        actualSteeringString = actualSteeringString.replace("@HotPixelRunNumber@", self._hotpixelString )
+
+
         # that's a good place to also replace the pedestal run number
         actualSteeringString = actualSteeringString.replace("@PedeRunNumber@", self._pedeString )
 
@@ -884,6 +895,7 @@ class SubmitCluSearch( SubmitBase ):
 
         # write the new steering file
         actualSteeringFile.write( actualSteeringString )
+#        self._logger.warning( actualSteeringString )
 
         # close both files
         actualSteeringFile.close()
@@ -905,7 +917,9 @@ class SubmitCluSearch( SubmitBase ):
         marlin  = popen2.Popen4( "Marlin %(steer)s" % { "steer": self._steeringFileName } )
         while marlin.poll() == -1:
             line = marlin.fromchild.readline()
-            print line.strip()
+            l = line.strip()
+            if(len(l) !=0):
+              print l
             logFile.write( line )
 
         logFile.close()
