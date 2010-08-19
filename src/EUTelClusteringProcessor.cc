@@ -187,7 +187,7 @@ EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteri
 //                             _hotPixelDBFile, static_cast< string > ( "hotpixel.slcio" ) );
 
   registerOptionalParameter("HotPixelCollectionName","This is the name of the hotpixel collection",
-                             _hotPixelCollectionName, static_cast< string > ( "hotpixel" ) );
+                             _hotPixelCollectionName, static_cast< string > ( "hotpixel_m26" ) );
 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -311,7 +311,7 @@ void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( mar
 
   } catch ( lcio::DataNotAvailableException ) {
     // do nothing
-    printf("_nzsDataCollectionName %s not found \n", _nzsDataCollectionName.c_str() ); 
+    streamlog_out( WARNING ) << "_nzsDataCollectionName " << _nzsDataCollectionName.c_str() << " not found " << endl; 
   }
 
   try 
@@ -329,7 +329,7 @@ void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( mar
 
   } catch ( lcio::DataNotAvailableException ) {
     // do nothing again
-    printf("_zsDataCollectionName %s not found \n", _zsDataCollectionName.c_str() ); 
+    streamlog_out( WARNING ) << "_zsDataCollectionName " << _zsDataCollectionName.c_str() << " not found " << endl; 
   }
 
 
@@ -341,7 +341,10 @@ void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( mar
   _layerIndexMap.clear();
   for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); ++iLayer ) 
   {
-      printf("Telescope: iLayer %5d [%5d], getID: %5d \n", iLayer, _siPlanesLayerLayout->getNLayers(), _siPlanesLayerLayout->getID( iLayer ) );
+      streamlog_out( DEBUG1) << 
+          "Telescope: iLayer " << iLayer <<
+          "["<< _siPlanesLayerLayout->getNLayers() << 
+          "], getID:" <<  _siPlanesLayerLayout->getID( iLayer ) << endl;
       _layerIndexMap.insert( make_pair( _siPlanesLayerLayout->getID( iLayer ), iLayer ) );
   }
 
@@ -352,7 +355,7 @@ void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( mar
     // for the time being this is quite useless since, if there is a
     // DUT this is just one, but anyway it will become useful in a
     // short time.
-    printf("DUT:  getID: %5d \n",  _siPlanesLayerLayout->getDUTID() );
+    streamlog_out( DEBUG1) << "DUT:  getID: " << _siPlanesLayerLayout->getDUTID() << endl;
     _dutLayerIndexMap.insert( make_pair( _siPlanesLayerLayout->getDUTID(), 0 ) );
   }
 
@@ -398,7 +401,7 @@ void EUTelClusteringProcessor::modifyEvent( LCEvent * /* event */ )
 
 void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
 {
-    printf("EUTelClusteringProcessor::initializeHotPixelMapVec, hotPixelCollectionVec size %7d \n", hotPixelCollectionVec->size());
+    streamlog_out(DEBUG4) << "EUTelClusteringProcessor::initializeHotPixelMapVec, hotPixelCollectionVec size = " << hotPixelCollectionVec->size() << endl;
     
     // prepare some decoders
     CellIDDecoder<TrackerDataImpl> cellDecoder( hotPixelCollectionVec );
@@ -407,7 +410,7 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
     for ( unsigned int iDetector = 0 ; iDetector < hotPixelCollectionVec->size(); iDetector++ )         
     {
         if( _hitIndexMapVec.size() < iDetector+1 )            _hitIndexMapVec.resize(iDetector+1);
-        printf(" idet: %5d  _hitIndexMapVec.size(): %5d \n", iDetector, _hitIndexMapVec.size());
+//        printf(" idet: %5d  _hitIndexMapVec.size(): %5d \n", iDetector, _hitIndexMapVec.size());
 
         TrackerDataImpl * hotData = dynamic_cast< TrackerDataImpl * > ( hotPixelCollectionVec->getElementAt( iDetector ) );
         SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( hotData )["sparsePixelType"]) );
@@ -456,16 +459,25 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
             int decoded_XY_index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() ); // unique pixel index !!
 
-//            printf("iPixel %5d   idet %5d decoded_XY_index %7d \n", iPixel, iDetector, decoded_XY_index);
-              if( _hitIndexMapVec[iDetector].find( decoded_XY_index ) == _hitIndexMapVec[iDetector].end() )
-              {
+            streamlog_out ( DEBUG1 )   << 
+                " iPixel " << iPixel <<
+                " idet " << iDetector <<
+                " decoded_XY_index " << decoded_XY_index << endl;
+            
+            if( _hitIndexMapVec[iDetector].find( decoded_XY_index ) == _hitIndexMapVec[iDetector].end() )
+            {
                 _hitIndexMapVec[iDetector].insert ( make_pair ( decoded_XY_index, EUTELESCOPE::FIRINGPIXEL ) );               
-//                printf("adding hot pixel [%7d], idet %5d, decoded_XY_index %7d, [%5d %5d]  status : %2d \n",
-//                        iPixel, iDetector,  decoded_XY_index, sparsePixel->getXCoord(), sparsePixel->getYCoord(), EUTELESCOPE::FIRINGPIXEL );
+                streamlog_out ( DEBUG4 ) 
+                    << "adding hot pixel ["<< iPixel <<"]"
+                    << " idet " << iDetector 
+                    << " decoded_XY_index " << decoded_XY_index  
+                    << " [" << sparsePixel->getXCoord() 
+                    << " "<< sparsePixel->getYCoord() << "]" 
+                    << " status : " << EUTELESCOPE::FIRINGPIXEL << endl;
               }
               else
               {
-                  printf("hot pixel [index %5d] reoccered ?!\n", decoded_XY_index );
+                  streamlog_out ( ERROR ) << "hot pixel [index " << decoded_XY_index << "] reoccered ?!" << endl;
               }
 //             try
 //            {
@@ -552,7 +564,7 @@ void EUTelClusteringProcessor::initializeStatusCollection(  )
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
             int decoded_XY_index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() ); // unique pixel index !!
 
-            printf("idet %5d decoded_XY_index %7d \n", iDetector, decoded_XY_index);
+//            printf("idet %5d decoded_XY_index %7d \n", iDetector, decoded_XY_index);
             if( _hitIndexMapVec[iDetector].find( decoded_XY_index ) == _hitIndexMapVec[iDetector].end() )
             {
                 int old_size = status->adcValues().size();
@@ -586,6 +598,13 @@ void EUTelClusteringProcessor::initializeStatusCollection(  )
 void EUTelClusteringProcessor::readCollections (LCEvent * event)
 {
 
+//    const std::vector<std::string> *cnames = event->getCollectionNames();
+//    for(int i=0;i<cnames->size();i++)
+//    {
+//        printf("%s\n", cnames->at(i).c_str());
+//    }
+//    return;
+
     try {
         nzsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > (event->getCollection( _nzsDataCollectionName ) );
         streamlog_out ( DEBUG4 ) << "nzsInputDataCollectionVec: " << _nzsDataCollectionName.c_str() << " found " << endl;
@@ -614,7 +633,7 @@ void EUTelClusteringProcessor::readCollections (LCEvent * event)
     }
     catch (lcio::DataNotAvailableException& e ) 
     {
-        streamlog_out ( DEBUG4 ) << "No hot pixel DB collection found in the event" << endl;
+        streamlog_out ( DEBUG4 ) << "No status collection found in the event" << endl;
     }
  
     noiseCollectionVec = 0;
@@ -625,7 +644,7 @@ void EUTelClusteringProcessor::readCollections (LCEvent * event)
     }
     catch (lcio::DataNotAvailableException& e ) 
     {
-        streamlog_out ( DEBUG4 ) << "No hot pixel DB collection found in the event" << endl;
+        streamlog_out ( DEBUG4 ) << "No noise pixel DB collection found in the event" << endl;
     }
  
     // the hotpixel db file should be read only once, and 
@@ -639,11 +658,11 @@ void EUTelClusteringProcessor::readCollections (LCEvent * event)
             hotPixelCollectionVec = static_cast< LCCollectionVec* >  (event->getCollection( _hotPixelCollectionName )) ;
             initializeHotPixelMapVec();
 //            initializeStatusCollection();
-            streamlog_out ( DEBUG4 ) << "hotPixelCollectionName: " << _hotPixelCollectionName.c_str() << " found " << endl;
+            streamlog_out ( MESSAGE ) << "hotPixelCollectionName: " << _hotPixelCollectionName.c_str() << " found " << endl;
         } 
         catch (lcio::DataNotAvailableException& e ) 
         {
-            streamlog_out ( DEBUG4 ) << "No hot pixel DB collection found in the event" << endl;
+            streamlog_out ( MESSAGE ) << "No hot pixel DB collection found in the event" << endl;
         }
 
     }
@@ -994,9 +1013,16 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
               pixel_type = status->adcValues()[ index  ];
           }
   */            
-          if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
+
+          if( _hitIndexMapVec.size() > sensorID )
+              if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
           {
-//              printf("iDetector %5d iPixel %5d unique index %7d at %5d %5d -- HOTPIXEL, skip pixel \n", sensorID, iPixel, index, sparsePixel->getXCoord(), sparsePixel->getYCoord()   );
+              streamlog_out ( DEBUG1) <<
+                  " iDetector " << sensorID << 
+                  " iPixel " << iPixel << 
+                  " unique index " << index <<
+                  " at x = " << sparsePixel->getXCoord() <<
+                  " y= " << sparsePixel->getYCoord() << endl;
               continue;
           }
 
@@ -1471,7 +1497,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
     } else {
       // this is not a reference plane neither a DUT... what's that?
 //      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-      printf( "Unknown sensorID %d, perhaps your GEAR fil is incomplete \n",  sensorID );
+      printf( "Unknown sensorID %d, perhaps your GEAR file is incomplete \n",  sensorID );
       continue;
     }
 
@@ -2199,6 +2225,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
         // now we can finally build the cluster candidate
         list<unsigned int >::iterator listIter = currentList.begin();
 
+//        int iPixel = 0;
         while ( listIter != currentList.end() ) {
 
           sparseData->getSparsePixelAt( (*listIter ), pixel );
@@ -2209,7 +2236,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
           int index = matrixDecoder.getIndexFromXY( pixel->getXCoord(), pixel->getYCoord() );
           if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
           {
-//              printf("iDetector %5d iPixel %5d unique index %5d at %5d %5d -- HOTPIXEL, skip pixel \n", sensorID, iPixel, index, sparsePixel->getXCoord(), sparsePixel->getYCoord()   );
+//               printf("iDetector %5d iPixel %5d unique index %5d at %5d %5d -- HOTPIXEL, skip pixel \n", sensorID, iPixel, index, pixel->getXCoord(), pixel->getYCoord()   );
                ++listIter;
                continue;
           }
@@ -2224,6 +2251,7 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
 
           // remember the iterator++
           ++listIter;
+//          iPixel++;
         }
         sparseCluster->setNoiseValues( noiseValueVec );
 
@@ -2451,6 +2479,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
         // now we can finally build the cluster candidate
         list<unsigned int >::iterator listIter = currentList.begin();
 
+//        int iPixel = 0;
         while ( listIter != currentList.end() ) {
 
 
@@ -2478,12 +2507,13 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
           // now remove HotPixels
           // 
           int index = matrixDecoder.getIndexFromXY( pixel->getXCoord(), pixel->getYCoord() );
-          if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
-          {
-//              printf("iDetector %5d iPixel %5d unique index %5d at %5d %5d -- HOTPIXEL, skip pixel \n", sensorID, iPixel, index, sparsePixel->getXCoord(), sparsePixel->getYCoord()   );
-               ++listIter;
-               continue;
-          }
+          if( _hitIndexMapVec.size() > sensorID )
+              if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
+              {
+//               printf("iDetector %5d iPixel %5d unique index %5d at %5d %5d -- HOTPIXEL, skip pixel \n", sensorID, iPixel, index, pixel->getXCoord(), pixel->getYCoord()   );
+                  ++listIter;
+                  continue;
+              }
 
 
           // 
@@ -2495,6 +2525,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
  
           // remember the iterator++
           ++listIter;
+//          iPixel++;
         }
  
 
