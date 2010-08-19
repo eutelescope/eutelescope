@@ -494,6 +494,18 @@ class SubmitFitter( SubmitBase ):
         actualSteeringString = actualSteeringString.replace("@Output@","%(output)s-s%(index)06d" %
                                                             { "output": self._option.output, "index": index } )
 
+        # set maximum Distance to include the hits for the alignment internal
+        # track fit 
+        try :
+            DistanceMax = self._configParser.get( "FitterOptions", "DistanceMax" )
+        except  ConfigParser.NoOptionError :
+            message = "The DistanceMax not defined, taking a default value (=5000)."
+            self._logger.info( message )
+            DistanceMax = "5000"
+#            raise StopExecutionError( message )
+
+        actualSteeringString = actualSteeringString.replace( "@DistanceMax@",DistanceMax )
+
         # allowed missing hit
         try:
             allowedMissingHit = self._configParser.getint( "FitterOptions", "AllowedMissingHits" )
@@ -750,6 +762,18 @@ class SubmitFitter( SubmitBase ):
 
         # finally replace the run string !
         actualSteeringString = actualSteeringString.replace("@Output@", self._option.output )
+
+        # set maximum Distance to include the hits for the alignment internal
+        # track fit 
+        try :
+            DistanceMax = self._configParser.get( "FitterOptions", "DistanceMax" )
+        except  ConfigParser.NoOptionError :
+            message = "The DistanceMax not defined, taking a default value (=5000)."
+            self._logger.info( message )
+            DistanceMax = "5000"
+#            raise StopExecutionError( message )
+
+        actualSteeringString = actualSteeringString.replace( "@DistanceMax@",DistanceMax )
 
         # allowed missing hit
         try:

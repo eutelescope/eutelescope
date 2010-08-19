@@ -88,6 +88,8 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits </parameter>
   <!--Collection name for fitted tracks-->
   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track </parameter>
+  <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
+  <parameter name="DistanceMax" type="float" value="@DistanceMax@"/>
   <!--Ids of layers for which alignment corrections are given-->
   <!--parameter name="AlignLayerIDs" type="IntVec"> </parameter-->
   <!--Rotation around Z for layer alignment-->
