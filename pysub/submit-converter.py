@@ -119,6 +119,12 @@ from the GRID SE, but the job will be executed on the local CPU
                         help="Verify that the output files copied to the GRID are equal to the local ones" +
                         "Option available on when working in cpu-local mode and requires more time" )
 
+    ioGroup.add_option( "--hotpixel-output",
+                        action="store_true",
+                        dest="force_hotpixel_output",
+                        help="Set to enable hotpixel db output, assuming the run was taken off-beam" )
+
+
     ioGroup.add_option( "-v", "--verbose",
                         action="store_true",
                         dest="verbose",
@@ -129,6 +135,7 @@ from the GRID SE, but the job will be executed on the local CPU
     parser.set_defaults(force_keep_output=False)
     parser.set_defaults(force_remove_input=False)
     parser.set_defaults(force_remove_output=False)
+    parser.set_defaults(force_hotpixel_output=False)
     parser.set_defaults(verify_output=False)
     parser.set_defaults(verbose=False)
 

@@ -77,6 +77,9 @@ class SubmitConverter( SubmitBase ) :
         self._keepInput  = True
         self._keepOutput = True
 
+        # set default for writing out hot pixel db
+        self._keepHotPixelOutput = False
+
         if self._option.execution == "all-grid" :
             # it doesn't really matter since all the inputs and outputs will be on the GRID
             # and not locally. Leave both to yes
@@ -121,6 +124,10 @@ class SubmitConverter( SubmitBase ) :
         if  self._option.force_remove_output and self._keepOutput:
             self._keepOutput = False
             self._logger.info( "User forces to remove the output files" )
+
+        if  self._option.force_hotpixel_output and not self._keepHotPixelOutput:
+            self._keepHotPixelOutput = True
+            self._logger.info( "User forces to save hot pixel db (even if it is not a off-beam run)" )
 
         # now in case the user wants to interact and the situation is dangerous
         # i.e. removing files, ask confirmation
@@ -819,6 +826,16 @@ class SubmitConverter( SubmitBase ) :
         # make all the changes
         actualSteeringString = templateSteeringString
 
+        # decide if User wants to write out hot pixel db file
+        # involves AutoPedestal and HotPixelKiller  processors
+        if self._keepHotPixelOutput == False:
+             actualSteeringString = actualSteeringString.replace("@RunHotPixelKillerCommentLeft@", "!--" )
+             actualSteeringString = actualSteeringString.replace("@RunHotPixelKillerCommentRight@", "--" )
+        else:    
+             actualSteeringString = actualSteeringString.replace("@RunHotPixelKillerCommentLeft@", "" )
+             actualSteeringString = actualSteeringString.replace("@RunHotPixelKillerCommentRight@", "" )
+            
+        
         # replace the file paths
         #
         # first the gear path
