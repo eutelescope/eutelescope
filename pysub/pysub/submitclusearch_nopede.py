@@ -121,6 +121,7 @@ class SubmitCluSearch( SubmitBase ):
             self._keepOutput = False
             self._logger.info( "User forces to remove the output files" )
 
+
         # now in case the user wants to interact and the situation is dangerous
         # i.e. removing files, ask confirmation
         try :
@@ -189,11 +190,11 @@ class SubmitCluSearch( SubmitBase ):
         self._hotpixelString = ""
         # first of all verify that the hotpixel run was provided, otherwise stop immediately
         if self._option.hotpixel == None:
-            message = "Hotpixel run not provided. Please use option -h to specify the hotpixel run (if required by your setup)"
+            message = "Hotpixel run not provided. Please use option --hotpixel to specify the hotpixel run (if required by your setup)"
             self._logger.warning( message )
         else :
-            self._hotpixelString = "%(hotpixel)06d" % { "hotpixel": self._option.hotpixel }
-            self._logger.warning(  self._hotpixelString )
+            self._hotpixelString = "Hotpixel run %(hotpixel)06d" % { "hotpixel": self._option.hotpixel }
+            self._logger.info(  self._hotpixelString )
 
         self._pedeString = ""
         # first of all verify that the pedestal run was provided, otherwise stop immediately
@@ -808,7 +809,6 @@ class SubmitCluSearch( SubmitBase ):
             self._gear_file = self._option.gear_file
             self._logger.debug( "Using command line GEAR file" )
 
-
         if self._gear_file == "" :
             # using default GEAR file
             defaultGEARFile = "gear_telescope.xml"
@@ -818,6 +818,32 @@ class SubmitCluSearch( SubmitBase ):
 
         actualSteeringString = actualSteeringString.replace("@GearFile@", self._gear_file )
 
+
+        # do use the hotpixel db file 
+        if self._option.hotpixel == None :
+            # this means that the user does not want to use hot pixel db file
+         
+            actualSteeringString = actualSteeringString.replace("@UseHotPixelKillerCommentLeft@", "!--" )
+            actualSteeringString = actualSteeringString.replace("@UseHotPixelKillerCommentRight@", "--" )
+            
+            self._logger.debug( "NOT Using hotpixel db file" )
+        else:    
+            # this means that the user DOES want to use hot pixel db file
+            
+            actualSteeringString = actualSteeringString.replace("@UseHotPixelKillerCommentLeft@", "" )
+            actualSteeringString = actualSteeringString.replace("@UseHotPixelKillerCommentRight@", "" )
+
+            hotpixelrunString = "%(run)06d" % { "run" : self._option.hotpixel }
+
+            # that's a good place to also replace the hot pixel db run number
+            actualSteeringString = actualSteeringString.replace("@HotPixelRunNumber@", hotpixelrunString )
+
+            
+            self._logger.debug( "Using hotpixel db file" )
+            
+
+ 
+        
         # now repeat the game with the histo info xml file even if it is not compulsory to have it
         if self._option.execution == "all-grid" :
             self._histoinfoPath = "."
@@ -857,10 +883,6 @@ class SubmitCluSearch( SubmitBase ):
             except ConfigParser.NoOptionError :
                 dbFolder = "db"
         actualSteeringString = actualSteeringString.replace("@DBPath@" ,dbFolder )
-
-
-        # that's a good place to also replace the pedestal run number
-        actualSteeringString = actualSteeringString.replace("@HotPixelRunNumber@", self._hotpixelString )
 
 
         # that's a good place to also replace the pedestal run number
