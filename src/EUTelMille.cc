@@ -657,6 +657,7 @@ void EUTelMille::findtracks(
                 taketrack = false;
             }
           vec.pop_back(); 
+
 //  ADDITIONAL PRINTOUTS   
 //          printf("come to the next plane id=%3d clu=%3d of %3d \n", i, j, _hitsArray[i].size());
           if(taketrack)
@@ -2557,6 +2558,7 @@ void EUTelMille::end() {
         // open the millepede ASCII output file
         ifstream millepede( millepedeResFileName.c_str() );
 
+
         // reopen the LCIO file this time in append mode
         LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
 
@@ -2567,6 +2569,7 @@ void EUTelMille::end() {
                                    << "Sorry for quitting. " << endl;
           exit(-1);
         }
+
 
         // write an almost empty run header
         LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
@@ -2588,7 +2591,7 @@ void EUTelMille::end() {
         LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
 
 
-        if ( millepede.bad() ) {
+        if ( millepede.bad() || !millepede.is_open() ) {
           streamlog_out ( ERROR4 ) << "Error opening the " << millepedeResFileName << endl
                                    << "The alignment slcio file cannot be saved" << endl;
         } else {
@@ -2600,6 +2603,7 @@ void EUTelMille::end() {
           // get the first line and throw it away since it is a
           // comment!
           getline( millepede, line );
+          std::cout << "line:" <<  line  << std::endl;
 
           int counter = 0;
 
@@ -2608,7 +2612,7 @@ void EUTelMille::end() {
             EUTelAlignmentConstant * constant = new EUTelAlignmentConstant;
 
             bool goodLine = true;
-            unsigned int numpars;
+            unsigned int numpars = 0;
             if(_alignMode != 3)
               numpars = 3;
             else
@@ -2617,7 +2621,9 @@ void EUTelMille::end() {
             bool _nonzero_tokens = false;
 
 
-            for ( unsigned int iParam = 0 ; iParam < numpars ; ++iParam ) {
+
+            for ( unsigned int iParam = 0 ; iParam < numpars ; ++iParam ) 
+            {
               getline( millepede, line );
 
               if ( line.empty() ) {
@@ -2625,10 +2631,11 @@ void EUTelMille::end() {
                 continue;
               }
 
+
+
               tokens.clear();
               tokenizer.clear();
               tokenizer.str( line );
-//              std::cout << line << std::endl;
 
               // check that all parts of the line are non zero
               while ( tokenizer >> buffer ) {
@@ -2650,7 +2657,7 @@ void EUTelMille::end() {
                                          << " +/- " << ( tokens[4] / 1000 )  << endl;
               }
 
-             if(_alignMode != 3)
+              if(_alignMode != 3)
                 {
                  if ( iParam == 0 ) {
                     constant->setXOffset( tokens[1] / 1000 );
@@ -2697,6 +2704,7 @@ void EUTelMille::end() {
             }
 
 
+
             // right place to add the constant to the collection
             if ( goodLine  ) {
               constant->setSensorID( _orderedSensorID_wo_excluded.at( counter ) );
@@ -2708,6 +2716,9 @@ void EUTelMille::end() {
           }
 
         }
+
+
+
         event->addCollection( constantsCollection, _alignmentConstantCollectionName );
         lcWriter->writeEvent( event );
         delete event;
