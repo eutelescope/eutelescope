@@ -499,9 +499,9 @@ class SubmitFitter( SubmitBase ):
         try :
             DistanceMax = self._configParser.get( "FitterOptions", "DistanceMax" )
         except  ConfigParser.NoOptionError :
-            message = "The DistanceMax not defined, taking a default value (=5000)."
+            message = "The DistanceMax not defined, taking a default value (=2.0)."
             self._logger.info( message )
-            DistanceMax = "5000"
+            DistanceMax = "2.0"
 #            raise StopExecutionError( message )
 
         actualSteeringString = actualSteeringString.replace( "@DistanceMax@",DistanceMax )
@@ -768,9 +768,9 @@ class SubmitFitter( SubmitBase ):
         try :
             DistanceMax = self._configParser.get( "FitterOptions", "DistanceMax" )
         except  ConfigParser.NoOptionError :
-            message = "The DistanceMax not defined, taking a default value (=5000)."
+            message = "The DistanceMax not defined, taking a default value (=2.0)."
             self._logger.info( message )
-            DistanceMax = "5000"
+            DistanceMax = "2.0"
 #            raise StopExecutionError( message )
 
         actualSteeringString = actualSteeringString.replace( "@DistanceMax@",DistanceMax )
