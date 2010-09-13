@@ -81,34 +81,37 @@ float EUTelFFClusterImpl::getTotalCharge() const {
 
 void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG) const {
 
-  int xSize, ySize;
+  int xSize=0, ySize=0;
   getClusterSize(xSize, ySize);
 
  
-  float normalization = 0;
-  float tempX = 0;
-  float tempY = 0;
+  float normalization = 0.;
+  float tempX = 0.;
+  float tempY = 0.;
 
   int iPixel = 0;
   for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
     for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
-      normalization += _trackerData->getChargeValues()[iPixel];
-      if( _trackerData->getChargeValues()[iPixel] > 0 ){
-          tempX         += xPixel * _trackerData->getChargeValues()[iPixel];
-          tempY         += yPixel * _trackerData->getChargeValues()[iPixel];
-      }
-      iPixel++;
+        if( _trackerData->getChargeValues().size()<= iPixel) break;
+        normalization += _trackerData->getChargeValues()[iPixel];
+        if( _trackerData->getChargeValues()[iPixel] > 0 ){
+            tempX         += xPixel * _trackerData->getChargeValues()[iPixel];
+            tempY         += yPixel * _trackerData->getChargeValues()[iPixel];
+        }      
+        iPixel++;    
     }
   }
 
-  if ( normalization != 0)  {
+  
+  if ( abs(normalization) > 1e-12 )  {
     xCoG = tempX / normalization;
     yCoG = tempY / normalization;
   } else {
-    xCoG = 0;
-    yCoG = 0;
+    xCoG = 0.;
+    yCoG = 0.;
   }
-
+  
+//  printf("%5.2f %5.2f  %5.2f %5.2f  norm=%5.2f\n", xCoG, yCoG, tempX,tempY, normalization);
 
 }
 
