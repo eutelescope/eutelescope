@@ -1026,8 +1026,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       int    ilast        =  0 ;
       int    nleft        =  0 ;
      
-
-
       if(_UseSlope)
       {
           iskip     = 0;
@@ -1108,7 +1106,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
                 {
                     iskip++;
                     iskip_at[iskip-1] = ipl;
-                    nleft++;                        // ??? what is this counting?  
+                    nleft++;                        // ??? what is this counting? not sure we need it here 
                     if(iskip>_allowSkipHits)break;
                 }
                 else
@@ -1126,8 +1124,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
               {
                 iskip++;
                 iskip_at[iskip-1] = ipl;
+                if(iskip>_allowSkipHits)break;
               }
-              if(iskip>_allowSkipHits)break;
           }
         }
       }
@@ -1204,9 +1202,13 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
       trackChi2 = choiceChi2+penalty;
 
-      if(nChoiceFired + _allowMissingHits >= _nActivePlanes &&
-         nChoiceFired + _allowSkipHits    >= nFiredPlanes  &&
-         trackChi2 < chi2min) 
+      if(
+              nChoiceFired + _allowMissingHits >= _nActivePlanes 
+              &&
+              nChoiceFired + _allowSkipHits    >= nFiredPlanes  
+              &&
+              trackChi2 < chi2min
+              ) 
       {
         chi2min=trackChi2;
       }
@@ -1214,18 +1216,16 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       // Check if better than best fit (or chi2Max if hit ambiguity allowed)
       // If not: skip also all track possibilities which include
       // this hit selection !!!
-//      if(
-//              (choiceChi2 >= _chi2Max) 
-//             ||
-//             (choiceChi2 >=  chi2best  && !ambiguityMode) 
-//              ) 
-//      {        
-//          int ilast_mod = ilast;
-////          if( _UseSlope ) ilast_mod = iskip_at[_allowSkipHits]; 
-//          ichoice-=_planeMod[ilast_mod]-1;
-//          continue;
-//      } // this Condition leads ot 25% inefficiency in track finding; to be
-//      investigated later.
+      if( !_UseSlope )
+          if(
+              (choiceChi2 >= _chi2Max) 
+             ||
+             (choiceChi2 >=  chi2best  && !ambiguityMode) 
+              ) 
+          {        
+              ichoice-=_planeMod[ilast]-1;
+              continue;
+          } // this Condition leads ot 25% inefficiency in track finding; to be investigated later.
 
 
       //
