@@ -169,6 +169,13 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
 
   // optional parameters
 
+  // ------- Parameters added to allow correlation band info 02 August 2010 libov@mail.desy.de -------
+  registerOptionalParameter("UseSlope","true - track selection is constrained with SlopeXLimit, SlopeYLimit, and SlopeDistanceMax; false - track selection hits based on all possible combinatorics (much slower!)", _UseSlope, true );
+  registerOptionalParameter("SlopeXLimit","Slope in X upper limit ", _SlopeXLimit, static_cast <float> (0.01));
+  registerOptionalParameter("SlopeYLimit","Slope in Y upper limit ", _SlopeYLimit, static_cast <float> (0.01));
+  registerOptionalParameter("SlopeDistanceMax","Maximum tube radius for initial hit selection", _SlopeDistanceMax, static_cast <float> (2.));
+  // -------------------------------------------------------------------------------------------------
+
   std::vector<int > initLayerIDs;
   std::vector<float > initLayerShift;
 
@@ -542,6 +549,8 @@ void EUTelTestFitter::init() {
   _planeY  = new double[_nTelPlanes];
   _planeEy = new double[_nTelPlanes];
 
+  _planeZ  = new double[_nTelPlanes];
+
   _planeDist = new double[_nTelPlanes];
   _planeScat = new double[_nTelPlanes];
 
@@ -563,12 +572,15 @@ void EUTelTestFitter::init() {
   // Planes are ordered in position along the beam line !
 
   for(int ipl=0; ipl<_nTelPlanes ; ipl++) {
-    if(ipl>0) {
+    if(ipl>0) 
+    {
       _planeDist[ipl-1]=1./(_planePosition[ipl] - _planePosition[ipl-1]) ;
     }
+    
     _planeScat[ipl]= 0.0136/_eBeam * sqrt(_planeThickness[ipl]/_planeX0[ipl])
       * (1.+0.038*std::log(_planeThickness[ipl]/_planeX0[ipl])) ;
-
+  
+ 
     if(ipl==0 && _useBeamConstraint) {
       _planeScat[ipl]= 1./(_planeScat[ipl]*_planeScat[ipl]+ _beamSpread*_beamSpread) ;
     } else {
@@ -577,6 +589,7 @@ void EUTelTestFitter::init() {
     _fitX[ipl] =_fitY[ipl] = 0. ;
     _nominalError[ipl]= _planeResolution[ipl];
   }
+
 
   // Fit with nominal parameters
 
@@ -641,7 +654,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 
-  if ( _nEvt % 10 == 0 ) {
+  if ( _nEvt %  10 == 0 ) {
     streamlog_out( MESSAGE2 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
@@ -719,11 +732,12 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   int nGoodHit = 0;
 
-  for(int ihit=0; ihit< nHit ; ihit++) {
+  for(int ihit=0; ihit< nHit ; ihit++) 
+  {
     TrackerHit * meshit = dynamic_cast<TrackerHit*>( col->getElementAt(ihit) ) ;
 
     // Hit position
-
+    //
     const double * pos = meshit->getPosition();
 
     hitZ[ihit] = pos[2];
@@ -732,38 +746,45 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     // We have to find Plane ID of the hit
     // by looking at the Z position
-
-    double distMin = 1.;
+    //
+    double distMin =  1.;
     hitPlane[ihit] = -1 ;
 
-    for(int ipl=0;ipl<_nTelPlanes;ipl++)  {
+    for(int ipl=0;ipl<_nTelPlanes;ipl++)  
+    {
       double dist =  hitZ[ihit] - _planePosition[ipl] ;
-
-      if(dist*dist < distMin*distMin)  {
-        hitPlane[ihit]=ipl;
-        distMin=dist;
+      if( dist < 0 ) dist = -dist; // always positive defined !
+       
+//        if(dist*dist < distMin*distMin)     // try to avoid expensive operations
+      if(     dist  <   distMin    )  
+      {
+        hitPlane[ihit] = ipl;
+        distMin        = dist ;
       }
     }
 
     // Ignore hits not matched to any plane
-
-    if(hitPlane[ihit]<0) {
-
-      if ( _isActive[hitPlane[ihit]] ) {
-	streamlog_out( WARNING0 )  << "Reconstructed hit outside sensor planes z [mm] = "  << hitZ[ihit] << endl;
+    //
+    if(hitPlane[ihit]<0) 
+    {
+      if ( _isActive[hitPlane[ihit]] ) 
+      {
+          streamlog_out( WARNING0 )  << "Reconstructed hit outside sensor planes z [mm] = "  << hitZ[ihit] << endl;
       }
       continue;
     }
 
     // Ignore hit, if plane not declared as active (i.e. not used in the fit)
-
-    if(! _isActive[hitPlane[ihit]]) {
+    // 
+    if(! _isActive[hitPlane[ihit]]) 
+    {
       continue ;
     }
 
     // Ignore hit also, if maximum number of hits already matched to this plane
-
-    if(_maxPlaneHits>0 && _maxPlaneHits-planeHitID[hitPlane[ihit]].size()<=0) {
+    // 
+    if(_maxPlaneHits>0 && _maxPlaneHits-planeHitID[hitPlane[ihit]].size()<=0) 
+    {
       continue ;
     }
 
@@ -784,10 +805,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       - _planeShiftY[hitPlane[ihit]];
 
     // Check Window and Mask cuts, if defined
-
     bool hitcut = false;
 
-    for(int wpl=0; wpl< (int)_planeWindowIDs[hitPlane[ihit]].size() ; wpl++)  {
+    for(int wpl=0; wpl< (int)_planeWindowIDs[hitPlane[ihit]].size() ; wpl++)  
+    {
       int iwin= _planeWindowIDs[hitPlane[ihit]].at(wpl);
 
       if(hitX[ihit] <  _WindowMinX.at(iwin)) hitcut = true;
@@ -799,11 +820,15 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     if(hitcut) continue;
 
 
-    for(int mpl=0; mpl< (int)_planeMaskIDs[hitPlane[ihit]].size() ; mpl++) {
+    for(int mpl=0; mpl< (int)_planeMaskIDs[hitPlane[ihit]].size() ; mpl++) 
+    {
       int imsk= _planeMaskIDs[hitPlane[ihit]].at(mpl);
 
-      if(hitX[ihit] >  _MaskMinX.at(imsk) &&  hitX[ihit] <  _MaskMaxX.at(imsk) &&
-         hitY[ihit] >  _MaskMinY.at(imsk) &&  hitY[ihit] <  _MaskMaxY.at(imsk)) {
+      if(
+              hitX[ihit] >  _MaskMinX.at(imsk) &&  hitX[ihit] <  _MaskMaxX.at(imsk) &&
+              hitY[ihit] >  _MaskMinY.at(imsk) &&  hitY[ihit] <  _MaskMaxY.at(imsk)
+              ) 
+      {
         hitcut = true;
       }
     }
@@ -812,12 +837,12 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 
     // Add hit to hit list for given plane - to be used in track selection
-
+    //
     planeHitID[hitPlane[ihit]].push_back(ihit);
     nGoodHit++;
 
     // Position uncertainty. Use nominal resolution if not properly defined
-
+    //
     const EVENT::FloatVec cov = meshit->getCovMatrix();
 
     if(cov.at(0)>0.) {
@@ -848,9 +873,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   // Main analysis loop: finding multiple tracks (if allowed)
 
   // Define output track and hit collections
-  LCCollectionVec     * fittrackvec = new LCCollectionVec(LCIO::TRACK);
-  LCCollectionVec     * fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
-  LCCollectionVec     * corrpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
+  LCCollectionVec     *fittrackvec = new LCCollectionVec(LCIO::TRACK);
+  LCCollectionVec     *fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
+  LCCollectionVec     *corrpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
 
   // Set flag for storing track hits in track collection
 
@@ -868,41 +893,49 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   bool ambiguityMode =  _allowAmbiguousHits && ( _allowMissingHits == 0 );
 
-  do {
-
+  do 
+  {
     // Count planes active in this event and number of fit possibilities
-
+    //
     int nFiredPlanes = 0;
     type_fitcount nChoice = 1;
     ibest=-1;
 
+    
     // Count from the last plane, to allow for "smart" track finding
-
-    for(int ipl=_nTelPlanes-1; ipl>=0 ;ipl--)   {
+    //
+    for(int ipl=_nTelPlanes-1; ipl>=0 ;ipl--)   
+    {
       _planeHits[ipl] = planeHitID[ipl].size() ;
 
-      if(_planeHits[ipl]>0)  {
+      if(_planeHits[ipl]>0)  
+      {
         nFiredPlanes++;
 
         _planeChoice[ipl]=_planeHits[ipl]+1;
-      }  else {
+      }
+      else 
+      {
         _planeChoice[ipl]=1;
       }
 
       _planeMod[ipl]=nChoice;
       nChoice*=_planeChoice[ipl];
-
     }
+    
 
     // Debug output
-
-    if(firstTrack && debug ) {
-      for(int ipl=0;ipl<_nTelPlanes;ipl++) {
-        if( _isActive[ipl] )  {
+    if(firstTrack && debug ) 
+    {
+      for(int ipl=0;ipl<_nTelPlanes;ipl++) 
+      {
+        if( _isActive[ipl] )  
+        {
           stringstream ss;
           ss << "Plane " << ipl << "  " << _planeHits[ipl] << " hit(s), hit IDs :";
 
-          for( int ihit=0; ihit < (int) planeHitID[ipl].size() ; ihit ++) {
+          for( int ihit=0; ihit < (int) planeHitID[ipl].size() ; ihit ++) 
+          {
             ss << planeHitID[ipl].at(ihit) << " " ;
           }
           streamlog_out ( DEBUG )  << ss.str() << endl;
@@ -912,10 +945,12 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 
     // Check if fit can be done
-
-    if(nFiredPlanes + _allowMissingHits < _nActivePlanes) {
-      if( firstTrack ) {
-        if(debug) {
+    if(nFiredPlanes + _allowMissingHits < _nActivePlanes) 
+    {
+      if( firstTrack ) 
+      {
+        if(debug) 
+        {
           streamlog_out ( TESTFITTERMESSAGE ) <<  "Not enough planes hit to perform the fit " << endl;
         }
 
@@ -944,13 +979,13 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     }
 
 
-    if( firstTrack && debug ) {
+    if( firstTrack && debug ) 
+    {
       streamlog_out ( TESTFITTERMESSAGE ) << nFiredPlanes << " active sensor planes hit, checking "
                                           << nChoice << " fit possibilities "  << endl;
     }
 
     // Check all track possibilities
-
     double chi2min  = numeric_limits<double >::max();
     double chi2best = _chi2Max;
     double bestPenalty = 0;
@@ -962,71 +997,187 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     int istart=0;
     int nmiss=_allowMissingHits;
 
-    while(nmiss>0 || !_isActive[istart])  {
-      if(_isActive[istart]) {
+    while(nmiss>0 || !_isActive[istart])  
+    {
+      if(_isActive[istart]) 
+      {
         nmiss--;
       }
       istart++;
     }
 
-    for(type_fitcount ichoice=nChoice-_planeMod[istart]-1; ichoice >=0 ; ichoice--)  {
-      int nChoiceFired=0;
-      double choiceChi2=-1.;
-      double trackChi2=-1.;
-      int ifirst=-1;
-      int ilast=0;
-      int nleft=0;
+    
+    int     iskip      = 0;
+    int     *iskip_at  = new int[_nTelPlanes];
+    int     *ihit_at   = new int[_nTelPlanes];
+    int     _slopeSet  = 0;
+    float   *_slopeX   = new float[_nTelPlanes];
+    float   *_slopeY   = new float[_nTelPlanes];
+    int     *_slope_at = new int[_nTelPlanes];
+  
+    bool _SlopeIsTight = true;
+  
+    for(type_fitcount ichoice = nChoice-_planeMod[istart]-1; ichoice >= 0; ichoice--)  
+    {        
+      int    nChoiceFired =  0 ;
+      double choiceChi2   = -1.;
+      double trackChi2    = -1.;
+      int    ifirst       = -1 ;
+      int    ilast        =  0 ;
+      int    nleft        =  0 ;
+     
 
+
+      if(_UseSlope)
+      {
+          iskip     = 0;
+          _slopeSet = 0;
+          _SlopeIsTight = true;
+      }
+ 
       // Fill position and error arrays for this hit configuration
+      for(int ipl=0;ipl<_nTelPlanes;ipl++)  
+      {
+         _planeX[ipl] = _planeY[ipl] = _planeEx[ipl] = _planeEy[ipl] = 0.;
+         if(_UseSlope)
+         {
+            iskip_at[ipl]  = 0 ;
+            ihit_at[ipl]   = 0 ;
+            _slopeX[ipl]   = 1.;
+            _slopeY[ipl]   = 1.;      
+            _slope_at[ipl] = 0 ;      
+         }
+      }
+       
+      for(int ipl=0;ipl<_nTelPlanes;ipl++)  
+      {
+        if(_isActive[ipl])  
+        {
+          int ihit   = (ichoice/_planeMod[ipl])%_planeChoice[ipl];
+        
 
-      for(int ipl=0;ipl<_nTelPlanes;ipl++)  {
-        _planeX[ipl]=_planeY[ipl]=_planeEx[ipl]=_planeEy[ipl]=0.;
-
-        if(_isActive[ipl])  {
-          int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
-
-          if(ihit<_planeHits[ipl])    {
-            int jhit = planeHitID[ipl].at(ihit);
-            _planeX[ipl]=hitX[jhit];
-            _planeY[ipl]=hitY[jhit];
-            _planeEx[ipl]=(_useNominalResolution)?_planeResolution[ipl]:hitEx[jhit];
-            _planeEy[ipl]=(_useNominalResolution)?_planeResolution[ipl]:hitEy[jhit];
-            if(ifirst<0) {
-              ifirst=ipl;
+          if(ihit<_planeHits[ipl])    
+          {
+            int jhit      = planeHitID[ipl].at(ihit);
+            
+            _planeX[ipl]  = hitX[jhit];
+            _planeY[ipl]  = hitY[jhit];
+            _planeEx[ipl] = (_useNominalResolution)?_planeResolution[ipl]:hitEx[jhit];
+            _planeEy[ipl] = (_useNominalResolution)?_planeResolution[ipl]:hitEy[jhit];
+            _planeZ[ipl]  = hitZ[jhit];
+ 
+ 
+          
+            if(ifirst<0) 
+            {            
+              ifirst    = ipl;
             }
-            ilast=ipl;
-            nleft=0;
-            nChoiceFired++;
-          }  else {
-            nleft++;
+            else
+                if( _UseSlope )
+            {
+                _slopeX[ipl] = (_planeX[ipl]-_planeX[ifirst])/(_planeZ[ipl]-_planeZ[ifirst]);
+                _slopeY[ipl] = (_planeY[ipl]-_planeY[ifirst])/(_planeZ[ipl]-_planeZ[ifirst]);                
+                _slopeSet++;
+                _slope_at[_slopeSet-1] = ipl;
+         
+                if( _slopeSet > 1 )
+                {
+                    int ti1 = _slope_at[_slopeSet-1];
+                    int ti0 = _slope_at[_slopeSet-1-1];                    
+                    _SlopeIsTight = 
+                        abs( _slopeX[ti1] - _slopeX[ti0] ) < _SlopeXLimit
+                        &&
+                        abs( _slopeY[ti1] - _slopeY[ti0] ) < _SlopeYLimit;
+                }
+             }
+ 
+                   
+                if ( 
+                        _UseSlope 
+                        &&
+                        !(
+                         _SlopeIsTight
+                        &&
+                         (  
+                         abs( _planeX[ipl] - _planeX[ifirst] ) <  _SlopeDistanceMax 
+                         &&
+                         abs( _planeY[ipl] - _planeY[ifirst] ) <  _SlopeDistanceMax  
+                         )
+                        )
+                        )
+                {
+                    iskip++;
+                    iskip_at[iskip-1] = ipl;
+                    nleft++;                        // ??? what is this counting?  
+                    if(iskip>_allowSkipHits)break;
+                }
+                else
+                {   
+                    ilast = ipl;
+                    nleft = 0;
+                    nChoiceFired++;
+                    ihit_at[ipl] = nChoiceFired;
+                }
+          } 
+          else 
+          {
+              nleft++;
+              if( _UseSlope )
+              {
+                iskip++;
+                iskip_at[iskip-1] = ipl;
+              }
+              if(iskip>_allowSkipHits)break;
           }
         }
       }
 
-      // Check number of selected hits
+
+     // Check number of selected hits
       // =============================
 
+      if( _UseSlope )
+      {
+
+        if(iskip > _allowSkipHits ) 
+        {
+         int ilast_mod=iskip_at[_allowSkipHits];
+           ichoice-=_planeMod[ilast_mod]-1;
+           continue;
+        }
+
+      }
+      else
+      {
       // No fit to 1 hit :-)
 
-      if(nChoiceFired < 2) continue;
-
+        if(nChoiceFired < 2) 
+        {
+           continue;
+        }
       // Fit with 2 hits make sense only with beam constraint, or
       // when 2 point fit is allowed
 
-      if(nChoiceFired==2 && !_useBeamConstraint
-         && nChoiceFired + _allowMissingHits < _nActivePlanes) continue;
-
+        if(
+                nChoiceFired==2 
+                && !_useBeamConstraint
+                && nChoiceFired + _allowMissingHits < _nActivePlanes
+               ) 
+        {
+           continue;
+        }
+      
       // Skip also if the fit can not be extended to proper number
       // of planes; no need to check remaining planes !!!
-      if(nChoiceFired + nleft < _nActivePlanes - _allowMissingHits ) {
-        ichoice-=_planeMod[ilast]-1;
-        continue;
+        if(nChoiceFired + nleft < _nActivePlanes - _allowMissingHits ) {
+          ichoice-=_planeMod[ilast]-1;
+         continue;
+        }
       }
-
-
       // Select fit method
       // "Nominal" fit only if all active planes used
 
+      
       if(_useNominalResolution && (nChoiceFired == _nActivePlanes)) {
         choiceChi2 = NominalFit();
       } else {
@@ -1034,8 +1185,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         else choiceChi2 = MatrixFit();
       }
 
-      // Fit failed ?
 
+      // Fit failed ?
       if(choiceChi2 < 0.)   {
         streamlog_out ( WARNING2 ) << "Fit to " << nChoiceFired
                                    << " planes failed for event " << event->getEventNumber()
@@ -1045,35 +1196,52 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       }
 
       // Penalty for missing or skiped hits
-
-      double penalty = (_nActivePlanes-nFiredPlanes)*_missingHitPenalty
-        +   (nFiredPlanes-nChoiceFired)*_skipHitPenalty ;
+      double penalty = 
+          (_nActivePlanes-nFiredPlanes)*_missingHitPenalty
+          +   
+          (nFiredPlanes-nChoiceFired)*_skipHitPenalty ;
 
 
       trackChi2 = choiceChi2+penalty;
 
       if(nChoiceFired + _allowMissingHits >= _nActivePlanes &&
          nChoiceFired + _allowSkipHits    >= nFiredPlanes  &&
-         trackChi2 < chi2min) {
+         trackChi2 < chi2min) 
+      {
         chi2min=trackChi2;
       }
 
       // Check if better than best fit (or chi2Max if hit ambiguity allowed)
       // If not: skip also all track possibilities which include
       // this hit selection !!!
-      if((choiceChi2 >= _chi2Max) ||
-         (choiceChi2 >=  chi2best  && !ambiguityMode) ) {
-        ichoice-=_planeMod[ilast]-1;
-        continue;
-      }
+//      if(
+//              (choiceChi2 >= _chi2Max) 
+//             ||
+//             (choiceChi2 >=  chi2best  && !ambiguityMode) 
+//              ) 
+//      {        
+//          int ilast_mod = ilast;
+////          if( _UseSlope ) ilast_mod = iskip_at[_allowSkipHits]; 
+//          ichoice-=_planeMod[ilast_mod]-1;
+//          continue;
+//      } // this Condition leads ot 25% inefficiency in track finding; to be
+//      investigated later.
+
 
       //
       // Skip fit if could not be accepted (too few planes fired)
       //
-      if(nChoiceFired + _allowMissingHits < _nActivePlanes ||
-         nChoiceFired + _allowSkipHits    < nFiredPlanes ) {
+
+      if( !_UseSlope)
+      if(
+              nChoiceFired + _allowMissingHits < _nActivePlanes 
+              ||
+              nChoiceFired + _allowSkipHits    < nFiredPlanes 
+              ) 
+      {
         continue;
       }
+
 
       // Best fit ?
 
@@ -1152,14 +1320,13 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         // Following parameters are not used for Telescope
         // and are set to zero (just in case)
         fittrack->setOmega(0.);     // curvature of the track
-        fittrack->setD0(0.);        // impact paramter of the track in (r-phi)
-        fittrack->setZ0(0.);        // impact paramter of the track in (r-z)
+        fittrack->setD0(0.);        // impact parameter of the track in (r-phi)
+        fittrack->setZ0(0.);        // impact parameter of the track in (r-z)
         fittrack->setPhi(0.);       // phi of the track at reference point
         fittrack->setTanLambda(0.); // dip angle of the track at reference point
 
         // Used class members
-
-        fittrack->setChi2(trackChi2);  // Chi2 of the fit (including penalties)
+        fittrack->setChi2(trackChi2);   // Chi2 of the fit (including penalties)
         fittrack->setNdf(nChoiceFired); // Number of planes fired (!)
 
         // Fitted position at DUT is stored as Reference Point
@@ -1210,11 +1377,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
           if(_OutputHitsInTrack)   fittrack->addHit(fitpoint);
 
-
-          //                 << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]
-          //       << "   Y = " << hitY[ihit] << " +/- " <<
-          //       hitEy[ihit]
-
           // add measured point to track (if found)
 
           if(_InputHitsInTrack && _isActive[ipl])  {
@@ -1229,7 +1391,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
               //
               corrhit->setType(meshit->getType());
               corrhit->setTime(meshit->getTime());
-              corrhit->setdEdx(meshit->getdEdx());
+//               corrhit->setdEdx(meshit->getdEdx()); // OBSOLETE member function
+              corrhit->setEDep(meshit->getEDep());
               corrhit->rawHits()=meshit->getRawHits();
               //
               // Use corrected position
@@ -1425,7 +1588,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
       // Track points fitted in each plane are stored as track hits
 
-      for(int ipl=0;ipl<_nTelPlanes;ipl++)  {
+      for(int ipl=0;ipl<_nTelPlanes;ipl++)  
+      {
         TrackerHitImpl * fitpoint = new TrackerHitImpl;
 
         // Hit type is set to 32, to distinguish from measured
@@ -1461,20 +1625,17 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         fitpointvec->push_back(fitpoint);
 
         //   add fitted point to track
-
+        //   
         if(_OutputHitsInTrack)  fittrack->addHit(fitpoint);
 
-
-        //                 << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]
-        //       << "   Y = " << hitY[ihit] << " +/- " <<
-        //       hitEy[ihit]
-
         // add measured point to track (if found)
-
-        if(_InputHitsInTrack && _isActive[ipl])  {
+        // 
+        if(_InputHitsInTrack && _isActive[ipl])  
+        {
           int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
 
-          if(ihit<_planeHits[ipl])  {
+          if(ihit<_planeHits[ipl])  
+          {
             int jhit = planeHitID[ipl].at(ihit);
             TrackerHitImpl * meshit = dynamic_cast<TrackerHitImpl*>( col->getElementAt(jhit) ) ;
             TrackerHitImpl * corrhit = new TrackerHitImpl;
@@ -1483,7 +1644,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
             //
             corrhit->setType(meshit->getType());
             corrhit->setTime(meshit->getTime());
-            corrhit->setdEdx(meshit->getdEdx());
+ //           corrhit->setdEdx(meshit->getdEdx());  ! OBSOLETE 
+            corrhit->setEDep(meshit->getEDep());
             corrhit->rawHits()=meshit->getRawHits();
             //
             // Use corrected position
@@ -1513,8 +1675,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         // Use position at DUT as a track reference point.
         // If no DUT present: use position in the first plane !
 
-        if(ipl==_iDUT || (_iDUT<0 && ipl==0)) {
-          for(int iref=0;iref<3;iref++) {
+        if(ipl==_iDUT || (_iDUT<0 && ipl==0)) 
+        {
+          for(int iref=0;iref<3;iref++) 
+          {
             refpoint[iref]=pos[iref];
           }
         }
@@ -1530,11 +1694,15 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     // If multiple tracks allowed: remove hits from fitted track from the list
 
-    if(ibest>=0 && _searchMultipleTracks && !ambiguityMode )  {
-      for(int ipl=0;ipl<_nTelPlanes;ipl++) {
-        if(_isActive[ipl]) {
+    if(ibest>=0 && _searchMultipleTracks && !ambiguityMode )  
+    {
+      for(int ipl=0;ipl<_nTelPlanes;ipl++) 
+      {
+        if(_isActive[ipl]) 
+        {
           int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
-          if(ihit<_planeHits[ipl]){
+          if(ihit<_planeHits[ipl])
+          {
             planeHitID[ipl].erase(planeHitID[ipl].begin()+ihit);
             nGoodHit--;
           }
@@ -1542,43 +1710,51 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       }
     }
     firstTrack=false;
-  } while(_searchMultipleTracks && ibest>=0 &&
-          nGoodHit + _allowMissingHits >= _nActivePlanes &&  !ambiguityMode );
+  } while(
+          _searchMultipleTracks && ibest>=0 &&
+          nGoodHit + _allowMissingHits >= _nActivePlanes &&  !ambiguityMode 
+          );
 
   // End of track loop
 
-  if(nFittedTracks > 0 ) {
+  if(nFittedTracks > 0 ) 
+  {
     event->addCollection(fittrackvec,_outputTrackColName);
     event->addCollection(fitpointvec,_outputHitColName);
     event->addCollection(corrpointvec,_correctedHitColName);
-  } else {
+  } 
+  else 
+  {
     delete fittrackvec;
     delete fitpointvec;
     delete corrpointvec;
   }
 
-  if ( fittrackvec->size() == 0 ) {
+  if ( fittrackvec->size() == 0 ) 
+  {
     ++_noOfEventWOTrack;
   }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   // Number of reconstructed tracks
-
+  // 
   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(nFittedTracks);
 #endif
 
   // Hit ambiguity
-
-  if ( ambiguityMode ) {
-    for(int ihit=0; ihit< nHit ; ihit++) {
-      if(_isActive[hitPlane[ihit]]) {
+  // 
+  if ( ambiguityMode ) 
+  {
+    for(int ihit=0; ihit< nHit ; ihit++) 
+    {
+      if(_isActive[hitPlane[ihit]]) 
+      {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
         (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_hitAmbiguityHistoName]))->fill(hitFits[ihit]);
 #endif
       }
     }
-
   }
 
 
@@ -1999,10 +2175,12 @@ int EUTelTestFitter::DoAnalFit(double * pos, double *err)
 
 
   for(int ipl=0; ipl<_nTelPlanes;ipl++)
+  {
     for(int jpl=0; jpl<_nTelPlanes;jpl++)
       {
         int imx=ipl+jpl*_nTelPlanes;
 
+      
         _fitArray[imx] = 0.;
 
         if(jpl==ipl-2)
@@ -2049,8 +2227,8 @@ int EUTelTestFitter::DoAnalFit(double * pos, double *err)
         if(ipl+jpl==1 && _useBeamConstraint)
           _fitArray[imx] -= _planeScat[0]*_planeDist[0]*_planeDist[0] ;
 
-
-      }
+        }
+  }
 
   int status=GaussjSolve(_fitArray,pos,_nTelPlanes) ;
 
@@ -2222,3 +2400,5 @@ int EUTelTestFitter::GaussjSolve(double *alfa,double *beta,int n)
 }
 
 #endif
+
+

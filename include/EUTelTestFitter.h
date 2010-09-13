@@ -504,7 +504,8 @@ namespace eutelescope {
     double * _planeEx ;
     double * _planeY  ;
     double * _planeEy ;
-
+    double * _planeZ  ;
+ 
     double * _planeDist ;
     double * _planeScat ;
 
@@ -563,6 +564,14 @@ namespace eutelescope {
     static std::string _nBestHistoName;
 
     static std::string _hitAmbiguityHistoName;
+
+    // -- 02 August 2010, libov@mail.desy.de ------
+    // to include correlation band track selection
+    bool            _UseSlope;
+    float           _SlopeXLimit;
+    float           _SlopeYLimit;
+    float           _SlopeDistanceMax; 
+    // --------------------------------------------
 
 #endif
 
