@@ -35,7 +35,31 @@ are still valid for the digital sensors/Mimosa-26)
 
 The EUTelescope library comes with the following features:
 
-<b>[Pro]</b> Version v00-02-03 
+<b>[Pro]</b> Version v00-03-00 
+@li Few major changes in the data processing flow:
+<ul>
+<li> Running the HotPixel processor in the Converter Step:
+<ul>
+<li> this has to be done on special Off-Beam runs
+<li> dumps the hotpixel collection into a dedicated db file (slcio)
+<li> the hitpixel-db.slcio to be read at the Clustering Step 
+<li> application of the hot pixel map reduces the combinatorics by large fraction
+(the amount depends on the threshold which defines a pixel being hot or not)
+</ul>
+</ul>
+@li Several control cards are added to the Fitter Processor, they are:
+<ul>
+<li> UseSlope - turn on the optimisation for the track candidates search 
+<li> SlopeDistanceMax - defines a tube, which is parallel to axis Z, to reduce
+the combinatorics of all possible hit combinations when trying to form a new
+track candidate
+<li> SlopeXLimit, SlopeYLimit - define the allowed deviations between the
+hit pairs constituting a track candidate
+</ul>
+@li Several bug fixes: variable initialisation issues.
+
+
+<b>[Old]</b> Version v00-02-03 
 @li Optimisation of the status collection (speedup for the Digital Fixed Frame Clustering).
 @li Fix of the cluster center position in the HitMaker, it makes no effect for
 DFF, was buggy for the SparseClustering2 (SP2). 
