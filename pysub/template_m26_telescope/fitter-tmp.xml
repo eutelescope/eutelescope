@@ -88,9 +88,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits </parameter>
   <!--Collection name for fitted tracks-->
   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track </parameter>
-  <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
-  <parameter name="DistanceMax" type="float" value="@DistanceMax@"/>
-  <!--Ids of layers for which alignment corrections are given-->
+ <!--Ids of layers for which alignment corrections are given-->
   <!--parameter name="AlignLayerIDs" type="IntVec"> </parameter-->
   <!--Rotation around Z for layer alignment-->
   <!--parameter name="AlignLayerRotZ" type="FloatVec"> </parameter-->
@@ -104,6 +102,14 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <parameter name="AllowMissingHits" type="int" value="@AllowedMissingHits@"/>
   <!--Allowed number of hits removed from the track-->
   <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@ "/>
+  <!--Decide now weather you want to rely on the track candidate slope permanence in X and Y, default=true -->
+  <parameter name="UseSlope"   type="bool"  value="true"/>
+  <!--Set the allowed maximum difference of the slope in X (from plane to plane), default = 0.01 -->
+  <parameter name="SlopeXLimit"   type="float" value="0.0001"/>
+  <!--Set the allowed maximum difference of the slope in Y (from plane to plane), default = 0.01 -->
+  <parameter name="SlopeYLimit"   type="float" value="0.0001"/>
+  <!--Maximal allowed (initial) distance between hits in the XY plane between the planes,default = 2. mm -->
+  <parameter name="SlopeDistanceMax" type="float" value="@DistanceMax@"/>
   <!--Assumed angular spread of the beam [rad]-->
   <!--parameter name="BeamSpread" type="double" value="0.1"/-->
   <!--Maximum Chi2 for accepted track fit-->

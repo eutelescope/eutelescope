@@ -78,7 +78,9 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
   <parameter name="DistanceMax" type="float" value="@DistanceMax@"/>
   <!--Exclude planes from fit.-->
-  <!--parameter name="ExcludePlanes" type="IntVec"> </parameter-->
+  <parameter name="ExcludePlanes" type="IntVec">@ExcludePlanes@ </parameter>
+  <!--Fix sensor planes in the fit according to their sensor ids.-->
+  <parameter name="FixedPlanes" type="IntVec">@FixedPlanes@ </parameter>
   <!--Generate a steering file for the pede program.-->
   <parameter name="GeneratePedeSteerfile" type="int" value="1"/>
   <!--Selects the source of input hits. 0 - hits read from hitfile with simple trackfinding. 1 - hits read from output of tracking processor. 2 - Test mode. Simple internal simulation and simple trackfinding.-->
