@@ -241,22 +241,29 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
     LCCollectionVec * xEtaCollection = 0x0, * yEtaCollection = 0x0;
 
-    if ( _etaCorrection == 1 ) {
+    if ( _etaCorrection == 1 ) 
+    {
       // this means that the user wants to apply the eta correction to
       // the center of gravity, so we need to have the two Eta function
       // collections
 
-      try {
+      try 
+      {
         xEtaCollection = static_cast<LCCollectionVec*> (event->getCollection( _etaCollectionNames[0] )) ;
-      } catch (DataNotAvailableException& e) {
+      }
+      catch (DataNotAvailableException& e) 
+      {
         streamlog_out ( ERROR1 )  << "The eta collection " << _etaCollectionNames[0] << " is not available" << endl
                                   << "Continuing without eta correction " << endl;
         _etaCorrection = 0;
       }
 
-      try {
+      try 
+      {
         yEtaCollection = static_cast<LCCollectionVec*> (event->getCollection( _etaCollectionNames[1] )) ;
-      } catch (DataNotAvailableException& e) {
+      }
+      catch (DataNotAvailableException& e) 
+      {
         streamlog_out ( ERROR1 ) << "The eta collection " << _etaCollectionNames[1] << " is not available" << endl
                                  << "Continuing without eta correction " << endl;
         _etaCorrection = 0;
@@ -264,22 +271,26 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     }
 
 
-    if ( isFirstEvent() && ( _etaCorrection == 1 )) {
+    if ( isFirstEvent() && ( _etaCorrection == 1 )) 
+    {
 
       EUTelEtaFunctionImpl * func = static_cast< EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt( 0 ) );
 
-      if ( func->getNInt() != 0 ) {
+      if ( func->getNInt() != 0 ) 
+      {
         _etaVersion = 2;
       } else {
         _etaVersion = 1;
       }
 
 
-      for ( size_t iDet = 0 ; iDet < xEtaCollection->size(); iDet++) {
+      for ( size_t iDet = 0 ; iDet < xEtaCollection->size(); iDet++) 
+      {
 
         EUTelEtaFunctionImpl * xEtaFunc = static_cast<EUTelEtaFunctionImpl*> ( xEtaCollection->getElementAt(iDet) );
 
-        if ( _etaVersion == 2 ) {
+        if ( _etaVersion == 2 ) 
+        {
           _etaMap[ xEtaFunc->getSensorID() ] = iDet;
         }
 
@@ -301,24 +312,32 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     double xPitch = 0., yPitch = 0.;
     double xPointing[2] = { 1., 0. }, yPointing[2] = { 1., 0. };
 
-    for ( int iPulse = 0; iPulse < pulseCollection->getNumberOfElements(); iPulse++ ) {
+    for ( int iPulse = 0; iPulse < pulseCollection->getNumberOfElements(); iPulse++ ) 
+    {
 
-      TrackerPulseImpl     * pulse   = static_cast<TrackerPulseImpl*> ( pulseCollection->getElementAt(iPulse) );
-      EUTelVirtualCluster  * cluster;
-      ClusterType type = static_cast<ClusterType>(static_cast<int>((pulseCellDecoder(pulse)["type"])));
+        
+        TrackerPulseImpl     * pulse   = static_cast<TrackerPulseImpl*> ( pulseCollection->getElementAt(iPulse) );
+        EUTelVirtualCluster  * cluster;
+        ClusterType type = static_cast<ClusterType>(static_cast<int>((pulseCellDecoder(pulse)["type"])));
 
-      if ( type == kEUTelDFFClusterImpl ) {
+        
+        if ( type == kEUTelDFFClusterImpl ) 
+        {
 
         // digital fixed cluster implementation. Remember it can come from
-        // both RAW and ZS data
-        cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
-      } else if ( type == kEUTelFFClusterImpl ) {
-
+        // both RAW and ZS data        
+            cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
+        }
+        else if ( type == kEUTelFFClusterImpl ) 
+        {
+           
         // fixed cluster implementation. Remember it can come from
         // both RAW and ZS data
-        cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
+            cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
 
-      } else if ( type == kEUTelSparseClusterImpl ) {
+        }
+        else if ( type == kEUTelSparseClusterImpl ) 
+        {
 
         // ok the cluster is of sparse type, but we also need to know
         // the kind of pixel description used. This information is
@@ -331,23 +350,32 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
         // now we know the pixel type. So we can properly create a new
         // instance of the sparse cluster
-        if ( pixelType == kEUTelSimpleSparsePixel ) {
+        if ( pixelType == kEUTelSimpleSparsePixel ) 
+        {
           cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
             ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
-        } else {
+        } 
+        else 
+        {
           streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
           throw UnknownDataTypeException("Pixel type unknown");
         }
 
-      } else if ( type == kEUTelBrickedClusterImpl ) { //!HACK TAKI
+
+        }
+        else if ( type == kEUTelBrickedClusterImpl ) 
+        { //!HACK TAKI
 
         //  bricked cluster implementation.
         cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ); //!HACK TAKI
 
-      } else {
-        streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
-        throw UnknownDataTypeException("Cluster type unknown");
-      }
+      
+        }
+        else 
+        {
+            streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
+            throw UnknownDataTypeException("Cluster type unknown");
+        }
 
       // there could be several clusters belonging to the same
       // detector. So update the geometry information only if this new
@@ -437,7 +465,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       // get the position of the seed pixel. This is in pixel number.
 //      int xCluCenter, yCluCenter;
 //      cluster->getCenterCoord(xCluCenter, yCluCenter);
-      int xCluSeed, yCluSeed;
+      int xCluSeed = 0;
+      int yCluSeed = 0;
       cluster->getSeedCoord(xCluSeed, yCluSeed);
 
 
@@ -465,7 +494,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
             }
       }
 
-      float xShift, yShift;
+      float xShift = 0.;
+      float yShift = 0.;
 
       if ( _cogAlgorithm == "full" )
       {
@@ -476,7 +506,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         else
         {
             cluster->getCenterOfGravityShift( xShift, yShift );
-//            printf("I: xShift:%8.3f yShift:%8.3f  _xycluSize: %7d %7d \n", xShift, yShift);
         }
       }
       else if ( _cogAlgorithm == "npixel" )
@@ -488,7 +517,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         else
         {
             cluster->getCenterOfGravityShift( xShift, yShift, _nPixel );
-//            printf("M: xShift:%8.3f yShift:%8.3f  _xycluSize: %7d %7d \n", xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
        }
       }
       else if ( _cogAlgorithm == "nxmpixel")
@@ -504,21 +532,13 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         {
             //will be okay for a brickedClusterImpl! accounted for such a call internally.
             cluster->getCenterOfGravityShift( xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
-//            printf("X: xShift:%8.3f yShift:%8.3f  _xycluSize: %7d %7d \n", xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
         }
       }
-/*
-      if(cluster->getTotalCharge() > 1) {         
-          printf("-------------------------------------------\n");
-          printf("etaCorrecion: %2d  Bricked: %p \n", _etaCorrection, p_tmpBrickedCluster );
-          printf("xShift:%8.3f yShift:%8.3f type: %5d\n",xShift,yShift, type);
-      }
-  */   
+     
       double xCorrection = static_cast<double> (xShift) ;
       double yCorrection = static_cast<double> (yShift) ;
       //!HACK TAKI if (_etaCorrection==1 && p_tmpBrickedCluster != NULL) THEN DO NOT FORGET
       //!     TO APPLY THE GLOBAL SEED COORD CORRECTION ON TOP AFTERWARDS!
-
 
       //if etaCorrection is to applied, then it will overwrite the two Corrections in here:
       if ( _etaCorrection == 1 ) {
@@ -606,32 +626,22 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       double xDet = ( static_cast<double> (xCluSeed) + xCorrection + 0.5 ) * xPitch ;
       double yDet = ( static_cast<double> (yCluSeed) + yCorrection + 0.5 ) * yPitch ;
 
-/*
-      if(cluster->getTotalCharge() > 1) {         
-          printf("-------------------------------------------\n");
-          printf("%10s \n", _cogAlgorithm.c_str());
-          printf("run:%8d    event:%8d  charge: %8.3f \n (xZero: %8.3f yZero:%8.3f zZero:%8.3f)\n", 
-                  event->getRunNumber(), event->getEventNumber(), 
-                  cluster->getTotalCharge(),  xZero, yZero, zZero
-                  );
-          printf("xCluSeed: %-8d xCorr: %-8.3f xPitch(%-8.3f) xDet(%-8.3f) \n", xCluSeed, xCorrection, xPitch, xDet);
-          printf("yCluSeed: %-8d yCorr: %-8.3f yPitch(%-8.3f) yDet(%-8.3f) \n", yCluSeed, yCorrection, yPitch, yDet);
-
-      }
-*/
       
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       string tempHistoName;
-      if ( _histogramSwitch ) {
+      if ( _histogramSwitch ) 
+      {
         tempHistoName =  _hitHistoLocalName + "_" + to_string( detectorID );
         if ( AIDA::IHistogram2D* histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap[ tempHistoName ]) )
-          histo->fill(xDet, yDet);
-        else {
-          streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
-                                    << ".\nDisabling histogramming from now on " << endl;
-          _histogramSwitch = false;
+        {
+            histo->fill(xDet, yDet);
         }
-
+        else 
+        {
+            streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
+                                      << ".\nDisabling histogramming from now on " << endl;
+            _histogramSwitch = false;
+        }
       }
 #endif
 
@@ -649,7 +659,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       double sign = 0;
       if      ( xPointing[0] < -0.7 )       sign = -1 ;
       else if ( xPointing[0] > 0.7 )       sign =  1 ;
-      else {
+      else 
+      {
         if       ( xPointing[1] < -0.7 )    sign = -1 ;
         else if  ( xPointing[1] > 0.7 )    sign =  1 ;
       }
@@ -657,7 +668,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
       if      ( yPointing[0] < -0.7 )       sign = -1 ;
       else if ( yPointing[0] > 0.7 )       sign =  1 ;
-      else {
+      else 
+      {
         if       ( yPointing[1] < -0.7 )    sign = -1 ;
         else if  ( yPointing[1] > 0.7 )    sign =  1 ;
       }
@@ -666,20 +678,30 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       telPos[2] = zZero + 0.5 * zThickness;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-      if ( _histogramSwitch ) {
+      if ( _histogramSwitch ) 
+      {
         tempHistoName = _hitHistoTelescopeName + "_" + to_string( detectorID );
         AIDA::IHistogram2D * histo2D = dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[ tempHistoName ] );
-        if ( histo2D ) histo2D->fill( telPos[0], telPos[1] );
-        else {
+        if ( histo2D )
+        {
+            histo2D->fill( telPos[0], telPos[1] );
+        }
+        else 
+        {
           streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
                                     << ".\nDisabling histogramming from now on " << endl;
           _histogramSwitch = false;
         }
 
-        if ( _3DHistoSwitch ) {
+        if ( _3DHistoSwitch ) 
+        {
           AIDA::IHistogram3D * histo3D = dynamic_cast<AIDA::IHistogram3D*> (_aidaHistoMap[ _densityPlotName ] );
-          if ( histo3D ) histo3D->fill( telPos[0], telPos[1], telPos[2] );
-          else {
+          if ( histo3D ) 
+          {
+              histo3D->fill( telPos[0], telPos[1], telPos[2] );
+          }
+          else 
+          {
             streamlog_out ( ERROR1 )  << "Not able to retrieve histogram pointer for " << tempHistoName
                                       << ".\nDisabling histogramming from now on " << endl;
             _histogramSwitch = false;
