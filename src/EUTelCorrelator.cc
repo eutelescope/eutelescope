@@ -38,6 +38,7 @@
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram2D.h>
 #include <AIDA/ITree.h>
+#include <AIDA/IAxis.h>
 #endif
 
 // gear includes <.h>
@@ -67,6 +68,11 @@ std::string EUTelCorrelator::_clusterXCorrelationHistoName   = "ClusterXCorrelat
 std::string EUTelCorrelator::_clusterYCorrelationHistoName   = "ClusterYCorrelationHisto";
 std::string EUTelCorrelator::_hitXCorrelationHistoName       = "HitXCorrelatioHisto";
 std::string EUTelCorrelator::_hitYCorrelationHistoName       = "HitYCorrelationHisto";
+
+std::string EUTelCorrelator::_clusterXCorrShiftHistoName          = "ClusterXCorrShiftHisto";
+std::string EUTelCorrelator::_clusterYCorrShiftHistoName          = "ClusterYCorrShiftHisto";
+std::string EUTelCorrelator::_clusterXCorrShiftProjectionHistoName   = "ClusterXCorrShiftProjectionHisto";
+std::string EUTelCorrelator::_clusterYCorrShiftProjectionHistoName   = "ClusterYCorrShiftProjectionHisto";
 #endif
 
 EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
@@ -83,6 +89,9 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
                           "Hit collection name",
                           _inputHitCollectionName, string ( "hit" ));
 
+  registerProcessorParameter ("ClusterChargeMinimum",
+                              "Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)",
+                              _clusterChargeMin, static_cast<int> (2));
 
 }
 
@@ -333,6 +342,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
         // we catch the coordinates of the external seed
 
         externalCluster->getCenterOfGravity( externalXCenter, externalYCenter ) ;
+        if( externalCluster->getTotalCharge() <= _clusterChargeMin ) continue;
 
         for ( size_t iInt = 0;  iInt <  inputClusterCollection->size() ; ++iInt ) {
 
@@ -382,6 +392,9 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
             throw UnknownDataTypeException("Cluster type unknown");
           }
+
+          if( internalCluster->getTotalCharge() < _clusterChargeMin ) continue;
+
           int internalSensorID = pulseCellDecoder( internalPulse ) [ "sensorID" ] ;
 
           if ( _sensorIDtoZOrderMap[internalSensorID] == _sensorIDtoZOrderMap[externalSensorID] +1) {
@@ -399,11 +412,11 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             // we input the coordinates in the correlation matrix, one
             // for each type of coordinate: X and Y
 
-            _clusterXCorrelationMatrix[ externalSensorID ][ internalSensorID ]->
-              fill( externalXCenter, internalXCenter );
-            _clusterYCorrelationMatrix[ externalSensorID ][ internalSensorID ]->
-              fill( externalYCenter, internalYCenter );
+            _clusterXCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalXCenter, internalXCenter );
+            _clusterYCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalYCenter, internalYCenter );
 
+            _clusterXCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalXCenter, internalXCenter-externalXCenter );
+            _clusterYCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalYCenter, internalYCenter-externalYCenter );
           } // endif
 
           delete internalCluster;
@@ -412,6 +425,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
         delete externalCluster;
       } // external loop
+
     } // endif hasCluster
 
 
@@ -468,6 +482,99 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
 void EUTelCorrelator::end() {
 
+    if( _hasClusterCollection)
+    {
+        for ( int inPlane = 0 ; inPlane < _siPlanesLayerLayout->getNLayers(); inPlane++ ) 
+        {           
+            for ( int exPlane = 0 ; exPlane < _siPlanesLayerLayout->getNLayers(); exPlane++ ) 
+            {
+                if( _clusterXCorrShiftMatrix[ exPlane ][ inPlane ] == 0 ) continue;
+//                if( _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis() == 0 ) continue;
+                if( _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins() <= 0 ) continue;
+//                std::cout << _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]  << std::endl;
+//                std::cout << _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis()  << std::endl;
+//                std::cout << _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins()  << std::endl;
+               
+                float _heighestBinX = 0.;
+                for(int ibin = 0; ibin < _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins(); ibin++)
+                {
+                    double xbin =  
+                        _clusterXCorrShiftProjection[ inPlane ]->axis().binLowerEdge(ibin)
+                        +
+                        _clusterXCorrShiftProjection[ inPlane ]->axis().binWidth(ibin)/2.
+                        ;
+                    double _binValue = _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->binEntriesY( ibin );
+                    _clusterXCorrShiftProjection[ inPlane ]->fill( xbin, _binValue );
+                    if( _binValue > _heighestBinX )
+                    {
+                        _heighestBinX = _binValue;
+                    }
+                }
+                ;
+               
+                float _heighestBinY = 0.;
+                for(int ibin = 0; ibin < _clusterYCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins(); ibin++)
+                {
+                    double xbin =  
+                        _clusterYCorrShiftProjection[ inPlane ]->axis().binLowerEdge(ibin)
+                        +
+                        _clusterYCorrShiftProjection[ inPlane ]->axis().binWidth(ibin)/2.
+                        ;
+                    double _binValue = _clusterYCorrShiftMatrix[ exPlane ][ inPlane ]->binEntriesY( ibin );
+                    _clusterYCorrShiftProjection[ inPlane ]->fill( xbin, _binValue );
+                    if( _binValue > _heighestBinY )
+                    {
+                        _heighestBinY = _binValue;
+                    }
+                }
+
+                // get the highert bin and its neighbours
+                // 
+                double _correlationBandBinsX     = 0.;
+                double _correlationBandCenterX   = 0.;
+
+                for(int ibin = 0; ibin < _clusterXCorrShiftProjection[ inPlane ]->axis().bins(); ibin++)
+                {
+                    double ybin =  _clusterXCorrShiftProjection[ inPlane ]->binHeight(ibin); 
+                   
+                    if( ybin < _heighestBinX/2.) continue;
+                    double xbin =  
+                        _clusterXCorrShiftProjection[ inPlane ]->axis().binLowerEdge(ibin)
+                        +
+                        _clusterXCorrShiftProjection[ inPlane ]->axis().binWidth(ibin)/2.
+                        ;
+                    
+
+                    _correlationBandBinsX   += ybin;
+                    _correlationBandCenterX += xbin*ybin;
+                }
+
+                
+                double _correlationBandBinsY     = 0.;
+                double _correlationBandCenterY   = 0.;
+
+                for(int ibin = 0; ibin < _clusterYCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins(); ibin++)
+                {
+                    double ybin =  _clusterYCorrShiftProjection[ inPlane ]->binHeight(ibin); 
+                    
+                    if( ybin < _heighestBinY/2.) continue;
+                    double xbin =  
+                        _clusterYCorrShiftProjection[ inPlane ]->axis().binLowerEdge(ibin)
+                        +
+                        _clusterYCorrShiftProjection[ inPlane ]->axis().binWidth(ibin)/2.
+                        ;                    
+                  
+                   _correlationBandBinsY   += ybin;
+                   _correlationBandCenterY += ybin*xbin;
+                }
+
+                printf("for plane %d  the X offset is %9.2f, the Y offset is %9.2f \n", inPlane, _correlationBandCenterX/_correlationBandBinsX, _correlationBandCenterY/_correlationBandBinsY );
+                printf("for plane %d  the X offset is %9.2f, the Y offset is %9.2f \n", inPlane, 18.4*_correlationBandCenterX/_correlationBandBinsX, 18.4*_correlationBandCenterY/_correlationBandBinsY );
+               
+            }
+        }
+    }
+
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
   delete [] _siPlaneZPosition;
 }
@@ -488,6 +595,8 @@ void EUTelCorrelator::bookHistos() {
     if ( _hasClusterCollection ) {
       dirNames.push_back ("ClusterX");
       dirNames.push_back ("ClusterY");
+      dirNames.push_back ("ClusterXShift");
+      dirNames.push_back ("ClusterYShift");
     }
 
     if ( _hasHitCollection ) {
@@ -506,12 +615,18 @@ void EUTelCorrelator::bookHistos() {
     string tempHistoTitle ;
 
 
-    for ( size_t r = 0 ; r < _sensorIDVec.size(); ++r ) {
+    for ( size_t r = 0 ; r < _sensorIDVec.size(); ++r ) 
+    {
 
       int row = _sensorIDVec.at( r );
       
       map< unsigned int , AIDA::IHistogram2D * > innerMapXCluster;
       map< unsigned int , AIDA::IHistogram2D * > innerMapYCluster;
+
+      map< unsigned int , AIDA::IHistogram2D * > innerMapXCluShift;
+      map< unsigned int , AIDA::IHistogram2D * > innerMapYCluShift;
+      map< unsigned int , AIDA::IHistogram1D * > innerMapXCluShiftProjection;
+      map< unsigned int , AIDA::IHistogram1D * > innerMapYCluShiftProjection;
 
       map< unsigned int , AIDA::IHistogram2D * > innerMapXHit;
       map< unsigned int , AIDA::IHistogram2D * > innerMapYHit;
@@ -525,8 +640,9 @@ void EUTelCorrelator::bookHistos() {
 
           //we create histograms for X and Y Cluster correlation
           if ( _hasClusterCollection ) {
-            tempHistoName = "ClusterX/" + _clusterXCorrelationHistoName + "_d"
-              + to_string( row ) + "_d" + to_string( col );
+
+            // book X
+            tempHistoName = "ClusterX/" + _clusterXCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
 
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
 
@@ -544,6 +660,8 @@ void EUTelCorrelator::bookHistos() {
             tempHistoTitle = "XClusterCorrelation_d" + to_string( row ) + "_d" + to_string( col );
             histo2D->setTitle( tempHistoTitle.c_str() );
             innerMapXCluster[ col  ] =  histo2D ;
+
+            // book Y
             tempHistoName =  "ClusterY/" +  _clusterYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
 
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
@@ -563,6 +681,52 @@ void EUTelCorrelator::bookHistos() {
             histo2D->setTitle( tempHistoTitle.c_str()) ;
 
             innerMapYCluster[ col  ] =  histo2D ;
+  
+            
+            // book special histos to calculate sensors initial offsets in X and Y
+            // book X
+            tempHistoName =  "ClusterXShift/" +  _clusterXCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
+
+            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+
+            xBin = _maxX[ row ] + _maxX[ row ] + 1;
+            xMin = static_cast<double >(-_maxX[ row ]) - 0.5;
+            xMax = static_cast<double >( _maxX[ row ]) + 0.5;
+            yBin = _maxX[ col ] + _maxX[ col ] + 1;
+            yMin = static_cast<double >(-_maxX[ col ]) - 0.5;
+            yMax = static_cast<double >( _maxX[ col ]) + 0.5;
+
+
+            histo2D =
+              AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
+                                                                        xBin, xMin, xMax, yBin, yMin, yMax );
+            tempHistoTitle =  "ClusterXShift/" +  _clusterXCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
+            histo2D->setTitle( tempHistoTitle.c_str()) ;
+
+            innerMapXCluShift[ col  ] =  histo2D ;
+
+            // book Y
+            tempHistoName =  "ClusterYShift/" +  _clusterYCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
+
+            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+
+            xBin = _maxY[ row ] + _minY[ row ] + 1;
+            xMin = static_cast<double >(-_maxY[ row ]) - 0.5;
+            xMax = static_cast<double >( _maxY[ row ]) + 0.5;
+            yBin = _maxY[ col ] + _minY[ col ] + 1;
+            yMin = static_cast<double >(-_maxY[ col ]) - 0.5;
+            yMax = static_cast<double >( _maxY[ col ]) + 0.5;
+
+
+            histo2D =
+              AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
+                                                                        xBin, xMin, xMax, yBin, yMin, yMax );
+            tempHistoTitle =  "ClusterYShift/" +  _clusterYCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
+            histo2D->setTitle( tempHistoTitle.c_str()) ;
+
+            innerMapYCluShift[ col  ] =  histo2D ;
+
+           
           }
 
 
@@ -645,9 +809,13 @@ void EUTelCorrelator::bookHistos() {
         } else {
 
           if ( _hasClusterCollection ) {
-            innerMapXCluster[ col ] = NULL ;
-            innerMapYCluster[ col ] = NULL ;
-            
+            innerMapXCluster[ col ]  = NULL ;
+            innerMapYCluster[ col ]  = NULL ;
+ 
+            innerMapXCluShift[ col ] = NULL ;
+            innerMapYCluShift[ col ] = NULL ;            
+            innerMapXCluShiftProjection[ col ] = NULL ;
+            innerMapYCluShiftProjection[ col ] = NULL ;            
           }
 
           if ( _hasHitCollection ) {
@@ -661,9 +829,47 @@ void EUTelCorrelator::bookHistos() {
 
       if ( _hasClusterCollection ) {
         _clusterXCorrelationMatrix[ row ] = innerMapXCluster  ;
-        _clusterYCorrelationMatrix[ row ] = innerMapYCluster  ;
+        _clusterYCorrelationMatrix[ row ] = innerMapYCluster  ;        
+ 
+        _clusterXCorrShiftMatrix[ row ]  = innerMapXCluShift  ;
+        _clusterYCorrShiftMatrix[ row ]  = innerMapYCluShift  ;        
 
-        
+            // book special histos to calculate sensors initial offsets in X and Y (Projection histograms)
+            // book X
+            tempHistoName =  "ClusterXShift/" +  _clusterXCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
+
+            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+
+            int xBin = _maxX[ row ] + _maxX[ row ] + 1;
+            double xMin = static_cast<double >(-_maxX[ row ]) - 0.5;
+            double xMax = static_cast<double >( _maxX[ row ]) + 0.5;
+
+
+            AIDA::IHistogram1D *
+                 histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), xBin, xMin, xMax );
+            tempHistoTitle =  "ClusterXShift/" +  _clusterXCorrShiftProjectionHistoName + "_d" + to_string( row );
+            histo1D->setTitle( tempHistoTitle.c_str()) ;
+
+//            innerMapXCluShiftProjection[ col  ] =  histo1D ;
+            _clusterXCorrShiftProjection[ row ]  = histo1D  ;        
+
+
+            // book Y
+            tempHistoName =  "ClusterYShift/" +  _clusterYCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
+
+            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+
+            xBin = _maxY[ row ] + _minY[ row ] + 1;
+            xMin = static_cast<double >(-_maxY[ row ]) - 0.5;
+            xMax = static_cast<double >( _maxY[ row ]) + 0.5;
+
+
+            histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), xBin, xMin, xMax );
+            tempHistoTitle =  "ClusterYShift/" +  _clusterYCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
+            histo1D->setTitle( tempHistoTitle.c_str()) ;
+
+//            innerMapYCluShiftProjection[ row  ] =  histo1D ;
+            _clusterYCorrShiftProjection[ row ]  = histo1D  ;        
       }
 
       if ( _hasHitCollection ) {

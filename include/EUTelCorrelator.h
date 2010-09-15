@@ -28,6 +28,7 @@
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
+#include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
 #endif
 
@@ -139,6 +140,11 @@ namespace eutelescope {
     std::string _inputClusterCollectionName;
     std::string _inputHitCollectionName;
 
+    //! Input cluster charge cut
+    /*!
+     */
+    int _clusterChargeMin;
+
     //! A function to guess the sensorID of a hit
     /*! It is checking against the distance of each plane assuming
      *  that this hit is belonging to the plane at the closest distant.
@@ -245,12 +251,22 @@ namespace eutelescope {
     std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _clusterXCorrelationMatrix;
     std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _clusterYCorrelationMatrix;
 
+    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _clusterXCorrShiftMatrix;
+    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _clusterYCorrShiftMatrix;
+    std::map< unsigned int , AIDA::IHistogram1D*  > _clusterXCorrShiftProjection;
+    std::map< unsigned int , AIDA::IHistogram1D*  > _clusterYCorrShiftProjection;
+
     std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitXCorrelationMatrix;
     std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitYCorrelationMatrix;
 
     //! Base name of the correlation histogram
     static std::string _clusterXCorrelationHistoName;
     static std::string _clusterYCorrelationHistoName;
+    static std::string _clusterXCorrShiftHistoName;
+    static std::string _clusterYCorrShiftHistoName;
+    static std::string _clusterXCorrShiftProjectionHistoName;
+    static std::string _clusterYCorrShiftProjectionHistoName;
+    
     static std::string _hitXCorrelationHistoName;
     static std::string _hitYCorrelationHistoName;
 #endif
