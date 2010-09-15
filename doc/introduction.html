@@ -33,9 +33,20 @@ are still valid for the digital sensors/Mimosa-26)
  @li @ref downinst
  @li @ref ilcinstall -->
 
+The EUTelescope framework workflow for digital sensors (Mimosa 26) is summarised
+<a
+href="http://www-zeus.desy.de/~rubinsky/EUTelescope/SoftwareDevelopment/EUTelescope_Aug_2010_concept_scheme.pdf">here
+<img border="none" src="http://www-zeus.desy.de/~rubinsky/home/pdficon_small.gif">
+</a>.
+
 The EUTelescope library comes with the following features:
 
-<b>[Pro]</b> Version v00-03-00 
+<b>[Pro]</b> Version v00-03-01 
+@li Bug fix, uncomment one of the chi2 safety checks in the EUTelTestFitter
+processor in order to maintain previous functionality.
+@li Add few more correlation histograms to the EUTelCorrelator processor.
+
+<b>[Old]</b> Version v00-03-00 
 @li Few major changes in the data processing flow:
 <ul>
 <li> Running the HotPixel processor in the Converter Step:

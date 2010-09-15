@@ -23,7 +23,7 @@ PROJECT_NAME           = $(DOX_PROGNAME)
 # This could be handy for archiving the generated documentation or 
 # if some version control system is used.
 
-PROJECT_NUMBER         = v00-03-00
+PROJECT_NUMBER         = v00-03-01
 
 # The OUTPUT_DIRECTORY tag is used to specify the (relative or absolute) 
 # base path where the generated documentation will be put. 
