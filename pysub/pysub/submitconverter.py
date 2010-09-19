@@ -170,19 +170,20 @@ class SubmitConverter( SubmitBase ) :
         self._runList = [];
         for i in self._args:
             try:
-                self._runList.append( int( i  ) )
+                if( self._runList.count(int(i)) == 0 ):
+                  self._runList.append( int(i) )
 
                 # if it is a good run number than we can prepare an entry for the summary ntuple
                 # the ntuple contains 6 variables:
                 # runNumber ; inputFileStatus ; marlinStatus ; outputFileStatus ; histoFileStatus ; joboutputFileStatus
-                entry = i , "Unknown", "Unknown", "Unknown", "Unknown", "Unknown"
+                  entry = i , "Unknown", "Unknown", "Unknown", "Unknown", "Unknown"
 
                 # the current entry to the ntuple
-                self._summaryNTuple.append( entry )
+                  self._summaryNTuple.append( entry )
 
                 # do the same also for the GRID NTuple
-                entry = i , "Unknown"
-                self._gridJobNTuple.append( entry )
+                  entry = i , "Unknown"
+                  self._gridJobNTuple.append( entry )
 
             except ValueError:
                 message = "Invalid run number %(i)s" % { "i": i }
