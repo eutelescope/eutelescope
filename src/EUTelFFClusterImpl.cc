@@ -216,7 +216,7 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int n
 
 void EUTelFFClusterImpl::getCenterOfGravity(float& xCoG, float& yCoG) const {
 
-  int xSeed, ySeed;
+  int xSeed=0, ySeed=0;
   getCenterCoord(xSeed, ySeed);
 
   getCenterOfGravityShift(xCoG, yCoG);
