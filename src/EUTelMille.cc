@@ -2381,7 +2381,7 @@ void EUTelMille::end() {
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
                 steerFile << (counter * 3 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
                 steerFile << (counter * 3 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
-                steerFile << (counter * 3 + 3) << " " << (averageZ - meanZ[help]) << " 0.0" << endl;
+                steerFile << (counter * 3 + 3) << " " << " 0.0 0.0" << endl;
 #endif
               } else {
                 steerFile << (counter * 3 + 1) << " " << _pedeUserStartValuesX[help] << " 0.0" << endl;
@@ -2533,10 +2533,13 @@ void EUTelMille::end() {
 
         streamlog_out ( MESSAGE2 ) << endl;
         streamlog_out ( MESSAGE2 ) << "Starting pede..." << endl;
+        streamlog_out ( MESSAGE2 ) << command.c_str() << endl;
+
 
         redi::ipstream pede( command.c_str() );
         string output;
-        while ( getline( pede, output ) ) {
+        while ( getline( pede, output ) ) 
+        {
           streamlog_out( MESSAGE2 ) << output << endl;
         }
 
@@ -2544,7 +2547,8 @@ void EUTelMille::end() {
         pede.close();
 
         // check the exit value of pede
-        if ( pede.rdbuf()->status() == 0 ) {
+        if ( pede.rdbuf()->status() == 0 ) 
+        {
           streamlog_out ( MESSAGE2 ) << "Pede successfully finished" << endl;
         }
 
@@ -2562,9 +2566,12 @@ void EUTelMille::end() {
         // reopen the LCIO file this time in append mode
         LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
 
-        try {
+        try 
+        {
           lcWriter->open( _alignmentConstantLCIOFile, LCIO::WRITE_NEW );
-        } catch ( IOException& e ) {
+        }
+        catch ( IOException& e ) 
+        {
           streamlog_out ( ERROR4 ) << e.what() << endl
                                    << "Sorry for quitting. " << endl;
           exit(-1);
@@ -2591,10 +2598,13 @@ void EUTelMille::end() {
         LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
 
 
-        if ( millepede.bad() || !millepede.is_open() ) {
+        if ( millepede.bad() || !millepede.is_open() ) 
+        {
           streamlog_out ( ERROR4 ) << "Error opening the " << millepedeResFileName << endl
                                    << "The alignment slcio file cannot be saved" << endl;
-        } else {
+        }
+        else 
+        {
           vector<double > tokens;
           stringstream tokenizer;
           string line;
