@@ -741,6 +741,7 @@ void EUTelClusteringProcessor::processEvent (LCEvent * event)
   }
 #endif
 
+
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
   if ( evt->getEventType() == kEORE ) 
   {
@@ -1508,6 +1509,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
     TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
     TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
 
+
     // reset the status
     resetStatus(status);
 
@@ -1537,6 +1539,10 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
         int   index  = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
         float signal = sparsePixel->getSignal();
         dataVec[ index  ] = signal;
+        if( status->getADCValues().size() < index )
+        {
+            status->adcValues().resize(index+1);
+        }
         if (  ( signal  > _ffSeedCut * noise->getChargeValues()[ index ] ) &&
               ( status->getADCValues()[ index ] == EUTELESCOPE::GOODPIXEL ) ) {
           seedCandidateMap.insert ( make_pair ( signal, index ) );
@@ -2662,6 +2668,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
       TrackerDataImpl    * noise   = dynamic_cast<TrackerDataImpl* >    ( noiseCollectionVec->getElementAt( _ancillaryIndexMap[ detectorID ] ) );
       TrackerRawDataImpl * status  = dynamic_cast<TrackerRawDataImpl *> ( statusCollectionVec->getElementAt( _ancillaryIndexMap[ detectorID ] ) );
 
+
       if ( ( noise->chargeValues().size() != status->adcValues().size() ) ||
            ( noise->chargeValues().size() != nzsData->chargeValues().size() ) ) {
         throw IncompatibleDataSetException("NZS data and noise/status size mismatch");
@@ -3382,8 +3389,7 @@ void EUTelClusteringProcessor::resetStatus(IMPL::TrackerRawDataImpl * status) {
         }
         ++iter;
         i++;
-    }
-  
+    } 
 }
 
 
