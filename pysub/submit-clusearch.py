@@ -36,7 +36,7 @@ usage: %prog [execution-options] [io-options] [configuration-options] -p pedesta
     parser.add_option( "-p", "--pedestal", type="int", action="store", dest="pedestal", metavar="PEDE",
                        help = "This is the run to be used as pedestal"  )
 
-    parser.add_option( "", "--hotpixel", type="int", action="store",
+    parser.add_option( "", "--hotpixel", type="string", action="store",
     dest="hotpixel", metavar="HOTPIXEL", help = "This is the run to be used as control run to get the hotpixel list"  )
 
 

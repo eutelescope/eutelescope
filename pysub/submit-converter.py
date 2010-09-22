@@ -120,8 +120,10 @@ from the GRID SE, but the job will be executed on the local CPU
                         "Option available on when working in cpu-local mode and requires more time" )
 
     ioGroup.add_option( "--hotpixel-output",
-                        action="store_true",
-                        dest="force_hotpixel_output",
+                        type="string", 
+                        action="store", 
+                        dest="force_hotpixel_output", 
+                        metavar="OUTPUT",
                         help="Set to enable hotpixel db output, assuming the run was taken off-beam" )
 
 
@@ -135,9 +137,11 @@ from the GRID SE, but the job will be executed on the local CPU
     parser.set_defaults(force_keep_output=False)
     parser.set_defaults(force_remove_input=False)
     parser.set_defaults(force_remove_output=False)
-    parser.set_defaults(force_hotpixel_output=False)
+    parser.set_defaults(force_hotpixel_output=0)
     parser.set_defaults(verify_output=False)
     parser.set_defaults(verbose=False)
+
+#    print force_hotpixel_output 
 
     parser.add_option_group( ioGroup )
 
