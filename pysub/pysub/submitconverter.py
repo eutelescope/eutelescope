@@ -78,7 +78,9 @@ class SubmitConverter( SubmitBase ) :
         self._keepOutput = True
 
         # set default for writing out hot pixel db
-        self._keepHotPixelOutput = False
+        self._keepHotPixelOutput   = False
+        self._keepHotPixelDBNumber = 0 
+
 
         if self._option.execution == "all-grid" :
             # it doesn't really matter since all the inputs and outputs will be on the GRID
@@ -125,9 +127,14 @@ class SubmitConverter( SubmitBase ) :
             self._keepOutput = False
             self._logger.info( "User forces to remove the output files" )
 
-        if  self._option.force_hotpixel_output and not self._keepHotPixelOutput:
+        if  self._option.force_hotpixel_output != 0 and not self._keepHotPixelOutput:
             self._keepHotPixelOutput = True
             self._logger.info( "User forces to save hot pixel db (even if it is not a off-beam run)" )
+            self._keepHotPixelDBNumber = self._option.force_hotpixel_output 
+
+
+
+
 
         # now in case the user wants to interact and the situation is dangerous
         # i.e. removing files, ask confirmation
@@ -830,9 +837,11 @@ class SubmitConverter( SubmitBase ) :
         # decide if User wants to write out hot pixel db file
         # involves AutoPedestal and HotPixelKiller  processors
         if self._keepHotPixelOutput == False:
+             print "_keepHotPixelOutput FALSE"
              actualSteeringString = actualSteeringString.replace("@RunHotPixelKillerCommentLeft@", "!--" )
              actualSteeringString = actualSteeringString.replace("@RunHotPixelKillerCommentRight@", "--" )
         else:    
+             print "_keepHotPixelOutput TRUE"
              actualSteeringString = actualSteeringString.replace("@RunHotPixelKillerCommentLeft@", "" )
              actualSteeringString = actualSteeringString.replace("@RunHotPixelKillerCommentRight@", "" )
             
@@ -918,6 +927,13 @@ class SubmitConverter( SubmitBase ) :
             except  ConfigParser.NoOptionError :
                 dbPath = "db"
         actualSteeringString = actualSteeringString.replace("@DBPath@", dbPath )
+ 
+        # replace the DB run number (output)   
+        if( self._keepHotPixelDBNumber != 0 ):
+           actualSteeringString = actualSteeringString.replace("@DBNumber@", self._keepHotPixelDBNumber )
+           
+            
+
 
         # replace the run string !
         actualSteeringString = actualSteeringString.replace("@Output@", "%(output)s" %
@@ -925,6 +941,7 @@ class SubmitConverter( SubmitBase ) :
 
         # replace the run string !
         actualSteeringString = actualSteeringString.replace("@RunNumber@", runString )
+
 
         #-----------------------------
 

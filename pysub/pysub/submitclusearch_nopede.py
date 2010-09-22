@@ -193,7 +193,7 @@ class SubmitCluSearch( SubmitBase ):
             message = "Hotpixel run not provided. Please use option --hotpixel to specify the hotpixel run (if required by your setup)"
             self._logger.warning( message )
         else :
-            self._hotpixelString = "Hotpixel run %(hotpixel)06d" % { "hotpixel": self._option.hotpixel }
+            self._hotpixelString = "Hotpixel run %(hotpixel)s" % { "hotpixel": self._option.hotpixel }
             self._logger.info(  self._hotpixelString )
 
         self._pedeString = ""
@@ -833,7 +833,7 @@ class SubmitCluSearch( SubmitBase ):
             actualSteeringString = actualSteeringString.replace("@UseHotPixelKillerCommentLeft@", "" )
             actualSteeringString = actualSteeringString.replace("@UseHotPixelKillerCommentRight@", "" )
 
-            hotpixelrunString = "%(run)06d" % { "run" : self._option.hotpixel }
+            hotpixelrunString = "%(run)s" % { "run" : self._option.hotpixel }
 
             # that's a good place to also replace the hot pixel db run number
             actualSteeringString = actualSteeringString.replace("@HotPixelRunNumber@", hotpixelrunString )
