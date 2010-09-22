@@ -31,6 +31,7 @@
 #include <AIDA/IBaseHistogram.h>
 #endif
 
+#include <IMPL/LCCollectionVec.h>
 
 // system includes <>
 #include <string>
@@ -332,6 +333,16 @@ namespace eutelescope {
      */
     std::vector< std::string > _etaCollectionNames;
 
+    //! preAlignment Collection name 
+    /*!
+     */
+    std::string _preAlignmentCollectionName;
+    
+    //! preAlignment Collection  
+    /*!
+     */
+    LCCollectionVec *_preAlignmentCollectionVec;  
+    
     //! Switch to apply eta correction
     /*! Eta correction is very important to obtain the maximum
      *  possibile spatial resolution, but having the possibility to
@@ -343,6 +354,12 @@ namespace eutelescope {
 
     //! Switch to enable the filling of the density plot
     bool _3DHistoSwitch;
+
+    //! Input offset db file 
+    /*!
+     */
+    std::string _offsetDBFile;
+
 
 
     //! The algorithm for CoG calculation.
@@ -515,6 +532,12 @@ namespace eutelescope {
     std::vector< int > _orderedSensorIDVec;
 
 
+    //! Sensor Offset X and Y
+    /*!
+     */
+    std::vector <double> _siOffsetXVec;
+    std::vector <double> _siOffsetYVec;
+    
   };
 
   //! A global instance of the processor

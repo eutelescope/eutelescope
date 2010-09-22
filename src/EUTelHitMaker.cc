@@ -26,6 +26,7 @@
 #include "EUTelSparseCluster2Impl.h"
 #include "EUTelExceptions.h"
 #include "EUTelEtaFunctionImpl.h"
+#include "EUTelAlignmentConstant.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -118,10 +119,15 @@ EUTelHitMaker::EUTelHitMaker () : Processor("EUTelHitMaker") {
                             "The name of the collections containing the eta function (x and y respectively)",
                             _etaCollectionNames, etaNames, etaNames.size());
 
-
   registerOptionalParameter("EtaSwitch","Enable or disable eta correction",
                             _etaCorrection, static_cast< bool > ( 1 ) );
 
+  registerOptionalParameter("OffsetDBFile","This is the name of the LCIO file name with the output offset db (add .slcio)",
+                            _offsetDBFile, static_cast< string > ( "offset-db.slcio" ) );
+ 
+  registerOptionalParameter("OffsetCollection","This is the name of the preAligment collection stored in the offset-db.slcio file",
+                            _preAlignmentCollectionName, static_cast< string > ( "preAlignment" ) );
+    
 }
 
 
@@ -160,8 +166,12 @@ void EUTelHitMaker::init() {
   _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
   _orderedSensorIDVec.clear();
+  _siOffsetXVec.clear();
+  _siOffsetYVec.clear();
   for ( int iPlane = 0 ; iPlane < _siPlanesParameters->getSiPlanesNumber() ; ++iPlane ) {
     _orderedSensorIDVec.push_back( _siPlanesLayerLayout->getID( iPlane ) );
+    _siOffsetXVec.push_back( 0.) ;
+    _siOffsetYVec.push_back( 0.) ;
   }
 
   _histogramSwitch = true;
@@ -298,6 +308,44 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
     }
 
+    if ( isFirstEvent() ) 
+    {
+        try{
+            _preAlignmentCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection( _preAlignmentCollectionName ) );
+        }
+        catch(...)
+        {
+            _preAlignmentCollectionVec = 0;
+            streamlog_out ( ERROR1 ) <<  "preAlignment Collection is absent." << endl;
+        }
+        
+        if( _preAlignmentCollectionVec != 0 )
+        {           
+        try 
+        {
+            streamlog_out ( MESSAGE ) << "The alignment collection contains: " <<  _preAlignmentCollectionVec->size() << " planes " << endl;
+                  
+            for ( size_t iPos = 0; iPos < _preAlignmentCollectionVec->size(); ++iPos ) 
+            {
+                
+                EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _preAlignmentCollectionVec->getElementAt( iPos ) );
+                _siOffsetXVec[ iPos ] =  alignment->getXOffset()/1000.;
+                _siOffsetYVec[ iPos ] =  alignment->getYOffset()/1000.;
+            }
+        }
+        catch(...)
+        {
+
+        }
+        }
+    }
+
+//    if( _preAlignmentCollectionVec != 0)
+//    for ( size_t iPos = 0; iPos < _preAlignmentCollectionVec->size(); ++iPos ) 
+//    {
+//        printf("%5d  %9.3f %9.3f \n", iPos, _siOffsetXVec[iPos], _siOffsetYVec[iPos] );
+//    }
+    
     LCCollectionVec * pulseCollection   = static_cast<LCCollectionVec*> (event->getCollection( _pulseCollectionName ));
     LCCollectionVec * hitCollection     = new LCCollectionVec(LCIO::TRACKERHIT);
     CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder(pulseCollection);
@@ -377,17 +425,25 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
             throw UnknownDataTypeException("Cluster type unknown");
         }
 
+        if( cluster->getTotalCharge() < 2 ) continue;
+      
+ 
       // there could be several clusters belonging to the same
       // detector. So update the geometry information only if this new
       // cluster belongs to a different detector.
       detectorID = cluster->getDetectorID();
 
-      if ( detectorID != oldDetectorID ) {
+      if ( detectorID != oldDetectorID ) 
+      {
         oldDetectorID = detectorID;
 
         // check if this telescope setup has a DUT
-        if ( ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) &&
-             ( _siPlanesLayerLayout->getDUTID() == detectorID ) ) {
+        if ( 
+                ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) 
+                &&
+                ( _siPlanesLayerLayout->getDUTID() == detectorID ) 
+                ) 
+        {
           xZero        = _siPlanesLayerLayout->getDUTSensitivePositionX(); // mm
           yZero        = _siPlanesLayerLayout->getDUTSensitivePositionY(); // mm
           zZero        = _siPlanesLayerLayout->getDUTSensitivePositionZ(); // mm
@@ -451,6 +507,12 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
         }
 
+        if( _preAlignmentCollectionVec != 0 )
+        {
+           xZero += _siOffsetXVec[detectorID];
+           yZero += _siOffsetYVec[detectorID];
+        }
+    
         if (  ( xPointing[0] == xPointing[1] ) && ( xPointing[0] == 0 ) ) {
           streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
         }
@@ -459,6 +521,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
         }
 
+//        printf("%5d %9.3f %9.3f\n", detectorID, xZero,yZero);
       }
 
 
@@ -534,7 +597,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
             cluster->getCenterOfGravityShift( xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
         }
       }
-     
+    
       double xCorrection = static_cast<double> (xShift) ;
       double yCorrection = static_cast<double> (yShift) ;
       //!HACK TAKI if (_etaCorrection==1 && p_tmpBrickedCluster != NULL) THEN DO NOT FORGET
@@ -724,6 +787,10 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
       // add the new hit to the hit collection
       hitCollection->push_back( hit );
+ 
+//      cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >  ( static_cast<TrackerDataImpl *> ( hit->rawHits()[0] ) );
+//      TrackerPulseImpl *clus = static_cast <TrackerPulseImpl> clusterVec[0];
+//      printf(" %9d  %9.3f %9.3f  %5d %5.2f \n", iPulse, hit->getPosition()[0], hit->getPosition()[1], hit->rawHits().size(), cluster->getTotalCharge() );
 
       // delete the eutel cluster
       delete cluster;
