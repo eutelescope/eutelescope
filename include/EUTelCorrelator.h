@@ -145,6 +145,17 @@ namespace eutelescope {
      */
     int _clusterChargeMin;
 
+    //! Input flag to dump the Offset values 
+    /*!
+     */
+    bool _dumpOffset;
+
+    //! Output offset db file 
+    /*!
+     */
+    std::string _offsetDBFile;
+
+
     //! A function to guess the sensorID of a hit
     /*! It is checking against the distance of each plane assuming
      *  that this hit is belonging to the plane at the closest distant.
@@ -214,6 +225,22 @@ namespace eutelescope {
      */
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
 
+    //! vector of Rotation Matrix elements
+    std::vector< std::map<int,double> > _siPlanesRotations;
+
+    //! vector of Sensor Pitch X
+    std::vector< double > _siPlanesPitchX;
+
+    //! vector of Sensor Pitch Y
+    std::vector< double > _siPlanesPitchY;
+
+    //! vector of Sensor Offset X
+    std::vector< double > _siPlanesOffsetX;
+
+    //! vector of Sensor Offset Y
+    std::vector< double > _siPlanesOffsetY;
+
+
     //! An array with the Z position of planes
     double * _siPlaneZPosition;
 
@@ -258,6 +285,11 @@ namespace eutelescope {
 
     std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitXCorrelationMatrix;
     std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitYCorrelationMatrix;
+    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitXCorrShiftMatrix;
+    std::map< unsigned int , std::map< unsigned int , AIDA::IHistogram2D* > > _hitYCorrShiftMatrix;
+    std::map< unsigned int , AIDA::IHistogram1D*  > _hitXCorrShiftProjection;
+    std::map< unsigned int , AIDA::IHistogram1D*  > _hitYCorrShiftProjection;
+
 
     //! Base name of the correlation histogram
     static std::string _clusterXCorrelationHistoName;
@@ -269,6 +301,11 @@ namespace eutelescope {
     
     static std::string _hitXCorrelationHistoName;
     static std::string _hitYCorrelationHistoName;
+    static std::string _hitXCorrShiftHistoName;
+    static std::string _hitYCorrShiftHistoName;
+    static std::string _hitXCorrShiftProjectionHistoName;
+    static std::string _hitYCorrShiftProjectionHistoName;
+
 #endif
 
     bool _hasClusterCollection;

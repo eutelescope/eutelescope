@@ -27,6 +27,14 @@
 #include "EUTelBrickedClusterImpl.h"
 #include "EUTelSparseClusterImpl.h"
 #include "EUTelExceptions.h"
+#include "EUTelAlignmentConstant.h"
+
+#include <UTIL/LCTime.h>
+
+#include <EVENT/LCCollection.h>
+#include <EVENT/LCEvent.h>
+#include <Exceptions.h>
+
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -69,10 +77,16 @@ std::string EUTelCorrelator::_clusterYCorrelationHistoName   = "ClusterYCorrelat
 std::string EUTelCorrelator::_hitXCorrelationHistoName       = "HitXCorrelatioHisto";
 std::string EUTelCorrelator::_hitYCorrelationHistoName       = "HitYCorrelationHisto";
 
-std::string EUTelCorrelator::_clusterXCorrShiftHistoName          = "ClusterXCorrShiftHisto";
-std::string EUTelCorrelator::_clusterYCorrShiftHistoName          = "ClusterYCorrShiftHisto";
+std::string EUTelCorrelator::_clusterXCorrShiftHistoName             = "ClusterXCorrShiftHisto";
+std::string EUTelCorrelator::_clusterYCorrShiftHistoName             = "ClusterYCorrShiftHisto";
 std::string EUTelCorrelator::_clusterXCorrShiftProjectionHistoName   = "ClusterXCorrShiftProjectionHisto";
 std::string EUTelCorrelator::_clusterYCorrShiftProjectionHistoName   = "ClusterYCorrShiftProjectionHisto";
+
+std::string EUTelCorrelator::_hitXCorrShiftHistoName             = "HitXCorrShiftHisto";
+std::string EUTelCorrelator::_hitYCorrShiftHistoName             = "HitYCorrShiftHisto";
+std::string EUTelCorrelator::_hitXCorrShiftProjectionHistoName   = "HitXCorrShiftProjectionHisto";
+std::string EUTelCorrelator::_hitYCorrShiftProjectionHistoName   = "HitYCorrShiftProjectionHisto";
+
 #endif
 
 EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
@@ -83,15 +97,27 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
 
   registerInputCollection(LCIO::TRACKERPULSE,"InputClusterCollectionName",
                           "Cluster (pulse) collection name",
-                          _inputClusterCollectionName, string ( "cluster" ));
+                          _inputClusterCollectionName, string ( "cluster" ) );
 
   registerInputCollection(LCIO::TRACKERHIT,"InputHitCollectionName",
                           "Hit collection name",
-                          _inputHitCollectionName, string ( "hit" ));
+                          _inputHitCollectionName, string ( "hit" ) );
 
   registerProcessorParameter ("ClusterChargeMinimum",
                               "Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)",
-                              _clusterChargeMin, static_cast<int> (2));
+                              _clusterChargeMin, static_cast <int> (2) );
+
+  registerProcessorParameter ("DumpOffset",
+                              "Dump the offset X and Y values calculated from the correlation bands (default = true)",
+                              _dumpOffset, static_cast <bool> (true) );
+
+//  registerProcessorParameter ("DumpOffset",
+//                              "Dump the offset X and Y values calculated from the correlation bands (default = true)",
+//                              _dumpOffset, static_cast <bool> (true) );
+
+  registerOptionalParameter("OffsetDBFile","This is the name of the LCIO file name with the output offset db (add .slcio)",
+                              _offsetDBFile, static_cast< string > ( "offset-db.slcio" ) );
+
 
 }
 
@@ -118,12 +144,43 @@ void EUTelCorrelator::init() {
     exit(-1);
   }
 
-  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
-  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*>
-    ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
+  _siPlanesParameters  = const_cast<gear::SiPlanesParameters* >  ( &(Global::GEAR->getSiPlanesParameters()));
+  _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*>  ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
-  _siPlaneZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
-  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
+  _siPlanesRotations.clear();
+  _siPlanesRotations.resize( _siPlanesLayerLayout->getNLayers() );
+
+  _siPlanesPitchX.clear();
+  _siPlanesPitchX.resize( _siPlanesLayerLayout->getNLayers() );
+
+  _siPlanesPitchY.clear();
+  _siPlanesPitchY.resize( _siPlanesLayerLayout->getNLayers() );
+
+  _siPlanesOffsetX.clear();
+  _siPlanesOffsetX.resize( _siPlanesLayerLayout->getNLayers() );
+
+  _siPlanesOffsetY.clear();
+  _siPlanesOffsetY.resize( _siPlanesLayerLayout->getNLayers() );
+
+
+   for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) 
+   {
+      _siPlanesRotations[iPlane].insert( make_pair( 1, _siPlanesLayerLayout->getSensitiveRotation1(iPlane) ) ); 
+      _siPlanesRotations[iPlane].insert( make_pair( 2, _siPlanesLayerLayout->getSensitiveRotation2(iPlane) ) ); 
+      _siPlanesRotations[iPlane].insert( make_pair( 3, _siPlanesLayerLayout->getSensitiveRotation3(iPlane) ) ); 
+      _siPlanesRotations[iPlane].insert( make_pair( 4, _siPlanesLayerLayout->getSensitiveRotation4(iPlane) ) );
+
+      _siPlanesPitchX[iPlane] = _siPlanesLayerLayout->getSensitivePitchX(iPlane);
+      _siPlanesPitchY[iPlane] = _siPlanesLayerLayout->getSensitivePitchY(iPlane);
+ 
+      _siPlanesOffsetX[iPlane] = 0.;
+      _siPlanesOffsetY[iPlane] = 0.;
+   }
+   
+ 
+   _siPlaneZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
+   for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) 
+   {
     _siPlaneZPosition[ iPlane ] = _siPlanesLayerLayout->getLayerPositionZ(iPlane);
     int sensorID = _siPlanesLayerLayout->getID( iPlane );
 
@@ -151,6 +208,8 @@ void EUTelCorrelator::init() {
     _minY[ sensorID ] = 0;
     _maxX[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelX( iPlane ) - 1;
     _maxY[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelY( iPlane ) - 1;
+    _maxX[ sensorID ] = 100;
+    _maxY[ sensorID ] = 100;
   }
 
   _isInitialize = false;
@@ -207,6 +266,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
+//    if(_iEvt > 10000) return;
   if (_iEvt % 10 == 0)
     streamlog_out( MESSAGE4 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
@@ -274,6 +334,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
 
 
+
   try {
 
     if ( _hasClusterCollection ) {
@@ -330,7 +391,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           }
 
         } else {
-          streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
+
+            streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
           throw UnknownDataTypeException("Cluster type unknown");
         }
 
@@ -342,9 +404,14 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
         // we catch the coordinates of the external seed
 
         externalCluster->getCenterOfGravity( externalXCenter, externalYCenter ) ;
-        if( externalCluster->getTotalCharge() <= _clusterChargeMin ) continue;
+        if( externalCluster->getTotalCharge() <= _clusterChargeMin ) 
+        {
+            delete externalCluster; 
+            continue;
+        }
 
-        for ( size_t iInt = 0;  iInt <  inputClusterCollection->size() ; ++iInt ) {
+        for ( size_t iInt = 0;  iInt <  inputClusterCollection->size() ; ++iInt ) 
+        {
 
           TrackerPulseImpl * internalPulse = static_cast< TrackerPulseImpl * >
             ( inputClusterCollection->getElementAt( iInt ) );
@@ -393,12 +460,16 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             throw UnknownDataTypeException("Cluster type unknown");
           }
 
-          if( internalCluster->getTotalCharge() < _clusterChargeMin ) continue;
-
+          if( internalCluster->getTotalCharge() < _clusterChargeMin )
+          {
+             delete internalCluster;
+             continue;
+          }
+          
           int internalSensorID = pulseCellDecoder( internalPulse ) [ "sensorID" ] ;
 
-          if ( _sensorIDtoZOrderMap[internalSensorID] == _sensorIDtoZOrderMap[externalSensorID] +1) {
-
+          if ( _sensorIDtoZOrderMap[internalSensorID] != 0 && _sensorIDtoZOrderMap[externalSensorID] == 0) 
+          {
             float internalXCenter;
             float internalYCenter;
 
@@ -415,19 +486,29 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             _clusterXCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalXCenter, internalXCenter );
             _clusterYCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalYCenter, internalYCenter );
 
-            _clusterXCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalXCenter, internalXCenter-externalXCenter );
-            _clusterYCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalYCenter, internalYCenter-externalYCenter );
+            // assum simpliest +1 and -1 only :
+            if( _siPlanesRotations[internalSensorID][1] * _siPlanesRotations[externalSensorID][1] > 0 )
+            {
+                _clusterXCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalXCenter, internalXCenter-externalXCenter );
+                _clusterYCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalYCenter, internalYCenter-externalYCenter );
+            }
+            else
+            {
+                _clusterXCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( 
+                        externalXCenter, _maxX[ iInt ] -internalXCenter -externalXCenter );
+                _clusterYCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( 
+                        externalYCenter, _maxX[ iInt ] -internalYCenter -externalYCenter ); 
+            }
           } // endif
 
           delete internalCluster;
 
         } // internal loop
 
-        delete externalCluster;
+        delete externalCluster; 
       } // external loop
 
     } // endif hasCluster
-
 
 
     if ( _hasHitCollection ) {
@@ -453,14 +534,18 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
           int internalSensorID = guessSensorID( internalHit );
 
-          if ( _sensorIDtoZOrderMap[internalSensorID] == _sensorIDtoZOrderMap[externalSensorID] +1 ) {
+          if ( _sensorIDtoZOrderMap[internalSensorID] != 0 && _sensorIDtoZOrderMap[externalSensorID] == 0 ) {
+
 
             double * internalPosition;
             internalPosition = (double *) internalHit->getPosition(  );
 
             _hitXCorrelationMatrix[ externalSensorID ] [ internalSensorID ] -> fill ( externalPosition[0], internalPosition[0] ) ;
-
             _hitYCorrelationMatrix[ externalSensorID ] [ internalSensorID ] -> fill ( externalPosition[1], internalPosition[1] ) ;
+
+            // assum simpliest +1 and -1 only :
+            _hitXCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalPosition[0], internalPosition[0]-externalPosition[0] );
+            _hitYCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalPosition[1], internalPosition[1]-externalPosition[1]);
 
           }
 
@@ -489,11 +574,7 @@ void EUTelCorrelator::end() {
             for ( int exPlane = 0 ; exPlane < _siPlanesLayerLayout->getNLayers(); exPlane++ ) 
             {
                 if( _clusterXCorrShiftMatrix[ exPlane ][ inPlane ] == 0 ) continue;
-//                if( _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis() == 0 ) continue;
                 if( _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins() <= 0 ) continue;
-//                std::cout << _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]  << std::endl;
-//                std::cout << _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis()  << std::endl;
-//                std::cout << _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins()  << std::endl;
                
                 float _heighestBinX = 0.;
                 for(int ibin = 0; ibin < _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins(); ibin++)
@@ -510,7 +591,7 @@ void EUTelCorrelator::end() {
                         _heighestBinX = _binValue;
                     }
                 }
-                ;
+                
                
                 float _heighestBinY = 0.;
                 for(int ibin = 0; ibin < _clusterYCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins(); ibin++)
@@ -568,15 +649,155 @@ void EUTelCorrelator::end() {
                    _correlationBandCenterY += ybin*xbin;
                 }
 
-                printf("for plane %d  the X offset is %9.2f, the Y offset is %9.2f \n", inPlane, _correlationBandCenterX/_correlationBandBinsX, _correlationBandCenterY/_correlationBandBinsY );
-                printf("for plane %d  the X offset is %9.2f, the Y offset is %9.2f \n", inPlane, 18.4*_correlationBandCenterX/_correlationBandBinsX, 18.4*_correlationBandCenterY/_correlationBandBinsY );
+                printf("for plane %d  the X offset is %9.3f px, the Y offset is %9.3f px\n", 
+                        inPlane, _correlationBandCenterX/_correlationBandBinsX-0.5, _correlationBandCenterY/_correlationBandBinsY-0.5 );
+
+                _siPlanesOffsetX[ inPlane ] = 1000.*_siPlanesPitchX[inPlane]*(_correlationBandCenterX/_correlationBandBinsX-0.5);
+                _siPlanesOffsetY[ inPlane ] = 1000.*_siPlanesPitchY[inPlane]*(_correlationBandCenterY/_correlationBandBinsY-0.5);
+               
+            }
+        }
+    }
+ 
+    if( _hasHitCollection)
+    {
+        for ( int inPlane = 0 ; inPlane < _siPlanesLayerLayout->getNLayers(); inPlane++ ) 
+        {           
+            for ( int exPlane = 0 ; exPlane < _siPlanesLayerLayout->getNLayers(); exPlane++ ) 
+            {
+                if( _hitXCorrShiftMatrix[ exPlane ][ inPlane ] == 0 ) continue;
+                if( _hitXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins() <= 0 ) continue;
+               
+                float _heighestBinX = 0.;
+                for(int ibin = 0; ibin < _hitXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins(); ibin++)
+                {
+                    double xbin =  
+                        _hitXCorrShiftProjection[ inPlane ]->axis().binLowerEdge(ibin)
+                        +
+                        _hitXCorrShiftProjection[ inPlane ]->axis().binWidth(ibin)/2.
+                        ;
+                    double _binValue = _hitXCorrShiftMatrix[ exPlane ][ inPlane ]->binEntriesY( ibin );
+                    _hitXCorrShiftProjection[ inPlane ]->fill( xbin, _binValue );
+                    if( _binValue > _heighestBinX )
+                    {
+                        _heighestBinX = _binValue;
+                    }
+                }
+                
+               
+                float _heighestBinY = 0.;
+                for(int ibin = 0; ibin < _hitYCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins(); ibin++)
+                {
+                    double xbin =  
+                        _hitYCorrShiftProjection[ inPlane ]->axis().binLowerEdge(ibin)
+                        +
+                        _hitYCorrShiftProjection[ inPlane ]->axis().binWidth(ibin)/2.
+                        ;
+                    double _binValue = _hitYCorrShiftMatrix[ exPlane ][ inPlane ]->binEntriesY( ibin );
+                    _hitYCorrShiftProjection[ inPlane ]->fill( xbin, _binValue );
+                    if( _binValue > _heighestBinY )
+                    {
+                        _heighestBinY = _binValue;
+                    }
+                }
+
+                // get the highert bin and its neighbours
+                // 
+                double _correlationBandBinsX     = 0.;
+                double _correlationBandCenterX   = 0.;
+
+                for(int ibin = 0; ibin < _hitXCorrShiftProjection[ inPlane ]->axis().bins(); ibin++)
+                {
+                    double ybin =  _hitXCorrShiftProjection[ inPlane ]->binHeight(ibin); 
+                   
+                    if( ybin < _heighestBinX/2.) continue;
+                    double xbin =  
+                        _hitXCorrShiftProjection[ inPlane ]->axis().binLowerEdge(ibin)
+                        +
+                        _hitXCorrShiftProjection[ inPlane ]->axis().binWidth(ibin)/2.
+                        ;
+                    
+
+                    _correlationBandBinsX   += ybin;
+                    _correlationBandCenterX += xbin*ybin;
+                }
+
+                
+                double _correlationBandBinsY     = 0.;
+                double _correlationBandCenterY   = 0.;
+
+                for(int ibin = 0; ibin < _hitYCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins(); ibin++)
+                {
+                    double ybin =  _hitYCorrShiftProjection[ inPlane ]->binHeight(ibin); 
+                    
+                    if( ybin < _heighestBinY/2.) continue;
+                    double xbin =  
+                        _hitYCorrShiftProjection[ inPlane ]->axis().binLowerEdge(ibin)
+                        +
+                        _hitYCorrShiftProjection[ inPlane ]->axis().binWidth(ibin)/2.
+                        ;                    
+                  
+                   _correlationBandBinsY   += ybin;
+                   _correlationBandCenterY += ybin*xbin;
+                }
+
+                printf("for plane %d  the X offset is %9.3f , the Y offset is %9.3f \n", 
+                        inPlane, _correlationBandCenterX/_correlationBandBinsX, _correlationBandCenterY/_correlationBandBinsY );
+
+                _siPlanesOffsetX[ inPlane ] = 1000.*_siPlanesPitchX[inPlane]*(_correlationBandCenterX/_correlationBandBinsX-0.5);
+                _siPlanesOffsetY[ inPlane ] = 1000.*_siPlanesPitchY[inPlane]*(_correlationBandCenterY/_correlationBandBinsY-0.5);
                
             }
         }
     }
 
-  streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
-  delete [] _siPlaneZPosition;
+    if( _dumpOffset && !_hasHitCollection )
+    {
+
+        // reopen the LCIO file this time in append mode
+        LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
+
+        try {
+            lcWriter->open( _offsetDBFile, LCIO::WRITE_NEW );
+        } catch ( IOException& e ) {
+            streamlog_out ( ERROR4 ) << e.what() << endl
+                << "Sorry for quitting. " << endl;
+            exit(-1);
+        }
+        
+        LCEventImpl *event = new LCEventImpl;
+        event->setRunNumber( 0 );
+        event->setEventNumber( 0 );
+        event->setDetectorName("Offset DB");
+
+        LCTime *now = new LCTime;
+        event->setTimeStamp( now->timeStamp() );
+        delete now;
+
+        LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
+
+
+        for ( int inPlane = 0 ; inPlane < _siPlanesLayerLayout->getNLayers(); inPlane++ ) 
+        {           
+            EUTelAlignmentConstant * constant = new EUTelAlignmentConstant;
+
+            constant->setXOffset( _siPlanesOffsetX[inPlane]  );
+            constant->setYOffset( _siPlanesOffsetY[inPlane]  ) ;
+ 
+            constant->setSensorID( inPlane );
+            constantsCollection->push_back( constant );
+        }
+
+        event->addCollection( constantsCollection, "preAlignment" ); 
+        lcWriter->writeEvent( event );        
+        delete event;
+    
+        lcWriter->close();        
+        delete lcWriter;
+    }
+  
+    streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
+    delete [] _siPlaneZPosition;
 }
 
 void EUTelCorrelator::bookHistos() {
@@ -602,6 +823,8 @@ void EUTelCorrelator::bookHistos() {
     if ( _hasHitCollection ) {
       dirNames.push_back ("HitX");
       dirNames.push_back ("HitY");
+      dirNames.push_back ("HitXShift");
+      dirNames.push_back ("HitYShift");
     }
 
     for ( size_t iPos = 0 ; iPos < dirNames.size() ; iPos++ ) {
@@ -631,12 +854,19 @@ void EUTelCorrelator::bookHistos() {
       map< unsigned int , AIDA::IHistogram2D * > innerMapXHit;
       map< unsigned int , AIDA::IHistogram2D * > innerMapYHit;
 
+      map< unsigned int , AIDA::IHistogram2D * > innerMapXHitShift;
+      map< unsigned int , AIDA::IHistogram2D * > innerMapYHitShift;
+      map< unsigned int , AIDA::IHistogram1D * > innerMapXHitShiftProjection;
+      map< unsigned int , AIDA::IHistogram1D * > innerMapYHitShiftProjection;
+
+
 
       for ( size_t c = 0 ; c < _sensorIDVec.size(); ++c ) {
 
         int col = _sensorIDVec.at( c );
 
-          if ( _sensorIDtoZOrderMap[ col ] == _sensorIDtoZOrderMap[ row ] +1 ) {
+          if ( _sensorIDtoZOrderMap[ col ] != 0 && _sensorIDtoZOrderMap[ row ] == 0 ) {
+
 
           //we create histograms for X and Y Cluster correlation
           if ( _hasClusterCollection ) {
@@ -740,9 +970,16 @@ void EUTelCorrelator::bookHistos() {
 
           if ( _hasHitCollection ) {
 
-            double safetyFactor = 2.0; // 2 should be enough because it
+            double safetyFactor = 1.0; // 2 should be enough because it
             // means that the sensor is wrong
             // by all its size.
+//            double rowMin = 0.;
+//            double rowMax = 0.;
+//            double colMin = 0.;
+//            double colMax = 0.;
+//            int    colMin = 0 ;
+//            int    colMax = 0 ;
+            
             double rowMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( r ) -
                                              ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( r ) ));
             double rowMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( r ) +
@@ -754,8 +991,8 @@ void EUTelCorrelator::bookHistos() {
                                              ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( c )) );
             
             //lets limit the memory usage
-            int colNBin = 512;
-            int rowNBin = 512;
+            int colNBin = _maxX[c];
+            int rowNBin = _maxX[r];
             
             if(_siPlanesLayerLayout->getSensitiveNpixelX( c ) < 255)
               colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( c );
@@ -763,10 +1000,14 @@ void EUTelCorrelator::bookHistos() {
             if(_siPlanesLayerLayout->getSensitiveNpixelX( r ) < 255)
               rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( r );
 
-            tempHistoName =  "HitX/" +  _hitXCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
+            colNBin = 100;
+            rowNBin = 100;
+
+            tempHistoName  =  "HitX/" +  _hitXCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
 
-            string tempHistoTitle =  "HitX/" +  _hitXCorrelationHistoName + "_d" + to_string( row ) + "_d" +  to_string( col );
+            string 
+            tempHistoTitle =  "HitX/" +  _hitXCorrelationHistoName + "_d" + to_string( row ) + "_d" +  to_string( col );
 
             AIDA::IHistogram2D * histo2D =
               AIDAProcessor::histogramFactory( this )->createHistogram2D( tempHistoName.c_str(), colNBin, colMin, colMax,
@@ -774,6 +1015,7 @@ void EUTelCorrelator::bookHistos() {
             histo2D->setTitle( tempHistoTitle.c_str() );
 
             innerMapXHit[ col  ] =  histo2D ;
+
 
             // now the hit on the Y direction
             rowMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( r ) -
@@ -786,23 +1028,106 @@ void EUTelCorrelator::bookHistos() {
             colMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( c ) +
                                       ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( c )) );
             
-            colNBin = 512;
-            rowNBin = 512;
+//            colNBin = 512;
+//            rowNBin = 512;
             if(_siPlanesLayerLayout->getSensitiveNpixelY( c ) < 255)
               colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( c );
 
             if(_siPlanesLayerLayout->getSensitiveNpixelY( r ) < 255)
               rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( r );
 
+            colNBin = 100;
+            rowNBin = 100;
+            
             tempHistoName =  "HitY/" + _hitYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             streamlog_out( DEBUG ) << "Booking cloud " << tempHistoName << endl;
-            tempHistoTitle = "YHitCorrelation_d" + to_string( row ) + "_d" + to_string( col ) ;
+            tempHistoTitle = "HitY/" + _hitYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col ) ;
             histo2D =
               AIDAProcessor::histogramFactory( this )->createHistogram2D( tempHistoName.c_str(), colNBin, colMin, colMax,
                                                                           rowNBin, rowMin, rowMax);
             histo2D->setTitle( tempHistoTitle.c_str() );
 
             innerMapYHit[  col  ] =  histo2D ;
+
+
+
+            
+            // book special histos to calculate sensors initial offsets in X and Y
+            // book X
+            tempHistoName =  "HitXShift/" +  _hitXCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
+
+            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+
+            rowMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( r ) -
+                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( r ) ));
+            rowMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( r ) +
+                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( r )));
+
+            colMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( c ) -
+                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( c )));
+            colMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( c ) +
+                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( c )) );
+            
+//            colNBin = 512;
+//            rowNBin = 512;
+            if(_siPlanesLayerLayout->getSensitiveNpixelY( c ) < 255)
+              colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( c );
+
+            if(_siPlanesLayerLayout->getSensitiveNpixelY( r ) < 255)
+              rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( r );
+
+            colNBin = 100;
+            rowNBin = 100;
+ 
+
+            histo2D =
+              AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
+                      colNBin, colMin, colMax, rowNBin, rowMin, rowMax);
+
+            tempHistoTitle =  "HitXShift/" +  _hitXCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
+            histo2D->setTitle( tempHistoTitle.c_str()) ;
+
+            innerMapXHitShift[ col  ] =  histo2D ;
+
+
+
+            // book Y
+            tempHistoName =  "HitYShift/" +  _hitYCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
+
+            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+
+
+            rowMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( r ) -
+                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( r ) ));
+            rowMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( r ) +
+                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( r )));
+
+            colMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( c ) -
+                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( c )));
+            colMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( c ) +
+                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( c )) );
+            
+//            colNBin = 512;
+//            rowNBin = 512;
+            if(_siPlanesLayerLayout->getSensitiveNpixelY( c ) < 255)
+              colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( c );
+
+            if(_siPlanesLayerLayout->getSensitiveNpixelY( r ) < 255)
+              rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( r );
+
+            colNBin = 100;
+            rowNBin = 100;
+ 
+
+
+            histo2D =
+              AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
+                      colNBin, colMin, colMax, rowNBin, rowMin, rowMax);
+            tempHistoTitle =  "HitYShift/" +  _hitYCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
+            histo2D->setTitle( tempHistoTitle.c_str()) ;
+
+            innerMapYHitShift[ col  ] =  histo2D ;
+
 
           }
 
@@ -821,13 +1146,19 @@ void EUTelCorrelator::bookHistos() {
           if ( _hasHitCollection ) {
             innerMapXHit[ col ] = NULL ;
             innerMapYHit[ col  ] = NULL ;
+ 
+            innerMapXHitShift[ col ] = NULL ;
+            innerMapYHitShift[ col ] = NULL ;            
+            innerMapXHitShiftProjection[ col ] = NULL ;
+            innerMapYHitShiftProjection[ col ] = NULL ;            
           }
 
         }
 
       }
 
-      if ( _hasClusterCollection ) {
+      if ( _hasClusterCollection ) 
+      {
         _clusterXCorrelationMatrix[ row ] = innerMapXCluster  ;
         _clusterYCorrelationMatrix[ row ] = innerMapYCluster  ;        
  
@@ -868,16 +1199,80 @@ void EUTelCorrelator::bookHistos() {
             tempHistoTitle =  "ClusterYShift/" +  _clusterYCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
             histo1D->setTitle( tempHistoTitle.c_str()) ;
 
-//            innerMapYCluShiftProjection[ row  ] =  histo1D ;
+//            innerMapYCluShiftProjection[ row ] =  histo1D ;
             _clusterYCorrShiftProjection[ row ]  = histo1D  ;        
       }
 
-      if ( _hasHitCollection ) {
-        _hitXCorrelationMatrix[ row ] = innerMapXHit;
-        _hitYCorrelationMatrix[ row ] = innerMapYHit;
-      }
-    }
+      if ( _hasHitCollection ) 
+      {
+         _hitXCorrelationMatrix[ row ] = innerMapXHit;
+         _hitYCorrelationMatrix[ row ] = innerMapYHit;
 
+         _hitXCorrShiftMatrix[ row ]   = innerMapXHitShift  ;
+         _hitYCorrShiftMatrix[ row ]   = innerMapYHitShift  ;        
+ 
+            // book special histos to calculate sensors initial offsets in X and Y (Projection histograms)
+            // book X
+            tempHistoName =  "HitXShift/" +  _hitXCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
+
+            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+
+ 
+            double safetyFactor = 1.0; // 2 should be enough because it
+            // means that the sensor is wrong
+            // by all its size.
+
+            double rowMin  = 0.;
+            double rowMax  = 0.;
+            int    rowNBin = 0 ;
+
+            rowMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( r ) -
+                                             ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( r ) ));
+            rowMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( r ) +
+                                             ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( r )));
+
+           
+             //lets limit the memory usage
+            rowNBin = 512;
+           
+            if(_siPlanesLayerLayout->getSensitiveNpixelX( r ) < 255)
+              rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( r );
+
+
+
+            AIDA::IHistogram1D *
+                 histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), rowNBin, rowMin, rowMax );
+            tempHistoTitle =  "HitXShift/" +  _hitXCorrShiftProjectionHistoName + "_d" + to_string( row );
+            histo1D->setTitle( tempHistoTitle.c_str()) ;
+
+//            innerMapXCluShiftProjection[ col  ] =  histo1D ;
+            _hitXCorrShiftProjection[ row ]  = histo1D  ;        
+
+
+            // book Y
+            tempHistoName =  "HitYShift/" +  _hitYCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
+
+            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+
+            histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), rowNBin, rowMin, rowMax );
+            tempHistoTitle =  "HitYShift/" +  _hitYCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
+            histo1D->setTitle( tempHistoTitle.c_str()) ;
+
+//            innerMapYCluShiftProjection[ row  ] =  histo1D ;
+            _hitYCorrShiftProjection[ row ]  = histo1D  ;        
+      }
+      
+    }
+/*
+    for ( size_t r = 0 ; r < _sensorIDVec.size(); ++r ) 
+    {
+    for ( size_t c = 0 ; c < _sensorIDVec.size(); ++c ) 
+    {
+        printf(" %p ", _hitXCorrShiftMatrix[r][c] );
+    }
+    printf("\n");
+    }
+  */  
   } catch (lcio::Exception& e ) {
 
     streamlog_out ( ERROR1 ) << "No AIDAProcessor initialized. Sorry for quitting..." << endl;
