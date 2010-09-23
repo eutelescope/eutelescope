@@ -65,6 +65,7 @@
 #include <vector>
 #include <iostream>
 #include <iomanip>
+#include <cstdio>
 
 using namespace std;
 using namespace marlin;

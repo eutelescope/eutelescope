@@ -601,7 +601,8 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
       // Remaining information on the simulated hit:
 
-      _mokkaDeposit =simhit->getdEdx();
+//      _mokkaDeposit =simhit->getdEdx(); // OBSOLETE member function
+      _mokkaDeposit =simhit->getEDep(); 
       _mokkaPath=simhit->getPathLength();
 
       ///////////////////////////////////////////////////////////////////////////

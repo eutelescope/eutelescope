@@ -68,8 +68,7 @@
 #include <vector>
 #include <memory>
 #include <list>
-
-
+#include <cstdio>
 
 using namespace std;
 using namespace lcio;
