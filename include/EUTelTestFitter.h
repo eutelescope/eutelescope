@@ -241,9 +241,9 @@ namespace eutelescope {
    *      even if beam spread is large. With beam
    *      constraint first two hits are sufficent to recognize bad track
    *      hypothesis. Without beam constraint at least 3 hits are needed.
-   *      However, to use beam constraint telescope layers have to be
-   *      aligned w.r.t. the beam direction (beam has to be perpendicular to
-   *     telescope layers).
+   *      If the beam direction is not exactly perpendicular to
+   *      telescope layers, beam tilt can be taken into account by
+   *      setting parameters \e BeamSlopeX and \e BeamSlopeY
    *
    * \li Do not allow for missing hits (set \e AllowMissingHits to 0).
    *     This reduces number of fit hypothesis and improves fit performance.
@@ -358,8 +358,9 @@ namespace eutelescope {
      */
     double NominalFit();
 
-    //! Fit particle track in one plane (XZ or YZ)
-    int DoAnalFit(double * pos, double *err);
+    //! Fit particle track in one plane (XZ or YZ), taking into
+    //! account beam slope
+    int DoAnalFit(double * pos, double *err, double slope=0.);
 
     //! Calculate \f$ \chi^{2} \f$ of the fit
     /*! Calculate \f$ \chi^{2} \f$ of the fit taking into account measured particle
@@ -462,7 +463,11 @@ namespace eutelescope {
     bool   _useDUT ;
 
     bool   _useBeamConstraint ;
+
     double _beamSpread;
+
+    double _beamSlopeX;
+    double _beamSlopeY;
 
     double _eBeam ;
 
@@ -515,8 +520,10 @@ namespace eutelescope {
     double * _fitEy ;
 
     double * _fitArray ;
-    double * _nominalFitArray ;
-    double * _nominalError ;
+    double * _nominalFitArrayX ;
+    double * _nominalErrorX ;
+    double * _nominalFitArrayY ;
+    double * _nominalErrorY ;
 
     // few counter to show the final summary
 

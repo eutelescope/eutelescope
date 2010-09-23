@@ -250,12 +250,20 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
                              _useBeamConstraint,  static_cast < bool > (false));
 
   registerOptionalParameter ("BeamSpread",
-                             "Assumed angular spread of the beam [rad]",
-                             _beamSpread,  static_cast < double > (0.1));
+                             "Assumed angular spread of the beam [rad] (for beam constraint)",
+                             _beamSpread, static_cast < double > (0.1) );
+
+  registerOptionalParameter ("BeamSlopeX",
+                             "Beam direction tilt in X-Z plane [rad] (for beam constraint)",
+                             _beamSlopeX,  static_cast < double > (0.));
+
+  registerOptionalParameter ("BeamSlopeY",
+                             "Beam direction tilt in Y-Z plane [rad] (for beam constraint)",
+                             _beamSlopeY,  static_cast < double > (0.));
 
   registerOptionalParameter ("SearchMultipleTracks",
                              "Flag for searching multiple tracks in events with multiple hits",
-                             _searchMultipleTracks,  static_cast < bool > (false));
+                             _searchMultipleTracks,  static_cast < bool > (true));
 
   registerOptionalParameter ("AllowAmbiguousHits",
                              "Allow same hit to be used in more than one track",
@@ -562,9 +570,11 @@ void EUTelTestFitter::init() {
   int arrayDim = _nTelPlanes * _nTelPlanes;
 
   _fitArray = new double[arrayDim];
-  _nominalFitArray = new double[arrayDim];
+  _nominalFitArrayX = new double[arrayDim];
+  _nominalErrorX = new double[_nTelPlanes];
 
-  _nominalError = new double[_nTelPlanes];
+  _nominalFitArrayY = new double[arrayDim];
+  _nominalErrorY = new double[_nTelPlanes];
 
   // Fill nominal fit matrices and
   // calculate expected precision of track fitting
@@ -587,29 +597,44 @@ void EUTelTestFitter::init() {
       _planeScat[ipl]= 1./(_planeScat[ipl] * _planeScat[ipl]) ;
     }
     _fitX[ipl] =_fitY[ipl] = 0. ;
-    _nominalError[ipl]= _planeResolution[ipl];
+    _nominalErrorX[ipl]= _planeResolution[ipl];
+    _nominalErrorY[ipl]= _planeResolution[ipl];
   }
 
+  // Fit with nominal parameters for X direction
 
-  // Fit with nominal parameters
-
-  int status = DoAnalFit(_fitX,_nominalError);
+  int status = DoAnalFit(_fitX,_nominalErrorX,_beamSlopeX);
 
   if(status) {
-    streamlog_out( ERROR2 ) << "\n Fit with nominal geometry failed !?!" << endl;
+    streamlog_out( ERROR2 ) << "\n Fit in X with nominal geometry failed !?!" << endl;
   }
   // Store fit matrix
 
   for(int imx=0; imx<arrayDim; imx++) {
-    _nominalFitArray[imx] = _fitArray[imx];
+    _nominalFitArrayX[imx] = _fitArray[imx];
   }
 
   stringstream ss;
-  ss << "Expected position resolutions [um]: ";
+  ss << "Expected position resolutions in X [um]: ";
   for(int ipl=0; ipl<_nTelPlanes ; ipl++) {
-    ss << _nominalError[ipl]*1000. << "  " ;
+    ss << _nominalErrorX[ipl]*1000. << "  " ;
   }
   streamlog_out ( MESSAGE2 ) << ss.str() << endl;
+
+
+
+  // Fit with nominal parameters for Y direction
+
+  status = DoAnalFit(_fitY,_nominalErrorY,_beamSlopeY);
+
+  if(status) {
+    streamlog_out( ERROR2 ) << "\n Fit in Y with nominal geometry failed !?!" << endl;
+  }
+  // Store fit matrix
+
+  for(int imx=0; imx<arrayDim; imx++) {
+    _nominalFitArrayY[imx] = _fitArray[imx];
+  }
 
 
 // Book histograms
@@ -1176,10 +1201,11 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       // "Nominal" fit only if all active planes used
 
       
-      if(_useNominalResolution && (nChoiceFired == _nActivePlanes)) {
+      if(_useNominalResolution && (nChoiceFired == _nActivePlanes)) 
+      {
         choiceChi2 = NominalFit();
       } else {
-        if(_useNominalResolution)    choiceChi2 = SingleFit();
+        if(_useNominalResolution && _beamSlopeX==_beamSlopeY) choiceChi2 = SingleFit();
         else choiceChi2 = MatrixFit();
       }
 
@@ -1832,8 +1858,11 @@ void EUTelTestFitter::end(){
   delete [] _fitEy ;
   delete [] _fitArray ;
 
-  delete [] _nominalFitArray ;
-  delete [] _nominalError ;
+  delete [] _nominalFitArrayX ;
+  delete [] _nominalErrorX ;
+
+  delete [] _nominalFitArrayY ;
+  delete [] _nominalErrorY ;
 }
 
 
@@ -2095,11 +2124,11 @@ double EUTelTestFitter::MatrixFit()
       _fitEy[ipl]=_planeEy[ipl];
     }
 
-  int status = DoAnalFit(_fitX,_fitEx);
+  int status = DoAnalFit(_fitX,_fitEx,_beamSlopeX);
 
   if(status)return -1. ;
 
-  status = DoAnalFit(_fitY,_fitEy);
+  status = DoAnalFit(_fitY,_fitEy,_beamSlopeY);
 
   if(status)return -1. ;
 
@@ -2117,7 +2146,7 @@ double EUTelTestFitter::SingleFit()
       _fitEx[ipl]=_planeEx[ipl];
     }
 
-  int status = DoAnalFit(_fitX,_fitEx);
+  int status = DoAnalFit(_fitX,_fitEx,_beamSlopeX);
 
   if(status)return -1. ;
 
@@ -2142,17 +2171,34 @@ double EUTelTestFitter::NominalFit()
 {
   for(int ipl=0; ipl<_nTelPlanes;ipl++)
     {
-      _fitEy[ipl]=_fitEx[ipl]=_nominalError[ipl];
+      _fitEx[ipl]=_nominalErrorX[ipl];
+      _fitEy[ipl]=_nominalErrorY[ipl];
 
       _fitX[ipl]=0. ;
       _fitY[ipl]=0. ;
+
       for(int jpl=0; jpl<_nTelPlanes;jpl++)
         {
           if(_planeEx[jpl]>0.)
-            _fitX[ipl]+=_nominalFitArray[ipl+jpl*_nTelPlanes]*_planeX[jpl]/_planeEx[jpl]/_planeEx[jpl];
+            _fitX[ipl]+=_nominalFitArrayX[ipl+jpl*_nTelPlanes]*_planeX[jpl]/_planeEx[jpl]/_planeEx[jpl];
           if(_planeEy[jpl]>0.)
-            _fitY[ipl]+=_nominalFitArray[ipl+jpl*_nTelPlanes]*_planeY[jpl]/_planeEy[jpl]/_planeEy[jpl];
+            _fitY[ipl]+=_nominalFitArrayY[ipl+jpl*_nTelPlanes]*_planeY[jpl]/_planeEy[jpl]/_planeEy[jpl];
         }
+
+      // Correction for beam slope
+
+    if(_useBeamConstraint && _beamSlopeX!=0.)
+      {
+	_fitX[ipl]-=_nominalFitArrayX[ipl]*_beamSlopeX*_planeDist[0]*_planeScat[0];
+	_fitX[ipl]+=_nominalFitArrayX[ipl+_nTelPlanes]*_beamSlopeX*_planeDist[0]*_planeScat[0];
+      }
+
+    if(_useBeamConstraint && _beamSlopeY!=0.)
+      {
+	_fitY[ipl]-=_nominalFitArrayY[ipl]*_beamSlopeY*_planeDist[0]*_planeScat[0];
+	_fitY[ipl]+=_nominalFitArrayY[ipl+_nTelPlanes]*_beamSlopeY*_planeDist[0]*_planeScat[0];
+      }
+
     }
 
   double chi2=GetFitChi2();
@@ -2161,7 +2207,7 @@ double EUTelTestFitter::NominalFit()
 }
 
 
-int EUTelTestFitter::DoAnalFit(double * pos, double *err)
+int EUTelTestFitter::DoAnalFit(double * pos, double *err, double slope)
 {
   for(int ipl=0; ipl<_nTelPlanes;ipl++)
     {
@@ -2171,6 +2217,14 @@ int EUTelTestFitter::DoAnalFit(double * pos, double *err)
         err[ipl] = 0. ;
 
       pos[ipl]*=err[ipl];
+    }
+
+  // To take into account beam tilt
+
+  if(_useBeamConstraint && slope!=0.)
+    {
+      pos[0] -= slope*_planeDist[0]*_planeScat[0];
+      pos[1] += slope*_planeDist[0]*_planeScat[0];
     }
 
 
@@ -2286,17 +2340,22 @@ double EUTelTestFitter::GetFitChi2()
     }
 
   // Beam constraint
+  // Beam slope taken into account.
 
   if(_useBeamConstraint)
     {
       double dth;
 
+      // Use small angle approximation: atan(x) = x
+      // Should be:
       //    dth=atan((_fitX[1]-_fitX[0])*_planeDist[0]) ;
-      dth=(_fitX[1]-_fitX[0])*_planeDist[0] ;
+      
+      dth=(_fitX[1]-_fitX[0])*_planeDist[0]  -  _beamSlopeX;
       chi2 += _planeScat[0] * dth * dth;
 
       //    dth=atan((_fitY[1]-_fitY[0])*_planeDist[0]) ;
-      dth=(_fitY[1]-_fitY[0])*_planeDist[0] ;
+
+      dth=(_fitY[1]-_fitY[0])*_planeDist[0]  -  _beamSlopeY ;
       chi2 += _planeScat[0] * dth * dth;
     }
 
