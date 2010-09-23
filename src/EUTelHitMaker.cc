@@ -331,6 +331,10 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
                 EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _preAlignmentCollectionVec->getElementAt( iPos ) );
                 _siOffsetXVec[ iPos ] =  alignment->getXOffset()/1000.;
                 _siOffsetYVec[ iPos ] =  alignment->getYOffset()/1000.;
+                streamlog_out ( MESSAGE ) << " ";
+                printf("%2d Xoffset: %9.3f  Yoffset: %9.3f ", iPos, _siOffsetXVec[ iPos ], _siOffsetYVec[ iPos ]); 
+                streamlog_out ( MESSAGE ) << endl;
+                
             }
         }
         catch(...)

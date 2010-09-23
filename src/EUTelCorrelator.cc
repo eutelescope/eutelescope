@@ -112,9 +112,9 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
                               "Dump the offset X and Y values calculated from the correlation bands (default = true)",
                               _dumpOffset, static_cast <bool> (true) );
 
-//  registerProcessorParameter ("DumpOffset",
-//                              "Dump the offset X and Y values calculated from the correlation bands (default = true)",
-//                              _dumpOffset, static_cast <bool> (true) );
+  registerProcessorParameter ("Events",
+                              "How many events are needed to get reasonable correlation plots (and Offset DB)? (default=1000)",
+                              _events, static_cast <int> (1000) );
 
   registerOptionalParameter("OffsetDBFile","This is the name of the LCIO file name with the output offset db (add .slcio)",
                               _offsetDBFile, static_cast< string > ( "offset-db.slcio" ) );
@@ -267,7 +267,9 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-//    if(_iEvt > 10000) return;
+    
+    if(_iEvt > _events) return;
+    
   if (_iEvt % 10 == 0)
     streamlog_out( MESSAGE4 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
@@ -651,10 +653,10 @@ void EUTelCorrelator::end() {
                 }
 
                 printf("for plane %d  the X offset is %9.3f px, the Y offset is %9.3f px\n", 
-                        inPlane, _correlationBandCenterX/_correlationBandBinsX-0.5, _correlationBandCenterY/_correlationBandBinsY-0.5 );
+                        inPlane, _correlationBandCenterX/_correlationBandBinsX, _correlationBandCenterY/_correlationBandBinsY );
 
-                _siPlanesOffsetX[ inPlane ] = 1000.*_siPlanesPitchX[inPlane]*(_correlationBandCenterX/_correlationBandBinsX-0.5);
-                _siPlanesOffsetY[ inPlane ] = 1000.*_siPlanesPitchY[inPlane]*(_correlationBandCenterY/_correlationBandBinsY-0.5);
+                _siPlanesOffsetX[ inPlane ] = 1000.*_siPlanesPitchX[inPlane]*(_correlationBandCenterX/_correlationBandBinsX);
+                _siPlanesOffsetY[ inPlane ] = 1000.*_siPlanesPitchY[inPlane]*(_correlationBandCenterY/_correlationBandBinsY);
                
             }
         }
@@ -745,8 +747,8 @@ void EUTelCorrelator::end() {
                 printf("for plane %d  the X offset is %9.3f , the Y offset is %9.3f \n", 
                         inPlane, _correlationBandCenterX/_correlationBandBinsX, _correlationBandCenterY/_correlationBandBinsY );
 
-                _siPlanesOffsetX[ inPlane ] = 1000.*_siPlanesPitchX[inPlane]*(_correlationBandCenterX/_correlationBandBinsX-0.5);
-                _siPlanesOffsetY[ inPlane ] = 1000.*_siPlanesPitchY[inPlane]*(_correlationBandCenterY/_correlationBandBinsY-0.5);
+                _siPlanesOffsetX[ inPlane ] = 1000.*_siPlanesPitchX[inPlane]*(_correlationBandCenterX/_correlationBandBinsX);
+                _siPlanesOffsetY[ inPlane ] = 1000.*_siPlanesPitchY[inPlane]*(_correlationBandCenterY/_correlationBandBinsY);
                
             }
         }

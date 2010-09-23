@@ -145,6 +145,13 @@ namespace eutelescope {
      */
     int _clusterChargeMin;
 
+    //! How many events are needed to get reasonable correlation plots 
+    /*! (and Offset DB values) 
+     *
+     */
+    int _events;
+
+
     //! Input flag to dump the Offset values 
     /*!
      */
