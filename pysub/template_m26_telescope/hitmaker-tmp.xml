@@ -21,6 +21,7 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
       <processor name="AIDA"/>
       <!--processor name="LoadEta"/-->
       <!--processor name="HitMakerWithEta3x3"/-->
+      <processor name="LoadOffsetDB"/>
       <processor name="HitMakerWithOutEta"/>
       <!--processor name="Correlator"/--> 
       <processor name="CorrelatorWithoutEta"/> 
@@ -45,6 +46,11 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
   <!-- type of output file xml (default) or root ( only OpenScientist)-->
   <parameter name="FileType" type="string" value="root"/>
 </processor>
+
+ <processor name="LoadOffsetDB" type="ConditionsProcessor">
+   <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
+   <parameter name="SimpleFileHandler" type="StringVec"> preAlignment offset-db.slcio preAlignment </parameter>
+  </processor>
 
  <processor name="LoadEta" type="ConditionsProcessor">
  <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
@@ -227,6 +233,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <parameter name="InputClusterCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
   <!--Hit collection name-->
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit_eta3x3 </parameter>
+  <parameter name="DumpOffset" type="bool" > false </parameter>
 </processor>
 
  <processor name="CorrelatorWithoutEta" type="EUTelCorrelator">
