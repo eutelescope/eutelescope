@@ -309,7 +309,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
         -> SparseCluster2: for cluster in ZS frame with better performance
         -> FixedFrame: for cluster with a given size
         -> DFixedFrame: for cluster with a given size-->
-    <parameter name="ZSClusteringAlgo" type="string" value="DFixedFrame"/>
+    <parameter name="ZSClusteringAlgo" type="string" value="SparseCluster2"/>
 
 
     <!--
@@ -424,7 +424,9 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <parameter name="InputClusterCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
     <!--Hit collection name-->
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
-  </processor>
+    <!-- -->
+    <parameter name="OffsetDBFile" type="string"> @DBPath@/run@RunNumber@-offset-db.slcio </parameter>
+ </processor>
 
   <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
     <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
@@ -432,11 +434,11 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> m26_status </parameter>
     <!--This float number [0,1] represents the maximum allowed firing frequency
         within the selected number of event per cycle-->
-    <parameter name="MaxAllowedFiringFreq" type="float" value="0.10"/>
+    <parameter name="MaxAllowedFiringFreq" type="float" value="0.01"/>
     <!--The number of events to be considered for each update cycle-->
-    <parameter name="NoOfEventPerCycle" type="int" value="100"/>
+    <parameter name="NoOfEventPerCycle" type="int" value="1000"/>
     <!--The total number of hot pixel cycle-->
-    <parameter name="TotalNoOfCycle" type="int" value="5"/>
+    <parameter name="TotalNoOfCycle" type="int" value="0"/>
   </processor>
 
   <processor name="Save" type="EUTelOutputProcessor">
