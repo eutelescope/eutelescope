@@ -41,7 +41,21 @@ href="http://www-zeus.desy.de/~rubinsky/EUTelescope/SoftwareDevelopment/EUTelesc
 
 The EUTelescope library comes with the following features:
 
-<b>[Pro]</b> Version v00-03-01 
+<b>[Pro]</b> Version v00-04-00 
+@li Major update. Introduce a (version of a) correlation band calculator. It is
+used to get an estimate of the sensors offset. To be applied in the HitMaker in
+order to have all sensors "preAligned". It make life for the Millepede (called
+in the EUTelMille) easier, since it is supposed to work anyway only with small
+shift/rotations. 
+@li bug fix in EUTelMille: do not implement the estimated Z position (set the
+difference to =0), otherwise the alignment constants could (rarely) get very large. 
+@li bug fix in the zsFixedFrame: cope with initially empty status collection.
+
+<b>[Old]</b> Version v00-03-02 
+@li Update DEPFET. A final decoding for S3Bsystem and for test version of DCD
+readout has been implemented.
+
+<b>[Old]</b> Version v00-03-01 
 @li Bug fix, uncomment one of the chi2 safety checks in the EUTelTestFitter
 processor in order to maintain previous functionality.
 @li Add few more correlation histograms to the EUTelCorrelator processor.
