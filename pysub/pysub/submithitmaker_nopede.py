@@ -783,6 +783,46 @@ class SubmitHitMaker( SubmitBase ):
 
         actualSteeringString = actualSteeringString.replace("@GearPath@", self._gearPath )
 
+        # now replace the offset folder path
+        if self._option.execution == "all-grid" :
+            dbFolder = "db"
+        else:
+            try:
+                dbFolder = self._configParser.get("LOCAL", "LocalFolderDBPede")
+            except ConfigParser.NoOptionError :
+                dbFolder = "db"
+        actualSteeringString = actualSteeringString.replace("@DBPath@" ,dbFolder )
+
+        # set the run number (offsets to be taken from)
+        # can be on run for many in the run block
+
+        if self._option.offsetRunNumber == None :
+            # this means that the user does not want to use hot pixel db file
+            print "offset"
+            print self._option.offsetRunNumber
+        
+            actualSteeringString = actualSteeringString.replace("@UseOffsetDBCommentLeft@", "!--" )
+            actualSteeringString = actualSteeringString.replace("@UseOffsetDBCommentRight@", "--" )
+ 
+#            actualSteeringString = actualSteeringString.replace("@OffsetRunNumber@", "000000" )
+           
+            self._logger.debug( "NOT Using offset db file" )
+        else:    
+            # this means that the user DOES want to use hot pixel db file
+            print "offset YES"
+            
+            actualSteeringString = actualSteeringString.replace("@UseOffsetDBCommentLeft@", "" )
+            actualSteeringString = actualSteeringString.replace("@UseOffsetDBCommentRight@", "" )
+ 
+            offsetRunNumber = "%(run)06d" % { "run": self._option.offsetRunNumber }
+            actualSteeringString = actualSteeringString.replace("@OffsetRunNumber@", offsetRunNumber )
+     
+            self._logger.debug( "Using offset db file" )
+        
+          
+
+
+
         # find the gear file, first check the configuration file, then the commad line options
         # and last use a default gear_telescope.xml
         self._gear_file = ""
