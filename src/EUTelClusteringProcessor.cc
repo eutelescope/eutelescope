@@ -988,7 +988,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
       auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
       {
-          
+
           sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
           int   index       = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
 
@@ -1133,7 +1133,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     // second criteria is the total number of neighbours
  
     // sorts the seed list according to the "operator<" definition in the seed class
-//    seedcandidates.sort();       
+    seedcandidates.sort();       
 
     //end of seed pixel finding!
 
@@ -1173,7 +1173,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                                 }
                             }
                         }
-                    }
+                   }
                           
                     // pix is a vector with all found "good" pixel, that
                     // were not used before in a different cluster.
