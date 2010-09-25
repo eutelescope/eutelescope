@@ -170,10 +170,10 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
   // optional parameters
 
   // ------- Parameters added to allow correlation band info 02 August 2010 libov@mail.desy.de -------
-  registerOptionalParameter("UseSlope","true - track selection is constrained with SlopeXLimit, SlopeYLimit, and SlopeDistanceMax; false - track selection hits based on all possible combinatorics (much slower!)", _UseSlope, true );
-  registerOptionalParameter("SlopeXLimit","Slope in X upper limit ", _SlopeXLimit, static_cast <float> (0.01));
-  registerOptionalParameter("SlopeYLimit","Slope in Y upper limit ", _SlopeYLimit, static_cast <float> (0.01));
-  registerOptionalParameter("SlopeDistanceMax","Maximum tube radius for initial hit selection", _SlopeDistanceMax, static_cast <float> (2.));
+  registerOptionalParameter("UseSlope","Use expected track direction to constraint number of considered hit combinations (track preselection).", _UseSlope, true );
+  registerOptionalParameter("SlopeXLimit","Limit on track slope change when passing sensor layer (in X direction)", _SlopeXLimit, static_cast <float> (0.001));
+  registerOptionalParameter("SlopeYLimit","Limit on track slope change when passing sensor layer (in Y direction)", _SlopeYLimit, static_cast <float> (0.001));
+  registerOptionalParameter("SlopeDistanceMax","Maximum hit distance from the expected position, used for hit preselection", _SlopeDistanceMax, static_cast <float> (1.));
   // -------------------------------------------------------------------------------------------------
 
   std::vector<int > initLayerIDs;
@@ -557,7 +557,7 @@ void EUTelTestFitter::init() {
   _planeY  = new double[_nTelPlanes];
   _planeEy = new double[_nTelPlanes];
 
-  _planeZ  = new double[_nTelPlanes];
+  _planeScatAngle  = new double[_nTelPlanes];
 
   _planeDist = new double[_nTelPlanes];
   _planeScat = new double[_nTelPlanes];
@@ -581,25 +581,32 @@ void EUTelTestFitter::init() {
 
   // Planes are ordered in position along the beam line !
 
+  double totalScatAngle = 0.;
+
   for(int ipl=0; ipl<_nTelPlanes ; ipl++) {
     if(ipl>0) 
     {
       _planeDist[ipl-1]=1./(_planePosition[ipl] - _planePosition[ipl-1]) ;
     }
     
-    _planeScat[ipl]= 0.0136/_eBeam * sqrt(_planeThickness[ipl]/_planeX0[ipl])
+    _planeScatAngle[ipl]= 0.0136/_eBeam * sqrt(_planeThickness[ipl]/_planeX0[ipl])
       * (1.+0.038*std::log(_planeThickness[ipl]/_planeX0[ipl])) ;
   
  
     if(ipl==0 && _useBeamConstraint) {
-      _planeScat[ipl]= 1./(_planeScat[ipl]*_planeScat[ipl]+ _beamSpread*_beamSpread) ;
+      _planeScat[ipl]= 1./(_planeScatAngle[ipl]*_planeScatAngle[ipl]+ _beamSpread*_beamSpread) ;
     } else {
-      _planeScat[ipl]= 1./(_planeScat[ipl] * _planeScat[ipl]) ;
+      _planeScat[ipl]= 1./(_planeScatAngle[ipl] * _planeScatAngle[ipl]) ;
     }
+
+    totalScatAngle+= _planeScatAngle[ipl] * _planeScatAngle[ipl];
+
     _fitX[ipl] =_fitY[ipl] = 0. ;
     _nominalErrorX[ipl]= _planeResolution[ipl];
     _nominalErrorY[ipl]= _planeResolution[ipl];
   }
+
+  totalScatAngle = sqrt(totalScatAngle);
 
   // Fit with nominal parameters for X direction
 
@@ -619,8 +626,15 @@ void EUTelTestFitter::init() {
   for(int ipl=0; ipl<_nTelPlanes ; ipl++) {
     ss << _nominalErrorX[ipl]*1000. << "  " ;
   }
-  streamlog_out ( MESSAGE2 ) << ss.str() << endl;
 
+  ss << endl << "Expected scattering angle [mrad]: ";
+  for(int ipl=0; ipl<_nTelPlanes ; ipl++) {
+    ss << _planeScatAngle[ipl]*1000. << "  " ;
+  }
+
+  ss << endl << "Expected total scattering angle [mrad]: " << totalScatAngle*1000. ;
+
+  streamlog_out ( MESSAGE2 ) << ss.str() << endl;
 
 
   // Fit with nominal parameters for Y direction
@@ -636,6 +650,28 @@ void EUTelTestFitter::init() {
     _nominalFitArrayY[imx] = _fitArray[imx];
   }
 
+// Check if slope-based preselection parameter values are not too small
+
+  if( _UseSlope && 
+        _SlopeXLimit < 5.*totalScatAngle 
+     )
+    streamlog_out( ERROR2 ) << "SlopeXLimit cut probably too tight! Check parameters!" << endl; 
+  
+
+  if( _UseSlope && 
+        _SlopeYLimit < 5.*totalScatAngle 
+     )
+    streamlog_out( ERROR2 ) << "SlopeXLimit cut probably too tight! Check parameters!" << endl; 
+  
+  // Take into account beam spread
+
+  totalScatAngle = sqrt(totalScatAngle*totalScatAngle + _beamSpread*_beamSpread);
+
+  if( _UseSlope && 
+  _SlopeDistanceMax < 5.*totalScatAngle * (_planePosition[_nTelPlanes-1] - _planePosition[0])
+     )
+    streamlog_out( ERROR2 ) << "SlopeDistanceMax cut probably too tight! Check parameters!" << endl; 
+  
 
 // Book histograms
 
@@ -1011,6 +1047,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     }
 
     // Check all track possibilities
+
     double chi2min  = numeric_limits<double >::max();
     double chi2best = _chi2Max;
     double bestPenalty = 0;
@@ -1032,16 +1069,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     }
 
     
-    int     iskip      = 0;
-    int     *iskip_at  = new int[_nTelPlanes];
-    int     *ihit_at   = new int[_nTelPlanes];
-    int     _slopeSet  = 0;
-    float   *_slopeX   = new float[_nTelPlanes];
-    float   *_slopeY   = new float[_nTelPlanes];
-    int     *_slope_at = new int[_nTelPlanes];
-  
-    bool _SlopeIsTight = true;
-  
     for(type_fitcount ichoice = nChoice-_planeMod[istart]-1; ichoice >= 0; ichoice--)  
     {        
       int    nChoiceFired =  0 ;
@@ -1051,29 +1078,41 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       int    ilast        =  0 ;
       int    nleft        =  0 ;
      
-      if(_UseSlope)
-      {
-          iskip     = 0;
-          _slopeSet = 0;
-          _SlopeIsTight = true;
-      }
+      // New variables for preselection based on slope
+      // will be set to plane number if
+      //   - hit too far from the expected position (based on first
+      //             plane + beam slope): hit missed
+      //   - angle between track segments (slope change) too large:
+      //                  track slope
+      //
+      // Value >0 gives first layer which failed the cut
+      // 0 value means that preselection cuts were passed by all hits
+
+      int firstHitMissed = 0;
+      int firstTrackSlope = 0;
+     
+      // If beam constraint used: assume the track should go along
+      // beam direction, otherwise beam is assumed to be perpendicular
+      // to the sensor plane
+
+      double expTrackSlopeX=0.;
+      double expTrackSlopeY=0.;
+ 
+      if(_useBeamConstraint)
+	{
+	  expTrackSlopeX=_beamSlopeX;
+	  expTrackSlopeY=_beamSlopeY;
+	}
+
+      double lastSlopeX=0.;
+      double lastSlopeY=0.;
  
       // Fill position and error arrays for this hit configuration
+
       for(int ipl=0;ipl<_nTelPlanes;ipl++)  
       {
          _planeX[ipl] = _planeY[ipl] = _planeEx[ipl] = _planeEy[ipl] = 0.;
-         if(_UseSlope)
-         {
-            iskip_at[ipl]  = 0 ;
-            ihit_at[ipl]   = 0 ;
-            _slopeX[ipl]   = 1.;
-            _slopeY[ipl]   = 1.;      
-            _slope_at[ipl] = 0 ;      
-         }
-      }
-       
-      for(int ipl=0;ipl<_nTelPlanes;ipl++)  
-      {
+
         if(_isActive[ipl])  
         {
           int ihit   = (ichoice/_planeMod[ipl])%_planeChoice[ipl];
@@ -1087,116 +1126,106 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
             _planeY[ipl]  = hitY[jhit];
             _planeEx[ipl] = (_useNominalResolution)?_planeResolution[ipl]:hitEx[jhit];
             _planeEy[ipl] = (_useNominalResolution)?_planeResolution[ipl]:hitEy[jhit];
-            _planeZ[ipl]  = hitZ[jhit];
  
  
-          
+	    // Calculate distance from expected position
+	    // starting from the second hit (when ifirst already set)
+
+            if(_UseSlope && ifirst>=0 && firstHitMissed == 0)
+	      {
+              double expX = _planeX[ifirst] + expTrackSlopeX *(_planePosition[ipl]-_planePosition[ifirst]);
+              double expY = _planeY[ifirst] + expTrackSlopeY *(_planePosition[ipl]-_planePosition[ifirst]);
+	      if(   abs( _planeX[ipl] - expX ) >  _SlopeDistanceMax 
+                 || abs( _planeY[ipl] - expY ) >  _SlopeDistanceMax  
+                   )  firstHitMissed = ipl;
+
+	      }
+
+	    // Calculate slope and check slope change w.r.t. previous slope
+
+            if(_UseSlope && ifirst>=0 && firstTrackSlope==0  )
+	      {
+              double slopeX = (_planeX[ipl]-_planeX[ifirst])/
+                               (_planePosition[ipl]-_planePosition[ifirst]);
+
+              double slopeY = (_planeY[ipl]-_planeY[ifirst])/
+                               (_planePosition[ipl]-_planePosition[ifirst]);
+
+              if(ilast>ifirst && 
+		 ( abs(slopeX - lastSlopeX) > _SlopeXLimit ||
+                   abs(slopeY - lastSlopeY) > _SlopeYLimit )
+		 ) firstTrackSlope=ipl;
+
+              lastSlopeX=slopeX;
+              lastSlopeY=slopeY;
+	      }
+
+         
             if(ifirst<0) 
             {            
               ifirst    = ipl;
             }
-            else
-                if( _UseSlope )
-            {
-                _slopeX[ipl] = (_planeX[ipl]-_planeX[ifirst])/(_planeZ[ipl]-_planeZ[ifirst]);
-                _slopeY[ipl] = (_planeY[ipl]-_planeY[ifirst])/(_planeZ[ipl]-_planeZ[ifirst]);                
-                _slopeSet++;
-                _slope_at[_slopeSet-1] = ipl;
-         
-                if( _slopeSet > 1 )
-                {
-                    int ti1 = _slope_at[_slopeSet-1];
-                    int ti0 = _slope_at[_slopeSet-1-1];                    
-                    _SlopeIsTight = 
-                        abs( _slopeX[ti1] - _slopeX[ti0] ) < _SlopeXLimit
-                        &&
-                        abs( _slopeY[ti1] - _slopeY[ti0] ) < _SlopeYLimit;
-                }
-             }
- 
-                   
-                if ( 
-                        _UseSlope 
-                        &&
-                        !(
-                         _SlopeIsTight
-                        &&
-                         (  
-                         abs( _planeX[ipl] - _planeX[ifirst] ) <  _SlopeDistanceMax 
-                         &&
-                         abs( _planeY[ipl] - _planeY[ifirst] ) <  _SlopeDistanceMax  
-                         )
-                        )
-                        )
-                {
-                    iskip++;
-                    iskip_at[iskip-1] = ipl;
-                    nleft++;                        // ??? what is this counting? not sure we need it here 
-                    if(iskip>_allowSkipHits)break;
-                }
-                else
-                {   
-                    ilast = ipl;
-                    nleft = 0;
-                    nChoiceFired++;
-                    ihit_at[ipl] = nChoiceFired;
-                }
+              
+            ilast = ipl;
+            nleft = 0;
+            nChoiceFired++;
           } 
           else 
           {
-              nleft++;
-              if( _UseSlope )
-              {
-                iskip++;
-                iskip_at[iskip-1] = ipl;
-                if(iskip>_allowSkipHits)break;
-              }
+            nleft++;        // Counts number of planes with missing
+			    // hits after the last hit
           }
         }
       }
+      // End of plane loop (decoding fit hypothesis)
 
 
-     // Check number of selected hits
+      // Check number of selected hits
       // =============================
 
-      if( _UseSlope )
-      {
-
-        if(iskip > _allowSkipHits ) 
-        {
-         int ilast_mod=iskip_at[_allowSkipHits];
-           ichoice-=_planeMod[ilast_mod]-1;
-           continue;
-        }
-
-      }
-      else
-      {
       // No fit to 1 hit :-)
 
-        if(nChoiceFired < 2) 
+      if(nChoiceFired < 2) 
         {
            continue;
         }
       // Fit with 2 hits make sense only with beam constraint, or
       // when 2 point fit is allowed
 
-        if(
-                nChoiceFired==2 
+      if(       nChoiceFired==2 
                 && !_useBeamConstraint
-                && nChoiceFired + _allowMissingHits < _nActivePlanes
-               ) 
+                && nChoiceFired + _allowMissingHits < _nActivePlanes     ) 
         {
            continue;
         }
       
       // Skip also if the fit can not be extended to proper number
       // of planes; no need to check remaining planes !!!
+
         if(nChoiceFired + nleft < _nActivePlanes - _allowMissingHits ) {
           ichoice-=_planeMod[ilast]-1;
          continue;
         }
-      }
+     
+
+      // Preselection added before full Chi2 calculation
+      //
+      // Cut on distance from expected position
+
+	if(firstHitMissed>0){
+          ichoice-=_planeMod[firstHitMissed]-1;
+         continue;
+        }
+     
+      // Cut on track slope changes
+
+	if(firstTrackSlope>0){
+          ichoice-=_planeMod[firstTrackSlope]-1;
+         continue;
+        }
+     
+
+ 
       // Select fit method
       // "Nominal" fit only if all active planes used
 
@@ -1211,6 +1240,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 
       // Fit failed ?
+
       if(choiceChi2 < 0.)   {
         streamlog_out ( WARNING2 ) << "Fit to " << nChoiceFired
                                    << " planes failed for event " << event->getEventNumber()
@@ -1242,23 +1272,21 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       // Check if better than best fit (or chi2Max if hit ambiguity allowed)
       // If not: skip also all track possibilities which include
       // this hit selection !!!
-      if( !_UseSlope )
-          if(
-              (choiceChi2 >= _chi2Max) 
+
+      if(
+             (choiceChi2 >= _chi2Max) 
              ||
              (choiceChi2 >=  chi2best  && !ambiguityMode) 
               ) 
           {        
               ichoice-=_planeMod[ilast]-1;
               continue;
-          } // this Condition leads ot 25% inefficiency in track finding; to be investigated later.
-
+          } 
 
       //
       // Skip fit if could not be accepted (too few planes fired)
       //
 
-      if( !_UseSlope)
       if(
               nChoiceFired + _allowMissingHits < _nActivePlanes 
               ||
@@ -1841,6 +1869,7 @@ void EUTelTestFitter::end(){
   delete [] _planeResolution ;
   delete [] _planeDist ;
   delete [] _planeScat ;
+  delete [] _planeScatAngle ;
   delete [] _isActive ;
 
   delete [] _planeHits ;

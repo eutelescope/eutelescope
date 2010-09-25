@@ -200,8 +200,11 @@ namespace eutelescope {
    * \param UseBeamConstraint Flag for using beam direction constraint
    *        in the fit. Can improve the fit, if beam angular spread is
    *        small. Improves track searching for multiple hits.
-   *
    * \param BeamSpread Assumed angular spread of the beam [rad]
+   *
+   * \param BeamSlopeX Assumed beam direction tilt in X-Z plane [rad]
+   *
+   * \param BeamSlopeY Assumed beam direction tilt in Y-Z plane [rad]
    *
    * \param AllowMissingHits Allowed number of hits missing in the track
    *        (sensor planes without hits or with hits removed from
@@ -215,6 +218,24 @@ namespace eutelescope {
    *        \f$ \chi^{2} \f$ for each hit removed from the track
    *        because of large \f$ \chi^{2} \f$ contribution.
    *
+   * \param UseSlope  Use additional cuts, based on measured particle
+   *        position in the first layer and the expected track
+   *        direction (beam slope given when UseBeamConstraint
+   *        option is used; otherwise beam is assumed to be
+   *        perpendicular to the sensor) to constraint number of
+   *        considered hit combinations. Also the track slope change
+   *        when passing the layer can be constrained. As the cuts are
+   *        based on the measured positions (and not the fitted ones)
+   *        this should only be used as preselection (cuts should not
+   *        be too tight) - final selection should be done based on
+   *        \f$ \chi^{2} \f$ 
+   * \param SlopeXLimit  Limit on track slope change when passing
+   *        sensor layer (in X direction) 
+   * \param SlopeYLimit  Limit on track slope change when passing
+   *        sensor layer (in Y direction) 
+   * \param SlopeDistanceMax Maximum hit distance from the expected
+   *        position, used for hit preselection (see above).
+   * 
    * \par Performance issues
    * As described above, if multiple hits are found in telescope
    * layers or hit rejection is allowed, the algorithm checks all hits
@@ -244,6 +265,12 @@ namespace eutelescope {
    *      If the beam direction is not exactly perpendicular to
    *      telescope layers, beam tilt can be taken into account by
    *      setting parameters \e BeamSlopeX and \e BeamSlopeY
+   *
+   *  \li Use track preselection based on slope (set \e UseSlope to \e true ).
+   *      This helps a lot especially when the beam is well collimated
+   *      and the energy is high (scattering in telescope planes
+   *      small, so preselection parameters \e  SlopeDistanceMax 
+   *      \e SlopeXLimit and  \e SlopeYLimit  can be set to small values)
    *
    * \li Do not allow for missing hits (set \e AllowMissingHits to 0).
    *     This reduces number of fit hypothesis and improves fit performance.
@@ -509,7 +536,8 @@ namespace eutelescope {
     double * _planeEx ;
     double * _planeY  ;
     double * _planeEy ;
-    double * _planeZ  ;
+
+    double * _planeScatAngle  ;
  
     double * _planeDist ;
     double * _planeScat ;
