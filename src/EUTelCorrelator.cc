@@ -400,7 +400,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
         }
 
         int externalSensorID = pulseCellDecoder( externalPulse ) [ "sensorID" ] ;
-
+//        printf("cluster type: %5d ID:%5d\n", type,externalSensorID);
+ 
         float externalXCenter;
         float externalYCenter;
 
@@ -572,10 +573,12 @@ void EUTelCorrelator::end() {
 
     if( _hasClusterCollection)
     {
-        for ( int inPlane = 0 ; inPlane < _siPlanesLayerLayout->getNLayers(); inPlane++ ) 
+        for ( int iin = 0 ; iin < _siPlanesLayerLayout->getNLayers(); iin++ ) 
         {           
-            for ( int exPlane = 0 ; exPlane < _siPlanesLayerLayout->getNLayers(); exPlane++ ) 
+            int inPlane = _siPlanesLayerLayout->getID( iin );
+            for ( int iex = 0 ; iex < _siPlanesLayerLayout->getNLayers(); iex++ ) 
             {
+                int exPlane = _siPlanesLayerLayout->getID( iex );
                 if( _clusterXCorrShiftMatrix[ exPlane ][ inPlane ] == 0 ) continue;
                 if( _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins() <= 0 ) continue;
                
@@ -664,10 +667,12 @@ void EUTelCorrelator::end() {
  
     if( _hasHitCollection)
     {
-        for ( int inPlane = 0 ; inPlane < _siPlanesLayerLayout->getNLayers(); inPlane++ ) 
+        for ( int iin = 0 ; iin < _siPlanesLayerLayout->getNLayers(); iin++ ) 
         {           
-            for ( int exPlane = 0 ; exPlane < _siPlanesLayerLayout->getNLayers(); exPlane++ ) 
+            int inPlane = _siPlanesLayerLayout->getID( iin );
+            for ( int iex = 0 ; iex < _siPlanesLayerLayout->getNLayers(); iex++ ) 
             {
+                int exPlane = _siPlanesLayerLayout->getID( iex );
                 if( _hitXCorrShiftMatrix[ exPlane ][ inPlane ] == 0 ) continue;
                 if( _hitXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins() <= 0 ) continue;
                
