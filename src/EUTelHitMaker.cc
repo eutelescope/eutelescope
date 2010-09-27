@@ -59,6 +59,7 @@
 #include <memory>
 #include <iostream>
 #include <iomanip>
+#include <cstdio>
 
 using namespace std;
 using namespace marlin;
@@ -327,8 +328,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
                   
             for ( size_t iPos = 0; iPos < _preAlignmentCollectionVec->size(); ++iPos ) 
             {
-                
                 EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _preAlignmentCollectionVec->getElementAt( iPos ) );
+//                _siOffsetXVec[ iPos ] =  alignment->getXOffset();
+//                _siOffsetYVec[ iPos ] =  alignment->getYOffset();
                 _siOffsetXVec[ iPos ] =  alignment->getXOffset()/1000.;
                 _siOffsetYVec[ iPos ] =  alignment->getYOffset()/1000.;
                 streamlog_out ( MESSAGE ) << " ";
