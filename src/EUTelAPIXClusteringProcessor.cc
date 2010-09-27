@@ -175,7 +175,7 @@ void EUTelAPIXClusteringProcessor::initializeGeometry( LCEvent * event ) throw (
 	}
 	streamlog_out(MESSAGE4) << "Active SensorPlanes: ";
 		for (int i= 0; i< _sensorIDVec.size(); i++) {
-			streamlog_out(MESSAGE4) << _sensorIDVec.at(i);
+			streamlog_out(MESSAGE4) << " " << _sensorIDVec.at(i);
 		}
 		streamlog_out(MESSAGE4) << endl;
 	
