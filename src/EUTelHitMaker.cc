@@ -167,12 +167,12 @@ void EUTelHitMaker::init() {
   _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
   _orderedSensorIDVec.clear();
-  _siOffsetXVec.clear();
-  _siOffsetYVec.clear();
+  _siOffsetXMap.clear();
+  _siOffsetYMap.clear();
   for ( int iPlane = 0 ; iPlane < _siPlanesParameters->getSiPlanesNumber() ; ++iPlane ) {
     _orderedSensorIDVec.push_back( _siPlanesLayerLayout->getID( iPlane ) );
-    _siOffsetXVec.push_back( 0.) ;
-    _siOffsetYVec.push_back( 0.) ;
+//    _siOffsetXMap.push_back( 0.) ;
+//    _siOffsetYMap.push_back( 0.) ;
   }
 
   _histogramSwitch = true;
@@ -329,12 +329,11 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
             for ( size_t iPos = 0; iPos < _preAlignmentCollectionVec->size(); ++iPos ) 
             {
                 EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _preAlignmentCollectionVec->getElementAt( iPos ) );
-//                _siOffsetXVec[ iPos ] =  alignment->getXOffset();
-//                _siOffsetYVec[ iPos ] =  alignment->getYOffset();
-                _siOffsetXVec[ iPos ] =  alignment->getXOffset()/1000.;
-                _siOffsetYVec[ iPos ] =  alignment->getYOffset()/1000.;
+                int iID = alignment->getSensorID();
+                _siOffsetXMap.insert( make_pair( iID,  alignment->getXOffset()/1000. ) );
+                _siOffsetYMap.insert( make_pair( iID,  alignment->getYOffset()/1000. ) );
                 streamlog_out ( MESSAGE ) << " ";
-                printf("%2d Xoffset: %9.3f  Yoffset: %9.3f ", iPos, _siOffsetXVec[ iPos ], _siOffsetYVec[ iPos ]); 
+                printf("loaded %2d [%2d] Xoffset: %9.3f  Yoffset: %9.3f ", iPos, iID, _siOffsetXMap[ iID ], _siOffsetYMap[ iID ]); 
                 streamlog_out ( MESSAGE ) << endl;
                 
             }
@@ -346,11 +345,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         }
     }
 
-//    if( _preAlignmentCollectionVec != 0)
-//    for ( size_t iPos = 0; iPos < _preAlignmentCollectionVec->size(); ++iPos ) 
-//    {
-//        printf("%5d  %9.3f %9.3f \n", iPos, _siOffsetXVec[iPos], _siOffsetYVec[iPos] );
-//    }
     
     LCCollectionVec * pulseCollection   = static_cast<LCCollectionVec*> (event->getCollection( _pulseCollectionName ));
     LCCollectionVec * hitCollection     = new LCCollectionVec(LCIO::TRACKERHIT);
@@ -515,8 +509,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
         if( _preAlignmentCollectionVec != 0 )
         {
-           xZero += _siOffsetXVec[detectorID];
-           yZero += _siOffsetYVec[detectorID];
+           xZero += _siOffsetXMap[detectorID];
+           yZero += _siOffsetYMap[detectorID];
         }
     
         if (  ( xPointing[0] == xPointing[1] ) && ( xPointing[0] == 0 ) ) {
