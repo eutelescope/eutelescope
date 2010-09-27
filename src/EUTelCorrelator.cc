@@ -131,6 +131,11 @@ void EUTelCorrelator::init() {
   // clear the sensor ID vector
   _sensorIDVec.clear();
 
+  // clear the sensor ID map
+  _sensorIDVecMap.clear();
+  _sensorIDtoZOrderMap.clear();
+
+
   // clear the sensor ID vector (z-axis order)
   _sensorIDVecZOrder.clear();
 
@@ -186,6 +191,7 @@ void EUTelCorrelator::init() {
     int sensorID = _siPlanesLayerLayout->getID( iPlane );
 
     _sensorIDVec.push_back( sensorID );
+    _sensorIDVecMap.insert( make_pair( sensorID, iPlane ) );
 
     // count number of the sensors to the left of the current one:
     int _sensors_to_the_left = 0;
@@ -209,8 +215,8 @@ void EUTelCorrelator::init() {
     _minY[ sensorID ] = 0;
     _maxX[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelX( iPlane ) - 1;
     _maxY[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelY( iPlane ) - 1;
-    _maxX[ sensorID ] = 100;
-    _maxY[ sensorID ] = 100;
+//    _maxX[ sensorID ] = 100;
+//    _maxY[ sensorID ] = 100;
   }
 
   _isInitialize = false;
@@ -491,7 +497,10 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             _clusterYCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalYCenter, internalYCenter );
 
             // assum simpliest +1 and -1 only :
-            if( _siPlanesRotations[internalSensorID][1] * _siPlanesRotations[externalSensorID][1] > 0 )
+            int inPlaneGear = _sensorIDVecMap[internalSensorID];
+            int exPlaneGear = _sensorIDVecMap[externalSensorID];
+
+            if( _siPlanesRotations[inPlaneGear][1] * _siPlanesRotations[exPlaneGear][1] > 0 )
             {
                 _clusterXCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalXCenter, internalXCenter-externalXCenter );
                 _clusterYCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalYCenter, internalYCenter-externalYCenter );
@@ -499,9 +508,9 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             else
             {
                 _clusterXCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( 
-                        externalXCenter, _maxX[ iInt ] -internalXCenter -externalXCenter );
+                        externalXCenter, _maxX[ iInt ] - internalXCenter + externalXCenter );
                 _clusterYCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( 
-                        externalYCenter, _maxX[ iInt ] -internalYCenter -externalYCenter ); 
+                        externalYCenter, _maxX[ iInt ] - internalYCenter + externalYCenter ); 
             }
           } // endif
 
@@ -656,12 +665,31 @@ void EUTelCorrelator::end() {
                 }
 
                 printf("for plane %d  the X offset is %9.3f px, the Y offset is %9.3f px\n", 
-                        inPlane, _correlationBandCenterX/_correlationBandBinsX, _correlationBandCenterY/_correlationBandBinsY );
+                        inPlane, 
+                        _correlationBandBinsX == 0. ? 0.: _correlationBandCenterX/_correlationBandBinsX, 
+                        _correlationBandBinsY == 0. ? 0.: _correlationBandCenterY/_correlationBandBinsY );
 
-                _siPlanesOffsetX[ inPlane ] = 1000.*_siPlanesPitchX[inPlane]*(_correlationBandCenterX/_correlationBandBinsX);
-                _siPlanesOffsetY[ inPlane ] = 1000.*_siPlanesPitchY[inPlane]*(_correlationBandCenterY/_correlationBandBinsY);
+                int inPlaneGear = _sensorIDVecMap[inPlane];
+
+                if( _correlationBandBinsX != 0. ) 
+                _siPlanesOffsetX[ inPlane ] = _siPlanesPitchX[inPlaneGear]*(_correlationBandCenterX/_correlationBandBinsX);
+                else
+                _siPlanesOffsetX[ inPlane ] = 0.;    
+ 
+                if( _correlationBandBinsY != 0. ) 
+                _siPlanesOffsetY[ inPlane ] = _siPlanesPitchY[inPlaneGear]*(_correlationBandCenterY/_correlationBandBinsY);
+                else
+                _siPlanesOffsetY[ inPlane ] = 0.;    
                
-            }
+                printf("for plane %d  the X offset is %9.3f mm, the Y offset is %9.3f mm [pitch X:%9.3f Y:%9.3f]\n", 
+                        inPlane, 
+                        _siPlanesOffsetX[inPlane], 
+                        _siPlanesOffsetY[inPlane],
+                        _siPlanesPitchX[inPlaneGear],
+                        _siPlanesPitchY[inPlaneGear]
+                        );
+
+           }
         }
     }
  
@@ -749,12 +777,19 @@ void EUTelCorrelator::end() {
                    _correlationBandCenterY += ybin*xbin;
                 }
 
-                printf("for plane %d  the X offset is %9.3f , the Y offset is %9.3f \n", 
-                        inPlane, _correlationBandCenterX/_correlationBandBinsX, _correlationBandCenterY/_correlationBandBinsY );
+//              printf("for plane %d  the X offset is %9.3f , the Y offset is %9.3f \n", 
+//                        inPlane, _correlationBandCenterX/_correlationBandBinsX, _correlationBandCenterY/_correlationBandBinsY );
 
-                _siPlanesOffsetX[ inPlane ] = 1000.*_siPlanesPitchX[inPlane]*(_correlationBandCenterX/_correlationBandBinsX);
-                _siPlanesOffsetY[ inPlane ] = 1000.*_siPlanesPitchY[inPlane]*(_correlationBandCenterY/_correlationBandBinsY);
+//                _siPlanesOffsetX[ inPlane ] = _siPlanesPitchX[inPlane]*(_correlationBandCenterX/_correlationBandBinsX);
+//                _siPlanesOffsetY[ inPlane ] = _siPlanesPitchY[inPlane]*(_correlationBandCenterY/_correlationBandBinsY);
                
+
+                printf("for plane %d  the X offset is %9.3f, the Y offset is %9.3f \n", 
+                        inPlane, 
+                        _correlationBandBinsX == 0. ? 0.: _correlationBandCenterX/_correlationBandBinsX, 
+                        _correlationBandBinsY == 0. ? 0.: _correlationBandCenterY/_correlationBandBinsY );
+
+
             }
         }
     }
@@ -785,8 +820,9 @@ void EUTelCorrelator::end() {
         LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
 
 
-        for ( int inPlane = 0 ; inPlane < _siPlanesLayerLayout->getNLayers(); inPlane++ ) 
+        for ( int iin = 0 ; iin < _siPlanesLayerLayout->getNLayers(); iin++ ) 
         {           
+            int inPlane = _siPlanesLayerLayout->getID( iin );
             EUTelAlignmentConstant * constant = new EUTelAlignmentConstant;
 
             constant->setXOffset( _siPlanesOffsetX[inPlane]  );
@@ -927,8 +963,8 @@ void EUTelCorrelator::bookHistos() {
 
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
 
-            xBin = _maxX[ row ] + _maxX[ row ] + 1;
-            xMin = static_cast<double >(-_maxX[ row ]) - 0.5;
+            xBin = _minX[ row ] + _maxX[ row ] + 1;
+            xMin = static_cast<double >( _minX[ row ]) - 0.5;
             xMax = static_cast<double >( _maxX[ row ]) + 0.5;
             yBin = _maxX[ col ] + _maxX[ col ] + 1;
             yMin = static_cast<double >(-_maxX[ col ]) - 0.5;
@@ -948,8 +984,8 @@ void EUTelCorrelator::bookHistos() {
 
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
 
-            xBin = _maxY[ row ] + _minY[ row ] + 1;
-            xMin = static_cast<double >(-_maxY[ row ]) - 0.5;
+            xBin = _minY[ row ] + _maxY[ row ] + 1;
+            xMin = static_cast<double >( _minY[ row ]) - 0.5;
             xMax = static_cast<double >( _maxY[ row ]) + 0.5;
             yBin = _maxY[ col ] + _minY[ col ] + 1;
             yMin = static_cast<double >(-_maxY[ col ]) - 0.5;
@@ -1008,8 +1044,8 @@ void EUTelCorrelator::bookHistos() {
             if(_siPlanesLayerLayout->getSensitiveNpixelX( r ) < 255)
               rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelX( r );
 
-            colNBin = 100;
-            rowNBin = 100;
+//            colNBin = 100;
+//            rowNBin = 100;
 
             tempHistoName  =  "HitX/" +  _hitXCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
@@ -1036,16 +1072,17 @@ void EUTelCorrelator::bookHistos() {
             colMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( c ) +
                                       ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( c )) );
             
-//            colNBin = 512;
-//            rowNBin = 512;
+            colNBin = _maxY[c];
+            rowNBin = _maxY[r];
+
             if(_siPlanesLayerLayout->getSensitiveNpixelY( c ) < 255)
               colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( c );
 
             if(_siPlanesLayerLayout->getSensitiveNpixelY( r ) < 255)
               rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( r );
 
-            colNBin = 100;
-            rowNBin = 100;
+//            colNBin = 100;
+//            rowNBin = 100;
             
             tempHistoName =  "HitY/" + _hitYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             streamlog_out( DEBUG ) << "Booking cloud " << tempHistoName << endl;
@@ -1076,18 +1113,27 @@ void EUTelCorrelator::bookHistos() {
             colMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( c ) +
                                       ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( c )) );
             
-//            colNBin = 512;
-//            rowNBin = 512;
+            colNBin = 512;
+            rowNBin = 512;
             if(_siPlanesLayerLayout->getSensitiveNpixelY( c ) < 255)
               colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( c );
 
             if(_siPlanesLayerLayout->getSensitiveNpixelY( r ) < 255)
               rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( r );
 
-            colNBin = 100;
-            rowNBin = 100;
- 
+//            colNBin = 100;
+//            rowNBin = 100;
 
+            printf("X:: r=%5d posX:%9.3f sizeX:%9.3f c=%5d posX:%9.3f sizeX:%9.3f [col: %5d   row: %5d]\n",
+                    r,
+                    _siPlanesLayerLayout->getSensitivePositionX( r ) ,
+                    _siPlanesLayerLayout->getSensitiveSizeX( r ), 
+                     c,
+                    _siPlanesLayerLayout->getSensitivePositionX( c ) ,
+                    _siPlanesLayerLayout->getSensitiveSizeX( c ) ,
+                    colNBin, rowNBin
+                    );
+ 
             histo2D =
               AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
                       colNBin, colMin, colMax, rowNBin, rowMin, rowMax);
@@ -1098,13 +1144,14 @@ void EUTelCorrelator::bookHistos() {
             innerMapXHitShift[ col  ] =  histo2D ;
 
 
-
             // book Y
             tempHistoName =  "HitYShift/" +  _hitYCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
 
             streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
 
-
+            
+            
+            
             rowMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( r ) -
                                       ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( r ) ));
             rowMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( r ) +
@@ -1115,18 +1162,26 @@ void EUTelCorrelator::bookHistos() {
             colMax = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionY( c ) +
                                       ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeY ( c )) );
             
-//            colNBin = 512;
-//            rowNBin = 512;
+            colNBin = 512;
+            rowNBin = 512;
             if(_siPlanesLayerLayout->getSensitiveNpixelY( c ) < 255)
               colNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( c );
 
             if(_siPlanesLayerLayout->getSensitiveNpixelY( r ) < 255)
               rowNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( r );
 
-            colNBin = 100;
-            rowNBin = 100;
- 
-
+//            colNBin = 100;
+//            rowNBin = 100;
+            
+            printf("Y:: r=%5d posY:%9.3f sizeY:%9.3f c=%5d posY:%9.3f sizeY:%9.3f [col: %5d   row: %5d]\n",
+                    r,
+                    _siPlanesLayerLayout->getSensitivePositionY( r ) ,
+                    _siPlanesLayerLayout->getSensitiveSizeY( r ) ,
+                     c,
+                    _siPlanesLayerLayout->getSensitivePositionY( c ) ,
+                    _siPlanesLayerLayout->getSensitiveSizeY( c ) ,
+                    colNBin, rowNBin
+                    );
 
             histo2D =
               AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
