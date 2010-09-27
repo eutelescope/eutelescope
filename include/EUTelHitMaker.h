@@ -535,8 +535,8 @@ namespace eutelescope {
     //! Sensor Offset X and Y
     /*!
      */
-    std::vector <double> _siOffsetXVec;
-    std::vector <double> _siOffsetYVec;
+    std::map <int, double> _siOffsetXMap;
+    std::map <int, double> _siOffsetYMap;
     
   };
 
