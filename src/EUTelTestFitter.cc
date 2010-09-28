@@ -269,6 +269,10 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
                              "Allow same hit to be used in more than one track",
                              _allowAmbiguousHits, static_cast < bool > (false));
 
+  registerOptionalParameter ("MaximumAmbiguousHits",
+                             "Maximum number of hits to be shared by more than one track",
+                             _maximumAmbiguousHits, static_cast < int > (2));
+
   // initialize all the counters
   _noOfEventWOInputHit   = 0;
   _noOfEventWOTrack = 0;
@@ -784,11 +788,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   IntVec * planeHitID   = new IntVec[_nTelPlanes];
 
-  double * bestX  = new double[_nTelPlanes];
-  double * bestEx = new double[_nTelPlanes];
-  double * bestY  = new double[_nTelPlanes];
-  double * bestEy = new double[_nTelPlanes];
-
   // Loop over hits
 
   int nGoodHit = 0;
@@ -932,8 +931,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 #endif
 
   // Main analysis loop: finding multiple tracks (if allowed)
+  //=========================================================
 
   // Define output track and hit collections
+
   LCCollectionVec     *fittrackvec = new LCCollectionVec(LCIO::TRACK);
   LCCollectionVec     *fitpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
   LCCollectionVec     *corrpointvec = new LCCollectionVec(LCIO::TRACKERHIT);
@@ -945,22 +946,44 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   fittrackvec->setFlag(flag.getFlag());
 
 
+  //
+  // New implementation: only one loop over all fit possibilities! 
+  // =============================================================
+  //
+  // Method works in all cases, also when missing hits are allowed 
+  // Duplicated tracks (if ambiguity is not allowed) rejected later
+
+
+  // Store all fits passing cuts
+  // Chi2 map will sort all possibilities according to Chi2 value
+
+  std::multimap<double,int> fittedChi2;
+  std::multimap<double,int>::iterator fitIterator,fitIterator2;
+
+
+  // Vectors storing fit results (one number per fit)
+
+  std::vector<double> fittedPenalty;
+  std::vector<int> fittedFired;
+
+
+  // Vectors storing fit results (_nTelPlanes numbers per fit)
+
+  std::vector<double> fittedX;
+  std::vector<double> fittedEx;
+  std::vector<double> fittedY;
+  std::vector<double> fittedEy;
+  std::vector<int> fittedHits;
+
+  // Total number of fitted tracks stored in vectors
+
   int nFittedTracks = 0 ;
-  bool firstTrack = true ;
-  type_fitcount ibest;
 
-  // In the current implementation ambiguity mode works only for full
-  // tracks, i.e. when _allowMissingHits == 0
 
-  bool ambiguityMode =  _allowAmbiguousHits && ( _allowMissingHits == 0 );
-
-  do 
-  {
     // Count planes active in this event and number of fit possibilities
     //
     int nFiredPlanes = 0;
     type_fitcount nChoice = 1;
-    ibest=-1;
 
     
     // Count from the last plane, to allow for "smart" track finding
@@ -986,7 +1009,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     
 
     // Debug output
-    if(firstTrack && debug ) 
+    if(debug ) 
     {
       for(int ipl=0;ipl<_nTelPlanes;ipl++) 
       {
@@ -1006,11 +1029,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 
     // Check if fit can be done
+
     if(nFiredPlanes + _allowMissingHits < _nActivePlanes) 
     {
-      if( firstTrack ) 
-      {
-        if(debug) 
+      if(debug) 
         {
           streamlog_out ( TESTFITTERMESSAGE ) <<  "Not enough planes hit to perform the fit " << endl;
         }
@@ -1019,28 +1041,24 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
 #endif
 
-        // before returning clean up the memory
-        delete [] bestEy;
-        delete [] bestY;
-        delete [] bestEx;
-        delete [] bestX;
-        delete [] planeHitID;
-        delete [] hitPlane;
-        delete [] hitFits;
-        delete [] hitZ;
-        delete [] hitEy;
-        delete [] hitY;
-        delete [] hitEx;
-        delete [] hitX;
+      // before returning clean up the memory
+
+      delete [] planeHitID;
+      delete [] hitPlane;
+      delete [] hitFits;
+      delete [] hitZ;
+      delete [] hitEy;
+      delete [] hitY;
+      delete [] hitEx;
+      delete [] hitX;
         
-        // increment the counter
-        ++_noOfEventWOTrack;
-        return ;
-      }
+      // increment the counter
+      ++_noOfEventWOTrack;
+      return ;
     }
 
 
-    if( firstTrack && debug ) 
+    if( debug ) 
     {
       streamlog_out ( TESTFITTERMESSAGE ) << nFiredPlanes << " active sensor planes hit, checking "
                                           << nChoice << " fit possibilities "  << endl;
@@ -1049,9 +1067,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     // Check all track possibilities
 
     double chi2min  = numeric_limits<double >::max();
-    double chi2best = _chi2Max;
-    double bestPenalty = 0;
-    int nBestFired = 0;
 
     // Loop over fit possibilities
     // Start from one-hit track to allow for "smart" skipping of wrong matches
@@ -1269,15 +1284,11 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         chi2min=trackChi2;
       }
 
-      // Check if better than best fit (or chi2Max if hit ambiguity allowed)
+      // Check if better than chi2Max
       // If not: skip also all track possibilities which include
       // this hit selection !!!
 
-      if(
-             (choiceChi2 >= _chi2Max) 
-             ||
-             (choiceChi2 >=  chi2best  && !ambiguityMode) 
-              ) 
+      if(  choiceChi2 >= _chi2Max  ) 
           {        
               ichoice-=_planeMod[ilast]-1;
               continue;
@@ -1297,212 +1308,39 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       }
 
 
-      // Best fit ?
+      // Fill all tracks passing chi2 cut
 
-      if(trackChi2<chi2best)   {
-        chi2best=trackChi2;
-        bestPenalty=penalty;
-        ibest=ichoice;
-        nBestFired=nChoiceFired;
-        for(int ipl=0;ipl<_nTelPlanes;ipl++)  {
-          bestX[ipl]=_fitX[ipl];
-          bestY[ipl]=_fitY[ipl];
-          bestEx[ipl]=_fitEx[ipl];
-          bestEy[ipl]=_fitEy[ipl];
-        }
-      }
+      if(trackChi2<_chi2Max) 
+      {
 
-      // If hit ambiguity allowed (same hit can be used in many
-      // tracks) - fill all tracks passing chi2 cut
+        fittedChi2.insert( make_pair( trackChi2, nFittedTracks ));
 
-      if(trackChi2<_chi2Max   && ambiguityMode ) {
+        fittedPenalty.push_back(penalty); 
+        fittedFired.push_back(nChoiceFired);
 
-        if(debug)  {
-          streamlog_out ( TESTFITTERMESSAGE) <<  "Track reconstructed from " << nChoiceFired << " hits: " << endl;
+        for(int ipl=0;ipl<_nTelPlanes;ipl++)  
+        {
+	  int jhit=-1;
 
+          if(_isActive[ipl])  
+            {
+            int ihit = (ichoice/_planeMod[ipl])%_planeChoice[ipl];
+      
+            if(ihit<_planeHits[ipl])
+                jhit = planeHitID[ipl].at(ihit);
+	    }
 
-          // print out hits contributing to the fit
+           fittedHits.push_back(jhit);
 
-
-          for(int ipl=0;ipl<_nTelPlanes;ipl++)  {
-            if(_isActive[ipl]) {
-              int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
-
-              if(ihit<_planeHits[ipl])  {
-                int jhit = planeHitID[ipl].at(ihit);
-                streamlog_out ( TESTFITTERMESSAGE) << "Hit " << jhit
-                                                   << "   X = " << hitX[jhit]
-                                                   << "   Y = " << hitY[jhit]
-                                                   << "   Z = " << hitZ[jhit] << " (plane" << hitPlane[jhit] << ")"  << endl;
-              }
-            }
-          }
-
-          streamlog_out ( TESTFITTERMESSAGE) << " Fitted positions in telescope planes:" << endl;
-
-          for(int ipl=0;ipl<_nTelPlanes;ipl++) {
-            streamlog_out ( TESTFITTERMESSAGE) << "  X = " << _fitX[ipl] << " +/- " << _fitEx[ipl]
-                                               << "  Y = " << _fitY[ipl] << " +/- " << _fitEy[ipl]
-                                               << "  at Z = " << _planePosition[ipl]  << endl;
-          }
-
-
-          streamlog_out ( TESTFITTERMESSAGE) << " Fit chi2 = " << trackChi2 << " including penalties of " << penalty << endl;
-
-        }
-
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-        // Fill Chi2 histograms
-
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_linChi2HistoName]))->fill(trackChi2);
-
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_logChi2HistoName]))->fill(log10(trackChi2));
-
-        if(_allowMissingHits && nBestFired==_nActivePlanes) {
-          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_fullChi2HistoName]))->fill(log10(trackChi2));
-        }
-
-        // Fill hit histograms
-
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nHitHistoName]))->fill(nChoiceFired);
-#endif
-
-        // Write fit result out
-
-        TrackImpl * fittrack = new TrackImpl();
-
-        // Following parameters are not used for Telescope
-        // and are set to zero (just in case)
-        fittrack->setOmega(0.);     // curvature of the track
-        fittrack->setD0(0.);        // impact parameter of the track in (r-phi)
-        fittrack->setZ0(0.);        // impact parameter of the track in (r-z)
-        fittrack->setPhi(0.);       // phi of the track at reference point
-        fittrack->setTanLambda(0.); // dip angle of the track at reference point
-
-        // Used class members
-        fittrack->setChi2(trackChi2);   // Chi2 of the fit (including penalties)
-        fittrack->setNdf(nChoiceFired); // Number of planes fired (!)
-
-        // Fitted position at DUT is stored as Reference Point
-        // (see below in loop over telescope planes)
-        // If no DUT present: use position in the first plane !
-
-        fittrack->setIsReferencePointPCA(false);
-        float refpoint[3];
-
-        // Track points fitted in each plane are stored as track hits
-
-        for(int ipl=0;ipl<_nTelPlanes;ipl++)  {
-          TrackerHitImpl * fitpoint = new TrackerHitImpl;
-
-          // Hit type is set to 32, to distinguish from measured
-          // hits (hit type = cluster type = 0 ... 31)
-
-          fitpoint->setType(32);
-
-          // fitted position in a plane
-
-          double pos[3];
-
-          pos[0]=_fitX[ipl];
-          pos[1]=_fitY[ipl];
-          pos[2]=_planePosition[ipl];
-
-          fitpoint->setPosition(pos);
-
-          // Covariance matrix of the position
-          // (stored as lower triangle matrix, i.e.  cov(xx),cov(y,x),cov(y,y) ).
-
-          float cov[TRKHITNCOVMATRIX];
-
-          cov[0]=_fitEx[ipl]*_fitEx[ipl];
-          cov[1]=0.;
-          cov[2]=_fitEy[ipl]*_fitEy[ipl];
-          cov[3]=cov[4]=0.;
-          cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
-
-          fitpoint->setCovMatrix(cov);
-
-          // store fit point
-
-          fitpointvec->push_back(fitpoint);
-
-          //   add fitted point to track
-
-          if(_OutputHitsInTrack)   fittrack->addHit(fitpoint);
-
-          // add measured point to track (if found)
-
-          if(_InputHitsInTrack && _isActive[ipl])  {
-            int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
-
-            if(ihit<_planeHits[ipl])   {
-              int jhit = planeHitID[ipl].at(ihit);
-              TrackerHitImpl * meshit = dynamic_cast<TrackerHitImpl*>( col->getElementAt(jhit) ) ;
-              TrackerHitImpl * corrhit = new TrackerHitImpl;
-              //
-              // Copy input hit data
-              //
-              corrhit->setType(meshit->getType());
-              corrhit->setTime(meshit->getTime());
-//               corrhit->setdEdx(meshit->getdEdx()); // OBSOLETE member function
-              corrhit->setEDep(meshit->getEDep());
-              corrhit->rawHits()=meshit->getRawHits();
-              //
-              // Use corrected position
-              //
-              pos[0]=hitX[jhit];
-              pos[1]=hitY[jhit];
-              pos[2]=_planePosition[ipl];
-
-              corrhit->setPosition(pos);
-              //
-              // Include errors, as used in the fit
-              //
-              cov[0]=hitEx[jhit]*hitEx[jhit];
-              cov[1]=0.;
-              cov[2]=hitEy[jhit]*hitEy[jhit];
-              cov[3]=cov[4]=0.;
-              cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
-
-              corrhit->setCovMatrix(cov);
-
-              corrpointvec->push_back(corrhit);
-
-              fittrack->addHit(corrhit);
-            }
-          }
-
-          // Use position at DUT as a track reference point.
-          // If no DUT present: use position in the first plane !
-
-          if(ipl==_iDUT || (_iDUT<0 && ipl==0)) {
-            for(int iref=0;iref<3;iref++) {
-              refpoint[iref]=pos[iref];
-            }
-          }
-        }
-
-        // Store track reference point.
-        fittrack->setReferencePoint(refpoint);
-
-        fittrackvec->addElement(fittrack);
-
-        // Count number of tracks for each hit
-
-        for(int ipl=0;ipl<_nTelPlanes;ipl++) {
-          if(_isActive[ipl]) {
-            int ihit=(ichoice/_planeMod[ipl])%_planeChoice[ipl];
-
-            if(ihit<_planeHits[ipl]) {
-              hitFits[planeHitID[ipl].at(ihit)]++;
-            }
-          }
-        }
+           fittedX.push_back(_fitX[ipl]);
+           fittedY.push_back(_fitY[ipl]);
+           fittedEx.push_back(_fitEx[ipl]);
+           fittedEy.push_back(_fitEy[ipl]);
+	}
 
         nFittedTracks++;
 
-      }  // end of track filling - if(choiceChi2+penalty<_chi2Max   && ambiguityMode )
+      }  // end of track filling 
 
 
 
@@ -1510,11 +1348,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     // End of loop over track possibilities
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-    if(firstTrack)
-      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_firstChi2HistoName]))->fill(log10(chi2min));
+    (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_firstChi2HistoName]))->fill(log10(chi2min));
 #endif
 
-    if(ibest<0 && firstTrack) {
+    if(nFittedTracks==0) {
       if(debug) {
         streamlog_out ( TESTFITTERMESSAGE ) << "No track fulfilling search criteria found ! " << endl;
       }
@@ -1525,10 +1362,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
       // before throwing the exception I should clean up the
       // memory...
-      delete [] bestEy;
-      delete [] bestY;
-      delete [] bestEx;
-      delete [] bestX;
       delete [] planeHitID;
       delete [] hitPlane;
       delete [] hitFits;
@@ -1541,78 +1374,124 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     }
 
 
-    if(ibest>=0 && firstTrack && ambiguityMode )  {
+
+    // Fitted track analysis
+    // =====================
+
+
+    // Take only first track (best Chi2), if multiple track finding disabled
+
+    if(!_searchMultipleTracks) nFittedTracks=1;
+
+    int itrk=0;
+  
+    int nStoredTracks=0;
+
+    for(fitIterator=fittedChi2.begin(); fitIterator!=fittedChi2.end(); fitIterator++)
+       {
+       // Chi2 map is sorted by definition, we start from the best fit
+
+       double choiceChi2 = fitIterator->first;
+       int ifit = fitIterator->second;
+
+       int nChoiceFired = fittedFired[ifit];
+       double penalty = fittedPenalty[ifit];
+
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-      if(_searchMultipleTracks) {
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_bestChi2HistoName]))->fill(log10(chi2best));
-      }
-      if(_searchMultipleTracks) {
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nBestHistoName]))->fill(nBestFired);
-      }
+       if(itrk==0 && _searchMultipleTracks) 
+         {
+     (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_bestChi2HistoName]))->fill(log10(choiceChi2));
+     (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nBestHistoName]))->fill(nChoiceFired);
+	 }
 #endif
 
-    }
+
+       // Skip tracks having too many ambiguous hits
+       // Check better fits only!
+
+       bool isAmbiguous = false;
+
+       for(fitIterator2=fittedChi2.begin(); fitIterator2!=fitIterator; fitIterator2++)
+	 {
+           int ifit2 = fitIterator2->second;
+           int nAmbiguous=0;
+
+           for(int ipl=0;ipl<_nTelPlanes;ipl++)  
+	       if(fittedHits[_nTelPlanes*ifit+ipl]==fittedHits[_nTelPlanes*ifit2+ipl]
+                  && 
+                  fittedHits[_nTelPlanes*ifit+ipl]>=0) 
+                                                  nAmbiguous++;
+
+           if( 
+	      (  _allowAmbiguousHits && nAmbiguous > _maximumAmbiguousHits )
+                  ||
+	      ( !_allowAmbiguousHits && nAmbiguous > 0 )
+
+              ) isAmbiguous=true;
+	 }
 
 
-    if(ibest>=0 && !ambiguityMode ) {
+       if(isAmbiguous)continue;
 
-      if(debug)  {
-        streamlog_out ( TESTFITTERMESSAGE)  << "Track reconstructed from " << nBestFired << " hits: " << endl;
+       // Count accepted track for contributing hits
+
+       for(int ipl=0;ipl<_nTelPlanes;ipl++) 
+         {
+	   int jhit = fittedHits[_nTelPlanes*ifit+ipl];
+
+	   if(jhit >= 0)
+                  hitFits[jhit]++;
+	 }
+
+
+       if(debug)  {
+         streamlog_out ( TESTFITTERMESSAGE)  << "Track reconstructed from " << nChoiceFired << " hits: " << endl;
 
 
         // print out hits contributing to the fit
 
-
-        for(int ipl=0;ipl<_nTelPlanes;ipl++)  {
-          if(_isActive[ipl])   {
-            int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
-
-            if(ihit<_planeHits[ipl])  {
-              int jhit = planeHitID[ipl].at(ihit);
+        for(int ipl=0;ipl<_nTelPlanes;ipl++)  
+          {
+          int jhit = fittedHits[_nTelPlanes*ifit+ipl];
+          if(jhit >= 0)
               streamlog_out ( TESTFITTERMESSAGE) << "Hit " << jhit
                                                  << "   X = " << hitX[jhit]
                                                  << "   Y = " << hitY[jhit]
-                                                 << "   Z = " << hitZ[jhit] << " (plane" << hitPlane[jhit] << ")" << endl;
-            }
+                                                 << "   Z = " << hitZ[jhit] 
+                                                 << " (plane" << hitPlane[jhit] << ")" << endl;
           }
-        }
 
 
         streamlog_out ( TESTFITTERMESSAGE) << " Fitted positions in telescope planes:" << endl;
 
         for(int ipl=0;ipl<_nTelPlanes;ipl++) {
-          streamlog_out ( TESTFITTERMESSAGE) << "  X = " << bestX[ipl] << " +/- " << bestEx[ipl]
-                                             << "  Y = " << bestY[ipl] << " +/- " << bestEy[ipl]
+          streamlog_out ( TESTFITTERMESSAGE) << "  X = " << fittedX[_nTelPlanes*ifit+ipl] 
+                                             << " +/- " << fittedEx[_nTelPlanes*ifit+ipl]
+                                             << "  Y = " << fittedY[_nTelPlanes*ifit+ipl] 
+                                             << " +/- " << fittedEy[_nTelPlanes*ifit+ipl]
                                              << "  at Z = " << _planePosition[ipl] << endl;
         }
 
-        streamlog_out ( TESTFITTERMESSAGE) << " Fit chi2 = " << chi2best << " including penalties of " << bestPenalty << endl;
+        streamlog_out ( TESTFITTERMESSAGE) << " Fit chi2 = " << choiceChi2 << " including penalties of " << penalty << endl;
 
       }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       // Fill Chi2 histograms
 
-      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_linChi2HistoName]))->fill(chi2best);
+      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_linChi2HistoName]))->fill(choiceChi2);
 
-      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_logChi2HistoName]))->fill(log10(chi2best));
+      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_logChi2HistoName]))->fill(log10(choiceChi2));
 
-      if(_searchMultipleTracks && firstTrack) {
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_bestChi2HistoName]))->fill(log10(chi2best));
-      }
-
-      if(_allowMissingHits && nBestFired==_nActivePlanes) {
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_fullChi2HistoName]))->fill(log10(chi2best));
+      if(_allowMissingHits && nChoiceFired==_nActivePlanes) {
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_fullChi2HistoName]))->fill(log10(choiceChi2));
       }
 
       // Fill hit histograms
 
-      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nHitHistoName]))->fill(nBestFired);
+      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nHitHistoName]))->fill(nChoiceFired);
 
-      if(_searchMultipleTracks && firstTrack) {
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nBestHistoName]))->fill(nBestFired);
-      }
 #endif
 
 
@@ -1630,8 +1509,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
       // Used class members
 
-      fittrack->setChi2(chi2best);  // Chi2 of the fit (including penalties)
-      fittrack->setNdf(nBestFired); // Number of planes fired (!)
+      fittrack->setChi2(choiceChi2);  // Chi2 of the fit (including penalties)
+      fittrack->setNdf(nChoiceFired); // Number of planes fired (!)
 
       // Fitted position at DUT is stored as Reference Point
       // (see below in loop over telescope planes)
@@ -1655,8 +1534,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
         double pos[3];
 
-        pos[0]=bestX[ipl];
-        pos[1]=bestY[ipl];
+        pos[0]=fittedX[_nTelPlanes*ifit+ipl];
+        pos[1]=fittedY[_nTelPlanes*ifit+ipl];
         pos[2]=_planePosition[ipl];
 
         fitpoint->setPosition(pos);
@@ -1666,9 +1545,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
         float cov[TRKHITNCOVMATRIX];
 
-        cov[0]=bestEx[ipl]*bestEx[ipl];
+        cov[0]=fittedEx[_nTelPlanes*ifit+ipl]*fittedEx[_nTelPlanes*ifit+ipl];
         cov[1]=0.;
-        cov[2]=bestEy[ipl]*bestEy[ipl];
+        cov[2]=fittedEy[_nTelPlanes*ifit+ipl]*fittedEy[_nTelPlanes*ifit+ipl];
         cov[3]=cov[4]=0.;
         cov[5]=_planeThickness[ipl]*_planeThickness[ipl]/12.;
 
@@ -1686,11 +1565,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         // 
         if(_InputHitsInTrack && _isActive[ipl])  
         {
-          int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
+          int jhit = fittedHits[_nTelPlanes*ifit+ipl];
 
-          if(ihit<_planeHits[ipl])  
+          if(jhit >= 0)  
           {
-            int jhit = planeHitID[ipl].at(ihit);
             TrackerHitImpl * meshit = dynamic_cast<TrackerHitImpl*>( col->getElementAt(jhit) ) ;
             TrackerHitImpl * corrhit = new TrackerHitImpl;
             //
@@ -1742,36 +1620,17 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
       fittrackvec->addElement(fittrack);
       // increment the total track counter
-      ++_noOfTracks;
-      nFittedTracks++;
-    }
 
-    // If multiple tracks allowed: remove hits from fitted track from the list
+      _noOfTracks++;
 
-    if(ibest>=0 && _searchMultipleTracks && !ambiguityMode )  
-    {
-      for(int ipl=0;ipl<_nTelPlanes;ipl++) 
-      {
-        if(_isActive[ipl]) 
-        {
-          int ihit=(ibest/_planeMod[ipl])%_planeChoice[ipl];
-          if(ihit<_planeHits[ipl])
-          {
-            planeHitID[ipl].erase(planeHitID[ipl].begin()+ihit);
-            nGoodHit--;
-          }
-        }
+      nStoredTracks++;
+
+      itrk++;  // loop count
       }
-    }
-    firstTrack=false;
-  } while(
-          _searchMultipleTracks && ibest>=0 &&
-          nGoodHit + _allowMissingHits >= _nActivePlanes &&  !ambiguityMode 
-          );
 
-  // End of track loop
+  // End of track finding procedure
 
-  if(nFittedTracks > 0 ) 
+  if(nStoredTracks > 0 ) 
   {
     event->addCollection(fittrackvec,_outputTrackColName);
     event->addCollection(fitpointvec,_outputHitColName);
@@ -1784,6 +1643,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     delete corrpointvec;
   }
 
+
   if ( fittrackvec->size() == 0 ) 
   {
     ++_noOfEventWOTrack;
@@ -1792,12 +1652,12 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   // Number of reconstructed tracks
   // 
-  (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(nFittedTracks);
+  (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(nStoredTracks);
 #endif
 
   // Hit ambiguity
   // 
-  if ( ambiguityMode ) 
+  if (_allowAmbiguousHits) 
   {
     for(int ihit=0; ihit< nHit ; ihit++) 
     {
@@ -1814,10 +1674,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   // Clear all working arrays
 
-  delete [] bestEy;
-  delete [] bestY;
-  delete [] bestEx;
-  delete [] bestX;
   delete [] planeHitID;
   delete [] hitPlane;
   delete [] hitFits;
@@ -2110,7 +1966,7 @@ void EUTelTestFitter::bookHistos()
 
 
   // Additional histogram for number of tracks fitted to given hit - use same binning
-  if(_allowAmbiguousHits && ( _allowMissingHits == 0 ))
+  if(_allowAmbiguousHits )
     {
       string ambigTitle = "Number of tracks containing given hit (ambiguity)";
       AIDA::IHistogram1D * AmbigHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D( _hitAmbiguityHistoName.c_str(),hitNBin,hitMin,hitMax);

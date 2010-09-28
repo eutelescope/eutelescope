@@ -187,9 +187,13 @@ namespace eutelescope {
    *        \f$ \chi^{2} \f$) track is taken.
    *
    * \param AllowAmbiguousHits Allow same hit to be used in more than
-   *        one track. Significantly improves algorithm
-   *        performance. However, this option can only be used when
-   *        missing hits are not allowed (\e  AllowMissingHits set to 0 )
+   *        one track. In the new implementation this option does not
+   *        improve the performance (new optimization method works
+   *        independently). This option can now be used also when
+   *        missing hits are allowed (\e  AllowMissingHits > 0 )
+   *
+   * \param MaximumAmbiguousHits Number of hits than can be shared by
+   *        two track (when \e AllowAmbiguousHits option is set)
    *
    * \param UseNominalResolution Flag for using nominal sensor resolution
    *        (as given in geometry description) instead of hit position
@@ -275,17 +279,6 @@ namespace eutelescope {
    * \li Do not allow for missing hits (set \e AllowMissingHits to 0).
    *     This reduces number of fit hypothesis and improves fit performance.
    *
-   * \li Allow same hit to be used in more than one track (set
-   *    \e AllowAmbiguousHits to \e true ). If each hit can be used in
-   *    one track only, track finding has to be repeated many times,
-   *    each time finding the best track hypothesis and then removing
-   *    corresponding hits before looking for the next track. If
-   *    ambiguity is allowed only one loop over all hypothesis is
-   *    needed. Therefor this option can significantly improve algorithm
-   *    performance at large multiplicities. The influence on the fit
-   *    results is negligible, as probability of more than one track
-   *    matching given hit is very, very small.
-   *
    * \li Limit number of hits per plane. This should \b not be done by
    *    using \e MaxPlaneHits parameter, as it would bias plane
    *    efficiency calculation. Best way is to define position window
@@ -296,7 +289,6 @@ namespace eutelescope {
    *  \li Interface to LCCD (alignment)
    *
    * \author A.F.Zarnecki, University of Warsaw, zarnecki@fuw.edu.pl
-   * @version $Id: EUTelTestFitter.h,v 1.20 2009-07-29 09:06:08 zarnecki Exp $
    *
    */
   class EUTelTestFitter : public marlin::Processor {
@@ -478,6 +470,7 @@ namespace eutelescope {
     bool _searchMultipleTracks;
 
     bool _allowAmbiguousHits;
+    int  _maximumAmbiguousHits;
 
     // Parameters of fitting algorithm
 
