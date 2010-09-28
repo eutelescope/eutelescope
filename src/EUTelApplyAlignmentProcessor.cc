@@ -353,9 +353,12 @@ void EUTelApplyAlignmentProcessor::bookHistos() {
 
     // histograms are grouped into folders named after the
     // detector. This requires to loop on detector now.
-    for (int iDet = 0 ; iDet < _siPlanesParameters->getSiPlanesNumber(); iDet++) {
+    for (int iDet = 0 ; iDet < _siPlanesParameters->getSiPlanesNumber(); iDet++) 
+    {
       int sensorID = _siPlanesLayerLayout->getID( iDet ) ;
  
+      streamlog_out ( MESSAGE4 ) <<  "Booking histograms for detectorID: " << sensorID << endl;
+
       string basePath;
       {
         stringstream ss ;
@@ -368,7 +371,7 @@ void EUTelApplyAlignmentProcessor::bookHistos() {
       // 2 should be enough because it
       // means that the sensor is wrong
       // by all its size.
-      double safetyFactor = 2.0;
+      double safetyFactor = 1.0;
 
       double xMin = safetyFactor * ( _siPlanesLayerLayout->getSensitivePositionX( iDet ) -
                                      ( 0.5 * _siPlanesLayerLayout->getSensitiveSizeX ( iDet ) ));
@@ -450,7 +453,7 @@ void EUTelApplyAlignmentProcessor::bookHistos() {
     // safety factor on the x and y direction especially.
     // here I take something less than 2 because otherwise I will have
     // a 200MB histogram.
-    double safetyFactor = 1.2;
+    double safetyFactor = 1.0;
 
     double xDistance = std::abs( xMax - xMin ) ;
     double xCenter   = ( xMax + xMin ) / 2 ;
@@ -515,6 +518,7 @@ void EUTelApplyAlignmentProcessor::bookHistos() {
       _histogramSwitch = false;
     }
 
+    streamlog_out ( MESSAGE4 ) <<  "Booking histograms DONE" << endl;
 
   } catch (lcio::Exception& e ) {
 
