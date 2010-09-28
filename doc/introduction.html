@@ -41,7 +41,15 @@ href="http://www-zeus.desy.de/~rubinsky/EUTelescope/SoftwareDevelopment/EUTelesc
 
 The EUTelescope library comes with the following features:
 
-<b>[Pro]</b> Version v00-04-00 
+<b>[Pro]</b> Version v00-04-01 
+@li EUTelTestFitter updates by Filip Zarnecki, fixes are related to the non zero
+beam slope and the new UseSlope logic, significant performance improvement
+@li bug fix in the Correlator processor due to sometimes confusing sensor
+addressing (by ID, by Z position by order in the gear file)
+@li change the safetyFactor in the ApplyAlignment to 1.0, otherwise the memory
+allocation fails
+
+<b>[Old]</b> Version v00-04-00 
 @li Major update. Introduce a (version of a) correlation band calculator. It is
 used to get an estimate of the sensors offset. To be applied in the HitMaker in
 order to have all sensors "preAligned". It make life for the Millepede (called
