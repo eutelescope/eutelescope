@@ -992,6 +992,11 @@ void EUTelMille::processEvent (LCEvent * event) {
                 throw UnknownDataTypeException("Pixel type unknown");
               }
 
+            } else if ( hit->getType() == kEUTelAPIXClusterImpl ) {
+              
+                cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
+                    ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+ 
             } else {
               throw UnknownDataTypeException("Unknown cluster type");
             }
@@ -1294,6 +1299,11 @@ void EUTelMille::processEvent (LCEvent * event) {
                       throw UnknownDataTypeException("Pixel type unknown");
                     }
 
+                  } else if ( hit->getType() == kEUTelAPIXClusterImpl ) {
+              
+                      cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
+                          ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+ 
                   } else {
                     throw UnknownDataTypeException("Unknown cluster type");
                   }
