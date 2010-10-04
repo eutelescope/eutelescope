@@ -330,8 +330,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
             {
                 EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _preAlignmentCollectionVec->getElementAt( iPos ) );
                 int iID = alignment->getSensorID();
-                _siOffsetXMap.insert( make_pair( iID,  alignment->getXOffset()/1000. ) );
-                _siOffsetYMap.insert( make_pair( iID,  alignment->getYOffset()/1000. ) );
+                _siOffsetXMap.insert( make_pair( iID,  alignment->getXOffset() ) );
+                _siOffsetYMap.insert( make_pair( iID,  alignment->getYOffset() ) );
                 streamlog_out ( MESSAGE ) << " ";
                 printf("loaded %2d [%2d] Xoffset: %9.3f  Yoffset: %9.3f ", iPos, iID, _siOffsetXMap[ iID ], _siOffsetYMap[ iID ]); 
                 streamlog_out ( MESSAGE ) << endl;
@@ -417,6 +417,11 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         //  bricked cluster implementation.
         cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ); //!HACK TAKI
 
+        } 
+        else if ( type == kEUTelAPIXClusterImpl ) 
+        {
+        
+        cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
       
         }
         else 
