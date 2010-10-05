@@ -241,7 +241,8 @@ namespace eutelescope {
   void EUTelSparseClusterImpl<PixelType>::getCenterOfGravity(float&  xCoG, float& yCoG) const {
     getCenterOfGravityShift(xCoG, yCoG);
     
-    int xSeed, ySeed;
+    int xSeed = 0;
+    int ySeed = 0;
     getSeedCoord(xSeed, ySeed);
     
     xCoG += static_cast<float > ( xSeed );
@@ -275,7 +276,8 @@ namespace eutelescope {
   void EUTelSparseClusterImpl<PixelType>::getCenterCoord(int& xCenter, int& yCenter) const {
     // by definition, the cluster center is the pixel containing the
     // charge center of gravity. 
-    float xCoG, yCoG;
+    float xCoG = 0.;
+    float yCoG = 0.;
     getCenterOfGravity(xCoG, yCoG);
 
     // unfortunately I couldn't found a better way to approximate a
