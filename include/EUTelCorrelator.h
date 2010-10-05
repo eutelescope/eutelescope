@@ -169,6 +169,8 @@ namespace eutelescope {
      */
     int guessSensorID( TrackerHitImpl * hit ) ;
 
+    std::vector<double> guessSensorOffset(int internalSensorID, int externalSensorID, std::vector<double> cluCenter );
+
   private:
 
     //! Initialization flag
@@ -209,6 +211,33 @@ namespace eutelescope {
      */
 
     std::map< int, int> _maxY;
+
+   //! First pixel along X
+    /*! This is an associative map relating the sensorID to the first 
+     *  pixel along X
+     */
+    std::map< float, float> _hitMinX;
+
+    //! Last pixel along X
+    /*! This is an associative map relating the sensorID to the last 
+     *  pixel along X
+     */
+
+    std::map< float, float> _hitMaxX;
+
+    //! First pixel along Y
+    /*! This is an associative map relating the sensorID to the first 
+     *  pixel along Y
+     */
+
+    std::map< float, float> _hitMinY;
+
+    //! Last pixel along Y
+    /*! This is an associative map relating the sensorID to the last 
+     *  pixel along Y
+     */
+
+    std::map< float, float> _hitMaxY;
 
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
