@@ -12,7 +12,7 @@
 
 namespace eutelescope {
 
-  template<class PixelType> 
+  template<class PixelType>
   EUTelSparseData2Impl<PixelType>::EUTelSparseData2Impl(IMPL::TrackerDataImpl * data) {
 
     std::auto_ptr<PixelType> pixel ( new PixelType );
@@ -25,11 +25,12 @@ namespace eutelescope {
     _isSignalSorted   = false;
     _isOriginalOrder  = true;
 
-    for ( unsigned int index = 0 ; index <  _trackerData->getChargeValues().size() ; index += 3 ) {
+	fillPixelVec();
+    /*for ( unsigned int index = 0 ; index <  _trackerData->getChargeValues().size() ; index += 3 ) {
       _pixelVec.push_back( PixelType( (short) _trackerData->getChargeValues()[ index ],
 				      (short) _trackerData->getChargeValues()[ index + 1 ],
 				      (short) _trackerData->getChargeValues()[ index + 2 ] ) );
-    }
+    }*/
 
 
   } 
@@ -55,7 +56,7 @@ namespace eutelescope {
     PixelVectorIterator currentPixel;
 
     // as a first thing sort by position 
-    if ( ! _isPositionSorted ) sortByPosition() ; 
+    if ( ! _isPositionSorted ) sortByPosition() ;
     
     // prepare the return listOfList
     std::list< std::list< unsigned int> > listOfList;    
@@ -229,7 +230,7 @@ namespace eutelescope {
 		if ( (*lastYPixel).getXCoord() > xCoord + 1 ) {
 		  break;
 		}
-		
+
 		++lastYPixel;
 	      }
 	    } else {
@@ -341,7 +342,7 @@ namespace eutelescope {
 	    
 	    // this may be not the first, so we can improve...
 	    firstYPixel = find_if ( firstYPixel, pixelEnd, EUTelBaseSparsePixel::HasYCoord<PixelType> ( yTest ) );
-	    
+
 	    if ( firstYPixel != pixelEnd ) {
 	      streamlog_out_T ( DEBUG1 ) << "--> First pixel with Y = " << yTest << " is " << std::endl
 				       << (*firstYPixel ) << std::endl;
@@ -573,7 +574,7 @@ namespace eutelescope {
 		  if ( lastYPixel == pixelEnd ) 
 		    break;
 		}
-		
+
 		// checking if the current iterator is pointing to
 		// pixel *8*, in case break the loop since we found
 		// already everything we need!
