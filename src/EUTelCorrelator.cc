@@ -16,7 +16,6 @@
 
 #if defined(USE_GEAR)
 
-#include "TCanvas.h"
 // eutelescope includes ".h"
 #include "EUTelCorrelator.h"
 #include "EUTelRunHeaderImpl.h"
