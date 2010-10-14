@@ -479,9 +479,19 @@ void EUTelMille::init() {
   _telescopeResolY = new double[_nPlanes];
   _telescopeResolZ = new double[_nPlanes];
 
+//  printf("print resolution  X: %2d, Y: %2d, Z: %2d \n", _resolutionX.size(), _resolutionY.size(), _resolutionZ.size() );
   //check the consistency of the resolution parameters
   if(_alignMode == 3)
     {
+       if( _resolutionX.size() != _resolutionY.size() )
+       {
+           throw InvalidParameterException("WARNING, length of resolution X and Y is not the same \n");
+       }
+       if( _resolutionY.size() != _resolutionZ.size() )
+       {
+           throw InvalidParameterException("WARNING, length of resolution Y and Z is not the same \n");
+       }
+                
       if(
          _resolutionX.size() != static_cast<unsigned int>(_nPlanes ) ||
          _resolutionY.size() != static_cast<unsigned int>(_nPlanes ) ||
@@ -489,11 +499,11 @@ void EUTelMille::init() {
          )
         {
 //  ADDITIONAL PRINTOUTS   
-//         for(int i = 0; i < _resolutionX.size(); i++)
-//          { 
-//              printf("_resolutionX.at(%2d) = %8.3f; _resolutionY.at(%2d) = %8.3f;  _resolutionZ.at(%2d) = %8.3f;  \n", 
-//                      i,_resolutionX.at(i), i,_resolutionY.at(i), i,_resolutionZ.at(i) );
-//          }
+         for(int i = 0; i < _resolutionX.size(); i++)
+          { 
+              printf("_resolutionX.at(%2d) = %8.3f; _resolutionY.at(%2d) = %8.3f;  _resolutionZ.at(%2d) = %8.3f;  \n", 
+                      i,_resolutionX.at(i), i,_resolutionY.at(i), i,_resolutionZ.at(i) );
+          }
           streamlog_out ( WARNING2 ) << "Consistency check of the resolution parameters failed. The array size is different than the number of found planes! The resolution parameters are set to default values now (see variable TelescopeResolution). This introduces a bias if the real values for X,Y and Z are rather different." << endl;
           _resolutionX.clear();
           _resolutionY.clear();
@@ -505,6 +515,8 @@ void EUTelMille::init() {
               _resolutionZ.push_back(_telescopeResolution);
             }
         }
+
+//      printf("print FixParameter  \n");
 
       if(_FixParameter.size() != static_cast<unsigned int>(_nPlanes ) && _FixParameter.size() > 0)
         {
@@ -1028,10 +1040,10 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 //            printf("hit %5d of %5d , at %-8.1f %-8.1f %-8.1f, %5d %5d \n", iHit , collection->getNumberOfElements(), hitsInPlane.measuredX, hitsInPlane.measuredY, hitsInPlane.measuredZ, indexconverter[layerIndex], layerIndex );
             // adding a requirement to use only fat clusters for alignement
-//            if(cluster->getTotalCharge()>1){
+//              if(cluster->getTotalCharge()>1){
               if(indexconverter[layerIndex] != -1)
                     _hitsArray[indexconverter[layerIndex]].push_back(hitsInPlane);
-//            }
+//              }
 
             delete cluster; // <--- destroying the cluster
 
@@ -1772,7 +1784,7 @@ void EUTelMille::processEvent (LCEvent * event) {
               derLC[0] = 1;
               derLC[2] = _zPosHere[help];
               residual = _waferResidX[help];
-
+              sigma    = _resolutionX[help];
               _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
               derGL[((helphelp * 2) + 0)] = 0;
@@ -1783,7 +1795,7 @@ void EUTelMille::processEvent (LCEvent * event) {
               derLC[1] = 1;
               derLC[3] = _zPosHere[help];
               residual = _waferResidY[help];
-
+              sigma    = _resolutionY[help];
               _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
               derGL[((helphelp * 2) + 1)] = 0;
@@ -1859,7 +1871,7 @@ void EUTelMille::processEvent (LCEvent * event) {
               derLC[0] = 1;
               derLC[2] = _zPosHere[help];
               residual = _waferResidX[help];
-
+              sigma    = _resolutionX[help];
               _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
               derGL[((helphelp * 3) + 0)] = 0;
@@ -1872,7 +1884,7 @@ void EUTelMille::processEvent (LCEvent * event) {
               derLC[1] = 1;
               derLC[3] = _zPosHere[help];
               residual = _waferResidY[help];
-
+              sigma    = _resolutionY[help];
               _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
               derGL[((helphelp * 3) + 1)] = 0;
@@ -2087,8 +2099,6 @@ void EUTelMille::processEvent (LCEvent * event) {
                   _nMilleDataPoints++;
 
                 } // end if plane is not excluded
-
-
 
               } // end loop over all planes
 
