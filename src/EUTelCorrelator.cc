@@ -239,7 +239,7 @@ void EUTelCorrelator::init() {
     {
         _maxX[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelX( iPlane ) - 1;
         _maxY[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelY( iPlane ) - 1;        
-        printf("sensorID %5d maxX %5d maxY %5d \n", sensorID, _maxX[sensorID], _maxY[sensorID]);
+//        printf("sensorID %5d maxX %5d maxY %5d \n", sensorID, _maxX[sensorID], _maxY[sensorID]);
         _hitMinX[ sensorID ] =  _siPlanesLayerLayout->getSensitivePositionX( iPlane ) - 0.5*_siPlanesLayerLayout->getSensitiveSizeX ( iPlane ) ;
         _hitMaxX[ sensorID ] =  _siPlanesLayerLayout->getSensitivePositionX( iPlane ) + 0.5*_siPlanesLayerLayout->getSensitiveSizeX ( iPlane ) ;
         _hitMinY[ sensorID ] =  _siPlanesLayerLayout->getSensitivePositionY( iPlane ) - 0.5*_siPlanesLayerLayout->getSensitiveSizeY ( iPlane ) ;
