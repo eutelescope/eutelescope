@@ -387,41 +387,42 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         else if ( type == kEUTelSparseClusterImpl ) 
         {
 
-        // ok the cluster is of sparse type, but we also need to know
-        // the kind of pixel description used. This information is
-        // stored in the corresponding original data collection.
+            // ok the cluster is of sparse type, but we also need to know
+            // the kind of pixel description used. This information is
+            // stored in the corresponding original data collection.
 
-        LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-        TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
-        CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
-        SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
+            LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
+            TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+            CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
+            SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
 
-        // now we know the pixel type. So we can properly create a new
-        // instance of the sparse cluster
-        if ( pixelType == kEUTelSimpleSparsePixel ) 
-        {
-          cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
-            ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
-        } 
-        else 
-        {
-          streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
-          throw UnknownDataTypeException("Pixel type unknown");
-        }
-
-
+            // now we know the pixel type. So we can properly create a new
+            // instance of the sparse cluster
+        
+            if ( pixelType == kEUTelSimpleSparsePixel ) 
+            {
+                cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
+                    ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
+            } 
+            else 
+            {
+                streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
+                throw UnknownDataTypeException("Pixel type unknown");
+            }
+            
         }
         else if ( type == kEUTelBrickedClusterImpl ) 
-        { //!HACK TAKI
+        { 
+            //!HACK TAKI
 
-        //  bricked cluster implementation.
-        cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ); //!HACK TAKI
+            //  bricked cluster implementation.      
+            cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) ); //!HACK TAKI
 
         } 
         else if ( type == kEUTelAPIXClusterImpl ) 
         {
         
-        cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
+            cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
       
         }
         else 
@@ -430,7 +431,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
             throw UnknownDataTypeException("Cluster type unknown");
         }
 
-        if( cluster->getTotalCharge() < 2 ) continue;
+//        if( cluster->getTotalCharge() < 2 ) continue;  ?? why is that ??
+//        perhaps it was some leftover of a debuging procedure, or ?
       
  
       // there could be several clusters belonging to the same
