@@ -20,8 +20,8 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
    <execute>
       <processor name="AIDA"/>
       <@UseOffsetDBCommentLeft@processor name="LoadOffsetDB"/@UseOffsetDBCommentRight@>
-      <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/>
-      <processor name="GeoSelection"/>
+      <!--processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/-->
+      <!--processor name="GeoSelection"/-->
       <processor name="HitMaker"/>
       <processor name="Correlator"/> 
       <processor name="Save"/>
@@ -74,7 +74,7 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
   <!--The minimum pixel along y (default 0, one value per detector)-->
   <parameter name="MinYVector" type="IntVec"> 0 0 0 0 0 0   0 0 0</parameter>
   <!--The sensorID for the generated collection (one per detector)-->
-  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5 10 11 12 </parameter>
+  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5  10 11 12 </parameter>
 </processor>
 
  <processor name="HitMaker" type="EUTelHitMaker">
