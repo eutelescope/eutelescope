@@ -56,6 +56,10 @@ class MissingGEARFileError( MissingFileError ):
 class MissingSteeringTemplateError( MissingFileError ):
     pass
 
+## Missing hotpixel file
+class MissingHotPixelFileError( MissingFileError ):
+    pass
+
 ## Missing pedestal file
 class MissingPedestalFileError( MissingFileError ):
     pass
@@ -90,10 +94,16 @@ class MissingFileOnGRIDError( MissingFileError ):
 class MissingInputFileOnGRIDError ( MissingFileOnGRIDError ):
     pass
 
+## Missing hotpixel file on the GRID
+#
+class MissingHotPixelFileOnGRIDError ( MissingFileOnGRIDError ) :
+    pass
+
 ## Missing pedestal file on the GRID
 #
 class MissingPedestalFileOnGRIDError ( MissingFileOnGRIDError ) :
     pass
+
 
 ## Missing alignment file on the GRID
 #
