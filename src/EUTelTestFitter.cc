@@ -1150,8 +1150,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 	      {
               double expX = _planeX[ifirst] + expTrackSlopeX *(_planePosition[ipl]-_planePosition[ifirst]);
               double expY = _planeY[ifirst] + expTrackSlopeY *(_planePosition[ipl]-_planePosition[ifirst]);
-	      if(   abs( _planeX[ipl] - expX ) >  _SlopeDistanceMax 
-                 || abs( _planeY[ipl] - expY ) >  _SlopeDistanceMax  
+              if(   abs( _planeX[ipl] - expX ) >  _SlopeDistanceMax/1000. 
+                 || abs( _planeY[ipl] - expY ) >  _SlopeDistanceMax/1000.  
                    )  firstHitMissed = ipl;
 
 	      }
