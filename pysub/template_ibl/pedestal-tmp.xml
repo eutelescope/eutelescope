@@ -1,0 +1,128 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
+<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
+
+<!-- 
+
+==========================================================================================
+                     Steering file template for the pysub framework
+
+                               ==> pedestal-tmp.xml <===
+
+Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+Version: $Id: pedestal-tmp.xml,v 1.8 2009-07-25 14:25:15 bulgheroni Exp $
+==========================================================================================
+
+--> 
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+   <execute>
+      <processor name="AIDAHistogrammingInterface"/>
+      <processor name="PedestalAndNoiseCalculator@DUTUnderscore@@DUTSuffix@"/>
+   </execute>
+
+   <global>
+      <parameter name="LCIOInputFiles"> @LcioRawPath@/run@RunNumber@.slcio </parameter>
+      <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
+      <parameter name="MaxRecordNumber" value="50000001"/>
+      <parameter name="SkipNEvents" value="0"/>
+      <parameter name="SupressCheck" value="false"/>
+      <parameter name="Verbosity" value="MESSAGE"/>
+   </global>
+
+ <processor name="AIDAHistogrammingInterface" type="AIDAProcessor">
+ <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
+  <!-- compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int" value="1"/>
+  <!-- filename without extension-->
+  <parameter name="FileName" type="string" value="@HistoPath@/run@RunNumber@-ped-@FilenameSuffix@@FilenameHyphen@histo"/>
+  <!-- type of output file xml (default) or root ( only OpenScientist)-->
+  <parameter name="FileType" type="string" value="root"/>
+</processor>
+
+ <processor name="PedestalAndNoiseCalculator@DUTUnderscore@@DUTSuffix@" type="EUTelPedestalNoiseProcessor">
+   <!--EUTelPedestalNoiseProcessor computes the pedestal and noise values of a pixel detector-->
+  
+   <!-- 
+        I / O Collection names and filenames
+   -->
+  <!--Input raw data collection-->
+  <parameter name="RawDataCollectionNameVec" type="string" lcioInType="TrackerRawData"> rawdata@DUTUnderscore@@DUTSuffix@ </parameter>
+  <!--Pedestal collection name-->
+  <parameter name="PedestalCollectionName" type="string" value="pedestalDB@DUTUnderscore@@DUTSuffix@"/>
+  <!--Noise collection name-->
+  <parameter name="NoiseCollectionName" type="string" value="noiseDB@DUTUnderscore@@DUTSuffix@"/>
+  <!--Status collection name-->
+  <parameter name="StatusCollectionName" type="string" value="statusDB@DUTUnderscore@@DUTSuffix@"/>
+  <!--The filename (w/o .slcio) to store the pedestal file-->
+  <parameter name="OutputPedeFile" type="string" value="@DBPath@/run@RunNumber@-ped-@FilenameSuffix@@FilenameHyphen@db"/>
+  <!--Set to true if the pedestal should also be saved as ASCII files-->
+  <parameter name="ASCIIOutputSwitch" type="bool" value="true"/>
+  <!--This is the name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string" value="histoinfo.xml"/>
+
+  <!--
+      ALGORITHMS
+  --> 
+  <!--Select the algorithm for pede/noise calculation-->
+  <parameter name="CalculationAlgorithm" type="string" value="MeanRMS"/>
+
+  <!--Select the algorithm for the common mode calculation. Possible values are:
+      FullFrame: all pixels in the frame are averaged
+      RowWise: pixels are averaged line by line-->
+  <parameter name="CommonModeAlgorithm" type="string" value="FullFrame"/>
+  
+  <!--Select the algorithm for bad pixel masking. Possible values are:
+      NoiseDistribution: removing pixels with noise above PixelMaskUpperNoiseCut in sigma unit
+      AbsoluteNoiseValue: removing pixels with noise above PixelMaskUpperAbsNoiseCut in ADC value
+      DeadPixel: removing pixels with noise below PixelMaskLowerAbsNoiseCut in ADC value
+      AbsolutePedeValue: removing pixels having pedestal too low or high using PixelMaskUpperAbsPedeCut and PixelMaskLowerAbsPedeCut-->
+  <parameter name="BadPixelMaskingAlgorithm" type="StringVec"> NoiseDistribution DeadPixel </parameter>
+  <!--Perform an additional loop for bad pixel masking-->
+  <parameter name="AdditionalMaskingLoop" type="bool" value="true"/>
+  <!--Perform a fast first loop to improve the efficiency of hit rejection-->
+  <parameter name="HitRejectionPreLoop" type="bool" value="true"/>
+
+
+  <!--
+      EVENT SELECTION
+  -->
+  <!--First event for pedestal calculation-->
+  <parameter name="FirstEvent" type="int" value="0"/>
+  <!--Last event for pedestal calculation-->
+  <parameter name="LastEvent" type="int" value="-1"/>
+
+  <!--
+      COMMON MODE OPTIONS
+  --> 
+  <!--Number of common mode suppression iterations-->
+  <parameter name="NoOfCMIteration" type="int" value="1"/>
+  <!--Threshold for rejection of hit pixel (SNR units)-->
+  <parameter name="HitRejectionCut" type="float" value="3"/>
+  <!--Maximum allowed number of rejected pixels per row (only with RowWise)-->
+  <parameter name="MaxNoOfRejectedPixelPerRow" type="int" value="25"/>
+  <!--Maximum allowed number of rejected pixels per event-->
+  <parameter name="MaxNoOfRejectedPixels" type="int" value="1000"/>
+  <!--Maximum allowed number of skipped rows (only with RowWise)-->
+  <parameter name="MaxNoOfSkippedRow" type="int" value="15"/>
+
+  <!--
+      BAD PIXEL MASKING
+  -->
+  <!--Lower threshold for bad pixel identification using DEADPIXEL-->
+  <parameter name="PixelMaskLowerAbsNoiseCut" type="float" value="0.2"/>
+  <!--Lower threshold for bad pixel identification using ABSOLUTEPEDEVALUE-->
+  <parameter name="PixelMaskLowerAbsPedeCut" type="float" value="-15"/>
+  <!--This is the maximum allowed firing % frequency for the additional masking loop-->
+  <parameter name="PixelMaskMaxFiringFrequency" type="float" value="1.0"/>
+  <!--Upper threshold for bad pixel identification using ABSOLUTENOISEVALUE-->
+  <parameter name="PixelMaskUpperAbsNoiseCut" type="float" value="3.5"/>
+  <!--Upper threshold for bad pixel identification using ABSOLUTEPEDEVALUE-->
+  <parameter name="PixelMaskUpperAbsPedeCut" type="float" value="15"/>
+  <!--Upper threshold for bad pixel identification using NOISEDISTRIBUTION-->
+  <parameter name="PixelMaskUpperNoiseCut" type="float" value="3.5"/>
+
+</processor>
+
+</marlin>
