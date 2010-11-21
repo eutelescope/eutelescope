@@ -59,6 +59,15 @@ usage: %prog [execution-options] [io-options] [configuration-options] [align-opt
 
     alignGroup.add_option( "--split-size", action="store", type="int", dest="split_size", help="Use this option to define how many records should be analyzed by each alignment job" )
 
+    # ----- 02 August 2010, libov@mail.desy.de ----
+    alignGroup.add_option("-i", "--input-collection", action="store", dest="InputCollectionName", help="Input hit collection")
+    alignGroup.add_option("-f", "--fixed-planes", action="store", type="string", dest="FixedPlanes", help="Planes to be fixed")
+    alignGroup.add_option("-e", "--excluded-planes", action="store",  type="string", dest="ExcludedPlanes", help="Planes to be excluded")
+    parser.set_defaults( InputCollectionName="hit" )
+    parser.set_defaults( FixedPlanes="" )	# by default fix first and last planes
+    parser.set_defaults( ExcludedPlanes="-1" )
+    # ---------------------------------------------
+
 
     parser.set_defaults( run_pede=False )
     parser.set_defaults( residual_cuts=False )

@@ -1036,6 +1036,10 @@ class SubmitAlign( SubmitBase ):
         else:
             value = 0
         actualSteeringString = actualSteeringString.replace("@UseResidualCuts@", "%(v)d" % { "v" : value } )
+			# -------- 02 August 2010 libov@mail.desy.de ----------
+        actualSteeringString = actualSteeringString.replace("@InputCollectionName@", self._option.InputCollectionName )
+        actualSteeringString = actualSteeringString.replace("@FixedPlanes@", self._option.FixedPlanes )
+			# -----------------------------------------------------
 
         # and the residual values
         try :
@@ -1067,7 +1071,7 @@ class SubmitAlign( SubmitBase ):
         actualSteeringString = actualSteeringString.replace( "@DistanceMax@",DistanceMax )
 
 
-        # add planes to be excluded from the alignment 
+        # add planes to be excluded from the alignment
         try :
             ExcludePlanes = self._configParser.get( "AlignOptions", "ExcludePlanes" )
         except  ConfigParser.NoOptionError :
@@ -1075,10 +1079,17 @@ class SubmitAlign( SubmitBase ):
             self._logger.info( message )
             ExcludePlanes = ""
 #            raise StopExecutionError( message )
+        print ExcludePlanes
 
+        # if -e option specified in the command line, take those values and override value from the config file
+        if self._option.ExcludedPlanes != "-1":
+            ExcludePlanes = self._option.ExcludedPlanes
+        
+        print ExcludePlanes
 
+		  # now put value in the actual steering file
         actualSteeringString = actualSteeringString.replace( "@ExcludePlanes@",ExcludePlanes )
-
+#        print actualSteeringString
         # add planes to be Fixed in the alignment 
         try :
             FixedPlanes = self._configParser.get( "AlignOptions", "FixedPlanes" )
@@ -1235,6 +1246,11 @@ class SubmitAlign( SubmitBase ):
             value = 0
         actualSteeringString = actualSteeringString.replace("@UseResidualCuts@", "%(v)d" % { "v" : value } )
 
+			# -------- 02 August 2010 libov@mail.desy.de ----------
+        actualSteeringString = actualSteeringString.replace("@InputCollectionName@", self._option.InputCollectionName )
+        actualSteeringString = actualSteeringString.replace("@FixedPlanes@", self._option.FixedPlanes )
+			# -----------------------------------------------------
+
         # and the residual values
         try :
             maxX = self._configParser.get( "AlignOptions", "ResidualXMax" )
@@ -1264,7 +1280,7 @@ class SubmitAlign( SubmitBase ):
         actualSteeringString = actualSteeringString.replace( "@DistanceMax@",DistanceMax )
 
 
-        # add planes to be excluded from the alignment 
+        # add planes to be excluded from the alignment
         try :
             ExcludePlanes = self._configParser.get( "AlignOptions", "ExcludePlanes" )
         except  ConfigParser.NoOptionError :
@@ -1273,8 +1289,12 @@ class SubmitAlign( SubmitBase ):
             ExcludePlanes = ""
 #            raise StopExecutionError( message )
 
-        actualSteeringString = actualSteeringString.replace( "@ExcludePlanes@",ExcludePlanes )
+        # if -e option specified in the command line, take those values and override value from the config file
+        if self._option.ExcludedPlanes != "-1":
+            ExcludePlanes = self._option.ExcludedPlanes
 
+		  # now put value in the actual steering file
+        actualSteeringString = actualSteeringString.replace( "@ExcludePlanes@",ExcludePlanes )
 
         # add planes to be Fixed in the alignment 
         try :
