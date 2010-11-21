@@ -287,6 +287,11 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
           throw UnknownDataTypeException("Pixel type unknown");
         }
 
+        
+      } else if ( type == kEUTelAPIXClusterImpl ) {
+                cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
+                ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
+ 
       }  else {
 
         streamlog_out ( ERROR4) << "Unknown cluster type. Sorry for quitting" << endl;
@@ -387,13 +392,15 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
                   if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <=  noiseMatrixDecoder.getMaxX()) &&
                        ( yPixel >=  noiseMatrixDecoder.getMinY() )  &&  ( yPixel <=  noiseMatrixDecoder.getMaxY()) ) {
                     int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
-                    
-                    bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
-                    if ( !isBad ) {
-                      noiseValues.push_back( 1.0 );
-                    } else {
-                      noiseValues.push_back( 0. );
-                    }
+                    if( statusMatrix->getADCValues().size() > index )
+                    {
+                      bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
+                      if ( !isBad ) {
+                        noiseValues.push_back( 1.0 );
+                      } else {
+                        noiseValues.push_back( 0. );
+                      }
+                    } 
                   } else {
                     noiseValues.push_back( 0. );
                   }
@@ -421,11 +428,14 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
                     // bool isHit  = ( statusMatrix->getADCValues()[index] ==
                     // EUTELESCOPE::HITPIXEL );
                     //
-                    bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
-                    if ( !isBad ) {
-                      noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
-                    } else {
-                      noiseValues.push_back( 0. );
+                    if( statusMatrix->getADCValues().size() > index )
+                    {
+                       bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
+                      if ( !isBad ) {
+                        noiseValues.push_back( noiseMatrix->getChargeValues()[index] );
+                      } else {
+                        noiseValues.push_back( 0. );
+                      }
                     }
                   } else {
                     noiseValues.push_back( 0. );

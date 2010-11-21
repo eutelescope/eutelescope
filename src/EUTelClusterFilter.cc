@@ -816,6 +816,8 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                                     // bool isHit  = ( statusMatrix->getADCValues()[index] ==
                                     // EUTELESCOPE::HITPIXEL );
                                     //
+                                    if( statusMatrix->getADCValues().size() > index )
+                                    {
                                     bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
                                     if ( !isBad )
                                     {
@@ -824,6 +826,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                                     else
                                     {
                                         noiseValues.push_back( 0. );
+                                    }
                                     }
 
                                 }
@@ -885,7 +888,11 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                                     //
                                     // bool isHit  = ( statusMatrix->getADCValues()[index] ==
                                     // EUTELESCOPE::HITPIXEL );
-                                    //
+                                    // 
+                                    ///
+                                    if( statusMatrix->getADCValues().size() > index )
+                                    {
+
                                     bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
                                     if ( !isBad )
                                     {
@@ -894,6 +901,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                                     else
                                     {
                                         noiseValues.push_back( 0. );
+                                    }
                                     }
 
                                 }
@@ -965,9 +973,13 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                 else
                 {
                   streamlog_out ( ERROR4 ) << "Unknown pixel type. Sorry for quitting" << endl;
-                  throw UnknownDataTypeException("Cluster type unknown");
+                  throw UnknownDataTypeException("Pixel type unknown");
                 }
 
+ 
+            } else if ( type == kEUTelAPIXClusterImpl ) {
+                cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
+                ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
             }
             else
             {
