@@ -40,7 +40,7 @@
     <histo name="seedSignal"        type="H1D" xBin="500" xMin="0"        xMax="300"/>
     <histo name="seedSNR"           type="H1D" xBin="150" xMin="0"        xMax="100"/>
     <histo name="clusterSNR"        type="H1D" xBin="200" xMin="0"        xMax="150"/>
-    <histo name="eventMultiplicity" type="H1D" xBin="30"  xMin="0"        xMax="30"/>
+    <histo name="eventMultiplicity" type="H1D" xBin="60"  xMin="0"        xMax="60"/>
 
     <!-- EUTelCalculateEtaProcessor -->
     <!-- 
@@ -53,40 +53,43 @@
 
 
     <!-- EUTelTestFitter -->
-    <histo name="logChi2"     type="H1D" xBin="200" xMin="-1"        xMax="9"/>
-    <histo name="nTrack"      type="H1D" xBin="10"  xMin="-0.5"         xMax="9.5"/>
-    <histo name="nHit"        type="H1D" xBin="10"  xMin="-0.01"        xMax="9.99"/>
+    <histo name="logChi2"     type="H1D" xBin="200" xMin="-1"      xMax="9"/>
+    <histo name="nTrack"      type="H1D" xBin="10"  xMin="-0.5"    xMax="9.5"/>
+    <histo name="nHit"        type="H1D" xBin="10"  xMin="-0.01"   xMax="9.99"/>
 
 
     <!-- EUTelFitHistograms -->
-    <histo name="measuredX"    type="H1D" xBin="400" xMin="-5" xMax="5"/>
-    <histo name="measuredY"    type="H1D" xBin="400" xMin="-5" xMax="5"/>
-    <histo name="measuredXY"   type="H2D" xBin="100" xMin="-5" xMax="5" 
+    <histo name="measuredX"    type="H1D" xBin="200" xMin="-10" xMax="10"/>
+    <histo name="measuredY"    type="H1D" xBin="100" xMin="-5" xMax="5"/>
+    <histo name="measuredXY"   type="H2D" xBin="200" xMin="-10" xMax="10" 
                                           yBin="100" yMin="-5" yMax="5"/>
 
 
-    <histo name="fittedX"    type="H1D" xBin="400" xMin="-5" xMax="5"/>
-    <histo name="fittedY"    type="H1D" xBin="400" xMin="-5" xMax="5"/>
-    <histo name="fittedXY"   type="H2D" xBin="100" xMin="-5" xMax="5" 
+    <histo name="fittedX"    type="H1D" xBin="200" xMin="-10" xMax="10"/>
+    <histo name="fittedY"    type="H1D" xBin="100" xMin="-5" xMax="5"/>
+    <histo name="fittedXY"   type="H2D" xBin="200" xMin="-10" xMax="10" 
                                         yBin="100" yMin="-5" yMax="5"/>
 
 
-    <histo name="residualX"    type="H1D" xBin="200" xMin="-0.01" xMax="0.01"/>
-    <histo name="residualY"    type="H1D" xBin="200" xMin="-0.01" xMax="0.01"/>
-    <histo name="residualXY"   type="H2D" xBin="100" xMin="-0.01" xMax="0.01" 
-                                          yBin="100" yMin="-0.01" yMax="0.01"/>
+    <histo name="residualX"    type="H1D" xBin="40" xMin="-0.02" xMax="0.02"/>
+    <histo name="residualY"    type="H1D" xBin="40" xMin="-0.02" xMax="0.02"/>
+    <histo name="residualXY"   type="H2D" xBin="40" xMin="-0.02" xMax="0.02" 
+                                          yBin="40" yMin="-0.02" yMax="0.02"/>
 
-    <histo name="beamShiftX"    type="H1D" xBin="400" xMin="-2" xMax="2"/>
-    <histo name="beamShiftY"    type="H1D" xBin="400" xMin="-2" xMax="2"/>
+    <histo name="beamShiftX"    type="H1D" xBin="100" xMin="-2" xMax="2"/>
+    <histo name="beamShiftY"    type="H1D" xBin="100" xMin="-2" xMax="2"/>
 
-    <histo name="beamRotX"    type="H1D" xBin="200" xMin="-5" xMax="5"/>
-    <histo name="beamRotY"    type="H1D" xBin="200" xMin="-5" xMax="5"/>
-    <histo name="beamRotX2D"  type="H2D" xBin="100" xMin="-5" xMax="5"
-           yBin="100" yMin="-1.5" yMax="1.5" />
-    <histo name="beamRotY2D"  type="H2D" xBin="100" xMin="-5" xMax="5"
-           yBin="100" yMin="-1.5" yMax="1.5" />
-    <histo name="beamRotX"    type="P1D" xBin="100" xMin="-5" xMax="5" yMin="-1.5" yMax="1.5" />
+    <histo name="beamRotX"    type="H1D" xBin="200" xMin="-10" xMax="10"/>
+    <histo name="beamRotY"    type="H1D" xBin="100" xMin="-5" xMax="5"/>
+    <histo name="beamRotX2D"  type="H2D" xBin="200" xMin="-10" xMax="10" yBin="100" yMin="-1.5" yMax="1.5" />
+    <histo name="beamRotY2D"  type="H2D" xBin="100" xMin="-5" xMax="5" yBin="100" yMin="-1.5" yMax="1.5" />
+    <histo name="beamRotX"    type="P1D" xBin="200" xMin="-10" xMax="10" yMin="-1.5" yMax="1.5" />
     <histo name="beamRotY"    type="P1D" xBin="100" xMin="-5" xMax="5" yMin="-1.5" yMax="1.5" />
+
+    <!-- EUTelDUTHistograms -->
+            <histo name="DUTshiftY"     type="H1D" xBin="400" xMin="-0.6" xMax="0.6"/>
+            <histo name="DUTshiftX"     type="H1D" xBin="400" xMin="-0.6" xMax="0.6"/>
+
 
   </histos>
 </HistogramManager>
