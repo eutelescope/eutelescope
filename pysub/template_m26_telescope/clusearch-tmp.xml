@@ -26,7 +26,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
       <@TELCommentLeft@processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/@TELCommentRight@>
       <@UseHotPixelKillerCommentLeft@processor name="LoadHotPixelDB"/@UseHotPixelKillerCommentRight@>
       <@TELCommentLeft@processor name="Clustering"/@TELCommentRight@>
-      <@TELCommentLeft@processor name="APIXClustering"/@TELCommentRight@>
+      <!--processor name="APIXClustering"/-->
       <@DUTCommentLeft@processor name="Clustering_@DUTSuffix@"/@DUTCommentRight@>
       <@TELCommentLeft@processor name="Correlator"/@TELCommentRight@>
     <processor name="Save"/>
