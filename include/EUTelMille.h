@@ -317,6 +317,7 @@ namespace eutelescope {
 
 
     int _maxTrackCandidates;
+    int _maxTrackCandidatesTotal;
 
     std::string _binaryFilename;
 

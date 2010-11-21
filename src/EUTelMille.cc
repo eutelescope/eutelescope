@@ -205,7 +205,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("FixedPlanes","Fix sensor planes in the fit according to their sensor ids.",_FixedPlanes_sensorIDs ,std::vector<int>());
 
 
-
+  registerOptionalParameter("MaxTrackCandidatesTotal","Maximal number of track candidates (Total).",_maxTrackCandidatesTotal, static_cast <int> (10000000));
   registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates.",_maxTrackCandidates, static_cast <int> (2000));
 
   registerOptionalParameter("BinaryFilename","Name of the Millepede binary file.",_binaryFilename, string ("mille.bin"));
@@ -241,11 +241,11 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
 
 
-  registerOptionalParameter("ResolutionX","X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionX,  std::vector<float> (static_cast <int> (6), 3.5));
+  registerOptionalParameter("ResolutionX","X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionX,  std::vector<float> (static_cast <int> (6), 10.));
 
-  registerOptionalParameter("ResolutionY","Y resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionY,std::vector<float> (static_cast <int> (6), 3.5));
+  registerOptionalParameter("ResolutionY","Y resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionY,std::vector<float> (static_cast <int> (6), 10.));
 
-  registerOptionalParameter("ResolutionZ","Z resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionZ,std::vector<float> (static_cast <int> (6), 3.5));
+  registerOptionalParameter("ResolutionZ","Z resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionZ,std::vector<float> (static_cast <int> (6), 10.));
 
 
  
@@ -878,7 +878,11 @@ void EUTelMille::processEvent (LCEvent * event) {
                               << _nMilleTracks << " tracks " << endl;
   }
 
-
+  if( _nMilleTracks > _maxTrackCandidatesTotal )
+  {
+      throw SkipEventException(this);
+  }
+  
   // fill resolution arrays
   for (int help = 0; help < _nPlanes; help++) {
     _telescopeResolX[help] = _telescopeResolution;
@@ -1041,7 +1045,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 //            printf("hit %5d of %5d , at %-8.1f %-8.1f %-8.1f, %5d %5d \n", iHit , collection->getNumberOfElements(), hitsInPlane.measuredX, hitsInPlane.measuredY, hitsInPlane.measuredZ, indexconverter[layerIndex], layerIndex );
             // adding a requirement to use only fat clusters for alignement
 //              if(cluster->getTotalCharge()>1){
-              if(indexconverter[layerIndex] != -1)
+                if(indexconverter[layerIndex] != -1)
                     _hitsArray[indexconverter[layerIndex]].push_back(hitsInPlane);
 //              }
 
@@ -1322,6 +1326,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
                   std::vector<EUTelMille::HitsInPlane> hitsplane;
 
+//                  if( cluster->getTotalCharge() > 1)
                   hitsplane.push_back(
                           EUTelMille::HitsInPlane(
                               1000 * hit->getPosition()[0],
@@ -1872,6 +1877,7 @@ void EUTelMille::processEvent (LCEvent * event) {
               derLC[2] = _zPosHere[help];
               residual = _waferResidX[help];
               sigma    = _resolutionX[help];
+//              printf("sigma = %9.3f \n",sigma);
               _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
               derGL[((helphelp * 3) + 0)] = 0;
