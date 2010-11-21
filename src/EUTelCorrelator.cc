@@ -575,10 +575,22 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 //                   _clusterXCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill(xPos_ex/_siPlanesPitchX[exPlaneGear],xPos_in/_siPlanesPitchX[inPlaneGear]);
 //                   _clusterYCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill(yPos_ex/_siPlanesPitchY[exPlaneGear],yPos_in/_siPlanesPitchY[inPlaneGear]);
 
- 
+/* try to udnerstand why the Correlation plots X.vs.X do not show any thing !!
+ * 
                    _clusterXCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalXCenter, internalYCenter );
                    _clusterYCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalYCenter, internalXCenter );
+*/
 
+                   if( cluster_offset.size() >3 )
+                   { 
+                       _clusterXCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalXCenter, cluster_offset[2]);
+                       _clusterYCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalYCenter, cluster_offset[3]);
+                   }
+                   else
+                   { 
+                       _clusterXCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalXCenter, internalYCenter );
+                       _clusterYCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalYCenter, internalXCenter );
+                   }
           } // endif
 
           delete internalCluster;
@@ -1448,12 +1460,22 @@ std::vector<double> EUTelCorrelator::guessSensorOffset(int internalSensorID, int
     double yDet_in =  internalYCenter*_siPlanesPitchY[inPlaneGear] ;
     double xDet_ex =  externalXCenter*_siPlanesPitchX[exPlaneGear] ;
     double yDet_ex =  externalYCenter*_siPlanesPitchY[exPlaneGear] ;
+
+    double xCoo_in = internalXCenter;                      
+    double yCoo_in = internalYCenter; 
+   
  
+    // get rotated sensors coordinates (in mm or um)
     double xPos_in =  xDet_in*( _siPlanesRotations[inPlaneGear][1] ) + yDet_in*( _siPlanesRotations[inPlaneGear][2] );
     double yPos_in =  xDet_in*( _siPlanesRotations[inPlaneGear][3] ) + yDet_in*( _siPlanesRotations[inPlaneGear][4] );
     double xPos_ex =  xDet_ex*( _siPlanesRotations[exPlaneGear][1] ) + yDet_ex*( _siPlanesRotations[exPlaneGear][2] );
     double yPos_ex =  xDet_ex*( _siPlanesRotations[exPlaneGear][3] ) + yDet_ex*( _siPlanesRotations[exPlaneGear][4] );
-    
+
+    double xCooPos_in =  xCoo_in*( _siPlanesRotations[inPlaneGear][1] ) + yCoo_in*( _siPlanesRotations[inPlaneGear][2] );
+    double yCooPos_in =  xCoo_in*( _siPlanesRotations[inPlaneGear][3] ) + yCoo_in*( _siPlanesRotations[inPlaneGear][4] );
+
+    // get rotated sensor coordinates (only in pixel number: col num)
+   
     double sign = 0.;
 
       sign = 0.;
@@ -1465,6 +1487,8 @@ std::vector<double> EUTelCorrelator::guessSensorOffset(int internalSensorID, int
         else if  ( _siPlanesRotations[inPlaneGear][2] > 0.7 )    sign =  1 ;
       }
       xPos_in +=  _siPlanesLayerLayout->getSensitivePositionX( inPlaneGear ) - sign*_siPlanesLayerLayout->getSensitiveSizeX ( inPlaneGear )/2. ;
+//    printf(" %5.2f Coo: %8.3f %8.3f Pos: %8.3f %8.3f\n", sign, xCoo_in, yCoo_in, xCooPos_in, yCooPos_in );
+      xCooPos_in = xCooPos_in*sign;
 
       sign = 0.;
       if      ( _siPlanesRotations[inPlaneGear][3] < -0.7 )       sign = -1 ;
@@ -1475,6 +1499,10 @@ std::vector<double> EUTelCorrelator::guessSensorOffset(int internalSensorID, int
         else if  ( _siPlanesRotations[inPlaneGear][4] > 0.7 )    sign =  1 ;
       }
       yPos_in +=  _siPlanesLayerLayout->getSensitivePositionY( inPlaneGear ) - sign*_siPlanesLayerLayout->getSensitiveSizeY ( inPlaneGear )/2. ;
+      yCooPos_in = yCooPos_in*sign;
+
+//   printf(" %5.2f Coo: %8.3f %8.3f Pos: %8.3f %8.3f\n", sign, xCoo_in, yCoo_in, xCooPos_in, yCooPos_in );
+
 
       sign = 0.;
       if      ( _siPlanesRotations[exPlaneGear][1] < -0.7 )       sign = -1 ;
@@ -1504,6 +1532,11 @@ std::vector<double> EUTelCorrelator::guessSensorOffset(int internalSensorID, int
  
       cluster_offset.push_back( -( xPos_in - xPos_ex ) );
       cluster_offset.push_back( -( yPos_in - yPos_ex ) );
+// 
+// add also internal sensor X and Y coord
+// 
+      cluster_offset.push_back(  xCooPos_in  );
+      cluster_offset.push_back(  yCooPos_in  );
 //      printf(" xPos_in %7.2f xPos_ex %7.2f \n", xPos_in, xPos_ex);
       
       return cluster_offset;
