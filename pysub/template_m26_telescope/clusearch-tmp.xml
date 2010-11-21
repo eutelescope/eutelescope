@@ -26,6 +26,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
       <@TELCommentLeft@processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/@TELCommentRight@>
       <@UseHotPixelKillerCommentLeft@processor name="LoadHotPixelDB"/@UseHotPixelKillerCommentRight@>
       <@TELCommentLeft@processor name="Clustering"/@TELCommentRight@>
+      <@TELCommentLeft@processor name="APIXClustering"/@TELCommentRight@>
       <@DUTCommentLeft@processor name="Clustering_@DUTSuffix@"/@DUTCommentRight@>
       <@TELCommentLeft@processor name="Correlator"/@TELCommentRight@>
     <processor name="Save"/>
@@ -34,7 +35,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
   <global>
     <parameter name="LCIOInputFiles"> @LcioRawPath@/run@RunNumber@.slcio </parameter>
     <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
-    <parameter name="MaxRecordNumber" value="10000000000"/>
+    <parameter name="MaxRecordNumber" value="100000000"/>
     <parameter name="SkipNEvents" value="0"/>
     <parameter name="SupressCheck" value="false"/>
     <parameter name="Verbosity" value="MESSAGE"/>
@@ -45,26 +46,10 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!-- compression of output file 0: false >0: true (default) -->
     <parameter name="Compress" type="int" value="1"/>
     <!-- filename without extension-->
-    <parameter name="FileName" type="string" value= "@HistoPath@/run@RunNumber@-clu@FilenameHyphen@@FilenameSuffix@-histo"/>
+    <parameter name="FileName" type="string" value=
+    "@HistoPath@/run@RunNumber@-clu@FilenameHyphen@@FilenameSuffix@-histo"/>
     <!-- type of output file xml (default) or root ( only OpenScientist)-->
     <parameter name="FileType" type="string" value="root"/>
-  </processor>
-
-
-  <processor name="LoadPedestal" type="ConditionsProcessor">
-    <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
-    <!--Initialization of a conditions database handler-->
-    <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
-    <!--Initialization of a conditions db file handler-->
-    <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
-    <!--Initialization string for conditions database-->
-    <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
-    <!--Initialization of a data file handler-->
-    <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
-    <!--Initialization of a simple conditions file handler-->
-    <parameter name="SimpleFileHandler" type="StringVec"> statusDB @DBPath@/run@PedeRunNumber@-ped-db.slcio statusDB </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> noiseDB @DBPath@/run@PedeRunNumber@-ped-db.slcio noiseDB </parameter>
-    <parameter name="SimpleFileHandler" type="StringVec"> pedestalDB @DBPath@/run@PedeRunNumber@-ped-db.slcio pedestalDB </parameter>
   </processor>
 
   <processor name="LoadPedestal_@DUTSuffix@" type="ConditionsProcessor">
@@ -84,22 +69,6 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
   </processor>
 
 
-  <processor name="CopyPedestal" type="EUTelCopyPedestalProcessor">
-    <!--EUTelCopyPedestalProcessor copies the condition data into local writable collections-->
-    <!--Noise input condition-->
-    <parameter name="NoiseConditionName" type="string" lcioInType="TrackerData"> noiseDB </parameter>
-    <!--Pedestal input condition-->
-    <parameter name="PedestalConditionName" type="string" lcioInType="TrackerData"> pedestalDB </parameter>
-    <!--Status input condition-->
-    <parameter name="StatusConditionName" type="string" lcioInType="TrackerRawData"> statusDB </parameter>
-    <!--Noise local collection-->
-    <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> noise </parameter>
-    <!--Pedestal local collection-->
-    <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData"> pedestal </parameter>
-    <!--Pixel status collection-->
-    <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> status </parameter>
-  </processor>
-
   <processor name="CopyPedestal_@DUTSuffix@" type="EUTelCopyPedestalProcessor">
     <!--EUTelCopyPedestalProcessor copies the condition data into local writable collections-->
     <!--Noise input condition-->
@@ -116,55 +85,6 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> status_@DUTSuffix@ </parameter>
   </processor>
 
-  <processor name="ApplyPedestal" type="EUTelCalibrateEventProcessor">
-    <!--EUTelCalibrateEventProcessor subtracts the pedestal value from the input data-->
-
-    <!--
-        INPUT & OUTPUT
-    -->
-
-    <!--Noise from the condition file-->
-    <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise </parameter>
-    <!--Pedestal from the condition file-->
-    <parameter name="PedestalCollectionName" type="string" lcioInType="TrackerData"> pedestal </parameter>
-    <!--Input raw data collection-->
-    <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData"> rawdata </parameter>
-    <!--Pixel status from the condition file-->
-    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
-    <!--Name of the output calibrated data collection-->
-    <parameter name="CalibratedDataCollectionName" type="string" lcioOutType="TrackerData"> data </parameter>
-
-    <!--
-        GENERAL PARAMETERS
-    -->
-    <!--Threshold of pixel SNR for hit rejection-->
-    <parameter name="HitRejectionCut" type="float" value="3.5"/>
-    <!--Flag to switch on the common mode suppression algorithm. 0 -> off, 1 -> full frame,  2 -> row wise-->
-    <parameter name="PerformCommonMode" type="int" value="1"/>
-
-    <!--
-        FULL FRAME PARAMETERS
-    -->
-    <!--Maximum allowed number of rejected pixel per event-->
-    <parameter name="MaxNoOfRejectedPixels" type="int" value="15000"/>
-
-    <!--
-        ROW WISE PARAMETERS
-    -->
-    <!--Maximum allowed number of rejected pixels per row (only with RowWise)-->
-    <parameter name="MaxNoOfRejectedPixelPerRow" type="int" value="25"/>
-    <!--Maximum allowed number of skipped rows (only with RowWise)-->
-    <parameter name="MaxNoOfSkippedRow" type="int" value="15"/>
-
-    <!--
-        HISTOGRAMS
-    -->
-    <!--Flag to switch on (1) or off (0) the detector debug histogram filling-->
-    <parameter name="DebugHistoFilling" type="bool" value="false"/>
-    <!--This is the name of the histogram information file-->
-    <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
-
-  </processor>
 
 
   <processor name="ApplyPedestal_@DUTSuffix@" type="EUTelCalibrateEventProcessor">
@@ -215,27 +135,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--This is the name of the histogram information file-->
     <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
 
-  </processor>
-
-  <processor name="UpdatePedestalNoise" type="EUTelUpdatePedestalNoiseProcessor">
-    <!--EUTelUpdatePedestalNoiseProcessor periodically updates the pedestaland noise values-->
-    <!--Noise local collection-->
-    <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise </parameter>
-    <!--Pedestal local collection-->
-    <parameter name="PedestalCollectionName" type="string" lcioInType="TrackerData"> pedestal </parameter>
-    <!--Raw data collection name-->
-    <parameter name="RawDataCollectionName" type="string" lcioInType="TrackerRawData"> rawdata </parameter>
-    <!--Pixel status collection-->
-    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status </parameter>
-    <!--The value of the fixed weight (only for fixed weight algorithm-->
-    <parameter name="FixedWeightValue" type="int" value="100"/>
-    <!--A pixel to be monitored (detectorID, xCoord, yCoord). Add as many line as this as you wish-->
-    <parameter name="PixelMonitored" type="IntVec" value="0 10 15 1 10 15 2 10 15 3 10 15 4 10 15  "/>
-    <!--The algorithm to be used for pedestal update-->
-    <parameter name="UpdateAlgorithm" type="string" value="FixedWeight"/>
-    <!--How often the algorithm should be applied-->
-    <parameter name="UpdateFrequency" type="int" value="10"/>
-  </processor>
+ </processor>
 
  <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
  <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
@@ -309,7 +209,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
         -> SparseCluster2: for cluster in ZS frame with better performance
         -> FixedFrame: for cluster with a given size
         -> DFixedFrame: for cluster with a given size-->
-    <parameter name="ZSClusteringAlgo" type="string" value="SparseCluster2"/>
+    <parameter name="ZSClusteringAlgo" type="string" value="DFixedFrame"/>
 
 
     <!--
@@ -320,9 +220,9 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--Threshold in SNR for cluster identification-->
     <parameter name="FFClusterCut" type="float" value="0.0"/>
     <!--Maximum allowed cluster size along x (only odd numbers)-->
-    <parameter name="FFClusterSizeX" type="int" value="3"/>
+    <parameter name="FFClusterSizeX" type="int" value="5"/>
     <!--Maximum allowed cluster size along y (only odd numbers)-->
-    <parameter name="FFClusterSizeY" type="int" value="3"/>
+    <parameter name="FFClusterSizeY" type="int" value="5"/>
 
     <!--
         SPARSECLUSTER and SPARSECLUSTER2 (use with care)
@@ -348,6 +248,12 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
 
   </processor>
 
+ 
+   <processor name="APIXClustering" type="EUTelAPIXClusteringProcessor">
+	<!--This is the name of the histogram information file-->
+    <parameter name="ClusterCollectionName" type="string" value="cluster"/>
+    <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
+   </processor>
 
   <processor name="Clustering_@DUTSuffix@" type="EUTelClusteringProcessor">
     <!--EUTelClusteringProcessor is looking for clusters into a calibrated pixel matrix.-->
@@ -425,6 +331,10 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--Hit collection name-->
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
     <!-- -->
+    <parameter name="ClusterChargeMinimum" type="int" value="2"/>
+    <!-- -->
+    <parameter name="Events" type="int" value="10000"/>
+    <!-- -->
     <parameter name="OffsetDBFile" type="string"> @DBPath@/run@RunNumber@-offset-db.slcio </parameter>
  </processor>
 
@@ -461,7 +371,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--Set it to true to remove intermediate EORE in merged runs-->
     <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
     <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-    <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
+    <!--parameter name="SplitFileSizekB" type="int" value="500000"/-->
   </processor>
 
 </marlin>

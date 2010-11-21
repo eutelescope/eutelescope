@@ -23,7 +23,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <processor name="ApplyAlignment"/>
       <processor name="Fitter"/>
       <processor name="FitterHisto"/>
-      <!--processor name="DUTHisto"/-->
+      <processor name="DUTHisto"/>
       <processor name="NTuple"/>
       <processor name="Save"/>
    </execute>
@@ -97,7 +97,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Alignment corrections in Y for these layers-->
   <!--parameter name="AlignLayerShiftY" type="FloatVec"> </parameter-->
   <!--Allow same hit to be used in more than one track-->
-  <!--parameter name="AllowAmbiguousHits" type="bool" value="false"/-->
+  <parameter name="AllowAmbiguousHits" type="bool" value="false"/>
   <!--Allowed number of missing hits in the track-->
   <parameter name="AllowMissingHits" type="int" value="@AllowedMissingHits@"/>
   <!--Allowed number of hits removed from the track-->
@@ -105,9 +105,9 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Decide now weather you want to rely on the track candidate slope permanence in X and Y, default=true -->
   <parameter name="UseSlope"   type="bool"  value="true"/>
   <!--Set the allowed maximum difference of the slope in X (from plane to plane), default = 0.01 -->
-  <parameter name="SlopeXLimit"   type="float" value="0.0001"/>
+  <parameter name="SlopeXLimit"   type="float" value="0.01"/>
   <!--Set the allowed maximum difference of the slope in Y (from plane to plane), default = 0.01 -->
-  <parameter name="SlopeYLimit"   type="float" value="0.0001"/>
+  <parameter name="SlopeYLimit"   type="float" value="0.01"/>
   <!--Maximal allowed (initial) distance between hits in the XY plane between the planes,default = 2. mm -->
   <parameter name="SlopeDistanceMax" type="float" value="@DistanceMax@"/>
   <!--Assumed angular spread of the beam [rad]-->
@@ -147,7 +147,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Ids of layers which should NOT be included in the fit-->
   <!--parameter name="SkipLayerIDs" type="IntVec"> </parameter-->
   <!--Flag for using beam direction constraint in the fit-->
-  <!--parameter name="UseBeamConstraint" type="bool" value="false"/-->
+  <parameter name="UseBeamConstraint" type="bool" value="false"/>
   <!--Flag for including DUT measurement in the fit-->
   <parameter name="UseDUT" type="bool" value="false"/>
   <!--Flag for using nominal resolution instead of position errors-->
@@ -190,19 +190,23 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Alignment corrections for DUT: shift (in mm) in X, Y and rotation around Z-->
   <parameter name="DUTalignment" type="FloatVec"> @DUTAlignment@ </parameter>
   <!--DUT sensor pitch in X-->
-  <parameter name="DUTpitchX" type="double" value="0.03"/>
+  <parameter name="DUTpitchX" type="double" value="0.40"/>
   <!--DUT sensor pitch in Y-->
-  <parameter name="DUTpitchY" type="double" value="0.03"/>
+  <parameter name="DUTpitchY" type="double" value="0.40"/>
   <!--Print out every DebugEnevtCount event-->
   <parameter name="DebugEventCount" type="int" value="100"/>
   <!--Maximum allowed distance between fit and matched DUT hit-->
-  <parameter name="DistMax" type="double" value="0.1"/>
+  <parameter name="DistMax" type="double" value="1.0"/>
   <!--Name of the histogram information file-->
   <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
   <!--Id of telescope layer which should be used as DUT-->
   <parameter name="ManualDUTid" type="int" value="@ManualDUTID@"/>
   <!--Flag for manual DUT selection-->
   <parameter name="UseManualDUT" type="bool" value="@UseManualDUT@"/>
+  <parameter name="onlyIntimeTracks" type="bool" value="true" />
+  <parameter name="referencePlaneID" type="int" value="10" />
+  <parameter name="DistMaxReference" type="double" value="0.1" />
+  
 </processor>
 
 <processor name="NTuple" type="EUTelFitTuple">
@@ -216,7 +220,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Print out every DebugEnevtCount event-->
   <parameter name="DebugEventCount" type="int" value="100"/>
   <!--Maximum allowed distance between fit and matched DUT hit-->
-  <parameter name="DistMax" type="double" value="0.1"/>
+  <parameter name="DistMax" type="double" value="1000.1"/>
   <!--Id of telescope layer which should be used as DUT-->
   <parameter name="ManualDUTid" type="int" value="@ManualDUTID@"/>
   <!--Value used for missing measurements-->
@@ -238,11 +242,11 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!-- name of output file -->
   <parameter name="LCIOOutputFile" type="string" value="@ResultsFolder@/@Output@-track.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
-  <parameter name="LCIOWriteMode" type="string" value="None"/>
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
   <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-  <parameter name="SplitFileSizekB" type="int" value="1992294"/>
+  <xparameter name="SplitFileSizekB" type="int" value="1992294"/>
 </processor>
 
 

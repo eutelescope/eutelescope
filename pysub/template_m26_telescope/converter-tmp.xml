@@ -29,7 +29,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
    <global>
       <parameter name="LCIOInputFiles"> </parameter>
       <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
-      <parameter name="MaxRecordNumber" value="100000000"/>
+      <parameter name="MaxRecordNumber" value="10000000"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE"/>
@@ -61,11 +61,11 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <!--Type of sparsified pixel data structure (use SparsePixelType enumerator)-->
   <!--parameter name="EUDRBSparsePixelType" type="int" value="1"/-->
   <!--The geometry identification number-->
-  <parameter name="GeoID" type="int" value="10"/>
+  <parameter name="GeoID" type="int" value="100"/>
   <!--This is the input file name-->
   <parameter name="InputFileName" type="string" value="@NativeFolder@/run@RunNumber@.raw  "/>
   <!--Resynchronize the events based on the TLU trigger ID-->
-  <parameter name="SyncTriggerID" type="bool" value="false"/>
+  <parameter name="SyncTriggerID" type="bool" value="true"/>
  </processor>
 
  <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
@@ -124,7 +124,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
     <parameter name="NoOfEventPerCycle" type="int" value="10000"/>
     <!--The total number of hot pixel cycle-->
     <parameter name="TotalNoOfCycle" type="int" value="0"/>
-  </processor>
+ </processor>
 
  
  <processor name="Save" type="EUTelOutputProcessor">
