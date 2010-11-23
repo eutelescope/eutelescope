@@ -188,12 +188,13 @@ class SubmitCluSearch( SubmitBase ):
     def execute( self ) :
 
         self._hotpixelString = ""
-        # first of all verify that the hotpixel run was provided, otherwise stop immediately
+        # first of all verify that the hotpixel run was provided, otherwise
+        # ignore
         if self._option.hotpixel == None:
             message = "Hotpixel run not provided. Please use option --hotpixel to specify the hotpixel run (if required by your setup)"
             self._logger.warning( message )
         else :
-            self._hotpixelString = "Hotpixel run %(hotpixel)s" % { "hotpixel": self._option.hotpixel }
+            self._hotpixelString = "%(hotpixel)s" % { "hotpixel": self._option.hotpixel }
             self._logger.info(  self._hotpixelString )
 
         self._pedeString = ""
@@ -203,6 +204,16 @@ class SubmitCluSearch( SubmitBase ):
             self._logger.warning( message )
         else :
             self._pedeString = "%(pede)06d" % { "pede":  self._option.pedestal }
+
+        # check the hotpixel file
+        try :
+            self.checkHotPixelFile()
+
+        except MissingHotPixelFileError, error:
+            raise StopExecutionError("Missing hotpixel file (locally)")
+
+        except MissingHotPixelFileOnGRIDError, error:
+            raise StopExecutionError("Missing hotpixel file (on GRID)")
 
         # check the pedestal file
 #        try :
@@ -1213,6 +1224,7 @@ class SubmitCluSearch( SubmitBase ):
         try :
             self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderLcioRaw")
             self._pedePathGRID      = self._configParser.get("GRID", "GRIDFolderDBPede" )
+            self._offsetPathGRID    = self._configParser.get("GRID", "GRIDFolderDBOffset" )
             self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderClusearchResults" )
             self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderClusearchJoboutput")
             self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderClusearchHisto")
@@ -1248,6 +1260,8 @@ class SubmitCluSearch( SubmitBase ):
 
         listOfFilesTBC = []
         if self._isDUTOnly:
+            listOfFilesTBC.append( "%(offsetPathGRID)s/run%(run)s-offset-db.slcio" % {
+                "offsetPathGRID": self._offsetPathGRID,  "run": runString } )
             listOfFilesTBC.append( "%(outputPathGRID)s/run%(run)s-clu-%(suffix)s-p%(pede)s.slcio" % {
                 "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString, "suffix": self._dutSuffix } )
             listOfFilesTBC.append( "%(outputPathGRID)s/%(name)s-%(run)s-%(suffix)s.tar.gz" % {
@@ -1255,6 +1269,8 @@ class SubmitCluSearch( SubmitBase ):
             listOfFilesTBC.append( "%(outputPathGRID)s/run%(run)s-clu-%(suffix)s-histo.root" % {
                 "outputPathGRID": self._histogramPathGRID, "run": runString , "suffix": self._dutSuffix} )
         else:
+            listOfFilesTBC.append( "%(offsetPathGRID)s/run%(run)s-offset-db.slcio" % {
+                "offsetPathGRID": self._offsetPathGRID,  "run": runString } )
             listOfFilesTBC.append( "%(outputPathGRID)s/run%(run)s-clu-p%(pede)s.slcio" % {
                 "outputPathGRID": self._outputPathGRID, "pede": self._pedeString, "run": runString } )
             listOfFilesTBC.append( "%(outputPathGRID)s/%(name)s-%(run)s.tar.gz" % {
@@ -1337,11 +1353,16 @@ class SubmitCluSearch( SubmitBase ):
         # replace the pedeString as well
         runActualString = runActualString.replace( "@PedeString@", self._pedeString )
 
+        # replace the hotpixelString as well
+        runActualString = runActualString.replace( "@HotPixelRunNumber@", self._option.hotpixel )
+
+
         # replace the job name
         runActualString = runActualString.replace( "@Name@", self.name )
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
-                         "GRIDFolderBase", "GRIDFolderLcioRaw", "GRIDFolderDBPede", "GRIDFolderClusearchResults",
+                         "GRIDFolderBase", "GRIDFolderLcioRaw",
+                         "GRIDFolderDBPede", "GRIDFolderDBOffset", "GRIDFolderClusearchResults",
                          "GRIDFolderClusearchJoboutput", "GRIDFolderClusearchHisto", "GRIDLibraryTarball",
                          "GRIDLibraryTarballPath" , "GRIDILCSoftVersion" ]
         for variable in variableList:
@@ -1399,7 +1420,88 @@ class SubmitCluSearch( SubmitBase ):
         self._gridJobNTuple[ index ] = run, jidFile.readline()
         jidFile.close()
 
+    ###########################################################################################################################
+    ## Check the existence of the hotpixel file
+    #
+    # Differently from the check input and output methods, this is done
+    # once only at the very beginning before entering in the loop on runs.
+    #
+    def checkHotPixelFile( self ) :
+        self._logger.info( "Checking the hotpixel file (run%(file)s-hotpixel-db.slcio)" % { "file": self._hotpixelString } )
 
+        # the hotpixel file should be something like this
+        # run123456-hotpixel-db.slcio
+        self._hotpixelFilename = "run%(run)s-hotpixel-db.slcio" % { "run": self._hotpixelString }
+
+        # where to check, depends from the execution mode!
+
+        if self._option.execution == "all-local":
+            self.checkHotPixelFileLocally()
+        elif self._option.execution == "cpu-local" or self._option.execution == "all-grid" :
+            self.checkHotPixelFileGRID()
+
+    ## Check locally for the hotpixel file
+    #
+    def checkHotPixelFileLocally( self ):
+
+        # the hotpixel file should be something like this
+        # db/run123456-hotpixel-db.slcio
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderDBHotPixel" )
+        except ConfigParser.NoOptionError :
+            localPath = "db"
+
+        if not os.access( os.path.join( localPath, self._hotpixelFilename ), os.R_OK ):
+            message = "Missing hotpixel file %(hot)s" % { "hot":  self._hotpixelFilename }
+            self._logger.critical ( message )
+            raise MissingHotPixelFileError( self._hotpixelFilename )
+
+    ## Check on GRID for the hotpixel file
+    #
+    def checkHotPixelFileGRID( self ):
+
+        try :
+            gridPath = self._configParser.get( "GRID" , "GRIDFolderDBHotPixel" )
+        except ConfigParser.NoOptionError :
+            message = "Unable to find the GRIDFolderDBHotPixel."
+            self._logger.critical( message )
+            raise StopExecutionError( message )
+
+        try :
+            localPath = self._configParser.get( "LOCAL", "LocalFolderDBHotPixel" )
+        except ConfigParser.NoOptionError :
+            localPath = "db"
+
+        command = "lfc-ls %(gridPath)s/%(file)s > /dev/null 2>&1 " % {
+            "gridPath": gridPath, "file": self._hotpixelFilename }
+        if os.system( command ) != 0:
+            message = "Missing hotpixel file %(file)s" %{ "file": self._hotpixelFilename }
+            self._logger.critical ( message )
+            raise MissingPedestalFileOnGRIDError( self._hotpixelFilename )
+        else:
+            message = "hotpixel file %(file)s found at %(gridPath)s" %{ "file": self._hotpixelFilename, "gridPath": gridPath }
+            self._logger.info ( message )
+            
+
+        if self._option.execution == "cpu-local":
+
+            # get the file then
+            baseCommand = "lcg-cp "
+            if self._option.verbose :
+                baseCommand = baseCommand + " -v "
+            command = baseCommand + "  lfn:%(gridPath)s/%(file)s file:%(localPath)s/%(file)s " % {
+                "gridPath" : gridPath, "file": self._hotpixelFilename, "localPath": localPath }
+
+            self._logger.info( "Getting the hotpixel file %(file)s" % { "file": self._hotpixelFilename } )
+            if os.system( command ) != 0:
+                message = "Problem getting the hotpixel file from the GRID"
+                self._logger.critical( message  )
+#                raise StopExecutionError( message )
+
+
+
+    ###########################################################################################################################
     ## Check the existence of the pedestal file
     #
     # Differently from the check input and output methods, this is done

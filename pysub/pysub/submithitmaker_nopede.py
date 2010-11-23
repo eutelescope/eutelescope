@@ -785,7 +785,10 @@ class SubmitHitMaker( SubmitBase ):
 
         # now replace the offset folder path
         if self._option.execution == "all-grid" :
-            dbFolder = "db"
+#            try:
+#                dbFolder = self._configParser.get("GRID", "GRIDFolderDBPede")
+#            except ConfigParser.NoOptionError :
+                dbFolder = "db"
         else:
             try:
                 dbFolder = self._configParser.get("LOCAL", "LocalFolderDBPede")
@@ -819,7 +822,9 @@ class SubmitHitMaker( SubmitBase ):
      
             self._logger.debug( "Using offset db file" )
         
-          
+         
+
+#        print actualSteeringString
 
 
 
@@ -1235,6 +1240,7 @@ class SubmitHitMaker( SubmitBase ):
             self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderHitmakerJoboutput")
             self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderHitmakerHisto")
             self._etaPathGRID       = self._configParser.get("GRID", "GRIDFolderDBEta")
+            self._offsetPathGRID    = self._configParser.get("GRID", "GRIDFolderDBOffset" )
             folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID ]
         except ConfigParser.NoOptionError:
             message = "Missing path from the configuration file"
@@ -1258,6 +1264,7 @@ class SubmitHitMaker( SubmitBase ):
             if inputFile != "DEADFACE" :
                 justFile = self._justInputFileList[ index ] 
                 command = "lfc-ls %(inputPathGRID)s/%(file)s" % { "inputPathGRID" : self._inputPathGRID,  "file": justFile  }
+                print command
 
                 lfc = popen2.Popen4( command )
                 while lfc.poll() == -1:
@@ -1423,8 +1430,16 @@ class SubmitHitMaker( SubmitBase ):
         etaFile = os.path.basename( self._option.eta )
         runActualString = runActualString.replace( "@EtaFile@", etaFile )
 
+        if self._option.offsetRunNumber == None :
+           offsetRunNumber = 0
+        else:
+           offsetRunNumber = "%(run)06d" % { "run": self._option.offsetRunNumber }
+           
+        fqOffsetFile = "run%(run)s-offset-db.slcio" %{ "run": offsetRunNumber }
+        runActualString = runActualString.replace("@OffsetFile@", fqOffsetFile )
+ 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
-                         "GRIDFolderBase", "GRIDFolderFilterResults", "GRIDFolderDBEta", "GRIDFolderHitmakerResults",
+                         "GRIDFolderBase", "GRIDFolderFilterResults", "GRIDFolderDBEta", "GRIDFolderDBOffset", "GRIDFolderHitmakerResults",
                          "GRIDFolderHitmakerJoboutput", "GRIDFolderHitmakerHisto", "GRIDLibraryTarball",
                          "GRIDLibraryTarballPath","GRIDILCSoftVersion" ]
         for variable in variableList:
