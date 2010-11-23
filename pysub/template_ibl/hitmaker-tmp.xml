@@ -65,10 +65,9 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
   <!--The initial value of pedestal (one value for detector)-->
   <parameter name="InitPedestalValue" type="FloatVec"> 0 0 0 0 0 0  0 0 0  </parameter>
   <!--The maximum pixel along x (default 255, one value per detector)-->
-  <parameter name="MaxXVector" type="IntVec"> 1151 1151 1151 1151 1151 1151 160
-  160 160 </parameter>
+  <parameter name="MaxXVector" type="IntVec"> 1151 1151 1151 1151 1151 1151  160 160 160 </parameter>
   <!--The maximum pixel along y (default 255, one value per detector)-->
-  <parameter name="MaxYVector" type="IntVec"> 575 575 575 575 575 575   18 18 18 </parameter>
+  <parameter name="MaxYVector" type="IntVec"> 575 575 575 575 575 575    18 18 18 </parameter>
   <!--The minimum pixel along x (default 0, one value per detector)-->
   <parameter name="MinXVector" type="IntVec"> 0 0 0 0 0 0   0 0 0</parameter>
   <!--The minimum pixel along y (default 0, one value per detector)-->
