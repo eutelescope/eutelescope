@@ -82,6 +82,10 @@ RunString="@RunString@"
 # To be replaced with the pedeString in the format %(pede)06d
 PedeString="@PedeString@"
 
+# To be replaced with the hotpixelString in the format %(pede)s (does not have
+# to be integer)
+HotPixelRunString="@HotPixelRunNumber@"
+
 # To be replace with the job name used for the identification of
 # all files. It should be something like converter
 Name="@Name@"
@@ -103,6 +107,7 @@ GRIDVO="@GRIDVO@"
 LFC_HOME="/grid/ilc/eudet-jra1"
 GRIDFolderBase="@GRIDFolderBase@"
 GRIDFolderLcioRaw="@GRIDFolderLcioRaw@"
+GRIDFolderDBOffset="@GRIDFolderDBOffset@"
 GRIDFolderDBPede="@GRIDFolderDBPede@"
 GRIDFolderClusearchResults="@GRIDFolderClusearchResults@"
 GRIDFolderClusearchJoboutput="@GRIDFolderClusearchJoboutput@"
@@ -134,23 +139,33 @@ else
 
     # lfn
     OutputLcioLFN=$GRIDFolderClusearchResults/run$RunString-clu-p$PedeString.slcio
+    OutputLcioLFNShort=$GRIDFolderClusearchResults/run$RunString-clu-p$PedeString
+    OutputLcioLFNDIR=$GRIDFolderClusearchResults/
     OutputHistoLFN=$GRIDFolderClusearchHisto/run$RunString-clu-histo.root
     OutputJoboutputLFN=$GRIDFolderClusearchJoboutput/$Name-$RunString.tar.gz
+    OutputDBLFN=$GRIDFolderDBOffset/run$RunString-offset-db.slcio
+
 
     # local
     OutputLcioLocal=$PWD/results/run$RunString-clu-p$PedeString.slcio
+    OutputLcioLocalShort=$PWD/results/run$RunString-clu-p$PedeString
+    OutputLcioLocalDIR=$PWD/results/
     OutputHistoLocal=$PWD/histo/run$RunString-clu-histo.root
     OutputJoboutputLocal=$PWD/log/$Name-$RunString.tar.gz
+    OutputDBLocal=$PWD/db/run$RunString-offset-db.slcio
+
 
 fi
 
 # lfn
 InputLcioRawLFN=$GRIDFolderLcioRaw/run$RunString.slcio
 InputPedeLFN=$GRIDFolderDBPede/run$PedeString-ped-db.slcio
+InputHotPixelLFN=$GRIDFolderDBPede/run$HotPixelRunString-hotpixel-db.slcio
 
 # local
 InputLcioRawLocal=$PWD/lcio-raw/run$RunString.slcio
 InputPedeLocal=$PWD/db/run$PedeString-ped-db.slcio
+InputHotPixelLocal=$PWD/db/run$HotPixelRunString-hotpixel-db.slcio
 
 # Steering and log
 SteeringFile=$Name-$RunString.xml
@@ -239,6 +254,21 @@ fi
 
 echo
 echo "########################################################################"
+echo "# Getting the hotpixel DB file ${InputHotPixelLocal}"
+echo "########################################################################"
+echo
+# 
+doCommand "getFromGRID ${InputHotPixelLFN} ${InputHotPixelLocal}"
+r=$?
+if [ $r -ne 0 ] ; then
+   echo "Problem copying ${InputHotPixelLFN}.    Warning! No hotpixel db file found at given location."
+#    echo "Please, check your input to make sure you all values are set properly. If you do not want to apply hotpixel masks you can ignore this warning."
+###    exit 3
+fi
+#
+
+echo
+echo "########################################################################"
 echo "# Getting the pedestal DB file ${InputPedeLocal}"
 echo "########################################################################"
 echo
@@ -254,15 +284,24 @@ fi
 doCommand "ls -al"
 
 # ready to run marlin
-echo
-echo "########################################################################"
-echo "# Starting Marlin `date`"
-echo "########################################################################"
-echo
+touch temp.err
+
+echo                                                                            | tee -a temp.err
+echo "########################################################################" | tee -a temp.err
+echo "# Starting Marlin `date`"                                                 | tee -a temp.err
+echo "########################################################################" | tee -a temp.err
+echo                                                                            | tee -a temp.err
+find ${OutputLcioLocalDIR} | tee -a temp.err
+find ./                    | tee -a temp.err
+#mail -s "$Name; run=$RunString; starting Marlin " ${USER}@mail.desy.de        < temp.err
+
 c="Marlin $SteeringFile"
 echo $c
 $c
 r=$?
+
+cat "" > temp.err
+#mail -s "$Name; run=$RunString; Marlin $r " ${USER}@mail.desy.de        < temp.err
 
 if [ $r -ne 0 ] ; then
     echo "****** Problem running Marlin"
@@ -290,12 +329,54 @@ echo "########################################################################"
 echo "# Copying and registering the output file to SE"
 echo "########################################################################"
 echo
+cat "" > temp.err
+find ${OutputLcioLocalDIR} | tee -a temp.err
+find ./                    | tee -a temp.err
+#mail -s "$Name; run=$RunString; copy files to GRID" ${USER}@mail.desy.de        < temp.err
+
 doCommand "putOnGRID ${OutputLcioLocal} ${OutputLcioLFN} ${GRIDSE}"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "****** Problem copying the ${OutputLcioLocal} to the GRID"
+    ls ${OutputLcioLocalShort}.*.slcio | tee slcio.txt
+    runs=`grep -c slcio slcio.txt`
+    echo "*** $runs found "
+
+    for (( i=0; i<$runs; i++ ))
+    do
+      printf -v ii "%03i" $i
+      echo "current run = $ii"
+      OutputLocal=${OutputLcioLocalShort}.$ii.slcio
+      OutputLFN=${OutputLcioLFNShort}.$ii.slcio
+      echo "putOnGRID ${OutputLocal} ${OutputLFN} ${GRIDSE}"
+      doCommand "putOnGRID ${OutputLocal} ${OutputLFN} ${GRIDSE}"
+      r=$?
+      if [ $r -ne 0 ] ; then
+        echo "****** Problem copying $runs files from ${OutputLcioLocalShort}.xxx.slcio to the GRID"
+        exit 30
+      fi  
+    done
+#   exit 30
+fi
+
+# put back the files to the GRID
+echo
+echo "########################################################################"
+echo "# Copying and registering the output DB offset file to SE"
+echo "########################################################################"
+echo "lfc-ls -l ${OutputDBLFN}"
+lfc-ls -l ${OutputDBLFN}
+echo "ls -ltr ${OutputDBLocal}"
+ls -ltr ${OutputDBLocal}
+echo doCommand "putOnGRID ${OutputDBLocal} ${OutputDBLFN} ${GRIDSE}"
+ 
+doCommand "putOnGRID ${OutputDBLocal} ${OutputDBLFN} ${GRIDSE}"
+r=$?
+if [ $r -ne 0 ] ; then
+    echo "****** Problem copying the ${OutputDBLocal} to the GRID"
     exit 30
 fi
+
 
 echo
 echo "########################################################################"

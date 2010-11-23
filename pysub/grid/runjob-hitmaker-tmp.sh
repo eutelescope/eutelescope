@@ -14,6 +14,8 @@
 # errno 32: Problem copying and registering the histogram to the SE
 #
 
+USER=rubinsky
+
 
 #############
 # Defining a function to output a command line message
@@ -86,6 +88,7 @@ InputFileList="@InputFileList@"
 
 # This is the eta file w/o path
 EtaFile="@EtaFile@"
+OffsetFile="@OffsetFile@"
 
 # Define here all the variables modified by the submitter
 GRIDCE="@GRIDCE@"
@@ -96,6 +99,7 @@ LFC_HOME="/grid/ilc/eudet-jra1"
 GRIDFolderBase="@GRIDFolderBase@"
 GRIDFolderFilterResults="@GRIDFolderFilterResults@"
 GRIDFolderDBEta="@GRIDFolderDBEta@"
+GRIDFolderDBOffset="@GRIDFolderDBOffset@"
 GRIDFolderHitmakerResults="@GRIDFolderHitmakerResults@"
 GRIDFolderHitmakerJoboutput="@GRIDFolderHitmakerJoboutput@"
 GRIDFolderHitmakerHisto="@GRIDFolderHitmakerHisto@"
@@ -112,11 +116,13 @@ GRIDLibraryLFN=$GRIDLibraryTarballPath/$GRIDLibraryTarball
 
 # end of things to be replaced from the main script
 
+InputOffsetLFN=$GRIDFolderDBOffset/$OffsetFile
 InputEtaLFN=$GRIDFolderDBEta/$EtaFile
 OutputLFN=$GRIDFolderHitmakerResults/$Output-hit.slcio
 OutputJoboutputLFN=$GRIDFolderHitmakerJoboutput/$Name-$Output.tar.gz
 OutputHistoLFN=$GRIDFolderHitmakerHisto/$Output-hit-histo.root
 
+InputOffsetLocal=$PWD/db/$OffsetFile
 InputEtaLocal=$PWD/db/$EtaFile
 OutputLocal=$PWD/results/$Output-hit.slcio
 OutputJoboutputLocal=$PWD/log/$Name-$Output.tar.gz
@@ -215,6 +221,19 @@ done
 
 echo
 echo "########################################################################"
+echo "# Getting the Offset DB file ${InputOffsetLocal}"
+echo "########################################################################"
+echo
+doCommand "getFromGRID ${InputOffsetLFN} ${InputOffsetLocal}"
+r=$?
+if [ $r -ne 0 ] ; then
+    echo "Problem copying ${InputOffsetLFN}. Warning! If the data under question is
+    from an Analog source this Warning should be treated as an ERROR." | tee dotemp.err
+#    exit 3
+fi
+
+echo
+echo "########################################################################"
 echo "# Getting the eta DB file ${InputEtaLocal}"
 echo "########################################################################"
 echo
@@ -240,8 +259,11 @@ echo $c
 $c
 r=$?
 
+find ./
+
 if [ $r -ne 0 ] ; then
     echo "****** Problem running Marlin"
+#    mail -s "name=$Name; output=$Output; Marlin ERROR "  ${USER}@mail.desy.de < out
     exit 20
 fi
 
@@ -255,26 +277,33 @@ echo
 # remove the input file
 for file in $InputFileList; do
     InputLocal=$PWD/results/$file
+    echo doCommand "rm ${InputLocal}"
     doCommand "rm ${InputLocal}"
 done
 
 # remove the eta file
 doCommand "rm ${InputEtaLocal}"
+# remove the offset file
+doCommand "rm ${InputOffsetLocal}"
 
 # fix the histogram file
 doCommand "hadd -f temp.root empty.root ${OutputHistoLocal}"
 doCommand "mv temp.root ${OutputHistoLocal}"
+
 
 # put back the files to the GRID
 echo
 echo "########################################################################"
 echo "# Copying and registering the output file to SE"
 echo "########################################################################"
+echo doCommand "putOnGRID ${OutputLocal} ${OutputLFN} ${GRIDSE}"
 echo
+
 doCommand "putOnGRID ${OutputLocal} ${OutputLFN} ${GRIDSE}"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "****** Problem copying the ${OutputLocal} to the GRID"
+#    mail -s "name=$Name; output=$Output; copy to GRID ERROR "  ${USER}@mail.desy.de < out
     exit 30
 fi
 
