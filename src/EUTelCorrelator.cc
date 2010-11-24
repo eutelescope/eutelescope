@@ -203,7 +203,12 @@ void EUTelCorrelator::init() {
         }
     }
     streamlog_out (MESSAGE4) << " ";
-    printf("iPlane %-3d sensor_#_along_Z_axis %-3d [z= %-9.3f ] [sensorID %-3d ] \n", iPlane, _sensors_to_the_left, _siPlaneZPosition[ iPlane ], sensorID); 
+    printf("iPlane %-3d sensor_#_along_Z_axis %-3d [z= %-9.3f ] [sensorID %-3d ]  rot:[%5.f %5.2f %5.2f %5.2f]\n", iPlane, _sensors_to_the_left, _siPlaneZPosition[ iPlane ], sensorID,            
+             _siPlanesRotations[iPlane][1],
+             _siPlanesRotations[iPlane][2],
+             _siPlanesRotations[iPlane][3],
+             _siPlanesRotations[iPlane][4]
+             ); 
     streamlog_out (MESSAGE4) << endl;
 
     _sensorIDVecZOrder.push_back( _sensors_to_the_left );
@@ -247,7 +252,7 @@ void EUTelCorrelator::init() {
     }   
         else
         {
-            streamlog_out (MESSAGE4) << "uknown sensor rotation configuration ?! check your Gear file or ammend the code " << endl;
+            streamlog_out (MESSAGE4) << "unknown sensor rotation configuration ?! check your Gear file or ammend the code " << endl;
             _hitMinX[ sensorID ] =  -10000.;
             _hitMaxX[ sensorID ] =   10000.;
             _hitMinY[ sensorID ] =  -10000.;
