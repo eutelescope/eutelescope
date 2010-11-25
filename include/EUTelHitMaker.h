@@ -307,6 +307,9 @@ namespace eutelescope {
     //! Book the 3D hitogram
     void book3DHisto();
 
+    //! Perform Euler rotations
+    void _EulerRotation(int detectorID, double* _telPos, double* _gRotation);
+
 
   protected:
 

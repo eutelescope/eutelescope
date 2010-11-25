@@ -13,6 +13,9 @@
 // built only if GEAR is used
 #ifdef USE_GEAR
 
+// ROOT includes:
+#include "TVector3.h"
+
 // eutelescope includes ".h"
 #include "EUTelHitMaker.h"
 #include "EUTelRunHeaderImpl.h"
@@ -360,6 +363,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     double xPitch = 0., yPitch = 0.;
     double xPointing[2] = { 1., 0. }, yPointing[2] = { 1., 0. };
 
+    double gRotation[3] = { 0., 0., 0.}; // not rotated
+
+
     for ( int iPulse = 0; iPulse < pulseCollection->getNumberOfElements(); iPulse++ ) 
     {
 
@@ -512,6 +518,22 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           yPointing[0] = _siPlanesLayerLayout->getSensitiveRotation3(layerIndex); // was  0 ;
           yPointing[1] = _siPlanesLayerLayout->getSensitiveRotation4(layerIndex); // was -1 ;
 
+          try
+          {
+          gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(layerIndex); // Euler alpha ;
+          gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(layerIndex); // Euler alpha ;
+          gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(layerIndex); // Euler alpha ;
+
+          // input angles are in DEGREEs !!!
+          // translate into radians
+          gRotation[0] =  gRotation[0]*3.1415926/180.; // 
+          gRotation[1] =  gRotation[1]*3.1415926/180.; //
+          gRotation[2] =  gRotation[2]*3.1415926/180.; //
+          }
+          catch(...)
+          {
+              printf(" no sensor rotation is given in the GEAR steering file, assume NONE \n" );
+          }
         }
 
         if( _preAlignmentCollectionVec != 0 )
@@ -531,6 +553,10 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 //        printf("%5d %9.3f %9.3f\n", detectorID, xZero,yZero);
       }
 
+
+      //
+      // LOCAL coordinate system !!!!!!
+      //
 
       // get the position of the seed pixel. This is in pixel number.
 //      int xCluCenter, yCluCenter;
@@ -716,6 +742,10 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 #endif
 
 
+      // 
+      // STILL in the LOCAL coordinate system !!!
+      // 
+       
       // now perform the rotation of the frame of references and put the
       // results already into a 3D array of double to be ready for the
       // setPosition method of TrackerHit
@@ -747,6 +777,21 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
       telPos[2] = zZero + 0.5 * zThickness;
 
+      // 
+      // NOW !!
+      // GLOBAL coordinate system !!!
+      // 
+
+      // 
+      // rotate according to gRotation angles:
+      // 
+
+      if(  detectorID >= 10 )
+      _EulerRotation( detectorID, telPos, gRotation);
+      //
+
+      
+          
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       if ( _histogramSwitch ) 
       {
@@ -1109,5 +1154,48 @@ void EUTelHitMaker::book3DHisto() {
 #endif // AIDA
 }
 
+void EUTelHitMaker::_EulerRotation(int detectorID, double* _telPos, double* _gRotation) {
+    
+    try{
+        printf("_telPos[0] = %8.3f, ", _telPos[0]);
+        printf("_telPos[1] = %8.3f, ", _telPos[1]);
+        printf("_telPos[2] = %8.3f \n ", _telPos[2]);
+    }
+    catch(...)
+    {
+        throw InvalidParameterException("_telPos[] array can not be accessed \n");
+    }
+
+    try{
+        printf("_gRotation[0] = %8.3f, ", _gRotation[0]);
+        printf("_gRotation[1] = %8.3f, ", _gRotation[1]);
+        printf("_gRotation[2] = %8.3f \n ", _gRotation[2]);
+    }
+    catch(...)
+    {
+        throw InvalidParameterException("_gRotation[] array can not be accessed \n"); 
+    }
+
+
+    TVector3 _UnrotatedSensorHit( _telPos[0], _telPos[1], 0. );
+    TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], 0. );
+
+    if( TMath::Abs(_gRotation[2]) > 1e-6 )    _RotatedSensorHit.RotateX( _gRotation[2] ); // in ZY
+    if( TMath::Abs(_gRotation[1]) > 1e-6 )    _RotatedSensorHit.RotateY( _gRotation[1] ); // in ZX 
+    if( TMath::Abs(_gRotation[0]) > 1e-6 )    _RotatedSensorHit.RotateZ( _gRotation[0] ); // in XY
+
+    /*
+    printf("  \n \n "    );
+    printf("  X = %8.3f Y = %8.3f Z = %8.3f,   \n",  _UnrotatedSensorHit.X(), _UnrotatedSensorHit.Y(), _UnrotatedSensorHit.Z()  );
+    printf("  X = %8.3f Y = %8.3f Z = %8.3f,  dx = %8.3f dy = %8.3f dz = %8.3f  ",  _RotatedSensorHit.X(), _RotatedSensorHit.Y(), _RotatedSensorHit.Z(), 
+            _UnrotatedSensorHit.X()- _RotatedSensorHit.X(), _UnrotatedSensorHit.Y()- _RotatedSensorHit.Y(), _UnrotatedSensorHit.Z()- _RotatedSensorHit.Z()   );
+    printf("  detectorID %5d  \n ", detectorID   );
+*/
+
+    _telPos[0] = _RotatedSensorHit.X();
+    _telPos[1] = _RotatedSensorHit.Y();
+    _telPos[2] = _telPos[2] + _RotatedSensorHit.Z();
+ 
+}
 
 #endif // GEAR
