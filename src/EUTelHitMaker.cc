@@ -1155,11 +1155,12 @@ void EUTelHitMaker::book3DHisto() {
 }
 
 void EUTelHitMaker::_EulerRotation(int detectorID, double* _telPos, double* _gRotation) {
-    
+   
     try{
-        printf("_telPos[0] = %8.3f, ", _telPos[0]);
-        printf("_telPos[1] = %8.3f, ", _telPos[1]);
-        printf("_telPos[2] = %8.3f \n ", _telPos[2]);
+        double t = _telPos[2];
+   //     printf("_telPos[0] = %8.3f, ", _telPos[0]);
+     //   printf("_telPos[1] = %8.3f, ", _telPos[1]);
+       // printf("_telPos[2] = %8.3f \n ", _telPos[2]);
     }
     catch(...)
     {
@@ -1167,9 +1168,10 @@ void EUTelHitMaker::_EulerRotation(int detectorID, double* _telPos, double* _gRo
     }
 
     try{
-        printf("_gRotation[0] = %8.3f, ", _gRotation[0]);
-        printf("_gRotation[1] = %8.3f, ", _gRotation[1]);
-        printf("_gRotation[2] = %8.3f \n ", _gRotation[2]);
+        double t = _telPos[2];
+      // printf("_gRotation[0] = %8.3f, ", _gRotation[0]);
+      //  printf("_gRotation[1] = %8.3f, ", _gRotation[1]);
+      //  printf("_gRotation[2] = %8.3f \n ", _gRotation[2]);
     }
     catch(...)
     {
@@ -1183,11 +1185,12 @@ void EUTelHitMaker::_EulerRotation(int detectorID, double* _telPos, double* _gRo
     if( TMath::Abs(_gRotation[2]) > 1e-6 )    _RotatedSensorHit.RotateX( _gRotation[2] ); // in ZY
     if( TMath::Abs(_gRotation[1]) > 1e-6 )    _RotatedSensorHit.RotateY( _gRotation[1] ); // in ZX 
     if( TMath::Abs(_gRotation[0]) > 1e-6 )    _RotatedSensorHit.RotateZ( _gRotation[0] ); // in XY
-
-    /*
-    printf("  \n \n "    );
-    printf("  X = %8.3f Y = %8.3f Z = %8.3f,   \n",  _UnrotatedSensorHit.X(), _UnrotatedSensorHit.Y(), _UnrotatedSensorHit.Z()  );
-    printf("  X = %8.3f Y = %8.3f Z = %8.3f,  dx = %8.3f dy = %8.3f dz = %8.3f  ",  _RotatedSensorHit.X(), _RotatedSensorHit.Y(), _RotatedSensorHit.Z(), 
+/*
+    printf("  \n");
+    printf("  X = %8.3f Y = %8.3f Z = %8.3f,   \n", 
+            _UnrotatedSensorHit.X(), _UnrotatedSensorHit.Y(), _telPos[2] + _UnrotatedSensorHit.Z()  );
+    printf("  X = %8.3f Y = %8.3f Z = %8.3f,  dx = %8.3f dy = %8.3f dz = %8.3f  ",  
+            _RotatedSensorHit.X(), _RotatedSensorHit.Y(), _telPos[2] + _RotatedSensorHit.Z(), 
             _UnrotatedSensorHit.X()- _RotatedSensorHit.X(), _UnrotatedSensorHit.Y()- _RotatedSensorHit.Y(), _UnrotatedSensorHit.Z()- _RotatedSensorHit.Z()   );
     printf("  detectorID %5d  \n ", detectorID   );
 */
