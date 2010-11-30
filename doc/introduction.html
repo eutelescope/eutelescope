@@ -41,7 +41,23 @@ href="http://www-zeus.desy.de/~rubinsky/EUTelescope/SoftwareDevelopment/EUTelesc
 
 The EUTelescope library comes with the following features:
 
-<b>[Pro]</b> Version v00-04-02 
+<b>[Pro]</b> Version v00-05-00-pre 
+Dependency on the latest GEAR library (!) ( >= 30.11.2010). 
+Three rotation angles added. Can work with tilted sensors now.
+
+<b>[Old]</b> Version v00-04-04 
+Fix the python scripts to be able to run on GRID.
+Bug fix in the Correlator processor to be able to manage sensors with any Pitch
+size (also different in X and Y) and rotation (this time only in XY plane), also
+sensor flip. 
+
+<b>[Old]</b> Version v00-04-04 
+Intermediate release.
+
+<b>[Old]</b> Version v00-04-03 
+intermediate release.
+
+<b>[Old]</b> Version v00-04-02 
 @li Final optimisations to the EUTelTestFitter by Filip Zarnecki, for more
 details see his talk at the EUDET-JRA1 meeting <a
 href="http://ilcagenda.linearcollider.org/materialDisplay.py?contribId=137&sessionId=12&materialId=slides&confId=4649">EUDET-JRA1
@@ -1264,14 +1280,16 @@ switched OFF (set to =0)
      
  
 @section download_ilcinstall Download the ilcinstall scripts            
-Change folder to the global analysis folder and check the ilcinstall scripts (v01-08-01) 
+Change folder to the global analysis folder and check the ilcinstall scripts (v01-09-pre01) 
 
 
 @code
  cd $TB_ANALYSIS
- svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-08-01 ilcinstall_v01-08-01 
- cd ilcinstall_v01-08-01
+ svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-09-pre01 ilcinstall_v01-09-pre01
+ cd ilcinstall_v01-09-pre01
  wget http://www-zeus.desy.de/~rubinsky/EUTelescope/complete_20100610.cfg 
+ # or
+ wget http://www-zeus.desy.de/~rubinsky/EUTelescope/complete_20103011_GEAR_HEAD.cfg 
 @endcode
       
 Edit manually your local configuration file "complete_20100610.cfg".<br>
