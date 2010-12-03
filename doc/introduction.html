@@ -1483,7 +1483,7 @@ main scripts)
  ./submit-converter.py  --config=config/config-DUT_ID-gear_ID.cfg  1001 
  # --config= defines the config file to be taken (default = config.cfg)
  # 1001 - run number 
- # [--hot 1001] - for real in-beam runs no optional parameter is given! 
+ # [--hot 1001] - for real in-beam runs no special parameters should given! 
 @endcode 
 
 <li> Clustering - depending on the  sensor active area geometry and readout type
@@ -1522,19 +1522,21 @@ other, then get final tracks.
 <li> Alignment - correct sensors 3D position and orientation. It is very important to
 align the sensor  X and Y global coordinates and possible rotation in X-Y plane.
 @code
- ./submit-align.py  --config=config/config-DUT_ID-gear_ID.cfg -o 1001  1001-hit.slcio 
+ ./submit-align.py  --config=config/config-DUT_ID-gear_ID.cfg -o batch1 1001-hit.slcio [ 1002-hit.slcio 1003-hit.slcio ]
  # -o 1001 - output filename ( 1001-align-db.slcio )
  # 1001-hit.slcio - input filename 
+ # optional files: 1002-hit.slcio 1003-hit.slcio
 @endcode 
 
 <li> Fitter - based on the aligned clusters position one can reconstruct tracks
 from the beam particles and interpolate (extrapolate) the track to a DUT
 surface. 
 @code
- ./submit-fitter.py  --config=config/config-DUT_ID-gear_ID.cfg -o 1001 -a  1001-align-db.slcio 1001-hit.slcio
+ ./submit-fitter.py  --config=config/config-DUT_ID-gear_ID.cfg -o 1001 -a  batch1-align-db.slcio 1001-hit.slcio [ 1002-hit.slcio 1003-hit.slcio ] 
  # -o 1001 - outputfilename (1001-fitter.slcio)
- # -a 1001-align-db.slcio - input file (alignment constants)
+ # -a batch1-align-db.slcio - input file (alignment constants)
  # 1001-hit.slcio - input filename (with hits) 
+ # optional files: 1002-hit.slcio 1003-hit.slcio 
 @endcode 
 </ul>
 </ul>
