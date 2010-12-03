@@ -1471,16 +1471,33 @@ main scripts)
 <ul>
 <li> Converter - convert a run from RAW (.raw) into LCIO (.slcio) format.
 @code
- ./submit-converter.py  --config=config/config-DUT_ID-gear_ID.cfg 1001
+ ./submit-converter.py  --config=config/config-DUT_ID-gear_ID.cfg [--hot 1000] 1000 
+ # --config= defines the config file to be taken (default = config.cfg)
+ # 1000 - run number (assuming now a no-beam run)
+ # [--hot 1000] - optional parameter, should be given only for runs when there
+ # was no beam, this option turns on the HotPixel Processor in the hot pixel
+ # counting mode, the output collection is dumped in the
+ # run1000-hotpixel-db.slcio file stored by default in the db/ folder
+@endcode 
+@code
+ ./submit-converter.py  --config=config/config-DUT_ID-gear_ID.cfg  1001 
  # --config= defines the config file to be taken (default = config.cfg)
  # 1001 - run number 
+ # [--hot 1001] - for real in-beam runs no optional parameter is given! 
 @endcode 
+
 <li> Clustering - depending on the  sensor active area geometry and readout type
 several algorithms are available.
 @code
- ./submit-clusearch.py  --config=config/config-DUT_ID-gear_ID.cfg 1001
+ ./submit-clusearch.py  --config=config/config-DUT_ID-gear_ID.cfg --hot 1000 1001
  # --config= defines the config file to be taken (default = config.cfg)
  # 1001 - run number 
+ # --hot 1000 - a must parameter hot pixel collection db file (loads a db/run1000-hotpixel-db.slcio).
+ # comment 1: the hot pixel run is usually one run, the distribution of hot
+ # pixels in Mimosa 26 sensors does not seem to be run dependent.
+ # comment 2: by defaul in the Correlator Processor the sensor offset values are
+ # calculated, the results are dumped into a db/run01001-offset-db.sclio file.
+ # This is done for every run.
 @endcode 
 <li> Filtering - prune cluster selection 
 @code
@@ -1490,9 +1507,12 @@ several algorithms are available.
 
 <li> Hitmaker - translate clusters into space points (we call them Hits)
 @code
- ./submit-hitmaker.py  --config=config/config-DUT_ID-gear_ID.cfg -o 1001  run001001-filter.slcio 
+ ./submit-hitmaker.py  --config=config/config-DUT_ID-gear_ID.cfg -o 1001 [-n 1001] run001001-filter.slcio 
  # -o 1001 - specify the output filename ( 1001-hit.slcio) 
- # run0010001-filter.lscio - intput filename  
+ # run001001-filter.lscio - intput filename  
+ # [-n 1001] - optional parameter (although a very much recommended one!). Turns
+ # on the implementation of the sensor offset values calculated at the clusearch
+ # step.
 @endcode 
 
 </ul>
