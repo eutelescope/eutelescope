@@ -1454,7 +1454,6 @@ Further on consider this folder as current = (./).
 in example lines below
 </ul>
 <li> Analysis job templates are stored in:
-
 <ul>
 <li> ./template_m26_telescope/
 </ul>
@@ -1522,18 +1521,23 @@ other, then get final tracks.
 <li> Alignment - correct sensors 3D position and orientation. It is very important to
 align the sensor  X and Y global coordinates and possible rotation in X-Y plane.
 @code
- ./submit-align.py  --config=config/config-DUT_ID-gear_ID.cfg -o batch1 1001-hit.slcio [ 1002-hit.slcio 1003-hit.slcio ]
- # -o 1001 - output filename ( 1001-align-db.slcio )
+ ./submit-align.py  [-f "0 5"] [-e "3 4"] --config=config/config-DUT_ID-gear_ID.cfg -o batch1 1001-hit.slcio [ 1002-hit.slcio 1003-hit.slcio ]
+ # -o batch1 - output filename ( batch1-align-db.slcio and batch1-align-histo.root)
  # 1001-hit.slcio - input filename 
  # optional files: 1002-hit.slcio 1003-hit.slcio
+ # optional parameters:
+ # -f "0 5": fix planes 0 and 5     
+ # -e "3 4": exclude planes 3 and 4
+ # these two parameters are identical to ExcludePlanes and FixedPlanes  in the
+ # config.cfg file
 @endcode 
 
 <li> Fitter - based on the aligned clusters position one can reconstruct tracks
 from the beam particles and interpolate (extrapolate) the track to a DUT
 surface. 
 @code
- ./submit-fitter.py  --config=config/config-DUT_ID-gear_ID.cfg -o 1001 -a  batch1-align-db.slcio 1001-hit.slcio [ 1002-hit.slcio 1003-hit.slcio ] 
- # -o 1001 - outputfilename (1001-fitter.slcio)
+ ./submit-fitter.py  --config=config/config-DUT_ID-gear_ID.cfg -o batch1 -a  batch1-align-db.slcio 1001-hit.slcio [ 1002-hit.slcio 1003-hit.slcio ] 
+ # -o batch1 - outputfilename (batch1-fitter.slcio and batch1-track-histo.root)
  # -a batch1-align-db.slcio - input file (alignment constants)
  # 1001-hit.slcio - input filename (with hits) 
  # optional files: 1002-hit.slcio 1003-hit.slcio 
