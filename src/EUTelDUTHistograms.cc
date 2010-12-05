@@ -485,7 +485,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 
- if ( _nEvt % 1000 == 0 ) {
+  if ( _nEvt % 1000 == 0 ) {
     streamlog_out( MESSAGE2 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
@@ -561,7 +561,9 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   if(debug)message<MESSAGE> ( log() << "Total of " << nTrack << " tracks in input collection " );
 
-	fillAPIXhits(hitcol, original_zsdata);
+  if (_manualDUTid >=10 ) {
+	
+      fillAPIXhits(hitcol, original_zsdata);
 
   for(int itrack=0; itrack< nTrack ; itrack++)
     {
@@ -628,13 +630,16 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       // End of loop over fitted tracks
     }
 
-  if(debug)message<MESSAGE> ( log() << _fittedX.size()  << " fitted positions at DUT " );
-      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_NumberOfFittedTracksHistoName]))->fill(_fittedX.size());
-	if ( _fittedX.size() != 1 ) return;
+//  return;
+  if(debug)
+  {
+      message<MESSAGE> ( log() << _fittedX.size()  << " fitted positions at DUT " );
+  }
+
+  (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_NumberOfFittedTracksHistoName]))->fill(_fittedX.size());
+  if ( _fittedX.size() != 1 ) return;
 
   // Histograms of fitted positions
-
-
 
   for(int ifit=0;ifit<(int)_fittedX.size(); ifit++)
     {
@@ -653,7 +658,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
     }
 
     
-
+  }// ENDAPIX
 
 
   // Match fitted positions with hits from previous event (background estimate)
@@ -725,8 +730,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
         // End of loop of matching background hits to fitted positions
       }
-
       while(distmin < _distMax*_distMax);
+
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -898,8 +903,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
         }
     }
 
-
-  if(debug)message<MESSAGE> ( log() << _measuredX.size() << " hits at DUT " );
+    if(debug)message<MESSAGE> ( log() << _measuredX.size() << " hits at DUT " );
 
 	if (_noHitYet && ( _measuredX.size()==0 ) ) {
 		_eventsWithNoHit++;
@@ -911,18 +915,18 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 		_noHitYet = false;
 		// determine transformation ...
 		getTransformationShifts();
-
 	}
 
-  // Histograms of measured positions
+    // Histograms of measured positions
 
-	if (_measuredX.size() != _measuredXLOCAL.size()) {
+	if ( _manualDUTid >= 10 && _measuredX.size() != _measuredXLOCAL.size()) {
 		cout<<"_measuredX.size() != _measuredXLOCAL.size()"<<endl;
 		cout<< "Sizes of measured hits arrays in Telescope and Local FoR are not the same! Terminating! " << endl;
 		abort();
 	}
 
-  for(int ihit=0;ihit<(int)_measuredX.size(); ihit++)
+
+    for(int ihit=0;ihit<(int)_measuredX.size(); ihit++)
     {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredXHistoName]))->fill(_measuredX[ihit]);
@@ -1223,11 +1227,14 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       message<MESSAGE> ( log() << _fittedX.size() << " fitted tracks not matched to any DUT hit ");
     }
 
+  if( _manualDUTid >= 10 )
+  {
 	//cout<<"nMatch = " << nMatch<<endl;
 	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MatchedHitsHistoName])) -> fill (nMatch);
 	(dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_MatchedHitsVSEventHistoName])) -> fill (evtNr, nMatch);
   // Efficiency plots - unmatched tracks
-
+  }
+  
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   for(int ifit=0;ifit<(int)_fittedX.size(); ifit++)
@@ -2533,7 +2540,10 @@ AIDA::IHistogram1D * _NumberOfFittedTracksHisto = AIDAProcessor::histogramFactor
 
 void EUTelDUTHistograms::getTransformationShifts() {
 	//cout <<"in getTransformationShifts()" <<endl;
-	_transShiftX = (a * _measuredXLOCAL[0] + b * _measuredYLOCAL[0]) - _measuredX[0];
+
+    if( _manualDUTid < 10 ) return;
+
+    _transShiftX = (a * _measuredXLOCAL[0] + b * _measuredYLOCAL[0]) - _measuredX[0];
 	_transShiftY = (c * _measuredXLOCAL[0] + d * _measuredYLOCAL[0]) - _measuredY[0];
 	//cout << "shifts: "<<_transShiftX << " , "<<_transShiftY << endl;
 /*
