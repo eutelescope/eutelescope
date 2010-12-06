@@ -880,7 +880,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
   if( _nMilleTracks > _maxTrackCandidatesTotal )
   {
-      throw SkipEventException(this);
+      throw StopProcessingException(this);
   }
   
   // fill resolution arrays
