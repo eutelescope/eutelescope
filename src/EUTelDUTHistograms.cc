@@ -497,7 +497,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 
   if(debug)message<MESSAGE> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
-//return;
+
   //
   // Get input collections
   //
@@ -561,9 +561,11 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   if(debug)message<MESSAGE> ( log() << "Total of " << nTrack << " tracks in input collection " );
 
-  if (_manualDUTid >=10 ) {
-	
+  if (_manualDUTid >=10 ) 
+  {	
       fillAPIXhits(hitcol, original_zsdata);
+  }
+
 
   for(int itrack=0; itrack< nTrack ; itrack++)
     {
@@ -630,23 +632,26 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       // End of loop over fitted tracks
     }
 
-//  return;
+    
   if(debug)
   {
       message<MESSAGE> ( log() << _fittedX.size()  << " fitted positions at DUT " );
   }
 
-  (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_NumberOfFittedTracksHistoName]))->fill(_fittedX.size());
+  if( _manualDUTid >= 10 )
+  {
+      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_NumberOfFittedTracksHistoName]))->fill(_fittedX.size());
+  }
+  
   if ( _fittedX.size() != 1 ) return;
 
   // Histograms of fitted positions
 
   for(int ifit=0;ifit<(int)_fittedX.size(); ifit++)
     {
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXHistoName]))->fill(_fittedX[ifit]);
-
-
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA) 
+      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXHistoName]))->fill(_fittedX[ifit]);        
+        
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedYHistoName]))->fill(_fittedY[ifit]);
 
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_FittedXYHistoName]))->fill(_fittedX[ifit],_fittedY[ifit]);
@@ -657,10 +662,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 #endif
     }
 
-    
-  }// ENDAPIX
-
-
   // Match fitted positions with hits from previous event (background estimate)
   // Skip first event
 
@@ -668,6 +669,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
     {
       int nMatch=0;
       double distmin;
+
 
       do{
         int bestfit=-1;
@@ -727,7 +729,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
           }
 
-
         // End of loop of matching background hits to fitted positions
       }
       while(distmin < _distMax*_distMax);
@@ -750,7 +751,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
     }  // End of if(_nEvt > 1)  - end of background calculations
 
-//  printf("end of backgroun calc event %5d \n",  event->getEventNumber() );
 
 
   // Clear local tables with measured position
@@ -963,12 +963,14 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
     distmin=_distMax*_distMax+1.;
 
+
     for(int ifit=0;ifit<(int)_fittedX.size(); ifit++)
       for(int ihit=0; ihit< (int)_measuredX.size() ; ihit++)
         {
           double dist=
             (_measuredX[ihit]-_fittedX[ifit])*(_measuredX[ihit]-_fittedX[ifit])
             + (_measuredY[ihit]-_fittedY[ifit])*(_measuredY[ihit]-_fittedY[ifit]);
+
 
           if(dist<distmin)
             {
@@ -979,7 +981,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
         }
 
     // Match found:
-
     if(distmin < _distMax*_distMax)
       {
 
@@ -1062,7 +1063,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 
         // Efficiency plots
-
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyXHistoName]))->fill(_fittedX[bestfit],1.);
 
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyYHistoName]))->fill(_fittedY[bestfit],1.);
@@ -1161,7 +1161,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 							if ((((int)(floor(fittedIndexX + 1))) % 2) == 0) isMirrored = true;
 
 							float		X = 1000 * (fittedIndexX - floor(fittedIndexX)) *_pitchX ;
-							//cout <<	fittedXLOCAL <<" "<< fittedIndexX << " " << X << endl;
 							float		Y = 1000 * (fittedIndexY - floor(fittedIndexY)) *_pitchY ;
 
 							if (isMirrored) X = 400. - X;
@@ -1189,7 +1188,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 			}
 
-
         // Remove matched entries from the list (so the next matching pair
         // can be looked for)
 
@@ -1213,8 +1211,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 				_clusterSizeY.erase(_clusterSizeY.begin()+besthit);
 			}
       }
-
-
     // End of loop of matching DUT hits to fitted positions
   }
   while(distmin < _distMax*_distMax);
@@ -1229,12 +1225,11 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   if( _manualDUTid >= 10 )
   {
-	//cout<<"nMatch = " << nMatch<<endl;
 	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MatchedHitsHistoName])) -> fill (nMatch);
 	(dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_MatchedHitsVSEventHistoName])) -> fill (evtNr, nMatch);
   // Efficiency plots - unmatched tracks
   }
-  
+
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   for(int ifit=0;ifit<(int)_fittedX.size(); ifit++)
@@ -1247,15 +1242,15 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 
 		// 19 August 2010 - plots in the local frame
-		double	fittedXLOCALMethod2 = _rot00*(_fittedX[ifit] + _transShiftX) + _rot01 *  (_fittedY[ifit] + _transShiftY);
+	  if (_manualDUTid >= 10) {
+        double	fittedXLOCALMethod2 = _rot00*(_fittedX[ifit] + _transShiftX) + _rot01 *  (_fittedY[ifit] + _transShiftY);
 		double	fittedYLOCALMethod2 = _rot10*(_fittedX[ifit] + _transShiftX) + _rot11 *  (_fittedY[ifit] + _transShiftY);
 
 		(dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyXLOCALHistoName]))->fill(fittedXLOCALMethod2, 0.);
 		(dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyYLOCALHistoName]))->fill(fittedYLOCALMethod2, 0.);
 		(dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EfficiencyXYLOCALHistoName]))->fill(fittedXLOCALMethod2, fittedYLOCALMethod2, 0.);
 
-      if (_manualDUTid >= 10) {
-      	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXLOCALHistoName]))->fill(fittedXLOCALMethod2);
+     	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXLOCALHistoName]))->fill(fittedXLOCALMethod2);
       	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedYLOCALHistoName]))->fill(fittedYLOCALMethod2);
       	(dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_FittedXYLOCALHistoName]))->fill(fittedXLOCALMethod2, fittedYLOCALMethod2);
       }
@@ -2053,10 +2048,10 @@ void EUTelDUTHistograms::bookHistos()
 
   // Efficiency as a function of the fitted position in X-Y
 
-  effiXNBin  = 50;
+  effiXNBin  = 40;
   effiXMin   = -10.;
   effiXMax   =  10.;
-  effiYNBin  = 50;
+  effiYNBin  = 20;
   effiYMin   = -10.;
   effiYMax   =  10.;
   string effiXYTitle = "Efficiency vs particle position in XY";
@@ -2539,7 +2534,6 @@ AIDA::IHistogram1D * _NumberOfFittedTracksHisto = AIDAProcessor::histogramFactor
 #endif
 
 void EUTelDUTHistograms::getTransformationShifts() {
-	//cout <<"in getTransformationShifts()" <<endl;
 
     if( _manualDUTid < 10 ) return;
 
