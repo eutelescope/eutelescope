@@ -74,18 +74,19 @@ this builds the library:
 @li Includes (merges) with branch "engels" to adopt new cmake scheme.
 @li Small improvements to the full_analysis_chain scripts.
 @li Bug fixes in the EUTelDUTHistograms class.
+@li Extend the template "template_ibl/fitter-tmp.xml" to have Telescope sensors (6x Mimosa 26) and a set of DUT sensors (APIX as an example) DUTHistograms done in one execution step.  
 @li New release of the ILCSoft v01-10 is now! 
 @code
 cd $TB_ANALYSIS
 svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-10 ilcinstall_v01-10
 cd ilcinstall_v01-10
 #
-# edit ./releases/v01-10/release_20101206.cfg
-# edit ./releases/v01-10/release_versions.py
+# edit ./releases/v01-10/release-20101206.cfg
+# edit ./releases/v01-10/release-versions.py
 #
 # examples of these two files are here: 
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release_ilcsoft.cfg 
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release_versions.py 
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-ilcsoft.cfg 
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-versions.py 
 #
 # replace the default files with the example ones:
 # mv release_ilcsoft.cfg ./releases/v01-10/
