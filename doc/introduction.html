@@ -49,7 +49,10 @@ mv HEAD HEAD_bak
 svn co https://svnsrv.desy.de/public/eutelescope/Eutelescope/trunk HEAD
 cd HEAD
 mkdir build; cd build
-cmake -C $ILCSoft ..
+cmake -C $ILCSOFT_CMAKE ..
+# where $ILCSOFT_CMAKE is the cmake file which can be found in the ilcsoft
+# folder (two levels abouve the $EUTELESCOPE level:
+# ILCSOFT_CMAKE = $EUTELESCOPE/../../ILCSoft.cmake
 @endcode
 this creates necessary Makefile(s). Now, execute the following (this step did not change):
 @code
