@@ -23,8 +23,11 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <processor name="ApplyAlignment"/>
       <processor name="Fitter"/>
       <processor name="FitterHisto"/>
-      <processor name="DUTHisto"/>
-      <processor name="NTuple"/>
+        <!-- processor name="DUTHisto"/-->
+        <!-- processor name="NTuple"/-->
+        <!-- processor name="APIXTbTrack"/-->
+        <!-- group name="TelDUTHisto"/-->
+        <!-- group name="APIXDUTHisto"/-->
       <processor name="Save"/>
    </execute>
 
@@ -105,9 +108,9 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Decide now weather you want to rely on the track candidate slope permanence in X and Y, default=true -->
   <parameter name="UseSlope"   type="bool"  value="true"/>
   <!--Set the allowed maximum difference of the slope in X (from plane to plane), default = 0.01 -->
-  <parameter name="SlopeXLimit"   type="float" value="0.01"/>
+  <parameter name="SlopeXLimit"   type="float" value="0.001"/>
   <!--Set the allowed maximum difference of the slope in Y (from plane to plane), default = 0.01 -->
-  <parameter name="SlopeYLimit"   type="float" value="0.01"/>
+  <parameter name="SlopeYLimit"   type="float" value="0.001"/>
   <!--Maximal allowed (initial) distance between hits in the XY plane between the planes,default = 2. mm -->
   <parameter name="SlopeDistanceMax" type="float" value="@DistanceMax@"/>
   <!--Assumed angular spread of the beam [rad]-->
@@ -229,6 +232,26 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <parameter name="UseManualDUT" type="bool" value="@UseManualDUT@"/>
 </processor>
 
+<processor name="APIXTbTrack" type="EUTelAPIXTbTrackTuple">
+    <parameter name="OutputPath" type ="string" value="@HistoPath@/@Output@-tb-histo.root"/>
+    <!--Prepare n-tuple with track fit results-->
+    <!--Name of the input Track collection-->
+    <parameter name="InputCollectionName" type="string" lcioInType="Track"> track </parameter>
+    <!--Name of the input pulse collections-->
+    <parameter name="InputPulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
+    <!--Name of the input hit collection-->
+    <parameter name="InputTrackerHitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit</parameter>
+    <!--Name of the input DUT hit collection-->
+    <!-- parameter name="InputTrackerHitCollectionName" type="string"    lcioInType="TrackerHit">  aligned_hit_m26</parameter -->
+    <!-- Alignment constants-->
+    <parameter name="DutAlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignment </parameter>
+    <!-- parameter name="TelAlignmentConstantName" type="string"    lcioInType="LCGenericObject"> alignmenttel </parameter -->
+    <!-- Make detailed TTree-output for the following sensor-IDs -->
+    <parameter name="MakeAllLeaves" type="IntVec"> 0 1 2  10 11 12  3 4 5</parameter>
+    <parameter name="MoveXY" type="StringVec"> 0 0 0 </parameter>
+ </processor>
+
+
  <processor name="Save" type="EUTelOutputProcessor">
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
@@ -249,5 +272,121 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <xparameter name="SplitFileSizekB" type="int" value="1992294"/>
 </processor>
 
+  <group name="TelDUTHisto" >
+	<!-- ------------------------------------ -->
+	<!-- -------- COMMON SETTINGS ----------- ->
+	<!-- ------------------------------------ -->
+  <!--Analysis of DUT performance based on the analytic track fit results-->
+  <!--Name of the input DUT hit collection-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit">alignedHit </parameter>
+  <!--Name of the input Track collection-->
+  <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track </parameter>
+  <!--Alignment corrections for DUT: shift (in mm) in X, Y and rotation around Z-->
+  <parameter name="DUTalignment" type="FloatVec"> @DUTAlignment@ </parameter>
+  <!--DUT sensor pitch in X-->
+  <parameter name="DUTpitchX" type="double" value="0.018"/>
+  <!--DUT sensor pitch in Y-->
+  <parameter name="DUTpitchY" type="double" value="0.018"/>
+  <!--Print out every DebugEnevtCount event-->
+  <parameter name="DebugEventCount" type="int" value="100"/>
+  <!--Maximum allowed distance between fit and matched DUT hit-->
+  <parameter name="DistMax" type="double" value="1.0"/>
+  <!--Name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
+  <!--Id of telescope layer which should be used as DUT-->
+  <!--Flag for manual DUT selection-->
+  <parameter name="UseManualDUT" type="bool" value="@UseManualDUT@"/>
+  <!--Use only events with 1 track reconstructed to enrich it with in-time tracks-->
+  <parameter name="UseSingleTrackOnly" type="bool" value="false"/>
+  <parameter name="onlyIntimeTracks" type="bool" value="false"/>
+ 
+	<!---------------------------------------->
+	<!------ END OF COMMON SETTINGS ---------->
+	<!---------------------------------------->
 
+	<!-- Now define processors for this group and specify options,
+        which are different for each processor,
+        in particular ID of the sensor to be treated as DUT, use reference plane or not,
+		which plane to be used as DUT.
+	 -->
+  <processor name="DUTHisto01" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="0" />
+  </processor>
+
+  <processor name="DUTHisto02" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="1" />
+  </processor>
+
+  <processor name="DUTHisto03" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="2" />
+  </processor>
+
+  <processor name="DUTHisto04" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="3" />
+  </processor>
+
+  <processor name="DUTHisto05" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="4" />
+  </processor>
+
+  <processor name="DUTHisto06" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="5" />
+  </processor>
+
+  </group>
+ 
+  <group name="APIXDUTHisto" >
+	<!-- ------------------------------------ -->
+	<!-- -------- COMMON SETTINGS ----------- ->
+	<!-- ------------------------------------ -->
+  <!--Analysis of DUT performance based on the analytic track fit results-->
+  <!--Name of the input DUT hit collection-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit">alignedHit </parameter>
+  <!--Name of the input Track collection-->
+  <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track </parameter>
+  <!--Alignment corrections for DUT: shift (in mm) in X, Y and rotation around Z-->
+  <parameter name="DUTalignment" type="FloatVec"> @DUTAlignment@ </parameter>
+  <!--DUT sensor pitch in X-->
+  <parameter name="DUTpitchX" type="double" value="0.40"/>
+  <!--DUT sensor pitch in Y-->
+  <parameter name="DUTpitchY" type="double" value="0.05"/>
+  <!--Print out every DebugEnevtCount event-->
+  <parameter name="DebugEventCount" type="int" value="100"/>
+  <!--Maximum allowed distance between fit and matched DUT hit-->
+  <parameter name="DistMax" type="double" value="0.5"/>
+  <!--Name of the histogram information file-->
+  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
+  <!--Id of telescope layer which should be used as DUT-->
+  <!--Flag for manual DUT selection-->
+  <parameter name="UseManualDUT" type="bool" value="@UseManualDUT@"/>
+  <!--Use only events with 1 track reconstructed to enrich it with in-time tracks-->
+  <parameter name="UseSingleTrackOnly" type="bool" value="false"/>
+  <parameter name="onlyIntimeTracks" type="bool" value="true"/>
+ 
+	<!---------------------------------------->
+	<!------ END OF COMMON SETTINGS ---------->
+	<!---------------------------------------->
+
+	<!-- Now define processors for this group and specify options,
+        which are different for each processor,
+        in particular ID of the sensor to be treated as DUT, use reference plane or not,
+		which plane to be used as DUT.
+	 -->
+  <processor name="DUTHisto10" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="10"/>
+    <parameter name="referencePlaneID" type="int" value="11" />
+  </processor>
+
+  <processor name="DUTHisto11" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="11"/>
+	<parameter name="referencePlaneID" type="int" value="10" />
+  </processor>
+
+  <processor name="DUTHisto12" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="12"/>
+	<parameter name="referencePlaneID" type="int" value="10" />
+  </processor>
+
+  </group>
+   
 </marlin>
