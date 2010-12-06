@@ -39,11 +39,64 @@ href="http://www-zeus.desy.de/~rubinsky/EUTelescope/SoftwareDevelopment/EUTelesc
 <img border="none" src="http://www-zeus.desy.de/~rubinsky/home/pdficon_small.gif">
 </a>.
 
-The EUTelescope library comes with the following features:
+<b>The library update:</b> In case you want to reinstall the EUTelescope library from scratch you do
+not need to rerun the ilcinstall scripts repeating all steps of the ilcsoft
+installation. There is one step to create the new Makefile for the EUTelescope
+compilation, namely 
+@code
+cd $EUTELESCOPE/../
+mv HEAD HEAD_bak
+svn co https://svnsrv.desy.de/public/eutelescope/Eutelescope/trunk HEAD
+cd HEAD
+mkdir build; cd build
+cmake -C $ILCSoft ..
+@endcode
+this creates necessary Makefile(s). Now, execeture the following (this step did not change):
+@code
+make install
+# or for a multicore CPU
+# make -j 8 install
+# where 8 is for an 8 core CPU.
+@endcode
+this builds the library:
+@code
+../lib/libEutelescope.so
+../lib/libEutelescope.so.0.5
+../lib/libEutelescope.so.0.5.1
+@endcode
 
-<b>[Pro]</b> Version v00-05-01-pre 
-Merge with branch "engels" to adopt new cmake scheme.
-Small improvements to the full_analysis_chain scripts.
+<b>Last versions release info:</b>
+
+<b>[Pro]</b> Version v00-05-01-pre.
+@li Includes (merges) with branch "engels" to adopt new cmake scheme.
+@li Small improvements to the full_analysis_chain scripts.
+@li Bug fixes in the EUTelDUTHistograms class.
+@li New release of the ILCSoft v01-10 is now! 
+@code
+cd $TB_ANALYSIS
+svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-10 ilcinstall_v01-10
+cd ilcinstall_v01-10
+#
+# edit ./releases/v01-10/release_20101206.cfg
+# edit ./releases/v01-10/release_versions.py
+#
+# examples of these two files are here: 
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release_ilcsoft.cfg 
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release_versions.py 
+#
+# replace the default files with the example ones:
+# mv release_ilcsoft.cfg ./releases/v01-10/
+# mv release_versions.py ./releases/v01-10/
+# 
+# check the installation
+#
+ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg
+# 
+# if OK then install
+#
+ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg  -i
+#
+@endcode
 
 <b>[Old]</b> Version v00-05-00-pre 
 Dependency on the latest GEAR library (!) ( >= 30.11.2010). 
