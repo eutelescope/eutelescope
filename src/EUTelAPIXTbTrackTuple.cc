@@ -128,36 +128,80 @@ void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) {
 }
 
 void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event ) {
-  _nEvt ++ ;
-  _evtNr = event->getEventNumber();
-  EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
-  if ( euEvent->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
-    return;
-  }
 
-  if( not _foundAllign ) { readAlignment(event); } //Sets _foundAlign to true if found.
-  if( not _foundAllign ) {
-    streamlog_out  ( ERROR ) << "Have not found the needed alignment collections, will skip this event ( " 
-			     << event->getEventNumber() << " )." << endl; 
-    return;
-  }
+    _nEvt ++ ;
+    _evtNr = event->getEventNumber();
+    
+    EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
+    
+    if ( euEvent->getEventType() == kEORE ) 
+    {
+        message<DEBUG> ( "EORE found: nothing else to do." );
+        return;
+    }
 
-  //Clear all event info containers
-  clear();
+    if( not _foundAllign ) 
+    {
+        readAlignment(event);  
+        //Sets _foundAlign to true if found.
+    }
 
-  /* --- Dump zs info, skip if event if collection not found --- */
-  if( readZsHits( _telZsColName ,  event) != 0) { return; }
-  if( readZsHits( _dutZsColName , event) != 0) { return; }
-  /* --- Dump fitted track params --- */
-  if( readTracks(event) != 0) { return; }
-  /* ---- Check cluster collections ---*/
-  if( readClusters( _inputDutPulseCollectionName , event) != 0 ) { return; } 
-  if( readClusters( _inputTelPulseCollectionName , event) != 0 ) { return; } 
-  /* Filling tree */
-  _zstree->Fill();
-  _eutracks->Fill();
-  _clutree->Fill();
+    // now check once again if the alignment collection has been found
+    if( not _foundAllign ) 
+    {
+        readAlignment(event);  //Sets _foundAlign to true if found.
+        
+        streamlog_out  ( ERROR ) << "Have not found the needed alignment collections, will skip this event ( " 
+            << event->getEventNumber() << " )." << endl; 
+        return;
+    }
+
+    //Clear all event info containers
+    clear();
+
+    /* --- Dump zs info, skip if event if collection not found --- */
+    if( readZsHits( _telZsColName ,  event) != 0) 
+    {
+        streamlog_out  ( ERROR ) << "Have not found the needed telZsColName  " << _telZsColName << " collections, will skip this event ( " 
+            << event->getEventNumber() << " )." << endl; 
+        return; 
+    }
+  
+    if( readZsHits( _dutZsColName , event) != 0) 
+    {
+        streamlog_out  ( ERROR ) << "Have not found the needed dutZsColName " << _dutZsColName << " collections, will skip this event ( " 
+            << event->getEventNumber() << " )." << endl; 
+        return;         
+    }
+    
+    /* --- Dump fitted track params --- */
+    if( readTracks(event) != 0) 
+    {
+        streamlog_out  ( ERROR ) << "Have not found any Tracks, will skip this event ( " 
+            << event->getEventNumber() << " )." << endl; 
+        return;
+    }
+    
+    /* ---- Check cluster collections ---*/
+    if( readClusters( _inputDutPulseCollectionName , event) != 0 ) 
+    {
+        streamlog_out  ( ERROR ) << "Have not found the needed dutPulseCollectionName " << _inputDutPulseCollectionName << " collections, will skip this event ( " 
+            << event->getEventNumber() << " )." << endl; 
+        return;
+    } 
+  
+    if( readClusters( _inputTelPulseCollectionName , event) != 0 ) 
+    {
+        streamlog_out  ( ERROR ) << "Have not found the needed telPulseCollectionName " << _inputTelPulseCollectionName << " collections, will skip this event ( " 
+            << event->getEventNumber() << " )." << endl; 
+        return; 
+    } 
+  
+    /* Filling tree */
+    _zstree->Fill();
+    _eutracks->Fill();
+    _clutree->Fill();
+    
 }
 
 void EUTelAPIXTbTrackTuple::end(){
