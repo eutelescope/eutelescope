@@ -25,9 +25,9 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <processor name="FitterHisto"/>
         <!-- processor name="DUTHisto"/-->
         <!-- processor name="NTuple"/-->
-        <!-- processor name="APIXTbTrack"/-->
+      <processor name="APIXTbTrack"/>
         <!-- group name="TelDUTHisto"/-->
-        <!-- group name="APIXDUTHisto"/-->
+      <group name="APIXDUTHisto"/>
       <processor name="Save"/>
    </execute>
 
@@ -238,14 +238,15 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <!--Name of the input Track collection-->
     <parameter name="InputCollectionName" type="string" lcioInType="Track"> track </parameter>
     <!--Name of the input pulse collections-->
-    <parameter name="InputPulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
+    <parameter name="InputTelPulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
+    <parameter name="InputDutPulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
     <!--Name of the input hit collection-->
     <parameter name="InputTrackerHitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit</parameter>
     <!--Name of the input DUT hit collection-->
     <!-- parameter name="InputTrackerHitCollectionName" type="string"    lcioInType="TrackerHit">  aligned_hit_m26</parameter -->
     <!-- Alignment constants-->
     <parameter name="DutAlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignment </parameter>
-    <!-- parameter name="TelAlignmentConstantName" type="string"    lcioInType="LCGenericObject"> alignmenttel </parameter -->
+    <parameter name="TelAlignmentConstantName" type="string"    lcioInType="LCGenericObject"> alignment </parameter>
     <!-- Make detailed TTree-output for the following sensor-IDs -->
     <parameter name="MakeAllLeaves" type="IntVec"> 0 1 2  10 11 12  3 4 5</parameter>
     <parameter name="MoveXY" type="StringVec"> 0 0 0 </parameter>
