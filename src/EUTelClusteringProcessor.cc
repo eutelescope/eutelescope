@@ -310,7 +310,7 @@ void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( mar
 
   } catch ( lcio::DataNotAvailableException ) {
     // do nothing
-    streamlog_out( WARNING ) << "_nzsDataCollectionName " << _nzsDataCollectionName.c_str() << " not found " << endl; 
+    streamlog_out( MESSAGE ) << "EUTelClusteringProcessor::initializeGeometry  _nzsDataCollectionName " << _nzsDataCollectionName.c_str() << " not found " << endl; 
   }
 
   try 
@@ -328,7 +328,7 @@ void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( mar
 
   } catch ( lcio::DataNotAvailableException ) {
     // do nothing again
-    streamlog_out( WARNING ) << "_zsDataCollectionName " << _zsDataCollectionName.c_str() << " not found " << endl; 
+    streamlog_out( WARNING ) << "EUTelClusteringProcessor::initializeGeometry  _zsDataCollectionName " << _zsDataCollectionName.c_str() << " not found " << endl; 
   }
 
 
@@ -606,19 +606,19 @@ void EUTelClusteringProcessor::readCollections (LCEvent * event)
 
     try {
         nzsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > (event->getCollection( _nzsDataCollectionName ) );
-        streamlog_out ( DEBUG4 ) << "nzsInputDataCollectionVec: " << _nzsDataCollectionName.c_str() << " found " << endl;
+        streamlog_out ( DEBUG4 ) << "EUTelClusteringProcessor::readCollections  nzsInputDataCollectionVec: " << _nzsDataCollectionName.c_str() << " found " << endl;
     } catch ( lcio::DataNotAvailableException ) {
         // do nothing
-        streamlog_out ( DEBUG4 ) << "nzsInputDataCollectionVec: " << _nzsDataCollectionName.c_str() << " not found " << endl;
+        streamlog_out ( DEBUG4 ) << "EUTelClusteringProcessor::readCollections  nzsInputDataCollectionVec: " << _nzsDataCollectionName.c_str() << " not found " << endl;
     }
 
     
     try {
         zsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _zsDataCollectionName ) ) ;
-        streamlog_out ( DEBUG4 ) << "zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " found " << endl;
+        streamlog_out ( DEBUG4 ) << "EUTelClusteringProcessor::readCollections  zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " found " << endl;
     } catch ( lcio::DataNotAvailableException ) {
         // do nothing again
-        streamlog_out ( DEBUG4 ) << "zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " not found " << endl;
+        streamlog_out ( DEBUG4 ) << "EUTelClusteringProcessor::readCollections  zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " not found " << endl;
     }
 
    
