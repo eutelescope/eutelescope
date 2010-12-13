@@ -55,6 +55,7 @@ getFromGRID(){
 # $3: the SE
 #
 putOnGRID() {
+    doCommand "lcg-del -a lfn:$2 "
     doCommand "lcg-cr -v -d $3 -l lfn:$2 file:$1"
     return $?
 }
@@ -271,9 +272,18 @@ echo "########################################################################"
 echo
 # the output LCIO can be more than one.
 # just loop over all possible values!
-# OutputLocal=$PWD/results/$Output-track.[0-9][0-9][0-9].slcio
-# OutputLFN=$GRIDFolderFitterResults/$Output-track.[0-9][0-9][0-9].slcio
-for file in `ls $PWD/results/$Output-track.[0-9][0-9][0-9].slcio` ; do
+OutputLocal=$PWD/results/$Output-track.slcio
+OutputLFN=$GRIDFolderFitterResults/$Output-track.slcio
+
+doCommand "putOnGRID ${OutputLocal} ${OutputLFN} ${GRIDSE}"
+r=$?
+if [ $r -eq 0 ] ; then
+  echo "****** ${OutputLocal} copied to the GRID"
+
+else
+  echo "****** Problem copying the ${OutputLocal} to the GRID, try with .xxx.slcio "
+
+  for file in `ls $PWD/results/$Output-track.[0-9][0-9][0-9].slcio` ; do
     
     basefile=`basename $file`
     echo "--> $basefile"
@@ -288,8 +298,8 @@ for file in `ls $PWD/results/$Output-track.[0-9][0-9][0-9].slcio` ; do
         echo "****** Problem copying the ${OutputLocal} to the GRID"
         exit 30
     fi
-
-done
+  done
+fi
 
 echo
 echo "########################################################################"
