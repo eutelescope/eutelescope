@@ -248,6 +248,10 @@ fi
 # list all the files available
 doCommand "ls -al"
 
+# mail -s "name=$Name; output=$Output; copy to GRID ERROR "  ${USER}@mail.desy.de < out
+# mail -s "name=$Name; output=$Output; copy to GRID ERROR "  ${USER}@mail.desy.de < log
+
+
 # ready to run marlin
 echo
 echo "########################################################################"
