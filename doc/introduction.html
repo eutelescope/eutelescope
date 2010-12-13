@@ -1559,7 +1559,8 @@ several algorithms are available.
  # calculated, the results are dumped into a db/run01001-offset-db.sclio file.
  # This is done for every run.
 @endcode 
-<li> Filtering - prune cluster selection 
+<li> Filtering - prune cluster selection. This step is not needed by default,
+can go directly to HitMaker.
 @code
  ./submit-filter.py  --config=config/config-DUT_ID-gear_ID.cfg 1001
  # 1001 - run number 
