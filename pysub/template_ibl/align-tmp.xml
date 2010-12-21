@@ -91,13 +91,13 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <parameter name="OnlySingleHitEvents" type="int" value="0"/>
   <!--Use only events with one track candidate.-->
   <parameter name="OnlySingleTrackEvents" type="int" value="0"/>
-  <xparameter name="FixParameter" type="int" value="63 63 63     7 63 63   63 63 63"/>
-  <xparameter name="FixParameter" type="int" value="60 60 60     0  0  0   60 60 60"/>
-  <xparameter name="FixParameter" type="int" value=" 0  0  0     0  0  0    0  0  0"/>
-  <xparameter name="FixParameter" type="int" value="16 16 16    16 16 16   16 16 16"/>
-  <xparameter name="FixParameter" type="int" value="60 60 60    60 60 60   60 60 60"/>
-  <xparameter name="FixParameter" type="int" value="28 28 28     28 28 28   28 28 28"/>
-  <parameter name="FixParameter" type="int" value="56 56 56   56 56 56  56  56 56  "/>
+  <!-- parameter name="FixParameter" type="int" value="63 63 63     7 63 63   63  63 63"/ -->
+  <!-- parameter name="FixParameter" type="int" value="60 60 60     0  0  0   60  60 60"/ -->
+  <!-- parameter name="FixParameter" type="int" value=" 0  0  0     0  0  0    0   0  0"/ -->
+  <!-- parameter name="FixParameter" type="int" value="16 16 16    16 16 16   16  16 16"/ -->
+  <!-- parameter name="FixParameter" type="int" value="60 60 60    60 60 60   60  60 60"/ -->
+  <!-- parameter name="FixParameter" type="int" value="28 28 28    28 28 28   28  28 28"/ -->
+  <!-- parameter name="FixParameter" type="int" value="56 56 56    56 56 56   56  56 56"/ -->
   <!--Start values for the alignment for the angle gamma.-->
   <!--parameter name="PedeUserStartValuesGamma" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
   <!--Start values for the alignment for shifts in the X direction.-->
@@ -106,8 +106,8 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--parameter name="PedeUserStartValuesY" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
   <!--Resolution of the telescope for Millepede.-->
   <parameter name="TelescopeResolution" type="float" value="10"/>
-  <parameter name="ResolutionX" type="float" value="   10     10     10      1200   1200   1200      10     10     10 "/>
-  <parameter name="ResolutionY" type="float" value="   10     10     10      150    150    150       10     10     10 "/>
+  <parameter name="ResolutionX" type="float" value="   10     10     10       150    150    150      10     10     10 "/>
+  <parameter name="ResolutionY" type="float" value="   10     10     10      1200   1200   1200      10     10     10 "/>
   <parameter name="ResolutionZ" type="float" value="    1      1      1        1      1      1        1      1      1 "/>
   <!--Rotation around the x axis of the sensors in test mode (to be determined by the alignment).-->
   <!--parameter name="TestModeSensorAlpha" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
