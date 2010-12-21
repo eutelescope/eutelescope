@@ -1341,19 +1341,31 @@ switched OFF (set to =0)
      
  
 @section download_ilcinstall Download the ilcinstall scripts            
-Change folder to the global analysis folder and check the ilcinstall scripts (v01-09-pre01) 
+Change folder to the global analysis folder and check the ilcinstall scripts (v01-10) 
 
 
 @code
  cd $TB_ANALYSIS
- svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-09-pre01 ilcinstall_v01-09-pre01
- cd ilcinstall_v01-09-pre01
- wget http://www-zeus.desy.de/~rubinsky/EUTelescope/complete_20100610.cfg 
- # or
- wget http://www-zeus.desy.de/~rubinsky/EUTelescope/complete_20103011_GEAR_HEAD.cfg 
+ svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-10  ilcinstall_v01-10
+ cd ilcinstall_v01-10
+#
+# edit ./releases/v01-10/release-20101206.cfg
+# edit ./releases/v01-10/release-versions.py
+#
+# examples of these two files are here: 
+#
+ wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-ilcsoft.cfg 
+ wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-versions.py 
+#
+# replace the default files with the example ones:
+#
+ mv release_ilcsoft.cfg ./releases/v01-10/
+ mv release_versions.py ./releases/v01-10/
+# 
 @endcode
       
-Edit manually your local configuration file "complete_20100610.cfg".<br>
+Your local configuration file "release-ilcsoft.cfg" shold contain the EUDAQ
+library references:<br>
      
 @li ilcsoft = ILCSoft("/data/TestBeam/Analysis/ilcsoft/")
 @li ilcsoft.module("Eutelescope").env["EUDAQ_HOME"]="/data/TestBeam/Analysis/eudaq/trunk"
@@ -1364,13 +1376,13 @@ Check if the installation looks concistent from the script/environment
 viewpoint:
  
 @code
- ilcsoft-install complete_20100610.cfg
+ ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg
 @endcode
  
 Read carefully the output screen. If no apparent problem is detected, run:
      
 @code
- ilcsoft-install -i complete_20100610.cfg
+ ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg  -i
 @endcode
 
 Depending one your hardware/OS performance the installation can last for about
