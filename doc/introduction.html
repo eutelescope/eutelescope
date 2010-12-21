@@ -1630,10 +1630,174 @@ surface.
 
 @page gridtools How to run python scripts on GRID. 
 
-First install the gridtools scripts:
+The following few lines of code should be rapped up in a short script (say
+.load_grid.sh):
+
 @code
-svn co https://svnsrv.desy.de/public/ilctools/gridtools/tags/LCSoftGridScripts-v01-00 gridtools
+ setenv INSTALL_ROOT /afs/desy.de/project/glite/UI
+ # for SL4:
+ source $INSTALL_ROOT/etc/profile.d/grid-env-3.1.csh 
+ # for SL5:
+ # source $INSTALL_ROOT/etc/profile.d/grid-env.csh 
+ #
+ voms-proxy-init -debug -voms ilc:/ilc/eudet-jra1 -valid        365:0
+ glite-wms-job-delegate-proxy -d $USER 
+ voms-proxy-info -debug -all
 @endcode
+
+
+Install the general ILC grid scripts:
+@code
+#
+# change dir to the ILCSOFT root folder
+# 
+svn co https://svnsrv.desy.de/public/ilctools/gridtools/trunk/LCSoftGridScripts
+#
+# edit the config file:
+vim LCSoftGridScripts/ilc-grid-config.sh
+# --
+# -- export SW_VER="v01-10"
+# -- export SW_ARCH="sl5"
+# --
+@endcode
+
+Change folder to the PYSUB folder and edit the config file:
+@code
+#
+cd $EUTELESCOPE/HEAD/pysub/
+# 
+# edit the config file:
+vim config/config.cfg
+# --
+# the following section should be corrected:
+# GRID library
+#
+# GRIDLibraryTarball            = job_tarball_YYMMDD_v00.tgz
+# GRIDLibraryTarballPath        = $LFC_HOME/2010/tb-cern-summer/DUT/software
+# GRIDILCSoftVersion            = v01-10
+# GRIDJDLTemplate               = $ILCSOFT/Eutelescope/HEAD/pysub/grid/jdl-tmp.jdl
+# 
+# [GRIDLibraryContent]
+# EUTelescopeLib = $ILCSOFT/Eutelescope/HEAD/lib/libEutelescope.so*
+# Pede           = $ILCSOFT/Eutelescope/HEAD/bin/pede
+# Pede2LCIO      = $ILCSOFT/Eutelescope/HEAD/bin/pede2lcio
+# Pedemerge      = $ILCSOFT/Eutelescope/HEAD/bin/pedestalmerge
+# EudaqLib       = $ILCSOFT/eudaq/bin/libeudaq.so
+# ILCGRIDConfig  = $ILCSOFT/LCSoftGridScripts/ilc-grid-config.sh
+# ILCGRIDTestSys = $ILCSOFT/LCSoftGridScripts/ilc-grid-test-sys.sh
+# ILCGRIDTestSw  = $ILCSOFT/LCSoftGridScripts/ilc-grid-test-sw.sh
+# Cmsos          = $ILCSOFT/LCSoftGridScripts/cmsos.sh
+# EmptyROOTFile  = $ILCSOFT/data/empty.root
+# --
+# --
+@endcode
+
+If all files are present rap the tarball and upload to the grid folder: 
+@code
+# 
+./prepare-gridlib.py --config-file=config/config.cfg  --output=lfn:/grid/ilc/eudet-jra1/2010/tb-cern-autumn/DUT/software/job_tarball_YYMMDD_v00.tgz
+# 
+@endcode
+
+Notice that 
+@code
+# the folder 
+# /grid/ilc/eudet-jra1/2010/tb-cern-autumn/DUT/software/ 
+# should exist
+# 
+# the file tag YYMMDD_v00 should be also meaningfull 
+#
+@endcode
+
+@code
+Some abbreviations
+==================
+LFN  - logical file name
+GUID - Globally Unique Identifier 
+URL  - Uniform Resource Locator
+SURL - Storage URL
+TURL - Transfer (Transport) URL
+VO   - virtual organization
+SE   - storage element
+LCG  - LHC Computing Grid
+LFC  - LHC File Catalog
+SRM  - Storage Resource Manager 
+
+
+Get Grid UI middleware on your SL3/4 machine:
+============================================
+# source /afs/desy.de/group/grid/UI/GLITE/etc/profile.d/grid_env.sh
+
+Set location of catalogue:
+=========================
+# export LFC_HOST=grid-lfc.desy.de
+
+Proxy:
+======
+# voms-proxy-init -debug -voms ilc:/ilc -valid 365:0
+  
+# glite-wms-job-delegate-proxy -d $USER 
+
+# voms-proxy-info -debug -all
+
+List entries in file catalogue:
+================================
+# lfc-ls -l /grid/ilc/eudet-jra1/2011/tb-desy-spring/
+
+Copying the file to your local system from the Grid:
+==================================================
+# lcg-cp -v --vo ilc lfn:/grid/ilc/eudet-jra1/2011/tb-desy-spring/lcio-raw/run000608.slcio file:run000608.slcio
+
+Listing the directory:
+======================
+# lfc-ls -R /grid/.../directoryname
+
+Creating a directory using the LFC file catalogue:
+=================================================
+# lfc-mkdir /grid/.../directoryname
+
+Finding all sites which support ilc:
+===================================
+# lcg-infosites --vo ilc all
+
+Copy and register a file:
+===========================
+# lcg-cr -v --vo ilc -t 1800 -d srm://dcache-se-desy.desy.de/pnfs/desy.de/ilc/../filename -l lfn:/grid/ilc/../filename file:filename
+
+Replicating the file to another site (here globe-door.ifh.de):
+==============================================================
+# lcg-rep -v --vo ilc lfn:/grid/ilc/test/testag1 -d globe-door.ifh.de
+
+List replicas of the logical file name (LFN):
+============================================
+# lcg-lr -v --vo ilc lfn:/grid/ilc/eudet-jra1/2011/tb-desy-spring/lcio-raw/run000601.slcio
+
+Deleting of only one replica via:
+================================
+# lcg-del -a -v --vo ilc srm://...../filename
+
+Delete the file again and all it replicas via its LFN: 
+(be careful, here you are deleting the file itself!!)
+==========================================================
+# lcg-del -a -v --vo ilc lfn:/grid/ilc/..../filename
+
+Register files from dCache on the GRID:
+======================================
+# lcg-rf -v --vo ilc -l lfn:/grid/ilc/eudet-jra1/2011/tb-desy-spring/native/run000615.raw srm://dcache-se-desy.desy.de/pnfs/desy.de/ilc/eudet-jra1/2011/tb-desy-spring/native/run000615.raw
+
+Unregister files (without deleting it in dCache):
+=============================================
+# lcg-uf --vo ilc GUID (see how to check GUID in the next command)
+
+List the GUID for a given LFN or SURL:
+=====================================
+# lcg-lg -v --vo ilc lfn:/grid/ilc/../filename
+
+
+@endcode
+
+
+
 
 */
 
