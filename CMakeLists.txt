@@ -16,10 +16,14 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 1 )
 
 
 
-### DEPENDENCIES ############################################################
+### SETTINGS ################################################################
 
-# additionally search for cmake macros/moules defined by this project
-LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
+# ilcsoft cmake macros / default settings
+INCLUDE( ilcsoft_default_settings )
+
+
+
+### DEPENDENCIES ############################################################
 
 # ------- required packages -------------------
 SET( required_packages LCIO GEAR Marlin MarlinUtil)
@@ -63,14 +67,6 @@ FOREACH( pkg ${required_packages} ${optional_packages} )
         MESSAGE( STATUS "${pkg} not found" )
     ENDIF()
 ENDFOREACH()
-
-
-
-### SETTINGS ################################################################
-
-# ilcsoft cmake macros / default settings
-INCLUDE( ilcsoft_default_settings )
-INCLUDE( MacroAddSharedLibrary )
 
 
 
@@ -118,20 +114,19 @@ ENDIF()
 # ---------------------------------------------------------------------------
 
 
-# library name
-SET( libname ${PROJECT_NAME} )
-
 # include directories
-INCLUDE_DIRECTORIES( include )
-INSTALL( DIRECTORY include DESTINATION . FILES_MATCHING PATTERN "*.h" )
+INCLUDE_DIRECTORIES( ./include )
+INSTALL_DIRECTORY( ./include DESTINATION . FILES_MATCHING PATTERN "*.h" )
 
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
 ADD_DEFINITIONS( "-Wno-long-long" )
 
 # add library
+SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( ./src library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
+INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 
 # used for alignment if Eutelescope was build with ROOT support
 IF( ROOT_FOUND AND ROOT_MINUIT_FOUND )
