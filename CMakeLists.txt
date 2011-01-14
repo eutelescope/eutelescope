@@ -16,14 +16,14 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 1 )
 
 
 
-### SETTINGS ################################################################
-
-# ilcsoft cmake macros / default settings
-INCLUDE( ilcsoft_default_settings )
-
-
-
 ### DEPENDENCIES ############################################################
+
+
+# FindILCSOFT_CMAKE_MODULES.cmake needs to be in CMAKE_MODULE_PATH
+FIND_PACKAGE( ILCSOFT_CMAKE_MODULES 0.11 REQUIRED )
+
+# load default settings from ILCSOFT_CMAKE_MODULES
+INCLUDE( ilcsoft_default_settings )
 
 # ------- required packages -------------------
 SET( required_packages LCIO GEAR Marlin MarlinUtil)
@@ -126,7 +126,7 @@ ADD_DEFINITIONS( "-Wno-long-long" )
 SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( ./src library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
-INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
+INSTALL( TARGETS ${libname} DESTINATION lib )
 
 # used for alignment if Eutelescope was build with ROOT support
 IF( ROOT_FOUND AND ROOT_MINUIT_FOUND )
@@ -136,11 +136,7 @@ ENDIF()
 MACRO( ADD_EUTELESCOPE_TOOL _name )
     ADD_EXECUTABLE( ${_name} src/exec/${_name}.cxx )
     TARGET_LINK_LIBRARIES( ${_name} ${libname} )
-    INSTALL( TARGETS ${_name} DESTINATION bin PERMISSIONS
-        OWNER_READ OWNER_WRITE OWNER_EXECUTE
-        GROUP_READ GROUP_EXECUTE
-        WORLD_READ WORLD_EXECUTE
-    )
+    INSTALL( TARGETS ${_name} DESTINATION bin )
 ENDMACRO()
 
 ADD_EUTELESCOPE_TOOL( pede2lcio )
