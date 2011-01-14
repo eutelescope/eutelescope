@@ -256,7 +256,14 @@ echo "# Marlin successfully finished `date `"
 echo "########################################################################"
 echo
 
-if [ $RunPede == "yes" ] ; then
+#
+# sometimes this iteration of pede (on GRID only!) misbehaves 
+# cure: comment this condition OUT 
+# This is a temp solution!
+#
+#if [ $RunPede == "yes" ] ; then
+if [ 1 -eq 0 ] ; then
+
     echo
     echo "########################################################################"
     echo "# Rerunning pede `date`"
