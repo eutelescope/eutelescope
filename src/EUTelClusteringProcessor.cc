@@ -1296,8 +1296,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                             {
                                 if(pixelmatrix.at(xPixel,yPixel))
                                     clusterCandidateCharges.push_back(1.0);
-//                                else
-//                                    clusterCandidateCharges.push_back(0.0);
+                                else
+                                    clusterCandidateCharges.push_back(0.0);
                             }
                         }
 
