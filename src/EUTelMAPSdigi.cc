@@ -13,6 +13,9 @@
 // built only if GEAR is used
 #ifdef USE_GEAR
 
+// ROOT includes:
+#include "TVector3.h"
+
 // eutelescope includes ".h"
 #include "EUTelMAPSdigi.h"
 #include "EUTelRunHeaderImpl.h"
@@ -157,19 +160,25 @@ EUTelMAPSdigi::EUTelMAPSdigi () : Processor("EUTelMAPSdigi") {
   initLayerFlag.push_back(0);
 
   std::vector< float > initLayerGain;
-  initLayerGain.push_back(0.4);
+  initLayerGain.push_back(1.);
 
   std::vector< float > initLayerGainVar;
   initLayerGainVar.push_back(0.);
 
   std::vector< float > initLayerNoise;
-  initLayerNoise.push_back(3.);
+  initLayerNoise.push_back(0.);
 
   std::vector< float > initLayerOffset;
   initLayerOffset.push_back(0.);
 
+  std::vector< int > initLayerRange;
+  initLayerRange.push_back(0);
+
   std::vector< float > initLayerThreshold;
   initLayerThreshold.push_back(0.);
+
+  std::vector< int > initLayerType;
+  initLayerType.push_back(1);
 
 
   registerOptionalParameter ("DigiLayerIDs",
@@ -178,7 +187,7 @@ EUTelMAPSdigi::EUTelMAPSdigi () : Processor("EUTelMAPSdigi") {
 
 
   registerProcessorParameter ("DepositedChargeScaling",
-                              "Scaling of the deposited charge",
+                              "Scaling of the deposited charge (collection efficiency)",
                               _depositedChargeScaling , initLayerScaling );
 
 
@@ -206,13 +215,23 @@ EUTelMAPSdigi::EUTelMAPSdigi () : Processor("EUTelMAPSdigi") {
 
 
   registerProcessorParameter ("AdcOffset",
-                              "Constant pedestal value in ADC couts",
+                              "Constant pedestal offset in ADC counts",
                               _adcOffset ,  initLayerOffset );
+
+
+  registerProcessorParameter ("AdcRange",
+                              "Maximum value which can be stored as a pixel signal",
+                              _adcRange ,  initLayerRange );
 
 
   registerProcessorParameter ("ZeroSuppressionThreshold",
                               "Threshold (in ADC counts) for removing empty pixels",
                               _zeroSuppressionThreshold ,  initLayerThreshold );
+
+
+  registerProcessorParameter ("SensorReadoutType",
+            "Flag for setting sensor readout type: 1 for digital, 2 for binary",
+                              _pixelReadoutType,  initLayerType );
 
 
 
@@ -275,6 +294,8 @@ void EUTelMAPSdigi::init() {
      _adcGain.size() == 0 ||
      _adcGainVariation.size() == 0 ||
      _adcNoise.size() == 0 ||
+     _adcRange.size() == 0 ||
+     _pixelReadoutType.size() == 0 ||
      _zeroSuppressionThreshold.size() == 0 ||
      _adcOffset.size() == 0 )
     {
@@ -302,6 +323,8 @@ void EUTelMAPSdigi::init() {
      _adcGain.size() != nTelPlanes ||
      _adcGainVariation.size() != nTelPlanes ||
      _adcNoise.size() != nTelPlanes ||
+     _adcRange.size() != nTelPlanes ||
+     _pixelReadoutType.size() != nTelPlanes ||
      _zeroSuppressionThreshold.size() != nTelPlanes ||
      _adcOffset.size() != nTelPlanes )
     {
@@ -422,6 +445,8 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
     double xPitch = 0., yPitch = 0.;
     double xPointing[2] = { 1., 0. }, yPointing[2] = { 1., 0. };
 
+    double gRotation[3] = { 0., 0., 0.}; // not rotated
+
     for ( int iHit = 0; iHit < simhitCollection->getNumberOfElements(); iHit++ ) {
 
       SimTrackerHitImpl * simhit   = static_cast<SimTrackerHitImpl*> ( simhitCollection->getElementAt(iHit) );
@@ -467,6 +492,24 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
         yPointing[0] = _siPlanesLayerLayout->getSensitiveRotation3(layerIndex); // was  0 ;
         yPointing[1] = _siPlanesLayerLayout->getSensitiveRotation4(layerIndex); // was -1 ;
 
+        try
+          {
+          gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(layerIndex); // Euler alpha ;
+          gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(layerIndex); // Euler alpha ;
+          gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(layerIndex); // Euler alpha ;
+
+        // input angles are in DEGREEs !!!
+        // translate into radians
+          gRotation[0] =  gRotation[0]*3.1415926/180.; // 
+          gRotation[1] =  gRotation[1]*3.1415926/180.; //
+          gRotation[2] =  gRotation[2]*3.1415926/180.; //
+          }
+          catch(...)
+          {
+              printf(" no sensor rotation is given in the GEAR steering file, assume NONE \n" );
+          }
+
+
         if (  ( xPointing[0] == xPointing[1] ) && ( xPointing[0] == 0 ) ) {
           streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
         }
@@ -510,6 +553,19 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       senspos[0] = hitpos[0] -  xZero;
       senspos[1] = hitpos[1] -  yZero;
       senspos[2] = hitpos[2] -  zZero;
+
+
+      // NEW: apply sensor rotation (if defined in GEAR)
+
+      InvEulerRotation(senspos, gRotation);
+
+      double sensmom[3];
+
+      sensmom[0] = (double) hitmom[0];
+      sensmom[1] = (double) hitmom[1];
+      sensmom[2] = (double) hitmom[2];
+
+      InvEulerRotation(sensmom, gRotation);
 
       // now move to the sensor corner. Sign determines which way to move
 
@@ -565,9 +621,9 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       // momentum transformation (only rotation)
 
 
-      _localMomentum[0] =  yPointing[1]/sign * hitmom[0] - xPointing[1]/sign * hitmom[1] ;
-      _localMomentum[1] = -yPointing[0]/sign * hitmom[0] + xPointing[0]/sign * hitmom[1] ;
-      _localMomentum[2] = sign * hitmom[2] ;
+      _localMomentum[0] =  yPointing[1]/sign * sensmom[0] - xPointing[1]/sign * sensmom[1] ;
+      _localMomentum[1] = -yPointing[0]/sign * sensmom[0] + xPointing[0]/sign * sensmom[1] ;
+      _localMomentum[2] = sign * sensmom[2] ;
 
       // Normalized direction vector
 
@@ -849,6 +905,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
         // now I have to prepare a temporary storage for the
         // sparse pixel
         auto_ptr<EUTelSparseDataImpl< EUTelSimpleSparsePixel > > sparseFrame( new EUTelSparseDataImpl<EUTelSimpleSparsePixel > ( zsFrame ) );
+
         // and also a temporary storage for the sparse pixel
         auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
         for ( _pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); ++_pixelIterator ) {
@@ -857,7 +914,27 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
           // the sparsePixel
           sparsePixel->setXCoord( _pixelIterator->getIndexAlongL() );
           sparsePixel->setYCoord( _pixelIterator->getIndexAlongW() );
-          sparsePixel->setSignal( static_cast< int > ( _pixelIterator->getCharge()) );
+
+	  // Take readout type and ADC range into account
+
+          int pixelValue = 1;        // For binary readout all pixels
+				     // above threshold are set to 1
+
+          if( _pixelReadoutType[digiIndex] == 1 )  // digital readout
+	    {
+            double pixelCharge = _pixelIterator->getCharge();
+
+            pixelValue = (int) pixelCharge;
+            if(pixelCharge<0.) pixelValue--; 
+
+            if(_adcRange[digiIndex] > 0)
+	      {
+              if(pixelValue > _adcRange[digiIndex])pixelValue=_adcRange[digiIndex];
+              if(pixelValue < 0 )pixelValue=0;
+	      }
+	    }
+
+          sparsePixel->setSignal( pixelValue );
 
           // add the sparse pixel to the sparse frame
           sparseFrame->addSparsePixel( sparsePixel.get() );
@@ -1432,6 +1509,49 @@ double EUTelMAPSdigi::CheckPathLimits()
 
   return pathEnd - pathStart;
 
+}
+
+
+//
+// Implementation of new gear parameters: rotation along Euler angles
+//  (modified from EUTelHitMaker)
+
+void EUTelMAPSdigi::InvEulerRotation(double* _telPos, double* _gRotation) {
+   
+ try{
+        double t = _telPos[2];
+    }
+    catch(...)
+    {
+        throw InvalidParameterException("_telPos[] array can not be accessed \n");
+    }
+
+ try{
+        double t = _gRotation[2];
+    }
+    catch(...)
+    {
+        throw InvalidParameterException("_gRotation[] array can not be accessed \n"); 
+    }
+
+
+    TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
+
+
+    // Inverse rotation
+    // ----------------
+    // Order reversed and minus signed added, with respect to
+    // EUTelHitMaker implementation. Inverse transformation is
+    // approximate only (assuming rotations along X and Y are small). 
+
+    if( TMath::Abs(_gRotation[0]) > 1e-6 )    _RotatedSensorHit.RotateZ( -_gRotation[0] ); // in XY
+    if( TMath::Abs(_gRotation[1]) > 1e-6 )    _RotatedSensorHit.RotateY( -_gRotation[1] ); // in ZX 
+    if( TMath::Abs(_gRotation[2]) > 1e-6 )    _RotatedSensorHit.RotateX( -_gRotation[2] ); // in ZY
+
+    _telPos[0] = _RotatedSensorHit.X();
+    _telPos[1] = _RotatedSensorHit.Y();
+    _telPos[2] = _RotatedSensorHit.Z();
+ 
 }
 
 

@@ -244,7 +244,7 @@ namespace eutelescope {
     std::vector< int >   _DigiLayerIDs;
 
 
-    //! Scaling of the deposited charge
+    //! Scaling of the deposited charge (collection efficiency)
     /*! Because of additional charge losses, charge collected by the
      *   detector can be smaller than expected from uniform
      *   diffusion. This scaling factor can also be used to decrease or
@@ -254,13 +254,15 @@ namespace eutelescope {
     std::vector< float > _depositedChargeScaling;
 
     //! Poisson smearing flag
-    /*! If this flag is set, charge collected on the pixel is smeared
-     *  according to the Poisson distribution.
+    /*! If this flag is set, charge collected on the pixel (number of
+     *  elementary charges) is smeared according to the Poisson
+     *  distribution. 
      */
 
     std::vector< int >  _applyPoissonSmearing;
 
-    //! ADC gain  in ADC counts per unit charge
+
+    //! ADC gain in ADC counts per unit charge
     /*! Charge collected on the pixel is amplified and converted to
      *   ADC counts.
      */
@@ -277,12 +279,18 @@ namespace eutelescope {
 
 
     //! ADC noise in ADC counts
-    /*! Readout noise, independent on the signal level, which is added
-     *  after charge conversion.
+    /*! Gaussian readout noise, independent on the signal level, which
+     *  is added after charge conversion. 
      */
 
     std::vector< float > _adcNoise;
 
+    //! ADC offeset in ADC counts
+    /*! Constant pedestal value, which is added to all pixels
+     *  after charge conversion and before zero suppression.
+     */
+
+    std::vector< float > _adcOffset;
 
     //! Zero Suppression Threshold
     /*! Threshold (in ADC counts) for removing empty pixels from pixel
@@ -292,13 +300,25 @@ namespace eutelescope {
     std::vector< float > _zeroSuppressionThreshold;
 
 
-    //! ADC offeset
-    /*! Constant pedestal value, which can be added to all pixels
-     *  after zero suppression and before storing in the output table
+    //! Sensor readout type flag
+    /*! This flag decides about the final conversion of the calculated
+     *  signal (in ADC counts) to the pixel signal stored in an output
+     *  collection. Considered readout types are: 
+     *    \li  1 - digital: final signal resulting from the applied gain,
+     *             noise and offset values is stored as a short int
+     *             number (if passed the threshold cut)
+     *    \li  2 - binary: value 1 is stored for all fired pixels
      */
 
-    std::vector< float > _adcOffset;
+    std::vector< int >  _pixelReadoutType;
 
+    //! ADC range
+    /*! Maximum value, which can be stored as a pixel signal.
+     *  If set, signal is also constrained to be positive or 0.
+     *  Used only for digital readout (readout type set to 1).
+     */
+
+    std::vector< int > _adcRange;
 
     //
     // Other processor parameter definitions start here
@@ -337,7 +357,7 @@ namespace eutelescope {
 
   private:
 
-    // Local functions used in charge sharing calculations
+    // Local functions used in the algorithm
 
     //! Checks track segment start and end point
     /*! Track segment start and end points are compared with sensor
@@ -347,7 +367,15 @@ namespace eutelescope {
 
     double CheckPathLimits();
 
+    //! Apply sensor rotation as described in GEAR
+    /*! Rotation using Euler angles, as defined in new GEAR geometry
+     *  description. Part of transformation from telescope frame to
+     *  local sensor frame.
+     */
 
+    void InvEulerRotation(double* _telPos, double* _gRotation); 
+
+  
     //
     // Local variables
     //
