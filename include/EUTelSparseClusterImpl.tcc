@@ -237,6 +237,8 @@ namespace eutelescope {
     return;
   }
 
+/*
+ * previous version (should be also ok, but sometimes not, why?)
   template<class PixelType> 
   void EUTelSparseClusterImpl<PixelType>::getCenterOfGravity(float&  xCoG, float& yCoG) const {
     getCenterOfGravityShift(xCoG, yCoG);
@@ -248,6 +250,33 @@ namespace eutelescope {
     xCoG += static_cast<float > ( xSeed );
     yCoG += static_cast<float > ( ySeed );
 
+  }
+*/
+
+  //
+  //direct calculation:
+  //
+  template<class PixelType> 
+  void EUTelSparseClusterImpl<PixelType>::getCenterOfGravity(float&  xCoG, float& yCoG) const {
+    // getCenterOfGravityShift(xCoG, yCoG);
+    
+    // int xSeed = 0;
+    // int ySeed = 0;
+    // getSeedCoord(xSeed, ySeed);
+    
+    // xCoG += static_cast<float > ( xSeed );
+    // yCoG += static_cast<float > ( ySeed );
+    PixelType * pixel = new PixelType;
+    float xPos(0.0f), yPos(0.0f), totWeight(0.0f);
+    for ( unsigned int index = 0; index < size() ; index++ ) {
+      getSparsePixelAt( index, pixel );
+      xPos += pixel->getXCoord();
+      yPos += pixel->getYCoord();
+      totWeight += 1.0f;
+    }
+    xCoG = xPos / totWeight;
+    yCoG = yPos / totWeight;
+    delete pixel;
   }
 
 
@@ -439,6 +468,7 @@ namespace eutelescope {
   template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getSeedSNR() const {
 
+      
     if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
     unsigned int   maxIndex  = 0;
     float          maxSignal = -1 * std::numeric_limits<float>::max();
