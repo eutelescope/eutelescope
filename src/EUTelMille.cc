@@ -1,5 +1,10 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
-// Author Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
+// Authors:
+// Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
+// Joerg Behr, Hamburg Uni/DESY <joerg.behr@desy.de>
+// Slava Libov, DESY <mailto:vladyslav.libov@desy.de>
+// Igor Rubinskiy, DESY <mailto:igorrubinsky@gmail.com>
+//
 // Version: $Id: EUTelMille.cc,v 1.48 2009-08-01 10:49:46 bulgheroni Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -591,7 +596,6 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
   auto_ptr<EUTelRunHeaderImpl> header ( new EUTelRunHeaderImpl (rdr) );
   header->addProcessor( type() ) ;
 
-
   // this is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
   // beam test. The same number should be saved in the run header and
@@ -1003,6 +1007,11 @@ void EUTelMille::processEvent (LCEvent * event) {
                 cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >
                   ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
 
+              } else if ( pixelType == kEUTelAPIXSparsePixel ) {
+
+                cluster = new EUTelSparseClusterImpl<EUTelAPIXSparsePixel >
+                  ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+
               } else {
                 streamlog_out ( ERROR4 ) << "Unknown pixel type.  Sorry for quitting." << endl;
                 throw UnknownDataTypeException("Pixel type unknown");
@@ -1044,11 +1053,30 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 //            printf("hit %5d of %5d , at %-8.1f %-8.1f %-8.1f, %5d %5d \n", iHit , collection->getNumberOfElements(), hitsInPlane.measuredX, hitsInPlane.measuredY, hitsInPlane.measuredZ, indexconverter[layerIndex], layerIndex );
             // adding a requirement to use only fat clusters for alignement
-//              if(cluster->getTotalCharge()>1){
-                if(indexconverter[layerIndex] != -1)
-                    _hitsArray[indexconverter[layerIndex]].push_back(hitsInPlane);
-//              }
 
+            if ( 
+                    hit->getType() == kEUTelDFFClusterImpl 
+                    ||
+                    hit->getType() == kEUTelFFClusterImpl 
+                    ||
+                    hit->getType() == kEUTelSparseClusterImpl 
+                    ) 
+            {
+                if(cluster->getTotalCharge() <= 1)
+                {
+//                    printf("(1) Thin cluster (charge <=1), hit type: %5d  detector: %5d\n", hit->getType(), cluster->getDetectorID() );
+//                    delete cluster; 
+//                    continue;
+                }
+            }
+            else
+            {
+//                    printf("(e) Thin cluster (charge <=1), hit type: %5d  detector: %5d\n", hit->getType(), cluster->getDetectorID() );                
+            }
+
+            if(indexconverter[layerIndex] != -1)
+                _hitsArray[indexconverter[layerIndex]].push_back(hitsInPlane);
+ 
             delete cluster; // <--- destroying the cluster
 
 //COMMENT 190510-2227            if(indexconverter[layerIndex] != -1) 
@@ -1326,7 +1354,23 @@ void EUTelMille::processEvent (LCEvent * event) {
 
                   std::vector<EUTelMille::HitsInPlane> hitsplane;
 
-//                  if( cluster->getTotalCharge() > 1)
+                  if ( 
+                    hit->getType() == kEUTelDFFClusterImpl 
+                    ||
+                    hit->getType() == kEUTelFFClusterImpl 
+                    ||
+                    hit->getType() == kEUTelSparseClusterImpl 
+                    ) 
+                  {
+                      if(cluster->getTotalCharge() <= 1)
+                      {
+//                          printf("(2) Thin cluster (charge <=1), hit type: %5d  \n", hit->getType() );
+//                          delete cluster; 
+//                          continue;
+                      }
+                  }
+
+
                   hitsplane.push_back(
                           EUTelMille::HitsInPlane(
                               1000 * hit->getPosition()[0],
@@ -2041,13 +2085,25 @@ void EUTelMille::processEvent (LCEvent * event) {
                   //local parameters: b0, b1, c0, c1
 
                   const double la = lambda[help];
-              
-                  derGL[((helphelp * 6) + 0)] = -1.0;
-                  derGL[((helphelp * 6) + 1)] = 0.0;
-                  derGL[((helphelp * 6) + 2)] = 0.0;
-                  derGL[((helphelp * 6) + 3)] = 0.0;
-                  derGL[((helphelp * 6) + 4)] = -1.0*_zPosHere[help];
-                  derGL[((helphelp * 6) + 5)] = _yPosHere[help];
+						double	z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ(help) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( help );
+						z_sensor *= 1000;		// in microns
+						// reset all derivatives to zero!
+						for (int i = 0; i < nGL; i++ ) {
+							derGL[i] = 0.000;
+						}
+
+						for (int i = 0; i < nLC; i++ ) {
+							derLC[i] = 0.000;
+						}
+
+                  // shift in X
+                  derGL[((helphelp * 6) + 0)] = -1.0; 
+                  derGL[((helphelp * 6) + 1)] =  0.0;
+                  derGL[((helphelp * 6) + 2)] =  0.0;
+                  // rotation in ZY ( alignment->getAlpfa() )
+                  derGL[((helphelp * 6) + 3)] =  0.0;
+                  derGL[((helphelp * 6) + 4)] =  1.0*(_zPosHere[help] - z_sensor);
+                  derGL[((helphelp * 6) + 5)] =  1.0*_yPosHere[help];      
 
                   derLC[0] = 1.0;
                   derLC[1] = 0.0;
@@ -2062,11 +2118,13 @@ void EUTelMille::processEvent (LCEvent * event) {
                   _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
              
-                  derGL[((helphelp * 6) + 0)] = 0.0;
-                  derGL[((helphelp * 6) + 1)] = -1.0;
-                  derGL[((helphelp * 6) + 2)] = 0.0;
-                  derGL[((helphelp * 6) + 3)] = _zPosHere[help];
-                  derGL[((helphelp * 6) + 4)] = _zPosHere[help];
+                  // shift in Y
+                  derGL[((helphelp * 6) + 0)] =  0.0;
+                  derGL[((helphelp * 6) + 1)] = -1.0; 
+                  derGL[((helphelp * 6) + 2)] =  0.0;
+                  // rotation in ZX
+                  derGL[((helphelp * 6) + 3)] =  1.0*(_zPosHere[help] - z_sensor); 
+                  derGL[((helphelp * 6) + 4)] =  0.0                ; 
                   derGL[((helphelp * 6) + 5)] = -1.0*_xPosHere[help];
 
                   derLC[0] = 0.0;
@@ -2082,12 +2140,14 @@ void EUTelMille::processEvent (LCEvent * event) {
                   _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
               
               
-                  derGL[((helphelp * 6) + 0)] = 0.0;
-                  derGL[((helphelp * 6) + 1)] = 0.0;
-                  derGL[((helphelp * 6) + 2)] = -1.0;
-                  derGL[((helphelp * 6) + 3)] = -1.0*_yPosHere[help];
-                  derGL[((helphelp * 6) + 4)] = _xPosHere[help];
-                  derGL[((helphelp * 6) + 5)] = 0.0;
+                  // shift in Z
+                  derGL[((helphelp * 6) + 0)] =  0.0;
+                  derGL[((helphelp * 6) + 1)] =  0.0;
+                  derGL[((helphelp * 6) + 2)] = -1.0; 
+                  // rotation in XY
+                  derGL[((helphelp * 6) + 3)] = -1.0*_yPosHere[help]; 
+                  derGL[((helphelp * 6) + 4)] =  1.0*_xPosHere[help];
+                  derGL[((helphelp * 6) + 5)] =  0.0;
 
                   derLC[0] = 0.0;
                   derLC[1] = 0.0;
@@ -2711,15 +2771,15 @@ void EUTelMille::end() {
               else
                 {
                  if ( iParam == 0 ) {
-                    constant->setXOffset( -1.0*tokens[1] / 1000 );
+                    constant->setXOffset( tokens[1] / 1000 );
                     if ( ! isFixed ) constant->setXOffsetError( tokens[4] / 1000 ) ;                    
                   }
                   if ( iParam == 1 ) {
-                    constant->setYOffset(  -1.0*tokens[1] / 1000 ) ;
+                    constant->setYOffset( tokens[1] / 1000 ) ;
                     if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000 ) ;
                   }
                   if ( iParam == 2 ) {
-                    constant->setZOffset(  -1.0*tokens[1] / 1000 ) ;
+                    constant->setZOffset( tokens[1] / 1000 ) ;
                     if ( ! isFixed ) constant->setZOffsetError( tokens[4] / 1000 ) ;
                   }
                   if ( iParam == 3 ) {

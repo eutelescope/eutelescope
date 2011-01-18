@@ -1,5 +1,10 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
-// Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+// Authors
+// Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+// Joerg Behr, Hamburg Uni/DESY  <joerg.behr@desy.de> 
+// Slava Libov, DESY <mailto:vladyslav.libov@desy.de>
+// Igor Rubinskiy, DESY <mailto:igorrubinsky@gmail.com>
+// 
 // Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.17 2009-07-30 17:19:19 jbehr Exp $
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -7,6 +12,7 @@
  *   long as it stays in a public research context. You are not
  *   allowed to use it for commercial purpose. You must put this
  *   header with author names in all development based on this file.
+ *   
  *
  */
 
@@ -94,7 +100,7 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor () :Processor("EUTelA
 
   // the histogram on / off switch
   registerOptionalParameter("HistogramSwitch","Enable or disable histograms",
-                            _histogramSwitch, static_cast< bool > ( 1 ) );
+                            _histogramSwitch, static_cast< bool > ( 0 ) );
 
 
 }
@@ -170,7 +176,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
     
     if (fevent) {
 
-      bookHistos();
+      if ( _histogramSwitch ) bookHistos();
 
       streamlog_out ( MESSAGE ) << "The alignment collection contains: " <<  alignmentCollectionVec->size()
                                 << " planes " << endl;
@@ -204,6 +210,18 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
       // now we have to understand which layer this hit belongs to.
       int sensorID = guessSensorID( inputHit );
+
+      // determine z position of the plane
+	  // 20 December 2010 @libov
+      float	z_sensor = 0;
+	  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
+      {
+          if (sensorID == _siPlanesLayerLayout->getID( iPlane ) ) 
+          {
+              z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ( iPlane ) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( iPlane );
+              break;
+          }
+      }
 
       // copy the input to the output, at least for the common part
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
@@ -250,6 +268,15 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
         EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * >
           ( alignmentCollectionVec->getElementAt( positionIter->second ) );
+
+//        printf("alignment %12.6f %12.6f %12.6f %12.6f %12.6f %12.6f \n" 
+//                ,alignment->getXOffset()
+//                ,alignment->getYOffset()
+//                ,alignment->getZOffset()
+//                ,alignment->getAlpha()
+//                ,alignment->getBeta() 
+//                ,alignment->getGamma()
+//                );
         
         if ( _correctionMethod == 0 ) {
 
@@ -263,10 +290,10 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
           // this is the rotation first
 
-          // first the rotation
-          outputPosition[0] = inputPosition[0] + alignment->getGamma() * inputPosition[1] + alignment->getBeta() * inputPosition[2] ;
-          outputPosition[1] = -1 * alignment->getGamma() * inputPosition[0] + inputPosition[1] + alignment->getAlpha() * inputPosition[2];
-          outputPosition[2] = -1 * alignment->getBeta()  * inputPosition[0] + alignment->getAlpha() * inputPosition[1] + inputPosition[2];
+          // first the rotation (matrix layout)
+          outputPosition[0] =                                inputPosition[0] + alignment->getGamma() * inputPosition[1] + alignment->getBeta()  * (inputPosition[2] - z_sensor) ;
+          outputPosition[1] = (-1) * alignment->getGamma() * inputPosition[0] +                         inputPosition[1] + alignment->getAlpha() * (inputPosition[2] - z_sensor) ;
+          outputPosition[2] = (-1) * alignment->getBeta()  * inputPosition[0] - alignment->getAlpha() * inputPosition[1] +                          inputPosition[2] ;
 
           // second the shift
           outputPosition[0] -= alignment->getXOffset();
@@ -282,10 +309,10 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
           inputPosition[1] -= alignment->getYOffset();
           inputPosition[2] -= alignment->getZOffset();
 
-          // second the rotation
-          outputPosition[0] = inputPosition[0] + alignment->getGamma() * inputPosition[1] + alignment->getBeta() * inputPosition[2] ;
-          outputPosition[1] = -1 * alignment->getGamma() * inputPosition[0] + inputPosition[1] + alignment->getAlpha() * inputPosition[2];
-          outputPosition[2] = -1 * alignment->getBeta()  * inputPosition[0] + alignment->getAlpha() * inputPosition[1] + inputPosition[2];
+          // second the rotation (matrix layout)
+          outputPosition[0] =                                inputPosition[0] + alignment->getGamma() * inputPosition[1] + alignment->getBeta()  * (inputPosition[2] - z_sensor) ;
+          outputPosition[1] = (-1) * alignment->getGamma() * inputPosition[0] +                         inputPosition[1] + alignment->getAlpha() * (inputPosition[2] - z_sensor);
+          outputPosition[2] = (-1) * alignment->getBeta()  * inputPosition[0] - alignment->getAlpha() * inputPosition[1] +                          inputPosition[2] ;
 
         }
 

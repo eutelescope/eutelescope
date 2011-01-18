@@ -2314,6 +2314,14 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
           int xSeed, ySeed, xSize, ySize;
           sparseCluster->getSeedCoord(xSeed, ySeed);
           sparseCluster->getClusterSize(xSize, ySize);
+// DEBUG 
+//                        float xCoG(0.0f), yCoG(0.0f);
+//                        int   xCen(0   ), yCen(0   );
+//                        sparseCluster->getSeedCoord(xCen, yCen);
+//                        sparseCluster->getCenterOfGravity(xCoG, yCoG);
+//                        printf("cluster->getCenterOfGravity %8.3f %8.3f\n", xCoG, yCoG );
+//                        printf("cluster->getSeedCoord       %8d   %8d  \n", xCen, yCen );
+// DEBUG done
 
           auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
           idZSPulseEncoder["sensorID"]  = sensorID;
