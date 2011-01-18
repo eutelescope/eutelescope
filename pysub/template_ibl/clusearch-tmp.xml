@@ -214,6 +214,9 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
 
     <!--
         FIXED FRAME ( for both NZS and ZS )
+        for DFixedFrame:
+        use 5x5 for threshold ~< 9
+        use 3x3 for threshold ~> 9        
     -->
     <!--Threshold in SNR for seed pixel identification-->
     <parameter name="FFSeedCut" type="float" value="0.0"/>
@@ -225,13 +228,23 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <parameter name="FFClusterSizeY" type="int" value="5"/>
 
     <!--
-        SPARSECLUSTER and SPARSECLUSTER2 (use with care)
+        SPARSECLUSTER and SPARSECLUSTER2 (use with care!)
+        
+        for SparseCluster:
+            SparseMinDistance = 2 (in the code minDistance => distance between  neighb.pixels .le. SparseMinDistance)
+            ==>  findNeighborPixels(double minDistance)
+        
+        for SparseCluster2:
+            SparseMinDistance = 0 ( in the code minSignal => ADC in the neigbh.pixel .ge. SparseMinDistance )
+            ==>  EUTelSparseData2Impl<PixelType>::findNeighborPixels(double  minSignal)
+            in principle can be used as default clustering algo.        
     -->
     <!--Threshold in SNR for clusters contained in ZS data-->
     <parameter name="SparseClusterCut" type="float" value="0.0"/>
     <!--Threshold in SNR for seed pixel contained in ZS data-->
     <parameter name="SparseSeedCut" type="float" value="0.0"/>
     <!--Minimum distance between sparsified pixel ( touching == sqrt(2)) -->
+    <!-- carefull with this one! see comments above. -->
     <parameter name="SparseMinDistance" type="float" value="0"/>
 
     <!--
