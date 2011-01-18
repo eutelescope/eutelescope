@@ -1047,8 +1047,16 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     // now the seed pixel finding !!
     // 
 
+    // RIA: 
+    // this is neibhours counting only!
+    // 
     const int stepx = (int)(_ffXClusterSize / 2);
     const int stepy = (int)(_ffYClusterSize / 2);
+  
+///    const int stepx = 1; wrong or OK ?? could skipp this counting for reeeally sparse data 
+///    i.e. when one knows that there are mostly 1-2 pixels per clusters expected.
+///    const int stepy = 1;
+    
     
     std::map<unsigned int, std::map<unsigned int, bool> >::iterator pos;
     for(pos = sensormatrix.begin(); pos != sensormatrix.end(); ++pos) 
@@ -1061,7 +1069,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
             {
                 const unsigned int i = pos->first;
                 const unsigned int j = sec->first;
- 
+
                 // number of neighbours
                 int nb = 0; 
  
@@ -1069,6 +1077,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                 // (also diagonal elements are counted)
                 int npixel_cl = 0; 
 
+ 
                 // first npixel_cl will be determined
                 for(unsigned int index_x = i-stepx; index_x <= (i + stepx); index_x++)
                 {
@@ -1088,7 +1097,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                         }
                     }
                 }
-
+ 
                 if(npixel_cl > 1)
                 {
                     if(i>=1)
@@ -1118,16 +1127,13 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                             }
                         }
                     }
-                }       
-                
-                
+                }         // could all this passage be skipped ?
 
                 //fill this pixel into the list of found seed pixel candidates
                 seedcandidates.push_back(seed(i,j,nb,npixel_cl));
               }
           }
-      }
-
+      } 
     // sort the list of seed pixel candidates. the first criteria is
     // the number of neighbours without diagonal neighbours. then the
     // second criteria is the total number of neighbours
@@ -1173,7 +1179,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                                 }
                             }
                         }
-                   }
+                    }
                           
                     // pix is a vector with all found "good" pixel, that
                     // were not used before in a different cluster.
@@ -1295,11 +1301,19 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                             for(int xPixel = 0; xPixel < _ffXClusterSize; xPixel++)
                             {
                                 if(pixelmatrix.at(xPixel,yPixel))
+                                {
                                     clusterCandidateCharges.push_back(1.0);
+//                                    printf("1");
+                                }
                                 else
+                                {
                                     clusterCandidateCharges.push_back(0.0);
+//                                    printf("0");
+                                }
                             }
+//                            printf("\n");
                         }
+//                            printf("\n");
 
 
                         // check whether this cluster is partly outside
@@ -1358,25 +1372,34 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                             ++indexIter;
                         }
 */
-//                        printf("1 clusterCandidateCharges.size = %6d  %6d cluster %p\n", 
-//                                cluster->getChargeValues().size(), clusterCandidateCharges.size(), cluster);
 
                         // copy the candidate charges inside the cluster
                         cluster->setChargeValues(clusterCandidateCharges);
                         sparseClusterCollectionVec->push_back(cluster);
 
-//                        printf("2 clusterCandidateCharges.size = %6d  %6d \n", cluster->getChargeValues().size(), clusterCandidateCharges.size());
 
 //continue;
 
                         EUTelDFFClusterImpl * eutelCluster = new EUTelDFFClusterImpl( cluster );
                         pulse->setCharge(eutelCluster->getTotalCharge());
 
+// DEBUG 
+//                        float xCoG(0.0f), yCoG(0.0f);
+//                        int   xCen(0   ), yCen(0   );
+//                        eutelCluster->getSeedCoord(xCen, yCen);
+//                        eutelCluster->getCenterOfGravity(xCoG, yCoG);
+//                        printf("cluster->getCenterOfGravity %8.3f %8.3f\n", xCoG, yCoG );
+//                        printf("cluster->getSeedCoord       %8d   %8d  \n", xCen, yCen );
+// DEBUG done
+// 
                         delete eutelCluster;
 
                         pulse->setQuality(static_cast<int>(cluQuality));
                         pulse->setTrackerData(cluster);
                         pulseCollection->push_back(pulse);
+
+
+
 
                         // increment the cluster counters
                         _totClusterMap[ sensorID ] += 1;
@@ -2231,14 +2254,14 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
         list<unsigned int >::iterator listIter = currentList.begin();
 
 //        int iPixel = 0;
-        while ( listIter != currentList.end() ) {
+       while ( listIter != currentList.end() ) {
 
           sparseData->getSparsePixelAt( (*listIter ), pixel );
   
           // 
           // now remove HotPixels
           // 
-          int index = matrixDecoder.getIndexFromXY( pixel->getXCoord(), pixel->getYCoord() );
+         int index = matrixDecoder.getIndexFromXY( pixel->getXCoord(), pixel->getYCoord() );
           if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
           {
 //               printf("iDetector %5d iPixel %5d unique index %5d at %5d %5d -- HOTPIXEL, skip pixel \n", sensorID, iPixel, index, pixel->getXCoord(), pixel->getYCoord()   );
@@ -2252,14 +2275,26 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
           // 
           sparseCluster->addSparsePixel( pixel );
 
+
           noiseValueVec.push_back(noise->getChargeValues()[ index ]);
 
           // remember the iterator++
           ++listIter;
 //          iPixel++;
         }
+
+        if(sparseCluster->getTotalCharge() == 0 )
+        {
+//            printf("empty cluster, skip \n");
+           // remember to increment the iterator
+           ++listOfListIter;
+           continue;
+        }
+ 
         sparseCluster->setNoiseValues( noiseValueVec );
 
+
+        
         // verify if the cluster candidates can become a good cluster
         if ( ( sparseCluster->getSeedSNR() >= _sparseSeedCut ) &&
              ( sparseCluster->getClusterSNR() >= _sparseClusterCut ) ) {
@@ -2430,7 +2465,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
 //      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
       printf( "Unknown sensorID %d, perhaps your GEAR fil is incomplete \n",  sensorID );
       continue;
-   }
+    }
 
    
     // reset the cluster counter for the clusterID
@@ -2562,7 +2597,10 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
 
           // prepare a pulse for this cluster
           int xSeed, ySeed, xSize, ySize;
+          float xCoG,yCoG;
           sparseCluster->getSeedCoord(xSeed, ySeed);
+          sparseCluster->getCenterOfGravity(xCoG, yCoG);
+          
           sparseCluster->getClusterSize(xSize, ySize);
 
           auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
