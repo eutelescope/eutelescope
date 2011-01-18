@@ -18,6 +18,8 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 1 )
 
 ### DEPENDENCIES ############################################################
 
+# for backwards compatibility
+LIST( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
 
 # FindILCSOFT_CMAKE_MODULES.cmake needs to be in CMAKE_MODULE_PATH
 FIND_PACKAGE( ILCSOFT_CMAKE_MODULES 1.11 REQUIRED )
