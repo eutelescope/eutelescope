@@ -113,6 +113,10 @@ ENDIF()
 IF ( GSL_FOUND )
   ADD_DEFINITIONS("-DUSE_GSL")
 ENDIF()
+
+IF ( GEAR_FOUND )
+  ADD_DEFINITIONS("-DUSE_GEAR")
+ENDIF()
 # ---------------------------------------------------------------------------
 
 
