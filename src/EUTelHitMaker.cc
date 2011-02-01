@@ -566,6 +566,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       cluster->getSeedCoord(xCluSeed, yCluSeed);
 
 
+
       // with the charge center of gravity calculation, we get a shift
       // from the seed pixel center due to the charge distribution. Those
       // two numbers are the correction values in the case the Eta
@@ -721,6 +722,22 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 //      double yDet = ( static_cast<double> (yCluCenter) + yCorrection + 0.5 ) * yPitch ;
       double xDet = ( static_cast<double> (xCluSeed) + xCorrection + 0.5 ) * xPitch ;
       double yDet = ( static_cast<double> (yCluSeed) + yCorrection + 0.5 ) * yPitch ;
+
+//      printf("------i %8d \n", detectorID);
+ 
+//      printf("%8d %8.3f %8.3f \n", xCluSeed, xCorrection, xDet);
+//      printf("%8d %8.3f %8.3f \n", yCluSeed, yCorrection, yDet);
+
+// check the hack from Havard:
+      float xCoG(0.0f), yCoG(0.0f);
+      cluster->getCenterOfGravity(xCoG, yCoG);
+
+      xDet = (xCoG + 0.5) * xPitch;
+      yDet = (yCoG + 0.5) * yPitch;
+ 
+//      printf("x:  %8.3f %8.3f \n", xCoG,                  xDet);
+//      printf("y:  %8.3f %8.3f \n", yCoG,                  yDet);
+
 
       
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
