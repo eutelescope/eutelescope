@@ -12,6 +12,8 @@
 #ifndef EUTelAPIXHistograms_h
 #define EUTelAPIXHistograms_h 1
 
+#include "EUTelAlignmentConstant.h"
+
 #include "marlin/Processor.h"
 
 // gear includes <.h>
@@ -37,6 +39,7 @@
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCFlagImpl.h>
 #include <Exceptions.h>
+#include <IMPL/TrackImpl.h>
 
 // system includes <>
 #include <string>
@@ -154,6 +157,9 @@ namespace eutelescope {
     virtual void end() ;
 
 bool hasMatchedHit(Track* fittrack);
+//
+void revertAlignment(double & x, double & y, double & z,  std::string	collectionName, LCEvent * ev);
+
 
   protected:
 
@@ -227,6 +233,8 @@ bool hasMatchedHit(Track* fittrack);
 
     std::vector<double> _measuredX;
     std::vector<double> _measuredY;
+    std::vector<double> _measuredZ;
+
 
     std::vector<double> _bgmeasuredX;
     std::vector<double> _bgmeasuredY;
@@ -392,6 +400,22 @@ bool hasMatchedHit(Track* fittrack);
 
 	static std::string	_NumberOfMatchedReferencesHistoName;
 	static std::string	_Lv1OfFirstMatchedReferenceHistoName;
+
+	// 18 January 2011
+	StringVec		_alignmentCollectionNames;
+	StringVec		_alignmentCollectionSuffixes;
+	double			_beta;
+	void TransformToLocalFrame(double & x, double & y, double & z, LCEvent * ev);
+
+	// 21 january
+	// corrected for non-normal sensors
+	std::vector<double> _fittedXcorr;
+	std::vector<double> _fittedYcorr;
+	std::vector<double> _fittedZcorr;
+	void getTrackImpactPoint(double & x, double & y, double & z, Track * tr, LCEvent * ev);
+	int	_indexDUTneighbour;
+	double	_zDUTneighbour;
+
 
 #endif
 

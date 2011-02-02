@@ -55,6 +55,10 @@
 #include <IMPL/LCFlagImpl.h>
 #include <Exceptions.h>
 
+#include <TVectorD.h>
+#include <TMatrixD.h>
+
+
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -262,6 +266,19 @@ registerProcessorParameter ("referencePlaneID",
 registerProcessorParameter ("DistMaxReference",
                               "Max distance from the track position to hit in a Reference Plane ID to be considered as matched",
                            _distMaxReference,  static_cast < double > (0.2));
+
+
+StringVec	_alignmentCollectionSuffixExamples;
+_alignmentCollectionSuffixExamples.push_back("iter3");
+
+registerProcessorParameter ("alignmentCollectionNames",
+                              "List of alignment collections that were applied to the DUT",
+                           _alignmentCollectionSuffixes, _alignmentCollectionSuffixExamples);
+
+registerProcessorParameter("Beta","Rotation Angle around Y axis",
+                            _beta, static_cast< double > ( 0.00 ) );
+
+
 }
 
 
@@ -356,6 +373,29 @@ void EUTelAPIXHistograms::init() {
 	_rot10 = const_factor * c;
 	_rot11 = const_factor * a* (-1);
 	
+    // 21 January 2011
+	// get an index of a layer, closest to the DUT (upstream)
+	double	zMin = 1000000.;
+	_indexDUTneighbour=-1;
+	_zDUTneighbour=-1;
+	for(int ipl=0; ipl <  _siPlanesLayerLayout->getNLayers(); ipl++) {
+
+		double	z = _siPlanesLayerLayout->getLayerPositionZ(ipl);
+		if  ( ( z < _zDUT ) && ( (_zDUT - z) < zMin) ) {
+			_indexDUTneighbour = ipl;
+			zMin = _zDUT - z;
+		}
+	}
+	_zDUTneighbour = _siPlanesLayerLayout->getLayerPositionZ(_indexDUTneighbour);
+
+	if ( (_indexDUTneighbour == -1) || (_zDUTneighbour == -1) ) {
+		cout << "was not able to determine layer next to the 	DUT. Terminating!" << endl;
+		abort();
+	}
+
+	cout << "The layer closest to the DUT: index= "<<_indexDUTneighbour <<  ", z= " << _zDUTneighbour << endl;
+
+
 // Book histograms
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -367,6 +407,9 @@ void EUTelAPIXHistograms::init() {
 
 	_transShiftX = 0;
 	_transShiftY = 0;
+
+	// transform the angle to radians
+  _beta = _beta * (3.14159 / 180.);
 
 }
 
@@ -380,6 +423,10 @@ void EUTelAPIXHistograms::processRunHeader( LCRunHeader* runHeader) {
   // Decode and print out Run Header information - just a check
 
   int runNr = runHeader->getRunNumber();
+  // convert to string
+  char buf[256];
+  sprintf(buf, "%i", runNr);
+  std::string runNr_str(buf);
 
   message<MESSAGE> ( log() << "Processing run header " << _nRun
                      << ", run nr " << runNr );
@@ -391,89 +438,16 @@ void EUTelAPIXHistograms::processRunHeader( LCRunHeader* runHeader) {
   message<MESSAGE> ( log() << detectorName << " : " << detectorDescription ) ;
 
 
-}
-
-bool EUTelAPIXHistograms::hasMatchedHit( Track* fittrack ) {
-		std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getTrackerHits();
-
-		// loop over the hits, find fitted ones in the reference plane
-		std::map<int, float> allDUtsfittedX, allDUtsfittedY;
-
-		int nHit =   trackhits.size();
-		for(int ihit=0; ihit < nHit ; ihit++) {
-			TrackerHit * meshit = trackhits.at(ihit);
-			if (meshit->getType() < 32) continue;
-			// Hit position
-			const double * pos = meshit -> getPosition();
-
-			for(int ipl=0; ipl <  _siPlanesLayerLayout->getNLayers(); ipl++) {
-				double dist =  pos[2] - ( _siPlanesLayerLayout -> getLayerPositionZ(ipl) ) ;
-				if( dist*dist < 1 ) {
-					allDUtsfittedX [ _siPlanesLayerLayout -> getID(ipl) ] = pos[0];
-					allDUtsfittedY [ _siPlanesLayerLayout -> getID(ipl) ] = pos[1];
-				}
-			}
-		}
-		bool	matchedTrackToReferencePlane = false;
-		int	nMatches=0;
-		float	Lv1ofFirstMatch = -1;
-		for (int i = 0; i< _allDUTsmeasuredX.size(); i++) {
-			double deltaX = _allDUTsmeasuredX[i] - allDUtsfittedX[ _allDUTssensorID[i] ];
-			double deltaY = _allDUTsmeasuredY[i] - allDUtsfittedY[ _allDUTssensorID[i] ];
-
-			double	dist = deltaX * deltaX + deltaY * deltaY;
-			if ( (dist < _distMaxReference*_distMaxReference) /*&& (_referencePlaneLV1[k] >= 4) && (_referencePlaneLV1[k] <= 6) */ ) {
-				nMatches++;
-				//(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[_Lv1OfFirstMatchedReferenceHistoName] ))->fill(_allDUTslv1[ i ]);
-				if ( Lv1ofFirstMatch < 0 ) Lv1ofFirstMatch = _allDUTslv1[ i ];
-				//_lv1 = Lv1ofFirstMatch;
-				//break;
-			}
-		}
-
-		(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_NumberOfMatchedReferencesHistoName] ) )->fill(nMatches);
-		if ( nMatches > 0 ) (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[_Lv1OfFirstMatchedReferenceHistoName] ))->fill(Lv1ofFirstMatch);
-
-		if ( (nMatches > 0) && (Lv1ofFirstMatch >= 3 ) && (Lv1ofFirstMatch <= 7 ) ) matchedTrackToReferencePlane = true;
-
-		return matchedTrackToReferencePlane;
-}
-
-void EUTelAPIXHistograms::fillAPIXhits(LCCollection* hitcol, LCCollection* original_zsdata) {
-	// -- 02 October 2010
-	CellIDDecoder<TrackerDataImpl> cellDecoder( original_zsdata );
-	// fill measured hits for DUTs except DUT under consideration - for intime requirement
-	_allDUTsmeasuredX.clear();
-	_allDUTsmeasuredY.clear();
-	_allDUTssensorID.clear();
-	_allDUTslv1.clear();
-
-	for(int ihit=0; ihit< hitcol->getNumberOfElements(); ihit++) {
-		TrackerHit * meshit = dynamic_cast<TrackerHit*>( hitcol->getElementAt(ihit) ) ;
-		LCObjectVec clusterVec = (meshit->getRawHits());
-		TrackerDataImpl * trackerData = dynamic_cast < TrackerDataImpl * > ( clusterVec[0] );
-
-		int sensorID             = static_cast<int > ( cellDecoder( trackerData )["sensorID"] );
-
-		if ( (sensorID >=10) && (_manualDUTid >= 10) && (_manualDUTid != sensorID) ) { // only when DUT=apix, current sensorID is apix but not one
-																												// under eff. measurement
-				// Hit position
-				const double * pos = meshit->getPosition();
-				_allDUTsmeasuredX.push_back(pos[0]);
-				_allDUTsmeasuredY.push_back(pos[1]);
-				_allDUTssensorID.push_back(sensorID);
-
-				EUTelSparseDataImpl <EUTelAPIXSparsePixel>  * sparseData = new EUTelSparseDataImpl <EUTelAPIXSparsePixel> (trackerData);
-				EUTelAPIXSparsePixel * sparsePixel= new EUTelAPIXSparsePixel;
-				sparseData -> getSparsePixelAt (0, sparsePixel );
-				_allDUTslv1.push_back( sparsePixel -> getTime() );
-				delete	sparseData;
-				delete	sparsePixel;
-		}
+	// pick up correct alignment collection
+	_alignmentCollectionNames.clear();
+	for (unsigned i = 0; i < _alignmentCollectionSuffixes.size(); i++) {
+		std::string	temp = "run"+runNr_str +_alignmentCollectionSuffixes[i];
+		_alignmentCollectionNames.push_back(temp);
+		cout << _alignmentCollectionNames[i] << endl;
 	}
-	//--
 
 }
+
 void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
 
@@ -549,6 +523,12 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
   _fittedX.clear();
   _fittedY.clear();
 
+  _fittedXcorr.clear();
+  _fittedYcorr.clear();
+  _fittedZcorr.clear();
+
+
+
   _bgfittedX.clear();
   _bgfittedY.clear();
 
@@ -590,10 +570,19 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
       double dist = por[2] - _zDUT ;
 
+		double	fitX_corr = 0;
+		double	fitY_corr = 0;
+		double	fitZ_corr = 0;
+		getTrackImpactPoint(fitX_corr, fitY_corr, fitZ_corr, fittrack, event);
+
+
       if(dist*dist < 1)
         {
           _fittedX.push_back(por[0]);
           _fittedY.push_back(por[1]);
+          _fittedXcorr.push_back(fitX_corr);
+          _fittedYcorr.push_back(fitY_corr);
+          _fittedZcorr.push_back(fitZ_corr);
           _bgfittedX.push_back(por[0]);
           _bgfittedY.push_back(por[1]);
         }
@@ -622,6 +611,9 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
                 {
                   _fittedX.push_back(pos[0]);
                   _fittedY.push_back(pos[1]);
+                  _fittedXcorr.push_back(fitX_corr);
+                  _fittedYcorr.push_back(fitY_corr);
+                  _fittedZcorr.push_back(fitZ_corr);
                   _bgfittedX.push_back(pos[0]);
                   _bgfittedY.push_back(pos[1]);
                   break;
@@ -757,6 +749,8 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
   _measuredX.clear();
   _measuredY.clear();
+  _measuredZ.clear();
+
 
   _localX.clear();
   _localY.clear();
@@ -811,6 +805,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
           _measuredX.push_back(corrX);
           _measuredY.push_back(corrY);
+          _measuredZ.push_back(pos[2]);
           _bgmeasuredX.push_back(corrX);
           _bgmeasuredY.push_back(corrY);
 
@@ -940,6 +935,15 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
           (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredXLOCALHistoName]))->fill(_measuredXLOCAL[ihit]);
           (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredYLOCALHistoName]))->fill(_measuredYLOCAL[ihit]);
           (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_MeasuredXYLOCALHistoName]))->fill(_measuredXLOCAL[ihit],_measuredYLOCAL[ihit]);
+ 
+				double	z_sensor = _siPlanesLayerLayout->getSensitivePositionZ(_indexDUT)+ 0.5 * _siPlanesLayerLayout->getSensitiveThickness( _indexDUT );
+
+				double	x = _measuredX[ihit];
+				double	y = _measuredY[ihit];
+				double	z = _measuredZ[ihit] - z_sensor;
+				TransformToLocalFrame(x, y, z, event);
+				(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["diffX_correct"]))->fill(x - _measuredXLOCAL[ihit]);
+				(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["diffY_correct"]))->fill(y - _measuredYLOCAL[ihit]);
       }
 
 #endif
@@ -1119,6 +1123,28 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 					double	diffX = fittedXLOCALMethod2 - fittedXLOCAL;
 					double	diffY = fittedYLOCALMethod2 - fittedYLOCAL;
 
+					double		fitX = _fittedXcorr[bestfit];
+					double		fitY = _fittedYcorr[bestfit];
+
+
+					double	z_sensor = _siPlanesLayerLayout->getSensitivePositionZ(_indexDUT)+ 0.5 * _siPlanesLayerLayout->getSensitiveThickness( _indexDUT );
+					double	fitZ = (_fittedZcorr[bestfit] - z_sensor);
+
+					(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["Zdiff"]))->fill(1000 * (_measuredZ[besthit] - _fittedZcorr[bestfit]));
+
+					TransformToLocalFrame(fitX, fitY, fitZ, event);
+
+					/*cout << "measuredZ: "<<_measuredZ[besthit] <<" , fittedZ: "<<_fittedZcorr[bestfit]<<endl;
+					cout << fitX << " " << fittedXLOCALMethod2 << " " << fittedXLOCAL << endl;
+					cout << fitY << " " << fittedYLOCALMethod2 << " " << fittedYLOCAL << endl;*/
+
+				(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["diffX_crap"]))->fill(1000*(fitX - fittedXLOCAL));
+				(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["diffY_crap"]))->fill(1000*(fitY - fittedYLOCAL));
+
+				fittedXLOCAL = fitX;
+				fittedYLOCAL = fitY;
+
+
 					/*if ((diffX>0.001) || (diffY>0.001)) {
 						cout << "C r a p ! ! !" << endl;
 						cout<< "fittedXLOCALMethod2 = "<<fittedXLOCALMethod2<<" fittedXLOCAL= "<<fittedXLOCAL<<" diff= "<<fittedXLOCALMethod2-fittedXLOCAL<<endl;
@@ -1201,8 +1227,15 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
         _fittedX.erase(_fittedX.begin()+bestfit);
         _fittedY.erase(_fittedY.begin()+bestfit);
 
+        _fittedXcorr.erase(_fittedXcorr.begin()+bestfit);
+        _fittedYcorr.erase(_fittedYcorr.begin()+bestfit);
+        _fittedZcorr.erase(_fittedZcorr.begin()+bestfit);
+
+
 		_measuredX.erase(_measuredX.begin()+besthit);
-        _measuredY.erase(_measuredY.begin()+besthit);
+        _measuredY.erase(_measuredY.begin()+besthit);    
+		_measuredZ.erase(_measuredZ.begin()+besthit);
+
 
         _localX.erase(_localX.begin()+besthit);
         _localY.erase(_localY.begin()+besthit);
@@ -2571,4 +2604,390 @@ void EUTelAPIXHistograms::getTransformationShifts() {
 */
 	//cout <<"leaving getTransformationShifts()" <<endl;
 }
+
+bool EUTelAPIXHistograms::hasMatchedHit( Track* fittrack ) {
+		std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getTrackerHits();
+
+		// loop over the hits, find fitted ones in the reference plane
+		std::map<int, float> allDUtsfittedX, allDUtsfittedY;
+
+		int nHit =   trackhits.size();
+		for(int ihit=0; ihit < nHit ; ihit++) {
+			TrackerHit * meshit = trackhits.at(ihit);
+			if (meshit->getType() < 32) continue;
+			// Hit position
+			const double * pos = meshit -> getPosition();
+
+			for(int ipl=0; ipl <  _siPlanesLayerLayout->getNLayers(); ipl++) {
+				double dist =  pos[2] - ( _siPlanesLayerLayout -> getLayerPositionZ(ipl) ) ;
+				if( dist*dist < 1 ) {
+					allDUtsfittedX [ _siPlanesLayerLayout -> getID(ipl) ] = pos[0];
+					allDUtsfittedY [ _siPlanesLayerLayout -> getID(ipl) ] = pos[1];
+				}
+			}
+		}
+		bool	matchedTrackToReferencePlane = false;
+		int	nMatches=0;
+		float	Lv1ofFirstMatch = -1;
+		for (int i = 0; i< _allDUTsmeasuredX.size(); i++) {
+			double deltaX = _allDUTsmeasuredX[i] - allDUtsfittedX[ _allDUTssensorID[i] ];
+			double deltaY = _allDUTsmeasuredY[i] - allDUtsfittedY[ _allDUTssensorID[i] ];
+
+			double	dist = deltaX * deltaX + deltaY * deltaY;
+			if ( (dist < _distMaxReference*_distMaxReference) /*&& (_referencePlaneLV1[k] >= 4) && (_referencePlaneLV1[k] <= 6) */ ) {
+				nMatches++;
+				//(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[_Lv1OfFirstMatchedReferenceHistoName] ))->fill(_allDUTslv1[ i ]);
+				if ( Lv1ofFirstMatch < 0 ) Lv1ofFirstMatch = _allDUTslv1[ i ];
+				//_lv1 = Lv1ofFirstMatch;
+				//break;
+			}
+		}
+
+		(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_NumberOfMatchedReferencesHistoName] ) )->fill(nMatches);
+		if ( nMatches > 0 ) (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[_Lv1OfFirstMatchedReferenceHistoName] ))->fill(Lv1ofFirstMatch);
+
+		if ( (nMatches > 0) && (Lv1ofFirstMatch >= 3 ) && (Lv1ofFirstMatch <= 7 ) ) matchedTrackToReferencePlane = true;
+
+		return matchedTrackToReferencePlane;
+}
+
+void EUTelAPIXHistograms::fillAPIXhits(LCCollection* hitcol, LCCollection* original_zsdata) {
+	// -- 02 October 2010
+	CellIDDecoder<TrackerDataImpl> cellDecoder( original_zsdata );
+	// fill measured hits for DUTs except DUT under consideration - for intime requirement
+	_allDUTsmeasuredX.clear();
+	_allDUTsmeasuredY.clear();
+	_allDUTssensorID.clear();
+	_allDUTslv1.clear();
+
+	for(int ihit=0; ihit< hitcol->getNumberOfElements(); ihit++) {
+		TrackerHit * meshit = dynamic_cast<TrackerHit*>( hitcol->getElementAt(ihit) ) ;
+		LCObjectVec clusterVec = (meshit->getRawHits());
+		TrackerDataImpl * trackerData = dynamic_cast < TrackerDataImpl * > ( clusterVec[0] );
+
+		int sensorID             = static_cast<int > ( cellDecoder( trackerData )["sensorID"] );
+
+		if ( (sensorID >=10) && (_manualDUTid >= 10) && (_manualDUTid != sensorID) ) { // only when DUT=apix, current sensorID is apix but not one
+																												// under eff. measurement
+				// Hit position
+				const double * pos = meshit->getPosition();
+				_allDUTsmeasuredX.push_back(pos[0]);
+				_allDUTsmeasuredY.push_back(pos[1]);
+				_allDUTssensorID.push_back(sensorID);
+
+				EUTelSparseDataImpl <EUTelAPIXSparsePixel>  * sparseData = new EUTelSparseDataImpl <EUTelAPIXSparsePixel> (trackerData);
+				EUTelAPIXSparsePixel * sparsePixel= new EUTelAPIXSparsePixel;
+				sparseData -> getSparsePixelAt (0, sparsePixel );
+				_allDUTslv1.push_back( sparsePixel -> getTime() );
+				delete	sparseData;
+				delete	sparsePixel;
+		}
+	}
+	//--
+
+}
+
+void EUTelAPIXHistograms::getTrackImpactPoint(double & x, double & y, double & z, Track * tr, LCEvent * ev) {
+
+	std::vector<EVENT::TrackerHit*>  trackhits = tr->getTrackerHits();
+	int nHit =   trackhits.size();
+
+
+	// first, get the track impact points at the DUT and the layer closest to it
+
+	// coordinates of the track impact point at the closest to DUT layer
+	double x1=0, y1=0, z1=0;
+	// coordinates of the track impact point at the DUT layer
+	double x2=0, y2=0, z2=0;
+
+	// for sanity check
+	bool	foundHitDUT = false;
+	bool	foundHitNeighbour = false;
+
+	double	dist;
+	for(int ihit=0; ihit< nHit ; ihit++)
+	{
+		TrackerHit * meshit = trackhits.at(ihit);
+
+		// Look at fitted hits only!
+		if (meshit->getType() < 32) continue;
+		// Hit position
+		const double * pos = meshit->getPosition();
+
+		// look for a hit at DUT
+		dist =  pos[2] - _zDUT ;
+		if (dist * dist < 1) {
+			if (foundHitDUT) {
+				cout << "hit at DUT layer already found! Terminating" << endl;
+				abort();
+			}
+			x2 = pos[0];
+			y2 = pos[1];
+			z2 = pos[2];
+			foundHitDUT = true;
+		}
+		// look for a hit at DUT's neighbour
+		dist =  pos[2] - _zDUTneighbour ;
+		if (dist * dist < 1) {
+			if (foundHitNeighbour) {
+				cout << "hit at DUT neigbour layer already found! Terminating" << endl;
+				abort();
+			}
+			x1 = pos[0];
+			y1 = pos[1];
+			z1 = pos[2];
+		}
+	}
+
+	if (! (foundHitDUT && foundHitNeighbour) ) {
+		cout << "Was not possible to find hits at dut and next-to-dut layers. Terminating." << endl;
+		abort();
+	}
+
+	/*cout << "track impact points:" << endl;
+	cout << x1 << " , " << z1 << endl;
+	cout << x2 << " , " << z2 << endl;*/
+
+	// now proceed to calculation of the intersection point
+	// of this track and the rotated DUT layer
+
+	// for the formulas see logbook 20/01/2011
+	// track parametrization: X = offsetX + slopeX * Z, Y = offsetY + slopeY * Z,
+
+	double	slopeX = (x2 - x1) / (z2-z1);
+	double	offsetX = x1 - z1 * slopeX;
+
+	double	slopeY = (y2 - y1) / (z2-z1);
+	double	offsetY = y1 - z1 * slopeY;
+
+
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["TrackSlopeX"]))->fill(slopeX);
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["TrackOffsetX"]))->fill(offsetX);
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["TrackSlopeY"]))->fill(slopeY);
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["TrackOffsetY"]))->fill(offsetY);
+
+	// now determine the total shift in X due to alignment
+	//double	deltaX = 0;
+
+
+	// this is a normal vector to the plane
+	TVectorD	NormalVector(3);
+	NormalVector(0) = sin( (-1)*_beta );
+	NormalVector(1) = 0;
+	NormalVector(2) = cos( (-1)*_beta );
+
+	double	z_sensor = _siPlanesLayerLayout->getSensitivePositionZ(_indexDUT)+ 0.5 * _siPlanesLayerLayout->getSensitiveThickness( _indexDUT );
+
+	// this is a vector to the point in the plane
+	TVectorD		r0Vector(3);
+	r0Vector(0)=0;
+	r0Vector(1)=0;
+	r0Vector(2)=z_sensor;
+
+	// this is a vector, pointing to the (0, 0, z_sensor )
+	// it's needed to translate the coordinate system to
+	// and to perform the rotation around that point, not the (0, 0, 0)
+	// as it's done in the alignment/applyAlignment steps.
+	TVectorD		auxVector(3);
+	auxVector(0) = 0;
+	auxVector(1) = 0;
+	auxVector(2) = z_sensor;
+
+	for ( unsigned i = 0; i< _alignmentCollectionNames.size(); i++) {
+
+		LCCollectionVec * alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (ev->getCollection(_alignmentCollectionNames[i]));
+		// next, find the alignment constant corresponding to the DUT
+		EUTelAlignmentConstant * c=NULL;
+		for ( size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos ) {
+
+			c = static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) );
+			if (c -> getSensorID() == _manualDUTid ) break;	// this means we found the alignment constant corresponding
+																			// to the DUT; the pointer to it is now stored in c and can
+																			// be furhter used
+		}
+		if ( c == NULL ) {
+			cout << "Was not possible to found alignment constant, terminating" << endl;
+			abort();
+		}
+
+		//------------------------------------------------------------------------------------
+		TMatrixD	RotationMatrix(3,3);
+		RotationMatrix(0,0) = 1;
+		RotationMatrix(0,1) = c -> getGamma();
+		RotationMatrix(0,2) = c -> getBeta();
+		RotationMatrix(1,0) = (-1) * c -> getGamma();
+		RotationMatrix(1,1) = 1;
+		RotationMatrix(1,2) = c -> getAlpha();
+		RotationMatrix(2,0) = (-1) * c -> getBeta();
+		RotationMatrix(2,1) = (-1) * c -> getAlpha();
+		RotationMatrix(2,2) = 1;
+
+		// transform the normal vector (only the rotation)
+		NormalVector = RotationMatrix * NormalVector;
+
+		// transform the vector to the plane point (rotation+translations)
+		r0Vector = RotationMatrix *  (r0Vector - auxVector) + auxVector;
+		r0Vector(0) -= c -> getXOffset();
+		r0Vector(1) -= c -> getYOffset();
+		r0Vector(2) -= c -> getZOffset();
+
+
+		//------------------------------------------------------------------------------------
+
+		//deltaX -= c->getXOffset();
+	}
+	
+
+	//r0Vector.Print();
+	//NormalVector.Print();
+
+	// now have to solve the equation
+	TVectorD	trackImpact(3);
+	TMatrixD	equationMatrix(3,3);
+	TVectorD	b(3);
+
+	equationMatrix(0, 0) = NormalVector (0);
+	equationMatrix(0, 1) = NormalVector (1);
+	equationMatrix(0, 2) = NormalVector (2);
+	equationMatrix(1, 0) = 1;
+	equationMatrix(1, 1) = 0;
+	equationMatrix(1, 2) = (-1)*slopeX;
+	equationMatrix(2, 0) = 0;
+	equationMatrix(2, 1) = 1;
+	equationMatrix(2, 2) = (-1)*slopeY;
+
+	b(0) = r0Vector(0) * NormalVector (0) + r0Vector(1) * NormalVector (1) + r0Vector(2) * NormalVector (2);
+	b(1) = offsetX;
+	b(2) = offsetY;
+
+	trackImpact = equationMatrix.Invert() * b;
+
+	/*
+	// very very naive approach
+	// finally calculate track impact point
+	z = ( z2 /tan((-1)*_beta) + deltaX - offsetX) / (slopeX + 1./tan((-1)*_beta));
+	x = slopeX * z + offsetX;
+	// in this simple approximation, no correction for y
+	y = y2;*/
+
+	/*cout << trackImpact(0) << " ** " << x << endl;
+	cout << trackImpact(1) << " ** " << y << endl;
+	cout << trackImpact(2) << " ** " << z << endl;*/
+
+	x = trackImpact(0);
+	y = trackImpact(1);
+	z = trackImpact(2);
+
+}
+
+
+
+
+void EUTelAPIXHistograms::TransformToLocalFrame(double & x, double & y, double & z, LCEvent * ev) {
+
+				// revert alignment, in an inverse order...
+				for ( int i = _alignmentCollectionNames.size() - 1; i >= 0; i--) {
+					revertAlignment (x, y, z, _alignmentCollectionNames[i], ev );
+				}
+				// revert beta rotations implememted in the hitmaker
+				x = x / cos( _beta );
+				z = z - (-1) * (-1) * x  * sin ( _beta );
+				//cout << "z-z_sensor= " << z << endl;
+
+				// revert setting (x,y) = (0,0) at the center of the sensor to the (row,col) = (0,0)
+				double	xSize = _siPlanesLayerLayout->getSensitiveSizeX(_indexDUT);  // mm
+				double	ySize = _siPlanesLayerLayout->getSensitiveSizeY(_indexDUT);  // mm
+				// as in the hitmaker... -------
+				double xPointing[2], yPointing[2];
+				xPointing[0] = _siPlanesLayerLayout->getSensitiveRotation1(_indexDUT); // was -1 ;
+				xPointing[1] = _siPlanesLayerLayout->getSensitiveRotation2(_indexDUT); // was  0 ;
+				yPointing[0] = _siPlanesLayerLayout->getSensitiveRotation3(_indexDUT); // was  0 ;
+				yPointing[1] = _siPlanesLayerLayout->getSensitiveRotation4(_indexDUT); // was -1 ;
+
+				double sign = 0;
+				if      ( xPointing[0] < -0.7 )       sign = -1 ;
+				else if ( xPointing[0] > 0.7 )       sign =  1 ;
+				else {
+				if       ( xPointing[1] < -0.7 )    sign = -1 ;
+				else if  ( xPointing[1] > 0.7 )    sign =  1 ;
+				}
+				x += sign * xSize/2;
+
+				if      ( yPointing[0] < -0.7 )       sign = -1 ;
+				else if ( yPointing[0] > 0.7 )       sign =  1 ;
+				else {
+				if       ( yPointing[1] < -0.7 )    sign = -1 ;
+				else if  ( yPointing[1] > 0.7 )    sign =  1 ;
+				}
+				y += sign * ySize/2;
+				//--------------
+
+				// revert gear rotations
+				double	x_temp = x;
+				double	y_temp = y;
+				double	z_temp = z;
+
+				x = _rot00 * x_temp + _rot01 * y_temp;
+				y = _rot10 * x_temp + _rot11 * y_temp;
+}
+
+void EUTelAPIXHistograms::revertAlignment(double & x, double & y, double & z, std::string	collectionName, LCEvent * ev) {
+
+	// in this function, some parts of the EUTelApplyAlignmentProcessor are used
+
+	// get the alignment constant object
+	// first, get the alignment collection
+	LCCollectionVec * alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (ev->getCollection(collectionName));
+	// next, find the alignment constant corresponding to the DUT
+	EUTelAlignmentConstant * c=NULL;
+	for ( size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos ) {
+
+		c = static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) );
+		if (c -> getSensorID() == _manualDUTid ) break;	// this means we found the alignment constant corresponding
+																		// to the DUT; the pointer to it is now stored in c and can
+																		// be furhter used
+	}
+	if ( c == NULL ) {
+		cout << "Was not possible to found alignment constant, terminating" << endl;
+		abort();
+	}
+
+	// now apply the constants
+
+	// the way we apply constants is correctionMethod1 (first the rotations, second the shifts)
+	// to revert the alignment transformation properly, the constants have to be applied in
+	// a reverted way, i.e. first the shifts, second the rotations
+
+	// not that the sign is different for all the constants wrt to what is done in EUTelApplyAlignmentProcessor -
+	// the transformation is reverted
+
+	// first the shifts
+	x += c->getXOffset();
+	y += c->getYOffset();
+	z += c->getZOffset();
+
+	double	x_temp = x;
+	double	y_temp = y;
+	double	z_temp = z;
+
+	double	alpha = c -> getAlpha();
+	double	beta = c -> getBeta();
+	double	gamma = c -> getGamma();
+
+	// second the rotation
+	// for the inverse matrix derivation see paper log book 19/01/2011
+	// libov@mail.desy.de
+
+	x = x_temp * (1 + alpha * alpha ) + ( (-1) * gamma - alpha * beta) * y_temp + ( (-1) * beta + alpha * gamma) * z_temp;
+	y = x_temp * (gamma - alpha * beta ) + (1 + beta * beta) * y_temp + ((-1) * alpha - beta * gamma) * z_temp;
+	z = x_temp * (beta + alpha * gamma ) + (alpha - gamma * beta) * y_temp + ( 1 + gamma * gamma) * z_temp;
+
+	double det = 1 + alpha * alpha + beta * beta + gamma * gamma;
+
+	x = x / det;
+	y = y / det;
+	z = z / det;
+}
+
+
 
