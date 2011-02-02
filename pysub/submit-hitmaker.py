@@ -43,7 +43,7 @@ usage: %prog [execution-options] [io-options] [configuration-options] -o basenam
                        help = "This is the ETA file to be used for correcting the cluster center position in the "
                        "hit making procedure." )
 
-    parser.add_option( "-n", "--offset-run-number", type="int",
+    parser.add_option( "-n", "--offset-run-number", type="string",
     action="store", dest="offsetRunNumber", 
                        help = "This is the run number." )
 

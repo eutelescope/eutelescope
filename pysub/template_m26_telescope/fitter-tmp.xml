@@ -22,10 +22,10 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <processor name="LoadAlignment"/>
       <processor name="ApplyAlignment"/>
       <processor name="Fitter"/>
-      <processor name="FitterHisto"/>
+      <xprocessor name="FitterHisto"/>
         <!-- processor name="DUTHisto"/-->
         <!-- processor name="NTuple"/-->
-        <!-- group name="TelDUTHisto"/-->
+      <group name="TelDUTHisto"/>
       <processor name="Save"/>
    </execute>
 
@@ -112,7 +112,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Maximal allowed (initial) distance between hits in the XY plane between the planes,default = 2. mm -->
   <parameter name="SlopeDistanceMax" type="float" value="@DistanceMax@"/>
   <!--Assumed angular spread of the beam [rad]-->
-  <!--parameter name="BeamSpread" type="double" value="0.1"/-->
+  <parameter name="BeamSpread" type="double" value="0.1"/>
   <!--Maximum Chi2 for accepted track fit-->
   <parameter name="Chi2Max" type="double" value="@Chi2Max@"/>
   <!--Print out every DebugEnevtCount event-->
@@ -142,13 +142,13 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Ids of layers which should be treated as passive in the fit-->
   <parameter name="PassiveLayerIDs" type="IntVec"> @PassiveLayerIDs@ </parameter>
   <!--Flag for searching multiple tracks in events with multiple hits-->
-  <parameter name="SearchMultipleTracks" type="bool" value="true"/>
+  <parameter name="SearchMultipleTracks" type="bool" value="false"/>
   <!--Chi2 penalty for removing hit from the track-->
   <parameter name="SkipHitPenalty" type="double" value="@SkipHitPenalty@"/>
   <!--Ids of layers which should NOT be included in the fit-->
   <!--parameter name="SkipLayerIDs" type="IntVec"> </parameter-->
   <!--Flag for using beam direction constraint in the fit-->
-  <parameter name="UseBeamConstraint" type="bool" value="false"/>
+  <parameter name="UseBeamConstraint" type="bool" value="true"/>
   <!--Flag for including DUT measurement in the fit-->
   <parameter name="UseDUT" type="bool" value="false"/>
   <!--Flag for using nominal resolution instead of position errors-->
@@ -277,9 +277,10 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Flag for manual DUT selection-->
   <parameter name="UseManualDUT" type="bool" value="@UseManualDUT@"/>
   <!--Use only events with 1 track reconstructed to enrich it with in-time tracks-->
-  <parameter name="UseSingleTrackOnly" type="bool" value="false"/>
+  <parameter name="UseSingleTrackOnly" type="bool" value="true"/>
   <parameter name="onlyIntimeTracks" type="bool" value="false"/>
- 
+  <parameter name="referencePlaneID" type="int" value="0" />
+
 	<!---------------------------------------->
 	<!------ END OF COMMON SETTINGS ---------->
 	<!---------------------------------------->

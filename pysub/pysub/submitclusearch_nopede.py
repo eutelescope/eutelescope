@@ -1452,6 +1452,8 @@ class SubmitCluSearch( SubmitBase ):
         except ConfigParser.NoOptionError :
             localPath = "db"
 
+        print localPath
+        print self._hotpixelFilename
         if not os.access( os.path.join( localPath, self._hotpixelFilename ), os.R_OK ):
             message = "Missing hotpixel file %(hot)s" % { "hot":  self._hotpixelFilename }
             self._logger.critical ( message )

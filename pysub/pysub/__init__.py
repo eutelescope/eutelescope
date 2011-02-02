@@ -64,16 +64,18 @@
 # @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 # @version $Id: __init__.py,v 1.13 2009-06-04 17:16:50 bulgheroni Exp $
 #
-from submitbase       import SubmitBase
-from submitconverter  import SubmitConverter
-from submittest       import SubmitTest
-from submitnativecopy import SubmitNativeCopy
-from submitpedestal   import SubmitPedestal
+from submitbase              import SubmitBase
+from submitconverter         import SubmitConverter
+from submittest              import SubmitTest
+from submitnativecopy        import SubmitNativeCopy
+from submitpedestal          import SubmitPedestal
 from submitclusearch_nopede  import SubmitCluSearch
 from submitfilter_nopede     import SubmitFilter
 from submiteta_nopede        import SubmitEta
 from submithitmaker_nopede   import SubmitHitMaker
 from submitalign_nopede      import SubmitAlign
 from submitfitter_nopede     import SubmitFitter
-from error            import *
+from submitanadut            import SubmitAnaDUT
+from submitapplyAlignment    import SubmitApplyAlignment
+from error                   import *
 

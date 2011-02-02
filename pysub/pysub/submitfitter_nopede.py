@@ -1722,6 +1722,8 @@ class SubmitFitter( SubmitBase ):
         try :
             for folder in folderList:
                 self.checkGRIDFolder( folder )
+            self._logger.info( "Folder list checks done" )
+
 
         except MissingGRIDFolderError, error :
             message = "Folder %(folder)s is unavailable. Quitting" % { "folder": error._filename }
@@ -1733,7 +1735,7 @@ class SubmitFitter( SubmitBase ):
         #
         filenameList = []
         lfcls = popen2.Popen4( "lfc-ls %(outputPathGRID)s" % { "outputPathGRID": self._outputPathGRID } )
-        lfcls.wait()
+#        lfcls.wait()
         list = lfcls.fromchild.read().splitlines()
         pattern = re.compile( "%(output)s-track.[0-9]{3}.slcio" % { "output": self._option.output } )
         for line in list :

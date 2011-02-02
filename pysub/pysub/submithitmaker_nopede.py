@@ -817,7 +817,7 @@ class SubmitHitMaker( SubmitBase ):
             actualSteeringString = actualSteeringString.replace("@UseOffsetDBCommentLeft@", "" )
             actualSteeringString = actualSteeringString.replace("@UseOffsetDBCommentRight@", "" )
  
-            offsetRunNumber = "%(run)06d" % { "run": self._option.offsetRunNumber }
+            offsetRunNumber = "0%(run)s" % { "run": self._option.offsetRunNumber }
             actualSteeringString = actualSteeringString.replace("@OffsetRunNumber@", offsetRunNumber )
      
             self._logger.debug( "Using offset db file" )
@@ -1433,9 +1433,9 @@ class SubmitHitMaker( SubmitBase ):
         if self._option.offsetRunNumber == None :
            offsetRunNumber = 0
         else:
-           offsetRunNumber = "%(run)06d" % { "run": self._option.offsetRunNumber }
+           offsetRunNumber = "%(run)s" % { "run": self._option.offsetRunNumber }
            
-        fqOffsetFile = "run%(run)s-offset-db.slcio" %{ "run": offsetRunNumber }
+        fqOffsetFile = "run0%(run)s-offset-db.slcio" %{ "run": offsetRunNumber }
         runActualString = runActualString.replace("@OffsetFile@", fqOffsetFile )
  
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",

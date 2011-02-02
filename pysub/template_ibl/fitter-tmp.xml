@@ -25,8 +25,8 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <processor name="FitterHisto"/>
         <!-- processor name="DUTHisto"/-->
         <!-- processor name="NTuple"/-->
-      <processor name="APIXTbTrack"/>
-        <!-- group name="TelDUTHisto"/-->
+      <xprocessor name="APIXTbTrack"/>
+      <group name="TelDUTHisto"/>
       <group name="APIXDUTHisto"/>
       <processor name="Save"/>
    </execute>
@@ -48,7 +48,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <parameter name="FileName" type="string" value="@HistoPath@/@Output@-track-histo"/>
   <!-- type of output file xml (default) or root ( only OpenScientist)-->
   <parameter name="FileType" type="string" value="root"/>
-</processor>
+ </processor>
 
  <processor name="LoadAlignment" type="ConditionsProcessor">
  <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
@@ -62,7 +62,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
   <parameter name="SimpleFileHandler" type="StringVec"> alignment @AlignmentFile@ alignment </parameter>
-</processor>
+ </processor>
 
  <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
  <!--Apply to the input hit the alignment corrections-->
@@ -79,7 +79,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <parameter name="CorrectionMethod" type="int" value="1"/>
   <!--Enable or disable histograms-->
   <parameter name="HistogramSwitch" type="bool" value="true"/>
-</processor>
+ </processor>
 
  <processor name="Fitter" type="EUTelTestFitter">
  <!--Analytical track fitting processor for EUDET telescope-->
@@ -108,9 +108,9 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Decide now weather you want to rely on the track candidate slope permanence in X and Y, default=true -->
   <parameter name="UseSlope"   type="bool"  value="true"/>
   <!--Set the allowed maximum difference of the slope in X (from plane to plane), default = 0.01 -->
-  <parameter name="SlopeXLimit"   type="float" value="0.001"/>
+  <parameter name="SlopeXLimit"   type="float" value="0.01"/>
   <!--Set the allowed maximum difference of the slope in Y (from plane to plane), default = 0.01 -->
-  <parameter name="SlopeYLimit"   type="float" value="0.001"/>
+  <parameter name="SlopeYLimit"   type="float" value="0.01"/>
   <!--Maximal allowed (initial) distance between hits in the XY plane between the planes,default = 2. mm -->
   <parameter name="SlopeDistanceMax" type="float" value="@DistanceMax@"/>
   <!--Assumed angular spread of the beam [rad]-->
@@ -150,7 +150,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Ids of layers which should NOT be included in the fit-->
   <!--parameter name="SkipLayerIDs" type="IntVec"> </parameter-->
   <!--Flag for using beam direction constraint in the fit-->
-  <parameter name="UseBeamConstraint" type="bool" value="false"/>
+  <parameter name="UseBeamConstraint" type="bool" value="true"/>
   <!--Flag for including DUT measurement in the fit-->
   <parameter name="UseDUT" type="bool" value="false"/>
   <!--Flag for using nominal resolution instead of position errors-->
@@ -180,7 +180,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Name of the histogram information file-->
   <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
   <!--IDs of two layers used to check internal telescope alignment-->
-  <parameter name="TelescopeReferenceIDs" type="IntVec"> 0 1 </parameter>
+  <parameter name="TelescopeReferenceIDs" type="IntVec"> 0 5 </parameter>
 </processor>
 
 
@@ -208,8 +208,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <parameter name="UseManualDUT" type="bool" value="@UseManualDUT@"/>
   <parameter name="onlyIntimeTracks" type="bool" value="true" />
   <parameter name="referencePlaneID" type="int" value="10" />
-  <parameter name="DistMaxReference" type="double" value="0.1" />
-  
+  <parameter name="DistMaxReference" type="double" value="1.0" />  
 </processor>
 
 <processor name="NTuple" type="EUTelFitTuple">
@@ -233,7 +232,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 </processor>
 
 <processor name="APIXTbTrack" type="EUTelAPIXTbTrackTuple">
-    <parameter name="OutputPath" type ="string" value="@HistoPath@/@Output@-tb-histo.root"/>
+    <parameter name="OutputPath" type ="string"   value="@HistoPath@/@Output@-track-histo.root"/>
     <!--Prepare n-tuple with track fit results-->
     <!--Name of the input Track collection-->
     <parameter name="InputCollectionName" type="string" lcioInType="Track"> track </parameter>
@@ -266,11 +265,11 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!-- name of output file -->
   <parameter name="LCIOOutputFile" type="string" value="@ResultsFolder@/@Output@-track.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
-  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+  <parameter name="LCIOWriteMode" type="string" value=""/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
   <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-  <xparameter name="SplitFileSizekB" type="int" value="1992294"/>
+  <parameter name="SplitFileSizekB" type="int" value="100000"/>
 </processor>
 
   <group name="TelDUTHisto" >
@@ -363,7 +362,8 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Use only events with 1 track reconstructed to enrich it with in-time tracks-->
   <parameter name="UseSingleTrackOnly" type="bool" value="false"/>
   <parameter name="onlyIntimeTracks" type="bool" value="true"/>
- 
+  <parameter name="DistMaxReference" type="double" value="1.0" />  
+
 	<!---------------------------------------->
 	<!------ END OF COMMON SETTINGS ---------->
 	<!---------------------------------------->

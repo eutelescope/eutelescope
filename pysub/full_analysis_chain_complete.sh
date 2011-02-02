@@ -58,21 +58,21 @@ do
 	rm -rf $logs/*.$RUN*.log
 
     # standard convertion
-	./submit-converter.py $RUN --config=config/$CONFIG > $logs/converter.$RUN.log
+#	./submit-converter.py $RUN --config=config/$CONFIG > $logs/converter.$RUN.log
 
     # --hot parameter tells to use the htpixelDB file 
-    ./submit-clusearch.py $RUN --config=config/$CONFIG --hot $RUNHOT > $logs/clusearch.$RUN.log
+ #   ./submit-clusearch.py $RUN --config=config/$CONFIG --hot $RUNHOT > $logs/clusearch.$RUN.log
 
 	# 5-digit runnumber
     # -n parameter tells to use te offsetDB values
-	./submit-hitmaker.py -o $RUN run0$RUN-clu-p.slcio --config=config/$CONFIG -n    $RUN > $logs/hitmaker.$RUN.log
+#	./submit-hitmaker.py -o $RUN run0$RUN-clu-p.slcio --config=config/$CONFIG -n    $RUN > $logs/hitmaker.$RUN.log
 
 
     # 
     # Millepede alignment (start with M26 sensors)
     #
     echo ./submit-align.py -f \"$TELPLANESFIXED\" -e \"$ALLDUTS\" -i hit -o $RUN-iter1 $RUN-hit.slcio  --config=config/$CONFIG 
-    ./submit-align.py -f "$TELPLANESFIXED" -e "$ALLDUTS" -i hit -o $RUN-iter1 $RUN-hit.slcio  --config=config/$CONFIG > $logs/align-iter1.$RUN.log
+   ./submit-align.py -f "$TELPLANESFIXED" -e "$ALLDUTS" -i hit -o $RUN-iter1 $RUN-hit.slcio  --config=config/$CONFIG > $logs/align-iter1.$RUN.log
 
 	# apply this alignment
 	# --- REMINDER: parameters for ./submit-apply-alignment.py
@@ -85,7 +85,7 @@ do
 
 
 
-	rm $RESULTS/$RUN-iter1_hit.000.slcio
+#	rm $RESULTS/$RUN-iter1_hit.slcio
 
 
 	# -----------
@@ -98,21 +98,21 @@ do
 		out=iter$i'_hit'
 		outBase=$RUN-iter$i	# output base
 		#OPTION=--use-residual-cuts
-        echo  ./submit-align.py -f \"$TELPLANES\" -e \"${PLANES[$DUTindex]}\" -i $in -o $outBase $RUN-$in.000.slcio $OPTION --config=config/$CONFIG 
-	    ./submit-align.py -f "$TELPLANES" -e "${PLANES[$DUTindex]}" -i $in -o $outBase $RUN-$in.000.slcio $OPTION --config=config/$CONFIG >$logs/align-iter$i.$RUN.log
+        echo  ./submit-align.py -f \"$TELPLANES\" -e \"${PLANES[$DUTindex]}\" -i $in -o $outBase $RUN-$in.slcio $OPTION --config=config/$CONFIG 
+	    ./submit-align.py -f "$TELPLANES" -e "${PLANES[$DUTindex]}" -i $in -o $outBase $RUN-$in.slcio $OPTION --config=config/$CONFIG >$logs/align-iter$i.$RUN.log
 		# apply alignment
 		# the last applied alignment should have output collection name alignedHit - otherwise fitter steering file needs help ;)
 		if [ $i -eq 4 ]; then out=alignedHit; fi
  		if [ $i -eq 4 ]; then out=alignedhit; fi
-        echo ./submit-apply-alignment.py -a $outBase-align-db.slcio -r $RUN -i $in -o $out --InputLCIOFile $RUN-$in.000.slcio --config=config/$CONFIG
-        ./submit-apply-alignment.py -a $outBase-align-db.slcio -r $RUN -i $in -o $out --InputLCIOFile $RUN-$in.000.slcio --config=config/$CONFIG
-   		rm $RESULTS/$RUN-$in.000.slcio
+        echo ./submit-apply-alignment.py -a $outBase-align-db.slcio -r $RUN -i $in -o $out --InputLCIOFile $RUN-$in.slcio --config=config/$CONFIG
+        ./submit-apply-alignment.py -a $outBase-align-db.slcio -r $RUN -i $in -o $out --InputLCIOFile $RUN-$in.slcio --config=config/$CONFIG
+#   		rm $RESULTS/$RUN-$in.slcio
 		let DUTindex++
 	done
 	# ------------------------------------------------------------
 
 	# -- Finally! Fit the tracks! --
-	echo ./submit-fitter.py -o $RUN $RUN-alignedHit.000.slcio -a $RUN-iter4-align-db.slcio --config=config/$CONFIG  
-    ./submit-fitter.py -o $RUN $RUN-alignedHit.000.slcio -a $RUN-iter4-align-db.slcio --config=config/$CONFIG  > $logs/fitter.$RUN.log
+	echo ./submit-fitter.py -o $RUN $RUN-alignedHit.slcio -a $RUN-iter4-align-db.slcio --config=config/$CONFIG  
+#    ./submit-fitter.py -o $RUN $RUN-alignedHit.slcio -a $RUN-iter4-align-db.slcio --config=config/$CONFIG  > $logs/fitter.$RUN.log
 	echo "done for run $RUN"
 done

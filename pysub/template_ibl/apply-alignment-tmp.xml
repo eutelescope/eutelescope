@@ -74,7 +74,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
  0 --> shift only
  1 --> rotation first
  2 --> shift first -->
-  <parameter name="CorrectionMethod" type="int" value="1"/>
+  <parameter name="CorrectionMethod" type="int" value="0"/>
   <!--Enable or disable histograms-->
   <parameter name="HistogramSwitch" type="bool" value="false"/>
 </processor>
@@ -109,11 +109,11 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
  <parameter name="LCIOOutputFile" type="string" value="@OutputLCIOFile@"/>
 	 <!--- ********************************************************************-->
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
-  <parameter name="LCIOWriteMode" type="string" value="None"/>
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
   <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-  <parameter name="SplitFileSizekB" type="int" value="1992294"/>
+  <!-- parameter name="SplitFileSizekB" type="int" value="1992294"/ -->
 </processor>
 
  <processor name="CorrelatorWithoutEta" type="EUTelCorrelator">

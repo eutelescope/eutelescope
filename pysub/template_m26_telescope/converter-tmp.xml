@@ -144,7 +144,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <!--Set it to true to remove intermediate EORE in merged runs-->
   <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-  <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
+  <!--parameter name="SplitFileSizekB" type="int" value="100000"/-->
 </processor>
 
 </marlin>
