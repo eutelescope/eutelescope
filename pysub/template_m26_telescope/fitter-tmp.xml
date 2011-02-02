@@ -142,7 +142,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Ids of layers which should be treated as passive in the fit-->
   <parameter name="PassiveLayerIDs" type="IntVec"> @PassiveLayerIDs@ </parameter>
   <!--Flag for searching multiple tracks in events with multiple hits-->
-  <parameter name="SearchMultipleTracks" type="bool" value="false"/>
+  <parameter name="SearchMultipleTracks" type="bool" value="true"/>
   <!--Chi2 penalty for removing hit from the track-->
   <parameter name="SkipHitPenalty" type="double" value="@SkipHitPenalty@"/>
   <!--Ids of layers which should NOT be included in the fit-->
@@ -277,7 +277,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Flag for manual DUT selection-->
   <parameter name="UseManualDUT" type="bool" value="@UseManualDUT@"/>
   <!--Use only events with 1 track reconstructed to enrich it with in-time tracks-->
-  <parameter name="UseSingleTrackOnly" type="bool" value="true"/>
+  <parameter name="UseSingleTrackOnly" type="bool" value="false"/>
   <parameter name="onlyIntimeTracks" type="bool" value="false"/>
   <parameter name="referencePlaneID" type="int" value="0" />
 
