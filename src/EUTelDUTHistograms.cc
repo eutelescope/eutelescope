@@ -21,9 +21,6 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelExceptions.h"
-#include "EUTelAPIXSparsePixel.h"
-#include "EUTelSparseDataImpl.h"
-#include "EUTelAPIXSparseClusterImpl.h"
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
@@ -44,14 +41,12 @@
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
 
-#include <UTIL/CellIDEncoder.h>
-#include <UTIL/CellIDDecoder.h>
+
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/TrackImpl.h>
-#include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCFlagImpl.h>
 #include <Exceptions.h>
 
@@ -125,62 +120,6 @@ std::string EUTelDUTHistograms::_EtaY2DHistoName    = "EtaY2D";
 std::string EUTelDUTHistograms::_EtaX3DHistoName    = "EtaX3D";
 std::string EUTelDUTHistograms::_EtaY3DHistoName    = "EtaY3D";
 
-
-// some APIX histograms
-// libov@mail.desy.de 05 August 2010
-std::string	EUTelDUTHistograms::_totAPIXmatchedHistoName				=	"APIX_ToT_matched";
-std::string	EUTelDUTHistograms::_totAPIXunmatchedHistoName			=	"APIX_ToT_unmatched";
-
-std::string	EUTelDUTHistograms::_lv1APIXmatchedHistoName				=	"APIX_lv1_matched";
-std::string	EUTelDUTHistograms::_lv1APIXunmatchedHistoName			=	"APIX_lv1_unmatched";
-
-std::string	EUTelDUTHistograms::_hitsInMatchedClusterHistoName		=	"APIX_hitsInCluster_matched";
-std::string	EUTelDUTHistograms::_hitsInUnmatchedClusterHistoName	=	"APIX_hitsInCluster_unmatched";
-
-std::string	EUTelDUTHistograms::_maxDifflv1MatchedHistoName			=	"APIX_maxlv1Diff_matched";
-std::string	EUTelDUTHistograms::_maxDifflv1UnmatchedHistoName		=	"APIX_maxlv1Diff_unmatched";
-
-// Implementing DUT plots in its local FoR, 18 August
-std::string EUTelDUTHistograms::_EfficiencyXLOCALHistoName 			=	"APIX_DUTeffiXLOCAL";
-std::string EUTelDUTHistograms::_EfficiencyYLOCALHistoName 			=	"APIX_DUTeffiYLOCAL";
-std::string EUTelDUTHistograms::_EfficiencyXYLOCALHistoName			=	"APIX_DUTeffiXYLOCAL";
-
-// 24 August 2010 libov@mail.desy.de
-std::string EUTelDUTHistograms::_MeasuredXLOCALHistoName				=	"APIX_measuredXLOCAL";
-std::string EUTelDUTHistograms::_MeasuredYLOCALHistoName				=	"APIX_measuredYLOCAL";
-std::string EUTelDUTHistograms::_MeasuredXYLOCALHistoName			=	"APIX_measuredXYLOCAL";
-
-std::string EUTelDUTHistograms::_FittedXLOCALHistoName				=	"APIX_fittedXLOCAL";
-std::string EUTelDUTHistograms::_FittedYLOCALHistoName				=	"APIX_fittedYLOCAL";
-std::string EUTelDUTHistograms::_FittedXYLOCALHistoName				=	"APIX_fittedXYLOCAL";
-
-std::string	EUTelDUTHistograms::_MatchedClusterSizeXHistoName		=	"APIX_ClusterSizeX_matched";
-std::string	EUTelDUTHistograms::_MatchedClusterSizeYHistoName		=	"APIX_ClusterSizeY_matched";
-
-std::string	EUTelDUTHistograms::_UnmatchedClusterSizeXHistoName	=	"APIX_ClusterSizeX_unmatched";
-std::string	EUTelDUTHistograms::_UnmatchedClusterSizeYHistoName	=	"APIX_ClusterSizeY_unmatched";
-
-std::string	EUTelDUTHistograms::_ChargeSharingProbXHistoName		=	"APIX_chargeSharingProbX";
-std::string	EUTelDUTHistograms::_ChargeSharingProbYHistoName		=	"APIX_chargeSharingProbY";
-std::string	EUTelDUTHistograms::_ChargeSharingProbXYHistoName		=	"APIX_chargeSharingProbXY";
-
-// 06 September
-std::string	EUTelDUTHistograms::_totSinglePixelClustersXHistoName	=	"APIX_ToT_SinglePixelClustersX";
-std::string	EUTelDUTHistograms::_totSinglePixelClustersYHistoName	=	"APIX_ToT_SinglePixelClustersY";
-std::string	EUTelDUTHistograms::_totSinglePixelClustersXYHistoName	=	"APIX_ToT_SinglePixelClustersXY";
-
-std::string	EUTelDUTHistograms::_totAllClustersXYHistoName	=	"APIX_ToT_AllClustersXY";
-
-std::string	EUTelDUTHistograms::_MatchedHitsHistoName	=	"APIX_MatchedPerEvent";
-std::string	EUTelDUTHistograms::_MatchedHitsVSEventHistoName	=	"APIX_MatchedPerEventVSEvent";
-
-std::string	EUTelDUTHistograms::_NumberOfFittedTracksHistoName	=	"APIX_NumberOfFittedTracks";
-
-std::string	EUTelDUTHistograms::_NumberOfMatchedReferencesHistoName = "APIX_NumberOfMatchedReferences";
-std::string	EUTelDUTHistograms::_Lv1OfFirstMatchedReferenceHistoName = "APIX_Lv1OfFirstMatchedReference";
-
-
-
 #endif
 
 
@@ -249,19 +188,7 @@ EUTelDUTHistograms::EUTelDUTHistograms() : Processor("EUTelDUTHistograms") {
                               "Print out every DebugEnevtCount event",
                               _debugCount,  static_cast < int > (100));
 
-// 17 August 2010 libov@mail.desy.de
 
-registerProcessorParameter ("onlyIntimeTracks",
-                              "For the efficiency determination, use only tracks with have matched hit in reference plane",
-                           _onlyIntimeTracks,  static_cast < bool > (false));
-
-registerProcessorParameter ("referencePlaneID",
-                              "Reference plane ID,",
-                           _referencePlaneID,  static_cast < int > (13));
-
-registerProcessorParameter ("DistMaxReference",
-                              "Max distance from the track position to hit in a Reference Plane ID to be considered as matched",
-                           _distMaxReference,  static_cast < double > (0.2));
 }
 
 
@@ -310,10 +237,9 @@ void EUTelDUTHistograms::init() {
           {
             _iDUT=_manualDUTid;
             _zDUT=_siPlanesLayerLayout->getLayerPositionZ(ipl);
-				_indexDUT = ipl;
             _manualOK=true;
           }
-		cout << "_indexDUT = " << _indexDUT << endl;
+
       if(!_manualOK)
         {
           message<ERROR> ( log() << "Manual DUT flag set, layer not found ID = "
@@ -341,32 +267,13 @@ void EUTelDUTHistograms::init() {
   message<MESSAGE> ( log() << "D.U.T. plane  ID = " << _iDUT
                      << "  at Z [mm] = " << _zDUT );
 
-	// 18 August
-	_xPitch       = _siPlanesLayerLayout->getSensitivePitchX(_indexDUT);    // mm
-	_yPitch       = _siPlanesLayerLayout->getSensitivePitchY(_indexDUT);    // mm
 
-	a = _siPlanesLayerLayout->getSensitiveRotation1(_indexDUT); // was -1 ;
-	b = _siPlanesLayerLayout->getSensitiveRotation2(_indexDUT); // was  0 ;
-	c = _siPlanesLayerLayout->getSensitiveRotation3(_indexDUT); // was  0 ;
-	d = _siPlanesLayerLayout->getSensitiveRotation4(_indexDUT); // was -1 ;
-	// now rotate back -- add more description here or put a link -- see paper logbook 18 August 2010 libov@mail.desy.de
-	double		const_factor = (double)1./((b*c)-(a*d));
-	_rot00 = const_factor * d * (-1);
-	_rot01 = const_factor * b;
-	_rot10 = const_factor * c;
-	_rot11 = const_factor * a* (-1);
-	
+
 // Book histograms
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   bookHistos();
 #endif
-
-	_noHitYet = true;
-	_eventsWithNoHit = 0;
-
-	_transShiftX = 0;
-	_transShiftY = 0;
 
 }
 
@@ -393,89 +300,7 @@ void EUTelDUTHistograms::processRunHeader( LCRunHeader* runHeader) {
 
 }
 
-bool EUTelDUTHistograms::hasMatchedHit( Track* fittrack ) {
-		std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getTrackerHits();
-
-		// loop over the hits, find fitted ones in the reference plane
-		std::map<int, float> allDUtsfittedX, allDUtsfittedY;
-
-		int nHit =   trackhits.size();
-		for(int ihit=0; ihit < nHit ; ihit++) {
-			TrackerHit * meshit = trackhits.at(ihit);
-			if (meshit->getType() < 32) continue;
-			// Hit position
-			const double * pos = meshit -> getPosition();
-
-			for(int ipl=0; ipl <  _siPlanesLayerLayout->getNLayers(); ipl++) {
-				double dist =  pos[2] - ( _siPlanesLayerLayout -> getLayerPositionZ(ipl) ) ;
-				if( dist*dist < 1 ) {
-					allDUtsfittedX [ _siPlanesLayerLayout -> getID(ipl) ] = pos[0];
-					allDUtsfittedY [ _siPlanesLayerLayout -> getID(ipl) ] = pos[1];
-				}
-			}
-		}
-		bool	matchedTrackToReferencePlane = false;
-		int	nMatches=0;
-		float	Lv1ofFirstMatch = -1;
-		for (int i = 0; i< _allDUTsmeasuredX.size(); i++) {
-			double deltaX = _allDUTsmeasuredX[i] - allDUtsfittedX[ _allDUTssensorID[i] ];
-			double deltaY = _allDUTsmeasuredY[i] - allDUtsfittedY[ _allDUTssensorID[i] ];
-
-			double	dist = deltaX * deltaX + deltaY * deltaY;
-			if ( (dist < _distMaxReference*_distMaxReference) /*&& (_referencePlaneLV1[k] >= 4) && (_referencePlaneLV1[k] <= 6) */ ) {
-				nMatches++;
-				//(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[_Lv1OfFirstMatchedReferenceHistoName] ))->fill(_allDUTslv1[ i ]);
-				if ( Lv1ofFirstMatch < 0 ) Lv1ofFirstMatch = _allDUTslv1[ i ];
-				//_lv1 = Lv1ofFirstMatch;
-				//break;
-			}
-		}
-
-		(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_NumberOfMatchedReferencesHistoName] ) )->fill(nMatches);
-		if ( nMatches > 0 ) (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[_Lv1OfFirstMatchedReferenceHistoName] ))->fill(Lv1ofFirstMatch);
-
-		if ( (nMatches > 0) && (Lv1ofFirstMatch >= 3 ) && (Lv1ofFirstMatch <= 7 ) ) matchedTrackToReferencePlane = true;
-
-		return matchedTrackToReferencePlane;
-}
-
-void EUTelDUTHistograms::fillAPIXhits(LCCollection* hitcol, LCCollection* original_zsdata) {
-	// -- 02 October 2010
-	CellIDDecoder<TrackerDataImpl> cellDecoder( original_zsdata );
-	// fill measured hits for DUTs except DUT under consideration - for intime requirement
-	_allDUTsmeasuredX.clear();
-	_allDUTsmeasuredY.clear();
-	_allDUTssensorID.clear();
-	_allDUTslv1.clear();
-
-	for(int ihit=0; ihit< hitcol->getNumberOfElements(); ihit++) {
-		TrackerHit * meshit = dynamic_cast<TrackerHit*>( hitcol->getElementAt(ihit) ) ;
-		LCObjectVec clusterVec = (meshit->getRawHits());
-		TrackerDataImpl * trackerData = dynamic_cast < TrackerDataImpl * > ( clusterVec[0] );
-
-		int sensorID             = static_cast<int > ( cellDecoder( trackerData )["sensorID"] );
-
-		if ( (sensorID >=10) && (_manualDUTid >= 10) && (_manualDUTid != sensorID) ) { // only when DUT=apix, current sensorID is apix but not one
-																												// under eff. measurement
-				// Hit position
-				const double * pos = meshit->getPosition();
-				_allDUTsmeasuredX.push_back(pos[0]);
-				_allDUTsmeasuredY.push_back(pos[1]);
-				_allDUTssensorID.push_back(sensorID);
-
-				EUTelSparseDataImpl <EUTelAPIXSparsePixel>  * sparseData = new EUTelSparseDataImpl <EUTelAPIXSparsePixel> (trackerData);
-				EUTelAPIXSparsePixel * sparsePixel= new EUTelAPIXSparsePixel;
-				sparseData -> getSparsePixelAt (0, sparsePixel );
-				_allDUTslv1.push_back( sparsePixel -> getTime() );
-				delete	sparseData;
-				delete	sparsePixel;
-		}
-	}
-	//--
-
-}
 void EUTelDUTHistograms::processEvent( LCEvent * event ) {
-
 
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
   if ( euEvent->getEventType() == kEORE ) {
@@ -485,7 +310,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 
-  if ( _nEvt % 1000 == 0 ) {
+ if ( _nEvt % 10 == 0 ) {
     streamlog_out( MESSAGE2 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
@@ -506,10 +331,10 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   try {
     trackcol = event->getCollection( _inputTrackColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    /*message<ERROR> ( log() << "Not able to get collection "
+    message<ERROR> ( log() << "Not able to get collection "
                      << _inputTrackColName
                      << "\nfrom event " << event->getEventNumber()
-                     << " in run " << event->getRunNumber()  );*/
+                     << " in run " << event->getRunNumber()  );
     throw SkipEventException(this);
   }
 
@@ -531,17 +356,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
     //   throw SkipEventException(this);
   }
 
-	LCCollection* original_zsdata = NULL;
-	try {
-		original_zsdata = event->getCollection( "cluster" ) ;
-	} catch (lcio::DataNotAvailableException& e) {
-		cout << "original_zsdata collection not available" << endl;
-		cout << "Terminating... " << endl;
-		abort();
-    }
-
-
-
   // Clear local fit storage tables
   // 'fitted' table used for comparison with measured hits
   // 'bgfitted' used for comparison with hits from previous event
@@ -561,29 +375,13 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   if(debug)message<MESSAGE> ( log() << "Total of " << nTrack << " tracks in input collection " );
 
-  if (_manualDUTid >=10 ) 
-  {	
-      fillAPIXhits(hitcol, original_zsdata);
-  }
 
 
   for(int itrack=0; itrack< nTrack ; itrack++)
     {
-  
       Track * fittrack = dynamic_cast<Track*>( trackcol->getElementAt(itrack) ) ;
-      std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getTrackerHits();
-      int nHit = 0;
-      //----------------------------------------------------------------------------------------------
-      // 17 August 2010 libov@mail.desy.de (1st implementation 14 July 2010)
-      // The idea is to select only tracks that are matched to one of the APIX DUTs, so that its "intime"
-      // check whether there is a hit in another plane near this track
-      if (_onlyIntimeTracks)
-      {
-  		if ( ! ( hasMatchedHit ( fittrack ) ) ) continue;
-      }
-      //----------------------------------------------------------------------------------------------
 
-      
+
       const float * por = fittrack->getReferencePoint();
 
       // Does track PoR match DUT position?
@@ -601,10 +399,10 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
         {
 
           // Look at hits asigned to track
-          // put this definition in the beginning of the loop - need to use there already
-          //std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getTrackerHits();
-          // put nHit declaration above
-          nHit =   trackhits.size();
+
+          std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getTrackerHits();
+
+          int nHit =   trackhits.size();
 
           for(int ihit=0; ihit< nHit ; ihit++)
             {
@@ -632,35 +430,32 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       // End of loop over fitted tracks
     }
 
-    
-  if(debug)
-  {
-      message<MESSAGE> ( log() << _fittedX.size()  << " fitted positions at DUT " );
-  }
-
-  if( _manualDUTid >= 10 )
-  {
-      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_NumberOfFittedTracksHistoName]))->fill(_fittedX.size());
-  }
-  
-  if ( _fittedX.size() != 1 ) return;
+  if(debug)message<MESSAGE> ( log() << _fittedX.size()  << " fitted positions at DUT " );
 
   // Histograms of fitted positions
 
+
+
   for(int ifit=0;ifit<(int)_fittedX.size(); ifit++)
     {
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA) 
-      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXHistoName]))->fill(_fittedX[ifit]);        
-        
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+      (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXHistoName]))->fill(_fittedX[ifit]);
+
+
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedYHistoName]))->fill(_fittedY[ifit]);
 
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_FittedXYHistoName]))->fill(_fittedX[ifit],_fittedY[ifit]);
+
 
       if(debug)message<MESSAGE> ( log() << "Fit " << ifit
                                 << "   X = " << _fittedX[ifit]
                                 << "   Y = " << _fittedY[ifit]) ;
 #endif
     }
+
+
+
+
 
   // Match fitted positions with hits from previous event (background estimate)
   // Skip first event
@@ -669,7 +464,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
     {
       int nMatch=0;
       double distmin;
-
 
       do{
         int bestfit=-1;
@@ -729,10 +523,11 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
           }
 
+
         // End of loop of matching background hits to fitted positions
       }
-      while(distmin < _distMax*_distMax);
 
+      while(distmin < _distMax*_distMax);
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -752,7 +547,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
     }  // End of if(_nEvt > 1)  - end of background calculations
 
 
-
   // Clear local tables with measured position
 
   _measuredX.clear();
@@ -763,19 +557,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   _bgmeasuredX.clear();
   _bgmeasuredY.clear();
-
-  _lv1APIX.clear();
-  _totAPIX.clear();
-  _maxDifflv1.clear();
-  _hitsInCluster.clear();
-
-  _measuredXLOCAL.clear();
-  _measuredYLOCAL.clear();
-
-	// 24 august
-	_clusterSizeX.clear();
-	_clusterSizeY.clear();
-
 
   // Loop over hits in input collection
   // Read measured positions at DUT
@@ -814,70 +595,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
           _bgmeasuredX.push_back(corrX);
           _bgmeasuredY.push_back(corrY);
 
-			// ----  05 August 2010 libov@mail.desy.de --------------
-			// Only for APIX at the moment
-			if (_manualDUTid >= 10) {
-				LCObjectVec clusterVec = (meshit->getRawHits());
-				TrackerDataImpl * trackerData = dynamic_cast < TrackerDataImpl * > ( clusterVec[0] );
-				EUTelSparseDataImpl <EUTelAPIXSparsePixel>  * sparseData = new EUTelSparseDataImpl <EUTelAPIXSparsePixel> (trackerData);
-				EUTelAPIXSparsePixel * sparsePixel= new EUTelAPIXSparsePixel;
-				float	tot=0;
-				std::vector	<float> lv1Cluster;
-				for (unsigned int i = 0; i < sparseData->size(); i++ ) {
-					sparseData -> getSparsePixelAt (i, sparsePixel );
-					tot += sparsePixel->getSignal();
-					lv1Cluster.push_back ( sparsePixel->getTime() );
-				}
-				_totAPIX.push_back(tot);
-
-				float	maxDifflv1 = 0;
-				for (unsigned int i =1; i<lv1Cluster.size(); i++ ) {
-					if (abs	(lv1Cluster[0] - lv1Cluster[i]) > maxDifflv1) {
-						maxDifflv1 = abs(lv1Cluster[0] - lv1Cluster[i]);
-					}
-				}
-				_lv1APIX.push_back(lv1Cluster[0]);
-				_maxDifflv1.push_back(maxDifflv1);
-
-				_hitsInCluster.push_back(sparseData->size());
-				// this assumes SparseClustering algorithm!
-				//EUTelSparseClusterImpl<EUTelAPIXSparsePixel> * sparseCluster = new EUTelSparseClusterImpl<EUTelAPIXSparsePixel> (trackerData);
-				EUTelAPIXSparseClusterImpl * sparseCluster = new EUTelAPIXSparseClusterImpl (trackerData);
-				if (sparseCluster -> getTotalCharge() != tot) {
-					cout << "total charge got from cluster is not equal to calculated from its pixels. Check what you're doing. Terminating."<<endl;
-					abort();
-				}
-				// get seed coordinates of a cluster
-				float xCluSeed, yCluSeed;
-				sparseCluster->getSeedCoord2(xCluSeed, yCluSeed);
-				// get Center Of Gravity Shift - the procedure here should be the same as in the hitmaker!
-				float	xShift, yShift;
-				sparseCluster->getCenterOfGravityShift2( xShift, yShift);
-				// Now transform cluster indices to coordinates in the local FoR
-				//double measuredXLOCAL = ( static_cast<double> (xCluSeed) + static_cast<double>(xShift) + 0.5 ) * _xPitch ;
-				//double measuredYLOCAL = ( static_cast<double> (yCluSeed) + static_cast<double>(yShift) + 0.5 ) * _yPitch ;
-				double measuredXLOCAL = xCluSeed + xShift;
-				double measuredYLOCAL = yCluSeed + yShift;
-
-				_measuredXLOCAL.push_back(measuredXLOCAL);
-				_measuredYLOCAL.push_back(measuredYLOCAL);
-
-				// 07 September
-				//float		xCluCenter, yCluCenter;
-				//sparseCluster->getCenterCoord( xShift, yShift);		// no, because in hitmaker 3x3 center of gravity algorithm is used
-
-
-				// 24 August
-				int sizeX, sizeY;
-				sparseCluster -> getClusterSize(sizeX, sizeY);
-				_clusterSizeX.push_back(sizeX);
-				_clusterSizeY.push_back(sizeY);
-
-				delete sparseData;
-				delete sparsePixel;
-				delete sparseCluster;
-			}
-			// -----------------------------------------------------------
           // Local position should be taken from the cluster.
           // This is a temporary solution:
 
@@ -903,52 +620,28 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
         }
     }
 
-    if(debug)message<MESSAGE> ( log() << _measuredX.size() << " hits at DUT " );
 
-	if (_noHitYet && ( _measuredX.size()==0 ) ) {
-		_eventsWithNoHit++;
-		// anything to be done before returning?
-		return;
-	}
-	if ((_noHitYet && (_measuredX.size()!=0) ) || (_measuredX.size()>=1)){
-		if (_noHitYet) cout << _eventsWithNoHit << "events before first hit" << endl;
-		_noHitYet = false;
-		// determine transformation ...
-		getTransformationShifts();
-	}
-
-    // Histograms of measured positions
-
-	if ( _manualDUTid >= 10 && _measuredX.size() != _measuredXLOCAL.size()) {
-		cout<<"_measuredX.size() != _measuredXLOCAL.size()"<<endl;
-		cout<< "Sizes of measured hits arrays in Telescope and Local FoR are not the same! Terminating! " << endl;
-		abort();
-	}
+  if(debug)message<MESSAGE> ( log() << _measuredX.size() << " hits at DUT " );
 
 
-    for(int ihit=0;ihit<(int)_measuredX.size(); ihit++)
+  // Histograms of measured positions
+
+
+  for(int ihit=0;ihit<(int)_measuredX.size(); ihit++)
     {
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA) 
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredXHistoName]))->fill(_measuredX[ihit]);
 
 
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredYHistoName]))->fill(_measuredY[ihit]);
 
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_MeasuredXYHistoName]))->fill(_measuredX[ihit],_measuredY[ihit]);
-
-      if (_manualDUTid >= 10) {
-          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredXLOCALHistoName]))->fill(_measuredXLOCAL[ihit]);
-          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredYLOCALHistoName]))->fill(_measuredYLOCAL[ihit]);
-          (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_MeasuredXYLOCALHistoName]))->fill(_measuredXLOCAL[ihit],_measuredYLOCAL[ihit]);
-      }
-
 #endif
       if(debug)message<MESSAGE> ( log() << "Hit " << ihit
                                 << "   X = " << _measuredX[ihit]
                                 << "   Y = " << _measuredY[ihit]) ;
     }
 
-	
 
 
 
@@ -963,14 +656,12 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
     distmin=_distMax*_distMax+1.;
 
-
     for(int ifit=0;ifit<(int)_fittedX.size(); ifit++)
       for(int ihit=0; ihit< (int)_measuredX.size() ; ihit++)
         {
           double dist=
             (_measuredX[ihit]-_fittedX[ifit])*(_measuredX[ihit]-_fittedX[ifit])
             + (_measuredY[ihit]-_fittedY[ifit])*(_measuredY[ihit]-_fittedY[ifit]);
-
 
           if(dist<distmin)
             {
@@ -981,6 +672,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
         }
 
     // Match found:
+
     if(distmin < _distMax*_distMax)
       {
 
@@ -1063,6 +755,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 
         // Efficiency plots
+
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyXHistoName]))->fill(_fittedX[bestfit],1.);
 
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyYHistoName]))->fill(_fittedY[bestfit],1.);
@@ -1080,137 +773,21 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 #endif
 
-			// 05 August 2010 libov@mail.desy.de
-			if (_manualDUTid >=10 ) {
-				(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_totAPIXmatchedHistoName]))->fill(_totAPIX[besthit]);
-				(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_hitsInMatchedClusterHistoName]))->fill(_hitsInCluster[besthit]);
-				(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_lv1APIXmatchedHistoName]))->fill(_lv1APIX[besthit]);
-				(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_maxDifflv1MatchedHistoName]))->fill(_maxDifflv1[besthit]);
-
-				// --- 24 august ---
-				(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MatchedClusterSizeXHistoName]))->fill(_clusterSizeX[besthit]);
-				(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MatchedClusterSizeYHistoName]))->fill(_clusterSizeY[besthit]);
-				// -----------------
-
-
-
-				// -- 18 August
-				// -- telescope frame of reference
-				double	residualXTEL = _measuredX[besthit]-_fittedX[bestfit];
-				double	residualYTEL = _measuredY[besthit]-_fittedY[bestfit];
-
-				double	residualXLOCAL = _rot00 * residualXTEL + _rot01 * residualYTEL;
-				double	residualYLOCAL = _rot10 * residualXTEL + _rot11 * residualYTEL;
-				// -- consistency check
-				//cout << (residualXTEL*residualXTEL+residualYTEL*residualYTEL) <<" <--> "<< (residualXLOCAL*residualXLOCAL + residualYLOCAL*residualYLOCAL)<<endl;
-				if (((residualXTEL*residualXTEL+residualYTEL*residualYTEL) - (residualXLOCAL*residualXLOCAL + residualYLOCAL*residualYLOCAL)) > 0.0000001) {
-					cout << "Bad matrix. Terminating "<< endl;
-					abort();
-				}
-				double	fittedXLOCAL = _measuredXLOCAL[besthit] - residualXLOCAL;
-				double	fittedYLOCAL = _measuredYLOCAL[besthit] - residualYLOCAL;
-
-
-				// consistency check
-				if (!_noHitYet) {
-					double	fittedXLOCALMethod2 = _rot00*(_fittedX[bestfit] + _transShiftX) + _rot01 *  (_fittedY[bestfit] + _transShiftY);
-					double	fittedYLOCALMethod2 = _rot10*(_fittedX[bestfit] + _transShiftX) + _rot11 *  (_fittedY[bestfit] + _transShiftY);
-
-					double	diffX = fittedXLOCALMethod2 - fittedXLOCAL;
-					double	diffY = fittedYLOCALMethod2 - fittedYLOCAL;
-
-					/*if ((diffX>0.001) || (diffY>0.001)) {
-						cout << "C r a p ! ! !" << endl;
-						cout<< "fittedXLOCALMethod2 = "<<fittedXLOCALMethod2<<" fittedXLOCAL= "<<fittedXLOCAL<<" diff= "<<fittedXLOCALMethod2-fittedXLOCAL<<endl;
-						cout<< "fittedYLOCALMethod2 = "<<fittedYLOCALMethod2<<" fittedYLOCAL= "<<fittedYLOCAL<<" diff= "<<fittedYLOCALMethod2-fittedYLOCAL<<endl;
-						//abort();
-					}*/
-				}
-
-				(dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyXLOCALHistoName]))->fill(fittedXLOCAL, 1.);
-				(dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyYLOCALHistoName]))->fill(fittedYLOCAL, 1.);
-				(dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EfficiencyXYLOCALHistoName]))->fill(fittedXLOCAL, fittedYLOCAL, 1.);
-
-				// now stupidly done - to do: fill array before.  24 august
-      		if (_manualDUTid >= 10) {
-      			(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXLOCALHistoName]))->fill(fittedXLOCAL);
-      			(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedYLOCALHistoName]))->fill(fittedYLOCAL);
-      			(dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_FittedXYLOCALHistoName]))->fill(fittedXLOCAL, fittedYLOCAL);
-
-					if (_hitsInCluster[besthit] == 1) {
-						if ( (_clusterSizeX[besthit] > 1) || (_clusterSizeY[besthit] > 1) ) {
-							cout << "Bug! # of pixels = 1 but size X or size Y not! Terminating!"<<endl;
-							abort();
-						}
-						// position of a fitted track inside a hit pixel
-						float		X = (400./2) - (residualXLOCAL * 1000.);
-						float		Y = (50./2) - (residualYLOCAL * 1000.);
-						(dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_totSinglePixelClustersXYHistoName]))->fill(X, Y, _totAPIX[besthit]);
-					}
-						// fittedXLOCAL was defined on line 1039
-
-						bool		isMirrored = false;
-						bool		longPixel = false;
-						if ( (fittedXLOCAL < 0.6 ) || (fittedXLOCAL > 7.) ) longPixel = true;	// also the case if fitted posiiton OUTSIDE of the sensor in X!
-						if ( ! longPixel ) {
-
-							float		fittedIndexX = 1 + (fittedXLOCAL - 0.6) / _pitchX;
-
-							float		fittedIndexY = ( _measuredYLOCAL[besthit] - residualYLOCAL ) / _pitchY;
-
-							if ((((int)(floor(fittedIndexX + 1))) % 2) == 0) isMirrored = true;
-
-							float		X = 1000 * (fittedIndexX - floor(fittedIndexX)) *_pitchX ;
-							float		Y = 1000 * (fittedIndexY - floor(fittedIndexY)) *_pitchY ;
-
-							if (isMirrored) X = 400. - X;
-
-							(dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_totAllClustersXYHistoName]))->fill(X, Y, _totAPIX[besthit]);
-
-							if ( _hitsInCluster[besthit] > 1) {
-								(dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_ChargeSharingProbXYHistoName]))->fill(X, Y, 1.);
-							} else if (_hitsInCluster[besthit] == 1) {
-								(dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_ChargeSharingProbXYHistoName]))->fill(X, Y, 0);
-							} else {
-								cout << "Bug, # of pixels in clusters < 0. Terminating! "<<endl;
-								abort();
-							}
-
-							}
-							/*if (fittedXLOCAL < 0.6 ) { fittedIndexX =  fittedXLOCAL / 0.6;
-							} else if (fittedXLOCAL >= 0.6 && fittedXLOCAL < 7. ) {
-								fittedIndexX = 1 + (fittedXLOCAL - 0.6) / _pitchX;
-							} else if (fittedXLOCAL > 7.) {
-								fittedIndexX = 17 + (fittedXLOCAL - 7.) / 0.6;
-
-							}*/
-      		}
-
-			}
-
         // Remove matched entries from the list (so the next matching pair
         // can be looked for)
 
         _fittedX.erase(_fittedX.begin()+bestfit);
         _fittedY.erase(_fittedY.begin()+bestfit);
 
-		_measuredX.erase(_measuredX.begin()+besthit);
+        _measuredX.erase(_measuredX.begin()+besthit);
         _measuredY.erase(_measuredY.begin()+besthit);
 
         _localX.erase(_localX.begin()+besthit);
         _localY.erase(_localY.begin()+besthit);
 
-			if (_manualDUTid >=10 ) {
-				_totAPIX.erase(_totAPIX.begin()+besthit);
-				_lv1APIX.erase(_lv1APIX.begin()+besthit);
-				_hitsInCluster.erase(_hitsInCluster.begin()+besthit);
-				_maxDifflv1.erase(_maxDifflv1.begin()+besthit);
-				_measuredXLOCAL.erase(_measuredXLOCAL.begin()+besthit);
-				_measuredYLOCAL.erase(_measuredYLOCAL.begin()+besthit);
-				_clusterSizeX.erase(_clusterSizeX.begin()+besthit);
-				_clusterSizeY.erase(_clusterSizeY.begin()+besthit);
-			}
       }
+
+
     // End of loop of matching DUT hits to fitted positions
   }
   while(distmin < _distMax*_distMax);
@@ -1223,12 +800,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       message<MESSAGE> ( log() << _fittedX.size() << " fitted tracks not matched to any DUT hit ");
     }
 
-  if( _manualDUTid >= 10 )
-  {
-	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MatchedHitsHistoName])) -> fill (nMatch);
-	(dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_MatchedHitsVSEventHistoName])) -> fill (evtNr, nMatch);
+
   // Efficiency plots - unmatched tracks
-  }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
@@ -1239,23 +812,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyYHistoName]))->fill(_fittedY[ifit],0.);
 
       (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EfficiencyXYHistoName]))->fill(_fittedX[ifit],_fittedY[ifit],0.);
-
-
-		// 19 August 2010 - plots in the local frame
-	  if (_manualDUTid >= 10) {
-        double	fittedXLOCALMethod2 = _rot00*(_fittedX[ifit] + _transShiftX) + _rot01 *  (_fittedY[ifit] + _transShiftY);
-		double	fittedYLOCALMethod2 = _rot10*(_fittedX[ifit] + _transShiftX) + _rot11 *  (_fittedY[ifit] + _transShiftY);
-
-		(dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyXLOCALHistoName]))->fill(fittedXLOCALMethod2, 0.);
-		(dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyYLOCALHistoName]))->fill(fittedYLOCALMethod2, 0.);
-		(dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EfficiencyXYLOCALHistoName]))->fill(fittedXLOCALMethod2, fittedYLOCALMethod2, 0.);
-
-     	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXLOCALHistoName]))->fill(fittedXLOCALMethod2);
-      	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedYLOCALHistoName]))->fill(fittedYLOCALMethod2);
-      	(dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_FittedXYLOCALHistoName]))->fill(fittedXLOCALMethod2, fittedYLOCALMethod2);
-      }
-
-
     }
 
 
@@ -1278,18 +834,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_UnMatchedYHistoName]))->fill(_measuredY[ihit]);
 
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_UnMatchedXYHistoName]))->fill(_measuredX[ihit],_measuredY[ihit]);
-
-		// 06 August 2010 libov@mail.desy.de
-		if (_manualDUTid >=10 ) {
-			(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_totAPIXunmatchedHistoName]))->fill(_totAPIX[ihit]);
-			(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_hitsInUnmatchedClusterHistoName]))->fill(_hitsInCluster[ihit]);
-			(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_lv1APIXunmatchedHistoName]))->fill(_lv1APIX[ihit]);
-			(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_maxDifflv1UnmatchedHistoName]))->fill(_maxDifflv1[ihit]);
-
-			(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_UnmatchedClusterSizeXHistoName]))->fill(_clusterSizeX[ihit]);
-			(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_UnmatchedClusterSizeYHistoName]))->fill(_clusterSizeY[ihit]);
-
-		}
 
     }
 
@@ -1343,8 +887,8 @@ void EUTelDUTHistograms::bookHistos()
   // Measured position in X
 
   int    measXNBin  = 400;
-  double measXMin   = -10.;
-  double measXMax   =  10.;
+  double measXMin   = -5.;
+  double measXMax   = 5.;
   string measXTitle = "Measured particle position in X";
   string matchXTitle = "Matched hit position in X";
   string unmatchXTitle = "Unmatched hit position in X";
@@ -1388,8 +932,8 @@ void EUTelDUTHistograms::bookHistos()
   // Measured position in Y
 
   int    measYNBin  = 400;
-  double measYMin   = -10.;
-  double measYMax   =  10.;
+  double measYMin   = -5.;
+  double measYMax   = 5.;
   string measYTitle = "Measured particle position in Y";
   string matchYTitle = "Matched hit position in Y";
   string unmatchYTitle = "Unmatched hit position in Y";
@@ -1435,11 +979,11 @@ void EUTelDUTHistograms::bookHistos()
   // Measured position in X-Y
 
   measXNBin  = 100;
-  measXMin   = -10.;
-  measXMax   =  10.;
+  measXMin   = -5.;
+  measXMax   = 5.;
   measYNBin  = 100;
-  measYMin   = -10.;
-  measYMax   =  10.;
+  measYMin   = -5.;
+  measYMax   = 5.;
   string measXYTitle = "Measured particle position in XY";
   string matchXYTitle = "Matched hit position in XY";
   string unmatchXYTitle = "Unmatched hit position in XY";
@@ -1487,8 +1031,8 @@ void EUTelDUTHistograms::bookHistos()
   // Fitted position in X
 
   int    fitXNBin  = 400;
-  double fitXMin   = -10.;
-  double fitXMax   =  10.;
+  double fitXMin   = -5.;
+  double fitXMax   = 5.;
   string fitXTitle = "Fitted particle position in X";
 
 
@@ -1518,8 +1062,8 @@ void EUTelDUTHistograms::bookHistos()
   // Fitted position in Y
 
   int    fitYNBin  = 400;
-  double fitYMin   = -10.;
-  double fitYMax   =  10.;
+  double fitYMin   = -5.;
+  double fitYMax   = 5.;
   string fitYTitle = "Fitted particle position in Y";
 
 
@@ -1551,11 +1095,11 @@ void EUTelDUTHistograms::bookHistos()
   // Fitted position in X-Y
 
   fitXNBin  = 100;
-  fitXMin   = -10.;
-  fitXMax   =  10.;
+  fitXMin   = -5.;
+  fitXMax   = 5.;
   fitYNBin  = 100;
-  fitYMin   = -10.;
-  fitYMax   =  10.;
+  fitYMin   = -5.;
+  fitYMax   = 5.;
   string fitXYTitle = "Fitted particle position in XY";
 
 
@@ -1589,8 +1133,8 @@ void EUTelDUTHistograms::bookHistos()
   // Measured - fitted position in X
 
   int    shiftXNBin  = 400;
-  double shiftXMin   = -0.5;
-  double shiftXMax   = 0.5;
+  double shiftXMin   = -0.1;
+  double shiftXMax   = 0.1;
   string shiftXTitle = "Measured - fitted X position";
 
 
@@ -1630,8 +1174,8 @@ void EUTelDUTHistograms::bookHistos()
   // Measured - fitted position in Y
 
   int    shiftYNBin  = 400;
-  double shiftYMin   = -0.5;
-  double shiftYMax   = 0.5;
+  double shiftYMin   = -0.1;
+  double shiftYMax   = 0.1;
   string shiftYTitle = "Measured - fitted Y position";
 
 
@@ -1671,10 +1215,10 @@ void EUTelDUTHistograms::bookHistos()
   // Measured - fitted position in X  vs Y
 
   shiftXNBin  = 200;
-  shiftXMin   = -10.;
-  shiftXMax   =  10.;
-  double shiftVMin   = -0.5;
-  double shiftVMax   = 0.5;
+  shiftXMin   = -5.;
+  shiftXMax   = 5.;
+  double shiftVMin   = -0.1;
+  double shiftVMax   = 0.1;
   shiftXTitle = "Measured - fitted X position vs Y";
 
 
@@ -1729,10 +1273,10 @@ void EUTelDUTHistograms::bookHistos()
   // Measured - fitted position in Y vs X
 
   shiftYNBin  = 200;
-  shiftYMin   = -10.;
-  shiftYMax   =  10.;
-  shiftVMin   = -0.5;
-  shiftVMax   = 0.5;
+  shiftYMin   = -5.;
+  shiftYMax   = 5.;
+  shiftVMin   = -0.1;
+  shiftVMax   = 0.1;
   shiftYTitle = "Measured - fitted Y position vs X";
 
 
@@ -1789,11 +1333,11 @@ void EUTelDUTHistograms::bookHistos()
   // Measured - fitted position in X  vs Y (2D plot)
 
   shiftXNBin  = 200;
-  shiftXMin   = -10.;
-  shiftXMax   =  10.;
+  shiftXMin   = -5.;
+  shiftXMax   = 5.;
   int shiftVNBin  = 200;
-  shiftVMin   = -0.5;
-  shiftVMax   = 0.5;
+  shiftVMin   = -0.1;
+  shiftVMax   = 0.1;
   shiftXTitle = "Measured - fitted X position vs Y";
 
 
@@ -1855,11 +1399,11 @@ void EUTelDUTHistograms::bookHistos()
   // Measured - fitted position in Y vs X  (2D plot)
 
   shiftYNBin  = 200;
-  shiftYMin   = -10.;
-  shiftYMax   =  10.;
-  shiftVNBin  = 500;
-  shiftVMin   = -0.5;
-  shiftVMax   = 0.5;
+  shiftYMin   = -5.;
+  shiftYMax   = 5.;
+  shiftVNBin  = 200;
+  shiftVMin   = -0.1;
+  shiftVMax   = 0.1;
   shiftYTitle = "Measured - fitted Y position vs X";
 
 
@@ -1915,12 +1459,12 @@ void EUTelDUTHistograms::bookHistos()
 
   // Measured - fitted position in X-Y
 
-  shiftXNBin  = 500;
-  shiftXMin   = -0.5;
-  shiftXMax   = 0.5;
-  shiftYNBin  = 500;
-  shiftYMin   = -0.5;
-  shiftYMax   = 0.5;
+  shiftXNBin  = 100;
+  shiftXMin   = -0.1;
+  shiftXMax   = 0.1;
+  shiftYNBin  = 100;
+  shiftYMin   = -0.1;
+  shiftYMax   = 0.1;
   string shiftXYTitle = "Measured - fitted position in XY";
 
 
@@ -1965,8 +1509,8 @@ void EUTelDUTHistograms::bookHistos()
   // Efficiency as a function of the fitted position in X
 
   int    effiXNBin  = 100;
-  double effiXMin   = -10.;
-  double effiXMax   =  10.;
+  double effiXMin   = -5.;
+  double effiXMax   = 5.;
   string effiXTitle = "Efficiency vs particle position in X";
 
 
@@ -2008,8 +1552,8 @@ void EUTelDUTHistograms::bookHistos()
   // Efficiency as a function of the fitted position in Y
 
   int    effiYNBin  = 100;
-  double effiYMin   = -10.;
-  double effiYMax   =  10.;
+  double effiYMin   = -5.;
+  double effiYMax   = 5.;
   string effiYTitle = "Efficiency vs particle position in Y";
 
 
@@ -2048,12 +1592,12 @@ void EUTelDUTHistograms::bookHistos()
 
   // Efficiency as a function of the fitted position in X-Y
 
-  effiXNBin  = 40;
-  effiXMin   = -10.;
-  effiXMax   =  10.;
-  effiYNBin  = 20;
-  effiYMin   = -10.;
-  effiYMax   =  10.;
+  effiXNBin  = 50;
+  effiXMin   = -5.;
+  effiXMax   = 5.;
+  effiYNBin  = 50;
+  effiYMin   = -5.;
+  effiYMax   = 5.;
   string effiXYTitle = "Efficiency vs particle position in XY";
 
 
@@ -2096,8 +1640,8 @@ void EUTelDUTHistograms::bookHistos()
   // Noise as a function of the measured position in X
 
   int    noiseXNBin  = 100;
-  double noiseXMin   = -10.;
-  double noiseXMax   =  10.;
+  double noiseXMin   = -5.;
+  double noiseXMax   = 5.;
   string noiseXTitle = "Noise fraction vs particle position in X";
 
 
@@ -2127,8 +1671,8 @@ void EUTelDUTHistograms::bookHistos()
   // Noise as a function of the measured position in Y
 
   int    noiseYNBin  = 100;
-  double noiseYMin   = -10.;
-  double noiseYMax   =  10.;
+  double noiseYMin   = -5.;
+  double noiseYMax   = 5.;
   string noiseYTitle = "Noise fraction vs particle position in Y";
 
 
@@ -2160,11 +1704,11 @@ void EUTelDUTHistograms::bookHistos()
   // Noise as a function of the measured position in X-Y
 
   noiseXNBin  = 50;
-  noiseXMin   = -10.;
-  noiseXMax   =  10.;
+  noiseXMin   = -5.;
+  noiseXMax   = 5.;
   noiseYNBin  = 50;
-  noiseYMin   = -10.;
-  noiseYMax   =  10.;
+  noiseYMin   = -5.;
+  noiseYMax   = 5.;
   string noiseXYTitle = "Noise fraction vs particle position in XY";
 
 
@@ -2411,110 +1955,8 @@ void EUTelDUTHistograms::bookHistos()
 
   _aidaHistoMap.insert(make_pair(_EtaY3DHistoName, etaY3DHisto));
 
-	// 05 August libov@mail.desy.de
-	if (_manualDUTid >=10 ) {
-
-		AIDA::IHistogram1D * totAPIXmatched = AIDAProcessor::histogramFactory(this)->createHistogram1D(_totAPIXmatchedHistoName.c_str(), 400, 0, 400);
-		AIDA::IHistogram1D * totAPIXunmatched = AIDAProcessor::histogramFactory(this)->createHistogram1D(_totAPIXunmatchedHistoName.c_str(), 400, 0, 400);
-
-		AIDA::IHistogram1D * lv1APIXmatched = AIDAProcessor::histogramFactory(this)->createHistogram1D(_lv1APIXmatchedHistoName.c_str(), 20, 0, 20);
-		AIDA::IHistogram1D * lv1APIXunmatched = AIDAProcessor::histogramFactory(this)->createHistogram1D(_lv1APIXunmatchedHistoName.c_str(), 20, 0, 20);
-
-		AIDA::IHistogram1D * hitsInMatchedCluster = AIDAProcessor::histogramFactory(this)->createHistogram1D(_hitsInMatchedClusterHistoName.c_str(), 20, 0, 20);
-		AIDA::IHistogram1D * hitsInUnmatchedCluster = AIDAProcessor::histogramFactory(this)->createHistogram1D(_hitsInUnmatchedClusterHistoName.c_str(), 20, 0, 20);
-
-		AIDA::IHistogram1D * maxDifflv1Matched = AIDAProcessor::histogramFactory(this)->createHistogram1D(_maxDifflv1MatchedHistoName.c_str(), 20, 0, 20);
-		AIDA::IHistogram1D * maxDifflv1Unmatched = AIDAProcessor::histogramFactory(this)->createHistogram1D(_maxDifflv1UnmatchedHistoName.c_str(), 20, 0, 20);
-
-
-		_aidaHistoMap.insert(make_pair(_totAPIXmatchedHistoName, totAPIXmatched));
-		_aidaHistoMap.insert(make_pair(_totAPIXunmatchedHistoName, totAPIXunmatched));
-		_aidaHistoMap.insert(make_pair(_lv1APIXmatchedHistoName, lv1APIXmatched));
-		_aidaHistoMap.insert(make_pair(_lv1APIXunmatchedHistoName, lv1APIXunmatched));
-		_aidaHistoMap.insert(make_pair(_hitsInMatchedClusterHistoName, hitsInMatchedCluster));
-		_aidaHistoMap.insert(make_pair(_hitsInUnmatchedClusterHistoName, hitsInUnmatchedCluster));
-		_aidaHistoMap.insert(make_pair(_maxDifflv1MatchedHistoName, maxDifflv1Matched));
-		_aidaHistoMap.insert(make_pair(_maxDifflv1UnmatchedHistoName, maxDifflv1Unmatched));
-
-		 AIDA::IProfile1D * effiXLOCALHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_EfficiencyXLOCALHistoName.c_str(),18, 0, 7.2);
-		 AIDA::IProfile1D * effiYLOCALHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_EfficiencyYLOCALHistoName.c_str(),160, 0, 8);
-		 AIDA::IProfile2D * effiXYLOCALHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_EfficiencyXYLOCALHistoName.c_str(), 18, 0, 7.2, 160, 0, 8);
-
-		_aidaHistoMap.insert(make_pair(_EfficiencyXLOCALHistoName, effiXLOCALHisto));
-		_aidaHistoMap.insert(make_pair(_EfficiencyYLOCALHistoName, effiYLOCALHisto));
-		_aidaHistoMap.insert(make_pair(_EfficiencyXYLOCALHistoName, effiXYLOCALHisto));
-
-		// -- more DUT plots, 24 August 2010, libov@mail.desy.de
-		AIDA::IHistogram1D * MeasuredXLOCALHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_MeasuredXLOCALHistoName.c_str(), 18, 0, 7.2);
-		AIDA::IHistogram1D * MeasuredYLOCALHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_MeasuredYLOCALHistoName.c_str(), 160, 0, 8);
-		AIDA::IHistogram2D * MeasuredXYLOCALHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_MeasuredXYLOCALHistoName.c_str(), 18, 0, 7.2, 160, 0, 8);
-
-		AIDA::IHistogram1D * FittedXLOCALHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_FittedXLOCALHistoName.c_str(), 18, 0, 7.2);
-		AIDA::IHistogram1D * FittedYLOCALHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_FittedYLOCALHistoName.c_str(), 160, 0, 8);
-		AIDA::IHistogram2D * FittedXYLOCALHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_FittedXYLOCALHistoName.c_str(), 18, 0, 7.2, 160, 0, 8);
-
-		AIDA::IHistogram1D * _MatchedClusterSizeXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_MatchedClusterSizeXHistoName.c_str(), 10, 0, 10);
-		AIDA::IHistogram1D * _MatchedClusterSizeYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_MatchedClusterSizeYHistoName.c_str(), 10, 0, 10);
-		AIDA::IHistogram1D * _UnmatchedClusterSizeXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_UnmatchedClusterSizeXHistoName.c_str(), 10, 0, 10);
-		AIDA::IHistogram1D * _UnmatchedClusterSizeYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_UnmatchedClusterSizeYHistoName.c_str(), 10, 0, 10);
-
-		AIDA::IProfile1D * _ChargeSharingProbXHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_ChargeSharingProbXHistoName.c_str(),100,0,400);
-		AIDA::IProfile1D * _ChargeSharingProbYHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_ChargeSharingProbYHistoName.c_str(),16,0,50);
-		AIDA::IProfile2D * _ChargeSharingProbXYHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_ChargeSharingProbXYHistoName.c_str(),100,0, 400,16,0,50);
-
-		_aidaHistoMap.insert(make_pair(_MeasuredXLOCALHistoName, MeasuredXLOCALHisto));
-		_aidaHistoMap.insert(make_pair(_MeasuredYLOCALHistoName, MeasuredYLOCALHisto));
-		_aidaHistoMap.insert(make_pair(_MeasuredXYLOCALHistoName, MeasuredXYLOCALHisto));
-
-		_aidaHistoMap.insert(make_pair(_FittedXLOCALHistoName, FittedXLOCALHisto));
-		_aidaHistoMap.insert(make_pair(_FittedYLOCALHistoName, FittedYLOCALHisto));
-		_aidaHistoMap.insert(make_pair(_FittedXYLOCALHistoName, FittedXYLOCALHisto));
-		
-		_aidaHistoMap.insert(make_pair(_MatchedClusterSizeXHistoName, _MatchedClusterSizeXHisto));
-		_aidaHistoMap.insert(make_pair(_MatchedClusterSizeYHistoName, _MatchedClusterSizeYHisto));
-		_aidaHistoMap.insert(make_pair(_UnmatchedClusterSizeXHistoName, _UnmatchedClusterSizeXHisto));
-		_aidaHistoMap.insert(make_pair(_UnmatchedClusterSizeYHistoName, _UnmatchedClusterSizeYHisto));
-
-		_aidaHistoMap.insert(make_pair(_ChargeSharingProbXHistoName, _ChargeSharingProbXHisto));
-		_aidaHistoMap.insert(make_pair(_ChargeSharingProbYHistoName, _ChargeSharingProbYHisto));
-		_aidaHistoMap.insert(make_pair(_ChargeSharingProbXYHistoName, _ChargeSharingProbXYHisto));
-
-		// 06 september
-		AIDA::IProfile1D * _totSinglePixelClustersXHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_totSinglePixelClustersXHistoName.c_str(),100,0,400);
-
-		AIDA::IProfile1D * _totSinglePixelClustersYHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_totSinglePixelClustersYHistoName.c_str(),16,0,50);
-
-		AIDA::IProfile2D * _totSinglePixelClustersXYHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_totSinglePixelClustersXYHistoName.c_str(),100, 0, 400, 16, 0, 50);
-
-		_aidaHistoMap.insert(make_pair(_totSinglePixelClustersXHistoName, _totSinglePixelClustersXHisto));
-		_aidaHistoMap.insert(make_pair(_totSinglePixelClustersYHistoName, _totSinglePixelClustersYHisto));
-		_aidaHistoMap.insert(make_pair(_totSinglePixelClustersXYHistoName, _totSinglePixelClustersXYHisto));
-
-AIDA::IProfile2D * _totAllClustersXYHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_totAllClustersXYHistoName.c_str(),100, 0, 400, 16, 0, 50);
-
-_aidaHistoMap.insert(make_pair(_totAllClustersXYHistoName, _totAllClustersXYHisto));
-
-	// 06 october
-	AIDA::IHistogram1D * _MatchedHitsHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_MatchedHitsHistoName.c_str(), 20, 0, 20 );
-	AIDA::IProfile1D * _MatchedHitsVSEventHisto = AIDAProcessor::histogramFactory(this)->createProfile1D(_MatchedHitsVSEventHistoName.c_str(), 100000, 0, 100000 );
-
-	_aidaHistoMap.insert(make_pair(_MatchedHitsHistoName, _MatchedHitsHisto));
-	_aidaHistoMap.insert(make_pair(_MatchedHitsVSEventHistoName, _MatchedHitsVSEventHisto));
-
-AIDA::IHistogram1D * _NumberOfFittedTracksHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_NumberOfFittedTracksHistoName.c_str(), 20, 0, 20 );
-	_aidaHistoMap.insert(make_pair(_NumberOfFittedTracksHistoName, _NumberOfFittedTracksHisto));
-
-	AIDA::IHistogram1D * _Lv1OfFirstMatchedReferenceHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_Lv1OfFirstMatchedReferenceHistoName.c_str(), 20, 0, 20);
-	_aidaHistoMap.insert(make_pair(_Lv1OfFirstMatchedReferenceHistoName, _Lv1OfFirstMatchedReferenceHisto));
-
-	AIDA::IHistogram1D * _NumberOfMatchedReferencesHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_NumberOfMatchedReferencesHistoName.c_str(), 20, 0, 20);
-	_aidaHistoMap.insert(make_pair(_NumberOfMatchedReferencesHistoName, _NumberOfMatchedReferencesHisto));
-
-	}
 
 // List all booked histogram - check of histogram map filling
-
-
 
   message<MESSAGE> ( log() <<  _aidaHistoMap.size() << " histograms booked");
 
@@ -2532,36 +1974,4 @@ AIDA::IHistogram1D * _NumberOfFittedTracksHisto = AIDAProcessor::histogramFactor
 }
 
 #endif
-
-void EUTelDUTHistograms::getTransformationShifts() {
-
-    if( _manualDUTid < 10 ) return;
-
-    _transShiftX = (a * _measuredXLOCAL[0] + b * _measuredYLOCAL[0]) - _measuredX[0];
-	_transShiftY = (c * _measuredXLOCAL[0] + d * _measuredYLOCAL[0]) - _measuredY[0];
-	//cout << "shifts: "<<_transShiftX << " , "<<_transShiftY << endl;
-/*
-	//-- cross check
-	double		X = _measuredX[0] + _transShiftX;
-	double		Y = _measuredY[0] + _transShiftY;
-	cout << _rot00 * X + _rot01 * Y << " --- "<<_measuredXLOCAL[0]<<endl;
-	cout << _rot10 * X + _rot11 * Y << " --- "<<_measuredYLOCAL[0]<<endl;
-	//--
-*/
-/*	if ( _measuredX.size() > 1 ) {
-		cout << "_measuredX.size() = "<<_measuredX.size()<<endl;
-		for (int k=1; k<_measuredX.size(); k++) {
-		double	_transShiftX2 = (a * _measuredXLOCAL[k] + b * _measuredYLOCAL[k]) - _measuredX[k];
-		double	_transShiftY2 = (c * _measuredXLOCAL[k] + d * _measuredYLOCAL[k]) - _measuredY[k];
-		//if ((_transShiftX2 !=_transShiftX) || (_transShiftY2 !=_transShiftY) ){
-			//cout << "Total crap" << endl;
-			cout<<_transShiftX2 << " " << _transShiftX << " diff= "<<_transShiftX2-_transShiftX<<endl;
-			cout<<_transShiftY2 << " " << _transShiftY << " diff= "<<_transShiftY2-_transShiftY<< endl;}
-			//abort();
-		//}
-
-	}
-*/
-	//cout <<"leaving getTransformationShifts()" <<endl;
-}
 
