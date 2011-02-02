@@ -94,13 +94,17 @@ cd ilcinstall_v01-10
 # edit ./releases/v01-10/release-20101206.cfg
 # edit ./releases/v01-10/release-versions.py
 #
-# examples of these two files are here: 
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-ilcsoft-standalone.cfg 
+# examples of these two files are here:
+#
+# for installation on a machine with a /afs/
 # wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-ilcsoft.cfg 
 # wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-versions.py 
 #
+# for a standalone installation:
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-ilcsoft.cfg 
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-versions.py
+#
 # replace the default files with the example ones:
-# mv release-ilcsoft-standalone.cfg ./releases/v01-10/
 # mv release-ilcsoft.cfg ./releases/v01-10/
 # mv release-versions.py ./releases/v01-10/
 # 
@@ -1366,13 +1370,15 @@ Change folder to the global analysis folder and check the ilcinstall scripts (v0
 #
 # examples of these two files are here: 
 #
- wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-ilcsoft-standalone.cfg 
+# for installation on a machine with a /afs/ (very fast installation)
  wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-ilcsoft.cfg 
  wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-versions.py 
 #
-# replace the default files with the example ones:
+# OR for a standalone installation (takes time):
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-ilcsoft.cfg 
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-versions.py
 #
- mv release-ilcsoft-standalone.cfg ./releases/v01-10/
+# replace the default files with the example ones:
  mv release-ilcsoft.cfg ./releases/v01-10/
  mv release-versions.py ./releases/v01-10/
 # 
@@ -1455,15 +1461,15 @@ The Millepede II source code can be downloaded from here:
   cd $ILCSOFT
   mkdir MillepedeII
   cd MillepedeII
-  svn co https://svnsrv.desy.de/desy/MillepedeII/tags/V03-02-02 V03-02-02
+  svn co https://svnsrv.desy.de/public/MillepedeII/tags/V03-03-00 V03-03-00
 @endcode
 
-You should add the $ILCSOFT/MillepedeII/V03-02-02 path to your environment $PATH
+You should add the $ILCSOFT/MillepedeII/V03-03-00 path to your environment $PATH
 or put a  soft link in your  $EUTELESCOPE/bin/ folder:
 
 @code
   cd $EUTELESCOPE/bin/
-  ln -sf $ILCSOFT/MillepedeII/V03-02-02/pede .
+  ln -sf $ILCSOFT/MillepedeII/V03-03-00/pede .
 @endcode
 
 Then, your $EUTELESCOPE/pysub/config/config.cfg file should contain:
