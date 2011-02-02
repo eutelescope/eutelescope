@@ -14,8 +14,6 @@
 # errno 32: Problem copying and registering the histogram to the SE
 #
 
-USER=rubinsky
-
 
 #############
 # Defining a function to output a command line message
@@ -131,7 +129,6 @@ echo "# Starting $Name-$Output at `date `"
 echo "########################################################################"
 echo
 
-#mail -s "name=$Name; output=$Output; STARTING           "  ${USER}@mail.desy.de 
 
 
 # prepare the directory structure as local
@@ -167,7 +164,6 @@ if [ $HasLocalGRIDLibraryTarball == "no" ] ; then
 fi
 
 
-#mail -s "name=$Name; output=$Output; getting tarball    "  ${USER}@mail.desy.de 
 
 
 # unpack the library
@@ -186,10 +182,7 @@ doCommand "$BASH ./ilc-grid-test-sw.sh"
 echo doCommand ". $VO_ILC_SW_DIR/initILCSOFT.sh $GRIDILCSoftVersion"
 echo "ILCSOFT : "$ILCSOFT
 #
-grep ClassDef $ROOTSYS/include/TH1.h >>out2
-mail -s "name=$Name; output=$Output; ClassDef      "  ${USER}@mail.desy.de<out2
 
-mail -s "name=$Name; output=$Output; ilcsoft ready      "  ${USER}@mail.desy.de< ilc-grid-test-sw.log
 
 r=$?
 if [ $r -ne 0 ] ; then
@@ -203,7 +196,6 @@ echo "# ILCSOFT ready to use"
 echo "########################################################################"
 echo
 
-#mail -s "name=$Name; output=$Output; ilcsoft ready      "  ${USER}@mail.desy.de 
 
 
 # set the list of Marlin plugins and the LD_LIBRARY_PATH
@@ -232,7 +224,6 @@ for file in $InputFileList; do
 
 done 
 
-#mail -s "name=$Name; output=$Output; getting all inputOK"  ${USER}@mail.desy.de 
 
 echo
 echo "########################################################################"
@@ -249,8 +240,6 @@ fi
 # list all the files available
 doCommand "ls -al"
 
-mail -s "name=$Name; output=$Output; status OUT         "  ${USER}@mail.desy.de < out
-mail -s "name=$Name; output=$Output; status err         "  ${USER}@mail.desy.de < err
 
 
 # ready to run marlin
