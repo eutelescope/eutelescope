@@ -27,17 +27,6 @@
 #include <AIDA/IHistogram1D.h>
 #endif
 
-#include <UTIL/CellIDEncoder.h>
-#include <UTIL/CellIDDecoder.h>
-#include <EVENT/LCCollection.h>
-#include <EVENT/LCEvent.h>
-#include <IMPL/LCCollectionVec.h>
-#include <IMPL/TrackerHitImpl.h>
-#include <IMPL/TrackImpl.h>
-#include <IMPL/TrackerDataImpl.h>
-#include <IMPL/LCFlagImpl.h>
-#include <Exceptions.h>
-
 // system includes <>
 #include <string>
 #include <vector>
@@ -152,8 +141,6 @@ namespace eutelescope {
     /*! Used to release memory allocated in init() step
      */
     virtual void end() ;
-
-bool hasMatchedHit(Track* fittrack);
 
   protected:
 
@@ -301,97 +288,6 @@ bool hasMatchedHit(Track* fittrack);
     static std::string _EtaX3DHistoName;
     static std::string _EtaY3DHistoName;
 
-
-
-	// some APIX stuff (histograms & arrays)
-	// libov@mail.desy.de 05 August 2010
-	static std::string	_totAPIXmatchedHistoName;
-	static std::string	_totAPIXunmatchedHistoName;
-	static std::string	_lv1APIXmatchedHistoName;
-	static std::string	_lv1APIXunmatchedHistoName;
-
-	std::vector<double> 	_totAPIX;
-	std::vector<float>  	_lv1APIX;
-
-	// some other relevant histograms
-	static std::string	_hitsInMatchedClusterHistoName;
-	static std::string	_hitsInUnmatchedClusterHistoName;
-
-	std::vector<int>	  	_hitsInCluster;
-
-	static std::string	_maxDifflv1MatchedHistoName;
-	static std::string	_maxDifflv1UnmatchedHistoName;
-	std::vector<float>	_maxDifflv1;
-
-	// ---  V. Libov 13 July (17 August)----
-	double _distMaxReference;
-	int _referencePlaneID;
-	int _referencePlaneIndex;
-	bool _onlyIntimeTracks;
-	// Implementing DUT plots in its local FoR, 18 August
-    static std::string _EfficiencyXLOCALHistoName;
-    static std::string _EfficiencyYLOCALHistoName;
-    static std::string _EfficiencyXYLOCALHistoName;
-
-	// measured hits in the local FoR of the DUT
-    std::vector<double> _measuredXLOCAL;
-    std::vector<double> _measuredYLOCAL;
-
-	int		_indexDUT;
-	double	_xPitch, _yPitch, _rot00, _rot01, _rot10, _rot11;
-
-	bool	_noHitYet;
-	int		_eventsWithNoHit;
-	
-	double	_transShiftX, _transShiftY;
-
-	void	getTransformationShifts();
-	double a,b,c,d;
-
-	// -- more DUT plots, 24 August 2010, libov@mail.desy.de
-    static std::string _MeasuredXLOCALHistoName;
-    static std::string _MeasuredYLOCALHistoName;
-    static std::string _MeasuredXYLOCALHistoName;
-
-    static std::string _FittedXLOCALHistoName;
-    static std::string _FittedYLOCALHistoName;
-    static std::string _FittedXYLOCALHistoName;
-
-	static std::string	_MatchedClusterSizeXHistoName;
-	static std::string	_MatchedClusterSizeYHistoName;
-
-	static std::string	_UnmatchedClusterSizeXHistoName;
-	static std::string	_UnmatchedClusterSizeYHistoName;
-
-	static std::string	_ChargeSharingProbXHistoName;
-	static std::string	_ChargeSharingProbYHistoName;
-	static std::string	_ChargeSharingProbXYHistoName;
-
-	std::vector<int>	  	_clusterSizeX;
-	std::vector<int>	  	_clusterSizeY;
-
-	// and even more (06 September 2010 libov@mail.desy.de)
-	static std::string	_totSinglePixelClustersXHistoName;
-	static std::string	_totSinglePixelClustersYHistoName;
-	static std::string	_totSinglePixelClustersXYHistoName;
-
-	static std::string	_totAllClustersXYHistoName;
-
-	std::vector<float>	_allDUTsmeasuredX;
-	std::vector<float>	_allDUTsmeasuredY;
-	std::vector<float>	_allDUTslv1;
-	std::vector<int>		_allDUTssensorID;
-
-	int		_lv1;
-
-	void fillAPIXhits(LCCollection* hitcol, LCCollection* original_zsdata);
-
-	static std::string	_MatchedHitsHistoName;
-	static std::string	_MatchedHitsVSEventHistoName;
-	static std::string	_NumberOfFittedTracksHistoName;
-
-	static std::string	_NumberOfMatchedReferencesHistoName;
-	static std::string	_Lv1OfFirstMatchedReferenceHistoName;
 
 #endif
 
