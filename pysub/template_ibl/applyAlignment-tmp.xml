@@ -9,8 +9,8 @@
 
                                ==> fitter-tmp.xml <===
 
-Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
+Author: Slava Libov, DESY <mailto:libvo@mail.desy.de>
+Version: $Id: applyAlignment-tmp.xml,v 1.7 2009-08-01 13:59:45 libov Exp $
 ==========================================================================================
 
 --> 
@@ -20,7 +20,9 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
    <execute>
       <processor name="AIDA"/>
       <processor name="LoadAlignment"/>
-      <processor name="ApplyAlignment"/>
+      <!-- processor name="ApplyAlignment"/-->
+      <processor name="ApplyAlignmentDirect"/>
+      <processor name="ApplyAlignmentReverse"/>
       <processor name="Save"/>
    </execute>
 
@@ -55,7 +57,9 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
   <parameter name="SimpleFileHandler" type="StringVec"> alignment @AlignmentFile@ alignment </parameter>
- </processor>
+  <!-- one can load as many db files as he wants -->
+  <!--parameter name="SimpleFileHandler" type="StringVec"> preAlignment  @preAlignmentFile@  preAlignment </parameter-->
+</processor>
 
  <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
  <!--Apply to the input hit the alignment corrections-->
@@ -75,10 +79,60 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
  </processor>
 
 
+ <processor name="ApplyAlignmentDirect" type="EUTelApplyAlignmentProcessor">
+ <!--Apply to the input hit the alignment corrections-->
+  <!--Alignment constant from the condition file-->
+  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignment </parameter>
+  <!--The name of the input hit collection-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+  <!--The name of the output hit collection-->
+  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedHit</parameter>
+  <!--Available methods are:
+ 0 --> shift only 
+ 1 --> rotation first 
+ 2 --> shift first -->
+  <parameter name="CorrectionMethod" type="int" value="1"/>
+  <parameter name="ApplyAlignmentDirection" type="int" value="0"/>
+  <parameter name="alignmentCollectionNames" type="vec" > alignment </parameter-->
+  <!-- several alignment db collection can be applied -->
+  <!--parameter name="alignmentCollectionNames" type="vec" > preAlignment  alignment </parameter-->
+  <!--Enable or disable histograms-->
+  <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="true"/>
+    <parameter name="Alpha" type="float" value="0.0"/>
+    <parameter name="Beta"  type="float" value="0.5"/>
+    <parameter name="Gamma" type="float" value="0.0"/>
+    <parameter name="PrintEvents" type="int" value="3"/>
+ </processor>
+
+ <processor name="ApplyAlignmentReverse" type="EUTelApplyAlignmentProcessor">
+  <!--Apply to the input hit the alignment corrections-->
+  <!--Alignment constant from the condition file-->
+  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignment </parameter>
+  <!--The name of the input hit collection-->
+  <parameter name="InputHitCollectionName" type="string"  lcioInType="TrackerHit"> alignedHit </parameter>
+  <!--The name of the output hit collection-->
+  <parameter name="OutputHitCollectionName" type="string"  lcioOutType="TrackerHit"> antiAlignedHit</parameter>
+  <!--Available methods are:
+     0 --> shift only 
+     1 --> rotation first 
+     2 --> shift first -->
+  <parameter name="CorrectionMethod" type="int" value="1"/>
+  <parameter name="ApplyAlignmentDirection" type="int" value="1"/>
+  <parameter name="alignmentCollectionNames" type="vec" >  alignment </parameter>
+  <!--Enable or disable histograms-->
+  <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="true"/>
+    <parameter name="Alpha" type="float" value="0.0"/>
+    <parameter name="Beta"  type="float" value="0.5"/>
+    <parameter name="Gamma" type="float" value="0.0"/>
+    <parameter name="PrintEvents" type="int" value="3"/>
+  </processor>
+
  <processor name="Save" type="EUTelOutputProcessor">
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
   <!--drops the named collections from the event-->
-  <parameter name="DropCollectionNames" type="StringVec"> hit hit_eta3x3 alignedHit_eta3x3 </parameter>
+  <parameter name="DropCollectionNames" type="StringVec">  </parameter>
   <!--drops all collections of the given type from the event-->
   <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
   <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
