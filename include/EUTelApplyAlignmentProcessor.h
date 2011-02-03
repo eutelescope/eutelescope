@@ -8,32 +8,48 @@
  *
  */
 // built only if USE_GEAR
-#if defined(USE_GEAR)
+// #if defined(USE_GEAR)
 #ifndef EUTELAPPLYALIGNMENTPROCESSOR_H
 #define EUTELAPPLYALIGNMENTPROCESSOR_H 1
 
 // eutelescope includes ".h"
+#include "EUTelAlignmentConstant.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
 
-// lcio includes <.h>
-#include <IMPL/TrackerHitImpl.h>
 
 // gear includes <.h>
 #include <gear/SiPlanesParameters.h>
 #include <gear/SiPlanesLayerLayout.h>
+
+// lcio includes <.h>
+#include "lcio.h"
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
 
+// lcio includes
+#include <UTIL/CellIDEncoder.h>
+#include <UTIL/CellIDDecoder.h>
+#include <EVENT/LCCollection.h>
+#include <EVENT/LCEvent.h>
+#include <IMPL/LCCollectionVec.h>
+#include <IMPL/TrackerHitImpl.h>
+#include <IMPL/TrackImpl.h>
+#include <IMPL/TrackerDataImpl.h>
+#include <IMPL/LCFlagImpl.h>
+#include <Exceptions.h>
+#include <IMPL/TrackImpl.h>
 
 // system includes <>
 #include <iostream>
 #include <string>
 #include <map>
+#include <vector>
+
 
 namespace eutelescope {
 
@@ -121,6 +137,26 @@ namespace eutelescope {
     virtual void processEvent (LCEvent * evt);
 
 
+    //! Apply Alignment
+    /*!
+     *
+     */
+    virtual void Direct(LCEvent *event);
+    
+    //! Apply Alignment in reverse direction
+    /*!
+     *
+     */
+    virtual void Reverse(LCEvent *event);
+     
+    //!
+    /*
+     */
+    virtual inline int GetApplyAlignmentDirection(){return _applyAlignmentDirection;}
+     
+    void TransformToLocalFrame(double & x, double & y, double & z, LCEvent * ev);
+    void revertAlignment(double & x, double & y, double & z, std::string	collectionName, LCEvent * ev) ;
+   
     //! Check event method
     /*! This method is called by the Marlin execution framework as
      *  soon as the processEvent is over. For the time being there is
@@ -153,6 +189,17 @@ namespace eutelescope {
 
   protected:
 
+    // Internal processor variables
+    // ----------------------------
+
+
+    int _nRun ;
+    int _nEvt ;
+
+    int _iDUT;
+	int	_indexDUT;
+	double	_xPitch, _yPitch, _rot00, _rot01, _rot10, _rot11;
+
     //! Input collection name.
     /*! This is the name of the input hit collection.
      */
@@ -182,6 +229,35 @@ namespace eutelescope {
      *  then rotated.
      */
     int _correctionMethod;
+
+    //! apply alignment direction modes
+    /*! There are basically two methods.
+     *  Here below a list of available methods:
+     *     0. <b>Direct </b> Normal alignment.
+     *     1. <b>Reverse </b> Unalign everything back to how it was. 
+     */
+    int _applyAlignmentDirection;
+
+    // 18 January 2011
+    EVENT::StringVec		_alignmentCollectionNames;
+    EVENT::StringVec		_alignmentCollectionSuffixes;
+
+    //! DEBUG
+    bool            _debugSwitch; 
+    //! rotation in ZY
+    //
+    double			_alpha;
+    //! rotation in ZX
+    //
+    double			_beta;
+    //! rotation in XY
+    //
+    double			_gamma;
+
+    //! common DEBUG1 information
+    /* set the number of events to have additional DEBUG1 information
+     */
+    int 			_printEvents;
 
     //! Current run number.
     /*! This number is used to store the current run number
@@ -259,4 +335,4 @@ namespace eutelescope {
 
 }
 #endif
-#endif // GEAR
+//#endif // GEAR
