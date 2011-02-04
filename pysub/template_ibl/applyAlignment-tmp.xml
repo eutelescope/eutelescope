@@ -93,17 +93,17 @@ Version: $Id: applyAlignment-tmp.xml,v 1.7 2009-08-01 13:59:45 libov Exp $
  2 --> shift first -->
   <parameter name="CorrectionMethod" type="int" value="1"/>
   <parameter name="ApplyAlignmentDirection" type="int" value="0"/>
-  <parameter name="alignmentCollectionNames" type="vec" > alignment </parameter-->
-  <!-- several alignment db collection can be applied -->
-  <!--parameter name="alignmentCollectionNames" type="vec" > preAlignment  alignment </parameter-->
+  <!--parameter name="alignmentCollectionNames" type="vec" > preAlignment
+  alignment </parameter-->
   <!--Enable or disable histograms-->
   <parameter name="HistogramSwitch" type="bool" value="false"/>
-    <parameter name="DEBUG" type="bool" value="true"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
     <parameter name="Alpha" type="float" value="0.0"/>
-    <parameter name="Beta"  type="float" value="0.5"/>
+    <parameter name="Beta"  type="float" value="0.0"/>
     <parameter name="Gamma" type="float" value="0.0"/>
     <parameter name="PrintEvents" type="int" value="3"/>
- </processor>
+  <parameter name="DoGear" type="bool" value="true"/>
+</processor>
 
  <processor name="ApplyAlignmentReverse" type="EUTelApplyAlignmentProcessor">
   <!--Apply to the input hit the alignment corrections-->
@@ -122,12 +122,12 @@ Version: $Id: applyAlignment-tmp.xml,v 1.7 2009-08-01 13:59:45 libov Exp $
   <parameter name="alignmentCollectionNames" type="vec" >  alignment </parameter>
   <!--Enable or disable histograms-->
   <parameter name="HistogramSwitch" type="bool" value="false"/>
-    <parameter name="DEBUG" type="bool" value="true"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
     <parameter name="Alpha" type="float" value="0.0"/>
-    <parameter name="Beta"  type="float" value="0.5"/>
+    <parameter name="Beta"  type="float" value="0.0"/>
     <parameter name="Gamma" type="float" value="0.0"/>
     <parameter name="PrintEvents" type="int" value="3"/>
-  </processor>
+   <parameter name="DoGear" type="bool" value="true"/>
 
  <processor name="Save" type="EUTelOutputProcessor">
  <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->

@@ -22,6 +22,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <processor name="LoadAlignment"/>
       <processor name="ApplyAlignment"/>
       <processor name="Fitter"/>
+      <processor name="ApplyAlignmentReverse"/>
       <processor name="FitterHisto"/>
         <!-- processor name="DUTHisto"/-->
         <!-- processor name="NTuple"/-->
@@ -166,6 +167,31 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Lower window edge in Y-->
   <!--parameter name="WindowMinY" type="FloatVec"> </parameter-->
 </processor>
+
+<processor name="ApplyAlignmentReverse" type="EUTelApplyAlignmentProcessor">
+  <!--Apply to the input hit the alignment corrections-->
+  <!--Alignment constant from the condition file-->
+  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignment </parameter>
+  <!--The name of the input hit collection-->
+  <parameter name="InputHitCollectionName" type="string"  lcioInType="TrackerHit"> alignedHit </parameter>
+  <!--The name of the output hit collection-->
+  <parameter name="OutputHitCollectionName" type="string"  lcioOutType="TrackerHit"> antiAlignedHit</parameter>
+  <!--Available methods are:
+     0 --> shift only 
+     1 --> rotation first 
+     2 --> shift first  -->
+  <parameter name="CorrectionMethod" type="int" value="1"/>
+  <parameter name="ApplyAlignmentDirection" type="int" value="1"/>
+  <parameter name="alignmentCollectionNames" type="vec" >  alignment </parameter>
+   <!--Enable or disable histograms-->
+   <!--parameter name="HistogramSwitch" type="bool" value="false"/-->
+   <!--parameter name="DEBUG" type="bool" value="false"/-->
+   <!--parameter name="Alpha" type="float" value="0.0"/-->
+   <!--parameter name="Beta"  type="float" value="0.0"/-->
+   <!--parameter name="Gamma" type="float" value="0.0"/-->
+   <!--parameter name="PrintEvents" type="int" value="3"/-->
+  <parameter name="DoGear" type="bool" value="true"/>
+ </processor>
 
  <processor name="FitterHisto" type="EUTelFitHistograms">
  <!--Histogram track fit results-->

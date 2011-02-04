@@ -87,7 +87,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <parameter name="InputMode" type="int" value="0"/>
   <!--Maximal number of track candidates.-->
   <parameter name="MaxTrackCandidates" type="int" value="100000"/>
-  <parameter name="MaxTrackCandidatesTotal" type="int" value="1000"/>
+  <parameter name="MaxTrackCandidatesTotal" type="int" value="100000"/>
   <!--Use only events with one hit in every plane.-->
   <parameter name="OnlySingleHitEvents" type="int" value="0"/>
   <!--Use only events with one track candidate.-->
