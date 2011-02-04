@@ -148,7 +148,19 @@ namespace eutelescope {
      *
      */
     virtual void Reverse(LCEvent *event);
-     
+ 
+    //! Apply GEAR shits and rotations
+    /*!
+     *
+     */
+    virtual void ApplyGear6D(LCEvent *event);
+ 
+    //! Revert GEAR shits and rotations
+    /*!
+     *
+     */
+    virtual void RevertGear6D(LCEvent *event);
+   
     //!
     /*
      */
@@ -156,7 +168,13 @@ namespace eutelescope {
      
     void TransformToLocalFrame(double & x, double & y, double & z, LCEvent * ev);
     void revertAlignment(double & x, double & y, double & z, std::string	collectionName, LCEvent * ev) ;
-   
+ 
+    //! Perform Euler rotations
+    void _EulerRotation(int sensorID, double* _telPos, double* _gRotation);
+
+    //! Perform Euler rotations backwards
+    void _EulerRotationInverse(int sensorID, double* _telPos, double* _gRotation);
+
     //! Check event method
     /*! This method is called by the Marlin execution framework as
      *  soon as the processEvent is over. For the time being there is
@@ -186,6 +204,17 @@ namespace eutelescope {
      *  that this hit is belonging to the plane at the closest distant.
      */
     int guessSensorID( lcio::TrackerHitImpl * hit ) ;
+
+  private:
+    //! Conversion ID map.
+    /*! In the data file, each cluster is tagged with a detector ID
+     *  identify the sensor it belongs to. In the geometry
+     *  description, there are along with the sensors also "passive"
+     *  layers and other stuff. Those are identify by a layerindex. So
+     *  we need a conversion table to go from the sensorID to the
+     *  layerindex.
+     */
+    std::map< int, int > _conversionIdMap;
 
   protected:
 
@@ -241,6 +270,13 @@ namespace eutelescope {
     // 18 January 2011
     EVENT::StringVec		_alignmentCollectionNames;
     EVENT::StringVec		_alignmentCollectionSuffixes;
+
+    //! DoGear
+    bool            _doGear; 
+
+    //! DoAlignCollection
+    bool            _doAlignCollection; 
+
 
     //! DEBUG
     bool            _debugSwitch; 

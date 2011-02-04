@@ -38,6 +38,8 @@
 #include <marlin/AIDAProcessor.h>
 #endif
 
+// ROOT includes:
+#include "TVector3.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -135,6 +137,12 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor () :Processor("EUTelA
   registerProcessorParameter ("alignmentCollectionNames",
                             "List of alignment collections that were applied to the DUT",
                             _alignmentCollectionSuffixes, _alignmentCollectionSuffixExamples);
+
+  registerOptionalParameter("DoAlignCollection","Implement geometry shifts and rotations as described in alignmentCollectionName ",
+                            _doAlignCollection, static_cast< bool > ( 0 ) );
+
+  registerOptionalParameter("DoGear","Implement geometry shifts and rotations as described in GEAR steering file ",
+                            _doGear, static_cast< bool > ( 0 ) );
 
   // DEBUG parameters :
   // turn ON/OFF debug features 
@@ -249,12 +257,26 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
             
             if( GetApplyAlignmentDirection() == 0 )
             {
-                Direct(event);
+                if( _doGear )
+                {
+                    ApplyGear6D(event);
+                }
+                if( _doAlignCollection )
+                {
+                    Direct(event);
+                }
             }
             else
                 if( GetApplyAlignmentDirection() == 1 )
                 {
-                    Reverse(event);     
+                    if( _doAlignCollection )
+                    {
+                        Reverse(event);     
+                    }
+                    if( _doGear )
+                    {
+                        RevertGear6D(event);
+                    }
                 }
                 else
                 {
@@ -269,6 +291,412 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
             fevent = false;
         }
     }
+
+}
+
+void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event) 
+{
+ 
+
+  if ( _iEvt % 10 == 0 )
+    streamlog_out ( MESSAGE4 ) << "Processing event  (ApplyGear6D) "
+                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
+                               << setfill(' ')
+                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  ++_iEvt;
+
+
+  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
+
+  if ( evt->getEventType() == kEORE ) 
+  {
+    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
+    return;
+  }
+  else if ( evt->getEventType() == kUNKNOWN ) 
+  {
+    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+                               << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+  }
+
+
+  try 
+  {
+
+    LCCollectionVec * inputCollectionVec         = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputHitCollectionName));
+    
+    if (fevent) 
+    {
+
+     
+#ifndef NDEBUG
+        // print out the lookup table
+        map< int , int >::iterator mapIter = _lookUpTable.begin();
+        while ( mapIter != _lookUpTable.end() ) 
+        {
+            streamlog_out ( DEBUG ) << "Sensor ID = " << mapIter->first
+                                    << " is in position " << mapIter->second << endl;
+            ++mapIter;
+        }
+#endif
+    }
+    
+    
+    LCCollectionVec * outputCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);
+
+    for (size_t iHit = 0; iHit < inputCollectionVec->size(); iHit++) 
+    {
+
+      TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( iHit ) ) ;
+
+      // now we have to understand which layer this hit belongs to.
+      int sensorID = guessSensorID( inputHit );
+
+      if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) 
+      {
+          // first of all try to see if this sensorID already belong to
+          if ( _conversionIdMap.find( sensorID ) == _conversionIdMap.end() ) 
+          {
+              // this means that this detector ID was not already inserted,
+              // so this is the right place to do that
+          
+              for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) 
+              {
+                  if ( _siPlanesLayerLayout->getID(iLayer) == sensorID ) 
+                  {
+                      _conversionIdMap.insert( make_pair( sensorID, iLayer ) );
+                      break;
+                  }
+              }
+          }
+      }
+
+      int layerIndex   = _conversionIdMap[sensorID];
+
+      // determine z position of the plane
+	  // 20 December 2010 @libov
+      float	z_sensor = 0;
+	  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
+      {
+          if (sensorID == _siPlanesLayerLayout->getID( iPlane ) ) 
+          {
+              z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ( iPlane ) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( iPlane );
+              break;
+          }
+      }
+
+      // copy the input to the output, at least for the common part
+      TrackerHitImpl   * outputHit  = new TrackerHitImpl;
+      outputHit->setType( inputHit->getType() );
+      outputHit->rawHits() = inputHit->getRawHits();
+
+
+      double * inputPosition      = const_cast< double * > ( inputHit->getPosition() ) ;
+      double   outputPosition[3]  = { 0., 0., 0. };
+
+      if ( 1==1 ) 
+      {
+
+          double telPos[3]    = {0., 0., 0.};
+          double gRotation[3] = { 0., 0., 0.}; // not rotated
+
+          if ( _debugSwitch )
+          {
+              telPos[0] = 0.;
+              telPos[1] = 0.;
+              telPos[2] = 0.; 
+              gRotation[0] = _alpha;
+              gRotation[1] = _beta ;
+              gRotation[2] = _gamma;
+          }
+          else
+          {
+              gRotation[0]    = _siPlanesLayerLayout->getLayerRotationXY(layerIndex); // Euler alpha ;
+              gRotation[1]    = _siPlanesLayerLayout->getLayerRotationZX(layerIndex); // Euler alpha ;
+              gRotation[2]    = _siPlanesLayerLayout->getLayerRotationZY(layerIndex); // Euler alpha ;
+
+              // input angles are in DEGREEs !!!
+              // translate into radians
+    
+              gRotation[0]  =   gRotation[0] *3.1415926/180.; // 
+              gRotation[1]  =   gRotation[1] *3.1415926/180.; //
+              gRotation[2]  =   gRotation[2] *3.1415926/180.; //
+
+              telPos[0]  =  _siPlanesLayerLayout->getSensitivePositionX(layerIndex); // mm
+              telPos[1]  =  _siPlanesLayerLayout->getSensitivePositionY(layerIndex); // mm
+              telPos[2]  =  _siPlanesLayerLayout->getSensitivePositionZ(layerIndex); // mm
+              
+          }
+ 
+      
+          if( _iEvt < _printEvents )
+          {
+                if ( _debugSwitch ) 
+                {
+                    streamlog_out ( MESSAGE )  << "Debugmode ON " << endl;                                   
+                }
+                
+                streamlog_out ( MESSAGE )  << "_applyGear6D " << endl;
+                streamlog_out ( MESSAGE )  << " telPos[0] = " << telPos[0]  << endl;
+                streamlog_out ( MESSAGE )  << " telPos[1] = " << telPos[1]  << endl;
+                streamlog_out ( MESSAGE )  << " telPos[2] = " << telPos[2]  << endl;
+                streamlog_out ( MESSAGE )  << " gRotation[0] = " << gRotation[0]  << endl;
+                streamlog_out ( MESSAGE )  << " gRotation[1] = " << gRotation[1]  << endl;
+                streamlog_out ( MESSAGE )  << " gRotation[2] = " << gRotation[2]  << endl;
+          }
+
+          // rotations first
+ 
+          outputPosition[0] = inputPosition[0];
+          outputPosition[1] = inputPosition[1];
+          outputPosition[2] = inputPosition[2] - z_sensor;
+          
+          _EulerRotation( sensorID,outputPosition, gRotation);
+
+          // then the shifts
+//          outputPosition[0]  = telPos[0];
+//          outputPosition[1]  = telPos[1];
+//          outputPosition[2]  = telPos[2];
+
+          outputPosition[2] += z_sensor;
+      }
+      else
+      {
+          // this hit belongs to a plane whose sensorID is not in the
+          // alignment constants. So the idea is to eventually advice
+          // the users if running in DEBUG and copy the not aligned hit
+          // in the new collection.
+          streamlog_out ( WARNING ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
+                                    << iHit << endl;
+
+          for ( size_t i = 0; i < 3; ++i )
+          {
+              outputPosition[i] = inputPosition[i];
+          }
+          
+      }
+
+      if ( _iEvt < _printEvents )
+      {
+         streamlog_out ( MESSAGE ) << "ApplyGear: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] << " " << z_sensor << endl;                
+         streamlog_out ( MESSAGE ) << "ApplyGear: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2] << " " << z_sensor << endl;                
+      }
+
+      outputHit->setPosition( outputPosition ) ;
+      outputCollectionVec->push_back( outputHit );
+    }
+
+    evt->addCollection( outputCollectionVec, _outputHitCollectionName );
+
+  } catch (DataNotAvailableException& e) {
+    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
+                                << " in run " << event->getRunNumber() << endl;
+  }
+
+}
+
+
+void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event) 
+{
+ 
+  if ( _iEvt % 10 == 0 )
+    streamlog_out ( MESSAGE4 ) << "Processing event  (RevertGear6D) "
+                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
+                               << setfill(' ')
+                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+  ++_iEvt;
+
+
+  EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
+
+  if ( evt->getEventType() == kEORE ) 
+  {
+    streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
+    return;
+  }
+  else if ( evt->getEventType() == kUNKNOWN ) 
+  {
+    streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
+                               << " is of unknown type. Continue considering it as a normal Data Event." << endl;
+  }
+
+
+  try 
+  {
+
+    LCCollectionVec * inputCollectionVec         = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputHitCollectionName));
+    
+    if (fevent) 
+    {
+
+     
+#ifndef NDEBUG
+        // print out the lookup table
+        map< int , int >::iterator mapIter = _lookUpTable.begin();
+        while ( mapIter != _lookUpTable.end() ) 
+        {
+            streamlog_out ( DEBUG ) << "Sensor ID = " << mapIter->first
+                                    << " is in position " << mapIter->second << endl;
+            ++mapIter;
+        }
+#endif
+    }
+    
+    
+    LCCollectionVec * outputCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);
+
+    for (size_t iHit = 0; iHit < inputCollectionVec->size(); iHit++) 
+    {
+
+      TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( iHit ) ) ;
+
+      // now we have to understand which layer this hit belongs to.
+      int sensorID = guessSensorID( inputHit );
+
+      if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) 
+      {
+          // first of all try to see if this sensorID already belong to
+          if ( _conversionIdMap.find( sensorID ) == _conversionIdMap.end() ) 
+          {
+              // this means that this detector ID was not already inserted,
+              // so this is the right place to do that
+          
+              for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) 
+              {
+                  if ( _siPlanesLayerLayout->getID(iLayer) == sensorID ) 
+                  {
+                      _conversionIdMap.insert( make_pair( sensorID, iLayer ) );
+                      break;
+                  }
+              }
+          }
+      }
+      
+      int layerIndex   = _conversionIdMap[sensorID];
+
+      // determine z position of the plane
+	  // 20 December 2010 @libov
+      float	z_sensor = 0;
+	  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
+      {
+          if (sensorID == _siPlanesLayerLayout->getID( iPlane ) ) 
+          {
+              z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ( iPlane ) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( iPlane );
+              break;
+          }
+      }
+
+      // copy the input to the output, at least for the common part
+      TrackerHitImpl   * outputHit  = new TrackerHitImpl;
+      outputHit->setType( inputHit->getType() );
+      outputHit->rawHits() = inputHit->getRawHits();
+
+
+      double * inputPosition      = const_cast< double * > ( inputHit->getPosition() ) ;
+      double   outputPosition[3]  = { 0., 0., 0. };
+
+   
+      if ( 1==1  ) 
+      {
+
+          double telPos[3]    = {0., 0., 0.};
+          double gRotation[3] = { 0., 0., 0.}; // not rotated
+
+
+          if ( _debugSwitch )
+          {
+              telPos[0] = 0.;
+              telPos[1] = 0.;
+              telPos[2] = 0.; 
+              gRotation[0] = _alpha;
+              gRotation[1] = _beta ;
+              gRotation[2] = _gamma;
+          }
+          else
+          {
+              gRotation[0]    = _siPlanesLayerLayout->getLayerRotationXY(layerIndex); // Euler alpha ;
+              gRotation[1]    = _siPlanesLayerLayout->getLayerRotationZX(layerIndex); // Euler alpha ;
+              gRotation[2]    = _siPlanesLayerLayout->getLayerRotationZY(layerIndex); // Euler alpha ;
+
+              // input angles are in DEGREEs !!!
+              // translate into radians
+    
+              gRotation[0]  =   gRotation[0] *3.1415926/180.; // 
+              gRotation[1]  =   gRotation[1] *3.1415926/180.; //
+              gRotation[2]  =   gRotation[2] *3.1415926/180.; //
+
+              telPos[0]  =  _siPlanesLayerLayout->getSensitivePositionX(layerIndex); // mm
+              telPos[1]  =  _siPlanesLayerLayout->getSensitivePositionY(layerIndex); // mm
+              telPos[2]  =  _siPlanesLayerLayout->getSensitivePositionZ(layerIndex); // mm
+              
+          }
+      
+          if( _iEvt < _printEvents )
+          {
+                if ( _debugSwitch ) 
+                {
+                    streamlog_out ( MESSAGE )  << "Debugmode ON " << endl;                                   
+                }
+                
+                streamlog_out ( MESSAGE )  << "_revertGear6D " << endl;
+                streamlog_out ( MESSAGE )  << " telPos[0] = " << telPos[0]  << endl;
+                streamlog_out ( MESSAGE )  << " telPos[1] = " << telPos[1]  << endl;
+                streamlog_out ( MESSAGE )  << " telPos[2] = " << telPos[2]  << endl;
+                streamlog_out ( MESSAGE )  << " gRotation[0] = " << gRotation[0]  << endl;
+                streamlog_out ( MESSAGE )  << " gRotation[1] = " << gRotation[1]  << endl;
+                streamlog_out ( MESSAGE )  << " gRotation[2] = " << gRotation[2]  << endl;
+          }
+
+          // rotations first
+ 
+          outputPosition[0] = inputPosition[0];
+          outputPosition[1] = inputPosition[1];
+          outputPosition[2] = inputPosition[2] - z_sensor;
+          
+          _EulerRotationInverse( sensorID,outputPosition, gRotation);
+
+          // then the shifts
+//          outputPosition[0] -= telPos[0];
+//          outputPosition[1] -= telPos[1];
+//          outputPosition[2] -= telPos[2];
+
+          outputPosition[2] += z_sensor;
+      }
+      else
+      {
+          // this hit belongs to a plane whose sensorID is not in the
+          // alignment constants. So the idea is to eventually advice
+          // the users if running in DEBUG and copy the not aligned hit
+          // in the new collection.
+          streamlog_out ( WARNING ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
+                                    << iHit << endl;
+
+          for ( size_t i = 0; i < 3; ++i )
+          {
+              outputPosition[i] = inputPosition[i];
+          }
+          
+      }
+
+      if ( _iEvt < _printEvents )
+      {
+         streamlog_out ( MESSAGE ) << "RevertGear: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] << " " << z_sensor << endl;                
+         streamlog_out ( MESSAGE ) << "RevertGear: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2] << " " << z_sensor << endl;                
+      }
+
+      outputHit->setPosition( outputPosition ) ;
+      outputCollectionVec->push_back( outputHit );
+    }
+
+    evt->addCollection( outputCollectionVec, _outputHitCollectionName );
+
+  } catch (DataNotAvailableException& e) {
+    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
+                                << " in run " << event->getRunNumber() << endl;
+  }
+
 
 }
 
@@ -311,7 +739,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
     
         if(alignmentCollectionVec->size() > 0 )
         {
-            streamlog_out ( MESSAGE ) << "alignment detectorID: " ;
+            streamlog_out ( MESSAGE ) << "alignment sensorID: " ;
             for ( size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos ) 
             {
                 EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) );
@@ -645,7 +1073,7 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
     
             if(alignmentCollectionVec->size() > 0 )
             {
-                streamlog_out ( MESSAGE ) << "alignment detectorID: " ;
+                streamlog_out ( MESSAGE ) << "alignment sensorID: " ;
                 for ( size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos ) 
                 {
                     EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) );
@@ -1048,7 +1476,7 @@ void EUTelApplyAlignmentProcessor::bookHistos() {
     {
       int sensorID = _siPlanesLayerLayout->getID( iDet ) ;
  
-      streamlog_out ( MESSAGE4 ) <<  "Booking histograms for detectorID: " << sensorID << endl;
+      streamlog_out ( MESSAGE4 ) <<  "Booking histograms for sensorID: " << sensorID << endl;
 
       string basePath;
       {
@@ -1387,6 +1815,54 @@ void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, doubl
 	x = x / det;
 	y = y / det;
 	z = z / det;
+}
+
+
+
+void EUTelApplyAlignmentProcessor::_EulerRotation(int sensorID, double* _telPos, double* _gRotation) {
+   
+    try{
+        double t = _telPos[2];
+    }
+    catch(...)
+    {
+        throw InvalidParameterException("_telPos[] array can not be accessed \n");
+    }
+
+    TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
+
+    if( TMath::Abs(_gRotation[2]) > 1e-6 )    _RotatedSensorHit.RotateX( _gRotation[2] ); // in ZY
+    if( TMath::Abs(_gRotation[1]) > 1e-6 )    _RotatedSensorHit.RotateY( _gRotation[1] ); // in ZX 
+    if( TMath::Abs(_gRotation[0]) > 1e-6 )    _RotatedSensorHit.RotateZ( _gRotation[0] ); // in XY
+
+    _telPos[0] = _RotatedSensorHit.X();
+    _telPos[1] = _RotatedSensorHit.Y();
+    _telPos[2] = _RotatedSensorHit.Z();
+ 
+}
+
+
+void EUTelApplyAlignmentProcessor::_EulerRotationInverse(int sensorID, double* _telPos, double* _gRotation) {
+   
+    try{
+        double t = _telPos[2];
+    }
+    catch(...)
+    {
+        throw InvalidParameterException("_telPos[] array can not be accessed \n");
+    }
+
+    TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
+
+    if( TMath::Abs(_gRotation[0]) > 1e-6 )    _RotatedSensorHit.RotateZ( -1.*_gRotation[0] ); // in XY
+    if( TMath::Abs(_gRotation[1]) > 1e-6 )    _RotatedSensorHit.RotateY( -1.*_gRotation[1] ); // in ZX 
+    if( TMath::Abs(_gRotation[2]) > 1e-6 )    _RotatedSensorHit.RotateX( -1.*_gRotation[2] ); // in ZY
+
+
+    _telPos[0] = _RotatedSensorHit.X();
+    _telPos[1] = _RotatedSensorHit.Y();
+    _telPos[2] = _RotatedSensorHit.Z();
+ 
 }
 
 
