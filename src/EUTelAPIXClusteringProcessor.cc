@@ -418,31 +418,40 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 						//streamlog_out(MESSAGE1) << "Adding Pixel " << i << " to cluster vector" << endl;
 					}
 				}
-				if ( (apixCluster->size() >= (unsigned int)_minNPixels) && (apixCluster->getTotalCharge() >= (unsigned int)_minCharge) ) {
-					int x,y,xsize,ysize;
-					apixCluster->getCenterCoord(x,y);
+	
+                if ( (apixCluster->size() >= (unsigned int)_minNPixels) && (apixCluster->getTotalCharge() >= (unsigned int)_minCharge) ) {
+					//int x,y; 
+					float x,y;
+					int xsize,ysize;
+					// This is only using digital hit information
+					// apixCluster->getCenterCoord(x,y); 
+					// This is using analogue hit information
+					apixCluster->getCenterOfGravity(x,y);
 					apixCluster->getClusterSize(xsize,ysize);
+					if (x > 0 && x < 10000 && y > 0 && y < 10000) {
+						//streamlog_out(MESSAGE3) << "Clustervars: " << sensorID << " " << *it << " " << x << " " << y << " " <<xsize << " " << ysize << " " << type << endl;
 
-					int clusterID = *it;
-					zsDataEncoder["sensorID"]      = sensorID;
-					zsDataEncoder["clusterID"]     = clusterID;
-					zsDataEncoder["xSeed"]         = x;
-					zsDataEncoder["ySeed"]         = y;
-					zsDataEncoder["xCluSize"]      = xsize;
-					zsDataEncoder["yCluSize"]      = ysize;
-					zsDataEncoder["type"]          = static_cast<int>(kEUTelAPIXClusterImpl);
-					zsDataEncoder.setCellID(pulseFrame);
-					pulseFrame->setTrackerData(clusterFrame);
-					clusterCollection->push_back(pulseFrame);
-					
-					idClusterEncoder["sensorID"] 		= sensorID;
-					idClusterEncoder["clusterID"] 		= clusterID;
-					idClusterEncoder["sparsePixelType"] 	= static_cast<int>(type);
-					idClusterEncoder["type"] 		= static_cast<int>(kEUTelAPIXClusterImpl);
-					idClusterEncoder.setCellID(clusterFrame);
-					sparseClusterCollectionVec->push_back(clusterFrame);
+						int clusterID = *it;
+						zsDataEncoder["sensorID"]      = sensorID;
+						zsDataEncoder["clusterID"]     = clusterID;
+						zsDataEncoder["xSeed"]         = x;
+						zsDataEncoder["ySeed"]         = y;
+						zsDataEncoder["xCluSize"]      = xsize;
+						zsDataEncoder["yCluSize"]      = ysize;
+						zsDataEncoder["type"]          = static_cast<int>(kEUTelAPIXClusterImpl);
+						zsDataEncoder.setCellID(pulseFrame);
+						pulseFrame->setTrackerData(clusterFrame);
+						clusterCollection->push_back(pulseFrame);
+						
+						idClusterEncoder["sensorID"] 		= sensorID;
+						idClusterEncoder["clusterID"] 		= clusterID;
+						idClusterEncoder["sparsePixelType"] 	= static_cast<int>(type);
+						idClusterEncoder["type"] 		= static_cast<int>(kEUTelAPIXClusterImpl);
+						idClusterEncoder.setCellID(clusterFrame);
+						sparseClusterCollectionVec->push_back(clusterFrame);
+					}
 				}
-			}
+            }
 		 }
 	}
 	if ( !isDummyAlreadyExisting ) {
