@@ -12,6 +12,9 @@
 #ifndef EUTelTestFitter_h
 #define EUTelTestFitter_h 1
 
+// eutelescope includes ".h"
+#include "EUTelAlignmentConstant.h"
+
 #include "marlin/Processor.h"
 
 // gear includes <.h>
@@ -20,6 +23,18 @@
 
 // lcio includes <.h>
 #include "lcio.h"
+#include <UTIL/CellIDEncoder.h>
+#include <UTIL/CellIDDecoder.h>
+#include <EVENT/LCCollection.h>
+#include <EVENT/LCEvent.h>
+#include <IMPL/LCCollectionVec.h>
+#include <IMPL/TrackerHitImpl.h>
+#include <IMPL/TrackImpl.h>
+#include <IMPL/TrackerDataImpl.h>
+#include <IMPL/LCFlagImpl.h>
+#include <Exceptions.h>
+#include <IMPL/TrackImpl.h>
+
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -437,6 +452,8 @@ namespace eutelescope {
 
     std::string _outputHitColName ;
 
+    EVENT::StringVec	_alignmentCollectionNames;
+
     bool _InputHitsInTrack;
 
     bool _OutputHitsInTrack;
@@ -600,6 +617,15 @@ namespace eutelescope {
     float           _SlopeYLimit;
     float           _SlopeDistanceMax; 
     // --------------------------------------------
+
+    // 21 january 2011, libov@mail.desy.de ------ 
+	// corrected for non-normal sensors
+	std::vector<double> _fittedXcorr;
+	std::vector<double> _fittedYcorr;
+	std::vector<double> _fittedZcorr;
+	void getTrackImpactPoint(double & x, double & y, double & z, Track * tr, LCEvent * ev);
+	int	_indexDUTneighbour;
+	double	_zDUTneighbour;
 
 #endif
 

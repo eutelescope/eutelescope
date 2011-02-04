@@ -60,6 +60,9 @@
 #include <cstdlib>
 #include <limits>
 
+// ROOT includes ".h"
+#include <TVectorD.h>
+#include <TMatrixD.h>
 
 using namespace std;
 using namespace lcio ;
@@ -112,6 +115,14 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
   registerOutputCollection(LCIO::TRACKERHIT,"OutputHitCollectionName",
                            "Collection name for fitted particle hits (positions)",
                            _outputHitColName, string ("testfithits"));
+
+  // alignment collections (might be important) 
+  EVENT::StringVec	_alignmentCollectionNames;
+  _alignmentCollectionNames.push_back("alignment");
+  
+  registerProcessorParameter ("alignmentCollectionNames",
+                            "List of alignment collections which are neede to get track position on a Sensor surface ",
+                            _alignmentCollectionNames, _alignmentCollectionNames );
 
   // compulsory parameters:
 
@@ -1320,23 +1331,25 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
         for(int ipl=0;ipl<_nTelPlanes;ipl++)  
         {
-	  int jhit=-1;
+            int jhit=-1;
 
-          if(_isActive[ipl])  
+            if(_isActive[ipl])  
             {
-            int ihit = (ichoice/_planeMod[ipl])%_planeChoice[ipl];
-      
-            if(ihit<_planeHits[ipl])
-                jhit = planeHitID[ipl].at(ihit);
-	    }
+                int ihit = (ichoice/_planeMod[ipl])%_planeChoice[ipl];
+                
+                if(ihit<_planeHits[ipl])
+                {
+                    jhit = planeHitID[ipl].at(ihit);
+                }
+            }
 
-           fittedHits.push_back(jhit);
+            fittedHits.push_back(jhit);
 
-           fittedX.push_back(_fitX[ipl]);
-           fittedY.push_back(_fitY[ipl]);
-           fittedEx.push_back(_fitEx[ipl]);
-           fittedEy.push_back(_fitEy[ipl]);
-	}
+            fittedX.push_back(_fitX[ipl]);
+            fittedY.push_back(_fitY[ipl]);
+            fittedEx.push_back(_fitEx[ipl]);
+            fittedEy.push_back(_fitEy[ipl]);
+        }
 
         nFittedTracks++;
 
@@ -2342,6 +2355,228 @@ int EUTelTestFitter::GaussjSolve(double *alfa,double *beta,int n)
 
   return 0;
 }
+
+void EUTelTestFitter::getTrackImpactPoint(double & x, double & y, double & z, Track * tr, LCEvent * ev) {
+
+    // what should be here:
+    // get the center of sensor (X,Y,Z) and normal vector (a,b,c)
+    // based on Gear information and all available alignment collections 
+    // at the moment Millepede "alignment" and offset "preAlignment" collections
+    //
+    // solve linear algebra
+    //  intersection of sensor Plane and Track
+    //
+    //  input: 
+    //        Track   *tr
+    //        LCEvent *ev
+    //  output:
+    //        double x,y,z
+    //
+    //
+    
+    // code taken from EUTelAPIXHistograms
+    // small fixes to make it compile,
+    // definitely not the way to write code
+    // 
+    double _zDUT           = 0.;
+    double _zDUTneighbour  = 0.;
+    int    _indexDUT       = 0 ;
+    int    _manualDUTid    = 0 ;
+
+	std::vector<EVENT::TrackerHit*>  trackhits = tr->getTrackerHits();
+	int nHit =   trackhits.size();
+
+
+	// first, get the track impact points at the DUT and the layer closest to it
+
+	// coordinates of the track impact point at the closest to DUT layer
+	double x1=0, y1=0, z1=0;
+	// coordinates of the track impact point at the DUT layer
+	double x2=0, y2=0, z2=0;
+
+	// for sanity check
+	bool	foundHitDUT = false;
+	bool	foundHitNeighbour = false;
+
+   
+    double	dist;
+	for(int ihit=0; ihit< nHit ; ihit++)
+	{
+		TrackerHit * meshit = trackhits.at(ihit);
+
+		// Look at fitted hits only!
+		if (meshit->getType() < 32) continue;
+		// Hit position
+		const double * pos = meshit->getPosition();
+
+		// look for a hit at DUT
+		dist =  pos[2] - _zDUT ;
+		if (dist * dist < 1) {
+			if (foundHitDUT) {
+				cout << "hit at DUT layer already found! Terminating" << endl;
+				abort();
+			}
+			x2 = pos[0];
+			y2 = pos[1];
+			z2 = pos[2];
+			foundHitDUT = true;
+		}
+		// look for a hit at DUT's neighbour
+		dist =  pos[2] - _zDUTneighbour ;
+		if (dist * dist < 1) {
+			if (foundHitNeighbour) {
+				cout << "hit at DUT neigbour layer already found! Terminating" << endl;
+				abort();
+			}
+			x1 = pos[0];
+			y1 = pos[1];
+			z1 = pos[2];
+		}
+
+	}
+
+	if (! (foundHitDUT && foundHitNeighbour) ) {
+		cout << "Was not possible to find hits at dut and next-to-dut layers. Terminating." << endl;
+		abort();
+	}
+
+	/*cout << "track impact points:" << endl;
+	cout << x1 << " , " << z1 << endl;
+	cout << x2 << " , " << z2 << endl;*/
+
+	// now proceed to calculation of the intersection point
+	// of this track and the rotated DUT layer
+
+	// for the formulas see logbook 20/01/2011
+	// track parametrization: X = offsetX + slopeX * Z, Y = offsetY + slopeY * Z,
+
+	double	slopeX = (x2 - x1) / (z2-z1);
+	double	offsetX = x1 - z1 * slopeX;
+
+	double	slopeY = (y2 - y1) / (z2-z1);
+	double	offsetY = y1 - z1 * slopeY;
+
+
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["TrackSlopeX"]))->fill(slopeX);
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["TrackOffsetX"]))->fill(offsetX);
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["TrackSlopeY"]))->fill(slopeY);
+	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["TrackOffsetY"]))->fill(offsetY);
+
+	// now determine the total shift in X due to alignment
+	//double	deltaX = 0;
+
+
+	// this is a normal vector to the plane
+	TVectorD	NormalVector(3);
+	NormalVector(0) = 0.;
+	NormalVector(1) = 0.;
+	NormalVector(2) = 1.;
+
+	double	z_sensor = _siPlanesLayerLayout->getSensitivePositionZ(_indexDUT)+ 0.5 * _siPlanesLayerLayout->getSensitiveThickness( _indexDUT );
+
+	// this is a vector to the point in the plane
+	TVectorD		r0Vector(3);
+	r0Vector(0)=0;
+	r0Vector(1)=0;
+	r0Vector(2)=z_sensor;
+
+	// this is a vector, pointing to the (0, 0, z_sensor )
+	// it's needed to translate the coordinate system to
+	// and to perform the rotation around that point, not the (0, 0, 0)
+	// as it's done in the alignment/applyAlignment steps.
+	TVectorD		auxVector(3);
+	auxVector(0) = 0;
+	auxVector(1) = 0;
+	auxVector(2) = z_sensor;
+
+	for ( unsigned i = 0; i< _alignmentCollectionNames.size(); i++) {
+
+		LCCollectionVec * alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (ev->getCollection(_alignmentCollectionNames[i]));
+		// next, find the alignment constant corresponding to the DUT
+		EUTelAlignmentConstant * c=NULL;
+		for ( size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos ) {
+
+			c = static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) );
+			if (c -> getSensorID() == _manualDUTid ) break;	// this means we found the alignment constant corresponding
+																			// to the DUT; the pointer to it is now stored in c and can
+																			// be furhter used
+		}
+		if ( c == NULL ) {
+			cout << "Was not possible to found alignment constant, terminating" << endl;
+			abort();
+		}
+
+		//------------------------------------------------------------------------------------
+		TMatrixD	RotationMatrix(3,3);
+		RotationMatrix(0,0) = 1;
+		RotationMatrix(0,1) = c -> getGamma();
+		RotationMatrix(0,2) = c -> getBeta();
+		RotationMatrix(1,0) = (-1) * c -> getGamma();
+		RotationMatrix(1,1) = 1;
+		RotationMatrix(1,2) = c -> getAlpha();
+		RotationMatrix(2,0) = (-1) * c -> getBeta();
+		RotationMatrix(2,1) = (-1) * c -> getAlpha();
+		RotationMatrix(2,2) = 1;
+
+		// transform the normal vector (only the rotation)
+		NormalVector = RotationMatrix * NormalVector;
+
+		// transform the vector to the plane point (rotation+translations)
+		r0Vector = RotationMatrix *  (r0Vector - auxVector) + auxVector;
+		r0Vector(0) -= c -> getXOffset();
+		r0Vector(1) -= c -> getYOffset();
+		r0Vector(2) -= c -> getZOffset();
+
+		//------------------------------------------------------------------------------------
+
+		//deltaX -= c->getXOffset();
+	}
+	
+
+	//r0Vector.Print();
+	//NormalVector.Print();
+
+	// now have to solve the equation
+	TVectorD	trackImpact(3);
+	TMatrixD	equationMatrix(3,3);
+	TVectorD	b(3);
+
+	equationMatrix(0, 0) = NormalVector (0);
+	equationMatrix(0, 1) = NormalVector (1);
+	equationMatrix(0, 2) = NormalVector (2);
+	equationMatrix(1, 0) = 1;
+	equationMatrix(1, 1) = 0;
+	equationMatrix(1, 2) = (-1)*slopeX;
+	equationMatrix(2, 0) = 0;
+	equationMatrix(2, 1) = 1;
+	equationMatrix(2, 2) = (-1)*slopeY;
+
+	b(0) = r0Vector(0) * NormalVector (0) + r0Vector(1) * NormalVector (1) + r0Vector(2) * NormalVector (2);
+	b(1) = offsetX;
+	b(2) = offsetY;
+
+	trackImpact = equationMatrix.Invert() * b;
+
+	/*
+	// very very naive approach
+	// finally calculate track impact point
+	z = ( z2 /tan((-1)*_beta) + deltaX - offsetX) / (slopeX + 1./tan((-1)*_beta));
+	x = slopeX * z + offsetX;
+	// in this simple approximation, no correction for y
+	y = y2;*/
+
+	/*cout << trackImpact(0) << " ** " << x << endl;
+	cout << trackImpact(1) << " ** " << y << endl;
+	cout << trackImpact(2) << " ** " << z << endl;*/
+
+	x = trackImpact(0);
+	y = trackImpact(1);
+	z = trackImpact(2);
+
+}
+
+
+
 
 #endif
 
