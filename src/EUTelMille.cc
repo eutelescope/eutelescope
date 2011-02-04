@@ -303,6 +303,10 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("TestModeSensorBeta","Rotation around the y axis of the sensors in test mode (to be determined by the alignment).",
                             _testModeSensorBeta,SensorBeta);
 
+  std::vector<int> initRect;
+  registerOptionalParameter("UseSensorRectangular","Do not use all pixels for alignment, only these in the rectangular (A|B) e.g. (0,0) and (C|D) e.g. (100|100) of sensor S. Type in the way S1 A1 B1 C1 D1 S2 A2 B2 C2 D2 ...",
+                            _useSensorRectangular,initRect);
+
 }
 
 void EUTelMille::init() {
@@ -347,6 +351,27 @@ void EUTelMille::init() {
       if ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
         ++_nPlanes;
       }
+
+      if (_useSensorRectangular.size() == 0) {
+	      streamlog_out(MESSAGE4) << "No rectangular limits on pixels of sensorplanes applied" << endl;
+      } else {
+	      if (_useSensorRectangular.size() % 5 != 0) {
+		      streamlog_out(WARNING2) << "Wrong number of arguments in RectangularLimits! Ignoring this cut!" << endl;
+	      } else {
+		      streamlog_out(MESSAGE4) << "Reading in SensorRectangularCuts: " << endl;
+		      int sensorcuts = _useSensorRectangular.size()/5;
+		      for (int i = 0; i < sensorcuts; ++i) {
+			      int sensor = _useSensorRectangular.at(5*i+0);
+			      int A = _useSensorRectangular.at(5*i+1);
+			      int B = _useSensorRectangular.at(5*i+2);
+			      int C = _useSensorRectangular.at(5*i+3);
+			      int D = _useSensorRectangular.at(5*i+4);
+			      SensorRectangular r(sensor,A,B,C,D);
+			      r.print();
+			      _rect.addRectangular(r);
+		      }
+	      }
+      } 
 
     }
   else if(_inputMode == 1)
@@ -989,6 +1014,46 @@ void EUTelMille::processEvent (LCEvent * event) {
               // fixed cluster implementation. Remember it can come from
               // both RAW and ZS data
               cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+            } else if ( hit->getType() == kEUTelAPIXClusterImpl ) {
+              
+//                cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
+//                    ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+
+                // streamlog_out(MESSAGE4) << "Type is kEUTelAPIXClusterImpl" << endl;
+                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
+                // streamlog_out(MESSAGE4) << "Vector size is: " << clusterVector.size() << endl;
+
+                cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
+	      
+	            // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
+                eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
+                
+                int sensorID = apixCluster->getDetectorID();//static_cast<int> ( cellDecoder(clusterFrame)["sensorID"] );
+         	    // cout << "Pixels at sensor " << sensorID << ": ";
+
+                bool skipHit = false;
+                for (int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
+                {
+                    int pixelX, pixelY;
+                    EUTelAPIXSparsePixel apixPixel;
+                    apixCluster->getSparsePixelAt(iPixel, &apixPixel);
+                    pixelX = apixPixel.getXCoord();
+                    pixelY = apixPixel.getYCoord();
+                    // cout << "(" << pixelX << "|" << pixelY << ") ";
+		     
+                    skipHit = !_rect.isInside(sensorID, pixelX, pixelY); 	      
+                }
+                // cout << endl;
+
+                if (skipHit) 
+                {
+                    streamlog_out(MESSAGE4) << "Skipping cluster due to rectangular cut!" << endl;
+                    continue;
+                }
+                if (skipHit) {
+                    streamlog_out(MESSAGE4) << "TEST: This message should never appear!" << endl;                    
+                }
+
             } else if ( hit->getType() == kEUTelSparseClusterImpl ) {
 
               // ok the cluster is of sparse type, but we also need to know
@@ -1017,10 +1082,6 @@ void EUTelMille::processEvent (LCEvent * event) {
                 throw UnknownDataTypeException("Pixel type unknown");
               }
 
-            } else if ( hit->getType() == kEUTelAPIXClusterImpl ) {
-              
-                cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-                    ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
  
             } else {
               throw UnknownDataTypeException("Unknown cluster type");

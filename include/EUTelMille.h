@@ -49,6 +49,47 @@ class TMinuit;
 namespace eutelescope {
 
  
+  //Specify a Rectangular in a sensor
+  class SensorRectangular {
+	protected:
+	// SensorID
+	int sensor;
+	// lowest pixel in X direction
+	int A; 
+	// lowest pixel in Y direction
+	int B;
+	// highest pixel in X direction
+	int C;
+	// highest pixel in Y direction
+	int D;
+	public:
+	SensorRectangular(int s, int a, int b, int c, int d) : sensor(s), A(a), B(b), C(c), D(d) {};
+	SensorRectangular() : sensor(0), A(0), B(0), C(0), D(0) {};
+	int getSensor() const {return sensor; }
+	//look if x and y are inside the foreseen rectangular
+	bool isInside(int x, int y) const {  return (x >=A && x <=C && y >=B && y <=D); }
+	void print() { streamlog_out(MESSAGE4) << "Sensor: " << sensor << ": (" << A << "|" << B << ") to (" << C << "|" << D << ")" << std::endl; }
+	
+  };
+  
+  class RectangularArray {
+	protected:
+		std::map<int,SensorRectangular > _rect;
+	
+	public:
+	void addRectangular(SensorRectangular &s) { _rect[s.getSensor() ] = s;}
+	
+	bool isInside(int s, int x, int y) {
+		std::map<int,SensorRectangular >::iterator it = _rect.find(s);
+		if (it == _rect.end()) { // not in the map means no limit on this sensor -> always true
+			return true;
+		}
+		SensorRectangular cSensor = _rect[s];
+		return cSensor.isInside(x,y);
+	}
+		
+  };
+
 
   //! Straight line fit processor
   /*!
@@ -367,6 +408,8 @@ namespace eutelescope {
     std::string _alignmentConstantLCIOFile;
     std::string _alignmentConstantCollectionName;
 
+    std::vector<int> _useSensorRectangular;
+
   private:
 
     //! Run number
@@ -462,6 +505,9 @@ namespace eutelescope {
     /*! Only for debug reason
      */
     bool _histogramSwitch;
+
+    //! Limits the pixels on each sensor-plane to a sub-rectangular  
+    RectangularArray _rect;
 
   };
 
