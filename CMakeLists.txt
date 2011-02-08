@@ -18,49 +18,32 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 3 )
 
 ### DEPENDENCIES ############################################################
 
-# for backwards compatibility
-LIST( APPEND CMAKE_MODULE_PATH ${CMAKE_CURRENT_SOURCE_DIR}/cmake )
-
-# FindILCSOFT_CMAKE_MODULES.cmake needs to be in CMAKE_MODULE_PATH
-FIND_PACKAGE( ILCSOFT_CMAKE_MODULES 1.11 REQUIRED )
+#FIND_PACKAGE( ILCUTIL COMPONENTS ILCSOFT_CMAKE_MODULES REQUIRED )  # (**)
+LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )        # (*)
+FIND_PACKAGE( ILCSOFT_CMAKE_MODULES REQUIRED )                      # (*)
 
 # load default settings from ILCSOFT_CMAKE_MODULES
 INCLUDE( ilcsoft_default_settings )
 
-# ------- required packages -------------------
-SET( required_packages LCIO GEAR Marlin MarlinUtil)
+#FIND_PACKAGE( Marlin 1.0 REQUIRED )        # (**)
+#FIND_PACKAGE( MarlinUtil 1.2 REQUIRED )    # (**)
 
-# ------- optional packages -------------------
-SET( optional_packages EUDAQ GSL CLHEP CED AIDA ROOT )
+SET( streamlog_DIR ${Marlin_DIR} )          # (*)
+FIND_PACKAGE( Marlin REQUIRED )             # (*)
+FIND_PACKAGE( streamlog REQUIRED )          # (*)
+FIND_PACKAGE( LCIO REQUIRED )               # (*)
+FIND_PACKAGE( GEAR REQUIRED )               # (*)
+FIND_PACKAGE( MarlinUtil REQUIRED )         # (*)
+FIND_PACKAGE( CED REQUIRED )                # (*)
+FIND_PACKAGE( CLHEP REQUIRED )              # (*)
 
-# need to use ROOT's Minuit library
-SET( ROOT_USE_COMPONENTS Minuit )
+FIND_PACKAGE( GSL )
+FIND_PACKAGE( AIDA )
+FIND_PACKAGE( EUDAQ )
+FIND_PACKAGE( ROOT COMPONENTS Minuit )
 
-# ------- do the search -----------------------
-
-# fix for backwards compatibility
-FOREACH( pkg ${required_packages} ${optional_packages} )
-    IF( NOT ${pkg}_DIR AND DEFINED ${pkg}_HOME )
-        SET( ${pkg}_DIR ${${pkg}_HOME} )
-    ENDIF()
-ENDFOREACH()
-
-IF( APPLE )
- SET( required_packages ${required_packages} streamlog )
- IF( NOT streamlog_DIR )
-    SET( streamlog_DIR "${Marlin_DIR}" CACHE PATH "Path to streamlog" FORCE)
- ENDIF()
-ENDIF()
-
-FOREACH( pkg ${required_packages} )
-    FIND_PACKAGE( ${pkg} REQUIRED )
-ENDFOREACH()
-
-FOREACH( pkg ${optional_packages} )
-    FIND_PACKAGE( ${pkg} QUIET )
-ENDFOREACH()
-
-FOREACH( pkg ${required_packages} ${optional_packages} )
+#FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT ) # (**)
+FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT streamlog LCIO GEAR CED CLHEP ) # (*)
     IF( ${pkg}_FOUND )
         INCLUDE_DIRECTORIES( ${${pkg}_INCLUDE_DIRS} )
         LINK_LIBRARIES( ${${pkg}_LIBRARIES} )
@@ -70,6 +53,12 @@ FOREACH( pkg ${required_packages} ${optional_packages} )
     ENDIF()
 ENDFOREACH()
 
+# ---------------------------------------------------------------------------------
+# (*) needed to compile with ilcsoft v01-10. Not needed anymore for ilcsoft v01-11
+# ---------------------------------------------------------------------------------
+# (**) uncomment this lines if backwards compatibility to v01-10 is not needed
+# anymore. Lines marked with (*) should in that case be removed/commented out as well !!
+# ---------------------------------------------------------------------------------
 
 
 ### DOCUMENTATION ###########################################################
@@ -94,33 +83,22 @@ ELSE()
     MESSAGE( STATUS "WARNING: failed to configure Eutelescope with EUDAQ!!" )
 ENDIF()
 
-IF ( CED_FOUND )
-  ADD_DEFINITIONS("-DUSE_CED")
-ENDIF()
-
-IF ( Marlin_FOUND)
-  ADD_DEFINITIONS("-DUSE_MARLIN")
-ENDIF()
-
 IF ( AIDA_FOUND)
   ADD_DEFINITIONS("-DUSE_AIDA")
-ENDIF()
-
-IF ( MarlinUtil_FOUND )
-  ADD_DEFINITIONS("-DUSE_MARLINUTIL")
 ENDIF()
 
 IF ( GSL_FOUND )
   ADD_DEFINITIONS("-DUSE_GSL")
 ENDIF()
 
-IF ( CLHEP_FOUND )
-  ADD_DEFINITIONS("-DUSE_CLHEP")
-ENDIF()
+# these are needed anyway...
+ADD_DEFINITIONS("-DUSE_MARLIN")
+ADD_DEFINITIONS("-DUSE_GEAR")
+ADD_DEFINITIONS("-DUSE_MARLINUTIL")
+ADD_DEFINITIONS("-DUSE_CLHEP")
+ADD_DEFINITIONS("-DUSE_CED")
 
-IF ( GEAR_FOUND )
-  ADD_DEFINITIONS("-DUSE_GEAR")
-ENDIF()
+
 # ---------------------------------------------------------------------------
 
 

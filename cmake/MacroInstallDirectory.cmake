@@ -4,6 +4,8 @@
 MACRO( INSTALL_DIRECTORY )
     INSTALL( DIRECTORY ${ARGN}
         PATTERN "*~" EXCLUDE
+        PATTERN "*#*" EXCLUDE
+        PATTERN ".#*" EXCLUDE
         PATTERN "*CVS" EXCLUDE
         PATTERN "*.svn" EXCLUDE
     )
