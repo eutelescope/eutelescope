@@ -65,11 +65,8 @@ ENDFOREACH()
 
 OPTION( INSTALL_DOC "Set to OFF to skip build/install Documentation" ON )
 
-IF( INSTALL_DOC AND EXISTS "${PROJECT_SOURCE_DIR}/doc/CMakeLists.txt" )
-    ADD_SUBDIRECTORY( doc )
-ELSE()
-    MESSAGE( STATUS "INSTALL_DOC set to OFF" )
-    SET( INSTALL_DOC OFF )
+IF( INSTALL_DOC )
+    ADD_SUBDIRECTORY( ./doc )
 ENDIF()
 
 
@@ -104,7 +101,7 @@ ADD_DEFINITIONS("-DUSE_CED")
 
 # include directories
 INCLUDE_DIRECTORIES( ./include )
-INSTALL_DIRECTORY( ./include DESTINATION . FILES_MATCHING PATTERN "*.h" )
+#INSTALL_DIRECTORY( ./include DESTINATION . FILES_MATCHING PATTERN "*.h" )
 
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
