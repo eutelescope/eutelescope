@@ -119,6 +119,7 @@ namespace eutelescope {
       tempX         += pixel->getSignal() * ( pixel->getXCoord() - xSeed );
       tempY         += pixel->getSignal() * ( pixel->getYCoord() - ySeed );
       normalization += pixel->getSignal() ;
+//      printf(" getCoG %5d %5d %5.1f \n",  pixel->getXCoord(), pixel->getYCoord(), normalization);
     }
     if ( normalization != 0 ) {
       xCoG = tempX / normalization;
