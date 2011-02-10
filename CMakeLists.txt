@@ -76,6 +76,8 @@ ENDIF()
 # ------ add preprocessor flags ---------------------------------------------
 IF( EUDAQ_FOUND )
     ADD_DEFINITIONS( "-DUSE_EUDAQ -DEUDAQ_PLATFORM=PF_LINUX -DEUDAQ_FUNC=__PRETTY_FUNCTION__" )
+    GET_FILENAME_COMPONENT( EUDAQ_LIBRARY_FULL_PATH ${EUDAQ_EUDAQ_LIBRARY} REALPATH )
+    INSTALL( PROGRAMS ${EUDAQ_LIBRARY_FULL_PATH} DESTINATION lib ) # PROGRAMS is like FILES but sets executable permissions
 ELSE()
     MESSAGE( STATUS "WARNING: failed to configure Eutelescope with EUDAQ!!" )
 ENDIF()
