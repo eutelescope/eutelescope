@@ -22,8 +22,9 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <processor name="LoadAlignment"/>
       <processor name="ApplyAlignment"/>
       <processor name="Fitter"/>
-        <group name="ReverseReconstructedHits"/>
-        <group name="ReverseFittedHits"/>
+         <!-- an example how to run anti-alignment processor -->
+         <!-- group name="ReverseReconstructedHits"/ -->
+         <!-- group name="ReverseFittedHits"/ -->
       <!-- processor name="FitterHisto"/-->
       <!-- processor name="DUTHisto"/-->
       <!-- processor name="NTuple"/-->
@@ -68,7 +69,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
  </processor>
 
  <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
- <!--Apply to the input hit the alignment corrections-->
+  <!--Apply to the input hit the alignment corrections-->
   <!--Alignment constant from the condition file-->
   <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignment </parameter>
   <!--The name of the input hit collection-->
@@ -76,16 +77,20 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--The name of the output hit collection-->
   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedHit</parameter>
   <!--Available methods are:
- 0 --> shift only 
- 1 --> rotation first 
- 2 --> shift first -->
+    0 --> shift only 
+    1 --> rotation first 
+    2 --> shift first -->
   <parameter name="CorrectionMethod" type="int" value="1"/>
   <!--Enable or disable histograms-->
-  <parameter name="HistogramSwitch" type="bool" value="true"/>
- </processor>
+  <parameter name="DoAlignCollection" type="bool" value="true"/>
+  <parameter name="HistogramSwitch" type="bool" value="false"/>
+  <parameter name="DEBUG" type="bool" value="false"/>
+  <parameter name="PrintEvents" type="int" value="0"/>
+</processor>
 
  <processor name="Fitter" type="EUTelTestFitter">
- <!--Analytical track fitting processor for EUDET telescope-->
+  <!--Analytical track fitting processor for EUDET telescope--> 
+  <parameter name="alignmentCollectionNames" type="vec" >   alignment </parameter>
   <!--Name of the input TrackerHit collection-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
   <!--Collection name for corrected particle positions-->
@@ -172,7 +177,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
 
 
- <group name="ReverseReconstructedHits"/>
+ <group name="ReverseReconstructedHits" type="EUTelApplyAlignmentProcessor" >
  	<!-- ------------------------------------ -->
 	<!-- -------- COMMON SETTINGS ----------- ->
 	<!-- ------------------------------------ -->
@@ -183,38 +188,37 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="ApplyAlignmentDirection" type="int" value="1"/>
  
 
-    <processor name="ReverseMillepedeAlignment"/>    
+    <processor name="ReverseMillepedeAlignment" type="EUTelApplyAlignmentProcessor" >    
        <parameter name="DoAlignCollection" type="bool" value="true"/>
        <parameter name="DoGear" type="bool" value="false"/>
        <!-- define alignment collection   -->
        <parameter name="alignmentCollectionNames" type="vec" >  alignment </parameter>
        <!-- defined input and output collections -->
        <parameter name="InputHitCollectionName" type="string"    lcioInType="TrackerHit">  alignedHit </parameter>
-       <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> alignedHit_I </parameter>
+       <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> alignedHit1 </parameter>
     </processor>
-    
-    <processor name="UndoGearGeometry"/>
+
+    <processor name="UndoGearGeometry" type="EUTelApplyAlignmentProcessor" >
        <parameter name="DoAlignCollection" type="bool" value="false"/>
        <parameter name="DoGear" type="bool" value="true"/>
-       <parameter name="InputHitCollectionName" type="string"    lcioInType="TrackerHit">  alignedHit_I </parameter>
-       <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> alignedHit_II </parameter>
-   </processor>
+       <parameter name="InputHitCollectionName" type="string"       lcioInType="TrackerHit">  alignedHit1 </parameter>
+       <parameter name="OutputHitCollectionName" type="string"      lcioOutType="TrackerHit"> alignedHit2 </parameter>
+    </processor>
   
-    <processor name="ReverseOffsetAlignment"/>
+    <processor name="ReverseOffsetAlignment" type="EUTelApplyAlignmentProcessor" >
        <parameter name="DoAlignCollection" type="bool" value="true"/>
        <parameter name="DoGear" type="bool" value="false"/>
-       <!-- define alignment collection   -->
        <parameter name="alignmentCollectionNames" type="vec" >  preAlignment </parameter>
        <!-- defined input and output collections -->
-       <parameter name="InputHitCollectionName" type="string"    lcioInType="TrackerHit">  alignedHit_II </parameter>
-       <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> alignedHit_III </parameter>
-   </processor>
- 
+       <parameter name="InputHitCollectionName" type="string"       lcioInType="TrackerHit">  alignedHit2 </parameter>
+       <parameter name="OutputHitCollectionName" type="string"       lcioOutType="TrackerHit"> alignedHit3 </parameter>
+    </processor>
+
  
  </group>
 
 
- <group name="ReverseFittedHits"/>
+ <group name="ReverseFittedHits" >
  	<!-- ------------------------------------ -->
 	<!-- -------- COMMON SETTINGS ----------- ->
 	<!-- ------------------------------------ -->
@@ -226,7 +230,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
  
  
 
-    <processor name="ReverseMillepedeAlignment"/>    
+    <processor name="ReverseMillepedeAlignment" type="EUTelApplyAlignmentProcessor" >    
        <parameter name="DoAlignCollection" type="bool" value="true"/>
        <parameter name="DoGear" type="bool" value="false"/>
        <parameter name="alignmentCollectionNames" type="vec" >  alignment </parameter>
@@ -234,14 +238,14 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
        <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> fithits_I</parameter>
     </processor>
     
-    <processor name="UndoGearGeometry"/>
+    <processor name="UndoGearGeometry" type="EUTelApplyAlignmentProcessor" >
        <parameter name="DoAlignCollection" type="bool" value="false"/>
        <parameter name="DoGear" type="bool" value="true"/>
        <parameter name="InputHitCollectionName" type="string"    lcioInType="TrackerHit"> fithits_I </parameter>
        <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> fithits_II</parameter>
    </processor>
   
-    <processor name="ReverseOffsetAlignment"/>
+    <processor name="ReverseOffsetAlignment" type="EUTelApplyAlignmentProcessor" >
        <parameter name="DoAlignCollection" type="bool" value="true"/>
        <parameter name="DoGear" type="bool" value="false"/>
        <parameter name="alignmentCollectionNames" type="vec" >  preAlignment </parameter>
