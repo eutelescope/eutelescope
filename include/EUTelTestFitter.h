@@ -368,6 +368,26 @@ namespace eutelescope {
      */
     virtual void end() ;
 
+  private:
+
+    //! 
+    /*!
+     * 
+     */
+    int guessSensorID( Track * track );
+ 
+    //! 
+    /*!
+     * 
+     */
+    int guessSensorID( double & x, double & y, double & z);
+
+    //! 
+    /*!
+     * 
+     */
+    bool _isFirstEvent;   
+        
   protected:
     // Fitting functions
 
@@ -623,10 +643,16 @@ namespace eutelescope {
 	std::vector<double> _fittedXcorr;
 	std::vector<double> _fittedYcorr;
 	std::vector<double> _fittedZcorr;
-	void getTrackImpactPoint(double & x, double & y, double & z, Track * tr, LCEvent * ev);
+	
+    void getFastTrackImpactPoint(double & x, double & y, double & z, Track * tr, LCEvent * ev);
+    void getTrackImpactPoint(double & x, double & y, double & z, Track * tr, LCEvent * ev);
 	int	_indexDUTneighbour;
 	double	_zDUTneighbour;
-
+    
+    
+    std::map< unsigned int , std::map< unsigned int , double > > _siPlaneCenter;
+    std::map< unsigned int , std::map< unsigned int , double > > _siPlaneNormal;
+   
 #endif
 
   } ;
