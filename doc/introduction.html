@@ -39,6 +39,7 @@ href="http://www-zeus.desy.de/~rubinsky/EUTelescope/SoftwareDevelopment/EUTelesc
 <img border="none" src="http://www-zeus.desy.de/~rubinsky/home/pdficon_small.gif">
 </a>.
 
+<!--
 <b>The library update:</b> In case you want to reinstall the EUTelescope library from scratch you do
 not need to rerun the ilcinstall scripts repeating all steps of the ilcsoft
 installation. There is one step to create the new Makefile for the EUTelescope
@@ -67,10 +68,18 @@ this builds the library:
 ../lib/libEutelescope.so.0.5
 ../lib/libEutelescope.so.0.5.1
 @endcode
+-->
 
 <b>Last versions release info:</b>
 
-<b>[Pro]</b> Version v00-05-03-pre.
+<b>[Pro]</b> Version v00-06-00-pre.
+
+@li New CMake approach implemented for ilcsoft v01-11 release. It is still backward compatible with ilcsoft v01-10.
+@li EUTelTestFitter fixed for a tilted sensor proper Z coordinate of the fitted hit.
+@li Deterministic Annealing Filter (DAF fitter) introduced.
+@li <b> Caution: new EUDAQ and Millepede II reference rules in the ilcinstall script. The Installation Guide page updated accordingly </b>
+
+<b>[Old]</b> Version v00-05-03-pre.
 
 @li New CMake approach implemented. 
 @li Bug fix in the clustering (EUTelClusteringProcessor:DFF).
@@ -85,7 +94,8 @@ this builds the library:
 @li Small improvements to the full_analysis_chain scripts.
 @li Bug fixes in the EUTelDUTHistograms class.
 @li Extend the template "template_ibl/fitter-tmp.xml" to have Telescope sensors (6x Mimosa 26) and a set of DUT sensors (APIX as an example) DUTHistograms done in one execution step.  
-@li New release of the ILCSoft v01-10 is now! 
+@li New release of the ILCSoft v01-10.
+<!-- 
 @code
 cd $TB_ANALYSIS
 svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-10 ilcinstall_v01-10
@@ -117,6 +127,7 @@ ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg
 ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg  -i
 #
 @endcode
+-->
 
 <b>[Old]</b> Version v00-05-00-pre 
 Dependency on the latest GEAR library (!) ( >= 30.11.2010). 
@@ -1362,13 +1373,14 @@ Change folder to the global analysis folder and check the ilcinstall scripts (v0
 
 @code
  cd $TB_ANALYSIS
- svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-10  ilcinstall_v01-10
- cd ilcinstall_v01-10
+ svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-11-pre02  ilcinstall_v01-11-pre02
+ cd ilcinstall_v01-11-pre02
 #
-# edit ./releases/v01-10/release-20101206.cfg
-# edit ./releases/v01-10/release-versions.py
+# edit if needed:
+#   ./releases/v01-11/release-ilcsoft.cfg
+#   ./releases/v01-11/release-versions.py
 #
-# examples of these two files are here: 
+# or download from here and replace your old files: 
 #
 # for installation on a machine with a /afs/ (very fast installation)
  wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-ilcsoft.cfg 
@@ -1379,30 +1391,33 @@ Change folder to the global analysis folder and check the ilcinstall scripts (v0
 # wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/standalone/release-versions.py
 #
 # replace the default files with the example ones:
- mv release-ilcsoft.cfg ./releases/v01-10/
- mv release-versions.py ./releases/v01-10/
+ mv release-ilcsoft.cfg ./releases/v01-11/
+ mv release-versions.py ./releases/v01-11/
 # 
 @endcode
       
 Your local configuration file "release-ilcsoft.cfg" shold contain the EUDAQ
 library references:<br>
      
-@li ilcsoft = ILCSoft("/data/TestBeam/Analysis/ilcsoft/")
-@li ilcsoft.module("Eutelescope").env["EUDAQ_HOME"]="/data/TestBeam/Analysis/eudaq/trunk"
-@li ilcsoft.module("Eutelescope").env["EUDAQ"]="/data/TestBeam/Analysis/eudaq/trunk"
-     
+@li ilcsoft.install( Eutelescope( Eutelescope_version ))
+@li ilcsoft.module("Eutelescope").env['MILLEPEDEII_VERSION']='trunk'
+@li ilcsoft.module("Eutelescope").env['EUDAQ_VERSION']='trunk'
+
+you can also turn the documentation build OFF:
+@li ilcsoft.envcmake["INSTALL_DOC"]="OFF"
+
 
 Check if the installation looks concistent from the script/environment
 viewpoint:
  
 @code
- ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg
+ ilcsoft-install ./releases/v01-11/release-ilcsoft.cfg
 @endcode
  
 Read carefully the output screen. If no apparent problem is detected, run:
      
 @code
- ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg  -i
+ ilcsoft-install ./releases/v01-11/release-ilcsoft.cfg  -i
 @endcode
 
 Depending one your hardware/OS performance the installation can last for about
@@ -1453,7 +1468,9 @@ A $EUTELESCOPE variable is also introduced there.
 @endcode
   you should get a non empty output.
 
-@section millepede Don't forget to install Millepede II!
+@section millepede Check that the Millepede II is installed and compiled alright!
+
+If the folder $EUTELESCOPE/millepede/ was not created then you should do it manually by following these steps:
 
 The Millepede II source code can be downloaded from here:
 
@@ -1471,6 +1488,7 @@ or put a  soft link in your  $EUTELESCOPE/bin/ folder:
   cd $EUTELESCOPE/bin/
   ln -sf $ILCSOFT/MillepedeII/V03-03-00/pede .
 @endcode
+
 
 Then, your $EUTELESCOPE/pysub/config/config.cfg file should contain:
 
