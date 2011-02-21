@@ -99,7 +99,7 @@ EUTelAPIXClusteringProcessor::EUTelAPIXClusteringProcessor () : Processor("EUTel
 	registerProcessorParameter ("MinXDistance", "Minimum distance in X that pixels should have to build a cluster", _minXDistance, 1);
 	registerProcessorParameter ("MinYDistance", "Minimum distance in Y that pixels should have to build a cluster", _minYDistance, 1);
 	registerProcessorParameter ("MinDiagonalDistance", "Minimum diagonal distance that pixels should have to build a cluster", _minDiagDistance, 1);
-	registerProcessorParameter ("MinCharge", "Minimum Charge (TOT) that clusters should have to build a cluster", _minCharge, 0);
+	registerProcessorParameter ("MinCharge", "Minimum Charge (TOT) that clusters should have to build a cluster", _minCharge, 1);
 	registerProcessorParameter ("MinLVL1Difference", "Minimim Level 1 difference of pixels building one cluster", _minLVL1, -1);
 	
 	registerProcessorParameter("HistoInfoFileName", "This is the name of the histogram information file", _histoInfoFileName, string( "histoinfo.xml" ) );
@@ -273,8 +273,8 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 	
 	//Data Output
 	//CellIDEncoder<TrackerPulseImpl> idClusterEncoder(EUTELESCOPE::ZSAPIXCLUSTERENCODING, clusterCollection);
-	CellIDEncoder< TrackerPulseImpl > zsDataEncoder ( "sensorID:5,clusterID:10,xSeed:8,ySeed:8,xCluSize:8,yCluSize:8,type:5", clusterCollection );
-	
+        CellIDEncoder< TrackerPulseImpl > zsDataEncoder ( "sensorID:5,clusterID:10,xSeed:8,ySeed:10,xCluSize:8,yCluSize:8,type:5", clusterCollection );	
+
 	//Dummy collection
 	
 	 bool isDummyAlreadyExisting = false;
