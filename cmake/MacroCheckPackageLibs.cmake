@@ -79,14 +79,25 @@ MACRO( CHECK_PACKAGE_LIBS _pkgname )
         SET( ${_pkgname}_${_ulibname}_LIBRARY ${_pkgname}_${_ulibname}_LIBRARY-NOTFOUND )
         MARK_AS_ADVANCED( ${_pkgname}_${_ulibname}_LIBRARY )
 
-        FIND_LIBRARY( ${_pkgname}_${_ulibname}_LIBRARY
-            NAMES ${_libname}
-            PATHS ${${_pkgname}_ROOT} ${${_pkgname}_DIR} ${${_pkgname}_LIB_SEARCH_PATH}
-            PATH_SUFFIXES lib64 lib
+        # WARNING: using PATH_SUFFIXES may cause problems when using variable CMAKE_FIND_ROOT_PATH
+        #           this problem does not occur if expanding PATHS
+        #           look in FindMySQL.cmake for more info
+        #FIND_LIBRARY( ${_pkgname}_${_ulibname}_LIBRARY NAMES ${_libname} PATHS
+        #    ${${_pkgname}_ROOT} ${${_pkgname}_DIR} ${${_pkgname}_LIB_SEARCH_PATH}
+        #    PATH_SUFFIXES lib64 lib
+        #    NO_DEFAULT_PATH
+        #)
+
+        FIND_LIBRARY( ${_pkgname}_${_ulibname}_LIBRARY NAMES ${_libname} PATHS
+            ${${_pkgname}_ROOT}/lib64 ${${_pkgname}_ROOT}/lib
+            ${${_pkgname}_DIR}/lib64 ${${_pkgname}_DIR}/lib
+            ${${_pkgname}_LIB_SEARCH_PATH} ${${_pkgname}_LIB_SEARCH_PATH}/lib64 ${${_pkgname}_LIB_SEARCH_PATH}/lib
             NO_DEFAULT_PATH
         )
 
-        #FIND_LIBRARY( ${_pkgname}_${_ulibname}_LIBRARY NAMES ${_libname} )
+        IF( NOT ${_pkgname}_DIR )
+            FIND_LIBRARY( ${_pkgname}_${_ulibname}_LIBRARY NAMES ${_libname} )
+        ENDIF()
         
         IF( ${_pkgname}_FIND_REQUIRED )
             LIST( APPEND ${_pkgname}_COMPONENT_VARIABLES ${_pkgname}_${_ulibname}_LIBRARY )

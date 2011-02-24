@@ -63,12 +63,12 @@ MACRO( CHECK_PACKAGE_VERSION _pkgname ) # left with one argument only for backwa
 
     SET( _sversion ${${_pkgname}_FIND_VERSION} )
 
+    IF( NOT ${_pkgname}_FIND_QUIETLY )
+        MESSAGE( STATUS "Check for ${_pkgname} (${_iversion})" )
+    ENDIF()
+
     # only do work if FIND_PACKAGE called with a version argument
     IF( _sversion )
-
-        IF( NOT ${_pkgname}_FIND_QUIETLY )
-            MESSAGE( STATUS "Check for ${_pkgname}: installed version ${_iversion}" )
-        ENDIF()
 
         #IF( NOT ${_pkgname}_FIND_QUIETLY )
         #    MESSAGE( STATUS "Check for ${_pkgname}: looking for version ${_sversion}" )
