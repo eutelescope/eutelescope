@@ -350,7 +350,17 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
     
     LCCollectionVec * pulseCollection   = static_cast<LCCollectionVec*> (event->getCollection( _pulseCollectionName ));
-    LCCollectionVec * hitCollection     = new LCCollectionVec(LCIO::TRACKERHIT);
+    LCCollectionVec * hitCollection     = 0;
+
+    try
+    {
+       hitCollection  = static_cast<LCCollectionVec*> (event->getCollection( _hitCollectionName ));
+    }
+    catch(...)
+    {
+       hitCollection = new LCCollectionVec(LCIO::TRACKERHIT);
+    }
+  
     CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder(pulseCollection);
 
     int detectorID    = -99; // it's a non sense
@@ -865,7 +875,13 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       delete cluster;
 
     }
-    evt->addCollection( hitCollection, _hitCollectionName );
+    try{
+      evt->addCollection( hitCollection, _hitCollectionName );
+    }
+    catch(...)
+    {
+//      printf("collection %s exists \n", _hitCollectionName.c_str() );
+    }
 
     if ( isFirstEvent() ) _isFirstEvent = false;
   } catch (DataNotAvailableException& e  ) {

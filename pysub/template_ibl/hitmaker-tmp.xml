@@ -22,7 +22,8 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
       <@UseOffsetDBCommentLeft@processor name="LoadOffsetDB"/@UseOffsetDBCommentRight@>
       <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/>
       <!-- processor name="GeoSelection"/ -->
-      <processor name="HitMaker"/>
+      <processor name="HitMakerM26"/>
+      <processor name="HitMakerAPIX"/>
       <processor name="Correlator"/> 
       <processor name="Save"/>
    </execute>
@@ -61,25 +62,48 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
   <!--Pixel status collection-->
   <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> statusDB   </parameter>
   <!--The initial value of noise (one value for detector)-->
-  <parameter name="InitNoiseValue" type="FloatVec"> 1 1 1 1 1 1    1 1 1 </parameter>
+  <parameter name="InitNoiseValue" type="FloatVec"> 1 1 1 1 1 1     </parameter>
   <!--The initial value of pedestal (one value for detector)-->
-  <parameter name="InitPedestalValue" type="FloatVec"> 0 0 0 0 0 0  0 0 0  </parameter>
+  <parameter name="InitPedestalValue" type="FloatVec"> 0 0 0 0 0 0   </parameter>
   <!--The maximum pixel along x (default 255, one value per detector)-->
-  <parameter name="MaxXVector" type="IntVec"> 1151 1151 1151 1151 1151 1151  160 160 160 </parameter>
+  <parameter name="MaxXVector" type="IntVec"> 1151 1151 1151 1151 1151 1151 </parameter>
   <!--The maximum pixel along y (default 255, one value per detector)-->
-  <parameter name="MaxYVector" type="IntVec"> 575 575 575 575 575 575    18 18 18 </parameter>
+  <parameter name="MaxYVector" type="IntVec"> 575 575 575 575 575 575     </parameter>
   <!--The minimum pixel along x (default 0, one value per detector)-->
-  <parameter name="MinXVector" type="IntVec"> 0 0 0 0 0 0   0 0 0</parameter>
+  <parameter name="MinXVector" type="IntVec"> 0 0 0 0 0 0   </parameter>
   <!--The minimum pixel along y (default 0, one value per detector)-->
-  <parameter name="MinYVector" type="IntVec"> 0 0 0 0 0 0   0 0 0</parameter>
+  <parameter name="MinYVector" type="IntVec"> 0 0 0 0 0 0   </parameter>
   <!--The sensorID for the generated collection (one per detector)-->
-  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5 10 11 12 </parameter>
+  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5  </parameter>
 </processor>
 
- <processor name="HitMaker" type="EUTelHitMaker">
+ <processor name="HitMakerM26" type="EUTelHitMaker">
  <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
   <!--Cluster (pulse) collection name-->
-  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
+  <!--Hit collection name-->
+  <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
+  <!--Select here how the center of gravity should be calculated.
+FULL: using the full cluster
+NPixel: using only the first N most significant pixels (set NPixel too)
+NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-->
+  <parameter name="CoGAlgorithm" type="string" value="FULL"/>
+  <!--If true a 3D histo will be filled. It may require large memory-->
+  <parameter name="Enable3DHisto" type="bool" value="false"/>
+  <!--The name of the collections containing the eta function (x and y respectively)-->
+  <!--parameter name="EtaCollectionName" type="StringVec"> xEta yEta </parameter-->
+  <!--Enable or disable eta correction-->
+  <parameter name="EtaSwitch" type="bool" value="false"/>
+  <!--The number of most significant pixels to be used if CoGAlgorithm is "NPixel"-->
+  <!--parameter name="NPixel" type="int" value="9"/-->
+  <!--The submatrix size to be used for CoGAlgorithm = "NxMPixel"-->
+  <parameter name="NxMPixel" type="IntVec"> 3 3 </parameter>
+</processor>
+
+ <processor name="HitMakerAPIX" type="EUTelHitMaker">
+ <!--EUTelHitMaker is responsible to translate cluster centers from the local frame of reference to the external frame of reference using the GEAR geometry description-->
+  <!--Cluster (pulse) collection name-->
+  <parameter name="PulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_apix </parameter>
   <!--Hit collection name-->
   <parameter name="HitCollectionName" type="string" lcioOutType="TrackerHit"> hit </parameter>
   <!--Select here how the center of gravity should be calculated.
@@ -124,7 +148,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
 only the clusters fulfilling a certain set of selection criteria.
 The user can modify the switch on and off each selection cut and set the proper value for that via the processor parameter.-->
   <!--This is the input Tracker Pulse collection that should be filtered-->
-  <parameter name="InputPulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
+  <parameter name="InputPulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
   <!--This is the output Tracker Pulse collection containing the filtered clusters-->
   <parameter name="OutputPulseCollectionName" type="string" lcioOutType="TrackerPulse"> refilteredcluster </parameter>
   <!--This is the minimum allowed total charge in to a cluster.
@@ -192,8 +216,6 @@ The presence of this collection in the event is allowing all the noise based sel
 
 <processor name="Correlator" type="EUTelCorrelator">
  <!--EUTelCorrelator fills histograms with correlation plots-->
-  <!--Cluster (pulse) collection name-->
-  <parameter name="InputClusterCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
   <!--Hit collection name-->
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
   <!-- -->
