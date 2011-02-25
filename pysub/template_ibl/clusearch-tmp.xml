@@ -340,9 +340,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
   <processor name="Correlator" type="EUTelCorrelator">
     <!--EUTelCorrelator fills histograms with correlation plots-->
     <!--Cluster (pulse) collection name-->
-    <!-- the following one is obsolete -->
-    <!-- parameter name="InputClusterCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter -->
-    <parameter name="InputClusterCollections" type="StringVec" > cluster_m26  cluster_apix</parameter>
+    <parameter name="InputClusterCollections" type="StringVec" > cluster_m26 cluster_apix </parameter>
     <!--Hit collection name-->
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
     <!-- -->
