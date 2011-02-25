@@ -193,7 +193,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--Input of Zero Suppressed data-->
     <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
     <!--Cluster (output) collection name-->
-    <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster </parameter>
+    <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26 </parameter>
 
     <!--
         Clustering algorithm
@@ -209,7 +209,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
         -> SparseCluster2: for cluster in ZS frame with better performance
         -> FixedFrame: for cluster with a given size
         -> DFixedFrame: for cluster with a given size-->
-    <parameter name="ZSClusteringAlgo" type="string" value="DFixedFrame"/>
+    <parameter name="ZSClusteringAlgo" type="string" value="SparseCluster2"/>
 
 
     <!--
@@ -264,7 +264,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
  
    <processor name="APIXClustering" type="EUTelAPIXClusteringProcessor">
 	<!--This is the name of the histogram information file-->
-    <parameter name="ClusterCollectionName" type="string" value="cluster"/>
+    <parameter name="ClusterCollectionName" type="string" value="cluster_apix"/>
     <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
    </processor>
 
@@ -340,7 +340,9 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
   <processor name="Correlator" type="EUTelCorrelator">
     <!--EUTelCorrelator fills histograms with correlation plots-->
     <!--Cluster (pulse) collection name-->
-    <parameter name="InputClusterCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
+    <!-- the following one is obsolete -->
+    <!-- parameter name="InputClusterCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter -->
+    <parameter name="InputClusterCollections" type="StringVec" > cluster_m26  cluster_apix</parameter>
     <!--Hit collection name-->
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
     <!-- -->

@@ -138,6 +138,9 @@ namespace eutelescope {
     /*! This is the name of the collection containing the input clusters
      */
     std::string _inputClusterCollectionName;
+    std::string _InternalInputClusterCollectionName;
+    std::string _ExternalInputClusterCollectionName;
+
     std::string _inputHitCollectionName;
 
     //! Input cluster charge cut
@@ -161,6 +164,11 @@ namespace eutelescope {
     /*!
      */
     std::string _offsetDBFile;
+
+    //! Cluster collection list (EVENT::StringVec) 
+    /*!
+     */
+    EVENT::StringVec  _clusterCollectionVec;
 
 
     //! A function to guess the sensorID of a hit

@@ -95,10 +95,17 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
   // modify processor description
   _description =
     "EUTelCorrelator fills histograms with correlation plots";
-
+/*
   registerInputCollection(LCIO::TRACKERPULSE,"InputClusterCollectionName",
                           "Cluster (pulse) collection name",
                           _inputClusterCollectionName, string ( "cluster" ) );
+*/
+  EVENT::StringVec	      _clusterCollectionVecExample;
+  _clusterCollectionVecExample.push_back("cluster");
+  
+  registerInputCollections ( LCIO::TRACKERPULSE, "InputClusterCollections",
+                            "List of cluster collections",
+                            _clusterCollectionVec, _clusterCollectionVecExample);
 
   registerInputCollection(LCIO::TRACKERHIT,"InputHitCollectionName",
                           "Hit collection name",
@@ -118,6 +125,7 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
 
   registerOptionalParameter("OffsetDBFile","This is the name of the LCIO file name with the output offset db (add .slcio)",
                               _offsetDBFile, static_cast< string > ( "offset-db.slcio" ) );
+
 
 
 }
@@ -339,20 +347,30 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
   }
   // if the Event that we are looking is the first we create files
   // with histograms.
-  if ( !_isInitialize ) {
+  if ( !_isInitialize ) 
+  {
 
-    try {
-      // let's check if we have cluster collections
-      event->getCollection( _inputClusterCollectionName );
+    _hasClusterCollection = false;
 
-      _hasClusterCollection = true;
+    for( size_t i = 0; i < _clusterCollectionVec.size() ; i++ )
+    {
+       _inputClusterCollectionName = _clusterCollectionVec[i];
 
-    } catch ( lcio::Exception& e ) {
-
-      _hasClusterCollection = false;
+       try 
+       {
+         // let's check if we have cluster collections
+         event->getCollection( _inputClusterCollectionName );
+ 
+         _hasClusterCollection = true;
+         streamlog_out ( MESSAGE ) << "found " << i <<  " name " <<   _inputClusterCollectionName.c_str() << endl;
+ 
+       } catch ( lcio::Exception& e ) {
+         streamlog_out ( WARNING ) << "NOT found " << i <<  " name " <<   _inputClusterCollectionName.c_str() << endl;
+       }
     }
 
-    try {
+    try 
+    {
       // let's check if we have hit collections
 
       event->getCollection( _inputHitCollectionName ) ;
@@ -390,37 +408,42 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
     if ( _hasClusterCollection && !_hasHitCollection) {
 
-      LCCollectionVec * inputClusterCollection   = static_cast<LCCollectionVec*>
-        (event->getCollection( _inputClusterCollectionName ));
+      for( size_t i = 0; i < _clusterCollectionVec.size() ; i++ )
+      {
+         _ExternalInputClusterCollectionName = _clusterCollectionVec[i];
 
-      CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder( inputClusterCollection );
+         LCCollectionVec * externalInputClusterCollection   = static_cast<LCCollectionVec*>   (event->getCollection( _ExternalInputClusterCollectionName ));
+         CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder( externalInputClusterCollection );
 
       // we have an external detector where we consider a cluster each
       // time (external cluster) that is correlated with another
       // detector's clusters (internal cluster)
 
-      for ( size_t iExt = 0 ; iExt < inputClusterCollection->size() ; ++iExt ) {
+      for ( size_t iExt = 0 ; iExt < externalInputClusterCollection->size() ; ++iExt ) {
 
-        TrackerPulseImpl * externalPulse = static_cast< TrackerPulseImpl * >
-          ( inputClusterCollection->getElementAt( iExt ) );
+        TrackerPulseImpl * externalPulse = static_cast< TrackerPulseImpl * >   ( externalInputClusterCollection->getElementAt( iExt ) );
 
         EUTelVirtualCluster  * externalCluster;
 
-        ClusterType type = static_cast<ClusterType>
-          (static_cast<int>((pulseCellDecoder(externalPulse)["type"])));
+        ClusterType type = static_cast<ClusterType>  (static_cast<int>((pulseCellDecoder(externalPulse)["type"])));
+
         // we check that the type of cluster is ok
         
-        if ( type == kEUTelDFFClusterImpl ) {
-          externalCluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*>
-                                                    ( externalPulse->getTrackerData()) );
-        } else if ( type == kEUTelBrickedClusterImpl ) {
-          externalCluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*>
-                                                    ( externalPulse->getTrackerData()) );
-        } else if ( type == kEUTelFFClusterImpl ) {
-          externalCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*>
-                                                    ( externalPulse->getTrackerData()) );
+        if ( type == kEUTelDFFClusterImpl ) 
+        {
+          externalCluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl*>     ( externalPulse->getTrackerData()) );
+        }
+        else if ( type == kEUTelBrickedClusterImpl ) 
+        {
+          externalCluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> ( externalPulse->getTrackerData()) );
+        }
+        else if ( type == kEUTelFFClusterImpl ) 
+        {
+          externalCluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl*>      ( externalPulse->getTrackerData()) );
             
-        } else if ( type == kEUTelSparseClusterImpl ) {
+        }
+        else if ( type == kEUTelSparseClusterImpl ) 
+        {
 
           // ok the cluster is of sparse type, but we also need to know
           // the kind of pixel description used. This information is
@@ -473,11 +496,18 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             continue;
         }
 
-        for ( size_t iInt = 0;  iInt <  inputClusterCollection->size() ; ++iInt ) 
+        for( size_t i = 0; i < _clusterCollectionVec.size() ; i++ )
+        {
+          _InternalInputClusterCollectionName = _clusterCollectionVec[i];
+
+         LCCollectionVec * internalInputClusterCollection   = static_cast<LCCollectionVec*>   (event->getCollection( _InternalInputClusterCollectionName ));
+         CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder( internalInputClusterCollection );
+
+
+        for ( size_t iInt = 0;  iInt <  internalInputClusterCollection->size() ; ++iInt ) 
         {
 
-          TrackerPulseImpl * internalPulse = static_cast< TrackerPulseImpl * >
-            ( inputClusterCollection->getElementAt( iInt ) );
+          TrackerPulseImpl * internalPulse = static_cast< TrackerPulseImpl * >  ( internalInputClusterCollection->getElementAt( iInt ) );
 
           EUTelVirtualCluster  * internalCluster;
 
@@ -601,9 +631,11 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           delete internalCluster;
 
         } // internal loop
+        } // internal loop of collections 
 
         delete externalCluster; 
       } // external loop
+      } // external loop of collections
 
     } // endif hasCluster
 
@@ -655,7 +687,6 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
       }
     }
-
   } catch (DataNotAvailableException& e  ) {
 
     streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
@@ -921,9 +952,12 @@ void EUTelCorrelator::end() {
         // reopen the LCIO file this time in append mode
         LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
 
-        try {
+        try 
+        {
             lcWriter->open( _offsetDBFile, LCIO::WRITE_NEW );
-        } catch ( IOException& e ) {
+        }
+        catch ( IOException& e ) 
+        {
             streamlog_out ( ERROR4 ) << e.what() << endl
                 << "Sorry for quitting. " << endl;
             exit(-1);
@@ -1439,7 +1473,7 @@ int EUTelCorrelator::guessSensorID( TrackerHitImpl * hit ) {
   if ( minDistance > 5 /* mm */ ) {
     // advice the user that the guessing wasn't successful 
     streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-      "Please check the consistency of the data with the GEAR file" << endl;
+      "Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hitPosition[2] <<       endl;
   }
 
   return sensorID;
