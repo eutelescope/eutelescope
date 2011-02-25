@@ -762,7 +762,7 @@ void EUTelCorrelator::end() {
                 {
                     double ybin =  _clusterXCorrShiftProjection[ inPlane ]->binHeight(ibin); 
                    
-                    if( ybin < _heighestBinX/2.) continue;
+                    if( ybin < _heighestBinX*0.9 ) continue;
                     double xbin =  
                         _clusterXCorrShiftProjection[ inPlane ]->axis().binLowerEdge(ibin)
                         +
@@ -782,7 +782,7 @@ void EUTelCorrelator::end() {
                 {
                     double ybin =  _clusterYCorrShiftProjection[ inPlane ]->binHeight(ibin); 
                     
-                    if( ybin < _heighestBinY/2.) continue;
+                    if( ybin < _heighestBinY*0.9 ) continue;
                     double xbin =  
                         _clusterYCorrShiftProjection[ inPlane ]->axis().binLowerEdge(ibin)
                         +
@@ -895,7 +895,7 @@ void EUTelCorrelator::end() {
                     double ybin =  _hitXCorrShiftProjection[ inPlane ]->binHeight(ibin); 
 //                    printf(" ybin  %9.3f, ibin %9d \n", ybin, ibin );
 
-                    if( ybin < _heighestBinX/2.) continue;
+                    if( ybin < _heighestBinX*0.9 ) continue;
                     double xbin =  
                         _hitXCorrShiftProjection[ inPlane ]->axis().binLowerEdge(ibin)
                         +
@@ -916,7 +916,7 @@ void EUTelCorrelator::end() {
                 {
                     double ybin =  _hitYCorrShiftProjection[ inPlane ]->binHeight(ibin); 
                     
-                    if( ybin < _heighestBinY/2.) continue;
+                    if( ybin < _heighestBinY*0.9  ) continue;
                     double xbin =  
                         _hitYCorrShiftProjection[ inPlane ]->axis().binLowerEdge(ibin)
                         +
