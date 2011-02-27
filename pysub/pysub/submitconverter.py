@@ -837,11 +837,11 @@ class SubmitConverter( SubmitBase ) :
         # decide if User wants to write out hot pixel db file
         # involves AutoPedestal and HotPixelKiller  processors
         if self._keepHotPixelOutput == False:
-             print "_keepHotPixelOutput FALSE"
+             self._logger.info( "_keepHotPixelOutput = FALSE" )
              actualSteeringString = actualSteeringString.replace("@RunHotPixelKillerCommentLeft@", "!--" )
              actualSteeringString = actualSteeringString.replace("@RunHotPixelKillerCommentRight@", "--" )
         else:    
-             print "_keepHotPixelOutput TRUE"
+             self._logger.info( "_keepHotPixelOutput = TRUE" )
              actualSteeringString = actualSteeringString.replace("@RunHotPixelKillerCommentLeft@", "" )
              actualSteeringString = actualSteeringString.replace("@RunHotPixelKillerCommentRight@", "" )
             
