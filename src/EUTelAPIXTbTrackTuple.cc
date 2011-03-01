@@ -38,6 +38,7 @@
 #include <algorithm>
 #include <gsl/gsl_blas.h>
 #include <gsl/gsl_linalg.h> 
+#include <TVector3.h>
 
 using namespace std;
 using namespace marlin ;
@@ -63,26 +64,30 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple() : Processor("EUTelAPIXTbTrackTupl
 		    "Name of the input PulseCollection to provide infos about clusters and raw-pixels",
 		    _inputTelPulseCollectionName,
 		    std::string("cluster_m26"));
+		    
+  registerInputCollection( LCIO::TRACKERHIT,
+		"InputTrackerHitCollectionName" ,
+		"Name of the plane-wide hit-data hit collection"  ,
+		_inputTrackerHitColName ,
+		"alignedHit" ) ;
   
   
   registerProcessorParameter ("TelZsColName",
 		     "Tel zero surpressed data colection name",
-		     _telZsColName, string ("zsdata_m26"));
+ 		     _telZsColName, string ("zsdata_m26"));
   registerProcessorParameter ("DutZsColName",
 		     "DUT zero surpressed data colection name",
-		     _dutZsColName, string ("zsdata_apix"));
+ 		     _dutZsColName, string ("zsdata_apix"));
 
-  registerInputCollection (LCIO::LCGENERICOBJECT, "DutAlignmentConstantName",
-                           "Alignment constant from the condition file",
-                           _dutAlignmentCollectionName, string ("alignment"));
-  registerInputCollection (LCIO::LCGENERICOBJECT, "TelAlignmentConstantName",
-                           "Alignment constant from the condition file",
-                           _telAlignmentCollectionName, string ("alignment"));
+  registerOptionalParameter("AlignmentCollectionNames", "Names of alignment collections, should be in same order as application", _alignColNames, std::vector<std::string>());
 
   // other processor parameters:
   registerProcessorParameter ("OutputPath",
 			      "Path/File where root-file should be stored",
 			      _path2file,  static_cast < std::string > ("NTuple.root"));
+  registerProcessorParameter ("DoScales",
+			      "If true assume alignment corrections uses scales, if false assume full rotations",
+			      _doScales, true);
 }
 
 
@@ -113,6 +118,7 @@ void EUTelAPIXTbTrackTuple::init() {
   // Prepare TTree/TFiles
   prepareTree();
   invertGear();
+  streamlog_out(MESSAGE3) << "HitCollection is " << _inputTrackerHitColName << endl;
   message<MESSAGE> ( log() << "End of Init" );
 }
 
@@ -128,86 +134,116 @@ void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) {
 }
 
 void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event ) {
+  _nEvt ++ ;
+  _evtNr = event->getEventNumber();
+  EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
+  if ( euEvent->getEventType() == kEORE ) {
+    message<DEBUG> ( "EORE found: nothing else to do." );
+    return;
+  }
 
-    _nEvt ++ ;
-    _evtNr = event->getEventNumber();
-    
-    EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
-    
-    if ( euEvent->getEventType() == kEORE ) 
-    {
-        message<DEBUG> ( "EORE found: nothing else to do." );
-        return;
-    }
+  if( not _foundAllign ) { readAlignment(event); } //Sets _foundAlign to true if found.
+  if( not _foundAllign ) {
+    streamlog_out  ( ERROR ) << "Have not found the needed alignment collections, will skip this event ( " 
+			     << event->getEventNumber() << " )." << endl; 
+    return;
+  }
 
-    if( not _foundAllign ) 
-    {
-        readAlignment(event);  
-        //Sets _foundAlign to true if found.
-    }
+  //Clear all event info containers
+  clear();
 
-    // now check once again if the alignment collection has been found
-    if( not _foundAllign ) 
-    {
-        readAlignment(event);  //Sets _foundAlign to true if found.
-        
-        streamlog_out  ( ERROR ) << "Have not found the needed alignment collections, will skip this event ( " 
-            << event->getEventNumber() << " )." << endl; 
-        return;
-    }
-
-    //Clear all event info containers
-    clear();
-
-    /* --- Dump zs info, skip if event if collection not found --- */
-    if( readZsHits( _telZsColName ,  event) != 0) 
-    {
-        streamlog_out  ( ERROR ) << "Have not found the needed telZsColName  " << _telZsColName << " collections, will skip this event ( " 
-            << event->getEventNumber() << " )." << endl; 
-        return; 
-    }
+  //if( readHits( _inputTrackerHitColName, event ) != 0) { return; }
+  /* --- Dump zs info, skip if event if collection not found --- */
+  //if( readZsHits( _telZsColName ,  event) != 0) { return; }
+  if( readZsHits( _dutZsColName , event) != 0) { return; }
+  /* --- Dump fitted track params --- */
+  if( readTracks(event) != 0) { return; }
+  /* ---- Check cluster collections ---*/
+  //if( readClusters( _inputDutPulseCollectionName , event) != 0 ) { return; } 
+  //if( readClusters( _inputTelPulseCollectionName , event) != 0 ) { return; } 
   
-    if( readZsHits( _dutZsColName , event) != 0) 
-    {
-        streamlog_out  ( ERROR ) << "Have not found the needed dutZsColName " << _dutZsColName << " collections, will skip this event ( " 
-            << event->getEventNumber() << " )." << endl; 
-        return;         
-    }
-    
-    /* --- Dump fitted track params --- */
-    if( readTracks(event) != 0) 
-    {
-        streamlog_out  ( ERROR ) << "Have not found any Tracks, will skip this event ( " 
-            << event->getEventNumber() << " )." << endl; 
-        return;
-    }
-    
-    /* ---- Check cluster collections ---*/
-    if( readClusters( _inputDutPulseCollectionName , event) != 0 ) 
-    {
-        streamlog_out  ( ERROR ) << "Have not found the needed dutPulseCollectionName " << _inputDutPulseCollectionName << " collections, will skip this event ( " 
-            << event->getEventNumber() << " )." << endl; 
-        return;
-    } 
-  
-    if( readClusters( _inputTelPulseCollectionName , event) != 0 ) 
-    {
-        streamlog_out  ( ERROR ) << "Have not found the needed telPulseCollectionName " << _inputTelPulseCollectionName << " collections, will skip this event ( " 
-            << event->getEventNumber() << " )." << endl; 
-        return; 
-    } 
-  
-    /* Filling tree */
-    _zstree->Fill();
-    _eutracks->Fill();
-    _clutree->Fill();
-    
+  //setClusterIdInHits();
+
+  /* Filling tree */
+  _zstree->Fill();
+  _eutracks->Fill();
+  _clutree->Fill();
 }
 
 void EUTelAPIXTbTrackTuple::end(){
   message<MESSAGE> ( log() << "N-tuple with " << _zstree->GetEntries() << " entries written to" << _path2file.c_str() <<",");
   _file->Write();
 }
+
+void EUTelAPIXTbTrackTuple::setClusterIdInHits() {
+  size_t endsize = _hitSensorId->size();
+  if (_hitClusterId->size() == 0) {
+    std::map<IMPL::TrackerDataImpl*, int>::iterator it;
+    
+    for (size_t ihit =0; ihit < _hitPointerToCluster->size(); ihit++) {
+      it = (*_cluPointer).find(_hitPointerToCluster->at(ihit));
+      if (it == (*_cluPointer).end()) { 
+	//cout << "not in there" << endl; 
+	_hitClusterId->push_back(-1);
+      } else {
+	int cluIndex = (*it).second;
+	_hitClusterId->push_back(_cluClusterId->at(cluIndex));
+      }
+    }
+  } else {
+    //streamlog_out(WARNING) << "Method setClusterIdInHits() may only be called once!" << endl;	
+  }
+  //if (endsize != _hitClusterId->size() ) cout << "ClusterIndex variable is not correct!" << endl;
+}
+
+int EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event ) {
+  LCCollection *hitCollection = NULL;
+  int nHit = -1;
+  try {
+    hitCollection = event->getCollection( hitColName ); 
+  } catch (lcio::DataNotAvailableException& e) {
+    //message<MESSAGE> ( log() << "Cluster collection " << colName <<  " not available on event " << event->getEventNumber() << "." );
+    return(1);
+  }
+  nHit = hitCollection->getNumberOfElements();
+  _nHits = nHit;
+  for(int ihit=0; ihit< nHit ; ihit++) {
+    TrackerHit * meshit = dynamic_cast<TrackerHitImpl*>( hitCollection->getElementAt(ihit) ) ;
+    const double * pos = meshit->getPosition();	
+    LCObjectVec clusterVec = (meshit->getRawHits());
+    TrackerDataImpl * trackerData = dynamic_cast < TrackerDataImpl * > ( clusterVec[0] );
+    
+    int iden = -1;
+    for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
+      if( fabs( pos[2] - _siPlanesLayerLayout->getSensitivePositionZ( plane ) ) < 2.0){
+	iden = _siPlanesLayerLayout->getID( plane );
+      }
+    }
+    if(iden == -1){ continue; }
+    double nominalZpos(0.0);
+    for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
+      if( fabs( pos[2] - _siPlanesLayerLayout->getSensitivePositionZ( plane ) ) < 2.0){
+	iden = _siPlanesLayerLayout->getID( plane );
+	nominalZpos = _siPlanesLayerLayout->getSensitivePositionZ(plane)
+	  + 0.5 * _siPlanesLayerLayout->getSensitiveThickness(plane);
+      }
+    }
+
+    double x = pos[0];
+    double y = pos[1];
+    double z = pos[2];
+    reverseAlign(x,y,z,iden, nominalZpos);
+    
+    _hitXPos->push_back(x);
+    _hitYPos->push_back(y);
+    _hitZPos->push_back(z);
+    _hitSensorId->push_back(iden);
+    _hitPointerToCluster->push_back(trackerData);
+  }
+  
+  return(0);
+}
+
 
 int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
   LCCollection* clusterCollectionVec = NULL;
@@ -227,20 +263,22 @@ int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
 
     int size(0), sizeX(0), sizeY(0);
     int posX(0), posY(0);
-    int charge(0);
+    int charge(0), clusterID(0);
     if(type == kEUTelAPIXClusterImpl){
       eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);	
       size = apixCluster->size();
       charge = apixCluster->getTotalCharge();
       apixCluster->getClusterSize(sizeX, sizeY);
       apixCluster->getCenterCoord(posX, posY);
+      clusterID = apixCluster->getClusterID();
       delete apixCluster;
-    } else if ( type == kEUTelSparseClusterImpl or type == kEUTelDFFClusterImpl){
+    } else if (  type == kEUTelSparseClusterImpl or type == kEUTelDFFClusterImpl){
       eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > * telCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
       size = telCluster->size();
       charge = telCluster->getTotalCharge();
       telCluster->getClusterSize(sizeX, sizeY);
       telCluster->getCenterCoord(posX, posY);
+      clusterID = telCluster->getClusterID();
       delete telCluster;
     } else {
       message<WARNING> ( log() << "Unknown cluster type: " << type );
@@ -253,7 +291,9 @@ int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
       _cluposX->push_back( posX );
       _cluposY->push_back( posY );
       _clucharge->push_back( charge );
-      _cluid->push_back( sensorID );
+      _cluSensorId->push_back( sensorID );
+      _cluClusterId->push_back( clusterID );
+      (*_cluPointer)[clusterFrame] = _cluClusterId->size() -1; // To enable a mapping between Link and the index in the map (size -1) is the last element of the vector
     }
   }
   return(0);
@@ -283,9 +323,12 @@ int EUTelAPIXTbTrackTuple::readTracks(LCEvent* event){
       //Type >= 32 for fitted hits
       if( fittedHit->getType() < 32) { continue; }
       int iden = -1;
+      double nominalZpos(0.0);
       for(int plane = 0; plane < _siPlanesLayerLayout->getNLayers(); plane++){
 	if( fabs( pos[2] - _siPlanesLayerLayout->getSensitivePositionZ( plane ) ) < 2.0){
 	  iden = _siPlanesLayerLayout->getID( plane );
+	  nominalZpos = _siPlanesLayerLayout->getSensitivePositionZ(plane)
+	    + 0.5 * _siPlanesLayerLayout->getSensitiveThickness(plane);
 	}
       }
       if(iden == -1){ continue; }
@@ -293,7 +336,7 @@ int EUTelAPIXTbTrackTuple::readTracks(LCEvent* event){
       double x = pos[0];
       double y = pos[1];
       double z = pos[2];
-      reverseAlign(x,y,z,iden);
+      reverseAlign(x,y,z,iden, nominalZpos);
       //eutrack tree
       _xPos->push_back(x);
       _yPos->push_back(y);
@@ -360,7 +403,7 @@ gsl_matrix* EUTelAPIXTbTrackTuple::invertLU(int dim, gsl_matrix* matrix){
   gsl_linalg_LU_decomp(matrix, perm, &s);
   gsl_linalg_LU_invert(matrix, perm, inverse);
   gsl_permutation_free(perm);
-  gsl_matrix_fprintf(stdout,inverse,"%f");
+  //gsl_matrix_fprintf(stdout,inverse,"%f");
   return (inverse);
 }
 
@@ -370,27 +413,41 @@ void EUTelAPIXTbTrackTuple::invertAlignment(EUTelAlignmentConstant * alignment){
   //Rotations
   gsl_matrix * alignM = gsl_matrix_alloc(3,3);
   //Fill alignment matrix
-  gsl_matrix_set( alignM, 0, 0, (1.0 + alignment->getAlpha() ));
-  gsl_matrix_set( alignM, 1, 1, (1.0 + alignment->getBeta()  ));
-  gsl_matrix_set( alignM, 2, 2, 1.0 );
-  gsl_matrix_set( alignM, 0, 1, alignment->getGamma() );
-  gsl_matrix_set( alignM, 1, 0, -1 * alignment->getGamma() );
-  gsl_matrix_set( alignM, 0, 2, 0.0 );
-  gsl_matrix_set( alignM, 2, 0, 0.0 );
-  gsl_matrix_set( alignM, 1, 2, 0.0 );
-  gsl_matrix_set( alignM, 2, 1, 0.0 );
-  
+  if(_doScales){
+    gsl_matrix_set( alignM, 0, 0, (1.0 + alignment->getAlpha() ));
+    gsl_matrix_set( alignM, 1, 1, (1.0 + alignment->getBeta()  ));
+    gsl_matrix_set( alignM, 2, 2, 1.0 );
+    gsl_matrix_set( alignM, 0, 1, alignment->getGamma() );
+    gsl_matrix_set( alignM, 1, 0, -1 * alignment->getGamma() );
+    gsl_matrix_set( alignM, 0, 2, 0.0 );
+    gsl_matrix_set( alignM, 2, 0, 0.0 );
+    gsl_matrix_set( alignM, 1, 2, 0.0 );
+    gsl_matrix_set( alignM, 2, 1, 0.0 );
+  } else {
+    gsl_matrix_set( alignM, 0, 0, 1.0);
+    gsl_matrix_set( alignM, 1, 1, 1.0);
+    gsl_matrix_set( alignM, 2, 2, 1.0 );
+    gsl_matrix_set( alignM, 0, 1, alignment->getGamma() );
+    gsl_matrix_set( alignM, 1, 0, -1 * alignment->getGamma());
+    gsl_matrix_set( alignM, 0, 2, alignment->getBeta() );
+    gsl_matrix_set( alignM, 2, 0, -1.0 * alignment->getBeta());
+    gsl_matrix_set( alignM, 1, 2, alignment->getAlpha() );
+    gsl_matrix_set( alignM, 2, 1, -1.0 * alignment->getAlpha());
+  }
   message<MESSAGE> ( log() << "Inverting alignment matrix for iden" << iden  ) ;
   gsl_matrix * inverse = invertLU(3, alignM);
   gsl_matrix_free(alignM);
-  _alignRot[iden] = inverse;
+  _alignRot[iden].push_back(inverse);
 
   //Shifts
   std::vector<double> shifts;
   shifts.push_back( alignment->getXOffset()  );
   shifts.push_back( alignment->getYOffset() );
   shifts.push_back( alignment->getZOffset() );
-  _alignShift[iden] = shifts;
+  _alignShift[iden].push_back(shifts);
+  streamlog_out(MESSAGE) << "Iden: " << iden << endl
+			 << "X-shift: "<< alignment->getXOffset() << endl
+			 << "Y-shift: "<< alignment->getYOffset() << endl;
 }
 
 void EUTelAPIXTbTrackTuple::invertGear(){
@@ -433,6 +490,18 @@ void EUTelAPIXTbTrackTuple::invertGear(){
     //Pitches
     _gearPitch[iden] = make_pair( _siPlanesLayerLayout->getSensitivePitchX(layerIndex),
 				  _siPlanesLayerLayout->getSensitivePitchY(layerIndex));
+
+    std::vector<double> gearRotations(3, 0.0);
+    //Convert angles to radians
+    double conv = 3.1415926/180.0;
+    gearRotations.at(0) = conv * _siPlanesLayerLayout->getLayerRotationXY(layerIndex);
+    gearRotations.at(1) = conv * _siPlanesLayerLayout->getLayerRotationZX(layerIndex);
+    gearRotations.at(2) = conv * _siPlanesLayerLayout->getLayerRotationZY(layerIndex);
+    cout << "Plane iden: " << iden << endl;
+    cout << "gearRotationsXY = " << gearRotations.at(0) << endl
+	 << "gearRotationsZX = " << gearRotations.at(1) << endl
+	 << "gearRotationsZY = " << gearRotations.at(2) << endl;
+    _gearEulerRot[iden] = gearRotations;
   }
 }
 
@@ -444,6 +513,7 @@ void EUTelAPIXTbTrackTuple::clear(){
   p_iden->clear();
   p_lv1->clear();
   p_chip->clear();
+  p_clusterId->clear();
   _nPixHits = 0;
   /* Clear hittrack */
   _xPos->clear();
@@ -461,27 +531,47 @@ void EUTelAPIXTbTrackTuple::clear(){
   _cluposX->clear();	 
   _cluposY->clear();	 
   _clucharge->clear();
-  _cluid->clear();
+  _cluSensorId->clear();
+  _cluClusterId->clear();
+  _cluPointer->clear(); // Clear the map as well!
 }
 
-void EUTelAPIXTbTrackTuple::reverseAlign(double& x, double& y, double &z, int iden){
+void EUTelAPIXTbTrackTuple::reverseAlign(double& x, double& y, double &z, int iden, double nomZpos){
   // Apply alignment translations 
-  
-  double xTemp(0.0),yTemp(0.0);
-  if( _alignShift.find(iden) != _alignShift.end() ){
-    x += _alignShift[iden].at(0);
-    y += _alignShift[iden].at(1);
-    z += _alignShift[iden].at(2);
-  }  //Apply alignment rotations
-  if( _alignRot.find(iden) != _alignRot.end() ){
-    gsl_matrix* m = _alignRot[iden];
-    xTemp = x * gsl_matrix_get(m,0,0) + y * gsl_matrix_get(m,0,1) + z * gsl_matrix_get(m,0,2); 
-    yTemp = x * gsl_matrix_get(m,1,0) + y * gsl_matrix_get(m,1,1) + z * gsl_matrix_get(m,1,2); 
-    x = xTemp; y = yTemp;
+  double xTemp(0.0),yTemp(0.0), zTemp(0.0);
+  for( size_t trans = 0; trans < _alignShift[iden].size(); trans++){
+    //if( _alignShift.find(iden) != _alignShift.end() ){
+    x += _alignShift[iden].at(trans).at(0);
+    y += _alignShift[iden].at(trans).at(1);
+    z += _alignShift[iden].at(trans).at(2);
+    double zShift(z);
+    if(not _doScales){ zShift = z - nomZpos;}
+    //Apply alignment rotations
+    gsl_matrix* m = _alignRot[iden].at(trans);
+    xTemp = x * gsl_matrix_get(m,0,0) + y * gsl_matrix_get(m,0,1) + zShift * gsl_matrix_get(m,0,2); 
+    yTemp = x * gsl_matrix_get(m,1,0) + y * gsl_matrix_get(m,1,1) + zShift * gsl_matrix_get(m,1,2); 
+    zTemp = x * gsl_matrix_get(m,2,0) + y * gsl_matrix_get(m,2,1) + z * gsl_matrix_get(m,2,2); 
+    x = xTemp; y = yTemp; z = zTemp;
     //Do not need z's from here, I guess
   }
-  //This seems to me to be a strange way of doing things, but following the method of EUTelHitMaker in reverse:
-  //Apply gear trans
+
+  //Apply GEAR Euler translations
+  zTemp = z - nomZpos;
+  TVector3 RotatedSensorHit( x, y, zTemp);
+  std::vector<double>& rots = _gearEulerRot[iden];
+  if( TMath::Abs(rots.at(0)) > 1e-6 ){
+    RotatedSensorHit.RotateZ( -1.0 * rots.at(0) ); // in XY
+  }
+  if( TMath::Abs(rots.at(1)) > 1e-6 ){
+    RotatedSensorHit.RotateY( -1.0 * rots.at(1) ); // in ZX 
+  }
+  if( TMath::Abs(rots.at(2)) > 1e-6 ){
+    RotatedSensorHit.RotateX( -1.0 * rots.at(2) ); // in ZY
+  }
+  x = RotatedSensorHit.X();
+  y = RotatedSensorHit.Y();
+  
+  //Apply gear local trans
   if(_gearShift.find(iden) != _gearShift.end()){
     x += _gearShift[iden].at(0);
     y += _gearShift[iden].at(1);
@@ -501,24 +591,21 @@ void EUTelAPIXTbTrackTuple::readAlignment(LCEvent* event){
   //Check for alignment collections, if found invert and store, if not keep _foundAlign false so it will look in next event.
   _foundAllign = true;
 
-  LCCollectionVec * dutAlignmentCollectionVec = NULL; 
-  LCCollectionVec * telAlignmentCollectionVec = NULL; 
-  try{
-    dutAlignmentCollectionVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _dutAlignmentCollectionName));
-    telAlignmentCollectionVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _telAlignmentCollectionName));
-  } catch( DataNotAvailableException& e) {
-    //streamlog_out ( ERROR ) << "Could not find  alignment collections on event " << event->getEventNumber() << "." << endl;
-    _foundAllign = false;
-  }
-  if(not _foundAllign){ return; }
-  streamlog_out ( MESSAGE ) << "Found alignment collections on event " << event->getEventNumber() << "."  << endl;
-  //The order of these two matters!
-  //Read DUT alignment first, Unity rotations of the fixed telescopes are overwritten when tel alignment is read
-  for ( size_t iPos = 0; iPos < dutAlignmentCollectionVec->size(); ++iPos ) {
-    invertAlignment( static_cast< EUTelAlignmentConstant * > ( dutAlignmentCollectionVec->getElementAt( iPos ) ) );
-  }
-  for ( size_t iPos = 0; iPos < telAlignmentCollectionVec->size(); ++iPos ) {
-    invertAlignment( static_cast< EUTelAlignmentConstant * > ( telAlignmentCollectionVec->getElementAt( iPos ) ) );
+  LCCollectionVec * alignmentCollectionVec;
+  cout << "Trying to read " << _alignColNames.size() << " collections" << endl;
+  for(size_t ii = 0; ii < _alignColNames.size(); ii++){
+    size_t index = _alignColNames.size() - ii -1;
+    cout << "Trying to read alignment collection " << _alignColNames.at(index) << endl;
+    try{
+      alignmentCollectionVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _alignColNames.at(index)));
+      for ( size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos ) {
+	cout << "Inverting plane " << iPos << endl;
+	invertAlignment( static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) ) );
+      }
+    } catch( DataNotAvailableException& e) {
+      streamlog_out ( ERROR ) << "Could not find  alignment collections on event " << event->getEventNumber() << "." << endl;
+      _foundAllign = false;
+    }
   }
 }
 
@@ -542,6 +629,8 @@ void EUTelAPIXTbTrackTuple::prepareTree(){
   p_iden = new vector<int>();
   p_lv1 = new vector<int>();
   p_chip = new vector<int>();
+  p_clusterId = new vector<int>();
+  
   
   _clusize = new vector<int>();
   _clusizeX = new vector<int>();
@@ -549,8 +638,25 @@ void EUTelAPIXTbTrackTuple::prepareTree(){
   _cluposX = new vector<int>();
   _cluposY = new vector<int>();
   _clucharge = new vector<int>();
-  _cluid = new vector<int>();
+  _cluSensorId = new vector<int>();
+  _cluClusterId = new vector<int>();
+  _cluPointer = new std::map<IMPL::TrackerDataImpl*, int>();
   
+  _hitXPos = new vector<double>();
+  _hitYPos = new vector<double>();
+  _hitZPos = new vector<double>();
+  _hitClusterId  = new vector<int>();
+  _hitSensorId  = new vector<int>();
+  _hitPointerToCluster = new vector<IMPL::TrackerDataImpl*>();
+  
+  _euhits = new TTree("euhits","euhits");
+  _euhits->Branch("nHits", &_nHits);
+  _euhits->Branch("xPos", &_hitXPos);
+  _euhits->Branch("yPos", &_hitYPos);
+  _euhits->Branch("zPos", &_hitZPos);
+  _euhits->Branch("clusterId", &_hitClusterId);
+  _euhits->Branch("sensorId", &_hitSensorId);
+      
   _zstree = new TTree("zspix", "zspix");
   _zstree->Branch("nPixHits", &_nPixHits);
   _zstree->Branch("euEvt",    &_nEvt);
@@ -560,6 +666,7 @@ void EUTelAPIXTbTrackTuple::prepareTree(){
   _zstree->Branch("lv1",      &p_lv1);
   _zstree->Branch("iden",     &p_iden);
   _zstree->Branch("chip",     &p_chip);
+  _zstree->Branch("clusterId",&p_clusterId);
   //Tree for storing all track param info
   _eutracks = new TTree("eutracks", "eutracks");
   _eutracks->Branch("nTrackParams", &_nTrackParams);
@@ -581,5 +688,9 @@ void EUTelAPIXTbTrackTuple::prepareTree(){
   _clutree->Branch("posX", &_cluposX);
   _clutree->Branch("posY", &_cluposY);
   _clutree->Branch("charge", &_clucharge);
-  _clutree->Branch("iden", &_cluid);
+  _clutree->Branch("iden", &_cluSensorId);
+  _clutree->Branch("ID", &_cluClusterId);
+  
+  _euhits->AddFriend(_clutree);
+  _euhits->AddFriend(_zstree);
 }

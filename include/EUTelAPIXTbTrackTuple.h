@@ -10,6 +10,15 @@
 
 // lcio includes <.h>
 #include "lcio.h"
+#include <EVENT/LCCollection.h>
+#include <EVENT/LCEvent.h>
+#include <IMPL/LCCollectionVec.h>
+#include <IMPL/TrackerHitImpl.h>
+#include <IMPL/TrackImpl.h>
+#include <IMPL/TrackerPulseImpl.h>
+#include <IMPL/TrackerDataImpl.h>
+#include <IMPL/LCFlagImpl.h>
+
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -44,27 +53,32 @@ namespace eutelescope {
     void readAlignment(LCEvent * event);
     void invertAlignment(EUTelAlignmentConstant * alignment);
     void invertGear();
-    void reverseAlign(double& x, double& y, double& z, int iden);
+    void reverseAlign(double& x, double& y, double& z, int iden, double nomZPos);
     void clear();
     gsl_matrix* invertLU(int dim, gsl_matrix* m);
     int readZsHits(std::string colName, LCEvent* event);
     int readTracks(LCEvent* event);
     int readClusters( std::string colName, LCEvent* event);
+    int readHits( std::string hitColName, LCEvent* event );
+    void setClusterIdInHits();
 
     bool _foundAllign;
-    std::string _dutAlignmentCollectionName;
-    std::string _telAlignmentCollectionName;
+    bool _doScales;
+    std::vector<std::string> _alignColNames;
 
-    std::map<int, std::vector<double> > _alignShift;
-    std::map<int, gsl_matrix* > _alignRot;
+    std::map<int, std::vector< std::vector<double> > > _alignShift;
+    //std::map< int, std::vector< std::vector<double> > >
+    std::map<int, std::vector<gsl_matrix*> > _alignRot;
     std::map<int, std::vector<double> > _gearShift;
     std::map<int, gsl_matrix* > _gearRot;
     std::map<int, std::pair<double, double> > _gearPitch;
+    std::map<int, std::vector<double> > _gearEulerRot;
 
     gear::SiPlanesParameters * _siPlanesParameters;
     gear::SiPlanesLayerLayout * _siPlanesLayerLayout;
 
     std::string _inputTrackColName ;
+    std::string _inputTrackerHitColName ;
     std::string _inputTelPulseCollectionName;
     std::string _inputDutPulseCollectionName;
     std::string _telZsColName;
@@ -101,6 +115,7 @@ namespace eutelescope {
     std::vector<int> *p_iden;
     std::vector<int> *p_lv1;
     std::vector<int> *p_chip;
+    std::vector<int> *p_clusterId;
 
     TTree* _clutree;
     std::vector<int> *_clusize;
@@ -109,7 +124,19 @@ namespace eutelescope {
     std::vector<int> *_cluposX;
     std::vector<int> *_cluposY;
     std::vector<int> *_clucharge;
-    std::vector<int> *_cluid;        
+    std::vector<int> *_cluSensorId; 
+    std::vector<int> *_cluClusterId;    
+    std::map<IMPL::TrackerDataImpl*, int> *_cluPointer;
+    //std::vector< >   *_cluPointerToPixHits;
+    
+    TTree* _euhits;
+    int _nHits;
+    std::vector<double> *_hitXPos;
+    std::vector<double> *_hitYPos;
+    std::vector<double> *_hitZPos;
+    std::vector<int>    *_hitClusterId;
+    std::vector<int>    *_hitSensorId;
+    std::vector<IMPL::TrackerDataImpl*>    *_hitPointerToCluster;
   };
 
 
