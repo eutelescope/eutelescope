@@ -122,10 +122,10 @@ void EUTelDafAlign::dafParams(){
   registerOptionalParameter("ResidualYMax", "Max Y for residual cuts. All sensors shoule be included, same order as parameter DutPlanes",
 			    _resYMax, std::vector<float>());
   //Region of cell
-  registerOptionalParameter("MinCol", "Minimum allowed local X of hit. All clusters containing hits outside will be discarded from alignment.", _minCol, static_cast<int>(0));
-  registerOptionalParameter("MaxCol", "Maximum allowed local X of hit. All clusters containing hits outside will be discarded from alignment.", _maxCol, static_cast<int>(17));
-  registerOptionalParameter("MinRow", "Minimum allowed local Y of hit. All clusters containing hits outside will be discarded from alignment.", _minRow, static_cast<int>(2));
-  registerOptionalParameter("MaxRow", "Maximum allowed local Y of hit. All clusters containing hits outside will be discarded from alignment.", _maxRow, static_cast<int>(150));
+  registerOptionalParameter("MinCol", "Minimum allowed local X of hit. All clusters containing hits outside will be discarded from alignment.", _colMin, std::vector<int>());
+  registerOptionalParameter("MaxCol", "Maximum allowed local X of hit. All clusters containing hits outside will be discarded from alignment.", _colMax, std::vector<int>());
+  registerOptionalParameter("MinRow", "Minimum allowed local Y of hit. All clusters containing hits outside will be discarded from alignment.", _rowMin, std::vector<int>());
+  registerOptionalParameter("MaxRow", "Maximum allowed local Y of hit. All clusters containing hits outside will be discarded from alignment.", _rowMax, std::vector<int>());
 }
 
 void EUTelDafAlign::dafInit() {
@@ -195,7 +195,7 @@ void EUTelDafAlign::dafEvent (LCEvent * event) {
   //Check found tracks
   for(size_t ii = 0; ii < _system.getNtracks(); ii++ ){
     //run track fitter
-    //_nClusters++;
+    _nClusters++;
     _system.fitPlanesInfoDaf(_system.tracks.at(ii));
     //Check resids, intime, angles
     if(not checkTrack( _system.tracks.at(ii))) { continue;};
@@ -215,7 +215,6 @@ void EUTelDafAlign::dafEvent (LCEvent * event) {
 	  //Add to mille bin file
 	  addToMille( _system.tracks.at(ii));
 	  _system.planes.at( _dutMatches.at(dut) ).exclude();
-	  _nClusters++;
 	}
       }
     }

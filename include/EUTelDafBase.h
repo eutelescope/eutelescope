@@ -69,6 +69,9 @@ namespace eutelescope {
     bool _initializedSystem;
     LCCollection* _hitCollection;
 
+    std::vector<int> _colMin, _colMax, _rowMin, _rowMax;
+    std::map<int, std::pair<int,int> > _rowMinMax, _colMinMax;
+
     // List of sensor IDs identifying telescopes and duts
     std::vector<int > _telPlanes;
     std::vector<int > _dutPlanes;
@@ -105,7 +108,7 @@ namespace eutelescope {
     virtual void dafEvent(LCEvent * evt){;}
     virtual void dafEnd(){;}
     virtual void dafParams(){;}
-    bool checkClusterRegion(lcio::TrackerHitImpl* hit); // { return(true);}
+    bool checkClusterRegion(lcio::TrackerHitImpl* hit, int iden); // { return(true);}
     
 
     size_t getPlaneIndex(float zPos);
@@ -123,7 +126,7 @@ namespace eutelescope {
     void gearRotate(size_t index, size_t gearIndex);
     Vector3f applyAlignment(EUTelAlignmentConstant* alignment, Vector3f point);
     void alignRotate(std::string collectionName, LCEvent* event);
-
+    void getPlaneNorm(daffitter::FitPlane& pl);
 
     daffitter::TrackerSystem _system;
     std::map<float, int> _zSort;

@@ -57,6 +57,7 @@ namespace eutelescope {
     void clear();
     gsl_matrix* invertLU(int dim, gsl_matrix* m);
     int readZsHits(std::string colName, LCEvent* event);
+    int readZsHitsFromClusters(std::string colName, LCEvent* event);
     int readTracks(LCEvent* event);
     int readClusters( std::string colName, LCEvent* event);
     int readHits( std::string hitColName, LCEvent* event );
@@ -83,6 +84,7 @@ namespace eutelescope {
     std::string _inputDutPulseCollectionName;
     std::string _telZsColName;
     std::string _dutZsColName;
+    bool _clusterBased;
 
     std::string _path2file;
 

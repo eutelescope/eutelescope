@@ -12,6 +12,7 @@ FitPlane::FitPlane(int sensorID, float zPos, float sigmaX, float sigmaY, float s
   this->sensorID = sensorID;
   this->zPosition = zPos;
   this->sigmas(0) = sigmaX; sigmas(1) = sigmaY;
+  this->variances = sigmas.cwise().square();
   this->invMeasVar(0) = 1/(sigmaX * sigmaX);
   this->invMeasVar(1) = 1/(sigmaY * sigmaY);
   this->scatterThetaSqr = scatterThetaSqr;
@@ -109,7 +110,7 @@ void TrackerSystem::getChi2Daf(TrackCandidate *candidate){
     ndof += p.weights.sum();
     for(int meas = 0; meas < (int) p.meas.size(); meas++){
       Measurement& m = p.meas.at(meas);
-      chi2v = (m.getM() - candidate->estimates.at(plane)->params.start<2>()).cwise() / p.getSigmas();
+      chi2v = (m.getM() - m_fitter->smoothed.at(plane)->params.start<2>()).cwise() / p.getSigmas();
       chi2v = chi2v.cwise().square();
       chi2 += p.weights(meas) * chi2v.sum();
     }
@@ -310,7 +311,7 @@ float TrackerSystem::fitPlanesInfoDafInner(){
   TrackEstimate* e = new TrackEstimate();
   e->cov.setZero();
   e->params.setZero();
-  //Forward fitter, biased
+  //Forward fitter
   m_fitter->forward.at(0)->copy(e);
   m_fitter->updateInfoDaf( planes.at(0), e );
   float ndof( -1.0f * e->params.size());

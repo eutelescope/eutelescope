@@ -92,6 +92,7 @@ namespace daffitter{
     float measZ;
     // Uncertainties of measurements in this plane
     Vector2f sigmas;
+    Vector2f variances;
     //Sum of DAF weights for all measurements
     float sumWeights;
     //Ref point
@@ -115,6 +116,7 @@ namespace daffitter{
     float getSigmaX()  const { return(sigmas(0));}
     float getSigmaY()  const { return(sigmas(1));}
     Vector2f getSigmas() const { return(sigmas);}
+    Vector2f getVars() const { return(variances);}
     void print();
     float getScatterThetaSqr() const {return(scatterThetaSqr);}
     void addMeasurement(float x, float y, float z, bool goodRegion, size_t measIden){ Measurement a(x,y, z, goodRegion, measIden); meas.push_back(a); }

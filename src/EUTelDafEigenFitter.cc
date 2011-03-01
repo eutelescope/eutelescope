@@ -39,8 +39,12 @@ void EigenFitter::calculatePlaneWeight(FitPlane& plane, TrackEstimate* e, float 
   for(size_t m = 0; m < nMeas ; m++){
     const Measurement &meas = plane.meas.at(m);
     resids = e->params.start<2>() - meas.getM();
-    chi2s = resids.cwise() / plane.getSigmas();
-    float chi2 = chi2s.squaredNorm();
+    chi2s = resids.cwise().square();
+    chi2s(0) /= plane.getSigmaX() * plane.getSigmaX() + e->cov(0,0);
+    chi2s(1) /= plane.getSigmaY() * plane.getSigmaY() + e->cov(1,1);
+    //resids = plane.getVars() + Vector2f( e->cov(0,0), e->cov(1,1) );
+    //chi2s = chi2s.cwise() / resids;
+    float chi2 = chi2s.sum();
     plane.weights(m) = exp( -1 * chi2 / (2 * tval));
   }
   float cutWeight = exp( -1 * chi2cutoff / (2 * tval));

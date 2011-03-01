@@ -137,7 +137,7 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
     if( inTimeHits < _nDutHits) { continue;}
 
     //if( inTimeHits > 2){ dumpToAscii(_system.tracks.at(ii));  }
-
+    dumpToAscii(_system.tracks.at(ii));
     //Fill plots
     if(_histogramSwitch){ 
       fillPlots( _system.tracks.at(ii) ); 

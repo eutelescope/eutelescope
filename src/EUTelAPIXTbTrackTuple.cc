@@ -81,6 +81,9 @@ EUTelAPIXTbTrackTuple::EUTelAPIXTbTrackTuple() : Processor("EUTelAPIXTbTrackTupl
 
   registerOptionalParameter("AlignmentCollectionNames", "Names of alignment collections, should be in same order as application", _alignColNames, std::vector<std::string>());
 
+  
+  registerOptionalParameter("ReadInClusterBased","Do not readin collection by collection but with the correct mapping between clusters, zsdata and hits", _clusterBased, true);
+
   // other processor parameters:
   registerProcessorParameter ("OutputPath",
 			      "Path/File where root-file should be stored",
@@ -152,22 +155,27 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event ) {
   //Clear all event info containers
   clear();
 
-  //if( readHits( _inputTrackerHitColName, event ) != 0) { return; }
+  if( readHits( _inputTrackerHitColName, event ) != 0) { return; }
   /* --- Dump zs info, skip if event if collection not found --- */
   //if( readZsHits( _telZsColName ,  event) != 0) { return; }
-  if( readZsHits( _dutZsColName , event) != 0) { return; }
+   if (_clusterBased) {
+   	if( readZsHits( _dutZsColName , event) != 0) { return; }
+   } else {
+  	if( readZsHitsFromClusters( _dutZsColName , event) != 0) { return; }
+   }
   /* --- Dump fitted track params --- */
   if( readTracks(event) != 0) { return; }
   /* ---- Check cluster collections ---*/
-  //if( readClusters( _inputDutPulseCollectionName , event) != 0 ) { return; } 
+  if( readClusters( _inputDutPulseCollectionName , event) != 0 ) { return; } 
   //if( readClusters( _inputTelPulseCollectionName , event) != 0 ) { return; } 
-  
-  //setClusterIdInHits();
+ 
+  if (_clusterBased) setClusterIdInHits();
 
   /* Filling tree */
   _zstree->Fill();
   _eutracks->Fill();
   _clutree->Fill();
+   if (_clusterBased) _euhits->Fill();
 }
 
 void EUTelAPIXTbTrackTuple::end(){
@@ -191,9 +199,9 @@ void EUTelAPIXTbTrackTuple::setClusterIdInHits() {
       }
     }
   } else {
-    //streamlog_out(WARNING) << "Method setClusterIdInHits() may only be called once!" << endl;	
+    streamlog_out(WARNING) << "Method setClusterIdInHits() may only be called once!" << endl;	
   }
-  //if (endsize != _hitClusterId->size() ) cout << "ClusterIndex variable is not correct!" << endl;
+  if (endsize != _hitClusterId->size() ) cout << "ClusterIndex variable is not correct!" << endl;
 }
 
 int EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event ) {
@@ -272,7 +280,7 @@ int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
       apixCluster->getCenterCoord(posX, posY);
       clusterID = apixCluster->getClusterID();
       delete apixCluster;
-    } else if (  type == kEUTelSparseClusterImpl or type == kEUTelDFFClusterImpl){
+    } else if (  type == kEUTelSparseClusterImpl or type == kEUTelM26ClusterImpl or type == kEUTelDFFClusterImpl){
       eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > * telCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
       size = telCluster->size();
       charge = telCluster->getTotalCharge();
@@ -352,6 +360,54 @@ int EUTelAPIXTbTrackTuple::readTracks(LCEvent* event){
   return(0);
 }
 
+int EUTelAPIXTbTrackTuple::readZsHitsFromClusters( std::string colName, LCEvent* event){
+  LCCollectionVec* zsInputCollectionVec= NULL;
+  try{
+    zsInputCollectionVec  = dynamic_cast < LCCollectionVec* > (event->getCollection( colName ));
+  } catch (DataNotAvailableException& e){
+    //streamlog_out ( ERROR ) << "Could not find collection " << colName << " on event " << event->getEventNumber() << "." << endl;
+    return(1);
+  }
+  CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputCollectionVec );
+  for ( unsigned int cluster = 0 ; cluster < zsInputCollectionVec->size(); cluster++ ) {
+    TrackerDataImpl* zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( cluster ) );
+    int sensorID = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
+    int clusterID = static_cast<int> ( cellDecoder (zsData) ["clusterID"] );
+    
+    _nPixHits++;
+    if (sensorID > 9  ) {
+      auto_ptr<EUTelSparseDataImpl<EUTelAPIXSparsePixel> > apixData(new EUTelSparseDataImpl<EUTelAPIXSparsePixel> ( zsData ));
+      EUTelAPIXSparsePixel apixPixel;
+      for ( unsigned int iHit = 0; iHit < apixData->size(); iHit++ ) {
+		apixData->getSparsePixelAt( iHit, &apixPixel);
+		p_iden->push_back( sensorID );
+		p_chip->push_back( apixPixel.getChip() );
+		p_row->push_back( apixPixel.getYCoord() );
+		p_col->push_back( apixPixel.getXCoord() );
+		p_tot->push_back( apixPixel.getSignal() );
+		p_lv1->push_back( apixPixel.getTime() );
+		p_clusterId->push_back(clusterID);
+      }
+		
+   
+    } else if ( sensorID > 0 && sensorID < 10 ) {
+      auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel> > telData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
+      EUTelSimpleSparsePixel telPixel;
+      for ( unsigned int iHit = 0; iHit < telData->size(); iHit++ ) {
+	telData->getSparsePixelAt( iHit, &telPixel);
+	p_iden->push_back( sensorID );
+	p_chip->push_back( 0 );
+	p_row->push_back( telPixel.getYCoord() );
+	p_col->push_back( telPixel.getXCoord() );
+	p_tot->push_back( telPixel.getSignal() );
+	p_lv1->push_back( 0 );
+	p_clusterId->push_back(clusterID);
+      }
+    }
+  }
+  if (p_clusterId->size() != p_row->size() ) { streamlog_out(ERROR) << "ClusterID Vector size is not consistent!(" << p_clusterId->size() << " and " << p_row->size() << endl; }
+    return(0);
+}
 
 int EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event){
   LCCollectionVec* zsInputCollectionVec= NULL;
@@ -534,6 +590,13 @@ void EUTelAPIXTbTrackTuple::clear(){
   _cluSensorId->clear();
   _cluClusterId->clear();
   _cluPointer->clear(); // Clear the map as well!
+  //Clear hits
+  _hitXPos->clear();
+  _hitYPos->clear();
+  _hitZPos->clear();
+  _hitClusterId->clear();
+  _hitSensorId->clear();
+  _hitPointerToCluster->clear();
 }
 
 void EUTelAPIXTbTrackTuple::reverseAlign(double& x, double& y, double &z, int iden, double nomZpos){
