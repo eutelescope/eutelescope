@@ -19,6 +19,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
    <execute>
       <processor name="AIDA"/>
+      <@UseOffsetDBCommentLeft@processor name="LoadOffsetDB"/@UseOffsetDBCommentRight@>
       <processor name="LoadAlignment"/>
       <processor name="ApplyAlignment"/>
       <processor name="Fitter"/>
@@ -28,7 +29,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <!-- processor name="FitterHisto"/ -->
       <!-- processor name="DUTHisto"/-->
       <!-- processor name="NTuple"/-->
-      <!-- processor name="APIXTbTrack"/-->
+      <processor name="APIXTbTrack"/>
       <!-- group name="TelDUTHisto"/ -->
       <!--group name="APIXDUTHisto"/-->
       <processor name="Save"/>
@@ -65,8 +66,12 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
   <parameter name="SimpleFileHandler" type="StringVec"> alignment @AlignmentFile@ alignment </parameter>
-  <!--parameter name="SimpleFileHandler" type="StringVec"> preAlignment @preAlignmentFile@ preAlignment </parameter-->
  </processor>
+
+  <processor name="LoadOffsetDB" type="ConditionsProcessor">
+   <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
+   <parameter name="SimpleFileHandler" type="StringVec"> preAlignment @DBPath@/run@OffsetRunNumber@-offset-db.slcio preAlignment </parameter>
+  </processor>
 
  <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
   <!--Apply to the input hit the alignment corrections-->
@@ -344,25 +349,32 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <parameter name="UseManualDUT" type="bool" value="@UseManualDUT@"/>
 </processor>
 
-<processor name="APIXTbTrack" type="EUTelAPIXTbTrackTuple">
+ <!--processor name="APIXTbTrack" type="EUTelAPIXTbTrackTuple">
     <parameter name="OutputPath" type ="string"   value="@HistoPath@/@Output@-track-tb-histo.root"/>
-    <!--Prepare n-tuple with track fit results-->
-    <!--Name of the input Track collection-->
     <parameter name="InputCollectionName" type="string" lcioInType="Track"> track </parameter>
-    <!--Name of the input pulse collections-->
     <parameter name="InputTelPulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_m26 </parameter>
     <parameter name="InputDutPulseCollectionName" type="string" lcioInType="TrackerPulse"> cluster_apix </parameter>
-    <!--Name of the input hit collection-->
     <parameter name="InputTrackerHitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit</parameter>
-    <!--Name of the input DUT hit collection-->
-    <!-- parameter name="InputTrackerHitCollectionName" type="string"    lcioInType="TrackerHit">  aligned_hit_m26</parameter -->
-    <!-- Alignment constants-->
     <parameter name="DutAlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignment </parameter>
     <parameter name="TelAlignmentConstantName" type="string"    lcioInType="LCGenericObject"> alignment </parameter>
-    <!-- Make detailed TTree-output for the following sensor-IDs -->
     <parameter name="MakeAllLeaves" type="IntVec"> 0 1 2  13 14  3 4 5</parameter>
     <parameter name="MoveXY" type="StringVec"> 0 0 0 </parameter>
- </processor>
+ </processor-->
+
+ <processor name="APIXTbTrack" type="EUTelAPIXTbTrackTuple">
+    <parameter name="OutputPath" type ="string" value="@HistoPath@/@Output@-track-tb-histo.root"/>
+    <!--Name of the input Track collection-->
+    <parameter name="InputCollectionName" type="string" lcioInType="Track"> track </parameter>
+    <!--Name of the input cluster collections-->
+    <parameter name="InputDutPulseCollectionName" type="string" value="cluster_apix"/>
+    <parameter name="InputTelPulseCollectionName" type="string" value="cluster_m26"/>
+    <!--Name of the zs hit collection-->
+    <parameter name="TelZsColName" type="string" value="zsdata_m26"/>
+    <parameter name="DutZsColName" type="string" value="zsdata_apix"/>
+    <!-- Alignment constants-->
+    <parameter name="AlignmentCollectionNames"> alignment preAlignment </parameter>
+    <parameter name="DoScales" type="bool" value="false"/>
+  </processor>
 
 
  <processor name="Save" type="EUTelOutputProcessor">

@@ -406,6 +406,7 @@ class SubmitFitter( SubmitBase ):
 
         actualSteeringString = actualSteeringString.replace("@GearFile@", self._gear_file )
 
+ 
         # histoinfo
         if self._option.execution == "all-grid" :
             self._histoinfoPath = "."
@@ -677,6 +678,47 @@ class SubmitFitter( SubmitBase ):
 
         actualSteeringString = actualSteeringString.replace("@GearFile@", self._gear_file )
 
+        # now replace the offset folder path
+        if self._option.execution == "all-grid" :
+#            try:
+#                dbFolder = self._configParser.get("GRID", "GRIDFolderDBPede")
+#            except ConfigParser.NoOptionError :
+                dbFolder = "db"
+        else:
+            try:
+                dbFolder = self._configParser.get("LOCAL", "LocalFolderDBOffset")
+            except ConfigParser.NoOptionError :
+                dbFolder = "db"
+        actualSteeringString = actualSteeringString.replace("@DBPath@" ,dbFolder )
+
+        self._logger.debug( dbFolder );
+
+        # set the run number (offsets to be taken from)
+        # can be on run for many in the run block
+
+        if self._option.offsetRunNumber == None :
+            # this means that the user does not want to use hot pixel db file
+            self._logger.info( "offset NONE" )
+            self._logger.info(  self._option.offsetRunNumber )
+        
+            actualSteeringString = actualSteeringString.replace("@UseOffsetDBCommentLeft@", "!--" )
+            actualSteeringString = actualSteeringString.replace("@UseOffsetDBCommentRight@", "--" )
+ 
+#           actualSteeringString = actualSteeringString.replace("@OffsetRunNumber@", "000000" )
+           
+            self._logger.debug( "NOT Using offset db file" )
+        else:    
+            # this means that the user DOES want to use hot pixel db file
+            print "offset YES"
+            
+            actualSteeringString = actualSteeringString.replace("@UseOffsetDBCommentLeft@", "" )
+            actualSteeringString = actualSteeringString.replace("@UseOffsetDBCommentRight@", "" )
+ 
+            offsetRunNumber = "0%(run)s" % { "run": self._option.offsetRunNumber }
+            actualSteeringString = actualSteeringString.replace("@OffsetRunNumber@", offsetRunNumber )
+     
+            self._logger.debug( "Using offset db file" )
+ 
         # histoinfo
         if self._option.execution == "all-grid" :
             self._histoinfoPath = "."
@@ -1814,11 +1856,19 @@ class SubmitFitter( SubmitBase ):
                 runActualString = runActualString.replace( "@InputFileList@", "%(file)s @InputFileList@" % {"file": self._justInputFileList[index] } )
         runActualString = runActualString.replace( "@InputFileList@" , "" )
 
+        if self._option.offsetRunNumber == None :
+           offsetRunNumber = 0
+        else:
+           offsetRunNumber = "%(run)s" % { "run": self._option.offsetRunNumber }
+           
+        fqOffsetFile = "run0%(run)s-offset-db.slcio" %{ "run": offsetRunNumber }
+        runActualString = runActualString.replace("@OffsetFile@", fqOffsetFile )
+
         # replace the alignment file
         runActualString = runActualString.replace( "@AlignFile@",os.path.basename( self._option.alignment_file ) )
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
-                         "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderFitterResults",
+                         "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderDBOffset", "GRIDFolderFitterResults",
                          "GRIDFolderFitterJoboutput", "GRIDFolderFitterHisto", "GRIDLibraryTarball",
                          "GRIDLibraryTarballPath", "GRIDILCSoftVersion" ]
         for variable in variableList:

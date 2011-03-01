@@ -42,6 +42,10 @@ usage: %prog [execution-options] [io-options] [configuration-options] [fitter-op
     parser.add_option( "-a", "--alignment-file", type="string", action="store", dest="alignment_file", 
                        help ="This is the name of the alignment file to be used." )
 
+    parser.add_option( "-n", "--offset-run-number", type="string",
+    action="store", dest="offsetRunNumber", 
+                       help = "This is the run number to get the offset-db file containing the preAlignmetn constants." )
+
 
     # adding a group with alignment related options
     fitterGroup = OptionGroup( parser, "Fitter options", "Use these options to modify the behaviour of the fitter processor")
