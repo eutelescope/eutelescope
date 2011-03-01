@@ -1,0 +1,13 @@
+def siteConfig(params):
+    #Where do you want all results to be stored?
+    params["ResultPath"] = "/home/haavagj/pixel/tb2009/eudet/results"
+    #Where do you want your databases to be stored?
+    params["DbPath"] = "/home/haavagj/pixel/tb2009/eudet/db"
+    #Where should I put your AIDA histogram files?
+    params["HistoPath"] = "/home/haavagj/pixel/tb2009/eudet/histo"
+    #Where can I find your native data?
+    params["NativePath"] = "/home/haavagj/pixel/tb2009/eudet/native"
+    #Where do the job template files reside?
+    params["TemplatePath"] = "/home/haavagj/src/ilchead/Eutelescope/HEAD/simplesub/template_m26_telescope"
+    #How many Marlin jobs should run in paralell? Note: align jobs run in a single thread.
+    params["NParallel"] = "4"
