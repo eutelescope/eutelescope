@@ -424,8 +424,8 @@ bool EUTelDafBase::checkClusterRegion(lcio::TrackerHitImpl* hit, int iden){
   if( hit->getType() == kEUTelAPIXClusterImpl ){
     auto_ptr<EUTelVirtualCluster> cluster( new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
   					   ( static_cast<TrackerDataImpl *> ( hit->getRawHits()[0] )));
-    float xPos(0), yPos(0);
-    cluster->getCenterOfGravity(xPos, yPos);
+    float xSeed(0), ySeed(0);
+    cluster->getCenterOfGravity(xSeed, ySeed);
     int xSize(0), ySize(0);
     cluster->getClusterSize(xSize, ySize);
     //if( iden == 10) std::cout << iden << " c: " << xSeed << " r: " << ySeed << std::endl;
