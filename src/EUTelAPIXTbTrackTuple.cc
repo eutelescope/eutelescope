@@ -280,7 +280,7 @@ int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
       apixCluster->getCenterCoord(posX, posY);
       clusterID = apixCluster->getClusterID();
       delete apixCluster;
-    } else if (  type == kEUTelSparseClusterImpl or type == kEUTelM26ClusterImpl or type == kEUTelDFFClusterImpl){
+    } else if (  type == kEUTelSparseClusterImpl or type == kEUTelDFFClusterImpl){
       eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > * telCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
       size = telCluster->size();
       charge = telCluster->getTotalCharge();
