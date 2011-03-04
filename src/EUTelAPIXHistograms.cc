@@ -14,7 +14,7 @@
 
 #ifdef USE_GEAR
 
-// eutelescope inlcudes
+// eutelescope includes ".h"
 #include "EUTelAPIXHistograms.h"
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
@@ -26,6 +26,7 @@
 #include "EUTelAPIXSparseClusterImpl.h"
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+// aida includes ".h"
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
 #include <AIDA/IHistogram1D.h>
@@ -44,6 +45,7 @@
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
 
+// lcio includes ".h"
 #include <UTIL/CellIDEncoder.h>
 #include <UTIL/CellIDDecoder.h>
 #include <EVENT/LCCollection.h>
@@ -55,10 +57,11 @@
 #include <IMPL/LCFlagImpl.h>
 #include <Exceptions.h>
 
+// ROOT includes ".h"
 #include <TVectorD.h>
 #include <TMatrixD.h>
 
-
+// system includes <> 
 #include <iostream>
 #include <fstream>
 #include <cmath>
@@ -2830,7 +2833,6 @@ void EUTelAPIXHistograms::getTrackImpactPoint(double & x, double & y, double & z
 		r0Vector(0) -= c -> getXOffset();
 		r0Vector(1) -= c -> getYOffset();
 		r0Vector(2) -= c -> getZOffset();
-
 
 		//------------------------------------------------------------------------------------
 
