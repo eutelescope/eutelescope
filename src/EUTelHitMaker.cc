@@ -333,8 +333,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
             {
                 EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _preAlignmentCollectionVec->getElementAt( iPos ) );
                 int iID = alignment->getSensorID();
-                _siOffsetXMap.insert( make_pair( iID,  alignment->getXOffset() ) );
-                _siOffsetYMap.insert( make_pair( iID,  alignment->getYOffset() ) );
+                _siOffsetXMap.insert( make_pair( iID, alignment->getXOffset() ) );
+                _siOffsetYMap.insert( make_pair( iID, alignment->getYOffset() ) );
                 streamlog_out ( MESSAGE ) << " ";
                 printf("loaded %2d [%2d] Xoffset: %9.3f  Yoffset: %9.3f ", iPos, iID, _siOffsetXMap[ iID ], _siOffsetYMap[ iID ]); 
                 streamlog_out ( MESSAGE ) << endl;
@@ -548,8 +548,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
         if( _preAlignmentCollectionVec != 0 )
         {
-           xZero += _siOffsetXMap[detectorID];
-           yZero += _siOffsetYMap[detectorID];
+           xZero -= _siOffsetXMap[detectorID];
+           yZero -= _siOffsetYMap[detectorID];
         }
     
         if (  ( xPointing[0] == xPointing[1] ) && ( xPointing[0] == 0 ) ) {

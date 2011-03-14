@@ -804,12 +804,12 @@ void EUTelCorrelator::end() {
                 int exPlaneGear = _sensorIDVecMap[exPlane];
 
                 if( _correlationBandBinsX != 0. ) 
-                    _siPlanesOffsetX[ inPlaneGear ] = _correlationBandCenterX/_correlationBandBinsX;
+                    _siPlanesOffsetX[ inPlaneGear ] = -1*_correlationBandCenterX/_correlationBandBinsX;
                 else
                     _siPlanesOffsetX[ inPlaneGear ] = 0.;    
  
                 if( _correlationBandBinsY != 0. ) 
-                    _siPlanesOffsetY[ inPlaneGear ] = _correlationBandCenterY/_correlationBandBinsY;
+                    _siPlanesOffsetY[ inPlaneGear ] = -1*_correlationBandCenterY/_correlationBandBinsY;
                 else
                     _siPlanesOffsetY[ inPlaneGear ] = 0.;    
                
@@ -927,6 +927,10 @@ void EUTelCorrelator::end() {
                    _correlationBandCenterY += ybin*xbin;
 //                   printf(" ybin  %9.3f, xbin %9.3f \n", ybin, xbin );
                }
+
+// alter sign:
+               _correlationBandCenterX = -_correlationBandCenterX;                
+               _correlationBandCenterY = -_correlationBandCenterY;                
 
 //              printf("for plane %d  the X offset is %9.3f , the Y offset is %9.3f \n", 
 //                        inPlane, _correlationBandCenterX/_correlationBandBinsX, _correlationBandCenterY/_correlationBandBinsY );
