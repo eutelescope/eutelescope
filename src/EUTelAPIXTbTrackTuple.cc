@@ -102,14 +102,14 @@ void EUTelAPIXTbTrackTuple::init() {
   _nEvt = 0 ;
   _foundAllign = false;
 
-  message<MESSAGE> ( log() << "Initializing " );
+  message<DEBUG> ( log() << "Initializing " );
 	
   if ( Global::GEAR == NULL ) {
     message<ERROR> ( "GearMgr is not available. Bailing." );
     exit(-1);
   }
 	
-  message<MESSAGE> ( log() << "Reading telescope geometry description from GEAR ") ;
+  message<DEBUG> ( log() << "Reading telescope geometry description from GEAR ") ;
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
@@ -121,8 +121,8 @@ void EUTelAPIXTbTrackTuple::init() {
   // Prepare TTree/TFiles
   prepareTree();
   invertGear();
-  streamlog_out(MESSAGE3) << "HitCollection is " << _inputTrackerHitColName << endl;
-  message<MESSAGE> ( log() << "End of Init" );
+  streamlog_out(DEBUG3) << "HitCollection is " << _inputTrackerHitColName << endl;
+  message<DEBUG> ( log() << "End of Init" );
 }
 
 void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) {
@@ -132,7 +132,7 @@ void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) {
 	
   // Decode and print out Run Header information - just a check
   _runNr = runHeader->getRunNumber();
-  message<MESSAGE> ( log() << "Processing run header " << _nRun
+  message<DEBUG> ( log() << "Processing run header " << _nRun
 		     << ", run nr " << _runNr );
 }
 
@@ -179,7 +179,7 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event ) {
 }
 
 void EUTelAPIXTbTrackTuple::end(){
-  message<MESSAGE> ( log() << "N-tuple with " << _zstree->GetEntries() << " entries written to" << _path2file.c_str() <<",");
+  message<DEBUG> ( log() << "N-tuple with " << _zstree->GetEntries() << " entries written to" << _path2file.c_str() <<",");
   _file->Write();
 }
 
@@ -191,7 +191,6 @@ void EUTelAPIXTbTrackTuple::setClusterIdInHits() {
     for (size_t ihit =0; ihit < _hitPointerToCluster->size(); ihit++) {
       it = (*_cluPointer).find(_hitPointerToCluster->at(ihit));
       if (it == (*_cluPointer).end()) { 
-	//cout << "not in there" << endl; 
 	_hitClusterId->push_back(-1);
       } else {
 	int cluIndex = (*it).second;
@@ -201,7 +200,10 @@ void EUTelAPIXTbTrackTuple::setClusterIdInHits() {
   } else {
     streamlog_out(WARNING) << "Method setClusterIdInHits() may only be called once!" << endl;	
   }
-  if (endsize != _hitClusterId->size() ) cout << "ClusterIndex variable is not correct!" << endl;
+  if (endsize != _hitClusterId->size() ) 
+  {
+    streamlog_out ( DEBUG ) << "ClusterIndex variable is not correct!" << endl;
+  }
 }
 
 int EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event ) {
@@ -210,7 +212,7 @@ int EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event ) {
   try {
     hitCollection = event->getCollection( hitColName ); 
   } catch (lcio::DataNotAvailableException& e) {
-    //message<MESSAGE> ( log() << "Cluster collection " << colName <<  " not available on event " << event->getEventNumber() << "." );
+    //message<DEBUG> ( log() << "Cluster collection " << colName <<  " not available on event " << event->getEventNumber() << "." );
     return(1);
   }
   nHit = hitCollection->getNumberOfElements();
@@ -258,7 +260,7 @@ int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
   try {
     clusterCollectionVec = event->getCollection( colName );
   } catch (lcio::DataNotAvailableException& e) {
-    //message<MESSAGE> ( log() << "Cluster collection " << colName <<  " not available on event " << event->getEventNumber() << "." );
+    //message<DEBUG> ( log() << "Cluster collection " << colName <<  " not available on event " << event->getEventNumber() << "." );
     return(1);
   }
   CellIDDecoder<TrackerPulseImpl> cellDecoder(clusterCollectionVec);
@@ -312,7 +314,7 @@ int EUTelAPIXTbTrackTuple::readTracks(LCEvent* event){
   try {
     trackCol = event->getCollection( _inputTrackColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    //message<MESSAGE> ( log() << "Track collection " << _inputColName << " not available on event " << event->getEventNumber() << "." );
+    //message<DEBUG> ( log() << "Track collection " << _inputColName << " not available on event " << event->getEventNumber() << "." );
     return(1);
   }
 
@@ -490,7 +492,7 @@ void EUTelAPIXTbTrackTuple::invertAlignment(EUTelAlignmentConstant * alignment){
     gsl_matrix_set( alignM, 1, 2, alignment->getAlpha() );
     gsl_matrix_set( alignM, 2, 1, -1.0 * alignment->getAlpha());
   }
-  message<MESSAGE> ( log() << "Inverting alignment matrix for iden" << iden  ) ;
+  message<DEBUG> ( log() << "Inverting alignment matrix for iden" << iden  ) ;
   gsl_matrix * inverse = invertLU(3, alignM);
   gsl_matrix_free(alignM);
   _alignRot[iden].push_back(inverse);
@@ -501,7 +503,7 @@ void EUTelAPIXTbTrackTuple::invertAlignment(EUTelAlignmentConstant * alignment){
   shifts.push_back( alignment->getYOffset() );
   shifts.push_back( alignment->getZOffset() );
   _alignShift[iden].push_back(shifts);
-  streamlog_out(MESSAGE) << "Iden: " << iden << endl
+  streamlog_out(DEBUG) << "Iden: " << iden << endl
 			 << "X-shift: "<< alignment->getXOffset() << endl
 			 << "Y-shift: "<< alignment->getYOffset() << endl;
 }
@@ -529,7 +531,7 @@ void EUTelAPIXTbTrackTuple::invertGear(){
       ySign = 1.0;
     }
   
-    message<MESSAGE> ( log() << "Inverting gear matrix for iden" << iden  ) ;
+    message<DEBUG> ( log() << "Inverting gear matrix for iden" << iden  ) ;
     gsl_matrix * inverse = invertLU(2, gearM);
     gsl_matrix_free(gearM);
     _gearRot[iden] = inverse;
@@ -553,10 +555,10 @@ void EUTelAPIXTbTrackTuple::invertGear(){
     gearRotations.at(0) = conv * _siPlanesLayerLayout->getLayerRotationXY(layerIndex);
     gearRotations.at(1) = conv * _siPlanesLayerLayout->getLayerRotationZX(layerIndex);
     gearRotations.at(2) = conv * _siPlanesLayerLayout->getLayerRotationZY(layerIndex);
-    cout << "Plane iden: " << iden << endl;
-    cout << "gearRotationsXY = " << gearRotations.at(0) << endl
-	 << "gearRotationsZX = " << gearRotations.at(1) << endl
-	 << "gearRotationsZY = " << gearRotations.at(2) << endl;
+    streamlog_out ( DEBUG )  << "Plane iden: " << iden << endl;
+    streamlog_out ( DEBUG )  << "gearRotationsXY = " << gearRotations.at(0) << endl
+                             << "gearRotationsZX = " << gearRotations.at(1) << endl
+                             << "gearRotationsZY = " << gearRotations.at(2) << endl;
     _gearEulerRot[iden] = gearRotations;
   }
 }
@@ -655,14 +657,14 @@ void EUTelAPIXTbTrackTuple::readAlignment(LCEvent* event){
   _foundAllign = true;
 
   LCCollectionVec * alignmentCollectionVec;
-  cout << "Trying to read " << _alignColNames.size() << " collections" << endl;
+  streamlog_out ( DEBUG )  << "Trying to read " << _alignColNames.size() << " collections" << endl;
   for(size_t ii = 0; ii < _alignColNames.size(); ii++){
     size_t index = _alignColNames.size() - ii -1;
-    cout << "Trying to read alignment collection " << _alignColNames.at(index) << endl;
+    streamlog_out ( DEBUG )  << "Trying to read alignment collection " << _alignColNames.at(index) << endl;
     try{
       alignmentCollectionVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _alignColNames.at(index)));
       for ( size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos ) {
-	cout << "Inverting plane " << iPos << endl;
+	 streamlog_out ( DEBUG ) << "Inverting plane " << iPos << endl;
 	invertAlignment( static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) ) );
       }
     } catch( DataNotAvailableException& e) {
@@ -674,7 +676,7 @@ void EUTelAPIXTbTrackTuple::readAlignment(LCEvent* event){
 
 void EUTelAPIXTbTrackTuple::prepareTree(){
   _file = new TFile(_path2file.c_str(),"RECREATE");
-  cout << "Writing to: " << _path2file.c_str() << endl;
+   streamlog_out ( DEBUG )  << "Writing to: " << _path2file.c_str() << endl;
   //Old school tbtrack tree
 
   _xPos = new vector<double>();	     
