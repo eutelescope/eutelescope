@@ -410,10 +410,11 @@ void EUTelDafBase::readHitCollection(LCEvent* event){
       TrackerHitImpl* hit = static_cast<TrackerHitImpl*> ( _hitCollection->getElementAt(iHit) );
       const double * pos = hit->getPosition();
       int planeIndex = getPlaneIndex( pos[2]  * 1000.0f);
-      bool region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
       //if( not region){ continue; }
-      if(planeIndex >=0 ) { 
-	_system.addMeasurement( planeIndex, (float) pos[0] * 1000.0f, (float) pos[1] * 1000.0f, (float) pos[2] * 1000.0f,  region, iHit);
+      if(planeIndex >=0 ) 
+      { 
+        bool region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
+        _system.addMeasurement( planeIndex, (float) pos[0] * 1000.0f, (float) pos[1] * 1000.0f, (float) pos[2] * 1000.0f,  region, iHit);
       }
     }
   }
