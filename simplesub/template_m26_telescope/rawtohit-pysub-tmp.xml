@@ -2,32 +2,16 @@
 <!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
 <!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
 
-<!-- 
-
-==========================================================================================
-Steering file template for the pysub framework
-
-==> converter-tmp.xml <===
-
-Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
-==========================================================================================
-
---> 
-
-
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
-
   <execute>
     <processor name="AIDA"/>
     <processor name="UniversalNativeReader"/>
-    <processor name="FilterZSDataM26"/>
-    <processor name="M26Clustering"/>
-    <processor name="FilterZSDataAPIX"/>
+    <processor name="LoadHotPixelDB"/>
+    <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/>
+    <processor name="Clustering"/>
     <processor name="APIXClustering"/>
     <processor name="HitMakerWithOutEta"/>
     <processor name="APIXHitMakerWithOutEta"/>
-    <!-- <processor name="Correlator"/> -->
     <processor name="Save"/>
   </execute>
 
@@ -67,31 +51,72 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
     <!--This is the input file name-->
     <parameter name="InputFileName" type="string" value="@NativePath@/run@RunNumber@.raw  "/>
   </processor>
-  <processor name="FilterZSDataM26" type="EUTelFilterZSDataProcessor">
-    <parameter name="_filteredZSDataCollectionName" type="string" value="filtered_zsdata_m26"/>
-    <parameter name="ZSDataCollectionName" type="string" value="zsdata_m26" />
-    <parameter name="NoiseOccupancyCollection" type="string" value="noiseocc" />
-    <parameter name="NoiseOccupancyDBFile" type="string" value="@DbPath@/@NoiseDb@"/>
-    <parameter name="Threshold" type="double" value="@TelOccupancyThresh@" />
-  </processor>
-  
-  <processor name="M26Clustering" type="EUTelM26ClusteringProcessor">
-    <!--This is the name of the histogram information file-->
-    <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> filtered_zsdata_m26 </parameter>
-    <parameter name="HistoInfoFileName" type="string" value="@HistoInfo@"/>
+
+
+  <processor name="LoadHotPixelDB" type="ConditionsProcessor">
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
+    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26  @DbPath@/@NoiseDb@ hotpixel_m26 </parameter>
   </processor>
 
-  <processor name="FilterZSDataAPIX" type="EUTelFilterZSDataProcessor">
-    <parameter name="_filteredZSDataCollectionName" type="string" value="filtered_zsdata_apix"/>
-    <parameter name="ZSDataCollectionName" type="string" value="zsdata_apix" />
-    <parameter name="NoiseOccupancyCollection" type="string" value="noiseocc" />
-    <parameter name="NoiseOccupancyDBFile" type="string" value="@DbPath@/@NoiseDb@"/>
-    <parameter name="Threshold" type="double" value="@DUTOccupancyThresh@" />
+ <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
+ <!--EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values-->
+  <!--Noise local collection-->
+  <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> m26_noise </parameter>
+  <!--Pedestal local collection-->
+  <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData"> m26_pedestal </parameter>
+  <!--Pixel status collection-->
+  <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> m26_status </parameter>
+  <!--The initial value of noise (one value for detector)-->
+  <parameter name="InitNoiseValue" type="FloatVec"> 1 1 1 1 1 1 </parameter>
+  <!--The initial value of pedestal (one value for detector)-->
+  <parameter name="InitPedestalValue" type="FloatVec"> 0 0 0 0 0 0 </parameter>
+  <!--The maximum pixel along x (default 255, one value per detector)-->
+  <parameter name="MaxXVector" type="IntVec"> 1151 1151 1151 1151 1151 1151</parameter>
+  <!--The maximum pixel along y (default 255, one value per detector)-->
+  <parameter name="MaxYVector" type="IntVec"> 575 575 575 575 575 575  </parameter>
+  <!--The minimum pixel along x (default 0, one value per detector)-->
+  <parameter name="MinXVector" type="IntVec"> 0 0 0 0 0 0  </parameter>
+  <!--The minimum pixel along y (default 0, one value per detector)-->
+  <parameter name="MinYVector" type="IntVec"> 0 0 0 0 0 0</parameter>
+  <!--The sensorID for the generated collection (one per detector)-->
+  <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5 </parameter>
+</processor>
+
+
+  <processor name="Clustering" type="EUTelClusteringProcessor">
+    <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
+    <!-- INPUT / OUTPUT  -->
+    <!--Input calibrated data not zero suppressed collection name-->
+    <parameter name="NZSDataCollectionName" type="string" lcioInType="TrackerData"> data </parameter>
+    <!--Noise (input) collection name-->
+    <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> m26_noise </parameter>
+    <!--Pixel status (input) collection name-->
+    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> m26_status </parameter>
+    <!--Input of Zero Suppressed data-->
+    <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
+    <!--Cluster (output) collection name-->
+    <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26 </parameter>
+    <!--Select here which algorithm should be used for ZS clustering.
+        Available algorithms are:
+        -> SparseCluster: for cluster in ZS frame
+        -> SparseCluster2: for cluster in ZS frame with better performance
+        -> FixedFrame: for cluster with a given size
+        -> DFixedFrame: for cluster with a given size-->
+    <parameter name="ZSClusteringAlgo" type="string" value="SparseCluster2"/>
+    <parameter name="SparseClusterCut" type="float" value="0.0"/>
+    <parameter name="SparseSeedCut" type="float" value="0.0"/>
+    <parameter name="SparseMinDistance" type="float" value="0"/>
+
+    <!-- HISTOGRAMMING  -->
+    <parameter name="HistogramFilling" type="bool" value="true"/>
+    <parameter name="HistoInfoFileName" type="string" value="@HistoInfo@"/>
+    <parameter name="ClusterN" type="IntVec" value="4 6 8 9"/>
+    <parameter name="ClusterNxN" type="IntVec" value="3"/>
   </processor>
 
   <processor name="APIXClustering" type="EUTelAPIXClusteringProcessor">
     <!--This is the name of the histogram information file-->
-    <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> filtered_zsdata_apix </parameter>
+    <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_apix </parameter>
     <parameter name="HistoInfoFileName" type="string" value="@HistoInfo@"/>
   </processor>
 
@@ -161,14 +186,4 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
     <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
     <!--parameter name="SplitFileSizekB" type="int" value="1992294"/-->
   </processor>
-
-  <processor name="Correlator" type="EUTelCorrelator">
-    <!--EUTelCorrelator fills histograms with correlation plots-->
-    <!--Cluster (pulse) collection name-->
-    <parameter name="InputClusterCollectionName" type="string" lcioInType="TrackerPulse"> filteredcluster </parameter>
-    <!--Hit collection name-->
-    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
-  </processor>
-  
-  
 </marlin>

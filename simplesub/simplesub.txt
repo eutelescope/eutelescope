@@ -1,0 +1,422 @@
+                              simplesub
+                              =========
+
+Author:  <haavagj@Marvel>
+Date: 2011-01-26 18:40:50 CET
+
+
+Table of Contents
+=================
+1 Full chain reconstruction of full data sets using simplesub 
+    1.1 Getting started 
+    1.2 Reconstructing a data set 
+        1.2.1 From native data to slcio hits 
+        1.2.2 Telescope alignment 
+        1.2.3 DAF based processors 
+        1.2.4 DUT alignment 
+        1.2.5 Fitter 
+2 The inner workings of simplesub 
+    2.1 Adding new templates/modes of operation 
+    2.2 Other options 
+
+
+1 Full chain reconstruction of full data sets using simplesub 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Simple sub is a very simple script for configuring and running Marlin jobs to run on your
+local computer. The script works much the same way as the official pysub framework, but it is
+much simpler, and lacks many of the advanced features. This is meant as a step by step guide
+for reconstructing a data set with the Eutelescope framework using the simplesub script. A
+data set is here meant as a set of runs that can use the exact same alignment file and GEAR
+file.
+
+The "simple" in simplesub does not necessarily mean simple to use or simple to configure. It
+means it uses a simplistic solution to configuring and running Marlin.
+
+1.1 Getting started 
+====================
+
+The first thing to do is to set up the file siteConfig.py. This file contains paths for
+storing result files, databases histograms, native data and xml templates. All these paths
+need to exist, and the pathnames should not end with a '/'.
+
+Another parameter, "NParallel", should be set to determine how many jobs will be run in
+parallel. This should probably be the same as the number of cores on your system.
+
+def siteConfig(params):
+    params["ResultPath"] = "/home/user/eudet/results"
+    params["DbPath"] = "/home/user/eudet/db"
+    params["HistoPath"] = "/home/user/eudet/histo"
+    params["NativePath"] = "/home/user/eudet/native"
+    params["TemplatePath"] = "/home/user/HEAD/simplesub/template_m26_telescope
+    params["NParallel"] = "4"
+
+When siteConfig.py is set up correctly, it is time for configuring the specific data set. A
+god way to do this is to copy an existing data set configuration file, like config-run10093.py
+in the 'havard' branch. If you give it a name that makes sense, this file can be kept and
+give information about the reconstruction job at a later stage.
+
+The parameters set in the runConfig file are global, and apply to all Marlin jobs for this
+data set. The names of the parameters should give a good pointer to what they do, make sure
+thay are all correct. All the parameters must be strings. The "DataSet" parameter is used by
+the script it self, so make sure the string is parsable by python. Also make sure the
+NoiseDb, DutAlignmentDb and TelAlignmentDb names are unique, if not you will overwrite existing
+alignment data bases. The DUTPlanes BADPlanes and TELPlanes parameters takes strings
+containing sensor ids. For the rest of this guide, lets pretend we have the file
+config-run1234.py, meant to reconstruct  runs 1234, 1235, 1236, 1237, 1238.
+
+def runConfig(params):
+    params["GearFile"]  = "gear_telescope_apix_cern_november2010.xml"
+    params["HistoInfo"] = "histoinfo.xml"
+    params["DUTPlanes"] = "10 11 12"
+    params["BADPlanes"] = "13 14 15 16 17"
+    params["TELPlanes"] = "0 1 2 3 4 5"
+    params["TelAlignmentDb"] = "run21198-alignment-tel-db.slcio"
+    params["DutAlignmentDb"] = "run21198-alignment-dut-db.slcio"
+    params["NoiseDb"]        = "run21198-noise-db.slcio"
+    params["DataSet"] = "[21198, 21199, 21200, 21201, 21202, 21203, 21204, 21205, 21206, 21207, 21208, 21209, 21210, 21211, 21212, 21213, 21214, 21215, 21216, 21217, 21218, 21219, 21220, 21221]"
+
+1.2 Reconstructing a data set 
+==============================
+
+The following is my way of reconstructing a dataset. Simplesub intends to make it easy to
+configure and run Marling jobs, so doing reconstruction with other processors is of course
+possible. 
+
+1.2.1 From native data to slcio hits 
+-------------------------------------
+
+The first 3 steps in the reconstruction requires no manual input except for the thresholds
+for the hot pixel killer and a noise database. 
+
+The outlined reconstruction procedure requires a noise data base in order to run. To obtain a
+noise database, you need the function 
+def noise(params):
+    params["TemplateFile"] = "noise-tmp.xml"
+defined in the run config file.
+
+Then run the program over a single run like:
+$ python config-run-1234.py -a noise 21198
+
+Make sure the thresholds in the rawtohit function is reasonable, and we should be good to go.
+
+def rawtohit(params):
+    params["TemplateFile"] = "rawtohit-tmp.xml"
+    params["TelOccupancyThresh"] = "0.001"
+    params["DUTOccupancyThresh"] = "0.001"
+
+To get Marlin going, simply type:
+$ python config-run1234.py -a rawtohit
+
+This procedures differs from the pysub procedure, by preforming conversion, cluster finding,
+cluster filtering, and "hit making" in a single Marlin job in order to reduce disc usage.
+
+1.2.2 Telescope alignment 
+--------------------------
+
+After the hits have been made, we are ready for aligning the telescope. The parameters are
+set up in the aligntel function. We should set up the basic cuts first, for that we need to
+run over a few thousand events with very loose cuts. Note that all parameters must be present
+in the function, I am only showing the once that are relevant for each step.
+
+    params["RecordNumber"] = "2000"
+    params["RunPede"] = "False"
+    params["UseResidualCuts"] = "False"
+    params["DistanceMax"] = "125.0"
+    params["MaxChi2"] = "2700"
+    params["MinDxDz"] = "-1.0"
+    params["MaxDxDz"] = "1.0"
+    params["MinDyDz"] = "-1.0" 
+    params["MaxDyDz"] = "1.0"
+
+The "DistanceMax" parameter is used by the combinatorial Kalman filter track finder, and
+decides whether or not a hit should be included in a track candidate. If this parameter is
+set too low, you will not find any good tracks. If it is set too high, the processor becomes
+slow. Having it a bit too high is better than having it a bit too low. 
+
+When you have ran over the a few 1000 triggers, you should start by cutting on chi2 and dx/dz
+/ dy/dz. These plots are available in your "HistoPath" directory, in the root file called
+something like run021198-align-dut-histo.root. So add the angle and chi2 cuts, and run
+again. When the chi2 and angle cuts are sufficiently tight, the residual distributions should
+be really easy to spot. Enable the residual cuts, set up the maximum and minimum cut values
+and run again. When you are happy with the cuts, run over the full data set (remember to set
+"RunPede" to true to generate a Alignment database). 
+
+When the cuts are set up properly, you should think a little bit about which planes you want
+to fix in the alignment. Translations should be fixed for two planes, z-rotations should be
+fixed for one plane, scales should be fixed for two planes. It appears that planes are not
+much rotated w.r.t. each other in the same telescope arm, so fixing scales for two planes
+within the same arm is probably a good idea. Adding a plane to the "FixedPlanes" parameter
+is the same as adding it to the "FixedTranslations", "FixedZRotations" and "FixedScales"
+parameters. 
+
+Note: The "TelescopeResolution" and "ResidualXMin" and friends parameters contain numbers
+ordered by z-position in the beam, NOT sensor ID.
+
+Also note that if millepede spits out a warning about rejecting too much data, you most
+likely need to adjust the "TelescopeResolution" vector up. All tel planes should have the
+same resolution. 
+
+Run like:
+$ python config-run1234.py -a aligntel
+
+Complete example config:
+
+def aligntel(params):
+    params["TemplateFile"] = "kalman-align-tel-tmp.xml"
+    params["RecordNumber"] = "10000000"
+    params["SkipNEvents"] = "0"
+    params["RunPede"] = "True"
+    params["UseResidualCuts"] = "True"
+    params["ResidualXMin"] = " 120   -20  -360  -9999  -9999  -9999  -60   60   -50"
+    params["ResidualXMax"] = " 230    80  -260   9999   9999   9999   60  130    60"
+    params["ResidualYMin"] = "  60  -180  -160  -9999  -9999  -9999  -80   90  -120"
+    params["ResidualYMax"] = " 220     0   -50   9999   9999   9999   80  160    10"
+    params["TelescopeResolution"] = "10 10 10 10000 10000 10000 10 10 10"
+    params["DistanceMax"] = "125.0"
+    params["MaxChi2"] = "2700"
+    params["MinDxDz"] = "-0.0009"
+    params["MaxDxDz"] = "0.0001"
+    params["MinDyDz"] = "-0.0004" 
+    params["MaxDyDz"] = "0.0005"
+    params["ExcludePlanes"] = params["DUTPlanes"] + " " + params["BADPlanes"]
+    params["FixedPlanes"] = "0"
+    params["FixedTranslations"] = "4"
+    params["FixedScales"] = "2"
+    params["FixedZRotations"] = ""
+
+1.2.3 DAF based processors 
+---------------------------
+ A suite of processors have been implemented that rely on the Deterministic Annealing Filter
+ (DAF) for track finding and/or track reconstruction. Here I will discuss a few common
+ parameters for the DAF fitter.
+
+ These processor woks by:
+ 1. Propagating all hit into plane 0 by using user supplied angled
+ 2. Running a cluster finder on hits based on a user supplied radius
+ 3. Running the DAF on the found hit clusters
+ 4. Checking that the fitted tracks contain a sufficient amount of telescope hits
+ 5. Checking that the chi2/ndof of the fitted track is ok
+ 6. Checking that the track matches a sufficient amount of DUT hits.
+
+ To get this processor you will need to first decide the nominal angle for point 1. This is
+ done by setting the clustering radius to something large
+    params["MakePlots"] = "True"
+    params["FinderRadius"] = "1500.0"
+    params["NominalDxdz"] = "0.0"
+    params["NominalDydz"] = "0.0"
+ then running the processor over a few triggers to set up further cuts
+    params["RecordNumber"] = "10000"
+ The plots in the histoPath folder should then show you the angular distribution of the
+ tracks, you will need to extract the center of these distributions to give the inout to the
+ track finder. The plots should also give you an idea of how the chi2/ndof behaves
+    params["NominalDxdz"] = "-0.0003"
+    params["NominalDydz"] = "0.000"
+    params["MaxChi2OverNdof"] = "12.0"
+ The finderRadius requires some fingerspitz gefühl, as having it too small will lose track
+ candidates, and leaving it too large will contaminate you tracks, making them fail the track
+ quality cuts. 300µm seems like a good value for the 120GeV runs with a well aligned
+ telescope and properly set nominal angles.
+    params["FinderRadius"] = "300.0"
+
+ The other DAF specific parameters are:
+    params["TelescopePlanes"] = params["TELPlanes"]
+ List of sensor IDs for the telescope planes.    
+    params["DutPlanes"] = params["DUTPlanes"]
+ List of sensor IDs for the DUT planes.
+    params["BeamEnergy"] = "120.0"
+ Nominal beam energy for scattering estimation.
+    params["TelResolution"] = "4.3"
+ Sigma of telescope resolution in X and Y
+    params["DutResolutionX"] = "14.4"
+    params["DutResolutionY"] = "116.5"
+ Sigma of DUT resolution in X and Y, relevant only if DUTs are in the fit, or during DUT alignment.
+    params["Chi2Cutoff"] = "100.0"
+ The DAF chi2 cutoff is a value which determines whether or not a measurement should be
+ included in the fit. Determined by looking at plX_hitChi2 plots. Cuts should be reasonably
+ loose, cutting into the tail of any tel plane will reduce your ndof.
+    params["RequireNTelPlanes"] = "4.0"
+ How many telescope planes are required to be in the track for it to be accepted.
+    params["ScaleScatter"] = "1.00"
+ A test parameter that scales the thickness of the DUT planes for manually improving the
+ goodness of fit.
+
+1.2.4 DUT alignment 
+--------------------
+ The DUT alignment procedure relies on the DAF fitter, so the first thing to do is to set up
+ the basic DAF parameters as above.
+
+ The alignment uses the cluster finder and DAF fitter for track finding. If a track passes
+ the track quality cuts, the DUT hits are checked against user supplied residual cuts. If
+ enough DUT hits pass the residual cuts, the DUT hits are added to the track and refitted with
+ a Kalman Filter one at the time, and fed to Millepede. This means that the DUTs are aligned
+ completely independently of each other.
+
+ The alignment specific parameters are: 
+    params["NDutHits"] = "2"
+ How many DUTs must match the track in order for it to be passed to Mille? If the overlap
+ between the sensors is good, 2 is a good value in order to suppress ghost tracks, if the
+ overlap is poor 1 might yield better results.
+
+    params["ResidualXMin"] = "  1270   600   4825"
+    params["ResidualXMax"] = "  1425   800   4960"
+    params["ResidualYMin"] = " -1000  -280   -560"
+    params["ResidualYMax"] = "  -500   280    -90"
+ Residual cut values for the DUT planes. Values are sorted by sensor ID in the same order as
+ "DUTplanes". 
+
+    params["Translate"] = params["DUTPlanes"]
+    params["ZRotate"] = params["DUTPlanes"]
+    params["Scale"] = params["DUTPlanes"]
+    params["ScaleY"] = ""#params["DUTPlanes"]
+    params["ScaleX"] = ""# params["DUTPlanes"]
+ Lists of sensorIDs for planes that should be translated, rotated, and scaled by
+ Millepede. If a plane in enabeled in "Scale", it will be scales both in X and Y. The
+ resolution in Y(APIX long direction) sometimes improves by scales, sometimes not. If you are
+ interested in resolution, you might want to try both.
+
+    params["AddToLCIO"] = "True"
+ Whether the program should make a mille file, and run pede or not. Turn off when running
+ only to determine cuts.
+
+    params["RequireNTelPlanes"] = "4.0"
+ Not really a alignment specific parameter, but the lower the number, the more tracks are fed
+ to mille. In my limited experience, setting it to "3.0" will reduce the quality of
+ alignment, I've gotten my best results using "4.0".
+
+    params["DutResolutionX"] = "144"
+    params["DutResolutionY"] = "1165"
+ Again, not a alignment specific parameter, but some times Millepede fails with alignment,
+ reporting:
+ [ MESSAGE "DafAligner"]  Too many rejects (>33.3%) - stop
+ or
+ [ MESSAGE "DafAligner"]        gWarningWarningWarningWarningWarningWarningWarningWarningWa
+ [ MESSAGE "DafAligner"]
+ [ MESSAGE "DafAligner"]          Chi^2/Ndf =    2.0800000000000001        (should be close to 1)
+ [ MESSAGE "DafAligner"]          => multiply all input standard deviations by factor   1.4399999999999999
+ [ MESSAGE "DafAligner"]
+ [ MESSAGE "DafAligner"]          Fraction of rejects =   25.210000000000001       %  (should be far below 1 %)
+ [ MESSAGE "DafAligner"]          => please provide correct mille data
+ [ MESSAGE "DafAligner"]
+ [ MESSAGE "DafAligner"]        WarningWarningWarningWarningWarningWarningWarningWarningWar 
+
+ This most likely means you will need to inflate the DUT resolutions.
+
+ Difference from official alignment:
+ Track selection is done on tracks fitted with telescope only. Does not require a hit in all
+ telescope or DUT planes in the fitted tracks. DUT planes are aligned independently. 
+
+ Run like:
+ $ python config-run21198.py -a aligndut
+
+def aligndut(params):
+    params["TemplateFile"] = "daf-align-dut.xml"
+    params["RecordNumber"] = "1000000"
+    params["SkipNEvents"] = "0"
+    params["MakePlots"] = "True"
+    params["FitDuts"] = "False"
+    params["AddToLCIO"] = "True"
+    params["TelescopePlanes"] = params["TELPlanes"]
+    params["DutPlanes"] = params["DUTPlanes"]
+    params["BeamEnergy"] = "120.0"
+    params["TelResolution"] = "4.3"
+    params["DutResolutionX"] = "144"
+    params["DutResolutionY"] = "1165"
+    params["FinderRadius"] = "300.0"
+    params["Chi2Cutoff"] = "100.0"
+    params["RequireNTelPlanes"] = "4.0"
+    params["MaxChi2OverNdof"] = "12.0"
+    params["NominalDxdz"] = "-0.0003"
+    params["NominalDydz"] = "0.000"
+    params["ScaleScatter"] = "1.00"
+    params["ResidualXMin"] = "  1270   600   4825"
+    params["ResidualXMax"] = "  1425   800   4960"
+    params["ResidualYMin"] = " -1000  -280   -560"
+    params["ResidualYMax"] = " -500   280    -90"
+    params["Translate"] = params["DUTPlanes"]
+    params["ZRotate"] = params["DUTPlanes"]
+    params["Scale"] = params["DUTPlanes"]
+    params["ScaleY"] = ""#params["DUTPlanes"]
+    params["ScaleX"] = ""# params["DUTPlanes"]
+    params["NDutHits"] = "2"
+
+1.2.5 Fitter 
+-------------
+ Again the basic DAF configuration is the same. 
+
+ Fitter specific parameters:
+    params["FitDuts"] = "False"
+ Should DUTs be included in the fit? So far I have not seen improved traking resolution from
+ this, it should be tested on the upstream box.
+    params["AddToLCIO"] = "True"
+ Should the tracks be dumped to LCIO? May be turned off in order to speed up the processor. 
+    params["NDutHits"]= "1"
+ How many DUTs need to match for the track to be dumped to LCIO? This value should be 0 or 1,
+ 0 if you want all tracks to be dumped, 1 if only tracks that match one of the DUTs should be
+ dumped. When fewer tracks are dumped, tbmon runs faster.
+
+2 The inner workings of simplesub 
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+As you may have noticed by now, the variable params is a hash map of string keys to string
+values. At its core, all simplesub does, is to open the file params["TemplateFile"], search
+and replace all @key@ strings in the template file  with the corresponding string value. This
+means that if we for instance would want to add a parameter "TestParameter" to the fitter
+step, all that needs to be done is to add a line
+    <parameter name="TestParameter" type ="string" value="@TestParameter@"/>
+to the template file, and add a line like
+    params["TestParameter"] = "TestValue"
+to the fitter function. This will result in the line
+    <parameter name="TestParameter" type ="string" value="TestValue"/>
+being in the steering file sent to Marlin.
+
+For each time a Marlin job is to be configured, the script clears the params hash map, and
+then fills it by calling
+siteConfig(params), runConfig(params), functions[-a option](params)
+in that order. After that the search and replace stuff is called, and Marlin is
+started. Marlin runs as an external program, so in order to stop a faulty job, you might want
+to tap ctrl-c more than one time.
+
+The script runs one Marlin job per run, unless the -a option is named "aligndut" or
+"aligntel". In that case one Marlin job runs, with all the runs as input files.
+
+
+2.1 Adding new templates/modes of operation 
+============================================
+If you want to make a new mode available, all you need to do is to add a function that has
+the "TemplateFile" set to what you need, like
+
+def testfun(params):
+    params["TemplateFile"] = "test-tmp.xml"
+
+and then simple add all the parameters you need. once that is done, you need to add it to the
+bottom of your config like
+
+   functions = {"noise": noise,
+                 "rawtohit": rawtohit,
+                 "aligntel": aligntel,
+                 "aligndut": aligndut,
+                 "fitter": fitter,
+                 "test": testfun
+                 }
+and run the program like
+python yourConfig.py -a test
+or 
+python yourConfig.py -a test <run numbers>
+
+2.2 Other options 
+==================
+
+Any thing that is number and does not follow a '-a', is assumed to be a run number to be
+looped over.
+
+If no run number is supplied, the program will run over all runs listed in params["DataSet"].
+
+In addition to the options supplied in the functions hash map, there are a few meta options.
+-a all runs rawtohit, then aligntel, then aligndut, then fitter.
+
+Running the program with '-d' will not run Marlin, just dump the all the Marlin steering
+files to screen. This can be useful for debugging.
+
+There is no logging in the script, it is you own job to '>' or '|tee' the output to a file if
+you want to keep it.

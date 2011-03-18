@@ -23,8 +23,6 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <processor name="ApplyAlignmentPre"/>
     <processor name="LoadAlignmentTel"/>
     <processor name="ApplyAlignmentTel"/>
-    <processor name="LoadAlignmentDut"/>
-    <processor name="ApplyAlignmentDut"/>
     <processor name="DafFitter"/>
     <processor name="APIXTbTrack"/> 
     <!-- <processor name="FitterHisto"/> -->
@@ -39,13 +37,12 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="Verbosity" value="MESSAGE"/>
   </global>
 
-
   <processor name="AIDA" type="AIDAProcessor">
     <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
     <!-- compression of output file 0: false >0: true (default) -->
     <parameter name="Compress" type="int" value="1"/>
     <!-- filename without extension-->
-    <parameter name="FileName" type="string" value= "@HistoPath@/run@RunNumber@-daf-histo"/>
+    <parameter name="FileName" type="string" value= "@HistoPath@/run@RunNumber@-daf-mille-histo"/>
     <!-- type of output file xml (default) or root ( only OpenScientist)-->
     <parameter name="FileType" type="string" value="root"/>
   </processor>
@@ -57,37 +54,40 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
   <processor name="LoadAlignmentTel" type="ConditionsProcessor">
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
-    <parameter name="SimpleFileHandler" type="StringVec"> alignmenttel @DbPath@/@TelAlignmentDb@ alignment </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> alignmenttel @DbPath@/@MilleAlignmentDb@ alignment </parameter>
   </processor>
 
-  <processor name="LoadAlignmentDut" type="ConditionsProcessor">
-    <parameter name="DBInit" type="string" value="localhost:lccd_test:align:dut"/>
-    <parameter name="SimpleFileHandler" type="StringVec"> alignmentdut @DbPath@/@DutAlignmentDb@ alignment </parameter>
-  </processor>
-
-  <processor name="ApplyAlignmentPre" type="EUTelAPIXApplyAlignment">
+  <processor name="ApplyAlignmentPre" type="EUTelApplyAlignmentProcessor">
     <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> prealign </parameter>
+    <parameter name="alignmentCollectionNames"> prealign </parameter>
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
     <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedPre </parameter>
+    <parameter name="CorrectionMethod" type="int" value="1"/>
+
+    <parameter name="DoAlignCollection" type="bool" value="true"/>
+    <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
+    <parameter name="PrintEvents" type="int" value="0"/>
   </processor>
 
-  <processor name="ApplyAlignmentTel" type="EUTelAPIXApplyAlignment">
+  <processor name="ApplyAlignmentTel" type="EUTelApplyAlignmentProcessor">
     <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignmenttel </parameter>
+    <parameter name="alignmentCollectionNames"> alignmenttel </parameter>
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> alignedPre </parameter>
-    <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedTelHit</parameter>
-  </processor>
-
-  <processor name="ApplyAlignmentDut" type="EUTelAPIXApplyAlignment">
-    <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignmentdut </parameter>
-    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> alignedTelHit </parameter>
     <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedHit</parameter>
+    <parameter name="CorrectionMethod" type="int" value="1"/>
+
+    <parameter name="DoAlignCollection" type="bool" value="true"/>
+    <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
+    <parameter name="PrintEvents" type="int" value="0"/>
   </processor>
 
   <processor name="DafFitter" type="EUTelDafFitter">
     <parameter name="TrackAsciiName" type="string" value="run@RunNumber@-ascii.txt"/>
     <parameter name="MakePlots" type="bool" value="@MakePlots@"/>
     <parameter name="AddToLCIO" type="bool" value="@AddToLCIO@"/>
-    <parameter name="TelescopePlanes" type="IntVec"> @TelescopePlanes@ </parameter>
+    <parameter name="TelescopePlanes" type="IntVec"> @TelescopePlanes@ </parameter> 
     <parameter name="DutPlanes" type="IntVec"> @DutPlanes@ </parameter>
     <parameter name="FitDuts" type="bool" value="@FitDuts@"/>
     <parameter name="Ebeam" type="float" value="@BeamEnergy@"/>
@@ -107,7 +107,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
     <parameter name="TrackCollectionName" type="string" lcioInType="Track"> track </parameter>
     <parameter name="RadiationLengths" type="floatVec"> @RadiationLengths@ </parameter>
-    <parameter name="AlignmentCollectionNames"> prealign alignmenttel alignmentdut </parameter>
+    <parameter name="AlignmentCollectionNames"> </parameter>
     <parameter name="NDutHits" type="int" value="@NDutHits@"/>
   </processor>
 
@@ -122,6 +122,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="TelZsColName" type="string" value="zsdata_m26"/>
     <parameter name="DutZsColName" type="string" value="zsdata_apix"/>
     <!-- Alignment constants-->
-    <parameter name="AlignmentCollectionNames"> prealign alignmenttel alignmentdut </parameter>
+    <parameter name="AlignmentCollectionNames"> prealign alignmenttel </parameter>
+    <parameter name="DoScales" type="bool" value="false"/>
   </processor>
 </marlin>

@@ -19,10 +19,10 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
   <execute>
     <processor name="AIDA"/>
+    <processor name="LoadAlignmentPre"/>
+    <processor name="ApplyAlignmentPre"/>
     <processor name="LoadAlignmentTel"/>
     <processor name="ApplyAlignmentTel"/>
-    <processor name="LoadAlignmentDut"/>
-    <processor name="ApplyAlignmentDut"/>
     <processor name="DafFitter"/>
     <!-- <processor name="APIXTbTrack"/> -->
   </execute>
@@ -47,14 +47,20 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="FileType" type="string" value="root"/>
   </processor>
 
+  <processor name="LoadAlignmentPre" type="ConditionsProcessor">
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
+    <parameter name="SimpleFileHandler" type="StringVec"> prealign @DbPath@/@PreAlignDb@ alignment </parameter>
+  </processor>
+
+  <processor name="ApplyAlignmentPre" type="EUTelAPIXApplyAlignment">
+    <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> prealign </parameter>
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+    <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedPre </parameter>
+  </processor>
+
   <processor name="LoadAlignmentTel" type="ConditionsProcessor">
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
     <parameter name="SimpleFileHandler" type="StringVec"> alignmenttel @DbPath@/@TelAlignmentDb@ alignment </parameter>
-  </processor>
-
-  <processor name="LoadAlignmentDut" type="ConditionsProcessor">
-    <parameter name="DBInit" type="string" value="localhost:lccd_test:align:dut"/>
-    <parameter name="SimpleFileHandler" type="StringVec"> alignmentdut @DbPath@/@DutAlignmentDb@ alignment </parameter>
   </processor>
 
   <processor name="ApplyAlignmentTel" type="EUTelAPIXApplyAlignment">
@@ -62,13 +68,9 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <!--Alignment constant from the condition file-->
     <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignmenttel </parameter>
     <!--The name of the input hit collection-->
-    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> alignedPre </parameter>
     <!--The name of the output hit collection-->
-    <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedTelHit</parameter>
-    <!--Available methods are:
-	0 --> shift only 
-    1 --> rotation first 
-    2 --> shift first -->
+    <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedHit</parameter>
     <parameter name="CorrectionMethod" type="int" value="1"/>
     <!--Enable or disable histograms-->
     <parameter name="HistogramSwitch" type="bool" value="false"/>
