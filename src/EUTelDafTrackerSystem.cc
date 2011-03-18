@@ -103,16 +103,15 @@ void TrackerSystem::getChi2Kf(TrackCandidate *candidate){
 void TrackerSystem::getChi2Daf(TrackCandidate *candidate){
   float chi2(0.0), ndof(0.0);
   Vector2f chi2v;
-
   for(int plane = 0; plane <(int) planes.size(); plane++){
     FitPlane& p = planes.at(plane);
     if(p.isExcluded()){continue;}
-    ndof += p.weights.sum();
-    for(int meas = 0; meas < (int) p.meas.size(); meas++){
+    for(size_t meas = 0; meas < p.meas.size(); meas++){
       Measurement& m = p.meas.at(meas);
       chi2v = (m.getM() - m_fitter->smoothed.at(plane)->params.start<2>()).cwise() / p.getSigmas();
       chi2v = chi2v.cwise().square();
       chi2 += p.weights(meas) * chi2v.sum();
+      ndof += p.weights(meas);
     }
   }
   candidate->chi2 = chi2; candidate->ndof = (ndof * 2) - 4;
@@ -258,7 +257,11 @@ void TrackerSystem::fitPlanesInfoDaf(TrackCandidate *candidate){
     //Copy weights from candidate, get tot weight per plane
     planes.at(plane).weights.resize( candidate->weights.at(plane).size() );
     planes.at(plane).weights = candidate->weights.at(plane);
-    planes.at(plane).setTotWeight( planes.at(plane).weights.sum() );
+    if ( planes.at(plane).weights.size() > 0 ){
+      planes.at(plane).setTotWeight( planes.at(plane).weights.sum() );
+    } else {
+      planes.at(plane).setTotWeight( 0.0f );
+    }
     if( planes.at(plane).getTotWeight() > 1.0f){
       planes.at(plane).weights *= 1.0f / planes.at(plane).getTotWeight();
       planes.at(plane).setTotWeight( 1.0f );
@@ -274,7 +277,8 @@ void TrackerSystem::fitPlanesInfoDaf(TrackCandidate *candidate){
   if(ndof > 0.0f) { ndof = runTweight(1.2); }
   if(ndof > 0.0f) { ndof = runTweight(1.1); }
   if(ndof > 0.0f) { ndof = runTweight(1.0); }
-  if(ndof > 0.0f) { ndof = runTweight(1.0); }
+  if(ndof > 0.0f) { ndof = runTweight(.1); }
+  if(ndof > 0.0f) { ndof = runTweight(.1); }
   
   if(ndof > 0.0f) {
     for(int ii = 0; ii <(int)  planes.size() ; ii++ ){

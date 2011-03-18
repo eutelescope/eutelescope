@@ -31,10 +31,14 @@ EigenFitter::EigenFitter(int nPlanes){
 void EigenFitter::calculatePlaneWeight(FitPlane& plane, TrackEstimate* e, float chi2cutoff){
   //Calculate neasurement weights based on residuals
   size_t nMeas = plane.meas.size();
-  if(nMeas > 0){
-    plane.weights.resize(nMeas);
-    plane.weights.setZero();
+  //Nothing to do if no measurements are found
+  if(nMeas < 1){
+    plane.weights.resize(0);
+    plane.setTotWeight(0.0f);
+    return;
   }
+  plane.weights.resize(nMeas);
+  plane.weights.setZero();
   //Get the value exp( -chi2 / 2t) for each measurement
   for(size_t m = 0; m < nMeas ; m++){
     const Measurement &meas = plane.meas.at(m);

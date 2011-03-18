@@ -1,3 +1,4 @@
+
 // Author Havard Gjersdal, UiO(haavagj@fys.uio.no)
 /*!
  * This is a track fitting processor for the Eutelescope package. 
@@ -231,7 +232,7 @@ void EUTelDafBase::alignRotate(std::string collectionName, LCEvent* event) {
   try {
     alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (event->getCollection(collectionName));
   } catch (DataNotAvailableException& e) {
-    throw runtime_error("Unable to open alignmetn colection " + collectionName);
+    throw runtime_error("Unable to open alignment collection " + collectionName);
   }
   for( size_t plane = 0; plane < _system.planes.size() ; plane++){
     daffitter::FitPlane& pl = _system.planes.at(plane);
@@ -410,11 +411,10 @@ void EUTelDafBase::readHitCollection(LCEvent* event){
       TrackerHitImpl* hit = static_cast<TrackerHitImpl*> ( _hitCollection->getElementAt(iHit) );
       const double * pos = hit->getPosition();
       int planeIndex = getPlaneIndex( pos[2]  * 1000.0f);
+      bool region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
       //if( not region){ continue; }
-      if(planeIndex >=0 ) 
-      { 
-        bool region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
-        _system.addMeasurement( planeIndex, (float) pos[0] * 1000.0f, (float) pos[1] * 1000.0f, (float) pos[2] * 1000.0f,  region, iHit);
+      if(planeIndex >=0 ) { 
+	_system.addMeasurement( planeIndex, (float) pos[0] * 1000.0f, (float) pos[1] * 1000.0f, (float) pos[2] * 1000.0f,  region, iHit);
       }
     }
   }
@@ -425,8 +425,10 @@ bool EUTelDafBase::checkClusterRegion(lcio::TrackerHitImpl* hit, int iden){
   if( hit->getType() == kEUTelAPIXClusterImpl ){
     auto_ptr<EUTelVirtualCluster> cluster( new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
   					   ( static_cast<TrackerDataImpl *> ( hit->getRawHits()[0] )));
-    float xSeed(0), ySeed(0);
-    cluster->getCenterOfGravity(xSeed, ySeed);
+    // float xPos(0), yPos(0);
+    // cluster->getCenterOfGravity(xPos, yPos);
+    int xSeed(0), ySeed(0);
+    cluster->getCenterCoord(xSeed, ySeed);
     int xSize(0), ySize(0);
     cluster->getClusterSize(xSize, ySize);
     //if( iden == 10) std::cout << iden << " c: " << xSeed << " r: " << ySeed << std::endl;
@@ -539,8 +541,11 @@ void EUTelDafBase::fillPlots(daffitter::TrackCandidate *track){
       _aidaHistoMap[bname + "dydz"]->fill( estim->getYdz() );
       if( ii != 4) { continue; }
       //plane.setMeasZ( plane.getMeasZ() - 175.0);
-      _aidaZvHit->fill(estim->getX(), meas.getZ() - plane.getZpos());
-      _aidaZvFit->fill(estim->getX(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
+      _aidaZvHitX->fill(estim->getX(), meas.getZ() - plane.getZpos());
+      _aidaZvFitX->fill(estim->getX(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
+      _aidaZvHitY->fill(estim->getY(), meas.getZ() - plane.getZpos());
+      _aidaZvHitY->fill(estim->getY(), plane.getMeasZ() - plane.getZpos());
+      _aidaZvFitY->fill(estim->getY(), (plane.getMeasZ() - plane.getZpos()) - (meas.getZ() - plane.getZpos()));
     }
   }
 }
@@ -592,8 +597,10 @@ void EUTelDafBase::bookHistos(){
   _aidaHistoMap["ndof"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("ndof", maxNdof * 10, 0, maxNdof);
   _aidaHistoMap["chi2overndof"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("Chi2OverNdof", maxNdof * 10, 0, _maxChi2);
 
-  _aidaZvFit = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvHit", 1000, -5000.0, 5000.0, 1000, -100.0, 100.0);
-  _aidaZvHit = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvFit", 1000, -5000.0, 5000.0, 1000, -5000.0, 5000.0);
+  _aidaZvFitX = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvHitX", 1000, -5000.0, 5000.0, 1000, -100.0, 100.0);
+  _aidaZvHitX = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvFitX", 1000, -10000.0, 10000.0, 1000, -10000.0, 10000.0);
+  _aidaZvFitY = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvHitY", 1000, -10000.0, 10000.0, 1000, -100.0, 100.0);
+  _aidaZvHitY = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvFitY", 1000, -10000.0, 10000.0, 1000, -10000.0, 10000.0);
 
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
     daffitter::FitPlane& plane = _system.planes.at(ii);
