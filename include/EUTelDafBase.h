@@ -142,8 +142,10 @@ namespace eutelescope {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     std::map<std::string, AIDA::IHistogram1D * > _aidaHistoMap;
-    AIDA::IHistogram2D* _aidaZvHit;
-    AIDA::IHistogram2D* _aidaZvFit;
+    AIDA::IHistogram2D* _aidaZvHitX;
+    AIDA::IHistogram2D* _aidaZvFitX;
+    AIDA::IHistogram2D* _aidaZvHitY;
+    AIDA::IHistogram2D* _aidaZvFitY;
 #endif
 
     //! Fill histogram switch

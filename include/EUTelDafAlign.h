@@ -65,7 +65,6 @@ namespace eutelescope {
     std::string _pedeSteerfileName, _binaryFilename, _alignmentConstantLCIOFile, _alignmentConstantCollectionName;
     std::vector<int> _translate, _translateX, _translateY, _zRot, _scale, _scaleX, _scaleY;
     std::vector<float>_resXMin, _resXMax, _resYMin, _resYMax;
-    int _minCol, _maxCol, _minRow, _maxRow;
     //Variables
     Mille * _mille;
     std::map<int, std::pair<float, float> > _resX, _resY;
