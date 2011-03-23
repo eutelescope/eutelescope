@@ -20,13 +20,16 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
    <execute>
       <processor name="AIDA"/>
       <@UseOffsetDBCommentLeft@processor name="LoadOffsetDB"/@UseOffsetDBCommentRight@>
+      <processor name="LoadPreAlignment"/>
+      <processor name="ApplyPreAlignment"/>
       <processor name="LoadAlignment"/>
       <processor name="ApplyAlignment"/>
-      <processor name="Fitter"/>
+      <processor name="DafFitter"/>
+      <!-- processor name="Fitter"/ -->
          <!-- an example how to run anti-alignment processor -->
          <!-- group name="ReverseReconstructedHits"/ -->
          <!-- group name="ReverseFittedHits"/ -->
-      <!-- processor name="FitterHisto"/ -->
+      <processor name="FitterHisto"/>
       <!-- processor name="DUTHisto"/-->
       <!-- processor name="NTuple"/-->
       <processor name="APIXTbTrack"/>
@@ -54,6 +57,26 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <parameter name="FileType" type="string" value="root"/>
  </processor>
 
+
+  <processor name="LoadPreAlignment" type="ConditionsProcessor">
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
+    <parameter name="SimpleFileHandler" type="StringVec"> prealign @DBPath@/@Output@-prealign-db.slcio        alignment </parameter>
+  </processor>
+
+  <processor name="ApplyPreAlignment" type="EUTelApplyAlignmentProcessor">
+    <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> prealign </parameter>
+    <parameter name="alignmentCollectionNames"> prealign </parameter>
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+    <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedPre </parameter>
+    <parameter name="CorrectionMethod" type="int" value="1"/>
+
+    <parameter name="DoAlignCollection" type="bool" value="true"/>
+    <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
+    <parameter name="PrintEvents" type="int" value="0"/>
+  </processor>
+
+
  <processor name="LoadAlignment" type="ConditionsProcessor">
  <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
   <!--Initialization of a conditions database handler-->
@@ -78,7 +101,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Alignment constant from the condition file-->
   <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignment </parameter>
   <!--The name of the input hit collection-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> alignedPre </parameter>
   <!--The name of the output hit collection-->
   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedHit</parameter>
   <!--Available methods are:
@@ -91,7 +114,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <parameter name="HistogramSwitch" type="bool" value="false"/>
   <parameter name="DEBUG" type="bool" value="false"/>
   <parameter name="PrintEvents" type="int" value="0"/>
-</processor>
+ </processor>
 
  <processor name="Fitter" type="EUTelTestFitter">
   <!--Analytical track fitting processor for EUDET telescope--> 
@@ -181,6 +204,27 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 </processor>
 
 
+  <processor name="DafFitter" type="EUTelDafFitter">
+    <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5  </parameter>
+    <parameter name="DutPlanes" type="IntVec"> 13 14</parameter>
+    <parameter name="FitDuts" type="bool" value="false"/>
+    <parameter name="MakePlots" type="bool" value="true"/>
+    <parameter name="RequireNTelPlanes" type="float" value="4"/>
+    <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
+    <parameter name="TrackCollectionName" type="string" lcioInType="Track"> track </parameter>
+    <parameter name="AlignmentCollectionNames"> </parameter>
+    <parameter name="Ebeam" type="float" value="4"/>
+    <parameter name="TelResolutionX" type="float" value="4.3"/>
+    <parameter name="TelResolutionY" type="float" value="4.3"/>
+    <parameter name="DutResolutionX" type="float" value="50"/>
+    <parameter name="DutResolutionY" type="float" value="400"/>
+    <parameter name="NominalDxdz" type="float" value="0.0"/>
+    <parameter name="NominalDydz" type="float" value="0.0"/>
+    <parameter name="FinderRadius" type="float" value="500"/>
+    <parameter name="Chi2Cutoff" type="float" value="50"/>
+    <parameter name="MaxChi2OverNdof" type="float" value="8"/>
+    <parameter name="NDutHits" type="int" value="1"/>
+  </processor>
 
  <group name="ReverseReconstructedHits" type="EUTelApplyAlignmentProcessor" >
  	<!-- ------------------------------------ -->
@@ -362,7 +406,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
  </processor-->
 
  <processor name="APIXTbTrack" type="EUTelAPIXTbTrackTuple">
-    <parameter name="OutputPath" type ="string" value="@HistoPath@/@Output@-track-tb-histo.root"/>
+    <parameter name="OutputPath" type ="string" value="@HistoPath@/tbtrack@Output@.root"/>
     <!--Name of the input Track collection-->
     <parameter name="InputCollectionName" type="string" lcioInType="Track"> track </parameter>
     <!--Name of the input cluster collections-->
@@ -372,7 +416,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="TelZsColName" type="string" value="zsdata_m26"/>
     <parameter name="DutZsColName" type="string" value="zsdata_apix"/>
     <!-- Alignment constants-->
-    <parameter name="AlignmentCollectionNames"> alignment preAlignment </parameter>
+    <parameter name="AlignmentCollectionNames"> prealign alignment  </parameter>
     <parameter name="DoScales" type="bool" value="false"/>
   </processor>
 
@@ -390,11 +434,11 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!-- name of output file -->
   <parameter name="LCIOOutputFile" type="string" value="@ResultsFolder@/@Output@-track.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
-  <parameter name="LCIOWriteMode" type="string" value=""/>
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
   <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-  <parameter name="SplitFileSizekB" type="int" value="100000"/>
+  <!-- parameter name="SplitFileSizekB" type="int" value="100000"/ -->
 </processor>
 
   <group name="TelDUTHisto" >
