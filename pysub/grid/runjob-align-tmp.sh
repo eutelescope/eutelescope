@@ -231,8 +231,27 @@ for file in $InputFileList; do
 done 
 
 
+
+PreAlignLFN=$GRIDFolderDBAlign/$Output-prealign-db.slcio
+PreAlignLocal=$PWD/db/$Output-prealign-db.slcio
+
+echo
+echo "########################################################################"
+echo "# Getting the prealign DB file ${PreAlignLocal}"
+echo "########################################################################"
+echo
+doCommand "getFromGRID ${PreAlignLFN} ${PreAlignLocal}"
+r=$?
+if [ $r -ne 0 ] ; then
+    echo "Problem copying ${PreAlignLFN}. Exiting with error."
+    exit 3
+fi
+
 # list all the files available
 doCommand "ls -al"
+
+
+
 
 # ready to run marlin
 echo

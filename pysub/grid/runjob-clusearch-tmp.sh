@@ -374,7 +374,7 @@ doCommand "putOnGRID ${OutputDBLocal} ${OutputDBLFN} ${GRIDSE}"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "****** Problem copying the ${OutputDBLocal} to the GRID"
-    exit 30
+#    exit 30
 fi
 
 
@@ -394,7 +394,7 @@ doCommand "putOnGRID  ${OutputJoboutputLocal} ${OutputJoboutputLFN} ${GRIDSE}"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "****** Problem copying the ${OutputJoboutputLocal} to the GRID"
-    exit 31
+#    exit 31
 fi
 
 echo
@@ -406,7 +406,7 @@ doCommand "putOnGRID ${OutputHistoLocal} ${OutputHistoLFN} ${GRIDSE}"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "****** Problem copying the ${OutputHistoLocal} to the GRID"
-    exit 32
+#    exit 32
 fi
 
 # Job finished

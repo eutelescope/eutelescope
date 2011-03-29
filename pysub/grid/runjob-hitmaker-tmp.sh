@@ -130,6 +130,10 @@ OutputHistoLocal=$PWD/histo/$Output-hit-histo.root
 SteeringFile=$Name-$Output.xml
 LogFile=$Name-$Output.log
 
+PreAlignLFN=$GRIDFolderDBOffset/$Output-prealign-db.slcio
+PreAlignLocal=$PWD/db/$Output-prealign-db.slcio
+
+
 echo
 echo "########################################################################"
 echo "# Starting $Name-$Output at `date `"
@@ -329,6 +333,18 @@ if [ $r -ne 0 ] ; then
     echo "****** Problem copying the ${OutputJoboutputLocal} to the GRID"
     exit 31
 fi
+echo
+echo "########################################################################"
+echo "# Copying and registering the preAlign file to SE"
+echo "########################################################################"
+echo
+doCommand "putOnGRID ${PreAlignLocal} ${PreAlignLFN} ${GRIDSE}"
+r=$?
+if [ $r -ne 0 ] ; then
+    echo "****** Problem copying the ${PreAlignLocal} to the GRID"
+    exit 32
+fi
+
 
 echo
 echo "########################################################################"

@@ -123,6 +123,9 @@ OutputHistoLocal=$PWD/histo/$Output-track-histo.root
 SteeringFile=$Name-$Output.xml
 LogFile=$Name-$Output.log
 
+OutputTBTrackLocal=$PWD/histo/tbtrack$Output.root
+OutputTBTrackLFN=$GRIDFolderFitterHisto/tbtrack$Output.root
+
 echo
 echo "########################################################################"
 echo "# Starting $Name-$Output at `date `"
@@ -224,6 +227,24 @@ for file in $InputFileList; do
 
 done 
 
+
+PreAlignLFN=$GRIDFolderDBAlign/$Output-prealign-db.slcio
+PreAlignLocal=$PWD/db/$Output-prealign-db.slcio
+
+echo
+echo "########################################################################"
+echo "# Getting the prealign DB file ${PreAlignLocal}"
+echo "########################################################################"
+echo
+doCommand "getFromGRID ${PreAlignLFN} ${PreAlignLocal}"
+r=$?
+if [ $r -ne 0 ] ; then
+    echo "Problem copying ${PreAlignLFN}. Exiting with error."
+    exit 3
+fi
+
+# list all the files available
+doCommand "ls -al"
 
 echo
 echo "########################################################################"
@@ -345,6 +366,14 @@ if [ $r -ne 0 ] ; then
     echo "****** Problem copying the ${OutputHistoLocal} to the GRID"
     exit 32
 fi
+
+doCommand "putOnGRID ${OutputTBTrackLocal} ${OutputTBTrackLFN} ${GRIDSE}"
+r=$?
+if [ $r -ne 0 ] ; then
+    echo "****** Problem copying the ${OutputTBTrackLocal} to the GRID"
+    exit 32
+fi
+
 
 # Job finished
 echo
