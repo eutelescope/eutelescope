@@ -22,20 +22,36 @@
 using namespace std;
 using namespace eutelescope;
 
-EUTelAPIXMCDetector::EUTelAPIXMCDetector() : EUTelPixelDetector()  {
+EUTelAPIXMCDetector::EUTelAPIXMCDetector(unsigned short fetype) : EUTelPixelDetector()  {
+	if (fetype==2)
+	{
+	  _xMin = 0;
+	  _xMax = 79;
 
-  _xMin = 0;
-  _xMax = 17;
+	  _yMin = 0;
+	  _yMax = 335; 
 
-  _yMin = 0;
-  _yMax = 159; 
+	  _name = "USBpixI4";
 
+	  _xPitch = 0.05;
+	  _yPitch = 0.25;
+	}
+	else
+	{
+	  _xMin = 0;
+	  _xMax = 17;
 
-  _name = "APIXMC"; // "SUSHVPIX"
+	  _yMin = 0;
+	  _yMax = 159; 
 
-  _xPitch = 0.05;
-  _yPitch = 0.40;
+	  if (fetype==1)
+		_name = "USBpix";
+	  else
+		_name = "APIXMC";
 
+	  _xPitch = 0.05;
+	  _yPitch = 0.40;
+	}
 }
 
 bool EUTelAPIXMCDetector::hasSubChannels() const {

@@ -298,7 +298,7 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
 {
  
 
-  if ( _iEvt % 10 == 0 )
+  if ( _iEvt % 100 == 0 )
     streamlog_out ( MESSAGE4 ) << "Processing event  (ApplyGear6D) "
                                << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
@@ -467,7 +467,7 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
           // alignment constants. So the idea is to eventually advice
           // the users if running in DEBUG and copy the not aligned hit
           // in the new collection.
-          streamlog_out ( WARNING ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
+          streamlog_out ( DEBUG ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
                                     << iHit << endl;
 
           for ( size_t i = 0; i < 3; ++i )
@@ -500,7 +500,7 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
 void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event) 
 {
  
-  if ( _iEvt % 10 == 0 )
+  if ( _iEvt % 100 == 0 )
     streamlog_out ( MESSAGE4 ) << "Processing event  (RevertGear6D) "
                                << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
@@ -670,7 +670,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
           // alignment constants. So the idea is to eventually advice
           // the users if running in DEBUG and copy the not aligned hit
           // in the new collection.
-          streamlog_out ( WARNING ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
+          streamlog_out ( DEBUG ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
                                     << iHit << endl;
 
           for ( size_t i = 0; i < 3; ++i )
@@ -703,7 +703,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
 
-  if ( _iEvt % 10 == 0 )
+  if ( _iEvt % 100 == 0 )
     streamlog_out ( MESSAGE4 ) << "Processing event  (ApplyAlignment Direct) "
                                << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
@@ -1007,7 +1007,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
         // alignment constants. So the idea is to eventually advice
         // the users if running in DEBUG and copy the not aligned hit
         // in the new collection.
-        streamlog_out ( WARNING ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
+        streamlog_out ( DEBUG ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
                                 << iHit << endl;
 
         for ( size_t i = 0; i < 3; ++i )
@@ -1038,7 +1038,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
 void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
 
-    if ( _iEvt % 10 == 0 )
+    if ( _iEvt % 100 == 0 )
         streamlog_out ( MESSAGE4 ) << "Processing event (ApplyAlignment Reverse) "
                                << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
@@ -1432,7 +1432,7 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
                 // the users if running in DEBUG and copy the not aligned hit
                 // in the new collection.
 
-                streamlog_out ( WARNING ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
+                streamlog_out ( DEBUG   ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
                                           << iHit << endl;
                 
                 for ( size_t i = 0; i < 3; ++i )

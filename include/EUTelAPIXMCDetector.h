@@ -36,7 +36,7 @@ namespace eutelescope {
 
   public:
     //! Default constructor
-    EUTelAPIXMCDetector() ;
+    EUTelAPIXMCDetector(unsigned short fetype=0) ;
 
 
     //! Default destructor
