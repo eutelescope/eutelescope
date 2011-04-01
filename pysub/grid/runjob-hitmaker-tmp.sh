@@ -57,6 +57,7 @@ getFromGRID(){
 # $3: the SE
 #
 putOnGRID() {
+    doCommand "lcg-del -a lfn:$2 "
     doCommand "lcg-cr -v -d $3 -l lfn:$2 file:$1"
     return $?
 }
