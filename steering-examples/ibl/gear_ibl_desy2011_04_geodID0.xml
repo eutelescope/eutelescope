@@ -68,13 +68,13 @@
 				<!--APIX-Plane 1 - FE-I4 SCC10 -->
 				<layer>
 					<ladder 	ID="20"
-                                                        positionX="00.00"       positionY="0.00"        positionZ="188.35" 
+                                                        positionX="00.00"       positionY="0.00"        positionZ="160.35" 
                                                         rotationYZ="0.0"        rotationZX="0.0"        rotationXY="0.0" 
                                                         sizeX="20.0"            sizeY="16.8"            thickness="0.025" 
                                                         radLength="93.660734"
                                         />
                                         <sensitive      ID="20" 
-                                                        positionX="00.00"       positionY="0.00"        positionZ="188.35" 
+                                                        positionX="00.00"       positionY="0.00"        positionZ="160.35" 
                                                         sizeX="20.0"             sizeY="16.8"            thickness="0.025" 
                                                         npixelX="80"            npixelY="336"
                                                         pitchX="0.250"          pitchY="0.05"           resolution="1.0000" 
