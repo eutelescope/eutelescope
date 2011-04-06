@@ -79,7 +79,7 @@
                                                         npixelX="18"            npixelY="160" 
                                                         pitchX="0.40"           pitchY="0.05"           resolution="1.0000"
                                                         rotation1="-1.0"        rotation2="0.0" 
-                                                        rotation3="0.0"         rotation4="-1.0" 
+                                                        rotation3="0.0"         rotation4="1.0" 
                                                         radLength="93.660734"
 					/>
 				</layer>
