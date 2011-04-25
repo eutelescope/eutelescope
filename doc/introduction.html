@@ -1350,8 +1350,7 @@ repository:
 @li Download source code
 @code
  cd $EUDAQ
- svn co http://svn.hepforge.org/eudaq/trunk trunk  
- cd trunk
+ svn co http://svn.hepforge.org/eudaq/trunk .  
 @endcode
 
 @li make sure that USE_LCIO and USE_EUTELESCOPE lines in the main/Makefile are
@@ -1363,6 +1362,7 @@ switched OFF (set to =0)
 @li  build EUDAQ with
 @code   
   make main
+  # it is important that after compilation you can find the library full path is valid: $EUDAQ/bin/libeudaq.so
 @endcode  
 @li  the EUDAQ library should appear as $EUDAQ/trunk/bin/libeudaq.so
      
