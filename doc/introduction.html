@@ -1373,37 +1373,43 @@ Change folder to the global analysis folder and check the ilcinstall scripts (v0
 
 @code
  cd $TB_ANALYSIS
- svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-11-pre02  ilcinstall_v01-11-pre02
- cd ilcinstall_v01-11-pre02
+ svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/branches/v01-10  ilcinstall_v01-10
+ cd ilcinstall_v01-10
 #
-# edit if needed:
-#   ./releases/v01-11/release-ilcsoft.cfg
-#   ./releases/v01-11/release-versions.py
+# edit according to your needs:
+#   ./releases/v01-10/release-ilcsoft.cfg
+#   ./releases/v01-10/release-versions.py
 #
 # or download from here and replace your old files: 
 #
-# for installation on a machine with a /afs/ (very fast installation)
- wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-ilcsoft.cfg 
- wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-versions.py 
+# for v01-10 (of ilcinstall):
+# for installation on a machine with a /afs/ (very fast installation):
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-10/srelease-ilcsoft.cfg 
 #
-# OR for a standalone installation (takes time):
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/standalone/release-ilcsoft.cfg 
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/standalone/release-versions.py
+# for a laptop installation (or without /afs/desy.de/ mount), quite long:
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-10-standalone/release-ilcsoft.cfg 
 #
-# replace the default files with the example ones:
- mv release-ilcsoft.cfg ./releases/v01-11/
- mv release-versions.py ./releases/v01-11/
-# 
+#
+# for v01-11 (of ilcinstall):
+# for installation with /afs/desy.de/:
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-11/srelease-ilcsoft.cfg 
+#
+# for standalone installation:
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-11-standalone/release-ilcsoft.cfg 
+#
+
 @endcode
       
 Your local configuration file "release-ilcsoft.cfg" shold contain the EUDAQ
 library references:<br>
      
 @li ilcsoft.install( Eutelescope( Eutelescope_version ))
+<!--
 @li ilcsoft.module("Eutelescope").env['MILLEPEDEII_VERSION']='trunk'
 @li ilcsoft.module("Eutelescope").env['EUDAQ_VERSION']='trunk'
+-->
 
-you can also turn the documentation build OFF:
+you might want to make the installation time shorter by turning the doxygen documentation build OFF:
 @li ilcsoft.envcmake["INSTALL_DOC"]="OFF"
 
 
@@ -1411,13 +1417,13 @@ Check if the installation looks concistent from the script/environment
 viewpoint:
  
 @code
- ilcsoft-install ./releases/v01-11/release-ilcsoft.cfg
+ ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg
 @endcode
  
 Read carefully the output screen. If no apparent problem is detected, run:
      
 @code
- ilcsoft-install ./releases/v01-11/release-ilcsoft.cfg  -i
+ ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg  -i
 @endcode
 
 Depending one your hardware/OS performance the installation can last for about
