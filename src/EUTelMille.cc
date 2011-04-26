@@ -898,7 +898,7 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
 void EUTelMille::processEvent (LCEvent * event) {
 
 
-  if (_iEvt % 10 == 0) {
+  if (_iEvt % 100 == 0) {
     streamlog_out( MESSAGE2 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
