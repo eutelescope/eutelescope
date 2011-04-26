@@ -60,28 +60,36 @@ private:
     for(int ii = -1; ii <2; ii++){
       int tmpBin = maxBin + ii;
       if(maxBin < 0 or maxBin >= (int)histo.size()){ continue;}
+try
+{
       pos += tmpBin * histo.at(tmpBin);
       weight += histo.at(tmpBin);
+}
+catch(...)
+{
+      printf("Could not execute bin content retrieval. The sensor frame empty or heavily misalgined \n"); 
+}
     }
     return(pos/weight);
   }
 public:
   PreAligner(float pitchX, float pitchY, float zPos, int iden): 
     pitchX(pitchX), pitchY(pitchY), 
-    minX(-10.0), maxX(10), range(maxX - minX),
+    minX(-20.0), maxX(20), range(maxX - minX),
     zPos(zPos), iden(iden){
-    histoX.assign( int( range / pitchX ), 0.0);
-    histoY.assign( int( range / pitchY ), 0.0);
+    histoX.assign( int( range / pitchX ), 0);
+    histoY.assign( int( range / pitchY ), 0);
   }
+  void* current(){return this; } 
   float getZPos() const { return(zPos); }
   int getIden() const { return(iden); }
   void addPoint(float x, float y){
     //Add to histo if within bounds, throw away data that is out of bounds
     try{
-      histoX.at( (x - minX)/pitchX) += 1; 
+      histoX.at( static_cast<int> ( (x - minX)/pitchX) ) += 1; 
     } catch (std::out_of_range& e) {;}
     try{
-      histoY.at( (y - minX)/pitchY) += 1; 
+      histoY.at( static_cast<int> ( (y - minX)/pitchY) ) += 1; 
     } catch (std::out_of_range& e) {;}
   }
   float getPeakX(){
