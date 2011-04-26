@@ -403,7 +403,7 @@ namespace eutelescope {
      *  the cell ID of the input collection, but in case of ZS only
      *  the sensor ID is available there.
      *
-     *  @param event The LCEvent to be used for geometry
+     *  @param evt The LCEvent to be used for geometry
      *  initialization.
      *
      *  @throw In case the @event does not contain all the needed
