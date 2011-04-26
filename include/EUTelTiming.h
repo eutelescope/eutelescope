@@ -54,21 +54,20 @@ namespace eutelescope {
     virtual EUTelDetectorType getDetectorType() const = 0;
 
     //! Print method
-    /*! This method is used to print out the contents of the sparse
-     *  pixel
+    /*! This method is used to print out the contents of the sparse pixel
      *
      *  @param os The input output stream
      */
     virtual void print(std::ostream& os) const = 0 ;
 	
-    //! Overload of operator<<
+    //! Overload of operator\<\<
     /*! This friend function is the overload of the operator << for
      *  the base sparse pixel class. It uses the print method that is
      *  virtually defined for all sparse pixel subclasses.
      *  
      *  @param os The input output stream as modified by the print
      *  method
-     *  @param pixel The base pixel to be stream out
+     *  @param timing The base pixel timing to be streamed out
      *  @return The output stream
      */
     friend std::ostream& operator<< (std::ostream& os, const EUTelTiming& timing)  { timing.print(os); return os; }
