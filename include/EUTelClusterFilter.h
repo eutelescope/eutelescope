@@ -368,13 +368,21 @@ namespace eutelescope {
      *  _clusterMaxTotalChargeVec.    .
      *
      *  @todo Implement it!
-     *  @param cluster The cluster under test.
      *  @return True if the @c cluster has a charge below its own threshold.
      *
      */
     bool isBelowMaxTotalCharge(EUTelVirtualCluster * /* cluster */ ) const { return true; }
 
 
+    //! Check if the total cluster charge is above a certain value
+    /*! This is used to select clusters having a total integrated
+     *  charge above a certain value. This threshold value is given on
+     *  a per detector basis and stored into the
+     *  _clusterMaxTotalChargeVec.    .
+     *
+     *  @param cluster The cluster under test.
+     *
+     */
     bool isAboveNumberOfHitPixel(EUTelVirtualCluster * cluster) const;
 
 
