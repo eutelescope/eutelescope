@@ -1341,7 +1341,7 @@ folders where the packages will be installed, say
 
 Create these folders if they do not exist.
 
-
+<!--
 @section install_eudaq Install EUDAQ
 
 Change current folder to $EUDAQ and get the EUDAQ source code from the
@@ -1364,50 +1364,54 @@ switched OFF (set to =0)
   make main
   # it is important that after compilation you can find the library full path is valid: $EUDAQ/bin/libeudaq.so
 @endcode  
-@li  the EUDAQ library should appear as $EUDAQ/trunk/bin/libeudaq.so
-     
+@li  the EUDAQ library should appear as $EUDAQ/bin/libeudaq.so
+    --> 
  
 @section download_ilcinstall Download the ilcinstall scripts            
-Change folder to the global analysis folder and check the ilcinstall scripts (v01-10) 
+Change folder to the global analysis folder and check the ilcinstall scripts (v01-11) 
 
 
 @code
  cd $TB_ANALYSIS
- svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/branches/v01-10  ilcinstall_v01-10
- cd ilcinstall_v01-10
+ svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/branches/v01-11  ilcinstall_v01-11
+ cd ilcinstall_v01-11
 #
 # edit according to your needs:
-#   ./releases/v01-10/release-ilcsoft.cfg
-#   ./releases/v01-10/release-versions.py
+#   ./releases/v01-11/release-ilcsoft.cfg
+#   ./releases/v01-11/release-versions.py
 #
 # or download from here and replace your old files: 
 #
-# for v01-10 (of ilcinstall):
+# you want to install ilcsoft v01-10
 # for installation on a machine with a /afs/ (very fast installation):
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-10/srelease-ilcsoft.cfg 
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-10/release-ilcsoft.cfg 
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-10/release-versions.py 
+
 #
 # for a laptop installation (or without /afs/desy.de/ mount), quite long:
 # wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-10-standalone/release-ilcsoft.cfg 
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-10-standalone/release-versions.py 
 #
 #
-# for v01-11 (of ilcinstall):
+<!--
+# if you want to install for v01-11 (of ilcsoft):
 # for installation with /afs/desy.de/:
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-11/srelease-ilcsoft.cfg 
+# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-11/release-ilcsoft.cfg 
 #
 # for standalone installation:
 # wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-11-standalone/release-ilcsoft.cfg 
 #
-
+-->
 @endcode
       
 Your local configuration file "release-ilcsoft.cfg" shold contain the EUDAQ
 library references:<br>
      
 @li ilcsoft.install( Eutelescope( Eutelescope_version ))
-<!--
-@li ilcsoft.module("Eutelescope").env['MILLEPEDEII_VERSION']='trunk'
+
+@li ilcsoft.module("Eutelescope").env['MILLEPEDEII_VERSION']='V03-03-00'
 @li ilcsoft.module("Eutelescope").env['EUDAQ_VERSION']='trunk'
--->
+
 
 you might want to make the installation time shorter by turning the doxygen documentation build OFF:
 @li ilcsoft.envcmake["INSTALL_DOC"]="OFF"
@@ -1417,13 +1421,13 @@ Check if the installation looks concistent from the script/environment
 viewpoint:
  
 @code
- ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg
+ ilcsoft-install ./releases/v01-11/release-ilcsoft.cfg
 @endcode
  
 Read carefully the output screen. If no apparent problem is detected, run:
      
 @code
- ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg  -i
+ ilcsoft-install ./releases/v01-11/release-ilcsoft.cfg  -i
 @endcode
 
 Depending one your hardware/OS performance the installation can last for about
@@ -1474,6 +1478,7 @@ A $EUTELESCOPE variable is also introduced there.
 @endcode
   you should get a non empty output.
 
+<!--
 @section millepede Check that the Millepede II is installed and compiled alright!
 
 If the folder $EUTELESCOPE/millepede/ was not created then you should do it manually by following these steps:
@@ -1507,7 +1512,7 @@ Replace the $EUTELESCOPE with the full path string corresponding to your setup.
 There is an official Millepede II web page maintained by Terascale Statistics
 group <a href="https://www.wiki.terascale.de/index.php/Millepede_II">Physics at
 the Terascale / Millepede II </a>.
-
+-->
 
 
 @section work How does it work?
