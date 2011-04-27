@@ -1448,7 +1448,7 @@ The script fills PATH and LD_LIBRARY_PATH variables.
 A $EUTELESCOPE variable is also introduced there.
 
 
-
+<!--
 @section recompile_eudaq Recompile EUDAQ    
 
 @code
@@ -1477,6 +1477,26 @@ A $EUTELESCOPE variable is also introduced there.
   nm ../lib/libEutelescope.so | grep eudaq
 @endcode
   you should get a non empty output.
+-->
+
+@section millepede Check that the Millepede II is installed!
+
+@code
+  cd $EUTELESCOPE/bin/
+  file pede
+@endcode
+
+Then, your $EUTELESCOPE/pysub/config/config.cfg file should contain:
+
+@code
+  Pede           =  $EUTELESCOPE/bin/pede
+@endcode
+
+Replace the $EUTELESCOPE with the full path (!) string corresponding to your setup.
+
+There is an official Millepede II web page maintained by Terascale Statistics
+group <a href="https://www.wiki.terascale.de/index.php/Millepede_II">Physics at
+the Terascale / Millepede II </a>.
 
 <!--
 @section millepede Check that the Millepede II is installed and compiled alright!
