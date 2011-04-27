@@ -1409,8 +1409,12 @@ library references:<br>
      
 @li ilcsoft.install( Eutelescope( Eutelescope_version ))
 
-@li ilcsoft.module("Eutelescope").env['MILLEPEDEII_VERSION']='V03-03-00'
 @li ilcsoft.module("Eutelescope").env['EUDAQ_VERSION']='trunk'
+and for 64-bit machines
+@li ilcsoft.module("Eutelescope").env['MILLEPEDEII_VERSION']='tags/V03-04-00'
+or for 32-bit machines
+@li ilcsoft.module("Eutelescope").env['MILLEPEDEII_VERSION']='tags/V03-00-02'
+
 
 
 you might want to make the installation time shorter by turning the doxygen documentation build OFF:
