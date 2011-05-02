@@ -72,7 +72,13 @@ this builds the library:
 
 <b>Last versions release info:</b>
 
-<b>[Pro]</b> Version v00-06-00-pre.
+<b>[Pro]</b> Version v00-06-01-pre.
+
+@li Several fixes to the PreAlign processor, increased range of the histogram-arrays to allow larger displacement between the sensors
+@li Installation documentation fixed. Recommended isntallation path consists of using ilcinstall scripts from version v01-11, and install all packages for ilcsoft release v01-10.
+The ilcinstall v01-11 contains improved cmake scripts assisting with installation/compilation of EUDAQ and Millepede. The ilcsoft v01-10 shuld be used as much as possible untill there is happens a crucial bug fixed or classes logic upgrade, which is incompatible with other packages in v01-10. 
+
+<b>[Old]</b> Version v00-06-00-pre.
 
 @li New CMake approach implemented for ilcsoft v01-11 release. It is still backward compatible with ilcsoft v01-10.
 @li EUTelTestFitter fixed for a tilted sensor proper Z coordinate of the fitted hit.
@@ -1393,7 +1399,8 @@ Change folder to the global analysis folder and check the ilcinstall scripts (v0
 # wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-10-standalone/release-versions.py 
 #
 #
-<!--
+@endcode
+ <!--
 # if you want to install for v01-11 (of ilcsoft):
 # for installation with /afs/desy.de/:
 # wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-11/release-ilcsoft.cfg 
@@ -1402,16 +1409,17 @@ Change folder to the global analysis folder and check the ilcinstall scripts (v0
 # wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-11-standalone/release-ilcsoft.cfg 
 #
 -->
-@endcode
-      
+     
 Your local configuration file "release-ilcsoft.cfg" shold contain the EUDAQ
 library references:<br>
      
 @li ilcsoft.install( Eutelescope( Eutelescope_version ))
 
 @li ilcsoft.module("Eutelescope").env['EUDAQ_VERSION']='trunk'
+
 and for 64-bit machines
 @li ilcsoft.module("Eutelescope").env['MILLEPEDEII_VERSION']='tags/V03-04-00'
+
 or for 32-bit machines
 @li ilcsoft.module("Eutelescope").env['MILLEPEDEII_VERSION']='tags/V03-00-02'
 
