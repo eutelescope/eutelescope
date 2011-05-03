@@ -67,7 +67,7 @@ try
 }
 catch(...)
 {
-      printf("Could not execute bin content retrieval. The sensor frame empty or heavily misalgined \n"); 
+      std::cout << "Could not execute bin content retrieval. The sensor frame empty or heavily misalgined" << std::endl; 
 }
     }
     return(pos/weight);
