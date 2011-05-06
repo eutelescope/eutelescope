@@ -172,6 +172,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--Initialization of a data file handler-->
     <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
     <!--Initialization of a simple conditions file handler-->
+    <!-- suppress only the Mimosa26 pixels --> 
     <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26  @DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio hotpixel_m26 </parameter>
   </processor>
 

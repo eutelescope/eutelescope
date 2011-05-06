@@ -19,6 +19,7 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
 
    <execute>
       <processor name="AIDA"/>
+      <processor name="LoadHotPixelDB"/>
       <@UseOffsetDBCommentLeft@processor name="LoadOffsetDB"/@UseOffsetDBCommentRight@>
       <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/>
       <!-- processor name="GeoSelection"/ -->
@@ -46,9 +47,25 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
   <parameter name="FileName" type="string" value="@HistoPath@/@Output@-hit-histo"/>
   <!-- type of output file xml (default) or root ( only OpenScientist)-->
   <parameter name="FileType" type="string" value="root"/>
-</processor>
+ </processor>
 
- <processor name="LoadOffsetDB" type="ConditionsProcessor">
+  <processor name="LoadHotPixelDB" type="ConditionsProcessor">
+    <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
+    <!--Initialization of a conditions database handler-->
+    <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
+    <!--Initialization of a conditions db file handler-->
+    <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
+    <!--Initialization string for conditions database-->
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
+    <!--Initialization of a data file handler-->
+    <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
+    <!--Initialization of a simple conditions file handler-->
+    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26   @DBPath@/run@Output@-hotpixel-db.slcio hotpixel_m26  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_apix  @DBPath@/run@Output@-hotpixel-db.slcio hotpixel_apix </parameter>
+  </processor>
+
+
+  <processor name="LoadOffsetDB" type="ConditionsProcessor">
    <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
    <parameter name="SimpleFileHandler" type="StringVec"> preAlignment @DBPath@/run@OffsetRunNumber@-offset-db.slcio preAlignment </parameter>
   </processor>
