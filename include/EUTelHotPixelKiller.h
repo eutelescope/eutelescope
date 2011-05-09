@@ -237,7 +237,6 @@ namespace eutelescope {
 
 
 
-    
     //! Current run number.
     /*! This number is used to store the current run number
      */

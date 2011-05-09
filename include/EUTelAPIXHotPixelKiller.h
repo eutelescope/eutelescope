@@ -15,7 +15,10 @@
 #include "EUTelAPIXSparsePixel.h"
 
 // marlin includes ".h"
+#include "marlin/EventModifier.h"
 #include "marlin/Processor.h"
+#include "marlin/Exceptions.h"
+
 
 // lcio includes <.h>
 #include <LCIOTypes.h>
@@ -58,7 +61,7 @@ namespace eutelescope {
    *
    */
 
-  class EUTelAPIXHotPixelKiller : public marlin::Processor {
+  class EUTelAPIXHotPixelKiller : public marlin::Processor, public marlin::EventModifier  {
 
   public:
 
@@ -74,6 +77,9 @@ namespace eutelescope {
       return new EUTelAPIXHotPixelKiller;
     }
 
+    virtual const std::string & name() const { return Processor::name() ; }
+
+
     //! Default constructor
     EUTelAPIXHotPixelKiller ();
 
@@ -83,6 +89,14 @@ namespace eutelescope {
      *  the value of the provided parameters
      */
     virtual void init ();
+
+    //! Modify event method
+    /*! Actually don't used
+     *
+     *  @param evt the current LCEvent event as passed by the ProcessMgr
+     */
+    virtual void modifyEvent( LCEvent * evt ) ;
+
 
     //! Called for every run.
     /*! It is called for every run, and consequently the run counter

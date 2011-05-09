@@ -369,7 +369,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
     }
     catch(...)
     {
-        std::cout <<  "Input collection not found in the current event. Skipping..." << std::endl;
+        std::cout <<  "Input collection " << _statusCollectionName.c_str() << " not found in the current event. Skipping..." << std::endl;
     }
 
     try 
@@ -608,31 +608,83 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
 
     // reopen the LCIO file this time in append mode
     LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
+    LCReader * lcReader = LCFactory::getInstance()->createLCReader( );
+    LCRunHeaderImpl *lcHeader= 0;
+    LCEventImpl      *event  = 0;
+    LCTime           *now    = 0;
 
-    try {
-        lcWriter->open( _hotpixelDBFile, LCIO::WRITE_NEW );
-    } catch ( IOException& e ) {
-        streamlog_out ( ERROR4 ) << e.what() << endl
-            << "Sorry for quitting. " << endl;
-        exit(-1);
-    }
-    
+    try 
+    {
+       lcWriter->open( _hotpixelDBFile, LCIO::WRITE_APPEND );
+       streamlog_out ( MESSAGE ) << _hotpixelDBFile << " was opened for writing" << endl;
+    } 
+    catch ( IOException& e ) 
+    {
+       streamlog_out ( ERROR4 ) << e.what() << endl << "Sorry, was not abel to APPEND to a hotpixel file, try open new " << endl;
+      try 
+      {
+          lcWriter->open( _hotpixelDBFile, LCIO::WRITE_NEW );
+    // create.write new stuff: 
     // write an almost empty run header
-    LCRunHeaderImpl *lcHeader  = new LCRunHeaderImpl;
+    lcHeader  = new LCRunHeaderImpl;
     lcHeader->setRunNumber( 0 );
 
     lcWriter->writeRunHeader(lcHeader);
     delete lcHeader;
 
-        
-    LCEventImpl *event = new LCEventImpl;
+    event = new LCEventImpl;
     event->setRunNumber( 0 );
     event->setEventNumber( 0 );
     event->setDetectorName("Mimosa26");
+    streamlog_out ( MESSAGE ) << "event created ok"  << endl;       
 
-    LCTime *now = new LCTime;
+    now   = new LCTime;
     event->setTimeStamp( now->timeStamp() );
     delete now;
+     }
+      catch ( IOException& e ) 
+      {
+          streamlog_out ( ERROR4 ) << e.what() << endl << "Sorry, was not able to create new file, will quit now. " << endl;
+          exit(-1);
+      }
+    }
+  
+    if( event == 0 )
+    {
+    try
+    {
+       lcReader->open( _hotpixelDBFile );
+       event =  static_cast<LCEventImpl *>  (lcReader->readNextEvent());
+       streamlog_out ( MESSAGE ) << "event read ok"  << endl;       
+       if( event == 0 )
+       {
+         lcHeader  = new LCRunHeaderImpl;
+         lcHeader->setRunNumber( 0 );
+         lcWriter->writeRunHeader(lcHeader);
+         delete lcHeader;
+
+         event = new LCEventImpl;
+         event->setRunNumber( 0 );
+         event->setEventNumber( 0 );
+         event->setDetectorName("Mimosa26");
+         streamlog_out ( MESSAGE ) << "event recreated ok"  << endl;       
+
+         now   = new LCTime;
+         event->setTimeStamp( now->timeStamp() );
+         delete now; 
+       }
+    }
+    catch(...)
+    {
+        streamlog_out ( MESSAGE ) << "could not read anything"  << endl;       
+    }
+    }
+
+    if(event==0)
+    {
+      streamlog_out (ERROR) << " event == 0 " << endl;
+      return;  
+    }
 
     // create main collection to be saved into the db file 
     LCCollectionVec * hotPixelCollection;
@@ -641,10 +693,20 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
     try 
     {
         hotPixelCollection = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
+        streamlog_out (MESSAGE) << " hotPixelCollection: " << _hotPixelCollectionName << 
+                                   " found found with " << hotPixelCollection->getNumberOfElements() << 
+                                   " elements " <<  endl; 
+        hotPixelCollection->clear();
+        streamlog_out (MESSAGE) << " hotPixelCollection: " << _hotPixelCollectionName << 
+                                   " cleared: now " << hotPixelCollection->getNumberOfElements() << 
+                                   " elements " <<  endl; 
     }
     catch ( lcio::DataNotAvailableException& e ) 
     {
         hotPixelCollection = new LCCollectionVec( lcio::LCIO::TRACKERDATA );
+        event->addCollection( hotPixelCollection, _hotPixelCollectionName );
+        streamlog_out (MESSAGE) << " hotPixelCollection: " << _hotPixelCollectionName << 
+                                   " created" <<  endl; 
     }
 
 
@@ -685,7 +747,6 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
         hotPixelCollection->push_back( currentFrame.release() );
     }
     
-    event->addCollection( hotPixelCollection, _hotPixelCollectionName );
     lcWriter->writeEvent( event );
     delete event;
     
