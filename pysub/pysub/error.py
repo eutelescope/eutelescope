@@ -60,6 +60,14 @@ class MissingSteeringTemplateError( MissingFileError ):
 class MissingHotPixelFileError( MissingFileError ):
     pass
 
+## Missing offset file
+class MissingOffsetFileError( MissingFileError ):
+    pass
+
+## Missing alignment file
+class MissingAlignmentFileError( MissingFileError ):
+    pass
+
 ## Missing pedestal file
 class MissingPedestalFileError( MissingFileError ):
     pass
@@ -104,6 +112,10 @@ class MissingHotPixelFileOnGRIDError ( MissingFileOnGRIDError ) :
 class MissingPedestalFileOnGRIDError ( MissingFileOnGRIDError ) :
     pass
 
+## Missing offset file on the GRID
+#
+class MissingOffsetFileOnGRIDError ( MissingFileOnGRIDError ) :
+    pass
 
 ## Missing alignment file on the GRID
 #
@@ -153,4 +165,4 @@ class GRID_LCG_CRError( MissingFileError ):
 #
 class StopExecutionError( PysubError ):
     def __init__( self, message ):
-        self._message = message;
+        self._message = message

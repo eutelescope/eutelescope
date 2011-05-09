@@ -55,6 +55,7 @@ getFromGRID(){
 putOnGRID() {
     echo      "lcg-cr -v -d $3 -l lfn:$2 file:$1"   
     if [ -e $1 ] ; then
+      doCommand "lcg-del -a lfn:$2 "
       doCommand "lcg-cr -v -d $3 -l lfn:$2 file:$1"
     else
       for i in $(seq 1 999)
@@ -75,6 +76,7 @@ putOnGRID() {
          
          if [ -e $stringAfrom ] ;then
 #           echo "doCommand lcg-cr -v -d $3 -l lfn:$stringAto file:$stringAfrom"            
+           doCommand "lcg-del -a lfn:$stringAto "
            doCommand "lcg-cr -v -d $3 -l lfn:$stringAto file:$stringAfrom"            
          fi
 #         echo $stringA         
@@ -115,6 +117,7 @@ LFC_HOME="/grid/ilc/aida-wp9"
 GRIDFolderBase="@GRIDFolderBase@"
 GRIDFolderNative="@GRIDFolderNative@"
 GRIDFolderLcioRaw="@GRIDFolderLcioRaw@"
+GRIDFolderDBHotPixel="@GRIDFolderDBHotPixel@"
 GRIDFolderConvertJoboutput="@GRIDFolderConvertJoboutput@"
 GRIDILCSoftVersion="@GRIDILCSoftVersion@"
 
@@ -131,7 +134,7 @@ GRIDLibraryLFN=$GRIDLibraryTarballPath/$GRIDLibraryTarball
 InputRawLFN=$GRIDFolderNative/run$RunString.raw
 OutputLcioLFN=$GRIDFolderLcioRaw/run$RunString.slcio
 OutputJoboutputLFN=$GRIDFolderConvertJoboutput/$Name-$RunString.tar.gz
-InputHotPixelLFN=$GRIDFolderDBPede/run$HotPixelRunString-hotpixel-db.slcio
+InputHotPixelLFN=$GRIDFolderDBHotPixel/run$DBNumber-hotpixel-db.slcio
 
 InputRawLocal=$PWD/native/run$RunString.raw
 OutputLcioLocal=$PWD/lcio-raw/run$RunString.slcio
@@ -191,8 +194,8 @@ doCommand "tar xzvf $GRIDLibraryLocal"
 # from now on doing things to get access to ESA
 doCommand "source ./ilc-grid-config.sh"
 doCommand "$BASH ./ilc-grid-test-sys.sh || abort \"system tests failed!\" "
-#doCommand ". $VO_ILC_SW_DIR/initILCSOFT.sh $GRIDILCSoftVersion"
-doCommand ". $VO_ILC_SW_DIR/ilcsoft/x86_64_gcc41_sl5/init_ilcsoft.sh v01-10"
+doCommand ". $VO_ILC_SW_DIR/initILCSOFT.sh $GRIDILCSoftVersion"
+#doCommand ". $VO_ILC_SW_DIR/ilcsoft/x86_64_gcc41_sl5/init_ilcsoft.sh v01-10"
 #doCommand "$BASH ./ilc-grid-test-sw.sh"
 
 r=$?

@@ -459,7 +459,8 @@ class SubmitConverter( SubmitBase ) :
             self._inputPathGRID     = self._configParser.get("GRID", "GRIDFolderNative")
             self._outputPathGRID    = self._configParser.get("GRID", "GRIDFolderLcioRaw" )
             self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderConvertJoboutput")
-            folderList = [self._inputPathGRID , self._outputPathGRID, self._joboutputPathGRID ]
+            self._dbHotPixelGRID    = self._configParser.get("GRID", "GRIDFolderDBHotPixel")
+            folderList = [self._inputPathGRID , self._outputPathGRID, self._joboutputPathGRID, self._dbHotPixelGRID ]
         except ConfigParser.NoOptionError:
             message = "Missing path from the configuration file"
             self._logger.critical( message )
@@ -555,7 +556,7 @@ class SubmitConverter( SubmitBase ) :
         runActualString = runActualString.replace( "@Name@", self.name )
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
-                         "GRIDFolderBase", "GRIDFolderNative", "GRIDFolderLcioRaw",
+                         "GRIDFolderBase", "GRIDFolderNative", "GRIDFolderLcioRaw", "GRIDFolderDBHotPixel",
                          "GRIDFolderConvertJoboutput", "GRIDLibraryTarball", "GRIDLibraryTarballPath", "GRIDILCSoftVersion" ]
         for variable in variableList:
             try:
