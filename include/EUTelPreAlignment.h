@@ -98,6 +98,8 @@ public:
   float getPeakY(){
     return( (getMaxBin(histoY) * pitchY) + minX) ;
   }
+
+
 };
   
 
@@ -115,6 +117,33 @@ public:
     virtual void processRunHeader (LCRunHeader * run);
     virtual void processEvent (LCEvent * evt);
     virtual void end();
+    virtual bool hitContainsHotPixels( TrackerHitImpl   * hit) ;
+
+    //! Called for first event per run
+    /*! Reads hotpixel information from hotPixelCollection into hotPixelMap
+     * to be used in the sensor exclusion area logic 
+     */
+    virtual void  FillHotPixelMap(LCEvent *event);
+
+  private:
+    //! Hot pixel collection name.
+    /*! 
+     * this collection is saved in a db file to be used at the clustering level
+     */
+    std::string _hotPixelCollectionName;
+     
+    //! Vector of map arrays, keeps record of hit pixels 
+    /*! The vector elements are sorted by Detector ID
+     *  For each Detector unique ID element a map of pixels is created. 
+     *  first level key   sensor unique 
+     *              value sensor map
+     *  sensor map key    unique row number
+     *             value  vector of column numbers.
+     */
+    
+    std::map<std::string, bool> _hotPixelMap;
+
+
 
   protected:
     std::string _inputHitCollectionName;

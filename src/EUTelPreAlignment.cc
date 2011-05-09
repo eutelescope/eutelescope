@@ -4,6 +4,12 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
 #include "EUTelAlignmentConstant.h"
+#include "EUTelVirtualCluster.h"
+#include "EUTelFFClusterImpl.h"
+#include "EUTelDFFClusterImpl.h"
+#include "EUTelBrickedClusterImpl.h"
+#include "EUTelSparseClusterImpl.h"
+#include "EUTelSparseCluster2Impl.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -57,6 +63,10 @@ EUTelPreAlign::EUTelPreAlign () :Processor("EUTelPreAlign") {
   registerOptionalParameter ("FixedPlane", "SensorID of fixed plane", _fixedID, 0);
   registerOptionalParameter("AlignmentConstantLCIOFile","Name of LCIO db file where alignment constantds will be stored", 
 			    _alignmentConstantLCIOFile, std::string( "alignment.slcio" ) );
+
+  registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
+                             _hotPixelCollectionName, static_cast< string > ( "hotpixel_apix" ));
+
 }
 
 
@@ -89,7 +99,72 @@ void EUTelPreAlign::processRunHeader (LCRunHeader * rdr) {
   ++_iRun;
 }
 
+
+void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
+{
+    LCCollectionVec *hotPixelCollectionVec = 0;
+    try 
+    {
+      hotPixelCollectionVec = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
+      streamlog_out ( MESSAGE ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " found" << endl; 
+    }
+    catch (...)
+    {
+      streamlog_out ( MESSAGE ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " not found" << endl; 
+      return;
+    }
+
+        CellIDDecoder<TrackerDataImpl> cellDecoder( hotPixelCollectionVec );
+// 	CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputCollectionVec );
+	
+        for(int i=0; i<  hotPixelCollectionVec->getNumberOfElements(); i++)
+        {
+           TrackerDataImpl* hotPixelData = dynamic_cast< TrackerDataImpl *> ( hotPixelCollectionVec->getElementAt( i ) );
+	   SparsePixelType  type         = static_cast<SparsePixelType> (static_cast<int> (cellDecoder( hotPixelData )["sparsePixelType"]));
+//		TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
+//		SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
+
+
+	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
+           streamlog_out ( MESSAGE ) << "sensorID: " << sensorID << " type " << kEUTelAPIXSparsePixel << " ?= " << type << endl; 
+
+           if( type  == kEUTelAPIXSparsePixel)
+           {  
+           auto_ptr<EUTelSparseDataImpl<EUTelAPIXSparsePixel > > apixData(new EUTelSparseDataImpl<EUTelAPIXSparsePixel> ( hotPixelData ));
+           //auto_ptr<EUTelAPIXSparsePixel> apixPixel( new EUTelAPIXSparsePixel );
+	   EUTelAPIXSparsePixel apixPixel;
+           //Push all single Pixels of one plane in the apixPixelVec
+           for ( unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++ ) 
+           {
+              std::vector<int> apixColVec();
+              apixData->getSparsePixelAt( iPixel, &apixPixel);
+//	       apixPixelVec.push_back(new EUTelAPIXSparsePixel(apixPixel));
+              streamlog_out ( MESSAGE ) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
+              try
+              {
+                 char ix[100];
+                 sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
+                 _hotPixelMap[ix] = true;             
+              }
+              catch(...)
+              {
+                 std::cout << "can not add pixel " << std::endl;
+//               std::cout << sensorID << " " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << std::endl;   
+              }
+           }
+
+           
+           }  	
+       }
+}
+
 void EUTelPreAlign::processEvent (LCEvent * event) {
+
+  if ( isFirstEvent() )
+  {
+    FillHotPixelMap(event);
+  }
+
   ++_iEvt;
   if ( _iEvt % 10000 == 0 )
     streamlog_out ( MESSAGE4 ) << "Processing event "
@@ -118,7 +193,9 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
       
       for (size_t iHit = 0; iHit < inputCollectionVec->size(); iHit++) {
 	TrackerHitImpl   * hit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( iHit ) ) ;
-	const double * pos = hit->getPosition();
+	if( hitContainsHotPixels(hit) ) continue;
+
+        const double * pos = hit->getPosition();
 	if( std::fabs(pos[2] - _fixedZ) < 2.5) { continue; }
 	bool gotIt(false);
 	for(size_t ii = 0; ii < _preAligners.size(); ii++){
@@ -138,7 +215,124 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
     streamlog_out  ( WARNING2 ) <<  "No input collection " << _inputHitCollectionName << " found on event " << event->getEventNumber()
                                 << " in run " << event->getRunNumber() << endl;
   }
+
+  if ( isFirstEvent() ) _isFirstEvent = false;
 }
+
+bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit) 
+{
+
+        try
+        {
+            LCObjectVec clusterVector = hit->getRawHits();
+
+            EUTelVirtualCluster * cluster;
+
+            if ( hit->getType() == kEUTelBrickedClusterImpl ) {
+
+               // fixed cluster implementation. Remember it
+               //  can come from
+               //  both RAW and ZS data
+   
+                cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+                
+            } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
+              
+              // fixed cluster implementation. Remember it can come from
+              // both RAW and ZS data
+              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+            } else if ( hit->getType() == kEUTelFFClusterImpl ) {
+              
+              // fixed cluster implementation. Remember it can come from
+              // both RAW and ZS data
+              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+            } 
+            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
+            {
+              
+//              cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
+//                 ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+
+                // streamlog_out(MESSAGE4) << "Type is kEUTelAPIXClusterImpl" << endl;
+                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
+                // streamlog_out(MESSAGE4) << "Vector size is: " << clusterVector.size() << endl;
+
+                cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
+	      
+	        // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
+                eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
+                
+                int sensorID = apixCluster->getDetectorID();//static_cast<int> ( cellDecoder(clusterFrame)["sensorID"] );
+//                cout << "Pixels at sensor " << sensorID << ": ";
+
+                bool skipHit = 0;
+                for (int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
+                {
+                    int pixelX, pixelY;
+                    EUTelAPIXSparsePixel apixPixel;
+                    apixCluster->getSparsePixelAt(iPixel, &apixPixel);
+                    pixelX = apixPixel.getXCoord();
+                    pixelY = apixPixel.getYCoord();
+//                    cout << "(" << pixelX << "|" << pixelY << ") ";
+//                    cout << endl;
+
+                    try
+                    {                       
+//                       printf("pixel %3d %3d was found in the _hotPixelMap = %1d (0/1) \n", pixelX, pixelY, _hotPixelMap[sensorID][pixelX][pixelY]  );                       
+                       char ix[100];
+                       sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
+                       if( _hotPixelMap[ix]  )
+                       { 
+                          skipHit = true; 	      
+//                          streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
+//                          printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
+                         return true; // if TRUE  this hit will be skipped
+                       }
+                       else
+                       { 
+                          skipHit = false; 	      
+                       } 
+                    } 
+                    catch (...)
+                    {
+//                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
+                    }
+                    if(skipHit ) 
+                    {
+//                       printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
+                    }
+                    else
+                    { 
+//                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
+                    }
+
+                }
+
+                if (skipHit) 
+                {
+//                      streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
+//                    continue;
+                }
+                else
+                {
+//                    streamlog_out(MESSAGE4) << "Cluster/hit is fine for preAlignment!" << endl;
+                }
+
+                return skipHit; // if TRUE  this hit will be skipped
+            } 
+            
+       }
+       catch(...)
+       { 
+          // if anything went wrong in the above return FALSE, meaning do not skip this hit
+          return 0;
+       }
+
+       // if none of the above worked return FALSE, meaning do not skip this hit
+       return 0;
+
+}
+
 void EUTelPreAlign::end() {
   LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
   try {

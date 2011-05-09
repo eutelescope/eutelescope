@@ -63,6 +63,11 @@
 #include <IMPL/TrackImpl.h>
 #include <IMPL/LCFlagImpl.h>
 #include <Exceptions.h>
+#include <UTIL/CellIDEncoder.h>
+#include <IMPL/TrackerRawDataImpl.h>
+#include <IMPL/TrackerDataImpl.h>
+#include <IMPL/TrackerPulseImpl.h>
+#include <IMPL/LCCollectionVec.h>
 
 // ROOT includes
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
@@ -306,6 +311,9 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   std::vector<int> initRect;
   registerOptionalParameter("UseSensorRectangular","Do not use all pixels for alignment, only these in the rectangular (A|B) e.g. (0,0) and (C|D) e.g. (100|100) of sensor S. Type in the way S1 A1 B1 C1 D1 S2 A2 B2 C2 D2 ...",
                             _useSensorRectangular,initRect);
+
+  registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
+                             _hotPixelCollectionName, static_cast< string > ( "hotpixel_apix" ));
 
 }
 
@@ -895,10 +903,76 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
 
 }
 
+void  EUTelMille::FillHotPixelMap(LCEvent *event)
+{
+    LCCollectionVec *hotPixelCollectionVec = 0;
+    try 
+    {
+      hotPixelCollectionVec = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
+      streamlog_out ( MESSAGE ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " found" << endl; 
+    }
+    catch (...)
+    {
+      streamlog_out ( MESSAGE ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " not found" << endl; 
+      return;
+    }
+
+        CellIDDecoder<TrackerDataImpl> cellDecoder( hotPixelCollectionVec );
+// 	CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputCollectionVec );
+	
+        for(int i=0; i<  hotPixelCollectionVec->getNumberOfElements(); i++)
+        {
+           TrackerDataImpl* hotPixelData = dynamic_cast< TrackerDataImpl *> ( hotPixelCollectionVec->getElementAt( i ) );
+	   SparsePixelType  type         = static_cast<SparsePixelType> (static_cast<int> (cellDecoder( hotPixelData )["sparsePixelType"]));
+//		TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
+//		SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
+
+
+	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
+           streamlog_out ( MESSAGE ) << "sensorID: " << sensorID << " type " << kEUTelAPIXSparsePixel << " ?= " << type << endl; 
+
+           if( type  == kEUTelAPIXSparsePixel)
+           {  
+           auto_ptr<EUTelSparseDataImpl<EUTelAPIXSparsePixel > > apixData(new EUTelSparseDataImpl<EUTelAPIXSparsePixel> ( hotPixelData ));
+	   std::vector<EUTelAPIXSparsePixel*> apixPixelVec;
+	     //auto_ptr<EUTelAPIXSparsePixel> apixPixel( new EUTelAPIXSparsePixel );
+	   EUTelAPIXSparsePixel apixPixel;
+	     //Push all single Pixels of one plane in the apixPixelVec
+
+           for ( unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++ ) 
+           {
+              std::vector<int> apixColVec();
+              apixData->getSparsePixelAt( iPixel, &apixPixel);
+//	       apixPixelVec.push_back(new EUTelAPIXSparsePixel(apixPixel));
+              streamlog_out ( MESSAGE ) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
+              try
+              {
+                 char ix[100];
+                 sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
+                 _hotPixelMap[ix] = true;             
+              }
+              catch(...)
+              {
+                 std::cout << "can not add pixel " << std::endl;
+//               std::cout << sensorID << " " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << std::endl;   
+              }
+           }
+
+
+           }  	
+       }
+
+}
+ 
 void EUTelMille::processEvent (LCEvent * event) {
 
+  if ( isFirstEvent() )
+  {
+    FillHotPixelMap(event);
+  }
 
-  if (_iEvt % 100 == 0) {
+  if (_iEvt % 100 == 0) 
+  {
     streamlog_out( MESSAGE2 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
@@ -1016,8 +1090,8 @@ void EUTelMille::processEvent (LCEvent * event) {
               cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
             } else if ( hit->getType() == kEUTelAPIXClusterImpl ) {
               
-//                cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-//                    ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+//              cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
+//                 ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
 
                 // streamlog_out(MESSAGE4) << "Type is kEUTelAPIXClusterImpl" << endl;
                 TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
@@ -1025,7 +1099,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
                 cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
 	      
-	            // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
+	        // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
                 eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
                 
                 int sensorID = apixCluster->getDetectorID();//static_cast<int> ( cellDecoder(clusterFrame)["sensorID"] );
@@ -2360,6 +2434,125 @@ void EUTelMille::processEvent (LCEvent * event) {
   if ( isFirstEvent() ) _isFirstEvent = false;
 
 }
+
+bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit) 
+{
+
+        try
+        {
+            LCObjectVec clusterVector = hit->getRawHits();
+
+            EUTelVirtualCluster * cluster;
+
+            if ( hit->getType() == kEUTelBrickedClusterImpl ) {
+
+               // fixed cluster implementation. Remember it
+               //  can come from
+               //  both RAW and ZS data
+   
+                cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+                
+            } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
+              
+              // fixed cluster implementation. Remember it can come from
+              // both RAW and ZS data
+              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+            } else if ( hit->getType() == kEUTelFFClusterImpl ) {
+              
+              // fixed cluster implementation. Remember it can come from
+              // both RAW and ZS data
+              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+            } 
+            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
+            {
+              
+//              cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
+//                 ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+
+                // streamlog_out(MESSAGE4) << "Type is kEUTelAPIXClusterImpl" << endl;
+                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
+                // streamlog_out(MESSAGE4) << "Vector size is: " << clusterVector.size() << endl;
+
+                cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
+	      
+	        // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
+                eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
+                
+                int sensorID = apixCluster->getDetectorID();//static_cast<int> ( cellDecoder(clusterFrame)["sensorID"] );
+//                cout << "Pixels at sensor " << sensorID << ": ";
+
+                bool skipHit = 0;
+                for (int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
+                {
+                    int pixelX, pixelY;
+                    EUTelAPIXSparsePixel apixPixel;
+                    apixCluster->getSparsePixelAt(iPixel, &apixPixel);
+                    pixelX = apixPixel.getXCoord();
+                    pixelY = apixPixel.getYCoord();
+//                    cout << "(" << pixelX << "|" << pixelY << ") ";
+//                    cout << endl;
+
+                    try
+                    {                       
+//                       printf("pixel %3d %3d was found in the _hotPixelMap = %1d (0/1) \n", pixelX, pixelY, _hotPixelMap[sensorID][pixelX][pixelY]  );                       
+                       char ix[100];
+                       sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
+                       if( _hotPixelMap[ix]  )
+                       { 
+                          skipHit = true; 	      
+//                          streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
+                          printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
+                         return true; // if TRUE  this hit will be skipped
+                       }
+                       else
+                       { 
+                          skipHit = false; 	      
+                       } 
+                    } 
+                    catch (...)
+                    {
+//                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
+                    }
+           
+                    skipHit = skipHit || hitContainsHotPixels(hit);
+
+                    if(skipHit ) 
+                    {
+                       printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
+                    }
+                    else
+                    { 
+                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
+                    }
+
+                }
+
+                if (skipHit) 
+                {
+//                      streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
+//                    continue;
+                }
+                else
+                {
+//                    streamlog_out(MESSAGE4) << "Cluster/hit is fine for preAlignment!" << endl;
+                }
+
+
+                return skipHit; // if TRUE  this hit will be skipped
+            } 
+            
+       }
+       catch(...)
+       { 
+          // if anything went wrong in the above return FALSE, meaning do not skip this hit
+          return 0;
+       }
+
+       // if none of the above worked return FALSE, meaning do not skip this hit
+       return 0;
+
+}
+
 
 void EUTelMille::end() {
 

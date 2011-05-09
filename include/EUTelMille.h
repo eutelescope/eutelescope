@@ -27,6 +27,8 @@
 // lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+#include <IMPL/TrackerHitImpl.h>
+
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -262,6 +264,9 @@ namespace eutelescope {
       return new EUTelMille;
     }
 
+    virtual bool hitContainsHotPixels( TrackerHitImpl   * hit) ;
+
+
     //! Default constructor
     EUTelMille ();
 
@@ -282,6 +287,12 @@ namespace eutelescope {
      *  @param run the LCRunHeader of the this current run
      */
     virtual void processRunHeader (LCRunHeader * run);
+
+    //! Called for first event per run
+    /*! Reads hotpixel information from hotPixelCollection into hotPixelMap
+     * to be used in the sensor exclusion area logic 
+     */
+    virtual void  FillHotPixelMap(LCEvent *event);
 
     //! Called every event
     /*! This is called for each event in the file. Each element of the
@@ -343,6 +354,24 @@ namespace eutelescope {
     /*! Output collection with fitted tracks.
      */
     std::string _trackCollectionName;
+
+    //! Hot pixel collection name.
+    /*! 
+     * this collection is saved in a db file to be used at the clustering level
+     */
+    std::string _hotPixelCollectionName;
+
+    //! Vector of map arrays, keeps record of hit pixels 
+    /*! The vector elements are sorted by Detector ID
+     *  For each Detector unique ID element a map of pixels is created. 
+     *  first level key   sensor unique 
+     *              value sensor map
+     *  sensor map key    unique row number
+     *             value  vector of column numbers.
+     */
+    
+    std::map<std::string, bool > _hotPixelMap;
+
 
     // parameters
 
