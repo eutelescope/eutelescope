@@ -111,7 +111,7 @@ GRIDCE="@GRIDCE@"
 GRIDSE="@GRIDSE@"
 GRIDStoreProtocol="@GRIDStoreProtocol@"
 GRIDVO="@GRIDVO@"
-LFC_HOME="/grid/ilc/eudet-jra1"
+LFC_HOME="/grid/ilc/aida-wp9"
 GRIDFolderBase="@GRIDFolderBase@"
 GRIDFolderNative="@GRIDFolderNative@"
 GRIDFolderLcioRaw="@GRIDFolderLcioRaw@"
@@ -131,10 +131,13 @@ GRIDLibraryLFN=$GRIDLibraryTarballPath/$GRIDLibraryTarball
 InputRawLFN=$GRIDFolderNative/run$RunString.raw
 OutputLcioLFN=$GRIDFolderLcioRaw/run$RunString.slcio
 OutputJoboutputLFN=$GRIDFolderConvertJoboutput/$Name-$RunString.tar.gz
+InputHotPixelLFN=$GRIDFolderDBPede/run$HotPixelRunString-hotpixel-db.slcio
 
 InputRawLocal=$PWD/native/run$RunString.raw
 OutputLcioLocal=$PWD/lcio-raw/run$RunString.slcio
 OutputJoboutputLocal=$PWD/log/$Name-$RunString.tar.gz
+InputHotPixelLocal=$PWD/db/run$HotPixelRunString-hotpixel-db.slcio
+
 SteeringFile=$Name-$RunString.xml
 LogFile=$Name-$RunString.log
 
@@ -188,8 +191,10 @@ doCommand "tar xzvf $GRIDLibraryLocal"
 # from now on doing things to get access to ESA
 doCommand "source ./ilc-grid-config.sh"
 doCommand "$BASH ./ilc-grid-test-sys.sh || abort \"system tests failed!\" "
-doCommand ". $VO_ILC_SW_DIR/initILCSOFT.sh $GRIDILCSoftVersion"
-doCommand "$BASH ./ilc-grid-test-sw.sh"
+#doCommand ". $VO_ILC_SW_DIR/initILCSOFT.sh $GRIDILCSoftVersion"
+doCommand ". $VO_ILC_SW_DIR/ilcsoft/x86_64_gcc41_sl5/init_ilcsoft.sh v01-10"
+#doCommand "$BASH ./ilc-grid-test-sw.sh"
+
 r=$?
 if [ $r -ne 0 ] ; then
     echo "******* ERROR: " ; cat ./ilc-grid-test-sw.log
@@ -255,6 +260,21 @@ if [ $r -ne 0 ] ; then
     echo "****** Problem copying the ${OutputLcioLocal} to the GRID"
     exit 30
 fi
+
+echo
+echo "########################################################################"
+echo "# Getting the hotpixel DB file ${InputHotPixelLocal}"
+echo "########################################################################"
+echo
+# 
+doCommand "getFromGRID ${InputHotPixelLFN} ${InputHotPixelLocal}"
+r=$?
+if [ $r -ne 0 ] ; then
+   echo "Problem copying ${InputHotPixelLFN}.    Warning! No hotpixel db file found at given location."
+#    echo "Please, check your input to make sure you all values are set properly. If you do not want to apply hotpixel masks you can ignore this warning."
+###    exit 3
+fi
+#
 
 echo
 echo "########################################################################"
