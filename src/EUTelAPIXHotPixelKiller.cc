@@ -253,7 +253,7 @@ void EUTelAPIXHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
 
         if (type != kEUTelAPIXSparsePixel  ) 
         {
-          printf(" pixel is not of APIX type \n");
+          std::cout << " pixel is not of APIX type " << std::endl ;
         }
 
         int _sensorID            = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
