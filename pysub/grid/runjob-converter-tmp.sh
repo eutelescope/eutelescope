@@ -104,6 +104,10 @@ putOnGRID() {
 # To be replaced with the runString in the format %(run)06d
 RunString="@RunString@"
 
+# To be replaced with the RunHotPixelNumber value in the format %(run)s can be a string
+HotPixelRunNumber="@HotPixelRunNumber@"
+
+
 # To be replace with the job name used for the identification of
 # all files. It should be something like converter
 Name="@Name@"
@@ -134,12 +138,13 @@ GRIDLibraryLFN=$GRIDLibraryTarballPath/$GRIDLibraryTarball
 InputRawLFN=$GRIDFolderNative/run$RunString.raw
 OutputLcioLFN=$GRIDFolderLcioRaw/run$RunString.slcio
 OutputJoboutputLFN=$GRIDFolderConvertJoboutput/$Name-$RunString.tar.gz
-InputHotPixelLFN=$GRIDFolderDBHotPixel/run$DBNumber-hotpixel-db.slcio
+InputHotPixelLFN=$GRIDFolderDBHotPixel/run$HotPixelRunNumber-hotpixel-db.slcio
 
 InputRawLocal=$PWD/native/run$RunString.raw
 OutputLcioLocal=$PWD/lcio-raw/run$RunString.slcio
 OutputJoboutputLocal=$PWD/log/$Name-$RunString.tar.gz
-InputHotPixelLocal=$PWD/db/run$HotPixelRunString-hotpixel-db.slcio
+InputHotPixelLocal=$PWD/db/run$HotPixelRunNumber-hotpixel-db.slcio
+LocalPWD=$PWD
 
 SteeringFile=$Name-$RunString.xml
 LogFile=$Name-$RunString.log
@@ -241,6 +246,8 @@ if [ $r -ne 0 ] ; then
     exit 20
 fi
 
+doCommand "find ./"
+
 echo
 echo "########################################################################"
 echo "# Marlin successfully finished `date `"
@@ -266,14 +273,17 @@ fi
 
 echo
 echo "########################################################################"
-echo "# Getting the hotpixel DB file ${InputHotPixelLocal}"
+echo "# Copying and registering file ${InputHotPixelLocal}" on SE
 echo "########################################################################"
 echo
-# 
-doCommand "getFromGRID ${InputHotPixelLFN} ${InputHotPixelLocal}"
+#  
+doCommand "find ${InputHotPixelLocal}"
+doCommand "find ${LocalPWD}"
+
+doCommand "putOnGRID ${InputHotPixelLocal} ${InputHotPixelLFN} ${GRIDSE} "
 r=$?
 if [ $r -ne 0 ] ; then
-   echo "Problem copying ${InputHotPixelLFN}.    Warning! No hotpixel db file found at given location."
+   echo "Problem copying ${InputHotPixelLocal} into ${InputHotPixelLFN}.    Warning! No hotpixel db file found at given location."
 #    echo "Please, check your input to make sure you all values are set properly. If you do not want to apply hotpixel masks you can ignore this warning."
 ###    exit 3
 fi

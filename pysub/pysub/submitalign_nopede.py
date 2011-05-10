@@ -1726,6 +1726,7 @@ class SubmitAlign( SubmitBase ):
                 self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderAlignJoboutput")
                 self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderAlignHisto")
                 self._dbAlignGRID       = self._configParser.get("GRID", "GRIDFolderDBAlign")
+                self._dbHotPixelPathGRID    = self._configParser.get("GRID", "GRIDFolderDBHotPixel" )
                 folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID, self._dbAlignGRID ]
             except ConfigParser.NoOptionError:
                 message = "Missing path from the configuration file"
@@ -1833,7 +1834,8 @@ class SubmitAlign( SubmitBase ):
             self._joboutputPathGRID = self._configParser.get("GRID", "GRIDFolderAlignJoboutput")
             self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderAlignHisto")
             self._dbAlignGRID       = self._configParser.get("GRID", "GRIDFolderDBAlign")
-            folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID, self._dbAlignGRID ]
+            self._dbHotPixelPathGRID    = self._configParser.get("GRID", "GRIDFolderDBHotPixel" )
+            folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID, self._dbAlignGRID, self._dbHotPixelPathGRID ]
         except ConfigParser.NoOptionError:
             message = "Missing path from the configuration file"
             self._logger.critical( message )
@@ -2031,7 +2033,7 @@ class SubmitAlign( SubmitBase ):
         runActualString = runActualString.replace( "@RunPede@", value )
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
-                         "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderAlignResults",
+                         "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderDBHotPixel", "GRIDFolderAlignResults",
                          "GRIDFolderAlignJoboutput", "GRIDFolderAlignHisto", "GRIDLibraryTarball",
                          "GRIDLibraryTarballPath","GRIDILCSoftVersion" ]
         for variable in variableList:
@@ -2109,7 +2111,7 @@ class SubmitAlign( SubmitBase ):
         runActualString = runActualString.replace( "@RunPede@", value )
 
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
-                         "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderAlignResults",
+                         "GRIDFolderBase", "GRIDFolderHitmakerResults", "GRIDFolderDBAlign", "GRIDFolderDBHotPixel", "GRIDFolderAlignResults",
                          "GRIDFolderAlignJoboutput", "GRIDFolderAlignHisto", "GRIDLibraryTarball",
                          "GRIDLibraryTarballPath", "GRIDILCSoftVersion" ]
         for variable in variableList:

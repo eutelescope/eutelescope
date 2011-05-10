@@ -90,17 +90,20 @@ InputFileList="@InputFileList@"
 # This is the eta file w/o path
 EtaFile="@EtaFile@"
 OffsetFile="@OffsetFile@"
+HotPixelRunNumber="@Output@"
+
 
 # Define here all the variables modified by the submitter
 GRIDCE="@GRIDCE@"
 GRIDSE="@GRIDSE@"
 GRIDStoreProtocol="@GRIDStoreProtocol@"
 GRIDVO="@GRIDVO@"
-LFC_HOME="/grid/ilc/eudet-jra1"
+LFC_HOME="/grid/ilc/aida-wp9"  
 GRIDFolderBase="@GRIDFolderBase@"
 GRIDFolderFilterResults="@GRIDFolderFilterResults@"
 GRIDFolderDBEta="@GRIDFolderDBEta@"
 GRIDFolderDBOffset="@GRIDFolderDBOffset@"
+GRIDFolderDBHotPixel="@GRIDFolderDBHotPixel@"
 GRIDFolderHitmakerResults="@GRIDFolderHitmakerResults@"
 GRIDFolderHitmakerJoboutput="@GRIDFolderHitmakerJoboutput@"
 GRIDFolderHitmakerHisto="@GRIDFolderHitmakerHisto@"
@@ -130,6 +133,11 @@ OutputJoboutputLocal=$PWD/log/$Name-$Output.tar.gz
 OutputHistoLocal=$PWD/histo/$Output-hit-histo.root
 SteeringFile=$Name-$Output.xml
 LogFile=$Name-$Output.log
+
+InputHotPixelLFN=$GRIDFolderDBHotPixel/run$HotPixelRunNumber-hotpixel-db.slcio
+InputHotPixelLocal=$PWD/db/run$HotPixelRunNumber-hotpixel-db.slcio
+LocalPWD=$PWD
+
 
 PreAlignLFN=$GRIDFolderDBOffset/$Output-prealign-db.slcio
 PreAlignLocal=$PWD/db/$Output-prealign-db.slcio
@@ -248,6 +256,21 @@ if [ $r -ne 0 ] ; then
     echo "Problem copying ${InputEtaLFN}. Warning! If the data under question is
     from an Analog source this Warning should be treated as an ERROR."
 #    exit 3
+fi
+
+echo
+echo "########################################################################"
+echo "# Getting the hot pixel db file ${InputHotPixelLocal}"
+echo "########################################################################"
+echo
+#  
+
+doCommand "getFromGRID  ${InputHotPixelLFN} ${InputHotPixelLocal}"
+r=$?
+if [ $r -ne 0 ] ; then
+   echo "Problem copying ${InputHotPixelLocal} into ${InputHotPixelLFN}.    Warning! No hotpixel db file found at given location."
+#    echo "Please, check your input to make sure you all values are set properly. If you do not want to apply hotpixel masks you can ignore this warning."
+###    exit 3
 fi
 
 # list all the files available

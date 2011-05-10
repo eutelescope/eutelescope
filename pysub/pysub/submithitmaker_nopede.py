@@ -1241,7 +1241,8 @@ class SubmitHitMaker( SubmitBase ):
             self._histogramPathGRID = self._configParser.get("GRID", "GRIDFolderHitmakerHisto")
             self._etaPathGRID       = self._configParser.get("GRID", "GRIDFolderDBEta")
             self._offsetPathGRID    = self._configParser.get("GRID", "GRIDFolderDBOffset" )
-            folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID ]
+            self._dbHotPixelPathGRID    = self._configParser.get("GRID", "GRIDFolderDBHotPixel" )
+            folderList =  [ self._outputPathGRID, self._joboutputPathGRID, self._histogramPathGRID, self._offsetPathGRID, self._dbHotPixelPathGRID ]
         except ConfigParser.NoOptionError:
             message = "Missing path from the configuration file"
             self._logger.critical( message )
@@ -1439,7 +1440,8 @@ class SubmitHitMaker( SubmitBase ):
         runActualString = runActualString.replace("@OffsetFile@", fqOffsetFile )
  
         variableList = [ "GRIDCE", "GRIDSE", "GRIDStoreProtocol", "GRIDVO",
-                         "GRIDFolderBase", "GRIDFolderFilterResults", "GRIDFolderDBEta", "GRIDFolderDBOffset", "GRIDFolderHitmakerResults",
+                         "GRIDFolderBase", "GRIDFolderFilterResults", "GRIDFolderDBEta", 
+                         "GRIDFolderDBOffset",  "GRIDFolderDBHotPixel", "GRIDFolderHitmakerResults",
                          "GRIDFolderHitmakerJoboutput", "GRIDFolderHitmakerHisto", "GRIDLibraryTarball",
                          "GRIDLibraryTarballPath","GRIDILCSoftVersion" ]
         for variable in variableList:

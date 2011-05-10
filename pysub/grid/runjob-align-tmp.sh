@@ -81,6 +81,8 @@ putOnGRID() {
 
 # To be replaced with the output suffix
 Output="@Output@"
+HotPixelRunNumber="@Output@"
+
 
 # To be replace with the job name used for the identification of
 # all files. It should be something like converter
@@ -102,6 +104,7 @@ LFC_HOME="/grid/ilc/eudet-jra1"
 GRIDFolderBase="@GRIDFolderBase@"
 GRIDFolderHitmakerResults="@GRIDFolderHitmakerResults@"
 GRIDFolderDBAlign="@GRIDFolderDBAlign@"
+GRIDFolderDBHotPixel="@GRIDFolderDBHotPixel@"
 GRIDFolderAlignResults="@GRIDFolderAlignResults@"
 GRIDFolderAlignJoboutput="@GRIDFolderAlignJoboutput@"
 GRIDFolderAlignHisto="@GRIDFolderAlignHisto@"
@@ -132,6 +135,11 @@ OutputJoboutputLocal=$PWD/log/$Name-$Output.tar.gz
 OutputHistoLocal=$PWD/histo/$Output-align-histo.root
 SteeringFile=$Name-$Output.xml
 LogFile=$Name-$Output.log
+
+InputHotPixelLFN=$GRIDFolderDBHotPixel/run$HotPixelRunNumber-hotpixel-db.slcio
+InputHotPixelLocal=$PWD/db/run$HotPixelRunNumber-hotpixel-db.slcio
+LocalPWD=$PWD
+
 
 echo
 echo "########################################################################"
@@ -245,6 +253,21 @@ r=$?
 if [ $r -ne 0 ] ; then
     echo "Problem copying ${PreAlignLFN}. Exiting with error."
     exit 3
+fi
+
+echo
+echo "########################################################################"
+echo "# Getting the hot pixel db file ${InputHotPixelLocal}"
+echo "########################################################################"
+echo
+#  
+
+doCommand "getFromGRID  ${InputHotPixelLFN} ${InputHotPixelLocal}"
+r=$?
+if [ $r -ne 0 ] ; then
+   echo "Problem copying ${InputHotPixelLocal} into ${InputHotPixelLFN}.    Warning! No hotpixel db file found at given location."
+#    echo "Please, check your input to make sure you all values are set properly. If you do not want to apply hotpixel masks you can ignore this warning."
+###    exit 3
 fi
 
 # list all the files available

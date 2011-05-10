@@ -37,6 +37,15 @@ usage: %prog [execution-options] [io-options] [configuration-options] [align-opt
                        help = "This is the base name of the output file. This string will be used to generate"
                        " the name of the output files according to the standard naming convention." )
 
+    parser.add_option( "-y", "--prealign", type="string", action="store", dest="prealign", metavar="INPUT",
+                       help = "This is the string used to define the prealignment db file." )
+
+
+    parser.add_option( "-n", "--offset-run-number", type="string",
+    action="store", dest="offsetRunNumber", 
+                       help = "This is the run number." )
+
+
     # adding a group with alignment related options
     alignGroup = OptionGroup( parser, "Alignment options", "Use these options to modify the behaviour of the alignment processor")
 

@@ -552,6 +552,12 @@ class SubmitConverter( SubmitBase ) :
         # replace the runString
         runActualString = runActualString.replace( "@RunString@", runString )
 
+        # replace the hotpixelString as well
+        runActualString = runActualString.replace( "@HotPixelRunNumber@", self._keepHotPixelDBNumber )
+        message = "Replacing HotPixelRunNumber with %(var)s          " % { "var" : self._keepHotPixelDBNumber }
+        self._logger.info( message )
+#        self._logger.info( runActualString ) 
+
         # replace the job name
         runActualString = runActualString.replace( "@Name@", self.name )
 
@@ -931,7 +937,7 @@ class SubmitConverter( SubmitBase ) :
  
         # replace the DB run number (output)   
         if( self._keepHotPixelDBNumber != 0 ):
-           actualSteeringString = actualSteeringString.replace("@DBNumber@", self._keepHotPixelDBNumber )
+           actualSteeringString = actualSteeringString.replace("@HotPixelRunNumber@", self._keepHotPixelDBNumber )
            
             
 
