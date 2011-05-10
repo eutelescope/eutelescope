@@ -77,7 +77,9 @@ void EUTelPreAlign::init () {
 
   // set to zero the run and event counters
   _iRun = 0;  _iEvt = 0;
-  
+
+  _UsefullHotPixelCollectionFound = 0; 
+
   _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
   for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
@@ -90,6 +92,12 @@ void EUTelPreAlign::init () {
 					   _siPlanesLayerLayout->getSensitivePitchY(iPlane),
 					   _siPlanesLayerLayout->getSensitivePositionZ(iPlane),
 					   _siPlanesLayerLayout->getID(iPlane)) );
+      printf("iPlane:%5d  %8.3f  %8.3f  %8.3f  %5d  \n",iPlane,
+                                           _siPlanesLayerLayout->getSensitivePitchX(iPlane),
+					   _siPlanesLayerLayout->getSensitivePitchY(iPlane),
+					   _siPlanesLayerLayout->getSensitivePositionZ(iPlane),
+					   _siPlanesLayerLayout->getID(iPlane) 
+);
     }
   }
 }
@@ -155,6 +163,10 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
            }
 
            
+           }
+            else
+           {
+              _UsefullHotPixelCollectionFound = 0;
            }  	
        }
 }
@@ -204,6 +216,7 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 	  if( std::fabs(pa.getZPos() - pos[2]) > 2.5  ) { continue; }
 	  gotIt = true;
 	  pa.addPoint(refPos[0] - pos[0], refPos[1] - pos[1]);
+//printf("%5d %5d [%5d] %p %5d \n", iHit, ii, _preAligners.size(), pa.current(), pa.getIden()); //, pa.getPeakX(), pa.getPeakY() );
 	  break;
 	}
 	if(not gotIt) {
@@ -222,7 +235,9 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 
 bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit) 
 {
-
+        bool skipHit = 0;
+//printf("EUTelPreAlign::hitContainsHotPixels \n");
+ 
         try
         {
             LCObjectVec clusterVector = hit->getRawHits();
@@ -266,7 +281,6 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
                 int sensorID = apixCluster->getDetectorID();//static_cast<int> ( cellDecoder(clusterFrame)["sensorID"] );
 //                cout << "Pixels at sensor " << sensorID << ": ";
 
-                bool skipHit = 0;
                 for (int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
                 {
                     int pixelX, pixelY;
@@ -287,7 +301,8 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
                           skipHit = true; 	      
 //                          streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
 //                          printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
-                         return true; // if TRUE  this hit will be skipped
+                          delete cluster;                        
+                          return true; // if TRUE  this hit will be skipped
                        }
                        else
                        { 
@@ -311,21 +326,24 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
 
                 if (skipHit) 
                 {
-//                      streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
+//                 streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
 //                    continue;
                 }
                 else
                 {
-//                    streamlog_out(MESSAGE4) << "Cluster/hit is fine for preAlignment!" << endl;
+//                  streamlog_out(MESSAGE4) << "Cluster/hit is fine for preAlignment!" << endl;
                 }
-
+                
+                delete cluster; 
                 return skipHit; // if TRUE  this hit will be skipped
             } 
             
+            delete cluster; 
        }
        catch(...)
        { 
           // if anything went wrong in the above return FALSE, meaning do not skip this hit
+          printf("something went wrong in EUTelPreAlign::hitContainsHotPixels \n"); 
           return 0;
        }
 
@@ -358,7 +376,14 @@ void EUTelPreAlign::end() {
 
   LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
   for(size_t ii = 0 ; ii < _preAligners.size(); ii++){
-    EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
+  printf("ii %5d %5d \n", ii, _preAligners.size()  );
+  printf("id %5d              \n", _preAligners.at(ii).getIden() );
+  printf("id %5d %8.3f        \n", _preAligners.at(ii).getIden(), _preAligners.at(ii).getPeakX()  );
+  printf("id %5d %8.3f %8.3f  \n", _preAligners.at(ii).getIden(), _preAligners.at(ii).getPeakX(), _preAligners.at(ii).getPeakY() );
+
+
+
+  EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
     constant->setXOffset( -1.0 * _preAligners.at(ii).getPeakX());
     constant->setYOffset( -1.0 * _preAligners.at(ii).getPeakY());
     constant->setSensorID( _preAligners.at(ii).getIden() );

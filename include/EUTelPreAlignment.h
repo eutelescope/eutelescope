@@ -34,6 +34,7 @@
 #include <iostream>
 #include <string>
 #include <map>
+#include <cstdio>
 
 namespace eutelescope {
 class PreAligner{
@@ -142,8 +143,11 @@ public:
      */
     
     std::map<std::string, bool> _hotPixelMap;
-
-
+    
+    //! bool tag if PreAlign should run anyway or not;
+    /*! default 0
+     */   
+    bool _UsefullHotPixelCollectionFound;
 
   protected:
     std::string _inputHitCollectionName;
