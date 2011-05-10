@@ -733,6 +733,10 @@ void EUTelAPIXHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
     {
         TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
         int sensorID = decoder( status ) [ "sensorID" ] ;
+        streamlog_out (MESSAGE) <<
+                                 " iDetector : " << iDetector  <<
+                                 " sensorID : " << sensorID  <<
+                                  endl;
 
         vector< short > statusVec  = status->adcValues();
          
@@ -751,11 +755,13 @@ void EUTelAPIXHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
         for ( unsigned int iPixel = 0; iPixel < _firingFreqVec[iDetector].size(); iPixel++ ) 
         {
             int decoded_XY_index = _inverse_hitIndexMapVec[iDetector][iPixel];
-            if ( statusVec[ iPixel ] == EUTELESCOPE::FIRINGPIXEL )                
+
+            if ( decoded_XY_index > 0 &&  statusVec[ iPixel ] == EUTELESCOPE::FIRINGPIXEL )                
             {
-                 streamlog_out (DEBUG3) <<
+                 streamlog_out (MESSAGE) <<
                      " writing out idet: " << iDetector <<
                      " ipixel: " << iPixel <<
+                     " statusVec: " << statusVec[ iPixel ]  <<
                      " decoded_XY_index " << decoded_XY_index <<
                      " fired " <<   _firingFreqVec[iDetector][ iPixel ]  / ( (double) _iEvt ) <<
                      " allowed = " << _maxAllowedFiringFreq << 
@@ -763,9 +769,10 @@ void EUTelAPIXHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
                  sparseFrame->addSparsePixel( _pixelMapVec[iDetector][ decoded_XY_index] );                
             }
         }
+
         hotPixelCollection->push_back( currentFrame.release() );
     }
-   
+ 
 
     lcReader->close();
 // modify to skip if APPENDing an event 
