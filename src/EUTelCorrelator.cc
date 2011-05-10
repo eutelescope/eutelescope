@@ -1101,6 +1101,9 @@ void EUTelCorrelator::bookHistos() {
             double  yMin = static_cast<double >(_minX[ col ]) - 0.5;
             double  yMax = static_cast<double >(_maxX[ col ]) + 0.5;
 
+if(xBin>100) xBin=xBin/4;
+if(yBin>100) yBin=yBin/4;
+
             AIDA::IHistogram2D * histo2D =
               AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
                                                                         xBin, xMin, xMax, yBin, yMin, yMax );
@@ -1122,6 +1125,8 @@ void EUTelCorrelator::bookHistos() {
             yMin = static_cast<double >(_minY[ col ]) - 0.5;
             yMax = static_cast<double >(_maxY[ col ]) + 0.5;
 
+if(xBin>100) xBin=xBin/4;
+if(yBin>100) yBin=yBin/4;
 
             histo2D =
               AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
@@ -1147,6 +1152,9 @@ void EUTelCorrelator::bookHistos() {
             yMin = safetyFactor * ( _hitMinX[row] - _hitMaxX[row]);
             yMax = safetyFactor * ( _hitMaxX[row] - _hitMinX[row]);
 
+if(xBin>100) xBin=xBin/4;
+if(yBin>100) yBin=yBin/4;
+
             histo2D =
               AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
                                                                         xBin, xMin, xMax, yBin, yMin, yMax );
@@ -1170,6 +1178,8 @@ void EUTelCorrelator::bookHistos() {
             yMin = safetyFactor * ( _hitMinY[row] - _hitMaxY[row]);
             yMax = safetyFactor * ( _hitMaxY[row] - _hitMinY[row]);
 
+if(xBin>100) xBin=xBin/4;
+if(yBin>100) yBin=yBin/4;
 
             histo2D =
               AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(),
@@ -1218,6 +1228,9 @@ void EUTelCorrelator::bookHistos() {
             string 
             tempHistoTitle =  "HitX/" +  _hitXCorrelationHistoName + "_d" + to_string( row ) + "_d" +  to_string( col );
 
+if(colNBin>100) colNBin=colNBin/4;
+if(rowNBin>100) rowNBin=rowNBin/4;
+
             AIDA::IHistogram2D * histo2D =
               AIDAProcessor::histogramFactory( this )->createHistogram2D( tempHistoName.c_str(), 
                       rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
@@ -1239,6 +1252,10 @@ void EUTelCorrelator::bookHistos() {
             tempHistoName =  "HitY/" + _hitYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             streamlog_out( DEBUG ) << "Booking cloud " << tempHistoName << endl;
             tempHistoTitle = "HitY/" + _hitYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col ) ;
+ 
+if(colNBin>100) colNBin=colNBin/4;
+if(rowNBin>100) rowNBin=rowNBin/4;
+
             histo2D =
               AIDAProcessor::histogramFactory( this )->createHistogram2D( tempHistoName.c_str(), 
                        rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
@@ -1272,8 +1289,9 @@ void EUTelCorrelator::bookHistos() {
                     colNBin, rowNBin
                     );
             streamlog_out (MESSAGE) << endl;
- 
-            histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
+if(colNBin>100) colNBin=colNBin/4;
+if(rowNBin>100) rowNBin=rowNBin/4;
+           histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
 
             tempHistoTitle =  "HitXShift/" +  _hitXCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             histo2D->setTitle( tempHistoTitle.c_str()) ;
@@ -1304,8 +1322,10 @@ void EUTelCorrelator::bookHistos() {
                     colNBin, rowNBin
                     );
             streamlog_out (MESSAGE) << endl;
- 
-            histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
+if(colNBin>100) colNBin=colNBin/4;
+if(rowNBin>100) rowNBin=rowNBin/4;
+
+           histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
            
             tempHistoTitle =  "HitYShift/" +  _hitYCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
             histo2D->setTitle( tempHistoTitle.c_str()) ;
@@ -1363,10 +1383,13 @@ void EUTelCorrelator::bookHistos() {
             double   yMax  = 0.;
             int      yBin  = 0 ;
 
+
+
             int refRow =  0; // reference row id
             xBin       = _maxX[refRow] + _maxX[ refRow ] ;    
             xMin = safetyFactor * ( _hitMinX[refRow] - _hitMaxX[refRow]);
             xMax = safetyFactor * ( _hitMaxX[refRow] - _hitMinX[refRow]);
+if(xBin>100) xBin=xBin/4;
 
             AIDA::IHistogram1D *
                  histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), xBin, xMin, xMax );
@@ -1383,7 +1406,7 @@ void EUTelCorrelator::bookHistos() {
             yBin        = _maxY[refRow] + _maxY[ refRow ] ;    
             yMin = safetyFactor * ( _hitMinY[refRow] - _hitMaxY[refRow]);
             yMax = safetyFactor * ( _hitMaxY[refRow] - _hitMinY[refRow]);
-
+if(yBin>100) yBin=yBin/4;
 
             histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), yBin, yMin, yMax );
             tempHistoTitle =  "ClusterYShift/" +  _clusterYCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
@@ -1421,6 +1444,7 @@ void EUTelCorrelator::bookHistos() {
     
             rowMin = safetyFactor * ( _hitMinX[refRow] - _hitMaxX[refRow]);
             rowMax = safetyFactor * ( _hitMaxX[refRow] - _hitMinX[refRow]);
+if(rowNBin>100) rowNBin=rowNBin/4;
 
             AIDA::IHistogram1D *
                  histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), rowNBin, rowMin, rowMax );
@@ -1440,8 +1464,8 @@ void EUTelCorrelator::bookHistos() {
     
             rowMin = safetyFactor * ( _hitMinY[refRow] - _hitMaxY[refRow]);
             rowMax = safetyFactor * ( _hitMaxY[refRow] - _hitMinY[refRow]);
-
-            histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), rowNBin, rowMin, rowMax );
+if(rowNBin>100) rowNBin=rowNBin/4;
+           histo1D = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), rowNBin, rowMin, rowMax );
             tempHistoTitle =  "HitYShift/" +  _hitYCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
             histo1D->setTitle( tempHistoTitle.c_str()) ;
 
