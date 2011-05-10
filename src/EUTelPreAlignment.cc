@@ -47,6 +47,7 @@
 #include <limits>
 #include <algorithm>
 #include <memory>
+#include <cstdio>
 
 using namespace std;
 using namespace lcio;
