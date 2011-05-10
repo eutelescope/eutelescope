@@ -732,7 +732,8 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
         for ( unsigned int iPixel = 0; iPixel < _firingFreqVec[iDetector].size(); iPixel++ ) 
         {
             int decoded_XY_index = _inverse_hitIndexMapVec[iDetector][iPixel];
-            if ( statusVec[ iPixel ] == EUTELESCOPE::FIRINGPIXEL )                
+
+            if ( decoded_XY_index > 0 && statusVec[ iPixel ] == EUTELESCOPE::FIRINGPIXEL )                
             {
                 streamlog_out (DEBUG3) <<
                     " writing out idet: " << iDetector <<
