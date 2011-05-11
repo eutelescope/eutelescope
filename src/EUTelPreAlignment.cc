@@ -338,7 +338,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
                 return skipHit; // if TRUE  this hit will be skipped
             } 
             
-            delete cluster; 
+            if(cluster != 0) delete cluster; 
        }
        catch(...)
        { 
