@@ -269,7 +269,7 @@ fi
 
 echo
 echo "########################################################################"
-echo "# Getting the hot pixel db file ${InputHotPixelLocal}
+echo "# Getting the hot pixel db file ${InputHotPixelLocal}"
 echo "########################################################################"
 echo
 #  
