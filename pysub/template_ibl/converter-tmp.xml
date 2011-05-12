@@ -99,7 +99,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
  <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
  
     <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
-    <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@DBNumber@-hotpixel-db.slcio"/>
+    <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio"/>
     <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
 
     <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
@@ -158,7 +158,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
  <processor name="APIXHotPixelKiller" type="EUTelAPIXHotPixelKiller">
  
     <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
-    <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@DBNumber@-hotpixel-db.slcio"/>
+    <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio"/>
     <parameter name="HotPixelCollectionName" type="string" value="hotpixel_apix" />
 
     <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
