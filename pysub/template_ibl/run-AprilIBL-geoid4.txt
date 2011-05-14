@@ -28,7 +28,7 @@ do
 echo "./submit-converter.py --config=config/ibl/"$config" -r --hot "$run" "$run
 #
 # echo "./submit-clusearch.py --config=config/ibl/"$config" -r --hot "$run" "$run
-# echo "./submit-hitmaker.py  --config=config/ibl/"$config" -r -o "$run" -n "$run" run0"$run"-clu-p.slcio "
+# echo "./submit-hitmaker.py  --config=config/ibl/"$config" -r -o "$run"  run0"$run"-clu-p.slcio "
 # echo "./submit-align.py     --config=config/ibl/"$config" -r -o "$run" -iPreAlignedHit  "$run"-hit.slcio "
 # echo "./submit-fitter.py    --config=config/ibl/"$config" -r  -o "$run" -a "$run"-align-db.slcio "$run"-hit.slcio "
 done
