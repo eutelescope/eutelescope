@@ -273,7 +273,7 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 	
 	//Data Output
 	//CellIDEncoder<TrackerPulseImpl> idClusterEncoder(EUTELESCOPE::ZSAPIXCLUSTERENCODING, clusterCollection);
-        CellIDEncoder< TrackerPulseImpl > zsDataEncoder ( "sensorID:5,clusterID:10,xSeed:8,ySeed:10,xCluSize:8,yCluSize:8,type:5", clusterCollection );	
+        CellIDEncoder< TrackerPulseImpl > zsDataEncoder ( "sensorID:5,clusterID:12,xSeed:8,ySeed:10,xCluSize:8,yCluSize:8,type:5", clusterCollection );	
 
 	//Dummy collection
 	
@@ -292,7 +292,7 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 	 }
 	 dummyCollectionInitialSize = sparseClusterCollectionVec->size();
 	  
-	  CellIDEncoder<TrackerDataImpl> idClusterEncoder( "sensorID:5,clusterID:10,sparsePixelType:5,type:6", sparseClusterCollectionVec  );
+	  CellIDEncoder<TrackerDataImpl> idClusterEncoder( "sensorID:5,clusterID:12,sparsePixelType:5,type:6", sparseClusterCollectionVec  );
 	
 	//One loop for each sensorplane
 	for ( unsigned int i = 0 ; i < zsInputCollectionVec->size(); i++ ) {

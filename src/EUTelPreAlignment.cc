@@ -238,11 +238,12 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
         bool skipHit = 0;
 //printf("EUTelPreAlign::hitContainsHotPixels \n");
  
+        EUTelVirtualCluster * cluster = 0;
+
         try
         {
             LCObjectVec clusterVector = hit->getRawHits();
 
-            EUTelVirtualCluster * cluster;
 
             if ( hit->getType() == kEUTelBrickedClusterImpl ) {
 
@@ -338,7 +339,6 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
                 return skipHit; // if TRUE  this hit will be skipped
             } 
             
-            if(cluster != 0) delete cluster; 
        }
        catch(...)
        { 
@@ -347,6 +347,8 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
           return 0;
        }
 
+//       if(cluster != 0) delete cluster; 
+ 
        // if none of the above worked return FALSE, meaning do not skip this hit
        return 0;
 
