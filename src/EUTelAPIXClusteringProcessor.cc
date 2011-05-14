@@ -273,7 +273,7 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 	
 	//Data Output
 	//CellIDEncoder<TrackerPulseImpl> idClusterEncoder(EUTELESCOPE::ZSAPIXCLUSTERENCODING, clusterCollection);
-        CellIDEncoder< TrackerPulseImpl > zsDataEncoder ( "sensorID:5,clusterID:12,xSeed:8,ySeed:10,xCluSize:8,yCluSize:8,type:5", clusterCollection );	
+        CellIDEncoder< TrackerPulseImpl > zsDataEncoder ( "sensorID:5,clusterID:12,xSeed:9,ySeed:10,xCluSize:9,yCluSize:8,type:5", clusterCollection );	
 
 	//Dummy collection
 	
