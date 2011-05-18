@@ -15,7 +15,7 @@
 				<layer>
 					<ladder 	ID="0"
 						 	positionX="0.00"	positionY="0.00"	positionZ="0.00"
-							rotationYZ="0.00"	rotationZX="0.0"	rotationXY="0.0" 
+							rotationZY="0.00"	rotationZX="0.0"	rotationXY="0.0" 
 							sizeX="21.2"		sizeY="10.6"		thickness="0.686"
 							radLength="93.660734"
 					/>
@@ -33,7 +33,7 @@
 				<layer>
 					<ladder 	ID="1" 
 							positionX="0.00"	positionY="0.00"	positionZ="35.00" 
-							rotationYZ="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
 							sizeX="21.2"		sizeY="10.6"		thickness="0.686" 
 							radLength="93.660734"
 					/>
@@ -51,7 +51,7 @@
 				<layer>
 					<ladder 	ID="2" 
 							positionX="0.00"	positionY="0.00"	positionZ="70.00" 
-							rotationYZ="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
 							sizeX="21.2"		sizeY="10.6"		thickness="0.686" 
 							radLength="93.660734"
 					/>
@@ -69,7 +69,7 @@
 				<layer>
 					<ladder 	ID="20"
                                                         positionX="00.00"       positionY="0.00"        positionZ="166.35" 
-                                                        rotationYZ="15.0"        rotationZX="0.0"        rotationXY="0.0" 
+                                                        rotationZY="15.0"        rotationZX="0.0"        rotationXY="0.0" 
                                                         sizeX="20.0"            sizeY="16.8"            thickness="0.025" 
                                                         radLength="93.660734"
                                         />
@@ -87,7 +87,7 @@
 				<layer>
 					<ladder 	ID="21" 
 							positionX="00.00" 	positionY="0.00" 	positionZ="190.35" 
-							rotationYZ="15.0" 	rotationZX="0.0" 	rotationXY="0.0" 
+							rotationZY="15.0" 	rotationZX="0.0" 	rotationXY="0.0" 
 							sizeX="20.0" 		sizeY="16.8" 		thickness="0.025" 
 							radLength="93.660734"
 					/>
@@ -105,7 +105,7 @@
                                 <layer>
                                         <ladder         ID="3"
                                                         positionX="0.00"        positionY="0.00"        positionZ="349.00"
-                                                        rotationYZ="0.00"       rotationZX="0.0"        rotationXY="0.0" 
+                                                        rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
                                                         sizeX="21.2"            sizeY="10.6"            thickness="0.686"
                                                         radLength="93.660734"
                                         />
@@ -123,7 +123,7 @@
                                 <layer>
                                         <ladder         ID="4"
                                                         positionX="0.00"        positionY="0.00"        positionZ="384.00"
-                                                        rotationYZ="0.00"       rotationZX="0.0"        rotationXY="0.0" 
+                                                        rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
                                                         sizeX="21.2"            sizeY="10.6"            thickness="0.686"
                                                         radLength="93.660734"
                                         />
@@ -141,7 +141,7 @@
                                 <layer>
                                         <ladder         ID="5"
                                                         positionX="0.00"        positionY="0.00"        positionZ="419.00"
-                                                        rotationYZ="0.00"       rotationZX="0.0"        rotationXY="0.0" 
+                                                        rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
                                                         sizeX="21.2"            sizeY="10.6"            thickness="0.686"
                                                         radLength="93.660734"
                                         />
