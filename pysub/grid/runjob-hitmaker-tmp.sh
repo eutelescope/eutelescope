@@ -123,12 +123,16 @@ GRIDLibraryLFN=$GRIDLibraryTarballPath/$GRIDLibraryTarball
 InputOffsetLFN=$GRIDFolderDBOffset/$OffsetFile
 InputEtaLFN=$GRIDFolderDBEta/$EtaFile
 OutputLFN=$GRIDFolderHitmakerResults/$Output-hit.slcio
+OutputLFNShort=$GRIDFolderHitmakerResults/$Output-hit
+
 OutputJoboutputLFN=$GRIDFolderHitmakerJoboutput/$Name-$Output.tar.gz
 OutputHistoLFN=$GRIDFolderHitmakerHisto/$Output-hit-histo.root
 
 InputOffsetLocal=$PWD/db/$OffsetFile
 InputEtaLocal=$PWD/db/$EtaFile
 OutputLocal=$PWD/results/$Output-hit.slcio
+OutputLocalShort=$PWD/results/$Output-hit
+
 OutputJoboutputLocal=$PWD/log/$Name-$Output.tar.gz
 OutputHistoLocal=$PWD/histo/$Output-hit-histo.root
 SteeringFile=$Name-$Output.xml
@@ -193,7 +197,8 @@ doCommand "tar xzvf $GRIDLibraryTarball"
 doCommand "source ./ilc-grid-config.sh"
 doCommand "$BASH ./ilc-grid-test-sys.sh || abort \"system tests failed!\" "
 doCommand ". $VO_ILC_SW_DIR/initILCSOFT.sh $GRIDILCSoftVersion"
-doCommand "$BASH ./ilc-grid-test-sw.sh"
+#doCommand ". $VO_ILC_SW_DIR/ilcsoft/x86_64_gcc41_sl5/init_ilcsoft.sh v01-11"
+#doCommand "$BASH ./ilc-grid-test-sw.sh"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "******* ERROR: " ; cat ./ilc-grid-test-sw.log
@@ -331,13 +336,39 @@ echo "########################################################################"
 echo doCommand "putOnGRID ${OutputLocal} ${OutputLFN} ${GRIDSE}"
 echo
 
+#doCommand "putOnGRID ${OutputLocal} ${OutputLFN} ${GRIDSE}"
+#r=$?
+#if [ $r -ne 0 ] ; then
+#    echo "****** Problem copying the ${OutputLocal} to the GRID"
+##    mail -s "name=$Name; output=$Output; copy to GRID ERROR "  ${USER}@mail.desy.de < out
+#    exit 30
+#fi
+
 doCommand "putOnGRID ${OutputLocal} ${OutputLFN} ${GRIDSE}"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "****** Problem copying the ${OutputLocal} to the GRID"
-#    mail -s "name=$Name; output=$Output; copy to GRID ERROR "  ${USER}@mail.desy.de < out
-    exit 30
+    ls ${OutputLocalShort}.*.slcio | tee slcio.txt
+    runs=`grep -c slcio slcio.txt`
+    echo "*** $runs found "
+
+    for (( i=0; i<$runs; i++ ))
+    do
+      printf -v ii "%03i" $i
+      echo "current run = $ii"
+      OutputLocal=${OutputLocalShort}.$ii.slcio
+      OutputLFN=${OutputLFNShort}-$ii.slcio
+      echo "putOnGRID ${OutputLocal} ${OutputLFN} ${GRIDSE}"
+      doCommand "putOnGRID ${OutputLocal} ${OutputLFN} ${GRIDSE}"
+      r=$?
+      if [ $r -ne 0 ] ; then
+        echo "****** Problem copying $runs files from ${OutputLocalShort}.xxx.slcio to the GRID"
+        exit 30
+      fi  
+    done
+#   exit 30
 fi
+
 
 echo
 echo "########################################################################"

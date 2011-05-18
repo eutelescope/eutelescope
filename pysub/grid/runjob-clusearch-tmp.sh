@@ -221,7 +221,8 @@ doCommand "tar xzvf $GRIDLibraryTarball"
 doCommand "source ./ilc-grid-config.sh"
 doCommand "$BASH ./ilc-grid-test-sys.sh || abort \"system tests failed!\" "
 doCommand ". $VO_ILC_SW_DIR/initILCSOFT.sh $GRIDILCSoftVersion"
-doCommand "$BASH ./ilc-grid-test-sw.sh"
+#doCommand ". $VO_ILC_SW_DIR/ilcsoft/x86_64_gcc41_sl5/init_ilcsoft.sh v01-11"
+#doCommand "$BASH ./ilc-grid-test-sw.sh"
 r=$?
 if [ $r -ne 0 ] ; then
     echo "******* ERROR: " ; cat ./ilc-grid-test-sw.log
