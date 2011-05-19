@@ -7,5 +7,5 @@ StdError            = "err" ;
 InputSandbox        = { "@SteeringFile@", "@Executable@", "@GearFile@", "@HistoInfo@" @GRIDLibraryTarball@ @Others@ } ;
 OutputSandbox       = { "out", "err" };
 VirtualOrganisation = "@GRIDVO@";
-Requirements        = Member( "VO-ilc-ilcsoft-@GRIDILCSoftVersion@-sl4", other.GlueHostApplicationSoftwareRunTimeEnvironment) ;
+Requirements        = Member( "VO-ilc-ilcsoft-@GRIDILCSoftVersion@-sl5", other.GlueHostApplicationSoftwareRunTimeEnvironment) ;
 ShallowRetryCount   = 3;

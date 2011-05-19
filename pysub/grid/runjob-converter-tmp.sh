@@ -199,8 +199,10 @@ doCommand "tar xzvf $GRIDLibraryLocal"
 # from now on doing things to get access to ESA
 doCommand "source ./ilc-grid-config.sh"
 doCommand "$BASH ./ilc-grid-test-sys.sh || abort \"system tests failed!\" "
-doCommand ". $VO_ILC_SW_DIR/initILCSOFT.sh $GRIDILCSoftVersion"
+#doCommand ". $VO_ILC_SW_DIR/initILCSOFT.sh $GRIDILCSoftVersion"
 #doCommand ". $VO_ILC_SW_DIR/ilcsoft/x86_64_gcc41_sl5/init_ilcsoft.sh v01-10"
+echo "where is VO_ILC_SW_DIR: $VO_ILC_SW_DIR"
+doCommand ". $VO_ILC_SW_DIR/ilcsoft/x86_64_gcc41_sl5/init_ilcsoft.sh v01-11"
 #doCommand "$BASH ./ilc-grid-test-sw.sh"
 
 r=$?
