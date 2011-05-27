@@ -72,7 +72,12 @@ this builds the library:
 
 <b>Last versions release info:</b>
 
-<b>[Pro]</b> Version v00-06-01-pre.
+<b>[Pro]</b> Version v00-06-02-pre.
+
+@li Inconsistency with the GEAR library found. Important! Use only GEAR v01-17 where the sensor (plane) tilts are treated properly. If use ilcsoft v01_11, then the GEAR library v01-17 is included.
+@li New processor EUTelAPIXHotPixelKiller introduced which dumps hot pixels into an event-like record. This information is used in PreAlignment (Hitmaker step) and Alignment steps. The hot pixels are not excluded from any event record, only a mask condition is applied to prevent the hotpixels from entering (pre)-alignment pixel selection. Otherwise the logic of the processors did not change.
+
+<b>[Old]</b> Version v00-06-01-pre.
 
 @li Several fixes to the PreAlign processor, increased range of the histogram-arrays to allow larger displacement between the sensors
 @li Installation documentation fixed. Recommended isntallation path consists of using ilcinstall scripts from version v01-11, and install all packages for ilcsoft release v01-10.
@@ -1388,15 +1393,15 @@ Change folder to the global analysis folder and check the ilcinstall scripts (v0
 #
 # or download from here and replace your old files: 
 #
-# you want to install ilcsoft v01-10
+# you want to install ilcsoft v01-11
 # for installation on a machine with a /afs/ (very fast installation):
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-10/release-ilcsoft.cfg 
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-10/release-versions.py 
+# wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-11/release-ilcsoft.cfg 
+# wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-11/release-versions.py 
 
 #
 # for a laptop installation (or without /afs/desy.de/ mount), quite long:
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-10-standalone/release-ilcsoft.cfg 
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-10-standalone/release-versions.py 
+# wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-11-standalone/release-ilcsoft.cfg 
+# wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-11-standalone/release-versions.py 
 #
 #
 @endcode
@@ -1737,7 +1742,7 @@ svn co https://svnsrv.desy.de/public/ilctools/gridtools/trunk/LCSoftGridScripts
 # edit the config file:
 vim LCSoftGridScripts/ilc-grid-config.sh
 # --
-# -- export SW_VER="v01-10"
+# -- export SW_VER="v01-11"
 # -- export SW_ARCH="sl5"
 # --
 @endcode
@@ -1753,9 +1758,9 @@ vim config/config.cfg
 # the following section should be corrected:
 # GRID library
 #
-# GRIDLibraryTarball            = job_tarball_YYMMDD_v00.tgz
+# GRIDLibraryTarball            = job_tarball_YYMMDD_v01_11.tgz
 # GRIDLibraryTarballPath        = $LFC_HOME/2010/tb-cern-summer/DUT/software
-# GRIDILCSoftVersion            = v01-10
+# GRIDILCSoftVersion            = v01-11
 # GRIDJDLTemplate               = $ILCSOFT/Eutelescope/HEAD/pysub/grid/jdl-tmp.jdl
 # 
 # [GRIDLibraryContent]
