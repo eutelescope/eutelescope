@@ -145,9 +145,9 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--parameter name="PedeUserStartValuesY" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
   <!--Resolution of the telescope for Millepede.-->
   <parameter name="TelescopeResolution" type="float" value="10"/>
-  <parameter name="ResolutionX" type="float" value="   22     22     22      1200   1200      22     22     22 "/>
-  <parameter name="ResolutionY" type="float" value="   22     22     22      1200   1200      22     22     22 "/>
-  <parameter name="ResolutionZ" type="float" value="   10     10     10        10     10      10     10     10 "/>
+  <parameter name="ResolutionX" type="float" value="    4      4      4        50     50       4      4      4 "/>
+  <parameter name="ResolutionY" type="float" value="    4      4      4        13     13       4      4      4 "/>
+  <parameter name="ResolutionZ" type="float" value="    1      1      1         1      1       1      1      1 "/>
   <!--Rotation around the x axis of the sensors in test mode (to be determined by the alignment).-->
   <!--parameter name="TestModeSensorAlpha" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
   <!--Rotation around the y axis of the sensors in test mode (to be determined by the alignment).-->

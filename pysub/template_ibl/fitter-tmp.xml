@@ -29,12 +29,12 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
          <!-- an example how to run anti-alignment processor -->
          <!-- group name="ReverseReconstructedHits"/ -->
          <!-- group name="ReverseFittedHits"/ -->
-      <processor name="FitterHisto"/>
+      <!-- processor name="FitterHisto"/ -->
       <!-- processor name="DUTHisto"/-->
       <!-- processor name="NTuple"/-->
       <processor name="APIXTbTrack"/>
       <!-- group name="TelDUTHisto"/ -->
-      <!--group name="APIXDUTHisto"/-->
+      <group name="APIXDUTHisto"/>
       <processor name="Save"/>
    </execute>
 
@@ -217,10 +217,10 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="TelResolutionX" type="float" value="4.3"/>
     <parameter name="TelResolutionY" type="float" value="4.3"/>
     <parameter name="DutResolutionX" type="float" value="50"/>
-    <parameter name="DutResolutionY" type="float" value="400"/>
+    <parameter name="DutResolutionY" type="float" value="250"/>
     <parameter name="NominalDxdz" type="float" value="0.0"/>
     <parameter name="NominalDydz" type="float" value="0.0"/>
-    <parameter name="FinderRadius" type="float" value="500"/>
+    <parameter name="FinderRadius" type="float" value="500" />
     <parameter name="Chi2Cutoff" type="float" value="50"/>
     <parameter name="MaxChi2OverNdof" type="float" value="8"/>
     <parameter name="NDutHits" type="int" value="1"/>
@@ -434,11 +434,11 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!-- name of output file -->
   <parameter name="LCIOOutputFile" type="string" value="@ResultsFolder@/@Output@-track.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
-  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+  <parameter name="LCIOWriteMode" type="string" value=""/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
   <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-  <!-- parameter name="SplitFileSizekB" type="int" value="100000"/ -->
+  <parameter name="SplitFileSizekB" type="int" value="1000000"/>
 </processor>
 
   <group name="TelDUTHisto" >
@@ -516,7 +516,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Alignment corrections for DUT: shift (in mm) in X, Y and rotation around Z-->
   <parameter name="DUTalignment" type="FloatVec"> @DUTAlignment@ </parameter>
   <!--DUT sensor pitch in X-->
-  <parameter name="DUTpitchX" type="double" value="0.40"/>
+  <parameter name="DUTpitchX" type="double" value="0.25"/>
   <!--DUT sensor pitch in Y-->
   <parameter name="DUTpitchY" type="double" value="0.05"/>
   <!--Print out every DebugEnevtCount event-->
@@ -542,19 +542,14 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
         in particular ID of the sensor to be treated as DUT, use reference plane or not,
 		which plane to be used as DUT.
 	 -->
-  <processor name="DUTHisto10" type="EUTelDUTHistograms">
-    <parameter name="ManualDUTid" type="int" value="10"/>
-    <parameter name="referencePlaneID" type="int" value="11" />
+  <processor name="DUTHisto20" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="20"/>
+    <parameter name="referencePlaneID" type="int" value="21" />
   </processor>
 
-  <processor name="DUTHisto11" type="EUTelDUTHistograms">
-    <parameter name="ManualDUTid" type="int" value="11"/>
-	<parameter name="referencePlaneID" type="int" value="10" />
-  </processor>
-
-  <processor name="DUTHisto12" type="EUTelDUTHistograms">
-    <parameter name="ManualDUTid" type="int" value="12"/>
-	<parameter name="referencePlaneID" type="int" value="10" />
+  <processor name="DUTHisto21" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="21"/>
+	<parameter name="referencePlaneID" type="int" value="20" />
   </processor>
 
   </group>
