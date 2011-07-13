@@ -298,6 +298,7 @@ $c
 r=$?
 
 find ./
+ls -ltrah *
 
 if [ $r -ne 0 ] ; then
     echo "****** Problem running Marlin"
