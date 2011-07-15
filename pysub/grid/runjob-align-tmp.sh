@@ -389,8 +389,8 @@ for file in $InputFileList; do
 done
 
 # fixing the problem with the histogram file
-doCommand "hadd -f temp.root empty.root ${OutputHistoLocal}"
-doCommand "mv temp.root ${OutputHistoLocal}"
+#doCommand "hadd -f temp.root empty.root ${OutputHistoLocal}"
+#doCommand "mv temp.root ${OutputHistoLocal}"
 
 # put back the files to the GRID
 if [ $RunPede == "yes" ] ; then

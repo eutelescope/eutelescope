@@ -323,8 +323,8 @@ done
 doCommand "rm ${InputAlignLocal}"
 
 # fix the histogram file
-doCommand "hadd -f temp.root empty.root ${OutputHistoLocal}"
-doCommand "mv temp.root ${OutputHistoLocal}"
+#doCommand "hadd -f temp.root empty.root ${OutputHistoLocal}"
+#doCommand "mv temp.root ${OutputHistoLocal}"
 
 # put back the files to the GRID
 echo
