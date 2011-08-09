@@ -26,8 +26,6 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
       <@TELCommentLeft@processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/@TELCommentRight@>
       <@UseHotPixelKillerCommentLeft@processor name="LoadHotPixelDB"/@UseHotPixelKillerCommentRight@>
       <@TELCommentLeft@processor name="Clustering"/@TELCommentRight@>
-      <!--processor name="APIXClustering"/-->
-      <@DUTCommentLeft@processor name="Clustering_@DUTSuffix@"/@DUTCommentRight@>
       <@TELCommentLeft@processor name="Correlator"/@TELCommentRight@>
     <processor name="Save"/>
   </execute>
@@ -172,6 +170,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--Initialization of a data file handler-->
     <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
     <!--Initialization of a simple conditions file handler-->
+    <!-- suppress only the Mimosa26 pixels --> 
     <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26  @DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio hotpixel_m26 </parameter>
   </processor>
 
@@ -193,7 +192,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--Input of Zero Suppressed data-->
     <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_m26 </parameter>
     <!--Cluster (output) collection name-->
-    <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster </parameter>
+    <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_m26 </parameter>
 
     <!--
         Clustering algorithm
@@ -209,14 +208,14 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
         -> SparseCluster2: for cluster in ZS frame with better performance
         -> FixedFrame: for cluster with a given size
         -> DFixedFrame: for cluster with a given size-->
-    <parameter name="ZSClusteringAlgo" type="string" value="DFixedFrame"/>
+    <parameter name="ZSClusteringAlgo" type="string" value="SparseCluster2"/>
 
 
     <!--
         FIXED FRAME ( for both NZS and ZS )
-        for DFixedFrame: 
+        for DFixedFrame:
         use 5x5 for threshold ~< 9
-        use 3x3 for threshold ~> 9
+        use 3x3 for threshold ~> 9        
     -->
     <!--Threshold in SNR for seed pixel identification-->
     <parameter name="FFSeedCut" type="float" value="0.0"/>
@@ -228,22 +227,22 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <parameter name="FFClusterSizeY" type="int" value="5"/>
 
     <!--
-        SPARSECLUSTER and SPARSECLUSTER2 (use with care!)        
+        SPARSECLUSTER and SPARSECLUSTER2 (use with care!)
+        
         for SparseCluster:
-          SparseMinDistance = 2 (in the code minDistance => distance between  neighb.pixels .le. SparseMinDistance)
-          ==>  findNeighborPixels(double minDistance) 
-
+            SparseMinDistance = 2 (in the code minDistance => distance between  neighb.pixels .le. SparseMinDistance)
+            ==>  findNeighborPixels(double minDistance)
+        
         for SparseCluster2:
-          SparseMinDistance = 0 ( in the code minSignal => ADC in the neigbh.pixel .ge. SparseMinDistance )
-          ==> EUTelSparseData2Impl<PixelType>::findNeighborPixels(double  minSignal)     
-          in principle can be used as default clustering algo.
+            SparseMinDistance = 0 ( in the code minSignal => ADC in the neigbh.pixel .ge. SparseMinDistance )
+            ==>  EUTelSparseData2Impl<PixelType>::findNeighborPixels(double  minSignal)
+            in principle can be used as default clustering algo.        
     -->
     <!--Threshold in SNR for clusters contained in ZS data-->
     <parameter name="SparseClusterCut" type="float" value="0.0"/>
     <!--Threshold in SNR for seed pixel contained in ZS data-->
     <parameter name="SparseSeedCut" type="float" value="0.0"/>
     <!--Minimum distance between sparsified pixel ( touching == sqrt(2)) -->
-
     <!-- carefull with this one! see comments above. -->
     <parameter name="SparseMinDistance" type="float" value="0"/>
 
@@ -261,95 +260,6 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
 
   </processor>
 
- 
-   <processor name="APIXClustering" type="EUTelAPIXClusteringProcessor">
-	<!--This is the name of the histogram information file-->
-    <parameter name="ClusterCollectionName" type="string" value="cluster"/>
-    <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
-   </processor>
-
-  <processor name="Clustering_@DUTSuffix@" type="EUTelClusteringProcessor">
-    <!--EUTelClusteringProcessor is looking for clusters into a calibrated pixel matrix.-->
-
-    <!--
-        INPUT / OUTPUT
-    -->
-    <!--Input calibrated data not zero suppressed collection name-->
-    <parameter name="NZSDataCollectionName" type="string" lcioInType="TrackerData"> data_@DUTSuffix@ </parameter>
-    <!--Noise (input) collection name-->
-    <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData"> noise_@DUTSuffix@ </parameter>
-    <!--Pixel status (input) collection name-->
-    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> status_@DUTSuffix@ </parameter>
-    <!--Input of Zero Suppressed data-->
-    <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData"> zsdata_@DUTSuffix@ </parameter>
-    <!--Cluster (output) collection name-->
-    <parameter name="PulseCollectionName" type="string" lcioOutType="TrackerPulse"> cluster_@DUTSuffix@ </parameter>
-
-    <!--
-        Clustering algorithm
-    -->
-    <!--Select here which algorithm should be used for NZS clustering.
-        Available algorithms are:
-        -> FixedFrame: for custer with a given size-->
-    <parameter name="ClusteringAlgo" type="string" value="FixedFrame"/>
-
-    <!--Select here which algorithm should be used for ZS clustering.
-        Available algorithms are:
-        -> SparseCluster: for cluster in ZS frame
-        -> SparseCluster2: for cluster in ZS frame with better performance
-        -> FixedFrame: for cluster with a given size-->
-    <parameter name="ZSClusteringAlgo" type="string" value="SparseCluster2"/>
-
-
-    <!--
-        FIXED FRAME ( for both NZS and ZS )
-    -->
-    <!--Threshold in SNR for seed pixel identification-->
-    <parameter name="FFSeedCut" type="float" value="0.0"/>
-    <!--Threshold in SNR for cluster identification-->
-    <parameter name="FFClusterCut" type="float" value="0.0"/>
-    <!--Maximum allowed cluster size along x (only odd numbers)-->
-    <parameter name="FFClusterSizeX" type="int" value="3"/>
-    <!--Maximum allowed cluster size along y (only odd numbers)-->
-    <parameter name="FFClusterSizeY" type="int" value="3"/>
-
-    <!--
-        SPARSECLUSTER and SPARSECLUSTER2 (use with care)
-    -->
-    <!--Threshold in SNR for clusters contained in ZS data-->
-    <parameter name="SparseClusterCut" type="float" value="0.0"/>
-    <!--Threshold in SNR for seed pixel contained in ZS data-->
-    <parameter name="SparseSeedCut" type="float" value="0.0"/>
-    <!--Minimum distance between sparsified pixel ( touching == sqrt(2)) -->
-    <parameter name="SparseMinDistance" type="float" value="0"/>
-
-    <!--
-        HISTOGRAMMING
-    -->
-    <!--Switch on or off the histogram filling-->
-    <parameter name="HistogramFilling" type="bool" value="true"/>
-    <!--This is the name of the histogram information file-->
-    <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
-    <!--The list of cluster N to be filled.For example 7 means filling the cluster spectra with the 7 most significant pixels-->
-    <parameter name="ClusterN" type="IntVec" value="4 6 8 9"/>
-    <!--The list of cluster NxN to be filled.For example 3 means filling the 3x3 histogram spectrum-->
-    <parameter name="ClusterNxN" type="IntVec" value="3"/>
-
-  </processor>
-
-  <processor name="Correlator" type="EUTelCorrelator">
-    <!--EUTelCorrelator fills histograms with correlation plots-->
-    <!--Cluster (pulse) collection name-->
-    <parameter name="InputClusterCollectionName" type="string" lcioInType="TrackerPulse"> cluster </parameter>
-    <!--Hit collection name-->
-    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
-    <!-- -->
-    <parameter name="ClusterChargeMinimum" type="int" value="2"/>
-    <!-- -->
-    <parameter name="Events" type="int" value="10000"/>
-    <!-- -->
-    <parameter name="OffsetDBFile" type="string"> @DBPath@/run@RunNumber@-offset-db.slcio </parameter>
- </processor>
 
   <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
     <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
@@ -363,6 +273,21 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--The total number of hot pixel cycle-->
     <parameter name="TotalNoOfCycle" type="int" value="0"/>
   </processor>
+
+  <processor name="Correlator" type="EUTelCorrelator">
+    <!--EUTelCorrelator fills histograms with correlation plots-->
+    <!--Cluster (pulse) collection name-->
+    <parameter name="InputClusterCollections" type="StringVec" > cluster_m26  </parameter>
+    <!--Hit collection name-->
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+    <!-- -->
+    <parameter name="ClusterChargeMinimum" type="int" value="2"/>
+    <!-- -->
+    <parameter name="Events" type="int" value="10000"/>
+    <!-- -->
+    <parameter name="OffsetDBFile" type="string"> @DBPath@/run@RunNumber@-offset-db.slcio </parameter>
+ </processor>
+
 
   <processor name="Save" type="EUTelOutputProcessor">
     <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
