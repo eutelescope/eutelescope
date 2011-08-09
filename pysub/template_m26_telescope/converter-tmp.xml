@@ -90,14 +90,12 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <parameter name="MinYVector" type="IntVec"> 0 0 0 0 0 0</parameter>
   <!--The sensorID for the generated collection (one per detector)-->
   <parameter name="SensorIDVec" type="IntVec"> 0 1 2 3 4 5 </parameter>
-</processor>
-
-
+ </processor>
 
  <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
  
     <!--This is the name of the LCIO file name with the input/output hot pixel collection  (add .slcio)-->
-    <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@DBNumber@-hotpixel-db.slcio"/>
+    <parameter name="HotPixelDBFile" type="string" value="@DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio"/>
     <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
 
     <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
@@ -119,9 +117,9 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
 
     <!--This float number [0,1] represents the maximum allowed firing frequency
         within the selected number of event per cycle-->
-    <parameter name="MaxAllowedFiringFreq" type="float" value="0.01"/>
+    <parameter name="MaxAllowedFiringFreq" type="float" value="0.50"/>
     <!--The number of events to be considered for each update cycle-->
-    <parameter name="NoOfEventPerCycle" type="int" value="10000"/>
+    <parameter name="NoOfEventPerCycle" type="int" value="9999"/>
     <!--The total number of hot pixel cycle-->
     <parameter name="TotalNoOfCycle" type="int" value="0"/>
  </processor>
