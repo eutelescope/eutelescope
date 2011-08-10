@@ -24,8 +24,12 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <processor name="ApplyPreAlignment"/>
       <processor name="LoadAlignment"/>
       <processor name="ApplyAlignment"/>
-      <!-- processor name="Fitter"/ -->
-      <!-- processor name="FitterHisto"/ -->
+      <!-- processor name="DafFitter"/ -->
+      <processor name="Fitter"/>
+         <!-- an example how to run anti-alignment processor -->
+         <!-- group name="ReverseReconstructedHits"/ -->
+         <!-- group name="ReverseFittedHits"/ -->
+      <processor name="FitterHisto"/>
       <!-- processor name="DUTHisto"/ -->
       <!-- processor name="NTuple"/-->
       <group name="TelDUTHisto"/>
@@ -409,92 +413,6 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 </processor>
 
   <group name="TelDUTHisto" >
-  <!--Analytical track fitting processor for EUDET telescope--> 
-  <parameter name="alignmentCollectionNames" type="vec" >   alignment </parameter>
-  <!--Name of the input TrackerHit collection-->
-  <parameter name="InputCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
-  <!--Collection name for corrected particle positions-->
-  <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits </parameter>
-  <!--Collection name for fitted particle hits (positions)-->
-  <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits </parameter>
-  <!--Collection name for fitted tracks-->
-  <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track </parameter>
- <!--Ids of layers for which alignment corrections are given-->
-  <!--parameter name="AlignLayerIDs" type="IntVec"> </parameter-->
-  <!--Rotation around Z for layer alignment-->
-  <!--parameter name="AlignLayerRotZ" type="FloatVec"> </parameter-->
-  <!--Alignment corrections in X for these layers-->
-  <!--parameter name="AlignLayerShiftX" type="FloatVec"> </parameter-->
-  <!--Alignment corrections in Y for these layers-->
-  <!--parameter name="AlignLayerShiftY" type="FloatVec"> </parameter-->
-  <!--Allow same hit to be used in more than one track-->
-  <parameter name="AllowAmbiguousHits" type="bool" value="false"/>
-  <!--Allowed number of missing hits in the track-->
-  <parameter name="AllowMissingHits" type="int" value="@AllowedMissingHits@"/>
-  <!--Allowed number of hits removed from the track-->
-  <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@ "/>
-  <!--Decide now weather you want to rely on the track candidate slope permanence in X and Y, default=true -->
-  <parameter name="UseSlope"   type="bool"  value="true"/>
-  <!--Set the allowed maximum difference of the slope in X (from plane to plane), default = 0.01 -->
-  <parameter name="SlopeXLimit"   type="float" value="0.01"/>
-  <!--Set the allowed maximum difference of the slope in Y (from plane to plane), default = 0.01 -->
-  <parameter name="SlopeYLimit"   type="float" value="0.01"/>
-  <!--Maximal allowed (initial) distance between hits in the XY plane between the planes,default = 2. mm -->
-  <parameter name="SlopeDistanceMax" type="float" value="@DistanceMax@"/>
-  <!--Assumed angular spread of the beam [rad]-->
-  <!--parameter name="BeamSpread" type="double" value="0.1"/-->
-  <!--Maximum Chi2 for accepted track fit-->
-  <parameter name="Chi2Max" type="double" value="@Chi2Max@"/>
-  <!--Print out every DebugEnevtCount event-->
-  <parameter name="DebugEventCount" type="int" value="100"/>
-  <!--Beam energy [GeV]-->
-  <parameter name="Ebeam" type="double" value="@BeamEnergy@"/>
-  <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
-  <!--Flag for storing input (measured) hits in track-->
-  <parameter name="InputHitsInTrack" type="bool" value="true"/>
-  <!--Ids of layers for which position masks are applied-->
-  <!--parameter name="MaskLayerIDs" type="IntVec"> </parameter-->
-  <!--Upper mask edge in X-->
-  <!--parameter name="MaskMaxX" type="FloatVec"> </parameter-->
-  <!--Upper mask edge in Y-->
-  <!--parameter name="MaskMaxY" type="FloatVec"> </parameter-->
-  <!--Lower mask edge in X-->
-  <!--parameter name="MaskMinX" type="FloatVec"> </parameter-->
-  <!--Lower mask edge in Y-->
-  <!--parameter name="MaskMinY" type="FloatVec"> </parameter-->
-  <!--Maximum number of considered hits per plane-->
-  <parameter name="MaxPlaneHits" type="int" value="100"/>
-  <!--Chi2 penalty for missing hit in the track-->
-  <parameter name="MissingHitPenalty" type="double" value="@MissingHitPenalty@"/>
-  <!--Flag for storing output (fitted) hits in track-->
-  <parameter name="OutputHitsInTrack" type="bool" value="true"/>
-  <!--Ids of layers which should be treated as passive in the fit-->
-  <parameter name="PassiveLayerIDs" type="IntVec"> @PassiveLayerIDs@ </parameter>
-  <!--Flag for searching multiple tracks in events with multiple hits-->
-  <parameter name="SearchMultipleTracks" type="bool" value="true"/>
-  <!--Chi2 penalty for removing hit from the track-->
-  <parameter name="SkipHitPenalty" type="double" value="@SkipHitPenalty@"/>
-  <!--Ids of layers which should NOT be included in the fit-->
-  <!--parameter name="SkipLayerIDs" type="IntVec"> </parameter-->
-  <!--Flag for using beam direction constraint in the fit-->
-  <parameter name="UseBeamConstraint" type="bool" value="true"/>
-  <!--Flag for including DUT measurement in the fit-->
-  <parameter name="UseDUT" type="bool" value="false"/>
-  <!--Flag for using nominal resolution instead of position errors-->
-  <parameter name="UseNominalResolution" type="bool" value="false"/>
-  <!--Ids of layers for which position window cut are applied-->
-  <!--parameter name="WindowLayerIDs" type="IntVec"> </parameter-->
-  <!--Upper window edge in X-->
-  <!--parameter name="WindowMaxX" type="FloatVec"> </parameter-->
-  <!--Upper window edge in Y-->
-  <!--parameter name="WindowMaxY" type="FloatVec"> </parameter-->
-  <!--Lower window edge in X-->
-  <!--parameter name="WindowMinX" type="FloatVec"> </parameter-->
-  <!--Lower window edge in Y-->
-  <!--parameter name="WindowMinY" type="FloatVec"> </parameter-->
-
-
 	<!-- ------------------------------------ -->
 	<!-- -------- COMMON SETTINGS ----------- ->
 	<!-- ------------------------------------ -->
@@ -531,78 +449,28 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
         in particular ID of the sensor to be treated as DUT, use reference plane or not,
 		which plane to be used as DUT.
 	 -->
-
-  <processor name="Fitter00" type="EUTelTestFitter">
-   <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits0 </parameter>
-   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits0 </parameter>
-   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track0 </parameter>
-   <parameter name="PassiveLayerIDs" type="IntVec">0</parameter>
-  </processor>
-  
-  <processor name="DUTHisto00" type="EUTelDUTHistograms">
-   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track0 </parameter>
-   <parameter name="ManualDUTid" type="int" value="0" />
-  </processor>
-
-
-  <processor name="Fitter01" type="EUTelTestFitter">
-   <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits1 </parameter>
-   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits1 </parameter>
-   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track1 </parameter>
-   <parameter name="PassiveLayerIDs" type="IntVec">1</parameter>
-  </processor>
-  
   <processor name="DUTHisto01" type="EUTelDUTHistograms">
-   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track1 </parameter>
-   <parameter name="ManualDUTid" type="int" value="1" />
+    <parameter name="ManualDUTid" type="int" value="0" />
   </processor>
 
-  <processor name="Fitter02" type="EUTelTestFitter">
-   <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits2 </parameter>
-   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits2 </parameter>
-   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track2 </parameter>
-   <parameter name="PassiveLayerIDs" type="IntVec">2</parameter>
-  </processor>
-  
   <processor name="DUTHisto02" type="EUTelDUTHistograms">
-   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track2 </parameter>
-   <parameter name="ManualDUTid" type="int" value="2" />
+    <parameter name="ManualDUTid" type="int" value="1" />
   </processor>
 
-  <processor name="Fitter03" type="EUTelTestFitter">
-   <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits3 </parameter>
-   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits3 </parameter>
-   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track3 </parameter>
-   <parameter name="PassiveLayerIDs" type="IntVec">3</parameter>
-  </processor>
-  
   <processor name="DUTHisto03" type="EUTelDUTHistograms">
-   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track3 </parameter>
-   <parameter name="ManualDUTid" type="int" value="3" />
+    <parameter name="ManualDUTid" type="int" value="2" />
   </processor>
 
-  <processor name="Fitter04" type="EUTelTestFitter">
-   <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits4 </parameter>
-   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits4 </parameter>
-   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track4 </parameter>
-   <parameter name="PassiveLayerIDs" type="IntVec">4</parameter>
-  </processor>
-  
   <processor name="DUTHisto04" type="EUTelDUTHistograms">
-   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track4 </parameter>
-   <parameter name="ManualDUTid" type="int" value="4" />
+    <parameter name="ManualDUTid" type="int" value="3" />
   </processor>
 
-  <processor name="Fitter05" type="EUTelTestFitter">
-   <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits5 </parameter>
-   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits5 </parameter>
-   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track5 </parameter>
-   <parameter name="PassiveLayerIDs" type="IntVec">5</parameter>
-  </processor>
-  
   <processor name="DUTHisto05" type="EUTelDUTHistograms">
-   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track5 </parameter>
-   <parameter name="ManualDUTid" type="int" value="5" />
+    <parameter name="ManualDUTid" type="int" value="4" />
+  </processor>
+
+  <processor name="DUTHisto06" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="5" />
   </processor>
 
   </group>
