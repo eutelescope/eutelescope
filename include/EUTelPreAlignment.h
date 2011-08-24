@@ -76,7 +76,7 @@ catch(...)
 public:
   PreAligner(float pitchX, float pitchY, float zPos, int iden): 
     pitchX(pitchX), pitchY(pitchY), 
-    minX(-20.0), maxX(20), range(maxX - minX),
+    minX(-40.0), maxX(40), range(maxX - minX),
     zPos(zPos), iden(iden){
     histoX.assign( int( range / pitchX ), 0);
     histoY.assign( int( range / pitchY ), 0);

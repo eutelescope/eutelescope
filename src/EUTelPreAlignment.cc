@@ -202,18 +202,18 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
     for (size_t ref = 0; ref < inputCollectionVec->size(); ref++) {
       TrackerHitImpl   * refHit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( ref ) ) ;
       const double * refPos = refHit->getPosition();
-      if( std::fabs(refPos[2] - _fixedZ) > 2.5) { continue; }
+      if( std::fabs(refPos[2] - _fixedZ) > 30.0) { continue; }
       
       for (size_t iHit = 0; iHit < inputCollectionVec->size(); iHit++) {
 	TrackerHitImpl   * hit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( iHit ) ) ;
 	if( hitContainsHotPixels(hit) ) continue;
 
         const double * pos = hit->getPosition();
-	if( std::fabs(pos[2] - _fixedZ) < 2.5) { continue; }
+	if( std::fabs(pos[2] - _fixedZ) < 30.0) { continue; }
 	bool gotIt(false);
 	for(size_t ii = 0; ii < _preAligners.size(); ii++){
 	  PreAligner& pa = _preAligners.at(ii);
-	  if( std::fabs(pa.getZPos() - pos[2]) > 2.5  ) { continue; }
+	  if( std::fabs(pa.getZPos() - pos[2]) > 30.  ) { continue; }
 	  gotIt = true;
 	  pa.addPoint(refPos[0] - pos[0], refPos[1] - pos[1]);
 //printf("%5d %5d [%5d] %p %5d \n", iHit, ii, _preAligners.size(), pa.current(), pa.getIden()); //, pa.getPeakX(), pa.getPeakY() );

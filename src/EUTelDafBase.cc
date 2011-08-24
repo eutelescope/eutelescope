@@ -384,7 +384,7 @@ size_t EUTelDafBase::getPlaneIndex(float zPos){
   size_t index(0);
   bool foundIt(false);
   for(;it != _zSort.end(); index++, it++){
-    if( fabs((*it).first - zPos) < 2500.0){ 
+    if( fabs((*it).first - zPos) < 30000.0){ 
       foundIt = true; break;
     }
   }

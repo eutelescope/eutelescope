@@ -326,7 +326,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
     
     if(_iEvt > _events) return;
     
-  if (_iEvt % 10 == 0)
+  if (_iEvt % 1000 == 0)
     streamlog_out( MESSAGE4 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
@@ -1498,7 +1498,7 @@ int EUTelCorrelator::guessSensorID( TrackerHitImpl * hit ) {
       sensorID = _siPlanesLayerLayout->getID( iPlane );
     }
   }
-  if ( minDistance > 5 /* mm */ ) {
+  if ( minDistance > 30 /* mm */ ) {
     // advice the user that the guessing wasn't successful 
     streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
       "Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hitPosition[2] <<       endl;

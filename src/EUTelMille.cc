@@ -1173,7 +1173,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                     layerIndex = i;
                   }
               }
-            if ( minDistance > 5 /* mm */ ) {
+            if ( minDistance > 30 /* mm */ ) {
               // advice the user that the guessing wasn't successful
               streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
                 "Please check the consistency of the data with the GEAR file" << endl;
@@ -3105,9 +3105,9 @@ void EUTelMille::bookHistos() {
     const int    Chi2NBin = 100 ;
     const double Chi2Min  =   0.;
     const double Chi2Max  = 100.;
-    const int    NBin =  30000;
-    const double Min  = -15000.;
-    const double Max  =  15000.;
+    const int    NBin =   5000;
+    const double Min  = -25000.;
+    const double Max  =  25000.;
 
     AIDA::IHistogram1D * numberTracksLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_numberTracksLocalname,tracksNBin,tracksMin,tracksMax);

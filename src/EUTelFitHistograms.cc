@@ -438,7 +438,7 @@ void EUTelFitHistograms::processEvent( LCEvent * event ) {
           // We find plane number of the hit
           // by looking at the Z position
 
-          double distMin = 1.;
+          double distMin = 3.;
           int hitPlane = -1 ;
 
           for(int ipl=0;ipl<_nTelPlanes;ipl++)
