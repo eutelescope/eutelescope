@@ -122,7 +122,7 @@
 						
 				<!--APIX-Plane 1 - FE-I3 - PPS -->
 				<layer>
-					<ladder ID="13"
+					<ladder ID="10"
 						positionX="0.00"
 						positionY="0.00"
 						positionZ="180.41"
@@ -131,16 +131,16 @@
                         			rotationZY="0.0" 
 						sizeX="7.2"
 						sizeY="8.0"
-						thickness="0.050"
+						thickness="0.500"
 						radLength="93.660734"
      			/>
-					<sensitive ID="13"
+					<sensitive ID="10"
 						positionX="0.00"
 						positionY="0.00"
 						positionZ="180.41"
 						sizeX="7.2"
 						sizeY="8.0"
-						thickness="0.025"
+						thickness="0.500"
 						npixelX="18"
 						npixelY="160"
 						pitchX="0.40"
@@ -156,7 +156,7 @@
 
 				<!--APIX-Plane 2 - FE-I3 - 3D -->
 				<layer>
-					<ladder ID="14"
+					<ladder ID="11"
 						positionX="00.00"
 						positionY="0.00"
 						positionZ="240.18"
@@ -165,16 +165,16 @@
 						rotationZY="0.0" 
 						sizeX="7.2"
 						sizeY="8.0"
-						thickness="0.050"
+						thickness="0.500"
 						radLength="93.660734"
 					/>
-					<sensitive ID="14"
+					<sensitive ID="11"
 						positionX="00.00"
 						positionY="0.00"
 						positionZ="240.18"
 						sizeX="7.2"
 						sizeY="8.0"
-						thickness="0.025"
+						thickness="0.500"
 						npixelX="18"
 						npixelY="160"
 						pitchX="0.40"
