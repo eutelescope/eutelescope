@@ -18,33 +18,23 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 2 )
 
 ### DEPENDENCIES ############################################################
 
-#FIND_PACKAGE( ILCUTIL COMPONENTS ILCSOFT_CMAKE_MODULES REQUIRED )  # (**)
-LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )        # (*)
-FIND_PACKAGE( ILCSOFT_CMAKE_MODULES REQUIRED )                      # (*)
+FIND_PACKAGE( ILCUTIL COMPONENTS ILCSOFT_CMAKE_MODULES REQUIRED )
 
 # load default settings from ILCSOFT_CMAKE_MODULES
 INCLUDE( ilcsoft_default_settings )
 
-#FIND_PACKAGE( Marlin 1.0 REQUIRED )        # (**)
-#FIND_PACKAGE( MarlinUtil 1.2 REQUIRED )    # (**)
+# in order to find FindEUDAQ.cmake
+LIST( APPEND CMAKE_MODULE_PATH ${PROJECT_SOURCE_DIR}/cmake )
 
-SET( streamlog_DIR ${Marlin_DIR} )          # (*)
-FIND_PACKAGE( Marlin REQUIRED )             # (*)
-FIND_PACKAGE( streamlog REQUIRED )          # (*)
-FIND_PACKAGE( LCIO REQUIRED )               # (*)
-FIND_PACKAGE( GEAR REQUIRED )               # (*)
-FIND_PACKAGE( MarlinUtil REQUIRED )         # (*)
-FIND_PACKAGE( CED REQUIRED )                # (*)
-FIND_PACKAGE( CLHEP REQUIRED )              # (*)
-FIND_PACKAGE( LCCD  REQUIRED )               # (*)
 
+FIND_PACKAGE( Marlin 1.0 REQUIRED )
+FIND_PACKAGE( MarlinUtil 1.2 REQUIRED )
 FIND_PACKAGE( GSL )
 FIND_PACKAGE( AIDA )
 FIND_PACKAGE( EUDAQ )
 FIND_PACKAGE( ROOT COMPONENTS Minuit )
 
-#FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT ) # (**)
-FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT streamlog LCIO LCCD GEAR CED CLHEP ) # (*)
+FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT )
     IF( ${pkg}_FOUND )
         INCLUDE_DIRECTORIES( ${${pkg}_INCLUDE_DIRS} )
         LINK_LIBRARIES( ${${pkg}_LIBRARIES} )
@@ -54,12 +44,6 @@ FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT streamlog LCIO LCCD GEAR CED 
     ENDIF()
 ENDFOREACH()
 
-# ---------------------------------------------------------------------------------
-# (*) needed to compile with ilcsoft v01-10. Not needed anymore for ilcsoft v01-11
-# ---------------------------------------------------------------------------------
-# (**) uncomment this lines if backwards compatibility to v01-10 is not needed
-# anymore. Lines marked with (*) should in that case be removed/commented out as well !!
-# ---------------------------------------------------------------------------------
 
 
 ### DOCUMENTATION ###########################################################
