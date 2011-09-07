@@ -50,7 +50,7 @@
 #include <EVENT/LCEvent.h>
 #include <Exceptions.h>
 // lccd
-#include <lccd/DBInterface.hh>
+//#include <lccd/DBInterface.hh>
 
 // system includes <>
 #include <map>
