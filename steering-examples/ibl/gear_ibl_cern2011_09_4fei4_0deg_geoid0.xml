@@ -1,0 +1,196 @@
+<gear>
+	<!--
+		IBL testbeam June 2011
+	-->
+	<global detectorName="EUTelescope"/>
+	<BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
+	<detectors>
+		<detector name="SiPlanes" geartype="SiPlanesParameters">
+			<siplanesID ID="0"/>
+			<siplanesType type="TelescopeWithoutDUT"/>
+			<siplanesNumber number="10"/>
+			<layers>
+				<!--Eudet-Plane 0 - EUD0 -->
+				<layer>
+					<ladder 	ID="0"
+						 	positionX="0.00"	positionY="0.00"	positionZ="0.0"
+							rotationZY="0.00"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="21.2"		sizeY="10.6"		thickness="0.030"
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="0"
+							positionX="0.00"	positionY="0.00"	positionZ="0.0" 
+							sizeX="21.2"		sizeY="10.6"		thickness="0.020" 
+							npixelX="1152"		npixelY="576" 
+							pitchX="0.018402778"	pitchY="0.018402778" 	resolution="0.0045" 
+							rotation1="-1.0" 	rotation2="0.0" 
+							rotation3="0.0"		rotation4="-1.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+				<!--Eudet-Plane 1 - EUD1 -->
+				<layer>
+					<ladder 	ID="1" 
+							positionX="0.00"	positionY="0.00"	positionZ="100.0" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="21.2"		sizeY="10.6"		thickness="0.030" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="1" 
+							positionX="0.00"	positionY="0.00"	positionZ="100.0" 
+							sizeX="21.2"		sizeY="10.6"		thickness="0.020" 
+							npixelX="1152"		npixelY="576" 
+							pitchX="0.018402778"	pitchY="0.018402778"	resolution="0.0045" 
+							rotation1="-1.0"	rotation2="0.0" 
+							rotation3="0.0"		rotation4="-1.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+				<!--Eudet-Plane 2 - EUD2 -->
+				<layer>
+					<ladder 	ID="2" 
+							positionX="0.00"	positionY="0.00"	positionZ="200.0" 
+							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
+							sizeX="21.2"		sizeY="10.6"		thickness="0.030" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="2" 
+							positionX="0.00"	positionY="0.00"	positionZ="200.0" 
+							sizeX="21.2"		sizeY="10.6"		thickness="0.020"
+							npixelX="1152"		npixelY="576"
+							pitchX="0.018402778" 	pitchY="0.018402778" 	resolution="0.0045"
+							rotation1="-1.0"	rotation2="0.0"
+							rotation3="0.0" 	rotation4="-1.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+				<!--APIX-Plane 1 - FE-I3       -->
+				<layer>
+					<ladder 	ID="10"
+                                                        positionX="00.00"       positionY="0.00"        positionZ="284.00" 
+                                                        rotationZY="0.0"        rotationZX="0.0"        rotationXY="0.0" 
+                                                        sizeX="20.0"            sizeY="16.8"            thickness="0.200" 
+                                                        radLength="93.660734"
+                                        />
+                                        <sensitive      ID="10" 
+                                                        positionX="00.00"       positionY="0.00"        positionZ="284.00" 
+        						sizeX="7.2" sizeY="8.0" npixelX="18" npixelY="160"
+                                                        thickness="0.450" 
+                                                        pitchX="0.250"          pitchY="0.05"           resolution="0.0500" 
+                                                        rotation1="0.0"        rotation2="1.0" 
+                                                        rotation3="-1.0"         rotation4="0.0" 
+                                                        radLength="93.660734"
+					/>
+				</layer>
+                                <!--APIX-Plane 2 - FE-I3       -->
+				<layer>
+					<ladder 	ID="11"
+                                                        positionX="00.00"       positionY="0.00"        positionZ="335.00" 
+                                                        rotationZY="0.0"        rotationZX="0.0"        rotationXY="0.0" 
+                                                        sizeX="20.0"            sizeY="16.8"            thickness="0.200" 
+                                                        radLength="93.660734"
+                                        />
+                                        <sensitive      ID="11" 
+                                                        positionX="00.00"       positionY="0.00"        positionZ="335.00" 
+         						sizeX="7.2" sizeY="8.0" npixelX="18" npixelY="160"
+							thickness="0.450" 
+                                                        pitchX="0.250"          pitchY="0.05"           resolution="0.0500" 
+                                                        rotation1="0.0"        rotation2="1.0" 
+                                                        rotation3="-1.0"         rotation4="0.0" 
+                                                        radLength="93.660734"
+					/>
+				</layer>
+				<!--APIX-Plane 3 - FE-I3       -->
+				<layer>
+					<ladder 	ID="12" 
+							positionX="00.00" 	positionY="0.00" 	positionZ="393.00" 
+							rotationZY="0.0" 	rotationZX="0.0" 	rotationXY="0.0" 
+							sizeX="20.0" 		sizeY="16.8" 		thickness="0.500" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="12" 
+							positionX="00.00" 	positionY="0.00" 	positionZ="393.00" 
+	       						sizeX="7.2" sizeY="8.0" npixelX="18" npixelY="160"
+							thickness="0.300" 
+							pitchX="0.250" 		pitchY="0.05" 		resolution="0.0500" 
+                                                        rotation1="0.0"        rotation2="1.0" 
+                                                        rotation3="-1.0"         rotation4="0.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+				<!--APIX-Plane 4 - FE-I3       -->
+				<layer>
+					<ladder 	ID="13" 
+							positionX="00.00" 	positionY="0.00" 	positionZ="444.00" 
+							rotationZY="0.0" 	rotationZX="0.0" 	rotationXY="0.0" 
+							sizeX="20.0" 		sizeY="16.8" 		thickness="0.500" 
+							radLength="93.660734"
+					/>
+					<sensitive 	ID="13" 
+							positionX="00.00" 	positionY="0.00" 	positionZ="444.00" 
+	       						sizeX="7.2" sizeY="8.0" npixelX="18" npixelY="160"
+							thickness="0.250" 
+							pitchX="0.250" 		pitchY="0.05" 		resolution="0.0500" 
+                                                        rotation1="0.0"        rotation2="1.0" 
+                                                        rotation3="-1.0"         rotation4="0.0" 
+							radLength="93.660734"
+					/>
+				</layer>
+                                <!--Eudet-Plane 3 - EUD3 -->
+                                <layer>
+                                        <ladder         ID="3"
+                                                        positionX="0.00"        positionY="0.00"        positionZ="594.00"
+                                                        rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.030"
+                                                        radLength="93.660734"
+                                        />
+                                        <sensitive      ID="3"
+                                                        positionX="0.00"        positionY="0.00"        positionZ="594.00" 
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.02" 
+                                                        npixelX="1152"          npixelY="576" 
+                                                        pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
+                                                        rotation1="-1.0"        rotation2="0.0" 
+                                                        rotation3="0.0"         rotation4="-1.0" 
+                                                        radLength="93.660734"
+                                        />
+                                </layer>
+                                <!--Eudet-Plane 4 - EUD4 -->
+                                <layer>
+                                        <ladder         ID="4"
+                                                        positionX="0.00"        positionY="0.00"        positionZ="694.00"
+                                                        rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.030"
+                                                        radLength="93.660734"
+                                        />
+                                        <sensitive      ID="4"
+                                                        positionX="0.00"        positionY="0.00"        positionZ="694.00" 
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.02" 
+                                                        npixelX="1152"          npixelY="576" 
+                                                        pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
+                                                        rotation1="-1.0"        rotation2="0.0" 
+                                                        rotation3="0.0"         rotation4="-1.0" 
+                                                        radLength="93.660734"
+                                        />
+                                </layer>
+                                <!--Eudet-Plane 5 - EUD5 -->
+                                <layer>
+                                        <ladder         ID="5"
+                                                        positionX="0.00"        positionY="0.00"        positionZ="794.00"
+                                                        rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.030"
+                                                        radLength="93.660734"
+                                        />
+                                        <sensitive      ID="5"
+                                                        positionX="0.00"        positionY="0.00"        positionZ="794.00" 
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.02" 
+                                                        npixelX="1152"          npixelY="576" 
+                                                        pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
+                                                        rotation1="-1.0"        rotation2="0.0" 
+                                                        rotation3="0.0"         rotation4="-1.0" 
+                                                        radLength="93.660734"
+                                        />
+                                </layer>
+			</layers>
+		</detector>
+	</detectors>
+</gear>
