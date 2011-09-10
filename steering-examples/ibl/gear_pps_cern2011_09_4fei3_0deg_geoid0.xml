@@ -76,9 +76,9 @@
                                                         positionX="00.00"       positionY="0.00"        positionZ="284.00" 
         						sizeX="7.2" sizeY="8.0" npixelX="18" npixelY="160"
                                                         thickness="0.450" 
-                                                        pitchX="0.250"          pitchY="0.05"           resolution="0.0500" 
-                                                        rotation1="0.0"        rotation2="1.0" 
-                                                        rotation3="-1.0"         rotation4="0.0" 
+                                                        pitchX="0.400"          pitchY="0.05"           resolution="0.0500" 
+                                                        rotation1="-1.0"       rotation2="0.0" 
+                                                        rotation3="00.0"         rotation4=" 1.0"
                                                         radLength="93.660734"
 					/>
 				</layer>
@@ -94,9 +94,9 @@
                                                         positionX="00.00"       positionY="0.00"        positionZ="335.00" 
          						sizeX="7.2" sizeY="8.0" npixelX="18" npixelY="160"
 							thickness="0.450" 
-                                                        pitchX="0.250"          pitchY="0.05"           resolution="0.0500" 
-                                                        rotation1="0.0"        rotation2="1.0" 
-                                                        rotation3="-1.0"         rotation4="0.0" 
+                                                        pitchX="0.400"          pitchY="0.05"           resolution="0.0500" 
+                                                        rotation1="-1.0"       rotation2="0.0" 
+                                                        rotation3="00.0"         rotation4=" 1.0"
                                                         radLength="93.660734"
 					/>
 				</layer>
@@ -112,9 +112,9 @@
 							positionX="00.00" 	positionY="0.00" 	positionZ="393.00" 
 	       						sizeX="7.2" sizeY="8.0" npixelX="18" npixelY="160"
 							thickness="0.300" 
-							pitchX="0.250" 		pitchY="0.05" 		resolution="0.0500" 
-                                                        rotation1="0.0"        rotation2="1.0" 
-                                                        rotation3="-1.0"         rotation4="0.0" 
+							pitchX="0.400" 		pitchY="0.05" 		resolution="0.0500" 
+                                                        rotation1="-1.0"       rotation2="0.0" 
+                                                        rotation3="00.0"         rotation4=" 1.0"
 							radLength="93.660734"
 					/>
 				</layer>
@@ -130,9 +130,9 @@
 							positionX="00.00" 	positionY="0.00" 	positionZ="444.00" 
 	       						sizeX="7.2" sizeY="8.0" npixelX="18" npixelY="160"
 							thickness="0.250" 
-							pitchX="0.250" 		pitchY="0.05" 		resolution="0.0500" 
-                                                        rotation1="0.0"        rotation2="1.0" 
-                                                        rotation3="-1.0"         rotation4="0.0" 
+							pitchX="0.400" 		pitchY="0.05" 		resolution="0.0500" 
+                                                        rotation1="-1.0"       rotation2="0.0" 
+                                                        rotation3="00.0"         rotation4=" 1.0"
 							radLength="93.660734"
 					/>
 				</layer>
