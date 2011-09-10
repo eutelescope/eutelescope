@@ -542,24 +542,24 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
         in particular ID of the sensor to be treated as DUT, use reference plane or not,
 		which plane to be used as DUT.
 	 -->
-  <processor name="DUTHisto10" type="EUTelDUTHistograms">
-    <parameter name="ManualDUTid" type="int" value="10"/>
-    <parameter name="referencePlaneID" type="int" value="13" />
+  <processor name="DUTHisto20" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="20"/>
+    <parameter name="referencePlaneID" type="int" value="23" />
   </processor>
 
-  <processor name="DUTHisto11" type="EUTelDUTHistograms">
-    <parameter name="ManualDUTid" type="int" value="11"/>
-	<parameter name="referencePlaneID" type="int" value="13" />
+  <processor name="DUTHisto21" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="21"/>
+	<parameter name="referencePlaneID" type="int" value="23" />
   </processor>
  
-  <processor name="DUTHisto12" type="EUTelDUTHistograms">
-    <parameter name="ManualDUTid" type="int" value="12"/>
-	<parameter name="referencePlaneID" type="int" value="13" />
+  <processor name="DUTHisto22" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="22"/>
+	<parameter name="referencePlaneID" type="int" value="23" />
   </processor>
 
-  <processor name="DUTHisto13" type="EUTelDUTHistograms">
-    <parameter name="ManualDUTid" type="int" value="13"/>
-	<parameter name="referencePlaneID" type="int" value="10" />
+  <processor name="DUTHisto23" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="23"/>
+	<parameter name="referencePlaneID" type="int" value="20" />
   </processor>
 
 
