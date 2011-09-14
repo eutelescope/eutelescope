@@ -72,7 +72,13 @@ this builds the library:
 
 <b>Last versions release info:</b>
 
-<b>[Pro]</b> Version v00-06-02-pre.
+<b>[Pro]</b> Version v00-06-03-pre.
+
+@li An obsolete LCIO method setIsReferencePointPCA is commented out for compatibility with new ILCSoft release (v01-12)
+@li Minor: 2D histograms added to EUTelDafFitter
+
+
+<b>[Old]</b> Version v00-06-02-pre.
 
 @li Inconsistency with the GEAR library found. Important! Use only GEAR v01-17 where the sensor (plane) tilts are treated properly. If use ilcsoft v01_11, then the GEAR library v01-17 is included.
 @li New processor EUTelAPIXHotPixelKiller introduced which dumps hot pixels into an event-like record. This information is used in PreAlignment (Hitmaker step) and Alignment steps. The hot pixels are not excluded from any event record, only a mask condition is applied to prevent the hotpixels from entering (pre)-alignment pixel selection. Otherwise the logic of the processors did not change.
