@@ -310,7 +310,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 
- if ( _nEvt % 10 == 0 ) {
+ if ( _nEvt % 1000 == 0 ) {
     streamlog_out( MESSAGE2 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
