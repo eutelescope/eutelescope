@@ -533,7 +533,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
     fittrack->setChi2(Chiquare[0]);  // x Chi2 of the fit
     //  fittrack->setNdf(nBestFired); // Number of planes fired (!)
 
-    fittrack->setIsReferencePointPCA(false);
+//    fittrack->setIsReferencePointPCA(false);
 
     // Calculate positions of fitted track in every plane
 

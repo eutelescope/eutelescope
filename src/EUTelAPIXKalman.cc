@@ -526,7 +526,7 @@ void EUTelAPIXKalman::addToLCIO(double chi2, int ndof){
   fittrack->setChi2(chi2);
   fittrack->setNdf(ndof);
   
-  fittrack->setIsReferencePointPCA(false);
+//  fittrack->setIsReferencePointPCA(false);
   float refpoint[3];
   
   map<int, FitPlane*>::iterator it = _fitter->indexToPlane.begin();

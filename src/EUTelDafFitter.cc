@@ -171,7 +171,7 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track){
   fittrack->setChi2(track->chi2);
   fittrack->setNdf(int(track->ndof + 0.2f) );
   
-  fittrack->setIsReferencePointPCA(false);
+//  fittrack->setIsReferencePointPCA(false);
   float refpoint[3];
   
   for(size_t plane = 0; plane < _system.planes.size(); plane++){

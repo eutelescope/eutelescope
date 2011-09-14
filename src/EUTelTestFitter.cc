@@ -1690,7 +1690,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       // (see below in loop over telescope planes)
       // If no DUT present: use position in the first plane !
 
-      fittrack->setIsReferencePointPCA(false);
+//      fittrack->setIsReferencePointPCA(false);
       float refpoint[3];
 
       // Track points fitted in each plane are stored as track hits

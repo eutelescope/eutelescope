@@ -1103,7 +1103,7 @@ void EUTelMultiLineFit::processEvent (LCEvent * event) {
         fittrack->setNdf(_nPlanes);
         //  fittrack->setNdf(nBestFired); // Number of planes fired (!)
 
-        fittrack->setIsReferencePointPCA(false);
+//        fittrack->setIsReferencePointPCA(false);
 
         // Calculate positions of fitted track in every plane
 
