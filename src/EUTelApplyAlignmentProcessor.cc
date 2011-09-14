@@ -467,8 +467,8 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
           // alignment constants. So the idea is to eventually advice
           // the users if running in DEBUG and copy the not aligned hit
           // in the new collection.
-          streamlog_out ( DEBUG ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
-                                    << iHit << endl;
+//          streamlog_out ( DEBUG3 ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
+//                                    << iHit << endl;
 
           for ( size_t i = 0; i < 3; ++i )
           {
