@@ -20,7 +20,7 @@
 					/>
 					<sensitive 	ID="0"
 							positionX="0.00"	positionY="0.00"	positionZ="0.00" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.02" 
+							sizeX="21.2"		sizeY="10.6"		thickness="0.025"
 							npixelX="1152"		npixelY="576" 
 							pitchX="0.018402778"	pitchY="0.018402778" 	resolution="0.0045" 
 							rotation1="-1.0" 	rotation2="0.0" 
@@ -31,14 +31,14 @@
 				<!--Eudet-Plane 1 - EUD1 -->
 				<layer>
 					<ladder 	ID="1" 
-							positionX="0.00"	positionY="0.00"	positionZ="34.50" 
+							positionX="0.00"	positionY="0.00"	positionZ="100.0" 
 							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.030" 
+							sizeX="21.2"		sizeY="10.6"		thickness="0.025" 
 							radLength="93.660734"
 					/>
 					<sensitive 	ID="1" 
-							positionX="0.00"	positionY="0.00"	positionZ="34.50" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.02" 
+							positionX="0.00"	positionY="0.00"	positionZ="100.0" 
+							sizeX="21.2"		sizeY="10.6"		thickness="0.025"
 							npixelX="1152"		npixelY="576" 
 							pitchX="0.018402778"	pitchY="0.018402778"	resolution="0.0045" 
 							rotation1="-1.0"	rotation2="0.0" 
@@ -49,14 +49,14 @@
 				<!--Eudet-Plane 2 - EUD2 -->
 				<layer>
 					<ladder 	ID="2" 
-							positionX="0.00"	positionY="0.00"	positionZ="69.50" 
+							positionX="0.00"	positionY="0.00"	positionZ="200.0" 
 							rotationZY="0.0"	rotationZX="0.0"	rotationXY="0.0" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.030" 
+							sizeX="21.2"		sizeY="10.6"		thickness="0.025" 
 							radLength="93.660734"
 					/>
 					<sensitive 	ID="2" 
-							positionX="0.00"	positionY="0.00"	positionZ="69.50" 
-							sizeX="21.2"		sizeY="10.6"		thickness="0.02"
+							positionX="0.00"	positionY="0.00"	positionZ="200.0" 
+							sizeX="21.2"		sizeY="10.6"		thickness="0.025"
 							npixelX="1152"		npixelY="576"
 							pitchX="0.018402778" 	pitchY="0.018402778" 	resolution="0.0045"
 							rotation1="-1.0"	rotation2="0.0"
@@ -67,86 +67,86 @@
 				<!--APIX-Plane 1 - FE-I4 SCC31 -->
 				<layer>
 					<ladder 	ID="20"
-                                                        positionX="00.00"       positionY="00.00"       positionZ="137.5" 
-                                                        rotationZY="0.0"        rotationZX="15.0"       rotationXY="0.0" 
-                                                        sizeX="20.0"            sizeY="16.8"            thickness="0.025" 
+                                                        positionX="00.00"       positionY="00.00"       positionZ="281.3" 
+                                                        rotationZY="14.83"      rotationZX="00.0"       rotationXY="0.0" 
+                                                        sizeX="20.0"            sizeY="16.8"            thickness="0.150" 
                                                         radLength="93.660734"
                                         />
                                         <sensitive      ID="20" 
-                                                        positionX="00.00"       positionY="00.00"       positionZ="137.5" 
-                                                        sizeX="20.0"             sizeY="16.8"            thickness="0.025" 
+                                                        positionX="00.00"       positionY="00.00"       positionZ="281.3" 
+                                                        sizeX="20.0"             sizeY="16.8"            thickness="0.150" 
                                                         npixelX="80"            npixelY="336"
-                                                        pitchX="0.250"          pitchY="0.05"           resolution="1.0000" 
-                                                        rotation1="0.0"        rotation2="1.0" 
-                                                        rotation3="-1.0"         rotation4="0.0" 
+                                                        pitchX="0.250"          pitchY="0.05"           resolution="0.1000" 
+                                                        rotation1="-1.0"        rotation2="0.0" 
+                                                        rotation3="00.0"         rotation4="-1.0" 
                                                         radLength="93.660734"
 					/>
 				</layer>
                  		<!--APIX-Plane 2 - FE-I4 BON_CN4_3D_34 -->
 				<layer>
 					<ladder 	ID="21"
-                                                        positionX="00.00"       positionY="00.00"       positionZ="224.9" 
-                                                        rotationZY="0.0"        rotationZX="15.0"        rotationXY="0.0" 
-                                                        sizeX="20.0"            sizeY="16.8"            thickness="0.025" 
+                                                        positionX="00.00"       positionY="00.00"       positionZ="319.9" 
+                                                        rotationZY="13.74"      rotationZX="00.0"        rotationXY="0.0" 
+                                                        sizeX="20.0"            sizeY="16.8"            thickness="0.150" 
                                                         radLength="93.660734"
                                         />
                                         <sensitive      ID="21" 
-                                                        positionX="00.00"       positionY="00.00"       positionZ="224.9" 
-                                                        sizeX="20.0"             sizeY="16.8"            thickness="0.025" 
+                                                        positionX="00.00"       positionY="00.00"       positionZ="319.9" 
+                                                        sizeX="20.0"             sizeY="16.8"            thickness="0.150" 
                                                         npixelX="80"            npixelY="336"
-                                                        pitchX="0.250"          pitchY="0.05"           resolution="1.0000" 
-                                                        rotation1="0.0"        rotation2="1.0" 
-                                                        rotation3="-1.0"         rotation4="0.0" 
+                                                        pitchX="0.250"          pitchY="0.05"           resolution="0.1000" 
+                                                        rotation1="-1.0"        rotation2="0.0" 
+                                                        rotation3="0.0"         rotation4="-1.0" 
                                                         radLength="93.660734"
 					/>
 				</layer>
 				<!--APIX-Plane 3 - FE-I4 SCC60 -->
 				<layer>
 					<ladder 	ID="22" 
-							positionX="00.00" 	positionY="00.00"	positionZ="272.9" 
-							rotationZY="0.0" 	rotationZX="15.0" 	rotationXY="0.0" 
-							sizeX="20.0" 		sizeY="16.8" 		thickness="0.025" 
+							positionX="00.00" 	positionY="00.00"	positionZ="359.8" 
+							rotationZY="13.98"      rotationZX="00.0" 	rotationXY="0.0" 
+							sizeX="20.0" 		sizeY="16.8" 		thickness="0.150" 
 							radLength="93.660734"
 					/>
 					<sensitive 	ID="22" 
-							positionX="00.00" 	positionY="00.00"	positionZ="272.9" 
-							sizeX="20.0" 		sizeY="16.8" 		thickness="0.025" 
+							positionX="00.00" 	positionY="00.00"	positionZ="359.8" 
+							sizeX="20.0" 		sizeY="16.8" 		thickness="0.150" 
 							npixelX="80" 		npixelY="336"
-							pitchX="0.250" 		pitchY="0.05" 		resolution="1.0000" 
-                                                        rotation1="0.0"        rotation2="1.0" 
-                                                        rotation3="-1.0"         rotation4="0.0" 
+							pitchX="0.250" 		pitchY="0.05" 		resolution="0.1000" 
+                                                        rotation1="-1.0"        rotation2="0.0" 
+                                                        rotation3="0.0"         rotation4="-1.0" 
 							radLength="93.660734"
 					/>
 				</layer>
 				<!--APIX-Plane 4 - FE-I4 FBK-0,011 -->
                                 <layer>
 					<ladder 	ID="23" 
-							positionX="00.00" 	positionY="00.00"	positionZ="316.9" 
-							rotationZY="0.0" 	rotationZX="15.0" 	rotationXY="0.0" 
-							sizeX="20.0" 		sizeY="16.8" 		thickness="0.025" 
+							positionX="00.00" 	positionY="00.00"	positionZ="399.7" 
+							rotationZY="14.22"      rotationZX="15.0" 	rotationXY="0.0" 
+							sizeX="20.0" 		sizeY="16.8" 		thickness="0.150" 
 							radLength="93.660734"
 					/>
 					<sensitive 	ID="23" 
 							positionX="00.00" 	positionY="00.00"	positionZ="316.9" 
-							sizeX="20.0" 		sizeY="16.8" 		thickness="0.025" 
+							sizeX="20.0" 		sizeY="16.8" 		thickness="0.150" 
 							npixelX="80" 		npixelY="336"
-							pitchX="0.250" 		pitchY="0.05" 		resolution="1.0000" 
-                                                        rotation1="0.0"        rotation2="1.0" 
-                                                        rotation3="-1.0"         rotation4="0.0" 
+							pitchX="0.250" 		pitchY="0.05" 		resolution="0.1000" 
+                                                        rotation1="-1.0"        rotation2="0.0" 
+                                                        rotation3="0.0"         rotation4="-1.0" 
 							radLength="93.660734"
 					/>
 				</layer>
                                 <!--Eudet-Plane 3 - EUD3 -->
                                 <layer>
                                         <ladder         ID="3"
-                                                        positionX="0.00"        positionY="0.00"        positionZ="452.00"
+                                                        positionX="0.00"        positionY="0.00"        positionZ="579.60"
                                                         rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
-                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.030"
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.025"
                                                         radLength="93.660734"
                                         />
                                         <sensitive      ID="3"
-                                                        positionX="0.00"        positionY="0.00"        positionZ="452.00" 
-                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.02" 
+                                                        positionX="0.00"        positionY="0.00"        positionZ="579.60" 
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.025"
                                                         npixelX="1152"          npixelY="576" 
                                                         pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
                                                         rotation1="-1.0"        rotation2="0.0" 
@@ -157,14 +157,14 @@
                                 <!--Eudet-Plane 4 - EUD4 -->
                                 <layer>
                                         <ladder         ID="4"
-                                                        positionX="0.00"        positionY="0.00"        positionZ="487.00"
+                                                        positionX="0.00"        positionY="0.00"        positionZ="679.60"
                                                         rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
-                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.030"
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.025"
                                                         radLength="93.660734"
                                         />
                                         <sensitive      ID="4"
-                                                        positionX="0.00"        positionY="0.00"        positionZ="487.00" 
-                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.02" 
+                                                        positionX="0.00"        positionY="0.00"        positionZ="679.60" 
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.025"
                                                         npixelX="1152"          npixelY="576" 
                                                         pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
                                                         rotation1="-1.0"        rotation2="0.0" 
@@ -175,14 +175,14 @@
                                 <!--Eudet-Plane 5 - EUD5 -->
                                 <layer>
                                         <ladder         ID="5"
-                                                        positionX="0.00"        positionY="0.00"        positionZ="522.00"
+                                                        positionX="0.00"        positionY="0.00"        positionZ="779.60"
                                                         rotationZY="0.00"       rotationZX="0.0"        rotationXY="0.0" 
-                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.030"
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.025"
                                                         radLength="93.660734"
                                         />
                                         <sensitive      ID="5"
-                                                        positionX="0.00"        positionY="0.00"        positionZ="522.00" 
-                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.02" 
+                                                        positionX="0.00"        positionY="0.00"        positionZ="799.60" 
+                                                        sizeX="21.2"            sizeY="10.6"            thickness="0.025"
                                                         npixelX="1152"          npixelY="576" 
                                                         pitchX="0.018402778"    pitchY="0.018402778"    resolution="0.0045" 
                                                         rotation1="-1.0"        rotation2="0.0" 
