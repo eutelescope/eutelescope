@@ -24,6 +24,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <processor name="ApplyPreAlignment"/>
       <processor name="LoadAlignment"/>
       <processor name="ApplyAlignment"/>
+      <processor name="Correlator"/>
       <processor name="DafFitter"/>
       <!-- processor name="Fitter"/ -->
          <!-- an example how to run anti-alignment processor -->
@@ -203,6 +204,15 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--parameter name="WindowMinY" type="FloatVec"> </parameter-->
 </processor>
 
+<processor name="Correlator" type="EUTelCorrelator">
+ <!--EUTelCorrelator fills histograms with correlation plots-->
+  <!--Hit collection name-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
+  <!--parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> correlatedhit  </parameter -->
+ <!-- -->
+  <parameter name="DumpOffset" type="bool" > false </parameter>
+</processor>
+
 
   <processor name="DafFitter" type="EUTelDafFitter">
     <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5  </parameter>
@@ -216,13 +226,13 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="Ebeam" type="float" value="120"/>
     <parameter name="TelResolutionX" type="float" value="4.3"/>
     <parameter name="TelResolutionY" type="float" value="4.3"/>
-    <parameter name="DutResolutionX" type="float" value="250"/>
-    <parameter name="DutResolutionY" type="float" value="50"/>
+    <parameter name="DutResolutionX" type="float" value="50" />
+    <parameter name="DutResolutionY" type="float" value="10"/>
     <parameter name="NominalDxdz" type="float" value="0.0"/>
     <parameter name="NominalDydz" type="float" value="0.0"/>
     <parameter name="FinderRadius" type="float" value="1500" />
     <parameter name="Chi2Cutoff" type="float" value="50"/>
-    <parameter name="MaxChi2OverNdof" type="float" value="12"/>
+    <parameter name="MaxChi2OverNdof" type="float" value="20"/>
     <parameter name="NDutHits" type="int" value="1"/>
   </processor>
 
