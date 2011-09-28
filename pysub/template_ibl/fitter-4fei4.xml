@@ -230,7 +230,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="DutResolutionY" type="float" value="10"/>
     <parameter name="NominalDxdz" type="float" value="0.0"/>
     <parameter name="NominalDydz" type="float" value="0.0"/>
-    <parameter name="FinderRadius" type="float" value="1500" />
+    <parameter name="FinderRadius" type="float" value="500" />
     <parameter name="Chi2Cutoff" type="float" value="50"/>
     <parameter name="MaxChi2OverNdof" type="float" value="20"/>
     <parameter name="NDutHits" type="int" value="1"/>
@@ -526,7 +526,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Alignment corrections for DUT: shift (in mm) in X, Y and rotation around Z-->
   <parameter name="DUTalignment" type="FloatVec"> @DUTAlignment@ </parameter>
   <!--DUT sensor pitch in X-->
-  <parameter name="DUTpitchX" type="double" value="0.40"/>
+  <parameter name="DUTpitchX" type="double" value="0.25"/>
   <!--DUT sensor pitch in Y-->
   <parameter name="DUTpitchY" type="double" value="0.05"/>
   <!--Print out every DebugEnevtCount event-->
