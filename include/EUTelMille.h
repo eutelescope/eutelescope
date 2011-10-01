@@ -13,6 +13,8 @@
 // built only if GEAR is available
 #ifdef USE_GEAR
 // eutelescope includes ".h"
+//#include "TrackerHitImpl2.h"
+#include "IMPL/TrackerHitImpl.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -27,12 +29,13 @@
 // lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
-#include <IMPL/TrackerHitImpl.h>
 
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
+#include <AIDA/IHistogram1D.h>
+#include <AIDA/IHistogram2D.h>
 #endif
 
 // system includes <>
@@ -329,6 +332,8 @@ namespace eutelescope {
      */
     void bookHistos();
 
+    virtual int guessSensorID(TrackerHitImpl* hit);
+
 
   protected:
 
@@ -499,7 +504,9 @@ namespace eutelescope {
      *  its name
      */
     std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
-
+    std::map<std::string, AIDA::IHistogram1D * > _aidaHistoMap1D;
+    std::map<std::string, AIDA::IHistogram2D * > _aidaHistoMap2D;
+ 
     static std::string _numberTracksLocalname;
 
     static std::string _chi2XLocalname;
@@ -508,6 +515,12 @@ namespace eutelescope {
     static std::string _residualXLocalname;
     static std::string _residualYLocalname;
     static std::string _residualZLocalname;
+
+    static std::string _residualXvsXLocalname;
+    static std::string _residualXvsYLocalname;
+    static std::string _residualYvsXLocalname;
+    static std::string _residualYvsYLocalname;
+ 
 #endif
 
     int _nPlanes;

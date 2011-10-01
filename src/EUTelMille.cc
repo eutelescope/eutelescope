@@ -59,6 +59,7 @@
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <IMPL/LCCollectionVec.h>
+//#include <TrackerHitImpl2.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/TrackImpl.h>
 #include <IMPL/LCFlagImpl.h>
@@ -120,6 +121,11 @@ std::string EUTelMille::_chi2YLocalname          = "Chi2Y";
 std::string EUTelMille::_residualXLocalname      = "ResidualX";
 std::string EUTelMille::_residualYLocalname      = "ResidualY";
 std::string EUTelMille::_residualZLocalname      = "ResidualZ";
+
+std::string EUTelMille::_residualXvsXLocalname      = "ResidualXvsX";
+std::string EUTelMille::_residualXvsYLocalname      = "ResidualXvsY";
+std::string EUTelMille::_residualYvsXLocalname      = "ResidualYvsX";
+std::string EUTelMille::_residualYvsYLocalname      = "ResidualYvsY";
 
 #endif
 
@@ -444,7 +450,7 @@ void EUTelMille::init() {
       while ( iter != sensorIDMap.end() ) {
         if( iter->second == _excludePlanes_sensorIDs[i])
           {
-//            printf("excludePlanes_sensorID %2d of %2d (%2d) \n", i, _excludePlanes_sensorIDs.size(), counter );
+            printf("excludePlanes_sensorID %2d of %2d (%2d) \n", i, _excludePlanes_sensorIDs.size(), counter );
             _excludePlanes.push_back(counter);
             break;
           }
@@ -462,7 +468,7 @@ void EUTelMille::init() {
       {
         if(_excludePlanes[i] == counter)
           {
-//            printf("excludePlanes %2d of %2d (%2d) \n", i, _excludePlanes_sensorIDs.size(), counter );
+            printf("excludePlanes %2d of %2d (%2d) \n", i, _excludePlanes_sensorIDs.size(), counter );
             excluded = true;
             break;
           }
@@ -470,7 +476,8 @@ void EUTelMille::init() {
     if(!excluded)
       _orderedSensorID_wo_excluded.push_back( iter->second );
     _orderedSensorID.push_back( iter->second );
-    
+    printf("_orderedSensorID %5d \n", _orderedSensorID.at(counter));
+
     ++iter;
     ++counter;
   }
@@ -621,6 +628,24 @@ void EUTelMille::init() {
           _distanceMaxVec.push_back(_distanceMax);
         }
     }
+
+/*
+//prepare a planes center points and normal vectors:
+  for(int i=0; i < _orderedSensorID.size(); i++)
+  {
+	// this is a normal vector to the plane
+	TVectorD	NormalVector(3);
+	NormalVector(0) = 0.;
+	NormalVector(1) = 0.;
+	NormalVector(2) = 1.; //along z axis !! {true but it's can different direction for the local sensor frame z !!}
+
+	TVectorD	CenterVector(3);
+	NormalVector(0) = 0.;
+	NormalVector(1) = 0.;
+	NormalVector(2) = 0.;
+  } 
+*/
+
   streamlog_out ( MESSAGE2 ) << "end of init" << endl;
 }
 
@@ -944,7 +969,7 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
               std::vector<int> apixColVec();
               apixData->getSparsePixelAt( iPixel, &apixPixel);
 //	       apixPixelVec.push_back(new EUTelAPIXSparsePixel(apixPixel));
-              streamlog_out ( MESSAGE ) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
+//              streamlog_out ( MESSAGE ) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
               try
               {
                  char ix[100];
@@ -1829,7 +1854,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                   _waferResidX[help] = b0 + la*c0 - x;
                   _waferResidY[help] = b1 + la*c1 - y;
                   _waferResidZ[help] = la*sqrt(1.0 - c0*c0 - c1*c1) - z;
-
+printf("sensor: %5d  %8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n", help, x,y,z,  _waferResidX[help], _waferResidY[help], _waferResidZ[help] );
                 }
             }
           delete gMinuit;
@@ -2242,7 +2267,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
                   derLC[0] = 1.0;
                   derLC[1] = 0.0;
-                  derLC[2] = _zPosHere[help];
+                  derLC[2] = _zPosHere[help] + _waferResidZ[help];
                   derLC[3] = 0.0;
             
                   residual = _waferResidX[help];
@@ -2265,7 +2290,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                   derLC[0] = 0.0;
                   derLC[1] = 1.0;
                   derLC[2] = 0.0;
-                  derLC[3] = _zPosHere[help];
+                  derLC[3] = _zPosHere[help] + _waferResidZ[help];
             
                   residual = _waferResidY[help];
                   sigma = _resolutionY[help];
@@ -2286,8 +2311,8 @@ void EUTelMille::processEvent (LCEvent * event) {
 
                   derLC[0] = 0.0;
                   derLC[1] = 0.0;
-                  derLC[2] = _xPosHere[help];
-                  derLC[3] = _yPosHere[help];
+                  derLC[2] = _xPosHere[help] + _waferResidX[help];
+                  derLC[3] = _yPosHere[help] + _waferResidY[help];
             
                   residual = _waferResidZ[help];
                   sigma = _resolutionZ[help];
@@ -2358,10 +2383,19 @@ void EUTelMille::processEvent (LCEvent * event) {
           if ( _histogramSwitch ) {
             tempHistoName = _residualXLocalname + "_d" + to_string( sensorID );
             if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
-              {
+            {
                 residx_histo->fill(_waferResidX[iDetector]);
-              }
-            else {
+
+                tempHistoName = _residualXvsYLocalname + "_d" + to_string( sensorID );
+                AIDA::IHistogram2D* residxvsY_histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap2D[tempHistoName.c_str()]) ;
+                residxvsY_histo->fill(_yPosHere[iDetector], _waferResidX[iDetector]);
+ 
+                tempHistoName = _residualXvsXLocalname + "_d" + to_string( sensorID );
+                AIDA::IHistogram2D* residxvsX_histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap2D[tempHistoName.c_str()]) ;
+                residxvsX_histo->fill(_xPosHere[iDetector], _waferResidX[iDetector]);
+            }
+            else
+            {
               streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
               streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
               _histogramSwitch = false;
@@ -2371,8 +2405,19 @@ void EUTelMille::processEvent (LCEvent * event) {
           if ( _histogramSwitch ) {
             tempHistoName = _residualYLocalname + "_d" + to_string( sensorID );
             if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+            {
               residy_histo->fill(_waferResidY[iDetector]);
-            else {
+
+              tempHistoName = _residualYvsYLocalname + "_d" + to_string( sensorID );
+              AIDA::IHistogram2D* residyvsY_histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap2D[tempHistoName.c_str()]) ;
+              residyvsY_histo->fill(_yPosHere[iDetector], _waferResidY[iDetector]);
+ 
+              tempHistoName = _residualYvsXLocalname + "_d" + to_string( sensorID );
+              AIDA::IHistogram2D* residyvsX_histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap2D[tempHistoName.c_str()]) ;
+              residyvsX_histo->fill(_xPosHere[iDetector], _waferResidY[iDetector]);
+            }
+            else
+            {
               streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualYLocalname << endl;
               streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
               _histogramSwitch = false;
@@ -2382,8 +2427,13 @@ void EUTelMille::processEvent (LCEvent * event) {
           if ( _histogramSwitch ) {
             tempHistoName = _residualZLocalname + "_d" + to_string( sensorID );
             if ( AIDA::IHistogram1D* residz_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+            {
               residz_histo->fill(_waferResidZ[iDetector]);
-            else {
+//              residzvsY_histo->fill(_yPosHere[iDetector], _waferResidZ[iDetector]);
+//              residzvsX_histo->fill(_xPosHere[iDetector], _waferResidZ[iDetector]);
+            }
+            else 
+            {
               streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualZLocalname << endl;
               streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
               _histogramSwitch = false;
@@ -2433,6 +2483,16 @@ void EUTelMille::processEvent (LCEvent * event) {
   ++_iEvt;
   if ( isFirstEvent() ) _isFirstEvent = false;
 
+}
+
+int EUTelMille::guessSensorID( TrackerHitImpl * hit ) {
+  if(hit==0)
+{
+    streamlog_out( ERROR ) << "An invalid hit pointer supplied! will exit now\n" << endl;
+    return -1;
+}
+// return hit->getDetectorID() ;
+return -1;
 }
 
 bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit) 
@@ -2620,7 +2680,7 @@ void EUTelMille::end() {
           streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualZLocalname << endl;
           streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
           _histogramSwitch = false;
-        }
+        } 
       }
 #endif
     } // end loop over all detector planes
@@ -3166,6 +3226,35 @@ void EUTelMille::bookHistos() {
         _histogramSwitch = false;
       }
 
+      tempHistoName     =  _residualXvsXLocalname + "_d" + to_string( sensorID );
+      histoTitleXResid  =  "XvsXResidual_d" + to_string( sensorID ) ;
+
+      AIDA::IHistogram2D *  tempX2dHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram2D(tempHistoName, 100, -10000., 10000., 1000, -1000., 1000. );
+      if ( tempX2dHisto ) {
+        tempX2dHisto->setTitle(histoTitleXResid);
+        _aidaHistoMap2D.insert( make_pair( tempHistoName, tempX2dHisto ) );
+      } else {
+        streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+        streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
+      }
+
+      tempHistoName     =  _residualXvsYLocalname + "_d" + to_string( sensorID );
+      histoTitleXResid  =  "XvsYResidual_d" + to_string( sensorID ) ;
+
+       tempX2dHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram2D(tempHistoName,  100, -10000., 10000., 1000, -1000., 1000.);
+      if ( tempX2dHisto ) {
+        tempX2dHisto->setTitle(histoTitleXResid);
+        _aidaHistoMap2D.insert( make_pair( tempHistoName, tempX2dHisto ) );
+      } else {
+        streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+        streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
+      }
+
+
       tempHistoName     =  _residualYLocalname + "_d" + to_string( sensorID );
       histoTitleYResid  =  "YResidual_d" + to_string( sensorID ) ;
 
@@ -3179,6 +3268,35 @@ void EUTelMille::bookHistos() {
         streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
         _histogramSwitch = false;
       }
+
+      tempHistoName     =  _residualYvsXLocalname + "_d" + to_string( sensorID );
+      histoTitleYResid  =  "YvsXResidual_d" + to_string( sensorID ) ;
+
+      AIDA::IHistogram2D *  tempY2dHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram2D(tempHistoName, 100, -10000., 10000., 1000, -1000., 1000.);
+      if ( tempY2dHisto ) {
+        tempY2dHisto->setTitle(histoTitleYResid);
+        _aidaHistoMap2D.insert( make_pair( tempHistoName, tempY2dHisto ) );
+      } else {
+        streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+        streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
+      }
+
+      tempHistoName     =  _residualYvsYLocalname + "_d" + to_string( sensorID );
+      histoTitleYResid  =  "YvsYResidual_d" + to_string( sensorID ) ;
+
+        tempY2dHisto =
+        AIDAProcessor::histogramFactory(this)->createHistogram2D(tempHistoName, 100, -10000., 10000., 1000, -1000., 1000.);
+      if ( tempY2dHisto ) {
+        tempY2dHisto->setTitle(histoTitleYResid);
+        _aidaHistoMap2D.insert( make_pair( tempHistoName, tempY2dHisto ) );
+      } else {
+        streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+        streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
+      }
+
 
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
       tempHistoName     =  _residualZLocalname + "_d" + to_string( sensorID );
