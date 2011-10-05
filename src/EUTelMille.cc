@@ -1854,7 +1854,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                   _waferResidX[help] = b0 + la*c0 - x;
                   _waferResidY[help] = b1 + la*c1 - y;
                   _waferResidZ[help] = la*sqrt(1.0 - c0*c0 - c1*c1) - z;
-printf("sensor: %5d  %8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n", help, x,y,z,  _waferResidX[help], _waferResidY[help], _waferResidZ[help] );
+//printf("sensor: %5d  %8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n", help, x,y,z,  _waferResidX[help], _waferResidY[help], _waferResidZ[help] );
                 }
             }
           delete gMinuit;
