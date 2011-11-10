@@ -135,9 +135,9 @@ void EUTelAlignmentConstant::print(ostream & os ) const {
      << setw(largeWidth) << " X off [mm] "
      << setw(largeWidth) << " Y off [mm] "
      << setw(largeWidth) << " Z off [mm] "
-     << setw(largeWidth) << " X angle "
-     << setw(largeWidth) << " Y angle "
-     << setw(largeWidth) << " Z angle "
+     << setw(largeWidth) << " ZY angle "
+     << setw(largeWidth) << " ZX angle "
+     << setw(largeWidth) << " XY angle "
      << endl
      << setw(largeWidth) << getXOffset()
      << setw(largeWidth) << getYOffset()

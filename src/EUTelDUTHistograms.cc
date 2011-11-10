@@ -1133,8 +1133,8 @@ void EUTelDUTHistograms::bookHistos()
   // Measured - fitted position in X
 
   int    shiftXNBin  = 1000;
-  double shiftXMin   = -0.1;
-  double shiftXMax   =  0.1;
+  double shiftXMin   = -0.5;
+  double shiftXMax   =  0.5;
   string shiftXTitle = "Measured - fitted X position";
 
 
@@ -1173,9 +1173,9 @@ void EUTelDUTHistograms::bookHistos()
 
   // Measured - fitted position in Y
 
-  int    shiftYNBin  =  200;
-  double shiftYMin   = -0.1;
-  double shiftYMax   =  0.1;
+  int    shiftYNBin  = 1000;
+  double shiftYMin   = -0.5;
+  double shiftYMax   =  0.5;
   string shiftYTitle = "Measured - fitted Y position";
 
 
@@ -1217,8 +1217,8 @@ void EUTelDUTHistograms::bookHistos()
   shiftXNBin  = 300;
   shiftXMin   = -15.;
   shiftXMax   =  15.;
-  double shiftVMin   = -0.1;
-  double shiftVMax   =  0.1;
+  double shiftVMin   = -0.5;
+  double shiftVMax   =  0.5;
   shiftXTitle = "Measured - fitted X position vs Y";
 
 
@@ -1275,8 +1275,8 @@ void EUTelDUTHistograms::bookHistos()
   shiftYNBin  = 300;
   shiftYMin   = -15.;
   shiftYMax   =  15.;
-  shiftVMin   = -0.1;
-  shiftVMax   =  0.1;
+  shiftVMin   = -0.5;
+  shiftVMax   =  0.5;
   shiftYTitle = "Measured - fitted Y position vs X";
 
 
@@ -1336,8 +1336,8 @@ void EUTelDUTHistograms::bookHistos()
   shiftXMin   = -15.;
   shiftXMax   =  15.; 
   int shiftVNBin  = 200;
-  shiftVMin   = -0.1;
-  shiftVMax   =  0.1;
+  shiftVMin   = -0.5;
+  shiftVMax   =  0.5;
   shiftXTitle = "Measured - fitted X position vs Y";
 
 
@@ -1402,8 +1402,8 @@ void EUTelDUTHistograms::bookHistos()
   shiftYMin   = -15.;
   shiftYMax   =  15.;
   shiftVNBin  =  200;
-  shiftVMin   = -0.1;
-  shiftVMax   =  0.1;
+  shiftVMin   = -0.5;
+  shiftVMax   =  0.5;
   shiftYTitle = "Measured - fitted Y position vs X";
 
 
@@ -1460,11 +1460,11 @@ void EUTelDUTHistograms::bookHistos()
   // Measured - fitted position in X-Y
 
   shiftXNBin  =  200;
-  shiftXMin   = -0.1;
-  shiftXMax   =  0.1;
+  shiftXMin   = -0.5;
+  shiftXMax   =  0.5;
   shiftYNBin  = 200;
-  shiftYMin   = -0.1;
-  shiftYMax   =  0.1;
+  shiftYMin   = -0.5;
+  shiftYMax   =  0.5;
   string shiftXYTitle = "Measured - fitted position in XY";
 
 

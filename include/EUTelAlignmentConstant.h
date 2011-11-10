@@ -59,10 +59,10 @@ namespace eutelescope {
      *
      */ 
     EUTelAlignmentConstant( int sensorID, 
-			    double xOff,   double yOff,   double zOff,
-			    double alpha, double beta, double gamma,
-			    double xOffErr,   double yOffErr,   double zOffErr,
-			    double alphaErr, double betaErr, double gammaErr );
+       double xOff,   double yOff,   double zOff,
+       double alpha, double beta, double gamma,
+       double xOffErr,   double yOffErr,   double zOffErr,
+       double alphaErr, double betaErr, double gammaErr );
       
     //! Default destructor
     virtual ~EUTelAlignmentConstant() { /* NO-OP */ ; }

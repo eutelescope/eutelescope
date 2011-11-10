@@ -5,6 +5,9 @@
 #include <Eigen/Core>
 #include <Eigen/Array>
 
+#include <TVector3.h>
+
+
 using namespace std;
 using namespace daffitter;
 
@@ -82,6 +85,7 @@ void TrackerSystem::clear(){
 
 void TrackerSystem::addMeasurement(size_t planeIndex, float x, float y, float z,  bool goodRegion, size_t measindex){
   planes.at(planeIndex).addMeasurement(x,y, z, goodRegion, measindex);
+//  printf("addMeas: %5d at %5.2f %5.2f %5.2f good::%5d index:%5d \n", planeIndex, x, y, z, goodRegion, measindex);
 }
 
 void TrackerSystem::getChi2Kf(TrackCandidate *candidate){
@@ -127,7 +131,8 @@ int TrackerSystem::addNeighbors(vector<PlaneHit> &candidate, list<PlaneHit> &hit
   for(list<PlaneHit>::iterator hit = hits.begin(); hit != hits.end(); hit++ ){
     for(vector<PlaneHit>::iterator it = candidate.begin(); it != candidate.end(); it++){
       Eigen::Vector2f resids = (*hit).getM() - (*it).getM();
-      if(resids.squaredNorm() > m_sqrClusterRadius  ) { continue;}
+     if(resids.squaredNorm() > m_sqrClusterRadius  ) { continue;}
+//     if(counter>3)  printf("addNeigh %5d %8.3f gt/lt %8.3f \n", counter, resids.squaredNorm(), m_sqrClusterRadius );
       candidate.push_back((*hit));
       hit = hits.erase(hit);
       counter ++; break;
@@ -146,6 +151,7 @@ void TrackerSystem::clusterTracker(){
     float yShift = -1 * getNominalYdz() * planes.at(ii).getZpos();
     for(size_t mm = 0; mm < planes.at(ii).meas.size(); mm++){
       PlaneHit a(planes.at(ii).meas.at(mm).getX() + xShift, planes.at(ii).meas.at(mm).getY() + yShift, ii, mm);
+//    printf("clusterTracker:: ii=%5d mm=%5d X=%8.3f Y=%8.3f \n",ii,mm,planes.at(ii).meas.at(mm).getX() + xShift, planes.at(ii).meas.at(mm).getY() + yShift);
       availableHits.push_back( a );
     }
   }
@@ -166,7 +172,7 @@ void TrackerSystem::clusterTracker(){
 		<< " If you are sure you config is right, see trackersystem.h on how to increase it." << std::endl;
       return;
     }
-
+//printf("TrackerSystem::clusterTracker candidate size is OK\n");
     TrackCandidate* cnd = tracks.at(m_nTracks);
     for(size_t ii = 0; ii < planes.size(); ii++){
      if( planes.at(ii).meas.size() > 0 ) { 
@@ -179,6 +185,7 @@ void TrackerSystem::clusterTracker(){
       cnd->weights.at( hit.getPlane() )( hit.getIndex()) = 1.0;
     }
     m_nTracks++;
+//printf("TrackerSystem::clusterTracker m_nTracks = %5d \n", m_nTracks);
   }
 }
 
@@ -197,7 +204,8 @@ void TrackerSystem::fitPlanesInfo(TrackCandidate *candidate){
     m_fitter->updateInfo( planes.at(ii), candidate->indexes.at(ii), e );
     m_fitter->forward.at(ii)->copy(e);
   }
- //Backward fitter, never bias
+
+  //Backward fitter, never bias
   e->cov.setZero();
   e->cov(2,2) = e->cov(3,3) = 1.0e-5f;
   e->params.setZero();
@@ -214,12 +222,15 @@ void TrackerSystem::fitPlanesInfo(TrackCandidate *candidate){
 
   for(int ii = 0; ii < (int) planes.size() ; ii++ ){
     candidate->estimates.at(ii)->copy( m_fitter->smoothed.at(ii) );
+    TrackEstimate* estim = m_fitter->smoothed.at(ii);
+//    printf("candidate at %5d :: %5.2f %5.2f  \n", ii, estim->getX(), estim->getY() );
   }
   getChi2Kf(candidate);
 }
 
 void TrackerSystem::intersect(){
   for(int plane = 0; plane < (int) planes.size(); plane++ ){
+//    printf("intersect:: plane %5d of %5d \n", plane, planes.size() );
     FitPlane& pl = planes.at(plane);
     TrackEstimate* estim = m_fitter->smoothed.at(plane);
     //Line intersects with plane where
@@ -230,9 +241,13 @@ void TrackerSystem::intersect(){
     Vector3f& normVec = pl.getPlaneNorm();
     // l, point at line is defined by esimate x, y, and prev z
     Vector3f linePoint= Vector3f( estim->getX(), estim->getY(), pl.getMeasZ() );
-    // l, unit direction of line is normal of dx/dz, dy/dz, 1.0
+//    printf(" refPoint: %5.3f %5.3f %5.3f \n", refPoint(0),refPoint(1), refPoint(2));
+//    printf(" normVec: %5.3f %5.3f %5.3f \n", normVec(0), normVec(1), normVec(2));
+//    printf(" linePoint: %5.3f %5.3f %5.3f \n", linePoint(0), linePoint(1), linePoint(2));
+   // l, unit direction of line is normal of dx/dz, dy/dz, 1.0
     Vector3f lineDir( estim->getXdz(), estim->getYdz(), 1.0f);
     lineDir = lineDir.normalized();
+//    printf(" lineDir  : %5.3f %5.3f %5.3f \n", lineDir(0), lineDir(1), lineDir(2));
     // p0 - l0
     Vector3f distance = refPoint - linePoint;
     float d = distance.dot(normVec) / lineDir.dot(normVec);
@@ -240,10 +255,28 @@ void TrackerSystem::intersect(){
     //estim->params(0) += d * lineDir(0);
     //estim->params(1) += d * lineDir(1);
     pl.setMeasZ( pl.getMeasZ() + d * lineDir(2));
+/*
+//// overwrite the line to plane intersection Z ::
+        TVector3 hitInPlane( refPoint(0), refPoint(1), refPoint(2) ); // go back to mm
+        TVector3 norm2Plane( normVec(0), normVec(1), normVec(2) );
+        TVector3 lpoint( linePoint(0), linePoint(1), linePoint(2) );
+        TVector3 lvector( lineDir(0), lineDir(1), lineDir(2) );
+        TVector3 point( 1.,1.,1. );
+          
+        double linecoord_numenator   = norm2Plane.Dot( hitInPlane - lpoint );
+        double linecoord_denumenator = norm2Plane.Dot( lvector );
+//        printf("line: numenator: %8.3f denum: %8.3f [%5.3f %5.3f %5.3f::%5.3f %5.3f %5.3f]\n", linecoord_numenator, linecoord_denumenator, norm2Plane[0], norm2Plane[1], norm2Plane[2], lvector[0], lvector[1], lvector[2] );
+
+        point = (linecoord_numenator/linecoord_denumenator)*lvector + lpoint ;
+    printf("intersect: %5.2f %5.2f %5.2f \n", point(0), point(1), point(2) );
+//    printf("plane mes: %5.2f %5.2f %5.2f \n", pl.getMeasX(), pl.getMeasY(), pl.getMeasZ() );
+////
+*/
   }
 }
 
 float TrackerSystem::runTweight(float t){
+//printf("TrackerSystem::runTweight \n");
   m_fitter->setT(t);
   m_fitter->calculateWeights(planes, getDAFChi2Cut());
   float ndof = fitPlanesInfoDafInner();
@@ -253,8 +286,10 @@ float TrackerSystem::runTweight(float t){
 
 void TrackerSystem::fitPlanesInfoDaf(TrackCandidate *candidate){
   float ndof = -4.0f;
+//printf("TrackerSystem::fitPlanesInfoDaf\n");
   for(int plane = 0; plane < (int) planes.size(); plane++ ){
     //Copy weights from candidate, get tot weight per plane
+
     planes.at(plane).weights.resize( candidate->weights.at(plane).size() );
     planes.at(plane).weights = candidate->weights.at(plane);
     if ( planes.at(plane).weights.size() > 0 ){
@@ -267,7 +302,9 @@ void TrackerSystem::fitPlanesInfoDaf(TrackCandidate *candidate){
       planes.at(plane).setTotWeight( 1.0f );
     }
     ndof += planes.at(plane).getTotWeight() * 2.0;
+//printf("plane %5d ndof:%8.3f  weight=%5.2f \n", plane, ndof, planes.at(plane).getTotWeight() );
   }
+//printf("in mid of TrackerSystem::fitPlanesInfoDaf \n");
   if(ndof > 0.0f){ fitPlanesInfoDafInner();}
   // Temperatures should be given from top level. This should be fixed.
   // if(ndof > 0.0f) { ndof = runTweight(15.0); }
@@ -279,19 +316,23 @@ void TrackerSystem::fitPlanesInfoDaf(TrackCandidate *candidate){
   if(ndof > 0.0f) { ndof = runTweight(1.0); }
   if(ndof > 0.0f) { ndof = runTweight(.1); }
   if(ndof > 0.0f) { ndof = runTweight(.1); }
-  
+//printf("and now ndof %5.3f\n",ndof);  
   if(ndof > 0.0f) {
     for(int ii = 0; ii <(int)  planes.size() ; ii++ ){
       //Store estimates and weights in candidate
       candidate->estimates.at(ii)->copy( m_fitter->smoothed.at(ii) );
       candidate->weights.at(ii) = planes.at(ii).weights;
+      TrackEstimate* estim = m_fitter->smoothed.at(ii);
+//      printf("candidate at %5d :: %5.2f %5.2f  \n", ii, estim->getX(), estim->getY() );
     }
     fitPlanesInfoDafBiased();
     getChi2Daf(candidate);
   } else {
+//printf("and now candidate ndof %5.3f\n",ndof);  
     candidate->ndof = ndof;
     candidate->chi2 = 0;
   }
+//printf("fitPlanesInfoDaf end \n");
 }
 
 void TrackerSystem::checkNan(TrackEstimate* e){
@@ -311,6 +352,8 @@ void TrackerSystem::checkNan(TrackEstimate* e){
 }
 
 float TrackerSystem::fitPlanesInfoDafInner(){
+//printf("fitPlanesInfodafInner \n");
+
   size_t nPlanes = planes.size();
   TrackEstimate* e = new TrackEstimate();
   e->cov.setZero();
@@ -320,14 +363,17 @@ float TrackerSystem::fitPlanesInfoDafInner(){
   m_fitter->updateInfoDaf( planes.at(0), e );
   float ndof( -1.0f * e->params.size());
   ndof += 2 * planes.at(0).getTotWeight();
+//printf("ndof= - %8.3f +2* %8.3f \n", e->params.size(),  planes.at(0).getTotWeight() );
   for(size_t ii = 1; ii < nPlanes ; ii++ ){
     if(not planes.at(ii).isExcluded()){
       ndof += 2 * planes.at(ii).getTotWeight();
     }
+//    printf("forw:[i=%5d] ndof += 2*%8.3f  => ndof=%8.3f \n", ii, planes.at(ii).getTotWeight(),ndof );
     m_fitter->predictInfo( planes.at( ii - 1), planes.at(ii), e );
     m_fitter->forward.at(ii)->copy(e);
     m_fitter->updateInfoDaf( planes.at(ii), e );
   }
+//printf("ndof %5.2f <? 2.5 [return?]\n", ndof);
   //No reason to complete
   if(ndof < 2.5) { return(ndof);}
   
@@ -337,17 +383,22 @@ float TrackerSystem::fitPlanesInfoDafInner(){
   m_fitter->backward.at( nPlanes -1 )->copy(e);
   m_fitter->updateInfoDaf( planes.at(nPlanes -1 ), e );
   for(int ii = nPlanes -2; ii >= 0; ii-- ){
+//    printf("back:[i=%5d] totWeight:%8.3f   \n", ii, planes.at(ii).getTotWeight() );
     m_fitter->predictInfo( planes.at( ii + 1 ), planes.at(ii), e );
     m_fitter->backward.at(ii)->copy(e);
     m_fitter->updateInfoDaf( planes.at(ii), e );
   }
   delete e;
 
+//  printf("returning ndof=%8.3f \n", ndof);
+
   m_fitter->smoothInfo();
   return(ndof);
 }
 
 float TrackerSystem::fitPlanesInfoDafBiased(){
+//printf("TrackerSystem::fitPlanesInfoDafBiased\n");
+
   size_t nPlanes = planes.size();
   TrackEstimate* e = new TrackEstimate();
   e->cov.setZero();
@@ -362,6 +413,7 @@ float TrackerSystem::fitPlanesInfoDafBiased(){
     m_fitter->predictInfo( planes.at( ii - 1), planes.at(ii), e );
     m_fitter->updateInfoDaf( planes.at(ii), e );
     m_fitter->forward.at(ii)->copy(e);
+//    printf("forward: m_fitter: %5d  ndof=%5.2f \n", ii, ndof); 
   }
   //No reason to complete
   if(ndof < 2.5) { return(ndof);}
@@ -375,6 +427,7 @@ float TrackerSystem::fitPlanesInfoDafBiased(){
     m_fitter->predictInfo( planes.at( ii + 1 ), planes.at(ii), e );
     m_fitter->backward.at(ii)->copy(e);
     m_fitter->updateInfoDaf( planes.at(ii), e );
+//    printf("backward: m_fitter: %5d  ndof=%5.2f \n", ii, ndof); 
   }
   delete e;
 

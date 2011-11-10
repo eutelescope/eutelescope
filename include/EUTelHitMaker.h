@@ -33,6 +33,7 @@
 
 #include <IMPL/LCCollectionVec.h>
 
+
 // system includes <>
 #include <string>
 #include <vector>
@@ -345,6 +346,16 @@ namespace eutelescope {
     /*!
      */
     LCCollectionVec *_preAlignmentCollectionVec;  
+ 
+    //! reference HitCollection name 
+    /*!
+     */
+    std::string _referenceHitCollectionName;
+    
+    //! reference HitCollection  
+    /*!
+     */
+    LCCollectionVec *_referenceHitCollectionVec;  
     
     //! Switch to apply eta correction
     /*! Eta correction is very important to obtain the maximum
@@ -394,6 +405,10 @@ namespace eutelescope {
      *  is "NxMPixel
      */
     std::vector<int > _xyCluSize;
+
+    //! Reference Hit file 
+    std::string _referenceHitLCIOFile;
+
 
   private:
 
@@ -540,7 +555,9 @@ namespace eutelescope {
      */
     std::map <int, double> _siOffsetXMap;
     std::map <int, double> _siOffsetYMap;
-    
+   
+    void DumpReferenceHitDB();
+ 
   };
 
   //! A global instance of the processor

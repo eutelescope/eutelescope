@@ -22,6 +22,8 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelExceptions.h"
+#include "EUTelReferenceHit.h"
+
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
@@ -182,6 +184,10 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
 
   // optional parameters
 
+  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("reference") );
+ 
+  registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
+ 
   // ------- Parameters added to allow correlation band info 02 August 2010 libov@mail.desy.de -------
   registerOptionalParameter("UseSlope","Use expected track direction to constraint number of considered hit combinations (track preselection).", _UseSlope, true );
   registerOptionalParameter("SlopeXLimit","Limit on track slope change when passing sensor layer (in X direction)", _SlopeXLimit, static_cast <float> (0.001));
@@ -286,6 +292,13 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
                              "Maximum number of hits to be shared by more than one track",
                              _maximumAmbiguousHits, static_cast < int > (2));
 
+  registerOptionalParameter("ResolutionX","X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionX,  std::vector<float> (static_cast <int> (6), 10.));
+
+  registerOptionalParameter("ResolutionY","Y resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionY,std::vector<float> (static_cast <int> (6), 10.));
+
+  registerOptionalParameter("ResolutionZ","Z resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionZ,std::vector<float> (static_cast <int> (6), 10.));
+
+
   // initialize all the counters
   _noOfEventWOInputHit   = 0;
   _noOfEventWOTrack = 0;
@@ -303,6 +316,9 @@ void EUTelTestFitter::init() {
   _nEvt = 0 ;
 
   _isFirstEvent = true;
+
+  _referenceHitVec = 0;
+
 
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
@@ -603,7 +619,8 @@ void EUTelTestFitter::init() {
 
   double totalScatAngle = 0.;
 
-  for(int ipl=0; ipl<_nTelPlanes ; ipl++) {
+  for(int ipl=0; ipl<_nTelPlanes ; ipl++) 
+  {
     if(ipl>0) 
     {
       _planeDist[ipl-1]=1./(_planePosition[ipl] - _planePosition[ipl-1]) ;
@@ -621,9 +638,29 @@ void EUTelTestFitter::init() {
 
     totalScatAngle+= _planeScatAngle[ipl] * _planeScatAngle[ipl];
 
+    printf("scat angle   ipl:%5d  scatangle:%8.3e ",ipl,  _planeScatAngle[ipl]);
+
     _fitX[ipl] =_fitY[ipl] = 0. ;
-    _nominalErrorX[ipl]= _planeResolution[ipl];
-    _nominalErrorY[ipl]= _planeResolution[ipl];
+    if( _resolutionX.size() < ipl+1 )
+    {
+      _nominalErrorX[ipl]= _planeResolution[ipl];
+    }
+    else
+    {
+      _nominalErrorX[ipl]= _resolutionX[ipl];
+    }
+    if( _resolutionY.size() < ipl+1 )
+    {
+      _nominalErrorY[ipl]= _planeResolution[ipl];
+    }
+    else
+    {
+      _nominalErrorY[ipl]= _resolutionY[ipl];
+    }
+ 
+//  _nominalErrorX[ipl]= _planeResolution[ipl];
+//  _nominalErrorY[ipl]= _planeResolution[ipl];
+    printf("nominal error X:%8.3f Y:%8.3f \n", _nominalErrorX[ipl], _nominalErrorY[ipl]);
   }
 
   totalScatAngle = sqrt(totalScatAngle);
@@ -773,6 +810,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   if(_isFirstEvent)
   {
+       if ( _applyToReferenceHitCollection ) 
+       {
+         _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
+       }
  
       // apply all GEAR/alignment offsets to get corrected X,Y,Z position of the
       // sensor center
@@ -818,9 +859,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
                           gRotation[2] =  gRotation[2]*3.1415926/180.; //
 
                           TRotation	r;
-                          r.RotateX( gRotation[2] );                          
-                          r.RotateY( gRotation[1] );                          
                           r.RotateZ( gRotation[0] );                          
+                          r.RotateY( gRotation[1] );                            
+                          r.RotateX( gRotation[2] );                          
 
                           _normalTVec.Transform( r );
                                   
@@ -874,10 +915,10 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
                           gRotation[2] = c->getAlpha();
 
                           TRotation	r;
-                          r.RotateX( gRotation[2] );                          
-                          r.RotateY( gRotation[1] );                          
                           r.RotateZ( gRotation[0] );                          
-
+                          r.RotateY( gRotation[1] );                          
+                          r.RotateX( gRotation[2] );                          
+ 
                           _normalTVec.Transform( r );
                                   
                       }
@@ -1027,7 +1068,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     // Shift sign changed in 1.22 for consistency with alignment
     // processor
-
+//printf("1what's this? [ihit=%5d] pos0:%8.3f hitX-ihit:%8.3f  pos1:%8.3f hitY-ihit:%8.3f \n", ihit, pos[0], hitX[ihit], pos[1], hitY[ihit]);
     hitX[ihit] = pos[0]*cos(_planeRotZ[hitPlane[ihit]])
       + pos[1]*sin(_planeRotZ[hitPlane[ihit]])
       - _planeShiftX[hitPlane[ihit]];
@@ -1035,6 +1076,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     hitY[ihit] = pos[1]*cos(_planeRotZ[hitPlane[ihit]])
       - pos[0]*sin(_planeRotZ[hitPlane[ihit]])
       - _planeShiftY[hitPlane[ihit]];
+//printf("2what's this? [ihit=%5d] pos0:%8.3f hitX-ihit:%8.3f  pos1:%8.3f hitY-ihit:%8.3f \n", ihit, pos[0], hitX[ihit], pos[1], hitY[ihit]);
 
     // Check Window and Mask cuts, if defined
     bool hitcut = false;
@@ -1510,6 +1552,29 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
             fittedY.push_back(_fitY[ipl]);
             fittedEx.push_back(_fitEx[ipl]);
             fittedEy.push_back(_fitEy[ipl]);
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+    char iden[4];
+    sprintf(iden, "%d", _planeID[ipl] );
+    string bname = (string)"pl" + iden + "_";
+if(jhit>=0){
+      _aidaHistoMap1D[bname + "fitX"]->fill( _fitX[ipl]  );
+      _aidaHistoMap1D[bname + "fitY"]->fill( _fitY[ipl]  );
+      _aidaHistoMap1D[bname + "hitX"]->fill(  hitX[jhit] );
+      _aidaHistoMap1D[bname + "hitY"]->fill(  hitY[jhit] );
+      _aidaHistoMap1D[bname + "residualX"]->fill( _fitX[ipl] - hitX[jhit] );
+      _aidaHistoMap1D[bname + "residualY"]->fill( _fitY[ipl] - hitY[jhit] );
+      //Resids 
+      _aidaHistoMap2D[bname + "residualXdX"]->fill( _fitX[ipl]  , _fitX[ipl]    - hitX[jhit]  );
+      _aidaHistoMap2D[bname + "residualYdX"]->fill( _fitX[ipl]  , _fitY[ipl]    - hitY[jhit]  );
+      _aidaHistoMap2D[bname + "residualXdY"]->fill( _fitY[ipl]  , _fitX[ipl]    - hitX[jhit]  );
+      _aidaHistoMap2D[bname + "residualYdY"]->fill( _fitY[ipl]  , _fitY[ipl]    - hitY[jhit]  );
+ }
+//      _aidaHistoMap2D[bname + "residualdZvsX"]->fill( _fitX[ipl]  , plane.getMeasZ() - hitZ[jhit]   );
+//      _aidaHistoMap2D[bname + "residualdZvsY"]->fill( _fitY[ipl]  , plane.getMeasZ() - hitZ[jhit]   );
+ 
+#endif
+
+  
         }
 
         nFittedTracks++;
@@ -1713,8 +1778,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
         pos[2]=_planePosition[ipl];
 
 
-
-        int sensorID = guessSensorID( pos[0], pos[1], pos[2] );
+        int sensorID = guessSensorID( pos );
+//        int sensorID = guessSensorID( pos[0], pos[1], pos[2] );
 //        printf("\n -- now at sensorID = %5d \n", sensorID );
 
 //        printf("BEFORE x: %12.5f y:%12.5f z:%12.5f \n", pos[0], pos[1], pos[2] );
@@ -2018,6 +2083,32 @@ void EUTelTestFitter::bookHistos()
   firstChi2Histo->setTitle(firstchi2Title.c_str());
   _aidaHistoMap.insert(make_pair(_firstChi2HistoName, firstChi2Histo));
 
+// plot plane by plane:
+   for(int iz=0; iz < _nTelPlanes ; iz++) {
+//plane id by      _planeID[iz]  
+    char iden[4];
+    sprintf(iden, "%d", _planeID[iz] );
+    string bname = (string)"pl" + iden + "_";
+    //Resids 
+    _aidaHistoMap1D[bname + "fitX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "fitX", 1000 , -9., 9.);
+    _aidaHistoMap1D[bname + "fitY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "fitY", 1000 , -9., 9.);
+    _aidaHistoMap1D[bname + "hitX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitX", 1000 , -9., 9.);
+    _aidaHistoMap1D[bname + "hitY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitY", 1000 , -9., 9.);
+    _aidaHistoMap1D[bname + "residualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualX", 1000 , -9., 9.);
+    _aidaHistoMap1D[bname + "residualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualY", 1000 , -9., 9.);
+    //Resids 2D
+    _aidaHistoMap2D[bname + "residualXdX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualXdX", 1000 , -10., 10., 1000 , -1., 1.);
+    _aidaHistoMap2D[bname + "residualYdX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualYdX", 1000 , -10., 10., 1000 , -1., 1.);
+    _aidaHistoMap2D[bname + "residualXdY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualXdY", 1000 , -10., 10., 1000 , -1., 1.);
+    _aidaHistoMap2D[bname + "residualYdY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualYdY", 1000 , -10., 10., 1000 , -1., 1.);
+
+    _aidaHistoMap2D[bname + "residualdZvsX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualdZvsX",1000 ,-10., 10., 1000 ,-50., 50.);
+    _aidaHistoMap2D[bname + "residualdZvsY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualdZvsY",1000 ,-10., 10., 1000 ,-50., 50.);
+    _aidaHistoMap2D[bname + "residualmeasZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasX",1000 ,0., 1., 1000 ,-10., 10.);
+    _aidaHistoMap2D[bname + "residualmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasY",1000 ,0., 1., 1000 ,-10., 10.);
+    _aidaHistoMap2D[bname + "residualfitZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasX",1000 ,0., 1., 1000 ,-10., 10.);
+    _aidaHistoMap2D[bname + "residualfitZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasY",1000 ,0., 1., 1000 ,-10., 10.);
+  }
 
   // Chi2 histogram for best tracks in an event - use same binning
   if(_searchMultipleTracks)
@@ -2535,6 +2626,7 @@ void EUTelTestFitter::getFastTrackImpactPoint(double & x, double & y, double & z
 
     // this is a simplified version of getTrackImpactPoint
     // 
+    double pos[3]={x,y,z};
     int sensorID = guessSensorID( x, y, z );
 
     //
@@ -2890,6 +2982,47 @@ int EUTelTestFitter::guessSensorID( double & x, double & y, double & z)
       "Please check the consistency of the data with the GEAR file " << endl;
     throw SkipEventException(this);
   }
+
+  return sensorID;
+}
+
+
+int EUTelTestFitter::guessSensorID( double * hit ) 
+{
+
+  int sensorID = -1;
+  double minDistance =  numeric_limits< double >::max() ;
+//  double * hitPosition = const_cast<double * > (hit->getPosition());
+
+//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
+  if( _referenceHitVec == 0)
+  {
+    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    return 0;
+  }
+
+      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+      {
+        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+//        printf(" _referenceHitVec %p refhit %p at %5.2f %5.2f %5.2f wih %5.2f %5.2f %5.2f \n", _referenceHitVec, refhit,
+//                refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset(),
+//                refhit->getAlpha(), refhit->getBeta(), refhit->getGamma()  
+//               );
+        
+        TVector3 hit3d( hit[0], hit[1], hit[2] );
+        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
+        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+ 
+        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
+//          printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hit[0],hit[1],hit[2], distance  );
+        if ( distance < minDistance ) 
+        {
+           minDistance = distance;
+           sensorID = refhit->getSensorID();
+//           printf("sensorID: %5d \n", sensorID );
+        }    
+
+      }
 
   return sensorID;
 }

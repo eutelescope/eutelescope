@@ -17,6 +17,10 @@
 // built only if GEAR and MARLINUTIL are used
 #if defined(USE_GEAR) && defined(USE_MARLINUTIL)
 
+// ROOT includes:
+#include "TVector3.h"
+
+
 // eutelescope includes ".h"
 #include "EUTelMille.h"
 #include "EUTelRunHeaderImpl.h"
@@ -31,6 +35,8 @@
 #include "EUTelExceptions.h"
 #include "EUTelPStream.h"
 #include "EUTelAlignmentConstant.h"
+#include "EUTelReferenceHit.h"
+
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -126,6 +132,9 @@ std::string EUTelMille::_residualXvsXLocalname      = "ResidualXvsX";
 std::string EUTelMille::_residualXvsYLocalname      = "ResidualXvsY";
 std::string EUTelMille::_residualYvsXLocalname      = "ResidualYvsX";
 std::string EUTelMille::_residualYvsYLocalname      = "ResidualYvsY";
+std::string EUTelMille::_residualZvsXLocalname      = "ResidualZvsX";
+std::string EUTelMille::_residualZvsYLocalname      = "ResidualZvsY";
+
 
 #endif
 
@@ -263,7 +272,9 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   registerOptionalParameter("ResolutionZ","Z resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionZ,std::vector<float> (static_cast <int> (6), 10.));
 
-
+  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("reference") );
+ 
+  registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
  
 
   registerOptionalParameter("FixParameter","Fixes the given alignment parameters in the fit if alignMode==3 is used. For each sensor an integer must be specified (If no value is given, then all parameters will be free). bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_FixParameter, std::vector<int> (static_cast <int> (6), 24));
@@ -349,10 +360,56 @@ void EUTelMille::init() {
     }  
 #endif
 
+//
+//  sensor-planes in geometry navigation:
+//
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
+  // clear the sensor ID vector
+  _sensorIDVec.clear();
+
+  // clear the sensor ID map
+  _sensorIDVecMap.clear();
+  _sensorIDtoZOrderMap.clear();
+
+  // clear the sensor ID vector (z-axis order)
+  _sensorIDVecZOrder.clear();
+
+// copy-paste from another class (should be ideally part of GEAR!)
+   double*   keepZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
+   for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) 
+   {
+    int sensorID = _siPlanesLayerLayout->getID( iPlane );
+        keepZPosition[ iPlane ] = _siPlanesLayerLayout->getLayerPositionZ(iPlane);
+
+    _sensorIDVec.push_back( sensorID );
+    _sensorIDVecMap.insert( make_pair( sensorID, iPlane ) );
+
+    // count number of the sensors to the left of the current one:
+    int _sensors_to_the_left = 0;
+    for ( int jPlane = 0 ; jPlane < _siPlanesLayerLayout->getNLayers(); jPlane++ ) 
+    {
+        if( _siPlanesLayerLayout->getLayerPositionZ(jPlane) + 1e-06 <     keepZPosition[ iPlane ] )
+        {
+            _sensors_to_the_left++;
+        }
+    }
+    streamlog_out (MESSAGE4) << " ";
+    printf("iPlane %-3d sensor_#_along_Z_axis %-3d [z= %-9.3f ] [sensorID %-3d ]  \n", iPlane, _sensors_to_the_left,     keepZPosition[ iPlane ], sensorID);
+
+    streamlog_out (MESSAGE4) << endl;
+
+    _sensorIDVecZOrder.push_back( _sensors_to_the_left );
+    _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
+   }
+
+
   _histogramSwitch = true;
+
+  _referenceHitVec = 0;
+
+
 
   //lets guess the number of planes
   if(_inputMode == 0 || _inputMode == 2) 
@@ -994,6 +1051,11 @@ void EUTelMille::processEvent (LCEvent * event) {
   if ( isFirstEvent() )
   {
     FillHotPixelMap(event);
+
+    if ( _applyToReferenceHitCollection ) 
+    {
+       _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
+    }
   }
 
   if (_iEvt % 100 == 0) 
@@ -1029,7 +1091,7 @@ void EUTelMille::processEvent (LCEvent * event) {
  
   
 
-//  printf("887: excludePlanes %2d  \n", _nExcludePlanes );
+//  printf("887: nPlanes %5d , excludePlanes %2d  \n", _nPlanes, _nExcludePlanes );
 //  if ( _nExcludePlanes > 0 )
   {
  
@@ -1060,14 +1122,14 @@ void EUTelMille::processEvent (LCEvent * event) {
   }
 
 //  std::vector<std::vector<EUTelMille::HitsInPlane> > _hitsArray(_nPlanes, std::vector<EUTelMille::HitsInPlane>());
-
-//  printf(" inputMode = %5d  hitCollectionName.size = %5d, indexconverter.size= %5d \n", _inputMode, _hitCollectionName.size(), indexconverter.size() );
-//     for(size_t i =0;i < indexconverter.size();i++)
-//      {
-//          std::cout << " " << indexconverter[i] ;
-//      }
-//     std::cout << std::endl;
-  
+/*
+  printf(" inputMode = %5d  hitCollectionName.size = %5d, indexconverter.size= %5d \n", _inputMode, _hitCollectionName.size(), indexconverter.size() );
+     for(size_t i =0;i < indexconverter.size();i++)
+      {
+          std::cout << " " << indexconverter[i] ;
+      }
+     std::cout << std::endl;
+*/
   if (_inputMode != 1 && _inputMode != 3)
     for(size_t i =0;i < _hitCollectionName.size();i++)
       {
@@ -1185,10 +1247,15 @@ void EUTelMille::processEvent (LCEvent * event) {
             } else {
               throw UnknownDataTypeException("Unknown cluster type");
             }
-
-            double minDistance =  numeric_limits< double >::max() ;
+//            double minDistance =  numeric_limits< double >::max() ;
             double * hitPosition = const_cast<double * > (hit->getPosition());
 
+            unsigned int localSensorID   = guessSensorID( hitPosition );
+            localSensorID   = guessSensorID( hit );
+                
+            layerIndex = _sensorIDVecMap[localSensorID] ;
+//printf("sensor %5d at %5d with %5.3f %5.3f %5.3f  [cluster detID:%5d]\n", localSensorID, layerIndex, hitPosition[0], hitPosition[1], hitPosition[2], cluster->getDetectorID() );
+/*
             for ( int i = 0 ; i < (int)_siPlaneZPosition.size(); i++ )
               {
                 double distance = std::abs( hitPosition[2] - _siPlaneZPosition[i] );
@@ -1198,11 +1265,12 @@ void EUTelMille::processEvent (LCEvent * event) {
                     layerIndex = i;
                   }
               }
-            if ( minDistance > 30 /* mm */ ) {
+*/
+//            if ( minDistance > 30 /* mm */ ) {
               // advice the user that the guessing wasn't successful
-              streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-                "Please check the consistency of the data with the GEAR file" << endl;
-            }
+//              streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
+//                "Please check the consistency of the data with the GEAR file" << endl;
+//            }
 
 
             // Getting positions of the hits.
@@ -1211,7 +1279,7 @@ void EUTelMille::processEvent (LCEvent * event) {
             hitsInPlane.measuredY = 1000 * hit->getPosition()[1];
             hitsInPlane.measuredZ = 1000 * hit->getPosition()[2];
 
-//            printf("hit %5d of %5d , at %-8.1f %-8.1f %-8.1f, %5d %5d \n", iHit , collection->getNumberOfElements(), hitsInPlane.measuredX, hitsInPlane.measuredY, hitsInPlane.measuredZ, indexconverter[layerIndex], layerIndex );
+//           printf("hit %5d of %5d , at %-8.1f %-8.1f %-8.1f, %5d %5d \n", iHit , collection->getNumberOfElements(), hitsInPlane.measuredX, hitsInPlane.measuredY, hitsInPlane.measuredZ, indexconverter[layerIndex], layerIndex );
             // adding a requirement to use only fat clusters for alignement
 
             if ( 
@@ -1234,6 +1302,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 //                    printf("(e) Thin cluster (charge <=1), hit type: %5d  detector: %5d\n", hit->getType(), cluster->getDetectorID() );                
             }
 
+//printf("index converter is OK at %5d of %5d \n", indexconverter[layerIndex], indexconverter.size());
             if(indexconverter[layerIndex] != -1)
                 _hitsArray[indexconverter[layerIndex]].push_back(hitsInPlane);
  
@@ -1288,6 +1357,9 @@ void EUTelMille::processEvent (LCEvent * event) {
         } // end if check running in input mode 0 or 2
 
       }
+
+
+
 
   std::vector<int> fitplane(_nPlanes, 0);
 
@@ -1854,7 +1926,20 @@ void EUTelMille::processEvent (LCEvent * event) {
                   _waferResidX[help] = b0 + la*c0 - x;
                   _waferResidY[help] = b1 + la*c1 - y;
                   _waferResidZ[help] = la*sqrt(1.0 - c0*c0 - c1*c1) - z;
-//printf("sensor: %5d  %8.3f %8.3f %8.3f   %8.3f %8.3f %8.3f \n", help, x,y,z,  _waferResidX[help], _waferResidY[help], _waferResidZ[help] );
+//printf("MINUIT PRE sensor: %5d  %10.3f %10.3f %10.3f   %10.3f %10.3f %10.3f \n", help, x,y,z,  _waferResidX[help]+x, _waferResidY[help]+y, _waferResidZ[help]+z );
+
+                   TVector3 vpoint(b0,b1,0.);
+                   TVector3 vvector(c0,c1,c2);
+                   TVector3 point=Line2Plane(help, vpoint,vvector);
+//                   printf("b0:%5.2f b1:%5.2f: vvector: %12.5f %12.5f %12.5f \n",b0,b1, vvector[0], vvector[1], vvector[2] );
+ 
+                  //determine the residuals
+                  _waferResidX[help] = point[0] - x;
+                  _waferResidY[help] = point[1] - y;
+                  _waferResidZ[help] = point[2] - z;
+//printf("FIT:   AFT sensor: %5d  %10.3f %10.3f %10.3f   %10.3f %10.3f %10.3f \n", help, x,y,z,  _waferResidX[help]+x, _waferResidY[help]+y, _waferResidZ[help]+z );
+
+
                 }
             }
           delete gMinuit;
@@ -2245,25 +2330,61 @@ void EUTelMille::processEvent (LCEvent * event) {
                   //local parameters: b0, b1, c0, c1
 
                   const double la = lambda[help];
-						double	z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ(help) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( help );
-						z_sensor *= 1000;		// in microns
+
+//                  double z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ(help) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( help );
+//                  z_sensor *= 1000;		// in microns
 						// reset all derivatives to zero!
-						for (int i = 0; i < nGL; i++ ) {
-							derGL[i] = 0.000;
-						}
+		  for (int i = 0; i < nGL; i++ ) 
+                  {
+		    derGL[i] = 0.000;
+		  }
 
-						for (int i = 0; i < nLC; i++ ) {
-							derLC[i] = 0.000;
-						}
+		  for (int i = 0; i < nLC; i++ ) 
+                  {
+		    derLC[i] = 0.000;
+		  }
 
+                  double x_sensor = 0.;
+                  double y_sensor = 0.;
+                  double z_sensor = 0.;
+
+                  for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+                  {
+                    EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+                    if( _sensorIDVec[help] == refhit->getSensorID() )
+                    {
+//                      printf("found refhit [%2d] %5.2f %5.2f %5.2f for hit [%2d] %5.2f %5.2f %5.2f \n", 
+//                              refhit->getSensorID(), refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset(),
+//                              _sensorIDVec[help], _xPosHere[help], _yPosHere[help], _zPosHere[help] );
+                      x_sensor =  refhit->getXOffset();
+                      y_sensor =  refhit->getYOffset();
+                      z_sensor =  refhit->getZOffset();
+                    } 
+                  }
+                   
+                  x_sensor *= 1000.;
+                  y_sensor *= 1000.;
+                  z_sensor *= 1000.;
+
+
+
+
+// track model : fit-reco => 
+//   (a_X*x+b_X, a_Y*y+b_Y)  :   /  1   -g    b \   / x          \   :: shouldn't it be x-xcenter-of-the-sensor ??
+//                           : - |  g    1   -a |   | y          |   ::  and y-ycenter-of-the-sensor ??   
+//                           :   \ -b    a    1 /   \ z-z_sensor /   ::  == z-zcenter-of-the-sensor  ?? (already)
+// make angles sings consistent with X->Y->Z->X rotations.
+// correct likewise all matrices in ApplyAlignment processor
+// Igor Rubinsky 09-10-2011
+//
                   // shift in X
-                  derGL[((helphelp * 6) + 0)] = -1.0; 
-                  derGL[((helphelp * 6) + 1)] =  0.0;
-                  derGL[((helphelp * 6) + 2)] =  0.0;
+                  derGL[((helphelp * 6) + 0)] = -1.0;                                 // dx
+                  derGL[((helphelp * 6) + 1)] =  0.0;                                 // dy
+                  derGL[((helphelp * 6) + 2)] =  0.0;                                 // dz
                   // rotation in ZY ( alignment->getAlpfa() )
-                  derGL[((helphelp * 6) + 3)] =  0.0;
-                  derGL[((helphelp * 6) + 4)] =  1.0*(_zPosHere[help] - z_sensor);
-                  derGL[((helphelp * 6) + 5)] =  1.0*_yPosHere[help];      
+                  derGL[((helphelp * 6) + 3)] =      0.0;                             // alfa  - ZY :: Y->Z
+                  derGL[((helphelp * 6) + 4)] = -1.0*(_zPosHere[help] - z_sensor);    // beta  - ZX :: Z->X
+                  derGL[((helphelp * 6) + 5)] =  1.0*(_yPosHere[help] - y_sensor);                 // gamma - XY :: X->Y
 
                   derLC[0] = 1.0;
                   derLC[1] = 0.0;
@@ -2284,8 +2405,8 @@ void EUTelMille::processEvent (LCEvent * event) {
                   derGL[((helphelp * 6) + 2)] =  0.0;
                   // rotation in ZX
                   derGL[((helphelp * 6) + 3)] =  1.0*(_zPosHere[help] - z_sensor); 
-                  derGL[((helphelp * 6) + 4)] =  0.0                ; 
-                  derGL[((helphelp * 6) + 5)] = -1.0*_xPosHere[help];
+                  derGL[((helphelp * 6) + 4)] =      0.0            ; 
+                  derGL[((helphelp * 6) + 5)] = -1.0*(_xPosHere[help] - x_sensor);
 
                   derLC[0] = 0.0;
                   derLC[1] = 1.0;
@@ -2305,8 +2426,8 @@ void EUTelMille::processEvent (LCEvent * event) {
                   derGL[((helphelp * 6) + 1)] =  0.0;
                   derGL[((helphelp * 6) + 2)] = -1.0; 
                   // rotation in XY
-                  derGL[((helphelp * 6) + 3)] = -1.0*_yPosHere[help]; 
-                  derGL[((helphelp * 6) + 4)] =  1.0*_xPosHere[help];
+                  derGL[((helphelp * 6) + 3)] = -1.0*(_yPosHere[help]-y_sensor); 
+                  derGL[((helphelp * 6) + 4)] =  1.0*(_xPosHere[help]-x_sensor);
                   derGL[((helphelp * 6) + 5)] =  0.0;
 
                   derLC[0] = 0.0;
@@ -2321,6 +2442,11 @@ void EUTelMille::processEvent (LCEvent * event) {
                  
                   _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
+//                  printf("residuals[%2d]: %7.2f %7.2f %7.2f :: x:%7.2f y:%7.2f \n", _sensorIDVec[help], _waferResidX[help], _waferResidY[help], _waferResidZ[help],
+//                                                       (_xPosHere[help]-x_sensor),             
+//                                                       (_yPosHere[help]-y_sensor)             
+//                                                                                  );
+ 
 
                   _nMilleDataPoints++;
 
@@ -2387,11 +2513,11 @@ void EUTelMille::processEvent (LCEvent * event) {
                 residx_histo->fill(_waferResidX[iDetector]);
 
                 tempHistoName = _residualXvsYLocalname + "_d" + to_string( sensorID );
-                AIDA::IHistogram2D* residxvsY_histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap2D[tempHistoName.c_str()]) ;
+                AIDA::IProfile1D* residxvsY_histo = dynamic_cast<AIDA::IProfile1D*>(_aidaHistoMapProf1D[tempHistoName.c_str()]) ;
                 residxvsY_histo->fill(_yPosHere[iDetector], _waferResidX[iDetector]);
  
                 tempHistoName = _residualXvsXLocalname + "_d" + to_string( sensorID );
-                AIDA::IHistogram2D* residxvsX_histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap2D[tempHistoName.c_str()]) ;
+                AIDA::IProfile1D* residxvsX_histo = dynamic_cast<AIDA::IProfile1D*>(_aidaHistoMapProf1D[tempHistoName.c_str()]) ;
                 residxvsX_histo->fill(_xPosHere[iDetector], _waferResidX[iDetector]);
             }
             else
@@ -2409,11 +2535,11 @@ void EUTelMille::processEvent (LCEvent * event) {
               residy_histo->fill(_waferResidY[iDetector]);
 
               tempHistoName = _residualYvsYLocalname + "_d" + to_string( sensorID );
-              AIDA::IHistogram2D* residyvsY_histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap2D[tempHistoName.c_str()]) ;
+              AIDA::IProfile1D* residyvsY_histo = dynamic_cast<AIDA::IProfile1D*>(_aidaHistoMapProf1D[tempHistoName.c_str()]) ;
               residyvsY_histo->fill(_yPosHere[iDetector], _waferResidY[iDetector]);
  
               tempHistoName = _residualYvsXLocalname + "_d" + to_string( sensorID );
-              AIDA::IHistogram2D* residyvsX_histo = dynamic_cast<AIDA::IHistogram2D*>(_aidaHistoMap2D[tempHistoName.c_str()]) ;
+              AIDA::IProfile1D* residyvsX_histo = dynamic_cast<AIDA::IProfile1D*>(_aidaHistoMapProf1D[tempHistoName.c_str()]) ;
               residyvsX_histo->fill(_xPosHere[iDetector], _waferResidY[iDetector]);
             }
             else
@@ -2429,6 +2555,15 @@ void EUTelMille::processEvent (LCEvent * event) {
             if ( AIDA::IHistogram1D* residz_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
             {
               residz_histo->fill(_waferResidZ[iDetector]);
+
+              tempHistoName = _residualZvsYLocalname + "_d" + to_string( sensorID );
+              AIDA::IProfile1D* residzvsY_histo = dynamic_cast<AIDA::IProfile1D*>(_aidaHistoMapProf1D[tempHistoName.c_str()]) ;
+              residzvsY_histo->fill(_yPosHere[iDetector], _waferResidZ[iDetector]);
+ 
+              tempHistoName = _residualZvsXLocalname + "_d" + to_string( sensorID );
+              AIDA::IProfile1D* residzvsX_histo = dynamic_cast<AIDA::IProfile1D*>(_aidaHistoMapProf1D[tempHistoName.c_str()]) ;
+              residzvsX_histo->fill(_xPosHere[iDetector], _waferResidZ[iDetector]);
+ 
 //              residzvsY_histo->fill(_yPosHere[iDetector], _waferResidZ[iDetector]);
 //              residzvsX_histo->fill(_xPosHere[iDetector], _waferResidZ[iDetector]);
             }
@@ -2485,16 +2620,147 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 }
 
+
 int EUTelMille::guessSensorID( TrackerHitImpl * hit ) {
   if(hit==0)
 {
     streamlog_out( ERROR ) << "An invalid hit pointer supplied! will exit now\n" << endl;
     return -1;
 }
-// return hit->getDetectorID() ;
+
+        try
+        {
+            LCObjectVec clusterVector = hit->getRawHits();
+
+            EUTelVirtualCluster * cluster=0;
+
+            if ( hit->getType() == kEUTelBrickedClusterImpl ) {
+
+               // fixed cluster implementation. Remember it
+               //  can come from
+               //  both RAW and ZS data
+   
+                cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+                
+            } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
+              
+              // fixed cluster implementation. Remember it can come from
+              // both RAW and ZS data
+              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+            } else if ( hit->getType() == kEUTelFFClusterImpl ) {
+              
+              // fixed cluster implementation. Remember it can come from
+              // both RAW and ZS data
+              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+            } 
+            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
+            {
+              
+//              cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
+//                 ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+
+                // streamlog_out(MESSAGE4) << "Type is kEUTelAPIXClusterImpl" << endl;
+                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
+                // streamlog_out(MESSAGE4) << "Vector size is: " << clusterVector.size() << endl;
+
+                cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
+	      
+	        // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
+                eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
+                
+            }
+            else if ( hit->getType() == kEUTelSparseClusterImpl ) 
+            {
+               cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+            }
+
+            if(cluster != 0)
+            {
+              int sensorID = cluster->getDetectorID();
+//              printf("actual sensorID: %5d \n", sensorID );
+              return sensorID;
+            }
+          }
+          catch(...)
+          {
+            printf("guess SensorID crashed \n");
+          }
+
 return -1;
 }
 
+int EUTelMille::guessSensorID( double * hit ) 
+{
+
+  int sensorID = -1;
+  double minDistance =  numeric_limits< double >::max() ;
+//  double * hitPosition = const_cast<double * > (hit->getPosition());
+
+//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
+  if( _referenceHitVec == 0)
+  {
+    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    return 0;
+  }
+
+      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+      {
+        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+//        printf(" _referenceHitVec %p refhit %p at %5.2f %5.2f %5.2f wih %5.2f %5.2f %5.2f \n", _referenceHitVec, refhit,
+//                refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset(),
+//                refhit->getAlpha(), refhit->getBeta(), refhit->getGamma()  
+//               );
+        
+        TVector3 hit3d( hit[0], hit[1], hit[2] );
+        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
+        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+ 
+        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
+//          printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hit[0],hit[1],hit[2], distance  );
+        if ( distance < minDistance ) 
+        {
+           minDistance = distance;
+           sensorID = refhit->getSensorID();
+//           printf("sensorID: %5d \n", sensorID );
+        }    
+
+      }
+
+  return sensorID;
+}
+
+
+TVector3 EUTelMille::Line2Plane(int iplane, const TVector3& lpoint, const TVector3& lvector ) 
+{
+
+  if( _referenceHitVec == 0)
+  {
+    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    return TVector3(0.,0.,0.);
+  }
+
+        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(iplane) ) ;
+        
+        TVector3 hitInPlane( refhit->getXOffset()*1000., refhit->getYOffset()*1000., refhit->getZOffset()*1000.); // go back to mm
+        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+        TVector3 point( 1.,1.,1. );
+          
+        double linecoord_numenator   = norm2Plane.Dot(hitInPlane-lpoint);
+        double linecoord_denumenator = norm2Plane.Dot(lvector);
+//        printf("line: numenator: %8.3f denum: %8.3f [%5.3f %5.3f %5.3f::%5.3f %5.3f %5.3f]\n", linecoord_numenator, linecoord_denumenator, norm2Plane[0], norm2Plane[1], norm2Plane[2], lvector[0], lvector[1], lvector[2] );
+
+        point = (linecoord_numenator/linecoord_denumenator)*lvector + lpoint;
+//        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
+//        printf("iPlane %5d   hitTrack:  [%8.3f;%8.3f;%8.3f] lvector[%5.2f %5.2f %5.2f] \n",
+//                                         refhit->getSensorID(), 
+//                                         hitInPlane[0], hitInPlane[1], hitInPlane[2],
+//                                         lvector[0], lvector[1], lvector[2]  );
+
+  return point;
+}
+
+
+      
 bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit) 
 {
 
@@ -2574,7 +2840,7 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
 //                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
                     }
            
-                    skipHit = skipHit || hitContainsHotPixels(hit);
+//                    skipHit = skipHit || hitContainsHotPixels(hit);
 
                     if(skipHit ) 
                     {
@@ -3229,11 +3495,11 @@ void EUTelMille::bookHistos() {
       tempHistoName     =  _residualXvsXLocalname + "_d" + to_string( sensorID );
       histoTitleXResid  =  "XvsXResidual_d" + to_string( sensorID ) ;
 
-      AIDA::IHistogram2D *  tempX2dHisto =
-        AIDAProcessor::histogramFactory(this)->createHistogram2D(tempHistoName, 100, -10000., 10000., 1000, -1000., 1000. );
+      AIDA::IProfile1D *  tempX2dHisto =
+        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName, 100, -10000., 10000.,  -1000., 1000. );
       if ( tempX2dHisto ) {
         tempX2dHisto->setTitle(histoTitleXResid);
-        _aidaHistoMap2D.insert( make_pair( tempHistoName, tempX2dHisto ) );
+        _aidaHistoMapProf1D.insert( make_pair( tempHistoName, tempX2dHisto ) );
       } else {
         streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
         streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
@@ -3244,10 +3510,10 @@ void EUTelMille::bookHistos() {
       histoTitleXResid  =  "XvsYResidual_d" + to_string( sensorID ) ;
 
        tempX2dHisto =
-        AIDAProcessor::histogramFactory(this)->createHistogram2D(tempHistoName,  100, -10000., 10000., 1000, -1000., 1000.);
+        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName,  100, -10000., 10000.,  -1000., 1000.);
       if ( tempX2dHisto ) {
         tempX2dHisto->setTitle(histoTitleXResid);
-        _aidaHistoMap2D.insert( make_pair( tempHistoName, tempX2dHisto ) );
+        _aidaHistoMapProf1D.insert( make_pair( tempHistoName, tempX2dHisto ) );
       } else {
         streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
         streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
@@ -3272,11 +3538,11 @@ void EUTelMille::bookHistos() {
       tempHistoName     =  _residualYvsXLocalname + "_d" + to_string( sensorID );
       histoTitleYResid  =  "YvsXResidual_d" + to_string( sensorID ) ;
 
-      AIDA::IHistogram2D *  tempY2dHisto =
-        AIDAProcessor::histogramFactory(this)->createHistogram2D(tempHistoName, 100, -10000., 10000., 1000, -1000., 1000.);
+      AIDA::IProfile1D *  tempY2dHisto =
+        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName, 100, -10000., 10000.,  -1000., 1000.);
       if ( tempY2dHisto ) {
         tempY2dHisto->setTitle(histoTitleYResid);
-        _aidaHistoMap2D.insert( make_pair( tempHistoName, tempY2dHisto ) );
+        _aidaHistoMapProf1D.insert( make_pair( tempHistoName, tempY2dHisto ) );
       } else {
         streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
         streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
@@ -3287,10 +3553,10 @@ void EUTelMille::bookHistos() {
       histoTitleYResid  =  "YvsYResidual_d" + to_string( sensorID ) ;
 
         tempY2dHisto =
-        AIDAProcessor::histogramFactory(this)->createHistogram2D(tempHistoName, 100, -10000., 10000., 1000, -1000., 1000.);
+        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName, 100, -10000., 10000.,  -1000., 1000.);
       if ( tempY2dHisto ) {
         tempY2dHisto->setTitle(histoTitleYResid);
-        _aidaHistoMap2D.insert( make_pair( tempHistoName, tempY2dHisto ) );
+        _aidaHistoMapProf1D.insert( make_pair( tempHistoName, tempY2dHisto ) );
       } else {
         streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
         streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
@@ -3313,6 +3579,37 @@ void EUTelMille::bookHistos() {
         _histogramSwitch = false;
       }
  
+ 
+      tempHistoName     =  _residualZvsYLocalname + "_d" + to_string( sensorID );
+      histoTitleZResid  =  "ZvsYResidual_d" + to_string( sensorID ) ;
+
+      AIDA::IProfile1D*  tempZ2dHisto =
+        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName, 100, -10000., 10000.,  -1000., 1000.);
+      if ( tempZ2dHisto ) {
+        tempZ2dHisto->setTitle(histoTitleZResid);
+        _aidaHistoMapProf1D.insert( make_pair( tempHistoName, tempZ2dHisto ) );
+      } else {
+        streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+        streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
+      }
+
+
+      tempHistoName     =  _residualZvsXLocalname + "_d" + to_string( sensorID );
+      histoTitleZResid  =  "ZvsXResidual_d" + to_string( sensorID ) ;
+
+        tempZ2dHisto =
+        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName, 100, -10000., 10000.,  -1000., 1000.);
+      if ( tempZ2dHisto ) {
+        tempZ2dHisto->setTitle(histoTitleZResid);
+        _aidaHistoMapProf1D.insert( make_pair( tempHistoName, tempZ2dHisto ) );
+      } else {
+        streamlog_out ( ERROR2 ) << "Problem booking the " << (tempHistoName) << endl;
+        streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
+        _histogramSwitch = false;
+      }
+
+
 #endif
     }
 

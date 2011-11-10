@@ -40,6 +40,7 @@
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #include <AIDA/IHistogram1D.h>
+#include <AIDA/IHistogram2D.h>
 #endif
 
 // system includes <>
@@ -386,6 +387,12 @@ namespace eutelescope {
     /*!
      * 
      */
+    virtual int guessSensorID( double* hit);
+ 
+    //! 
+    /*!
+     * 
+     */
     bool _isFirstEvent;   
         
   protected:
@@ -497,6 +504,19 @@ namespace eutelescope {
     std::vector<float > _MaskMaxX;
     std::vector<float > _MaskMinY;
     std::vector<float > _MaskMaxY;
+
+    std::vector<float> _resolutionX;
+    std::vector<float> _resolutionY;
+    std::vector<float> _resolutionZ;
+
+
+    //! reference HitCollection name 
+    /*!
+     */
+    std::string      _referenceHitCollectionName;
+    bool             _applyToReferenceHitCollection;
+    LCCollectionVec* _referenceHitVec;    
+ 
 
     // Parameters of hit selection algorithm
 
@@ -610,6 +630,8 @@ namespace eutelescope {
      */
 
     std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
+    std::map<std::string, AIDA::IHistogram1D * > _aidaHistoMap1D;
+    std::map<std::string, AIDA::IHistogram2D * > _aidaHistoMap2D;
 
     // Chi2 histogram names
     static std::string _linChi2HistoName;

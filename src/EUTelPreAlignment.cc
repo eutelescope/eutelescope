@@ -14,25 +14,28 @@
 // marlin includes ".h"
 #include "marlin/Processor.h"
 #include "marlin/Exceptions.h"
+#include "marlin/AIDAProcessor.h"
 
 // lcio includes <.h>
 #include <IO/LCWriter.h>
 #include <UTIL/LCTime.h>
 #include <EVENT/LCCollection.h>
 #include <IMPL/TrackerHitImpl.h>
+//#include <TrackerHitImpl2.h>
 #include <IMPL/TrackerDataImpl.h>
 #include <IMPL/LCCollectionVec.h>
 #include <UTIL/CellIDDecoder.h>
 #include <UTIL/CellIDEncoder.h>
 
+
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-// aida includes
-#include <AIDA/IHistogram3D.h>
+// aida includes <.h>
+#include <AIDA/IHistogramFactory.h>
+#include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
 #include <AIDA/ITree.h>
-#include <AIDA/IHistogramFactory.h>
-#include <marlin/AIDAProcessor.h>
 #endif
+
 
 // gear includes <.h>
 #include "marlin/Global.h"
@@ -61,12 +64,31 @@ EUTelPreAlign::EUTelPreAlign () :Processor("EUTelPreAlign") {
   registerInputCollection (LCIO::TRACKERHIT, "InputHitCollectionName",
                            "The name of the input hit collection",
                            _inputHitCollectionName, string ("hit"));
+
   registerOptionalParameter ("FixedPlane", "SensorID of fixed plane", _fixedID, 0);
+
   registerOptionalParameter("AlignmentConstantLCIOFile","Name of LCIO db file where alignment constantds will be stored", 
 			    _alignmentConstantLCIOFile, std::string( "alignment.slcio" ) );
 
   registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
                              _hotPixelCollectionName, static_cast< string > ( "hotpixel_apix" ));
+
+
+  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("reference") );
+ 
+  registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
+ 
+  registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMin, std::vector<float > (static_cast<float > (6), -10.) );
+
+  registerOptionalParameter("ResidualsYMin","Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMin, std::vector<float > (static_cast<float > (6), -10.) );
+
+  registerOptionalParameter("ResidualsXMax","Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMax, std::vector<float > (static_cast<float > (6),  10.) );
+
+  registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMax, std::vector<float > (static_cast<float > (6),  10.) );
+
+  registerOptionalParameter ("MinNumberOfCorrelatedHits",
+                              "If there are more then this number of correlated hits (planes->track candidate) (default=5)",
+                              _minNumberOfCorrelatedHits, static_cast <int> (5) );
 
 }
 
@@ -80,6 +102,18 @@ void EUTelPreAlign::init () {
 
   _UsefullHotPixelCollectionFound = 0; 
 
+  // clear the sensor ID vector
+  _sensorIDVec.clear();
+
+  // clear the sensor ID map
+  _sensorIDVecMap.clear();
+  _sensorIDtoZOrderMap.clear();
+
+
+  // clear the sensor ID vector (z-axis order)
+  _sensorIDVecZOrder.clear();
+
+//
   _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
   for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) {
@@ -100,6 +134,50 @@ void EUTelPreAlign::init () {
 );
     }
   }
+
+
+   _siPlaneZPosition = new double[ _siPlanesLayerLayout->getNLayers() ];
+   for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) 
+   {
+    _siPlaneZPosition[ iPlane ] = _siPlanesLayerLayout->getLayerPositionZ(iPlane);
+    int sensorID = _siPlanesLayerLayout->getID( iPlane );
+
+    _sensorIDVec.push_back( sensorID );
+    _sensorIDVecMap.insert( make_pair( sensorID, iPlane ) );
+
+    // count number of the sensors to the left of the current one:
+    int _sensors_to_the_left = 0;
+    for ( int jPlane = 0 ; jPlane < _siPlanesLayerLayout->getNLayers(); jPlane++ ) 
+    {
+        if( _siPlanesLayerLayout->getLayerPositionZ(jPlane) + 1e-06 < _siPlaneZPosition[ iPlane ] )
+        {
+            _sensors_to_the_left++;
+        }
+    }
+    streamlog_out (MESSAGE4) << " ";
+    printf("iPlane %-3d sensor_#_along_Z_axis %-3d [z= %-9.3f ] [sensorID %-3d ]  \n", iPlane, _sensors_to_the_left, _siPlaneZPosition[ iPlane ], sensorID);
+
+    streamlog_out (MESSAGE4) << endl;
+
+    _sensorIDVecZOrder.push_back( _sensors_to_the_left );
+    _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
+   }
+
+   string tempHistoName = "";
+   for(int i=0;i<_sensorIDVecZOrder.size(); i++)
+   { 
+       tempHistoName =  "PreAlign/hitXCorr_0_to_" + to_string( i ) ;
+       AIDA::IHistogram1D* histo1Da  = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), 100 , -10., 10.) ;
+       _hitXCorr.insert( make_pair( i, histo1Da) );
+       printf("XCorr  %5d %p \n", i, histo1Da );
+
+       tempHistoName =  "PreAlign/hitYCorr_0_to_" + to_string( i ) ;
+       AIDA::IHistogram1D* histo1Db = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), 100 , -10., 10.) ;
+       _hitYCorr.insert( make_pair( i, histo1Db) );
+       printf("YCorr  %5d %p \n", i, histo1Db );
+
+  }
+
 }
 
 void EUTelPreAlign::processRunHeader (LCRunHeader * rdr) {
@@ -176,7 +254,19 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
   if ( isFirstEvent() )
   {
     FillHotPixelMap(event);
+    if ( _applyToReferenceHitCollection ) 
+    {
+       try{
+       _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
+       }
+       catch(...)
+       {
+         _referenceHitVec = 0;
+         _applyToReferenceHitCollection = 0;
+       }
+    }
   }
+
 
   ++_iEvt;
   if ( _iEvt % 10000 == 0 )
@@ -198,30 +288,68 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 
   try {
     LCCollectionVec * inputCollectionVec         = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputHitCollectionName));
+
+    std::vector<float>   hitX(0.0f);
+    std::vector<float>   hitY(0.0f);
+    std::vector<PreAligner*>   prealign;
+
+
     //Loop over hits in fixed plane
     for (size_t ref = 0; ref < inputCollectionVec->size(); ref++) {
       TrackerHitImpl   * refHit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( ref ) ) ;
       const double * refPos = refHit->getPosition();
-      if( std::fabs(refPos[2] - _fixedZ) > 30.0) { continue; }
-      
+//      if( std::fabs(refPos[2] - _fixedZ) > 30.0) { continue; }
+      if( guessSensorID(refPos) != _fixedID ) { continue; }
+      hitX.clear();
+      hitY.clear();
+      prealign.clear();
+
       for (size_t iHit = 0; iHit < inputCollectionVec->size(); iHit++) {
 	TrackerHitImpl   * hit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( iHit ) ) ;
 	if( hitContainsHotPixels(hit) ) continue;
 
         const double * pos = hit->getPosition();
-	if( std::fabs(pos[2] - _fixedZ) < 30.0) { continue; }
-	bool gotIt(false);
-	for(size_t ii = 0; ii < _preAligners.size(); ii++){
+        int iHitID = guessSensorID(pos); 
+
+//	if( std::fabs(pos[2] - _fixedZ) < 30.0) { continue; }
+        if( iHitID == _fixedID ) { continue; }
+        bool gotIt(false);
+	for(size_t ii = 0; ii < _preAligners.size(); ii++)
+        {
 	  PreAligner& pa = _preAligners.at(ii);
-	  if( std::fabs(pa.getZPos() - pos[2]) > 30.  ) { continue; }
+//	  if( std::fabs(pa.getZPos() - pos[2]) > 30.  ) { continue; }
+          if( pa.getIden() != iHitID  ) { continue; }
 	  gotIt = true;
-	  pa.addPoint(refPos[0] - pos[0], refPos[1] - pos[1]);
+
+    double correlationX =  refPos[0] - pos[0] ;
+    double correlationY =  refPos[1] - pos[1] ;
+
+    int idZ = _sensorIDtoZOrderMap[ iHitID ];
+    if( 
+        (_residualsXMin[idZ] < correlationX ) && ( correlationX < _residualsXMax[idZ]) &&
+        (_residualsYMin[idZ] < correlationY ) && ( correlationY < _residualsYMax[idZ]) 
+      )
+       {
+          hitX.push_back( correlationX );
+          hitY.push_back( correlationY );
+          prealign.push_back(&pa);
+       }
 //printf("%5d %5d [%5d] %p %5d \n", iHit, ii, _preAligners.size(), pa.current(), pa.getIden()); //, pa.getPeakX(), pa.getPeakY() );
 	  break;
 	}
 	if(not gotIt) {
 	  streamlog_out ( ERROR ) << "Mismatched hit at " << pos[2] << endl;
 	}
+      }
+      if( prealign.size() > _minNumberOfCorrelatedHits && hitX.size() == hitY.size() )
+      {
+         for( int ii=0;ii<prealign.size();ii++)
+         {  
+//            printf(" sensor[%2d] %5d  %8.3f %8.3f  %p %p \n", prealign[ii]->getIden(), ii, hitX[ii], hitY[ii], _hitXCorr[ii], _hitYCorr[ii]  );
+            prealign[ii]->addPoint( hitX[ii], hitY[ii] );
+//            (dynamic_cast<AIDA::IHistogram1D*> (_hitXCorr[ii]))->fill( hitX[ii] );
+//            (dynamic_cast<AIDA::IHistogram1D*> (_hitYCorr[ii]))->fill( hitY[ii] );
+         } 
       }
     }
   }
@@ -353,11 +481,61 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
        return 0;
 
 }
+/*
+int EUTelPreAlign::guessSensorID( TrackerHitImpl * hit ) {
+  if(hit==0)
+{
+    streamlog_out( ERROR ) << "An invalid hit pointer supplied! will exit now\n" << endl;
+    return -1;
+}
+// return hit->getDetectorID() ;
+return 0;
+}
+*/
+int EUTelPreAlign::guessSensorID(const double * hit ) 
+{
 
+  int sensorID = -1;
+  double minDistance =  numeric_limits< double >::max() ;
+//  double * hitPosition = const_cast<double * > (hit->getPosition());
+
+//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
+  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == 0 )
+  {
+//    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    return 0;
+  }
+
+      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+      {
+        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+//        printf(" _referenceHitVec %p refhit %p \n", _referenceHitVec, refhit);
+        
+        TVector3 hit3d( hit[0], hit[1], hit[2] );
+        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
+        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+ 
+        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
+//        printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hitPosition[0],hitPosition[1],hitPosition[2], distance  );
+        if ( distance < minDistance ) 
+        {
+           minDistance = distance;
+           sensorID = refhit->getSensorID();
+//           printf("sensorID: %5d \n", sensorID );
+        }    
+
+      }
+
+  return sensorID;
+}
+
+
+
+      
 void EUTelPreAlign::end() {
   LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
   try {
-    lcWriter->open( _alignmentConstantLCIOFile, LCIO::WRITE_NEW );
+    lcWriter->open( _alignmentConstantLCIOFile, LCIO::WRITE_NEW    );
   } catch ( IOException& e ) {
     streamlog_out ( ERROR4 ) << e.what() << endl;
     exit(-1);
@@ -386,8 +564,16 @@ void EUTelPreAlign::end() {
 
 
   EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
-    constant->setXOffset( -1.0 * _preAligners.at(ii).getPeakX());
-    constant->setYOffset( -1.0 * _preAligners.at(ii).getPeakY());
+   if( abs( _preAligners.at(ii).getPeakX() ) <1000. )
+      constant->setXOffset( -1.0 * _preAligners.at(ii).getPeakX());
+   else
+      constant->setXOffset( -1.0 * 0.0                           );
+ 
+   if( abs( _preAligners.at(ii).getPeakY() ) <1000. )
+      constant->setYOffset( -1.0 * _preAligners.at(ii).getPeakY());
+   else
+      constant->setYOffset( -1.0 * 0.0                           );
+ 
     constant->setSensorID( _preAligners.at(ii).getIden() );
     constantsCollection->push_back( constant );
     streamlog_out ( MESSAGE ) << (*constant) << endl;

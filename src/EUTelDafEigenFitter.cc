@@ -43,17 +43,29 @@ void EigenFitter::calculatePlaneWeight(FitPlane& plane, TrackEstimate* e, float 
   for(size_t m = 0; m < nMeas ; m++){
     const Measurement &meas = plane.meas.at(m);
     resids = e->params.start<2>() - meas.getM();
+//printf("%8.3f %8.3f <->%8.3f %8.3f \n", e->params(0),e->params(1), meas.getM()(0), meas.getM()(1) );
+
     chi2s = resids.cwise().square();
     chi2s(0) /= plane.getSigmaX() * plane.getSigmaX() + e->cov(0,0);
     chi2s(1) /= plane.getSigmaY() * plane.getSigmaY() + e->cov(1,1);
     //resids = plane.getVars() + Vector2f( e->cov(0,0), e->cov(1,1) );
     //chi2s = chi2s.cwise() / resids;
+//printf("X: chi2:%8.3f  plane.sigmaX:%8.3f e-cov(00):%8.3f res(0):%8.3f\n", chi2s(0), plane.getSigmaX(), e->cov(0,0), resids(0) );
+//printf("Y: chi2:%8.3f  plane.sigmaY:%8.3f e-cov(11):%8.3f res(1):%8.3f \n", chi2s(1), plane.getSigmaY(), e->cov(1,1), resids(1) );
+
+
     float chi2 = chi2s.sum();
     plane.weights(m) = exp( -1 * chi2 / (2 * tval));
+//printf(" plane.weights(%4d)=%8.3f, chi2=%8.3f, tval=%8.3f \n",m,plane.weights(m),chi2, tval);
   }
   float cutWeight = exp( -1 * chi2cutoff / (2 * tval));
   plane.weights /= (cutWeight + plane.weights.sum() + FLT_MIN);
+//printf("EigenFitter::calculatePlaneWeight, plane.getTotWeight=%8.3f\n", plane.getTotWeight() );
+
   plane.setTotWeight( plane.weights.sum() );
+//printf("EigenFitter::calculatePlaneWeight, plane.getTotWeight=%8.3f\n", plane.getTotWeight() );
+
+
 }
 
 void EigenFitter::calculateWeights(std::vector<FitPlane> &planes, float chi2cut){

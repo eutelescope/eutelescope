@@ -60,6 +60,9 @@ namespace eutelescope {
     virtual void end();
     bool defineSystemFromData();
     
+    virtual int guessSensorID(const double* hit);
+
+
   protected:
     std::ofstream trackstream;
     //! Input hit collection name
@@ -135,6 +138,14 @@ namespace eutelescope {
 
     //! Counters
     int _iRun, _iEvt, _nTracks, _nClusters, n_passedNdof, n_passedChi2OverNdof, n_passedIsnan;
+
+    //! reference HitCollection name 
+    /*!
+     */
+    std::string      _referenceHitCollectionName;
+    bool             _applyToReferenceHitCollection;
+    LCCollectionVec* _referenceHitVec;    
+ 
 
     //! Silicon planes parameters as described in GEAR
     gear::SiPlanesParameters * _siPlanesParameters;

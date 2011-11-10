@@ -43,6 +43,8 @@
 #include "EUTelVirtualCluster.h"
 #include "EUTelExceptions.h"
 #include "EUTelSparseClusterImpl.h"
+#include "EUTelReferenceHit.h"
+
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -121,6 +123,11 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
   registerOptionalParameter("NominalDxdz", "dx/dz assumed by track finder", _nXdz, static_cast<float>(0.0f));
   registerOptionalParameter("NominalDydz", "dy/dz assumed by track finder", _nYdz, static_cast<float>(0.0f));
   
+  // 
+  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("reference") );
+  registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
+ 
+
   //Track quality parameters
   registerOptionalParameter("MaxChi2OverNdof", "Maximum allowed global chi2/ndof", _maxChi2, static_cast<float> ( 9999.0));
   registerOptionalParameter("TrackAsciiName", "Filename for fitted tracks", _asciiName, string ("tracks.txt"));
@@ -130,16 +137,21 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
 
 bool EUTelDafBase::defineSystemFromData(){
   bool gotIt = true;
+  bool gotPlane = false;
   for(size_t plane = 0; plane < _system.planes.size(); plane++){
     daffitter::FitPlane& pl = _system.planes.at(plane);
-    bool gotPlane = false;
+    gotPlane = false;
     for(size_t meas = 0; meas < pl.meas.size(); meas++){
+//printf("plane %5d meas %5d ref %5d \n", plane, meas, _nRef.at(plane) );
       if( _nRef.at(plane) > 2){ gotPlane = true; continue; }
       if( _nRef.at(plane) == 0 ){
+//printf("pl.getRef0: %8.3f %8.3f %8.3f \n", pl.getRef0()(0), pl.getRef0()(1), pl.getRef0()(2) );
 	pl.setRef0( Vector3f(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
+//printf("pl.getRef0: %8.3f %8.3f %8.3f \n", pl.getRef0()(0), pl.getRef0()(1), pl.getRef0()(2) );
 	_nRef.at(plane)++;
 	gotPlane = false;
-	continue;
+//	printf("FALSE plane %5d meas %5d ref %5d \n", plane, meas, _nRef.at(plane) );
+ continue;
       }
       if( fabs(pl.meas.at(meas).getX() - pl.getRef0()(0) ) < 500) { continue; }
       if( fabs(pl.meas.at(meas).getY() - pl.getRef0()(1) ) < 500) { continue; }
@@ -147,21 +159,25 @@ bool EUTelDafBase::defineSystemFromData(){
 	pl.setRef1( Vector3f(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
 	_nRef.at(plane)++;
 	gotPlane = false;
-	continue;
+//	printf("FALSE plane %5d meas %5d ref %5d \n", plane, meas, _nRef.at(plane) );
+ continue;
       }
-      if( fabs(pl.meas.at(meas).getX() - pl.getRef1()(0) ) < 500) { continue; }
-      if( fabs(pl.meas.at(meas).getY() - pl.getRef1()(1) ) < 500) { continue; }
+      if( fabs(pl.meas.at(meas).getX() - pl.getRef1()(0) ) < 500) {  continue; }
+      if( fabs(pl.meas.at(meas).getY() - pl.getRef1()(1) ) < 500) {  continue; }
       if( _nRef.at(plane) == 2 ){
 	pl.setRef2( Vector3f(pl.meas.at(meas).getX(), pl.meas.at(meas).getY(), pl.meas.at(meas).getZ()));
 	_nRef.at(plane)++;
 	getPlaneNorm(pl);
 	pl.print();
 	gotPlane = true;
-	continue;
+//	printf("TRUE plane %5d meas %5d ref %5d \n", plane, meas, _nRef.at(plane) );
+ continue;
       }
     }
     if(not gotPlane) { gotIt = false;}
-  }
+//   printf("gotPlane  %5d  gotIt %5d \n",gotPlane, gotIt);
+
+}
   return(gotIt);
 }
 
@@ -188,26 +204,30 @@ void EUTelDafBase::gearRotate(size_t index, size_t gearIndex){
 
   double nomZ = zZero + 0.5 * zThickness;
 
-   if( TMath::Abs( gRotation[2] ) > 1e-6 ){
-    ref0.RotateX( gRotation[2] );
-    ref1.RotateX( gRotation[2] );
-    ref2.RotateX( gRotation[2] );
-  }
-
-  if( TMath::Abs( gRotation[1] )> 1e-6 ) {
-    ref0.RotateY( gRotation[1] );
-    ref1.RotateY( gRotation[1] );
-    ref2.RotateY( gRotation[1] );
-  }
   if( TMath::Abs( gRotation[0] ) > 1e-6 ){
     ref0.RotateZ( gRotation[0] );
     ref1.RotateZ( gRotation[0] );
     ref2.RotateZ( gRotation[0] );
   }
+  if( TMath::Abs( gRotation[1] )> 1e-6 ) {
+    ref0.RotateY( gRotation[1] );
+    ref1.RotateY( gRotation[1] );
+    ref2.RotateY( gRotation[1] );
+  }
+  if( TMath::Abs( gRotation[2] ) > 1e-6 ){
+    ref0.RotateX( gRotation[2] );
+    ref1.RotateX( gRotation[2] );
+    ref2.RotateX( gRotation[2] );
+  }
+
 
   pl.setRef0( Vector3f( ref0.X() * 1000.0f, ref0.Y() * 1000.0f, (ref0.Z() + nomZ) * 1000.0f ));
   pl.setRef1( Vector3f( ref1.X() * 1000.0f, ref1.Y() * 1000.0f, (ref1.Z() + nomZ) * 1000.0f ));
   pl.setRef2( Vector3f( ref2.X() * 1000.0f, ref2.Y() * 1000.0f, (ref2.Z() + nomZ) * 1000.0f ));
+//printf("gearRotate[%2d] %8.3f %8.3f %8.3f \n", index, ref0.X(), ref0.Y(), ref0.Z()+nomZ);
+//printf("gearRotate[%2d] %8.3f %8.3f %8.3f \n", index, ref1.X(), ref1.Y(), ref1.Z()+nomZ);
+//printf("gearRotate[%2d] %8.3f %8.3f %8.3f \n", index, ref2.X(), ref2.Y(), ref2.Z()+nomZ);
+
   //Tracks are propagated to glob xy plane => Errors are in glob xy plane. scales like cosine
   //Errors not corrected for xy rotation
   pl.scaleErrors( std::fabs(std::cos(gRotation[1])), std::fabs(std::cos(gRotation[0])));
@@ -224,8 +244,8 @@ Vector3f EUTelDafBase::applyAlignment(EUTelAlignmentConstant* alignment, Vector3
   outpoint(1) -= 1000.0f * alignment->getYOffset();
   outpoint(2) -= 1000.0f * alignment->getZOffset();
 
-printf("point %5.3f %5.3f %5.3f \n", point(0), point(1), point(2) );
-printf("outut %5.3f %5.3f %5.3f \n", outpoint(0), outpoint(1), outpoint(2) );
+//printf("point %5.3f %5.3f %5.3f \n", point(0), point(1), point(2) );
+//printf("outut %5.3f %5.3f %5.3f \n", outpoint(0), outpoint(1), outpoint(2) );
 
   return(outpoint);
 }*/
@@ -237,9 +257,11 @@ Vector3f EUTelDafBase::applyAlignment(EUTelAlignmentConstant* alignment, Vector3
   double gamma = alignment->getGamma();
   double z_sensor = point(2);
 
-  outpoint(0) =                point(0) + gamma * point(1) + beta  * (point(2) - z_sensor) ;
-  outpoint(1) = (-1) * gamma * point(0) +         point(1) + alpha * (point(2) - z_sensor) ;
-  outpoint(2) = (-1) * beta  * point(0) - alpha * point(1) +         (point(2) - z_sensor) ;
+// sync with updated sign convention of the rotation angles:
+//
+  outpoint(0) =                point(0) + (-1)*gamma * point(1) +      beta  * (point(2) - z_sensor) ;
+  outpoint(1) =        gamma * point(0) +              point(1) + (-1)*alpha * (point(2) - z_sensor) ;
+  outpoint(2) = (-1) * beta  * point(0) +      alpha * point(1) +              (point(2) - z_sensor) ;
 
   // second the shift
   outpoint(0) -= 1000.0f * alignment->getXOffset();
@@ -248,8 +270,8 @@ Vector3f EUTelDafBase::applyAlignment(EUTelAlignmentConstant* alignment, Vector3
 
             
   outpoint(2) += z_sensor ;
-printf("input %5.3f %5.3f %5.3f \n", point(0), point(1), point(2) );
-printf("outut %5.3f %5.3f %5.3f \n", outpoint(0), outpoint(1), outpoint(2) );
+//printf("input %5.3f %5.3f %5.3f   %5.3f %5.3f %5.3f \n", point(0), point(1), point(2),  alpha, beta, gamma );
+//printf("outut %5.3f %5.3f %5.3f \n", outpoint(0), outpoint(1), outpoint(2) );
 
   return(outpoint);
 }
@@ -263,10 +285,11 @@ void EUTelDafBase::alignRotate(std::string collectionName, LCEvent* event) {
     throw runtime_error("Unable to open alignment collection " + collectionName);
   }
   for( size_t plane = 0; plane < _system.planes.size() ; plane++){
- printf("plane %5d \n", plane);
+// printf("plane %5d \n", plane);
     daffitter::FitPlane& pl = _system.planes.at(plane);
     int iden = pl.getSensorID();
     for ( size_t ii = 0; ii < alignmentCollectionVec->size(); ++ii ) {
+      try{
       EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * >
 	( alignmentCollectionVec->getElementAt( ii ) );
       if( alignment->getSensorID() != iden) { continue; }
@@ -277,6 +300,11 @@ void EUTelDafBase::alignRotate(std::string collectionName, LCEvent* event) {
       getPlaneNorm(pl);
       pl.scaleErrors(alignment->getAlpha() + 1.0f, alignment->getBeta() + 1.0f);
       pl.print();
+      }
+      catch(...)
+      {
+        printf("could not find sensor in %s at %5d \n", collectionName, ii);
+      }
     }
   }
 }
@@ -315,13 +343,13 @@ void EUTelDafBase::init() {
   map<float, int>::iterator zit = _zSort.begin();
   size_t index(0), nActive(0);
   for( ; zit != _zSort.end(); index++, zit++){
+//printf("index= %5d \n",index);
     _nRef.push_back(3);
     int sensorID = _siPlanesLayerLayout->getID( (*zit).second );
     //float zPos  = (*zit).first + _siPlanesLayerLayout->getSensitiveThickness( (*zit).second );
     //Read sensitive as 0, in case the two are different
     float zPos  = _siPlanesLayerLayout->getSensitivePositionZ( (*zit).second )* 1000.0
       + 0.5 * 1000.0 *  _siPlanesLayerLayout->getSensitiveThickness( (*zit).second) ; // um
-
     //Figure out what kind of plane we are dealing with
     float errX(0.0f), errY(0.0f);
     bool excluded = true;
@@ -351,7 +379,8 @@ void EUTelDafBase::init() {
 
     //Add plane to tracker system
     if(not excluded){ nActive++;}
-    _system.addPlane(sensorID, zPos , errX, errY, scatter, excluded);
+// printf("sensorID %5d zpos %8.3f %5d \n", sensorID, zPos, _nRef.at(index) );
+   _system.addPlane(sensorID, zPos , errX, errY, scatter, excluded);
     gearRotate(index, (*zit).second);
   }
  
@@ -420,13 +449,56 @@ size_t EUTelDafBase::getPlaneIndex(float zPos){
   if(not foundIt){ 
     streamlog_out (ERROR ) << "Found hit at z=" << zPos << " , not able to assign to any plane!" << endl; 
     return(-1);
+  }else{
+//    streamlog_out (MESSAGE ) << "Found hit at z=" << zPos << " , assign index = " << index << endl;     
   }
+
   return(index);
 }
+
+int EUTelDafBase::guessSensorID(const double * hit ) 
+{
+
+  int sensorID = -1;
+  double minDistance =  numeric_limits< double >::max() ;
+//  double * hitPosition = const_cast<double * > (hit->getPosition());
+
+//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
+  if( _referenceHitVec == 0)
+  {
+    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    return 0;
+  }
+
+      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+      {
+        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+//        printf(" _referenceHitVec %p refhit %p \n", _referenceHitVec, refhit);
+        
+        TVector3 hit3d( hit[0], hit[1], hit[2] );
+        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
+        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+ 
+        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
+//        printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hitPosition[0],hitPosition[1],hitPosition[2], distance  );
+        if ( distance < minDistance ) 
+        {
+           minDistance = distance;
+//           sensorID = refhit->getSensorID(); // proper ID
+           sensorID = ii;                    // number in the GEAR file z ordered
+//           printf("sensorID: %5d \n", sensorID );
+        }    
+
+      }
+
+  return sensorID;
+}
+
 
 void EUTelDafBase::readHitCollection(LCEvent* event){
   //Dump LCIO hit collection to tracker system
   //Extract hits from collection, add to tracker system
+//printf("EUTelDafBase::readHitCollection \n");
   for(size_t i =0;i < _hitCollectionName.size();i++){
     try {
       _hitCollection = event->getCollection(_hitCollectionName[i]);
@@ -435,18 +507,25 @@ void EUTelDafBase::readHitCollection(LCEvent* event){
 				 << " in run " << event->getRunNumber() << endl;
       throw SkipEventException( this );
     }
+// printf("EUTelDafBase::readHitCollection add all hits from collection %5d \n",i);
     //Add all hits in collection to corresponding plane
     for ( int iHit = 0; iHit < _hitCollection->getNumberOfElements(); iHit++ ) {
       TrackerHitImpl* hit = static_cast<TrackerHitImpl*> ( _hitCollection->getElementAt(iHit) );
       const double * pos = hit->getPosition();
-      int planeIndex = getPlaneIndex( pos[2]  * 1000.0f);
+//      int planeIndex = getPlaneIndex( pos[2]  * 1000.0f);
+      int planeIndex = guessSensorID( pos );
+//      printf("planeIndex %5d of %5d \n", planeIndex, _system.planes.size() ); 
       bool region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
       //if( not region){ continue; }
       if(planeIndex >=0 ) { 
 	_system.addMeasurement( planeIndex, (float) pos[0] * 1000.0f, (float) pos[1] * 1000.0f, (float) pos[2] * 1000.0f,  region, iHit);
       }
     }
+// printf("EUTelDafBase::readHitCollection add all hits from collection %5d DONE \n",i);
+ 
   }
+// printf("EUTelDafBase::readHitCollection -- DONE \n");
+ 
 }
 
 bool EUTelDafBase::checkClusterRegion(lcio::TrackerHitImpl* hit, int iden){
@@ -476,10 +555,12 @@ int EUTelDafBase::checkInTime(daffitter::TrackCandidate * track){
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
     daffitter::FitPlane& plane = _system.planes.at(ii);
     int sensorID = plane.getSensorID();
+//    printf("plane %5d with ID %5d \n", ii, sensorID);
     //Check if any DUT plane is "In time" with the 
     if( find(_dutPlanes.begin(), _dutPlanes.end(), sensorID) == _dutPlanes.end()){ continue; }
     //In timeness can be checked by seeing if the plane has assigned weight
     for(size_t w = 0; w < plane.meas.size(); w++){
+//      printf("plane %5d with ID %5d --- weight = %5.2f\n", ii, sensorID, plane.weights(w) );
       if( plane.weights(w) < 0.5f ) {  continue; }
       nMatches++; break;
     }
@@ -495,8 +576,12 @@ void EUTelDafBase::processEvent(LCEvent * event){
   }
   if( isFirstEvent() ){
     for(size_t ii = 0; ii < _alignColNames.size(); ii++){
-printf("aligncollection %5d \n", ii);
+//printf("aligncollection %5d \n", ii);
       alignRotate(_alignColNames.at(ii), event);
+    }
+    if ( _applyToReferenceHitCollection ) 
+    {
+       _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
     }
   }
   //Prepare tracker system for new data, new tracks
@@ -506,11 +591,11 @@ printf("aligncollection %5d \n", ii);
   readHitCollection(event);
 
   if( not _initializedSystem ){ 
-    _initializedSystem = defineSystemFromData();
-    if(not _initializedSystem) { return; }
-    cout << "Initialized system at event " << event->getEventNumber() << endl;
+//    _initializedSystem = defineSystemFromData();
+//    if(not _initializedSystem) { return; }
+//    cout << "Initialized system at event " << event->getEventNumber() << endl;
   }
-
+//printf("EUTelDafBase::processEvent \n");
   //Run track finder
   _system.clusterTracker();
   
@@ -523,12 +608,17 @@ printf("aligncollection %5d \n", ii);
 }
 
 bool EUTelDafBase::checkTrack(daffitter::TrackCandidate * track){
+
+//printf("EUTelDafBase::checkTrack %7.3f %8.3f \n", track->ndof, track->chi2 );
+//track->print();
   if( track->ndof < _ndofMin) { return(false); }
   n_passedNdof++;
   if( (track->chi2 / track->ndof) > _maxChi2 ) { return(false); }
   n_passedChi2OverNdof++;
   if( isnan(track->ndof)) { return(false); }
   n_passedIsnan++;
+
+//printf("EUTelDafBase::checkTrack %7.3f %8.3f ;; return true;\n", track->ndof, track->chi2 );
   return(true);
 }
 

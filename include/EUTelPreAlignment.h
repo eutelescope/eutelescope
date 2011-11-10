@@ -13,6 +13,11 @@
 #define EUTELPREALIGNMENT_H
 
 // eutelescope includes ".h"
+//#include "TrackerHitImpl2.h"
+#include "EUTelReferenceHit.h"
+
+//ROOT includes
+#include "TVector3.h"
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -27,14 +32,17 @@
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
+#include <AIDA/IHistogram1D.h>
+#include <AIDA/IHistogram2D.h>
 #endif
-
 
 // system includes <>
 #include <iostream>
 #include <string>
 #include <map>
 #include <cstdio>
+#include <vector>
+
 
 namespace eutelescope {
 class PreAligner{
@@ -132,7 +140,14 @@ public:
      * this collection is saved in a db file to be used at the clustering level
      */
     std::string _hotPixelCollectionName;
-     
+ 
+    //! reference HitCollection name 
+    /*!
+     */
+    std::string      _referenceHitCollectionName;
+    bool             _applyToReferenceHitCollection;
+    LCCollectionVec* _referenceHitVec;    
+    
     //! Vector of map arrays, keeps record of hit pixels 
     /*! The vector elements are sorted by Detector ID
      *  For each Detector unique ID element a map of pixels is created. 
@@ -141,7 +156,7 @@ public:
      *  sensor map key    unique row number
      *             value  vector of column numbers.
      */
-    
+ 
     std::map<std::string, bool> _hotPixelMap;
     
     //! bool tag if PreAlign should run anyway or not;
@@ -149,9 +164,56 @@ public:
      */   
     bool _UsefullHotPixelCollectionFound;
 
+//    virtual int guessSensorID(TrackerHitImpl* hit);
+    virtual int guessSensorID(const double* hit);
+
+// maps and vectors to navigate along the geometry of the setup:
+    //! vector of Rotation Matrix elements
+    std::vector< std::map<int,double> > _siPlanesRotations;
+
+    //! An array with the Z position of planes
+    double * _siPlaneZPosition;
+
+    //! Sensor ID vector
+    std::vector< int > _sensorIDVec;
+
+    //! Sensor ID map (inverse sensorIDVec) 
+    std::map< int, int > _sensorIDVecMap;
+    //! Sensor ID vector, 
+    /*! it's position along Z axis
+     */ 
+    std::vector< int > _sensorIDVecZOrder;
+    //! sensor ID to position along Z id
+    /*!
+     */
+    std::map<int, int> _sensorIDtoZOrderMap;
+
+// _residual cuts [relative to the first upstream plane!]
+    //! vector of correlation band cuts in X (upper limit)
+    std::vector< float  > _residualsXMax;
+    //! vector of correlation band cuts in X (lower limit) 
+    std::vector< float  > _residualsXMin;
+    //! vector of correlation band cuts in Y (upper limit)       
+    std::vector< float  > _residualsYMax;         
+    //! vector of correlation band cuts in Y (lower limit) 
+    std::vector< float  > _residualsYMin;
+
+    int _minNumberOfCorrelatedHits;
+
+//
+    std::map< int, AIDA::IHistogram1D*  > _hitXCorr;
+    std::map< int, AIDA::IHistogram1D*  > _hitYCorr;
+//    std::map<unsigned int, AIDA::IBaseHistogram * > _hitXCorr;
+//    std::map<unsigned int, AIDA::IBaseHistogram * > _hitYCorr;
+
+
+
+
   protected:
     std::string _inputHitCollectionName;
     std::string _alignmentConstantLCIOFile;
+ 
+ 
     int _iRun;
     int _iEvt;
     int _fixedID;

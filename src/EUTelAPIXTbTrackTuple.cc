@@ -485,12 +485,12 @@ void EUTelAPIXTbTrackTuple::invertAlignment(EUTelAlignmentConstant * alignment){
     gsl_matrix_set( alignM, 0, 0, 1.0);
     gsl_matrix_set( alignM, 1, 1, 1.0);
     gsl_matrix_set( alignM, 2, 2, 1.0 );
-    gsl_matrix_set( alignM, 0, 1, alignment->getGamma() );
-    gsl_matrix_set( alignM, 1, 0, -1 * alignment->getGamma());
-    gsl_matrix_set( alignM, 0, 2, alignment->getBeta() );
-    gsl_matrix_set( alignM, 2, 0, -1.0 * alignment->getBeta());
-    gsl_matrix_set( alignM, 1, 2, alignment->getAlpha() );
-    gsl_matrix_set( alignM, 2, 1, -1.0 * alignment->getAlpha());
+    gsl_matrix_set( alignM, 0, 1, -1* alignment->getGamma() ); // Rubinsky 09-10-2011
+    gsl_matrix_set( alignM, 1, 0,     alignment->getGamma());
+    gsl_matrix_set( alignM, 0, 2,     alignment->getBeta() );
+    gsl_matrix_set( alignM, 2, 0, -1* alignment->getBeta());
+    gsl_matrix_set( alignM, 1, 2, -1* alignment->getAlpha() );
+    gsl_matrix_set( alignM, 2, 1,     alignment->getAlpha());
   }
   message<DEBUG> ( log() << "Inverting alignment matrix for iden" << iden  ) ;
   gsl_matrix * inverse = invertLU(3, alignM);

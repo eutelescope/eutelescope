@@ -62,6 +62,7 @@ namespace eutelescope {
 	static std::string _clusterSignalHistoName;
 	static std::string _seedSignalHistoName;
 	static std::string _hitMapHistoName;
+	static std::string _pixelMapHistoName;
 	static std::string _seedSNRHistoName;
 	static std::string _clusterNoiseHistoName;
 	static std::string _clusterSNRHistoName;
@@ -89,6 +90,14 @@ namespace eutelescope {
 	int _minDiagDistance;
 	int _minCharge;
 	int _minLVL1;
+	int _maxXsize;
+	int _maxYsize;
+	int _minXsize;
+	int _minYsize;
+        std::vector<int> _ClusterLimits;
+        std::map<int, std::vector<int> > _ClusterLimitsMap;
+
+
 	bool _fillHistos;
     
 	int _noOfDetector;

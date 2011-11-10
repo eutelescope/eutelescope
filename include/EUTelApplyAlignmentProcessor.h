@@ -14,6 +14,9 @@
 
 // eutelescope includes ".h"
 #include "EUTelAlignmentConstant.h"
+#include "EUTelEventImpl.h"
+#include "EUTelReferenceHit.h"
+
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -37,6 +40,7 @@
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <IMPL/LCCollectionVec.h>
+//#include <TrackerHitImpl2.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/TrackImpl.h>
 #include <IMPL/TrackerDataImpl.h>
@@ -160,6 +164,12 @@ namespace eutelescope {
      *
      */
     virtual void RevertGear6D(LCEvent *event);
+ 
+    //! Apply alignment to a reference hit collection
+    /*!
+     *
+     */
+    virtual void AlignReferenceHit(EUTelEventImpl *evt,  EUTelAlignmentConstant * alignment );
    
     //!
     /*
@@ -203,7 +213,8 @@ namespace eutelescope {
     /*! It is checking against the distance of each plane assuming
      *  that this hit is belonging to the plane at the closest distant.
      */
-    int guessSensorID( lcio::TrackerHitImpl * hit ) ;
+    int guessSensorID( TrackerHitImpl * hit ) ;
+//    int guessSensorID( TrackerHitImpl2 * hit ) ;
 
   private:
     //! Conversion ID map.
@@ -245,7 +256,14 @@ namespace eutelescope {
     /*! This is the name of the output hit collection.
      */
     std::string _outputHitCollectionName;
-
+    
+    //! reference HitCollection name 
+    /*!
+     */
+    std::string _referenceHitCollectionName;
+    bool        _applyToReferenceHitCollection;
+    LCCollectionVec* _referenceHitVec;    
+ 
     //! Correction method
     /*! There are actually several different
      *  methods to apply the alignment constants. Here below a list of

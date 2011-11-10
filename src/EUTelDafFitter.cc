@@ -104,6 +104,7 @@ void EUTelDafFitter::dafParams(){
 }
 
 void EUTelDafFitter::dafInit() {
+//printf("EUTelDafFitter::dafInit()\n"); 
   if(_fitDuts){
     for( size_t ii = 0; ii< _system.planes.size(); ii++){
       if( find(_dutPlanes.begin(), _dutPlanes.end(), _system.planes.at(ii).getSensorID()) != _dutPlanes.end()){ 
@@ -115,6 +116,7 @@ void EUTelDafFitter::dafInit() {
 
 
 void EUTelDafFitter::dafEvent (LCEvent * event) {
+// printf("EUTelDafFitter::dafEvent()\n"); 
   //Prepare track collection
   if(_addToLCIO){
     // Define output track and hit collections
@@ -128,14 +130,17 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
   
   //Check found tracks
   for(size_t ii = 0; ii < _system.getNtracks(); ii++ ){
+//printf("EUTelDafFitter::dafEvent track %3d \n", ii);
     //run track fitte
     _nClusters++;
     _system.fitPlanesInfoDaf(_system.tracks.at(ii));
+//printf("EUTelDafFitter::dafEvent track %3d info is OK \n", ii);
     //Check resids, intime, angles
     if(not checkTrack( _system.tracks.at(ii))) { continue;};
     int inTimeHits = checkInTime( _system.tracks.at(ii));
     if( inTimeHits < _nDutHits) { continue;}
-
+//printf("EUTelDafFitter::dafEvent track %3d is OK \n", ii);
+ 
     //if( inTimeHits > 2){ dumpToAscii(_system.tracks.at(ii));  }
     dumpToAscii(_system.tracks.at(ii));
     //Fill plots

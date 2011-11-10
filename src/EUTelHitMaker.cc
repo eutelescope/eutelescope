@@ -30,6 +30,8 @@
 #include "EUTelExceptions.h"
 #include "EUTelEtaFunctionImpl.h"
 #include "EUTelAlignmentConstant.h"
+#include "EUTelReferenceHit.h"
+
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -52,8 +54,10 @@
 // lcio includes <.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerPulseImpl.h>
+//#include <TrackerHitImpl2.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <UTIL/CellIDDecoder.h>
+#include <UTIL/LCTime.h>
 
 // system includes <>
 #include <string>
@@ -131,6 +135,12 @@ EUTelHitMaker::EUTelHitMaker () : Processor("EUTelHitMaker") {
  
   registerOptionalParameter("OffsetCollection","This is the name of the preAligment collection stored in the offset-db.slcio file",
                             _preAlignmentCollectionName, static_cast< string > ( "preAlignment" ) );
+ 
+  registerOptionalParameter("ReferenceCollection","This is the name of the reference it collection (init at 0,0,0)",
+                            _referenceHitCollectionName, static_cast< string > ( "reference" ) );
+ 
+  registerOptionalParameter("ReferenceHitFile","This is the name of the reference it collection (init at 0,0,0)",
+                            _referenceHitLCIOFile, static_cast< string > ( "reference.slcio" ) );
     
 }
 
@@ -180,9 +190,114 @@ void EUTelHitMaker::init() {
 
   _histogramSwitch = true;
 
+  DumpReferenceHitDB();
+ 
 #endif
 
 }
+
+void EUTelHitMaker::DumpReferenceHitDB()
+{
+// create a reference hit collection file (DB)
+
+  LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
+  try {
+    lcWriter->open( _referenceHitLCIOFile, LCIO::WRITE_NEW    );
+  } catch ( IOException& e ) {
+    streamlog_out ( ERROR4 ) << e.what() << endl;
+    exit(-1);
+  }
+
+  std::cout << "Writing to " << _referenceHitLCIOFile << std::endl;
+
+  LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
+  lcHeader->setRunNumber( 0 );
+  lcWriter->writeRunHeader(lcHeader);
+  delete lcHeader;
+  LCEventImpl * event = new LCEventImpl;
+  event->setRunNumber( 0 );
+  event->setEventNumber( 0 );
+  LCTime * now = new LCTime;
+  event->setTimeStamp( now->timeStamp() );
+  delete now;
+
+  LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
+  double refVec[2] ;
+  for(size_t ii = 0 ; ii <  _orderedSensorIDVec.size(); ii++)
+  {
+    EUTelReferenceHit * refhit = new EUTelReferenceHit();
+    refhit->setSensorID( _orderedSensorIDVec[ii] );
+    refhit->setXOffset( _siPlanesLayerLayout->getSensitivePositionX(ii) );
+    refhit->setYOffset( _siPlanesLayerLayout->getSensitivePositionY(ii) );
+    refhit->setZOffset( _siPlanesLayerLayout->getSensitivePositionZ(ii) + 0.5*_siPlanesLayerLayout->getSensitiveThickness(ii) );
+    
+    refVec[0] = 0.;
+    refVec[1] = 0.;
+    refVec[2] = 1.;
+  
+    double gRotation[3] = { 0., 0., 0.}; // not rotated
+    gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(ii); // Euler alpha ;
+    gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(ii); // Euler alpha ;
+    gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(ii); // Euler alpha ;
+printf("rotations: %5.3f %5.3f %5.3f \n", gRotation[0], gRotation[1], gRotation[2]);
+    gRotation[0] =  gRotation[0]*3.1415926/180.; // 
+    gRotation[1] =  gRotation[1]*3.1415926/180.; //
+    gRotation[2] =  gRotation[2]*3.1415926/180.; //
+
+    TVector3 _RotatedVector( refVec[0], refVec[1], refVec[2] );
+
+printf("BEF sensor: %5.3f %5.3f %5.3f \n", refVec[0], refVec[1], refVec[2]  );
+//    if( TMath::Abs( gRotation[0]) > 1e-6 )    _RotatedVector.RotateZ(  gRotation[0] ); // in XY 
+//    if( TMath::Abs( gRotation[1]) > 1e-6 )    _RotatedVector.RotateY(  gRotation[1] ); // in ZY
+//    if( TMath::Abs( gRotation[2]) > 1e-6 )    _RotatedVector.RotateX(  gRotation[2] ); // in ZY
+
+    TVector3 _Xaxis( 1.0, 0.0, 0.0 );
+    TVector3 _Yaxis( 0.0, 1.0, 0.0 );
+    TVector3 _Zaxis( 0.0, 0.0, 1.0 );
+
+      printf("1 xaxis: %5.3f %5.3f %5.3f \n", _Xaxis[0], _Xaxis[1], _Xaxis[2] ); 
+      printf("1 yaxis: %5.3f %5.3f %5.3f \n", _Yaxis[0], _Yaxis[1], _Yaxis[2] ); 
+      printf("1 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
+
+
+    if( TMath::Abs( gRotation[2]) > 1e-6 ) 
+    {
+        _RotatedVector.Rotate(  gRotation[2], _Xaxis ); // in ZY
+//        _Zaxis.Rotate(  gRotation[2], _Xaxis  ); // in XY
+//        _Yaxis.Rotate(  gRotation[2], _Xaxis  ); // in XY
+    }
+    if( TMath::Abs( gRotation[1]) > 1e-6 ) 
+    {
+//printf("rotation[1] = %5.3f \n", _gRotation[1]);
+        _RotatedVector.Rotate(  gRotation[1], _Yaxis ); // in ZX 
+//        _Xaxis.Rotate(  gRotation[1], _Yaxis  ); // in XY
+//        _Zaxis.Rotate(  gRotation[1], _Yaxis  ); // in XY
+    }
+    if( TMath::Abs( gRotation[0]) > 1e-6 ) 
+    {   
+        _RotatedVector.Rotate(  gRotation[0], _Zaxis ); // in XY
+//        _Xaxis.Rotate(  gRotation[0], _Zaxis  ); // in XY
+//        _Yaxis.Rotate(  gRotation[0], _Zaxis  ); // in XY
+    }
+ 
+      printf("2 xaxis: %5.3f %5.3f %5.3f \n", _Xaxis[0], _Xaxis[1], _Xaxis[2] ); 
+      printf("2 yaxis: %5.3f %5.3f %5.3f \n", _Yaxis[0], _Yaxis[1], _Yaxis[2] ); 
+      printf("2 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
+
+
+printf("AFT sensor: %5.3f %5.3f %5.3f \n", _RotatedVector[0], _RotatedVector[1], _RotatedVector[2]  );
+    refhit->setAlpha( _RotatedVector[0] );
+    refhit->setBeta( _RotatedVector[1] );
+    refhit->setGamma( _RotatedVector[2] );
+    referenceHitCollection->push_back( refhit );
+    streamlog_out ( MESSAGE ) << (*refhit) << endl;
+  }
+  event->addCollection( referenceHitCollection, "referenceHit" );
+  lcWriter->writeEvent( event );
+  delete event;
+  lcWriter->close();
+}
+
 
 void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
 
@@ -232,7 +347,7 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelHitMaker::processEvent (LCEvent * event) {
 
-
+ 
   if (_iEvt % 1000 == 0)
     streamlog_out( MESSAGE4 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
@@ -325,27 +440,71 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         
         if( _preAlignmentCollectionVec != 0 )
         {           
-        try 
-        {
+          try 
+          {
             streamlog_out ( MESSAGE ) << "The alignment collection contains: " <<  _preAlignmentCollectionVec->size() << " planes " << endl;
                   
             for ( size_t iPos = 0; iPos < _preAlignmentCollectionVec->size(); ++iPos ) 
             {
-                EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _preAlignmentCollectionVec->getElementAt( iPos ) );
-                int iID = alignment->getSensorID();
-                _siOffsetXMap.insert( make_pair( iID, alignment->getXOffset() ) );
-                _siOffsetYMap.insert( make_pair( iID, alignment->getYOffset() ) );
-                streamlog_out ( MESSAGE ) << " ";
-                printf("loaded %2d [%2d] Xoffset: %9.3f  Yoffset: %9.3f ", iPos, iID, _siOffsetXMap[ iID ], _siOffsetYMap[ iID ]); 
-                streamlog_out ( MESSAGE ) << endl;
-                
+               EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _preAlignmentCollectionVec->getElementAt( iPos ) );
+               int iID = alignment->getSensorID();
+               _siOffsetXMap.insert( make_pair( iID, alignment->getXOffset() ) );
+               _siOffsetYMap.insert( make_pair( iID, alignment->getYOffset() ) );
+               streamlog_out ( MESSAGE ) << " ";
+               printf("loaded %2d [%2d] Xoffset: %9.3f  Yoffset: %9.3f ", iPos, iID, _siOffsetXMap[ iID ], _siOffsetYMap[ iID ]); 
+               streamlog_out ( MESSAGE ) << endl;                
             }
+          }
+          catch(...)
+          {
+
+          }
+        }
+
+        try
+        {
+/*          _referenceHitCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName ) );
+          if( _referenceHitCollectionVec != 0 )
+          {
+             _referenceHitCollectionVec->clear();
+          }
+          else
+          {
+             _referenceHitCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);
+          }
+*/ 
+/*        lccd::DBInterface db( _DBLoginName, _dbActualFolderName , _DBStatusName ) ;
+          streamlog_out (MESSAGE) << _DBLoginName << endl;
+          streamlog_out (MESSAGE) << _dbActualFolderName << endl;
+          streamlog_out (MESSAGE) << _DBStatusName << endl;
+          try 
+          {
+            hotPixelCollection = static_cast< LCCollectionVec* > ( db.findCollection( now, from, till, _conditionsTag ) );
+            for(int i=0; i<hotPixelCollection->getNumberOfElements(); i++)
+            { 
+              EUTelReferenceHit *refhit = static_cast<EUTelReferenceHit *>  (hotPixelCollection->getElementAt(i));
+              hpk->print();
+            } 
+            if( hotPixelCollection->getNumberOfElements() == 0 )
+            {   
+               streamlog_out (MESSAGE) << " hotPixelCollection: " << _hotPixelCollectionName << 
+                                          " cleared: now " << hotPixelCollection->getNumberOfElements() << " elements" <<  endl;
+            }
+          }
+          catch ( std::exception& e )
+          {
+            hotPixelCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
+          }
+          catch ( ... )
+          {
+            streamlog_out (MESSAGE) <<  "unknown exception !!!!!!!!!!!    " << endl;
+          }
+*/
+
         }
         catch(...)
         {
-
-        }
-        }
+        } 
     }
 
     
@@ -375,10 +534,11 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
     double gRotation[3] = { 0., 0., 0.}; // not rotated
 
-
+//    printf("\n\n");
+ 
     for ( int iPulse = 0; iPulse < pulseCollection->getNumberOfElements(); iPulse++ ) 
     {
-
+//printf("pulse %5d \n", iPulse);
         
         TrackerPulseImpl     * pulse   = static_cast<TrackerPulseImpl*> ( pulseCollection->getElementAt(iPulse) );
         EUTelVirtualCluster  * cluster;
@@ -439,7 +599,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         {
         
             cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
-      
+            int xsize0,ysize0;
+            cluster->getClusterSize(xsize0,ysize0);
+//            printf("ID: %5d:  x:%5d y:%5d tot:%5.1f\n", cluster->getDetectorID(), xsize0, ysize0,  cluster->getTotalCharge() );
         }
         else 
         {
@@ -530,8 +692,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
           try
           {
-          gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(layerIndex); // Euler alpha ;
-          gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(layerIndex); // Euler alpha ;
+          gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(layerIndex); // Euler gamma ;
+          gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(layerIndex); // Euler beta  ;
           gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(layerIndex); // Euler alpha ;
 
           // input angles are in DEGREEs !!!
@@ -612,6 +774,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         }
         else
         {
+//            printf("cogAlgo FULL\n");
             cluster->getCenterOfGravityShift( xShift, yShift );
         }
       }
@@ -623,8 +786,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         }
         else
         {
+//             printf("cogAlgo npixel\n");
             cluster->getCenterOfGravityShift( xShift, yShift, _nPixel );
-       }
+        }
       }
       else if ( _cogAlgorithm == "nxmpixel")
       {
@@ -638,6 +802,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         else
         {
             //will be okay for a brickedClusterImpl! accounted for such a call internally.
+//            printf("cogAlgo nxmpixel\n");
             cluster->getCenterOfGravityShift( xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
         }
       }
@@ -741,12 +906,28 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 // check the hack from Havard:
       float xCoG(0.0f), yCoG(0.0f);
       cluster->getCenterOfGravity(xCoG, yCoG);
-
+/*      if( detectorID == 22 )
+      {
+//        printf("22--- %5.2f %5.2f ", xCoG, yCoG  );
+        xCoG =-999999.9;
+//        yCoG = 999999.9;
+        EUTelSparseClusterImpl< EUTelAPIXSparsePixel > *apixCluster = static_cast<EUTelSparseClusterImpl<EUTelAPIXSparsePixel>*> (cluster);
+        for (int iPixel=0; iPixel <  apixCluster->size(); iPixel++) 
+        {
+	   EUTelAPIXSparsePixel apixPixel;
+	   apixCluster->getSparsePixelAt(iPixel, &apixPixel);
+          if( xCoG < apixPixel.getXCoord() ) xCoG = apixPixel.getXCoord() ;
+//          if( yCoG > apixPixel.getYCoord() ) yCoG = apixPixel.getYCoord() ;
+        }
+//        printf("--- %5.2f %5.2f  \n", xCoG, yCoG );
+      }
+  */
       xDet = (xCoG + 0.5) * xPitch;
       yDet = (yCoG + 0.5) * yPitch;
+
  
-//      printf("x:  %8.3f %8.3f \n", xCoG,                  xDet);
-//      printf("y:  %8.3f %8.3f \n", yCoG,                  yDet);
+//      printf("x:  Cog:%8.3f Det:%8.3f \n", xCoG,                  xDet);
+//      printf("y:  Cog:%8.3f Det:%8.3f \n", yCoG,                  yDet);
 
 
       
@@ -791,7 +972,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         if       ( xPointing[1] < -0.7 )    sign = -1 ;
         else if  ( xPointing[1] > 0.7 )    sign =  1 ;
       }
-      telPos[0] += xZero - sign * xSize/2;
+//     telPos[0] += xZero - sign * xSize/2;
+      telPos[0] +=  (-1)* sign * xSize/2;   //apply shifts few lines later
 
       if      ( yPointing[0] < -0.7 )       sign = -1 ;
       else if ( yPointing[0] > 0.7 )       sign =  1 ;
@@ -800,9 +982,12 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         if       ( yPointing[1] < -0.7 )    sign = -1 ;
         else if  ( yPointing[1] > 0.7 )    sign =  1 ;
       }
-      telPos[1] += yZero - sign * ySize/2;
+//      telPos[1] += yZero - sign * ySize/2;
+      telPos[1] += (-1)* sign * ySize/2;   // apply shifts few lines later
 
-      telPos[2] = zZero + 0.5 * zThickness;
+
+//    telPos[2] = zZero + 0.5 * zThickness;
+      telPos[2] = 0.0 ;       // apply shifts few lines later 
 
       // 
       // NOW !!
@@ -813,10 +998,14 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       // rotate according to gRotation angles:
       // 
 
-      if(  detectorID >= 10 )
+//      if(  detectorID >= 10 )
+//     test mode: all planes can be tilted  
       _EulerRotation( detectorID, telPos, gRotation);
       //
-
+//    finally apply initial shifts:       
+      telPos[0] += xZero;
+      telPos[1] += yZero;
+      telPos[2] += zZero + 0.5 * zThickness;
       
           
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -854,6 +1043,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
       // create the new hit
       TrackerHitImpl * hit = new TrackerHitImpl;
+//      hit->setDetectorID( detectorID ) ;
       hit->setPosition( &telPos[0] );
       hit->setType( pulseCellDecoder(pulse)["type"] );
 
@@ -891,9 +1081,18 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
 }
 
-void EUTelHitMaker::end() {
+//void EUTelHitMaker::end() 
+//{
+//  streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
+//}
+
+void EUTelHitMaker::end() 
+{
+ 
+
 
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
+
 }
 
 void EUTelHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection * xEtaCollection, LCCollection * yEtaCollection) {
@@ -1188,12 +1387,15 @@ void EUTelHitMaker::book3DHisto() {
 }
 
 void EUTelHitMaker::_EulerRotation(int detectorID, double* _telPos, double* _gRotation) {
-   
+  
+//  if( _gRotation[0] != 0.0 || _gRotation[1] != 0.0 || _gRotation[2] != 0.0  )
+//  printf("not zero rotations ! \n");
+    
     try{
         double t = _telPos[2];
-   //     printf("_telPos[0] = %8.3f, ", _telPos[0]);
-     //   printf("_telPos[1] = %8.3f, ", _telPos[1]);
-       // printf("_telPos[2] = %8.3f \n ", _telPos[2]);
+//          printf("_telPos[0] = %8.3f, ", _telPos[0]);
+//          printf("_telPos[1] = %8.3f, ", _telPos[1]);
+//          printf("_telPos[2] = %8.3f \n ", _telPos[2]);
     }
     catch(...)
     {
@@ -1201,10 +1403,10 @@ void EUTelHitMaker::_EulerRotation(int detectorID, double* _telPos, double* _gRo
     }
 
     try{
-        double t = _telPos[2];
-      // printf("_gRotation[0] = %8.3f, ", _gRotation[0]);
-      //  printf("_gRotation[1] = %8.3f, ", _gRotation[1]);
-      //  printf("_gRotation[2] = %8.3f \n ", _gRotation[2]);
+        double t = _gRotation[2];
+//          printf("_gRotation[0] = %8.3f, ", _gRotation[0]);
+//          printf("_gRotation[1] = %8.3f, ", _gRotation[1]);
+//          printf("_gRotation[2] = %8.3f \n ", _gRotation[2]);
     }
     catch(...)
     {
@@ -1215,18 +1417,51 @@ void EUTelHitMaker::_EulerRotation(int detectorID, double* _telPos, double* _gRo
     TVector3 _UnrotatedSensorHit( _telPos[0], _telPos[1], 0. );
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], 0. );
 
-    if( TMath::Abs(_gRotation[2]) > 1e-6 )    _RotatedSensorHit.RotateX( _gRotation[2] ); // in ZY
-    if( TMath::Abs(_gRotation[1]) > 1e-6 )    _RotatedSensorHit.RotateY( _gRotation[1] ); // in ZX 
-    if( TMath::Abs(_gRotation[0]) > 1e-6 )    _RotatedSensorHit.RotateZ( _gRotation[0] ); // in XY
-/*
-    printf("  \n");
-    printf("  X = %8.3f Y = %8.3f Z = %8.3f,   \n", 
-            _UnrotatedSensorHit.X(), _UnrotatedSensorHit.Y(), _telPos[2] + _UnrotatedSensorHit.Z()  );
-    printf("  X = %8.3f Y = %8.3f Z = %8.3f,  dx = %8.3f dy = %8.3f dz = %8.3f  ",  
-            _RotatedSensorHit.X(), _RotatedSensorHit.Y(), _telPos[2] + _RotatedSensorHit.Z(), 
-            _UnrotatedSensorHit.X()- _RotatedSensorHit.X(), _UnrotatedSensorHit.Y()- _RotatedSensorHit.Y(), _UnrotatedSensorHit.Z()- _RotatedSensorHit.Z()   );
-    printf("  detectorID %5d  \n ", detectorID   );
-*/
+    TVector3 _Xaxis( 1.0, 0.0, 0.0 );
+    TVector3 _Yaxis( 0.0, 1.0, 0.0 );
+    TVector3 _Zaxis( 0.0, 0.0, 1.0 );
+
+//      printf("1 xaxis: %5.3f %5.3f %5.3f \n", _Xaxis[0], _Xaxis[1], _Xaxis[2] ); 
+//      printf("1 yaxis: %5.3f %5.3f %5.3f \n", _Yaxis[0], _Yaxis[1], _Yaxis[2] ); 
+//      printf("1 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
+
+
+    if( TMath::Abs(_gRotation[2]) > 1e-6 ) 
+    {
+        _RotatedSensorHit.Rotate( _gRotation[2], _Xaxis ); // in ZY
+//        _Zaxis.Rotate( _gRotation[2], _Xaxis  ); // in XY
+//        _Yaxis.Rotate( _gRotation[2], _Xaxis  ); // in XY
+    }
+    if( TMath::Abs(_gRotation[1]) > 1e-6 ) 
+    {
+//printf("rotation[1] = %5.3f \n", _gRotation[1]);
+        _RotatedSensorHit.Rotate( _gRotation[1], _Yaxis ); // in ZX 
+//        _Xaxis.Rotate( _gRotation[1], _Yaxis  ); // in XY
+//        _Zaxis.Rotate( _gRotation[1], _Yaxis  ); // in XY
+    } 
+    if( TMath::Abs(_gRotation[0]) > 1e-6 ) 
+    {   
+        _RotatedSensorHit.Rotate( _gRotation[0], _Zaxis ); // in XY
+//        _Xaxis.Rotate( _gRotation[0], _Zaxis  ); // in XY
+//        _Yaxis.Rotate( _gRotation[0], _Zaxis  ); // in XY
+    }
+ 
+//      printf("2 xaxis: %5.3f %5.3f %5.3f \n", _Xaxis[0], _Xaxis[1], _Xaxis[2] ); 
+//      printf("2 yaxis: %5.3f %5.3f %5.3f \n", _Yaxis[0], _Yaxis[1], _Yaxis[2] ); 
+//7      printf("2 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
+
+
+
+//    printf("  \n");
+//    printf("  X = %8.3f Y = %8.3f Z = %8.3f,   \n", 
+//            _UnrotatedSensorHit.X(), _UnrotatedSensorHit.Y(), _telPos[2] + _UnrotatedSensorHit.Z()  );
+//    printf("  X = %8.3f Y = %8.3f Z = %8.3f,  dx = %8.3f dy = %8.3f dz = %8.3f  ",  
+//            _RotatedSensorHit.X(), _RotatedSensorHit.Y(), _telPos[2] + _RotatedSensorHit.Z(), 
+//            _UnrotatedSensorHit.X()- _RotatedSensorHit.X(), 
+//            _UnrotatedSensorHit.Y()- _RotatedSensorHit.Y(), 
+//            _UnrotatedSensorHit.Z()- _RotatedSensorHit.Z()   );
+//    printf("  detectorID %5d  \n ", detectorID   );
+
 
     _telPos[0] = _RotatedSensorHit.X();
     _telPos[1] = _RotatedSensorHit.Y();

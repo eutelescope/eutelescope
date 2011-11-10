@@ -36,6 +36,7 @@
 #include <AIDA/IBaseHistogram.h>
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
+#include <AIDA/IProfile1D.h>
 #endif
 
 // system includes <>
@@ -332,7 +333,11 @@ namespace eutelescope {
      */
     void bookHistos();
 
-    virtual int guessSensorID(TrackerHitImpl* hit);
+    virtual int guessSensorID( double* hit);
+    virtual int guessSensorID( TrackerHitImpl* hit);
+
+
+    TVector3 Line2Plane(int iplane, const TVector3& lpoint, const TVector3& lvector ); 
 
 
   protected:
@@ -349,7 +354,13 @@ namespace eutelescope {
     std::vector< int > _orderedSensorID_wo_excluded;
 
 
-
+    //! reference HitCollection name 
+    /*!
+     */
+    std::string      _referenceHitCollectionName;
+    bool             _applyToReferenceHitCollection;
+    LCCollectionVec* _referenceHitVec;    
+ 
     //! TrackerHit collection name
     /*! Input collection with hits.
      */
@@ -376,6 +387,20 @@ namespace eutelescope {
      */
     
     std::map<std::string, bool > _hotPixelMap;
+
+    //! Sensor ID vector
+    std::vector< int > _sensorIDVec;
+
+    //! Sensor ID map (inverse sensorIDVec) 
+    std::map< int, int > _sensorIDVecMap;
+    //! Sensor ID vector, 
+    /*! it's position along Z axis
+     */ 
+    std::vector< int > _sensorIDVecZOrder;
+    //! sensor ID to position along Z id
+    /*!
+     */
+    std::map<int, int> _sensorIDtoZOrderMap;
 
 
     // parameters
@@ -506,6 +531,7 @@ namespace eutelescope {
     std::map<std::string, AIDA::IBaseHistogram * > _aidaHistoMap;
     std::map<std::string, AIDA::IHistogram1D * > _aidaHistoMap1D;
     std::map<std::string, AIDA::IHistogram2D * > _aidaHistoMap2D;
+    std::map<std::string, AIDA::IProfile1D * >   _aidaHistoMapProf1D;
  
     static std::string _numberTracksLocalname;
 
@@ -520,6 +546,8 @@ namespace eutelescope {
     static std::string _residualXvsYLocalname;
     static std::string _residualYvsXLocalname;
     static std::string _residualYvsYLocalname;
+    static std::string _residualZvsXLocalname;
+    static std::string _residualZvsYLocalname;
  
 #endif
 

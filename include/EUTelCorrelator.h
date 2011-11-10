@@ -12,6 +12,11 @@
 #if defined(USE_GEAR)
 
 // eutelescope includes ".h"
+#include "EUTelReferenceHit.h"
+
+//ROOT includes
+#include "TVector3.h"
+
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -23,7 +28,10 @@
 // lcio includes <.h>
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
+//#include <TrackerHitImpl2.h>
 #include <IMPL/TrackerHitImpl.h>
+
+
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -131,6 +139,15 @@ namespace eutelescope {
      */
     void bookHistos();
 
+    //! Called for first event per run
+    /*! Reads hotpixel information from hotPixelCollection into hotPixelMap
+     * to be used in the sensor exclusion area logic 
+     */
+    virtual void  FillHotPixelMap(LCEvent *event);
+
+
+    virtual bool hitContainsHotPixels( TrackerHitImpl   * hit) ;
+
 
   protected:
 
@@ -141,8 +158,32 @@ namespace eutelescope {
     std::string _InternalInputClusterCollectionName;
     std::string _ExternalInputClusterCollectionName;
 
+    //! vector of correlation band cuts in X (upper limit)
+    std::vector< float  > _residualsXMax;
+    //! vector of correlation band cuts in X (lower limit) 
+    std::vector< float  > _residualsXMin;
+    //! vector of correlation band cuts in Y (upper limit)       
+    std::vector< float  > _residualsYMax;         
+    //! vector of correlation band cuts in Y (lower limit) 
+    std::vector< float  > _residualsYMin;
+
+    int _minNumberOfCorrelatedHits;
+
+    //! Input collection name.
+    /*! This is the name of the output hit collection.
+     */
     std::string _inputHitCollectionName;
 
+    //! Output collection name.
+    /*! This is the name of the output hit collection.
+     */
+    std::string _outputHitCollectionName;
+
+    //! output collection for correlated 
+    /*! 
+     */ 
+    LCCollectionVec* _outputCorrelatedHitCollectionVec;
+ 
     //! Input cluster charge cut
     /*!
      */
@@ -175,7 +216,9 @@ namespace eutelescope {
     /*! It is checking against the distance of each plane assuming
      *  that this hit is belonging to the plane at the closest distant.
      */
-    int guessSensorID( TrackerHitImpl * hit ) ;
+  //  int guessSensorID( TrackerHitImpl * hit ) ;
+    int guessSensorID( const double* hit ) ;
+
 
     std::vector<double> guessSensorOffset(int internalSensorID, int externalSensorID, std::vector<double> cluCenter );
 
@@ -307,7 +350,30 @@ namespace eutelescope {
      */
     std::map<int, int> _sensorIDtoZOrderMap;
 
+    //! Hot pixel collection name.
+    /*! 
+     * this collection is saved in a db file to be used at the clustering level
+     */
+    std::string _hotPixelCollectionName;
 
+    //! Vector of map arrays, keeps record of hit pixels 
+    /*! The vector elements are sorted by Detector ID
+     *  For each Detector unique ID element a map of pixels is created. 
+     *  first level key   sensor unique 
+     *              value sensor map
+     *  sensor map key    unique row number
+     *             value  vector of column numbers.
+     */
+    
+    std::map<std::string, bool > _hotPixelMap;
+
+    //! reference HitCollection name 
+    /*!
+     */
+    std::string      _referenceHitCollectionName;
+    bool             _applyToReferenceHitCollection;
+    LCCollectionVec* _referenceHitVec;    
+ 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
     //! AIDA histogram map

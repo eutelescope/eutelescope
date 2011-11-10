@@ -74,6 +74,7 @@ using namespace eutelescope;
 std::string EUTelAPIXClusteringProcessor::_clusterSignalHistoName      	= "clusterSignal";
 std::string EUTelAPIXClusteringProcessor::_seedSignalHistoName         	= "seedSignal";
 std::string EUTelAPIXClusteringProcessor::_hitMapHistoName             	= "hitMap";
+std::string EUTelAPIXClusteringProcessor::_pixelMapHistoName           	= "pixelMap";
 std::string EUTelAPIXClusteringProcessor::_seedSNRHistoName            	= "seedSNR";
 std::string EUTelAPIXClusteringProcessor::_clusterNoiseHistoName       	= "clusterNoise";
 std::string EUTelAPIXClusteringProcessor::_clusterSNRHistoName         	= "clusterSNR";
@@ -101,6 +102,12 @@ EUTelAPIXClusteringProcessor::EUTelAPIXClusteringProcessor () : Processor("EUTel
 	registerProcessorParameter ("MinDiagonalDistance", "Minimum diagonal distance that pixels should have to build a cluster", _minDiagDistance, 1);
 	registerProcessorParameter ("MinCharge", "Minimum Charge (TOT) that clusters should have to build a cluster", _minCharge, 1);
 	registerProcessorParameter ("MinLVL1Difference", "Minimim Level 1 difference of pixels building one cluster", _minLVL1, -1);
+        registerProcessorParameter ("MaxXSize","Maximim size along X direction", _maxXsize, 1000 );
+        registerProcessorParameter ("MaxYSize","Maximim size along Y direction", _maxYsize, 1000 );
+        registerProcessorParameter ("MinXSize","Minimim size along X direction", _minXsize,  0   );
+        registerProcessorParameter ("MinYSize","Minimim size along Y direction", _minYsize,  0   );
+
+        registerProcessorParameter ("ClusterLimits","Minimim/Maximum size along X and Y direction [ID xmin xmax ymin ymax]", _ClusterLimits,  std::vector<int> (static_cast<int> (5), -1) );
 	
 	registerProcessorParameter("HistoInfoFileName", "This is the name of the histogram information file", _histoInfoFileName, string( "histoinfo.xml" ) );
 	registerProcessorParameter("HistogramFilling","Switch on or off the histogram filling", _fillHistos, static_cast< bool > ( true ) );
@@ -113,6 +120,7 @@ EUTelAPIXClusteringProcessor::EUTelAPIXClusteringProcessor () : Processor("EUTel
 	if (_minCharge < 1) _minCharge = 0;
 	if (_minLVL1 > 15) _minLVL1 = -1;
 
+
 }
 
 
@@ -121,6 +129,36 @@ void EUTelAPIXClusteringProcessor::init () {
 	streamlog_out(MESSAGE4) << "Histofile is: " << _histoInfoFileName << endl;
 	_iRun = 0;
 	_iEvt = 0;
+  // this method is called only once even when the rewind is active
+  // usually a good idea to
+
+    printParameters ();
+
+    if( _ClusterLimits.size() % 5 != 0) 
+    {
+      streamlog_out (ERROR) << "Wrong number of input values in ClusterLimits; check your steering file !" <<endl;
+    }
+    else
+    {
+      streamlog_out (MESSAGE) << " ClusterLimits initialised with " << _ClusterLimits.size() << " elements" << endl;
+    } 
+
+    for(int i = 0; i < _ClusterLimits.size(); i=i+5)
+    {
+       int ivector = i % 5;
+       int iSensor = _ClusterLimits.at(i);
+       printf("%5d : ivector %5d sensorID: %2d \n", i, ivector, iSensor );
+       _ClusterLimitsMap[ iSensor ].push_back(_ClusterLimits.at(i+1));
+       _ClusterLimitsMap[ iSensor ].push_back(_ClusterLimits.at(i+2));
+       _ClusterLimitsMap[ iSensor ].push_back(_ClusterLimits.at(i+3));
+       _ClusterLimitsMap[ iSensor ].push_back(_ClusterLimits.at(i+4));
+       printf("%5d : _ClusterLimitsMap[%2d] %5d %5d %5d %d \n", i, iSensor, 
+                                                     _ClusterLimitsMap[ iSensor ][0],
+                                                     _ClusterLimitsMap[ iSensor ][1],
+                                                     _ClusterLimitsMap[ iSensor ][2],
+                                                     _ClusterLimitsMap[ iSensor ][3]  );
+  
+    }  
 
 }
 
@@ -246,7 +284,8 @@ void EUTelAPIXClusteringProcessor::processEvent (LCEvent * event) {
 	
 	/* -------------- */
 	
-	 if ( ! clusterCollectionExists && ( clusterCollection->size() != _initialClusterCollectionSize )) {
+        if ( ! clusterCollectionExists && ( clusterCollection->size() != _initialClusterCollectionSize ))  
+        {
 		evt->addCollection( clusterCollection, _clusterCollectionName );
 		//streamlog_out ( MESSAGE1 ) << "Adding collection " << _clusterCollectionName <<  endl;
 	}
@@ -331,10 +370,12 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 			//streamlog_out(MESSAGE1) << "Starting with clustering..." << endl;
 			if (apixPixelVec.size() > 1) {
 				//Now compare all pixel in one plane with each other
-				for ( unsigned int aPixel=0;aPixel < apixPixelVec.size();++aPixel) {
+                		for ( unsigned int aPixel=0;aPixel < apixPixelVec.size();++aPixel) {
+	 				EUTelAPIXSparsePixel *aPix = apixPixelVec.at(aPixel);
+// printf("starting Pixel %5d at %5d %5d \n", aPixel, aPix->getXCoord(), aPix->getYCoord());
 					for ( unsigned int bPixel=aPixel+1; bPixel < apixPixelVec.size(); ++bPixel) {
-						EUTelAPIXSparsePixel *aPix = apixPixelVec.at(aPixel);
 						EUTelAPIXSparsePixel *bPix = apixPixelVec.at(bPixel);
+// printf("-- neeting Pixel %5d at %5d %5d \n", bPixel, bPix->getXCoord(), bPix->getYCoord());
 						//streamlog_out (MESSAGE1) << "looping..." << aPixel << " " << bPixel << endl;
 						int xDist = abs( aPix->getXCoord() - bPix->getXCoord() );
 						int yDist = abs( aPix->getYCoord() - bPix->getYCoord() );
@@ -346,10 +387,11 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 								int diagDist = max(xDist,yDist);
 								if (areDiagonalPartners && diagDist > _minDiagDistance) skipPixel = true;
 							}
-							if (_minLVL1 != -1) {
-								int LVL1Diff = abs(aPix->getTime() - bPix->getTime() );
+							if (_minLVL1 != -1 )
+                                                        {
+								float LVL1Diff = abs(aPix->getTime() - bPix->getTime() );
 								if (LVL1Diff > _minLVL1) skipPixel = true;
-							}
+ 							}
 							
 							if (skipPixel == false) {
 								
@@ -402,24 +444,73 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 			nClusters = clusterSet.size();
 			
 			
-			//if (nClusters != 0) streamlog_out(MESSAGE1) << "Found " << nClusters << " clusters in sensor " << sensorID<< endl;
+//			if (nClusters != 0) streamlog_out(MESSAGE1) << "Found " << nClusters << " clusters in sensor " << sensorID<< endl;
 			
 			/* --- Finished Clustering --- */
 			
 			/* --- Push back one Collection per Cluster --- */
 			std::set<int>::iterator it;
+                        int icounter=0;
 			for (it=clusterSet.begin();it!=clusterSet.end();it++) {
 				lcio::TrackerPulseImpl * pulseFrame = new lcio::TrackerPulseImpl();
 				lcio::TrackerDataImpl * clusterFrame = new lcio::TrackerDataImpl();
 				eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);	
+//                                printf("i:%2d it:%5d size:%5d apixPixelVec:%5d \n", icounter, *it, clusterNumber.size(), apixPixelVec.size() );
 				for (unsigned int i=0;i< apixPixelVec.size();i++) {
 					if(clusterNumber.at(i)== *it) { //Put only these pixels in that ClusterCollection that belong to that cluster
 						apixCluster->addSparsePixel(apixPixelVec.at(i));
-						//streamlog_out(MESSAGE1) << "Adding Pixel " << i << " to cluster vector" << endl;
+//						streamlog_out(MESSAGE1) << "Adding Pixel " << i << " to cluster vector" << endl;
 					}
-				}
-	
-                if ( (apixCluster->size() >= (unsigned int)_minNPixels) && (apixCluster->getTotalCharge() >= (unsigned int)_minCharge) ) {
+  				}
+ 			int xsize0,ysize0;
+			apixCluster->getClusterSize(xsize0,ysize0);
+			if( xsize0 < _minXsize || xsize0 > _maxXsize || ysize0 > _maxYsize || ysize0 < _minYsize )
+			{
+//			  streamlog_out(MESSAGE3) << "cluster ID: " << *it << " skipped due to oversize in X: " << xsize0 << " or Y: " << ysize0 << endl;
+                          continue;
+			}
+
+                        bool bSensorID = true; // sensor is not defined in _ClusterLimitsMap
+                        try
+                        {
+                          bSensorID = _ClusterLimits[0] > -1 ;
+                        }
+                        catch(...)
+                        {
+                          bSensorID = false;
+//                        streamlog_out(MESSAGE) << "  " << endl;
+                        }
+
+                        if( bSensorID )
+                        {
+                            if(  
+                                 xsize0 < _ClusterLimitsMap[sensorID][0] 
+                                 ||
+                                 xsize0 > _ClusterLimitsMap[sensorID][1] 
+                                 ||
+                                 ysize0 < _ClusterLimitsMap[sensorID][2] 
+                                 ||
+                                 ysize0 > _ClusterLimitsMap[sensorID][3] 
+                               )
+                                {
+//   		 		  streamlog_out(MESSAGE3) << "SensorID: " << sensorID << " : _ClusterLimitsMap:: cluster ID: " << *it << " skipped due to oversize in X: " << xsize0 << " or Y: " << ysize0 << endl;
+                		  continue;
+	                        }
+                        }
+                        else
+                        {
+// 			  streamlog_out(MESSAGE3) << "cluster ID: has no limits associated to it " << endl;                                 
+                        }
+
+
+//                streamlog_out(MESSAGE3) << "Accept:: SensorID: " << sensorID << " : _ClusterLimitsMap:: cluster ID: " << *it << " skipped due to oversize in X: " << xsize0 << " or Y: " << ysize0 << endl;
+ 
+
+                if (   
+                     ( apixCluster->size() >= (unsigned int) _minNPixels ) 
+                     &&
+                     ( apixCluster->getTotalCharge() >= (unsigned int) _minCharge )
+                                    ) {
 					//int x,y; 
 					float x,y;
 					int xsize,ysize;
@@ -428,6 +519,7 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 					// This is using analogue hit information
 					apixCluster->getCenterOfGravity(x,y);
 					apixCluster->getClusterSize(xsize,ysize);
+//         printf("xsize %5d ysize %5d \n", xsize, ysize);
 					if (x > 0 && x < 10000 && y > 0 && y < 10000) {
 						//streamlog_out(MESSAGE3) << "Clustervars: " << sensorID << " " << *it << " " << x << " " << y << " " <<xsize << " " << ysize << " " << type << endl;
 
@@ -442,15 +534,24 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 						zsDataEncoder.setCellID(pulseFrame);
 						pulseFrame->setTrackerData(clusterFrame);
 						clusterCollection->push_back(pulseFrame);
-						
+/*    printf("%5d %5d %8.3f %8.3f  %5d %5d consists of :\n", sensorID, clusterID, x, y, xsize, ysize);
+					for (int iPixel=0; iPixel <  apixCluster->size(); iPixel++) 
+                                        {
+					   EUTelAPIXSparsePixel apixPixel;
+					   apixCluster->getSparsePixelAt(iPixel, &apixPixel);
+                                           printf("--- %5d  %5d   %5d   %5.2f \n", iPixel,
+                                                  apixPixel.getXCoord(), apixPixel.getYCoord(), apixPixel.getSignal()   );
+					}
+*/
 						idClusterEncoder["sensorID"] 		= sensorID;
 						idClusterEncoder["clusterID"] 		= clusterID;
 						idClusterEncoder["sparsePixelType"] 	= static_cast<int>(type);
 						idClusterEncoder["type"] 		= static_cast<int>(kEUTelAPIXClusterImpl);
 						idClusterEncoder.setCellID(clusterFrame);
 						sparseClusterCollectionVec->push_back(clusterFrame);
-					}
+				      }
 				}
+            icounter++;   
             }
 		 }
 	}
@@ -543,7 +644,13 @@ void EUTelAPIXClusteringProcessor::fillHistos (LCEvent * evt) {
 					tempHistoName = _lvl1TriggerName + "_d" + to_string( sensorID );
 					(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(lvl1);
 					
-					
+					tempHistoName = _pixelMapHistoName + "_d" + to_string( sensorID );
+//		 apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() <		       
+				 	(dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[tempHistoName]))->fill(
+                                                 static_cast<double >(apixPixel.getXCoord() ),
+                                                 static_cast<double >(apixPixel.getYCoord() ),
+                                                 static_cast<double >(apixPixel.getSignal() )  );
+	
 					if (lvl1min == -1 && lvl1max == -1) {
 						lvl1min = lvl1;
 						lvl1max =lvl1;
@@ -681,7 +788,6 @@ void EUTelAPIXClusteringProcessor::bookHistos() {
 		_aidaHistoMap.insert(make_pair(tempHistoName, lvl1triggerdiff));
 		lvl1triggerdiff->setTitle(lvl1TriggerDiffTitle.c_str());
 
-
 		tempHistoName = _hitMapHistoName + "_d" + to_string( sensorID );
 		int     xBin = maxX - minX + 1;
 		double  xMin = static_cast<double >( minX ) - 0.5 ;
@@ -693,6 +799,12 @@ void EUTelAPIXClusteringProcessor::bookHistos() {
 		AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(), xBin, xMin, xMax,yBin, yMin, yMax);
 		_aidaHistoMap.insert(make_pair(tempHistoName, hitMapHisto));
 		hitMapHisto->setTitle("Hit map");
+	
+		tempHistoName = _pixelMapHistoName + "_d" + to_string( sensorID );
+           	AIDA::IHistogram2D * pixelMapHisto =
+		AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(), xBin, xMin, xMax,yBin, yMin, yMax);
+		_aidaHistoMap.insert(make_pair(tempHistoName, pixelMapHisto));
+		pixelMapHisto->setTitle("Pixel map");
 	}
 	streamlog_out ( MESSAGE0 )  << "end of Booking histograms " << endl;
 }
