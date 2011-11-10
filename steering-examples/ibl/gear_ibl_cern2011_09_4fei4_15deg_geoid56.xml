@@ -104,7 +104,7 @@
 				<layer>
 					<ladder 	ID="23" 
 							positionX="-3.631" 	positionY="-3.205"	positionZ="374.757" 
-							rotationZY="12.30"       rotationZX="-81.47" 	rotationXY="1.83" 
+							rotationZY="12.30"       rotationZX="-81.48" 	rotationXY="1.83" 
 							sizeX="20.0" 		sizeY="16.8" 		thickness="0.150" 
 							radLength="93.660734"
 					/>
