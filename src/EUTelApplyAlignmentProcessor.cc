@@ -37,6 +37,10 @@
 #
 // ROOT includes:
 #include "TVector3.h"
+#include "TVector2.h"
+#include "TMatrix.h"
+
+
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 // aida includes ".h"
@@ -317,6 +321,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
             _isFirstEvent = false;
             fevent = false;
         }
+        _iEvt++; 
     }
 /* 
     if ( _applyToReferenceHitCollection ) 
@@ -348,7 +353,7 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
                                << setfill(' ')
                                << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-  ++_iEvt;
+//++_iEvt;
 
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
@@ -550,7 +555,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
                                << setfill(' ')
                                << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-  ++_iEvt;
+//  ++_iEvt;
 
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
@@ -621,15 +626,53 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       int layerIndex   = _conversionIdMap[sensorID];
 
       // determine z position of the plane
-	  // 20 December 2010 @libov
+      // 20 December 2010 @libov
       float	z_sensor = 0;
-	  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
+      for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
       {
           if (sensorID == _siPlanesLayerLayout->getID( iPlane ) ) 
           {
               z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ( iPlane ) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( iPlane );
               break;
           }
+      }
+
+// retrieve the refhit cooridantes (eventual offset of the sensor) 
+      double x_refhit = 0.; 
+      double y_refhit = 0.; 
+      double z_refhit = 0.; 
+      
+      if( _referenceHitVec == 0 )
+      {
+        streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+      }
+      else
+      {
+//        streamlog_out(MESSAGE) << "reference Hit collection name : " << _referenceHitCollectionName << endl;
+ 
+       for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+       {
+        EUTelReferenceHit * refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+        if( sensorID != refhit->getSensorID() )
+        {
+       //   streamlog_out(MESSAGE) << "Looping through a varity of sensor IDs" << endl;
+          continue;
+        }
+        else
+        {
+          x_refhit =  refhit->getXOffset();
+          y_refhit =  refhit->getYOffset();
+          z_refhit =  refhit->getZOffset();
+          if( _iEvt < _printEvents )
+          {
+            streamlog_out(MESSAGE) << "Sensor ID and Alignment plane ID match!" << endl;
+            streamlog_out(MESSAGE) << "x_refhit " << x_refhit  << endl; 
+            streamlog_out(MESSAGE) << "y_refhit " << y_refhit  << endl; 
+            streamlog_out(MESSAGE) << "z_refhit " << z_refhit  << endl; 
+          }
+          break;
+        }
+       }
       }
 
       // copy the input to the output, at least for the common part
@@ -692,7 +735,30 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
                 streamlog_out ( MESSAGE )  << " gRotation[1] = " << gRotation[1]  << endl;
                 streamlog_out ( MESSAGE )  << " gRotation[2] = " << gRotation[2]  << endl;
           }
+// new implmentation // Rubinskiy 11.11.11
 
+// undo the shifts = go back to the center of the sensor frame (rotations unchanged)
+      outputPosition[0] = inputPosition[0] - x_refhit;
+      outputPosition[1] = inputPosition[1] - y_refhit;
+      outputPosition[2] = inputPosition[2] - z_refhit;
+
+      if ( _iEvt < _printEvents )
+      {
+         streamlog_out ( MESSAGE ) << "RevertGear: intermediate: "<<outputPosition[0] << " " <<outputPosition[1] << " " <<outputPosition[2] <<  endl;
+      } 
+      TVector3 iCenterOfSensorFrame( outputPosition[0], outputPosition[1], outputPosition[2] );
+
+      iCenterOfSensorFrame.RotateZ( -gRotation[0] );
+      iCenterOfSensorFrame.RotateY( -gRotation[1] );
+      iCenterOfSensorFrame.RotateX( -gRotation[2] ); // first rotaiton in ZY plane -> around X axis (gamma)
+
+      outputPosition[0] = iCenterOfSensorFrame(0);
+      outputPosition[1] = iCenterOfSensorFrame(1);
+      outputPosition[2] = iCenterOfSensorFrame(2);
+
+         
+          
+/* old implementation
           // rotations first
  
           outputPosition[0] = inputPosition[0];
@@ -707,6 +773,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 //          outputPosition[2] -= telPos[2];
 
           outputPosition[2] += z_sensor;
+*/
       }
       else
       {
@@ -726,12 +793,14 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 
       if ( _iEvt < _printEvents )
       {
-         streamlog_out ( MESSAGE ) << "RevertGear: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] << " " << z_sensor << endl;                
-         streamlog_out ( MESSAGE ) << "RevertGear: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2] << " " << z_sensor << endl;                
+        streamlog_out ( MESSAGE ) << "RevertGear: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] <<  endl;
+        streamlog_out ( MESSAGE ) << "RevertGear: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2] << endl;
       }
 
       outputHit->setPosition( outputPosition ) ;
       outputCollectionVec->push_back( outputHit );
+ 
+      TransformToLocalFrame(outputHit,evt); 
     }
 
     evt->addCollection( outputCollectionVec, _outputHitCollectionName );
@@ -746,15 +815,13 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 
 void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
-
   if ( _iEvt % 100 == 0 )
     streamlog_out ( MESSAGE4 ) << "Processing event  (ApplyAlignment Direct) "
                                << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
                                << setfill(' ')
                                << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-  ++_iEvt;
-
+//  ++_iEvt;
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
@@ -768,7 +835,6 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
     streamlog_out ( WARNING2 ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
-
 
   try 
   {
@@ -798,7 +864,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
             streamlog_out ( MESSAGE ) << endl;
             if ( _applyToReferenceHitCollection ) 
             {
-           }
+            }
         }
 
         if ( _histogramSwitch )
@@ -822,7 +888,12 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
     }
 
 
-    LCCollectionVec * outputCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);
+    LCCollectionVec * outputCollectionVec = 0;
+    try{
+        outputCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_outputHitCollectionName));
+    }catch(...){
+        outputCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);
+    }
 
     for (size_t iHit = 0; iHit < inputCollectionVec->size(); iHit++) {
 
@@ -912,16 +983,16 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
         else
         {
 //          streamlog_out(MESSAGE) << "Sensor ID and Alignment plane ID match!" << endl;
-        }
-        x_refhit =  refhit->getXOffset();
-        y_refhit =  refhit->getYOffset();
-        z_refhit =  refhit->getZOffset();
+          x_refhit =  refhit->getXOffset();
+          y_refhit =  refhit->getYOffset();
+          z_refhit =  refhit->getZOffset();
 
+          x_refhit += offsetX;
+          y_refhit += offsetY;
+          z_refhit += offsetZ;
 
-        x_refhit += offsetX;
-        y_refhit += offsetY;
-        z_refhit += offsetZ;
-
+          break;
+        } 
 /*        printf("PRE sensorID: %5d dx:%5.3f dy:%5.3f dz:%5.3f  [%5.2f %5.2f %5.2f]\n",
         refhit->getSensorID(   ),                      
         refhit->getXOffset(    ),
@@ -1180,15 +1251,19 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
       if ( _iEvt < _printEvents )
       {
-         streamlog_out ( MESSAGE ) << "DIRECT: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] <<  endl;                
-         streamlog_out ( MESSAGE ) << "DIRECT: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2]  << endl;                
+         streamlog_out ( MESSAGE ) << "DIRECT: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] <<  endl;   
+         streamlog_out ( MESSAGE ) << "DIRECT: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2]  << endl;
       }
 
       outputHit->setPosition( outputPosition ) ;
       outputCollectionVec->push_back( outputHit );
     }
 
-    evt->addCollection( outputCollectionVec, _outputHitCollectionName );
+    try{
+       evt->addCollection( outputCollectionVec, _outputHitCollectionName );
+    }catch(...){
+//       printf("can not add Collection %s \n", _outputHitCollectionName.c_str());
+    }
 
   } catch (DataNotAvailableException& e) {
     streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
@@ -1205,7 +1280,7 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
                                << setfill(' ')
                                << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-    ++_iEvt;
+//    ++_iEvt;
 
 
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
@@ -1961,55 +2036,176 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
 }
 
 
-void EUTelApplyAlignmentProcessor::TransformToLocalFrame(double & x, double & y, double & z, LCEvent * ev) {
+void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputHit, LCEvent * ev) 
+{
+// revert alignment, in an inverse order... this part should be fixed // perhaps it's obsolete already// Rubinskiy 12.11.2011
+//	for ( int i = _alignmentCollectionNames.size() - 1; i >= 0; i--) 
+//      {
+//          revertAlignment (x, y, z, _alignmentCollectionNames[i], ev );
+//	}
 
-				// revert alignment, in an inverse order...
-				for ( int i = _alignmentCollectionNames.size() - 1; i >= 0; i--) {
-					revertAlignment (x, y, z, _alignmentCollectionNames[i], ev );
-				}
-				// revert beta rotations implememted in the hitmaker
-				x = x / cos( _beta );
-				z = z - (-1) * (-1) * x  * sin ( _beta );
-				//cout << "z-z_sensor= " << z << endl;
+        double *outputPosition = const_cast< double * > ( outputHit->getPosition() ) ;
 
-				// revert setting (x,y) = (0,0) at the center of the sensor to the (row,col) = (0,0)
-				double	xSize = _siPlanesLayerLayout->getSensitiveSizeX(_indexDUT);  // mm
-				double	ySize = _siPlanesLayerLayout->getSensitiveSizeY(_indexDUT);  // mm
-				// as in the hitmaker... -------
-				double xPointing[2], yPointing[2];
-				xPointing[0] = _siPlanesLayerLayout->getSensitiveRotation1(_indexDUT); // was -1 ;
-				xPointing[1] = _siPlanesLayerLayout->getSensitiveRotation2(_indexDUT); // was  0 ;
-				yPointing[0] = _siPlanesLayerLayout->getSensitiveRotation3(_indexDUT); // was  0 ;
-				yPointing[1] = _siPlanesLayerLayout->getSensitiveRotation4(_indexDUT); // was -1 ;
+        // now we have to understand which layer this hit belongs to.
+        int sensorID = guessSensorID( outputHit );
 
-				double sign = 0;
-				if      ( xPointing[0] < -0.7 )       sign = -1 ;
-				else if ( xPointing[0] > 0.7 )       sign =  1 ;
-				else {
-				if       ( xPointing[1] < -0.7 )    sign = -1 ;
-				else if  ( xPointing[1] > 0.7 )    sign =  1 ;
-				}
-				x += sign * xSize/2;
+        if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) 
+        {
+          // first of all try to see if this sensorID already belong to
+          if ( _conversionIdMap.find( sensorID ) == _conversionIdMap.end() ) 
+          {
+              // this means that this detector ID was not already inserted,
+              // so this is the right place to do that
+          
+              for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) 
+              {
+                  if ( _siPlanesLayerLayout->getID(iLayer) == sensorID ) 
+                  {
+                      _conversionIdMap.insert( make_pair( sensorID, iLayer ) );
+                      break;
+                  }
+              }
+          }
+        }
+      
+        int layerIndex   = _conversionIdMap[sensorID];
 
-				if      ( yPointing[0] < -0.7 )       sign = -1 ;
-				else if ( yPointing[0] > 0.7 )       sign =  1 ;
-				else {
-				if       ( yPointing[1] < -0.7 )    sign = -1 ;
-				else if  ( yPointing[1] > 0.7 )    sign =  1 ;
-				}
-				y += sign * ySize/2;
-				//--------------
 
-				// revert gear rotations
-				double	x_temp = x;
-				double	y_temp = y;
-				double	z_temp = z;
+        double xSize = 0., ySize = 0.;
+        double zThickness = 0.;
+        double xPitch = 0., yPitch = 0.;
+        double xPointing[2] = { 1., 0. }, yPointing[2] = { 1., 0. };
 
-				x = _rot00 * x_temp + _rot01 * y_temp;
-				y = _rot10 * x_temp + _rot11 * y_temp;
+        xPitch       = _siPlanesLayerLayout->getSensitivePitchX(layerIndex);    // mm
+        yPitch       = _siPlanesLayerLayout->getSensitivePitchY(layerIndex);    // mm
+        xSize        = _siPlanesLayerLayout->getSensitiveSizeX(layerIndex);     // mm
+        ySize        = _siPlanesLayerLayout->getSensitiveSizeY(layerIndex);     // mm
+        xPointing[0] = _siPlanesLayerLayout->getSensitiveRotation1(layerIndex); // was -1 ;
+        xPointing[1] = _siPlanesLayerLayout->getSensitiveRotation2(layerIndex); // was  0 ;
+        yPointing[0] = _siPlanesLayerLayout->getSensitiveRotation3(layerIndex); // was  0 ;
+        yPointing[1] = _siPlanesLayerLayout->getSensitiveRotation4(layerIndex); // was -1 ;
+
+        double sign = 0;
+          if      ( xPointing[0] < -0.7 )     sign = -1 ;
+          else if ( xPointing[0] > 0.7 )      sign =  1 ;
+          else 
+          {
+           if       ( xPointing[1] < -0.7 )   sign = -1 ;
+           else if  ( xPointing[1] > 0.7 )    sign =  1 ;
+          }
+          outputPosition[0] -=  (-1)* sign * xSize/2;   //apply shifts few lines later
+
+          if      ( yPointing[0] < -0.7 )     sign = -1 ;
+          else if ( yPointing[0] > 0.7 )      sign =  1 ;
+          else 
+          {
+           if       ( yPointing[1] < -0.7 )   sign = -1 ;
+           else if  ( yPointing[1] > 0.7 )    sign =  1 ;
+          }
+          outputPosition[1] -= (-1)* sign * ySize/2;   // apply shifts few lines later
+
+        TMatrix flip0(2,1);
+          flip0(0,0) = outputPosition[0];
+          flip0(1,0) = outputPosition[1];
+
+        TMatrix flip1(2,1);
+          flip1(0,0) = 0.;
+          flip1(1,0) = 0.;
+
+        TMatrix flip(2,2);
+          flip(0,0) = xPointing[0];  
+          flip(1,0) = yPointing[0];  
+          flip(0,1) = xPointing[1];  
+          flip(1,1) = yPointing[1];  
+
+        TMatrix antiflip(2,2);
+          antiflip = flip.Invert();
+         
+        flip1.Mult(antiflip, flip0);
+
+        TVector2 clusterCenter( flip1(0,0)/xPitch-0.5, flip1(1,0)/yPitch-0.5 ); 
+        if ( _iEvt < _printEvents )
+        {
+          streamlog_out ( MESSAGE ) << "RevertGear: matrix: " << flip1(0,0) << ":" << flip1(1,0) << endl;
+          streamlog_out ( MESSAGE ) << "RevertGear: cluster coordinates [pitch:"<<xPitch<<":"<<yPitch<<"]:" << clusterCenter.X() << " " << clusterCenter.Y() << endl;
+        }
+
+        EUTelVirtualCluster  * cluster;
+        ClusterType type = static_cast<ClusterType>(static_cast<int>(outputHit->getType()));
+        if ( _iEvt < _printEvents )
+        {
+          streamlog_out ( MESSAGE ) << "RevertGear: hit/cluster type:" << type << endl;
+        }
+
+        // prepare a LCObjectVec to store the current cluster
+        LCObjectVec clusterVec = outputHit->getRawHits();
+        for(int i=0;i<clusterVec.size();i++)
+        {      
+          if ( _iEvt < _printEvents )
+          {
+            streamlog_out ( MESSAGE ) << "[" << i << "]" ;
+          }
+          if ( type == kEUTelSparseClusterImpl ) 
+          {
+            cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVec[i]  ) );
+          } 
+          else if ( type == kEUTelAPIXClusterImpl ) 
+          {
+        
+            cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVec[i]  ) );
+//            printf("ID: %5d:  x:%5d y:%5d tot:%5.1f\n", cluster->getDetectorID(), xsize0, ysize0,  cluster->getTotalCharge() );
+          }
+          else 
+          {
+            streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
+            throw UnknownDataTypeException("Cluster type unknown");
+          }
+          float xCoG(0.0f), yCoG(0.0f);
+          cluster->getCenterOfGravity(xCoG, yCoG);
+          double xDet = (xCoG + 0.5) * xPitch;
+          double yDet = (yCoG + 0.5) * yPitch;
+
+          double telPos[3];
+          telPos[0] = xPointing[0] * xDet + xPointing[1] * yDet;
+          telPos[1] = yPointing[0] * xDet + yPointing[1] * yDet;
+
+          // now the translation
+          // not sure about the sign. At least it is working for the current
+          // configuration but we need to double check it
+          double sign = 0;
+          if      ( xPointing[0] < -0.7 )       sign = -1 ;
+          else if ( xPointing[0] > 0.7 )       sign =  1 ;
+          else 
+          {
+           if       ( xPointing[1] < -0.7 )    sign = -1 ;
+           else if  ( xPointing[1] > 0.7 )    sign =  1 ;
+          }
+          telPos[0] +=  (-1)* sign * xSize/2;   //apply shifts few lines later
+
+          if      ( yPointing[0] < -0.7 )       sign = -1 ;
+          else if ( yPointing[0] > 0.7 )       sign =  1 ;
+          else 
+          {
+           if       ( yPointing[1] < -0.7 )    sign = -1 ;
+           else if  ( yPointing[1] > 0.7 )    sign =  1 ;
+          }
+          telPos[1] += (-1)* sign * ySize/2;   // apply shifts few lines later
+
+          if ( _iEvt < _printEvents )
+          {
+            streamlog_out ( MESSAGE ) << "[CoG:" << xCoG << ":" << yCoG << " -> Det:" << xDet << ":" << yDet << "] == " << telPos[0] << ":" << telPos[1] ;
+          }
+        }
+ 
+        if ( _iEvt < _printEvents )
+        { 
+          streamlog_out ( MESSAGE ) << endl;
+        }
+
 }
 
-void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, double & z, std::string	collectionName, LCEvent * lcevent) {
+void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, double & z, std::string	collectionName, LCEvent * lcevent) 
+{
 
 	// in this function, some parts of the EUTelApplyAlignmentProcessor are used
 
@@ -2090,9 +2286,9 @@ void EUTelApplyAlignmentProcessor::_EulerRotation(int sensorID, double* _telPos,
 
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
 
-    if( TMath::Abs(_gRotation[0]) > 1e-6 )    _RotatedSensorHit.RotateZ( _gRotation[0] ); // in XY
-    if( TMath::Abs(_gRotation[1]) > 1e-6 )    _RotatedSensorHit.RotateY( _gRotation[1] ); // in ZX 
     if( TMath::Abs(_gRotation[2]) > 1e-6 )    _RotatedSensorHit.RotateX( _gRotation[2] ); // in ZY
+    if( TMath::Abs(_gRotation[1]) > 1e-6 )    _RotatedSensorHit.RotateY( _gRotation[1] ); // in ZX 
+    if( TMath::Abs(_gRotation[0]) > 1e-6 )    _RotatedSensorHit.RotateZ( _gRotation[0] ); // in XY
 
     _telPos[0] = _RotatedSensorHit.X();
     _telPos[1] = _RotatedSensorHit.Y();
@@ -2113,9 +2309,9 @@ void EUTelApplyAlignmentProcessor::_EulerRotationInverse(int sensorID, double* _
 
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
 
-    if( TMath::Abs(_gRotation[2]) > 1e-6 )    _RotatedSensorHit.RotateX( -1.*_gRotation[2] ); // in ZY
-    if( TMath::Abs(_gRotation[1]) > 1e-6 )    _RotatedSensorHit.RotateY( -1.*_gRotation[1] ); // in ZX 
     if( TMath::Abs(_gRotation[0]) > 1e-6 )    _RotatedSensorHit.RotateZ( -1.*_gRotation[0] ); // in XY
+    if( TMath::Abs(_gRotation[1]) > 1e-6 )    _RotatedSensorHit.RotateY( -1.*_gRotation[1] ); // in ZX 
+    if( TMath::Abs(_gRotation[2]) > 1e-6 )    _RotatedSensorHit.RotateX( -1.*_gRotation[2] ); // in ZY
  
 
     _telPos[0] = _RotatedSensorHit.X();

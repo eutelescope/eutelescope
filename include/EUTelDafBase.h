@@ -29,8 +29,10 @@
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+#include <AIDA/IBaseHistogram.h>
 #include <AIDA/IHistogram1D.h>
 #include <AIDA/IHistogram2D.h>
+#include <AIDA/IProfile1D.h>
 #endif
 
 // system includes <>
@@ -62,6 +64,7 @@ namespace eutelescope {
     
     virtual int guessSensorID(const double* hit);
 
+    virtual inline bool ReferenceHitVecIsSet(){ return _referenceHitVec==0; }    
 
   protected:
     std::ofstream trackstream;
@@ -154,6 +157,8 @@ namespace eutelescope {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     std::map<std::string, AIDA::IHistogram1D * > _aidaHistoMap;
     std::map<std::string, AIDA::IHistogram2D * > _aidaHistoMap2D;
+    std::map<std::string, AIDA::IProfile1D * >   _aidaHistoMapProf1D;
+ 
     AIDA::IHistogram2D* _aidaZvHitX;
     AIDA::IHistogram2D* _aidaZvFitX;
     AIDA::IHistogram2D* _aidaZvHitY;

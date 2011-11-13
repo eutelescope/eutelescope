@@ -41,6 +41,8 @@
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
 #include "EUTelExceptions.h"
+#include "EUTelReferenceHit.h"
+
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
@@ -82,6 +84,9 @@
 #include <iostream>
 #include <fstream>
 
+// ROOT includes
+#include "TVector3.h"
+
 using namespace std;
 using namespace lcio;
 using namespace marlin;
@@ -112,11 +117,29 @@ void EUTelDafFitter::dafInit() {
       }
     }
   }
+
+//  _isFirstEvent = true; 
+
 }
 
 
 void EUTelDafFitter::dafEvent (LCEvent * event) {
 // printf("EUTelDafFitter::dafEvent()\n"); 
+/*
+  if( _isFirstEvent )
+  {
+    try
+    {
+     _referenceHitVec     = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));  
+    }
+    catch(...)
+    {
+      streamlog_out(ERROR) << "Critical error; the referennce hit collection was not found, pls check your steering file." << endl;
+    }
+ 
+  }
+*/
+
   //Prepare track collection
   if(_addToLCIO){
     // Define output track and hit collections
@@ -158,6 +181,12 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
     event->addCollection(_fittrackvec,_trackCollectionName); 
     event->addCollection(_fitpointvec, "fitpoints");
   }
+
+//   if( _isFirstEvent )
+//   {
+//     _isFirstEvent = false;
+//   }
+
 }
 
 void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track){
@@ -189,7 +218,9 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track){
     pos[0]= estim->getX() / 1000.0;
     pos[1]= estim->getY() / 1000.0;
     pos[2]= pl.getMeasZ() / 1000.0;
-      
+// overload z coordinate calculation -> important for proper sensor Identification by the hit coordinates based onthe refhit collection
+    pos[2] = getZfromRefHit(plane, pos);    
+//
     fitpoint->setPosition(pos);
     // Covariance matrix of the fitted position
     // (stored as lower triangle matrix, i.e.  cov(xx),cov(y,x),cov(y,y) ).
@@ -218,6 +249,44 @@ void EUTelDafFitter::addToLCIO(daffitter::TrackCandidate* track){
   }
   fittrack->setReferencePoint(refpoint);
   _fittrackvec->addElement(fittrack);
+}
+
+double EUTelDafFitter::getZfromRefHit(int plane, double *pos){
+//rintf("plane %5d estim X:%5.2f Y:%5.2f Z:%5.2f \n", plane,  pos[0], pos[1], pos[2] );      
+
+ try
+ {
+   double t = pos[2];
+ }
+ catch(...)
+ {
+   printf(" input array pos{3} access error, perhaps it has less then 3 elements => check yoru input !! \n"); 
+   return 0.;
+ }
+   
+  if( ReferenceHitVecIsSet() )
+  {
+    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    return 0;
+  }
+  
+  EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(plane) ) ;
+//        printf(" _referenceHitVec %p refhit %p \n", _referenceHitVec, refhit);
+        
+  TVector3 lpoint( pos[0], pos[1], pos[2] );
+  TVector3 lvector( 0., 0., 1. );
+  TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
+  TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+
+  TVector3 point( 1.,1.,1. );
+          
+  double linecoord_numenator   = norm2Plane.Dot(hitInPlane-lpoint);
+  double linecoord_denumenator = norm2Plane.Dot(lvector);
+  point = (linecoord_numenator/linecoord_denumenator)*lvector + lpoint;
+
+//  printf("plane %5d estim X:%5.2f Y:%5.2f Z:%5.2f -> (%5.2f, %5.2f, %5.2f)\n", plane,  pos[0], pos[1], pos[2], point(0), point(1), point(2) );      
+
+return point(2);
 }
 
 void EUTelDafFitter::dafEnd() {

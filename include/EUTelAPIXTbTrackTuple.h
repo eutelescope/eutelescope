@@ -3,6 +3,8 @@
 
 #include "marlin/Processor.h"
 #include "EUTelAlignmentConstant.h"
+#include "EUTelReferenceHit.h"
+
 
 // gear includes <.h>
 #include <gear/SiPlanesParameters.h>
@@ -54,6 +56,7 @@ namespace eutelescope {
     void invertAlignment(EUTelAlignmentConstant * alignment);
     void invertGear();
     void reverseAlign(double& x, double& y, double& z, int iden, double nomZPos);
+    int  guessSensorID( TrackerHit *hit);
     void clear();
     gsl_matrix* invertLU(int dim, gsl_matrix* m);
     int readZsHits(std::string colName, LCEvent* event);
@@ -88,6 +91,12 @@ namespace eutelescope {
 
     std::string _path2file;
 
+    //! reference HitCollection name 
+    /*!
+     */
+    std::string _referenceHitCollectionName;
+    LCCollectionVec* _referenceHitVec;    
+ 
     // Internal processor variables
     // ----------------------------
 
@@ -95,6 +104,8 @@ namespace eutelescope {
     int _nEvt ;
     int _runNr;
     int _evtNr;
+
+    bool _isFirstEvent;
     
     TFile* _file;
 

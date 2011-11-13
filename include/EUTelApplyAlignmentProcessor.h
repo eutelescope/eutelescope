@@ -176,7 +176,7 @@ namespace eutelescope {
      */
     virtual inline int GetApplyAlignmentDirection(){return _applyAlignmentDirection;}
      
-    void TransformToLocalFrame(double & x, double & y, double & z, LCEvent * ev);
+    void TransformToLocalFrame(TrackerHitImpl* outputHit, LCEvent * ev);
     void revertAlignment(double & x, double & y, double & z, std::string	collectionName, LCEvent * ev) ;
  
     //! Perform Euler rotations
