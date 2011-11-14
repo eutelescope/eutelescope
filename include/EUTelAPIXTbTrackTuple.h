@@ -74,6 +74,8 @@ namespace eutelescope {
     //std::map< int, std::vector< std::vector<double> > >
     std::map<int, std::vector<gsl_matrix*> > _alignRot;
     std::map<int, std::vector<double> > _gearShift;
+    std::map<int, std::vector<double> > _gearOffset;
+    std::map<int, std::vector<double> > _gearSize;
     std::map<int, gsl_matrix* > _gearRot;
     std::map<int, std::pair<double, double> > _gearPitch;
     std::map<int, std::vector<double> > _gearEulerRot;

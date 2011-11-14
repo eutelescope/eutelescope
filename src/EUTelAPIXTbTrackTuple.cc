@@ -617,6 +617,20 @@ void EUTelAPIXTbTrackTuple::invertGear(){
     shifts.push_back(-1 * _siPlanesLayerLayout->getSensitivePositionZ(layerIndex));
     _gearShift[iden] = shifts;
 
+    //offset
+    vector<double> offset;
+    offset.push_back( _siPlanesLayerLayout->getSensitivePositionX(layerIndex) );
+    offset.push_back( _siPlanesLayerLayout->getSensitivePositionY(layerIndex) );
+    offset.push_back( _siPlanesLayerLayout->getSensitivePositionZ(layerIndex) );
+    _gearOffset[iden] = offset;
+
+    //sizes
+    vector<double> size;
+    size.push_back(-1 * (  - xSign * 0.5 * _siPlanesLayerLayout->getSensitiveSizeX(layerIndex)));
+    size.push_back(-1 * (  - ySign * 0.5 * _siPlanesLayerLayout->getSensitiveSizeY(layerIndex)));
+    _gearSize[iden] = size;
+
+
     //Pitches
     _gearPitch[iden] = make_pair( _siPlanesLayerLayout->getSensitivePitchX(layerIndex),
 				  _siPlanesLayerLayout->getSensitivePitchY(layerIndex));
@@ -674,6 +688,7 @@ void EUTelAPIXTbTrackTuple::clear(){
 }
 
 void EUTelAPIXTbTrackTuple::reverseAlign(double& x, double& y, double &z, int iden, double nomZpos){
+//printf("reverseAlign-- %5d -- x:%5.2f %5.2f %5.2f \n", iden, x,y,z);
   // Apply alignment translations 
   double xTemp(0.0),yTemp(0.0), zTemp(0.0);
   for( size_t trans = 0; trans < _alignShift[iden].size(); trans++){
@@ -713,30 +728,46 @@ void EUTelAPIXTbTrackTuple::reverseAlign(double& x, double& y, double &z, int id
     EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(iloc) ) ;
     if( refhit == 0 ) streamlog_out( WARNING ) << "refhit is empty :" << refhit << endl;
 
-    xoffset = refhit->getXOffset();
-    yoffset = refhit->getYOffset();
-    zoffset = refhit->getZOffset();
-    alpha   = refhit->getAlpha();
-    beta    = refhit->getBeta();
-    gamma   = refhit->getGamma();
+    if(_gearOffset.find(iden) != _gearOffset.end())
+    {
+      x -= _gearOffset[iden].at(0);
+      y -= _gearOffset[iden].at(1);
+      z -= _gearOffset[iden].at(2);
+    }
  
-    xTemp = x - xoffset;
-    yTemp = y - yoffset;
-    zTemp = z - zoffset;
-    TVector3 RotatedSensorHit( xTemp, yTemp, zTemp);
-    if( TMath::Abs(gamma) > 1e-6 ){
-      RotatedSensorHit.RotateZ( -1.0 * gamma ); // in XY
+    TVector3 RotatedSensorHit( x, y, z);
+
+    std::vector<double>& rots = _gearEulerRot[iden];
+    if( TMath::Abs(rots.at(0)) > 1e-6 ){
+      RotatedSensorHit.RotateZ( -1.0 * rots.at(0) ); // in XY
     }
-    if( TMath::Abs( beta) > 1e-6 ){
-      RotatedSensorHit.RotateY( -1.0 * beta ); // in ZX 
+    if( TMath::Abs(rots.at(1)) > 1e-6 ){
+      RotatedSensorHit.RotateY( -1.0 * rots.at(1) ); // in ZX 
     }
-    if( TMath::Abs(alpha) > 1e-6 ){
-      RotatedSensorHit.RotateX( -1.0 * alpha ); // in ZY
+    if( TMath::Abs(rots.at(2)) > 1e-6 ){
+      RotatedSensorHit.RotateX( -1.0 * rots.at(2) ); // in ZY
     }
     x = RotatedSensorHit.X();
     y = RotatedSensorHit.Y();
     z = RotatedSensorHit.Z();
-  
+//printf("unrotated x:%5.2f y:%5.2f z:%5.2f\n", x,y,z);
+ 
+    if(_gearSize.find(iden) != _gearSize.end())
+    {
+      x += _gearSize[iden].at(0);
+      y += _gearSize[iden].at(1);
+    }
+//printf("size corrected x:%5.2f y:%5.2f \n", x,y);
+ 
+    //Apply gear rot
+    if(_gearRot.find(iden) != _gearRot.end()){
+      gsl_matrix* m = _gearRot[iden];
+      xTemp = x * gsl_matrix_get(m,0,0) + y * gsl_matrix_get(m,0,1);
+      yTemp = x * gsl_matrix_get(m,1,0) + y * gsl_matrix_get(m,1,1);
+      x = xTemp; y = yTemp;
+    }
+
+ 
   }else{
     zTemp = z - nomZpos;
     TVector3 RotatedSensorHit( x, y, zTemp);
@@ -759,19 +790,20 @@ void EUTelAPIXTbTrackTuple::reverseAlign(double& x, double& y, double &z, int id
       x += _gearShift[iden].at(0);
       y += _gearShift[iden].at(1);
     }
+    //Apply gear rot
+    if(_gearRot.find(iden) != _gearRot.end()){
+      gsl_matrix* m = _gearRot[iden];
+      xTemp = x * gsl_matrix_get(m,0,0) + y * gsl_matrix_get(m,0,1);
+      yTemp = x * gsl_matrix_get(m,1,0) + y * gsl_matrix_get(m,1,1);
+      x = xTemp; y = yTemp;
+    }
+
+    // Change reference from sensor corner to center of pixel 0,0
+    x -= 0.5 * _gearPitch[iden].first;
+    y -= 0.5 * _gearPitch[iden].second;
   }
 
-  //Apply gear rot
-  if(_gearRot.find(iden) != _gearRot.end()){
-    gsl_matrix* m = _gearRot[iden];
-    xTemp = x * gsl_matrix_get(m,0,0) + y * gsl_matrix_get(m,0,1);
-    yTemp = x * gsl_matrix_get(m,1,0) + y * gsl_matrix_get(m,1,1);
-    x = xTemp; y = yTemp;
-  }
-
-  // Change reference from sensor corner to center of pixel 0,0
-  x -= 0.5 * _gearPitch[iden].first;
-  y -= 0.5 * _gearPitch[iden].second;
+//  printf("iden %5d at x=%5.2f y=%5.2f z=%5.2f \n", iden, x, y, z);
 }
 
 void EUTelAPIXTbTrackTuple::readAlignment(LCEvent* event){
