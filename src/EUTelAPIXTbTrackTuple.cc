@@ -693,32 +693,82 @@ void EUTelAPIXTbTrackTuple::reverseAlign(double& x, double& y, double &z, int id
   }
 
   //Apply GEAR Euler translations
-  zTemp = z - nomZpos;
-  TVector3 RotatedSensorHit( x, y, zTemp);
-  std::vector<double>& rots = _gearEulerRot[iden];
-  if( TMath::Abs(rots.at(0)) > 1e-6 ){
-    RotatedSensorHit.RotateZ( -1.0 * rots.at(0) ); // in XY
-  }
-  if( TMath::Abs(rots.at(1)) > 1e-6 ){
-    RotatedSensorHit.RotateY( -1.0 * rots.at(1) ); // in ZX 
-  }
-  if( TMath::Abs(rots.at(2)) > 1e-6 ){
-    RotatedSensorHit.RotateX( -1.0 * rots.at(2) ); // in ZY
-  }
-  x = RotatedSensorHit.X();
-  y = RotatedSensorHit.Y();
+  double xoffset = 0.;
+  double yoffset = 0.;
+  double zoffset = 0.;
+  double alpha   = 0.;
+  double beta    = 0.;
+  double gamma   = 0.;
+
+  if( _referenceHitVec != 0  )
+  {
+    int iloc = -1;
+    for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+    {
+      EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+      if( iden == refhit->getSensorID()) iloc = ii;
+    }
+   
+    if( iloc < 0 ) streamlog_out( WARNING ) << "Uknown sensor found at :" << iden << endl;
+    EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(iloc) ) ;
+    if( refhit == 0 ) streamlog_out( WARNING ) << "refhit is empty :" << refhit << endl;
+
+    xoffset = refhit->getXOffset();
+    yoffset = refhit->getYOffset();
+    zoffset = refhit->getZOffset();
+    alpha   = refhit->getAlpha();
+    beta    = refhit->getBeta();
+    gamma   = refhit->getGamma();
+ 
+    xTemp = x - xoffset;
+    yTemp = y - yoffset;
+    zTemp = z - zoffset;
+    TVector3 RotatedSensorHit( xTemp, yTemp, zTemp);
+    if( TMath::Abs(gamma) > 1e-6 ){
+      RotatedSensorHit.RotateZ( -1.0 * gamma ); // in XY
+    }
+    if( TMath::Abs( beta) > 1e-6 ){
+      RotatedSensorHit.RotateY( -1.0 * beta ); // in ZX 
+    }
+    if( TMath::Abs(alpha) > 1e-6 ){
+      RotatedSensorHit.RotateX( -1.0 * alpha ); // in ZY
+    }
+    x = RotatedSensorHit.X();
+    y = RotatedSensorHit.Y();
+    z = RotatedSensorHit.Z();
   
-  //Apply gear local trans
-  if(_gearShift.find(iden) != _gearShift.end()){
-    x += _gearShift[iden].at(0);
-    y += _gearShift[iden].at(1);
-  }  //Apply gear rot
+  }else{
+    zTemp = z - nomZpos;
+    TVector3 RotatedSensorHit( x, y, zTemp);
+    std::vector<double>& rots = _gearEulerRot[iden];
+    if( TMath::Abs(rots.at(0)) > 1e-6 ){
+      RotatedSensorHit.RotateZ( -1.0 * rots.at(0) ); // in XY
+    }
+    if( TMath::Abs(rots.at(1)) > 1e-6 ){
+      RotatedSensorHit.RotateY( -1.0 * rots.at(1) ); // in ZX 
+    }
+    if( TMath::Abs(rots.at(2)) > 1e-6 ){
+      RotatedSensorHit.RotateX( -1.0 * rots.at(2) ); // in ZY
+    }
+    x = RotatedSensorHit.X();
+    y = RotatedSensorHit.Y();
+ 
+    //Apply gear local trans
+    if(_gearShift.find(iden) != _gearShift.end())
+    {
+      x += _gearShift[iden].at(0);
+      y += _gearShift[iden].at(1);
+    }
+  }
+
+  //Apply gear rot
   if(_gearRot.find(iden) != _gearRot.end()){
     gsl_matrix* m = _gearRot[iden];
     xTemp = x * gsl_matrix_get(m,0,0) + y * gsl_matrix_get(m,0,1);
     yTemp = x * gsl_matrix_get(m,1,0) + y * gsl_matrix_get(m,1,1);
     x = xTemp; y = yTemp;
   }
+
   // Change reference from sensor corner to center of pixel 0,0
   x -= 0.5 * _gearPitch[iden].first;
   y -= 0.5 * _gearPitch[iden].second;

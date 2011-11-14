@@ -821,10 +821,12 @@ void EUTelDafBase::end() {
     sprintf(iden, "%d", plane.getSensorID());
     string bname = (string)"pl" + iden + "_";
     streamlog_out ( MESSAGE ) << "plane:" << ii <<
-                               "  x-mean:" << _aidaHistoMap[bname + "residualX"]->mean() << 
-                               "  x-rms :" << _aidaHistoMap[bname + "residualX"]->rms() << 
-                               "  y-mean:" << _aidaHistoMap[bname + "residualY"]->mean() << 
-                               "  y-rms :" << _aidaHistoMap[bname + "residualY"]->rms() << endl;
+                               "  x-stat :" <<  _aidaHistoMap[bname + "residualX"]->allEntries() <<
+                               "  x-mean:"  <<  _aidaHistoMap[bname + "residualX"]->mean() << 
+                               "  x-rms :"  <<  _aidaHistoMap[bname + "residualX"]->rms() << 
+                               "  y-stat :" <<  _aidaHistoMap[bname + "residualY"]->allEntries() <<
+                               "  y-mean:"  <<  _aidaHistoMap[bname + "residualY"]->mean() << 
+                               "  y-rms :"  <<  _aidaHistoMap[bname + "residualY"]->rms() << endl;
   }
 
 
