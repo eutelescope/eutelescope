@@ -206,7 +206,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
   <processor name="DafFitter" type="EUTelDafFitter">
     <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5  </parameter>
-    <parameter name="DutPlanes" type="IntVec"> 20 21 </parameter>
+    <parameter name="DutPlanes" type="IntVec"> 10 20 </parameter>
     <parameter name="FitDuts" type="bool" value="false"/>
     <parameter name="MakePlots" type="bool" value="true"/>
     <parameter name="RequireNTelPlanes" type="float" value="4"/>
@@ -542,14 +542,14 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
         in particular ID of the sensor to be treated as DUT, use reference plane or not,
 		which plane to be used as DUT.
 	 -->
-  <processor name="DUTHisto20" type="EUTelDUTHistograms">
-    <parameter name="ManualDUTid" type="int" value="20"/>
-    <parameter name="referencePlaneID" type="int" value="21" />
+  <processor name="DUTHisto10" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="10"/>
+    <parameter name="referencePlaneID" type="int" value="20" />
   </processor>
 
-  <processor name="DUTHisto21" type="EUTelDUTHistograms">
-    <parameter name="ManualDUTid" type="int" value="21"/>
-	<parameter name="referencePlaneID" type="int" value="20" />
+  <processor name="DUTHisto20" type="EUTelDUTHistograms">
+    <parameter name="ManualDUTid" type="int" value="20"/>
+	<parameter name="referencePlaneID" type="int" value="10" />
   </processor>
 
   </group>
