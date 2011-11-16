@@ -114,7 +114,7 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor () :Processor("EUTelA
 
   registerInputCollection (LCIO::LCGENERICOBJECT, "AlignmentConstantName",
                            "Alignment constant from the condition file",
-                           _alignmentCollectionName, string ("alignment"));
+                           _alignmentCollectionName, string ("alignmentCollectionName"));
 
   registerOutputCollection (LCIO::TRACKERHIT, "OutputHitCollectionName",
                             "The name of the output hit collection",
@@ -149,7 +149,7 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor () :Processor("EUTelA
 
 
   EVENT::StringVec	_alignmentCollectionSuffixExamples;
-  _alignmentCollectionSuffixExamples.push_back("alignment");
+  _alignmentCollectionSuffixExamples.push_back("alignmentCollectionNames");
   
   registerProcessorParameter ("alignmentCollectionNames",
                             "List of alignment collections that were applied to the DUT",
@@ -627,7 +627,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 
       // determine z position of the plane
       // 20 December 2010 @libov
-      float	z_sensor = 0;
+/*      float	z_sensor = 0;
       for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
       {
           if (sensorID == _siPlanesLayerLayout->getID( iPlane ) ) 
@@ -636,6 +636,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
               break;
           }
       }
+*/
 
 // retrieve the refhit cooridantes (eventual offset of the sensor) 
       double x_refhit = 0.; 
@@ -663,6 +664,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
           x_refhit =  refhit->getXOffset();
           y_refhit =  refhit->getYOffset();
           z_refhit =  refhit->getZOffset();
+
           if( _iEvt < _printEvents )
           {
             streamlog_out(MESSAGE) << "Sensor ID and Alignment plane ID match!" << endl;
@@ -681,7 +683,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       outputHit->rawHits() = inputHit->getRawHits();
 
 
-      double * inputPosition      = const_cast< double * > ( inputHit->getPosition() ) ;
+      const double * inputPosition      = const_cast< const double * > ( inputHit->getPosition() ) ;
       double   outputPosition[3]  = { 0., 0., 0. };
 
    
@@ -716,7 +718,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 
               telPos[0]  =  _siPlanesLayerLayout->getSensitivePositionX(layerIndex); // mm
               telPos[1]  =  _siPlanesLayerLayout->getSensitivePositionY(layerIndex); // mm
-              telPos[2]  =  _siPlanesLayerLayout->getSensitivePositionZ(layerIndex); // mm
+              telPos[2]  =  _siPlanesLayerLayout->getSensitivePositionZ(layerIndex)+0.5*_siPlanesLayerLayout->getSensitiveThickness(layerIndex) ; // mm
               
           }
       
@@ -924,41 +926,15 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
          {
            EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * >  ( alignmentCollectionVec->getElementAt( positionIter->second ) );
 
-           alpha = -alignment->getAlpha();
-           beta  = -alignment->getBeta();
-           gamma = -alignment->getGamma();
+           alpha   = alignment->getAlpha();
+           beta    = alignment->getBeta();
+           gamma   = alignment->getGamma();
            offsetX = alignment->getXOffset();
            offsetY = alignment->getYOffset();
            offsetZ = alignment->getZOffset();
          }  
 
 
-
-//        printf("alignment %12.6f %12.6f %12.6f %12.6f %12.6f %12.6f \n" 
-//                ,alignment->getXOffset()
-//                ,alignment->getYOffset()
-//                ,alignment->getZOffset()
-//                ,alignment->getAlpha()
-//                ,alignment->getBeta() 
-//                ,alignment->getGamma()
-//                );
-
-
-//printf("%5d sensorID: %5d at %p \n", iHit, sensorID, inputHit );
-
-/* obsolete, since we have refit collection now: Rubinskiy, 04.11.2011
-      // determine z position of the plane
-	  // 20 December 2010 @libov
-      float	z_sensor = 0;
-	  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
-      {
-          if (sensorID == _siPlanesLayerLayout->getID( iPlane ) ) 
-          {
-              z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ( iPlane ) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( iPlane );
-              break;
-          }
-      }
-*/
       // refhit = center-of-the-sensor coordinates:
       double x_refhit = 0.; 
       double y_refhit = 0.; 
@@ -1008,7 +984,11 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       outputHit->rawHits() = inputHit->getRawHits();
 
       // hit coordinates in the center-of-the sensor frame (axis coincide with the global frame)
-      double * inputPosition      = const_cast< double * > ( inputHit->getPosition() ) ;
+      const double *inputS = static_cast<const double*> ( inputHit->getPosition() ) ;
+
+      double inputPosition[3]      = { inputS[0], inputS[1], inputS[2] };
+      double inputPosition_orig[3] = { inputS[0], inputS[1], inputS[2] };
+
       inputPosition[0] = inputPosition[0] - x_refhit;
       inputPosition[1] = inputPosition[1] - y_refhit;
       inputPosition[2] = inputPosition[2] - z_refhit;
@@ -1068,14 +1048,6 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
         } 
         else if ( _correctionMethod == 1 ) 
         {
-
-/*            double alpha = 0.;
-            double beta  = 0.;
-            double gamma = 0.;
-            double offsetX = 0.;
-            double offsetY = 0.;
-            double offsetZ = 0.;
-*/
             if ( _debugSwitch )
             {
                 alpha = _alpha;
@@ -1087,13 +1059,8 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
             }
             else
             {
-  //              alpha = alignment->getAlpha();
-  //              beta  = alignment->getBeta();
-  //              gamma = alignment->getGamma();
-  //              offsetX = alignment->getXOffset();
-  //              offsetY = alignment->getYOffset();
-  //              offsetZ = alignment->getZOffset();
             }
+
             if( _iEvt < _printEvents )
             {
                 if ( _debugSwitch ) 
@@ -1113,95 +1080,22 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
             // this is the rotation first
             TVector3 iCenterOfSensorFrame(  inputPosition[0],  inputPosition[1],  inputPosition[2] );
 
-            iCenterOfSensorFrame.RotateX( alpha );
-            iCenterOfSensorFrame.RotateY( beta  );
-            iCenterOfSensorFrame.RotateZ( gamma );
+            iCenterOfSensorFrame.RotateX( -alpha );
+            iCenterOfSensorFrame.RotateY( -beta  );
+            iCenterOfSensorFrame.RotateZ( -gamma );
 
             outputPosition[0] += iCenterOfSensorFrame(0);
             outputPosition[1] += iCenterOfSensorFrame(1);
             outputPosition[2] += iCenterOfSensorFrame(2);
 
- /* orig
-            // first the rotation (matrix layout)
-            outputPosition[0] +=                inputPosition[0] + (-1)*gamma * inputPosition[1] +      beta  * inputPosition[2] ;
-            outputPosition[1] +=        gamma * inputPosition[0] +              inputPosition[1] + (-1)*alpha * inputPosition[2] ;
-            outputPosition[2] += (-1) * beta  * inputPosition[0] +      alpha * inputPosition[1] +              inputPosition[2] ;
-  */
-
-//	x = x_temp * (1 + alpha * alpha ) + ( (-1) * gamma - alpha * beta) * y_temp + ( (-1) * beta + alpha * gamma) * z_temp;
-//	y = x_temp * (gamma - alpha * beta ) + (1 + beta * beta) * y_temp + ((-1) * alpha - beta * gamma) * z_temp;
-//	z = x_temp * (beta + alpha * gamma ) + (alpha - gamma * beta) * y_temp + ( 1 + gamma * gamma) * z_temp;
-//            outputPosition[0] +=  (1+alpha*alpha)*inputPosition[0] + (-1)*gamma * inputPosition[1] +      beta  * inputPosition[2] ;
-//            outputPosition[1] +=        gamma * inputPosition[0] +              inputPosition[1] + (-1)*alpha * inputPosition[2] ;
-//            outputPosition[2] += (-1) * beta  * inputPosition[0] +      alpha * inputPosition[1] +              inputPosition[2] ;
-
-
-
             // second the shift
             outputPosition[0] -= offsetX; 
             outputPosition[1] -= offsetY; 
             outputPosition[2] -= offsetZ; 
-//            printf(" final %5d  %5.2f %5.2f %5.2f :: %5.2f %5.2f %5.2f \n", sensorID, outputPosition[0], outputPosition[1], outputPosition[2],
-//                                  offsetX, offsetY, offsetZ );
- 
-//            outputPosition[2] += z_sensor ;
           
         }
         else if ( _correctionMethod == 2 ) 
         {
-/*            double alpha = 0.;
-            double beta  = 0.;
-            double gamma = 0.;
-            double offsetX = 0.;
-            double offsetY = 0.;
-            double offsetZ = 0.;
-*/
-            if ( _debugSwitch )
-            {
-                alpha = _alpha;
-                beta  = _beta;
-                gamma = _gamma; 
-                offsetX = 0.;
-                offsetY = 0.;
-                offsetZ = 0.;
-            }
-            else
-            {
-   //             alpha = alignment->getAlpha();
-   //             beta  = alignment->getBeta();
-   //             gamma = alignment->getGamma();
-   //             offsetX = alignment->getXOffset();
-   //             offsetY = alignment->getYOffset();
-   //             offsetZ = alignment->getZOffset();
-            }
-            if( _iEvt < _printEvents )
-            {
-                if ( _debugSwitch ) 
-                {
-                    streamlog_out ( MESSAGE )  << "Debugmode ON " << endl;                                   
-                }
-                
-                streamlog_out ( MESSAGE )  << "_correctionMethod == rotation first " << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getAlpha() = " << alpha  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getBeta()  = " <<  beta  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getGamma() = " << gamma << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getXOffest() = " << offsetX  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getYOffest() = " << offsetY  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getZOffest() = " << offsetZ  << endl;
-            }
-
-          // this is the translation first
-          // first the shifts
-          inputPosition[0] -= offsetX;
-          inputPosition[1] -= offsetY; 
-          inputPosition[2] -= offsetZ;
-
-          // second the rotation (matrix layout)
-          outputPosition[0] +=                inputPosition[0] + (-1)* gamma * inputPosition[1] +      beta  * inputPosition[2]  ;
-          outputPosition[1] +=        gamma * inputPosition[0] +               inputPosition[1] + (-1)*alpha * inputPosition[2]  ;
-          outputPosition[2] += (-1) * beta  * inputPosition[0] +       alpha * inputPosition[1] +              inputPosition[2]  ;
-
-//          outputPosition[2] += z_sensor;
         }
 
 #if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) ) 
@@ -1251,6 +1145,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
       if ( _iEvt < _printEvents )
       {
+         streamlog_out ( MESSAGE ) << "DIRECT: ORIGI: Sensor ID " << sensorID << " " << inputPosition_orig[0] << " " << inputPosition_orig[1] << " " << inputPosition_orig[2] <<  endl;   
          streamlog_out ( MESSAGE ) << "DIRECT: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] <<  endl;   
          streamlog_out ( MESSAGE ) << "DIRECT: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2]  << endl;
       }
@@ -1273,7 +1168,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 }
 
 void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
-
+ 
     if ( _iEvt % 100 == 0 )
         streamlog_out ( MESSAGE4 ) << "Processing event (ApplyAlignment Reverse) "
                                << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
@@ -1306,7 +1201,7 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
         {
             LCCollectionVec * alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection(_alignmentCollectionName));          
             streamlog_out ( MESSAGE ) << "The alignment collection ["<< _alignmentCollectionName.c_str() <<"] contains: " <<  alignmentCollectionVec->size() << " planes " << endl;    
-    
+
             if(alignmentCollectionVec->size() > 0 )
             {
                 streamlog_out ( MESSAGE ) << "alignment sensorID: " ;
@@ -1315,6 +1210,10 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
                     EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) );
                     _lookUpTable[ alignment->getSensorID() ] = iPos;
                     streamlog_out ( MESSAGE ) << iPos << " " ;
+                    if ( _applyToReferenceHitCollection ) 
+                    {
+                     AlignReferenceHit( evt,  alignment); 
+                    }
                 }
                 streamlog_out ( MESSAGE ) << endl;
             }
@@ -1338,6 +1237,8 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
                 ++mapIter;
             }
 #endif
+     
+
         }
 
 
@@ -1354,7 +1255,7 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
             // determine z position of the plane
             // 20 December 2010 @libov
 
-            float	z_sensor = 0;
+/*            float	z_sensor = 0;
             for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
             {
                 if (sensorID == _siPlanesLayerLayout->getID( iPlane ) ) 
@@ -1363,21 +1264,118 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
                     break;
                 }
             }
+*/
+      //find proper alignment colleciton:
+      double alpha = 0.;
+      double beta  = 0.;
+      double gamma = 0.;
+      double offsetX = 0.;
+      double offsetY = 0.;
+      double offsetZ = 0.;
+ 
+      // now that we know at which sensor the hit belongs to, we can
+      // get the corresponding alignment constants
+      map< int , int >::iterator  positionIter = _lookUpTable.find( sensorID );
 
-            // copy the input to the output, at least for the common part
-            TrackerHitImpl   * outputHit  = new TrackerHitImpl;
-            outputHit->setType( inputHit->getType() );
-            outputHit->rawHits() = inputHit->getRawHits();
+//      printf(" positionIter %5d at %5d \n", sensorID, positionIter->second );
+      if ( positionIter == _lookUpTable.end() )
+         {
+//..           printf("wrong sensorId %5d ??\n", sensorID );
+//           continue; do nothing as if alignment == 0.
+         }
+      else
+         {
+           EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * >  ( alignmentCollectionVec->getElementAt( positionIter->second ) );
 
-            // now that we know at which sensor the hit belongs to, we can
-            // get the corresponding alignment constants
-            map< int , int >::iterator  positionIter = _lookUpTable.find( sensorID );
+           alpha   = alignment->getAlpha();
+           beta    = alignment->getBeta();
+           gamma   = alignment->getGamma();
+           offsetX = alignment->getXOffset();
+           offsetY = alignment->getYOffset();
+           offsetZ = alignment->getZOffset();
+         }  
 
-            double * inputPosition      = const_cast< double * > ( inputHit->getPosition() ) ;
-            double   outputPosition[3]  = { 0., 0., 0. };
 
-            if ( positionIter != _lookUpTable.end() ) 
-            {
+      // refhit = center-of-the-sensor coordinates:
+      double x_refhit = 0.; 
+      double y_refhit = 0.; 
+      double z_refhit = 0.; 
+
+      if( _referenceHitVec == 0 )
+      {
+        streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+      }
+      else
+      {
+//        streamlog_out(MESSAGE) << "reference Hit collection name : " << _referenceHitCollectionName << endl;
+ 
+        for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+        {
+          EUTelReferenceHit * refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+          if( sensorID != refhit->getSensorID() )
+          {
+            // streamlog_out(MESSAGE) << "Looping through a varity of sensor IDs" << endl;
+            continue;
+          }
+          else
+          {
+//           streamlog_out(MESSAGE) << "Sensor ID and Alignment plane ID match!" << endl;
+            x_refhit =  refhit->getXOffset();
+            y_refhit =  refhit->getYOffset();
+            z_refhit =  refhit->getZOffset();
+
+// do not apply this part: refhits should be just as they where befre the alignment has been applied
+// = it means the anti-apply alignment should have been applied already in the AlignReferenceHit
+//---//
+//          x_refhit -= offsetX;
+//          y_refhit -= offsetY;
+//          z_refhit -= offsetZ;
+//---//
+
+            break;
+          } 
+/*
+        printf("PRE sensorID: %5d dx:%5.3f dy:%5.3f dz:%5.3f  [%5.2f %5.2f %5.2f]\n",
+        refhit->getSensorID(   ),                      
+        refhit->getXOffset(    ),
+        refhit->getYOffset(    ),
+        refhit->getZOffset(    ), x_refhit, y_refhit, z_refhit
+        );
+*/
+        }
+      }
+ 
+      // copy the input to the output, at least for the common part
+      TrackerHitImpl   * outputHit  = new TrackerHitImpl;
+      outputHit->setType( inputHit->getType() );
+      outputHit->rawHits() = inputHit->getRawHits();
+
+      // now that we know at which sensor the hit belongs to, we can
+      // get the corresponding alignment constants
+      // map< int , int >::iterator  positionIter = _lookUpTable.find( sensorID );
+
+      // hit coordinates in the center-of-the sensor frame (axis coincide with the global frame)
+      const double *inputS = static_cast<const double*> ( inputHit->getPosition() ) ;
+
+      double inputPosition[3]      = { inputS[0], inputS[1], inputS[2] };
+      double inputPosition_orig[3] = { inputS[0], inputS[1], inputS[2] };
+
+      inputPosition[0] = inputPosition[0] - x_refhit;
+      inputPosition[1] = inputPosition[1] - y_refhit;
+      inputPosition[2] = inputPosition[2] - z_refhit;
+
+
+//            const double * inputPosition = const_cast< const double * > ( inputHit->getPosition() ) ;
+//            double   outputPosition[3]   = { 0., 0., 0. };
+  
+      // initial setting of the sensor = center-of-the sensor coordinates in the global frame
+      double   outputPosition[3]  = { 0., 0., 0. };
+      outputPosition[0] = x_refhit;
+      outputPosition[1] = y_refhit;
+      outputPosition[2] = z_refhit;
+
+//            if ( positionIter != _lookUpTable.end() ) 
+//            {
 
 #if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) )
                 string tempHistoName;
@@ -1414,57 +1412,34 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
                 }
 #endif
 
-                EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( positionIter->second ) );
-
-//        printf("alignment %12.6f %12.6f %12.6f %12.6f %12.6f %12.6f \n" 
-//                ,alignment->getXOffset()
-//                ,alignment->getYOffset()
-//                ,alignment->getZOffset()
-//                ,alignment->getAlpha()
-//                ,alignment->getBeta() 
-//                ,alignment->getGamma()
-//                );
-        
+       
                 if ( _correctionMethod == 0 ) 
                 {                   
 
                     // this is the shift only case
 
-                    outputPosition[0] = inputPosition[0] + alignment->getXOffset();
-                    outputPosition[1] = inputPosition[1] + alignment->getYOffset();
-                    outputPosition[2] = inputPosition[2] + alignment->getZOffset();
+                    outputPosition[0] = inputPosition[0] + offsetX ;
+                    outputPosition[1] = inputPosition[1] + offsetY ;
+                    outputPosition[2] = inputPosition[2] + offsetZ ;
 
                 }
                 else
                     if ( _correctionMethod == 1 ) 
                     {
                         // this is the rotation first
- 
-                        double alpha = 0.;
-                        double beta  = 0.;
-                        double gamma = 0.;
-            double offsetX = 0.;
-            double offsetY = 0.;
-            double offsetZ = 0.;
+                        if ( _debugSwitch )
+                        {
+                          alpha = _alpha;
+                          beta  = _beta;
+                          gamma = _gamma; 
+                          offsetX = 0.;
+                          offsetY = 0.;
+                          offsetZ = 0.;
+                        }
+                        else
+                        {
+                        }
 
-            if ( _debugSwitch )
-            {
-                alpha = _alpha;
-                beta  = _beta;
-                gamma = _gamma; 
-                offsetX = 0.;
-                offsetY = 0.;
-                offsetZ = 0.;
-            }
-            else
-            {
-                alpha = alignment->getAlpha();
-                beta  = alignment->getBeta();
-                gamma = alignment->getGamma();
-                offsetX = alignment->getXOffset();
-                offsetY = alignment->getYOffset();
-                offsetZ = alignment->getZOffset();
-            }
             if( _iEvt < _printEvents )
             {
                 if ( _debugSwitch ) 
@@ -1480,153 +1455,27 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
                 streamlog_out ( MESSAGE )  << " alignment->getYOffest() = " << offsetY  << endl;
                 streamlog_out ( MESSAGE )  << " alignment->getZOffest() = " << offsetZ  << endl;
             }
+        
+            // this is the rotation first
+            TVector3 iCenterOfSensorFrame(  inputPosition[0],  inputPosition[1],  inputPosition[2] );
 
+            iCenterOfSensorFrame.RotateZ( +gamma );
+            iCenterOfSensorFrame.RotateY( +beta  );
+            iCenterOfSensorFrame.RotateX( +alpha );
 
-       
-                        // second the rotation
-                        // for the inverse matrix derivation see paper log book 19/01/2011
-                        // libov@mail.desy.de
+            outputPosition[0] += iCenterOfSensorFrame(0);
+            outputPosition[1] += iCenterOfSensorFrame(1);
+            outputPosition[2] += iCenterOfSensorFrame(2);
 
-                        // local variables (X,Y,Z) position of a hit
-                        // x_temp (original) -> x (rotated)
-                        // (x_temp,y_temp,z_temp) -> (x,y,z) 
-                        // rotation matrix is:
-                        //      1 + a^2    -g - a*b  -b + a*g
-                        //      g - a*b     1 + b^2  -a - b*g 
-                        //      b + a*g     a - g*b   1 + g^2  
-                        // 
-                        double	x_temp = inputPosition[0];
-                        double	y_temp = inputPosition[1];
-                        double	z_temp = inputPosition[2] - z_sensor;
-// no correct any more due to changes in convention of the angle signs!
-// further more a more clear way would be to multiply an input vector by an inverse rotation matrix  
-// Igor Rubinsky 09-10-2011
+            // second the shift
+            outputPosition[0] += offsetX; 
+            outputPosition[1] += offsetY; 
+            outputPosition[2] += offsetZ; 
 
-                        // rotation first
-                        double x = x_temp * (1 + alpha * alpha )    + ( (-1) * gamma - alpha * beta) * y_temp    + ( (-1) * beta + alpha * gamma) * z_temp;
-                        double y = x_temp * (gamma - alpha * beta ) + (1 + beta * beta) * y_temp                 + ((-1) * alpha - beta * gamma) * z_temp;
-                        double z = x_temp * (beta + alpha * gamma ) + (alpha - gamma * beta) * y_temp            + ( 1 + gamma * gamma) * z_temp;
-
-                        double det = 1 + alpha * alpha + beta * beta + gamma * gamma;
-
-                        x = x / det;
-                        y = y / det;
-                        z = z / det;
-
-                        x += alignment->getXOffset();
-                        y += alignment->getYOffset();
-                        z += alignment->getZOffset();
-
-                        // now final coordinates
-                        outputPosition[0] = x ;
-                        outputPosition[1] = y;
-                        outputPosition[2] = z + z_sensor ;
-          
                     }
                     else
                         if ( _correctionMethod == 2 ) 
                         {
-                            // this is the translation first
-
-                            double alpha = 0.;
-                            double beta  = 0.;
-                            double gamma = 0.;
-            double offsetX = 0.;
-            double offsetY = 0.;
-            double offsetZ = 0.;
-
-            if ( _debugSwitch )
-            {
-                alpha = _alpha;
-                beta  = _beta;
-                gamma = _gamma; 
-                offsetX = 0.;
-                offsetY = 0.;
-                offsetZ = 0.;
-            }
-            else
-            {
-                alpha = alignment->getAlpha();
-                beta  = alignment->getBeta();
-                gamma = alignment->getGamma();
-                offsetX = alignment->getXOffset();
-                offsetY = alignment->getYOffset();
-                offsetZ = alignment->getZOffset();
-            }
-            if( _iEvt < _printEvents )
-            {
-                if ( _debugSwitch ) 
-                {
-                    streamlog_out ( MESSAGE )  << "Debugmode ON " << endl;                                   
-                }
-                
-                streamlog_out ( MESSAGE )  << "_correctionMethod == rotation first " << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getAlpha() = " << alpha  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getBeta()  = " <<  beta  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getGamma() = " << gamma << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getXOffest() = " << offsetX  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getYOffest() = " << offsetY  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getZOffest() = " << offsetZ  << endl;
-            }
-
-
-                            if ( _debugSwitch )
-                            {
-                               
-                                alpha = _alpha;
-                                beta  = _beta;
-                                gamma = _gamma;
-                            }
-                            else
-                            {
-                                alpha = alignment->getAlpha();
-                                beta  = alignment->getBeta();
-                                gamma = alignment->getGamma();
-                            }
-                            if( _iEvt < _printEvents )
-                            {
-                                if ( _debugSwitch ) 
-                                {
-                                    streamlog_out ( MESSAGE )  << "Debugmode ON " << endl;                                   
-                                }
-                                streamlog_out ( MESSAGE )  << "_correctionMethod == translation  first " << endl;
-                                streamlog_out ( MESSAGE )  << " alignment->getAlpha() = " << alpha  << endl;
-                                streamlog_out ( MESSAGE )  << " alignment->getBeta() = " <<  beta  << endl;
-                                streamlog_out ( MESSAGE )  << " alignment->getGamma() = " << gamma << endl;
-                                streamlog_out ( MESSAGE )  << " alignment->getXOffest() = " << alignment->getXOffset() << endl;
-                                streamlog_out ( MESSAGE )  << " alignment->getYOffest() = " << alignment->getYOffset() << endl;
-                                streamlog_out ( MESSAGE )  << " alignment->getZOffest() = " << alignment->getZOffset() << endl;
-                            }
- 
-                            
-                            double	x_temp = inputPosition[0];
-                            double	y_temp = inputPosition[1];
-                            double	z_temp = inputPosition[2] - z_sensor;
-
-                            // first the shifts
-                            x_temp += alignment->getXOffset();
-                            y_temp += alignment->getYOffset();
-                            z_temp += alignment->getZOffset();
-
-
-                            // second the rotation (matrix layout)
-// no correct! see comment above
-// Igor Rubinsky 09-10-2011
-                            double x = x_temp * (1 + alpha * alpha ) + ( (-1) * gamma - alpha * beta) * y_temp + ( (-1) * beta + alpha * gamma) * z_temp;
-                            double y = x_temp * (gamma - alpha * beta ) + (1 + beta * beta) * y_temp + ((-1) * alpha - beta * gamma) * z_temp;
-                            double z = x_temp * (beta + alpha * gamma ) + (alpha - gamma * beta) * y_temp + ( 1 + gamma * gamma) * z_temp;
-
-                            double det = 1 + alpha * alpha + beta * beta + gamma * gamma;
-
-                            x = x / det;
-                            y = y / det;
-                            z = z / det;
-
-
-                            // now final coordinates
-                            outputPosition[0] = x ;
-                            outputPosition[1] = y;
-                            outputPosition[2] = z + z_sensor;
                         }
 
 #if ( defined(USE_AIDA) || defined(MARLIN_USE_AIDA) ) 
@@ -1662,7 +1511,7 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
                     }
                 }
 #endif
-
+/*
             }
             else 
             {
@@ -1680,12 +1529,14 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
                     outputPosition[i] = inputPosition[i];
                 }
             }
+*/
+      if ( _iEvt < _printEvents )
+      {
+         streamlog_out ( MESSAGE ) << "DIRECT: ORIGI: Sensor ID " << sensorID << " " << inputPosition_orig[0] << " " << inputPosition_orig[1] << " " << inputPosition_orig[2] <<  endl;   
+         streamlog_out ( MESSAGE ) << "DIRECT: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] <<  endl;   
+         streamlog_out ( MESSAGE ) << "DIRECT: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2]  << endl;
+      }
 
-            if ( _iEvt < _printEvents )
-            {
-               streamlog_out ( MESSAGE ) << "Reverse: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] << " " << endl;                
-               streamlog_out ( MESSAGE ) << "Reverse: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2] << " " << endl;                
-            }
             outputHit->setPosition( outputPosition ) ;
             outputCollectionVec->push_back( outputHit );
         }
@@ -2126,6 +1977,8 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
         TVector2 clusterCenter( flip1(0,0)/xPitch-0.5, flip1(1,0)/yPitch-0.5 ); 
         if ( _iEvt < _printEvents )
         {
+          streamlog_out ( MESSAGE ) << "RevertGear: antiflip: " << antiflip(0,0) << ":" << antiflip(1,0) << endl;
+          streamlog_out ( MESSAGE ) << "RevertGear: antiflip: " << antiflip(0,1) << ":" << antiflip(1,1) << endl;
           streamlog_out ( MESSAGE ) << "RevertGear: matrix: " << flip1(0,0) << ":" << flip1(1,0) << endl;
           streamlog_out ( MESSAGE ) << "RevertGear: cluster coordinates [pitch:"<<xPitch<<":"<<yPitch<<"]:" << clusterCenter.X() << " " << clusterCenter.Y() << endl;
         }
@@ -2324,9 +2177,9 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
 {
     int iPlane = alignment->getSensorID();
     streamlog_out(MESSAGE)<< "AlignReferenceHit for " <<  alignment->getSensorID() << endl;
-    double            alpha = alignment->getAlpha();
-    double            beta  = alignment->getBeta();
-    double            gamma = alignment->getGamma();
+    double            alpha   = alignment->getAlpha();
+    double            beta    = alignment->getBeta();
+    double            gamma   = alignment->getGamma();
     double            offsetX = alignment->getXOffset();
     double            offsetY = alignment->getYOffset();
     double            offsetZ = alignment->getZOffset();
@@ -2372,21 +2225,34 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
         refhit->getBeta(),
         refhit->getGamma()    );
 
-        refhit->setXOffset( refhit->getXOffset() - offsetX );
-        refhit->setYOffset( refhit->getYOffset() - offsetY );
-        refhit->setZOffset( refhit->getZOffset() - offsetZ );
-        TVector3 _RotatedVector( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+        if( GetApplyAlignmentDirection() == 0) 
+        {
+           refhit->setXOffset( refhit->getXOffset() - offsetX );
+           refhit->setYOffset( refhit->getYOffset() - offsetY );
+           refhit->setZOffset( refhit->getZOffset() - offsetZ );
 
-//orig        _RotatedVector.RotateZ(  -alpha        ); // in ZY
-//orig        _RotatedVector.RotateX(  -beta         ); // in ZY
-//orig        _RotatedVector.RotateY(  -gamma        ); // in XY 
-        _RotatedVector.RotateX(  -alpha        ); // in ZY
-        _RotatedVector.RotateY(  -beta         ); // in ZY
-        _RotatedVector.RotateZ(  -gamma        ); // in XY 
+           TVector3 _RotatedVector( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+           _RotatedVector.RotateX(  -alpha        ); // in ZY
+           _RotatedVector.RotateY(  -beta         ); // in ZY
+           _RotatedVector.RotateZ(  -gamma        ); // in XY 
+  
+           refhit->setAlpha( _RotatedVector[0] );
+           refhit->setBeta( _RotatedVector[1] );
+           refhit->setGamma( _RotatedVector[2] );
+        }else{
+           refhit->setXOffset( refhit->getXOffset() + offsetX );
+           refhit->setYOffset( refhit->getYOffset() + offsetY );
+           refhit->setZOffset( refhit->getZOffset() + offsetZ );
+
+           TVector3 _RotatedVector( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+           _RotatedVector.RotateZ(  +gamma        ); // in XY 
+           _RotatedVector.RotateY(  +beta         ); // in ZY
+           _RotatedVector.RotateX(  +alpha        ); // in ZY
  
-        refhit->setAlpha( _RotatedVector[0] );
-        refhit->setBeta( _RotatedVector[1] );
-        refhit->setGamma( _RotatedVector[2] );
+           refhit->setAlpha( _RotatedVector[0] );
+           refhit->setBeta( _RotatedVector[1] );
+           refhit->setGamma( _RotatedVector[2] );
+       }
 //    referenceHitCollection->push_back( refhit );
  
         printf("AFT sensorID: %5d dx:%5.3f dy:%5.3f dz:%5.3f  alfa:%5.3f beta:%5.3f gamma:%5.3f \n",

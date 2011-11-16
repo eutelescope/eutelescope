@@ -71,6 +71,7 @@ namespace eutelescope {
     std::vector<std::string> _alignColNames;
 
     std::map<int, std::vector< std::vector<double> > > _alignShift;
+    std::map<int, std::vector< std::vector<double> > > _alignRotations;
     //std::map< int, std::vector< std::vector<double> > >
     std::map<int, std::vector<gsl_matrix*> > _alignRot;
     std::map<int, std::vector<double> > _gearShift;
