@@ -241,6 +241,22 @@ for file in $InputFileList; do
 done 
 
 
+RefhitLFN=$GRIDFolderDBAlign/$Output-refhit-db.slcio
+RefhitLocal=$PWD/db/$Output-refhit-db.slcio
+
+echo
+echo "########################################################################"
+echo "# Getting the refhit DB file ${PreAlignLocal}"
+echo "########################################################################"
+echo
+doCommand "getFromGRID ${RefhitLFN} ${RefhitLocal}"
+r=$?
+if [ $r -ne 0 ] ; then
+    echo "Problem copying ${RefhitLFN}. Exiting with error."
+    exit 3
+fi
+
+
 
 PreAlignLFN=$GRIDFolderDBAlign/$Output-prealign-db.slcio
 PreAlignLocal=$PWD/db/$Output-prealign-db.slcio
