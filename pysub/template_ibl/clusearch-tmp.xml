@@ -35,7 +35,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
   <global>
     <parameter name="LCIOInputFiles"> @LcioRawPath@/run@RunNumber@.slcio </parameter>
     <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
-    <parameter name="MaxRecordNumber" value="100000000"/>
+    <parameter name="MaxRecordNumber" value="1000000"/>
     <parameter name="SkipNEvents" value="0"/>
     <parameter name="SupressCheck" value="false"/>
     <parameter name="Verbosity" value="MESSAGE"/>
@@ -267,6 +267,12 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
 	<!--This is the name of the histogram information file-->
     <parameter name="ClusterCollectionName" type="string" value="cluster_apix"/>
     <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
+    <parameter name="MinLVL1Difference" type="int" value="1"/>
+    <parameter name="MinXDistance" type="int" value="1"/>
+    <parameter name="ClusterLimits" type="vector">  22   3 19   1  5  </parameter>
+    <parameter name="ClusterLimits" type="vector">  21   3 19   1  5  </parameter>
+    <parameter name="ClusterLimits" type="vector">  23   3 19   1  5  </parameter>
+    <parameter name="ClusterLimits" type="vector">  20   1 99   1  99 </parameter>
    </processor>
 
   <processor name="Clustering_@DUTSuffix@" type="EUTelClusteringProcessor">
