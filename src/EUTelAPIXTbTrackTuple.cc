@@ -743,10 +743,10 @@ void EUTelAPIXTbTrackTuple::reverseAlign(double& x, double& y, double &z, int id
          zrefhit -= _alignShift[iden].at(trans).at(2);
        }
     }   
-    printf("APIXTbTrackTuple: original refhit[%5.3f %5.3f %7.3f] local[%5.3f %5.3f %7.3f] unaligned[%5.3f %5.3f %7.3f]\n", 
-                                     xrefhit, yrefhit, zrefhit, 
-                                     xTemp, yTemp, zTemp, 
-                                     temp_x, temp_y, temp_z);
+//    printf("APIXTbTrackTuple: original refhit[%5.3f %5.3f %7.3f] local[%5.3f %5.3f %7.3f] unaligned[%5.3f %5.3f %7.3f]\n", 
+//                                     xrefhit, yrefhit, zrefhit, 
+//                                     xTemp, yTemp, zTemp, 
+//                                     temp_x, temp_y, temp_z);
 
 
 // alignment(s) part
@@ -782,10 +782,10 @@ void EUTelAPIXTbTrackTuple::reverseAlign(double& x, double& y, double &z, int id
       temp_y = yTemp + yrefhit + _alignShift[iden].at(trans).at(1);
       temp_z = zTemp + zrefhit + _alignShift[iden].at(trans).at(2);
 
-      printf("APIXTbTrackTuple: align[%1d] refhit[%5.3f %5.3f %7.3f] local[%5.3f %5.3f %7.3f] unaligned[%5.3f %5.3f %7.3f]\n", trans, 
-                                     xrefhit, yrefhit, zrefhit, 
-                                     xTemp, yTemp, zTemp, 
-                                     temp_x, temp_y, temp_z);
+//      printf("APIXTbTrackTuple: align[%1d] refhit[%5.3f %5.3f %7.3f] local[%5.3f %5.3f %7.3f] unaligned[%5.3f %5.3f %7.3f]\n", trans, 
+//                                     xrefhit, yrefhit, zrefhit, 
+//                                     xTemp, yTemp, zTemp, 
+//                                     temp_x, temp_y, temp_z);
 
       //Do not need z's from here, I guess
     }
