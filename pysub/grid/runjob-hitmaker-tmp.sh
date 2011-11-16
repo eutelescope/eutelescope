@@ -146,6 +146,9 @@ LocalPWD=$PWD
 PreAlignLFN=$GRIDFolderDBOffset/$Output-prealign-db.slcio
 PreAlignLocal=$PWD/db/$Output-prealign-db.slcio
 
+RefhitLFN=$GRIDFolderDBOffset/$Output-refhit-db.slcio
+RefhitLocal=$PWD/db/$Output-refhit-db.slcio
+
 
 echo
 echo "########################################################################"
@@ -390,6 +393,7 @@ if [ $r -ne 0 ] ; then
     echo "****** Problem copying the ${OutputJoboutputLocal} to the GRID"
     exit 31
 fi
+
 echo
 echo "########################################################################"
 echo "# Copying and registering the preAlign file to SE"
@@ -400,6 +404,18 @@ r=$?
 if [ $r -ne 0 ] ; then
     echo "****** Problem copying the ${PreAlignLocal} to the GRID"
     exit 32
+fi
+
+echo
+echo "########################################################################"
+echo "# Copying and registering the refhit file to SE"
+echo "########################################################################"
+echo
+doCommand "putOnGRID ${RefhitLocal} ${RefhitLFN} ${GRIDSE}"
+r=$?
+if [ $r -ne 0 ] ; then
+    echo "****** Problem copying the ${RefhitLocal} to the GRID; if not present ignore this error (?)"
+#    exit 32
 fi
 
 

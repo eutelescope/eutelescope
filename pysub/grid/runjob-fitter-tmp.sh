@@ -134,6 +134,10 @@ LocalPWD=$PWD
 OutputTBTrackLocal=$PWD/histo/tbtrack$Output.root
 OutputTBTrackLFN=$GRIDFolderFitterHisto/tbtrack$Output.root
 
+RefhitLFN=$GRIDFolderDBOffset/$Output-refhit-db.slcio
+RefhitLocal=$PWD/db/$Output-refhit-db.slcio
+
+
 echo
 echo "########################################################################"
 echo "# Starting $Name-$Output at `date `"
@@ -238,6 +242,22 @@ for file in $InputFileList; do
 done 
 
 
+RefhitLFN=$GRIDFolderDBAlign/$Output-refhit-db.slcio
+RefhitLocal=$PWD/db/$Output-refhit-db.slcio
+
+echo
+echo "########################################################################"
+echo "# Getting the refhit DB file ${PreAlignLocal}"
+echo "########################################################################"
+echo
+doCommand "getFromGRID ${RefhitLFN} ${RefhitLocal}"
+r=$?
+if [ $r -ne 0 ] ; then
+    echo "Problem copying ${RefhitLFN}. Exiting with error."
+    exit 3
+fi
+
+
 PreAlignLFN=$GRIDFolderDBAlign/$Output-prealign-db.slcio
 PreAlignLocal=$PWD/db/$Output-prealign-db.slcio
 
@@ -280,7 +300,7 @@ doCommand "getFromGRID  ${InputHotPixelLFN} ${InputHotPixelLocal}"
 r=$?
 if [ $r -ne 0 ] ; then
    echo "Problem copying ${InputHotPixelLocal} into ${InputHotPixelLFN}.    Warning! No hotpixel db file found at given location."
-#    echo "Please, check your input to make sure you all values are set properly. If you do not want to apply hotpixel masks you can ignore this warning."
+   echo "Please, check your input to make sure you all values are set properly. If you do not want to apply hotpixel masks you can ignore this warning."
 ###    exit 3
 fi
 
@@ -390,6 +410,8 @@ echo
 doCommand "putOnGRID ${OutputHistoLocal} ${OutputHistoLFN} ${GRIDSE}"
 r=$?
 if [ $r -ne 0 ] ; then
+    ls -ltrah ${OutputHistoLocal} 
+    find ./
     echo "****** Problem copying the ${OutputHistoLocal} to the GRID"
     exit 32
 fi
@@ -397,6 +419,8 @@ fi
 doCommand "putOnGRID ${OutputTBTrackLocal} ${OutputTBTrackLFN} ${GRIDSE}"
 r=$?
 if [ $r -ne 0 ] ; then
+    ls -ltrah ${OutputTBTrackLocal}
+    find ./
     echo "****** Problem copying the ${OutputTBTrackLocal} to the GRID"
     exit 32
 fi
