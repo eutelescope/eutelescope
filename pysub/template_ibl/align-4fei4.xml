@@ -125,24 +125,27 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--Number of alignment constants used. Available mode are: 1 - shifts in the X and Y directions and a rotation around the Z axis, 2 - only shifts in the X and Y directions-->
   <parameter name="AlignMode" type="int" value="3"/>
   <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
-  <parameter name="DistanceMax" type="float" value="@DistanceMax@"/>
+  <!-- parameter name="DistanceMax" type="float" value="@DistanceMax@"/-->
+  <!-- parameter name="DistanceMaxVec" type="float" > 1000. 1000. 1000.  10000. 10000. 10000. 10000.  1000. 1000. 1000. </parameter-->
   <!--Exclude planes from fit.-->
-  <parameter name="ExcludePlanes" type="IntVec">@ExcludePlanes@ </parameter>
+  <!-- parameter name="ExcludePlanes" type="IntVec">@ExcludePlanes@ </parameter-->
+  <parameter name="ExcludePlanes" type="IntVec"> </parameter>
   <!--Fix sensor planes in the fit according to their sensor ids.-->
-  <parameter name="FixedPlanes" type="IntVec">@FixedPlanes@ </parameter>
+  <!--parameter name="FixedPlanes" type="IntVec">@FixedPlanes@ </parameter-->
+  <parameter name="FixedPlanes" type="IntVec"> </parameter>
   <!--Generate a steering file for the pede program.-->
   <parameter name="GeneratePedeSteerfile" type="int" value="1"/>
   <!--Selects the source of input hits. 0 - hits read from hitfile with simple trackfinding. 1 - hits read from output of tracking processor. 2 - Test mode. Simple internal simulation and simple trackfinding.-->
   <parameter name="InputMode" type="int" value="0"/>
   <!--Maximal number of track candidates.-->
   <parameter name="MaxTrackCandidates" type="int" value="1000000"/>
-  <parameter name="MaxTrackCandidatesTotal" type="int" value="1000000"/>
+  <parameter name="MaxTrackCandidatesTotal" type="int" value="100000"/>
   <!--Use only events with one hit in every plane.-->
   <parameter name="OnlySingleHitEvents" type="int" value="0"/>
   <!--Use only events with one track candidate.-->
   <parameter name="OnlySingleTrackEvents" type="int" value="0"/>
   <!-- parameter name="FixParameter" type="int" value="63 63 63     7 63 63   63  63 63"/ -->
-  <xparameter name="FixParameter" type="int" value=" 28 28 28 ` 28 28 28 28    28 28 28" />
+  <!-- parameter name="FixParameter" type="int" value=" 28 28 28 ` 28 28 28 28    28 28 28" /-->
   <!-- parameter name="FixParameter" type="int" value="63 28 28    28 28 28   28  28 28"/ -->
   <parameter name="FixParameter" type="int" value=" 0  0  0     0  0  0  0    0   0  0"/>
   <!-- parameter name="FixParameter" type="int" value="16 16 16    16 16 16   16  16 16"/ -->
