@@ -124,6 +124,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <parameter name="TrackCollectionName" type="string" lcioInType="Track"> fittracks </parameter>
   <!--Number of alignment constants used. Available mode are: 1 - shifts in the X and Y directions and a rotation around the Z axis, 2 - only shifts in the X and Y directions-->
   <parameter name="AlignMode" type="int" value="3"/>
+  <parameter name="AllowedMissingHits" type="int" value="3"/>
   <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
   <!-- parameter name="DistanceMax" type="float" value="@DistanceMax@"/-->
   <!-- parameter name="DistanceMaxVec" type="float" > 1000. 1000. 1000.  10000. 10000. 10000. 10000.  1000. 1000. 1000. </parameter-->
