@@ -1448,7 +1448,7 @@ void EUTelHitMaker::_EulerRotation(int detectorID, double* _telPos, double* _gRo
  
 //      printf("2 xaxis: %5.3f %5.3f %5.3f \n", _Xaxis[0], _Xaxis[1], _Xaxis[2] ); 
 //      printf("2 yaxis: %5.3f %5.3f %5.3f \n", _Yaxis[0], _Yaxis[1], _Yaxis[2] ); 
-//7      printf("2 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
+//      printf("2 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
 
 
 
