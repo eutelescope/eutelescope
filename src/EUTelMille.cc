@@ -203,6 +203,10 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
                             "\n3 - Mixture of a track collection from the telescope and hit collections for the DUT (only one DUT layer can be used unfortunately)",
                             _inputMode, static_cast <int> (0));
 
+  registerOptionalParameter("AllowedMissingHits","Set how many hits (=planes) can be missing on a track candidate.",
+                            _allowedMissingHits, static_cast <int> (0));
+
+
   // input collections
   std::vector<std::string > HitCollectionNameVecExample;
   HitCollectionNameVecExample.push_back("corrhits");
@@ -646,7 +650,8 @@ void EUTelMille::init() {
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
   if(_alignMode == 3)
     {
-      number_of_datapoints = _nPlanes -_nExcludePlanes;
+//       number_of_datapoints = _nPlanes -_nExcludePlanes;
+      number_of_datapoints = _nPlanes;
       hitsarray = new hit[number_of_datapoints];
     }
 #endif
@@ -663,11 +668,15 @@ void EUTelMille::init() {
       _xPos.push_back(std::vector<double>(_nPlanes,0.0));
       _yPos.push_back(std::vector<double>(_nPlanes,0.0));
       _zPos.push_back(std::vector<double>(_nPlanes,0.0));
+ 
+//      _xPosTrack.push_back(std::vector<double>(_nPlanes,0.0));
+//      _yPosTrack.push_back(std::vector<double>(_nPlanes,0.0));
+//      _zPosTrack.push_back(std::vector<double>(_nPlanes,0.0));
     }
 
   if(_distanceMaxVec.size() > 0)
     {
-      if(_distanceMaxVec.size() !=  static_cast<unsigned int>(_nPlanes )-1 )
+      if(_distanceMaxVec.size() !=  static_cast<unsigned int>(_nPlanes ) )
         {
           streamlog_out ( WARNING2 ) << "Consistency check of the DistanceMaxVec array failed. Its size is different compared to the number of planes! Will now use _distanceMax for each pair of planes." << endl;
           _distanceMaxVec.clear();
@@ -741,6 +750,230 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
 
   // increment the run counter
   ++_iRun;
+}
+
+
+
+void EUTelMille::findtracks2(
+                            int missinghits,
+                            std::vector<std::vector<int> > &indexarray,
+                            std::vector<int> vec,
+                            std::vector<std::vector<EUTelMille::HitsInPlane> > &_allHitsArray,
+                            int i,
+                            int y
+                            )
+{
+ if(y==-1) missinghits++;
+
+ if( missinghits > getAllowedMissingHits() ) 
+ {
+//   printf("too mmany missing hits %5d\n", missinghits); 
+   // recursive chain is dropped here;
+   return;
+ }
+
+ //  ADDITIONAL PRINTOUTS   
+// printf("come to PLANE id=%3d y=%3d  : : _allHitsArray[i].size()=%5d \n", i,y, _allHitsArray[i].size() );
+
+ if(i>0)
+ { 
+    vec.push_back(y); // recall hit id from the plane (i-1)
+ }
+
+ if( _allHitsArray[i].size() == 0 && i <_allHitsArray.size()-1 )
+ {
+    findtracks2(missinghits,indexarray,vec, _allHitsArray, i+1, -1 ); 
+//    return; // stop here
+ } 
+
+ for(size_t j =0; j < _allHitsArray[i].size(); j++)
+    {
+      int ihit = (int)j;
+ //     printf("plane %2d of %2d ; hit %2d \n", i, (int)(_allHitsArray.size())-1, ihit);
+
+      //if we are not in the last plane, call this method again
+      if(i<(int)(_allHitsArray.size())-1)
+        {
+          vec.push_back( ihit); //index of the cluster in the last plane
+         
+          //track candidate requirements
+          bool taketrack = true;
+          const int e = vec.size()-2;
+          if(e >= 0)
+            {
+              double residualX  = -999999.;
+              double residualY  = -999999.;
+              double residualZ  = -999999.;
+
+              // now loop through all hits on a track candidate "vec"
+              // stop on the last non-zero hit
+              for(int ivec=0; ivec<=e; ivec++)
+              {
+                if(vec[ivec]>=0) // non zero hit has id vec[ivec]>=0 {otherwise -1}
+                {
+                  double x = _allHitsArray[ivec][vec[ivec]].measuredX;
+                  double y = _allHitsArray[ivec][vec[ivec]].measuredY;
+                  double z = _allHitsArray[ivec][vec[ivec]].measuredZ;
+//                  printf("e %2d ivec %2d of %2d, vec[%2d]=%2d at [%5.2f %5.2f %8.2f] \n", e, ivec, vec.size(), ivec,vec[ivec], x,y,z  );
+                  residualX  = abs(x - _allHitsArray[e+1][vec[e+1]].measuredX);
+                  residualY  = abs(y - _allHitsArray[e+1][vec[e+1]].measuredY);
+                  residualZ  = abs(z - _allHitsArray[e+1][vec[e+1]].measuredZ);
+//                  printf("e %2d ivec %2d of %2d, vec[%2d]=%2d at [%5.2f %5.2f %8.2f] dist[%8.2f %8.2f %8.2f]\n", 
+//                            e+1, ivec, vec.size(), ivec,vec[ivec], x,y,z, distanceX,distanceY,distanceZ );
+                  break; 
+                }   
+              }
+           
+//              const double dM = _distanceMaxVec[e];
+/*             
+              double distancemax = dM * ( distanceZ  / 100000.0);
+
+              if( distanceX >= distancemax )
+                taketrack = false;
+
+              if( distanceY >= distancemax )
+                taketrack = false;
+*/
+             if ( 
+                   residualX < _residualsXMin[e] || residualX > _residualsXMax[e] ||
+                   residualY < _residualsYMin[e] || residualY > _residualsYMax[e] 
+                 )
+                 taketrack = false;
+              
+/* 
+             if( distanceX >= dM )
+                taketrack = false;
+
+              if( distanceY >= dM )
+                taketrack = false;
+*/
+
+              if( taketrack == false )
+              {
+                taketrack = true; 
+                ihit=-1;
+              } 
+ //             printf("distanceX:%5.2f  distanceY:%5.2f  distancemax:%5.2f  taketrack:%1d\n", distanceX, distanceY, dM, taketrack);
+            }
+          vec.pop_back(); 
+
+//  ADDITIONAL PRINTOUTS   
+          if(taketrack)
+          { 
+/*
+              for(int ivec = 0; ivec< vec.size() ; ivec++)
+              {       
+                if(vec[ivec]>=0) // non zero hit has id vec[ivec]>=0 {otherwise -1}
+                {
+                  double x = _allHitsArray[ivec][vec[ivec]].measuredX;
+                  double y = _allHitsArray[ivec][vec[ivec]].measuredY;
+                  double z = _allHitsArray[ivec][vec[ivec]].measuredZ;
+                  printf("come to the next plane from id=%3d clu=%3d of %3d at[%5.2f %5.2f %13.2f]\n", ivec, vec[ivec], _allHitsArray[ivec].size(), x,y,z);
+                }
+                else
+                { 
+                   printf("come to the next plane from id=%3d clu=%3d \n", ivec, vec[ivec]);
+                }
+              }
+*/
+              findtracks2(missinghits, indexarray, vec, _allHitsArray, i+1, ihit );
+          }
+        }
+      else
+        {
+          //we are in the last plane
+          vec.push_back( ihit ); //index of the cluster in the last plane
+
+          //track candidate requirements
+          bool taketrack = true;
+          const int e = vec.size()-2;
+          if(e >= 0)
+            {
+              double residualX  = -999999.;
+              double residualY  = -999999.;
+              double residualZ  = -999999.;
+
+              // now loop through all hits on a track candidate "vec"
+              // stop on the last non-zero hit
+              for(int ivec=0; ivec<=e; ivec++)
+              {
+                if(vec[ivec]>=0) // non zero hit has id vec[ivec]>=0 {otherwise -1}
+                {
+                  double x = _allHitsArray[ivec][vec[ivec]].measuredX;
+                  double y = _allHitsArray[ivec][vec[ivec]].measuredY;
+                  double z = _allHitsArray[ivec][vec[ivec]].measuredZ;
+//                  printf("e %2d ivec %2d of %2d, vec[%2d]=%2d at [%5.2f %5.2f %8.2f] \n", e, ivec, vec.size(), ivec,vec[ivec], x,y,z  );
+                  residualX  = abs(x - _allHitsArray[e+1][vec[e+1]].measuredX);
+                  residualY  = abs(y - _allHitsArray[e+1][vec[e+1]].measuredY);
+                  residualZ  = abs(z - _allHitsArray[e+1][vec[e+1]].measuredZ);
+//                  printf("e %2d ivec %2d of %2d, vec[%2d]=%2d at [%5.2f %5.2f %8.2f] dist[%8.2f %8.2f %8.2f]\n", 
+//                            e+1, ivec, vec.size(), ivec,vec[ivec], x,y,z, distanceX,distanceY,distanceZ );
+                  break; 
+                }   
+              }
+           
+//              const double dM = _distanceMaxVec[e];
+/*
+              double distancemax = dM * ( distanceZ  / 100000.0);
+
+              if( distanceX >= distancemax )
+                taketrack = false;
+
+              if( distanceY >= distancemax )
+                taketrack = false;
+*/
+/*
+              if( distanceX >= dM )
+                taketrack = false;
+
+              if( distanceY >= dM )
+                taketrack = false;
+*/
+              if ( 
+                   residualX < _residualsXMin[e] || residualX > _residualsXMax[e] ||
+                   residualY < _residualsYMin[e] || residualY > _residualsYMax[e] 
+                 )
+                 taketrack = false;
+ 
+//              printf("distanceX:%5.2f  distanceY:%5.2f  distancemax:%5.2f  \n", distanceX, distanceY, dM);
+ 
+              if( taketrack == false )
+              {
+                taketrack = true; 
+                ihit=-1;
+              } 
+            }
+
+          if((int)indexarray.size() >= _maxTrackCandidates)
+            taketrack = false;
+//  ADDITIONAL PRINTOUTS   
+//          printf("come to the last plane id=%3d clu=%3d of %3d ; vec.size=%5d\n", i, j, _allHitsArray[i].size(), vec.size());
+ 
+          if(taketrack)
+            {
+/*
+               for(int ivec = 0; ivec< vec.size() ; ivec++)
+               {       
+                if(vec[ivec]>=0) // non zero hit has id vec[ivec]>=0 {otherwise -1}
+                {
+                  double x = _allHitsArray[ivec][vec[ivec]].measuredX;
+                  double y = _allHitsArray[ivec][vec[ivec]].measuredY;
+                  double z = _allHitsArray[ivec][vec[ivec]].measuredZ;
+                  printf("come to the LAST plane from id=%3d clu=%3d of %3d at[%5.2f %5.2f %13.2f]\n", ivec, vec[ivec], _allHitsArray[ivec].size(), x,y,z);
+                }
+                else
+                { 
+                   printf("come to the LAST plane from id=%3d clu=%3d \n", ivec, vec[ivec]);
+                }
+               }
+*/
+               indexarray.push_back(vec);
+            }
+          vec.pop_back(); //last element must be removed because the
+                          //vector is still used -> we are in a last plane hit loop!
+
+        }
+    }
 }
 
 
@@ -1089,6 +1322,7 @@ void EUTelMille::processEvent (LCEvent * event) {
   std::vector<std::vector<EUTelMille::HitsInPlane> > _hitsArray(_nPlanes - _nExcludePlanes, std::vector<EUTelMille::HitsInPlane>());
   std::vector<int> indexconverter (_nPlanes,-1);
  
+  std::vector<std::vector<EUTelMille::HitsInPlane> > _allHitsArray(_nPlanes, std::vector<EUTelMille::HitsInPlane>());
   
 
 //  printf("887: nPlanes %5d , excludePlanes %2d  \n", _nPlanes, _nExcludePlanes );
@@ -1247,12 +1481,34 @@ void EUTelMille::processEvent (LCEvent * event) {
             } else {
               throw UnknownDataTypeException("Unknown cluster type");
             }
+
+            if ( 
+                    hit->getType() == kEUTelDFFClusterImpl 
+                    ||
+                    hit->getType() == kEUTelFFClusterImpl 
+                    ||
+                    hit->getType() == kEUTelSparseClusterImpl 
+                    ) 
+            {
+                if(cluster->getTotalCharge() <= 1)
+                {
+//                    printf("(1) Thin cluster (charge <=1), hit type: %5d  detector: %5d\n", hit->getType(), cluster->getDetectorID() );
+//                    delete cluster; 
+//                    continue;
+                }
+            }
+            else
+            {
+//                    printf("(e) Thin cluster (charge <=1), hit type: %5d  detector: %5d\n", hit->getType(), cluster->getDetectorID() );                
+            }
+ 
 //            double minDistance =  numeric_limits< double >::max() ;
             double * hitPosition = const_cast<double * > (hit->getPosition());
 
             unsigned int localSensorID   = guessSensorID( hitPosition );
             localSensorID   = guessSensorID( hit );
-                
+
+              
             layerIndex = _sensorIDVecMap[localSensorID] ;
 //printf("sensor %5d at %5d with %5.3f %5.3f %5.3f  [cluster detID:%5d]\n", localSensorID, layerIndex, hitPosition[0], hitPosition[1], hitPosition[2], cluster->getDetectorID() );
 /*
@@ -1282,30 +1538,24 @@ void EUTelMille::processEvent (LCEvent * event) {
 //           printf("hit %5d of %5d , at %-8.1f %-8.1f %-8.1f, %5d %5d \n", iHit , collection->getNumberOfElements(), hitsInPlane.measuredX, hitsInPlane.measuredY, hitsInPlane.measuredZ, indexconverter[layerIndex], layerIndex );
             // adding a requirement to use only fat clusters for alignement
 
-            if ( 
-                    hit->getType() == kEUTelDFFClusterImpl 
-                    ||
-                    hit->getType() == kEUTelFFClusterImpl 
-                    ||
-                    hit->getType() == kEUTelSparseClusterImpl 
-                    ) 
+
+            if(indexconverter[layerIndex] != -1)
             {
-                if(cluster->getTotalCharge() <= 1)
-                {
-//                    printf("(1) Thin cluster (charge <=1), hit type: %5d  detector: %5d\n", hit->getType(), cluster->getDetectorID() );
-//                    delete cluster; 
-//                    continue;
-                }
-            }
-            else
-            {
-//                    printf("(e) Thin cluster (charge <=1), hit type: %5d  detector: %5d\n", hit->getType(), cluster->getDetectorID() );                
+//               _hitsArray[indexconverter[layerIndex]].push_back(hitsInPlane);
+//               printf("  _hitsArray size %5d indexconverter[%2d] = %2d, %8.3f, %8.3f, %8.3f \n", _hitsArray.size(), layerIndex, indexconverter[layerIndex],
+//                       hitsInPlane.measuredX,
+//                       hitsInPlane.measuredY,
+//                       hitsInPlane.measuredZ);
             }
 
-//printf("index converter is OK at %5d of %5d \n", indexconverter[layerIndex], indexconverter.size());
-            if(indexconverter[layerIndex] != -1)
-                _hitsArray[indexconverter[layerIndex]].push_back(hitsInPlane);
- 
+            _allHitsArray[layerIndex].push_back(hitsInPlane);
+//            printf("allHitsArray[%2d:%2d]: size %5d[%5d] indexconverter[%2d] = %2d, %8.3f, %8.3f, %8.3f \n", layerIndex, localSensorID, 
+//                       _allHitsArray.size(), _allHitsArray[layerIndex].size(), layerIndex, indexconverter[layerIndex],
+//                      hitsInPlane.measuredX,
+//                      hitsInPlane.measuredY,
+//                      hitsInPlane.measuredZ);
+
+
             delete cluster; // <--- destroying the cluster
 
 //COMMENT 190510-2227            if(indexconverter[layerIndex] != -1) 
@@ -1357,9 +1607,16 @@ void EUTelMille::processEvent (LCEvent * event) {
         } // end if check running in input mode 0 or 2
 
       }
-
-
-
+/*
+  for(int j=0;j<_nPlanes;j++) 
+  for(int i=0;i<_allHitsArray[j].size();i++)
+    {
+      double x0 = _allHitsArray[j][i].measuredX;
+      double y0 = _allHitsArray[j][i].measuredY;
+      double z0 = _allHitsArray[j][i].measuredZ;
+      printf("control print hit[%5d][%5d].of.%5d  at %5.3f %5.3f %5.3f \n", j   , i, _allHitsArray[j].size(),  x0, y0, z0);
+    }
+*/
 
   std::vector<int> fitplane(_nPlanes, 0);
 
@@ -1383,8 +1640,34 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 //  ADDITIONAL PRINTOUTS   
 //    printf("=========\n");
+    findtracks2(0, indexarray, std::vector<int>(), _allHitsArray, 0, 0);
+//    printf("==== indexarray size i = %5d %5d hitsArray.size() = %3d \n", indexarray.size(), indexconverter.size(), _allHitsArray.size() );
+    for(size_t i = 0; i < indexarray.size(); i++)
+      {
+        for(size_t j = 0; j <  _nPlanes; j++)
+          {
+//  ADDITIONAL PRINTOUTS   
+//             printf("indexarray size i = %5d, j = %5d (%2d)\n", i, j, indexconverter[j]);
+
+             if( indexarray[i][j] >= 0 )
+             {              
+               _xPos[i][j] = _allHitsArray[j][indexarray[i][j]].measuredX;
+               _yPos[i][j] = _allHitsArray[j][indexarray[i][j]].measuredY;
+               _zPos[i][j] = _allHitsArray[j][indexarray[i][j]].measuredZ;
+             }
+             else
+             {
+               _xPos[i][j] = 0.;
+               _yPos[i][j] = 0.;
+               _zPos[i][j] = 0.;
+             }  
+//             printf("track[%2d] plane[%2d] at [%08.1f %08.1f %08.1f] \n", i, j, _xPos[i][j], _yPos[i][j], _zPos[i][j]);
+          }
+      }
+
+//return;
+/* 
     findtracks(indexarray, std::vector<int>(), _hitsArray, 0, 0);
-//    printf("indexarray size i = %5d %5d \n", indexarray.size(), indexconverter.size());
  
     for(size_t i = 0; i < indexarray.size(); i++)
       {
@@ -1398,9 +1681,9 @@ void EUTelMille::processEvent (LCEvent * event) {
              {
                 //if the plane j is excluded set a fake hit. This hit
                 //will be ignored by the fitter.
-                _xPos[i][j] = 0.0;
-                _yPos[i][j] = 0.0;
-                _zPos[i][j] = 0.0;
+                   _xPos[i][j] = 0.0;
+                   _yPos[i][j] = 0.0;
+                   _zPos[i][j] = 0.0;
              }
              else
              {
@@ -1412,11 +1695,9 @@ void EUTelMille::processEvent (LCEvent * event) {
                 _yPos[i][j] = _hitsArray[indexconverter[j]][indexarray[i][indexconverter[j]]].measuredY;
                 _zPos[i][j] = _hitsArray[indexconverter[j]][indexarray[i][indexconverter[j]]].measuredZ;
              }
-//            _xPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredX;
-//            _yPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredY;
-//            _zPos[i][j] = _hitsArray[j][indexarray[i][j]].measuredZ;
           }
       }
+*/
 
     _nTracks = (int) indexarray.size();
 //  ADDITIONAL PRINTOUTS   
@@ -1610,17 +1891,19 @@ void EUTelMille::processEvent (LCEvent * event) {
                               1000 * hit->getPosition()[2]
                               )
                           );
-
+//                  printf("hit %5d pos:%8.3f %8.3f %8.3f \n", iHit,  hit->getPosition()[0],  hit->getPosition()[1], hit->getPosition()[2]  );
+ 
                   double measuredz = hit->getPosition()[2];
 
                   delete cluster; // <--- destroying the cluster
                   for (int nHits = 0; nHits < int(TrackHitsHere.size()); nHits++)  // end loop over all hits and fill arrays
-                    {
+                  {
                       TrackerHit *HitHere = TrackHitsHere.at(nHits);
 
                       // hit positions
                       const double *PositionsHere = HitHere->getPosition();
-
+//                  printf("fithit %5d pos:%8.3f %8.3f %8.3f \n", nHits, HitHere->getPosition()[0], HitHere->getPosition()[1], HitHere->getPosition()[2]  );
+ 
                       //assume that fitted hits have type 32.
                       //the tracker hit will be excluded if the
                       //distance to the hit from the hit collection
@@ -1676,8 +1959,10 @@ void EUTelMille::processEvent (LCEvent * event) {
   }
 
   streamlog_out ( MILLEMESSAGE ) << "Number of hits in the individual planes: ";
-  for(size_t i = 0; i < _hitsArray.size(); i++)
-    streamlog_out ( MILLEMESSAGE ) << _hitsArray[i].size() << " ";
+//   for(size_t i = 0; i < _hitsArray.size(); i++)
+//    streamlog_out ( MILLEMESSAGE ) << _hitsArray[i].size() << " ";
+  for(size_t i = 0; i < _allHitsArray.size(); i++)
+    streamlog_out ( MILLEMESSAGE ) << _allHitsArray[i].size() << " ";
   streamlog_out ( MILLEMESSAGE ) << endl;
 
   streamlog_out ( MILLEMESSAGE ) << "Number of track candidates found: " << _iEvt << ": " << _nTracks << endl;
@@ -1692,7 +1977,8 @@ void EUTelMille::processEvent (LCEvent * event) {
     std::vector<double> lambda;
     double par_c0 = 0.0;
     double par_c1 = 0.0;
-    lambda.reserve(_nPlanes-_nExcludePlanes);
+    lambda.reserve(_nPlanes);
+//   lambda.reserve(_nPlanes-_nExcludePlanes);
     bool validminuittrack = false;
 #endif
 
@@ -1701,6 +1987,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
     // loop over all track candidates
     for (int track = 0; track < _nTracks; track++) {
+//printf("loop over tracks %5d \n", track);
 
       _xPosHere = new double[_nPlanes];
       _yPosHere = new double[_nPlanes];
@@ -1718,8 +2005,8 @@ void EUTelMille::processEvent (LCEvent * event) {
       streamlog_out ( MILLEMESSAGE ) << "Adding track using the following coordinates: ";
 
       // loop over all planes
-      for (int help = 0; help < _nPlanes; help++) {
-
+      for (int help = 0; help < _nPlanes; help++) 
+      {
         int excluded = 0;
 
         // check if actual plane is excluded
@@ -1745,29 +2032,72 @@ void EUTelMille::processEvent (LCEvent * event) {
           //use minuit to find tracks
           //hitsarray.clear();
           //hitsarray.reserve(_nPlanes-_nExcludePlanes);
+          int    mean_n = 0  ;
           double mean_x = 0.0;
           double mean_y = 0.0;
           double mean_z = 0.0;
           int index_hitsarray=0;
-          for (int help = 0; help < _nPlanes; help++) {
+          int index_firsthit=0;
+          double x0 = -1.;
+          double y0 = -1.;
+          double z0 = -1.;
+          for (int help = 0; help < _nPlanes; help++) 
+          {
             bool excluded = false;
             // check if actual plane is excluded
-            if (_nExcludePlanes > 0) {
-              for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-                if (help == _excludePlanes[helphelp]) {
+            if (_nExcludePlanes > 0) 
+            {
+              for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) 
+              {
+                if (help == _excludePlanes[helphelp]) 
+                {
                   excluded = true;
                 }
               }
             }
+            const double x = _xPos[track][help];
+            const double y = _yPos[track][help];
+            const double z = _zPos[track][help];
+            if( abs(x)>1e-06 && abs(y)>1e-06 && abs(z)>1e-06 && index_firsthit == 0 )
+            {
+              index_firsthit = help; 
+              x0 = _xPos[track][help];
+              y0 = _yPos[track][help];
+              z0 = _zPos[track][help];
+            }
+            const double xresid = x0 - x;
+            const double yresid = y0 - y;
+            const double zresid = z0 - z;
+            if ( xresid < _residualsXMin[help] || xresid > _residualsXMax[help]) 
+              {
+                continue;
+              }
+            if ( yresid < _residualsYMin[help] || yresid > _residualsYMax[help]) 
+              {
+                continue;
+              }
+ 
             if(!excluded)
               {
-                const double x = _xPos[track][help];
-                const double y = _yPos[track][help];
-                const double z = _zPos[track][help];
+                double sigmax  = _resolutionX[help];
+                double sigmay  = _resolutionY[help];
+                double sigmaz  = _resolutionZ[help];
+                  
+                if( abs(x)>1e-06 && abs(y)>1e-06 && abs(z)>1e-06 )
+                {
+                  mean_z += z;
+                  mean_x += x;
+                  mean_y += y;
+                  mean_n++;  
+//                  printf(" track %5d plane %5d x:%5.2e y:%5.2e z:%5.2e total planes:%5d \n", track, help, x,y,z, mean_n);
+                } 
 
-                mean_z += z;
-                mean_x += x;
-                mean_y += y;
+                if( abs(x)<1e-06 && abs(y)<1e-06 && abs(z)<1e-06 )
+                {
+                  sigmax = 1000000.;
+                  sigmay = 1000000.;
+                  sigmaz = 1000000.;
+                }
 
               //   hitsarray.push_back(hit(
 //                                         x, y, z,
@@ -1777,16 +2107,35 @@ void EUTelMille::processEvent (LCEvent * event) {
 
                 hitsarray[index_hitsarray] = (hit(
                                                   x, y, z,
-                                                  _resolutionX[help],_resolutionY[help], _resolutionZ[help],
+                                                  sigmax, sigmay, sigmaz,
                                                   help
                                                   ));
                 
                 index_hitsarray++;
               }
           }
-          mean_z = mean_z / (double)(number_of_datapoints);
-          mean_x = mean_x / (double)(number_of_datapoints);
-          mean_y = mean_y / (double)(number_of_datapoints);
+//          mean_z = mean_z / (double)(number_of_datapoints);
+//          mean_x = mean_x / (double)(number_of_datapoints);
+//          mean_y = mean_y / (double)(number_of_datapoints);
+          mean_z = mean_z / (double)(mean_n);
+          mean_x = mean_x / (double)(mean_n);
+          mean_y = mean_y / (double)(mean_n);
+
+          if( _nPlanes - mean_n > getAllowedMissingHits() ) 
+          {
+             continue;
+          }
+          else
+          {  
+/*             for(size_t i = 0; i< mean_n; i++)
+             {
+               const double x = hitsarray[i].x;
+               const double y = hitsarray[i].y;
+               const double z = hitsarray[i].z;
+               const int help = hitsarray[i].planenumber;
+               printf(" track %5d plane %5d x:%5.2e y:%5.2e z:%5.2e total planes:%5d \n", track, help, x,y,z, mean_n);
+             }
+*/          }
 
           static bool firstminuitcall = true;
           
@@ -1823,18 +2172,20 @@ void EUTelMille::processEvent (LCEvent * event) {
           double szy = 0.0;
             
           for(size_t i = 0; i< number_of_datapoints; i++)
+          {
+            const double x = hitsarray[i].x;
+            const double y = hitsarray[i].y;
+            const double z = hitsarray[i].z;
+            if( abs(x)>1e-06 && abs(y)>1e-06 && abs(z)>1e-06 )
             {
-              const double x = hitsarray[i].x;
-              const double y = hitsarray[i].y;
-              const double z = hitsarray[i].z;
-                
               sxx += pow(x-mean_x,2);
               syy += pow(y-mean_y,2);
               szz += pow(z-mean_z,2);
-                
+            
               szx += (x-mean_x)*(z-mean_z);
               szy += (y-mean_y)*(z-mean_z);
             }
+          }
           double linfit_x_a1 = szx/szz; //slope
           double linfit_y_a1 = szy/szz; //slope
             
@@ -1875,10 +2226,9 @@ void EUTelMille::processEvent (LCEvent * event) {
           bool ok = true;
             
           if(ierflg != 0)
-            {
-              ok = false;
-            
-            }
+          {
+            ok = false;            
+          }
                     
       //     //    calculate errors using MINOS. do we need this?
 //           arglist[0] = 2000;
@@ -1917,7 +2267,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                   const double x = _xPos[track][help];
                   const double y = _yPos[track][help];
                   const double z = _zPos[track][help];
-                  
+                 
                   //calculate the lambda parameter
                   const double la = -1.0*b0*c0-b1*c1+c0*x+c1*y+sqrt(1-c0*c0-c1*c1)*z;
                   lambda.push_back(la);
@@ -1928,18 +2278,61 @@ void EUTelMille::processEvent (LCEvent * event) {
                   _waferResidZ[help] = la*sqrt(1.0 - c0*c0 - c1*c1) - z;
 //printf("MINUIT PRE sensor: %5d  %10.3f %10.3f %10.3f   %10.3f %10.3f %10.3f \n", help, x,y,z,  _waferResidX[help]+x, _waferResidY[help]+y, _waferResidZ[help]+z );
 
-                   TVector3 vpoint(b0,b1,0.);
-                   TVector3 vvector(c0,c1,c2);
-                   TVector3 point=Line2Plane(help, vpoint,vvector);
+                  TVector3 vpoint(b0,b1,0.);
+                  TVector3 vvector(c0,c1,c2);
+                  TVector3 point=Line2Plane(help, vpoint,vvector);
 //                   printf("b0:%5.2f b1:%5.2f: vvector: %12.5f %12.5f %12.5f \n",b0,b1, vvector[0], vvector[1], vvector[2] );
- 
+
+//                  _xPosTrack[track][help] = point[0];
+//                  _yPosTrack[track][help] = point[1];
+//                  _zPosTrack[track][help] = point[2];
+
                   //determine the residuals
-                  _waferResidX[help] = point[0] - x;
-                  _waferResidY[help] = point[1] - y;
-                  _waferResidZ[help] = point[2] - z;
+                 if( abs(x)>1e-06 && abs(y)>1e-06 && abs(z)>1e-06 )
+                 {
+                    _waferResidX[help] = point[0] - x;
+                    _waferResidY[help] = point[1] - y;
+                    _waferResidZ[help] = point[2] - z;
+                 }else{
+                    _waferResidX[help] = 0.;
+                    _waferResidY[help] = 0.;
+                    _waferResidZ[help] = 0.;
+                 }
+//                 printf("FIT:   AFT sensor: %5d  [%10.3f %10.3f %10.3f]   [%10.3f %10.3f %10.3f] planes %5d \n", 
+//                        help, x,y,z,  _waferResidX[help], _waferResidY[help], _waferResidZ[help], mean_n );
 //printf("FIT:   AFT sensor: %5d  %10.3f %10.3f %10.3f   %10.3f %10.3f %10.3f \n", help, x,y,z,  _waferResidX[help]+x, _waferResidY[help]+y, _waferResidZ[help]+z );
 
 
+/*
+// try to recover planes which were exluded from the fit:
+                  double mindistance=999999.;
+                  TVector3 minpoint(0.,0.,0.);
+                  TVector3 testpoint(0.,0.,0.);
+//                  if( abs(x) < 1e-06 && abs(y) < 1e-06 && abs(x) < 1e-06 )
+                  {
+//                    printf("plane %2d with zero hit %5.3f %5.3f %5.3f \n", help, x,y,z);
+                    for(int i=0;i<_allHitsArray[help].size(); i++)
+                    {
+                      double x0 = _allHitsArray[help][i].measuredX;
+                      double y0 = _allHitsArray[help][i].measuredY;
+                      double z0 = _allHitsArray[help][i].measuredZ;
+                      testpoint = TVector3(x0,y0,z0);
+                      TVector3 distance3d = testpoint-point;
+                      double distance = distance3d.Mag(); 
+                      if( mindistance > distance )
+                      {
+                        mindistance = distance;
+                        minpoint = testpoint;
+                      }
+                      printf("could be replaced by  hit[%5d][%5d].of.%5d  at [%5.3f %5.3f %13.3f] [%5.3f %5.3f %13.3f]\n", 
+                              help, i, _allHitsArray[help].size(),  x0, y0, z0, x,y,z);
+                    }
+                    if(mindistance <999999.)
+                    {
+                      printf("to be replaced by [%5.3f %5.3f %5.3f ][%5.3f %5.3f %5.3f] \n", point[0],point[1],point[2],minpoint[0],minpoint[1],minpoint[2] );
+                    } 
+                  } 
+ */
                 }
             }
           delete gMinuit;
@@ -1975,31 +2368,47 @@ void EUTelMille::processEvent (LCEvent * event) {
 
       streamlog_out ( MILLEMESSAGE ) << endl;
 
+      streamlog_out ( MILLEMESSAGE ) << "Residuals Z: ";
+
+      for (int help = 0; help < _nPlanes; help++) {
+        streamlog_out ( MILLEMESSAGE ) << _waferResidZ[help] << " ";
+      }
+
+      streamlog_out ( MILLEMESSAGE ) << endl;
+
+
       int residualsXOkay = 1;
       int residualsYOkay = 1;
 
       // check if residal cuts are used
-      if (_useResidualCuts != 0) {
+      if (_useResidualCuts != 0) 
+      {
 
         // loop over all sensors
-        for (int help = 0; help < _nPlanes; help++) {
+        for (int help = 0; help < _nPlanes; help++) 
+        {
           int excluded = 0; //0 not excluded, 1 excluded
-          if (_nExcludePlanes > 0) {
-            for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-              if (help == _excludePlanes[helphelp]) {
+          if (_nExcludePlanes > 0) 
+          {
+            for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) 
+            {
+              if (help == _excludePlanes[helphelp]) 
+              {
                 excluded = 1;
               }
             }
           }
           if(excluded == 0)
-            {
-              if (_waferResidX[help] < _residualsXMin[help] || _waferResidX[help] > _residualsXMax[help]) {
+          {
+              if (_waferResidX[help] < _residualsXMin[help] || _waferResidX[help] > _residualsXMax[help]) 
+              {
                 residualsXOkay = 0;
               }
-              if (_waferResidY[help] < _residualsYMin[help] || _waferResidY[help] > _residualsYMax[help]) {
+              if (_waferResidY[help] < _residualsYMin[help] || _waferResidY[help] > _residualsYMax[help]) 
+              {
                 residualsYOkay = 0;
               }
-            }
+          }
 // 
 //          if (_waferResidX[help] < _residualsXMin[help] || _waferResidX[help] > _residualsXMax[help]) {
 //            residualsXOkay = 0;
@@ -2216,15 +2625,18 @@ void EUTelMille::processEvent (LCEvent * event) {
               float residual;
 
               // create labels
-              for (int help = 0; help < nGL; help++) {
+              for (int help = 0; help < nGL; help++) 
+              {
                 label[help] = help + 1;
               }
 
-              for (int help = 0; help < nGL; help++) {
+              for (int help = 0; help < nGL; help++) 
+              {
                 derGL[help] = 0;
               }
 
-              for (int help = 0; help < nLC; help++) {
+              for (int help = 0; help < nLC; help++) 
+              {
                 derLC[help] = 0;
               }
 
@@ -2232,10 +2644,11 @@ void EUTelMille::processEvent (LCEvent * event) {
 
               // loop over all planes
              
-              for (int help = 0; help < _nPlanes; help++) {
+              for (int help = 0; help < _nPlanes; help++) 
+              {
 
                 int excluded = 0;
-
+/*
                 // check if actual plane is excluded
                 if (_nExcludePlanes > 0) {
                   for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
@@ -2244,6 +2657,22 @@ void EUTelMille::processEvent (LCEvent * event) {
                       nExcluded++;
                     }
                   }
+                }
+*/
+                double sigmax = _resolutionX[help];
+                double sigmay = _resolutionY[help];
+                double sigmaz = _resolutionZ[help];
+
+                if( 
+                    abs(_xPosHere[help]) < 1e-06 &&
+                    abs(_yPosHere[help]) < 1e-06 &&
+                    abs(_zPosHere[help]) < 1e-06   
+                   )
+                {
+                   sigmax *= 1000000.;
+                   sigmay *= 1000000.;
+                   sigmaz *= 1000000.;
+                   continue;
                 }
 
                 // if plane is not excluded
@@ -2328,7 +2757,6 @@ void EUTelMille::processEvent (LCEvent * event) {
                   // been removed
 
                   //local parameters: b0, b1, c0, c1
-
                   const double la = lambda[help];
 
 //                  double z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ(help) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( help );
@@ -2392,11 +2820,12 @@ void EUTelMille::processEvent (LCEvent * event) {
                   derLC[3] = 0.0;
             
                   residual = _waferResidX[help];
-                  sigma = _resolutionX[help];
+//                  sigma = _resolutionX[help];
                //    for(int i =0; i<4;i++)
 //                     cout << "a " << derLC[i] << endl;
                  
-                  _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+                  _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigmax);
+//printf("helphelp %5d %8.3f %8.3f %8.3f %8.3f %8.3f %8.3f \n", helphelp, _waferResidX[help], sigmax, _waferResidY[help], sigmay, _waferResidZ[help], sigmaz );
 
              
                   // shift in Y
@@ -2414,11 +2843,11 @@ void EUTelMille::processEvent (LCEvent * event) {
                   derLC[3] = _zPosHere[help] + _waferResidZ[help];
             
                   residual = _waferResidY[help];
-                  sigma = _resolutionY[help];
+//                  sigma = _resolutionY[help];
                //    for(int i =0; i<4;i++)
 //                     cout << "b " << derLC[i] << endl;
                   
-                  _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+                  _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigmay);
               
               
                   // shift in Z
@@ -2436,11 +2865,11 @@ void EUTelMille::processEvent (LCEvent * event) {
                   derLC[3] = _yPosHere[help] + _waferResidY[help];
             
                   residual = _waferResidZ[help];
-                  sigma = _resolutionZ[help];
+//                  sigma = _resolutionZ[help];
                //    for(int i =0; i<4;i++)
 //                     cout << "c " << derLC[i] << endl;
                  
-                  _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
+                  _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigmaz);
 
 //                  printf("residuals[%2d]: %7.2f %7.2f %7.2f :: x:%7.2f y:%7.2f \n", _sensorIDVec[help], _waferResidX[help], _waferResidY[help], _waferResidZ[help],
 //                                                       (_xPosHere[help]-x_sensor),             
@@ -2456,9 +2885,13 @@ void EUTelMille::processEvent (LCEvent * event) {
 
               // clean up
 
+//              printf("finished track %5d \n", _nMilleDataPoints);
+
               delete [] derLC;
               delete [] derGL;
               delete [] label;
+//              printf("finished track %5d DELETE OK\n", _nMilleDataPoints);
+
             }
 #endif
         } else {
@@ -2471,6 +2904,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
         // end local fit
         _mille->end();
+//        printf("mille->end() OK \n", _nMilleTracks);
 
         _nMilleTracks++;
 
@@ -2501,10 +2935,19 @@ void EUTelMille::processEvent (LCEvent * event) {
           }
         }
 
+//printf("coming to loope over detector plane sfor histos \n");
+
         // loop over all detector planes
         for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
 
           int sensorID = _orderedSensorID.at( iDetector );
+
+          if ( 
+              abs(_waferResidX[iDetector]) < 1e-06 &&  
+              abs(_waferResidY[iDetector]) < 1e-06 &&  
+              abs(_waferResidZ[iDetector]) < 1e-06 
+             )   continue;
+
 
           if ( _histogramSwitch ) {
             tempHistoName = _residualXLocalname + "_d" + to_string( sensorID );
@@ -2578,6 +3021,8 @@ void EUTelMille::processEvent (LCEvent * event) {
 #endif
 
         } // end loop over all detector planes
+//printf("coming to loope over detector plane sfor histos DONE\n");
+
 
 #endif
 
@@ -2587,6 +3032,9 @@ void EUTelMille::processEvent (LCEvent * event) {
       delete [] _zPosHere;
       delete [] _yPosHere;
       delete [] _xPosHere;
+
+//printf("delete [] PosHere OK \n");
+
 
     } // end loop over all track candidates
 
@@ -2751,10 +3199,11 @@ TVector3 EUTelMille::Line2Plane(int iplane, const TVector3& lpoint, const TVecto
 
         point = (linecoord_numenator/linecoord_denumenator)*lvector + lpoint;
 //        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-//        printf("iPlane %5d   hitTrack:  [%8.3f;%8.3f;%8.3f] lvector[%5.2f %5.2f %5.2f] \n",
-//                                         refhit->getSensorID(), 
-//                                         hitInPlane[0], hitInPlane[1], hitInPlane[2],
-//                                         lvector[0], lvector[1], lvector[2]  );
+//      printf("iPlane %5d   hitTrack:  [%8.3f;%8.3f;%13.3f] lvector[%5.2f %5.2f %5.2f] -> point[%5.2f %5.2f %13.2f]\n",
+//                                       refhit->getSensorID(), 
+//                                       hitInPlane[0], hitInPlane[1], hitInPlane[2],
+//                                       lvector[0], lvector[1], lvector[2],
+//                                       point[0], point[1], point[2]  );
 
   return point;
 }
@@ -2882,6 +3331,8 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
 
 void EUTelMille::end() {
 
+//printf("end() \n");
+
   delete [] _telescopeResolY;
   delete [] _telescopeResolX;
   delete [] _telescopeResolZ;
@@ -2890,6 +3341,9 @@ void EUTelMille::end() {
   delete [] _waferResidY;
   delete [] _waferResidX;
   delete [] _waferResidZ;
+
+//printf("delete hitsarray \n");
+
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
   if(_alignMode == 3)
     {
@@ -2897,8 +3351,13 @@ void EUTelMille::end() {
     }
 #endif
 
+//printf("mille \n");
+
   // close the output file
   delete _mille;
+
+//printf("mille OK\n");
+
 
   // if write the pede steering file
   if (_generatePedeSteerfile) {
@@ -2911,6 +3370,8 @@ void EUTelMille::end() {
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
     double *meanZ = new double[_nPlanes];
 #endif
+
+//printf("loop over all detector planes \n");
     // loop over all detector planes
     for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
 
@@ -2961,22 +3422,27 @@ void EUTelMille::end() {
       int lastnotexcl = 0;
 
       // loop over all planes
-      for (int help = 0; help < _nPlanes; help++) {
+      for (int help = 0; help < _nPlanes; help++) 
+      {
 
         int excluded = 0;
 
         // loop over all excluded planes
-        for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-          if (help == _excludePlanes[helphelp]) {
-            excluded = 1;
+        for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) 
+        {
+          if (help == _excludePlanes[helphelp]) 
+          {
+//            excluded = 1;
           }
         } // end loop over all excluded planes
 
-        if (excluded == 0 && firstnotexcl > help) {
+        if (excluded == 0 && firstnotexcl > help) 
+        {
           firstnotexcl = help;
         }
 
-        if (excluded == 0 && lastnotexcl < help) {
+        if (excluded == 0 && lastnotexcl < help) 
+        {
           lastnotexcl = help;
         }
       } // end loop over all planes
@@ -2997,14 +3463,15 @@ void EUTelMille::end() {
 
       // loop over all planes
       for (int help = 0; help < _nPlanes; help++) {
-
+//        printf("end: plane %5d of %5d \n", help, _nPlanes);
+ 
         int excluded = 0; // flag for excluded planes
 
         // loop over all excluded planes
         for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
 
           if (help == _excludePlanes[helphelp]) {
-            excluded = 1;
+//            excluded = 1;
           }
 
         } // end loop over all excluded planes
@@ -3314,25 +3781,29 @@ void EUTelMille::end() {
               tokenizer.str( line );
 
               // check that all parts of the line are non zero
+//              int ibuff=0;
               while ( tokenizer >> buffer ) {
                 tokens.push_back( buffer ) ;
                 if(buffer> 1e-12) _nonzero_tokens = true;
-//                printf("buffer = %8.3f\n", buffer);
+//                ibuff++;
+//                printf("buff[%2d:%1d] = %8.3f ", iParam, ibuff, buffer);
               }
+//              printf("\n");
 
               if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) || (tokens.size() == 5) ) {
                 goodLine = true;
               } else goodLine = false;
 
               bool isFixed = ( tokens.size() == 3 );
+/*
               if ( isFixed ) {
-                streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << ( tokens[1] / 1000 )
+                streamlog_out ( MESSAGE ) << "Parameter " << tokens[0] << " is at " << ( tokens[1] / 1000 )
                                          << " (fixed)"  << endl;
               } else {
-                streamlog_out ( DEBUG0 ) << "Parameter " << tokens[0] << " is at " << (tokens[1] / 1000 )
+                streamlog_out ( MESSAGE ) << "Parameter " << tokens[0] << " is at " << (tokens[1] / 1000 )
                                          << " +/- " << ( tokens[4] / 1000 )  << endl;
               }
-
+*/
               if(_alignMode != 3)
                 {
                  if ( iParam == 0 ) {
@@ -3380,10 +3851,11 @@ void EUTelMille::end() {
             }
 
 
-
+//printf("goodLine : %1d \n", goodLine, _orderedSensorID.at( counter ) );
             // right place to add the constant to the collection
             if ( goodLine  ) {
-              constant->setSensorID( _orderedSensorID_wo_excluded.at( counter ) );
+//               constant->setSensorID( _orderedSensorID_wo_excluded.at( counter ) );
+              constant->setSensorID( _orderedSensorID.at( counter ) );
               ++ counter;
               constantsCollection->push_back( constant );
               streamlog_out ( MESSAGE0 ) << (*constant) << endl;
@@ -3428,12 +3900,12 @@ void EUTelMille::bookHistos() {
     const int    tracksNBin = 20  ;
     const double tracksMin  = -0.5;
     const double tracksMax  = 19.5;
-    const int    Chi2NBin = 100 ;
+    const int    Chi2NBin = 1000 ;
     const double Chi2Min  =   0.;
-    const double Chi2Max  = 100.;
-    const int    NBin =   5000;
-    const double Min  = -25000.;
-    const double Max  =  25000.;
+    const double Chi2Max  = 1000.;
+    const int    NBin =   4000;
+    const double Min  = -2000.;
+    const double Max  =  2000.;
 
     AIDA::IHistogram1D * numberTracksLocal =
       AIDAProcessor::histogramFactory(this)->createHistogram1D(_numberTracksLocalname,tracksNBin,tracksMin,tracksMax);
@@ -3496,7 +3968,7 @@ void EUTelMille::bookHistos() {
       histoTitleXResid  =  "XvsXResidual_d" + to_string( sensorID ) ;
 
       AIDA::IProfile1D *  tempX2dHisto =
-        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName, 100, -10000., 10000.,  -1000., 1000. );
+        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName, 100, -10000., 10000.,  -10000., 10000. );
       if ( tempX2dHisto ) {
         tempX2dHisto->setTitle(histoTitleXResid);
         _aidaHistoMapProf1D.insert( make_pair( tempHistoName, tempX2dHisto ) );
@@ -3510,7 +3982,7 @@ void EUTelMille::bookHistos() {
       histoTitleXResid  =  "XvsYResidual_d" + to_string( sensorID ) ;
 
        tempX2dHisto =
-        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName,  100, -10000., 10000.,  -1000., 1000.);
+        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName,  100, -10000., 10000.,  -10000., 10000.);
       if ( tempX2dHisto ) {
         tempX2dHisto->setTitle(histoTitleXResid);
         _aidaHistoMapProf1D.insert( make_pair( tempHistoName, tempX2dHisto ) );
@@ -3553,7 +4025,7 @@ void EUTelMille::bookHistos() {
       histoTitleYResid  =  "YvsYResidual_d" + to_string( sensorID ) ;
 
         tempY2dHisto =
-        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName, 100, -10000., 10000.,  -1000., 1000.);
+        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName, 100, -10000., 10000.,  -10000., 10000.);
       if ( tempY2dHisto ) {
         tempY2dHisto->setTitle(histoTitleYResid);
         _aidaHistoMapProf1D.insert( make_pair( tempHistoName, tempY2dHisto ) );
@@ -3584,7 +4056,7 @@ void EUTelMille::bookHistos() {
       histoTitleZResid  =  "ZvsYResidual_d" + to_string( sensorID ) ;
 
       AIDA::IProfile1D*  tempZ2dHisto =
-        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName, 100, -10000., 10000.,  -1000., 1000.);
+        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName, 100, -10000., 10000.,  -10000., 10000.);
       if ( tempZ2dHisto ) {
         tempZ2dHisto->setTitle(histoTitleZResid);
         _aidaHistoMapProf1D.insert( make_pair( tempHistoName, tempZ2dHisto ) );
@@ -3599,7 +4071,7 @@ void EUTelMille::bookHistos() {
       histoTitleZResid  =  "ZvsXResidual_d" + to_string( sensorID ) ;
 
         tempZ2dHisto =
-        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName, 100, -10000., 10000.,  -1000., 1000.);
+        AIDAProcessor::histogramFactory(this)->createProfile1D(tempHistoName, 100, -10000., 10000.,  -10000., 10000.);
       if ( tempZ2dHisto ) {
         tempZ2dHisto->setTitle(histoTitleZResid);
         _aidaHistoMapProf1D.insert( make_pair( tempHistoName, tempZ2dHisto ) );

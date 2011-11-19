@@ -247,6 +247,16 @@ namespace eutelescope {
                           );
 
 
+    //recursive method which searches for track candidates - with omits!
+    virtual void findtracks2(
+                            int missinghits,
+                            std::vector<std::vector<int> > &indexarray, //resulting vector of hit indizes
+                            std::vector<int> vec, //for internal use
+                            std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray, //contains all hits for each plane
+                            int i, //plane number
+                            int y //hit index number
+                            );
+
 
     //recursive method which searches for track candidates
     virtual void findtracks(
@@ -339,6 +349,7 @@ namespace eutelescope {
 
     TVector3 Line2Plane(int iplane, const TVector3& lpoint, const TVector3& lvector ); 
 
+    virtual inline int getAllowedMissingHits(){return _allowedMissingHits;}
 
   protected:
 
@@ -452,6 +463,7 @@ namespace eutelescope {
     std::vector<float > _pedeUserStartValuesGamma;
 
     int _inputMode;
+    int _allowedMissingHits;
     float _testModeSensorResolution;
     float _testModeXTrackSlope;
     float _testModeYTrackSlope;
@@ -556,6 +568,10 @@ namespace eutelescope {
     std::vector<std::vector<double> > _xPos;
     std::vector<std::vector<double> > _yPos;
     std::vector<std::vector<double> > _zPos;
+
+//    std::vector<std::vector<double> > _xPosTrack;
+//    std::vector<std::vector<double> > _yPosTrack;
+//    std::vector<std::vector<double> > _zPosTrack;
 
     double * _xPosHere;
     double * _yPosHere;
