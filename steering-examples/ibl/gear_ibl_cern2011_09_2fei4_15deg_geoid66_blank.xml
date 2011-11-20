@@ -66,13 +66,13 @@
 				</layer>
 	              		<!--APIX-Plane 2 - FE-I4 SCC34 -->
 				<layer>
-					<ladder 	ID="21"
+					<ladder 	ID="20"
                                                         positionX="0.000"      positionY="0.000"      positionZ="274.966" 
                                                         rotationZY="10.0"       rotationZX="-80.0"     rotationXY="5.000"  
                                                         sizeX="20.0"            sizeY="16.8"            thickness="0.150" 
                                                         radLength="93.660734"
                                         />
-                                        <sensitive      ID="21" 
+                                        <sensitive      ID="20" 
                                                         positionX="00.000"      positionY="00.000"      positionZ="274.966" 
                                                         sizeX="20.0"            sizeY="16.8"            thickness="0.150" 
                                                         npixelX="80"            npixelY="336"
@@ -83,14 +83,14 @@
 					/>
 				</layer>
 				<!--APIX-Plane 1 - FE-I4 SCC55 -->
-<!--				<layer>
-					<ladder 	ID="22"
+				<layer>
+					<ladder 	ID="21"
                                                         positionX="0.000"      positionY="0.000"      positionZ="283.524" 
                                                         rotationZY="10.0"      rotationZX="-80.0"     rotationXY="5.000"
                                                         sizeX="20.0"            sizeY="16.8"            thickness="0.150" 
                                                         radLength="93.660734"
                                         />
-                                        <sensitive      ID="22" 
+                                        <sensitive      ID="21" 
                                                         positionX="0.000"       positionY="0.000"       positionZ="283.524" 
                                                         sizeX="20.0"             sizeY="16.8"            thickness="0.150" 
                                                         npixelX="80"            npixelY="336"
@@ -99,7 +99,7 @@
                                                         rotation3="00.0"         rotation4="-1.0" 
                                                         radLength="93.660734"
 					/>
-				</layer>  -->
+				</layer>  
 				<!--APIX-Plane 3 - FE-I4 SCC60 -->
 <!--				<layer>
 					<ladder 	ID="22" 
@@ -119,7 +119,7 @@
 					/>
 				</layer> -->
 				<!--APIX-Plane 4 - FE-I4 FBK-0,011 -->
-                                <layer>
+<!--                                <layer>
 					<ladder 	ID="20" 
 							positionX="0.000" 	positionY="0.000"	positionZ="380.000" 
 							rotationZY="00.00"      rotationZX="00.0" 	rotationXY=" 0.00" 
@@ -135,7 +135,7 @@
                                                         rotation3="0.0"         rotation4="-1.0" 
 							radLength="93.660734"
 					/>
-				</layer>
+				</layer>  -->
                                 <!--Eudet-Plane 3 - EUD3 -->
                                 <layer>
                                         <ladder         ID="3"
