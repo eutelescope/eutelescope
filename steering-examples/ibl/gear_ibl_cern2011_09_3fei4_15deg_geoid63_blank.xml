@@ -8,7 +8,7 @@
 		<detector name="SiPlanes" geartype="SiPlanesParameters">
 			<siplanesID ID="0"/>
 			<siplanesType type="TelescopeWithoutDUT"/>
-			<siplanesNumber number="10"/>
+			<siplanesNumber number="9"/>
 			<layers>
 				<!--Eudet-Plane 0 - EUD0 -->
 				<layer>
