@@ -139,8 +139,8 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--Selects the source of input hits. 0 - hits read from hitfile with simple trackfinding. 1 - hits read from output of tracking processor. 2 - Test mode. Simple internal simulation and simple trackfinding.-->
   <parameter name="InputMode" type="int" value="0"/>
   <!--Maximal number of track candidates.-->
-  <parameter name="MaxTrackCandidates" type="int" value="1000000"/>
-  <parameter name="MaxTrackCandidatesTotal" type="int" value="1000000"/>
+  <parameter name="MaxTrackCandidates" type="int" value="100000"/>
+  <parameter name="MaxTrackCandidatesTotal" type="int" value="100000"/>
   <!--Use only events with one hit in every plane.-->
   <parameter name="OnlySingleHitEvents" type="int" value="0"/>
   <!--Use only events with one track candidate.-->

@@ -236,7 +236,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
   <processor name="DafFitter" type="EUTelDafFitter">
     <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5  </parameter>
-    <parameter name="DutPlanes" type="IntVec"> 21  20  </parameter>
+    <parameter name="DutPlanes" type="IntVec"> 20 21 </parameter>
     <parameter name="FitDuts" type="bool" value="false"/>
     <parameter name="MakePlots" type="bool" value="true"/>
     <parameter name="RequireNTelPlanes" type="float" value="4"/>
@@ -255,7 +255,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="FinderRadius" type="float" value="700" />
     <parameter name="Chi2Cutoff" type="float" value="1500"/>
     <parameter name="MaxChi2OverNdof" type="float" value="150"/>
-    <parameter name="NDutHits" type="int" value="1"/>
+    <parameter name="NDutHits" type="int" value="0"/>
   </processor>
 
  <group name="ReverseReconstructedHits" type="EUTelApplyAlignmentProcessor" >
