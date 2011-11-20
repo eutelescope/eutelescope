@@ -31,7 +31,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
    <global>
       <parameter name="LCIOInputFiles"> </parameter>
       <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
-      <parameter name="MaxRecordNumber" value="10000000"/>
+      <parameter name="MaxRecordNumber" value="10000"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE"/>
@@ -138,19 +138,19 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
   <!--Pixel status collection-->
   <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> apix_status </parameter>
   <!--The initial value of noise (one value for detector)-->
-  <parameter name="InitNoiseValue" type="FloatVec"> 1 1  </parameter>
+  <parameter name="InitNoiseValue" type="FloatVec"> 0 0    </parameter>
   <!--The initial value of pedestal (one value for detector)-->
-  <parameter name="InitPedestalValue" type="FloatVec"> 0 0 </parameter>
+  <parameter name="InitPedestalValue" type="FloatVec">  0 0 </parameter>
   <!--The maximum pixel along x (default 255, one value per detector)-->
-  <parameter name="MaxXVector" type="IntVec">   80  80  </parameter>
+  <parameter name="MaxXVector" type="IntVec">   80  80    </parameter>
   <!--The maximum pixel along y (default 255, one value per detector)-->
-  <parameter name="MaxYVector" type="IntVec">  336 336  </parameter>
+  <parameter name="MaxYVector" type="IntVec">  336 336    </parameter>
   <!--The minimum pixel along x (default 0, one value per detector)-->
-  <parameter name="MinXVector" type="IntVec"> 0 0   </parameter>
+  <parameter name="MinXVector" type="IntVec"> 0 0    </parameter>
   <!--The minimum pixel along y (default 0, one value per detector)-->
-  <parameter name="MinYVector" type="IntVec"> 0 0 </parameter>
+  <parameter name="MinYVector" type="IntVec"> 0 0  </parameter>
   <!--The sensorID for the generated collection (one per detector)-->
-  <parameter name="SensorIDVec" type="IntVec"> 20 21  </parameter>
+  <parameter name="SensorIDVec" type="IntVec"> 20 21     </parameter>
 </processor>
 
 
