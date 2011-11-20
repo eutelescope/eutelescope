@@ -129,7 +129,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
  <processor name="Fitter" type="EUTelTestFitter">
   <!--Analytical track fitting processor for EUDET telescope--> 
-  <parameter name="alignmentCollectionNames" type="vec" >   alignment </parameter>
+  <parameter name="alignmentCollectionNames" type="vec" >   align </parameter>
   <!--Name of the input TrackerHit collection-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
   <!--Collection name for corrected particle positions-->
