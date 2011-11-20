@@ -20,6 +20,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
    <execute>
       <processor name="AIDA"/>
       <@UseOffsetDBCommentLeft@processor name="LoadOffsetDB"/@UseOffsetDBCommentRight@>
+      <processor name="LoadRefHitDB"/>
       <processor name="LoadPreAlignment"/>
       <processor name="ApplyPreAlignment"/>
       <processor name="LoadAlignment"/>
@@ -35,7 +36,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <!-- processor name="NTuple"/-->
       <processor name="APIXTbTrack"/>
       <!-- group name="TelDUTHisto"/ -->
-      <group name="APIXDUTHisto"/>
+      <xgroup name="APIXDUTHisto"/>
       <processor name="Save"/>
    </execute>
 
@@ -58,6 +59,11 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <parameter name="FileType" type="string" value="root"/>
  </processor>
 
+  <processor name="LoadRefHitDB"     type="ConditionsProcessor">
+    <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+  </processor>
+
 
   <processor name="LoadPreAlignment" type="ConditionsProcessor">
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
@@ -65,11 +71,12 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   </processor>
 
   <processor name="ApplyPreAlignment" type="EUTelApplyAlignmentProcessor">
-    <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> prealign </parameter>
     <parameter name="alignmentCollectionNames"> prealign </parameter>
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
     <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedPre </parameter>
     <parameter name="CorrectionMethod" type="int" value="1"/>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
 
     <parameter name="DoAlignCollection" type="bool" value="true"/>
     <parameter name="HistogramSwitch" type="bool" value="false"/>
@@ -89,7 +96,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> alignment @AlignmentFile@ alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> align @AlignmentFile@ alignment </parameter>
  </processor>
 
   <processor name="LoadOffsetDB" type="ConditionsProcessor">
@@ -100,7 +107,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
  <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
   <!--Apply to the input hit the alignment corrections-->
   <!--Alignment constant from the condition file-->
-  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignment </parameter>
+  <parameter name="alignmentCollectionNames"> align </parameter>
   <!--The name of the input hit collection-->
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> alignedPre </parameter>
   <!--The name of the output hit collection-->
@@ -110,6 +117,9 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     1 --> rotation first 
     2 --> shift first -->
   <parameter name="CorrectionMethod" type="int" value="1"/>
+  <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+
   <!--Enable or disable histograms-->
   <parameter name="DoAlignCollection" type="bool" value="true"/>
   <parameter name="HistogramSwitch" type="bool" value="false"/>
@@ -119,7 +129,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
  <processor name="Fitter" type="EUTelTestFitter">
   <!--Analytical track fitting processor for EUDET telescope--> 
-  <parameter name="alignmentCollectionNames" type="vec" >   alignment </parameter>
+  <parameter name="alignmentCollectionNames" type="vec" >   align </parameter>
   <!--Name of the input TrackerHit collection-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
   <!--Collection name for corrected particle positions-->
@@ -211,18 +221,30 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> correlatedhit  </parameter -->
  <!-- -->
   <parameter name="DumpOffset" type="bool" > false </parameter>
+  <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+  <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
+  <parameter name="Events"  type="int" value="9999"/>
+
+  <!--Residual cuts along both size in microns-->
+    <parameter name="ResidualsXMax" type="FloatVec">  1.0  1.0  1.0  20.0  20.0  20.0  20.3  2.0  2.0  2.0           </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -1.0 -1.0 -1.0 -20.0 -20.0 -20.0 -20.3 -2.0 -2.0 -2.0           </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  1.0  1.0  1.0  20.0  20.0  20.3  20.3  2.0  2.0  2.0           </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -1.0 -1.0 -1.0 -20.0 -20.0 -20.3 -20.3 -2.0 -2.0 -2.0           </parameter>
 </processor>
 
 
   <processor name="DafFitter" type="EUTelDafFitter">
     <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5  </parameter>
-    <parameter name="DutPlanes" type="IntVec"> 20 21 22  </parameter>
+    <parameter name="DutPlanes" type="IntVec"> 21 22 20  </parameter>
     <parameter name="FitDuts" type="bool" value="false"/>
     <parameter name="MakePlots" type="bool" value="true"/>
     <parameter name="RequireNTelPlanes" type="float" value="4"/>
     <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
     <parameter name="TrackCollectionName" type="string" lcioInType="Track"> track </parameter>
-    <parameter name="AlignmentCollectionNames"> prealign alignment  </parameter>
+    <parameter name="AlignmentCollectionNames">prealign align   </parameter>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
     <parameter name="Ebeam" type="float" value="120"/>
     <parameter name="TelResolutionX" type="float" value="4.3"/>
     <parameter name="TelResolutionY" type="float" value="4.3"/>
@@ -230,9 +252,9 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="DutResolutionY" type="float" value="10"/>
     <parameter name="NominalDxdz" type="float" value="0.0"/>
     <parameter name="NominalDydz" type="float" value="0.0"/>
-    <parameter name="FinderRadius" type="float" value="1500" />
-    <parameter name="Chi2Cutoff" type="float" value="50"/>
-    <parameter name="MaxChi2OverNdof" type="float" value="20"/>
+    <parameter name="FinderRadius" type="float" value="700" />
+    <parameter name="Chi2Cutoff" type="float" value="1500"/>
+    <parameter name="MaxChi2OverNdof" type="float" value="150"/>
     <parameter name="NDutHits" type="int" value="1"/>
   </processor>
 
@@ -426,8 +448,10 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="TelZsColName" type="string" value="zsdata_m26"/>
     <parameter name="DutZsColName" type="string" value="zsdata_apix"/>
     <!-- Alignment constants-->
-    <parameter name="AlignmentCollectionNames"> prealign alignment  </parameter>
+    <parameter name="AlignmentCollectionNames"> prealign align  </parameter>
     <parameter name="DoScales" type="bool" value="false"/>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
   </processor>
 
 
