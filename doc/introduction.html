@@ -1509,6 +1509,16 @@ A $EUTELESCOPE variable is also introduced there.
   file pede
 @endcode
 
+If there are no "pede" binary executable, then you should make a soft link to it
+from the path where you have it installed (for V03-04-00):
+
+@code
+  cd $EUTELESCOPE/bin/
+  ln -sf $EUTELESCOPE/millepede2/tags/V03-04-00/pede .
+  file pede
+@endcode
+
+
 Then, your $EUTELESCOPE/pysub/config/config.cfg file should contain:
 
 @code
