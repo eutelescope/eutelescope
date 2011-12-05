@@ -67,13 +67,13 @@
 	              		<!--APIX-Plane 2 - FE-I4 SCC34 -->
 				<layer>
 					<ladder 	ID="21"
-                                                        positionX="0.000"      positionY="0.000"      positionZ="394.000" 
+                                                        positionX="0.000"      positionY="0.000"      positionZ="390.000" 
                                                         rotationZY="15.0"       rotationZX="0.0"     rotationXY="0.000"  
                                                         sizeX="20.0"            sizeY="16.8"            thickness="0.150" 
                                                         radLength="93.660734"
                                         />
                                         <sensitive      ID="21" 
-                                                        positionX="00.000"      positionY="00.000"      positionZ="394.000" 
+                                                        positionX="00.000"      positionY="00.000"      positionZ="390.000" 
                                                         sizeX="20.0"            sizeY="16.8"            thickness="0.150" 
                                                         npixelX="80"            npixelY="336"
                                                         pitchX="0.250"          pitchY="0.05"           resolution="0.1000" 
@@ -85,13 +85,13 @@
 				<!--APIX-Plane 1 - FE-I4 SCC55 -->
 				<layer>
 					<ladder 	ID="22"
-                                                        positionX="0.000"      positionY="0.000"      positionZ="404.000" 
+                                                        positionX="0.000"      positionY="0.000"      positionZ="400.000" 
                                                         rotationZY="15.0"      rotationZX="0.0"     rotationXY="0.000"
                                                         sizeX="20.0"            sizeY="16.8"            thickness="0.150" 
                                                         radLength="93.660734"
                                         />
                                         <sensitive      ID="22" 
-                                                        positionX="0.000"       positionY="0.000"       positionZ="404.000" 
+                                                        positionX="0.000"       positionY="0.000"       positionZ="400.000" 
                                                         sizeX="20.0"             sizeY="16.8"            thickness="0.150" 
                                                         npixelX="80"            npixelY="336"
                                                         pitchX="0.250"          pitchY="0.05"           resolution="0.1000" 
