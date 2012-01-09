@@ -75,7 +75,10 @@ this builds the library:
 @li Major update to the EUTelMille processor. Multiple fixes turned out to be a major rewrite of the Processor. The 3D shift + 3 angle rotation alignment has been validated in the ATLAS IBL testbeams.
 Performance tuned for semi-automatic usage. However, one has to be carefull with the lignment level residual cuts and sensor resolution values set in the align-tmp.xml template. 
 Millepede module (pede) is very sensitive to both.
-@li Major changes to the active plane identification. Formerly was done by a hit z-coordinate proximity to the gear file nominal position fo the plane. Does not work well for strongly tilted planes and does nto work at all for sensors sharing same z-cooridnate in the hardware installation. Two methods which work equally well have been implemented. First one based on the hit-to-cluster-to-PlaneID lookup (works only for data clusters). Second one based on linear algebra of finding a shortest distance from a hit to the plane as it was defined in the gear file. For the track fitted hits only the latter approach is applicable.
+@li Major changes to the active plane identification. Formerly was done by a hit z-coordinate proximity to the gear file nominal position of the plane. It does not work well for planes with high tilts realtive to the beam and it does not work at all for sensors sharing same z-coordinate (by the hardware setup). There are two methods which have been implemented to address the issue. 
+The first one is based on the hit-to-cluster-to-PlaneID lookup (works only for data clusters). 
+The second one is based on linear algebra of finding a shortest distance from a hit to the plane (as it was defined in the gear file). 
+For the track fitted hits only the latter approach is applicable.
 
 
 
