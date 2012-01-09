@@ -34,10 +34,8 @@ are still valid for the digital sensors/Mimosa-26)
  @li @ref ilcinstall -->
 
 The EUTelescope framework workflow for digital sensors (Mimosa 26) is summarised
-<a
-href="http://atlas.desy.de/ibl/EUTelescope/SoftwareDevelopment/EUTelescope_Aug_2010_concept_scheme.pdf">here
-<img border="none" src="http://www-zeus.desy.de/~rubinsky/home/pdficon_small.gif">
-</a>.
+<a href="http://atlas.desy.de/ibl/EUTelescope/SoftwareDevelopment/EUTelescope_Aug_2010_concept_scheme.pdf">here
+<img border="none" src="http://atlas.desy.de/ibl/home/pdficon_small.gif"> </a>.
 
 <!--
 <b>The library update:</b> In case you want to reinstall the EUTelescope library from scratch you do
@@ -74,9 +72,12 @@ this builds the library:
 
 <b>[Pro]</b> Version v00-07-00-pre.
 
-@li Major update to the EUTelMille processor. Multiple fixes turned out to be a major rewrite of the Processor. The 3D shift + 4 angle rotation alignment has been validated i nthe ATLAS IBL testbeams.
+@li Major update to the EUTelMille processor. Multiple fixes turned out to be a major rewrite of the Processor. The 3D shift + 3 angle rotation alignment has been validated in the ATLAS IBL testbeams.
 Performance tuned for semi-automatic usage. However, one has to be carefull with the lignment level residual cuts and sensor resolution values set in the align-tmp.xml template. 
 Millepede module (pede) is very sensitive to both.
+@li Major changes to the active plane identification. Formerly was done by a hit z-coordinate proximity to the gear file nominal position fo the plane. Does not work well for strongly tilted planes and does nto work at all for sensors sharing same z-cooridnate in the hardware installation. Two methods which work equally well have been implemented. First one based on the hit-to-cluster-to-PlaneID lookup (works only for data clusters). Second one based on linear algebra of finding a shortest distance from a hit to the plane as it was defined in the gear file. For the track fitted hits only the latter approach is applicable.
+
+
 
 <b>[Old]</b> Version v00-06-03-pre.
 
