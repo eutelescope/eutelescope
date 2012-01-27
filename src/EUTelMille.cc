@@ -5,7 +5,7 @@
 // Slava Libov, DESY <mailto:vladyslav.libov@desy.de>
 // Igor Rubinskiy, DESY <mailto:igorrubinsky@gmail.com>
 //
-// Version: $Id: EUTelMille.cc,v 1.48 2009-08-01 10:49:46 bulgheroni Exp $
+// Version: $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -806,8 +806,8 @@ void EUTelMille::findtracks2(
               double residualZ  = -999999.;
 
               // now loop through all hits on a track candidate "vec"
-              // stop on the last non-zero hit
-              for(int ivec=0; ivec<=e; ivec++)
+              // start at the end, stop on the first non-zero hit
+              for(int ivec=e; ivec>=e; --ivec)
               {
                 if(vec[ivec]>=0) // non zero hit has id vec[ivec]>=0 {otherwise -1}
                 {
@@ -894,8 +894,8 @@ void EUTelMille::findtracks2(
               double residualZ  = -999999.;
 
               // now loop through all hits on a track candidate "vec"
-              // stop on the last non-zero hit
-              for(int ivec=0; ivec<=e; ivec++)
+              // start at the end, stop on the first non-zero hit
+              for(int ivec=e; ivec>=e; --ivec)
               {
                 if(vec[ivec]>=0) // non zero hit has id vec[ivec]>=0 {otherwise -1}
                 {
