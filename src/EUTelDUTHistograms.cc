@@ -14,6 +14,9 @@
 
 #ifdef USE_GEAR
 
+// ROOT includes:
+#include "TVector3.h"
+
 // eutelescope inlcudes
 #include "EUTelDUTHistograms.h"
 #include "EUTELESCOPE.h"
@@ -21,6 +24,7 @@
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelExceptions.h"
+#include "EUTelReferenceHit.h"
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
@@ -171,6 +175,11 @@ EUTelDUTHistograms::EUTelDUTHistograms() : Processor("EUTelDUTHistograms") {
                               _pitchY,  static_cast < double > (0.03));
 
 
+  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("reference") );
+ 
+  registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
+
+
   std::vector<float > initAlign;
   initAlign.push_back(0.);
   initAlign.push_back(0.);
@@ -199,6 +208,8 @@ void EUTelDUTHistograms::init() {
 
   _nRun = 0 ;
   _nEvt = 0 ;
+
+  _referenceHitVec = 0;
 
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
@@ -302,6 +313,14 @@ void EUTelDUTHistograms::processRunHeader( LCRunHeader* runHeader) {
 
 void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
+  if ( isFirstEvent() )
+  {
+    if ( _applyToReferenceHitCollection ) 
+    {
+       _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
+    }
+  }
+
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
   if ( euEvent->getEventType() == kEORE ) {
     message<DEBUG> ( "EORE found: nothing else to do." );
@@ -374,7 +393,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 
   if(debug)message<MESSAGE> ( log() << "Total of " << nTrack << " tracks in input collection " );
-
 
 
   for(int itrack=0; itrack< nTrack ; itrack++)
@@ -838,6 +856,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
     }
 
 #endif
+
+  if ( isFirstEvent() ) _isFirstEvent = false;
 
   return;
 }
@@ -1972,6 +1992,47 @@ void EUTelDUTHistograms::bookHistos()
 
   return;
 }
+
+int EUTelDUTHistograms::guessSensorID( double * hit ) 
+{
+
+  int sensorID = -1;
+  double minDistance =  numeric_limits< double >::max() ;
+//  double * hitPosition = const_cast<double * > (hit->getPosition());
+
+//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
+  if( _referenceHitVec == 0)
+  {
+    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    return 0;
+  }
+
+      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+      {
+        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+//        printf(" _referenceHitVec %p refhit %p at %5.2f %5.2f %5.2f wih %5.2f %5.2f %5.2f \n", _referenceHitVec, refhit,
+//                refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset(),
+//                refhit->getAlpha(), refhit->getBeta(), refhit->getGamma()  
+//               );
+        
+        TVector3 hit3d( hit[0], hit[1], hit[2] );
+        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
+        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
+ 
+        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
+//          printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hit[0],hit[1],hit[2], distance  );
+        if ( distance < minDistance ) 
+        {
+           minDistance = distance;
+           sensorID = refhit->getSensorID();
+//           printf("sensorID: %5d \n", sensorID );
+        }    
+
+      }
+
+  return sensorID;
+}
+
 
 #endif
 

@@ -12,6 +12,11 @@
 #ifndef EUTelDUTHistograms_h
 #define EUTelDUTHistograms_h 1
 
+// eutelescope includes ".h"
+//#include "TrackerHitImpl2.h"
+#include "IMPL/TrackerHitImpl.h"
+
+// marlin includes ".h"
 #include "marlin/Processor.h"
 
 // gear includes <.h>
@@ -20,6 +25,8 @@
 
 // lcio includes <.h>
 #include "lcio.h"
+#include <EVENT/LCRunHeader.h>
+#include <EVENT/LCEvent.h>
 
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -136,6 +143,7 @@ namespace eutelescope {
      */
     void bookHistos();
 
+    virtual int guessSensorID( double* hit);
 
     //! Called after data processing for clean up.
     /*! Used to release memory allocated in init() step
@@ -143,6 +151,13 @@ namespace eutelescope {
     virtual void end() ;
 
   protected:
+
+    //! reference HitCollection name 
+    /*!
+     */
+    std::string      _referenceHitCollectionName;
+    bool             _applyToReferenceHitCollection;
+    LCCollectionVec* _referenceHitVec;    
 
     //! Silicon planes parameters as described in GEAR
     /*! This structure actually contains the following:
