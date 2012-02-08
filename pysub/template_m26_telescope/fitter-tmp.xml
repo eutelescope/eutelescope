@@ -20,11 +20,12 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
    <execute>
       <processor name="AIDA"/>
       <@UseOffsetDBCommentLeft@processor name="LoadOffsetDB"/@UseOffsetDBCommentRight@>
+      <processor name="LoadRefHitDB"/>
       <processor name="LoadPreAlignment"/>
       <processor name="ApplyPreAlignment"/>
       <processor name="LoadAlignment"/>
       <processor name="ApplyAlignment"/>
-      <!-- processor name="Fitter"/ -->
+      <processor name="Correlator"/>
       <!-- processor name="FitterHisto"/ -->
       <!-- processor name="DUTHisto"/ -->
       <!-- processor name="NTuple"/-->
@@ -52,6 +53,11 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
  </processor>
 
 
+  <processor name="LoadRefHitDB"     type="ConditionsProcessor">
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+  </processor>
+
+
   <processor name="LoadPreAlignment" type="ConditionsProcessor">
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
     <parameter name="SimpleFileHandler" type="StringVec"> prealign @DBPath@/@Output@-prealign-db.slcio        alignment </parameter>
@@ -63,6 +69,8 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
     <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedPre </parameter>
     <parameter name="CorrectionMethod" type="int" value="1"/>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
 
     <parameter name="DoAlignCollection" type="bool" value="true"/>
     <parameter name="HistogramSwitch" type="bool" value="false"/>
@@ -103,6 +111,9 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     1 --> rotation first 
     2 --> shift first -->
   <parameter name="CorrectionMethod" type="int" value="1"/>
+  <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+
   <!--Enable or disable histograms-->
   <parameter name="DoAlignCollection" type="bool" value="true"/>
   <parameter name="HistogramSwitch" type="bool" value="false"/>
@@ -197,24 +208,47 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--parameter name="WindowMinY" type="FloatVec"> </parameter-->
 </processor>
 
+<processor name="Correlator" type="EUTelCorrelator">
+ <!--EUTelCorrelator fills histograms with correlation plots-->
+  <!--Hit collection name-->
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
+  <!--parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> correlatedhit  </parameter -->
+ <!-- -->
+  <parameter name="DumpOffset" type="bool" > false </parameter>
+
+  <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+  <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
+  <parameter name="Events"  type="int" value="9999"/>
+
+  <!--Residual cuts along both size in microns-->
+    <parameter name="ResidualsXMax" type="FloatVec">  10.0  10.0  10.0   10.0  10.0  10.0           </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -10.0 -10.0 -10.0  -10.0 -10.0 -10.0           </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  10.0  10.0  10.0   10.0  10.0  10.0           </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -10.0 -10.0 -10.0  -10.0 -10.0 -10.0           </parameter>
+
+
+</processor>
 
   <processor name="DafFitter" type="EUTelDafFitter">
     <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5  </parameter>
-    <parameter name="DutPlanes" type="IntVec"> 20 21 </parameter>
+    <parameter name="DutPlanes" type="IntVec"> 1 </parameter>
     <parameter name="FitDuts" type="bool" value="false"/>
     <parameter name="MakePlots" type="bool" value="true"/>
-    <parameter name="RequireNTelPlanes" type="float" value="4"/>
+    <parameter name="RequireNTelPlanes" type="float" value="5"/>
     <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
     <parameter name="TrackCollectionName" type="string" lcioInType="Track"> track </parameter>
-    <parameter name="AlignmentCollectionNames"> </parameter>
+    <parameter name="AlignmentCollectionNames"> prealign align </parameter>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
     <parameter name="Ebeam" type="float" value="4"/>
     <parameter name="TelResolutionX" type="float" value="4.3"/>
     <parameter name="TelResolutionY" type="float" value="4.3"/>
-    <parameter name="DutResolutionX" type="float" value="250"/>
-    <parameter name="DutResolutionY" type="float" value="50"/>
+    <parameter name="DutResolutionX" type="float" value="4.3"/>
+    <parameter name="DutResolutionY" type="float" value="4.3"/>
     <parameter name="NominalDxdz" type="float" value="0.0"/>
     <parameter name="NominalDydz" type="float" value="0.0"/>
-    <parameter name="FinderRadius" type="float" value="500" />
+    <parameter name="FinderRadius" type="float" value="100" />
     <parameter name="Chi2Cutoff" type="float" value="50"/>
     <parameter name="MaxChi2OverNdof" type="float" value="8"/>
     <parameter name="NDutHits" type="int" value="1"/>
@@ -273,7 +307,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
  
  
 
-    <processor name="ReverseMillepedeAlignment" type="EUTelApplyAlignmentProcessor" >    
+    <processor name="ReverseMillepedeAlignment2" type="EUTelApplyAlignmentProcessor" >    
        <parameter name="DoAlignCollection" type="bool" value="true"/>
        <parameter name="DoGear" type="bool" value="false"/>
        <parameter name="alignmentCollectionNames" type="vec" >  alignment </parameter>
@@ -281,14 +315,14 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
        <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> fithits_I</parameter>
     </processor>
     
-    <processor name="UndoGearGeometry" type="EUTelApplyAlignmentProcessor" >
+    <processor name="UndoGearGeometry2" type="EUTelApplyAlignmentProcessor" >
        <parameter name="DoAlignCollection" type="bool" value="false"/>
        <parameter name="DoGear" type="bool" value="true"/>
        <parameter name="InputHitCollectionName" type="string"    lcioInType="TrackerHit"> fithits_I </parameter>
        <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> fithits_II</parameter>
    </processor>
   
-    <processor name="ReverseOffsetAlignment" type="EUTelApplyAlignmentProcessor" >
+    <processor name="ReverseOffsetAlignment2" type="EUTelApplyAlignmentProcessor" >
        <parameter name="DoAlignCollection" type="bool" value="true"/>
        <parameter name="DoGear" type="bool" value="false"/>
        <parameter name="alignmentCollectionNames" type="vec" >  preAlignment </parameter>
@@ -401,11 +435,11 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!-- name of output file -->
   <parameter name="LCIOOutputFile" type="string" value="@ResultsFolder@/@Output@-track.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
-  <parameter name="LCIOWriteMode" type="string" value=""/>
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->
   <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
   <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
-  <parameter name="SplitFileSizekB" type="int" value="1000000"/>
+  <!-- parameter name="SplitFileSizekB" type="int" value="1000000"/-->
 </processor>
 
   <group name="TelDUTHisto" >
