@@ -354,7 +354,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
                      << _inputTrackColName
                      << "\nfrom event " << event->getEventNumber()
                      << " in run " << event->getRunNumber()  );
-    throw SkipEventException(this);
+    return;
+//    throw SkipEventException(this);
   }
 
 
@@ -998,10 +999,10 @@ void EUTelDUTHistograms::bookHistos()
 
   // Measured position in X-Y
 
-  measXNBin  = 300;
+  measXNBin  = 150;
   measXMin   = -15.;
   measXMax   =  15.;
-  measYNBin  = 200;
+  measYNBin  = 100;
   measYMin   = -10.;
   measYMax   =  10.;
   string measXYTitle = "Measured particle position in XY";
@@ -1050,9 +1051,9 @@ void EUTelDUTHistograms::bookHistos()
 
   // Fitted position in X
 
-  int    fitXNBin  = 400;
-  double fitXMin   = -5.;
-  double fitXMax   = 5.;
+  int    fitXNBin  = 150;
+  double fitXMin   = -15.;
+  double fitXMax   =  15.;
   string fitXTitle = "Fitted particle position in X";
 
 
@@ -1081,9 +1082,9 @@ void EUTelDUTHistograms::bookHistos()
 
   // Fitted position in Y
 
-  int    fitYNBin  = 400;
-  double fitYMin   = -5.;
-  double fitYMax   = 5.;
+  int    fitYNBin  = 100;
+  double fitYMin   = -10.;
+  double fitYMax   =  10.;
   string fitYTitle = "Fitted particle position in Y";
 
 
@@ -1114,10 +1115,10 @@ void EUTelDUTHistograms::bookHistos()
 
   // Fitted position in X-Y
 
-  fitXNBin  = 300;
+  fitXNBin  = 150;
   fitXMin   = -15.;
   fitXMax   =  15.;
-  fitYNBin  = 200;
+  fitYNBin  = 100;
   fitYMin   = -10.;
   fitYMax   =  10.;
   string fitXYTitle = "Fitted particle position in XY";
@@ -1152,9 +1153,9 @@ void EUTelDUTHistograms::bookHistos()
 
   // Measured - fitted position in X
 
-  int    shiftXNBin  = 1000;
-  double shiftXMin   = -0.5;
-  double shiftXMax   =  0.5;
+  int    shiftXNBin  =  200;
+  double shiftXMin   = -0.1;
+  double shiftXMax   =  0.1;
   string shiftXTitle = "Measured - fitted X position";
 
 
@@ -1193,9 +1194,9 @@ void EUTelDUTHistograms::bookHistos()
 
   // Measured - fitted position in Y
 
-  int    shiftYNBin  = 1000;
-  double shiftYMin   = -0.5;
-  double shiftYMax   =  0.5;
+  int    shiftYNBin  =  200;
+  double shiftYMin   = -0.1;
+  double shiftYMax   =  0.1;
   string shiftYTitle = "Measured - fitted Y position";
 
 
@@ -1234,11 +1235,11 @@ void EUTelDUTHistograms::bookHistos()
 
   // Measured - fitted position in X  vs Y
 
-  shiftXNBin  = 300;
+  shiftXNBin  = 150;
   shiftXMin   = -15.;
   shiftXMax   =  15.;
-  double shiftVMin   = -0.5;
-  double shiftVMax   =  0.5;
+  double shiftVMin   = -1.0;
+  double shiftVMax   =  1.0;
   shiftXTitle = "Measured - fitted X position vs Y";
 
 
@@ -1292,11 +1293,11 @@ void EUTelDUTHistograms::bookHistos()
 
   // Measured - fitted position in Y vs X
 
-  shiftYNBin  = 300;
-  shiftYMin   = -15.;
-  shiftYMax   =  15.;
-  shiftVMin   = -0.5;
-  shiftVMax   =  0.5;
+  shiftYNBin  = 100;
+  shiftYMin   = -10.;
+  shiftYMax   =  10.;
+  shiftVMin   = -1.0;
+  shiftVMax   =  1.0;
   shiftYTitle = "Measured - fitted Y position vs X";
 
 
@@ -1352,12 +1353,12 @@ void EUTelDUTHistograms::bookHistos()
 
   // Measured - fitted position in X  vs Y (2D plot)
 
-  shiftXNBin  = 300;
+  shiftXNBin  = 150;
   shiftXMin   = -15.;
   shiftXMax   =  15.; 
   int shiftVNBin  = 200;
-  shiftVMin   = -0.5;
-  shiftVMax   =  0.5;
+  shiftVMin   = -0.1;
+  shiftVMax   =  0.1;
   shiftXTitle = "Measured - fitted X position vs Y";
 
 
@@ -1418,12 +1419,12 @@ void EUTelDUTHistograms::bookHistos()
 
   // Measured - fitted position in Y vs X  (2D plot)
 
-  shiftYNBin  = 300;
+  shiftYNBin  = 150;
   shiftYMin   = -15.;
   shiftYMax   =  15.;
   shiftVNBin  =  200;
-  shiftVMin   = -0.5;
-  shiftVMax   =  0.5;
+  shiftVMin   = -0.1;
+  shiftVMax   =  0.1;
   shiftYTitle = "Measured - fitted Y position vs X";
 
 
@@ -1480,11 +1481,11 @@ void EUTelDUTHistograms::bookHistos()
   // Measured - fitted position in X-Y
 
   shiftXNBin  =  200;
-  shiftXMin   = -0.5;
-  shiftXMax   =  0.5;
+  shiftXMin   = -0.1;
+  shiftXMax   =  0.1;
   shiftYNBin  = 200;
-  shiftYMin   = -0.5;
-  shiftYMax   =  0.5;
+  shiftYMin   = -0.1;
+  shiftYMax   =  0.1;
   string shiftXYTitle = "Measured - fitted position in XY";
 
 
@@ -1528,7 +1529,7 @@ void EUTelDUTHistograms::bookHistos()
 
   // Efficiency as a function of the fitted position in X
 
-  int    effiXNBin  = 300;
+  int    effiXNBin  = 150;
   double effiXMin   = -15.;
   double effiXMax   =  15.;
   string effiXTitle = "Efficiency vs particle position in X";
@@ -1571,7 +1572,7 @@ void EUTelDUTHistograms::bookHistos()
 
   // Efficiency as a function of the fitted position in Y
 
-  int    effiYNBin  = 300;
+  int    effiYNBin  = 150;
   double effiYMin   = -15.;
   double effiYMax   =  15.; 
   string effiYTitle = "Efficiency vs particle position in Y";
@@ -1612,12 +1613,12 @@ void EUTelDUTHistograms::bookHistos()
 
   // Efficiency as a function of the fitted position in X-Y
 
-  effiXNBin  = 60;
+  effiXNBin  = 30;
   effiXMin   = -15.;
   effiXMax   =  15.;
-  effiYNBin  = 60;
-  effiYMin   = -15.;
-  effiYMax   =  15.;
+  effiYNBin  = 20;
+  effiYMin   = -10.;
+  effiYMax   =  10.;
   string effiXYTitle = "Efficiency vs particle position in XY";
 
 
@@ -1659,7 +1660,7 @@ void EUTelDUTHistograms::bookHistos()
 
   // Noise as a function of the measured position in X
 
-  int    noiseXNBin  = 300;
+  int    noiseXNBin  = 150;
   double noiseXMin   = -15.;
   double noiseXMax   =  15.;
   string noiseXTitle = "Noise fraction vs particle position in X";
@@ -1690,7 +1691,7 @@ void EUTelDUTHistograms::bookHistos()
 
   // Noise as a function of the measured position in Y
 
-  int    noiseYNBin  = 300;
+  int    noiseYNBin  = 150;
   double noiseYMin   = -15.;
   double noiseYMax   =  15.;
   string noiseYTitle = "Noise fraction vs particle position in Y";
@@ -1723,12 +1724,12 @@ void EUTelDUTHistograms::bookHistos()
 
   // Noise as a function of the measured position in X-Y
 
-  noiseXNBin  = 60;
+  noiseXNBin  = 30;
   noiseXMin   = -15.;
   noiseXMax   =  15.;
-  noiseYNBin  = 60;
-  noiseYMin   = -15.;
-  noiseYMax   =  15.;
+  noiseYNBin  = 20;
+  noiseYMin   = -10.;
+  noiseYMax   =  10.;
   string noiseXYTitle = "Noise fraction vs particle position in XY";
 
 
@@ -1761,7 +1762,7 @@ void EUTelDUTHistograms::bookHistos()
 
   // Eta function check: measured - fitted position in X  vs  local X
 
-  int etaXNBin  = 200;
+  int etaXNBin  =  60;
   double etaXMin   = -0.03;
   double etaXMax   = 0.03;
   double etaVMin   = -0.03;
@@ -1795,7 +1796,7 @@ void EUTelDUTHistograms::bookHistos()
 
   // Eta function check: measured - fitted position in Y vs local Y
 
-  int etaYNBin  = 200;
+  int etaYNBin  =  60;
   double etaYMin   = -0.03;
   double etaYMax   = 0.03;
   etaVMin   = -0.03;
@@ -1829,10 +1830,10 @@ void EUTelDUTHistograms::bookHistos()
 
   // Eta function check: measured - fitted position in X  vs local X (2D plot)
 
-  etaXNBin  = 200;
+  etaXNBin  =  60;
   etaXMin   = -0.03;
   etaXMax   = 0.03;
-  int etaVNBin  = 200;
+  int etaVNBin  =  60;
   etaVMin   = -0.03;
   etaVMax   = 0.03;
   etaXTitle = "Measured - fitted X position vs local X";
@@ -1865,10 +1866,10 @@ void EUTelDUTHistograms::bookHistos()
 
   // Measured - fitted position in Y vs Y  (2D plot)
 
-  etaYNBin  = 200;
+  etaYNBin  =  60;
   etaYMin   = -0.03;
   etaYMax   = 0.03;
-  etaVNBin  = 200;
+  etaVNBin  =  60;
   etaVMin   = -0.03;
   etaVMax   = 0.03;
   etaYTitle = "Measured - fitted Y position vs local Y";
@@ -1900,10 +1901,10 @@ void EUTelDUTHistograms::bookHistos()
 
   // Eta function check: measured - fitted position in X  vs  local X-Y ("3D")
 
-  etaXNBin  = 200;
+  etaXNBin  =  60;
   etaXMin   = -0.03;
   etaXMax   = 0.03;
-  etaYNBin  = 200;
+  etaYNBin  =  60;
   etaYMin   = -0.03;
   etaYMax   = 0.03;
   etaVMin   = -0.03;
@@ -1940,10 +1941,10 @@ void EUTelDUTHistograms::bookHistos()
 
   // Eta function check: measured - fitted position in Y vs local X-Y ("3D")
 
-  etaXNBin  = 200;
+  etaXNBin  =  60;
   etaXMin   = -0.03;
   etaXMax   = 0.03;
-  etaYNBin  = 200;
+  etaYNBin  =  60;
   etaYMin   = -0.03;
   etaYMax   = 0.03;
   etaVMin   = -0.03;

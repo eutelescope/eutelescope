@@ -2089,25 +2089,36 @@ void EUTelTestFitter::bookHistos()
     char iden[4];
     sprintf(iden, "%d", _planeID[iz] );
     string bname = (string)"pl" + iden + "_";
-    //Resids 
-    _aidaHistoMap1D[bname + "fitX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "fitX", 1000 , -9., 9.);
-    _aidaHistoMap1D[bname + "fitY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "fitY", 1000 , -9., 9.);
-    _aidaHistoMap1D[bname + "hitX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitX", 1000 , -9., 9.);
-    _aidaHistoMap1D[bname + "hitY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitY", 1000 , -9., 9.);
-    _aidaHistoMap1D[bname + "residualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualX", 1000 , -9., 9.);
-    _aidaHistoMap1D[bname + "residualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualY", 1000 , -9., 9.);
-    //Resids 2D
-    _aidaHistoMap2D[bname + "residualXdX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualXdX", 1000 , -10., 10., 1000 , -1., 1.);
-    _aidaHistoMap2D[bname + "residualYdX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualYdX", 1000 , -10., 10., 1000 , -1., 1.);
-    _aidaHistoMap2D[bname + "residualXdY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualXdY", 1000 , -10., 10., 1000 , -1., 1.);
-    _aidaHistoMap2D[bname + "residualYdY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualYdY", 1000 , -10., 10., 1000 , -1., 1.);
+ 
 
-    _aidaHistoMap2D[bname + "residualdZvsX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualdZvsX",1000 ,-10., 10., 1000 ,-50., 50.);
-    _aidaHistoMap2D[bname + "residualdZvsY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualdZvsY",1000 ,-10., 10., 1000 ,-50., 50.);
-    _aidaHistoMap2D[bname + "residualmeasZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasX",1000 ,0., 1., 1000 ,-10., 10.);
-    _aidaHistoMap2D[bname + "residualmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasY",1000 ,0., 1., 1000 ,-10., 10.);
-    _aidaHistoMap2D[bname + "residualfitZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasX",1000 ,0., 1., 1000 ,-10., 10.);
-    _aidaHistoMap2D[bname + "residualfitZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasY",1000 ,0., 1., 1000 ,-10., 10.);
+    int   limitXN  = 100;
+    int   limitYN  = 100;
+    int   limitZN  = 100;
+    float limitY   = 10.0;
+    float limitX   = 10.0; 
+    float limitYr  = 0.1;
+    float limitXr  = 0.1; 
+    float limitZ   = 50.0; 
+    float limitZr  = 50.0; 
+   //Resids 
+    _aidaHistoMap1D[bname + "fitX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "fitX", limitXN , -limitX, limitX);
+    _aidaHistoMap1D[bname + "fitY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "fitY", limitYN , -limitY, limitY);
+    _aidaHistoMap1D[bname + "hitX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitX", limitXN , -limitX, limitX); 
+    _aidaHistoMap1D[bname + "hitY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitY", limitYN , -limitY, limitY);
+    _aidaHistoMap1D[bname + "residualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualX", limitXN , -limitXr, limitXr);
+    _aidaHistoMap1D[bname + "residualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualY", limitYN , -limitYr, limitYr);
+    //Resids 2D
+    _aidaHistoMap2D[bname + "residualXdX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualXdX", limitXN, -limitX, limitX, limitXN, -limitXr, limitXr);
+    _aidaHistoMap2D[bname + "residualYdX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualYdX", limitXN, -limitX, limitX, limitYN, -limitYr, limitYr);
+    _aidaHistoMap2D[bname + "residualXdY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualXdY", limitYN, -limitY, limitY, limitXN, -limitXr, limitXr);
+    _aidaHistoMap2D[bname + "residualYdY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualYdY", limitYN, -limitY, limitY, limitYN, -limitYr, limitYr);
+
+    _aidaHistoMap2D[bname + "residualdZvsX"]        =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualdZvsX",limitXN, -limitX, limitX, limitZN ,-limitZr, limitZr);
+    _aidaHistoMap2D[bname + "residualdZvsY"]        =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualdZvsY",limitYN, -limitY, limitY, limitZN ,-limitZr, limitZr);
+    _aidaHistoMap2D[bname + "residualmeasZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasX",limitXN , -limitX, limitX, limitZN ,-limitZr, limitZr);
+    _aidaHistoMap2D[bname + "residualmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasY",limitYN , -limitY, limitY, limitZN ,-limitZr, limitZr);
+    _aidaHistoMap2D[bname + "residualfitZvsmeasX"]  =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasX",limitXN , -limitX, limitX, limitZN ,-limitZr, limitZr);
+    _aidaHistoMap2D[bname + "residualfitZvsmeasY"]  =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasY",limitYN , -limitY, limitY, limitZN ,-limitZr, limitZr);
   }
 
   // Chi2 histogram for best tracks in an event - use same binning
@@ -2627,7 +2638,7 @@ void EUTelTestFitter::getFastTrackImpactPoint(double & x, double & y, double & z
     // this is a simplified version of getTrackImpactPoint
     // 
     double pos[3]={x,y,z};
-    int sensorID = guessSensorID( x, y, z );
+    int sensorID = guessSensorID( pos );
 
     //
     // assume no slope for a track
@@ -2980,7 +2991,8 @@ int EUTelTestFitter::guessSensorID( double & x, double & y, double & z)
     // advice the user that the guessing wasn't successful 
     streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
       "Please check the consistency of the data with the GEAR file " << endl;
-    throw SkipEventException(this);
+        
+//    throw SkipEventException(this);
   }
 
   return sensorID;
