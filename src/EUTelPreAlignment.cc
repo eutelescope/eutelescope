@@ -217,31 +217,56 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 
            if( type  == kEUTelAPIXSparsePixel)
            {  
-           auto_ptr<EUTelSparseDataImpl<EUTelAPIXSparsePixel > > apixData(new EUTelSparseDataImpl<EUTelAPIXSparsePixel> ( hotPixelData ));
-           //auto_ptr<EUTelAPIXSparsePixel> apixPixel( new EUTelAPIXSparsePixel );
-	   EUTelAPIXSparsePixel apixPixel;
-           //Push all single Pixels of one plane in the apixPixelVec
-           for ( unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++ ) 
-           {
-              std::vector<int> apixColVec();
-              apixData->getSparsePixelAt( iPixel, &apixPixel);
+             auto_ptr<EUTelSparseDataImpl<EUTelAPIXSparsePixel > > apixData(new EUTelSparseDataImpl<EUTelAPIXSparsePixel> ( hotPixelData ));
+             //auto_ptr<EUTelAPIXSparsePixel> apixPixel( new EUTelAPIXSparsePixel );
+	     EUTelAPIXSparsePixel apixPixel;
+             //Push all single Pixels of one plane in the apixPixelVec
+             for ( unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++ ) 
+             {
+               std::vector<int> apixColVec();
+               apixData->getSparsePixelAt( iPixel, &apixPixel);
+//	        apixPixelVec.push_back(new EUTelAPIXSparsePixel(apixPixel));
+               streamlog_out ( MESSAGE ) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
+               try
+               {
+                  char ix[100];
+                  sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
+                  _hotPixelMap[ix] = true;             
+               }
+               catch(...)
+               {
+                  std::cout << "can not add pixel " << std::endl;
+//                std::cout << sensorID << " " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << std::endl;   
+               }
+             }
+           }
+           else if( type  ==  kEUTelSimpleSparsePixel )
+           {  
+              auto_ptr<EUTelSparseClusterImpl< EUTelSimpleSparsePixel > > m26Data( new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >   ( hotPixelData ) );
+
+              std::vector<EUTelSimpleSparsePixel*> m26PixelVec;
+	      EUTelSimpleSparsePixel m26Pixel;
+  	      //Push all single Pixels of one plane in the m26PixelVec
+
+             for ( unsigned int iPixel = 0; iPixel < m26Data->size(); iPixel++ ) 
+             {
+              std::vector<int> m26ColVec();
+              m26Data->getSparsePixelAt( iPixel, &m26Pixel);
 //	       apixPixelVec.push_back(new EUTelAPIXSparsePixel(apixPixel));
-              streamlog_out ( MESSAGE ) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
+              streamlog_out ( MESSAGE ) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << endl;
               try
               {
                  char ix[100];
-                 sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
+                 sprintf(ix, "%d,%d,%d", sensorID, m26Pixel.getXCoord(), m26Pixel.getYCoord() ); 
                  _hotPixelMap[ix] = true;             
               }
               catch(...)
               {
                  std::cout << "can not add pixel " << std::endl;
-//               std::cout << sensorID << " " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << std::endl;   
+                 std::cout << sensorID << " " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << std::endl;   
               }
-           }
-
-           
-           }
+             }
+           }          
             else
            {
               _UsefullHotPixelCollectionFound = 0;
@@ -363,7 +388,7 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 
 bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit) 
 {
-        bool skipHit = 0;
+        bool skipHit = false;
 //printf("EUTelPreAlign::hitContainsHotPixels \n");
  
         EUTelVirtualCluster * cluster = 0;
@@ -373,7 +398,51 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
             LCObjectVec clusterVector = hit->getRawHits();
 
 
-            if ( hit->getType() == kEUTelBrickedClusterImpl ) {
+            if ( hit->getType() == kEUTelSparseClusterImpl ) 
+            {
+      
+              TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
+ //              cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
+              eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > *cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
+              int sensorID = cluster->getDetectorID();
+ 
+              for ( unsigned int iPixel = 0; iPixel < cluster->size(); iPixel++ ) 
+              {
+                EUTelSimpleSparsePixel m26Pixel;
+                cluster->getSparsePixelAt( iPixel, &m26Pixel);
+                int pixelX, pixelY;
+                pixelX = m26Pixel.getXCoord();
+                pixelY = m26Pixel.getYCoord();
+//                streamlog_out ( MESSAGE ) << iPixel << " of " << cluster->size() << "real Pixel:  " << pixelX << " " << pixelY << " " <<  endl;
+ 
+                try
+                {                       
+                       char ix[100];
+                       sprintf(ix, "%d,%d,%d", sensorID, pixelX, pixelY ); 
+//                       printf("real pixel at %s \n", ix);
+//
+//  std::map< std::string, bool >::iterator iter = _hotPixelMap.begin();
+//  while ( iter != _hotPixelMap.end() ) {
+//    std::cout << "Found hot pixel " << iter->second << " at " << iter->first << std::endl;
+//    ++iter;
+//  }
+   
+//                       std::cout << _hotPixelMap.first() << " " << _hotPixelMap.second() << std::endl; 
+                       std::map<std::string, bool >::const_iterator z = _hotPixelMap.find(ix);
+                       if(z!=_hotPixelMap.end() && _hotPixelMap[ix] == true  )
+                       { 
+                          skipHit = true; 	      
+//                          streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
+//                          printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
+                          return true; // if TRUE  this hit will be skipped
+                       }
+                    } 
+                    catch (...)
+                    {
+//                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
+                    }
+              }
+            } else if ( hit->getType() == kEUTelBrickedClusterImpl ) {
 
                // fixed cluster implementation. Remember it
                //  can come from
