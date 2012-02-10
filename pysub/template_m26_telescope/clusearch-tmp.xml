@@ -26,8 +26,8 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
       <@TELCommentLeft@processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/@TELCommentRight@>
       <@UseHotPixelKillerCommentLeft@processor name="LoadHotPixelDB"/@UseHotPixelKillerCommentRight@>
       <@TELCommentLeft@processor name="Clustering"/@TELCommentRight@>
-      <@TELCommentLeft@processor name="Correlator"/@TELCommentRight@>
-    <processor name="Save"/>
+      <!-- processor name="Correlator"/ -->
+   <processor name="Save"/>
   </execute>
 
   <global>
@@ -160,17 +160,6 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
 </processor>
 
   <processor name="LoadHotPixelDB" type="ConditionsProcessor">
-    <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
-    <!--Initialization of a conditions database handler-->
-    <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
-    <!--Initialization of a conditions db file handler-->
-    <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
-    <!--Initialization string for conditions database-->
-    <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
-    <!--Initialization of a data file handler-->
-    <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
-    <!--Initialization of a simple conditions file handler-->
-    <!-- suppress only the Mimosa26 pixels --> 
     <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26  @DBPath@/run@HotPixelRunNumber@-hotpixel-db.slcio hotpixel_m26 </parameter>
   </processor>
 
@@ -279,6 +268,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--EUTelCorrelator fills histograms with correlation plots-->
     <!--Cluster (pulse) collection name-->
     <parameter name="InputClusterCollections" type="StringVec" > cluster_m26  </parameter>
+    <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26" />
     <!-- -->
     <parameter name="ClusterChargeMinimum" type="int" value="1"/>
     <!-- -->

@@ -19,13 +19,12 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
    <execute>
       <processor name="AIDA"/>
-      <@UseOffsetDBCommentLeft@processor name="LoadOffsetDB"/@UseOffsetDBCommentRight@>
       <processor name="LoadRefHitDB"/>
       <processor name="LoadPreAlignment"/>
       <processor name="ApplyPreAlignment"/>
       <processor name="LoadAlignment"/>
       <processor name="ApplyAlignment"/>
-      <processor name="Correlator"/>
+      <xprocessor name="Correlator"/>
       <!-- processor name="FitterHisto"/ -->
       <!-- processor name="DUTHisto"/ -->
       <!-- processor name="NTuple"/-->
@@ -64,7 +63,6 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   </processor>
 
   <processor name="ApplyPreAlignment" type="EUTelApplyAlignmentProcessor">
-    <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> prealign </parameter>
     <parameter name="alignmentCollectionNames"> prealign </parameter>
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
     <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> alignedPre </parameter>
@@ -78,30 +76,14 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="PrintEvents" type="int" value="0"/>
   </processor>
 
-
  <processor name="LoadAlignment" type="ConditionsProcessor">
- <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
-  <!--Initialization of a conditions database handler-->
-  <!--parameter name="DBCondHandler" type="StringVec"> conditionsName /lccd/myfolder HEAD </parameter-->
-  <!--Initialization of a conditions db file handler-->
-  <!--parameter name="DBFileHandler" type="StringVec"> conditionsName conditions.slcio collectionName </parameter-->
-  <!--Initialization string for conditions database-->
-  <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
-  <!--Initialization of a data file handler-->
-  <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
-  <!--Initialization of a simple conditions file handler-->
   <parameter name="SimpleFileHandler" type="StringVec"> alignment @AlignmentFile@ alignment </parameter>
  </processor>
-
-  <processor name="LoadOffsetDB" type="ConditionsProcessor">
-   <parameter name="DBInit" type="string" value="localhost:lccd_test:calvin:hobbes"/>
-   <parameter name="SimpleFileHandler" type="StringVec"> preAlignment @DBPath@/run@OffsetRunNumber@-offset-db.slcio preAlignment </parameter>
-  </processor>
 
  <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
   <!--Apply to the input hit the alignment corrections-->
   <!--Alignment constant from the condition file-->
-  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignment </parameter>
+  <parameter name="alignmentCollectionNames"> alignment </parameter>
   <!--The name of the input hit collection-->
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> alignedPre </parameter>
   <!--The name of the output hit collection-->
@@ -126,6 +108,10 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <parameter name="alignmentCollectionNames" type="vec" >   alignment </parameter>
   <!--Name of the input TrackerHit collection-->
   <parameter name="InputCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
+ 
+  <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+
   <!--Collection name for corrected particle positions-->
   <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits </parameter>
   <!--Collection name for fitted particle hits (positions)-->
@@ -255,16 +241,14 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   </processor>
 
  <group name="ReverseReconstructedHits" type="EUTelApplyAlignmentProcessor" >
- 	<!-- ------------------------------------ -->
-	<!-- -------- COMMON SETTINGS ----------- ->
-	<!-- ------------------------------------ -->
-
+    <!-- ------------------------------------ -->
+    <!-- -------- COMMON SETTINGS ----------- ->
+    <!-- ------------------------------------ -->
     <!--Apply to the input hit the alignment corrections-->
     <!--Alignment constant from the condition file-->
     <parameter name="CorrectionMethod" type="int" value="1"/>
     <parameter name="ApplyAlignmentDirection" type="int" value="1"/>
  
-
     <processor name="ReverseMillepedeAlignment" type="EUTelApplyAlignmentProcessor" >    
        <parameter name="DoAlignCollection" type="bool" value="true"/>
        <parameter name="DoGear" type="bool" value="false"/>
@@ -289,9 +273,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
        <!-- defined input and output collections -->
        <parameter name="InputHitCollectionName" type="string"       lcioInType="TrackerHit">  alignedHit2 </parameter>
        <parameter name="OutputHitCollectionName" type="string"       lcioOutType="TrackerHit"> alignedHit3 </parameter>
-    </processor>
-
- 
+    </processor> 
  </group>
 
 
@@ -546,7 +528,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <!--Print out every DebugEnevtCount event-->
   <parameter name="DebugEventCount" type="int" value="100"/>
   <!--Maximum allowed distance between fit and matched DUT hit-->
-  <parameter name="DistMax" type="double" value="1.0"/>
+  <parameter name="DistMax" type="double" value="1000.0"/>
   <!--Name of the histogram information file-->
   <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
   <!--Id of telescope layer which should be used as DUT-->
@@ -565,6 +547,8 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
         in particular ID of the sensor to be treated as DUT, use reference plane or not,
 		which plane to be used as DUT.
 	 -->
+  <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+  <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
 
   <processor name="Fitter00" type="EUTelTestFitter">
    <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits0 </parameter>

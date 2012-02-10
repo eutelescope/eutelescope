@@ -222,12 +222,13 @@ The presence of this collection in the event is allowing all the noise based sel
     <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
     <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
     <parameter name="Events"  type="int" value="9999"/>
+    <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26"/>
 
     <!--Residual cuts along both size in microns-->
-    <parameter name="ResidualsXMax" type="FloatVec">  20.  20.  20.    20.  20.0  20.0          </parameter>
-    <parameter name="ResidualsXMin" type="FloatVec"> -20. -20. -20.   -20. -20.0 -20.0          </parameter>
-    <parameter name="ResidualsYMax" type="FloatVec">  20.  20.  20.    20.  20.0  20.0          </parameter>
-    <parameter name="ResidualsYMin" type="FloatVec"> -20. -20. -20.   -20. -20.0 -20.0          </parameter>
+    <parameter name="ResidualsXMax" type="FloatVec">  1.0  1.0  1.0    1.0  1.0  1.0          </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -1.0 -1.0 -1.0   -1.0 -1.0 -1.0          </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  1.0  1.0  1.0    1.0  1.0  1.0          </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -1.0 -1.0 -1.0   -1.0 -1.0 -1.0          </parameter>
 <!--
    <parameter name="ResidualsXMax" type="FloatVec">  0.2  0.2  0.2  20.0  20.0  20.0  -3.0  -0.5 -0.5 -0.5           </parameter>
     <parameter name="ResidualsXMin" type="FloatVec"> -0.2 -0.2 -0.2 -20.0 -20.0 -20.0  -3.5  -1.0 -1.0 -1.0           </parameter>
@@ -248,10 +249,10 @@ The presence of this collection in the event is allowing all the noise based sel
   <parameter name="Events"  type="int" value="9999"/>
 
   <!--Residual cuts along both size in microns-->
-    <parameter name="ResidualsXMax" type="FloatVec">  20.  20.  20.     20.  20.0  20.0          </parameter>
-    <parameter name="ResidualsXMin" type="FloatVec"> -20. -20. -20.    -20. -20.0 -20.0          </parameter>
-    <parameter name="ResidualsYMax" type="FloatVec">  20.  20.  20.     20.  20.0  20.0          </parameter>
-    <parameter name="ResidualsYMin" type="FloatVec"> -20. -20. -20.    -20. -20.0 -20.0          </parameter>
+    <parameter name="ResidualsXMax" type="FloatVec">  1.0  1.0  1.0     1.0  1.0  1.0          </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -1.0 -1.0 -1.0    -1.0 -1.0 -1.0          </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  1.0  1.0  1.0     1.0  1.0  1.0          </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -1.0 -1.0 -1.0    -1.0 -1.0 -1.0          </parameter>
 
  <!--    <parameter name="ResidualsXMax" type="FloatVec">  0.2  0.2  0.2  20.0  20.0  20.0 -3.0  -0.5 -0.5 -0.5           </parameter>
     <parameter name="ResidualsXMin" type="FloatVec"> -0.2 -0.2 -0.2 -20.0 -20.0 -20.0 -3.5  -1.0 -1.0 -1.0           </parameter>
