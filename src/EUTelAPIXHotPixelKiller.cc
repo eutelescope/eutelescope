@@ -356,7 +356,7 @@ void EUTelAPIXHotPixelKiller::processEvent (LCEvent * event)
     
     if ( _iCycle > (unsigned short) _totalNoOfCycle )  return;
 
-    if (_iEvt % 10 == 0)
+    if (_iEvt % 1000 == 0)
         streamlog_out( MESSAGE4 ) << "Processing event "
             << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
             << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
@@ -774,7 +774,7 @@ void EUTelAPIXHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
     }
  
 
-    lcReader->close();
+//    lcReader->close();
 // modify to skip if APPENDing an event 
     lcWriter->writeEvent( event );
     
