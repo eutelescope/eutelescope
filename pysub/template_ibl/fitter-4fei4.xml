@@ -242,7 +242,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="DutPlanes" type="IntVec">22 21  23 20 </parameter>
     <parameter name="FitDuts" type="bool" value="false"/>
     <parameter name="MakePlots" type="bool" value="true"/>
-    <parameter name="RequireNTelPlanes" type="float" value="4"/>
+    <parameter name="RequireNTelPlanes" type="float" value="5"/>
     <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
     <parameter name="TrackCollectionName" type="string" lcioInType="Track"> track </parameter>
     <parameter name="AlignmentCollectionNames">prealign align   </parameter>
@@ -252,7 +252,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="TelResolutionX" type="float" value="4.3"/>
     <parameter name="TelResolutionY" type="float" value="4.3"/>
     <parameter name="DutResolutionX" type="float" value="50" />
-    <parameter name="DutResolutionY" type="float" value="10"/>
+    <parameter name="DutResolutionY" type="float" value="50"/>
     <parameter name="NominalDxdz" type="float" value="0.0"/>
     <parameter name="NominalDydz" type="float" value="0.0"/>
     <parameter name="FinderRadius" type="float" value="700" />
@@ -314,7 +314,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
  
  
 
-    <processor name="ReverseMillepedeAlignment" type="EUTelApplyAlignmentProcessor" >    
+    <processor name="ReverseMillepedeAlignment2" type="EUTelApplyAlignmentProcessor" >    
        <parameter name="DoAlignCollection" type="bool" value="true"/>
        <parameter name="DoGear" type="bool" value="false"/>
        <parameter name="alignmentCollectionNames" type="vec" >  alignment </parameter>
@@ -322,14 +322,14 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
        <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> fithits_I</parameter>
     </processor>
     
-    <processor name="UndoGearGeometry" type="EUTelApplyAlignmentProcessor" >
+    <processor name="UndoGearGeometry2" type="EUTelApplyAlignmentProcessor" >
        <parameter name="DoAlignCollection" type="bool" value="false"/>
        <parameter name="DoGear" type="bool" value="true"/>
        <parameter name="InputHitCollectionName" type="string"    lcioInType="TrackerHit"> fithits_I </parameter>
        <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> fithits_II</parameter>
    </processor>
   
-    <processor name="ReverseOffsetAlignment" type="EUTelApplyAlignmentProcessor" >
+    <processor name="ReverseOffsetAlignment2" type="EUTelApplyAlignmentProcessor" >
        <parameter name="DoAlignCollection" type="bool" value="true"/>
        <parameter name="DoGear" type="bool" value="false"/>
        <parameter name="alignmentCollectionNames" type="vec" >  preAlignment </parameter>
