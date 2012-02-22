@@ -1423,7 +1423,7 @@ void EUTelMille::processEvent (LCEvent * event) {
              
             if( hitContainsHotPixels(hit) )
             {
-              streamlog_out ( WARNING ) << "Hit " << i << " contains hot pixels; skip this one. " << endl;
+//              streamlog_out ( WARNING ) << "Hit " << i << " contains hot pixels; skip this one. " << endl;
               continue;
             }
 
