@@ -157,7 +157,7 @@ void EUTelNativeReader::readDataSource(int numEvents) {
   while ( reader.NextEvent() && (eventCounter < numEvents ) ) {
 
     // inform the user about the reading status
-    if ( eventCounter % 10 == 0 )
+    if ( eventCounter % 1000 == 0 )
       streamlog_out ( MESSAGE4 ) << "Processing event "
                                  << setw(6) << setiosflags( ios::right ) << reader.Event().GetEventNumber() << resetiosflags(ios::right)
                                  << " in run "  << setw(6)
