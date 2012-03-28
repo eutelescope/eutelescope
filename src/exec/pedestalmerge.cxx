@@ -25,6 +25,8 @@
 #include <map>
 
 using namespace std;
+using namespace IMPL;
+
 
 
 int main( int argc, char ** argv ) {
