@@ -25,17 +25,48 @@ using namespace eutelescope;
 
 EUTelDEPFETDetector::EUTelDEPFETDetector() : EUTelPixelDetector()  {
 
+/* For S3B system */
+/*
   _xMin = 0;
   _xMax = 63;
 
   _yMin = 0;
   _yMax = 255;
 
+  _xPitch = 0.024;
+  _yPitch = 0.024;
+
+*/
+
+/* for DCD */
+/*
+  _xMin = 0;
+  _xMax = 127;
+  _yMin = 0;
+  _yMax = 15;
+
+
+*/
+
+/* for DCD matrix */
+/*  _xMin = 0;
+  _xMax = 63;
+  _yMin = 0;
+  _yMax = 31;
+*/
+/* for DCD 4-fold matrix */
+  _xMin = 0;
+  _xMax = 31;
+  _yMin = 0;
+  _yMax = 63;
+
+
+  _xPitch = 0.032;
+  _yPitch = 0.024;
+
 
   _name = "DEPFET";
 
-  _xPitch = 0.024;
-  _yPitch = 0.024;
 
 }
 

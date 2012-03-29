@@ -11,6 +11,7 @@
 #ifndef EUTELSPARSECLUSTERIMPL_TCC
 #define EUTELSPARSECLUSTERIMPL_TCC
 
+using namespace EVENT;
 
 namespace eutelescope {
 
