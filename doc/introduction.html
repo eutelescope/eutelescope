@@ -70,6 +70,10 @@ this builds the library:
 
 <b>Last versions release info:</b>
 
+<b>[queue]</b> Version xxx.
+
+@li Update for the installation documentation. Recommended ilcsoft release v01-12.
+
 <b>[Pro]</b> Version v00-07-00-pre.
 
 @li Major update to the EUTelMille processor. Multiple fixes turned out to be a major rewrite of the Processor. The 3D shift + 3 angle rotation alignment has been validated in the ATLAS IBL testbeams.
@@ -1395,29 +1399,37 @@ switched OFF (set to =0)
     --> 
  
 @section download_ilcinstall Download the ilcinstall scripts            
-Change folder to the global analysis folder and check the ilcinstall scripts (v01-11) 
+Change folder to the global analysis folder and check the ilcinstall scripts (v01-12) 
 
 
 @code
  cd $TB_ANALYSIS
- svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-11  ilcinstall_v01-11
- cd ilcinstall_v01-11
+ svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-12  ilcinstall_v01-12
+ cd ilcinstall_v01-12
 #
-# edit according to your needs:
-#   ./releases/v01-11/release-ilcsoft.cfg
-#   ./releases/v01-11/release-versions.py
+# edit according to your needs [if you know what you are doing]:
+#   ./releases/v01-12/release-ilcsoft.cfg
+#   ./releases/v01-12/release-versions.py
 #
-# or download from here and replace your old files: 
+# Otherwise download the following two files and replace the old ones in the ./releases/v01-12/ subfolder. 
 #
-# you want to install ilcsoft v01-11
+# If you want to install ilcsoft v01-12 with some packages borrowed from the DESY /afs installation:
 # for installation on a machine with a /afs/ (very fast installation):
+# wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-12/release-ilcsoft.cfg 
+# wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-12/release-versions.py 
+#
+# for a laptop installation (or without /afs/desy.de/ mount) use these files as example (!), and the installation takes more time:
+# example from Simon Spannagel:
+# wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-12/release-ilcsoft-standalone.cfg 
+# wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-12/release-versions.py 
+
+# If you want to install the previous v01-11 [should still be OK] use these files:
 # wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-11/release-ilcsoft.cfg 
 # wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-11/release-versions.py 
-
 #
-# for a laptop installation (or without /afs/desy.de/ mount), quite long:
-# wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-11-standalone/release-ilcsoft.cfg 
-# wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-11-standalone/release-versions.py 
+# for a laptop installation (or without /afs/desy.de/ mount) use these files as example (!), and the installation takes more time:
+# wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-11/release-ilcsoft-standalone.cfg 
+# wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-11/release-versions.py 
 #
 #
 @endcode
@@ -1444,8 +1456,6 @@ and for 64-bit machines
 or for 32-bit machines
 @li ilcsoft.module("Eutelescope").env['MILLEPEDEII_VERSION']='tags/V03-00-02'
 
-
-
 you might want to make the installation time shorter by turning the doxygen documentation build OFF:
 @li ilcsoft.envcmake["INSTALL_DOC"]="OFF"
 
@@ -1454,17 +1464,19 @@ Check if the installation looks concistent from the script/environment
 viewpoint:
  
 @code
- ilcsoft-install ./releases/v01-11/release-ilcsoft.cfg
+ ilcsoft-install ./releases/v01-12/release-ilcsoft.cfg
 @endcode
  
 Read carefully the output screen. If no apparent problem is detected, run:
      
 @code
- ilcsoft-install ./releases/v01-11/release-ilcsoft.cfg  -i
+ ilcsoft-install ./releases/v01-12/release-ilcsoft.cfg  -i
 @endcode
 
 Depending one your hardware/OS performance the installation can last for about
 half an hour.
+
+IF the ILCINSTALL script crashes due to the error "svn:Repository moved permanently to http://eudaq.hepforge.org/svn/trunk/; please relocate" you must edit the eutelescope.py file in your ilcinstall_v01-12/ilcsoft/ folder. Changing http://svn.hepforge.org/eudaq/trunk/ to http://eudaq.hepforge.org/svn/trunk/ is the right thing to do. Just restart the installation afterwards (dont' forget the '-i' switch).
 
 @section setenv_eutelescope Set EUTelescope environment
 
