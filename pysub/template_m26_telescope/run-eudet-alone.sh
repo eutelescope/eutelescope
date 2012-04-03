@@ -12,13 +12,13 @@
 
 run1=2016 
 run2=2016  
-config="config-desy2012-02-anemone.cfg"
+config="config-temp.cfg"
 
 for run in $(seq $run1 $run2)
 do
-  echo "./submit-converter.py --config=config/"$config"  --hot "$run" "$run
-  echo "./submit-clusearch.py --config=config/"$config"  --hot "$run" "$run
-  echo "./submit-hitmaker.py  --config=config/"$config"  -o "$run"  run0"$run"-clu-p.slcio "
-  echo "./submit-align.py     --config=config/"$config"  -o "$run" -f \"0\" -e \"\" -iPreAlignedHit  "$run"-hit.slcio "
-  echo "./submit-fitter.py    --config=config/"$config"   -o "$run" -a "$run"-align-db.slcio "$run"-hit.slcio "
+  echo "./submit-converter.py --config=temp/"$config"  --hot "$run" "$run
+  echo "./submit-clusearch.py --config=temp/"$config"  --hot "$run" "$run
+  echo "./submit-hitmaker.py  --config=temp/"$config"  -o "$run"  run0"$run"-clu-p.slcio "
+  echo "./submit-align.py     --config=temp/"$config"  -o "$run" -f \"0\" -e \"\" -iPreAlignedHit  "$run"-hit.slcio "
+  echo "./submit-fitter.py    --config=temp/"$config"   -o "$run" -a "$run"-align-db.slcio "$run"-hit.slcio "
 done
