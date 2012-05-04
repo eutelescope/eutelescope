@@ -807,11 +807,11 @@ void EUTelMille::findtracks2(
 
               // ACTIVE
               // stop on the last non-zero hit
-              for(int ivec=0; ivec<=e; ivec++)
+//              for(int ivec=0; ivec<=e; ivec++)
 
               // now loop through all hits on a track candidate "vec"
               // start at the end, stop on the first non-zero hit
-//              for(int ivec=e; ivec>=e; --ivec)                       <-> OFF
+              for(int ivec=e; ivec>=e; --ivec)                  //     <-> OFF
               {
                 if(vec[ivec]>=0) // non zero hit has id vec[ivec]>=0 {otherwise -1}
                 {
@@ -899,11 +899,11 @@ void EUTelMille::findtracks2(
 
               // ACTIVE:
               // stop on the last non-zero hit
-              for(int ivec=0; ivec<=e; ivec++)
+//              for(int ivec=0; ivec<=e; ivec++)
 
               // now loop through all hits on a track candidate "vec"
               // start at the end, stop on the first non-zero hit
-//              for(int ivec=e; ivec>=e; --ivec)                           <-> OFF
+              for(int ivec=e; ivec>=e; --ivec)                        //   <-> OFF
               {
                 if(vec[ivec]>=0) // non zero hit has id vec[ivec]>=0 {otherwise -1}
                 {
