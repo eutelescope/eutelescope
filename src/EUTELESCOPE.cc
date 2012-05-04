@@ -73,11 +73,11 @@ const char *   EUTELESCOPE::DIGITAL             = "Digital";
 const char *   EUTELESCOPE::BINARY              = "Binary";
 const char *   EUTELESCOPE::FLAGONLY            = "FlagOnly";
 const char *   EUTELESCOPE::MATRIXDEFAULTENCODING    = "sensorID:5,xMin:12,xMax:12,yMin:12,yMax:12";
-const char *   EUTELESCOPE::CLUSTERDEFAULTENCODING   = "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,quality:5";
-const char *   EUTELESCOPE::PULSEDEFAULTENCODING     = "sensorID:5,clusterID:8,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,type:5";
+const char *   EUTELESCOPE::CLUSTERDEFAULTENCODING   = "sensorID:5,clusterID:12,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,quality:5";
+const char *   EUTELESCOPE::PULSEDEFAULTENCODING     = "sensorID:5,clusterID:12,xSeed:12,ySeed:12,xCluSize:5,yCluSize:5,type:5";
 const char *   EUTELESCOPE::ZSDATADEFAULTENCODING    = "sensorID:5,sparsePixelType:5";
-const char *   EUTELESCOPE::ZSCLUSTERDEFAULTENCODING = "sensorID:5,clusterID:8,sparsePixelType:5,quality:5";
-const char *   EUTELESCOPE::ZSAPIXCLUSTERENCODING    = "sensorID:5,clusterID:8,sparsePixelType:5,type:6";
+const char *   EUTELESCOPE::ZSCLUSTERDEFAULTENCODING = "sensorID:5,clusterID:12,sparsePixelType:5,quality:5";
+const char *   EUTELESCOPE::ZSAPIXCLUSTERENCODING    = "sensorID:5,clusterID:12,sparsePixelType:5,type:6";
 const char *   EUTELESCOPE::FIXEDWEIGHT              = "FixedWeight";
 
 
