@@ -93,6 +93,9 @@ std::string EUTelClusteringProcessor::_cluster_vs_seedSNRHistoName = "cluster_vs
 std::string EUTelClusteringProcessor::_eventMultiplicityHistoName  = "eventMultiplicity";
 #endif
 
+static const int  MAXCLUSTERSIZE = 4096;
+
+
 EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteringProcessor") {
 
   // modify processor description
@@ -223,7 +226,7 @@ void EUTelClusteringProcessor::init() {
   // this method is called only once even when the rewind is active
   // usually a good idea to
 
-    printParameters ();
+  printParameters ();
 
   // in the case the FIXEDFRAME algorithm is selected, the check if
   // the _ffXClusterSize and the _ffYClusterSize are odd numbers
@@ -1303,12 +1306,10 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                                 if(pixelmatrix.at(xPixel,yPixel))
                                 {
                                     clusterCandidateCharges.push_back(1.0);
-//                                    printf("1");
                                 }
                                 else
                                 {
                                     clusterCandidateCharges.push_back(0.0);
-//                                    printf("0");
                                 }
                             }
 //                            printf("\n");
@@ -1344,7 +1345,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                         idPulseEncoder["type"]          = static_cast<int>(kEUTelDFFClusterImpl);
                         idPulseEncoder.setCellID(pulse);
 
-                        TrackerDataImpl * cluster = new TrackerDataImpl;
+                       TrackerDataImpl * cluster = new TrackerDataImpl;
                         CellIDEncoder<TrackerDataImpl> idClusterEncoder(EUTELESCOPE::CLUSTERDEFAULTENCODING, sparseClusterCollectionVec);
                         idClusterEncoder["sensorID"]      = _sensorID;
                         idClusterEncoder["clusterID"]     = clusterID;
@@ -1404,12 +1405,12 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                         // increment the cluster counters
                         _totClusterMap[ sensorID ] += 1;
                         ++clusterID;
-                        if ( clusterID >= 256 ) {
+                        if ( clusterID >= MAXCLUSTERSIZE ) {
                             ++limitExceed;
                             --clusterID;
                             streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
                                 << " on detector " << _sensorID
-                                << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
+                                << " contains more than " << MAXCLUSTERSIZE << " cluster (" << clusterID + limitExceed << ")" << endl;
                             
                         } 
                     }
@@ -1702,12 +1703,12 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
             // increment the cluster counters
             _totClusterMap[ sensorID ] += 1;
             ++clusterID;
-            if ( clusterID >= 256 ) {
+            if ( clusterID >= MAXCLUSTERSIZE ) {
               ++limitExceed;
               --clusterID;
               streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
                                          << " on detector " << sensorID
-                                         << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
+                                         << " contains more than " << MAXCLUSTERSIZE << " cluster (" << clusterID + limitExceed << ")" << endl;
             }
           }
         }
@@ -2106,13 +2107,13 @@ void EUTelClusteringProcessor::zsBrickedClustering(LCEvent * evt, LCCollectionVe
                       // increment the cluster counters
                       _totClusterMap[ sensorID ] += 1;
                       ++clusterID;
-                      if ( clusterID >= 256 )
+                      if ( clusterID >= MAXCLUSTERSIZE )
                         {
                           ++limitExceed;
                           --clusterID;
                           streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
                                                      << " on detector " << sensorID
-                                                     << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
+                                                     << " contains more than " << MAXCLUSTERSIZE << " cluster (" << clusterID + limitExceed << ")" << endl;
                         }
                     } //END: if ( brickedClusterCandidate->getClusterSNR() > _ffClusterCut )
                   else
@@ -2342,12 +2343,12 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
           // last but not least increment the clusterID
           _totClusterMap[ sensorID ] += 1;
           ++clusterID;
-          if ( clusterID > 256 ) {
+          if ( clusterID > MAXCLUSTERSIZE ) {
             --clusterID;
             ++limitExceed;
             streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
                                        << " on detector " << sensorID
-                                       << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
+                                       << " contains more than " << MAXCLUSTERSIZE << " cluster (" << clusterID + limitExceed << ")" << endl;
           }
 
         } else {
@@ -2449,7 +2450,8 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
             foundexcludedsensor = true;
         }
     }
-    
+   
+ 
     if(foundexcludedsensor)       continue;
  
     // now that we know which is the sensorID, we can ask to GEAR
@@ -2506,8 +2508,6 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
       // check if the pixel coordinate is valid otherwise skip
       
  
-            
-
       // now loop over all the lists
       list<list< unsigned int> >::iterator listOfListIter = listOfList.begin();
 
@@ -2592,6 +2592,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
                 ) 
         {
 
+
           // ok good cluster....
           // set the ID for this zsCluster
           idZSClusterEncoder["sensorID"]  = sensorID;
@@ -2608,8 +2609,9 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
           float xCoG,yCoG;
           sparseCluster->getSeedCoord(xSeed, ySeed);
           sparseCluster->getCenterOfGravity(xCoG, yCoG);
-          
+
           sparseCluster->getClusterSize(xSize, ySize);
+
 
           auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
           idZSPulseEncoder["sensorID"]  = sensorID;
@@ -2630,12 +2632,12 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
           // last but not least increment the clusterID
           _totClusterMap[ sensorID ] += 1;
           ++clusterID;
-          if ( clusterID > 256 ) {
+          if ( clusterID > MAXCLUSTERSIZE ) {
             --clusterID;
             ++limitExceed;
             streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
                                        << " on detector " << sensorID
-                                       << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
+                                       << " contains more than " << MAXCLUSTERSIZE << " cluster (" << clusterID + limitExceed << ")" << endl;
           }
 
  
@@ -2661,7 +2663,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
     }
 
 
- 
+
   } // this is the end of the loop over all ZS detectors
 
   // if the sparseClusterCollectionVec isn't empty add it to the
@@ -2964,12 +2966,12 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
             // increment the cluster counters
             _totClusterMap[ sensorID ] += 1;
             ++clusterCounter;
-            if ( clusterCounter > 256 ) {
+            if ( clusterCounter > MAXCLUSTERSIZE ) {
               ++limitExceed;
               --clusterCounter;
               streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
                                          << " on detector " << sensorID
-                                         << " contains more than 256 cluster (" << clusterCounter + limitExceed << ")" << endl;
+                                         << " contains more than " << MAXCLUSTERSIZE << " cluster (" << clusterCounter + limitExceed << ")" << endl;
             }
           } else {
             // the cluster has not passed the cut!
@@ -3350,13 +3352,13 @@ void EUTelClusteringProcessor::nzsBrickedClustering(LCEvent * evt, LCCollectionV
                       // increment the cluster counters
                       _totClusterMap[ sensorID ] += 1;
                       ++clusterID;
-                      if ( clusterID >= 256 )
+                      if ( clusterID >= MAXCLUSTERSIZE )
                         {
                           ++limitExceed;
                           --clusterID;
                           streamlog_out ( WARNING2 ) << "Event " << evt->getEventNumber() << " in run " << evt->getRunNumber()
                                                      << " on detector " << sensorID
-                                                     << " contains more than 256 cluster (" << clusterID + limitExceed << ")" << endl;
+                                                     << " contains more than " << MAXCLUSTERSIZE << " cluster (" << clusterID + limitExceed << ")" << endl;
                         }
                     } //END: if ( brickedClusterCandidate->getClusterSNR() > _ffClusterCut )
                   else
