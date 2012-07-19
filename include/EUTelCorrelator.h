@@ -145,11 +145,18 @@ namespace eutelescope {
      */
     virtual void  FillHotPixelMap(LCEvent *event);
 
-
+    //! check whether the hit given as argument contains at least one hit which belongs to the hot pixel map 
     virtual bool hitContainsHotPixels( TrackerHitImpl   * hit) ;
+
+    //! internal functtion: return the ID of a plane selected as a reference plane for correlation plots
+
+    virtual int getFixedPlaneID(){return _fixedPlaneID;} 
 
 
   protected:
+
+    //! set the plane you would like to use as a reference/strating point for correlation plots
+    int _fixedPlaneID;
 
     //! Input cluster collection name
     /*! This is the name of the collection containing the input clusters

@@ -126,6 +126,8 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
                               "How many events are needed to get reasonable correlation plots (and Offset DB)? (default=1000)",
                               _events, static_cast <int> (1000) );
 
+  registerOptionalParameter ("FixedPlane", "SensorID of fixed plane", _fixedPlaneID, 0);
+
   registerOptionalParameter("OffsetDBFile","This is the name of the LCIO file name with the output offset db (add .slcio)",
                               _offsetDBFile, static_cast< string > ( "offset-db.slcio" ) );
 
@@ -230,17 +232,21 @@ void EUTelCorrelator::init() {
             _sensors_to_the_left++;
         }
     }
+ 
+    _sensorIDVecZOrder.push_back( _sensors_to_the_left );
+    _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
+ 
     streamlog_out (MESSAGE4) << " ";
-    printf("iPlane %-3d sensor_#_along_Z_axis %-3d [z= %-9.3f ] [sensorID %-3d ]  rot:[%5.f %5.2f %5.2f %5.2f]\n", iPlane, _sensors_to_the_left, _siPlaneZPosition[ iPlane ], sensorID,            
+    printf("iPlane %-3d sensor_#_along_Z_axis %-3d [z= %-9.3f ] [sensorID %-3d ]  rot:[%5.f %5.2f %5.2f %5.2f] - check sensorIDtoZOrderMap = %-3d \n", iPlane, _sensors_to_the_left, _siPlaneZPosition[ iPlane ], sensorID,            
              _siPlanesRotations[iPlane][1],
              _siPlanesRotations[iPlane][2],
              _siPlanesRotations[iPlane][3],
-             _siPlanesRotations[iPlane][4]
+             _siPlanesRotations[iPlane][4],
+
+             _sensorIDtoZOrderMap[sensorID]
              ); 
     streamlog_out (MESSAGE4) << endl;
 
-    _sensorIDVecZOrder.push_back( _sensors_to_the_left );
-    _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
 
     _minX[ sensorID ] = 0;
     _minY[ sensorID ] = 0;
@@ -272,7 +278,7 @@ void EUTelCorrelator::init() {
     {
         _maxX[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelX( iPlane ) - 1;
         _maxY[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelY( iPlane ) - 1;        
-//        printf("sensorID %5d maxX %5d maxY %5d \n", sensorID, _maxX[sensorID], _maxY[sensorID]);
+        printf("sensorID %5d maxX %5d maxY %5d \n", sensorID, _maxX[sensorID], _maxY[sensorID]);
         _hitMinX[ sensorID ] =  _siPlanesLayerLayout->getSensitivePositionX( iPlane ) - 0.5*_siPlanesLayerLayout->getSensitiveSizeX ( iPlane ) ;
         _hitMaxX[ sensorID ] =  _siPlanesLayerLayout->getSensitivePositionX( iPlane ) + 0.5*_siPlanesLayerLayout->getSensitiveSizeX ( iPlane ) ;
         _hitMinY[ sensorID ] =  _siPlanesLayerLayout->getSensitivePositionY( iPlane ) - 0.5*_siPlanesLayerLayout->getSensitiveSizeY ( iPlane ) ;
@@ -610,7 +616,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
 
           if ( 
-                  (_sensorIDtoZOrderMap[internalSensorID] != 0 && _sensorIDtoZOrderMap[externalSensorID] == 0)
+// optional       (_sensorIDtoZOrderMap[internalSensorID] != 0 && _sensorIDtoZOrderMap[externalSensorID] == 0)
+                  ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
                   ||
                   (_sensorIDtoZOrderMap[internalSensorID] ==  _sensorIDtoZOrderMap[externalSensorID] + 1 )
                   ) 
@@ -629,7 +636,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             // we input the coordinates in the correlation matrix, one
             // for each type of coordinate: X and Y
 
-            // assum simpliest +1 and -1 only :
+            // assume simpliest +1 and -1 only :
             int inPlaneGear = _sensorIDVecMap[internalSensorID];
             int exPlaneGear = _sensorIDVecMap[externalSensorID];
 
@@ -742,7 +749,8 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           }
 
           if ( 
-                  _sensorIDtoZOrderMap[internalSensorID] != 0 && _sensorIDtoZOrderMap[externalSensorID] == 0 
+// optional       (_sensorIDtoZOrderMap[internalSensorID] != 0 && _sensorIDtoZOrderMap[externalSensorID] == 0)
+                  ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
                    ||
                   _sensorIDtoZOrderMap[internalSensorID] ==  _sensorIDtoZOrderMap[externalSensorID] +1 
                   ) 
@@ -808,7 +816,7 @@ if( iplane_unique.size()> _minNumberOfCorrelatedHits &&  trackX.size()==trackY.s
 // if( trackX.size()> _minNumberOfCorrelatedHits &&  trackX.size()==trackY.size())
 {
 //continue;
-      for(int i=1;i< trackX.size();i++)
+      for(int i=0;i< trackX.size();i++)
       {
 //        printf("s_%2d=[%2d %4.1f %4.1f]",i, iplane[i],  trackX[i], trackY[i]);       
             _hitXCorrelationMatrix[ iplane[0]        ] [ iplane[i]        ] -> fill ( trackX[0]          , trackX[i]           ) ;
@@ -867,9 +875,10 @@ void EUTelCorrelator::end() {
                 int exPlane = _siPlanesLayerLayout->getID( iex );
 
                 if(
-                  !(_sensorIDtoZOrderMap[inPlane] != 0 &&   _sensorIDtoZOrderMap[exPlane] == 0)
+                    !( inPlane != getFixedPlaneID() && exPlane == getFixedPlaneID() )
+//                  !(_sensorIDtoZOrderMap[inPlane] != 0 &&   _sensorIDtoZOrderMap[exPlane] == 0)
                   )continue;
- 
+
                 if( _clusterXCorrShiftMatrix[ exPlane ][ inPlane ] == 0 ) continue;
                 if( _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins() <= 0 ) continue;
 
@@ -994,9 +1003,10 @@ void EUTelCorrelator::end() {
                 if( _hitXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins() <= 0 ) continue;
 
                 if(
-                  !(_sensorIDtoZOrderMap[inPlane] != 0 &&   _sensorIDtoZOrderMap[exPlane] == 0)
+                    !( inPlane != getFixedPlaneID() && exPlane == getFixedPlaneID() )
+//                  !(_sensorIDtoZOrderMap[inPlane] != 0 &&   _sensorIDtoZOrderMap[exPlane] == 0)
                   )continue;
-                
+
 //                printf(" inPlane %5d exPlane %5d \n", inPlane, exPlane);
                 float _heighestBinX = 0.;
                 for(int ibin = 0; ibin < _hitXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins(); ibin++)
@@ -1229,11 +1239,13 @@ void EUTelCorrelator::bookHistos() {
  
         int col = _sensorIDVec.at( c );
 
-          if ( 
-                  (_sensorIDtoZOrderMap[ col ] != 0 && _sensorIDtoZOrderMap[ row ] == 0 )
+         if ( 
+// optional       (_sensorIDtoZOrderMap[internalSensorID] != 0 && _sensorIDtoZOrderMap[externalSensorID] == 0)
+                  ( col != getFixedPlaneID() && row == getFixedPlaneID() )
                   ||
-                  ( _sensorIDtoZOrderMap[ col ] == _sensorIDtoZOrderMap[ row ] +1  )
-                  ) {
+                  (_sensorIDtoZOrderMap[ col ] ==  _sensorIDtoZOrderMap[ row ] + 1 )
+                  ) 
+          {
 
 
           //we create histograms for X and Y Cluster correlation
@@ -1540,7 +1552,7 @@ if(rowNBin>100) rowNBin=rowNBin/4;
 
 
 
-            int refRow =  0; // reference row id
+            int refRow =  getFixedPlaneID() ; // reference row id
             xBin       = _maxX[refRow] + _maxX[ refRow ] ;    
             xMin = safetyFactor * ( _hitMinX[refRow] - _hitMaxX[refRow]);
             xMax = safetyFactor * ( _hitMaxX[refRow] - _hitMinX[refRow]);
@@ -1594,7 +1606,7 @@ if(yBin>100) yBin=yBin/4;
             double rowMax  = 0.;
             int    rowNBin = 0 ;
 
-            int refRow =  0;
+            int refRow =   getFixedPlaneID();
             rowNBin        = _maxX[refRow] + _maxX[refRow] ;
     
             rowMin = safetyFactor * ( _hitMinX[refRow] - _hitMaxX[refRow]);
