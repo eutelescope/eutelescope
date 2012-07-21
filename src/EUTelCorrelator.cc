@@ -816,7 +816,7 @@ if( iplane_unique.size()> _minNumberOfCorrelatedHits &&  trackX.size()==trackY.s
 // if( trackX.size()> _minNumberOfCorrelatedHits &&  trackX.size()==trackY.size())
 {
 //continue;
-      for(int i=0;i< trackX.size();i++)
+      for(int i=1;i< trackX.size();i++)
       {
 //        printf("s_%2d=[%2d %4.1f %4.1f]",i, iplane[i],  trackX[i], trackY[i]);       
             _hitXCorrelationMatrix[ iplane[0]        ] [ iplane[i]        ] -> fill ( trackX[0]          , trackX[i]           ) ;
