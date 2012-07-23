@@ -102,6 +102,8 @@ void EUTelPreAlign::init () {
 
   _UsefullHotPixelCollectionFound = 0; 
 
+  _referenceHitVec = 0;
+
   // clear the sensor ID vector
   _sensorIDVec.clear();
 
@@ -287,7 +289,7 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
        catch(...)
        {
          _referenceHitVec = 0;
-         _applyToReferenceHitCollection = 0;
+         _applyToReferenceHitCollection = false;
        }
     }
   }
@@ -323,8 +325,8 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
     for (size_t ref = 0; ref < inputCollectionVec->size(); ref++) {
       TrackerHitImpl   * refHit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( ref ) ) ;
       const double * refPos = refHit->getPosition();
-//      if( std::fabs(refPos[2] - _fixedZ) > 30.0) { continue; }
-      if( guessSensorID(refPos) != _fixedID ) { continue; }
+      // identify fixed plane
+      if( guessSensorID(refPos) != _fixedID ) continue;
       hitX.clear();
       hitY.clear();
       prealign.clear();
@@ -334,15 +336,12 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 	if( hitContainsHotPixels(hit) ) continue;
 
         const double * pos = hit->getPosition();
-        int iHitID = guessSensorID(pos); 
-
-//	if( std::fabs(pos[2] - _fixedZ) < 30.0) { continue; }
-        if( iHitID == _fixedID ) { continue; }
+        int iHitID = guessSensorID(pos);  
+        if( iHitID == _fixedID ) continue;
         bool gotIt(false);
 	for(size_t ii = 0; ii < _preAligners.size(); ii++)
         {
 	  PreAligner& pa = _preAligners.at(ii);
-//	  if( std::fabs(pa.getZPos() - pos[2]) > 30.  ) { continue; }
           if( pa.getIden() != iHitID  ) { continue; }
 	  gotIt = true;
 
@@ -359,7 +358,6 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
           hitY.push_back( correlationY );
           prealign.push_back(&pa);
        }
-//printf("%5d %5d [%5d] %p %5d \n", iHit, ii, _preAligners.size(), pa.current(), pa.getIden()); //, pa.getPeakX(), pa.getPeakY() );
 	  break;
 	}
 	if(not gotIt) {
@@ -370,10 +368,7 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
       {
          for( int ii=0;ii<prealign.size();ii++)
          {  
-//            printf(" sensor[%2d] %5d  %8.3f %8.3f  %p %p \n", prealign[ii]->getIden(), ii, hitX[ii], hitY[ii], _hitXCorr[ii], _hitYCorr[ii]  );
             prealign[ii]->addPoint( hitX[ii], hitY[ii] );
-//            (dynamic_cast<AIDA::IHistogram1D*> (_hitXCorr[ii]))->fill( hitX[ii] );
-//            (dynamic_cast<AIDA::IHistogram1D*> (_hitYCorr[ii]))->fill( hitY[ii] );
          } 
       }
     }
@@ -389,7 +384,6 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit) 
 {
         bool skipHit = false;
-//printf("EUTelPreAlign::hitContainsHotPixels \n");
  
         EUTelVirtualCluster * cluster = 0;
 
@@ -434,6 +428,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
                           skipHit = true; 	      
 //                          streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
 //                          printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
+                          delete cluster;                        			  
                           return true; // if TRUE  this hit will be skipped
                        }
                     } 
@@ -544,41 +539,42 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
           return 0;
        }
 
-//       if(cluster != 0) delete cluster; 
+       if(cluster) delete cluster; 
  
        // if none of the above worked return FALSE, meaning do not skip this hit
        return 0;
 
 }
-/*
-int EUTelPreAlign::guessSensorID( TrackerHitImpl * hit ) {
-  if(hit==0)
-{
-    streamlog_out( ERROR ) << "An invalid hit pointer supplied! will exit now\n" << endl;
-    return -1;
-}
-// return hit->getDetectorID() ;
-return 0;
-}
-*/
+
+
 int EUTelPreAlign::guessSensorID(const double * hit ) 
 {
 
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
-//  double * hitPosition = const_cast<double * > (hit->getPosition());
 
-//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
-  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == 0 )
+  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false )
   {
-//    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
-    return 0;
+    // use z information of planes instead of reference vector
+    for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
+      double distance = std::abs( hit[2] - _siPlaneZPosition[ iPlane ] );
+      if ( distance < minDistance ) {
+	minDistance = distance;
+	sensorID = _siPlanesLayerLayout->getID( iPlane );
+      }
+    }
+    if ( minDistance > 30  ) {
+      // advice the user that the guessing wasn't successful 
+      streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
+	"Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hit[2] <<       endl;
+    }
+    
+    return sensorID;
   }
 
       for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-//        printf(" _referenceHitVec %p refhit %p \n", _referenceHitVec, refhit);
         
         TVector3 hit3d( hit[0], hit[1], hit[2] );
         TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
@@ -625,11 +621,6 @@ void EUTelPreAlign::end() {
 
   LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
   for(size_t ii = 0 ; ii < _preAligners.size(); ii++){
-  printf("ii %5d %5d \n", ii, _preAligners.size()  );
-  printf("id %5d              \n", _preAligners.at(ii).getIden() );
-  printf("id %5d %8.3f        \n", _preAligners.at(ii).getIden(), _preAligners.at(ii).getPeakX()  );
-  printf("id %5d %8.3f %8.3f  \n", _preAligners.at(ii).getIden(), _preAligners.at(ii).getPeakX(), _preAligners.at(ii).getPeakY() );
-
 
 
   EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();

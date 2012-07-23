@@ -165,6 +165,7 @@ void EUTelCorrelator::init() {
   _sensorIDVecMap.clear();
   _sensorIDtoZOrderMap.clear();
 
+  _referenceHitVec = 0;
 
   // clear the sensor ID vector (z-axis order)
   _sensorIDVecZOrder.clear();
@@ -1651,42 +1652,28 @@ if(rowNBin>100) rowNBin=rowNBin/4;
 #endif
 }
 
-/*
-int EUTelCorrelator::guessSensorID( TrackerHitImpl * hit ) {
-
-  int sensorID = -1;
-  double minDistance =  numeric_limits< double >::max() ;
-  double * hitPosition = const_cast<double * > (hit->getPosition());
-
-  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
-    double distance = std::abs( hitPosition[2] - _siPlaneZPosition[ iPlane ] );
-    if ( distance < minDistance ) {
-      minDistance = distance;
-      sensorID = _siPlanesLayerLayout->getID( iPlane );
-    }
-  }
-  if ( minDistance > 30  ) {
-    // advice the user that the guessing wasn't successful 
-    streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-      "Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hitPosition[2] <<       endl;
-  }
-
-  return sensorID;
-}
-*/
-
 int EUTelCorrelator::guessSensorID(const double * hit ) 
 {
 
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
-//  double * hitPosition = const_cast<double * > (hit->getPosition());
 
-//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
-  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == 0 )
-  {
-//    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
-    return 0;
+  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false ){
+    // use z information of planes instead of reference vector
+    for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
+      double distance = std::abs( hit[2] - _siPlaneZPosition[ iPlane ] );
+      if ( distance < minDistance ) {
+	minDistance = distance;
+	sensorID = _siPlanesLayerLayout->getID( iPlane );
+      }
+    }
+    if ( minDistance > 30  ) {
+      // advice the user that the guessing wasn't successful 
+      streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
+	"Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hit[2] <<       endl;
+    }
+    
+    return sensorID;
   }
 
       for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
