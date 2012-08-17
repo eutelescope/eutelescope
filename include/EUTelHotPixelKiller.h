@@ -140,6 +140,8 @@ namespace eutelescope {
 
   protected:
 
+    std::string _lcioWriteMode ; 
+
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     //! Histogram with the firing frequency 2D distribution
