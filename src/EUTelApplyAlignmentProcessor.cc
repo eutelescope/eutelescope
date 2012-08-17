@@ -1,4 +1,3 @@
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Authors
 // Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Joerg Behr, Hamburg Uni/DESY  <joerg.behr@desy.de> 
@@ -232,7 +231,7 @@ void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader) {
   std::string runNr_str(buf);
 
   message<MESSAGE> ( log() << "Processing run header " << _nRun
-                     << ", run nr " << runNr );
+                     << ", run number " << runNr );
 
   const std::string detectorName = runHeader->getDetectorName();
   const std::string detectorDescription = runHeader->getDescription();
@@ -245,7 +244,7 @@ void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader) {
 	for (unsigned i = 0; i < _alignmentCollectionSuffixes.size(); i++) {
 		std::string	temp = _alignmentCollectionSuffixes[i];
 		_alignmentCollectionNames.push_back(temp);
-		cout << _alignmentCollectionNames[i] << endl;
+		//cout << _alignmentCollectionNames[i] << endl;
 	}
 
 }
@@ -262,9 +261,9 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
     {    
  
         if ( fevent )
-            streamlog_out ( MESSAGE4 ) << "Processing run  "  
+            streamlog_out ( MESSAGE4 ) << "Processing run "  
                 << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
-                << " Number of defined alignment collection is  " << _alignmentCollectionNames.size()
+                << ". Number of the defined alignment collection is " << _alignmentCollectionNames.size()
                 << endl;
         
         if ( fevent && _applyToReferenceHitCollection ) 
@@ -645,7 +644,8 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       
       if( _referenceHitVec == 0 )
       {
-        streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+	// todo: is this case (no reference vector) treated correctly?
+	  //streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
       }
       else
       {
@@ -817,7 +817,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 
 void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
-  if ( _iEvt % 100 == 0 )
+  if ( _iEvt % 1000 == 0 )
     streamlog_out ( MESSAGE4 ) << "Processing event  (ApplyAlignment Direct) "
                                << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
@@ -942,7 +942,8 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       
       if( _referenceHitVec == 0 )
       {
-        streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+	// todo: is this case (no reference vector) treated correctly?
+        // streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
       }
       else
       {
@@ -1303,7 +1304,8 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
 
       if( _referenceHitVec == 0 )
       {
-        streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+	// todo: is this case (no reference vector) treated correctly?
+        // streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
       }
       else
       {
@@ -1766,14 +1768,42 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
 
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
-  double * hitPosition = const_cast<double * > (hit->getPosition());
 
-//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
-  if( _referenceHitVec == 0)
-  {
-    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
-    return 0;
-  }
+  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false )
+    {
+      // use z information of planes instead of reference vector
+
+      double * hitPosition = const_cast<double * > (hit->getPosition());
+
+      for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
+	{
+	  double distance = std::abs( hitPosition[2] - _siPlaneZPosition[ iPlane ] );
+	  if ( distance < minDistance ) 
+	    {
+	      minDistance = distance;
+	      sensorID = _siPlanesLayerLayout->getID( iPlane );
+	    }
+	}
+      if  ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) 
+	{
+	  double distance = std::abs( hitPosition[2] - _siPlanesLayerLayout->getDUTPositionZ() );
+	  if( distance < minDistance )
+	    {
+	      minDistance = distance;
+	      sensorID = _siPlanesLayerLayout->getDUTID();
+	    }
+	}
+      if ( minDistance > 10  ) //mm 
+	{
+	  // advice the user that the guessing wasn't successful 
+	  streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
+	    "Please check the consistency of the data with the GEAR file " << endl;
+	  throw SkipEventException(this);
+	}
+
+      return sensorID;
+    } // if not using ref vec
+
 
         try
         {
@@ -1830,60 +1860,10 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
           }
           catch(...)
           {
-            printf("guess SensorID crashed \n");
+            streamlog_out(ERROR4) << "guess SensorID crashed" << endl;
           }
-
-
-/*
-      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
-      {
-        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-//        printf(" _referenceHitVec %p refhit %p \n", _referenceHitVec, refhit);
-        
-        TVector3 hit3d( hitPosition[0], hitPosition[1], hitPosition[2] );
-        TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-        TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-        double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-//        printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hitPosition[0],hitPosition[1],hitPosition[2], distance  );
-        if ( distance < minDistance ) 
-        {
-           minDistance = distance;
-           sensorID = refhit->getSensorID();
-//           printf("sensorID: %5d \n", sensorID );
-        }    
-
-      }
- */
-/*
-  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
-  {
-//      printf("iPlane %5d   hitPos:  %8.3f  siZpos: %8.3f \n", iPlane, hitPosition[2] , _siPlaneZPosition[ iPlane ] );
-      double distance = std::abs( hitPosition[2] - _siPlaneZPosition[ iPlane ] );
-      if ( distance < minDistance ) 
-      {
-          minDistance = distance;
-          sensorID = _siPlanesLayerLayout->getID( iPlane );
-      }
-  }
-  if  ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) 
-  {
-      double distance = std::abs( hitPosition[2] - _siPlanesLayerLayout->getDUTPositionZ() );
-      if( distance < minDistance )
-      {
-        minDistance = distance;
-        sensorID = _siPlanesLayerLayout->getDUTID();
-      }
-  }
-  if ( minDistance > 10  ) //mm 
-  {
-    // advice the user that the guessing wasn't successful 
-    streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-      "Please check the consistency of the data with the GEAR file " << endl;
-    throw SkipEventException(this);
-  }
-*/
   return sensorID;
+
 }
 
 
@@ -2216,14 +2196,14 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
         {
           streamlog_out(MESSAGE) << "Sensor ID and Alignment plane ID match!" << endl;
         }
-        printf("PRE sensorID: %5d dx:%5.3f dy:%5.3f dz:%5.3f  alfa:%5.3f beta:%5.3f gamma:%5.3f \n",
-        refhit->getSensorID(   ),                      
-        refhit->getXOffset(    ),
-        refhit->getYOffset(    ),
-        refhit->getZOffset(    ),
-        refhit->getAlpha(),
-        refhit->getBeta(),
-        refhit->getGamma()    );
+        //printf("PRE sensorID: %5d dx:%5.3f dy:%5.3f dz:%5.3f  alfa:%5.3f beta:%5.3f gamma:%5.3f \n",
+        // refhit->getSensorID(   ),                      
+        // refhit->getXOffset(    ),
+        // refhit->getYOffset(    ),
+        // refhit->getZOffset(    ),
+        // refhit->getAlpha(),
+        // refhit->getBeta(),
+        // refhit->getGamma()    );
 
         if( GetApplyAlignmentDirection() == 0) 
         {
@@ -2255,14 +2235,14 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
        }
 //    referenceHitCollection->push_back( refhit );
  
-        printf("AFT sensorID: %5d dx:%5.3f dy:%5.3f dz:%5.3f  alfa:%5.3f beta:%5.3f gamma:%5.3f \n",
-        refhit->getSensorID(   ),                      
-        refhit->getXOffset(    ),
-        refhit->getYOffset(    ),
-        refhit->getZOffset(    ),
-        refhit->getAlpha(),
-        refhit->getBeta(),
-        refhit->getGamma()    );
+        //printf("AFT sensorID: %5d dx:%5.3f dy:%5.3f dz:%5.3f  alfa:%5.3f beta:%5.3f gamma:%5.3f \n",
+        // refhit->getSensorID(   ),                      
+        // refhit->getXOffset(    ),
+        // refhit->getYOffset(    ),
+        // refhit->getZOffset(    ),
+        // refhit->getAlpha(),
+        // refhit->getBeta(),
+        // refhit->getGamma()    );
    
       //  _referenceHitVecAligned->push_back( refhit );
      }

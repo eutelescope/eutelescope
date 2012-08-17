@@ -128,12 +128,12 @@ void EUTelPreAlign::init () {
 					   _siPlanesLayerLayout->getSensitivePitchY(iPlane),
 					   _siPlanesLayerLayout->getSensitivePositionZ(iPlane),
 					   _siPlanesLayerLayout->getID(iPlane)) );
-      printf("iPlane:%5d  %8.3f  %8.3f  %8.3f  %5d  \n",iPlane,
-                                           _siPlanesLayerLayout->getSensitivePitchX(iPlane),
-					   _siPlanesLayerLayout->getSensitivePitchY(iPlane),
-					   _siPlanesLayerLayout->getSensitivePositionZ(iPlane),
-					   _siPlanesLayerLayout->getID(iPlane) 
-);
+//       printf("iPlane:%5d  %8.3f  %8.3f  %8.3f  %5d  \n",iPlane,
+//                                            _siPlanesLayerLayout->getSensitivePitchX(iPlane),
+// 					   _siPlanesLayerLayout->getSensitivePitchY(iPlane),
+// 					   _siPlanesLayerLayout->getSensitivePositionZ(iPlane),
+// 					   _siPlanesLayerLayout->getID(iPlane) 
+// );
     }
   }
 
@@ -156,10 +156,7 @@ void EUTelPreAlign::init () {
             _sensors_to_the_left++;
         }
     }
-    streamlog_out (MESSAGE4) << " ";
-    printf("iPlane %-3d sensor_#_along_Z_axis %-3d [z= %-9.3f ] [sensorID %-3d ]  \n", iPlane, _sensors_to_the_left, _siPlaneZPosition[ iPlane ], sensorID);
-
-    streamlog_out (MESSAGE4) << endl;
+    streamlog_out (DEBUG) << " iPlane " << iPlane << " sensor_#_along_Z_axis " << _sensors_to_the_left << "[z= " << setprecision (3) << _siPlaneZPosition[iPlane] << " ] [sensorID " << sensorID << " ]  " << endl;
 
     _sensorIDVecZOrder.push_back( _sensors_to_the_left );
     _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
@@ -171,12 +168,12 @@ void EUTelPreAlign::init () {
        tempHistoName =  "PreAlign/hitXCorr_0_to_" + to_string( i ) ;
        AIDA::IHistogram1D* histo1Da  = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), 100 , -10., 10.) ;
        _hitXCorr.insert( make_pair( i, histo1Da) );
-       printf("XCorr  %5d %p \n", i, histo1Da );
+       //printf("XCorr  %5d %p \n", i, histo1Da );
 
        tempHistoName =  "PreAlign/hitYCorr_0_to_" + to_string( i ) ;
        AIDA::IHistogram1D* histo1Db = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), 100 , -10., 10.) ;
        _hitYCorr.insert( make_pair( i, histo1Db) );
-       printf("YCorr  %5d %p \n", i, histo1Db );
+       //printf("YCorr  %5d %p \n", i, histo1Db );
 
   }
 
@@ -535,7 +532,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
        catch(...)
        { 
           // if anything went wrong in the above return FALSE, meaning do not skip this hit
-          printf("something went wrong in EUTelPreAlign::hitContainsHotPixels \n"); 
+	 streamlog_out(ERROR4) << "something went wrong in EUTelPreAlign::hitContainsHotPixels " << endl;
           return 0;
        }
 
@@ -606,7 +603,7 @@ void EUTelPreAlign::end() {
     exit(-1);
   }
 
-  std::cout << "Writing to " << _alignmentConstantLCIOFile << std::endl;
+  streamlog_out ( MESSAGE ) << "Writing to " << _alignmentConstantLCIOFile << endl;
 
   LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
   lcHeader->setRunNumber( 0 );
