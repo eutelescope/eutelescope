@@ -1,4 +1,3 @@
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Version $Id: EUTelHitMaker.cc,v 1.27 2009-07-18 10:45:58 bulgheroni Exp $
 /*
@@ -208,7 +207,7 @@ void EUTelHitMaker::DumpReferenceHitDB()
     exit(-1);
   }
 
-  std::cout << "Writing to " << _referenceHitLCIOFile << std::endl;
+  streamlog_out ( MESSAGE ) << "Writing to " << _referenceHitLCIOFile << std::endl;
 
   LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
   lcHeader->setRunNumber( 0 );
@@ -239,14 +238,14 @@ void EUTelHitMaker::DumpReferenceHitDB()
     gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(ii); // Euler alpha ;
     gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(ii); // Euler alpha ;
     gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(ii); // Euler alpha ;
-printf("rotations: %5.3f %5.3f %5.3f \n", gRotation[0], gRotation[1], gRotation[2]);
+    //printf("rotations: %5.3f %5.3f %5.3f \n", gRotation[0], gRotation[1], gRotation[2]);
     gRotation[0] =  gRotation[0]*3.1415926/180.; // 
     gRotation[1] =  gRotation[1]*3.1415926/180.; //
     gRotation[2] =  gRotation[2]*3.1415926/180.; //
 
     TVector3 _RotatedVector( refVec[0], refVec[1], refVec[2] );
 
-printf("BEF sensor: %5.3f %5.3f %5.3f \n", refVec[0], refVec[1], refVec[2]  );
+    //printf("BEF sensor: %5.3f %5.3f %5.3f \n", refVec[0], refVec[1], refVec[2]  );
 //    if( TMath::Abs( gRotation[0]) > 1e-6 )    _RotatedVector.RotateZ(  gRotation[0] ); // in XY 
 //    if( TMath::Abs( gRotation[1]) > 1e-6 )    _RotatedVector.RotateY(  gRotation[1] ); // in ZY
 //    if( TMath::Abs( gRotation[2]) > 1e-6 )    _RotatedVector.RotateX(  gRotation[2] ); // in ZY
@@ -255,9 +254,9 @@ printf("BEF sensor: %5.3f %5.3f %5.3f \n", refVec[0], refVec[1], refVec[2]  );
     TVector3 _Yaxis( 0.0, 1.0, 0.0 );
     TVector3 _Zaxis( 0.0, 0.0, 1.0 );
 
-      printf("1 xaxis: %5.3f %5.3f %5.3f \n", _Xaxis[0], _Xaxis[1], _Xaxis[2] ); 
-      printf("1 yaxis: %5.3f %5.3f %5.3f \n", _Yaxis[0], _Yaxis[1], _Yaxis[2] ); 
-      printf("1 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
+      // printf("1 xaxis: %5.3f %5.3f %5.3f \n", _Xaxis[0], _Xaxis[1], _Xaxis[2] ); 
+      // printf("1 yaxis: %5.3f %5.3f %5.3f \n", _Yaxis[0], _Yaxis[1], _Yaxis[2] ); 
+      // printf("1 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
 
 
     if( TMath::Abs( gRotation[2]) > 1e-6 ) 
@@ -280,17 +279,17 @@ printf("BEF sensor: %5.3f %5.3f %5.3f \n", refVec[0], refVec[1], refVec[2]  );
 //        _Yaxis.Rotate(  gRotation[0], _Zaxis  ); // in XY
     }
  
-      printf("2 xaxis: %5.3f %5.3f %5.3f \n", _Xaxis[0], _Xaxis[1], _Xaxis[2] ); 
-      printf("2 yaxis: %5.3f %5.3f %5.3f \n", _Yaxis[0], _Yaxis[1], _Yaxis[2] ); 
-      printf("2 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
+      // printf("2 xaxis: %5.3f %5.3f %5.3f \n", _Xaxis[0], _Xaxis[1], _Xaxis[2] ); 
+      // printf("2 yaxis: %5.3f %5.3f %5.3f \n", _Yaxis[0], _Yaxis[1], _Yaxis[2] ); 
+      // printf("2 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
 
 
-printf("AFT sensor: %5.3f %5.3f %5.3f \n", _RotatedVector[0], _RotatedVector[1], _RotatedVector[2]  );
-    refhit->setAlpha( _RotatedVector[0] );
-    refhit->setBeta( _RotatedVector[1] );
-    refhit->setGamma( _RotatedVector[2] );
-    referenceHitCollection->push_back( refhit );
-    streamlog_out ( MESSAGE ) << (*refhit) << endl;
+// printf("AFT sensor: %5.3f %5.3f %5.3f \n", _RotatedVector[0], _RotatedVector[1], _RotatedVector[2]  );
+//     refhit->setAlpha( _RotatedVector[0] );
+//     refhit->setBeta( _RotatedVector[1] );
+//     refhit->setGamma( _RotatedVector[2] );
+//     referenceHitCollection->push_back( refhit );
+//     streamlog_out ( MESSAGE ) << (*refhit) << endl;
   }
   event->addCollection( referenceHitCollection, "referenceHit" );
   lcWriter->writeEvent( event );
@@ -435,7 +434,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         catch(...)
         {
             _preAlignmentCollectionVec = 0;
-            streamlog_out ( ERROR1 ) <<  "preAlignment Collection is absent." << endl;
+            streamlog_out ( WARNING ) <<  "preAlignment/offset Collection is absent." << endl;
         }
         
         if( _preAlignmentCollectionVec != 0 )
@@ -451,7 +450,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
                _siOffsetXMap.insert( make_pair( iID, alignment->getXOffset() ) );
                _siOffsetYMap.insert( make_pair( iID, alignment->getYOffset() ) );
                streamlog_out ( MESSAGE ) << " ";
-               printf("loaded %2d [%2d] Xoffset: %9.3f  Yoffset: %9.3f ", iPos, iID, _siOffsetXMap[ iID ], _siOffsetYMap[ iID ]); 
+               //printf("loaded %2d [%2d] Xoffset: %9.3f  Yoffset: %9.3f ", iPos, iID, _siOffsetXMap[ iID ], _siOffsetYMap[ iID ]); 
                streamlog_out ( MESSAGE ) << endl;                
             }
           }
@@ -704,7 +703,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           }
           catch(...)
           {
-              printf(" no sensor rotation is given in the GEAR steering file, assume NONE \n" );
+	    streamlog_out ( MESSAGE ) << " no sensor rotation is given in the GEAR steering file, assume NONE " << endl;
           }
         }
 
@@ -1000,6 +999,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
 //      if(  detectorID >= 10 )
 //     test mode: all planes can be tilted  
+
       _EulerRotation( detectorID, telPos, gRotation);
       //
 //    finally apply initial shifts:       
@@ -1390,29 +1390,6 @@ void EUTelHitMaker::_EulerRotation(int detectorID, double* _telPos, double* _gRo
   
 //  if( _gRotation[0] != 0.0 || _gRotation[1] != 0.0 || _gRotation[2] != 0.0  )
 //  printf("not zero rotations ! \n");
-    
-    try{
-        double t = _telPos[2];
-//          printf("_telPos[0] = %8.3f, ", _telPos[0]);
-//          printf("_telPos[1] = %8.3f, ", _telPos[1]);
-//          printf("_telPos[2] = %8.3f \n ", _telPos[2]);
-    }
-    catch(...)
-    {
-        throw InvalidParameterException("_telPos[] array can not be accessed \n");
-    }
-
-    try{
-        double t = _gRotation[2];
-//          printf("_gRotation[0] = %8.3f, ", _gRotation[0]);
-//          printf("_gRotation[1] = %8.3f, ", _gRotation[1]);
-//          printf("_gRotation[2] = %8.3f \n ", _gRotation[2]);
-    }
-    catch(...)
-    {
-        throw InvalidParameterException("_gRotation[] array can not be accessed \n"); 
-    }
-
 
     TVector3 _UnrotatedSensorHit( _telPos[0], _telPos[1], 0. );
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], 0. );

@@ -154,9 +154,9 @@ class SubmitHitMaker( SubmitBase ):
             self._logger.critical( "No output base name provided. Please use -o option to specify it" )
             sys.exit( 5 )
 
-        # issue another critical error in case the user didn't provide an eta file
+        # issue warning in case the user didn't provide an eta file
         if self._option.eta == None:
-            self._logger.critical("No ETA file provided. Pleasure use -e option to specify it" )
+            self._logger.warning("No ETA file provided. Please use -e option to specify it (if needed)" )
             sys.exit( 6 )
 
 
