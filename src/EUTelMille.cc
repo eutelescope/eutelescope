@@ -1,4 +1,3 @@
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Authors:
 // Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
 // Joerg Behr, Hamburg Uni/DESY <joerg.behr@desy.de>
@@ -537,7 +536,6 @@ void EUTelMille::init() {
     if(!excluded)
       _orderedSensorID_wo_excluded.push_back( iter->second );
     _orderedSensorID.push_back( iter->second );
-    printf("_orderedSensorID %5d \n", _orderedSensorID.at(counter));
 
     ++iter;
     ++counter;
@@ -2311,36 +2309,33 @@ void EUTelMille::processEvent (LCEvent * event) {
                   //calculate the lambda parameter
                   const double la = -1.0*b0*c0-b1*c1+c0*x+c1*y+sqrt(1-c0*c0-c1*c1)*z;
                   lambda.push_back(la);
-                  
-                  //determine the residuals
+
+		  if (_referenceHitVec == 0){                  
+                  //determine the residuals without reference vector
                   _waferResidX[help] = b0 + la*c0 - x;
                   _waferResidY[help] = b1 + la*c1 - y;
                   _waferResidZ[help] = la*sqrt(1.0 - c0*c0 - c1*c1) - z;
 //printf("MINUIT PRE sensor: %5d  %10.3f %10.3f %10.3f   %10.3f %10.3f %10.3f \n", help, x,y,z,  _waferResidX[help]+x, _waferResidY[help]+y, _waferResidZ[help]+z );
 
-                  TVector3 vpoint(b0,b1,0.);
-                  TVector3 vvector(c0,c1,c2);
-                  TVector3 point=Line2Plane(help, vpoint,vvector);
-//                   printf("b0:%5.2f b1:%5.2f: vvector: %12.5f %12.5f %12.5f \n",b0,b1, vvector[0], vvector[1], vvector[2] );
+		  } else {
+		    // use reference vector
+		    TVector3 vpoint(b0,b1,0.);
+		    TVector3 vvector(c0,c1,c2);
+		    TVector3 point=Line2Plane(help, vpoint,vvector);
 
-//                  _xPosTrack[track][help] = point[0];
-//                  _yPosTrack[track][help] = point[1];
-//                  _zPosTrack[track][help] = point[2];
-
-                  //determine the residuals
-                 if( abs(x)>1e-06 && abs(y)>1e-06 && abs(z)>1e-06 )
-                 {
-                    _waferResidX[help] = point[0] - x;
-                    _waferResidY[help] = point[1] - y;
-                    _waferResidZ[help] = point[2] - z;
-                 }else{
-                    _waferResidX[help] = 0.;
-                    _waferResidY[help] = 0.;
-                    _waferResidZ[help] = 0.;
-                 }
-//                 printf("FIT:   AFT sensor: %5d  [%10.3f %10.3f %10.3f]   [%10.3f %10.3f %10.3f] planes %5d \n", 
-//                        help, x,y,z,  _waferResidX[help], _waferResidY[help], _waferResidZ[help], mean_n );
-//printf("FIT:   AFT sensor: %5d  %10.3f %10.3f %10.3f   %10.3f %10.3f %10.3f \n", help, x,y,z,  _waferResidX[help]+x, _waferResidY[help]+y, _waferResidZ[help]+z );
+		    //determine the residuals
+		    if( abs(x)>1e-06 && abs(y)>1e-06 && abs(z)>1e-06 )
+		      {
+			_waferResidX[help] = point[0] - x;
+			_waferResidY[help] = point[1] - y;
+			_waferResidZ[help] = point[2] - z;
+		      }else{
+		      _waferResidX[help] = 0.;
+		      _waferResidY[help] = 0.;
+		      _waferResidZ[help] = 0.;
+		    }
+		  }
+		  //                 printf("FIT:   AFT sensor: %5d  [%10.3f %10.3f %10.3f]   [%10.3f %10.3f %10.3f] planes %5d \n", help, x,y,z,  _waferResidX[help], _waferResidY[help], _waferResidZ[help], mean_n );
 
 
 /*
@@ -2816,20 +2811,21 @@ void EUTelMille::processEvent (LCEvent * event) {
                   double y_sensor = 0.;
                   double z_sensor = 0.;
 
-                  for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
-                  {
-                    EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-                    if( _sensorIDVec[help] == refhit->getSensorID() )
-                    {
-//                      printf("found refhit [%2d] %5.2f %5.2f %5.2f for hit [%2d] %5.2f %5.2f %5.2f \n", 
-//                              refhit->getSensorID(), refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset(),
-//                              _sensorIDVec[help], _xPosHere[help], _yPosHere[help], _zPosHere[help] );
-                      x_sensor =  refhit->getXOffset();
-                      y_sensor =  refhit->getYOffset();
-                      z_sensor =  refhit->getZOffset();
-                    } 
-                  }
-                   
+		  if (_referenceHitVec != 0){
+		    for(int ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+		      {
+			EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+			if( _sensorIDVec[help] == refhit->getSensorID() )
+			  {
+			    //                      printf("found refhit [%2d] %5.2f %5.2f %5.2f for hit [%2d] %5.2f %5.2f %5.2f \n", 
+			    //                              refhit->getSensorID(), refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset(),
+			    //                              _sensorIDVec[help], _xPosHere[help], _yPosHere[help], _zPosHere[help] );
+			    x_sensor =  refhit->getXOffset();
+			    y_sensor =  refhit->getYOffset();
+			    z_sensor =  refhit->getZOffset();
+			  } 
+		      }
+		  }
                   x_sensor *= 1000.;
                   y_sensor *= 1000.;
                   z_sensor *= 1000.;
@@ -3185,10 +3181,23 @@ int EUTelMille::guessSensorID( double * hit )
 //  double * hitPosition = const_cast<double * > (hit->getPosition());
 
 //  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
-  if( _referenceHitVec == 0)
+  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false)
   {
-    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
-    return 0;
+    // use z information of planes instead of reference vector
+    for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
+      double distance = std::abs( hit[2] - _siPlaneZPosition[ iPlane ] );
+      if ( distance < minDistance ) {
+	minDistance = distance;
+	sensorID = _siPlanesLayerLayout->getID( iPlane );
+      }
+    }
+    if ( minDistance > 30  ) {
+      // advice the user that the guessing wasn't successful 
+      streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
+	"Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hit[2] <<       endl;
+    }
+    
+    return sensorID;
   }
 
       for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
@@ -3252,173 +3261,181 @@ TVector3 EUTelMille::Line2Plane(int iplane, const TVector3& lpoint, const TVecto
       
 bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit) 
 {
-        bool skipHit = false;
+  bool skipHit = false;
 
-        try
-        {
-            LCObjectVec clusterVector = hit->getRawHits();
+  try
+    {
+      try{
+	LCObjectVec clusterVector = hit->getRawHits();
 
-            EUTelVirtualCluster * cluster;
+	EUTelVirtualCluster * cluster;
 
-//            std::cout << "hit type : " <<  hit->getType()  << std::endl;
-
-            if ( hit->getType() == kEUTelSparseClusterImpl ) 
-            {
+	if ( hit->getType() == kEUTelSparseClusterImpl ) 
+	  {
       
-              TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
- //              cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
-              eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > *cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
-              int sensorID = cluster->getDetectorID();
+	    TrackerDataImpl * clusterFrame = dynamic_cast<TrackerDataImpl*> ( clusterVector[0] );
+	    if (clusterFrame == 0){
+	      // found invalid result from cast
+	      throw UnknownDataTypeException("Invalid hit found in method hitContainsHotPixels()");
+	    }
+		
+	    eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > *cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
+	    int sensorID = cluster->getDetectorID();
  
-              for ( unsigned int iPixel = 0; iPixel < cluster->size(); iPixel++ ) 
+	    for ( unsigned int iPixel = 0; iPixel < cluster->size(); iPixel++ ) 
               {
                 EUTelSimpleSparsePixel m26Pixel;
                 cluster->getSparsePixelAt( iPixel, &m26Pixel);
                 int pixelX, pixelY;
                 pixelX = m26Pixel.getXCoord();
                 pixelY = m26Pixel.getYCoord();
-//                streamlog_out ( MESSAGE ) << iPixel << " of " << cluster->size() << "real Pixel:  " << pixelX << " " << pixelY << " " <<  endl;
+		//                streamlog_out ( MESSAGE ) << iPixel << " of " << cluster->size() << "real Pixel:  " << pixelX << " " << pixelY << " " <<  endl;
  
                 try
-                {                       
-                       char ix[100];
-                       sprintf(ix, "%d,%d,%d", sensorID, pixelX, pixelY ); 
-//                       printf("real pixel at %s \n", ix);
-//
-//  std::map< std::string, bool >::iterator iter = _hotPixelMap.begin();
-//  while ( iter != _hotPixelMap.end() ) {
-//    std::cout << "Found hot pixel " << iter->second << " at " << iter->first << std::endl;
-//    ++iter;
-//  }
+		  {                       
+		    char ix[100];
+		    sprintf(ix, "%d,%d,%d", sensorID, pixelX, pixelY ); 
+		    //                       printf("real pixel at %s \n", ix);
+		    //
+		    //  std::map< std::string, bool >::iterator iter = _hotPixelMap.begin();
+		    //  while ( iter != _hotPixelMap.end() ) {
+		    //    std::cout << "Found hot pixel " << iter->second << " at " << iter->first << std::endl;
+		    //    ++iter;
+		    //  }
    
-//                       std::cout << _hotPixelMap.first() << " " << _hotPixelMap.second() << std::endl; 
-                       std::map<std::string, bool >::const_iterator z = _hotPixelMap.find(ix);
-                       if(z!=_hotPixelMap.end() && _hotPixelMap[ix] == true  )
-                       { 
-                          skipHit = true; 	      
-//                          streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
-//                          printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
-                          return true; // if TRUE  this hit will be skipped
-                       }
-                       else
-                       { 
-                          skipHit = false; 	      
-                       } 
-                    } 
-                    catch (...)
-                    {
-//                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
-                    }
-             }
+		    //                       std::cout << _hotPixelMap.first() << " " << _hotPixelMap.second() << std::endl; 
+		    std::map<std::string, bool >::const_iterator z = _hotPixelMap.find(ix);
+		    if(z!=_hotPixelMap.end() && _hotPixelMap[ix] == true  )
+		      { 
+			skipHit = true; 	      
+			//                          streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
+			//                          printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
+			return true; // if TRUE  this hit will be skipped
+		      }
+		    else
+		      { 
+			skipHit = false; 	      
+		      } 
+		  } 
+		catch (...)
+		  {
+		    //                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
+		  }
+	      }
 
 
-            } else if ( hit->getType() == kEUTelBrickedClusterImpl ) {
+	  } else if ( hit->getType() == kEUTelBrickedClusterImpl ) {
 
-               // fixed cluster implementation. Remember it
-               //  can come from
-               //  both RAW and ZS data
+	  // fixed cluster implementation. Remember it
+	  //  can come from
+	  //  both RAW and ZS data
    
-                cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+	  cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
                 
-            } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
+	} else if ( hit->getType() == kEUTelDFFClusterImpl ) {
               
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } else if ( hit->getType() == kEUTelFFClusterImpl ) {
+	  // fixed cluster implementation. Remember it can come from
+	  // both RAW and ZS data
+	  cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+	} else if ( hit->getType() == kEUTelFFClusterImpl ) {
               
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } 
-            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
-            {
+	  // fixed cluster implementation. Remember it can come from
+	  // both RAW and ZS data
+	  cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+	} 
+	else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
+	  {
               
-//              cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-//                 ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+	    //              cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
+	    //                 ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
 
-                // streamlog_out(MESSAGE4) << "Type is kEUTelAPIXClusterImpl" << endl;
-                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-                // streamlog_out(MESSAGE4) << "Vector size is: " << clusterVector.size() << endl;
+	    // streamlog_out(MESSAGE4) << "Type is kEUTelAPIXClusterImpl" << endl;
+	    TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
+	    // streamlog_out(MESSAGE4) << "Vector size is: " << clusterVector.size() << endl;
 
-                cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
+	    cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
 	      
-	        // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
-                eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
+	    // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
+	    eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
                 
-                int sensorID = apixCluster->getDetectorID();//static_cast<int> ( cellDecoder(clusterFrame)["sensorID"] );
-//                cout << "Pixels at sensor " << sensorID << ": ";
+	    int sensorID = apixCluster->getDetectorID();//static_cast<int> ( cellDecoder(clusterFrame)["sensorID"] );
+	    //                cout << "Pixels at sensor " << sensorID << ": ";
 
-//                bool skipHit = 0;
-                for (int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
-                {
-                    int pixelX, pixelY;
-                    EUTelAPIXSparsePixel apixPixel;
-                    apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-                    pixelX = apixPixel.getXCoord();
-                    pixelY = apixPixel.getYCoord();
-//                    cout << "(" << pixelX << "|" << pixelY << ") ";
-//                    cout << endl;
+	    //                bool skipHit = 0;
+	    for (int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
+	      {
+		int pixelX, pixelY;
+		EUTelAPIXSparsePixel apixPixel;
+		apixCluster->getSparsePixelAt(iPixel, &apixPixel);
+		pixelX = apixPixel.getXCoord();
+		pixelY = apixPixel.getYCoord();
+		//                    cout << "(" << pixelX << "|" << pixelY << ") ";
+		//                    cout << endl;
 
-                    try
-                    {                       
-//                       printf("pixel %3d %3d was found in the _hotPixelMap = %1d (0/1) \n", pixelX, pixelY, _hotPixelMap[sensorID][pixelX][pixelY]  );                       
-                       char ix[100];
-                       sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
-                       std::map<std::string, bool >::const_iterator z = _hotPixelMap.find(ix);
-                       if(z!=_hotPixelMap.end() && _hotPixelMap[ix] == true  )
-                       { 
-                          skipHit = true; 	      
-//                          streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
-//                          printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
-                         return true; // if TRUE  this hit will be skipped
-                       }
-                       else
-                       { 
-                          skipHit = false; 	      
-                       } 
-                    } 
-                    catch (...)
-                    {
-//                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
-                    }
+		try
+		  {                       
+		    //                       printf("pixel %3d %3d was found in the _hotPixelMap = %1d (0/1) \n", pixelX, pixelY, _hotPixelMap[sensorID][pixelX][pixelY]  );                       
+		    char ix[100];
+		    sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
+		    std::map<std::string, bool >::const_iterator z = _hotPixelMap.find(ix);
+		    if(z!=_hotPixelMap.end() && _hotPixelMap[ix] == true  )
+		      { 
+			skipHit = true; 	      
+			//                          streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
+			//                          printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
+			return true; // if TRUE  this hit will be skipped
+		      }
+		    else
+		      { 
+			skipHit = false; 	      
+		      } 
+		  } 
+		catch (...)
+		  {
+		    //                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
+		  }
            
-//                    skipHit = skipHit || hitContainsHotPixels(hit);
+		//                    skipHit = skipHit || hitContainsHotPixels(hit);
 
-                    if(skipHit ) 
-                    {
-//                       printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
-                    }
-                    else
-                    { 
-//                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
-                    }
+		if(skipHit ) 
+		  {
+		    //                       printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
+		  }
+		else
+		  { 
+		    //                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
+		  }
 
-                }
+	      }
 
-                if (skipHit) 
-                {
-//                      streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
-//                    continue;
-                }
-                else
-                {
-//                    streamlog_out(MESSAGE4) << "Cluster/hit is fine for preAlignment!" << endl;
-                }
+	    if (skipHit) 
+	      {
+		//                      streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
+		//                    continue;
+	      }
+	    else
+	      {
+		//                    streamlog_out(MESSAGE4) << "Cluster/hit is fine for preAlignment!" << endl;
+	      }
 
 
-                return skipHit; // if TRUE  this hit will be skipped
-            } 
+	    return skipHit; // if TRUE  this hit will be skipped
+	  } 
             
-       }
-       catch(...)
-       { 
-          // if anything went wrong in the above return FALSE, meaning do not skip this hit
-          return 0;
-       }
+      }
+      catch(lcio::Exception e){
+	// catch specific exceptions
+          streamlog_out ( ERROR ) << "Exception occured in hitContainsHotPixels(): " << e.what() << endl;
+      }
+    }
+  catch(...)
+    { 
+      // if anything went wrong in the above return FALSE, meaning do not skip this hit
+      return 0;
+    }
 
-       // if none of the above worked return FALSE, meaning do not skip this hit
-       return 0;
+  // if none of the above worked return FALSE, meaning do not skip this hit
+  return 0;
 
 }
 
@@ -3741,43 +3758,83 @@ void EUTelMille::end() {
 
       std::string command = "pede " + _pedeSteerfileName;
 
-      // before starting pede, let's check if it is in the path
-      bool isPedeInPath = true;
+      streamlog_out ( MESSAGE2 ) << endl;
+      streamlog_out ( MESSAGE2 ) << "Starting pede..." << endl;
+      streamlog_out ( MESSAGE2 ) << command.c_str() << endl;
 
-      // create a new process
-      redi::ipstream which("which pede");
-
-      // wait for the process to finish
-      which.close();
-
-      // get the status
-      // if it 255 then the program wasn't found in the path
-      isPedeInPath = !( which.rdbuf()->status() == 255 );
-
-      if ( !isPedeInPath ) {
-        streamlog_out( ERROR ) << "Pede cannot be executed because not found in the path" << endl;
+      bool encounteredError = false;
+      
+      // run pede and create a streambuf that reads its stdout and stderr
+      redi::ipstream pede( command.c_str(), redi::pstreams::pstdout|redi::pstreams::pstderr ); 
+      
+      if (!pede.is_open()) {
+	  streamlog_out( ERROR ) << "Pede cannot be executed: command not found in the path" << endl;
+	  encounteredError = true;	  
       } else {
 
-        streamlog_out ( MESSAGE2 ) << endl;
-        streamlog_out ( MESSAGE2 ) << "Starting pede..." << endl;
-        streamlog_out ( MESSAGE2 ) << command.c_str() << endl;
+	// output multiplexing: parse pede output in both stdout and stderr and echo messages accordingly
+	char buf[1024];
+	std::streamsize n;
+	std::stringstream pedeoutput; // store stdout to parse later
+	std::stringstream pedeerrors;
+	bool finished[2] = { false, false };
+	while (!finished[0] || !finished[1])
+	  {
+	    if (!finished[0])
+	      {
+		while ((n = pede.err().readsome(buf, sizeof(buf))) > 0){
+		  streamlog_out( ERROR ).write(buf, n).flush();
+		  string error (buf, n);
+		  pedeerrors << error;
+		  encounteredError = true;
+		}
+		if (pede.eof())
+		  {
+		    finished[0] = true;
+		    if (!finished[1])
+		      pede.clear();
+		  }
+	      }
 
+	    if (!finished[1])
+	      {
+		while ((n = pede.out().readsome(buf, sizeof(buf))) > 0){
+		  streamlog_out( MESSAGE2 ).write(buf, n).flush();
+		  string output (buf, n);
+		  pedeoutput << output;
+		}
+		if (pede.eof())
+		  {
+		    finished[1] = true;
+		    if (!finished[0])
+		      pede.clear();
+		  }
+	      }
+	  }
 
-        redi::ipstream pede( command.c_str() );
-        string output;
-        while ( getline( pede, output ) ) 
-        {
-          streamlog_out( MESSAGE2 ) << output << endl;
-        }
+	// pede does not return exit codes on some errors (in V03-04-00)
+	// check for some of those here by parsing the output
+	char * pch = strstr(pedeoutput.str().data(),"Too many rejects");
+	if (pch){
+	  streamlog_out ( ERROR ) << "Pede stopped due to the large number of rejects. " << endl;
+	  encounteredError = true;
+	}
 
         // wait for the pede execution to finish
         pede.close();
 
-        // check the exit value of pede
-        if ( pede.rdbuf()->status() == 0 ) 
+        // check the exit value of pede / react to previous errors
+        if ( pede.rdbuf()->status() == 0 && !encounteredError) 
         {
           streamlog_out ( MESSAGE2 ) << "Pede successfully finished" << endl;
-        }
+        } else {
+          streamlog_out ( ERROR ) << "Problem during Pede execution, exit status: " << pede.rdbuf()->status() << ", error messages (repeated here): " << endl;
+	  streamlog_out ( ERROR4 ) << pedeerrors.str() << endl;
+	  // TODO: decide what to do now; exit? and if, how?
+          streamlog_out ( ERROR4 ) << "Will exit now" << endl;
+	  //exit(EXIT_FAILURE); // FIXME: can lead to (ROOT?) seg faults - points to corrupt memory? run valgrind...
+	  return; // does fine for now
+	}
 
         // reading back the millepede.res file and getting the
         // results.
