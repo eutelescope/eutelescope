@@ -143,7 +143,9 @@ namespace eutelescope {
      */
     void bookHistos();
 
-    virtual int guessSensorID( double* hit);
+    virtual int guessSensorID( const double* hit);
+    virtual int getClusterSize(int sensorID, TrackerHitImpl * hit, int& sizeX, int& sizeY, int& subMatrix );
+    virtual int getSubMatrix(int sensorID, float xlocal);
 
     //! Called after data processing for clean up.
     /*! Used to release memory allocated in init() step
@@ -227,6 +229,11 @@ namespace eutelescope {
     std::vector<double> _localX;
     std::vector<double> _localY;
 
+    std::vector<int> _clusterSizeX;
+    std::vector<int> _clusterSizeY;
+    std::vector<int> _subMatrix;
+
+
     std::vector<double> _measuredX;
     std::vector<double> _measuredY;
 
@@ -249,6 +256,26 @@ namespace eutelescope {
      */
 
     std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
+
+    static std::string _ClusterSizeXHistoName  ;
+    static std::string _ClusterSizeYHistoName  ;
+    static std::string _ClusterSizeXYHistoName ;
+
+    static std::string _ClusterSizeXAHistoName  ;
+    static std::string _ClusterSizeYAHistoName  ;
+    static std::string _ClusterSizeXYAHistoName ;
+
+    static std::string _ClusterSizeXBHistoName  ;
+    static std::string _ClusterSizeYBHistoName  ;
+    static std::string _ClusterSizeXYBHistoName ;
+
+    static std::string _ClusterSizeXCHistoName  ;
+    static std::string _ClusterSizeYCHistoName  ;
+    static std::string _ClusterSizeXYCHistoName ;
+
+    static std::string _ClusterSizeXDHistoName  ;
+    static std::string _ClusterSizeYDHistoName  ;
+    static std::string _ClusterSizeXYDHistoName ;
 
     static std::string _MeasuredXHistoName;
     static std::string _MeasuredYHistoName;
@@ -281,6 +308,144 @@ namespace eutelescope {
     static std::string _ShiftXHistoName;
     static std::string _ShiftYHistoName;
     static std::string _ShiftXYHistoName;
+
+// submatrix A
+    static std::string _ShiftXAHistoName;
+    static std::string _ShiftYAHistoName;
+    static std::string _ShiftXYAHistoName;
+    // cluster size 1
+    static std::string _ShiftXA1HistoName;
+    static std::string _ShiftYA1HistoName;
+    static std::string _ShiftXYA1HistoName;
+    // cluster size 2
+    static std::string _ShiftXA2HistoName;
+    static std::string _ShiftYA2HistoName;
+    static std::string _ShiftXYA2HistoName;
+    // cluster size 3
+    static std::string _ShiftXA3HistoName;
+    static std::string _ShiftYA3HistoName;
+    static std::string _ShiftXYA3HistoName;
+    // cluster size 4
+    static std::string _ShiftXA4HistoName;
+    static std::string _ShiftYA4HistoName;
+    static std::string _ShiftXYA4HistoName;
+    // cluster size 5
+    static std::string _ShiftXA5HistoName;
+    static std::string _ShiftYA5HistoName;
+    static std::string _ShiftXYA5HistoName;
+    // cluster size 6
+    static std::string _ShiftXA6HistoName;
+    static std::string _ShiftYA6HistoName;
+    static std::string _ShiftXYA6HistoName;
+    // cluster size 7
+    static std::string _ShiftXA7HistoName;
+    static std::string _ShiftYA7HistoName;
+    static std::string _ShiftXYA7HistoName;
+
+
+// submatrix B
+    static std::string _ShiftXBHistoName;
+    static std::string _ShiftYBHistoName;
+    static std::string _ShiftXYBHistoName;
+    // cluster size 1
+    static std::string _ShiftXB1HistoName;
+    static std::string _ShiftYB1HistoName;
+    static std::string _ShiftXYB1HistoName;
+    // cluster size 2
+    static std::string _ShiftXB2HistoName;
+    static std::string _ShiftYB2HistoName;
+    static std::string _ShiftXYB2HistoName;
+    // cluster size 3
+    static std::string _ShiftXB3HistoName;
+    static std::string _ShiftYB3HistoName;
+    static std::string _ShiftXYB3HistoName;
+    // cluster size 4
+    static std::string _ShiftXB4HistoName;
+    static std::string _ShiftYB4HistoName;
+    static std::string _ShiftXYB4HistoName;
+    // cluster size 5
+    static std::string _ShiftXB5HistoName;
+    static std::string _ShiftYB5HistoName;
+    static std::string _ShiftXYB5HistoName;
+    // cluster size 6
+    static std::string _ShiftXB6HistoName;
+    static std::string _ShiftYB6HistoName;
+    static std::string _ShiftXYB6HistoName;
+    // cluster size 7
+    static std::string _ShiftXB7HistoName;
+    static std::string _ShiftYB7HistoName;
+    static std::string _ShiftXYB7HistoName;
+
+
+// submatrix C
+    static std::string _ShiftXCHistoName;
+    static std::string _ShiftYCHistoName;
+    static std::string _ShiftXYCHistoName;
+    // cluster size 1
+    static std::string _ShiftXC1HistoName;
+    static std::string _ShiftYC1HistoName;
+    static std::string _ShiftXYC1HistoName;
+    // cluster size 2
+    static std::string _ShiftXC2HistoName;
+    static std::string _ShiftYC2HistoName;
+    static std::string _ShiftXYC2HistoName;
+    // cluster size 3
+    static std::string _ShiftXC3HistoName;
+    static std::string _ShiftYC3HistoName;
+    static std::string _ShiftXYC3HistoName;
+    // cluster size 4
+    static std::string _ShiftXC4HistoName;
+    static std::string _ShiftYC4HistoName;
+    static std::string _ShiftXYC4HistoName;
+    // cluster size 5
+    static std::string _ShiftXC5HistoName;
+    static std::string _ShiftYC5HistoName;
+    static std::string _ShiftXYC5HistoName;
+    // cluster size 6
+    static std::string _ShiftXC6HistoName;
+    static std::string _ShiftYC6HistoName;
+    static std::string _ShiftXYC6HistoName;
+    // cluster size 7
+    static std::string _ShiftXC7HistoName;
+    static std::string _ShiftYC7HistoName;
+    static std::string _ShiftXYC7HistoName;
+
+
+// submatrix D
+    static std::string _ShiftXDHistoName;
+    static std::string _ShiftYDHistoName;
+    static std::string _ShiftXYDHistoName;
+    // cluster size 1
+    static std::string _ShiftXD1HistoName;
+    static std::string _ShiftYD1HistoName;
+    static std::string _ShiftXYD1HistoName;
+    // cluster size 2
+    static std::string _ShiftXD2HistoName;
+    static std::string _ShiftYD2HistoName;
+    static std::string _ShiftXYD2HistoName;
+    // cluster size 3
+    static std::string _ShiftXD3HistoName;
+    static std::string _ShiftYD3HistoName;
+    static std::string _ShiftXYD3HistoName;
+    // cluster size 4
+    static std::string _ShiftXD4HistoName;
+    static std::string _ShiftYD4HistoName;
+    static std::string _ShiftXYD4HistoName;
+    // cluster size 5
+    static std::string _ShiftXD5HistoName;
+    static std::string _ShiftYD5HistoName;
+    static std::string _ShiftXYD5HistoName;
+    // cluster size 6
+    static std::string _ShiftXD6HistoName;
+    static std::string _ShiftYD6HistoName;
+    static std::string _ShiftXYD6HistoName;
+    // cluster size 7
+    static std::string _ShiftXD7HistoName;
+    static std::string _ShiftYD7HistoName;
+    static std::string _ShiftXYD7HistoName;
+
+
+
 
     static std::string _BgShiftXHistoName;
     static std::string _BgShiftYHistoName;

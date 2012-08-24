@@ -25,7 +25,14 @@
 #include "EUTelHistogramManager.h"
 #include "EUTelExceptions.h"
 #include "EUTelReferenceHit.h"
-
+// for cluster operations:
+#include "EUTelVirtualCluster.h"
+#include "EUTelFFClusterImpl.h"
+#include "EUTelDFFClusterImpl.h"
+#include "EUTelBrickedClusterImpl.h"
+#include "EUTelSparseClusterImpl.h"
+#include "EUTelSparseCluster2Impl.h"
+#
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <marlin/AIDAProcessor.h>
 #include <AIDA/IHistogramFactory.h>
@@ -71,6 +78,28 @@ using namespace eutelescope;
 
 // definition of static members mainly used to name histograms
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
+std::string EUTelDUTHistograms::_ClusterSizeXHistoName  = "clusterSizeX";
+std::string EUTelDUTHistograms::_ClusterSizeYHistoName  = "clusterSizeY";
+std::string EUTelDUTHistograms::_ClusterSizeXYHistoName = "clusterSuzeXY";
+
+std::string EUTelDUTHistograms::_ClusterSizeXAHistoName  = "clusterSizeX submatrix A";
+std::string EUTelDUTHistograms::_ClusterSizeYAHistoName  = "clusterSizeY submatrix A";
+std::string EUTelDUTHistograms::_ClusterSizeXYAHistoName = "clusterSuzeXY submatrix A";
+
+std::string EUTelDUTHistograms::_ClusterSizeXBHistoName  = "clusterSizeX submatrix B";
+std::string EUTelDUTHistograms::_ClusterSizeYBHistoName  = "clusterSizeY submatrix B";
+std::string EUTelDUTHistograms::_ClusterSizeXYBHistoName = "clusterSuzeXY submatrix B";
+
+std::string EUTelDUTHistograms::_ClusterSizeXCHistoName  = "clusterSizeX submatrix C";
+std::string EUTelDUTHistograms::_ClusterSizeYCHistoName  = "clusterSizeY submatrix C";
+std::string EUTelDUTHistograms::_ClusterSizeXYCHistoName = "clusterSuzeXY submatrix C";
+
+std::string EUTelDUTHistograms::_ClusterSizeXDHistoName  = "clusterSizeX submatrix D";
+std::string EUTelDUTHistograms::_ClusterSizeYDHistoName  = "clusterSizeY submatrix D";
+std::string EUTelDUTHistograms::_ClusterSizeXYDHistoName = "clusterSuzeXY submatrix D";
+
+
 std::string EUTelDUTHistograms::_MeasuredXHistoName  = "measuredX";
 std::string EUTelDUTHistograms::_MeasuredYHistoName  = "measuredY";
 std::string EUTelDUTHistograms::_MeasuredXYHistoName = "measuredXY";
@@ -102,6 +131,145 @@ std::string EUTelDUTHistograms::_NoiseXYHistoName = "DUTnoiseXY";
 std::string EUTelDUTHistograms::_ShiftXHistoName       = "DUTshiftX";
 std::string EUTelDUTHistograms::_ShiftYHistoName       = "DUTshiftY";
 std::string EUTelDUTHistograms::_ShiftXYHistoName      = "DUTshiftXY";
+// submatrix A
+std::string EUTelDUTHistograms::_ShiftXAHistoName       = "DUTshiftXA";
+std::string EUTelDUTHistograms::_ShiftYAHistoName       = "DUTshiftYA";
+std::string EUTelDUTHistograms::_ShiftXYAHistoName      = "DUTshiftXYA";
+// cluster size 1
+std::string EUTelDUTHistograms::_ShiftXA1HistoName       = "DUTshiftXA1";
+std::string EUTelDUTHistograms::_ShiftYA1HistoName       = "DUTshiftYA1";
+std::string EUTelDUTHistograms::_ShiftXYA1HistoName      = "DUTshiftXYA1";
+// cluster size 2
+std::string EUTelDUTHistograms::_ShiftXA2HistoName       = "DUTshiftXA2";
+std::string EUTelDUTHistograms::_ShiftYA2HistoName       = "DUTshiftYA2";
+std::string EUTelDUTHistograms::_ShiftXYA2HistoName      = "DUTshiftXYA2";
+// cluster size 3
+std::string EUTelDUTHistograms::_ShiftXA3HistoName       = "DUTshiftXA3";
+std::string EUTelDUTHistograms::_ShiftYA3HistoName       = "DUTshiftYA3";
+std::string EUTelDUTHistograms::_ShiftXYA3HistoName      = "DUTshiftXYA3";
+// cluster size 4
+std::string EUTelDUTHistograms::_ShiftXA4HistoName       = "DUTshiftXA4";
+std::string EUTelDUTHistograms::_ShiftYA4HistoName       = "DUTshiftYA4";
+std::string EUTelDUTHistograms::_ShiftXYA4HistoName      = "DUTshiftXYA4";
+// cluster size 5
+std::string EUTelDUTHistograms::_ShiftXA5HistoName       = "DUTshiftXA5";
+std::string EUTelDUTHistograms::_ShiftYA5HistoName       = "DUTshiftYA5";
+std::string EUTelDUTHistograms::_ShiftXYA5HistoName      = "DUTshiftXYA5";
+// cluster size 6
+std::string EUTelDUTHistograms::_ShiftXA6HistoName       = "DUTshiftXA6";
+std::string EUTelDUTHistograms::_ShiftYA6HistoName       = "DUTshiftYA6";
+std::string EUTelDUTHistograms::_ShiftXYA6HistoName      = "DUTshiftXYA6";
+// cluster size 7
+std::string EUTelDUTHistograms::_ShiftXA7HistoName       = "DUTshiftXA7";
+std::string EUTelDUTHistograms::_ShiftYA7HistoName       = "DUTshiftYA7";
+std::string EUTelDUTHistograms::_ShiftXYA7HistoName      = "DUTshiftXYA7";
+
+// submatrix B
+std::string EUTelDUTHistograms::_ShiftXBHistoName       = "DUTshiftXB";
+std::string EUTelDUTHistograms::_ShiftYBHistoName       = "DUTshiftYB";
+std::string EUTelDUTHistograms::_ShiftXYBHistoName      = "DUTshiftXYB";
+// cluster size 1
+std::string EUTelDUTHistograms::_ShiftXB1HistoName       = "DUTshiftXB1";
+std::string EUTelDUTHistograms::_ShiftYB1HistoName       = "DUTshiftYB1";
+std::string EUTelDUTHistograms::_ShiftXYB1HistoName      = "DUTshiftXYB1";
+// cluster size 2
+std::string EUTelDUTHistograms::_ShiftXB2HistoName       = "DUTshiftXB2";
+std::string EUTelDUTHistograms::_ShiftYB2HistoName       = "DUTshiftYB2";
+std::string EUTelDUTHistograms::_ShiftXYB2HistoName      = "DUTshiftXYB2";
+// cluster size 3
+std::string EUTelDUTHistograms::_ShiftXB3HistoName       = "DUTshiftXB3";
+std::string EUTelDUTHistograms::_ShiftYB3HistoName       = "DUTshiftYB3";
+std::string EUTelDUTHistograms::_ShiftXYB3HistoName      = "DUTshiftXYB3";
+// cluster size 4
+std::string EUTelDUTHistograms::_ShiftXB4HistoName       = "DUTshiftXB4";
+std::string EUTelDUTHistograms::_ShiftYB4HistoName       = "DUTshiftYB4";
+std::string EUTelDUTHistograms::_ShiftXYB4HistoName      = "DUTshiftXYB4";
+// cluster size 5
+std::string EUTelDUTHistograms::_ShiftXB5HistoName       = "DUTshiftXB5";
+std::string EUTelDUTHistograms::_ShiftYB5HistoName       = "DUTshiftYB5";
+std::string EUTelDUTHistograms::_ShiftXYB5HistoName      = "DUTshiftXYB5";
+// cluster size 6
+std::string EUTelDUTHistograms::_ShiftXB6HistoName       = "DUTshiftXB6";
+std::string EUTelDUTHistograms::_ShiftYB6HistoName       = "DUTshiftYB6";
+std::string EUTelDUTHistograms::_ShiftXYB6HistoName      = "DUTshiftXYB6";
+// cluster size 7
+std::string EUTelDUTHistograms::_ShiftXB7HistoName       = "DUTshiftXB7";
+std::string EUTelDUTHistograms::_ShiftYB7HistoName       = "DUTshiftYB7";
+std::string EUTelDUTHistograms::_ShiftXYB7HistoName      = "DUTshiftXYB7";
+
+
+// submatrix C
+std::string EUTelDUTHistograms::_ShiftXCHistoName       = "DUTshiftXC";
+std::string EUTelDUTHistograms::_ShiftYCHistoName       = "DUTshiftYC";
+std::string EUTelDUTHistograms::_ShiftXYCHistoName      = "DUTshiftXYC";
+// cluster size 1
+std::string EUTelDUTHistograms::_ShiftXC1HistoName       = "DUTshiftXC1";
+std::string EUTelDUTHistograms::_ShiftYC1HistoName       = "DUTshiftYC1";
+std::string EUTelDUTHistograms::_ShiftXYC1HistoName      = "DUTshiftXYC1";
+// cluster size 2
+std::string EUTelDUTHistograms::_ShiftXC2HistoName       = "DUTshiftXC2";
+std::string EUTelDUTHistograms::_ShiftYC2HistoName       = "DUTshiftYC2";
+std::string EUTelDUTHistograms::_ShiftXYC2HistoName      = "DUTshiftXYC2";
+// cluster size 3
+std::string EUTelDUTHistograms::_ShiftXC3HistoName       = "DUTshiftXC3";
+std::string EUTelDUTHistograms::_ShiftYC3HistoName       = "DUTshiftYC3";
+std::string EUTelDUTHistograms::_ShiftXYC3HistoName      = "DUTshiftXYC3";
+// cluster size 4
+std::string EUTelDUTHistograms::_ShiftXC4HistoName       = "DUTshiftXC4";
+std::string EUTelDUTHistograms::_ShiftYC4HistoName       = "DUTshiftYC4";
+std::string EUTelDUTHistograms::_ShiftXYC4HistoName      = "DUTshiftXYC4";
+// cluster size 5
+std::string EUTelDUTHistograms::_ShiftXC5HistoName       = "DUTshiftXC5";
+std::string EUTelDUTHistograms::_ShiftYC5HistoName       = "DUTshiftYC5";
+std::string EUTelDUTHistograms::_ShiftXYC5HistoName      = "DUTshiftXYC5";
+// cluster size 6
+std::string EUTelDUTHistograms::_ShiftXC6HistoName       = "DUTshiftXC6";
+std::string EUTelDUTHistograms::_ShiftYC6HistoName       = "DUTshiftYC6";
+std::string EUTelDUTHistograms::_ShiftXYC6HistoName      = "DUTshiftXYC6";
+// cluster size 7
+std::string EUTelDUTHistograms::_ShiftXC7HistoName       = "DUTshiftXC7";
+std::string EUTelDUTHistograms::_ShiftYC7HistoName       = "DUTshiftYC7";
+std::string EUTelDUTHistograms::_ShiftXYC7HistoName      = "DUTshiftXYC7";
+
+
+// submatrix D
+std::string EUTelDUTHistograms::_ShiftXDHistoName       = "DUTshiftXD";
+std::string EUTelDUTHistograms::_ShiftYDHistoName       = "DUTshiftYD";
+std::string EUTelDUTHistograms::_ShiftXYDHistoName      = "DUTshiftXYD";
+// cluster size 1
+std::string EUTelDUTHistograms::_ShiftXD1HistoName       = "DUTshiftXD1";
+std::string EUTelDUTHistograms::_ShiftYD1HistoName       = "DUTshiftYD1";
+std::string EUTelDUTHistograms::_ShiftXYD1HistoName      = "DUTshiftXYD1";
+// cluster size 2
+std::string EUTelDUTHistograms::_ShiftXD2HistoName       = "DUTshiftXD2";
+std::string EUTelDUTHistograms::_ShiftYD2HistoName       = "DUTshiftYD2";
+std::string EUTelDUTHistograms::_ShiftXYD2HistoName      = "DUTshiftXYD2";
+// cluster size 3
+std::string EUTelDUTHistograms::_ShiftXD3HistoName       = "DUTshiftXD3";
+std::string EUTelDUTHistograms::_ShiftYD3HistoName       = "DUTshiftYD3";
+std::string EUTelDUTHistograms::_ShiftXYD3HistoName      = "DUTshiftXYD3";
+// cluster size 4
+std::string EUTelDUTHistograms::_ShiftXD4HistoName       = "DUTshiftXD4";
+std::string EUTelDUTHistograms::_ShiftYD4HistoName       = "DUTshiftYD4";
+std::string EUTelDUTHistograms::_ShiftXYD4HistoName      = "DUTshiftXYD4";
+// cluster size 5
+std::string EUTelDUTHistograms::_ShiftXD5HistoName       = "DUTshiftXD5";
+std::string EUTelDUTHistograms::_ShiftYD5HistoName       = "DUTshiftYD5";
+std::string EUTelDUTHistograms::_ShiftXYD5HistoName      = "DUTshiftXYD5";
+// cluster size 6
+std::string EUTelDUTHistograms::_ShiftXD6HistoName       = "DUTshiftXD6";
+std::string EUTelDUTHistograms::_ShiftYD6HistoName       = "DUTshiftYD6";
+std::string EUTelDUTHistograms::_ShiftXYD6HistoName      = "DUTshiftXYD6";
+// cluster size 7
+std::string EUTelDUTHistograms::_ShiftXD7HistoName       = "DUTshiftXD7";
+std::string EUTelDUTHistograms::_ShiftYD7HistoName       = "DUTshiftYD7";
+std::string EUTelDUTHistograms::_ShiftXYD7HistoName      = "DUTshiftXYD7";
+
+
+
+
+
+
 
 std::string EUTelDUTHistograms::_BgShiftXHistoName       = "BGshiftX";
 std::string EUTelDUTHistograms::_BgShiftYHistoName       = "BGshiftY";
@@ -567,6 +735,10 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 
   // Clear local tables with measured position
+  _clusterSizeX.clear();
+  _clusterSizeY.clear();
+  _subMatrix.clear();
+
 
   _measuredX.clear();
   _measuredY.clear();
@@ -595,10 +767,22 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
       const double * pos = meshit->getPosition();
 
+      int   sensorID = guessSensorID( pos );
+
       double dist = pos[2] - _zDUT;
 
       if(dist*dist < 1)
         {
+          int sizeX = -1;
+          int sizeY = -1;
+          int subMatrix = -1;
+          getClusterSize( sensorID, static_cast<TrackerHitImpl*>(meshit), sizeX, sizeY, subMatrix);
+          //printf("%d %d \n", sizeX,sizeY);  
+          _clusterSizeX.push_back(sizeX);
+          _clusterSizeY.push_back(sizeY);
+          _subMatrix.push_back( subMatrix );
+
+
           // Apply alignment corrections
 
           double corrX  =   pos[0]*cos(_DUTalign.at(2))
@@ -701,6 +885,40 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_ClusterSizeXHistoName]))->fill(_clusterSizeX[besthit]+0.0);
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_ClusterSizeYHistoName]))->fill(_clusterSizeY[besthit]+0.0);
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ClusterSizeXYHistoName]))->fill(_clusterSizeX[besthit]+0.0,_clusterSizeY[besthit]+0.0);
+
+      if( _subMatrix[besthit] == 0)
+       { 
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_ClusterSizeXAHistoName]))->fill(_clusterSizeX[besthit]+0.0);
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_ClusterSizeYAHistoName]))->fill(_clusterSizeY[besthit]+0.0);
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ClusterSizeXYAHistoName]))->fill(_clusterSizeX[besthit]+0.0,_clusterSizeY[besthit]+0.0);
+       }
+
+      if( _subMatrix[besthit] == 1)
+       { 
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_ClusterSizeXBHistoName]))->fill(_clusterSizeX[besthit]+0.0);
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_ClusterSizeYBHistoName]))->fill(_clusterSizeY[besthit]+0.0);
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ClusterSizeXYBHistoName]))->fill(_clusterSizeX[besthit]+0.0,_clusterSizeY[besthit]+0.0);
+       }
+
+      if( _subMatrix[besthit] == 2)
+       { 
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_ClusterSizeXCHistoName]))->fill(_clusterSizeX[besthit]+0.0);
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_ClusterSizeYCHistoName]))->fill(_clusterSizeY[besthit]+0.0);
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ClusterSizeXYCHistoName]))->fill(_clusterSizeX[besthit]+0.0,_clusterSizeY[besthit]+0.0);
+       }
+
+      if( _subMatrix[besthit] == 3)
+       { 
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_ClusterSizeXDHistoName]))->fill(_clusterSizeX[besthit]+0.0);
+        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_ClusterSizeYDHistoName]))->fill(_clusterSizeY[besthit]+0.0);
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ClusterSizeXYDHistoName]))->fill(_clusterSizeX[besthit]+0.0,_clusterSizeY[besthit]+0.0);
+       }
+
+
+
         (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MatchedXHistoName]))->fill(_measuredX[besthit]);
 
 
@@ -710,11 +928,170 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
         // Histograms of measured-fitted shifts
 
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_ShiftXHistoName]))->fill(_measuredX[besthit]-_fittedX[bestfit]);
+        double shiftX =  _measuredX[besthit]-_fittedX[bestfit];
+        double shiftY =  _measuredY[besthit]-_fittedY[bestfit];
 
-        (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_ShiftYHistoName]))->fill(_measuredY[besthit]-_fittedY[bestfit]);
+        std::string histoX  = _ShiftXHistoName;
+        std::string histoY  = _ShiftYHistoName;
+        std::string histoXY = _ShiftXYHistoName;
 
-        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ShiftXYHistoName]))->fill(_measuredX[besthit]-_fittedX[bestfit],_measuredY[besthit]-_fittedY[bestfit]);
+// fill anyway the global one:
+          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoX ]))->fill(shiftX);
+          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoY ]))->fill(shiftY);
+          (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[ histoXY ]))->fill(shiftX, shiftY);
+        
+        if( _subMatrix[besthit] == 0 )  
+        { 
+          histoX = _ShiftXAHistoName;
+          histoY = _ShiftYAHistoName;
+          histoXY= _ShiftXYAHistoName;
+        }
+        if( _subMatrix[besthit] == 1 )  
+        { 
+          histoX = _ShiftXBHistoName;
+          histoY = _ShiftYBHistoName;
+          histoXY= _ShiftXYBHistoName;
+        }
+        if( _subMatrix[besthit] == 2 )  
+        { 
+          histoX = _ShiftXCHistoName;
+          histoY = _ShiftYCHistoName;
+          histoXY= _ShiftXYCHistoName;
+        }
+        if( _subMatrix[besthit] == 3 )  
+        { 
+          histoX = _ShiftXDHistoName;
+          histoY = _ShiftYDHistoName;
+          histoXY= _ShiftXYDHistoName;
+        }
+         (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoX ]))->fill(shiftX);
+         (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoY ]))->fill(shiftY);
+         (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[ histoXY ]))->fill(shiftX, shiftY);
+        
+        if( _subMatrix[besthit] == 0 )  
+        {
+          if( _clusterSizeX[besthit] == 1 )  histoX = _ShiftXA1HistoName;
+          if( _clusterSizeY[besthit] == 1 )  histoY = _ShiftYA1HistoName;
+          if( _clusterSizeX[besthit] == 1 && _clusterSizeY[besthit] == 1 )  histoXY= _ShiftXYA1HistoName;
+
+          if( _clusterSizeX[besthit] == 2 )  histoX = _ShiftXA2HistoName;
+          if( _clusterSizeY[besthit] == 2 )  histoY = _ShiftYA2HistoName;
+          if( _clusterSizeX[besthit] == 2 && _clusterSizeY[besthit] == 2 )  histoXY= _ShiftXYA2HistoName;
+ 
+          if( _clusterSizeX[besthit] == 3 )  histoX = _ShiftXA3HistoName;
+          if( _clusterSizeY[besthit] == 3 )  histoY = _ShiftYA3HistoName;
+          if( _clusterSizeX[besthit] == 3 && _clusterSizeY[besthit] == 3 )  histoXY= _ShiftXYA3HistoName;
+ 
+          if( _clusterSizeX[besthit] == 4 )  histoX = _ShiftXA4HistoName;
+          if( _clusterSizeY[besthit] == 4 )  histoY = _ShiftYA4HistoName;
+          if( _clusterSizeX[besthit] == 4 && _clusterSizeY[besthit] == 4 )  histoXY= _ShiftXYA4HistoName;
+ 
+          if( _clusterSizeX[besthit] == 5 )  histoX = _ShiftXA5HistoName;
+          if( _clusterSizeY[besthit] == 5 )  histoY = _ShiftYA5HistoName;
+          if( _clusterSizeX[besthit] == 5 && _clusterSizeY[besthit] == 5 )  histoXY= _ShiftXYA5HistoName;
+ 
+          if( _clusterSizeX[besthit] == 6 )  histoX = _ShiftXA6HistoName;
+          if( _clusterSizeY[besthit] == 6 )  histoY = _ShiftYA6HistoName;
+          if( _clusterSizeX[besthit] == 6 && _clusterSizeY[besthit] == 6 )  histoXY= _ShiftXYA6HistoName;
+ 
+          if( _clusterSizeX[besthit] == 7 )  histoX = _ShiftXA7HistoName;
+          if( _clusterSizeY[besthit] == 7 )  histoY = _ShiftYA7HistoName;
+          if( _clusterSizeX[besthit] == 7 && _clusterSizeY[besthit] == 7 )  histoXY= _ShiftXYA7HistoName;
+        }
+        if( _subMatrix[besthit] == 1 )  
+        { 
+           if( _clusterSizeX[besthit] == 1 )  histoX = _ShiftXB1HistoName;
+          if( _clusterSizeY[besthit] == 1 )  histoY = _ShiftYB1HistoName;
+          if( _clusterSizeX[besthit] == 1 && _clusterSizeY[besthit] == 1 )  histoXY= _ShiftXYB1HistoName;
+
+          if( _clusterSizeX[besthit] == 2 )  histoX = _ShiftXB2HistoName;
+          if( _clusterSizeY[besthit] == 2 )  histoY = _ShiftYB2HistoName;
+          if( _clusterSizeX[besthit] == 2 && _clusterSizeY[besthit] == 2 )  histoXY= _ShiftXYB2HistoName;
+ 
+          if( _clusterSizeX[besthit] == 3 )  histoX = _ShiftXB3HistoName;
+          if( _clusterSizeY[besthit] == 3 )  histoY = _ShiftYB3HistoName;
+          if( _clusterSizeX[besthit] == 3 && _clusterSizeY[besthit] == 3 )  histoXY= _ShiftXYB3HistoName;
+ 
+          if( _clusterSizeX[besthit] == 4 )  histoX = _ShiftXB4HistoName;
+          if( _clusterSizeY[besthit] == 4 )  histoY = _ShiftYB4HistoName;
+          if( _clusterSizeX[besthit] == 4 && _clusterSizeY[besthit] == 4 )  histoXY= _ShiftXYB4HistoName;
+ 
+          if( _clusterSizeX[besthit] == 5 )  histoX = _ShiftXB5HistoName;
+          if( _clusterSizeY[besthit] == 5 )  histoY = _ShiftYB5HistoName;
+          if( _clusterSizeX[besthit] == 5 && _clusterSizeY[besthit] == 5 )  histoXY= _ShiftXYB5HistoName;
+ 
+          if( _clusterSizeX[besthit] == 6 )  histoX = _ShiftXB6HistoName;
+          if( _clusterSizeY[besthit] == 6 )  histoY = _ShiftYB6HistoName;
+          if( _clusterSizeX[besthit] == 6 && _clusterSizeY[besthit] == 6 )  histoXY= _ShiftXYB6HistoName;
+ 
+          if( _clusterSizeX[besthit] == 7 )  histoX = _ShiftXB7HistoName;
+          if( _clusterSizeY[besthit] == 7 )  histoY = _ShiftYB7HistoName;
+          if( _clusterSizeX[besthit] == 7 && _clusterSizeY[besthit] == 7 )  histoXY= _ShiftXYB7HistoName;
+       }
+        if( _subMatrix[besthit] == 2 )  
+        { 
+           if( _clusterSizeX[besthit] == 1 )  histoX = _ShiftXC1HistoName;
+          if( _clusterSizeY[besthit] == 1 )  histoY = _ShiftYC1HistoName;
+          if( _clusterSizeX[besthit] == 1 && _clusterSizeY[besthit] == 1 )  histoXY= _ShiftXYC1HistoName;
+
+          if( _clusterSizeX[besthit] == 2 )  histoX = _ShiftXC2HistoName;
+          if( _clusterSizeY[besthit] == 2 )  histoY = _ShiftYC2HistoName;
+          if( _clusterSizeX[besthit] == 2 && _clusterSizeY[besthit] == 2 )  histoXY= _ShiftXYC2HistoName;
+ 
+          if( _clusterSizeX[besthit] == 3 )  histoX = _ShiftXC3HistoName;
+          if( _clusterSizeY[besthit] == 3 )  histoY = _ShiftYC3HistoName;
+          if( _clusterSizeX[besthit] == 3 && _clusterSizeY[besthit] == 3 )  histoXY= _ShiftXYC3HistoName;
+ 
+          if( _clusterSizeX[besthit] == 4 )  histoX = _ShiftXC4HistoName;
+          if( _clusterSizeY[besthit] == 4 )  histoY = _ShiftYC4HistoName;
+          if( _clusterSizeX[besthit] == 4 && _clusterSizeY[besthit] == 4 )  histoXY= _ShiftXYC4HistoName;
+ 
+          if( _clusterSizeX[besthit] == 5 )  histoX = _ShiftXC5HistoName;
+          if( _clusterSizeY[besthit] == 5 )  histoY = _ShiftYC5HistoName;
+          if( _clusterSizeX[besthit] == 5 && _clusterSizeY[besthit] == 5 )  histoXY= _ShiftXYC5HistoName;
+ 
+          if( _clusterSizeX[besthit] == 6 )  histoX = _ShiftXC6HistoName;
+          if( _clusterSizeY[besthit] == 6 )  histoY = _ShiftYC6HistoName;
+          if( _clusterSizeX[besthit] == 6 && _clusterSizeY[besthit] == 6 )  histoXY= _ShiftXYC6HistoName;
+ 
+          if( _clusterSizeX[besthit] == 7 )  histoX = _ShiftXC7HistoName;
+          if( _clusterSizeY[besthit] == 7 )  histoY = _ShiftYC7HistoName;
+          if( _clusterSizeX[besthit] == 7 && _clusterSizeY[besthit] == 7 )  histoXY= _ShiftXYC7HistoName;
+       }
+        if( _subMatrix[besthit] == 3 )  
+        { 
+           if( _clusterSizeX[besthit] == 1 )  histoX = _ShiftXD1HistoName;
+          if( _clusterSizeY[besthit] == 1 )  histoY = _ShiftYD1HistoName;
+          if( _clusterSizeX[besthit] == 1 && _clusterSizeY[besthit] == 1 )  histoXY= _ShiftXYD1HistoName;
+
+          if( _clusterSizeX[besthit] == 2 )  histoX = _ShiftXD2HistoName;
+          if( _clusterSizeY[besthit] == 2 )  histoY = _ShiftYD2HistoName;
+          if( _clusterSizeX[besthit] == 2 && _clusterSizeY[besthit] == 2 )  histoXY= _ShiftXYD2HistoName;
+ 
+          if( _clusterSizeX[besthit] == 3 )  histoX = _ShiftXD3HistoName;
+          if( _clusterSizeY[besthit] == 3 )  histoY = _ShiftYD3HistoName;
+          if( _clusterSizeX[besthit] == 3 && _clusterSizeY[besthit] == 3 )  histoXY= _ShiftXYD3HistoName;
+ 
+          if( _clusterSizeX[besthit] == 4 )  histoX = _ShiftXD4HistoName;
+          if( _clusterSizeY[besthit] == 4 )  histoY = _ShiftYD4HistoName;
+          if( _clusterSizeX[besthit] == 4 && _clusterSizeY[besthit] == 4 )  histoXY= _ShiftXYD4HistoName;
+ 
+          if( _clusterSizeX[besthit] == 5 )  histoX = _ShiftXD5HistoName;
+          if( _clusterSizeY[besthit] == 5 )  histoY = _ShiftYD5HistoName;
+          if( _clusterSizeX[besthit] == 5 && _clusterSizeY[besthit] == 5 )  histoXY= _ShiftXYD5HistoName;
+ 
+          if( _clusterSizeX[besthit] == 6 )  histoX = _ShiftXD6HistoName;
+          if( _clusterSizeY[besthit] == 6 )  histoY = _ShiftYD6HistoName;
+          if( _clusterSizeX[besthit] == 6 && _clusterSizeY[besthit] == 6 )  histoXY= _ShiftXYD6HistoName;
+ 
+          if( _clusterSizeX[besthit] == 7 )  histoX = _ShiftXD7HistoName;
+          if( _clusterSizeY[besthit] == 7 )  histoY = _ShiftYD7HistoName;
+          if( _clusterSizeX[besthit] == 7 && _clusterSizeY[besthit] == 7 )  histoXY= _ShiftXYD7HistoName;
+       }
+          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoX ]))->fill(shiftX);
+          (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoY ]))->fill(shiftY);
+          (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[ histoXY ]))->fill(shiftX, shiftY);
+        
 
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_ShiftXvsYHistoName]))->fill(_fittedY[bestfit],_measuredX[besthit]-_fittedX[bestfit]);
 
@@ -902,6 +1279,121 @@ void EUTelDUTHistograms::bookHistos()
                      << "Continuing without histogram manager" );
     isHistoManagerAvailable = false;
   }
+
+
+  // cluster size in X and Y
+  int    clusXNBin  =  12 ;
+  double clusXMin   = -1.5;
+  double clusXMax   =  10.5;
+ 
+  int    clusYNBin  =  12 ;
+  double clusYMin   = -1.5;
+  double clusYMax   =  10.5; 
+  string clusXTitle = "Fitted cluster size in X"       ;
+  string clusYTitle = "Fitted cluster size in Y"       ;
+  string clusXYTitle = "Fitted cluster size in X and Y" ;
+
+  if ( isHistoManagerAvailable )
+    {
+      histoInfo = histoMgr->getHistogramInfo(_ClusterSizeXHistoName);
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          clusXNBin = histoInfo->_xBin;
+          clusXMin  = histoInfo->_xMin;
+          clusXMax  = histoInfo->_xMax;
+          if ( histoInfo->_title != "" ) clusXTitle = histoInfo->_title;
+        }
+    }
+  AIDA::IHistogram1D * clusXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ClusterSizeXHistoName.c_str(),clusXNBin,clusXMin,clusXMax);
+  clusXHisto->setTitle(clusXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeXHistoName, clusXHisto));
+
+  clusXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ClusterSizeXAHistoName.c_str(),clusXNBin,clusXMin,clusXMax);
+  clusXHisto->setTitle(clusXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeXAHistoName, clusXHisto));
+
+  clusXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ClusterSizeXBHistoName.c_str(),clusXNBin,clusXMin,clusXMax);
+  clusXHisto->setTitle(clusXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeXBHistoName, clusXHisto));
+
+  clusXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ClusterSizeXCHistoName.c_str(),clusXNBin,clusXMin,clusXMax);
+  clusXHisto->setTitle(clusXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeXCHistoName, clusXHisto));
+
+  clusXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ClusterSizeXDHistoName.c_str(),clusXNBin,clusXMin,clusXMax);
+  clusXHisto->setTitle(clusXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeXDHistoName, clusXHisto));
+
+
+  if ( isHistoManagerAvailable )
+    {
+      histoInfo = histoMgr->getHistogramInfo(_ClusterSizeYHistoName);
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          clusYNBin = histoInfo->_xBin;
+          clusYMin  = histoInfo->_xMin;
+          clusYMax  = histoInfo->_xMax;
+          if ( histoInfo->_title != "" ) clusYTitle = histoInfo->_title;
+        }
+    }
+  AIDA::IHistogram1D * clusYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ClusterSizeYHistoName.c_str(),clusYNBin,clusYMin,clusYMax);
+  clusYHisto->setTitle(clusYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeYHistoName, clusYHisto));
+
+  clusYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ClusterSizeYAHistoName.c_str(),clusYNBin,clusYMin,clusYMax);
+  clusYHisto->setTitle(clusYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeYAHistoName, clusYHisto));
+
+  clusYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ClusterSizeYBHistoName.c_str(),clusYNBin,clusYMin,clusYMax);
+  clusYHisto->setTitle(clusYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeYBHistoName, clusYHisto));
+
+  clusYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ClusterSizeYCHistoName.c_str(),clusYNBin,clusYMin,clusYMax);
+  clusYHisto->setTitle(clusYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeYCHistoName, clusYHisto));
+
+  clusYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ClusterSizeYDHistoName.c_str(),clusYNBin,clusYMin,clusYMax);
+  clusYHisto->setTitle(clusYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeYDHistoName, clusYHisto));
+
+  if ( isHistoManagerAvailable )
+    {
+      histoInfo = histoMgr->getHistogramInfo(_ClusterSizeXYHistoName);
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          clusYNBin = histoInfo->_yBin;
+          clusYMin  = histoInfo->_yMin;
+          clusYMax  = histoInfo->_yMax;
+          clusXNBin = histoInfo->_xBin;
+          clusXMin  = histoInfo->_xMin;
+          clusXMax  = histoInfo->_xMax;
+          if ( histoInfo->_title != "" ) clusXYTitle = histoInfo->_title;
+        }
+    }
+
+  AIDA::IHistogram2D * clusXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_ClusterSizeXYHistoName.c_str(),clusXNBin,clusXMin,clusXMax,clusYNBin,clusYMin,clusYMax);
+  clusXYHisto->setTitle(clusXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeXYHistoName, clusXYHisto));
+
+  clusXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_ClusterSizeXYAHistoName.c_str(),clusXNBin,clusXMin,clusXMax,clusYNBin,clusYMin,clusYMax);
+  clusXYHisto->setTitle(clusXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeXYAHistoName, clusXYHisto));
+
+  clusXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_ClusterSizeXYBHistoName.c_str(),clusXNBin,clusXMin,clusXMax,clusYNBin,clusYMin,clusYMax);
+  clusXYHisto->setTitle(clusXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeXYBHistoName, clusXYHisto));
+
+  clusXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_ClusterSizeXYCHistoName.c_str(),clusXNBin,clusXMin,clusXMax,clusYNBin,clusYMin,clusYMax);
+  clusXYHisto->setTitle(clusXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeXYCHistoName, clusXYHisto));
+
+  clusXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D(_ClusterSizeXYDHistoName.c_str(),clusXNBin,clusXMin,clusXMax,clusYNBin,clusYMin,clusYMax);
+  clusXYHisto->setTitle(clusXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ClusterSizeXYDHistoName, clusXYHisto));
+
 
 
 
@@ -1149,15 +1641,12 @@ void EUTelDUTHistograms::bookHistos()
   _aidaHistoMap.insert(make_pair(_FittedXYHistoName, fitXYHisto));
 
 
-
-
   // Measured - fitted position in X
 
-  int    shiftXNBin  =  200;
-  double shiftXMin   = -0.1;
-  double shiftXMax   =  0.1;
+  int    shiftXNBin  =  500;
+  double shiftXMin   = -0.5;
+  double shiftXMax   =  0.5;
   string shiftXTitle = "Measured - fitted X position";
-
 
   if ( isHistoManagerAvailable )
     {
@@ -1172,12 +1661,141 @@ void EUTelDUTHistograms::bookHistos()
         }
     }
 
-
   AIDA::IHistogram1D * shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
-
   shiftXHisto->setTitle(shiftXTitle.c_str());
-
   _aidaHistoMap.insert(make_pair(_ShiftXHistoName, shiftXHisto));
+
+  // A
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXAHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXAHistoName, shiftXHisto));
+  
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXA1HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXA1HistoName, shiftXHisto));
+  
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXA2HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXA2HistoName, shiftXHisto));
+  
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXA3HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXA3HistoName, shiftXHisto));
+  
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXA4HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXA4HistoName, shiftXHisto));
+  
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXA5HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXA5HistoName, shiftXHisto));
+  
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXA6HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXA6HistoName, shiftXHisto));
+
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXA7HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXA7HistoName, shiftXHisto));
+  // B
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXBHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXBHistoName, shiftXHisto));
+
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXB1HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXB1HistoName, shiftXHisto));
+ 
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXB2HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXB2HistoName, shiftXHisto));
+ 
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXB3HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXB3HistoName, shiftXHisto));
+ 
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXB4HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXB4HistoName, shiftXHisto));
+ 
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXB5HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXB5HistoName, shiftXHisto));
+ 
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXB6HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXB6HistoName, shiftXHisto));
+ 
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXB7HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXB7HistoName, shiftXHisto));
+  // C
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXCHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXCHistoName, shiftXHisto));
+
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXC1HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXC1HistoName, shiftXHisto));
+ 
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXC2HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXC2HistoName, shiftXHisto));
+ 
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXC3HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXC3HistoName, shiftXHisto));
+ 
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXC4HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXC4HistoName, shiftXHisto));
+ 
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXC5HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXC5HistoName, shiftXHisto));
+ 
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXC6HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXC6HistoName, shiftXHisto));
+ 
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXC7HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXC7HistoName, shiftXHisto));
+  // D
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXDHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXDHistoName, shiftXHisto));
+
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXD1HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXD1HistoName, shiftXHisto));
+
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXD2HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXD2HistoName, shiftXHisto));
+
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXD3HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXD3HistoName, shiftXHisto));
+
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXD4HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXD4HistoName, shiftXHisto));
+
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXD5HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXD5HistoName, shiftXHisto));
+
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXD6HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXD6HistoName, shiftXHisto));
+
+  shiftXHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftXD7HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax);
+  shiftXHisto->setTitle(shiftXTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXD7HistoName, shiftXHisto));
+
+
+
 
 
   // Corresponding background histogram
@@ -1194,9 +1812,9 @@ void EUTelDUTHistograms::bookHistos()
 
   // Measured - fitted position in Y
 
-  int    shiftYNBin  =  200;
-  double shiftYMin   = -0.1;
-  double shiftYMax   =  0.1;
+  int    shiftYNBin  =  500;
+  double shiftYMin   = -0.5;
+  double shiftYMax   =  0.5;
   string shiftYTitle = "Measured - fitted Y position";
 
 
@@ -1214,10 +1832,139 @@ void EUTelDUTHistograms::bookHistos()
     }
 
   AIDA::IHistogram1D * shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYHistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
-
   shiftYHisto->setTitle(shiftYTitle.c_str());
-
   _aidaHistoMap.insert(make_pair(_ShiftYHistoName, shiftYHisto));
+
+
+  // A
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYAHistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYAHistoName, shiftYHisto));
+  
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYA1HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYA1HistoName, shiftYHisto));
+  
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYA2HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYA2HistoName, shiftYHisto));
+  
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYA3HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYA3HistoName, shiftYHisto));
+  
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYA4HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYA4HistoName, shiftYHisto));
+  
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYA5HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYA5HistoName, shiftYHisto));
+  
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYA6HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYA6HistoName, shiftYHisto));
+
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYA7HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYA7HistoName, shiftYHisto));
+  // B
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYBHistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYBHistoName, shiftYHisto));
+
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYB1HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYB1HistoName, shiftYHisto));
+ 
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYB2HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYB2HistoName, shiftYHisto));
+ 
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYB3HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYB3HistoName, shiftYHisto));
+ 
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYB4HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYB4HistoName, shiftYHisto));
+ 
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYB5HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYB5HistoName, shiftYHisto));
+ 
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYB6HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYB6HistoName, shiftYHisto));
+ 
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYB7HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYB7HistoName, shiftYHisto));
+  // C
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYCHistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYCHistoName, shiftYHisto));
+
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYC1HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYC1HistoName, shiftYHisto));
+ 
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYC2HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYC2HistoName, shiftYHisto));
+ 
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYC3HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYC3HistoName, shiftYHisto));
+ 
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYC4HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYC4HistoName, shiftYHisto));
+ 
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYC5HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYC5HistoName, shiftYHisto));
+ 
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYC6HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYC6HistoName, shiftYHisto));
+ 
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYC7HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYC7HistoName, shiftYHisto));
+  // D
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYDHistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYDHistoName, shiftYHisto));
+
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYD1HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYD1HistoName, shiftYHisto));
+
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYD2HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYD2HistoName, shiftYHisto));
+
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYD3HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYD3HistoName, shiftYHisto));
+
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYD4HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYD4HistoName, shiftYHisto));
+
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYD5HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYD5HistoName, shiftYHisto));
+
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYD6HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYD6HistoName, shiftYHisto));
+
+  shiftYHisto = AIDAProcessor::histogramFactory(this)->createHistogram1D(_ShiftYD7HistoName.c_str(),shiftYNBin,shiftYMin,shiftYMax);
+  shiftYHisto->setTitle(shiftYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftYD7HistoName, shiftYHisto));
+
 
 
   // Corresponding background histogram
@@ -1357,8 +2104,8 @@ void EUTelDUTHistograms::bookHistos()
   shiftXMin   = -15.;
   shiftXMax   =  15.; 
   int shiftVNBin  = 200;
-  shiftVMin   = -0.1;
-  shiftVMax   =  0.1;
+  shiftVMin   = -1.0;
+  shiftVMax   =  1.0;
   shiftXTitle = "Measured - fitted X position vs Y";
 
 
@@ -1423,8 +2170,8 @@ void EUTelDUTHistograms::bookHistos()
   shiftYMin   = -15.;
   shiftYMax   =  15.;
   shiftVNBin  =  200;
-  shiftVMin   = -0.1;
-  shiftVMax   =  0.1;
+  shiftVMin   = -1.0;
+  shiftVMax   =  1.0;
   shiftYTitle = "Measured - fitted Y position vs X";
 
 
@@ -1480,12 +2227,12 @@ void EUTelDUTHistograms::bookHistos()
 
   // Measured - fitted position in X-Y
 
-  shiftXNBin  =  200;
-  shiftXMin   = -0.1;
-  shiftXMax   =  0.1;
-  shiftYNBin  = 200;
-  shiftYMin   = -0.1;
-  shiftYMax   =  0.1;
+  shiftXNBin  =  500;
+  shiftXMin   = -0.5;
+  shiftXMax   =  0.5;
+  shiftYNBin  =  500;
+  shiftYMin   = -0.5;
+  shiftYMax   =  0.5;
   string shiftXYTitle = "Measured - fitted position in XY";
 
 
@@ -1505,13 +2252,145 @@ void EUTelDUTHistograms::bookHistos()
         }
     }
 
-
-
   AIDA::IHistogram2D * shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
-
   shiftXYHisto->setTitle(shiftXYTitle.c_str());
-
   _aidaHistoMap.insert(make_pair(_ShiftXYHistoName, shiftXYHisto));
+
+// A
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYAHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYAHistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYA1HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYA1HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYA2HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYA2HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYA3HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYA3HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYA4HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYA4HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYA5HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYA5HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYA6HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYA6HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYA7HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYA7HistoName, shiftXYHisto));
+
+
+// B
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYBHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYBHistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYB1HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYB1HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYB2HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYB2HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYB3HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYB3HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYB4HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYB4HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYB5HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYB5HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYB6HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYB6HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYB7HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYB7HistoName, shiftXYHisto));
+
+
+// C
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYCHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYCHistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYC1HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYC1HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYC2HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYC2HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYC3HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYC3HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYC4HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYC4HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYC5HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYC5HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYC6HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYC6HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYC7HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYC7HistoName, shiftXYHisto));
+
+
+// D
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYDHistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYDHistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYD1HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYD1HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYD2HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYD2HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYD3HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYD3HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYD4HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYD4HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYD5HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYD5HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYD6HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYD6HistoName, shiftXYHisto));
+
+  shiftXYHisto = AIDAProcessor::histogramFactory(this)->createHistogram2D( _ShiftXYD7HistoName.c_str(),shiftXNBin,shiftXMin,shiftXMax,shiftYNBin,shiftYMin,shiftYMax);
+  shiftXYHisto->setTitle(shiftXYTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_ShiftXYD7HistoName, shiftXYHisto));
+
 
 
 
@@ -1994,7 +2873,7 @@ void EUTelDUTHistograms::bookHistos()
   return;
 }
 
-int EUTelDUTHistograms::guessSensorID( double * hit ) 
+int EUTelDUTHistograms::guessSensorID(const double * hit ) 
 {
 
   int sensorID = -1;
@@ -2034,6 +2913,92 @@ int EUTelDUTHistograms::guessSensorID( double * hit )
   return sensorID;
 }
 
+int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHitImpl * hit, int& sizeX, int& sizeY, int& subMatrix ) {
+  if(hit==0)
+{
+    streamlog_out( ERROR ) << "An invalid hit pointer supplied! will exit now\n" << endl;
+    return -1;
+}
+
+        try
+        {
+            LCObjectVec clusterVector = hit->getRawHits();
+
+            EUTelVirtualCluster * cluster=0;
+
+            if ( hit->getType() == kEUTelBrickedClusterImpl ) {
+
+               // fixed cluster implementation. Remember it
+               //  can come from
+               //  both RAW and ZS data
+   
+                cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+                
+            } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
+              
+              // fixed cluster implementation. Remember it can come from
+              // both RAW and ZS data
+              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+            } else if ( hit->getType() == kEUTelFFClusterImpl ) {
+              
+              // fixed cluster implementation. Remember it can come from
+              // both RAW and ZS data
+              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+            } 
+            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
+            {
+              
+//              cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
+//                 ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
+
+                // streamlog_out(MESSAGE4) << "Type is kEUTelAPIXClusterImpl" << endl;
+                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
+                // streamlog_out(MESSAGE4) << "Vector size is: " << clusterVector.size() << endl;
+
+                cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
+	      
+	        // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
+                eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
+                
+            }
+            else if ( hit->getType() == kEUTelSparseClusterImpl ) 
+            {
+               cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+            }
+
+            if(cluster != 0)
+            {
+              float xlocal=-1.;
+              float ylocal=-1.;
+              cluster->getClusterSize(sizeX,sizeY);
+              cluster->getCenterOfGravity(xlocal, ylocal);
+              subMatrix = getSubMatrix(sensorID, xlocal);  
+            //  printf("cluster x:%d y:%d    \n", sizeX, sizeY );
+              return 0;         
+            }
+          }
+          catch(...)
+          {
+            printf("guess SensorID crashed \n");
+          }
+
+return -1;
+}
+
+int EUTelDUTHistograms::getSubMatrix(int detectorID, float xlocal)
+{
+   // quarters : 0-287, 288-575, 576-863, 864-1151
+   int fourlocal = static_cast<int>(xlocal*4.); 
+   for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
+      if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
+         int subquarter =  fourlocal/static_cast<int>(_siPlanesLayerLayout->getSensitiveNpixelX(iLayer)); 
+//         printf("detector %5d xlocal %8.3f %d %d\n", detectorID, xlocal, fourlocal, subquarter) ;        
+         return subquarter;       
+      }
+   }
+
+  return -1; 
+}  
 
 #endif
 
