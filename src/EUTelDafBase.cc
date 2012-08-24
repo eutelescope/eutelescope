@@ -758,8 +758,8 @@ void EUTelDafBase::bookHistos(){
     sprintf(iden, "%d", plane.getSensorID());
     string bname = (string)"pl" + iden + "_";
     //Resids 
-    _aidaHistoMap[bname + "residualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualX", 1000 , -9000., 9000.);
-    _aidaHistoMap[bname + "residualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualY", 1000 , -9000., 9000.);
+    _aidaHistoMap[bname + "residualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualX", 1000 , -1000., 1000.);
+    _aidaHistoMap[bname + "residualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualY", 1000 , -1000., 1000.);
     //Resids 2D // profiles
     _aidaHistoMapProf1D[bname+"residualdXvsX"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dXvsX", 1000, -10000., 10000.,  -1000., 1000. );
     _aidaHistoMapProf1D[bname+"residualdYvsX"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dXvsY", 1000, -10000., 10000.,  -1000., 1000. );
