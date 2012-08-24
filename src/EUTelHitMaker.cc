@@ -285,10 +285,10 @@ void EUTelHitMaker::DumpReferenceHitDB()
 
 
 // printf("AFT sensor: %5.3f %5.3f %5.3f \n", _RotatedVector[0], _RotatedVector[1], _RotatedVector[2]  );
-//     refhit->setAlpha( _RotatedVector[0] );
-//     refhit->setBeta( _RotatedVector[1] );
-//     refhit->setGamma( _RotatedVector[2] );
-//     referenceHitCollection->push_back( refhit );
+     refhit->setAlpha( _RotatedVector[0] );
+     refhit->setBeta( _RotatedVector[1] );
+     refhit->setGamma( _RotatedVector[2] );
+     referenceHitCollection->push_back( refhit );
 //     streamlog_out ( MESSAGE ) << (*refhit) << endl;
   }
   event->addCollection( referenceHitCollection, "referenceHit" );
@@ -471,7 +471,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           {
              _referenceHitCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);
           }
-*/ 
+*/
+ 
 /*        lccd::DBInterface db( _DBLoginName, _dbActualFolderName , _DBStatusName ) ;
           streamlog_out (MESSAGE) << _DBLoginName << endl;
           streamlog_out (MESSAGE) << _dbActualFolderName << endl;
