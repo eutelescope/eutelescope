@@ -350,6 +350,8 @@ namespace eutelescope {
     TVector3 Line2Plane(int iplane, const TVector3& lpoint, const TVector3& lvector ); 
 
     virtual inline int getAllowedMissingHits(){return _allowedMissingHits;}
+    virtual inline int getMimosa26ClusterChargeMin(){return _mimosa26ClusterChargeMin;}
+
 
   protected:
 
@@ -464,6 +466,8 @@ namespace eutelescope {
 
     int _inputMode;
     int _allowedMissingHits;
+    int _mimosa26ClusterChargeMin;
+
     float _testModeSensorResolution;
     float _testModeXTrackSlope;
     float _testModeYTrackSlope;

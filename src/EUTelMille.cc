@@ -205,6 +205,9 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("AllowedMissingHits","Set how many hits (=planes) can be missing on a track candidate.",
                             _allowedMissingHits, static_cast <int> (0));
 
+  registerOptionalParameter("MimosaClusterChargeMin","Select Mimosa26 clusters with charge above this value (default=1)",
+                            _mimosa26ClusterChargeMin,  static_cast <int> (1) );
+
 
   // input collections
   std::vector<std::string > HitCollectionNameVecExample;
@@ -1528,11 +1531,11 @@ void EUTelMille::processEvent (LCEvent * event) {
                     hit->getType() == kEUTelSparseClusterImpl 
                     ) 
             {
-                if(cluster->getTotalCharge() <= 1)
+                if(cluster->getTotalCharge() <= getMimosa26ClusterChargeMin() )
                 {
 //                    printf("(1) Thin cluster (charge <=1), hit type: %5d  detector: %5d\n", hit->getType(), cluster->getDetectorID() );
-//                    delete cluster; 
-//                    continue;
+                    delete cluster; 
+                    continue;
                 }
             }
             else
@@ -1913,11 +1916,11 @@ void EUTelMille::processEvent (LCEvent * event) {
                     hit->getType() == kEUTelSparseClusterImpl 
                     ) 
                   {
-                      if(cluster->getTotalCharge() <= 1)
+                      if(cluster->getTotalCharge() <= getMimosa26ClusterChargeMin() )
                       {
 //                          printf("(2) Thin cluster (charge <=1), hit type: %5d  \n", hit->getType() );
-//                          delete cluster; 
-//                          continue;
+                          delete cluster; 
+                          continue;
                       }
                   }
 
