@@ -233,6 +233,22 @@ namespace eutelescope {
     std::vector<int> _clusterSizeY;
     std::vector<int> _subMatrix;
 
+    int  _maptrackid; 
+    std::map< int, std::vector<double> >  _trackhitposX;   
+    std::map< int, std::vector<double> >  _trackhitposY;
+    std::map< int, std::vector<int> >     _trackhitsizeX;
+    std::map< int, std::vector<int> >     _trackhitsizeY;
+    std::map< int, std::vector<int> >     _trackhitsubM;
+    std::map< int, std::vector<int> >     _trackhitsensorID;
+ 
+ 
+    int _cluSizeXCut ;
+    int _cluSizeYCut ;
+
+    int _trackNCluXCut;
+    int _trackNCluYCut;
+
+
 
     std::vector<double> _measuredX;
     std::vector<double> _measuredY;
@@ -240,11 +256,17 @@ namespace eutelescope {
     std::vector<double> _bgmeasuredX;
     std::vector<double> _bgmeasuredY;
 
-    std::vector<double> _fittedX;
-    std::vector<double> _fittedY;
+    std::map< int, std::vector<double> >  _fittedX;   
+    std::map< int, std::vector<double> >  _fittedY;   
+ 
+    std::map< int, std::vector<double> >  _bgfittedX;   
+    std::map< int, std::vector<double> >  _bgfittedY;   
+ 
+//obs.igor.280812    std::vector<double> _fittedX;
+//obs.igor.280812    std::vector<double> _fittedY;
 
-    std::vector<double> _bgfittedX;
-    std::vector<double> _bgfittedY;
+//obs.igor.280812    std::vector<double> _bgfittedX;
+//obs.igor.280812    std::vector<double> _bgfittedY;
 
     std::vector<float > _DUTalign;
 
@@ -468,6 +490,9 @@ namespace eutelescope {
     static std::string _EtaX3DHistoName;
     static std::string _EtaY3DHistoName;
 
+    static std::string _PixelEfficiencyHistoName    ;
+    static std::string _PixelResolutionHistoName    ;
+    static std::string _PixelChargeSharingHistoName ;
 
 #endif
 
