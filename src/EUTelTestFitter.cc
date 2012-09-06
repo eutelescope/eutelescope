@@ -772,7 +772,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 
-  if ( _nEvt %  10 == 0 ) 
+  if ( _nEvt %  1000 == 0 ) 
   {
     streamlog_out( MESSAGE2 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
@@ -2519,14 +2519,23 @@ double EUTelTestFitter::GetFitChi2()
       // Use small angle approximation: atan(x) = x
       // Should be:
       //    dth=atan((_fitX[1]-_fitX[0])*_planeDist[0]) ;
-      
       dth=(_fitX[1]-_fitX[0])*_planeDist[0]  -  _beamSlopeX;
       chi2 += _planeScat[0] * dth * dth;
 
-      //    dth=atan((_fitY[1]-_fitY[0])*_planeDist[0]) ;
-
       dth=(_fitY[1]-_fitY[0])*_planeDist[0]  -  _beamSlopeY ;
       chi2 += _planeScat[0] * dth * dth;
+/*
+    for(int ipl=1; ipl< 2;ipl++)
+     {  
+      dth=(_fitX[ipl]-_fitX[ipl-1])*_planeDist[ipl-1]  -  _beamSlopeX;
+      chi2 += _planeScat[ipl-1] * dth * dth;
+
+      //    dth=atan((_fitY[1]-_fitY[0])*_planeDist[0]) ;
+
+      dth=(_fitY[ipl]-_fitY[ipl-1])*_planeDist[ipl-1]  -  _beamSlopeY ;
+      chi2 += _planeScat[ipl-1] * dth * dth;
+     } 
+*/
     }
 
 
