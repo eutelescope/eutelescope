@@ -148,7 +148,7 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
                               _minNumberOfCorrelatedHits, static_cast <int> (5) );
 
   registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
-                             _hotPixelCollectionName, static_cast< string > ( "hotpixel_apix" ));
+                             _hotPixelCollectionName, static_cast< string > ( "hotpixel" ));
 
 }
 
@@ -1105,10 +1105,9 @@ void EUTelCorrelator::end() {
 //                _siPlanesOffsetY[ inPlane ] = _siPlanesPitchY[inPlane]*(_correlationBandCenterY/_correlationBandBinsY);
                
                 streamlog_out(MESSAGE) << "Hit Offset values: " ; 
-                printf("for plane %3d  the X offset is %12.6f, the Y offset is %12.6f \n", 
-                        inPlane, 
-                        _correlationBandBinsX == 0. ? 0.: _correlationBandCenterX/_correlationBandBinsX, 
-                        _correlationBandBinsY == 0. ? 0.: _correlationBandCenterY/_correlationBandBinsY );
+                streamlog_out (MESSAGE) << " plane : " << inPlane << " " ;
+                streamlog_out (MESSAGE) << " X offset : "<<  (_correlationBandBinsX == 0. ? 0.: _correlationBandCenterX/_correlationBandBinsX) ; 
+                streamlog_out (MESSAGE) << " Y offset : "<<  (_correlationBandBinsY == 0. ? 0.: _correlationBandCenterY/_correlationBandBinsY) ; 
                 streamlog_out(MESSAGE) << endl;
 
 
@@ -1449,14 +1448,11 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             colMax = safetyFactor * ( _hitMaxX[row] - _hitMinX[row]);
 
             streamlog_out (MESSAGE) << " GEAR contents: " ;
-            printf("X:: r=%5d  sizeX:%9.3f c=%5d  sizeX:%9.3f [col: %5d   row: %5d]\n",
-                    r,
-                    _siPlanesLayerLayout->getSensitiveSizeX( r ), 
-                     c,
-                    _siPlanesLayerLayout->getSensitiveSizeX( c ) ,
-                    colNBin, rowNBin
-                    );
+            streamlog_out (MESSAGE) << "X:: r= " << r << "  sizeX:" << _siPlanesLayerLayout->getSensitiveSizeX( r ) ;
+            streamlog_out (MESSAGE) << "X:: r= " << c << "  sizeX:" << _siPlanesLayerLayout->getSensitiveSizeX( c ) ;
+            streamlog_out (MESSAGE) << "[col: "<< colNBin<<" row:" << rowNBin << "]";
             streamlog_out (MESSAGE) << endl;
+
 if(colNBin>100) colNBin=colNBin/4;
 if(rowNBin>100) rowNBin=rowNBin/4;
            histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
@@ -1482,13 +1478,17 @@ if(rowNBin>100) rowNBin=rowNBin/4;
 
             
             streamlog_out (MESSAGE) << " GEAR contents: " ;
-            printf("Y:: r=%5d  sizeY:%9.3f c=%5d  sizeY:%9.3f [col: %5d   row: %5d]\n",
+            streamlog_out (MESSAGE) << "Y:: r= " << r << "  sizeY:" << _siPlanesLayerLayout->getSensitiveSizeY( r ) ;
+            streamlog_out (MESSAGE) << "Y:: r= " << c << "  sizeY:" << _siPlanesLayerLayout->getSensitiveSizeY( c ) ;
+            streamlog_out (MESSAGE) << "[col: "<< colNBin<<" row:" << rowNBin << "]";
+
+/*            printf("Y:: r=%5d  sizeY:%9.3f c=%5d  sizeY:%9.3f [col: %5d   row: %5d]\n",
                     static_cast<int>(r),
                     _siPlanesLayerLayout->getSensitiveSizeY( r ) ,
                     static_cast<int>(c),
                     _siPlanesLayerLayout->getSensitiveSizeY( c ) ,
                     static_cast<int>(colNBin), static_cast<int>(rowNBin)
-                    );
+                    );*/
             streamlog_out (MESSAGE) << endl;
 if(colNBin>100) colNBin=colNBin/4;
 if(rowNBin>100) rowNBin=rowNBin/4;
@@ -1676,11 +1676,13 @@ int EUTelCorrelator::guessSensorID(const double * hit )
     return sensorID;
   }
 
-      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+     streamlog_out( DEBUG ) << " _referenceHitVec " << _referenceHitVec << " " << _referenceHitCollectionName.c_str() << endl;
+     for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
       {
-        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-//        printf(" _referenceHitVec %p refhit %p \n", _referenceHitVec, refhit);
-        
+
+       EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+       streamlog_out( DEBUG ) << " _referenceHitVec " << _referenceHitVec << " refhit " << refhit << endl;
+       
         TVector3 hit3d( hit[0], hit[1], hit[2] );
         TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
         TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
