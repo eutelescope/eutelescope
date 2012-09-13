@@ -292,9 +292,9 @@ std::string EUTelDUTHistograms::_EtaX3DHistoName    = "EtaX3D";
 std::string EUTelDUTHistograms::_EtaY3DHistoName    = "EtaY3D";
 
 std::string EUTelDUTHistograms::_PixelEfficiencyHistoName       = "PixelEfficiency";
-std::string EUTelDUTHistograms::_PixelResolutionHistoName       = "PixelResolution";
+std::string EUTelDUTHistograms::_PixelResolutionXHistoName      = "PixelResolutionX";
+std::string EUTelDUTHistograms::_PixelResolutionYHistoName      = "PixelResolutionY";
 std::string EUTelDUTHistograms::_PixelChargeSharingHistoName    = "PixelChargeSharing";
-
 
 #endif
 
@@ -2924,13 +2924,15 @@ void EUTelDUTHistograms::bookHistos()
 
   // Pixel plots
 
-  pixYNBin  =  128;
-  pixYMin   = -0.0184*2.;
-  pixYMax   = 0.0184*2.;
-  pixXNBin  =  128;
-  pixXMin   = -0.0184*2.;
-  pixXMax   = 0.0184*2.;
-  pixTitle = "In pixel efficiency";
+  Int_t    pixYNBin  =  128;
+  Double_t pixYMin   = -0.0184*2.;
+  Double_t pixYMax   = 0.0184*2.;
+  Int_t    pixXNBin  =  128;
+  Double_t pixXMin   = -0.0184*2.;
+  Double_t pixXMax   = 0.0184*2.;
+  Double_t  pixVMin   = -1000000.;
+  Double_t  pixVMax   =  1000000.;
+  std::string pixTitle = "In pixel efficiency";
 
   // ---- // Efficiency
   if ( isHistoManagerAvailable )
@@ -2939,61 +2941,94 @@ void EUTelDUTHistograms::bookHistos()
       if ( histoInfo )
         {
           message<DEBUG> ( log() << (* histoInfo ) );
-          pixYNBin = histoInfo->_xBin;
-          pixYMin  = histoInfo->_xMin;
-          pixYMax  = histoInfo->_xMax;
-          pixVNBin = histoInfo->_yBin;
-          pixVMin  = histoInfo->_yMin;
-          pixVMax  = histoInfo->_yMax;
+          pixXNBin = histoInfo->_xBin;
+          pixXMin  = histoInfo->_xMin;
+          pixXMax  = histoInfo->_xMax;
+          pixYNBin = histoInfo->_yBin;
+          pixYMin  = histoInfo->_yMin;
+          pixYMax  = histoInfo->_yMax;
+          pixVMin  = histoInfo->_zMin;
+          pixVMax  = histoInfo->_zMax;
           if ( histoInfo->_title != "" ) pixTitle = histoInfo->_title;
         }
     }
 
-  AIDA::IHistogram2D * pixEfficiency3DHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_PixelEfficiencyHistoName.c_str(), pixYNBin, pixYMin, pixYMax, pixXNBin, pixXMin, pixXmax );
+  AIDA::IProfile2D * pixEfficiency3DHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_PixelEfficiencyHistoName.c_str(), pixYNBin, pixYMin, pixYMax, pixXNBin, pixXMin, pixXMax, pixVMin, pixVMax );
   pixEfficiency3DHisto->setTitle( pixTitle.c_str());
   _aidaHistoMap.insert(make_pair(_PixelEfficiencyHistoName, pixEfficiency3DHisto));
 
-  // ---- // Resolution
+  // ---- // Resolution X
   if ( isHistoManagerAvailable )
     {
-      histoInfo = histoMgr->getHistogramInfo( _PixelResolutionHistoName );
+      histoInfo = histoMgr->getHistogramInfo( _PixelResolutionXHistoName );
       if ( histoInfo )
         {
           message<DEBUG> ( log() << (* histoInfo ) );
-          pixYNBin = histoInfo->_xBin;
-          pixYMin  = histoInfo->_xMin;
-          pixYMax  = histoInfo->_xMax;
-          pixVNBin = histoInfo->_yBin;
-          pixVMin  = histoInfo->_yMin;
-          pixVMax  = histoInfo->_yMax;
+          pixXNBin = histoInfo->_xBin;
+          pixXMin  = histoInfo->_xMin;
+          pixXMax  = histoInfo->_xMax;
+          pixYNBin = histoInfo->_yBin;
+          pixYMin  = histoInfo->_yMin;
+          pixYMax  = histoInfo->_yMax;
+          pixVMin  = histoInfo->_zMin;
+          pixVMax  = histoInfo->_zMax;
           if ( histoInfo->_title != "" ) pixTitle = histoInfo->_title;
         }
     }
 
-  AIDA::IHistogram2D * pixResolution3DHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_PixelResolutionHistoName.c_str(), pixYNBin, pixYMin, pixYMax, pixXNBin, pixXMin, pixXmax );
-  pixResolution3DHisto->setTitle( pixTitle.c_str());
-  _aidaHistoMap.insert(make_pair(_PixelEfficiencyHistoName, pixResolution3DHisto));
+  AIDA::IProfile2D * pixResolutionX3DHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_PixelResolutionXHistoName.c_str(), pixYNBin, pixYMin, pixYMax, pixXNBin, pixXMin, pixXMax, pixVMin, pixVMax );
+  pixResolutionX3DHisto->setTitle( pixTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_PixelResolutionXHistoName, pixResolutionX3DHisto));
 
-  // ---- // Charge Sharing 
+  // ---- // Resolution Y
+  if ( isHistoManagerAvailable )
+    {
+      histoInfo = histoMgr->getHistogramInfo( _PixelResolutionYHistoName );
+      if ( histoInfo )
+        {
+          message<DEBUG> ( log() << (* histoInfo ) );
+          pixXNBin = histoInfo->_xBin;
+          pixXMin  = histoInfo->_xMin;
+          pixXMax  = histoInfo->_xMax;
+          pixYNBin = histoInfo->_yBin;
+          pixYMin  = histoInfo->_yMin;
+          pixYMax  = histoInfo->_yMax;
+          pixVMin  = histoInfo->_zMin;
+          pixVMax  = histoInfo->_zMax;
+          if ( histoInfo->_title != "" ) pixTitle = histoInfo->_title;
+        }
+    }
+
+  AIDA::IProfile2D * pixResolutionY3DHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_PixelResolutionYHistoName.c_str(), pixYNBin, pixYMin, pixYMax, pixXNBin, pixXMin, pixXMax, pixVMin, pixVMax );
+  pixResolutionY3DHisto->setTitle( pixTitle.c_str());
+  _aidaHistoMap.insert(make_pair(_PixelResolutionYHistoName, pixResolutionY3DHisto));
+
+  // ---- // Charge sharing 
   if ( isHistoManagerAvailable )
     {
       histoInfo = histoMgr->getHistogramInfo( _PixelChargeSharingHistoName );
       if ( histoInfo )
         {
           message<DEBUG> ( log() << (* histoInfo ) );
-          pixYNBin = histoInfo->_xBin;
-          pixYMin  = histoInfo->_xMin;
-          pixYMax  = histoInfo->_xMax;
-          pixVNBin = histoInfo->_yBin;
-          pixVMin  = histoInfo->_yMin;
-          pixVMax  = histoInfo->_yMax;
-          if ( histoInfo->_title != "" ) pixTitle = histoInfo->_title;
+          pixXNBin = histoInfo->_xBin;
+          pixXMin  = histoInfo->_xMin;
+          pixXMax  = histoInfo->_xMax;
+          pixYNBin = histoInfo->_yBin;
+          pixYMin  = histoInfo->_yMin;
+          pixYMax  = histoInfo->_yMax;
+          pixVMin  = histoInfo->_zMin;
+          pixVMax  = histoInfo->_zMax;
+         if ( histoInfo->_title != "" ) pixTitle = histoInfo->_title;
         }
     }
 
-  AIDA::IHistogram2D * pixChargeSharing3DHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_PixelChargeSharingHistoName.c_str(), pixYNBin, pixYMin, pixYMax, pixXNBin, pixXMin, pixXmax );
+  AIDA::IProfile2D * pixChargeSharing3DHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_PixelChargeSharingHistoName.c_str(), pixYNBin, pixYMin, pixYMax, pixXNBin, pixXMin, pixXMax, pixVMin, pixVMax );
   pixChargeSharing3DHisto->setTitle( pixTitle.c_str());
   _aidaHistoMap.insert(make_pair(_PixelEfficiencyHistoName, pixChargeSharing3DHisto));
+
+
+
+
 
 
 
