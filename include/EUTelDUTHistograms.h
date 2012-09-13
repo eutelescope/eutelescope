@@ -491,7 +491,8 @@ namespace eutelescope {
     static std::string _EtaY3DHistoName;
 
     static std::string _PixelEfficiencyHistoName    ;
-    static std::string _PixelResolutionHistoName    ;
+    static std::string _PixelResolutionXHistoName    ;
+    static std::string _PixelResolutionYHistoName    ;
     static std::string _PixelChargeSharingHistoName ;
 
 #endif
