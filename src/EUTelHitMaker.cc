@@ -221,7 +221,7 @@ void EUTelHitMaker::DumpReferenceHitDB()
   delete now;
 
   LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
-  double refVec[2] ;
+  double refVec[3] ;
   for(size_t ii = 0 ; ii <  _orderedSensorIDVec.size(); ii++)
   {
     EUTelReferenceHit * refhit = new EUTelReferenceHit();
