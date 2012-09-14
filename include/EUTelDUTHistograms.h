@@ -91,6 +91,8 @@ namespace eutelescope {
 
   public:
 
+    virtual int  read_track(LCEvent *event); 
+    virtual int  read_track_from_collections(LCEvent *event); 
 
 
     //! Returns a new instance of EUTelDUTHistograms
@@ -144,7 +146,7 @@ namespace eutelescope {
     void bookHistos();
 
     virtual int guessSensorID( const double* hit);
-    virtual int getClusterSize(int sensorID, TrackerHitImpl * hit, int& sizeX, int& sizeY, int& subMatrix );
+    virtual int getClusterSize(int sensorID, TrackerHit * hit, int& sizeX, int& sizeY, int& subMatrix );
     virtual int getSubMatrix(int sensorID, float xlocal);
 
     //! Called after data processing for clean up.
@@ -198,6 +200,10 @@ namespace eutelescope {
 
     //! Input \c TrackerHit collection name
     std::string _inputHitColName ;
+    std::string _inputRecHitColName ;
+    std::string _inputFitHitColName ;
+
+
 
     //! Flag for manual DUT selection
 
@@ -226,8 +232,6 @@ namespace eutelescope {
     double _pitchX;
     double _pitchY;
 
-    std::vector<double> _localX;
-    std::vector<double> _localY;
 
     std::vector<int> _clusterSizeX;
     std::vector<int> _clusterSizeY;
@@ -255,6 +259,9 @@ namespace eutelescope {
 
     std::vector<double> _bgmeasuredX;
     std::vector<double> _bgmeasuredY;
+
+    std::map< int, std::vector<double> >  _localX;   
+    std::map< int, std::vector<double> >  _localY;   
 
     std::map< int, std::vector<double> >  _fittedX;   
     std::map< int, std::vector<double> >  _fittedY;   
@@ -491,8 +498,8 @@ namespace eutelescope {
     static std::string _EtaY3DHistoName;
 
     static std::string _PixelEfficiencyHistoName    ;
-    static std::string _PixelResolutionXHistoName    ;
-    static std::string _PixelResolutionYHistoName    ;
+    static std::string _PixelResolutionXHistoName   ;
+    static std::string _PixelResolutionYHistoName   ;
     static std::string _PixelChargeSharingHistoName ;
 
 #endif

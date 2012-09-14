@@ -296,6 +296,7 @@ std::string EUTelDUTHistograms::_PixelResolutionXHistoName      = "PixelResoluti
 std::string EUTelDUTHistograms::_PixelResolutionYHistoName      = "PixelResolutionY";
 std::string EUTelDUTHistograms::_PixelChargeSharingHistoName    = "PixelChargeSharing";
 
+
 #endif
 
 
@@ -322,6 +323,20 @@ EUTelDUTHistograms::EUTelDUTHistograms() : Processor("EUTelDUTHistograms") {
                            _inputHitColName,
                            std::string("hit") ) ;
 
+  registerInputCollection( LCIO::TRACKERHIT,
+                           "InputRecHitCollectionName" ,
+                           "Name of the input DUT hit collection"  ,
+                           _inputRecHitColName,
+                           std::string("localHit") ) ;
+
+  registerInputCollection( LCIO::TRACKERHIT,
+                           "InputFitHitCollectionName" ,
+                           "Name of the input DUT hit collection"  ,
+                           _inputFitHitColName,
+                           std::string("fithit") ) ;
+
+
+
   // other processor parameters:
 
   registerProcessorParameter ("UseManualDUT",
@@ -339,12 +354,12 @@ EUTelDUTHistograms::EUTelDUTHistograms() : Processor("EUTelDUTHistograms") {
 
   registerProcessorParameter ("DUTpitchX",
                               "DUT sensor pitch in X",
-                              _pitchX,  static_cast < double > (0.03));
+                              _pitchX,  static_cast < double > (0.0184));
 
 
   registerProcessorParameter ("DUTpitchY",
                               "DUT sensor pitch in Y",
-                              _pitchY,  static_cast < double > (0.03));
+                              _pitchY,  static_cast < double > (0.0184));
 
 
   registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("reference") );
@@ -391,12 +406,12 @@ void EUTelDUTHistograms::init() {
 
   _referenceHitVec = 0;
 
+  _maptrackid = 0;
 //  _cluSizeXCut = -1;
 //  _cluSizeYCut = -1;
 
 //  _trackNCluXCut = 0;
 //  _trackNCluYCut = 0;
-
 
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
@@ -475,6 +490,7 @@ void EUTelDUTHistograms::init() {
 
 }
 
+
 void EUTelDUTHistograms::processRunHeader( LCRunHeader* runHeader) {
 
   auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
@@ -516,7 +532,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 
- if ( _nEvt % 1000 == 0 ) {
+  if ( _nEvt % 1000 == 0 ) {
     streamlog_out( MESSAGE2 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
@@ -529,153 +545,40 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   if(debug)message<MESSAGE> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
 
-  //
-  // Get input collections
-  //
-
-  LCCollection* trackcol;
-  try {
-    trackcol = event->getCollection( _inputTrackColName ) ;
-  } catch (lcio::DataNotAvailableException& e) {
-    if( evtNr < 100 ) 
-    message<ERROR> ( log() << "Not able to get collection "
-                     << _inputTrackColName
-                     << "\nfrom event " << event->getEventNumber()
-                     << " in run " << event->getRunNumber() <<  "[message suppressed after event #100 / hardcoded]" );
-    return;
-//    throw SkipEventException(this);
-  }
 
 
-  LCCollection* hitcol = NULL;
-  bool _DUTok=true;
-  try {
-    hitcol = event->getCollection( _inputHitColName ) ;
-  } catch (lcio::DataNotAvailableException& e) {
-    if( evtNr < 100 ) 
-    message<ERROR> ( log() << "Not able to get collection "
-                     << _inputHitColName
-                     << "\nfrom event " << event->getEventNumber()
-                     << " in run " << event->getRunNumber() <<  "[message suppressed after event #100 / hardcoded]"  );
-    _DUTok=false;
-    //
-    // Do not skip event if DUT hits missing - efficiency and
-    //   background calculations still have to be done!
-    //
-    //   throw SkipEventException(this);
-  }
 
-  // Clear local fit storage tables
-  // 'fitted' table used for comparison with measured hits
-  // 'bgfitted' used for comparison with hits from previous event
-
-  _fittedX.clear();
-  _fittedY.clear();
-
-  _bgfittedX.clear();
-  _bgfittedY.clear();
-
-  _trackhitposX.clear();   
-  _trackhitposY.clear();
-  _trackhitsizeX.clear();
-  _trackhitsizeY.clear();
-  _trackhitsubM.clear();
-  _trackhitsensorID.clear();
-
-  // Loop over tracks in input track collection
-  // Read fitted positions at DUT
-
-  int nTrack = trackcol->getNumberOfElements()  ;
-
-
-  if(debug)message<MESSAGE> ( log() << "Total of " << nTrack << " tracks in input collection " );
-
-// looking through a track info:
-// initialise a class-internal track counter:
-  _maptrackid = 0;
-  for(int itrack=0; itrack< nTrack ; itrack++)
-    {
-      Track * fittrack = dynamic_cast<Track*>( trackcol->getElementAt(itrack) ) ;
- 
-      // skip if for some reason the track collection is at NULL address
-      if( fittrack == 0 ) continue;
-
-      const float  * por = fittrack->getReferencePoint();
-
-
-// Does track PoR match DUT position?
-//obsolete get id by z:      double dist = por[2] - _zDUT ;
-      int fsensorID = guessSensorID( (double*)(por));
-//      printf("\n----\n track %2d id %2d  reference point %5.3f %5.3f %5.3f \n", itrack, fsensorID, por[0], por[1], por[2] );
-
-/*    if( fsensorID == _iDUT  )  
-        {
-          // for hits on DUT 
-          _fittedX[_maptrackid].push_back(por[0]);
-          _fittedY[_maptrackid].push_back(por[1]);
-          _bgfittedX[_maptrackid].push_back(por[0]);
-          _bgfittedY[_maptrackid].push_back(por[1]);
-        }
-      else */
-        {
-          // Look at hits assigned to track
-          std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getTrackerHits();
-
-          int nHit =   trackhits.size();
-
-          for(int ihit=0; ihit< nHit ; ihit++)
-            {
-              TrackerHit * meshit = trackhits.at(ihit);
-
-              // Hit position
-
-              const double * pos = meshit->getPosition();
-              int hsensorID = guessSensorID(pos);
-
-//              dist =  pos[2] - _zDUT ;
-
-              // Look at fitted hits only!
-
-              if( meshit->getType() >= 32  && hsensorID == _iDUT  )  // get all fitted hits on board
-                {
-//       printf("---   hit %2d id %2d  point %5.3f %5.3f %5.3f \n", ihit, hsensorID, pos[0], pos[1], pos[2] );
-
-                  _fittedX[_maptrackid].push_back(pos[0]);
-                  _fittedY[_maptrackid].push_back(pos[1]);
-                  _bgfittedX[_maptrackid].push_back(pos[0]);
-                  _bgfittedY[_maptrackid].push_back(pos[1]);
-                  break;
-                }
-            }
+// fill tracking info:
   
-          // look at reconstructed hits only for all planes (excluding DUT !)       
-          // hits that belong to track "_maptrackid"
-          int iplanes = 0;  
-          for(int ihit=0; ihit< nHit ; ihit++)
-            {
-              TrackerHit * meshit = trackhits.at(ihit);
 
-              // Hit position
-              const double * pos = meshit->getPosition();
-              int hsensorID = guessSensorID(pos);
-
-              if( meshit->getType() < 32  ) //&& hsensorID != _iDUT  ) // get all 
-                {
-                  int sizeX = -1;
-                  int sizeY = -1;
-                  int subMatrix = -1; 
-                  getClusterSize( hsensorID, static_cast<TrackerHitImpl*>(meshit), sizeX, sizeY, subMatrix);
-                  _trackhitposX[_maptrackid].push_back(pos[0]);
-                  _trackhitposY[_maptrackid].push_back(pos[1]);
-                  _trackhitsizeX[_maptrackid].push_back( sizeX );
-                  _trackhitsizeY[_maptrackid].push_back( sizeY );
-                  _trackhitsubM[_maptrackid].push_back(subMatrix);
-                  _trackhitsensorID[_maptrackid].push_back( hsensorID );
-                }
-            }
-        }
-
-      // End of loop over fitted tracks
+   if( _inputFitHitColName != "dummy" )
+   {
+     if(debug)message<MESSAGE> ( log() << "inputFitHitColName = " << _inputFitHitColName << " (not dummy)" << endl); 
+     if( read_track_from_collections( event ) > 0 ) 
+     {
+//       message<MESSAGE> ( log() << "no tracks existing!" << endl); 
+       return;
+     }
+   } 
+   else
+   {
+     if(debug)message<MESSAGE> ( log() << "inputFitHitColName = " << _inputFitHitColName << " (should be called dummy)" << endl); 
+     if( read_track( event ) > 0 ) 
+     {
+//       message<MESSAGE> ( log() << "no tracks existing!" << endl); 
+       return;
+     }
+   }
+//return;
+/*
+  for( int itrack=0; itrack<_maptrackid; itrack++)
+  {
+    printf(" track %2d / %2d  ::  ", itrack, _maptrackid);
+    printf("--- sensors: %3u \n",  _trackhitsensorID[itrack].size());
+    for( int i=0; i< _trackhitsensorID[itrack].size() ; i++)
+    {
+       printf("-------- sensor %2d  pos[%5.3f %5.3f] size[%2d %2d] submatrix[%2d]\n", 
+              _trackhitsensorID[itrack][i], _trackhitposX[itrack][i] , _trackhitposY[itrack][i], _trackhitsizeX[itrack][i], _trackhitsizeY[itrack][i], _trackhitsubM[itrack][i] );  
       _maptrackid++; 
    }
 /*
@@ -701,10 +604,10 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   } 
 //return;
 
+  if(debug)message<MESSAGE> ( log() << _measuredX.size() << " hits at DUT " );
+
+
   // Histograms of fitted positions
-
-
-
   for( int itrack=0; itrack<_maptrackid; itrack++)
   {
     for( int ifit=0;ifit<(int)_fittedX[itrack].size(); ifit++)
@@ -712,12 +615,8 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXHistoName]))->fill(_fittedX[itrack][ifit]);
 
-
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedYHistoName]))->fill(_fittedY[itrack][ifit]);
-
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_FittedXYHistoName]))->fill(_fittedX[itrack][ifit],_fittedY[itrack][ifit]);
-
-
       if(debug)message<MESSAGE> ( log() << "Fit " << ifit
                                 << "   X = " << _fittedX[itrack][ifit]
                                 << "   Y = " << _fittedY[itrack][ifit]) ;
@@ -726,200 +625,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   }
 
 
-
-
-  // Match fitted positions with hits from previous event (background estimate)
-  // Skip first event
-
-  if(_nEvt > 1)
-    {
-      int nMatch=0;
-      double distmin;
-
-      for(int itrack=0; itrack< _maptrackid; itrack++)
-      {
-       do
-       {
-        int bestfit=-1;
-        int besthit=-1;
-
-        distmin=_distMax*_distMax+10.;
-
-        for(int ifit=0;ifit<(int)_bgfittedX[itrack].size(); ifit++)
-          for(int ihit=0; ihit< (int)_bgmeasuredX.size() ; ihit++)
-            {
-              double dist=
-                (_bgmeasuredX[ihit]-_bgfittedX[itrack][ifit])*(_bgmeasuredX[ihit]-_bgfittedX[itrack][ifit])
-                + (_bgmeasuredY[ihit]-_bgfittedY[itrack][ifit])*(_bgmeasuredY[ihit]-_bgfittedY[itrack][ifit]);
-
-              if(dist<distmin)
-                {
-                  distmin=dist;
-                  besthit=ihit;
-                  bestfit=ifit;
-                }
-            }
-
-        // Match found:
-
-        if(distmin < _distMax*_distMax)
-          {
-
-            nMatch++;
-// calculate in pixel coordinate
-
-            // Histograms of measured-fitted shifts
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-
-            (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_BgShiftXHistoName]))->fill(_bgmeasuredX[besthit]-_bgfittedX[itrack][bestfit]);
-
-            (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_BgShiftYHistoName]))->fill(_bgmeasuredY[besthit]-_bgfittedY[itrack][bestfit]);
-
-            (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_BgShiftXYHistoName]))->fill(_bgmeasuredX[besthit]-_bgfittedX[itrack][bestfit],_bgmeasuredY[besthit]-_bgfittedY[itrack][bestfit]);
-
-            // Efficiency plots
-
-            (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_BgEfficiencyXHistoName]))->fill(_bgfittedX[itrack][bestfit],1.);
-
-            (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_BgEfficiencyYHistoName]))->fill(_bgfittedY[itrack][bestfit],1.);
-
-            (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_BgEfficiencyXYHistoName]))->fill(_bgfittedX[itrack][bestfit],_bgfittedY[itrack][bestfit],1.);
-
-#endif
-
-            // Remove matched entries from the list (so the next matching pair
-            // can be looked for)
-
-            _bgfittedX[itrack].erase(_bgfittedX[itrack].begin()+bestfit);
-            _bgfittedY[itrack].erase(_bgfittedY[itrack].begin()+bestfit);
-
-            _bgmeasuredX.erase(_bgmeasuredX.begin()+besthit);
-            _bgmeasuredY.erase(_bgmeasuredY.begin()+besthit);
-
-          }
-//printf("patching background with (dist) %5.3f < (_distMax) %5.3f \n", TMath::Sqrt(distmin), _distMax);
-
-        // End of loop of matching background hits to fitted positions
-       }
-       while( distmin < _distMax*_distMax);
-
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-
-      // Background efficiency plots - tracks unmached to bg hits
-
-      for(int ifit=0;ifit<(int)_bgfittedX[itrack].size(); ifit++)
-        {
-          (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_BgEfficiencyXHistoName]))->fill(_bgfittedX[itrack][ifit],0.);
-
-          (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_BgEfficiencyYHistoName]))->fill(_bgfittedY[itrack][ifit],0.);
-
-          (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_BgEfficiencyXYHistoName]))->fill(_bgfittedX[itrack][ifit],_bgfittedY[itrack][ifit],0.);
-        }
-
-#endif
-      }// end of track loop
-
-    }  // End of if(_nEvt > 1)  - end of background calculations
-
-
-  // Clear local tables with measured position
-  _clusterSizeX.clear();
-  _clusterSizeY.clear();
-  _subMatrix.clear();
-
-
-  _measuredX.clear();
-  _measuredY.clear();
-
-  _localX.clear();
-  _localY.clear();
-
-  _bgmeasuredX.clear();
-  _bgmeasuredY.clear();
-
-  // Loop over hits in input collection
-  // Read measured positions at DUT
-
-  int nHit = 0;
-
-  if(_DUTok) nHit = hitcol->getNumberOfElements();
-
-  if(debug)message<MESSAGE> ( log() << "Total of " << nHit << " tracker hits in input collection " );
-
-
-  for(int ihit=0; ihit< nHit ; ihit++)
-    {
-      TrackerHit * meshit = dynamic_cast<TrackerHit*>( hitcol->getElementAt(ihit) ) ;
-
-      // Hit position
-
-      const double * pos = meshit->getPosition();
-
-      int   sensorID = guessSensorID( pos );
-
-// obsolete get id by z:      double dist = pos[2] - _zDUT;
-// if ( dist*dist < -1 )
-      if( sensorID ==_iDUT ) // measured info only for DUT plane
-        {
-          int sizeX = -1;
-          int sizeY = -1;
-          int subMatrix = -1;
-          getClusterSize( sensorID, static_cast<TrackerHitImpl*>(meshit), sizeX, sizeY, subMatrix);
-          //printf("%d %d \n", sizeX,sizeY);  
-          _clusterSizeX.push_back(sizeX);
-          _clusterSizeY.push_back(sizeY);
-          _subMatrix.push_back( subMatrix );
-
-//      printf(" =====  %2d id %2d  mes %5.3f %5.3f %5.3f \n", ihit, sensorID, pos[0], pos[1], pos[2] );
-
-
-          // Apply alignment corrections
-
-          double corrX  =   pos[0]*cos(_DUTalign.at(2))
-            +pos[1]*sin(_DUTalign.at(2))
-            +_DUTalign.at(0);
-
-          double corrY  =  pos[1]*cos(_DUTalign.at(2))
-            -pos[0]*sin(_DUTalign.at(2))
-            +_DUTalign.at(1);
-
-          _measuredX.push_back(corrX);
-          _measuredY.push_back(corrY);
-          _bgmeasuredX.push_back(corrX);
-          _bgmeasuredY.push_back(corrY);
-
-          // Local position should be taken from the cluster.
-          // This is a temporary solution:
-
-          double locX = pos[0];
-          double locY = pos[1];
-
-          // Subtract position of the central pixel
-
-          int picX = (int)(locX/_pitchX);
-
-          if(locX<0)picX--;
-
-          locX-=(picX+0.5)*_pitchX;
-
-          int picY = (int)(locY/_pitchY);
-
-          if(locY<0)picY--;
-
-          locY-=(picY+0.5)*_pitchY;
-
-          _localX.push_back(locX);
-          _localY.push_back(locY);
-        }
-    }
-
-
-  if(debug)message<MESSAGE> ( log() << _measuredX.size() << " hits at DUT " );
-
-
   // Histograms of measured positions
-
-
   for(int ihit=0;ihit<(int)_measuredX.size(); ihit++)
     {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA) 
@@ -961,20 +667,23 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
     for(int ifit=0;ifit<(int)_fittedX[itrack].size(); ifit++)
     {
       if( (int)_measuredX.size() < 1 ) continue;
-//      printf("%2d %5.3f: ihit{", ifit, _fittedX[itrack][ifit] );
+  //    printf("%2d %5.3f: ihit{", ifit, _fittedX[itrack][ifit] );
 
       for(int ihit=0; ihit< (int)_measuredX.size() ; ihit++)
         {
-//          printf("%2d %5.3f",ihit, _measuredX[ihit]);
-//          if(ihit<(int)_measuredX.size()-1)
-//               printf(":");
-//          else 
-//               printf("}");
+ //         printf("%2d %5.3f",ihit, _measuredX[ihit]);
+ //         if(ihit<(int)_measuredX.size()-1)
+ //              printf(":");
+ //         else 
+ //              printf("}");
 
           double dist2rd=
             (_measuredX[ihit]-_fittedX[itrack][ifit])*(_measuredX[ihit]-_fittedX[itrack][ifit])
             + (_measuredY[ihit]-_fittedY[itrack][ifit])*(_measuredY[ihit]-_fittedY[itrack][ifit]);
 
+                  if(debug)message<MESSAGE> ( log() << "Fit " << ifit << " ["<< _fittedX[itrack][ifit] << ":" << _fittedY[itrack][ifit] << "]" << endl) ;
+                  if(debug)message<MESSAGE> ( log() << "rec " << ihit << " ["<< _measuredX[ihit] << ":" << _measuredY[ihit] << "]" << endl) ;
+                  if(debug)message<MESSAGE> ( log() << "distance : " << TMath::Sqrt( dist2rd )  << endl) ;
           if(dist2rd<distmin)
             {
               distmin = dist2rd;
@@ -983,36 +692,16 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
             }
         }
  
-//      if(ifit<(int)_fittedX[itrack].size()-1 )
-//           printf(":");
-//      else 
-//           printf("]");
-   }
-//           printf("\n");
+ //     if(ifit<(int)_fittedX[itrack].size()-1 )
+ //          printf(":");
+ //     else 
+ //          printf("]");
+    }
+ //          printf("\n");
  
     // Match found:
 
-    int _track_clu_size_X =  0;
-    int _track_clu_size_Y =  0;
-
-    if( _trackNCluXCut > 0 )
-    {
-      for(int i=0;i<_trackhitsensorID.size();i++)
-      { 
-//         if( _trackhitsensorID[i] ==_iDUT ) continue;
-        if( _trackhitsizeX[itrack][i] == _cluSizeXCut ) _track_clu_size_X++; 
-        if( _trackhitsizeY[itrack][i] == _cluSizeYCut ) _track_clu_size_Y++; 
-      }
-
-    }
-//      if( _track_clu_size_X >0 )
-//    { 
-//      printf("track %2d dist[%5.3f %5.3f] _clusizeX[%2d %2d %2d] _clusizeY[%2d %2d %2d] \n", itrack, TMath::Sqrt(distmin), _distMax, 
-//                      _cluSizeXCut,_track_clu_size_X, _trackNCluXCut,
-//                      _cluSizeYCut, _track_clu_size_Y, _trackNCluYCut );
-//    }
-
-    if( distmin < _distMax*_distMax  && _track_clu_size_X == _trackNCluXCut && _track_clu_size_Y == _trackNCluYCut )
+    if( distmin < _distMax*_distMax  )
       {
 
         nMatch++;
@@ -1227,14 +916,17 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
           (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoX ]))->fill(shiftX);
           (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoY ]))->fill(shiftY);
           (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[ histoXY ]))->fill(shiftX, shiftY);
-        
 
+// cout << " localX "<< bestfit ;
+// cout << " " << _localX[bestfit] << endl;        
+        (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[ _PixelEfficiencyHistoName ] ) )->fill( _localX[itrack][bestfit]*1000., _localY[itrack][bestfit]*1000., 1.);
+        (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[ _PixelResolutionXHistoName ] ) )->fill( _localX[itrack][bestfit]*1000., _localY[itrack][bestfit]*1000., _measuredX[besthit]-_fittedX[itrack][bestfit] );
+        (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[ _PixelResolutionYHistoName ] ) )->fill( _localX[itrack][bestfit]*1000., _localY[itrack][bestfit]*1000., _measuredY[besthit]-_fittedY[itrack][bestfit] );
+//      (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[ _PixelChargeSharingHistoName ] ) )->fill( _localX[itrack][bestfit], _localY[itrack][bestfit], 0. );
+//
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_ShiftXvsYHistoName]))->fill(_fittedY[itrack][bestfit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
-
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_ShiftYvsXHistoName]))->fill(_fittedX[itrack][bestfit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
-
         (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ShiftXvsX2DHistoName]))->fill(_fittedX[itrack][bestfit], _measuredX[besthit]-_fittedX[itrack][bestfit]);
-
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_ShiftXvsXHistoName]))->fill(_fittedX[itrack][bestfit], _measuredX[besthit]-_fittedX[itrack][bestfit]);
 
         (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_ShiftYvsY2DHistoName]))->fill(_fittedY[itrack][bestfit], _measuredY[besthit]-_fittedY[itrack][bestfit]);
@@ -1249,41 +941,33 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
         // Eta function check plots
 
 
-        (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaXHistoName]))->fill(_localX[besthit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
-
-        (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaYHistoName]))->fill(_localY[besthit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
-
-        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaX2DHistoName]))->fill(_localX[besthit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
-
-        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaY2DHistoName]))->fill(_localY[besthit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
-
-        (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EtaX3DHistoName]))->fill(_localX[besthit],_localY[besthit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
-
-        (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EtaY3DHistoName]))->fill(_localX[besthit],_localY[besthit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
+        (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaXHistoName]))->fill(_localX[itrack][bestfit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
+        (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaYHistoName]))->fill(_localY[itrack][bestfit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaX2DHistoName]))->fill(_localX[itrack][bestfit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaY2DHistoName]))->fill(_localY[itrack][bestfit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
+        (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EtaX3DHistoName]))->fill(_localX[itrack][bestfit],_localY[itrack][bestfit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
+        (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EtaY3DHistoName]))->fill(_localX[itrack][bestfit],_localY[itrack][bestfit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
 
         // extend Eta histograms to 2 pitch range
 
 #endif
 
-        if(_localX[besthit]<0)
-          _localX[besthit]+=_pitchX;
+        if(_localX[itrack][bestfit]<0)
+          _localX[itrack][bestfit]+=_pitchX;
         else
-          _localX[besthit]-=_pitchX;
+          _localX[itrack][bestfit]-=_pitchX;
 
-        if(_localY[besthit]<0)
-          _localY[besthit]+=_pitchY;
+        if(_localY[itrack][bestfit]<0)
+          _localY[itrack][bestfit]+=_pitchY;
         else
-          _localY[besthit]-=_pitchY;
+          _localY[itrack][bestfit]-=_pitchY;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-        (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaXHistoName]))->fill(_localX[besthit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
-
-        (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaYHistoName]))->fill(_localY[besthit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
-
-        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaX2DHistoName]))->fill(_localX[besthit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
-
-        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaY2DHistoName]))->fill(_localY[besthit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
+        (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaXHistoName]))->fill(_localX[itrack][bestfit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
+        (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaYHistoName]))->fill(_localY[itrack][bestfit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaX2DHistoName]))->fill(_localX[itrack][bestfit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
+        (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaY2DHistoName]))->fill(_localY[itrack][bestfit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
 
 
         // Efficiency plots
@@ -1314,12 +998,15 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
         _measuredX.erase(_measuredX.begin()+besthit);
         _measuredY.erase(_measuredY.begin()+besthit);
 
-        _localX.erase(_localX.begin()+besthit);
-        _localY.erase(_localY.begin()+besthit);
+// cout << " localX "<< bestfit ;
+// cout << " " << _localX[itrack][bestfit] << endl;        
+ 
+        _localX[itrack].erase(_localX[itrack].begin()+bestfit);
+        _localY[itrack].erase(_localY[itrack].begin()+bestfit);
 
-      }
+//       printf("patching track rate with (dist) %5.3f < (_distMax) %5.3f \n", TMath::Sqrt(distmin), _distMax);
 
-//      printf("patching track rate with (dist) %5.3f < (_distMax) %5.3f \n", TMath::Sqrt(distmin), _distMax);
+     }
 
     // End of loop of matching DUT hits to fitted positions
 //  }
@@ -1337,6 +1024,13 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   // Efficiency plots - unmatched tracks
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+
+  for(int ifit=0;ifit<(int)_localX[itrack].size(); ifit++)
+    {
+ //     printf("%2d %5.3f: local", ifit, _fittedX[itrack][ifit] );
+ //     message<MESSAGE>( log() << " :[" << ifit << "] :" << _localX[itrack][ ifit ]*1000.0 << endl);
+      (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_PixelEfficiencyHistoName]))->fill(_localX[itrack][ ifit ]*1000.,_localY[itrack][ ifit ]*1000.,0.);
+    }
 
   for(int ifit=0;ifit<(int)_fittedX[itrack].size(); ifit++)
     {
@@ -2924,15 +2618,16 @@ void EUTelDUTHistograms::bookHistos()
 
   // Pixel plots
 
-  Int_t    pixYNBin  =  128;
-  Double_t pixYMin   = -0.0184*2.;
-  Double_t pixYMax   = 0.0184*2.;
-  Int_t    pixXNBin  =  128;
-  Double_t pixXMin   = -0.0184*2.;
-  Double_t pixXMax   = 0.0184*2.;
+  Int_t     pixYNBin  =  128;
+  Double_t  pixYMin   = -18.4*2.;
+  Double_t  pixYMax   =  18.4*2.;
+  Int_t     pixXNBin  =  128;
+  Double_t  pixXMin   = -18.4*2.;
+  Double_t  pixXMax   =  18.4*2.;
   Double_t  pixVMin   = -1000000.;
   Double_t  pixVMax   =  1000000.;
-  std::string pixTitle = "In pixel efficiency";
+
+  string pixTitle     = "In pixel efficiency";
 
   // ---- // Efficiency
   if ( isHistoManagerAvailable )
@@ -3003,7 +2698,7 @@ void EUTelDUTHistograms::bookHistos()
   pixResolutionY3DHisto->setTitle( pixTitle.c_str());
   _aidaHistoMap.insert(make_pair(_PixelResolutionYHistoName, pixResolutionY3DHisto));
 
-  // ---- // Charge sharing 
+  // ---- // Charge Sharing 
   if ( isHistoManagerAvailable )
     {
       histoInfo = histoMgr->getHistogramInfo( _PixelChargeSharingHistoName );
@@ -3018,17 +2713,13 @@ void EUTelDUTHistograms::bookHistos()
           pixYMax  = histoInfo->_yMax;
           pixVMin  = histoInfo->_zMin;
           pixVMax  = histoInfo->_zMax;
-         if ( histoInfo->_title != "" ) pixTitle = histoInfo->_title;
+          if ( histoInfo->_title != "" ) pixTitle = histoInfo->_title;
         }
     }
 
   AIDA::IProfile2D * pixChargeSharing3DHisto = AIDAProcessor::histogramFactory(this)->createProfile2D(_PixelChargeSharingHistoName.c_str(), pixYNBin, pixYMin, pixYMax, pixXNBin, pixXMin, pixXMax, pixVMin, pixVMax );
   pixChargeSharing3DHisto->setTitle( pixTitle.c_str());
   _aidaHistoMap.insert(make_pair(_PixelEfficiencyHistoName, pixChargeSharing3DHisto));
-
-
-
-
 
 
 
@@ -3134,6 +2825,7 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
   double minDistance =  numeric_limits< double >::max() ;
 //  double * hitPosition = const_cast<double * > (hit->getPosition());
 
+//  message<MESSAGE> ( log() <<  "referencehit collection: " << _referenceHitCollectionName << " at "<< _referenceHitVec << endl);
 //  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
   if( _referenceHitVec == 0)
   {
@@ -3141,28 +2833,41 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
     return 0;
   }
 
+  if(  isFirstEvent() )  message<MESSAGE> ( log() <<  "number of elements : " << _referenceHitVec->getNumberOfElements() << endl );
       for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-//        printf(" _referenceHitVec %p refhit %p at %5.2f %5.2f %5.2f wih %5.2f %5.2f %5.2f \n", _referenceHitVec, refhit,
-//                refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset(),
-//                refhit->getAlpha(), refhit->getBeta(), refhit->getGamma()  
-//               );
+        if(refhit == 0 ) continue;
         
         TVector3 hit3d( hit[0], hit[1], hit[2] );
         TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
         TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
  
         double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-//          printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hit[0],hit[1],hit[2], distance  );
+
         if ( distance < minDistance ) 
         {
            minDistance = distance;
            sensorID = refhit->getSensorID();
-//           printf("sensorID: %5d \n", sensorID );
         }    
 
       }
+
+// some usefull debug printouts:
+/*      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+      {
+        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+        if(refhit == 0 ) continue;
+        if( sensorID != refhit->getSensorID() )  continue;
+         streamlog_out(MESSAGE) << " _referenceHitVec " <<  _referenceHitVec << " " <<  _referenceHitCollectionName.c_str()  << "  " << refhit << " at "  
+                                << refhit->getXOffset() << " " << refhit->getYOffset() << " " <<  refhit->getZOffset() << " "  
+                                << refhit->getAlpha()   << " " <<  refhit->getBeta()   << " " <<  refhit->getGamma()   << endl ;
+         message<MESSAGE> ( log() << "iPlane " << refhit->getSensorID() << " hitPos:  [" << hit[0] << " " << hit[1] << " " <<  hit[2] << "]  distance: " <<  minDistance  << endl );
+//         message<MESSAGE> ( log() << "sensorID: " <<  sensorID << endl ); 
+//         bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
+//         if(debug)   message<MESSAGE> ( log() <<  "hit at "  << hit[0] << " " << hit[1] << " "<< hit[2] << " at sensor " << sensorID << endl);   
+      }*/
+ 
 
   return sensorID;
 }
@@ -3186,7 +2891,7 @@ int EUTelDUTHistograms::getInPixelCoordinate(int sensorID, TrackerHitImpl * hit,
 
   for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
    {
-     EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+     EUTelReferenceHit* 
      if(refhit->getSensorID() != sensorID) continue; // skip this reference hit plane
 
      TVector3 hit3d( hit[0], hit[1], hit[2] );
@@ -3211,7 +2916,7 @@ return 0;
 
 // --------------------------------------------------------------------------------------------------------------------------------
 
-int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHitImpl * hit, int& sizeX, int& sizeY, int& subMatrix ) {
+int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit * hit, int& sizeX, int& sizeY, int& subMatrix ) {
 
   if(hit==0)
   {
@@ -3298,6 +3003,502 @@ int EUTelDUTHistograms::getSubMatrix(int detectorID, float xlocal)
 
   return -1; 
 }  
+
+// -------------------------------------------------------------------------------------------
+int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
+{
+  // Clear local fit storage tables
+  // 'fitted' table used for comparison with measured hits
+  // 'bgfitted' used for comparison with hits from previous event
+
+ //
+  // Get input collections
+  //
+  int evtNr = event->getEventNumber();
+
+  bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
+
+  // first check if there are tracks:
+  LCCollection* trackcol;
+  try {
+    trackcol = event->getCollection( _inputTrackColName ) ;
+  } catch (lcio::DataNotAvailableException& e) {
+    if( evtNr < 100 ) 
+    message<ERROR> ( log() << "Not able to get collection "
+                     << _inputTrackColName
+                     << "\nfrom event " << event->getEventNumber()
+                     << " in run " << event->getRunNumber() <<  "[message suppressed after event #100 / hardcoded]" );
+    return 1;
+//    throw SkipEventException(this);
+  }
+  
+  // Loop over tracks in input track collection
+  // Read fitted positions at DUT
+
+  int nTrack = trackcol->getNumberOfElements()  ;
+
+  if(debug)message<MESSAGE> ( log() << "Total of " << nTrack << " tracks in input collection " );
+
+  if(nTrack == 0 ) return 1;
+
+  _fittedX.clear();
+  _fittedY.clear();
+
+  _bgfittedX.clear();
+  _bgfittedY.clear();
+
+  _localX.clear();
+  _localY.clear();
+
+  _trackhitposX.clear();   
+  _trackhitposY.clear();
+  _trackhitsizeX.clear();
+  _trackhitsizeY.clear();
+  _trackhitsubM.clear();
+  _trackhitsensorID.clear();
+
+
+
+  LCCollection* fit__col;
+  try {
+    fit__col = event->getCollection( _inputFitHitColName ) ;
+  } catch (lcio::DataNotAvailableException& e) {
+    if( evtNr < 100 ) 
+    message<ERROR> ( log() << "Not able to get collection "
+                     << _inputFitHitColName
+                     << "\nfrom event " << event->getEventNumber()
+                     << " in run " << event->getRunNumber() <<  "[message suppressed after event #100 / hardcoded]" );
+    return 1;
+//    throw SkipEventException(this);
+  }
+
+  LCCollection* rec__col;
+  try {
+    rec__col = event->getCollection( _inputRecHitColName ) ;
+  } catch (lcio::DataNotAvailableException& e) {
+    if( evtNr < 100 ) 
+    message<ERROR> ( log() << "Not able to get collection "
+                     << _inputRecHitColName
+                     << "\nfrom event " << event->getEventNumber()
+                     << " in run " << event->getRunNumber() <<  "[message suppressed after event #100 / hardcoded]" );
+    return 2;
+//    throw SkipEventException(this);
+  }
+
+
+  // Loop over tracks in input track collection
+  // Read fitted positions at DUT
+
+  int nTracks = fit__col->getNumberOfElements()  ;
+  int nRecHits = rec__col->getNumberOfElements()  ;
+
+  if(debug)message<MESSAGE> ( log() << "\n tracks " << nTracks << " \n hits " <<  nRecHits << endl );
+  if(debug)message<MESSAGE> ( log() << "Total of " << nTracks  <<" (fit) hits in input collection " );
+  if(debug)message<MESSAGE> ( log() << "Total of " << nRecHits <<" (rec) hits  in input collection " );
+
+
+// looking through a track info:
+// initialise a class-internal track counter:
+  _maptrackid = 0;
+  for(int itrack=0; itrack< nTracks ; itrack++)
+    {
+//(debug)      printf("getting track %d \n", itrack);
+
+      TrackerHit* fithit = dynamic_cast<TrackerHit*>( fit__col->getElementAt(itrack) ) ;
+ 
+//(debug)      printf("at %p  \n", fithit );
+
+      // skip if for some reason the track collection is at NULL address
+      if( fithit == 0 ) continue;
+
+// Does track PoR match DUT position?
+//obsolete get id by z:      double dist = por[2] - _zDUT ;
+//      int fsensorID = guessSensorID( (double*)(por));
+//(debug)      printf("\n----\n hit %2d  of %5d  \n", itrack, nTracks );
+       
+        // Look at hits assigned to track
+        //  std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getNumberOfElements();
+
+//          int nHit = fittrack->getNumberOfElements();
+
+//          for(int ihit=0; ihit< nHit ; ihit++)
+            {
+ //             TrackerHit * meshit = dynamic_cast<TrackerHit*> (fittrack->getElementAt(ihit)) ;
+
+              // Hit position
+
+              const double * pos = fithit->getPosition();
+              int hsensorID = guessSensorID(pos);
+
+//              dist =  pos[2] - _zDUT ;
+
+              // Look at fitted hits only!
+
+              if( hsensorID == _iDUT  )  // get all fitted hits on board
+                {
+                  if(debug)message<MESSAGE> ( log() << "---   hit " << itrack << " id " << hsensorID << " point " <<  pos[0] << " "<< pos[1] << " " << pos[2] << endl );
+
+                  _fittedX[_maptrackid].push_back(pos[0]);
+                  _fittedY[_maptrackid].push_back(pos[1]);
+                  _bgfittedX[_maptrackid].push_back(pos[0]);
+                  _bgfittedY[_maptrackid].push_back(pos[1]);
+
+//
+// using fitted position to calculate in pixel coordinates
+
+          double locX = pos[0];
+          double locY = pos[1];
+
+          // Subtract position of the central pixel
+
+          int picX = (int)(locX/_pitchX);
+
+          if(locX<0)picX--;
+
+          locX-=(picX+0.5)*_pitchX;
+
+          int picY = (int)(locY/_pitchY);
+
+          if(locY<0)picY--;
+
+          locY-=(picY+0.5)*_pitchY;
+
+          _localX[_maptrackid].push_back(locX);
+          _localY[_maptrackid].push_back(locY);
+
+          if(debug)message<MESSAGE> ( log() << "_fittedX element [" << _fittedX[_maptrackid].size()-1 <<  "]" << _fittedX[_maptrackid][ _fittedX.size()-1] << " for DUT " << hsensorID << endl);
+
+//                  break;
+                }
+            }
+
+       
+
+      // End of loop over fitted tracks
+      _maptrackid++; 
+   }
+
+  if(debug)
+  {
+    for(int ii=0;ii<_maptrackid;ii++)
+    {
+      message<MESSAGE> ( log() << "for _maptrackid=" << ii << " found fithits " << _fittedX[ii].size() <<  endl);      
+      for(int jj=0;jj< _fittedX[ii].size(); jj++)
+      { 
+         message<MESSAGE> ( log() << "fit hits [" << jj << " of " << _fittedX[ii].size() << "] " << _fittedX[ii][jj] <<  endl);             
+      }   
+    }
+  }
+
+  if(debug) message<MESSAGE> ( log() << "rechits " << endl );
+
+   // Clear local tables with measured position
+  _clusterSizeX.clear();
+  _clusterSizeY.clear();
+  _subMatrix.clear();
+
+
+  _measuredX.clear();
+  _measuredY.clear();
+
+  _bgmeasuredX.clear();
+  _bgmeasuredY.clear();
+         // look at reconstructed hits only for all planes (excluding DUT !)       
+          // hits that belong to track "_maptrackid"
+          int iplanes = 0;  
+          for(int ihit=0; ihit< nRecHits ; ihit++)
+            {
+              TrackerHit * meshit = dynamic_cast<TrackerHit*>( rec__col->getElementAt(ihit) ) ;
+//              TrackerHit * meshit = trackhits.at(ihit);
+
+              // Hit position
+              const double * pos = meshit->getPosition();
+              int hsensorID = guessSensorID(pos);
+
+              if(hsensorID == _iDUT   ) //&& hsensorID != _iDUT  ) // get all 
+                {
+                  int sizeX = -1;
+                  int sizeY = -1;
+                  int subMatrix = -1; 
+                  getClusterSize( hsensorID, static_cast<TrackerHit*>(meshit), sizeX, sizeY, subMatrix);
+  //                _trackhitposX[_maptrackid].push_back(pos[0]);
+  //                _trackhitposY[_maptrackid].push_back(pos[1]);
+  //                _trackhitsizeX[_maptrackid].push_back( sizeX );
+  //                _trackhitsizeY[_maptrackid].push_back( sizeY );
+  //                _trackhitsubM[_maptrackid].push_back(subMatrix);
+  //                _trackhitsensorID[_maptrackid].push_back( hsensorID );
+          _clusterSizeX.push_back(sizeX);
+          _clusterSizeY.push_back(sizeY);
+          _subMatrix.push_back( subMatrix );
+
+          _measuredX.push_back(pos[0]);
+          _measuredY.push_back(pos[1]);
+          _bgmeasuredX.push_back(pos[0]);
+          _bgmeasuredY.push_back(pos[1]);
+          if(debug)message<MESSAGE> ( log() << "_measuredX element [" << _measuredX.size()-1 <<  "]" << _measuredX[ _measuredX.size()-1] << " for DUT " << hsensorID << endl);
+               }
+            }
+
+    if(debug)message<MESSAGE> ( log() << "Total of " << _measuredX.size() << " hits at DUT " << _iDUT << endl);
+      
+
+ return 0;
+}
+
+
+// -----------------------------------------------------------------------------------------------------------
+int EUTelDUTHistograms::read_track(LCEvent *event)
+{
+  // Clear local fit storage tables
+  // 'fitted' table used for comparison with measured hits
+  // 'bgfitted' used for comparison with hits from previous event
+
+  _fittedX.clear();
+  _fittedY.clear();
+
+  _bgfittedX.clear();
+  _bgfittedY.clear();
+
+  _localX.clear();
+  _localY.clear();
+
+  _trackhitposX.clear();   
+  _trackhitposY.clear();
+  _trackhitsizeX.clear();
+  _trackhitsizeY.clear();
+  _trackhitsubM.clear();
+  _trackhitsensorID.clear();
+
+ //
+  // Get input collections
+  //
+  int evtNr = event->getEventNumber();
+
+  bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
+
+
+  LCCollection* trackcol;
+  try {
+    trackcol = event->getCollection( _inputTrackColName ) ;
+  } catch (lcio::DataNotAvailableException& e) {
+    if( evtNr < 100 ) 
+    message<ERROR> ( log() << "Not able to get collection "
+                     << _inputTrackColName
+                     << "\nfrom event " << event->getEventNumber()
+                     << " in run " << event->getRunNumber() <<  "[message suppressed after event #100 / hardcoded]" );
+    return 1;
+//    throw SkipEventException(this);
+  }
+
+  // Loop over tracks in input track collection
+  // Read fitted positions at DUT
+
+  int nTrack = trackcol->getNumberOfElements()  ;
+
+
+  if(debug)message<MESSAGE> ( log() << "Total of " << nTrack << " tracks in input collection " );
+
+// looking through a track info:
+// initialise a class-internal track counter:
+  _maptrackid = 0;
+  for(int itrack=0; itrack< nTrack ; itrack++)
+    {
+      Track * fittrack = dynamic_cast<Track*>( trackcol->getElementAt(itrack) ) ;
+ 
+      // skip if for some reason the track collection is at NULL address
+      if( fittrack == 0 ) continue;
+
+      const float  * por = fittrack->getReferencePoint();
+
+
+// Does track PoR match DUT position?
+//obsolete get id by z:      double dist = por[2] - _zDUT ;
+      int fsensorID = guessSensorID( (double*)(por));
+//      printf("\n----\n track %2d id %2d  reference point %5.3f %5.3f %5.3f \n", itrack, fsensorID, por[0], por[1], por[2] );
+
+/*    if( fsensorID == _iDUT  )  
+        {
+          // for hits on DUT 
+          _fittedX[_maptrackid].push_back(por[0]);
+          _fittedY[_maptrackid].push_back(por[1]);
+          _bgfittedX[_maptrackid].push_back(por[0]);
+          _bgfittedY[_maptrackid].push_back(por[1]);
+        }
+      else */
+        {
+          // Look at hits assigned to track
+          std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getTrackerHits();
+
+          int nHit =   trackhits.size();
+
+          for(int ihit=0; ihit< nHit ; ihit++)
+            {
+              TrackerHit * meshit = trackhits.at(ihit);
+
+              // Hit position
+
+              const double * pos = meshit->getPosition();
+              int hsensorID = guessSensorID(pos);
+
+//              dist =  pos[2] - _zDUT ;
+
+              // Look at fitted hits only!
+
+              if( meshit->getType() >= 32  && hsensorID == _iDUT  )  // get all fitted hits on board
+                {
+//       printf("---   hit %2d id %2d  point %5.3f %5.3f %5.3f \n", ihit, hsensorID, pos[0], pos[1], pos[2] );
+
+                  _fittedX[_maptrackid].push_back(pos[0]);
+                  _fittedY[_maptrackid].push_back(pos[1]);
+                  _bgfittedX[_maptrackid].push_back(pos[0]);
+                  _bgfittedY[_maptrackid].push_back(pos[1]);
+
+//
+// using fitted position to calculate in pixel coordinates
+
+          double locX = pos[0];
+          double locY = pos[1];
+
+          // Subtract position of the central pixel
+
+          int picX = (int)(locX/_pitchX);
+
+          if(locX<0)picX--;
+
+          locX-=(picX+0.5)*_pitchX;
+
+          int picY = (int)(locY/_pitchY);
+
+          if(locY<0)picY--;
+
+          locY-=(picY+0.5)*_pitchY;
+
+          _localX[_maptrackid].push_back(locX);
+          _localY[_maptrackid].push_back(locY);
+
+                  break;
+                }
+            }
+  
+          // look at reconstructed hits only for all planes (excluding DUT !)       
+          // hits that belong to track "_maptrackid"
+          int iplanes = 0;  
+          for(int ihit=0; ihit< nHit ; ihit++)
+            {
+              TrackerHit * meshit = trackhits.at(ihit);
+
+              // Hit position
+              const double * pos = meshit->getPosition();
+              int hsensorID = guessSensorID(pos);
+
+              if( meshit->getType() < 32  ) //&& hsensorID != _iDUT  ) // get all 
+                {
+                  int sizeX = -1;
+                  int sizeY = -1;
+                  int subMatrix = -1; 
+                  getClusterSize( hsensorID, static_cast<TrackerHitImpl*>(meshit), sizeX, sizeY, subMatrix);
+                  _trackhitposX[_maptrackid].push_back(pos[0]);
+                  _trackhitposY[_maptrackid].push_back(pos[1]);
+                  _trackhitsizeX[_maptrackid].push_back( sizeX );
+                  _trackhitsizeY[_maptrackid].push_back( sizeY );
+                  _trackhitsubM[_maptrackid].push_back(subMatrix);
+                  _trackhitsensorID[_maptrackid].push_back( hsensorID );
+                }
+            }
+        }
+
+      // End of loop over fitted tracks
+      _maptrackid++; 
+   }
+
+   // Clear local tables with measured position
+  _clusterSizeX.clear();
+  _clusterSizeY.clear();
+  _subMatrix.clear();
+
+
+  _measuredX.clear();
+  _measuredY.clear();
+
+  _bgmeasuredX.clear();
+  _bgmeasuredY.clear();
+ 
+  LCCollection* hitcol = NULL;
+  bool _DUTok=true;
+  try {
+    hitcol = event->getCollection( _inputHitColName ) ;
+  } catch (lcio::DataNotAvailableException& e) {
+    if( evtNr < 100 ) 
+    message<ERROR> ( log() << "Not able to get collection "
+                     << _inputHitColName
+                     << "\nfrom event " << event->getEventNumber()
+                     << " in run " << event->getRunNumber() <<  "[message suppressed after event #100 / hardcoded]"  );
+    _DUTok=false;
+    //
+    // Do not skip event if DUT hits missing - efficiency and
+    //   background calculations still have to be done!
+    //
+    //   throw SkipEventException(this);
+  }
+
+  int nHit = 0;
+
+  nHit = hitcol->getNumberOfElements();
+
+  if(debug)message<MESSAGE> ( log() << "Total of " << nHit << " tracker hits in input collection " );
+
+
+  for(int ihit=0; ihit< nHit ; ihit++)
+    {
+      TrackerHit * meshit = dynamic_cast<TrackerHit*>( hitcol->getElementAt(ihit) ) ;
+
+      // Hit position
+
+      const double * pos = meshit->getPosition();
+
+      int   sensorID = guessSensorID( pos );
+
+// obsolete get id by z:      double dist = pos[2] - _zDUT;
+// if ( dist*dist < -1 )
+     if(debug) printf(" =====  %2d id %2d [%2d] mes %5.3f %5.3f %5.3f \n", ihit, sensorID, _iDUT, pos[0], pos[1], pos[2] );
+
+     if( sensorID ==_iDUT ) // measured info only for DUT plane
+        {
+          int sizeX = -1;
+          int sizeY = -1;
+          int subMatrix = -1;
+          getClusterSize( sensorID, static_cast<TrackerHitImpl*>(meshit), sizeX, sizeY, subMatrix);
+          //printf("%d %d \n", sizeX,sizeY);  
+          _clusterSizeX.push_back(sizeX);
+          _clusterSizeY.push_back(sizeY);
+          _subMatrix.push_back( subMatrix );
+
+
+          // Apply alignment corrections
+
+          double corrX  =   pos[0]*cos(_DUTalign.at(2))
+            +pos[1]*sin(_DUTalign.at(2))
+            +_DUTalign.at(0);
+
+          double corrY  =  pos[1]*cos(_DUTalign.at(2))
+            -pos[0]*sin(_DUTalign.at(2))
+            +_DUTalign.at(1);
+
+          _measuredX.push_back(corrX);
+          _measuredY.push_back(corrY);
+          _bgmeasuredX.push_back(corrX);
+          _bgmeasuredY.push_back(corrY);
+
+          // Local position should be taken from the cluster.
+          // This is a temporary solution:
+
+       }
+    }
+
+    if(debug)message<MESSAGE> ( log() << "Total of " << _measuredX.size() << " hits at DUT " << _iDUT << endl);
+
+ return 0;
+}
 
 #endif
 
