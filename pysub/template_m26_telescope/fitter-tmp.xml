@@ -53,8 +53,16 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
 
   <processor name="LoadRefHitDB"     type="ConditionsProcessor">
-    <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
-  </processor>
+   <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+   <parameter name="SimpleFileHandler" type="StringVec"> refhit11  @DBPath@/@Output@-refhit-db.slcio referenceHit11  </parameter>
+   <parameter name="SimpleFileHandler" type="StringVec"> refhit12  @DBPath@/@Output@-refhit-db.slcio referenceHit12  </parameter>
+   <parameter name="SimpleFileHandler" type="StringVec"> refhit21  @DBPath@/@Output@-refhit-db.slcio referenceHit21  </parameter>
+   <parameter name="SimpleFileHandler" type="StringVec"> refhit22  @DBPath@/@Output@-refhit-db.slcio referenceHit22  </parameter>
+   <parameter name="SimpleFileHandler" type="StringVec"> refhit23  @DBPath@/@Output@-refhit-db.slcio referenceHit23  </parameter>
+   <parameter name="SimpleFileHandler" type="StringVec"> refhit31  @DBPath@/@Output@-refhit-db.slcio referenceHit31  </parameter>
+   <parameter name="SimpleFileHandler" type="StringVec"> refhit32  @DBPath@/@Output@-refhit-db.slcio referenceHit32  </parameter>
+   <parameter name="SimpleFileHandler" type="StringVec"> refhit33  @DBPath@/@Output@-refhit-db.slcio referenceHit33  </parameter>
+ </processor>
 
 
   <processor name="LoadPreAlignment" type="ConditionsProcessor">
@@ -62,6 +70,11 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="SimpleFileHandler" type="StringVec"> prealign @DBPath@/@Output@-prealign-db.slcio        alignment </parameter>
   </processor>
 
+  <processor name="LoadAlignment" type="ConditionsProcessor">
+    <parameter name="SimpleFileHandler" type="StringVec"> alignment @AlignmentFile@ alignment </parameter>
+  </processor>
+
+<!-- ApplyPreAlignment and ApplyAlignment to be merged -->
   <processor name="ApplyPreAlignment" type="EUTelApplyAlignmentProcessor">
     <parameter name="alignmentCollectionNames"> prealign </parameter>
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
@@ -75,12 +88,8 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="DEBUG" type="bool" value="false"/>
     <parameter name="PrintEvents" type="int" value="0"/>
   </processor>
-
- <processor name="LoadAlignment" type="ConditionsProcessor">
-  <parameter name="SimpleFileHandler" type="StringVec"> alignment @AlignmentFile@ alignment </parameter>
- </processor>
-
- <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
+ 
+  <processor name="ApplyAlignment" type="EUTelApplyAlignmentProcessor">
   <!--Apply to the input hit the alignment corrections-->
   <!--Alignment constant from the condition file-->
   <parameter name="alignmentCollectionNames"> alignment </parameter>
@@ -240,79 +249,6 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
     <parameter name="NDutHits" type="int" value="1"/>
   </processor>
 
- <group name="ReverseReconstructedHits" type="EUTelApplyAlignmentProcessor" >
-    <!-- ------------------------------------ -->
-    <!-- -------- COMMON SETTINGS ----------- ->
-    <!-- ------------------------------------ -->
-    <!--Apply to the input hit the alignment corrections-->
-    <!--Alignment constant from the condition file-->
-    <parameter name="CorrectionMethod" type="int" value="1"/>
-    <parameter name="ApplyAlignmentDirection" type="int" value="1"/>
- 
-    <processor name="ReverseMillepedeAlignment" type="EUTelApplyAlignmentProcessor" >    
-       <parameter name="DoAlignCollection" type="bool" value="true"/>
-       <parameter name="DoGear" type="bool" value="false"/>
-       <!-- define alignment collection   -->
-       <parameter name="alignmentCollectionNames" type="vec" >  alignment </parameter>
-       <!-- defined input and output collections -->
-       <parameter name="InputHitCollectionName" type="string"    lcioInType="TrackerHit">  alignedHit </parameter>
-       <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> alignedHit1 </parameter>
-    </processor>
-
-    <processor name="UndoGearGeometry" type="EUTelApplyAlignmentProcessor" >
-       <parameter name="DoAlignCollection" type="bool" value="false"/>
-       <parameter name="DoGear" type="bool" value="true"/>
-       <parameter name="InputHitCollectionName" type="string"       lcioInType="TrackerHit">  alignedHit1 </parameter>
-       <parameter name="OutputHitCollectionName" type="string"      lcioOutType="TrackerHit"> alignedHit2 </parameter>
-    </processor>
-  
-    <processor name="ReverseOffsetAlignment" type="EUTelApplyAlignmentProcessor" >
-       <parameter name="DoAlignCollection" type="bool" value="true"/>
-       <parameter name="DoGear" type="bool" value="false"/>
-       <parameter name="alignmentCollectionNames" type="vec" >  preAlignment </parameter>
-       <!-- defined input and output collections -->
-       <parameter name="InputHitCollectionName" type="string"       lcioInType="TrackerHit">  alignedHit2 </parameter>
-       <parameter name="OutputHitCollectionName" type="string"       lcioOutType="TrackerHit"> alignedHit3 </parameter>
-    </processor> 
- </group>
-
-
- <group name="ReverseFittedHits" >
- 	<!-- ------------------------------------ -->
-	<!-- -------- COMMON SETTINGS ----------- ->
-	<!-- ------------------------------------ -->
- 
-    <!--Apply to the input hit the alignment corrections-->
-    <!--Alignment constant from the condition file-->
-    <parameter name="CorrectionMethod" type="int" value="1"/>
-    <parameter name="ApplyAlignmentDirection" type="int" value="1"/>
- 
- 
-
-    <processor name="ReverseMillepedeAlignment2" type="EUTelApplyAlignmentProcessor" >    
-       <parameter name="DoAlignCollection" type="bool" value="true"/>
-       <parameter name="DoGear" type="bool" value="false"/>
-       <parameter name="alignmentCollectionNames" type="vec" >  alignment </parameter>
-       <parameter name="InputHitCollectionName" type="string"    lcioInType="TrackerHit"> fithits </parameter>
-       <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> fithits_I</parameter>
-    </processor>
-    
-    <processor name="UndoGearGeometry2" type="EUTelApplyAlignmentProcessor" >
-       <parameter name="DoAlignCollection" type="bool" value="false"/>
-       <parameter name="DoGear" type="bool" value="true"/>
-       <parameter name="InputHitCollectionName" type="string"    lcioInType="TrackerHit"> fithits_I </parameter>
-       <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> fithits_II</parameter>
-   </processor>
-  
-    <processor name="ReverseOffsetAlignment2" type="EUTelApplyAlignmentProcessor" >
-       <parameter name="DoAlignCollection" type="bool" value="true"/>
-       <parameter name="DoGear" type="bool" value="false"/>
-       <parameter name="alignmentCollectionNames" type="vec" >  preAlignment </parameter>
-       <parameter name="InputHitCollectionName" type="string"    lcioInType="TrackerHit"> fithits_II </parameter>
-       <parameter name="OutputHitCollectionName" type="string"   lcioOutType="TrackerHit"> fithits_III</parameter>
-   </processor>
- 
- </group>
 
 
 
@@ -323,21 +259,6 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
 
 
-
-
- <processor name="ApplyAlignmentReverse" type="EUTelApplyAlignmentProcessor">
-  <!--Apply to the input hit the alignment corrections-->
-  <!--Alignment constant from the condition file-->
-  <parameter name="AlignmentConstantName" type="string" lcioInType="LCGenericObject"> alignment </parameter>
-  <!--The name of the input hit collection-->
-  <parameter name="InputHitCollectionName" type="string"  lcioInType="TrackerHit"> alignedHit </parameter>
-  <!--The name of the output hit collection-->
-  <parameter name="OutputHitCollectionName" type="string"  lcioOutType="TrackerHit"> antiAlignedHit</parameter>
-  <parameter name="CorrectionMethod" type="int" value="1"/>
-  <parameter name="ApplyAlignmentDirection" type="int" value="1"/>
-  <parameter name="alignmentCollectionNames" type="vec" >  alignment </parameter>
-  <parameter name="DoGear" type="bool" value="true"/>
- </processor>
 
  <processor name="FitterHisto" type="EUTelFitHistograms">
  <!--Histogram track fit results-->
@@ -549,7 +470,202 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 	 -->
   <parameter name="ReferenceCollection" type="string" > refhit </parameter>
   <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+  <parameter name="SkipLayerIDs" type="IntVec">99 </parameter>
+  <parameter name="PassiveLayerIDs" type="IntVec">99 </parameter>
 
+  <processor name="Fitter00" type="EUTelTestFitter">
+   <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits0 </parameter>
+   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits0 </parameter>
+   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track0 </parameter>
+   <parameter name="PassiveLayerIDs" type="IntVec">0</parameter>
+  </processor>
+
+  <processor name="ApplyAlignmentFitHits00" type="EUTelApplyAlignmentProcessor">
+    <parameter name="alignmentCollectionNames">  prealign alignment </parameter>
+    <parameter name="hitCollectionNames">    gearfithits0  prealignedfithits0  </parameter>
+    <parameter name="refhitCollectionNames"> refhit32 refhit31 </parameter>
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> fithits0 </parameter>
+    <parameter name="ApplyAlignmentDirection" type="int" value="1"/> 
+    <parameter name="CorrectionMethod" type="int" value="1"/>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+    <parameter name="DoAlignmentInOneGo" type="bool" value="true"/>
+    <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
+    <parameter name="PrintEvents" type="int" value="0"/>
+  </processor>
+ 
+  <processor name="DUTHisto00" type="EUTelDUTHistograms">
+   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track0 </parameter>
+   <parameter name="InputFitHitCollectionName" type="string" lcioOutType="TrackerHit"> gearfithits0 </parameter>
+   <parameter name="InputRecHitCollectionName" type="string" lcioOutType="TrackerHit"> hit      </parameter>
+   <parameter name="ManualDUTid" type="int" value="0" />
+   <parameter name="DebugEventCount" type="int" value="0"/>
+  </processor>
+
+
+  <processor name="Fitter01" type="EUTelTestFitter">
+   <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits1 </parameter>
+   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits1 </parameter>
+   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track1 </parameter>
+   <parameter name="PassiveLayerIDs" type="IntVec">1</parameter>
+  </processor>
+
+  <processor name="ApplyAlignmentFitHits01" type="EUTelApplyAlignmentProcessor">
+    <parameter name="alignmentCollectionNames">  prealign alignment </parameter>
+    <parameter name="hitCollectionNames">    gearfithits1  prealignedfithits1  </parameter>
+    <parameter name="refhitCollectionNames"> refhit32 refhit31 </parameter>
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> fithits1 </parameter>
+    <parameter name="ApplyAlignmentDirection" type="int" value="1"/> 
+    <parameter name="CorrectionMethod" type="int" value="1"/>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+    <parameter name="DoAlignmentInOneGo" type="bool" value="true"/>
+    <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
+    <parameter name="PrintEvents" type="int" value="0"/>
+  </processor>
+
+ 
+  <processor name="DUTHisto01" type="EUTelDUTHistograms">
+   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track1 </parameter>
+   <parameter name="InputFitHitCollectionName" type="string" lcioOutType="TrackerHit"> gearfithits1 </parameter>
+   <parameter name="InputRecHitCollectionName" type="string" lcioOutType="TrackerHit"> hit      </parameter>
+   <parameter name="ReferenceCollection" type="string" > refhit32 </parameter>
+   <parameter name="ManualDUTid" type="int" value="1" />
+   <parameter name="DebugEventCount" type="int" value="0"/>
+  </processor>
+
+  <processor name="Fitter02" type="EUTelTestFitter">
+   <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits2 </parameter>
+   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits2 </parameter>
+   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track2 </parameter>
+   <parameter name="PassiveLayerIDs" type="IntVec">2</parameter>
+  </processor>
+
+  <processor name="ApplyAlignmentFitHits02" type="EUTelApplyAlignmentProcessor">
+    <parameter name="alignmentCollectionNames">  prealign alignment </parameter>
+    <parameter name="hitCollectionNames">    gearfithits2  prealignedfithits2  </parameter>
+    <parameter name="refhitCollectionNames"> refhit32 refhit31 </parameter>
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> fithits2 </parameter>
+    <parameter name="ApplyAlignmentDirection" type="int" value="1"/> 
+    <parameter name="CorrectionMethod" type="int" value="1"/>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+    <parameter name="DoAlignmentInOneGo" type="bool" value="true"/>
+    <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
+    <parameter name="PrintEvents" type="int" value="0"/>
+  </processor>
+ 
+  <processor name="DUTHisto02" type="EUTelDUTHistograms">
+   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track2 </parameter>
+   <parameter name="InputFitHitCollectionName" type="string" lcioOutType="TrackerHit"> gearfithits2 </parameter>
+   <parameter name="InputRecHitCollectionName" type="string" lcioOutType="TrackerHit"> hit      </parameter>
+   <parameter name="ReferenceCollection" type="string" > refhit32 </parameter>
+   <parameter name="ManualDUTid" type="int" value="2" />
+   <parameter name="DebugEventCount" type="int" value="0"/>
+  </processor>
+
+
+  <processor name="Fitter03" type="EUTelTestFitter">
+   <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits3 </parameter>
+   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits3 </parameter>
+   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track3 </parameter>
+   <parameter name="PassiveLayerIDs" type="IntVec">3</parameter>
+  </processor>
+
+  <processor name="ApplyAlignmentFitHits03" type="EUTelApplyAlignmentProcessor">
+    <parameter name="alignmentCollectionNames">  prealign alignment </parameter>
+    <parameter name="hitCollectionNames">    gearfithits3  prealignedfithits3  </parameter>
+    <parameter name="refhitCollectionNames"> refhit32 refhit31 </parameter>
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> fithits3 </parameter>
+    <parameter name="ApplyAlignmentDirection" type="int" value="1"/> 
+    <parameter name="CorrectionMethod" type="int" value="1"/>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+    <parameter name="DoAlignmentInOneGo" type="bool" value="true"/>
+    <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
+    <parameter name="PrintEvents" type="int" value="0"/>
+  </processor>
+ 
+  <processor name="DUTHisto03" type="EUTelDUTHistograms">
+   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track3 </parameter>
+   <parameter name="InputFitHitCollectionName" type="string" lcioOutType="TrackerHit"> gearfithits3 </parameter>
+   <parameter name="InputRecHitCollectionName" type="string" lcioOutType="TrackerHit"> hit      </parameter>
+   <parameter name="ReferenceCollection" type="string" > refhit32 </parameter>
+   <parameter name="ManualDUTid" type="int" value="3" />
+   <parameter name="DebugEventCount" type="int" value="0"/>
+  </processor>
+
+
+  <processor name="Fitter04" type="EUTelTestFitter">
+   <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits4 </parameter>
+   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits4 </parameter>
+   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track4 </parameter>
+   <parameter name="PassiveLayerIDs" type="IntVec">4</parameter>
+  </processor>
+
+  <processor name="ApplyAlignmentFitHits04" type="EUTelApplyAlignmentProcessor">
+    <parameter name="alignmentCollectionNames">  prealign alignment </parameter>
+    <parameter name="hitCollectionNames">    gearfithits4  prealignedfithits4  </parameter>
+    <parameter name="refhitCollectionNames"> refhit32 refhit31 </parameter>
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> fithits4 </parameter>
+    <parameter name="ApplyAlignmentDirection" type="int" value="1"/> 
+    <parameter name="CorrectionMethod" type="int" value="1"/>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+    <parameter name="DoAlignmentInOneGo" type="bool" value="true"/>
+    <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
+    <parameter name="PrintEvents" type="int" value="0"/>
+  </processor>
+ 
+  <processor name="DUTHisto04" type="EUTelDUTHistograms">
+   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track4 </parameter>
+   <parameter name="InputFitHitCollectionName" type="string" lcioOutType="TrackerHit"> gearfithits4 </parameter>
+   <parameter name="InputRecHitCollectionName" type="string" lcioOutType="TrackerHit"> hit      </parameter>
+   <parameter name="ReferenceCollection" type="string" > refhit32 </parameter>
+   <parameter name="ManualDUTid" type="int" value="4" />
+   <parameter name="DebugEventCount" type="int" value="0"/>
+  </processor>
+
+
+  <processor name="Fitter05" type="EUTelTestFitter">
+   <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits5 </parameter>
+   <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits5 </parameter>
+   <parameter name="OutputTrackCollectionName" type="string" lcioOutType="Track"> track5 </parameter>
+   <parameter name="PassiveLayerIDs" type="IntVec">5</parameter>
+  </processor>
+
+  <processor name="ApplyAlignmentFitHits05" type="EUTelApplyAlignmentProcessor">
+    <parameter name="alignmentCollectionNames">  prealign alignment </parameter>
+    <parameter name="hitCollectionNames">    gearfithits5  prealignedfithits5  </parameter>
+    <parameter name="refhitCollectionNames"> refhit32 refhit31 </parameter>
+    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> fithits5 </parameter>
+    <parameter name="ApplyAlignmentDirection" type="int" value="1"/> 
+    <parameter name="CorrectionMethod" type="int" value="1"/>
+    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
+    <parameter name="DoAlignmentInOneGo" type="bool" value="true"/>
+    <parameter name="HistogramSwitch" type="bool" value="false"/>
+    <parameter name="DEBUG" type="bool" value="false"/>
+    <parameter name="PrintEvents" type="int" value="0"/>
+  </processor>
+ 
+  <processor name="DUTHisto05" type="EUTelDUTHistograms">
+   <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track5 </parameter>
+   <parameter name="InputFitHitCollectionName" type="string" lcioOutType="TrackerHit"> gearfithits5 </parameter>
+   <parameter name="InputRecHitCollectionName" type="string" lcioOutType="TrackerHit"> hit      </parameter>
+   <parameter name="ReferenceCollection" type="string" > refhit32 </parameter>
+   <parameter name="ManualDUTid" type="int" value="5" />
+   <parameter name="DebugEventCount" type="int" value="0"/>
+  </processor>
+
+
+
+<!-- GLOBAL Frame 
   <processor name="Fitter00" type="EUTelTestFitter">
    <parameter name="CorrectedHitCollectionName" type="string" lcioOutType="TrackerHit"> corrhits0 </parameter>
    <parameter name="OutputHitCollectionName" type="string" lcioOutType="TrackerHit"> fithits0 </parameter>
@@ -622,6 +738,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
    <parameter name="InputTrackCollectionName" type="string" lcioInType="Track"> track5 </parameter>
    <parameter name="ManualDUTid" type="int" value="5" />
   </processor>
+end of GLOBA frame -->
 
   </group>
  
