@@ -16,10 +16,13 @@
 #include "EUTelAlignmentConstant.h"
 #include "EUTelEventImpl.h"
 #include "EUTelReferenceHit.h"
+#include "EUTelExceptions.h"
 
 
 // marlin includes ".h"
 #include "marlin/Processor.h"
+#include "marlin/Exceptions.h"
+//#include "marlin/EventModifier.h"
 
 
 // gear includes <.h>
@@ -33,6 +36,9 @@
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #endif
+
+// ROOT includes
+#include "TString.h"
 
 // lcio includes
 #include <UTIL/CellIDEncoder.h>
@@ -100,6 +106,8 @@ namespace eutelescope {
 
   public:
 
+//    virtual void modifyEvent( LCEvent * evt ) ;
+//    virtual const std::string & name() const { return Processor::name() ; }
 
     //! Returns a new instance of EUTelApplyAlignmentProcessor
     /*! This method returns an new instance of the this processor.  It
@@ -128,7 +136,7 @@ namespace eutelescope {
      *
      *  @param run the LCRunHeader of the this current run
      */
-    virtual void processRunHeader (LCRunHeader * run);
+    void processRunHeader (LCRunHeader * run);
 
     //! Called every event
     /*! This is called for each event in the file. A few consistency
@@ -215,6 +223,13 @@ namespace eutelescope {
      */
     int guessSensorID( TrackerHitImpl * hit ) ;
 //    int guessSensorID( TrackerHitImpl2 * hit ) ;
+    int guessSensorID(const double * hit ) ;
+
+    virtual    LCCollectionVec* CreateDummyReferenceHitCollection();
+    virtual void CheckIOCollections(LCEvent* event);
+
+    void DumpReferenceHitDB(std::string name);
+
 
   private:
     //! Conversion ID map.
@@ -226,6 +241,9 @@ namespace eutelescope {
      *  layerindex.
      */
     std::map< int, int > _conversionIdMap;
+
+    //! Reference Hit file 
+    std::string _referenceHitLCIOFile;
 
   protected:
 
@@ -239,31 +257,45 @@ namespace eutelescope {
     int _iDUT;
 	int	_indexDUT;
 	double	_xPitch, _yPitch, _rot00, _rot01, _rot10, _rot11;
+  
+    // class internal strings and pointers
+    std::string      internal_inputHitCollectionName;
+    LCCollectionVec* internal_inputCollectionVec      ;
+
+    std::string      internal_referenceHitCollectionName;
+    LCCollectionVec* internal_referenceHitVec;    
 
     //! Input collection name.
     /*! This is the name of the input hit collection.
      */
-    std::string _inputHitCollectionName;
+    std::string      _inputHitCollectionName;
+    LCCollectionVec* _inputCollectionVec      ;
 
     //! Alignment constant collection name
     /*! This is the name of the collection containing the alignment
      *  constants. This should be the results of the execution of a
      *  EUTelMille and pede.
      */
-    std::string _alignmentCollectionName;
+    std::string      _alignmentCollectionName;
+    LCCollectionVec* _alignmentCollectionVec  ;
 
     //! Output collection name.
     /*! This is the name of the output hit collection.
      */
-    std::string _outputHitCollectionName;
-    
+    std::string      _outputHitCollectionName;
+    LCCollectionVec* _outputCollectionVec     ;
+
     //! reference HitCollection name 
     /*!
      */
-    std::string _referenceHitCollectionName;
     bool        _applyToReferenceHitCollection;
-    LCCollectionVec* _referenceHitVec;    
  
+    std::string _referenceHitCollectionName;
+    LCCollectionVec* _referenceHitVec;    
+
+    std::string _outputReferenceHitCollectionName;
+    LCCollectionVec* _outputReferenceHitVec;    
+
     //! Correction method
     /*! There are actually several different
      *  methods to apply the alignment constants. Here below a list of
@@ -289,11 +321,24 @@ namespace eutelescope {
     EVENT::StringVec		_alignmentCollectionNames;
     EVENT::StringVec		_alignmentCollectionSuffixes;
 
+    // 10.09.2012
+    EVENT::StringVec		_hitCollectionNames;
+    EVENT::StringVec		_hitCollectionSuffixes;
+
+    EVENT::StringVec		_refhitCollectionNames;
+    EVENT::StringVec		_refhitCollectionSuffixes;
+
     //! DoGear
     bool            _doGear; 
 
     //! DoAlignCollection
     bool            _doAlignCollection; 
+
+    //! Ignore _doGear and _doAlignCollection flags
+    /*! set _doAlignmentInOneGo
+     *  If you want to do all (anti)alignment steps in one go
+     */ 
+    bool            _doAlignmentInOneGo; 
 
 
     //! DEBUG
@@ -325,10 +370,11 @@ namespace eutelescope {
     int _iEvt;
 
     //! Look Up Table for the sensor ID
-    std::map< int, int > _lookUpTable;
+    //    std::map< int, int > _lookUpTable;
+    std::map< std::string, std::map< int, int > > _lookUpTable;
 
     //! boolean to mark the first processed event
-    bool fevent;
+    bool _fevent;
 
 #if (defined(USE_AIDA) || defined(MARLIN_USE_AIDA))
     //! AIDA histogram map
@@ -373,6 +419,13 @@ namespace eutelescope {
 
     //! An array with the Z position of planes
     double * _siPlaneZPosition;
+
+    //! The ordered sensor ID vector
+    /*! This vector contains the sensorID of all the detectors in the
+     *  input collection in the same order as they appear. This vector
+     *  has to be used to number the histogram booking and filling.
+     */
+    std::vector< int > _orderedSensorIDVec;
 
     //! Fill histogram switch
     /*! This boolean switch was initially introduced for debug reason
