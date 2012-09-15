@@ -267,15 +267,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
 	<!--This is the name of the histogram information file-->
     <parameter name="ClusterCollectionName" type="string" value="cluster_apix"/>
     <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfo@"/>
-    <parameter name="MinLVL1Difference" type="int" value="2"/>
-    <parameter name="MinDiagonalDistance" type="int" value="2"/>
-    <parameter name="MinXDistance" type="int" value="2"/>
-    <parameter name="MinYDistance" type="int" value="2"/>
-    <parameter name="ClusterLimits" type="vector">  22   3 19   1  5  </parameter>
-    <parameter name="ClusterLimits" type="vector">  21   3 19   1  5  </parameter>
-    <parameter name="ClusterLimits" type="vector">  23   3 19   1  5  </parameter>
-    <parameter name="ClusterLimits" type="vector">  20   1 99   1  99 </parameter>
-   </processor>
+  </processor>
 
   <processor name="Clustering_@DUTSuffix@" type="EUTelClusteringProcessor">
     <!--EUTelClusteringProcessor is looking for clusters into a calibrated pixel matrix.-->
@@ -382,7 +374,8 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--drops the named collections from the event-->
     <parameter name="DropCollectionNames" type="StringVec"> 
            rawdata status noise pedestal data zsdata 
-           rawdata_@DUTSuffix@ status_@DUTSuffix@  noise_@DUTSuffix@  pedestal_@DUTSuffix@  data_@DUTSuffix@ zsdata_@DUTSuffix@ 
+            zsdata_m26 zsdata_apix
+              rawdata_@DUTSuffix@ status_@DUTSuffix@  noise_@DUTSuffix@  pedestal_@DUTSuffix@  data_@DUTSuffix@ zsdata_@DUTSuffix@ 
     </parameter>
     <!--drops all collections of the given type from the event-->
     <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
