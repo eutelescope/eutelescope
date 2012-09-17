@@ -617,9 +617,33 @@ void EUTelPreAlign::end() {
   delete now;
 
   LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
+
+
+  for(size_t ii=0; ii<_sensorIDVec.size(); ii++)
+  {
+    streamlog_out(DEBUG) << " sensor " << _sensorIDVec[ii] << endl;
+    bool ifound = false;
+    for(size_t jj=0; jj< _preAligners.size(); jj++)
+    {
+      int sensorID = _preAligners.at(jj).getIden();
+      if( _sensorIDVec[ii] == sensorID ) { ifound = true; break; }
+    }
+    if( ifound == false)
+    {
+      streamlog_out(DEBUG) << " not found ... so, adding " << endl;
+      EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
+      constant->setXOffset( 0.0 );
+      constant->setYOffset( 0.0 );
+      constant->setSensorID( _sensorIDVec[ii] );
+      constantsCollection->push_back( constant );
+      streamlog_out ( MESSAGE ) << (*constant) << endl;
+      continue; 
+    }
+    streamlog_out(DEBUG) << " found in  usedID " << endl;
+  }
+
+
   for(size_t ii = 0 ; ii < _preAligners.size(); ii++){
-
-
   EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
    if( abs( _preAligners.at(ii).getPeakX() ) <1000. )
       constant->setXOffset( -1.0 * _preAligners.at(ii).getPeakX());
@@ -631,7 +655,8 @@ void EUTelPreAlign::end() {
    else
       constant->setYOffset( -1.0 * 0.0                           );
  
-    constant->setSensorID( _preAligners.at(ii).getIden() );
+    int sensorID = _preAligners.at(ii).getIden();
+    constant->setSensorID( sensorID );
     constantsCollection->push_back( constant );
     streamlog_out ( MESSAGE ) << (*constant) << endl;
     // std::cout << "Iden: " << _preAligners.at(ii).getIden()
@@ -640,6 +665,10 @@ void EUTelPreAlign::end() {
     // 	      << " Aligned y:" 
     // 	      << _preAligners.at(ii).getPeakY() << std::endl;
   }
+
+
+  streamlog_out(DEBUG) << " adding Collection " << "alignment " << endl;
+ 
   event->addCollection( constantsCollection, "alignment" );
   lcWriter->writeEvent( event );
   delete event;
