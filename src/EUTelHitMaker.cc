@@ -292,9 +292,42 @@ void EUTelHitMaker::DumpReferenceHitDB()
 //     streamlog_out ( MESSAGE ) << (*refhit) << endl;
   }
   event->addCollection( referenceHitCollection, "referenceHit" );
+
+  addReferenceHitCollection(event, "referenceHit11");
+  addReferenceHitCollection(event, "referenceHit12");
+  addReferenceHitCollection(event, "referenceHit21");
+  addReferenceHitCollection(event, "referenceHit22");
+  addReferenceHitCollection(event, "referenceHit23");
+  addReferenceHitCollection(event, "referenceHit31");
+  addReferenceHitCollection(event, "referenceHit32");
+  addReferenceHitCollection(event, "referenceHit33");
+ 
   lcWriter->writeEvent( event );
   delete event;
   lcWriter->close();
+}
+
+void EUTelHitMaker::addReferenceHitCollection(LCEvent *event, std::string referenceHitName="referenceHit")
+{ 
+
+  LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
+  double refVec[3] ;
+  for(size_t ii = 0 ; ii <  _orderedSensorIDVec.size(); ii++)
+  {
+    EUTelReferenceHit * refhit = new EUTelReferenceHit();
+    refhit->setSensorID( _orderedSensorIDVec[ii] );
+    refhit->setXOffset( 0.0 );
+    refhit->setYOffset( 0.0 );
+    refhit->setZOffset( 0.0 );
+ 
+    refhit->setAlpha( 0.0 );
+    refhit->setBeta( 0.0 );
+    refhit->setGamma( 0.0 );
+    referenceHitCollection->push_back( refhit );
+  }
+ 
+  event->addCollection( referenceHitCollection, referenceHitName );
+
 }
 
 

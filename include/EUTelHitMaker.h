@@ -311,6 +311,7 @@ namespace eutelescope {
     //! Perform Euler rotations
     void _EulerRotation(int detectorID, double* _telPos, double* _gRotation);
 
+    void addReferenceHitCollection(LCEvent *event, std::string referenceHitName);
 
   protected:
 
