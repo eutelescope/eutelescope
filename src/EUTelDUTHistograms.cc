@@ -516,14 +516,47 @@ void EUTelDUTHistograms::processRunHeader( LCRunHeader* runHeader) {
 
 void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
-  if ( isFirstEvent() )
+  streamlog_out( DEBUG) << "EUTelDUTHistograms::processEvent " << endl;
+
+//  if ( isFirstEvent() )
   {
     if ( _applyToReferenceHitCollection ) 
     {
        _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
+      for(size_t ii = 0 ; ii < _referenceHitVec->getNumberOfElements(); ii++)
+     {
+      streamlog_out( DEBUG ) << " check output_refhit at : " << _referenceHitVec << " ";
+      EUTelReferenceHit* output_refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
+      streamlog_out( DEBUG ) << " at : " <<  output_refhit << endl;     
+      streamlog_out( DEBUG ) << "CHK sensorID: " <<  output_refhit->getSensorID(   )     
+                              << " x    :" <<        output_refhit->getXOffset(    )    
+                              << " y    :" <<        output_refhit->getYOffset(    )    
+                              << " z    :" <<        output_refhit->getZOffset(    )    
+                              << " alfa :" <<        output_refhit->getAlpha()          
+                              << " beta :" <<        output_refhit->getBeta()           
+                              << " gamma:" <<        output_refhit->getGamma()        << endl ;
+     }
     }
   }
-
+/*
+    if ( _applyToReferenceHitCollection ) 
+    {
+     LCCollectionVec * ref    = static_cast < LCCollectionVec * > (event->getCollection( "refhit32" ));
+     for(size_t ii = 0 ; ii <  ref->getNumberOfElements(); ii++)
+     {
+      streamlog_out(MESSAGE) << " check output_refhit at : " << ref << " ";
+      EUTelReferenceHit* output_refhit = static_cast< EUTelReferenceHit*> ( ref->getElementAt(ii) ) ;
+      streamlog_out(MESSAGE) << " at : " <<  output_refhit << endl;     
+      streamlog_out(MESSAGE) << "CHK sensorID: " <<  output_refhit->getSensorID(   )     
+                              << " x    :" <<        output_refhit->getXOffset(    )    
+                              << " y    :" <<        output_refhit->getYOffset(    )    
+                              << " z    :" <<        output_refhit->getZOffset(    )    
+                              << " alfa :" <<        output_refhit->getAlpha()          
+                              << " beta :" <<        output_refhit->getBeta()           
+                              << " gamma:" <<        output_refhit->getGamma()        << endl ;
+     }
+    }
+*/
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
   if ( euEvent->getEventType() == kEORE ) {
     message<DEBUG> ( "EORE found: nothing else to do." );
@@ -617,7 +650,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedYHistoName]))->fill(_fittedY[itrack][ifit]);
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_FittedXYHistoName]))->fill(_fittedX[itrack][ifit],_fittedY[itrack][ifit]);
-      if(debug)message<MESSAGE> ( log() << "Fit " << ifit
+      if(debug)message<MESSAGE> ( log() << "Fit " << ifit << " [track:"<< itrack << "] "
                                 << "   X = " << _fittedX[itrack][ifit]
                                 << "   Y = " << _fittedY[itrack][ifit]) ;
 #endif
@@ -681,7 +714,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
             (_measuredX[ihit]-_fittedX[itrack][ifit])*(_measuredX[ihit]-_fittedX[itrack][ifit])
             + (_measuredY[ihit]-_fittedY[itrack][ifit])*(_measuredY[ihit]-_fittedY[itrack][ifit]);
 
-                  if(debug)message<MESSAGE> ( log() << "Fit " << ifit << " ["<< _fittedX[itrack][ifit] << ":" << _fittedY[itrack][ifit] << "]" << endl) ;
+                  if(debug)message<MESSAGE> ( log() << "Fit ["<< itrack << ":" << _maptrackid <<"], ifit= " << ifit << " ["<< _fittedX[itrack][ifit] << ":" << _fittedY[itrack][ifit] << "]" << endl) ;
                   if(debug)message<MESSAGE> ( log() << "rec " << ihit << " ["<< _measuredX[ihit] << ":" << _measuredY[ihit] << "]" << endl) ;
                   if(debug)message<MESSAGE> ( log() << "distance : " << TMath::Sqrt( dist2rd )  << endl) ;
           if(dist2rd<distmin)
@@ -2825,7 +2858,7 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
   double minDistance =  numeric_limits< double >::max() ;
 //  double * hitPosition = const_cast<double * > (hit->getPosition());
 
-//  message<MESSAGE> ( log() <<  "referencehit collection: " << _referenceHitCollectionName << " at "<< _referenceHitVec << endl);
+  message<DEBUG> ( log() <<  "referencehit collection: " << _referenceHitCollectionName << " at "<< _referenceHitVec << endl);
 //  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
   if( _referenceHitVec == 0)
   {
@@ -2833,8 +2866,12 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
     return 0;
   }
 
-  if(  isFirstEvent() )  message<MESSAGE> ( log() <<  "number of elements : " << _referenceHitVec->getNumberOfElements() << endl );
-      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+  if(  isFirstEvent() )
+  {
+    message<DEBUG > ( log() <<  "number of elements : " << _referenceHitVec->getNumberOfElements() << endl );
+  }
+
+  for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if(refhit == 0 ) continue;
@@ -2844,7 +2881,11 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
         TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
  
         double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-
+        streamlog_out(DEBUG) << " hit " << hit[0] << " "<< hit[1] << " " << hit[2] << endl;
+        streamlog_out(DEBUG) << " " << refhit->getXOffset() << " " << refhit->getYOffset() << " " << refhit->getZOffset() << endl;
+        streamlog_out(DEBUG) << " " << refhit->getAlpha() << " " << refhit->getBeta() << " " << refhit->getGamma() << endl;
+        streamlog_out(DEBUG) << " distance " << distance  << endl;
+ 
         if ( distance < minDistance ) 
         {
            minDistance = distance;
@@ -2854,22 +2895,25 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
       }
 
 // some usefull debug printouts:
-/*      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+
+   bool debug = ( _debugCount>0 );
+
+   if(debug)
+   {
+      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if(refhit == 0 ) continue;
-        if( sensorID != refhit->getSensorID() )  continue;
-         streamlog_out(MESSAGE) << " _referenceHitVec " <<  _referenceHitVec << " " <<  _referenceHitCollectionName.c_str()  << "  " << refhit << " at "  
+//        if( sensorID != refhit->getSensorID() )  continue;
+         streamlog_out(DEBUG) << " _referenceHitVec " <<  _referenceHitVec << " " <<  _referenceHitCollectionName.c_str()  << "  " << refhit << " at "  
                                 << refhit->getXOffset() << " " << refhit->getYOffset() << " " <<  refhit->getZOffset() << " "  
                                 << refhit->getAlpha()   << " " <<  refhit->getBeta()   << " " <<  refhit->getGamma()   << endl ;
-         message<MESSAGE> ( log() << "iPlane " << refhit->getSensorID() << " hitPos:  [" << hit[0] << " " << hit[1] << " " <<  hit[2] << "]  distance: " <<  minDistance  << endl );
-//         message<MESSAGE> ( log() << "sensorID: " <<  sensorID << endl ); 
-//         bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
-//         if(debug)   message<MESSAGE> ( log() <<  "hit at "  << hit[0] << " " << hit[1] << " "<< hit[2] << " at sensor " << sensorID << endl);   
-      }*/
- 
+         message<DEBUG> ( log() << "iPlane " << refhit->getSensorID() << " hitPos:  [" << hit[0] << " " << hit[1] << " " <<  hit[2] << "]  distance: " <<  minDistance  << endl );
+         message<DEBUG> ( log() << "sensorID: " <<  sensorID << endl ); 
+      }
+   } 
 
-  return sensorID;
+   return sensorID;
 }
 
 
