@@ -627,6 +627,24 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
       }
     }
 */
+
+    if ( _applyToReferenceHitCollection ) 
+    {
+     LCCollectionVec * ref    = static_cast < LCCollectionVec * > (event->getCollection( "refhit32" ));
+     for(size_t ii = 0 ; ii <  ref->getNumberOfElements(); ii++)
+     {
+      streamlog_out( DEBUG ) << " check output_refhit at : " << ref << " ";
+      EUTelReferenceHit* output_refhit = static_cast< EUTelReferenceHit*> ( ref->getElementAt(ii) ) ;
+      streamlog_out( DEBUG ) << " at : " <<  output_refhit << endl;     
+      streamlog_out( DEBUG ) << "CHK sensorID: " <<  output_refhit->getSensorID(   )     
+                              << " x    :" <<        output_refhit->getXOffset(    )    
+                              << " y    :" <<        output_refhit->getYOffset(    )    
+                              << " z    :" <<        output_refhit->getZOffset(    )    
+                              << " alfa :" <<        output_refhit->getAlpha()          
+                              << " beta :" <<        output_refhit->getBeta()           
+                              << " gamma:" <<        output_refhit->getGamma()        << endl ;
+     }
+    }
 }
 
 void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event) 
@@ -1135,7 +1153,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
             {
                 EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _alignmentCollectionVec->getElementAt( iPos ) );
                 _lookUpTable[ _alignmentCollectionName ][ alignment->getSensorID() ] = iPos;
-                streamlog_out ( MESSAGE ) << iPos << " " ;
+                streamlog_out ( MESSAGE ) << " _alignmentCollectionVec element position : " << iPos << " " ;
             
                 if ( _applyToReferenceHitCollection ) 
                 {
@@ -1491,8 +1509,8 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
                 {
                     EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _alignmentCollectionVec->getElementAt( iPos ) );
                     _lookUpTable[ _alignmentCollectionName ][ alignment->getSensorID() ] = iPos;
-                    streamlog_out ( MESSAGE ) << iPos << " " ;
-                  
+                    streamlog_out ( MESSAGE ) << " _alignmentCollectionVec element position : " << iPos << " " << " align for " << alignment->getSensorID() << endl ;
+
                     if ( _applyToReferenceHitCollection ) 
                     {
                      AlignReferenceHit( evt,  alignment); 
@@ -2447,7 +2465,7 @@ void EUTelApplyAlignmentProcessor::_EulerRotationInverse(int sensorID, double* _
 void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTelAlignmentConstant * alignment )
 {
     int iPlane = alignment->getSensorID();
-    streamlog_out(MESSAGE)<< "AlignReferenceHit for " <<  alignment->getSensorID() << endl;
+    streamlog_out( DEBUG )<< "AlignReferenceHit for sensor ID:" <<  alignment->getSensorID() << endl;
     double            alpha   = alignment->getAlpha();
     double            beta    = alignment->getBeta();
     double            gamma   = alignment->getGamma();
@@ -2455,12 +2473,12 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
     double            offsetY = alignment->getYOffset();
     double            offsetZ = alignment->getZOffset();
                 
-                streamlog_out ( MESSAGE )  << " alignment->getAlpha() = " << alpha  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getBeta()  = " <<  beta  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getGamma() = " << gamma << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getXOffest() = " << offsetX  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getYOffest() = " << offsetY  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getZOffest() = " << offsetZ  << endl;
+                streamlog_out ( DEBUG   )  << " alignment->getAlpha() = " << alpha  << endl;
+                streamlog_out ( DEBUG   )  << " alignment->getBeta()  = " <<  beta  << endl;
+                streamlog_out ( DEBUG   )  << " alignment->getGamma() = " << gamma << endl;
+                streamlog_out ( DEBUG   )  << " alignment->getXOffest() = " << offsetX  << endl;
+                streamlog_out ( DEBUG   )  << " alignment->getYOffest() = " << offsetY  << endl;
+                streamlog_out ( DEBUG   )  << " alignment->getZOffest() = " << offsetZ  << endl;
 
     if( evt == 0 )
     {
@@ -2473,7 +2491,7 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
       streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
     }
    
-    streamlog_out(MESSAGE) << "reference Hit collection name : " << _referenceHitCollectionName.c_str() << " elements " << _referenceHitVec->getNumberOfElements() <<endl;
+    streamlog_out( DEBUG ) << "reference Hit collection name : " << _referenceHitCollectionName.c_str() << " elements " << _referenceHitVec->getNumberOfElements() <<endl;
  
       for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
       {
@@ -2481,27 +2499,31 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
         EUTelReferenceHit * output_refhit = 0;
         try{ 
           output_refhit = static_cast< EUTelReferenceHit*> ( _outputReferenceHitVec->getElementAt(ii) ) ;
+          streamlog_out( DEBUG ) << "existing refhit["<<ii<<"] found at  " << output_refhit << endl;
+          
         }
         catch(...)
         {
-          streamlog_out(MESSAGE) << " creating new EUTelReferenceHit element " << ii << endl;
+          streamlog_out( DEBUG ) << " creating new EUTelReferenceHit element " << ii << endl;
           output_refhit = new EUTelReferenceHit();
+          streamlog_out( DEBUG ) << "new refhit for ["<<ii<<"] created at  " << output_refhit << endl;
           _outputReferenceHitVec->push_back(output_refhit);
         } 
 
         if( iPlane != refhit->getSensorID() )
         {
-          // streamlog_out(MESSAGE) << "Looping through a varity of sensor IDs" << endl;
+          streamlog_out( DEBUG ) << "Looping through a varity of sensor IDs for iPlane :"<< iPlane <<" and refhit->getSensorID()="<<refhit->getSensorID() << endl;
           continue;
         }
         else
         {
           output_refhit->setSensorID(iPlane);
-//          streamlog_out(MESSAGE) << "Sensor ID and Alignment plane ID match!" << endl;
+          streamlog_out( DEBUG ) << "Sensor ID and Alignment plane ID match!" << endl;
         }
 
-       streamlog_out(MESSAGE) << "reference Hit collection name : " << _referenceHitCollectionName.c_str() << " elements " << _referenceHitVec->getNumberOfElements() << " ";
-       streamlog_out(MESSAGE) << "PRE sensorID: " <<  refhit->getSensorID(   )     
+       streamlog_out(DEBUG  ) << "reference Hit collection name : " << _referenceHitCollectionName.c_str() << " elements " << _referenceHitVec->getNumberOfElements() << " ";
+       streamlog_out(DEBUG  ) << " at : " << _referenceHitVec << " ";
+       streamlog_out(DEBUG  ) << "PRE sensorID: " <<  refhit->getSensorID(   )     
                                << " x    :" <<        refhit->getXOffset(    )    
                                << " y    :" <<        refhit->getYOffset(    )    
                                << " z    :" <<        refhit->getZOffset(    )    
@@ -2540,6 +2562,7 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
 //        referenceHitCollection->push_back( refhit );
  
       streamlog_out(MESSAGE) << "reference Hit collection name : " << _outputReferenceHitCollectionName.c_str() << " elements " << _outputReferenceHitVec->getNumberOfElements() << " ";
+      streamlog_out(MESSAGE) << " at : " << _outputReferenceHitVec << " ";
       streamlog_out(MESSAGE) << "AFT sensorID: " <<  output_refhit->getSensorID(   )     
                               << " x    :" <<        output_refhit->getXOffset(    )    
                               << " y    :" <<        output_refhit->getYOffset(    )    
@@ -2549,7 +2572,8 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
                               << " gamma:" <<        output_refhit->getGamma()        << endl ;
    
       //  _referenceHitVecAligned->push_back( refhit );
-     }
+     
+    }
 
 }
 
