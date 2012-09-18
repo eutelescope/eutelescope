@@ -1,0 +1,10 @@
+StatTest
+--------
+StatTest is a package to perform automatic regression testing on the content of a ROOT file.
+
+see: https://twiki.cern.ch/twiki/bin/view/Geant4/StatTest
+
+Kindly provided by the author Andrea Dotti (Andrea.Dotti@cern.ch).
+
+This is a preliminary (as things changed in the meantime) presentation on the subject:
+http://indico.cern.ch/getFile.py/access?contribId=3&sessionId=0&resId=0&materialId=slides&confId=186631

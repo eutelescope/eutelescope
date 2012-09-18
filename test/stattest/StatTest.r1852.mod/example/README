@@ -1,0 +1,8 @@
+To execute:
+
+../runtests.py testconf.qa test.root
+
+or:
+python ../runtests.py testconf.qa test.root
+
+See testconf.qa and testconfall.qa for examples of configuration files.

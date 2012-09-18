@@ -1,0 +1,34 @@
+#
+# +++++++++ IGNORE SOME OF THE TESTS WHEN RUNNING MEMCHECKS (e.g. valgrind) +++++++++++++++
+#
+# this basically includes every test except the *Run tests
+#
+
+set (CTEST_CUSTOM_MEMCHECK_IGNORE 
+	${CTEST_CUSTOM_MEMCHECK_IGNORE}
+	TestPysubExampleDaturaAloneCleanup
+	TestPysubExampleDaturaAloneSetup
+	TestPysubExampleDaturaAloneConverterLog
+	TestPysubExampleDaturaAloneConverterHisto
+	TestPysubExampleDaturaAloneConverterHotpix
+	TestPysubExampleDaturaAloneConverterOutput
+	TestPysubExampleDaturaAloneClusearchLog
+	TestPysubExampleDaturaAloneClusearchHisto
+	TestPysubExampleDaturaAloneClusearchOffset
+	TestPysubExampleDaturaAloneClusearchOutput
+	TestPysubExampleDaturaAloneHitmakerLog
+	TestPysubExampleDaturaAloneHitmakerHisto
+	TestPysubExampleDaturaAloneHitmakerPrealign
+	TestPysubExampleDaturaAloneHitmakerOutput
+	TestPysubExampleDaturaAloneAlignLog
+	TestPysubExampleDaturaAloneAlignHisto
+	TestPysubExampleDaturaAloneAlignDB
+	TestPysubExampleDaturaAloneAlignOutput
+	TestPysubExampleDaturaAloneFitterLog
+	TestPysubExampleDaturaAloneFitterHisto
+	TestPysubExampleDaturaAloneFitterOutput
+	TestPysubExampleDaturaAloneStatTestAlign
+	TestPysubExampleDaturaAloneStatTestFitter
+    )
+
+set (CTEST_CUSTOM_MAXIMUM_NUMBER_OF_WARNINGS 150)

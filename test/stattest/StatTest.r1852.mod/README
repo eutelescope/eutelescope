@@ -1,0 +1,20 @@
+This application performs statistical tests on distributions contained in a ROOT file.
+Distributions can be binned (i.e. histograms) or unbinned (not yet ready).
+Which tests to run and conditions to define failure/success are controlled thorugh a configuration file.
+See example/testconf.qa for an example of a configuration format.
+The basic idea is to check a distribution against a reference contained in a second file. The structure of the reference
+file should be exactly the same as the input file.
+
+Available statistical tests are contained in the Tests module. To see a list of all available tests:
+  runtests.py --list
+
+To run the application:
+
+   runtests.py <conffile> <inputfile> [<referencefile>]
+
+The third parameter: referencefile if present overwrites the value specified in the conffile
+(It can be useful to run several times the testing against different referneces without changing the conffile)
+
+Directory example contains a test file with 3 histograms a reference file and and example of configuration file.
+cp example/* .
+runtests.py testconf.qa test.root

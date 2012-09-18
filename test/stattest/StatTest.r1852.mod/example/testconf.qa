@@ -1,0 +1,147 @@
+#-*-python-*-
+# Configuration file for QA tests
+# This file should be a valid python file.
+# To test if format is correct, tye:
+# python testconf.qa
+# no output is produced if the code is correct
+#
+# The general format is:
+#     variable = value
+# There are few top-level variables: Binned and UnBinned for
+# binned and unbinned distributions respectively.
+# The value of the top-level variables is a dictionary of variable:values pairs.
+# See the following as an example
+
+#Configuration for Binned distributions
+#These are tests to be performed on Histograms
+Binned = {
+    #Define the Test to be executed by Default
+    #If a test is specified for a specific histogram the latter will overwrite this
+    #Availble tests are defined in module: StatTest.Tests, there the function
+    # getTestByName is used to retrieve the test class corresponding to the name
+    #Specified here
+    'DefaultTestName' : 'Binned1DChi2Test',
+    #Define the default thresholds for the test.
+    #These are used together with the test above
+    #Three special cases could be useful in special cases
+    # If Thresholds : [ 0 , 0 ] It will cause the test to always PASS (basically disabble test)
+    # If Thresholds : [ 0 , 1 ] Test will always be NOTPASSED (useful to force user to check results manually)
+    # If Thresholds : [ 1 , 1 ] Test will always FAIL
+    'DefaultThresholds' : [ 0.1,0.5],
+
+    #Define the default file from where retrieve the reference histograms.
+    #Reference histograms should have the same name (including ROOT's directory structure)
+    #of the tested histogram.
+    #Reference file is searched in working directory
+    'DefaultReferenceFile' : 'reference.root',
+    #It is possible to access remote files via HHTP (See documentation of ROOT's TWebFile'
+    #'DefaultReferenceFile' : 'http://someserver.org/somerootfile.root',
+
+    #Define inputs: histograms a list of dictionaries
+    'Histos' : [
+        #Each dictionary represents a configuration for a set of histograms.
+        #At least one configuration should be defined.
+
+        #Group 1
+        {
+            #The first element of the configuration is the name of the histogram
+            #  to be tested, the name can be an absolute path or a regular experession
+            #  For example the following is a configuration for an histogram 
+            'Name' : 'h2',
+            #The second element is the test name, if not given the value in DefaultTestName
+            #will be used
+            #'TestName' : 'AndersonDarlingTest',
+            #The third element are the thresholds. This is a couple of p-values, if
+            #the result of the test (p-value) between the histogram and the reference is lower than
+            #the first element the test is FAILED, if larger than thge second element is PASSED,
+            #otherwise is NOTPASSED. If no thresholds are given the default will be used (see:
+            # Interface.Output class)
+            'Thresholds' : [ 0.1 , 0.7 ]
+        },
+
+        #Group 2
+        {
+            #In this example we show the use of regular-expressions. All histograms contained in
+            #a TFile TDirectory will be checked using defaults.
+            # Note that we use the python re module. See: http://docs.python.org/library/re.html
+            # for re syntax. For example ".*" means everyhing
+            # IMPORTANT NOTE 1:
+            #   It is important to note that there is no check of validity of re between groups.
+            #   For example if a group uses: 'Name' : '.*' will include ALL histograms in ALL
+            #   directories in the file. This means that other groups are not needed, if specified
+            #   the behaviour of the code is in general not correct
+            # IMPORTANT NOTE 2:
+            #   In ROOT a TDirectory name starts with '/', while a histogram written
+            #   in the ROOT of a TFile does not have the '/' character
+            'Name' : '/ADirectory/.*',
+        },
+            
+        ] #End of Histos defintion
+
+    } #End of configuration
+
+
+#Configuration for un-binned distributions
+#Describing only differences w.r.t. Binned case
+#Unbinned distributions are stored in TTrees as the
+#content of different branches.
+#Only simple data in branches are supported (see examples)
+UnBinned = {
+    'DefaultTestName' : 'AndersonDarlingTest',
+    'DefaultThresholds' : [0.1,0.5],
+    'DefaultReferenceFile' : 'reference.root',
+    
+    #These are the list of unbinned distributions
+    
+    'DataSet' : [
+    
+        #Group 1
+        {
+        #The name of the TTree's variable containing data.
+        #The name has the format: TreeName:BranchName
+        'Name' : 'TestTree:aInt',
+        #Type of data. Supported datatypes are: INT, FLOAT, DOUBLE, VECTORDOUBLE (see Group 5)
+        'Type' : 'INT',
+        #Dimension of the data. A single valued has dimension 1, if the branch contains
+        #An array, specify Size (see Group 4 for an example)
+        'Size' : 1
+        },
+        
+        #Group 2: double type
+        {
+        'Name' : 'TestTree:aDouble',
+        'Type' : 'DOUBLE',
+        'Size' : 1
+        },
+        
+        #Group 3: float type 
+        {
+        'Name' : 'TestTree:aFloat',
+        'Type' : 'FLOAT',
+        'Size' : 1
+        },
+        
+        #Group 4: an array of doubles
+        #Limitation: only fixed-size arrays are supported
+        {
+        'Name' : 'TestTree:aArrayD',
+        'Type' : 'DOUBLE',
+        #The array has a (fixed) size of 5
+        'Size' : 5,
+        #The third array element should be used
+        'Element' : 2,
+        },
+        
+        #Group 5: a std::vector<double>
+        #Limitation: only fixed-size arrays are supported
+        {
+        'Name' : 'TestTree:aStdVecD',
+        #This is a special type
+        'Type' : 'VECTORDOUBLE',
+        'Size' : 10,
+        'Element' : 1,
+        }
+        
+        ] #End of DataSets
+    }#End of configuration for UnBinned distributions
+

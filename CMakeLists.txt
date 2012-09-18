@@ -18,7 +18,7 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 ### DEPENDENCIES ############################################################
 
-FIND_PACKAGE( ILCUTIL COMPONENTS ILCSOFT_CMAKE_MODULES REQUIRED )
+FIND_PACKAGE( ILCUTIL COMPONENTS ILCSOFT_CMAKE_MODULES REQUIRED ILCTEST)
 
 # load default settings from ILCSOFT_CMAKE_MODULES
 INCLUDE( ilcsoft_default_settings )
@@ -117,4 +117,65 @@ ADD_EUTELESCOPE_TOOL( pedestalmerge )
 
 # display some variables and write them to cache
 DISPLAY_STD_VARIABLES()
+
+
+#  _            _       
+# | |_ ___  ___| |_ ___ 
+# | __/ _ \/ __| __/ __|
+# | ||  __/\__ \ |_\__ \
+#  \__\___||___/\__|___/
+#=============================================================================                      
+
+# to see the output of 'make test' in case of failure, export the environmental variable CTEST_OUTPUT_ON_FAILURE=true
+
+ENABLE_TESTING()
+INCLUDE(CTest)
+
+set( CTEST_MEMORYCHECK_COMMAND valgrind )
+
+# ----------------------------------------------------------------------------
+# TEST IF ENVIRONMENT IS OK FOR RUNNING TESTS
+# ----------------------------------------------------------------------------
+
+IF( NOT DEFINED ENV{EUTELESCOPE} OR NOT DEFINED ENV{MARLIN})
+      MESSAGE( "trying to load build and run environment for EUTelescope" )
+
+  IF( DEFINED ENV{ILCSOFT})
+        EXECUTE_PROCESS( COMMAND sh -c " [ -f $ILCSOFT/Eutelscope/HEAD/build_env.sh ] && . $ILCSOFT/Eutelescope/HEAD/build_env.sh" )
+
+	IF( NOT DEFINED ENV{EUTELESCOPE} OR NOT DEFINED ENV{MARLIN} )
+        # try to load build_env.sh environment - if running 'make' from 'build' directory, it should be located in '../'
+        EXECUTE_PROCESS( COMMAND sh -c " [ -f '../build_env.sh' ] && . ../build_env.sh" )
+	IF( DEFINED ENV{EUTELESCOPE} AND DEFINED ENV{MARLIN} )
+	    MESSAGE( "EUTELESCOPE environment automatically loaded from ../build_env.sh" )
+	ENDIF()
+     ENDIF()
+  ENDIF()
+
+ENDIF()
+
+# ----------------------------------------------------------------------------
+# ACTUAL TESTS BEGIN HERE
+# ----------------------------------------------------------------------------
+
+# check environment
+IF( DEFINED ENV{EUTELESCOPE} AND DEFINED ENV{MARLIN})
+# ======================================================================
+# ======================================================================
+# TestPysubExampleDaturaAlone: based on config in pysub/examples/datura-alone
+# ======================================================================
+# ======================================================================
+
+  INCLUDE(pysub/examples/datura-alone/testing.cmake)
+
+# set custom settings (e.g. tests to be skipped for valgrind)
+configure_file (
+	       ./CTestCustom.cmake.in 
+	       ${PROJECT_BINARY_DIR}/CTestCustom.cmake
+	       )
+
+
+ELSE()
+    MESSAGE( "EUTELESCOPE environment variable not defined, cannot run tests - please run 'source build_env.sh' in the EUTel root directory first." )
+ENDIF()
 

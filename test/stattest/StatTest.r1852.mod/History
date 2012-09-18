@@ -1,0 +1,41 @@
+     =========================================================
+     Geant4 - an Object-Oriented Toolkit for Simulation in HEP
+     =========================================================
+
+                      Category History file
+                      ---------------------
+
+History file for Geant4 CMake build scripts.
+It DOES NOT substitute the SVN log-message one should put at every
+committal in the SVN repository !
+
+Entries MUST use the following format:
+
+
+MONTH DAY YEAR - INITIAL.SURNAME (TAG)
+- FILECHANGED : Document changes made.
+
+- OTHERFILECHANGED : Document changes made.
+
+
+You should keep two lines between each date.
+TAG is optional. If your changes fix a bug listed in the Geant4 Bugzilla,
+add this in the documentation for the changed file as [BUGFIX #BUGNUMBER].
+
+
+     ----------------------------------------------------------
+     * Reverse chronological order (last date on top), please *
+     ----------------------------------------------------------
+09/05/2012 Andrea Dotti (stattest-V09-05-03)
+Adding example file to test all histograms of ROOT file.
+
+08/01/2012 Andrea Dotti (stattest-V09-05-02)
+ANSI colors for output are now off by default, can be turned
+on with --colors option (needed for CDash that does not support ANSI chars)
+
+07/13/2012 Andrea Dotti (stattest-V09-05-01)
+Reducing ROOT verbosity
+
+07/10/2012 Andrea Dotti (stattest-V09-05-00)
+Initial import
+
