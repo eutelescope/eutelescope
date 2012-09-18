@@ -8,11 +8,11 @@ WAKEUPAT=0100 # time to wake up every day in HHMM
 if [ -z "$EUTELESCOPE" ]
 then
     echo " Variable \$EUTELESCOPE not set, trying to parse 'build_env.sh'"
-    if (( -f ./build_env.sh ))
+    if [ -f ./build_env.sh ]
 	then
 	source build_env.sh
     else 
-	if (( -f ../build_env.sh ))
+	if [ -f ../build_env.sh ]
 	then
 	    source ../build_env.sh
 	else
