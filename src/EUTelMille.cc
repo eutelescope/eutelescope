@@ -3817,7 +3817,7 @@ void EUTelMille::end() {
 
 	// pede does not return exit codes on some errors (in V03-04-00)
 	// check for some of those here by parsing the output
-	char * pch = strstr(pedeoutput.str().data(),"Too many rejects");
+	const char * pch = strstr(pedeoutput.str().data(),"Too many rejects");
 	if (pch){
 	  streamlog_out ( ERROR ) << "Pede stopped due to the large number of rejects. " << endl;
 	  encounteredError = true;
