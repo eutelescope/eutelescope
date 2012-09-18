@@ -1,5 +1,3 @@
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
-
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
 // Version: $Id: EUTelTestFitter.cc,v 1.39 2009-07-30 14:00:19 zarnecki Exp $
 // Date 2007.06.04
@@ -638,7 +636,7 @@ void EUTelTestFitter::init() {
 
     totalScatAngle+= _planeScatAngle[ipl] * _planeScatAngle[ipl];
 
-    printf("scat angle   ipl:%5d  scatangle:%8.3e ",ipl,  _planeScatAngle[ipl]);
+    //printf("scat angle   ipl:%5d  scatangle:%8.3e ",ipl,  _planeScatAngle[ipl]);
 
     _fitX[ipl] =_fitY[ipl] = 0. ;
     if( _resolutionX.size() < ipl+1 )
@@ -660,7 +658,7 @@ void EUTelTestFitter::init() {
  
 //  _nominalErrorX[ipl]= _planeResolution[ipl];
 //  _nominalErrorY[ipl]= _planeResolution[ipl];
-    printf("nominal error X:%8.3f Y:%8.3f \n", _nominalErrorX[ipl], _nominalErrorY[ipl]);
+    //printf("nominal error X:%8.3f Y:%8.3f \n", _nominalErrorX[ipl], _nominalErrorY[ipl]);
   }
 
   totalScatAngle = sqrt(totalScatAngle);
@@ -823,7 +821,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       for(int iplane=0; iplane <  _siPlanesLayerLayout->getNLayers(); iplane++)    
       {
 
-          printf(":\n");
+	//printf(":\n");
 
           map< unsigned int , double > _planeCenter;
           map< unsigned int , double > _planeNormal;
@@ -871,11 +869,11 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
                       }
                       catch(...)
                       {
-                          printf(" no sensor rotation is given in the GEAR steering file, assume NONE \n" );
+			streamlog_out( MESSAGE ) << " no sensor rotation is given in the GEAR steering file, assume NONE" << endl;
                       }
 
  
-          printf("sensorID: %5d    %8.3f %8.3f %8.3f \n", sensorID, _planeCenter[ 0 ], _planeCenter[ 1 ], _planeCenter[ 2 ] );
+          //printf("sensorID: %5d    %8.3f %8.3f %8.3f \n", sensorID, _planeCenter[ 0 ], _planeCenter[ 1 ], _planeCenter[ 2 ] );
              
           if( _alignmentCollectionNames.size() > 0 )
           {
@@ -924,30 +922,30 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
                       }
                       catch(...)
                       {
-                          printf(" no sensor rotation is given in the GEAR steering file, assume NONE \n" );
-                      }
+			streamlog_out( MESSAGE ) << " no sensor rotation is given in the GEAR steering file, assume NONE" << endl;
+		      }
 
 
                       _planeNormal[0] = _normalTVec[0];
                       _planeNormal[1] = _normalTVec[1];
                       _planeNormal[2] = _normalTVec[2];
                       
-                      printf("%-20s %5d (%8.3f %8.3f %8.3f) %8.3f %8.3f %8.3f  normal (%8.3f %8.3f %8.3f) %8.3f %8.3f %8.3f \n", 
-                              _alignmentCollectionNames[i].c_str(), sensorID, 
+                      //printf("%-20s %5d (%8.3f %8.3f %8.3f) %8.3f %8.3f %8.3f  normal (%8.3f %8.3f %8.3f) %8.3f %8.3f %8.3f \n", 
+                              // _alignmentCollectionNames[i].c_str(), sensorID, 
 
-                              c->getXOffset(), c->getYOffset(), c->getZOffset(),
-                              _planeCenter[0], _planeCenter[1], _planeCenter[2],
+                              // c->getXOffset(), c->getYOffset(), c->getZOffset(),
+                              // _planeCenter[0], _planeCenter[1], _planeCenter[2],
                               
-                              gRotation[0], gRotation[1], gRotation[2], 
-                              _planeNormal[0], _planeNormal[1], _planeNormal[2] 
-                              );
+                              // gRotation[0], gRotation[1], gRotation[2], 
+                              // _planeNormal[0], _planeNormal[1], _planeNormal[2] 
+                              // );
                   }
                   catch(...)
                   {
-                     printf("collection %s not found \n", _alignmentCollectionNames[i].c_str() );
+		    streamlog_out( WARNING2 ) << "Collection " << _alignmentCollectionNames[i].c_str() << " not found "  << endl;
                   }
  
-                  printf(":\n");            
+                  //printf(":\n");            
               }            
 
                          
@@ -1951,11 +1949,11 @@ void EUTelTestFitter::end(){
   //        << std::endl ;
 
 
-  // Print the summer
+  // Print the summary
   streamlog_out( MESSAGE ) << "Total number of processed events:    " << setw(10) << setiosflags(ios::right) << _nEvt << resetiosflags(ios::right) << endl
-                           << "Total number of event w/o input hit: " << setw(10) << setiosflags(ios::right) << _noOfEventWOInputHit 
+                           << "Total number of events w/o input hit: " << setw(10) << setiosflags(ios::right) << _noOfEventWOInputHit 
                            << resetiosflags(ios::right) << endl
-                           << "Total number of event w/o track:     " << setw(10) << setiosflags(ios::right) << _noOfEventWOTrack
+                           << "Total number of events w/o track:     " << setw(10) << setiosflags(ios::right) << _noOfEventWOTrack
                            << resetiosflags(ios::right) << endl
                            << "Total number of reconstructed tracks " << setw(10) << setiosflags(ios::right) << _noOfTracks << resetiosflags(ios::right)
                            << endl;
@@ -3013,22 +3011,27 @@ int EUTelTestFitter::guessSensorID( double * hit )
 
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
-//  double * hitPosition = const_cast<double * > (hit->getPosition());
 
-//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
-  if( _referenceHitVec == 0)
-  {
-    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
-    return 0;
-  }
+  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false) {
+      // use z information of planes instead of reference vector
+      for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
+	double distance = std::abs( hit[2] - _siPlanesLayerLayout->getLayerPositionZ(iPlane) );
+	if ( distance < minDistance ) {
+	  minDistance = distance;
+	  sensorID = _siPlanesLayerLayout->getID( iPlane );
+	}
+      }
+      if ( minDistance > 30  ) {
+	// advice the user that the guessing wasn't successful 
+	streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
+	  "Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hit[2] <<       endl;
+      }
+    
+      return sensorID;
+    }
 
-      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
-      {
+  for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++) {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-//        printf(" _referenceHitVec %p refhit %p at %5.2f %5.2f %5.2f wih %5.2f %5.2f %5.2f \n", _referenceHitVec, refhit,
-//                refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset(),
-//                refhit->getAlpha(), refhit->getBeta(), refhit->getGamma()  
-//               );
         
         TVector3 hit3d( hit[0], hit[1], hit[2] );
         TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
