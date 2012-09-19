@@ -1950,12 +1950,12 @@ void EUTelTestFitter::end(){
 
 
   // Print the summary
-  streamlog_out( MESSAGE ) << "Total number of processed events:    " << setw(10) << setiosflags(ios::right) << _nEvt << resetiosflags(ios::right) << endl
+  streamlog_out( MESSAGE ) << "Total number of processed events:     " << setw(10) << setiosflags(ios::right) << _nEvt << resetiosflags(ios::right) << endl
                            << "Total number of events w/o input hit: " << setw(10) << setiosflags(ios::right) << _noOfEventWOInputHit 
                            << resetiosflags(ios::right) << endl
                            << "Total number of events w/o track:     " << setw(10) << setiosflags(ios::right) << _noOfEventWOTrack
                            << resetiosflags(ios::right) << endl
-                           << "Total number of reconstructed tracks " << setw(10) << setiosflags(ios::right) << _noOfTracks << resetiosflags(ios::right)
+                           << "Total number of reconstructed tracks  " << setw(10) << setiosflags(ios::right) << _noOfTracks << resetiosflags(ios::right)
                            << endl;
 
 
