@@ -3,7 +3,7 @@
 # to the dashboard.
 # use GNU screen to start this script from ssh sessions and then detach the session.
 
-WAKEUPAT="09:55" # time to wake up every day in HH:MM
+WAKEUPAT="01:00" # time to wake up every day in HH:MM
 
 if [ -z "$EUTELESCOPE" ]
 then
