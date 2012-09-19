@@ -630,19 +630,23 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
     if ( _applyToReferenceHitCollection ) 
     {
-     LCCollectionVec * ref    = static_cast < LCCollectionVec * > (event->getCollection( "refhit32" ));
-     for(size_t ii = 0 ; ii <  ref->getNumberOfElements(); ii++)
-     {
-      streamlog_out( DEBUG ) << " check output_refhit at : " << ref << " ";
-      EUTelReferenceHit* output_refhit = static_cast< EUTelReferenceHit*> ( ref->getElementAt(ii) ) ;
-      streamlog_out( DEBUG ) << " at : " <<  output_refhit << endl;     
-      streamlog_out( DEBUG ) << "CHK sensorID: " <<  output_refhit->getSensorID(   )     
+     for( size_t jj = 0 ; jj < _alignmentCollectionNames.size(); jj ++)
+     { 
+       std::string _colName = _alignmentCollectionNames.at(jj);
+       LCCollectionVec * ref    = static_cast < LCCollectionVec * > (event->getCollection( _colName  ));
+       for( size_t ii = 0 ; ii <  ref->getNumberOfElements(); ii++)
+       {
+        streamlog_out( DEBUG ) << " check output_refhit at : " << ref << " ";
+        EUTelReferenceHit* output_refhit = static_cast< EUTelReferenceHit*> ( ref->getElementAt(ii) ) ;
+        streamlog_out( DEBUG ) << " at : " <<  output_refhit << endl;     
+        streamlog_out( DEBUG ) << "CHK sensorID: " <<  output_refhit->getSensorID(   )     
                               << " x    :" <<        output_refhit->getXOffset(    )    
                               << " y    :" <<        output_refhit->getYOffset(    )    
                               << " z    :" <<        output_refhit->getZOffset(    )    
                               << " alfa :" <<        output_refhit->getAlpha()          
                               << " beta :" <<        output_refhit->getBeta()           
                               << " gamma:" <<        output_refhit->getGamma()        << endl ;
+       }
      }
     }
 }
