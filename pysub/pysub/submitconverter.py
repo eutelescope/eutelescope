@@ -976,7 +976,7 @@ class SubmitConverter( SubmitBase ) :
 
         # do some tricks for having the logfile
         logFile = open( self._logFileName, "w")
-        marlin  = popen2.Popen4( "Marlin %(steer)s" % { "steer": self._steeringFileName } )
+        marlin  = popen2.Popen4( "Marlin %(steer)s; Marlin -d %(steer)s %(steer)s.dot; " % { "steer": self._steeringFileName } )
         while marlin.poll() == -1:
             line = marlin.fromchild.readline()
             l = line.strip()
