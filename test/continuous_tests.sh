@@ -3,7 +3,7 @@
 # to the dashboard.
 # use GNU screen to start this script from ssh sessions and then detach the session.
 
-WAKEUPAT=0100 # time to wake up every day in HHMM
+WAKEUPAT="09:55" # time to wake up every day in HH:MM
 
 if [ -z "$EUTELESCOPE" ]
 then
@@ -37,8 +37,8 @@ echo " Waiting for my time to wake up ($WAKEUPAT)... "
 
 # infinite loop
 while :; do
-    now=$(date +%H%M)
-    if (( now == $WAKEUPAT )); then
+    now="$(date +%H:%M)"
+    if [[ "$now" = "$WAKEUPAT" ]]; then
 	echo " it's $now, time to wake up!"
 	echo " .. cleaning up .."
 	make clean
