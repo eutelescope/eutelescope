@@ -72,7 +72,7 @@ this builds the library:
 
 <b>[queue]</b> Version xxx.
 
-@li Update for the installation documentation. Recommended ilcsoft release v01-12.
+@li Update for the installation documentation. Recommended ilcsoft release v01-14-01.
 
 <b>[Pro]</b> Version v00-07-00-pre.
 
@@ -1399,12 +1399,12 @@ switched OFF (set to =0)
     --> 
  
 @section download_ilcinstall Download the ilcinstall scripts            
-Change folder to the global analysis folder and check the ilcinstall scripts (v01-12) 
+Change folder to the global analysis folder and check the ilcinstall scripts (v01-14-01) 
 
 
 @code
  cd $TB_ANALYSIS
- svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-12  ilcinstall_v01-12
+ svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-14-01  ilcinstall_v01-14-01
  cd ilcinstall_v01-12
 #
 # edit according to your needs [if you know what you are doing]:
@@ -1464,19 +1464,19 @@ Check if the installation looks concistent from the script/environment
 viewpoint:
  
 @code
- ilcsoft-install ./releases/v01-12/release-ilcsoft.cfg
+ ilcsoft-install ./releases/v01-14-01/release-ilcsoft.cfg
 @endcode
  
 Read carefully the output screen. If no apparent problem is detected, run:
      
 @code
- ilcsoft-install ./releases/v01-12/release-ilcsoft.cfg  -i
+ ilcsoft-install ./releases/v01-14-01/release-ilcsoft.cfg  -i
 @endcode
 
 Depending one your hardware/OS performance the installation can last for about
 half an hour.
 
-IF the ILCINSTALL script crashes due to the error "svn:Repository moved permanently to http://eudaq.hepforge.org/svn/trunk/; please relocate" you must edit the eutelescope.py file in your ilcinstall_v01-12/ilcsoft/ folder. Changing http://svn.hepforge.org/eudaq/trunk/ to http://eudaq.hepforge.org/svn/trunk/ is the right thing to do. Just restart the installation afterwards (dont' forget the '-i' switch).
+IF the ILCINSTALL script crashes due to the error "svn:Repository moved permanently to http://eudaq.hepforge.org/svn/trunk/; please relocate" you must edit the eutelescope.py file in your ilcinstall_v01-14-01/ilcsoft/ folder. Changing http://svn.hepforge.org/eudaq/trunk/ to http://eudaq.hepforge.org/svn/trunk/ is the right thing to do. Just restart the installation afterwards (dont' forget the '-i' switch).
 
 @section setenv_eutelescope Set EUTelescope environment
 
