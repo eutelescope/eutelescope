@@ -111,8 +111,15 @@ class SubmitBase :
         if not os.path.exists( self._configFile ):
             raise MissingConfigurationFileError( self._configFile )
 
+        # set up dictionary to be used for defaults in the config file
+        # populate defaults e.g. with environment variables
+        config_defaults = {
+            'env_eutelescope_path' : os.environ['EUTELESCOPE'],
+            'env_home_path' : os.environ['HOME']
+            }
+
         # if it exists, then I can read it!!!
-        self._configParser = ConfigParser.SafeConfigParser()
+        self._configParser = ConfigParser.SafeConfigParser(config_defaults)
         self._configParser.read( self._configFile )
 
         # set a couple of usefull information from the configuration file
