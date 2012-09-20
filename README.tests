@@ -1,0 +1,40 @@
+EUTelescope uses the CMake/CTest framework for daily automated,
+data-driven tests to constantly verify the validity of the output. The
+basis for the tests are the examples provided with the software
+together with a real data sample and the expected output in form of
+root files.
+
+If you are a user of EUTelescope and you have already taken data and
+performed you analysis, we would be very interested in obtaining a
+data sample with the corresponding analysis results including the
+EUTelescope configuration used so that we can include your analysis in
+the regular testing. This guarantees that your analysis will be well
+supported in future releases of EUTelescope and it might serve as a
+good starting point for others.
+
+The test can also be used by any developer who wishes to verify
+changes made to the EUTelescope code. This is a short how-to; for more
+detailed information see the CMake manual or web page
+(http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
+
+To see which tests are available, enter the build directory of
+EUTelescope and run
+	   ctest -N
+
+To perform a specific test of the list, run 
+   	   ctest -I [START #],[END #]
+
+where 'START #' is the test number to start from and 'END #' is the
+(optional) last test to run. The tests will be run in build/Testing,
+where each test has its own sub directory. Usually, the first testing
+steps will set up this directory structure. If you have run the tests
+once, you can therefore easily perform just specific tests that are
+affected by code changes that you want to verify.
+
+The end results of the analysis are verified using statistical tests
+provided by ROOT and accessed through the Python scripts in
+test/stattest/bin.
+
+The tests can be run by anybody but require access to the data files
+which reside on DESY AFS. If you wish to access the files please
+contact the EUTelescope software coordinators.
