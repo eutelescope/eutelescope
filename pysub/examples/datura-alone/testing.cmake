@@ -138,7 +138,7 @@
     ADD_TEST( TestPysubExampleDaturaAloneHitmakerHisto sh -c "[ -f ${testdir}/output/histo/${RunNr}-hit-histo.root ]" )
     SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneHitmakerHisto PROPERTIES DEPENDS TestPysubExampleDaturaAloneHitmakerRun)
 
-    ADD_TEST( TestPysubExampleDaturaAloneHitmakerPrealign sh -c "[ -f ${testdir}/output/db/${RunNr}-prealign-db.slcio ] && lcio_check_col_elements --expelements 5  alignment  ${testdir}/output/db/${RunNr}-prealign-db.slcio" )
+    ADD_TEST( TestPysubExampleDaturaAloneHitmakerPrealign sh -c "[ -f ${testdir}/output/db/${RunNr}-prealign-db.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/db/${RunNr}-prealign-db.slcio" )
     SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneHitmakerPrealign PROPERTIES DEPENDS TestPysubExampleDaturaAloneHitmakerRun)
 
     # we expect an average hit number of 35 for run 4118 using the example configuration
@@ -177,7 +177,7 @@
     ADD_TEST( TestPysubExampleDaturaAloneAlignHisto sh -c "[ -f ${testdir}/output/histo/${RunNr}-align-histo.root ]" )
     SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneAlignHisto PROPERTIES DEPENDS TestPysubExampleDaturaAloneAlignRun)
 
-    ADD_TEST( TestPysubExampleDaturaAloneAlignDB sh -c "[ -f ${testdir}/output/db/${RunNr}-align-db.slcio ] && lcio_check_col_elements --expelements 5  alignment  ${testdir}/output/db/${RunNr}-prealign-db.slcio" )
+    ADD_TEST( TestPysubExampleDaturaAloneAlignDB sh -c "[ -f ${testdir}/output/db/${RunNr}-align-db.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/db/${RunNr}-prealign-db.slcio" )
     SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneAlignDB PROPERTIES DEPENDS TestPysubExampleDaturaAloneAlignRun)
 
     ADD_TEST( TestPysubExampleDaturaAloneAlignOutput sh -c "[ -f ${testdir}/output/results/${RunNr}-align-mille.bin -a -f ${testdir}/output/results/${RunNr}-pede-steer.txt ] " )
