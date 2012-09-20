@@ -284,12 +284,12 @@ std::string EUTelDUTHistograms::_ShiftXvsXHistoName      = "DUTshiftXvsX";
 std::string EUTelDUTHistograms::_ShiftXvsX2DHistoName    = "DUTshiftXvsX2D";
 std::string EUTelDUTHistograms::_ShiftYvsY2DHistoName    = "DUTshiftYvsY2D";
 
-std::string EUTelDUTHistograms::_EtaXHistoName      = "EtaX";
-std::string EUTelDUTHistograms::_EtaYHistoName      = "EtaY";
-std::string EUTelDUTHistograms::_EtaX2DHistoName    = "EtaX2D";
-std::string EUTelDUTHistograms::_EtaY2DHistoName    = "EtaY2D";
-std::string EUTelDUTHistograms::_EtaX3DHistoName    = "EtaX3D";
-std::string EUTelDUTHistograms::_EtaY3DHistoName    = "EtaY3D";
+std::string EUTelDUTHistograms::_EtaXHistoName           = "EtaX";
+std::string EUTelDUTHistograms::_EtaYHistoName           = "EtaY";
+std::string EUTelDUTHistograms::_EtaX2DHistoName         = "EtaX2D";
+std::string EUTelDUTHistograms::_EtaY2DHistoName         = "EtaY2D";
+std::string EUTelDUTHistograms::_EtaX3DHistoName         = "EtaX3D";
+std::string EUTelDUTHistograms::_EtaY3DHistoName         = "EtaY3D";
 
 std::string EUTelDUTHistograms::_PixelEfficiencyHistoName       = "PixelEfficiency";
 std::string EUTelDUTHistograms::_PixelResolutionXHistoName      = "PixelResolutionX";
@@ -333,7 +333,7 @@ EUTelDUTHistograms::EUTelDUTHistograms() : Processor("EUTelDUTHistograms") {
                            "InputFitHitCollectionName" ,
                            "Name of the input DUT hit collection"  ,
                            _inputFitHitColName,
-                           std::string("fithit") ) ;
+                           std::string("dummy") ) ;
 
 
 
@@ -614,6 +614,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
               _trackhitsensorID[itrack][i], _trackhitposX[itrack][i] , _trackhitposY[itrack][i], _trackhitsizeX[itrack][i], _trackhitsizeY[itrack][i], _trackhitsubM[itrack][i] );  
       _maptrackid++; 
    }
+*/
 /*
   for( int itrack=0; itrack<_maptrackid; itrack++)
   {
@@ -952,10 +953,13 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 // cout << " localX "<< bestfit ;
 // cout << " " << _localX[bestfit] << endl;        
+       if(  _clusterSizeX[besthit] == 1 &&  _clusterSizeY[besthit] == 1 )
+       {
         (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[ _PixelEfficiencyHistoName ] ) )->fill( _localX[itrack][bestfit]*1000., _localY[itrack][bestfit]*1000., 1.);
         (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[ _PixelResolutionXHistoName ] ) )->fill( _localX[itrack][bestfit]*1000., _localY[itrack][bestfit]*1000., _measuredX[besthit]-_fittedX[itrack][bestfit] );
         (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[ _PixelResolutionYHistoName ] ) )->fill( _localX[itrack][bestfit]*1000., _localY[itrack][bestfit]*1000., _measuredY[besthit]-_fittedY[itrack][bestfit] );
 //      (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[ _PixelChargeSharingHistoName ] ) )->fill( _localX[itrack][bestfit], _localY[itrack][bestfit], 0. );
+       }
 //
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_ShiftXvsYHistoName]))->fill(_fittedY[itrack][bestfit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_ShiftYvsXHistoName]))->fill(_fittedX[itrack][bestfit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
@@ -973,14 +977,15 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
         // Eta function check plots
 
-
+       if(  _clusterSizeX[besthit] == 1 &&  _clusterSizeY[besthit] == 1 )
+       {
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaXHistoName]))->fill(_localX[itrack][bestfit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
         (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EtaYHistoName]))->fill(_localY[itrack][bestfit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
         (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaX2DHistoName]))->fill(_localX[itrack][bestfit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
         (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_EtaY2DHistoName]))->fill(_localY[itrack][bestfit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
         (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EtaX3DHistoName]))->fill(_localX[itrack][bestfit],_localY[itrack][bestfit],_measuredX[besthit]-_fittedX[itrack][bestfit]);
         (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EtaY3DHistoName]))->fill(_localX[itrack][bestfit],_localY[itrack][bestfit],_measuredY[besthit]-_fittedY[itrack][bestfit]);
-
+       } 
         // extend Eta histograms to 2 pitch range
 
 #endif
