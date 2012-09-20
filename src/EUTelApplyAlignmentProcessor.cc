@@ -259,7 +259,7 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
             }   
             catch(...)
             {
-              streamlog_out ( MESSAGE ) <<  "_referenceHitCollectionName " << _referenceHitCollectionName.c_str() << " could not be retrieved, creating a dummy one (all elements are null) " << endl;
+              streamlog_out ( DEBUG ) <<  "_referenceHitCollectionName " << _referenceHitCollectionName.c_str() << " could not be retrieved, creating a dummy one (all elements are null) " << endl;
              
               _referenceHitVec = CreateDummyReferenceHitCollection();
               event->addCollection( _referenceHitVec, _referenceHitCollectionName );
@@ -282,7 +282,7 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
             catch(...)
             {
               _outputReferenceHitVec = CreateDummyReferenceHitCollection();
-              streamlog_out ( MESSAGE ) << "NOT found _outputReferenceHitVec [" << _outputReferenceHitCollectionName.c_str() << "] at " << _outputReferenceHitVec << endl;  
+              streamlog_out ( DEBUG ) << "NOT found _outputReferenceHitVec [" << _outputReferenceHitCollectionName.c_str() << "] at " << _outputReferenceHitVec << endl;  
               event->addCollection( _outputReferenceHitVec, _outputReferenceHitCollectionName );
             }
 
@@ -2613,12 +2613,26 @@ int EUTelApplyAlignmentProcessor::guessSensorID(const double * hit )
 
 //  message<MESSAGE> ( log() <<  "referencehit collection: " << _referenceHitCollectionName << " at "<< _referenceHitVec);
 //  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
-  if( _referenceHitVec == 0)
+
+  if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false)
   {
-    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
-    return 0;
+    // use z information of planes instead of reference vector
+    for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
+      double distance = std::abs( hit[2] - _siPlaneZPosition[ iPlane ] );
+      if ( distance < minDistance ) {
+	minDistance = distance;
+	sensorID = _siPlanesLayerLayout->getID( iPlane );
+      }
+    }
+    if ( minDistance > 30  ) {
+      // advice the user that the guessing wasn't successful 
+      streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
+	"Please check the consistency of the data with the GEAR file: hitPosition[2]=" << hit[2] <<       endl;
+    }
+    
+    return sensorID;
   }
- 
+
 //  message<MESSAGE> ( log() <<  "number of elements : " << _referenceHitVec->getNumberOfElements() << endl );
 
       for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
