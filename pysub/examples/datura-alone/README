@@ -9,3 +9,22 @@ The corresponding data can be found at:
 
 If you are interested in the data but cannot access the above path,
 please contact the EUTelescope software coordinators.
+
+
+Features of this configuration:
+------------------------------
+
+- telescope alone, no DUT
+
+
+Known issues:
+------------
+
+- does not use the reference vector framework for identifying a sensor
+  plane corresponding to a hit; therefore, planes are identified by
+  their z-coordinate which could lead to problems if this
+  configuration is used in geometries with overlapping sensor layers
+  (in z)
+
+- lacks an thorough analysis of the data, e.g. using telescope planes
+  as DUT and determining the resolution
