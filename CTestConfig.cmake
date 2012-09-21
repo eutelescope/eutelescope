@@ -5,7 +5,7 @@
 ##   ENABLE_TESTING()
 ##   INCLUDE(CTest)
 set(CTEST_PROJECT_NAME "EuTelescope")
-set(CTEST_NIGHTLY_START_TIME "01:00:00 MET")
+set(CTEST_NIGHTLY_START_TIME "02:00:00 UTC")
 
 set(CTEST_DROP_METHOD "http")
 set(CTEST_DROP_SITE "aidasoft.desy.de")
