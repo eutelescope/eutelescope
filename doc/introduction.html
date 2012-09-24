@@ -26,51 +26,15 @@ are still valid for the digital sensors/Mimosa-26)
 </ul>
 @li @ref pythonScripts 
 @li @ref gridtools
-<!--
- @li @ref preparation
- @li @ref analysis
- @li @ref intro
- @li @ref downinst
- @li @ref ilcinstall -->
 
 The EUTelescope framework workflow for digital sensors (Mimosa 26) is summarised
 <a href="http://atlas.desy.de/ibl/EUTelescope/SoftwareDevelopment/EUTelescope_Aug_2010_concept_scheme.pdf">here
 <img border="none" src="http://atlas.desy.de/ibl/home/pdficon_small.gif"> </a>.
 
-<!--
-<b>The library update:</b> In case you want to reinstall the EUTelescope library from scratch you do
-not need to rerun the ilcinstall scripts repeating all steps of the ilcsoft
-installation. There is one step to create the new Makefile for the EUTelescope
-compilation, namely 
-@code
-cd $EUTELESCOPE/../
-mv HEAD HEAD_bak
-svn co https://svnsrv.desy.de/public/eutelescope/Eutelescope/trunk HEAD
-cd HEAD
-mkdir build; cd build
-cmake -C $ILCSOFT_CMAKE ..
-# where $ILCSOFT_CMAKE is the cmake file which can be found in the ilcsoft
-# folder (two levels abouve the $EUTELESCOPE level:
-# ILCSOFT_CMAKE = $EUTELESCOPE/../../ILCSoft.cmake
-@endcode
-this creates necessary Makefile(s). Now, execute the following (this step did not change):
-@code
-make install
-# or for a multicore CPU
-# make -j 8 install
-# where 8 is for an 8 core CPU.
-@endcode
-this builds the library:
-@code
-../lib/libEutelescope.so
-../lib/libEutelescope.so.0.5
-../lib/libEutelescope.so.0.5.1
-@endcode
--->
 
 <b>Last versions release info:</b>
 
-<b>[queue]</b> Version xxx.
+<b>[comin' soon]</b> Version v00-07-01.
 
 @li Update for the installation documentation. Recommended ilcsoft release v01-14-01.
 
@@ -126,39 +90,6 @@ The ilcinstall v01-11 contains improved cmake scripts assisting with installatio
 @li Bug fixes in the EUTelDUTHistograms class.
 @li Extend the template "template_ibl/fitter-tmp.xml" to have Telescope sensors (6x Mimosa 26) and a set of DUT sensors (APIX as an example) DUTHistograms done in one execution step.  
 @li New release of the ILCSoft v01-10.
-<!-- 
-@code
-cd $TB_ANALYSIS
-svn co https://svnsrv.desy.de/public/ilctools/ilcinstall/tags/v01-10 ilcinstall_v01-10
-cd ilcinstall_v01-10
-#
-# edit ./releases/v01-10/release-20101206.cfg
-# edit ./releases/v01-10/release-versions.py
-#
-# examples of these two files are here:
-#
-# for installation on a machine with a /afs/
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-ilcsoft.cfg 
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/release-versions.py 
-#
-# for a standalone installation:
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/standalone/release-ilcsoft.cfg 
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/standalone/release-versions.py
-#
-# replace the default files with the example ones:
-# mv release-ilcsoft.cfg ./releases/v01-10/
-# mv release-versions.py ./releases/v01-10/
-# 
-# check the installation
-#
-ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg
-# 
-# if OK then install
-#
-ilcsoft-install ./releases/v01-10/release-ilcsoft.cfg  -i
-#
-@endcode
--->
 
 <b>[Old]</b> Version v00-05-00-pre 
 Dependency on the latest GEAR library (!) ( >= 30.11.2010). 
@@ -1372,32 +1303,7 @@ folders where the software and the data files will be located, say
 
 Create these folders if they do not exist.
 
-<!--
-@section install_eudaq Install EUDAQ
 
-Change current folder to $EUDAQ and get the EUDAQ source code from the
-repository:
-
-@li Download source code
-@code
- cd $EUDAQ
- svn co http://svn.hepforge.org/eudaq/trunk .  
-@endcode
-
-@li make sure that USE_LCIO and USE_EUTELESCOPE lines in the main/Makefile are
-switched OFF (set to =0)
-   <ul> 
-<li>  USE_LCIO := 0
-<li>  USE_EUTELESCOPE := 0
-   </ul>
-@li  build EUDAQ with
-@code   
-  make main
-  # it is important that after compilation you can find the library full path is valid: $EUDAQ/bin/libeudaq.so
-@endcode  
-@li  the EUDAQ library should appear as $EUDAQ/bin/libeudaq.so
-    --> 
- 
 @section download_ilcinstall Download the ilcinstall scripts            
 Change folder to the global analysis folder and check the ilcinstall scripts (v01-14-01) 
 
@@ -1424,15 +1330,6 @@ Change folder to the global analysis folder and check the ilcinstall scripts (v0
 # wget http://atlas.desy.de/ibl/EUTelescope/installation-cfg-files/v01-12/release-versions.py 
 #
 @endcode
- <!--
-# if you want to install for v01-11 (of ilcsoft):
-# for installation with /afs/desy.de/:
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-11/release-ilcsoft.cfg 
-#
-# for standalone installation:
-# wget http://www-zeus.desy.de/~rubinsky/EUTelescope/installation-cfg-files/v01-11-standalone/release-ilcsoft.cfg 
-#
--->
      
 Your local configuration file "release-ilcsoft.cfg" shold contain the EUDAQ
 library references:<br>
@@ -1484,36 +1381,6 @@ The script fills PATH and LD_LIBRARY_PATH variables.
 A $EUTELESCOPE variable is also introduced there.
 
 
-<!--
-@section recompile_eudaq Recompile EUDAQ    
-
-@code
- cd $EUDAQ/trunk 
-@endcode
-
-@li Edit the main/Makefile to build with LCIO and EUTelescope libs:
-  <ul> 
-<li>  USE_LCIO := 1
-<li>  USE_EUTELESCOPE := 1
-   </ul>
-@li  build EUDAQ with
-@code   
- make clean main
-@endcode  
-
-@section recompile_eutelescope Recompile EUTelescope     
-
-@li Rebuild the EUTelescope library:
-@code 
-  cd $EUTELESCOPE/build  
-  make clean install
-@endcode
-@li Check that you can see EUDAQ library definitions in the EUTelescope lib:
-@code 
-  nm ../lib/libEutelescope.so | grep eudaq
-@endcode
-  you should get a non empty output.
--->
 
 @section millepede Check that the Millepede II is installed!
 
@@ -1544,41 +1411,6 @@ There is an official Millepede II web page maintained by Terascale Statistics
 group <a href="https://www.wiki.terascale.de/index.php/Millepede_II">Physics at
 the Terascale / Millepede II </a>.
 
-<!--
-@section millepede Check that the Millepede II is installed and compiled alright!
-
-If the folder $EUTELESCOPE/millepede/ was not created then you should do it manually by following these steps:
-
-The Millepede II source code can be downloaded from here:
-
-@code 
-  cd $ILCSOFT
-  mkdir MillepedeII
-  cd MillepedeII
-  svn co https://svnsrv.desy.de/public/MillepedeII/tags/V03-03-00 V03-03-00
-@endcode
-
-You should add the $ILCSOFT/MillepedeII/V03-03-00 path to your environment $PATH
-or put a  soft link in your  $EUTELESCOPE/bin/ folder:
-
-@code
-  cd $EUTELESCOPE/bin/
-  ln -sf $ILCSOFT/MillepedeII/V03-03-00/pede .
-@endcode
-
-
-Then, your $EUTELESCOPE/pysub/config/config.cfg file should contain:
-
-@code
-  Pede           =  $EUTELESCOPE/bin/pede
-@endcode
-
-Replace the $EUTELESCOPE with the full path string corresponding to your setup.
-
-There is an official Millepede II web page maintained by Terascale Statistics
-group <a href="https://www.wiki.terascale.de/index.php/Millepede_II">Physics at
-the Terascale / Millepede II </a>.
--->
 
 
 @section work How does it work?
