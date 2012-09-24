@@ -2091,8 +2091,8 @@ namespace redi
 } // namespace redi
 
 /**
- * @mainpage PStreams Reference
- * @htmlinclude mainpage.html
+ * @page PStreams Reference
+ * @htmlinclude page.html
  */
 
 #endif  // REDI_PSTREAM_H_SEEN
