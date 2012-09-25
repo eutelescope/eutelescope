@@ -240,7 +240,7 @@
 
     # run stattest tool on output from previous step and test it against reference file; test are configured in specified config file (*.qa)
 
-    ADD_TEST( TestPysubExampleDaturaAloneStatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib python ${stattestdir}/${executable} -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_DaturaAloneAlign.qa ${testdir}/output/histo/${RunNr}-align-histo.root ${referencedatadir}/${RunNr}-align-histo.root" )
+    ADD_TEST( TestPysubExampleDaturaAloneStatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH python ${stattestdir}/${executable} -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_DaturaAloneAlign.qa ${testdir}/output/histo/${RunNr}-align-histo.root ${referencedatadir}/${RunNr}-align-histo.root" )
     SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneStatTestAlign PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
@@ -251,7 +251,7 @@
 	)
 
 
-    ADD_TEST( TestPysubExampleDaturaAloneStatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib python ${stattestdir}/${executable} -g ${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_DaturaAloneFitter.qa ${testdir}/output/histo/${RunNr}-track-histo.root ${referencedatadir}/${RunNr}-track-histo.root" )
+    ADD_TEST( TestPysubExampleDaturaAloneStatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH python ${stattestdir}/${executable} -g ${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_DaturaAloneFitter.qa ${testdir}/output/histo/${RunNr}-track-histo.root ${referencedatadir}/${RunNr}-track-histo.root" )
     SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneStatTestFitter PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
