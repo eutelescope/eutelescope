@@ -33,7 +33,7 @@ echo " Environment set up correctly "
 cd build
 
 # setup done!
-echo " Waiting for my time to wake up ($WAKEUPAT)... "
+echo " Waiting for my time to wake up ($WAKEUPAT UTC)... "
 
 # infinite loop
 while :; do
