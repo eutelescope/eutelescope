@@ -31,7 +31,7 @@ Version: $Id: converter-tmp.xml,v 1.2 2009-05-14 18:25:21 bulgheroni Exp $
    <global>
       <parameter name="LCIOInputFiles"> </parameter>
       <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
-      <parameter name="MaxRecordNumber" value="10000000"/>
+      <parameter name="MaxRecordNumber" value="10000"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
       <parameter name="Verbosity" value="MESSAGE"/>
