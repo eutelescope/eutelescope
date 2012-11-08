@@ -107,6 +107,11 @@ void EUTelAPIXTbTrackTuple::init() {
   _nEvt = 0 ;
   _foundAllign = false;
 
+  for (int count=0; count<50; count++){
+    rotationstored[count] = false;
+  }
+  countrotstored = 0;
+
   message<DEBUG> ( log() << "Initializing " );
 	
   if ( Global::GEAR == NULL ) {
@@ -582,6 +587,12 @@ void EUTelAPIXTbTrackTuple::invertAlignment(EUTelAlignmentConstant * alignment){
   rotations.push_back( alignment->getGamma() );
   _alignRotations[iden].push_back(rotations);
 
+  //check if alignment for plane has already been stored
+  if(rotationstored[iden] == false){
+    getDUTRot(alignment);
+    rotationstored[iden] = true;
+  }
+
   streamlog_out(DEBUG) << "Iden: " << iden << endl
 			 << "X-shift: "<< alignment->getXOffset() << endl
 			 << "Y-shift: "<< alignment->getYOffset() << endl
@@ -696,6 +707,11 @@ void EUTelAPIXTbTrackTuple::clear(){
   _hitClusterId->clear();
   _hitSensorId->clear();
   _hitPointerToCluster->clear();
+  //Clear DUT rot
+  _rotDUTId->clear();
+  _rotXY->clear();
+  _rotZX->clear();
+  _rotZY->clear();
 }
 
 void EUTelAPIXTbTrackTuple::reverseAlign(double& x, double& y, double &z, int iden, double nomZpos){
@@ -952,6 +968,11 @@ void EUTelAPIXTbTrackTuple::prepareTree(){
   _hitClusterId  = new vector<int>();
   _hitSensorId  = new vector<int>();
   _hitPointerToCluster = new vector<IMPL::TrackerDataImpl*>();
+
+  _rotDUTId = new vector<int>();
+  _rotXY = new vector<double>();
+  _rotZX = new vector<double>();
+  _rotZY = new vector<double>();
   
   _euhits = new TTree("euhits","euhits");
   _euhits->Branch("nHits", &_nHits);
@@ -994,7 +1015,45 @@ void EUTelAPIXTbTrackTuple::prepareTree(){
   _clutree->Branch("charge", &_clucharge);
   _clutree->Branch("iden", &_cluSensorId);
   _clutree->Branch("ID", &_cluClusterId);
+  //TTree for DUT rot info
+  _rottree = new TTree("DUTrotation", "DUTrotation");
+  _rottree->Branch("ID", &_rotDUTId);
+  _rottree->Branch("RotXY", &_rotXY);
+  _rottree->Branch("RotZX", &_rotZX);
+  _rottree->Branch("RotZY", &_rotZY);
   
   _euhits->AddFriend(_clutree);
   _euhits->AddFriend(_zstree);
+}
+
+void EUTelAPIXTbTrackTuple::getDUTRot(EUTelAlignmentConstant * alignment){
+  int iden = alignment->getSensorID();
+
+  for ( int layerIndex = 0 ; layerIndex < _siPlanesParameters->getSiPlanesNumber() ; ++layerIndex ) {
+    int idencheck = _siPlanesLayerLayout->getID( layerIndex );
+
+    //get rotations from gearfile
+    if (idencheck == iden){
+      double rotXY = _siPlanesLayerLayout->getLayerRotationXY(layerIndex);
+      double rotZX = _siPlanesLayerLayout->getLayerRotationZX(layerIndex);
+      double rotZY = _siPlanesLayerLayout->getLayerRotationZY(layerIndex);
+
+      _rotDUTId->push_back(iden);
+      _rotXY->push_back(alignment->getAlpha() + rotXY);
+      _rotZX->push_back(alignment->getBeta() + rotZX);
+      _rotZY->push_back(alignment->getGamma() + rotZY);
+    }
+  }
+
+  //count stored planes
+  countrotstored++;
+
+  //message<MESSAGE> ( log() << "Planes stored " << countrotstored );
+  //message<MESSAGE> ( log() << "# Planes " << _siPlanesParameters->getSiPlanesNumber() );
+
+  //fill tree omly once
+  //first plane has no aligment
+  if ((countrotstored + 1) == _siPlanesParameters->getSiPlanesNumber()){
+    _rottree->Fill();
+  }
 }

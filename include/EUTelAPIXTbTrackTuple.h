@@ -65,10 +65,13 @@ namespace eutelescope {
     int readClusters( std::string colName, LCEvent* event);
     int readHits( std::string hitColName, LCEvent* event );
     void setClusterIdInHits();
+    void getDUTRot(EUTelAlignmentConstant * alignment);
 
     bool _foundAllign;
     bool _doScales;
     std::vector<std::string> _alignColNames;
+    bool rotationstored[50];
+    int countrotstored;
 
     std::map<int, std::vector< std::vector<double> > > _alignShift;
     std::map<int, std::vector< std::vector<double> > > _alignRotations;
@@ -153,6 +156,12 @@ namespace eutelescope {
     std::vector<int>    *_hitClusterId;
     std::vector<int>    *_hitSensorId;
     std::vector<IMPL::TrackerDataImpl*>    *_hitPointerToCluster;
+
+    TTree* _rottree;
+    std::vector<int> *_rotDUTId;    
+    std::vector<double> *_rotZY;
+    std::vector<double> *_rotZX; 
+    std::vector<double> *_rotXY;  
   };
 
 
