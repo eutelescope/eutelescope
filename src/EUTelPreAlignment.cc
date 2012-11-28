@@ -390,19 +390,16 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
 {
         bool skipHit = false;
  
-        EUTelVirtualCluster * cluster = 0;
-
         try
         {
             LCObjectVec clusterVector = hit->getRawHits();
 
 
-            if ( hit->getType() == kEUTelSparseClusterImpl ) 
-            {
-      
+           if ( hit->getType() == kEUTelSparseClusterImpl ) 
+           {
               TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
- //              cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
               eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > *cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
+
               int sensorID = cluster->getDetectorID();
  
               for ( unsigned int iPixel = 0; iPixel < cluster->size(); iPixel++ ) 
@@ -442,28 +439,40 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
 //                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
                     }
               }
-            } else if ( hit->getType() == kEUTelBrickedClusterImpl ) {
 
-               // fixed cluster implementation. Remember it
-               //  can come from
-               //  both RAW and ZS data
+              if(cluster != 0 ) delete cluster;
+              return 0;
+           } 
+            else if ( hit->getType() == kEUTelBrickedClusterImpl ) 
+            {
+
+              // fixed cluster implementation. Remember it
+              //  can come from
+              //  both RAW and ZS data
    
-                cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-                
-            } else if ( hit->getType() == kEUTelDFFClusterImpl ) {
-              
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } else if ( hit->getType() == kEUTelFFClusterImpl ) {
-              
-              // fixed cluster implementation. Remember it can come from
-              // both RAW and ZS data
-              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
-            } 
-            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
+//              cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+              streamlog_out ( MESSAGE ) << " Hit type kEUTelBrickedClusterImpl is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
+
+           } 
+            else if ( hit->getType() == kEUTelDFFClusterImpl ) 
             {
               
+              // fixed cluster implementation. Remember it can come from
+              // both RAW and ZS data
+//              cluster = new EUTelDFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+              streamlog_out ( MESSAGE ) << " Hit type kEUTelDFFClusterImpl is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
+           } 
+            else if ( hit->getType() == kEUTelFFClusterImpl ) 
+            {
+              
+              // fixed cluster implementation. Remember it can come from
+              // both RAW and ZS data
+//              cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
+              streamlog_out ( MESSAGE ) << " Hit type kEUTelFFClusterImpl is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
+           } 
+            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
+            {
+             
 //              cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
 //                 ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
 
@@ -471,7 +480,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
                 TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
                 // streamlog_out(MESSAGE4) << "Vector size is: " << clusterVector.size() << endl;
 
-                cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
+                // cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
 	      
 	        // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
                 eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
@@ -490,7 +499,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
 //                    cout << endl;
 
                     try
-                    {                       
+                    {
 //                       printf("pixel %3d %3d was found in the _hotPixelMap = %1d (0/1) \n", pixelX, pixelY, _hotPixelMap[sensorID][pixelX][pixelY]  );                       
                        char ix[100];
                        sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
@@ -499,7 +508,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
                           skipHit = true; 	      
 //                          streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
 //                          printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
-                          delete cluster;                        
+                          delete apixCluster;                        
                           return true; // if TRUE  this hit will be skipped
                        }
                        else
@@ -509,46 +518,31 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
                     } 
                     catch (...)
                     {
-//                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
-                    }
-                    if(skipHit ) 
-                    {
-//                       printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
-                    }
-                    else
-                    { 
+// do  nothing -> ignore 
 //                       printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
                     }
 
-                }
-
-                if (skipHit) 
-                {
-//                 streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
-//                    continue;
-                }
-                else
-                {
-//                  streamlog_out(MESSAGE4) << "Cluster/hit is fine for preAlignment!" << endl;
                 }
                 
-                delete cluster; 
+                if( apixCluster != 0 ) delete apixCluster;
                 return skipHit; // if TRUE  this hit will be skipped
-            } 
-            
+           } 
+            else
+            {
+              streamlog_out ( MESSAGE ) << " Hit type is not known (?!) and is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
+           }
+ 
        }
        catch(...)
        { 
           // if anything went wrong in the above return FALSE, meaning do not skip this hit
-	 streamlog_out(ERROR4) << "something went wrong in EUTelPreAlign::hitContainsHotPixels " << endl;
+	
+          streamlog_out(ERROR4) << "something went wrong in EUTelPreAlign::hitContainsHotPixels " << endl;
           return 0;
        }
-
-       if(cluster) delete cluster; 
  
        // if none of the above worked return FALSE, meaning do not skip this hit
        return 0;
-
 }
 
 
