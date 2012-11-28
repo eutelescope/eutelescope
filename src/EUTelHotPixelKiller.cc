@@ -375,7 +375,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
     }
     catch(...)
     {
-        std::cout <<  "Input collection " << _statusCollectionName.c_str() << " not found in the current event. Skipping..." << std::endl;
+        streamlog_out ( MESSAGE ) <<  "Input collection status: " << _statusCollectionName.c_str() << " not found in the current event. Skipping..." << endl;
     }
 
     try 
@@ -477,13 +477,12 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
   } 
   catch (lcio::DataNotAvailableException& e ) 
   {
-    streamlog_out ( WARNING2 )  << "Input collection not found in the current event. Skipping..." << endl;
-    std::cout <<  "Input collection not found in the current event. Skipping..." << std::endl;
+    streamlog_out ( WARNING2 )  << "Input collection not found in the current event. Skipping..." << e.what() << endl;
     return;    
   } 
   catch ( ParseException& e ) 
   {
-      std::cout <<  e.what() << "\n" << std::endl;
+      streamlog_out ( MESsAGE )  << "Input collection not found in the current event. Skipping..." << e.what() << endl;
       return;     
   }
 
