@@ -142,7 +142,16 @@ namespace TDS {
 //! Key/hash for storage of integration results. Global TDS function
   inline unsigned long long int integSegmentID(const unsigned int segmentL, const unsigned int segmentW, const unsigned int segmentH, const unsigned int pixelL, const unsigned int pixelW)
     {
-      return segmentL*1000000000000ULL + segmentW*1000000000 + segmentH*1000000 + pixelL*1000 + pixelW;
+      if(0)
+      {
+      std::cout << " W " <<  pixelW << std::endl;
+      std::cout << " LW " <<  pixelL*1000 + pixelW << std::endl;
+      std::cout << " HLW " <<  segmentH << " = " << segmentH*1000000ULL << " " << pixelL*1000  << " " << pixelW << std::endl;
+      std::cout << " WHLW " <<  segmentW*1000000000ULL + segmentH*1000000ULL + pixelL*1000 + pixelW << std::endl;
+      std::cout << " LWHLW " << segmentL*1000000000000ULL + segmentW*1000000000ULL + segmentH*1000000ULL + pixelL*1000 + pixelW << std::endl;
+      }
+
+      return segmentL*1000000000000ULL + segmentW*1000000000ULL + segmentH*1000000ULL + pixelL*1000 + pixelW;
     }
   
 
