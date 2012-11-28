@@ -123,6 +123,21 @@ namespace eutelescope {
      */
     virtual void processEvent (LCEvent * evt);
 
+    //! Called if the detector is Mimosa26
+    /*! 
+     */
+    virtual void packMimosa26( int digiIndex );
+
+    //! Called if the detector is FEI3    
+    /*! 
+     */
+    virtual void packFEI3( int digiIndex );
+
+    //! Called if the detector is FEI4    
+    /*! 
+     */
+    virtual void packFEI4( int digiIndex );
+
 
     //! Called after data processing.
     /*! This method is called when the loop on events is
@@ -380,7 +395,8 @@ namespace eutelescope {
     // Local variables
     //
 
-
+    TrackerDataImpl * zsFrame;
+ 
     //! Run number
     int _iRun;
 
@@ -532,7 +548,7 @@ namespace eutelescope {
      *  X can swap with Y due to rotation
      */
 
-    double _localPitch[2];
+    double _localPitch[3];
 
     //! Pixel Charge Map from TDS
     /*! Main structure used by Track Detailed Simulation (TDS)

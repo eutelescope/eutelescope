@@ -640,7 +640,7 @@ namespace TDS {
 
       // Variable for result storing
       double A;
-
+      int debug = 0 ;
       // Calculate charge distribution
 
       if ( gp->detectorType == "MAPS" )
@@ -648,9 +648,11 @@ namespace TDS {
           // MAPS
           double r2 = k[0]*k[0] + k[1]*k[1] + (gp->H)*(gp->H);
           double r  = std::sqrt(r2);
-          //   std::cout << " r = " << r << " lambda = " << gp->lambda << " H = " << gp->H <<std::endl;
+          if(debug)std::cout << "MAPS r = " << r << " lambda = " << gp->lambda << " H = " << gp->H <<std::endl;
           // Function = exp(-r/\lambda) |H| / r^3 / (4\pi)
           A  = std::exp( - r / gp->lambda ) * std::abs(gp->H) / (r2*r) / (4*M_PI);
+          if(debug)std::cout << " function A: " << A << "    (-r/la) " <<         ( - r / gp->lambda ) << " " <<          (gp->H) << " " << r2*r << " " << 4*M_PI << std::endl;
+          if(debug)std::cout << " function A: " << A << " exp(-r/la) " << std::exp( - r / gp->lambda ) << " " <<  std::abs(gp->H) << " " << r2*r << " " << 4*M_PI << std::endl;
           if (gp->addReflectedContribution)
             {
               // Reflection with the same angle (Remember: gp->H < 0  AND gp->height < 0)
@@ -661,9 +663,30 @@ namespace TDS {
         }
       //
       // Other detectors...
+      else if ( gp->detectorType == "FEI4" )
+        {
+//          std::cout << "Detector Type : " << gp->detectorType << "!" <<std::endl;
+
+          // a copy of MAPS at the moment 
+          double r2 = k[0]*k[0] + k[1]*k[1] + (gp->H)*(gp->H);
+          double r  = std::sqrt(r2);
+          if(debug)std::cout << "MAPS r = " << r << " lambda = " << gp->lambda << " H = " << gp->H <<std::endl;
+          // Function = exp(-r/\lambda) |H| / r^3 / (4\pi)
+          A  = std::exp( - r / gp->lambda ) * std::abs(gp->H) / (r2*r) / (4*M_PI);
+          if(debug)std::cout << " function A: " << A << "    (-r/la) " <<         ( - r / gp->lambda ) << " " <<          (gp->H) << " " << r2*r << " " << 4*M_PI << std::endl;
+          if(debug)std::cout << " function A: " << A << " exp(-r/la) " << std::exp( - r / gp->lambda ) << " " <<  std::abs(gp->H) << " " << r2*r << " " << 4*M_PI << std::endl;
+          if (gp->addReflectedContribution)
+            {
+              // Reflection with the same angle (Remember: gp->H < 0  AND gp->height < 0)
+              double rimage2 = k[0]*k[0] + k[1]*k[1] + (2*gp->height - gp->H)*(2*gp->height - gp->H);
+              double rimage  = std::sqrt(rimage2);
+              A += gp->reflectedContribution * std::exp( - rimage / gp->lambda ) * std::abs(2*gp->height - gp->H) / (rimage2*rimage) / (4*M_PI);
+            };
+           
+        } 
       else
         {
-         std::cout << "Error: Detector type " << gp->detectorType << " not found!" <<std::endl;
+          std::cout << "Error: Detector type " << gp->detectorType << " not found!" <<std::endl;
           exit(1);
         }
       //   std::cout << "A= " << A << std::endl;

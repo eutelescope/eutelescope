@@ -14,6 +14,9 @@ Date: 2008-11-07
 #include <CLHEP/Random/RandGauss.h>
 #include <CLHEP/Random/RandPoisson.h>
 
+#include "marlin/Processor.h"
+
+
 using namespace TDS;
 using namespace std;
 
@@ -21,6 +24,7 @@ using namespace std;
 TDSPixelsChargeMap::TDSPixelsChargeMap(const double length, const double width, const double height, const double firstPixelCornerCoordL, const double firstPixelCornerCoordW) :
   length(length), width(width), height(height), firstPixelCornerCoordL(firstPixelCornerCoordL), firstPixelCornerCoordW(firstPixelCornerCoordW)
 {
+  std::cout << " booking width="<< width << " and length=" << length << std::endl;
   if( height > 0. )
     {
       cout << "Error: height must be negative!" << endl;
@@ -76,7 +80,7 @@ void TDSPixelsChargeMap::setPixelWidth (const double val) {
   numberPixelsAlongW = (unsigned long int)(width/pixelWidth);
   if( (double)numberPixelsAlongW < width/pixelWidth )
     {
-      cout << "Warning: Layer width is not an integer multiple of pixel width." << endl;
+      cout << "Warning: Layer width (" << val << ")is not an integer multiple of pixel width ("<< width<<") width/pixelWidth="<<(width/pixelWidth)<<". numberPixelsAlongW="<<(double)numberPixelsAlongW << endl;
     }
   // Check if the system limits are not too low
   if( numberPixelsAlongW > 999999999ULL )
@@ -174,6 +178,7 @@ void TDSPixelsChargeMap::setIntegMaxNumberPixelsAlongW(const unsigned int val)
 // Function which adds charge contribution to pixels
 void TDSPixelsChargeMap::update(const TDSStep & step)
 {
+  int debug = 0;
 
   if ( ( ! isPixelLengthSet ) || ( ! isPixelWidthSet ) )
     {
@@ -189,8 +194,8 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
 
   if (step.geomLength == 0.)    // Return (and take next step)
     {
-      cout << "Warning: Step length = 0." << endl;
-      return;
+//      cout << "Warning: Step length = 0." << endl;
+//      return;
     }
 
   if (step.geomLength < 0.)
@@ -207,11 +212,11 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
   integStepsNumber = ( temp > 0 ? temp : 1 );
 
   double integStep = step.geomLength / integStepsNumber;
-  // cout << integStepsNumber << endl;
+  if(debug>1) cout << "integ: length: " << step.geomLength << " stepnumber: " << integStepsNumber << endl;
   // Charge per integration step
   // Charge per integration step
   double integChargePerStep = step.charge / integStepsNumber;
-  // cout << "integChargePerStep= " << integChargePerStep << ";  integStep= " << integStep << endl;
+  if(debug>1) cout << "integChargePerStep= " << integChargePerStep << ";  integStep= " << integStep << endl;
 
 
   // Initialize position before integration loop (one integration point back)
@@ -229,14 +234,14 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
       currentPoint[1] += step.dirW*integStep;
       currentPoint[2] += step.dirH*integStep;
 
-      // cout << " currentPoint[0] = " << currentPoint[0] << "  currentPoint[1] = " << currentPoint[1] << " currentPoint[2] = " << currentPoint[2] << endl;
+      if(debug>1) cout << " currentPoint[0] = " << currentPoint[0] << "  currentPoint[1] = " << currentPoint[1] << " currentPoint[2] = " << currentPoint[2] << endl;
 
       // Determine integer coordinates of the main (core) pixel (under which the current point is placed)
       unsigned long int iL, iW;
       iL = (unsigned long int)((currentPoint[0]-firstPixelCornerCoordL)/pixelLength);
       iW = (unsigned long int)((currentPoint[1]-firstPixelCornerCoordW)/pixelWidth);
-      // cout << "iL: " << iL << " " << (long unsigned int)((currentPoint[0]-firstPixelCornerCoordL)/pixelLength)  << endl;
-      // cout << "iW: " << iW << " " << (long unsigned int)((currentPoint[1]-firstPixelCornerCoordW)/pixelWidth)  << endl;
+      if(debug>1) cout << "iL: " << iL << " " << (long unsigned int)((currentPoint[0]-firstPixelCornerCoordL)/pixelLength)  << " " ;
+      if(debug>1) cout << "iW: " << iW << " " << (long unsigned int)((currentPoint[1]-firstPixelCornerCoordW)/pixelWidth)  << endl;
       if ( iL >= numberPixelsAlongL  || iW >= numberPixelsAlongW )
         {
           cout << "Error: Core pixel (and step) outside the boundary of Length-Width plane!" << endl;
@@ -249,6 +254,11 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
         {
           cout << "Error: Point outside sensitive volume (Height > 0)!" << endl;
           //      exit(1);
+          streamlog_out(ERROR4) << 
+                                  " currentPoint[0] " << currentPoint[0] <<
+                                  " currentPoint[1] " << currentPoint[1] <<
+                                  " currentPoint[2] " << currentPoint[2] <<
+                                    endl;
           break;
         }
 
@@ -264,7 +274,9 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
           // Unreduced segments
           segmentL = (unsigned int)( integrationStorage->integPixelSegmentsAlongL * ((currentPoint[0]-firstPixelCornerCoordL-pixelLength*iL ) / pixelLength) );
           segmentW = (unsigned int)( integrationStorage->integPixelSegmentsAlongW * ((currentPoint[1]-firstPixelCornerCoordW-pixelWidth *iW ) / pixelWidth ) ) ;
-          segmentH = (unsigned int)( integrationStorage->integPixelSegmentsAlongH * (abs(currentPoint[2]) / height ) );
+          segmentH = (unsigned int)( integrationStorage->integPixelSegmentsAlongH * (abs(currentPoint[2]) / abs(height) ) );
+          if(debug>1) std::cout << "segmentH: " << segmentH  << " point2: " << abs(currentPoint[2]) <<
+                    " " << integrationStorage->integPixelSegmentsAlongH << " 1./height:" << 1./height <<  std::endl;
           // Thanks to symmetry we can reduce L and W segments (we have to reduce pixels then, too!)
           if (segmentL >= integrationStorage->integPixelSegmentsAlongL/2)
             {
@@ -299,7 +311,7 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
 
       // Loops over important pixels
       // (borders of a layer part taken into account - see above)
-      // cout << "iL = " << iL << " iW = " << iW << " imin = " << imin << " imax = " << imax << " jmin = " << jmin << " jmax = " << jmax << endl;
+      if(debug>2) cout << "iL = " << iL << " iW = " << iW << " imin = " << imin << " imax = " << imax << " jmin = " << jmin << " jmax = " << jmax << endl;
 
       // I use map<unsigned long long int pixId, double pixCharge> to keep charges collected in pixels.
       // Machine limit for unsigned long int:
@@ -310,71 +322,84 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
 
       for (i = imin ; i <= imax ; i++ )
         {
-          // cout << "i = " << i << endl;
+          if(debug>2) cout << "i = " << i << endl;
           // L limits of integral
           limitsLow[0] = firstPixelCornerCoordL + i*pixelLength - currentPoint[0];
           limitsUp[0]  = limitsLow[0] + pixelLength;
 
           for (j = jmin ; j <= jmax ; j++ )
             {
-              // cout << "j = " << j << endl;
+              if(debug>2) cout << "j = " << j << endl;
               // W limits of integral
               limitsLow[1] = firstPixelCornerCoordW + j*pixelWidth - currentPoint[1];
               limitsUp[1]  = limitsLow[1] + pixelWidth;
 
-
+              if(debug>2) std::cout << "limitsLow " << limitsLow[0] << " " << limitsLow[1] << std::endl; 
+              if(debug>2) std::cout << "limitsUp  " << limitsUp[0] << " " << limitsUp[1] << std::endl; 
+ 
               // Should we use integration-results?
               if (useIntegrationStorage)
                 {
 
-                  // cout << "Integration-results storage is used!" << endl;
+                  if(debug>2) cout << "Integration-results storage is used!" << endl;
 
                   // Relative integer coordinates of pixel from main pixel
                   unsigned int pixelL, pixelW;
                   // Thanks to symmetry we can reduce L and W pixels indexes. We have to reduce segments simultaneously!
+
+                  if(debug>2) std::cout << " " << i << " " << iL << " " << integMaxNumberPixelsAlongL / 2 << std::endl;
                   pixelL = (long int)(i) - (long int)(iL) + integMaxNumberPixelsAlongL / 2;
                   if ( segmentL_reduced   &&  i != iL )
                     {
                       pixelL = integMaxNumberPixelsAlongL - pixelL - 1;
                     }
+
+                  if(debug>2) std::cout << " " << j << " " << iW << " " << integMaxNumberPixelsAlongW / 2 << std::endl;
                   pixelW = (long int)(j) - (long int)(iW) + integMaxNumberPixelsAlongW / 2;
                   if ( segmentW_reduced   &&  j != iW )
                     {
                       pixelW = integMaxNumberPixelsAlongW - pixelW - 1;
                     }
 
+                  if(debug>2) std::cout << "L: " << segmentL << " W: " << segmentW << " H: " << segmentH << " pixelL:" << pixelL << " pixelW:" << pixelW << std::endl;
                   unsigned long long int integSegID = integSegmentID(segmentL, segmentW, segmentH, pixelL, pixelW);
 
+                  if(debug>2) std::cout << " " << pixelL << " " << pixelW << " " << integSegID << std::endl;
                   if ( integrationStorage->isResultStored(integSegID) )
                     {
+                      if(debug>2) std::cout << "1here no storage " << std::endl; 
                       gsl_res = integrationStorage->getResult(integSegID);
                     }
                   else
                     {
+                      if(debug>2) std::cout << "2here no storage " << std::endl; 
                       // Integrate
                       gsl_monte_miser_integrate (&gsl_funToIntegrate, limitsLow, limitsUp, 2, gsl_calls, gsl_r, gsl_s, &gsl_res, &gsl_err);
+                      if(debug>2) std::cout << " integration done    gsl_calls: " << gsl_calls <<
+                                "   r: " << gsl_r << "   s: " << gsl_s << "   res: " << gsl_res << "   err:" << gsl_err << std::endl;
                       // Store integration result
                       integrationStorage->rememberResult(integSegID,gsl_res);
                     };
                 }
               else
                 {
+                  if(debug>2) std::cout << " here no storage " << std::endl; 
                   // Integrate (here no storage)
                   gsl_monte_miser_integrate (&gsl_funToIntegrate, limitsLow, limitsUp, 2, gsl_calls, gsl_r, gsl_s, &gsl_res, &gsl_err);
                 };
 
+              if(debug>2)cout << "integChargePerStep " << integChargePerStep << " " << gsl_res << std::endl;
+               
               // Pixels Charge Map
               // "code" of the pixel - it serves as a key in the map container of pixels (relations: i <-> L, j <-> W)
-              pixID = tenTo10*i + j ;
+              pixID = 0UL + tenTo10*i + j ;
               // Add contribution to pixelsChargeMap
               pixelsChargeMap[ pixID ] = pixelsChargeMap[ pixID ] + ( gsl_res * integChargePerStep );
-              //cout << "charge collected in the pixel " << pixID << " = " << pixelsChargeMap[ pixID ] << endl;
-              //cout << "miser= " << gsl_res << " +- " << gsl_err << endl;
+              if(debug>2)cout << "charge collected in the pixel " << pixID << " = " << pixelsChargeMap[ pixID ] << endl;
+              if(debug>2)cout << "miser= " << gsl_res << " +- " << gsl_err << endl;
             }
         }
     }
-
-
 }
 
 
@@ -572,10 +597,17 @@ double TDSPixelsChargeMap::getTotalCharge()
   type_PixelsChargeMap::iterator i;
 
   double totalCharge = 0.;
+  int debug = 0;
 
+  int ipixel=0;
   for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
     {
+      if(debug) 
+           {
+             std::cout << "ipixel " << ipixel << " charge" << i->second << std::endl; 
+           }
       totalCharge += i->second;
+      ipixel++;
     }
   return totalCharge;
 }
@@ -691,6 +723,7 @@ vector<TDSPixel> TDSPixelsChargeMap::getVectorOfPixels()
   // Speed-up vector filling
   vectorOfPixels.reserve(pixelsChargeMap.size());
 
+  int ipixel = 0;
   for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
     {
       thePixel.indexAlongL = i->first/tenTo10;
@@ -699,6 +732,8 @@ vector<TDSPixel> TDSPixelsChargeMap::getVectorOfPixels()
       thePixel.coordW = ((double)(thePixel.indexAlongW)+0.5)*pixelWidth  + firstPixelCornerCoordW;
       thePixel.charge = i->second;
       vectorOfPixels.push_back(thePixel);
+      //streamlog_out(MESSAGE) << "ipixel= " << ipixel << " " << thePixel.coordL << " " << thePixel.coordW << endl;
+      ipixel++;
     }
 
   // Sort pixels in charge in descending order.

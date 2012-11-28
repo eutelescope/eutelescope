@@ -1,4 +1,3 @@
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Aleksander Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
 // Version $Id: EUTelMAPSdigi.cc,v 1.7 2009-07-23 12:35:15 bulgheroni Exp $
 /*
@@ -279,7 +278,13 @@ void EUTelMAPSdigi::init() {
     streamlog_out ( ERROR4 ) <<  "The GearMgr is not available, for an unknown reason." << endl;
     exit(-1);
   }
-
+  
+  if ( _DigiLayerIDs.size() == 0 )
+  {
+    streamlog_out ( ERROR4 ) <<  "The lsit of sensors is not defined in the steering file. Pls go back to your template and specify _DigiLayerIDs." << endl;
+    exit(-1);
+  }
+ 
   _siPlanesParameters  = const_cast<SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
@@ -308,16 +313,16 @@ void EUTelMAPSdigi::init() {
   // Check if correct number of digitization parameters is given
 
   unsigned int nTelPlanes = _siPlanesParameters->getSiPlanesNumber();
-
+/*
   if(_DigiLayerIDs.size()>0 && _DigiLayerIDs.size()!=nTelPlanes)
     {
   streamlog_out ( ERROR4 ) <<  "Wrong number of Layer IDs for digitization" << endl
                   <<  "Size of DigiLayerIDs have to match GEAR description" << endl;
   exit(-1);
     }
-
+*/
   if(_DigiLayerIDs.size()==0)nTelPlanes=1;
-
+/*
   if(_depositedChargeScaling.size() != nTelPlanes ||
      _applyPoissonSmearing.size() != nTelPlanes ||
      _adcGain.size() != nTelPlanes ||
@@ -331,11 +336,11 @@ void EUTelMAPSdigi::init() {
  streamlog_out ( ERROR4 ) <<  "Wrong size of digitization parameter vector" << endl;
   exit(-1);
     }
-
+*/
   // prepare digitization parameter index map
 
   if(_DigiLayerIDs.size() > 0 )
-    for(unsigned int id=0; id<nTelPlanes; id++)
+    for(unsigned int id=0; id<_DigiLayerIDs.size(); id++)
       _digiIdMap.insert( make_pair(_DigiLayerIDs.at(id), id ) );
 
 
@@ -403,9 +408,10 @@ void EUTelMAPSdigi::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
-  bool debug = ( _debugCount>0 && _iEvt%_debugCount == 0);
+  int  debug = ( _debugCount>0 && _iEvt%_debugCount == 0);
+//debug =2;
 
-  if (_iEvt % 10 == 0  || debug)
+  if (_iEvt % _debugCount == 0  || debug)
     streamlog_out( MESSAGE4 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
@@ -447,16 +453,37 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
     double gRotation[3] = { 0., 0., 0.}; // not rotated
 
-    for ( int iHit = 0; iHit < simhitCollection->getNumberOfElements(); iHit++ ) {
+    for ( int iHit = 0; iHit < simhitCollection->getNumberOfElements(); iHit++ ) 
+    {
 
       SimTrackerHitImpl * simhit   = static_cast<SimTrackerHitImpl*> ( simhitCollection->getElementAt(iHit) );
 
       // there could be several hits belonging to the same
       // detector. So update the geometry information only if this new
       // cluster belongs to a different detector.
-      detectorID = simhit->getCellID();
+      detectorID = simhit->getCellID0();
+      if( _DigiLayerIDs.size() > 0 && _DigiLayerIDs[0] >= 20 ) detectorID += 19; 
+      if( _DigiLayerIDs.size() > 0 && _DigiLayerIDs[0] <  10 ) detectorID -=  1; 
+     
+      bool detector_type_choice = false;
+      for( int iPlane = 0; iPlane < _DigiLayerIDs.size(); iPlane++)
+      {
+        if(detectorID == _DigiLayerIDs[iPlane] ) detector_type_choice = true;
+      }
 
-      if ( detectorID != oldDetectorID ) {
+      if( detector_type_choice == false ) 
+      {
+        // clear stored pixel map
+        //if( _pixelChargeMap != 0) _pixelChargeMap->clear();
+        //if( _vectorOfPixels.size() != 0) _vectorOfPixels.clear();
+
+        break;
+      }
+ 
+      if(debug>1) streamlog_out ( MESSAGE ) << "Sensitive layer ID = " << detectorID << " found in SimTracker collection" << endl;
+ 
+      if ( detectorID != oldDetectorID )
+      {
 
         oldDetectorID = detectorID;
 
@@ -468,7 +495,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
             for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
               if ( _siPlanesLayerLayout->getSensitiveID(iLayer) == detectorID ) {
                 _conversionIdMap.insert( make_pair( detectorID, iLayer ) );
-                streamlog_out ( DEBUG4 ) << "Sensitive layer ID = " << detectorID << " found in GEAR" << endl;
+                if(debug>1) streamlog_out ( MESSAGE ) << "Sensitive layer ID = " << detectorID << " found in GEAR" << endl;
                 break;
               }
             }
@@ -491,6 +518,11 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
         xPointing[1] = _siPlanesLayerLayout->getSensitiveRotation2(layerIndex); // was  0 ;
         yPointing[0] = _siPlanesLayerLayout->getSensitiveRotation3(layerIndex); // was  0 ;
         yPointing[1] = _siPlanesLayerLayout->getSensitiveRotation4(layerIndex); // was -1 ;
+        int npixelX = _siPlanesLayerLayout->getSensitiveNpixelX( layerIndex );
+        int npixelY = _siPlanesLayerLayout->getSensitiveNpixelY( layerIndex );
+        xSize = xPitch*npixelX;
+        ySize = yPitch*npixelY;
+
 
         try
           {
@@ -527,8 +559,8 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       const double* hitpos = simhit->getPosition();
       const float*  hitmom = simhit->getMomentum();
 
-      if (debug)
-        streamlog_out( DEBUG4 ) << "SimHit in global frame  at X = " <<  hitpos[0]
+      if (debug>1)
+        streamlog_out( MESSAGE ) << "SimHit in global frame  at X = " <<  hitpos[0]
                                 <<  " Y = " <<  hitpos[1]
                                 <<  " Z = " <<  hitpos[2]
                                 <<  "  detector ID = " << detectorID << endl;
@@ -648,11 +680,19 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
       _localSize[2] = zThickness;
 
+      if(debug>1) streamlog_out(MESSAGE) <<
+                               " _localSize[0] = " << _localSize[0] << 
+                               " _localSize[1] = " << _localSize[1] << 
+                               " _localSize[2] = " << _localSize[2] << endl;
+
+
       // From EUTelHitMaker code it looks like sensor pitches given in
       // GEAR are already in the local frame of reference:
 
       _localPitch[0] = xPitch;
       _localPitch[1] = yPitch;
+      _localPitch[2] = zThickness;
+
 
 
       // Remaining information on the simulated hit:
@@ -686,17 +726,21 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       if ( detectorID != mapDetectorID ) {
         mapDetectorID = detectorID;
 
-        if ( _pixelChargeMapCollection.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
+//      if ( _pixelChargeMapCollection.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
+        if ( _pixelChargeMapCollection.size() != (unsigned) _DigiLayerIDs.size() ){
           // first of all try to see if this detectorID already belong to
           if ( _pixelChargeMapCollection.find( detectorID ) == _pixelChargeMapCollection.end() ) {
             // this means that the map for was not defined yet,
             // so this is the right place to do that
+            std::cout << " Initialising a TDS Charge Map " << std::endl;
 
             // current TDS requires that negative sensor thickness is given!
             _pixelChargeMap = new TDSPixelsChargeMap(_localSize[0],_localSize[1],-_localSize[2]);
-
             _pixelChargeMapCollection.insert( make_pair( detectorID,_pixelChargeMap) );
 
+            // set detector type (Default MAPS)
+            if( detectorID >=20 ) _pixelChargeMap->setDetectorType("FEI4");
+ 
             // Set additional geometry parameters
             _pixelChargeMap->setPixelLength(_localPitch[0]);
             _pixelChargeMap->setPixelWidth(_localPitch[1]);
@@ -756,6 +800,14 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       //
       //  Here comes the core of the algorithm
       //
+      if(debug>1) 
+           streamlog_out( DEBUG4 ) << "going to convert mokka deposit [GeV] to charge units of elementary charge " << endl;
+      if(debug>1) 
+           streamlog_out( DEBUG4 ) << "_mokkaPath " << _mokkaPath << endl;
+      if(debug>1) 
+           streamlog_out( DEBUG4 ) << "_mokkaDeposit"<< _mokkaDeposit << endl;
+
+
 
       if(_mokkaPath > 0 && _mokkaDeposit > 0.)
         {
@@ -768,6 +820,22 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
         // TDS requires position in depth to be negative ! Shift it by
         // thickness to keep direction unchanged
 
+
+        if (debug>1 ||  ( _localPosition[2]-_localSize[2] > 0)  || ( _localPosition[2] > 0.) )
+          streamlog_out( MESSAGE ) << " sensor = " << detectorID << 
+                                     " _localPosition[0] = " << _localPosition[0] <<
+                                     " _localPosition[1] = " << _localPosition[1] <<
+                                     " _localPosition[2] = " << _localPosition[2] << endl << 
+                                     " _localSize[0]     = " << _localSize[0]     <<
+                                     " _localSize[1]     = " << _localSize[1]     <<
+                                     " _localSize[2]     = " << _localSize[2]     << endl <<
+                                     " _ localDirection[0]= " << _localDirection[0]<<
+                                     " _localDirection[1]= " << _localDirection[1]<<
+                                     " _localDirection[2]= " << _localDirection[2]<< endl <<
+                                     " _mokkaPath        = " << _mokkaPath  <<
+                                     " _mokkaDeposit     = " << _mokkaDeposit << endl;
+
+        if( _localPosition[2] > 0.) return; 
         TDSStep step(_localPosition[0], _localPosition[1], _localPosition[2]-_localSize[2],
                      _localDirection[0],_localDirection[1],_localDirection[2],
                      _mokkaPath, _mokkaDeposit);
@@ -776,7 +844,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
         _pixelChargeMap->update(step);
 
-        if (debug)
+        if (debug>0)
           streamlog_out( DEBUG4 ) << "Adding Mokka deposit of " << _mokkaDeposit <<  endl;
         }
     }
@@ -793,14 +861,36 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
     // check if the we already have a tracker data for this
     // detector id
-    for ( int iDetector = 0 ; iDetector < _siPlanesParameters->getSiPlanesNumber(); iDetector++ ) {
-      TrackerDataImpl * zsFrame          = new TrackerDataImpl;
-      zsDataEncoder[ "sensorID" ]        = _siPlanesLayerLayout->getSensitiveID(iDetector);
-      zsDataEncoder[ "sparsePixelType" ] = kEUTelSimpleSparsePixel;
-      zsDataEncoder.setCellID( zsFrame );
-      _trackerDataMap[ _siPlanesLayerLayout->getSensitiveID(iDetector) ] = zsFrame;
+    if(detectorID< 10)
+    {
+      for ( int iDetector = 0 ; iDetector < _siPlanesParameters->getSiPlanesNumber(); iDetector++ ) {
+        if( _siPlanesLayerLayout->getSensitiveID(iDetector) > 10 ) continue;
+        TrackerDataImpl * tmp_zsFrame      = new TrackerDataImpl;
+        zsDataEncoder[ "sensorID" ]        = _siPlanesLayerLayout->getSensitiveID(iDetector);
+        zsDataEncoder[ "sparsePixelType" ] = kEUTelSimpleSparsePixel;
+        zsDataEncoder.setCellID( tmp_zsFrame );
+        _trackerDataMap[ _siPlanesLayerLayout->getSensitiveID(iDetector) ] = tmp_zsFrame;
+        if(debug>1)streamlog_out(MESSAGE) << " map : ("<< iDetector <<") "  << _siPlanesLayerLayout->getSensitiveID(iDetector) << endl;
+      }
     }
-
+    else
+        if(detectorID>=20)
+    {
+      for ( int iDetector = 0 ; iDetector < _siPlanesParameters->getSiPlanesNumber(); iDetector++ ) {
+        if( _siPlanesLayerLayout->getSensitiveID(iDetector) <  20 ) continue;
+        TrackerDataImpl * tmp_zsFrame      = new TrackerDataImpl;
+        zsDataEncoder[ "sensorID" ]        = _siPlanesLayerLayout->getSensitiveID(iDetector);
+ 	zsDataEncoder["sparsePixelType"]   = kEUTelAPIXSparsePixel;
+        zsDataEncoder.setCellID( tmp_zsFrame );
+        _trackerDataMap[ _siPlanesLayerLayout->getSensitiveID(iDetector) ] = tmp_zsFrame;
+        if(debug>1)streamlog_out(MESSAGE) << " map : ("<< iDetector <<") " << _siPlanesLayerLayout->getSensitiveID(iDetector) << endl;
+      }
+    }
+    else
+    {
+       streamlog_out(ERROR) << "Detector ID is not specific to the telescope planes (0-9, 20-29)... exit" << endl;
+       exit(-1); 
+    }
 
     // Loop over defined detectors
 
@@ -888,67 +978,53 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
         // check if the we already have a tracker data for this
         // detector id
-        TrackerDataImpl * zsFrame = NULL;
+        zsFrame = NULL;
         if ( _trackerDataMap.find( detectorID ) == _trackerDataMap.end() ) {
           // this is the first time we have to deal with such a
           // detector. so first of all let's create the
           // corresponding TrackerData
           //
+          // clear stored pixel map
+          _pixelChargeMap->clear();
+          _vectorOfPixels.clear();
+
           // unable to find the proper zsFrame
-          streamlog_out ( ERROR4 ) << "Unable to find the TrackerData corresponding to detectorID " << detectorID << endl;
-          throw SkipEventException(this);
+          if(debug) streamlog_out ( ERROR4 ) << "Unable to find the TrackerData corresponding to detectorID " << detectorID << endl;
+          continue; //throw SkipEventException(this);
         } else {
           zsFrame = _trackerDataMap[ detectorID ];
         }
 
 
-        // now I have to prepare a temporary storage for the
-        // sparse pixel
-        auto_ptr<EUTelSparseDataImpl< EUTelSimpleSparsePixel > > sparseFrame( new EUTelSparseDataImpl<EUTelSimpleSparsePixel > ( zsFrame ) );
-
-        // and also a temporary storage for the sparse pixel
-        auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
-        for ( _pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); ++_pixelIterator ) {
-
-          // move the pixel information from the pixelIterator to
-          // the sparsePixel
-          sparsePixel->setXCoord( _pixelIterator->getIndexAlongL() );
-          sparsePixel->setYCoord( _pixelIterator->getIndexAlongW() );
-
-	  // Take readout type and ADC range into account
-
-          int pixelValue = 1;        // For binary readout all pixels
-				     // above threshold are set to 1
-
-          if( _pixelReadoutType[digiIndex] == 1 )  // digital readout
-	    {
-            double pixelCharge = _pixelIterator->getCharge();
-
-            pixelValue = (int) pixelCharge;
-            if(pixelCharge<0.) pixelValue--; 
-
-            if(_adcRange[digiIndex] > 0)
-	      {
-              if(pixelValue > _adcRange[digiIndex])pixelValue=_adcRange[digiIndex];
-              if(pixelValue < 0 )pixelValue=0;
-	      }
-	    }
-
-          sparsePixel->setSignal( pixelValue );
-
-          // add the sparse pixel to the sparse frame
-          sparseFrame->addSparsePixel( sparsePixel.get() );
+        if( detectorID< 10 )
+        {
+           //streamlog_out ( MESSAGE )<< "magic. Mimosa type"<< endl;
+           packMimosa26( digiIndex );
+        }
+        else
+            if( detectorID >= 10 && detectorID < 20 )
+        {
+           //streamlog_out ( MESSAGE )<< "magic. FEI3   type"<< endl;
+           packFEI3( digiIndex );
+        }
+        else
+            if( detectorID >= 20 && detectorID < 30 )
+        {
+           //streamlog_out ( MESSAGE )<< "magic. FEI4   type"<< endl;
+           packFEI4( digiIndex );
+        }
+        else
+        {
 
         }
-        // end of data copying
-
+///////////////////////////aaaaaaaaaaaaaaa
 
 
         // List all fired pixels
 
         int nPixel = _vectorOfPixels.size() ;
 
-        if (debug)
+        if (debug>1)
           {
             streamlog_out( MESSAGE4 ) <<  "Detector ID = " << detectorID
                                       << ", " << nPixel << " pixels fired, "
@@ -1066,7 +1142,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
             // Test output at the end of processing
             //
-            if(debug)
+            if(debug>1)
                 streamlog_out( DEBUG4 ) <<  "Seed at L = " << seedL << " W = " << seedW
                                << ", " << pixelAbsMap.size() << " pixels in cluster " << endl
                                << "Total cluster charge: " << clusterCharge
@@ -1107,6 +1183,136 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
   }
 
 }
+
+void EUTelMAPSdigi::packMimosa26( int digiIndex ) 
+{
+  int debug = 0;
+
+//  streamlog_out ( MESSAGE4 )  << "packing Mimosa26" << endl;
+
+  if( zsFrame == 0 )
+  {
+     streamlog_out(ERROR) << " zsFrame is absent. emergency exit" << endl;
+     exit(-1);
+  } 
+        // now I have to prepare a temporary storage for the
+        // sparse pixel
+        auto_ptr< EUTelSparseDataImpl< EUTelSimpleSparsePixel > > sparseFrame( new EUTelSparseDataImpl< EUTelSimpleSparsePixel > ( zsFrame ) );
+        auto_ptr< EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
+ 
+
+        // and also a temporary storage for the sparse pixel
+					
+        //sparseFrame->addSparsePixel( thisHit );
+	//tmphits.push_back( thisHit );
+        for ( _pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); ++_pixelIterator ) 
+        {
+
+          // move the pixel information from the pixelIterator to
+          // the sparsePixel
+          sparsePixel->setXCoord( _pixelIterator->getIndexAlongL() );
+          sparsePixel->setYCoord( _pixelIterator->getIndexAlongW() );
+
+	  // Take readout type and ADC range into account
+
+          int pixelValue = 1;        // For binary readout all pixels
+				     // above threshold are set to 1
+
+          if( _pixelReadoutType[digiIndex] == 1 )  // digital readout
+	    {
+            double pixelCharge = _pixelIterator->getCharge();
+
+            pixelValue = (int) pixelCharge;
+
+            if(pixelCharge<0.) pixelValue--; 
+
+ 
+           if(_adcRange[digiIndex] > 0)
+	      {
+              if(pixelValue > _adcRange[digiIndex])pixelValue=_adcRange[digiIndex];
+              if(pixelValue < 0 )pixelValue=0;
+	      }
+	    }
+
+          if (debug>1)
+                     streamlog_out( MESSAGE4 ) <<  "pixel charge " << pixelValue << " X " <<  _pixelIterator->getIndexAlongL() << " " <<  _pixelIterator->getIndexAlongW() << endl;
+          sparsePixel->setSignal( pixelValue );
+
+          // add the sparse pixel to the sparse frame
+          sparseFrame->addSparsePixel( sparsePixel.get() );
+
+        }
+        // end of data copying
+
+
+}
+
+
+void EUTelMAPSdigi::packFEI3( int digiIndex ) 
+{
+
+//  streamlog_out ( MESSAGE4 )  << "packing FEI3" << endl;
+}
+
+
+void EUTelMAPSdigi::packFEI4( int digiIndex ) 
+{
+
+  int debug = 1;
+
+//  streamlog_out ( MESSAGE4 )  << "packing FEI4" << endl;
+
+  if( zsFrame == 0 )
+  {
+     streamlog_out(ERROR) << " zsFrame is absent. emergency exit" << endl;
+     exit(-1);
+  } 
+        // now I have to prepare a temporary storage for the
+        // sparse pixel
+ 	auto_ptr< EUTelSparseDataImpl< EUTelAPIXSparsePixel   > > sparseFrame( new EUTelSparseDataImpl< EUTelAPIXSparsePixel   > ( zsFrame ) );
+        auto_ptr< EUTelAPIXSparsePixel> sparsePixel( new EUTelAPIXSparsePixel );
+
+        for ( _pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); ++_pixelIterator ) 
+        {
+
+          // move the pixel information from the pixelIterator to
+          // the sparsePixel
+          sparsePixel->setXCoord( _pixelIterator->getIndexAlongL() );
+          sparsePixel->setYCoord( _pixelIterator->getIndexAlongW() );
+
+	  // Take readout type and ADC range into account
+
+          int pixelValue = 1;        // For binary readout all pixels
+				     // above threshold are set to 1
+
+          if( _pixelReadoutType[digiIndex] == 1 )  // digital readout
+	    {
+            double pixelCharge = _pixelIterator->getCharge();
+
+            pixelValue = (int) pixelCharge;
+
+            if(pixelCharge<0.) pixelValue--; 
+
+ 
+           if(_adcRange[digiIndex] > 0)
+	      {
+              if(pixelValue > _adcRange[digiIndex])pixelValue=_adcRange[digiIndex];
+              if(pixelValue < 0 )pixelValue=0;
+	      }
+	    }
+
+          if (debug>1)
+                     streamlog_out( MESSAGE4 ) <<  "pixel charge " << pixelValue << " X " <<  _pixelIterator->getIndexAlongL() << " " <<  _pixelIterator->getIndexAlongW() << endl;
+          sparsePixel->setSignal( pixelValue );
+
+          // add the sparse pixel to the sparse frame
+          sparseFrame->addSparsePixel( sparsePixel.get() );
+
+        }
+        // end of data copying
+
+}
+
 
 void EUTelMAPSdigi::end() {
 
@@ -1462,23 +1668,37 @@ double EUTelMAPSdigi::CheckPathLimits()
 
   // Check all sensor dimensions !
   // (Probably checking Z would be enough :-)
-
+/*
   for(int idim=0; idim<3 ; idim++)
     {
-      if(_localPosition[idim]+(pathStart-0.5)*_mokkaPath*_localDirection[idim] < 0)
-        pathStart= 0.5 - _localPosition[idim]/(_mokkaPath*_localDirection[idim]);
+      double side = _localPitch[idim]/2.;
+ 
+std::cout << "aidim : " << _localSize[idim] << std::endl;
+std::cout << "bidim : " << idim << " pathStart : " << pathStart << " localPosition:" << _localPosition[idim] << " localDirection:"<< _localDirection[idim]<<std::endl;
+     if( pathStart < side - _localPosition[idim]/(_mokkaPath*_localDirection[idim]) )
+       {
+        pathStart = side - _localPosition[idim]/(_mokkaPath*_localDirection[idim]);
+std::cout << "bidim : " << idim << " pathStart : " << pathStart << " localPosition:" << _localPosition[idim] << " localDirection:"<< _localDirection[idim]<<std::endl;
+       }
+ 
+std::cout << "cidim : " << idim << " pathStart : " << pathStart << " localPosition:" << _localPosition[idim] << " localDirection:"<< _localDirection[idim]<<std::endl;
+    if(_localPosition[idim]+(pathStart- side   )*_mokkaPath*_localDirection[idim] > _localSize[idim])
+       {
+        pathStart= side+ (_localSize[idim]- _localPosition[idim])/(_mokkaPath*_localDirection[idim]);
+std::cout << "didim : " << idim << " pathStart : " << pathStart << " localPosition:" << _localPosition[idim] << " localDirection:"<< _localDirection[idim]<<std::endl;
+       }
 
-      if(_localPosition[idim]+(pathStart-0.5)*_mokkaPath*_localDirection[idim] > _localSize[idim])
-        pathStart= 0.5 + (_localSize[idim]- _localPosition[idim])/(_mokkaPath*_localDirection[idim]);
-
-      if(_localPosition[idim]+(pathEnd-0.5)*_mokkaPath*_localDirection[idim] > _localSize[idim])
-        pathEnd= 0.5 + (_localSize[idim]- _localPosition[idim])/(_mokkaPath*_localDirection[idim]);
-
-      if(_localPosition[idim]+(pathEnd-0.5)*_mokkaPath*_localDirection[idim] < 0)
-        pathEnd= 0.5 - _localPosition[idim]/(_mokkaPath*_localDirection[idim]);
-
+//std::cout << " idim : " << idim << " pathEnd   : " << pathEnd   << " localPosition:" << _localPosition[idim] << " localDirection:"<< _localDirection[idim]<<std::endl;
+    if(_localPosition[idim]+(pathEnd-side)*_mokkaPath*_localDirection[idim] > _localSize[idim])
+       {
+        pathEnd= side + (_localSize[idim]- _localPosition[idim])/(_mokkaPath*_localDirection[idim]);
+       }
+    if(_localPosition[idim]+(pathEnd-side)*_mokkaPath*_localDirection[idim] < 0)
+       {
+        pathEnd= side - _localPosition[idim]/(_mokkaPath*_localDirection[idim]);
+       }  
     }
-
+*/
   //
 
   if(  pathStart < 0. || pathStart > 1. || pathEnd < 0. || pathEnd > 1.)
