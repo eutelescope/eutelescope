@@ -117,7 +117,7 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor () :Processor("EUTelA
 
   registerOutputCollection (LCIO::TRACKERHIT, "OutputHitCollectionName",
                             "The name of the output hit collection",
-                            _outputHitCollectionName, string("correctedHit"));
+                            _outputHitCollectionName, string("PreAlignedHit"));
 
   registerOptionalParameter("ReferenceCollection","This is the name of the reference it collection (init at 0,0,0)",
                             internal_referenceHitCollectionName, static_cast< string > ( "reference" ) );
@@ -324,10 +324,16 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
       {
         _outputCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);
         evt->addCollection( _outputCollectionVec, _outputHitCollectionName );
+        streamlog_out  ( DEBUG ) <<  " created new " <<  _outputHitCollectionName  << endl;
       } 
+      else
+      {
+        streamlog_out  ( DEBUG ) <<  " opened " <<  _outputHitCollectionName  << endl;
+      }
   }catch(...){
       _outputCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);
       evt->addCollection( _outputCollectionVec, _outputHitCollectionName );
+      streamlog_out  ( DEBUG ) <<  " try catch. nevertheless created new " <<  _outputHitCollectionName  << endl;
   }
   // ------------------------------------------------------------------------- //
 
