@@ -1534,6 +1534,10 @@ class SubmitAlign( SubmitBase ):
             self._logger.debug( "LocalFolderAlignJoboutput not available, using $PWD/log ")
             localFolder = "log/"
 
+        dest = os.path.join( localFolder, self._tarballFileName )
+        if os.path.exists(dest):
+          os.remove(dest)
+
         shutil.move( self._tarballFileName, localFolder )
 
 
