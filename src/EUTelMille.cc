@@ -206,7 +206,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
                             _allowedMissingHits, static_cast <int> (0));
 
   registerOptionalParameter("MimosaClusterChargeMin","Select Mimosa26 clusters with charge above this value (default=1)",
-                            _mimosa26ClusterChargeMin,  static_cast <int> (1) );
+                            _mimosa26ClusterChargeMin,  static_cast <int> (0) );
 
 
   // input collections
@@ -1233,7 +1233,7 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
     try 
     {
       hotPixelCollectionVec = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
-      streamlog_out ( MESSAGE ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " found" << endl; 
+//      streamlog_out ( MESSAGE ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " found" << endl; 
     }
     catch (...)
     {
@@ -1253,7 +1253,7 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
 
 
 	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
-           streamlog_out ( MESSAGE ) << "sensorID: " << sensorID << " type " << kEUTelAPIXSparsePixel << " ?= " << type << endl; 
+//           streamlog_out ( MESSAGE ) << "sensorID: " << sensorID << " type " << kEUTelAPIXSparsePixel << " ?= " << type << endl; 
 
            if( type  == kEUTelAPIXSparsePixel)
            {  
@@ -1492,12 +1492,17 @@ void EUTelMille::processEvent (LCEvent * event) {
 
             } else if ( hit->getType() == kEUTelSparseClusterImpl ) {
 
+
+// streamlog_out(MESSAGE) << " found kEUTelSparseClusterImpl hit type " << endl;
+
               // ok the cluster is of sparse type, but we also need to know
               // the kind of pixel description used. This information is
               // stored in the corresponding original data collection.
 
               LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
-              TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
+// streamlog_out(MESSAGE) << " sparseClusterCollectionVec = " << (sparseClusterCollectionVec) << endl;
+
+             TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
               CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
               SparsePixelType pixelType = static_cast<SparsePixelType> ( static_cast<int> ( anotherDecoder( oneCluster )["sparsePixelType"] ));
 
@@ -1533,7 +1538,7 @@ void EUTelMille::processEvent (LCEvent * event) {
             {
                 if(cluster->getTotalCharge() <= getMimosa26ClusterChargeMin() )
                 {
-//                    printf("(1) Thin cluster (charge <=1), hit type: %5d  detector: %5d\n", hit->getType(), cluster->getDetectorID() );
+                    printf("(1) Thin cluster (charge <=1), hit type: %5d  detector: %5d\n", hit->getType(), cluster->getDetectorID() );
                     delete cluster; 
                     continue;
                 }
