@@ -73,6 +73,9 @@ EUTelPreAlign::EUTelPreAlign () :Processor("EUTelPreAlign") {
   registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
                              _hotPixelCollectionName, static_cast< string > ( "hotpixel_apix" ));
 
+  registerProcessorParameter ("Events",
+                              "How many events are needed to get reasonable approximation to the X,Y shift (pre-alignment)? (default=1000)",
+                              _events, static_cast <int> (1000) );
 
   registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("reference") );
  
@@ -291,8 +294,10 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
     }
   }
 
-
   ++_iEvt;
+
+  if(_iEvt > _events) return;
+
   if ( _iEvt % 10000 == 0 )
     streamlog_out ( MESSAGE4 ) << "Processing event "
                                << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
@@ -328,7 +333,8 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
       hitY.clear();
       prealign.clear();
 
-      for (size_t iHit = 0; iHit < inputCollectionVec->size(); iHit++) {
+      for (size_t iHit = 0; iHit < inputCollectionVec->size(); iHit++) 
+      {
 	TrackerHitImpl   * hit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( iHit ) ) ;
 	if( hitContainsHotPixels(hit) ) continue;
 
@@ -342,25 +348,27 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
           if( pa.getIden() != iHitID  ) { continue; }
 	  gotIt = true;
 
-    double correlationX =  refPos[0] - pos[0] ;
-    double correlationY =  refPos[1] - pos[1] ;
+          double correlationX =  refPos[0] - pos[0] ;
+          double correlationY =  refPos[1] - pos[1] ;
 
-    int idZ = _sensorIDtoZOrderMap[ iHitID ];
-    if( 
-        (_residualsXMin[idZ] < correlationX ) && ( correlationX < _residualsXMax[idZ]) &&
-        (_residualsYMin[idZ] < correlationY ) && ( correlationY < _residualsYMax[idZ]) 
-      )
-       {
-          hitX.push_back( correlationX );
-          hitY.push_back( correlationY );
-          prealign.push_back(&pa);
-       }
+          int idZ = _sensorIDtoZOrderMap[ iHitID ];
+          if( 
+              (_residualsXMin[idZ] < correlationX ) && ( correlationX < _residualsXMax[idZ]) &&
+              (_residualsYMin[idZ] < correlationY ) && ( correlationY < _residualsYMax[idZ]) 
+            )
+          {
+            hitX.push_back( correlationX );
+            hitY.push_back( correlationY );
+            prealign.push_back(&pa);
+          }
 	  break;
 	}
-	if(not gotIt) {
+	if(not gotIt) 
+        {
 	  streamlog_out ( ERROR ) << "Mismatched hit at " << pos[2] << endl;
 	}
       }
+
       if( prealign.size() > _minNumberOfCorrelatedHits && hitX.size() == hitY.size() )
       {
          for( int ii=0;ii<prealign.size();ii++)
@@ -644,7 +652,7 @@ void EUTelPreAlign::end() {
 
 
   for(size_t ii = 0 ; ii < _preAligners.size(); ii++){
-  EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
+   EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
    if( abs( _preAligners.at(ii).getPeakX() ) <1000. )
       constant->setXOffset( -1.0 * _preAligners.at(ii).getPeakX());
    else

@@ -161,9 +161,14 @@ namespace eutelescope {
      *  sensor map key    unique row number
      *             value  vector of column numbers.
      */
- 
     std::map<std::string, bool> _hotPixelMap;
-    
+ 
+    //! How many events are needed to get reasonable correlation plots 
+    /*! (and Offset DB values) 
+     *
+     */
+    int _events;
+   
     //! bool tag if PreAlign should run anyway or not;
     /*! default 0
      */   
