@@ -697,8 +697,8 @@ void EUTelClusteringProcessor::readCollections (LCEvent * event)
 
     if ( !hasNZSData && !hasZSData ) 
     {
-        streamlog_out ( MESSAGE2 ) << "The current event doesn't contain neither ZS nor NZS data collections" << endl
-            << "Leaving this event without any further processing" << endl;
+        streamlog_out ( MESSAGE2 ) << "The current event doesn't contain neither ZS nor NZS data collections: skip # " << event->getEventNumber() << endl;
+//            << "Leaving this event without any further processing" << endl;
         throw SkipEventException( this ) ;
     }
 
