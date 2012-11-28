@@ -114,6 +114,13 @@ namespace eutelescope {
 	std::vector<int > _clusterSpectraNxNVector;
 	std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
 
+        //! Total cluster found
+        /*! This is a map correlating the sensorID number and the
+        *  total number of clusters found on that sensor.
+        *  The content of this map is show during end().
+        */
+        std::map< int, int > _totClusterMap;
+
 
   };
 

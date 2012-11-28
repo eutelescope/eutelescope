@@ -90,7 +90,8 @@ std::string EUTelAPIXClusteringProcessor::_lvl1TriggerDiffName		= "lvl1triggerdi
 static const int NOCLUSTER=-1;
 
 EUTelAPIXClusteringProcessor::EUTelAPIXClusteringProcessor () : Processor("EUTelAPIXClusteringProcessor") {
-	 _description = "EUTelAPIXClusteringProcessor is looking for clusters.";
+
+        _description = "EUTelAPIXClusteringProcessor is looking for clusters.";
 
 	registerInputCollection (LCIO::TRACKERDATA, "ZSDataCollectionName", "LCIO converted data files", _zsDataCollectionName, string("zsdata_apix"));
 	registerOutputCollection(LCIO::TRACKERPULSE, "ClusterCollectionName", "Cluster (output) collection name", _clusterCollectionName, string("cluster_apix"));
@@ -132,6 +133,8 @@ void EUTelAPIXClusteringProcessor::init () {
   // this method is called only once even when the rewind is active
   // usually a good idea to
 
+        _isGeometryReady = false;
+
     printParameters ();
 
     if( _ClusterLimits.size() % 5 != 0) 
@@ -157,7 +160,6 @@ void EUTelAPIXClusteringProcessor::init () {
                                                      _ClusterLimitsMap[ iSensor ][1],
                                                      _ClusterLimitsMap[ iSensor ][2],
                                                      _ClusterLimitsMap[ iSensor ][3]  );
-  
     }  
 
 }
@@ -183,7 +185,7 @@ void EUTelAPIXClusteringProcessor::initializeGeometry( LCEvent * event ) throw (
 		for ( size_t i = 0; i < collection->size(); ++i ) {
 			TrackerDataImpl * data = dynamic_cast< TrackerDataImpl * > ( collection->getElementAt( i ) ) ;
 			_sensorIDVec.push_back( cellDecoder( data )[ "sensorID" ] );
-			//_totClusterMap.insert( make_pair( cellDecoder( data )[ "sensorID" ] , 0 ));
+			_totClusterMap.insert( make_pair( cellDecoder( data )[ "sensorID" ] , 0 ));
 	}
 
 	} catch ( lcio::DataNotAvailableException ) {
@@ -232,18 +234,8 @@ void EUTelAPIXClusteringProcessor::processEvent (LCEvent * event) {
 	++_iEvt;
 	
 	/* -------------- */
-	
-	try {
-		event->getCollection( _zsDataCollectionName ) ;
-	} catch (lcio::DataNotAvailableException& e ) {
-		streamlog_out ( DEBUG4 ) << "No ZS data found in the event" << endl;
-	}
-	
-	/* -------------- */
-	
-	
-	
-	 if ( !_isGeometryReady ) {
+
+        if ( !_isGeometryReady ) {
 		initializeGeometry( event ) ;
 	}
 	#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -253,8 +245,17 @@ void EUTelAPIXClusteringProcessor::processEvent (LCEvent * event) {
 	}
 	#endif
   
-		/* -------------- */
+	/* -------------- */
 
+	try {
+		event->getCollection( _zsDataCollectionName ) ;
+	} catch (lcio::DataNotAvailableException& e ) {
+		streamlog_out ( DEBUG4 ) << "No ZS data found in the event " << _iEvt << endl;
+          return;
+	}
+	
+	/* -------------- */
+	
 	
 	EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 	if ( evt->getEventType() == kEORE ) {
@@ -319,29 +320,32 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 	 bool isDummyAlreadyExisting = false;
 	 LCCollectionVec * sparseClusterCollectionVec = NULL;
 	 size_t dummyCollectionInitialSize = 0;
-	 try {
+	 try 
+         {
 		 sparseClusterCollectionVec = dynamic_cast< LCCollectionVec* > ( evt->getCollection( "original_zsdata_apix") );
 		 isDummyAlreadyExisting = true ;
-		 
-	 
-	 } catch (lcio::DataNotAvailableException& e) {
+	 }
+         catch (lcio::DataNotAvailableException& e) 
+         {
 		//streamlog_out(MESSAGE4) << "Creating new dummy collection" << endl;
 		sparseClusterCollectionVec =  new LCCollectionVec(LCIO::TRACKERDATA);
 		isDummyAlreadyExisting = false;
 	 }
 	 dummyCollectionInitialSize = sparseClusterCollectionVec->size();
 	  
-	  CellIDEncoder<TrackerDataImpl> idClusterEncoder( "sensorID:5,clusterID:12,sparsePixelType:5,type:6", sparseClusterCollectionVec  );
+	 CellIDEncoder<TrackerDataImpl> idClusterEncoder( "sensorID:5,clusterID:12,sparsePixelType:5,type:6", sparseClusterCollectionVec  );
 	
-	//One loop for each sensorplane
-	for ( unsigned int i = 0 ; i < zsInputCollectionVec->size(); i++ ) {
+	 //One loop for each sensorplane
+	 for ( unsigned int i = 0 ; i < zsInputCollectionVec->size(); i++ ) 
+         {
 		TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
 		SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
 
-		int sensorID              = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
+		int sensorID             = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
 		//streamlog_out ( MESSAGE1 ) << "SensorID / Type is " << sensorID << " / " << type <<  endl;
 		
-		 if (type == kEUTelAPIXSparsePixel  ) {
+	        if (type == kEUTelAPIXSparsePixel  ) 
+                {
 			auto_ptr<EUTelSparseDataImpl<EUTelAPIXSparsePixel > > apixData(new EUTelSparseDataImpl<EUTelAPIXSparsePixel> ( zsData ));
 			//streamlog_out ( MESSAGE1 ) << "Processing APIX data on detector " << sensorID << " with " << apixData->size() << " pixels " << endl;
 			// loop over all pixels in the sparseData object.
@@ -349,10 +353,12 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 			//auto_ptr<EUTelAPIXSparsePixel> apixPixel( new EUTelAPIXSparsePixel );
 			EUTelAPIXSparsePixel apixPixel;
 			 //Push all single Pixels of one plane in the apixPixelVec
-			for ( unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++ ) {
-				apixData->getSparsePixelAt( iPixel, &apixPixel);
-				apixPixelVec.push_back(new EUTelAPIXSparsePixel(apixPixel));
-				//streamlog_out ( MESSAGE1 ) << "PixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
+			for ( unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++ ) 
+                        {
+			  apixData->getSparsePixelAt( iPixel, &apixPixel);
+                          EUTelAPIXSparsePixel *apix_temp = new EUTelAPIXSparsePixel(apixPixel);  
+			  apixPixelVec.push_back( apix_temp );
+//streamlog_out ( MESSAGE1 ) << "PixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
 			}
 			
 			//streamlog_out ( MESSAGE1 ) << "Hit Pixels: " << apixPixelVec.size() << endl;
@@ -361,85 +367,116 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 			 int nClusters = 0;
 			//int clusterNumArray[1000];
 			std::vector<int> clusterNumber;
-			if (apixPixelVec.size() != 0) {
+			if (apixPixelVec.size() != 0) 
+                        {
 				clusterNumber.assign(apixPixelVec.size(), NOCLUSTER);
 				//for (int i=0;i< apixPixelVec.size(); ++i) clusterNumArray[i]=NOCLUSTER;
 			}
 			
 			
 			//streamlog_out(MESSAGE1) << "Starting with clustering..." << endl;
-			if (apixPixelVec.size() > 1) {
+			if (apixPixelVec.size() > 1) 
+                        {
 				//Now compare all pixel in one plane with each other
-                		for ( unsigned int aPixel=0;aPixel < apixPixelVec.size();++aPixel) {
+                		for ( unsigned int aPixel=0;aPixel < apixPixelVec.size();++aPixel) 
+                                {
 	 				EUTelAPIXSparsePixel *aPix = apixPixelVec.at(aPixel);
 // printf("starting Pixel %5d at %5d %5d \n", aPixel, aPix->getXCoord(), aPix->getYCoord());
-					for ( unsigned int bPixel=aPixel+1; bPixel < apixPixelVec.size(); ++bPixel) {
+					for ( unsigned int bPixel=aPixel+1; bPixel < apixPixelVec.size(); ++bPixel) 
+                                        {
 						EUTelAPIXSparsePixel *bPix = apixPixelVec.at(bPixel);
 // printf("-- neeting Pixel %5d at %5d %5d \n", bPixel, bPix->getXCoord(), bPix->getYCoord());
 						//streamlog_out (MESSAGE1) << "looping..." << aPixel << " " << bPixel << endl;
 						int xDist = abs( aPix->getXCoord() - bPix->getXCoord() );
 						int yDist = abs( aPix->getYCoord() - bPix->getYCoord() );
 						
-						if ( ( xDist <= _minXDistance) && (yDist <= _minYDistance)  ) { //this means they are neighbours in x-direction && / this means they are neighbours in y-direction
+						if ( ( xDist <= _minXDistance) && (yDist <= _minYDistance)  )
+                                                { //this means they are neighbours in x-direction && / this means they are neighbours in y-direction
 							bool skipPixel = false;
-							if (_minDiagDistance != -1) {
+							if (_minDiagDistance != -1) 
+                                                        {
 								bool areDiagonalPartners =  (xDist != 0 && yDist != 0);  // if true then these pixels are diagonal partners
 								int diagDist = max(xDist,yDist);
 								if (areDiagonalPartners && diagDist > _minDiagDistance) skipPixel = true;
 							}
+
 							if (_minLVL1 != -1 )
                                                         {
 								float LVL1Diff = abs(aPix->getTime() - bPix->getTime() );
 								if (LVL1Diff > _minLVL1) skipPixel = true;
  							}
 							
-							if (skipPixel == false) {
+							if (skipPixel == false) 
+                                                        {
 								
-								if ( (clusterNumber.at(aPixel) == NOCLUSTER) && clusterNumber.at(bPixel) == NOCLUSTER) { // none of these pixels have been assigned to a cluster
+								if ( (clusterNumber.at(aPixel) == NOCLUSTER) && clusterNumber.at(bPixel) == NOCLUSTER) 
+                                                                { // none of these pixels have been assigned to a cluster
 									++nClusters;
 									clusterNumber.at(aPixel) = nClusters;
 									clusterNumber.at(bPixel) = nClusters;
 									//streamlog_out (MESSAGE1) << "assigning clusternumber: " << nClusters << endl;
-								}else if ( (clusterNumber.at(aPixel) == NOCLUSTER) && clusterNumber.at(bPixel) != NOCLUSTER) { // b was assigned already, a not
+								} else if ( (clusterNumber.at(aPixel) == NOCLUSTER) && clusterNumber.at(bPixel) != NOCLUSTER) { // b was assigned already, a not
 									clusterNumber.at(aPixel) = clusterNumber.at(bPixel);
-								}else if ( (clusterNumber.at(aPixel) != NOCLUSTER) && clusterNumber.at(bPixel) == NOCLUSTER) { // a was assigned already, b not
+								} else if ( (clusterNumber.at(aPixel) != NOCLUSTER) && clusterNumber.at(bPixel) == NOCLUSTER) { // a was assigned already, b not
 									clusterNumber.at(bPixel) = clusterNumber.at(aPixel);
-								}else { //both pixels have a clusternumber already
+								} else { //both pixels have a clusternumber already
 									int min = std::min(clusterNumber.at(aPixel), clusterNumber.at(bPixel));
 									clusterNumber.at(aPixel) = min;
 									clusterNumber.at(bPixel) = min;
 								}
-							} else { // these pixels are not neighboured due to diagonal cut or too different LVL Triggers
-								if ( clusterNumber.at(aPixel) == NOCLUSTER ) {
+
+							}
+                                                        else
+                                                        { // these pixels are not neighboured due to diagonal cut or too different LVL Triggers
+
+								if ( clusterNumber.at(aPixel) == NOCLUSTER ) 
+                                                                {
 									++nClusters;
 									clusterNumber.at(aPixel) = nClusters;
 								}
+
 								if ( clusterNumber.at(bPixel) == NOCLUSTER ) {
 									++nClusters;
 									clusterNumber.at(bPixel) = nClusters;
 								}
 							}
-						} else { // these pixels are not neighboured
-							if ( clusterNumber.at(aPixel) == NOCLUSTER ) {
+
+						}
+                                                else
+                                                { // these pixels are not neighboured
+
+							if ( clusterNumber.at(aPixel) == NOCLUSTER ) 
+                                                        {
 								++nClusters;
 								clusterNumber.at(aPixel) = nClusters;
 							}
-							if ( clusterNumber.at(bPixel) == NOCLUSTER ) {
+
+							if ( clusterNumber.at(bPixel) == NOCLUSTER ) 
+                                                        {
 								++nClusters;
 								clusterNumber.at(bPixel) = nClusters;
 							}
+
 						}
 					}
 				}
-			} else { //You can't use the clustering algorithym with only one pixel
-				if (apixPixelVec.size() == 1) clusterNumber.at(0) = 1;
+
+			} 
+                        else
+                        { //You can't use the clustering algorithym with only one pixel
+		
+                          if (apixPixelVec.size() == 1) clusterNumber.at(0) = 1;
 			}
 			
 			//it happens, that nCluster is higher that the real number of clusters, as a clusternumber can be deleted in the else-block, so lets correct it
 			std::set<int> clusterSet;
-			for (unsigned int i=0; i<apixPixelVec.size();++i) {
-				clusterSet.insert(clusterNumber.at(i));
-				if ( clusterNumber.at(i) == NOCLUSTER) {streamlog_out(MESSAGE1) << "Cluster with ID -1 in " << i << endl;}
+			for (unsigned int i=0; i<apixPixelVec.size();++i) 
+                        {
+			  clusterSet.insert(clusterNumber.at(i));
+			  if ( clusterNumber.at(i) == NOCLUSTER) 
+                          {
+                            streamlog_out(MESSAGE1) << "Cluster with ID -1 in " << i << endl;
+                          }
 			}
 			nClusters = clusterSet.size();
 			
@@ -447,42 +484,52 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 //			if (nClusters != 0) streamlog_out(MESSAGE1) << "Found " << nClusters << " clusters in sensor " << sensorID<< endl;
 			
 			/* --- Finished Clustering --- */
-			
+
 			/* --- Push back one Collection per Cluster --- */
 			std::set<int>::iterator it;
                         int icounter=0;
-			for (it=clusterSet.begin();it!=clusterSet.end();it++) {
-				lcio::TrackerPulseImpl * pulseFrame = new lcio::TrackerPulseImpl();
-				lcio::TrackerDataImpl * clusterFrame = new lcio::TrackerDataImpl();
-				eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);	
-//                                printf("i:%2d it:%5d size:%5d apixPixelVec:%5d \n", icounter, *it, clusterNumber.size(), apixPixelVec.size() );
-				for (unsigned int i=0;i< apixPixelVec.size();i++) {
-					if(clusterNumber.at(i)== *it) { //Put only these pixels in that ClusterCollection that belong to that cluster
-						apixCluster->addSparsePixel(apixPixelVec.at(i));
-//						streamlog_out(MESSAGE1) << "Adding Pixel " << i << " to cluster vector" << endl;
-					}
-  				}
- 			int xsize0,ysize0;
-			apixCluster->getClusterSize(xsize0,ysize0);
-			if( xsize0 < _minXsize || xsize0 > _maxXsize || ysize0 > _maxYsize || ysize0 < _minYsize )
-			{
-//			  streamlog_out(MESSAGE3) << "cluster ID: " << *it << " skipped due to oversize in X: " << xsize0 << " or Y: " << ysize0 << endl;
-                          continue;
-			}
+			for (it=clusterSet.begin();it!=clusterSet.end();it++) 
+                        {
+			  lcio::TrackerPulseImpl * pulseFrame   = new lcio::TrackerPulseImpl();
+		          lcio::TrackerDataImpl  * clusterFrame = new lcio::TrackerDataImpl();
+			  eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >  
+                                                 * apixCluster  = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);	
 
-                        bool bSensorID = true; // sensor is not defined in _ClusterLimitsMap
-                        try
-                        {
-                          bSensorID = _ClusterLimits[0] > -1 ;
-                        }
-                        catch(...)
-                        {
-                          bSensorID = false;
-//                        streamlog_out(MESSAGE) << "  " << endl;
-                        }
+//                        printf("i:%2d it:%5d size:%5d apixPixelVec:%5d \n", icounter, *it, clusterNumber.size(), apixPixelVec.size() );
+			  for (unsigned int i=0;i< apixPixelVec.size();i++) 
+                          {
+			    if(clusterNumber.at(i)== *it) 
+                            { //Put only these pixels in that ClusterCollection that belong to that cluster
+                              apixCluster->addSparsePixel(apixPixelVec.at(i));
+//			      streamlog_out(MESSAGE1) << "Adding Pixel " << i << " to cluster vector" << endl;
+			    }
+  			  }
 
-                        if( bSensorID )
-                        {
+ 			  int xsize0,ysize0;
+			  apixCluster->getClusterSize(xsize0,ysize0);
+ 
+			  if( xsize0 < _minXsize || xsize0 > _maxXsize || ysize0 > _maxYsize || ysize0 < _minYsize )
+			  {
+//			    streamlog_out(MESSAGE3) << "cluster ID: " << *it << " skipped due to oversize in X: " << xsize0 << " or Y: " << ysize0 << endl;
+                            if( pulseFrame   != 0 ) delete pulseFrame;
+                            if( clusterFrame != 0 ) delete clusterFrame;
+                            if( apixCluster  != 0 ) delete apixCluster; 
+                            continue;
+		  	  }
+
+                          bool bSensorID = true; // sensor is not defined in _ClusterLimitsMap
+                          try
+                          {
+                            bSensorID = _ClusterLimits[0] > -1 ;
+                          }
+                          catch(...)
+                          {
+                            bSensorID = false;
+//                          streamlog_out(MESSAGE) << "  " << endl;
+                          }
+
+                          if( bSensorID )
+                          {
                             if(  
                                  xsize0 < _ClusterLimitsMap[sensorID][0] 
                                  ||
@@ -494,46 +541,57 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
                                )
                                 {
 //   		 		  streamlog_out(MESSAGE3) << "SensorID: " << sensorID << " : _ClusterLimitsMap:: cluster ID: " << *it << " skipped due to oversize in X: " << xsize0 << " or Y: " << ysize0 << endl;
-                		  continue;
+                                  if( pulseFrame   != 0 ) delete pulseFrame;
+                                  if( clusterFrame != 0 ) delete clusterFrame;
+                                  if( apixCluster  != 0 ) delete apixCluster; 
+                    		  continue;
 	                        }
-                        }
-                        else
-                        {
-// 			  streamlog_out(MESSAGE3) << "cluster ID: has no limits associated to it " << endl;                                 
-                        }
+                          }
+                          else
+                          {
+// 			    streamlog_out(MESSAGE3) << "cluster ID: has no limits associated to it " << endl;                                 
+                          }
 
 
 //                streamlog_out(MESSAGE3) << "Accept:: SensorID: " << sensorID << " : _ClusterLimitsMap:: cluster ID: " << *it << " skipped due to oversize in X: " << xsize0 << " or Y: " << ysize0 << endl;
  
 
-                if (   
-                     ( apixCluster->size() >= (unsigned int) _minNPixels ) 
-                     &&
-                     ( apixCluster->getTotalCharge() >= (unsigned int) _minCharge )
-                                    ) {
-					//int x,y; 
-					float x,y;
-					int xsize,ysize;
-					// This is only using digital hit information
-					// apixCluster->getCenterCoord(x,y); 
-					// This is using analogue hit information
-					apixCluster->getCenterOfGravity(x,y);
-					apixCluster->getClusterSize(xsize,ysize);
-//         printf("xsize %5d ysize %5d \n", xsize, ysize);
-					if (x > 0 && x < 10000 && y > 0 && y < 10000) {
-						//streamlog_out(MESSAGE3) << "Clustervars: " << sensorID << " " << *it << " " << x << " " << y << " " <<xsize << " " << ysize << " " << type << endl;
-
-						int clusterID = *it;
-						zsDataEncoder["sensorID"]      = sensorID;
-						zsDataEncoder["clusterID"]     = clusterID;
-						zsDataEncoder["xSeed"]         = x;
-						zsDataEncoder["ySeed"]         = y;
-						zsDataEncoder["xCluSize"]      = xsize;
-						zsDataEncoder["yCluSize"]      = ysize;
-						zsDataEncoder["type"]          = static_cast<int>(kEUTelAPIXClusterImpl);
-						zsDataEncoder.setCellID(pulseFrame);
-						pulseFrame->setTrackerData(clusterFrame);
-						clusterCollection->push_back(pulseFrame);
+                          if (   
+                             ( apixCluster->size() >= (unsigned int) _minNPixels ) 
+                             &&
+                             ( apixCluster->getTotalCharge() >= (unsigned int) _minCharge )
+                             )
+                          {
+			    //int x,y; 
+			    float x = 0.;
+                            float y = 0.;
+		            int xsize = 0;
+                            int ysize = 0;
+			  
+                            // This is only using digital hit information
+			    // apixCluster->getCenterCoord(x,y); 
+			    // This is using analogue hit information
+			    apixCluster->getCenterOfGravity(x,y);
+			    apixCluster->getClusterSize(xsize,ysize);
+//                          printf("xsize %5d ysize %5d \n", xsize, ysize);
+			
+                            if (x > 0 && x < 10000 && y > 0 && y < 10000) 
+                            {
+			      //streamlog_out(MESSAGE3) << "Clustervars: " << sensorID << " " << *it << " " << x << " " << y << " " <<xsize << " " << ysize << " " << type << endl;
+                              // increment global cluster counter (per plane)
+                              _totClusterMap[ sensorID ] += 1;
+ 
+			      int clusterID = *it;
+			      zsDataEncoder["sensorID"]      = sensorID;
+			      zsDataEncoder["clusterID"]     = clusterID;
+			      zsDataEncoder["xSeed"]         = x;
+			      zsDataEncoder["ySeed"]         = y;
+			      zsDataEncoder["xCluSize"]      = xsize;
+			      zsDataEncoder["yCluSize"]      = ysize;
+			      zsDataEncoder["type"]          = static_cast<int>(kEUTelAPIXClusterImpl);
+			      zsDataEncoder.setCellID(pulseFrame);
+			      pulseFrame->setTrackerData(clusterFrame);
+			      clusterCollection->push_back(pulseFrame);
 /*    printf("%5d %5d %8.3f %8.3f  %5d %5d consists of :\n", sensorID, clusterID, x, y, xsize, ysize);
 					for (int iPixel=0; iPixel <  apixCluster->size(); iPixel++) 
                                         {
@@ -543,17 +601,25 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
                                                   apixPixel.getXCoord(), apixPixel.getYCoord(), apixPixel.getSignal()   );
 					}
 */
-						idClusterEncoder["sensorID"] 		= sensorID;
-						idClusterEncoder["clusterID"] 		= clusterID;
-						idClusterEncoder["sparsePixelType"] 	= static_cast<int>(type);
-						idClusterEncoder["type"] 		= static_cast<int>(kEUTelAPIXClusterImpl);
-						idClusterEncoder.setCellID(clusterFrame);
-						sparseClusterCollectionVec->push_back(clusterFrame);
-				      }
-				}
-            icounter++;   
-            }
-		 }
+			      idClusterEncoder["sensorID"] 	     = sensorID;
+			      idClusterEncoder["clusterID"] 	     = clusterID;
+			      idClusterEncoder["sparsePixelType"]    = static_cast<int>(type);
+			      idClusterEncoder["type"] 	             = static_cast<int>(kEUTelAPIXClusterImpl);
+			      idClusterEncoder.setCellID(clusterFrame);
+			      sparseClusterCollectionVec->push_back(clusterFrame);
+			    }
+                          }
+//                          else
+//                          {
+//                                  continue;
+//                          }
+
+//                          if( pulseFrame   != 0 ) delete pulseFrame;
+//                          if( clusterFrame != 0 ) delete clusterFrame;
+                          if( apixCluster  != 0 ) delete apixCluster;
+                          icounter++;   
+                        }
+		}
 	}
 	if ( !isDummyAlreadyExisting ) {
 		if ( sparseClusterCollectionVec->size() != dummyCollectionInitialSize ) {
@@ -571,7 +637,21 @@ void EUTelAPIXClusteringProcessor::check (LCEvent * /* evt */) {
 
 
 void EUTelAPIXClusteringProcessor::end() {
-	streamlog_out( MESSAGE4 ) << "Ending" << endl;
+//	streamlog_out( MESSAGE4 ) << "Ending" << endl;
+
+  streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
+
+  map< int, int >::iterator iter = _totClusterMap.begin();
+  while ( iter != _totClusterMap.end() ) {
+
+#ifdef MARLINDEBUG
+    /// /* DEBUG */    message<DEBUG> ( logfile << "Found " << iter->second << " clusters on detector " << iter->first );
+#endif
+    streamlog_out ( MESSAGE2 ) << "Found " << iter->second << " clusters on detector " << iter->first << endl;
+    ++iter;
+
+  }
+
 }
 
 
@@ -601,8 +681,8 @@ void EUTelAPIXClusteringProcessor::fillHistos (LCEvent * evt) {
 		vector<unsigned short> eventCounterVec( _noOfDetector, 0 );
 
 		for ( int iCluster = _initialClusterCollectionSize; iCluster < clusterCollectionVec->getNumberOfElements(); iCluster++ ) {
-			TrackerPulseImpl * pulseFrame = dynamic_cast<TrackerPulseImpl*> ( clusterCollectionVec->getElementAt(iCluster) );
-			TrackerDataImpl * clusterFrame = dynamic_cast<TrackerDataImpl*> ( pulseFrame->getTrackerData() );
+			TrackerPulseImpl * pulseFrame   = dynamic_cast<TrackerPulseImpl*> ( clusterCollectionVec->getElementAt(iCluster) );
+			TrackerDataImpl  * clusterFrame = dynamic_cast<TrackerDataImpl*> ( pulseFrame->getTrackerData() );
 			
 			//ClusterType        type  = static_cast<ClusterType> ( static_cast<int> ( cellDecoder(clusterFrame)["type"] ));
 			int		         sensorID  = ( static_cast<int> ( cellDecoder(pulseFrame)["sensorID"] ));
@@ -614,8 +694,12 @@ void EUTelAPIXClusteringProcessor::fillHistos (LCEvent * evt) {
 				string tempHistoName;
 				
 				tempHistoName = _clusterSignalHistoName + "_d" + to_string( sensorID ) ;
+                                //streamlog_out(MESSAGE) << " apixCluster at " << apixCluster << endl;
+                                //streamlog_out(MESSAGE) << " _aidaHistoMap["<<tempHistoName<<"] " << _aidaHistoMap[tempHistoName] << endl;
+
+
 				(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(apixCluster->getTotalCharge());
-				
+ 				
 				int size = apixCluster->size();
 				int xSize, ySize;
 				apixCluster->getClusterSize(xSize,ySize);
@@ -735,7 +819,7 @@ void EUTelAPIXClusteringProcessor::bookHistos() {
 		
 		
 		string clusterTitle = "Cluster spectrum with all pixels";
-		/*
+		
 		if ( isHistoManagerAvailable ) {
 			histoInfo = histoMgr->getHistogramInfo( _clusterSignalHistoName );
 			if ( histoInfo ) {
@@ -746,8 +830,9 @@ void EUTelAPIXClusteringProcessor::bookHistos() {
 				if ( histoInfo->_title != "" ) clusterTitle = histoInfo->_title;
 			}
 		}
-		*/
-		tempHistoName = _clusterSignalHistoName + "_d" + to_string( sensorID );
+		
+	        tempHistoName = _clusterSignalHistoName + "_d" + to_string( sensorID );
+	        //streamlog_out(MESSAGE) << " booking :" << tempHistoName.c_str() << endl;
 		AIDA::IHistogram1D * clusterSignalHisto =  AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), signalNBin,signalMin,signalMax);
 		_aidaHistoMap.insert(make_pair(tempHistoName, clusterSignalHisto));
 		clusterSignalHisto->setTitle(clusterTitle.c_str());
