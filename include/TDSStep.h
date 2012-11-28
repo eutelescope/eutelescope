@@ -85,7 +85,7 @@ namespace TDS {
       {
 	if (midH > 0.)
 	  {
-	    std::cout << "Middle point of the step should have H coordinate < 0!" << std::endl;
+	    std::cout << "Middle point (" << midH << ") of the step should have H coordinate < 0!" << std::endl;
 	    exit(1);
 	  }
       }
