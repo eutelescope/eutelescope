@@ -482,7 +482,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
   } 
   catch ( ParseException& e ) 
   {
-      streamlog_out ( MESsAGE )  << "Input collection not found in the current event. Skipping..." << e.what() << endl;
+      streamlog_out ( MESSAGE )  << "Input collection not found in the current event. Skipping..." << e.what() << endl;
       return;     
   }
 
