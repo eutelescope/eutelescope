@@ -146,7 +146,7 @@ void EUTelAPIXHotPixelKiller::init ()
 
 void EUTelAPIXHotPixelKiller::modifyEvent( LCEvent * event )
 {
-    std::cout << "_iEvt" << std::endl; 
+//    std::cout << "_iEvt" << std::endl; 
     return;
 }
 
