@@ -532,8 +532,14 @@ class SubmitFitter( SubmitBase ):
         try:
             value = self._configParser.getfloat( "FitterOptions", "BeamEnergy" )
         except ConfigParser.NoOptionError :
-            value = 120
-        actualSteeringString = actualSteeringString.replace( "@BeamEnergy@", "%(d)f" % {"d":  value  } )
+            value = 120.0
+ 
+        if self._option.beam_energy != None :
+            # this means that the user wants to override the configuration file
+            value = self._option.beam_energy
+            self._logger.debug( "Using command line parameter: beam energy" )
+
+        actualSteeringString = actualSteeringString.replace( "@BeamEnergy@", "%(d)f" % {"d": value  } )
 
         # MissingHitPenalty
         try:
@@ -843,7 +849,13 @@ class SubmitFitter( SubmitBase ):
             value = self._configParser.getfloat( "FitterOptions", "BeamEnergy" )
         except ConfigParser.NoOptionError :
             value = 120
-        actualSteeringString = actualSteeringString.replace( "@BeamEnergy@", "%(d)f" % {"d":  value  } )
+ 
+        if self._option.beam_energy != None :
+            # this means that the user wants to override the configuration file
+            value = self._option.beam_energy
+            self._logger.debug( "Using command line parameter: beam energy" )
+
+        actualSteeringString = actualSteeringString.replace( "@BeamEnergy@", "%(d)f" % {"d": value  } )
 
         # MissingHitPenalty
         try:

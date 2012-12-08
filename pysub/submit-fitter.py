@@ -182,6 +182,14 @@ from the GRID SE, but the job will be executed on the local CPU
                                    dest="event_range",
                                    help="Set the event range to process")
 
+    configurationGroup.add_option( "--beam-energy",
+                                   type="float",
+                                   action="store",
+                                   dest="beam_energy",
+                                   help="Set the beam energy for given run/job")
+
+    parser.set_defaults(beam_energy=1.0)
+
 
     parser.add_option_group( configurationGroup )
 
