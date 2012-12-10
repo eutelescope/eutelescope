@@ -188,7 +188,15 @@ from the GRID SE, but the job will be executed on the local CPU
                                    dest="beam_energy",
                                    help="Set the beam energy for given run/job")
 
+    configurationGroup.add_option( "--finder-radius",
+                                   type="float",
+                                   action="store",
+                                   dest="finder_radius",
+                                   help="Set the next plane radius, search cone ")
+
+
     parser.set_defaults(beam_energy=1.0)
+    parser.set_defaults(finder_radius=100.0)
 
 
     parser.add_option_group( configurationGroup )

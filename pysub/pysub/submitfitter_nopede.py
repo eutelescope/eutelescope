@@ -541,6 +541,19 @@ class SubmitFitter( SubmitBase ):
 
         actualSteeringString = actualSteeringString.replace( "@BeamEnergy@", "%(d)f" % {"d": value  } )
 
+        # search radius [um?]
+        try:
+            value = self._configParser.getfloat( "FitterOptions","FinderRadius")
+        except ConfigParser.NoOptionError :
+            value = 500.0
+ 
+        if self._option.finder_radius != None :
+            # this means that the user wants to override the configuration file
+            value = self._option.finder_radius
+            self._logger.debug( "Using command line parameter: radius next plane ")
+
+        actualSteeringString = actualSteeringString.replace( "@FinderRadius@", "%(d)f" % {"d": value  } )
+
         # MissingHitPenalty
         try:
             value = self._configParser.getfloat( "FitterOptions", "MissingHitPenalty" )
@@ -856,6 +869,19 @@ class SubmitFitter( SubmitBase ):
             self._logger.debug( "Using command line parameter: beam energy" )
 
         actualSteeringString = actualSteeringString.replace( "@BeamEnergy@", "%(d)f" % {"d": value  } )
+
+        # search radius [um?]
+        try:
+            value = self._configParser.getfloat( "FitterOptions","FinderRadius")
+        except ConfigParser.NoOptionError :
+            value = 500.0
+ 
+        if self._option.finder_radius != None :
+            # this means that the user wants to override the configuration file
+            value = self._option.finder_radius
+            self._logger.debug( "Using command line parameter: radius next plane ")
+
+        actualSteeringString = actualSteeringString.replace( "@FinderRadius@", "%(d)f" % {"d": value  } )
 
         # MissingHitPenalty
         try:
