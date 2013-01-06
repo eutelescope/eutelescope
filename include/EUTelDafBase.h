@@ -75,6 +75,12 @@ namespace eutelescope {
     bool _initializedSystem;
     LCCollection* _hitCollection;
 
+    EVENT::StringVec		_mcCollectionStr;
+    EVENT::StringVec		_mcCollectionExample;
+    LCCollection*               _mcCollection;
+
+
+
     std::vector<int> _colMin, _colMax, _rowMin, _rowMax;
     std::map<int, std::pair<int,int> > _rowMinMax, _colMinMax;
 
