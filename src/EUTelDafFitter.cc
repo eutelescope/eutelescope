@@ -177,9 +177,25 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
   }
 
  //Add track collection
-  if(_addToLCIO){ 
+  if(_addToLCIO)
+  { 
     event->addCollection(_fittrackvec,_trackCollectionName); 
-    event->addCollection(_fitpointvec, "fitpoints");
+    std::string  sfitpoints = "" ;  
+
+    
+    for(int i = 0; i<1000; i++)
+    {
+      sfitpoints = "fitpoints" + i;
+      try
+      {
+       dynamic_cast < LCCollectionVec * > ( event->getCollection( sfitpoints ) )  ;
+      }
+      catch(...)
+      {
+        break;
+      } 
+    }
+    event->addCollection(_fitpointvec, sfitpoints );
   }
 
 //   if( _isFirstEvent )
