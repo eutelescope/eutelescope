@@ -513,7 +513,7 @@ void EUTelMille::init() {
       while ( iter != sensorIDMap.end() ) {
         if( iter->second == _excludePlanes_sensorIDs[i])
           {
-            printf("excludePlanes_sensorID %2d of %2d (%2d) \n", i, _excludePlanes_sensorIDs.size(), counter );
+            printf("excludePlanes_sensorID %2d of %2d (%2d) \n", int(i), static_cast<int> (_excludePlanes_sensorIDs.size()) , counter );
             _excludePlanes.push_back(counter);
             break;
           }
@@ -531,7 +531,7 @@ void EUTelMille::init() {
       {
         if(_excludePlanes[i] == counter)
           {
-            printf("excludePlanes %2d of %2d (%2d) \n", i, _excludePlanes_sensorIDs.size(), counter );
+            printf("excludePlanes %2d of %2d (%2d) \n", int(i), static_cast<int> (_excludePlanes_sensorIDs.size()), counter );
             excluded = true;
             break;
           }
@@ -2000,9 +2000,9 @@ void EUTelMille::processEvent (LCEvent * event) {
 
   }
 
-  if (_nTracks == _maxTrackCandidates) {
-    streamlog_out ( WARNING2 ) << "Maximum number of track candidates reached. Maybe further tracks were skipped" << endl;
-  }
+//  if (_nTracks == _maxTrackCandidates) {
+//    streamlog_out ( WARNING2 ) << "Maximum number of track candidates reached. Maybe further tracks were skipped" << endl;
+//  }
 
   streamlog_out ( MILLEMESSAGE ) << "Number of hits in the individual planes: ";
 //   for(size_t i = 0; i < _hitsArray.size(); i++)
