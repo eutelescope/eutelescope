@@ -30,6 +30,8 @@ TDSPixelsChargeMap::TDSPixelsChargeMap(const double length, const double width, 
       cout << "Error: height must be negative!" << endl;
       exit(1);
     };
+ 
+  clear();
 
   setDetectorType();
   theParamsOfFunChargeDistribution.height = height;
@@ -600,6 +602,8 @@ double TDSPixelsChargeMap::getTotalCharge()
   int debug = 0;
 
   int ipixel=0;
+  if(debug) streamlog_out (MESSAGE ) << " pixelsChargeMap : " << pixelsChargeMap.size() << endl;
+
   for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
     {
       if(debug) 
