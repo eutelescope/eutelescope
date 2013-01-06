@@ -24,16 +24,16 @@ FitPlane::FitPlane(int sensorID, float zPos, float sigmaX, float sigmaY, float s
 
 void FitPlane::print(){
   //Pretty print initialized plane info
-  cout << "SensorID: " << sensorID
-       << " Z-position: " << zPosition
-       << " Hit sigma x: " << sigmas(0)
+  cout << "SensorID: " << sensorID;
+  printf(" Z-position: %012.3f ", zPosition);
+  cout << " Hit sigma x: " << sigmas(0)
        << " Hit sigma y: " << sigmas(1)
        << " Sigma scatter theta: " << sqrt(scatterThetaSqr)
        << " Excluded: " << excluded << endl;
 }
 
 
-TrackerSystem::TrackerSystem() : m_inited(false), m_maxCandidates(100), m_minClusterSize(3), m_nXdz(0.0f), m_nYdz(0.0) {;}
+TrackerSystem::TrackerSystem() : m_inited(false), m_maxCandidates(500), m_minClusterSize(3), m_nXdz(0.0f), m_nYdz(0.0) {;}
 
 void TrackerSystem::setTruth(int plane, float x, float y, float xdz, float ydz){
   mcTruth.at(plane)->params(0) = x;
@@ -375,7 +375,7 @@ float TrackerSystem::fitPlanesInfoDafInner(){
   }
 //printf("ndof %5.2f <? 2.5 [return?]\n", ndof);
   //No reason to complete
-  if(ndof < 2.5) { return(ndof);}
+  if(ndof < 2.5) { delete e; return(ndof);}
   
   //Backward fitter, never bias
   e->cov.setZero();
@@ -416,7 +416,7 @@ float TrackerSystem::fitPlanesInfoDafBiased(){
 //    printf("forward: m_fitter: %5d  ndof=%5.2f \n", ii, ndof); 
   }
   //No reason to complete
-  if(ndof < 2.5) { return(ndof);}
+  if(ndof < 2.5) { delete e; return(ndof);}
   
   //Backward fitter, never bias
   e->cov.setZero();
