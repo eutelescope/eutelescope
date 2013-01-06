@@ -394,7 +394,7 @@ void EUTelAPIXHotPixelKiller::processEvent (LCEvent * event)
     //  
     if ( isFirstEvent() ) 
     {
-//        printf("in initializeGeometry : %p\n", event );
+        streamlog_out (MESSAGE) << "in initializeGeometry : " << event << "; will prepare map of pixels too " << endl;;
         initializeGeometry( event );
 
         _firingFreqVec.clear();
@@ -406,7 +406,8 @@ void EUTelAPIXHotPixelKiller::processEvent (LCEvent * event)
         }
         
         for ( int iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) 
-        {            
+        {  
+           streamlog_out (MESSAGE) << " First event :: adding Detector " << iDetector << endl;          
            TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
            _firingFreqVec.resize( iDetector+1 );
            
@@ -810,7 +811,9 @@ void EUTelAPIXHotPixelKiller::bookAndFillHistos()
   string tempHistoName, basePath;
   for ( int iDetector = 0; iDetector < _noOfDetectors; iDetector++ ) 
   { 
-      
+    streamlog_out ( MESSAGE0 ) << "-- histograms for iDetector = " << iDetector << " of " << _noOfDetectors << endl;
+
+       
     basePath = "detector_" + to_string( _sensorIDVec.at( iDetector ) ) ;
     AIDAProcessor::tree(this)->mkdir(basePath.c_str());
 
@@ -854,13 +857,14 @@ void EUTelAPIXHotPixelKiller::bookAndFillHistos()
 
     int iPixel = 0;
 
-
+  //  streamlog_out(MESSAGE) << " iDetector " << iDetector << "  _firingFreqVec.size = " <<  _firingFreqVec.size() << endl;
     
     for (int yPixel = _minY[_sensorIDVec.at( iDetector)]; yPixel <= _maxY[_sensorIDVec.at( iDetector)]; yPixel++) 
     {
       for (int xPixel = _minX[_sensorIDVec.at( iDetector)]; xPixel <= _maxX[_sensorIDVec.at( iDetector)]; xPixel++) 
       {
-          if( _firingFreqVec[ iDetector ][ iPixel ] > 0 )
+          //streamlog_out(MESSAGE) << " iPixel = " << iPixel << " _firingFreqVec[ iDetector ].size()= " << _firingFreqVec[ iDetector ].size() <<  endl; 
+          if(  iDetector < _firingFreqVec.size() &&  _firingFreqVec[ iDetector ].size() > 0  &&  _firingFreqVec[ iDetector ][ iPixel ] > 0 )
           {
               firing2DHisto->fill(xPixel, yPixel, _firingFreqVec[ iDetector ][ iPixel ] );
               firing1DHisto->fill( _firingFreqVec[ iDetector ][ iPixel ] / ( (double)  _noOfEventPerCycle ));
