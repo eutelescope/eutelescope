@@ -268,7 +268,7 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
 
   registerOptionalParameter ("BeamSpread",
                              "Assumed angular spread of the beam [rad] (for beam constraint)",
-                             _beamSpread, static_cast < double > (0.1) );
+                             _beamSpread, static_cast < double > (0.0) );
 
   registerOptionalParameter ("BeamSlopeX",
                              "Beam direction tilt in X-Z plane [rad] (for beam constraint)",
@@ -455,8 +455,8 @@ void EUTelTestFitter::init() {
 
     if(ipl != _iDUT )    {
       _planeID[iz]=_siPlanesLayerLayout->getID(ipl);
-      _planeThickness[iz]=_siPlanesLayerLayout->getLayerThickness(ipl);
-      _planeX0[iz]=_siPlanesLayerLayout->getLayerRadLength(ipl);
+      _planeThickness[iz]=_siPlanesLayerLayout->getLayerThickness(ipl) + _siPlanesLayerLayout->getSensitiveThickness(ipl) ;
+      _planeX0[iz]=_siPlanesLayerLayout->getLayerRadLength(ipl) ;
       resolution = _siPlanesLayerLayout->getSensitiveResolution(ipl);
     }  else {
       _planeID[iz]=_siPlanesLayerLayout->getDUTID();
@@ -1948,6 +1948,20 @@ void EUTelTestFitter::end(){
   //        << " processed " << _nEvt << " events in " << _nRun << " runs "
   //        << std::endl ;
 
+  for(int ipl=0;ipl<_nTelPlanes;ipl++)  
+  {
+    char iden[4];
+    sprintf(iden, "%d", _planeID[ipl] );
+    string bname = (string)"pl" + iden + "_";
+
+    streamlog_out( MESSAGE ) << "X: ["<< ipl << ":" << _planeID[ipl] <<"]" << 
+    _aidaHistoMap1D[bname + "residualX"]->allEntries()<< " " <<
+    _aidaHistoMap1D[bname + "residualX"]->mean()*1000. << " " <<
+    _aidaHistoMap1D[bname + "residualX"]->rms()*1000. << " " <<
+    _aidaHistoMap1D[bname + "residualY"]->allEntries()<< " " <<
+    _aidaHistoMap1D[bname + "residualY"]->mean()*1000. << " " <<
+    _aidaHistoMap1D[bname + "residualY"]->rms()*1000. << " " << endl;
+  }
 
   // Print the summary
   streamlog_out( MESSAGE ) << "Total number of processed events:     " << setw(10) << setiosflags(ios::right) << _nEvt << resetiosflags(ios::right) << endl
