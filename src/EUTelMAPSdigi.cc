@@ -409,7 +409,8 @@ void EUTelMAPSdigi::processRunHeader (LCRunHeader * rdr) {
 void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
   int  debug = ( _debugCount>0 && _iEvt%_debugCount == 0);
-//debug =2;
+
+  debug = 0;
 
   if (_iEvt % _debugCount == 0  || debug)
     streamlog_out( MESSAGE4 ) << "Processing event "
@@ -434,6 +435,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
     LCCollectionVec * simhitCollection   = static_cast<LCCollectionVec*> (event->getCollection( _simhitCollectionName ));
 
+
     // prepare also an output collection
     auto_ptr< lcio::LCCollectionVec > zsDataCollection( new LCCollectionVec ( LCIO::TRACKERDATA ) ) ;
 
@@ -455,16 +457,20 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
     for ( int iHit = 0; iHit < simhitCollection->getNumberOfElements(); iHit++ ) 
     {
-
+      if(debug>1) streamlog_out ( MESSAGE ) << "iHit = " << iHit << " :of: " << simhitCollection->getNumberOfElements() << endl;
+      
       SimTrackerHitImpl * simhit   = static_cast<SimTrackerHitImpl*> ( simhitCollection->getElementAt(iHit) );
-
+     
       // there could be several hits belonging to the same
       // detector. So update the geometry information only if this new
       // cluster belongs to a different detector.
       detectorID = simhit->getCellID0();
-      if( _DigiLayerIDs.size() > 0 && _DigiLayerIDs[0] >= 20 ) detectorID += 19; 
+      if( detectorID > 99 ) continue;
+
       if( _DigiLayerIDs.size() > 0 && _DigiLayerIDs[0] <  10 ) detectorID -=  1; 
-     
+
+      //
+ 
       bool detector_type_choice = false;
       for( int iPlane = 0; iPlane < _DigiLayerIDs.size(); iPlane++)
       {
@@ -477,7 +483,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
         //if( _pixelChargeMap != 0) _pixelChargeMap->clear();
         //if( _vectorOfPixels.size() != 0) _vectorOfPixels.clear();
 
-        break;
+        //break;
       }
  
       if(debug>1) streamlog_out ( MESSAGE ) << "Sensitive layer ID = " << detectorID << " found in SimTracker collection" << endl;
@@ -487,13 +493,17 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
         oldDetectorID = detectorID;
 
-        if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
+        if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) 
+        {
           // first of all try to see if this detectorID already belong to
-          if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
+          if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) 
+          {
             // this means that this detector ID was not already inserted,
             // so this is the right place to do that
-            for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
-              if ( _siPlanesLayerLayout->getSensitiveID(iLayer) == detectorID ) {
+            for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) 
+            {
+              if ( _siPlanesLayerLayout->getSensitiveID(iLayer) == detectorID ) 
+              {
                 _conversionIdMap.insert( make_pair( detectorID, iLayer ) );
                 if(debug>1) streamlog_out ( MESSAGE ) << "Sensitive layer ID = " << detectorID << " found in GEAR" << endl;
                 break;
@@ -542,11 +552,13 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
           }
 
 
-        if (  ( xPointing[0] == xPointing[1] ) && ( xPointing[0] == 0 ) ) {
+        if (  ( xPointing[0] == xPointing[1] ) && ( xPointing[0] == 0 ) ) 
+        {
           streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
         }
 
-        if (  ( yPointing[0] == yPointing[1] ) && ( yPointing[0] == 0 ) ) {
+        if (  ( yPointing[0] == yPointing[1] ) && ( yPointing[0] == 0 ) ) 
+        {
           streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
 
         }
@@ -723,19 +735,24 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
       // We have to initialize TDS pixel charge map if not done yet
 
-      if ( detectorID != mapDetectorID ) {
+      if ( detectorID != mapDetectorID && detectorID < 100 ) 
+      {
         mapDetectorID = detectorID;
 
-//      if ( _pixelChargeMapCollection.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
-        if ( _pixelChargeMapCollection.size() != (unsigned) _DigiLayerIDs.size() ){
+        if ( _pixelChargeMapCollection.size() != (unsigned) _DigiLayerIDs.size() )
+        {
           // first of all try to see if this detectorID already belong to
-          if ( _pixelChargeMapCollection.find( detectorID ) == _pixelChargeMapCollection.end() ) {
+          if ( _pixelChargeMapCollection.find( detectorID ) == _pixelChargeMapCollection.end()  ) 
+          {
             // this means that the map for was not defined yet,
             // so this is the right place to do that
             std::cout << " Initialising a TDS Charge Map " << std::endl;
 
             // current TDS requires that negative sensor thickness is given!
             _pixelChargeMap = new TDSPixelsChargeMap(_localSize[0],_localSize[1],-_localSize[2]);
+
+            std::cout << "iHit: " << iHit << " " << _pixelChargeMap << endl;
+
             _pixelChargeMapCollection.insert( make_pair( detectorID,_pixelChargeMap) );
 
             // set detector type (Default MAPS)
@@ -835,7 +852,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
                                      " _mokkaPath        = " << _mokkaPath  <<
                                      " _mokkaDeposit     = " << _mokkaDeposit << endl;
 
-        if( _localPosition[2] > 0.) return; 
+        if( _localPosition[2] > 0.) continue; 
         TDSStep step(_localPosition[0], _localPosition[1], _localPosition[2]-_localSize[2],
                      _localDirection[0],_localDirection[1],_localDirection[2],
                      _mokkaPath, _mokkaDeposit);
@@ -859,38 +876,47 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
     // prepare the output TrackerData to host the SparsePixel
 
+for(int idet = 0; idet < _DigiLayerIDs.size(); idet++)
+{
+    int idetectorID = _DigiLayerIDs[idet];
+
     // check if the we already have a tracker data for this
     // detector id
-    if(detectorID< 10)
+    if( idetectorID< 10)
     {
-      for ( int iDetector = 0 ; iDetector < _siPlanesParameters->getSiPlanesNumber(); iDetector++ ) {
+      for ( int iDetector = 0 ; iDetector < _siPlanesParameters->getSiPlanesNumber(); iDetector++ ) 
+      {
         if( _siPlanesLayerLayout->getSensitiveID(iDetector) > 10 ) continue;
         TrackerDataImpl * tmp_zsFrame      = new TrackerDataImpl;
         zsDataEncoder[ "sensorID" ]        = _siPlanesLayerLayout->getSensitiveID(iDetector);
         zsDataEncoder[ "sparsePixelType" ] = kEUTelSimpleSparsePixel;
         zsDataEncoder.setCellID( tmp_zsFrame );
         _trackerDataMap[ _siPlanesLayerLayout->getSensitiveID(iDetector) ] = tmp_zsFrame;
-        if(debug>1)streamlog_out(MESSAGE) << " map : ("<< iDetector <<") "  << _siPlanesLayerLayout->getSensitiveID(iDetector) << endl;
+        if(debug>0)streamlog_out(MESSAGE) << " map : ("<< iDetector <<") "  << _siPlanesLayerLayout->getSensitiveID(iDetector) << endl;
       }
+      break;
     }
     else
-        if(detectorID>=20)
+        if( idetectorID>=20 && idetectorID < 100 )
     {
-      for ( int iDetector = 0 ; iDetector < _siPlanesParameters->getSiPlanesNumber(); iDetector++ ) {
+      for ( int iDetector = 0 ; iDetector < _siPlanesParameters->getSiPlanesNumber(); iDetector++ ) 
+      {
         if( _siPlanesLayerLayout->getSensitiveID(iDetector) <  20 ) continue;
         TrackerDataImpl * tmp_zsFrame      = new TrackerDataImpl;
         zsDataEncoder[ "sensorID" ]        = _siPlanesLayerLayout->getSensitiveID(iDetector);
  	zsDataEncoder["sparsePixelType"]   = kEUTelAPIXSparsePixel;
         zsDataEncoder.setCellID( tmp_zsFrame );
         _trackerDataMap[ _siPlanesLayerLayout->getSensitiveID(iDetector) ] = tmp_zsFrame;
-        if(debug>1)streamlog_out(MESSAGE) << " map : ("<< iDetector <<") " << _siPlanesLayerLayout->getSensitiveID(iDetector) << endl;
+        if(debug>0)streamlog_out(MESSAGE) << " map : ("<< iDetector <<") " << _siPlanesLayerLayout->getSensitiveID(iDetector) << endl;
       }
+      break; 
     }
     else
     {
-       streamlog_out(ERROR) << "Detector ID is not specific to the telescope planes (0-9, 20-29)... exit" << endl;
-       exit(-1); 
+      streamlog_out(ERROR) << "Detector ID ["<< idetectorID << "] is not specific to the telescope planes (0-9, 20-29)... exit" << endl;
+      exit(-1); 
     }
+}
 
     // Loop over defined detectors
 
@@ -900,17 +926,21 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
         mapIterator != _pixelChargeMapCollection.end(); mapIterator++)
       {
         detectorID = mapIterator->first;
+
+
         layerIndex   = _conversionIdMap[detectorID];
 
         int digiIndex = 0;
 
-        if(_DigiLayerIDs.size() > 0 )digiIndex = _digiIdMap[detectorID];
+        if( _DigiLayerIDs.size() > 0 ) digiIndex = _digiIdMap[detectorID];
 
         _pixelChargeMap = mapIterator->second;
 
 
         // Charge processing
-
+        if (debug)
+          streamlog_out( MESSAGE ) << " _pixelChargeMap " << _pixelChargeMap << " det " << detectorID << " lay " << layerIndex << endl;
+       
         double totalCharge=_pixelChargeMap->getTotalCharge();
 
         if (debug)
@@ -1025,29 +1055,32 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
         int nPixel = _vectorOfPixels.size() ;
 
         if (debug>1)
-          {
+        {
             streamlog_out( MESSAGE4 ) <<  "Detector ID = " << detectorID
                                       << ", " << nPixel << " pixels fired, "
                                       << "total charge deposited: " << totalCharge << endl;
 
+            int ipixel = 0;
             for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); _pixelIterator++)
-              streamlog_out( DEBUG4 ) <<  " Pixel at  (" << _pixelIterator->getIndexAlongL()
+            {
+              streamlog_out( MESSAGE ) <<  " Pixel [" <<  ipixel << "] at  (" << _pixelIterator->getIndexAlongL()
                                       <<  "," <<  _pixelIterator->getIndexAlongW()
                                       <<  ") with Q = " << _pixelIterator->getCharge() << endl;
+              ipixel++;
+            }
 
 
 // Store pixel charges in the 2D histogram (charge map)
 // Only for events with debug output!
 
             for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); _pixelIterator++)
-              {
-                double xpixel = _pixelIterator->getIndexAlongL() + 0.5;
-                double ypixel = _pixelIterator->getIndexAlongW() + 0.5;
-                fillHist2D(_pixelHistoName, layerIndex, xpixel,ypixel,_pixelIterator->getCharge());
-              }
+            {
+              double xpixel = _pixelIterator->getIndexAlongL() + 0.5;
+              double ypixel = _pixelIterator->getIndexAlongW() + 0.5;
+              fillHist2D(_pixelHistoName, layerIndex, xpixel,ypixel,_pixelIterator->getCharge());
+            }
 
-
-          }// end of if (debug)
+        }// end of if (debug)
 
 
         // charge profile filling (for algorithm tuning)
@@ -1161,7 +1194,8 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
         // to push back to the output collection all the trackerdata I
         // have
     map< int, TrackerDataImpl * >::iterator trackerDataIter = _trackerDataMap.begin();
-    while ( trackerDataIter != _trackerDataMap.end() ) {
+    while ( trackerDataIter != _trackerDataMap.end() ) 
+    {
 
       zsDataCollection->push_back( trackerDataIter->second ) ;
 
@@ -1258,7 +1292,7 @@ void EUTelMAPSdigi::packFEI3( int digiIndex )
 void EUTelMAPSdigi::packFEI4( int digiIndex ) 
 {
 
-  int debug = 1;
+  int debug = 0;
 
 //  streamlog_out ( MESSAGE4 )  << "packing FEI4" << endl;
 
@@ -1274,7 +1308,7 @@ void EUTelMAPSdigi::packFEI4( int digiIndex )
 
         for ( _pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); ++_pixelIterator ) 
         {
-
+          if(debug>1) streamlog_out (MESSAGE) << " pixelIterator:" <<  _pixelIterator->getIndexAlongL() << " " <<  _pixelIterator->getIndexAlongW()  << endl;  
           // move the pixel information from the pixelIterator to
           // the sparsePixel
           sparsePixel->setXCoord( _pixelIterator->getIndexAlongL() );
