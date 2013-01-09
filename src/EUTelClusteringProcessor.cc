@@ -415,8 +415,6 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
 //        printf(" idet: %5d  _hitIndexMapVec.size(): %5d \n", iDetector, _hitIndexMapVec.size());
 
         TrackerDataImpl * hotData = dynamic_cast< TrackerDataImpl * > ( hotPixelCollectionVec->getElementAt( iDetector ) );
-        SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( hotData )["sparsePixelType"]) );
-
         int sensorID            = static_cast<int > ( cellDecoder( hotData )["sensorID"] );
  
         //if this is an excluded sensor go to the next element
@@ -515,8 +513,6 @@ void EUTelClusteringProcessor::initializeStatusCollection(  )
         // contains.
 
         TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputDataCollectionVec->getElementAt( iDetector ) );
-        SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
-
         int sensorID            = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
 
 
@@ -531,9 +527,6 @@ void EUTelClusteringProcessor::initializeStatusCollection(  )
             }
         }
         if(foundexcludedsensor)  continue;
-
-        // reset the cluster counter for the clusterID
-        int clusterID = 0;
 
         // get the noise and the status matrix with the right detectorID
         TrackerRawDataImpl * status = 0;
@@ -875,7 +868,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
 
     int _sensorID            = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
-    int  sensorID            = _sensorID;
+    int sensorID            = _sensorID;
 //    int __sensorID = _sensorIDVec.at( i );
 
 //    printf("zsData i: %5d, sensorID: %5d  or %5d \n", i, sensorID, __sensorID   );
@@ -1224,7 +1217,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                             }   
 
                             // dont forget to apply the offset correction!
-                            int index = matrixDecoder.getIndexFromXY(pix[j].x + xoffset, pix[j].y + yoffset);
+//                            int index = matrixDecoder.getIndexFromXY(pix[j].x + xoffset, pix[j].y + yoffset);
 
                             if(pix[j].x == i->x  && pix[j].y == i->y)
                             {
@@ -1238,7 +1231,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                                 // nothing to do?
                             }
 
-                            bool isHit  = true;
+//                            bool isHit  = true;
 //                            bool isGood = true;
 
  //                           if( _dataFormatType == EUTELESCOPE::BINARY )
