@@ -245,7 +245,7 @@ void EUTelHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
     CellIDDecoder<TrackerDataImpl> noiseDecoder( noiseCollectionVec );
 
 
-    for ( unsigned int iDetector = 0 ; iDetector < zsInputCollectionVec->size(); iDetector++ ) 
+    for ( size_t iDetector = 0 ; iDetector < zsInputCollectionVec->size(); iDetector++ ) 
     {
         
         // get the TrackerData and guess which kind of sparsified data it
@@ -399,9 +399,10 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
             _pixelMapVec.clear();
         }
         
-        for ( int iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) 
-        {            
-           TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
+        for ( size_t iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements(); iDetector++) 
+        {    
+	   // Apparently not used at all:        
+	   // TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
            _firingFreqVec.resize( iDetector+1 );
            
            if( getBuildHotPixelDatabase() != 0 )
@@ -422,7 +423,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
 
      
     
-    for ( int iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) 
+    for ( size_t iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) 
     {
         TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
         if( _firingFreqVec[iDetector].size() < status->getADCValues().size() )
