@@ -311,7 +311,6 @@ void EUTelHitMaker::addReferenceHitCollection(LCEvent *event, std::string refere
 { 
 
   LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
-  double refVec[3] ;
   for(size_t ii = 0 ; ii <  _orderedSensorIDVec.size(); ii++)
   {
     EUTelReferenceHit * refhit = new EUTelReferenceHit();
