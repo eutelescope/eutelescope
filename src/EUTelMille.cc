@@ -206,7 +206,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
                             _allowedMissingHits, static_cast <int> (0));
 
   registerOptionalParameter("MimosaClusterChargeMin","Select Mimosa26 clusters with charge above this value (default=1)",
-                            _mimosa26ClusterChargeMin,  static_cast <int> (0) );
+                            _mimosa26ClusterChargeMin,  static_cast <int> (1) );
 
 
   // input collections
