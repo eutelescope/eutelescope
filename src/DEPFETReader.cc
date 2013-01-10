@@ -104,7 +104,6 @@ DEPFETReader::DEPFETReader ():DataSourceProcessor  ("DEPFETReader") {
     LCCollectionVec *rawData = NULL;
     event_DEPFET  copy_evt[MAXMOD];
     int lenEVENT[MAXMOD];
-    int startgate[MAXMOD];
 
     TrackerRawDataImpl *rawMatrix[20];
     int rc,eventNumber;
@@ -386,7 +385,6 @@ DEPFETReader::DEPFETReader ():DataSourceProcessor  ("DEPFETReader") {
 
          }  // skip_2:  //end eventheader rc==2
 	 delete DATA;
-     myskip:;
      } while (idet!=Nmodtot);
      printf("-------------------------------\n");
      for (int ii=0;ii<Ndet;ii++)  rawData->push_back (rawMatrix[ii]);
