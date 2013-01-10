@@ -9,7 +9,7 @@
  *   header with author names in all development based on this file.
  *
  */
-
+ 
 // eutelescope includes ".h"
 #include "EUTelAPIXHotPixelKiller.h"
 #include "EUTELESCOPE.h"
@@ -279,9 +279,6 @@ void EUTelAPIXHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
         }
         if(foundexcludedsensor)  continue;
 
-        // reset the cluster counter for the clusterID
-        int clusterID = 0;
-
         // get the noise and the status matrix with the right detectorID
         TrackerRawDataImpl * status = 0;
 
@@ -375,14 +372,6 @@ void EUTelAPIXHotPixelKiller::processEvent (LCEvent * event)
             << " is of unknown type. Continue considering it as a normal Data Event." << endl;
     }
 
-    try 
-    {
-        LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) );
-    }
-    catch(...)
-    {
-        std::cout <<  "Input collection " << _statusCollectionName.c_str() << " not found in the current event. Skipping..." << std::endl;
-    }
 
     try 
     {
@@ -408,14 +397,13 @@ void EUTelAPIXHotPixelKiller::processEvent (LCEvent * event)
         for ( int iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) 
         {  
            streamlog_out (MESSAGE) << " First event :: adding Detector " << iDetector << endl;          
-           TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
            _firingFreqVec.resize( iDetector+1 );
            
            if( getBuildHotPixelDatabase() != 0 )
             {
-                if( _hitIndexMapVec.size() < iDetector+1 )            _hitIndexMapVec.resize(iDetector+1);
-                if( _inverse_hitIndexMapVec.size() < iDetector+1 )    _inverse_hitIndexMapVec.resize(iDetector+1);
-                if( _pixelMapVec.size() < iDetector+1 )               _pixelMapVec.resize(iDetector+1);
+                if((int) _hitIndexMapVec.size() < iDetector+1 )            _hitIndexMapVec.resize(iDetector+1);
+                if( (int)_inverse_hitIndexMapVec.size() < iDetector+1 )    _inverse_hitIndexMapVec.resize(iDetector+1);
+                if( (int)_pixelMapVec.size() < iDetector+1 )               _pixelMapVec.resize(iDetector+1);
             }
         }
         
@@ -864,7 +852,7 @@ void EUTelAPIXHotPixelKiller::bookAndFillHistos()
       for (int xPixel = _minX[_sensorIDVec.at( iDetector)]; xPixel <= _maxX[_sensorIDVec.at( iDetector)]; xPixel++) 
       {
           //streamlog_out(MESSAGE) << " iPixel = " << iPixel << " _firingFreqVec[ iDetector ].size()= " << _firingFreqVec[ iDetector ].size() <<  endl; 
-          if(  iDetector < _firingFreqVec.size() &&  _firingFreqVec[ iDetector ].size() > 0  &&  _firingFreqVec[ iDetector ][ iPixel ] > 0 )
+          if(  iDetector < (int)_firingFreqVec.size() &&  (int)_firingFreqVec[ iDetector ].size() > 0  &&  _firingFreqVec[ iDetector ][ iPixel ] > 0 )
           {
               firing2DHisto->fill(xPixel, yPixel, _firingFreqVec[ iDetector ][ iPixel ] );
               firing1DHisto->fill( _firingFreqVec[ iDetector ][ iPixel ] / ( (double)  _noOfEventPerCycle ));
