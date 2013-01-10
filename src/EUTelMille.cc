@@ -524,7 +524,7 @@ void EUTelMille::init() {
   
   // strip from the map the sensor id already sorted.
   map< double, int >::iterator iter = sensorIDMap.begin();
-  int counter = 0;
+  unsigned int counter = 0;
   while ( iter != sensorIDMap.end() ) {
     bool excluded = false;
     for (size_t i = 0; i < _excludePlanes.size(); i++)
@@ -547,7 +547,7 @@ void EUTelMille::init() {
 
 
   //consistency
-  if((int)_siPlaneZPosition.size() != _nPlanes)
+  if(_siPlaneZPosition.size() != _nPlanes)
     {
       streamlog_out ( ERROR2 ) << "the number of detected planes is " << _nPlanes << " but only " << _siPlaneZPosition.size() << " layer z positions were found!"  << endl;
       exit(-1);
@@ -605,17 +605,11 @@ void EUTelMille::init() {
          _resolutionZ.size() != static_cast<unsigned int>(_nPlanes )
          )
         {
-//  ADDITIONAL PRINTOUTS   
-         for(int i = 0; i < _resolutionX.size(); i++)
-          { 
-              printf("_resolutionX.at(%2d) = %8.3f; _resolutionY.at(%2d) = %8.3f;  _resolutionZ.at(%2d) = %8.3f;  \n", 
-                      i,_resolutionX.at(i), i,_resolutionY.at(i), i,_resolutionZ.at(i) );
-          }
           streamlog_out ( WARNING2 ) << "Consistency check of the resolution parameters failed. The array size is different than the number of found planes! The resolution parameters are set to default values now (see variable TelescopeResolution). This introduces a bias if the real values for X,Y and Z are rather different." << endl;
           _resolutionX.clear();
           _resolutionY.clear();
           _resolutionZ.clear();
-          for(int i = 0; i < _nPlanes; i++)
+          for(size_t i = 0; i < _nPlanes; i++)
             {
               _resolutionX.push_back(_telescopeResolution);
               _resolutionY.push_back(_telescopeResolution);
@@ -632,7 +626,7 @@ void EUTelMille::init() {
          
          streamlog_out ( WARNING2 ) << "Consistency check of the fixed parameters array failed. The array size is different than the number of found planes! The array is now set to default values, which means that all parameters are free in the fit." << endl;
           _FixParameter.clear();
-          for(int i = 0; i < _nPlanes; i++)
+          for(size_t i = 0; i < _nPlanes; i++)
             {
               _FixParameter.push_back(0);
             }
@@ -641,7 +635,7 @@ void EUTelMille::init() {
         {
           streamlog_out ( WARNING2 ) << "The fixed parameters array was found to be empty. It will be filled with default values. All parameters are free in the fit now." << endl;
           _FixParameter.clear();
-          for(int i = 0; i < _nPlanes; i++)
+          for(size_t i = 0; i < _nPlanes; i++)
             {
               _FixParameter.push_back(0);
             }
@@ -681,7 +675,7 @@ void EUTelMille::init() {
         {
           streamlog_out ( WARNING2 ) << "Consistency check of the DistanceMaxVec array failed. Its size is different compared to the number of planes! Will now use _distanceMax for each pair of planes." << endl;
           _distanceMaxVec.clear();
-          for(int i = 0; i < _nPlanes-1; i++)
+          for(size_t i = 0; i < _nPlanes-1; i++)
             {
               _distanceMaxVec.push_back(_distanceMax);
             }
@@ -690,7 +684,7 @@ void EUTelMille::init() {
   else
     {
       _distanceMaxVec.clear();
-      for(int i = 0; i < _nPlanes-1; i++)
+      for(size_t i = 0; i < _nPlanes-1; i++)
         {
           _distanceMaxVec.push_back(_distanceMax);
         }
@@ -760,7 +754,7 @@ void EUTelMille::findtracks2(
                             std::vector<std::vector<int> > &indexarray,
                             std::vector<int> vec,
                             std::vector<std::vector<EUTelMille::HitsInPlane> > &_allHitsArray,
-                            int i,
+                            unsigned int i,
                             int y
                             )
 {
@@ -773,8 +767,6 @@ void EUTelMille::findtracks2(
    return;
  }
 
- //  ADDITIONAL PRINTOUTS   
-// printf("come to PLANE id=%3d y=%3d  : : _allHitsArray[i].size()=%5d \n", i,y, _allHitsArray[i].size() );
 
  if(i>0)
  { 
@@ -793,7 +785,7 @@ void EUTelMille::findtracks2(
  //     printf("plane %2d of %2d ; hit %2d \n", i, (int)(_allHitsArray.size())-1, ihit);
 
       //if we are not in the last plane, call this method again
-      if(i<(int)(_allHitsArray.size())-1)
+      if(i < _allHitsArray.size()-1)
         {
           vec.push_back( ihit); //index of the cluster in the last plane
          
@@ -1078,7 +1070,8 @@ void EUTelMille::findtracks(
 }
 
 
-void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFitter[], double yResFitter[], double chi2Fit[2], double residXFit[], double residYFit[], double angleFit[2]) {
+void EUTelMille::FitTrack(unsigned int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFitter[], double yResFitter[], double chi2Fit[2], double residXFit[], 
+double residYFit[], double angleFit[2]) {
 
   int sizearray;
 
@@ -1096,7 +1089,7 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
 
   int nPlanesFit = 0;
 
-  for (int help = 0; help < nPlanesFitter; help++) {
+  for (unsigned int help = 0; help < nPlanesFitter; help++) {
 
     int excluded = 0;
 
@@ -1202,7 +1195,7 @@ void EUTelMille::FitTrack(int nPlanesFitter, double xPosFitter[], double yPosFit
                       +yPosFit[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(yResFit[counter],2);
   }
 
-  for( counter = 0; counter < nPlanesFitter; counter++ ) {
+  for( counter = 0; counter < (int)nPlanesFitter; counter++ ) {
     residXFit[counter] = (Ybar[0]-Xbar[0]*A2[0]+zPosFitter[counter]*A2[0])-xPosFitter[counter];
     residYFit[counter] = (Ybar[1]-Xbar[1]*A2[1]+zPosFitter[counter]*A2[1])-yPosFitter[counter];
 
@@ -1342,7 +1335,7 @@ void EUTelMille::processEvent (LCEvent * event) {
   }
   
   // fill resolution arrays
-  for (int help = 0; help < _nPlanes; help++) {
+  for (size_t help = 0; help < _nPlanes; help++) {
     _telescopeResolX[help] = _telescopeResolution;
     _telescopeResolY[help] = _telescopeResolution;
   }
@@ -1366,7 +1359,7 @@ void EUTelMille::processEvent (LCEvent * event) {
  
     
       int icounter = 0;
-      for(int i = 0; i < _nPlanes; i++)
+      for(size_t i = 0; i < _nPlanes; i++)
       {
           int excluded = 0; //0 - not excluded, 1 - excluded
           if ( _nExcludePlanes > 0 )
@@ -1468,7 +1461,7 @@ void EUTelMille::processEvent (LCEvent * event) {
          	    // cout << "Pixels at sensor " << sensorID << ": ";
 
                 bool skipHit = false;
-                for (int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
+                for (size_t iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
                 {
                     int pixelX, pixelY;
                     EUTelAPIXSparsePixel apixPixel;
@@ -1625,7 +1618,7 @@ void EUTelMille::processEvent (LCEvent * event) {
           const float yslope = gRandom->Gaus(0.0,_testModeYTrackSlope);
 
           // loop over all planes
-          for (int help = 0; help < _nPlanes; help++) {
+          for (unsigned int help = 0; help < _nPlanes; help++) {
 
             // The x and y positions are given by the sums of the measured
             // hit positions, the detector resolution, the shifts of the
@@ -1666,7 +1659,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
   std::vector<int> fitplane(_nPlanes, 0);
 
-  for (int help = 0; help < _nPlanes; help++) {
+  for (unsigned int help = 0; help < _nPlanes; help++) {
     fitplane[help] = 1;
   }
 
@@ -1774,7 +1767,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
       // check for a hit in every plane
 
-      if (_nPlanes == int(TrackHitsHere.size() / 2)) {
+      if (_nPlanes == (TrackHitsHere.size() / 2)) {
 
         // assume hits are ordered in z! start counting from 0
         int nPlaneHere = 0;
@@ -1830,15 +1823,15 @@ void EUTelMille::processEvent (LCEvent * event) {
       // hit list assigned to track
       std::vector<EVENT::TrackerHit*> TrackHitsHere = TrackHere->getTrackerHits();
 
-      int number_of_planes = int((TrackHitsHere.size() - _excludePlanes.size() )/ 2);
-//    int number_of_planes = int(TrackHitsHere.size() / 2);
+      size_t number_of_planes = (TrackHitsHere.size() - _excludePlanes.size() )/ 2;
+
       if ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) {
         ++number_of_planes;
       }
       // check for a hit in every telescope plane. this needs probably
       // some further investigations. perhaps it fails if some planes
       // were excluded in the track fitter. but it should work
-      if ((_nPlanes  - static_cast<int>(_excludePlanes.size()))== number_of_planes)
+      if ((_nPlanes  - _excludePlanes.size())== number_of_planes)
         {
           for(size_t i =0;i < _hitCollectionName.size();i++)
  //     // check for a hit in every telescope plane
@@ -1981,7 +1974,7 @@ void EUTelMille::processEvent (LCEvent * event) {
           
                   //now the array is filled into the track
                   //candidates array
-                  for(int i = 0; i < _nPlanes; i++)
+                  for(size_t i = 0; i < _nPlanes; i++)
                     {
                       _xPos[_nTracks][i] = hitsplane[i].measuredX;
                       _yPos[_nTracks][i] = hitsplane[i].measuredY;
@@ -2039,7 +2032,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       _yPosHere = new double[_nPlanes];
       _zPosHere = new double[_nPlanes];
 
-      for (int help = 0; help < _nPlanes; help++) {
+      for (unsigned int help = 0; help < _nPlanes; help++) {
         _xPosHere[help] = _xPos[track][help];
         _yPosHere[help] = _yPos[track][help];
         _zPosHere[help] = _zPos[track][help];
@@ -2051,7 +2044,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       streamlog_out ( MILLEMESSAGE ) << "Adding track using the following coordinates: ";
 
       // loop over all planes
-      for (int help = 0; help < _nPlanes; help++) 
+      for (unsigned int help = 0; help < _nPlanes; help++) 
       {
         int excluded = 0;
 
@@ -2078,7 +2071,7 @@ void EUTelMille::processEvent (LCEvent * event) {
           //use minuit to find tracks
           //hitsarray.clear();
           //hitsarray.reserve(_nPlanes-_nExcludePlanes);
-          int    mean_n = 0  ;
+          size_t mean_n = 0  ;
           double mean_x = 0.0;
           double mean_y = 0.0;
           double mean_z = 0.0;
@@ -2087,7 +2080,7 @@ void EUTelMille::processEvent (LCEvent * event) {
           double x0 = -1.;
           double y0 = -1.;
           double z0 = -1.;
-          for (int help = 0; help < _nPlanes; help++) 
+          for (unsigned int help = 0; help < _nPlanes; help++) 
           {
             bool excluded = false;
             // check if actual plane is excluded
@@ -2167,8 +2160,10 @@ void EUTelMille::processEvent (LCEvent * event) {
           mean_z = mean_z / (double)(mean_n);
           mean_x = mean_x / (double)(mean_n);
           mean_y = mean_y / (double)(mean_n);
+	  
+          int diff_mean = _nPlanes - mean_n;
 
-          if( _nPlanes - mean_n > getAllowedMissingHits() ) 
+          if( diff_mean > getAllowedMissingHits() ) 
           {
              continue;
           }
@@ -2309,7 +2304,7 @@ void EUTelMille::processEvent (LCEvent * event) {
               par_c1 = c1;
               validminuittrack = true;
               
-              for (int help =0; help < _nPlanes; help++)
+              for (unsigned int help =0; help < _nPlanes; help++)
                 {
                   const double x = _xPos[track][help];
                   const double y = _yPos[track][help];
@@ -2385,7 +2380,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       else
         {
           // Calculate residuals
-          FitTrack(int(_nPlanes),
+          FitTrack(_nPlanes,
                    _xPosHere,
                    _yPosHere,
                    _zPosHere,
@@ -2398,7 +2393,7 @@ void EUTelMille::processEvent (LCEvent * event) {
         }
       streamlog_out ( MILLEMESSAGE ) << "Residuals X: ";
 
-      for (int help = 0; help < _nPlanes; help++) {
+      for (unsigned int help = 0; help < _nPlanes; help++) {
         streamlog_out ( MILLEMESSAGE ) << _waferResidX[help] << " ";
       }
 
@@ -2406,7 +2401,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
       streamlog_out ( MILLEMESSAGE ) << "Residuals Y: ";
 
-      for (int help = 0; help < _nPlanes; help++) {
+      for (unsigned int help = 0; help < _nPlanes; help++) {
         streamlog_out ( MILLEMESSAGE ) << _waferResidY[help] << " ";
       }
 
@@ -2414,7 +2409,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
       streamlog_out ( MILLEMESSAGE ) << "Residuals Z: ";
 
-      for (int help = 0; help < _nPlanes; help++) {
+      for (unsigned int help = 0; help < _nPlanes; help++) {
         streamlog_out ( MILLEMESSAGE ) << _waferResidZ[help] << " ";
       }
 
@@ -2429,7 +2424,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       {
 
         // loop over all sensors
-        for (int help = 0; help < _nPlanes; help++) 
+        for (unsigned int help = 0; help < _nPlanes; help++) 
         {
           int excluded = 0; //0 not excluded, 1 excluded
           if (_nExcludePlanes > 0) 
@@ -2506,7 +2501,7 @@ void EUTelMille::processEvent (LCEvent * event) {
           int nExcluded = 0;
 
           // loop over all planes
-          for (int help = 0; help < _nPlanes; help++) {
+          for (unsigned int help = 0; help < _nPlanes; help++) {
 
             int excluded = 0;
 
@@ -2592,7 +2587,7 @@ void EUTelMille::processEvent (LCEvent * event) {
           int nExcluded = 0;
 
           // loop over all planes
-          for (int help = 0; help < _nPlanes; help++) {
+          for (unsigned int help = 0; help < _nPlanes; help++) {
 
             int excluded = 0;
 
@@ -2686,7 +2681,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
               // loop over all planes
              
-              for (int help = 0; help < _nPlanes; help++) 
+              for (unsigned int help = 0; help < _nPlanes; help++) 
               {
 
                 int excluded = 0;
@@ -2981,7 +2976,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 //printf("coming to loope over detector plane sfor histos \n");
 
         // loop over all detector planes
-        for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
+        for(unsigned int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
 
           int sensorID = _orderedSensorID.at( iDetector );
 
@@ -3204,25 +3199,19 @@ int EUTelMille::guessSensorID( double * hit )
     return sensorID;
   }
 
-      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+      for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-//        printf(" _referenceHitVec %p refhit %p at %5.2f %5.2f %5.2f wih %5.2f %5.2f %5.2f \n", _referenceHitVec, refhit,
-//                refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset(),
-//                refhit->getAlpha(), refhit->getBeta(), refhit->getGamma()  
-//               );
         
         TVector3 hit3d( hit[0], hit[1], hit[2] );
         TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
         TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
  
         double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-//          printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hit[0],hit[1],hit[2], distance  );
         if ( distance < minDistance ) 
         {
            minDistance = distance;
            sensorID = refhit->getSensorID();
-//           printf("sensorID: %5d \n", sensorID );
         }    
 
       }
@@ -3366,7 +3355,7 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
 	    //                cout << "Pixels at sensor " << sensorID << ": ";
 
 	    //                bool skipHit = 0;
-	    for (int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
+	    for (unsigned int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
 	      {
 		int pixelX, pixelY;
 		EUTelAPIXSparsePixel apixPixel;
@@ -3488,7 +3477,7 @@ void EUTelMille::end() {
 
 //printf("loop over all detector planes \n");
     // loop over all detector planes
-    for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
+    for(unsigned int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
 
       int sensorID = _orderedSensorID.at( iDetector );
 
@@ -3533,11 +3522,11 @@ void EUTelMille::end() {
     if (steerFile.is_open()) {
 
       // find first and last excluded plane
-      int firstnotexcl = _nPlanes;
-      int lastnotexcl = 0;
+      unsigned int firstnotexcl = _nPlanes;
+      unsigned int lastnotexcl = 0;
 
       // loop over all planes
-      for (int help = 0; help < _nPlanes; help++) 
+      for (unsigned int help = 0; help < _nPlanes; help++) 
       {
 
         int excluded = 0;
@@ -3577,7 +3566,7 @@ void EUTelMille::end() {
       int counter = 0;
 
       // loop over all planes
-      for (int help = 0; help < _nPlanes; help++) {
+      for (unsigned int help = 0; help < _nPlanes; help++) {
 //        printf("end: plane %5d of %5d \n", help, _nPlanes);
  
         int excluded = 0; // flag for excluded planes
@@ -3597,7 +3586,7 @@ void EUTelMille::end() {
           bool fixed = false;
           for(size_t i = 0;i< _FixedPlanes.size(); i++)
             {
-              if(_FixedPlanes[i] == help)
+              if(_FixedPlanes[i] == (int)help)
                 fixed = true;
             }
           
@@ -4100,7 +4089,7 @@ void EUTelMille::bookHistos() {
     string histoTitleYResid;
     string histoTitleZResid;
 
-    for( int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
+    for(unsigned int iDetector = 0; iDetector < _nPlanes; iDetector++ ){
 
       // this is the sensorID corresponding to this plane
       int sensorID = _orderedSensorID.at( iDetector );

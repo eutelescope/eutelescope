@@ -232,7 +232,7 @@ namespace eutelescope {
     };
 
     virtual void FitTrack(
-                          int nPlanesFitter,
+                          unsigned int nPlanesFitter,
                           double xPosFitter[],
                           double yPosFitter[],
                           double zPosFitter[],
@@ -251,7 +251,7 @@ namespace eutelescope {
                             std::vector<std::vector<int> > &indexarray, //resulting vector of hit indizes
                             std::vector<int> vec, //for internal use
                             std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray, //contains all hits for each plane
-                            int i, //plane number
+                            unsigned int i, //plane number
                             int y //hit index number
                             );
 
@@ -418,7 +418,7 @@ namespace eutelescope {
 
     float _distanceMax;
     std::vector<float> _distanceMaxVec;
-    std::vector<int > _excludePlanes; //only for internal usage
+    std::vector<unsigned int > _excludePlanes; //only for internal usage
     std::vector<int > _excludePlanes_sensorIDs; //this is going to be
                                                 //set by the user.
     std::vector<int > _FixedPlanes; //only for internal usage
@@ -565,7 +565,7 @@ namespace eutelescope {
  
 #endif
 
-    int _nPlanes;
+    size_t _nPlanes;
 
     std::vector<std::vector<double> > _xPos;
     std::vector<std::vector<double> > _yPos;
