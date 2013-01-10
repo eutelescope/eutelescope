@@ -368,6 +368,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
     try 
     {
         LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _statusCollectionName ) );
+        statusCollectionVec->getNumberOfElements();
     }
     catch(...)
     {
