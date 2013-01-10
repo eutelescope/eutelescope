@@ -399,7 +399,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
             _pixelMapVec.clear();
         }
         
-        for ( size_t iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements(); iDetector++) 
+        for ( size_t iDetector = 0; iDetector < (unsigned int)statusCollectionVec->getNumberOfElements(); iDetector++) 
         {    
 	   // Apparently not used at all:        
 	   // TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
@@ -423,7 +423,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
 
      
     
-    for ( size_t iDetector = 0; iDetector < statusCollectionVec->getNumberOfElements() ; iDetector++) 
+    for ( size_t iDetector = 0; iDetector < (unsigned int)statusCollectionVec->getNumberOfElements() ; iDetector++) 
     {
         TrackerRawDataImpl * status = dynamic_cast< TrackerRawDataImpl * > ( statusCollectionVec->getElementAt( iDetector ) );
         if( _firingFreqVec[iDetector].size() < status->getADCValues().size() )
