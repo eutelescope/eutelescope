@@ -6,7 +6,6 @@
  *   long as it stays in a public research context. You are not
  *   allowed to use it for commercial purpose. You must put this
  *   header with author names in all development based on this file.
- *
  */
 
 // built only if GEAR is used
@@ -1773,7 +1772,8 @@ std::cout << "didim : " << idim << " pathStart : " << pathStart << " localPositi
 void EUTelMAPSdigi::InvEulerRotation(double* _telPos, double* _gRotation) {
    
  try{
-        double t = _telPos[2];
+        double doesNothing = _telPos[2];
+        doesNothing++;  //Gets rid of compiler warnings
     }
     catch(...)
     {
@@ -1781,7 +1781,8 @@ void EUTelMAPSdigi::InvEulerRotation(double* _telPos, double* _gRotation) {
     }
 
  try{
-        double t = _gRotation[2];
+        double doesNothing = _gRotation[2];
+        doesNothing++;  //Gets rid of compiler warnings
     }
     catch(...)
     {
