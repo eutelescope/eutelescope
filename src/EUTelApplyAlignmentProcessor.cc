@@ -483,9 +483,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
   //
   //......................................................................  //
 
-        Int_t icounter = 0;
-
-        for ( int i = _alignmentCollectionNames.size() -1 ; i >= 0; i-- ) 
+        for (unsigned int i = _alignmentCollectionNames.size() -1 ; i >= 0; i-- ) 
         {
             // read the first available alignment collection
             // CAUTION 1: it might be important to keep the order of alignment collections (if many) given in the opposite direction
@@ -640,7 +638,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
      { 
        std::string _colName = _alignmentCollectionNames.at(jj);
        LCCollectionVec * ref    = static_cast < LCCollectionVec * > (event->getCollection( _colName  ));
-       for( size_t ii = 0 ; ii <  ref->getNumberOfElements(); ii++)
+       for( size_t ii = 0 ; ii <  (unsigned int)ref->getNumberOfElements(); ii++)
        {
         streamlog_out( DEBUG ) << " check output_refhit at : " << ref << " ";
         EUTelReferenceHit* output_refhit = static_cast< EUTelReferenceHit*> ( ref->getElementAt(ii) ) ;
@@ -963,7 +961,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       {
 //        streamlog_out(MESSAGE) << "reference Hit collection name : " << _referenceHitCollectionName << endl;
  
-       for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+       for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
        {
         EUTelReferenceHit * refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if( sensorID != refhit->getSensorID() )
@@ -1264,7 +1262,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       {
         streamlog_out( DEBUG ) << "DIRECT:-----:-----: reference Hit collection name : " << _referenceHitCollectionName << endl;
  
-       for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+       for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
        {
         EUTelReferenceHit * refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if( sensorID != refhit->getSensorID() )
@@ -1628,7 +1626,7 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
       {
         if(_fevent) streamlog_out(MESSAGE) << "REVERSE: reference Hit collection name : " << _referenceHitCollectionName << " at " << _referenceHitVec  << endl;
 
-        for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+        for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
         {
           EUTelReferenceHit * refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
           if( sensorID != refhit->getSensorID() )
@@ -2153,9 +2151,6 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
 
                 cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
 	      
-	        // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
-                eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-                
             }
             else if ( hit->getType() == kEUTelSparseClusterImpl ) 
             {
@@ -2214,7 +2209,6 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
 
 
         double xSize = 0., ySize = 0.;
-        double zThickness = 0.;
         double xPitch = 0., yPitch = 0.;
         double xPointing[2] = { 1., 0. }, yPointing[2] = { 1., 0. };
 
@@ -2283,7 +2277,7 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
 
         // prepare a LCObjectVec to store the current cluster
         LCObjectVec clusterVec = outputHit->getRawHits();
-        for(int i=0;i<clusterVec.size();i++)
+        for(size_t i=0; i < clusterVec.size(); i++)
         {      
           if ( _iEvt < _printEvents )
           {
@@ -2352,9 +2346,6 @@ void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, doubl
 {
 
 	// in this function, some parts of the EUTelApplyAlignmentProcessor are used
-
-
-    EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
 
     // ----------------------------------------------------------------------- //
@@ -2503,7 +2494,7 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
    
     streamlog_out( DEBUG ) << "reference Hit collection name : " << _referenceHitCollectionName.c_str() << " elements " << _referenceHitVec->getNumberOfElements() <<endl;
  
-      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+      for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
       {
         EUTelReferenceHit * refhit        = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         EUTelReferenceHit * output_refhit = 0;
@@ -2641,7 +2632,7 @@ int EUTelApplyAlignmentProcessor::guessSensorID(const double * hit )
 
 //  message<MESSAGE> ( log() <<  "number of elements : " << _referenceHitVec->getNumberOfElements() << endl );
 
-      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+      for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if(refhit == 0 ) continue;
@@ -2691,7 +2682,6 @@ void EUTelApplyAlignmentProcessor::DumpReferenceHitDB(std::string name="referenc
   streamlog_out ( MESSAGE ) << "Writing to " << _referenceHitLCIOFile << std::endl;
 
   LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
-  double refVec[3] ;
   for(size_t ii = 0 ; ii <  _orderedSensorIDVec.size(); ii++)
   {
     EUTelReferenceHit * refhit = new EUTelReferenceHit();
@@ -2699,7 +2689,7 @@ void EUTelApplyAlignmentProcessor::DumpReferenceHitDB(std::string name="referenc
     refhit->setXOffset( 0. );
     refhit->setYOffset( 0. );
     refhit->setZOffset( 0. );
-    
+   
     refhit->setAlpha( 0. );
     refhit->setBeta( 0. );
     refhit->setGamma( 0. );
