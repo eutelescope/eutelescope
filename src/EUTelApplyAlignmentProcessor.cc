@@ -2419,7 +2419,8 @@ void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, doubl
 void EUTelApplyAlignmentProcessor::_EulerRotation(int sensorID, double* _telPos, double* _gRotation) {
    
     try{
-        double t = _telPos[2];
+        double doesNothing = _telPos[2];
+        doesNothing++;
     }
     catch(...)
     {
@@ -2442,7 +2443,8 @@ void EUTelApplyAlignmentProcessor::_EulerRotation(int sensorID, double* _telPos,
 void EUTelApplyAlignmentProcessor::_EulerRotationInverse(int sensorID, double* _telPos, double* _gRotation) {
    
     try{
-        double t = _telPos[2];
+        double doesNothing = _telPos[2];
+        doesNothing++;
     }
     catch(...)
     {
