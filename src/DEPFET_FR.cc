@@ -154,11 +154,9 @@ void DEPFET_FR::skip_n_words(int n)
 
 /*=====================================================================*/
 int  DEPFET_FR::READ_DEPFET_EVENT1(int iprint, int SkipStartGate, event_DEPFET *depfet_mod,int *eventsize){
-    int rc,i;
-    int icol,irow,startgate;
+    int rc;
     unsigned int Startgate;
     struct InfoWord *infoword1;
-    struct InfoWord infoword2;
 
     rc=fread(&Startgate,sizeof(Startgate),1,DF);
    infoword1=(struct InfoWord *)&Startgate;
@@ -193,7 +191,6 @@ int  DEPFET_FR::READ_DEPFET_EVENT(int iprint,int SkipStartGate,int *DATA1 ){
 
    unsigned int Startgate;
     struct InfoWord *infoword1;
-    struct InfoWord infoword2;
 
     rc=fread(&Startgate,sizeof(Startgate),1,DF);
    infoword1=(struct InfoWord *)&Startgate;
@@ -257,11 +254,9 @@ int  DEPFET_FR::READ_DEPFET_EVENT(int iprint,int SkipStartGate,int *DATA1 ){
 /*=====================================================================*/
 /*=====================================================================*/
 int  DEPFET_FR::READ_DEPFET_EVENT_DCD(int iprint, int SkipStartGate, event_DEPFET *depfet_mod,int *eventsize){
-    int rc,i;
-    int icol,irow,startgate;
+    int rc;
     unsigned int Startgate;
     struct InfoWord *infoword1;
-    struct InfoWord infoword2;
 
     rc=fread(&Startgate,sizeof(Startgate),1,DF);
    infoword1=(struct InfoWord *)&Startgate;
