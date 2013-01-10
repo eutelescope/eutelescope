@@ -9,7 +9,7 @@
  *   header with author names in all development based on this file.
  *
  */
-
+ 
 // since v00-00-09 this processor is built only if Marlin has GEAR
 // support. In theory, since that version EUTelescope require GEAR,
 // but it is better being sure
@@ -1010,7 +1010,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
           }
   */            
 
-          if( _hitIndexMapVec.size() > sensorID )
+          if((int) _hitIndexMapVec.size() > sensorID )
               if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
           {
               streamlog_out ( DEBUG1) <<
@@ -1555,7 +1555,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
         int   index  = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
         float signal = sparsePixel->getSignal();
         dataVec[ index  ] = signal;
-        if( status->getADCValues().size() < index )
+        if( (int)status->getADCValues().size() < index )
         {
             status->adcValues().resize(index+1);
         }
@@ -2548,7 +2548,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
           // now remove HotPixels
           // 
           int index = matrixDecoder.getIndexFromXY( pixel->getXCoord(), pixel->getYCoord() );
-          if( _hitIndexMapVec.size() > sensorID )
+          if((int) _hitIndexMapVec.size() > sensorID )
               if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
               {
 //               printf("iDetector %5d iPixel %5d unique index %5d at %5d %5d -- HOTPIXEL, skip pixel \n", sensorID, iPixel, index, pixel->getXCoord(), pixel->getYCoord()   );

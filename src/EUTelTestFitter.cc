@@ -1,7 +1,7 @@
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
 // Version: $Id: EUTelTestFitter.cc,v 1.39 2009-07-30 14:00:19 zarnecki Exp $
 // Date 2007.06.04
-
+        
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
@@ -639,7 +639,7 @@ void EUTelTestFitter::init() {
     //printf("scat angle   ipl:%5d  scatangle:%8.3e ",ipl,  _planeScatAngle[ipl]);
 
     _fitX[ipl] =_fitY[ipl] = 0. ;
-    if( _resolutionX.size() < ipl+1 )
+    if((int)_resolutionX.size() < ipl+1 )
     {
       _nominalErrorX[ipl]= _planeResolution[ipl];
     }
@@ -647,7 +647,7 @@ void EUTelTestFitter::init() {
     {
       _nominalErrorX[ipl]= _resolutionX[ipl];
     }
-    if( _resolutionY.size() < ipl+1 )
+    if((int)_resolutionY.size() < ipl+1 )
     {
       _nominalErrorY[ipl]= _planeResolution[ipl];
     }
@@ -877,7 +877,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
              
           if( _alignmentCollectionNames.size() > 0 )
           {
-              for( int i=0; i < _alignmentCollectionNames.size(); i++)
+              for( size_t i=0; i < _alignmentCollectionNames.size(); i++)
               {
 
                   //
@@ -1776,7 +1776,7 @@ if(jhit>=0){
         pos[2]=_planePosition[ipl];
 
 
-        int sensorID = guessSensorID( pos );
+        //int sensorID = guessSensorID( pos );
 //        int sensorID = guessSensorID( pos[0], pos[1], pos[2] );
 //        printf("\n -- now at sensorID = %5d \n", sensorID );
 
@@ -1864,7 +1864,16 @@ if(jhit>=0){
       }
       // Store track reference point.
       fittrack->setReferencePoint(refpoint);
-
+     /* 
+      // Work out the 5 track parameters and set them
+      double pca[3];  //Point of closest approach
+      const vector< TrackerHit* > hits = trackElement->getTrackerHits();
+      for(size_t i = 0; i < hits.size(); ++i){
+        if(hits[i] >= 32){
+          
+        }
+      }
+*/
       fittrackvec->addElement(fittrack);
       // increment the total track counter
 
@@ -2110,7 +2119,7 @@ void EUTelTestFitter::bookHistos()
     float limitX   = 10.0; 
     float limitYr  = 0.1;
     float limitXr  = 0.1; 
-    float limitZ   = 50.0; 
+    //float limitZ   = 50.0; 
     float limitZr  = 50.0; 
    //Resids 
     _aidaHistoMap1D[bname + "fitX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "fitX", limitXN , -limitX, limitX);
@@ -3044,7 +3053,7 @@ int EUTelTestFitter::guessSensorID( double * hit )
       return sensorID;
     }
 
-  for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++) {
+  for(int ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++) {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         
         TVector3 hit3d( hit[0], hit[1], hit[2] );
