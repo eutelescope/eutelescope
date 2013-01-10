@@ -147,10 +147,10 @@ void EUTelDafAlign::dafInit() {
   
   for(size_t ii = 0; ii < _dutPlanes.size(); ii++){
     int iden = _dutPlanes.at(ii);
-    int xMin = _resXMin.size() > ii ? _resXMin.at(ii) : -9999999;
-    int xMax = _resXMax.size() > ii ? _resXMax.at(ii) : 9999999;
-    int yMin = _resYMin.size() > ii ? _resYMin.at(ii) : -9999999;
-    int yMax = _resYMax.size() > ii ? _resYMax.at(ii) : 9999999;
+    int xMin = _resXMin.size() > ii ? (int)_resXMin.at(ii) : -9999999;
+    int xMax = _resXMax.size() > ii ? (int)_resXMax.at(ii) : 9999999;
+    int yMin = _resYMin.size() > ii ? (int)_resYMin.at(ii) : -9999999;
+    int yMax = _resYMax.size() > ii ? (int)_resYMax.at(ii) : 9999999;
     cout << "xMin " << xMin << " " << xMax << endl;
     cout << "yMin " << yMin << " " << yMax << endl;
     _resX[iden] = make_pair(xMin, xMax);
@@ -390,7 +390,8 @@ void EUTelDafAlign::runPede(){
   // get the first line and throw it away since it is a comment!
   getline( millepede, line );
   while ( not millepede.eof() ) {
-    EUTelAlignmentConstant* constant;
+    //First line, we need a new alignment constant thingy.
+    EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
     getline( millepede, line );
    
     values.clear(); linestream.clear(); linestream.str( line );
@@ -401,12 +402,10 @@ void EUTelDafAlign::runPede(){
     
     if(( nValues != 3 ) and ( nValues != 5) and (nValues != 6)){ continue; }
     bool isFixed = ( nValues == 3 );
-    int label = values.at(0) - 1;
+    int label = (int)values.at(0) - 1;
     int plane = label / 5;
     switch( label % 5){
     case 0:
-      //First line, we need a new alignment constant thingy.
-      constant = new EUTelAlignmentConstant();
       constant->setXOffset ( values.at(1) / 1000.0);
       if( not isFixed){  constant->setXOffsetError( values.at(4)/ 1000.0);}
       break;
