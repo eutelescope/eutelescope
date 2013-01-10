@@ -1120,11 +1120,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
 				// consistency check
 				if (!_noHitYet) {
-					double	fittedXLOCALMethod2 = _rot00*(_fittedX[bestfit] + _transShiftX) + _rot01 *  (_fittedY[bestfit] + _transShiftY);
-					double	fittedYLOCALMethod2 = _rot10*(_fittedX[bestfit] + _transShiftX) + _rot11 *  (_fittedY[bestfit] + _transShiftY);
 
-					double	diffX = fittedXLOCALMethod2 - fittedXLOCAL;
-					double	diffY = fittedYLOCALMethod2 - fittedYLOCAL;
 
 					double		fitX = _fittedXcorr[bestfit];
 					double		fitY = _fittedYcorr[bestfit];
@@ -2632,7 +2628,7 @@ bool EUTelAPIXHistograms::hasMatchedHit( Track* fittrack ) {
 		bool	matchedTrackToReferencePlane = false;
 		int	nMatches=0;
 		float	Lv1ofFirstMatch = -1;
-		for (int i = 0; i< _allDUTsmeasuredX.size(); i++) {
+		for (size_t i = 0; i< _allDUTsmeasuredX.size(); i++) {
 			double deltaX = _allDUTsmeasuredX[i] - allDUtsfittedX[ _allDUTssensorID[i] ];
 			double deltaY = _allDUTsmeasuredY[i] - allDUtsfittedY[ _allDUTssensorID[i] ];
 
@@ -2927,7 +2923,6 @@ void EUTelAPIXHistograms::TransformToLocalFrame(double & x, double & y, double &
 				// revert gear rotations
 				double	x_temp = x;
 				double	y_temp = y;
-				double	z_temp = z;
 
 				x = _rot00 * x_temp + _rot01 * y_temp;
 				y = _rot10 * x_temp + _rot11 * y_temp;
