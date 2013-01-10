@@ -163,10 +163,10 @@ void EUTelPreAlign::init () {
 
     _sensorIDVecZOrder.push_back( _sensors_to_the_left );
     _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
-   }
+  }
 
    string tempHistoName = "";
-   for(int i=0;i<_sensorIDVecZOrder.size(); i++)
+   for(unsigned int i = 0; i < _sensorIDVecZOrder.size(); i++)
    { 
        tempHistoName =  "PreAlign/hitXCorr_0_to_" + to_string( i ) ;
        AIDA::IHistogram1D* histo1Da  = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), 100 , -10., 10.) ;
@@ -369,9 +369,9 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 	}
       }
 
-      if( prealign.size() > _minNumberOfCorrelatedHits && hitX.size() == hitY.size() )
+      if( prealign.size() > (unsigned int)_minNumberOfCorrelatedHits && hitX.size() == hitY.size() )
       {
-         for( int ii=0;ii<prealign.size();ii++)
+         for(unsigned int ii = 0 ;ii < prealign.size();ii++)
          {  
             prealign[ii]->addPoint( hitX[ii], hitY[ii] );
          } 
@@ -488,7 +488,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
                 int sensorID = apixCluster->getDetectorID();//static_cast<int> ( cellDecoder(clusterFrame)["sensorID"] );
 //                cout << "Pixels at sensor " << sensorID << ": ";
 
-                for (int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
+                for (unsigned int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
                 {
                     int pixelX, pixelY;
                     EUTelAPIXSparsePixel apixPixel;
@@ -571,7 +571,7 @@ int EUTelPreAlign::guessSensorID(const double * hit )
     return sensorID;
   }
 
-      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+      for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         
