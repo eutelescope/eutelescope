@@ -8,7 +8,7 @@
  *   header with author names in all development based on this file.
  *
  */
-// built only if GEAR and MARLINUTIL are used
+// built only if GEAR and MARLINUTIL are used 
 #if defined(USE_GEAR)
 // eutelescope includes ".h"
 #include "EUTelAPIXKalman.h"
@@ -623,7 +623,7 @@ void EUTelAPIXKalman::bookHistos() {
   const int    NBin = 10000;
   const double Min  = -20000.;
   const double Max  = 20000.;
-  const double ddzBins = 100000;
+  const int ddzBins = 100000;
   const double ddzMin = -1;
   const double ddzMax =  1;
     
