@@ -391,8 +391,8 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
                   // always check we are still within the sensor!!!
                   if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <=  noiseMatrixDecoder.getMaxX()) &&
                        ( yPixel >=  noiseMatrixDecoder.getMinY() )  &&  ( yPixel <=  noiseMatrixDecoder.getMaxY()) ) {
-                    int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
-                    if( statusMatrix->getADCValues().size() > index )
+                    unsigned int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
+                    if(statusMatrix->getADCValues().size() > index )
                     {
                       bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
                       if ( !isBad ) {
@@ -418,7 +418,7 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
                   // always check we are still within the sensor!!!
                   if ( ( xPixel >= noiseMatrixDecoder.getMinX() )  &&  ( xPixel <=  noiseMatrixDecoder.getMaxX()) &&
                        ( yPixel >=  noiseMatrixDecoder.getMinY() )  &&  ( yPixel <=  noiseMatrixDecoder.getMaxY()) ) {
-                    int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
+                    unsigned int index = noiseMatrixDecoder.getIndexFromXY(xPixel, yPixel);
                     
                     // the corresponding position in the status matrix has to be HITPIXEL
                     // in the EUTelClusteringProcessor, we verify also that
@@ -428,7 +428,7 @@ void EUTelHistogramMaker::processEvent (LCEvent * evt) {
                     // bool isHit  = ( statusMatrix->getADCValues()[index] ==
                     // EUTELESCOPE::HITPIXEL );
                     //
-                    if( statusMatrix->getADCValues().size() > index )
+                    if(statusMatrix->getADCValues().size() > index )
                     {
                        bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
                       if ( !isBad ) {
