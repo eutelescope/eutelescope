@@ -7,7 +7,6 @@
  *   long as it stays in a public research context. You are not
  *   allowed to use it for commercial purpose. You must put this
  *   header with author names in all development based on this file.
- *
  */
 
 // eutelescope includes ".h"

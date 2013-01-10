@@ -12,7 +12,6 @@
  *   allowed to use it for commercial purpose. You must put this
  *   header with author names in all development based on this file.
  *   
- *
  */
 
 #ifdef USE_GEAR

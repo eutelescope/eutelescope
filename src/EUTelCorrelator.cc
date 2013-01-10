@@ -135,13 +135,13 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
  
   registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
  
-  registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMin, std::vector<float > (static_cast<float > (6), -10.) );
+  registerOptionalParameter("ResidualsXMin","Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMin, std::vector<float > (static_cast<float > (6.0), -10.) );
 
-  registerOptionalParameter("ResidualsYMin","Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMin, std::vector<float > (static_cast<float > (6), -10.) );
+  registerOptionalParameter("ResidualsYMin","Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMin, std::vector<float > (static_cast<float > (6.0), -10.) );
 
-  registerOptionalParameter("ResidualsXMax","Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMax, std::vector<float > (static_cast<float > (6),  10.) );
+  registerOptionalParameter("ResidualsXMax","Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsXMax, std::vector<float > (static_cast<float > (6.0),  10.) );
 
-  registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMax, std::vector<float > (static_cast<float > (6),  10.) );
+  registerOptionalParameter("ResidualsYMax","Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_residualsYMax, std::vector<float > (static_cast<float > (6.0),  10.) );
 
   registerOptionalParameter ("MinNumberOfCorrelatedHits",
                               "If there are more then this number of correlated hits (planes->track candidate) (default=5)",
@@ -638,7 +638,6 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             // for each type of coordinate: X and Y
 
             // assume simpliest +1 and -1 only :
-            int inPlaneGear = _sensorIDVecMap[internalSensorID];
             int exPlaneGear = _sensorIDVecMap[externalSensorID];
 
                    std::vector<double> cluster_offset;
@@ -704,9 +703,9 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
     }*/
 ///////
       for ( size_t iExt = 0 ; iExt < inputHitCollection->size(); ++iExt ) {
-        std::vector<float> trackX(0.0f);
-        std::vector<float> trackY(0.0f);
-        std::vector<int  > iplane(0   );
+        std::vector<double> trackX;
+        std::vector<double> trackY;
+        std::vector<int  > iplane;
 
        trackX.clear();
        trackY.clear();
@@ -785,7 +784,6 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
   vector<int>  iplane_unique = iplane;
   vector<int>::iterator p, p_end;
-  int i;
 
 //  cout << "Original contents of vectorObject:\n";
 //  for(p = iplane.begin(); p < iplane.end(); p++)
@@ -813,11 +811,11 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
       iplane_unique.assign(splane.begin(),splane.end());
       printf("iplane_unique size: %5d\n",iplane_unique.size());         
 */
-if( iplane_unique.size()> _minNumberOfCorrelatedHits &&  trackX.size()==trackY.size())
+if( (int)iplane_unique.size()> _minNumberOfCorrelatedHits &&  trackX.size()==trackY.size())
 // if( trackX.size()> _minNumberOfCorrelatedHits &&  trackX.size()==trackY.size())
 {
 //continue;
-      for(int i=1;i< trackX.size();i++)
+      for(size_t i=1;i< trackX.size();i++)
       {
 //        printf("s_%2d=[%2d %4.1f %4.1f]",i, iplane[i],  trackX[i], trackY[i]);       
             _hitXCorrelationMatrix[ iplane[0]        ] [ iplane[i]        ] -> fill ( trackX[0]          , trackX[i]           ) ;
@@ -966,7 +964,6 @@ void EUTelCorrelator::end() {
 //                streamlog_out(MESSAGE) << endl;
 
                 int inPlaneGear = _sensorIDVecMap[inPlane];
-                int exPlaneGear = _sensorIDVecMap[exPlane];
 
                 if( _correlationBandBinsX != 0. ) 
                     _siPlanesOffsetX[ inPlaneGear ] = -1*_correlationBandCenterX/_correlationBandBinsX;
@@ -1677,7 +1674,7 @@ int EUTelCorrelator::guessSensorID(const double * hit )
   }
 
      streamlog_out( DEBUG ) << " _referenceHitVec " << _referenceHitVec << " " << _referenceHitCollectionName.c_str() << endl;
-     for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+     for(int ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
       {
 
        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
@@ -1713,11 +1710,6 @@ std::vector<double> EUTelCorrelator::guessSensorOffset(int internalSensorID, int
     int inPlaneGear = _sensorIDVecMap[internalSensorID];
     int exPlaneGear = _sensorIDVecMap[externalSensorID];
     
-    double inXShift = _hitMinX[ internalSensorID ]/_siPlanesPitchY[inPlaneGear];
-    double inYShift = _hitMinY[ internalSensorID ]/_siPlanesPitchX[inPlaneGear];
-    double exXShift = _hitMinX[ externalSensorID ]/_siPlanesPitchX[exPlaneGear];
-    double exYShift = _hitMinY[ externalSensorID ]/_siPlanesPitchY[exPlaneGear];
- 
     double xDet_in =  internalXCenter*_siPlanesPitchX[inPlaneGear];
     double yDet_in =  internalYCenter*_siPlanesPitchY[inPlaneGear] ;
     double xDet_ex =  externalXCenter*_siPlanesPitchX[exPlaneGear] ;
@@ -1917,7 +1909,7 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
 //              printf("EUTelCorrelator::hitContainsHotPixels  kEUTelAPIXClusterImpl in %5d \n", sensorID ); 
 
                 bool skipHit = 0;
-                for (int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
+                for (size_t iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
                 {
                     int pixelX, pixelY;
                     EUTelAPIXSparsePixel apixPixel;

@@ -2,7 +2,6 @@
 // Author:  Georg Troska <mailto: georg.troska@uni-dortmund.de>
 
 
-
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
