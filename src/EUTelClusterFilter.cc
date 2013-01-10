@@ -9,7 +9,7 @@
  *   header with author names in all development based on this file.
  *
  */
-
+ 
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
 #include "EUTelVirtualCluster.h"
@@ -816,7 +816,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                                     // bool isHit  = ( statusMatrix->getADCValues()[index] ==
                                     // EUTELESCOPE::HITPIXEL );
                                     //
-                                    if( statusMatrix->getADCValues().size() > index )
+                                    if((int) statusMatrix->getADCValues().size() > index )
                                     {
                                     bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
                                     if ( !isBad )
@@ -890,7 +890,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                                     // EUTELESCOPE::HITPIXEL );
                                     // 
                                     ///
-                                    if( statusMatrix->getADCValues().size() > index )
+                                    if((int) statusMatrix->getADCValues().size() > index )
                                     {
 
                                     bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
