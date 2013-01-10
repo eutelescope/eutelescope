@@ -323,13 +323,9 @@ void EUTelHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
                 status->adcValues()[ last_element ] = EUTELESCOPE::HITPIXEL ;  // adcValues is a vector, there fore must address the elements incrementally
                 
                 _pixelMapVec[iDetector].insert ( make_pair( decoded_XY_index, sparsePixel ) );                     // one more map, get the pixel point bny its unique index
-//                printf("--last_element:%7d;  pixel %7d, index %7d, pointer %7d %7d \n",
-//                        last_element, iPixel, decoded_XY_index, _pixelMapVec[iDetector][ decoded_XY_index]->getXCoord(), _pixelMapVec[iDetector][ decoded_XY_index]->getYCoord()  );
             }
             else
             {
-//                printf("idet: %5d, status: %p, addressing known pixel decoded: %7d  orig: %7d  status->size:%7d\n", 
-//                        iDetector, status, decoded_XY_index, _hitIndexMapVec[iDetector][ decoded_XY_index ], status->adcValues().size()  );
                 status->adcValues()[ _hitIndexMapVec[iDetector][ decoded_XY_index]  ] = EUTELESCOPE::HITPIXEL ;
             }
         }
@@ -388,7 +384,6 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
     //  
     if ( isFirstEvent() ) 
     {
-//        printf("in initializeGeometry : %p\n", event );
         initializeGeometry( event );
 
         _firingFreqVec.clear();

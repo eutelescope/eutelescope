@@ -548,7 +548,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
           }
           catch(...)
           {
-              printf(" no sensor rotation is given in the GEAR steering file, assume NONE \n" );
+              streamlog_out(DEBUG) << "No sensor rotation is given in the GEAR steering file, assume NONE." << endl;
           }
 
 

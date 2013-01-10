@@ -1174,7 +1174,6 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 					}
 						// fittedXLOCAL was defined on line 1039
 
-//                    printf("fittedXLOCAL: %8.3f fittedYLOCAL:%8.3f\n",fittedXLOCAL, fittedYLOCAL );
 
 						bool		isMirrored = false;
 						bool		longPixel = false;
@@ -1187,7 +1186,6 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
 							if ((((int)(floor(fittedIndexX + 1))) % 2) == 0) isMirrored = true;
 
-  //                          printf("fittedIndexX: %8.3f fittedIndexY:%8.3f  isMirrored: %5d\n",fittedIndexX, fittedIndexY, isMirrored );
 
 
 							float		X = 1000 * (fittedIndexX - floor(fittedIndexX)) *_pitchX ;
@@ -1197,7 +1195,6 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
 							(dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_totAllClustersXYHistoName]))->fill(X, Y, _totAPIX[besthit]);
 
-    //                        printf("fitted X: %8.3f Y:%8.3f\n", X, Y );
 
 	        				if ( _hitsInCluster[besthit] > 1) {
 								(dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_ChargeSharingProbXYHistoName]))->fill(X, Y, 1.);
