@@ -272,7 +272,8 @@ double EUTelDafFitter::getZfromRefHit(int plane, double *pos){
 
  try
  {
-   double t = pos[2];
+   double doesNothing = pos[2];
+   doesNothing++;  //Stops a warning about unused variable
  }
  catch(...)
  {
