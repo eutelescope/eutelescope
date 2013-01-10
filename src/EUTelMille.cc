@@ -2113,7 +2113,8 @@ void EUTelMille::processEvent (LCEvent * event) {
             }
             const double xresid = x0 - x;
             const double yresid = y0 - y;
-            const double zresid = z0 - z;
+//            const double zresid = z0 - z;
+
             if ( xresid < _residualsXMin[help] || xresid > _residualsXMax[help]) 
               {
                 continue;
@@ -2658,8 +2659,6 @@ void EUTelMille::processEvent (LCEvent * event) {
               const int nLC = 4; // number of local parameters
               const int nGL = _nPlanes * 6; // number of global parameters
 
-              float sigma = _telescopeResolution;
-
               float *derLC = new float[nLC]; // array of derivatives for local parameters
               float *derGL = new float[nGL]; // array of derivatives for global parameters
 
@@ -2800,7 +2799,7 @@ void EUTelMille::processEvent (LCEvent * event) {
                   // been removed
 
                   //local parameters: b0, b1, c0, c1
-                  const double la = lambda[help];
+//                  const double la = lambda[help];
 
 //                  double z_sensor = _siPlanesLayerLayout -> getSensitivePositionZ(help) + 0.5 * _siPlanesLayerLayout->getSensitiveThickness( help );
 //                  z_sensor *= 1000;		// in microns
@@ -3157,9 +3156,6 @@ int EUTelMille::guessSensorID( TrackerHitImpl * hit ) {
 
                 cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
 	      
-	        // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
-                eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-                
             }
             else if ( hit->getType() == kEUTelSparseClusterImpl ) 
             {

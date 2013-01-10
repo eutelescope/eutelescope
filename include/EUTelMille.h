@@ -184,8 +184,6 @@ namespace eutelescope {
             const double resol_y = hitsarray[i].resolution_y;
             const double resol_z = hitsarray[i].resolution_z;
         
-            const double p[n] = {p0, p1, p2}; 
-        
             const double pmb[n] = {p0-b0, p1-b1, p2-b2}; //p - b
         
             const double coeff = dot(c, pmb);
