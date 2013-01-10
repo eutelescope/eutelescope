@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
 // Version: $Id: EUTelAPIXSparsePixel.cc,v 1.2 2007-08-20 18:22:40 bulgheroni Exp $
-
+ 
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -46,9 +46,9 @@ EUTelAPIXSparsePixel::EUTelAPIXSparsePixel(short xCoord, short yCoord, short sig
 EUTelAPIXSparsePixel::EUTelAPIXSparsePixel(const EUTelAPIXSparsePixel &orig) {
   _xCoord = orig.getXCoord();
   _yCoord = orig.getYCoord();
-  _signal = orig.getSignal();
+  _signal = (short)orig.getSignal();
   _chip = orig.getChip();
-  _time = orig.getTime();
+  _time = (short)orig.getTime();
   _noOfElements = orig.getNoOfElements();
   _type = orig.getSparsePixelType();
 }

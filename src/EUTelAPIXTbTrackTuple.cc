@@ -309,7 +309,7 @@ int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
     if(type == kEUTelAPIXClusterImpl){
       eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);	
       size = apixCluster->size();
-      charge = apixCluster->getTotalCharge();
+      charge = (int)apixCluster->getTotalCharge();
       apixCluster->getClusterSize(sizeX, sizeY);
       apixCluster->getCenterCoord(posX, posY);
       clusterID = apixCluster->getClusterID();
@@ -317,7 +317,7 @@ int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
     } else if (  type == kEUTelSparseClusterImpl or type == kEUTelDFFClusterImpl){
       eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > * telCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
       size = telCluster->size();
-      charge = telCluster->getTotalCharge();
+      charge = (int)telCluster->getTotalCharge();
       telCluster->getClusterSize(sizeX, sizeY);
       telCluster->getCenterCoord(posX, posY);
       clusterID = telCluster->getClusterID();
@@ -416,7 +416,7 @@ int EUTelAPIXTbTrackTuple::guessSensorID( TrackerHit *hit ) {
   }
 
 
-      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+      for(int ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
 //        printf(" _referenceHitVec %p refhit %p \n", _referenceHitVec, refhit);
@@ -463,8 +463,8 @@ int EUTelAPIXTbTrackTuple::readZsHitsFromClusters( std::string colName, LCEvent*
 		p_chip->push_back( apixPixel.getChip() );
 		p_row->push_back( apixPixel.getYCoord() );
 		p_col->push_back( apixPixel.getXCoord() );
-		p_tot->push_back( apixPixel.getSignal() );
-		p_lv1->push_back( apixPixel.getTime() );
+		p_tot->push_back( (int)apixPixel.getSignal() );
+		p_lv1->push_back( (int)apixPixel.getTime() );
 		p_clusterId->push_back(clusterID);
       }
 		
@@ -478,7 +478,7 @@ int EUTelAPIXTbTrackTuple::readZsHitsFromClusters( std::string colName, LCEvent*
 	p_chip->push_back( 0 );
 	p_row->push_back( telPixel.getYCoord() );
 	p_col->push_back( telPixel.getXCoord() );
-	p_tot->push_back( telPixel.getSignal() );
+	p_tot->push_back( (int)telPixel.getSignal() );
 	p_lv1->push_back( 0 );
 	p_clusterId->push_back(clusterID);
       }
@@ -511,8 +511,8 @@ int EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event){
 	p_chip->push_back( apixPixel.getChip() );
 	p_row->push_back( apixPixel.getYCoord() );
 	p_col->push_back( apixPixel.getXCoord() );
-	p_tot->push_back( apixPixel.getSignal() );
-	p_lv1->push_back( apixPixel.getTime() );
+	p_tot->push_back( (int)apixPixel.getSignal() );
+	p_lv1->push_back( (int)apixPixel.getTime() );
       }
     } else if ( type == kEUTelSimpleSparsePixel ) {
       auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel> > telData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
@@ -523,7 +523,7 @@ int EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event){
 	p_chip->push_back( 0 );
 	p_row->push_back( telPixel.getYCoord() );
 	p_col->push_back( telPixel.getXCoord() );
-	p_tot->push_back( telPixel.getSignal() );
+	p_tot->push_back( (int)telPixel.getSignal() );
 	p_lv1->push_back( 0 );
       }
     }
@@ -719,18 +719,10 @@ void EUTelAPIXTbTrackTuple::reverseAlign(double& x, double& y, double &z, int id
   // Apply alignment translations 
   double xTemp(0.0),yTemp(0.0), zTemp(0.0);
 
-  //Apply GEAR Euler translations
-  double xoffset = 0.;
-  double yoffset = 0.;
-  double zoffset = 0.;
-  double alpha   = 0.;
-  double beta    = 0.;
-  double gamma   = 0.;
-
   if( _referenceHitVec != 0  )
   {
     int iloc = -1;
-    for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+    for(int ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
     {
       EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
       if( iden == refhit->getSensorID()) iloc = ii;
@@ -742,9 +734,6 @@ void EUTelAPIXTbTrackTuple::reverseAlign(double& x, double& y, double &z, int id
     double  xrefhit = refhit->getXOffset();
     double  yrefhit = refhit->getYOffset();
     double  zrefhit = refhit->getZOffset();
-    double  arefhit = refhit->getAlpha();
-    double  brefhit = refhit->getBeta();
-    double  grefhit = refhit->getGamma();
 
     double temp_x = x;
     double temp_y = y;
