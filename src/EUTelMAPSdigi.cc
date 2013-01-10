@@ -472,7 +472,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       //
  
       bool detector_type_choice = false;
-      for( int iPlane = 0; iPlane < _DigiLayerIDs.size(); iPlane++)
+      for(unsigned int iPlane = 0; iPlane < _DigiLayerIDs.size(); iPlane++)
       {
         if(detectorID == _DigiLayerIDs[iPlane] ) detector_type_choice = true;
       }
@@ -876,7 +876,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
     // prepare the output TrackerData to host the SparsePixel
 
-for(int idet = 0; idet < _DigiLayerIDs.size(); idet++)
+for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
 {
     int idetectorID = _DigiLayerIDs[idet];
 
