@@ -222,8 +222,6 @@ void TrackerSystem::fitPlanesInfo(TrackCandidate *candidate){
 
   for(int ii = 0; ii < (int) planes.size() ; ii++ ){
     candidate->estimates.at(ii)->copy( m_fitter->smoothed.at(ii) );
-    TrackEstimate* estim = m_fitter->smoothed.at(ii);
-//    printf("candidate at %5d :: %5.2f %5.2f  \n", ii, estim->getX(), estim->getY() );
   }
   getChi2Kf(candidate);
 }
@@ -322,8 +320,6 @@ void TrackerSystem::fitPlanesInfoDaf(TrackCandidate *candidate){
       //Store estimates and weights in candidate
       candidate->estimates.at(ii)->copy( m_fitter->smoothed.at(ii) );
       candidate->weights.at(ii) = planes.at(ii).weights;
-      TrackEstimate* estim = m_fitter->smoothed.at(ii);
-//      printf("candidate at %5d :: %5.2f %5.2f  \n", ii, estim->getX(), estim->getY() );
     }
     fitPlanesInfoDafBiased();
     getChi2Daf(candidate);
