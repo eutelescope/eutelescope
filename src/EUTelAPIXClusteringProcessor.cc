@@ -1,4 +1,4 @@
-
+   
 #ifdef USE_GEAR
 
 // eutelescope includes ".h"
@@ -146,7 +146,7 @@ void EUTelAPIXClusteringProcessor::init () {
       streamlog_out (MESSAGE) << " ClusterLimits initialised with " << _ClusterLimits.size() << " elements" << endl;
     } 
 
-    for(int i = 0; i < _ClusterLimits.size(); i=i+5)
+    for(int i = 0; i < (int)_ClusterLimits.size(); i=i+5)
     {
        int ivector = i % 5;
        int iSensor = _ClusterLimits.at(i);
@@ -214,7 +214,7 @@ void EUTelAPIXClusteringProcessor::initializeGeometry( LCEvent * event ) throw (
 		_isGeometryReady = true;
 	}
 	streamlog_out(MESSAGE4) << "Active SensorPlanes: ";
-		for (int i= 0; i< _sensorIDVec.size(); i++) {
+		for (size_t i= 0; i< _sensorIDVec.size(); i++) {
 			streamlog_out(MESSAGE4) << " " << _sensorIDVec.at(i);
 		}
 		streamlog_out(MESSAGE4) << endl;
@@ -563,8 +563,8 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
                              )
                           {
 			    //int x,y; 
-			    float x = 0.;
-                            float y = 0.;
+			    float x = 0;
+                            float y = 0;
 		            int xsize = 0;
                             int ysize = 0;
 			  
@@ -584,8 +584,8 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 			      int clusterID = *it;
 			      zsDataEncoder["sensorID"]      = sensorID;
 			      zsDataEncoder["clusterID"]     = clusterID;
-			      zsDataEncoder["xSeed"]         = x;
-			      zsDataEncoder["ySeed"]         = y;
+			      zsDataEncoder["xSeed"]         = (int)x;
+			      zsDataEncoder["ySeed"]         = (int)y;
 			      zsDataEncoder["xCluSize"]      = xsize;
 			      zsDataEncoder["yCluSize"]      = ysize;
 			      zsDataEncoder["type"]          = static_cast<int>(kEUTelAPIXClusterImpl);
@@ -689,7 +689,7 @@ void EUTelAPIXClusteringProcessor::fillHistos (LCEvent * evt) {
 			SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( pulseFrame )["type"]) );
 			eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);	
 			
-			if (type == kEUTelAPIXClusterImpl  ) {
+			if ((int)type == (int)kEUTelAPIXClusterImpl  ) {
 			
 				string tempHistoName;
 				
@@ -723,7 +723,7 @@ void EUTelAPIXClusteringProcessor::fillHistos (LCEvent * evt) {
 					tempHistoName = _pixelSignalHistoName + "_d" + to_string( sensorID );
 					(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(apixPixel.getSignal());
 					
-					int lvl1 = apixPixel.getTime();
+					int lvl1 = (int)apixPixel.getTime();
 					
 					tempHistoName = _lvl1TriggerName + "_d" + to_string( sensorID );
 					(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(lvl1);
