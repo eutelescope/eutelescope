@@ -315,7 +315,7 @@ void EUTelDafBase::alignRotate(std::string collectionName, LCEvent* event) {
       }
       catch(...)
       {
-        printf("could not find sensor in %s at %5d \n", collectionName.c_str(), ii);
+        streamlog_out(WARNING) << "Could not find sensor in " <<  collectionName.c_str() << " at " << ii << endl;
       }
     }
   }
@@ -490,7 +490,7 @@ int EUTelDafBase::guessSensorID(const double * hit )
     return 0;
   }
 
-      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
+      for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
 //        printf(" _referenceHitVec %p refhit %p \n", _referenceHitVec, refhit);
@@ -611,10 +611,10 @@ void EUTelDafBase::processEvent(LCEvent * event){
   //get MC collections if exists
   if( _mcCollectionStr.size() > 0 )
   {
-    for(int i=0;i<_mcCollectionStr.size();i++)
+    for(unsigned int i=0; i < _mcCollectionStr.size(); i++)
     {
        _mcCollection = dynamic_cast < LCCollectionVec * > (event->getCollection(  _mcCollectionStr[i] ));
-       printf("collection %d %s at %p \n",i, _mcCollectionStr[i].c_str(), _mcCollection );
+       streamlog_out(DEBUG) << "Collection " << i << " " << _mcCollectionStr[i].c_str() << " at " << _mcCollection << endl;
     }
   }
   else
