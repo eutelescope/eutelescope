@@ -89,7 +89,7 @@ void EUTelFFClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG) const
   float tempX = 0.;
   float tempY = 0.;
 
-  int iPixel = 0;
+  unsigned int iPixel = 0;
   for (int yPixel = -1 * (ySize / 2); yPixel <= (ySize / 2); yPixel++) {
     for (int xPixel = -1 * (xSize / 2); xPixel <= (xSize / 2); xPixel++) {
         if( _trackerData->getChargeValues().size()<= iPixel) break;
