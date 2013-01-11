@@ -12,7 +12,8 @@ def usage():
     print '    -h : this help'
     print '    -v : verbose'
     print '    -V : very verbose'
-    print '    -g : produce pdf with plos'
+    print '    -g : produce report.pdf with plots'
+    print '    --cdash : if producing plots also produce .png files and necessary xml output for CDash integration'
     print '    --list : list all available tests'
     print '    --colors : use ANSI colors for output results table'
     print ''
@@ -29,11 +30,12 @@ def printList():
 def run( argv = sys.argv ):
     from Interface import runROOT
     colors = False #By default use ANSI colors for output
+    cdash = False
 
     if len(argv)>=1:
         import getopt
         try:
-            opts,args = getopt.getopt( argv ,"hvVg:",["list","colors"])
+            opts,args = getopt.getopt( argv ,"hvVg:",["list","colors","cdash"])
         except getopt.GetoptError,err:
             sys.stderr.write( str(err) )
             usage()
@@ -57,14 +59,16 @@ def run( argv = sys.argv ):
                 sys.exit(0)
             elif op == "--colors":
                 colors = True
+            elif op == "--cdash":
+                cdash = True
             elif op == '-g':
                 doplots=ar
         if len(args)>=2:
             try:
                 if len(args)>=3:
-                    errcode = runROOT( args[0],args[1] , doPlots = doplots , defaultReferenceFile = args[2] , useColorsForOutput = colors)
+                    errcode = runROOT( args[0],args[1] , doPlots = doplots , defaultReferenceFile = args[2] , useColorsForOutput = colors, doCDashOutput = cdash)
                 else:
-                    errcode = runROOT( args[0] , args[1] ,doPlots = doplots , useColorsForOutput = colors)
+                    errcode = runROOT( args[0] , args[1] ,doPlots = doplots , useColorsForOutput = colors, doCDashOutput = cdash)
             except Exception,e:
                 sys.stderr.write("Error: %s\n"%e)
                 sys.exit(1)

@@ -96,7 +96,7 @@ def buildHistogramInputs( tfile, paths ):
             pass
     return inputs
 
-def makePage( algorithm , pagename , prefix=""):
+def makePage( algorithm , pagename , cdash = False, prefix=""):
     from ROOT import TCanvas,kBlue,kRed,gROOT,kGreen,kYellow
     gROOT.SetBatch(True)
     c=TCanvas( algorithm.output.name , algorithm.output.name )
@@ -120,7 +120,21 @@ def makePage( algorithm , pagename , prefix=""):
                 max( algorithm.test.dataset1.tolist() + algorithm.test.dataset2.tolist() )
                )
     h1=draw( algorithm.test.dataset1 , kBlue , ""    , lims , algorithm.output.name )
-    h2=draw( algorithm.test.dataset2 , kRed  , "same", lims , algorithm.output.name+"ref")
+    h1.SetName(h1.GetName()+"_new")
+    aPad.Update()
+    from ROOT import TPaveStats
+    statBox = h1.GetListOfFunctions().FindObject("stats")
+    statBox.SetName('new_stat')
+    statBox.SetY1NDC(statBox.GetY1NDC()-.18)
+    statBox.SetY2NDC(statBox.GetY2NDC()-.18)
+    statBox.SetTextColor(kBlue)
+    statBox.SetBorderSize(2)
+    h2=draw( algorithm.test.dataset2 , kRed  , "sames", lims , algorithm.output.name+"ref")
+    h2.SetName(h2.GetName()+"_ref")
+    aPad.Update()
+    statBox2 = h2.GetListOfFunctions().FindObject("stats")
+    statBox2.SetName('ref_stat')
+    statBox2.SetTextColor(kRed)
     from ROOT import TPaveText
     pave=TPaveText(0.02,0.85,0.35,0.99,"NDC")
     pave.SetTextColor(aColor)
@@ -137,6 +151,10 @@ def makePage( algorithm , pagename , prefix=""):
         algorithm.test.residuals = makeResiduals( h1 , h2 )
         algorithm.test.residuals.Draw()
     c.Print(pagename+prefix)
+    if cdash == True:
+        import os
+        c.Print(os.path.dirname(pagename)+"/"+algorithm.output.name.replace('/','_')+".png")
+        print " <DartMeasurementFile name=\"" + algorithm.output.name +  "\" type=\"image/png\"> " + os.path.dirname(pagename) + "/" + algorithm.output.name.replace('/','_') + ".png" + " </DartMeasurementFile>"
 
 def testme( filename="AtlasECAL_pi-_100_QGSP_BERT_95ref02.root" ):
     """

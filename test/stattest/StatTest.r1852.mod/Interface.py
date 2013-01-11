@@ -303,7 +303,7 @@ class Configuration:
         msg+="\n"
         return msg
 
-def runROOT( aConfigurationFile , aROOTFileName, doHistos = True , doUnBinned = True , doPlots = "report" , defaultReferenceFile = None , useColorsForOutput = False):
+def runROOT( aConfigurationFile , aROOTFileName, doHistos = True , doUnBinned = True , doPlots = "report" , defaultReferenceFile = None , useColorsForOutput = False, doCDashOutput = False):
     """
     Run full analysis for a ROOT file.
     Configuraiton is specified in aConfiguraitonFile, the input ROOT file
@@ -518,10 +518,10 @@ def runROOT( aConfigurationFile , aROOTFileName, doHistos = True , doUnBinned = 
         stdout.write("\n")
         if doPlots != None:
             if openpage:
-                makePage( algo , doPlots , "(")
+                makePage( algo , doPlots , doCDashOutput, "(")
                 openpage = False
             else:
-                makePage( algo , doPlots )
+                makePage( algo , doPlots , doCDashOutput)
     print "="*80
     if doPlots != None:
         from ROOT import TCanvas,gROOT
