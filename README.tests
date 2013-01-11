@@ -31,6 +31,10 @@ steps will set up this directory structure. If you have run the tests
 once, you can therefore easily perform just specific tests that are
 affected by code changes that you want to verify.
 
+If you want to see the full output of the tests that have failed you
+need to export the following environment variable:
+CTEST_OUTPUT_ON_FAILURE=true
+
 The end results of the analysis are verified using statistical tests
 provided by ROOT and accessed through the Python scripts in
 test/stattest/bin.

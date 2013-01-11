@@ -31,6 +31,10 @@ set (CTEST_CUSTOM_MEMCHECK_IGNORE
 	TestPysubExampleDaturaAloneStatTestFitter
     )
 
+# use valgrind for dynamic analysis
+set (CTEST_MEMORYCHECK_COMMAND "/usr/bin/valgrind")
+set (CTEST_MEMORYCHECK_COMMAND_OPTIONS "--log-file=vlogs --leak-check=full --xml=yes")
+
 # increase the maximum number of warnings reported by ctest from the default 50
 set (CTEST_CUSTOM_MAXIMUM_NUMBER_OF_WARNINGS 150)
 
