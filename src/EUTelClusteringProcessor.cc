@@ -412,7 +412,6 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
     for ( unsigned int iDetector = 0 ; iDetector < hotPixelCollectionVec->size(); iDetector++ )         
     {
         if( _hitIndexMapVec.size() < iDetector+1 )            _hitIndexMapVec.resize(iDetector+1);
-//        printf(" idet: %5d  _hitIndexMapVec.size(): %5d \n", iDetector, _hitIndexMapVec.size());
 
         TrackerDataImpl * hotData = dynamic_cast< TrackerDataImpl * > ( hotPixelCollectionVec->getElementAt( iDetector ) );
         int sensorID            = static_cast<int > ( cellDecoder( hotData )["sensorID"] );
@@ -432,7 +431,7 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
  
         if ( _layerIndexMap.find( sensorID ) == _layerIndexMap.end()   )
         {
-            printf("sensor %5d not found in the present Data, so skip the hotPixel info for this sensor \n", sensorID);
+            streamlog_out(DEBUG) << "Sensor " << sensorID << " not found in the present data, skipping its hotPixel information." << endl;
             continue;
         }
        
@@ -477,21 +476,8 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
               }
               else
               {
-                  streamlog_out ( ERROR ) << "hot pixel [index " << decoded_XY_index << "] reoccered ?!" << endl;
+                  streamlog_out ( ERROR ) << "hot pixel [index " << decoded_XY_index << "] reoccured ?!" << endl;
               }
-//             try
-//            {
-//                _hitIndexMapVec[iDetector][ decoded_XY_index ] == EUTELESCOPE::FIRINGPIXEL; 
-//                printf("hot pixel [index %5d] reoccered ?!\n", decoded_XY_index );               
-//            }
-//            catch(...)
-//            {
-//               _hitIndexMapVec[iDetector].insert ( make_pair ( decoded_XY_index, EUTELESCOPE::FIRINGPIXEL ) );               
-//                printf("adding hot pixel [%7d], idet %5d, decoded_XY_index %7d, [%5d %5d]  status : %2d \n",
-//                        iPixel, iDetector,  decoded_XY_index, sparsePixel->getXCoord(), sparsePixel->getYCoord(), EUTELESCOPE::FIRINGPIXEL );
-//            }
-
-           
         }
   }
     
@@ -559,7 +545,6 @@ void EUTelClusteringProcessor::initializeStatusCollection(  )
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
             int decoded_XY_index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() ); // unique pixel index !!
 
-//            printf("idet %5d decoded_XY_index %7d \n", iDetector, decoded_XY_index);
             if( _hitIndexMapVec[iDetector].find( decoded_XY_index ) == _hitIndexMapVec[iDetector].end() )
             {
                 int old_size = status->adcValues().size();
@@ -573,14 +558,9 @@ void EUTelClusteringProcessor::initializeStatusCollection(  )
 
               
                 status->adcValues()[ last_element ] = EUTELESCOPE::HITPIXEL ;  // adcValues is a vector, there fore must address the elements incrementally
-                
-//                printf("--last_element:%7d;  pixel %7d, index %7d, pointer %7d %7d \n",
-//                        last_element, iPixel, decoded_XY_index, _pixelMapVec[iDetector][ decoded_XY_index]->getXCoord(), _pixelMapVec[iDetector][ decoded_XY_index]->getYCoord()  );
             }
             else
             {
-//                printf("idet: %5d, status: %p, addressing known pixel decoded: %7d  orig: %7d  status->size:%7d\n", 
-//                        iDetector, status, decoded_XY_index, _hitIndexMapVec[iDetector][ decoded_XY_index ], status->adcValues().size()  );
                 status->adcValues()[ _hitIndexMapVec[iDetector][ decoded_XY_index]  ] = EUTELESCOPE::HITPIXEL ;
             }
         }
@@ -592,13 +572,6 @@ void EUTelClusteringProcessor::initializeStatusCollection(  )
 
 void EUTelClusteringProcessor::readCollections (LCEvent * event)
 {
-
-//    const std::vector<std::string> *cnames = event->getCollectionNames();
-//    for(int i=0;i<cnames->size();i++)
-//    {
-//        printf("%s\n", cnames->at(i).c_str());
-//    }
-//    return;
 
     try {
         nzsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > (event->getCollection( _nzsDataCollectionName ) );
@@ -869,10 +842,6 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
     int _sensorID            = static_cast<int > ( cellDecoder( zsData )["sensorID"] );
     int sensorID            = _sensorID;
-//    int __sensorID = _sensorIDVec.at( i );
-
-//    printf("zsData i: %5d, sensorID: %5d  or %5d \n", i, sensorID, __sensorID   );
-//    continue;
         
     //if this is an excluded sensor go to the next element
     bool foundexcludedsensor = false;
@@ -933,7 +902,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
       // this is not a reference plane neither a DUT... what's that?
 //      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
 //      exit(-1);
-        printf( "Unknown sensorID %d, perhaps your GEAR fil is incomplete \n",  sensorID );
+        streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
         continue;
     }
 
@@ -1305,9 +1274,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                                     clusterCandidateCharges.push_back(0.0);
                                 }
                             }
-//                            printf("\n");
                         }
-//                            printf("\n");
 
 
                         // check whether this cluster is partly outside
@@ -1377,15 +1344,6 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                         EUTelDFFClusterImpl * eutelCluster = new EUTelDFFClusterImpl( cluster );
                         pulse->setCharge(eutelCluster->getTotalCharge());
 
-// DEBUG 
-//                        float xCoG(0.0f), yCoG(0.0f);
-//                        int   xCen(0   ), yCen(0   );
-//                        eutelCluster->getSeedCoord(xCen, yCen);
-//                        eutelCluster->getCenterOfGravity(xCoG, yCoG);
-//                        printf("cluster->getCenterOfGravity %8.3f %8.3f\n", xCoG, yCoG );
-//                        printf("cluster->getSeedCoord       %8d   %8d  \n", xCen, yCen );
-// DEBUG done
-// 
                         delete eutelCluster;
 
                         pulse->setQuality(static_cast<int>(cluQuality));
@@ -1514,7 +1472,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
     } else {
       // this is not a reference plane neither a DUT... what's that?
 //      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-      printf( "Unknown sensorID %d, perhaps your GEAR file is incomplete \n",  sensorID );
+      streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
       continue;
     }
 
@@ -1801,7 +1759,7 @@ void EUTelClusteringProcessor::zsBrickedClustering(LCEvent * evt, LCCollectionVe
         {
           // this is not a reference plane neither a DUT... what's that?
 //          throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-          printf( "Unknown sensorID %d, perhaps your GEAR fil is incomplete \n",  sensorID );
+          streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
           continue;
         }
 
@@ -2258,7 +2216,6 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
          int index = matrixDecoder.getIndexFromXY( pixel->getXCoord(), pixel->getYCoord() );
           if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
           {
-//               printf("iDetector %5d iPixel %5d unique index %5d at %5d %5d -- HOTPIXEL, skip pixel \n", sensorID, iPixel, index, pixel->getXCoord(), pixel->getYCoord()   );
                ++listIter;
                continue;
           }
@@ -2279,7 +2236,6 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
 
         if(sparseCluster->getTotalCharge() == 0 )
         {
-//            printf("empty cluster, skip \n");
            // remember to increment the iterator
            ++listOfListIter;
            continue;
@@ -2308,14 +2264,6 @@ void EUTelClusteringProcessor::sparseClustering(LCEvent * evt, LCCollectionVec *
           int xSeed, ySeed, xSize, ySize;
           sparseCluster->getSeedCoord(xSeed, ySeed);
           sparseCluster->getClusterSize(xSize, ySize);
-// DEBUG 
-//                        float xCoG(0.0f), yCoG(0.0f);
-//                        int   xCen(0   ), yCen(0   );
-//                        sparseCluster->getSeedCoord(xCen, yCen);
-//                        sparseCluster->getCenterOfGravity(xCoG, yCoG);
-//                        printf("cluster->getCenterOfGravity %8.3f %8.3f\n", xCoG, yCoG );
-//                        printf("cluster->getSeedCoord       %8d   %8d  \n", xCen, yCen );
-// DEBUG done
 
           auto_ptr<TrackerPulseImpl> zsPulse ( new TrackerPulseImpl );
           idZSPulseEncoder["sensorID"]  = sensorID;
@@ -2466,7 +2414,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
     } else {
       // this is not a reference plane neither a DUT... what's that?
 //      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-      printf( "Unknown sensorID %d, perhaps your GEAR fil is incomplete \n",  sensorID );
+      streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
       continue;
     }
 
@@ -2551,7 +2499,6 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
           if((int) _hitIndexMapVec.size() > sensorID )
               if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
               {
-//               printf("iDetector %5d iPixel %5d unique index %5d at %5d %5d -- HOTPIXEL, skip pixel \n", sensorID, iPixel, index, pixel->getXCoord(), pixel->getYCoord()   );
                   ++listIter;
                   continue;
               }
@@ -2771,7 +2718,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     } else {
       // this is not a reference plane neither a DUT... what's that?
 //      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-      printf( "Unknown sensorID %d, perhaps your GEAR fil is incomplete \n",  sensorID );
+      streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
       continue;
     }
 
@@ -3085,7 +3032,7 @@ void EUTelClusteringProcessor::nzsBrickedClustering(LCEvent * evt, LCCollectionV
         {
           // this is not a reference plane neither a DUT... what's that?
 //          throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-          printf( "Unknown sensorID %d, perhaps your GEAR fil is incomplete \n",  sensorID );
+          streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
           continue;
         }
 
@@ -3581,7 +3528,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
       } else {
         // this is not a reference plane neither a DUT... what's that?
 //        throw  InvalidGeometryException ("Unknown sensorID " + to_string( detectorID ));
-        printf( "Unknown sensorID %d, perhaps your GEAR fil is incomplete \n",  detectorID  );
+        streamlog_out(ERROR) << "Unknown sensorID " << detectorID << ", perhaps your GEAR file is incomplete." << endl;
         continue;
       }
 
@@ -3751,7 +3698,7 @@ void EUTelClusteringProcessor::bookHistos() {
     } else {
       // this is not a reference plane neither a DUT... what's that?
 //      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-      printf( "Unknown sensorID %d, perhaps your GEAR fil is incomplete \n",  sensorID );
+      streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
       continue;
     }
 
