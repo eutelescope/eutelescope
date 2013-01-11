@@ -74,8 +74,8 @@ EUTelPreAlign::EUTelPreAlign () :Processor("EUTelPreAlign") {
                              _hotPixelCollectionName, static_cast< string > ( "hotpixel_apix" ));
 
   registerProcessorParameter ("Events",
-                              "How many events are needed to get reasonable approximation to the X,Y shift (pre-alignment)? (default=1000)",
-                              _events, static_cast <int> (1000) );
+                              "How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)",
+                              _events, static_cast <int> (50000) );
 
   registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("reference") );
  
