@@ -482,7 +482,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
   //
   //......................................................................  //
 
-        for (unsigned int i = _alignmentCollectionNames.size() -1 ; i >= 0; i-- ) 
+        for (int i = ((int)_alignmentCollectionNames.size()) -1 ; i >= 0; i-- ) 
         {
             // read the first available alignment collection
             // CAUTION 1: it might be important to keep the order of alignment collections (if many) given in the opposite direction
@@ -2418,14 +2418,6 @@ void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, doubl
 
 void EUTelApplyAlignmentProcessor::_EulerRotation(int sensorID, double* _telPos, double* _gRotation) {
    
-    try{
-        double doesNothing = _telPos[2];
-        doesNothing++;
-    }
-    catch(...)
-    {
-        throw InvalidParameterException("_telPos[] array can not be accessed \n");
-    }
 
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
 
@@ -2442,14 +2434,6 @@ void EUTelApplyAlignmentProcessor::_EulerRotation(int sensorID, double* _telPos,
 
 void EUTelApplyAlignmentProcessor::_EulerRotationInverse(int sensorID, double* _telPos, double* _gRotation) {
    
-    try{
-        double doesNothing = _telPos[2];
-        doesNothing++;
-    }
-    catch(...)
-    {
-        throw InvalidParameterException("_telPos[] array can not be accessed \n");
-    }
 
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
 
