@@ -238,26 +238,15 @@ void EUTelHitMaker::DumpReferenceHitDB()
     gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(ii); // Euler alpha ;
     gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(ii); // Euler alpha ;
     gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(ii); // Euler alpha ;
-    //printf("rotations: %5.3f %5.3f %5.3f \n", gRotation[0], gRotation[1], gRotation[2]);
+    streamlog_out(DEBUG) << "GEAR rotations: " << gRotation[0] << " " << gRotation[1] << " " <<  gRotation[2] << endl;
     gRotation[0] =  gRotation[0]*3.1415926/180.; // 
     gRotation[1] =  gRotation[1]*3.1415926/180.; //
     gRotation[2] =  gRotation[2]*3.1415926/180.; //
 
     TVector3 _RotatedVector( refVec[0], refVec[1], refVec[2] );
-
-    //printf("BEF sensor: %5.3f %5.3f %5.3f \n", refVec[0], refVec[1], refVec[2]  );
-//    if( TMath::Abs( gRotation[0]) > 1e-6 )    _RotatedVector.RotateZ(  gRotation[0] ); // in XY 
-//    if( TMath::Abs( gRotation[1]) > 1e-6 )    _RotatedVector.RotateY(  gRotation[1] ); // in ZY
-//    if( TMath::Abs( gRotation[2]) > 1e-6 )    _RotatedVector.RotateX(  gRotation[2] ); // in ZY
-
     TVector3 _Xaxis( 1.0, 0.0, 0.0 );
     TVector3 _Yaxis( 0.0, 1.0, 0.0 );
     TVector3 _Zaxis( 0.0, 0.0, 1.0 );
-
-      // printf("1 xaxis: %5.3f %5.3f %5.3f \n", _Xaxis[0], _Xaxis[1], _Xaxis[2] ); 
-      // printf("1 yaxis: %5.3f %5.3f %5.3f \n", _Yaxis[0], _Yaxis[1], _Yaxis[2] ); 
-      // printf("1 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
-
 
     if( TMath::Abs( gRotation[2]) > 1e-6 ) 
     {
@@ -267,7 +256,6 @@ void EUTelHitMaker::DumpReferenceHitDB()
     }
     if( TMath::Abs( gRotation[1]) > 1e-6 ) 
     {
-//printf("rotation[1] = %5.3f \n", _gRotation[1]);
         _RotatedVector.Rotate(  gRotation[1], _Yaxis ); // in ZX 
 //        _Xaxis.Rotate(  gRotation[1], _Yaxis  ); // in XY
 //        _Zaxis.Rotate(  gRotation[1], _Yaxis  ); // in XY
@@ -279,17 +267,10 @@ void EUTelHitMaker::DumpReferenceHitDB()
 //        _Yaxis.Rotate(  gRotation[0], _Zaxis  ); // in XY
     }
  
-      // printf("2 xaxis: %5.3f %5.3f %5.3f \n", _Xaxis[0], _Xaxis[1], _Xaxis[2] ); 
-      // printf("2 yaxis: %5.3f %5.3f %5.3f \n", _Yaxis[0], _Yaxis[1], _Yaxis[2] ); 
-      // printf("2 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
-
-
-// printf("AFT sensor: %5.3f %5.3f %5.3f \n", _RotatedVector[0], _RotatedVector[1], _RotatedVector[2]  );
      refhit->setAlpha( _RotatedVector[0] );
      refhit->setBeta( _RotatedVector[1] );
      refhit->setGamma( _RotatedVector[2] );
      referenceHitCollection->push_back( refhit );
-//     streamlog_out ( MESSAGE ) << (*refhit) << endl;
   }
   event->addCollection( referenceHitCollection, "referenceHit" );
 
@@ -481,9 +462,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
                int iID = alignment->getSensorID();
                _siOffsetXMap.insert( make_pair( iID, alignment->getXOffset() ) );
                _siOffsetYMap.insert( make_pair( iID, alignment->getYOffset() ) );
-               streamlog_out ( MESSAGE ) << " ";
-               //printf("loaded %2d [%2d] Xoffset: %9.3f  Yoffset: %9.3f ", iPos, iID, _siOffsetXMap[ iID ], _siOffsetYMap[ iID ]); 
-               streamlog_out ( MESSAGE ) << endl;                
             }
           }
           catch(...)
@@ -566,12 +544,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
     double gRotation[3] = { 0., 0., 0.}; // not rotated
 
-//    printf("\n\n");
- 
     for ( int iPulse = 0; iPulse < pulseCollection->getNumberOfElements(); iPulse++ ) 
     {
-//printf("pulse %5d \n", iPulse);
-        
         TrackerPulseImpl     * pulse   = static_cast<TrackerPulseImpl*> ( pulseCollection->getElementAt(iPulse) );
         EUTelVirtualCluster  * cluster;
         ClusterType type = static_cast<ClusterType>(static_cast<int>((pulseCellDecoder(pulse)["type"])));
@@ -633,7 +607,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
             cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > ( static_cast<TrackerDataImpl *> ( pulse->getTrackerData()  ) );
             int xsize0,ysize0;
             cluster->getClusterSize(xsize0,ysize0);
-//            printf("ID: %5d:  x:%5d y:%5d tot:%5.1f\n", cluster->getDetectorID(), xsize0, ysize0,  cluster->getTotalCharge() );
         }
         else 
         {
@@ -754,7 +727,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           streamlog_out ( ERROR4 ) << "Detector " << detectorID << " has a singular rotation matrix. Sorry for quitting" << endl;
         }
 
-//        printf("%5d %9.3f %9.3f\n", detectorID, xZero,yZero);
       }
 
 
@@ -806,7 +778,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         }
         else
         {
-//            printf("cogAlgo FULL\n");
+            streamlog_out(DEBUG) << "Center of gravity algorithm: FULL" << endl;
             cluster->getCenterOfGravityShift( xShift, yShift );
         }
       }
@@ -818,7 +790,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         }
         else
         {
-//             printf("cogAlgo npixel\n");
+            streamlog_out(DEBUG) << "Center of gravity algorithm: N PIXEL" << endl;
             cluster->getCenterOfGravityShift( xShift, yShift, _nPixel );
         }
       }
@@ -834,7 +806,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         else
         {
             //will be okay for a brickedClusterImpl! accounted for such a call internally.
-//            printf("cogAlgo nxmpixel\n");
+            streamlog_out(DEBUG) << "Center of gravity algorithm: NxM PIXEL" << endl;
             cluster->getCenterOfGravityShift( xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
         }
       }
@@ -930,17 +902,12 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       double xDet = ( static_cast<double> (xCluSeed) + xCorrection + 0.5 ) * xPitch ;
       double yDet = ( static_cast<double> (yCluSeed) + yCorrection + 0.5 ) * yPitch ;
 
-//      printf("------i %8d \n", detectorID);
- 
-//      printf("%8d %8.3f %8.3f \n", xCluSeed, xCorrection, xDet);
-//      printf("%8d %8.3f %8.3f \n", yCluSeed, yCorrection, yDet);
-
 // check the hack from Havard:
       float xCoG(0.0f), yCoG(0.0f);
       cluster->getCenterOfGravity(xCoG, yCoG);
+// SIMON: LIKELY TO BE REMOVED:
 /*      if( detectorID == 22 )
       {
-//        printf("22--- %5.2f %5.2f ", xCoG, yCoG  );
         xCoG =-999999.9;
 //        yCoG = 999999.9;
         EUTelSparseClusterImpl< EUTelAPIXSparsePixel > *apixCluster = static_cast<EUTelSparseClusterImpl<EUTelAPIXSparsePixel>*> (cluster);
@@ -951,15 +918,12 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           if( xCoG < apixPixel.getXCoord() ) xCoG = apixPixel.getXCoord() ;
 //          if( yCoG > apixPixel.getYCoord() ) yCoG = apixPixel.getYCoord() ;
         }
-//        printf("--- %5.2f %5.2f  \n", xCoG, yCoG );
       }
   */
       xDet = (xCoG + 0.5) * xPitch;
       yDet = (yCoG + 0.5) * yPitch;
 
  
-//      printf("x:  Cog:%8.3f Det:%8.3f \n", xCoG,                  xDet);
-//      printf("y:  Cog:%8.3f Det:%8.3f \n", yCoG,                  yDet);
 
 
       
@@ -1090,10 +1054,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       // add the new hit to the hit collection
       hitCollection->push_back( hit );
  
-//      cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel >  ( static_cast<TrackerDataImpl *> ( hit->rawHits()[0] ) );
-//      TrackerPulseImpl *clus = static_cast <TrackerPulseImpl> clusterVec[0];
-//      printf(" %9d  %9.3f %9.3f  %5d %5.2f \n", iPulse, hit->getPosition()[0], hit->getPosition()[1], hit->rawHits().size(), cluster->getTotalCharge() );
-
       // delete the eutel cluster
       delete cluster;
 
@@ -1103,7 +1063,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     }
     catch(...)
     {
-//      printf("collection %s exists \n", _hitCollectionName.c_str() );
+      streamlog_out(ERROR) << "Hit collection " << _hitCollectionName.c_str() << " already exists!" << endl;
     }
 
     if ( isFirstEvent() ) _isFirstEvent = false;
@@ -1421,20 +1381,12 @@ void EUTelHitMaker::book3DHisto() {
 
 void EUTelHitMaker::_EulerRotation(int detectorID, double* _telPos, double* _gRotation) {
   
-//  if( _gRotation[0] != 0.0 || _gRotation[1] != 0.0 || _gRotation[2] != 0.0  )
-//  printf("not zero rotations ! \n");
-
     TVector3 _UnrotatedSensorHit( _telPos[0], _telPos[1], 0. );
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], 0. );
 
     TVector3 _Xaxis( 1.0, 0.0, 0.0 );
     TVector3 _Yaxis( 0.0, 1.0, 0.0 );
     TVector3 _Zaxis( 0.0, 0.0, 1.0 );
-
-//      printf("1 xaxis: %5.3f %5.3f %5.3f \n", _Xaxis[0], _Xaxis[1], _Xaxis[2] ); 
-//      printf("1 yaxis: %5.3f %5.3f %5.3f \n", _Yaxis[0], _Yaxis[1], _Yaxis[2] ); 
-//      printf("1 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
-
 
     if( TMath::Abs(_gRotation[2]) > 1e-6 ) 
     {
@@ -1444,7 +1396,6 @@ void EUTelHitMaker::_EulerRotation(int detectorID, double* _telPos, double* _gRo
     }
     if( TMath::Abs(_gRotation[1]) > 1e-6 ) 
     {
-//printf("rotation[1] = %5.3f \n", _gRotation[1]);
         _RotatedSensorHit.Rotate( _gRotation[1], _Yaxis ); // in ZX 
 //        _Xaxis.Rotate( _gRotation[1], _Yaxis  ); // in XY
 //        _Zaxis.Rotate( _gRotation[1], _Yaxis  ); // in XY
@@ -1456,23 +1407,6 @@ void EUTelHitMaker::_EulerRotation(int detectorID, double* _telPos, double* _gRo
 //        _Yaxis.Rotate( _gRotation[0], _Zaxis  ); // in XY
     }
  
-//      printf("2 xaxis: %5.3f %5.3f %5.3f \n", _Xaxis[0], _Xaxis[1], _Xaxis[2] ); 
-//      printf("2 yaxis: %5.3f %5.3f %5.3f \n", _Yaxis[0], _Yaxis[1], _Yaxis[2] ); 
-//      printf("2 zaxis: %5.3f %5.3f %5.3f \n", _Zaxis[0], _Zaxis[1], _Zaxis[2] ); 
-
-
-
-//    printf("  \n");
-//    printf("  X = %8.3f Y = %8.3f Z = %8.3f,   \n", 
-//            _UnrotatedSensorHit.X(), _UnrotatedSensorHit.Y(), _telPos[2] + _UnrotatedSensorHit.Z()  );
-//    printf("  X = %8.3f Y = %8.3f Z = %8.3f,  dx = %8.3f dy = %8.3f dz = %8.3f  ",  
-//            _RotatedSensorHit.X(), _RotatedSensorHit.Y(), _telPos[2] + _RotatedSensorHit.Z(), 
-//            _UnrotatedSensorHit.X()- _RotatedSensorHit.X(), 
-//            _UnrotatedSensorHit.Y()- _RotatedSensorHit.Y(), 
-//            _UnrotatedSensorHit.Z()- _RotatedSensorHit.Z()   );
-//    printf("  detectorID %5d  \n ", detectorID   );
-
-
     _telPos[0] = _RotatedSensorHit.X();
     _telPos[1] = _RotatedSensorHit.Y();
     _telPos[2] = _telPos[2] + _RotatedSensorHit.Z();
