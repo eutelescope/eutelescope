@@ -60,6 +60,18 @@ usage: %prog [execution-options] [io-options] [configuration-options] [fitter-op
     fitterGroup.add_option( "--skip", action="store", type="int", dest="skip", help="Use this parameter to skip some records from the beginning of the input files" )
 
 
+    fitterGroup.add_option( "--beam-energy",
+                                   type="float",
+                                   action="store",
+                                   dest="beam_energy",
+                                   help="Set the beam energy for given run/job")
+
+    fitterGroup.add_option( "--finder-radius",
+                                   type="float",
+                                   action="store",
+                                   dest="finder_radius",
+                                   help="Set the next plane radius, search cone ")
+
     parser.set_defaults( split_job=1 )
     parser.set_defaults( split_size=1000 )
     parser.set_defaults( skip=0 )
@@ -181,23 +193,6 @@ from the GRID SE, but the job will be executed on the local CPU
                                    action="store",
                                    dest="event_range",
                                    help="Set the event range to process")
-
-    configurationGroup.add_option( "--beam-energy",
-                                   type="float",
-                                   action="store",
-                                   dest="beam_energy",
-                                   help="Set the beam energy for given run/job")
-
-    configurationGroup.add_option( "--finder-radius",
-                                   type="float",
-                                   action="store",
-                                   dest="finder_radius",
-                                   help="Set the next plane radius, search cone ")
-
-
-    parser.set_defaults(beam_energy=1.0)
-    parser.set_defaults(finder_radius=100.0)
-
 
     parser.add_option_group( configurationGroup )
 
