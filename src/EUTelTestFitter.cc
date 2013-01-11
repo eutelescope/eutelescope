@@ -636,7 +636,7 @@ void EUTelTestFitter::init() {
 
     totalScatAngle+= _planeScatAngle[ipl] * _planeScatAngle[ipl];
 
-    //printf("scat angle   ipl:%5d  scatangle:%8.3e ",ipl,  _planeScatAngle[ipl]);
+    streamlog_out(DEBUG) << "Scattering angle in plane " << ipl << ": " << _planeScatAngle[ipl] << endl;
 
     _fitX[ipl] =_fitY[ipl] = 0. ;
     if((int)_resolutionX.size() < ipl+1 )
@@ -656,9 +656,6 @@ void EUTelTestFitter::init() {
       _nominalErrorY[ipl]= _resolutionY[ipl];
     }
  
-//  _nominalErrorX[ipl]= _planeResolution[ipl];
-//  _nominalErrorY[ipl]= _planeResolution[ipl];
-    //printf("nominal error X:%8.3f Y:%8.3f \n", _nominalErrorX[ipl], _nominalErrorY[ipl]);
   }
 
   totalScatAngle = sqrt(totalScatAngle);
@@ -821,8 +818,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       for(int iplane=0; iplane <  _siPlanesLayerLayout->getNLayers(); iplane++)    
       {
 
-	//printf(":\n");
-
           map< unsigned int , double > _planeCenter;
           map< unsigned int , double > _planeNormal;
  
@@ -872,9 +867,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 			streamlog_out( MESSAGE ) << " no sensor rotation is given in the GEAR steering file, assume NONE" << endl;
                       }
 
- 
-          //printf("sensorID: %5d    %8.3f %8.3f %8.3f \n", sensorID, _planeCenter[ 0 ], _planeCenter[ 1 ], _planeCenter[ 2 ] );
-             
           if( _alignmentCollectionNames.size() > 0 )
           {
               for( size_t i=0; i < _alignmentCollectionNames.size(); i++)
@@ -925,27 +917,15 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 			streamlog_out( MESSAGE ) << " no sensor rotation is given in the GEAR steering file, assume NONE" << endl;
 		      }
 
-
                       _planeNormal[0] = _normalTVec[0];
                       _planeNormal[1] = _normalTVec[1];
                       _planeNormal[2] = _normalTVec[2];
                       
-                      //printf("%-20s %5d (%8.3f %8.3f %8.3f) %8.3f %8.3f %8.3f  normal (%8.3f %8.3f %8.3f) %8.3f %8.3f %8.3f \n", 
-                              // _alignmentCollectionNames[i].c_str(), sensorID, 
-
-                              // c->getXOffset(), c->getYOffset(), c->getZOffset(),
-                              // _planeCenter[0], _planeCenter[1], _planeCenter[2],
-                              
-                              // gRotation[0], gRotation[1], gRotation[2], 
-                              // _planeNormal[0], _planeNormal[1], _planeNormal[2] 
-                              // );
                   }
                   catch(...)
                   {
 		    streamlog_out( WARNING2 ) << "Collection " << _alignmentCollectionNames[i].c_str() << " not found "  << endl;
                   }
- 
-                  //printf(":\n");            
               }            
 
                          
@@ -1066,7 +1046,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     // Shift sign changed in 1.22 for consistency with alignment
     // processor
-//printf("1what's this? [ihit=%5d] pos0:%8.3f hitX-ihit:%8.3f  pos1:%8.3f hitY-ihit:%8.3f \n", ihit, pos[0], hitX[ihit], pos[1], hitY[ihit]);
     hitX[ihit] = pos[0]*cos(_planeRotZ[hitPlane[ihit]])
       + pos[1]*sin(_planeRotZ[hitPlane[ihit]])
       - _planeShiftX[hitPlane[ihit]];
@@ -1074,7 +1053,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     hitY[ihit] = pos[1]*cos(_planeRotZ[hitPlane[ihit]])
       - pos[0]*sin(_planeRotZ[hitPlane[ihit]])
       - _planeShiftY[hitPlane[ihit]];
-//printf("2what's this? [ihit=%5d] pos0:%8.3f hitX-ihit:%8.3f  pos1:%8.3f hitY-ihit:%8.3f \n", ihit, pos[0], hitX[ihit], pos[1], hitY[ihit]);
 
     // Check Window and Mask cuts, if defined
     bool hitcut = false;
@@ -1775,15 +1753,7 @@ if(jhit>=0){
         pos[1]=fittedY[_nTelPlanes*ifit+ipl];
         pos[2]=_planePosition[ipl];
 
-
-        //int sensorID = guessSensorID( pos );
-//        int sensorID = guessSensorID( pos[0], pos[1], pos[2] );
-//        printf("\n -- now at sensorID = %5d \n", sensorID );
-
-//        printf("BEFORE x: %12.5f y:%12.5f z:%12.5f \n", pos[0], pos[1], pos[2] );
         getFastTrackImpactPoint(pos[0], pos[1], pos[2], fittrack, event);
-//        printf("AFTER  x: %12.5f y:%12.5f z:%12.5f \n", pos[0], pos[1], pos[2] );
-       
         fitpoint->setPosition(pos);
 
         // Covariance matrix of the position
@@ -1822,7 +1792,6 @@ if(jhit>=0){
             //
             corrhit->setType(meshit->getType());
             corrhit->setTime(meshit->getTime());
- //           corrhit->setdEdx(meshit->getdEdx());  ! OBSOLETE 
             corrhit->setEDep(meshit->getEDep());
             corrhit->rawHits()=meshit->getRawHits();
             //
@@ -1832,7 +1801,6 @@ if(jhit>=0){
             pos[1]=hitY[jhit];
             pos[2]=_planePosition[ipl];
 
-//            printf("%5d   %12.5f %12.5f %12.5f \n", jhit, pos[0], pos[1], pos[2]);
             corrhit->setPosition(pos);
             //
             // Include errors, as used in the fit
@@ -2969,7 +2937,6 @@ int EUTelTestFitter::guessSensorID( Track * track ) {
 
   for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
   {
-      printf("iPlane %5d   hitPos:  %8.3f  siZpos: %8.3f \n", iPlane, hitPosition[2] , _siPlaneZPosition[ iPlane ] );
       double distance = std::abs( hitPosition[2] - _siPlaneZPosition[ iPlane ] );
       if ( distance < minDistance ) 
       {
@@ -3007,7 +2974,6 @@ int EUTelTestFitter::guessSensorID( double & x, double & y, double & z)
   for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
   {
       int _id = _siPlanesLayerLayout->getID(iPlane);
-//      printf("iPlane %5d   hitPos:  %8.3f  siZpos: %8.3f \n", iPlane, z , _siPlaneCenter[ _id  ][2] );
       double distance = std::abs( z - _siPlaneCenter[ _id  ][2] );
       if ( distance < minDistance ) 
       {
@@ -3061,12 +3027,10 @@ int EUTelTestFitter::guessSensorID( double * hit )
         TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
  
         double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-//          printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hit[0],hit[1],hit[2], distance  );
         if ( distance < minDistance ) 
         {
            minDistance = distance;
            sensorID = refhit->getSensorID();
-//           printf("sensorID: %5d \n", sensorID );
         }    
 
       }
