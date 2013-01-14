@@ -205,7 +205,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("AllowedMissingHits","Set how many hits (=planes) can be missing on a track candidate.",
                             _allowedMissingHits, static_cast <int> (0));
 
-  registerOptionalParameter("MimosaClusterChargeMin","Select Mimosa26 clusters with charge above this value (default=1)",
+  registerOptionalParameter("MimosaClusterChargeMin","Remove Mimosa26 clusters with a charge (i.e. number of fired pixels in cluster) below or equal to this value",
                             _mimosa26ClusterChargeMin,  static_cast <int> (1) );
 
 
@@ -1531,9 +1531,9 @@ void EUTelMille::processEvent (LCEvent * event) {
             {
                 if(cluster->getTotalCharge() <= getMimosa26ClusterChargeMin() )
                 {
-                    printf("(1) Thin cluster (charge <=1), hit type: %5d  detector: %5d\n", hit->getType(), cluster->getDetectorID() );
-                    delete cluster; 
-                    continue;
+		  streamlog_out( DEBUG ) << " Thin cluster (charge <=" << getMimosa26ClusterChargeMin() << ") found and removed (hit type " << hit->getType() << " on detector w/ id " << cluster->getDetectorID() << ")" << endl;
+		  delete cluster; 
+		  continue;
                 }
             }
             else
