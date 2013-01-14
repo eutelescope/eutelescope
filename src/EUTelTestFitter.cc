@@ -891,36 +891,42 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
                           }
                       }
 
-                      _planeCenter[ 0 ] += c->getXOffset() ;
-                      _planeCenter[ 1 ] += c->getYOffset() ;
-                      _planeCenter[ 2 ] += c->getZOffset() ;
+		     if(c->getSensorID() == sensorID)
+		     {
+                       _planeCenter[ 0 ] += c->getXOffset() ;
+                       _planeCenter[ 1 ] += c->getYOffset() ;
+                       _planeCenter[ 2 ] += c->getZOffset() ;
                 
 
-                      double gRotation[3] = { 0., 0., 0.}; // not rotated
+                       double gRotation[3] = { 0., 0., 0.}; // not rotated
 
-                      try
-                      {
-                          gRotation[0] = c->getGamma();
-                          gRotation[1] = c->getBeta();
-                          gRotation[2] = c->getAlpha();
+                       try
+                       {
+                           gRotation[0] = c->getGamma();
+                           gRotation[1] = c->getBeta();
+                           gRotation[2] = c->getAlpha();
 
-                          TRotation	r;
-                          r.RotateZ( gRotation[0] );                          
-                          r.RotateY( gRotation[1] );                          
-                          r.RotateX( gRotation[2] );                          
+                           TRotation	r;
+                           r.RotateZ( gRotation[0] );                          
+                           r.RotateY( gRotation[1] );                          
+                           r.RotateX( gRotation[2] );                          
  
-                          _normalTVec.Transform( r );
-                                  
-                      }
-                      catch(...)
-                      {
-			streamlog_out( MESSAGE ) << " no sensor rotation is given in the GEAR steering file, assume NONE" << endl;
-		      }
+                           _normalTVec.Transform( r );
+                                   
+                        }
+                        catch(...)
+                        {
+ 			streamlog_out( MESSAGE ) << " no sensor rotation is given in the GEAR steering file, assume NONE" << endl;
+ 	                }
 
-                      _planeNormal[0] = _normalTVec[0];
-                      _planeNormal[1] = _normalTVec[1];
-                      _planeNormal[2] = _normalTVec[2];
-                      
+                       _planeNormal[0] = _normalTVec[0];
+                       _planeNormal[1] = _normalTVec[1];
+                       _planeNormal[2] = _normalTVec[2];
+
+		    }
+		    else {
+			streamlog_out(DEBUG) << "Wrong telescope plane, not applying offsets." << endl;
+		    }                      
                   }
                   catch(...)
                   {
