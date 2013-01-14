@@ -92,7 +92,7 @@ INCLUDE_DIRECTORIES( ./include )
 #INSTALL_DIRECTORY( ./include DESTINATION . FILES_MATCHING PATTERN "*.h" )
 
 # definitions to pass to the compiler
-ADD_DEFINITIONS( "-Wall -ansi -pedantic" )
+ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra -g" )
 ADD_DEFINITIONS( "-Wno-long-long" )
 
 # add library
@@ -130,8 +130,6 @@ DISPLAY_STD_VARIABLES()
 
 ENABLE_TESTING()
 INCLUDE(CTest)
-
-set( CTEST_MEMORYCHECK_COMMAND valgrind )
 
 # ----------------------------------------------------------------------------
 # TEST IF ENVIRONMENT IS OK FOR RUNNING TESTS
