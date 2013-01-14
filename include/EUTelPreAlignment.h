@@ -210,12 +210,13 @@ namespace eutelescope {
 
     int _minNumberOfCorrelatedHits;
 
-//
-    std::map< int, AIDA::IHistogram1D*  > _hitXCorr;
-    std::map< int, AIDA::IHistogram1D*  > _hitYCorr;
-//    std::map<unsigned int, AIDA::IBaseHistogram * > _hitXCorr;
-//    std::map<unsigned int, AIDA::IBaseHistogram * > _hitYCorr;
+    //! Boolean for turning histogram creation on and off
+    bool _fillHistos;
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA) 
+    std::map<unsigned int, AIDA::IBaseHistogram * > _hitXCorr;
+    std::map<unsigned int, AIDA::IBaseHistogram * > _hitYCorr;
+#endif
 
 
 

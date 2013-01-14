@@ -93,6 +93,8 @@ EUTelPreAlign::EUTelPreAlign () :Processor("EUTelPreAlign") {
                               "If there are more then this number of correlated hits (planes->track candidate) (default=5)",
                               _minNumberOfCorrelatedHits, static_cast <int> (5) );
 
+  registerOptionalParameter("HistogramFilling","Switch on or off the histogram filling",_fillHistos, static_cast< bool > ( true ) );
+
 }
 
 
@@ -165,20 +167,27 @@ void EUTelPreAlign::init () {
     _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
   }
 
-   string tempHistoName = "";
-   for(unsigned int i = 0; i < _sensorIDVecZOrder.size(); i++)
-   { 
-       tempHistoName =  "PreAlign/hitXCorr_0_to_" + to_string( i ) ;
-       AIDA::IHistogram1D* histo1Da  = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), 100 , -10., 10.) ;
-       _hitXCorr.insert( make_pair( i, histo1Da) );
-       //printf("XCorr  %5d %p \n", i, histo1Da );
+  string tempHistoName = "";
+  string basePath; 
 
-       tempHistoName =  "PreAlign/hitYCorr_0_to_" + to_string( i ) ;
-       AIDA::IHistogram1D* histo1Db = AIDAProcessor::histogramFactory(this)->createHistogram1D( tempHistoName.c_str(), 100 , -10., 10.) ;
-       _hitYCorr.insert( make_pair( i, histo1Db) );
-       //printf("YCorr  %5d %p \n", i, histo1Db );
-
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+  if(_fillHistos) {
+    for(unsigned int i = 1; i < _sensorIDVecZOrder.size(); i++)
+    {
+      basePath = "plane_" + to_string( i );
+      AIDAProcessor::tree(this)->mkdir(basePath.c_str());
+      basePath.append("/");
+ 
+      tempHistoName = "hitXCorr_0_to_" + to_string( i ) ;
+      AIDA::IHistogram1D * histo1Da = AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 100 , -10., 10.);
+      _hitXCorr.insert( make_pair( i, histo1Da) );
+ 
+      tempHistoName = "hitYCorr_0_to_" + to_string( i ) ;
+      AIDA::IHistogram1D * histo1Db = AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 100 , -10., 10.) ;
+      _hitYCorr.insert( make_pair( i, histo1Db) );
+    }
   }
+#endif
 
 }
 
@@ -374,6 +383,12 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
          for(unsigned int ii = 0 ;ii < prealign.size();ii++)
          {  
             prealign[ii]->addPoint( hitX[ii], hitY[ii] );
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+              if(_fillHistos) {
+                (dynamic_cast<AIDA::IHistogram1D*> (_hitXCorr[prealign[ii]->getIden()]))->fill( hitX[ii] );
+                (dynamic_cast<AIDA::IHistogram1D*> (_hitYCorr[prealign[ii]->getIden()]))->fill( hitY[ii] );
+              }
+#endif
          } 
       }
     }
