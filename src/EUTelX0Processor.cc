@@ -25,13 +25,10 @@ EUTelX0Processor::EUTelX0Processor():Processor("EUTelX0Processor")
 void EUTelX0Processor::init()
 {
   _debug = false; 
-  _noTracks = 0;
-  _noEvents = 0;
   int nobins = 100, nobinsangle = 100;//Number of bins in the histograms
   double minbin = -0.4, maxbin = 0.4;//Maximum and minimum bin values
   double minbinangle = -25, maxbinangle = 25, minbinalpha = -5, maxbinalpha = 5;
   std::vector<double> empty;  
-  _hitsfiles.open("hitsfile.txt");
   
   AIDA::IHistogram2D * ResidualXZ = AIDAProcessor::histogramFactory(this)->createHistogram2D(_histoResidualXZ, nobins, minbin, maxbin, nobins, minbin, maxbin );//Creates a profile histogram which is going to store the residuals as a function of X and Y
   ResidualXZ->setTitle(_histoResidualXZ);//Set the title for this histogram
@@ -171,7 +168,6 @@ void EUTelX0Processor::init()
   registerProcessorParameter("CutValue","Used to determine cuts in the system", _cutValue1, static_cast< double > (10.0));
   registerProcessorParameter ("DebugEventCount", "Print out every DebugEnevtCount event", _debugCount, static_cast < int > (100));//Not sure if I need this or not...
 
-  _fileName = "/scratch/hamnett/TestBeam/2012/tb-desy-summer/datura/histo/68-track-histo";  //Major Hack I know, but can't figure out how to bring in the text file from the steering folder
 
 }
 
@@ -181,8 +177,6 @@ void EUTelX0Processor::processRunHeader(LCRunHeader *run)
 
 void EUTelX0Processor::processEvent(LCEvent *evt)
 {
-  //cout << "Event Number: " << _noEvents << endl;
-  _noEvents++;
   map< int, vector< TVector3> > hitInfoTemp;//Temporary map for storing vectors of hit information pre-cut
   LCCollection* col = evt->getCollection("alignedHit");//Create the collection of alignedHits for this event
   _referenceHitVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_referenceHitCollectionName));//Create the reference hit vector (used for figuring out what layer the hit is in)
@@ -233,7 +227,6 @@ void EUTelX0Processor::createResiduals(LCCollection *trackCollection){
         dzf = vecHits[j+1].z() - vecHits[j].z();
       }
       if(dxf != 0 || dyf != 0 || dzf != 0){
-        cout << "Stuff written to 2D histograms" << endl;
         (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualX"]))->fill(dxf/dzf);
         (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualY"]))->fill(dyf/dzf);
 //        (dynamic_cast< AIDA::IHistogram1D* > (_histoThing[_histoResidualXY]))->fill(dxf/dyf);
@@ -244,12 +237,12 @@ void EUTelX0Processor::createResiduals(LCCollection *trackCollection){
 
 void EUTelX0Processor::testtrack(LCCollection *trackCollection){
   if(_debug){
-    cout << "trackCollection contains " << trackCollection->getNumberOfElements() << " elements" << endl;
-    cout << "The elements are as follows: " << endl;
+    streamlog_out(DEBUG) << "trackCollection contains " << trackCollection->getNumberOfElements() << " elements" << endl;
+    streamlog_out(DEBUG) << "The elements are as follows: " << endl;
     for(int i = 0; i < trackCollection->getNumberOfElements(); ++i){
       Track* trackElement = dynamic_cast< Track* >(trackCollection->getElementAt(i));
-      cout << "Element " << i << " contains the following values:" << endl;
-      cout << "D0 = " << trackElement->getD0() << endl
+      streamlog_out(DEBUG) << "Element " << i << " contains the following values:" << endl;
+      streamlog_out(DEBUG) << "D0 = " << trackElement->getD0() << endl
            << "Omega = " << trackElement->getOmega() << endl
            << "Phi = " << trackElement->getPhi() << endl
            << "Z0 = " << trackElement->getZ0() << endl
@@ -261,18 +254,14 @@ void EUTelX0Processor::testtrack(LCCollection *trackCollection){
            << "The covariance matrix is as follows:" << endl;
       const vector<float> covMatrix = trackElement->getCovMatrix();
       for(size_t j = 0; j < covMatrix.size(); ++j){
-        cout << covMatrix[j] << endl;
+        streamlog_out(DEBUG) << covMatrix[j] << endl;
       }
-      cout <<  "The track hits are finally listed here:" << endl;
+      streamlog_out(DEBUG) <<  "The track hits are finally listed here:" << endl;
       const vector<TrackerHit*> hits = trackElement->getTrackerHits();
       for(size_t j = 0; j < hits.size(); ++j){
-        cout << "Hit " << j << " = " << hits[j]->getPosition()[0] << ", " <<  hits[j]->getPosition()[1] << ", " << hits[j]->getPosition()[2]  << endl;
-        if(j % 2 == 0 && j < hits.size() - 2){
-          _hitsfiles <<  hits[j]->getPosition()[0] << "," <<  hits[j]->getPosition()[2] << "," << hits[j+2]->getPosition()[0] << "," << hits[j+2]->getPosition()[2] << "\n";
-          _hitsfiles <<  hits[j]->getPosition()[1] << "," <<  hits[j+2]->getPosition()[1] << "\n";
-        }
+        streamlog_out(DEBUG) << "Hit " << j << " = " << hits[j]->getPosition()[0] << ", " <<  hits[j]->getPosition()[1] << ", " << hits[j]->getPosition()[2]  << endl;
       }
-      cout << endl;
+      streamlog_out(DEBUG) << endl;
     }
   }
 }
@@ -335,7 +324,6 @@ void EUTelX0Processor::end()
 {
   //calculateX0();
   _hitInfo.clear();  //This stores the hit position in a TVector3. If there are multiple hits then they are all stored in the vector of TVector3's. The int key refers to the layer number
-  _hitsfiles.close();
   _projectedHits.clear();  //int refers to 1 or 2, with 1 being the projection from the 01 plane and 2 being the projection from the 43 plane
   _histoThing.clear();  //This map contains all the histograms that are going to be plotted in this processor
   _residual.clear();  //The pair of doubles refers to the x and y coordinates in layer 2. The vector of TVector3's refers to the positions of the projected hits
@@ -343,59 +331,6 @@ void EUTelX0Processor::end()
   _residualProfile.clear(); //TODO(Phillip Hamnett): Can this be joined with _residual? //Used as above but for created a profile histogram
   _inputCollectionVec = NULL;  //Stores the information being brought in from the Marlin process which contains information about post-aligned hits
   _referenceHitVec = NULL;  
-  _noTracks = 0;
-  _noEvents = 0;
-}
-
-void EUTelX0Processor::cutAndStoreHits(size_t size1, size_t size2, int firstLayer, int secondLayer, double anglecut)
-{
-  for(size_t i = 0; i < size1; ++i)
-  {
-    Double_t x0 = _hitInfo[firstLayer][i].x(), y0 = _hitInfo[firstLayer][i].y(), z0 = _hitInfo[firstLayer][i].z();//Store the positions in layer 0
-    for(size_t j = 0; j < size2; ++j)
-    {
-      Double_t x1 = _hitInfo[secondLayer][j].x(), y1 = _hitInfo[secondLayer][j].y(), z1 = _hitInfo[secondLayer][j].z();//Store the positions in layer 1
-      Double_t theta = atan(double(x1 - x0)/double(z1 - z0));//Work out the angle that the track makes relative to the Z axis in the x direction
-      Double_t phi = atan(double(y1 - y0)/double(z1 - z0));//Same for y direction
-
-      if(theta*180/3.14 < anglecut && theta*180/3.14 > -anglecut && phi*180/3.14 < anglecut && phi*180/3.14 > -anglecut)//Make sure that the angle of the track as it leaves the 1st or 3rd layer is less than 10 degrees total magnitude
-      {
-        Double_t x2;//The value of the projection onto layer 2 in the x direction
-        Double_t y2;//The value of the projection onto layer 2 in the y direction
-        if((x1 - x0) > 0)
-        {
-           x2 = x1 + (z1-z0)*tan(theta);//Value of x2
-        }
-        else
-        {
-           x2 = x1 - (z1 - z0)*tan(theta);//Different from above just due to trig
-        }
-        if((y1 - y0) > 0)
-        {
-           y2 = y1 + (z1-z0)/cos(phi);//As with x
-        }
-        else
-        {
-           y2 = y1 - (z1 - z0)/cos(phi);//As with x
-        }
-        Double_t z2 = _hitInfo[2][0].z();//HACK for now, will figure out what should actually go here later, not sure what value of z I should store in this TVector3
-        TVector3 tempvec(x2,y2,z2);//Make the temporary TVector3
-        if(firstLayer == 0)
-	{
-           _projectedHits[1].push_back(tempvec);//Put it in the map of projected hits (The [1] means coming from layer 1)
-        }
-        else if(firstLayer == 4)
-        {
-          _projectedHits[2].push_back(tempvec);//Put it in the map of projected hits (The [2] means coming from layer 3)a
-        }
-        else
-        {
-          cerr << "Trying to cut and store hits from somewhere that isn't right" << endl;
-          exit(14124);  //Just putting in a random number for now, not sure how error codes work in other files
-        }
-      }//End of: if statement that cuts at the angle
-    }//End of: for(size_t j = 0; j < hitinfo1size; ++j)
-  }//End of: for(size_t i = 0; i < hitinfo0size; ++i)
 }
 
 double EUTelX0Processor::calculateX0()
