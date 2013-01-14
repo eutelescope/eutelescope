@@ -128,7 +128,7 @@ namespace eutelescope {
    *  @param OutputEtaFileName The name of the output file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelCalculateEtaProcessor.h,v 1.10 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id$
    *
    *
    */

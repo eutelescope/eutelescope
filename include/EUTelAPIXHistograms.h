@@ -89,7 +89,7 @@ namespace eutelescope {
    * debug information is printed.
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelAPIXHistograms.h,v 1.7 2009-07-15 17:21:28 bulgheroni Exp $
+   * @version $Id$
    *
    */
 

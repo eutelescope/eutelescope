@@ -63,7 +63,7 @@ namespace eutelescope {
    *  @param StatusCollectionName This is the name of the status collection.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelCopyPedestalProcessor.h,v 1.5 2007-06-29 15:24:23 bulgheroni Exp $
+   *  @version $Id$
    *
    */
 

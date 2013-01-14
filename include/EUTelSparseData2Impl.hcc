@@ -80,7 +80,7 @@ namespace eutelescope {
    *  \image html clusteringPerfomance.png "Different algorithms performance"
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelSparseData2Impl.hcc,v 1.5 2008-07-09 14:35:10 bulgheroni Exp $
+   *  @version $Id$
    */
   template<class PixelType>
   class EUTelSparseData2Impl {

@@ -65,7 +65,7 @@ namespace eutelescope {
    *  available before the fitter.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelXCorrelator.h,v 1.3 2009-04-27 12:46:45 bulgheroni Exp $
+   *  @version $Id$
    *
    */
   class EUTelXCorrelator : public marlin::Processor {

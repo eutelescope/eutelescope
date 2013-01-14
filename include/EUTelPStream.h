@@ -1,4 +1,4 @@
-/* $Id: pstream.h,v 1.112 2010/03/20 14:50:47 redi Exp $ */
+/* $Id$ */
 /*
 PStreams - POSIX Process I/O for C++
 Copyright (C) 2001-2012 Jonathan Wakely

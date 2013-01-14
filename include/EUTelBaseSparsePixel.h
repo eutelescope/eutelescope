@@ -27,7 +27,7 @@ namespace eutelescope {
    *  methods available to all sparsified pixel type
    *  
    *  @author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $
+   *  @version $Id$
    */
   class EUTelBaseSparsePixel {
 
@@ -113,7 +113,7 @@ namespace eutelescope {
      *  sorting. 
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-     *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $
+     *  @version $Id$
      */ 
     template<class T>
     class GreaterSignal :  
@@ -138,7 +138,7 @@ namespace eutelescope {
      *  sorting. 
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-     *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $ 
+     *  @version $Id$ 
      */ 
     template<class T>
     class SmallerSignal :
@@ -163,7 +163,7 @@ namespace eutelescope {
      *  sorting. 
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-     *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $ 
+     *  @version $Id$ 
      */     
     template<class T>
     class IsBefore :
@@ -191,7 +191,7 @@ namespace eutelescope {
      *  pixel in the matrix
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-     *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $ 
+     *  @version $Id$ 
      */     
     template<class T>
     class HasCoord {
@@ -222,7 +222,7 @@ namespace eutelescope {
      *  pixel in the matrix
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-     *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $ 
+     *  @version $Id$ 
      */ 
     template<class T>
     class HasXCoord {
@@ -249,7 +249,7 @@ namespace eutelescope {
      *  pixel in the matrix
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-     *  @version $Id: EUTelBaseSparsePixel.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $ 
+     *  @version $Id$ 
      */ 
     template<class T>
     class HasYCoord {

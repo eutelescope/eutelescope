@@ -1,3 +1,4 @@
+// Version: $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as

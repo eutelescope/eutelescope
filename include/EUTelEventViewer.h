@@ -99,7 +99,7 @@ namespace eutelescope {
    *  has to be provided.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEventViewer.h,v 1.10 2008-10-08 11:25:32 bulgheroni Exp $
+   *  @version $Id$
    */
   class EUTelEventViewer : public marlin::Processor {
 

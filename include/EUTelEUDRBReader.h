@@ -28,7 +28,7 @@ namespace eutelescope {
    *  contains many information about the current setup.
    *  
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEUDRBReader.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $
+   *  @version $Id$
    */
   struct EUDRBFileHeader {
     
@@ -141,7 +141,7 @@ namespace eutelescope {
    *  event. The total size is 8 bytes.
    * 
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEUDRBReader.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $
+   *  @version $Id$
    */ 
   struct EUDRBEventHeader {
     
@@ -158,7 +158,7 @@ namespace eutelescope {
   /*! This is the trailer appended at the end of each event.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEUDRBReader.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $   
+   *  @version $Id$   
    */
   struct EUDRBTrailer {
     //! The trailer
@@ -221,7 +221,7 @@ namespace eutelescope {
    *   the TrackerRawData
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelEUDRBReader.h,v 1.5 2008-07-09 14:35:09 bulgheroni Exp $
+   *   @version $Id$
    *
    */
   

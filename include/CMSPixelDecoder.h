@@ -1,3 +1,4 @@
+// Version: $Id$
 /*========================================================================*/
 /*          CMSPixel Decoder v2.4                                         */
 /*          Author: Simon Spannagel (s.spannagel@cern.ch)                 */

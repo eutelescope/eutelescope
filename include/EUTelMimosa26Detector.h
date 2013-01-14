@@ -29,7 +29,7 @@ namespace eutelescope {
   /*!
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelMimosa26Detector.h,v 1.1 2009-07-31 09:45:49 bulgheroni Exp $
+   *  @version $Id$
    */
 
   class EUTelMimosa26Detector : public EUTelPixelDetector {

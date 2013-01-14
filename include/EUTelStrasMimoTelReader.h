@@ -57,7 +57,7 @@ namespace eutelescope {
    *   @param CDSCollectionName Name of the CDS collection
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelStrasMimoTelReader.h,v 1.4 2007-06-29 15:24:23 bulgheroni Exp $
+   *   @version $Id$
    *
    */
 
@@ -106,7 +106,7 @@ namespace eutelescope {
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
      *  @author Gilles CLAUS, LEPSI <mailto:claus@lepsi.in2p3.fr>
-     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.4 2007-06-29 15:24:23 bulgheroni Exp $
+     *  @version $Id$
      */ 
     class StrasRunHeader {
 
@@ -223,7 +223,7 @@ namespace eutelescope {
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
      *  @author Gilles CLAUS, LEPSI <mailto:claus@lepsi.in2p3.fr>
-     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.4 2007-06-29 15:24:23 bulgheroni Exp $
+     *  @version $Id$
      */ 
     class StrasEventHeader {
       
@@ -325,7 +325,7 @@ namespace eutelescope {
      *
      *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
      *  @author Gilles CLAUS, LEPSI <mailto:claus@lepsi.in2p3.fr>
-     *  @version $Id: EUTelStrasMimoTelReader.h,v 1.4 2007-06-29 15:24:23 bulgheroni Exp $
+     *  @version $Id$
      */ 
     class StrasEventTrailer {
       

@@ -121,7 +121,7 @@ namespace eutelescope {
    *  histogram information file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelCalibrateEventProcessor.h,v 1.13 2009-07-19 14:46:05 bulgheroni Exp $
+   *  @version $Id$
    *
    *
    */

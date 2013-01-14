@@ -1,3 +1,4 @@
+// Version: $Id$
 #ifndef Mod_DEPF_A
 #define Mod_DEPF_A 1
 #include <stdio.h>

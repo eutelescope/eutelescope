@@ -1,3 +1,4 @@
+// Version: $Id$
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Contact: Phillip Hamnett (phillip.hamnett@desy.de)
 /*

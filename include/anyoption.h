@@ -1,3 +1,4 @@
+// Version: $Id$
 #ifndef _ANYOPTION_H
 #define _ANYOPTION_H
 

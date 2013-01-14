@@ -94,7 +94,7 @@ namespace eutelescope {
    *  encoding of fixed frame clusters
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelFFClusterImpl.h,v 1.17 2009-08-01 21:05:03 jbehr Exp $
+   *  @version $Id$
    */ 
 
   class EUTelFFClusterImpl : public EUTelVirtualCluster {

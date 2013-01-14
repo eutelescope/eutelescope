@@ -1,3 +1,4 @@
+// Version: $Id$
 /*========================================================================*/
 /*          CMSPixel file converter (RAW->LCIO)                           */
 /*          Author: Simon Spannagel (s.spannagel@cern.ch)                 */

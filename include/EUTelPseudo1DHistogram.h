@@ -35,7 +35,7 @@ namespace eutelescope {
    *  in the MarlinUtil package were written by O. Wendt (DESY)
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPseudo1DHistogram.h,v 1.3 2007-06-29 15:24:23 bulgheroni Exp $
+   *  @version $Id$
    */ 
   
   class EUTelPseudo1DHistogram {

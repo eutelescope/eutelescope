@@ -1,3 +1,4 @@
+// Version: $Id$
 #ifndef EUTelHotPixel_h
 #define EUTelHotPixel_h 1
 

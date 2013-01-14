@@ -65,7 +65,7 @@ namespace eutelescope {
    * debug information is printed.
    *
    * \author A.F.Zarnecki, University of Warsaw
-   * @version $Id: EUTelFitHistograms.h,v 1.8 2009-07-29 10:23:49 zarnecki Exp $
+   * @version $Id$
    * \date 2007.09.10
    *
    */

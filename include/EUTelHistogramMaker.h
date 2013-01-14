@@ -84,7 +84,7 @@ namespace eutelescope {
    *  None
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHistogramMaker.h,v 1.8 2009/07/15 17:21:28 bulgheroni Exp $
+   *  @version $Id$
    *
    */
 

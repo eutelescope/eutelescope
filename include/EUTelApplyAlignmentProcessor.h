@@ -97,7 +97,7 @@ namespace eutelescope {
    *  then rotated.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelApplyAlignmentProcessor.h,v 1.5 2008-10-03 07:55:14 bulgheroni Exp $
+   *  @version $Id$
    *
    *
    */

@@ -1,3 +1,4 @@
+// Version: $Id$
 #ifndef EUTelFitTuple_h
 #define EUTelFitTuple_h 1
 

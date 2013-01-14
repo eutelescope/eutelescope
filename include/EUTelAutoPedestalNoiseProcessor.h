@@ -102,7 +102,7 @@ namespace eutelescope {
      @endverbatim
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelAutoPedestalNoiseProcessor.h,v 1.7 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id$
    *
    *
    */

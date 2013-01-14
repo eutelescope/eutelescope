@@ -115,7 +115,7 @@ namespace eutelescope {
    *   the marker position in pixel number start counting from 0.
    *
    *   @author  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *   @version $Id: EUTelMimoTelReader.h,v 1.8 2008-09-08 13:21:19 bulgheroni Exp $
+   *   @version $Id$
    *
    *   @deprecated Use EUTelNativeReader.
    */

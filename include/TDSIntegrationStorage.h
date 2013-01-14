@@ -1,3 +1,4 @@
+// Version: $Id$
 /* 
    Description: Store of integration results - may be used for many layers with the same pixel sizes, lambda, height etc.
    Divide each pixel into sectors -- integration results are stored and reused.

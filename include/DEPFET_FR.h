@@ -52,7 +52,7 @@ namespace DEPFET {
   /*! A class to read and decode a DEPFET file
    *
    *  @author Yulia Furletova, Uni-Bonn <mailto:yulia@mail.cern.ch>
-   *  @version $Id: DEPFET_FR.h,v 1.2 2008/11/13 10:43:56 bulgheroni Exp $
+   *  @version $Id$
    */
    
     

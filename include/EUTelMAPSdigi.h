@@ -64,7 +64,7 @@ namespace eutelescope {
    *  Simulation) package by Piotr Niezurawski (pniez@fuw.edu.pl)
    *
    *  @author Aleksander Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-   *  @version $Id: EUTelMAPSdigi.h,v 1.5 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id$
    *
    */
 

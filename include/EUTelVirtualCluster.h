@@ -32,7 +32,7 @@ namespace eutelescope {
    *  inherithing from this virtual class.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelVirtualCluster.h,v 1.10 2008-07-09 14:35:10 bulgheroni Exp $
+   *  @version $Id$
    */
 
   class EUTelVirtualCluster {

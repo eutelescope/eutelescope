@@ -74,7 +74,7 @@ namespace eutelescope {
    *
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelOutputProcessor.h,v 1.2 2007-07-09 13:42:40 bulgheroni Exp $ 
+   *  @version $Id$ 
    */
 
   class EUTelOutputProcessor : public marlin::LCIOOutputProcessor {

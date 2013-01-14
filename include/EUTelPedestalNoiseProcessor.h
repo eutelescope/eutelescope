@@ -181,7 +181,7 @@ namespace eutelescope {
    *  saving the output pedestal file.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelPedestalNoiseProcessor.h,v 1.22 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id$
    *
    *  @todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by

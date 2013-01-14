@@ -1,3 +1,4 @@
+// Version: $Id$
 //! Author Havard Gjersdal <haavagj@fys.uio.no>
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 /*

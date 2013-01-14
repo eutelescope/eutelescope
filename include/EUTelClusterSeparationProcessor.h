@@ -79,7 +79,7 @@ namespace eutelescope {
    *  cluster separation.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterSeparationProcessor.h,v 1.7 2007-07-09 15:26:05 bulgheroni Exp $
+   *  @version $Id$
    *
    *
    */

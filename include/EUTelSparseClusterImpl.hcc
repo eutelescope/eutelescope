@@ -26,7 +26,7 @@ namespace eutelescope {
    *  method. 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelSparseClusterImpl.hcc,v 1.5 2008-07-09 14:35:10 bulgheroni Exp $
+   *  @version $Id$
    */
 
   template<class PixelType>

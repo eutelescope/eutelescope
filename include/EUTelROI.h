@@ -34,7 +34,7 @@ namespace eutelescope {
    *  also provided.
    *
    *  @author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelROI.h,v 1.2 2008-08-19 15:42:47 bulgheroni Exp $
+   *  @version $Id$
    */
   class EUTelROI {
 

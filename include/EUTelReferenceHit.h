@@ -28,7 +28,7 @@ namespace eutelescope {
    *  pede. 
    *
    *  @author Igor Rubinskiy, DESY <mailto:rubinsky@mail.desy.de>
-   *  @version $Id: EUTelReferenceHit.h,v 1.3 2008-07-10 16:06:00 rubinsky Exp $
+   *  @version $Id$
    */ 
   class EUTelReferenceHit : public IMPL::LCGenericObjectImpl {
 

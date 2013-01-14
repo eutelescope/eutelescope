@@ -45,7 +45,7 @@ namespace eutelescope {
    *  different away in order to simplify the code.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelMatrixDecoder.h,v 1.4 2007-07-15 16:43:55 bulgheroni Exp $
+   *  @version $Id$
    */ 
   class EUTelMatrixDecoder {
     

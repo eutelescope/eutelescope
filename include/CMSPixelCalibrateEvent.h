@@ -1,3 +1,4 @@
+// Version: $Id$
 /*========================================================================*/
 /*          CMSPixel CalibrateEvent (Calibration of raw detector data)    */
 /*          Author: Simon Spannagel                                       */

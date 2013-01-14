@@ -75,7 +75,7 @@ namespace eutelescope {
    *
    *  @author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
    *  @author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
-   *  @version $Id: EUTelCorrelator.h,v 1.10 2009/07/29 09:36:49 gelin Exp $
+   *  @version $Id$
    *
    */
 

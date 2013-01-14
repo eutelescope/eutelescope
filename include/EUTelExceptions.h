@@ -33,7 +33,7 @@ namespace eutelescope {
    *  invalid algorithm then this exceptions is thrown
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.10 2009-08-01 21:05:03 jbehr Exp $
+   *  @version $Id$
    */
 
   class InvalidParameterException  : public lcio::Exception {
@@ -62,7 +62,7 @@ namespace eutelescope {
    *  the number of detectors.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.10 2009-08-01 21:05:03 jbehr Exp $
+   *  @version $Id$
    */
   class IncompatibleDataSetException : public lcio::Exception {
 
@@ -105,7 +105,7 @@ namespace eutelescope {
    *  exception is thrown.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.10 2009-08-01 21:05:03 jbehr Exp $
+   *  @version $Id$
    */
   class UnknownDataTypeException : public lcio::Exception {
 
@@ -133,7 +133,7 @@ namespace eutelescope {
    *  dependency against specific library and this is missing.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.10 2009-08-01 21:05:03 jbehr Exp $
+   *  @version $Id$
    */
   class MissingLibraryException: public lcio::Exception {
 
@@ -163,7 +163,7 @@ namespace eutelescope {
    *  the GEAR file
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelExceptions.h,v 1.10 2009-08-01 21:05:03 jbehr Exp $
+   *  @version $Id$
    */
   class InvalidGeometryException: public lcio::Exception {
 

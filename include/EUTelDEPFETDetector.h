@@ -29,7 +29,7 @@ namespace eutelescope {
   /*!
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelDEPFETDetector.h,v 1.1 2008-11-12 12:03:16 furletova Exp $
+   *  @version $Id$
    */
 
   class EUTelDEPFETDetector : public EUTelPixelDetector {

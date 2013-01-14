@@ -105,7 +105,7 @@ namespace eutelescope {
    *  zero suppressed data collection
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelMimosa26Generator.h,v 1.2 2009-08-01 21:05:03 jbehr Exp $
+   *  @version $Id$
    */
 
   class EUTelMimosa26Generator:public marlin::Processor {

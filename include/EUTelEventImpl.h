@@ -50,7 +50,7 @@ namespace eutelescope {
    *  return immediately.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEventImpl.h,v 1.2 2008-07-09 14:35:09 bulgheroni Exp $
+   *  @version $Id$
    * 
    */
 

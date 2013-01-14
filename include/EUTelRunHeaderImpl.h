@@ -144,7 +144,7 @@ namespace eutelescope {
    *  \li <b>UserComment</b>: a user defined string field. piipo
    *
    * @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   * @version $Id: EUTelRunHeaderImpl.h,v 1.11 2008-07-09 14:35:09 bulgheroni Exp $
+   * @version $Id$
    * 
    */
 

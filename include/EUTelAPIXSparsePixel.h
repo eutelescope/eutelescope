@@ -28,7 +28,7 @@ namespace eutelescope {
    *  integer numbers.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelAPIXSparsePixel.h,v 1.2 2008-07-09 14:35:10 bulgheroni Exp $
+   *  @version $Id$
    */ 
   
   class EUTelAPIXSparsePixel  :  public EUTelBaseSparsePixel  {

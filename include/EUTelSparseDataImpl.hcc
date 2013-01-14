@@ -69,7 +69,7 @@ namespace eutelescope {
    *  process run on this sparse data. 
    *  
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelSparseDataImpl.hcc,v 1.4 2008-07-09 14:35:10 bulgheroni Exp $
+   *  @version $Id$
    */  
   template<class PixelType>
   class EUTelSparseDataImpl {

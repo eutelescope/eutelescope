@@ -240,7 +240,7 @@ namespace eutelescope {
    *  the current event.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelClusterFilter.h,v 1.10 2009/07/29 20:41:31 bulgheroni Exp $
+   *  @version $Id$
    *
    *
    */
@@ -884,7 +884,7 @@ namespace eutelescope {
      *  in find_if.
      *
      *  @author Antonio Bulgheroni, INFN  <mailto:antonio.bulgheroni@gmail.com>
-     *  @version $Id: EUTelClusterFilter.h,v 1.10 2009/07/29 20:41:31 bulgheroni Exp $
+     *  @version $Id$
      */
     class HasSameID {
     public:

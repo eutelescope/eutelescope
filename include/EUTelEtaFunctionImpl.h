@@ -35,7 +35,7 @@ namespace eutelescope {
    *  to set/get the full bin center and the full eta value vectors
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelEtaFunctionImpl.h,v 1.7 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id$
    */
   class EUTelEtaFunctionImpl : public IMPL::LCGenericObjectImpl {
 

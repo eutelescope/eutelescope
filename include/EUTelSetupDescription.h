@@ -42,7 +42,7 @@ namespace eutelescope {
    *  while the readout mode is set using EUTelReadoutMode.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelSetupDescription.h,v 1.1 2008-09-09 08:15:46 bulgheroni Exp $
+   *  @version $Id$
    */
   class EUTelSetupDescription : public IMPL::LCGenericObjectImpl {
 

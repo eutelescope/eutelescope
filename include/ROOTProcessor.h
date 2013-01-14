@@ -74,7 +74,7 @@ namespace eutelescope {
    *  @param ROOT file name
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: ROOTProcessor.h,v 1.4 2008-08-23 12:30:51 bulgheroni Exp $
+   *  @version $Id$
    */
   class ROOTProcessor : public marlin::Processor {
 

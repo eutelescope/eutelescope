@@ -57,7 +57,7 @@ namespace eutelescope {
    *  depending on the occupancy.
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelAPIXHotPixelKiller.h,v 1.4 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id$
    *
    */
 

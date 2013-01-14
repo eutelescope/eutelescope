@@ -29,7 +29,7 @@ namespace eutelescope {
    *  read from the XML information file.
    *  
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHistogramManager.h,v 1.4 2008-07-09 14:35:09 bulgheroni Exp $
+   *  @version $Id$
    */
   class EUTelHistogramInfo {
     
@@ -159,7 +159,7 @@ namespace eutelescope {
    *  available histograms.
    * 
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHistogramManager.h,v 1.4 2008-07-09 14:35:09 bulgheroni Exp $
+   *  @version $Id$
    */ 
     
   class EUTelHistogramManager  {

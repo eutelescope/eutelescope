@@ -225,7 +225,7 @@ namespace eutelescope {
    *  processing. 
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelHitMaker.h,v 1.12 2009-07-15 17:21:28 bulgheroni Exp $
+   *  @version $Id$
    *
    */
 

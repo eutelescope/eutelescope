@@ -1,3 +1,4 @@
+// Version: $Id$
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 /*
  *

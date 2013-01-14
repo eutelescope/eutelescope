@@ -88,7 +88,7 @@ namespace eutelescope {
    *  @param FixedWeightValue the value of the fixed weight
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-   *  @version $Id: EUTelUpdatePedestalNoiseProcessor.h,v 1.8 2009-07-19 14:47:43 bulgheroni Exp $
+   *  @version $Id$
    *
    *  @todo Implement the status matrix update
    *
