@@ -1538,6 +1538,18 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
       // now built up a cluster for each seed candidate
       multimap<float, int >::reverse_iterator rMapIter = seedCandidateMap.rbegin();
       while ( rMapIter != seedCandidateMap.rend() ) {
+      
+        // Remove hot pixel:
+        if( _hitIndexMapVec.size() > (unsigned int)sensorID ) {
+              if( _hitIndexMapVec[sensorID].find( (*rMapIter).second ) != _hitIndexMapVec[sensorID].end() )
+              {
+                int seedX, seedY;
+                matrixDecoder.getXYFromIndex ( (*rMapIter).second, seedX, seedY );
+                streamlog_out ( DEBUG ) << "Detector " << sensorID << " Pixel " << seedX << " " << seedY << " -- HOTPIXEL, skipping... " << endl;
+                ++rMapIter;
+                continue;
+              }
+        }
         if ( status->adcValues()[ (*rMapIter).second ] == EUTELESCOPE::GOODPIXEL ) {
           // if we enter here, this means that at least the seed pixel
           // wasn't added yet to another cluster.  Note that now we need
@@ -1559,7 +1571,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
               if ( ( xPixel >= minX )  &&  ( xPixel <= maxX ) &&
                    ( yPixel >= minY )  &&  ( yPixel <= maxY ) ) {
                 int index = matrixDecoder.getIndexFromXY(xPixel, yPixel);
-
+                
                 bool isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
                 bool isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
 
