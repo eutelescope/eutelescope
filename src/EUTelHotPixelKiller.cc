@@ -648,7 +648,7 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
 	streamlog_out ( MESSAGE ) << _hotpixelDBFile << " was opened for writing" << endl;
       }
       catch ( IOException& e ) 	{
-	streamlog_out ( ERROR ) << e.what() << endl << "Sorry, was not abel to APPEND to the hotpixel file " << _hotpixelDBFile << ", try open new " << endl;
+	streamlog_out ( DEBUG ) << e.what() << endl << "Sorry, was not able to APPEND to the hotpixel file " << _hotpixelDBFile << ", try open new " << endl;
       }
     }
 
