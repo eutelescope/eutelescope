@@ -1,5 +1,5 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
-// Version: $Id: EUTelMille.cc,v 1.48 2009-08-01 10:49:46 bulgheroni Exp $
+// Version: $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as

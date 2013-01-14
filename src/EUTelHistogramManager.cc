@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelHistogramManager.cc,v 1.4 2007-06-28 08:35:56 bulgheroni Exp $
+// Version: $Id$
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.

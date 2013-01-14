@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Julia Furletova, INFN <mailto:julia@mail.desy.de>
-// Version $Id: EUTelDEPFETDetector.cc,v 1.1 2008/11/12 12:03:16 furletova Exp $
+// Version $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as

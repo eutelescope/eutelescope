@@ -1,5 +1,5 @@
 // Author Aleksander Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version $Id: EUTelMAPSdigi.cc,v 1.7 2009-07-23 12:35:15 bulgheroni Exp $
+// Version $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as

@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelBaseSparsePixel.cc,v 1.2 2007-08-21 12:29:21 bulgheroni Exp $
+// Version: $Id$
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.

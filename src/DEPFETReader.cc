@@ -1,3 +1,4 @@
+// Version: $Id$
 /*=====================================================================*/
 /*          DEPFET file converter (RAW->LCIO)                          */
 /*          Author: Julia Furletova                                    */

@@ -1,7 +1,7 @@
 
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelFFClusterImpl.cc,v 1.23 2009-07-30 14:50:18 bulgheroni Exp $
+// Version: $Id$
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.

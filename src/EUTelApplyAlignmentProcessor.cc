@@ -4,7 +4,7 @@
 // Slava Libov, DESY <mailto:vladyslav.libov@desy.de>
 // Igor Rubinskiy, DESY <mailto:igorrubinsky@gmail.com>
 // 
-// Version $Id: EUTelApplyAlignmentProcessor.cc,v 1.17 2009-07-30 17:19:19 jbehr Exp $
+// Version $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as

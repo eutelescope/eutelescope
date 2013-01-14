@@ -1,3 +1,4 @@
+// Version: $Id$
 
 // Author Havard Gjersdal, UiO(haavagj@fys.uio.no)
 /*!

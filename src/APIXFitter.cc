@@ -1,3 +1,4 @@
+// Version: $Id$
 // See R.Fruhwirt: Application of Kalman Filtering to track and vertex fitting
 #include "APIXFitter.h"
 using namespace APIXFitter;

@@ -1,7 +1,7 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelFitTuple.cc,v 1.9 2009-07-29 20:41:31 bulgheroni Exp $
+// Version: $Id$
 // Date 2007.09.10
 
 /*

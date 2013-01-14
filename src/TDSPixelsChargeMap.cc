@@ -1,3 +1,4 @@
+// Version: $Id$
 /*!
 
 Description: Map of charge distribution in pixels for Tracker Detailed Simulation

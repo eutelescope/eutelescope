@@ -1,5 +1,5 @@
 // Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
-// Version: $Id: EUTelTestFitter.cc,v 1.39 2009-07-30 14:00:19 zarnecki Exp $
+// Version: $Id$
 // Date 2007.06.04
         
 /*

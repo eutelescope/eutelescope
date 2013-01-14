@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version: $Id: EUTelAPIXSparsePixel.cc,v 1.2 2007-08-20 18:22:40 bulgheroni Exp $
+// Version: $Id$
  
 
 /*

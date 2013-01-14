@@ -1,3 +1,4 @@
+// Version: $Id$
 //! Precluster for Tracker Detailed Simulation
 /*! 
   Simple rectangular precluster from the charge deposits

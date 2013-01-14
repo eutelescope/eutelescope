@@ -1,3 +1,4 @@
+// Version: $Id$
 #ifdef USE_GEAR
 // eutelescope includes ".h"
 #include "EUTelPreAlignment.h"

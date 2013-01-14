@@ -1,6 +1,6 @@
 // -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Igor Rubinskiy, INFN <mailto:rubinky@mail.desy.de>
-// Version $Id: EUTelReferenceHit.cc,v 1.3 2009-07-15 17:21:28 rubinsky Exp $
+// Version $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  *   You are free to use this source files for your own development as
