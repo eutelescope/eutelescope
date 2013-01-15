@@ -2885,7 +2885,7 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
 //  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
   if( _referenceHitVec == 0)
   {
-    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    streamlog_out(DEBUG) << "_referenceHitVec is empty" << endl;
     return 0;
   }
 
@@ -2952,7 +2952,7 @@ int EUTelDUTHistograms::getInPixelCoordinate(int sensorID, TrackerHitImpl * hit,
 
   if( _referenceHitVec == 0)
    {
-    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    streamlog_out(DEBUG) << "_referenceHitVec is empty" << endl;
     return 0;
    }
 
