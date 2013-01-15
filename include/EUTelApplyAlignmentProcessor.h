@@ -185,13 +185,13 @@ namespace eutelescope {
     virtual inline int GetApplyAlignmentDirection(){return _applyAlignmentDirection;}
      
     void TransformToLocalFrame(TrackerHitImpl* outputHit, LCEvent * ev);
-    void revertAlignment(double & x, double & y, double & z, std::string	collectionName, LCEvent * ev) ;
+    void revertAlignment(double & x, double & y, double & z) ;
  
     //! Perform Euler rotations
-    void _EulerRotation(int sensorID, double* _telPos, double* _gRotation);
+    void _EulerRotation(double* _telPos, double* _gRotation);
 
     //! Perform Euler rotations backwards
-    void _EulerRotationInverse(int sensorID, double* _telPos, double* _gRotation);
+    void _EulerRotationInverse(double* _telPos, double* _gRotation);
 
     //! Check event method
     /*! This method is called by the Marlin execution framework as
@@ -228,7 +228,7 @@ namespace eutelescope {
     virtual    LCCollectionVec* CreateDummyReferenceHitCollection();
     virtual void CheckIOCollections(LCEvent* event);
 
-    void DumpReferenceHitDB(std::string name);
+    void DumpReferenceHitDB();
 
 
   private:

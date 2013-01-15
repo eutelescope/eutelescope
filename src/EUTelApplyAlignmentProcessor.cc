@@ -494,7 +494,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 //            _referenceHitCollectionName = _refhitCollectionNames.at(i);
 //            _inputHitCollectionName     = _hitCollectionNames.at(i);
 
-            if( i ==  _alignmentCollectionNames.size() -1 ) 
+            if( i ==  (int)_alignmentCollectionNames.size() -1 ) 
             {
                _inputHitCollectionName     = internal_inputHitCollectionName     ; 
                _referenceHitCollectionName = internal_referenceHitCollectionName ; 
@@ -810,7 +810,7 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
           outputPosition[1] = inputPosition[1];
           outputPosition[2] = inputPosition[2] - z_sensor;
           
-          _EulerRotation( sensorID,outputPosition, gRotation);
+          _EulerRotation(outputPosition, gRotation);
 
           // then the shifts
 //          outputPosition[0]  = telPos[0];
@@ -2341,22 +2341,10 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
 
 }
 
-void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, double & z, std::string	collectionName, LCEvent * event) 
+void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, double & z) 
 {
 
-	// in this function, some parts of the EUTelApplyAlignmentProcessor are used
-
-
-    // ----------------------------------------------------------------------- //
-    // check input / output collections
-
-    // CheckIOCollections(event);
-
-    //
-    // ----------------------------------------------------------------------- //
-
-    // next, find the alignment constant corresponding to the DUT
-	EUTelAlignmentConstant * c = NULL;
+    EUTelAlignmentConstant * c = NULL;
     
     int _manualDUTid = 10;
 
@@ -2398,7 +2386,7 @@ void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, doubl
 	// second the rotation
 	// for the inverse matrix derivation see paper log book 19/01/2011
 	// libov@mail.desy.de
-// no correct any more due to changes in convention of the angle signs!
+// not correct any more due to changes in convention of the angle signs!
 // further more a more clear way would be to multiply an input vector by an inverse rotation matrix  
 // Igor Rubinsky 09-10-2011
 
@@ -2416,7 +2404,7 @@ void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, doubl
 
 
 
-void EUTelApplyAlignmentProcessor::_EulerRotation(int sensorID, double* _telPos, double* _gRotation) {
+void EUTelApplyAlignmentProcessor::_EulerRotation(double* _telPos, double* _gRotation) {
    
 
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
@@ -2432,7 +2420,7 @@ void EUTelApplyAlignmentProcessor::_EulerRotation(int sensorID, double* _telPos,
 }
 
 
-void EUTelApplyAlignmentProcessor::_EulerRotationInverse(int sensorID, double* _telPos, double* _gRotation) {
+void EUTelApplyAlignmentProcessor::_EulerRotationInverse(double* _telPos, double* _gRotation) {
    
 
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
@@ -2650,7 +2638,7 @@ int EUTelApplyAlignmentProcessor::guessSensorID(const double * hit )
 }
 
 
-void EUTelApplyAlignmentProcessor::DumpReferenceHitDB(std::string name="referencehit" )
+void EUTelApplyAlignmentProcessor::DumpReferenceHitDB()
 {
 // create a reference hit collection file (DB)
 
