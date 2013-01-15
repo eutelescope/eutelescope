@@ -35,6 +35,7 @@
 #include "EUTelPStream.h"
 #include "EUTelAlignmentConstant.h"
 #include "EUTelReferenceHit.h"
+#include "EUTelCDashMeasurement.h"
 
 
 // marlin includes ".h"
@@ -3743,6 +3744,9 @@ void EUTelMille::end() {
   streamlog_out ( MESSAGE2 ) << "Number of data points used: " << _nMilleDataPoints << endl;
   streamlog_out ( MESSAGE2 ) << "Number of tracks used: " << _nMilleTracks << endl;
 
+  // monitor the number of tracks in CDash when running tests
+  CDashMeasurement meas_ntracks("ntracks",_nMilleTracks);  cout << meas_ntracks;
+
   // if running pede using the generated steering file
   if (_runPede == 1) {
 
@@ -3807,10 +3811,30 @@ void EUTelMille::end() {
 
 	// pede does not return exit codes on some errors (in V03-04-00)
 	// check for some of those here by parsing the output
-	const char * pch = strstr(pedeoutput.str().data(),"Too many rejects");
-	if (pch){
-	  streamlog_out ( ERROR ) << "Pede stopped due to the large number of rejects. " << endl;
-	  encounteredError = true;
+	{
+	  const char * pch = strstr(pedeoutput.str().data(),"Too many rejects");
+	  if (pch){
+	    streamlog_out ( ERROR ) << "Pede stopped due to the large number of rejects. " << endl;
+	    encounteredError = true;
+	  }
+	}
+	
+	{
+	  char * pch = strstr(pedeoutput.str().data(),"Sum(Chi^2)/Sum(Ndf) = ");
+	  if (pch){
+	    streamlog_out ( DEBUG ) << " Parsing pede output for final chi2/ndf result.. " << endl;
+	    // search for the equal sign after which the result for chi2/ndf is stated within the next 80 chars 
+	    // (with offset of 22 chars since pch points to beginning of "Sum(..." string just found)
+	    pch = (char*) memchr (pch+22, '=', 180);
+	    if (pch!=NULL){
+	      char str[16];
+	      // now copy the numbers after the equal sign
+	      strncpy ( str, pch+1, 15 );
+	      str[15] = '\0';   /* null character manually added */
+	      // monitor the chi2/ndf in CDash when running tests
+	      CDashMeasurement meas_chi2ndf("chi2_ndf",atof(str));  cout << meas_chi2ndf;
+	    }	    
+	  }
 	}
 
         // wait for the pede execution to finish
