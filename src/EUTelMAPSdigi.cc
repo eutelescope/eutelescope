@@ -1280,14 +1280,6 @@ void EUTelMAPSdigi::packMimosa26( int digiIndex )
 
 }
 
-
-void EUTelMAPSdigi::packFEI3( int digiIndex ) 
-{
-
-//  streamlog_out ( MESSAGE4 )  << "packing FEI3" << endl;
-}
-
-
 void EUTelMAPSdigi::packFEI4( int digiIndex ) 
 {
 

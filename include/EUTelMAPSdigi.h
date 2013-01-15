@@ -128,11 +128,6 @@ namespace eutelescope {
      */
     virtual void packMimosa26( int digiIndex );
 
-    //! Called if the detector is FEI3    
-    /*! 
-     */
-    virtual void packFEI3( int digiIndex );
-
     //! Called if the detector is FEI4    
     /*! 
      */
