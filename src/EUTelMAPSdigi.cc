@@ -1033,8 +1033,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
         else
             if( detectorID >= 10 && detectorID < 20 )
         {
-           //streamlog_out ( MESSAGE )<< "magic. FEI3   type"<< endl;
-           packFEI3( digiIndex );
+           streamlog_out ( DEBUG ) << "magic. FEI3   type - Currently no function packFEI3"<< endl;
         }
         else
             if( detectorID >= 20 && detectorID < 30 )
