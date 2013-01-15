@@ -3081,8 +3081,6 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
  //
   // Get input collections
   //
-  int evtNr = event->getEventNumber();
-
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 //  debug = 1;
 
@@ -3091,11 +3089,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   try {
     trackcol = event->getCollection( _inputTrackColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    if( evtNr < 100 ) 
-    message<ERROR> ( log() << "Not able to get collection "
-                     << _inputTrackColName
-                     << "\nfrom event " << event->getEventNumber()
-                     << " in run " << event->getRunNumber() <<  "[message suppressed after event #100 / hardcoded]" );
+    streamlog_out(DEBUG) << "Not able to get collection " << _inputTrackColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     return 1;
 //    throw SkipEventException(this);
   }
@@ -3129,11 +3123,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   try {
     fit__col = event->getCollection( _inputFitHitColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    if( evtNr < 100 ) 
-    message<ERROR> ( log() << "Not able to get collection "
-                     << _inputFitHitColName
-                     << "\nfrom event " << event->getEventNumber()
-                     << " in run " << event->getRunNumber() <<  "[message suppressed after event #100 / hardcoded]" );
+    streamlog_out(DEBUG) << "Not able to get collection " << _inputFitHitColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     return 1;
 //    throw SkipEventException(this);
   }
@@ -3142,11 +3132,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   try {
     rec__col = event->getCollection( _inputRecHitColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    if( evtNr < 100 ) 
-    message<ERROR> ( log() << "Not able to get collection "
-                     << _inputRecHitColName
-                     << "\nfrom event " << event->getEventNumber()
-                     << " in run " << event->getRunNumber() <<  "[message suppressed after event #100 / hardcoded]" );
+    streamlog_out(DEBUG) << "Not able to get collection " << _inputRecHitColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     return 2;
 //    throw SkipEventException(this);
   }
@@ -3392,8 +3378,6 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
  //
   // Get input collections
   //
-  int evtNr = event->getEventNumber();
-
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 
 
@@ -3401,11 +3385,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
   try {
     trackcol = event->getCollection( _inputTrackColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    if( evtNr < 100 ) 
-    message<ERROR> ( log() << "Not able to get collection "
-                     << _inputTrackColName
-                     << "\nfrom event " << event->getEventNumber()
-                     << " in run " << event->getRunNumber() <<  "[message suppressed after event #100 / hardcoded]" );
+    streamlog_out(DEBUG) << "Not able to get collection " << _inputTrackColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     return 1;
 //    throw SkipEventException(this);
   }
@@ -3539,11 +3519,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
   try {
     hitcol = event->getCollection( _inputHitColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    if( evtNr < 100 ) 
-    message<ERROR> ( log() << "Not able to get collection "
-                     << _inputHitColName
-                     << "\nfrom event " << event->getEventNumber()
-                     << " in run " << event->getRunNumber() <<  "[message suppressed after event #100 / hardcoded]"  );
+    streamlog_out(DEBUG) << "Not able to get collection " << _inputHitColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     _DUTok=false;
     //
     // Do not skip event if DUT hits missing - efficiency and
@@ -3571,7 +3547,6 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
 
 // obsolete get id by z:      double dist = pos[2] - _zDUT;
 // if ( dist*dist < -1 )
-     if(debug) printf(" =====  %2d id %2d [%2d] mes %5.3f %5.3f %5.3f \n", ihit, sensorID, _iDUT, pos[0], pos[1], pos[2] );
 
      if( sensorID ==_iDUT ) // measured info only for DUT plane
         {
