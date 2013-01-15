@@ -111,7 +111,7 @@ void fcn_wrapper(int &npar, double *gin, double &f, double *par, int iflag)
   p[1] = 0.0;
   p[2] = 0.0;
   p[3] = 0.0;
-  f = fobj.fit(par,p);
+  f = fobj.fit(par);
 }
 #endif
 
