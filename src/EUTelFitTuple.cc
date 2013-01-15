@@ -354,10 +354,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
   try {
     col = event->getCollection( _inputColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    message<ERROR> ( log() << "Not able to get collection "
-                     << _inputColName
-                     << "\nfrom event " << event->getEventNumber()
-                     << " in run " << event->getRunNumber()  );
+    streamlog_out(DEBUG) << "Not able to get collection " << _inputColName << "from event " << event->getEventNumber() << " in run " << event->getRunNumber() << endl;
     return;
   }
 
