@@ -27,7 +27,8 @@ using namespace CMSPixel;
 CMSPixelDecoder::CMSPixelDecoder(const char *FileName, int *status, unsigned int rocs, int flags, unsigned int event_selection, unsigned int verbosity) 
 {
     *status=0;
-    CMS_stats empty = {0};
+    std::map<unsigned int, int > init;
+    CMS_stats empty = {0,0,0,0,0,0,0,0,0,init,init,0,0,0};
     global_statistics = empty;
 
     // Reading the flags:
@@ -473,7 +474,7 @@ int CMSPixelDecoderDigital::get_bits(std::vector< int > data, int bit_offset,int
     return value;
 }
 
-bool CMSPixelDecoderDigital::find_roc_header(std::vector< int > data, unsigned int * pos, unsigned int roc)
+bool CMSPixelDecoderDigital::find_roc_header(std::vector< int > data, unsigned int * pos, unsigned int)
 {
     // ROC header: 0111 1111 10SD, S & D are reserved status bits.
     // Possible ROC headers: 0x7f8 0x7f9 0x7fa 0x7fb
