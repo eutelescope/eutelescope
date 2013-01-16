@@ -9,9 +9,11 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 PROJECT( Eutelescope )
 
 # IMPORTANT FOR RELEASES:
-# 1. remove debugging compilation flags
-# 2. remove DO_TESTING precompiler flag
-# 3. bumb release version
+# 0. if new major release: create new dev. branch for this release
+#    - remove debugging/extra warnings/efences compilation flags (see below in this file)
+#    - remove DO_TESTING precompiler flag
+# 1. bump release version in this file
+# 2. create SVN tag for this release
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 0 )
@@ -99,7 +101,7 @@ INCLUDE_DIRECTORIES( ./include )
 ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra -g" )
 ADD_DEFINITIONS( "-Wno-long-long" )
 # REMOVE THESE FOR A RELEASE VERSION:
-ADD_DEFINITIONS( "-Wextra -g" )
+ADD_DEFINITIONS( "-Wextra -g -lefence" )
 
 # add library
 SET( libname ${PROJECT_NAME} )
