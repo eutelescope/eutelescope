@@ -159,26 +159,12 @@ void EUTelBrickedClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG) 
 
 }
 
-void EUTelBrickedClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int xSize, int ySize) const {
+void EUTelBrickedClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int , int) const {
 
   //!UGLY HACK
   streamlog_out( WARNING4 ) << "[getCenterOfGravityShift(float& xCoG, float& yCoG, int xSize, int ySize)] DOES NOT MAKE SENSE FOR A BRICKED PIXEL" << endl;
   streamlog_out( WARNING4 ) << "[getCenterOfGravityShift(float& xCoG, float& yCoG, int xSize, int ySize)] USING THE WHOLE FRAME TO COMPUTE THE SHIFT!" << endl;
   getCenterOfGravityShift(xCoG,yCoG);
-
-  /*
-  int xCluSize, yCluSize;
-  getClusterSize(xCluSize, yCluSize);
-  if ( ( xSize >= 2 ) || ( ySize >= 2 ) )
-  {
-        xCoG = 0.0f; yCoG = 0.0f;
-        throw IncompatibleDataSetException("[EUTelBrickedClusterImpl::getCenterOfGravityShift(float& xCoG, float& yCoG, int xSize, int ySize)] WARNING: This is not really applicable within a bricked pixel structure! Result will be zero!");
-  }
-  else
-  {
-        getCenterOfGravityShift(xCoG, yCoG);
-  }
-  */
 
 }
 
