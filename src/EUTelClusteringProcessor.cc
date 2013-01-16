@@ -1067,7 +1067,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                 if(npixel_cl > 1)
                 {
                     if(i>=1)
-                    for(unsigned int index_x = i-1; index_x <= (i + 1); index_x++)
+		      for(int index_x = (int)i-1; index_x <= ((int)i + 1); index_x++)
                     {
                         if(index_x >= 0)
                         {
@@ -1081,7 +1081,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                     }
                     
                     if(j>=1)
-                    for(unsigned int index_y = j-1; index_y <= (j + 1); index_y++)
+		      for(int index_y = (int)j-1; index_y <= ((int)j + 1); index_y++)
                     {
                         if(index_y >= 0)
                         {
@@ -1128,9 +1128,9 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 
                     if(i->x >= (unsigned int) stepx && i->y >= (unsigned int) stepy)
                     {
-                        for(unsigned int index_x = i->x - stepx; index_x <= (i->x + stepx); index_x++)
+		      for(int index_x = (int)i->x - stepx; index_x <= ((int)i->x + stepx); index_x++)
                         {
-                            for(unsigned int index_y = i->y - stepy; index_y <= (i->y + stepy);index_y++)
+			  for(int index_y = (int)i->y - stepy; index_y <= ((int)i->y + stepy);index_y++)
                             {
                                 if(index_x >= 0 && index_y >= 0)
                                 {
