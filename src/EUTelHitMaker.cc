@@ -997,7 +997,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 //      if(  detectorID >= 10 )
 //     test mode: all planes can be tilted  
 
-      _EulerRotation( detectorID, telPos, gRotation);
+      _EulerRotation(telPos, gRotation);
       //
 //    finally apply initial shifts:       
       telPos[0] += xZero;
@@ -1379,7 +1379,7 @@ void EUTelHitMaker::book3DHisto() {
 #endif // AIDA
 }
 
-void EUTelHitMaker::_EulerRotation(int detectorID, double* _telPos, double* _gRotation) {
+void EUTelHitMaker::_EulerRotation(double* _telPos, double* _gRotation) {
   
     TVector3 _UnrotatedSensorHit( _telPos[0], _telPos[1], 0. );
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], 0. );
