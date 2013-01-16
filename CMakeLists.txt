@@ -8,17 +8,18 @@ CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 # project name
 PROJECT( Eutelescope )
 
-# IMPORTANT FOR RELEASES:
-# 0. if new major release: create new dev. branch for this release
-#    - remove debugging/extra warnings/efences compilation flags (see below in this file)
-#    - remove DO_TESTING precompiler flag
-# 1. bump release version in this file
-# 2. create SVN tag for this release
-
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 0 )
 SET( ${PROJECT_NAME}_VERSION_MINOR 7 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
+
+# IMPORTANT FOR RELEASES:
+# ======================
+# 0. if new major release: create new dev. branch for this release
+#    - remove the lines below that are marked with "!RELEASE": these activate debugging/extra warnings and electric fence
+#    - remove DO_TESTING precompiler flag
+# 1. bump release version in this file
+# 2. create SVN tag for this release
 
 
 
@@ -100,8 +101,8 @@ INCLUDE_DIRECTORIES( ./include )
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra -g" )
 ADD_DEFINITIONS( "-Wno-long-long" )
-# REMOVE THESE FOR A RELEASE VERSION:
-ADD_DEFINITIONS( "-Wextra -g -lefence" )
+# !RELEASE: REMOVE FOR RELEASE VERSIONS
+ADD_DEFINITIONS( "-Wextra -g" )
 
 # add library
 SET( libname ${PROJECT_NAME} )
@@ -123,6 +124,23 @@ ENDMACRO()
 ADD_EUTELESCOPE_TOOL( pede2lcio )
 ADD_EUTELESCOPE_TOOL( pedestalmerge )
 
+# !RELEASE: REMOVE FOR RELEASE VERSIONS
+# electric fence
+FIND_LIBRARY(EFENCE_LIBRARY
+    NAMES efence
+    DOC "The electric fence library"
+    PATHS
+        /usr/lib
+        /usr/local/lib
+        /usr/efence/lib
+        /usr/share/efence/lib
+    )
+IF(EFENCE_LIBRARY MATCHES "NOTFOUND")
+  MESSAGE("Electric Fence not installed - disabled.")
+ELSE(EFENCE_LIBRARY MATCHES "NOTFOUND")
+  target_link_libraries(${libname} ${EFENCE_LIBRARY})
+ENDIF()
+
 # display some variables and write them to cache
 DISPLAY_STD_VARIABLES()
 
@@ -138,6 +156,16 @@ DISPLAY_STD_VARIABLES()
 
 ENABLE_TESTING()
 INCLUDE(CTest)
+
+# if cppcheck is installed, offer static code analysis test
+find_program(CPPCHECK cppcheck /scrach/local/bin) # hint at path /scratch/... used on EUTelTesting server; will also parse $PATH
+if(CPPCHECK)
+        ADD_TEST( TestCppcheckSources sh -c "${CPPCHECK_EXECUTABLE} --enable=style -q $ENV{EUTELESCOPE}/src" )
+        SET_TESTS_PROPERTIES (TestCppcheckSources PROPERTIES
+                FAIL_REGULAR_EXPRESSION "(error)"
+        )
+endif()
+
 
 # ----------------------------------------------------------------------------
 # TEST IF ENVIRONMENT IS OK FOR RUNNING TESTS
@@ -180,6 +208,7 @@ configure_file (
 	       ${PROJECT_BINARY_DIR}/CTestCustom.cmake
 	       )
 
+# !RELEASE
 ADD_DEFINITIONS("-DDO_TESTING")
 
 
