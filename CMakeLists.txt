@@ -91,6 +91,10 @@ ADD_DEFINITIONS("-DUSE_CLHEP")
 ADD_DEFINITIONS("-DUSE_CED")
 
 
+# !RELEASE: switches on output parsed for automatic nightly tests
+ADD_DEFINITIONS("-DDO_TESTING")
+
+
 # ---------------------------------------------------------------------------
 
 
@@ -138,6 +142,7 @@ FIND_LIBRARY(EFENCE_LIBRARY
 IF(EFENCE_LIBRARY MATCHES "NOTFOUND")
   MESSAGE("Electric Fence not installed - disabled.")
 ELSE(EFENCE_LIBRARY MATCHES "NOTFOUND")
+  MESSAGE("Electric Fence library was found and will be linked against ${PROJECT_NAME}")
   target_link_libraries(${libname} ${EFENCE_LIBRARY})
 ENDIF()
 
@@ -156,15 +161,6 @@ DISPLAY_STD_VARIABLES()
 
 ENABLE_TESTING()
 INCLUDE(CTest)
-
-# if cppcheck is installed, offer static code analysis test
-find_program(CPPCHECK cppcheck /scrach/local/bin) # hint at path /scratch/... used on EUTelTesting server; will also parse $PATH
-if(CPPCHECK)
-        ADD_TEST( TestCppcheckSources sh -c "${CPPCHECK_EXECUTABLE} --enable=style -q $ENV{EUTELESCOPE}/src" )
-        SET_TESTS_PROPERTIES (TestCppcheckSources PROPERTIES
-                FAIL_REGULAR_EXPRESSION "(error)"
-        )
-endif()
 
 
 # ----------------------------------------------------------------------------
@@ -194,6 +190,20 @@ ENDIF()
 
 # check environment
 IF( DEFINED ENV{EUTELESCOPE} AND DEFINED ENV{MARLIN})
+
+# if cppcheck is installed, offer static code analysis test
+find_program(CPPCHECK cppcheck /scrach/local/bin) # hint at path /scratch/... used on EUTelTesting server; will also parse $PATH
+if(CPPCHECK)
+  MESSAGE("cppcheck was found and will be made available as test.")
+  ADD_TEST( TestCppcheckSources sh -c "${CPPCHECK_EXECUTABLE} --enable=all -I $ENV{EUTELESCOPE}/include -q -rp=$ENV{EUTELESCOPE} --std=c99 --std=posix $ENV{EUTELESCOPE}/src" )
+  SET_TESTS_PROPERTIES (TestCppcheckSources PROPERTIES
+    FAIL_REGULAR_EXPRESSION "(error)"
+    )
+else()
+  MESSAGE("cppcheck was not found - omitting cppcheck static code analysis test.")
+endif()
+
+
 # ======================================================================
 # ======================================================================
 # TestPysubExampleDaturaAlone: based on config in pysub/examples/datura-alone
@@ -207,9 +217,6 @@ configure_file (
 	       ./CTestCustom.cmake.in 
 	       ${PROJECT_BINARY_DIR}/CTestCustom.cmake
 	       )
-
-# !RELEASE
-ADD_DEFINITIONS("-DDO_TESTING")
 
 
 ELSE()
