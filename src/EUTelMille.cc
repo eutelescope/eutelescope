@@ -402,10 +402,6 @@ void EUTelMille::init() {
             _sensors_to_the_left++;
         }
     }
-    streamlog_out (MESSAGE4) << " ";
-    printf("iPlane %-3d sensor_#_along_Z_axis %-3d [z= %-9.3f ] [sensorID %-3d ]  \n", iPlane, _sensors_to_the_left,     keepZPosition[ iPlane ], sensorID);
-
-    streamlog_out (MESSAGE4) << endl;
 
     _sensorIDVecZOrder.push_back( _sensors_to_the_left );
     _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
@@ -430,7 +426,7 @@ void EUTelMille::init() {
         ++_nPlanes;
       }
 
-      if (_useSensorRectangular.size() == 0) {
+      if (_useSensorRectangular.empty()) {
 	      streamlog_out(MESSAGE4) << "No rectangular limits on pixels of sensorplanes applied" << endl;
       } else {
 	      if (_useSensorRectangular.size() % 5 != 0) {
@@ -514,7 +510,6 @@ void EUTelMille::init() {
       while ( iter != sensorIDMap.end() ) {
         if( iter->second == _excludePlanes_sensorIDs[i])
           {
-            printf("excludePlanes_sensorID %2d of %2d (%2d) \n", int(i), static_cast<int> (_excludePlanes_sensorIDs.size()) , counter );
             _excludePlanes.push_back(counter);
             break;
           }
@@ -532,7 +527,6 @@ void EUTelMille::init() {
       {
         if(_excludePlanes[i] == counter)
           {
-            printf("excludePlanes %2d of %2d (%2d) \n", int(i), static_cast<int> (_excludePlanes_sensorIDs.size()), counter );
             excluded = true;
             break;
           }
@@ -587,7 +581,6 @@ void EUTelMille::init() {
   _telescopeResolY = new double[_nPlanes];
   _telescopeResolZ = new double[_nPlanes];
 
-//  printf("print resolution  X: %2d, Y: %2d, Z: %2d \n", _resolutionX.size(), _resolutionY.size(), _resolutionZ.size() );
   //check the consistency of the resolution parameters
   if(_alignMode == 3)
     {
@@ -618,13 +611,8 @@ void EUTelMille::init() {
             }
         }
 
-//      printf("print FixParameter  \n");
-
-      if(_FixParameter.size() != static_cast<unsigned int>(_nPlanes ) && _FixParameter.size() > 0)
-        {
-//  ADDITIONAL PRINTOUTS   
-//       for(int i = 0; i < _FixParameter.size(); i++) printf(" _FixParameter(%2d) = %3d \n", i, _FixParameter.at(i) );
-         
+      if(_FixParameter.size() != static_cast<unsigned int>(_nPlanes ) && !_FixParameter.empty())
+        {       
          streamlog_out ( WARNING2 ) << "Consistency check of the fixed parameters array failed. The array size is different than the number of found planes! The array is now set to default values, which means that all parameters are free in the fit." << endl;
           _FixParameter.clear();
           for(size_t i = 0; i < _nPlanes; i++)
@@ -632,7 +620,7 @@ void EUTelMille::init() {
               _FixParameter.push_back(0);
             }
         }
-      if(_FixParameter.size() == 0)
+      if(_FixParameter.empty())
         {
           streamlog_out ( WARNING2 ) << "The fixed parameters array was found to be empty. It will be filled with default values. All parameters are free in the fit now." << endl;
           _FixParameter.clear();
@@ -670,7 +658,7 @@ void EUTelMille::init() {
 //      _zPosTrack.push_back(std::vector<double>(_nPlanes,0.0));
     }
 
-  if(_distanceMaxVec.size() > 0)
+  if(!_distanceMaxVec.empty())
     {
       if(_distanceMaxVec.size() !=  static_cast<unsigned int>(_nPlanes ) )
         {
@@ -783,7 +771,6 @@ void EUTelMille::findtracks2(
  for(size_t j =0; j < _allHitsArray[i].size(); j++)
     {
       int ihit = (int)j;
- //     printf("plane %2d of %2d ; hit %2d \n", i, (int)(_allHitsArray.size())-1, ihit);
 
       //if we are not in the last plane, call this method again
       if(i < _allHitsArray.size()-1)
@@ -2282,7 +2269,6 @@ void EUTelMille::processEvent (LCEvent * event) {
               derLC[2] = _zPosHere[help];
               residual = _waferResidX[help];
               sigma    = _resolutionX[help];
-//              printf("sigma = %9.3f \n",sigma);
               _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
 
               derGL[((helphelp * 3) + 0)] = 0;
@@ -2590,7 +2576,6 @@ void EUTelMille::processEvent (LCEvent * event) {
 
         // end local fit
         _mille->end();
-//        printf("mille->end() OK \n", _nMilleTracks);
 
         _nMilleTracks++;
 
@@ -2797,13 +2782,12 @@ int EUTelMille::guessSensorID( TrackerHitImpl * hit ) {
             if(cluster != 0)
             {
               int sensorID = cluster->getDetectorID();
-//              printf("actual sensorID: %5d \n", sensorID );
               return sensorID;
             }
           }
           catch(...)
           {
-            printf("guess SensorID crashed \n");
+	    streamlog_out(ERROR) << "guessSensorID() produced an exception!" << endl;
           }
 
 return -1;
@@ -3007,8 +2991,6 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
 
 void EUTelMille::end() {
 
-//printf("end() \n");
-
   delete [] _telescopeResolY;
   delete [] _telescopeResolX;
   delete [] _telescopeResolZ;
@@ -3018,8 +3000,6 @@ void EUTelMille::end() {
   delete [] _waferResidX;
   delete [] _waferResidZ;
 
-//printf("delete hitsarray \n");
-
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
   if(_alignMode == 3)
     {
@@ -3027,13 +3007,8 @@ void EUTelMille::end() {
     }
 #endif
 
-//printf("mille \n");
-
   // close the output file
   delete _mille;
-
-//printf("mille OK\n");
-
 
   // if write the pede steering file
   if (_generatePedeSteerfile) {
@@ -3139,7 +3114,6 @@ void EUTelMille::end() {
 
       // loop over all planes
       for (unsigned int help = 0; help < _nPlanes; help++) {
-//        printf("end: plane %5d of %5d \n", help, _nPlanes);
  
         int excluded = 0; // flag for excluded planes
 
@@ -3162,9 +3136,7 @@ void EUTelMille::end() {
                 fixed = true;
             }
           
-          // if fixed planes
-          // if (help == firstnotexcl || help == lastnotexcl) {
-          if( fixed || (_FixedPlanes.size() == 0 && (help == firstnotexcl || help == lastnotexcl) ) )
+          if( fixed || (_FixedPlanes.empty() && (help == firstnotexcl || help == lastnotexcl) ) )
             {
               if (_alignMode == 1) {
                 steerFile << (counter * 3 + 1) << " 0.0 -1.0" << endl;
@@ -3454,7 +3426,6 @@ void EUTelMille::end() {
         LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
         lcHeader->setRunNumber( 0 );
 
-
         lcWriter->writeRunHeader(lcHeader);
 
         delete lcHeader;
@@ -3485,7 +3456,6 @@ void EUTelMille::end() {
           // get the first line and throw it away since it is a
           // comment!
           getline( millepede, line );
-          std::cout << "line:" <<  line  << std::endl;
 
           int counter = 0;
 
@@ -3502,8 +3472,6 @@ void EUTelMille::end() {
 
             bool _nonzero_tokens = false;
 
-
-
             for ( unsigned int iParam = 0 ; iParam < numpars ; ++iParam ) 
             {
               getline( millepede, line );
@@ -3513,36 +3481,21 @@ void EUTelMille::end() {
                 continue;
               }
 
-
-
               tokens.clear();
               tokenizer.clear();
               tokenizer.str( line );
 
               // check that all parts of the line are non zero
-//              int ibuff=0;
               while ( tokenizer >> buffer ) {
                 tokens.push_back( buffer ) ;
                 if(buffer> 1e-12) _nonzero_tokens = true;
-//                ibuff++;
-//                printf("buff[%2d:%1d] = %8.3f ", iParam, ibuff, buffer);
               }
-//              printf("\n");
 
               if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) || (tokens.size() == 5) ) {
                 goodLine = true;
               } else goodLine = false;
 
               bool isFixed = ( tokens.size() == 3 );
-/*
-              if ( isFixed ) {
-                streamlog_out ( MESSAGE ) << "Parameter " << tokens[0] << " is at " << ( tokens[1] / 1000 )
-                                         << " (fixed)"  << endl;
-              } else {
-                streamlog_out ( MESSAGE ) << "Parameter " << tokens[0] << " is at " << (tokens[1] / 1000 )
-                                         << " +/- " << ( tokens[4] / 1000 )  << endl;
-              }
-*/
               if(_alignMode != 3)
                 {
                  if ( iParam == 0 ) {
@@ -3590,7 +3543,6 @@ void EUTelMille::end() {
             }
 
 
-//printf("goodLine : %1d \n", goodLine, _orderedSensorID.at( counter ) );
             // right place to add the constant to the collection
             if ( goodLine  ) {
 //               constant->setSensorID( _orderedSensorID_wo_excluded.at( counter ) );
