@@ -174,6 +174,11 @@ void EUTelX0Processor::init()
 
 void EUTelX0Processor::processRunHeader(LCRunHeader *run)
 {
+  int hell = 1;
+  int freezesover = 2;
+  if(hell == freezesover){
+    run++;
+  }
 }
 
 void EUTelX0Processor::processEvent(LCEvent *evt)
@@ -317,7 +322,6 @@ int EUTelX0Processor::guessSensorID(const double * hit )
       //message<DEBUG> ( log() << "iPlane " << refhit->getSensorID() << " hitPos: [" << hit[0] << " " << hit[1] << " " << hit[2] << "] distance: " << minDistance << endl );
     }
   }
-  //cout << "Layer Number of this hit is " << sensorID << endl;
   return sensorID;
 }
  
@@ -358,7 +362,6 @@ double EUTelX0Processor::calculateX0()
     sigma_measi = 5;  //HACK - This is actually the sum of the variances of theta in the forward and backward direction. 
     size_t size = _histoData["Theta012"].size();
     double loglikelihoodX0(0);
-    cout << "Size = " << size << endl;
     for(size_t i = 0; i < size; ++i){
       theta012 = _histoData["Theta012"][i]*3.1415/180.0;
       theta432 = _histoData["Theta432"][i]*3.1415/180.0;
@@ -368,13 +371,10 @@ double EUTelX0Processor::calculateX0()
       double deltabeta = sqrt((beta432 - beta012)*(beta432 - beta012));
       sigma_msi = (0.015*E/(p*p))*sqrt(X/(sin(deltatheta)*cos(deltabeta)))*(1 + 0.038*std::log(X/(sin(deltatheta)*cos(deltabeta))));
       if(sigma_msi != sigma_msi){
-        cerr << "Code failed with following values: " << endl;
-        cout << "E = " << E << endl << "p = " << p << endl << "X = " << X << endl << "theta012 = " << theta012 << endl << "beta012 = " << beta012 << endl << "theta432 = " << theta432 << endl << "beta432 = " << beta432 << endl << "deltatheta = " << deltatheta << endl << "deltabeta = " << deltabeta << endl << "sigma_msi = " << sigma_msi << endl << "sigma_measi = " << sigma_measi << endl << "loglikelihoodX0 = " << loglikelihoodX0 << endl << endl;
+        streamlog_out(ERROR) << "Code failed with following values: " << endl << "E = " << E << endl << "p = " << p << endl << "X = " << X << endl << "theta012 = " << theta012 << endl << "beta012 = " << beta012 << endl << "theta432 = " << theta432 << endl << "beta432 = " << beta432 << endl << "deltatheta = " << deltatheta << endl << "deltabeta = " << deltabeta << endl << "sigma_msi = " << sigma_msi << endl << "sigma_measi = " << sigma_measi << endl << "loglikelihoodX0 = " << loglikelihoodX0 << endl << endl;
       }
       //Maximum log-likelihood:
       loglikelihoodX0 += -std::log(sigma_msi*sigma_msi + sigma_measi*sigma_measi) - (theta012*theta012)/(sigma_msi*sigma_msi + sigma_measi*sigma_measi); 
-
-      cout << "E = " << E << endl << "p = " << p << endl << "X = " << X << endl << "theta012 = " << theta012 << endl << "beta012 = " << beta012 << endl << "sigma_msi = " << sigma_msi << endl << "sigma_measi = " << sigma_measi << endl << "loglikelihoodX0 = " << loglikelihoodX0 << endl << endl;
     }
     if(loglikelihoodX0 > currentlikelihood){
       BetterX = X0;
@@ -397,17 +397,13 @@ double EUTelX0Processor::calculateX0()
     X = X0/thickness;
     loglikelihoodX0 = 0;
   }
-
-  cout << "The MAX Log Likelihood is " << currentlikelihood << endl;
   return X0;
 }
 
 void EUTelX0Processor::threePointResolution(LCCollection *alignedHitCollection){
-  //cout << "Running threePointResolution function" << endl;
   map< int, vector< TVector3> > hitvectortemp;//Temporary map for storing vectors of hit information pre-cut
   int collectionsize = alignedHitCollection->getNumberOfElements();
   for(int i = 0; i < collectionsize; ++i){
-    //cout << "Make a collection of the hits: " << i << endl;
     TrackerHit* tHit = dynamic_cast<TrackerHit*>(alignedHitCollection->getElementAt(i));//Get the hit from each element of the collection
     const double* pos = tHit->getPosition();//Get the position of the hit in x, y and z
     int layernumber = guessSensorID(pos);//Get the layer number of the hit
@@ -415,7 +411,7 @@ void EUTelX0Processor::threePointResolution(LCCollection *alignedHitCollection){
     TVector3 tempvec(X,Y,Z);//Add the positions to a TVector3
     hitvectortemp[layernumber].push_back(tempvec);//Then put it in the temporary map
     if(_debug == true){
-      cout << "In for loop 'for(int i = 0; i < collectionsize; ++i)':" << endl
+      streamlog_out(DEBUG)<< "In for loop 'for(int i = 0; i < collectionsize; ++i)':" << endl
            << "layernumber = " << layernumber << ", X = " << X << ", Y = " << Y << ", Z = " << Z << endl
            << "hitvectortemp[" << layernumber << "].size() = " << hitvectortemp[layernumber].size() << endl;
     }
@@ -424,8 +420,6 @@ void EUTelX0Processor::threePointResolution(LCCollection *alignedHitCollection){
     size_t hitvecisize = hitvectortemp[i].size();
     size_t hitveci2size = hitvectortemp[i+2].size();
     size_t hitveci1size = hitvectortemp[i+1].size();
-    //cout << "Size of each hitvec is: " << endl <<
-    //  "hitvecisize = " << hitvecisize << endl << "hitveci1size = " << hitveci1size << endl << "hitveci2size = " << hitveci2size << endl;
     for(size_t j = 0; j < hitvecisize; ++j){
       TVector3 hiti = hitvectortemp[i][j];
       for(size_t k = 0; k < hitveci2size; ++k){
