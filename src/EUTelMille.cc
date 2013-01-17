@@ -101,17 +101,7 @@ using namespace eutelescope;
 //std::vector<EUTelMille::hit> hitsarray;
 EUTelMille::hit *hitsarray;
 unsigned int number_of_datapoints;
-<<<<<<< .mine
 
-void fcn_wrapper(int &npar, double *gin, double &f, double *par, int iflag) {
-    EUTelMille::trackfitter fobj(hitsarray, number_of_datapoints);
-    double p[4];
-    p[0] = 0.0;
-    p[1] = 0.0;
-    p[2] = 0.0;
-    p[3] = 0.0;
-    f = fobj.fit(par);
-=======
 void fcn_wrapper(int& /*npar*/, double* /*gin*/, double &f, double *par, int /*iflag*/)
 {
   EUTelMille::trackfitter fobj(hitsarray,number_of_datapoints);
@@ -121,7 +111,6 @@ void fcn_wrapper(int& /*npar*/, double* /*gin*/, double &f, double *par, int /*i
   p[2] = 0.0;
   p[3] = 0.0;
   f = fobj.fit(par);
->>>>>>> .r2260
 }
 #endif
 
