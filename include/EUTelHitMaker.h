@@ -309,7 +309,7 @@ namespace eutelescope {
     void book3DHisto();
 
     //! Perform Euler rotations
-    void _EulerRotation(int detectorID, double* _telPos, double* _gRotation);
+    void _EulerRotation(double* _telPos, double* _gRotation);
 
     void addReferenceHitCollection(LCEvent *event, std::string referenceHitName);
 
