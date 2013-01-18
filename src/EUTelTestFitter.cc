@@ -348,11 +348,11 @@ void EUTelTestFitter::init() {
 
   // Test output
 
-  if( _SkipLayerIDs.size() ) {
+  if( !_SkipLayerIDs.empty() ) {
     streamlog_out ( MESSAGE0 )  <<  _SkipLayerIDs.size() << " layers should be skipped" << endl;
   }
 
-  if( _PassiveLayerIDs.size() ) {
+  if( !_PassiveLayerIDs.empty() ) {
     streamlog_out ( MESSAGE0 ) <<  _PassiveLayerIDs.size() << " layers should be considered passive" << endl;
   }
 
@@ -2575,8 +2575,13 @@ int EUTelTestFitter::GaussjSolve(double *alfa,double *beta,int n)
         }
       ipiv[icol]++;
 
-      if(ipiv[icol]>1)
+      if(ipiv[icol]>1){
+	// first clean up then bail out
+	delete ipiv;
+	delete indxr;
+	delete indxc;
         return 1;
+      }
 
       if(irow!=icol)
         {
@@ -2632,7 +2637,7 @@ int EUTelTestFitter::GaussjSolve(double *alfa,double *beta,int n)
   return 0;
 }
 
-void EUTelTestFitter::getFastTrackImpactPoint(double & x, double & y, double & z, Track * tr, LCEvent * ev) {
+void EUTelTestFitter::getFastTrackImpactPoint(double & x, double & y, double & z, Track * /* tr */, LCEvent * /* ev */) {
 
     // given maps:
     //            _siPlaneCenter.insert( make_pair( sensorID,  _planeCenter ));
@@ -2686,12 +2691,6 @@ void EUTelTestFitter::getFastTrackImpactPoint(double & x, double & y, double & z
 	b(2) = offsetY;
 
 	trackImpact = equationMatrix.Invert() * b;
-
-/*
-	cout << trackImpact(0) << " ** " << x << endl;
-	cout << trackImpact(1) << " ** " << y << endl;
-	cout << trackImpact(2) << " ** " << z << endl;
-*/
 
 	x = trackImpact(0);
 	y = trackImpact(1);
@@ -2934,44 +2933,15 @@ void EUTelTestFitter::getTrackImpactPoint(double & x, double & y, double & z, Tr
 
 
 
-int EUTelTestFitter::guessSensorID( Track * track ) {
+int EUTelTestFitter::guessSensorID( Track * /*track*/ ) {
 
-  int sensorID = -1;
-  /*
-  double minDistance =  numeric_limits< double >::max() ;
-  double * hitPosition = const_cast<double * > (hit->getPosition());
+  streamlog_out( ERROR ) << " guessSensorID(Track *) called but no longer implemented! Please use guessSensorID( double & x, double & y, double & z) instead. " << endl;
 
-  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) 
-  {
-      double distance = std::abs( hitPosition[2] - _siPlaneZPosition[ iPlane ] );
-      if ( distance < minDistance ) 
-      {
-          minDistance = distance;
-          sensorID = _siPlanesLayerLayout->getID( iPlane );
-      }
-  }
-  if  ( _siPlanesParameters->getSiPlanesType() == _siPlanesParameters->TelescopeWithDUT ) 
-  {
-      double distance = std::abs( hitPosition[2] - _siPlanesLayerLayout->getDUTPositionZ() );
-      if( distance < minDistance )
-      {
-        minDistance = distance;
-        sensorID = _siPlanesLayerLayout->getDUTID();
-      }
-  }
-  if ( minDistance > 10  // mm  ) 
-  {
-    // advice the user that the guessing wasn't successful 
-    streamlog_out( WARNING3 ) << "A hit was found " << minDistance << " mm far from the nearest plane\n"
-      "Please check the consistency of the data with the GEAR file " << endl;
-    throw SkipEventException(this);
-  }
-*/
-  return sensorID;
+  return -1;
 }
 
 
-int EUTelTestFitter::guessSensorID( double & x, double & y, double & z) 
+int EUTelTestFitter::guessSensorID( double & /*x*/, double & /*y*/, double & z) 
 {
 
   int sensorID = -1;
