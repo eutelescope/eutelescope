@@ -1891,6 +1891,7 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
                 eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > 
                               *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
                 
+		if(apixCluster == 0 ) throw UnknownDataTypeException(" problem accessing cluster ");
                 int sensorID = apixCluster->getDetectorID();
                 bool skipHit = 0;
                 for (size_t iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
@@ -1908,7 +1909,7 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
                        if( _hotPixelMap[ix]  )
                        { 
                           skipHit = true; 	      
-                          if(apixCluster !=0 ) delete apixCluster;
+                          delete apixCluster;
                           return true; // if TRUE  this hit will be skipped
                        }
                        else

@@ -385,7 +385,7 @@ DEPFETReader::DEPFETReader ():DataSourceProcessor  ("DEPFETReader") {
 //       rawData->push_back (rawMatrix[iMOD]);
 
          }  // skip_2:  //end eventheader rc==2
-	 delete DATA;
+	 delete[] DATA;
      } while (idet!=Nmodtot);
      printf("-------------------------------\n");
      for (int ii=0;ii<Ndet;ii++)  rawData->push_back (rawMatrix[ii]);
