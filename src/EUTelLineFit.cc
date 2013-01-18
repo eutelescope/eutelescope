@@ -1,4 +1,3 @@
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Tatsiana Klimkovich, DESY <mailto:tklimk@mail.desy.de>
 // Version: $Id$
 /*

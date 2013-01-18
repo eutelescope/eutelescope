@@ -1,4 +1,3 @@
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Igor Rubinskiy, INFN <mailto:rubinky@mail.desy.de>
 // Version $Id$
 /*

@@ -1,4 +1,3 @@
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 
 /*
  *   This source code is part of the Eutelescope package of Marlin.

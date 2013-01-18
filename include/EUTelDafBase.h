@@ -1,6 +1,5 @@
 // Version: $Id$
 //! Author Havard Gjersdal <haavagj@fys.uio.no>
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 /*
  *   This source code is part of the Eutelescope package of Marlin.
  */

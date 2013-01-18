@@ -1,6 +1,4 @@
-// Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
 // Version: $Id$
-// Date 2007.06.04
         
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -13,7 +11,7 @@
 
 #ifdef USE_GEAR
 
-// eutelescope inlcudes
+// eutelescope includes
 #include "EUTelTestFitter.h"
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"

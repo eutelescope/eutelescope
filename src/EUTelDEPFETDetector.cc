@@ -1,4 +1,3 @@
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Julia Furletova, INFN <mailto:julia@mail.desy.de>
 // Version $Id$
 /*

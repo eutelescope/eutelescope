@@ -1,5 +1,4 @@
 // Version: $Id$
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author:  Georg Troska <mailto:georg.troska@uni-dortmund.de>
 
 

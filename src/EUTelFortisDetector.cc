@@ -1,5 +1,4 @@
 // Version: $Id$
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
 // Author Christian Takacs, SUS UNI HD <mailto:ctakacs@rumms.uni-mannheim.de>
 /*
  *   This source code is part of the Eutelescope package of Marlin.
