@@ -296,7 +296,7 @@ void CMSPixelReader::readDataSource (int Ntrig)
             EUTelSparseDataImpl<EUTelSimpleSparsePixel>  sparseData( sparse ) ;
                     
             // Check if we have an empty event:
-            if(event_data.size() != 0) {
+            if(!event_data.empty()) {
                 for (unsigned int ipx = 0; ipx < event_data[iROC].size(); ipx++) {
                     auto_ptr<EUTelSimpleSparsePixel> sparsePixel( new EUTelSimpleSparsePixel );
                     
