@@ -2577,9 +2577,9 @@ int EUTelTestFitter::GaussjSolve(double *alfa,double *beta,int n)
 
       if(ipiv[icol]>1){
 	// first clean up then bail out
-	delete ipiv;
-	delete indxr;
-	delete indxc;
+	delete[] ipiv;
+	delete[] indxr;
+	delete[] indxc;
         return 1;
       }
 
@@ -2598,8 +2598,12 @@ int EUTelTestFitter::GaussjSolve(double *alfa,double *beta,int n)
       indxr[i]=irow;
       indxc[i]=icol;
 
-      if(alfa[n*icol+icol]==0.)
-        return 1;
+      if(alfa[n*icol+icol]==0.){
+	// first clean up then bail out
+	delete[] ipiv;
+	delete[] indxr;
+	delete[] indxc;
+        return 1;}
 
       help=alfa[n*icol+icol];
       pivinv=1./help;
