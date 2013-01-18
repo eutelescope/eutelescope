@@ -17,7 +17,7 @@
 #if defined(USE_GEAR) && defined(USE_MARLINUTIL)
 
 // ROOT includes:
-#include "TVector3.h"
+#include <TVector3.h>
 
 
 // eutelescope includes ".h"
@@ -254,7 +254,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
                             "\n3 - (EXPERIMENTAL) shifts in the X,Y and Z directions and rotations around all three axis",
                             _alignMode, static_cast <int> (1));
 
-  registerOptionalParameter("UseResidualCuts","Use cuts on the residuals to reduce the combinatorial background. 0 for off (default), 1 for on",_useResidualCuts,
+  registerOptionalParameter("UseResidualCuts","Use cuts on the residuals to reduce the combinatorial background. 0 for off, 1 for on",_useResidualCuts,
                             static_cast <int> (0));
 
   registerOptionalParameter("AlignmentConstantLCIOFile","This is the name of the LCIO file name with the output alignment"
@@ -342,15 +342,6 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 }
 
 void EUTelMille::init() {
-  // check if Marlin was built with GEAR support or not
-#ifndef USE_GEAR
-
-  streamlog_out ( ERROR2 ) << "Marlin was not built with GEAR support." << endl;
-  streamlog_out ( ERROR2 ) << "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue." << endl;
-
-  exit(-1);
-
-#else
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
@@ -406,6 +397,8 @@ void EUTelMille::init() {
     _sensorIDVecZOrder.push_back( _sensors_to_the_left );
     _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
    }
+   
+   delete [] keepZPosition;
 
 
   _histogramSwitch = true;
@@ -465,8 +458,8 @@ void EUTelMille::init() {
     }
   else
     {
-      cout << "unknown input mode " << _inputMode << endl;
-      exit(-1);
+      streamlog_out ( ERROR2 ) << "unknown input mode " << _inputMode << endl;
+      throw InvalidParameterException("unknown input mode");
     }
   
   // an associative map for getting also the sensorID ordered
@@ -545,12 +538,8 @@ void EUTelMille::init() {
   if(_siPlaneZPosition.size() != _nPlanes)
     {
       streamlog_out ( ERROR2 ) << "the number of detected planes is " << _nPlanes << " but only " << _siPlaneZPosition.size() << " layer z positions were found!"  << endl;
-      exit(-1);
+      throw InvalidParameterException("number of layers and layer z positions mismatch");
     }
-
-#endif
-
-
 
   // this method is called only once even when the rewind is active
   // usually a good idea to
@@ -599,7 +588,9 @@ void EUTelMille::init() {
          _resolutionZ.size() != static_cast<unsigned int>(_nPlanes )
          )
         {
-          streamlog_out ( WARNING2 ) << "Consistency check of the resolution parameters failed. The array size is different than the number of found planes! The resolution parameters are set to default values now (see variable TelescopeResolution). This introduces a bias if the real values for X,Y and Z are rather different." << endl;
+          streamlog_out ( WARNING2 ) << "Consistency check of the resolution parameters failed. The array size is different than the number of found planes! "
+                                        "The resolution parameters are set to default values now (see variable TelescopeResolution). "
+                                        "This introduces a bias if the real values for X,Y and Z are rather different." << endl;
           _resolutionX.clear();
           _resolutionY.clear();
           _resolutionZ.clear();
@@ -645,7 +636,6 @@ void EUTelMille::init() {
 
   streamlog_out ( MESSAGE2 ) << "Initialising Mille..." << endl;
   _mille = new Mille(_binaryFilename.c_str());
-  streamlog_out ( MESSAGE2 ) << "The filename for the binary file is: " << _binaryFilename.c_str() << endl;
 
   for(int i = 0; i < _maxTrackCandidates; i++)
     {
@@ -679,24 +669,7 @@ void EUTelMille::init() {
         }
     }
 
-/*
-//prepare a planes center points and normal vectors:
-  for(int i=0; i < _orderedSensorID.size(); i++)
-  {
-	// this is a normal vector to the plane
-	TVectorD	NormalVector(3);
-	NormalVector(0) = 0.;
-	NormalVector(1) = 0.;
-	NormalVector(2) = 1.; //along z axis !! {true but it's can different direction for the local sensor frame z !!}
-
-	TVectorD	CenterVector(3);
-	NormalVector(0) = 0.;
-	NormalVector(1) = 0.;
-	NormalVector(2) = 0.;
-  } 
-*/
-
-  streamlog_out ( MESSAGE2 ) << "end of init" << endl;
+  streamlog_out ( MESSAGE2 ) << "end of initialisation" << endl;
 }
 
 void EUTelMille::processRunHeader (LCRunHeader * rdr) {
