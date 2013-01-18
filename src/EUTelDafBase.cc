@@ -572,19 +572,22 @@ bool EUTelDafBase::checkClusterRegion(lcio::TrackerHitImpl* hit, int iden){
   return(goodRegion);
 }
 
-int EUTelDafBase::checkInTime(daffitter::TrackCandidate * track){
+int EUTelDafBase::checkInTime(){
   size_t nMatches(0);
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
     daffitter::FitPlane& plane = _system.planes.at(ii);
     int sensorID = plane.getSensorID();
-//    printf("plane %5d with ID %5d \n", ii, sensorID);
     //Check if any DUT plane is "In time" with the 
-    if( find(_dutPlanes.begin(), _dutPlanes.end(), sensorID) == _dutPlanes.end()){ continue; }
+    if( find(_dutPlanes.begin(), _dutPlanes.end(), sensorID) == _dutPlanes.end()){
+      continue;
+    }
     //In timeness can be checked by seeing if the plane has assigned weight
     for(size_t w = 0; w < plane.meas.size(); w++){
-//      printf("plane %5d with ID %5d --- weight = %5.2f\n", ii, sensorID, plane.weights(w) );
-      if( plane.weights(w) < 0.5f ) {  continue; }
-      nMatches++; break;
+      if( plane.weights(w) < 0.5f ){
+        continue;
+      }
+      nMatches++;
+      break;
     }
   }
   return(nMatches);
@@ -658,7 +661,7 @@ bool EUTelDafBase::checkTrack(daffitter::TrackCandidate * track){
   return(true);
 }
 
-void EUTelDafBase::dumpToAscii(daffitter::TrackCandidate *track){
+void EUTelDafBase::dumpToAscii(){
   trackstream << _nTracks << endl;
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
     daffitter::FitPlane& plane = _system.planes.at(ii);

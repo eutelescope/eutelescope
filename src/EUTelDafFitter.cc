@@ -161,12 +161,11 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
 //printf("EUTelDafFitter::dafEvent track %3d info is OK \n", ii);
     //Check resids, intime, angles
     if(not checkTrack( _system.tracks.at(ii))) { continue;};
-    int inTimeHits = checkInTime( _system.tracks.at(ii));
+    int inTimeHits = checkInTime();
     if( inTimeHits < _nDutHits) { continue;}
 //printf("EUTelDafFitter::dafEvent track %3d is OK \n", ii);
  
-    //if( inTimeHits > 2){ dumpToAscii(_system.tracks.at(ii));  }
-    dumpToAscii(_system.tracks.at(ii));
+    dumpToAscii();
     //Fill plots
     if(_histogramSwitch){ 
       fillPlots( _system.tracks.at(ii) ); 

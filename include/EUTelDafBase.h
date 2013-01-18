@@ -117,10 +117,10 @@ namespace eutelescope {
     float _scaleScatter;
 
     virtual void dafInit(){;}
-    virtual void dafEvent(LCEvent * evt){;}
+    virtual void dafEvent(LCEvent * /*evt*/){;}  //evt commented out because it causes a warning, function doesn't seem to do anything here but is probably used in another file through inheritance
     virtual void dafEnd(){;}
     virtual void dafParams(){;}
-    bool checkClusterRegion(lcio::TrackerHitImpl* hit, int iden); // { return(true);}
+    bool checkClusterRegion(lcio::TrackerHitImpl* hit, int iden); 
     
 
     size_t getPlaneIndex(float zPos);
@@ -128,11 +128,11 @@ namespace eutelescope {
     void readHitCollection(LCEvent* event);
     void bookHistos();
     void bookDetailedHistos();
-    void dumpToAscii(daffitter::TrackCandidate* track);
+    void dumpToAscii();
     void fillPlots(daffitter::TrackCandidate* track);
     void fillDetailPlots(daffitter::TrackCandidate* track);
     bool checkTrack(daffitter::TrackCandidate * track);
-    int checkInTime(daffitter::TrackCandidate * track);
+    int checkInTime();
     void printStats();
     //alignment stuff
     void gearRotate(size_t index, size_t gearIndex);

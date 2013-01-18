@@ -212,7 +212,7 @@ int EUTelDafAlign::checkDutResids(daffitter::TrackCandidate* track){
   return(nHits);
 }
 
-void EUTelDafAlign::dafEvent (LCEvent * event) {
+void EUTelDafAlign::dafEvent (LCEvent* /*event*/) {
   //Check found tracks
   for(size_t ii = 0; ii < _system.getNtracks(); ii++ ){
     //run track fitter
