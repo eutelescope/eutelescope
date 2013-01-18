@@ -234,12 +234,8 @@ void EUTelMimosa26Generator::processEvent (LCEvent * event) {
 
 }
 
-void EUTelMimosa26Generator::check (LCEvent * evt) {
+void EUTelMimosa26Generator::check (LCEvent * /*evt*/) {
   // nothing to check here - could be used to fill check plots in reconstruction processor
-
-  //The following two lines just get rid of a compiler warning for the unused parameter evt. This can be deleted when the 'check' function is actually written
-  int eventNumber = evt->getEventNumber();
-  eventNumber++;
 }
 
 void EUTelMimosa26Generator::end() {
