@@ -139,9 +139,7 @@ FIND_LIBRARY(EFENCE_LIBRARY
         /usr/efence/lib
         /usr/share/efence/lib
     )
-IF(EFENCE_LIBRARY MATCHES "NOTFOUND")
-  MESSAGE("Electric Fence not installed - disabled.")
-ELSE(EFENCE_LIBRARY MATCHES "NOTFOUND")
+IF(EFENCE_LIBRARY)
   MESSAGE("Electric Fence library was found and will be linked against ${PROJECT_NAME}")
   target_link_libraries(${libname} ${EFENCE_LIBRARY})
 ENDIF()
@@ -192,15 +190,15 @@ ENDIF()
 IF( DEFINED ENV{EUTELESCOPE} AND DEFINED ENV{MARLIN})
 
 # if cppcheck is installed, offer static code analysis test
-find_program(CPPCHECK cppcheck /scrach/local/bin) # hint at path /scratch/... used on EUTelTesting server; will also parse $PATH
+find_program(CPPCHECK cppcheck /scratch/local/bin) # hint at path /scratch/... used on EUTelTesting server; will also parse $PATH
 if(CPPCHECK)
   MESSAGE("cppcheck was found and will be made available as test.")
   ADD_TEST( TestCppcheckSources sh -c "${CPPCHECK_EXECUTABLE} --enable=all -I $ENV{EUTELESCOPE}/include -q -rp=$ENV{EUTELESCOPE} --std=c99 --std=posix $ENV{EUTELESCOPE}/src" )
   SET_TESTS_PROPERTIES (TestCppcheckSources PROPERTIES
     FAIL_REGULAR_EXPRESSION "(error)"
     )
-else()
-  MESSAGE("cppcheck was not found - omitting cppcheck static code analysis test.")
+#else()
+#  MESSAGE("cppcheck was not found - omitting cppcheck static code analysis test.")
 endif()
 
 

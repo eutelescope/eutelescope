@@ -6,6 +6,7 @@
 
 set (CTEST_CUSTOM_MEMCHECK_IGNORE 
 	${CTEST_CUSTOM_MEMCHECK_IGNORE}
+	TestCppcheckSources
 	TestPysubExampleDaturaAloneCleanup
 	TestPysubExampleDaturaAloneSetup
 	TestPysubExampleDaturaAloneConverterLog

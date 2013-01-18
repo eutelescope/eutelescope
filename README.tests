@@ -17,6 +17,11 @@ changes made to the EUTelescope code. This is a short how-to; for more
 detailed information see the CMake manual or web page
 (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
 
+PREREQUISITES: in order to be able to run all tests you will need to
+install cppcheck (http://sourceforge.net/projects/cppcheck/), a tool
+for static code analysis. To run the stattest program under SL5.8, you
+will also have to install the package "giflib".
+
 To see which tests are available, enter the build directory of
 EUTelescope and run
 	   ctest -N
@@ -34,6 +39,9 @@ affected by code changes that you want to verify.
 If you want to see the full output of the tests that have failed you
 need to export the following environment variable:
 CTEST_OUTPUT_ON_FAILURE=true
+or use
+ctest -V
+to see all output.
 
 The end results of the analysis are verified using statistical tests
 provided by ROOT and accessed through the Python scripts in
