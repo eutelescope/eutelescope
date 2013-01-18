@@ -1111,7 +1111,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       outputHit->setPosition( outputPosition ) ;
       _outputCollectionVec->push_back( outputHit );
  
-      TransformToLocalFrame(outputHit,evt); 
+      TransformToLocalFrame(outputHit); 
     }
 
 }
@@ -2172,13 +2172,8 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
 }
 
 
-void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputHit, LCEvent * ev) 
+void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputHit) 
 {
-// revert alignment, in an inverse order... this part should be fixed // perhaps it's obsolete already// Rubinskiy 12.11.2011
-//	for ( int i = _alignmentCollectionNames.size() - 1; i >= 0; i--) 
-//      {
-//          revertAlignment (x, y, z, _alignmentCollectionNames[i], ev );
-//	}
 
         double *outputPosition = const_cast< double * > ( outputHit->getPosition() ) ;
 

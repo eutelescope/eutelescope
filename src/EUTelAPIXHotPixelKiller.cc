@@ -144,10 +144,10 @@ void EUTelAPIXHotPixelKiller::init ()
 
 }
 
-void EUTelAPIXHotPixelKiller::modifyEvent( LCEvent * event )
+void EUTelAPIXHotPixelKiller::modifyEvent( LCEvent * /*event*/ )
 {
-//    std::cout << "_iEvt" << std::endl; 
-    return;
+  //This function does nothing, but must be included due to being inherited from an abstract base class
+  return;
 }
 
 void EUTelAPIXHotPixelKiller::processRunHeader (LCRunHeader * rdr ) {

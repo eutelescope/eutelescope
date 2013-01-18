@@ -91,8 +91,8 @@ namespace eutelescope {
     virtual void init ();
 
     //! Modify event method
-    /*! Actually don't used
-     *
+    /*! Actually this function is not used, but must be included due to
+     *  the inheritence of this class from an abstract base class
      *  @param evt the current LCEvent event as passed by the ProcessMgr
      */
     virtual void modifyEvent( LCEvent * evt ) ;
