@@ -38,7 +38,7 @@ EUTelM26Timing::EUTelM26Timing(short sensorID, uint32_t tlu_counter ) {
 
 }
 
-EUTelM26Timing::EUTelM26Timing(const EUTelM26Timing &orig) {
+EUTelM26Timing::EUTelM26Timing(const EUTelM26Timing &orig) : EUTelTiming() {
   _sensorID = orig.getSensorID();
   _tluCounter = orig.getTLUCounter();
   _noOfElements = orig.getNoOfElements();

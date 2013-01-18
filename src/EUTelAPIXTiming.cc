@@ -43,7 +43,7 @@ EUTelAPIXTiming::EUTelAPIXTiming(short sensorID, uint64_t realtime, uint32_t tlu
 
 }
 
-EUTelAPIXTiming::EUTelAPIXTiming(const EUTelAPIXTiming &orig) {
+EUTelAPIXTiming::EUTelAPIXTiming(const EUTelAPIXTiming &orig) : EUTelTiming() {
   _sensorID = orig.getSensorID();
   _tluCounter = orig.getTLUCounter();
   _tpllCounter = orig.getTPLLCounter();
