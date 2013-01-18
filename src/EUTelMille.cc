@@ -345,8 +345,8 @@ void EUTelMille::init() {
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
-    streamlog_out ( ERROR2) << "The GearMgr is not available, for an unknown reason." << endl;
-    exit(-1);
+    streamlog_out ( ERROR2 ) << "The GearMgr is not available, for an unknown reason." << endl;
+    throw InvalidGeometryException("GEAR manager is not initialised");
   }
 
 
