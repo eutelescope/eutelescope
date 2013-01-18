@@ -82,8 +82,6 @@ namespace eutelescope {
      */
     void initializeHotPixelMapVec();
 
-    void resetStatus(IMPL::TrackerRawDataImpl * status);
-
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 	void bookHistos();
 	void fillHistos(LCEvent * evt);

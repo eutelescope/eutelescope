@@ -570,9 +570,6 @@ void CMSPixelClusteringProcessor::end() {
 }
 
 
-void CMSPixelClusteringProcessor::resetStatus(IMPL::TrackerRawDataImpl * status) {
-}
-
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 void CMSPixelClusteringProcessor::fillHistos (LCEvent * evt) {
 
