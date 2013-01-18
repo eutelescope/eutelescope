@@ -82,7 +82,8 @@ bool EUTelHistogramManager::init() throw( std::exception, marlin::ParseException
       
       if ( pHistoNode->Attribute("type") == NULL ) {
 	delete doc;
-	throw ParseException( string( "EUTelHistogramManager::init: no type found for " + histoInfo->_name ) );
+	delete histoInfo;
+	throw ParseException( string( "EUTelHistogramManager::init: no type found for " +  string(pHistoNode->Attribute("name"))) );
       } else   histoInfo->_type  = pHistoNode->Attribute("type");
       
       if ( pHistoNode->Attribute("title") == NULL  ) histoInfo->_title = "";
