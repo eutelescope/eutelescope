@@ -1,6 +1,3 @@
-// -*- mode: c++; mode: auto-fill; mode: flyspell-prog; -*-
-
-// Author: A.F.Zarnecki, University of Warsaw <mailto:zarnecki@fuw.edu.pl>
 // @version: $Id$
 
 /*
@@ -12,12 +9,10 @@
  *
  */
 
-#ifdef USE_GEAR
-
 // ROOT includes:
 #include "TVector3.h"
 
-// eutelescope inlcudes
+// eutelescope includes
 #include "EUTelDUTHistograms.h"
 #include "EUTELESCOPE.h"
 #include "EUTelEventImpl.h"
@@ -51,9 +46,13 @@
 #include "marlin/Exceptions.h"
 #include "marlin/Global.h"
 
+#ifdef USE_GEAR
+
 // gear includes <.h>
 #include <gear/GearMgr.h>
 #include <gear/SiPlanesParameters.h>
+
+#endif
 
 
 #include <EVENT/LCCollection.h>
@@ -540,25 +539,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
      }
     }
   }
-/*
-    if ( _applyToReferenceHitCollection ) 
-    {
-     LCCollectionVec * ref    = static_cast < LCCollectionVec * > (event->getCollection( "refhit32" ));
-     for(size_t ii = 0 ; ii <  ref->getNumberOfElements(); ii++)
-     {
-      streamlog_out(MESSAGE) << " check output_refhit at : " << ref << " ";
-      EUTelReferenceHit* output_refhit = static_cast< EUTelReferenceHit*> ( ref->getElementAt(ii) ) ;
-      streamlog_out(MESSAGE) << " at : " <<  output_refhit << endl;     
-      streamlog_out(MESSAGE) << "CHK sensorID: " <<  output_refhit->getSensorID(   )     
-                              << " x    :" <<        output_refhit->getXOffset(    )    
-                              << " y    :" <<        output_refhit->getYOffset(    )    
-                              << " z    :" <<        output_refhit->getZOffset(    )    
-                              << " alfa :" <<        output_refhit->getAlpha()          
-                              << " beta :" <<        output_refhit->getBeta()           
-                              << " gamma:" <<        output_refhit->getGamma()        << endl ;
-     }
-    }
-*/
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
   if ( euEvent->getEventType() == kEORE ) {
     message<DEBUG> ( "EORE found: nothing else to do." );
@@ -605,31 +585,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
        return;
      }
    }
-//return;
-/*
-  for( int itrack=0; itrack<_maptrackid; itrack++)
-  {
-    printf(" track %2d / %2d  ::  ", itrack, _maptrackid);
-    printf("--- sensors: %3u \n",  _trackhitsensorID[itrack].size());
-    for( int i=0; i< _trackhitsensorID[itrack].size() ; i++)
-    {
-       printf("-------- sensor %2d  pos[%5.3f %5.3f] size[%2d %2d] submatrix[%2d]\n", 
-              _trackhitsensorID[itrack][i], _trackhitposX[itrack][i] , _trackhitposY[itrack][i], _trackhitsizeX[itrack][i], _trackhitsizeY[itrack][i], _trackhitsubM[itrack][i] );  
-      _maptrackid++; 
-   }
-*/
-/*
-  for( int itrack=0; itrack<_maptrackid; itrack++)
-  {
-    printf(" track %2d / %2d  ::  ", itrack, _maptrackid);
-    printf("--- sensors: %3u \n",  _trackhitsensorID[itrack].size());
-    for( int i=0; i< _trackhitsensorID[itrack].size() ; i++)
-    {
-       printf("-------- sensor %2d  pos[%5.3f %5.3f] size[%2d %2d] submatrix[%2d]\n", 
-              _trackhitsensorID[itrack][i], _trackhitposX[itrack][i] , _trackhitposY[itrack][i], _trackhitsizeX[itrack][i], _trackhitsizeY[itrack][i], _trackhitsubM[itrack][i] );  
-    }
-  }
-*/
   
   if(debug)
   {
@@ -644,12 +599,12 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   if(debug)message<MESSAGE> ( log() << _measuredX.size() << " hits at DUT " );
 
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   // Histograms of fitted positions
   for( int itrack=0; itrack<_maptrackid; itrack++)
   {
     for( int ifit=0;ifit<(int)_fittedX[itrack].size(); ifit++)
     {
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXHistoName]))->fill(_fittedX[itrack][ifit]);
 
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedYHistoName]))->fill(_fittedY[itrack][ifit]);
@@ -657,26 +612,26 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       if(debug)message<MESSAGE> ( log() << "Fit " << ifit << " [track:"<< itrack << "] "
                                 << "   X = " << _fittedX[itrack][ifit]
                                 << "   Y = " << _fittedY[itrack][ifit]) ;
-#endif
     }
   }
+#endif
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA) 
 
   // Histograms of measured positions
   for(int ihit=0;ihit<(int)_measuredX.size(); ihit++)
     {
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA) 
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredXHistoName]))->fill(_measuredX[ihit]);
 
 
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredYHistoName]))->fill(_measuredY[ihit]);
 
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_MeasuredXYHistoName]))->fill(_measuredX[ihit],_measuredY[ihit]);
-#endif
       if(debug)message<MESSAGE> ( log() << "Hit " << ihit
                                 << "   X = " << _measuredX[ihit]
                                 << "   Y = " << _measuredY[ihit]) ;
     }
+#endif
 
 
 
@@ -708,11 +663,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
       for(int ihit=0; ihit< (int)_measuredX.size() ; ihit++)
         {
- //         printf("%2d %5.3f",ihit, _measuredX[ihit]);
- //         if(ihit<(int)_measuredX.size()-1)
- //              printf(":");
- //         else 
- //              printf("}");
 
           double dist2rd=
             (_measuredX[ihit]-_fittedX[itrack][ifit])*(_measuredX[ihit]-_fittedX[itrack][ifit])
@@ -729,12 +679,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
             }
         }
  
- //     if(ifit<(int)_fittedX[itrack].size()-1 )
- //          printf(":");
- //     else 
- //          printf("]");
     }
- //          printf("\n");
  
     // Match found:
 
@@ -1068,8 +1013,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   for(int ifit=0;ifit<(int)_localX[itrack].size(); ifit++)
     {
- //     printf("%2d %5.3f: local", ifit, _fittedX[itrack][ifit] );
- //     message<MESSAGE>( log() << " :[" << ifit << "] :" << _localX[itrack][ ifit ]*1000.0 << endl);
       (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_PixelEfficiencyHistoName]))->fill(_localX[itrack][ ifit ]*1000.,_localY[itrack][ ifit ]*1000.,0.);
     }
 
@@ -1081,6 +1024,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
       (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_EfficiencyXYHistoName]))->fill(_fittedX[itrack][ifit],_fittedY[itrack][ifit],0.);
     }
+  #endif
 }
 //
 //
@@ -1090,6 +1034,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 
 
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   // Noise plots - unmatched hits
 
@@ -2940,46 +2885,6 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
 }
 
 
-// --------------------------------------------------------------------------------------------------------------------------------
-/*
-int EUTelDUTHistograms::getInPixelCoordinate(int sensorID, TrackerHitImpl * hit, int& X, int& Y ) {
-
-  if(hit==0)
-   {
-    streamlog_out( ERROR ) << "An invalid hit pointer supplied! will exit now\n" << endl;
-    return -1;
-   }
-
-  if( _referenceHitVec == 0)
-   {
-    streamlog_out(DEBUG) << "_referenceHitVec is empty" << endl;
-    return 0;
-   }
-
-  for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
-   {
-     EUTelReferenceHit* 
-     if(refhit->getSensorID() != sensorID) continue; // skip this reference hit plane
-
-     TVector3 hit3d( hit[0], hit[1], hit[2] );
-     TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
-     TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
- 
-     double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-//          printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hit[0],hit[1],hit[2], distance  );
-     if ( distance < minDistance ) 
-      {
-        minDistance = distance;
-        sensorID = refhit->getSensorID();
-//           printf("sensorID: %5d \n", sensorID );
-      }    
-
-   }
-
-return 0;
-}
-
-*/
 
 // --------------------------------------------------------------------------------------------------------------------------------
 
@@ -3016,22 +2921,6 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit * hit, int& size
               // both RAW and ZS data
               cluster = new EUTelFFClusterImpl( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
             }
-/*            else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
-            {
-              
-//              cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-//                 ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
-
-                // streamlog_out(MESSAGE4) << "Type is kEUTelAPIXClusterImpl" << endl;
-                TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-                // streamlog_out(MESSAGE4) << "Vector size is: " << clusterVector.size() << endl;
-
-                cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-	      
-	        // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
-                eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-                
-            }*/
             else if ( hit->getType() == kEUTelSparseClusterImpl ) 
             {
                cluster = new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVector[0] ) );
@@ -3327,12 +3216,6 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
                      sizeY = 1;     
                      subMatrix = 0;     
                   }
-  //                _trackhitposX[_maptrackid].push_back(pos[0]);
-  //                _trackhitposY[_maptrackid].push_back(pos[1]);
-  //                _trackhitsizeX[_maptrackid].push_back( sizeX );
-  //                _trackhitsizeY[_maptrackid].push_back( sizeY );
-  //                _trackhitsubM[_maptrackid].push_back(subMatrix);
-  //                _trackhitsensorID[_maptrackid].push_back( hsensorID );
           _clusterSizeX.push_back(sizeX);
           _clusterSizeY.push_back(sizeY);
           _subMatrix.push_back( subMatrix );
@@ -3408,15 +3291,6 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
       // skip if for some reason the track collection is at NULL address
       if( fittrack == 0 ) continue;
 
-/*    if( fsensorID == _iDUT  )  
-        {
-          // for hits on DUT 
-          _fittedX[_maptrackid].push_back(por[0]);
-          _fittedY[_maptrackid].push_back(por[1]);
-          _bgfittedX[_maptrackid].push_back(por[0]);
-          _bgfittedY[_maptrackid].push_back(por[1]);
-        }
-      else */
         {
           // Look at hits assigned to track
           std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getTrackerHits();
@@ -3586,5 +3460,4 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
  return 0;
 }
 
-#endif
 
