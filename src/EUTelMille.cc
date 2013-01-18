@@ -3330,12 +3330,12 @@ void EUTelMille::end() {
 	}
 	
 	{
-	  char * pch = strstr(pedeoutput.str().data(),"Sum(Chi^2)/Sum(Ndf) = ");
-	  if (pch){
+	  const char* pch0 = strstr(pedeoutput.str().data(),"Sum(Chi^2)/Sum(Ndf) = ");
+	  if (pch0 != 0){
 	    streamlog_out ( DEBUG ) << " Parsing pede output for final chi2/ndf result.. " << endl;
 	    // search for the equal sign after which the result for chi2/ndf is stated within the next 80 chars 
 	    // (with offset of 22 chars since pch points to beginning of "Sum(..." string just found)
-	    pch = (char*) memchr (pch+22, '=', 180);
+	    char* pch = (char*) memchr (pch0+22, '=', 180);
 	    if (pch!=NULL){
 	      char str[16];
 	      // now copy the numbers after the equal sign
