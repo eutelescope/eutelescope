@@ -193,14 +193,23 @@ AnyOption::alloc()
 bool
 AnyOption::doubleOptStorage()
 {
-	options = (const char**)realloc( options,  
+  // temp pointers:
+   const char **tmp_options;
+  int *tmp_optiontype;
+  int *tmp_optionindex;
+
+	tmp_options = (const char**)realloc( options,  
 			((2*max_options)+1) * sizeof( const char*) );
-	optiontype = (int*) realloc(  optiontype ,  
+	tmp_optiontype = (int*) realloc(  optiontype ,  
 			((2 * max_options)+1)* sizeof(int) );	
-	optionindex = (int*) realloc(  optionindex,  
+	tmp_optionindex = (int*) realloc(  optionindex,  
 			((2 * max_options)+1) * sizeof(int) );	
-	if( options == NULL || optiontype == NULL || optionindex == NULL )
+	if( tmp_options == NULL || tmp_optiontype == NULL || tmp_optionindex == NULL )
 		return false;
+	// realloc worked, reassign pointers
+	options = tmp_options;
+	optiontype = tmp_optiontype;
+	optionindex = tmp_optionindex;
 	/* init new storage */
 	for( int i = max_options ; i < 2*max_options ; i++ ){
 		options[i] = NULL;
@@ -214,16 +223,26 @@ AnyOption::doubleOptStorage()
 bool
 AnyOption::doubleCharStorage()
 {
-	optionchars = (char*) realloc( optionchars,  
+  // temp pointers:
+  char *tmp_optionchars;
+  int  *tmp_optchartype;
+  int  *tmp_optcharindex;
+  
+	tmp_optionchars = (char*) realloc( optionchars,  
 			((2*max_char_options)+1)*sizeof(char) );
-	optchartype = (int*) realloc( optchartype,  
+	tmp_optchartype = (int*) realloc( optchartype,  
 			((2*max_char_options)+1)*sizeof(int) );	
-	optcharindex = (int*) realloc( optcharindex,  
+	tmp_optcharindex = (int*) realloc( optcharindex,  
 			((2*max_char_options)+1)*sizeof(int) );	
-	if( optionchars == NULL || 
-	    optchartype == NULL || 
-	    optcharindex == NULL )
+	if( tmp_optionchars == NULL || 
+	    tmp_optchartype == NULL || 
+	    tmp_optcharindex == NULL )
 		return false;
+	// realloc worked, reassign pointers
+	optionchars = tmp_optionchars;
+	optchartype = tmp_optchartype;
+	optcharindex = tmp_optcharindex;
+
 	/* init new storage */
 	for( int i = max_char_options ; i < 2*max_char_options ; i++ ){
 		optionchars[i] = '0';
@@ -237,10 +256,13 @@ AnyOption::doubleCharStorage()
 bool
 AnyOption::doubleUsageStorage()
 {
-	usage = (const char**)realloc( usage,  
+  const char **tmp_usage;
+
+	tmp_usage = (const char**)realloc( usage,  
 			((2*max_usage_lines)+1) * sizeof( const char*) );
-	if ( usage == NULL )
+	if ( tmp_usage == NULL )
 		return false;
+	else usage = tmp_usage;
 	for( int i = max_usage_lines ; i < 2*max_usage_lines ; i++ )
 		usage[i] = NULL;
 	max_usage_lines = 2 * max_usage_lines ;

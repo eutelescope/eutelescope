@@ -200,11 +200,9 @@ class AnyOption
   bool mem_allocated;     /* if memory allocated in init() */
   bool posix_style;       /* enables to turn off POSIX style options */
   bool verbose;           /* silent|verbose */
-  bool print_usage;       /* usage verbose */
-  bool print_help;        /* help verbose */
 
   char opt_prefix_char;           /*  '-' in "-w" */
-  char long_opt_prefix[MAX_LONG_PREFIX_LENGTH]; /* '--' in "--width" */
+  char long_opt_prefix[MAX_LONG_PREFIX_LENGTH+1]; /* '--' in "--width" */
   char file_delimiter_char;       /* ':' in width : 100 */
   char file_comment_char;         /*  '#' in "#this is a comment" */
   char equalsign;
