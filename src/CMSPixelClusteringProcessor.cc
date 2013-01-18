@@ -228,7 +228,7 @@ void CMSPixelClusteringProcessor::initializeHotPixelMapVec(  )
  
         if ( _layerIndexMap.find( sensorID ) == _layerIndexMap.end()   )
         {
-            printf("sensor %5d not found in the present Data, so skip the hotPixel info for this sensor \n", sensorID);
+            printf("sensor %5u not found in the present Data, so skip the hotPixel info for this sensor \n", sensorID);
             continue;
         }
        
@@ -418,7 +418,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 			 int nClusters = 0;
 			std::vector<int> clusterNumber;
 
-			if (PixelVec.size() != 0) clusterNumber.assign(PixelVec.size(), NOCLUSTER);
+			if (!PixelVec.empty()) clusterNumber.assign(PixelVec.size(), NOCLUSTER);
 			
 			
 			streamlog_out(DEBUG) << "Starting with clustering..." << endl;
@@ -500,7 +500,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 			
 			/* --- Push back one Collection per Cluster --- */
 			std::set<int>::iterator it;
-			for (it=clusterSet.begin();it!=clusterSet.end();it++) {
+			for (it = clusterSet.begin(); it != clusterSet.end(); ++it) {
 				lcio::TrackerPulseImpl * pulseFrame = new lcio::TrackerPulseImpl();
 				lcio::TrackerDataImpl * clusterFrame = new lcio::TrackerDataImpl();
 				eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > *pixelCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);	
