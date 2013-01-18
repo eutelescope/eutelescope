@@ -198,7 +198,8 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
     idEncoder["yMax"]     = _fileHeader->nYPixel - 1;
     idEncoder.setCellID( channelD );
     
-    int firstFrame, secondFrame;
+    int firstFrame = -1;
+    int secondFrame = -1;
     if ( ( _algo == "CDS32" ) || ( _algo == "LF2") ) {
       firstFrame  = 1;
       secondFrame = 2;
