@@ -1421,12 +1421,6 @@ void EUTelMille::processEvent (LCEvent * event) {
 
       }
 
-  std::vector<int> fitplane(_nPlanes, 0);
-
-  for (unsigned int help = 0; help < _nPlanes; help++) {
-    fitplane[help] = 1;
-  }
-
   int _nTracks = 0;
 
   int _nGoodTracks = 0;
