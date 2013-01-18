@@ -43,11 +43,6 @@ class TMinuit;
 
 namespace eutelescope {
 
-  //! Alignment processor
-  /*!
-   *
-   */
-
   class EUTelAlign : public marlin::Processor {
 
   public:
@@ -165,16 +160,6 @@ namespace eutelescope {
 
     std::vector<float > _startValuesForAlignment;
 
-    //! Output collection name
-    /*! Output collection with fitted tracks.
-     */
-    //    std::string _outputTrackColName;
-
-    //! TRACKERHIT collection name
-    /*! Output collection with hits from fitted tracks.
-     */
-    //    std::string _outputHitColName;
-
   private:
 
     //! Run number
@@ -261,9 +246,6 @@ namespace eutelescope {
 
   //! A global instance of the processor
   EUTelAlign gEUTelAlign;
-
-
-
 }
 #endif
 #endif

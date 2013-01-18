@@ -1,4 +1,4 @@
-// Author Philip Roloff, DESY <mailto:philipp.roloff@desy.de>
+// Contact: philipp.roloff@desy.de
 // Version: $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -176,8 +176,7 @@ void EUTelAlign::init() {
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
 
-  message<ERROR> ( "Marlin was not built with GEAR support." );
-  message<ERROR> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
+  message<ERROR> ( "Marlin was not built with GEAR support. You need to install GEAR and recompile Marlin with -DUSE_GEAR before continuing.");
 
   // I'm thinking if this is the case of throwing an exception or
   // not. This is a really error and not something that can
@@ -212,7 +211,7 @@ void EUTelAlign::processRunHeader (LCRunHeader * rdr) {
   auto_ptr<EUTelRunHeaderImpl> header( new EUTelRunHeaderImpl( rdr ) );
 
 
-  // the run header contains the number of detectors. This number
+  // The run header contains the number of detectors. This number
   // should be in principle the same as the number of layers in the
   // geometry description
   if ( header->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) {
@@ -222,10 +221,10 @@ void EUTelAlign::processRunHeader (LCRunHeader * rdr) {
     exit(-1);
   }
 
-  // this is the right place also to check the geometry ID. This is a
+  // This is the right place also to check the geometry ID. This is a
   // unique number identifying each different geometry used at the
   // beam test. The same number should be saved in the run header and
-  // in the xml file. If the numbers are different, instead of barely
+  // in the xml file. If the numbers are different, instead of just
   // quitting ask the user what to do.
 
   if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
@@ -238,7 +237,7 @@ void EUTelAlign::processRunHeader (LCRunHeader * rdr) {
     while (true) {
       message<ERROR> ( "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" );
       cin >> answer;
-      // put the answer in lower case before making the comparison.
+      // Put the answer in lower case before making the comparison.
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
       if ( answer == "q" ) {
         exit(-1);
@@ -250,10 +249,10 @@ void EUTelAlign::processRunHeader (LCRunHeader * rdr) {
 
   }
 
-  // now book histograms plz...
+  // Now book histograms
   if ( isFirstEvent() )  bookHistos();
 
-  // increment the run counter
+  // Increment the run counter
   ++_iRun;
 }
 
@@ -281,8 +280,6 @@ void EUTelAlign::FitTrack(int nPlanesFit, double xPosFit[], double yPosFit[], do
   float Sxybar[2] = {0,0};
   float Sxxbar[2] = {0,0};
   float A2[2]     = {0,0};
-  // float Chiquare[2] = {0,0};
-  // float angle[2] = {0,0};
 
   // define S1
   for( counter = 0; counter < nPlanesFit; counter++ ){
@@ -329,13 +326,11 @@ void EUTelAlign::FitTrack(int nPlanesFit, double xPosFit[], double yPosFit[], do
   }
 
   // define A2
-
   A2[0]=Sxybar[0]/Sxxbar[0];
   A2[1]=Sxybar[1]/Sxxbar[1];
 
   // Calculate chi sqaured
   // Chi^2 for X and Y coordinate for hits in all planes
-
   for( counter = 0; counter < nPlanesFit; counter++ ){
     chi2Fit[0] += pow(-zPosFit[counter]*A2[0]
                       +xPosFit[counter]-Ybar[0]+Xbar[0]*A2[0],2)/pow(xResFit[counter],2);
@@ -346,22 +341,8 @@ void EUTelAlign::FitTrack(int nPlanesFit, double xPosFit[], double yPosFit[], do
   _predX = Ybar[0]-Xbar[0]*A2[0]+_predZ*A2[0];
   _predY = Ybar[1]-Xbar[1]*A2[1]+_predZ*A2[1];
 
-  /*
-
-    for( counter = 0; counter < nPlanesFit; counter++ ){
-    residXFit[counter] = (Ybar[0]-Xbar[0]*A2[0]+zPosFit[counter]*A2[0])-xPosFit[counter];
-    residYFit[counter] = (Ybar[1]-Xbar[1]*A2[1]+zPosFit[counter]*A2[1])-yPosFit[counter];
-    }
-
-    // define angle
-    angleFit[0] = atan(A2[0]);
-    angleFit[1] = atan(A2[1]);
-
-  */
-
   delete [] Zbar_X;
   delete [] Zbar_Y;
-
 }
 
 void EUTelAlign::processEvent (LCEvent * event) {
@@ -382,7 +363,7 @@ void EUTelAlign::processEvent (LCEvent * event) {
 
     LCCollectionVec * measHitCollection = static_cast<LCCollectionVec*> (event->getCollection( _measHitCollectionName ));
 
-    int detectorID    = -99; // it's a non sense
+    int detectorID    = -99; 
     int oldDetectorID = -100;
     int layerIndex;
 
@@ -502,9 +483,9 @@ void EUTelAlign::processEvent (LCEvent * event) {
 
         if (layerIndex == 0) {
 
-          hitsInFirstBox.measuredX = 1000 * measHit->getPosition()[0]; // in um
-          hitsInFirstBox.measuredY = 1000 * measHit->getPosition()[1]; // in um
-          hitsInFirstBox.measuredZ = 1000 * measHit->getPosition()[2]; // in um
+          hitsInFirstBox.measuredX = 1000 * measHit->getPosition()[0]; 
+          hitsInFirstBox.measuredY = 1000 * measHit->getPosition()[1]; 
+          hitsInFirstBox.measuredZ = 1000 * measHit->getPosition()[2];
 
         } else {
 
@@ -558,7 +539,6 @@ void EUTelAlign::processEvent (LCEvent * event) {
         allHitsFirstLayerMeasuredY[nHitsFirstPlane] = 1000 * measHit->getPosition()[1];
         allHitsFirstLayerMeasuredZ[nHitsFirstPlane] = 1000 * measHit->getPosition()[2];
 
-        // cout << hitsForFit.firstLayerMeasuredX << " " << hitsForFit.firstLayerMeasuredY << "            ";
 
         allHitsFirstLayerResolution[nHitsFirstPlane] = 1000 * _siPlanesLayerLayout->getSensitiveResolution(layerIndex); // Add multiple scattering later!
 
@@ -573,7 +553,6 @@ void EUTelAlign::processEvent (LCEvent * event) {
         allHitsSecondLayerMeasuredY[nHitsSecondPlane] = 1000 * measHit->getPosition()[1];
         allHitsSecondLayerMeasuredZ[nHitsSecondPlane] = 1000 * measHit->getPosition()[2];
 
-        // cout << hitsForFit.secondLayerMeasuredX << " " << hitsForFit.secondLayerMeasuredY << endl;
 
         // hitsForFit.secondLayerPredictedZ = 1000 * measHit->getPosition()[2];
 
@@ -817,12 +796,6 @@ void EUTelAlign::processEvent (LCEvent * event) {
           } // end loop over hits in second plane
 
           if (take != -1000 && veto == -1000) {
-
-            /*
-              hitsForFit.firstLayerMeasuredX = allHitsFirstLayerMeasuredX[firsthit];
-              hitsForFit.firstLayerMeasuredY = allHitsFirstLayerMeasuredY[firsthit];
-              hitsForFit.firstLayerMeasuredZ = allHitsFirstLayerMeasuredZ[firsthit];
-            */
 
             hitsForFit.secondLayerMeasuredX = allHitsSecondLayerMeasuredX[take];
             hitsForFit.secondLayerMeasuredY = allHitsSecondLayerMeasuredY[take];
