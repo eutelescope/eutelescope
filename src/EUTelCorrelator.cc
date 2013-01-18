@@ -1887,26 +1887,11 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
             } 
             else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
             {
-//           printf("EUTelCorrelator::hitContainsHotPixels  kEUTelAPIXClusterImpl \n"); 
-              
-//              cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-//                 ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
-
-                // streamlog_out(MESSAGE4) << "Type is kEUTelAPIXClusterImpl" << endl;
                 TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-                // streamlog_out(MESSAGE4) << "Vector size is: " << clusterVector.size() << endl;
-
-                //cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-	      
-	        // CellIDDecoder<TrackerDataImpl> cellDecoder(clusterFrame);
                 eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > 
                               *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
                 
-                int sensorID = apixCluster->getDetectorID();//static_cast<int> ( cellDecoder(clusterFrame)["sensorID"] );
-//                cout << "Pixels at sensor " << sensorID << ": ";
-
-//              printf("EUTelCorrelator::hitContainsHotPixels  kEUTelAPIXClusterImpl in %5d \n", sensorID ); 
-
+                int sensorID = apixCluster->getDetectorID();
                 bool skipHit = 0;
                 for (size_t iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
                 {
@@ -1915,19 +1900,14 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
                     apixCluster->getSparsePixelAt(iPixel, &apixPixel);
                     pixelX = apixPixel.getXCoord();
                     pixelY = apixPixel.getYCoord();
-//                  cout << "(" << pixelX << "|" << pixelY << ") ";
-//                  cout << endl;
 
                     try
                     {                       
-//                       printf("pixel %3d %3d was found in the _hotPixelMap = %1d (0/1) \n", pixelX, pixelY, _hotPixelMap[sensorID][pixelX][pixelY]  );                       
                        char ix[100];
                        sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
                        if( _hotPixelMap[ix]  )
                        { 
                           skipHit = true; 	      
-//                        streamlog_out(MESSAGE4) << "Skipping hit due to hot pixel content." << endl;
-//                        printf("pixel %3d %3d was found in the _hotPixelMap \n", pixelX, pixelY  );
                           if(apixCluster !=0 ) delete apixCluster;
                           return true; // if TRUE  this hit will be skipped
                        }
@@ -1944,7 +1924,7 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
 //                    skipHit = skipHit || hitContainsHotPixels(hit);
                 }
 
-                if(apixCluster !=0 ) delete apixCluster;
+                delete apixCluster;
                 return skipHit; // if TRUE  this hit will be skipped
             } 
             
