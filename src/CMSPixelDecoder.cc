@@ -762,12 +762,12 @@ void CMSPixelDecoderAnalogue::print_addresslevels() {
 
     log(D_DEBUG) << "    CMSPixelDecoder::STATUS TBM   header: ";
     std::vector<int>::iterator it;
-    for ( it=addressLevels->TBM.level.begin() ; it < addressLevels->TBM.level.end(); it++ ) log(D_DEBUG) << std::setw(5) << *it << " ";
+    for(it = addressLevels->TBM.level.begin(); it < addressLevels->TBM.level.end(); ++it) log(D_DEBUG) << std::setw(5) << *it << " ";
     for (unsigned int iroc = 0; iroc < addressLevels->address.size(); iroc++ ){
         log(D_DEBUG) << std::endl << "    CMSPixelDecoder::STATUS ROC" << std::setw(2) << iroc << " header: ";
-        for ( it=addressLevels->ROC[iroc].level.begin() ; it < addressLevels->ROC[iroc].level.end(); it++ ) log(D_DEBUG) << std::setw(5) << *it << " ";
+        for(it = addressLevels->ROC[iroc].level.begin(); it < addressLevels->ROC[iroc].level.end(); ++it) log(D_DEBUG) << std::setw(5) << *it << " ";
         log(D_DEBUG) << std::endl << "    CMSPixelDecoder::STATUS ROC" << std::setw(2) << iroc << " addr. levels: ";
-        for ( it=addressLevels->address[iroc].level.begin() ; it < addressLevels->address[iroc].level.end(); it++ ) log(D_DEBUG) << std::setw(5) << *it << " ";
+        for(it = addressLevels->address[iroc].level.begin(); it < addressLevels->address[iroc].level.end(); ++it) log(D_DEBUG) << std::setw(5) << *it << " ";
     }
     log(D_DEBUG) << std::endl;
 }

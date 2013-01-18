@@ -15,10 +15,10 @@
 #include <iostream>
 
 // Flags:
-#define D_ERROR   0
-#define D_WARNING 1
-#define D_DEBUG   2
-#define D_LOGORRHOEA 3
+#define D_ERROR 1
+#define D_WARNING 2
+#define D_DEBUG   3
+#define D_LOGORRHOEA 4
 
 #define FLAG_EMPTYEVENTS 1
 #define FLAG_LAZYDECODING 2
