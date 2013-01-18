@@ -43,7 +43,7 @@ EUTelAPIXSparsePixel::EUTelAPIXSparsePixel(short xCoord, short yCoord, short sig
   _type = kEUTelAPIXSparsePixel;
 }
 
-EUTelAPIXSparsePixel::EUTelAPIXSparsePixel(const EUTelAPIXSparsePixel &orig) {
+EUTelAPIXSparsePixel::EUTelAPIXSparsePixel(const EUTelAPIXSparsePixel &orig) : EUTelBaseSparsePixel() {
   _xCoord = orig.getXCoord();
   _yCoord = orig.getYCoord();
   _signal = (short)orig.getSignal();
