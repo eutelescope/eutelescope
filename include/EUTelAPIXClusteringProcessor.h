@@ -55,7 +55,6 @@ namespace eutelescope {
     virtual void modifyEvent( LCEvent * evt ) ;
     virtual void check (LCEvent * evt);
     virtual void end();
-    void resetStatus(IMPL::TrackerRawDataImpl * status);
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 	void bookHistos();

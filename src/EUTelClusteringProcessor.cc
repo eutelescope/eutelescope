@@ -878,7 +878,6 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
 //    }
 
     // reset the status
-//    resetStatus(status);
 
     // now that we know which is the sensorID, we can ask to GEAR
     // which are the minX, minY, maxX and maxY.

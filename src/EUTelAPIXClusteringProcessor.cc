@@ -655,10 +655,6 @@ void EUTelAPIXClusteringProcessor::end() {
 
 }
 
-
-void EUTelAPIXClusteringProcessor::resetStatus(IMPL::TrackerRawDataImpl * status) {
-}
-
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 void EUTelAPIXClusteringProcessor::fillHistos (LCEvent * evt) {
 	//cout<<"EUTelClusteringProcessor::fillHistos()"<<endl;
