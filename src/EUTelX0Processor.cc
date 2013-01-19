@@ -425,7 +425,6 @@ void EUTelX0Processor::threePointResolution(LCCollection *alignedHitCollection){
       for(size_t k = 0; k < hitveci2size; ++k){
         TVector3 hiti2 = hitvectortemp[i+2][k];
         for(size_t l = 0; l < hitveci1size; ++l){
-          //printf("%i,%i,%i,%i\n",i,j,k,l);
           TVector3 hiti1 = hitvectortemp[i+1][l];
           double averagex = (hiti.x() + hiti2.x())/2.0;
           double averagey = (hiti.y() + hiti2.y())/2.0;

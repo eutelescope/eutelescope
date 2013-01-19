@@ -1533,9 +1533,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
             fittedEx.push_back(_fitEx[ipl]);
             fittedEy.push_back(_fitEy[ipl]);
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-    char iden[4];
-    sprintf(iden, "%d", _planeID[ipl] );
-    string bname = (string)"pl" + iden + "_";
+    stringstream iden;
+    iden << _planeID[ipl];
+    string bname = (string)"pl" + iden.str().c_str() + "_";
 if(jhit>=0){
       _aidaHistoMap1D[bname + "fitX"]->fill( _fitX[ipl]  );
       _aidaHistoMap1D[bname + "fitY"]->fill( _fitY[ipl]  );
@@ -1931,9 +1931,9 @@ void EUTelTestFitter::end(){
 
   for(int ipl=0;ipl<_nTelPlanes;ipl++)  
   {
-    char iden[4];
-    sprintf(iden, "%d", _planeID[ipl] );
-    string bname = (string)"pl" + iden + "_";
+    stringstream iden;
+    iden << _planeID[ipl];
+    string bname = (string)"pl" + iden.str().c_str() + "_";
 
     streamlog_out( MESSAGE ) << "X: ["<< ipl << ":" << _planeID[ipl] <<"]" << 
     _aidaHistoMap1D[bname + "residualX"]->allEntries()<< " " <<
@@ -2079,9 +2079,9 @@ void EUTelTestFitter::bookHistos()
 // plot plane by plane:
    for(int iz=0; iz < _nTelPlanes ; iz++) {
 //plane id by      _planeID[iz]  
-    char iden[4];
-    sprintf(iden, "%d", _planeID[iz] );
-    string bname = (string)"pl" + iden + "_";
+    stringstream iden;
+    iden <<< _planeID[iz];
+    string bname = (string)"pl" + iden.str().c_str() + "_";
  
 
     int   limitXN  = 100;
