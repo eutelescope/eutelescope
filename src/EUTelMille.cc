@@ -1,8 +1,4 @@
-// Authors:
-// Philipp Roloff, DESY <mailto:philipp.roloff@desy.de>
-// Joerg Behr, Hamburg Uni/DESY <joerg.behr@desy.de>
-// Slava Libov, DESY <mailto:vladyslav.libov@desy.de>
-// Igor Rubinskiy, DESY <mailto:igorrubinsky@gmail.com>
+// Contact: Igor Rubinskiy, DESY <mailto:igorrubinsky@gmail.com>
 //
 // Version: $Id$
 /*
@@ -358,9 +354,7 @@ void EUTelMille::init() {
     }  
 #endif
 
-//
 //  sensor-planes in geometry navigation:
-//
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
@@ -642,10 +636,6 @@ void EUTelMille::init() {
       _xPos.push_back(std::vector<double>(_nPlanes,0.0));
       _yPos.push_back(std::vector<double>(_nPlanes,0.0));
       _zPos.push_back(std::vector<double>(_nPlanes,0.0));
- 
-//      _xPosTrack.push_back(std::vector<double>(_nPlanes,0.0));
-//      _yPosTrack.push_back(std::vector<double>(_nPlanes,0.0));
-//      _zPosTrack.push_back(std::vector<double>(_nPlanes,0.0));
     }
 
   if(!_distanceMaxVec.empty())
@@ -724,7 +714,6 @@ void EUTelMille::findtracks2(
 
  if( missinghits > getAllowedMissingHits() ) 
  {
-//   printf("too mmany missing hits %5d\n", missinghits); 
    // recursive chain is dropped here;
    return;
  }
@@ -738,7 +727,6 @@ void EUTelMille::findtracks2(
  if( (_allHitsArray[i].size() == 0) && (i <_allHitsArray.size()-1) )
  {
     findtracks2(missinghits,indexarray,vec, _allHitsArray, i+1, -1 ); 
-//    return; // stop here
  } 
 
  for(size_t j =0; j < _allHitsArray[i].size(); j++)
@@ -761,7 +749,6 @@ void EUTelMille::findtracks2(
 
               // ACTIVE
               // stop on the last non-zero hit
-//              for(int ivec=0; ivec<=e; ivec++)
 
               // now loop through all hits on a track candidate "vec"
               // start at the end, stop on the first non-zero hit
@@ -1550,7 +1537,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       if ((_nPlanes  - _excludePlanes.size())== number_of_planes)
         {
           for(size_t i =0;i < _hitCollectionName.size();i++)
- //     // check for a hit in every telescope plane
+          // check for a hit in every telescope plane
           {
               LCCollection* collection;
               try {
@@ -1631,7 +1618,6 @@ void EUTelMille::processEvent (LCEvent * event) {
                   {
                       if(cluster->getTotalCharge() <= getMimosa26ClusterChargeMin() )
                       {
-//                          printf("(2) Thin cluster (charge <=1), hit type: %5d  \n", hit->getType() );
                           delete cluster; 
                           continue;
                       }
@@ -2524,12 +2510,10 @@ void EUTelMille::processEvent (LCEvent * event) {
 
               // clean up
 
-//              printf("finished track %5d \n", _nMilleDataPoints);
 
               delete [] derLC;
               delete [] derGL;
               delete [] label;
-//              printf("finished track %5d DELETE OK\n", _nMilleDataPoints);
 
             }
 #endif
@@ -2573,7 +2557,6 @@ void EUTelMille::processEvent (LCEvent * event) {
           }
         }
 
-//printf("coming to loope over detector plane sfor histos \n");
 
         // loop over all detector planes
         for(unsigned int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
@@ -2656,7 +2639,6 @@ void EUTelMille::processEvent (LCEvent * event) {
 #endif
 
         } // end loop over all detector planes
-//printf("coming to loope over detector plane sfor histos DONE\n");
 
 
 #endif
@@ -2989,7 +2971,6 @@ void EUTelMille::end() {
     double *meanZ = new double[_nPlanes];
 #endif
 
-//printf("loop over all detector planes \n");
     // loop over all detector planes
     for(unsigned int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
 
