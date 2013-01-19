@@ -7,10 +7,10 @@
  *
  */
 
-#ifndef EUTELALIGNMENTCONSTAN_H
-#define EUTELALIGNMENTCONSTAN_H
+#ifndef EUTELALIGNMENTCONSTANT_H
+#define EUTELALIGNMENTCONSTANT_H
 
-#define ALIGN_CONST_MAX_SIZE 20
+#define ALIGN_CONST_MAX_SIZE 20  //Can we change this to a global const int? Or put it somewhere else in the code...
 
 // lcio includes <.h>
 #include <lcio.h>
@@ -26,7 +26,7 @@ namespace eutelescope {
    *  alignment contants obtained by the execution of EUTelMille +
    *  pede. 
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @author Contact: antonio.bulgheroni@gmail.com
    *  @version $Id$
    */ 
   class EUTelAlignmentConstant : public IMPL::LCGenericObjectImpl {
@@ -39,7 +39,7 @@ namespace eutelescope {
     EUTelAlignmentConstant(); 
 
     //! Constructor with all the needed parameters
-    /*! This constructor is the recommended one because it set all the
+    /*! This constructor is the recommended one because it sets all the
      *  needed parameters in one go. 
      *
      *  @param sensorID The sensor number as from the GEAR file
@@ -162,11 +162,7 @@ namespace eutelescope {
      *
      */ 
     friend std::ostream& operator<< (std::ostream& os, const EUTelAlignmentConstant & c) { c.print(os); return os; }
-
   };
-
-  
-
 }
 
 #endif
