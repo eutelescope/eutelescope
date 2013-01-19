@@ -105,65 +105,65 @@ class EUTelX0Processor : public marlin::Processor {
 public:
   //! Returns a new instance of EUTelX0Processor
   /*! This method returns a new instance of this processor. It is
-  * called by Marlin execution framework and it shouldn't be
-  * called/used by the final user.
+  *   called by Marlin execution framework and it shouldn't be
+  *   called/used by the final user.
   *
-  * @return a new EUTelX0Processor.
+  *   @return a new EUTelX0Processor.
   */
   virtual Processor * newProcessor() {return new EUTelX0Processor;}
 
-  //! Default constructor
+  //! Default constructor sets all numeric values to -1, all pointers to NULL, all booleans to false, clears all STL containers and sets strings to ""
   EUTelX0Processor ();
 
   //! Called at the job beginning.
   /*! This is executed only once in the whole execution. It inputs
-  * the processor parameters and check that the GEAR
-  * environment is properly set up and accessible from Marlin.
+  *   the processor parameters and check that the GEAR
+  *   environment is properly set up and accessible from Marlin.
+  *   All the private members of the class are given their starting values here
   */
   virtual void init ();
 
   //! Called for every run.
-  /*! It is called for every run, and consequently the run counter
-  * is incremented. The geometry ID of the file is compared with
-  * the one provided by the GEAR geometry description. In case the
-  * two are different, the user is asked to decide to quit or to
-  * continue with a description that might be wrong.
-  *
-  * @param run the LCRunHeader of the current run
+  /*! It is called for every run, but does nothing in this code. 
+  *   It must be left in the program due to the inheritence from Marlin
+  *   @param run the LCRunHeader of the current run
   */
   virtual void processRunHeader (LCRunHeader * run);
   
   //! Called every event
-  /*! This is called for each event in the file. Each element of the
-  * pulse collection is scanned and the center of the cluster is
-  * translated into the external frame of reference thanks to the
-  * GEAR geometry description.
-  *
-  * @throw UnknownDataTypeException if the cluster type is unknown
-  *
-  * @param evt the current LCEvent event as passed by the
-  * ProcessMgr
+  /*! This is called for each event in the file.
+  *   This will, when completed, go through each event and 
+  *   find the tracks (or accept the track from a track finding 
+  *   processor). Then it will work out the scattering angle of
+  *   of the track at the position of the DUT. Finally, when it
+  *   has all the scattering angles it will use the values to
+  *   produce an estimate of the radiation length of the material.
+  *   Additionally, it may be possible to do a fine binning of how
+  *   the radiation length changes with x and y position in the DUT.
+  *   But this is for a later stage of the development.
+  *   @param evt the current LCEvent event as passed by the
   */
   virtual void processEvent (LCEvent * evt);
 
   //! Called after data processing.
   /*! This method is called when the loop on events is
-  * finished.
+  *   finished. It cleans up code, and sets all values
+  *   as per the constructor.
   */
   virtual void end();
 
   //! Histogram booking
   /*! Some control histograms are filled during this procedure in
-  * order to be able to perform easy check on the quality of the
-  * output hits and also to understand if the frame of reference
-  * conversion has been properly done. Of course this method is
-  * effectively doing something only in the case MARLIN_USE_AIDA.
+  *   order to be able to perform easy check on the quality of the
+  *   output hits and also to understand if the frame of reference
+  *   conversion has been properly done. Of course this method is
+  *   effectively doing something only in the case MARLIN_USE_AIDA.
+  *   Currently this is not used, but that may change later.
   */
   void bookHistos();
 
   //!Guess Sensor ID
-  /*!Works out which layer of the telescope the current element is in based on its position
-  */ 
+  /*!Works out which layer of the telescope the current element is in based on its position*/ 
   int guessSensorID(const double * hit );
 
 private:
@@ -187,6 +187,8 @@ private:
   void testtrack(LCCollection *trackCollection);
   void threePointResolution(LCCollection *alignedHitCollection);
   void createResiduals(LCCollection *trackCollection);
+
+  //Private member values
   std::string _correctedHitColName;
   double _cutValue1,_cutValue2;
   bool _debug;

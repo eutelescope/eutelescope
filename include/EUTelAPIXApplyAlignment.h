@@ -69,7 +69,7 @@ namespace eutelescope {
    *     2. <b>Translation first</b> The hits are first shifted and
    *  then rotated.
    *
-   *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+   *  @author Contact: antonio.bulgheroni@gmail.com
    *  @version $Id$
    *
    *
