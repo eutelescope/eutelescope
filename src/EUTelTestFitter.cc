@@ -2080,7 +2080,7 @@ void EUTelTestFitter::bookHistos()
    for(int iz=0; iz < _nTelPlanes ; iz++) {
 //plane id by      _planeID[iz]  
     stringstream iden;
-    iden <<< _planeID[iz];
+    iden << _planeID[iz];
     string bname = (string)"pl" + iden.str().c_str() + "_";
  
 
