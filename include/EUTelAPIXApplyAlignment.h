@@ -125,13 +125,6 @@ namespace eutelescope {
      */
     virtual void end();
 
-    //! Histogram booking
-    /*! Some control histograms are filled during this procedure in
-     *  order to be able to perform easy check on the quality of the
-     *  output hits and also to understand if the frame of reference
-     *  conversion has been properly done. Of course this method is
-     *  effectively doing something only in the case MARLIN_USE_AIDA.
-     */
     int guessSensorID( lcio::TrackerHitImpl * hit ) ;
 
   protected:
@@ -208,12 +201,6 @@ namespace eutelescope {
     //! An array with the Z position of planes
     double * _siPlaneZPosition;
 
-    //! Fill histogram switch
-    /*! This boolean switch was initially introduced for debug reason
-     *  but then we realized that it could stay there and protect
-     *  against missing AIDA::Processor.
-     *
-     */
   };
 
   //! A global instance of the processor
