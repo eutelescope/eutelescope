@@ -106,7 +106,8 @@ EUTelDafBase::EUTelDafBase(std::string name) : marlin::Processor(name) {
   // input collection
   std::vector<std::string > HitCollectionNameVecExample;
   HitCollectionNameVecExample.push_back("hit");
-  registerInputCollections(LCIO::TRACKERHIT,"HitCollectionName", "Names of input hit collections", _hitCollectionName,HitCollectionNameVecExample);
+ // registerInputCollections(LCIO::TRACKERHIT,"HitCollectionName", "Names of input hit collections", _hitCollectionName,HitCollectionNameVecExample);
+  registerProcessorParameter( "HitCollectionName", "Names of input hit collections", _hitCollectionName,HitCollectionNameVecExample);
   
   //Tracker system options
   registerOptionalParameter("MakePlots", "Should plots be made and filled?", _histogramSwitch, static_cast<bool>(false));
@@ -477,7 +478,7 @@ size_t EUTelDafBase::getPlaneIndex(float zPos){
   return(index);
 }
 
-int EUTelDafBase::guessSensorID(const double * hit ) 
+int EUTelDafBase::guessSensorID( double * hit ) 
 {
 
   int sensorID = -1;
@@ -516,35 +517,77 @@ int EUTelDafBase::guessSensorID(const double * hit )
 }
 
 
-void EUTelDafBase::readHitCollection(LCEvent* event){
+void EUTelDafBase::readHitCollection(LCEvent* event)
+{
   //Dump LCIO hit collection to tracker system
   //Extract hits from collection, add to tracker system
 //printf("EUTelDafBase::readHitCollection \n");
-  for(size_t i =0;i < _hitCollectionName.size();i++){
-    try {
+   streamlog_out ( DEBUG ) << " readHitCollection: " << _hitCollectionName.size() << " collections to read " << endl;
+   for(size_t i =0;i < _hitCollectionName.size();i++)
+   {
+    streamlog_out ( DEBUG ) << " hit collection name: " << _hitCollectionName[i] << " found for event " << event->getEventNumber();
+    try 
+    {
       _hitCollection = event->getCollection(_hitCollectionName[i]);
-    } catch (DataNotAvailableException& e) {
+    }
+    catch (DataNotAvailableException& e)
+    {
       streamlog_out ( WARNING2 ) << "No input collection " << _hitCollectionName[i] << " found for event " << event->getEventNumber()
 				 << " in run " << event->getRunNumber() << endl;
       throw SkipEventException( this );
     }
 // printf("EUTelDafBase::readHitCollection add all hits from collection %5d \n",i);
     //Add all hits in collection to corresponding plane
-    for ( int iHit = 0; iHit < _hitCollection->getNumberOfElements(); iHit++ ) {
+   streamlog_out ( DEBUG ) << " hit collection size : " << _hitCollection->getNumberOfElements() << endl;
+
+   for ( int iHit = 0; iHit < _hitCollection->getNumberOfElements(); iHit++ ) {
       TrackerHitImpl* hit = static_cast<TrackerHitImpl*> ( _hitCollection->getElementAt(iHit) );
-      const double * pos = hit->getPosition();
+     double pos[3]  = {0.,0.,0.};
+      bool region    = true;
+      int planeIndex = -1;
+
+      if( _mcCollectionStr.size() > 0 )
+      {
+//      printf("1 %s hit = %p   and simhit = %p  \n", _hitCollectionName[i].c_str(), hit, simhit);
+       _mcCollection = dynamic_cast < LCCollectionVec * > (event->getCollection(  _mcCollectionStr[i] ));
+       SimTrackerHitImpl* simhit = 0;
+       if(_mcCollection != 0 ) simhit = static_cast<SimTrackerHitImpl*> ( _mcCollection->getElementAt(iHit) );
+       if(simhit != 0 )
+       {
+       const double * simpos = simhit->getPosition();
+       pos[0]=simpos[0];
+       pos[1]=simpos[1];
+       pos[2]=simpos[2];
 //      int planeIndex = getPlaneIndex( pos[2]  * 1000.0f);
-      int planeIndex = guessSensorID( pos );
+       planeIndex = guessSensorID( pos );
+       }
+       streamlog_out ( DEBUG ) << " SIM: simhit="<< ( simhit != 0 ) <<" add point [" << planeIndex << "] "<< 
+                      (float) pos[0] * 1000.0f << " " << (float) pos[1] * 1000.0f << " " <<  (float) pos[2] * 1000.0f << endl;
 //      printf("planeIndex %5d of %5d \n", planeIndex, _system.planes.size() ); 
-      bool region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
-      //if( not region){ continue; }
+//       region = checkClusterRegion( simhit, _system.planes.at(planeIndex).getSensorID() );
+     }else
+      if(hit != 0 )
+      {
+//      printf("2 %s hit = %2d  and simhit = %2d \n",_hitCollectionName[i].c_str(), hit, simhit);
+       const double * hitpos = hit->getPosition();
+       pos[0]=hitpos[0];
+       pos[1]=hitpos[1];
+       pos[2]=hitpos[2];
+       planeIndex = guessSensorID( pos );
+       streamlog_out ( DEBUG   ) << " REAL: add point [" << planeIndex << "] "<< 
+                      (float) pos[0] * 1000.0f << " " << (float) pos[1] * 1000.0f << " " <<  (float) pos[2] * 1000.0f << endl;
+       region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
+      }
+
+     //if( not region){ continue; }
       if(planeIndex >=0 ) 
       { 
-	_system.addMeasurement( planeIndex, (float) pos[0] * 1000.0f, (float) pos[1] * 1000.0f, (float) pos[2] * 1000.0f,  region, iHit);
+	streamlog_out ( DEBUG   ) << " add point [" << planeIndex << "] "<< 
+                      (float) pos[0] * 1000.0f << " " << (float) pos[1] * 1000.0f << " " <<  (float) pos[2] * 1000.0f << endl;
+        _system.addMeasurement( planeIndex, (float) pos[0] * 1000.0f, (float) pos[1] * 1000.0f, (float) pos[2] * 1000.0f,  region, iHit);
       }
     }
 // printf("EUTelDafBase::readHitCollection add all hits from collection %5d DONE \n",i);
- 
   }
 // printf("EUTelDafBase::readHitCollection -- DONE \n");
  
@@ -696,7 +739,7 @@ void EUTelDafBase::fillPlots(daffitter::TrackCandidate *track){
       _aidaHistoMap[bname + "residualX"]->fill( (estim->getX() - meas.getX())*1e-3 );
       _aidaHistoMap[bname + "residualY"]->fill( (estim->getY() - meas.getY())*1e-3 );
       // mc ?? 
-      if( _mcCollection != 0 )
+/*      if( _mcCollection != 0 )
       {
          double dca = 99999.;
          double dcax = 99999.;
@@ -722,7 +765,7 @@ void EUTelDafBase::fillPlots(daffitter::TrackCandidate *track){
          }
              _aidaHistoMap[bname + "mcresidualX"]->fill( dcax *1e-3 );
              _aidaHistoMap[bname + "mcresidualY"]->fill( dcay *1e-3);
-      }
+      }*/
       //Resids 
       _aidaHistoMapProf1D[bname + "residualdXvsX"]->fill(estim->getX(), estim->getX() - meas.getX() );
       _aidaHistoMapProf1D[bname + "residualdYvsX"]->fill(estim->getX(), estim->getY() - meas.getY() );
@@ -809,15 +852,15 @@ void EUTelDafBase::bookHistos(){
   _aidaHistoMap["ndof"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("ndof", maxNdof * 10, 0, maxNdof);
   _aidaHistoMap["chi2overndof"] = AIDAProcessor::histogramFactory(this)->createHistogram1D("Chi2OverNdof", maxNdof * 10, 0, _maxChi2);
 
-  _aidaZvFitX = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvHitX", 200,  -5000.0,  5000.0, 200,   -100.0,   100.0);
-  _aidaZvHitX = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvFitX", 200, -10000.0, 10000.0, 200, -10000.0, 10000.0);
-  _aidaZvFitY = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvHitY", 200, -10000.0, 10000.0, 200,   -100.0,   100.0);
-  _aidaZvHitY = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvFitY", 200, -10000.0, 10000.0, 200, -10000.0, 10000.0);
+  _aidaZvFitX = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvHitX", 20,  -5000.0,  5000.0, 20,   -100.0,   100.0);
+  _aidaZvHitX = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvFitX", 20, -10000.0, 10000.0, 20, -10000.0, 10000.0);
+  _aidaZvFitY = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvHitY", 20, -10000.0, 10000.0, 20,   -100.0,   100.0);
+  _aidaZvHitY = AIDAProcessor::histogramFactory(this)->createHistogram2D("ZvFitY", 20, -10000.0, 10000.0, 20, -10000.0, 10000.0);
 
-  _aidaHistoMap2D["AllResidmeasZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidmeasZvsmeasX",1400 ,-80., 60., 200 ,-10000., 10000.);
-  _aidaHistoMap2D["AllResidmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidmeasZvsmeasY",1400 ,-80., 60., 200 ,-10000., 10000.);
-  _aidaHistoMap2D["AllResidfitZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidfitZvsmeasX",1400 ,-80., 60., 200 ,-10000., 10000.);
-  _aidaHistoMap2D["AllResidfitZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidfitZvsmeasY",1400 ,-80., 60., 200 ,-10000., 10000.);
+  _aidaHistoMap2D["AllResidmeasZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidmeasZvsmeasX",14 ,-80., 60., 20 ,-10000., 10000.);
+  _aidaHistoMap2D["AllResidmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidmeasZvsmeasY",14 ,-80., 60., 20 ,-10000., 10000.);
+  _aidaHistoMap2D["AllResidfitZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidfitZvsmeasX",14 ,-80., 60., 20 ,-10000., 10000.);
+  _aidaHistoMap2D["AllResidfitZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( "AllResidfitZvsmeasY",14 ,-80., 60., 20 ,-10000., 10000.);
 
 
   for( size_t ii = 0; ii < _system.planes.size() ; ii++)
@@ -828,14 +871,14 @@ void EUTelDafBase::bookHistos(){
     string bname = (string)"pl" + iden + "_";
     //Resids
 
-    double residminX = -0.05;
-    double residmaxX =  0.05;
+    double residminX = -0.03;
+    double residmaxX =  0.03;
  
-    _aidaHistoMap[bname + "mcresidualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "mcresidualX",2000 ,  residminX, residmaxX );
-    _aidaHistoMap[bname + "mcresidualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "mcresidualY",2000 ,  residminX, residmaxX );
+    _aidaHistoMap[bname + "mcresidualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "mcresidualX", 200,  residminX, residmaxX );
+    _aidaHistoMap[bname + "mcresidualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "mcresidualY", 200,  residminX, residmaxX );
 
-    _aidaHistoMap[bname + "residualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualX", 2000,  residminX, residmaxX);
-    _aidaHistoMap[bname + "residualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualY", 2000,  residminX, residmaxX);
+    _aidaHistoMap[bname + "residualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualX",6000, residminX, residmaxX);
+    _aidaHistoMap[bname + "residualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "residualY",6000, residminX, residmaxX);
     //Resids 2D // profiles
     _aidaHistoMapProf1D[bname+"residualdXvsX"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dXvsX", 200, -10000., 10000.,   residminX, residmaxX );
     _aidaHistoMapProf1D[bname+"residualdYvsX"]= AIDAProcessor::histogramFactory(this)->createProfile1D(bname+"dXvsY", 200, -10000., 10000.,   residminX, residmaxX );
@@ -852,14 +895,14 @@ void EUTelDafBase::bookHistos(){
 //  _aidaHistoMap2D[bname + "residualdZvsY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualdZvsY",1000 ,-10000., 10000., 200 ,-50., 50.);
 
     // residuals
-    _aidaHistoMap2D[bname + "residualmeasZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasX",200 ,-1000., 1000., 200 ,-10000., 10000.);
-    _aidaHistoMap2D[bname + "residualmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasY",200 ,-1000., 1000., 200 ,-10000., 10000.);
-    _aidaHistoMap2D[bname + "residualfitZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasX",200 ,-1000., 1000., 200 ,-10000., 10000.);
-    _aidaHistoMap2D[bname + "residualfitZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasY",200 ,-1000., 1000., 200 ,-10000., 10000.);
+    _aidaHistoMap2D[bname + "residualmeasZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasX",20 ,-1000., 1000., 20 ,-10000., 10000.);
+    _aidaHistoMap2D[bname + "residualmeasZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualmeasZvsmeasY",20 ,-1000., 1000., 20 ,-10000., 10000.);
+    _aidaHistoMap2D[bname + "residualfitZvsmeasX"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasX",20 ,-1000., 1000., 20 ,-10000., 10000.);
+    _aidaHistoMap2D[bname + "residualfitZvsmeasY"] =  AIDAProcessor::histogramFactory(this)->createHistogram2D( bname + "residualfitZvsmeasY",20 ,-1000., 1000., 20 ,-10000., 10000.);
 
     //Angles
-    _aidaHistoMap[bname + "dxdz"] = AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "dxdz", 100, -0.1, 0.1);
-    _aidaHistoMap[bname + "dydz"] = AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "dydz", 100, -0.1, 0.1);
+    _aidaHistoMap[bname + "dxdz"] = AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "dxdz", 10, -0.1, 0.1);
+    _aidaHistoMap[bname + "dydz"] = AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "dydz", 10, -0.1, 0.1);
     //Zpositions
   }
 }
@@ -872,11 +915,11 @@ void EUTelDafBase::bookDetailedHistos(){
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
     string bname = (string)"pl" + iden + "_";
-    _aidaHistoMap[bname + "sigmaX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "sigmaX", 100, 0.0f, 100);
-    _aidaHistoMap[bname + "sigmaY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "sigmaY", 100, 0.0f, 100);
-    _aidaHistoMap[bname + "hitChi2"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitChi2", 100, 0, 100);
-    _aidaHistoMap[bname + "pullX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "pullX", 100, -2, 2);
-    _aidaHistoMap[bname + "pullY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "pullY", 100, -2, 2);
+    _aidaHistoMap[bname + "sigmaX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "sigmaX", 10, 0.0f, 100);
+    _aidaHistoMap[bname + "sigmaY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "sigmaY", 10, 0.0f, 100);
+    _aidaHistoMap[bname + "hitChi2"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitChi2", 10, 0, 100);
+    _aidaHistoMap[bname + "pullX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "pullX", 10, -2, 2);
+    _aidaHistoMap[bname + "pullY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "pullY", 10, -2, 2);
   }
 }
 
