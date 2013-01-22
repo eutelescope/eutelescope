@@ -1469,8 +1469,11 @@ void EUTelMille::processEvent (LCEvent * event) {
       std::vector<EVENT::TrackerHit*> TrackHitsHere = TrackHere->getTrackerHits();
 
       // check for a hit in every plane
+      streamlog_out ( MILLEMESSAGE ) << "track " << nTracksEvent << " has " << TrackHitsHere.size() << " hits <F12>" << endl;
 
-      if (_nPlanes == (TrackHitsHere.size() / 2)) {
+
+//    if (_nPlanes == (TrackHitsHere.size() / 2)) 
+//      {
 
         // assume hits are ordered in z! start counting from 0
         int nPlaneHere = 0;
@@ -1491,6 +1494,12 @@ void EUTelMille::processEvent (LCEvent * event) {
             _yPos[nTracksEvent][nPlaneHere] = PositionsHere[1] * 1000;
             _zPos[nTracksEvent][nPlaneHere] = PositionsHere[2] * 1000;
 
+            streamlog_out ( MILLEMESSAGE ) << "hit: " << nHits << " " 
+                         << _xPos[nTracksEvent][nPlaneHere] << " " 
+                         << _yPos[nTracksEvent][nPlaneHere] << " " 
+                         << _zPos[nTracksEvent][nPlaneHere] << endl;
+
+
             nPlaneHere++;
 
           } // end assume fitted hits have type 32
@@ -1499,11 +1508,11 @@ void EUTelMille::processEvent (LCEvent * event) {
 
         _nTracks++;
 
-      } else {
+//      } else {
 
-        streamlog_out ( MILLEMESSAGE ) << "Dropping track " << nTracksEvent << " because there is not a hit in every plane assigned to it." << endl;
+//        streamlog_out ( MILLEMESSAGE ) << "Dropping track " << nTracksEvent << " because there is not a hit in every plane assigned to it." << endl;
 
-      }
+//      }
 
     } // end loop over all tracks
 
