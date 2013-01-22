@@ -435,7 +435,6 @@ void EUTelAPIXHistograms::processRunHeader( LCRunHeader* runHeader) {
 
   const std::string detectorName = runHeader->getDetectorName();
   const std::string detectorDescription = runHeader->getDescription();
-  //  const std::vector<std::string> * subDets = runHeader->getActiveSubdetectors();
 
   message<MESSAGE> ( log() << detectorName << " : " << detectorDescription ) ;
 
@@ -482,10 +481,6 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
   try {
     trackcol = event->getCollection( _inputTrackColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    /*message<ERROR> ( log() << "Not able to get collection "
-                     << _inputTrackColName
-                     << "\nfrom event " << event->getEventNumber()
-                     << " in run " << event->getRunNumber()  );*/
     throw SkipEventException(this);
   }
 
@@ -1205,13 +1200,6 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 							}
 
 							}
-							/*if (fittedXLOCAL < 0.6 ) { fittedIndexX =  fittedXLOCAL / 0.6;
-							} else if (fittedXLOCAL >= 0.6 && fittedXLOCAL < 7. ) {
-								fittedIndexX = 1 + (fittedXLOCAL - 0.6) / _pitchX;
-							} else if (fittedXLOCAL > 7.) {
-								fittedIndexX = 17 + (fittedXLOCAL - 7.) / 0.6;
-
-							}*/
       		}
 
 			}
@@ -2574,30 +2562,6 @@ void EUTelAPIXHistograms::getTransformationShifts() {
 
     _transShiftX = (a * _measuredXLOCAL[0] + b * _measuredYLOCAL[0]) - _measuredX[0];
 	_transShiftY = (c * _measuredXLOCAL[0] + d * _measuredYLOCAL[0]) - _measuredY[0];
-	//cout << "shifts: "<<_transShiftX << " , "<<_transShiftY << endl;
-/*
-	//-- cross check
-	double		X = _measuredX[0] + _transShiftX;
-	double		Y = _measuredY[0] + _transShiftY;
-	cout << _rot00 * X + _rot01 * Y << " --- "<<_measuredXLOCAL[0]<<endl;
-	cout << _rot10 * X + _rot11 * Y << " --- "<<_measuredYLOCAL[0]<<endl;
-	//--
-*/
-/*	if ( _measuredX.size() > 1 ) {
-		cout << "_measuredX.size() = "<<_measuredX.size()<<endl;
-		for (int k=1; k<_measuredX.size(); k++) {
-		double	_transShiftX2 = (a * _measuredXLOCAL[k] + b * _measuredYLOCAL[k]) - _measuredX[k];
-		double	_transShiftY2 = (c * _measuredXLOCAL[k] + d * _measuredYLOCAL[k]) - _measuredY[k];
-		//if ((_transShiftX2 !=_transShiftX) || (_transShiftY2 !=_transShiftY) ){
-			//cout << "Total crap" << endl;
-			cout<<_transShiftX2 << " " << _transShiftX << " diff= "<<_transShiftX2-_transShiftX<<endl;
-			cout<<_transShiftY2 << " " << _transShiftY << " diff= "<<_transShiftY2-_transShiftY<< endl;}
-			//abort();
-		//}
-
-	}
-*/
-	//cout <<"leaving getTransformationShifts()" <<endl;
 }
 
 bool EUTelAPIXHistograms::hasMatchedHit( Track* fittrack ) {
@@ -2629,12 +2593,9 @@ bool EUTelAPIXHistograms::hasMatchedHit( Track* fittrack ) {
 			double deltaY = _allDUTsmeasuredY[i] - allDUtsfittedY[ _allDUTssensorID[i] ];
 
 			double	dist = deltaX * deltaX + deltaY * deltaY;
-			if ( (dist < _distMaxReference*_distMaxReference) /*&& (_referencePlaneLV1[k] >= 4) && (_referencePlaneLV1[k] <= 6) */ ) {
+			if ( (dist < _distMaxReference*_distMaxReference) ) {
 				nMatches++;
-				//(dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[_Lv1OfFirstMatchedReferenceHistoName] ))->fill(_allDUTslv1[ i ]);
 				if ( Lv1ofFirstMatch < 0 ) Lv1ofFirstMatch = _allDUTslv1[ i ];
-				//_lv1 = Lv1ofFirstMatch;
-				//break;
 			}
 		}
 
@@ -2739,10 +2700,6 @@ void EUTelAPIXHistograms::getTrackImpactPoint(double & x, double & y, double & z
 		abort();
 	}
 
-	/*cout << "track impact points:" << endl;
-	cout << x1 << " , " << z1 << endl;
-	cout << x2 << " , " << z2 << endl;*/
-
 	// now proceed to calculation of the intersection point
 	// of this track and the rotated DUT layer
 
@@ -2760,10 +2717,6 @@ void EUTelAPIXHistograms::getTrackImpactPoint(double & x, double & y, double & z
 	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["TrackOffsetX"]))->fill(offsetX);
 	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["TrackSlopeY"]))->fill(slopeY);
 	(dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap["TrackOffsetY"]))->fill(offsetY);
-
-	// now determine the total shift in X due to alignment
-	//double	deltaX = 0;
-
 
 	// this is a normal vector to the plane
 	TVectorD	NormalVector(3);
@@ -2828,12 +2781,8 @@ void EUTelAPIXHistograms::getTrackImpactPoint(double & x, double & y, double & z
 
 		//------------------------------------------------------------------------------------
 
-		//deltaX -= c->getXOffset();
 	}
 	
-
-	//r0Vector.Print();
-	//NormalVector.Print();
 
 	// now have to solve the equation
 	TVectorD	trackImpact(3);
@@ -2855,18 +2804,6 @@ void EUTelAPIXHistograms::getTrackImpactPoint(double & x, double & y, double & z
 	b(2) = offsetY;
 
 	trackImpact = equationMatrix.Invert() * b;
-
-	/*
-	// very very naive approach
-	// finally calculate track impact point
-	z = ( z2 /tan((-1)*_beta) + deltaX - offsetX) / (slopeX + 1./tan((-1)*_beta));
-	x = slopeX * z + offsetX;
-	// in this simple approximation, no correction for y
-	y = y2;*/
-
-	/*cout << trackImpact(0) << " ** " << x << endl;
-	cout << trackImpact(1) << " ** " << y << endl;
-	cout << trackImpact(2) << " ** " << z << endl;*/
 
 	x = trackImpact(0);
 	y = trackImpact(1);
@@ -2951,7 +2888,7 @@ void EUTelAPIXHistograms::revertAlignment(double & x, double & y, double & z, st
 	// to revert the alignment transformation properly, the constants have to be applied in
 	// a reverted way, i.e. first the shifts, second the rotations
 
-	// not that the sign is different for all the constants wrt to what is done in EUTelApplyAlignmentProcessor -
+	// note that the sign is different for all the constants with respect to what is done in EUTelApplyAlignmentProcessor -
 	// the transformation is reverted
 
 	// first the shifts
