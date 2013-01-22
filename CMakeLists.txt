@@ -193,7 +193,7 @@ IF( DEFINED ENV{EUTELESCOPE} AND DEFINED ENV{MARLIN})
 find_program(CPPCHECK cppcheck /scratch/local/bin) # hint at path /scratch/... used on EUTelTesting server; will also parse $PATH
 if(CPPCHECK)
   MESSAGE("cppcheck was found and will be made available as test.")
-  ADD_TEST( TestCppcheckSources sh -c "${CPPCHECK_EXECUTABLE} --enable=all -I $ENV{EUTELESCOPE}/include -q -rp=$ENV{EUTELESCOPE} --std=c99 --std=posix $ENV{EUTELESCOPE}/src" )
+  ADD_TEST( TestCppcheckSources sh -c "${CPPCHECK} --enable=all -I $ENV{EUTELESCOPE}/include -q -rp=$ENV{EUTELESCOPE} --std=c99 --std=posix $ENV{EUTELESCOPE}/src" )
   SET_TESTS_PROPERTIES (TestCppcheckSources PROPERTIES
     FAIL_REGULAR_EXPRESSION "(error)"
     )
