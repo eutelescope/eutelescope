@@ -452,9 +452,6 @@ WARN_LOGFILE           =
 # with spaces.
 
 INPUT                  = ../include ../src introduction.html \ 
-                         ../steering-examples/minimal.cfg    \
-                         ../steering-examples/complete.cfg   \
-                         ../steering-examples/complete_20100610.cfg   \
 	                 ChangeLog	     \
                          ../test/histograms  \
                          ../pysub
