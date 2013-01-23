@@ -73,7 +73,7 @@ usage: %prog [execution-options] [io-options] [configuration-options] [fitter-op
                                    help="Set the next plane radius, search cone ")
 
     parser.set_defaults( split_job=1 )
-    parser.set_defaults( split_size=1000 )
+    parser.set_defaults( split_size=1000000 )
     parser.set_defaults( skip=0 )
 
     parser.add_option_group( fitterGroup )
@@ -192,7 +192,7 @@ from the GRID SE, but the job will be executed on the local CPU
     configurationGroup.add_option( "--event-range",
                                    action="store",
                                    dest="event_range",
-                                   help="Set the event range to process")
+                                   help="Set the event range to process (first = 0, last = default 1000000")
 
     parser.add_option_group( configurationGroup )
 
