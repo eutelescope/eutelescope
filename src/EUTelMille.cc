@@ -1487,17 +1487,18 @@ void EUTelMille::processEvent (LCEvent * event) {
           const double *PositionsHere = HitHere->getPosition();
 
           // assume fitted hits have type 32
-          if ( HitHere->getType() == 32 ) {
+          if ( HitHere->getType() < 32 ) 
+{
 
             // fill hits to arrays
-            _xPos[nTracksEvent][nPlaneHere] = PositionsHere[0] * 1000;
-            _yPos[nTracksEvent][nPlaneHere] = PositionsHere[1] * 1000;
-            _zPos[nTracksEvent][nPlaneHere] = PositionsHere[2] * 1000;
+            _xPos[nTracksEvent][nPlaneHere] = PositionsHere[0] * 1000.;
+            _yPos[nTracksEvent][nPlaneHere] = PositionsHere[1] * 1000.;
+            _zPos[nTracksEvent][nPlaneHere] = PositionsHere[2] * 1000.;
 
             streamlog_out ( MILLEMESSAGE ) << "hit: " << nHits << " " 
                          << _xPos[nTracksEvent][nPlaneHere] << " " 
                          << _yPos[nTracksEvent][nPlaneHere] << " " 
-                         << _zPos[nTracksEvent][nPlaneHere] << endl;
+                         << _zPos[nTracksEvent][nPlaneHere] << " type: " << HitHere->getType() << endl;
 
 
             nPlaneHere++;
