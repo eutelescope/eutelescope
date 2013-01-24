@@ -345,14 +345,14 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!-- -->
     <parameter name="ClusterChargeMinimum" type="int" value="1"/>
     <!-- -->
-    <parameter name="MinNumberOfCorrelatedHits" type="int" value="4"/>
+    <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
     <parameter name="Events"  type="int" value="999"/>
 
     <!--Residual cuts along both size in microns-->
-    <parameter name="ResidualsXMax" type="FloatVec">  20.  20.  20.   20.0  20.0    20.0   20.0    20.  20.0  20.0          </parameter>
-    <parameter name="ResidualsXMin" type="FloatVec"> -20. -20. -20.  -20.0 -20.0   -20.0  -20.0   -20. -20.0 -20.0          </parameter>
-    <parameter name="ResidualsYMax" type="FloatVec">  20.  20.  20.   20.0  20.0    20.0   20.0    20.  20.0  20.0          </parameter>
-    <parameter name="ResidualsYMin" type="FloatVec"> -20. -20. -20.  -20.0 -20.0   -20.0  -20.0   -20. -20.0 -20.0          </parameter>
+    <parameter name="ResidualsXMax" type="FloatVec">  20.  20.  20.      20.0   20.0    20.0  20.0  20.0          </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -20. -20. -20.     -20.0  -20.0   -20.0 -20.0 -20.0          </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  20.  20.  20.      20.0   20.0    20.0  20.0  20.0          </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -20. -20. -20.     -20.0  -20.0   -20.0 -20.0 -20.0          </parameter>
 
   </processor>
 

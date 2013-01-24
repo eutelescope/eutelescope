@@ -26,8 +26,8 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <processor name="ApplyAlignment"/>
       <processor name="Correlator"/>
       <processor name="DafFitter"/>
-      <processor name="APIXTbTrack"/>
-      <group name="APIXDUTHisto"/>
+      <xprocessor name="APIXTbTrack"/>
+      <xgroup name="APIXDUTHisto"/>
       <processor name="Save"/>
    </execute>
 
@@ -53,6 +53,8 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
   <processor name="LoadRefHitDB"     type="ConditionsProcessor">
     <parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/>
     <parameter name="SimpleFileHandler" type="StringVec"> refhit  @DBPath@/@Output@-refhit-db.slcio referenceHit  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit31  @DBPath@/@Output@-refhit-db.slcio referenceHit31  </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> refhit32  @DBPath@/@Output@-refhit-db.slcio referenceHit32  </parameter>
   </processor>
 
 
@@ -111,26 +113,26 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
 
   <processor name="DafFitter" type="EUTelDafFitter">
-    <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5  </parameter>
+    <parameter name="TelescopePlanes" type="IntVec"> 0 1 2 3 4 5 20 21  </parameter>
     <parameter name="DutPlanes" type="IntVec"> 20 21 </parameter>
     <parameter name="FitDuts" type="bool" value="false"/>
     <parameter name="MakePlots" type="bool" value="true"/>
-    <parameter name="RequireNTelPlanes" type="float" value="4"/>
+    <parameter name="RequireNTelPlanes" type="float" value="6"/>
     <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> alignedHit </parameter>
     <parameter name="TrackCollectionName" type="string" lcioInType="Track"> track </parameter>
     <parameter name="AlignmentCollectionNames">prealign align   </parameter>
-    <parameter name="ReferenceCollection" type="string" > refhit </parameter>
+    <parameter name="ReferenceCollection" type="string" > refhit32 </parameter>
     <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-    <parameter name="Ebeam" type="float" value="120"/>
-    <parameter name="TelResolutionX" type="float" value="4.3"/>
-    <parameter name="TelResolutionY" type="float" value="4.3"/>
-    <parameter name="DutResolutionX" type="float" value="50" />
-    <parameter name="DutResolutionY" type="float" value="10"/>
+    <parameter name="Ebeam" type="float" value="4"/>
+    <parameter name="TelResolutionX" type="float" value="18.4"/>
+    <parameter name="TelResolutionY" type="float" value="18.4"/>
+    <parameter name="DutResolutionX" type="float" value="250" />
+    <parameter name="DutResolutionY" type="float" value="50"/>
     <parameter name="NominalDxdz" type="float" value="0.0"/>
     <parameter name="NominalDydz" type="float" value="0.0"/>
-    <parameter name="FinderRadius" type="float" value="700" />
-    <parameter name="Chi2Cutoff" type="float" value="1500"/>
-    <parameter name="MaxChi2OverNdof" type="float" value="150"/>
+    <parameter name="FinderRadius" type="float" value="500" />
+    <parameter name="Chi2Cutoff" type="float" value="1000"/>
+    <parameter name="MaxChi2OverNdof" type="float" value="10"/>
     <parameter name="NDutHits" type="int" value="0"/>
   </processor>
 
