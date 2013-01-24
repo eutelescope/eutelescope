@@ -240,34 +240,24 @@
 
     # run stattest tool on output from previous step and test it against reference file; test are configured in specified config file (*.qa)
 
-<<<<<<< .mine
     ADD_TEST( TestPysubExampleDatura2FEI4StatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib python ${stattestdir}/${executable} -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_Datura2FEI4Align.qa ${testdir}/output/histo/${RunNr}-align-histo.root ${referencedatadir}/${RunNr}-align-histo.root" )
     SET_TESTS_PROPERTIES (TestPysubExampleDatura2FEI4StatTestAlign PROPERTIES
-=======
-    ADD_TEST( TestPysubExampleDaturaAloneStatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH python ${stattestdir}/${executable} --cdash -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_DaturaAloneAlign.qa ${testdir}/output/histo/${RunNr}-align-histo.root ${referencedatadir}/${RunNr}-align-histo.root" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneStatTestAlign PROPERTIES
->>>>>>> .r2293
-        # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
-        # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
-	# test depends on earlier steps
-	DEPENDS TestPysubExampleDatura2FEI4AlignRun
-	)
+    # test will pass if ALL of the following expressions are matched
+    PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
+    # test will fail if ANY of the following expressions is matched 
+    FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
+    # test depends on earlier steps
+    DEPENDS TestPysubExampleDatura2FEI4AlignRun
+    )
 
 
-<<<<<<< .mine
     ADD_TEST( TestPysubExampleDatura2FEI4StatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib python ${stattestdir}/${executable} -g ${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_Datura2FEI4Fitter.qa ${testdir}/output/histo/${RunNr}-track-histo.root ${referencedatadir}/${RunNr}-track-histo.root" )
     SET_TESTS_PROPERTIES (TestPysubExampleDatura2FEI4StatTestFitter PROPERTIES
-=======
-    ADD_TEST( TestPysubExampleDaturaAloneStatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH python ${stattestdir}/${executable} --cdash  -g${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_DaturaAloneFitter.qa ${testdir}/output/histo/${RunNr}-track-histo.root ${referencedatadir}/${RunNr}-track-histo.root" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneStatTestFitter PROPERTIES
->>>>>>> .r2293
-        # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
-        # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
-	# test depends on earlier steps
-	DEPENDS TestPysubExampleDatura2FEI4FitterRun
-	)
+    # test will pass if ALL of the following expressions are matched
+    PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
+    # test will fail if ANY of the following expressions is matched 
+    FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
+    # test depends on earlier steps
+    DEPENDS TestPysubExampleDatura2FEI4FitterRun
+    )
 
