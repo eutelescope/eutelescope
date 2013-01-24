@@ -209,7 +209,7 @@ endif()
 # ======================================================================
 
   INCLUDE(pysub/examples/datura-alone/testing.cmake)
-#  INCLUDE(pysub/examples/datura-2FEI4/testing.cmake)
+  INCLUDE(pysub/examples/datura-2FEI4/testing.cmake)
 
 # set custom settings (e.g. tests to be skipped for valgrind)
 configure_file (
