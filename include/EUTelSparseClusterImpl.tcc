@@ -206,7 +206,7 @@ namespace eutelescope {
     
     for ( unsigned int iPixel = 0; iPixel < size() ; iPixel++ ) {
       getSparsePixelAt(iPixel, sparsePixel);
-      pixelMap.insert( make_pair( sparsePixel->getSignal(), iPixel ) );
+      pixelMap.insert( std::make_pair( sparsePixel->getSignal(), iPixel ) );
     }
 
     int counter = 0;
@@ -585,7 +585,7 @@ namespace eutelescope {
 
     for ( unsigned int iPixel = 0 ; iPixel < size(); iPixel++ ) {
       getSparsePixelAt( iPixel, pixel );
-      clusterSignalMap.insert( make_pair( pixel->getSignal() , iPixel ) );
+      clusterSignalMap.insert( std::make_pair( pixel->getSignal() , iPixel ) );
     }
 
     delete pixel;
