@@ -103,7 +103,9 @@ namespace eutelescope {
              
         private:
 
-            bool checkBoundaries(double &corr, double y, double p0, double p1, double p2, double p3);
+            bool calTanH(double &corr, double y, double p0, double p1, double p2, double p3);
+	    bool calWeibull(double &corr, double y);
+	    bool calLinear(double &corr, double y);
             std::vector< std::vector< cal_param > > calibration;
 
     };

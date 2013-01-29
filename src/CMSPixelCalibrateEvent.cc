@@ -344,8 +344,12 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
                 int iPixel = Pixel.getXCoord()*_noOfYPixel + Pixel.getYCoord();
 
                 double corrected;
-                if(checkBoundaries(corrected,Pixel.getSignal(),calibration[iDetector][iPixel].par0,calibration[iDetector][iPixel].par1,calibration[iDetector][iPixel].par2,calibration[iDetector][iPixel].par3)) {
-                    correctedPixel->setSignal((short int)corrected);
+		bool rangecheck = true;
+                if(_phCalibration) rangecheck = calTanH(corrected,Pixel.getSignal(),calibration[iDetector][iPixel].par0,calibration[iDetector][iPixel].par1,calibration[iDetector][iPixel].par2,calibration[iDetector][iPixel].par3);
+		else rangecheck = calWeibull(corrected,Pixel.getSignal());
+                
+	        if(rangecheck) {
+		  correctedPixel->setSignal((short int)corrected);
                     
                     // Filling histogramms if needed:
                		if ( _fillHistos ) fillHistos ( (int)Pixel.getSignal(), (int)correctedPixel->getSignal(), iDetector );
@@ -392,33 +396,57 @@ void CMSPixelCalibrateEventProcessor::end() {
     streamlog_out ( MESSAGE ) <<  "Successfully finished" << endl;
 }
 
-bool CMSPixelCalibrateEventProcessor::checkBoundaries(double &corr, double y, double p0, double p1, double p2, double p3) {
 
-    if(_phCalibration) {
-        // Check for ATanh boundaries, values should be in  (-1,1)
-        if(-1 < (y-p3)/p2 && (y-p3)/p2 < 1) {
-            corr = (TMath::ATanH((y-p3)/p2) + p1)/p0;
-            return true;
-        }
-        else return false;
-    }
-    else {
-        double Aout = 1.0; // Aout in no-TBM units!
-        double Ared = Aout - p3;//sub vert off, see gaintanh2ps.C
-        double ma9 = p0;
-
-        if( Ared >  ma9-1 ) ma9 = Ared + 2;
-        if( Ared <  -ma9+1 ) ma9 = Ared - 2;
-
-        // calibrate into ke units:
-
-        //cout << "atanh(" << Ared / ma9 << ") = " << TMath::ATanH( Ared / ma9 ) << endl;
-
-        corr = ( TMath::ATanH( Ared / ma9 ) * p1 + p2 ) * 0.45  ; // [ke]
-        return true;
-    }
-    
+bool CMSPixelCalibrateEventProcessor::calTanH(double &corr, double y, double p0, double p1, double p2, double p3) {
+  // Check for ATanh boundaries, values should be in  (-1,1)
+  if(-1 < (y-p3)/p2 && (y-p3)/p2 < 1) {
+    corr = (TMath::ATanH((y-p3)/p2) + p1)/p0;
+    return true;
+  }
+  else return false;
 }
+
+bool CMSPixelCalibrateEventProcessor::calWeibull(double &corr, double y) {
+  //corr = (pow( -log( 1.0 - Ared / ma9 ), 1.0/expo[col][row]) * Gain[col][row] + horz[col][row] ) * keV;
+  corr = y;
+  streamlog_out(ERROR) << "Calibration mode not yet implemented. Choose different one." << endl;
+  return false;
+}
+
+bool CMSPixelCalibrateEventProcessor::calLinear(double &corr, double y) {
+  corr = y;
+  streamlog_out(ERROR) << "Calibration mode not yet implemented. Choose different one." << endl;
+  return false;
+}
+
+
+  //bool CMSPixelCalibrateEventProcessor::checkBoundaries(double &corr, double y, double p0, double p1, double p2, double p3) {
+  //
+  //    if(_phCalibration) {
+  //      // Check for ATanh boundaries, values should be in  (-1,1)
+  //       if(-1 < (y-p3)/p2 && (y-p3)/p2 < 1) {
+  //        corr = (TMath::ATanH((y-p3)/p2) + p1)/p0;
+  //        return true;
+  //    }
+  //    else return false;
+  //}
+  //else {
+  //      double Aout = 1.0; // Aout in no-TBM units!
+  //    double Ared = Aout - p3;//sub vert off, see gaintanh2ps.C
+  //    double ma9 = p0;
+  //
+  //    if( Ared >  ma9-1 ) ma9 = Ared + 2;
+  //    if( Ared <  -ma9+1 ) ma9 = Ared - 2;
+  //
+  //    // calibrate into ke units:
+  //
+  //    //cout << "atanh(" << Ared / ma9 << ") = " << TMath::ATanH( Ared / ma9 ) << endl;
+  //
+  //    corr = ( TMath::ATanH( Ared / ma9 ) * p1 + p2 ) * 0.45  ; // [ke]
+  //    return true;
+  ////}
+  //
+  //}
 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
