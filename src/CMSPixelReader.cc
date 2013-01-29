@@ -225,7 +225,7 @@ void CMSPixelReader::readDataSource (int Ntrig)
             runHeader->setMinY(IntVec(_noOfROC, 0));
             runHeader->setMaxY(IntVec(_noOfROC, _noOfYPixel - 1));
 
-            runHeader->lcRunHeader()->setDetectorName("CMSPixelTelescope");
+	    //            runHeader->lcRunHeader()->setDetectorName("EUTelescope");
 
             // Process the run header:
             ProcessorMgr::instance ()->processRunHeader ( static_cast<lcio::LCRunHeader*> ( lcHeader.release()) );
@@ -350,14 +350,13 @@ void CMSPixelReader::readDataSource (int Ntrig)
     streamlog_out ( MESSAGE ) << " ---------------------------------------------------------" << endl;    
     streamlog_out ( MESSAGE ) << "  Write EORE as event " << event->getEventNumber() << endl;
         
-    // Print the readout statistics:
+    // Print the readout statistics, invoked by the destructor:
     streamlog_out ( MESSAGE ) << " ---------------------------------------------------------" << endl;    
-    readout->print_statistics();
+    delete readout;
     streamlog_out ( MESSAGE ) << " ---------------------------------------------------------" << endl;    
 
     // Delete the EORE event:    
     delete event;
-    delete readout;
  }
 
 

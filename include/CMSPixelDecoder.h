@@ -77,10 +77,13 @@ namespace CMSPixel {
     class CMSPixelDecoder {
         public:
             CMSPixelDecoder(const char *FileName, int *status, unsigned int rocs, int flags, unsigned int selectevents = 0, unsigned int verbosity = 1);
-	    virtual ~CMSPixelDecoder(){}
+	    virtual ~CMSPixelDecoder() {
+	      log(D_ERROR) << "~CMSPixelDecoder done." << std::endl;
+	      print_statistics();
+	    }
             
             virtual int get_event(std::vector< std::vector< CMS_event > > * event_data);
-            void print_statistics();
+	    void print_statistics();
           	            
         protected:
             inline bool word_is_data(unsigned short word) {
@@ -205,8 +208,8 @@ namespace CMSPixel {
 
                 // Check whether we should have a TBM header or not:
                 if(!havetbm) {
-                    L_HEADER = 0;
-                 	L_TRAILER = 0;
+                    L_HEADER = 8;
+                 	L_TRAILER = 28;
                 }
                 else {
                     L_HEADER = 28;

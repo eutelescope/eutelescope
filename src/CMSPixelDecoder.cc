@@ -64,7 +64,16 @@ int CMSPixelDecoder::get_event(std::vector< std::vector< CMS_event > > * event_d
     if(!process_rawdata(&data)) goto readmoredata; // return 1;
     
     unsigned int pos = 0;
-    if(!check_event_sanity(&data,&pos)) goto readmoredata;
+    if(!check_event_sanity(&data,&pos)) { 
+      if(!writeempty) {
+	log(D_DEBUG) << "Sanity check failed. Skipping event." << std::endl;
+	goto readmoredata;
+      }
+      else {
+	log(D_DEBUG) << "Sanity check failed. Writing empty event." << std::endl;
+	data.clear();
+      }
+    }
 
     // Init ROC id:
     unsigned int roc = 0;
@@ -99,16 +108,17 @@ int CMSPixelDecoder::get_event(std::vector< std::vector< CMS_event > > * event_d
     evt_roc.clear();
     
     // If we have no hit at this point, the event is empty:
-    if(!writeempty && !have_hit) {
+    if(!have_hit) {
         global_statistics.data_empty++;
-        goto readmoredata;
+	log(D_LOGORRHOEA) << "Event empty!" << std::endl;
+        if(!writeempty) goto readmoredata;
     }
     
     // Check if the event has been rejected on the way:
     if(reject_event) {
         global_statistics.data_rejected++;
         log(D_LOGORRHOEA) << "Event rejected!" << std::endl;
-        goto readmoredata;
+        if(!writeempty) goto readmoredata;
     }
     
     // Reject events with too many ROCs at this stage, not before (they might be wrongly decoded hits...)
@@ -116,7 +126,8 @@ int CMSPixelDecoder::get_event(std::vector< std::vector< CMS_event > > * event_d
         log(D_LOGORRHOEA) << "Event contains too many ROCs!" << std::endl;
         global_statistics.data_diffrocs[event_data->size()]++;
         global_statistics.data_rejected++;
-        goto readmoredata;
+	event_data->clear();
+        if(!writeempty) goto readmoredata;
     }
     else if(event_data->size() < noOfROC) {
         log(D_LOGORRHOEA) << "Event contains too few ROCs!" << std::endl;
@@ -124,7 +135,7 @@ int CMSPixelDecoder::get_event(std::vector< std::vector< CMS_event > > * event_d
         // selectevents == 1 means rejecting all events but those with correct No of ROC headers
         if(selectevents > 0) {
             global_statistics.data_rejected++;
-            goto readmoredata;
+            if(!writeempty) goto readmoredata;
         }
         // Push back empty ROC vectors if we allow events with less than noOfROC headers:
         else {
@@ -218,16 +229,9 @@ bool CMSPixelDecoder::check_event_sanity(std::vector< int > * data, unsigned int
     
     // Checking for empty events and skip them if necessary:
     if( length <= L_EMPTYEVT ){
-            global_statistics.data_empty++;        // Fill statistics
-            if(!writeempty) {
-                log(D_DEBUG) << "    CMSPixelDecoder::GET_EVENT::STATUS event was empty, " << length << " words. Skipped." << std::endl;
-                return false;
-            }
-            else {
-                log(D_DEBUG) << "    CMSPixelDecoder::GET_EVENT::STATUS event was empty, writing emtpy event." << std::endl;
-                data->clear();
-                return true;
-            }
+      //            global_statistics.data_empty++;        // Fill statistics
+            log(D_DEBUG) << "    CMSPixelDecoder::GET_EVENT::STATUS event was empty, " << length << " words." << std::endl;
+            return false;
     }
 
     // Checking for data length if necessary:    
@@ -264,13 +268,13 @@ bool CMSPixelDecoder::check_event_sanity(std::vector< int > * data, unsigned int
     }
     else if(L_TRAILER > 0) {
         // Delete the trailer from valid hit data:
-        data->erase(data->end() - L_TRAILER,data->end());
-        log(D_LOGORRHOEA) << "Deteled trailer: " << L_TRAILER << " words." << std::endl;
+        data->erase(data->end() - L_TRAILER/L_GRANULARITY,data->end());
+        log(D_LOGORRHOEA) << "Deleted trailer: " << L_TRAILER << " words." << std::endl;
     }
     
     if(L_HEADER > 0) {
         // Delete the header from valid hit data:
-        data->erase(data->begin(),data->begin()+L_HEADER);
+        data->erase(data->begin(),data->begin()+L_HEADER/L_GRANULARITY);
         log(D_LOGORRHOEA) << "Deleted header: " << L_HEADER << " words." << std::endl;
     }
 
@@ -279,7 +283,8 @@ bool CMSPixelDecoder::check_event_sanity(std::vector< int > * data, unsigned int
 
     // Find the start position with the first ROC header (maybe there are idle patterns before...)
     //FIXME the if() is an ugly hack for single analog/xdb chip readout without TBM or emulator: ROC UB level seems broken there...
-    if(!havetbm && noOfROC == 1) {
+    //    if(!havetbm && noOfROC == 1) {
+    if(0) {
         // Just set the starting position after the first ROC header:
         *pos = L_ROC_HEADER;
         log(D_LOGORRHOEA) << "Set starting position to: " << *pos << std::endl;
@@ -317,8 +322,8 @@ bool CMSPixelDecoder::check_event_sanity(std::vector< int > * data, unsigned int
     }
     
     log(D_DEBUG) << "    CMSPixelDecoder::GET_EVENT::STATUS event: " << length << " data words." << std::endl;
-    for(unsigned int i = 0; i < data->size();i++) log(D_LOGORRHOEA) << data->at(i) << " ";
-    log(D_LOGORRHOEA) << std::endl;
+    for(unsigned int i = 0; i < data->size();i++) log(D_LOGORRHOEA) << std::hex << std::setw(4) << data->at(i) << " ";
+    log(D_LOGORRHOEA) << std::dec << std::endl;
     
 
     return true;
@@ -524,6 +529,7 @@ bool CMSPixelDecoderDigital::decode_hit(std::vector< int > data, unsigned int * 
             if(i==4 || i==5|| i==9|| i==12|| i==15|| i==18|| i==21) log(D_LOGORRHOEA) << ".";
         }
     log(D_LOGORRHOEA) << std::endl;
+
 
     // Double Column magic:
     //  dcol =  dcol msb        *6 + dcol lsb
