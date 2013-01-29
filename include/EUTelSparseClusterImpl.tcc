@@ -84,14 +84,12 @@ namespace eutelescope {
 
   template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getSeedCharge() const {
-    unsigned int   maxIndex  = 0;
     float          maxSignal = -1 * std::numeric_limits<float>::max();
     PixelType * pixel = new PixelType;
     for ( unsigned int index = 0; index < size() ; index++ ) {
       getSparsePixelAt(index , pixel);
       if ( pixel->getSignal() > maxSignal ) {
 	maxSignal = pixel->getSignal();
-	maxIndex  = index;
       }
     }
     delete pixel;
