@@ -3389,12 +3389,10 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
   _bgmeasuredY.clear();
  
   LCCollection* hitcol = NULL;
-  bool _DUTok=true;
   try {
     hitcol = event->getCollection( _inputHitColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
     streamlog_out(DEBUG) << "Not able to get collection " << _inputHitColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
-    _DUTok=false;
     //
     // Do not skip event if DUT hits missing - efficiency and
     //   background calculations still have to be done!

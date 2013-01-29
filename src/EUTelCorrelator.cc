@@ -1896,11 +1896,8 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
                 bool skipHit = 0;
                 for (size_t iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
                 {
-                    int pixelX, pixelY;
                     EUTelAPIXSparsePixel apixPixel;
                     apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-                    pixelX = apixPixel.getXCoord();
-                    pixelY = apixPixel.getYCoord();
 
                     try
                     {                       
@@ -1919,7 +1916,7 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
                     } 
                     catch (...)
                     {
-//                     printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", pixelX, pixelY  );
+//                     printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", apixPixel.getXCoord(), apixPixel.getYCoord() );
                     }
            
 //                    skipHit = skipHit || hitContainsHotPixels(hit);

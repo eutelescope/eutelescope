@@ -311,17 +311,17 @@ void EUTelMAPSdigi::init() {
 
   // Check if correct number of digitization parameters is given
 
-  unsigned int nTelPlanes = _siPlanesParameters->getSiPlanesNumber();
-/*
+  /*  unsigned int nTelPlanes = _siPlanesParameters->getSiPlanesNumber();
+
   if(_DigiLayerIDs.size()>0 && _DigiLayerIDs.size()!=nTelPlanes)
     {
   streamlog_out ( ERROR4 ) <<  "Wrong number of Layer IDs for digitization" << endl
                   <<  "Size of DigiLayerIDs have to match GEAR description" << endl;
   exit(-1);
     }
-*/
+
   if(_DigiLayerIDs.size()==0)nTelPlanes=1;
-/*
+
   if(_depositedChargeScaling.size() != nTelPlanes ||
      _applyPoissonSmearing.size() != nTelPlanes ||
      _adcGain.size() != nTelPlanes ||

@@ -407,12 +407,9 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
               {
                 EUTelSimpleSparsePixel m26Pixel;
                 cluster->getSparsePixelAt( iPixel, &m26Pixel);
-                int pixelX, pixelY;
-                pixelX = m26Pixel.getXCoord();
-                pixelY = m26Pixel.getYCoord();
 		{
 		  char ix[100];
-		  sprintf(ix, "%d,%d,%d", sensorID, pixelX, pixelY ); 
+		  sprintf(ix, "%d,%d,%d", sensorID, m26Pixel.getXCoord(), m26Pixel.getYCoord() ); 
 		  std::map<std::string, bool >::const_iterator z = _hotPixelMap.find(ix);
 		  if(z!=_hotPixelMap.end() && _hotPixelMap[ix] == true  )
 		    { 
@@ -459,12 +456,8 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
                 int sensorID = apixCluster->getDetectorID();
                 for (unsigned int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) 
                 {
-                    int pixelX, pixelY;
                     EUTelAPIXSparsePixel apixPixel;
                     apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-                    pixelX = apixPixel.getXCoord();
-                    pixelY = apixPixel.getYCoord();
-
                     {
                        char ix[100];
                        sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
