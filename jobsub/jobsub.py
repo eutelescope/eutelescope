@@ -1,4 +1,4 @@
-#!/usr/bin/python
+#!/usr/bin/env python
 """
 jobsub: a tool for EUTelescope job submission to Marlin 
 
@@ -74,18 +74,18 @@ def loadparamsfromcsv(csvfilename, runs):
 
     """
     import csv
-    import collections
     import os.path
 
     log = logging.getLogger('jobsub')
-    parameters_csv = collections.defaultdict(dict) # store all information needed from the csv file
+    parameters_csv = {} # store all information needed from the csv file
     if csvfilename is None: 
         return parameters_csv # if no file name given, return empty collection here
     if not os.path.isfile(csvfilename): # check if file exists
         log.error("Could not find the specified csv file '"+csvfilename+"'!")
         exit(1)
     try:
-        with open(csvfilename, 'rb') as csvfile:
+        csvfile = open(csvfilename, 'rb')
+        try:
             log.debug("Opening csv file '"+csvfilename+"'.")
             dialect = csv.Sniffer().sniff(csvfile.read(1024)) # test csv file format details
             csvfile.seek(0) # back to beginning of file
@@ -107,7 +107,9 @@ def loadparamsfromcsv(csvfilename, runs):
                     for run in missingRuns: # check all runs if runnumber matches
                         if int(row["runnumber"]) == run:
                             log.debug("Found entry in csv file for run "+str(run)+" in row number "+ str(rowcount))
-                            parameters_csv[run] = row
+                            parameters_csv[run] = {}
+                            parameters_csv[run].update(row)
+                            print parameters_csv[run]
                             missingRuns.remove(run)
                             break
                 except ValueError: # int conversion error
@@ -119,7 +121,8 @@ def loadparamsfromcsv(csvfilename, runs):
             log.debug("Searched over "+str(rowcount)+" rows in file '"+csvfilename+"'.")
             if not len(missingRuns)==0:
                 log.error("Could not find an entry for the following run numbers in '"+csvfilename+"': "+', '.join(map(str, missingRuns)))
-
+        finally:
+            csvfile.close()
     except csv.Error, e:
         log.error("Problem loading the csv file '"+csvfilename+"'({0}): {1}".format(e.errno, e.strerror))
         return 1
@@ -139,7 +142,7 @@ def checkSteer(sstring):
 def runMarlin(filenamebase):
     """ Runs Marlin and stores log of output """
     log = logging.getLogger('jobsub.marlin')
-    logging.Formatter('%(name)s(%(levelname)s): %(message)s')
+
     # need some addtional libraries for process interaction
     from subprocess import Popen, PIPE
     from threading  import Thread # threading used for non-blocking process output parsing
@@ -152,12 +155,12 @@ def runMarlin(filenamebase):
     # (approach from http://stackoverflow.com/a/4896288)
     def enqueue_output(out, queue):
         """ feed queue with readline output """
-        for line in iter(out.readline, b''):
+        for line in iter(out.readline, ''):
             queue.put(line)
-            out.close()
+        out.close()
     import shlex        
     ON_POSIX = 'posix' in sys.builtin_module_names
-    cmd = "Marlin -steer "+filenamebase+".xml"
+    cmd = "Marlin "+filenamebase+".xml"
     try:
         # run process
         log.info ("Now starting Marlin process: "+cmd)
@@ -172,7 +175,8 @@ def runMarlin(filenamebase):
         terr.daemon = True 
         tout.start()
         terr.start()
-        with open(filenamebase+".log", "w") as log_file:
+        log_file = open(filenamebase+".log", "w")
+        try:
             while p.poll() is None:
                 # read line without blocking
                 try:  
@@ -188,6 +192,8 @@ def runMarlin(filenamebase):
                     log_file.write(line)                     
                 except Empty:
                     pass
+        finally:
+            log_file.close()
     except OSError, e:
         log.critical("Problem with Marlin execution: Command '%s' resulted in error #%s, %s", cmd, e.errno, e.strerror)
         exit(1)
@@ -197,18 +203,30 @@ def runMarlin(filenamebase):
 def main(argv=None):
     """  main routine of jobsub: a tool for EUTelescope job submission to Marlin """
     log = logging.getLogger('jobsub') # set up logging
-    formatter = logging.Formatter('%(name)s - %(asctime)s - %(levelname)s: %(message)s')
+    formatter = logging.Formatter('%(asctime)s %(name)s(%(levelname)s): %(message)s',"%H:%M:%S")
     handler_stream = logging.StreamHandler()
     handler_stream.setFormatter(formatter)
     log.addHandler(handler_stream)
 
+    import os.path
     import ConfigParser
     try:
         import argparse
     except ImportError:
-        log.critical("Could not load argparse module. For python versions prior to 2.7, please install it from http://code.google.com/p/argparse")
-    import os.path
-
+        log.debug("No locally installed argparse module found; trying the package provided with jobsub.")
+        # argparse is not installed; use (old) version provided with jobsub
+        # determine path to subdirectory
+        import inspect
+        cmd_subfolder = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"pymodules/argparse")))
+        if cmd_subfolder not in sys.path:
+            sys.path.insert(0, cmd_subfolder)
+        # try again loading the module
+        try:
+            import argparse
+        except ImportError:
+            # nothing we can do now
+            log.critical("Could not load argparse module. For python versions prior to 2.7, please install it from http://code.google.com/p/argparse")
+            return 1
 
     if argv is None:
         argv = sys.argv
@@ -232,7 +250,7 @@ def main(argv=None):
             
             runs.update(parseIntegerString(runnum))
         except ValueError:
-            log.error("The list of runs contains non-integer and non-range values: '%s'", runnum)            
+            log.error("The list of runs contains non-integer and non-range values: '%s'", runnum)
             return 2
 
     # set the logging level
@@ -341,15 +359,18 @@ def main(argv=None):
 
         # if we have a csv file we can parse, we will lookup the runnumber and replace any
         # variables identified by the csv header by the run specific value
-        for field in parameters_csv[run].keys():
-        # check if we actually find all parameters from the csv file in the steering file - warn if not
-            log.debug("Parsing steering file for csv field name '%s'", field)
-            try:
-                # check that the field name is not empty and do not yet replace the runnumber
-                if not field == "" and not field == "runnumber":                    
-                    steeringString = ireplace("@" + field + "@", parameters_csv[run][field], steeringString)
-            except EOFError:
-                log.warn(" Parameter '" + field + "' from the csv file was not found in template file "+steeringTmpFileName)
+        try:
+            for field in parameters_csv[run].keys():
+                # check if we actually find all parameters from the csv file in the steering file - warn if not
+                log.debug("Parsing steering file for csv field name '%s'", field)
+                try:
+                    # check that the field name is not empty and do not yet replace the runnumber
+                    if not field == "" and not field == "runnumber":                    
+                        steeringString = ireplace("@" + field + "@", parameters_csv[run][field], steeringString)
+                except EOFError:
+                    log.warn(" Parameter '" + field + "' from the csv file was not found in template file "+steeringTmpFileName)
+        except KeyError:
+            log.debug("No information from CSV found for this run")
 
         try:
             steeringString = ireplace("@RunNumber@", runnr, steeringString)
@@ -364,8 +385,11 @@ def main(argv=None):
 
         basefilename = args.jobtask+"-"+runnr
 
-        with open(basefilename+".xml", "w") as steeringFile:
+        steeringFile = open(basefilename+".xml", "w")
+        try:
             steeringFile.write(steeringString)
+        finally:
+            steeringFile.close()
 
         # bail out if running a dry run
         if args.dry_run:

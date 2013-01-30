@@ -1,0 +1,132 @@
+# this file uses emacs Org mode formatting -*- mode: Org; -*-
+* Overview
+  jobsub is a tool for the convenient run-specific modification of
+  Marlin steering files and their execution through the Marlin
+  processor.
+* Usage
+  - help with jobsub -h and jobsub --help (latter is more verbose)
+  - task names are arbitrary and can be set up by the user; they determine
+    e.g. the config section and default file names.
+  - Config file etc. are all optional; only file name for the steering
+    file needs to be either derived from the defaults or needs to be
+    configured
+  - Run range is parsed: allowed are lists or ranges
+  - log file and steering file will be generated
+  - default logging level for submission: warning
+* Preparation of Steering File Templates
+  Steering file templates are valid Marlin steering files (in xml
+  format) where single values are replaced by variables in the form
+  "@SomeVariable@".
+
+  When jobsub is run, these placeholders are filled with a
+  user-defined value that can be specified through any of these
+  sources (in order of precedence): command-line arguments, a config
+  file, or a table with a row for each run number processed.
+  
+  There is only one predefined placeholder, @RunNumber@, which will be
+  substituted with the current run number (padded with leading zeros
+  to six digits, e.g. 001234).
+
+* Sources for Steering File Variables
+  There are only very few predefined options: TemplateFilename, TemplatePath
+** Command Line
+   Variable substitutions can be specified using the --option or -o
+   command line switches, e.g.
+
+   jobsub.py --option beamenergy=5.3 align 1234
+
+   Command line options override any options given in the config file.
+** Config File
+   Config files are text file consisting of sections (indicated by '[]'):
+   - a global section called [DEFAULT]
+   - task-specific sections
+   as well as "name: value" or "name=value" entries, where 'name' are
+   arbitrary steering file variables (case-insensitive).
+
+   Some features of note include:
+   - comment prefix characters are # and ;
+   - interpolation of format strings is supported, for example:
+
+     [My Section]
+     foodir: %(dir)s/whatever
+     dir=frob
+     long: this value continues
+       in the next line
+
+     would resolve the %(dir)s to the value of dir (frob in this case).
+   - some default interpolations are %(home)s and %(eutelescopePath)s
+     which are set up with the environment variables $HOME and
+     $EUTELESCOPE, respectively.
+   - The string "@RunNumber@" will be replaced in the template *after*
+     all other variable strings were filled-in; therefore, you can use
+     the @RunNumber@ placeholder inside options, e.g. the file name.
+     It will be replaced by the run number padded with leading zeros
+     to 6 digits.
+
+** Table (comma-separated text file)
+   - format: e.g. export from Open/LibreOffice with default settings (UTF-8,comma, text-field delimiter: ")
+   - first row has to provide column headers which identify the variables in the steering template to replace (case-insensitive)
+   - requires one column labeled "RunNumber"
+   - only considers placeholders left in the steering template after processing command-line arguments and config file options
+* Examples
+* Appendix 1: pysub migration
+  Currently, jobsub does not directly support submission on the grid;
+  if you need this functionality, please stay with pysub for now.
+
+  *Please consider setting up a template from scratch*: this will ensure
+  that all existing settings are present and show the correct defaults
+  and that the documenting comments are up-to-date. Furthermore, the
+  resulting steering file and jobsub configuration will be much simpler
+  than their pysub counterparts.
+
+  If you still want to keep the steering files used previously with
+  pysub, you can manualy convert them. You mainly need to modify the
+  configuration files: (replace all bold names with your settings)
+
+  - Set up the global settings section
+    [Default]
+
+  - Set up sections for each of your analysis tasks, e.g.
+    [align]
+    [converter]
+    [hitmaker]
+    [fitter]
+    or rename existing sections such as [AlignOptions] to the
+    corresponding task name.
+
+  - Move task-specific options to the corresponding section
+
+  - if your steering files do not follow the naming convention
+    NAME-tmp.xml you need to have the setting
+    TemplateFile = YOUR_FILE_NAME.xml
+    in each task section.
+    Add the setting
+    TemplatePath = (RELATIVE)_PATH_TO_YOUR_TEMPLATES
+    to the global section (or task sections if it varies 
+    for each task)
+
+  - delete obsolete sections: [SteeringTemplate]
+
+  - Move any non-task specific sections into the global [default]
+    section: this applies e.g. to [General], [Logger] and [LOCAL] options
+
+  - Rename the "LocalFolder..." options:
+    LocalFolderNative -> NativeFolder
+    LocalFolderGear -> GearPath
+    LocalFolderLcioRaw -> LcioRawFolder
+    LocalFolderTASKNAMEHisto -> HistoPath (either globally or in local sections)
+    LocalFolderDBTASKNAME -> DBPath (again, either globally or locally)
+    LocalFolderTASKNAMEResults -> ResultsPath (globally or locally)
+
+  - Set the following options: 
+    Globally:
+    Output = @RunNumber@
+    In each task section, modify accordingly:
+    e.g. in [align]:
+    InputFile = %(ResultsPath)s/hit-@RunNumber@.slcio
+    
+  - Run jobsub; if it complains about "Missing configuration
+    parameters", check your template and config for any of the listed
+    parameters and set their value in the config or remove them from
+    the steering file.
+   
