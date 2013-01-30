@@ -327,7 +327,7 @@ def main(argv=None):
         # check if we actually find all parameters from the config in the steering file
         try:
             # need not to search for config variables only concerning submission control
-            if (not key == "templatefile" and not key == "templatepath"):
+            if (not key == "templatefile" and not key == "templatepath" and not key == "home" and not key == "eutelescopepath"):
                 steeringStringBase = ireplace("@" + key + "@", parameters[key], steeringStringBase)
         except EOFError:
             log.warn(" Parameter '" + key + "' was not found in template file "+parameters["templatefile"])
