@@ -60,7 +60,7 @@ def ireplace(old, new, text):
                 raise EOFError("Could not find string "+old)
             return text
         text = text[:index_l] + new + text[index_l + len(old):]
-        idx = index_l + len(old)
+        idx = index_l + len(new)
         occur = occur+1
     if occur == 0:
         raise EOFError("Could not find string "+old)
@@ -161,6 +161,7 @@ def runMarlin(filenamebase):
     import shlex        
     ON_POSIX = 'posix' in sys.builtin_module_names
     cmd = "Marlin "+filenamebase+".xml"
+    rcode = None # the return code that will be set by a later subprocess method
     try:
         # run process
         log.info ("Now starting Marlin process: "+cmd)
@@ -194,11 +195,32 @@ def runMarlin(filenamebase):
                     pass
         finally:
             log_file.close()
+        rcode = p.returncode # get the return code
     except OSError, e:
         log.critical("Problem with Marlin execution: Command '%s' resulted in error #%s, %s", cmd, e.errno, e.strerror)
         exit(1)
+    return rcode
 
-
+def zipLogs(path,filename):
+    import zipfile
+    import os.path
+    log = logging.getLogger('jobsub')
+    try:     # compression module might not be available, therefore try import here
+        import zlib
+        compression = zipfile.ZIP_DEFLATED
+        log.debug("Creating *compressed* log archive")
+    except ImportError: # no compression module available, use flat files
+        compression = zipfile.ZIP_STORED
+        log.debug("Creating flat log archive")
+    zf = zipfile.ZipFile(os.path.join(path,filename)+".zip", mode='w') # create new zip file
+    try:
+        zf.write(os.path.join(path,filename)+".xml", compress_type=compression) # store in zip file
+        zf.write(os.path.join(path,filename)+".log", compress_type=compression) # store in zip file
+        os.remove(os.path.join(path,filename)+".xml") # delete file
+        os.remove(os.path.join(path,filename)+".log") # delete file
+    finally:
+        log.debug("Closing log archive file")
+        zf.close()
 
 def main(argv=None):
     """  main routine of jobsub: a tool for EUTelescope job submission to Marlin """
@@ -234,7 +256,7 @@ def main(argv=None):
 
     # command line argument parsing
     parser = argparse.ArgumentParser()
-    parser.add_argument("-c", "--conf-file", help="Load config file with global and task specific variables", metavar="FILE")
+    parser.add_argument("-c", "--conf-file", "--config", help="Load config file with global and task specific variables", metavar="FILE")
     parser.add_argument("-csv", "--csv-file", help="Load run-specific variables from table (csv format)", metavar="FILE")
     parser.add_argument("--log-file", help="Save log to specified file", metavar="FILE")
     parser.add_argument("-l", "--log", help="Set specified log level", metavar="LEVEL")
@@ -254,7 +276,7 @@ def main(argv=None):
             return 2
 
     # set the logging level
-    numeric_level = getattr(logging, "WARNING", None) # default: warnings only
+    numeric_level = getattr(logging, "INFO", None) # default: warnings only
     if args.log:
         # Convert log level to upper case to allow the user to specify --log=DEBUG or --log=debug
         numeric_level = getattr(logging, args.log.upper(), None)
@@ -276,7 +298,7 @@ def main(argv=None):
 
     # dictionary keeping our paramters
     # here you can set some minimal default config values that will (possibly) be overwritten by the config file
-    parameters = {"templatepath":".", "templatefile":args.jobtask+"-tmp.xml"}
+    parameters = {"templatepath":".", "templatefile":args.jobtask+"-tmp.xml","logpath":"."}
 
     # read in config file if specified on command line
     if args.conf_file:
@@ -313,7 +335,7 @@ def main(argv=None):
     for key, value in parameters.items():
         log.debug ( "     "+key+" = "+value)
 
-    steeringTmpFileName = parameters["templatepath"] + "/" + parameters["templatefile"]
+    steeringTmpFileName = os.path.join(parameters["templatepath"], parameters["templatefile"])
     if not os.path.isfile(steeringTmpFileName):
         log.critical("Steering file template '"+steeringTmpFileName+"' not found!")
         return 1
@@ -327,10 +349,11 @@ def main(argv=None):
         # check if we actually find all parameters from the config in the steering file
         try:
             # need not to search for config variables only concerning submission control
-            if (not key == "templatefile" and not key == "templatepath" and not key == "home" and not key == "eutelescopepath"):
+            if (not key == "templatefile" and not key == "templatepath"):
                 steeringStringBase = ireplace("@" + key + "@", parameters[key], steeringStringBase)
         except EOFError:
-            log.warn(" Parameter '" + key + "' was not found in template file "+parameters["templatefile"])
+            if (not key == "eutelescopepath" and not key == "home" and not key == "logpath"): # do not warn about default content of config
+                log.warn(" Parameter '" + key + "' was not found in template file "+parameters["templatefile"])
 
     # CSV table
     log.debug ("Loading csv file (if requested)")
@@ -345,6 +368,7 @@ def main(argv=None):
         keepRunning['Sigint'] = 'seen'
     prevINTHandler = signal.signal(signal.SIGINT, signal_handler)
 
+    log.info("Will now start processing the following runs: "+', '.join(map(str, runs)))
     # now loop over all runs
     for run in runs:
         if keepRunning['Sigint'] == 'seen':
@@ -382,9 +406,7 @@ def main(argv=None):
             return 1
 
         log.debug ("Now writing steering file for run number "+runnr)
-
         basefilename = args.jobtask+"-"+runnr
-
         steeringFile = open(basefilename+".xml", "w")
         try:
             steeringFile.write(steeringString)
@@ -395,8 +417,12 @@ def main(argv=None):
         if args.dry_run:
             return 0
 
-        runMarlin(basefilename) # start Marlin execution
-
+        rcode = runMarlin(basefilename) # start Marlin execution
+        if rcode == 0:
+            log.info("Marlin finished successfully")
+        else:
+            log.error("Marlin application returned with code "+str(rcode))
+        zipLogs(parameters["logpath"],basefilename)
     # return to the prvious signal handler
     signal.signal(signal.SIGINT, prevINTHandler)
         

@@ -10,7 +10,13 @@
   - Config file etc. are all optional; only file name for the steering
     file needs to be either derived from the defaults or needs to be
     configured
-  - Run range is parsed: allowed are lists or ranges
+  - Run range is parsed: allowed are lists or ranges, e.g.  
+    1234 1235 1240-1250 
+    *Warning*: The order in which the runs are being
+    processed does not necessarily follow the order in which they were
+    given on the command line (due to the underlying python data
+    structure used for storing them); if you need some runs processed
+    before others you need to run them separately.
   - log file and steering file will be generated
   - default logging level for submission: warning
 * Preparation of Steering File Templates
@@ -27,8 +33,18 @@
   substituted with the current run number (padded with leading zeros
   to six digits, e.g. 001234).
 
-* Sources for Steering File Variables
-  There are only very few predefined options: TemplateFilename, TemplatePath
+* Configuration
+  There are only very few predefined options: TemplateFile,
+  TemplatePath, and LogPath. The former are used to find the correct
+  steering file template for the current task while the latter sets
+  the path where the final steering file and job output of each run is
+  stored (as zip file). The default for the file name is
+  "TASK-tmp.xml", where TASK corresponds to the taskname given on the
+  command line.  The default path to the template is ".", i.e. the
+  current directory.
+
+  You can modify these options is the same way as placeholders in the
+  template file, as described below.
 ** Command Line
    Variable substitutions can be specified using the --option or -o
    command line switches, e.g.
@@ -113,7 +129,8 @@
   - Rename the "LocalFolder..." options:
     LocalFolderNative -> NativeFolder
     LocalFolderGear -> GearPath
-    LocalFolderLcioRaw -> LcioRawFolder
+    LocalFolderLcioRaw -> LcioRawPath
+    LocalFolderHistoInfo -> HistoInfoPath
     LocalFolderTASKNAMEHisto -> HistoPath (either globally or in local sections)
     LocalFolderDBTASKNAME -> DBPath (again, either globally or locally)
     LocalFolderTASKNAMEResults -> ResultsPath (globally or locally)
