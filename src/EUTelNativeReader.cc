@@ -141,8 +141,14 @@ void EUTelNativeReader::readDataSource(int numEvents) {
   streamlog_out( DEBUG4 ) << "Reading " << _fileName << " with eudaq file deserializer " << endl;
 
   // open the input file with the eudaq reader
+  try{
+    eudaq::FileReader reader( _fileName, "", _syncTriggerID );
+  }
+  catch(...){
+    streamlog_out(ERROR) << "eudaq::FileReader could not read the file name correctly. Please check the path and file names that have been input" << endl;
+    exit(1);
+  }
   eudaq::FileReader reader( _fileName, "", _syncTriggerID );
-
   if ( reader.Event().IsBORE() ) {
     eudaq::PluginManager::Initialize(  reader.Event() );
     // this is the case in which the eudaq event is a Begin Of Run
@@ -151,7 +157,6 @@ void EUTelNativeReader::readDataSource(int numEvents) {
     processBORE( reader.Event() );
 
   }
-
 
   while ( reader.NextEvent() && (eventCounter < numEvents ) ) {
 
@@ -205,6 +210,7 @@ void EUTelNativeReader::readDataSource(int numEvents) {
     ++eventCounter;
 
   }
+
 }
 
 void EUTelNativeReader::processEORE( const eudaq::DetectorEvent & eore) {
