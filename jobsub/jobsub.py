@@ -88,10 +88,12 @@ def loadparamsfromcsv(csvfilename, runs):
         try:
             log.debug("Opening csv file '"+csvfilename+"'.")
             dialect = csv.Sniffer().sniff(csvfile.read(1024)) # test csv file format details
+            log.debug("Determined the CSV dialect as follows: delimiter=%s, doublequote=%s, escapechar=%s, lineterminator=%s, quotechar=%s , quoting=%s, skipinitialspace=%s",dialect.delimiter, dialect.doublequote, dialect.escapechar, list(ord(c) for c in dialect.lineterminator), dialect.quotechar, dialect.quoting, dialect.skipinitialspace)
             csvfile.seek(0) # back to beginning of file
             reader = csv.DictReader(csvfile, dialect=dialect) # now process CSV file contents here and load them into memory
-            reader.fieldnames = [field.lower() for field in reader.fieldnames] # convert to lower case keys to avoid confusion
+            reader.next() # python < 2.6 requires an actual read access before filling 'DictReader.fieldnames'
             log.debug("CSV file contains the header info: %s", reader.fieldnames)
+            reader.fieldnames = [field.lower() for field in reader.fieldnames] # convert to lower case keys to avoid confusion
             if not "runnumber" in reader.fieldnames: # verify that we have a column "runnumber"
                 log.error("Could not find a column with header label 'RunNumber' in file '"+csvfilename+"'!")
                 return 1
@@ -99,7 +101,9 @@ def loadparamsfromcsv(csvfilename, runs):
                 log.warning("Column without header label encountered in csv file '"+csvfilename+"'!")
             log.info("Successfully loaded csv file'"+csvfilename+"'.")
             # first: search through csv file to find corresponding runnumber entry line for every run
-            rowcount = 0
+            csvfile.seek(0) # back to beginning of file..
+            reader.next()   # .. and skip the header line
+            rowcount = 1
             missingRuns = runs.copy() # list of runs to look for in csv file
             for row in reader: # loop over all rows once
                 rowcount = rowcount + 1
@@ -109,7 +113,6 @@ def loadparamsfromcsv(csvfilename, runs):
                             log.debug("Found entry in csv file for run "+str(run)+" in row number "+ str(rowcount))
                             parameters_csv[run] = {}
                             parameters_csv[run].update(row)
-                            print parameters_csv[run]
                             missingRuns.remove(run)
                             break
                 except ValueError: # int conversion error
@@ -260,7 +263,7 @@ def main(argv=None):
     parser.add_argument("-csv", "--csv-file", help="Load run-specific variables from table (csv format)", metavar="FILE")
     parser.add_argument("--log-file", help="Save log to specified file", metavar="FILE")
     parser.add_argument("-l", "--log", help="Set specified log level", metavar="LEVEL")
-    parser.add_argument("--dry-run", help="Use to write steering files but to omit Marlin execution")
+    parser.add_argument("--dry-run", action="store_true", default=False, help="Use to write steering files but to omit Marlin execution")
     parser.add_argument('--option', '-o', action='append', metavar="NAME=VALUE", help="Specify further options such as beamenergy=5.3; overrides config file options.")
     parser.add_argument("jobtask", help="Task of job (e.g. convert, hitmaker, align)")
     parser.add_argument("runs", help="Runs to analyze; can be a comma-separated list or a range, e.g. 1056-1060", nargs='*')
@@ -415,6 +418,7 @@ def main(argv=None):
 
         # bail out if running a dry run
         if args.dry_run:
+            log.info("Dry run: skipping Marlin execution. Steering file written to "+basefilename+'.xml')
             return 0
 
         rcode = runMarlin(basefilename) # start Marlin execution
