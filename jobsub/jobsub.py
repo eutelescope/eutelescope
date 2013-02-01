@@ -93,7 +93,11 @@ def loadparamsfromcsv(csvfilename, runs):
             reader = csv.DictReader(csvfile, dialect=dialect) # now process CSV file contents here and load them into memory
             reader.next() # python < 2.6 requires an actual read access before filling 'DictReader.fieldnames'
             log.debug("CSV file contains the header info: %s", reader.fieldnames)
-            reader.fieldnames = [field.lower() for field in reader.fieldnames] # convert to lower case keys to avoid confusion
+            try:
+                reader.fieldnames = [field.lower() for field in reader.fieldnames] # convert to lower case keys to avoid confusion
+            except TypeError:
+                log.error("Could not process the CSV file header information. csv.DictReader returned fieldnames: %s", reader.fieldnames)
+                exit(1)
             if not "runnumber" in reader.fieldnames: # verify that we have a column "runnumber"
                 log.error("Could not find a column with header label 'RunNumber' in file '"+csvfilename+"'!")
                 return 1
@@ -142,7 +146,7 @@ def checkSteer(sstring):
     else:
         return True
 
-def runMarlin(filenamebase):
+def runMarlin(filenamebase,silent):
     """ Runs Marlin and stores log of output """
     log = logging.getLogger('jobsub.marlin')
 
@@ -185,7 +189,8 @@ def runMarlin(filenamebase):
                 # read line without blocking
                 try:  
                     line = qout.get_nowait() # or q.get(timeout=.1)
-                    log.info(line.strip())
+                    if not silent:
+                        log.info(line.strip())
                     log_file.write(line)
                 except Empty:
                     pass
@@ -221,6 +226,7 @@ def zipLogs(path,filename):
         zf.write(os.path.join(path,filename)+".log", compress_type=compression) # store in zip file
         os.remove(os.path.join(path,filename)+".xml") # delete file
         os.remove(os.path.join(path,filename)+".log") # delete file
+        log.info("Logs written to "+os.path.join(path,filename)+".zip")
     finally:
         log.debug("Closing log archive file")
         zf.close()
@@ -259,12 +265,13 @@ def main(argv=None):
 
     # command line argument parsing
     parser = argparse.ArgumentParser()
+    parser.add_argument('--option', '-o', action='append', metavar="NAME=VALUE", help="Specify further options such as beamenergy=5.3; overrides config file options.")
     parser.add_argument("-c", "--conf-file", "--config", help="Load config file with global and task specific variables", metavar="FILE")
     parser.add_argument("-csv", "--csv-file", help="Load run-specific variables from table (csv format)", metavar="FILE")
     parser.add_argument("--log-file", help="Save log to specified file", metavar="FILE")
     parser.add_argument("-l", "--log", help="Set specified log level", metavar="LEVEL")
-    parser.add_argument("--dry-run", action="store_true", default=False, help="Use to write steering files but to omit Marlin execution")
-    parser.add_argument('--option', '-o', action='append', metavar="NAME=VALUE", help="Specify further options such as beamenergy=5.3; overrides config file options.")
+    parser.add_argument("-s","--silent", action="store_true", default=False, help="Suppress non-error (stdout) Marlin output to console")
+    parser.add_argument("--dry-run", action="store_true", default=False, help="Write steering files but skip Marlin execution")
     parser.add_argument("jobtask", help="Task of job (e.g. convert, hitmaker, align)")
     parser.add_argument("runs", help="Runs to analyze; can be a comma-separated list or a range, e.g. 1056-1060", nargs='*')
     args = parser.parse_args(argv)
@@ -289,7 +296,6 @@ def main(argv=None):
 
     handler_stream.setLevel(numeric_level)
     log.setLevel(numeric_level)
-    log.info( "Setting log level to %i", numeric_level )
     log.debug( "Command line arguments used: %s ", args )
 
     # set up submission log file if requested on command line
@@ -421,9 +427,9 @@ def main(argv=None):
             log.info("Dry run: skipping Marlin execution. Steering file written to "+basefilename+'.xml')
             return 0
 
-        rcode = runMarlin(basefilename) # start Marlin execution
+        rcode = runMarlin(basefilename,args.silent) # start Marlin execution
         if rcode == 0:
-            log.info("Marlin finished successfully")
+            log.info("Marlin execution done")
         else:
             log.error("Marlin application returned with code "+str(rcode))
         zipLogs(parameters["logpath"],basefilename)
