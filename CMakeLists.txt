@@ -44,7 +44,8 @@ FIND_PACKAGE( LCCD  REQUIRED )
 
 FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT LCCD )
     IF( ${pkg}_FOUND )
-        INCLUDE_DIRECTORIES( ${${pkg}_INCLUDE_DIRS} )
+        # include as "system" libraries: gcc will be less verbose w.r.t. warnings
+        INCLUDE_DIRECTORIES(SYSTEM ${${pkg}_INCLUDE_DIRS} )
         LINK_LIBRARIES( ${${pkg}_LIBRARIES} )
         ADD_DEFINITIONS ( ${${pkg}_DEFINITIONS} )
     ELSE()
@@ -103,10 +104,13 @@ INCLUDE_DIRECTORIES( ./include )
 #INSTALL_DIRECTORY( ./include DESTINATION . FILES_MATCHING PATTERN "*.h" )
 
 # definitions to pass to the compiler
-ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra -g" )
+ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra" )
 ADD_DEFINITIONS( "-Wno-long-long" )
-# !RELEASE: REMOVE FOR RELEASE VERSIONS
-ADD_DEFINITIONS( "-Wextra -g" )
+# !RELEASE: DEBUGING WARNINGS AND SWITCHES - COMMENT FOR RELEASE VERSIONS
+ADD_DEFINITIONS( "-g -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy 
+               -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast 
+               -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef" )
+# also useful: -Wshadow (however, GCC 4.1 uses this even for system libraries, causing many warnings from Marlin & co)
 
 # add library
 SET( libname ${PROJECT_NAME} )
