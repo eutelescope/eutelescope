@@ -341,11 +341,11 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
                 correctedPixel->setXCoord( Pixel.getXCoord() );
                 correctedPixel->setYCoord( Pixel.getYCoord() );
                 
-                int iPixel = Pixel.getXCoord()*_noOfYPixel + Pixel.getYCoord();
+                int iPix = Pixel.getXCoord()*_noOfYPixel + Pixel.getYCoord();
 
                 double corrected;
 		bool rangecheck = true;
-                if(_phCalibration) rangecheck = calTanH(corrected,Pixel.getSignal(),calibration[iDetector][iPixel].par0,calibration[iDetector][iPixel].par1,calibration[iDetector][iPixel].par2,calibration[iDetector][iPixel].par3);
+                if(_phCalibration) rangecheck = calTanH(corrected,Pixel.getSignal(),calibration[iDetector][iPix].par0,calibration[iDetector][iPix].par1,calibration[iDetector][iPix].par2,calibration[iDetector][iPix].par3);
 		else rangecheck = calWeibull(corrected,Pixel.getSignal());
                 
 	        if(rangecheck) {
