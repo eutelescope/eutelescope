@@ -718,11 +718,11 @@ void EUTelMille::findtracks2(
    return;
  }
 
-
  if(i>0)
  { 
     vec.push_back(y); // recall hit id from the plane (i-1)
  }
+
 
  if( (_allHitsArray[i].size() == 0) && (i <_allHitsArray.size()-1) )
  {
@@ -840,6 +840,11 @@ void EUTelMille::findtracks2(
 
         }
     }
+
+  if( (_allHitsArray[i].size() == 0) && (i >= _allHitsArray.size()-1) )
+  {
+               indexarray.push_back(vec);
+  } 
 }
 
 
@@ -926,6 +931,7 @@ void EUTelMille::findtracks(
                           //vector is still used
         }
     }
+
 }
 
 
@@ -1427,7 +1433,8 @@ void EUTelMille::processEvent (LCEvent * event) {
       {
         for(size_t j = 0; j <  _nPlanes; j++)
           {
-             if( indexarray[i][j] >= 0 )
+
+             if( _allHitsArray[j].size()>0 &&  indexarray[i][j] >= 0 )
              {              
                _xPos[i][j] = _allHitsArray[j][indexarray[i][j]].measuredX;
                _yPos[i][j] = _allHitsArray[j][indexarray[i][j]].measuredY;
