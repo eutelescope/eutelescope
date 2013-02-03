@@ -109,7 +109,7 @@ void EUTelAPIXTbTrackTuple::init() {
   _foundAllign = false;
 
   _rotationstored.clear();
-  _countrotstored = 0
+  _countrotstored = 0;
 
   message<DEBUG> ( log() << "Initializing " );
 	
