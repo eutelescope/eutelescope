@@ -108,10 +108,8 @@ void EUTelAPIXTbTrackTuple::init() {
   _nEvt = 0 ;
   _foundAllign = false;
 
-  for (int count=0; count<50; count++){
-    rotationstored[count] = false;
-  }
-  countrotstored = 0;
+  _rotationstored.clear();
+  _countrotstored = 0
 
   message<DEBUG> ( log() << "Initializing " );
 	
@@ -589,9 +587,9 @@ void EUTelAPIXTbTrackTuple::invertAlignment(EUTelAlignmentConstant * alignment){
   _alignRotations[iden].push_back(rotations);
 
   //check if alignment for plane has already been stored
-  if(rotationstored[iden] == false){
+  if(_rotationstored[iden] == false){
     getDUTRot(alignment);
-    rotationstored[iden] = true;
+    _rotationstored[iden] = true;
   }
 
   streamlog_out(DEBUG) << "Iden: " << iden << endl
@@ -1008,9 +1006,15 @@ void EUTelAPIXTbTrackTuple::prepareTree(){
   //TTree for DUT rot info
   _rottree = new TTree("DUTrotation", "DUTrotation");
   _rottree->Branch("ID", &_rotDUTId);
+  _rottree->Branch("Alpha", &_alpha);
+  _rottree->Branch("Beta", &_beta);
+  _rottree->Branch("Gamma", &_gamma);
   _rottree->Branch("RotXY", &_rotXY);
   _rottree->Branch("RotZX", &_rotZX);
   _rottree->Branch("RotZY", &_rotZY);
+  _rottree->Branch("RotXYErr", &_rotXYerr);
+  _rottree->Branch("RotZXErr", &_rotZXerr);
+  _rottree->Branch("RotZYErr", &_rotZYerr);
   
   _euhits->AddFriend(_clutree);
   _euhits->AddFriend(_zstree);
@@ -1022,28 +1026,40 @@ void EUTelAPIXTbTrackTuple::getDUTRot(EUTelAlignmentConstant * alignment){
   for ( int layerIndex = 0 ; layerIndex < _siPlanesParameters->getSiPlanesNumber() ; ++layerIndex ) {
     int idencheck = _siPlanesLayerLayout->getID( layerIndex );
 
-    //get rotations from gearfile
     if (idencheck == iden){
+      //get rotations from gearfile
       double rotXY = _siPlanesLayerLayout->getLayerRotationXY(layerIndex);
       double rotZX = _siPlanesLayerLayout->getLayerRotationZX(layerIndex);
       double rotZY = _siPlanesLayerLayout->getLayerRotationZY(layerIndex);
 
       _rotDUTId->push_back(iden);
-      _rotXY->push_back(alignment->getAlpha() + rotXY);
-      _rotZX->push_back(alignment->getBeta() + rotZX);
-      _rotZY->push_back(alignment->getGamma() + rotZY);
+
+      //corrections from alignment
+      _alpha->push_back(alignment->getAlpha());
+      _beta->push_back(alignment->getBeta());
+      _gamma->push_back(alignment->getGamma());
+
+      //rotations from gearfile
+      _rotXY->push_back(rotXY);
+      _rotZX->push_back(rotZX);
+      _rotZY->push_back(rotZY);
+
+      //errors from alignment
+      _rotXYerr->push_back(alignment->getAlphaError());
+      _rotZXerr->push_back(alignment->getBetaError());
+      _rotZYerr->push_back(alignment->getGammaError());
     }
   }
 
   //count stored planes
-  countrotstored++;
+  _countrotstored++;
 
-  //message<MESSAGE> ( log() << "Planes stored " << countrotstored );
+  //message<MESSAGE> ( log() << "Planes stored " << _countrotstored );
   //message<MESSAGE> ( log() << "# Planes " << _siPlanesParameters->getSiPlanesNumber() );
 
   //fill tree omly once
-  //first plane has no aligment
-  if ((countrotstored + 1) == _siPlanesParameters->getSiPlanesNumber()){
+  //first plane has no alignment
+  if ((_countrotstored + 1) == _siPlanesParameters->getSiPlanesNumber()){
     _rottree->Fill();
   }
 }

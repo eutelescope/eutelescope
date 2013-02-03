@@ -71,8 +71,8 @@ namespace eutelescope {
     bool _foundAllign;
     bool _doScales;
     std::vector<std::string> _alignColNames;
-    bool rotationstored[50];
-    int countrotstored;
+    std::map<int, bool> _rotationstored;
+    int _countrotstored;
 
     std::map<int, std::vector< std::vector<double> > > _alignShift;
     std::map<int, std::vector< std::vector<double> > > _alignRotations;
@@ -159,10 +159,16 @@ namespace eutelescope {
     std::vector<IMPL::TrackerDataImpl*>    *_hitPointerToCluster;
 
     TTree* _rottree;
-    std::vector<int> *_rotDUTId;    
+    std::vector<int> *_rotDUTId;  
+    std::vector<double> *_alpha;
+    std::vector<double> *_beta; 
+    std::vector<double> *_gamma;  
     std::vector<double> *_rotZY;
     std::vector<double> *_rotZX; 
-    std::vector<double> *_rotXY;  
+    std::vector<double> *_rotXY;
+    std::vector<double> *_rotZYerr;
+    std::vector<double> *_rotZXerr; 
+    std::vector<double> *_rotXYerr;  
   };
 
 
