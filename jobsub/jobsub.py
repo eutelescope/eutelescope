@@ -171,7 +171,7 @@ def runMarlin(filenamebase,silent):
     rcode = None # the return code that will be set by a later subprocess method
     try:
         # run process
-        log.info ("Now starting Marlin process: "+cmd)
+        log.info ("Now running Marlin: "+cmd)
         p = Popen(shlex.split(cmd), stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
         # setup output queues and threads
         qout = Queue()
@@ -222,10 +222,10 @@ def zipLogs(path,filename):
         log.debug("Creating flat log archive")
     zf = zipfile.ZipFile(os.path.join(path,filename)+".zip", mode='w') # create new zip file
     try:
-        zf.write(os.path.join(path,filename)+".xml", compress_type=compression) # store in zip file
-        zf.write(os.path.join(path,filename)+".log", compress_type=compression) # store in zip file
-        os.remove(os.path.join(path,filename)+".xml") # delete file
-        os.remove(os.path.join(path,filename)+".log") # delete file
+        zf.write(os.path.join("./",filename)+".xml", compress_type=compression) # store in zip file
+        zf.write(os.path.join("./",filename)+".log", compress_type=compression) # store in zip file
+        os.remove(os.path.join("./",filename)+".xml") # delete file
+        os.remove(os.path.join("./",filename)+".log") # delete file
         log.info("Logs written to "+os.path.join(path,filename)+".zip")
     finally:
         log.debug("Closing log archive file")
@@ -385,7 +385,7 @@ def main(argv=None):
             break  # if we received ctrl-c (SIGINT) we stop processing here
 
         runnr = str(run).zfill(6)
-        log.info ("Now processing steering file for run number "+runnr)
+        log.info ("Generating steering file for run number "+runnr)
 
         # make a copy of the preprocessed steering file content
         steeringString = steeringStringBase
@@ -414,7 +414,7 @@ def main(argv=None):
         if not checkSteer(steeringString):
             return 1
 
-        log.debug ("Now writing steering file for run number "+runnr)
+        log.debug ("Writing steering file for run number "+runnr)
         basefilename = args.jobtask+"-"+runnr
         steeringFile = open(basefilename+".xml", "w")
         try:
@@ -431,7 +431,7 @@ def main(argv=None):
         if rcode == 0:
             log.info("Marlin execution done")
         else:
-            log.error("Marlin application returned with code "+str(rcode))
+            log.error("Marlin returned with error code "+str(rcode))
         zipLogs(parameters["logpath"],basefilename)
     # return to the prvious signal handler
     signal.signal(signal.SIGINT, prevINTHandler)

@@ -131,6 +131,7 @@
     LocalFolderGear -> GearPath
     LocalFolderLcioRaw -> LcioRawPath
     LocalFolderHistoInfo -> HistoInfoPath
+    LocalFolderTASKNAMEJoboutput -> LogPath
     LocalFolderTASKNAMEHisto -> HistoPath (either globally or in local sections)
     LocalFolderDBTASKNAME -> DBPath (again, either globally or locally)
     LocalFolderTASKNAMEResults -> ResultsPath (globally or locally)
