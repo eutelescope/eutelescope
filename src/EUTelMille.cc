@@ -13,7 +13,7 @@
 #if defined(USE_GEAR) && defined(USE_MARLINUTIL)
 
 // ROOT includes:
-#include <TVector3.h>
+
 
 
 // eutelescope includes ".h"
@@ -78,6 +78,7 @@
 #include <TMinuit.h>
 #include <TSystem.h>
 #include <TMath.h>
+#include <TVector3.h>
 #endif
 
 // system includes <>
@@ -277,7 +278,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("reference") );
  
-  registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
+  registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
  
 
   registerOptionalParameter("FixParameter","Fixes the given alignment parameters in the fit if alignMode==3 is used. For each sensor an integer must be specified (If no value is given, then all parameters will be free). bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_FixParameter, std::vector<int> (static_cast <int> (6), 24));
@@ -711,10 +712,12 @@ void EUTelMille::findtracks2(
                             )
 {
  if(y==-1) missinghits++;
+ streamlog_out(DEBUG) << "Missing hits:" << missinghits << std::endl;
 
  if( missinghits > getAllowedMissingHits() ) 
  {
    // recursive chain is dropped here;
+   streamlog_out(DEBUG) << "indexarray size:" << indexarray.size() << std::endl;
    return;
  }
 
@@ -732,6 +735,7 @@ void EUTelMille::findtracks2(
  for(size_t j =0; j < _allHitsArray[i].size(); j++)
     {
       int ihit = (int)j;
+      streamlog_out(DEBUG) << "ihit:" << ihit << std::endl;
 
       //if we are not in the last plane, call this method again
       if(i < _allHitsArray.size()-1)
@@ -762,6 +766,11 @@ void EUTelMille::findtracks2(
                   residualX  = abs(x - _allHitsArray[e+1][vec[e+1]].measuredX);
                   residualY  = abs(y - _allHitsArray[e+1][vec[e+1]].measuredY);
                   residualZ  = abs(z - _allHitsArray[e+1][vec[e+1]].measuredZ);
+		  streamlog_out(DEBUG) << "residuals:" << std::endl;
+		  streamlog_out(DEBUG) << residualX << std::endl;
+		  streamlog_out(DEBUG) << residualY << std::endl;
+		  streamlog_out(DEBUG) << residualZ << std::endl;
+
                   break; 
                 }   
               }
@@ -834,6 +843,7 @@ void EUTelMille::findtracks2(
           if(taketrack)
             {
                indexarray.push_back(vec);
+	       streamlog_out(DEBUG) << "indexarray size at last plane:" << indexarray.size() << std::endl;
             }
           vec.pop_back(); //last element must be removed because the
                           //vector is still used -> we are in a last plane hit loop!
@@ -1428,6 +1438,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
     std::vector<std::vector<int> > indexarray;
 
+    streamlog_out( DEBUG ) << "Event #" << _iEvt << std::endl;
     findtracks2(0, indexarray, std::vector<int>(), _allHitsArray, 0, 0);
     for(size_t i = 0; i < indexarray.size(); i++)
       {
@@ -1451,6 +1462,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 
     _nTracks = (int) indexarray.size();
+    streamlog_out( DEBUG ) << "Track finder found " << _nTracks << std::endl;
 
     // end check if running in input mode 0 or 2 => perform simple track finding
   } else if (_inputMode == 1) {

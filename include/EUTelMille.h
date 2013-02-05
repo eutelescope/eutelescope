@@ -45,9 +45,10 @@
 #include <map>
 
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
-#include "TMinuit.h"
+#include <TMinuit.h>
 #include <TSystem.h>
 #include <TMath.h>
+#include <TVector3.h>
 class TMinuit;
 #endif
 
@@ -605,3 +606,4 @@ namespace eutelescope {
 }
 #endif
 #endif
+
