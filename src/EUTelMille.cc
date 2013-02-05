@@ -221,13 +221,13 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
                             _distanceMax, static_cast <float> (2000.0));
 
   registerOptionalParameter("DistanceMaxVec","Maximal allowed distance between hits entering the fit per 10 cm space between the planes. One value for each neighbor planes. DistanceMax will be used for each pair if this vector is empty.",
-                            _distanceMaxVec, std::vector<float> ());
+                            _distanceMaxVec, FloatVec ());
 
   
 
-  registerOptionalParameter("ExcludePlanes","Exclude planes from fit according to their sensor ids.",_excludePlanes_sensorIDs ,std::vector<int>());
+  registerOptionalParameter("ExcludePlanes","Exclude planes from fit according to their sensor ids.",_excludePlanes_sensorIDs ,IntVec());
 
-  registerOptionalParameter("FixedPlanes","Fix sensor planes in the fit according to their sensor ids.",_FixedPlanes_sensorIDs ,std::vector<int>());
+  registerOptionalParameter("FixedPlanes","Fix sensor planes in the fit according to their sensor ids.",_FixedPlanes_sensorIDs ,IntVec());
 
 
   registerOptionalParameter("MaxTrackCandidatesTotal","Maximal number of track candidates (Total).",_maxTrackCandidatesTotal, static_cast <int> (10000000));
@@ -266,18 +266,18 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
 
 
-  registerOptionalParameter("ResolutionX","X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionX,  std::vector<float> (static_cast <int> (6), 10.));
+  registerOptionalParameter("ResolutionX","X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionX,  FloatVec (static_cast <int> (6), 10.));
 
-  registerOptionalParameter("ResolutionY","Y resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionY,std::vector<float> (static_cast <int> (6), 10.));
+  registerOptionalParameter("ResolutionY","Y resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionY,FloatVec (static_cast <int> (6), 10.));
 
-  registerOptionalParameter("ResolutionZ","Z resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionZ,std::vector<float> (static_cast <int> (6), 10.));
+  registerOptionalParameter("ResolutionZ","Z resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionZ,FloatVec (static_cast <int> (6), 10.));
 
   registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("reference") );
  
   registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
  
 
-  registerOptionalParameter("FixParameter","Fixes the given alignment parameters in the fit if alignMode==3 is used. For each sensor an integer must be specified (If no value is given, then all parameters will be free). bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_FixParameter, std::vector<int> (static_cast <int> (6), 24));
+  registerOptionalParameter("FixParameter","Fixes the given alignment parameters in the fit if alignMode==3 is used. For each sensor an integer must be specified (If no value is given, then all parameters will be free). bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_FixParameter, IntVec (static_cast <int> (6), 24));
 
   registerOptionalParameter("GeneratePedeSteerfile","Generate a steering file for the pede program.",_generatePedeSteerfile, static_cast <int> (0));
 
@@ -291,11 +291,11 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   registerOptionalParameter("PedeUserStartValuesY","Start values for the alignment for shifts in the Y direction.",_pedeUserStartValuesY,PedeUserStartValuesY);
 
-  registerOptionalParameter("PedeUserStartValuesZ","Start values for the alignment for shifts in the Z direction.",_pedeUserStartValuesZ,std::vector<float> (static_cast <int> (6), 0.0));
+  registerOptionalParameter("PedeUserStartValuesZ","Start values for the alignment for shifts in the Z direction.",_pedeUserStartValuesZ,FloatVec (static_cast <int> (6), 0.0));
 
-  registerOptionalParameter("PedeUserStartValuesAlpha","Start values for the alignment for the angle alpha.",_pedeUserStartValuesAlpha,std::vector<float> (static_cast <int> (6), 0.0));
+  registerOptionalParameter("PedeUserStartValuesAlpha","Start values for the alignment for the angle alpha.",_pedeUserStartValuesAlpha,FloatVec (static_cast <int> (6), 0.0));
   
-  registerOptionalParameter("PedeUserStartValuesBeta","Start values for the alignment for the angle beta.",_pedeUserStartValuesBeta,std::vector<float> (static_cast <int> (6), 0.0));
+  registerOptionalParameter("PedeUserStartValuesBeta","Start values for the alignment for the angle beta.",_pedeUserStartValuesBeta,FloatVec (static_cast <int> (6), 0.0));
   
   registerOptionalParameter("PedeUserStartValuesGamma","Start values for the alignment for the angle gamma.",_pedeUserStartValuesGamma,PedeUserStartValuesGamma);
 
@@ -325,7 +325,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("TestModeSensorBeta","Rotation around the y axis of the sensors in test mode (to be determined by the alignment).",
                             _testModeSensorBeta,SensorBeta);
 
-  std::vector<int> initRect;
+  IntVec initRect;
   registerOptionalParameter("UseSensorRectangular","Do not use all pixels for alignment, only these in the rectangular (A|B) e.g. (0,0) and (C|D) e.g. (100|100) of sensor S. Type in the way S1 A1 B1 C1 D1 S2 A2 B2 C2 D2 ...",
                             _useSensorRectangular,initRect);
 
@@ -630,9 +630,9 @@ void EUTelMille::init() {
 
   for(int i = 0; i < _maxTrackCandidates; i++)
     {
-      _xPos.push_back(std::vector<double>(_nPlanes,0.0));
-      _yPos.push_back(std::vector<double>(_nPlanes,0.0));
-      _zPos.push_back(std::vector<double>(_nPlanes,0.0));
+      _xPos.push_back(DoubleVec(_nPlanes,0.0));
+      _yPos.push_back(DoubleVec(_nPlanes,0.0));
+      _zPos.push_back(DoubleVec(_nPlanes,0.0));
     }
 
   if(!_distanceMaxVec.empty())
@@ -700,8 +700,8 @@ void EUTelMille::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelMille::findtracks2(
                             int missinghits,
-                            std::vector<std::vector<int> > &indexarray,
-                            std::vector<int> vec,
+                            std::vector<IntVec > &indexarray,
+                            IntVec vec,
                             std::vector<std::vector<EUTelMille::HitsInPlane> > &_allHitsArray,
                             unsigned int i,
                             int y
@@ -856,8 +856,8 @@ void EUTelMille::findtracks2(
 
 
 void EUTelMille::findtracks(
-                            std::vector<std::vector<int> > &indexarray,
-                            std::vector<int> vec,
+                            std::vector<IntVec > &indexarray,
+                            IntVec vec,
                             std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray,
                             int i,
                             int y
@@ -1120,7 +1120,7 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
 
              for ( unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++ ) 
              {
-              std::vector<int> apixColVec();
+              IntVec apixColVec();
               apixData->getSparsePixelAt( iPixel, &apixPixel);
               try
               {
@@ -1145,7 +1145,7 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
 
              for ( unsigned int iPixel = 0; iPixel < m26Data->size(); iPixel++ ) 
              {
-              std::vector<int> m26ColVec();
+              IntVec m26ColVec();
               m26Data->getSparsePixelAt( iPixel, &m26Pixel);
               streamlog_out ( MESSAGE ) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << endl;
               try
@@ -1206,7 +1206,7 @@ void EUTelMille::processEvent (LCEvent * event) {
   }
 
   std::vector<std::vector<EUTelMille::HitsInPlane> > _hitsArray(_nPlanes - _nExcludePlanes, std::vector<EUTelMille::HitsInPlane>());
-  std::vector<int> indexconverter (_nPlanes,-1);
+  IntVec indexconverter (_nPlanes,-1);
  
   std::vector<std::vector<EUTelMille::HitsInPlane> > _allHitsArray(_nPlanes, std::vector<EUTelMille::HitsInPlane>());
   
@@ -1435,10 +1435,10 @@ void EUTelMille::processEvent (LCEvent * event) {
     //
     // This is done separately for different numbers of planes.
 
-    std::vector<std::vector<int> > indexarray;
+    std::vector<IntVec > indexarray;
 
     streamlog_out( DEBUG ) << "Event #" << _iEvt << std::endl;
-    findtracks2(0, indexarray, std::vector<int>(), _allHitsArray, 0, 0);
+    findtracks2(0, indexarray, IntVec(), _allHitsArray, 0, 0);
     for(size_t i = 0; i < indexarray.size(); i++)
       {
         for(size_t j = 0; j <  _nPlanes; j++)
@@ -1732,7 +1732,7 @@ void EUTelMille::processEvent (LCEvent * event) {
   if (_nTracks == 1 || _onlySingleTrackEvents == 0) {
 
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
-    std::vector<double> lambda;
+    DoubleVec lambda;
     double par_c0 = 0.0;
     double par_c1 = 0.0;
     lambda.reserve(_nPlanes);

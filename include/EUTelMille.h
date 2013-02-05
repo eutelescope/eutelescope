@@ -30,7 +30,6 @@
 #include <EVENT/LCRunHeader.h>
 #include <EVENT/LCEvent.h>
 
-
 // AIDA includes <.h>
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
@@ -249,8 +248,8 @@ namespace eutelescope {
     //recursive method which searches for track candidates - with omits!
     virtual void findtracks2(
                             int missinghits,
-                            std::vector<std::vector<int> > &indexarray, //resulting vector of hit indizes
-                            std::vector<int> vec, //for internal use
+                            std::vector<IntVec > &indexarray, //resulting vector of hit indizes
+                            IntVec vec, //for internal use
                             std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray, //contains all hits for each plane
                             unsigned int i, //plane number
                             int y //hit index number
@@ -259,8 +258,8 @@ namespace eutelescope {
 
     //recursive method which searches for track candidates
     virtual void findtracks(
-                            std::vector<std::vector<int> > &indexarray, //resulting vector of hit indizes
-                            std::vector<int> vec, //for internal use
+                            std::vector<IntVec > &indexarray, //resulting vector of hit indizes
+                            IntVec vec, //for internal use
                             std::vector<std::vector<EUTelMille::HitsInPlane> > &_hitsArray, //contains all hits for each plane
                             int i, //plane number
                             int y //hit index number
@@ -362,8 +361,8 @@ namespace eutelescope {
      *  This vector is containing the sensorID sorted according to the
      *  same rule.
      */
-    std::vector< int > _orderedSensorID;
-    std::vector< int > _orderedSensorID_wo_excluded;
+    IntVec _orderedSensorID;
+    IntVec _orderedSensorID_wo_excluded;
 
 
     //! reference HitCollection name 
@@ -376,7 +375,7 @@ namespace eutelescope {
     //! TrackerHit collection name
     /*! Input collection with hits.
      */
-    std::vector<std::string > _hitCollectionName;
+    StringVec _hitCollectionName;
 
     //! TRACK collection name
     /*! Output collection with fitted tracks.
@@ -401,14 +400,14 @@ namespace eutelescope {
     std::map<std::string, bool > _hotPixelMap;
 
     //! Sensor ID vector
-    std::vector< int > _sensorIDVec;
+    IntVec _sensorIDVec;
 
     //! Sensor ID map (inverse sensorIDVec) 
     std::map< int, int > _sensorIDVecMap;
     //! Sensor ID vector, 
     /*! it's position along Z axis
      */ 
-    std::vector< int > _sensorIDVecZOrder;
+    IntVec _sensorIDVecZOrder;
     //! sensor ID to position along Z id
     /*!
      */
@@ -418,12 +417,12 @@ namespace eutelescope {
     // parameters
 
     float _distanceMax;
-    std::vector<float> _distanceMaxVec;
+    FloatVec _distanceMaxVec;
     std::vector<unsigned int > _excludePlanes; //only for internal usage
-    std::vector<int > _excludePlanes_sensorIDs; //this is going to be
+    IntVec _excludePlanes_sensorIDs; //this is going to be
                                                 //set by the user.
-    std::vector<int > _FixedPlanes; //only for internal usage
-    std::vector<int > _FixedPlanes_sensorIDs; //this is going to be
+    IntVec _FixedPlanes; //only for internal usage
+    IntVec _FixedPlanes_sensorIDs; //this is going to be
     //set by the user.
     
 
@@ -439,29 +438,29 @@ namespace eutelescope {
     int _alignMode;
     int _useResidualCuts;
 
-    std::vector<float > _residualsXMin;
-    std::vector<float > _residualsYMin;
-    std::vector<float > _residualsXMax;
-    std::vector<float > _residualsYMax;
+    FloatVec _residualsXMin;
+    FloatVec _residualsYMin;
+    FloatVec _residualsXMax;
+    FloatVec _residualsYMax;
 
-    std::vector<float> _resolutionX;
-    std::vector<float> _resolutionY;
-    std::vector<float> _resolutionZ;
+    FloatVec _resolutionX;
+    FloatVec _resolutionY;
+    FloatVec _resolutionZ;
 
-     std::vector<int> _FixParameter;
+    IntVec _FixParameter;
 
 
     int _generatePedeSteerfile;
     std::string _pedeSteerfileName;
     int _runPede;
     int _usePedeUserStartValues;
-    std::vector<float > _pedeUserStartValuesX;
-    std::vector<float > _pedeUserStartValuesY;
-    std::vector<float > _pedeUserStartValuesZ;
+    FloatVec _pedeUserStartValuesX;
+    FloatVec _pedeUserStartValuesY;
+    FloatVec _pedeUserStartValuesZ;
     
-    std::vector<float > _pedeUserStartValuesAlpha;
-    std::vector<float > _pedeUserStartValuesBeta;
-    std::vector<float > _pedeUserStartValuesGamma;
+    FloatVec _pedeUserStartValuesAlpha;
+    FloatVec _pedeUserStartValuesBeta;
+    FloatVec _pedeUserStartValuesGamma;
 
     int _inputMode;
     int _allowedMissingHits;
@@ -471,18 +470,18 @@ namespace eutelescope {
     float _testModeXTrackSlope;
     float _testModeYTrackSlope;
 
-    std::vector<float > _testModeSensorZPositions;
+    FloatVec _testModeSensorZPositions;
 
-    std::vector<float > _testModeSensorXShifts;
-    std::vector<float > _testModeSensorYShifts;
-    std::vector<float > _testModeSensorGamma;
-    std::vector<float > _testModeSensorAlpha;
-    std::vector<float > _testModeSensorBeta;
+    FloatVec _testModeSensorXShifts;
+    FloatVec _testModeSensorYShifts;
+    FloatVec _testModeSensorGamma;
+    FloatVec _testModeSensorAlpha;
+    FloatVec _testModeSensorBeta;
 
     std::string _alignmentConstantLCIOFile;
     std::string _alignmentConstantCollectionName;
 
-    std::vector<int> _useSensorRectangular;
+    IntVec _useSensorRectangular;
 
   private:
 
@@ -568,13 +567,13 @@ namespace eutelescope {
 
     size_t _nPlanes;
 
-    std::vector<std::vector<double> > _xPos;
-    std::vector<std::vector<double> > _yPos;
-    std::vector<std::vector<double> > _zPos;
+    std::vector<DoubleVec > _xPos;
+    std::vector<DoubleVec > _yPos;
+    std::vector<DoubleVec > _zPos;
 
-//    std::vector<std::vector<double> > _xPosTrack;
-//    std::vector<std::vector<double> > _yPosTrack;
-//    std::vector<std::vector<double> > _zPosTrack;
+//    std::vector<DoubleVec > _xPosTrack;
+//    std::vector<DoubleVec > _yPosTrack;
+//    std::vector<DoubleVec > _zPosTrack;
 
     double * _xPosHere;
     double * _yPosHere;
@@ -588,7 +587,7 @@ namespace eutelescope {
     double * _xFitPos;
     double * _yFitPos;
 
-    std::vector<double> _siPlaneZPosition;
+    DoubleVec _siPlaneZPosition;
 
     //! Fill histogram switch
     /*! Only for debug reason
