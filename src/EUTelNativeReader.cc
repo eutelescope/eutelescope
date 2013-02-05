@@ -45,6 +45,7 @@
 // eudaq includes
 #include <eudaq/FileReader.hh>
 #include <eudaq/Event.hh>
+#include <eudaq/Logger.hh>
 #include <eudaq/PluginManager.hh>
 
 // lcio includes
@@ -121,7 +122,7 @@ EUTelNativeReader * EUTelNativeReader::newProcessor () {
 
 void EUTelNativeReader::init () {
   printParameters ();
-
+  ::eudaq::GetLogger().SetErrLevel("WARN"); // send only eudaq messages above (or equal?) "warn" level to stderr
 }
 
 void EUTelNativeReader::readDataSource(int numEvents) {
