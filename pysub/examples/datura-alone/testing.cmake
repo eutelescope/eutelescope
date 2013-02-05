@@ -18,7 +18,7 @@
  
    # only needed in the last step to test the results of EUTel against a set of reference files:
     SET( stattestdir "$ENV{EUTELESCOPE}/test/stattest/bin" )
-    SET( referencedatadir "/afs/desy.de/group/telescopes/EutelTestData/TestPysubExampleDaturaAlone" )
+    SET( referencedatadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaAlone" )
 
 
 #

@@ -11,7 +11,7 @@ This example is based on a test beam campaign done in May 2012 at DESY
 by the DESY CMS pixel group.
 
 The corresponding data can be found at:
-/afs/desy.de/group/telescopes/EutelTestData/TestPysubExampleDaturaAlone
+/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaAlone
 
 If you are interested in the data but cannot access the above path,
 please contact the EUTelescope software coordinators.
