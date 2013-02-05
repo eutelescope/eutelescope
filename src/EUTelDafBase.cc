@@ -871,8 +871,8 @@ void EUTelDafBase::bookHistos(){
     string bname = (string)"pl" + iden + "_";
     //Resids
 
-    double residminX = -0.03;
-    double residmaxX =  0.03;
+    double residminX = -0.3;
+    double residmaxX =  0.3;
  
     _aidaHistoMap[bname + "mcresidualX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "mcresidualX", 200,  residminX, residmaxX );
     _aidaHistoMap[bname + "mcresidualY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "mcresidualY", 200,  residminX, residmaxX );
