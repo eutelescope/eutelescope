@@ -12,10 +12,6 @@
 // built only if GEAR and MARLINUTIL are used
 #if defined(USE_GEAR) && defined(USE_MARLINUTIL)
 
-// ROOT includes:
-
-
-
 // eutelescope includes ".h"
 #include "EUTelMille.h"
 #include "EUTelRunHeaderImpl.h"
@@ -712,12 +708,12 @@ void EUTelMille::findtracks2(
                             )
 {
  if(y==-1) missinghits++;
- streamlog_out(DEBUG) << "Missing hits:" << missinghits << std::endl;
+ streamlog_out(DEBUG9) << "Missing hits:" << missinghits << std::endl;
 
  if( missinghits > getAllowedMissingHits() ) 
  {
    // recursive chain is dropped here;
-   streamlog_out(DEBUG) << "indexarray size:" << indexarray.size() << std::endl;
+   streamlog_out(DEBUG9) << "indexarray size:" << indexarray.size() << std::endl;
    return;
  }
 
@@ -735,7 +731,7 @@ void EUTelMille::findtracks2(
  for(size_t j =0; j < _allHitsArray[i].size(); j++)
     {
       int ihit = (int)j;
-      streamlog_out(DEBUG) << "ihit:" << ihit << std::endl;
+      streamlog_out(DEBUG9) << "ihit:" << ihit << std::endl;
 
       //if we are not in the last plane, call this method again
       if(i < _allHitsArray.size()-1)
@@ -766,10 +762,10 @@ void EUTelMille::findtracks2(
                   residualX  = abs(x - _allHitsArray[e+1][vec[e+1]].measuredX);
                   residualY  = abs(y - _allHitsArray[e+1][vec[e+1]].measuredY);
                   residualZ  = abs(z - _allHitsArray[e+1][vec[e+1]].measuredZ);
-		  streamlog_out(DEBUG) << "residuals:" << std::endl;
-		  streamlog_out(DEBUG) << residualX << std::endl;
-		  streamlog_out(DEBUG) << residualY << std::endl;
-		  streamlog_out(DEBUG) << residualZ << std::endl;
+		  streamlog_out(DEBUG9) << "residuals:" << std::endl;
+		  streamlog_out(DEBUG9) << residualX << std::endl;
+		  streamlog_out(DEBUG9) << residualY << std::endl;
+		  streamlog_out(DEBUG9) << residualZ << std::endl;
 
                   break; 
                 }   
@@ -843,7 +839,7 @@ void EUTelMille::findtracks2(
           if(taketrack)
             {
                indexarray.push_back(vec);
-	       streamlog_out(DEBUG) << "indexarray size at last plane:" << indexarray.size() << std::endl;
+	       streamlog_out(DEBUG9) << "indexarray size at last plane:" << indexarray.size() << std::endl;
             }
           vec.pop_back(); //last element must be removed because the
                           //vector is still used -> we are in a last plane hit loop!
@@ -944,7 +940,14 @@ void EUTelMille::findtracks(
 
 }
 
-
+/*! Performs analytic straight line fit.
+ * 
+ * Determines parameters of a straight line passing through the 
+ * measurement points.
+ * 
+ * @see http://www.desy.de/~blobel/eBuch.pdf page 162
+ * 
+ */
 void EUTelMille::FitTrack(unsigned int nPlanesFitter, double xPosFitter[], double yPosFitter[], double zPosFitter[], double xResFitter[], double yResFitter[], double chi2Fit[2], double residXFit[], 
 double residYFit[], double angleFit[2]) {
 
@@ -988,10 +991,6 @@ double residYFit[], double angleFit[2]) {
       nPlanesFit++;
     }
   }
-
-  // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
-  // ++++++++++++ See Blobel Page 226 !!! +++++++++++++++++
-  // ++++++++++++++++++++++++++++++++++++++++++++++++++++++
 
   int counter;
 
