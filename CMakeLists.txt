@@ -212,6 +212,7 @@ endif()
 # ======================================================================
 # ======================================================================
 
+  INCLUDE(jobsub/examples/datura-alone/testing.cmake)
   INCLUDE(pysub/examples/datura-alone/testing.cmake)
   INCLUDE(pysub/examples/datura-2FEI4/testing.cmake)
 
