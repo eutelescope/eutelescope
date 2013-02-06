@@ -1176,24 +1176,24 @@ void EUTelMille::processEvent (LCEvent * event) {
        _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
     }
   }
+  
+  if (_iEvt % 100 == 0 && _iEvt % 1000 != 0) 
+  {
+    streamlog_out( MESSAGE4 ) << "Processing event "
+                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+    streamlog_out( MESSAGE4 ) << "Currently having " << _nMilleDataPoints << " data points in "
+                              << _nMilleTracks << " tracks " << endl;
+  }
 
-  if (_iEvt % 100 == 0) 
+  if (_iEvt % 1000 == 0) 
   {
     streamlog_out( MESSAGE6 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
     streamlog_out( MESSAGE6 ) << "Currently having " << _nMilleDataPoints << " data points in "
-                              << _nMilleTracks << " tracks " << endl;
-  }
-
-  if (_iEvt % 1000 == 0) 
-  {
-    streamlog_out( MESSAGE ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-    streamlog_out( MESSAGE ) << "Currently having " << _nMilleDataPoints << " data points in "
                               << _nMilleTracks << " tracks " << endl;
   }
   
