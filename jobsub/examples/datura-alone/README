@@ -21,7 +21,7 @@ Features of this configuration:
 ------------------------------
 
 - telescope alone, no DUT data
-- "dead material" (CMS pixel) in between telescope arms
+- "passive material" (CMS pixel sensor+ROC, socket, and PCB) in between telescope arms
 
 
 Known issues:
