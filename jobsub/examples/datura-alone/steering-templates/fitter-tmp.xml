@@ -34,10 +34,10 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
    <global>
       <parameter name="LCIOInputFiles"> @InputFile@ </parameter>
       <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
-      <parameter name="MaxRecordNumber" value="@RecordNumber@"/>
+      <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="@SkipNEvents@"/>
       <parameter name="SupressCheck" value="false"/>
-      <parameter name="Verbosity" value="MESSAGE"/>
+      <parameter name="Verbosity" value="@Verbosity@"/>
    </global>
 
  <processor name="AIDA" type="AIDAProcessor">

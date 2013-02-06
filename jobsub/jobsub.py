@@ -76,6 +76,28 @@ def loadparamsfromcsv(csvfilename, runs):
     import csv
     import os.path
 
+    class CommentedFile:
+        """ Decorator for text files: filters out comments (i.e. first char of line #)
+        Based on http://www.mfasold.net/blog/2010/02/python-recipe-read-csvtsv-textfiles-and-ignore-comment-lines/
+        
+        """
+        def __init__(self, f, commentstring="#"):
+            self.f = f
+            self.commentstring = commentstring
+            self.linecount = 0
+        def rewind(self):
+            self.f.seek(0)
+            self.linecount = 0
+        def next(self):
+            line = self.f.next()
+            self.linecount += 1
+            while line.startswith(self.commentstring) or not line.strip(): # test if line commented or empty
+                line = self.f.next()
+                self.linecount += 1
+            return line
+        def __iter__(self):
+            return self
+
     log = logging.getLogger('jobsub')
     parameters_csv = {} # store all information needed from the csv file
     if csvfilename is None: 
@@ -84,48 +106,55 @@ def loadparamsfromcsv(csvfilename, runs):
         log.error("Could not find the specified csv file '"+csvfilename+"'!")
         exit(1)
     try:
+        log.debug("Opening csv file '"+csvfilename+"'.")
         csvfile = open(csvfilename, 'rb')
+        filteredfile = CommentedFile(csvfile)
         try:
-            log.debug("Opening csv file '"+csvfilename+"'.")
-            dialect = csv.Sniffer().sniff(csvfile.read(1024)) # test csv file format details
+            # contruct a sample for the csv format sniffer:
+            sample = ""
+            try:
+                while (len(sample)<1024):
+                    sample+=filteredfile.next()
+            except StopIteration:
+                log.debug("End of csv file reached, sample limited to " + str(len(sample))+ " bytes")
+            dialect = csv.Sniffer().sniff(sample) # test csv file format details
             log.debug("Determined the CSV dialect as follows: delimiter=%s, doublequote=%s, escapechar=%s, lineterminator=%s, quotechar=%s , quoting=%s, skipinitialspace=%s",dialect.delimiter, dialect.doublequote, dialect.escapechar, list(ord(c) for c in dialect.lineterminator), dialect.quotechar, dialect.quoting, dialect.skipinitialspace)
-            csvfile.seek(0) # back to beginning of file
-            reader = csv.DictReader(csvfile, dialect=dialect) # now process CSV file contents here and load them into memory
+            filteredfile.rewind() # back to beginning of file
+            reader = csv.DictReader(filteredfile, dialect=dialect) # now process CSV file contents here and load them into memory
             reader.next() # python < 2.6 requires an actual read access before filling 'DictReader.fieldnames'
             log.debug("CSV file contains the header info: %s", reader.fieldnames)
             try:
                 reader.fieldnames = [field.lower() for field in reader.fieldnames] # convert to lower case keys to avoid confusion
+                reader.fieldnames = [field.strip() for field in reader.fieldnames] # remove leading and trailing white space
             except TypeError:
                 log.error("Could not process the CSV file header information. csv.DictReader returned fieldnames: %s", reader.fieldnames)
                 exit(1)
             if not "runnumber" in reader.fieldnames: # verify that we have a column "runnumber"
                 log.error("Could not find a column with header label 'RunNumber' in file '"+csvfilename+"'!")
-                return 1
+                exit(1)
             if "" in reader.fieldnames:
                 log.warning("Column without header label encountered in csv file '"+csvfilename+"'!")
             log.info("Successfully loaded csv file'"+csvfilename+"'.")
             # first: search through csv file to find corresponding runnumber entry line for every run
-            csvfile.seek(0) # back to beginning of file..
+            filteredfile.rewind() # back to beginning of file
             reader.next()   # .. and skip the header line
-            rowcount = 1
             missingRuns = runs.copy() # list of runs to look for in csv file
             for row in reader: # loop over all rows once
-                rowcount = rowcount + 1
                 try:
                     for run in missingRuns: # check all runs if runnumber matches
                         if int(row["runnumber"]) == run:
-                            log.debug("Found entry in csv file for run "+str(run)+" in row number "+ str(rowcount))
+                            log.debug("Found entry in csv file for run "+str(run)+" on line "+ str(filteredfile.linecount))
                             parameters_csv[run] = {}
                             parameters_csv[run].update(row)
                             missingRuns.remove(run)
                             break
                 except ValueError: # int conversion error
-                    log.warn("Could not interpret run number in row number "+str(rowcount)+" in file '"+csvfilename+"'.")
+                    log.warn("Could not interpret run number on line "+str(filteredfile.linecount)+" in file '"+csvfilename+"'.")
                     continue
                 if len(missingRuns)==0:
                     log.debug("Finished search for runs in csv file before reaching end of file")
                     break
-            log.debug("Searched over "+str(rowcount)+" rows in file '"+csvfilename+"'.")
+            log.debug("Searched over "+str(filteredfile.linecount)+" lines in file '"+csvfilename+"'.")
             if not len(missingRuns)==0:
                 log.error("Could not find an entry for the following run numbers in '"+csvfilename+"': "+', '.join(map(str, missingRuns)))
         finally:
@@ -401,7 +430,7 @@ def main(argv=None):
                     if not field == "" and not field == "runnumber":                    
                         steeringString = ireplace("@" + field + "@", parameters_csv[run][field], steeringString)
                 except EOFError:
-                    log.warn(" Parameter '" + field + "' from the csv file was not found in template file "+steeringTmpFileName)
+                    log.warn(" Parameter '" + field + "' from the csv file was not found in the template file (already overwritten by config file parameters?)")
         except KeyError:
             log.debug("No information from CSV found for this run")
 

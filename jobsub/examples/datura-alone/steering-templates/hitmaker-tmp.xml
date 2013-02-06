@@ -31,10 +31,10 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
    <global>
       <parameter name="LCIOInputFiles"> @InputFile@  </parameter>
       <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
-      <parameter name="MaxRecordNumber" value="10000000"/>
+      <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
       <parameter name="SkipNEvents" value="0"/>
       <parameter name="SupressCheck" value="false"/>
-      <parameter name="Verbosity" value="MESSAGE"/>
+      <parameter name="Verbosity" value="@Verbosity@"/>
    </global>
 
  <processor name="AIDA" type="AIDAProcessor">

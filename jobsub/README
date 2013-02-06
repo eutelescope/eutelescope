@@ -80,8 +80,11 @@
      to 6 digits.
 
 ** Table (comma-separated text file)
-   - format: e.g. export from Open/LibreOffice with default settings (UTF-8,comma, text-field delimiter: ")
-   - first row has to provide column headers which identify the variables in the steering template to replace (case-insensitive)
+   - format: e.g. 
+     - export from Open/LibreOffice with default settings (UTF-8,comma, text-field delimiter: ")
+     - emacs org-mode table
+   - commented lines (starting with #) are ignored
+   - first row (after comments) has to provide column headers which identify the variables in the steering template to replace (case-insensitive)
    - requires one column labeled "RunNumber"
    - only considers placeholders left in the steering template after processing command-line arguments and config file options
 * Examples

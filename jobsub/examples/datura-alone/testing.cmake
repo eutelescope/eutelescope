@@ -20,7 +20,7 @@
     execute_process(COMMAND sh -c "printf %06d ${RunNr}" OUTPUT_VARIABLE PaddedRunNr)
 
     SET( executable "jobsub.py" )
-    SET( jobsubOptions "--config=${exampledir}/config.cfg")
+    SET( jobsubOptions "--config=${exampledir}/config.cfg -csv table_orgmode.csv")
  
    # only needed in the last step to test the results of EUTel against a set of reference files:
     SET( stattestdir "$ENV{EUTELESCOPE}/test/stattest/bin" )
