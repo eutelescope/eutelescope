@@ -22,6 +22,13 @@ then
     fi
 fi
 
+if [ -z "$DISPLAY" ]
+then
+    # if $DISPLAY is not set (e.g. on a VM or server), ROOT sents a warning to stderr e.g. when loading Marlin libraries; this might fail tests
+    echo " Variable \$DISPLAY not set, set to 'localhost:0' (otherwise tests might fail due to ROOT error message)"
+    export DISPLAY=localhost:0
+fi
+
 cd $EUTELESCOPE
 if (( $? )); then
     {
