@@ -1179,14 +1179,24 @@ void EUTelMille::processEvent (LCEvent * event) {
 
   if (_iEvt % 100 == 0) 
   {
-    streamlog_out( MESSAGE2 ) << "Processing event "
+    streamlog_out( MESSAGE6 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-    streamlog_out( MESSAGE2 ) << "Currently having " << _nMilleDataPoints << " data points in "
+    streamlog_out( MESSAGE6 ) << "Currently having " << _nMilleDataPoints << " data points in "
                               << _nMilleTracks << " tracks " << endl;
   }
 
+  if (_iEvt % 1000 == 0) 
+  {
+    streamlog_out( MESSAGE ) << "Processing event "
+                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
+                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
+                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
+    streamlog_out( MESSAGE ) << "Currently having " << _nMilleDataPoints << " data points in "
+                              << _nMilleTracks << " tracks " << endl;
+  }
+  
   if( _nMilleTracks > _maxTrackCandidatesTotal )
   {
       throw StopProcessingException(this);
