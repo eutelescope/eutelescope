@@ -75,6 +75,7 @@ def loadparamsfromcsv(csvfilename, runs):
     """
     import csv
     import os.path
+    from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
 
     class CommentedFile:
         """ Decorator for text files: filters out comments (i.e. first char of line #)
@@ -177,6 +178,7 @@ def checkSteer(sstring):
 
 def runMarlin(filenamebase,silent):
     """ Runs Marlin and stores log of output """
+    from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
     log = logging.getLogger('jobsub.marlin')
 
     # need some addtional libraries for process interaction
