@@ -49,6 +49,8 @@
 #include <TMath.h>
 #include <TVector3.h>
 class TMinuit;
+#else
+#error *** You need ROOT to compile this code.  *** 
 #endif
 
 
@@ -105,7 +107,6 @@ namespace eutelescope {
   class EUTelMille : public marlin::Processor {
 
   public:
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
     class hit
     {
     public:
@@ -206,7 +207,6 @@ namespace eutelescope {
     hit *hitsarray;
     unsigned int n;
     };
-#endif
 
     //! Variables for hit parameters
     class HitsInPlane {

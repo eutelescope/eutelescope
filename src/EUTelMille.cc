@@ -57,7 +57,6 @@
 #include <EVENT/LCCollection.h>
 #include <EVENT/LCEvent.h>
 #include <IMPL/LCCollectionVec.h>
-//#include <TrackerHitImpl2.h>
 #include <IMPL/TrackerHitImpl.h>
 #include <IMPL/TrackImpl.h>
 #include <IMPL/LCFlagImpl.h>
@@ -75,6 +74,8 @@
 #include <TSystem.h>
 #include <TMath.h>
 #include <TVector3.h>
+#else
+#error *** You need ROOT to compile this code.  *** 
 #endif
 
 // system includes <>
@@ -92,7 +93,6 @@ using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
 
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
 //evil global variables ...
 //std::vector<EUTelMille::hit> hitsarray;
 EUTelMille::hit *hitsarray;
@@ -107,9 +107,6 @@ void fcn_wrapper(int& /*npar*/, double* /*gin*/, double &f, double *par, int /*i
   p[3] = 0.0;
   f = fobj.fit(par);
 }
-#endif
-
-
 
 
 // definition of static members mainly used to name histograms
@@ -342,14 +339,11 @@ void EUTelMille::init() {
     throw InvalidGeometryException("GEAR manager is not initialised");
   }
 
-
-#if !defined(USE_ROOT) && !defined(MARLIN_USE_ROOT)
   if(_alignMode == 3)
     {
       streamlog_out ( ERROR2) << "alignMode == 3 was chosen but Eutelescope was not build with ROOT support!" << endl;
-      exit(-1);   
+      throw MissingLibraryException( this, "ROOT" );
     }  
-#endif
 
 //  sensor-planes in geometry navigation:
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
@@ -613,14 +607,12 @@ void EUTelMille::init() {
         }
     }
 
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
   if(_alignMode == 3)
     {
 //       number_of_datapoints = _nPlanes -_nExcludePlanes;
       number_of_datapoints = _nPlanes;
       hitsarray = new hit[number_of_datapoints];
     }
-#endif
 
   // booking histograms
   bookHistos();
@@ -1395,8 +1387,6 @@ void EUTelMille::processEvent (LCEvent * event) {
 
         } else if (_inputMode == 2) {
 
-#if defined( USE_ROOT ) || defined(MARLIN_USE_ROOT)
-
           const float resolX = _testModeSensorResolution;
           const float resolY = _testModeSensorResolution;
 
@@ -1421,11 +1411,6 @@ void EUTelMille::processEvent (LCEvent * event) {
             _telescopeResolX[help] = resolX;
             _telescopeResolY[help] = resolY;
           } // end loop over all planes
-
-#else // USE_ROOT
-          throw MissingLibraryException( this, "ROOT" );
-#endif
-
 
         } // end if check running in input mode 0 or 2
 
@@ -1739,13 +1724,11 @@ void EUTelMille::processEvent (LCEvent * event) {
   // only one track or no single track event
   if (_nTracks == 1 || _onlySingleTrackEvents == 0) {
 
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
     DoubleVec lambda;
     double par_c0 = 0.0;
     double par_c1 = 0.0;
     lambda.reserve(_nPlanes);
     bool validminuittrack = false;
-#endif
 
     double Chiquare[2] = {0,0};
     double angle[2] = {0,0};
@@ -1792,7 +1775,6 @@ void EUTelMille::processEvent (LCEvent * event) {
       
       if(_alignMode == 3)
         {
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
           //use minuit to find tracks
           size_t mean_n = 0  ;
           double mean_x = 0.0;
@@ -2026,7 +2008,6 @@ void EUTelMille::processEvent (LCEvent * event) {
                 }
             }
           delete gMinuit;
-#endif
         }
       else
         {
@@ -2291,7 +2272,6 @@ void EUTelMille::processEvent (LCEvent * event) {
           delete [] label;
 
         } else if (_alignMode == 3) {
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
           if(validminuittrack)
             {
               const int nLC = 4; // number of local parameters
@@ -2328,17 +2308,7 @@ void EUTelMille::processEvent (LCEvent * event) {
               {
 
                 int excluded = 0;
-/*
-                // check if actual plane is excluded
-                if (_nExcludePlanes > 0) {
-                  for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
-                    if (help == _excludePlanes[helphelp]) {
-                      excluded = 1;
-                      nExcluded++;
-                    }
-                  }
-                }
-*/
+
                 double sigmax = _resolutionX[help];
                 double sigmay = _resolutionY[help];
                 double sigmaz = _resolutionZ[help];
@@ -2354,81 +2324,6 @@ void EUTelMille::processEvent (LCEvent * event) {
                    sigmaz *= 1000000.;
                    continue;
                 }
-
-                // if plane is not excluded
-//                 if (excluded == 0) {
-//                   cout << "--" << endl;
-//                   int helphelp = help - nExcluded; // index of plane after
-//                   // excluded planes have
-//                   // been removed
-
-//                   //local parameters: b0, b1, c0, c1
-
-//                   const double la = lambda[help];
-              
-//                   derGL[((helphelp * 6) + 0)] = 1.0;
-//                   derGL[((helphelp * 6) + 1)] = 0.0;
-//                   derGL[((helphelp * 6) + 2)] = 0.0;
-//                   derGL[((helphelp * 6) + 3)] = 0.0;
-//                   derGL[((helphelp * 6) + 4)] = -1.0*_zPosHere[help];
-//                   derGL[((helphelp * 6) + 5)] = _yPosHere[help];
-
-//                   derLC[0] = 1.0;
-//                   derLC[1] = 0.0;
-//                   derLC[2] = la;
-//                   derLC[3] = 0.0;
-            
-//                   residual = _waferResidX[help];
-//                   sigma = _resolutionX[help];
-//                   for(int i =0; i<4;i++)
-//                     cout << "a " << derLC[i] << endl;
-                 
-//                   _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
-
-             
-//                   derGL[((helphelp * 6) + 0)] = 0.0;
-//                   derGL[((helphelp * 6) + 1)] = 1.0;
-//                   derGL[((helphelp * 6) + 2)] = 0.0;
-//                   derGL[((helphelp * 6) + 3)] = _zPosHere[help];
-//                   derGL[((helphelp * 6) + 4)] = _zPosHere[help];
-//                   derGL[((helphelp * 6) + 5)] = -1.0*_xPosHere[help];
-
-//                   derLC[0] = 0.0;
-//                   derLC[1] = 1.0;
-//                   derLC[2] = 0.0;
-//                   derLC[3] = 1.0;
-            
-//                   residual = _waferResidY[help];
-//                   sigma = _resolutionY[help];
-//                   for(int i =0; i<4;i++)
-//                     cout << "b " << derLC[i] << endl;
-                  
-//                   _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
-              
-              
-//                   derGL[((helphelp * 6) + 0)] = 0.0;
-//                   derGL[((helphelp * 6) + 1)] = 0.0;
-//                   derGL[((helphelp * 6) + 2)] = 1.0;
-//                   derGL[((helphelp * 6) + 3)] = -1.0*_yPosHere[help];
-//                   derGL[((helphelp * 6) + 4)] = _xPosHere[help];
-//                   derGL[((helphelp * 6) + 5)] = 0.0;
-
-//                   derLC[0] = 0.0;
-//                   derLC[1] = 0.0;
-//                   derLC[2] = -1.0*la*par_c0/sqrt(1.0-par_c0*par_c0-par_c1*par_c1);
-//                   derLC[3] = -1.0*la*par_c1/sqrt(1.0-par_c0*par_c0-par_c1*par_c1);
-            
-//                   residual = _waferResidZ[help];
-//                   sigma = _resolutionZ[help];
-//                   for(int i =0; i<4;i++)
-//                     cout << "c " << derLC[i] << endl;
-                 
-//                   _mille->mille(nLC,derLC,nGL,derGL,label,residual,sigma);
-
-
-//                   _nMilleDataPoints++;
-
-//                 } // end if plane is not excluded
 
                 if (excluded == 0) {
                   //     cout << "--" << endl;
@@ -2552,7 +2447,6 @@ void EUTelMille::processEvent (LCEvent * event) {
               delete [] label;
 
             }
-#endif
         } else {
 
           streamlog_out ( ERROR2 ) << _alignMode << " is not a valid mode. Please choose 1,2 or 3." << endl;
@@ -2649,7 +2543,6 @@ void EUTelMille::processEvent (LCEvent * event) {
               _histogramSwitch = false;
             }
           }
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
           if ( _histogramSwitch ) {
             tempHistoName = _residualZLocalname + "_d" + to_string( sensorID );
             if ( AIDA::IHistogram1D* residz_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
@@ -2671,9 +2564,6 @@ void EUTelMille::processEvent (LCEvent * event) {
               _histogramSwitch = false;
             }
           }
-
-#endif
-
         } // end loop over all detector planes
 
 
@@ -2985,12 +2875,10 @@ void EUTelMille::end() {
   delete [] _waferResidX;
   delete [] _waferResidZ;
 
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
   if(_alignMode == 3)
     {
       delete []  hitsarray;
     }
-#endif
 
   // close the output file
   delete _mille;
@@ -3003,9 +2891,7 @@ void EUTelMille::end() {
     string tempHistoName;
     double *meanX = new double[_nPlanes];
     double *meanY = new double[_nPlanes];
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
     double *meanZ = new double[_nPlanes];
-#endif
 
     // loop over all detector planes
     for(unsigned int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
@@ -3033,7 +2919,7 @@ void EUTelMille::end() {
           _histogramSwitch = false;
         }
       }
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
+
       if ( _histogramSwitch ) {
         tempHistoName =  _residualZLocalname + "_d" + to_string( sensorID );
         if ( AIDA::IHistogram1D* residz_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
@@ -3044,7 +2930,6 @@ void EUTelMille::end() {
           _histogramSwitch = false;
         } 
       }
-#endif
     } // end loop over all detector planes
 
     ofstream steerFile;
@@ -3085,9 +2970,8 @@ void EUTelMille::end() {
       // calculate average
       double averageX = (meanX[firstnotexcl] + meanX[lastnotexcl]) / 2;
       double averageY = (meanY[firstnotexcl] + meanY[lastnotexcl]) / 2;
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
       double averageZ = (meanZ[firstnotexcl] + meanZ[lastnotexcl]) / 2;
-#endif
+
       steerFile << "Cfiles" << endl;
       steerFile << _binaryFilename << endl;
       steerFile << endl;
@@ -3143,11 +3027,9 @@ void EUTelMille::end() {
             if (_alignMode == 1) {
 
               if (_usePedeUserStartValues == 0) {
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
                 steerFile << (counter * 3 + 1) << " " << (averageX - meanX[help]) << " 0.0" << endl;
                 steerFile << (counter * 3 + 2) << " " << (averageY - meanY[help]) << " 0.0" << endl;
                 steerFile << (counter * 3 + 3) << " " << " 0.0 0.0" << endl;
-#endif
               } else {
                 steerFile << (counter * 3 + 1) << " " << _pedeUserStartValuesX[help] << " 0.0" << endl;
                 steerFile << (counter * 3 + 2) << " " << _pedeUserStartValuesY[help] << " 0.0" << endl;
@@ -3165,7 +3047,6 @@ void EUTelMille::end() {
               }
 
             } else if (_alignMode == 3) {
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
               if (_usePedeUserStartValues == 0)
                 {
                   if(_FixParameter[help] & (1 << 0))
@@ -3230,7 +3111,6 @@ void EUTelMille::end() {
                   else
                     steerFile << (counter * 6 + 6) << " " << _pedeUserStartValuesGamma[help] << " 0.0" << endl;
                 }
-#endif
             }
           }
 
@@ -3262,9 +3142,7 @@ void EUTelMille::end() {
     //cleaning up
     delete [] meanX;
     delete [] meanY;
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
     delete [] meanZ;
-#endif
   } // end if write the pede steering file
 
   streamlog_out ( MESSAGE7 ) << "Number of data points used: " << _nMilleDataPoints << endl;
@@ -3708,8 +3586,6 @@ void EUTelMille::bookHistos() {
         _histogramSwitch = false;
       }
 
-
-#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
       tempHistoName     =  _residualZLocalname + "_d" + to_string( sensorID );
       histoTitleZResid  =  "ZResidual_d" + to_string( sensorID ) ;
 
@@ -3753,11 +3629,7 @@ void EUTelMille::bookHistos() {
         streamlog_out ( ERROR2 ) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << endl;
         _histogramSwitch = false;
       }
-
-
-#endif
     }
-
   } catch (lcio::Exception& e ) {
 
 

@@ -59,10 +59,14 @@
 #include <limits>
 
 // ROOT includes ".h"
+#if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
 #include <TVectorD.h>
 #include <TMatrixD.h>
 #include <TVector3.h>
 #include <TRotation.h>
+#else
+#error *** You need ROOT to compile this code.  *** 
+#endif
 
 using namespace std;
 using namespace lcio ;
