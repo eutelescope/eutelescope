@@ -330,7 +330,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
                             _useSensorRectangular,initRect);
 
   registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
-                             _hotPixelCollectionName, static_cast< string > ( "hotpixel_apix" ));
+                             _hotPixelCollectionName, static_cast< string > ( "" ));
 
 }
 
@@ -625,7 +625,7 @@ void EUTelMille::init() {
   // booking histograms
   bookHistos();
 
-  streamlog_out ( MESSAGE2 ) << "Initialising Mille..." << endl;
+  streamlog_out ( MESSAGE ) << "Initialising Mille..." << endl;
   _mille = new Mille(_binaryFilename.c_str());
 
   for(int i = 0; i < _maxTrackCandidates; i++)
@@ -656,7 +656,7 @@ void EUTelMille::init() {
         }
     }
 
-  streamlog_out ( MESSAGE2 ) << "end of initialisation" << endl;
+  streamlog_out ( MESSAGE4 ) << "end of initialisation" << endl;
 }
 
 void EUTelMille::processRunHeader (LCRunHeader * rdr) {
@@ -1098,7 +1098,8 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
     }
     catch (...)
     {
-      streamlog_out ( MESSAGE ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " not found" << endl; 
+      if (!_hotPixelCollectionName.empty())
+	streamlog_out ( WARNING ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " not found" << endl; 
       return;
     }
 
@@ -1147,7 +1148,7 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
              {
               IntVec m26ColVec();
               m26Data->getSparsePixelAt( iPixel, &m26Pixel);
-              streamlog_out ( MESSAGE ) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << endl;
+              streamlog_out ( DEBUG3 ) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << endl;
               try
               {
                  char ix[100];
@@ -1179,21 +1180,21 @@ void EUTelMille::processEvent (LCEvent * event) {
   
   if (_iEvt % 100 == 0 && _iEvt % 1000 != 0) 
   {
-    streamlog_out( MESSAGE4 ) << "Processing event "
+    streamlog_out( MESSAGE3 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-    streamlog_out( MESSAGE4 ) << "Currently having " << _nMilleDataPoints << " data points in "
+    streamlog_out( MESSAGE3 ) << "Currently having " << _nMilleDataPoints << " data points in "
                               << _nMilleTracks << " tracks " << endl;
   }
 
   if (_iEvt % 1000 == 0) 
   {
-    streamlog_out( MESSAGE6 ) << "Processing event "
+    streamlog_out( MESSAGE5 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-    streamlog_out( MESSAGE6 ) << "Currently having " << _nMilleDataPoints << " data points in "
+    streamlog_out( MESSAGE5 ) << "Currently having " << _nMilleDataPoints << " data points in "
                               << _nMilleTracks << " tracks " << endl;
   }
   
@@ -1322,9 +1323,6 @@ void EUTelMille::processEvent (LCEvent * event) {
                 {
                     streamlog_out(MESSAGE4) << "Skipping cluster due to rectangular cut!" << endl;
                     continue;
-                }
-                if (skipHit) {
-                    streamlog_out(MESSAGE4) << "TEST: This message should never appear!" << endl;                    
                 }
 
             } else if ( hit->getType() == kEUTelSparseClusterImpl ) {
@@ -2831,7 +2829,7 @@ TVector3 EUTelMille::Line2Plane(int iplane, const TVector3& lpoint, const TVecto
 
   if( _referenceHitVec == 0)
   {
-    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    streamlog_out(MESSAGE2) << "_referenceHitVec is empty" << endl;
     return TVector3(0.,0.,0.);
   }
 
@@ -3254,7 +3252,7 @@ void EUTelMille::end() {
 
       steerFile.close();
 
-      streamlog_out ( MESSAGE2 ) << "File " << _pedeSteerfileName << " written." << endl;
+      streamlog_out ( MESSAGE ) << "File " << _pedeSteerfileName << " written." << endl;
 
     } else {
 
@@ -3269,12 +3267,11 @@ void EUTelMille::end() {
 #endif
   } // end if write the pede steering file
 
-  streamlog_out ( MESSAGE2 ) << endl;
-  streamlog_out ( MESSAGE2 ) << "Number of data points used: " << _nMilleDataPoints << endl;
-  streamlog_out ( MESSAGE2 ) << "Number of tracks used: " << _nMilleTracks << endl;
+  streamlog_out ( MESSAGE7 ) << "Number of data points used: " << _nMilleDataPoints << endl;
+  streamlog_out ( MESSAGE7 ) << "Number of tracks used: " << _nMilleTracks << endl;
 
   // monitor the number of tracks in CDash when running tests
-  CDashMeasurement meas_ntracks("ntracks",_nMilleTracks);  cout << meas_ntracks;
+  CDashMeasurement meas_ntracks("ntracks",_nMilleTracks);  cout << meas_ntracks;  // output only if DO_TESTING is set
 
   // if running pede using the generated steering file
   if (_runPede == 1) {
@@ -3284,9 +3281,7 @@ void EUTelMille::end() {
 
       std::string command = "pede " + _pedeSteerfileName;
 
-      streamlog_out ( MESSAGE2 ) << endl;
-      streamlog_out ( MESSAGE2 ) << "Starting pede..." << endl;
-      streamlog_out ( MESSAGE2 ) << command.c_str() << endl;
+      streamlog_out ( MESSAGE ) << "Starting pede...: " << command.c_str() << endl;
 
       bool encounteredError = false;
       
@@ -3325,7 +3320,7 @@ void EUTelMille::end() {
 	    if (!finished[1])
 	      {
 		while ((n = pede.out().readsome(buf, sizeof(buf))) > 0){
-		  streamlog_out( MESSAGE2 ).write(buf, n).flush();
+		  streamlog_out( MESSAGE4 ).write(buf, n).flush();
 		  string output (buf, n);
 		  pedeoutput << output;
 		}
@@ -3361,7 +3356,8 @@ void EUTelMille::end() {
 	      strncpy ( str, pch+1, 15 );
 	      str[15] = '\0';   /* null character manually added */
 	      // monitor the chi2/ndf in CDash when running tests
-	      CDashMeasurement meas_chi2ndf("chi2_ndf",atof(str));  cout << meas_chi2ndf;
+	      CDashMeasurement meas_chi2ndf("chi2_ndf",atof(str));  cout << meas_chi2ndf; // output only if DO_TESTING is set
+	      streamlog_out ( MESSAGE6 ) << "Final Sum(Chi^2)/Sum(Ndf) = " << str << endl;
 	    }	    
 	  }
 	}
@@ -3372,12 +3368,12 @@ void EUTelMille::end() {
         // check the exit value of pede / react to previous errors
         if ( pede.rdbuf()->status() == 0 && !encounteredError) 
         {
-          streamlog_out ( MESSAGE2 ) << "Pede successfully finished" << endl;
+          streamlog_out ( MESSAGE7 ) << "Pede successfully finished" << endl;
         } else {
           streamlog_out ( ERROR ) << "Problem during Pede execution, exit status: " << pede.rdbuf()->status() << ", error messages (repeated here): " << endl;
-	  streamlog_out ( ERROR4 ) << pedeerrors.str() << endl;
+	  streamlog_out ( ERROR ) << pedeerrors.str() << endl;
 	  // TODO: decide what to do now; exit? and if, how?
-          streamlog_out ( ERROR4 ) << "Will exit now" << endl;
+          streamlog_out ( ERROR ) << "Will exit now" << endl;
 	  //exit(EXIT_FAILURE); // FIXME: can lead to (ROOT?) seg faults - points to corrupt memory? run valgrind...
 	  return; // does fine for now
 	}
@@ -3386,7 +3382,7 @@ void EUTelMille::end() {
         // results.
         string millepedeResFileName = "millepede.res";
 
-        streamlog_out ( MESSAGE2 ) << "Reading back the " << millepedeResFileName << endl
+        streamlog_out ( MESSAGE6 ) << "Reading back the " << millepedeResFileName << endl
                                    << "Saving the alignment constant into " << _alignmentConstantLCIOFile << endl;
 
         // open the millepede ASCII output file
@@ -3766,10 +3762,10 @@ void EUTelMille::bookHistos() {
 
 
 #ifdef EUTEL_INTERACTIVE
-    streamlog_out ( ERROR2 ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
+    streamlog_out ( ERROR ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
     string answer;
     while ( true ) {
-      streamlog_out ( ERROR2 ) << "[q]/[c]" << endl;
+      streamlog_out ( ERROR ) << "[q]/[c]" << endl;
       cin >> answer;
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
       if ( answer == "q" ) {
@@ -3779,7 +3775,7 @@ void EUTelMille::bookHistos() {
       break;
     }
 #else
-    streamlog_out( WARNING2 ) << "No AIDAProcessor initialized. Continue without histogramming" << endl;
+    streamlog_out( WARNING6 ) << "No AIDAProcessor initialized. Continue without histogramming" << endl;
 
 #endif
 
