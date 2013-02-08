@@ -1,9 +1,3 @@
-// Authors
-// Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Joerg Behr, Hamburg Uni/DESY  <joerg.behr@desy.de> 
-// Slava Libov, DESY <mailto:vladyslav.libov@desy.de>
-// Igor Rubinskiy, DESY <mailto:igorrubinsky@gmail.com>
-// 
 // Version $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -202,9 +196,6 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor () :Processor("EUTelA
 
 }
 
-//void EUTelApplyAlignmentProcessor::modifyEvent( LCEvent * /* event */ ){
-//  return;
-//}
 
 void EUTelApplyAlignmentProcessor::init() {
   // this method is called only once even when the rewind is active
@@ -268,15 +259,6 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
             { 
               _outputReferenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _outputReferenceHitCollectionName ) );
 
-//              if(_fevent)   streamlog_out ( MESSAGE ) << "found _outputReferenceHitVec "<<  _outputReferenceHitCollectionName.c_str() << " at " << _outputReferenceHitVec << endl ;  
-//              if( _outputReferenceHitVec != 0 )
-//              {
-//                _outputReferenceHitVec->clear();
-//                printf("cleared, elements N= %d \n", _outputReferenceHitVec->getNumberOfElements()  );  
-//                _outputReferenceHitVec = CreateDummyReferenceHitCollection();
-//                event->addCollection( _outputReferenceHitVec, _outputReferenceHitCollectionName );
-//              }
-
             }
             catch(...)
             {
@@ -297,10 +279,10 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
   try 
   {
     _inputCollectionVec         = dynamic_cast < LCCollectionVec* > (evt->getCollection(_inputHitCollectionName));
-    streamlog_out  ( DEBUG ) <<  " input ["<< _inputHitCollectionName <<"] collection found on event " << event->getEventNumber() << endl;
-    streamlog_out  ( DEBUG ) <<  " input ["<< _inputHitCollectionName <<"] collection found at       " << _inputCollectionVec << endl;  
+    streamlog_out  ( DEBUG2 ) <<  " input ["<< _inputHitCollectionName <<"] collection found on event " << event->getEventNumber() << endl;
+    streamlog_out  ( DEBUG2 ) <<  " input ["<< _inputHitCollectionName <<"] collection found at       " << _inputCollectionVec << endl;  
   } catch (DataNotAvailableException& e) {
-    streamlog_out  ( DEBUG ) <<  "No input ["<< _inputHitCollectionName <<"] collection found on event " << event->getEventNumber()
+    streamlog_out  ( DEBUG3 ) <<  "No input ["<< _inputHitCollectionName <<"] collection found on event " << event->getEventNumber()
                                 << " in run " << event->getRunNumber() << endl;
   }
  
@@ -309,10 +291,10 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
     try 
     {
       _alignmentCollectionVec     = dynamic_cast < LCCollectionVec* > (evt->getCollection(_alignmentCollectionName));
-      streamlog_out  ( DEBUG ) <<  "found Alignment ["<< _alignmentCollectionName <<"] collection found on event " << event->getEventNumber() <<
+      streamlog_out  ( DEBUG2 ) <<  "found Alignment ["<< _alignmentCollectionName <<"] collection found on event " << event->getEventNumber() <<
                                    " at " << _alignmentCollectionVec << endl;
    } catch (DataNotAvailableException& e) {
-      streamlog_out  ( DEBUG ) <<  "No Alignment ["<< _alignmentCollectionName <<"] collection found on event " << event->getEventNumber()
+      streamlog_out  ( DEBUG3 ) <<  "No Alignment ["<< _alignmentCollectionName <<"] collection found on event " << event->getEventNumber()
                                   << " in run " << event->getRunNumber() << endl;
     }
   }
@@ -323,16 +305,16 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
       {
         _outputCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);
         evt->addCollection( _outputCollectionVec, _outputHitCollectionName );
-        streamlog_out  ( DEBUG ) <<  " created new " <<  _outputHitCollectionName  << endl;
+        streamlog_out  ( DEBUG2 ) <<  " created new " <<  _outputHitCollectionName  << endl;
       } 
       else
       {
-        streamlog_out  ( DEBUG ) <<  " opened " <<  _outputHitCollectionName  << endl;
+        streamlog_out  ( DEBUG2 ) <<  " opened " <<  _outputHitCollectionName  << endl;
       }
   }catch(...){
       _outputCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);
       evt->addCollection( _outputCollectionVec, _outputHitCollectionName );
-      streamlog_out  ( DEBUG ) <<  " try catch. nevertheless created new " <<  _outputHitCollectionName  << endl;
+      streamlog_out  ( DEBUG2 ) <<  " try catch. nevertheless created new " <<  _outputHitCollectionName  << endl;
   }
   // ------------------------------------------------------------------------- //
 
@@ -342,17 +324,9 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
 //..................................................................................
 void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader)
 {
-
-//  auto_ptr<EUTelRunHeaderImpl> runHeader ( new EUTelRunHeaderImpl( rdr ) ) ;
-//  runHeader->addProcessor( type() );
-//
-//  // increment the run counter
-//  ++_iRun;
-
   auto_ptr<EUTelRunHeaderImpl> eutelHeader( new EUTelRunHeaderImpl ( runHeader ) );
   eutelHeader->addProcessor( type() );
-
-
+// increment the run counter
   _nRun++ ;
 
   // Decode and print out Run Header information - just a check
@@ -363,14 +337,14 @@ void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader)
   sprintf(buf, "%i", runNr);
   std::string runNr_str(buf);
 
-  message<MESSAGE> ( log() << "Processing run header " << _nRun
+  message<MESSAGE6> ( log() << "Processing run header " << _nRun
                      << ", run number " << runNr );
 
   const std::string detectorName = runHeader->getDetectorName();
   const std::string detectorDescription = runHeader->getDescription();
   //  const std::vector<std::string> * subDets = runHeader->getActiveSubdetectors();
 
-  message<MESSAGE> ( log() << detectorName << " : " << detectorDescription ) ;
+  message<MESSAGE4> ( log() << detectorName << " : " << detectorDescription ) ;
 
   // pick up correct alignment collection
   _alignmentCollectionNames.clear();
@@ -379,23 +353,21 @@ void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader)
 
   if( _alignmentCollectionSuffixes.size() < 1 )
   {
-      message<MESSAGE> ( log() << "You must define at least one Alignmen Collection to start ApplyAlignment Processor" << endl ) ;
+      message<ERROR> ( log() << "You must define at least one Alignmen Collection to start ApplyAlignment Processor" << endl ) ;
       throw StopProcessingException(this);
   }
   else 
   if( _alignmentCollectionSuffixes.size() == 1 )
   {
-    message<MESSAGE> ( log() << "Only one Alignment Collection has been specified" << endl ) ;
-    message<MESSAGE> ( log() << "Ignore other Suffix collections, proceed with the defaults given by _referenceHitCollectionName and _inputHitCollectionName " <<endl );
+    message<MESSAGE4> ( log() << "Only one Alignment Collection has been specified" << endl ) ;
+    message<MESSAGE4> ( log() << "Ignore other Suffix collections, proceed with the defaults given by _referenceHitCollectionName and _inputHitCollectionName " <<endl );
     _alignmentCollectionNames.push_back( _alignmentCollectionSuffixes[0] );
     _refhitCollectionNames.push_back( internal_referenceHitCollectionName );
     _hitCollectionNames.push_back( _outputHitCollectionName );
 
-    message<MESSAGE> ( log() << " _alignmentCollectionNames[0] = " << _alignmentCollectionNames[0]  << endl);
-    message<MESSAGE> ( log() << " _hitCollectionNames[0] = " << _hitCollectionNames[0]  << endl);
-    message<MESSAGE> ( log() << " _refhitCollectionNames[0] = " << _refhitCollectionNames[0]  << endl);
-
-//    _outputReferenceHitCollectionName =  _refhitCollectionNames[0];
+    message<MESSAGE4> ( log() << " _alignmentCollectionNames[0] = " << _alignmentCollectionNames[0]  << endl);
+    message<MESSAGE4> ( log() << " _hitCollectionNames[0] = " << _hitCollectionNames[0]  << endl);
+    message<MESSAGE4> ( log() << " _refhitCollectionNames[0] = " << _refhitCollectionNames[0]  << endl);
   }
   else
   if(
@@ -434,8 +406,6 @@ void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader)
      ExceptionMessage += " hit [ ";       ExceptionMessage += _hitCollectionSuffixes.size();        ExceptionMessage += "]\n";
      ExceptionMessage += " refhit [ ";    ExceptionMessage += _refhitCollectionSuffixes.size();     ExceptionMessage += "]\n";
      message<ERROR> ( log() << ExceptionMessage.Data()  );
-//     throw InvalidParameterException( ExceptionMessage.Data() );
-//     message<ERROR  > ( log() << endl );
      message<ERROR  > ( log() << " ***                                                                     ***" );    
      message<ERROR  > ( log() << " ***************************************************************************" );    
      message<ERROR  > ( log() << endl );
@@ -452,7 +422,6 @@ void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader)
        _hitCollectionNames.push_back(hittemp);
        std::string	reftemp = _refhitCollectionSuffixes[i];
        _refhitCollectionNames.push_back(reftemp);
-	//cout << _alignmentCollectionNames[i] << endl;
      }
    }
 
@@ -470,7 +439,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
     {    
  
         if ( _fevent )
-            streamlog_out ( MESSAGE4 ) << "Processing run "  
+            streamlog_out ( MESSAGE5 ) << "Processing run "  
                 << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
                 << ". Number of the defined alignment collection is " << _alignmentCollectionNames.size()
                 << endl;
@@ -488,24 +457,12 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
             // CAUTION 1: it might be important to keep the order of alignment collections (if many) given in the opposite direction
             // CAUTION 2: to be controled via steering files
             //
-
-
             _alignmentCollectionName    = _alignmentCollectionNames.at(i);
-//            _referenceHitCollectionName = _refhitCollectionNames.at(i);
-//            _inputHitCollectionName     = _hitCollectionNames.at(i);
 
             if( i ==  (int)_alignmentCollectionNames.size() -1 ) 
             {
                _inputHitCollectionName     = internal_inputHitCollectionName     ; 
                _referenceHitCollectionName = internal_referenceHitCollectionName ; 
-/*              if( _inputHitCollectionName != _hitCollectionNames.at(i)  )   
-                {
-                    _inputHitCollectionName  = _hitCollectionNames.at(i);
-                }
-                if( _referenceHitCollectionName != _refhitCollectionNames.at(i)  )   
-                {
-                    _referenceHitCollectionName  = _refhitCollectionNames.at(i);
-                }*/
                   _outputHitCollectionName          = _hitCollectionNames.at(i);//_input_inputHitCollectionName + _alignmentCollectionName; 
                   _outputReferenceHitCollectionName = _refhitCollectionNames.at(i);//referenceH_referenceHitCollectionName + _alignmentCollectionName; 
                
@@ -513,29 +470,13 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
             else
                if( i >= 0 ) 
                {
-//               std::string align1 = _alignmentCollectionNames.at(i+1);
-//               int align_length1 = align1.length();
-
-//               int outputhit_length2 = _outputHitCollectionName.length();
-//               int outputREFhit_length2 = _outputReferenceHitCollectionName.length();
-
-//               std::string temp = "";
-//               temp =  _inputHitCollectionName;
-//               temp.erase( outputhit_length2 - align_length1, align_length1);
                  _inputHitCollectionName           = _hitCollectionNames.at(i+1);
                  _outputHitCollectionName          = _hitCollectionNames.at(i);//temp + _alignmentCollectionName; 
 
-//               temp = _referenceHitCollectionName;
-//               temp.erase( outputREFhit_length2 - align_length1, align_length1);
                  _referenceHitCollectionName       = _refhitCollectionNames.at(i+1);
                  _outputReferenceHitCollectionName = _refhitCollectionNames.at(i);//temp + _alignmentCollectionName; 
                }  
- 
-//            printf("[%2d of %2d]  alignment: [%s] ", i,  _alignmentCollectionNames.size(),  _alignmentCollectionName.c_str() );
-//            printf("collections: input [%s] output [%s] refhit in [%s] out [%s] \n", 
-//                    _inputHitCollectionName.c_str(), _outputHitCollectionName.c_str() , 
-//                    _referenceHitCollectionName.c_str(), _outputReferenceHitCollectionName.c_str() );
- 
+  
   CheckIOCollections(event);
 
 //            streamlog_out ( MESSAGE4 ) << "_doAlignmentInOneGo == " << _doAlignmentInOneGo << endl;              
@@ -600,8 +541,8 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
                 }
                 else
                     {
-                       streamlog_out ( MESSAGE4 ) << "Man! you MUST specifiy whether you want the alignment to be done in one go or not" << endl;              
-                       streamlog_out ( MESSAGE4 ) << "Check your steering cards!!" << endl;              
+                       streamlog_out ( ERROR ) << "You MUST specifiy whether you want the alignment to be done in one go or not" << endl;              
+                       streamlog_out ( ERROR ) << "Check your steering cards!!" << endl;              
                     }
         }
  
@@ -612,24 +553,6 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
         }
         _iEvt++; 
     }
-/* 
-    if ( _applyToReferenceHitCollection ) 
-    {
-      LCCollectionVec * ref    = static_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName ));
-      for(size_t ii = 0 ; ii <  ref->getNumberOfElements(); ii++)
-      {
-        EUTelReferenceHit * refhit = static_cast< EUTelReferenceHit*> ( ref->getElementAt(ii) ) ;
-        printf("FIN sensorID: %5d dx:%5.3f dy:%5.3f dz:%5.3f  alfa:%5.3f beta:%5.3f gamma:%5.3f \n",
-        refhit->getSensorID(   ),                      
-        refhit->getXOffset(    ),
-        refhit->getYOffset(    ),
-        refhit->getZOffset(    ),
-        refhit->getAlpha(),
-        refhit->getBeta(),
-        refhit->getGamma()    );
-      }
-    }
-*/
 
     if ( _applyToReferenceHitCollection ) 
     {
@@ -659,7 +582,7 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
  
 
   if ( _iEvt % 1000 == 0 )
-    streamlog_out ( MESSAGE4 ) << "Processing event  (ApplyGear6D) "
+    streamlog_out ( MESSAGE5 ) << "Processing event  (ApplyGear6D) "
                                << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
                                << setfill(' ')
@@ -682,14 +605,13 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
 
 
      
-//    if (_fevent) 
     {    
 #ifndef NDEBUG
         // print out the lookup table
         map< int , int >::iterator mapIter = _lookUpTable[ _alignmentCollectionName ].begin();
         while ( mapIter != _lookUpTable[ _alignmentCollectionName ].end() ) 
         {
-            streamlog_out ( DEBUG ) << "Sensor ID = " << mapIter->first
+            streamlog_out ( DEBUG2 ) << "Sensor ID = " << mapIter->first
                                     << " is in position " << mapIter->second << endl;
             ++mapIter;
         }
@@ -699,7 +621,7 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
     
     if( _inputCollectionVec == 0 )
     {
-      streamlog_out ( DEBUG ) << "EUTelApplyAlignmentProcessor::ApplyGear6D. Skip this event. Input Collection not found. " << endl;  
+      streamlog_out ( DEBUG5 ) << "EUTelApplyAlignmentProcessor::ApplyGear6D. Skip this event. Input Collection not found. " << endl;  
       return;
     }
 
@@ -795,13 +717,13 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
                     streamlog_out ( MESSAGE )  << "Debugmode ON " << endl;                                   
                 }
                 
-                streamlog_out ( MESSAGE )  << "_applyGear6D " << endl;
-                streamlog_out ( MESSAGE )  << " telPos[0] = " << telPos[0]  << endl;
-                streamlog_out ( MESSAGE )  << " telPos[1] = " << telPos[1]  << endl;
-                streamlog_out ( MESSAGE )  << " telPos[2] = " << telPos[2]  << endl;
-                streamlog_out ( MESSAGE )  << " gRotation[0] = " << gRotation[0]  << endl;
-                streamlog_out ( MESSAGE )  << " gRotation[1] = " << gRotation[1]  << endl;
-                streamlog_out ( MESSAGE )  << " gRotation[2] = " << gRotation[2]  << endl;
+                streamlog_out ( DEBUG2 )  << "_applyGear6D " << endl;
+                streamlog_out ( DEBUG2 )  << " telPos[0] = " << telPos[0]  << endl;
+                streamlog_out ( DEBUG2 )  << " telPos[1] = " << telPos[1]  << endl;
+                streamlog_out ( DEBUG2 )  << " telPos[2] = " << telPos[2]  << endl;
+                streamlog_out ( DEBUG2 )  << " gRotation[0] = " << gRotation[0]  << endl;
+                streamlog_out ( DEBUG2 )  << " gRotation[1] = " << gRotation[1]  << endl;
+                streamlog_out ( DEBUG2 )  << " gRotation[2] = " << gRotation[2]  << endl;
           }
 
           // rotations first
@@ -837,8 +759,8 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
 
       if ( _iEvt < _printEvents )
       {
-         streamlog_out ( MESSAGE ) << "ApplyGear: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] << " " << z_sensor << endl;                
-         streamlog_out ( MESSAGE ) << "ApplyGear: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2] << " " << z_sensor << endl;                
+         streamlog_out ( DEBUG2 ) << "ApplyGear: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] << " " << z_sensor << endl;                
+         streamlog_out ( DEBUG2 ) << "ApplyGear: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2] << " " << z_sensor << endl;                
       }
 
        outputHit->setPosition( outputPosition ) ;
@@ -852,7 +774,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 {
  
   if ( _iEvt % 1000 == 0 )
-    streamlog_out ( MESSAGE4 ) << "Processing event  (RevertGear6D) "
+    streamlog_out ( MESSAGE5 ) << "Processing event  (RevertGear6D) "
                                << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
                                << setfill(' ')
@@ -976,10 +898,10 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 
           if( _iEvt < _printEvents )
           {
-            streamlog_out(MESSAGE) << "Sensor ID and Alignment plane ID match!" << endl;
-            streamlog_out(MESSAGE) << "x_refhit " << x_refhit  << endl; 
-            streamlog_out(MESSAGE) << "y_refhit " << y_refhit  << endl; 
-            streamlog_out(MESSAGE) << "z_refhit " << z_refhit  << endl; 
+            streamlog_out(DEBUG2) << "Sensor ID and Alignment plane ID match!" << endl;
+            streamlog_out(DEBUG2) << "x_refhit " << x_refhit  << endl; 
+            streamlog_out(DEBUG2) << "y_refhit " << y_refhit  << endl; 
+            streamlog_out(DEBUG2) << "z_refhit " << z_refhit  << endl; 
           }
           break;
         }
@@ -1038,13 +960,13 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
                     streamlog_out ( MESSAGE )  << "Debugmode ON " << endl;                                   
                 }
                 
-                streamlog_out ( MESSAGE )  << "_revertGear6D " << endl;
-                streamlog_out ( MESSAGE )  << " telPos[0] = " << telPos[0]  << endl;
-                streamlog_out ( MESSAGE )  << " telPos[1] = " << telPos[1]  << endl;
-                streamlog_out ( MESSAGE )  << " telPos[2] = " << telPos[2]  << endl;
-                streamlog_out ( MESSAGE )  << " gRotation[0] = " << gRotation[0]  << endl;
-                streamlog_out ( MESSAGE )  << " gRotation[1] = " << gRotation[1]  << endl;
-                streamlog_out ( MESSAGE )  << " gRotation[2] = " << gRotation[2]  << endl;
+                streamlog_out ( DEBUG2 )  << "_revertGear6D " << endl;
+                streamlog_out ( DEBUG2 )  << " telPos[0] = " << telPos[0]  << endl;
+                streamlog_out ( DEBUG2 )  << " telPos[1] = " << telPos[1]  << endl;
+                streamlog_out ( DEBUG2 )  << " telPos[2] = " << telPos[2]  << endl;
+                streamlog_out ( DEBUG2 )  << " gRotation[0] = " << gRotation[0]  << endl;
+                streamlog_out ( DEBUG2 )  << " gRotation[1] = " << gRotation[1]  << endl;
+                streamlog_out ( DEBUG2 )  << " gRotation[2] = " << gRotation[2]  << endl;
           }
 // new implmentation // Rubinskiy 11.11.11
 
@@ -1055,7 +977,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 
       if ( _iEvt < _printEvents )
       {
-         streamlog_out ( MESSAGE ) << "RevertGear: intermediate: "<<outputPosition[0] << " " <<outputPosition[1] << " " <<outputPosition[2] <<  endl;
+         streamlog_out ( DEBUG2 ) << "RevertGear: intermediate: "<<outputPosition[0] << " " <<outputPosition[1] << " " <<outputPosition[2] <<  endl;
       } 
       TVector3 iCenterOfSensorFrame( outputPosition[0], outputPosition[1], outputPosition[2] );
 
@@ -1104,8 +1026,8 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 
       if ( _iEvt < _printEvents )
       {
-        streamlog_out ( MESSAGE ) << "RevertGear: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] <<  endl;
-        streamlog_out ( MESSAGE ) << "RevertGear: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2] << endl;
+        streamlog_out ( DEBUG2 ) << "RevertGear: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] <<  endl;
+        streamlog_out ( DEBUG2 ) << "RevertGear: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2] << endl;
       }
 
       outputHit->setPosition( outputPosition ) ;
@@ -1119,7 +1041,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
   if ( _iEvt % 1000 == 0 )
-    streamlog_out ( MESSAGE4 ) << "Processing event  (ApplyAlignment Direct) "
+    streamlog_out ( MESSAGE5 ) << "Processing event  (ApplyAlignment Direct) "
                                << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
                                << setfill(' ')
@@ -1150,24 +1072,24 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
     if (_fevent) 
     {
-        streamlog_out ( DEBUG   ) << "DIRECT:FIRST:REFHIT: The alignment collection ["<< _alignmentCollectionName.c_str() <<"] contains: " <<  _alignmentCollectionVec->getNumberOfElements() << " planes " << endl;    
+        streamlog_out ( DEBUG2   ) << "DIRECT:FIRST:REFHIT: The alignment collection ["<< _alignmentCollectionName.c_str() <<"] contains: " <<  _alignmentCollectionVec->getNumberOfElements() << " planes " << endl;    
     
         if(_alignmentCollectionVec->size() > 0 )
         {
-            streamlog_out ( DEBUG   ) << "DIRECT:FIRST:REFHIT: alignment sensorID: " ;
+            streamlog_out ( DEBUG2   ) << "DIRECT:FIRST:REFHIT: alignment sensorID: " ;
  
             for ( size_t iPos = 0; iPos < _alignmentCollectionVec->size(); ++iPos ) 
             {
                 EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _alignmentCollectionVec->getElementAt( iPos ) );
                 _lookUpTable[ _alignmentCollectionName ][ alignment->getSensorID() ] = iPos;
-                streamlog_out ( MESSAGE ) << " _alignmentCollectionVec element position : " << iPos << " " ;
+                streamlog_out ( DEBUG3 ) << " _alignmentCollectionVec element position : " << iPos << " " ;
             
                 if ( _applyToReferenceHitCollection ) 
                 {
                  AlignReferenceHit( evt,   alignment); 
                 }
             }
-            streamlog_out ( MESSAGE ) << endl;
+            streamlog_out ( DEBUG2 ) << endl;
 //            if ( _applyToReferenceHitCollection ) 
 //            {
 //            }
@@ -1383,7 +1305,6 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
                 {
                     streamlog_out (  DEBUG  )  << "DIRECT:-----:-----: Debugmode ON " << endl;                                   
                 }
-                
                 streamlog_out (  DEBUG  )  << "DIRECT:-----:-----: _correctionMethod == rotation first " << endl;
                 streamlog_out (  DEBUG  )  << "DIRECT:-----:-----:  alignment->getAlpha() = " << alpha  << endl;
                 streamlog_out (  DEBUG  )  << "DIRECT:-----:-----:  alignment->getBeta()  = " <<  beta  << endl;
@@ -1392,7 +1313,6 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
                 streamlog_out (  DEBUG  )  << "DIRECT:-----:-----:  alignment->getYOffest() = " << offsetY  << endl;
                 streamlog_out (  DEBUG  )  << "DIRECT:-----:-----:  alignment->getZOffest() = " << offsetZ  << endl;
             }
-        
             // this is the rotation first
             TVector3 iCenterOfSensorFrame(  inputPosition[0],  inputPosition[1],  inputPosition[2] );
 
@@ -1461,9 +1381,9 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
       if ( _iEvt < _printEvents )
       {
-         streamlog_out ( MESSAGE ) << "DIRECT:-----:-----:" << _alignmentCollectionName.c_str() << " : ORIGI: Sensor ID " << sensorID << " " << inputPosition_orig[0] << " " << inputPosition_orig[1] << " " << inputPosition_orig[2] <<  endl;   
-         streamlog_out ( MESSAGE ) << "DIRECT:-----:-----:" << _alignmentCollectionName.c_str() << " : INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] <<  endl;   
-         streamlog_out ( MESSAGE ) << "DIRECT:-----:-----:" << _alignmentCollectionName.c_str() << " : OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2]  << endl;
+         streamlog_out ( DEBUG1 ) << "DIRECT:-----:-----:" << _alignmentCollectionName.c_str() << " : ORIGI: Sensor ID " << sensorID << " " << inputPosition_orig[0] << " " << inputPosition_orig[1] << " " << inputPosition_orig[2] <<  endl;   
+         streamlog_out ( DEBUG1 ) << "DIRECT:-----:-----:" << _alignmentCollectionName.c_str() << " : INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] <<  endl;   
+         streamlog_out ( DEBUG1 ) << "DIRECT:-----:-----:" << _alignmentCollectionName.c_str() << " : OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2]  << endl;
       }
 
       outputHit->setPosition( outputPosition ) ;
@@ -1591,11 +1511,10 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
       // get the corresponding alignment constants
       map< int , int >::iterator  positionIter = _lookUpTable[ _alignmentCollectionName ].find( sensorID );
 
-//      printf(" positionIter %5d at %5d \n", sensorID, positionIter->second );
       if ( positionIter == _lookUpTable[ _alignmentCollectionName ].end() )
          {
            streamlog_out( DEBUG ) <<  "REVERSE: wrong sensorId " << sensorID  << endl;
-//           continue; do nothing as if alignment == 0.
+	   // continue; do nothing as if alignment == 0.
          }
       else
          {
@@ -1609,7 +1528,6 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
            offsetY = alignment->getYOffset();
            offsetZ = alignment->getZOffset();
          }  
-
 
       // refhit = center-of-the-sensor coordinates:
       double x_refhit = 0.; 
@@ -1630,12 +1548,12 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
           EUTelReferenceHit * refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
           if( sensorID != refhit->getSensorID() )
           {
-            // streamlog_out(MESSAGE) << "Looping through a varity of sensor IDs" << endl;
+            // Looping through a varity of sensor IDs
             continue;
           }
           else
           {
-//           streamlog_out(MESSAGE) << "Sensor ID and Alignment plane ID match!" << endl;
+	    // Sensor ID and Alignment plane ID match!
             x_refhit =  refhit->getXOffset();
             y_refhit =  refhit->getYOffset();
             z_refhit =  refhit->getZOffset();
@@ -1650,14 +1568,6 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
 
             break;
           } 
-/*
-        printf("PRE sensorID: %5d dx:%5.3f dy:%5.3f dz:%5.3f  [%5.2f %5.2f %5.2f]\n",
-        refhit->getSensorID(   ),                      
-        refhit->getXOffset(    ),
-        refhit->getYOffset(    ),
-        refhit->getZOffset(    ), x_refhit, y_refhit, z_refhit
-        );
-*/
         }
       }
  
@@ -1760,16 +1670,16 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
             {
                 if ( _debugSwitch ) 
                 {
-                    streamlog_out ( MESSAGE )  << "Debugmode ON " << endl;                                   
+                    streamlog_out ( DEBUG1 )  << "Debugmode ON " << endl;                                   
                 }
                 
-                streamlog_out ( MESSAGE )  << "_correctionMethod == rotation first " << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getAlpha() = " << alpha  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getBeta()  = " <<  beta  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getGamma() = " << gamma << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getXOffest() = " << offsetX  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getYOffest() = " << offsetY  << endl;
-                streamlog_out ( MESSAGE )  << " alignment->getZOffest() = " << offsetZ  << endl;
+                streamlog_out ( DEBUG1 )  << "_correctionMethod == rotation first " << endl;
+                streamlog_out ( DEBUG1 )  << " alignment->getAlpha() = " << alpha  << endl;
+                streamlog_out ( DEBUG1 )  << " alignment->getBeta()  = " <<  beta  << endl;
+                streamlog_out ( DEBUG1 )  << " alignment->getGamma() = " << gamma << endl;
+                streamlog_out ( DEBUG1 )  << " alignment->getXOffest() = " << offsetX  << endl;
+                streamlog_out ( DEBUG1 )  << " alignment->getYOffest() = " << offsetY  << endl;
+                streamlog_out ( DEBUG1 )  << " alignment->getZOffest() = " << offsetZ  << endl;
             }
         
             // this is the rotation first
@@ -1848,9 +1758,9 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
 */
       if ( _iEvt < _printEvents )
       {
-         streamlog_out ( MESSAGE ) <<_alignmentCollectionName.c_str() << " REVERT: ORIGI: Sensor ID " << sensorID << " " << inputPosition_orig[0] << " " << inputPosition_orig[1] << " " << inputPosition_orig[2] <<  endl;   
-         streamlog_out ( MESSAGE ) <<_alignmentCollectionName.c_str() << " REVERT: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] <<  endl;   
-         streamlog_out ( MESSAGE ) <<_alignmentCollectionName.c_str() << " REVERT: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2]  << endl;
+         streamlog_out ( DEBUG0 ) <<_alignmentCollectionName.c_str() << " REVERT: ORIGI: Sensor ID " << sensorID << " " << inputPosition_orig[0] << " " << inputPosition_orig[1] << " " << inputPosition_orig[2] <<  endl;   
+         streamlog_out ( DEBUG0 ) <<_alignmentCollectionName.c_str() << " REVERT: INPUT: Sensor ID " << sensorID << " " << inputPosition[0] << " " << inputPosition[1] << " " << inputPosition[2] <<  endl;   
+         streamlog_out ( DEBUG0 ) <<_alignmentCollectionName.c_str() << " REVERT: OUTPUT:Sensor ID " << sensorID << " " << outputPosition[0] << " " << outputPosition[1] << " " << outputPosition[2]  << endl;
       }
 
             outputHit->setPosition( outputPosition ) ;
@@ -2063,9 +1973,7 @@ void EUTelApplyAlignmentProcessor::check (LCEvent * /* evt */ ) {
 
 
 void EUTelApplyAlignmentProcessor::end() {
-  streamlog_out ( MESSAGE2 ) <<  "Successfully finished" << endl;
- 
-
+  streamlog_out ( MESSAGE9 ) <<  "Successfully finished" << endl;
   delete [] _siPlaneZPosition;
 
 }
@@ -2074,8 +1982,6 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
 
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
-
-
 
   if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false )
     {
@@ -2111,14 +2017,11 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
 
       return sensorID;
     } // if not using ref vec
-
-
         try
         {
             LCObjectVec clusterVector = hit->getRawHits();
 
             EUTelVirtualCluster *cluster = 0;
-// printf("cluster type %5d \n", hit->getType() );
             if ( hit->getType() == kEUTelBrickedClusterImpl ) {
 
                // fixed cluster implementation. Remember it
@@ -2140,16 +2043,8 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
             } 
             else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
             {
-              
-//              cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
-//                 ( static_cast<TrackerDataImpl *> ( clusterVector[ 0 ]  ) );
-
-                // streamlog_out(MESSAGE4) << "Type is kEUTelAPIXClusterImpl" << endl;
                 TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> ( clusterVector[0] );
-                // streamlog_out(MESSAGE4) << "Vector size is: " << clusterVector.size() << endl;
-
                 cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);
-	      
             }
             else if ( hit->getType() == kEUTelSparseClusterImpl ) 
             {
@@ -2159,7 +2054,6 @@ int EUTelApplyAlignmentProcessor::guessSensorID( TrackerHitImpl * hit ) {
             if(cluster != 0)
             {
             int sensorID = cluster->getDetectorID();
-//            printf("ApplyAlignement :: actual sensorID: %5d \n", sensorID );
             return sensorID;
             }
           }
@@ -2200,8 +2094,6 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
         }
       
         int layerIndex   = _conversionIdMap[sensorID];
-
-
         double xSize = 0., ySize = 0.;
         double xPitch = 0., yPitch = 0.;
         double xPointing[2] = { 1., 0. }, yPointing[2] = { 1., 0. };
@@ -2256,17 +2148,17 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
         TVector2 clusterCenter( flip1(0,0)/xPitch-0.5, flip1(1,0)/yPitch-0.5 ); 
         if ( _iEvt < _printEvents )
         {
-          streamlog_out ( MESSAGE ) << "RevertGear: antiflip: " << antiflip(0,0) << ":" << antiflip(1,0) << endl;
-          streamlog_out ( MESSAGE ) << "RevertGear: antiflip: " << antiflip(0,1) << ":" << antiflip(1,1) << endl;
-          streamlog_out ( MESSAGE ) << "RevertGear: matrix: " << flip1(0,0) << ":" << flip1(1,0) << endl;
-          streamlog_out ( MESSAGE ) << "RevertGear: cluster coordinates [pitch:"<<xPitch<<":"<<yPitch<<"]:" << clusterCenter.X() << " " << clusterCenter.Y() << endl;
+          streamlog_out ( DEBUG1 ) << "RevertGear: antiflip: " << antiflip(0,0) << ":" << antiflip(1,0) << endl;
+          streamlog_out ( DEBUG1 ) << "RevertGear: antiflip: " << antiflip(0,1) << ":" << antiflip(1,1) << endl;
+          streamlog_out ( DEBUG1 ) << "RevertGear: matrix: " << flip1(0,0) << ":" << flip1(1,0) << endl;
+          streamlog_out ( DEBUG1 ) << "RevertGear: cluster coordinates [pitch:"<<xPitch<<":"<<yPitch<<"]:" << clusterCenter.X() << " " << clusterCenter.Y() << endl;
         }
 
         EUTelVirtualCluster  * cluster;
         ClusterType type = static_cast<ClusterType>(static_cast<int>(outputHit->getType()));
         if ( _iEvt < _printEvents )
         {
-          streamlog_out ( MESSAGE ) << "RevertGear: hit/cluster type:" << type << endl;
+          streamlog_out ( DEBUG2 ) << "RevertGear: hit/cluster type:" << type << endl;
         }
 
         // prepare a LCObjectVec to store the current cluster
@@ -2275,7 +2167,7 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
         {      
           if ( _iEvt < _printEvents )
           {
-            streamlog_out ( MESSAGE ) << "[" << i << "]" ;
+            streamlog_out ( DEBUG0 ) << "[" << i << "]" ;
           }
           if ( type == kEUTelSparseClusterImpl ) 
           {
@@ -2283,9 +2175,7 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
           } 
           else if ( type == kEUTelAPIXClusterImpl ) 
           {
-        
             cluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > ( static_cast<TrackerDataImpl *> ( clusterVec[i]  ) );
-//            printf("ID: %5d:  x:%5d y:%5d tot:%5.1f\n", cluster->getDetectorID(), xsize0, ysize0,  cluster->getTotalCharge() );
           }
           else 
           {
@@ -2325,13 +2215,13 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
 
           if ( _iEvt < _printEvents )
           {
-            streamlog_out ( MESSAGE ) << "[CoG:" << xCoG << ":" << yCoG << " -> Det:" << xDet << ":" << yDet << "] == " << telPos[0] << ":" << telPos[1] ;
+            streamlog_out ( DEBUG0 ) << "[CoG:" << xCoG << ":" << yCoG << " -> Det:" << xDet << ":" << yDet << "] == " << telPos[0] << ":" << telPos[1] ;
           }
         }
  
         if ( _iEvt < _printEvents )
         { 
-          streamlog_out ( MESSAGE ) << endl;
+          streamlog_out ( DEBUG0 ) << endl;
         }
 
 }
@@ -2400,7 +2290,6 @@ void EUTelApplyAlignmentProcessor::revertAlignment(double & x, double & y, doubl
 
 
 void EUTelApplyAlignmentProcessor::_EulerRotation(double* _telPos, double* _gRotation) {
-   
 
     TVector3 _RotatedSensorHit( _telPos[0], _telPos[1], _telPos[2] );
 
@@ -2442,13 +2331,13 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
     double            offsetY = alignment->getYOffset();
     double            offsetZ = alignment->getZOffset();
                 
-                streamlog_out ( DEBUG   )  << " alignment->getAlpha() = " << alpha  << endl;
-                streamlog_out ( DEBUG   )  << " alignment->getBeta()  = " <<  beta  << endl;
-                streamlog_out ( DEBUG   )  << " alignment->getGamma() = " << gamma << endl;
-                streamlog_out ( DEBUG   )  << " alignment->getXOffest() = " << offsetX  << endl;
-                streamlog_out ( DEBUG   )  << " alignment->getYOffest() = " << offsetY  << endl;
-                streamlog_out ( DEBUG   )  << " alignment->getZOffest() = " << offsetZ  << endl;
-
+    streamlog_out ( DEBUG0 )  << " alignment->getAlpha() = " << alpha  << endl;
+    streamlog_out ( DEBUG0 )  << " alignment->getBeta()  = " <<  beta  << endl;
+    streamlog_out ( DEBUG0 )  << " alignment->getGamma() = " << gamma << endl;
+    streamlog_out ( DEBUG0 )  << " alignment->getXOffest() = " << offsetX  << endl;
+    streamlog_out ( DEBUG0 )  << " alignment->getYOffest() = " << offsetY  << endl;
+    streamlog_out ( DEBUG0 )  << " alignment->getZOffest() = " << offsetZ  << endl;
+		
     if( evt == 0 )
     {
       streamlog_out(ERROR) << "EMPTY event!" << endl;
@@ -2457,10 +2346,10 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
     
     if( _referenceHitVec == 0 )
     {
-      streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+      streamlog_out(MESSAGE3) << "_referenceHitVec is empty" << endl;
     }
    
-    streamlog_out( DEBUG ) << "reference Hit collection name : " << _referenceHitCollectionName.c_str() << " elements " << _referenceHitVec->getNumberOfElements() <<endl;
+    streamlog_out( DEBUG2 ) << "reference Hit collection name : " << _referenceHitCollectionName.c_str() << " elements " << _referenceHitVec->getNumberOfElements() <<endl;
  
       for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
       {
@@ -2468,31 +2357,31 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
         EUTelReferenceHit * output_refhit = 0;
         try{ 
           output_refhit = static_cast< EUTelReferenceHit*> ( _outputReferenceHitVec->getElementAt(ii) ) ;
-          streamlog_out( DEBUG ) << "existing refhit["<<ii<<"] found at  " << output_refhit << endl;
+          streamlog_out( DEBUG1 ) << "existing refhit["<<ii<<"] found at  " << output_refhit << endl;
           
         }
         catch(...)
         {
-          streamlog_out( DEBUG ) << " creating new EUTelReferenceHit element " << ii << endl;
+          streamlog_out( DEBUG2 ) << " creating new EUTelReferenceHit element " << ii << endl;
           output_refhit = new EUTelReferenceHit();
-          streamlog_out( DEBUG ) << "new refhit for ["<<ii<<"] created at  " << output_refhit << endl;
+          streamlog_out( DEBUG1 ) << "new refhit for ["<<ii<<"] created at  " << output_refhit << endl;
           _outputReferenceHitVec->push_back(output_refhit);
         } 
 
         if( iPlane != refhit->getSensorID() )
         {
-          streamlog_out( DEBUG ) << "Looping through a varity of sensor IDs for iPlane :"<< iPlane <<" and refhit->getSensorID()="<<refhit->getSensorID() << endl;
+          streamlog_out( DEBUG3 ) << "Looping through a varity of sensor IDs for iPlane :"<< iPlane <<" and refhit->getSensorID()="<<refhit->getSensorID() << endl;
           continue;
         }
         else
         {
           output_refhit->setSensorID(iPlane);
-          streamlog_out( DEBUG ) << "Sensor ID and Alignment plane ID match!" << endl;
+          streamlog_out( DEBUG2 ) << "Sensor ID and Alignment plane ID match!" << endl;
         }
 
-       streamlog_out(DEBUG  ) << "reference Hit collection name : " << _referenceHitCollectionName.c_str() << " elements " << _referenceHitVec->getNumberOfElements() << " ";
-       streamlog_out(DEBUG  ) << " at : " << _referenceHitVec << " ";
-       streamlog_out(DEBUG  ) << "PRE sensorID: " <<  refhit->getSensorID(   )     
+       streamlog_out(DEBUG2  ) << "reference Hit collection name : " << _referenceHitCollectionName.c_str() << " elements " << _referenceHitVec->getNumberOfElements() << " ";
+       streamlog_out(DEBUG2  ) << " at : " << _referenceHitVec << " ";
+       streamlog_out(DEBUG2  ) << "PRE sensorID: " <<  refhit->getSensorID(   )     
                                << " x    :" <<        refhit->getXOffset(    )    
                                << " y    :" <<        refhit->getYOffset(    )    
                                << " z    :" <<        refhit->getZOffset(    )    
@@ -2530,9 +2419,9 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
         }
 //        referenceHitCollection->push_back( refhit );
  
-      streamlog_out(MESSAGE) << "reference Hit collection name : " << _outputReferenceHitCollectionName.c_str() << " elements " << _outputReferenceHitVec->getNumberOfElements() << " ";
-      streamlog_out(MESSAGE) << " at : " << _outputReferenceHitVec << " ";
-      streamlog_out(MESSAGE) << "AFT sensorID: " <<  output_refhit->getSensorID(   )     
+      streamlog_out(DEBUG2) << "reference Hit collection name : " << _outputReferenceHitCollectionName.c_str() << " elements " << _outputReferenceHitVec->getNumberOfElements() << " ";
+      streamlog_out(DEBUG2) << " at : " << _outputReferenceHitVec << " ";
+      streamlog_out(DEBUG2) << "AFT sensorID: " <<  output_refhit->getSensorID(   )     
                               << " x    :" <<        output_refhit->getXOffset(    )    
                               << " y    :" <<        output_refhit->getYOffset(    )    
                               << " z    :" <<        output_refhit->getZOffset(    )    
@@ -2576,9 +2465,6 @@ int EUTelApplyAlignmentProcessor::guessSensorID(const double * hit )
   int sensorID = -1;
   double minDistance =  numeric_limits< double >::max() ;
 
-//  message<MESSAGE> ( log() <<  "referencehit collection: " << _referenceHitCollectionName << " at "<< _referenceHitVec);
-//  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
-
   if( _referenceHitVec == 0 || _applyToReferenceHitCollection == false)
   {
     // use z information of planes instead of reference vector
@@ -2598,8 +2484,6 @@ int EUTelApplyAlignmentProcessor::guessSensorID(const double * hit )
     return sensorID;
   }
 
-//  message<MESSAGE> ( log() <<  "number of elements : " << _referenceHitVec->getNumberOfElements() << endl );
-
       for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
@@ -2617,17 +2501,6 @@ int EUTelApplyAlignmentProcessor::guessSensorID(const double * hit )
         }    
 
       }
-
-/*      for(size_t ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
-      {
-        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-        if(refhit == 0 ) continue;
-        if( sensorID != refhit->getSensorID() )  continue;
-        message<MESSAGE> ( log() <<" _referenceHitVec "<<_referenceHitVec << " " << _referenceHitCollectionName.c_str()<< " " << refhit << 
-                                                 " at " << refhit->getXOffset() << " " <<refhit->getYOffset() << " " << refhit->getZOffset() <<
-                                                 " normal: " << refhit->getAlpha() << " " << refhit->getBeta() << " " << refhit->getGamma() << endl) ; 
-        message<MESSAGE> ( log() << "iPlane " << refhit->getSensorID() << " hitPos:  [" << hit[0] << " " << hit[1] << " " <<  hit[2] << "]  distance: " <<  minDistance  << endl );
-      }*/
   
   return sensorID;
 }
@@ -2647,7 +2520,7 @@ void EUTelApplyAlignmentProcessor::DumpReferenceHitDB()
 
   LCEventImpl * event = new LCEventImpl;
 
-  streamlog_out ( MESSAGE ) << "Writing to " << _referenceHitLCIOFile << std::endl;
+  streamlog_out ( MESSAGE7 ) << "Writing to " << _referenceHitLCIOFile << std::endl;
 
   LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
   for(size_t ii = 0 ; ii <  _orderedSensorIDVec.size(); ii++)
