@@ -69,15 +69,25 @@ using namespace eutelescope;
 const unsigned short EUTelNativeReader::_eudrbOutOfSyncThr = 2;
 const unsigned short EUTelNativeReader::_eudrbMaxConsecutiveOutOfSyncWarning = 20;
 
-EUTelNativeReader::EUTelNativeReader (): DataSourceProcessor  ("EUTelNativeReader") {
-
+EUTelNativeReader::EUTelNativeReader ():
+  DataSourceProcessor("EUTelNativeReader"),
+  _depfetOutputCollectionName(""),
+  _eudrbRawModeOutputCollectionName(""),
+  _eudrbZSModeOutputCollectionName(""),
+  _fileName(""),
+  _geoID(0),
+  _syncTriggerID(0),
+  _depfetDetectors(),
+  _eudrbDetectors(),
+  _tluDetectors(),
+  _eudrbConsecutiveOutOfSyncWarning(0),
+  _eudrbPreviousOutOfSyncEvent(0),
+  _eudrbSparsePixelType(0),
+  _eudrbTotalOutOfSyncEvent(0)
+{
   // initialize few variables
-  _eudrbPreviousOutOfSyncEvent      = 0;
-  _eudrbConsecutiveOutOfSyncWarning = 0;
-  _eudrbTotalOutOfSyncEvent         = 0;
 
-  _description =
-    "Reads data streams produced by EUDAQ and produced the corresponding LCIO output";
+  _description = "Reads data streams produced by EUDAQ and produced the corresponding LCIO output";
 
   registerProcessorParameter("InputFileName", "This is the input file name",
                              _fileName, string("run012345.raw") );

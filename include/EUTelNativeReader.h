@@ -176,6 +176,20 @@ namespace eutelescope {
 
   protected:
 
+    //! The depfet output collection name
+    std::string _depfetOutputCollectionName;
+
+    //! The eudrb output collection name
+    /*! This is the name of the eudrb output collection.
+     */
+    std::string _eudrbRawModeOutputCollectionName;
+    
+    //! The eudrb output collection name for ZS data
+    /*! This is the name of the eudrb output collection when the
+     *  detector was readout in ZS mode
+     */
+    std::string _eudrbZSModeOutputCollectionName;
+
     //! The input file name
     /*! It is set as a Marlin parameter in the constructor
      */
@@ -197,23 +211,11 @@ namespace eutelescope {
      */
     bool _syncTriggerID;
 
-    //! The eudrb output collection name
-    /*! This is the name of the eudrb output collection.
-     */
-    std::string _eudrbRawModeOutputCollectionName;
-
-    //! The eudrb output collection name for ZS data
-    /*! This is the name of the eudrb output collection when the
-     *  detector was readout in ZS mode
-     */
-    std::string _eudrbZSModeOutputCollectionName;
-
-
-    //! The depfet output collection name
-    std::string _depfetOutputCollectionName;
-
   private:
     // from here below only private data members
+
+    //! Vector of detectors readout by the EUDRBProducer
+    std::vector<EUTelPixelDetector * > _depfetDetectors;
 
     //! Vector of detectors readout by the EUDRBProducer
     std::vector<EUTelPixelDetector * > _eudrbDetectors;
@@ -221,20 +223,14 @@ namespace eutelescope {
     //! Vector of detectors readout by the TLUProducer
     std::vector<EUTelBaseDetector * > _tluDetectors;
 
-    //! Vector of detectors readout by the EUDRBProducer
-    std::vector<EUTelPixelDetector * > _depfetDetectors;
-
 
     // detector specific...................................
 
-    //! Type of sparsified pixel for the mimotel sensors
-    /*! Which information of the pixel passing the zero suppression
-     *  can be stored into different data structure. The user can
-     *  select which one in the steering file using the
-     *  SparsePixelType enumerator
-     */
-    int _eudrbSparsePixelType;
+    //! Out of sync consecutive counter
+    unsigned short _eudrbConsecutiveOutOfSyncWarning;
 
+    //! Max value of consecutive counter
+    static const unsigned short _eudrbMaxConsecutiveOutOfSyncWarning;
 
     //! Out of sync threshold for mimotel sensors
     /*! The definition of an out of synch event is based upon the
@@ -245,22 +241,22 @@ namespace eutelescope {
      */
     static const unsigned short _eudrbOutOfSyncThr;
 
+    //! Previous warning event
+    unsigned int _eudrbPreviousOutOfSyncEvent;
+
+    //! Type of sparsified pixel for the mimotel sensors
+    /*! Which information of the pixel passing the zero suppression
+     *  can be stored into different data structure. The user can
+     *  select which one in the steering file using the
+     *  SparsePixelType enumerator
+     */
+    int _eudrbSparsePixelType;
+
     //! Out of sync counter
     /*! This variable is used to count how many events out of sync
      *  have been found in the current run
      */
     unsigned int _eudrbTotalOutOfSyncEvent;
-
-    //! Out of sync consecutive counter
-    unsigned short _eudrbConsecutiveOutOfSyncWarning;
-
-    //! Max value of consecutive counter
-    static const unsigned short _eudrbMaxConsecutiveOutOfSyncWarning;
-
-    //! Previous warning event
-    unsigned int _eudrbPreviousOutOfSyncEvent;
-
-
   };
 
   //! A global instance of the processor
