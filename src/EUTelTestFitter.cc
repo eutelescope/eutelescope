@@ -742,7 +742,7 @@ void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) {
 
   int runNr = runHeader->getRunNumber();
 
-  streamlog_out( MESSAGE2 )  << "Processing run header " << _nRun
+  streamlog_out( MESSAGE4 )  << "Processing run header " << _nRun
                              << ", run nr " << runNr << endl;
 
   const std::string detectorName = runHeader->getDetectorName();
@@ -767,7 +767,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   if ( _nEvt %  1000 == 0 ) 
   {
-    streamlog_out( MESSAGE2 ) << "Processing event "
+    streamlog_out( MESSAGE ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
                               << " (Total = " << setw(10) << _nEvt << ")" << resetiosflags(ios::left) << endl;
@@ -1935,7 +1935,7 @@ void EUTelTestFitter::end(){
     iden << _planeID[ipl];
     string bname = (string)"pl" + iden.str().c_str() + "_";
 
-    streamlog_out( MESSAGE ) << "X: ["<< ipl << ":" << _planeID[ipl] <<"]" << 
+    streamlog_out( DEBUG ) << "X: ["<< ipl << ":" << _planeID[ipl] <<"]" << 
     _aidaHistoMap1D[bname + "residualX"]->allEntries()<< " " <<
     _aidaHistoMap1D[bname + "residualX"]->mean()*1000. << " " <<
     _aidaHistoMap1D[bname + "residualX"]->rms()*1000. << " " <<
