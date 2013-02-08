@@ -441,10 +441,10 @@ void EUTelX0Processor::threePointResolution(LCCollection *alignedHitCollection){
 //This function draws a line between the hits in plane i and i+2
 //then it compares where the hit in plane i+1 is with the average of the other two planes
 //this is then plotted as a residual for each plane.
-  std::cout << "Starting ThreePointResolution" << std::endl;
+  streamlog_out(DEBUG0) << "Starting ThreePointResolution" << std::endl;
   map< int, vector< TVector3> > hitvectortemp;//Temporary map for storing vectors of hit information pre-cut
   int collectionsize = alignedHitCollection->getNumberOfElements();
-  std::cout << "Collectionsize = " << collectionsize << std::endl;
+  streamlog_out(DEBUG0) << "Collectionsize = " << collectionsize << std::endl;
   for(int i = 0; i < collectionsize; ++i){
     TrackerHit* tHit = dynamic_cast<TrackerHit*>(alignedHitCollection->getElementAt(i));//Get the hit from each element of the collection
     const double* pos = tHit->getPosition();//Get the position of the hit in x, y and z
@@ -459,11 +459,11 @@ void EUTelX0Processor::threePointResolution(LCCollection *alignedHitCollection){
     }
   }
   for(int i = 0; i < _noLayers - 1; ++i){
-    std::cout << "Entering layer " << i << std::endl;
+    streamlog_out(DEBUG0) << "Entering layer " << i << std::endl;
     size_t hitvecisize = hitvectortemp[i].size();
     size_t hitveci2size = hitvectortemp[i+2].size();
     size_t hitveci1size = hitvectortemp[i+1].size();
-    std::cout << "Hit vector sizes are: " << hitvecisize << "," << hitveci2size << "," << hitveci1size << std::endl;
+    streamlog_out(DEBUG0) << "Hit vector sizes are: " << hitvecisize << "," << hitveci2size << "," << hitveci1size << std::endl;
     for(size_t j = 0; j < hitvecisize; ++j){
       TVector3 hiti = hitvectortemp[i][j];
       for(size_t k = 0; k < hitveci2size; ++k){
@@ -472,11 +472,11 @@ void EUTelX0Processor::threePointResolution(LCCollection *alignedHitCollection){
           TVector3 hiti1 = hitvectortemp[i+1][l];
           double averagex = (hiti.x() + hiti2.x())/2.0;
           double averagey = (hiti.y() + hiti2.y())/2.0;
-          std::cout << "Does the value fall within cut parameters?" << std::endl
+          streamlog_out(DEBUG0) << "Does the value fall within cut parameters?" << std::endl
                     << "x^2 + y^2 = " << pow((averagex-hiti1.x()),2) + pow((averagey-hiti1.y()),2) << std::endl
                     << "cutValue1 = " << _cutValue1 << std::endl;
           if(sqrt(pow((averagex-hiti1.x()),2) + pow((averagey-hiti1.y()),2)) < _cutValue1){
-            std::cout << "Filling histograms for residuals" << std::endl;
+            streamlog_out(DEBUG0) << "Filling histograms for residuals" << std::endl;
             (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualX"]))->fill(averagex - hiti1.x());
             (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualY"]))->fill(averagey - hiti1.y());
             if(i == 0){
