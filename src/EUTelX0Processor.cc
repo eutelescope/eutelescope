@@ -19,12 +19,35 @@ std::string EUTelX0Processor::_histoResidualXZ = "ResidualXZ";
 std::string EUTelX0Processor::_histoResidualYZ = "ResidualYZ";
 std::string EUTelX0Processor::_histoResidualXY = "ResidualYZ";
 
-EUTelX0Processor::EUTelX0Processor():Processor("EUTelX0Processor")
+EUTelX0Processor::EUTelX0Processor()
+  :Processor("EUTelX0Processor"),
+  _trackColName(""),
+  _cutValue1(0.0),
+  _cutValue2(0.0),
+  _debug(false),
+  _debugCount(0),
+  _eventNumber(0),
+  _histoData(),
+  _histoThing(),
+  _hitInfo(),
+  _inputHitCollectionVec(NULL), 
+  _inputTrackCollectionVec(NULL), 
+  _inputHitColName(""),
+  _inputHitCollectionName(""),
+  _inputTrackColName(""),
+  _projectedHits(),
+  _referenceHitCollectionName(""),
+  _referenceHitVec(NULL),
+  _residual(),
+  _residualAngle(),
+  _residualProfile()
 {
+  streamlog_out(DEBUG1) << "Constructing the EUTelX0Processor, setting all values to zero or NULL" << std::endl;
 }
 
 void EUTelX0Processor::init()
 {
+  streamlog_out(DEBUG1) << "Running EUTelX0Processor::init()" << std::endl;
   _debug = false; 
   int nobins = 100, nobinsangle = 100;//Number of bins in the histograms
   double minbin = -0.4, maxbin = 0.4;//Maximum and minimum bin values
@@ -145,14 +168,15 @@ void EUTelX0Processor::init()
   _histoData["Alpha432"] = empty;
  
 
-  _inputCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);//Used to store the values of the hit events
+  _inputHitCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);//Used to store the values of the hit events
+  _inputTrackCollectionVec = new LCCollectionVec(LCIO::TRACK);//Used to store the values of the hit events
   // readin parameter for input hit collection name (default alignedHit)
   //registerInputCollection (LCIO::TRACKERHIT, "InputHitCollectionName", "The name of the input hit collection", _inputHitCollectionName, string("correctedHit"));//Used to store the values of the hit events
-  
-  registerInputCollection(LCIO::TRACKERHIT,"AlignedHitCollectionName",
+  registerInputCollection(LCIO::TRACKERHIT,"InputTrackCollectionName",
                            "Collection name for corrected particle positions",
-                           _correctedHitColName, string ("alignedHit"));
-  /*
+                           _trackColName, string ("alignedHit"));
+
+/*  
   registerInputCollection(LCIO::TRACK,"OutputTrackCollectionName",
                            "Collection name for fitted tracks",
                            _inputTrackColName, string ("testfittracks"));
@@ -174,30 +198,37 @@ void EUTelX0Processor::init()
 
 void EUTelX0Processor::processRunHeader(LCRunHeader *run)
 {
-  int hell = 1;
-  int freezesover = 2;
-  if(hell == freezesover){
-    run++;
-  }
+  streamlog_out(DEBUG0) << "Running EUTelX0Processor::processRunHeader(LCRunHeader *run) with run = " << run << std:: endl;
+  run++;
 }
 
 void EUTelX0Processor::processEvent(LCEvent *evt)
 {
-  map< int, vector< TVector3> > hitInfoTemp;//Temporary map for storing vectors of hit information pre-cut
-  LCCollection* col = evt->getCollection("alignedHit");//Create the collection of alignedHits for this event
-  _referenceHitVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_referenceHitCollectionName));//Create the reference hit vector (used for figuring out what layer the hit is in)
-  threePointResolution(col);
-/*  try{
-    LCCollection* col = evt->getCollection("track");//Create the collection of alignedHits for this event
-    _referenceHitVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_referenceHitCollectionName));//Create the reference hit vector (used for figuring out what layer the hit is in)
-    testtrack(col);
-    createResiduals(col);
-  }
-  catch(...){
-    cerr << "track collection did not exist in this event, moving to next event" << endl;
-  }
-*/
+  streamlog_out(DEBUG0) << "Running EUTelX0Processor::processEvent(LCEvent *evt) with evt = " << evt << std:: endl;
 
+  //Take track from input parameter
+  //Work out kink angle from track
+  //Put kink angle into histogram
+  //Check for last event
+    //Fit gaussian to histogram
+    //Extract sigma value from histogram
+    //Deduce radiation length from sigma value - See Nadler and Fruwurth paper
+
+  try{
+    std::vector< std::string > *eventCollectionNames = const_cast<std::vector< std::string >* >(evt->getCollectionNames());
+    streamlog_out(DEBUG0) << "Event Collection Names:" << std::endl;
+    for(std::vector< std::string >::iterator it = (*eventCollectionNames).begin(); it != (*eventCollectionNames).end(); ++it){
+      streamlog_out(DEBUG0) << *it << " (" << evt->getCollection(*it)->getNumberOfElements() << " elements)" << std::endl;
+    }
+    LCCollection* col = evt->getCollection(_trackColName);//Create the collection of alignedHits for this event
+    threePointResolution(col);
+  }
+  catch(...){//Not sure what argument I could pass to this catch statement yet
+    streamlog_out(WARNING) << "Could not get collection from event, Skipping Event" << std::endl;//Not sure on this verbosity level
+  }
+
+  _referenceHitVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_referenceHitCollectionName));//Create the reference hit vector (used for figuring out what layer the hit is in)
+  _eventNumber++;
   
 }
 
@@ -327,6 +358,11 @@ int EUTelX0Processor::guessSensorID(const double * hit )
  
 void EUTelX0Processor::end()
 {
+  //Clean up memory
+  //Set all values to zero or NULL
+  //
+
+
   //calculateX0();
   _hitInfo.clear();  //This stores the hit position in a TVector3. If there are multiple hits then they are all stored in the vector of TVector3's. The int key refers to the layer number
   _projectedHits.clear();  //int refers to 1 or 2, with 1 being the projection from the 01 plane and 2 being the projection from the 43 plane
@@ -334,7 +370,8 @@ void EUTelX0Processor::end()
   _residual.clear();  //The pair of doubles refers to the x and y coordinates in layer 2. The vector of TVector3's refers to the positions of the projected hits
   _residualAngle.clear();  //As above but the TVector3 doesn't contain xyz but instead theta, phi and alpha
   _residualProfile.clear(); //TODO(Phillip Hamnett): Can this be joined with _residual? //Used as above but for created a profile histogram
-  _inputCollectionVec = NULL;  //Stores the information being brought in from the Marlin process which contains information about post-aligned hits
+  _inputHitCollectionVec = NULL;  //Stores the information being brought in from the Marlin process which contains information about post-aligned hits
+  _inputTrackCollectionVec = NULL;  //Stores the information being brought in from the Marlin process which contains information about post-aligned hits
   _referenceHitVec = NULL;  
 }
 
@@ -401,8 +438,13 @@ double EUTelX0Processor::calculateX0()
 }
 
 void EUTelX0Processor::threePointResolution(LCCollection *alignedHitCollection){
+//This function draws a line between the hits in plane i and i+2
+//then it compares where the hit in plane i+1 is with the average of the other two planes
+//this is then plotted as a residual for each plane.
+  std::cout << "Starting ThreePointResolution" << std::endl;
   map< int, vector< TVector3> > hitvectortemp;//Temporary map for storing vectors of hit information pre-cut
   int collectionsize = alignedHitCollection->getNumberOfElements();
+  std::cout << "Collectionsize = " << collectionsize << std::endl;
   for(int i = 0; i < collectionsize; ++i){
     TrackerHit* tHit = dynamic_cast<TrackerHit*>(alignedHitCollection->getElementAt(i));//Get the hit from each element of the collection
     const double* pos = tHit->getPosition();//Get the position of the hit in x, y and z
@@ -417,9 +459,11 @@ void EUTelX0Processor::threePointResolution(LCCollection *alignedHitCollection){
     }
   }
   for(int i = 0; i < _noLayers - 1; ++i){
+    std::cout << "Entering layer " << i << std::endl;
     size_t hitvecisize = hitvectortemp[i].size();
     size_t hitveci2size = hitvectortemp[i+2].size();
     size_t hitveci1size = hitvectortemp[i+1].size();
+    std::cout << "Hit vector sizes are: " << hitvecisize << "," << hitveci2size << "," << hitveci1size << std::endl;
     for(size_t j = 0; j < hitvecisize; ++j){
       TVector3 hiti = hitvectortemp[i][j];
       for(size_t k = 0; k < hitveci2size; ++k){
@@ -428,24 +472,28 @@ void EUTelX0Processor::threePointResolution(LCCollection *alignedHitCollection){
           TVector3 hiti1 = hitvectortemp[i+1][l];
           double averagex = (hiti.x() + hiti2.x())/2.0;
           double averagey = (hiti.y() + hiti2.y())/2.0;
+          std::cout << "Does the value fall within cut parameters?" << std::endl
+                    << "x^2 + y^2 = " << pow((averagex-hiti1.x()),2) + pow((averagey-hiti1.y()),2) << std::endl
+                    << "cutValue1 = " << _cutValue1 << std::endl;
           if(sqrt(pow((averagex-hiti1.x()),2) + pow((averagey-hiti1.y()),2)) < _cutValue1){
+            std::cout << "Filling histograms for residuals" << std::endl;
             (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualX"]))->fill(averagex - hiti1.x());
-            (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualY"]))->fill(averagex - hiti1.x());
+            (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualY"]))->fill(averagey - hiti1.y());
             if(i == 0){
               (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualXPlane1"]))->fill(averagex - hiti1.x());
-              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualYPlane1"]))->fill(averagex - hiti1.x());
+              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualYPlane1"]))->fill(averagey - hiti1.y());
             }
             else if(i == 1){
               (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualXPlane2"]))->fill(averagex - hiti1.x());
-              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualYPlane2"]))->fill(averagex - hiti1.x());
+              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualYPlane2"]))->fill(averagey - hiti1.y());
             }
             else if(i == 2){
               (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualXPlane3"]))->fill(averagex - hiti1.x());
-              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualYPlane3"]))->fill(averagex - hiti1.x());
+              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualYPlane3"]))->fill(averagey - hiti1.y());
             }
             else if(i == 3){
               (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualXPlane4"]))->fill(averagex - hiti1.x());
-              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualYPlane4"]))->fill(averagex - hiti1.x());
+              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualYPlane4"]))->fill(averagey - hiti1.y());
             }
           }
         }
@@ -553,7 +601,7 @@ void EUTelX0Processor::basicFitter(LCCollection *alignedHitCollection){
   cout << "projectedhits43.size() = " << projectedhits43.size() << endl;
   //Now we have projected hits in the 2nd layer from both the forward and backward direction. Now we make a residual between the two assuming that anything within a radius of 'layerdifference' of each other should be taken account of only
   for(vector< TVector3 >::iterator hits012 = projectedhits01.begin(); hits012 != projectedhits01.end(); ++hits012){
-    for(vector< TVector3 >::iterator hits432 = projectedhits43.begin(); hits432 != projectedhits43.end(); ++hits432){
+    for(vector< TVector3 >::iterator hits432 = projectedhits43.begin(); hits432 != projectedhits43.end(); ++ hits432){  
       if(sqrt(pow(hits012->x() - hits432->x(),2) + pow(hits012->y() - hits432->y(),2)) < layerdifference){
         cout << "Hit recorded in histogram" << endl;
         double newx = hits012->x() - hits432->x();

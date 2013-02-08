@@ -189,12 +189,13 @@ private:
   void createResiduals(LCCollection *trackCollection);
 
   //Private member values
-  std::string _correctedHitColName;
+  std::string _trackColName;
   double _cutValue1,_cutValue2;
   bool _debug;
   int _debugCount;  //TODO(Phillip Hamnett): Can this be deleted?
-  std::map<std::string , AIDA::IBaseHistogram * > _histoThing;  //This map contains all the histograms that are going to be plotted in this processor
+  int _eventNumber;
   std::map<std::string , std::vector< double > > _histoData;
+  std::map<std::string , AIDA::IBaseHistogram * > _histoThing;  //This map contains all the histograms that are going to be plotted in this processor
   static std::string _histoResidualX;
   static std::string _histoResidualXPlane1;
   static std::string _histoResidualXPlane2;
@@ -209,17 +210,18 @@ private:
   static std::string _histoResidualXZ;
   static std::string _histoResidualYZ;
   std::map< int, std::vector< TVector3 > > _hitInfo;  //This stores the hit position in a TVector3. If there are multiple hits then they are all stored in the vector of TVector3's. The int key refers to the layer number
-  IMPL::LCCollectionVec* _inputCollectionVec;  //Stores the information being brought in from the Marlin process which contains information about post-aligned hits
+  IMPL::LCCollectionVec* _inputHitCollectionVec;  //Stores the information being brought in from the Marlin process which contains information about post-aligned hits
+  IMPL::LCCollectionVec* _inputTrackCollectionVec;  //Stores the information being brought in from the Marlin process which contains information about post-aligned hits
   std::string _inputHitColName;
   std::string _inputHitCollectionName;  //Stores the name of the parameter to bring in from the Marlin steering file
   std::string _inputTrackColName;
   static const int _noLayers = 5;  //TODO(Phillip Hamnett): This is a hack just so that the computer knows how many layers there are, is this stored somewhere else or should it be made as a non-const variable in case at some future date more layers are added to the telescope?
   std::map< int, std::vector< TVector3 > > _projectedHits;  //int refers to 1 or 2, with 1 being the projection from the 01 plane and 2 being the projection from the 43 plane
   std::string _referenceHitCollectionName;  //Stores the name of the file to be brought in by the Marlin steering file that is used to determine layer number
+  IMPL::LCCollectionVec* _referenceHitVec;   //Stores the information being brought in from the Marlin process containing information about the geometry of the setup for working out the layer number
   std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residual;  //The pair of doubles refers to the x and y coordinates in layer 2. The vector of TVector3's refers to the positions of the projected hits
   std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residualAngle;  //As above but the TVector3 doesn't contain xyz but instead theta, phi and alpha
   std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residualProfile; //TODO(Phillip Hamnett): Can this be joined with _residual? //Used as above but for created a profile histogram
-  IMPL::LCCollectionVec* _referenceHitVec;   //Stores the information being brought in from the Marlin process containing information about the geometry of the setup for working out the layer number
 
 };
 //! A global instance of the processor
