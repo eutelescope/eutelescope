@@ -105,7 +105,7 @@ namespace eutelescope {
 
     //! Default constructor
     EUTelDUTHistograms() ;
-
+ 
     //! Called at the job beginning.
     /*! This is executed only once in the whole execution.
      *
@@ -154,7 +154,14 @@ namespace eutelescope {
     virtual void end() ;
 
   protected:
+  //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
+  #define DISALLOW_COPY_AND_ASSIGN(EUTelDUTHistograms) \
+  EUTelDUTHistograms(const EUTelDUTHistograms&); \
+  void operator=(const EUTelDUTHistograms&);
 
+  //Private Functions
+  DISALLOW_COPY_AND_ASSIGN(EUTelDUTHistograms)//See #define just above
+ 
     //! reference HitCollection name 
     /*!
      */

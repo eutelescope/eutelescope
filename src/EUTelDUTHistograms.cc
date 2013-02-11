@@ -301,7 +301,56 @@ std::string EUTelDUTHistograms::_PixelChargeSharingHistoName    = "PixelChargeSh
 #endif
 
 
-EUTelDUTHistograms::EUTelDUTHistograms() : Processor("EUTelDUTHistograms") {
+EUTelDUTHistograms::EUTelDUTHistograms() 
+: Processor("EUTelDUTHistograms"),
+  _referenceHitCollectionName(""),
+  _applyToReferenceHitCollection(false),
+  _referenceHitVec(NULL),
+  _siPlanesParameters(),
+  _siPlanesLayerLayout(),
+  _histoInfoFileName(""),
+  _inputTrackColName(""),
+  _inputHitColName(""),
+  _inputRecHitColName(""),
+  _inputFitHitColName(""),
+  _useManualDUT(false),
+  _manualDUTid(0),
+  _debugCount(0),
+  _nRun(0),
+  _nEvt(0),
+  _iDUT(0),
+  _zDUT(0.0),
+  _distMax(0.0),
+  _pitchX(0.0),
+  _pitchY(0.0),
+  _clusterSizeX(),
+  _clusterSizeY(),
+  _subMatrix(),
+  _maptrackid(0),
+  _trackhitposX(),
+  _trackhitposY(),
+  _trackhitsizeX(),
+  _trackhitsizeY(),
+  _trackhitsubM(),
+  _trackhitsensorID(),
+  _cluSizeXCut(0),
+  _cluSizeYCut(0),
+  _trackNCluXCut(0),
+  _trackNCluYCut(0),
+  _measuredX(),
+  _measuredY(),
+  _bgmeasuredX(),
+  _bgmeasuredY(),
+  _localX(),
+  _localY(),
+  _fittedX(),
+  _fittedY(),
+  _bgfittedX(),
+  _bgfittedY(),
+  _DUTalign(),
+  _aidaHistoMap()
+
+ {
 
   // modify processor description
   _description = "Analysis of DUT performance based on the analytic track fit results" ;
@@ -395,7 +444,6 @@ EUTelDUTHistograms::EUTelDUTHistograms() : Processor("EUTelDUTHistograms") {
   registerOptionalParameter("trackNCluYCut","number of hit on a track with _cluSizeY cluster size ", _trackNCluYCut, static_cast <int> (0) );
 
 }
-
 
 void EUTelDUTHistograms::init() {
 
@@ -524,7 +572,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
     if ( _applyToReferenceHitCollection ) 
     {
        _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
-      for(size_t ii = 0 ; ii < (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
+      for(size_t ii = 0 ; ii < static_cast<size_t>(_referenceHitVec->getNumberOfElements()); ii++)
      {
       streamlog_out( DEBUG ) << " check output_refhit at : " << _referenceHitVec << " ";
       EUTelReferenceHit* output_refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
@@ -603,7 +651,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   // Histograms of fitted positions
   for( int itrack=0; itrack<_maptrackid; itrack++)
   {
-    for( int ifit=0;ifit<(int)_fittedX[itrack].size(); ifit++)
+    for( int ifit=0;ifit<static_cast<int>(_fittedX[itrack].size()); ifit++)
     {
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXHistoName]))->fill(_fittedX[itrack][ifit]);
 
@@ -619,7 +667,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA) 
 
   // Histograms of measured positions
-  for(int ihit=0;ihit<(int)_measuredX.size(); ihit++)
+  for(int ihit=0;ihit<static_cast<int>(_measuredX.size()); ihit++)
     {
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredXHistoName]))->fill(_measuredX[ihit]);
 
@@ -653,15 +701,15 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
     distmin = _distMax*_distMax + 10. ;
  
-    if( (int)_fittedX[itrack].size() < 1 ) continue;
+    if( static_cast<int>(_fittedX[itrack].size()) < 1 ) continue;
  
 //    printf("track %2d with ifit[", itrack);    
-    for(int ifit=0;ifit<(int)_fittedX[itrack].size(); ifit++)
+    for(int ifit=0;ifit<static_cast<int>(_fittedX[itrack].size()); ifit++)
     {
-      if( (int)_measuredX.size() < 1 ) continue;
+      if( static_cast<int>(_measuredX.size()) < 1 ) continue;
   //    printf("%2d %5.3f: ihit{", ifit, _fittedX[itrack][ifit] );
 
-      for(int ihit=0; ihit< (int)_measuredX.size() ; ihit++)
+      for(int ihit=0; ihit< static_cast<int>(_measuredX.size()) ; ihit++)
         {
 
           double dist2rd=
@@ -1011,12 +1059,12 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-  for(int ifit=0;ifit<(int)_localX[itrack].size(); ifit++)
+  for(int ifit=0;ifit<static_cast<int>(_localX[itrack].size()); ifit++)
     {
       (dynamic_cast<AIDA::IProfile2D*> ( _aidaHistoMap[_PixelEfficiencyHistoName]))->fill(_localX[itrack][ ifit ]*1000.,_localY[itrack][ ifit ]*1000.,0.);
     }
 
-  for(int ifit=0;ifit<(int)_fittedX[itrack].size(); ifit++)
+  for(int ifit=0;ifit<static_cast<int>(_fittedX[itrack].size()); ifit++)
     {
       (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyXHistoName]))->fill(_fittedX[itrack][ifit],0.);
 
@@ -1038,7 +1086,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   // Noise plots - unmatched hits
 
-  for(int ihit=0;ihit<(int)_measuredX.size(); ihit++)
+  for(int ihit=0;ihit<static_cast<int>(_measuredX.size()); ihit++)
     {
       (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_NoiseXHistoName]))->fill(_measuredX[ihit],1.);
 
@@ -2839,7 +2887,7 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
     message<DEBUG > ( log() <<  "number of elements : " << _referenceHitVec->getNumberOfElements() << endl );
   }
 
-  for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
+  for(size_t ii = 0 ; ii <  static_cast<size_t>(_referenceHitVec->getNumberOfElements()); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if(refhit == 0 ) continue;
@@ -2868,7 +2916,7 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
 
    if(debug)
    {
-      for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
+      for(size_t ii = 0 ; ii <  static_cast<size_t>(_referenceHitVec->getNumberOfElements()); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if(refhit == 0 ) continue;
@@ -3113,13 +3161,13 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
 
           // Subtract position of the central pixel
 
-          int picX = (int)(locX/_pitchX);
+          int picX = static_cast<int>(locX/_pitchX);
 
           if(locX<0)picX--;
 
           locX-=(picX+0.5)*_pitchX;
 
-          int picY = (int)(locY/_pitchY);
+          int picY = static_cast<int>(locY/_pitchY);
 
           if(locY<0)picY--;
 
@@ -3327,13 +3375,13 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
 
           // Subtract position of the central pixel
 
-          int picX = (int)(locX/_pitchX);
+          int picX = static_cast<int>(locX/_pitchX);
 
           if(locX<0)picX--;
 
           locX-=(picX+0.5)*_pitchX;
 
-          int picY = (int)(locY/_pitchY);
+          int picY = static_cast<int>(locY/_pitchY);
 
           if(locY<0)picY--;
 

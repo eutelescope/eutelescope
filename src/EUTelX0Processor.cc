@@ -190,7 +190,7 @@ void EUTelX0Processor::init()
                            _inputHitColName, string ("testfithits"));
 */
   registerOptionalParameter("ReferenceCollection","This is the name of the reference it collection (init at 0,0,0)", _referenceHitCollectionName, static_cast< string > ( "refhit" ) );//Necessary for working out which layer the particle is detected in
-  registerProcessorParameter("CutValue","Used to determine cuts in the system", _cutValue1, static_cast< double > (10.0));
+  registerProcessorParameter("CutValue","Used to determine cuts in the system", _cutValue1, static_cast< double > (50000.0));
   registerProcessorParameter ("DebugEventCount", "Print out every DebugEnevtCount event", _debugCount, static_cast < int > (100));//Not sure if I need this or not...
 
 
