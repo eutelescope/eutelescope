@@ -339,14 +339,6 @@ void EUTelMille::init() {
     throw InvalidGeometryException("GEAR manager is not initialised");
   }
 
-#if !defined(USE_ROOT) && !defined(MARLIN_USE_ROOT)
-  if(_alignMode == 3)
-    {
-      streamlog_out ( ERROR2) << "alignMode == 3 was chosen but Eutelescope was not build with ROOT support!" << endl;
-      throw MissingLibraryException( this, "ROOT" );
-    }  
-#endif
-
 //  sensor-planes in geometry navigation:
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
