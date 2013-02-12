@@ -157,21 +157,21 @@ namespace eutelescope {
     class dim2array
     {
     public:
-      dim2array() : array(0), size_x(0), size_y(0)
+      dim2array() : array(NULL), size_x(0), size_y(0)
       {
         createarray();
       }
-      dim2array(int x, int y) : array(0), size_x(x), size_y(y)
+      dim2array(int x, int y) : array(NULL), size_x(x), size_y(y)
       {
         createarray();
       }
-      dim2array(const unsigned int x, const unsigned int y, T value) : array(0), size_x(x), size_y(y)
+      dim2array(const unsigned int x, const unsigned int y, T value) : array(NULL), size_x(x), size_y(y)
       {
         createarray();
         for(unsigned int i =0; i < (size_x * size_y); ++i)
           array[i] = value;
       }
-      dim2array(const dim2array &a) : array(0), size_x(a.size_x), size_y(a.size_y)
+      dim2array(const dim2array &a) : array(NULL), size_x(a.size_x), size_y(a.size_y)
       {
         //size_x = a.size_x;
         //size_y = a.size_y;
@@ -239,8 +239,8 @@ namespace eutelescope {
     class pixel
     {
     public:
-      pixel(){}
-      pixel(unsigned int tmp_x, unsigned int tmp_y)
+      pixel() : x(0), y(0) {}
+      pixel(unsigned int tmp_x, unsigned int tmp_y) : x(tmp_x), y(tmp_y)
       {
         x = tmp_x;
         y = tmp_y;
@@ -253,7 +253,7 @@ namespace eutelescope {
     class seed
     {
     public:
-      seed(unsigned int tmp_x, unsigned int tmp_y, unsigned int tmp_nb, unsigned int cp)
+      seed(unsigned int tmp_x, unsigned int tmp_y, unsigned int tmp_nb, unsigned int cp) : x(tmp_x), y(tmp_y), neighbours(tmp_nb), p(cp)
       {
         x = tmp_x;
         y = tmp_y;
@@ -783,6 +783,14 @@ namespace eutelescope {
 
 
   private:
+  //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
+  #define DISALLOW_COPY_AND_ASSIGN(EUTelClusteringProcessor) \
+  EUTelClusteringProcessor(const EUTelClusteringProcessor&); \
+  void operator=(const EUTelClusteringProcessor&);
+
+  //Private Functions
+  DISALLOW_COPY_AND_ASSIGN(EUTelClusteringProcessor)//See #define just above
+
 
     //! read secondary collections
     /*!

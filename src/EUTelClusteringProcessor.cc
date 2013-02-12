@@ -96,8 +96,57 @@ std::string EUTelClusteringProcessor::_eventMultiplicityHistoName  = "eventMulti
 static const int  MAXCLUSTERSIZE = 4096;
 
 
-EUTelClusteringProcessor::EUTelClusteringProcessor () : Processor("EUTelClusteringProcessor") {
-
+EUTelClusteringProcessor::EUTelClusteringProcessor () 
+: Processor("EUTelClusteringProcessor"), 
+  _nzsDataCollectionName(""),
+  _zsDataCollectionName(""),
+  _noiseCollectionName(""),
+  _statusCollectionName(""),
+  _pulseCollectionName(""),
+  _hotPixelCollectionName(""),
+  _initialPulseCollectionSize(0),
+  _dummyCollectionName(""),
+  _iRun(0),
+  _nzsClusteringAlgo(""),
+  _zsClusteringAlgo(""),
+  _dataFormatType(""),
+  _ffXClusterSize(0),
+  _ffYClusterSize(0),
+  _ffSeedCut(0.0),
+  _sparseSeedCut(0.0),
+  _ffClusterCut(0.0),
+  _sparseClusterCut(0.0),
+  _sparseMinDistance(0.0),
+  _iEvt(0),
+  _fillHistos(false),
+  _histoInfoFileName(""),
+  _seedCandidateMap(),
+  _indexMap(),
+  _totClusterMap(),
+  _noOfDetector(0),
+  _ExcludedPlanes(),
+  _clusterSpectraNVector(),
+  _clusterSpectraNxNVector(),
+  _aidaHistoMap(),
+  _siPlanesParameters(NULL),
+  _siPlanesLayerLayout(NULL),
+  _isGeometryReady(false),
+  _layerIndexMap(),
+  _dutLayerIndexMap(),
+  _ancillaryIndexMap(),
+  _orderedSensorIDVec(),
+  _sensorIDVec(),
+  zsInputDataCollectionVec(NULL),
+  nzsInputDataCollectionVec(NULL),
+  pulseCollectionVec(NULL),
+  noiseCollectionVec(NULL),
+  statusCollectionVec(NULL),
+  hotPixelCollectionVec(NULL),
+  hasNZSData(false),
+  hasZSData(false),
+  _hitIndexMapVec()
+ {
+  
   // modify processor description
   _description =
     "EUTelClusteringProcessor is looking for clusters into a calibrated pixel matrix.";
@@ -947,38 +996,15 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
       streamlog_out ( DEBUG1 ) << "Processing sparse data on detector " << _sensorID << " with "
                                << sparseData->size() << " pixels " << endl;
 
-
       // loop over all pixels in the sparseData object.
       auto_ptr<EUTelSimpleSparsePixel > sparsePixel( new EUTelSimpleSparsePixel );
       for ( unsigned int iPixel = 0; iPixel < sparseData->size(); iPixel++ ) 
       {
 
           sparseData->getSparsePixelAt( iPixel, sparsePixel.get() );
-          int   index       = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
+          int index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
 
-
-//          float fsignal     = sparsePixel->getSignal();
-//          dataVec[ index  ] = fsignal;
- 
-/*
-          int pixel_type = EUTELESCOPE::GOODPIXEL;
-
-          if( _dataFormatType == EUTELESCOPE::BINARY )
-          {    
-              if( _indexMap.find(index) == _indexMap.end() )
-              {
-                  int adc_size = status->adcValues().size();
-                  status->adcValues().resize( adc_size + 1 );
-                  _indexMap.insert ( make_pair ( index, adc_size ) );                  
-                  status->adcValues()[ _indexMap[index]  ] = EUTELESCOPE::GOODPIXEL ;
-              }
-              pixel_type = status->adcValues()[ _indexMap[index]  ];
-          }else{
-              pixel_type = status->adcValues()[ index  ];
-          }
-  */            
-
-          if((int) _hitIndexMapVec.size() > sensorID )
+          if(static_cast<int>(_hitIndexMapVec.size()) > sensorID ){
               if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
           {
               streamlog_out ( DEBUG1) <<
@@ -989,15 +1015,9 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                   " y= " << sparsePixel->getYCoord() << endl;
               continue;
           }
+          }
 
-
-//          if ( pixel_type == EUTELESCOPE::GOODPIXEL )
-//          {
-//              if(fsignal > 1.0e-12)
-//              {
                   sensormatrix[sparsePixel->getXCoord()][sparsePixel->getYCoord()] = true;
-//              }
-//          }
       }
     }
     else 
@@ -1014,8 +1034,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     // RIA: 
     // this is neibhours counting only!
     // 
-    const int stepx = (int)(_ffXClusterSize / 2);
-    const int stepy = (int)(_ffYClusterSize / 2);
+    const int stepx = static_cast<int>(_ffXClusterSize / 2);
+    const int stepy = static_cast<int>(_ffYClusterSize / 2);
   
 ///    const int stepx = 1; wrong or OK ?? could skipp this counting for reeeally sparse data 
 ///    i.e. when one knows that there are mostly 1-2 pixels per clusters expected.
@@ -1065,7 +1085,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                 if(npixel_cl > 1)
                 {
                     if(i>=1)
-		      for(int index_x = (int)i-1; index_x <= ((int)i + 1); index_x++)
+		      for(int index_x = static_cast<int>(i-1); index_x <= static_cast<int>(i + 1); index_x++)
                     {
                         if(index_x >= 0)
                         {
@@ -1079,7 +1099,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                     }
                     
                     if(j>=1)
-		      for(int index_y = (int)j-1; index_y <= ((int)j + 1); index_y++)
+		      for(int index_y = static_cast<int>(j-1); index_y <= static_cast<int>(j + 1); index_y++)
                     {
                         if(index_y >= 0)
                         {
@@ -1124,11 +1144,11 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                     std::vector<pixel> pix;
                     // select pixels around the seed pixel
 
-                    if(i->x >= (unsigned int) stepx && i->y >= (unsigned int) stepy)
+                    if(i->x >= static_cast<unsigned int>(stepx) && i->y >= static_cast<unsigned int>(stepy))
                     {
-		      for(int index_x = (int)i->x - stepx; index_x <= ((int)i->x + stepx); index_x++)
+		      for(int index_x = static_cast<int>(i->x - stepx); index_x <= static_cast<int>(i->x + stepx); index_x++)
                         {
-			  for(int index_y = (int)i->y - stepy; index_y <= ((int)i->y + stepy);index_y++)
+			  for(int index_y = static_cast<int>(i->y - stepy); index_y <= static_cast<int>(i->y + stepy);index_y++)
                             {
                                 if(index_x >= 0 && index_y >= 0)
                                 {
@@ -1250,8 +1270,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                             // center of this matrix.
 
                             pixelmatrix.set(
-                                    pix[j].x + xoffset - seedX + (int)(_ffXClusterSize / 2),
-                                    pix[j].y + yoffset - seedY + (int)(_ffYClusterSize / 2),
+                                    pix[j].x + xoffset - seedX + static_cast<int>(_ffXClusterSize / 2),
+                                    pix[j].y + yoffset - seedY + static_cast<int>(_ffYClusterSize / 2),
                                     true
                                     );
                         }
@@ -1512,7 +1532,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
         int   index  = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() );
         float signal = sparsePixel->getSignal();
         dataVec[ index  ] = signal;
-        if( (int)status->getADCValues().size() < index )
+        if( static_cast<int>(status->getADCValues().size()) < index )
         {
             status->adcValues().resize(index+1);
         }
@@ -1539,7 +1559,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
       while ( rMapIter != seedCandidateMap.rend() ) {
       
         // Remove hot pixel:
-        if( _hitIndexMapVec.size() > (unsigned int)sensorID ) {
+        if( _hitIndexMapVec.size() > static_cast<unsigned int>(sensorID)) {
               if( _hitIndexMapVec[sensorID].find( (*rMapIter).second ) != _hitIndexMapVec[sensorID].end() )
               {
                 int seedX, seedY;
@@ -2507,7 +2527,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
           // now remove HotPixels
           // 
           int index = matrixDecoder.getIndexFromXY( pixel->getXCoord(), pixel->getYCoord() );
-          if((int) _hitIndexMapVec.size() > sensorID )
+          if(static_cast<int>(_hitIndexMapVec.size()) > sensorID )
               if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
               {
                   ++listIter;
@@ -2548,7 +2568,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
           // set the ID for this zsCluster
           idZSClusterEncoder["sensorID"]  = sensorID;
           idZSClusterEncoder["clusterID"] = clusterID;
-          idZSClusterEncoder["sparsePixelType"] = static_cast<int> ( type );
+          idZSClusterEncoder["sparsePixelType"] = static_cast<int>( type );
           idZSClusterEncoder["quality"] = 0;
           idZSClusterEncoder.setCellID( zsCluster.get() );
 
