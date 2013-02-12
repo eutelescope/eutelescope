@@ -122,7 +122,7 @@ void EUTelUpdatePedestalNoiseProcessor::init () {
 #ifdef MARLINDEBUG
   vector<int >::iterator iter = _monitoredPixel.begin();
   while ( iter != _monitoredPixel.end() ) {
-    streamlog_out( DEBUG )  << "Monitoring pixel " << (*iter) << endl;
+    streamlog_out( DEBUG5 )  << "Monitoring pixel " << (*iter) << endl;
     ++iter;
   }
 #endif
@@ -150,7 +150,7 @@ void EUTelUpdatePedestalNoiseProcessor::processEvent (LCEvent * event) {
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
   if ( evt->getEventType() == kEORE ) {
-    streamlog_out( DEBUG ) <<  "EORE found: nothing else to do." << endl;
+    streamlog_out( DEBUG5 ) <<  "EORE found: nothing else to do." << endl;
     return;
   }
 
@@ -211,7 +211,7 @@ void EUTelUpdatePedestalNoiseProcessor::processEvent (LCEvent * event) {
     if ( _updateAlgo == EUTELESCOPE::FIXEDWEIGHT )
       fixedWeightUpdate(evt);
 
-    streamlog_out( MESSAGE ) << "Updating pedestal and noise ... ok" << endl;
+    streamlog_out( MESSAGE5 ) << "Updating pedestal and noise ... ok" << endl;
 
   }
   ++_iEvt;
@@ -305,7 +305,7 @@ void EUTelUpdatePedestalNoiseProcessor::fixedWeightUpdate(LCEvent * evt) {
 void EUTelUpdatePedestalNoiseProcessor::end() {
 
   if ( _monitoredPixelPedestal.size() == 0 ) {
-    streamlog_out( ERROR ) <<  "The update procedure failed." << endl;
+    streamlog_out( ERROR5 ) <<  "The update procedure failed." << endl;
   } else {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -334,9 +334,9 @@ void EUTelUpdatePedestalNoiseProcessor::end() {
 
       //    AIDA::IDataPointSet * noiseDPS =  AIDAProcessor::dataPointSetFactory(this)->create();
 
-      message<DEBUG> ( "Update results" );
+      message<DEBUG5> ( "Update results" );
       for (unsigned int count = 0; count < _monitoredPixelPedestal[iPixel].size(); count++) {
-        message<DEBUG> ( log() << count << " " << _monitoredPixelPedestal[iPixel][count] << " " << _monitoredPixelNoise[iPixel][count] );
+        message<DEBUG5> ( log() << count << " " << _monitoredPixelPedestal[iPixel][count] << " " << _monitoredPixelNoise[iPixel][count] );
         //       pedestalDPS->addPoint();
         //       pedestalDPS->point(count)->coordinate(0)->setValue(_monitoredPixelPedestal[iPixel][count]);
 
@@ -346,7 +346,7 @@ void EUTelUpdatePedestalNoiseProcessor::end() {
       ++iPixel;
     }
 #endif
-    message<MESSAGE> ( "Successfully finished" );
+    message<MESSAGE5> ( "Successfully finished" );
   }
 
 }

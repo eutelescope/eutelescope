@@ -372,7 +372,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
     }
     catch(...)
     {
-        streamlog_out ( MESSAGE ) <<  "Input collection status: " << _statusCollectionName.c_str() << " not found in the current event. Skipping..." << endl;
+        streamlog_out ( MESSAGE5 ) <<  "Input collection status: " << _statusCollectionName.c_str() << " not found in the current event. Skipping..." << endl;
     }
 
     try 
@@ -479,7 +479,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
   } 
   catch ( ParseException& e ) 
   {
-      streamlog_out ( MESSAGE )  << "Input collection not found in the current event. Skipping..." << e.what() << endl;
+      streamlog_out ( MESSAGE5 )  << "Input collection not found in the current event. Skipping..." << e.what() << endl;
       return;     
   }
 
@@ -563,7 +563,7 @@ void EUTelHotPixelKiller::check( LCEvent * event )
                 {
                     if ( _firingFreqVec[iDetector][ iPixel ] / ( (double) _iEvt ) > _maxAllowedFiringFreq ) 
                     {
-                        streamlog_out ( DEBUG ) << " Pixel " << iPixel << " on detector " << _sensorIDVec.at( iDetector )
+                        streamlog_out ( DEBUG5 ) << " Pixel " << iPixel << " on detector " << _sensorIDVec.at( iDetector )
                             << " is firing too often (" << _firingFreqVec[iDetector][iPixel] / ((double) _iEvt )
                             << "). Masking it now on! " << endl;
                         status->adcValues()[ iPixel ] = EUTELESCOPE::FIRINGPIXEL;
@@ -601,8 +601,8 @@ void EUTelHotPixelKiller::check( LCEvent * event )
 void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
 {    
 
-    streamlog_out ( MESSAGE ) << "EUTelHotPixelKiller::HotPixelDBWriter " << endl;
-    streamlog_out ( MESSAGE ) << "writing out hot pixel db into " << _hotpixelDBFile.c_str() << endl;
+    streamlog_out ( MESSAGE5 ) << "EUTelHotPixelKiller::HotPixelDBWriter " << endl;
+    streamlog_out ( MESSAGE5 ) << "writing out hot pixel db into " << _hotpixelDBFile.c_str() << endl;
 
     // create data decoder
     LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( input_event->getCollection( _statusCollectionName ) );
@@ -622,7 +622,7 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
 	try {
 	  lcReader->open( _hotpixelDBFile );
 	  event =  static_cast<LCEventImpl *>  (lcReader->readNextEvent());
-	  streamlog_out ( DEBUG ) << "event read back ok from file"  << endl;       
+	  streamlog_out ( DEBUG5 ) << "event read back ok from file"  << endl;       
 	  if( event == 0 )
 	    {
 	      lcHeader  = new LCRunHeaderImpl;
@@ -634,7 +634,7 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
 	      event->setRunNumber( 0 );
 	      event->setEventNumber( 0 );
 	      event->setDetectorName("Mimosa26");
-	      streamlog_out ( DEBUG ) << "event recreated ok"  << endl;       
+	      streamlog_out ( DEBUG5 ) << "event recreated ok"  << endl;       
 		
 	      now   = new LCTime;
 	      event->setTimeStamp( now->timeStamp() );
@@ -642,13 +642,13 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
 	    }
 	}
 	catch(...) {
-	  streamlog_out ( ERROR ) << "could not read anything from HotPixelDB file"  << endl;       
+	  streamlog_out ( ERROR5 ) << "could not read anything from HotPixelDB file"  << endl;       
 	  event = 0;
 	}
-	streamlog_out ( MESSAGE ) << _hotpixelDBFile << " was opened for writing" << endl;
+	streamlog_out ( MESSAGE5 ) << _hotpixelDBFile << " was opened for writing" << endl;
       }
       catch ( IOException& e ) 	{
-	streamlog_out ( DEBUG ) << e.what() << endl << "Sorry, was not able to APPEND to the hotpixel file " << _hotpixelDBFile << ", try open new " << endl;
+	streamlog_out ( DEBUG5 ) << e.what() << endl << "Sorry, was not able to APPEND to the hotpixel file " << _hotpixelDBFile << ", try open new " << endl;
       }
     }
 
@@ -670,7 +670,7 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
 	  event->setRunNumber( 0 );
 	  event->setEventNumber( 0 );
 	  event->setDetectorName("Mimosa26");
-	  streamlog_out ( DEBUG ) << "HotPixelDB file: run header and event created ok"  << endl;       
+	  streamlog_out ( DEBUG5 ) << "HotPixelDB file: run header and event created ok"  << endl;       
 	  now   = new LCTime;
 	  event->setTimeStamp( now->timeStamp() );
 	  delete now;
@@ -684,7 +684,7 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
   
     if(event==0)
     {
-      streamlog_out (ERROR) << "Problem opening HotPixelDB file, event == 0 " << endl;
+      streamlog_out ( ERROR5 ) << "Problem opening HotPixelDB file, event == 0 " << endl;
       return;  
     }
 
@@ -695,11 +695,11 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
     try 
     {
         hotPixelCollection = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
-        streamlog_out (MESSAGE) << "hotPixelCollection: " << _hotPixelCollectionName << 
+        streamlog_out ( MESSAGE5 ) << "hotPixelCollection: " << _hotPixelCollectionName << 
                                    " found found with " << hotPixelCollection->getNumberOfElements() << 
                                    " elements " <<  endl; 
         hotPixelCollection->clear();
-        streamlog_out (MESSAGE) << "hotPixelCollection: " << _hotPixelCollectionName << 
+        streamlog_out ( MESSAGE5 ) << "hotPixelCollection: " << _hotPixelCollectionName << 
                                    " cleared: now " << hotPixelCollection->getNumberOfElements() << 
                                    " elements " <<  endl; 
     }
@@ -707,7 +707,7 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
     {
         hotPixelCollection = new LCCollectionVec( lcio::LCIO::TRACKERDATA );
         event->addCollection( hotPixelCollection, _hotPixelCollectionName );
-        streamlog_out (MESSAGE) << "hotPixelCollection: " << _hotPixelCollectionName << 
+        streamlog_out ( MESSAGE5 ) << "hotPixelCollection: " << _hotPixelCollectionName << 
                                    " created" <<  endl; 
     }
 
@@ -794,8 +794,8 @@ void EUTelHotPixelKiller::bookAndFillHistos()
 
     if( firing2DHisto == 0 )
     {
-        streamlog_out ( ERROR ) << "CreateHistogram2D for " <<  (basePath + tempHistoName).c_str()  << " failed " << endl;
-        streamlog_out ( ERROR ) << "Execution stopped, check that your path (" << basePath.c_str() << ")exists  " << endl;
+        streamlog_out ( ERROR5 ) << "CreateHistogram2D for " <<  (basePath + tempHistoName).c_str()  << " failed " << endl;
+        streamlog_out ( ERROR5 ) << "Execution stopped, check that your path (" << basePath.c_str() << ")exists  " << endl;
         return;
     }
     

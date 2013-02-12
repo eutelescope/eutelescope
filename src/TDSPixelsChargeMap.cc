@@ -603,7 +603,7 @@ double TDSPixelsChargeMap::getTotalCharge()
   int debug = 0;
 
   int ipixel=0;
-  if(debug) streamlog_out (MESSAGE ) << " pixelsChargeMap : " << pixelsChargeMap.size() << endl;
+  if(debug) streamlog_out ( MESSAGE5 ) << " pixelsChargeMap : " << pixelsChargeMap.size() << endl;
 
   for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
     {
@@ -737,7 +737,7 @@ vector<TDSPixel> TDSPixelsChargeMap::getVectorOfPixels()
       thePixel.coordW = ((double)(thePixel.indexAlongW)+0.5)*pixelWidth  + firstPixelCornerCoordW;
       thePixel.charge = i->second;
       vectorOfPixels.push_back(thePixel);
-      //streamlog_out(MESSAGE) << "ipixel= " << ipixel << " " << thePixel.coordL << " " << thePixel.coordW << endl;
+      //streamlog_out( MESSAGE5 ) << "ipixel= " << ipixel << " " << thePixel.coordL << " " << thePixel.coordW << endl;
       ipixel++;
     }
 

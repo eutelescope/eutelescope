@@ -111,14 +111,14 @@ void EUTelAPIXTbTrackTuple::init() {
   _rotationstored.clear();
   _countrotstored = 0;
 
-  message<DEBUG> ( log() << "Initializing " );
+  message<DEBUG5> ( log() << "Initializing " );
 	
   if ( Global::GEAR == NULL ) {
-    message<ERROR> ( "GearMgr is not available. Bailing." );
+    message<ERROR5> ( "GearMgr is not available. Bailing." );
     exit(-1);
   }
 	
-  message<DEBUG> ( log() << "Reading telescope geometry description from GEAR ") ;
+  message<DEBUG5> ( log() << "Reading telescope geometry description from GEAR ") ;
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
 
@@ -131,7 +131,7 @@ void EUTelAPIXTbTrackTuple::init() {
   prepareTree();
   invertGear();
   streamlog_out(DEBUG3) << "HitCollection is " << _inputTrackerHitColName << endl;
-  message<DEBUG> ( log() << "End of Init" );
+  message<DEBUG5> ( log() << "End of Init" );
 }
 
 void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) {
@@ -141,7 +141,7 @@ void EUTelAPIXTbTrackTuple::processRunHeader( LCRunHeader* runHeader) {
 	
   // Decode and print out Run Header information - just a check
   _runNr = runHeader->getRunNumber();
-  message<DEBUG> ( log() << "Processing run header " << _nRun
+  message<DEBUG5> ( log() << "Processing run header " << _nRun
 		     << ", run nr " << _runNr );
 }
 
@@ -156,7 +156,7 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event ) {
     }
     catch(...)
     {
-      streamlog_out(ERROR) << "Critical error; the referennce hit collection was not found, pls check your steering file." << endl;
+      streamlog_out( ERROR5 ) << "Critical error; the referennce hit collection was not found, pls check your steering file." << endl;
     }
  
   }
@@ -164,13 +164,13 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event ) {
   _evtNr = event->getEventNumber();
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
   if ( euEvent->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
+    message<DEBUG5> ( "EORE found: nothing else to do." );
     return;
   }
 
   if( not _foundAllign ) { readAlignment(event); } //Sets _foundAlign to true if found.
   if( not _foundAllign ) {
-    streamlog_out  ( ERROR ) << "Have not found the needed alignment collections, will skip this event ( " 
+    streamlog_out  ( ERROR5 ) << "Have not found the needed alignment collections, will skip this event ( " 
 			     << event->getEventNumber() << " )." << endl; 
     return;
   }
@@ -208,7 +208,7 @@ void EUTelAPIXTbTrackTuple::processEvent( LCEvent * event ) {
 }
 
 void EUTelAPIXTbTrackTuple::end(){
-  message<DEBUG> ( log() << "N-tuple with " << _zstree->GetEntries() << " entries written to" << _path2file.c_str() <<",");
+  message<DEBUG5> ( log() << "N-tuple with " << _zstree->GetEntries() << " entries written to" << _path2file.c_str() <<",");
   _file->Write();
 }
 
@@ -231,7 +231,7 @@ void EUTelAPIXTbTrackTuple::setClusterIdInHits() {
   }
   if (endsize != _hitClusterId->size() ) 
   {
-    streamlog_out ( DEBUG ) << "ClusterIndex variable is not correct!" << endl;
+    streamlog_out ( DEBUG5 ) << "ClusterIndex variable is not correct!" << endl;
   }
 }
 
@@ -241,13 +241,13 @@ int EUTelAPIXTbTrackTuple::readHits( std::string hitColName, LCEvent* event ) {
   try {
     hitCollection = event->getCollection( hitColName ); 
   } catch (lcio::DataNotAvailableException& e) {
-    //message<DEBUG> ( log() << "Cluster collection " << colName <<  " not available on event " << event->getEventNumber() << "." );
+    //message<DEBUG5> ( log() << "Cluster collection " << colName <<  " not available on event " << event->getEventNumber() << "." );
     return(1);
   }
   nHit = hitCollection->getNumberOfElements();
   _nHits = nHit;
  
-//  streamlog_out(MESSAGE)<< "readHits(mes)"<<endl;    
+//  streamlog_out( MESSAGE5 )<< "readHits(mes)"<<endl;    
   for(int ihit=0; ihit< nHit ; ihit++) {
     TrackerHit * meshit = dynamic_cast<TrackerHitImpl*>( hitCollection->getElementAt(ihit) ) ;
     const double * pos = meshit->getPosition();	
@@ -291,7 +291,7 @@ int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
   try {
     clusterCollectionVec = event->getCollection( colName );
   } catch (lcio::DataNotAvailableException& e) {
-    //message<DEBUG> ( log() << "Cluster collection " << colName <<  " not available on event " << event->getEventNumber() << "." );
+    //message<DEBUG5> ( log() << "Cluster collection " << colName <<  " not available on event " << event->getEventNumber() << "." );
     return(1);
   }
   CellIDDecoder<TrackerPulseImpl> cellDecoder(clusterCollectionVec);
@@ -345,7 +345,7 @@ int EUTelAPIXTbTrackTuple::readTracks(LCEvent* event){
   try {
     trackCol = event->getCollection( _inputTrackColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    //message<DEBUG> ( log() << "Track collection " << _inputColName << " not available on event " << event->getEventNumber() << "." );
+    //message<DEBUG5> ( log() << "Track collection " << _inputColName << " not available on event " << event->getEventNumber() << "." );
     return(1);
   }
 
@@ -358,7 +358,7 @@ int EUTelAPIXTbTrackTuple::readTracks(LCEvent* event){
     double dxdz = fittrack->getOmega();
     double dydz = fittrack->getPhi();
 
-//    streamlog_out(MESSAGE)<< "readTracks(fit)"<<endl;    
+//    streamlog_out( MESSAGE5 )<< "readTracks(fit)"<<endl;    
  
     for(unsigned int ihit=0; ihit< trackhits.size(); ihit++) {
       TrackerHit* fittedHit = trackhits.at(ihit);
@@ -410,7 +410,7 @@ int EUTelAPIXTbTrackTuple::guessSensorID( TrackerHit *hit ) {
 //  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
   if( _referenceHitVec == 0)
   {
-    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
     return 0;
   }
 
@@ -434,7 +434,7 @@ int EUTelAPIXTbTrackTuple::guessSensorID( TrackerHit *hit ) {
         }    
 
       }
-// streamlog_out(MESSAGE) << "guessSensorID for hit at X:"<<hitPosition[0]<<" Y:"<<hitPosition[1]<<" Z:"<<hitPosition[2]<<" ID="<< sensorID<<" minD:"<<minDistance<<endl;
+// streamlog_out( MESSAGE5 ) << "guessSensorID for hit at X:"<<hitPosition[0]<<" Y:"<<hitPosition[1]<<" Z:"<<hitPosition[2]<<" ID="<< sensorID<<" minD:"<<minDistance<<endl;
  return sensorID;
 }
 
@@ -443,7 +443,7 @@ int EUTelAPIXTbTrackTuple::readZsHitsFromClusters( std::string colName, LCEvent*
   try{
     zsInputCollectionVec  = dynamic_cast < LCCollectionVec* > (event->getCollection( colName ));
   } catch (DataNotAvailableException& e){
-    //streamlog_out ( ERROR ) << "Could not find collection " << colName << " on event " << event->getEventNumber() << "." << endl;
+    //streamlog_out ( ERROR5 ) << "Could not find collection " << colName << " on event " << event->getEventNumber() << "." << endl;
     return(1);
   }
   CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputCollectionVec );
@@ -483,7 +483,7 @@ int EUTelAPIXTbTrackTuple::readZsHitsFromClusters( std::string colName, LCEvent*
       }
     }
   }
-  if (p_clusterId->size() != p_row->size() ) { streamlog_out(ERROR) << "ClusterID Vector size is not consistent!(" << p_clusterId->size() << " and " << p_row->size() << endl; }
+  if (p_clusterId->size() != p_row->size() ) { streamlog_out( ERROR5 ) << "ClusterID Vector size is not consistent!(" << p_clusterId->size() << " and " << p_row->size() << endl; }
     return(0);
 }
 
@@ -492,7 +492,7 @@ int EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event){
   try{
     zsInputCollectionVec  = dynamic_cast < LCCollectionVec* > (event->getCollection( colName ));
   } catch (DataNotAvailableException& e){
-    //streamlog_out ( ERROR ) << "Could not find collection " << colName << " on event " << event->getEventNumber() << "." << endl;
+    //streamlog_out ( ERROR5 ) << "Could not find collection " << colName << " on event " << event->getEventNumber() << "." << endl;
     return(1);
   }
   CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputCollectionVec );
@@ -568,7 +568,7 @@ void EUTelAPIXTbTrackTuple::invertAlignment(EUTelAlignmentConstant * alignment){
     gsl_matrix_set( alignM, 1, 2, -1* alignment->getAlpha() );
     gsl_matrix_set( alignM, 2, 1,     alignment->getAlpha());
   }
-  message<DEBUG> ( log() << "Inverting alignment matrix for iden" << iden  ) ;
+  message<DEBUG5> ( log() << "Inverting alignment matrix for iden" << iden  ) ;
   gsl_matrix * inverse = invertLU(3, alignM);
   gsl_matrix_free(alignM);
   _alignRot[iden].push_back(inverse);
@@ -592,7 +592,7 @@ void EUTelAPIXTbTrackTuple::invertAlignment(EUTelAlignmentConstant * alignment){
     _rotationstored[iden] = true;
   }
 
-  streamlog_out(DEBUG) << "Iden: " << iden << endl
+  streamlog_out( DEBUG5 ) << "Iden: " << iden << endl
 			 << "X-shift: "<< alignment->getXOffset() << endl
 			 << "Y-shift: "<< alignment->getYOffset() << endl
 			 << "Z-shift: "<< alignment->getZOffset() << endl
@@ -624,7 +624,7 @@ void EUTelAPIXTbTrackTuple::invertGear(){
       ySign = 1.0;
     }
   
-    message<DEBUG> ( log() << "Inverting gear matrix for iden" << iden  ) ;
+    message<DEBUG5> ( log() << "Inverting gear matrix for iden" << iden  ) ;
     gsl_matrix * inverse = invertLU(2, gearM);
     gsl_matrix_free(gearM);
     _gearRot[iden] = inverse;
@@ -662,8 +662,8 @@ void EUTelAPIXTbTrackTuple::invertGear(){
     gearRotations.at(0) = conv * _siPlanesLayerLayout->getLayerRotationXY(layerIndex);
     gearRotations.at(1) = conv * _siPlanesLayerLayout->getLayerRotationZX(layerIndex);
     gearRotations.at(2) = conv * _siPlanesLayerLayout->getLayerRotationZY(layerIndex);
-    streamlog_out ( DEBUG )  << "Plane iden: " << iden << endl;
-    streamlog_out ( DEBUG )  << "gearRotationsXY = " << gearRotations.at(0) << endl
+    streamlog_out ( DEBUG5 )  << "Plane iden: " << iden << endl;
+    streamlog_out ( DEBUG5 )  << "gearRotationsXY = " << gearRotations.at(0) << endl
                              << "gearRotationsZX = " << gearRotations.at(1) << endl
                              << "gearRotationsZY = " << gearRotations.at(2) << endl;
     _gearEulerRot[iden] = gearRotations;
@@ -900,18 +900,18 @@ void EUTelAPIXTbTrackTuple::readAlignment(LCEvent* event){
   _foundAllign = true;
 
   LCCollectionVec * alignmentCollectionVec;
-  streamlog_out ( DEBUG )  << "Trying to read " << _alignColNames.size() << " collections" << endl;
+  streamlog_out ( DEBUG5 )  << "Trying to read " << _alignColNames.size() << " collections" << endl;
   for(size_t ii = 0; ii < _alignColNames.size(); ii++){
     size_t index = _alignColNames.size() - ii -1;
-    streamlog_out ( DEBUG )  << "Trying to read alignment collection " << _alignColNames.at(index) << endl;
+    streamlog_out ( DEBUG5 )  << "Trying to read alignment collection " << _alignColNames.at(index) << endl;
     try{
       alignmentCollectionVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _alignColNames.at(index)));
       for ( size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos ) {
-	 streamlog_out ( DEBUG ) << "Inverting plane " << iPos << endl;
+	 streamlog_out ( DEBUG5 ) << "Inverting plane " << iPos << endl;
 	invertAlignment( static_cast< EUTelAlignmentConstant * > ( alignmentCollectionVec->getElementAt( iPos ) ) );
       }
     } catch( DataNotAvailableException& e) {
-      streamlog_out ( ERROR ) << "Could not find  alignment collections on event " << event->getEventNumber() << "." << endl;
+      streamlog_out ( ERROR5 ) << "Could not find  alignment collections on event " << event->getEventNumber() << "." << endl;
       _foundAllign = false;
     }
   }
@@ -919,7 +919,7 @@ void EUTelAPIXTbTrackTuple::readAlignment(LCEvent* event){
 
 void EUTelAPIXTbTrackTuple::prepareTree(){
   _file = new TFile(_path2file.c_str(),"RECREATE");
-   streamlog_out ( DEBUG )  << "Writing to: " << _path2file.c_str() << endl;
+   streamlog_out ( DEBUG5 )  << "Writing to: " << _path2file.c_str() << endl;
   //Old school tbtrack tree
 
   _xPos = new vector<double>();	     
@@ -1054,8 +1054,8 @@ void EUTelAPIXTbTrackTuple::getDUTRot(EUTelAlignmentConstant * alignment){
   //count stored planes
   _countrotstored++;
 
-  //message<MESSAGE> ( log() << "Planes stored " << _countrotstored );
-  //message<MESSAGE> ( log() << "# Planes " << _siPlanesParameters->getSiPlanesNumber() );
+  //message<MESSAGE5> ( log() << "Planes stored " << _countrotstored );
+  //message<MESSAGE5> ( log() << "# Planes " << _siPlanesParameters->getSiPlanesNumber() );
 
   //fill tree omly once
   //first plane has no alignment

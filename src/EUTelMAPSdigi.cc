@@ -456,7 +456,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
     for ( int iHit = 0; iHit < simhitCollection->getNumberOfElements(); iHit++ ) 
     {
-      if(debug>1) streamlog_out ( MESSAGE ) << "iHit = " << iHit << " :of: " << simhitCollection->getNumberOfElements() << endl;
+      if(debug>1) streamlog_out ( MESSAGE5 ) << "iHit = " << iHit << " :of: " << simhitCollection->getNumberOfElements() << endl;
       
       SimTrackerHitImpl * simhit   = static_cast<SimTrackerHitImpl*> ( simhitCollection->getElementAt(iHit) );
      
@@ -485,7 +485,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
         //break;
       }
  
-      if(debug>1) streamlog_out ( MESSAGE ) << "Sensitive layer ID = " << detectorID << " found in SimTracker collection" << endl;
+      if(debug>1) streamlog_out ( MESSAGE5 ) << "Sensitive layer ID = " << detectorID << " found in SimTracker collection" << endl;
  
       if ( detectorID != oldDetectorID )
       {
@@ -504,7 +504,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
               if ( _siPlanesLayerLayout->getSensitiveID(iLayer) == detectorID ) 
               {
                 _conversionIdMap.insert( make_pair( detectorID, iLayer ) );
-                if(debug>1) streamlog_out ( MESSAGE ) << "Sensitive layer ID = " << detectorID << " found in GEAR" << endl;
+                if(debug>1) streamlog_out ( MESSAGE5 ) << "Sensitive layer ID = " << detectorID << " found in GEAR" << endl;
                 break;
               }
             }
@@ -547,7 +547,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
           }
           catch(...)
           {
-              streamlog_out(DEBUG) << "No sensor rotation is given in the GEAR steering file, assume NONE." << endl;
+              streamlog_out( DEBUG5 ) << "No sensor rotation is given in the GEAR steering file, assume NONE." << endl;
           }
 
 
@@ -571,7 +571,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       const float*  hitmom = simhit->getMomentum();
 
       if (debug>1)
-        streamlog_out( MESSAGE ) << "SimHit in global frame  at X = " <<  hitpos[0]
+        streamlog_out( MESSAGE5 ) << "SimHit in global frame  at X = " <<  hitpos[0]
                                 <<  " Y = " <<  hitpos[1]
                                 <<  " Z = " <<  hitpos[2]
                                 <<  "  detector ID = " << detectorID << endl;
@@ -691,7 +691,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
       _localSize[2] = zThickness;
 
-      if(debug>1) streamlog_out(MESSAGE) <<
+      if(debug>1) streamlog_out( MESSAGE5 ) <<
                                " _localSize[0] = " << _localSize[0] << 
                                " _localSize[1] = " << _localSize[1] << 
                                " _localSize[2] = " << _localSize[2] << endl;
@@ -838,7 +838,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
 
         if (debug>1 ||  ( _localPosition[2]-_localSize[2] > 0)  || ( _localPosition[2] > 0.) )
-          streamlog_out( MESSAGE ) << " sensor = " << detectorID << 
+          streamlog_out( MESSAGE5 ) << " sensor = " << detectorID << 
                                      " _localPosition[0] = " << _localPosition[0] <<
                                      " _localPosition[1] = " << _localPosition[1] <<
                                      " _localPosition[2] = " << _localPosition[2] << endl << 
@@ -891,7 +891,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
         zsDataEncoder[ "sparsePixelType" ] = kEUTelSimpleSparsePixel;
         zsDataEncoder.setCellID( tmp_zsFrame );
         _trackerDataMap[ _siPlanesLayerLayout->getSensitiveID(iDetector) ] = tmp_zsFrame;
-        if(debug>0)streamlog_out(MESSAGE) << " map : ("<< iDetector <<") "  << _siPlanesLayerLayout->getSensitiveID(iDetector) << endl;
+        if(debug>0)streamlog_out( MESSAGE5 ) << " map : ("<< iDetector <<") "  << _siPlanesLayerLayout->getSensitiveID(iDetector) << endl;
       }
       break;
     }
@@ -906,13 +906,13 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
  	zsDataEncoder["sparsePixelType"]   = kEUTelAPIXSparsePixel;
         zsDataEncoder.setCellID( tmp_zsFrame );
         _trackerDataMap[ _siPlanesLayerLayout->getSensitiveID(iDetector) ] = tmp_zsFrame;
-        if(debug>0)streamlog_out(MESSAGE) << " map : ("<< iDetector <<") " << _siPlanesLayerLayout->getSensitiveID(iDetector) << endl;
+        if(debug>0)streamlog_out( MESSAGE5 ) << " map : ("<< iDetector <<") " << _siPlanesLayerLayout->getSensitiveID(iDetector) << endl;
       }
       break; 
     }
     else
     {
-      streamlog_out(ERROR) << "Detector ID ["<< idetectorID << "] is not specific to the telescope planes (0-9, 20-29)... exit" << endl;
+      streamlog_out( ERROR5 ) << "Detector ID ["<< idetectorID << "] is not specific to the telescope planes (0-9, 20-29)... exit" << endl;
       exit(-1); 
     }
 }
@@ -938,7 +938,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
 
         // Charge processing
         if (debug)
-          streamlog_out( MESSAGE ) << " _pixelChargeMap " << _pixelChargeMap << " det " << detectorID << " lay " << layerIndex << endl;
+          streamlog_out( MESSAGE5 ) << " _pixelChargeMap " << _pixelChargeMap << " det " << detectorID << " lay " << layerIndex << endl;
        
         double totalCharge=_pixelChargeMap->getTotalCharge();
 
@@ -1027,18 +1027,18 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
 
         if( detectorID< 10 )
         {
-           //streamlog_out ( MESSAGE )<< "magic. Mimosa type"<< endl;
+           //streamlog_out ( MESSAGE5 )<< "magic. Mimosa type"<< endl;
            packMimosa26( digiIndex );
         }
         else
             if( detectorID >= 10 && detectorID < 20 )
         {
-           streamlog_out ( DEBUG ) << "magic. FEI3   type - Currently no function packFEI3"<< endl;
+           streamlog_out ( DEBUG5 ) << "magic. FEI3   type - Currently no function packFEI3"<< endl;
         }
         else
             if( detectorID >= 20 && detectorID < 30 )
         {
-           //streamlog_out ( MESSAGE )<< "magic. FEI4   type"<< endl;
+           //streamlog_out ( MESSAGE5 )<< "magic. FEI4   type"<< endl;
            packFEI4( digiIndex );
         }
         else
@@ -1061,7 +1061,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
             int ipixel = 0;
             for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); _pixelIterator++)
             {
-              streamlog_out( MESSAGE ) <<  " Pixel [" <<  ipixel << "] at  (" << _pixelIterator->getIndexAlongL()
+              streamlog_out( MESSAGE5 ) <<  " Pixel [" <<  ipixel << "] at  (" << _pixelIterator->getIndexAlongL()
                                       <<  "," <<  _pixelIterator->getIndexAlongW()
                                       <<  ") with Q = " << _pixelIterator->getCharge() << endl;
               ipixel++;
@@ -1224,7 +1224,7 @@ void EUTelMAPSdigi::packMimosa26( int digiIndex )
 
   if( zsFrame == 0 )
   {
-     streamlog_out(ERROR) << " zsFrame is absent. emergency exit" << endl;
+     streamlog_out( ERROR5 ) << " zsFrame is absent. emergency exit" << endl;
      exit(-1);
   } 
         // now I have to prepare a temporary storage for the
@@ -1288,7 +1288,7 @@ void EUTelMAPSdigi::packFEI4( int digiIndex )
 
   if( zsFrame == 0 )
   {
-     streamlog_out(ERROR) << " zsFrame is absent. emergency exit" << endl;
+     streamlog_out( ERROR5 ) << " zsFrame is absent. emergency exit" << endl;
      exit(-1);
   } 
         // now I have to prepare a temporary storage for the
@@ -1298,7 +1298,7 @@ void EUTelMAPSdigi::packFEI4( int digiIndex )
 
         for ( _pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); ++_pixelIterator ) 
         {
-          if(debug>1) streamlog_out (MESSAGE) << " pixelIterator:" <<  _pixelIterator->getIndexAlongL() << " " <<  _pixelIterator->getIndexAlongW()  << endl;  
+          if(debug>1) streamlog_out ( MESSAGE5 ) << " pixelIterator:" <<  _pixelIterator->getIndexAlongL() << " " <<  _pixelIterator->getIndexAlongW()  << endl;  
           // move the pixel information from the pixelIterator to
           // the sparsePixel
           sparsePixel->setXCoord( _pixelIterator->getIndexAlongL() );

@@ -137,13 +137,13 @@ void EUTelFitTuple::init() {
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
-    message<ERROR> ( "The GearMgr is not available, for an unknown reason." );
+    message<ERROR5> ( "The GearMgr is not available, for an unknown reason." );
     exit(-1);
   }
 
   // Read geometry information from GEAR
 
-  message<MESSAGE> ( log() << "Reading telescope geometry description from GEAR ") ;
+  message<MESSAGE5> ( log() << "Reading telescope geometry description from GEAR ") ;
 
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
@@ -253,7 +253,7 @@ void EUTelFitTuple::init() {
 
       if(!_manualOK)
         {
-          message<ERROR> ( log() << "Manual DUT flag set, layer not found ID = "
+          message<ERROR5> ( log() << "Manual DUT flag set, layer not found ID = "
                            << _manualDUTid
                            << "\n Program will terminate! Correct geometry description!");
           exit(-1);
@@ -264,7 +264,7 @@ void EUTelFitTuple::init() {
 
   // Print out geometry information
 
-  message<MESSAGE> ( log() << "Telescope configuration with " << _nTelPlanes << " planes" );
+  message<MESSAGE5> ( log() << "Telescope configuration with " << _nTelPlanes << " planes" );
 
 
   for(int ipl=0; ipl < _nTelPlanes; ipl++)
@@ -281,7 +281,7 @@ void EUTelFitTuple::init() {
       ss << "  ID = " << _planeID[ipl]
          << "  at Z [mm] = " << _planePosition[ipl];
 
-      message<MESSAGE> ( log() << ss.str() );
+      message<MESSAGE5> ( log() << ss.str() );
     }
 
 
@@ -315,20 +315,20 @@ void EUTelFitTuple::processRunHeader( LCRunHeader* runHeader) {
 
   _runNr = runHeader->getRunNumber();
 
-  message<MESSAGE> ( log() << "Processing run header " << _nRun
+  message<MESSAGE5> ( log() << "Processing run header " << _nRun
                      << ", run nr " << _runNr );
 
   const std::string detectorName = runHeader->getDetectorName();
   const std::string detectorDescription = runHeader->getDescription();
   const std::vector<std::string> * subDets = runHeader->getActiveSubdetectors();
 
-  message<MESSAGE> ( log() << detectorName << " : " << detectorDescription ) ;
+  message<MESSAGE5> ( log() << detectorName << " : " << detectorDescription ) ;
 
   int nDet = subDets->size();
 
-  if(nDet)message<MESSAGE> ( log() << nDet << " subdetectors defined :" );
+  if(nDet)message<MESSAGE5> ( log() << nDet << " subdetectors defined :" );
   stringstream ss;
-  for(int idet=0;idet<nDet;idet++)  message<MESSAGE> (log()  << idet+1 << " : " << subDets->at(idet) );
+  for(int idet=0;idet<nDet;idet++)  message<MESSAGE5> (log()  << idet+1 << " : " << subDets->at(idet) );
 
 
 }
@@ -337,7 +337,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
   if ( euEvent->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
+    message<DEBUG5> ( "EORE found: nothing else to do." );
     return;
   }
 
@@ -347,13 +347,13 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
   _evtNr = event->getEventNumber();
 
 
-  if(debug)message<DEBUG> ( log() << "Processing record " << _nEvt << " == event " << _evtNr );
+  if(debug)message<DEBUG5> ( log() << "Processing record " << _nEvt << " == event " << _evtNr );
 
   LCCollection* col;
   try {
     col = event->getCollection( _inputColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    streamlog_out(DEBUG) << "Not able to get collection " << _inputColName << "from event " << event->getEventNumber() << " in run " << event->getRunNumber() << endl;
+    streamlog_out( DEBUG5 ) << "Not able to get collection " << _inputColName << "from event " << event->getEventNumber() << " in run " << event->getRunNumber() << endl;
     return;
   }
 
@@ -364,7 +364,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
   try {
     hitcol = event->getCollection( _inputDUTColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-//     message<ERROR> ( log() << "Not able to get collection "
+//     message<ERROR5> ( log() << "Not able to get collection "
 //                      << _inputDUTColName
 //                      << "\nfrom event " << event->getEventNumber()
 //                      << " in run " << event->getRunNumber()  );
@@ -376,12 +376,12 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
   int nTrack = col->getNumberOfElements()  ;
 
-  if(debug)message<DEBUG> ( log() << "Total of " << nTrack << " tracks in input collection " );
+  if(debug)message<DEBUG5> ( log() << "Total of " << nTrack << " tracks in input collection " );
 
   int nDUT = 0;
   if(_DUTok) nDUT = hitcol->getNumberOfElements()  ;
 
-  if(debug)message<DEBUG> ( log() << "Total of " << nDUT << " hits in input collection " );
+  if(debug)message<DEBUG5> ( log() << "Total of " << nDUT << " hits in input collection " );
 
 
   for(int itrack=0; itrack< nTrack ; itrack++)
@@ -398,7 +398,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
       int nHit =   trackhits.size();
 
-      if(debug)message<DEBUG> ( log() << "Track " << itrack << " with " << nHit << " hits, Chi2 = "
+      if(debug)message<DEBUG5> ( log() << "Track " << itrack << " with " << nHit << " hits, Chi2 = "
                                 << fittrack->getChi2() << "/" << fittrack->getNdf());
 
 
@@ -451,7 +451,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
           if(hitPlane<0)
             {
-              message<ERROR> ( log() << "Hit outside telescope plane at z [mm] = "  << pos[2] );
+              message<ERROR5> ( log() << "Hit outside telescope plane at z [mm] = "  << pos[2] );
               continue;
             }
 
@@ -478,7 +478,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
                   _measuredQ[hitPlane]=cluster->getTotalCharge();
                 }
 
-              if(debug)message<DEBUG> ( log() << "Measured hit in plane " << hitPlane << " at  X = "
+              if(debug)message<DEBUG5> ( log() << "Measured hit in plane " << hitPlane << " at  X = "
                                         << pos[0] << ", Y = " << pos[1] << ", Q = " << _measuredQ[hitPlane] );
 
             }
@@ -491,7 +491,7 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
               _fittedX[hitPlane]=pos[0];
               _fittedY[hitPlane]=pos[1];
 
-              if(debug)message<DEBUG> ( log() << "Fitted  hit  in plane " << hitPlane << " at  X = "
+              if(debug)message<DEBUG5> ( log() << "Fitted  hit  in plane " << hitPlane << " at  X = "
                                         << pos[0] << ", Y = " << pos[1] );
 
             }
@@ -584,11 +584,11 @@ void EUTelFitTuple::processEvent( LCEvent * event ) {
 
               dutR=sqrt(distmin);
 
-              if(debug)message<DEBUG> ( log() << "Matched DUT hit at X = " << dutX << "   Y = " << dutY
+              if(debug)message<DEBUG5> ( log() << "Matched DUT hit at X = " << dutX << "   Y = " << dutY
                                         << "   Dxy = " << dutR << "   Q = " << dutQ );
             }
           else
-            if(debug)message<DEBUG> ( log() << "DUT hit not matched !" );
+            if(debug)message<DEBUG5> ( log() << "DUT hit not matched !" );
 
 
           // End of if(_DUTok)
@@ -623,7 +623,7 @@ void EUTelFitTuple::end(){
   //        << std::endl ;
 
 
-  message<MESSAGE> ( log() << "N-tuple with "
+  message<MESSAGE5> ( log() << "N-tuple with "
                      << _FitTuple->rows() << " rows created" );
 
 
@@ -652,7 +652,7 @@ void EUTelFitTuple::bookHistos()
 {
 
 
-  message<MESSAGE> ( log() << "Booking fit n-tuple \n" );
+  message<MESSAGE5> ( log() << "Booking fit n-tuple \n" );
 
   std::vector<std::string> _columnNames;
   std::vector<std::string> _columnType;
@@ -701,7 +701,7 @@ void EUTelFitTuple::bookHistos()
   _FitTuple=AIDAProcessor::tupleFactory(this)->create(_FitTupleName, _FitTupleName, _columnNames, _columnType, "");
 
 
-  message<DEBUG> ( log() << "Booking completed \n\n");
+  message<DEBUG5> ( log() << "Booking completed \n\n");
 
   return;
 }

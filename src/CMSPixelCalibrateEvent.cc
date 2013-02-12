@@ -134,16 +134,16 @@ void CMSPixelCalibrateEventProcessor::initializeGeometry() {
 	} else {
 		_isGeometryReady = true;
 	}
-	streamlog_out( MESSAGE ) << "Active SensorPlanes: " << _noOfROC << endl;
-    streamlog_out( MESSAGE ) << "Pixels in X: " << _noOfXPixel << endl;
-    streamlog_out( MESSAGE ) << "Pixels in Y: " << _noOfYPixel << endl;
+	streamlog_out( MESSAGE5 ) << "Active SensorPlanes: " << _noOfROC << endl;
+    streamlog_out( MESSAGE5 ) << "Pixels in X: " << _noOfXPixel << endl;
+    streamlog_out( MESSAGE5 ) << "Pixels in Y: " << _noOfYPixel << endl;
 
 }
 
 
 void CMSPixelCalibrateEventProcessor::initializeCalibration() throw ( marlin::StopProcessingException ) {
 
-    streamlog_out( MESSAGE ) << "Read Calibration Data for ROC ";
+    streamlog_out( MESSAGE5 ) << "Read Calibration Data for ROC ";
     
     for(unsigned int i = 0; i < _noOfROC; i++) {
 
@@ -151,7 +151,7 @@ void CMSPixelCalibrateEventProcessor::initializeCalibration() throw ( marlin::St
         char calibrationFile[100];
             
         sprintf(calibrationFile,_calibrationFile.c_str(), i);
-        streamlog_out( DEBUG ) << "ROC" << i << " File: " << calibrationFile << endl;
+        streamlog_out( DEBUG5 ) << "ROC" << i << " File: " << calibrationFile << endl;
 
         std::ifstream* file = new std::ifstream(calibrationFile);
 
@@ -172,8 +172,8 @@ void CMSPixelCalibrateEventProcessor::initializeCalibration() throw ( marlin::St
             cal_roc.push_back(dummycal);            
         }
 
-        streamlog_out( MESSAGE ) << i << " ";
-        streamlog_out( DEBUG ) << endl << "First pixel: " << cal_roc[0].par0 << " " << cal_roc[0].par1 << " " << cal_roc[0].par2 << " " << cal_roc[0].par3 << endl;
+        streamlog_out( MESSAGE5 ) << i << " ";
+        streamlog_out( DEBUG5 ) << endl << "First pixel: " << cal_roc[0].par0 << " " << cal_roc[0].par1 << " " << cal_roc[0].par2 << " " << cal_roc[0].par3 << endl;
 
         delete file;  
 
@@ -187,13 +187,13 @@ void CMSPixelCalibrateEventProcessor::initializeCalibration() throw ( marlin::St
         
     } // end looping over noOfROC
     
-    streamlog_out( MESSAGE ) << endl;
+    streamlog_out( MESSAGE5 ) << endl;
   
 }
 
 void CMSPixelCalibrateEventProcessor::initializeGaintanhCalibration() throw ( marlin::StopProcessingException ) {
 
-    streamlog_out( MESSAGE ) << "Read calibration data for ROC ";
+    streamlog_out( MESSAGE5 ) << "Read calibration data for ROC ";
     
     int icol;
     int irow;
@@ -209,7 +209,7 @@ void CMSPixelCalibrateEventProcessor::initializeGaintanhCalibration() throw ( ma
         char calibrationFile[100];
             
         sprintf(calibrationFile,_calibrationFile.c_str(), i);
-        streamlog_out( DEBUG ) << "ROC" << i << " File: " << calibrationFile << endl;
+        streamlog_out( DEBUG5 ) << "ROC" << i << " File: " << calibrationFile << endl;
 
         std::ifstream* file = new std::ifstream(calibrationFile);
 
@@ -237,8 +237,8 @@ void CMSPixelCalibrateEventProcessor::initializeGaintanhCalibration() throw ( ma
         }
 
 
-        streamlog_out( MESSAGE ) << i << " ";
-        streamlog_out( DEBUG ) << endl << "First pixel: " << cal_roc[0].par0 << " " << cal_roc[0].par2 << " " << cal_roc[0].par1 << " " << cal_roc[0].par3 << endl;
+        streamlog_out( MESSAGE5 ) << i << " ";
+        streamlog_out( DEBUG5 ) << endl << "First pixel: " << cal_roc[0].par0 << " " << cal_roc[0].par2 << " " << cal_roc[0].par1 << " " << cal_roc[0].par3 << endl;
 
         delete file;  
 
@@ -252,7 +252,7 @@ void CMSPixelCalibrateEventProcessor::initializeGaintanhCalibration() throw ( ma
         
     } // end looping over noOfROC
     
-    streamlog_out( MESSAGE ) << endl;
+    streamlog_out( MESSAGE5 ) << endl;
 }
 
 void CMSPixelCalibrateEventProcessor::init () {
@@ -293,7 +293,7 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
 
 
     if ( _iEvt % 1000 == 0 )
-    streamlog_out ( MESSAGE ) << "Processing event "
+    streamlog_out ( MESSAGE5 ) << "Processing event "
                                << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
                                << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
@@ -303,7 +303,7 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
 
     if ( evt->getEventType() == kEORE ) {
-        streamlog_out ( DEBUG ) << "EORE found: nothing else to do." << endl;
+        streamlog_out ( DEBUG5 ) << "EORE found: nothing else to do." << endl;
         return;
     } else if ( evt->getEventType() == kUNKNOWN ) {
         streamlog_out ( WARNING ) << "Event number " << evt->getEventNumber() << " in run " << evt->getRunNumber()
@@ -355,7 +355,7 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
                		if ( _fillHistos ) fillHistos ( (int)Pixel.getSignal(), (int)correctedPixel->getSignal(), iDetector );
                		
                		// Debug output:
-                    streamlog_out ( DEBUG ) << "evt" << evt->getEventNumber() << " ROC" << iDetector << " Pixel " << Pixel.getXCoord() << " " << Pixel.getYCoord() << ": " << Pixel.getSignal() << " -> " << correctedPixel->getSignal() << endl;
+                    streamlog_out ( DEBUG5 ) << "evt" << evt->getEventNumber() << " ROC" << iDetector << " Pixel " << Pixel.getXCoord() << " " << Pixel.getYCoord() << ": " << Pixel.getSignal() << " -> " << correctedPixel->getSignal() << endl;
                 }
                 else {
                     streamlog_out ( WARNING ) << "evt" << evt->getEventNumber() << " ROC" << iDetector << " Pixel " << Pixel.getXCoord() << " " << Pixel.getYCoord() << ": failed to calibrate! Skipping." << endl;
@@ -393,7 +393,7 @@ void CMSPixelCalibrateEventProcessor::check (LCEvent * /* evt */ ) {
 
 void CMSPixelCalibrateEventProcessor::end() {
 
-    streamlog_out ( MESSAGE ) <<  "Successfully finished" << endl;
+    streamlog_out ( MESSAGE5 ) <<  "Successfully finished" << endl;
 }
 
 
@@ -409,13 +409,13 @@ bool CMSPixelCalibrateEventProcessor::calTanH(double &corr, double y, double p0,
 bool CMSPixelCalibrateEventProcessor::calWeibull(double &corr, double y) {
   //corr = (pow( -log( 1.0 - Ared / ma9 ), 1.0/expo[col][row]) * Gain[col][row] + horz[col][row] ) * keV;
   corr = y;
-  streamlog_out(ERROR) << "Calibration mode not yet implemented. Choose different one." << endl;
+  streamlog_out( ERROR5 ) << "Calibration mode not yet implemented. Choose different one." << endl;
   return false;
 }
 
 bool CMSPixelCalibrateEventProcessor::calLinear(double &corr, double y) {
   corr = y;
-  streamlog_out(ERROR) << "Calibration mode not yet implemented. Choose different one." << endl;
+  streamlog_out( ERROR5 ) << "Calibration mode not yet implemented. Choose different one." << endl;
   return false;
 }
 
@@ -464,7 +464,7 @@ void CMSPixelCalibrateEventProcessor::fillHistos (int raw, int calibrated, int s
 
 void CMSPixelCalibrateEventProcessor::bookHistos() {
 	
-	streamlog_out ( MESSAGE )  << "Booking histograms " << endl;
+	streamlog_out ( MESSAGE5 )  << "Booking histograms " << endl;
 
 	string tempHistoName;
 	string basePath;
@@ -498,7 +498,7 @@ void CMSPixelCalibrateEventProcessor::bookHistos() {
 		NANMapHisto->setTitle("Map of pixels with NAN response");
 				
 	}
-	streamlog_out ( MESSAGE )  << "end of Booking histograms " << endl;
+	streamlog_out ( MESSAGE5 )  << "end of Booking histograms " << endl;
 }
 #endif // USE_AIDA || MARLIN_USE_AIDA
 

@@ -176,7 +176,7 @@ void EUTelAlign::init() {
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
 
-  message<ERROR> ( "Marlin was not built with GEAR support. You need to install GEAR and recompile Marlin with -DUSE_GEAR before continuing.");
+  message<ERROR5> ( "Marlin was not built with GEAR support. You need to install GEAR and recompile Marlin with -DUSE_GEAR before continuing.");
 
   // I'm thinking if this is the case of throwing an exception or
   // not. This is a really error and not something that can
@@ -187,7 +187,7 @@ void EUTelAlign::init() {
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
-    message<ERROR> ( "The GearMgr is not available, for an unknown reason." );
+    message<ERROR5> ( "The GearMgr is not available, for an unknown reason." );
     exit(-1);
   }
 
@@ -215,9 +215,9 @@ void EUTelAlign::processRunHeader (LCRunHeader * rdr) {
   // should be in principle the same as the number of layers in the
   // geometry description
   if ( header->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) {
-    message<ERROR> ( "Error during the geometry consistency check: " );
-    message<ERROR> ( log() << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " );
-    message<ERROR> ( log() << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() << " silicon planes" );
+    message<ERROR5> ( "Error during the geometry consistency check: " );
+    message<ERROR5> ( log() << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " );
+    message<ERROR5> ( log() << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() << " silicon planes" );
     exit(-1);
   }
 
@@ -228,14 +228,14 @@ void EUTelAlign::processRunHeader (LCRunHeader * rdr) {
   // quitting ask the user what to do.
 
   if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
-    message<ERROR> ( "Error during the geometry consistency check: " );
-    message<ERROR> ( log() << "The run header says the GeoID is " << header->getGeoID() );
-    message<ERROR> ( log() << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesNumber() );
+    message<ERROR5> ( "Error during the geometry consistency check: " );
+    message<ERROR5> ( log() << "The run header says the GeoID is " << header->getGeoID() );
+    message<ERROR5> ( log() << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesNumber() );
 
 #ifdef EUTEL_INTERACTIVE
     string answer;
     while (true) {
-      message<ERROR> ( "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" );
+      message<ERROR5> ( "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" );
       cin >> answer;
       // Put the answer in lower case before making the comparison.
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
@@ -350,7 +350,7 @@ void EUTelAlign::processEvent (LCEvent * event) {
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
 
   if ( evt->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
+    message<DEBUG5> ( "EORE found: nothing else to do." );
     return;
   }
 

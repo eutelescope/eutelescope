@@ -295,8 +295,8 @@ void EUTelAPIXHistograms::init() {
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
 
-  message<ERROR> ( "Marlin was not built with GEAR support." );
-  message<ERROR> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
+  message<ERROR5> ( "Marlin was not built with GEAR support." );
+  message<ERROR5> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
 
   // I'm thinking if this is the case of throwing an exception or
   // not. This is a really error and not something that can
@@ -307,13 +307,13 @@ void EUTelAPIXHistograms::init() {
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
-    message<ERROR> ( "The GearMgr is not available, for an unknown reason." );
+    message<ERROR5> ( "The GearMgr is not available, for an unknown reason." );
     exit(-1);
   }
 
   // Read geometry information from GEAR
 
-  message<MESSAGE> ( log() << "Reading telescope geometry description from GEAR ") ;
+  message<MESSAGE5> ( log() << "Reading telescope geometry description from GEAR ") ;
 
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
@@ -335,7 +335,7 @@ void EUTelAPIXHistograms::init() {
 		cout << "_indexDUT = " << _indexDUT << endl;
       if(!_manualOK)
         {
-          message<ERROR> ( log() << "Manual DUT flag set, layer not found ID = "
+          message<ERROR5> ( log() << "Manual DUT flag set, layer not found ID = "
                            << _manualDUTid
                            << "\n Program will terminate! Correct geometry description!");
           exit(-1);
@@ -349,7 +349,7 @@ void EUTelAPIXHistograms::init() {
       }
     else
       {
-        message<ERROR> ( log() << "DUT analysis initialized, but no DUT found in GEAR \n"
+        message<ERROR5> ( log() << "DUT analysis initialized, but no DUT found in GEAR \n"
                          << "Program will terminate! Correct geometry description!");
         exit(-1);
       }
@@ -357,7 +357,7 @@ void EUTelAPIXHistograms::init() {
 
 // Print out geometry information
 
-  message<MESSAGE> ( log() << "D.U.T. plane  ID = " << _iDUT
+  message<MESSAGE5> ( log() << "D.U.T. plane  ID = " << _iDUT
                      << "  at Z [mm] = " << _zDUT );
 
 	// 18 August
@@ -430,13 +430,13 @@ void EUTelAPIXHistograms::processRunHeader( LCRunHeader* runHeader) {
   sprintf(buf, "%i", runNr);
   std::string runNr_str(buf);
 
-  message<MESSAGE> ( log() << "Processing run header " << _nRun
+  message<MESSAGE5> ( log() << "Processing run header " << _nRun
                      << ", run nr " << runNr );
 
   const std::string detectorName = runHeader->getDetectorName();
   const std::string detectorDescription = runHeader->getDescription();
 
-  message<MESSAGE> ( log() << detectorName << " : " << detectorDescription ) ;
+  message<MESSAGE5> ( log() << detectorName << " : " << detectorDescription ) ;
 
 
 	// pick up correct alignment collection
@@ -454,7 +454,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
   if ( euEvent->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
+    message<DEBUG5> ( "EORE found: nothing else to do." );
     return;
   }
 
@@ -471,7 +471,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
   int evtNr = event->getEventNumber();
 
 
-  if(debug)message<MESSAGE> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
+  if(debug)message<MESSAGE5> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
 
   //
   // Get input collections
@@ -490,7 +490,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
   try {
     hitcol = event->getCollection( _inputHitColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    message<ERROR> ( log() << "Not able to get collection "
+    message<ERROR5> ( log() << "Not able to get collection "
                      << _inputHitColName
                      << "\nfrom event " << event->getEventNumber()
                      << " in run " << event->getRunNumber()  );
@@ -536,7 +536,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
   int nTrack = trackcol->getNumberOfElements()  ;
 
 
-  if(debug)message<MESSAGE> ( log() << "Total of " << nTrack << " tracks in input collection " );
+  if(debug)message<MESSAGE5> ( log() << "Total of " << nTrack << " tracks in input collection " );
 
   if (_manualDUTid >=10 ) 
   {	
@@ -624,7 +624,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
     
   if(debug)
   {
-      message<MESSAGE> ( log() << _fittedX.size()  << " fitted positions at DUT " );
+      message<MESSAGE5> ( log() << _fittedX.size()  << " fitted positions at DUT " );
   }
 
   if( _manualDUTid >= 10 )
@@ -645,7 +645,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_FittedXYHistoName]))->fill(_fittedX[ifit],_fittedY[ifit]);
 
-      if(debug)message<MESSAGE> ( log() << "Fit " << ifit
+      if(debug)message<MESSAGE5> ( log() << "Fit " << ifit
                                 << "   X = " << _fittedX[ifit]
                                 << "   Y = " << _fittedY[ifit]) ;
 #endif
@@ -775,7 +775,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
   if(_DUTok) nHit = hitcol->getNumberOfElements();
 
-  if(debug)message<MESSAGE> ( log() << "Total of " << nHit << " tracker hits in input collection " );
+  if(debug)message<MESSAGE5> ( log() << "Total of " << nHit << " tracker hits in input collection " );
 
 
   for(int ihit=0; ihit< nHit ; ihit++)
@@ -895,7 +895,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
         }
     }
 
-    if(debug)message<MESSAGE> ( log() << _measuredX.size() << " hits at DUT " );
+    if(debug)message<MESSAGE5> ( log() << _measuredX.size() << " hits at DUT " );
 
 	if (_noHitYet && ( _measuredX.size()==0 ) ) {
 		_eventsWithNoHit++;
@@ -944,7 +944,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
       }
 
 #endif
-      if(debug)message<MESSAGE> ( log() << "Hit " << ihit
+      if(debug)message<MESSAGE5> ( log() << "Hit " << ihit
                                 << "   X = " << _measuredX[ihit]
                                 << "   Y = " << _measuredY[ihit]) ;
     }
@@ -1241,9 +1241,9 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
   if(debug)
     {
-      message<MESSAGE> ( log() << nMatch << " DUT hits matched to fitted tracks ");
-      message<MESSAGE> ( log() << _measuredX.size() << " DUT hits not matched to any track ");
-      message<MESSAGE> ( log() << _fittedX.size() << " fitted tracks not matched to any DUT hit ");
+      message<MESSAGE5> ( log() << nMatch << " DUT hits matched to fitted tracks ");
+      message<MESSAGE5> ( log() << _measuredX.size() << " DUT hits not matched to any track ");
+      message<MESSAGE5> ( log() << _fittedX.size() << " fitted tracks not matched to any DUT hit ");
     }
 
   if( _manualDUTid >= 10 )
@@ -1340,10 +1340,10 @@ void EUTelAPIXHistograms::bookHistos()
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-  message<MESSAGE> ( log() << "Booking histograms " );
+  message<MESSAGE5> ( log() << "Booking histograms " );
 
 
-  message<MESSAGE> ( log() << "Histogram information searched in " << _histoInfoFileName);
+  message<MESSAGE5> ( log() << "Histogram information searched in " << _histoInfoFileName);
 
   auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
   EUTelHistogramInfo    * histoInfo;
@@ -1352,11 +1352,11 @@ void EUTelAPIXHistograms::bookHistos()
   try {
     isHistoManagerAvailable = histoMgr->init();
   } catch ( ios::failure& e) {
-    message<ERROR> ( log() << "I/O problem with " << _histoInfoFileName << "\n"
+    message<ERROR5> ( log() << "I/O problem with " << _histoInfoFileName << "\n"
                      << "Continuing without histogram manager"    );
     isHistoManagerAvailable = false;
   } catch ( ParseException& e ) {
-    message<ERROR> ( log() << e.what() << "\n"
+    message<ERROR5> ( log() << e.what() << "\n"
                      << "Continuing without histogram manager" );
     isHistoManagerAvailable = false;
   }
@@ -1378,7 +1378,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_MeasuredXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           measXNBin = histoInfo->_xBin;
           measXMin  = histoInfo->_xMin;
           measXMax  = histoInfo->_xMax;
@@ -1424,7 +1424,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_MeasuredYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           measYNBin = histoInfo->_xBin;
           measYMin  = histoInfo->_xMin;
           measYMax  = histoInfo->_xMax;
@@ -1474,7 +1474,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_MeasuredXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           measXNBin = histoInfo->_xBin;
           measXMin  = histoInfo->_xMin;
           measXMax  = histoInfo->_xMax;
@@ -1520,7 +1520,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_FittedXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           fitXNBin = histoInfo->_xBin;
           fitXMin  = histoInfo->_xMin;
           fitXMax  = histoInfo->_xMax;
@@ -1551,7 +1551,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_FittedYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           fitYNBin = histoInfo->_xBin;
           fitYMin  = histoInfo->_xMin;
           fitYMax  = histoInfo->_xMax;
@@ -1587,7 +1587,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_FittedXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           fitXNBin = histoInfo->_xBin;
           fitXMin  = histoInfo->_xMin;
           fitXMax  = histoInfo->_xMax;
@@ -1622,7 +1622,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -1663,7 +1663,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftYNBin = histoInfo->_xBin;
           shiftYMin  = histoInfo->_xMin;
           shiftYMax  = histoInfo->_xMax;
@@ -1706,7 +1706,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftXvsYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -1731,7 +1731,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftXvsXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -1764,7 +1764,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftYvsXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftYNBin = histoInfo->_xBin;
           shiftYMin  = histoInfo->_xMin;
           shiftYMax  = histoInfo->_xMax;
@@ -1792,7 +1792,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftYvsYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftYNBin = histoInfo->_xBin;
           shiftYMin  = histoInfo->_xMin;
           shiftYMax  = histoInfo->_xMax;
@@ -1825,7 +1825,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftXvsY2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -1855,7 +1855,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftXvsX2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -1891,7 +1891,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftYvsX2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftYNBin = histoInfo->_xBin;
           shiftYMin  = histoInfo->_xMin;
           shiftYMax  = histoInfo->_xMax;
@@ -1918,7 +1918,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftYvsY2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftYNBin = histoInfo->_xBin;
           shiftYMin  = histoInfo->_xMin;
           shiftYMax  = histoInfo->_xMax;
@@ -1952,7 +1952,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -1998,7 +1998,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EfficiencyXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           effiXNBin = histoInfo->_xBin;
           effiXMin  = histoInfo->_xMin;
           effiXMax  = histoInfo->_xMax;
@@ -2041,7 +2041,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EfficiencyYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           effiYNBin = histoInfo->_xBin;
           effiYMin  = histoInfo->_xMin;
           effiYMax  = histoInfo->_xMax;
@@ -2085,7 +2085,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EfficiencyXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           effiXNBin = histoInfo->_xBin;
           effiXMin  = histoInfo->_xMin;
           effiXMax  = histoInfo->_xMax;
@@ -2129,7 +2129,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_NoiseXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           noiseXNBin = histoInfo->_xBin;
           noiseXMin  = histoInfo->_xMin;
           noiseXMax  = histoInfo->_xMax;
@@ -2160,7 +2160,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_NoiseYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           noiseYNBin = histoInfo->_xBin;
           noiseYMin  = histoInfo->_xMin;
           noiseYMax  = histoInfo->_xMax;
@@ -2196,7 +2196,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_NoiseXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           noiseXNBin = histoInfo->_xBin;
           noiseXMin  = histoInfo->_xMin;
           noiseXMax  = histoInfo->_xMax;
@@ -2233,7 +2233,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EtaXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           etaXNBin = histoInfo->_xBin;
           etaXMin  = histoInfo->_xMin;
           etaXMax  = histoInfo->_xMax;
@@ -2267,7 +2267,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EtaYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           etaYNBin = histoInfo->_xBin;
           etaYMin  = histoInfo->_xMin;
           etaYMax  = histoInfo->_xMax;
@@ -2302,7 +2302,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EtaX2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           etaXNBin = histoInfo->_xBin;
           etaXMin  = histoInfo->_xMin;
           etaXMax  = histoInfo->_xMax;
@@ -2338,7 +2338,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EtaY2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           etaYNBin = histoInfo->_xBin;
           etaYMin  = histoInfo->_xMin;
           etaYMax  = histoInfo->_xMax;
@@ -2375,7 +2375,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EtaX3DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           etaXNBin = histoInfo->_xBin;
           etaXMin  = histoInfo->_xMin;
           etaXMax  = histoInfo->_xMax;
@@ -2415,7 +2415,7 @@ void EUTelAPIXHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EtaY3DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           etaXNBin = histoInfo->_xBin;
           etaXMin  = histoInfo->_xMin;
           etaXMax  = histoInfo->_xMax;
@@ -2539,16 +2539,16 @@ AIDA::IHistogram1D * _NumberOfFittedTracksHisto = AIDAProcessor::histogramFactor
 
 
 
-  message<MESSAGE> ( log() <<  _aidaHistoMap.size() << " histograms booked");
+  message<MESSAGE5> ( log() <<  _aidaHistoMap.size() << " histograms booked");
 
 
   map<string, AIDA::IBaseHistogram *>::iterator mapIter;
   for(mapIter = _aidaHistoMap.begin(); mapIter != _aidaHistoMap.end() ; mapIter++ )
-    message<DEBUG> ( log() <<  mapIter->first << " : " <<  (mapIter->second)->title() ) ;
+    message<DEBUG5> ( log() <<  mapIter->first << " : " <<  (mapIter->second)->title() ) ;
 
-  message<DEBUG> ( log() << "Histogram booking completed \n\n");
+  message<DEBUG5> ( log() << "Histogram booking completed \n\n");
 #else
-  message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
+  message<MESSAGE5> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
 #endif
 
   return;

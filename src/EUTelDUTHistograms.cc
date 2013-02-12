@@ -465,8 +465,8 @@ void EUTelDUTHistograms::init() {
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
 
-  message<ERROR> ( "Marlin was not built with GEAR support." );
-  message<ERROR> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
+  message<ERROR5> ( "Marlin was not built with GEAR support." );
+  message<ERROR5> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
 
   // I'm thinking if this is the case of throwing an exception or
   // not. This is a really error and not something that can
@@ -477,13 +477,13 @@ void EUTelDUTHistograms::init() {
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
-    message<ERROR> ( "The GearMgr is not available, for an unknown reason." );
+    message<ERROR5> ( "The GearMgr is not available, for an unknown reason." );
     exit(-1);
   }
 
   // Read geometry information from GEAR
 
-  message<MESSAGE> ( log() << "Reading telescope geometry description from GEAR ") ;
+  message<MESSAGE5> ( log() << "Reading telescope geometry description from GEAR ") ;
 
   _siPlanesParameters  = const_cast<gear::SiPlanesParameters* > (&(Global::GEAR->getSiPlanesParameters()));
   _siPlanesLayerLayout = const_cast<gear::SiPlanesLayerLayout*> ( &(_siPlanesParameters->getSiPlanesLayerLayout() ));
@@ -504,7 +504,7 @@ void EUTelDUTHistograms::init() {
 
       if(!_manualOK)
         {
-          message<ERROR> ( log() << "Manual DUT flag set, layer not found ID = "
+          message<ERROR5> ( log() << "Manual DUT flag set, layer not found ID = "
                            << _manualDUTid
                            << "\n Program will terminate! Correct geometry description!");
           exit(-1);
@@ -518,7 +518,7 @@ void EUTelDUTHistograms::init() {
       }
     else
       {
-        message<ERROR> ( log() << "DUT analysis initialized, but no DUT found in GEAR \n"
+        message<ERROR5> ( log() << "DUT analysis initialized, but no DUT found in GEAR \n"
                          << "Program will terminate! Correct geometry description!");
         exit(-1);
       }
@@ -526,7 +526,7 @@ void EUTelDUTHistograms::init() {
 
 // Print out geometry information
 
-  message<MESSAGE> ( log() << "D.U.T. plane  ID = " << _iDUT
+  message<MESSAGE5> ( log() << "D.U.T. plane  ID = " << _iDUT
                      << "  at Z [mm] = " << _zDUT );
 
 
@@ -551,21 +551,21 @@ void EUTelDUTHistograms::processRunHeader( LCRunHeader* runHeader) {
 
   int runNr = runHeader->getRunNumber();
 
-  message<MESSAGE> ( log() << "Processing run header " << _nRun
+  message<MESSAGE5> ( log() << "Processing run header " << _nRun
                      << ", run nr " << runNr );
 
   const std::string detectorName = runHeader->getDetectorName();
   const std::string detectorDescription = runHeader->getDescription();
   //  const std::vector<std::string> * subDets = runHeader->getActiveSubdetectors();
 
-  message<MESSAGE> ( log() << detectorName << " : " << detectorDescription ) ;
+  message<MESSAGE5> ( log() << detectorName << " : " << detectorDescription ) ;
 
 
 }
 
 void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
-  streamlog_out( DEBUG) << "EUTelDUTHistograms::processEvent " << endl;
+  streamlog_out( DEBUG5 ) << "EUTelDUTHistograms::processEvent " << endl;
 
 //  if ( isFirstEvent() )
   {
@@ -574,10 +574,10 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
        _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
       for(size_t ii = 0 ; ii < static_cast<size_t>(_referenceHitVec->getNumberOfElements()); ii++)
      {
-      streamlog_out( DEBUG ) << " check output_refhit at : " << _referenceHitVec << " ";
+      streamlog_out( DEBUG5 ) << " check output_refhit at : " << _referenceHitVec << " ";
       EUTelReferenceHit* output_refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-      streamlog_out( DEBUG ) << " at : " <<  output_refhit << endl;     
-      streamlog_out( DEBUG ) << "CHK sensorID: " <<  output_refhit->getSensorID(   )     
+      streamlog_out( DEBUG5 ) << " at : " <<  output_refhit << endl;     
+      streamlog_out( DEBUG5 ) << "CHK sensorID: " <<  output_refhit->getSensorID(   )     
                               << " x    :" <<        output_refhit->getXOffset(    )    
                               << " y    :" <<        output_refhit->getYOffset(    )    
                               << " z    :" <<        output_refhit->getZOffset(    )    
@@ -589,7 +589,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   }
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
   if ( euEvent->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
+    message<DEBUG5> ( "EORE found: nothing else to do." );
     return;
   }
 
@@ -607,7 +607,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   int evtNr = event->getEventNumber();
 
 
-  if(debug)message<MESSAGE> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
+  if(debug)message<MESSAGE5> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
 
 
 
@@ -617,34 +617,34 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
    if( _inputFitHitColName != "dummy" )
    {
-     if(debug)message<MESSAGE> ( log() << "inputFitHitColName = " << _inputFitHitColName << " (not dummy)" << endl); 
+     if(debug)message<MESSAGE5> ( log() << "inputFitHitColName = " << _inputFitHitColName << " (not dummy)" << endl); 
      if( read_track_from_collections( event ) > 0 ) 
      {
-//       message<MESSAGE> ( log() << "no tracks existing!" << endl); 
+//       message<MESSAGE5> ( log() << "no tracks existing!" << endl); 
        return;
      }
    } 
    else
    {
-     if(debug)message<MESSAGE> ( log() << "inputFitHitColName = " << _inputFitHitColName << " (should be called dummy)" << endl); 
+     if(debug)message<MESSAGE5> ( log() << "inputFitHitColName = " << _inputFitHitColName << " (should be called dummy)" << endl); 
      if( read_track( event ) > 0 ) 
      {
-//       message<MESSAGE> ( log() << "no tracks existing!" << endl); 
+//       message<MESSAGE5> ( log() << "no tracks existing!" << endl); 
        return;
      }
    }
   
   if(debug)
   {
-    message<MESSAGE> ( log() << _maptrackid  << " fitted tracks " ); 
+    message<MESSAGE5> ( log() << _maptrackid  << " fitted tracks " ); 
     for( int itrack=0; itrack<_maptrackid; itrack++)
     {
-      message<MESSAGE> ( log() <<" track " << itrack << " has " << _fittedX[itrack].size()  << " fitted positions at DUT " );
+      message<MESSAGE5> ( log() <<" track " << itrack << " has " << _fittedX[itrack].size()  << " fitted positions at DUT " );
     }
   } 
 //return;
 
-  if(debug)message<MESSAGE> ( log() << _measuredX.size() << " hits at DUT " );
+  if(debug)message<MESSAGE5> ( log() << _measuredX.size() << " hits at DUT " );
 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -657,7 +657,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedYHistoName]))->fill(_fittedY[itrack][ifit]);
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_FittedXYHistoName]))->fill(_fittedX[itrack][ifit],_fittedY[itrack][ifit]);
-      if(debug)message<MESSAGE> ( log() << "Fit " << ifit << " [track:"<< itrack << "] "
+      if(debug)message<MESSAGE5> ( log() << "Fit " << ifit << " [track:"<< itrack << "] "
                                 << "   X = " << _fittedX[itrack][ifit]
                                 << "   Y = " << _fittedY[itrack][ifit]) ;
     }
@@ -675,7 +675,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredYHistoName]))->fill(_measuredY[ihit]);
 
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_MeasuredXYHistoName]))->fill(_measuredX[ihit],_measuredY[ihit]);
-      if(debug)message<MESSAGE> ( log() << "Hit " << ihit
+      if(debug)message<MESSAGE5> ( log() << "Hit " << ihit
                                 << "   X = " << _measuredX[ihit]
                                 << "   Y = " << _measuredY[ihit]) ;
     }
@@ -716,9 +716,9 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
             (_measuredX[ihit]-_fittedX[itrack][ifit])*(_measuredX[ihit]-_fittedX[itrack][ifit])
             + (_measuredY[ihit]-_fittedY[itrack][ifit])*(_measuredY[ihit]-_fittedY[itrack][ifit]);
 
-                  if(debug)message<MESSAGE> ( log() << "Fit ["<< itrack << ":" << _maptrackid <<"], ifit= " << ifit << " ["<< _fittedX[itrack][ifit] << ":" << _fittedY[itrack][ifit] << "]" << endl) ;
-                  if(debug)message<MESSAGE> ( log() << "rec " << ihit << " ["<< _measuredX[ihit] << ":" << _measuredY[ihit] << "]" << endl) ;
-                  if(debug)message<MESSAGE> ( log() << "distance : " << TMath::Sqrt( dist2rd )  << endl) ;
+                  if(debug)message<MESSAGE5> ( log() << "Fit ["<< itrack << ":" << _maptrackid <<"], ifit= " << ifit << " ["<< _fittedX[itrack][ifit] << ":" << _fittedY[itrack][ifit] << "]" << endl) ;
+                  if(debug)message<MESSAGE5> ( log() << "rec " << ihit << " ["<< _measuredX[ihit] << ":" << _measuredY[ihit] << "]" << endl) ;
+                  if(debug)message<MESSAGE5> ( log() << "distance : " << TMath::Sqrt( dist2rd )  << endl) ;
           if(dist2rd<distmin)
             {
               distmin = dist2rd;
@@ -1049,9 +1049,9 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
   if(debug)
     {     
-      message<MESSAGE> ( log() << nMatch << " DUT hits matched to fitted tracks ");
-      message<MESSAGE> ( log() << _measuredX.size() << " DUT hits not matched to any track ");
-      message<MESSAGE> ( log() << "track "<<itrack<<" has " << _fittedX[itrack].size() << " _fittedX[itrack].size() not matched to any DUT hit ");
+      message<MESSAGE5> ( log() << nMatch << " DUT hits matched to fitted tracks ");
+      message<MESSAGE5> ( log() << _measuredX.size() << " DUT hits not matched to any track ");
+      message<MESSAGE5> ( log() << "track "<<itrack<<" has " << _fittedX[itrack].size() << " _fittedX[itrack].size() not matched to any DUT hit ");
     }
 
 
@@ -1127,7 +1127,7 @@ void EUTelDUTHistograms::end(){
         std::string histoY  = _ShiftYHistoName;
 
 
-  streamlog_out(MESSAGE) << " ";
+  streamlog_out( MESSAGE5 ) << " ";
   printf("%20s  x: %7d  %8.3f %8.3f   y: %7d %8.3f %8.3f \n", histoX.c_str(), 
   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoX ]))->allEntries(), 
   (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoX ]))->mean()*1000., 
@@ -1147,10 +1147,10 @@ void EUTelDUTHistograms::bookHistos()
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-  message<MESSAGE> ( log() << "Booking histograms " );
+  message<MESSAGE5> ( log() << "Booking histograms " );
 
 
-  message<MESSAGE> ( log() << "Histogram information searched in " << _histoInfoFileName);
+  message<MESSAGE5> ( log() << "Histogram information searched in " << _histoInfoFileName);
 
   auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
   EUTelHistogramInfo    * histoInfo;
@@ -1159,11 +1159,11 @@ void EUTelDUTHistograms::bookHistos()
   try {
     isHistoManagerAvailable = histoMgr->init();
   } catch ( ios::failure& e) {
-    message<ERROR> ( log() << "I/O problem with " << _histoInfoFileName << "\n"
+    message<ERROR5> ( log() << "I/O problem with " << _histoInfoFileName << "\n"
                      << "Continuing without histogram manager"    );
     isHistoManagerAvailable = false;
   } catch ( ParseException& e ) {
-    message<ERROR> ( log() << e.what() << "\n"
+    message<ERROR5> ( log() << e.what() << "\n"
                      << "Continuing without histogram manager" );
     isHistoManagerAvailable = false;
   }
@@ -1186,7 +1186,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ClusterSizeXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           clusXNBin = histoInfo->_xBin;
           clusXMin  = histoInfo->_xMin;
           clusXMax  = histoInfo->_xMax;
@@ -1219,7 +1219,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ClusterSizeYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           clusYNBin = histoInfo->_xBin;
           clusYMin  = histoInfo->_xMin;
           clusYMax  = histoInfo->_xMax;
@@ -1251,7 +1251,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ClusterSizeXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           clusYNBin = histoInfo->_yBin;
           clusYMin  = histoInfo->_yMin;
           clusYMax  = histoInfo->_yMax;
@@ -1300,7 +1300,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_MeasuredXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           measXNBin = histoInfo->_xBin;
           measXMin  = histoInfo->_xMin;
           measXMax  = histoInfo->_xMax;
@@ -1346,7 +1346,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_MeasuredYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           measYNBin = histoInfo->_xBin;
           measYMin  = histoInfo->_xMin;
           measYMax  = histoInfo->_xMax;
@@ -1396,7 +1396,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_MeasuredXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           measXNBin = histoInfo->_xBin;
           measXMin  = histoInfo->_xMin;
           measXMax  = histoInfo->_xMax;
@@ -1442,7 +1442,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_FittedXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           fitXNBin = histoInfo->_xBin;
           fitXMin  = histoInfo->_xMin;
           fitXMax  = histoInfo->_xMax;
@@ -1473,7 +1473,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_FittedYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           fitYNBin = histoInfo->_xBin;
           fitYMin  = histoInfo->_xMin;
           fitYMax  = histoInfo->_xMax;
@@ -1509,7 +1509,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_FittedXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           fitXNBin = histoInfo->_xBin;
           fitXMin  = histoInfo->_xMin;
           fitXMax  = histoInfo->_xMax;
@@ -1541,7 +1541,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -1711,7 +1711,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftYNBin = histoInfo->_xBin;
           shiftYMin  = histoInfo->_xMin;
           shiftYMax  = histoInfo->_xMax;
@@ -1883,7 +1883,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftXvsYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -1908,7 +1908,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftXvsXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -1941,7 +1941,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftYvsXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftYNBin = histoInfo->_xBin;
           shiftYMin  = histoInfo->_xMin;
           shiftYMax  = histoInfo->_xMax;
@@ -1969,7 +1969,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftYvsYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftYNBin = histoInfo->_xBin;
           shiftYMin  = histoInfo->_xMin;
           shiftYMax  = histoInfo->_xMax;
@@ -2002,7 +2002,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftXvsY2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -2032,7 +2032,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftXvsX2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -2068,7 +2068,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftYvsX2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftYNBin = histoInfo->_xBin;
           shiftYMin  = histoInfo->_xMin;
           shiftYMax  = histoInfo->_xMax;
@@ -2095,7 +2095,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftYvsY2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftYNBin = histoInfo->_xBin;
           shiftYMin  = histoInfo->_xMin;
           shiftYMax  = histoInfo->_xMax;
@@ -2129,7 +2129,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_ShiftXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           shiftXNBin = histoInfo->_xBin;
           shiftXMin  = histoInfo->_xMin;
           shiftXMax  = histoInfo->_xMax;
@@ -2307,7 +2307,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EfficiencyXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           effiXNBin = histoInfo->_xBin;
           effiXMin  = histoInfo->_xMin;
           effiXMax  = histoInfo->_xMax;
@@ -2350,7 +2350,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EfficiencyYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           effiYNBin = histoInfo->_xBin;
           effiYMin  = histoInfo->_xMin;
           effiYMax  = histoInfo->_xMax;
@@ -2394,7 +2394,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EfficiencyXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           effiXNBin = histoInfo->_xBin;
           effiXMin  = histoInfo->_xMin;
           effiXMax  = histoInfo->_xMax;
@@ -2438,7 +2438,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_NoiseXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           noiseXNBin = histoInfo->_xBin;
           noiseXMin  = histoInfo->_xMin;
           noiseXMax  = histoInfo->_xMax;
@@ -2469,7 +2469,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_NoiseYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           noiseYNBin = histoInfo->_xBin;
           noiseYMin  = histoInfo->_xMin;
           noiseYMax  = histoInfo->_xMax;
@@ -2505,7 +2505,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_NoiseXYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           noiseXNBin = histoInfo->_xBin;
           noiseXMin  = histoInfo->_xMin;
           noiseXMax  = histoInfo->_xMax;
@@ -2542,7 +2542,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EtaXHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           etaXNBin = histoInfo->_xBin;
           etaXMin  = histoInfo->_xMin;
           etaXMax  = histoInfo->_xMax;
@@ -2576,7 +2576,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EtaYHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           etaYNBin = histoInfo->_xBin;
           etaYMin  = histoInfo->_xMin;
           etaYMax  = histoInfo->_xMax;
@@ -2611,7 +2611,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EtaX2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           etaXNBin = histoInfo->_xBin;
           etaXMin  = histoInfo->_xMin;
           etaXMax  = histoInfo->_xMax;
@@ -2647,7 +2647,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EtaY2DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           etaYNBin = histoInfo->_xBin;
           etaYMin  = histoInfo->_xMin;
           etaYMax  = histoInfo->_xMax;
@@ -2684,7 +2684,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo( _PixelEfficiencyHistoName );
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           pixXNBin = histoInfo->_xBin;
           pixXMin  = histoInfo->_xMin;
           pixXMax  = histoInfo->_xMax;
@@ -2707,7 +2707,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo( _PixelResolutionXHistoName );
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           pixXNBin = histoInfo->_xBin;
           pixXMin  = histoInfo->_xMin;
           pixXMax  = histoInfo->_xMax;
@@ -2730,7 +2730,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo( _PixelResolutionYHistoName );
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           pixXNBin = histoInfo->_xBin;
           pixXMin  = histoInfo->_xMin;
           pixXMax  = histoInfo->_xMax;
@@ -2753,7 +2753,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo( _PixelChargeSharingHistoName );
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           pixXNBin = histoInfo->_xBin;
           pixXMin  = histoInfo->_xMin;
           pixXMax  = histoInfo->_xMax;
@@ -2790,7 +2790,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EtaX3DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           etaXNBin = histoInfo->_xBin;
           etaXMin  = histoInfo->_xMin;
           etaXMax  = histoInfo->_xMax;
@@ -2830,7 +2830,7 @@ void EUTelDUTHistograms::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_EtaY3DHistoName);
       if ( histoInfo )
         {
-          message<DEBUG> ( log() << (* histoInfo ) );
+          message<DEBUG5> ( log() << (* histoInfo ) );
           etaXNBin = histoInfo->_xBin;
           etaXMin  = histoInfo->_xMin;
           etaXMax  = histoInfo->_xMax;
@@ -2852,16 +2852,16 @@ void EUTelDUTHistograms::bookHistos()
 
 // List all booked histogram - check of histogram map filling
 
-  message<MESSAGE> ( log() <<  _aidaHistoMap.size() << " histograms booked");
+  message<MESSAGE5> ( log() <<  _aidaHistoMap.size() << " histograms booked");
 
 
   map<string, AIDA::IBaseHistogram *>::iterator mapIter;
   for(mapIter = _aidaHistoMap.begin(); mapIter != _aidaHistoMap.end() ; mapIter++ )
-    message<DEBUG> ( log() <<  mapIter->first << " : " <<  (mapIter->second)->title() ) ;
+    message<DEBUG5> ( log() <<  mapIter->first << " : " <<  (mapIter->second)->title() ) ;
 
-  message<DEBUG> ( log() << "Histogram booking completed \n\n");
+  message<DEBUG5> ( log() << "Histogram booking completed \n\n");
 #else
-  message<MESSAGE> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
+  message<MESSAGE5> ( log() << "No histogram produced because Marlin doesn't use AIDA" );
 #endif
 
   return;
@@ -2874,11 +2874,11 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
   double minDistance =  numeric_limits< double >::max() ;
 //  double * hitPosition = const_cast<double * > (hit->getPosition());
 
-  message<DEBUG> ( log() <<  "referencehit collection: " << _referenceHitCollectionName << " at "<< _referenceHitVec << endl);
+  message<DEBUG5> ( log() <<  "referencehit collection: " << _referenceHitCollectionName << " at "<< _referenceHitVec << endl);
 //  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
   if( _referenceHitVec == 0)
   {
-    streamlog_out(DEBUG) << "_referenceHitVec is empty" << endl;
+    streamlog_out( DEBUG5 ) << "_referenceHitVec is empty" << endl;
     return 0;
   }
 
@@ -2897,10 +2897,10 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
         TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
  
         double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-        streamlog_out(DEBUG) << " hit " << hit[0] << " "<< hit[1] << " " << hit[2] << endl;
-        streamlog_out(DEBUG) << " " << refhit->getXOffset() << " " << refhit->getYOffset() << " " << refhit->getZOffset() << endl;
-        streamlog_out(DEBUG) << " " << refhit->getAlpha() << " " << refhit->getBeta() << " " << refhit->getGamma() << endl;
-        streamlog_out(DEBUG) << " distance " << distance  << endl;
+        streamlog_out( DEBUG5 ) << " hit " << hit[0] << " "<< hit[1] << " " << hit[2] << endl;
+        streamlog_out( DEBUG5 ) << " " << refhit->getXOffset() << " " << refhit->getYOffset() << " " << refhit->getZOffset() << endl;
+        streamlog_out( DEBUG5 ) << " " << refhit->getAlpha() << " " << refhit->getBeta() << " " << refhit->getGamma() << endl;
+        streamlog_out( DEBUG5 ) << " distance " << distance  << endl;
  
         if ( distance < minDistance ) 
         {
@@ -2921,11 +2921,11 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if(refhit == 0 ) continue;
 //        if( sensorID != refhit->getSensorID() )  continue;
-         streamlog_out(DEBUG) << " _referenceHitVec " <<  _referenceHitVec << " " <<  _referenceHitCollectionName.c_str()  << "  " << refhit << " at "  
+         streamlog_out( DEBUG5 ) << " _referenceHitVec " <<  _referenceHitVec << " " <<  _referenceHitCollectionName.c_str()  << "  " << refhit << " at "  
                                 << refhit->getXOffset() << " " << refhit->getYOffset() << " " <<  refhit->getZOffset() << " "  
                                 << refhit->getAlpha()   << " " <<  refhit->getBeta()   << " " <<  refhit->getGamma()   << endl ;
-         message<DEBUG> ( log() << "iPlane " << refhit->getSensorID() << " hitPos:  [" << hit[0] << " " << hit[1] << " " <<  hit[2] << "]  distance: " <<  minDistance  << endl );
-         message<DEBUG> ( log() << "sensorID: " <<  sensorID << endl ); 
+         message<DEBUG5> ( log() << "iPlane " << refhit->getSensorID() << " hitPos:  [" << hit[0] << " " << hit[1] << " " <<  hit[2] << "]  distance: " <<  minDistance  << endl );
+         message<DEBUG5> ( log() << "sensorID: " <<  sensorID << endl ); 
       }
    } 
 
@@ -2940,7 +2940,7 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit * hit, int& size
 
   if(hit==0)
   {
-    streamlog_out( ERROR ) << "An invalid hit pointer supplied! will exit now\n" << endl;
+    streamlog_out( ERROR5 ) << "An invalid hit pointer supplied! will exit now\n" << endl;
     return -1;
   }
 
@@ -3026,7 +3026,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   try {
     trackcol = event->getCollection( _inputTrackColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    streamlog_out(DEBUG) << "Not able to get collection " << _inputTrackColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
+    streamlog_out( DEBUG5 ) << "Not able to get collection " << _inputTrackColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     return 1;
 //    throw SkipEventException(this);
   }
@@ -3036,7 +3036,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
 
   int nTrack = trackcol->getNumberOfElements()  ;
 
-  if(debug)message<MESSAGE> ( log() << "Total of " << nTrack << " tracks in input collection " );
+  if(debug)message<MESSAGE5> ( log() << "Total of " << nTrack << " tracks in input collection " );
 
   if(nTrack == 0 ) return 1;
 
@@ -3060,7 +3060,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   try {
     fit__col = event->getCollection( _inputFitHitColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    streamlog_out(DEBUG) << "Not able to get collection " << _inputFitHitColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
+    streamlog_out( DEBUG5 ) << "Not able to get collection " << _inputFitHitColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     return 1;
 //    throw SkipEventException(this);
   }
@@ -3069,7 +3069,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   try {
     rec__col = event->getCollection( _inputRecHitColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    streamlog_out(DEBUG) << "Not able to get collection " << _inputRecHitColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
+    streamlog_out( DEBUG5 ) << "Not able to get collection " << _inputRecHitColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     return 2;
 //    throw SkipEventException(this);
   }
@@ -3081,9 +3081,9 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   int nTracks = fit__col->getNumberOfElements()  ;
   int nRecHits = rec__col->getNumberOfElements()  ;
 
-  if(debug)message<MESSAGE> ( log() << "\n tracks " << nTracks << " \n hits " <<  nRecHits << endl );
-  if(debug)message<MESSAGE> ( log() << "Total of " << nTracks  <<" (fit) hits in input collection " );
-  if(debug)message<MESSAGE> ( log() << "Total of " << nRecHits <<" (rec) hits  in input collection " );
+  if(debug)message<MESSAGE5> ( log() << "\n tracks " << nTracks << " \n hits " <<  nRecHits << endl );
+  if(debug)message<MESSAGE5> ( log() << "Total of " << nTracks  <<" (fit) hits in input collection " );
+  if(debug)message<MESSAGE5> ( log() << "Total of " << nRecHits <<" (rec) hits  in input collection " );
 
 
 // looking through a track info:
@@ -3139,14 +3139,14 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
 //              const double * pos = fithit->getPosition();
 //              int hsensorID = guessSensorID(pos);
 
-//              streamlog_out ( MESSAGE) << " pos " << pos[0]<< " " << pos[1] << " " << pos[2]  << " " << hsensorID << endl;
+//              streamlog_out ( MESSAGE5 ) << " pos " << pos[0]<< " " << pos[1] << " " << pos[2]  << " " << hsensorID << endl;
 //              dist =  pos[2] - _zDUT ;
 
               // Look at fitted hits only!
 
               if( hsensorID == _iDUT  )  // get all fitted hits on board
                 {
-//                  if(debug)message<MESSAGE> ( log() << "---   hit " << itrack << " id " << hsensorID << " point " <<  pos[0] << " "<< pos[1] << " " << pos[2] << endl );
+//                  if(debug)message<MESSAGE5> ( log() << "---   hit " << itrack << " id " << hsensorID << " point " <<  pos[0] << " "<< pos[1] << " " << pos[2] << endl );
 
                   _fittedX[_maptrackid].push_back(pos[0]);
                   _fittedY[_maptrackid].push_back(pos[1]);
@@ -3176,7 +3176,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
           _localX[_maptrackid].push_back(locX);
           _localY[_maptrackid].push_back(locY);
 
-          if(debug)message<MESSAGE> ( log() << "_fittedX element [" << _fittedX[_maptrackid].size()-1 <<  "]" << _fittedX[_maptrackid][ _fittedX.size()-1] << " " << _fittedY[_maptrackid][ _fittedX.size()-1] << " for DUT " << hsensorID << endl);
+          if(debug)message<MESSAGE5> ( log() << "_fittedX element [" << _fittedX[_maptrackid].size()-1 <<  "]" << _fittedX[_maptrackid][ _fittedX.size()-1] << " " << _fittedY[_maptrackid][ _fittedX.size()-1] << " for DUT " << hsensorID << endl);
 
 //                  break;
                 }
@@ -3192,15 +3192,15 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   {
     for(int ii=0;ii<_maptrackid;ii++)
     {
-      message<MESSAGE> ( log() << "for _maptrackid=" << ii << " found fithits " << _fittedX[ii].size() <<  endl);      
+      message<MESSAGE5> ( log() << "for _maptrackid=" << ii << " found fithits " << _fittedX[ii].size() <<  endl);      
       for(unsigned int jj=0; jj < _fittedX[ii].size(); jj++)
       { 
-         message<MESSAGE> ( log() << "fit hits [" << jj << " of " << _fittedX[ii].size() << "] " << _fittedX[ii][jj] << " " <<  _fittedY[ii][jj] <<  endl);             
+         message<MESSAGE5> ( log() << "fit hits [" << jj << " of " << _fittedX[ii].size() << "] " << _fittedX[ii][jj] << " " <<  _fittedY[ii][jj] <<  endl);             
       }   
     }
   }
 
-  if(debug) message<MESSAGE> ( log() << "rechits " << endl );
+  if(debug) message<MESSAGE5> ( log() << "rechits " << endl );
 
    // Clear local tables with measured position
   _clusterSizeX.clear();
@@ -3272,11 +3272,11 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
           _measuredY.push_back(pos[1]);
           _bgmeasuredX.push_back(pos[0]);
           _bgmeasuredY.push_back(pos[1]);
-          if(debug)message<MESSAGE> ( log() << "_measured element [" << _measuredX.size()-1 <<  "]"  << _measuredX[ _measuredX.size()-1] << " " << _measuredY[ _measuredX.size()-1] << " for DUT " << hsensorID << endl);
+          if(debug)message<MESSAGE5> ( log() << "_measured element [" << _measuredX.size()-1 <<  "]"  << _measuredX[ _measuredX.size()-1] << " " << _measuredY[ _measuredX.size()-1] << " for DUT " << hsensorID << endl);
                }
             }
 
-    if(debug)message<MESSAGE> ( log() << "Total of " << _measuredX.size() << " hits at DUT " << _iDUT << endl);
+    if(debug)message<MESSAGE5> ( log() << "Total of " << _measuredX.size() << " hits at DUT " << _iDUT << endl);
       
 
  return 0;
@@ -3316,7 +3316,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
   try {
     trackcol = event->getCollection( _inputTrackColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    streamlog_out(DEBUG) << "Not able to get collection " << _inputTrackColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
+    streamlog_out( DEBUG5 ) << "Not able to get collection " << _inputTrackColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     return 1;
 //    throw SkipEventException(this);
   }
@@ -3327,7 +3327,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
   int nTrack = trackcol->getNumberOfElements()  ;
 
 
-  if(debug)message<MESSAGE> ( log() << "Total of " << nTrack << " tracks in input collection " );
+  if(debug)message<MESSAGE5> ( log() << "Total of " << nTrack << " tracks in input collection " );
 
 // looking through a track info:
 // initialise a class-internal track counter:
@@ -3440,7 +3440,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
   try {
     hitcol = event->getCollection( _inputHitColName ) ;
   } catch (lcio::DataNotAvailableException& e) {
-    streamlog_out(DEBUG) << "Not able to get collection " << _inputHitColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
+    streamlog_out( DEBUG5 ) << "Not able to get collection " << _inputHitColName << " from event " << event->getEventNumber() << " in run " << event->getRunNumber() <<  endl;
     //
     // Do not skip event if DUT hits missing - efficiency and
     //   background calculations still have to be done!
@@ -3452,7 +3452,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
 
   nHit = hitcol->getNumberOfElements();
 
-  if(debug)message<MESSAGE> ( log() << "Total of " << nHit << " tracker hits in input collection " );
+  if(debug)message<MESSAGE5> ( log() << "Total of " << nHit << " tracker hits in input collection " );
 
 
   for(int ihit=0; ihit< nHit ; ihit++)
@@ -3501,7 +3501,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
        }
     }
 
-    if(debug)message<MESSAGE> ( log() << "Total of " << _measuredX.size() << " hits at DUT " << _iDUT << endl);
+    if(debug)message<MESSAGE5> ( log() << "Total of " << _measuredX.size() << " hits at DUT " << _iDUT << endl);
 
  return 0;
 }

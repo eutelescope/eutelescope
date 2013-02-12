@@ -611,7 +611,7 @@ void EUTelMille::init() {
   // booking histograms
   bookHistos();
 
-  streamlog_out ( MESSAGE ) << "Initialising Mille..." << endl;
+  streamlog_out ( MESSAGE5 ) << "Initialising Mille..." << endl;
   _mille = new Mille(_binaryFilename.c_str());
 
   for(int i = 0; i < _maxTrackCandidates; i++)
@@ -1117,7 +1117,7 @@ void  EUTelMille::FillHotPixelMap(LCEvent *event)
               }
               catch(...)
               {
-                 streamlog_out ( ERROR ) << "problem adding pixel to hotpixel map! " << endl;
+                 streamlog_out ( ERROR5 ) << "problem adding pixel to hotpixel map! " << endl;
               }
              }
 
@@ -1355,7 +1355,7 @@ void EUTelMille::processEvent (LCEvent * event) {
             {
                 if(cluster->getTotalCharge() <= getMimosa26ClusterChargeMin() )
                 {
-		  streamlog_out( DEBUG ) << " Thin cluster (charge <=" << getMimosa26ClusterChargeMin() << ") found and removed (hit type " << hit->getType() << " on detector w/ id " << cluster->getDetectorID() << ")" << endl;
+		  streamlog_out( DEBUG5 ) << " Thin cluster (charge <=" << getMimosa26ClusterChargeMin() << ") found and removed (hit type " << hit->getType() << " on detector w/ id " << cluster->getDetectorID() << ")" << endl;
 		  delete cluster; 
 		  continue;
                 }
@@ -1424,7 +1424,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
     std::vector<IntVec > indexarray;
 
-    streamlog_out( DEBUG ) << "Event #" << _iEvt << std::endl;
+    streamlog_out( DEBUG5 ) << "Event #" << _iEvt << std::endl;
     findtracks2(0, indexarray, IntVec(), _allHitsArray, 0, 0);
     for(size_t i = 0; i < indexarray.size(); i++)
       {
@@ -1448,7 +1448,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 
 
     _nTracks = (int) indexarray.size();
-    streamlog_out( DEBUG ) << "Track finder found " << _nTracks << std::endl;
+    streamlog_out( DEBUG5 ) << "Track finder found " << _nTracks << std::endl;
 
     // end check if running in input mode 0 or 2 => perform simple track finding
   } else if (_inputMode == 1) {
@@ -2606,7 +2606,7 @@ void EUTelMille::processEvent (LCEvent * event) {
 int EUTelMille::guessSensorID( TrackerHitImpl * hit ) {
   if(hit==0)
 {
-    streamlog_out( ERROR ) << "An invalid hit pointer supplied! will exit now\n" << endl;
+    streamlog_out( ERROR5 ) << "An invalid hit pointer supplied! will exit now\n" << endl;
     return -1;
 }
 
@@ -2656,7 +2656,7 @@ int EUTelMille::guessSensorID( TrackerHitImpl * hit ) {
           }
           catch(...)
           {
-	    streamlog_out(ERROR) << "guessSensorID() produced an exception!" << endl;
+	    streamlog_out( ERROR5 ) << "guessSensorID() produced an exception!" << endl;
           }
 
 return -1;
@@ -2843,7 +2843,7 @@ bool EUTelMille::hitContainsHotPixels( TrackerHitImpl   * hit)
       }
       catch(lcio::Exception e){
 	// catch specific exceptions
-          streamlog_out ( ERROR ) << "Exception occured in hitContainsHotPixels(): " << e.what() << endl;
+          streamlog_out ( ERROR5 ) << "Exception occured in hitContainsHotPixels(): " << e.what() << endl;
       }
     }
   catch(...)
@@ -3126,7 +3126,7 @@ void EUTelMille::end() {
 
       steerFile.close();
 
-      streamlog_out ( MESSAGE ) << "File " << _pedeSteerfileName << " written." << endl;
+      streamlog_out ( MESSAGE5 ) << "File " << _pedeSteerfileName << " written." << endl;
 
     } else {
 
@@ -3153,7 +3153,7 @@ void EUTelMille::end() {
 
       std::string command = "pede " + _pedeSteerfileName;
 
-      streamlog_out ( MESSAGE ) << "Starting pede...: " << command.c_str() << endl;
+      streamlog_out ( MESSAGE5 ) << "Starting pede...: " << command.c_str() << endl;
 
       bool encounteredError = false;
       
@@ -3161,7 +3161,7 @@ void EUTelMille::end() {
       redi::ipstream pede( command.c_str(), redi::pstreams::pstdout|redi::pstreams::pstderr ); 
       
       if (!pede.is_open()) {
-	  streamlog_out( ERROR ) << "Pede cannot be executed: command not found in the path" << endl;
+	  streamlog_out( ERROR5 ) << "Pede cannot be executed: command not found in the path" << endl;
 	  encounteredError = true;	  
       } else {
 
@@ -3176,7 +3176,7 @@ void EUTelMille::end() {
 	    if (!finished[0])
 	      {
 		while ((n = pede.err().readsome(buf, sizeof(buf))) > 0){
-		  streamlog_out( ERROR ).write(buf, n).flush();
+		  streamlog_out( ERROR5 ).write(buf, n).flush();
 		  string error (buf, n);
 		  pedeerrors << error;
 		  encounteredError = true;
@@ -3210,7 +3210,7 @@ void EUTelMille::end() {
 	{
 	  const char * pch = strstr(pedeoutput.str().data(),"Too many rejects");
 	  if (pch){
-	    streamlog_out ( ERROR ) << "Pede stopped due to the large number of rejects. " << endl;
+	    streamlog_out ( ERROR5 ) << "Pede stopped due to the large number of rejects. " << endl;
 	    encounteredError = true;
 	  }
 	}
@@ -3218,7 +3218,7 @@ void EUTelMille::end() {
 	{
 	  const char* pch0 = strstr(pedeoutput.str().data(),"Sum(Chi^2)/Sum(Ndf) = ");
 	  if (pch0 != 0){
-	    streamlog_out ( DEBUG ) << " Parsing pede output for final chi2/ndf result.. " << endl;
+	    streamlog_out ( DEBUG5 ) << " Parsing pede output for final chi2/ndf result.. " << endl;
 	    // search for the equal sign after which the result for chi2/ndf is stated within the next 80 chars 
 	    // (with offset of 22 chars since pch points to beginning of "Sum(..." string just found)
 	    char* pch = (char*) memchr (pch0+22, '=', 180);
@@ -3242,10 +3242,10 @@ void EUTelMille::end() {
         {
           streamlog_out ( MESSAGE7 ) << "Pede successfully finished" << endl;
         } else {
-          streamlog_out ( ERROR ) << "Problem during Pede execution, exit status: " << pede.rdbuf()->status() << ", error messages (repeated here): " << endl;
-	  streamlog_out ( ERROR ) << pedeerrors.str() << endl;
+          streamlog_out ( ERROR5 ) << "Problem during Pede execution, exit status: " << pede.rdbuf()->status() << ", error messages (repeated here): " << endl;
+	  streamlog_out ( ERROR5 ) << pedeerrors.str() << endl;
 	  // TODO: decide what to do now; exit? and if, how?
-          streamlog_out ( ERROR ) << "Will exit now" << endl;
+          streamlog_out ( ERROR5 ) << "Will exit now" << endl;
 	  //exit(EXIT_FAILURE); // FIXME: can lead to (ROOT?) seg faults - points to corrupt memory? run valgrind...
 	  return; // does fine for now
 	}
@@ -3628,10 +3628,10 @@ void EUTelMille::bookHistos() {
 
 
 #ifdef EUTEL_INTERACTIVE
-    streamlog_out ( ERROR ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
+    streamlog_out ( ERROR5 ) << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" << endl;
     string answer;
     while ( true ) {
-      streamlog_out ( ERROR ) << "[q]/[c]" << endl;
+      streamlog_out ( ERROR5 ) << "[q]/[c]" << endl;
       cin >> answer;
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
       if ( answer == "q" ) {

@@ -70,7 +70,7 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
   try {
     inputFile.open (_fileName.c_str (), ios::in);
   } catch (exception & e) {
-    message<ERROR> ( log() << "Problem opening file " << _fileName << ". Exiting." );
+    message<ERROR5> ( log() << "Problem opening file " << _fileName << ". Exiting." );
     exit (-1);
   }
   
@@ -93,7 +93,7 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
 
     LCCollectionVec *rawData = new LCCollectionVec (LCIO::TRACKERRAWDATA);
     
-    if (eventNumber % 10 == 0)  message<MESSAGE> ( log() << "Converting event " << eventNumber );
+    if (eventNumber % 10 == 0)  message<MESSAGE5> ( log() << "Converting event " << eventNumber );
 
     
     if (isFirstEvent ()) {
@@ -154,8 +154,8 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
       } else {
 	// that's strange. it might be that the last event was not complete
 	// break here
-	message<ERROR> ( log() << "Event " << eventNumber << " finished un-expectedly. " );
-	message<ERROR> ( log() << "Consider to check the input file, or limit the conversion to " 	    
+	message<ERROR5> ( log() << "Event " << eventNumber << " finished un-expectedly. " );
+	message<ERROR5> ( log() << "Consider to check the input file, or limit the conversion to " 	    
 			 << eventNumber - 1 << " events" << endl << "Sorry to quit!" ) ;
 	exit(-1);
       }
@@ -205,5 +205,5 @@ void EUTelSucimaImagerReader::readDataSource (int numEvents) {
 
 void EUTelSucimaImagerReader::end () {
   delete[]_buffer;
-  message<MESSAGE> ("Successfully finished") ;
+  message<MESSAGE5> ("Successfully finished") ;
 }

@@ -261,7 +261,7 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
                                                                LCCollectionVec * inputCollectionVec,
                                                                LCCollectionVec * outputCollectionVec) const {
 
-  //  message<DEBUG> ( log() << "Applying cluster separation algorithm
+  //  message<DEBUG5> ( log() << "Applying cluster separation algorithm
   //  " << _separationAlgo );
   streamlog_out ( DEBUG0 ) <<  "Found "  << setVector.size() << " group(s) of merging clusters on event " << _iEvt << endl;
 
@@ -312,7 +312,7 @@ bool EUTelClusterSeparationProcessor::applySeparationAlgorithm(std::vector<std::
           cluster = new EUTelBrickedClusterImpl( static_cast<TrackerDataImpl*> (pulse->getTrackerData()) );
         else
         {
-          message<ERROR> ( "Unknown cluster type. Sorry for quitting" ) ;
+          message<ERROR5> ( "Unknown cluster type. Sorry for quitting" ) ;
           throw UnknownDataTypeException("Cluster type unknown");
         }
 

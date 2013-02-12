@@ -127,7 +127,7 @@ void EUTelAPIXApplyAlign::processEvent (LCEvent * event) {
     LCCollectionVec * alignmentCollectionVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection(_alignmentCollectionName));
     
     if (fevent) {
-      streamlog_out ( MESSAGE ) << "The alignment collection contains: " <<  alignmentCollectionVec->size()
+      streamlog_out ( MESSAGE5 ) << "The alignment collection contains: " <<  alignmentCollectionVec->size()
                                 << " planes " << endl;
       
       for ( size_t iPos = 0; iPos < alignmentCollectionVec->size(); ++iPos ) {
@@ -137,7 +137,7 @@ void EUTelAPIXApplyAlign::processEvent (LCEvent * event) {
 
       map< int , int >::iterator mapIter = _lookUpTable.begin();
       for(;mapIter != _lookUpTable.end(); mapIter++){
-        streamlog_out ( MESSAGE ) << "Sensor ID = " << mapIter->first
+        streamlog_out ( MESSAGE5 ) << "Sensor ID = " << mapIter->first
                                 << " is in position " << mapIter->second << endl;
       }
       _isFirstEvent = false;
@@ -174,7 +174,7 @@ void EUTelAPIXApplyAlign::processEvent (LCEvent * event) {
 	outputPosition[1] -= alignment->getYOffset();
 	outputPosition[2] -= alignment->getZOffset();
 
-	streamlog_out(DEBUG) << "position: " 
+	streamlog_out( DEBUG5 ) << "position: " 
 			       << inputPosition[0] << "," 
 			       << inputPosition[1] << ","
 			       << inputPosition[2] << " -> "
@@ -186,7 +186,7 @@ void EUTelAPIXApplyAlign::processEvent (LCEvent * event) {
         // alignment constants. So the idea is to eventually advice
         // the users if running in DEBUG and copy the not aligned hit
         // in the new collection.
-        streamlog_out ( DEBUG ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit " << iHit << endl;
+        streamlog_out ( DEBUG5 ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit " << iHit << endl;
       }
       outputHit->setPosition( outputPosition );
       outputCollectionVec->push_back( outputHit );

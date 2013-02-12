@@ -313,7 +313,7 @@ void EUTelXCorrelator::bookHistos() {
       int    telYNBin = static_cast< int > ( safetyFactor ) * _siPlanesLayerLayout->getSensitiveNpixelY( iTel );
 
       tempHistoName = dirNames[0] + "/" + _hitXCorrelationHistoName + to_string( sensorID );
-      streamlog_out( DEBUG ) << "Booking histo " << tempHistoName ;
+      streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName ;
 
       tempHistoTitle = "Correlation of the DUT and the X detector " + to_string( sensorID );
 
@@ -329,7 +329,7 @@ void EUTelXCorrelator::bookHistos() {
 
       // repeat for the y direction
       tempHistoName = dirNames[1] + "/" + _hitYCorrelationHistoName + to_string( sensorID );
-      streamlog_out( DEBUG ) << "Booking histo " << tempHistoName ;
+      streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName ;
 
       tempHistoTitle = "Correlation of the DUT and the Y detector " + to_string( sensorID );
 

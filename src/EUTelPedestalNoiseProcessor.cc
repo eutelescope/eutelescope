@@ -1028,7 +1028,7 @@ void EUTelPedestalNoiseProcessor::firstLoop(LCEvent * event) {
                   if ( AIDA::IProfile2D* profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) )
                     profile->fill(static_cast<double> (xPixel), static_cast<double> (yPixel), static_cast<double> (adcValues[iPixel]));
                   else {
-                    streamlog_out ( ERROR ) << "Irreversible error: " << ss.str() << " is not available. Sorry for quitting." << endl;
+                    streamlog_out ( ERROR5 ) << "Irreversible error: " << ss.str() << " is not available. Sorry for quitting." << endl;
                     exit(-1);
                   }
                 }

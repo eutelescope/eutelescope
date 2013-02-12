@@ -143,7 +143,7 @@ void EUTelOutputProcessor::end(){
 
   }
 
-  message<MESSAGE> ( log() << "Writing the output file " << _lcioOutputFile );
+  message<MESSAGE5> ( log() << "Writing the output file " << _lcioOutputFile );
   _lcWrt->close() ;
 
 }

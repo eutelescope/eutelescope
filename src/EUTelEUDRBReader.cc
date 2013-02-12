@@ -78,7 +78,7 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
   try {
     inputFile.open (_fileName.c_str (), ios::in | ios::binary);
   } catch (exception & e) {
-    message<ERROR> ( log() << "Problem opening file " << _fileName << ". Exiting." );
+    message<ERROR5> ( log() << "Problem opening file " << _fileName << ". Exiting." );
     exit (-1);
   }
   
@@ -88,7 +88,7 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
   try {
     inputFile.read(reinterpret_cast<char*>(_fileHeader), sizeof(EUDRBFileHeader));
   } catch (exception & e) {
-    message<ERROR> ( log() << "Problem reading the file header" );
+    message<ERROR5> ( log() << "Problem reading the file header" );
     exit(-1);
   }
 
@@ -143,7 +143,7 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
     try {
       inputFile.read(reinterpret_cast<char*>(&eventHeader), sizeof(eventHeader));
     } catch (exception & e) {
-      message<ERROR> ( log() << "Problem reading the event header for event " );
+      message<ERROR5> ( log() << "Problem reading the event header for event " );
       exit(-1);
     }
     
@@ -158,7 +158,7 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
     try {
       inputFile.read(reinterpret_cast<char*>(_buffer), _fileHeader->dataSize );
     } catch (exception& e) {
-      message<ERROR> ( log() << "Problem reading the data block for event " << iEvent );
+      message<ERROR5> ( log() << "Problem reading the data block for event " << iEvent );
       exit(-1);
     }
     
@@ -254,7 +254,7 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
     try {
       inputFile.read(reinterpret_cast<char*>(&eventTrailer), sizeof(eventTrailer));
     } catch (exception & e) {
-      message<ERROR> ( log() << "Problem reading the event trailer on event " << iEvent );
+      message<ERROR5> ( log() << "Problem reading the event trailer on event " << iEvent );
       exit(-1);
     }
     // crosscheck the trailer
@@ -292,7 +292,7 @@ void EUTelEUDRBReader::readDataSource (int numEvents) {
 void EUTelEUDRBReader::end () {
 
   delete [] _buffer;
-  message<MESSAGE> ( "Successfully finished" );
+  message<MESSAGE5> ( "Successfully finished" );
 
 }
 #endif

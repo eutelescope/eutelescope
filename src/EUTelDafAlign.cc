@@ -143,7 +143,7 @@ void EUTelDafAlign::dafInit() {
   }
   if(_runPede){
     _mille = new Mille(_binaryFilename.c_str());
-    streamlog_out ( MESSAGE ) << "The filename for the mille binary file is: " << _binaryFilename.c_str() << endl;
+    streamlog_out ( MESSAGE5 ) << "The filename for the mille binary file is: " << _binaryFilename.c_str() << endl;
   }
   
   for(size_t ii = 0; ii < _dutPlanes.size(); ii++){
@@ -331,13 +331,13 @@ void EUTelDafAlign::generatePedeSteeringFile(){
   steerFile << endl;
   steerFile << "end" << endl;
   steerFile.close();
-  streamlog_out ( MESSAGE ) << "File " << _pedeSteerfileName << " written." << endl;
+  streamlog_out ( MESSAGE5 ) << "File " << _pedeSteerfileName << " written." << endl;
 }
 
 void EUTelDafAlign::steerLine(ofstream &steerFile, int label, int iden, std::vector<int> idens){
   if( find(idens.begin(), idens.end(), iden) != idens.end()){
     steerFile << label << " 0.0 0.0" << endl; 
-    streamlog_out(MESSAGE) << "Steering line: " << label << " 0.0 0.0" << endl; 
+    streamlog_out( MESSAGE5 ) << "Steering line: " << label << " 0.0 0.0" << endl; 
   } else {
     steerFile << label << " 0.0 -1.0" << endl; 
   }
@@ -351,25 +351,25 @@ void EUTelDafAlign::runPede(){
   which.close();
  
   if (  which.rdbuf()->status() == 255 ) {
-    streamlog_out( ERROR ) << "Cannot find pede program in path. Nothing to do." << endl;
+    streamlog_out( ERROR5 ) << "Cannot find pede program in path. Nothing to do." << endl;
     throw runtime_error("Cannot find pede in path.");
   }
-  streamlog_out ( MESSAGE ) << "Starting pede..." << endl;
+  streamlog_out ( MESSAGE5 ) << "Starting pede..." << endl;
   redi::ipstream pede( command.c_str() );
   string output;
-  while ( getline( pede, output ) ) { streamlog_out( MESSAGE ) << output << endl; }
+  while ( getline( pede, output ) ) { streamlog_out( MESSAGE5 ) << output << endl; }
   // wait for the pede execution to finish
   pede.close();
   // check the exit value of pede
   if ( pede.rdbuf()->status() == 0 ) {
-    streamlog_out ( MESSAGE ) << "Pede successfully finished" << endl;
+    streamlog_out ( MESSAGE5 ) << "Pede successfully finished" << endl;
   } else {
     throw runtime_error("Pede exitted abmormally.");
   }
   // reading back the millepede.res file and getting the results. 
   string millepedeResFileName = "millepede.res";
 
-  streamlog_out ( MESSAGE ) << "Reading back " << millepedeResFileName << endl
+  streamlog_out ( MESSAGE5 ) << "Reading back " << millepedeResFileName << endl
 			     << "Saving the alignment constant into " << _alignmentConstantLCIOFile << endl;
 
   // open the millepede ASCII output file
@@ -449,7 +449,7 @@ void EUTelDafAlign::runPede(){
       //Last line, add constant to collection
       constant->setSensorID( _system.planes.at(plane).getSensorID() );
       constantsCollection->push_back( constant );
-      streamlog_out ( MESSAGE ) << (*constant) << endl;
+      streamlog_out ( MESSAGE5 ) << (*constant) << endl;
       break;
     default:
       throw runtime_error("Error parsing millepede.res");

@@ -390,7 +390,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
          event->getCollection( _inputClusterCollectionName );
  
          _hasClusterCollection = true;
-         streamlog_out ( MESSAGE ) << "found " << i <<  " name " <<   _inputClusterCollectionName.c_str() << endl;
+         streamlog_out ( MESSAGE5 ) << "found " << i <<  " name " <<   _inputClusterCollectionName.c_str() << endl;
  
        } catch ( lcio::Exception& e ) {
          streamlog_out ( WARNING ) << "NOT found " << i <<  " name " <<   _inputClusterCollectionName.c_str() << endl;
@@ -630,7 +630,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
             internalCluster->getCenterOfGravity( internalXCenter, internalYCenter ) ;
 
-            streamlog_out ( DEBUG ) << "Filling histo " << externalSensorID << " " << internalSensorID << endl;
+            streamlog_out ( DEBUG5 ) << "Filling histo " << externalSensorID << " " << internalSensorID << endl;
 
 
             // we input the coordinates in the correlation matrix, one
@@ -687,7 +687,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
       LCCollectionVec * inputHitCollection = static_cast< LCCollectionVec *>
         ( event->getCollection( _inputHitCollectionName )) ;
 //////
-//streamlog_out(MESSAGE) << "creating a LCGENERICOBJECT collection " <<endl;
+//streamlog_out( MESSAGE5 ) << "creating a LCGENERICOBJECT collection " <<endl;
 //      _outputCorrelatedHitCollectionVec  = new LCCollectionVec( LCIO::TRACKERHIT      );
 //      LCCollectionVec*  t_outputCorrelatedHitCollectionVec  = new LCCollectionVec( LCIO::TRACKERHIT      );
 /*    try 
@@ -850,7 +850,7 @@ if( (int)iplane_unique.size()> _minNumberOfCorrelatedHits &&  trackX.size()==tra
 /*
   if( _outputCorrelatedHitCollectionVec != 0 )
   {
-    streamlog_out(MESSAGE) << "adding to event " <<endl; 
+    streamlog_out( MESSAGE5 ) << "adding to event " <<endl; 
     event->addCollection( _outputCorrelatedHitCollectionVec, "correlatorhits" );
   }
 */
@@ -863,7 +863,7 @@ void EUTelCorrelator::end() {
 
     if( _hasClusterCollection && !_hasHitCollection)
     {
-        streamlog_out(MESSAGE) << "The input CollectionVec contains ClusterCollection, calculating offest values " << endl;
+        streamlog_out( MESSAGE5 ) << "The input CollectionVec contains ClusterCollection, calculating offest values " << endl;
         
         for ( int iin = 0 ; iin < _siPlanesLayerLayout->getNLayers(); iin++ ) 
         {           
@@ -955,12 +955,12 @@ void EUTelCorrelator::end() {
                    _correlationBandCenterY += ybin*xbin;
                 }
 
-//                streamlog_out(MESSAGE) << "Clustering Offset values: " ; 
+//                streamlog_out( MESSAGE5 ) << "Clustering Offset values: " ; 
 //                printf("for plane %3d  the X offset is %9.3f px, the Y offset is %9.3f px \n", 
 //                        inPlane, 
 //                        _correlationBandBinsX == 0. ? 0.: _correlationBandCenterX/_correlationBandBinsX, 
 //                        _correlationBandBinsY == 0. ? 0.: _correlationBandCenterY/_correlationBandBinsY );
-//                streamlog_out(MESSAGE) << endl;
+//                streamlog_out( MESSAGE5 ) << endl;
 
                 int inPlaneGear = _sensorIDVecMap[inPlane];
 
@@ -974,13 +974,13 @@ void EUTelCorrelator::end() {
                 else
                     _siPlanesOffsetY[ inPlaneGear ] = 0.;    
                
-                streamlog_out(MESSAGE) << "Clustering Offset values: " ; 
+                streamlog_out( MESSAGE5 ) << "Clustering Offset values: " ; 
                 printf("for plane %3d  the X offset is %9.3f um, the Y offset is %9.3f um  \n", 
                         inPlane, 
                         _siPlanesOffsetX[inPlaneGear], 
                         _siPlanesOffsetY[inPlaneGear]
                         );
-                streamlog_out(MESSAGE) << endl;
+                streamlog_out( MESSAGE5 ) << endl;
 
            }
         }
@@ -988,7 +988,7 @@ void EUTelCorrelator::end() {
  
     if( _hasHitCollection)
     {
-        streamlog_out(MESSAGE) << "The input CollectionVec contains HitCollection, calculating offest values " << endl;
+        streamlog_out( MESSAGE5 ) << "The input CollectionVec contains HitCollection, calculating offest values " << endl;
  
         for ( int iin = 0 ; iin < _siPlanesLayerLayout->getNLayers(); iin++ ) 
         {           
@@ -1100,11 +1100,11 @@ void EUTelCorrelator::end() {
 //                _siPlanesOffsetX[ inPlane ] = _siPlanesPitchX[inPlane]*(_correlationBandCenterX/_correlationBandBinsX);
 //                _siPlanesOffsetY[ inPlane ] = _siPlanesPitchY[inPlane]*(_correlationBandCenterY/_correlationBandBinsY);
                
-                streamlog_out(MESSAGE) << "Hit Offset values: " ; 
-                streamlog_out (MESSAGE) << " plane : " << inPlane << " " ;
-                streamlog_out (MESSAGE) << " X offset : "<<  (_correlationBandBinsX == 0. ? 0.: _correlationBandCenterX/_correlationBandBinsX) ; 
-                streamlog_out (MESSAGE) << " Y offset : "<<  (_correlationBandBinsY == 0. ? 0.: _correlationBandCenterY/_correlationBandBinsY) ; 
-                streamlog_out(MESSAGE) << endl;
+                streamlog_out( MESSAGE5 ) << "Hit Offset values: " ; 
+                streamlog_out ( MESSAGE5 ) << " plane : " << inPlane << " " ;
+                streamlog_out ( MESSAGE5 ) << " X offset : "<<  (_correlationBandBinsX == 0. ? 0.: _correlationBandCenterX/_correlationBandBinsX) ; 
+                streamlog_out ( MESSAGE5 ) << " Y offset : "<<  (_correlationBandBinsY == 0. ? 0.: _correlationBandCenterY/_correlationBandBinsY) ; 
+                streamlog_out( MESSAGE5 ) << endl;
 
 
             }
@@ -1255,7 +1255,7 @@ void EUTelCorrelator::bookHistos() {
             // book X
             tempHistoName = "ClusterX/" + _clusterXCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
 
-            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+            streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
             int     xBin = _maxX[ row ] - _minX[ row ] + 1;
             double  xMin = static_cast<double >(_minX[ row ]) - 0.5;
@@ -1279,7 +1279,7 @@ if(yBin>100) yBin=yBin/4;
             // book Y
             tempHistoName =  "ClusterY/" +  _clusterYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
 
-            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+            streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
             xBin = _maxY[ row ] - _minY[ row ] + 1;
             xMin = static_cast<double >(_minY[ row ]) - 0.5;
@@ -1304,7 +1304,7 @@ if(yBin>100) yBin=yBin/4;
             // book X
             tempHistoName =  "ClusterXShift/" +  _clusterXCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
 
-            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+            streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
             xBin = _maxX[row] ;
             yBin = _maxX[row] + _maxX[row] ;
@@ -1330,7 +1330,7 @@ if(yBin>100) yBin=yBin/4;
             // book Y
             tempHistoName =  "ClusterYShift/" +  _clusterYCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
 
-            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+            streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
             xBin = _maxY[row]  ;
             yBin = _maxY[row] + _maxY[row] ;
@@ -1386,7 +1386,7 @@ if(yBin>100) yBin=yBin/4;
         
             tempHistoName  =  "HitX/" +  _hitXCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
 
-            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+            streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
             string 
             tempHistoTitle =  "HitX/" +  _hitXCorrelationHistoName + "_d" + to_string( row ) + "_d" +  to_string( col );
@@ -1413,7 +1413,7 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             colMax = safetyFactor * ( _hitMaxY[col]);
 
             tempHistoName =  "HitY/" + _hitYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
-            streamlog_out( DEBUG ) << "Booking cloud " << tempHistoName << endl;
+            streamlog_out( DEBUG5 ) << "Booking cloud " << tempHistoName << endl;
             tempHistoTitle = "HitY/" + _hitYCorrelationHistoName + "_d" + to_string( row ) + "_d" + to_string( col ) ;
  
 if(colNBin>100) colNBin=colNBin/4;
@@ -1432,7 +1432,7 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             // book X
             tempHistoName =  "HitXShift/" +  _hitXCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
 
-            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+            streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
             rowNBin = _maxX[row];
             colNBin = _maxX[row] + _maxX[row] ;
@@ -1443,11 +1443,11 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             colMin = safetyFactor * ( _hitMinX[row] - _hitMaxX[row]);
             colMax = safetyFactor * ( _hitMaxX[row] - _hitMinX[row]);
 
-            streamlog_out (MESSAGE) << " GEAR contents: " ;
-            streamlog_out (MESSAGE) << "X:: r= " << r << "  sizeX:" << _siPlanesLayerLayout->getSensitiveSizeX( r ) ;
-            streamlog_out (MESSAGE) << "X:: r= " << c << "  sizeX:" << _siPlanesLayerLayout->getSensitiveSizeX( c ) ;
-            streamlog_out (MESSAGE) << "[col: "<< colNBin<<" row:" << rowNBin << "]";
-            streamlog_out (MESSAGE) << endl;
+            streamlog_out ( MESSAGE5 ) << " GEAR contents: " ;
+            streamlog_out ( MESSAGE5 ) << "X:: r= " << r << "  sizeX:" << _siPlanesLayerLayout->getSensitiveSizeX( r ) ;
+            streamlog_out ( MESSAGE5 ) << "X:: r= " << c << "  sizeX:" << _siPlanesLayerLayout->getSensitiveSizeX( c ) ;
+            streamlog_out ( MESSAGE5 ) << "[col: "<< colNBin<<" row:" << rowNBin << "]";
+            streamlog_out ( MESSAGE5 ) << endl;
 
 if(colNBin>100) colNBin=colNBin/4;
 if(rowNBin>100) rowNBin=rowNBin/4;
@@ -1461,7 +1461,7 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             // book Y
             tempHistoName =  "HitYShift/" +  _hitYCorrShiftHistoName + "_d" + to_string( row ) + "_d" + to_string( col );
 
-            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+            streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
             rowNBin = _maxY[row];
             colNBin = _maxY[row] + _maxY[row] ;
@@ -1473,10 +1473,10 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             colMax = safetyFactor * ( _hitMaxY[row] - _hitMinY[row]);
 
             
-            streamlog_out (MESSAGE) << " GEAR contents: " ;
-            streamlog_out (MESSAGE) << "Y:: r= " << r << "  sizeY:" << _siPlanesLayerLayout->getSensitiveSizeY( r ) ;
-            streamlog_out (MESSAGE) << "Y:: r= " << c << "  sizeY:" << _siPlanesLayerLayout->getSensitiveSizeY( c ) ;
-            streamlog_out (MESSAGE) << "[col: "<< colNBin<<" row:" << rowNBin << "]";
+            streamlog_out ( MESSAGE5 ) << " GEAR contents: " ;
+            streamlog_out ( MESSAGE5 ) << "Y:: r= " << r << "  sizeY:" << _siPlanesLayerLayout->getSensitiveSizeY( r ) ;
+            streamlog_out ( MESSAGE5 ) << "Y:: r= " << c << "  sizeY:" << _siPlanesLayerLayout->getSensitiveSizeY( c ) ;
+            streamlog_out ( MESSAGE5 ) << "[col: "<< colNBin<<" row:" << rowNBin << "]";
 
 /*            printf("Y:: r=%5d  sizeY:%9.3f c=%5d  sizeY:%9.3f [col: %5d   row: %5d]\n",
                     static_cast<int>(r),
@@ -1485,7 +1485,7 @@ if(rowNBin>100) rowNBin=rowNBin/4;
                     _siPlanesLayerLayout->getSensitiveSizeY( c ) ,
                     static_cast<int>(colNBin), static_cast<int>(rowNBin)
                     );*/
-            streamlog_out (MESSAGE) << endl;
+            streamlog_out ( MESSAGE5 ) << endl;
 if(colNBin>100) colNBin=colNBin/4;
 if(rowNBin>100) rowNBin=rowNBin/4;
 
@@ -1533,7 +1533,7 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             // book special histos to calculate sensors initial offsets in X and Y (Projection histograms)
             // book X
             tempHistoName =  "ClusterXShift/" +  _clusterXCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
-            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+            streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
             double safetyFactor = 1.0; // 2 should be enough because it
             // means that the sensor is wrong
@@ -1565,7 +1565,7 @@ if(xBin>100) xBin=xBin/4;
 
             // book Y
             tempHistoName =  "ClusterYShift/" +  _clusterYCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
-            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+            streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
             yBin        = _maxY[refRow] + _maxY[ refRow ] ;    
             yMin = safetyFactor * ( _hitMinY[refRow] - _hitMaxY[refRow]);
@@ -1593,7 +1593,7 @@ if(yBin>100) yBin=yBin/4;
             // book X
             tempHistoName =  "HitXShift/" +  _hitXCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
 
-            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+            streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
  
             double safetyFactor = 1.0; // 2 should be enough because it
@@ -1622,7 +1622,7 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             // book Y
             tempHistoName =  "HitYShift/" +  _hitYCorrShiftProjectionHistoName + "_d" + to_string( row ) ;
 
-            streamlog_out( DEBUG ) << "Booking histo " << tempHistoName << endl;
+            streamlog_out( DEBUG5 ) << "Booking histo " << tempHistoName << endl;
 
             rowNBin        = _maxY[refRow] + _maxY[refRow] ;
     
@@ -1672,12 +1672,12 @@ int EUTelCorrelator::guessSensorID(const double * hit )
     return sensorID;
   }
 
-     streamlog_out( DEBUG ) << " _referenceHitVec " << _referenceHitVec << " " << _referenceHitCollectionName.c_str() << endl;
+     streamlog_out( DEBUG5 ) << " _referenceHitVec " << _referenceHitVec << " " << _referenceHitCollectionName.c_str() << endl;
      for(int ii = 0 ; ii <  _referenceHitVec->getNumberOfElements(); ii++)
       {
 
        EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
-       streamlog_out( DEBUG ) << " _referenceHitVec " << _referenceHitVec << " refhit " << refhit << endl;
+       streamlog_out( DEBUG5 ) << " _referenceHitVec " << _referenceHitVec << " refhit " << refhit << endl;
        
         TVector3 hit3d( hit[0], hit[1], hit[2] );
         TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
@@ -1801,11 +1801,11 @@ void  EUTelCorrelator::FillHotPixelMap(LCEvent *event)
     try 
     {
       hotPixelCollectionVec = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
-      streamlog_out ( MESSAGE ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " found" << endl; 
+      streamlog_out ( MESSAGE5 ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " found" << endl; 
     }
     catch (...)
     {
-      streamlog_out ( MESSAGE ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " not found" << endl; 
+      streamlog_out ( MESSAGE5 ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " not found" << endl; 
       return;
     }
 
@@ -1821,7 +1821,7 @@ void  EUTelCorrelator::FillHotPixelMap(LCEvent *event)
 
 
 	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
-           streamlog_out ( MESSAGE ) << "sensorID: " << sensorID << " type " << kEUTelAPIXSparsePixel << " ?= " << type << endl; 
+           streamlog_out ( MESSAGE5 ) << "sensorID: " << sensorID << " type " << kEUTelAPIXSparsePixel << " ?= " << type << endl; 
 
            if( type  == kEUTelAPIXSparsePixel)
            {  
@@ -1836,7 +1836,7 @@ void  EUTelCorrelator::FillHotPixelMap(LCEvent *event)
               std::vector<int> apixColVec();
               apixData->getSparsePixelAt( iPixel, &apixPixel);
 //	       apixPixelVec.push_back(new EUTelAPIXSparsePixel(apixPixel));
-//              streamlog_out ( MESSAGE ) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
+//              streamlog_out ( MESSAGE5 ) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
               try
               {
                  char ix[100];

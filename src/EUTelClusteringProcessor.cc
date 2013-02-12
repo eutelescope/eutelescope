@@ -362,7 +362,7 @@ void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( mar
 
   } catch ( lcio::DataNotAvailableException ) {
     // do nothing
-    streamlog_out( MESSAGE ) << "EUTelClusteringProcessor::initializeGeometry  _nzsDataCollectionName " << _nzsDataCollectionName.c_str() << " not found " << endl; 
+    streamlog_out( MESSAGE5 ) << "EUTelClusteringProcessor::initializeGeometry  _nzsDataCollectionName " << _nzsDataCollectionName.c_str() << " not found " << endl; 
   }
 
   try 
@@ -480,7 +480,7 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
  
         if ( _layerIndexMap.find( sensorID ) == _layerIndexMap.end()   )
         {
-            streamlog_out(DEBUG) << "Sensor " << sensorID << " not found in the present data, skipping its hotPixel information." << endl;
+            streamlog_out( DEBUG5 ) << "Sensor " << sensorID << " not found in the present data, skipping its hotPixel information." << endl;
             continue;
         }
        
@@ -525,7 +525,7 @@ void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
               }
               else
               {
-                  streamlog_out ( ERROR ) << "hot pixel [index " << decoded_XY_index << "] reoccured ?!" << endl;
+                  streamlog_out ( ERROR5 ) << "hot pixel [index " << decoded_XY_index << "] reoccured ?!" << endl;
               }
         }
   }
@@ -675,11 +675,11 @@ void EUTelClusteringProcessor::readCollections (LCEvent * event)
             hotPixelCollectionVec = static_cast< LCCollectionVec* >  (event->getCollection( _hotPixelCollectionName )) ;
             initializeHotPixelMapVec();
 //            initializeStatusCollection();
-            streamlog_out ( MESSAGE ) << "hotPixelCollectionName: " << _hotPixelCollectionName.c_str() << " found " << endl;
+            streamlog_out ( MESSAGE5 ) << "hotPixelCollectionName: " << _hotPixelCollectionName.c_str() << " found " << endl;
         } 
         catch (lcio::DataNotAvailableException& e ) 
         {
-            streamlog_out ( MESSAGE ) << "No hot pixel DB collection found in the event" << endl;
+            streamlog_out ( MESSAGE5 ) << "No hot pixel DB collection found in the event" << endl;
         }
 
     }
@@ -950,7 +950,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
       // this is not a reference plane neither a DUT... what's that?
 //      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
 //      exit(-1);
-        streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
+        streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
         continue;
     }
 
@@ -1491,7 +1491,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
     } else {
       // this is not a reference plane neither a DUT... what's that?
 //      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-      streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
+      streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
       continue;
     }
 
@@ -1564,7 +1564,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
               {
                 int seedX, seedY;
                 matrixDecoder.getXYFromIndex ( (*rMapIter).second, seedX, seedY );
-                streamlog_out ( DEBUG ) << "Detector " << sensorID << " Pixel " << seedX << " " << seedY << " -- HOTPIXEL, skipping... " << endl;
+                streamlog_out ( DEBUG5 ) << "Detector " << sensorID << " Pixel " << seedX << " " << seedY << " -- HOTPIXEL, skipping... " << endl;
                 ++rMapIter;
                 continue;
               }
@@ -1790,7 +1790,7 @@ void EUTelClusteringProcessor::zsBrickedClustering(LCEvent * evt, LCCollectionVe
         {
           // this is not a reference plane neither a DUT... what's that?
 //          throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-          streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
+          streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
           continue;
         }
 
@@ -2445,7 +2445,7 @@ void EUTelClusteringProcessor::sparseClustering2(LCEvent * evt, LCCollectionVec 
     } else {
       // this is not a reference plane neither a DUT... what's that?
 //      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-      streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
+      streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
       continue;
     }
 
@@ -2698,7 +2698,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
   }
 
 #ifdef MARLINDEBUG
-  /// /* DEBUG */ message<DEBUG> ( logfile << "Event " << _iEvt );
+  /// /* DEBUG */ message<DEBUG5> ( logfile << "Event " << _iEvt );
 #endif
 
   streamlog_out ( DEBUG0 ) << "Event " << _iEvt << endl;
@@ -2749,14 +2749,14 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     } else {
       // this is not a reference plane neither a DUT... what's that?
 //      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-      streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
+      streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
       continue;
     }
 
     streamlog_out ( DEBUG0 ) << "  Working on detector " << sensorID << endl;
 
 #ifdef MARLINDEBUG
-    /// /* DEBUG */ message<DEBUG> ( logfile << "  Working on detector " << iDetector );
+    /// /* DEBUG */ message<DEBUG5> ( logfile << "  Working on detector " << iDetector );
 #endif
 
     TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
@@ -2775,7 +2775,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     _seedCandidateMap.clear();
 
 #ifdef MARLINDEBUG
-    /// /* DEBUG */ message<DEBUG> ( log() << "Max signal " << (*max_element(nzsData->getChargeValues().begin(), nzsData->getChargeValues().end()))
+    /// /* DEBUG */ message<DEBUG5> ( log() << "Max signal " << (*max_element(nzsData->getChargeValues().begin(), nzsData->getChargeValues().end()))
     /// /* DEBUG */                  << "\nMin signal " << (*min_element(nzsData->getChargeValues().begin(), nzsData->getChargeValues().end())) );
 #endif
 
@@ -2794,7 +2794,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     if ( _seedCandidateMap.size() != 0 ) {
 
 #ifdef MARLINDEBUG
-      /// /* DEBUG */      message<DEBUG> ( logfile << "  Seed candidates " << _seedCandidateMap.size() );
+      /// /* DEBUG */      message<DEBUG5> ( logfile << "  Seed candidates " << _seedCandidateMap.size() );
 #endif
       streamlog_out ( DEBUG0 ) << "  Seed candidates " << _seedCandidateMap.size() << endl;
 
@@ -2896,7 +2896,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
             idClusterEncoder.setCellID(cluster);
 
 #ifdef MARLINDEBUG
-            /// /* DEBUG */         message<DEBUG> ( logfile << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY );
+            /// /* DEBUG */         message<DEBUG5> ( logfile << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY );
 #endif
             streamlog_out (DEBUG0) << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY << endl;
 
@@ -2910,7 +2910,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 
 #ifdef MARLINDEBUG
             for (unsigned int iPixel = 0; iPixel < clusterCandidateIndeces.size(); iPixel++) {
-              /// /* DEBUG */         message<DEBUG> ( logfile << "  x " << matrixDecoder.getXFromIndex(clusterCandidateIndeces[iPixel])
+              /// /* DEBUG */         message<DEBUG5> ( logfile << "  x " << matrixDecoder.getXFromIndex(clusterCandidateIndeces[iPixel])
               /// /* DEBUG */                          << "  y " <<  matrixDecoder.getYFromIndex(clusterCandidateIndeces[iPixel])
               /// /* DEBUG */                          << "  s " <<
               /// clusterCandidateCharges[iPixel]);
@@ -3000,7 +3000,7 @@ void EUTelClusteringProcessor::nzsBrickedClustering(LCEvent * evt, LCCollectionV
 
 #ifdef MARLINDEBUG
   //DEBUG:
-  //message<DEBUG> ( logfile << "Event " << _iEvt );
+  //message<DEBUG5> ( logfile << "Event " << _iEvt );
 #endif
 
   streamlog_out ( DEBUG0 ) << "nzsBrickedClustering: Event " << _iEvt << endl;
@@ -3063,7 +3063,7 @@ void EUTelClusteringProcessor::nzsBrickedClustering(LCEvent * evt, LCCollectionV
         {
           // this is not a reference plane neither a DUT... what's that?
 //          throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-          streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
+          streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
           continue;
         }
 
@@ -3377,7 +3377,7 @@ void EUTelClusteringProcessor::end() {
   while ( iter != _totClusterMap.end() ) {
 
 #ifdef MARLINDEBUG
-    /// /* DEBUG */    message<DEBUG> ( logfile << "Found " << iter->second << " clusters on detector " << iter->first );
+    /// /* DEBUG */    message<DEBUG5> ( logfile << "Found " << iter->second << " clusters on detector " << iter->first );
 #endif
     streamlog_out ( MESSAGE2 ) << "Found " << iter->second << " clusters on detector " << iter->first << endl;
     ++iter;
@@ -3559,7 +3559,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
       } else {
         // this is not a reference plane neither a DUT... what's that?
 //        throw  InvalidGeometryException ("Unknown sensorID " + to_string( detectorID ));
-        streamlog_out(ERROR) << "Unknown sensorID " << detectorID << ", perhaps your GEAR file is incomplete." << endl;
+        streamlog_out( ERROR5 ) << "Unknown sensorID " << detectorID << ", perhaps your GEAR file is incomplete." << endl;
         continue;
       }
 
@@ -3729,7 +3729,7 @@ void EUTelClusteringProcessor::bookHistos() {
     } else {
       // this is not a reference plane neither a DUT... what's that?
 //      throw  InvalidGeometryException ("Unknown sensorID " + to_string( sensorID ));
-      streamlog_out(ERROR) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
+      streamlog_out( ERROR5 ) << "Unknown sensorID " << sensorID << ", perhaps your GEAR file is incomplete." << endl;
       continue;
     }
 

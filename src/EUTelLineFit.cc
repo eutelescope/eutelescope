@@ -153,8 +153,8 @@ void EUTelLineFit::init() {
   // check if Marlin was built with GEAR support or not
 #ifndef USE_GEAR
 
-  message<ERROR> ( "Marlin was not built with GEAR support." );
-  message<ERROR> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
+  message<ERROR5> ( "Marlin was not built with GEAR support." );
+  message<ERROR5> ( "You need to install GEAR and recompile Marlin with -DUSE_GEAR before continue.");
 
   // I'm thinking if this is the case of throwing an exception or
   // not. This is a really error and not something that can
@@ -165,7 +165,7 @@ void EUTelLineFit::init() {
 
   // check if the GEAR manager pointer is not null!
   if ( Global::GEAR == 0x0 ) {
-    message<ERROR> ( "The GearMgr is not available, for an unknown reason." );
+    message<ERROR5> ( "The GearMgr is not available, for an unknown reason." );
     exit(-1);
   }
 
@@ -201,9 +201,9 @@ void EUTelLineFit::processRunHeader (LCRunHeader * rdr) {
   // should be in principle the same as the number of layers in the
   // geometry description
   if ( header->getNoOfDetector() != _siPlanesParameters->getSiPlanesNumber() ) {
-    message<ERROR> ( "Error during the geometry consistency check: " );
-    message<ERROR> ( log() << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " );
-    message<ERROR> ( log() << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() << " silicon planes" );
+    message<ERROR5> ( "Error during the geometry consistency check: " );
+    message<ERROR5> ( log() << "The run header says there are " << header->getNoOfDetector() << " silicon detectors " );
+    message<ERROR5> ( log() << "The GEAR description says     " << _siPlanesParameters->getSiPlanesNumber() << " silicon planes" );
     exit(-1);
   }
 
@@ -214,12 +214,12 @@ void EUTelLineFit::processRunHeader (LCRunHeader * rdr) {
   // quitting ask the user what to do.
 
   if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
-    message<ERROR> ( "Error during the geometry consistency check: " );
-    message<ERROR> ( log() << "The run header says the GeoID is " << header->getGeoID() );
-    message<ERROR> ( log() << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesNumber() );
+    message<ERROR5> ( "Error during the geometry consistency check: " );
+    message<ERROR5> ( log() << "The run header says the GeoID is " << header->getGeoID() );
+    message<ERROR5> ( log() << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesNumber() );
     string answer;
     while (true) {
-      message<ERROR> ( "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" );
+      message<ERROR5> ( "Type Q to quit now or C to continue using the actual GEAR description anyway [Q/C]" );
       cin >> answer;
       // put the answer in lower case before making the comparison.
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
@@ -245,7 +245,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
 
   if ( evt->getEventType() == kEORE ) {
-    message<DEBUG> ( "EORE found: nothing else to do." );
+    message<DEBUG5> ( "EORE found: nothing else to do." );
     return;
   }
 
@@ -578,7 +578,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
       if ( AIDA::IHistogram1D* chi2x_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2XLocalname]) )
         chi2x_histo->fill(Chiquare[0]);
       else {
-        message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _chi2XLocalname
+        message<ERROR5> ( log() << "Not able to retrieve histogram pointer for " <<  _chi2XLocalname
                          << ".\nDisabling histogramming from now on " );
         _histogramSwitch = false;
       }
@@ -592,7 +592,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
       if ( AIDA::IHistogram1D* chi2y_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_chi2YLocalname]) )
         chi2y_histo->fill(Chiquare[1]);
       else {
-        message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _chi2YLocalname
+        message<ERROR5> ( log() << "Not able to retrieve histogram pointer for " <<  _chi2YLocalname
                          << ".\nDisabling histogramming from now on " );
         _histogramSwitch = false;
       }
@@ -606,7 +606,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
       if ( AIDA::IHistogram1D* anglex_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleXLocalname]) )
         anglex_histo->fill(angle[0]*180/M_PI);
       else {
-        message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _angleXLocalname
+        message<ERROR5> ( log() << "Not able to retrieve histogram pointer for " <<  _angleXLocalname
                          << ".\nDisabling histogramming from now on " );
         _histogramSwitch = false;
       }
@@ -620,7 +620,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
       if ( AIDA::IHistogram1D* angley_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[_angleYLocalname]) )
         angley_histo->fill(angle[1]*180/M_PI);
       else {
-        message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _angleYLocalname
+        message<ERROR5> ( log() << "Not able to retrieve histogram pointer for " <<  _angleYLocalname
                          << ".\nDisabling histogramming from now on " );
         _histogramSwitch = false;
       }
@@ -638,7 +638,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
         if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
           residx_histo->fill(_waferResidX[iDetector]);
         else {
-          message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualXLocalname
+          message<ERROR5> ( log() << "Not able to retrieve histogram pointer for " <<  _residualXLocalname
                            << ".\nDisabling histogramming from now on " );
           _histogramSwitch = false;
         }
@@ -653,7 +653,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
         if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
           residy_histo->fill(_waferResidY[iDetector]);
         else {
-          message<ERROR> ( log() << "Not able to retrieve histogram pointer for " <<  _residualYLocalname
+          message<ERROR5> ( log() << "Not able to retrieve histogram pointer for " <<  _residualYLocalname
                            << ".\nDisabling histogramming from now on " );
           _histogramSwitch = false;
         }
@@ -691,7 +691,7 @@ void EUTelLineFit::end() {
   delete [] _yPos;
   delete [] _xPos;
 
-  message<MESSAGE> ( log() << "Successfully finished" ) ;
+  message<MESSAGE5> ( log() << "Successfully finished" ) ;
 
 }
 
@@ -701,7 +701,7 @@ void EUTelLineFit::bookHistos() {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
   try {
-    message<MESSAGE> ( "Booking histograms" );
+    message<MESSAGE5> ( "Booking histograms" );
 
     const int    NBin = 100;
     const double Chi2Min  = 0.;
@@ -718,7 +718,7 @@ void EUTelLineFit::bookHistos() {
       chi2XLocal->setTitle("Chi2 X");
       _aidaHistoMap.insert( make_pair( _chi2XLocalname, chi2XLocal ) );
     } else {
-      message<ERROR> ( log() << "Problem booking the " << (_chi2XLocalname) << ".\n"
+      message<ERROR5> ( log() << "Problem booking the " << (_chi2XLocalname) << ".\n"
                        << "Very likely a problem with path name. Switching off histogramming and continue w/o");
       _histogramSwitch = false;
     }
@@ -729,7 +729,7 @@ void EUTelLineFit::bookHistos() {
       chi2YLocal->setTitle("Chi2 Y");
       _aidaHistoMap.insert( make_pair( _chi2YLocalname, chi2YLocal ) );
     } else {
-      message<ERROR> ( log() << "Problem booking the " << (_chi2YLocalname) << ".\n"
+      message<ERROR5> ( log() << "Problem booking the " << (_chi2YLocalname) << ".\n"
                        << "Very likely a problem with path name. Switching off histogramming and continue w/o");
       _histogramSwitch = false;
     }
@@ -740,7 +740,7 @@ void EUTelLineFit::bookHistos() {
       angleXLocal->setTitle("X Angle");
       _aidaHistoMap.insert( make_pair( _angleXLocalname, angleXLocal ) );
     } else {
-      message<ERROR> ( log() << "Problem booking the " << (_angleXLocalname) << ".\n"
+      message<ERROR5> ( log() << "Problem booking the " << (_angleXLocalname) << ".\n"
                        << "Very likely a problem with path name. Switching off histogramming and continue w/o");
       _histogramSwitch = false;
     }
@@ -751,7 +751,7 @@ void EUTelLineFit::bookHistos() {
       angleYLocal->setTitle("Y Angle");
       _aidaHistoMap.insert( make_pair( _angleYLocalname, angleYLocal ) );
     } else {
-      message<ERROR> ( log() << "Problem booking the " << (_angleYLocalname) << ".\n"
+      message<ERROR5> ( log() << "Problem booking the " << (_angleYLocalname) << ".\n"
                        << "Very likely a problem with path name. Switching off histogramming and continue w/o");
       _histogramSwitch = false;
     }
@@ -783,7 +783,7 @@ void EUTelLineFit::bookHistos() {
         tempXHisto->setTitle(histoTitleXResid);
         _aidaHistoMap.insert( make_pair( tempHistoName, tempXHisto ) );
       } else {
-        message<ERROR> ( log() << "Problem booking the " << (tempHistoName) << ".\n"
+        message<ERROR5> ( log() << "Problem booking the " << (tempHistoName) << ".\n"
                          << "Very likely a problem with path name. Switching off histogramming and continue w/o");
         _histogramSwitch = false;
       }
@@ -807,7 +807,7 @@ void EUTelLineFit::bookHistos() {
         tempYHisto->setTitle(histoTitleYResid);
         _aidaHistoMap.insert( make_pair( tempHistoName, tempYHisto ) );
       } else {
-        message<ERROR> ( log() << "Problem booking the " << (tempHistoName) << ".\n"
+        message<ERROR5> ( log() << "Problem booking the " << (tempHistoName) << ".\n"
                          << "Very likely a problem with path name. Switching off histogramming and continue w/o");
         _histogramSwitch = false;
       }
@@ -816,10 +816,10 @@ void EUTelLineFit::bookHistos() {
 
   } catch (lcio::Exception& e ) {
 
-    message<ERROR> ( log() << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" );
+    message<ERROR5> ( log() << "No AIDAProcessor initialized. Type q to exit or c to continue without histogramming" );
     string answer;
     while ( true ) {
-      message<ERROR> ( "[q]/[c]" );
+      message<ERROR5> ( "[q]/[c]" );
       cin >> answer;
       transform( answer.begin(), answer.end(), answer.begin(), ::tolower );
       if ( answer == "q" ) {

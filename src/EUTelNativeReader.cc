@@ -156,7 +156,7 @@ void EUTelNativeReader::readDataSource(int numEvents) {
     eudaq::FileReader reader( _fileName, "", _syncTriggerID );
   }
   catch(...){
-    streamlog_out(ERROR) << "eudaq::FileReader could not read the file name correctly. Please check the path and file names that have been input" << endl;
+    streamlog_out( ERROR5 ) << "eudaq::FileReader could not read the file name correctly. Please check the path and file names that have been input" << endl;
     exit(1);
   }
   eudaq::FileReader reader( _fileName, "", _syncTriggerID );
@@ -241,9 +241,9 @@ void EUTelNativeReader::processEORE( const eudaq::DetectorEvent & eore) {
 void EUTelNativeReader::end () {
 
   if ( _eudrbTotalOutOfSyncEvent != 0 ) {
-    streamlog_out ( MESSAGE ) << "Found " << _eudrbTotalOutOfSyncEvent << " events out of sync " << endl;
+    streamlog_out ( MESSAGE5 ) << "Found " << _eudrbTotalOutOfSyncEvent << " events out of sync " << endl;
   }
-  streamlog_out ( MESSAGE)  << "Successfully finished" << endl;
+  streamlog_out ( MESSAGE5 )  << "Successfully finished" << endl;
 }
 
 

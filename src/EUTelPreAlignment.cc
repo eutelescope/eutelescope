@@ -156,7 +156,7 @@ void EUTelPreAlign::init () {
             _sensors_to_the_left++;
         }
     }
-    streamlog_out (DEBUG) << " iPlane " << iPlane << " sensor_#_along_Z_axis " << _sensors_to_the_left << "[z= " << setprecision (3) << _siPlaneZPosition[iPlane] << " ] [sensorID " << sensorID << " ]  " << endl;
+    streamlog_out ( DEBUG5 ) << " iPlane " << iPlane << " sensor_#_along_Z_axis " << _sensors_to_the_left << "[z= " << setprecision (3) << _siPlaneZPosition[iPlane] << " ] [sensorID " << sensorID << " ]  " << endl;
 
     _sensorIDVecZOrder.push_back( _sensors_to_the_left );
     _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
@@ -199,11 +199,11 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
     try 
     {
       hotPixelCollectionVec = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
-      streamlog_out ( MESSAGE ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " found" << endl; 
+      streamlog_out ( MESSAGE5 ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " found" << endl; 
     }
     catch (...)
     {
-      streamlog_out ( MESSAGE ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " not found" << endl; 
+      streamlog_out ( MESSAGE5 ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " not found" << endl; 
       return;
     }
 
@@ -215,7 +215,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 	   SparsePixelType  type         = static_cast<SparsePixelType> (static_cast<int> (cellDecoder( hotPixelData )["sparsePixelType"]));
 
 	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
-           streamlog_out ( MESSAGE ) << "sensorID: " << sensorID << " type " << kEUTelAPIXSparsePixel << " ?= " << type << endl; 
+           streamlog_out ( MESSAGE5 ) << "sensorID: " << sensorID << " type " << kEUTelAPIXSparsePixel << " ?= " << type << endl; 
 
            if( type  == kEUTelAPIXSparsePixel)
            {  
@@ -226,7 +226,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
              {
                std::vector<int> apixColVec();
                apixData->getSparsePixelAt( iPixel, &apixPixel);
-               streamlog_out ( MESSAGE ) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
+               streamlog_out ( MESSAGE5 ) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
                try
                {
                   char ix[100];
@@ -235,7 +235,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
                }
                catch(...)
                {
-		 streamlog_out ( ERROR ) << " cannot add pixel to hotpixel map!"  << endl; 
+		 streamlog_out ( ERROR5 ) << " cannot add pixel to hotpixel map!"  << endl; 
                }
              }
            }
@@ -251,7 +251,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
              {
               std::vector<int> m26ColVec();
               m26Data->getSparsePixelAt( iPixel, &m26Pixel);
-              streamlog_out ( MESSAGE ) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << endl;
+              streamlog_out ( MESSAGE5 ) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << endl;
               try
               {
                  char ix[100];
@@ -260,7 +260,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
               }
               catch(...)
               {
-		streamlog_out ( ERROR ) << " cannot add pixel to hotpixel map! SensorID: "  << sensorID << ", X:" << m26Pixel.getXCoord() << ", Y:" << m26Pixel.getYCoord() << endl; 
+		streamlog_out ( ERROR5 ) << " cannot add pixel to hotpixel map! SensorID: "  << sensorID << ", X:" << m26Pixel.getXCoord() << ", Y:" << m26Pixel.getYCoord() << endl; 
               }
              }
            }          
@@ -360,7 +360,7 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 	}
 	if(not gotIt) 
         {
-	  streamlog_out ( ERROR ) << "Mismatched hit at " << pos[2] << endl;
+	  streamlog_out ( ERROR5 ) << "Mismatched hit at " << pos[2] << endl;
 	}
       }
 
@@ -552,7 +552,7 @@ void EUTelPreAlign::end() {
     exit(-1);
   }
 
-  streamlog_out ( MESSAGE ) << "Writing to " << _alignmentConstantLCIOFile << endl;
+  streamlog_out ( MESSAGE5 ) << "Writing to " << _alignmentConstantLCIOFile << endl;
 
   LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
   lcHeader->setRunNumber( 0 );
@@ -570,7 +570,7 @@ void EUTelPreAlign::end() {
 
   for(size_t ii=0; ii<_sensorIDVec.size(); ii++)
   {
-    streamlog_out(DEBUG) << " sensor " << _sensorIDVec[ii] << endl;
+    streamlog_out( DEBUG5 ) << " sensor " << _sensorIDVec[ii] << endl;
     bool ifound = false;
     for(size_t jj=0; jj< _preAligners.size(); jj++)
     {
@@ -579,16 +579,16 @@ void EUTelPreAlign::end() {
     }
     if( ifound == false)
     {
-      streamlog_out(DEBUG) << " not found ... so, adding " << endl;
+      streamlog_out( DEBUG5 ) << " not found ... so, adding " << endl;
       EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
       constant->setXOffset( 0.0 );
       constant->setYOffset( 0.0 );
       constant->setSensorID( _sensorIDVec[ii] );
       constantsCollection->push_back( constant );
-      streamlog_out ( MESSAGE ) << (*constant) << endl;
+      streamlog_out ( MESSAGE5 ) << (*constant) << endl;
       continue; 
     }
-    streamlog_out(DEBUG) << " found in  usedID " << endl;
+    streamlog_out( DEBUG5 ) << " found in  usedID " << endl;
   }
 
 
@@ -607,10 +607,10 @@ void EUTelPreAlign::end() {
     int sensorID = _preAligners.at(ii).getIden();
     constant->setSensorID( sensorID );
     constantsCollection->push_back( constant );
-    streamlog_out ( MESSAGE ) << (*constant) << endl;
+    streamlog_out ( MESSAGE5 ) << (*constant) << endl;
   }
 
-  streamlog_out(DEBUG) << " adding Collection " << "alignment " << endl;
+  streamlog_out( DEBUG5 ) << " adding Collection " << "alignment " << endl;
  
   event->addCollection( constantsCollection, "alignment" );
   lcWriter->writeEvent( event );

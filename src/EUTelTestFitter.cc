@@ -638,7 +638,7 @@ void EUTelTestFitter::init() {
 
     totalScatAngle+= _planeScatAngle[ipl] * _planeScatAngle[ipl];
 
-    streamlog_out(DEBUG) << "Scattering angle in plane " << ipl << ": " << _planeScatAngle[ipl] << endl;
+    streamlog_out( DEBUG5 ) << "Scattering angle in plane " << ipl << ": " << _planeScatAngle[ipl] << endl;
 
     _fitX[ipl] =_fitY[ipl] = 0. ;
     if((int)_resolutionX.size() < ipl+1 )
@@ -771,7 +771,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   if ( _nEvt %  1000 == 0 ) 
   {
-    streamlog_out( MESSAGE ) << "Processing event "
+    streamlog_out( MESSAGE5 ) << "Processing event "
                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
                               << " (Total = " << setw(10) << _nEvt << ")" << resetiosflags(ios::left) << endl;
@@ -781,7 +781,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
   if ( euEvent->getEventType() == kEORE ) 
   {
-    streamlog_out ( DEBUG ) <<  "EORE found: nothing else to do." << endl;
+    streamlog_out ( DEBUG5 ) <<  "EORE found: nothing else to do." << endl;
     return;
   }
 
@@ -793,7 +793,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   }
   catch (lcio::DataNotAvailableException& e) 
   {
-    streamlog_out ( DEBUG ) << "Not able to get collection "
+    streamlog_out ( DEBUG5 ) << "Not able to get collection "
                             << _inputColName
                             << "\nfrom event " << event->getEventNumber()
                             << " in run " << event->getRunNumber()  << endl;
@@ -866,7 +866,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
                       }
                       catch(...)
                       {
-			streamlog_out( MESSAGE ) << " no sensor rotation is given in the GEAR steering file, assume NONE" << endl;
+			streamlog_out( MESSAGE5 ) << " no sensor rotation is given in the GEAR steering file, assume NONE" << endl;
                       }
 
           if( _alignmentCollectionNames.size() > 0 )
@@ -918,7 +918,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
                         }
                         catch(...)
                         {
- 			streamlog_out( MESSAGE ) << " no sensor rotation is given in the GEAR steering file, assume NONE" << endl;
+ 			streamlog_out( MESSAGE5 ) << " no sensor rotation is given in the GEAR steering file, assume NONE" << endl;
  	                }
 
                        _planeNormal[0] = _normalTVec[0];
@@ -927,7 +927,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
 		    }
 		    else {
-			streamlog_out(DEBUG) << "Wrong telescope plane, not applying offsets." << endl;
+			streamlog_out( DEBUG5 ) << "Wrong telescope plane, not applying offsets." << endl;
 		    }                      
                   }
                   catch(...)
@@ -1220,7 +1220,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
           {
             ss << planeHitID[ipl].at(ihit) << " " ;
           }
-          streamlog_out ( DEBUG )  << ss.str() << endl;
+          streamlog_out ( DEBUG5 )  << ss.str() << endl;
         }
       }
     }
@@ -1939,7 +1939,7 @@ void EUTelTestFitter::end(){
     iden << _planeID[ipl];
     string bname = (string)"pl" + iden.str().c_str() + "_";
 
-    streamlog_out( DEBUG ) << "X: ["<< ipl << ":" << _planeID[ipl] <<"]" << 
+    streamlog_out( DEBUG5 ) << "X: ["<< ipl << ":" << _planeID[ipl] <<"]" << 
     _aidaHistoMap1D[bname + "residualX"]->allEntries()<< " " <<
     _aidaHistoMap1D[bname + "residualX"]->mean()*1000. << " " <<
     _aidaHistoMap1D[bname + "residualX"]->rms()*1000. << " " <<
@@ -1949,7 +1949,7 @@ void EUTelTestFitter::end(){
   }
 
   // Print the summary
-  streamlog_out( MESSAGE ) << "Total number of processed events:     " << setw(10) << setiosflags(ios::right) << _nEvt << resetiosflags(ios::right) << endl
+  streamlog_out( MESSAGE5 ) << "Total number of processed events:     " << setw(10) << setiosflags(ios::right) << _nEvt << resetiosflags(ios::right) << endl
                            << "Total number of events w/o input hit: " << setw(10) << setiosflags(ios::right) << _noOfEventWOInputHit 
                            << resetiosflags(ios::right) << endl
                            << "Total number of events w/o track:     " << setw(10) << setiosflags(ios::right) << _noOfEventWOTrack
@@ -2013,11 +2013,11 @@ void EUTelTestFitter::bookHistos()
   try {
     isHistoManagerAvailable = histoMgr->init();
   } catch ( ios::failure& e) {
-    streamlog_out( ERROR ) << "I/O problem with " << _histoInfoFileName << "\n"
+    streamlog_out( ERROR5 ) << "I/O problem with " << _histoInfoFileName << "\n"
                            << "Continuing without histogram manager"    << endl;
     isHistoManagerAvailable = false;
   } catch ( ParseException& e ) {
-    streamlog_out( ERROR ) << e.what() << "\n"
+    streamlog_out( ERROR5 ) << e.what() << "\n"
                            << "Continuing without histogram manager" << endl;
     isHistoManagerAvailable = false;
   }
@@ -2035,7 +2035,7 @@ void EUTelTestFitter::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_linChi2HistoName);
       if ( histoInfo )
         {
-          streamlog_out ( DEBUG )  << (* histoInfo ) << endl;
+          streamlog_out ( DEBUG5 )  << (* histoInfo ) << endl;
           chi2NBin = histoInfo->_xBin;
           chi2Min  = histoInfo->_xMin;
           chi2Max  = histoInfo->_xMax;
@@ -2062,7 +2062,7 @@ void EUTelTestFitter::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_logChi2HistoName);
       if ( histoInfo )
         {
-          streamlog_out ( DEBUG )   << (* histoInfo ) << endl;
+          streamlog_out ( DEBUG5 )   << (* histoInfo ) << endl;
           chi2NBin = histoInfo->_xBin;
           chi2Min  = histoInfo->_xMin;
           chi2Max  = histoInfo->_xMax;
@@ -2155,7 +2155,7 @@ void EUTelTestFitter::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_nTrackHistoName);
       if ( histoInfo )
         {
-          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
+          streamlog_out ( DEBUG5 ) << (* histoInfo ) << endl;
           trkNBin = histoInfo->_xBin;
           trkMin  = histoInfo->_xMin;
           trkMax  = histoInfo->_xMax;
@@ -2179,7 +2179,7 @@ void EUTelTestFitter::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_nAllHitHistoName);
       if ( histoInfo )
         {
-          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
+          streamlog_out ( DEBUG5 ) << (* histoInfo ) << endl;
           hitNBin = histoInfo->_xBin;
           hitMin  = histoInfo->_xMin;
           hitMax  = histoInfo->_xMax;
@@ -2203,7 +2203,7 @@ void EUTelTestFitter::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_nAccHitHistoName);
       if ( histoInfo )
         {
-          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
+          streamlog_out ( DEBUG5 ) << (* histoInfo ) << endl;
           hitNBin = histoInfo->_xBin;
           hitMin  = histoInfo->_xMin;
           hitMax  = histoInfo->_xMax;
@@ -2226,7 +2226,7 @@ void EUTelTestFitter::bookHistos()
       histoInfo = histoMgr->getHistogramInfo(_nHitHistoName);
       if ( histoInfo )
         {
-          streamlog_out ( DEBUG ) << (* histoInfo ) << endl;
+          streamlog_out ( DEBUG5 ) << (* histoInfo ) << endl;
           hitNBin = histoInfo->_xBin;
           hitMin  = histoInfo->_xMin;
           hitMax  = histoInfo->_xMax;
@@ -2259,13 +2259,13 @@ void EUTelTestFitter::bookHistos()
 
 
   // List all booked histogram - check of histogram map filling
-  streamlog_out ( DEBUG ) <<  _aidaHistoMap.size() << " histograms booked" << endl;
+  streamlog_out ( DEBUG5 ) <<  _aidaHistoMap.size() << " histograms booked" << endl;
 
   map<string, AIDA::IBaseHistogram *>::iterator mapIter;
   for(mapIter = _aidaHistoMap.begin(); mapIter != _aidaHistoMap.end() ; mapIter++ )
-    streamlog_out ( DEBUG ) <<  mapIter->first << " : " <<  (mapIter->second)->title()  << endl;
+    streamlog_out ( DEBUG5 ) <<  mapIter->first << " : " <<  (mapIter->second)->title()  << endl;
 
-  streamlog_out ( DEBUG ) << "Histogram booking completed \n\n" << endl;
+  streamlog_out ( DEBUG5 ) << "Histogram booking completed \n\n" << endl;
 
 #else
 
@@ -2941,7 +2941,7 @@ void EUTelTestFitter::getTrackImpactPoint(double & x, double & y, double & z, Tr
 
 int EUTelTestFitter::guessSensorID( Track * /*track*/ ) {
 
-  streamlog_out( ERROR ) << " guessSensorID(Track *) called but no longer implemented! Please use guessSensorID( double & x, double & y, double & z) instead. " << endl;
+  streamlog_out( ERROR5 ) << " guessSensorID(Track *) called but no longer implemented! Please use guessSensorID( double & x, double & y, double & z) instead. " << endl;
 
   return -1;
 }

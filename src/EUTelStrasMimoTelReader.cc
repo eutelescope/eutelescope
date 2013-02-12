@@ -118,7 +118,7 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
 			 << _runNumber << "!=" << _runHeader.RunNo );
     }
 
-    message<MESSAGE> ( log() << "Reading the run header\n" << _runHeader );
+    message<MESSAGE5> ( log() << "Reading the run header\n" << _runHeader );
     runHeaderFile.close();
 
     auto_ptr<IMPL::LCRunHeaderImpl> lcHeader ( new IMPL::LCRunHeaderImpl );
@@ -139,7 +139,7 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
     ProcessorMgr::instance()->processRunHeader( lcHeader.release() );
     
   } catch (exception& e) {
-    message<ERROR> ( log() << "Unable to open file " << runHeaderFileName << ". Exiting." );
+    message<ERROR5> ( log() << "Unable to open file " << runHeaderFileName << ". Exiting." );
   }
   
   int nFile = _runHeader.TotEvNb / _runHeader.FileEvNb;
@@ -161,12 +161,12 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
     // try to open the data file
     try {
       
-      message<DEBUG> ( log() << "Opening file " << dataFileName );
+      message<DEBUG5> ( log() << "Opening file " << dataFileName );
       dataFile.open( dataFileName.c_str(), ios::in | ios::binary );
       
       while ( !dataFile.eof() ) {
 	if ( (eventCounter % 10 == 0 ) )
-	  message<MESSAGE> ( log() << "Converting event " << eventCounter << " (File = " << iFile << ")" );
+	  message<MESSAGE5> ( log() << "Converting event " << eventCounter << " (File = " << iFile << ")" );
 	    
 	// get the full record
 	dataFile.read( reinterpret_cast<char *> (&_eventHeader), sizeof(StrasEventHeader) );
@@ -175,7 +175,7 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
 	
 	// make some checks
 	if ( (unsigned) _eventTrailer.Eor != 0x89ABCDEF ) {
-	  message<ERROR> ( log() << "Event trailer not found on event " << _eventHeader.EvNo << ". Exiting ");
+	  message<ERROR5> ( log() << "Event trailer not found on event " << _eventHeader.EvNo << ". Exiting ");
 	  exit(-1);
 	}
 	
@@ -287,12 +287,12 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
       }
     } catch (ifstream::failure e) {
       if ( !dataFile.eof() ) {
-	message<ERROR> ( log() << "Unable to open file " << dataFileName << ". Exiting." );
+	message<ERROR5> ( log() << "Unable to open file " << dataFileName << ". Exiting." );
 	addEORE();
 	exit(-1);
       } else {
 	dataFile.close();
-	message<DEBUG> ( log() << "Closing file " << dataFileName ) ;
+	message<DEBUG5> ( log() << "Closing file " << dataFileName ) ;
       }
     } 
   }
@@ -314,6 +314,6 @@ void EUTelStrasMimoTelReader::addEORE() {
 
 void EUTelStrasMimoTelReader::end () {
 
-  message<MESSAGE> ("Successfully finished") ;
+  message<MESSAGE5> ("Successfully finished") ;
 }
 

@@ -372,16 +372,16 @@ void EUTelDafBase::init() {
     float radLength = _siPlanesLayerLayout->getLayerThickness( (*zit).second ) /  _siPlanesLayerLayout->getLayerRadLength( (*zit).second );
     radLength += _siPlanesLayerLayout->getSensitiveThickness( (*zit).second ) /  _siPlanesLayerLayout->getSensitiveRadLength( (*zit).second );
 
-    streamlog_out (MESSAGE) << " zPos:      " << zPos << " " << radLength ;
-    streamlog_out (MESSAGE) << " sen thick: " << _siPlanesLayerLayout->getSensitiveThickness( (*zit).second ) ;
-    streamlog_out (MESSAGE) << " sens rad:  " << _siPlanesLayerLayout->getSensitiveRadLength( (*zit).second ) << endl;
+    streamlog_out ( MESSAGE5 ) << " zPos:      " << zPos << " " << radLength ;
+    streamlog_out ( MESSAGE5 ) << " sen thick: " << _siPlanesLayerLayout->getSensitiveThickness( (*zit).second ) ;
+    streamlog_out ( MESSAGE5 ) << " sens rad:  " << _siPlanesLayerLayout->getSensitiveRadLength( (*zit).second ) << endl;
     if( _radLength.size() > index){
       radLength = _radLength.at(index);
     }
     float scatter = getScatterThetaVar( radLength );
     
-    streamlog_out (MESSAGE) << " radlength: "<< radLength << endl;
-    streamlog_out (MESSAGE) << " scatter: "<< scatter << endl;
+    streamlog_out ( MESSAGE5 ) << " radlength: "<< radLength << endl;
+    streamlog_out ( MESSAGE5 ) << " scatter: "<< scatter << endl;
     
     //Is current plane a telescope plane?
     if( find(_telPlanes.begin(), _telPlanes.end(), sensorID) != _telPlanes.end()){
@@ -420,9 +420,9 @@ void EUTelDafBase::init() {
   //not a integer. Everything above (ndof - 0.5) is assumed to include at least ndof degrees of
   //freedom. 
   _ndofMin = -4 + _nSkipMax * 2 - 0.5;
-  streamlog_out ( MESSAGE ) << "NDOF min is " << _ndofMin << endl;
+  streamlog_out ( MESSAGE5 ) << "NDOF min is " << _ndofMin << endl;
   if( _ndofMin < 0.5) {
-    streamlog_out ( ERROR ) << "Too few active planes(" << nActive << ") when " << _nSkipMax << " planes can be skipped." 
+    streamlog_out ( ERROR5 ) << "Too few active planes(" << nActive << ") when " << _nSkipMax << " planes can be skipped." 
 			    << "Please check your configuration." << endl;
     exit(1);
   }
@@ -469,10 +469,10 @@ size_t EUTelDafBase::getPlaneIndex(float zPos){
     }
   }
   if(not foundIt){ 
-    streamlog_out (ERROR ) << "Found hit at z=" << zPos << " , not able to assign to any plane!" << endl; 
+    streamlog_out ( ERROR5 ) << "Found hit at z=" << zPos << " , not able to assign to any plane!" << endl; 
     return(-1);
   }else{
-//    streamlog_out (MESSAGE ) << "Found hit at z=" << zPos << " , assign index = " << index << endl;     
+//    streamlog_out ( MESSAGE5 ) << "Found hit at z=" << zPos << " , assign index = " << index << endl;     
   }
 
   return(index);
@@ -488,7 +488,7 @@ int EUTelDafBase::guessSensorID( double * hit )
 //  LCCollectionVec * referenceHitVec     = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName));
   if( ReferenceHitVecIsSet() )
   {
-    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
     return 0;
   }
 
@@ -522,10 +522,10 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
   //Dump LCIO hit collection to tracker system
   //Extract hits from collection, add to tracker system
 //printf("EUTelDafBase::readHitCollection \n");
-   streamlog_out ( DEBUG ) << " readHitCollection: " << _hitCollectionName.size() << " collections to read " << endl;
+   streamlog_out ( DEBUG5 ) << " readHitCollection: " << _hitCollectionName.size() << " collections to read " << endl;
    for(size_t i =0;i < _hitCollectionName.size();i++)
    {
-    streamlog_out ( DEBUG ) << " hit collection name: " << _hitCollectionName[i] << " found for event " << event->getEventNumber();
+    streamlog_out ( DEBUG5 ) << " hit collection name: " << _hitCollectionName[i] << " found for event " << event->getEventNumber();
     try 
     {
       _hitCollection = event->getCollection(_hitCollectionName[i]);
@@ -538,7 +538,7 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
     }
 // printf("EUTelDafBase::readHitCollection add all hits from collection %5d \n",i);
     //Add all hits in collection to corresponding plane
-   streamlog_out ( DEBUG ) << " hit collection size : " << _hitCollection->getNumberOfElements() << endl;
+   streamlog_out ( DEBUG5 ) << " hit collection size : " << _hitCollection->getNumberOfElements() << endl;
 
    for ( int iHit = 0; iHit < _hitCollection->getNumberOfElements(); iHit++ ) {
       TrackerHitImpl* hit = static_cast<TrackerHitImpl*> ( _hitCollection->getElementAt(iHit) );
@@ -561,7 +561,7 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
 //      int planeIndex = getPlaneIndex( pos[2]  * 1000.0f);
        planeIndex = guessSensorID( pos );
        }
-       streamlog_out ( DEBUG ) << " SIM: simhit="<< ( simhit != 0 ) <<" add point [" << planeIndex << "] "<< 
+       streamlog_out ( DEBUG5 ) << " SIM: simhit="<< ( simhit != 0 ) <<" add point [" << planeIndex << "] "<< 
                       (float) pos[0] * 1000.0f << " " << (float) pos[1] * 1000.0f << " " <<  (float) pos[2] * 1000.0f << endl;
 //      printf("planeIndex %5d of %5d \n", planeIndex, _system.planes.size() ); 
 //       region = checkClusterRegion( simhit, _system.planes.at(planeIndex).getSensorID() );
@@ -574,7 +574,7 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
        pos[1]=hitpos[1];
        pos[2]=hitpos[2];
        planeIndex = guessSensorID( pos );
-       streamlog_out ( DEBUG   ) << " REAL: add point [" << planeIndex << "] "<< 
+       streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
                       (float) pos[0] * 1000.0f << " " << (float) pos[1] * 1000.0f << " " <<  (float) pos[2] * 1000.0f << endl;
        region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
       }
@@ -582,7 +582,7 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
      //if( not region){ continue; }
       if(planeIndex >=0 ) 
       { 
-	streamlog_out ( DEBUG   ) << " add point [" << planeIndex << "] "<< 
+	streamlog_out ( DEBUG5 ) << " add point [" << planeIndex << "] "<< 
                       (float) pos[0] * 1000.0f << " " << (float) pos[1] * 1000.0f << " " <<  (float) pos[2] * 1000.0f << endl;
         _system.addMeasurement( planeIndex, (float) pos[0] * 1000.0f, (float) pos[1] * 1000.0f, (float) pos[2] * 1000.0f,  region, iHit);
       }
@@ -661,7 +661,7 @@ void EUTelDafBase::processEvent(LCEvent * event){
     for(unsigned int i=0; i < _mcCollectionStr.size(); i++)
     {
        _mcCollection = dynamic_cast < LCCollectionVec * > (event->getCollection(  _mcCollectionStr[i] ));
-       streamlog_out(DEBUG) << "Collection " << i << " " << _mcCollectionStr[i].c_str() << " at " << _mcCollection << endl;
+       streamlog_out( DEBUG5 ) << "Collection " << i << " " << _mcCollectionStr[i].c_str() << " at " << _mcCollection << endl;
     }
   }
   else
@@ -685,7 +685,7 @@ void EUTelDafBase::processEvent(LCEvent * event){
   dafEvent(event);
 
   if(event->getEventNumber() % 1000 == 0){
-    streamlog_out ( MESSAGE ) << "Accepted " << _nTracks <<" tracks at event " << event->getEventNumber() << endl;
+    streamlog_out ( MESSAGE5 ) << "Accepted " << _nTracks <<" tracks at event " << event->getEventNumber() << endl;
   }
 }
 
@@ -929,20 +929,20 @@ void EUTelDafBase::end() {
 
   dafEnd();
   
-  streamlog_out ( MESSAGE ) << endl;
-  streamlog_out ( MESSAGE ) << "Number of found hit clusters: " << _nClusters << endl;
-  streamlog_out ( MESSAGE ) << "Tracks with ok ndof: " << n_passedNdof << endl;
-  streamlog_out ( MESSAGE ) << "Tracks with ok chi2/ndof: " << n_passedChi2OverNdof << endl;
-  streamlog_out ( MESSAGE ) << "Tracks with no NaNs: " << n_passedIsnan<< endl;
-  streamlog_out ( MESSAGE ) << "Number of fitted tracks: " << _nTracks << endl;
-  streamlog_out ( MESSAGE ) << "Successfully finished" << endl;
+  streamlog_out ( MESSAGE5 ) << endl;
+  streamlog_out ( MESSAGE5 ) << "Number of found hit clusters: " << _nClusters << endl;
+  streamlog_out ( MESSAGE5 ) << "Tracks with ok ndof: " << n_passedNdof << endl;
+  streamlog_out ( MESSAGE5 ) << "Tracks with ok chi2/ndof: " << n_passedChi2OverNdof << endl;
+  streamlog_out ( MESSAGE5 ) << "Tracks with no NaNs: " << n_passedIsnan<< endl;
+  streamlog_out ( MESSAGE5 ) << "Number of fitted tracks: " << _nTracks << endl;
+  streamlog_out ( MESSAGE5 ) << "Successfully finished" << endl;
   for( size_t ii = 0; ii < _system.planes.size() ; ii++){
     daffitter::FitPlane& plane = _system.planes.at(ii);
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
     string bname = (string)"pl" + iden + "_";
     if( _aidaHistoMap[bname + "residualX"] != 0 && _aidaHistoMap[bname + "residualY"] != 0 )
-    streamlog_out ( MESSAGE ) << "plane:" << ii <<
+    streamlog_out ( MESSAGE5 ) << "plane:" << ii <<
                                "  x-stat :" <<  _aidaHistoMap[bname + "residualX"]->allEntries() <<
                                "  x-mean:"  <<  _aidaHistoMap[bname + "residualX"]->mean() << 
                                "  x-rms :"  <<  _aidaHistoMap[bname + "residualX"]->rms() << 

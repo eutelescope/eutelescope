@@ -408,7 +408,7 @@ DEPFETReader::DEPFETReader ():DataSourceProcessor  ("DEPFETReader") {
 /*=====================================================================*/
 
  void DEPFETReader::end () {
-   message<MESSAGE> ("Successfully finished") ;
+   message<MESSAGE5> ("Successfully finished") ;
  }
 
 /*=====================================================================*/

@@ -135,7 +135,7 @@ void EUTelDafFitter::dafEvent (LCEvent * event) {
     }
     catch(...)
     {
-      streamlog_out(ERROR) << "Critical error; the referennce hit collection was not found, pls check your steering file." << endl;
+      streamlog_out( ERROR5 ) << "Critical error; the referennce hit collection was not found, pls check your steering file." << endl;
     }
  
   }
@@ -283,7 +283,7 @@ double EUTelDafFitter::getZfromRefHit(int plane, double *pos){
    
   if( ReferenceHitVecIsSet() )
   {
-    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
     return 0;
   }
   

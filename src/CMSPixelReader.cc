@@ -136,7 +136,7 @@ void CMSPixelReader::init () {
 
 void CMSPixelReader::initializeGeometry() {
 
-	streamlog_out( MESSAGE ) << "Initializing geometry" << endl;
+	streamlog_out( MESSAGE5 ) << "Initializing geometry" << endl;
 
 	_noOfROC = 0;
 	_noOfXPixel = 0;
@@ -162,9 +162,9 @@ void CMSPixelReader::initializeGeometry() {
 	} else {
 		_isGeometryReady = true;
 	}
-	streamlog_out( MESSAGE ) << "Active SensorPlanes: " << _noOfROC << endl;
-    streamlog_out( MESSAGE ) << "Pixels in X: " << _noOfXPixel << endl;
-    streamlog_out( MESSAGE ) << "Pixels in Y: " << _noOfYPixel << endl;
+	streamlog_out( MESSAGE5 ) << "Active SensorPlanes: " << _noOfROC << endl;
+    streamlog_out( MESSAGE5 ) << "Pixels in X: " << _noOfXPixel << endl;
+    streamlog_out( MESSAGE5 ) << "Pixels in Y: " << _noOfYPixel << endl;
 
 }
 
@@ -182,7 +182,7 @@ void CMSPixelReader::readDataSource (int Ntrig)
     if(!_isGeometryReady) throw InvalidGeometryException ("Wrong geometry file?");
 
    for(unsigned int i = 0; i < _noOfROC; i++) {
-        streamlog_out( MESSAGE ) << "ROC " << i << " -> TelescopePlane " << _shufflePlanes[i] << endl;
+        streamlog_out( MESSAGE5 ) << "ROC " << i << " -> TelescopePlane " << _shufflePlanes[i] << endl;
    }
        
     // Open data file
@@ -193,11 +193,11 @@ void CMSPixelReader::readDataSource (int Ntrig)
 
 
     if (status==-1) {   
-        streamlog_out ( ERROR ) << "Problem opening file " << filename << "." << endl;
+        streamlog_out ( ERROR5 ) << "Problem opening file " << filename << "." << endl;
         throw DataNotAvailableException("No data file available.");
     }
     else if (status < -1) {
-        streamlog_out ( ERROR ) << "Problem with address levels file " << levelsFile << "." << endl;
+        streamlog_out ( ERROR5 ) << "Problem with address levels file " << levelsFile << "." << endl;
         throw InvalidGeometryException("Addresslevels file does not match (check Number of ROCs in GEAR geometry).");
     }
 
@@ -238,9 +238,9 @@ void CMSPixelReader::readDataSource (int Ntrig)
 
         // Trigger counter:
         if(eventNumber >= Ntrig) {
-            streamlog_out ( MESSAGE ) << " ---------------------------------------------------------" << endl;
-            streamlog_out ( MESSAGE ) << "  End of processing: reached MaxRecordNumber (" << Ntrig << ")" << endl;
-            streamlog_out ( MESSAGE ) << "  If you want to process more events check your steerfile." << endl;                                    
+            streamlog_out ( MESSAGE5 ) << " ---------------------------------------------------------" << endl;
+            streamlog_out ( MESSAGE5 ) << "  End of processing: reached MaxRecordNumber (" << Ntrig << ")" << endl;
+            streamlog_out ( MESSAGE5 ) << "  If you want to process more events check your steerfile." << endl;                                    
             break;
         }
         eventNumber++;
@@ -317,7 +317,7 @@ void CMSPixelReader::readDataSource (int Ntrig)
         } while (iROC<event_data.size());
 
 
-        if(_debugSwitch > 0 || eventNumber%1000 == 0) streamlog_out ( MESSAGE ) << "Write event " << eventNumber << endl;
+        if(_debugSwitch > 0 || eventNumber%1000 == 0) streamlog_out ( MESSAGE5 ) << "Write event " << eventNumber << endl;
         // Start constructing current event:
         event = new EUTelEventImpl();
         event->setDetectorName("CMSPixelTelescope");
@@ -347,13 +347,13 @@ void CMSPixelReader::readDataSource (int Ntrig)
     event->setTimeStamp(now->timeStamp());
     delete now;
     ProcessorMgr::instance ()->processEvent (static_cast<LCEventImpl*> (event));
-    streamlog_out ( MESSAGE ) << " ---------------------------------------------------------" << endl;    
-    streamlog_out ( MESSAGE ) << "  Write EORE as event " << event->getEventNumber() << endl;
+    streamlog_out ( MESSAGE5 ) << " ---------------------------------------------------------" << endl;    
+    streamlog_out ( MESSAGE5 ) << "  Write EORE as event " << event->getEventNumber() << endl;
         
     // Print the readout statistics, invoked by the destructor:
-    streamlog_out ( MESSAGE ) << " ---------------------------------------------------------" << endl;    
+    streamlog_out ( MESSAGE5 ) << " ---------------------------------------------------------" << endl;    
     delete readout;
-    streamlog_out ( MESSAGE ) << " ---------------------------------------------------------" << endl;    
+    streamlog_out ( MESSAGE5 ) << " ---------------------------------------------------------" << endl;    
 
     // Delete the EORE event:    
     delete event;
@@ -361,7 +361,7 @@ void CMSPixelReader::readDataSource (int Ntrig)
 
 
 void CMSPixelReader::end () {
-   message<MESSAGE> ("Successfully finished") ;
+   message<MESSAGE5> ("Successfully finished") ;
  }
 
 
@@ -380,7 +380,7 @@ void CMSPixelReader::fillHistos (int xCoord, int yCoord, int value, int sensorID
 
 void CMSPixelReader::bookHistos() {
 	
-	streamlog_out ( MESSAGE )  << "Booking histograms " << endl;
+	streamlog_out ( MESSAGE5 )  << "Booking histograms " << endl;
 
 	string tempHistoName;
 	string basePath;
@@ -403,7 +403,7 @@ void CMSPixelReader::bookHistos() {
 		pulseHeightHisto->setTitle(pulseHeightTitle.c_str());
 				
 	}
-	streamlog_out ( MESSAGE )  << "end of Booking histograms " << endl;
+	streamlog_out ( MESSAGE5 )  << "end of Booking histograms " << endl;
 }
 #endif // USE_AIDA || MARLIN_USE_AIDA
 

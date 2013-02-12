@@ -776,7 +776,7 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
         }
         delete dummyEvt;
       }  catch (eudaq::Exception& e) {
-        message<ERROR> ( log() << e.what() << endl
+        message<ERROR5> ( log() << e.what() << endl
                          << "Skipping the current event" ) ;
       }
 
@@ -789,7 +789,7 @@ void EUTelMimoTelReader::readDataSource (int numEvents) {
 
 
 void EUTelMimoTelReader::end () {
-  message<MESSAGE> ("Successfully finished") ;
+  message<MESSAGE5> ("Successfully finished") ;
 }
 
 #endif

@@ -212,7 +212,7 @@ void CMSPixelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( 
 
 void CMSPixelClusteringProcessor::initializeHotPixelMapVec(  )
 {
-    streamlog_out(MESSAGE) << "CMSPixelClusteringProcessor::initializeHotPixelMapVec, hotPixelCollectionVec size = " << hotPixelCollectionVec->size() << endl;
+    streamlog_out( MESSAGE5 ) << "CMSPixelClusteringProcessor::initializeHotPixelMapVec, hotPixelCollectionVec size = " << hotPixelCollectionVec->size() << endl;
     
     // prepare some decoders
     CellIDDecoder<TrackerDataImpl> cellDecoder( hotPixelCollectionVec );
@@ -248,17 +248,17 @@ void CMSPixelClusteringProcessor::initializeHotPixelMapVec(  )
             sparseData->getSparsePixelAt( iPixel, sparsePixel );
             int decoded_XY_index = matrixDecoder.getIndexFromXY( sparsePixel->getXCoord(), sparsePixel->getYCoord() ); // unique pixel index !!
 
-            streamlog_out ( DEBUG )   << " iPixel " << iPixel << " idet " << iDetector << " decoded_XY_index " << decoded_XY_index << endl;
+            streamlog_out ( DEBUG5 )   << " iPixel " << iPixel << " idet " << iDetector << " decoded_XY_index " << decoded_XY_index << endl;
             
             if( _hitIndexMapVec[iDetector].find( decoded_XY_index ) == _hitIndexMapVec[iDetector].end() )
             {
                 _hitIndexMapVec[iDetector].insert ( make_pair ( decoded_XY_index, EUTELESCOPE::FIRINGPIXEL ) );               
-                streamlog_out ( DEBUG ) 
+                streamlog_out ( DEBUG5 ) 
                     << "adding hot pixel " << " Det." << iDetector << " [" << sparsePixel->getXCoord() << " "<< sparsePixel->getYCoord() << "]" << " status : " << EUTELESCOPE::FIRINGPIXEL << endl;
               }
               else
               {
-                  streamlog_out ( ERROR ) << "hot pixel [index " << decoded_XY_index << "] reoccered ?!" << endl;
+                  streamlog_out ( ERROR5 ) << "hot pixel [index " << decoded_XY_index << "] reoccered ?!" << endl;
               }
            
         }
@@ -295,11 +295,11 @@ void CMSPixelClusteringProcessor::processEvent (LCEvent * event) {
         {
             hotPixelCollectionVec = static_cast< LCCollectionVec* >  (event->getCollection( _hotPixelCollectionName )) ;
             initializeHotPixelMapVec();
-            streamlog_out ( MESSAGE ) << "hotPixelCollectionName: " << _hotPixelCollectionName.c_str() << " found " << endl;
+            streamlog_out ( MESSAGE5 ) << "hotPixelCollectionName: " << _hotPixelCollectionName.c_str() << " found " << endl;
         } 
         catch (lcio::DataNotAvailableException& e ) 
         {
-            streamlog_out ( MESSAGE ) << "No hot pixel DB collection (" << _hotPixelCollectionName << ") found in the event" << endl;
+            streamlog_out ( MESSAGE5 ) << "No hot pixel DB collection (" << _hotPixelCollectionName << ") found in the event" << endl;
         }
 	}
 	
@@ -349,12 +349,12 @@ void CMSPixelClusteringProcessor::processEvent (LCEvent * event) {
   
 	if ( ! clusterCollectionExists && ( clusterCollection->size() == _initialClusterCollectionSize ) ) {
 		delete clusterCollection;
-    	streamlog_out ( DEBUG ) << "delete clusterCollection;" <<  endl;
+    	streamlog_out ( DEBUG5 ) << "delete clusterCollection;" <<  endl;
 	}
 
 
 	_isFirstEvent = false;
-	streamlog_out ( DEBUG ) << "End of process event" <<  endl;
+	streamlog_out ( DEBUG5 ) << "End of process event" <<  endl;
 }
 
 
@@ -380,14 +380,14 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 		SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
 
 		unsigned int sensorID              = static_cast<unsigned int > ( cellDecoder( zsData )["sensorID"] );
-		streamlog_out ( DEBUG ) << "evt " << evt->getEventNumber() << " SensorID " << sensorID << endl;
+		streamlog_out ( DEBUG5 ) << "evt " << evt->getEventNumber() << " SensorID " << sensorID << endl;
 
         // prepare the matrix decoder
         EUTelMatrixDecoder matrixDecoder( _siPlanesLayerLayout , sensorID );
 		
 		if (type == kEUTelSimpleSparsePixel  ) {
 		    auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel > > pixelData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
-			streamlog_out ( DEBUG ) << "Processing data on detector " << sensorID << ", " << pixelData->size() << " pixels " << endl;
+			streamlog_out ( DEBUG5 ) << "Processing data on detector " << sensorID << ", " << pixelData->size() << " pixels " << endl;
 
 			// Loop over all pixels in the sparseData object.
 			std::vector<EUTelSimpleSparsePixel*> PixelVec;
@@ -403,7 +403,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
                     int index = matrixDecoder.getIndexFromXY( Pixel.getXCoord(), Pixel.getYCoord() );
                     if( _hitIndexMapVec[sensorID].find( index ) != _hitIndexMapVec[sensorID].end() )
                     {
-                        streamlog_out ( DEBUG ) << "Detector " << sensorID << " Pixel " << Pixel.getXCoord() << " " << Pixel.getYCoord() << " -- HOTPIXEL, skipping... " << endl;
+                        streamlog_out ( DEBUG5 ) << "Detector " << sensorID << " Pixel " << Pixel.getXCoord() << " " << Pixel.getYCoord() << " -- HOTPIXEL, skipping... " << endl;
                         continue;
                     }
                 }
@@ -411,7 +411,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 				PixelVec.push_back(new EUTelSimpleSparsePixel(Pixel));
 			}
 			
-			streamlog_out ( DEBUG ) << "Hit Pixels: " << PixelVec.size() << endl;
+			streamlog_out ( DEBUG5 ) << "Hit Pixels: " << PixelVec.size() << endl;
 			
 			/* --- Here the real clustering happens --- */
 			 int nClusters = 0;
@@ -420,7 +420,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 			if (!PixelVec.empty()) clusterNumber.assign(PixelVec.size(), NOCLUSTER);
 			
 			
-			streamlog_out(DEBUG) << "Starting with clustering..." << endl;
+			streamlog_out( DEBUG5 ) << "Starting with clustering..." << endl;
 			if (PixelVec.size() > 1) {
 				//Now compare all pixel in one plane with each other
 				for ( unsigned int aPixel=0;aPixel < PixelVec.size();++aPixel) {
@@ -444,7 +444,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 									++nClusters;
 									clusterNumber.at(aPixel) = nClusters;
 									clusterNumber.at(bPixel) = nClusters;
-									streamlog_out (DEBUG) << "assigning clusternumber: " << nClusters << endl;
+									streamlog_out ( DEBUG5 ) << "assigning clusternumber: " << nClusters << endl;
 								}else if ( (clusterNumber.at(aPixel) == NOCLUSTER) && clusterNumber.at(bPixel) != NOCLUSTER) { 
 								    // b was assigned already, a not
 									clusterNumber.at(aPixel) = clusterNumber.at(bPixel);
@@ -493,7 +493,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 			nClusters = clusterSet.size();
 			
 			
-			if (nClusters != 0) streamlog_out(DEBUG) << "Found " << nClusters << " clusters in sensor " << sensorID<< endl;
+			if (nClusters != 0) streamlog_out( DEBUG5 ) << "Found " << nClusters << " clusters in sensor " << sensorID<< endl;
 			
 			/* --- Finished Clustering --- */
 			
@@ -507,11 +507,11 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 					if(clusterNumber.at(i)== *it) { 
 					    // Put only these pixels in that ClusterCollection that belong to that cluster
 						pixelCluster->addSparsePixel(PixelVec.at(i));
-						streamlog_out(DEBUG) << "Adding Pixel " << i << " to cluster " << clusterNumber.at(i) << endl;
+						streamlog_out( DEBUG5 ) << "Adding Pixel " << i << " to cluster " << clusterNumber.at(i) << endl;
 					}
 				}
 	            
-	            streamlog_out(DEBUG) << "size: " << pixelCluster->size() << ">=" << _minNPixels << " && charge: " << pixelCluster->getTotalCharge() << ">=" << _minCharge << endl;
+	            streamlog_out( DEBUG5 ) << "size: " << pixelCluster->size() << ">=" << _minNPixels << " && charge: " << pixelCluster->getTotalCharge() << ">=" << _minCharge << endl;
                 if ( (pixelCluster->size() >= (unsigned int)_minNPixels) && (pixelCluster->getTotalCharge() >= (unsigned int)_minCharge) ) {
 
 					float x,y;
@@ -524,7 +524,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 					pixelCluster->getClusterSize(xsize,ysize);
 					if (x >= 0 && x <= _siPlanesLayerLayout->getSensitiveNpixelX( _layerIndexMap[ sensorID ] ) && 
 					    y >= 0 && y <= _siPlanesLayerLayout->getSensitiveNpixelY( _layerIndexMap[ sensorID ] )) {
-						streamlog_out(DEBUG) << "Clustervars: ROC" << sensorID << " Cl" << *it << " x" << x << " y" << y << " dx" <<xsize << " dy" << ysize << " " << type << endl;
+						streamlog_out( DEBUG5 ) << "Clustervars: ROC" << sensorID << " Cl" << *it << " x" << x << " y" << y << " dx" <<xsize << " dy" << ysize << " " << type << endl;
 						_iClusters++;
 						_iPlaneClusters[sensorID]++;
 
@@ -547,7 +547,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 						idClusterEncoder.setCellID(clusterFrame);
 						sparseClusterCollectionVec->push_back(clusterFrame);
 					}
-					else streamlog_out(DEBUG) << "No cluster: ROC" << sensorID << " Cl" << *it << " x" << x << " y" << y << " dx" <<xsize << " dy" << ysize << " " << type << endl;
+					else streamlog_out( DEBUG5 ) << "No cluster: ROC" << sensorID << " Cl" << *it << " x" << x << " y" << y << " dx" <<xsize << " dy" << ysize << " " << type << endl;
 
 				}
             }

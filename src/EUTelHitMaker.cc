@@ -207,7 +207,7 @@ void EUTelHitMaker::DumpReferenceHitDB()
     exit(-1);
   }
 
-  streamlog_out ( MESSAGE ) << "Writing to " << _referenceHitLCIOFile << std::endl;
+  streamlog_out ( MESSAGE5 ) << "Writing to " << _referenceHitLCIOFile << std::endl;
 
   LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
   lcHeader->setRunNumber( 0 );
@@ -238,7 +238,7 @@ void EUTelHitMaker::DumpReferenceHitDB()
     gRotation[0] = _siPlanesLayerLayout->getLayerRotationXY(ii); // Euler alpha ;
     gRotation[1] = _siPlanesLayerLayout->getLayerRotationZX(ii); // Euler alpha ;
     gRotation[2] = _siPlanesLayerLayout->getLayerRotationZY(ii); // Euler alpha ;
-    streamlog_out(DEBUG) << "GEAR rotations: " << gRotation[0] << " " << gRotation[1] << " " <<  gRotation[2] << endl;
+    streamlog_out( DEBUG5 ) << "GEAR rotations: " << gRotation[0] << " " << gRotation[1] << " " <<  gRotation[2] << endl;
     gRotation[0] =  gRotation[0]*3.1415926/180.; // 
     gRotation[1] =  gRotation[1]*3.1415926/180.; //
     gRotation[2] =  gRotation[2]*3.1415926/180.; //
@@ -454,7 +454,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         {           
           try 
           {
-            streamlog_out ( MESSAGE ) << "The alignment collection contains: " <<  _preAlignmentCollectionVec->size() << " planes " << endl;
+            streamlog_out ( MESSAGE5 ) << "The alignment collection contains: " <<  _preAlignmentCollectionVec->size() << " planes " << endl;
                   
             for ( size_t iPos = 0; iPos < _preAlignmentCollectionVec->size(); ++iPos ) 
             {
@@ -484,9 +484,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 */
  
 /*        lccd::DBInterface db( _DBLoginName, _dbActualFolderName , _DBStatusName ) ;
-          streamlog_out (MESSAGE) << _DBLoginName << endl;
-          streamlog_out (MESSAGE) << _dbActualFolderName << endl;
-          streamlog_out (MESSAGE) << _DBStatusName << endl;
+          streamlog_out ( MESSAGE5 ) << _DBLoginName << endl;
+          streamlog_out ( MESSAGE5 ) << _dbActualFolderName << endl;
+          streamlog_out ( MESSAGE5 ) << _DBStatusName << endl;
           try 
           {
             hotPixelCollection = static_cast< LCCollectionVec* > ( db.findCollection( now, from, till, _conditionsTag ) );
@@ -497,7 +497,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
             } 
             if( hotPixelCollection->getNumberOfElements() == 0 )
             {   
-               streamlog_out (MESSAGE) << " hotPixelCollection: " << _hotPixelCollectionName << 
+               streamlog_out ( MESSAGE5 ) << " hotPixelCollection: " << _hotPixelCollectionName << 
                                           " cleared: now " << hotPixelCollection->getNumberOfElements() << " elements" <<  endl;
             }
           }
@@ -507,7 +507,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           }
           catch ( ... )
           {
-            streamlog_out (MESSAGE) <<  "unknown exception !!!!!!!!!!!    " << endl;
+            streamlog_out ( MESSAGE5 ) <<  "unknown exception !!!!!!!!!!!    " << endl;
           }
 */
 
@@ -709,7 +709,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           }
           catch(...)
           {
-	    streamlog_out ( MESSAGE ) << " no sensor rotation is given in the GEAR steering file, assume NONE " << endl;
+	    streamlog_out ( MESSAGE5 ) << " no sensor rotation is given in the GEAR steering file, assume NONE " << endl;
           }
         }
 
@@ -778,7 +778,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         }
         else
         {
-            streamlog_out(DEBUG) << "Center of gravity algorithm: FULL" << endl;
+            streamlog_out( DEBUG5 ) << "Center of gravity algorithm: FULL" << endl;
             cluster->getCenterOfGravityShift( xShift, yShift );
         }
       }
@@ -790,7 +790,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         }
         else
         {
-            streamlog_out(DEBUG) << "Center of gravity algorithm: N PIXEL" << endl;
+            streamlog_out( DEBUG5 ) << "Center of gravity algorithm: N PIXEL" << endl;
             cluster->getCenterOfGravityShift( xShift, yShift, _nPixel );
         }
       }
@@ -806,7 +806,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         else
         {
             //will be okay for a brickedClusterImpl! accounted for such a call internally.
-            streamlog_out(DEBUG) << "Center of gravity algorithm: NxM PIXEL" << endl;
+            streamlog_out( DEBUG5 ) << "Center of gravity algorithm: NxM PIXEL" << endl;
             cluster->getCenterOfGravityShift( xShift, yShift, _xyCluSize[0], _xyCluSize[1]);
         }
       }
@@ -1063,7 +1063,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     }
     catch(...)
     {
-      streamlog_out(ERROR) << "Hit collection " << _hitCollectionName.c_str() << " already exists!" << endl;
+      streamlog_out( ERROR5 ) << "Hit collection " << _hitCollectionName.c_str() << " already exists!" << endl;
     }
 
     if ( isFirstEvent() ) _isFirstEvent = false;

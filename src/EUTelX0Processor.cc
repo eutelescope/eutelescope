@@ -274,12 +274,12 @@ void EUTelX0Processor::createResiduals(LCCollection *trackCollection){
 
 void EUTelX0Processor::testtrack(LCCollection *trackCollection){
   if(_debug){
-    streamlog_out(DEBUG) << "trackCollection contains " << trackCollection->getNumberOfElements() << " elements" << endl;
-    streamlog_out(DEBUG) << "The elements are as follows: " << endl;
+    streamlog_out( DEBUG5 ) << "trackCollection contains " << trackCollection->getNumberOfElements() << " elements" << endl;
+    streamlog_out( DEBUG5 ) << "The elements are as follows: " << endl;
     for(int i = 0; i < trackCollection->getNumberOfElements(); ++i){
       Track* trackElement = dynamic_cast< Track* >(trackCollection->getElementAt(i));
-      streamlog_out(DEBUG) << "Element " << i << " contains the following values:" << endl;
-      streamlog_out(DEBUG) << "D0 = " << trackElement->getD0() << endl
+      streamlog_out( DEBUG5 ) << "Element " << i << " contains the following values:" << endl;
+      streamlog_out( DEBUG5 ) << "D0 = " << trackElement->getD0() << endl
            << "Omega = " << trackElement->getOmega() << endl
            << "Phi = " << trackElement->getPhi() << endl
            << "Z0 = " << trackElement->getZ0() << endl
@@ -291,14 +291,14 @@ void EUTelX0Processor::testtrack(LCCollection *trackCollection){
            << "The covariance matrix is as follows:" << endl;
       const vector<float> covMatrix = trackElement->getCovMatrix();
       for(size_t j = 0; j < covMatrix.size(); ++j){
-        streamlog_out(DEBUG) << covMatrix[j] << endl;
+        streamlog_out( DEBUG5 ) << covMatrix[j] << endl;
       }
-      streamlog_out(DEBUG) <<  "The track hits are finally listed here:" << endl;
+      streamlog_out( DEBUG5 ) <<  "The track hits are finally listed here:" << endl;
       const vector<TrackerHit*> hits = trackElement->getTrackerHits();
       for(size_t j = 0; j < hits.size(); ++j){
-        streamlog_out(DEBUG) << "Hit " << j << " = " << hits[j]->getPosition()[0] << ", " <<  hits[j]->getPosition()[1] << ", " << hits[j]->getPosition()[2]  << endl;
+        streamlog_out( DEBUG5 ) << "Hit " << j << " = " << hits[j]->getPosition()[0] << ", " <<  hits[j]->getPosition()[1] << ", " << hits[j]->getPosition()[2]  << endl;
       }
-      streamlog_out(DEBUG) << endl;
+      streamlog_out( DEBUG5 ) << endl;
     }
   }
 }
@@ -307,10 +307,10 @@ int EUTelX0Processor::guessSensorID(const double * hit )
 {
   int sensorID = -1;
   double minDistance = numeric_limits< double >::max() ;
-  streamlog_out(DEBUG) << "referencehit collection: " << _referenceHitCollectionName << " at "<< _referenceHitVec << endl;
+  streamlog_out( DEBUG5 ) << "referencehit collection: " << _referenceHitCollectionName << " at "<< _referenceHitVec << endl;
   if( _referenceHitVec == 0)
   {
-    streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+    streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
     return 0;
   }
 
@@ -327,10 +327,10 @@ int EUTelX0Processor::guessSensorID(const double * hit )
     TVector3 hitInPlane( refhit->getXOffset(), refhit->getYOffset(), refhit->getZOffset());
     TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
     double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-    streamlog_out(DEBUG) << " hit " << hit[0] << " "<< hit[1] << " " << hit[2] << endl;
-    streamlog_out(DEBUG) << " " << refhit->getXOffset() << " " << refhit->getYOffset() << " " << refhit->getZOffset() << endl;
-    streamlog_out(DEBUG) << " " << refhit->getAlpha() << " " << refhit->getBeta() << " " << refhit->getGamma() << endl;
-    streamlog_out(DEBUG) << " distance " << distance << endl;
+    streamlog_out( DEBUG5 ) << " hit " << hit[0] << " "<< hit[1] << " " << hit[2] << endl;
+    streamlog_out( DEBUG5 ) << " " << refhit->getXOffset() << " " << refhit->getYOffset() << " " << refhit->getZOffset() << endl;
+    streamlog_out( DEBUG5 ) << " " << refhit->getAlpha() << " " << refhit->getBeta() << " " << refhit->getGamma() << endl;
+    streamlog_out( DEBUG5 ) << " distance " << distance << endl;
     if ( distance < minDistance )
     {
       minDistance = distance;
@@ -347,10 +347,10 @@ int EUTelX0Processor::guessSensorID(const double * hit )
       EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
       if(refhit == 0 ) continue;
       // if( sensorID != refhit->getSensorID() ) continue;
-      // streamlog_out(DEBUG) << " _referenceHitVec " << _referenceHitVec << " " << _referenceHitCollectionName.c_str() << " " << refhit << " at "
+      // streamlog_out( DEBUG5 ) << " _referenceHitVec " << _referenceHitVec << " " << _referenceHitCollectionName.c_str() << " " << refhit << " at "
       // << refhit->getXOffset() << " " << refhit->getYOffset() << " " << refhit->getZOffset() << " "
       //<< refhit->getAlpha() << " " << refhit->getBeta() << " " << refhit->getGamma() << endl ;
-      //message<DEBUG> ( log() << "iPlane " << refhit->getSensorID() << " hitPos: [" << hit[0] << " " << hit[1] << " " << hit[2] << "] distance: " << minDistance << endl );
+      //message<DEBUG5> ( log() << "iPlane " << refhit->getSensorID() << " hitPos: [" << hit[0] << " " << hit[1] << " " << hit[2] << "] distance: " << minDistance << endl );
     }
   }
   return sensorID;
@@ -408,7 +408,7 @@ double EUTelX0Processor::calculateX0()
       double deltabeta = sqrt((beta432 - beta012)*(beta432 - beta012));
       sigma_msi = (0.015*E/(p*p))*sqrt(X/(sin(deltatheta)*cos(deltabeta)))*(1 + 0.038*std::log(X/(sin(deltatheta)*cos(deltabeta))));
       if(sigma_msi != sigma_msi){
-        streamlog_out(ERROR) << "Code failed with following values: " << endl << "E = " << E << endl << "p = " << p << endl << "X = " << X << endl << "theta012 = " << theta012 << endl << "beta012 = " << beta012 << endl << "theta432 = " << theta432 << endl << "beta432 = " << beta432 << endl << "deltatheta = " << deltatheta << endl << "deltabeta = " << deltabeta << endl << "sigma_msi = " << sigma_msi << endl << "sigma_measi = " << sigma_measi << endl << "loglikelihoodX0 = " << loglikelihoodX0 << endl << endl;
+        streamlog_out( ERROR5 ) << "Code failed with following values: " << endl << "E = " << E << endl << "p = " << p << endl << "X = " << X << endl << "theta012 = " << theta012 << endl << "beta012 = " << beta012 << endl << "theta432 = " << theta432 << endl << "beta432 = " << beta432 << endl << "deltatheta = " << deltatheta << endl << "deltabeta = " << deltabeta << endl << "sigma_msi = " << sigma_msi << endl << "sigma_measi = " << sigma_measi << endl << "loglikelihoodX0 = " << loglikelihoodX0 << endl << endl;
       }
       //Maximum log-likelihood:
       loglikelihoodX0 += -std::log(sigma_msi*sigma_msi + sigma_measi*sigma_measi) - (theta012*theta012)/(sigma_msi*sigma_msi + sigma_measi*sigma_measi); 
@@ -453,7 +453,7 @@ void EUTelX0Processor::threePointResolution(LCCollection *alignedHitCollection){
     TVector3 tempvec(X,Y,Z);//Add the positions to a TVector3
     hitvectortemp[layernumber].push_back(tempvec);//Then put it in the temporary map
     if(_debug == true){
-      streamlog_out(DEBUG)<< "In for loop 'for(int i = 0; i < collectionsize; ++i)':" << endl
+      streamlog_out( DEBUG5 )<< "In for loop 'for(int i = 0; i < collectionsize; ++i)':" << endl
            << "layernumber = " << layernumber << ", X = " << X << ", Y = " << Y << ", Z = " << Z << endl
            << "hitvectortemp[" << layernumber << "].size() = " << hitvectortemp[layernumber].size() << endl;
     }

@@ -140,11 +140,11 @@ void EUTelAPIXClusteringProcessor::init () {
 
     if( _ClusterLimits.size() % 5 != 0) 
     {
-      streamlog_out (ERROR) << "Wrong number of input values in ClusterLimits; check your steering file !" <<endl;
+      streamlog_out ( ERROR5 ) << "Wrong number of input values in ClusterLimits; check your steering file !" <<endl;
     }
     else
     {
-      streamlog_out (MESSAGE) << " ClusterLimits initialised with " << _ClusterLimits.size() << " elements" << endl;
+      streamlog_out ( MESSAGE5 ) << " ClusterLimits initialised with " << _ClusterLimits.size() << " elements" << endl;
     } 
 
     for(int i = 0; i < (int)_ClusterLimits.size(); i=i+5)
@@ -608,7 +608,7 @@ void EUTelAPIXClusteringProcessor::end() {
   while ( iter != _totClusterMap.end() ) {
 
 #ifdef MARLINDEBUG
-    /// /* DEBUG */    message<DEBUG> ( logfile << "Found " << iter->second << " clusters on detector " << iter->first );
+    /// /* DEBUG */    message<DEBUG5> ( logfile << "Found " << iter->second << " clusters on detector " << iter->first );
 #endif
     streamlog_out ( MESSAGE2 ) << "Found " << iter->second << " clusters on detector " << iter->first << endl;
     ++iter;

@@ -198,7 +198,7 @@ void EUTelAPIXKalman::init() {
     _fitter->addPlane(index, pl);
   }
   if(nActive - _nSkipMax  < 2) {
-    streamlog_out ( ERROR ) << "Too few active planes(" << nActive << ") when " << _nSkipMax << " planes can be skipped." 
+    streamlog_out ( ERROR5 ) << "Too few active planes(" << nActive << ") when " << _nSkipMax << " planes can be skipped." 
 			    << "Please check your configuration." << endl;
     exit(1);
   }
@@ -208,9 +208,9 @@ void EUTelAPIXKalman::init() {
   _nMilleTracks = 0;
   if(_runPede){
     _mille = new Mille(_binaryFilename.c_str());
-    streamlog_out ( MESSAGE ) << "The filename for the mille binary file is: " << _binaryFilename.c_str() << endl;
+    streamlog_out ( MESSAGE5 ) << "The filename for the mille binary file is: " << _binaryFilename.c_str() << endl;
     if(_nSkipMax > 0){
-      streamlog_out ( ERROR ) << "I'm planning on doing alignment, in this case skipping planes is a very bad idea. Setting number of allowed skipped planes to 0." << endl;
+      streamlog_out ( ERROR5 ) << "I'm planning on doing alignment, in this case skipping planes is a very bad idea. Setting number of allowed skipped planes to 0." << endl;
       _nSkipMax = 0;
     }
   }
@@ -244,7 +244,7 @@ int EUTelAPIXKalman::getPlaneIndex(double zPos){
     }
   }
   if(not foundIt){ 
-    streamlog_out (ERROR ) << "Found hit at z=" << zPos << " , not able to assign to any plane!" << endl; 
+    streamlog_out ( ERROR5 ) << "Found hit at z=" << zPos << " , not able to assign to any plane!" << endl; 
     return(-1);
   }
   return(index);
@@ -318,7 +318,7 @@ void EUTelAPIXKalman::processEvent (LCEvent * event) {
   tryFill( _numberTracksLocalname, _nTracks);
   if(_addToLCIO){ event->addCollection(_fittrackvec,_trackCollectionName); }
   if(event->getEventNumber() % 100 == 0){
-    streamlog_out ( MESSAGE ) << "Accepted " << _nMilleTracks <<" tracks at event " << event->getEventNumber() << endl;
+    streamlog_out ( MESSAGE5 ) << "Accepted " << _nMilleTracks <<" tracks at event " << event->getEventNumber() << endl;
   }
 }
 void EUTelAPIXKalman::fitPermutations(int plane, FitPlane* prev, TrackEstimate* est, int nSkipped){
@@ -770,7 +770,7 @@ bool EUTelAPIXKalman::generatePedeSteeringFile( vector<double> &startVals , bool
   steerFile << endl;
   steerFile << "end" << endl;
   steerFile.close();
-  streamlog_out ( MESSAGE ) << "File " << _pedeSteerfileName << " written." << endl;
+  streamlog_out ( MESSAGE5 ) << "File " << _pedeSteerfileName << " written." << endl;
   return(true);
 }
 
@@ -787,26 +787,26 @@ void EUTelAPIXKalman::runPede(vector<double> &alignmentParams ){
   isPedeInPath = !( which.rdbuf()->status() == 255 );
   
   if ( !isPedeInPath ) {
-    streamlog_out( ERROR ) << "Cannot find pede program in path. Nothing to do." << endl;
+    streamlog_out( ERROR5 ) << "Cannot find pede program in path. Nothing to do." << endl;
     return;
   }
-  streamlog_out ( MESSAGE ) << "Starting pede..." << endl;
+  streamlog_out ( MESSAGE5 ) << "Starting pede..." << endl;
 
   redi::ipstream pede( command.c_str() );
   string output;
-  while ( getline( pede, output ) ) { streamlog_out( MESSAGE ) << output << endl; }
+  while ( getline( pede, output ) ) { streamlog_out( MESSAGE5 ) << output << endl; }
   // wait for the pede execution to finish
   pede.close();
   // check the exit value of pede
   if ( pede.rdbuf()->status() == 0 ) {
-    streamlog_out ( MESSAGE ) << "Pede successfully finished" << endl;
+    streamlog_out ( MESSAGE5 ) << "Pede successfully finished" << endl;
   } else {
     streamlog_out ( ERROR2 ) << "Pede exited abnormally with exit code " << pede.rdbuf()->status() << endl;
   }
   // reading back the millepede.res file and getting the results. 
   string millepedeResFileName = "millepede.res";
 
-  streamlog_out ( MESSAGE ) << "Reading back " << millepedeResFileName << endl
+  streamlog_out ( MESSAGE5 ) << "Reading back " << millepedeResFileName << endl
 			     << "Saving the alignment constant into " << _alignmentConstantLCIOFile << endl;
 
 
@@ -814,7 +814,7 @@ void EUTelAPIXKalman::runPede(vector<double> &alignmentParams ){
   ifstream millepede( millepedeResFileName.c_str() );
 
   if(not millepede.is_open() ){
-    streamlog_out (MESSAGE) << "Unable to open " << millepedeResFileName << " for reading" << endl; 
+    streamlog_out ( MESSAGE5 ) << "Unable to open " << millepedeResFileName << " for reading" << endl; 
     return;
   }
 
@@ -916,7 +916,7 @@ void EUTelAPIXKalman::runPede(vector<double> &alignmentParams ){
       constant->setSensorID( (*it).second->sensorID );
       it++;
       constantsCollection->push_back( constant );
-      streamlog_out ( MESSAGE ) << (*constant) << endl;
+      streamlog_out ( MESSAGE5 ) << (*constant) << endl;
     } else{ delete constant; }
   }
   event->addCollection( constantsCollection, _alignmentConstantCollectionName );
@@ -933,10 +933,10 @@ void EUTelAPIXKalman::end() {
     generatePedeSteeringFile(alignParams, false, false, false);
     runPede(alignParams);
   }
-  streamlog_out ( MESSAGE ) << endl;
-  streamlog_out ( MESSAGE ) << "Number of data points used: " << _nMilleDataPoints << endl;
-  streamlog_out ( MESSAGE ) << "Number of tracks used: " << _nMilleTracks << endl;
-  streamlog_out ( MESSAGE ) << endl;
-  streamlog_out ( MESSAGE ) << "Successfully finished" << endl << flush << flush;
+  streamlog_out ( MESSAGE5 ) << endl;
+  streamlog_out ( MESSAGE5 ) << "Number of data points used: " << _nMilleDataPoints << endl;
+  streamlog_out ( MESSAGE5 ) << "Number of tracks used: " << _nMilleTracks << endl;
+  streamlog_out ( MESSAGE5 ) << endl;
+  streamlog_out ( MESSAGE5 ) << "Successfully finished" << endl << flush << flush;
 }
 #endif // USE_GEAR

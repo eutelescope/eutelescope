@@ -249,7 +249,7 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
             }   
             catch(...)
             {
-              streamlog_out ( DEBUG ) <<  "_referenceHitCollectionName " << _referenceHitCollectionName.c_str() << " could not be retrieved, creating a dummy one (all elements are null) " << endl;
+              streamlog_out ( DEBUG5 ) <<  "_referenceHitCollectionName " << _referenceHitCollectionName.c_str() << " could not be retrieved, creating a dummy one (all elements are null) " << endl;
              
               _referenceHitVec = CreateDummyReferenceHitCollection();
               event->addCollection( _referenceHitVec, _referenceHitCollectionName );
@@ -263,7 +263,7 @@ void EUTelApplyAlignmentProcessor::CheckIOCollections(LCEvent* event)
             catch(...)
             {
               _outputReferenceHitVec = CreateDummyReferenceHitCollection();
-              streamlog_out ( DEBUG ) << "NOT found _outputReferenceHitVec [" << _outputReferenceHitCollectionName.c_str() << "] at " << _outputReferenceHitVec << endl;  
+              streamlog_out ( DEBUG5 ) << "NOT found _outputReferenceHitVec [" << _outputReferenceHitCollectionName.c_str() << "] at " << _outputReferenceHitVec << endl;  
               event->addCollection( _outputReferenceHitVec, _outputReferenceHitCollectionName );
             }
 
@@ -353,7 +353,7 @@ void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader)
 
   if( _alignmentCollectionSuffixes.size() < 1 )
   {
-      message<ERROR> ( log() << "You must define at least one Alignmen Collection to start ApplyAlignment Processor" << endl ) ;
+      message<ERROR5> ( log() << "You must define at least one Alignmen Collection to start ApplyAlignment Processor" << endl ) ;
       throw StopProcessingException(this);
   }
   else 
@@ -405,7 +405,7 @@ void EUTelApplyAlignmentProcessor::processRunHeader (LCRunHeader * runHeader)
      ExceptionMessage += " alignment [ "; ExceptionMessage += _alignmentCollectionSuffixes.size();  ExceptionMessage += "]\n";
      ExceptionMessage += " hit [ ";       ExceptionMessage += _hitCollectionSuffixes.size();        ExceptionMessage += "]\n";
      ExceptionMessage += " refhit [ ";    ExceptionMessage += _refhitCollectionSuffixes.size();     ExceptionMessage += "]\n";
-     message<ERROR> ( log() << ExceptionMessage.Data()  );
+     message<ERROR5> ( log() << ExceptionMessage.Data()  );
      message<ERROR  > ( log() << " ***                                                                     ***" );    
      message<ERROR  > ( log() << " ***************************************************************************" );    
      message<ERROR  > ( log() << endl );
@@ -432,7 +432,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
 
     if( _alignmentCollectionNames.size() <= 0 )
     {
-        streamlog_out ( ERROR ) << "Alignment collections are UNDEFINED, the processor can not continue. EXIT " << endl;
+        streamlog_out ( ERROR5 ) << "Alignment collections are UNDEFINED, the processor can not continue. EXIT " << endl;
         throw StopProcessingException(this);       
     }
     else
@@ -541,8 +541,8 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
                 }
                 else
                     {
-                       streamlog_out ( ERROR ) << "You MUST specifiy whether you want the alignment to be done in one go or not" << endl;              
-                       streamlog_out ( ERROR ) << "Check your steering cards!!" << endl;              
+                       streamlog_out ( ERROR5 ) << "You MUST specifiy whether you want the alignment to be done in one go or not" << endl;              
+                       streamlog_out ( ERROR5 ) << "Check your steering cards!!" << endl;              
                     }
         }
  
@@ -562,10 +562,10 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
        LCCollectionVec * ref    = static_cast < LCCollectionVec * > (event->getCollection( _colName  ));
        for( size_t ii = 0 ; ii <  (unsigned int)ref->getNumberOfElements(); ii++)
        {
-        streamlog_out( DEBUG ) << " check output_refhit at : " << ref << " ";
+        streamlog_out( DEBUG5 ) << " check output_refhit at : " << ref << " ";
         EUTelReferenceHit* output_refhit = static_cast< EUTelReferenceHit*> ( ref->getElementAt(ii) ) ;
-        streamlog_out( DEBUG ) << " at : " <<  output_refhit << endl;     
-        streamlog_out( DEBUG ) << "CHK sensorID: " <<  output_refhit->getSensorID(   )     
+        streamlog_out( DEBUG5 ) << " at : " <<  output_refhit << endl;     
+        streamlog_out( DEBUG5 ) << "CHK sensorID: " <<  output_refhit->getSensorID(   )     
                               << " x    :" <<        output_refhit->getXOffset(    )    
                               << " y    :" <<        output_refhit->getYOffset(    )    
                               << " z    :" <<        output_refhit->getZOffset(    )    
@@ -714,7 +714,7 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
           {
                 if ( _debugSwitch ) 
                 {
-                    streamlog_out ( MESSAGE )  << "Debugmode ON " << endl;                                   
+                    streamlog_out ( MESSAGE5 )  << "Debugmode ON " << endl;                                   
                 }
                 
                 streamlog_out ( DEBUG2 )  << "_applyGear6D " << endl;
@@ -811,7 +811,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
         map< int , int >::iterator mapIter = _lookUpTable[ _alignmentCollectionName ].begin();
         while ( mapIter != _lookUpTable[ _alignmentCollectionName ].end() ) 
         {
-            streamlog_out ( DEBUG ) << "Sensor ID = " << mapIter->first
+            streamlog_out ( DEBUG5 ) << "Sensor ID = " << mapIter->first
                                     << " is in position " << mapIter->second << endl;
             ++mapIter;
         }
@@ -821,7 +821,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
 // final check
     if( _inputCollectionVec == 0 )
     {
-      streamlog_out ( DEBUG ) << "EUTelApplyAlignmentProcessor::RevertGear6D. Skip this event. Input Collection not found. " << endl;  
+      streamlog_out ( DEBUG5 ) << "EUTelApplyAlignmentProcessor::RevertGear6D. Skip this event. Input Collection not found. " << endl;  
       return;
     }
 
@@ -876,18 +876,18 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       if( _referenceHitVec == 0 )
       {
 	// todo: is this case (no reference vector) treated correctly?
-	  //streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+	  //streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
       }
       else
       {
-//        streamlog_out(MESSAGE) << "reference Hit collection name : " << _referenceHitCollectionName << endl;
+//        streamlog_out( MESSAGE5 ) << "reference Hit collection name : " << _referenceHitCollectionName << endl;
  
        for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
        {
         EUTelReferenceHit * refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if( sensorID != refhit->getSensorID() )
         {
-       //   streamlog_out(MESSAGE) << "Looping through a varity of sensor IDs" << endl;
+       //   streamlog_out( MESSAGE5 ) << "Looping through a varity of sensor IDs" << endl;
           continue;
         }
         else
@@ -957,7 +957,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
           {
                 if ( _debugSwitch ) 
                 {
-                    streamlog_out ( MESSAGE )  << "Debugmode ON " << endl;                                   
+                    streamlog_out ( MESSAGE5 )  << "Debugmode ON " << endl;                                   
                 }
                 
                 streamlog_out ( DEBUG2 )  << "_revertGear6D " << endl;
@@ -1014,7 +1014,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
           // alignment constants. So the idea is to eventually advice
           // the users if running in DEBUG and copy the not aligned hit
           // in the new collection.
-          streamlog_out ( DEBUG ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
+          streamlog_out ( DEBUG5 ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
                                     << iHit << endl;
 
           for ( size_t i = 0; i < 3; ++i )
@@ -1100,7 +1100,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
             bookHistos();
         }
           
-        streamlog_out ( DEBUG   ) << "DIRECT:FIRST:REFHIT: The alignment collection ["<< _alignmentCollectionName.c_str() <<"] contains: " <<  _alignmentCollectionVec->getNumberOfElements()
+        streamlog_out ( DEBUG5 ) << "DIRECT:FIRST:REFHIT: The alignment collection ["<< _alignmentCollectionName.c_str() <<"] contains: " <<  _alignmentCollectionVec->getNumberOfElements()
                                   << " planes " << endl;   
 
 #ifndef NDEBUG
@@ -1108,7 +1108,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
         map< int , int >::iterator mapIter = _lookUpTable[ _alignmentCollectionName ].begin();
         while ( mapIter != _lookUpTable[ _alignmentCollectionName ].end() ) 
         {
-            streamlog_out ( DEBUG ) << "DIRECT:FIRST:REFHIT: Sensor ID = " << mapIter->first
+            streamlog_out ( DEBUG5 ) << "DIRECT:FIRST:REFHIT: Sensor ID = " << mapIter->first
                                     << " is in position " << mapIter->second << endl;
             ++mapIter;
         }
@@ -1119,16 +1119,16 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 // final check
     if( _inputCollectionVec == 0 )
     {
-      streamlog_out ( DEBUG ) << "DIRECT:-----:-----: EUTelApplyAlignmentProcessor::Direct. Skip this event. Input Collection not found. " << endl;  
+      streamlog_out ( DEBUG5 ) << "DIRECT:-----:-----: EUTelApplyAlignmentProcessor::Direct. Skip this event. Input Collection not found. " << endl;  
       return;
     }
 
-    streamlog_out ( DEBUG ) << "DIRECT:-----:-----: EUTelApplyAlignmentProcessor::Direct. going to proceeed with " <<  _inputCollectionVec->size() << " hits " << endl;
+    streamlog_out ( DEBUG5 ) << "DIRECT:-----:-----: EUTelApplyAlignmentProcessor::Direct. going to proceeed with " <<  _inputCollectionVec->size() << " hits " << endl;
 
 // go-go
     for (size_t iHit = 0; iHit < _inputCollectionVec->size(); iHit++) {
 
-      streamlog_out ( DEBUG ) << "DIRECT:-----:-----: hit " << iHit << " of  " <<  _inputCollectionVec->size() << " hits " << endl;
+      streamlog_out ( DEBUG5 ) << "DIRECT:-----:-----: hit " << iHit << " of  " <<  _inputCollectionVec->size() << " hits " << endl;
 
       TrackerHitImpl   * inputHit   = dynamic_cast< TrackerHitImpl * >  ( _inputCollectionVec->getElementAt( iHit ) ) ;
 //if(inputHit==0)continue;
@@ -1149,17 +1149,17 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       // get the corresponding alignment constants
       map< int , int >::iterator  positionIter = _lookUpTable[ _alignmentCollectionName ].find( sensorID );
 
-     streamlog_out( DEBUG ) << "DIRECT:-----:-----: iHit [" <<  iHit << "] for sensor  "<<  sensorID << endl;
+     streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: iHit [" <<  iHit << "] for sensor  "<<  sensorID << endl;
      if ( positionIter == _lookUpTable[ _alignmentCollectionName ].end() )
          {
-          streamlog_out( DEBUG ) << "DIRECT:-----:-----: wrong sensorID : " <<  sensorID << " ?? " << endl;
+          streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: wrong sensorID : " <<  sensorID << " ?? " << endl;
 //          continue; //do nothing as if alignment == 0.
          }
       else
          {
            EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * >  ( _alignmentCollectionVec->getElementAt( positionIter->second ) );
-           streamlog_out( DEBUG ) << "DIRECT:-----:-----: iHit [" <<  iHit << "] at "<<  positionIter->second << " found at (EUTelAlignmentConstant*) " << alignment ;
-           streamlog_out( DEBUG ) << " with alignment collection name : " << _alignmentCollectionName << endl;
+           streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: iHit [" <<  iHit << "] at "<<  positionIter->second << " found at (EUTelAlignmentConstant*) " << alignment ;
+           streamlog_out( DEBUG5 ) << " with alignment collection name : " << _alignmentCollectionName << endl;
            alpha   = alignment->getAlpha();
            beta    = alignment->getBeta();
            gamma   = alignment->getGamma();
@@ -1177,23 +1177,23 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       if( _referenceHitVec == 0 )
       {
 	// todo: is this case (no reference vector) treated correctly?
-        streamlog_out( DEBUG ) << "DIRECT:-----:-----: _referenceHitVec is empty" << endl;
+        streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: _referenceHitVec is empty" << endl;
       }
       else
       {
-        streamlog_out( DEBUG ) << "DIRECT:-----:-----: reference Hit collection name : " << _referenceHitCollectionName << endl;
+        streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: reference Hit collection name : " << _referenceHitCollectionName << endl;
  
        for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
        {
         EUTelReferenceHit * refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if( sensorID != refhit->getSensorID() )
         {
-//          streamlog_out( DEBUG ) << "DIRECT:-----:-----: Looping through a varity of sensor IDs" << endl;
+//          streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: Looping through a varity of sensor IDs" << endl;
           continue;
         }
         else
         {
-          streamlog_out( DEBUG ) << "DIRECT:-----:-----: Sensor ID and Alignment plane ID match!" << endl;
+          streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: Sensor ID and Alignment plane ID match!" << endl;
           x_refhit =  refhit->getXOffset();
           y_refhit =  refhit->getYOffset();
           z_refhit =  refhit->getZOffset();
@@ -1204,7 +1204,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
 
           break;
         } 
-           streamlog_out( DEBUG ) << "DIRECT:-----:-----: sensorID "<<
+           streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: sensorID "<<
              refhit->getSensorID(   )  << " X: "   <<                
              refhit->getXOffset(    )  << " Y: "   <<
              refhit->getYOffset(    )  << " Z: "   <<
@@ -1214,7 +1214,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
              z_refhit << "  "   << endl;        
        }
       }
-      streamlog_out( DEBUG ) << "DIRECT:-----:-----: refhit found for sensorID " << sensorID << endl;
+      streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: refhit found for sensorID " << sensorID << endl;
 
       // copy the input to the output, at least for the common part
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
@@ -1303,15 +1303,15 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
             {
                 if ( _debugSwitch ) 
                 {
-                    streamlog_out (  DEBUG  )  << "DIRECT:-----:-----: Debugmode ON " << endl;                                   
+                    streamlog_out ( DEBUG5 )  << "DIRECT:-----:-----: Debugmode ON " << endl;                                   
                 }
-                streamlog_out (  DEBUG  )  << "DIRECT:-----:-----: _correctionMethod == rotation first " << endl;
-                streamlog_out (  DEBUG  )  << "DIRECT:-----:-----:  alignment->getAlpha() = " << alpha  << endl;
-                streamlog_out (  DEBUG  )  << "DIRECT:-----:-----:  alignment->getBeta()  = " <<  beta  << endl;
-                streamlog_out (  DEBUG  )  << "DIRECT:-----:-----:  alignment->getGamma() = " << gamma << endl;
-                streamlog_out (  DEBUG  )  << "DIRECT:-----:-----:  alignment->getXOffest() = " << offsetX  << endl;
-                streamlog_out (  DEBUG  )  << "DIRECT:-----:-----:  alignment->getYOffest() = " << offsetY  << endl;
-                streamlog_out (  DEBUG  )  << "DIRECT:-----:-----:  alignment->getZOffest() = " << offsetZ  << endl;
+                streamlog_out ( DEBUG5 )  << "DIRECT:-----:-----: _correctionMethod == rotation first " << endl;
+                streamlog_out ( DEBUG5 )  << "DIRECT:-----:-----:  alignment->getAlpha() = " << alpha  << endl;
+                streamlog_out ( DEBUG5 )  << "DIRECT:-----:-----:  alignment->getBeta()  = " <<  beta  << endl;
+                streamlog_out ( DEBUG5 )  << "DIRECT:-----:-----:  alignment->getGamma() = " << gamma << endl;
+                streamlog_out ( DEBUG5 )  << "DIRECT:-----:-----:  alignment->getXOffest() = " << offsetX  << endl;
+                streamlog_out ( DEBUG5 )  << "DIRECT:-----:-----:  alignment->getYOffest() = " << offsetY  << endl;
+                streamlog_out ( DEBUG5 )  << "DIRECT:-----:-----:  alignment->getZOffest() = " << offsetZ  << endl;
             }
             // this is the rotation first
             TVector3 iCenterOfSensorFrame(  inputPosition[0],  inputPosition[1],  inputPosition[2] );
@@ -1368,7 +1368,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
         // alignment constants. So the idea is to eventually advice
         // the users if running in DEBUG and copy the not aligned hit
         // in the new collection.
-//        streamlog_out ( DEBUG ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
+//        streamlog_out ( DEBUG5 ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
 //                                << iHit << endl;
 
         for ( size_t i = 0; i < 3; ++i )
@@ -1426,24 +1426,24 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
 
         if (_fevent) 
         {
-            streamlog_out ( MESSAGE ) << "REVERSE: The alignment collection ["<< _alignmentCollectionName.c_str() <<"] contains: " <<  _alignmentCollectionVec << endl ; 
-            streamlog_out ( MESSAGE ) << "REVERSE: The alignment collection ["<< _alignmentCollectionName.c_str() <<"] contains: " <<  _alignmentCollectionVec->size() << " planes " << endl;    
+            streamlog_out ( MESSAGE5 ) << "REVERSE: The alignment collection ["<< _alignmentCollectionName.c_str() <<"] contains: " <<  _alignmentCollectionVec << endl ; 
+            streamlog_out ( MESSAGE5 ) << "REVERSE: The alignment collection ["<< _alignmentCollectionName.c_str() <<"] contains: " <<  _alignmentCollectionVec->size() << " planes " << endl;    
 
             if(_alignmentCollectionVec->size() > 0 )
             {
-                streamlog_out ( MESSAGE ) << "REVERSE: alignment sensorID: " ;
+                streamlog_out ( MESSAGE5 ) << "REVERSE: alignment sensorID: " ;
                 for ( size_t iPos = 0; iPos < _alignmentCollectionVec->size(); ++iPos ) 
                 {
                     EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _alignmentCollectionVec->getElementAt( iPos ) );
                     _lookUpTable[ _alignmentCollectionName ][ alignment->getSensorID() ] = iPos;
-                    streamlog_out ( MESSAGE ) << " _alignmentCollectionVec element position : " << iPos << " " << " align for " << alignment->getSensorID() << endl ;
+                    streamlog_out ( MESSAGE5 ) << " _alignmentCollectionVec element position : " << iPos << " " << " align for " << alignment->getSensorID() << endl ;
 
                     if ( _applyToReferenceHitCollection ) 
                     {
                      AlignReferenceHit( evt,  alignment); 
                     }
                 } 
-                streamlog_out ( MESSAGE ) << endl;
+                streamlog_out ( MESSAGE5 ) << endl;
             }
             
 //            if ( _histogramSwitch ) 
@@ -1456,14 +1456,14 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
 #endif
         }
 
-        streamlog_out ( DEBUG ) << "REVERSE: The alignment collection ["<< _alignmentCollectionName.c_str() <<"] contains: " <<  _alignmentCollectionVec->size() << " planes " << endl;   
-        streamlog_out ( DEBUG ) << "REVERSE: _lookUpTable contains "<< _lookUpTable.size() << " elements " << endl;
+        streamlog_out ( DEBUG5 ) << "REVERSE: The alignment collection ["<< _alignmentCollectionName.c_str() <<"] contains: " <<  _alignmentCollectionVec->size() << " planes " << endl;   
+        streamlog_out ( DEBUG5 ) << "REVERSE: _lookUpTable contains "<< _lookUpTable.size() << " elements " << endl;
 
        // print out the lookup table
         map< int , int >::iterator mapIter = _lookUpTable[ _alignmentCollectionName ].begin();
         while ( mapIter != _lookUpTable[ _alignmentCollectionName ].end() ) 
           {
-                streamlog_out ( DEBUG ) << "REVERSE: Sensor ID = " << mapIter->first
+                streamlog_out ( DEBUG5 ) << "REVERSE: Sensor ID = " << mapIter->first
                                         << " is in position " << mapIter->second << endl;
                 ++mapIter;
           }
@@ -1471,7 +1471,7 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
 // final check
     if( _inputCollectionVec == 0 )
     {
-      streamlog_out ( DEBUG ) << "REVERSE: EUTelApplyAlignmentProcessor::Reverse. Skip this event. Input Collection not found. " << endl;  
+      streamlog_out ( DEBUG5 ) << "REVERSE: EUTelApplyAlignmentProcessor::Reverse. Skip this event. Input Collection not found. " << endl;  
       return;
     }
 
@@ -1513,12 +1513,12 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
 
       if ( positionIter == _lookUpTable[ _alignmentCollectionName ].end() )
          {
-           streamlog_out( DEBUG ) <<  "REVERSE: wrong sensorId " << sensorID  << endl;
+           streamlog_out( DEBUG5 ) <<  "REVERSE: wrong sensorId " << sensorID  << endl;
 	   // continue; do nothing as if alignment == 0.
          }
       else
          {
-           streamlog_out( DEBUG ) << "REVERSE: FOUND alignment collection "<< _alignmentCollectionName.c_str() <<" record for sensorId " << sensorID  << endl;
+           streamlog_out( DEBUG5 ) << "REVERSE: FOUND alignment collection "<< _alignmentCollectionName.c_str() <<" record for sensorId " << sensorID  << endl;
            EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * >  ( _alignmentCollectionVec->getElementAt( positionIter->second ) );
 
            alpha   = alignment->getAlpha();
@@ -1537,11 +1537,11 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
       if( _referenceHitVec == 0 )
       {
 	// todo: is this case (no reference vector) treated correctly?
-        // streamlog_out(MESSAGE) << "_referenceHitVec is empty" << endl;
+        // streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << endl;
       }
       else
       {
-        if(_fevent) streamlog_out(MESSAGE) << "REVERSE: reference Hit collection name : " << _referenceHitCollectionName << " at " << _referenceHitVec  << endl;
+        if(_fevent) streamlog_out( MESSAGE5 ) << "REVERSE: reference Hit collection name : " << _referenceHitCollectionName << " at " << _referenceHitVec  << endl;
 
         for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
         {
@@ -1747,7 +1747,7 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
                 // the users if running in DEBUG and copy the not aligned hit
                 // in the new collection.
 
-                streamlog_out ( DEBUG   ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
+                streamlog_out ( DEBUG5 ) << "Sensor ID " << sensorID << " not found. Skipping alignment for hit "
                                           << iHit << endl;
                 
                 for ( size_t i = 0; i < 3; ++i )
@@ -2323,7 +2323,7 @@ void EUTelApplyAlignmentProcessor::_EulerRotationInverse(double* _telPos, double
 void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTelAlignmentConstant * alignment )
 {
     int iPlane = alignment->getSensorID();
-    streamlog_out( DEBUG )<< "AlignReferenceHit for sensor ID:" <<  alignment->getSensorID() << endl;
+    streamlog_out( DEBUG5 )<< "AlignReferenceHit for sensor ID:" <<  alignment->getSensorID() << endl;
     double            alpha   = alignment->getAlpha();
     double            beta    = alignment->getBeta();
     double            gamma   = alignment->getGamma();
@@ -2340,7 +2340,7 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
 		
     if( evt == 0 )
     {
-      streamlog_out(ERROR) << "EMPTY event!" << endl;
+      streamlog_out( ERROR5 ) << "EMPTY event!" << endl;
       return;
     } 
     
