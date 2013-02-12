@@ -33,7 +33,7 @@ namespace eutelescope {
 
   public:
     //! Default constructor
-    EUTelBaseDetector() { }
+    EUTelBaseDetector() : _name("") { }
 
     //! Default destructor
     virtual ~EUTelBaseDetector() {;}

@@ -36,7 +36,7 @@ namespace eutelescope {
 
   public:
     //! Default constructor
-    EUTelPixelDetector() { }
+    EUTelPixelDetector() : _xMin(0), _xMax(0), _yMin(0), _yMax(0), _xPitch(0.0), _yPitch(0.0), _signalPolarity(0), _markerPos(), _mode(""), _subChannelsWithMarkers(), _subChannelsWithoutMarkers() { }
 
     //! Default destructor
     virtual ~EUTelPixelDetector() {;}

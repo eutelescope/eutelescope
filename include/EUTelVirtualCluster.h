@@ -38,7 +38,7 @@ namespace eutelescope {
 
   public:
     //! Default constructor
-    EUTelVirtualCluster(IMPL::TrackerDataImpl *) { } 
+    EUTelVirtualCluster(IMPL::TrackerDataImpl *) : _trackerData(NULL) { } 
 
     //! Default destructor
     virtual ~EUTelVirtualCluster() {;}
@@ -315,7 +315,15 @@ namespace eutelescope {
     friend std::ostream& operator<< (std::ostream& os , const EUTelVirtualCluster & clu )  { clu.print(os); return os; }
 
   protected:
-    
+  #ifndef DISALLOW_COPY_AND_ASSIGN 
+  //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
+  #define DISALLOW_COPY_AND_ASSIGN(EUTelVirtualCluster) \
+  EUTelVirtualCluster(const EUTelVirtualCluster&); \
+  void operator=(const EUTelVirtualCluster&);
+  #endif
+  //Private Functions
+  DISALLOW_COPY_AND_ASSIGN(EUTelVirtualCluster)//See #define just above
+ 
     //! The tracker data member
     /*! This is the core of the decorator pattern design. Whenever an
      *  object deriving from this virtual class is created from an
