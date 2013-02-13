@@ -1,6 +1,5 @@
 ########################################################
 # cmake file for building Marlin example Package
-# @author Jan Engels, Desy IT
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6 FATAL_ERROR)
 ########################################################
 
@@ -20,7 +19,13 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 #    - remove DO_TESTING precompiler flag
 # 1. bump release version in this file
 # 2. create SVN tag for this release
+# 3. update web page, update installation documentation
+# 4. let ILCSoft guys know (?)
 
+# !RELEASE: comment out the following line and comment in either one of the release ones
+SET(CMAKE_BUILD_TYPE Debug) # more warnings, no optimizations, debug symbols
+# SET(CMAKE_BUILD_TYPE Release) # full gcc optimization (-O3), no debug symbols, no debug messages
+# SET(CMAKE_BUILD_TYPE RelWithDebInfo) # gcc optimizations (-O2) with debug symbols
 
 
 ### DEPENDENCIES ############################################################
@@ -106,10 +111,9 @@ INCLUDE_DIRECTORIES( ./include )
 # definitions to pass to the compiler
 ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra" )
 ADD_DEFINITIONS( "-Wno-long-long" )
-# !RELEASE: DEBUGING WARNINGS AND SWITCHES - COMMENT FOR RELEASE VERSIONS
-ADD_DEFINITIONS( "-g -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy 
-               -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast 
-               -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef" )
+
+# debuging warnings and switches - only active if  CMAKE_BUILD_TYPE  is set to debug
+SET(CMAKE_CXX_FLAGS_DEBUG "-g -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef" CACHE STRING "Debug options." FORCE )
 # also useful: -Wshadow (however, GCC 4.1 uses this even for system libraries, causing many warnings from Marlin & co)
 
 # add library
@@ -193,6 +197,7 @@ ENDIF()
 # check environment
 IF( DEFINED ENV{EUTELESCOPE} AND DEFINED ENV{MARLIN})
 
+# !RELEASE: cppcheck is not a useful test for most users (comment out the following lines)
 # if cppcheck is installed, offer static code analysis test
 find_program(CPPCHECK cppcheck /scratch/local/bin) # hint at path /scratch/... used on EUTelTesting server; will also parse $PATH
 if(CPPCHECK)
@@ -204,7 +209,7 @@ if(CPPCHECK)
 #else()
 #  MESSAGE("cppcheck was not found - omitting cppcheck static code analysis test.")
 endif()
-
+# /!RELEASE
 
 # ======================================================================
 # ======================================================================
@@ -212,6 +217,7 @@ endif()
 # ======================================================================
 # ======================================================================
 
+# !RELEASE: the data-driven tests require DESY-AFS access and are not useful for most users (comment out the following lines)
   INCLUDE(jobsub/examples/datura-alone/testing.cmake)
   INCLUDE(pysub/examples/datura-alone/testing.cmake)
   INCLUDE(pysub/examples/datura-2FEI4/testing.cmake)
@@ -221,7 +227,7 @@ configure_file (
 	       ./CTestCustom.cmake.in 
 	       ${PROJECT_BINARY_DIR}/CTestCustom.cmake
 	       )
-
+# /!RELEASE
 
 ELSE()
     MESSAGE( "EUTELESCOPE environment variable not defined, cannot run tests - please run 'source build_env.sh' in the EUTel root directory first." )
