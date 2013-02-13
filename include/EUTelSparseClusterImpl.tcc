@@ -154,8 +154,8 @@ namespace eutelescope {
 
     for ( unsigned int iPixel = 0; iPixel < size() ; iPixel++ ) {
       getSparsePixelAt( iPixel, pixel );
-      xPixel = (int) pixel->getXCoord();
-      yPixel = (int) pixel->getYCoord();
+      xPixel = static_cast<int>(pixel->getXCoord());
+      yPixel = static_cast<int>(pixel->getYCoord());
       if ( ( abs( xSeed - xPixel ) <= ( xSize / 2 ) ) &&
 	   ( abs( ySeed - yPixel ) <= ( ySize / 2 ) ) ) {
 	goodPixelList.push_back(iPixel);
@@ -193,7 +193,7 @@ namespace eutelescope {
       return;
     }
 
-    if ( (unsigned) n >= size() ) {
+    if ( static_cast<unsigned int>(n) >= size() ) {
       getCenterOfGravityShift( xCoG, yCoG );
       return;
     }
@@ -349,7 +349,7 @@ namespace eutelescope {
   float EUTelSparseClusterImpl<PixelType>::getClusterCharge(int nPixel) const {
 
 
-    if ( (unsigned) nPixel >= size() ) return getTotalCharge();
+    if ( static_cast<unsigned int> (nPixel) >= size() ) return getTotalCharge();
 
     std::vector<float > allSignals;
     
@@ -418,8 +418,8 @@ namespace eutelescope {
 
     for ( unsigned int iPixel = 0; iPixel < size() ; iPixel++ ) {
       getSparsePixelAt( iPixel, pixel );
-      xPixel = (int) pixel->getXCoord();
-      yPixel = (int) pixel->getYCoord();
+      xPixel = static_cast<int>( pixel->getXCoord());
+      yPixel = static_cast<int>( pixel->getYCoord());
       if ( ( abs( xSeed - xPixel ) <= ( xSize / 2 ) ) &&
 	   ( abs( ySeed - yPixel ) <= ( ySize / 2 ) ) ) {
 	charge += pixel->getSignal();
@@ -494,7 +494,7 @@ namespace eutelescope {
   template<class PixelType>
   float EUTelSparseClusterImpl<PixelType>::getClusterSNR(int nPixel) const {
     if ( ! _noiseSetSwitch ) throw DataNotAvailableException("No noise values set");
-    if ( ( unsigned ) nPixel >= size() ) 
+    if ( static_cast<unsigned>(nPixel) >= size() ) 
       return getClusterSNR();
 
     PixelType * pixel = new PixelType;
@@ -558,8 +558,8 @@ namespace eutelescope {
 
     for (unsigned int iPixel = 0;  iPixel < size() ; iPixel++ ) {
       getSparsePixelAt( iPixel, pixel );
-      xPixel = (int) pixel->getXCoord();
-      yPixel = (int) pixel->getYCoord();
+      xPixel = static_cast<int> (pixel->getXCoord());
+      yPixel = static_cast<int> (pixel->getYCoord());
       if ( ( abs( xSeed - xPixel ) <= ( xSize / 2 ) ) &&
 	   ( abs( ySeed - yPixel ) <= ( ySize / 2 ) ) ) {     
 	charge += pixel->getSignal();

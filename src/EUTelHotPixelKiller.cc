@@ -64,7 +64,34 @@ string EUTelHotPixelKiller::_firing1DHistoName = "Firing1D";
 #endif
 
 
-EUTelHotPixelKiller::EUTelHotPixelKiller () : Processor("EUTelHotPixelKiller") 
+EUTelHotPixelKiller::EUTelHotPixelKiller ()
+: Processor("EUTelHotPixelKiller"),
+  _lcioWriteMode(""),
+  _zsDataCollectionName(""),
+  _noiseCollectionName(""), 
+  _statusCollectionName(""),
+  _hotPixelCollectionName(""),
+  _ExcludedPlanes(),
+  _noOfEventPerCycle(0),
+  _maxAllowedFiringFreq(0.0),
+  _ancillaryIndexMap(),
+  _hitIndexMapVec(),
+  _inverse_hitIndexMapVec(),
+  _pixelMapVec(),
+  _iRun(0),
+  _iEvt(0),
+  _noOfDetectors(0),
+  _minX(),
+  _maxX(),
+  _minY(),
+  _maxY(),
+  _sensorIDVec(),
+  _totalNoOfCycle(0),
+  _hotpixelDBFile(""),
+  _iCycle(0),
+  _killedPixelVec(),
+  _firingFreqVec(),
+  _flagBuildHotPixelDatabase(0)
 {
 
   // modify processor description

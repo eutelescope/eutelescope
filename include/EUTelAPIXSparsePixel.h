@@ -102,7 +102,7 @@ namespace eutelescope {
     float getTime() const { return static_cast<float> (_time) ; } 
 
   private:
-    
+  
     //! The x coordinate
     short _xCoord;
     

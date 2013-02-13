@@ -783,6 +783,8 @@ namespace eutelescope {
 
 
   private:
+  
+  #ifndef DISALLOW_COPY_AND_ASSIGN
   //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
   #define DISALLOW_COPY_AND_ASSIGN(EUTelClusteringProcessor) \
   EUTelClusteringProcessor(const EUTelClusteringProcessor&); \
@@ -790,7 +792,7 @@ namespace eutelescope {
 
   //Private Functions
   DISALLOW_COPY_AND_ASSIGN(EUTelClusteringProcessor)//See #define just above
-
+  #endif
 
     //! read secondary collections
     /*!

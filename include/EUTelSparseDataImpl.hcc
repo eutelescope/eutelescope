@@ -141,6 +141,18 @@ namespace eutelescope {
     IMPL::TrackerDataImpl * trackerData(); 
 
   private:
+
+  #ifndef DISALLOW_COPY_AND_ASSIGN
+  //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
+  #define DISALLOW_COPY_AND_ASSIGN(EUTelSparseDataImpl) \
+  EUTelSparseDataImpl(const EUTelSparseDataImpl&); \
+  void operator=(const EUTelSparseDataImpl&);
+
+  //Private Functions
+  DISALLOW_COPY_AND_ASSIGN(EUTelSparseDataImpl)//See #define just above
+  #endif
+
+
     //! This is the TrackerDataImpl
     /*! This is the object where the sparse data information are
      *  collected all together.

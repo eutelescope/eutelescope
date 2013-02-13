@@ -153,7 +153,8 @@ namespace eutelescope {
      */
     virtual void end() ;
 
-  protected:
+private:
+  #ifndef DISALLOW_COPY_AND_ASSIGN
   //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
   #define DISALLOW_COPY_AND_ASSIGN(EUTelDUTHistograms) \
   EUTelDUTHistograms(const EUTelDUTHistograms&); \
@@ -161,7 +162,9 @@ namespace eutelescope {
 
   //Private Functions
   DISALLOW_COPY_AND_ASSIGN(EUTelDUTHistograms)//See #define just above
- 
+  #endif 
+  
+protected:
     //! reference HitCollection name 
     /*!
      */

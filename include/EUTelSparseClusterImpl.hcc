@@ -383,7 +383,19 @@ namespace eutelescope {
     SparsePixelType _type;
 
   private:
-    
+   #ifndef DISALLOW_COPY_AND_ASSIGN
+  //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
+  #define DISALLOW_COPY_AND_ASSIGN(EUTelSparseClusterImpl) \
+  EUTelSparseClusterImpl(const EUTelSparseClusterImpl&); \
+  void operator=(const EUTelSparseClusterImpl&);
+
+  //Private Functions
+  DISALLOW_COPY_AND_ASSIGN(EUTelSparseClusterImpl)//See #define just above
+  #endif
+ 
+  //Private Functions
+
+  
     //! Noise values vector
     std::vector<float > _noiseValues;
 
@@ -407,7 +419,7 @@ namespace eutelescope {
   
 
   //! Template specialization for the getSparsePixelAt method
-  /*! The same considerations about EUTelSparseDataImpl apply here as
+  /*! The same considerations about EUTelSparseClusterImpl apply here as
    *  well. This method has to specialized for every type of
    *  sparsified pixel
    *  

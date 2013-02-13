@@ -2,6 +2,8 @@
 #ifndef TRACKERSYSTEM_H
 #define TRACKERSYSTEM_H
 
+#include <marlin/AIDAProcessor.h>
+#include "marlin/Processor.h"
 #include <Eigen/Core>
 #include <list>
 #include <vector>
@@ -13,6 +15,7 @@ USING_PART_OF_NAMESPACE_EIGEN
 namespace daffitter{
   class TrackEstimate{
   public:
+    TrackEstimate():params(),cov(){;}
     Vector4f params;
     Matrix4f cov;
     void copy(TrackEstimate* e){
@@ -43,7 +46,7 @@ namespace daffitter{
     bool goodRegion() const { return(m_goodRegion); }
     size_t getIden() const { return(m_iden); }
     
-    Measurement(float x, float y, float z, bool goodRegion, size_t iden){ 
+    Measurement(float x, float y, float z, bool goodRegion, size_t iden) : m(), m_goodRegion(goodRegion), zPos(z), m_iden(iden){ 
       m(0) = x; m(1) = y;
       zPos = z;
       m_goodRegion = goodRegion;
@@ -217,6 +220,7 @@ namespace daffitter{
     std::vector<daffitter::TrackCandidate*> tracks;
 
     TrackerSystem();
+    TrackerSystem(const TrackerSystem &z);
     void addPlane(int sensorID, float zPos, float sigmaX, float sigmaY, float scatterVariance, bool excluded);
     void addMeasurement(size_t planeIndex, float x, float y, float z, bool goodRegion, size_t iden);
     void init();

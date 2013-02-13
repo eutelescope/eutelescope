@@ -88,7 +88,7 @@ namespace eutelescope {
 
 
   private:
-    
+  
     //! The x coordinate
     short _xCoord;
     

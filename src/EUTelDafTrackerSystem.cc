@@ -45,7 +45,7 @@ void TrackerSystem::setTruth(int plane, float x, float y, float xdz, float ydz){
 
 void TrackerSystem::setMaxCandidates(int nCandidates){
   if( m_inited ){
-    cerr << "ERROR: call to TrackerSystem::setMaxCandidates() must be called before call to TrackerSystem::init(). Quitting." << endl;
+    streamlog_out(ERROR5) << "ERROR: call to TrackerSystem::setMaxCandidates() must be called before call to TrackerSystem::init(). Quitting." << endl;
     exit(1);
   }
   m_maxCandidates = nCandidates;
@@ -53,7 +53,7 @@ void TrackerSystem::setMaxCandidates(int nCandidates){
 
 void TrackerSystem::addPlane(int sensorID, float zPos, float sigmaX, float sigmaY, float scatterVariance, bool excluded){
   if(m_inited){
-    cerr << "All planes must be added before call to TrackerSystem::init" << endl;
+    streamlog_out(ERROR5) << "All planes must be added before call to TrackerSystem::init" << endl;
     exit(1);
   }
 

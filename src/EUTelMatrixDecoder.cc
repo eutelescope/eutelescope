@@ -34,7 +34,11 @@ using namespace eutelescope;
 using namespace gear;
 #endif
 
-EUTelMatrixDecoder::EUTelMatrixDecoder(int xNoOfPixel, int yNoOfPixel) throw(InvalidParameterException) {
+EUTelMatrixDecoder::EUTelMatrixDecoder(int xNoOfPixel, int yNoOfPixel) throw(InvalidParameterException)
+: _xNoOfPixel(xNoOfPixel),
+  _yNoOfPixel(yNoOfPixel),
+  _xMin(0),
+  _yMin(0){
 
   if ( xNoOfPixel <= 0 ) throw InvalidParameterException("xNoOfPixel has to be positive");
   if ( yNoOfPixel <= 0 ) throw InvalidParameterException("yNoOfPixel has to be positive");
@@ -45,7 +49,11 @@ EUTelMatrixDecoder::EUTelMatrixDecoder(int xNoOfPixel, int yNoOfPixel) throw(Inv
 
 }
 
-EUTelMatrixDecoder::EUTelMatrixDecoder(int xNoOfPixel, int yNoOfPixel, int xMin, int yMin) {
+EUTelMatrixDecoder::EUTelMatrixDecoder(int xNoOfPixel, int yNoOfPixel, int xMin, int yMin)
+: _xNoOfPixel(xNoOfPixel),
+  _yNoOfPixel(yNoOfPixel),
+  _xMin(xMin),
+  _yMin(yMin){
   if ( xNoOfPixel <= 0 ) throw InvalidParameterException("xNoOfPixel has to be positive");
   if ( yNoOfPixel <= 0 ) throw InvalidParameterException("yNoOfPixel has to be positive");
   _xNoOfPixel = xNoOfPixel;

@@ -500,6 +500,7 @@ namespace eutelescope {
     inline IMPL::LCRunHeaderImpl * lcRunHeader() { return  _lcHeader ; }
 
   private:
+  #ifndef DISALLOW_COPY_AND_ASSIGN
       //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
   #define DISALLOW_COPY_AND_ASSIGN(EUTelRunHeaderImpl) \
   EUTelRunHeaderImpl(const EUTelRunHeaderImpl&); \
@@ -507,6 +508,7 @@ namespace eutelescope {
 
   //Private Functions
   DISALLOW_COPY_AND_ASSIGN(EUTelRunHeaderImpl)//See #define just above
+  #endif
 
     IMPL::LCRunHeaderImpl * _lcHeader;
 

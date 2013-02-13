@@ -167,6 +167,7 @@ public:
   int guessSensorID(const double * hit );
 
 private:
+  #ifndef DISALLOW_COPY_AND_ASSIGN
   //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
   #define DISALLOW_COPY_AND_ASSIGN(EUTelX0Processor) \
   EUTelX0Processor(const EUTelX0Processor&); \
@@ -174,6 +175,8 @@ private:
   
   //Private Functions
   DISALLOW_COPY_AND_ASSIGN(EUTelX0Processor)//See #define just above
+  #endif
+  
   //!Cut and Store Hits
   /*!This looks at the two layers and extrapolates a track line between them. It also allows for a cut to be made that stops tracks with angles greater than +/- anglecut.
   size1 and size2 refer to the specific sizes of the number of hits in the first and second layer.

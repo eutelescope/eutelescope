@@ -32,7 +32,7 @@ namespace eutelescope {
 
     public:
     //! Default constructor
-    EUTelBaseSparsePixel() { } 
+    EUTelBaseSparsePixel() : _noOfElements(0), _type() { } 
 
     //! Default destructor
     virtual ~EUTelBaseSparsePixel() { ; } 

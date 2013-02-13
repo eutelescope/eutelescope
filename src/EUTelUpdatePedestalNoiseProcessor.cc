@@ -48,7 +48,21 @@ using namespace eutelescope;
 const unsigned short EUTelUpdatePedestalNoiseProcessor::_maxNoOfConsecutiveMissing = 10;
 
 
-EUTelUpdatePedestalNoiseProcessor::EUTelUpdatePedestalNoiseProcessor () : Processor("EUTelUpdatePedestalNoiseProcessor") {
+EUTelUpdatePedestalNoiseProcessor::EUTelUpdatePedestalNoiseProcessor ()
+: Processor("EUTelUpdatePedestalNoiseProcessor"),
+  _rawDataCollectionName(""),
+  _pedestalCollectionName(""),
+  _noiseCollectionName(""),
+  _statusCollectionName(""),
+  _updateAlgo(""),
+  _monitoredPixel(),
+  _monitoredPixelPedestal(),
+  _monitoredPixelNoise(),
+  _updateFrequency(0),
+  _fixedWeight(0),
+  _iRun(0),
+  _iEvt(0),
+  _noOfConsecutiveMissing(0){
 
   // modify processor description
   _description =
