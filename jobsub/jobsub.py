@@ -232,6 +232,26 @@ def runMarlin(filenamebase,silent):
                     log_file.write(line)                     
                 except Empty:
                     pass
+            # process done
+            tout.join() # finish stdout thread; wait for remaining buffer to be read
+            terr.join() # finish stderr thread
+            # process the remainder of the buffers now stored in our queues
+            while not qout.empty() or not qerr.empty():
+                # read line without blocking
+                try:  
+                    line = qout.get_nowait() # or q.get(timeout=.1)
+                    if not silent:
+                        log.info(line.strip())
+                    log_file.write(line)
+                except Empty:
+                    pass
+                
+                try:  
+                    line = qerr.get_nowait() # or q.get(timeout=.1)
+                    log.error(line.strip())
+                    log_file.write(line)                     
+                except Empty:
+                    pass
         finally:
             log_file.close()
         rcode = p.returncode # get the return code
