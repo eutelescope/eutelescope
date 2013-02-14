@@ -312,19 +312,19 @@ def main(argv=None):
 
     if argv is None:
         argv = sys.argv
-        argv.pop(0) # progName
+        progName = os.path.basename(argv.pop(0))
 
     # command line argument parsing
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(prog=progName, description="A tool for the convenient run-specific modification of Marlin steering files and their execution through the Marlin processor")
     parser.add_argument('--option', '-o', action='append', metavar="NAME=VALUE", help="Specify further options such as beamenergy=5.3; overrides config file options.")
-    parser.add_argument("-c", "--conf-file", "--config", help="Load config file with global and task specific variables", metavar="FILE")
-    parser.add_argument("-csv", "--csv-file", help="Load run-specific variables from table (csv format)", metavar="FILE")
-    parser.add_argument("--log-file", help="Save log to specified file", metavar="FILE")
-    parser.add_argument("-l", "--log", help="Set specified log level", metavar="LEVEL")
+    parser.add_argument("-c", "--conf-file", "--config", help="Load specified config file with global and task specific variables", metavar="FILE")
+    parser.add_argument("-csv", "--csv-file", help="Load additional run-specific variables from table (text file in csv format)", metavar="FILE")
+    parser.add_argument("--log-file", help="Save submission log to specified file", metavar="FILE")
+    parser.add_argument("-l", "--log", default="info", help="Sets the verbosity of log messages during job submission where LEVEL is either debug, info, warning or error", metavar="LEVEL")
     parser.add_argument("-s","--silent", action="store_true", default=False, help="Suppress non-error (stdout) Marlin output to console")
-    parser.add_argument("--dry-run", action="store_true", default=False, help="Write steering files but skip Marlin execution")
-    parser.add_argument("jobtask", help="Task of job (e.g. convert, hitmaker, align)")
-    parser.add_argument("runs", help="Runs to analyze; can be a comma-separated list or a range, e.g. 1056-1060", nargs='*')
+    parser.add_argument("--dry-run", action="store_true", default=False, help="Write steering files but skip actual Marlin execution")
+    parser.add_argument("jobtask", help="Which task to submit (e.g. convert, hitmaker, align); task names are arbitrary and can be set up by the user; they determine e.g. the config section and default steering file names.")
+    parser.add_argument("runs", help="The runs to be analyzed; can be a list of single runs and/or a range, e.g. 1056-1060. PLEASE NOTE: for technical reasons, the order in which the runs are processed does not neccessarily follow the order in which they were specified.", nargs='*')
     args = parser.parse_args(argv)
 
     runs = set()
@@ -337,7 +337,7 @@ def main(argv=None):
             return 2
 
     # set the logging level
-    numeric_level = getattr(logging, "INFO", None) # default: warnings only
+    numeric_level = getattr(logging, "INFO", None) # default: INFO messages and above
     if args.log:
         # Convert log level to upper case to allow the user to specify --log=DEBUG or --log=debug
         numeric_level = getattr(logging, args.log.upper(), None)
@@ -365,16 +365,23 @@ def main(argv=None):
         config = ConfigParser.SafeConfigParser()
         # local variables useful in the context of the config; access using %(NAME)s in config
         config.set("DEFAULT","HOME",str(os.environ.get('HOME')))
-        config.set("DEFAULT","EUTelescopePath",str(os.environ.get('EUTELESCOPE')))
-        if not config.read([args.conf_file]):
-            log.error("Could not read config file '%s'!", args.conf_file)
-            return 1
-        # merge with defaults and create final set of configuration parameters
-        if config.has_section(args.jobtask):
-            parameters.update(dict(config.items(args.jobtask)))
+        if not os.environ.get('EUTELESCOPE') is None:
+            config.set("DEFAULT","EUTelescopePath",str(os.environ.get('EUTELESCOPE')))
         else:
-            log.warning("Config file '%s' is missing a section [%s]!", args.conf_file, args.jobtask)
-        log.info("Loaded config file %s", args.conf_file)
+            log.debug("Environment variable EUTELESCOPE not found; will not be set for steering/config file parsing")
+        try:
+            if not config.read([args.conf_file]): # loads global defaults
+                log.error("Could not read config file '%s'!", args.conf_file)
+                return 1
+            # merge with defaults and create final set of configuration parameters
+            if config.has_section(args.jobtask):
+                parameters.update(dict(config.items(args.jobtask)))
+            else:
+                log.warning("Config file '%s' is missing a section [%s]!", args.conf_file, args.jobtask)
+            log.info("Loaded config file %s", args.conf_file)
+        except ConfigParser.InterpolationMissingOptionError, err: # if interpolation during config parsing fails
+            log.error('Bad value substitution in config file '+str(args.conf_file)+ ": missing '{0}' key in section [{1}] for option '{2}'.".format(err.reference,err.section,err.option))
+            return 1
     else:
         log.warn("No config file specified")
     

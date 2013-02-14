@@ -6,7 +6,8 @@ WE ENCOURAGE YOU THEREFORE TO START WITH FRESH STEERING FILES
 AND COMMIT YOUR ANALYSIS BACK TO US FOR FUTURE REFERENCE.
 ********
 
-This subdirectory contains example configurations and steering files:
+This subdirectory contains example configurations and steering files
+that can be used as a basis for your own analysis:
 
 * datura-alone
      The Datura telescope with six planes of Mimosa26 without DUT

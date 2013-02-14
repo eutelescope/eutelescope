@@ -4,21 +4,43 @@
   Marlin steering files and their execution through the Marlin
   processor.
 * Usage
-  - help with jobsub -h and jobsub --help (latter is more verbose)
-  - task names are arbitrary and can be set up by the user; they determine
-    e.g. the config section and default file names.
-  - Config file etc. are all optional; only file name for the steering
-    file needs to be either derived from the defaults or needs to be
-    configured
-  - Run range is parsed: allowed are lists or ranges, e.g.  
-    1234 1235 1240-1250 
-    *Warning*: The order in which the runs are being
-    processed does not necessarily follow the order in which they were
-    given on the command line (due to the underlying python data
-    structure used for storing them); if you need some runs processed
-    before others you need to run them separately.
-  - log file and steering file will be generated
-  - default logging level for submission: warning
+usage: jobsub.py [-h] [--option NAME=VALUE] [-c FILE] [-csv FILE]
+                 [--log-file FILE] [-l LEVEL] [-s] [--dry-run]
+                 jobtask [runs [runs ...]]
+
+A tool for the convenient run-specific modification of Marlin steering files
+and their execution through the Marlin processor
+
+positional arguments:
+  jobtask               Which task to submit (e.g. convert, hitmaker, align);
+                        task names are arbitrary and can be set up by the
+                        user; they determine e.g. the config section and
+                        default steering file names.
+  runs                  The runs to be analyzed; can be a list of single runs
+                        and/or a range, e.g. 1056-1060. PLEASE NOTE: for
+                        technical reasons, the order in which the runs are
+                        processed does not neccessarily follow the order in
+                        which they were specified.
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --option NAME=VALUE, -o NAME=VALUE
+                        Specify further options such as beamenergy=5.3;
+                        overrides config file options.
+  -c FILE, --conf-file FILE, --config FILE
+                        Load specified config file with global and task
+                        specific variables
+  -csv FILE, --csv-file FILE
+                        Load additional run-specific variables from table
+                        (text file in csv format)
+  --log-file FILE       Save submission log to specified file
+  -l LEVEL, --log LEVEL
+                        Sets the verbosity of log messages during job
+                        submission where LEVEL is either debug, info, warning
+                        or error
+  -s, --silent          Suppress non-error (stdout) Marlin output to console
+  --dry-run             Write steering files but skip actual Marlin execution
+
 * Preparation of Steering File Templates
   Steering file templates are valid Marlin steering files (in xml
   format) where single values are replaced by variables in the form
@@ -32,7 +54,6 @@
   There is only one predefined placeholder, @RunNumber@, which will be
   substituted with the current run number (padded with leading zeros
   to six digits, e.g. 001234).
-
 * Configuration
   There are only very few predefined options: TemplateFile,
   TemplatePath, and LogPath. The former are used to find the correct
@@ -59,7 +80,7 @@
    as well as "name: value" or "name=value" entries, where 'name' are
    arbitrary steering file variables (case-insensitive).
 
-   Some features of note include:
+   Some noteworthy features include:
    - comment prefix characters are # and ;
    - interpolation of format strings is supported, for example:
 
@@ -78,16 +99,115 @@
      the @RunNumber@ placeholder inside options, e.g. the file name.
      It will be replaced by the run number padded with leading zeros
      to 6 digits.
+   - for more details, see the documentation to the Python module used
+     for parsing: http://docs.python.org/2/library/configparser.html
+
+*** Example
+    [DEFAULT]
+    # global section. Settings can be overwritten through task-specific sections
+    # the template file name can be set with
+    # TemplateFile = file.xml
+    # The default is '[task]-tmp.xml'
+    BasePath     		= %(eutelescopepath)s/jobsub/examples/datura-alone
+    TemplatePath		= %(BasePath)s/steering-templates
+    # set the folder which contains the raw/native data files
+    NativeFolder            = /afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaAlone
+    # geometry file
+    GEARFile    		= gear_desy2012_06f_tb21.xml
+    # histogram information
+    Histoinfo   		= histoinfo.xml
+    # format for the output; @RunNumber@ is the current run number padded with leading zeros to 6 digits
+    Output			= run@RunNumber@
+    # which run number to use for hot pixel determination (use current run)
+    HotpixelRunNumber	= @RunNumber@
+    # do not skip events
+    SkipNEvents = 
+    # recommended subfolder structure:
+    LocalFolderOutputBase	= ./output
+    LcioRawFolder            	= %(LocalFolderOutputBase)s/lcio-raw
+    DBPath			= %(LocalFolderOutputBase)s/db
+    ResultsPath			= %(LocalFolderOutputBase)s/results
+    HistoPath			= %(LocalFolderOutputBase)s/histo
+    LogPath			= %(LocalFolderOutputBase)s/logs
+    # limit processing of run to a certain number of events
+    MaxRecordNumber = 100000
+
+    [converter]
+    # section for the converter step
+    # nothing specific to set here
+
+    [align]
+    InputFile		= %(ResultsPath)s/run@RunNumber@-hit.slcio
+    PedeSteeringFile	= %(TemplatePath)s/pede-steer-tmp.txt
+    # do not need so many events for alignment - this overwrites global value set above
+    MaxRecordNumber     = 75000
+    ResidualXMin        = -300. -300. -300. -600. -600. -600.
+    ResidualXMax        =  300.  300.  300.  600.  600.  600.
+    ResidualYMin        = -300. -300. -300. -600. -600. -600.
+    ResidualYMax        =  300.  300.  300.  600.  600.  600.
 
 ** Table (comma-separated text file)
    - format: e.g. 
-     - export from Open/LibreOffice with default settings (UTF-8,comma, text-field delimiter: ")
-     - emacs org-mode table
+     - export from Open/LibreOffice with default settings (UTF-8,comma-separated, text-field delimiter: ")
+     - emacs org-mode table (see http://orgmode.org/manual/Tables.html)
    - commented lines (starting with #) are ignored
    - first row (after comments) has to provide column headers which identify the variables in the steering template to replace (case-insensitive)
    - requires one column labeled "RunNumber"
    - only considers placeholders left in the steering template after processing command-line arguments and config file options
-* Examples
+*** Example
+    An org-mode emacs table would have the following form:
+    | RunNumber | BeamEnergy |
+    |      4115 |          1 |
+    |      4116 |          2 |
+    |      4117 |          3 |
+    |      4118 |          4 |
+    |      4119 |          5 |
+    
+    Using this table, the variable @BeamEnergy@ in the templates would
+    be replaced by the value corresponding to the current run number.
+* Example
+  The following commands show how you would execute the telescope-only
+  analysis that is provided as an example:
+
+  First, create the directory structure and set up some environment variables for convenience:
+  export ANALYSIS=/data/testbeam/analysis
+  mkdir -p $ANALYSIS/histo && mkdir -p $ANALYSIS/results && mkdir -p $ANALYSIS/db && mkdir -p $ANALYSIS/logs && mkdir -p $ANALYSIS/lcio-raw
+
+  The analysis we want to perform is controlled by a config file
+  (config.cfg), a csv-table (table_orgmode.csv) and steerings file
+  templates (*.xml), all located in the examples subdirectory of
+  jobsub: 
+  export $ANALYSIS_CONF=$EUTELESCOPE/jobsub/examples/datura-alone
+
+  In principle, neither the table nor the config are required as long
+  as the template files do not contain any variables except for the
+  run number ('@RunNumber@').
+  
+  After making sure that the path to the raw data files in config.cfg
+  is correct, we can execute the analysis step-by-step:
+
+  First, converter step:
+  cd $ANALYSIS
+  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv converter 4118
+
+  Here, jobsub will generate a steering file using the template file
+  specified in the config file (default would be 'converter-tmp.xml'),
+  thereby replacing any variables given in the config and table files.
+  The final steering file will be processed by executing Marlin.
+  
+  The next steps follow the same pattern:
+  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv clusearch 4118
+  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv hitmaker 4118
+  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv align 4118
+  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv fitter 4118
+
+  For this example, the output of each step is stored in
+  subdirectories of the $ANALYSIS path. This is configurable through
+  the paths in the config.cfg file.
+
+  If all steps succeed, we end up with an LCIO-Collection of tracks on
+  which detailed studies can be performed.
+    
 * Appendix 1: pysub migration
   Currently, jobsub does not directly support submission on the grid;
   if you need this functionality, please stay with pysub for now.
