@@ -103,7 +103,7 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
                           _inputClusterCollectionName, string ( "cluster" ) );
 */
   EVENT::StringVec	      _clusterCollectionVecExample;
-  _clusterCollectionVecExample.push_back("cluster");
+//  _clusterCollectionVecExample.push_back("cluster");
   
   registerInputCollections ( LCIO::TRACKERPULSE, "InputClusterCollections",
                             "List of cluster collections",
