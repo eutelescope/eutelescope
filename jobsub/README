@@ -4,6 +4,7 @@
   Marlin steering files and their execution through the Marlin
   processor.
 * Usage
+#+begin_example
 usage: jobsub.py [-h] [--option NAME=VALUE] [-c FILE] [-csv FILE]
                  [--log-file FILE] [-l LEVEL] [-s] [--dry-run]
                  jobtask [runs [runs ...]]
@@ -19,7 +20,7 @@ positional arguments:
   runs                  The runs to be analyzed; can be a list of single runs
                         and/or a range, e.g. 1056-1060. PLEASE NOTE: for
                         technical reasons, the order in which the runs are
-                        processed does not neccessarily follow the order in
+                        processed does not necessarily follow the order in
                         which they were specified.
 
 optional arguments:
@@ -40,7 +41,7 @@ optional arguments:
                         or error
   -s, --silent          Suppress non-error (stdout) Marlin output to console
   --dry-run             Write steering files but skip actual Marlin execution
-
+#+end_example
 * Preparation of Steering File Templates
   Steering file templates are valid Marlin steering files (in xml
   format) where single values are replaced by variables in the form
@@ -70,26 +71,29 @@ optional arguments:
    Variable substitutions can be specified using the --option or -o
    command line switches, e.g.
 
+   #+begin_src shell-script
    jobsub.py --option beamenergy=5.3 align 1234
+   #+end_src
 
    Command line options override any options given in the config file.
 ** Config File
    Config files are text file consisting of sections (indicated by '[]'):
    - a global section called [DEFAULT]
    - task-specific sections
+
    as well as "name: value" or "name=value" entries, where 'name' are
    arbitrary steering file variables (case-insensitive).
 
    Some noteworthy features include:
    - comment prefix characters are # and ;
    - interpolation of format strings is supported, for example:
-
+     #+begin_example
      [My Section]
      foodir: %(dir)s/whatever
      dir=frob
      long: this value continues
        in the next line
-
+     #+end_example
      would resolve the %(dir)s to the value of dir (frob in this case).
    - some default interpolations are %(home)s and %(eutelescopePath)s
      which are set up with the environment variables $HOME and
@@ -103,6 +107,8 @@ optional arguments:
      for parsing: http://docs.python.org/2/library/configparser.html
 
 *** Example
+    The following is an excerpt from jobsub/examples/datura-alone/config.cfg:
+    #+begin_src conf
     [DEFAULT]
     # global section. Settings can be overwritten through task-specific sections
     # the template file name can be set with
@@ -145,6 +151,7 @@ optional arguments:
     ResidualXMax        =  300.  300.  300.  600.  600.  600.
     ResidualYMin        = -300. -300. -300. -600. -600. -600.
     ResidualYMax        =  300.  300.  300.  600.  600.  600.
+    #+end_src
 
 ** Table (comma-separated text file)
    - format: e.g. 
@@ -156,13 +163,16 @@ optional arguments:
    - only considers placeholders left in the steering template after processing command-line arguments and config file options
 *** Example
     An org-mode emacs table would have the following form:
+
+    #+begin_example
     | RunNumber | BeamEnergy |
     |      4115 |          1 |
     |      4116 |          2 |
     |      4117 |          3 |
     |      4118 |          4 |
     |      4119 |          5 |
-    
+    #+end_example
+
     Using this table, the variable @BeamEnergy@ in the templates would
     be replaced by the value corresponding to the current run number.
 * Example
@@ -170,14 +180,20 @@ optional arguments:
   analysis that is provided as an example:
 
   First, create the directory structure and set up some environment variables for convenience:
+
+  #+begin_src sh
   export ANALYSIS=/data/testbeam/analysis
   mkdir -p $ANALYSIS/histo && mkdir -p $ANALYSIS/results && mkdir -p $ANALYSIS/db && mkdir -p $ANALYSIS/logs && mkdir -p $ANALYSIS/lcio-raw
+  #+end_src
 
   The analysis we want to perform is controlled by a config file
-  (config.cfg), a csv-table (table_orgmode.csv) and steerings file
-  templates (*.xml), all located in the examples subdirectory of
+  (config.cfg), a csv-table (table_orgmode.csv) and steering file
+  templates (*.xml), all located in the examples sub directory of
   jobsub: 
+  
+  #+begin_src sh
   export $ANALYSIS_CONF=$EUTELESCOPE/jobsub/examples/datura-alone
+  #+end_src
 
   In principle, neither the table nor the config are required as long
   as the template files do not contain any variables except for the
@@ -187,8 +203,10 @@ optional arguments:
   is correct, we can execute the analysis step-by-step:
 
   First, converter step:
+  #+begin_src sh
   cd $ANALYSIS
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv converter 4118
+  #+end_src
 
   Here, jobsub will generate a steering file using the template file
   specified in the config file (default would be 'converter-tmp.xml'),
@@ -196,13 +214,15 @@ optional arguments:
   The final steering file will be processed by executing Marlin.
   
   The next steps follow the same pattern:
+  #+begin_src sh
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv clusearch 4118
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv hitmaker 4118
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv align 4118
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv fitter 4118
+  #+end_src sh
 
   For this example, the output of each step is stored in
-  subdirectories of the $ANALYSIS path. This is configurable through
+  sub directories of the $ANALYSIS path. This is configurable through
   the paths in the config.cfg file.
 
   If all steps succeed, we end up with an LCIO-Collection of tracks on
@@ -219,17 +239,18 @@ optional arguments:
   than their pysub counterparts.
 
   If you still want to keep the steering files used previously with
-  pysub, you can manualy convert them. You mainly need to modify the
+  pysub, you can manually convert them. You mainly need to modify the
   configuration files: (replace all bold names with your settings)
 
-  - Set up the global settings section
-    [Default]
+  - Set up the global settings section "[Default]"
 
-  - Set up sections for each of your analysis tasks, e.g.
+  - Set up sections for each of your analysis tasks, e.g.    
+    #+begin_example
     [align]
     [converter]
     [hitmaker]
     [fitter]
+    #+end_example
     or rename existing sections such as [AlignOptions] to the
     corresponding task name.
 
@@ -237,19 +258,24 @@ optional arguments:
 
   - if your steering files do not follow the naming convention
     NAME-tmp.xml you need to have the setting
+    #+begin_example
     TemplateFile = YOUR_FILE_NAME.xml
+    #+end_example
     in each task section.
     Add the setting
-    TemplatePath = (RELATIVE)_PATH_TO_YOUR_TEMPLATES
+    #+begin_example
+    src_conf{TemplatePath = (RELATIVE)_PATH_TO_YOUR_TEMPLATES}
+    #+end_example
     to the global section (or task sections if it varies 
     for each task)
 
-  - delete obsolete sections: [SteeringTemplate]
+  - delete obsolete sections: "[SteeringTemplate]"
 
   - Move any non-task specific sections into the global [default]
     section: this applies e.g. to [General], [Logger] and [LOCAL] options
 
   - Rename the "LocalFolder..." options:
+    #+begin_example
     LocalFolderNative -> NativeFolder
     LocalFolderGear -> GearPath
     LocalFolderLcioRaw -> LcioRawPath
@@ -258,13 +284,18 @@ optional arguments:
     LocalFolderTASKNAMEHisto -> HistoPath (either globally or in local sections)
     LocalFolderDBTASKNAME -> DBPath (again, either globally or locally)
     LocalFolderTASKNAMEResults -> ResultsPath (globally or locally)
+    #+end_example
 
   - Set the following options: 
     Globally:
+    #+begin_example
     Output = @RunNumber@
+    #+end_example
     In each task section, modify accordingly:
     e.g. in [align]:
+    #+begin_example
     InputFile = %(ResultsPath)s/hit-@RunNumber@.slcio
+    #+end_example
     
   - Run jobsub; if it complains about "Missing configuration
     parameters", check your template and config for any of the listed
