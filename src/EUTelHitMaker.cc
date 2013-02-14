@@ -94,11 +94,11 @@ EUTelHitMaker::EUTelHitMaker () : Processor("EUTelHitMaker") {
 
   registerInputCollection(LCIO::TRACKERPULSE,"PulseCollectionName",
                           "Cluster (pulse) collection name",
-                          _pulseCollectionName, string ( "cluster" ));
+                          _pulseCollectionName, string ( "" ));
 
   registerOutputCollection(LCIO::TRACKERHIT,"HitCollectionName",
                            "Hit collection name",
-                           _hitCollectionName, string ( "hit" ));
+                           _hitCollectionName, string ( "" ));
 
 
   registerProcessorParameter("CoGAlgorithm", "Select here how the center of gravity should be calculated.\n"
@@ -378,7 +378,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
-  try {
 
     LCCollectionVec * xEtaCollection = 0x0, * yEtaCollection = 0x0;
 
@@ -439,87 +438,21 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 
     }
 
-    if ( isFirstEvent() ) 
+    
+    LCCollectionVec * pulseCollection   = 0;
+    LCCollectionVec * hitCollection     = 0;
+
+    try
     {
-        try{
-            _preAlignmentCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection( _preAlignmentCollectionName ) );
-        }
-        catch(...)
-        {
-            _preAlignmentCollectionVec = 0;
-            streamlog_out ( WARNING ) <<  "preAlignment/offset Collection is absent." << endl;
-        }
-        
-        if( _preAlignmentCollectionVec != 0 )
-        {           
-          try 
-          {
-            streamlog_out ( MESSAGE5 ) << "The alignment collection contains: " <<  _preAlignmentCollectionVec->size() << " planes " << endl;
-                  
-            for ( size_t iPos = 0; iPos < _preAlignmentCollectionVec->size(); ++iPos ) 
-            {
-               EUTelAlignmentConstant * alignment = static_cast< EUTelAlignmentConstant * > ( _preAlignmentCollectionVec->getElementAt( iPos ) );
-               int iID = alignment->getSensorID();
-               _siOffsetXMap.insert( make_pair( iID, alignment->getXOffset() ) );
-               _siOffsetYMap.insert( make_pair( iID, alignment->getYOffset() ) );
-            }
-          }
-          catch(...)
-          {
-
-          }
-        }
-
-        try
-        {
-/*          _referenceHitCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection( _referenceHitCollectionName ) );
-          if( _referenceHitCollectionVec != 0 )
-          {
-             _referenceHitCollectionVec->clear();
-          }
-          else
-          {
-             _referenceHitCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);
-          }
-*/
- 
-/*        lccd::DBInterface db( _DBLoginName, _dbActualFolderName , _DBStatusName ) ;
-          streamlog_out ( MESSAGE5 ) << _DBLoginName << endl;
-          streamlog_out ( MESSAGE5 ) << _dbActualFolderName << endl;
-          streamlog_out ( MESSAGE5 ) << _DBStatusName << endl;
-          try 
-          {
-            hotPixelCollection = static_cast< LCCollectionVec* > ( db.findCollection( now, from, till, _conditionsTag ) );
-            for(int i=0; i<hotPixelCollection->getNumberOfElements(); i++)
-            { 
-              EUTelReferenceHit *refhit = static_cast<EUTelReferenceHit *>  (hotPixelCollection->getElementAt(i));
-              hpk->print();
-            } 
-            if( hotPixelCollection->getNumberOfElements() == 0 )
-            {   
-               streamlog_out ( MESSAGE5 ) << " hotPixelCollection: " << _hotPixelCollectionName << 
-                                          " cleared: now " << hotPixelCollection->getNumberOfElements() << " elements" <<  endl;
-            }
-          }
-          catch ( std::exception& e )
-          {
-            hotPixelCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
-          }
-          catch ( ... )
-          {
-            streamlog_out ( MESSAGE5 ) <<  "unknown exception !!!!!!!!!!!    " << endl;
-          }
-*/
-
-        }
-        catch(...)
-        {
-        } 
+      pulseCollection = static_cast<LCCollectionVec*> (event->getCollection( _pulseCollectionName ));
+    }
+    catch (DataNotAvailableException& e  ) 
+    {
+      streamlog_out  ( WARNING9 ) <<  "No input collection " << _pulseCollectionName << " found on event " << event->getEventNumber()
+                                  << " in run " << event->getRunNumber() << endl;
+      return ;
     }
 
-    
-    LCCollectionVec * pulseCollection   = static_cast<LCCollectionVec*> (event->getCollection( _pulseCollectionName ));
-    LCCollectionVec * hitCollection     = 0;
 
     try
     {
@@ -527,6 +460,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     }
     catch(...)
     {
+//     streamlog_out  ( WARNING2 ) <<  "No output collection " << _hitCollectionName << " found on event " << event->getEventNumber()
+//                                << " in run " << event->getRunNumber() << " creating new one  " << endl;
        hitCollection = new LCCollectionVec(LCIO::TRACKERHIT);
     }
   
@@ -614,10 +549,6 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
             throw UnknownDataTypeException("Cluster type unknown");
         }
 
-//        if( cluster->getTotalCharge() < 2 ) continue;  ?? why is that ??
-//        perhaps it was some leftover of a debuging procedure, or ?
-      
- 
       // there could be several clusters belonging to the same
       // detector. So update the geometry information only if this new
       // cluster belongs to a different detector.
@@ -1056,22 +987,18 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
  
       // delete the eutel cluster
       delete cluster;
-
     }
-    try{
-      evt->addCollection( hitCollection, _hitCollectionName );
+
+    try
+    { 
+      event->getCollection( _hitCollectionName ) ;
     }
     catch(...)
     {
-      streamlog_out( ERROR5 ) << "Hit collection " << _hitCollectionName.c_str() << " already exists!" << endl;
+      event->addCollection( hitCollection, _hitCollectionName );
     }
 
     if ( isFirstEvent() ) _isFirstEvent = false;
-  } catch (DataNotAvailableException& e  ) {
-    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
-                                << " in run " << event->getRunNumber() << endl;
-  }
-
 }
 
 //void EUTelHitMaker::end() 
