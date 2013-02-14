@@ -16,17 +16,6 @@
  *
  */
 
-/*!
-   \example testTDSPixelsChargeMap.cxx
-   \brief This is an example of how to use TrackerDetailedSimulation package.
-*/
-
-/*! 
-   \example testTDSPreclustering.cxx
-   \brief This is an example of how to use TrackerDetailedSimulation package.
-*/
-
-
 #ifndef TDSPixelsChargeMap_H
 #define TDSPixelsChargeMap_H 1
 
