@@ -301,9 +301,6 @@ namespace eutelescope {
    *    in each active plane (see geometry description parameters
    *    above).
    *
-   * \todo
-   *  \li Interface to LCCD (alignment)
-   *
    * \author A.F.Zarnecki, University of Warsaw, zarnecki@fuw.edu.pl
    *
    */

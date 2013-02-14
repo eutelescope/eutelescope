@@ -182,7 +182,7 @@ namespace eutelescope {
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  @version $Id$
    *
-   *  @todo For the time being the final pedestal/noise/status objects
+   *  //todo For the time being the final pedestal/noise/status objects
    *  are stored into a LCIO and they will be successively accessed by
    *  a ConditionProcess; consider the possibility to store those
    *  objects also into a DB.
@@ -296,8 +296,6 @@ namespace eutelescope {
      *  of the <b>"AbsoluteNoiseValue"</b> but using the pedestal as a
      *  figure of merit and using two thresholds: one for the lowest
      *  and one for the highest acceptable value.
-     *
-     *  @todo Ask other teams about their favorite masking algorithm.
      */
     void maskBadPixel();
 
@@ -340,11 +338,6 @@ namespace eutelescope {
      *
      *  @param evt This is the current event passed by
      *  EUTelPedestalNoieProcessor::processEvent(LCEvent*)
-     *
-     *  @todo A full debug of the AIDAProfile algorithm is required.
-     *
-     *  @todo Ask other teams about their favorite calculation
-     *  algorithm
      */
     void firstLoop(LCEvent * evt);
 
@@ -565,7 +558,7 @@ namespace eutelescope {
      *  AIDAIProfile2D::binRMS() method, the calculated noise is not
      *  correct. Moreover, this algorithm looks particularly slow. <br>
      *
-     *  @todo Implement all other methods according to user wishes. In
+     *  //todo Implement all other methods according to user wishes. In
      *  particular, we can imagine to implement the ROOTProfile as
      *  soon as the ROOTProcessor will be ready and fully tested.
      */

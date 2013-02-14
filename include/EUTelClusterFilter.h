@@ -366,7 +366,6 @@ namespace eutelescope {
      *  a per detector basis and stored into the
      *  _clusterMaxTotalChargeVec.    .
      *
-     *  @todo Implement it!
      *  @return True if the @c cluster has a charge below its own threshold.
      *
      */
@@ -755,10 +754,6 @@ namespace eutelescope {
      *  file the user can specify only values and not directly a
      *  EUTelROI. So the user specified values are stored in the
      *  _tempInsideROI and then moved to the _insideROIVec soon after.
-     *
-     *  @todo Ask Frank why Marlin is crashing if in the
-     *  registerProcessorParameter we ask to put the values in
-     *  something that is not a class member
      */
     std::vector<float > _tempInsideROI;
 
@@ -767,10 +762,6 @@ namespace eutelescope {
      *  file the user can specify only values and not directly a
      *  EUTelROI. So the user specified values are stored in the
      *  _tempOutsideROI and then moved to the _outsideROIVec soon after.
-     *
-     *  @todo Ask Frank why Marlin is crashing if in the
-     *  registerProcessorParameter we ask to put the values in
-     *  something that is not a class member
      */
     std::vector<float > _tempOutsideROI;
 

@@ -366,7 +366,7 @@ namespace eutelescope {
      *  @param status A pointer to the TrackerRawData with the status
      *  to be reset
      *
-     *  @todo Consider the possibility to use instead of
+     *  //todo Consider the possibility to use instead of
      *  EUTELESCOPE::HITPIXEL, the clusterID to flag hit pixel. This
      *  is offering a very easy way to show on a 2D histograms where
      *  clusters have been found. It might be of any usefulness if we

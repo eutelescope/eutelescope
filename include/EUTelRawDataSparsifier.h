@@ -112,7 +112,7 @@ namespace eutelescope {
    *  the case, <b>DO NOT USE</b> this processor and ask to the
    *  developers for a better implementation.
    *
-   *  @todo Whenever we will have some few minutes to spare, the
+   *  //todo Whenever we will have some few minutes to spare, the
    *  reason for the above warning message can be easily removed
    *  preparing a map for each ancillary collection (pede, noise,
    *  status) linking the position of each element and its sensorID.

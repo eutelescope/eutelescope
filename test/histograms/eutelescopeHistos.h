@@ -239,9 +239,6 @@ namespace eutelHistogram {
    *  analysis with a breakdown of the noise channel by channel. To
    *  switch off the advanced analysis simply set \a detector to "".
    *
-   *  @todo Implement the advanced noise analysis for the mimosa18 as
-   *  well.
-   *
    *  @bug If the telescope setup is a mixed one (mimotel and mimosa18),
    *  the advance noise analysis will fail.
    *

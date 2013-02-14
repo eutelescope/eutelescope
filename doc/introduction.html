@@ -9,7 +9,7 @@ If you feel you don't know enough about the EUTelescope software then we encoura
 you to have a look at the following pages:
 
 @li @ref intro
-@li <a href="eutelescope.web.cern.ch/content/installation">EUTelescope Installation</a>
+@li <a href="http://eutelescope.web.cern.ch/content/installation">EUTelescope Installation</a>
 @li Analysis basics (prepared for Analog sensors - MimoTel/Mimosa-18, many steps
 are still valid for the digital sensors/Mimosa-26)
 <ul>
@@ -18,12 +18,7 @@ are still valid for the digital sensors/Mimosa-26)
 </ul>
 @li @ref pythonScripts 
 @li @ref gridtools
-
-The EUTelescope framework workflow for digital sensors (Mimosa 26) is summarised
-<a href="http://atlas.desy.de/ibl/EUTelescope/SoftwareDevelopment/EUTelescope_Aug_2010_concept_scheme.pdf">here
-<img border="none" src="http://atlas.desy.de/ibl/home/pdficon_small.gif"> </a>.
-
-<br><br> If those information are not yet enough, contact us on the <a href="http://eutelescope.web.cern.ch/forum">EUTelescope Forum</a>.
+<br> If those information are not yet enough, contact us on the <a href="http://eutelescope.web.cern.ch/forum">EUTelescope Forum</a>.
 
 */
 
@@ -199,8 +194,6 @@ eutelescope::EUTelCopyPedestalProcessor configured as follows:
 @endcode
 
 One can do the exactly the same also for the eta conditions.
-
-@todo Consider renaming EUTelCopyPedestalProcessor in EUTelCopyConditionProcessor
 
 \section calibrate Apply the pedestal correction
 
@@ -390,10 +383,6 @@ developers of the EUTelescope framework included the powerful package
 MillePede2 (http://www.desy.de/~blobel/mptalks.html) in the MarlinUtil
 package and implemented the eutelescope::EUTelMille processor to execute the local
 track fitting and also the global fitting and parameter minimization.
-
-@todo The documentation of the eutelescope::EUTelMille class will be soon expanded,
-including also a procedure the user can follow to perform the
-telescope and the DUT alignment.
 
 When the alignment procedur is over, the constants are then transfered
 to a DB via a LCIO file (in the same way the pedestal / noise and
@@ -1026,26 +1015,6 @@ processor using as input the output of the previous step.
 
 /**
 
-@page preparationDigital  Digital - preparation steps 
-
-The section is being filled.
-
-*/
-
-*****************************************************************************
-
-/**
-
-@page analysisDigital  Digital - analysis chain 
-
-The section is being filled.
-
-*/
-
-*****************************************************************************
-
-/**
-
 @page pythonScripts How to run python scripts. 
 
 The steering (.xml) files, needed to define your analysis job the sequence and
@@ -1397,12 +1366,3 @@ arrival and then it is 1 till the end.
 
 */
 
-/**
-@page minimal_config Minimal configuration
-\include minimal.cfg
-*/
-
-/**
-@page complete_config Complete configuration
-\include complete_20100610.cfg
-*/

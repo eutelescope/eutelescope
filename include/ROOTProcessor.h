@@ -157,7 +157,7 @@ namespace eutelescope {
      *  @param objName The name of the object we want to retrieve
      *  @return A pointer to the object we would like to have
      *
-     *  @todo Consider the possibility to define and throw an
+     *  //todo Consider the possibility to define and throw an
      *  exception if the object the user is looking for doesn't exist
      */
     static TObject * getTObject(const marlin::Processor * proc, const char * objName) ;
@@ -172,7 +172,7 @@ namespace eutelescope {
      *  @param objName The name of the object we want to retrieve @return
      *  A pointer to the object we would like to have
      *
-     *  @todo Consider the possibility to define and throw an
+     *  //todo Consider the possibility to define and throw an
      *  exception if the object the user is looking for doesn't exist
      */
     static TObject * getTObject(const marlin::Processor * proc, const char * subfolder, const char * objName );

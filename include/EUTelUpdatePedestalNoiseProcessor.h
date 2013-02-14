@@ -88,9 +88,6 @@ namespace eutelescope {
    *
    *  @author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
    *  @version $Id$
-   *
-   *  @todo Implement the status matrix update
-   *
    */
 
   class EUTelUpdatePedestalNoiseProcessor : public marlin::Processor {
@@ -219,7 +216,7 @@ namespace eutelescope {
      *  This method is set protected since it is going to be called
      *  only by the end() call back.
      *
-     *  @todo It is probably better to allow the user to save the
+     *  //todo It is probably better to allow the user to save the
      *  monitoring info also if the Marlin is not using AIDA
      *
      *  @bug Because of a bug in RAIDA, this is not even compiling
