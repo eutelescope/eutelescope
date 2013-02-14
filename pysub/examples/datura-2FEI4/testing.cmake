@@ -19,6 +19,7 @@
    # only needed in the last step to test the results of EUTel against a set of reference files:
     SET( stattestdir "$ENV{EUTELESCOPE}/test/stattest/bin" )
     SET( referencedatadir "/afs/desy.de/group/telescopes/EutelTestData/TestPysubExampleDatura2FEI4" )
+#    SET( referencedatadir "/home/ilcsoft/TestBeam/tests/datura2FEI4/native" )
 
 
 #
@@ -99,10 +100,6 @@
     ADD_TEST( TestPysubExampleDatura2FEI4ClusearchHisto sh -c "[ -f ${testdir}/output/histo/run`printf %06d ${RunNr}`-clu-histo.root ]" )
     SET_TESTS_PROPERTIES (TestPysubExampleDatura2FEI4ClusearchHisto PROPERTIES DEPENDS TestPysubExampleDatura2FEI4ClusearchRun)
 
-    ADD_TEST( TestPysubExampleDatura2FEI4ClusearchOffset sh -c "[ -f ${testdir}/output/db/run`printf %06d ${RunNr}`-offset-db.slcio ] && lcio_check_col_elements --expelements 6  preAlignment  ${testdir}/output/db/run`printf %06d ${RunNr}`-offset-db.slcio" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDatura2FEI4ClusearchOffset PROPERTIES DEPENDS TestPysubExampleDatura2FEI4ClusearchRun)
-
-
     ADD_TEST( TestPysubExampleDatura2FEI4ClusearchOutput sh -c "[ -f ${testdir}/output/results/run`printf %06d ${RunNr}`-clu-p.slcio ] && lcio_check_col_elements --expelements 6 zsdata_m26 ${testdir}/output/results/run`printf %06d ${RunNr}`-clu-p.slcio" )
     SET_TESTS_PROPERTIES (TestPysubExampleDatura2FEI4ClusearchOutput PROPERTIES DEPENDS TestPysubExampleDatura2FEI4ClusearchRun)
 
@@ -138,12 +135,12 @@
     ADD_TEST( TestPysubExampleDatura2FEI4HitmakerHisto sh -c "[ -f ${testdir}/output/histo/${RunNr}-hit-histo.root ]" )
     SET_TESTS_PROPERTIES (TestPysubExampleDatura2FEI4HitmakerHisto PROPERTIES DEPENDS TestPysubExampleDatura2FEI4HitmakerRun)
 
-    ADD_TEST( TestPysubExampleDatura2FEI4HitmakerPrealign sh -c "[ -f ${testdir}/output/db/${RunNr}-prealign-db.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/db/${RunNr}-prealign-db.slcio" )
+    ADD_TEST( TestPysubExampleDatura2FEI4HitmakerPrealign sh -c "[ -f ${testdir}/output/db/${RunNr}-prealign-db.slcio ] && lcio_check_col_elements --expelements 8  alignment  ${testdir}/output/db/${RunNr}-prealign-db.slcio" )
     SET_TESTS_PROPERTIES (TestPysubExampleDatura2FEI4HitmakerPrealign PROPERTIES DEPENDS TestPysubExampleDatura2FEI4HitmakerRun)
 
     # we expect an average hit number of 35 for run 4118 using the example configuration
-    ADD_TEST( TestPysubExampleDatura2FEI4HitmakerOutput sh -c "[ -f ${testdir}/output/results/${RunNr}-hit.slcio ] && lcio_check_col_elements -a --expelements 35 hit ${testdir}/output/results/${RunNr}-hit.slcio" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDatura2FEI4HitmakerOutput PROPERTIES DEPENDS TestPysubExampleDatura2FEI4HitmakerRun)
+#    ADD_TEST( TestPysubExampleDatura2FEI4HitmakerOutput sh -c "[ -f ${testdir}/output/results/${RunNr}-hit.slcio ] && lcio_check_col_elements --expelements 40 --relelementerror .5 --releventerror .4  hit ${testdir}/output/results/${RunNr}-hit.slcio" )
+#    SET_TESTS_PROPERTIES (TestPysubExampleDatura2FEI4HitmakerOutput PROPERTIES DEPENDS TestPysubExampleDatura2FEI4HitmakerRun)
 
 
 #
@@ -177,7 +174,7 @@
     ADD_TEST( TestPysubExampleDatura2FEI4AlignHisto sh -c "[ -f ${testdir}/output/histo/${RunNr}-align-histo.root ]" )
     SET_TESTS_PROPERTIES (TestPysubExampleDatura2FEI4AlignHisto PROPERTIES DEPENDS TestPysubExampleDatura2FEI4AlignRun)
 
-    ADD_TEST( TestPysubExampleDatura2FEI4AlignDB sh -c "[ -f ${testdir}/output/db/${RunNr}-align-db.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/db/${RunNr}-prealign-db.slcio" )
+    ADD_TEST( TestPysubExampleDatura2FEI4AlignDB sh -c "[ -f ${testdir}/output/db/${RunNr}-align-db.slcio ] && lcio_check_col_elements --expelements 8  alignment  ${testdir}/output/db/${RunNr}-prealign-db.slcio" )
     SET_TESTS_PROPERTIES (TestPysubExampleDatura2FEI4AlignDB PROPERTIES DEPENDS TestPysubExampleDatura2FEI4AlignRun)
 
     ADD_TEST( TestPysubExampleDatura2FEI4AlignOutput sh -c "[ -f ${testdir}/output/results/${RunNr}-align-mille.bin -a -f ${testdir}/output/results/${RunNr}-pede-steer.txt ] " )
