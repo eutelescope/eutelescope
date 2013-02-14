@@ -7,7 +7,7 @@
 	<BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
 	<detectors>
 		<detector name="SiPlanes" geartype="SiPlanesParameters">
-			<siplanesID ID="1"/>
+			<siplanesID ID="225"/>
 			<siplanesType type="TelescopeWithoutDUT"/>
 			<siplanesNumber number="8"/>
 			<layers>
