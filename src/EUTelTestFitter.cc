@@ -42,6 +42,9 @@
 #include <EVENT/LCEvent.h>
 #include <IMPL/LCCollectionVec.h>
 #include <IMPL/TrackerHitImpl.h>
+#include <IMPL/SimTrackerHitImpl.h>
+
+
 #include <IMPL/TrackImpl.h>
 #include <IMPL/LCFlagImpl.h>
 #include <Exceptions.h>
@@ -161,6 +164,10 @@ EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
   registerProcessorParameter ("SkipHitPenalty",
                               "Chi2 penalty for removing hit from the track",
                               _skipHitPenalty,  static_cast < double > (100.));
+
+  registerProcessorParameter ("Chi2Min",
+                              "Minimum Chi2 for accepted track fit",
+                              _chi2Min,  static_cast < double > (0.01));
 
   registerProcessorParameter ("Chi2Max",
                               "Maximum Chi2 for accepted track fit",
@@ -983,7 +990,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
   double * hitEy = new double[nHit];
   double * hitZ  = new double[nHit];
   int    * hitPlane = new int[nHit];
-  int    * hitFits = new int[nHit];
+  int    * hitFits  = new int[nHit];
 
   IntVec * planeHitID   = new IntVec[_nTelPlanes];
 
@@ -993,12 +1000,27 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   for(int ihit=0; ihit< nHit ; ihit++) 
   {
-    TrackerHit * meshit = dynamic_cast<TrackerHit*>( col->getElementAt(ihit) ) ;
+    TrackerHit        * meshit = dynamic_cast<TrackerHit*>( col->getElementAt(ihit) ) ;
+    SimTrackerHitImpl * simhit = dynamic_cast<SimTrackerHitImpl*>( col->getElementAt(ihit) ) ;
 
     // Hit position
     //
-    const double * pos = meshit->getPosition();
-
+    double pos[3]={0.,0.,0.};
+    if( meshit != 0 )
+    {
+      const double *pos0 = meshit->getPosition();
+      pos[0] = pos0[0];
+      pos[1] = pos0[1];
+      pos[2] = pos0[2];
+    } 
+    else if( meshit == 0 && simhit != 0 )
+    {
+      const double *pos0 = simhit->getPosition(); 
+      pos[0] = pos0[0];
+      pos[1] = pos0[1];
+      pos[2] = pos0[2];
+    }
+   
     hitZ[ihit] = pos[2];
 
     hitFits[ihit]=-1;
@@ -1101,8 +1123,25 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     // Position uncertainty. Use nominal resolution if not properly defined
     //
-    const EVENT::FloatVec cov = meshit->getCovMatrix();
-
+    EVENT::FloatVec cov(3);
+    cov[0] = 0.;
+    cov[1] = 0.;
+    cov[2] = 0.;
+    if( meshit != 0 )
+    {
+      const EVENT::FloatVec cov0 = meshit->getCovMatrix();
+      cov[0]=cov0[0];
+      cov[1]=cov0[1];
+      cov[2]=cov0[2];
+    } 
+/*    else if( meshit == 0 && simhit != 0 )
+    {
+      const EVENT::FloatVec cov0 = simhit->getCovMatrix();
+      cov[0]=cov0[0];
+      cov[1]=cov0[1];
+      cov[2]=cov0[2];
+    }
+*/ 
     if(cov.at(0)>0.) {
       hitEx[ihit]=sqrt(cov.at(0));
     } else {
@@ -1486,11 +1525,11 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
       // If not: skip also all track possibilities which include
       // this hit selection !!!
 
-      if(  choiceChi2 >= _chi2Max  ) 
-          {        
-              ichoice-=_planeMod[ilast]-1;
-              continue;
-          } 
+      if( choiceChi2 >= _chi2Max  || choiceChi2 < _chi2Min ) 
+      {        
+        ichoice-=_planeMod[ilast]-1;
+        continue;
+      } 
 
       //
       // Skip fit if could not be accepted (too few planes fired)
@@ -1508,7 +1547,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
       // Fill all tracks passing chi2 cut
 
-      if(trackChi2<_chi2Max) 
+      if( trackChi2 < _chi2Max && trackChi2 > _chi2Min ) 
       {
 
         fittedChi2.insert( make_pair( trackChi2, nFittedTracks ));
@@ -1793,15 +1832,27 @@ if(jhit>=0){
 
           if(jhit >= 0)  
           {
-            TrackerHitImpl * meshit = dynamic_cast<TrackerHitImpl*>( col->getElementAt(jhit) ) ;
-            TrackerHitImpl * corrhit = new TrackerHitImpl;
+            TrackerHitImpl    * meshit  = dynamic_cast<TrackerHitImpl*>( col->getElementAt(jhit) ) ;
+            SimTrackerHitImpl * simhit  = dynamic_cast<SimTrackerHitImpl*>( col->getElementAt(jhit) ) ;
+            TrackerHitImpl    * corrhit = new TrackerHitImpl;
             //
             // Copy input hit data
             //
-            corrhit->setType(meshit->getType());
-            corrhit->setTime(meshit->getTime());
-            corrhit->setEDep(meshit->getEDep());
-            corrhit->rawHits()=meshit->getRawHits();
+            if( meshit != 0 ) 
+            {
+              corrhit->setType(meshit->getType());
+              corrhit->setTime(meshit->getTime());
+              corrhit->setEDep(meshit->getEDep());
+              corrhit->rawHits()=meshit->getRawHits();
+            }
+            else if( simhit != 0 )
+            {
+              corrhit->setType( 0 );
+              corrhit->setTime(simhit->getTime());
+ //           corrhit->setdEdx(simhit->getdEdx());  ! OBSOLETE 
+              corrhit->setEDep(simhit->getEDep());
+//              corrhit->rawHits()=simhit->getRawHits();
+            }
             //
             // Use corrected position
             //
@@ -2093,8 +2144,8 @@ void EUTelTestFitter::bookHistos()
     int   limitZN  = 100;
     float limitY   = 10.0;
     float limitX   = 10.0; 
-    float limitYr  = 0.1;
-    float limitXr  = 0.1; 
+    float limitYr  = 0.005;
+    float limitXr  = 0.005; 
     //float limitZ   = 50.0; 
     float limitZr  = 50.0; 
    //Resids 
@@ -2765,12 +2816,39 @@ void EUTelTestFitter::getTrackImpactPoint(double & x, double & y, double & z, Tr
 	for(int ihit=0; ihit< nHit ; ihit++)
 	{
 		TrackerHit * meshit = trackhits.at(ihit);
+//                SimTrackerHitImpl * simhit = dynamic_cast<SimTrackerHitImpl*>( col->getElementAt(ihit) ) ;
 
+                int itype = 0;
+                if( meshit != 0 )
+                {
+                  itype = meshit->getType();
+                } 
+//                else if( meshit == 0 && simhit != 0 )
+//                {
+//                  itype = simhit->getType(); 
+//                }
+ 
 		// Look at fitted hits only!
-		if (meshit->getType() < 32) continue;
-		// Hit position
-		const double * pos = meshit->getPosition();
+		if ( itype < 32) continue;
 
+                // Hit position
+                //
+   double pos[3]={0.,0.,0.};
+    if( meshit != 0 )
+    {
+      const double *pos0 = meshit->getPosition();
+      pos[0] = pos0[0];
+      pos[1] = pos0[1];
+      pos[2] = pos0[2];
+    } 
+/*    else if( meshit == 0 && simhit != 0 )
+    {
+      const double *pos0 = simhit->getPosition(); 
+      pos[0] = pos0[0];
+      pos[1] = pos0[1];
+      pos[2] = pos0[2];
+    }
+*/              
 		// look for a hit at DUT
 		dist =  pos[2] - _zDUT ;
 		if (dist * dist < 1) {
