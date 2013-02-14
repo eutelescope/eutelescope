@@ -82,6 +82,9 @@ namespace CMSPixel {
 	      print_statistics();
 	    }
             
+            CMSPixelDecoder(const CMSPixelDecoder&); 
+	    void operator=(CMSPixelDecoder const&); 
+
             virtual int get_event(std::vector< std::vector< CMS_event > > * event_data);
 	    void print_statistics();
           	            
@@ -154,6 +157,10 @@ namespace CMSPixel {
         public:
             CMSPixelDecoderAnalogue(const char *FileName, int *status, unsigned int rocs, int flags, const char* addressFile, unsigned int selectevents = 0, unsigned int verbosity = 1);
             virtual ~CMSPixelDecoderAnalogue(){}
+
+            CMSPixelDecoderAnalogue(const CMSPixelDecoderAnalogue&); 
+	    void operator=(CMSPixelDecoderAnalogue const&); 
+
         protected:
             inline void load_constants() {
                 // Lenth of different tokens:

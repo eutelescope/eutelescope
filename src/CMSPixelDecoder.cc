@@ -24,7 +24,7 @@ using namespace CMSPixel;
 /*          parent class CMSPixelDecoder                                  */
 /*========================================================================*/
 
-CMSPixelDecoder::CMSPixelDecoder(const char *FileName, int *status, unsigned int rocs, int flags, unsigned int event_selection, unsigned int verbosity) 
+CMSPixelDecoder::CMSPixelDecoder(const char *FileName, int *status, unsigned int rocs, int flags, unsigned int event_selection, unsigned int verbosity) : L_HEADER(0), L_TRAILER(0), L_EMPTYEVT(0), L_GRANULARITY(0), L_HIT(0), L_ROC_HEADER(0), L_HUGE_EVENT(0), noOfROC(0), selectevents(0), reject_event(false), pixel_addressfailed(0), pixel_hits(0), debug(false), deepdebug(false), lazydecoding(false), havetbm(false), writeempty(false), ipbus(false)
 {
     *status=0;
     std::map<unsigned int, int > init;
