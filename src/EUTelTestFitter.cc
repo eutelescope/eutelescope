@@ -92,7 +92,112 @@ std::string EUTelTestFitter::_hitAmbiguityHistoName  = "nAmbig";
 #endif
 
 
-EUTelTestFitter::EUTelTestFitter() : Processor("EUTelTestFitter") {
+EUTelTestFitter::EUTelTestFitter()
+: Processor("EUTelTestFitter"),
+  _isFirstEvent(false),
+  _siPlanesParameters(NULL),
+  _siPlanesLayerLayout(NULL),
+  _histoInfoFileName(""),
+  _debugCount(0),
+  _inputColName(""),
+  _outputTrackColName(""),
+  _correctedHitColName(""),
+  _outputHitColName(""),
+  _alignmentCollectionNames(),
+  _InputHitsInTrack(false),
+  _OutputHitsInTrack(false),
+  _SkipLayerIDs(),
+  _PassiveLayerIDs(),
+  _AlignLayerIDs(),
+  _AlignLayerShiftX(),
+  _AlignLayerShiftY(),
+  _AlignLayerRotZ(),
+  _WindowLayerIDs(),
+  _WindowMinX(),
+  _WindowMaxX(),
+  _WindowMinY(),
+  _WindowMaxY(),
+  _MaskLayerIDs(),
+  _MaskMinX(),
+  _MaskMaxX(),
+  _MaskMinY(),
+  _MaskMaxY(),
+  _resolutionX(),
+  _resolutionY(),
+  _resolutionZ(),
+  _referenceHitCollectionName(""),
+  _applyToReferenceHitCollection(false),
+  _referenceHitVec(NULL),
+  _allowMissingHits(0),
+  _allowSkipHits(0),
+  _maxPlaneHits(0),
+  _searchMultipleTracks(false),
+  _allowAmbiguousHits(false),
+  _maximumAmbiguousHits(false),
+  _missingHitPenalty(0.0),
+  _skipHitPenalty(0.0),
+  _chi2Max(0.0),
+  _chi2Min(0.0),
+  _useNominalResolution(false),
+  _useDUT(false),
+  _useBeamConstraint(false),
+  _beamSpread(0.0),
+  _beamSlopeX(0.0),
+  _beamSlopeY(0.0),
+  _eBeam(0.0),
+  _nTelPlanes(0),
+  _nActivePlanes(0),
+  _iDUT(0),
+  _planeSort(NULL),
+  _planeID(NULL),
+  _planeShiftX(NULL),
+  _planeShiftY(NULL),
+  _planeRotZ(NULL),
+  _planePosition(NULL),
+  _planeThickness(NULL),
+  _planeX0(NULL),
+  _planeResolution(NULL),
+  _isActive(NULL),
+  _planeWindowIDs(NULL),
+  _planeMaskIDs(NULL),
+  _nRun(0),
+  _nEvt(0),
+  _planeHits(NULL),
+  _planeChoice(NULL),
+  _planeMod(NULL),
+  _planeX(NULL),
+  _planeEx(NULL),
+  _planeY(NULL),
+  _planeEy(NULL),
+  _planeScatAngle(NULL),
+  _planeDist(NULL),
+  _planeScat(NULL),
+  _fitX(NULL),
+  _fitEx(NULL),
+  _fitY(NULL),
+  _fitEy(NULL),
+  _fitArray(NULL),
+  _nominalFitArrayX(NULL),
+  _nominalErrorX(NULL),
+  _nominalFitArrayY(NULL),
+  _nominalErrorY(NULL),
+  _noOfEventWOInputHit(0),
+  _noOfEventWOTrack(0),
+  _noOfTracks(0),
+  _aidaHistoMap(),
+  _aidaHistoMap1D(),
+  _aidaHistoMap2D(),
+  _UseSlope(false),
+  _SlopeXLimit(0.0),
+  _SlopeYLimit(0.0),
+  _SlopeDistanceMax(0.0),
+  _fittedXcorr(),
+  _fittedYcorr(),
+  _fittedZcorr(),
+  _indexDUTneighbour(0),
+  _zDUTneighbour(0.0),
+  _siPlaneCenter(),
+  _siPlaneNormal() {
 
   // modify processor description
   _description = "Analytical track fitting processor for EUDET telescope" ;
@@ -395,7 +500,7 @@ void EUTelTestFitter::init() {
 
     int _plID = _siPlanesLayerLayout->getID(ipl);
 
-    for(int spl=0; spl< (int)_SkipLayerIDs.size() ; spl++) {
+    for(int spl=0; spl< static_cast<int>(_SkipLayerIDs.size()) ; spl++) {
       if ( _SkipLayerIDs.at(spl) == _plID) {
         streamlog_out ( MESSAGE0 ) <<  "Skipping layer ID " << _plID
                                    << " at Z = " << _siPlanesLayerLayout->getLayerPositionZ(ipl) << endl;
@@ -477,7 +582,7 @@ void EUTelTestFitter::init() {
     iActive = (resolution > 0);
 
     // Check passive layer list
-    for(int ppl=0; ppl< (int)_PassiveLayerIDs.size() ; ppl++) {
+    for(int ppl=0; ppl< static_cast<int>(_PassiveLayerIDs.size()) ; ppl++) {
       if ( _PassiveLayerIDs.at(ppl) == _planeID[iz])    {
         streamlog_out ( MESSAGE0 ) <<  "Force passive layer ID " << _planeID[iz]
                                    << " at Z = " << _planePosition[iz] << endl ;
@@ -502,12 +607,12 @@ void EUTelTestFitter::init() {
     _planeShiftY[iz]=0.;
     _planeRotZ[iz]=0.;
 
-    for(int apl=0; apl< (int)_AlignLayerIDs.size() ; apl++) {
+    for(int apl=0; apl< static_cast<int>(_AlignLayerIDs.size()) ; apl++) {
       if ( _AlignLayerIDs.at(apl) == _planeID[iz]) {
         _planeShiftX[iz]=_AlignLayerShiftX.at(apl);
         _planeShiftY[iz]=_AlignLayerShiftY.at(apl);
         // Rotation can be skipped: check size
-        if(apl < (int)_AlignLayerRotZ.size()) {
+        if(apl < static_cast<int>(_AlignLayerRotZ.size())) {
           _planeRotZ[iz]=_AlignLayerRotZ.at(apl);
         }
         break;
@@ -515,12 +620,12 @@ void EUTelTestFitter::init() {
     }
 
     // Check, if there are additional cuts defined for this plane
-    for(int wpl=0; wpl< (int)_WindowLayerIDs.size() ; wpl++) {
+    for(int wpl=0; wpl< static_cast<int>(_WindowLayerIDs.size()) ; wpl++) {
       if ( _WindowLayerIDs.at(wpl) == _planeID[iz]) {
         _planeWindowIDs[iz].push_back(wpl);
       }
     }
-    for(int mpl=0; mpl< (int)_MaskLayerIDs.size() ; mpl++) {
+    for(int mpl=0; mpl< static_cast<int>(_MaskLayerIDs.size()) ; mpl++) {
       if ( _MaskLayerIDs.at(mpl) == _planeID[iz]) {
         _planeMaskIDs[iz].push_back(mpl);
       }
@@ -567,7 +672,7 @@ void EUTelTestFitter::init() {
           ss << " RotZ [rad] = " << _planeRotZ[ipl] ;
         }
 
-        for(int wpl=0; wpl< (int)_planeWindowIDs[ipl].size() ; wpl++)  {
+        for(int wpl=0; wpl< static_cast<int>(_planeWindowIDs[ipl].size()) ; wpl++)  {
           int iwin= _planeWindowIDs[ipl].at(wpl);
           ss << "\n accepted window: X = " <<  _WindowMinX.at(iwin)
              << " to " <<  _WindowMaxX.at(iwin)
@@ -575,7 +680,7 @@ void EUTelTestFitter::init() {
              << " to " <<  _WindowMaxY.at(iwin);
         }
 
-        for(int mpl=0; mpl< (int)_planeMaskIDs[ipl].size() ; mpl++)  {
+        for(int mpl=0; mpl< static_cast<int>(_planeMaskIDs[ipl].size()) ; mpl++)  {
           int imsk= _planeMaskIDs[ipl].at(mpl);
           ss << "\n imposed mask: X = " <<  _MaskMinX.at(imsk)
              << " to " <<  _MaskMaxX.at(imsk)
@@ -648,7 +753,7 @@ void EUTelTestFitter::init() {
     streamlog_out( DEBUG5 ) << "Scattering angle in plane " << ipl << ": " << _planeScatAngle[ipl] << endl;
 
     _fitX[ipl] =_fitY[ipl] = 0. ;
-    if((int)_resolutionX.size() < ipl+1 )
+    if(static_cast<int>(_resolutionX.size()) < ipl+1 )
     {
       _nominalErrorX[ipl]= _planeResolution[ipl];
     }
@@ -656,7 +761,7 @@ void EUTelTestFitter::init() {
     {
       _nominalErrorX[ipl]= _resolutionX[ipl];
     }
-    if((int)_resolutionY.size() < ipl+1 )
+    if(static_cast<int>(_resolutionY.size()) < ipl+1 )
     {
       _nominalErrorY[ipl]= _planeResolution[ipl];
     }
@@ -1087,7 +1192,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     // Check Window and Mask cuts, if defined
     bool hitcut = false;
 
-    for(int wpl=0; wpl< (int)_planeWindowIDs[hitPlane[ihit]].size() ; wpl++)  
+    for(int wpl=0; wpl< static_cast<int>(_planeWindowIDs[hitPlane[ihit]].size()) ; wpl++)  
     {
       int iwin= _planeWindowIDs[hitPlane[ihit]].at(wpl);
 
@@ -1100,7 +1205,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     if(hitcut) continue;
 
 
-    for(int mpl=0; mpl< (int)_planeMaskIDs[hitPlane[ihit]].size() ; mpl++) 
+    for(int mpl=0; mpl< static_cast<int>(_planeMaskIDs[hitPlane[ihit]].size()) ; mpl++) 
     {
       int imsk= _planeMaskIDs[hitPlane[ihit]].at(mpl);
 
@@ -1255,7 +1360,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
           stringstream ss;
           ss << "Plane " << ipl << "  " << _planeHits[ipl] << " hit(s), hit IDs :";
 
-          for( int ihit=0; ihit < (int) planeHitID[ipl].size() ; ihit ++) 
+          for( int ihit=0; ihit < static_cast<int>( planeHitID[ipl].size()) ; ihit ++) 
           {
             ss << planeHitID[ipl].at(ihit) << " " ;
           }
@@ -1577,8 +1682,8 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
             fittedEy.push_back(_fitEy[ipl]);
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     stringstream iden;
-    iden << _planeID[ipl];
-    string bname = (string)"pl" + iden.str().c_str() + "_";
+    iden << "pl" << _planeID[ipl] << "_";
+    string bname = iden.str();
 if(jhit>=0){
       _aidaHistoMap1D[bname + "fitX"]->fill( _fitX[ipl]  );
       _aidaHistoMap1D[bname + "fitY"]->fill( _fitY[ipl]  );
@@ -1987,8 +2092,8 @@ void EUTelTestFitter::end(){
   for(int ipl=0;ipl<_nTelPlanes;ipl++)  
   {
     stringstream iden;
-    iden << _planeID[ipl];
-    string bname = (string)"pl" + iden.str().c_str() + "_";
+    iden << "pl" << _planeID[ipl] << "_";
+    string bname = iden.str();
 
     streamlog_out( DEBUG5 ) << "X: ["<< ipl << ":" << _planeID[ipl] <<"]" << 
     _aidaHistoMap1D[bname + "residualX"]->allEntries()<< " " <<
@@ -2135,8 +2240,8 @@ void EUTelTestFitter::bookHistos()
    for(int iz=0; iz < _nTelPlanes ; iz++) {
 //plane id by      _planeID[iz]  
     stringstream iden;
-    iden << _planeID[iz];
-    string bname = (string)"pl" + iden.str().c_str() + "_";
+    iden << "pl" << _planeID[iz] << "_";
+    string bname = iden.str();
  
 
     int   limitXN  = 100;

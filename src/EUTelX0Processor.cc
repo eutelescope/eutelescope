@@ -189,7 +189,7 @@ void EUTelX0Processor::init()
                            "Collection name for fitted particle hits (positions)",
                            _inputHitColName, string ("testfithits"));
 */
-  registerOptionalParameter("ReferenceCollection","This is the name of the reference it collection (init at 0,0,0)", _referenceHitCollectionName, static_cast< string > ( "refhit" ) );//Necessary for working out which layer the particle is detected in
+  registerOptionalParameter("ReferenceCollection","This is the name of the reference it collection (init at 0,0,0)", _referenceHitCollectionName, static_cast< string > ( "referenceHit" ) );//Necessary for working out which layer the particle is detected in
   registerProcessorParameter("CutValue","Used to determine cuts in the system", _cutValue1, static_cast< double > (50000.0));
   registerProcessorParameter ("DebugEventCount", "Print out every DebugEnevtCount event", _debugCount, static_cast < int > (100));//Not sure if I need this or not...
 
@@ -214,8 +214,21 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
     //Extract sigma value from histogram
     //Deduce radiation length from sigma value - See Nadler and Fruwurth paper
 
+/*THIS IS WHERE THE FUTURE CODE IS BEING DEVELOPED, PLEASE DO NOT TOUCH
+  try{
+    LCCollection* trackcollection = evt->getCollection(_trackCollectionName);
+    double kinkangle = kinkEstimate(_trackcollection);
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Kink Angle"]))->fill(kinkAngle);
+    if(
+  } catch(...){
+    streamlog_out(WARNING) << "Could not get collection '" << _trackCollectionName << "' from event, Skipping Event" << std::endl;//Not sure on this verbosity level
+  }
+
+*/
+
   try{
     std::vector< std::string > *eventCollectionNames = const_cast<std::vector< std::string >* >(evt->getCollectionNames());
+    _referenceHitVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_referenceHitCollectionName));//Create the reference hit vector (used for figuring out what layer the hit is in)
     streamlog_out(DEBUG0) << "Event Collection Names:" << std::endl;
     for(std::vector< std::string >::iterator it = (*eventCollectionNames).begin(); it != (*eventCollectionNames).end(); ++it){
       streamlog_out(DEBUG0) << *it << " (" << evt->getCollection(*it)->getNumberOfElements() << " elements)" << std::endl;
@@ -227,7 +240,6 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
     streamlog_out(WARNING) << "Could not get collection from event, Skipping Event" << std::endl;//Not sure on this verbosity level
   }
 
-  _referenceHitVec = dynamic_cast < LCCollectionVec * > (evt->getCollection(_referenceHitCollectionName));//Create the reference hit vector (used for figuring out what layer the hit is in)
   _eventNumber++;
   
 }
