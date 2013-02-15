@@ -531,6 +531,7 @@ namespace eutelescope {
     double _missingHitPenalty;
     double _skipHitPenalty;
     double _chi2Max ;
+    double _chi2Min ;
 
     bool   _useNominalResolution ;
 
