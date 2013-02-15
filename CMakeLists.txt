@@ -23,9 +23,9 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 # 4. let ILCSoft guys know (?)
 
 # !RELEASE: comment out the following line and comment in either one of the release ones
-SET(CMAKE_BUILD_TYPE Debug) # more warnings, no optimizations, debug symbols
+#SET(CMAKE_BUILD_TYPE Debug) # add. warnings, no optimizations, debug symbols
+SET(CMAKE_BUILD_TYPE RelWithDebInfo) # gcc optimizations (-O2) with debug symbols and add. warnings
 # SET(CMAKE_BUILD_TYPE Release) # full gcc optimization (-O3), no debug symbols, no debug messages
-# SET(CMAKE_BUILD_TYPE RelWithDebInfo) # gcc optimizations (-O2) with debug symbols
 
 
 ### DEPENDENCIES ############################################################
@@ -122,6 +122,7 @@ ADD_DEFINITIONS( "-Wno-long-long" )
 # debuging warnings and switches - only active if  CMAKE_BUILD_TYPE  is set to debug
 SET(CMAKE_CXX_FLAGS_DEBUG "-g -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef" CACHE STRING "Debug options." FORCE )
 # also useful: -Wshadow (however, GCC 4.1 uses this even for system libraries, causing many warnings from Marlin & co)
+SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "${CMAKE_CXX_FLAGS_RELWITHDEBINFO} -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef" CACHE STRING "Debug options." FORCE )
 
 # add library
 SET( libname ${PROJECT_NAME} )
