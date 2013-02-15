@@ -58,7 +58,12 @@ FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT LCCD )
     ENDIF()
 ENDFOREACH()
 
-
+INCLUDE_DIRECTORIES( ./gbl/cpp )
+AUX_SOURCE_DIRECTORY( ./gbl/cpp/src gbl_sources )
+ADD_LIBRARY( GBL STATIC ${gbl_sources} )
+IF( CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" )
+ SET_TARGET_PROPERTIES(GBL PROPERTIES COMPILE_FLAGS "-fPIC")
+ENDIF( CMAKE_SYSTEM_PROCESSOR STREQUAL "x86_64" ) 
 
 ### DOCUMENTATION ###########################################################
 
@@ -106,6 +111,8 @@ ADD_DEFINITIONS("-DDO_TESTING")
 
 # include directories
 INCLUDE_DIRECTORIES( ./include )
+INCLUDE_DIRECTORIES( ./gbl/cpp/include )
+
 #INSTALL_DIRECTORY( ./include DESTINATION . FILES_MATCHING PATTERN "*.h" )
 
 # definitions to pass to the compiler
@@ -122,6 +129,8 @@ AUX_SOURCE_DIRECTORY( ./src library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
 
+TARGET_LINK_LIBRARIES( ${libname} GBL)
+
 # used for alignment if Eutelescope was build with ROOT support
 IF( ROOT_FOUND AND ROOT_MINUIT_FOUND )
     TARGET_LINK_LIBRARIES( ${libname} ${ROOT_MINUIT_LIBRARY} )
@@ -131,6 +140,7 @@ MACRO( ADD_EUTELESCOPE_TOOL _name )
     ADD_EXECUTABLE( ${_name} src/exec/${_name}.cxx )
     TARGET_LINK_LIBRARIES( ${_name} ${libname} )
     INSTALL( TARGETS ${_name} DESTINATION bin )
+    TARGET_LINK_LIBRARIES( ${_name} GBL) 
 ENDMACRO()
 
 ADD_EUTELESCOPE_TOOL( pede2lcio )
