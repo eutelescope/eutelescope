@@ -1,0 +1,362 @@
+/* 
+ * File:   EUTelUtility.cpp
+ * Contact: denys.lontkovskyi@desy.de
+ * 
+ * Created on January 22, 2013, 11:54 AM
+ */
+
+// eutelescope includes ".h"
+#include "EUTelUtility.h"
+#include "EUTELESCOPE.h"
+#include "EUTelVirtualCluster.h"
+#include "EUTelSparseClusterImpl.h"
+#include "EUTelAPIXSparsePixel.h"
+#include "EUTelBrickedClusterImpl.h"
+#include "EUTelDFFClusterImpl.h"
+#include "EUTelFFClusterImpl.h"
+
+// lcio includes <.h>
+#include "IMPL/TrackerHitImpl.h"
+
+#include <EVENT/LCEvent.h>
+
+
+namespace eutelescope {
+
+    namespace Utility {
+
+        /**
+         * Fills indices of not excluded planes
+         * 
+         * 
+         *      *               *
+         * |    |       ...     |       |
+         * 0    1       ...     k      k+1
+         * 
+         * Plane marked with (*) to be excluded from consideration
+         * 
+         *      *                               *       
+         * |    |       |       |       ...     |       |
+         * 0   -1       1       2       ...    -1      k-2
+         * 
+         * Array of indices of not excluded planes
+         * 
+         * @param indexconverter 
+         *              returned indices of not excluded planes
+         * 
+         * @param excludePlanes
+         *              array of plane ids to be excluded
+         * 
+         * @param nPlanes
+         *              total number of planes
+         */
+        
+        void FillNotExcludedPlanesIndices( std::vector<int>& indexconverter, const std::vector<unsigned int >& excludePlanes,  unsigned int nPlanes ) {
+            int icounter = 0;
+            int nExcludePlanes = (int) excludePlanes.size();
+            for( unsigned int i = 0; i < nPlanes; i++) {
+                int excluded = 0; //0 - not excluded, 1 - excluded
+                if ( nExcludePlanes > 0) {
+                    for( int j = 0; j < nExcludePlanes; j++ ) {
+                        if ( i == excludePlanes[ j ] ) {
+                            excluded = 1;
+                            break;
+                        }
+                    }
+                }
+                if ( excluded == 1 )
+                    indexconverter[ i ] = -1;
+                else {
+                    indexconverter[ i ] = icounter;
+                    icounter++;
+                }
+            }
+            streamlog_out( DEBUG ) << "FillNotExcludedPlanesIndices" << std::endl;
+        }
+        
+        bool HitContainsHotPixels( const IMPL::TrackerHitImpl* hit, const std::map<std::string, bool >& hotPixelMap ) {
+            bool skipHit = false;
+
+            try {
+                try {
+                    LCObjectVec clusterVector = hit->getRawHits();
+
+                    EUTelVirtualCluster * cluster;
+
+                    if (hit->getType() == kEUTelSparseClusterImpl) {
+
+                        TrackerDataImpl * clusterFrame = dynamic_cast<TrackerDataImpl*> (clusterVector[0]);
+                        if (clusterFrame == 0) {
+                            // found invalid result from cast
+                            throw UnknownDataTypeException("Invalid hit found in method hitContainsHotPixels()");
+                        }
+
+                        eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > *cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > (clusterFrame);
+                        int sensorID = cluster->getDetectorID();
+
+                        for (unsigned int iPixel = 0; iPixel < cluster->size(); iPixel++) {
+                            EUTelSimpleSparsePixel m26Pixel;
+                            cluster->getSparsePixelAt(iPixel, &m26Pixel);
+                            int pixelX, pixelY;
+                            pixelX = m26Pixel.getXCoord();
+                            pixelY = m26Pixel.getYCoord();
+
+                            {
+                                char ix[100];
+                                sprintf(ix, "%d,%d,%d", sensorID, pixelX, pixelY);
+                                std::map < std::string, bool >::const_iterator z = hotPixelMap.find(ix);
+                                if (z != hotPixelMap.end() && hotPixelMap.at(ix) == true) {
+                                    skipHit = true;
+                                    streamlog_out(DEBUG3) << "Skipping hit as it was found in the hot pixel map." << std::endl;
+                                    return true; // if TRUE  this hit will be skipped
+                                } else {
+                                    skipHit = false;
+                                }
+                            }
+                        }
+
+                    } else if (hit->getType() == kEUTelBrickedClusterImpl) {
+
+                        // fixed cluster implementation. Remember it
+                        //  can come from
+                        //  both RAW and ZS data
+
+                        cluster = new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
+
+                    } else if (hit->getType() == kEUTelDFFClusterImpl) {
+
+                        // fixed cluster implementation. Remember it can come from
+                        // both RAW and ZS data
+                        cluster = new EUTelDFFClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
+                    } else if (hit->getType() == kEUTelFFClusterImpl) {
+
+                        // fixed cluster implementation. Remember it can come from
+                        // both RAW and ZS data
+                        cluster = new EUTelFFClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
+                    }
+                    else if (hit->getType() == kEUTelAPIXClusterImpl) {
+                        TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> (clusterVector[0]);
+
+                        cluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > (clusterFrame);
+
+                        eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > (clusterFrame);
+
+                        int sensorID = apixCluster->getDetectorID();
+
+                        for (unsigned int iPixel = 0; iPixel < apixCluster->size(); ++iPixel) {
+                            int pixelX, pixelY;
+                            EUTelAPIXSparsePixel apixPixel;
+                            apixCluster->getSparsePixelAt(iPixel, &apixPixel);
+                            pixelX = apixPixel.getXCoord();
+                            pixelY = apixPixel.getYCoord();
+                            {
+                                char ix[100];
+                                sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord());
+                                std::map < std::string, bool >::const_iterator z = hotPixelMap.find(ix);
+                                if (z != hotPixelMap.end() && hotPixelMap.at(ix) == true) {
+                                    skipHit = true;
+                                    streamlog_out(DEBUG3) << "Skipping hit as it was found in the hot pixel map." << std::endl;
+                                    return true; // if TRUE  this hit will be skipped
+                                } else {
+                                    skipHit = false;
+                                }
+                            }
+                        }
+
+                        return skipHit; // if TRUE  this hit will be skipped
+                    }
+
+                } catch (lcio::Exception e) {
+                    // catch specific exceptions
+                    streamlog_out(ERROR) << "Exception occured in hitContainsHotPixels(): " << e.what() << std::endl;
+                }
+            } catch (...) {
+                // if anything went wrong in the above return FALSE, meaning do not skip this hit
+                return 0;
+            }
+
+            // if none of the above worked return FALSE, meaning do not skip this hit
+            return 0;
+
+        }
+        
+        EUTelVirtualCluster* GetClusterFromHit( const IMPL::TrackerHitImpl* hit ) {
+            
+            LCObjectVec clusterVector = hit->getRawHits();
+            
+            if (hit->getType() == kEUTelBrickedClusterImpl) {
+                        return new EUTelBrickedClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
+                    } else if (hit->getType() == kEUTelDFFClusterImpl) {
+                        return new EUTelDFFClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
+                    } else if (hit->getType() == kEUTelFFClusterImpl) {
+                        return new EUTelFFClusterImpl(static_cast<TrackerDataImpl *> (clusterVector[0]));
+                    } else if (hit->getType() == kEUTelAPIXClusterImpl) {
+                        return new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >(static_cast<TrackerDataImpl *> (clusterVector[0]));
+                    } else if (hit->getType() == kEUTelSparseClusterImpl) {
+			return new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > (static_cast<TrackerDataImpl *> (clusterVector[0]));
+                    } else {
+                        throw UnknownDataTypeException("Unknown cluster type");
+                    }
+            
+        }
+
+        int GuessSensorID( const IMPL::TrackerHitImpl * hit ) {
+            if ( hit == NULL ) {
+                streamlog_out(ERROR) << "An invalid hit pointer supplied! will exit now\n" << std::endl;
+                return -1;
+            }
+
+            try {
+                EUTelVirtualCluster * cluster = GetClusterFromHit( hit );
+
+                if ( cluster != NULL ) {
+                    int sensorID = cluster->getDetectorID();
+                    return sensorID;
+                }
+            } catch (...) {
+                streamlog_out(ERROR) << "guessSensorID() produced an exception!" << std::endl;
+            }
+
+            return -1;
+        }     
+        
+        std::map<std::string, bool > FillHotPixelMap( EVENT::LCEvent *event, const std::string& hotPixelCollectionName ) {
+            
+            std::map < std::string, bool > hotPixelMap;
+            
+            LCCollectionVec *hotPixelCollectionVec = 0;
+            try {
+                hotPixelCollectionVec = static_cast<LCCollectionVec*> (event->getCollection(hotPixelCollectionName));
+            } catch (...) {
+                streamlog_out(MESSAGE) << "hotPixelCollectionName " << hotPixelCollectionName.c_str() << " not found" << std::endl;
+                return hotPixelMap;
+            }
+
+            CellIDDecoder<TrackerDataImpl> cellDecoder(hotPixelCollectionVec);
+
+            for (int i = 0; i < hotPixelCollectionVec -> getNumberOfElements(); i++) {
+                TrackerDataImpl* hotPixelData = dynamic_cast<TrackerDataImpl*> (hotPixelCollectionVec->getElementAt(i));
+                SparsePixelType type = static_cast<SparsePixelType> (static_cast<int> (cellDecoder(hotPixelData)["sparsePixelType"]));
+
+                int sensorID = static_cast<int> (cellDecoder(hotPixelData)["sensorID"]);
+
+                if (type == kEUTelAPIXSparsePixel) {
+                    std::auto_ptr< EUTelSparseDataImpl< EUTelAPIXSparsePixel > > apixData(new EUTelSparseDataImpl< EUTelAPIXSparsePixel > (hotPixelData));
+                    std::vector< EUTelAPIXSparsePixel* > apixPixelVec;
+                    EUTelAPIXSparsePixel apixPixel;
+
+                    //Push all single Pixels of one plane in the apixPixelVec
+                    for (unsigned int iPixel = 0; iPixel < apixData->size(); iPixel++) {
+                        std::vector<int> apixColVec();
+                        apixData->getSparsePixelAt(iPixel, &apixPixel);
+                        streamlog_out(MESSAGE) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << std::endl;
+                        try {
+                            char ix[100];
+                            sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord());
+                            hotPixelMap[ix] = true;
+                        } catch (...) {
+                            streamlog_out(ERROR) << "problem adding pixel to hotpixel map! " << std::endl;
+                        }
+                    }
+
+                } else if (type == kEUTelSimpleSparsePixel) {
+                    std::auto_ptr< EUTelSparseClusterImpl< EUTelSimpleSparsePixel > > m26Data(new EUTelSparseClusterImpl< EUTelSimpleSparsePixel > (hotPixelData));
+                    std::vector< EUTelSimpleSparsePixel* > m26PixelVec;
+                    EUTelSimpleSparsePixel m26Pixel;
+
+                    //Push all single Pixels of one plane in the m26PixelVec
+                    for (unsigned int iPixel = 0; iPixel < m26Data->size(); iPixel++) {
+                        std::vector<int> m26ColVec();
+                        m26Data->getSparsePixelAt(iPixel, &m26Pixel);
+                        streamlog_out(MESSAGE) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << std::endl;
+                        try {
+                            char ix[100];
+                            sprintf(ix, "%d,%d,%d", sensorID, m26Pixel.getXCoord(), m26Pixel.getYCoord());
+                            hotPixelMap[ix] = true;
+                        } catch (...) {
+                            std::cout << "can not add pixel " << std::endl;
+                            std::cout << sensorID << " " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << std::endl;
+                        }
+                    }
+                }
+            }
+            return hotPixelMap;
+        }
+
+//        void EUTelMilleDL::findtracks(
+//                std::vector<std::vector<int> > &indexarray,
+//                std::vector<int> vec,
+//                std::vector<std::vector<HitsInPlane> > &_hitsArray,
+//                int i,
+//                int y
+//                ) {
+//            if (i > 0)
+//                vec.push_back(y);
+//
+//            for (size_t j = 0; j < _hitsArray[i].size(); j++) {
+//                //if we are not in the last plane, call this method again
+//                if (i < (int) (_hitsArray.size()) - 1) {
+//                    vec.push_back((int) j); //index of the cluster in the last plane
+//
+//                    //track candidate requirements
+//                    bool taketrack = true;
+//                    const int e = vec.size() - 2;
+//                    if (e >= 0) {
+//                        double distance = sqrt(
+//                                pow(_hitsArray[e][vec[e]].measuredX - _hitsArray[e + 1][vec[e + 1]].measuredX, 2) +
+//                                pow(_hitsArray[e][vec[e]].measuredY - _hitsArray[e + 1][vec[e + 1]].measuredY, 2)
+//                                );
+//                        double distance_z = _hitsArray[e + 1][vec[e + 1]].measuredZ - _hitsArray[e][vec[e]].measuredZ;
+//
+//
+//                        const double dM = _distanceMaxVec[e];
+//
+//                        double distancemax = dM * (distance_z / 100000.0);
+//
+//                        if (distance >= distancemax)
+//                            taketrack = false;
+//
+//                        if (_onlySingleHitEvents == 1 && (_hitsArray[e].size() != 1 || _hitsArray[e + 1].size() != 1))
+//                            taketrack = false;
+//                    }
+//                    vec.pop_back();
+//
+//                    if (taketrack)
+//                        findtracks(indexarray, vec, _hitsArray, i + 1, (int) j);
+//                } else {
+//                    //we are in the last plane
+//                    vec.push_back((int) j); //index of the cluster in the last plane
+//
+//                    //track candidate requirements
+//                    bool taketrack = true;
+//                    for (size_t e = 0; e < vec.size() - 1; e++) {
+//                        double distance = sqrt(
+//                                pow(_hitsArray[e][vec[e]].measuredX - _hitsArray[e + 1][vec[e + 1]].measuredX, 2) +
+//                                pow(_hitsArray[e][vec[e]].measuredY - _hitsArray[e + 1][vec[e + 1]].measuredY, 2)
+//                                );
+//                        double distance_z = _hitsArray[e + 1][vec[e + 1]].measuredZ - _hitsArray[e][vec[e]].measuredZ;
+//
+//                        const double dM = _distanceMaxVec[e];
+//
+//                        double distancemax = dM * (distance_z / 100000.0);
+//
+//                        if (distance >= distancemax)
+//                            taketrack = false;
+//
+//                        if (_onlySingleHitEvents == 1 && (_hitsArray[e].size() != 1 || _hitsArray[e + 1].size() != 1))
+//                            taketrack = false;
+//
+//                    }
+//                    if ((int) indexarray.size() >= _maxTrackCandidates)
+//                        taketrack = false;
+//
+//                    if (taketrack) {
+//                        indexarray.push_back(vec);
+//                    }
+//                    vec.pop_back(); //last element must be removed because the
+//                    //vector is still used
+//                }
+//            }
+//        }
+    }
+}
