@@ -272,7 +272,7 @@ EUTelTestFitter::EUTelTestFitter()
 
   registerProcessorParameter ("Chi2Min",
                               "Minimum Chi2 for accepted track fit",
-                              _chi2Min,  static_cast < double > (0.01));
+                              _chi2Min,  static_cast < double > (0.0));
 
   registerProcessorParameter ("Chi2Max",
                               "Maximum Chi2 for accepted track fit",
@@ -2249,8 +2249,8 @@ void EUTelTestFitter::bookHistos()
     int   limitZN  = 100;
     float limitY   = 10.0;
     float limitX   = 10.0; 
-    float limitYr  = 0.005;
-    float limitXr  = 0.005; 
+    float limitYr  = 0.1;
+    float limitXr  = 0.1; 
     //float limitZ   = 50.0; 
     float limitZr  = 50.0; 
    //Resids 
