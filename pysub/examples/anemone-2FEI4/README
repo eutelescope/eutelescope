@@ -1,0 +1,18 @@
+This directory contains an example configuration for the Anemone
+telescope with six planes of Mimosa26 with 2 ATLAS pixel modules.
+
+The corresponding data can be found at:
+/afs/desy.de/group/telescopes/EutelTestData/TestPysubExampleAnemone2FEI4
+
+If you are interested in the data but cannot access the above path,
+please contact the EUTelescope software coordinators.
+
+
+Features of this configuration:
+------------------------------
+
+- telescope (ANEMONE) and 2 ATLAS pixel modulesT
+
+
+Known issues:
+------------

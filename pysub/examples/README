@@ -11,6 +11,9 @@ This subdirectory contains example configurations and steering files:
 * datura-alone
      The Datura telescope with six planes of Mimosa26 without DUT
 
+* anemone-2FEI4
+     The Anemone telescope (six planes of Mimosa26) and 2 ATLAS-FEI4 pixel
+
 All examples are also being used for automated data-driven tests using
 the CMake/CTest framework to verify the correct functionality of
 EUTelescope; see 'datura-alone/testing.cmake' for an example setup for

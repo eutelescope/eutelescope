@@ -231,7 +231,7 @@ endif()
 # !RELEASE: the data-driven tests require DESY-AFS access and are not useful for most users (comment out the following lines)
   INCLUDE(jobsub/examples/datura-alone/testing.cmake)
   INCLUDE(pysub/examples/datura-alone/testing.cmake)
-  INCLUDE(pysub/examples/datura-2FEI4/testing.cmake)
+  INCLUDE(pysub/examples/anemone-2FEI4/testing.cmake)
 
 # set custom settings (e.g. tests to be skipped for valgrind)
 configure_file (
