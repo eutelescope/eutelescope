@@ -1,5 +1,3 @@
-// Author Silvia Bonfanti, Uni. Insubria  <mailto:silviafisica@gmail.com>
-// Author Loretta Negrini, Uni. Insubria  <mailto:loryneg@gmail.com>
 // Version $Id$
 /*
  *   This source code is part of the Eutelescope package of Marlin.
@@ -649,14 +647,6 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
                    
                    _clusterXCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalXCenter*_siPlanesPitchX[exPlaneGear]-_siPlanesLayerLayout->getSensitiveSizeX(exPlaneGear)/2., cluster_offset[0]  );
                    _clusterYCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalYCenter*_siPlanesPitchY[exPlaneGear]-_siPlanesLayerLayout->getSensitiveSizeY(exPlaneGear)/2., cluster_offset[1]  );
-//                   _clusterXCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill(xPos_ex/_siPlanesPitchX[exPlaneGear],xPos_in/_siPlanesPitchX[inPlaneGear]);
-//                   _clusterYCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill(yPos_ex/_siPlanesPitchY[exPlaneGear],yPos_in/_siPlanesPitchY[inPlaneGear]);
-
-/* try to udnerstand why the Correlation plots X.vs.X do not show any thing !!
- * 
-                   _clusterXCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalXCenter, internalYCenter );
-                   _clusterYCorrelationMatrix[ externalSensorID ][ internalSensorID ]->fill( externalYCenter, internalXCenter );
-*/
 
                    if( cluster_offset.size() >3 )
                    { 
@@ -681,26 +671,10 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
     } // endif hasCluster
 
-
     if ( _hasHitCollection ) {
 
       LCCollectionVec * inputHitCollection = static_cast< LCCollectionVec *>
         ( event->getCollection( _inputHitCollectionName )) ;
-//////
-//streamlog_out( MESSAGE5 ) << "creating a LCGENERICOBJECT collection " <<endl;
-//      _outputCorrelatedHitCollectionVec  = new LCCollectionVec( LCIO::TRACKERHIT      );
-//      LCCollectionVec*  t_outputCorrelatedHitCollectionVec  = new LCCollectionVec( LCIO::TRACKERHIT      );
-/*    try 
-    {
-      // let's check if we have hit collections
-
-     LCCollectionVec *collvec = static_cast<LCCollectionVec*> ( event->getCollection( "correlatorhits" )) ;
-     printf("LCCollectionVec correlatorhits found at %p \n", static_cast <void*> (collvec) );
-
-    } catch ( lcio::Exception& e ) {
-     printf("LCCollectionVec correlatorhits get failed \n" );
-    }*/
-///////
       for ( size_t iExt = 0 ; iExt < inputHitCollection->size(); ++iExt ) {
         std::vector<double> trackX;
         std::vector<double> trackY;
@@ -710,13 +684,10 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
        trackY.clear();
        iplane.clear();
 
-//        t_outputCorrelatedHitCollectionVec->clear();
 
         // this is the external hit
         TrackerHitImpl * externalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
                                                                          getElementAt( iExt ) );
-//        t_outputCorrelatedHitCollectionVec->push_back(externalHit);
-//        t_outputCorrelatedHitCollectionVec->push_back( externalHit );
 
         double * externalPosition;
         externalPosition = (double *) externalHit->getPosition();
@@ -748,7 +719,6 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           }
 
           if ( 
-// optional       (_sensorIDtoZOrderMap[internalSensorID] != 0 && _sensorIDtoZOrderMap[externalSensorID] == 0)
                   ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
                    ||
                   _sensorIDtoZOrderMap[internalSensorID] ==  _sensorIDtoZOrderMap[externalSensorID] +1 
@@ -756,9 +726,6 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             {
 
             int iz = _sensorIDtoZOrderMap[internalSensorID]; 
-            //printf(" xmn:%5.3f <%5.3f< xmx:%5.3f;; \n", _residualsXMin[iz], (externalPosition[0]-internalPosition[0] ), _residualsXMax[iz]) ;
-            //printf(" ymn:%5.3f <%5.3f< ymx:%5.3f \n",   _residualsYMin[iz], (externalPosition[1]-internalPosition[1] ), _residualsYMax[iz]);
-
 
             if(
                ((externalPosition[0]-internalPosition[0] ) < _residualsXMax[iz]) && (_residualsXMin[iz] < (externalPosition[0]-internalPosition[0] ))   
@@ -770,12 +737,6 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
                 trackY.push_back(internalPosition[1]);
                 iplane.push_back(internalSensorID);
 
-//              t_outputCorrelatedHitCollectionVec->push_back( internalHit );
-//             _hitXCorrelationMatrix[ externalSensorID ] [ internalSensorID ] -> fill ( externalPosition[0], internalPosition[0] ) ;
-//             _hitYCorrelationMatrix[ externalSensorID ] [ internalSensorID ] -> fill ( externalPosition[1], internalPosition[1] ) ;
-// assume all rotations have been done in the hitmaker processor:
-//             _hitXCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalPosition[0], internalPosition[0]-externalPosition[0] );
-//             _hitYCorrShiftMatrix[ externalSensorID ][ internalSensorID ]->fill( externalPosition[1], internalPosition[1]-externalPosition[1]);
                }
             }
 
@@ -783,61 +744,20 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
   vector<int>  iplane_unique = iplane;
   vector<int>::iterator p, p_end;
-
-//  cout << "Original contents of vectorObject:\n";
-//  for(p = iplane.begin(); p < iplane.end(); p++)
-//    cout << *p << " ";
-//  cout << endl;
-  
+ 
   p_end = unique( iplane_unique.begin(), iplane_unique.end());       // remove duplicates
 
-//  cout << "Sequence after removing duplicates:\n";
-//  for(p = iplane.begin(); p < p_end; p++)
-//    cout << *p << " ";
-//  cout << endl;
-/*
-      std::set<int> splane;
-      for(int i=0;iplane.size();i++)
-      {
-        splane.insert(iplane[i]);
-        printf("splane %5d \n",splane.size() );
-        cout << "Original contents of set:\n";
-        for( iterator p = splane.begin(); p < splane.end(); p++)
-         cout << *p << " ";
-        cout << endl;
-      }  
-      std::vector<int> iplane_unique;
-      iplane_unique.assign(splane.begin(),splane.end());
-      printf("iplane_unique size: %5d\n",iplane_unique.size());         
-*/
 if( (int)iplane_unique.size()> _minNumberOfCorrelatedHits &&  trackX.size()==trackY.size())
-// if( trackX.size()> _minNumberOfCorrelatedHits &&  trackX.size()==trackY.size())
 {
-//continue;
       for(size_t i=1;i< trackX.size();i++)
       {
-//        printf("s_%2d=[%2d %4.1f %4.1f]",i, iplane[i],  trackX[i], trackY[i]);       
             _hitXCorrelationMatrix[ iplane[0]        ] [ iplane[i]        ] -> fill ( trackX[0]          , trackX[i]           ) ;
             _hitYCorrelationMatrix[ iplane[0]        ] [ iplane[i]        ] -> fill ( trackY[0]          , trackY[i]           ) ;
             // assume all rotations have been done in the hitmaker processor:
             _hitXCorrShiftMatrix[ iplane[0]        ][ iplane[i]        ]->fill( trackX[0]          , trackX[0]          - trackX[i]          );
             _hitYCorrShiftMatrix[ iplane[0]        ][ iplane[i]        ]->fill( trackY[0]          , trackY[0]          - trackY[i]         );
       }
-//      printf("\n\n");
-//      for ( size_t iPos = 0; iPos < t_outputCorrelatedHitCollectionVec->size(); ++iPos )
-//      { 
-//        printf("::iPos:%5d ", iPos );
-//        TrackerHitImpl  *outputHit = dynamic_cast< TrackerHitImpl*> (t_outputCorrelatedHitCollectionVec->getElementAt(iPos)) ;
-//        _outputCorrelatedHitCollectionVec->push_back( outputHit->clone() );
-//      }
-//      printf("\n");
-//      outputCollectionVec->resize(t_outputCollectionVec->size());
-//      std::copy( t_outputCollectionVec->begin(), t_outputCollectionVec->end(),  outputCollectionVec->begin() ); 
-//      outputCorrelatedCollectionVec->insert( outputCorrelatedCollectionVec->begin(), t_outputCollectionVec->begin(), t_outputCollectionVec->end() ); 
-//t_outputCollectionVec->clear();
-//      printf("--outputCollectionVec size: %5d \n", outputCorrelatedCollectionVec->size() );
 }else{
-//      t_outputCollectionVec
 }
  
       }
@@ -847,13 +767,6 @@ if( (int)iplane_unique.size()> _minNumberOfCorrelatedHits &&  trackX.size()==tra
     streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
                                 << " in run " << event->getRunNumber() << endl;
   }
-/*
-  if( _outputCorrelatedHitCollectionVec != 0 )
-  {
-    streamlog_out( MESSAGE5 ) << "adding to event " <<endl; 
-    event->addCollection( _outputCorrelatedHitCollectionVec, "correlatorhits" );
-  }
-*/
 
 #endif
 
@@ -874,7 +787,6 @@ void EUTelCorrelator::end() {
 
                 if(
                     !( inPlane != getFixedPlaneID() && exPlane == getFixedPlaneID() )
-//                  !(_sensorIDtoZOrderMap[inPlane] != 0 &&   _sensorIDtoZOrderMap[exPlane] == 0)
                   )continue;
 
                 if( _clusterXCorrShiftMatrix[ exPlane ][ inPlane ] == 0 ) continue;
@@ -890,7 +802,6 @@ void EUTelCorrelator::end() {
                         ;
                     double _binValue = _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->binEntriesY( ibin );
 
-//                    if(_binValue>0)printf("ibin %-5d %-5.2f %-5.2f %6d %6d \n", ibin, xbin, _binValue, _clusterXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins(), _clusterXCorrShiftProjection[ inPlane ]->axis().bins() );
                     _clusterXCorrShiftProjection[ inPlane ]->fill( xbin, _binValue );
                     if( _binValue > _heighestBinX )
                     {
@@ -955,13 +866,6 @@ void EUTelCorrelator::end() {
                    _correlationBandCenterY += ybin*xbin;
                 }
 
-//                streamlog_out( MESSAGE5 ) << "Clustering Offset values: " ; 
-//                printf("for plane %3d  the X offset is %9.3f px, the Y offset is %9.3f px \n", 
-//                        inPlane, 
-//                        _correlationBandBinsX == 0. ? 0.: _correlationBandCenterX/_correlationBandBinsX, 
-//                        _correlationBandBinsY == 0. ? 0.: _correlationBandCenterY/_correlationBandBinsY );
-//                streamlog_out( MESSAGE5 ) << endl;
-
                 int inPlaneGear = _sensorIDVecMap[inPlane];
 
                 if( _correlationBandBinsX != 0. ) 
@@ -1001,10 +905,8 @@ void EUTelCorrelator::end() {
 
                 if(
                     !( inPlane != getFixedPlaneID() && exPlane == getFixedPlaneID() )
-//                  !(_sensorIDtoZOrderMap[inPlane] != 0 &&   _sensorIDtoZOrderMap[exPlane] == 0)
                   )continue;
 
-//                printf(" inPlane %5d exPlane %5d \n", inPlane, exPlane);
                 float _heighestBinX = 0.;
                 for(int ibin = 0; ibin < _hitXCorrShiftMatrix[ exPlane ][ inPlane ]->yAxis().bins(); ibin++)
                 {
@@ -1016,11 +918,9 @@ void EUTelCorrelator::end() {
                     double _binValue = _hitXCorrShiftMatrix[ exPlane ][ inPlane ]->binEntriesY( ibin );
                     _hitXCorrShiftProjection[ inPlane ]->fill( xbin, _binValue );
                     if( _binValue>0)
-//                    printf("X ibin %2d binValue: %9.6f \n", ibin, _binValue );
                     if( _binValue > _heighestBinX )
                     {
                         _heighestBinX = _binValue;
-//                        printf("X ibin %2d heighest binValue: %9.6f \n", ibin, _heighestBinX  );
                    }
                 }
                 
@@ -1036,16 +936,12 @@ void EUTelCorrelator::end() {
                     double _binValue = _hitYCorrShiftMatrix[ exPlane ][ inPlane ]->binEntriesY( ibin );
                     _hitYCorrShiftProjection[ inPlane ]->fill( xbin, _binValue );
                     if( _binValue>0)
-//                    printf("Y ibin %2d binValue: %9.6f \n", ibin, _binValue );
                     if( _binValue > _heighestBinY )
                     {
                         _heighestBinY = _binValue;
-//                        printf("Y ibin %2d heighest binValue: %9.6f \n", ibin, _heighestBinY  );
                    }
                 }
 
-//               _hitXCorrShiftProjection[ inPlane ]->print("ALL");
-//               _hitYCorrShiftProjection[ inPlane ]->print("ALL");
                 
                 // get the highert bin and its neighbours
                 // 
@@ -1055,7 +951,6 @@ void EUTelCorrelator::end() {
                 for(int ibin = 0; ibin < _hitXCorrShiftProjection[ inPlane ]->axis().bins(); ibin++)
                 {
                     double ybin =  _hitXCorrShiftProjection[ inPlane ]->binHeight(ibin); 
-//                    printf(" ybin  %9.3f, ibin %9d \n", ybin, ibin );
 
                     if( ybin < _heighestBinX*0.9 ) continue;
                     double xbin =  
@@ -1067,7 +962,6 @@ void EUTelCorrelator::end() {
 
                     _correlationBandBinsX   += ybin;
                     _correlationBandCenterX += xbin*ybin;
-//                    printf(" ybin  %9.3f, xbin %9.3f \n", ybin, xbin );
                 }
 
                 
@@ -1087,18 +981,11 @@ void EUTelCorrelator::end() {
                   
                    _correlationBandBinsY   += ybin;
                    _correlationBandCenterY += ybin*xbin;
-//                   printf(" ybin  %9.3f, xbin %9.3f \n", ybin, xbin );
                }
 
 // alter sign:
                _correlationBandCenterX = -_correlationBandCenterX;                
                _correlationBandCenterY = -_correlationBandCenterY;                
-
-//              printf("for plane %d  the X offset is %9.3f , the Y offset is %9.3f \n", 
-//                        inPlane, _correlationBandCenterX/_correlationBandBinsX, _correlationBandCenterY/_correlationBandBinsY );
-
-//                _siPlanesOffsetX[ inPlane ] = _siPlanesPitchX[inPlane]*(_correlationBandCenterX/_correlationBandBinsX);
-//                _siPlanesOffsetY[ inPlane ] = _siPlanesPitchY[inPlane]*(_correlationBandCenterY/_correlationBandBinsY);
                
                 streamlog_out( MESSAGE5 ) << "Hit Offset values: " ; 
                 streamlog_out ( MESSAGE5 ) << " plane : " << inPlane << " " ;
@@ -1443,11 +1330,11 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             colMin = safetyFactor * ( _hitMinX[row] - _hitMaxX[row]);
             colMax = safetyFactor * ( _hitMaxX[row] - _hitMinX[row]);
 
-            streamlog_out ( MESSAGE5 ) << " GEAR contents: " ;
-            streamlog_out ( MESSAGE5 ) << "X:: r= " << r << "  sizeX:" << _siPlanesLayerLayout->getSensitiveSizeX( r ) ;
-            streamlog_out ( MESSAGE5 ) << "X:: r= " << c << "  sizeX:" << _siPlanesLayerLayout->getSensitiveSizeX( c ) ;
-            streamlog_out ( MESSAGE5 ) << "[col: "<< colNBin<<" row:" << rowNBin << "]";
-            streamlog_out ( MESSAGE5 ) << endl;
+            streamlog_out ( DEBUG5 ) << " GEAR contents: " ;
+            streamlog_out ( DEBUG5 ) << "X:: r= " << r << "  sizeX:" << _siPlanesLayerLayout->getSensitiveSizeX( r ) ;
+            streamlog_out ( DEBUG5 ) << "X:: r= " << c << "  sizeX:" << _siPlanesLayerLayout->getSensitiveSizeX( c ) ;
+            streamlog_out ( DEBUG5 ) << "[col: "<< colNBin<<" row:" << rowNBin << "]";
+            streamlog_out ( DEBUG5 ) << endl;
 
 if(colNBin>100) colNBin=colNBin/4;
 if(rowNBin>100) rowNBin=rowNBin/4;
@@ -1473,19 +1360,11 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             colMax = safetyFactor * ( _hitMaxY[row] - _hitMinY[row]);
 
             
-            streamlog_out ( MESSAGE5 ) << " GEAR contents: " ;
-            streamlog_out ( MESSAGE5 ) << "Y:: r= " << r << "  sizeY:" << _siPlanesLayerLayout->getSensitiveSizeY( r ) ;
-            streamlog_out ( MESSAGE5 ) << "Y:: r= " << c << "  sizeY:" << _siPlanesLayerLayout->getSensitiveSizeY( c ) ;
-            streamlog_out ( MESSAGE5 ) << "[col: "<< colNBin<<" row:" << rowNBin << "]";
-
-/*            printf("Y:: r=%5d  sizeY:%9.3f c=%5d  sizeY:%9.3f [col: %5d   row: %5d]\n",
-                    static_cast<int>(r),
-                    _siPlanesLayerLayout->getSensitiveSizeY( r ) ,
-                    static_cast<int>(c),
-                    _siPlanesLayerLayout->getSensitiveSizeY( c ) ,
-                    static_cast<int>(colNBin), static_cast<int>(rowNBin)
-                    );*/
-            streamlog_out ( MESSAGE5 ) << endl;
+            streamlog_out ( DEBUG5 ) << " GEAR contents: " ;
+            streamlog_out ( DEBUG5 ) << "Y:: r= " << r << "  sizeY:" << _siPlanesLayerLayout->getSensitiveSizeY( r ) ;
+            streamlog_out ( DEBUG5 ) << "Y:: r= " << c << "  sizeY:" << _siPlanesLayerLayout->getSensitiveSizeY( c ) ;
+            streamlog_out ( DEBUG5 ) << "[col: "<< colNBin<<" row:" << rowNBin << "]";
+            streamlog_out ( DEBUG5 ) << endl;
 if(colNBin>100) colNBin=colNBin/4;
 if(rowNBin>100) rowNBin=rowNBin/4;
 
@@ -1615,7 +1494,6 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             tempHistoTitle =  "HitXShift/" +  _hitXCorrShiftProjectionHistoName + "_d" + to_string( row );
             histo1D->setTitle( tempHistoTitle.c_str()) ;
 
-//            innerMapXCluShiftProjection[ col  ] =  histo1D ;
             _hitXCorrShiftProjection[ row ]  = histo1D  ;        
 
 
@@ -1684,12 +1562,10 @@ int EUTelCorrelator::guessSensorID(const double * hit )
         TVector3 norm2Plane( refhit->getAlpha(), refhit->getBeta(), refhit->getGamma() );
  
         double distance = abs( norm2Plane.Dot(hit3d-hitInPlane) );
-//        printf("iPlane %5d   hitPos:  [%8.3f;%8.3f%8.3f]  distance: %8.3f \n", refhit->getSensorID(), hitPosition[0],hitPosition[1],hitPosition[2], distance  );
         if ( distance < minDistance ) 
         {
            minDistance = distance;
            sensorID = refhit->getSensorID();
-//           printf("sensorID: %5d \n", sensorID );
         }    
 
       }
@@ -1740,7 +1616,7 @@ std::vector<double> EUTelCorrelator::guessSensorOffset(int internalSensorID, int
         else if  ( _siPlanesRotations[inPlaneGear][2] > 0.7 )    sign =  1 ;
       }
       xPos_in +=  _siPlanesLayerLayout->getSensitivePositionX( inPlaneGear ) - sign*_siPlanesLayerLayout->getSensitiveSizeX ( inPlaneGear )/2. ;
-//    printf(" %5.2f Coo: %8.3f %8.3f Pos: %8.3f %8.3f\n", sign, xCoo_in, yCoo_in, xCooPos_in, yCooPos_in );
+
       xCooPos_in = xCooPos_in*sign;
 
       sign = 0.;
@@ -1753,8 +1629,6 @@ std::vector<double> EUTelCorrelator::guessSensorOffset(int internalSensorID, int
       }
       yPos_in +=  _siPlanesLayerLayout->getSensitivePositionY( inPlaneGear ) - sign*_siPlanesLayerLayout->getSensitiveSizeY ( inPlaneGear )/2. ;
       yCooPos_in = yCooPos_in*sign;
-
-//   printf(" %5.2f Coo: %8.3f %8.3f Pos: %8.3f %8.3f\n", sign, xCoo_in, yCoo_in, xCooPos_in, yCooPos_in );
 
 
       sign = 0.;
@@ -1780,9 +1654,6 @@ std::vector<double> EUTelCorrelator::guessSensorOffset(int internalSensorID, int
                      
       std::vector<double> cluster_offset;
 
-//      cluster_offset.push_back( -( xPos_in - xPos_ex ) / _siPlanesPitchX[ exPlaneGear ] );
-//      cluster_offset.push_back( -( yPos_in - yPos_ex ) / _siPlanesPitchY[ exPlaneGear ] );
- 
       cluster_offset.push_back( -( xPos_in - xPos_ex ) );
       cluster_offset.push_back( -( yPos_in - yPos_ex ) );
 // 
@@ -1790,7 +1661,6 @@ std::vector<double> EUTelCorrelator::guessSensorOffset(int internalSensorID, int
 // 
       cluster_offset.push_back(  xCooPos_in  );
       cluster_offset.push_back(  yCooPos_in  );
-//      printf(" xPos_in %7.2f xPos_ex %7.2f \n", xPos_in, xPos_ex);
       
       return cluster_offset;
 }
@@ -1810,15 +1680,11 @@ void  EUTelCorrelator::FillHotPixelMap(LCEvent *event)
     }
 
         CellIDDecoder<TrackerDataImpl> cellDecoder( hotPixelCollectionVec );
-// 	CellIDDecoder<TrackerDataImpl> cellDecoder( zsInputCollectionVec );
 	
         for(int i=0; i<  hotPixelCollectionVec->getNumberOfElements(); i++)
         {
            TrackerDataImpl* hotPixelData = dynamic_cast< TrackerDataImpl *> ( hotPixelCollectionVec->getElementAt( i ) );
 	   SparsePixelType  type         = static_cast<SparsePixelType> (static_cast<int> (cellDecoder( hotPixelData )["sparsePixelType"]));
-//		TrackerDataImpl * zsData = dynamic_cast< TrackerDataImpl * > ( zsInputCollectionVec->getElementAt( i ) );
-//		SparsePixelType   type   = static_cast<SparsePixelType> ( static_cast<int> (cellDecoder( zsData )["sparsePixelType"]) );
-
 
 	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
            streamlog_out ( MESSAGE5 ) << "sensorID: " << sensorID << " type " << kEUTelAPIXSparsePixel << " ?= " << type << endl; 
@@ -1835,8 +1701,6 @@ void  EUTelCorrelator::FillHotPixelMap(LCEvent *event)
            {
               std::vector<int> apixColVec();
               apixData->getSparsePixelAt( iPixel, &apixPixel);
-//	       apixPixelVec.push_back(new EUTelAPIXSparsePixel(apixPixel));
-//              streamlog_out ( MESSAGE5 ) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
               try
               {
                  char ix[100];
@@ -1845,8 +1709,7 @@ void  EUTelCorrelator::FillHotPixelMap(LCEvent *event)
               }
               catch(...)
               {
-                 std::cout << "can not add pixel " << std::endl;
-//               std::cout << sensorID << " " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << std::endl;   
+		streamlog_out ( ERROR5 ) <<  "Cannot add pixel" << endl;
               }
            }
 
@@ -1863,7 +1726,6 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
         try
         {
             LCObjectVec clusterVector = hit->getRawHits();
-//          printf("EUTelCorrelator::hitContainsHotPixels %p \n", static_cast<void*>(hit)); 
  
 //            EUTelVirtualCluster * cluster;
             if ( hit->getType() == kEUTelBrickedClusterImpl ) {
@@ -1916,10 +1778,8 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
                     } 
                     catch (...)
                     {
-//                     printf("pixel %3d %3d was NOT found in the _hotPixelMap \n", apixPixel.getXCoord(), apixPixel.getYCoord() );
                     }
            
-//                    skipHit = skipHit || hitContainsHotPixels(hit);
                 }
 
                 delete apixCluster;
@@ -1933,7 +1793,6 @@ bool EUTelCorrelator::hitContainsHotPixels( TrackerHitImpl   * hit)
           // if anything went wrong in the above return FALSE, meaning do not skip this hit
           return 0;
        }
-//       printf("hitContains hot pixel done\n");
  
        // if none of the above worked return FALSE, meaning do not skip this hit
        return 0;
