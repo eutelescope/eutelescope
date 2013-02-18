@@ -87,10 +87,11 @@ public:
   CDashMeasurement( string name, double value ){ mname << name; setDouble(value); }
   CDashMeasurement( string name, string value ){ mname << name; setString(value); }
 
+  // only show output when precompiler flag is set
+#ifdef DO_TESTING
   friend ostream& operator<<( ostream& os, const CDashMeasurement& cdm )
   {
-    // only show output when precompiler flag is set
-    #ifdef DO_TESTING
+
     // example output:
     // <DartMeasurementFile name="TestImage" type="image/png">/home/test/Testing/Temporary/TestTexturedSphere.png</DartMeasurementFile>
     os << "<DartMeasurement";
@@ -98,9 +99,18 @@ public:
     os << " name=\"" << cdm.mname.str() << "\" type=\"" << cdm.mtype.str() << "\">" << cdm.mymeasurement.str()<< "</DartMeasurement";
     if (cdm.isImage) os << "File";
     os << ">" << endl;
-    #endif
+
     return os;
   }
+#else
+  // no output case (if testing precompiler flag is not set:)
+  friend ostream& operator<<( ostream& os, const CDashMeasurement& )
+  {
+    return os;
+  }
+
+#endif
+
 
 };
 
