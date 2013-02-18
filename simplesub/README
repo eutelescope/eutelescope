@@ -1,0 +1,9 @@
+EUTelescope job submission tool: *OBSOLETE* soon!
+-------------------------------------------------
+Previous EUTelescope versions shipped with two different job
+submission programs: pysub and simplesub. From version 0.8 onwards, we
+recommend to replace these tools in your analysis with jobsub. Jobsub
+offers a similar workflow but gives much more flexiblity and control
+than the previous programs.
+
+See ../jobsub/README or http://eutelescope.web.cern.ch/content/job-submission
