@@ -115,11 +115,11 @@ def loadparamsfromcsv(csvfilename, runs):
             sample = ""
             try:
                 while (len(sample)<1024):
-                    sample+=filteredfile.next()
+                    sample += filteredfile.next()
             except StopIteration:
                 log.debug("End of csv file reached, sample limited to " + str(len(sample))+ " bytes")
             dialect = csv.Sniffer().sniff(sample) # test csv file format details
-            log.debug("Determined the CSV dialect as follows: delimiter=%s, doublequote=%s, escapechar=%s, lineterminator=%s, quotechar=%s , quoting=%s, skipinitialspace=%s",dialect.delimiter, dialect.doublequote, dialect.escapechar, list(ord(c) for c in dialect.lineterminator), dialect.quotechar, dialect.quoting, dialect.skipinitialspace)
+            log.debug("Determined the CSV dialect as follows: delimiter=%s, doublequote=%s, escapechar=%s, lineterminator=%s, quotechar=%s , quoting=%s, skipinitialspace=%s", dialect.delimiter, dialect.doublequote, dialect.escapechar, list(ord(c) for c in dialect.lineterminator), dialect.quotechar, dialect.quoting, dialect.skipinitialspace)
             filteredfile.rewind() # back to beginning of file
             reader = csv.DictReader(filteredfile, dialect=dialect) # now process CSV file contents here and load them into memory
             reader.next() # python < 2.6 requires an actual read access before filling 'DictReader.fieldnames'
@@ -176,7 +176,7 @@ def checkSteer(sstring):
     else:
         return True
 
-def runMarlin(filenamebase,silent):
+def runMarlin(filenamebase, silent):
     """ Runs Marlin and stores log of output """
     from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
     log = logging.getLogger('jobsub.marlin')
@@ -260,7 +260,8 @@ def runMarlin(filenamebase,silent):
         exit(1)
     return rcode
 
-def zipLogs(path,filename):
+def zipLogs(path, filename):
+    """  stores output from Marlin in zip file; enables compression if necessary module is available """
     import zipfile
     import os.path
     log = logging.getLogger('jobsub')
@@ -271,13 +272,13 @@ def zipLogs(path,filename):
     except ImportError: # no compression module available, use flat files
         compression = zipfile.ZIP_STORED
         log.debug("Creating flat log archive")
-    zf = zipfile.ZipFile(os.path.join(path,filename)+".zip", mode='w') # create new zip file
+    zf = zipfile.ZipFile(os.path.join(path, filename)+".zip", mode='w') # create new zip file
     try:
-        zf.write(os.path.join("./",filename)+".xml", compress_type=compression) # store in zip file
-        zf.write(os.path.join("./",filename)+".log", compress_type=compression) # store in zip file
-        os.remove(os.path.join("./",filename)+".xml") # delete file
-        os.remove(os.path.join("./",filename)+".log") # delete file
-        log.info("Logs written to "+os.path.join(path,filename)+".zip")
+        zf.write(os.path.join("./", filename)+".xml", compress_type=compression) # store in zip file
+        zf.write(os.path.join("./", filename)+".log", compress_type=compression) # store in zip file
+        os.remove(os.path.join("./", filename)+".xml") # delete file
+        os.remove(os.path.join("./", filename)+".log") # delete file
+        log.info("Logs written to "+os.path.join(path, filename)+".zip")
     finally:
         log.debug("Closing log archive file")
         zf.close()
@@ -321,7 +322,7 @@ def main(argv=None):
     parser.add_argument("-csv", "--csv-file", help="Load additional run-specific variables from table (text file in csv format)", metavar="FILE")
     parser.add_argument("--log-file", help="Save submission log to specified file", metavar="FILE")
     parser.add_argument("-l", "--log", default="info", help="Sets the verbosity of log messages during job submission where LEVEL is either debug, info, warning or error", metavar="LEVEL")
-    parser.add_argument("-s","--silent", action="store_true", default=False, help="Suppress non-error (stdout) Marlin output to console")
+    parser.add_argument("-s", "--silent", action="store_true", default=False, help="Suppress non-error (stdout) Marlin output to console")
     parser.add_argument("--dry-run", action="store_true", default=False, help="Write steering files but skip actual Marlin execution")
     parser.add_argument("jobtask", help="Which task to submit (e.g. convert, hitmaker, align); task names are arbitrary and can be set up by the user; they determine e.g. the config section and default steering file names.")
     parser.add_argument("runs", help="The runs to be analyzed; can be a list of single runs and/or a range, e.g. 1056-1060. PLEASE NOTE: for technical reasons, the order in which the runs are processed does not neccessarily follow the order in which they were specified.", nargs='*')
@@ -330,7 +331,6 @@ def main(argv=None):
     runs = set()
     for runnum in args.runs:
         try:
-            
             runs.update(parseIntegerString(runnum))
         except ValueError:
             log.error("The list of runs contains non-integer and non-range values: '%s'", runnum)
@@ -358,15 +358,15 @@ def main(argv=None):
 
     # dictionary keeping our paramters
     # here you can set some minimal default config values that will (possibly) be overwritten by the config file
-    parameters = {"templatepath":".", "templatefile":args.jobtask+"-tmp.xml","logpath":"."}
+    parameters = {"templatepath":".", "templatefile":args.jobtask+"-tmp.xml", "logpath":"."}
 
     # read in config file if specified on command line
     if args.conf_file:
         config = ConfigParser.SafeConfigParser()
         # local variables useful in the context of the config; access using %(NAME)s in config
-        config.set("DEFAULT","HOME",str(os.environ.get('HOME')))
+        config.set("DEFAULT", "HOME",str(os.environ.get('HOME')))
         if not os.environ.get('EUTELESCOPE') is None:
-            config.set("DEFAULT","EUTelescopePath",str(os.environ.get('EUTELESCOPE')))
+            config.set("DEFAULT", "EUTelescopePath", str(os.environ.get('EUTELESCOPE')))
         else:
             log.debug("Environment variable EUTELESCOPE not found; will not be set for steering/config file parsing")
         try:
@@ -380,7 +380,7 @@ def main(argv=None):
                 log.warning("Config file '%s' is missing a section [%s]!", args.conf_file, args.jobtask)
             log.info("Loaded config file %s", args.conf_file)
         except ConfigParser.InterpolationMissingOptionError, err: # if interpolation during config parsing fails
-            log.error('Bad value substitution in config file '+str(args.conf_file)+ ": missing '{0}' key in section [{1}] for option '{2}'.".format(err.reference,err.section,err.option))
+            log.error('Bad value substitution in config file '+str(args.conf_file)+ ": missing '{0}' key in section [{1}] for option '{2}'.".format(err.reference, err.section, err.option))
             return 1
     else:
         log.warn("No config file specified")
@@ -485,12 +485,12 @@ def main(argv=None):
             log.info("Dry run: skipping Marlin execution. Steering file written to "+basefilename+'.xml')
             return 0
 
-        rcode = runMarlin(basefilename,args.silent) # start Marlin execution
+        rcode = runMarlin(basefilename, args.silent) # start Marlin execution
         if rcode == 0:
             log.info("Marlin execution done")
         else:
             log.error("Marlin returned with error code "+str(rcode))
-        zipLogs(parameters["logpath"],basefilename)
+        zipLogs(parameters["logpath"], basefilename)
     # return to the prvious signal handler
     signal.signal(signal.SIGINT, prevINTHandler)
         
