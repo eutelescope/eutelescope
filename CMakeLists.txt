@@ -15,17 +15,23 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 # IMPORTANT FOR RELEASES:
 # ======================
 # 0. if new major release: create new dev. branch for this release
-#    - remove the lines below that are marked with "!RELEASE": these activate debugging/extra warnings and electric fence
+#    - remove/adjust the lines below that are marked with "!RELEASE": these activate e.g. debugging/extra warnings and electric fence
 #    - remove DO_TESTING precompiler flag
 # 1. bump release version in this file
 # 2. create SVN tag for this release
 # 3. update web page, update installation documentation
-# 4. let ILCSoft guys know (?)
+# 4. announce! :)
 
+# These switches activate/deactivate compiler switches such as the
+# inclusion of debugging symbols and code optimizations. For actual
+# data analysis we recommend setting CMAKE_BUILD_TYPE to "Release"
+# while for developement "RelWithDebInfo" is best used. For actual
+# debugging e.g. using gdb, please consider "Debug" which will turn
+# off all (!) optimizations but will be "gdb-friendlier"
 # !RELEASE: comment out the following line and comment in either one of the release ones
-#SET(CMAKE_BUILD_TYPE Debug) # add. warnings, no optimizations, debug symbols
-SET(CMAKE_BUILD_TYPE RelWithDebInfo) # gcc optimizations (-O2) with debug symbols and add. warnings
-# SET(CMAKE_BUILD_TYPE Release) # full gcc optimization (-O3), no debug symbols, no debug messages
+#SET(CMAKE_BUILD_TYPE Debug) # use for debugging with e.g. gdb: add. warnings, no optimizations, debug symbols
+SET(CMAKE_BUILD_TYPE RelWithDebInfo) # useful for normal development, runs faster but compilation takes longer: gcc optimizations (-O2) with debug symbols and add. warnings
+# SET(CMAKE_BUILD_TYPE Release) # for production: full gcc optimization (-O3), no debug symbols, no debug messages
 
 
 ### DEPENDENCIES ############################################################
@@ -103,6 +109,7 @@ ADD_DEFINITIONS("-DUSE_CED")
 
 
 # !RELEASE: switches on output parsed for automatic nightly tests
+# (only useful if using CDash web frontend to CTest otherwise produces superfluous output)
 ADD_DEFINITIONS("-DDO_TESTING")
 
 
@@ -173,8 +180,24 @@ DISPLAY_STD_VARIABLES()
 # | ||  __/\__ \ |_\__ \
 #  \__\___||___/\__|___/
 #=============================================================================                      
-
-# to see the output of 'make test' in case of failure, export the environmental variable CTEST_OUTPUT_ON_FAILURE=true
+# EUTelescope uses the CMake/CTest framework for daily automated,
+#data-driven tests to constantly verify the validity of the output. The
+#basis for the tests are the examples provided with the software
+#together with a real data sample and the expected output in form of
+#root files.
+#
+#If you are a user of EUTelescope and you have already taken data and
+#performed you analysis, we would be very interested in obtaining a
+#data sample with the corresponding analysis results including the
+#EUTelescope configuration used so that we can include your analysis in
+#the regular testing. This guarantees that your analysis will be well
+#supported in future releases of EUTelescope and it might serve as a
+#good starting point for others.
+#
+#The test can also be used by any developer who wishes to verify
+#changes made to the EUTelescope code. For a short how-to see
+#README.tests; for more detailed information see the CMake manual or
+#web page (http://www.cmake.org/Wiki/CMake/Testing_With_CTest).
 
 ENABLE_TESTING()
 INCLUDE(CTest)
@@ -208,7 +231,7 @@ ENDIF()
 # check environment
 IF( DEFINED ENV{EUTELESCOPE} AND DEFINED ENV{MARLIN})
 
-# !RELEASE: cppcheck is not a useful test for most users (comment out the following lines)
+# cppcheck should be a useful check for developers to test their code against
 # if cppcheck is installed, offer static code analysis test
 find_program(CPPCHECK cppcheck /scratch/local/bin) # hint at path /scratch/... used on EUTelTesting server; will also parse $PATH
 if(CPPCHECK)
@@ -220,22 +243,18 @@ if(CPPCHECK)
 #else()
 #  MESSAGE("cppcheck was not found - omitting cppcheck static code analysis test.")
 endif()
-# /!RELEASE
 
-# ======================================================================
-# ======================================================================
-# TestPysubExampleDaturaAlone: based on config in pysub/examples/datura-alone
-# ======================================================================
-# ======================================================================
-
-# !RELEASE: the data-driven tests require DESY-AFS access and are not useful for most users (comment out the following lines)
+# Developers: please consider using these tests to verify your code!
+# to obtain the necessary data files, please check the corresponding
+# README files in the example folders and/or contact the EUTelescope
+# software coordinators.
+# !RELEASE: the data-driven tests require DESY-AFS access and are not
+# useful for typical users (comment out the following lines)
   INCLUDE(jobsub/examples/datura-alone/testing.cmake)
   INCLUDE(pysub/examples/datura-alone/testing.cmake)
   INCLUDE(pysub/examples/anemone-2FEI4/testing.cmake)
-
-# set custom settings (e.g. tests to be skipped for valgrind)
-configure_file (
-	       ./CTestCustom.cmake.in 
+  configure_file (
+	       ./CTestCustom.cmake.in   # set custom settings (e.g. tests to be skipped for valgrind)
 	       ${PROJECT_BINARY_DIR}/CTestCustom.cmake
 	       )
 # /!RELEASE
