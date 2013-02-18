@@ -187,9 +187,12 @@ private:
   /*!This function calculates the value of the material budget.
   */
   double calculateX0();
+  void printTrackParameters(EVENT::Track* track);
+  void printHitParameters(EVENT::TrackerHit* hit);
   void testtrack(LCCollection *trackCollection);
   void threePointResolution(LCCollection *alignedHitCollection);
   void createResiduals(LCCollection *trackCollection);
+  double kinkEstimate(EVENT::Track* track);
 
   //Private member values
   std::string _trackColName;
@@ -218,14 +221,15 @@ private:
   std::string _inputHitColName;
   std::string _inputHitCollectionName;  //Stores the name of the parameter to bring in from the Marlin steering file
   std::string _inputTrackColName;
-  static const int _noLayers = 5;  //TODO(Phillip Hamnett): This is a hack just so that the computer knows how many layers there are, is this stored somewhere else or should it be made as a non-const variable in case at some future date more layers are added to the telescope?
+  static const int _noLayers = 6;  //TODO(Phillip Hamnett): This is a hack just so that the computer knows how many layers there are, is this stored somewhere else or should it be made as a non-const variable in case at some future date more layers are added to the telescope?
   std::map< int, std::vector< TVector3 > > _projectedHits;  //int refers to 1 or 2, with 1 being the projection from the 01 plane and 2 being the projection from the 43 plane
   std::string _referenceHitCollectionName;  //Stores the name of the file to be brought in by the Marlin steering file that is used to determine layer number
   IMPL::LCCollectionVec* _referenceHitVec;   //Stores the information being brought in from the Marlin process containing information about the geometry of the setup for working out the layer number
   std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residual;  //The pair of doubles refers to the x and y coordinates in layer 2. The vector of TVector3's refers to the positions of the projected hits
   std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residualAngle;  //As above but the TVector3 doesn't contain xyz but instead theta, phi and alpha
   std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residualProfile; //TODO(Phillip Hamnett): Can this be joined with _residual? //Used as above but for created a profile histogram
-
+  int _runNumber;
+  std::string _trackCollectionName;
 };
 //! A global instance of the processor
 EUTelX0Processor gEUTelX0Processor;
