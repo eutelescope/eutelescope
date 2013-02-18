@@ -196,7 +196,7 @@
     SET( executable "submit-fitter.py" )
 
     # all this regular expressions must be matched for the test to pass
-    SET( fit_pass_regex_1 "Processing run header 1" )
+    SET( fit_pass_regex_1 "Processing run header [0-9]" )
     SET( fit_pass_regex_2 "Number of fitted tracks: *[0-9][0-9][0-9][0-9][0-9]+" )
     SET( fit_pass_regex_3 "Marlin finished successfully" )
 
