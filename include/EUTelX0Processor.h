@@ -190,9 +190,9 @@ private:
   void printTrackParameters(EVENT::Track* track);
   void printHitParameters(EVENT::TrackerHit* hit);
   void testtrack(LCCollection *trackCollection);
-  void threePointResolution(LCCollection *alignedHitCollection);
+  void threePointResolution(EVENT::Track *track);
   void createResiduals(LCCollection *trackCollection);
-  double kinkEstimate(EVENT::Track* track);
+  void kinkEstimate(EVENT::Track* track);
 
   //Private member values
   std::string _trackColName;
