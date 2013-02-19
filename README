@@ -1,23 +1,21 @@
-This is a first trial to integrate LCIO + Marlin into the standard
-analysis procedure used within the sucimaPix framework. Of course this
-is under very heavy develop, so please check very often for updates
-and new releases.
+This is the EUTelescope package, a generic pixel telescope data
+analysis framework.
 
-To install it, download the source code via cvs or a tarball with the
-source code from the web CVS interface. The code has been organized as
-a Marlin package, so copy the Eutelescope folder into the
-$(MARLIN)/packages folder and type make from Marlin top level
-directory. So far, there is no need to add user specific includes and
-libraries, so the userlib.gmk in Marlin top level folder is actually
-an empty file.
+You can find all documentation online: http://eutelescope.web.cern.ch
 
-The documentation is built together with the Marlin one typing make
-doc from the top level directory. All Eutelescope classes belongs to
-eutelescope namespace.
+Should you have any questions regarding EUTelescope, please check our
+online support pages, especially the forums and the FAQ or contact us
+via mail: eutelescope-coordinators@desy.de
 
-For anything else, mail me: antonio.bulgheroni@gmail.com
+Maybe you would also like to get involved in the development - all
+contributions are highly welcomed!
 
+Have you found a bug in EUTelescope? Please report it on our bug
+tracker! (or just mail us the patch :)
 
-// Author Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
-// Version $Id: README,v 1.1.1.1 2007-02-07 10:53:11 bulgheroni Exp $
-
+If you are interested in becoming a regular contributor and developer
+of EUTelescope, please request an SVN account and commit your changes
+directly into the main development branch (trunk). If you are planing
+on performing major changes to many producers, which could be
+disruptive to the ongoing work of other developers, please consider to
+create your own branch and merge as soon as your code is matured.
