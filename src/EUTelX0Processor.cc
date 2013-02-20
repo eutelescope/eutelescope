@@ -1,6 +1,7 @@
 // Version: $Id$
 #include "EUTelX0Processor.h"
 #include <cmath>
+#include <cstdlib>
 using namespace marlin;
 using namespace eutelescope;
 using namespace std;

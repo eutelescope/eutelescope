@@ -20,6 +20,7 @@
 
 #include <EVENT/LCEvent.h>
 
+#include <cstdio>
 
 namespace eutelescope {
 
@@ -211,6 +212,7 @@ namespace eutelescope {
 
                 if ( cluster != NULL ) {
                     int sensorID = cluster->getDetectorID();
+		    delete cluster;
                     return sensorID;
                 }
             } catch (...) {
