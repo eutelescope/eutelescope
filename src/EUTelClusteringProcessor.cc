@@ -25,7 +25,6 @@
 #include "EUTelFFClusterImpl.h"
 #include "EUTelDFFClusterImpl.h"
 #include "EUTelBrickedClusterImpl.h"
-#include "EUTelExceptions.h"
 #include "EUTelHistogramManager.h"
 #include "EUTelMatrixDecoder.h"
 #include "EUTelSparseDataImpl.h"
