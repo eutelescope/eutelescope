@@ -154,6 +154,12 @@ namespace eutelescope {
     //! Default constructor
     EUTelRunHeaderImpl ( lcio::LCRunHeader * lcHeader ) : _lcHeader(NULL) { _lcHeader = dynamic_cast<IMPL::LCRunHeaderImpl*> (lcHeader) ; }
 
+    //!Copy Constructor
+    EUTelRunHeaderImpl(const EUTelRunHeaderImpl &z);
+    
+    //!Assignment Operator
+    EUTelRunHeaderImpl& operator = (const EUTelRunHeaderImpl &z);
+    
     //! Destructor
     virtual ~ EUTelRunHeaderImpl ()  { /* NO-OP */ ;  }
 
@@ -500,15 +506,6 @@ namespace eutelescope {
     inline IMPL::LCRunHeaderImpl * lcRunHeader() { return  _lcHeader ; }
 
   private:
-  #ifndef DISALLOW_COPY_AND_ASSIGN
-      //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
-  #define DISALLOW_COPY_AND_ASSIGN(EUTelRunHeaderImpl) \
-  EUTelRunHeaderImpl(const EUTelRunHeaderImpl&); \
-  void operator=(const EUTelRunHeaderImpl&);
-
-  //Private Functions
-  DISALLOW_COPY_AND_ASSIGN(EUTelRunHeaderImpl)//See #define just above
-  #endif
 
     IMPL::LCRunHeaderImpl * _lcHeader;
 
