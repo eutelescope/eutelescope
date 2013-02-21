@@ -93,7 +93,62 @@ std::string EUTelApplyAlignmentProcessor::_hitHistoBeforeAlignName    = "HitHist
 std::string EUTelApplyAlignmentProcessor::_hitHistoAfterAlignName     = "HitHistoAfterAlign";
 #endif
 
-EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor () :Processor("EUTelApplyAlignmentProcessor") {
+EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor () 
+: Processor("EUTelApplyAlignmentProcessor"),
+  _conversionIdMap(),
+  _referenceHitLCIOFile(""),
+  _nRun(0),
+  _nEvt(0),
+  _iDUT(0),
+  _indexDUT(0),
+  _xPitch(0.0),
+  _yPitch(0.0),
+  _rot00(0.0),
+  _rot01(0.0),
+  _rot10(0.0),
+  _rot11(0.0),
+  internal_inputHitCollectionName(""),
+  internal_inputCollectionVec(NULL),
+  internal_referenceHitCollectionName(""),
+  internal_referenceHitVec(NULL),
+  _inputHitCollectionName(""),
+  _inputCollectionVec(NULL),
+  _alignmentCollectionName(""),
+  _alignmentCollectionVec(NULL),
+  _outputHitCollectionName(""),
+  _outputCollectionVec(NULL),
+  _applyToReferenceHitCollection(false),
+  _referenceHitCollectionName(""),
+  _referenceHitVec(NULL),
+  _outputReferenceHitCollectionName(""),
+  _outputReferenceHitVec(NULL),
+  _correctionMethod(0),
+  _applyAlignmentDirection(0),
+  _alignmentCollectionNames(),
+  _alignmentCollectionSuffixes(),
+  _hitCollectionNames(),
+  _hitCollectionSuffixes(),
+  _refhitCollectionNames(),
+  _refhitCollectionSuffixes(),
+  _doGear(false),
+  _doAlignCollection(false),
+  _doAlignmentInOneGo(false),
+  _debugSwitch(false),
+  _alpha(0.0),
+  _beta(0.0),
+  _gamma(0.0),
+  _printEvents(0),
+  _iRun(0),
+  _iEvt(0),
+  _lookUpTable(),
+  _fevent(false),
+  _aidaHistoMap(),
+  _siPlanesParameters(NULL),
+  _siPlanesLayerLayout(NULL),
+  _siPlaneZPosition(NULL),
+  _orderedSensorIDVec(),
+  _histogramSwitch(false)
+{
 
   // modify processor description
   _description =
@@ -451,7 +506,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
   //
   //......................................................................  //
 
-        for (int i = ((int)_alignmentCollectionNames.size()) -1 ; i >= 0; i-- ) 
+        for (int i = static_cast<int>(_alignmentCollectionNames.size()) -1 ; i >= 0; i-- ) 
         {
             // read the first available alignment collection
             // CAUTION 1: it might be important to keep the order of alignment collections (if many) given in the opposite direction
@@ -459,7 +514,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
             //
             _alignmentCollectionName    = _alignmentCollectionNames.at(i);
 
-            if( i ==  (int)_alignmentCollectionNames.size() -1 ) 
+            if( i ==  static_cast<int>(_alignmentCollectionNames.size()) -1 ) 
             {
                _inputHitCollectionName     = internal_inputHitCollectionName     ; 
                _referenceHitCollectionName = internal_referenceHitCollectionName ; 
@@ -560,7 +615,7 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
      { 
        std::string _colName = _alignmentCollectionNames.at(jj);
        LCCollectionVec * ref    = static_cast < LCCollectionVec * > (event->getCollection( _colName  ));
-       for( size_t ii = 0 ; ii <  (unsigned int)ref->getNumberOfElements(); ii++)
+       for( size_t ii = 0 ; ii <  static_cast< size_t >(ref->getNumberOfElements()); ii++)
        {
         streamlog_out( DEBUG5 ) << " check output_refhit at : " << ref << " ";
         EUTelReferenceHit* output_refhit = static_cast< EUTelReferenceHit*> ( ref->getElementAt(ii) ) ;
@@ -633,7 +688,7 @@ void EUTelApplyAlignmentProcessor::ApplyGear6D( LCEvent *event)
       // now we have to understand which layer this hit belongs to.
       int sensorID = guessSensorID( inputHit );
 
-      if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) 
+      if ( _conversionIdMap.size() != static_cast< unsigned >( _siPlanesParameters->getSiPlanesNumber()) ) 
       {
           // first of all try to see if this sensorID already belong to
           if ( _conversionIdMap.find( sensorID ) == _conversionIdMap.end() ) 
@@ -834,7 +889,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       // now we have to understand which layer this hit belongs to.
       int sensorID = guessSensorID( inputHit );
 
-      if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) 
+      if ( _conversionIdMap.size() != static_cast< unsigned >( _siPlanesParameters->getSiPlanesNumber()) ) 
       {
           // first of all try to see if this sensorID already belong to
           if ( _conversionIdMap.find( sensorID ) == _conversionIdMap.end() ) 
@@ -882,7 +937,7 @@ void EUTelApplyAlignmentProcessor::RevertGear6D( LCEvent *event)
       {
 //        streamlog_out( MESSAGE5 ) << "reference Hit collection name : " << _referenceHitCollectionName << endl;
  
-       for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
+       for(size_t ii = 0 ; ii <  static_cast< size_t >(_referenceHitVec->getNumberOfElements()); ii++)
        {
         EUTelReferenceHit * refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if( sensorID != refhit->getSensorID() )
@@ -1183,7 +1238,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       {
         streamlog_out( DEBUG5 ) << "DIRECT:-----:-----: reference Hit collection name : " << _referenceHitCollectionName << endl;
  
-       for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
+       for(size_t ii = 0 ; ii <  static_cast< size_t >(_referenceHitVec->getNumberOfElements()); ii++)
        {
         EUTelReferenceHit * refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if( sensorID != refhit->getSensorID() )
@@ -1543,7 +1598,7 @@ void EUTelApplyAlignmentProcessor::Reverse(LCEvent *event) {
       {
         if(_fevent) streamlog_out( MESSAGE5 ) << "REVERSE: reference Hit collection name : " << _referenceHitCollectionName << " at " << _referenceHitVec  << endl;
 
-        for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
+        for(size_t ii = 0 ; ii <  static_cast< size_t >(_referenceHitVec->getNumberOfElements()); ii++)
         {
           EUTelReferenceHit * refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
           if( sensorID != refhit->getSensorID() )
@@ -2074,7 +2129,7 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
         // now we have to understand which layer this hit belongs to.
         int sensorID = guessSensorID( outputHit );
 
-        if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) 
+        if ( _conversionIdMap.size() != static_cast< unsigned >( _siPlanesParameters->getSiPlanesNumber()) ) 
         {
           // first of all try to see if this sensorID already belong to
           if ( _conversionIdMap.find( sensorID ) == _conversionIdMap.end() ) 
@@ -2158,7 +2213,7 @@ void EUTelApplyAlignmentProcessor::TransformToLocalFrame(TrackerHitImpl* outputH
         ClusterType type = static_cast<ClusterType>(static_cast<int>(outputHit->getType()));
         if ( _iEvt < _printEvents )
         {
-          streamlog_out ( DEBUG2 ) << "RevertGear: hit/cluster type:" << type << endl;
+          streamlog_out ( DEBUG2 ) << "RevertGear: hit/cluster type:" << static_cast<int>(type) << endl;
         }
 
         // prepare a LCObjectVec to store the current cluster
@@ -2351,7 +2406,7 @@ void EUTelApplyAlignmentProcessor::AlignReferenceHit(EUTelEventImpl * evt, EUTel
    
     streamlog_out( DEBUG2 ) << "reference Hit collection name : " << _referenceHitCollectionName.c_str() << " elements " << _referenceHitVec->getNumberOfElements() <<endl;
  
-      for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
+      for(size_t ii = 0 ; ii <  static_cast< size_t >(_referenceHitVec->getNumberOfElements()); ii++)
       {
         EUTelReferenceHit * refhit        = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         EUTelReferenceHit * output_refhit = 0;
@@ -2484,7 +2539,7 @@ int EUTelApplyAlignmentProcessor::guessSensorID(const double * hit )
     return sensorID;
   }
 
-      for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
+      for(size_t ii = 0 ; ii <  static_cast< size_t >(_referenceHitVec->getNumberOfElements()); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         if(refhit == 0 ) continue;
