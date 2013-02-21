@@ -77,7 +77,8 @@
 #include <list>
 #include <algorithm>
 #include <set>
-
+#include <stdio.h>
+#include <iostream>
 
 
 using namespace std;

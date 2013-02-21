@@ -68,6 +68,8 @@
 #include <memory>
 #include <list>
 #include <cstdio>
+#include <stdio.h>
+#include <iostream>
 
 using namespace std;
 using namespace lcio;
