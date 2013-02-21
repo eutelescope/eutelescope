@@ -41,6 +41,7 @@ EUTelX0Processor::EUTelX0Processor()
   _referenceHitVec(NULL),
   _residual(),
   _residualAngle(),
+  _residualCut(0.0),
   _residualProfile(),
   _runNumber(0),
   _trackCollectionName("")
@@ -52,9 +53,9 @@ void EUTelX0Processor::init()
 {
   streamlog_out(DEBUG1) << "Running EUTelX0Processor::init()" << std::endl;
   _debug = false; 
-  int nobins = 1000, nobinsangle = 100;//Number of bins in the histograms
-  double minbin = -0.4, maxbin = 0.4;//Maximum and minimum bin values
-  double minbinangle = -0.5, maxbinangle = 0.5, minbinalpha = 0, maxbinalpha = 1;
+  int nobins = 100, nobinsangle = 100;//Number of bins in the histograms
+  double minbin = -0.2, maxbin = 0.2;//Maximum and minimum bin values
+  double minbinangle = -0.5, maxbinangle = 0.5, minbinalpha = 0, maxbinalpha = 0.5;
   std::vector<double> empty;  
   
   AIDA::IHistogram1D * ResidualX = AIDAProcessor::histogramFactory(this)->createHistogram1D("ResidualX",nobins,minbin,maxbin);//Create a histogram for the residual
@@ -137,7 +138,7 @@ void EUTelX0Processor::init()
   _histoThing.insert(make_pair("Angle Y Back",PhiBack));
   _histoData["Angle Y Back"] = empty;
 
-  AIDA::IHistogram1D * KinkAngle = AIDAProcessor::histogramFactory(this)->createHistogram1D("Kink Angle",nobins,minbinalpha,maxbinalpha);//Create a histogram for the residual
+  AIDA::IHistogram1D * KinkAngle = AIDAProcessor::histogramFactory(this)->createHistogram1D("Kink Angle",nobinsangle,minbinalpha,maxbinalpha);//Create a histogram for the residual
   KinkAngle->setTitle("Kink Angle");
   _histoThing.insert(make_pair("Kink Angle",KinkAngle));
   _histoData["Kink Angle"] = empty;
@@ -156,7 +157,7 @@ void EUTelX0Processor::init()
                            _trackCollectionName, string ("track"));
 
   registerOptionalParameter("ReferenceCollection","This is the name of the reference it collection (init at 0,0,0)", _referenceHitCollectionName, static_cast< string > ( "referenceHit" ) );//Necessary for working out which layer the particle is detected in
-  registerProcessorParameter("CutValue","Used to determine cuts in the system, measured in XXX", _cutValue1, static_cast< double > (50000.0));
+  registerProcessorParameter("ResidualCutValue","Used to determine cuts in the system, measured in XXX", _residualCut, static_cast< double > (50000.0));
 }
 
 void EUTelX0Processor::processRunHeader(LCRunHeader *run)
@@ -235,7 +236,6 @@ void EUTelX0Processor::kinkEstimate(Track* track){
 
   double x1 = hits[1]->x();
   double y1 = hits[1]->y();
-  double z1 = hits[1]->z();
 
   double x2 = hits[2]->x();
   double y2 = hits[2]->y();
@@ -247,7 +247,6 @@ void EUTelX0Processor::kinkEstimate(Track* track){
 
   double x4 = hits[4]->x();
   double y4 = hits[4]->y();
-  double z4 = hits[4]->z();
 
   double x5 = hits[5]->x();
   double y5 = hits[5]->y();
@@ -257,16 +256,33 @@ void EUTelX0Processor::kinkEstimate(Track* track){
   //THIS IS TO BE DECIDED IF IT IS NEEDED LATER
 
   //Then we work out the angles of these lines with respect to XZ and YZ, plot results in histograms
-  double deltaxfront = x2-x0;
-  double deltaxback = x5-x3;
+  try{
+  double residualxfront = (x2 + x0)/2.0 - x1;
+  double residualyfront = (y2 + y0)/2.0 - y1;
+  double residualxback = (x5 + x3)/2.0 - x4;
+  double residualyback = (y5 + y3)/2.0 - y4;
 
-  double deltayfront = y2-y0;
-  double deltayback = y5-y3;
+  if(sqrt(pow(residualxfront,2) + pow(residualyfront,2)) > _residualCut
+     || sqrt(pow(residualxback,2) + pow(residualyback,2)) > _residualCut){
+    //This if statement determines if the residual is good enough to consider this an actual track. If not then the if statment is executed and an exception is thrown
+    throw _residualCut;
+  }
+
+  double deltaxfront = x2 - x0;
+  double deltaxback = x5 - x3;
+
+  double deltayfront = y2 - y0;
+  double deltayback = y5 - y3;
   
-  double deltazfront = z2-z0;
-  double deltazback = z5-z3;
+  double deltazfront = z2 - z0;
+  double deltazback = z5 - z3;
 
   double radianstodegrees = 180/3.1415;
+
+  if(deltazfront == 0 || deltazback == 0){
+    std::string errormessage("Program attempted to divide by zero (due to deltazfront or deltazback being equal to zero). Therefore this particular track will be ignored in the histograms.");
+    throw errormessage;
+  }
 
   double anglexfront = atan2(deltaxfront,deltazfront)*radianstodegrees;
   double anglexback = atan2(deltaxback,deltazback)*radianstodegrees;
@@ -286,6 +302,20 @@ void EUTelX0Processor::kinkEstimate(Track* track){
   double kinkangle = sqrt(pow(anglexfront + anglexback,2) + pow(angleyfront + angleyback,2));  //Not sure if this is the correct way to work out the angle
 
   dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Kink Angle"])->fill(kinkangle);
+  } catch(double residual){
+    if(residual == _residualCut){
+      streamlog_out(DEBUG8) << "A track was rejected because the straight line fit through it had too large of a resolution, the resolution was great than " << _residualCut << "." << std::endl << 
+      "Therefore the data was not added to the histogram and will be ignored. If you see this message a lot it means either your cut is too small or the track candidates created in other processors are too loose" << std::endl;
+    } else{
+      streamlog_out(ERROR9) << "Unknown exception occured in EUTelX0Processor::kinkEstimate, the catch for doubles caught the following value: " << residual << std::endl;
+      exit(1);
+    }
+  } catch(std::string errormessage){
+    streamlog_out(DEBUG8) << errormessage.c_str() << std::endl;
+  } catch(...){
+    streamlog_out(ERROR9) << "Unknown exception occured in EUTelX0Processor, at a guess I would say this was caused by the dynamic casting of AIDA Histograms" << std::endl;
+    exit(1);
+  }
 }
 
 void EUTelX0Processor::processEvent(LCEvent *evt)
@@ -299,7 +329,6 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
     //Extract sigma value from histogram
     //Deduce radiation length from sigma value - See Nadler and Fruwurth paper
 
-  //THIS IS WHERE THE FUTURE CODE IS BEING DEVELOPED, PLEASE DO NOT TOUCH
   try{
     LCCollection* trackcollection = evt->getCollection(_trackCollectionName);
     int elementnumber = trackcollection->getNumberOfElements();
@@ -533,6 +562,7 @@ void EUTelX0Processor::threePointResolution(Track *track){
 //This function draws a line between the hits in plane i and i+2
 //then it compares where the hit in plane i+1 is with the average of the other two planes
 //this is then plotted as a residual for each plane.
+  streamlog_out(DEBUG0) << "Function EUTelX0Processor::threePointResolution(Track *" << &track << ") called" << std::endl;
 
   std::vector< TrackerHit* > trackhits = track->getTrackerHits();
   std::vector< TVector3* > hits;
@@ -545,12 +575,17 @@ void EUTelX0Processor::threePointResolution(Track *track){
       hits.push_back(tempvec);
     } //End of if query for type check
   } //End of for loop running through trackhits
+
   int i = 1;
   for(std::vector< TVector3* >::iterator it = hits.begin(); it != hits.end() - 2; ++it){
-    double averagex = ((*it)->x() + (*it + 2)->x())/2.0;
-    double averagey = ((*it)->y() + (*it + 2)->x())/2.0;
+    //This determines the guess of the position of the particle as it should hit the middle sensor
+    double averagingfactor = ((*it + 1)->z() - (*it)->z())/((*it + 2)->z() - (*it)->z());
+    
+    double averagex = ((*it)->x() + (*it + 2)->x())/averagingfactor;
+    double averagey = ((*it)->y() + (*it + 2)->x())/averagingfactor;
     double middlex = (*it + 1)->x();
     double middley = (*it + 1)->y();
+
     stringstream ResidualX, ResidualY;
     ResidualX << "ResidualXPlane" << i;
     ResidualY << "ResidualYPlane" << i;

@@ -227,6 +227,7 @@ private:
   IMPL::LCCollectionVec* _referenceHitVec;   //Stores the information being brought in from the Marlin process containing information about the geometry of the setup for working out the layer number
   std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residual;  //The pair of doubles refers to the x and y coordinates in layer 2. The vector of TVector3's refers to the positions of the projected hits
   std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residualAngle;  //As above but the TVector3 doesn't contain xyz but instead theta, phi and alpha
+  double _residualCut;  //This is the cut which determines the acceptable tracks
   std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residualProfile; //TODO(Phillip Hamnett): Can this be joined with _residual? //Used as above but for created a profile histogram
   int _runNumber;
   std::string _trackCollectionName;
