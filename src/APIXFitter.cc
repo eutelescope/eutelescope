@@ -181,8 +181,8 @@ void APIXKalman::smoothPlanes(){
   map<int, FitPlane*>::reverse_iterator it = indexToPlane.rbegin();
   FitPlane* kplus1 = (*it).second;
   setState(kplus1, estimates.at( kplus1->index));
-  it++;
-  for(; it != indexToPlane.rend(); it++){
+  ++it;
+  for(; it != indexToPlane.rend(); ++it){
     FitPlane* k = (*it).second;
     getSmoothGain(kplus1, k);
     getSmoothState(kplus1, k);
@@ -195,7 +195,7 @@ void APIXKalman::fitPlanes(){
   internalEstimate->makeSeed();
   map<int, FitPlane*>::iterator it = indexToPlane.begin();
   FitPlane* prev = NULL;
-  for(; it != indexToPlane.end(); it++){
+  for(; it != indexToPlane.end(); ++it){
     FitPlane* cur = (*it).second;
     if(not ( prev == NULL)) {
       predict(prev, cur, internalEstimate);
