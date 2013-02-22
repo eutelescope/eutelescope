@@ -516,7 +516,7 @@ string EUTelAPIXHotPixelKiller::printSummary() const {
     singleLine << "-";
   }
 
-  if ( _killedPixelVec.size() == 0 ) {
+  if ( _killedPixelVec.empty() ) {
     return "" ;
   }
 
