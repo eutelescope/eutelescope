@@ -24,9 +24,13 @@ namespace eutelescope {
 
     class EUTelExhaustiveTrackFinder : public EUTelTrackFinder {
     public:
-        EUTelExhaustiveTrackFinder() : EUTelTrackFinder( "EUTelExhaustiveTrackFinder" ) {};
+        EUTelExhaustiveTrackFinder() : 
+                EUTelTrackFinder( "EUTelExhaustiveTrackFinder" ),
+                _allowedMissingHits(0),
+                _maxTrackCandidates(9999),
+                _mode(2) {};
 
-        EUTelExhaustiveTrackFinder(std::string name) : EUTelTrackFinder(name), _allowedMissingHits(0), _maxTrackCandidates(9999) {
+        EUTelExhaustiveTrackFinder(std::string name) : EUTelTrackFinder(name), _allowedMissingHits(0), _maxTrackCandidates(9999), _mode(2) {
             _residualsYMin.clear();
             _residualsXMax.clear();
             _residualsXMin.clear();
@@ -36,7 +40,8 @@ namespace eutelescope {
         EUTelExhaustiveTrackFinder(std::string name, int allowedMissingHits, int maxTrackCandidates) : 
 		EUTelTrackFinder(name), 
 		_allowedMissingHits(allowedMissingHits),
-		_maxTrackCandidates(maxTrackCandidates) {
+		_maxTrackCandidates(maxTrackCandidates),
+                _mode(2) {
             _residualsYMin.clear();
             _residualsXMax.clear();
             _residualsXMin.clear();
