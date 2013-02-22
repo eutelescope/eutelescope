@@ -176,7 +176,7 @@ void EUTelAPIXKalman::init() {
   //Adding planes to fitter with increasing z
   map<double, int>::iterator zit = _zSort.begin();
   int index(0), nActive(0);
-  for(; zit != _zSort.end(); zit++, index++){
+  for(; zit != _zSort.end(); ++zit, index++){
     int sensorID = _siPlanesLayerLayout->getID( (*zit).second );
     double zPos  = (*zit).first; 
     if(index >= (int)_telescopeResolution.size()){
@@ -202,7 +202,7 @@ void EUTelAPIXKalman::init() {
 			    << "Please check your configuration." << endl;
     exit(1);
   }
-  _checkInTime = (_inTimeCheck.size() > 0);
+  _checkInTime = (!_inTimeCheck.empty());
 
   _nMilleDataPoints = 0;
   _nMilleTracks = 0;
@@ -405,7 +405,7 @@ void EUTelAPIXKalman::addToMille(){
 
   int labelMe = 0;
   map<int, FitPlane*>::iterator it = _fitter->indexToPlane.begin();
-  for(;it != _fitter->indexToPlane.end(); it++){
+  for(;it != _fitter->indexToPlane.end(); ++it){
     if((*it).second->excluded) { continue; }
     derGL[(labelMe * 5)    ] = -1; //Derivatives of residuals w.r.t. shift in x
     derGL[(labelMe * 5) + 2] = (*it).second->hitPosY; //Derivatives of residuals w.r.t. z rotations
@@ -483,7 +483,7 @@ void EUTelAPIXKalman::finalizeTrack(){
   if( (ppl->fitdydz > _maxDyDz) or (ppl->fitdydz < _minDyDz) ) { return; }
 
   map<int, FitPlane*>::reverse_iterator rit = _fitter->indexToPlane.rbegin();
-  for(; rit != _fitter->indexToPlane.rend(); rit++){
+  for(; rit != _fitter->indexToPlane.rend(); ++rit){
     FitPlane* pl = (*rit).second;
     if( pl->excluded) { 
       if( _checkInTime and inTimeGood(pl)) { intimeplanes++; }
@@ -500,7 +500,7 @@ void EUTelAPIXKalman::finalizeTrack(){
     if( _useResidualCuts and (not goodResiduals(pl))){ return; }
   }
   //Kill track if we want an intime check and no matching DUT hits are found
-  if( (_inTimeCheck.size() > 0) and intimeplanes == 0) { return; }
+  if( (!_inTimeCheck.empty()) and intimeplanes == 0) { return; }
   _nTracks++;
   _nMilleTracks++;
   if( _runPede ) { addToMille(); }
@@ -529,7 +529,7 @@ void EUTelAPIXKalman::addToLCIO(double chi2, int ndof){
   float refpoint[3];
   
   map<int, FitPlane*>::iterator it = _fitter->indexToPlane.begin();
-  for(;it != _fitter->indexToPlane.end(); it++){
+  for(;it != _fitter->indexToPlane.end(); ++it){
     FitPlane* pl = (*it).second;
     TrackEstimate* estim = _fitter->estimates.at( pl->index);
     TrackerHitImpl * fitpoint = new TrackerHitImpl();
@@ -585,7 +585,7 @@ void EUTelAPIXKalman::plotResiduals(double chi2, int ndof){
   tryFill( _dxdzLocalname, (*it).second->fitdxdz);
   tryFill( _dydzLocalname, (*it).second->fitdydz);
 
-  for(; it != _fitter->indexToPlane.end(); it++ ){
+  for(; it != _fitter->indexToPlane.end(); ++it ){
     //Plot in-time planes and non excluded planes
     if((*it).second->excluded and
        not (find (_inTimeCheck.begin(), _inTimeCheck.end(), (*it).second->sensorID) != _inTimeCheck.end())){
@@ -633,7 +633,7 @@ void EUTelAPIXKalman::bookHistos() {
   tryBook(_dydzLocalname, "dydz", ddzBins, ddzMin, ddzMax);
 
   map<int, FitPlane*>::iterator it = _fitter->indexToPlane.begin();
-  for(; it != _fitter->indexToPlane.end(); it++ ){
+  for(; it != _fitter->indexToPlane.end(); ++it ){
     string sensorID = to_string((*it).second->sensorID);
     string resXtitle = "Residual X for " + sensorID;
     tryBook(_residualXLocalname + "_d" + sensorID, resXtitle, NBin, Min, Max);
@@ -647,7 +647,7 @@ vector<double> EUTelAPIXKalman::initAlignParams(){
   //Get straight line fit to fixed planes in the setup
   map<int, FitPlane*>::iterator it = _fitter->indexToPlane.begin();
   string tempHistoName;
-  for(;it!= _fitter->indexToPlane.end(); it++){
+  for(;it!= _fitter->indexToPlane.end(); ++it){
     FitPlane* pl = (*it).second;
     bool fixedTrans = (find (_fixedTranslations.begin(), _fixedTranslations.end(), 
 			     pl->sensorID) != _fixedTranslations.end());
@@ -672,7 +672,7 @@ vector<double> EUTelAPIXKalman::initAlignParams(){
   _fitter->fitPlanes();
   //Use straight line fit to initialize shifts. Rotations and scales are set to 0.
   vector<double> alignParams;
-  for(it = _fitter->indexToPlane.begin(); it != _fitter->indexToPlane.end(); it++){
+  for(it = _fitter->indexToPlane.begin(); it != _fitter->indexToPlane.end(); ++it){
     FitPlane* pl = (*it).second;
     if(find (_excludePlanes.begin(), _excludePlanes.end(), 
 	     pl->sensorID) != _excludePlanes.end()) {
@@ -712,7 +712,7 @@ bool EUTelAPIXKalman::generatePedeSteeringFile( vector<double> &startVals , bool
   steerFile << "Parameter" << endl;
   int counter(0);
   map<int, FitPlane*>::iterator it = _fitter->indexToPlane.begin();
-  for(; it != _fitter->indexToPlane.end(); it++){
+  for(; it != _fitter->indexToPlane.end(); ++it){
     FitPlane* pl = (*it).second;
     if(find (_excludePlanes.begin(), _excludePlanes.end(), 
 	     pl->sensorID) != _excludePlanes.end()) { continue; }
@@ -912,9 +912,9 @@ void EUTelAPIXKalman::runPede(vector<double> &alignmentParams ){
     // add the constant to the collection
     if ( goodLine ) {
       while ( find (_excludePlanes.begin(), _excludePlanes.end(), 
-		    (*it).second->sensorID) != _excludePlanes.end()) {it++;}
+		    (*it).second->sensorID) != _excludePlanes.end()) {++it;}
       constant->setSensorID( (*it).second->sensorID );
-      it++;
+      ++it;
       constantsCollection->push_back( constant );
       streamlog_out ( MESSAGE5 ) << (*constant) << endl;
     } else{ delete constant; }
