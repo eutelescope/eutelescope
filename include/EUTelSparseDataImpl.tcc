@@ -82,7 +82,7 @@ namespace eutelescope {
 	}
       }
       
-      if ( groupedPixel.size() != 0 )   listOfList.push_back( groupedPixel );
+      if ( !groupedPixel.empty() )   listOfList.push_back( groupedPixel );
       
     }
     
