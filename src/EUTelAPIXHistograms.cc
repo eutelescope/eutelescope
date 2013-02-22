@@ -897,12 +897,12 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
     if(debug)message<MESSAGE5> ( log() << _measuredX.size() << " hits at DUT " );
 
-	if (_noHitYet && ( _measuredX.size()==0 ) ) {
+	if (_noHitYet && ( _measuredX.empty() ) ) {
 		_eventsWithNoHit++;
 		// anything to be done before returning?
 		return;
 	}
-	if ((_noHitYet && (_measuredX.size()!=0) ) || (_measuredX.size()>=1)){
+	if ((_noHitYet && (!_measuredX.empty()) ) || (_measuredX.size()>=1)){
 		if (_noHitYet) cout << _eventsWithNoHit << "events before first hit" << endl;
 		_noHitYet = false;
 		// determine transformation ...

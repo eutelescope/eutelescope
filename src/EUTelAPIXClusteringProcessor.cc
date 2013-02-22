@@ -368,7 +368,7 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 			 int nClusters = 0;
 			//int clusterNumArray[1000];
 			std::vector<int> clusterNumber;
-			if (!apixPixelVec.size().empty()) 
+			if (!apixPixelVec.empty()) 
                         {
 				clusterNumber.assign(apixPixelVec.size(), NOCLUSTER);
 				//for (int i=0;i< apixPixelVec.size(); ++i) clusterNumArray[i]=NOCLUSTER;
