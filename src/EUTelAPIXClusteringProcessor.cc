@@ -368,7 +368,7 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 			 int nClusters = 0;
 			//int clusterNumArray[1000];
 			std::vector<int> clusterNumber;
-			if (apixPixelVec.size() != 0) 
+			if (!apixPixelVec.size().empty()) 
                         {
 				clusterNumber.assign(apixPixelVec.size(), NOCLUSTER);
 				//for (int i=0;i< apixPixelVec.size(); ++i) clusterNumArray[i]=NOCLUSTER;
@@ -486,7 +486,7 @@ void EUTelAPIXClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * c
 			/* --- Push back one Collection per Cluster --- */
 			std::set<int>::iterator it;
                         int icounter=0;
-			for (it=clusterSet.begin();it!=clusterSet.end();it++) 
+			for (it=clusterSet.begin();it!=clusterSet.end();++it) 
                         {
 			  lcio::TrackerPulseImpl * pulseFrame   = new lcio::TrackerPulseImpl();
 		          lcio::TrackerDataImpl  * clusterFrame = new lcio::TrackerDataImpl();
