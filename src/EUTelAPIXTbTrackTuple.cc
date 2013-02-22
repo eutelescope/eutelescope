@@ -214,7 +214,7 @@ void EUTelAPIXTbTrackTuple::end(){
 
 void EUTelAPIXTbTrackTuple::setClusterIdInHits() {
   size_t endsize = _hitSensorId->size();
-  if (_hitClusterId->size() == 0) {
+  if (_hitClusterId->empty()) {
     std::map<IMPL::TrackerDataImpl*, int>::iterator it;
     
     for (size_t ihit =0; ihit < _hitPointerToCluster->size(); ihit++) {
