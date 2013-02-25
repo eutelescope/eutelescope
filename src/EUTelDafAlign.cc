@@ -89,7 +89,29 @@ using namespace marlin;
 using namespace eutelescope;
 
 
-EUTelDafAlign::EUTelDafAlign () : EUTelDafBase("EUTelDafAlign"){
+EUTelDafAlign::EUTelDafAlign ()
+: EUTelDafBase("EUTelDafAlign"),
+  _runPede(false), 
+  _pedeSteerfileName(""),
+  _binaryFilename(""),
+  _alignmentConstantLCIOFile(""),
+  _alignmentConstantCollectionName(""),
+  _translate(),
+  _translateX(),
+  _translateY(),
+  _zRot(),
+  _scale(),
+  _scaleX(),
+  _scaleY(),
+  _resXMin(),
+  _resXMax(),
+  _resYMin(),
+  _resYMax(),
+  _mille(NULL),
+  _resX(),
+  _resY(),
+  _dutMatches()
+{
     //Child spesific params and description
   dafParams();
 }

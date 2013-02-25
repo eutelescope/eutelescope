@@ -64,7 +64,12 @@ EUTelMatrixDecoder::EUTelMatrixDecoder(int xNoOfPixel, int yNoOfPixel, int xMin,
 
 
 #ifdef USE_GEAR
-EUTelMatrixDecoder::EUTelMatrixDecoder(gear::SiPlanesLayerLayout * siPlanes, int layerIndex) {
+EUTelMatrixDecoder::EUTelMatrixDecoder(gear::SiPlanesLayerLayout * siPlanes, int layerIndex)
+: _xNoOfPixel(0),
+  _yNoOfPixel(0),
+  _xMin(0),
+  _yMin(0)
+{
   _xNoOfPixel = siPlanes->getSensitiveNpixelX(layerIndex);
   _yNoOfPixel = siPlanes->getSensitiveNpixelY(layerIndex);
   _xMin = 0;
