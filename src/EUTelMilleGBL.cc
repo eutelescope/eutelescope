@@ -759,7 +759,7 @@ void EUTelMilleGBL::processEvent(LCEvent * event) {
         if (_nTracks != 0) {
             _theFitter->SetTrackCandidates(trackCandidates);
             _theFitter->FitTracks();
-
+//
             double chi2Trk = 0.;
             int ndfTrk = 0;
 

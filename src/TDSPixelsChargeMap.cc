@@ -411,7 +411,7 @@ void TDSPixelsChargeMap::print(string filename)
   ofstream fout(filename.c_str());
 
   type_PixelsChargeMap::iterator i;
-  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
+  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); ++i )
     {
       fout << (i->first)/tenTo10 << "\t" << (i->first)%tenTo10 << "\t" << (i->second) << endl;
     }
@@ -585,7 +585,7 @@ std::vector<type_PixelID> TDSPixelsChargeMap::getVectorOfPixelsIDs()
   // Speed-up vector filling
   vectorOfPixelsIDs.reserve(pixelsChargeMap.size());
 
-  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
+  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); ++i )
     {
       vectorOfPixelsIDs.push_back(i->first);
     }
@@ -605,7 +605,7 @@ double TDSPixelsChargeMap::getTotalCharge()
   int ipixel=0;
   if(debug) streamlog_out ( MESSAGE5 ) << " pixelsChargeMap : " << pixelsChargeMap.size() << endl;
 
-  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
+  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); ++i )
     {
       if(debug) 
            {
@@ -625,7 +625,7 @@ double TDSPixelsChargeMap::scaleCharge(double scaleFactor)
 
   double totalCharge = 0.;
 
-  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
+  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); ++i )
     {
       i->second *= scaleFactor;
       totalCharge += i->second;
@@ -662,7 +662,7 @@ double TDSPixelsChargeMap::scaleCharge(double scaleFactor)
       else
         {
 	  i->second = varCharge;
-	  i++;
+	  ++i;
         }
     }
 
@@ -675,7 +675,7 @@ void TDSPixelsChargeMap::applyGain(double gain, double gainVariation, double noi
 {
   type_PixelsChargeMap::iterator i;
 
-  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
+  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); ++i )
     {
       double charge =  i->second;
       
@@ -709,7 +709,7 @@ void TDSPixelsChargeMap::applyThresholdCut(double threshold)
       }
     else
       {
-	i++;
+	++i;
       }
     }
 
@@ -729,7 +729,7 @@ vector<TDSPixel> TDSPixelsChargeMap::getVectorOfPixels()
   vectorOfPixels.reserve(pixelsChargeMap.size());
 
   int ipixel = 0;
-  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); i++ )
+  for( i = pixelsChargeMap.begin(); i != pixelsChargeMap.end(); ++i )
     {
       thePixel.indexAlongL = i->first/tenTo10;
       thePixel.indexAlongW = i->first%tenTo10;
@@ -830,7 +830,7 @@ TDSPrecluster TDSPixelsChargeMap::getPrecluster(unsigned long int seedIndexAlong
 
   thePrecluster.charge = preclusterCharge;
 
-  if ( thePrecluster.vectorOfPixels.size() != 0 )
+  if ( !thePrecluster.vectorOfPixels.empty() )
     {
       thePrecluster.empty = false;
   

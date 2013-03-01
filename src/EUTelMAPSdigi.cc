@@ -278,7 +278,7 @@ void EUTelMAPSdigi::init() {
     exit(-1);
   }
   
-  if ( _DigiLayerIDs.size() == 0 )
+  if ( _DigiLayerIDs.empty() )
   {
     streamlog_out ( ERROR4 ) <<  "The lsit of sensors is not defined in the steering file. Pls go back to your template and specify _DigiLayerIDs." << endl;
     exit(-1);
@@ -293,15 +293,15 @@ void EUTelMAPSdigi::init() {
 
   // Check if digitization parameters are not missing (!)
 
-  if(_depositedChargeScaling.size() == 0 ||
-     _applyPoissonSmearing.size() == 0 ||
-     _adcGain.size() == 0 ||
-     _adcGainVariation.size() == 0 ||
-     _adcNoise.size() == 0 ||
-     _adcRange.size() == 0 ||
-     _pixelReadoutType.size() == 0 ||
-     _zeroSuppressionThreshold.size() == 0 ||
-     _adcOffset.size() == 0 )
+  if(_depositedChargeScaling.empty() ||
+     _applyPoissonSmearing.empty() ||
+     _adcGain.empty() ||
+     _adcGainVariation.empty() ||
+     _adcNoise.empty() ||
+     _adcRange.empty() ||
+     _pixelReadoutType.empty() ||
+     _zeroSuppressionThreshold.empty() ||
+     _adcOffset.empty() )
     {
   streamlog_out ( ERROR4 ) <<  "Digitization parameters not given!" << endl
                     <<  "You have to specify all digitization parameters" << endl;
@@ -338,7 +338,7 @@ void EUTelMAPSdigi::init() {
 */
   // prepare digitization parameter index map
 
-  if(_DigiLayerIDs.size() > 0 )
+  if( !_DigiLayerIDs.empty() )
     for(unsigned int id=0; id<_DigiLayerIDs.size(); id++)
       _digiIdMap.insert( make_pair(_DigiLayerIDs.at(id), id ) );
 
@@ -466,7 +466,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       detectorID = simhit->getCellID0();
       if( detectorID > 99 ) continue;
 
-      if( _DigiLayerIDs.size() > 0 && _DigiLayerIDs[0] <  10 ) detectorID -=  1; 
+      if( !_DigiLayerIDs.empty() && _DigiLayerIDs[0] <  10 ) detectorID -=  1; 
 
       //
  
@@ -922,7 +922,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
     std::map< int,  TDSPixelsChargeMap *>::iterator mapIterator;
 
     for(mapIterator = _pixelChargeMapCollection.begin();
-        mapIterator != _pixelChargeMapCollection.end(); mapIterator++)
+        mapIterator != _pixelChargeMapCollection.end(); ++mapIterator)
       {
         detectorID = mapIterator->first;
 
@@ -931,7 +931,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
 
         int digiIndex = 0;
 
-        if( _DigiLayerIDs.size() > 0 ) digiIndex = _digiIdMap[detectorID];
+        if( !_DigiLayerIDs.empty() ) digiIndex = _digiIdMap[detectorID];
 
         _pixelChargeMap = mapIterator->second;
 
@@ -1059,7 +1059,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
                                       << "total charge deposited: " << totalCharge << endl;
 
             int ipixel = 0;
-            for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); _pixelIterator++)
+            for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); ++_pixelIterator)
             {
               streamlog_out( MESSAGE5 ) <<  " Pixel [" <<  ipixel << "] at  (" << _pixelIterator->getIndexAlongL()
                                       <<  "," <<  _pixelIterator->getIndexAlongW()
@@ -1071,7 +1071,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
 // Store pixel charges in the 2D histogram (charge map)
 // Only for events with debug output!
 
-            for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); _pixelIterator++)
+            for(_pixelIterator = _vectorOfPixels.begin(); _pixelIterator != _vectorOfPixels.end(); ++_pixelIterator)
             {
               double xpixel = _pixelIterator->getIndexAlongL() + 0.5;
               double ypixel = _pixelIterator->getIndexAlongW() + 0.5;
@@ -1124,7 +1124,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
 
                 if(pixelL > seedL+dLmax || pixelL < seedL-dLmax ||
                    pixelW > seedW+dWmax || pixelW < seedW-dWmax )
-                  _pixelIterator++;
+                  ++_pixelIterator;
                 else
                   {
                    double dist = (pixelL-seedL)*(pixelL-seedL)+(pixelW-seedW)*(pixelW-seedW);
@@ -1146,7 +1146,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
 
                    clusterCharge+=charge;
                    intClusterCharge+=icharge;
-                   _pixelIterator++;
+                   ++_pixelIterator;
                   }
               }
 
@@ -1155,7 +1155,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
 
            int iPixel=0;
            for(pixelAbsIterator=pixelAbsMap.begin();
-               pixelAbsIterator != pixelAbsMap.end(); pixelAbsIterator++)
+               pixelAbsIterator != pixelAbsMap.end(); ++pixelAbsIterator)
               {
               fillProf1D(_chargeProfileName,layerIndex,iPixel+0.5, pixelAbsIterator->second);
               iPixel++;
@@ -1164,7 +1164,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
 
            iPixel=0;
            for(pixelWeightedIterator=pixelWeightedMap.begin();
-               pixelWeightedIterator != pixelWeightedMap.end(); pixelWeightedIterator++)
+               pixelWeightedIterator != pixelWeightedMap.end(); ++pixelWeightedIterator)
               {
               fillProf1D(_weightedProfileName,layerIndex,iPixel+0.5, pixelWeightedIterator->second);
               iPixel++;
@@ -1628,7 +1628,7 @@ void EUTelMAPSdigi::bookHistos() {
       int detectorID=_siPlanesLayerLayout->getSensitiveID(iDet);
       int digiIndex = 0;
 
-      if(_DigiLayerIDs.size() > 0 )digiIndex = _digiIdMap[detectorID];
+      if(!_DigiLayerIDs.empty() )digiIndex = _digiIdMap[detectorID];
       xMax*=_depositedChargeScaling[digiIndex]*_adcGain[digiIndex];
 
       bookHist1D(_signalHistoName, "Sensor signal", iDet,xNBin, xMin, xMax);

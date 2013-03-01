@@ -265,7 +265,7 @@ void EUTelClusterFilter::init () {
   streamlog_out( DEBUG2 ) << "MinTotalChargeSwitch " << _minTotalChargeSwitch << endl;
 
   // N cluster charge
-  if ( _minNChargeVec.size() != 0 ) {
+  if ( !_minNChargeVec.empty() ) {
     if ( _minNChargeVec[0] != 0 ) {
       _minNChargeSwitch = true;
     } else {
@@ -278,7 +278,7 @@ void EUTelClusterFilter::init () {
   streamlog_out( DEBUG2 ) << "MinNChargeSwitch " << _minNChargeSwitch << endl;
 
   // N cluster SNR
-  if ( (_minNSNRVec.size() != 0) && (_minNSNRVec[0] != 0) ) {
+  if ( (!_minNSNRVec.empty()) && (_minNSNRVec[0] != 0) ) {
     _minNSNRSwitch = true;
   } else {
     _minNSNRSwitch = false;
@@ -394,7 +394,7 @@ void EUTelClusterFilter::init () {
     }
   }
 
-  _insideROISwitch = (  _insideROIVec.size() > 0 );
+  _insideROISwitch = (  !_insideROIVec.empty() );
   streamlog_out( DEBUG2 )  << "InsideROISwitch " << _insideROISwitch << endl;
 
   // outside ROI
@@ -412,7 +412,7 @@ void EUTelClusterFilter::init () {
     }
   }
 
-  _outsideROISwitch = (  _outsideROIVec.size() > 0 );
+  _outsideROISwitch = (  !_outsideROIVec.empty() );
   streamlog_out( DEBUG2 ) << "OutsideROISwitch " << _outsideROISwitch << endl;
 
   // max cluster noise

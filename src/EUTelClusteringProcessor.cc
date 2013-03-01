@@ -1129,7 +1129,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
     //end of seed pixel finding!
 
     //if at least one seed pixel candidate was found, then ...
-    if(seedcandidates.size() >0)
+    if(!seedcandidates.empty())
     {
         list<seed>::iterator i;
         //loop over all found seed pixel candidates
@@ -1173,7 +1173,7 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                     // apply this cut here, use it in the
                     // filtering processor?
 
-                    if(pix.size() >= 1) 
+                    if(!pix.empty()) 
                     {
                         // we found a cluster ...
 
@@ -1551,7 +1551,7 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
       throw UnknownDataTypeException("Unknown sparsified pixel");
     }
 
-    if ( seedCandidateMap.size() != 0 ) {
+    if ( !seedCandidateMap.empty() ) {
 
       streamlog_out ( DEBUG0 ) << "  Seed candidates " << seedCandidateMap.size() << endl;
 
@@ -1870,7 +1870,7 @@ void EUTelClusteringProcessor::zsBrickedClustering(LCEvent * evt, LCCollectionVe
           throw UnknownDataTypeException("Unknown sparsified pixel");
         }
 
-      if ( seedCandidateMap.size() != 0 )
+      if ( !seedCandidateMap.empty() )
         {
 
           streamlog_out ( DEBUG0 ) << "  Seed candidates " << seedCandidateMap.size() << endl;
@@ -2792,7 +2792,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     }
 
     // continue only if seed candidate map is not empty!
-    if ( _seedCandidateMap.size() != 0 ) {
+    if ( !_seedCandidateMap.empty() ) {
 
 #ifdef MARLINDEBUG
       /// /* DEBUG */      message<DEBUG5> ( logfile << "  Seed candidates " << _seedCandidateMap.size() );
@@ -3113,7 +3113,7 @@ void EUTelClusteringProcessor::nzsBrickedClustering(LCEvent * evt, LCCollectionV
 
       streamlog_out ( DEBUG0 ) << "  Number of seed candidates: " << seedCandidateMap.size() << endl;
 
-      if ( seedCandidateMap.size() != 0 )
+      if ( !seedCandidateMap.empty() )
         {
           // now build up a cluster for each seed candidate
           multimap<float, int >::reverse_iterator rMapIter = seedCandidateMap.rbegin();
