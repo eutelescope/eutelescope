@@ -29,8 +29,7 @@ namespace eutelescope {
         void EUTelExhaustiveTrackFinder::PruneTrackCandidates( std::map< int, EVENT::TrackerHitVec >& trackCandidates ) {
             std::map< int, EVENT::TrackerHitVec >::iterator itr;
             for( itr = trackCandidates.begin(); itr != trackCandidates.end();  ) {
-                if( itr->second.size() < 6 ) itr = trackCandidates.erase( itr );
-                else ++itr;
+                if( itr->second.size() < 6 ) trackCandidates.erase( itr++ );
             }
             return;
         }
