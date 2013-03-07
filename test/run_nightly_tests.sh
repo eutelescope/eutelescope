@@ -3,7 +3,7 @@
 # to the dashboard.
 # use GNU screen to start this script from ssh sessions and then detach the session.
 
-WAKEUPAT="02:05" # time to wake up every day in HH:MM in UTC
+WAKEUPAT="03:05" # time to wake up every day in HH:MM in UTC
 
 if [ -z "$EUTELESCOPE" ]
 then
@@ -47,6 +47,9 @@ while :; do
     now="$(date --utc +%H:%M)"
     if [[ "$now" = "$WAKEUPAT" ]]; then
 	echo " it's $now, time to wake up!"
+	DELAY=$(echo "scale=0;120*$RANDOM/32000" | bc) # calculates a random num between 1 and 120
+	echo " .. delaying for another $DELAY minutes to avoid collisions when accessing the same file from multiple machines"
+	sleep ${DELAY}m
 	echo " .. cleaning up .."
 	make clean
 	echo " .. running nightly checks .."
