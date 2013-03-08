@@ -169,7 +169,7 @@ namespace eutelescope {
      *  
      *  @param histoInfoFileName The histogram information file name
      */ 
-    EUTelHistogramManager(std::string histoInfoFileName) : _histoInfoFileName(histoInfoFileName) {;}
+    EUTelHistogramManager(std::string histoInfoFileName) : _histoInfoFileName(histoInfoFileName), _histoInfoMap() {;}
    
     //! Destructor
     /*! Deletes all the entries of the map since they all have been
