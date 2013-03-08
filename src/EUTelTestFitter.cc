@@ -1069,7 +1069,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   if ( debug ) 
   {
-    streamlog_out( TESTFITTERMESSAGE )  << "Total of " << nHit << " tracker hits in input collection " << endl;
+    streamlog_out( DEBUG5 )  << "Total of " << nHit << " tracker hits in input collection " << endl;
   }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -1078,7 +1078,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   if(nHit + _allowMissingHits < _nActivePlanes) 
   {
-    streamlog_out ( TESTFITTERMESSAGE ) << "Not enough hits to perform the fit, exiting... " << endl;
+    streamlog_out ( MESSAGE5 ) << "Not enough hits to perform the fit, exiting... " << endl;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
@@ -1261,7 +1261,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     hitFits[ihit]=0;
 
     if ( debug ) {
-      streamlog_out ( TESTFITTERMESSAGE ) << "Hit " << ihit
+      streamlog_out ( DEBUG5 ) << "Hit " << ihit
                                           << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]
                                           << "   Y = " << hitY[ihit] << " +/- " << hitEy[ihit]
                                           << "   Z = " << hitZ[ihit] << " (plane " << hitPlane[ihit] << ")" << endl;
@@ -1376,7 +1376,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     {
       if(debug) 
         {
-          streamlog_out ( TESTFITTERMESSAGE ) <<  "Not enough planes hit to perform the fit " << endl;
+          streamlog_out ( MESSAGE5 ) <<  "Not enough planes hit to perform the fit " << endl;
         }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -1402,7 +1402,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     if( debug ) 
     {
-      streamlog_out ( TESTFITTERMESSAGE ) << nFiredPlanes << " active sensor planes hit, checking "
+      streamlog_out ( DEBUG5 ) << nFiredPlanes << " active sensor planes hit, checking "
                                           << nChoice << " fit possibilities "  << endl;
     }
 
@@ -1720,7 +1720,7 @@ if(jhit>=0){
 
     if(nFittedTracks==0) {
       if(debug) {
-        streamlog_out ( TESTFITTERMESSAGE ) << "No track fulfilling search criteria found ! " << endl;
+        streamlog_out ( DEBUG5 ) << "No track fulfilling search criteria found ! " << endl;
       }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -1813,7 +1813,7 @@ if(jhit>=0){
 
 
        if(debug)  {
-         streamlog_out ( TESTFITTERMESSAGE)  << "Track reconstructed from " << nChoiceFired << " hits: " << endl;
+         streamlog_out ( DEBUG5 )  << "Track reconstructed from " << nChoiceFired << " hits: " << endl;
 
 
         // print out hits contributing to the fit
@@ -1822,7 +1822,7 @@ if(jhit>=0){
           {
           int jhit = fittedHits[_nTelPlanes*ifit+ipl];
           if(jhit >= 0)
-              streamlog_out ( TESTFITTERMESSAGE) << "Hit " << jhit
+              streamlog_out ( DEBUG5 ) << "Hit " << jhit
                                                  << "   X = " << hitX[jhit]
                                                  << "   Y = " << hitY[jhit]
                                                  << "   Z = " << hitZ[jhit] 
@@ -1830,17 +1830,17 @@ if(jhit>=0){
           }
 
 
-        streamlog_out ( TESTFITTERMESSAGE) << " Fitted positions in telescope planes:" << endl;
+        streamlog_out ( DEBUG5) << " Fitted positions in telescope planes:" << endl;
 
         for(int ipl=0;ipl<_nTelPlanes;ipl++) {
-          streamlog_out ( TESTFITTERMESSAGE) << "  X = " << fittedX[_nTelPlanes*ifit+ipl] 
+          streamlog_out ( DEBUG5) << "  X = " << fittedX[_nTelPlanes*ifit+ipl] 
                                              << " +/- " << fittedEx[_nTelPlanes*ifit+ipl]
                                              << "  Y = " << fittedY[_nTelPlanes*ifit+ipl] 
                                              << " +/- " << fittedEy[_nTelPlanes*ifit+ipl]
                                              << "  at Z = " << _planePosition[ipl] << endl;
         }
 
-        streamlog_out ( TESTFITTERMESSAGE) << " Fit chi2 = " << choiceChi2 << " including penalties of " << penalty << endl;
+        streamlog_out ( DEBUG5) << " Fit chi2 = " << choiceChi2 << " including penalties of " << penalty << endl;
 
       }
 
@@ -2821,16 +2821,16 @@ void EUTelTestFitter::getFastTrackImpactPoint(double & x, double & y, double & z
     double offsetY = y;   
 
     // this is a normal vector to the plane
-	TVectorD	NormalVector(3);
-	NormalVector(0) = _siPlaneNormal[sensorID][0] ;
-	NormalVector(1) = _siPlaneNormal[sensorID][1] ;
-	NormalVector(2) = _siPlaneNormal[sensorID][2] ;
+	TVectorD NormalVector(3);
+	NormalVector[0] = _siPlaneNormal[sensorID][0] ;
+	NormalVector[1] = _siPlaneNormal[sensorID][1] ;
+	NormalVector[2] = _siPlaneNormal[sensorID][2] ;
 
 	// this is a vector to the point in the plane
 	TVectorD    r0Vector(3);
-	r0Vector(0) = _siPlaneCenter[sensorID][0] ;
-	r0Vector(1) = _siPlaneCenter[sensorID][1] ;
-	r0Vector(2) = _siPlaneCenter[sensorID][2] ;
+	r0Vector[0] = _siPlaneCenter[sensorID][0] ;
+	r0Vector[1] = _siPlaneCenter[sensorID][1] ;
+	r0Vector[2] = _siPlaneCenter[sensorID][2] ;
 
 
 	// now have to solve the equation
@@ -2838,7 +2838,7 @@ void EUTelTestFitter::getFastTrackImpactPoint(double & x, double & y, double & z
 	TMatrixD	equationMatrix(3,3);
 	TVectorD	b(3);
 
-    equationMatrix(0, 0) = NormalVector (0);
+        equationMatrix(0, 0) = NormalVector (0);
 	equationMatrix(0, 1) = NormalVector (1);
 	equationMatrix(0, 2) = NormalVector (2);
 	equationMatrix(1, 0) = 1;
@@ -2848,9 +2848,9 @@ void EUTelTestFitter::getFastTrackImpactPoint(double & x, double & y, double & z
 	equationMatrix(2, 1) = 1;
 	equationMatrix(2, 2) = (-1)*slopeY;
 
-	b(0) = r0Vector(0) * NormalVector (0) + r0Vector(1) * NormalVector (1) + r0Vector(2) * NormalVector (2);
-	b(1) = offsetX;
-	b(2) = offsetY;
+	b[0] = r0Vector(0) * NormalVector (0) + r0Vector(1) * NormalVector (1) + r0Vector(2) * NormalVector (2);
+	b[1] = offsetX;
+	b[2] = offsetY;
 
 	trackImpact = equationMatrix.Invert() * b;
 
