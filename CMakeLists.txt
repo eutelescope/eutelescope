@@ -78,11 +78,11 @@ FIND_PACKAGE( LCCD  REQUIRED )
 # FIND_PACKAGE( ALLPIX )               
 # 
 # General Broken Line track fitter as shared lib:
-# FIND_PACKAGE( GBL )
+FIND_PACKAGE( GBL )
 
 
 
-FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT LCCD ) #/* {remove this comment to enable}*/ GBL G4 ALLPIX )
+FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT LCCD GBL ) #/* {remove this comment to enable}*/ G4 ALLPIX )
     IF( ${pkg}_FOUND )
         # include as "system" libraries: gcc will be less verbose w.r.t. warnings
         INCLUDE_DIRECTORIES(SYSTEM ${${pkg}_INCLUDE_DIRS} )
@@ -105,13 +105,13 @@ ELSE()
     MESSAGE( STATUS "WARNING: failed to configure Eutelescope with EUDAQ!!" )
 ENDIF()
 
-# IF( GBL_FOUND )
-#     ADD_DEFINITIONS( "-DUSE_GBL " )
-#     GET_FILENAME_COMPONENT( GBL_LIBRARY_FULL_PATH ${GBL_GBL_LIBRARY} REALPATH )
-#    INSTALL( FILES ${GBL_LIBRARY_FULL_PATH} DESTINATION lib ) # PROGRAMS is like FILES but sets executable permissions
-# ELSE()
-#     MESSAGE( STATUS "WARNING: failed to configure Eutelescope with GBL!!" )
-# ENDIF()
+ IF( GBL_FOUND )
+     ADD_DEFINITIONS( "-DUSE_GBL " )
+     GET_FILENAME_COMPONENT( GBL_LIBRARY_FULL_PATH ${GBL_GBL_LIBRARY} REALPATH )
+     INSTALL( FILES ${GBL_LIBRARY_FULL_PATH} DESTINATION lib ) # PROGRAMS is like FILES but sets executable permissions
+ ELSE()
+     MESSAGE( STATUS "WARNING: failed to configure Eutelescope with GBL!!" )
+ ENDIF()
 
 
 IF ( AIDA_FOUND)
