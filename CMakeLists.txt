@@ -74,15 +74,15 @@ FIND_PACKAGE( LCCD  REQUIRED )
 # export GBL="/home/ilcsoft/v01-16-02/Eutelescope/HEAD/external/gbl/cpp"
 # the libs is here
 #
-# FIND_PACKAGE( G4 )               
-# FIND_PACKAGE( ALLPIX )               
+ FIND_PACKAGE( G4 )               
+ FIND_PACKAGE( ALLPIX )               
 # 
 # General Broken Line track fitter as shared lib:
-FIND_PACKAGE( GBL )
+ FIND_PACKAGE( GBL )
 
 
 
-FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT LCCD GBL ) #/* {remove this comment to enable}*/ G4 ALLPIX )
+FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT LCCD GBL G4 ALLPIX )
     IF( ${pkg}_FOUND )
         # include as "system" libraries: gcc will be less verbose w.r.t. warnings
         INCLUDE_DIRECTORIES(SYSTEM ${${pkg}_INCLUDE_DIRS} )
