@@ -105,13 +105,21 @@ ELSE()
     MESSAGE( STATUS "WARNING: failed to configure Eutelescope with EUDAQ!!" )
 ENDIF()
 
- IF( GBL_FOUND )
-     ADD_DEFINITIONS( "-DUSE_GBL " )
-     GET_FILENAME_COMPONENT( GBL_LIBRARY_FULL_PATH ${GBL_GBL_LIBRARY} REALPATH )
-     INSTALL( FILES ${GBL_LIBRARY_FULL_PATH} DESTINATION lib ) # PROGRAMS is like FILES but sets executable permissions
- ELSE()
-     MESSAGE( STATUS "WARNING: failed to configure Eutelescope with GBL!!" )
- ENDIF()
+IF( GBL_FOUND )
+    ADD_DEFINITIONS( "-DUSE_GBL " )
+    GET_FILENAME_COMPONENT( GBL_LIBRARY_FULL_PATH ${GBL_GBL_LIBRARY} REALPATH )
+    INSTALL( FILES ${GBL_LIBRARY_FULL_PATH} DESTINATION lib ) # PROGRAMS is like FILES but sets executable permissions
+ELSE()
+    MESSAGE( STATUS "WARNING: failed to configure Eutelescope with GBL!!" )
+ENDIF()
+
+IF( ALLPIX_FOUND )
+    ADD_DEFINITIONS( "-DUSE_ALLPIX " )
+    GET_FILENAME_COMPONENT( ALLPIX_LIBRARY_FULL_PATH ${ALLPIX_ALLPIX_LIBRARY} REALPATH )
+    INSTALL( FILES ${ALLPIX_LIBRARY_FULL_PATH} DESTINATION lib ) # PROGRAMS is like FILES but sets executable permissions
+ELSE()
+    MESSAGE( STATUS "WARNING: failed to configure Eutelescope with ALLPIX!!" )
+ENDIF()
 
 
 IF ( AIDA_FOUND)
