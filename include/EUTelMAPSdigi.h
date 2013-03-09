@@ -39,6 +39,21 @@
 #include <vector>
 #include <map>
 
+#if defined ( USE_ALLPIX )
+#include "AllPixTrackerHit.hh"
+#include "G4DigiManager.hh"
+#include "G4VDigitizerModule.hh"
+
+#include "AllPixEventAction.hh"
+#include "G4SDManager.hh"
+#include "G4PrimaryVertex.hh"
+#include "AllPixMedipix2Digitizer.hh"
+#include "AllPixFEI3StandardDigitizer.hh"
+#include "AllPixMimosa26Digitizer.hh"
+#include "AllPixTimepixDigitizer.hh"
+#include "AllPixMCTruthDigitizer.hh"
+#include "AllPixLETCalculatorDigitizer.hh"
+#endif
 
 namespace eutelescope {
 
@@ -571,6 +586,30 @@ namespace eutelescope {
     //! Map for the TrackerData output collection
     std::map<int , lcio::TrackerDataImpl * > _trackerDataMap;
 
+#if defined( USE_ALLPIX )
+    //! digitiser interface to ALLPIX library
+    vector<G4String> digitizerModulesNames;
+    G4String GetNewName(G4String oldName, G4String toErase, G4String toAppend)
+    {
+
+	string oldName_s = oldName.data();
+	string toErase_s = toErase.data();
+	string toAppend_s = toAppend.data();
+	string fixedString;
+
+	size_t pos = oldName_s.find_last_of(toErase) - toErase_s.size();
+	if(pos == string::npos) // couldn't find it
+		return oldName;
+
+
+	fixedString = oldName_s.substr(0,pos);
+	fixedString.append(toAppend_s);
+
+	return G4String(fixedString);
+    }
+
+    void SetupDetectors ();
+#endif
   };
 
   //! A global instance of the processor

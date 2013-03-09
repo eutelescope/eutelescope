@@ -9,7 +9,7 @@
  */
 
 // built only if GEAR is used
-#ifdef USE_GEAR
+#if defined( USE_GEAR )
 
 // ROOT includes:
 #include "TVector3.h"
@@ -59,6 +59,9 @@
 #include <memory>
 #include <iostream>
 #include <iomanip>
+
+
+// __endofheader__
 
 using namespace std;
 using namespace marlin;
@@ -353,6 +356,11 @@ void EUTelMAPSdigi::init() {
       streamlog_out( MESSAGE4 )  << " Common TDS integration storage initialized  " << endl;
     }
 
+#if defined( USE_ALLPIX)
+  digitizerModulesNames.clear();
+#endif
+
+
 }
 
 void EUTelMAPSdigi::processRunHeader (LCRunHeader * rdr) {
@@ -404,6 +412,74 @@ void EUTelMAPSdigi::processRunHeader (LCRunHeader * rdr) {
   ++_iRun;
 }
 
+#if defined( USE_ALLPIX )
+void EUTelMAPSdigi::SetupDetectors () 
+{
+        int itr        = 0;
+	int detectorId = 0;
+	digitizerModulesNames.clear();
+
+	// Digit manager
+	G4DigiManager * fDM = G4DigiManager::GetDMpointer();
+
+		G4String hcName = "";
+
+		// Now build the digit Collection name
+		G4String digitColectionName = _simhitCollectionName;
+         	G4String digitizerName = "Mimos26";
+
+		// Creating an instance of the actual digitizer, and keep pointer through the interface
+		AllPixDigitizerInterface * dmPtr;
+
+		G4String digitSuffix = "_";
+		digitSuffix += digitizerName;
+		digitSuffix += "Digitizer";
+		G4String digitizerModName =  GetNewName(hcName, "HitsCollection", digitSuffix);
+
+
+		digitizerModulesNames.push_back(digitizerModName);
+
+                    
+	        // __beginofdigitlist__
+		if (digitizerName == "FEI3Standard") {
+			AllPixFEI3StandardDigitizer * dp = new AllPixFEI3StandardDigitizer(digitizerModulesNames[itr] , hcName, digitColectionName);
+			dmPtr = static_cast<AllPixDigitizerInterface *> (dp);
+			cout << "    Setting up a " << digitizerName << " digitizer for det : " << detectorId << endl;
+		} else if (digitizerName == "Medipix2") {
+			AllPixMedipix2Digitizer * dp = new AllPixMedipix2Digitizer(digitizerModulesNames[itr] , hcName, digitColectionName);
+			dmPtr = static_cast<AllPixDigitizerInterface *> (dp);
+			cout << "    Setting up a " << digitizerName << " digitizer for det : " << detectorId << endl;
+		} else if (digitizerName == "Mimosa26") {
+			AllPixMimosa26Digitizer * dp = new AllPixMimosa26Digitizer(digitizerModulesNames[itr] , hcName, digitColectionName);
+			dmPtr = static_cast<AllPixDigitizerInterface *> (dp);
+			cout << "    Setting up a " << digitizerName << " digitizer for det : " << detectorId << endl;
+		} else if (digitizerName == "Timepix") {
+			AllPixTimepixDigitizer * dp = new AllPixTimepixDigitizer(digitizerModulesNames[itr] , hcName, digitColectionName);
+			dmPtr = static_cast<AllPixDigitizerInterface *> (dp);
+			cout << "    Setting up a " << digitizerName << " digitizer for det : " << detectorId << endl;
+		}else if (digitizerName == "MCTruth") {
+			AllPixMCTruthDigitizer * dp = new AllPixMCTruthDigitizer(digitizerModulesNames[itr] , hcName, digitColectionName);
+			dmPtr = static_cast<AllPixDigitizerInterface *> (dp);
+			cout << "    Setting up a " << digitizerName << " digitizer for det : " << detectorId << endl;
+		}// Included by newdigitizer.sh script --> LETCalculator
+		else if (digitizerName == "LETCalculator") {
+					AllPixLETCalculatorDigitizer * dp = new AllPixLETCalculatorDigitizer(digitizerModulesNames[itr] , hcName, digitColectionName);
+					dmPtr = static_cast<AllPixDigitizerInterface *> (dp);
+					cout << "    Setting up a " << digitizerName << " digitizer for det : " << detectorId << endl;
+				}
+ 
+        	// __endofdigitlist__
+		else {
+			G4cout << "    can't find digitizer with name : " << digitizerName << G4endl;
+			exit(1);
+		}
+
+		// push back the digitizer
+//		m_digiPtrs.push_back( dmPtr );
+		fDM->AddNewModule( dmPtr );
+}
+#endif
+
 
 void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
@@ -430,16 +506,24 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
   }
 
 
+  LCCollectionVec * simhitCollection   = 0;
+
   try {
 
-    LCCollectionVec * simhitCollection   = static_cast<LCCollectionVec*> (event->getCollection( _simhitCollectionName ));
+    simhitCollection = static_cast<LCCollectionVec*> (event->getCollection( _simhitCollectionName ));
+
+  } catch (DataNotAvailableException& e  ) {
+
+    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
+                                << " in run " << event->getRunNumber() << endl;
+  }
 
 
-    // prepare also an output collection
-    auto_ptr< lcio::LCCollectionVec > zsDataCollection( new LCCollectionVec ( LCIO::TRACKERDATA ) ) ;
+  // prepare also an output collection
+  auto_ptr< lcio::LCCollectionVec > zsDataCollection( new LCCollectionVec ( LCIO::TRACKERDATA ) ) ;
 
-    // prepare also the corresponding encoder
-    CellIDEncoder< TrackerDataImpl > zsDataEncoder ( EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection.get() ) ;
+  // prepare also the corresponding encoder
+  CellIDEncoder< TrackerDataImpl > zsDataEncoder ( EUTELESCOPE::ZSDATADEFAULTENCODING, zsDataCollection.get() ) ;
 
     int detectorID    = -99; // it's a non sense
     int oldDetectorID = -100;
@@ -453,6 +537,8 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
     double xPointing[2] = { 1., 0. }, yPointing[2] = { 1., 0. };
 
     double gRotation[3] = { 0., 0., 0.}; // not rotated
+
+
 
     for ( int iHit = 0; iHit < simhitCollection->getNumberOfElements(); iHit++ ) 
     {
@@ -1209,10 +1295,6 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
 
 
     if ( isFirstEvent() ) _isFirstEvent = false;
-  } catch (DataNotAvailableException& e  ) {
-    streamlog_out  ( WARNING2 ) <<  "No input collection found on event " << event->getEventNumber()
-                                << " in run " << event->getRunNumber() << endl;
-  }
 
 }
 
