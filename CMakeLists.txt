@@ -74,6 +74,7 @@ FIND_PACKAGE( LCCD  REQUIRED )
 # export GBL="/home/ilcsoft/v01-16-02/Eutelescope/HEAD/external/gbl/cpp"
 # the libs is here
 #
+ FIND_PACKAGE( XERCESC )               
  FIND_PACKAGE( G4 )               
  FIND_PACKAGE( ALLPIX )               
 # 
@@ -82,7 +83,7 @@ FIND_PACKAGE( LCCD  REQUIRED )
 
 
 
-FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT LCCD GBL G4 ALLPIX )
+FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT LCCD GBL XERCESC G4 ALLPIX )
     IF( ${pkg}_FOUND )
         # include as "system" libraries: gcc will be less verbose w.r.t. warnings
         INCLUDE_DIRECTORIES(SYSTEM ${${pkg}_INCLUDE_DIRS} )
@@ -93,8 +94,38 @@ FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT LCCD GBL G4 ALLPIX )
     ENDIF()
 ENDFOREACH()
 
+MESSAGE (STATUS "${XERCESC_LIBRARIES}" )
+MESSAGE (STATUS "${XERCESC_INCLUDE_DIRS}" )
+
+
 
 ### LIBRARY #################################################################
+
+# two ROOT libraries which are not always included in "root-config --glibs"
+find_library(
+    LXMLPARSER
+    NAMES XMLParser 
+    PATHS  ${ROOT_LIBRARY_FULL_PATH}
+    PATH_SUFFIXES lib64 lib32 lib
+    NO_DEFAULT_PATH
+)
+
+
+find_library(
+    LGEOM
+    NAMES Geom 
+    PATHS  ${ROOT_LIBRARY_FULL_PATH}
+    PATH_SUFFIXES lib64 lib32 lib
+    NO_DEFAULT_PATH
+)
+
+
+LINK_LIBRARIES( ${LGEOM} )
+LINK_LIBRARIES( ${LXMLPARSER} )
+ 
+MESSAGE ( STATUS "linking TGeom : ${LGEOM}" )
+MESSAGE ( STATUS "linking TXMLParser : ${LXMLPARSER}" )
+
 
 # ------ add preprocessor flags ---------------------------------------------
 IF( EUDAQ_FOUND )
@@ -165,6 +196,8 @@ SET( libname ${PROJECT_NAME} )
 AUX_SOURCE_DIRECTORY( ./src library_sources )
 ADD_SHARED_LIBRARY( ${libname} ${library_sources} )
 INSTALL_SHARED_LIBRARY( ${libname} DESTINATION lib )
+INSTALL_SHARED_LIBRARY( GBL DESTINATION lib )
+
 
 
 # used for alignment if Eutelescope was build with ROOT support
@@ -174,29 +207,29 @@ ENDIF()
 
 MACRO( ADD_EUTELESCOPE_TOOL _name )
     ADD_EXECUTABLE( ${_name} src/exec/${_name}.cxx )
-    TARGET_LINK_LIBRARIES( ${_name} ${libname} )
+    TARGET_LINK_LIBRARIES( ${_name} ${libname}  )
     INSTALL( TARGETS ${_name} DESTINATION bin )
-#    TARGET_LINK_LIBRARIES( ${_name} GBL) 
 ENDMACRO()
 
 ADD_EUTELESCOPE_TOOL( pede2lcio )
 ADD_EUTELESCOPE_TOOL( pedestalmerge )
 
+
 # !RELEASE: REMOVE FOR RELEASE VERSIONS
 # electric fence
-# FIND_LIBRARY(EFENCE_LIBRARY
-#     NAMES efence
-#     DOC "The electric fence library"
-#     PATHS
-#         /usr/lib
-#         /usr/local/lib
-#         /usr/efence/lib
-#         /usr/share/efence/lib
-#     )
-# IF(EFENCE_LIBRARY)
-#   MESSAGE("Electric Fence library was found and will be linked against ${PROJECT_NAME}")
-#   target_link_libraries(${libname} ${EFENCE_LIBRARY})
-# ENDIF()
+ FIND_LIBRARY(EFENCE_LIBRARY
+     NAMES efence
+     DOC "The electric fence library"
+     PATHS
+         /usr/lib
+         /usr/local/lib
+         /usr/efence/lib
+         /usr/share/efence/lib
+     )
+ IF(EFENCE_LIBRARY)
+   MESSAGE("Electric Fence library was found and will be linked against ${PROJECT_NAME}")
+   target_link_libraries(${libname} ${EFENCE_LIBRARY})
+ ENDIF()
 
 # display some variables and write them to cache
 DISPLAY_STD_VARIABLES()
