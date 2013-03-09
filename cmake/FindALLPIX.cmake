@@ -55,7 +55,7 @@ FIND_PATH( ALLPIX_INCLUDE_DIRS NAMES AllPixRun.hh *hh
 # ---------- libraries --------------------------------------------------------
 INCLUDE( MacroCheckPackageLibs )
 
-LIST( APPEND ALLPIX_LIB_SEARCH_PATH /home/rubinsky/geant4_workdir/tmp/Linux-g++/allpix/  )
+LIST( APPEND ALLPIX_LIB_SEARCH_PATH $ENV{G4WORKDIR}/tmp/Linux-g++/allpix/  )
 #                                    /home/rubinsky/geant4_workdir/tmp/Linux-g++/allpix/liballpix.so
 #FIND_LIBRARY(ALLPIX_LIBRARIES
 #    NAMES allpix
@@ -72,12 +72,12 @@ LIST( APPEND ALLPIX_LIB_SEARCH_PATH /home/rubinsky/geant4_workdir/tmp/Linux-g++/
 # first argument should be the package name
 CHECK_PACKAGE_LIBS( ALLPIX allpix  )
 
-SET ( ROOTLIBS "/home/ilcsoft/v01-15/root/5.32.00/lib/libXMLParser.so;/home/ilcsoft/v01-15/root/5.32.00/lib/libGeom.so;/usr/lib/libxerces-c-3.1.so;/home/ilcsoft/v01-15/root/5.32.00/lib/libGraf3d.so;/home/ilcsoft/v01-15/root/5.32.00/lib/libGraf.so")
+#SET ( ROOTLIBS "/home/ilcsoft/v01-15/root/5.32.00/lib/libXMLParser.so;/home/ilcsoft/v01-15/root/5.32.00/lib/libGeom.so;/usr/lib/libces-c-3.1.so;/home/ilcsoft/v01-15/root/5.32.00/lib/libGraf3d.so;/home/ilcsoft/v01-15/root/5.32.00/lib/libGraf.so")
 
 # ---------- final checking ---------------------------------------------------
 INCLUDE( FindPackageHandleStandardArgs )
 # set ALLPIX_FOUND to TRUE if all listed variables are TRUE and not empty
-FIND_PACKAGE_HANDLE_STANDARD_ARGS( ALLPIX DEFAULT_MSG ALLPIX_DIR ALLPIX_INCLUDE_DIRS ALLPIX_LIBRARIES ROOTLIBS )
+FIND_PACKAGE_HANDLE_STANDARD_ARGS( ALLPIX DEFAULT_MSG ALLPIX_DIR ALLPIX_INCLUDE_DIRS ALLPIX_LIBRARIES )
 
 #MESSAGE (STATUS "${ALLPIX}")
 #MESSAGE (STATUS "${ALLPIX_FOUND}")
