@@ -211,7 +211,6 @@ ENDIF()
 MACRO( ADD_EUTELESCOPE_TOOL _name )
     ADD_EXECUTABLE( ${_name} src/exec/${_name}.cxx )
     TARGET_LINK_LIBRARIES( ${_name} ${libname} )
-#    TARGET_LINK_LIBRARIES( ${_name}  /usr/lib/libxerces-c.so   )
     INSTALL( TARGETS ${_name} DESTINATION bin )
 ENDMACRO()
 
