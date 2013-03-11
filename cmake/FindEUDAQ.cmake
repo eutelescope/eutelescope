@@ -11,6 +11,7 @@
 # @author Jan Engels, DESY
 #########################################################
 
+
 # -- fix for backwards compatibility
 IF( NOT EUDAQ_DIR AND EUDAQ_HOME )
     SET( EUDAQ_DIR "${EUDAQ_HOME}" )
@@ -23,6 +24,13 @@ ENDIF()
 IF( NOT EUDAQ_DIR AND DEFINED ENV{EUDAQ} )
     SET( EUDAQ_DIR "$ENV{EUDAQ}" )
 ENDIF()
+
+# MESSAGE (STATUS "eudaq_home: ${EUDAQ_HOME}")
+# MESSAGE (STATUS "env eudaq_home: $ENV{EUDAQ_HOME}")
+# MESSAGE (STATUS "env eudaq: $ENV{EUDAQ}")
+# MESSAGE (STATUS "eudaq_dir: ${EUDAQ_DIR}")
+
+
 
 
 
@@ -39,6 +47,8 @@ IF( NOT EUDAQ_DIR )
     FIND_PATH( EUDAQ_INCLUDE_DIRS NAMES eudaq/RunControl.hh )
 ENDIF()
 
+# MESSAGE (STATUS "eudaq include: ${EUDAQ_DIR}" )
+# MESSAGE (STATUS "eudaq include: ${EUDAQ_INCLUDE_DIRS}" )
 
 
 # ---------- libraries --------------------------------------------------------

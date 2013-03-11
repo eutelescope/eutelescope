@@ -101,30 +101,6 @@ ENDFOREACH()
 
 ### LIBRARY #################################################################
 
-# two ROOT libraries which are not always included in "root-config --glibs"
-find_library(
-    LXMLPARSER
-    NAMES XMLParser 
-    PATHS  ${ROOT_LIBRARY_FULL_PATH}
-    PATH_SUFFIXES lib64 lib32 lib
-    NO_DEFAULT_PATH
-)
-
-
-find_library(
-    LGEOM
-    NAMES Geom 
-    PATHS  ${ROOT_LIBRARY_FULL_PATH}
-    PATH_SUFFIXES lib64 lib32 lib
-    NO_DEFAULT_PATH
-)
-
-
-LINK_LIBRARIES( ${LGEOM} )
-LINK_LIBRARIES( ${LXMLPARSER} )
- 
-MESSAGE ( STATUS "linking TGeom : ${LGEOM}" )
-MESSAGE ( STATUS "linking TXMLParser : ${LXMLPARSER}" )
 
 
 # ------ add preprocessor flags ---------------------------------------------
@@ -148,8 +124,35 @@ IF( ALLPIX_FOUND )
     ADD_DEFINITIONS( "-DUSE_ALLPIX " )
     GET_FILENAME_COMPONENT( ALLPIX_LIBRARY_FULL_PATH ${ALLPIX_ALLPIX_LIBRARY} REALPATH )
     INSTALL( FILES ${ALLPIX_LIBRARY_FULL_PATH} DESTINATION lib ) # PROGRAMS is like FILES but sets executable permissions
+
+    # two ROOT libraries which are not always included in "root-config --glibs"
+    find_library(
+      LXMLPARSER
+      NAMES XMLParser 
+      PATHS  ${ROOT_LIBRARY_FULL_PATH}
+      PATH_SUFFIXES lib64 lib32 lib
+      NO_DEFAULT_PATH
+    )
+  
+
+    find_library(
+      LGEOM
+      NAMES Geom 
+      PATHS  ${ROOT_LIBRARY_FULL_PATH}
+      PATH_SUFFIXES lib64 lib32 lib
+      NO_DEFAULT_PATH
+    )
+
+    LINK_LIBRARIES( ${LGEOM} )
+    LINK_LIBRARIES( ${LXMLPARSER} )
+ 
+    MESSAGE ( STATUS "linking TGeom : ${LGEOM}" )
+    MESSAGE ( STATUS "linking TXMLParser : ${LXMLPARSER}" )
+
 ELSE()
-    MESSAGE( STATUS "WARNING: failed to configure Eutelescope with ALLPIX!!" )
+    IF( DEFINED "$ENV{ALLPIX}" )
+      MESSAGE( STATUS "WARNING: failed to configure Eutelescope with ALLPIX!!" )
+    ENDIF()
 ENDIF()
 
 
@@ -208,7 +211,7 @@ ENDIF()
 MACRO( ADD_EUTELESCOPE_TOOL _name )
     ADD_EXECUTABLE( ${_name} src/exec/${_name}.cxx )
     TARGET_LINK_LIBRARIES( ${_name} ${libname} )
-    TARGET_LINK_LIBRARIES( ${_name}  /usr/lib/libxerces-c.so   )
+#    TARGET_LINK_LIBRARIES( ${_name}  /usr/lib/libxerces-c.so   )
     INSTALL( TARGETS ${_name} DESTINATION bin )
 ENDMACRO()
 

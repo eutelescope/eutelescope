@@ -24,7 +24,8 @@
 # Redistribution and use is allowed according to the terms of the BSD license.
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
-SET ( XERCESC_ROOT_DIR "$ENV{XERCESC_ROOT_DIR}" )
+
+IF ( DEFINED "$ENV{XERCESC_ROOT_DIR}" )
 
 # Look for the header - preferentially searching below XERCESC_ROOT_DIR
 find_path(
@@ -40,6 +41,11 @@ find_path(
     XERCESC_INCLUDE_DIR
     NAMES xercesc/util/XercesVersion.hpp
 )
+
+MESSAGE ( STATUS "xerces: ${XERCESC_FOUND}" )
+MESSAGE ( STATUS "xerces: ${XERCESC_ROOT_DIR}" )
+MESSAGE ( STATUS "xerces: ${XERCESC_LIBRARY}" )
+MESSAGE ( STATUS "xerces: ${XERCESC_INCLUDE_DIR}" )
 
 EXECUTE_PROCESS(
     COMMAND find ${XERCESC_ROOT_DIR}/include/xercesc/ -type d # -printf "%p;" # not recognized on mac osx
@@ -86,9 +92,5 @@ mark_as_advanced(
     XERCESC_INCLUDE_DIR
 )
 
-#MESSAGE ( STATUS "xerces: ${XERCESC_FOUND}" )
-#MESSAGE ( STATUS "xerces: ${XERCESC_ROOT_DIR}" )
-#MESSAGE ( STATUS "xerces: ${XERCESC_LIBRARY}" )
-#MESSAGE ( STATUS "xerces: ${XERCESC_INCLUDE_DIR}" )
 
-
+ENDIF()
