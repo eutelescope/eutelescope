@@ -9,7 +9,7 @@ PROJECT( Eutelescope )
 
 # project version
 SET( ${PROJECT_NAME}_VERSION_MAJOR 0 )
-SET( ${PROJECT_NAME}_VERSION_MINOR 8 )
+SET( ${PROJECT_NAME}_VERSION_MINOR 9 )
 SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 
 # IMPORTANT FOR RELEASES:
@@ -207,7 +207,8 @@ ENDIF()
 
 MACRO( ADD_EUTELESCOPE_TOOL _name )
     ADD_EXECUTABLE( ${_name} src/exec/${_name}.cxx )
-    TARGET_LINK_LIBRARIES( ${_name} ${libname}  )
+    TARGET_LINK_LIBRARIES( ${_name} ${libname} )
+    TARGET_LINK_LIBRARIES( ${_name}  /usr/lib/libxerces-c.so   )
     INSTALL( TARGETS ${_name} DESTINATION bin )
 ENDMACRO()
 
