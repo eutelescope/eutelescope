@@ -122,7 +122,8 @@ optional arguments:
     GEARFile    		= gear_desy2012_06f_tb21.xml
     # histogram information
     Histoinfo   		= histoinfo.xml
-    # format for the output; @RunNumber@ is the current run number padded with leading zeros to 6 digits
+    # format for the output; @RunNumber@ is the current 
+    # run number padded with leading zeros to 6 digits
     Output			= run@RunNumber@
     # which run number to use for hot pixel determination (use current run)
     HotpixelRunNumber	= @RunNumber@
@@ -183,7 +184,10 @@ optional arguments:
 
   #+begin_src sh
   export ANALYSIS=/data/testbeam/analysis
-  mkdir -p $ANALYSIS/histo && mkdir -p $ANALYSIS/results && mkdir -p $ANALYSIS/db && mkdir -p $ANALYSIS/logs && mkdir -p $ANALYSIS/lcio-raw
+  mkdir -p $ANALYSIS/output/histo && mkdir -p $ANALYSIS/output/results \
+                    && mkdir -p $ANALYSIS/output/db \
+                    && mkdir -p $ANALYSIS/output/logs \
+                    && mkdir -p $ANALYSIS/output/lcio-raw
   #+end_src
 
   The analysis we want to perform is controlled by a config file
@@ -192,7 +196,7 @@ optional arguments:
   jobsub: 
   
   #+begin_src sh
-  export $ANALYSIS_CONF=$EUTELESCOPE/jobsub/examples/datura-alone
+  export ANALYSIS_CONF=$EUTELESCOPE/jobsub/examples/datura-alone
   #+end_src
 
   In principle, neither the table nor the config are required as long
@@ -205,7 +209,8 @@ optional arguments:
   First, converter step:
   #+begin_src sh
   cd $ANALYSIS
-  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv converter 4118
+  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
+                   -csv ${ANALYSIS_CONF}/table_orgmode.csv converter 4118
   #+end_src
 
   Here, jobsub will generate a steering file using the template file
@@ -215,10 +220,14 @@ optional arguments:
   
   The next steps follow the same pattern:
   #+begin_src sh
-  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv clusearch 4118
-  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv hitmaker 4118
-  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv align 4118
-  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg -csv ${ANALYSIS_CONF}/table_orgmode.csv fitter 4118
+  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
+                    -csv ${ANALYSIS_CONF}/table_orgmode.csv clusearch 4118
+  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
+                    -csv ${ANALYSIS_CONF}/table_orgmode.csv hitmaker 4118
+  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
+                    -csv ${ANALYSIS_CONF}/table_orgmode.csv align 4118
+  $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg 
+                    -csv ${ANALYSIS_CONF}/table_orgmode.csv fitter 4118
   #+end_src sh
 
   For this example, the output of each step is stored in
