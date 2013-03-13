@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
+<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
+
+<!-- 
+
+==========================================================================================
+                     Steering file template for the pysub framework
+
+                               ==> eta-tmp.xml <===
+
+Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+Version: $Id: eta-tmp.xml,v 1.2 2009-05-18 08:58:02 bulgheroni Exp $
+==========================================================================================
+
+--> 
+
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+   <execute>
+      <processor name="AIDA"/>
+      <processor name="ETA"/>
+   </execute>
+
+   <global>
+      <parameter name="LCIOInputFiles"> @InputFile@ </parameter>
+      <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
+      <parameter name="MaxRecordNumber" value="100000000"/>
+      <parameter name="SkipNEvents" value="0"/>
+      <parameter name="SupressCheck" value="false"/>
+      <parameter name="Verbosity" value="MESSAGE"/>
+   </global>
+
+ <processor name="AIDA" type="AIDAProcessor">
+ <!--Processor that handles AIDA files. Creates on directory per processor.  Processors only need to create and fill the histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
+  <!-- compression of output file 0: false >0: true (default) -->
+  <parameter name="Compress" type="int" value="1"/>
+  <!-- filename without extension-->
+  <parameter name="FileName" type="string" value="@HistoPath@/@RunNumber@-eta-histo"/>
+  <!-- type of output file xml (default) or root ( only OpenScientist)-->
+  <parameter name="FileType" type="string" value="root"/>
+</processor>
+
+ <processor name="ETA" type="EUTelCalculateEtaProcessor">
+ <!--EUTelCalculateEtaProcessor calculates the eta function for a given set of clusters-->
+  <!--Input cluster collection-->
+  <parameter name="ClusterCollectionName" type="string" lcioInType="TrackerPulse"> filteredcluster </parameter>
+  <!--To use only kGoodQuality write 0 here-->
+  <parameter name="ClusterQualitySelection" type="int" value="0"/>
+  <!--Write FULL: full cluster, NxMPixel: for a NxM sub-cluster, NPixel: to use only N pixel-->
+  <parameter name="ClusterTypeSelection" type="string" value="NxMPixel"/>
+  <!--Set the name of the Eta collection along x-->
+  <parameter name="EtaXCollectionName" type="string" value="xEtaCondition3x3"/>
+  <!--Set the name of the Eta collection along y-->
+  <parameter name="EtaYCollectionName" type="string" value="yEtaCondition3x3"/>
+  <!--Write here how many events you want to use for eta calculation (-1 for all)-->
+  <parameter name="EventNumber" type="int" value="-1"/>
+  <!--The number of pixel with the highest signal (only for NPixel)-->
+  <parameter name="NPixelSize" type="int" value="5"/>
+  <!--Write here in how many bins the seed pixel should be divided (x and y)-->
+  <parameter name="NumberOfBins" type="IntVec"> 1000 1000 </parameter>
+  <!--The size along x and y of the subcluster (only for NxMPixel)-->
+  <parameter name="NxMPixelClusterSize" type="IntVec"> 3 3 </parameter>
+  <!--This is the name of the output condition file-->
+  <parameter name="OutputEtaFileName" type="string" value="@DBPath@/@RunNumber@-eta-db.slcio"/>
+  <!--reject single pixel cluster. 1=reject, 0=keep, 2=reject clusters with two pixels, where the second pixel is not diagonal to the seed. -->
+  <!--parameter name="RejectSinglePixelCluster" type="int" value="0"/-->
+</processor>
+
+</marlin>

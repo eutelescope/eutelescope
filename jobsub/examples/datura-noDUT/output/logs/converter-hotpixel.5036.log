@@ -1,0 +1,237 @@
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/PandoraAnalysis/v00-04/lib/libPandoraAnalysis.so.0.3.0 (libPandoraAnalysis.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/MarlinPandora/v00-09-02/lib/libMarlinPandora.so.0.9.2 (libMarlinPandora.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/LCFIVertex/v00-06-01/lib/libLCFIVertex.so.0.6.1 (libLCFIVertex.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/CEDViewer/v01-06-01/lib/libCEDViewer.so.1.6.1 (libCEDViewer.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/Overlay/v00-13/lib/libOverlay.so.0.13.0 (libOverlay.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/FastJetClustering/v00-02/lib/libFastJetClustering.so.0.2.0 (libFastJetClustering.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/MarlinFastJet/v00-01/lib/libMarlinFastJet.so.0.1.0 (libMarlinFastJet.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/LCTuple/v01-01/lib/libLCTuple.so.1.1.0 (libLCTuple.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/MarlinKinfit/v00-01-02/lib/libMarlinKinfit.so.0.1.2 (libMarlinKinfit.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/MarlinTrkProcessors/v01-09/lib/libMarlinTrkProcessors.so.1.9.0 (libMarlinTrkProcessors.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/Clupatra/v00-09-01/lib/libClupatra.so.0.9.1 (libClupatra.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/LCFIPlus/v00-05-02/lib/libLCFIPlus.so.0.5.2 (libLCFIPlus.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/ForwardTracking/v01-07/lib/libForwardTracking.so.1.7.0 (libForwardTracking.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/Eutelescope/HEAD/lib/libEutelescope.so.0.7.0 (libEutelescope.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/MarlinTPC/v00-10/lib/libMarlinTPC.so.0.10.0 (libMarlinTPC.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/Garlic/v2.10.1/lib/libGarlic.so.2.1.1 (libGarlic.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/MarlinReco/v01-05/lib/libMarlinReco.so.1.5.0 (libMarlinReco.so)-->
+[ MESSAGE "Marlin"]  ---- instantiated  GEAR from file  /data/user/eicht/testbeam/ilcsoft/v01-16-01/Eutelescope/HEAD/pysub/examples/datura-alone-2/gear_desy2012_150mm.xml
+[ MESSAGE "Marlin"]  -----------------------------------------------------
+[ MESSAGE "Marlin"]               GearMgr :
+[ MESSAGE "Marlin"]  -----------------------------------------------------
+[ MESSAGE "Marlin"]    ----  DetectorName   ----
+[ MESSAGE "Marlin"]
+[ MESSAGE "Marlin"]          EUTelescope
+[ MESSAGE "Marlin"]
+[ MESSAGE "Marlin"]
+[ MESSAGE "Marlin"]    -----------   BField   -------
+[ MESSAGE "Marlin"]
+[ MESSAGE "Marlin"]        field vector at origin :   Bx = 0 , By = 0 , Bz = 0 [Tesla]
+[ MESSAGE "Marlin"]
+[ MESSAGE "Marlin"]
+[ MESSAGE "Marlin"]    -----------   SiPlanesParameters  -------
+[ MESSAGE "Marlin"]
+[ MESSAGE "Marlin"]  Setup ID : 0
+[ MESSAGE "Marlin"]  Telescope type :  TelescopeWithoutDUT
+[ MESSAGE "Marlin"]  Number of telescope planes : 6
+[ MESSAGE "Marlin"]  Number of layers : 6
+[ MESSAGE "Marlin"]
+[ MESSAGE "Marlin"]  layer parameters :
+[ MESSAGE "Marlin"]   |-------------------------------------------------------------------------------------------------------------------------------------------------|
+[ MESSAGE "Marlin"]   |              ladder:                        |                    sensitive part:                                                                |
+[ MESSAGE "Marlin"]   | ID | pozX| pozY|  pozZ |rotXY|rotZX|rotZY| sizeX| sizeY| Thick| ID| pozX| pozY|  pozZ |sizeX|sizeY| Thick|NpixX|NpixY|PitchX|PitchY| Resol| Rot1| Rot2| Rot3| Rot4|
+[ MESSAGE "Marlin"]   |-------------------------------------------------------------------------------------------------------------------------------------------------|
+[ MESSAGE "Marlin"]   |   0| 0.00| 0.00|   0.00| 0.00| 0.00| 0.00| 21.20| 10.60| 0.036|  0| 0.00| 0.00|   0.00|21.20|10.60| 0.014| 1152|  576|  0.02|  0.02|0.0045| -1.00| 0.00| 0.00| -1.00|
+[ MESSAGE "Marlin"]   |   1| 0.00| 0.00| 150.00| 0.00| 0.00| 0.00| 21.20| 10.60| 0.036|  1| 0.00| 0.00| 150.00|21.20|10.60| 0.014| 1152|  576|  0.02|  0.02|0.0045| -1.00| 0.00| 0.00| -1.00|
+[ MESSAGE "Marlin"]   |   2| 0.00| 0.00| 300.00| 0.00| 0.00| 0.00| 21.20| 10.60| 0.036|  2| 0.00| 0.00| 300.00|21.20|10.60| 0.014| 1152|  576|  0.02|  0.02|0.0045| -1.00| 0.00| 0.00| -1.00|
+[ MESSAGE "Marlin"]   |   3| 0.00| 0.00| 450.00| 0.00| 0.00| 0.00| 21.20| 10.60| 0.036|  3| 0.00| 0.00| 450.00|21.20|10.60| 0.014| 1152|  576|  0.02|  0.02|0.0045| -1.00| 0.00| 0.00| -1.00|
+[ MESSAGE "Marlin"]   |   4| 0.00| 0.00| 600.00| 0.00| 0.00| 0.00| 21.20| 10.60| 0.036|  4| 0.00| 0.00| 600.00|21.20|10.60| 0.014| 1152|  576|  0.02|  0.02|0.0045| -1.00| 0.00| 0.00| -1.00|
+[ MESSAGE "Marlin"]   |   5| 0.00| 0.00| 750.00| 0.00| 0.00| 0.00| 21.20| 10.60| 0.036|  5| 0.00| 0.00| 750.00|21.20|10.60| 0.014| 1152|  576|  0.02|  0.02|0.0045| -1.00| 0.00| 0.00| -1.00|
+[ MESSAGE "Marlin"]   |-------------------------------------------------------------------------------------------------------------------------------------------------|
+[ MESSAGE "Marlin"]
+[ MESSAGE "Marlin"]
+[ MESSAGE "Marlin"]    parameter sections (detectors) :
+[ MESSAGE "Marlin"]  ------------------------------------------------------------------
+[ MESSAGE "Marlin"]    materials :
+[ MESSAGE "Marlin"]  ------------------------------------------------------------------
+[ MESSAGE "Marlin"]
+[ MESSAGE "AIDA"]
+[ MESSAGE "AIDA"] ---- AIDA -  parameters:
+[ MESSAGE "AIDA"] 	Compress:  1
+[ MESSAGE "AIDA"] 	FileName:  /data/user/eicht/testbeam/telescope_150mm/histo/run005036-converter-histo
+[ MESSAGE "AIDA"] 	FileType:  root
+[ MESSAGE "AIDA"] -------------------------------------------------
+[ VERBOSE "AIDA"] ---------------------------------- R A I D A ----------------------------------
+[ VERBOSE "AIDA"] ROOT Implementation of the Abstract Interfaces for Data Analysis (AIDA v3.2.1)
+[ VERBOSE "AIDA"]
+[ VERBOSE "AIDA"] RAIDA Version: not supported by cvs2svn
+[ VERBOSE "AIDA"]
+[ VERBOSE "AIDA"] RAIDA only creates simple ROOT histograms
+[ VERBOSE "AIDA"] Used ROOT Release: 5.28/00f
+[ VERBOSE "AIDA"] -------------------------------------------------------------------------------
+[ VERBOSE "AIDA"]
+[ MESSAGE "UniversalNativeReader"]
+[ MESSAGE "UniversalNativeReader"] ---- UniversalNativeReader -  parameters:
+[ MESSAGE "UniversalNativeReader"] 	DEPFETOutputCollection:  rawdata_dep
+[ MESSAGE "UniversalNativeReader"] 	EUBRDRawModeOutputCollection:  rawdata
+[ MESSAGE "UniversalNativeReader"] 	EUDRBZSModeOutputCollection:  zsdata
+[ MESSAGE "UniversalNativeReader"] 	GeoID:  100
+[ MESSAGE "UniversalNativeReader"] 	InputFileName:  /data/user/eicht/testbeam/telescope_150mm/native/run005036.raw
+[ MESSAGE "UniversalNativeReader"] 	SyncTriggerID:  true
+[ MESSAGE "UniversalNativeReader"] -------------------------------------------------
+[ MESSAGE "Mimosa26EUTelAutoPedestalNoiseProcessor"]
+[ MESSAGE "Mimosa26EUTelAutoPedestalNoiseProcessor"] ---- Mimosa26EUTelAutoPedestalNoiseProcessor -  parameters:
+[ MESSAGE "Mimosa26EUTelAutoPedestalNoiseProcessor"] 	InitNoiseValue:  1 1 1 1 1 1
+[ MESSAGE "Mimosa26EUTelAutoPedestalNoiseProcessor"] 	InitPedestalValue:  0 0 0 0 0 0
+[ MESSAGE "Mimosa26EUTelAutoPedestalNoiseProcessor"] 	MaxXVector:  1151 1151 1151 1151 1151 1151
+[ MESSAGE "Mimosa26EUTelAutoPedestalNoiseProcessor"] 	MaxYVector:  575 575 575 575 575 575
+[ MESSAGE "Mimosa26EUTelAutoPedestalNoiseProcessor"] 	MinXVector:  0 0 0 0 0 0
+[ MESSAGE "Mimosa26EUTelAutoPedestalNoiseProcessor"] 	MinYVector:  0 0 0 0 0 0
+[ MESSAGE "Mimosa26EUTelAutoPedestalNoiseProcessor"] 	NoiseCollectionName:  m26_noise
+[ MESSAGE "Mimosa26EUTelAutoPedestalNoiseProcessor"] 	PedestalCollectionName:  m26_pedestal
+[ MESSAGE "Mimosa26EUTelAutoPedestalNoiseProcessor"] 	SensorIDVec:  0 1 2 3 4 5
+[ MESSAGE "Mimosa26EUTelAutoPedestalNoiseProcessor"] 	StatusCollectionName:  m26_status
+[ MESSAGE "Mimosa26EUTelAutoPedestalNoiseProcessor"] -------------------------------------------------
+[ MESSAGE "HotPixelKiller"]
+[ MESSAGE "HotPixelKiller"] ---- HotPixelKiller -  parameters:
+[ MESSAGE "HotPixelKiller"] 	BuildHotPixelDatabase:  1
+[ MESSAGE "HotPixelKiller"] 	HotPixelCollectionName:  hotpixel_m26
+[ MESSAGE "HotPixelKiller"] 	HotPixelDBFile:  /data/user/eicht/testbeam/telescope_150mm/db/run5036-hotpixel-db.slcio
+[ MESSAGE "HotPixelKiller"] 	LCIOWriteMode:  WRITE_NEW
+[ MESSAGE "HotPixelKiller"] 	MaxAllowedFiringFreq:  0.5
+[ MESSAGE "HotPixelKiller"] 	NoOfEventPerCycle:  9999
+[ MESSAGE "HotPixelKiller"] 	NoiseCollectionName:  m26_noise
+[ MESSAGE "HotPixelKiller"] 	StatusCollectionName:  m26_status
+[ MESSAGE "HotPixelKiller"] 	TotalNoOfCycle:  0
+[ MESSAGE "HotPixelKiller"] 	ZSDataCollectionName:  zsdata_m26
+[ MESSAGE "HotPixelKiller"] -------------------------------------------------
+[ MESSAGE "Save"]
+[ MESSAGE "Save"] ---- Save -  parameters:
+[ MESSAGE "Save"] 	DropCollectionNames:  firstFrame secondFrame thirdFrame
+[ MESSAGE "Save"] 	LCIOOutputFile:  /data/user/eicht/testbeam/telescope_150mm/lcio-raw/run005036.slcio
+[ MESSAGE "Save"] 	LCIOWriteMode:  WRITE_NEW
+[ MESSAGE "Save"] 	SkipIntermediaINFO: First TLU id detected as 1 2013-01-07 15:21:33.126
+teEORE:  true
+[ MESSAGE "Save"] -------------------------------------------------
+[ MESSAGE4 "UniversalNativeReader"] Processing event      0 in run 005036 (Total =          0)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event      0 in run 005036 (Total =          0)
+[ MESSAGE4 "HotPixelKiller"] Processing event      0 in run 005036 (Total =          0)
+[ MESSAGE4 "UniversalNativeReader"] Processing event   1000 in run 005036 (Total =       1000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event   1000 in run 005036 (Total =       1000)
+[ MESSAGE4 "HotPixelKiller"] Processing event   1000 in run 005036 (Total =       1000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event   2000 in run 005036 (Total =       2000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event   2000 in run 005036 (Total =       2000)
+[ MESSAGE4 "HotPixelKiller"] Processing event   2000 in run 005036 (Total =       2000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event   3000 in run 005036 (Total =       3000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event   3000 in run 005036 (Total =       3000)
+[ MESSAGE4 "HotPixelKiller"] Processing event   3000 in run 005036 (Total =       3000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event   4000 in run 005036 (Total =       4000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event   4000 in run 005036 (Total =       4000)
+[ MESSAGE4 "HotPixelKiller"] Processing event   4000 in run 005036 (Total =       4000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event   5000 in run 005036 (Total =       5000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event   5000 in run 005036 (Total =       5000)
+[ MESSAGE4 "HotPixelKiller"] Processing event   5000 in run 005036 (Total =       5000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event   6000 in run 005036 (Total =       6000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event   6000 in run 005036 (Total =       6000)
+[ MESSAGE4 "HotPixelKiller"] Processing event   6000 in run 005036 (Total =       6000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event   7000 in run 005036 (Total =       7000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event   7000 in run 005036 (Total =       7000)
+[ MESSAGE4 "HotPixelKiller"] Processing event   7000 in run 005036 (Total =       7000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event   8000 in run 005036 (Total =       8000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event   8000 in run 005036 (Total =       8000)
+[ MESSAGE4 "HotPixelKiller"] Processing event   8000 in run 005036 (Total =       8000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event   9000 in run 005036 (Total =       9000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event   9000 in run 005036 (Total =       9000)
+[ MESSAGE4 "HotPixelKiller"] Processing event   9000 in run 005036 (Total =       9000)
+[ MESSAGE0 "HotPixelKiller"] Booking and filling histograms for cycle 0
+[ MESSAGE "HotPixelKiller"] EUTelHotPixelKiller::HotPixelDBWriter
+[ MESSAGE "HotPixelKiller"] writing out hot pixel db into /data/user/eicht/testbeam/telescope_150mm/db/run5036-hotpixel-db.slcio
+[ MESSAGE "HotPixelKiller"] hotPixelCollection: hotpixel_m26 created
+[ MESSAGE4 "UniversalNativeReader"] Processing event  10000 in run 005036 (Total =      10000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  10000 in run 005036 (Total =      10000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  11000 in run 005036 (Total =      11000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  11000 in run 005036 (Total =      11000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  12000 in run 005036 (Total =      12000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  12000 in run 005036 (Total =      12000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  13000 in run 005036 (Total =      13000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  13000 in run 005036 (Total =      13000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  14000 in run 005036 (Total =      14000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  14000 in run 005036 (Total =      14000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  15000 in run 005036 (Total =      15000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  15000 in run 005036 (Total =      15000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  16000 in run 005036 (Total =      16000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  16000 in run 005036 (Total =      16000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  17000 in run 005036 (Total =      17000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  17000 in run 005036 (Total =      17000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  18000 in run 005036 (Total =      18000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  18000 in run 005036 (Total =      18000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  19000 in run 005036 (Total =      19000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  19000 in run 005036 (Total =      19000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  20000 in run 005036 (Total =      20000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  20000 in run 005036 (Total =      20000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  21000 in run 005036 (Total =      21000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  21000 in run 005036 (Total =      21000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  22000 in run 005036 (Total =      22000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  22000 in run 005036 (Total =      22000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  23000 in run 005036 (Total =      23000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  23000 in run 005036 (Total =      23000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  24000 in run 005036 (Total =      24000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  24000 in run 005036 (Total =      24000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  25000 in run 005036 (Total =      25000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  25000 in run 005036 (Total =      25000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  26000 in run 005036 (Total =      26000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  26000 in run 005036 (Total =      26000)
+[ MESSAGE4 "UniversalNativeReader"] Processing event  27000 in run 005036 (Total =      27000)
+[ MESSAGE4 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Processing event  27000 in run 005036 (Total =      27000)
+[ WARNING "Save"] Adding a EORE because was missing
+[ MESSAGE "Save"] Writing the output file /data/user/eicht/testbeam/telescope_150mm/lcio-raw/run005036.slcio
+[ MESSAGE4 "HotPixelKiller"] Successfully finished
+[ MESSAGE4 "HotPixelKiller"] ========================================================================================
+[ MESSAGE4 "HotPixelKiller"]  Hot pixel killer summary
+[ MESSAGE4 "HotPixelKiller"] ========================================================================================
+[ MESSAGE4 "HotPixelKiller"]  Cycle num:    0           0           0           1           0           0           3
+[ MESSAGE4 "HotPixelKiller"] ----------------------------------------------------------------------------------------
+[ MESSAGE4 "HotPixelKiller"]
+[ MESSAGE4 "HotPixelKiller"] ========================================================================================
+[ MESSAGE4 "HotPixelKiller"]
+[ MESSAGE2 "Mimosa26EUTelAutoPedestalNoiseProcessor"] Successfully finished
+[ MESSAGE "UniversalNativeReader"] Successfully finished
+[ MESSAGE "Marlin"]  ---------------------------------------------------------
+[ MESSAGE "Marlin"]   Events skipped by processors :
+[ MESSAGE "Marlin"]   Total: 0
+[ MESSAGE "Marlin"]  ---------------------------------------------------------
+[ MESSAGE "Marlin"]
+[ MESSAGE "Marlin"]  ---------------------------------------------------------
+[ MESSAGE "Marlin"]       Time used by processors ( in processEvent() ) :
+[ MESSAGE "Marlin"]
+[ MESSAGE "Marlin"] Save                                 2.059000e+01 s in        27844 events  ==> 7.394771e-04 [ s/evt.]
+[ MESSAGE "Marlin"] HotPixelKiller                       1.763000e+01 s in        27844 events  ==> 6.331705e-04 [ s/evt.]
+[ MESSAGE "Marlin"] Mimosa26EUTelAutoPedestalNoise       1.200000e-01 s in        27844 events  ==> 4.309726e-06 [ s/evt.]
+[ MESSAGE "Marlin"] AIDA                                 4.000000e-02 s in        27844 events  ==> 1.436575e-06 [ s/evt.]
+[ MESSAGE "Marlin"] UniversalNativeReader                0.000000e+00 s in        27844 events  ==> 0.000000e+00 [ s/evt.]
+[ MESSAGE "Marlin"]             Total:                   3.838000e+01 s in        27844 events  ==> 1.378394e-03 [ s/evt.]
+[ MESSAGE "Marlin"]  ---------------------------------------------------------
+[ VERBOSE "UNKOWN"] ~APIXCTConverterPlugin done
+[ VERBOSE "UNKOWN"] ~NIConverterPlugin done
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/PandoraAnalysis/v00-04/lib/libPandoraAnalysis.so.0.3.0 (libPandoraAnalysis.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/MarlinPandora/v00-09-02/lib/libMarlinPandora.so.0.9.2 (libMarlinPandora.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/LCFIVertex/v00-06-01/lib/libLCFIVertex.so.0.6.1 (libLCFIVertex.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/CEDViewer/v01-06-01/lib/libCEDViewer.so.1.6.1 (libCEDViewer.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/Overlay/v00-13/lib/libOverlay.so.0.13.0 (libOverlay.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/FastJetClustering/v00-02/lib/libFastJetClustering.so.0.2.0 (libFastJetClustering.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/MarlinFastJet/v00-01/lib/libMarlinFastJet.so.0.1.0 (libMarlinFastJet.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/LCTuple/v01-01/lib/libLCTuple.so.1.1.0 (libLCTuple.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/MarlinKinfit/v00-01-02/lib/libMarlinKinfit.so.0.1.2 (libMarlinKinfit.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/MarlinTrkProcessors/v01-09/lib/libMarlinTrkProcessors.so.1.9.0 (libMarlinTrkProcessors.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/Clupatra/v00-09-01/lib/libClupatra.so.0.9.1 (libClupatra.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/LCFIPlus/v00-05-02/lib/libLCFIPlus.so.0.5.2 (libLCFIPlus.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/ForwardTracking/v01-07/lib/libForwardTracking.so.1.7.0 (libForwardTracking.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/Eutelescope/HEAD/lib/libEutelescope.so.0.7.0 (libEutelescope.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/MarlinTPC/v00-10/lib/libMarlinTPC.so.0.10.0 (libMarlinTPC.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/Garlic/v2.10.1/lib/libGarlic.so.2.1.1 (libGarlic.so)-->
+<!-- Loading shared library : /data/user/eicht/testbeam/ilcsoft/v01-16-01/MarlinReco/v01-05/lib/libMarlinReco.so.1.5.0 (libMarlinReco.so)-->
+zsdata_m26 not found for HotPixelKiller
+DOT File written...
+Now run dot eg: dot -Tps converter-005036.xml.dot > converter-005036.xml.dot.ps
+~APIXCTConverterPlugin done
+~NIConverterPlugin done
