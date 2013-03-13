@@ -7,6 +7,9 @@
  *   header with author names in all development based on this file.
  *
  */
+
+#ifdef USE_GBL
+
 #ifndef EUTELMULTILINEFIT_H
 #define EUTELMULTILINEFIT_H
 
@@ -388,4 +391,6 @@ namespace eutelescope {
 
 }
 #endif
+#endif
+
 #endif

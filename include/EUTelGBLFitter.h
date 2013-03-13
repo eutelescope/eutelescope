@@ -5,6 +5,8 @@
  * Created on January 25, 2013, 2:53 PM
  */
 
+#ifdef USE_GBL
+
 #ifndef EUTELGBLFITTER_H
 #define	EUTELGBLFITTER_H
 
@@ -93,3 +95,5 @@ namespace eutelescope {
 }
 #endif	/* EUTELGBLFITTER_H */
 
+
+#endif
