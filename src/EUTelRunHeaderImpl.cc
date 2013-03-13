@@ -45,6 +45,7 @@ EUTelRunHeaderImpl& EUTelRunHeaderImpl::operator = (const EUTelRunHeaderImpl &z)
   for(std::vector< std::string >::iterator it = activesubdetectors->begin(); it != activesubdetectors->end(); ++it){
     _lcHeader->addActiveSubdetector(*it);
   }
+  return *this;
 }
 
 void EUTelRunHeaderImpl::setHeaderVersion (float ver) {
