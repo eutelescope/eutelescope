@@ -28,7 +28,9 @@ EUTelX0Processor::EUTelX0Processor()
   _debug(false),
   _debugCount(0),
   _eventNumber(0),
+  _finalEvent(false),
   _histoData(),
+  _histoFile(""),
   _histoThing(),
   _hitInfo(),
   _inputHitCollectionVec(NULL), 
@@ -36,6 +38,7 @@ EUTelX0Processor::EUTelX0Processor()
   _inputHitColName(""),
   _inputHitCollectionName(""),
   _inputTrackColName(""),
+  _maxRecords(0),
   _projectedHits(),
   _referenceHitCollectionName(""),
   _referenceHitVec(NULL),
@@ -47,6 +50,21 @@ EUTelX0Processor::EUTelX0Processor()
   _trackCollectionName("")
 {
   streamlog_out(DEBUG1) << "Constructing the EUTelX0Processor, setting all values to zero or NULL" << std::endl;
+  _inputHitCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);//Used to store the values of the hit events
+  _inputTrackCollectionVec = new LCCollectionVec(LCIO::TRACK);//Used to store the values of the hit events
+  registerInputCollection(LCIO::TRACKERHIT,"InputTrackCollectionName",
+                           "Collection name for corrected particle positions",
+                           _trackColName, string ("alignedHit"));
+
+  
+  registerInputCollection(LCIO::TRACK,"OutputTrackCollectionName",
+                           "Collection name for fitted tracks",
+                           _trackCollectionName, string ("track"));
+
+  registerOptionalParameter("ReferenceCollection","This is the name of the reference it collection (init at 0,0,0)", _referenceHitCollectionName, static_cast< string > ( "referenceHit" ) );//Necessary for working out which layer the particle is detected in
+  registerProcessorParameter("ResidualCutValue","Used to determine cuts in the system, measured in XXX", _residualCut, static_cast< double > (50000.0));
+  registerProcessorParameter("MaxRecords","Will be used to determine the final event if the final event must come before EOF", _maxRecords, static_cast< int > (0));
+  registerProcessorParameter("HistoFile","Will be used to add the gaussian to the kink angle at the end of the run", _histoFile, static_cast< std::string > (""));
 }
 
 void EUTelX0Processor::init()
@@ -143,21 +161,8 @@ void EUTelX0Processor::init()
   _histoThing.insert(make_pair("Kink Angle",KinkAngle));
   _histoData["Kink Angle"] = empty;
 
-  _inputHitCollectionVec = new LCCollectionVec(LCIO::TRACKERHIT);//Used to store the values of the hit events
-  _inputTrackCollectionVec = new LCCollectionVec(LCIO::TRACK);//Used to store the values of the hit events
   // readin parameter for input hit collection name (default alignedHit)
   //registerInputCollection (LCIO::TRACKERHIT, "InputHitCollectionName", "The name of the input hit collection", _inputHitCollectionName, string("correctedHit"));//Used to store the values of the hit events
-  registerInputCollection(LCIO::TRACKERHIT,"InputTrackCollectionName",
-                           "Collection name for corrected particle positions",
-                           _trackColName, string ("alignedHit"));
-
-  
-  registerInputCollection(LCIO::TRACK,"OutputTrackCollectionName",
-                           "Collection name for fitted tracks",
-                           _trackCollectionName, string ("track"));
-
-  registerOptionalParameter("ReferenceCollection","This is the name of the reference it collection (init at 0,0,0)", _referenceHitCollectionName, static_cast< string > ( "referenceHit" ) );//Necessary for working out which layer the particle is detected in
-  registerProcessorParameter("ResidualCutValue","Used to determine cuts in the system, measured in XXX", _residualCut, static_cast< double > (50000.0));
 }
 
 void EUTelX0Processor::processRunHeader(LCRunHeader *run)
@@ -300,7 +305,6 @@ void EUTelX0Processor::kinkEstimate(Track* track){
   dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Scattering Angle Y"])->fill(angleyfront + angleyback);
 
   double kinkangle = sqrt(pow(anglexfront + anglexback,2) + pow(angleyfront + angleyback,2));  //Not sure if this is the correct way to work out the angle
-
   dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Kink Angle"])->fill(kinkangle);
   } catch(double residual){
     if(residual == _residualCut){
@@ -318,6 +322,24 @@ void EUTelX0Processor::kinkEstimate(Track* track){
   }
 }
 
+void EUTelX0Processor::kinkGaussian(){
+/*
+  gStyle->SetOptFit(111);
+  std::string _histoFile = "/scratch/hamnett/TestBeam/2013/data_X0MeasurementsOneWeek20012013/histo/000001-track-histo.root";
+  TFile *file = new TFile(_histoFile.c_str(),"UPDATE");
+  TDirectory *directory = (TDirectory*)file->GetDirectory("X0Scanner");
+  directory->ls();
+  TH1D *histogram = (TH1D*)directory->Get("KinkAngle");
+  histogram->Draw();
+  TF1 *fit = new TF1("fit","gaus",0,5);
+  histogram->Fit("fit","R");
+  file->Write();
+*/
+  
+//  AIDA::IFitter * fit = AIDAProcessor::getIAnalysisFactory(this)->createFitFactory()->createFitter("Chi2")->fit(_histoThing["Kink Angle"],fitfunction);
+
+}
+
 void EUTelX0Processor::processEvent(LCEvent *evt)
 {
   streamlog_out(DEBUG0) << "Running EUTelX0Processor::processEvent(LCEvent *evt) with evt = " << evt << std::endl;
@@ -330,14 +352,19 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
     //Deduce radiation length from sigma value - See Nadler and Fruwurth paper
 
   try{
-    LCCollection* trackcollection = evt->getCollection(_trackCollectionName);
-    int elementnumber = trackcollection->getNumberOfElements();
-    for(int i = 0; i < elementnumber; ++i){
-      Track* eventtrack = dynamic_cast< Track* >(trackcollection->getElementAt(i));
-      streamlog_out(DEBUG0) << "Here is all the information about the track in run " << _runNumber << ", event " << _eventNumber << ", element " << i << std::endl << std::endl;
-      printTrackParameters( eventtrack );
-      kinkEstimate( eventtrack );
-      threePointResolution( eventtrack );
+    if(_eventNumber == _maxRecords - 2){ //Not sure about the -2
+      _finalEvent = true;
+      kinkGaussian();
+    } else{
+      LCCollection* trackcollection = evt->getCollection(_trackCollectionName);
+      int elementnumber = trackcollection->getNumberOfElements();
+      for(int i = 0; i < elementnumber; ++i){
+        Track* eventtrack = dynamic_cast< Track* >(trackcollection->getElementAt(i));
+        streamlog_out(DEBUG0) << "Here is all the information about the track in run " << _runNumber << ", event " << _eventNumber << ", element " << i << std::endl << std::endl;
+        printTrackParameters( eventtrack );
+        kinkEstimate( eventtrack );
+        threePointResolution( eventtrack );
+      }
     }
   } catch(DataNotAvailableException &datanotavailable){
     streamlog_out(WARNING4) << "Exception occured: " << datanotavailable.what() << std::endl

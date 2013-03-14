@@ -61,6 +61,7 @@
 #include <vector>
 //  ROOT includes
 #if defined(USE_ROOT) || defined(MARLIN_USE_ROOT)
+#include "TF1.h"
 #include "TH1F.h"
 #include "TH2F.h"
 #include "TFile.h"
@@ -193,6 +194,7 @@ private:
   void threePointResolution(EVENT::Track *track);
   void createResiduals(LCCollection *trackCollection);
   void kinkEstimate(EVENT::Track* track);
+  void kinkGaussian();
 
   //Private member values
   std::string _trackColName;
@@ -200,8 +202,10 @@ private:
   bool _debug;
   int _debugCount;  //TODO(Phillip Hamnett): Can this be deleted?
   int _eventNumber;
-  std::map<std::string , std::vector< double > > _histoData;
-  std::map<std::string , AIDA::IBaseHistogram * > _histoThing;  //This map contains all the histograms that are going to be plotted in this processor
+  bool _finalEvent;
+  std::map< std::string , std::vector< double > > _histoData;
+  std::string _histoFile;
+  std::map< std::string , AIDA::IBaseHistogram* > _histoThing;  //This map contains all the histograms that are going to be plotted in this processor
   static std::string _histoResidualX;
   static std::string _histoResidualXPlane1;
   static std::string _histoResidualXPlane2;
@@ -221,6 +225,7 @@ private:
   std::string _inputHitColName;
   std::string _inputHitCollectionName;  //Stores the name of the parameter to bring in from the Marlin steering file
   std::string _inputTrackColName;
+  int _maxRecords;
   static const int _noLayers = 6;  //TODO(Phillip Hamnett): This is a hack just so that the computer knows how many layers there are, is this stored somewhere else or should it be made as a non-const variable in case at some future date more layers are added to the telescope?
   std::map< int, std::vector< TVector3 > > _projectedHits;  //int refers to 1 or 2, with 1 being the projection from the 01 plane and 2 being the projection from the 43 plane
   std::string _referenceHitCollectionName;  //Stores the name of the file to be brought in by the Marlin steering file that is used to determine layer number
