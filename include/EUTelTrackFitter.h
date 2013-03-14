@@ -26,7 +26,7 @@ namespace eutelescope {
     class EUTelTrackFitter {
     public:
         EUTelTrackFitter();
-        EUTelTrackFitter(const EUTelTrackFitter& orig);
+ //       EUTelTrackFitter(const EUTelTrackFitter& orig);
 
         EUTelTrackFitter( std::string name );
 

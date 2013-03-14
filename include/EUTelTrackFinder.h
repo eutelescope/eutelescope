@@ -27,7 +27,7 @@ namespace eutelescope {
         
     public:
         EUTelTrackFinder();
-        EUTelTrackFinder( const EUTelTrackFinder& orig );
+ //       EUTelTrackFinder( const EUTelTrackFinder& orig );
         EUTelTrackFinder( std::string name );
         
         virtual ~EUTelTrackFinder();

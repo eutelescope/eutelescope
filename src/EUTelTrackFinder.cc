@@ -36,9 +36,10 @@ namespace eutelescope {
         return;
     }
 
+/*
     EUTelTrackFinder::EUTelTrackFinder(const EUTelTrackFinder& orig) {
     }
-
+*/
     EUTelTrackFinder::~EUTelTrackFinder() {
     }
     

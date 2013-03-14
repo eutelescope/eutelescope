@@ -14,10 +14,10 @@ namespace eutelescope {
 
     EUTelTrackFitter::EUTelTrackFitter() : _name("DefaultTrackFitter") {
     }
-
+/*
     EUTelTrackFitter::EUTelTrackFitter(const EUTelTrackFitter& orig) {
     }
-
+*/
     EUTelTrackFitter::EUTelTrackFitter( std::string name ) : _name(name) {
     }
 
