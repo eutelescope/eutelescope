@@ -690,7 +690,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
                                                                          getElementAt( iExt ) );
 
         double * externalPosition;
-        externalPosition = (double *) externalHit->getPosition();
+        externalPosition = const_cast< double* >( externalHit->getPosition() );
 
         int externalSensorID = guessSensorID( externalPosition );
 
@@ -705,7 +705,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           TrackerHitImpl  * internalHit = static_cast< TrackerHitImpl * > ( inputHitCollection->
                                                                             getElementAt( iInt ) );
           double * internalPosition;
-          internalPosition = (double *) internalHit->getPosition(  );
+          internalPosition = const_cast< double* >( internalHit->getPosition() );
 
           int internalSensorID = guessSensorID( internalPosition );
 
