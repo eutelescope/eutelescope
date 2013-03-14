@@ -35,7 +35,17 @@ namespace eutelescope {
 
 
   } 
-  
+ /* 
+  template<class PixelType>
+  EUTelSparseData2Impl<PixelType>::EUTelSparseData2Impl( const EUTelSparseData2Impl & z ) {
+
+  }
+
+  template<class PixelType>
+  EUTelSparseData2Impl<PixelType> & EUTelSparseData2Impl<PixelType>::operator=( const EUTelSparseData2Impl & z ) {
+    return *this;
+  }
+*/
   template<class PixelType>
   unsigned int EUTelSparseData2Impl<PixelType>::size() const {
     return _pixelVec.size();

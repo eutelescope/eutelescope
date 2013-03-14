@@ -88,7 +88,13 @@ namespace eutelescope {
   public:
     //! Default constructor
     EUTelSparseData2Impl(IMPL::TrackerDataImpl * data);
+    /*
+    //!Copy Constructor
+    EUTelSparseData2Impl( const EUTelSparseData2Impl & z);
 
+    //!Assignment Operator
+    EUTelSparseData2Impl & operator=( const EUTelSparseData2Impl & z);
+    */
     //! Destructor
     virtual ~EUTelSparseData2Impl() { /* NOOP */ ; }
 
