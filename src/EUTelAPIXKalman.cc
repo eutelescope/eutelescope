@@ -179,7 +179,7 @@ void EUTelAPIXKalman::init() {
   for(; zit != _zSort.end(); ++zit, index++){
     int sensorID = _siPlanesLayerLayout->getID( (*zit).second );
     double zPos  = (*zit).first; 
-    if(index >= (int)_telescopeResolution.size()){
+    if(index >= static_cast< int >(_telescopeResolution.size())){
       _telescopeResolution.push_back( 1000.0 * _siPlanesLayerLayout->getSensitiveResolution( (*zit).second ) );
     }
     double errX = _telescopeResolution.at(index);
@@ -252,7 +252,7 @@ int EUTelAPIXKalman::getPlaneIndex(double zPos){
 
 void EUTelAPIXKalman::readHitCollection(LCEvent* event){
   //Clear _planeHits
-  for(int ii = 0; ii < (int)_planeHits.size(); ii++){ _planeHits.at(ii).clear();}
+  for(int ii = 0; ii < static_cast< int >(_planeHits.size()); ii++){ _planeHits.at(ii).clear();}
   //Extract hits from collection, add to 
   LCCollection* collection;
   for(size_t i =0;i < _hitCollectionName.size();i++){
@@ -324,7 +324,7 @@ void EUTelAPIXKalman::processEvent (LCEvent * event) {
 void EUTelAPIXKalman::fitPermutations(int plane, FitPlane* prev, TrackEstimate* est, int nSkipped){
   //Got track?
   if(_nTracks > 15) { return; }
-  if(plane == (int)_planeHits.size()){
+  if(plane == static_cast< int >(_planeHits.size())){
     finalizeTrack();
     return;
   }
@@ -451,11 +451,11 @@ void EUTelAPIXKalman::addToMille(){
 
 bool EUTelAPIXKalman::goodResiduals(FitPlane* pl){
   //Check if residuals in plane passes cuts
-  if( pl->index < (int)_residualsXMax.size() and pl->index < (int)_residualsXMin.size() ){
+  if( pl->index < static_cast< int >(_residualsXMax.size()) and pl->index < static_cast< int >(_residualsXMin.size()) ){
     if(pl->resX > _residualsXMax.at( pl->index )) return(false); 
     if(pl->resX < _residualsXMin.at( pl->index )) return(false); 
   }
-  if( pl->index < (int)_residualsYMax.size() and pl->index < (int)_residualsYMin.size() ){
+  if( pl->index < static_cast< int >(_residualsYMax.size()) and pl->index < static_cast< int >(_residualsYMin.size()) ){
     if(pl->resY > _residualsYMax.at( pl->index )) return(false); 
     if(pl->resY < _residualsYMin.at( pl->index )) return(false); 
   }
@@ -465,7 +465,7 @@ bool EUTelAPIXKalman::goodResiduals(FitPlane* pl){
 bool EUTelAPIXKalman::inTimeGood(FitPlane* pl){
   //Check if track is intime with plane using residuals
   if(find (_inTimeCheck.begin(), _inTimeCheck.end(), pl->sensorID) == _inTimeCheck.end()){ return(false);}
-  for(int hit = 0; hit < (int)_planeHits.at(pl->index).size(); hit++ ){
+  for(int hit = 0; hit < static_cast< int >(_planeHits.at(pl->index).size()); hit++ ){
     addPlaneHit(pl, _planeHits.at(pl->index).at(hit));
     if( goodResiduals(pl) ){ return(true); }
   }
@@ -618,7 +618,7 @@ void EUTelAPIXKalman::bookHistos() {
   const double tracksMax = 19.5;
   const int    Chi2NBin =1000; 
   const double Chi2Min  = 0.;
-  const double Chi2Max  =(int)_maxChi2 + 1;
+  const double Chi2Max  =static_cast< int >(_maxChi2 + 1);
   const int    NBin = 10000;
   const double Min  = -20000.;
   const double Max  = 20000.;
