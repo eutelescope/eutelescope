@@ -502,9 +502,9 @@ namespace eutelescope {
     unsigned int size = _pixelVec.size();
     _pixelVec.clear();
     for ( unsigned int index = 0; index < size; index++ ) {
-      EUTelSimpleSparsePixel pixel ( (short) _trackerData->chargeValues()[index * _nElement],
-				     (short) _trackerData->chargeValues()[index * _nElement + 1],
-				     (short) _trackerData->chargeValues()[index * _nElement + 2] );
+      EUTelSimpleSparsePixel pixel ( static_cast< short >(_trackerData->chargeValues()[index * _nElement]),
+				     static_cast< short >(_trackerData->chargeValues()[index * _nElement + 1]),
+				     static_cast< short >(_trackerData->chargeValues()[index * _nElement + 2]) );
       _pixelVec.push_back( pixel );
     }
     _isPositionSorted = false;
