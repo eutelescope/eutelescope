@@ -168,7 +168,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
       PedeUserStartValuesGamma.push_back(0.0);
 
-      float zpos = 20000.0 +  20000.0 * (float)i;
+      float zpos = 20000.0 +  20000.0 * static_cast< float >(i);
       SensorZPositions.push_back(zpos);
 
       SensorXShifts.push_back(0.0);
@@ -716,7 +716,7 @@ void EUTelMille::findtracks2(
 
  for(size_t j =0; j < _allHitsArray[i].size(); j++)
     {
-      int ihit = (int)j;
+      int ihit = static_cast< int >(j);
       streamlog_out(DEBUG9) << "ihit:" << ihit << std::endl;
 
       //if we are not in the last plane, call this method again
@@ -819,7 +819,7 @@ void EUTelMille::findtracks2(
               } 
             }
 
-          if((int)indexarray.size() >= _maxTrackCandidates)
+          if(static_cast< int >(indexarray.size()) >= _maxTrackCandidates)
             taketrack = false;
  
           if(taketrack)
@@ -855,9 +855,9 @@ void EUTelMille::findtracks(
  for(size_t j =0; j < _hitsArray[i].size(); j++)
     {
       //if we are not in the last plane, call this method again
-      if(i<(int)(_hitsArray.size())-1)
+      if(i < static_cast< int >((_hitsArray.size())-1))
         {
-          vec.push_back((int)j); //index of the cluster in the last plane
+          vec.push_back(static_cast< int >(j)); //index of the cluster in the last plane
          
           //track candidate requirements
           bool taketrack = true;
@@ -884,12 +884,12 @@ void EUTelMille::findtracks(
           vec.pop_back(); 
 
           if(taketrack)
-            findtracks(indexarray,vec, _hitsArray, i+1,(int)j);
+            findtracks(indexarray,vec, _hitsArray, i+1,static_cast< int >(j));
         }
       else
         {
           //we are in the last plane
-          vec.push_back((int)j); //index of the cluster in the last plane
+          vec.push_back(static_cast< int >(j)); //index of the cluster in the last plane
 
           //track candidate requirements
           bool taketrack = true;
@@ -912,7 +912,7 @@ void EUTelMille::findtracks(
                 taketrack = false;
 
             }
-          if((int)indexarray.size() >= _maxTrackCandidates)
+          if(static_cast< int >(indexarray.size()) >= _maxTrackCandidates)
             taketrack = false;
  
           if(taketrack)
@@ -1054,7 +1054,7 @@ double residYFit[], double angleFit[2]) {
                       +yPosFit[counter]-Ybar[1]+Xbar[1]*A2[1],2)/pow(yResFit[counter],2);
   }
 
-  for( counter = 0; counter < (int)nPlanesFitter; counter++ ) {
+  for( counter = 0; counter < static_cast< int >(nPlanesFitter); counter++ ) {
     residXFit[counter] = (Ybar[0]-Xbar[0]*A2[0]+zPosFitter[counter]*A2[0])-xPosFitter[counter];
     residYFit[counter] = (Ybar[1]-Xbar[1]*A2[1]+zPosFitter[counter]*A2[1])-yPosFitter[counter];
   }
@@ -1447,7 +1447,7 @@ void EUTelMille::processEvent (LCEvent * event) {
       }
 
 
-    _nTracks = (int) indexarray.size();
+    _nTracks = static_cast< int >(indexarray.size());
     streamlog_out( DEBUG5 ) << "Track finder found " << _nTracks << std::endl;
 
     // end check if running in input mode 0 or 2 => perform simple track finding
@@ -1845,9 +1845,9 @@ void EUTelMille::processEvent (LCEvent * event) {
                 index_hitsarray++;
               }
           }
-          mean_z = mean_z / (double)(mean_n);
-          mean_x = mean_x / (double)(mean_n);
-          mean_y = mean_y / (double)(mean_n);
+          mean_z = mean_z / static_cast< double >((mean_n));
+          mean_x = mean_x / static_cast< double >((mean_n));
+          mean_y = mean_y / static_cast< double >((mean_n));
 	  
           int diff_mean = _nPlanes - mean_n;
 
@@ -2687,7 +2687,7 @@ int EUTelMille::guessSensorID( double * hit )
     return sensorID;
   }
 
-      for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
+      for(size_t ii = 0 ; ii < static_cast< unsigned int >(_referenceHitVec->getNumberOfElements()); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         
@@ -2994,7 +2994,7 @@ void EUTelMille::end() {
           bool fixed = false;
           for(size_t i = 0;i< _FixedPlanes.size(); i++)
             {
-              if(_FixedPlanes[i] == (int)help)
+              if(_FixedPlanes[i] == static_cast< int >(help))
                 fixed = true;
             }
           
@@ -3221,7 +3221,7 @@ void EUTelMille::end() {
 	    streamlog_out ( DEBUG5 ) << " Parsing pede output for final chi2/ndf result.. " << endl;
 	    // search for the equal sign after which the result for chi2/ndf is stated within the next 80 chars 
 	    // (with offset of 22 chars since pch points to beginning of "Sum(..." string just found)
-	    char* pch = (char*) memchr (pch0+22, '=', 180);
+	    char* pch = static_cast< char* >(memchr (pch0+22, '=', 180));
 	    if (pch!=NULL){
 	      char str[16];
 	      // now copy the numbers after the equal sign
