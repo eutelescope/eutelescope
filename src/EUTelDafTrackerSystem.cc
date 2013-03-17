@@ -66,7 +66,7 @@ bool planeSort(FitPlane p1, FitPlane p2){ return( p1.getZpos() < p2.getZpos() );
 void TrackerSystem::init(){
   sort(planes.begin(), planes.end(), planeSort);
   mcTruth.resize(planes.size());
-  for(int ii = 0; ii < (int) planes.size(); ii++){
+  for(int ii = 0; ii < static_cast< int >(planes.size()); ii++){
     planes.at(ii).print();
     mcTruth.at(ii) = new TrackEstimate();
   }
@@ -80,7 +80,7 @@ void TrackerSystem::init(){
 }
 
 void TrackerSystem::clear(){
-  for(int ii = 0; ii < (int)planes.size(); ii++){ planes.at(ii).clear(); }
+  for(int ii = 0; ii < static_cast< int >(planes.size()); ii++){ planes.at(ii).clear(); }
   m_nTracks = 0;
 }
 
@@ -92,7 +92,7 @@ void TrackerSystem::addMeasurement(size_t planeIndex, float x, float y, float z,
 void TrackerSystem::getChi2Kf(TrackCandidate *candidate){
   float chi2(0.0), ndof(0.0);
   Eigen::Vector2f chi2v;
-  for(int plane = 0; plane < (int) planes.size(); plane++){
+  for(int plane = 0; plane < static_cast< int >(planes.size()); plane++){
     FitPlane& p = planes.at(plane);
     if(p.isExcluded()) { continue; }
     if(candidate->indexes.at(plane) < 0) { continue; }
@@ -108,7 +108,7 @@ void TrackerSystem::getChi2Kf(TrackCandidate *candidate){
 void TrackerSystem::getChi2Daf(TrackCandidate *candidate){
   float chi2(0.0), ndof(0.0);
   Vector2f chi2v;
-  for(int plane = 0; plane <(int) planes.size(); plane++){
+  for(int plane = 0; plane <static_cast< int >(planes.size()); plane++){
     FitPlane& p = planes.at(plane);
     if(p.isExcluded()){continue;}
     for(size_t meas = 0; meas < p.meas.size(); meas++){
@@ -221,14 +221,14 @@ void TrackerSystem::fitPlanesInfo(TrackCandidate *candidate){
 
   m_fitter->smoothInfo();
 
-  for(int ii = 0; ii < (int) planes.size() ; ii++ ){
+  for(int ii = 0; ii < static_cast< int >(planes.size()); ii++ ){
     candidate->estimates.at(ii)->copy( m_fitter->smoothed.at(ii) );
   }
   getChi2Kf(candidate);
 }
 
 void TrackerSystem::intersect(){
-  for(int plane = 0; plane < (int) planes.size(); plane++ ){
+  for(int plane = 0; plane < static_cast< int >(planes.size()); plane++ ){
 //    printf("intersect:: plane %5d of %5d \n", plane, planes.size() );
     FitPlane& pl = planes.at(plane);
     TrackEstimate* estim = m_fitter->smoothed.at(plane);
@@ -286,7 +286,7 @@ float TrackerSystem::runTweight(float t){
 void TrackerSystem::fitPlanesInfoDaf(TrackCandidate *candidate){
   float ndof = -4.0f;
 //printf("TrackerSystem::fitPlanesInfoDaf\n");
-  for(int plane = 0; plane < (int) planes.size(); plane++ ){
+  for(int plane = 0; plane < static_cast< int >(planes.size()); plane++ ){
     //Copy weights from candidate, get tot weight per plane
 
     planes.at(plane).weights.resize( candidate->weights.at(plane).size() );
@@ -317,7 +317,7 @@ void TrackerSystem::fitPlanesInfoDaf(TrackCandidate *candidate){
   if(ndof > 0.0f) { ndof = runTweight(.1); }
 //printf("and now ndof %5.3f\n",ndof);  
   if(ndof > 0.0f) {
-    for(int ii = 0; ii <(int)  planes.size() ; ii++ ){
+    for(int ii = 0; ii <static_cast< int >(planes.size()); ii++ ){
       //Store estimates and weights in candidate
       candidate->estimates.at(ii)->copy( m_fitter->smoothed.at(ii) );
       candidate->weights.at(ii) = planes.at(ii).weights;
@@ -435,7 +435,7 @@ float TrackerSystem::fitPlanesInfoDafBiased(){
 
 void TrackerSystem::truthTracker(){
   TrackCandidate *candidate = tracks.at(0);
-  for(int ii = 0 ; ii < (int) planes.size() ; ii++){
+  for(int ii = 0 ; ii < static_cast< int >(planes.size()); ii++){
     candidate->weights.at(ii).resize( planes.at(ii).meas.size());
     candidate->weights.at(ii).setZero();
     if( (not planes.at(ii).isExcluded()) and (planes.at(ii).meas.size() > 0)){
