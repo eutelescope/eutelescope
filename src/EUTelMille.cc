@@ -855,7 +855,7 @@ void EUTelMille::findtracks(
  for(size_t j =0; j < _hitsArray[i].size(); j++)
     {
       //if we are not in the last plane, call this method again
-      if(i < static_cast< int >((_hitsArray.size())-1))
+      if(i < static_cast< int >((_hitsArray.size()))-1)
         {
           vec.push_back(static_cast< int >(j)); //index of the cluster in the last plane
          
@@ -1845,9 +1845,9 @@ void EUTelMille::processEvent (LCEvent * event) {
                 index_hitsarray++;
               }
           }
-          mean_z = mean_z / static_cast< double >((mean_n));
-          mean_x = mean_x / static_cast< double >((mean_n));
-          mean_y = mean_y / static_cast< double >((mean_n));
+          mean_z = mean_z / static_cast< double >(mean_n);
+          mean_x = mean_x / static_cast< double >(mean_n);
+          mean_y = mean_y / static_cast< double >(mean_n);
 	  
           int diff_mean = _nPlanes - mean_n;
 
@@ -3221,7 +3221,7 @@ void EUTelMille::end() {
 	    streamlog_out ( DEBUG5 ) << " Parsing pede output for final chi2/ndf result.. " << endl;
 	    // search for the equal sign after which the result for chi2/ndf is stated within the next 80 chars 
 	    // (with offset of 22 chars since pch points to beginning of "Sum(..." string just found)
-	    char* pch = static_cast< char* >(memchr (pch0+22, '=', 180));
+	    char* pch = (char*)(memchr (pch0+22, '=', 180));
 	    if (pch!=NULL){
 	      char str[16];
 	      // now copy the numbers after the equal sign
