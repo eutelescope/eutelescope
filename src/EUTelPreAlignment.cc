@@ -72,7 +72,7 @@ EUTelPreAlign::EUTelPreAlign () :Processor("EUTelPreAlign") {
 			    _alignmentConstantLCIOFile, std::string( "alignment.slcio" ) );
 
   registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
-                             _hotPixelCollectionName, static_cast< string > ( "hotpixel_apix" ));
+                             _hotPixelCollectionName, static_cast< string > ( "hotpixel" ));
 
   registerProcessorParameter ("Events",
                               "How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)",
