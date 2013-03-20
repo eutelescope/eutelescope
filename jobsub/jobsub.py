@@ -336,6 +336,9 @@ def main(argv=None):
             log.error("The list of runs contains non-integer and non-range values: '%s'", runnum)
             return 2
 
+    if not runs:
+        log.error("No run numbers were specified. Please see '"+progName+" --help' for details.")
+        return 2
     # set the logging level
     numeric_level = getattr(logging, "INFO", None) # default: INFO messages and above
     if args.log:
