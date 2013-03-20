@@ -149,7 +149,6 @@ void EUTelAPIXClusteringProcessor::init () {
 
     for(int i = 0; i < (int)_ClusterLimits.size(); i=i+5)
     {
-       int ivector = i % 5;
        int iSensor = _ClusterLimits.at(i);
        _ClusterLimitsMap[ iSensor ].push_back(_ClusterLimits.at(i+1));
        _ClusterLimitsMap[ iSensor ].push_back(_ClusterLimits.at(i+2));
