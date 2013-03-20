@@ -272,16 +272,19 @@ def zipLogs(path, filename):
     except ImportError: # no compression module available, use flat files
         compression = zipfile.ZIP_STORED
         log.debug("Creating flat log archive")
-    zf = zipfile.ZipFile(os.path.join(path, filename)+".zip", mode='w') # create new zip file
     try:
-        zf.write(os.path.join("./", filename)+".xml", compress_type=compression) # store in zip file
-        zf.write(os.path.join("./", filename)+".log", compress_type=compression) # store in zip file
-        os.remove(os.path.join("./", filename)+".xml") # delete file
-        os.remove(os.path.join("./", filename)+".log") # delete file
-        log.info("Logs written to "+os.path.join(path, filename)+".zip")
-    finally:
-        log.debug("Closing log archive file")
-        zf.close()
+        zf = zipfile.ZipFile(os.path.join(path, filename)+".zip", mode='w') # create new zip file
+        try:
+            zf.write(os.path.join("./", filename)+".xml", compress_type=compression) # store in zip file
+            zf.write(os.path.join("./", filename)+".log", compress_type=compression) # store in zip file
+            os.remove(os.path.join("./", filename)+".xml") # delete file
+            os.remove(os.path.join("./", filename)+".log") # delete file
+            log.info("Logs written to "+os.path.join(path, filename)+".zip")
+        finally:
+            log.debug("Closing log archive file")
+            zf.close()
+    except IOError: # could not create zip file - path non-existant?!
+        log.error("Input/Output error: Could not create log and steering file archive ("+os.path.join(path, filename)+".zip"+")!")
 
 def main(argv=None):
     """  main routine of jobsub: a tool for EUTelescope job submission to Marlin """
