@@ -151,16 +151,10 @@ void EUTelAPIXClusteringProcessor::init () {
     {
        int ivector = i % 5;
        int iSensor = _ClusterLimits.at(i);
-       printf("%5d : ivector %5d sensorID: %2d \n", i, ivector, iSensor );
        _ClusterLimitsMap[ iSensor ].push_back(_ClusterLimits.at(i+1));
        _ClusterLimitsMap[ iSensor ].push_back(_ClusterLimits.at(i+2));
        _ClusterLimitsMap[ iSensor ].push_back(_ClusterLimits.at(i+3));
        _ClusterLimitsMap[ iSensor ].push_back(_ClusterLimits.at(i+4));
-       printf("%5d : _ClusterLimitsMap[%2d] %5d %5d %5d %d \n", i, iSensor, 
-                                                     _ClusterLimitsMap[ iSensor ][0],
-                                                     _ClusterLimitsMap[ iSensor ][1],
-                                                     _ClusterLimitsMap[ iSensor ][2],
-                                                     _ClusterLimitsMap[ iSensor ][3]  );
     }  
 
 }

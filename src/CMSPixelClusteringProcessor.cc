@@ -228,8 +228,8 @@ void CMSPixelClusteringProcessor::initializeHotPixelMapVec(  )
  
         if ( _layerIndexMap.find( sensorID ) == _layerIndexMap.end()   )
         {
-            printf("sensor %5u not found in the present Data, so skip the hotPixel info for this sensor \n", sensorID);
-            continue;
+	  streamlog_out( WARNING5 ) << "sensor " << sensorID << " not found in the present Data, so skip the hotPixel info for this sensor " << endl;
+	  continue;
         }
        
         // prepare the matrix decoder
