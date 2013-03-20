@@ -162,7 +162,7 @@ def loadparamsfromcsv(csvfilename, runs):
             csvfile.close()
     except csv.Error, e:
         log.error("Problem loading the csv file '"+csvfilename+"'({0}): {1}".format(e.errno, e.strerror))
-        return 1
+        exit(1)
     return parameters_csv
 
 def checkSteer(sstring):
@@ -443,25 +443,27 @@ def main(argv=None):
             break  # if we received ctrl-c (SIGINT) we stop processing here
 
         runnr = str(run).zfill(6)
-        log.info ("Generating steering file for run number "+runnr)
+        log.info ("Now generating steering file for run number "+runnr+"..")
 
         # make a copy of the preprocessed steering file content
         steeringString = steeringStringBase
 
         # if we have a csv file we can parse, we will lookup the runnumber and replace any
         # variables identified by the csv header by the run specific value
-        try:
-            for field in parameters_csv[run].keys():
-                # check if we actually find all parameters from the csv file in the steering file - warn if not
-                log.debug("Parsing steering file for csv field name '%s'", field)
-                try:
-                    # check that the field name is not empty and do not yet replace the runnumber
-                    if not field == "" and not field == "runnumber":                    
-                        steeringString = ireplace("@" + field + "@", parameters_csv[run][field], steeringString)
-                except EOFError:
-                    log.warn(" Parameter '" + field + "' from the csv file was not found in the template file (already overwritten by config file parameters?)")
-        except KeyError:
-            log.debug("No information from CSV found for this run")
+        if parameters_csv:
+            try:
+                for field in parameters_csv[run].keys():
+                    # check if we actually find all parameters from the csv file in the steering file - warn if not
+                    log.debug("Parsing steering file for csv field name '%s'", field)
+                    try:
+                        # check that the field name is not empty and do not yet replace the runnumber
+                        if not field == "" and not field == "runnumber":                    
+                            steeringString = ireplace("@" + field + "@", parameters_csv[run][field], steeringString)
+                    except EOFError:
+                        log.warn(" Parameter '" + field + "' from the csv file was not found in the template file (already overwritten by config file parameters?)")
+            except KeyError:
+                log.warning("Run #" + runnr + " was not found in the specified CSV file - will skip this run! ")
+                continue
 
         try:
             steeringString = ireplace("@RunNumber@", runnr, steeringString)
