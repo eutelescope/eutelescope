@@ -234,18 +234,6 @@ void EUTelCorrelator::init() {
     _sensorIDVecZOrder.push_back( _sensors_to_the_left );
     _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
  
-    streamlog_out (MESSAGE4) << " ";
-    printf("iPlane %-3d sensor_#_along_Z_axis %-3d [z= %-9.3f ] [sensorID %-3d ]  rot:[%5.f %5.2f %5.2f %5.2f] - check sensorIDtoZOrderMap = %-3d \n", iPlane, _sensors_to_the_left, _siPlaneZPosition[ iPlane ], sensorID,            
-             _siPlanesRotations[iPlane][1],
-             _siPlanesRotations[iPlane][2],
-             _siPlanesRotations[iPlane][3],
-             _siPlanesRotations[iPlane][4],
-
-             _sensorIDtoZOrderMap[sensorID]
-             ); 
-    streamlog_out (MESSAGE4) << endl;
-
-
     _minX[ sensorID ] = 0;
     _minY[ sensorID ] = 0;
     _maxX[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelX( iPlane ) - 1;
@@ -260,7 +248,7 @@ void EUTelCorrelator::init() {
     {
         _maxX[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelY( iPlane ) - 1;
         _maxY[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelX( iPlane ) - 1;        
-        printf("sensorID %5d maxX %5d maxY %5d \n", sensorID, _maxX[sensorID], _maxY[sensorID]);
+
         _hitMinX[ sensorID ] =  _siPlanesLayerLayout->getSensitivePositionY( iPlane ) - 0.5*_siPlanesLayerLayout->getSensitiveSizeY ( iPlane ) ;
         _hitMaxX[ sensorID ] =  _siPlanesLayerLayout->getSensitivePositionY( iPlane ) + 0.5*_siPlanesLayerLayout->getSensitiveSizeY ( iPlane ) ;
         _hitMinY[ sensorID ] =  _siPlanesLayerLayout->getSensitivePositionX( iPlane ) - 0.5*_siPlanesLayerLayout->getSensitiveSizeX ( iPlane ) ;
@@ -284,7 +272,7 @@ void EUTelCorrelator::init() {
     }   
         else
         {
-            streamlog_out (MESSAGE4) << "unknown sensor rotation configuration ?! check your Gear file or ammend the code " << endl;
+            streamlog_out (WARNING5) << "unknown sensor rotation configuration ?! check your Gear file or ammend the code " << endl;
             _hitMinX[ sensorID ] =  -10000.;
             _hitMaxX[ sensorID ] =   10000.;
             _hitMinY[ sensorID ] =  -10000.;
@@ -316,7 +304,7 @@ void EUTelCorrelator::processRunHeader (LCRunHeader * rdr) {
 
 
   if ( runHeader->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
-    streamlog_out ( ERROR1 ) <<  "Error during the geometry consistency check: " << endl
+    streamlog_out ( WARNING5 ) <<  "Error during the geometry consistency check: " << endl
                              << "The run header says the GeoID is " << runHeader->getGeoID() << endl
                              << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID()
                              << endl;
@@ -351,14 +339,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
     
   if(_iEvt > _events) return;
-    
-  if (_iEvt % 1000 == 0)
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
-                              << setfill(' ') << " (Total = " << setw(10) << _iEvt << ")"
-                              << resetiosflags(ios::left) << endl;
-  ++_iEvt;
+      ++_iEvt;
 
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
@@ -514,15 +495,9 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             externalCluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
               ( static_cast<TrackerDataImpl *> ( externalPulse->getTrackerData()  ) );
  
-        } else {
-
-//          streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
-            continue;
-//          throw UnknownDataTypeException("Cluster type unknown");
-       }
+        } else  continue;
 
         int externalSensorID = pulseCellDecoder( externalPulse ) [ "sensorID" ] ;
-//        printf("cluster type: %5d ID:%5d\n", type,externalSensorID);
  
         float externalXCenter;
         float externalYCenter;
@@ -597,11 +572,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
             internalCluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel >
               ( static_cast<TrackerDataImpl *> ( internalPulse->getTrackerData()  ) );
  
-          } else {
-//            streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
-            continue;
-//            throw UnknownDataTypeException("Cluster type unknown");
-          }
+          } else  continue;
 
           if( internalCluster->getTotalCharge() < _clusterChargeMin )
           {
@@ -708,15 +679,9 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           internalPosition = const_cast< double* >( internalHit->getPosition() );
 
           int internalSensorID = guessSensorID( internalPosition );
-
-//          printf("try to define a hot pixel and skip \n");
           bool ishot = hitContainsHotPixels(internalHit); 
-//          printf("try to define a hot pixel and skip, ishot=%1d \n", ishot);
-          if( ishot )
-          {
-//            printf("in sensorID %2d hit %3d is HHHHHOT\n", internalSensorID, iInt);
-            continue;
-          }
+
+          if( ishot ) continue;
 
           if ( 
                   ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
@@ -1330,12 +1295,6 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             colMin = safetyFactor * ( _hitMinX[row] - _hitMaxX[row]);
             colMax = safetyFactor * ( _hitMaxX[row] - _hitMinX[row]);
 
-            streamlog_out ( DEBUG5 ) << " GEAR contents: " ;
-            streamlog_out ( DEBUG5 ) << "X:: r= " << r << "  sizeX:" << _siPlanesLayerLayout->getSensitiveSizeX( r ) ;
-            streamlog_out ( DEBUG5 ) << "X:: r= " << c << "  sizeX:" << _siPlanesLayerLayout->getSensitiveSizeX( c ) ;
-            streamlog_out ( DEBUG5 ) << "[col: "<< colNBin<<" row:" << rowNBin << "]";
-            streamlog_out ( DEBUG5 ) << endl;
-
 if(colNBin>100) colNBin=colNBin/4;
 if(rowNBin>100) rowNBin=rowNBin/4;
            histo2D = AIDAProcessor::histogramFactory(this)->createHistogram2D( tempHistoName.c_str(), rowNBin, rowMin, rowMax, colNBin, colMin, colMax );
@@ -1360,11 +1319,6 @@ if(rowNBin>100) rowNBin=rowNBin/4;
             colMax = safetyFactor * ( _hitMaxY[row] - _hitMinY[row]);
 
             
-            streamlog_out ( DEBUG5 ) << " GEAR contents: " ;
-            streamlog_out ( DEBUG5 ) << "Y:: r= " << r << "  sizeY:" << _siPlanesLayerLayout->getSensitiveSizeY( r ) ;
-            streamlog_out ( DEBUG5 ) << "Y:: r= " << c << "  sizeY:" << _siPlanesLayerLayout->getSensitiveSizeY( c ) ;
-            streamlog_out ( DEBUG5 ) << "[col: "<< colNBin<<" row:" << rowNBin << "]";
-            streamlog_out ( DEBUG5 ) << endl;
 if(colNBin>100) colNBin=colNBin/4;
 if(rowNBin>100) rowNBin=rowNBin/4;
 
@@ -1671,11 +1625,11 @@ void  EUTelCorrelator::FillHotPixelMap(LCEvent *event)
     try 
     {
       hotPixelCollectionVec = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
-      streamlog_out ( MESSAGE5 ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " found" << endl; 
+      streamlog_out ( DEBUG5 ) << "Hotpixel collection " << _hotPixelCollectionName.c_str() << " found" << endl; 
     }
     catch (...)
     {
-      streamlog_out ( MESSAGE5 ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " not found" << endl; 
+      streamlog_out ( MESSAGE5 ) << "Hotpixel collection " << _hotPixelCollectionName.c_str() << " not found" << endl; 
       return;
     }
 
@@ -1687,7 +1641,6 @@ void  EUTelCorrelator::FillHotPixelMap(LCEvent *event)
 	   SparsePixelType  type         = static_cast<SparsePixelType> (static_cast<int> (cellDecoder( hotPixelData )["sparsePixelType"]));
 
 	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
-           streamlog_out ( MESSAGE5 ) << "sensorID: " << sensorID << " type " << kEUTelAPIXSparsePixel << " ?= " << type << endl; 
 
            if( type  == kEUTelAPIXSparsePixel)
            {  
