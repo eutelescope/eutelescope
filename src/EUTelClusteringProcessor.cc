@@ -349,7 +349,7 @@ void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( mar
   _sensorIDVec.clear();
 
 
-  streamlog_out( MESSAGE4 ) << "Initializing geometry" << endl;
+  streamlog_out( DEBUG5 ) << "Initializing geometry" << endl;
 
   try {
     nzsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > (event->getCollection( _nzsDataCollectionName ) );
@@ -363,7 +363,7 @@ void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( mar
 
   } catch ( lcio::DataNotAvailableException ) {
     // do nothing
-    streamlog_out( MESSAGE5 ) << "EUTelClusteringProcessor::initializeGeometry  _nzsDataCollectionName " << _nzsDataCollectionName.c_str() << " not found " << endl; 
+    streamlog_out( DEBUG5 ) << "_nzsDataCollectionName " << _nzsDataCollectionName.c_str() << " not found " << endl; 
   }
 
   try 
@@ -381,7 +381,7 @@ void EUTelClusteringProcessor::initializeGeometry( LCEvent * event ) throw ( mar
 
   } catch ( lcio::DataNotAvailableException ) {
     // do nothing again
-    streamlog_out( WARNING ) << "EUTelClusteringProcessor::initializeGeometry  _zsDataCollectionName " << _zsDataCollectionName.c_str() << " not found " << endl; 
+    streamlog_out( DEBUG5 ) << "_zsDataCollectionName " << _zsDataCollectionName.c_str() << " not found " << endl; 
   }
 
 
@@ -453,7 +453,7 @@ void EUTelClusteringProcessor::modifyEvent( LCEvent * /* event */ )
 
 void EUTelClusteringProcessor::initializeHotPixelMapVec(  )
 {
-    streamlog_out(DEBUG4) << "EUTelClusteringProcessor::initializeHotPixelMapVec, hotPixelCollectionVec size = " << hotPixelCollectionVec->size() << endl;
+    streamlog_out(DEBUG4) << "initializeHotPixelMapVec, hotPixelCollectionVec size = " << hotPixelCollectionVec->size() << endl;
     
     // prepare some decoders
     CellIDDecoder<TrackerDataImpl> cellDecoder( hotPixelCollectionVec );
@@ -625,19 +625,19 @@ void EUTelClusteringProcessor::readCollections (LCEvent * event)
 
     try {
         nzsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > (event->getCollection( _nzsDataCollectionName ) );
-        streamlog_out ( DEBUG4 ) << "EUTelClusteringProcessor::readCollections  nzsInputDataCollectionVec: " << _nzsDataCollectionName.c_str() << " found " << endl;
+        streamlog_out ( DEBUG4 ) << "nzsInputDataCollectionVec: " << _nzsDataCollectionName.c_str() << " found " << endl;
     } catch ( lcio::DataNotAvailableException ) {
         // do nothing
-        streamlog_out ( DEBUG4 ) << "EUTelClusteringProcessor::readCollections  nzsInputDataCollectionVec: " << _nzsDataCollectionName.c_str() << " not found " << endl;
+        streamlog_out ( DEBUG4 ) << "nzsInputDataCollectionVec: " << _nzsDataCollectionName.c_str() << " not found " << endl;
     }
 
     
     try {
         zsInputDataCollectionVec = dynamic_cast< LCCollectionVec * > ( event->getCollection( _zsDataCollectionName ) ) ;
-        streamlog_out ( DEBUG4 ) << "EUTelClusteringProcessor::readCollections  zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " found " << endl;
+        streamlog_out ( DEBUG4 ) << "zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " found " << endl;
     } catch ( lcio::DataNotAvailableException ) {
         // do nothing again
-        streamlog_out ( DEBUG4 ) << "EUTelClusteringProcessor::readCollections  zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " not found " << endl;
+        streamlog_out ( DEBUG4 ) << "zsInputDataCollectionVec: " << _zsDataCollectionName.c_str() << " not found " << endl;
     }
 
    
@@ -1247,9 +1247,9 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                         // sanity check
                         if(seedX == -1 || seedY == -1)
                         {
-                            cout << "a cluster was found but no seed pixel coordinates!" << endl;
-                            cout << pix.size() << " " << i->x << " " << i->y << endl;
-                            exit(-1);
+			  streamlog_out(DEBUG5) << "a cluster was found but no seed pixel coordinates!" << endl;
+			  streamlog_out(DEBUG5) << pix.size() << " " << i->x << " " << i->y << endl;
+			  exit(-1);
                         }
 
                         // now lets fill the cluster pixel matrix, which is required
@@ -3367,16 +3367,10 @@ void EUTelClusteringProcessor::end() {
   map< int, int >::iterator iter = _totClusterMap.begin();
   while ( iter != _totClusterMap.end() ) {
 
-#ifdef MARLINDEBUG
-    /// /* DEBUG */    message<DEBUG5> ( logfile << "Found " << iter->second << " clusters on detector " << iter->first );
-#endif
     streamlog_out ( MESSAGE2 ) << "Found " << iter->second << " clusters on detector " << iter->first << endl;
     ++iter;
 
   }
-#ifdef MARLINDEBUG
-  /// /* DEBUG */  logfile.close();
-#endif
 }
 
 

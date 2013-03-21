@@ -369,7 +369,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
          event->getCollection( _inputClusterCollectionName );
  
          _hasClusterCollection = true;
-         streamlog_out ( MESSAGE5 ) << "found " << i <<  " name " <<   _inputClusterCollectionName.c_str() << endl;
+         streamlog_out ( DEBUG5 ) << "found " << i <<  " name " <<   _inputClusterCollectionName.c_str() << endl;
  
        } catch ( lcio::Exception& e ) {
          streamlog_out ( WARNING ) << "NOT found " << i <<  " name " <<   _inputClusterCollectionName.c_str() << endl;
@@ -1017,7 +1017,7 @@ void EUTelCorrelator::bookHistos() {
 
   try {
 
-    streamlog_out ( MESSAGE4 ) <<  "Booking histograms" << endl;
+    streamlog_out ( DEBUG5 ) <<  "Booking histograms" << endl;
 
     // create all the directories first
     vector< string > dirNames;
