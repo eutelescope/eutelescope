@@ -199,11 +199,11 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
     try 
     {
       hotPixelCollectionVec = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
-      streamlog_out ( MESSAGE5 ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " found" << endl; 
+      streamlog_out ( DEBUG5 ) << "Hotpixel database " << _hotPixelCollectionName.c_str() << " found" << endl; 
     }
     catch (...)
     {
-      streamlog_out ( MESSAGE5 ) << "_hotPixelCollectionName " << _hotPixelCollectionName.c_str() << " not found" << endl; 
+      streamlog_out ( MESSAGE5 ) << "Hotpixel database " << _hotPixelCollectionName.c_str() << " not found" << endl; 
       return;
     }
 
@@ -215,7 +215,6 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 	   SparsePixelType  type         = static_cast<SparsePixelType> (static_cast<int> (cellDecoder( hotPixelData )["sparsePixelType"]));
 
 	   int sensorID              = static_cast<int > ( cellDecoder( hotPixelData )["sensorID"] );
-           streamlog_out ( MESSAGE5 ) << "sensorID: " << sensorID << " type " << kEUTelAPIXSparsePixel << " ?= " << type << endl; 
 
            if( type  == kEUTelAPIXSparsePixel)
            {  
@@ -226,7 +225,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
              {
                std::vector<int> apixColVec();
                apixData->getSparsePixelAt( iPixel, &apixPixel);
-               streamlog_out ( MESSAGE5 ) << iPixel << " of " << apixData->size() << " HotPixelInfo:  " << apixPixel.getXCoord() << " " << apixPixel.getYCoord() << " " << apixPixel.getSignal() << " " << apixPixel.getChip() << " " << apixPixel.getTime()<< endl;
+
                try
                {
                   char ix[100];
@@ -251,7 +250,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
              {
               std::vector<int> m26ColVec();
               m26Data->getSparsePixelAt( iPixel, &m26Pixel);
-              streamlog_out ( MESSAGE5 ) << iPixel << " of " << m26Data->size() << " HotPixelInfo:  " << m26Pixel.getXCoord() << " " << m26Pixel.getYCoord() << " " << m26Pixel.getSignal() << endl;
+
               try
               {
                  char ix[100];

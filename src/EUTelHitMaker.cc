@@ -330,7 +330,7 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
 
 
   if ( header->getGeoID() != _siPlanesParameters->getSiPlanesID() ) {
-    streamlog_out ( ERROR1 ) <<  "Error during the geometry consistency check: " << endl
+    streamlog_out ( WARNING5 ) <<  "Error during the geometry consistency check: " << endl
                              << "The run header says the GeoID is " << header->getGeoID() << endl
                              << "The GEAR description says is     " << _siPlanesParameters->getSiPlanesID() << endl;
 #ifdef EUTEL_INTERACTIVE
@@ -359,13 +359,7 @@ void EUTelHitMaker::processRunHeader (LCRunHeader * rdr) {
 
 void EUTelHitMaker::processEvent (LCEvent * event) {
 
- 
-  if (_iEvt % 1000 == 0)
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-  ++_iEvt;
+   ++_iEvt;
 
 
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event) ;
@@ -707,11 +701,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         {
             p_tmpBrickedCluster->getCenterOfGravityShiftWithOutGlobalSeedCoordinateCorrection(xShift,yShift);
         }
-        else
-        {
-            streamlog_out( DEBUG5 ) << "Center of gravity algorithm: FULL" << endl;
-            cluster->getCenterOfGravityShift( xShift, yShift );
-        }
+        else cluster->getCenterOfGravityShift( xShift, yShift );
       }
       else if ( _cogAlgorithm == "npixel" )
       {
