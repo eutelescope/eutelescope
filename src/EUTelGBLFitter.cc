@@ -197,6 +197,7 @@ namespace eutelescope {
         double tetAir = 0.; //(0.0136 * sqrt(X0Air) / p * ( 1 + 0.038*std::log(X0Air) ));
 
         TVectorD scatPrec(2);
+        //2 for x and y directions
         scatPrec[0] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
         scatPrec[1] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
 

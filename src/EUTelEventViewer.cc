@@ -78,19 +78,19 @@ EUTelEventViewer::EUTelEventViewer() : Processor("EUTelEventViewer") {
   registerProcessorParameter("LayerTrackerHit",
                              "Layer for Tracker Hits",
                              _layerTrackerHit,
-                             (int)-1);
+                             static_cast< int >(-1));
 
   registerProcessorParameter("LayerTracks",
                              "Layer for Tracks",
                              _layerTrack,
-                             (int)-1);
+                             static_cast< int >(-1));
 
   registerProcessorParameter("DetectorModel",
                              "Detector Model:\n"
 			     " 99999 to draw the ideal model taken from the GEAR description\n"
 			     "    -1 to draw the model described by GEAR and corrected for alignment",
                              _detModel,
-                             (int)99999);
+                             static_cast< int >(99999));
 
   registerProcessorParameter("WaitForKeyboard",
                              "Wait for Keyboard before proceed",

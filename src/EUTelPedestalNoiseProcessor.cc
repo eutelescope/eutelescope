@@ -1612,10 +1612,10 @@ void EUTelPedestalNoiseProcessor::finalizeProcessor(bool fromMaskingLoop) {
         for (int yPixel = _minY[iDetector]; yPixel <= _maxY[iDetector]; yPixel++) {
           for (int xPixel = _minX[iDetector]; xPixel <= _maxX[iDetector]; xPixel++) {
             if ( AIDA::IProfile2D * profile = dynamic_cast<AIDA::IProfile2D*> (_aidaHistoMap[ss.str()]) ) {
-              tempPede.push_back((float) profile->binHeight(xPixel,yPixel));
+              tempPede.push_back( static_cast< float >(profile->binHeight(xPixel,yPixel)));
               // WARNING: the noise part of this algorithm is still not
               // working probably because of a bug in RAIDA implementation
-              tempNoise.push_back((float) profile->binRms(xPixel,yPixel));
+              tempNoise.push_back( static_cast< float >(profile->binRms(xPixel,yPixel)));
               //cout << xPixel << " " << yPixel << " " << tempPede.back() << " " << tempNoise.back() << endl;
             } else {
               streamlog_out ( ERROR4 )  << "Problem with the AIDA temporary profile.\n"

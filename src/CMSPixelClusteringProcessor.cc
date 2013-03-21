@@ -513,7 +513,7 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 				}
 	            
 	            streamlog_out( DEBUG5 ) << "size: " << pixelCluster->size() << ">=" << _minNPixels << " && charge: " << pixelCluster->getTotalCharge() << ">=" << _minCharge << endl;
-                if ( (pixelCluster->size() >= (unsigned int)_minNPixels) && (pixelCluster->getTotalCharge() >= (unsigned int)_minCharge) ) {
+                if ( (pixelCluster->size() >= static_cast< unsigned int >(_minNPixels)) && (pixelCluster->getTotalCharge() >= static_cast< unsigned int >(_minCharge)) ) {
 
 					float x,y;
 					int xsize,ysize;
@@ -532,8 +532,8 @@ void CMSPixelClusteringProcessor::Clustering(LCEvent * evt, LCCollectionVec * cl
 						int clusterID = *it;
 						zsDataEncoder["sensorID"]      = sensorID;
 						zsDataEncoder["clusterID"]     = clusterID;
-						zsDataEncoder["xSeed"]         = (long)x;
-						zsDataEncoder["ySeed"]         = (long)y;
+						zsDataEncoder["xSeed"]         = static_cast< long >(x);
+						zsDataEncoder["ySeed"]         = static_cast< long >(y);
 						zsDataEncoder["xCluSize"]      = xsize;
 						zsDataEncoder["yCluSize"]      = ysize;
 						zsDataEncoder["type"]          = static_cast<int>(kEUTelSparseClusterImpl);

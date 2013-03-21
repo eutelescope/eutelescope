@@ -174,12 +174,12 @@ void EUTelStrasMimoTelReader::readDataSource (int numEvents) {
 	dataFile.read( reinterpret_cast<char *> (&_eventTrailer), sizeof(StrasEventTrailer) );
 	
 	// make some checks
-	if ( (unsigned) _eventTrailer.Eor != 0x89ABCDEF ) {
+	if ( static_cast< unsigned >(_eventTrailer.Eor) != 0x89ABCDEF ) {
 	  message<ERROR5> ( log() << "Event trailer not found on event " << _eventHeader.EvNo << ". Exiting ");
 	  exit(-1);
 	}
 	
-	if ( _eventHeader.EvNo != (unsigned) eventCounter ) {
+	if ( _eventHeader.EvNo != static_cast< unsigned >(eventCounter) ) {
 	  message<WARNING> ( log() << "Event number mismatch: expected " << eventCounter << " read " << _eventHeader.EvNo );
 	}
 

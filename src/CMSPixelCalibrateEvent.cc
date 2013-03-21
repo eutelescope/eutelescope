@@ -351,10 +351,10 @@ void CMSPixelCalibrateEventProcessor::processEvent (LCEvent * event) {
 		else rangecheck = calWeibull(corrected,Pixel.getSignal());
                 
 	        if(rangecheck) {
-		  correctedPixel->setSignal((short int)corrected);
+		  correctedPixel->setSignal( static_cast< short int >(corrected));
                     
                     // Filling histogramms if needed:
-               		if ( _fillHistos ) fillHistos ( (int)Pixel.getSignal(), (int)correctedPixel->getSignal(), iDetector );
+               		if ( _fillHistos ) fillHistos ( static_cast< int >(Pixel.getSignal()), static_cast< int >(correctedPixel->getSignal()), iDetector );
                		
                		// Debug output:
                     streamlog_out ( DEBUG5 ) << "evt" << evt->getEventNumber() << " ROC" << iDetector << " Pixel " << Pixel.getXCoord() << " " << Pixel.getYCoord() << ": " << Pixel.getSignal() << " -> " << correctedPixel->getSignal() << endl;

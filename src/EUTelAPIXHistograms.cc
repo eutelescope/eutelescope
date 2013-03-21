@@ -369,7 +369,7 @@ void EUTelAPIXHistograms::init() {
 	c = _siPlanesLayerLayout->getSensitiveRotation3(_indexDUT); // was  0 ;
 	d = _siPlanesLayerLayout->getSensitiveRotation4(_indexDUT); // was -1 ;
 	// now rotate back -- add more description here or put a link -- see paper logbook 18 August 2010 libov@mail.desy.de
-	double		const_factor = (double)1./((b*c)-(a*d));
+	double const_factor = static_cast< double >(1./((b*c)-(a*d)));
 	_rot00 = const_factor * d * (-1);
 	_rot01 = const_factor * b;
 	_rot10 = const_factor * c;
@@ -636,7 +636,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
   // Histograms of fitted positions
 
-  for(int ifit=0;ifit<(int)_fittedX.size(); ifit++)
+  for(int ifit=0; ifit < static_cast< int >(_fittedX.size()); ifit++)
     {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA) 
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedXHistoName]))->fill(_fittedX[ifit]);        
@@ -666,8 +666,8 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
         distmin=_distMax*_distMax+1.;
 
-        for(int ifit=0;ifit<(int)_bgfittedX.size(); ifit++)
-          for(int ihit=0; ihit< (int)_bgmeasuredX.size() ; ihit++)
+        for(int ifit=0; ifit < static_cast< int >(_bgfittedX.size()); ifit++)
+          for(int ihit=0; ihit< static_cast< int >(_bgmeasuredX.size()) ; ihit++)
             {
               double dist=
                 (_bgmeasuredX[ihit]-_bgfittedX[ifit])*(_bgmeasuredX[ihit]-_bgfittedX[ifit])
@@ -727,7 +727,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
       // Background efficiency plots - tracks unmached to bg hits
 
-      for(int ifit=0;ifit<(int)_bgfittedX.size(); ifit++)
+      for(int ifit=0;ifit<static_cast< int >(_bgfittedX.size()); ifit++)
         {
           (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_BgEfficiencyXHistoName]))->fill(_bgfittedX[ifit],0.);
 
@@ -878,13 +878,13 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
           // Subtract position of the central pixel
 
-          int picX = (int)(locX/_pitchX);
+          int picX = static_cast< int >(locX/_pitchX);
 
           if(locX<0)picX--;
 
           locX-=(picX+0.5)*_pitchX;
 
-          int picY = (int)(locY/_pitchY);
+          int picY = static_cast< int >(locY/_pitchY);
 
           if(locY<0)picY--;
 
@@ -918,7 +918,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 	}
 
 
-    for(int ihit=0;ihit<(int)_measuredX.size(); ihit++)
+    for(int ihit=0; ihit < static_cast< int >(_measuredX.size()); ihit++)
     {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredXHistoName]))->fill(_measuredX[ihit]);
@@ -965,8 +965,8 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
     distmin=_distMax*_distMax+1.;
 
 
-    for(int ifit=0;ifit<(int)_fittedX.size(); ifit++)
-      for(int ihit=0; ihit< (int)_measuredX.size() ; ihit++)
+    for(int ifit=0; ifit < static_cast< int >(_fittedX.size()); ifit++)
+      for(int ihit=0; ihit< static_cast< int >(_measuredX.size()); ihit++)
         {
           double dist=
             (_measuredX[ihit]-_fittedX[ifit])*(_measuredX[ihit]-_fittedX[ifit])
@@ -1178,7 +1178,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
 							float		fittedIndexY = ( _measuredYLOCAL[besthit] - residualYLOCAL ) / _pitchY;
 
-							if ((((int)(floor(fittedIndexX + 1))) % 2) == 0) isMirrored = true;
+							if (((static_cast< int >(floor(fittedIndexX + 1))) % 2) == 0) isMirrored = true;
 
 
 
@@ -1255,7 +1255,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
-  for(int ifit=0;ifit<(int)_fittedX.size(); ifit++)
+  for(int ifit=0; ifit < static_cast< int >(_fittedX.size()); ifit++)
     {
       (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_EfficiencyXHistoName]))->fill(_fittedX[ifit],0.);
 
@@ -1284,7 +1284,7 @@ void EUTelAPIXHistograms::processEvent( LCEvent * event ) {
 
   // Noise plots - unmatched hits
 
-  for(int ihit=0;ihit<(int)_measuredX.size(); ihit++)
+  for(int ihit=0; ihit < static_cast< int >(_measuredX.size()); ihit++)
     {
       (dynamic_cast<AIDA::IProfile1D*> ( _aidaHistoMap[_NoiseXHistoName]))->fill(_measuredX[ihit],1.);
 

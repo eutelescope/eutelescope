@@ -492,7 +492,7 @@ int EUTelDafBase::guessSensorID( double * hit )
     return 0;
   }
 
-      for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
+      for(size_t ii = 0 ; ii <  static_cast< unsigned int >(_referenceHitVec->getNumberOfElements()); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
 //        printf(" _referenceHitVec %p refhit %p \n", _referenceHitVec, refhit);
@@ -562,7 +562,7 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
        planeIndex = guessSensorID( pos );
        }
        streamlog_out ( DEBUG5 ) << " SIM: simhit="<< ( simhit != 0 ) <<" add point [" << planeIndex << "] "<< 
-                      (float) pos[0] * 1000.0f << " " << (float) pos[1] * 1000.0f << " " <<  (float) pos[2] * 1000.0f << endl;
+                      static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
 //      printf("planeIndex %5d of %5d \n", planeIndex, _system.planes.size() ); 
 //       region = checkClusterRegion( simhit, _system.planes.at(planeIndex).getSensorID() );
      }else
@@ -575,7 +575,7 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
        pos[2]=hitpos[2];
        planeIndex = guessSensorID( pos );
        streamlog_out ( DEBUG5 ) << " REAL: add point [" << planeIndex << "] "<< 
-                      (float) pos[0] * 1000.0f << " " << (float) pos[1] * 1000.0f << " " <<  (float) pos[2] * 1000.0f << endl;
+                      static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
        region = checkClusterRegion( hit, _system.planes.at(planeIndex).getSensorID() );
       }
 
@@ -583,8 +583,8 @@ void EUTelDafBase::readHitCollection(LCEvent* event)
       if(planeIndex >=0 ) 
       { 
 	streamlog_out ( DEBUG5 ) << " add point [" << planeIndex << "] "<< 
-                      (float) pos[0] * 1000.0f << " " << (float) pos[1] * 1000.0f << " " <<  (float) pos[2] * 1000.0f << endl;
-        _system.addMeasurement( planeIndex, (float) pos[0] * 1000.0f, (float) pos[1] * 1000.0f, (float) pos[2] * 1000.0f,  region, iHit);
+                      static_cast< float >(pos[0]) * 1000.0f << " " << static_cast< float >(pos[1]) * 1000.0f << " " <<  static_cast< float >(pos[2]) * 1000.0f << endl;
+        _system.addMeasurement( planeIndex, static_cast< float >(pos[0]) * 1000.0f, static_cast< float >(pos[1]) * 1000.0f, static_cast< float >(pos[2]) * 1000.0f,  region, iHit);
       }
     }
 // printf("EUTelDafBase::readHitCollection add all hits from collection %5d DONE \n",i);
@@ -728,7 +728,7 @@ void EUTelDafBase::fillPlots(daffitter::TrackCandidate *track){
     daffitter::FitPlane& plane = _system.planes.at(ii);
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
-    string bname = (string)"pl" + iden + "_";
+    string bname = static_cast< string >("pl") + iden + "_";
     //Plot resids, angles for all hits with > 50% includion in track.
     //This should be one measurement per track
     daffitter::TrackEstimate* estim = track->estimates.at(ii);
@@ -812,7 +812,7 @@ void EUTelDafBase::fillDetailPlots(daffitter::TrackCandidate *track){
 
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
-    string bname = (string)"pl" + iden + "_";
+    string bname = static_cast< string >("pl") + iden + "_";
 
     //Plot resids, angles for all hits with > 50% includion in track.
     //This should be one measurement per track
@@ -868,7 +868,7 @@ void EUTelDafBase::bookHistos(){
     daffitter::FitPlane& plane = _system.planes.at(ii);
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
-    string bname = (string)"pl" + iden + "_";
+    string bname = static_cast< string >("pl") + iden + "_";
     //Resids
 
     double residminX = -0.3;
@@ -914,7 +914,7 @@ void EUTelDafBase::bookDetailedHistos(){
     daffitter::FitPlane& plane = _system.planes.at(ii);
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
-    string bname = (string)"pl" + iden + "_";
+    string bname = static_cast< string >("pl") + iden + "_";
     _aidaHistoMap[bname + "sigmaX"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "sigmaX", 10, 0.0f, 100);
     _aidaHistoMap[bname + "sigmaY"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "sigmaY", 10, 0.0f, 100);
     _aidaHistoMap[bname + "hitChi2"] =  AIDAProcessor::histogramFactory(this)->createHistogram1D( bname + "hitChi2", 10, 0, 100);
@@ -940,7 +940,7 @@ void EUTelDafBase::end() {
     daffitter::FitPlane& plane = _system.planes.at(ii);
     char iden[4];
     sprintf(iden, "%d", plane.getSensorID());
-    string bname = (string)"pl" + iden + "_";
+    string bname = static_cast< string >("pl") + iden + "_";
     if( _aidaHistoMap[bname + "residualX"] != 0 && _aidaHistoMap[bname + "residualY"] != 0 )
     streamlog_out ( MESSAGE5 ) << "plane:" << ii <<
                                "  x-stat :" <<  _aidaHistoMap[bname + "residualX"]->allEntries() <<

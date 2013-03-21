@@ -364,7 +364,7 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 	}
       }
 
-      if( prealign.size() > (unsigned int)_minNumberOfCorrelatedHits && hitX.size() == hitY.size() )
+      if( prealign.size() > static_cast< unsigned int >(_minNumberOfCorrelatedHits) && hitX.size() == hitY.size() )
       {
          for(unsigned int ii = 0 ;ii < prealign.size();ii++)
          {  
@@ -520,7 +520,7 @@ int EUTelPreAlign::guessSensorID(const double * hit )
     return sensorID;
   }
 
-      for(size_t ii = 0 ; ii <  (unsigned int)_referenceHitVec->getNumberOfElements(); ii++)
+      for(size_t ii = 0 ; ii < static_cast< unsigned int >(_referenceHitVec->getNumberOfElements()); ii++)
       {
         EUTelReferenceHit* refhit = static_cast< EUTelReferenceHit*> ( _referenceHitVec->getElementAt(ii) ) ;
         

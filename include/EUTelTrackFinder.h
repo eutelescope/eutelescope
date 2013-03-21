@@ -62,7 +62,7 @@ namespace eutelescope {
         std::string _name;
         
         std::vector< EVENT::TrackerHitVec > _allHits;
-        std::map< int, EVENT::TrackerHitVec > _trackCandidates;
+        std::map< int, EVENT::TrackerHitVec > _trackCandidates;//int is ID
 
     };
 

@@ -83,8 +83,7 @@ void EUTelPseudo1DHistogram::fill(double x, double w) {
     _Content[_FullNumberOfBins-2] += w;  
   }
   else {
-    int index = (int)floor((((double)_NumberOfBins)/
-			    (_MaxValue - _MinValue))*(x - _MinValue)) + 1;
+    int index = static_cast< int >(floor(((static_cast< double >(_NumberOfBins))/(_MaxValue - _MinValue))*(x - _MinValue))) + 1;
     ++_NOfEntries[index];
     _Content[index] += w;
   }
@@ -105,8 +104,7 @@ int EUTelPseudo1DHistogram::findBin(double x) {
     return _FullNumberOfBins-2;
   }
   else {
-  return (int)floor((((double)_NumberOfBins)/
-		     (_MaxValue - _MinValue))*(x - _MinValue)) + 1;
+    return static_cast< int >(floor(((static_cast< double >(_NumberOfBins))/(_MaxValue - _MinValue))*(x - _MinValue))) + 1;
   }
 
 }
