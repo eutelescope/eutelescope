@@ -373,13 +373,6 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
     
     if ( _iCycle > static_cast< unsigned short >( _totalNoOfCycle ) )  return;
 
-    if (_iEvt % 1000 == 0)
-        streamlog_out( MESSAGE4 ) << "Processing event "
-            << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-            << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-            << " (Total = " << setw(10) << (_iCycle * _noOfEventPerCycle) + _iEvt << ")"
-            << resetiosflags(ios::left) << endl;
-    
     EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
     if ( evt->getEventType() == kEORE ) 
     {
@@ -628,8 +621,7 @@ void EUTelHotPixelKiller::check( LCEvent * event )
 void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
 {    
 
-    streamlog_out ( MESSAGE5 ) << "EUTelHotPixelKiller::HotPixelDBWriter " << endl;
-    streamlog_out ( MESSAGE5 ) << "writing out hot pixel db into " << _hotpixelDBFile.c_str() << endl;
+    streamlog_out ( DEBUG5 ) << "Writing out hot pixel db into " << _hotpixelDBFile.c_str() << endl;
 
     // create data decoder
     LCCollectionVec * statusCollectionVec = dynamic_cast< LCCollectionVec * > ( input_event->getCollection( _statusCollectionName ) );
@@ -672,7 +664,7 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
 	  streamlog_out ( ERROR5 ) << "could not read anything from HotPixelDB file"  << endl;       
 	  event = 0;
 	}
-	streamlog_out ( MESSAGE5 ) << _hotpixelDBFile << " was opened for writing" << endl;
+	streamlog_out ( DEBUG5 ) << _hotpixelDBFile << " was opened for writing" << endl;
       }
       catch ( IOException& e ) 	{
 	streamlog_out ( DEBUG5 ) << e.what() << endl << "Sorry, was not able to APPEND to the hotpixel file " << _hotpixelDBFile << ", try open new " << endl;
@@ -722,11 +714,11 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
     try 
     {
         hotPixelCollection = static_cast< LCCollectionVec* > ( event->getCollection( _hotPixelCollectionName  ) );
-        streamlog_out ( MESSAGE5 ) << "hotPixelCollection: " << _hotPixelCollectionName << 
+        streamlog_out ( DEBUG5 ) << "hotPixelCollection: " << _hotPixelCollectionName << 
                                    " found found with " << hotPixelCollection->getNumberOfElements() << 
                                    " elements " <<  endl; 
         hotPixelCollection->clear();
-        streamlog_out ( MESSAGE5 ) << "hotPixelCollection: " << _hotPixelCollectionName << 
+        streamlog_out ( DEBUG5 ) << "hotPixelCollection: " << _hotPixelCollectionName << 
                                    " cleared: now " << hotPixelCollection->getNumberOfElements() << 
                                    " elements " <<  endl; 
     }
@@ -734,7 +726,7 @@ void EUTelHotPixelKiller::HotPixelDBWriter(LCEvent *input_event)
     {
         hotPixelCollection = new LCCollectionVec( lcio::LCIO::TRACKERDATA );
         event->addCollection( hotPixelCollection, _hotPixelCollectionName );
-        streamlog_out ( MESSAGE5 ) << "hotPixelCollection: " << _hotPixelCollectionName << 
+        streamlog_out ( DEBUG5 ) << "hotPixelCollection: " << _hotPixelCollectionName << 
                                    " created" <<  endl; 
     }
 
@@ -789,7 +781,7 @@ void EUTelHotPixelKiller::bookAndFillHistos()
 {
 
 
-  streamlog_out ( MESSAGE0 ) << "Booking and filling histograms for cycle " << _iCycle << endl;
+  streamlog_out ( DEBUG5 ) << "Booking and filling histograms for cycle " << _iCycle << endl;
 
   string tempHistoName, basePath;
   for ( int iDetector = 0; iDetector < _noOfDetectors; iDetector++ ) 

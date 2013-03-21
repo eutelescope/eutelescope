@@ -171,16 +171,6 @@ void EUTelNativeReader::readDataSource(int numEvents) {
 
   while ( reader.NextEvent() && (eventCounter < numEvents ) ) {
 
-    // inform the user about the reading status
-    if ( eventCounter % 1000 == 0 )
-      streamlog_out ( MESSAGE4 ) << "Processing event "
-                                 << setw(6) << setiosflags( ios::right ) << reader.Event().GetEventNumber() << resetiosflags(ios::right)
-                                 << " in run "  << setw(6)
-                                 << setiosflags( ios::right ) << setfill('0') << reader.Event().GetRunNumber() << resetiosflags(ios::right)
-                                 << setfill(' ') << " (Total = " << setw(10)
-                                 << setiosflags( ios::right ) << eventCounter << resetiosflags(ios::right) << ")"
-                                 << setiosflags( ios::left ) << endl;
-
     const eudaq::DetectorEvent& eudaqEvent = reader.Event();
 
     if ( eudaqEvent.IsBORE() ) {
