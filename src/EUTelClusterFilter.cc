@@ -485,7 +485,7 @@ void EUTelClusterFilter::checkCriteria() {
 
   // check the consistency of selection thresholds
   if ( _minTotalChargeSwitch ) {
-    if (  _minTotalChargeVec.size() != (unsigned) _noOfDetectors ) {
+    if (  _minTotalChargeVec.size() != static_cast< unsigned >( _noOfDetectors ) ) {
       streamlog_out ( ERROR1 ) << "The threshold vector on the total cluster charge did not match the right size \n"
                                <<  "The number of planes is " << _noOfDetectors
                                << " while the thresholds are " << _minTotalChargeVec.size() <<  "\n"
@@ -499,7 +499,7 @@ void EUTelClusterFilter::checkCriteria() {
   }
 
   if ( _minTotalSNRSwitch ) {
-    if ( _minTotalSNRVec.size() != ( unsigned ) _noOfDetectors ) {
+    if ( _minTotalSNRVec.size() != static_cast< unsigned >( _noOfDetectors ) ) {
       streamlog_out ( ERROR1 ) << "The threshold vector on the total cluster SNR did not match the right size \n"
                                <<  "The number of planes is " << _noOfDetectors
                                << " while the thresholds are " << _minTotalSNRVec.size() <<  "\n"
@@ -573,7 +573,7 @@ void EUTelClusterFilter::checkCriteria() {
   }
 
   if ( _minSeedChargeSwitch ) {
-    if (  _minSeedChargeVec.size() != (unsigned) _noOfDetectors ) {
+    if (  _minSeedChargeVec.size() != static_cast< unsigned >( _noOfDetectors ) ) {
       streamlog_out ( ERROR1 ) << "The threshold vector on the seed charge did not match the right size \n"
                                <<  "The number of planes is " << _noOfDetectors
                                << " while the thresholds are " << _minSeedChargeVec.size()
@@ -588,7 +588,7 @@ void EUTelClusterFilter::checkCriteria() {
   }
 
   if ( _minSeedSNRSwitch ) {
-    if ( _minSeedSNRVec.size() != (unsigned) _noOfDetectors ) {
+    if ( _minSeedSNRVec.size() != static_cast< unsigned >( _noOfDetectors )) {
       streamlog_out ( ERROR1 ) << "The threshold vector on the seed SNR did not match the right size \n"
                                <<  "The number of planes is " << _noOfDetectors << " while the thresholds are " << _minSeedSNRVec.size()
                                <<  "\n"
@@ -602,7 +602,7 @@ void EUTelClusterFilter::checkCriteria() {
   }
 
   if ( _clusterQualitySwitch ) {
-    if ( _clusterQualityVec.size() != (unsigned) _noOfDetectors ) {
+    if ( _clusterQualityVec.size() != static_cast< unsigned >( _noOfDetectors )) {
       streamlog_out ( ERROR1 ) << "The cluster quality vector did not match the right size \n"
                                << "The number of planes is " << _noOfDetectors
                                << " while the thresholds are " << _minSeedChargeVec.size()
@@ -617,7 +617,7 @@ void EUTelClusterFilter::checkCriteria() {
   }
 
   if ( _minClusterNoSwitch ) {
-    if ( _minClusterNoVec.size() != (unsigned) _noOfDetectors ) {
+    if ( _minClusterNoVec.size() != static_cast< unsigned >( _noOfDetectors )) {
       streamlog_out ( ERROR1 ) << "The minimum cluster number vector did not match the right size \n"
                                << "The number of planes is " << _noOfDetectors << " while the thresholds are "
                                << _minClusterNoVec.size() <<  "\n"
@@ -631,7 +631,7 @@ void EUTelClusterFilter::checkCriteria() {
   }
 
   if ( _maxClusterNoSwitch ) {
-    if ( _maxClusterNoVec.size() != (unsigned) _noOfDetectors ) {
+    if ( _maxClusterNoVec.size() != static_cast< unsigned >( _noOfDetectors )) {
       streamlog_out ( ERROR1 ) << "The maximum cluster number vector did not match the right size \n"
                                << "The number of planes is " << _noOfDetectors
                                << " while the thresholds are " << _maxClusterNoVec.size() <<  "\n"
@@ -645,7 +645,7 @@ void EUTelClusterFilter::checkCriteria() {
   }
 
   if ( _maxClusterNoiseSwitch ) {
-    if ( _maxClusterNoiseVec.size() != (unsigned) _noOfDetectors ) {
+    if ( _maxClusterNoiseVec.size() != static_cast< unsigned >( _noOfDetectors )) {
       streamlog_out ( ERROR1 ) << "The maximum cluster noise vector did not match the right size \n"
                                << "The number of planes is " << _noOfDetectors
                                << " while the thresholds are " << _maxClusterNoiseVec.size()   << "\n"
@@ -659,7 +659,7 @@ void EUTelClusterFilter::checkCriteria() {
   }
 
   if ( _dffnhitsswitch ) {
-    if ( _DFFNHitsCuts.size() != (unsigned) _noOfDetectors ) {
+    if ( _DFFNHitsCuts.size() != static_cast< unsigned >( _noOfDetectors )) {
       streamlog_out ( ERROR1 ) << "The minimum hit pixel vector did not match the right size \n"
                                << "The number of planes is " << _noOfDetectors << " while the thresholds are "
                                << _DFFNHitsCuts.size() <<  "\n"
@@ -815,7 +815,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                                     // bool isHit  = ( statusMatrix->getADCValues()[index] ==
                                     // EUTELESCOPE::HITPIXEL );
                                     //
-                                    if((int) statusMatrix->getADCValues().size() > index )
+                                    if( static_cast< int >( statusMatrix->getADCValues().size() ) > index )
                                     {
                                     bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
                                     if ( !isBad )
@@ -889,7 +889,7 @@ void EUTelClusterFilter::processEvent (LCEvent * event) {
                                     // EUTELESCOPE::HITPIXEL );
                                     // 
                                     ///
-                                    if((int) statusMatrix->getADCValues().size() > index )
+                                    if( static_cast< int >(statusMatrix->getADCValues().size()) > index )
                                     {
 
                                     bool isBad  = ( statusMatrix->getADCValues()[index] == EUTELESCOPE::BADPIXEL );
@@ -1178,9 +1178,9 @@ bool EUTelClusterFilter::isAboveNumberOfHitPixel(EUTelVirtualCluster * cluster) 
   int detectorID = cluster->getDetectorID();
   int detectorPos = _ancillaryIndexMap[ detectorID ];
 
-  if ( (int)(cluster->getTotalCharge()) >= _DFFNHitsCuts[detectorPos] ) return true;
+  if ( static_cast< int >(cluster->getTotalCharge()) >= _DFFNHitsCuts[detectorPos] ) return true;
   else {
-    streamlog_out ( DEBUG2 )  << "Rejected cluster because the number of hit pixel is " << (int)(cluster->getTotalCharge())
+    streamlog_out ( DEBUG2 )  << "Rejected cluster because the number of hit pixel is " << static_cast< int >(cluster->getTotalCharge())
                               << " and the threshold is " << _DFFNHitsCuts[detectorPos] << endl;
     _rejectionMap["MinHitPixel"][detectorPos]++;
     return false;

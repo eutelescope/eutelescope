@@ -308,7 +308,7 @@ int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
     if(type == kEUTelAPIXClusterImpl){
       eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel > *apixCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelAPIXSparsePixel >(clusterFrame);	
       size = apixCluster->size();
-      charge = (int)apixCluster->getTotalCharge();
+      charge = static_cast< int >(apixCluster->getTotalCharge());
       apixCluster->getClusterSize(sizeX, sizeY);
       apixCluster->getCenterCoord(posX, posY);
       clusterID = apixCluster->getClusterID();
@@ -316,7 +316,7 @@ int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
     } else if (  type == kEUTelSparseClusterImpl or type == kEUTelDFFClusterImpl){
       eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel > * telCluster = new eutelescope::EUTelSparseClusterImpl< eutelescope::EUTelSimpleSparsePixel >(clusterFrame);
       size = telCluster->size();
-      charge = (int)telCluster->getTotalCharge();
+      charge = static_cast< int >(telCluster->getTotalCharge());
       telCluster->getClusterSize(sizeX, sizeY);
       telCluster->getCenterCoord(posX, posY);
       clusterID = telCluster->getClusterID();
@@ -462,8 +462,8 @@ int EUTelAPIXTbTrackTuple::readZsHitsFromClusters( std::string colName, LCEvent*
 		p_chip->push_back( apixPixel.getChip() );
 		p_row->push_back( apixPixel.getYCoord() );
 		p_col->push_back( apixPixel.getXCoord() );
-		p_tot->push_back( (int)apixPixel.getSignal() );
-		p_lv1->push_back( (int)apixPixel.getTime() );
+		p_tot->push_back( static_cast< int >(apixPixel.getSignal()) );
+		p_lv1->push_back( static_cast< int >(apixPixel.getTime()) );
 		p_clusterId->push_back(clusterID);
       }
 		
@@ -477,7 +477,7 @@ int EUTelAPIXTbTrackTuple::readZsHitsFromClusters( std::string colName, LCEvent*
 	p_chip->push_back( 0 );
 	p_row->push_back( telPixel.getYCoord() );
 	p_col->push_back( telPixel.getXCoord() );
-	p_tot->push_back( (int)telPixel.getSignal() );
+	p_tot->push_back( static_cast< int >(telPixel.getSignal()) );
 	p_lv1->push_back( 0 );
 	p_clusterId->push_back(clusterID);
       }
@@ -510,8 +510,8 @@ int EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event){
 	p_chip->push_back( apixPixel.getChip() );
 	p_row->push_back( apixPixel.getYCoord() );
 	p_col->push_back( apixPixel.getXCoord() );
-	p_tot->push_back( (int)apixPixel.getSignal() );
-	p_lv1->push_back( (int)apixPixel.getTime() );
+	p_tot->push_back( static_cast< int >(apixPixel.getSignal()) );
+	p_lv1->push_back( static_cast< int >(apixPixel.getTime()) );
       }
     } else if ( type == kEUTelSimpleSparsePixel ) {
       auto_ptr<EUTelSparseDataImpl<EUTelSimpleSparsePixel> > telData(new EUTelSparseDataImpl<EUTelSimpleSparsePixel> ( zsData ));
@@ -522,7 +522,7 @@ int EUTelAPIXTbTrackTuple::readZsHits( std::string colName, LCEvent* event){
 	p_chip->push_back( 0 );
 	p_row->push_back( telPixel.getYCoord() );
 	p_col->push_back( telPixel.getXCoord() );
-	p_tot->push_back( (int)telPixel.getSignal() );
+	p_tot->push_back( static_cast< int >(telPixel.getSignal()) );
 	p_lv1->push_back( 0 );
       }
     }

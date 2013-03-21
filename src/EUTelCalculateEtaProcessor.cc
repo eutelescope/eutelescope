@@ -333,7 +333,7 @@ void EUTelCalculateEtaProcessor::processEvent (LCEvent * event) {
             EUTelBrickedClusterImpl* p_tmpBrickedCluster = NULL;
             if ( type == kEUTelBrickedClusterImpl )
               {
-                p_tmpBrickedCluster = (EUTelBrickedClusterImpl*) cluster;
+                p_tmpBrickedCluster = dynamic_cast< EUTelBrickedClusterImpl* >(cluster);
                 //Static of cluster to EUTelBrickedClusterImpl* was done for sure in the case of
                 //( type == kEUTelBrickedClusterImpl ).
                 //So this cast must work as well!

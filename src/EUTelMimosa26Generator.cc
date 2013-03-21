@@ -106,7 +106,7 @@ void EUTelMimosa26Generator::processRunHeader (LCRunHeader * rdr) {
 
   // let's check if the number of sigma cut components is the same of
   // the detector number.
-  if ( (unsigned) _noOfDetector != _sigmaCutVec.size() ) {
+  if ( static_cast< unsigned >(_noOfDetector) != _sigmaCutVec.size() ) {
     streamlog_out( WARNING2 ) << "The number of values in the sigma cut does not match the number of detectors\n"
 			      << "Changing SigmaCutVec consequently." << endl;
     _sigmaCutVec.resize(_noOfDetector, _sigmaCutVec.back());

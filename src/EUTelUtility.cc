@@ -54,7 +54,7 @@ namespace eutelescope {
         
         void FillNotExcludedPlanesIndices( std::vector<int>& indexconverter, const std::vector<unsigned int >& excludePlanes,  unsigned int nPlanes ) {
             int icounter = 0;
-            int nExcludePlanes = (int) excludePlanes.size();
+            int nExcludePlanes = static_cast< int >( excludePlanes.size());
             for( unsigned int i = 0; i < nPlanes; i++) {
                 int excluded = 0; //0 - not excluded, 1 - excluded
                 if ( nExcludePlanes > 0) {

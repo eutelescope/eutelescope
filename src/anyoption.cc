@@ -149,9 +149,9 @@ AnyOption::alloc()
 		return true;
 
 	size = (max_options+1) * sizeof(const char*);
-	options = (const char**)malloc( size );	
-	optiontype = (int*) malloc( (max_options+1)*sizeof(int) );	
-	optionindex = (int*) malloc( (max_options+1)*sizeof(int) );	
+	options = static_cast< const char** >(malloc( size ));	
+	optiontype = static_cast< int* >(malloc( (max_options+1)*sizeof(int)));	
+	optionindex = static_cast< int* >(malloc( (max_options+1)*sizeof(int)));	
 	if( options == NULL || optiontype == NULL || optionindex == NULL )
 		return false;
 	else
@@ -161,9 +161,9 @@ AnyOption::alloc()
 		optiontype[i] = 0 ;
 		optionindex[i] = -1 ;
 	}
-	optionchars = (char*) malloc( (max_char_options+1)*sizeof(char) );
-	optchartype = (int*) malloc( (max_char_options+1)*sizeof(int) );	
-	optcharindex = (int*) malloc( (max_char_options+1)*sizeof(int) );	
+	optionchars = static_cast< char* >(malloc( (max_char_options+1)*sizeof(char)));
+	optchartype = static_cast< int* >(malloc( (max_char_options+1)*sizeof(int)));
+	optcharindex = static_cast< int* >(malloc( (max_char_options+1)*sizeof(int)));
 	if( optionchars == NULL || 
             optchartype == NULL || 
             optcharindex == NULL )
@@ -178,7 +178,7 @@ AnyOption::alloc()
 	}
 
 	size = (max_usage_lines+1) * sizeof(const char*) ;
-	usage = (const char**) malloc( size );
+	usage = static_cast< const char** >(malloc( size ));
 
 	if( usage == NULL  ){
 		mem_allocated = false;
@@ -198,12 +198,12 @@ AnyOption::doubleOptStorage()
   int *tmp_optiontype;
   int *tmp_optionindex;
 
-	tmp_options = (const char**)realloc( options,  
-			((2*max_options)+1) * sizeof( const char*) );
-	tmp_optiontype = (int*) realloc(  optiontype ,  
-			((2 * max_options)+1)* sizeof(int) );	
-	tmp_optionindex = (int*) realloc(  optionindex,  
-			((2 * max_options)+1) * sizeof(int) );	
+	tmp_options = static_cast< const char** >(realloc( options,  
+			((2*max_options)+1) * sizeof( const char*)));
+	tmp_optiontype = static_cast< int* >(realloc( optiontype ,  
+			((2 * max_options)+1)* sizeof(int)));	
+	tmp_optionindex = static_cast< int* >(realloc( optionindex,  
+			((2 * max_options)+1) * sizeof(int)));	
 	if( tmp_options == NULL || tmp_optiontype == NULL || tmp_optionindex == NULL )
 		return false;
 	// realloc worked, reassign pointers
@@ -228,12 +228,12 @@ AnyOption::doubleCharStorage()
   int  *tmp_optchartype;
   int  *tmp_optcharindex;
   
-	tmp_optionchars = (char*) realloc( optionchars,  
-			((2*max_char_options)+1)*sizeof(char) );
-	tmp_optchartype = (int*) realloc( optchartype,  
-			((2*max_char_options)+1)*sizeof(int) );	
-	tmp_optcharindex = (int*) realloc( optcharindex,  
-			((2*max_char_options)+1)*sizeof(int) );	
+	tmp_optionchars = static_cast< char* >(realloc( optionchars,  
+			((2*max_char_options)+1)*sizeof(char) ));
+	tmp_optchartype = static_cast< int* >(realloc( optchartype,  
+			((2*max_char_options)+1)*sizeof(int) ));	
+	tmp_optcharindex = static_cast< int* >(realloc( optcharindex,  
+			((2*max_char_options)+1)*sizeof(int) ));	
 	if( tmp_optionchars == NULL || 
 	    tmp_optchartype == NULL || 
 	    tmp_optcharindex == NULL )
@@ -258,8 +258,8 @@ AnyOption::doubleUsageStorage()
 {
   const char **tmp_usage;
 
-	tmp_usage = (const char**)realloc( usage,  
-			((2*max_usage_lines)+1) * sizeof( const char*) );
+	tmp_usage = static_cast< const char** >(realloc( usage,  
+			((2*max_usage_lines)+1) * sizeof( const char*) ));
 	if ( tmp_usage == NULL )
 		return false;
 	else usage = tmp_usage;
@@ -636,7 +636,7 @@ AnyOption::processCommandArgs()
 	   
 	if( max_legal_args == 0 )
 		max_legal_args = argc;
-	new_argv = (int*) malloc( (max_legal_args+1) * sizeof(int) );
+	new_argv = static_cast< int* >(malloc( (max_legal_args+1) * sizeof(int) ));
 	for( int i = 1 ; i < argc ; i++ ){/* ignore first argv */
 		if(  argv[i][0] == long_opt_prefix[0] && 
                      argv[i][1] == long_opt_prefix[1] ) { /* long GNU option */
@@ -710,7 +710,7 @@ AnyOption::parseGNU( char *arg )
 		}
 	}
 	if( split_at > 0 ){ /* it is an option value pair */
-		char* tmp = (char*) malloc(  (split_at+1)*sizeof(char) );
+		char* tmp = static_cast< char* >(malloc(  (split_at+1)*sizeof(char) ));
 		for( int i = 0 ; i < split_at ; i++ )
 			tmp[i] = arg[i];
 		tmp[split_at] = '\0';
@@ -786,7 +786,7 @@ AnyOption::valueStoreOK( )
 	if( !set ){
 		if( g_value_counter > 0 ){
 			size = g_value_counter * sizeof(char*);
-			values = (char**)malloc( size );	
+			values = static_cast< char** >(malloc( size ));	
 			for( int i = 0 ; i < g_value_counter ; i++)
 				values[i] = NULL;
 			set = true;
@@ -869,7 +869,7 @@ AnyOption::setValue( const char *option , char *value )
 		return false;
         for( int i = 0 ; i < option_counter ; i++ ){
                 if( strcmp( options[i], option ) == 0 ){
-                        values[ optionindex[i] ] = (char*) malloc((strlen(value)+1)*sizeof(char));
+                        values[ optionindex[i] ] = static_cast< char* >(malloc((strlen(value)+1)*sizeof(char)));
                         strcpy( values[ optionindex[i] ], value );
 			return true;
 		}
@@ -884,7 +884,7 @@ AnyOption::setFlagOn( const char *option )
 		return false;
         for( int i = 0 ; i < option_counter ; i++ ){
                 if( strcmp( options[i], option ) == 0 ){
-                        values[ optionindex[i] ] = (char*) malloc((strlen(TRUE_FLAG)+1)*sizeof(char));
+                        values[ optionindex[i] ] = static_cast< char* >(malloc((strlen(TRUE_FLAG)+1)*sizeof(char)));
                         strcpy( values[ optionindex[i] ]  ,  TRUE_FLAG );
 			return true;
 		}
@@ -899,7 +899,7 @@ AnyOption::setValue( char option , char *value )
 		return false;
         for( int i = 0 ; i < optchar_counter ; i++ ){
                 if( optionchars[i] == option ){
-                        values[ optcharindex[i] ] = (char*) malloc((strlen(value)+1)*sizeof(char));
+                        values[ optcharindex[i] ] = static_cast< char* >(malloc((strlen(value)+1)*sizeof(char)));
                         strcpy( values[ optcharindex[i] ],  value );
 			return true;
 		}
@@ -914,7 +914,7 @@ AnyOption::setFlagOn( char option )
 		return false;
         for( int i = 0 ; i < optchar_counter ; i++ ){
                 if( optionchars[i] == option ){
-                        values[ optcharindex[i] ] = (char*) malloc((strlen(TRUE_FLAG)+1)*sizeof(char));
+                        values[ optcharindex[i] ] = static_cast< char* >(malloc((strlen(TRUE_FLAG)+1)*sizeof(char)));
 			strcpy( values[ optcharindex[i] ] , TRUE_FLAG );
 			return true;
 		}
@@ -979,7 +979,7 @@ AnyOption::readFile( const char* fname )
         is.seekg (0, ios::end);
         length = is.tellg();
         is.seekg (0, ios::beg);
-        buffer = (char*) malloc(length*sizeof(char));
+        buffer = static_cast< char*>(malloc(length*sizeof(char)));
         is.read (buffer,length);
         is.close();
         return buffer;
@@ -1045,7 +1045,7 @@ void
 AnyOption::processLine( char *theline, int length  )
 {
         bool found = false;
-        char *pline = (char*) malloc( (length+1)*sizeof(char) );
+        char *pline = static_cast< char* >(malloc( (length+1)*sizeof(char) ));
         for( int i = 0 ; i < length ; i ++ )
                 pline[i]= *(theline++);
         pline[length] = nullterminate;

@@ -747,7 +747,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
  
   p_end = unique( iplane_unique.begin(), iplane_unique.end());       // remove duplicates
 
-if( (int)iplane_unique.size()> _minNumberOfCorrelatedHits &&  trackX.size()==trackY.size())
+if( static_cast< int >(iplane_unique.size()) > _minNumberOfCorrelatedHits && trackX.size() == trackY.size())
 {
       for(size_t i=1;i< trackX.size();i++)
       {

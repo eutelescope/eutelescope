@@ -578,7 +578,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
         oldDetectorID = detectorID;
 
-        if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) 
+        if ( _conversionIdMap.size() != static_cast< unsigned >( _siPlanesParameters->getSiPlanesNumber()) ) 
         {
           // first of all try to see if this detectorID already belong to
           if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) 
@@ -690,9 +690,9 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
 
       double sensmom[3];
 
-      sensmom[0] = (double) hitmom[0];
-      sensmom[1] = (double) hitmom[1];
-      sensmom[2] = (double) hitmom[2];
+      sensmom[0] = static_cast< double >( hitmom[0]);
+      sensmom[1] = static_cast< double >( hitmom[1]);
+      sensmom[2] = static_cast< double >( hitmom[2]);
 
       InvEulerRotation(sensmom, gRotation);
 
@@ -824,7 +824,7 @@ void EUTelMAPSdigi::processEvent (LCEvent * event) {
       {
         mapDetectorID = detectorID;
 
-        if ( _pixelChargeMapCollection.size() != (unsigned) _DigiLayerIDs.size() )
+        if ( _pixelChargeMapCollection.size() != static_cast< unsigned >( _DigiLayerIDs.size()) )
         {
           // first of all try to see if this detectorID already belong to
           if ( _pixelChargeMapCollection.find( detectorID ) == _pixelChargeMapCollection.end()  ) 
@@ -1039,7 +1039,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
         // Scaling of charge deposited at each pixel
 
         if(_depositedChargeScaling[digiIndex]!=1.)
-          _pixelChargeMap->scaleCharge((double)_depositedChargeScaling[digiIndex]);
+          _pixelChargeMap->scaleCharge(static_cast< double >(_depositedChargeScaling[digiIndex]));
 
 
         // Poisson smearing (if requested)
@@ -1056,7 +1056,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
 
         // ADC gain, noise, pedestal
 
-        _pixelChargeMap->applyGain((double)_adcGain[digiIndex], (double)_adcGainVariation[digiIndex], (double)_adcNoise[digiIndex], (double)_adcOffset[digiIndex]);
+        _pixelChargeMap->applyGain(static_cast< double >(_adcGain[digiIndex]), static_cast< double >(_adcGainVariation[digiIndex]), static_cast< double >(_adcNoise[digiIndex]), static_cast< double >(_adcOffset[digiIndex]));
 
         // TDS allow for negative charges and negative thresholds.
         // However we assume here that threshold has to be
@@ -1064,7 +1064,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
         // threshold correction is applied.
 
         if(_zeroSuppressionThreshold[digiIndex]>0)
-          _pixelChargeMap->applyThresholdCut((double)_zeroSuppressionThreshold[digiIndex]);
+          _pixelChargeMap->applyThresholdCut(static_cast< double >(_zeroSuppressionThreshold[digiIndex]));
 
         totalCharge=_pixelChargeMap->getTotalCharge();
 
@@ -1085,7 +1085,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
 
         // Pixel multiplicity histogram
 
-        fillHist1D(_multipHistoName, layerIndex, (double)_vectorOfPixels.size());
+        fillHist1D(_multipHistoName, layerIndex, static_cast< double >(_vectorOfPixels.size()));
 
 
         // Data copying to output stream starts here
@@ -1218,7 +1218,7 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
 
                    // ADC digitization simulation
 
-                   int icharge = (int) charge;
+                   int icharge = static_cast< int >(charge);
                    if(charge<0.) icharge--;
 
                    // double absCharge = fabs(charge);
@@ -1227,8 +1227,8 @@ for(unsigned int idet = 0; idet < _DigiLayerIDs.size(); idet++)
                    double weight = absCharge;
                    if(dist>0.5)weight/=sqrt(dist);
 
-                   pixelAbsMap.insert( make_pair( absCharge, (double) icharge));
-                   pixelWeightedMap.insert( make_pair( weight, (double) icharge));
+                   pixelAbsMap.insert( make_pair( absCharge, static_cast< double >( icharge)));
+                   pixelWeightedMap.insert( make_pair( weight, static_cast< double >( icharge)));
 
                    clusterCharge+=charge;
                    intClusterCharge+=icharge;
@@ -1336,7 +1336,7 @@ void EUTelMAPSdigi::packMimosa26( int digiIndex )
 	    {
             double pixelCharge = _pixelIterator->getCharge();
 
-            pixelValue = (int) pixelCharge;
+            pixelValue = static_cast< int >(pixelCharge);
 
             if(pixelCharge<0.) pixelValue--; 
 
@@ -1395,7 +1395,7 @@ void EUTelMAPSdigi::packFEI4( int digiIndex )
 	    {
             double pixelCharge = _pixelIterator->getCharge();
 
-            pixelValue = (int) pixelCharge;
+            pixelValue = static_cast< int >(pixelCharge);
 
             if(pixelCharge<0.) pixelValue--; 
 

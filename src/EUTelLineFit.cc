@@ -299,7 +299,7 @@ void EUTelLineFit::processEvent (LCEvent * event) {
       if ( detectorID != oldDetectorID ) {
         oldDetectorID = detectorID;
 
-        if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
+        if ( _conversionIdMap.size() != static_cast< unsigned >(_siPlanesParameters->getSiPlanesNumber()) ) {
           // first of all try to see if this detectorID already belong to
           if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
             // this means that this detector ID was not already inserted,

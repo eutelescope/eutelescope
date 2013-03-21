@@ -588,7 +588,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
         } else {
 
 
-          if ( _conversionIdMap.size() != (unsigned) _siPlanesParameters->getSiPlanesNumber() ) {
+          if ( _conversionIdMap.size() != static_cast< unsigned >(_siPlanesParameters->getSiPlanesNumber()) ) {
             // first of all try to see if this detectorID already belong to
             if ( _conversionIdMap.find( detectorID ) == _conversionIdMap.end() ) {
               // this means that this detector ID was not already inserted,
@@ -690,7 +690,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       EUTelBrickedClusterImpl* p_tmpBrickedCluster = NULL;
       if ( type == kEUTelBrickedClusterImpl )
       {
-            p_tmpBrickedCluster = (EUTelBrickedClusterImpl*) cluster;
+            p_tmpBrickedCluster = dynamic_cast< EUTelBrickedClusterImpl* >(cluster);
             if (p_tmpBrickedCluster == NULL)
             {
                 streamlog_out ( ERROR4 ) << " .COULD NOT CREATE EUTelBrickedClusterImpl* !!!" << endl;

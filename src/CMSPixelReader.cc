@@ -273,7 +273,7 @@ void CMSPixelReader::readDataSource (int Ntrig)
         // Shuffle the planes according to the given processor parameter:
         std::vector<int> _shuffled = _shufflePlanes;
         for(unsigned int i = 0; i < _noOfROC; i++) {
-            if((int)i != _shuffled[i]) {
+            if(static_cast< int >(i) != _shuffled[i]) {
                 // Swap the two vectors:
                 event_data[i].swap(event_data[_shuffled[i]]);
                 // Prevent the re-swapping of the elements:

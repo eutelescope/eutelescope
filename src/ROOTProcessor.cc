@@ -98,7 +98,7 @@ void ROOTProcessor::end(){
       TDirectory * baseDir = gDirectory;
       TObjArray *  array   = fullname.Tokenize("/");
       for (int iDir = 0; iDir < array->GetEntriesFast(); iDir++) {
-        TString      dir     = ((TObjString *) array->At(iDir))->GetString();
+        TString      dir     = ( dynamic_cast< TObjString* >( array->At(iDir)))->GetString();
         // if the directory doens't exist, create it!
         if ( !baseDir->cd(dir) ) {
           baseDir->mkdir(dir);
