@@ -675,12 +675,11 @@ void EUTelClusteringProcessor::readCollections (LCEvent * event)
         {
             hotPixelCollectionVec = static_cast< LCCollectionVec* >  (event->getCollection( _hotPixelCollectionName )) ;
             initializeHotPixelMapVec();
-//            initializeStatusCollection();
-            streamlog_out ( MESSAGE5 ) << "hotPixelCollectionName: " << _hotPixelCollectionName.c_str() << " found " << endl;
+            streamlog_out ( DEBUG5 ) << "hotPixelCollectionName: " << _hotPixelCollectionName.c_str() << " found " << endl;
         } 
         catch (lcio::DataNotAvailableException& e ) 
         {
-            streamlog_out ( MESSAGE5 ) << "No hot pixel DB collection found in the event" << endl;
+            streamlog_out ( WARNING5 ) << "No hot pixel DB collection found in the event" << endl;
         }
 
     }
@@ -724,17 +723,8 @@ void EUTelClusteringProcessor::readCollections (LCEvent * event)
 void EUTelClusteringProcessor::processEvent (LCEvent * event) 
 {
 
-  if (_iEvt % 1000 == 0)
-  {
-    streamlog_out( MESSAGE4 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-  }
   ++_iEvt;
 
-
-  // 
   // first of all we need to be sure that the geometry is properly
   // initialized!
   // 
@@ -3688,7 +3678,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 void EUTelClusteringProcessor::bookHistos() {
 
   // histograms are grouped in loops and detectors
-  streamlog_out ( MESSAGE0 )  << "Booking histograms " << endl;
+  streamlog_out ( DEBUG5 )  << "Booking histograms " << endl;
   auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
   EUTelHistogramInfo    * histoInfo;
   bool                    isHistoManagerAvailable;
@@ -4021,7 +4011,7 @@ void EUTelClusteringProcessor::bookHistos() {
     eventMultiHisto->setTitle( eventMultiTitle.c_str() );
 
   }
-  streamlog_out ( MESSAGE0 )  << "end of Booking histograms " << endl;
+  streamlog_out ( DEBUG5 )  << "end of Booking histograms " << endl;
 }
 
 #endif
