@@ -3221,7 +3221,7 @@ void EUTelMille::end() {
 	    streamlog_out ( DEBUG5 ) << " Parsing pede output for final chi2/ndf result.. " << endl;
 	    // search for the equal sign after which the result for chi2/ndf is stated within the next 80 chars 
 	    // (with offset of 22 chars since pch points to beginning of "Sum(..." string just found)
-	    char* pch = static_cast< char* >((memchr (pch0+22, '=', 180)));
+	    char* pch = (char*)((memchr (pch0+22, '=', 180)));
 	    if (pch!=NULL){
 	      char str[16];
 	      // now copy the numbers after the equal sign
