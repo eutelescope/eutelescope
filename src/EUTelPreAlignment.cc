@@ -292,13 +292,6 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 
   if(_iEvt > _events) return;
 
-  if ( _iEvt % 10000 == 0 )
-    streamlog_out ( MESSAGE4 ) << "Processing event "
-                               << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                               << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
-                               << setfill(' ')
-                               << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-
   EUTelEventImpl * evt = static_cast<EUTelEventImpl*> (event);
   
   if ( evt->getEventType() == kEORE ) {
@@ -429,7 +422,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
               //  can come from
               //  both RAW and ZS data
    
-              streamlog_out ( WARNING ) << " Hit type kEUTelBrickedClusterImpl is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
+              streamlog_out ( WARNING5 ) << " Hit type kEUTelBrickedClusterImpl is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
 
            } 
             else if ( hit->getType() == kEUTelDFFClusterImpl ) 
@@ -437,14 +430,14 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
               
               // fixed cluster implementation. Remember it can come from
               // both RAW and ZS data
-              streamlog_out ( WARNING ) << " Hit type kEUTelDFFClusterImpl is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
+              streamlog_out ( WARNING5 ) << " Hit type kEUTelDFFClusterImpl is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
            } 
             else if ( hit->getType() == kEUTelFFClusterImpl ) 
             {
               
               // fixed cluster implementation. Remember it can come from
               // both RAW and ZS data
-              streamlog_out ( WARNING ) << " Hit type kEUTelFFClusterImpl is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
+              streamlog_out ( WARNING5 ) << " Hit type kEUTelFFClusterImpl is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
            } 
             else if ( hit->getType() == kEUTelAPIXClusterImpl ) 
             {
@@ -477,7 +470,7 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
            } 
             else
             {
-              streamlog_out ( WARNING ) << " Hit type is not known (?!) and is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
+              streamlog_out ( WARNING5 ) << " Hit type is not known and is not implemented in hotPixel finder method, all pixels are considered for PreAlignment." <<  endl;
            }
  
        }
@@ -569,7 +562,6 @@ void EUTelPreAlign::end() {
 
   for(size_t ii=0; ii<_sensorIDVec.size(); ii++)
   {
-    streamlog_out( DEBUG5 ) << " sensor " << _sensorIDVec[ii] << endl;
     bool ifound = false;
     for(size_t jj=0; jj< _preAligners.size(); jj++)
     {
@@ -578,7 +570,6 @@ void EUTelPreAlign::end() {
     }
     if( ifound == false)
     {
-      streamlog_out( DEBUG5 ) << " not found ... so, adding " << endl;
       EUTelAlignmentConstant* constant = new EUTelAlignmentConstant();
       constant->setXOffset( 0.0 );
       constant->setYOffset( 0.0 );
@@ -587,7 +578,6 @@ void EUTelPreAlign::end() {
       streamlog_out ( MESSAGE5 ) << (*constant) << endl;
       continue; 
     }
-    streamlog_out( DEBUG5 ) << " found in  usedID " << endl;
   }
 
 
