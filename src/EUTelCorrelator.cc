@@ -264,7 +264,7 @@ void EUTelCorrelator::init() {
     {
         _maxX[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelX( iPlane ) - 1;
         _maxY[ sensorID ] = _siPlanesLayerLayout->getSensitiveNpixelY( iPlane ) - 1;        
-        printf("sensorID %5d maxX %5d maxY %5d \n", sensorID, _maxX[sensorID], _maxY[sensorID]);
+
         _hitMinX[ sensorID ] =  _siPlanesLayerLayout->getSensitivePositionX( iPlane ) - 0.5*_siPlanesLayerLayout->getSensitiveSizeX ( iPlane ) ;
         _hitMaxX[ sensorID ] =  _siPlanesLayerLayout->getSensitivePositionX( iPlane ) + 0.5*_siPlanesLayerLayout->getSensitiveSizeX ( iPlane ) ;
         _hitMinY[ sensorID ] =  _siPlanesLayerLayout->getSensitivePositionY( iPlane ) - 0.5*_siPlanesLayerLayout->getSensitiveSizeY ( iPlane ) ;
@@ -584,9 +584,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
           int internalSensorID = pulseCellDecoder( internalPulse ) [ "sensorID" ] ;
 
 
-          if ( 
-// optional       (_sensorIDtoZOrderMap[internalSensorID] != 0 && _sensorIDtoZOrderMap[externalSensorID] == 0)
-                  ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
+          if ( ( internalSensorID != getFixedPlaneID() && externalSensorID == getFixedPlaneID() )
                   ||
                   (_sensorIDtoZOrderMap[internalSensorID] ==  _sensorIDtoZOrderMap[externalSensorID] + 1 )
                   ) 
@@ -741,7 +739,7 @@ void EUTelCorrelator::end() {
 
     if( _hasClusterCollection && !_hasHitCollection)
     {
-        streamlog_out( MESSAGE5 ) << "The input CollectionVec contains ClusterCollection, calculating offest values " << endl;
+        streamlog_out( MESSAGE5 ) << "The input CollectionVec contains ClusterCollection, calculating offset values " << endl;
         
         for ( int iin = 0 ; iin < _siPlanesLayerLayout->getNLayers(); iin++ ) 
         {           
@@ -843,13 +841,7 @@ void EUTelCorrelator::end() {
                 else
                     _siPlanesOffsetY[ inPlaneGear ] = 0.;    
                
-                streamlog_out( MESSAGE5 ) << "Clustering Offset values: " ; 
-                printf("for plane %3d  the X offset is %9.3f um, the Y offset is %9.3f um  \n", 
-                        inPlane, 
-                        _siPlanesOffsetX[inPlaneGear], 
-                        _siPlanesOffsetY[inPlaneGear]
-                        );
-                streamlog_out( MESSAGE5 ) << endl;
+                streamlog_out( MESSAGE5 ) << "Offsets in plane " << std::setw(3) << inPlane << ": dX=" << std::setw(9) << std::setprecision(3) << _siPlanesOffsetX[inPlaneGear] << " um,    dY=" << std::setw(9) << std::setprecision(3) << _siPlanesOffsetY[inPlaneGear] << " um" << endl;
 
            }
         }
@@ -1003,11 +995,6 @@ void EUTelCorrelator::end() {
             constant->setSensorID( _sensorID );
             constantsCollection->push_back( constant );
             
-            printf("%-3d DUMPed for plane %-3d  the X offset is %9.3f um, the Y offset is %9.3f um \n", 
-                    iin, _sensorID, 
-                    _siPlanesOffsetX[iin], 
-                    _siPlanesOffsetY[iin]
-                    );
         }
 
         event->addCollection( constantsCollection, "preAlignment" ); 
