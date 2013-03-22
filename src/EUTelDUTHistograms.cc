@@ -703,11 +703,9 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
  
     if( static_cast<int>(_fittedX[itrack].size()) < 1 ) continue;
  
-//    printf("track %2d with ifit[", itrack);    
     for(int ifit=0;ifit<static_cast<int>(_fittedX[itrack].size()); ifit++)
     {
       if( _measuredX.empty() ) continue;
-  //    printf("%2d %5.3f: ihit{", ifit, _fittedX[itrack][ifit] );
 
       for(int ihit=0; ihit< static_cast<int>(_measuredX.size()) ; ihit++)
         {
@@ -1038,7 +1036,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
         _localX[itrack].erase(_localX[itrack].begin()+bestfit);
         _localY[itrack].erase(_localY[itrack].begin()+bestfit);
 
-//       printf("patching track rate with (dist) %5.3f < (_distMax) %5.3f \n", TMath::Sqrt(distmin), _distMax);
 
      }
 
@@ -1126,18 +1123,6 @@ void EUTelDUTHistograms::end(){
         std::string histoX  = _ShiftXHistoName;
         std::string histoY  = _ShiftYHistoName;
 
-
-  streamlog_out( MESSAGE5 ) << " ";
-  printf("%20s  x: %7d  %8.3f %8.3f   y: %7d %8.3f %8.3f \n", histoX.c_str(), 
-  (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoX ]))->allEntries(), 
-  (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoX ]))->mean()*1000., 
-  (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoX ]))->rms()*1000., 
-  (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoY ]))->allEntries(), 
-  (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoY ]))->mean()*1000., 
-  (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[ histoY ]))->rms()*1000. );
-
-
-  // Nothing to do here
 }
 
 
@@ -2879,8 +2864,25 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
   if( _referenceHitVec == 0)
   {
     streamlog_out( DEBUG5 ) << "_referenceHitVec is empty" << endl;
-    return 0;
+
+// anyway try to guess SensorID by GEAR description:
+   if(sensorID < 0 )
+    {
+     double minDist =  numeric_limits< double >::max() ;
+     for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); ++iPlane ) {
+      double dist = std::abs( hit[2] -  _siPlanesLayerLayout->getLayerPositionZ(iPlane) ) ;
+      if ( dist < minDist ) {
+        minDist = dist;
+        sensorID = _siPlanesLayerLayout->getID( iPlane );
+      }
+     }
+    }
+
+    //return 0;
+    return sensorID;
   }
+
+
 
   if(  isFirstEvent() )
   {
@@ -2909,6 +2911,10 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
         }    
 
       }
+
+
+
+
 
 // some usefull debug printouts:
 
@@ -2981,13 +2987,12 @@ int EUTelDUTHistograms::getClusterSize(int sensorID, TrackerHit * hit, int& size
               cluster->getClusterSize(sizeX,sizeY);
               cluster->getCenterOfGravity(xlocal, ylocal);
               subMatrix = getSubMatrix(sensorID, xlocal);  
-            //  printf("cluster x:%d y:%d    \n", sizeX, sizeY );
               return 0;         
             }
           }
           catch(...)
           {
-            printf("guess SensorID crashed \n");
+            streamlog_out(ERROR5)<< "guess SensorID crashed" << std::endl;
           }
 
 return -1;
@@ -3000,7 +3005,6 @@ int EUTelDUTHistograms::getSubMatrix(int detectorID, float xlocal)
    for ( int iLayer = 0; iLayer < _siPlanesLayerLayout->getNLayers(); iLayer++ ) {
       if ( _siPlanesLayerLayout->getID(iLayer) == detectorID ) {
          int subquarter =  fourlocal/static_cast<int>(_siPlanesLayerLayout->getSensitiveNpixelX(iLayer)); 
-//         printf("detector %5d xlocal %8.3f %d %d\n", detectorID, xlocal, fourlocal, subquarter) ;        
          return subquarter;       
       }
    }
@@ -3091,7 +3095,6 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   _maptrackid = 0;
   for(int itrack=0; itrack< nTracks ; itrack++)
     {
-//      if(debug)      printf("getting track %d \n", itrack);
 
       const double * pos = 0;//fithit->getPosition();
       int hsensorID      = 0;//guessSensorID(pos);
@@ -3104,12 +3107,10 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
       { 
         pos       = fithit->getPosition();
         hsensorID = guessSensorID(pos);
-//        if(debug)      printf("at %p  \n", fithit );
       } 
       else 
       if(fithit == 0 )
       {
-//       if(debug)      printf("at %p  \n", fithit0 );
         if(fithit0 != 0 ) 
         { 
           pos       = fithit0->getPosition();
@@ -3123,7 +3124,6 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
 // Does track PoR match DUT position?
 //obsolete get id by z:      double dist = por[2] - _zDUT ;
 //      int fsensorID = guessSensorID( (double*)(por));
-//(debug)      printf("\n----\n hit %2d  of %5d  \n", itrack, nTracks );
        
         // Look at hits assigned to track
         //  std::vector<EVENT::TrackerHit*>  trackhits = fittrack->getNumberOfElements();
@@ -3229,12 +3229,10 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
       { 
         pos       = meshit->getPosition();
         hsensorID = guessSensorID(pos);
-//        if(debug)      printf("at %p  \n", fithit );
       } 
       else 
       if(meshit == 0 )
       {
-//       if(debug)      printf("at %p  \n", fithit0 );
         if(meshit0 != 0 ) 
         { 
           pos       = meshit0->getPosition();
@@ -3360,7 +3358,6 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
 
               if( meshit->getType() >= 32  && hsensorID == _iDUT  )  // get all fitted hits on board
                 {
-//       printf("---   hit %2d id %2d  point %5.3f %5.3f %5.3f \n", ihit, hsensorID, pos[0], pos[1], pos[2] );
 
                   _fittedX[_maptrackid].push_back(pos[0]);
                   _fittedY[_maptrackid].push_back(pos[1]);
@@ -3410,7 +3407,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
                   int sizeY = -1;
                   int subMatrix = -1; 
                   getClusterSize( hsensorID, static_cast<TrackerHitImpl*>(meshit), sizeX, sizeY, subMatrix);
-                  _trackhitposX[_maptrackid].push_back(pos[0]);
+                 _trackhitposX[_maptrackid].push_back(pos[0]);
                   _trackhitposY[_maptrackid].push_back(pos[1]);
                   _trackhitsizeX[_maptrackid].push_back( sizeX );
                   _trackhitsizeY[_maptrackid].push_back( sizeY );
@@ -3474,7 +3471,6 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
           int sizeY = -1;
           int subMatrix = -1;
           getClusterSize( sensorID, static_cast<TrackerHitImpl*>(meshit), sizeX, sizeY, subMatrix);
-          //printf("%d %d \n", sizeX,sizeY);  
           _clusterSizeX.push_back(sizeX);
           _clusterSizeY.push_back(sizeY);
           _subMatrix.push_back( subMatrix );
