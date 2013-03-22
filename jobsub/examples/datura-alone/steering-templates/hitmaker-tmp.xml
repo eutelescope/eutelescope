@@ -26,6 +26,7 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
       <processor name="PreAligner"/> 
       <processor name="Correlator"/> 
       <processor name="Save"/>
+      <processor name="MyEUTelUtilityPrintEventNumber"/>
    </execute>
 
    <global>
@@ -212,6 +213,16 @@ The presence of this collection in the event is allowing all the noise based sel
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
   <!-- -->
   <parameter name="DumpOffset" type="bool" > false </parameter>
+</processor>
+
+<processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="1000"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
 </processor>
 
 </marlin>
