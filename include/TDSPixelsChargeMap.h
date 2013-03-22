@@ -625,7 +625,7 @@ namespace TDS {
     // k[0] = L, k[1] = W, dim - dimension (not used), *p - struct with parameters
     static double funChargeDistribution (double *k, size_t /* dim */ , void * p)
     {
-      ParamsOfFunChargeDistribution * gp = (ParamsOfFunChargeDistribution *)p;
+      ParamsOfFunChargeDistribution * gp = static_cast< ParamsOfFunChargeDistribution* >(p);
 
       // Variable for result storing
       double A;

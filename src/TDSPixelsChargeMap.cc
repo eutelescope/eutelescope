@@ -63,8 +63,8 @@ TDSPixelsChargeMap::~TDSPixelsChargeMap()
 void TDSPixelsChargeMap::setPixelLength(const double val)
 {
   pixelLength = val;
-  numberPixelsAlongL = (unsigned long int)(length/pixelLength);
-  if( (double)numberPixelsAlongL < length/pixelLength )
+  numberPixelsAlongL = static_cast< unsigned long int >(length/pixelLength);
+  if( static_cast< double >(numberPixelsAlongL) < length/pixelLength )
     {
       cout << "Warning: Layer length is not an integer multiple of pixel length." << endl;
     };
@@ -80,10 +80,10 @@ void TDSPixelsChargeMap::setPixelLength(const double val)
 
 void TDSPixelsChargeMap::setPixelWidth (const double val) {
   pixelWidth = val;
-  numberPixelsAlongW = (unsigned long int)(width/pixelWidth);
-  if( (double)numberPixelsAlongW < width/pixelWidth )
+  numberPixelsAlongW = static_cast< unsigned long int >(width/pixelWidth);
+  if( static_cast< double >(numberPixelsAlongW) < width/pixelWidth )
     {
-      cout << "Warning: Layer width (" << val << ")is not an integer multiple of pixel width ("<< width<<") width/pixelWidth="<<(width/pixelWidth)<<". numberPixelsAlongW="<<(double)numberPixelsAlongW << endl;
+      cout << "Warning: Layer width (" << val << ")is not an integer multiple of pixel width ("<< width<<") width/pixelWidth="<<(width/pixelWidth)<<". numberPixelsAlongW="<< static_cast< double >(numberPixelsAlongW) << endl;
     }
   // Check if the system limits are not too low
   if( numberPixelsAlongW > 999999999ULL )
@@ -209,8 +209,8 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
 
   // Choose the smallest step -- the greatest number of steps
   unsigned int integStepsNumber;
-  unsigned int temp1 = (unsigned int) ( step.geomLength / integMaxStepInDistance + 0.5);
-  unsigned int temp2 = (unsigned int) ( abs(step.charge / integMaxStepInCharge)  + 0.5);
+  unsigned int temp1 = static_cast< unsigned int >( step.geomLength / integMaxStepInDistance + 0.5);
+  unsigned int temp2 = static_cast< unsigned int >( abs(step.charge / integMaxStepInCharge)  + 0.5);
   unsigned int temp  = max(temp1,temp2);
   integStepsNumber = ( temp > 0 ? temp : 1 );
 
@@ -241,10 +241,10 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
 
       // Determine integer coordinates of the main (core) pixel (under which the current point is placed)
       unsigned long int iL, iW;
-      iL = (unsigned long int)((currentPoint[0]-firstPixelCornerCoordL)/pixelLength);
-      iW = (unsigned long int)((currentPoint[1]-firstPixelCornerCoordW)/pixelWidth);
-      if(debug>1) cout << "iL: " << iL << " " << (long unsigned int)((currentPoint[0]-firstPixelCornerCoordL)/pixelLength)  << " " ;
-      if(debug>1) cout << "iW: " << iW << " " << (long unsigned int)((currentPoint[1]-firstPixelCornerCoordW)/pixelWidth)  << endl;
+      iL = static_cast< unsigned long int >((currentPoint[0]-firstPixelCornerCoordL)/pixelLength);
+      iW = static_cast< unsigned long int >((currentPoint[1]-firstPixelCornerCoordW)/pixelWidth);
+      if(debug>1) cout << "iL: " << iL << " " << static_cast< long unsigned int >((currentPoint[0]-firstPixelCornerCoordL)/pixelLength)  << " " ;
+      if(debug>1) cout << "iW: " << iW << " " << static_cast< long unsigned int >((currentPoint[1]-firstPixelCornerCoordW)/pixelWidth)  << endl;
       if ( iL >= numberPixelsAlongL  || iW >= numberPixelsAlongW )
         {
           cout << "Error: Core pixel (and step) outside the boundary of Length-Width plane!" << endl;
@@ -275,9 +275,9 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
         {
           // Determine pixel segment for integration results storage
           // Unreduced segments
-          segmentL = (unsigned int)( integrationStorage->integPixelSegmentsAlongL * ((currentPoint[0]-firstPixelCornerCoordL-pixelLength*iL ) / pixelLength) );
-          segmentW = (unsigned int)( integrationStorage->integPixelSegmentsAlongW * ((currentPoint[1]-firstPixelCornerCoordW-pixelWidth *iW ) / pixelWidth ) ) ;
-          segmentH = (unsigned int)( integrationStorage->integPixelSegmentsAlongH * (abs(currentPoint[2]) / abs(height) ) );
+          segmentL = static_cast< unsigned int >( integrationStorage->integPixelSegmentsAlongL * ((currentPoint[0]-firstPixelCornerCoordL-pixelLength*iL ) / pixelLength) );
+          segmentW = static_cast< unsigned int >( integrationStorage->integPixelSegmentsAlongW * ((currentPoint[1]-firstPixelCornerCoordW-pixelWidth *iW ) / pixelWidth ) ) ;
+          segmentH = static_cast< unsigned int >( integrationStorage->integPixelSegmentsAlongH * (abs(currentPoint[2]) / abs(height) ) );
           if(debug>1) std::cout << "segmentH: " << segmentH  << " point2: " << abs(currentPoint[2]) <<
                     " " << integrationStorage->integPixelSegmentsAlongH << " 1./height:" << 1./height <<  std::endl;
           // Thanks to symmetry we can reduce L and W segments (we have to reduce pixels then, too!)
@@ -306,11 +306,11 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
       temp = iL - integMaxNumberPixelsAlongL / 2;
       temp < 0 ? imin = 0 : imin = temp;
       temp = iL + integMaxNumberPixelsAlongL / 2;
-      temp >= (long int)numberPixelsAlongL ? imax = numberPixelsAlongL - 1 : imax = temp;
+      temp >= static_cast< long int >(numberPixelsAlongL) ? imax = numberPixelsAlongL - 1 : imax = temp;
       temp = iW - integMaxNumberPixelsAlongW / 2;
       temp < 0 ? jmin = 0 : jmin = temp;
       temp = iW + integMaxNumberPixelsAlongW / 2;
-      temp >= (long int)numberPixelsAlongW ? jmax = numberPixelsAlongW - 1 : jmax = temp;
+      temp >= static_cast< long int >(numberPixelsAlongW) ? jmax = numberPixelsAlongW - 1 : jmax = temp;
 
       // Loops over important pixels
       // (borders of a layer part taken into account - see above)
@@ -351,14 +351,14 @@ void TDSPixelsChargeMap::update(const TDSStep & step)
                   // Thanks to symmetry we can reduce L and W pixels indexes. We have to reduce segments simultaneously!
 
                   if(debug>2) std::cout << " " << i << " " << iL << " " << integMaxNumberPixelsAlongL / 2 << std::endl;
-                  pixelL = (long int)(i) - (long int)(iL) + integMaxNumberPixelsAlongL / 2;
+                  pixelL = static_cast< long int >(i) - static_cast< long int >(iL) + integMaxNumberPixelsAlongL / 2;
                   if ( segmentL_reduced   &&  i != iL )
                     {
                       pixelL = integMaxNumberPixelsAlongL - pixelL - 1;
                     }
 
                   if(debug>2) std::cout << " " << j << " " << iW << " " << integMaxNumberPixelsAlongW / 2 << std::endl;
-                  pixelW = (long int)(j) - (long int)(iW) + integMaxNumberPixelsAlongW / 2;
+                  pixelW = static_cast< long int >(j) - static_cast< long int >(iW) + integMaxNumberPixelsAlongW / 2;
                   if ( segmentW_reduced   &&  j != iW )
                     {
                       pixelW = integMaxNumberPixelsAlongW - pixelW - 1;
@@ -485,7 +485,7 @@ double TDSPixelsChargeMap::getPixelCoordL(unsigned long int indexAlongL)
     }
   else
     {
-      return ((double)(indexAlongL)+0.5)*pixelLength + firstPixelCornerCoordL;
+      return (static_cast< double >(indexAlongL)+0.5)*pixelLength + firstPixelCornerCoordL;
     }
 }  
 
@@ -499,7 +499,7 @@ double TDSPixelsChargeMap::getPixelCoordL(type_PixelID pixID)
     }
   else
     {
-      return ((double)(pixID/tenTo10)+0.5)*pixelLength + firstPixelCornerCoordL;
+      return (static_cast< double >(pixID/tenTo10)+0.5)*pixelLength + firstPixelCornerCoordL;
     }
 }  
 
@@ -513,7 +513,7 @@ double TDSPixelsChargeMap::getPixelCoordW(unsigned long int indexAlongW)
     }
   else
     {
-      return ((double)(indexAlongW)+0.5)*pixelWidth + firstPixelCornerCoordW;
+      return (static_cast< double >(indexAlongW)+0.5)*pixelWidth + firstPixelCornerCoordW;
     }
 }  
 
@@ -527,7 +527,7 @@ double TDSPixelsChargeMap::getPixelCoordW(type_PixelID pixID)
     }
   else
     {
-      return ((double)(pixID%tenTo10)+0.5)*pixelWidth + firstPixelCornerCoordW;
+      return (static_cast< double >(pixID%tenTo10)+0.5)*pixelWidth + firstPixelCornerCoordW;
     }
 }  
 
@@ -733,8 +733,8 @@ vector<TDSPixel> TDSPixelsChargeMap::getVectorOfPixels()
     {
       thePixel.indexAlongL = i->first/tenTo10;
       thePixel.indexAlongW = i->first%tenTo10;
-      thePixel.coordL = ((double)(thePixel.indexAlongL)+0.5)*pixelLength + firstPixelCornerCoordL;
-      thePixel.coordW = ((double)(thePixel.indexAlongW)+0.5)*pixelWidth  + firstPixelCornerCoordW;
+      thePixel.coordL = (static_cast< double >(thePixel.indexAlongL)+0.5)*pixelLength + firstPixelCornerCoordL;
+      thePixel.coordW = (static_cast< double >(thePixel.indexAlongW)+0.5)*pixelWidth  + firstPixelCornerCoordW;
       thePixel.charge = i->second;
       vectorOfPixels.push_back(thePixel);
       //streamlog_out( MESSAGE5 ) << "ipixel= " << ipixel << " " << thePixel.coordL << " " << thePixel.coordW << endl;
@@ -790,11 +790,11 @@ TDSPrecluster TDSPixelsChargeMap::getPrecluster(unsigned long int seedIndexAlong
   temp = thePrecluster.pixelL-rectLength/2;
   temp < 0 ? lmin = 0 : lmin = temp;
   temp = thePrecluster.pixelL+rectLength/2;
-  temp >= (long int)numberPixelsAlongL ? lmax = numberPixelsAlongL - 1 : lmax = temp;
+  temp >= static_cast< long int >(numberPixelsAlongL) ? lmax = numberPixelsAlongL - 1 : lmax = temp;
   temp = thePrecluster.pixelW-rectWidth/2;
   temp < 0 ? wmin = 0 : wmin = temp;
   temp = thePrecluster.pixelW+rectWidth/2;
-  temp >= (long int)numberPixelsAlongW ? wmax = numberPixelsAlongL - 1 : wmax = temp;
+  temp >= static_cast< long int >(numberPixelsAlongW) ? wmax = numberPixelsAlongL - 1 : wmax = temp;
 
   thePrecluster.rectLmin = lmin;
   thePrecluster.rectLmax = lmax;
