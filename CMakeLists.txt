@@ -55,6 +55,8 @@ FIND_PACKAGE( AIDA )
 FIND_PACKAGE( EUDAQ )
 FIND_PACKAGE( ROOT COMPONENTS Minuit )
 FIND_PACKAGE( LCCD  REQUIRED )               
+# Uncomment as soon as we have Eigen from system library or elsewhere
+#FIND_PACKAGE( Eigen )
 
 # development mode:
 
@@ -83,7 +85,7 @@ FIND_PACKAGE( LCCD  REQUIRED )
 
 
 
-FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT LCCD GBL XERCESC G4 ALLPIX )
+FOREACH( pkg Marlin MarlinUtil GSL AIDA EUDAQ ROOT LCCD GBL XERCESC G4 ALLPIX EIGEN )
     IF( ${pkg}_FOUND )
         # include as "system" libraries: gcc will be less verbose w.r.t. warnings
         INCLUDE_DIRECTORIES(SYSTEM ${${pkg}_INCLUDE_DIRS} )
