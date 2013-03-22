@@ -257,7 +257,7 @@ float EUTelFFClusterImpl::getClusterCharge(int nPixel) const {
 
   vector<float > vectorCopy(_trackerData->getChargeValues());
 
-  if ( (size_t) nPixel >= vectorCopy.size() ) return getTotalCharge() ;
+  if ( static_cast< size_t >(nPixel) >= vectorCopy.size() ) return getTotalCharge() ;
 
   sort(vectorCopy.begin(), vectorCopy.end(), greater<float>());
 
@@ -283,7 +283,7 @@ std::vector<float> EUTelFFClusterImpl::getClusterCharge(std::vector<int > nPixel
     iter = vectorCopy.begin();
     float charge = 0;
 
-    if ( (size_t )nPixels[i] >= vectorCopy.size() ) {
+    if ( static_cast< size_t >(nPixels[i]) >= vectorCopy.size() ) {
 
       clusterSignal.push_back( getTotalCharge() );
 
