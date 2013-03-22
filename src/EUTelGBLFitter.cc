@@ -117,11 +117,11 @@ namespace eutelescope {
     //
 
     double EUTelGBLFitter::InterpolateTrackX(const EVENT::TrackerHitVec& trackCand, const double z) const {
-        double x0 = (*trackCand.begin())->getPosition()[0];
-        double z0 = (*trackCand.begin())->getPosition()[0];
+        double x0 = trackCand.front()->getPosition()[0];
+        double z0 = trackCand.front()->getPosition()[2];
 
-        double xLast = trackCand[trackCand.size() - 1]->getPosition()[0];
-        double zLast = trackCand[trackCand.size() - 1]->getPosition()[1];
+        double xLast = trackCand.back()->getPosition()[0];
+        double zLast = trackCand.back()->getPosition()[2];
 
         double x = x0 - (x0 - xLast) * ((z0 - z) / (z0 - zLast));
 
@@ -131,11 +131,11 @@ namespace eutelescope {
     //! Predict track hit in Y direction using simplified model
 
     double EUTelGBLFitter::InterpolateTrackY(const EVENT::TrackerHitVec& trackCand, const double z) const {
-        double y0 = (*trackCand.begin())->getPosition()[0];
-        double z0 = (*trackCand.begin())->getPosition()[2];
+        double y0 = trackCand.front()->getPosition()[1];
+        double z0 = trackCand.front()->getPosition()[2];
 
-        double yLast = trackCand[trackCand.size() - 1]->getPosition()[0];
-        double zLast = trackCand[trackCand.size() - 1]->getPosition()[2];
+        double yLast = trackCand.back()->getPosition()[1];
+        double zLast = trackCand.back()->getPosition()[2];
 
         double y = y0 - (y0 - yLast) * ((z0 - z) / (z0 - zLast));
 
@@ -172,36 +172,40 @@ namespace eutelescope {
             }
         }
 
-        TMatrixD jacPointToPoint(5, 5);
-        TMatrixD proL2m(2, 2);
         TVectorD meas(2);
 
-        const double resx = 21; // [um] telescope initial resolution
-        const double resy = 20; // [um] telescope initial resolution
+        const double resx = 0.017/sqrt(12.); // [um] telescope initial resolution
+        const double resy = 0.017/sqrt(12.); // [um] telescope initial resolution
+        //const double resx = 18/sqrt(12.); // [um] telescope initial resolution
+        //const double resy = 18/sqrt(12.); // [um] telescope initial resolution
 
         TVectorD measPrec(2); // precision = 1/resolution^2
         measPrec[0] = 1.0 / resx / resx;
         measPrec[1] = 1.0 / resy / resy;
 
-        TVectorD scat(2);
-        scat[0] = 0.;
-        scat[1] = 0.;
-
+	TVectorD scat(2);
+	scat.Zero();
+	
         double _eBeam = 3.; // Run 5063
+//        double _eBeam = 5.; // Run 5080
         double p = _eBeam; // beam momentum
-        double X0Si = 65e-3 / 94; // Si 
+        double X0Si = 50e-3 / 94; // Si 
         double X0Kap = 60e-3 / 286; // Kapton
-        double X0Air = 50 / 304e3; // Air
+        double X0Air = 150 / 304e3; // Air
         double tetSi = (0.0136 * sqrt(X0Si) / p * (1 + 0.038 * std::log(X0Si)));
         double tetKap = (0.0136 * sqrt(X0Kap) / p * (1 + 0.038 * std::log(X0Kap)));
-        double tetAir = 0.; //(0.0136 * sqrt(X0Air) / p * ( 1 + 0.038*std::log(X0Air) ));
+        double tetAir = (0.0136 * sqrt(X0Air) / p * ( 1 + 0.038*std::log(X0Air)));
 
-        TVectorD scatPrec(2);
-        //2 for x and y directions
-        scatPrec[0] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
-        scatPrec[1] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
+        TVectorD scatPrecSensor(2);
+        scatPrecSensor[0] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
+        scatPrecSensor[1] = 1.0 / (tetSi * tetSi + tetKap * tetKap);
+
+        TVectorD scatPrecAir(2);
+        scatPrecAir[0] = 1.0 / (tetAir * tetAir);
+        scatPrecAir[1] = 1.0 / (tetAir * tetAir);
 
         TMatrixD alDer( 2, 3 ); // alignment derivatives
+        alDer.Zero();
 	alDer[0][0] = 1.0; // dx/dx
         alDer[0][1] = 0.0; // dx/dy
 	alDer[1][0] = 0.0; // dy/dx
@@ -211,51 +215,91 @@ namespace eutelescope {
         EVENT::TrackerHitVec::const_iterator itHit;
         for (; itTrkCand != _trackCandidates.end(); ++itTrkCand) {
 
+            if( itTrkCand->second.size() > 6 ) continue;
+            
             IMPL::TrackImpl * fittrack = new IMPL::TrackImpl();
 
             //GBL trajectory construction
             std::vector< gbl::GblPoint > pointList;
-            jacPointToPoint.UnitMatrix();
-            proL2m.UnitMatrix();
 
             int iLabel = 0;
-            itHit = itTrkCand->second.begin();
-            double step = 0.;
-            double zprev = (*itHit)->getPosition()[2];
             int iPlane = 0;
+            TMatrixD jacPointToPoint(5, 5);
+            jacPointToPoint.UnitMatrix();
+            double step = 0.;
+            double zprev = itTrkCand->second.front()->getPosition()[2];
+            itHit = itTrkCand->second.begin();
             for (; itHit != itTrkCand->second.end(); ++itHit) {
-                
+                const double* hitpos = (*itHit)->getPosition();
+//                step = hitpos[2] - zprev;			// commented out beacause propagation is done in air's sub-block
+//                streamlog_out(DEBUG0) << "Step size:" << step << std::endl;	// commented out beacause propagation is done in air's sub-block
+//                jacPointToPoint = PropagatePar(step);		// commented out beacause propagation is done in air's sub-block
+                //jacPointToPoint.Print();
+//                
                 std::vector<int> globalLabels(3);
-                globalLabels[0] = 10 + iPlane; // dx
-                globalLabels[1] = 20 + iPlane; // dy
-                globalLabels[2] = 40 + iPlane; // rot
-                
-                ++iPlane;
-                
-                double xPred = InterpolateTrackX(itTrkCand->second, (*itHit)->getPosition()[2]);
-                double yPred = InterpolateTrackY(itTrkCand->second, (*itHit)->getPosition()[2]);
-                
+//                std::vector<int> globalLabels(2);	// fit w/o rotations
+                globalLabels[0] = 1 + iPlane*10; // dx
+                globalLabels[1] = 2 + iPlane*10; // dy
+                globalLabels[2] = 3 + iPlane*10; // rot
+//                
+//                
+                double xPred = InterpolateTrackX(itTrkCand->second, hitpos[2]);
+                double yPred = InterpolateTrackY(itTrkCand->second, hitpos[2]);
+//                
                 alDer[0][2] = -yPred; // dx/rot
                 alDer[1][2] = xPred; // dy/rot
                 
                 fittrack -> addHit(*itHit);
 
-                const double* hitpos = (*itHit)->getPosition();
-                step = hitpos[2] - zprev;
                 gbl::GblPoint point(jacPointToPoint);
-                jacPointToPoint = PropagatePar(step);
-                zprev = hitpos[2];
-                meas[0] = (*itHit)->getPosition()[0] - xPred; // [um]
-                meas[1] = (*itHit)->getPosition()[1] - yPred;
+                meas[0] = hitpos[0] - xPred; // [um]
+                meas[1] = hitpos[1] - yPred;
                 streamlog_out(DEBUG0) << "Residuals:" << std::endl;
-                streamlog_out(DEBUG0) << "X:" << std::setw(10) << meas[0] << std::setw(10) << resx << std::endl;
-                streamlog_out(DEBUG0) << "Y:" << std::setw(10) << meas[1] << std::setw(10) << resy << std::endl;
-
-                point.setLabel(++iLabel);
+                streamlog_out(DEBUG0) << "X:" << std::setw(20) << meas[0] << std::setw(20) << resx << std::endl;
+                streamlog_out(DEBUG0) << "Y:" << std::setw(20) << meas[1] << std::setw(20) << resy << std::endl;
+                TMatrixD proL2m(2, 2);
+                proL2m.UnitMatrix();
+                ++iLabel;
+                point.setLabel(iLabel);
                 point.addMeasurement(proL2m, meas, measPrec);
-                point.addScatterer(scat, scatPrec);
+                point.addScatterer(scat, scatPrecSensor);
                 point.addGlobals(globalLabels,alDer);
                 pointList.push_back(point);
+
+		// construct effective scatterers for air
+		// the scatters must be at (Z(plane i) + Z(plane i+1))/2. +/- (Z(plane i) - Z(plane i+1))/sqrt(12)
+		if ( iPlane < itTrkCand->second.size()-1 ) {
+			const double planeSpacing = hitpos[2] - (*(itHit+1))->getPosition()[2];		// works only for 6 hits tracks
+			// propagate parameters into air gap
+			step = planeSpacing/2. - planeSpacing/sqrt(12.);
+			//step = planeSpacing/2.;
+			streamlog_out(DEBUG0) << "Step size in the air gap:" << step << std::endl;
+			jacPointToPoint = PropagatePar(step);
+			// point with scatterer
+			gbl::GblPoint pointInAir1(jacPointToPoint);
+			//pointInAir1.setLabel(1000+iLabel);
+			pointInAir1.setLabel(++iLabel);
+			pointInAir1.addScatterer(scat, scatPrecAir);
+			pointList.push_back(pointInAir1);
+
+			step = 2.*planeSpacing/sqrt(12.);
+			streamlog_out(DEBUG0) << "Step size in the air gap:" << step << std::endl;
+			jacPointToPoint = PropagatePar(step);
+			// point with scatterer
+			gbl::GblPoint pointInAir2(jacPointToPoint);
+			//pointInAir2.setLabel(2000+iLabel);
+			pointInAir2.setLabel(++iLabel);
+			pointInAir2.addScatterer(scat, scatPrecAir);
+			pointList.push_back(pointInAir2);
+
+			step = planeSpacing/2. - planeSpacing/sqrt(12.); 
+			//step = planeSpacing/2.;
+			streamlog_out(DEBUG0) << "Step size in the air gap:" << step << std::endl;
+			jacPointToPoint = PropagatePar(step);
+		}
+
+                ++iPlane;
+                zprev = hitpos[2];
             }
 
             gbl::GblTrajectory* traj = new gbl::GblTrajectory(pointList, false);
@@ -266,6 +310,7 @@ namespace eutelescope {
             int ierr = 0;
             const std::string mEstOpt = "T";
             ierr = traj->fit(chi2, ndf, loss, mEstOpt);
+//            ierr = traj->fit(chi2, ndf, loss);
 
             if( !ierr ) traj->milleOut( *_mille );
             
@@ -297,7 +342,7 @@ namespace eutelescope {
             //            
             _fittrackvec->addElement(fittrack);
             //
-            //	    delete fittrack;
+//            delete fittrack;
 
             streamlog_out(DEBUG1) << "Fit results:" << std::endl;
             streamlog_out(DEBUG1) << "Chi2:" << std::setw(10) << chi2 << std::endl;

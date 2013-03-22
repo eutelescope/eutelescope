@@ -257,6 +257,8 @@ EUTelMilleGBL::EUTelMilleGBL() : Processor("EUTelMilleGBL") {
 
 
     registerOptionalParameter("BinaryFilename", "Name of the Millepede binary file.", _binaryFilename, std::string("mille.bin"));
+    
+    registerOptionalParameter("PedeConstraintsFilename", "Name of the Millepede constraints file.", _pedeConstraintsFilename, std::string("constraints.txt"));
 
     registerOptionalParameter("FixParameter", "Fixes the given alignment parameters in the fit if alignMode==3 is used. For each sensor an integer must be specified (If no value is given, then all parameters will be free). bit 0 = x shift, bit 1 = y shift, bit 2 = z shift, bit 3 = alpha, bit 4 = beta, bit 5 = gamma. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.", _FixParameter, std::vector<int> (static_cast<int> (6), 24));
 
@@ -756,7 +758,7 @@ void EUTelMilleGBL::processEvent(LCEvent * event) {
         TVectorD measErr(200);
         TVectorD residualErr(200);
         TVectorD downWeight(200);
-        if (_nTracks != 0) {
+        if (_nTracks != 0 && _nTracks == 1) {
             _theFitter->SetTrackCandidates(trackCandidates);
             _theFitter->FitTracks();
 //
@@ -780,21 +782,29 @@ void EUTelMilleGBL::processEvent(LCEvent * event) {
 
                 std::stringstream sstr;
                 gbl::GblTrajectory* gblTraj = gblTracks[ iCounter ];
+		//gblTraj->printTrajectory();
+		//gblTraj->printPoints();
+		//gblTraj->printData();
                 std::vector< gbl::GblPoint > gblPointVec = static_cast<EUTelGBLFitter*> (_theFitter)->GetGblTracksPoints()[iCounter];
                 std::vector< gbl::GblPoint >::const_iterator itGblPoint = gblPointVec.begin();
                 int iPlane = 0; // wrong in case of missing planes
                 for (; itGblPoint != gblPointVec.end(); ++itGblPoint) {
                     if (iPlane > 5) continue;
-                    gblTraj->getMeasResults(itGblPoint->getLabel(), numData, residual, measErr, residualErr, downWeight);
-                    sstr << _residGblFitHistNameX << iPlane;
-                    streamlog_out(DEBUG0) << std::setw(15) << std::setprecision(5) << residual[0] << std::setw(15) << std::setprecision(5) << residualErr[0] << std::endl;
-                    static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[0] / residualErr[0]);
-                    sstr.str(std::string());
-                    sstr << _residGblFitHistNameY << iPlane;
-                    streamlog_out(DEBUG0) << std::setw(15) << std::setprecision(5) << residual[1] << std::setw(15) << std::setprecision(5) << residualErr[1] << std::endl;
-                    static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[1] / residualErr[1]);
-                    sstr.str(std::string());
-                    ++iPlane;
+		    //if ( itGblPoint->getLabel() < 1000 )
+		    if ( itGblPoint->getLabel() % 3 == 1 ) 
+		    {
+			    streamlog_out(DEBUG0) << std::setw(15) << itGblPoint->getLabel() << std::endl;
+			    gblTraj->getMeasResults(itGblPoint->getLabel(), numData, residual, measErr, residualErr, downWeight);
+			    sstr << _residGblFitHistNameX << iPlane;
+			    streamlog_out(DEBUG0) << std::setw(15) << std::setprecision(5) << residual[0] << std::setw(15) << std::setprecision(5) << residualErr[0] << std::endl;
+			    static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[0] / residualErr[0], downWeight);
+			    sstr.str(std::string());
+			    sstr << _residGblFitHistNameY << iPlane;
+			    streamlog_out(DEBUG0) << std::setw(15) << std::setprecision(5) << residual[1] << std::setw(15) << std::setprecision(5) << residualErr[1] << std::endl;
+			    static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[1] / residualErr[1], downWeight);
+			    sstr.str(std::string());
+			    if ( itGblPoint->getLabel() < 1000 )++iPlane;
+		    }
                 }
 
                 IMPL::LCCollectionVec::const_iterator itFitTrack;
@@ -867,6 +877,278 @@ void EUTelMilleGBL::end() {
 
     // if write the pede steering file
     if (_generatePedeSteerfile) {
+        streamlog_out ( MESSAGE4 ) << "\n Generating the steering file for the pede program..." << std::endl;
+
+        std::string tempHistoName;
+        double *meanX = new double[_nPlanes];
+        double *meanY = new double[_nPlanes];
+        double *meanZ = new double[_nPlanes];
+
+//        // loop over all detector planes
+//        for(unsigned int iDetector = 0; iDetector < _nPlanes; iDetector++ ) {
+//
+//          int sensorID = _orderedSensorID.at( iDetector );
+//
+//          if ( _histogramSwitch ) {
+//            tempHistoName =  _residualXLocalname + "_d" + to_string( sensorID );
+//            if ( AIDA::IHistogram1D* residx_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+//              meanX[iDetector] = residx_histo->mean();
+//            else {
+//              streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualXLocalname << endl;
+//              streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+//              _histogramSwitch = false;
+//            }
+//          }
+//
+//          if ( _histogramSwitch ) {
+//            tempHistoName =  _residualYLocalname + "_d" + to_string( sensorID );
+//            if ( AIDA::IHistogram1D* residy_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+//              meanY[iDetector] = residy_histo->mean();
+//            else {
+//              streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualYLocalname << endl;
+//              streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+//              _histogramSwitch = false;
+//            }
+//          }
+//
+//          if ( _histogramSwitch ) {
+//            tempHistoName =  _residualZLocalname + "_d" + to_string( sensorID );
+//            if ( AIDA::IHistogram1D* residz_histo = dynamic_cast<AIDA::IHistogram1D*>(_aidaHistoMap[tempHistoName.c_str()]) )
+//              meanZ[iDetector] = residz_histo->mean();
+//            else {
+//              streamlog_out ( ERROR2 ) << "Not able to retrieve histogram pointer for " << _residualZLocalname << endl;
+//              streamlog_out ( ERROR2 ) << "Disabling histogramming from now on" << endl;
+//              _histogramSwitch = false;
+//            } 
+//          }
+//        } // end loop over all detector planes
+
+        std::ofstream steerFile;
+        steerFile.open(_pedeSteerfileName.c_str());
+
+        if (steerFile.is_open()) {
+
+          // find first and last excluded plane
+          unsigned int firstnotexcl = _nPlanes;
+          unsigned int lastnotexcl = 0;
+
+          // loop over all planes
+          for (unsigned int help = 0; help < _nPlanes; help++) 
+          {
+
+            int excluded = 0;
+
+            // loop over all excluded planes
+            for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) 
+            {
+              if (help == _excludePlanes[helphelp]) 
+              {
+    //            excluded = 1;
+              }
+            } // end loop over all excluded planes
+
+            if (excluded == 0 && firstnotexcl > help) 
+            {
+              firstnotexcl = help;
+            }
+
+            if (excluded == 0 && lastnotexcl < help) 
+            {
+              lastnotexcl = help;
+            }
+          } // end loop over all planes
+
+          // calculate average
+          double averageX = (meanX[firstnotexcl] + meanX[lastnotexcl]) / 2;
+          double averageY = (meanY[firstnotexcl] + meanY[lastnotexcl]) / 2;
+          double averageZ = (meanZ[firstnotexcl] + meanZ[lastnotexcl]) / 2;
+
+          steerFile << "fortranfiles" << std::endl;
+          steerFile << _pedeConstraintsFilename << std::endl;
+          steerFile << std::endl;
+          
+          steerFile << "Cfiles" << std::endl;
+          steerFile << _binaryFilename << std::endl;
+          steerFile << std::endl;
+
+          steerFile << "Parameter" << std::endl;
+
+          int counter = 0;
+
+          // loop over all planes
+          for (unsigned int help = 0; help < _nPlanes; help++) {
+
+            int excluded = 0; // flag for excluded planes
+
+            // loop over all excluded planes
+            for (int helphelp = 0; helphelp < _nExcludePlanes; helphelp++) {
+
+              if (help == _excludePlanes[helphelp]) {
+    //            excluded = 1;
+              }
+
+            } // end loop over all excluded planes
+
+            // if plane not excluded
+            if (excluded == 0) {
+
+              bool fixed = false;
+              for(size_t i = 0;i< _FixedPlanes.size(); i++)
+                {
+                  if(_FixedPlanes[i] == static_cast< int >(help))
+                    fixed = true;
+                }
+
+              if( fixed || (_FixedPlanes.empty() && (help == firstnotexcl || help == lastnotexcl) ) )
+                {
+                  if (_alignMode == 1) {
+                    steerFile << (counter * 3 + 1) << " 0.0 -1.0" << std::endl;
+                    steerFile << (counter * 3 + 2) << " 0.0 -1.0" << std::endl;
+                    steerFile << (counter * 3 + 3) << " 0.0 -1.0" << std::endl;
+                  } else if (_alignMode == 2) {
+                    steerFile << (counter * 2 + 1) << " 0.0 -1.0" << std::endl;
+                    steerFile << (counter * 2 + 2) << " 0.0 -1.0" << std::endl;
+                  } else if (_alignMode == 3) {
+                    steerFile << (counter * 6 + 1) << " 0.0 -1.0" << std::endl;
+                    steerFile << (counter * 6 + 2) << " 0.0 -1.0" << std::endl;
+                    steerFile << (counter * 6 + 3) << " 0.0 -1.0" << std::endl;
+                    steerFile << (counter * 6 + 4) << " 0.0 -1.0" << std::endl;
+                    steerFile << (counter * 6 + 5) << " 0.0 -1.0" << std::endl;
+                    steerFile << (counter * 6 + 6) << " 0.0 -1.0" << std::endl;
+                  } else if (_alignMode == 4) {
+                        if(help==0)
+                        {       
+                            steerFile << 1 << " " << _pedeUserStartValuesX[help] << " -1.0" << std::endl;
+                            steerFile << 2 << " " << _pedeUserStartValuesY[help] << " -1.0" << std::endl;
+                        }
+                  }
+                } else {
+
+                if (_alignMode == 1) {
+
+                  if (_usePedeUserStartValues == 0) {
+                    steerFile << (counter * 3 + 1) << " " << (averageX - meanX[help]) << " 0.0" << std::endl;
+                    steerFile << (counter * 3 + 2) << " " << (averageY - meanY[help]) << " 0.0" << std::endl;
+                    steerFile << (counter * 3 + 3) << " " << " 0.0 0.0" << std::endl;
+                  } else {
+                    steerFile << (counter * 3 + 1) << " " << _pedeUserStartValuesX[help] << " 0.0" << std::endl;
+                    steerFile << (counter * 3 + 2) << " " << _pedeUserStartValuesY[help] << " 0.0" << std::endl;
+                    steerFile << (counter * 3 + 3) << " " << _pedeUserStartValuesGamma[help] << " 0.0" << std::endl;
+                  }
+
+                } else if (_alignMode == 2) {
+
+                  if (_usePedeUserStartValues == 0) {
+                    steerFile << (counter * 2 + 1) << " " << (averageX - meanX[help]) << " 0.0" << std::endl;
+                    steerFile << (counter * 2 + 2) << " " << (averageY - meanY[help]) << " 0.0" << std::endl;
+                  } else {
+                    steerFile << (counter * 2 + 1) << " " << _pedeUserStartValuesX[help] << " 0.0" << std::endl;
+                    steerFile << (counter * 2 + 2) << " " << _pedeUserStartValuesY[help] << " 0.0" << std::endl;
+                  }
+
+                } else if (_alignMode == 3) {
+                  if (_usePedeUserStartValues == 0)
+                    {
+                      if(_FixParameter[help] & (1 << 0))
+                        steerFile << (counter * 6 + 1) << " 0.0 -1.0" << std::endl;
+                      else
+                        steerFile << (counter * 6 + 1) << " " << (averageX - meanX[help]) << " 0.0" << std::endl;
+
+                      if(_FixParameter[help] & (1 << 1))
+                        steerFile << (counter * 6 + 2) << " 0.0 -1.0" << std::endl;
+                      else
+                        steerFile << (counter * 6 + 2) << " " << (averageY - meanY[help]) << " 0.0" << std::endl;
+
+                      if(_FixParameter[help] & (1 << 2))
+                        steerFile << (counter * 6 + 3) << " 0.0 -1.0" << std::endl;
+                      else
+                        steerFile << (counter * 6 + 3) << " " << (averageZ - meanZ[help]) << " 0.0" << std::endl;
+
+                      if(_FixParameter[help] & (1 << 3))
+                        steerFile << (counter * 6 + 4) << " 0.0 -1.0" << std::endl;
+                      else
+                        steerFile << (counter * 6 + 4) << " 0.0 0.0" << std::endl;
+
+                      if(_FixParameter[help] & (1 << 4))
+                        steerFile << (counter * 6 + 5) << " 0.0 -1.0" << std::endl;
+                      else
+                        steerFile << (counter * 6 + 5) << " 0.0 0.0" << std::endl;
+
+                      if(_FixParameter[help] & (1 << 5))
+                        steerFile << (counter * 6 + 6) << " 0.0 -1.0" << std::endl;
+                      else
+                        steerFile << (counter * 6 + 6) << " 0.0 0.0" << std::endl;
+                    } else {
+                      if(_FixParameter[help] & (1 << 0))
+                        steerFile << (counter * 6 + 1) << " 0.0 -1.0" << std::endl;
+                      else
+                        steerFile << (counter * 6 + 1) << " " << _pedeUserStartValuesX[help] << " 0.0" << std::endl;
+
+                      if(_FixParameter[help] & (1 << 1))
+                        steerFile << (counter * 6 + 2) << " 0.0 -1.0" << std::endl;
+                      else
+                        steerFile << (counter * 6 + 2) << " " << _pedeUserStartValuesY[help] << " 0.0" << std::endl;
+
+                      if(_FixParameter[help] & (1 << 2))
+                        steerFile << (counter * 6 + 3) << " 0.0 -1.0" << std::endl;
+                      else
+                        steerFile << (counter * 6 + 3) << " " << _pedeUserStartValuesZ[help] << " 0.0" << std::endl;
+
+                      if(_FixParameter[help] & (1 << 3))
+                        steerFile << (counter * 6 + 4) << " 0.0 -1.0" << std::endl;
+                      else
+                        steerFile << (counter * 6 + 4) << " " << _pedeUserStartValuesAlpha[help] << " 0.0" << std::endl;
+
+                      if(_FixParameter[help] & (1 << 4))
+                        steerFile << (counter * 6 + 5) << " 0.0 -1.0" << std::endl;
+                      else
+                        steerFile << (counter * 6 + 5) << " " << _pedeUserStartValuesBeta[help] << " 0.0" << std::endl;
+
+                      if(_FixParameter[help] & (1 << 5))
+                        steerFile << (counter * 6 + 6) << " 0.0 -1.0" << std::endl;
+                      else
+                        steerFile << (counter * 6 + 6) << " " << _pedeUserStartValuesGamma[help] << " 0.0" << std::endl;
+                    }
+                } else if (_alignMode == 4) {
+                      if (_usePedeUserStartValues == 0) {
+                        if(help==0)
+                        {       
+                            steerFile << 1 << " " << _pedeUserStartValuesX[help] << " -1.0" << std::endl;
+                            steerFile << 2 << " " << _pedeUserStartValuesY[help] << " -1.0" << std::endl;
+                        }
+                      } 
+                }
+              }
+
+              counter++;
+
+            } // end if plane not excluded
+
+          } // end loop over all planes
+
+          steerFile << std::endl;
+          steerFile << "chiscut 10.0 5.0" << std::endl;
+          steerFile << "! outlierdownweighting 4" << std::endl;
+          steerFile << std::endl;
+          steerFile << "method inversion 10 0.001" << std::endl;
+          steerFile << std::endl;
+          steerFile << "! histprint" << std::endl;
+          steerFile << std::endl;
+          steerFile << "end" << std::endl;
+
+          steerFile.close();
+
+          streamlog_out ( MESSAGE5 ) << "File " << _pedeSteerfileName << " written." << std::endl;
+
+        } else {
+
+          streamlog_out ( ERROR2 ) << "Could not open steering file." << std::endl;
+
+        }
+        //cleaning up
+        delete [] meanX;
+        delete [] meanY;
+        delete [] meanZ;
     } // end if write the pede steering file
 
     streamlog_out(MESSAGE2) << std::endl;
@@ -875,6 +1157,290 @@ void EUTelMilleGBL::end() {
 
     // if running pede using the generated steering file
     if (_runPede == 1) {
+        // check if steering file exists
+        if (_generatePedeSteerfile == 1) {
+
+          std::string command = "pede " + _pedeSteerfileName;
+
+          streamlog_out ( MESSAGE5 ) << "Starting pede...: " << command.c_str() << std::endl;
+
+          bool encounteredError = false;
+
+          // run pede and create a streambuf that reads its stdout and stderr
+          redi::ipstream pede( command.c_str(), redi::pstreams::pstdout|redi::pstreams::pstderr ); 
+
+          if (!pede.is_open()) {
+              streamlog_out( ERROR5 ) << "Pede cannot be executed: command not found in the path" << std::endl;
+              encounteredError = true;	  
+          } else {
+
+            // output multiplexing: parse pede output in both stdout and stderr and echo messages accordingly
+            char buf[1024];
+            std::streamsize n;
+            std::stringstream pedeoutput; // store stdout to parse later
+            std::stringstream pedeerrors;
+            bool finished[2] = { false, false };
+            while (!finished[0] || !finished[1])
+              {
+                if (!finished[0])
+                  {
+                    while ((n = pede.err().readsome(buf, sizeof(buf))) > 0){
+                      streamlog_out( ERROR5 ).write(buf, n).flush();
+                      std::string error (buf, n);
+                      pedeerrors << error;
+                      encounteredError = true;
+                    }
+                    if (pede.eof())
+                      {
+                        finished[0] = true;
+                        if (!finished[1])
+                          pede.clear();
+                      }
+                  }
+
+                if (!finished[1])
+                  {
+                    while ((n = pede.out().readsome(buf, sizeof(buf))) > 0){
+                      streamlog_out( MESSAGE4 ).write(buf, n).flush();
+                      std::string output (buf, n);
+                      pedeoutput << output;
+                    }
+                    if (pede.eof())
+                      {
+                        finished[1] = true;
+                        if (!finished[0])
+                          pede.clear();
+                      }
+                  }
+              }
+
+            // pede does not return exit codes on some errors (in V03-04-00)
+            // check for some of those here by parsing the output
+            {
+              const char * pch = strstr(pedeoutput.str().data(),"Too many rejects");
+              if (pch){
+                streamlog_out ( ERROR5 ) << "Pede stopped due to the large number of rejects. " << std::endl;
+                encounteredError = true;
+              }
+            }
+
+            {
+              const char* pch0 = strstr(pedeoutput.str().data(),"Sum(Chi^2)/Sum(Ndf) = ");
+              if (pch0 != 0){
+                streamlog_out ( DEBUG5 ) << " Parsing pede output for final chi2/ndf result.. " << std::endl;
+                // search for the equal sign after which the result for chi2/ndf is stated within the next 80 chars 
+                // (with offset of 22 chars since pch points to beginning of "Sum(..." string just found)
+                char* pch = (char*)(memchr (pch0+22, '=', 180));
+                if (pch!=NULL){
+                  char str[16];
+                  // now copy the numbers after the equal sign
+                  strncpy ( str, pch+1, 15 );
+                  str[15] = '\0';   /* null character manually added */
+                  // monitor the chi2/ndf in CDash when running tests
+//                  CDashMeasurement meas_chi2ndf("chi2_ndf",atof(str));  cout << meas_chi2ndf; // output only if DO_TESTING is set
+                  streamlog_out ( MESSAGE6 ) << "Final Sum(Chi^2)/Sum(Ndf) = " << str << std::endl;
+                }	    
+              }
+            }
+
+            // wait for the pede execution to finish
+            pede.close();
+
+            // check the exit value of pede / react to previous errors
+            if ( pede.rdbuf()->status() == 0 && !encounteredError) 
+            {
+              streamlog_out ( MESSAGE7 ) << "Pede successfully finished" << std::endl;
+            } else {
+              streamlog_out ( ERROR5 ) << "Problem during Pede execution, exit status: " << pede.rdbuf()->status() << ", error messages (repeated here): " << std::endl;
+              streamlog_out ( ERROR5 ) << pedeerrors.str() << std::endl;
+              // TODO: decide what to do now; exit? and if, how?
+              streamlog_out ( ERROR5 ) << "Will exit now" << std::endl;
+              //exit(EXIT_FAILURE); // FIXME: can lead to (ROOT?) seg faults - points to corrupt memory? run valgrind...
+              return; // does fine for now
+            }
+
+            // reading back the millepede.res file and getting the
+            // results.
+            std::string millepedeResFileName = "millepede.res";
+
+            streamlog_out ( MESSAGE6 ) << "Reading back the " << millepedeResFileName << std::endl
+                                       << "Saving the alignment constant into " << _alignmentConstantLCIOFile << std::endl;
+
+            // open the millepede ASCII output file
+            ifstream millepede( millepedeResFileName.c_str() );
+
+
+            // reopen the LCIO file this time in append mode
+            LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
+
+            try 
+            {
+              lcWriter->open( _alignmentConstantLCIOFile, LCIO::WRITE_NEW );
+            }
+            catch ( IOException& e ) 
+            {
+              streamlog_out ( ERROR4 ) << e.what() << std::endl
+                                       << "Sorry for quitting. " << std::endl;
+              exit(-1);
+            }
+
+
+            // write an almost empty run header
+            LCRunHeaderImpl * lcHeader  = new LCRunHeaderImpl;
+            lcHeader->setRunNumber( 0 );
+
+            lcWriter->writeRunHeader(lcHeader);
+
+            delete lcHeader;
+
+            LCEventImpl * event = new LCEventImpl;
+            event->setRunNumber( 0 );
+            event->setEventNumber( 0 );
+
+            LCTime * now = new LCTime;
+            event->setTimeStamp( now->timeStamp() );
+            delete now;
+
+            LCCollectionVec * constantsCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
+
+
+            if ( millepede.bad() || !millepede.is_open() ) 
+            {
+              streamlog_out ( ERROR4 ) << "Error opening the " << millepedeResFileName << std::endl
+                                       << "The alignment slcio file cannot be saved" << std::endl;
+            }
+            else 
+            {
+              std::vector<double > tokens;
+              std::stringstream tokenizer;
+              std::string line;
+              double buffer;
+
+              // get the first line and throw it away since it is a
+              // comment!
+              getline( millepede, line );
+
+              int counter = 0;
+
+              while ( ! millepede.eof() ) {
+
+                EUTelAlignmentConstant * constant = new EUTelAlignmentConstant;
+
+                bool goodLine = true;
+                unsigned int numpars = 0;
+                if(_alignMode != 3)
+                  numpars = 3;
+                else
+                  numpars = 6;
+
+                bool _nonzero_tokens = false;
+
+                for ( unsigned int iParam = 0 ; iParam < numpars ; ++iParam ) 
+                {
+                  getline( millepede, line );
+
+                  if ( line.empty() ) {
+                    goodLine = false;
+                    continue;
+                  }
+
+                  tokens.clear();
+                  tokenizer.clear();
+                  tokenizer.str( line );
+
+                  // check that all parts of the line are non zero
+                  while ( tokenizer >> buffer ) {
+                    tokens.push_back( buffer ) ;
+                    if(buffer> 1e-12) _nonzero_tokens = true;
+                  }
+
+                  if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) || (tokens.size() == 5) ) {
+                    goodLine = true;
+                  } else goodLine = false;
+
+                  bool isFixed = ( tokens.size() == 3 );
+                  if(_alignMode != 3 && _alignMode == 4) //GBL case
+                    {
+                     if ( iParam == 0 ) {
+                        constant->setXOffset( tokens[1] );
+			streamlog_out(DEBUG5)<<"X offset:"<<std::endl;
+			streamlog_out(DEBUG5)<<tokens[1]<<std::endl;
+                        if ( ! isFixed ) constant->setXOffsetError( tokens[4] ) ;
+                      }
+                      if ( iParam == 1 ) {
+			streamlog_out(DEBUG5)<<"Y offset:"<<std::endl;
+			streamlog_out(DEBUG5)<<tokens[1]<<std::endl;
+                        constant->setYOffset( tokens[1] ) ;
+                        if ( ! isFixed ) constant->setYOffsetError( tokens[4] ) ;
+                      }
+                      if ( iParam == 2 ) {
+			streamlog_out(DEBUG5)<<"Gamma:"<<std::endl;
+			streamlog_out(DEBUG5)<<tokens[1]<<std::endl;
+                        constant->setGamma( tokens[1]  ) ;
+                        if ( ! isFixed ) constant->setGammaError( tokens[4] ) ;
+                      }
+                    }
+                  else
+                    {
+                     if ( iParam == 0 ) {
+                        constant->setXOffset( tokens[1] / 1000 );
+                        if ( ! isFixed ) constant->setXOffsetError( tokens[4] / 1000 ) ;                    
+                      }
+                      if ( iParam == 1 ) {
+                        constant->setYOffset( tokens[1] / 1000 ) ;
+                        if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000 ) ;
+                      }
+                      if ( iParam == 2 ) {
+                        constant->setZOffset( tokens[1] / 1000 ) ;
+                        if ( ! isFixed ) constant->setZOffsetError( tokens[4] / 1000 ) ;
+                      }
+                      if ( iParam == 3 ) {
+                        constant->setAlpha( tokens[1]  ) ;
+                        if ( ! isFixed ) constant->setAlphaError( tokens[4] ) ;
+                      } 
+                      if ( iParam == 4 ) {
+                        constant->setBeta( tokens[1]  ) ;
+                        if ( ! isFixed ) constant->setBetaError( tokens[4] ) ;
+                      } 
+                      if ( iParam == 5 ) {
+                        constant->setGamma( tokens[1]  ) ;
+                        if ( ! isFixed ) constant->setGammaError( tokens[4] ) ;
+                      } 
+
+                    }
+
+                }
+
+
+                // right place to add the constant to the collection
+                if ( goodLine  ) {
+    //               constant->setSensorID( _orderedSensorID_wo_excluded.at( counter ) );
+                  constant->setSensorID( _orderedSensorID.at( counter ) );
+                  ++ counter;
+                  constantsCollection->push_back( constant );
+                  streamlog_out ( MESSAGE0 ) << (*constant) << std::endl;
+                }
+                else delete constant;
+              }
+
+            }
+
+
+
+            event->addCollection( constantsCollection, _alignmentConstantCollectionName );
+            lcWriter->writeEvent( event );
+            delete event;
+
+            lcWriter->close();
+
+            millepede.close();
+
+          }
+        } else {
+
+          streamlog_out ( ERROR2 ) << "Unable to run pede. No steering file has been generated." << std::endl;
+
+        }
     } // end if running pede using the generated steering file
 
     streamlog_out(MESSAGE2) << std::endl;

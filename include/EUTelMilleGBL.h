@@ -232,7 +232,7 @@ namespace eutelescope {
         int _maxTrackCandidates;
         int _maxTrackCandidatesTotal;
 
-        std::string _binaryFilename;
+        std::string _binaryFilename;     
 
         float _telescopeResolution;
         int _onlySingleHitEvents;
@@ -254,6 +254,7 @@ namespace eutelescope {
 
         int _generatePedeSteerfile;
         std::string _pedeSteerfileName;
+        std::string _pedeConstraintsFilename;
         int _runPede;
         int _usePedeUserStartValues;
         FloatVec _pedeUserStartValuesX;
