@@ -146,7 +146,7 @@ namespace eutelescope {
                         }
                     }
 
-                    if( (int)trackCandidates.size() >= GetMaxTrackCandidates() ) taketrack = false;
+                    if( static_cast< int >(trackCandidates.size()) >= GetMaxTrackCandidates() ) taketrack = false;
 
                     //we are in the last plane. if the hit satisfies track candidate requirement then store this track candidate.
                     if( taketrack ) {
@@ -155,7 +155,7 @@ namespace eutelescope {
 //			for_each( aCandidate.begin(), aCandidate.end(), std::bind1st( std::mem_fun(&IMPL::TrackImpl::addHit), track ) );
 //			trackCandidates.push_back( track );
 //			delete track;
-                        trackCandidates.insert( std::make_pair((int) trackCandidates.size(), aCandidate) );
+                        trackCandidates.insert( std::make_pair( static_cast< int >(trackCandidates.size()), aCandidate) );
                         streamlog_out(DEBUG0) << "indexarray size at last plane:" << trackCandidates.size() << std::endl;
 		    }
 //                    vec.pop_back(); //last element must be removed because the
@@ -238,11 +238,11 @@ namespace eutelescope {
 //                        if (_allHitsArray[e].size() != 1 || _allHitsArray[e + 1].size() != 1) taketrack = false;    //only one hit in each planes
 
                     }
-                    if( (int)indexarray.size() >= GetMaxTrackCandidates() ) taketrack = false;
+                    if( static_cast< int >(indexarray.size()) >= GetMaxTrackCandidates() ) taketrack = false;
 
                     if (taketrack) {
                             EVENT::TrackerHitVec aCandidate = vec;         //copy vec, because it will be reused
-                            indexarray.insert( std::make_pair((int) indexarray.size(), aCandidate) );
+                            indexarray.insert( std::make_pair(static_cast< int >(indexarray.size()), aCandidate) );
                             streamlog_out(DEBUG0) << "indexarray size at last plane:" << indexarray.size() << std::endl;
                     }
                     vec.pop_back(); //last element must be removed because the
