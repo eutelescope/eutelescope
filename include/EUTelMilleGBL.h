@@ -346,6 +346,7 @@ namespace eutelescope {
          *  its name
          */
         std::map<std::string, AIDA::IHistogram1D * > _aidaHistoMap1D;
+        std::map<std::string, AIDA::IHistogram2D * > _aidaHistoMap2D;
 
         //! Names of histograms
         static std::string _numberTracksCandidatesHistName;
@@ -354,6 +355,12 @@ namespace eutelescope {
         static std::string _residGblFitHistName;
         static std::string _residGblFitHistNameX;
         static std::string _residGblFitHistNameY;
+        static std::string _resid2DGblFitHistNameXvsX;
+        static std::string _resid2DGblFitHistNameXvsY;
+        static std::string _resid2DGblFitHistNameYvsX;
+        static std::string _resid2DGblFitHistNameYvsY;
+        static std::string _kinkGblFitHistNameX;
+        static std::string _kinkGblFitHistNameY;
 
 #endif
 
