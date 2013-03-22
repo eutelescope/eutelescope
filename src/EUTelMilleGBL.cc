@@ -103,6 +103,12 @@ std::string EUTelMilleGBL::_probGblFitHistName = "probGblFit";
 std::string EUTelMilleGBL::_residGblFitHistName = "ResidualsGblFit";
 std::string EUTelMilleGBL::_residGblFitHistNameX = "ResidualsGblFit_x";
 std::string EUTelMilleGBL::_residGblFitHistNameY = "ResidualsGblFit_y";
+std::string EUTelMilleGBL::_resid2DGblFitHistNameXvsX = "Residuals2DGblFit_xVSx";
+std::string EUTelMilleGBL::_resid2DGblFitHistNameYvsX = "Residuals2DGblFit_yVSx";
+std::string EUTelMilleGBL::_resid2DGblFitHistNameXvsY = "Residuals2DGblFit_xVSy";
+std::string EUTelMilleGBL::_resid2DGblFitHistNameYvsY = "Residuals2DGblFit_yVSy";
+std::string EUTelMilleGBL::_kinkGblFitHistNameX = "KinksGblFit_x";
+std::string EUTelMilleGBL::_kinkGblFitHistNameY = "KinksGblFit_y";
 #endif
 
 EUTelMilleGBL::EUTelMilleGBL() : Processor("EUTelMilleGBL") {
@@ -775,7 +781,7 @@ void EUTelMilleGBL::processEvent(LCEvent * event) {
                 ndfTrk = static_cast<TrackImpl*> (*itFitTrack)->getNdf();
 
                 static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _chi2GblFitHistName ]) -> fill(chi2Trk);
-                static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _probGblFitHistName ]) -> fill(TMath::Prob(chi2Trk, ndfTrk));
+                if( chi2Trk < 17 ) static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _probGblFitHistName ]) -> fill(TMath::Prob(chi2Trk, ndfTrk));
 
 
                 std::map< int, gbl::GblTrajectory* > gblTracks = static_cast<EUTelGBLFitter*> (_theFitter)->GetGblTrackCandidates();
@@ -794,15 +800,42 @@ void EUTelMilleGBL::processEvent(LCEvent * event) {
 		    if ( itGblPoint->getLabel() % 3 == 1 ) 
 		    {
 			    streamlog_out(DEBUG0) << std::setw(15) << itGblPoint->getLabel() << std::endl;
+                            // spatial residuals
 			    gblTraj->getMeasResults(itGblPoint->getLabel(), numData, residual, measErr, residualErr, downWeight);
 			    sstr << _residGblFitHistNameX << iPlane;
 			    streamlog_out(DEBUG0) << std::setw(15) << std::setprecision(5) << residual[0] << std::setw(15) << std::setprecision(5) << residualErr[0] << std::endl;
-			    static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[0] / residualErr[0], downWeight);
+			    static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[0] / residualErr[0], downWeight[0]);
 			    sstr.str(std::string());
 			    sstr << _residGblFitHistNameY << iPlane;
 			    streamlog_out(DEBUG0) << std::setw(15) << std::setprecision(5) << residual[1] << std::setw(15) << std::setprecision(5) << residualErr[1] << std::endl;
-			    static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[1] / residualErr[1], downWeight);
+			    static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[1] / residualErr[1], downWeight[1]);
 			    sstr.str(std::string());
+                            // kinks
+                            gblTraj->getScatResults (itGblPoint->getLabel(), numData, residual, measErr, residualErr, downWeight);
+                            sstr << _kinkGblFitHistNameX << iPlane;
+			    streamlog_out(DEBUG0) << std::setw(15) << std::setprecision(5) << residual[0] << std::setw(15) << std::setprecision(5) << residualErr[0] << std::endl;
+			    static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[0], downWeight[0]);
+			    sstr.str(std::string());
+			    sstr << _kinkGblFitHistNameY << iPlane;
+			    streamlog_out(DEBUG0) << std::setw(15) << std::setprecision(5) << residual[1] << std::setw(15) << std::setprecision(5) << residualErr[1] << std::endl;
+			    static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[1], downWeight[1]);
+			    sstr.str(std::string());
+                            
+                            // 2D histograms
+                            const double* hitpos = trackCandidates.begin()->second[iPlane]->getPosition();              // wrong in case of empty planes
+                            sstr << _resid2DGblFitHistNameXvsX << iPlane;
+                            static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstr.str() ]) -> fill(residual[0], hitpos[0], downWeight[0]);
+                            sstr.str(std::string());
+                            sstr << _resid2DGblFitHistNameXvsY << iPlane;
+                            static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstr.str() ]) -> fill(residual[0], hitpos[1], downWeight[0]);
+                            sstr.str(std::string());
+                            sstr << _resid2DGblFitHistNameYvsX << iPlane;
+                            static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstr.str() ]) -> fill(residual[1], hitpos[0], downWeight[1]);
+                            sstr.str(std::string());
+                            sstr << _resid2DGblFitHistNameYvsY << iPlane;
+                            static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstr.str() ]) -> fill(residual[1], hitpos[1], downWeight[1]);
+                            sstr.str(std::string());
+                            
 			    if ( itGblPoint->getLabel() < 1000 )++iPlane;
 		    }
                 }
@@ -1467,15 +1500,19 @@ void EUTelMilleGBL::bookHistos() {
         const double probMin = 0.;
         const double probMax = 1.;
 
-        const int NBin = 4000;
-        const double Min = -20.;
-        const double Max = 20.;
+        int NBinX = 4000;
+        double MinX = -20.;
+        double MaxX = 20.;
+        int NBinY = 4000;
+        double MinY = -20.;
+        double MaxY = 20.;
+        
 
         // Track candidate search
         AIDA::IHistogram1D * numberTracksCandidates =
                 marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_numberTracksCandidatesHistName, tracksNBin, tracksMin, tracksMax);
         if (numberTracksCandidates) {
-            numberTracksCandidates->setTitle("Number of track candidates");
+            numberTracksCandidates->setTitle("Number of track candidates;N tracks;N events");
             _aidaHistoMap1D.insert(std::make_pair(_numberTracksCandidatesHistName, numberTracksCandidates));
         } else {
             streamlog_out(ERROR2) << "Problem booking the " << (_numberTracksCandidatesHistName) << std::endl;
@@ -1487,7 +1524,7 @@ void EUTelMilleGBL::bookHistos() {
         AIDA::IHistogram1D * chi2GblFit =
                 marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_chi2GblFitHistName, chi2NBin, chi2Min, chi2Max);
         if (chi2GblFit) {
-            chi2GblFit->setTitle("#Chi^{2} of track candidates");
+            chi2GblFit->setTitle("#chi^{2} of track candidates; #chi^{2};N Tracks");
             _aidaHistoMap1D.insert(std::make_pair(_chi2GblFitHistName, chi2GblFit));
         } else {
             streamlog_out(ERROR2) << "Problem booking the " << (_chi2GblFitHistName) << std::endl;
@@ -1498,7 +1535,7 @@ void EUTelMilleGBL::bookHistos() {
         AIDA::IHistogram1D * probGblFit =
                 marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_probGblFitHistName, probNBin, probMin, probMax);
         if (probGblFit) {
-            probGblFit->setTitle("#Chi^{2} of track candidates");
+            probGblFit->setTitle("Probability of track fit; Prob;N Tracks");
             _aidaHistoMap1D.insert(std::make_pair(_probGblFitHistName, probGblFit));
         } else {
             streamlog_out(ERROR2) << "Problem booking the " << (_probGblFitHistName) << std::endl;
@@ -1514,11 +1551,11 @@ void EUTelMilleGBL::bookHistos() {
             sstm << _residGblFitHistNameX << iPlane;
             residGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << iPlane << "X direction";
+            sstm << "Normalised residuals. Plane " << iPlane << "X direction; r; N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             AIDA::IHistogram1D * residGblFit =
-                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBin, Min, Max);
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX);
             if (residGblFit) {
                 residGblFit->setTitle(histTitle);
                 _aidaHistoMap1D.insert(std::make_pair(residGblFitHistName, residGblFit));
@@ -1534,16 +1571,142 @@ void EUTelMilleGBL::bookHistos() {
             sstm << _residGblFitHistNameY << iPlane;
             residGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << iPlane << "X direction";
+            sstm << "Normalised residuals. Plane " << iPlane << "Y direction; r; N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             AIDA::IHistogram1D * residGblFit =
-                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBin, Min, Max);
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX);
             if (residGblFit) {
                 residGblFit->setTitle(histTitle);
                 _aidaHistoMap1D.insert(std::make_pair(residGblFitHistName, residGblFit));
             } else {
                 streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+                _histogramSwitch = false;
+            }
+            sstm.str(std::string(""));
+        }
+        
+        // 2D histograms
+        NBinX = 100;
+        NBinY = 100;
+        MinX = -0.001;
+        MaxX = 0.001;
+        std::string resid2DGblFitHistName;
+        for (int iPlane = 0; iPlane < 6; iPlane++) {
+            sstm << _resid2DGblFitHistNameXvsX << iPlane;
+            resid2DGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Normalised residuals. Plane " << iPlane << "; x (mm); rx";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            AIDA::IHistogram2D * residGblFit1 =
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(resid2DGblFitHistName, NBinX, MinX, MaxX, NBinY, MinY, MaxY);
+            if (residGblFit1) {
+                residGblFit1->setTitle(histTitle);
+                _aidaHistoMap2D.insert(std::make_pair(resid2DGblFitHistName, residGblFit1));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (resid2DGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+                _histogramSwitch = false;
+            }
+            sstm.str(std::string(""));
+            
+            sstm << _resid2DGblFitHistNameXvsY << iPlane;
+            resid2DGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Normalised residuals. Plane " << iPlane << "; y (mm); rx";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            AIDA::IHistogram2D * residGblFit2 =
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(resid2DGblFitHistName, NBinX, MinX, MaxX, NBinY, MinY, MaxY);
+            if (residGblFit2) {
+                residGblFit2->setTitle(histTitle);
+                _aidaHistoMap2D.insert(std::make_pair(resid2DGblFitHistName, residGblFit2));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (resid2DGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+                _histogramSwitch = false;
+            }
+            sstm.str(std::string(""));
+        }
+
+        for (int iPlane = 0; iPlane < 6; iPlane++) {
+            sstm << _resid2DGblFitHistNameYvsX << iPlane;
+            resid2DGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Normalised residuals. Plane " << iPlane << "; x (mm); ry";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            AIDA::IHistogram2D * residGblFit1 =
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(resid2DGblFitHistName, NBinX, MinX, MaxX, NBinY, MinY, MaxY);
+            if (residGblFit1) {
+                residGblFit1->setTitle(histTitle);
+                _aidaHistoMap2D.insert(std::make_pair(resid2DGblFitHistName, residGblFit1));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (resid2DGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+                _histogramSwitch = false;
+            }
+            sstm.str(std::string(""));
+            
+            sstm << _resid2DGblFitHistNameYvsY << iPlane;
+            resid2DGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Normalised residuals. Plane " << iPlane << "; y (mm); ry";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            AIDA::IHistogram2D * residGblFit2 =
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(resid2DGblFitHistName, NBinX, MinX, MaxX, NBinY, MinY, MaxY);
+            if (residGblFit2) {
+                residGblFit2->setTitle(histTitle);
+                _aidaHistoMap2D.insert(std::make_pair(resid2DGblFitHistName, residGblFit2));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (resid2DGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+                _histogramSwitch = false;
+            }
+            sstm.str(std::string(""));
+        }
+        
+        // Kink angles after fit
+        MinX = -0.001;
+        MaxX = 0.001;
+        std::string kinkGblFitHistName;
+        for (int iPlane = 0; iPlane < 6; iPlane++) {
+            sstm << _kinkGblFitHistNameX << iPlane;
+            kinkGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Kink angles. Plane " << iPlane << "X direction; kink (rad); N hits";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            AIDA::IHistogram1D * residGblFit =
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(kinkGblFitHistName, NBinX, MinX, MaxX);
+            if (residGblFit) {
+                residGblFit->setTitle(histTitle);
+                _aidaHistoMap1D.insert(std::make_pair(kinkGblFitHistName, residGblFit));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (kinkGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+                _histogramSwitch = false;
+            }
+            sstm.str(std::string(""));
+        }
+
+        for (int iPlane = 0; iPlane < 6; iPlane++) {
+            sstm << _kinkGblFitHistNameY << iPlane;
+            kinkGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Kink angles. Plane " << iPlane << "Y direction; kink (rad); N hits";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            AIDA::IHistogram1D * residGblFit =
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(kinkGblFitHistName, NBinX, MinX, MaxX);
+            if (residGblFit) {
+                residGblFit->setTitle(histTitle);
+                _aidaHistoMap1D.insert(std::make_pair(kinkGblFitHistName, residGblFit));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (kinkGblFitHistName) << std::endl;
                 streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
                 _histogramSwitch = false;
             }

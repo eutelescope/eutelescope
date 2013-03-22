@@ -174,10 +174,10 @@ namespace eutelescope {
 
         TVectorD meas(2);
 
-        const double resx = 0.017/sqrt(12.); // [um] telescope initial resolution
-        const double resy = 0.017/sqrt(12.); // [um] telescope initial resolution
-        //const double resx = 18/sqrt(12.); // [um] telescope initial resolution
-        //const double resy = 18/sqrt(12.); // [um] telescope initial resolution
+        const double resx = 0.018/sqrt(12.); // [mm] telescope initial resolution
+        const double resy = 0.018/sqrt(12.); // [mm] telescope initial resolution
+//        const double resx = 0.00001/sqrt(12.); // [mm] telescope initial resolution
+//        const double resy = 0.00001/sqrt(12.); // [mm] telescope initial resolution
 
         TVectorD measPrec(2); // precision = 1/resolution^2
         measPrec[0] = 1.0 / resx / resx;
@@ -231,9 +231,9 @@ namespace eutelescope {
             itHit = itTrkCand->second.begin();
             for (; itHit != itTrkCand->second.end(); ++itHit) {
                 const double* hitpos = (*itHit)->getPosition();
-//                step = hitpos[2] - zprev;			// commented out beacause propagation is done in air's sub-block
+//                step = hitpos[2] - zprev;			// commented out because propagation is done in air's sub-block
 //                streamlog_out(DEBUG0) << "Step size:" << step << std::endl;	// commented out beacause propagation is done in air's sub-block
-//                jacPointToPoint = PropagatePar(step);		// commented out beacause propagation is done in air's sub-block
+//                jacPointToPoint = PropagatePar(step);		// commented out because propagation is done in air's sub-block
                 //jacPointToPoint.Print();
 //                
                 std::vector<int> globalLabels(3);
@@ -309,8 +309,8 @@ namespace eutelescope {
             int ndf = 0;
             int ierr = 0;
             const std::string mEstOpt = "T";
-            ierr = traj->fit(chi2, ndf, loss, mEstOpt);
-//            ierr = traj->fit(chi2, ndf, loss);
+//            ierr = traj->fit(chi2, ndf, loss, mEstOpt);
+            ierr = traj->fit(chi2, ndf, loss);
 
             if( !ierr ) traj->milleOut( *_mille );
             
