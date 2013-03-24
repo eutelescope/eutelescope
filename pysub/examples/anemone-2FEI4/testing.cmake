@@ -239,7 +239,7 @@
 
     # run stattest tool on output from previous step and test it against reference file; test are configured in specified config file (*.qa)
 
-    ADD_TEST( TestPysubExampleAnemone2FEI4StatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib python ${stattestdir}/${executable} -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_AnemoneFEI4Align.qa ${testdir}/output/histo/${RunNr}-align-histo.root ${referencedatadir}/${RunNr}-align-histo.root" )
+    ADD_TEST( TestPysubExampleAnemone2FEI4StatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib python ${stattestdir}/${executable} --cdash -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_AnemoneFEI4Align.qa ${testdir}/output/histo/${RunNr}-align-histo.root ${referencedatadir}/${RunNr}-align-histo.root" )
     SET_TESTS_PROPERTIES (TestPysubExampleAnemone2FEI4StatTestAlign PROPERTIES
     # test will pass if ALL of the following expressions are matched
     PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
@@ -250,7 +250,7 @@
     )
 
 
-    ADD_TEST( TestPysubExampleAnemone2FEI4StatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib python ${stattestdir}/${executable} -g ${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_AnemoneFEI4Fitter.qa ${testdir}/output/histo/${RunNr}-track-histo.root ${referencedatadir}/${RunNr}-track-histo.root" )
+    ADD_TEST( TestPysubExampleAnemone2FEI4StatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib python ${stattestdir}/${executable} --cdash -g ${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_AnemoneFEI4Fitter.qa ${testdir}/output/histo/${RunNr}-track-histo.root ${referencedatadir}/${RunNr}-track-histo.root" )
     SET_TESTS_PROPERTIES (TestPysubExampleAnemone2FEI4StatTestFitter PROPERTIES
     # test will pass if ALL of the following expressions are matched
     PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
