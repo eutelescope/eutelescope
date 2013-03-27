@@ -322,7 +322,7 @@ int EUTelAPIXTbTrackTuple::readClusters( std::string colName, LCEvent* event ){
       clusterID = telCluster->getClusterID();
       delete telCluster;
     } else {
-      message<WARNING> ( log() << "Unknown cluster type: " << type );
+      message<WARNING> ( log() << "Unknown cluster type: " << static_cast< int >(type) );
       sensorID = -1;
     }
     if(sensorID > 0){
