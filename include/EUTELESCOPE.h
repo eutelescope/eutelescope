@@ -735,7 +735,7 @@ namespace eutelescope
 
 #else
 
-    return to_hex( (int) x, digits );
+    return to_hex( static_cast< int >(x), digits );
 
 #endif
   }
@@ -750,7 +750,7 @@ namespace eutelescope
 
 #else
 
-    return to_hex( (int) x, digits );
+    return to_hex( static_cast< int >(x), digits );
 
 #endif
   }
@@ -765,7 +765,7 @@ namespace eutelescope
 
 #else
 
-    return to_hex( (unsigned char) x, digits );
+    return to_hex( static_cast< unsigned char >(x), digits );
 
 #endif
   }
