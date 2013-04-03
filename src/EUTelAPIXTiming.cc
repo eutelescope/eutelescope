@@ -68,7 +68,7 @@ void EUTelAPIXTiming::print(std::ostream& os) const {
   }
   os << endl;
   int width = 20;
-  os << setw(width) << setiosflags(ios::left) << "Type: "     << _type << endl
+  os << setw(width) << setiosflags(ios::left) << "Type: "     << static_cast< int >(_type) << endl
      << setw(width) << "Elements: " << _noOfElements << endl
      << setw(width) << "Realtime (sec): "  << _realtimeSec << endl
      << setw(width) << "Realtime (ns): "  << _realtimeNs << endl
