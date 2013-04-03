@@ -31,6 +31,11 @@ optional arguments:
   -c FILE, --conf-file FILE, --config FILE
                         Load specified config file with global and task
                         specific variables
+  --concatenate         Modifies run range treatment: concatenate all runs
+                        into first run (e.g. to combine runs for alignment) by
+                        combining every options that includes the string
+                        '@RunRange multiple times, once for each run of the
+                        range specified.
   -csv FILE, --csv-file FILE
                         Load additional run-specific variables from table
                         (text file in csv format)
@@ -55,6 +60,7 @@ optional arguments:
   There is only one predefined placeholder, @RunNumber@, which will be
   substituted with the current run number (padded with leading zeros
   to six digits, e.g. 001234).
+
 * Configuration
   There are only very few predefined options: TemplateFile,
   TemplatePath, and LogPath. The former are used to find the correct
@@ -176,6 +182,33 @@ optional arguments:
 
     Using this table, the variable @BeamEnergy@ in the templates would
     be replaced by the value corresponding to the current run number.
+** Concatenation
+   If you have an option e.g. the LCIO input files that you want to
+   fill with several runs in one steering file, you can use a command
+   line switch to activate concatenation. This replaces any steering
+   file placeholder whose corresponding option contains the string
+   "@RunRange" multiple times, once for every run specified.
+
+   #+begin_src shell-script
+   jobsub.py --concatenate --option LCIOInputFiles=/my/path/to/data/@RunRange.lcio align 1234 1235-1237
+   #+end_src
+
+   This will create *one* steering file (for run 1234) in which the placeholder
+   "@LCIOInputFiles@" is replaced four times by its value with
+   @RunRange@ replaced by values from 1234 to 1237, e.g.
+
+   #+begin_example
+    <parameter name="FileName" type="string" value= @LCIOInputFiles@/>
+   #+end_example
+
+   becomes:
+
+   #+begin_example
+    <parameter name="FileName" type="string" value= /my/path/to/data/1234.lcio /my/path/to/data/1235.lcio /my/path/to/data/1236.lcio /my/path/to/data/1237.lcio/>
+   #+end_example
+
+   This can be useful if you want to combine several runs e.g. for alignment.
+
 * Example
   The following commands show how you would execute the telescope-only
   analysis that is provided as an example:

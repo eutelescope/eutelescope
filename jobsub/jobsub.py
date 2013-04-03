@@ -17,7 +17,7 @@ import logging
 
 def parseIntegerString(nputstr=""):
     """
-    return a set of selected values when a string in the form:
+    return a list of selected values when a string in the form:
     1-4,6
     would return:
     1,2,3,4,6
@@ -25,13 +25,13 @@ def parseIntegerString(nputstr=""):
     (from http://thoughtsbyclayg.blogspot.de/2008/10/parsing-list-of-numbers-in-python.html)
 
     """
-    selection = set()
+    selection = list()
     # tokens are comma seperated values
     tokens = [substring.strip() for substring in nputstr.split(',')]
     for i in tokens:
         try:
             # typically tokens are plain old integers
-            selection.add(int(i))
+            selection.append(int(i))
         except ValueError:
             # if not, then it might be a range
             token = [int(k.strip()) for k in i.split('-')]
@@ -42,7 +42,7 @@ def parseIntegerString(nputstr=""):
                 first = token[0]
                 last = token[len(token)-1]
                 for value in range(first, last+1):
-                    selection.add(value)
+                    selection.append(value)
     return selection # end parseIntegerString
 
 def ireplace(old, new, text):
@@ -139,7 +139,7 @@ def loadparamsfromcsv(csvfilename, runs):
             # first: search through csv file to find corresponding runnumber entry line for every run
             filteredfile.rewind() # back to beginning of file
             reader.next()   # .. and skip the header line
-            missingRuns = runs.copy() # list of runs to look for in csv file
+            missingRuns = list(runs) # list of runs to look for in csv file
             for row in reader: # loop over all rows once
                 try:
                     for run in missingRuns: # check all runs if runnumber matches
@@ -286,6 +286,7 @@ def zipLogs(path, filename):
     except IOError: # could not create zip file - path non-existant?!
         log.error("Input/Output error: Could not create log and steering file archive ("+os.path.join(path, filename)+".zip"+")!")
 
+
 def main(argv=None):
     """  main routine of jobsub: a tool for EUTelescope job submission to Marlin """
     log = logging.getLogger('jobsub') # set up logging
@@ -293,6 +294,16 @@ def main(argv=None):
     handler_stream = logging.StreamHandler()
     handler_stream.setFormatter(formatter)
     log.addHandler(handler_stream)
+    # using this decorator, we can count the number of error messages
+    class callcounted(object):
+        """Decorator to determine number of calls for a method"""
+        def __init__(self,method):
+            self.method=method
+            self.counter=0
+        def __call__(self,*args,**kwargs):
+            self.counter+=1
+            return self.method(*args,**kwargs)
+    log.error=callcounted(log.error)
 
     import os.path
     import ConfigParser
@@ -322,6 +333,7 @@ def main(argv=None):
     parser = argparse.ArgumentParser(prog=progName, description="A tool for the convenient run-specific modification of Marlin steering files and their execution through the Marlin processor")
     parser.add_argument('--option', '-o', action='append', metavar="NAME=VALUE", help="Specify further options such as beamenergy=5.3; overrides config file options.")
     parser.add_argument("-c", "--conf-file", "--config", help="Load specified config file with global and task specific variables", metavar="FILE")
+    parser.add_argument("--concatenate", action="store_true", default=False, help="Modifies run range treatment: concatenate all runs into first run (e.g. to combine runs for alignment) by combining every options that includes the string '@RunRange@' multiple times, once for each run of the range specified.")
     parser.add_argument("-csv", "--csv-file", help="Load additional run-specific variables from table (text file in csv format)", metavar="FILE")
     parser.add_argument("--log-file", help="Save submission log to specified file", metavar="FILE")
     parser.add_argument("-l", "--log", default="info", help="Sets the verbosity of log messages during job submission where LEVEL is either debug, info, warning or error", metavar="LEVEL")
@@ -331,17 +343,6 @@ def main(argv=None):
     parser.add_argument("runs", help="The runs to be analyzed; can be a list of single runs and/or a range, e.g. 1056-1060. PLEASE NOTE: for technical reasons, the order in which the runs are processed does not neccessarily follow the order in which they were specified.", nargs='*')
     args = parser.parse_args(argv)
 
-    runs = set()
-    for runnum in args.runs:
-        try:
-            runs.update(parseIntegerString(runnum))
-        except ValueError:
-            log.error("The list of runs contains non-integer and non-range values: '%s'", runnum)
-            return 2
-
-    if not runs:
-        log.error("No run numbers were specified. Please see '"+progName+" --help' for details.")
-        return 2
     # set the logging level
     numeric_level = getattr(logging, "INFO", None) # default: INFO messages and above
     if args.log:
@@ -361,6 +362,23 @@ def main(argv=None):
         handler_file.setFormatter(formatter)
         handler_file.setLevel(numeric_level)
         log.addHandler(handler_file) 
+
+    runs = list()
+    for runnum in args.runs:
+        try:
+            log.debug("Parsing run-range argument: '%s'", runnum)
+            runs = runs + parseIntegerString(runnum)
+        except ValueError:
+            log.error("The list of runs contains non-integer and non-range values: '%s'", runnum)
+            return 2
+
+    if not runs:
+        log.error("No run numbers were specified. Please see '"+progName+" --help' for details.")
+        return 2
+
+    if len(runs) > len(set(runs)): # sets items are unique
+        log.error("At least one run is specified multiple times!")
+        return 2
 
     # dictionary keeping our paramters
     # here you can set some minimal default config values that will (possibly) be overwritten by the config file
@@ -423,10 +441,35 @@ def main(argv=None):
         try:
             # need not to search for config variables only concerning submission control
             if (not key == "templatefile" and not key == "templatepath"):
-                steeringStringBase = ireplace("@" + key + "@", parameters[key], steeringStringBase)
+                # if using concatenation, we have a modified behavior in case the key contains "@RunRange@": then the key is replaced for every run
+                if args.concatenate and parameters[key].lower().find("@runrange@")>-1:
+                    log.info("Concatenation: Option '" + key + "' contains string '@RunRange@', will fill for all runs of specified range")
+                    runiter = iter(runs)
+                    firstrun = next(runiter) # skip first run to leave one instance of @RunNumber@ in the file for main loop
+                    log.debug("Concatenation: doing substitution for first run: "+str(firstrun))
+                    runkey = ireplace("@runrange@","@RunNumber@",parameters[key]) # insert run placeholder into first key, will be later replaced in main loop
+                    # replace key and add the same key again for next run-through
+                    steeringStringBase = ireplace("@" + key + "@", runkey+" "+"@"+key+"@", steeringStringBase) 
+                    thisrun=next(runiter) 
+                    for nextrun in runiter:
+                        runkey = ireplace("@runrange@",str(thisrun).zfill(6),parameters[key]) # insert run number into key
+                        log.debug("Concatenation: doing substitution for run "+str(thisrun)+" using " + runkey)
+                        steeringStringBase = ireplace("@" + key + "@", runkey+" "+"@"+key+"@", steeringStringBase)
+                        thisrun=nextrun # effectively skipping last, will need special treatment again
+                    # last run: do not add key again
+                    runkey = ireplace("@runrange@",str(thisrun).zfill(6),parameters[key]) # insert run number into key
+                    log.debug("Concatenation: doing substitution for last run "+str(thisrun)+" using " + runkey)
+                    steeringStringBase = ireplace("@" + key + "@", runkey, steeringStringBase)
+                else: # the common case when not concatenating: just replace keyword
+                    steeringStringBase = ireplace("@" + key + "@", parameters[key], steeringStringBase)
         except EOFError:
             if (not key == "eutelescopepath" and not key == "home" and not key == "logpath"): # do not warn about default content of config
                 log.warn(" Parameter '" + key + "' was not found in template file "+parameters["templatefile"])
+
+    if args.concatenate:
+        # replace list of runs with first run only
+        log.info("Concatenating runs into first run")
+        runs = runs[0:1] # slice run list down to first item
 
     # CSV table
     log.debug ("Loading csv file (if requested)")
@@ -491,17 +534,19 @@ def main(argv=None):
         # bail out if running a dry run
         if args.dry_run:
             log.info("Dry run: skipping Marlin execution. Steering file written to "+basefilename+'.xml')
-            return 0
-
-        rcode = runMarlin(basefilename, args.silent) # start Marlin execution
-        if rcode == 0:
-            log.info("Marlin execution done")
         else:
-            log.error("Marlin returned with error code "+str(rcode))
-        zipLogs(parameters["logpath"], basefilename)
+            rcode = runMarlin(basefilename, args.silent) # start Marlin execution
+            if rcode == 0:
+                log.info("Marlin execution done")
+            else:
+                log.error("Marlin returned with error code "+str(rcode))
+            zipLogs(parameters["logpath"], basefilename)
+        
     # return to the prvious signal handler
     signal.signal(signal.SIGINT, prevINTHandler)
-        
+    if log.error.counter>0:
+        log.warning("There were "+str(log.error.counter)+" error messages reported")
+
     return 0
 
 if __name__ == "__main__":
