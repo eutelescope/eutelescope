@@ -22,32 +22,38 @@ using namespace std;
 using namespace eutelescope;
 
 
-EUTelAPIXSparsePixel::EUTelAPIXSparsePixel() {
-  _xCoord = 0;
-  _yCoord = 0;
-  _signal = 0;
-  _chip = 0;
-  _time = 0;
-  _noOfElements = 5;
+EUTelAPIXSparsePixel::EUTelAPIXSparsePixel()
+: EUTelBaseSparsePixel(),
+  _xCoord(0),
+  _yCoord(0),
+  _signal(0),
+  _chip(0),
+  _time(0)
+{
+  _noOfElements = 5,
   _type = kEUTelAPIXSparsePixel;
 }
 
-EUTelAPIXSparsePixel::EUTelAPIXSparsePixel(short xCoord, short yCoord, short signal, short chip, short time) {
-  _xCoord = xCoord;
-  _yCoord = yCoord;
-  _signal = signal;
-  _chip = chip;
-  _time = time;
-  _noOfElements = 5;
+EUTelAPIXSparsePixel::EUTelAPIXSparsePixel(short xCoord, short yCoord, short signal, short chip, short time)
+: EUTelBaseSparsePixel(),
+  _xCoord(xCoord),
+  _yCoord(yCoord),
+  _signal(signal),
+  _chip(chip),
+  _time(time)
+{
+  _noOfElements = 5,
   _type = kEUTelAPIXSparsePixel;
 }
 
-EUTelAPIXSparsePixel::EUTelAPIXSparsePixel(const EUTelAPIXSparsePixel &orig) : EUTelBaseSparsePixel() {
-  _xCoord = orig.getXCoord();
-  _yCoord = orig.getYCoord();
-  _signal = static_cast< short >(orig.getSignal());
-  _chip = orig.getChip();
-  _time = static_cast< short >(orig.getTime());
+EUTelAPIXSparsePixel::EUTelAPIXSparsePixel(const EUTelAPIXSparsePixel &orig)
+: EUTelBaseSparsePixel(),
+  _xCoord(orig.getXCoord()),
+  _yCoord(orig.getYCoord()),
+  _signal(static_cast< short >(orig.getSignal())),
+  _chip(orig.getChip()),
+  _time(static_cast< short >(orig.getTime()))
+{
   _noOfElements = orig.getNoOfElements();
   _type = orig.getSparsePixelType();
 }
