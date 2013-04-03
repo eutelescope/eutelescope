@@ -60,7 +60,7 @@ void EUTelM26Timing::print(std::ostream& os) const {
   }
   os << endl;
   int width = 20;
-  os << setw(width) << setiosflags(ios::left) << "Type: "     << _type << endl
+  os << setw(width) << setiosflags(ios::left) << "Type: "     << static_cast< int >(_type) << endl
      << setw(width) << "Elements: " << _noOfElements << endl
      << setw(width) << "TLU: "  << _tluCounter << endl
      << setw(width) << "Sensor: "  << _sensorID << endl;
