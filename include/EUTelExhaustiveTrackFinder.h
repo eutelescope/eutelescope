@@ -28,9 +28,24 @@ namespace eutelescope {
                 EUTelTrackFinder( "EUTelExhaustiveTrackFinder" ),
                 _allowedMissingHits(0),
                 _maxTrackCandidates(9999),
-                _mode(2) {};
+                _mode(2),
+		_residualsYMin(),
+		_residualsXMin(),
+		_residualsXMax(),
+		_residualsYMax(),
+		_distanceMaxVec() {};
 
-        EUTelExhaustiveTrackFinder(std::string name) : EUTelTrackFinder(name), _allowedMissingHits(0), _maxTrackCandidates(9999), _mode(2) {
+        EUTelExhaustiveTrackFinder(std::string name) : 
+               EUTelTrackFinder(name),
+	       _allowedMissingHits(0), 
+      	       _maxTrackCandidates(9999), 
+   	       _mode(2),
+   	       _residualsYMin(),
+	       _residualsXMin(),
+	       _residualsXMax(),
+	       _residualsYMax(),
+	       _distanceMaxVec()
+	{
             _residualsYMin.clear();
             _residualsXMax.clear();
             _residualsXMin.clear();
@@ -41,7 +56,13 @@ namespace eutelescope {
 		EUTelTrackFinder(name), 
 		_allowedMissingHits(allowedMissingHits),
 		_maxTrackCandidates(maxTrackCandidates),
-                _mode(2) {
+                _mode(2),
+	        _residualsYMin(),
+	        _residualsXMin(),
+	        _residualsXMax(),
+	        _residualsYMax(),
+	        _distanceMaxVec()
+	{
             _residualsYMin.clear();
             _residualsXMax.clear();
             _residualsXMin.clear();
@@ -111,8 +132,8 @@ namespace eutelescope {
         int _mode;
         
         EVENT::FloatVec _residualsYMin;
-        EVENT::FloatVec _residualsXMax;
         EVENT::FloatVec _residualsXMin;
+        EVENT::FloatVec _residualsXMax;
         EVENT::FloatVec _residualsYMax;
         
         EVENT::FloatVec _distanceMaxVec;
