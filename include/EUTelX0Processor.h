@@ -236,6 +236,9 @@ private:
   std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residualProfile; //TODO(Phillip Hamnett): Can this be joined with _residual? //Used as above but for created a profile histogram
   int _runNumber;
   std::string _trackCollectionName;
+
+  std::vector< TVector3* > getHitsFromTrack(Track *track);
+  void singlePointResolution(EVENT::Track*);
 };
 //! A global instance of the processor
 EUTelX0Processor gEUTelX0Processor;
