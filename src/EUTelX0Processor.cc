@@ -59,7 +59,7 @@ EUTelX0Processor::EUTelX0Processor()
   
   registerInputCollection(LCIO::TRACK,"OutputTrackCollectionName",
                            "Collection name for fitted tracks",
-                           _trackCollectionName, string ("track"));
+                           _trackCollectionName, string ("AlignedTrack"));
 
   registerOptionalParameter("ReferenceCollection","This is the name of the reference it collection (init at 0,0,0)", _referenceHitCollectionName, static_cast< string > ( "referenceHit" ) );//Necessary for working out which layer the particle is detected in
   registerProcessorParameter("ResidualCutValue","Used to determine cuts in the system, measured in XXX", _residualCut, static_cast< double > (50000.0));
@@ -72,265 +72,245 @@ void EUTelX0Processor::init()
   streamlog_out(DEBUG5) << "Running EUTelX0Processor::init()" << std::endl;
   int nobins = 10000, nobinsangle = 100;//Number of bins in the histograms
   double minbin = -0.1, maxbin = 0.1;//Maximum and minimum bin values
-  double minbinangle = -0.5, maxbinangle = 0.5, minbinalpha = 0, maxbinalpha = 0.5;
+  double minbinangle = -0.01, maxbinangle = 0.01, minbinalpha = -0.01, maxbinalpha = 0.01;
   std::vector<double> empty;  
   
-  AIDA::IHistogram1D * SinglePointResidualXPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane1",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * SinglePointResidualXPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane1",nobins,minbin,maxbin);
   SinglePointResidualXPlane1->setTitle("SinglePointResidualXPlane1");
   _histoThing.insert(make_pair("SinglePointResidualXPlane1",SinglePointResidualXPlane1));
   _histoData["SinglePointResidualXPlane1"] = empty;
  
-  AIDA::IHistogram1D * SinglePointResidualXPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane2",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * SinglePointResidualXPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane2",nobins,minbin,maxbin);
   SinglePointResidualXPlane2->setTitle("SinglePointResidualXPlane2");
   _histoThing.insert(make_pair("SinglePointResidualXPlane2",SinglePointResidualXPlane2));
   _histoData["SinglePointResidualXPlane2"] = empty;
  
-  AIDA::IHistogram1D * SinglePointResidualXPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane3",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * SinglePointResidualXPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane3",nobins,minbin,maxbin);
   SinglePointResidualXPlane3->setTitle("SinglePointResidualXPlane3");
   _histoThing.insert(make_pair("SinglePointResidualXPlane3",SinglePointResidualXPlane3));
   _histoData["SinglePointResidualXPlane3"] = empty;
  
-  AIDA::IHistogram1D * SinglePointResidualXPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane4",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * SinglePointResidualXPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane4",nobins,minbin,maxbin);
   SinglePointResidualXPlane4->setTitle("SinglePointResidualXPlane4");
   _histoThing.insert(make_pair("SinglePointResidualXPlane4",SinglePointResidualXPlane4));
   _histoData["SinglePointResidualXPlane4"] = empty;
  
-  AIDA::IHistogram1D * SinglePointResidualYPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualYPlane1",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * SinglePointResidualYPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualYPlane1",nobins,minbin,maxbin);
   SinglePointResidualYPlane1->setTitle("SinglePointResidualYPlane1");
   _histoThing.insert(make_pair("SinglePointResidualYPlane1",SinglePointResidualYPlane1));
   _histoData["SinglePointResidualYPlane1"] = empty;
  
-  AIDA::IHistogram1D * SinglePointResidualYPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualYPlane2",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * SinglePointResidualYPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualYPlane2",nobins,minbin,maxbin);
   SinglePointResidualYPlane2->setTitle("SinglePointResidualYPlane2");
   _histoThing.insert(make_pair("SinglePointResidualYPlane2",SinglePointResidualYPlane2));
   _histoData["SinglePointResidualYPlane2"] = empty;
  
-  AIDA::IHistogram1D * SinglePointResidualYPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualYPlane3",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * SinglePointResidualYPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualYPlane3",nobins,minbin,maxbin);
   SinglePointResidualYPlane3->setTitle("SinglePointResidualYPlane3");
   _histoThing.insert(make_pair("SinglePointResidualYPlane3",SinglePointResidualYPlane3));
   _histoData["SinglePointResidualYPlane3"] = empty;
  
-  AIDA::IHistogram1D * SinglePointResidualYPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualYPlane4",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * SinglePointResidualYPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualYPlane4",nobins,minbin,maxbin);
   SinglePointResidualYPlane4->setTitle("SinglePointResidualYPlane4");
   _histoThing.insert(make_pair("SinglePointResidualYPlane4",SinglePointResidualYPlane4));
   _histoData["SinglePointResidualYPlane4"] = empty;
  
-  AIDA::IHistogram1D * ThreePointResidualXPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualXPlane1",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * ThreePointResidualXPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualXPlane1",nobins,minbin,maxbin);
   ThreePointResidualXPlane1->setTitle("ThreePointResidualXPlane1");
   _histoThing.insert(make_pair("ThreePointResidualXPlane1",ThreePointResidualXPlane1));
   _histoData["ThreePointResidualXPlane1"] = empty;
  
-  AIDA::IHistogram1D * ThreePointResidualXPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualXPlane2",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * ThreePointResidualXPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualXPlane2",nobins,minbin,maxbin);
   ThreePointResidualXPlane2->setTitle("ThreePointResidualXPlane2");
   _histoThing.insert(make_pair("ThreePointResidualXPlane2",ThreePointResidualXPlane2));
   _histoData["ThreePointResidualXPlane2"] = empty;
  
-  AIDA::IHistogram1D * ThreePointResidualXPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualXPlane3",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * ThreePointResidualXPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualXPlane3",nobins,minbin,maxbin);
   ThreePointResidualXPlane3->setTitle("ThreePointResidualXPlane3");
   _histoThing.insert(make_pair("ThreePointResidualXPlane3",ThreePointResidualXPlane3));
   _histoData["ThreePointResidualXPlane3"] = empty;
  
-  AIDA::IHistogram1D * ThreePointResidualXPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualXPlane4",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * ThreePointResidualXPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualXPlane4",nobins,minbin,maxbin);
   ThreePointResidualXPlane4->setTitle("ThreePointResidualXPlane4");
   _histoThing.insert(make_pair("ThreePointResidualXPlane4",ThreePointResidualXPlane4));
   _histoData["ThreePointResidualXPlane4"] = empty;
  
-  AIDA::IHistogram1D * ThreePointResidualYPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualYPlane1",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * ThreePointResidualYPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualYPlane1",nobins,minbin,maxbin);
   ThreePointResidualYPlane1->setTitle("ThreePointResidualYPlane1");
   _histoThing.insert(make_pair("ThreePointResidualYPlane1",ThreePointResidualYPlane1));
   _histoData["ThreePointResidualYPlane1"] = empty;
  
-  AIDA::IHistogram1D * ThreePointResidualYPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualYPlane2",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * ThreePointResidualYPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualYPlane2",nobins,minbin,maxbin);
   ThreePointResidualYPlane2->setTitle("ThreePointResidualYPlane2");
   _histoThing.insert(make_pair("ThreePointResidualYPlane2",ThreePointResidualYPlane2));
   _histoData["ThreePointResidualYPlane2"] = empty;
  
-  AIDA::IHistogram1D * ThreePointResidualYPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualYPlane3",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * ThreePointResidualYPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualYPlane3",nobins,minbin,maxbin);
   ThreePointResidualYPlane3->setTitle("ThreePointResidualYPlane3");
   _histoThing.insert(make_pair("ThreePointResidualYPlane3",ThreePointResidualYPlane3));
   _histoData["ThreePointResidualYPlane3"] = empty;
  
-  AIDA::IHistogram1D * ThreePointResidualYPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualYPlane4",nobins,minbin,maxbin);//Create a histogram for the residual
+  AIDA::IHistogram1D * ThreePointResidualYPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualYPlane4",nobins,minbin,maxbin);
   ThreePointResidualYPlane4->setTitle("ThreePointResidualYPlane4");
   _histoThing.insert(make_pair("ThreePointResidualYPlane4",ThreePointResidualYPlane4));
   _histoData["ThreePointResidualYPlane4"] = empty;
  
-  AIDA::IHistogram1D * AngleXForwardPlane0 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Forward Plane 0",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleXForwardPlane0 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Forward Plane 0",nobinsangle,minbinangle,maxbinangle);
   AngleXForwardPlane0->setTitle("Angle X Forward Plane 0");
   _histoThing.insert(make_pair("Angle X Forward Plane 0",AngleXForwardPlane0));
   _histoData["Angle X Forward Plane 0"] = empty;
 
-  AIDA::IHistogram1D * AngleXForwardPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Forward Plane 1",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleXForwardPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Forward Plane 1",nobinsangle,minbinangle,maxbinangle);
   AngleXForwardPlane1->setTitle("Angle X Forward Plane 1");
   _histoThing.insert(make_pair("Angle X Forward Plane 1",AngleXForwardPlane1));
   _histoData["Angle X Forward Plane 1"] = empty;
 
-  AIDA::IHistogram1D * AngleXForwardPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Forward Plane 2",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleXForwardPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Forward Plane 2",nobinsangle,minbinangle,maxbinangle);
   AngleXForwardPlane2->setTitle("Angle X Forward Plane 2");
   _histoThing.insert(make_pair("Angle X Forward Plane 2",AngleXForwardPlane2));
   _histoData["Angle X Forward Plane 2"] = empty;
 
-  AIDA::IHistogram1D * AngleXForwardPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Forward Plane 3",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleXForwardPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Forward Plane 3",nobinsangle,minbinangle,maxbinangle);
   AngleXForwardPlane3->setTitle("Angle X Forward Plane 3");
   _histoThing.insert(make_pair("Angle X Forward Plane 3",AngleXForwardPlane3));
   _histoData["Angle X Forward Plane 3"] = empty;
  
-  AIDA::IHistogram1D * AngleXForwardPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Forward Plane 4",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleXForwardPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Forward Plane 4",nobinsangle,minbinangle,maxbinangle);
   AngleXForwardPlane4->setTitle("Angle X Forward Plane 4");
   _histoThing.insert(make_pair("Angle X Forward Plane 4",AngleXForwardPlane4));
   _histoData["Angle X Forward Plane 4"] = empty;
 
-  AIDA::IHistogram1D * AngleXForwardPlane5 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Forward Plane 5",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
-  AngleXForwardPlane5->setTitle("Angle X Forward Plane 5");
-  _histoThing.insert(make_pair("Angle X Forward Plane 5",AngleXForwardPlane5));
-  _histoData["Angle X Forward Plane 5"] = empty;
- 
-  AIDA::IHistogram1D * AngleYForwardPlane0 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Forward Plane 0",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleYForwardPlane0 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Forward Plane 0",nobinsangle,minbinangle,maxbinangle);
   AngleYForwardPlane0->setTitle("Angle Y Forward Plane 0");
   _histoThing.insert(make_pair("Angle Y Forward Plane 0",AngleYForwardPlane0));
   _histoData["Angle Y Forward Plane 0"] = empty;
 
-  AIDA::IHistogram1D * AngleYForwardPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Forward Plane 1",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleYForwardPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Forward Plane 1",nobinsangle,minbinangle,maxbinangle);
   AngleYForwardPlane1->setTitle("Angle Y Forward Plane 1");
   _histoThing.insert(make_pair("Angle Y Forward Plane 1",AngleYForwardPlane1));
   _histoData["Angle Y Forward Plane 1"] = empty;
 
-  AIDA::IHistogram1D * AngleYForwardPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Forward Plane 2",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleYForwardPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Forward Plane 2",nobinsangle,minbinangle,maxbinangle);
   AngleYForwardPlane2->setTitle("Angle Y Forward Plane 2");
   _histoThing.insert(make_pair("Angle Y Forward Plane 2",AngleYForwardPlane2));
   _histoData["Angle Y Forward Plane 2"] = empty;
 
-  AIDA::IHistogram1D * AngleYForwardPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Forward Plane 3",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleYForwardPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Forward Plane 3",nobinsangle,minbinangle,maxbinangle);
   AngleYForwardPlane3->setTitle("Angle Y Forward Plane 3");
   _histoThing.insert(make_pair("Angle Y Forward Plane 3",AngleYForwardPlane3));
   _histoData["Angle Y Forward Plane 3"] = empty;
  
-  AIDA::IHistogram1D * AngleYForwardPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Forward Plane 4",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleYForwardPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Forward Plane 4",nobinsangle,minbinangle,maxbinangle);
   AngleYForwardPlane4->setTitle("Angle Y Forward Plane 4");
   _histoThing.insert(make_pair("Angle Y Forward Plane 4",AngleYForwardPlane4));
   _histoData["Angle Y Forward Plane 4"] = empty;
 
-  AIDA::IHistogram1D * AngleYForwardPlane5 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Forward Plane 5",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
-  AngleYForwardPlane5->setTitle("Angle Y Forward Plane 5");
-  _histoThing.insert(make_pair("Angle Y Forward Plane 5",AngleYForwardPlane5));
-  _histoData["Angle Y Forward Plane 5"] = empty;
- 
-  AIDA::IHistogram1D * AngleXBackwardPlane0 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Backward Plane 0",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
-  AngleXBackwardPlane0->setTitle("Angle X Backward Plane 0");
-  _histoThing.insert(make_pair("Angle X Backward Plane 0",AngleXBackwardPlane0));
-  _histoData["Angle X Backward Plane 0"] = empty;
-
-  AIDA::IHistogram1D * AngleXBackwardPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Backward Plane 1",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleXBackwardPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Backward Plane 1",nobinsangle,minbinangle,maxbinangle);
   AngleXBackwardPlane1->setTitle("Angle X Backward Plane 1");
   _histoThing.insert(make_pair("Angle X Backward Plane 1",AngleXBackwardPlane1));
   _histoData["Angle X Backward Plane 1"] = empty;
 
-  AIDA::IHistogram1D * AngleXBackwardPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Backward Plane 2",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleXBackwardPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Backward Plane 2",nobinsangle,minbinangle,maxbinangle);
   AngleXBackwardPlane2->setTitle("Angle X Backward Plane 2");
   _histoThing.insert(make_pair("Angle X Backward Plane 2",AngleXBackwardPlane2));
   _histoData["Angle X Backward Plane 2"] = empty;
 
-  AIDA::IHistogram1D * AngleXBackwardPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Backward Plane 3",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleXBackwardPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Backward Plane 3",nobinsangle,minbinangle,maxbinangle);
   AngleXBackwardPlane3->setTitle("Angle X Backward Plane 3");
   _histoThing.insert(make_pair("Angle X Backward Plane 3",AngleXBackwardPlane3));
   _histoData["Angle X Backward Plane 3"] = empty;
  
-  AIDA::IHistogram1D * AngleXBackwardPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Backward Plane 4",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleXBackwardPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Backward Plane 4",nobinsangle,minbinangle,maxbinangle);
   AngleXBackwardPlane4->setTitle("Angle X Backward Plane 4");
   _histoThing.insert(make_pair("Angle X Backward Plane 4",AngleXBackwardPlane4));
   _histoData["Angle X Backward Plane 4"] = empty;
 
-  AIDA::IHistogram1D * AngleXBackwardPlane5 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Backward Plane 5",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleXBackwardPlane5 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle X Backward Plane 5",nobinsangle,minbinangle,maxbinangle);
   AngleXBackwardPlane5->setTitle("Angle X Backward Plane 5");
   _histoThing.insert(make_pair("Angle X Backward Plane 5",AngleXBackwardPlane5));
   _histoData["Angle X Backward Plane 5"] = empty;
- 
-  AIDA::IHistogram1D * AngleYBackwardPlane0 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Backward Plane 0",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
-  AngleYBackwardPlane0->setTitle("Angle Y Backward Plane 0");
-  _histoThing.insert(make_pair("Angle Y Backward Plane 0",AngleYBackwardPlane0));
-  _histoData["Angle Y Backward Plane 0"] = empty;
 
-  AIDA::IHistogram1D * AngleYBackwardPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Backward Plane 1",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleYBackwardPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Backward Plane 1",nobinsangle,minbinangle,maxbinangle);
   AngleYBackwardPlane1->setTitle("Angle Y Backward Plane 1");
   _histoThing.insert(make_pair("Angle Y Backward Plane 1",AngleYBackwardPlane1));
   _histoData["Angle Y Backward Plane 1"] = empty;
 
-  AIDA::IHistogram1D * AngleYBackwardPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Backward Plane 2",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleYBackwardPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Backward Plane 2",nobinsangle,minbinangle,maxbinangle);
   AngleYBackwardPlane2->setTitle("Angle Y Backward Plane 2");
   _histoThing.insert(make_pair("Angle Y Backward Plane 2",AngleYBackwardPlane2));
   _histoData["Angle Y Backward Plane 2"] = empty;
 
-  AIDA::IHistogram1D * AngleYBackwardPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Backward Plane 3",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleYBackwardPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Backward Plane 3",nobinsangle,minbinangle,maxbinangle);
   AngleYBackwardPlane3->setTitle("Angle Y Backward Plane 3");
   _histoThing.insert(make_pair("Angle Y Backward Plane 3",AngleYBackwardPlane3));
   _histoData["Angle Y Backward Plane 3"] = empty;
  
-  AIDA::IHistogram1D * AngleYBackwardPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Backward Plane 4",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleYBackwardPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Backward Plane 4",nobinsangle,minbinangle,maxbinangle);
   AngleYBackwardPlane4->setTitle("Angle Y Backward Plane 4");
   _histoThing.insert(make_pair("Angle Y Backward Plane 4",AngleYBackwardPlane4));
   _histoData["Angle Y Backward Plane 4"] = empty;
 
-  AIDA::IHistogram1D * AngleYBackwardPlane5 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Backward Plane 5",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * AngleYBackwardPlane5 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Angle Y Backward Plane 5",nobinsangle,minbinangle,maxbinangle);
   AngleYBackwardPlane5->setTitle("Angle Y Backward Plane 5");
   _histoThing.insert(make_pair("Angle Y Backward Plane 5",AngleYBackwardPlane5));
   _histoData["Angle Y Backward Plane 5"] = empty;
 
-  AIDA::IHistogram1D * ScatteringAngleXPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle X Plane 1",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * ScatteringAngleXPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle X Plane 1",nobinsangle,minbinangle,maxbinangle);
   ScatteringAngleXPlane1->setTitle("Scattering Angle X Plane 1");
   _histoThing.insert(make_pair("Scattering Angle X Plane 1",ScatteringAngleXPlane1));
   _histoData["Scattering Angle X Plane 1"] = empty;
 
-  AIDA::IHistogram1D * ScatteringAngleXPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle X Plane 2",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * ScatteringAngleXPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle X Plane 2",nobinsangle,minbinangle,maxbinangle);
   ScatteringAngleXPlane2->setTitle("Scattering Angle X Plane 2");
   _histoThing.insert(make_pair("Scattering Angle X Plane 2",ScatteringAngleXPlane2));
   _histoData["Scattering Angle X Plane 2"] = empty;
 
-  AIDA::IHistogram1D * ScatteringAngleXPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle X Plane 3",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * ScatteringAngleXPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle X Plane 3",nobinsangle,minbinangle,maxbinangle);
   ScatteringAngleXPlane3->setTitle("Scattering Angle X Plane 3");
   _histoThing.insert(make_pair("Scattering Angle X Plane 3",ScatteringAngleXPlane3));
   _histoData["Scattering Angle X Plane 3"] = empty;
  
-  AIDA::IHistogram1D * ScatteringAngleXPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle X Plane 4",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * ScatteringAngleXPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle X Plane 4",nobinsangle,minbinangle,maxbinangle);
   ScatteringAngleXPlane4->setTitle("Scattering Angle X Plane 4");
   _histoThing.insert(make_pair("Scattering Angle X Plane 4",ScatteringAngleXPlane4));
   _histoData["Scattering Angle X Plane 4"] = empty;
 
-  AIDA::IHistogram1D * ScatteringAngleYPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle Y Plane 1",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * ScatteringAngleYPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle Y Plane 1",nobinsangle,minbinangle,maxbinangle);
   ScatteringAngleYPlane1->setTitle("Scattering Angle Y Plane 1");
   _histoThing.insert(make_pair("Scattering Angle Y Plane 1",ScatteringAngleYPlane1));
   _histoData["Scattering Angle Y Plane 1"] = empty;
 
-  AIDA::IHistogram1D * ScatteringAngleYPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle Y Plane 2",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * ScatteringAngleYPlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle Y Plane 2",nobinsangle,minbinangle,maxbinangle);
   ScatteringAngleYPlane2->setTitle("Scattering Angle Y Plane 2");
   _histoThing.insert(make_pair("Scattering Angle Y Plane 2",ScatteringAngleYPlane2));
   _histoData["Scattering Angle Y Plane 2"] = empty;
 
-  AIDA::IHistogram1D * ScatteringAngleYPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle Y Plane 3",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * ScatteringAngleYPlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle Y Plane 3",nobinsangle,minbinangle,maxbinangle);
   ScatteringAngleYPlane3->setTitle("Scattering Angle Y Plane 3");
   _histoThing.insert(make_pair("Scattering Angle Y Plane 3",ScatteringAngleYPlane3));
   _histoData["Scattering Angle Y Plane 3"] = empty;
  
-  AIDA::IHistogram1D * ScatteringAngleYPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle Y Plane 4",nobinsangle,minbinangle,maxbinangle);//Create a histogram for the residual
+  AIDA::IHistogram1D * ScatteringAngleYPlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Scattering Angle Y Plane 4",nobinsangle,minbinangle,maxbinangle);
   ScatteringAngleYPlane4->setTitle("Scattering Angle Y Plane 4");
   _histoThing.insert(make_pair("Scattering Angle Y Plane 4",ScatteringAngleYPlane4));
   _histoData["Scattering Angle Y Plane 4"] = empty;
 
-  AIDA::IHistogram1D * KinkAnglePlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Kink Angle Plane 1",nobinsangle,minbinalpha,maxbinalpha);//Create a histogram for the residual
+  AIDA::IHistogram2D * KinkAnglePlane1 = AIDAProcessor::histogramFactory(this)->createHistogram2D("Kink Angle Plane 1",nobinsangle,minbinalpha,maxbinalpha,nobinsangle,minbinalpha,maxbinalpha);
   KinkAnglePlane1->setTitle("Kink Angle Plane 1");
   _histoThing.insert(make_pair("Kink Angle Plane 1",KinkAnglePlane1));
   _histoData["Kink Angle Plane 1"] = empty;
 
-  AIDA::IHistogram1D * KinkAnglePlane2 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Kink Angle Plane 2",nobinsangle,minbinalpha,maxbinalpha);//Create a histogram for the residual
+  AIDA::IHistogram2D * KinkAnglePlane2 = AIDAProcessor::histogramFactory(this)->createHistogram2D("Kink Angle Plane 2",nobinsangle,minbinalpha,maxbinalpha,nobinsangle,minbinalpha,maxbinalpha);
   KinkAnglePlane2->setTitle("Kink Angle Plane 2");
   _histoThing.insert(make_pair("Kink Angle Plane 2",KinkAnglePlane2));
   _histoData["Kink Angle Plane 2"] = empty;
 
-  AIDA::IHistogram1D * KinkAnglePlane3 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Kink Angle Plane 3",nobinsangle,minbinalpha,maxbinalpha);//Create a histogram for the residual
+  AIDA::IHistogram2D * KinkAnglePlane3 = AIDAProcessor::histogramFactory(this)->createHistogram2D("Kink Angle Plane 3",nobinsangle,minbinalpha,maxbinalpha,nobinsangle,minbinalpha,maxbinalpha);
   KinkAnglePlane3->setTitle("Kink Angle Plane 3");
   _histoThing.insert(make_pair("Kink Angle Plane 3",KinkAnglePlane3));
   _histoData["Kink Angle Plane 3"] = empty;
 
-  AIDA::IHistogram1D * KinkAnglePlane4 = AIDAProcessor::histogramFactory(this)->createHistogram1D("Kink Angle Plane 4",nobinsangle,minbinalpha,maxbinalpha);//Create a histogram for the residual
+  AIDA::IHistogram2D * KinkAnglePlane4 = AIDAProcessor::histogramFactory(this)->createHistogram2D("Kink Angle Plane 4",nobinsangle,minbinalpha,maxbinalpha,nobinsangle,minbinalpha,maxbinalpha);
   KinkAnglePlane4->setTitle("Kink Angle Plane 4");
   _histoThing.insert(make_pair("Kink Angle Plane 4",KinkAnglePlane4));
   _histoData["Kink Angle Plane 4"] = empty;
@@ -393,106 +373,123 @@ void EUTelX0Processor::printHitParameters( TrackerHit* trackhit ){
 void EUTelX0Processor::kinkEstimate(Track* track){
   //This function works out an angle based on a straight line fitted from plane 0 to 2 and plane 5 to 3
   //It will also store all other angles in histograms too
+  streamlog_out(MESSAGE0) << "Running function kinkEstimate(Track* " << &track << ")" << std::endl;
   
   //First we extract the relevant hits from the track
-  std::vector< TrackerHit* > trackhits = track->getTrackerHits();
-  std::vector< TVector3* > hits;
-  for(std::vector< TrackerHit* >::iterator it = trackhits.begin(); it != trackhits.end(); ++it){
-    if((*it)->getType() == 32){  //Check if the hit type is appropriate
-      Double_t x = (*it)->getPosition()[0];
-      Double_t y = (*it)->getPosition()[1];
-      Double_t z = (*it)->getPosition()[2];
-      TVector3 *tempvec = new TVector3(x,y,z);
-      hits.push_back(tempvec);
-    } //End of if query for type check
-  } //End of for loop running through trackhits
-  
-  //Then we draw lines through the hits in layers 02 and layers 35
-  double x0 = hits[0]->x();
-  double y0 = hits[0]->y();
-  double z0 = hits[0]->z();
-
-  double x1 = hits[1]->x();
-  double y1 = hits[1]->y();
-
-  double x2 = hits[2]->x();
-  double y2 = hits[2]->y();
-  double z2 = hits[2]->z();
-
-  double x3 = hits[3]->x();
-  double y3 = hits[3]->y();
-  double z3 = hits[3]->z();
-
-  double x4 = hits[4]->x();
-  double y4 = hits[4]->y();
-
-  double x5 = hits[5]->x();
-  double y5 = hits[5]->y();
-  double z5 = hits[5]->z();
-
+  std::vector< TVector3* > hits = getHitsFromTrack(track);
+  streamlog_out(MESSAGE0) << "Successfully got hits from track" << std::endl;
   //Then we find the position where those lines would have hit the DUT
   //THIS IS TO BE DECIDED IF IT IS NEEDED LATER
 
   //Then we work out the angles of these lines with respect to XZ and YZ, plot results in histograms
-  try{
-  double residualxfront = (x2 + x0)/2.0 - x1;
-  double residualyfront = (y2 + y0)/2.0 - y1;
-  double residualxback = (x5 + x3)/2.0 - x4;
-  double residualyback = (y5 + y3)/2.0 - y4;
-
-  if(sqrt(pow(residualxfront,2) + pow(residualyfront,2)) > _residualCut
-     || sqrt(pow(residualxback,2) + pow(residualyback,2)) > _residualCut){
-    //This if statement determines if the residual is good enough to consider this an actual track. If not then the if statment is executed and an exception is thrown
-    throw _residualCut;
+  int hitsize = static_cast< int >(hits.size());
+  std::vector< double > scatterx, scattery;
+  for(int i = 0; i < hitsize-1; ++i){
+    double x0 = hits[i]->x();
+    double y0 = hits[i]->y();
+    double z0 = hits[i]->z();
+    double x1 = hits[i+1]->x();
+    double y1 = hits[i+1]->y();
+    double z1 = hits[i+1]->z();
+    double deltaz = z1-z0;
+    double frontanglex = atan2(x1-x0,deltaz);
+    double frontangley = atan2(y1-y0,deltaz);
+    double backanglex = atan2(x0-x1,deltaz);
+    double backangley = atan2(y0-y1,deltaz);
+    scatterx.push_back(frontanglex);
+    scattery.push_back(frontangley);
+    std::stringstream xforward,yforward,xbackward,ybackward;
+    xforward << "Angle X Forward Plane " << i;
+    yforward << "Angle Y Forward Plane " << i;
+    xbackward << "Angle X Backward Plane " << i+1;
+    ybackward << "Angle Y Backward Plane " << i+1;
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing[xforward.str().c_str()])->fill(frontanglex);
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing[yforward.str().c_str()])->fill(frontangley);
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing[xbackward.str().c_str()])->fill(backanglex);
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing[ybackward.str().c_str()])->fill(backangley);
+  }
+ 
+  int scatterxsize = static_cast< int >(scatterx.size());
+  for(int i = 0; i < scatterxsize-1; ++i){
+    double scatteringanglex = scatterx[i+1] - scatterx[i];
+    double scatteringangley = scattery[i+1] - scattery[i];
+    std::stringstream scatterx,scattery,scatterxy;
+    scatterx << "Scattering Angle X Plane " << i+1;
+    scattery << "Scattering Angle Y Plane " << i+1;
+    scatterxy << "Kink Angle Plane " << i+1;
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing[scatterx.str().c_str()])->fill(scatteringanglex);
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing[scattery.str().c_str()])->fill(scatteringangley);
+    dynamic_cast< AIDA::IHistogram2D* >(_histoThing[scatterxy.str().c_str()])->fill(scatteringanglex,scatteringangley);
   }
 
-  double deltaxfront = x2 - x0;
-  double deltaxback = x5 - x3;
-
-  double deltayfront = y2 - y0;
-  double deltayback = y5 - y3;
   
-  double deltazfront = z2 - z0;
-  double deltazback = z5 - z3;
 
-  double radianstodegrees = 180/3.1415;
 
-  if(deltazfront == 0 || deltazback == 0){
-    std::string errormessage("Program attempted to divide by zero (due to deltazfront or deltazback being equal to zero). Therefore this particular track will be ignored in the histograms.");
-    throw errormessage;
-  }
 
-  double anglexfront = atan2(deltaxfront,deltazfront)*radianstodegrees;
-  double anglexback = atan2(deltaxback,deltazback)*radianstodegrees;
 
-  double angleyfront = atan2(deltayfront,deltazfront)*radianstodegrees;
-  double angleyback = atan2(deltayback,deltazback)*radianstodegrees;
 
-  dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Angle X Front"])->fill(anglexfront);
-  dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Angle Y Front"])->fill(angleyfront);
-  dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Angle X Back"])->fill(anglexback);
-  dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Angle Y Back"])->fill(angleyback);
 
-  //Then we add these two angles together and return the result
-  dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Scattering Angle X"])->fill(anglexfront + anglexback);
-  dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Scattering Angle Y"])->fill(angleyfront + angleyback);
-
-  double kinkangle = sqrt(pow(anglexfront + anglexback,2) + pow(angleyfront + angleyback,2));  //Not sure if this is the correct way to work out the angle
-  dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Kink Angle"])->fill(kinkangle);
-  } catch(double residual){
-    if(residual == _residualCut){
-      streamlog_out(DEBUG8) << "A track was rejected because the straight line fit through it had too large of a resolution, the resolution was great than " << _residualCut << "." << std::endl << 
-      "Therefore the data was not added to the histogram and will be ignored. If you see this message a lot it means either your cut is too small or the track candidates created in other processors are too loose" << std::endl;
-    } else{
-      streamlog_out(ERROR9) << "Unknown exception occured in EUTelX0Processor::kinkEstimate, the catch for doubles caught the following value: " << residual << std::endl;
-      exit(1);
+/*
+  try{
+    double residualxfront = (x2 + x0)/2.0 - x1;
+    double residualyfront = (y2 + y0)/2.0 - y1;
+    double residualxback = (x5 + x3)/2.0 - x4;
+    double residualyback = (y5 + y3)/2.0 - y4;
+    streamlog_out(DEBUG0) << "Filled the front and back residuals" << std::endl;
+    if(sqrt(pow(residualxfront,2) + pow(residualyfront,2)) > _residualCut
+       || sqrt(pow(residualxback,2) + pow(residualyback,2)) > _residualCut){
+      //This if statement determines if the residual is good enough to consider this an actual track. If not then the if statment is executed and an exception is thrown
+      throw _residualCut;
     }
-  } catch(std::string errormessage){
+    streamlog_out(DEBUG0) << "Successfully checked for whether the particle passed the residual cut selection" << std::endl;
+   
+    double deltaxfront = x2 - x0;
+    double deltaxback = x5 - x3;
+  
+    double deltayfront = y2 - y0;
+    double deltayback = y5 - y3;
+    
+    double deltazfront = z2 - z0;
+    double deltazback = z5 - z3;
+  
+    double radianstodegrees = 180/3.1415;
+  
+    if(deltazfront == 0 || deltazback == 0){
+      std::string errormessage("Program attempted to divide by zero (due to deltazfront or deltazback being equal to zero). Therefore this particular track will be ignored in the histograms.");
+      throw errormessage;
+    }
+    double anglexfront = atan2(deltaxfront,deltazfront)*radianstodegrees;
+    double anglexback = atan2(deltaxback,deltazback)*radianstodegrees;
+  
+    double angleyfront = atan2(deltayfront,deltazfront)*radianstodegrees;
+    double angleyback = atan2(deltayback,deltazback)*radianstodegrees;
+    streamlog_out(DEBUG0) << "Successfully filled all the angles" << std::endl;
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Angle X Front"])->fill(anglexfront);
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Angle Y Front"])->fill(angleyfront);
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Angle X Back"])->fill(anglexback);
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Angle Y Back"])->fill(angleyback);
+    //Then we add these two angles together and return the result
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Scattering Angle X"])->fill(anglexfront + anglexback);
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Scattering Angle Y"])->fill(angleyfront + angleyback);
+    double kinkangle = sqrt(pow(anglexfront + anglexback,2) + pow(angleyfront + angleyback,2));  //Not sure if this is the correct way to work out the angle
+    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Kink Angle"])->fill(kinkangle);
+    streamlog_out(DEBUG0) << "Successfully filled all the histograms" << std::endl;
+  } catch(double residual){
+      if(residual == _residualCut){
+        streamlog_out(DEBUG8) << "A track was rejected because the straight line fit through it had too large of a resolution, the resolution was great than " << _residualCut << "." << std::endl << 
+        "Therefore the data was not added to the histogram and will be ignored. If you see this message a lot it means either your cut is too small or the track candidates created in other processors are too loose" << std::endl;
+      } else{
+        streamlog_out(ERROR9) << "Unknown exception occured in EUTelX0Processor::kinkEstimate, the catch for doubles caught the following value: " << residual << std::endl;
+        exit(1);
+      }
+    } catch(std::string errormessage){
     streamlog_out(DEBUG8) << errormessage.c_str() << std::endl;
   } catch(...){
     streamlog_out(ERROR9) << "Unknown exception occured in EUTelX0Processor, at a guess I would say this was caused by the dynamic casting of AIDA Histograms" << std::endl;
     exit(1);
   }
+  */
+  streamlog_out(MESSAGE0) << "Made it to the end of kinkEstimate()" << endl;
 }
 
 void EUTelX0Processor::kinkGaussian(){
@@ -515,7 +512,7 @@ void EUTelX0Processor::kinkGaussian(){
 
 void EUTelX0Processor::processEvent(LCEvent *evt)
 {
-  streamlog_out(DEBUG0) << "Running EUTelX0Processor::processEvent(LCEvent *evt) with evt = " << evt << std::endl;
+  streamlog_out(MESSAGE0) << "Running EUTelX0Processor::processEvent(LCEvent *evt) with evt = " << evt << std::endl;
   //Take track from input parameter
   //Work out kink angle from track
   //Put kink angle into histogram
@@ -535,9 +532,9 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
       for(int i = 0; i < elementnumber; ++i){
         Track* eventtrack = dynamic_cast< Track* >(trackcollection->getElementAt(i));
         streamlog_out(DEBUG0) << "Here is all the information about the track in run " << _runNumber << ", event " << _eventNumber << ", element " << i << std::endl << std::endl;
-        printTrackParameters( eventtrack );
+//        printTrackParameters( eventtrack );
         kinkEstimate( eventtrack );
-        threePointResolution( eventtrack );
+//        threePointResolution( eventtrack );
       }
     }
   } catch(DataNotAvailableException &datanotavailable){
@@ -759,16 +756,10 @@ double EUTelX0Processor::calculateX0()
   return X0;
 }
 
-void EUTelX0Processor::threePointResolution(Track *track){
-//This function draws a line between the hits in plane i and i+2
-//then it compares where the hit in plane i+1 is with the average of the other two planes
-//this is then plotted as a residual for each plane.
-  streamlog_out(DEBUG0) << "Function EUTelX0Processor::threePointResolution(Track *" << &track << ") called" << std::endl;
-
-  std::vector< TrackerHit* > trackhits = track->getTrackerHits();
-  std::vector< TVector3* > hits;
-/*
-  for(std::vector< TrackerHit* >::iterator it = trackhits.begin(); it != trackhits.end(); ++it){
+std::vector< TVector3* > EUTelX0Processor::getHitsFromTrack(Track *track){
+ std::vector< TrackerHit* > trackhits = track->getTrackerHits();
+ std::vector< TVector3* > hits;
+ for(std::vector< TrackerHit* >::iterator it = trackhits.begin(); it != trackhits.end(); ++it){
     if((*it)->getType() == 32){  //Check if the hit type is appropriate
       Double_t x = (*it)->getPosition()[0];
       Double_t y = (*it)->getPosition()[1];
@@ -777,7 +768,51 @@ void EUTelX0Processor::threePointResolution(Track *track){
       hits.push_back(tempvec);
     } //End of if query for type check
   } //End of for loop running through trackhits
+  return hits;
+}
 
+void EUTelX0Processor::singlePointResolution(Track *track){
+//This function draws a line between two hits on adjacent planes and then projects in the forward and backward direction to the hit on the next plane.
+//It then compares that hit with the actual hit on that next plane and the differencce is plotted
+  streamlog_out(DEBUG1) << "Function EUTeoX0Processor::singlePointResolution(Track *" << &track << ") called" << std::endl;
+  std::vector< TVector3* > hits = getHitsFromTrack(track);
+  for(std::vector< TVector3* >::iterator it = hits.begin(); it != hits.end(); ++it){
+    if(it == hits.begin()){
+      streamlog_out(DEBUG0) << "Processing first hit in singlePointResolution" << std::endl;
+      double x0, y0, x1, y1, x2, y2, z0, z1, z2;
+      x0 = (*it)->x();
+      y0 = (*it)->y();
+      z0 = (*it)->z();
+      x1 = (*it + 1)->x();
+      y1 = (*it + 1)->y();
+      z1 = (*it + 1)->z();
+      x2 = (*it + 2)->x();
+      y2 = (*it + 2)->y();
+      z2 = (*it + 2)->z();
+      double predictx, predicty;
+      predictx = (x1-x0)*(z2-z0)/(z1-z0);
+      predicty = (y1-y0)*(z2-z0)/(z1-z0);
+      dynamic_cast< AIDA::IHistogram1D* > (_histoThing["SinglePointResidualXPlane1"])->fill(x2 - predictx);
+      dynamic_cast< AIDA::IHistogram1D* > (_histoThing["SinglePointResidualYPlane1"])->fill(y2 - predicty);
+    } else if(it == hits.end()){
+      streamlog_out(DEBUG0) << "Processing last hit in singlePointResolution" << std::endl;
+      
+    }
+    else{
+
+    }
+  }
+
+}
+
+void EUTelX0Processor::threePointResolution(Track *track){
+//This function draws a line between the hits in plane i and i+2
+//then it compares where the hit in plane i+1 is with the average of the other two planes
+//this is then plotted as a residual for each plane.
+  streamlog_out(DEBUG0) << "Function EUTelX0Processor::threePointResolution(Track *" << &track << ") called" << std::endl;
+
+  std::vector< TrackerHit* > trackhits = track->getTrackerHits();
+  std::vector< TVector3* > hits = getHitsFromTrack(track);
   int i = 1;
   for(std::vector< TVector3* >::iterator it = hits.begin(); it != hits.end() - 2; ++it){
     //This determines the guess of the position of the particle as it should hit the middle sensor
@@ -793,13 +828,17 @@ void EUTelX0Processor::threePointResolution(Track *track){
     stringstream ResidualX, ResidualY;
     ResidualX << "ResidualXPlane" << i;
     ResidualY << "ResidualYPlane" << i;
-    dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualX"])->fill(averagex - middlex);
-    dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualY"])->fill(averagey - middley);
-    dynamic_cast< AIDA::IHistogram1D* > (_histoThing[ResidualX.str().c_str()])->fill(averagex - middlex);
-    dynamic_cast< AIDA::IHistogram1D* > (_histoThing[ResidualY.str().c_str()])->fill(averagey - middley);
+    try{
+      dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualX"])->fill(averagex - middlex);
+      dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualY"])->fill(averagey - middley);
+      dynamic_cast< AIDA::IHistogram1D* > (_histoThing[ResidualX.str().c_str()])->fill(averagex - middlex);
+      dynamic_cast< AIDA::IHistogram1D* > (_histoThing[ResidualY.str().c_str()])->fill(averagey - middley);
+    } catch(std::bad_cast& bc){
+      streamlog_out(ERROR5) << "Unable to fill histograms due to bad cast" << std::endl;
+    }
     i++;
   }
-*/
+/*
   map< int, vector< TVector3> > hitvectortemp;//Temporary map for storing vectors of hit information pre-cut
   for(std::vector< TrackerHit* >::iterator it = trackhits.begin(); it != trackhits.end(); ++it){
     TrackerHit* tHit = *it;//Get the hit from each element of the collection
@@ -851,7 +890,7 @@ void EUTelX0Processor::threePointResolution(Track *track){
       }
     }
   }
-
+*/
 }
 
 void EUTelX0Processor::basicFitter(LCCollection *alignedHitCollection){
