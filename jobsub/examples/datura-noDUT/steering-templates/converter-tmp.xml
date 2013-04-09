@@ -26,7 +26,7 @@
     <parameter name="MaxRecordNumber" value="@MaxRecordNumber@" />  
     <parameter name="SkipNEvents" value="0" />  
     <parameter name="SupressCheck" value="false" />  
-    <parameter name="Verbosity"> @VerbosityLevel@  </parameter> 
+    <parameter name="Verbosity"> @Verbosity@  </parameter> 
   </global>
 
   <!-- Processor that handles AIDA files, creates one directory per processor. Processors needed to create and fill histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
@@ -94,11 +94,11 @@
     <!-- Write mode for HotPixelDB file: WRITE_APPEND or WRITE_NEW. -->
     <parameter name="LCIOWriteMode" type="string">WRITE_NEW </parameter>
     <!-- This float number [0,1] represents the maximum allowed firing frequency within the selected number of events per cycle. -->
-    <parameter name="MaxAllowedFiringFreq" type="float">0.01 </parameter>
+    <parameter name="MaxAllowedFiringFreq" type="float"> @FiringFrequency@ </parameter>
     <!-- The number of events to be considered for each update cycle. -->
-    <parameter name="NoOfEventPerCycle" type="int">1000 </parameter>
+    <parameter name="NoOfEventPerCycle" type="int">2000 </parameter>
     <!-- The total number of hot pixel cycles. -->
-    <parameter name="TotalNoOfCycle" type="int" value="3"/>
+    <parameter name="TotalNoOfCycle" type="int" value="5"/>
     <!-- Noise input collection name. -->
     <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData">m26_noise </parameter>
     <!-- Pixel status input collection name. -->

@@ -23,23 +23,17 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
       <processor name="Mimosa26EUTelAutoPedestalNoiseProcessor"/>
       <processor name="LoadHotPixelDB"/>
       <processor name="Clustering"/>
-      <processor name="Correlator"/>
       <processor name="MyEUTelUtilityPrintEventNumber"/>
-    <processor name="Save"/>
+      <processor name="Save"/>
   </execute>
 
   <global>
-    <parameter name="LCIOInputFiles"> @LcioRawFolder@/run@RunNumber@.slcio </parameter>
-    <parameter name="GearXMLFile" value="@GearPath@/@GearFile@"/>
+    <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-converter.slcio </parameter>
+    <parameter name="GearXMLFile" value="@GeometryPath@/@GearFile@"/>
     <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
-    <parameter name="SkipNEvents" value="@skipnevents@"/>
+    <parameter name="SkipNEvents" value="0"/>
     <parameter name="SupressCheck" value="false"/>
-    <parameter name="Verbosity" value="@verbositylevel@"/>
-    <parameter name="nativefolder" value="@nativefolder@"/>
-    <parameter name="basepath" value="@basepath@"/>
-    <parameter name="localfolderoutputbase" value="@localfolderoutputbase@"/>
-    <parameter name="output" value="@output@"/>
-
+    <parameter name="Verbosity"> @Verbosity@  </parameter> 
   </global>
 
   <processor name="AIDA" type="AIDAProcessor">
@@ -47,8 +41,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!-- compression of output file 0: false >0: true (default) -->
     <parameter name="Compress" type="int" value="1"/>
     <!-- filename without extension-->
-    <parameter name="FileName" type="string" value=
-    "@HistoPath@/run@RunNumber@-clu-histo"/>
+    <parameter name="FileName" type="string"> @HistogramPath@/@FilePrefix@-clustering </parameter>
     <!-- type of output file xml (default) or root ( only OpenScientist)-->
     <parameter name="FileType" type="string" value="root"/>
   </processor>
@@ -90,7 +83,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
     <!--Initialization of a simple conditions file handler-->
     <!-- suppress only the Mimosa26 pixels --> 
-    <parameter name="SimpleFileHandler" type="StringVec"> m26_hotpixel  @DatabasePath@/run@HotPixelRunNumber@-hotpixel.slcio m26_hotpixel </parameter>
+    <parameter name="SimpleFileHandler" type="StringVec"> m26_hotpixel @DatabasePath@/@FilePrefix@-hotpixel.slcio m26_hotpixel </parameter>
   </processor>
 
 
@@ -124,7 +117,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
         -> SparseCluster2: for cluster in ZS frame with better performance
         -> FixedFrame: for cluster with a given size
         -> DFixedFrame: for cluster with a given size-->
-    <parameter name="ZSClusteringAlgo" type="string" value="SparseCluster2"/>
+    <parameter name="ZSClusteringAlgo" type="string" value="@ClusteringAlgorithm@"/>
 
     <!--
         FIXED FRAME ( for both NZS and ZS )
@@ -165,44 +158,15 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
         HISTOGRAMMING
     -->
     <!--Switch on or off the histogram filling-->
-    <parameter name="HistogramFilling" type="bool" value="false"/>
+    <parameter name="HistogramFilling" type="bool" value="@FillHistograms@"/>
     <!--This is the name of the histogram information file-->
-    <parameter name="HistoInfoFileName" type="string" value="@HistoInfoPath@/@HistoInfoFile@"/>
+    <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
     <!--The list of cluster N to be filled.For example 7 means filling the cluster spectra with the 7 most significant pixels-->
-    <parameter name="ClusterN" type="IntVec" value="4 6 8 9"/>
+    <!--parameter name="ClusterN" type="IntVec" value="4 6 8 9"/-->
     <!--The list of cluster NxN to be filled.For example 3 means filling the 3x3 histogram spectrum-->
-    <parameter name="ClusterNxN" type="IntVec" value="3"/>
+    <!--parameter name="ClusterNxN" type="IntVec" value="3"/-->
 
   </processor>
-
-
-  <processor name="HotPixelKiller" type="EUTelHotPixelKiller">
-    <!--EUTelHotPixelKiller periodically check for pixel singing loud too often and remove them from the analysis-->
-    <!--Pixel status collection-->
-    <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData"> m26_status </parameter>
-    <!--This float number [0,1] represents the maximum allowed firing frequency
-        within the selected number of event per cycle-->
-    <parameter name="MaxAllowedFiringFreq" type="float" value="0.01"/>
-    <!--The number of events to be considered for each update cycle-->
-    <parameter name="NoOfEventPerCycle" type="int" value="1000"/>
-    <!--The total number of hot pixel cycle-->
-    <parameter name="TotalNoOfCycle" type="int" value="0"/>
-  </processor>
-
-  <processor name="Correlator" type="EUTelCorrelator">
-    <!--EUTelCorrelator fills histograms with correlation plots-->
-    <!--Cluster (pulse) collection name-->
-    <parameter name="InputClusterCollections" type="StringVec" > cluster_m26  </parameter>
-    <!--Hit collection name-->
-    <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
-    <!-- -->
-    <parameter name="ClusterChargeMinimum" type="int" value="2"/>
-    <!-- -->
-    <parameter name="Events" type="int" value="10000"/>
-    <!-- -->
-    <parameter name="OffsetDBFile" type="string"> @DBPath@/run@RunNumber@-offset-db.slcio </parameter>
- </processor>
-
 
   <processor name="Save" type="EUTelOutputProcessor">
     <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
@@ -217,7 +181,7 @@ Version: $Id: clusearch-tmp.xml,v 1.9 2009-08-01 10:41:44 bulgheroni Exp $
     <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
     <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
     <!-- name of output file -->
-    <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/run@RunNumber@-clu.slcio"/>
+    <parameter name="LCIOOutputFile" type="string"> @LcioPath@/@FilePrefix@-clustering.slcio </parameter>
     <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
     <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
     <!--Set it to true to remove intermediate EORE in merged runs-->
