@@ -234,9 +234,9 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   registerOptionalParameter("TelescopeResolution","Resolution of the telescope for Millepede (sigma_x=sigma_y.",_telescopeResolution, static_cast <float> (3.0));
 
-  registerOptionalParameter("OnlySingleHitEvents","Use only events with one hit in every plane.",_onlySingleHitEvents, static_cast <int> (0));
+  registerOptionalParameter("OnlySingleHitEvents","Use only events with one hit in every plane.",_onlySingleHitEvents, static_cast <bool> (false));
 
-  registerOptionalParameter("OnlySingleTrackEvents","Use only events with one track candidate.",_onlySingleTrackEvents, static_cast <int> (0));
+  registerOptionalParameter("OnlySingleTrackEvents","Use only events with one track candidate.",_onlySingleTrackEvents, static_cast <bool> (false));
 
   registerOptionalParameter("AlignMode","Number of alignment constants used. Available mode are: "
                             "\n1 - shifts in the X and Y directions and a rotation around the Z axis,"
@@ -244,8 +244,8 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
                             "\n3 - (EXPERIMENTAL) shifts in the X,Y and Z directions and rotations around all three axis",
                             _alignMode, static_cast <int> (1));
 
-  registerOptionalParameter("UseResidualCuts","Use cuts on the residuals to reduce the combinatorial background. 0 for off, 1 for on",_useResidualCuts,
-                            static_cast <int> (0));
+  registerOptionalParameter("UseResidualCuts","Use cuts on the residuals to reduce the combinatorial background.",_useResidualCuts,
+                            static_cast <bool> (false));
 
   registerOptionalParameter("AlignmentConstantLCIOFile","This is the name of the LCIO file name with the output alignment"
                             "constants (add .slcio)",_alignmentConstantLCIOFile, static_cast< string > ( "alignment.slcio" ) );
@@ -280,7 +280,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   registerOptionalParameter("PedeSteerfileName","Name of the steering file for the pede program.",_pedeSteerfileName, string("steer_mille.txt"));
 
-  registerOptionalParameter("RunPede","Execute the pede program using the generated steering file.",_runPede, static_cast <int> (0));
+  registerOptionalParameter("RunPede","Execute the pede program using the generated steering file.",_runPede, static_cast <bool> (true));
 
   registerOptionalParameter("UsePedeUserStartValues","Give start values for pede by hand (0 - automatic calculation of start values, 1 - start values defined by user).", _usePedeUserStartValues, static_cast <int> (0));
 

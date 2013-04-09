@@ -433,10 +433,10 @@ namespace eutelescope {
     std::string _binaryFilename;
 
     float _telescopeResolution;
-    int _onlySingleHitEvents;
-    int _onlySingleTrackEvents;
+    bool _onlySingleHitEvents;
+    bool _onlySingleTrackEvents;
     int _alignMode;
-    int _useResidualCuts;
+    bool _useResidualCuts;
 
     FloatVec _residualsXMin;
     FloatVec _residualsYMin;
@@ -452,7 +452,7 @@ namespace eutelescope {
 
     int _generatePedeSteerfile;
     std::string _pedeSteerfileName;
-    int _runPede;
+    bool _runPede;
     int _usePedeUserStartValues;
     FloatVec _pedeUserStartValuesX;
     FloatVec _pedeUserStartValuesY;
