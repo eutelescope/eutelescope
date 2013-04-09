@@ -1,26 +1,25 @@
-For Datura alone, spacing 150mm
-
-
-
-
+Datura telescope without explicit DUT, spacing 150mm
+===================
 
 This directory contains an example configuration for the Datura
 telescope with six planes of Mimosa26 without DUT.
 
-This example is based on a test beam campaign done in May 2012 at DESY
-by the DESY CMS pixel group.
+This example is based on a test beam campaign done in May 2012 at DESY.
 
-The corresponding data can be found at:
+A corresponding data sample can be found at:
 /afs/desy.de/group/telescopes/EutelTestData/TestPysubExampleDaturaAlone
 
 If you are interested in the data but cannot access the above path,
-please contact the EUTelescope software coordinators.
+please contact the EUTelescope software coordinators via mail:
+eutelescope-coordinators@desy.de
 
 
 Features of this configuration:
 ------------------------------
 
+- Datura telescope with Mimosa26 sensors
 - telescope alone, no DUT
+- settings tuned for DESY testbeam (1-6 GeV electrons)
 
 
 Known issues:
