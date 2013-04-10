@@ -179,7 +179,7 @@ void EUTelNativeReader::readDataSource(int numEvents) {
       // outside the while loop.
       //
       // Anyway I'm processing this BORE again,
-      processBORE( eudaqEvent ): This is a strange case but the event will be processed anyway
+      processBORE( eudaqEvent );
 
 
     } else if ( eudaqEvent.IsEORE() ) {
