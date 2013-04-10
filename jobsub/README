@@ -18,10 +18,7 @@ positional arguments:
                         user; they determine e.g. the config section and
                         default steering file names.
   runs                  The runs to be analyzed; can be a list of single runs
-                        and/or a range, e.g. 1056-1060. PLEASE NOTE: for
-                        technical reasons, the order in which the runs are
-                        processed does not necessarily follow the order in
-                        which they were specified.
+                        and/or a range, e.g. 1056-1060.
 
 optional arguments:
   -h, --help            show this help message and exit

@@ -340,7 +340,7 @@ def main(argv=None):
     parser.add_argument("-s", "--silent", action="store_true", default=False, help="Suppress non-error (stdout) Marlin output to console")
     parser.add_argument("--dry-run", action="store_true", default=False, help="Write steering files but skip actual Marlin execution")
     parser.add_argument("jobtask", help="Which task to submit (e.g. convert, hitmaker, align); task names are arbitrary and can be set up by the user; they determine e.g. the config section and default steering file names.")
-    parser.add_argument("runs", help="The runs to be analyzed; can be a list of single runs and/or a range, e.g. 1056-1060. PLEASE NOTE: for technical reasons, the order in which the runs are processed does not neccessarily follow the order in which they were specified.", nargs='*')
+    parser.add_argument("runs", help="The runs to be analyzed; can be a list of single runs and/or a range, e.g. 1056-1060.", nargs='*')
     args = parser.parse_args(argv)
 
     # set the logging level
