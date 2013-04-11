@@ -176,14 +176,37 @@ def checkSteer(sstring):
     else:
         return True
 
+def check_program(name):
+    """ Searches PATH environment variable for executable given by parameter """
+    import os
+    for dir in os.environ['PATH'].split(os.pathsep):
+        prog = os.path.join(dir, name)
+        if os.path.exists(prog): return prog
+
 def runMarlin(filenamebase, silent):
     """ Runs Marlin and stores log of output """
     from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
     log = logging.getLogger('jobsub.marlin')
 
+    # check for Marlin executable
+    cmd = check_program("Marlin")
+    if cmd:
+        log.debug("Found Marlin executable: " + cmd)
+    else:
+        log.error("Marlin executable not found in PATH!")
+        exit(1)
+
+    # search for stdbuf command: adjust stdout buffering
+    stdbuf = check_program("stdbuf")
+    if stdbuf:
+        log.debug("Found stdbuf, will use line buffered output.")
+        # -oL: adjust standard output stream buffering to line buffered
+        cmd = stdbuf + " -oL " + cmd
+
     # need some addtional libraries for process interaction
     from subprocess import Popen, PIPE
     from threading  import Thread # threading used for non-blocking process output parsing
+    from time import sleep
     try:
         from Queue import Queue, Empty # python 2.x
     except ImportError:
@@ -198,11 +221,12 @@ def runMarlin(filenamebase, silent):
         out.close()
     import shlex        
     ON_POSIX = 'posix' in sys.builtin_module_names
-    cmd = "Marlin "+filenamebase+".xml"
+    cmd = cmd+" "+filenamebase+".xml"
     rcode = None # the return code that will be set by a later subprocess method
     try:
         # run process
-        log.info ("Now running Marlin: "+cmd)
+        log.info ("Now running Marlin on "+filenamebase+".xml")
+        log.debug ("Executing: "+cmd)
         p = Popen(shlex.split(cmd), stdout=PIPE, stderr=PIPE, bufsize=1, close_fds=ON_POSIX)
         # setup output queues and threads
         qout = Queue()
@@ -231,7 +255,8 @@ def runMarlin(filenamebase, silent):
                     log.error(line.strip())
                     log_file.write(line)                     
                 except Empty:
-                    pass
+                    sleep(0.005) # sleep for 5 ms to avoid excessive CPU load
+
             # process done
             tout.join() # finish stdout thread; wait for remaining buffer to be read
             terr.join() # finish stderr thread
@@ -405,6 +430,8 @@ def main(argv=None):
             log.info("Loaded config file %s", args.conf_file)
         except ConfigParser.InterpolationMissingOptionError, err: # if interpolation during config parsing fails
             log.error('Bad value substitution in config file '+str(args.conf_file)+ ": missing '{0}' key in section [{1}] for option '{2}'.".format(err.reference, err.section, err.option))
+            if err.reference == "eutelescopepath":
+                log.error('EUTELESCOPE environment variable not set but required in config through "EUTelescopePath" key - please source build_env.sh in EUTelescope top directory or set variable manually.')
             return 1
     else:
         log.warn("No config file specified")
