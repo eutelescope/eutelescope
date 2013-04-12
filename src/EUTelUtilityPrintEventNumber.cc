@@ -22,7 +22,12 @@ EUTelUtilityPrintEventNumber aPrintEventNumber ;
     
 
 EUTelUtilityPrintEventNumber::EUTelUtilityPrintEventNumber() : 
-  Processor("EUTelUtilityPrintEventNumber") {
+  Processor("EUTelUtilityPrintEventNumber"),
+  _everyNEvents(1000),
+  _printTimestamp(false),
+  totalevents(0),
+  totalruns(0)
+{
   /* the constructor call first the super constructor which the name 
    * of the processor
    * this must by the same as the class name.
