@@ -42,7 +42,7 @@
 #  - set property DEPENDS to make sure that failure of required steps does not cause following steps to fail as well 
 
     # all this regular expressions must be matched for the test to pass
-    SET( converter_pass_regex_1 "Now running Marlin:" )
+    SET( converter_pass_regex_1 "Now running Marlin" )
     SET( converter_pass_regex_2 "Processing event.*in run ${PaddedRunNr}" )
     SET( converter_pass_regex_3 "Marlin execution done" )
 
