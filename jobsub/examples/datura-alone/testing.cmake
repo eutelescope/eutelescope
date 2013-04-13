@@ -48,7 +48,9 @@
 
     SET( converter_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
-    ADD_TEST( TestJobsubExampleDaturaAloneConverterRun sh -c "cd ${testdir} && python ${jobsubdir}/${executable} ${jobsubOptions} converter ${RunNr}" )
+    ADD_TEST( NAME TestJobsubExampleDaturaAloneConverterRun 
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} converter ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneConverterRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${converter_pass_regex_1}.*${converter_pass_regex_2}.*${converter_pass_regex_3}"
@@ -80,13 +82,15 @@
 #
 
     # all this regular expressions must be matched for the test to pass
-    SET( clusearch_pass_regex_1 "Now running Marlin:" )
+    SET( clusearch_pass_regex_1 "Now running Marlin" )
     SET( clusearch_pass_regex_2 "Processing event.*in run ${PaddedRunNr}" )
     SET( clusearch_pass_regex_3 "Marlin execution done" )
 
     SET( clusearch_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
-    ADD_TEST( TestJobsubExampleDaturaAloneClusearchRun sh -c "cd ${testdir} && python ${jobsubdir}/${executable} ${jobsubOptions} clusearch ${RunNr}" )
+    ADD_TEST( NAME TestJobsubExampleDaturaAloneClusearchRun 
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} clusearch ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneClusearchRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${clusearch_pass_regex_1}.*${clusearch_pass_regex_2}.*${clusearch_pass_regex_3}"
@@ -117,13 +121,15 @@
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
     # all this regular expressions must be matched for the test to pass
-    SET( hitmaker_pass_regex_1 "Now running Marlin:" )
+    SET( hitmaker_pass_regex_1 "Now running Marlin" )
     SET( hitmaker_pass_regex_2 "Processing event.*in run ${PaddedRunNr}" )
     SET( hitmaker_pass_regex_3 "Marlin execution done" )
 
     SET( hitmaker_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
-    ADD_TEST( TestJobsubExampleDaturaAloneHitmakerRun sh -c "cd ${testdir} && python ${jobsubdir}/${executable} ${jobsubOptions} hitmaker ${RunNr}" )
+    ADD_TEST( NAME TestJobsubExampleDaturaAloneHitmakerRun 
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} hitmaker ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneHitmakerRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${hitmaker_pass_regex_1}.*${hitmaker_pass_regex_2}.*${hitmaker_pass_regex_3}"
@@ -153,7 +159,7 @@
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
     # all this regular expressions must be matched for the test to pass
-    SET( align_pass_regex_1 "Now running Marlin:" )
+    SET( align_pass_regex_1 "Now running Marlin" )
     SET( align_pass_regex_2 "Initialising Mille" )
     SET( align_pass_regex_3 "Processing event.*in run ${PaddedRunNr}" )
     SET( align_pass_regex_4 "Pede successfully finished" )
@@ -161,7 +167,9 @@
 
     SET( align_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
-    ADD_TEST( TestJobsubExampleDaturaAloneAlignRun sh -c "cd ${testdir} && python ${jobsubdir}/${executable} ${jobsubOptions} align ${RunNr}" )
+    ADD_TEST( NAME TestJobsubExampleDaturaAloneAlignRun 
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} align ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneAlignRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${align_pass_regex_1}.*${align_pass_regex_2}.*${align_pass_regex_3}.*${align_pass_regex_4}"
@@ -201,7 +209,9 @@
 
     SET( fit_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
-    ADD_TEST( TestJobsubExampleDaturaAloneFitterRun sh -c "cd ${testdir} && python ${jobsubdir}/${executable} ${jobsubOptions} fitter ${RunNr}" )
+    ADD_TEST( NAME TestJobsubExampleDaturaAloneFitterRun 
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} fitter ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneFitterRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}.*${fit_pass_regex_2}.*${fit_pass_regex_3}"
