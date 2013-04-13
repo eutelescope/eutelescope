@@ -80,7 +80,7 @@ set (CTEST_CUSTOM_MEMCHECK_IGNORE
 
 # use valgrind for dynamic analysis
 set (CTEST_MEMORYCHECK_COMMAND "/usr/bin/valgrind")
-set (CTEST_MEMORYCHECK_COMMAND_OPTIONS "--leak-check=full --suppressions=$ROOTSYS/etc/valgrind-root.supp")
+set (CTEST_MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=yes --leak-resolution=high  --suppressions=$ROOTSYS/etc/valgrind-root.supp")
 
 # increase the maximum number of warnings reported by ctest from the default 50
 set (CTEST_CUSTOM_MAXIMUM_NUMBER_OF_WARNINGS 150)
