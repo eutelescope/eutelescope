@@ -354,6 +354,7 @@ void EUTelHotPixelKiller::HotPixelFinder(EUTelEventImpl  *evt)
             else
             {
                 status->adcValues()[ _hitIndexMapVec[iDetector][ decoded_XY_index]  ] = EUTELESCOPE::HITPIXEL ;
+		delete sparsePixel;
             }
         }
     }    
