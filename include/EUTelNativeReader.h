@@ -214,7 +214,7 @@ namespace eutelescope {
   private:
     // from here below only private data members
 
-    //! Vector of detectors readout by the EUDRBProducer
+    //! Vector of detectors readout by the DEPFETProducer
     std::vector<EUTelPixelDetector * > _depfetDetectors;
 
     //! Vector of detectors readout by the EUDRBProducer
