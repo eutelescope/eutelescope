@@ -225,7 +225,7 @@ void CMSPixelReader::readDataSource (int Ntrig)
             runHeader->setMinY(IntVec(_noOfROC, 0));
             runHeader->setMaxY(IntVec(_noOfROC, _noOfYPixel - 1));
 
-	    //            runHeader->lcRunHeader()->setDetectorName("EUTelescope");
+	    runHeader->lcRunHeader()->setDetectorName("CMSPixelTelescope");
 
             // Process the run header:
             ProcessorMgr::instance ()->processRunHeader ( static_cast<lcio::LCRunHeader*> ( lcHeader.release()) );
