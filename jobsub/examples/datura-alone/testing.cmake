@@ -20,7 +20,7 @@
     execute_process(COMMAND sh -c "printf %06d ${RunNr}" OUTPUT_VARIABLE PaddedRunNr)
 
     SET( executable "jobsub.py" )
-    SET( jobsubOptions "--config=${exampledir}/config.cfg -csv ${exampledir}/table_orgmode.csv")
+    SET( jobsubOptions --config=${exampledir}/config.cfg -csv ${exampledir}/table_orgmode.csv)
  
    # only needed in the last step to test the results of EUTel against a set of reference files:
     SET( stattestdir "$ENV{EUTELESCOPE}/test/stattest/bin" )
@@ -49,7 +49,7 @@
     SET( converter_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
     ADD_TEST( NAME TestJobsubExampleDaturaAloneConverterRun 
-              WORKING_DIRECTORY ${testdir} 
+              WORKING_DIRECTORY "${testdir}"
 	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} converter ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneConverterRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
