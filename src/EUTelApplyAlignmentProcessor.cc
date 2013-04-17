@@ -493,13 +493,6 @@ void EUTelApplyAlignmentProcessor::processEvent (LCEvent * event) {
     else
     {    
  
-        if ( _fevent )
-            streamlog_out ( MESSAGE5 ) << "Processing run "  
-                << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber()
-                << ". Number of the defined alignment collection is " << _alignmentCollectionNames.size()
-                << endl;
-        
-
   // ----------------------------------------------------------------------- //
   // check input / output collections
 
