@@ -23,8 +23,10 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --option NAME=VALUE, -o NAME=VALUE
-                        Specify further options such as beamenergy=5.3;
-                        overrides config file options.
+                        Specify further options such as 'beamenergy=5.3'. This
+                        switch be specified several times for multiple options
+                        or can parse a comma-separated list of options. This
+                        switch overrides any config file options.
   -c FILE, --conf-file FILE, --config FILE
                         Load specified config file with global and task
                         specific variables
@@ -77,8 +79,10 @@ optional arguments:
    #+begin_src shell-script
    jobsub.py --option beamenergy=5.3 align 1234
    #+end_src
-
-   Command line options override any options given in the config file.
+   
+   This switch be specified several times for multiple options or can
+   parse a comma-separated list of options. This switch overrides any
+   config file options.
 ** Config File
    Config files are text file consisting of sections (indicated by '[]'):
    - a global section called [DEFAULT]
