@@ -66,6 +66,9 @@ namespace eutelescope {
     
     CMSPixelClusteringProcessor();
     ~CMSPixelClusteringProcessor() { };
+    CMSPixelClusteringProcessor(const CMSPixelClusteringProcessor&);
+
+    void operator=(const CMSPixelClusteringProcessor&);
 
     virtual const std::string & name() const { return Processor::name() ; }
     virtual void init ();

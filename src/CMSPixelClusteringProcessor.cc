@@ -108,7 +108,7 @@ std::string CMSPixelClusteringProcessor::_clusterMorepxHistoName        = "clust
 
 static const int NOCLUSTER=-1;
 
-CMSPixelClusteringProcessor::CMSPixelClusteringProcessor () : Processor("CMSPixelClusteringProcessor") {
+CMSPixelClusteringProcessor::CMSPixelClusteringProcessor () : Processor("CMSPixelClusteringProcessor"), _zsDataCollectionName(""), _clusterCollectionName(""), _iRun(0), _iEvt(0), _isFirstEvent(true), _iClusters(0), _iPlaneClusters(),  _initialClusterCollectionSize(0), _minNPixels(0), _minXDistance(0), _minYDistance(0), _minDiagDistance(0), _minCharge(0), _fillHistos(false), hotPixelCollectionVec(), _hitIndexMapVec(), _noOfDetector(0), _isGeometryReady(false), _sensorIDVec(), _siPlanesParameters(), _siPlanesLayerLayout(), _orderedSensorIDVec(), _histoInfoFileName(""), _hotPixelCollectionName(""), _clusterSpectraNVector(), _clusterSpectraNxNVector(), _aidaHistoMap() {
 	 _description = "CMSPixelClusteringProcessor is searching clusters in zero suppressed data.";
 
 	registerInputCollection (LCIO::TRACKERDATA, "ZSDataCollectionName", "LCIO converted data files", _zsDataCollectionName, string("zsdata_pixel"));
@@ -274,11 +274,6 @@ void CMSPixelClusteringProcessor::modifyEvent( LCEvent * /* event */ ){
 
 void CMSPixelClusteringProcessor::processEvent (LCEvent * event) {
 
-	if (_iEvt % 1000 == 0)
-	streamlog_out( MESSAGE4 ) << "Processing event "
-		<< setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-		<< setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-		<< " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
 	++_iEvt;
 
 	

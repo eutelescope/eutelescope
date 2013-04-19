@@ -317,7 +317,6 @@ void CMSPixelReader::readDataSource (int Ntrig)
         } while (iROC<event_data.size());
 
 
-        if(_debugSwitch > 0 || eventNumber%1000 == 0) streamlog_out ( MESSAGE5 ) << "Write event " << eventNumber << endl;
         // Start constructing current event:
         event = new EUTelEventImpl();
         event->setDetectorName("CMSPixelTelescope");
