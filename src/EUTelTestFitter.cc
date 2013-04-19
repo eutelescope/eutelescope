@@ -881,13 +881,6 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 
-  if ( _nEvt %  1000 == 0 ) 
-  {
-    streamlog_out( MESSAGE5 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _nEvt << ")" << resetiosflags(ios::left) << endl;
-  }
   _nEvt ++ ;
 
   EUTelEventImpl * euEvent = static_cast<EUTelEventImpl*> ( event );
@@ -1078,7 +1071,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   if(nHit + _allowMissingHits < _nActivePlanes) 
   {
-    streamlog_out ( MESSAGE5 ) << "Not enough hits to perform the fit, exiting... " << endl;
+    streamlog_out ( DEBUG5 ) << "Not enough hits to perform the fit, exiting... " << endl;
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
     (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
@@ -1376,7 +1369,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     {
       if(debug) 
         {
-          streamlog_out ( MESSAGE5 ) <<  "Not enough planes hit to perform the fit " << endl;
+          streamlog_out ( DEBUG5 ) <<  "Not enough planes hit to perform the fit " << endl;
         }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
