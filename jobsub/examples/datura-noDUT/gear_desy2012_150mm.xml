@@ -1,8 +1,6 @@
 <gear>
-  <!--
-     GEAR file for TB 21 Datura Mimosa telescope
-     28. Jun 2012, xdb2 with Ref 11
-    -->
+  <!--GEAR file for DATURA Telescope in DESY TB 21 - Nov. 2012 & Apr. 2013 -->
+  <!-- z was fixed to 150 mm between all sensors -->
   <global detectorName="EUTelescope"/>
   <BField type="ConstantBField" x="0.0" y="0.0" z="0.0"/>
   <detectors>
@@ -10,9 +8,9 @@
       <siplanesID ID="0"/>
       <siplanesType type="TelescopeWithoutDUT"/>
       <siplanesNumber number="6"/>
-      <!--                                           z along beam ('from right to left') -->
+      <!-- z along beam ('from right to left') -->
       <layers>
-	<!--Eudet-Plane 0 - EUD0 -->
+	<!--Mimosa26-Plane 0 - EUD0 -->
 	<layer>
 	  <ladder 	ID="0"
 			positionX="0.00"	positionY="0.00"	positionZ="0.0"
@@ -30,7 +28,7 @@
 			radLength="93.660734"
 			/>
 	</layer>
-	<!--Eudet-Plane 1 - EUD1 -->
+	<!--Mimosa26-Plane 1 - EUD1 -->
 	<layer>
 	  <ladder 	ID="1" 
 			positionX="0.00"	positionY="0.00"	positionZ="150.0" 
@@ -48,7 +46,7 @@
 			radLength="93.660734"
 			/>
 	</layer>
-	<!--Eudet-Plane 2 - EUD2 -->
+	<!--Mimosa26-Plane 2 - EUD2 -->
 	<layer>
 	  <ladder 	ID="2" 
 			positionX="0.00"	positionY="0.00"	positionZ="300.0" 
@@ -66,7 +64,7 @@
 			radLength="93.660734"
 			/>
 	</layer>
-        <!--Eudet-Plane 3 - EUD3 -->
+        <!--Mimosa26-Plane 3 - EUD3 -->
         <layer>
           <ladder         ID="3"
                           positionX="0.00"        positionY="0.00"        positionZ="450.0"
@@ -84,7 +82,7 @@
                           radLength="93.660734"
                           />
         </layer>
-        <!--Eudet-Plane 4 - EUD4 -->
+        <!--Mimosa26-Plane 4 - EUD4 -->
         <layer>
           <ladder         ID="4"
                           positionX="0.00"        positionY="0.00"        positionZ="600.0"
@@ -102,7 +100,7 @@
                           radLength="93.660734"
                           />
         </layer>
-        <!--Eudet-Plane 5 - EUD5 -->
+        <!--Mimosa26-Plane 5 - EUD5 -->
         <layer>
           <ladder         ID="5"
                           positionX="0.00"        positionY="0.00"        positionZ="750.0"
