@@ -11,8 +11,9 @@
     ###############################################-->
 
 <marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
   <execute>
-    <processor name="MyAIDAProcessor"/>
+    <processor name="AIDA"/>
     <processor name="MyEUTelNativeReader"/>
     <processor name="MyEUTelAutoPedestalNoiseProcessor"/>
     <processor name="MyEUTelHotPixelKiller"/>
@@ -23,118 +24,56 @@
   <global>
     <parameter name="LCIOInputFiles"> </parameter>
     <parameter name="GearXMLFile" value="@GeometryPath@/@GearFile@"/>
-    <parameter name="MaxRecordNumber" value="@MaxRecordNumber@" />  
-    <parameter name="SkipNEvents" value="0" />  
-    <parameter name="SupressCheck" value="false" />  
-    <parameter name="Verbosity"> @Verbosity@  </parameter> 
+    <parameter name="MaxRecordNumber" value="@MaxRecordNumber@" />
+    <parameter name="SkipNEvents" value="0" />
+    <parameter name="SupressCheck" value="false" />
+    <parameter name="Verbosity"> @Verbosity@ </parameter>
   </global>
 
-  <!-- Processor that handles AIDA files, creates one directory per processor. Processors needed to create and fill histograms, clouds and tuples. Needs to be the first ActiveProcessor-->
-  <processor name="MyAIDAProcessor" type="AIDAProcessor">
-    <!-- Compression of output files. 0: false, >0: true (default). -->
-    <parameter name="Compress" type="int"> 1 </parameter>
-    <!-- Filename without extension. -->
+  <processor name="AIDA" type="AIDAProcessor">
+    <parameter name="Compress" type="int" value="1"/>
     <parameter name="FileName" type="string"> @HistogramPath@/@FilePrefix@-converter </parameter>
-    <!-- Type of output file: root (default) or xml. -->
     <parameter name="FileType" type="string">root </parameter>
   </processor>
 
-  <!-- Reads data streams produced by EUDAQ and produces the corresponding LCIO output. -->
   <processor name="MyEUTelNativeReader" type="EUTelNativeReader">
-    <!-- This is the DEPFET producer output collection. -->
     <parameter name="DEPFETOutputCollection" type="string" lcioOutType="TrackerData"> rawdata_dep </parameter>
-    <!-- This is the EUDRB producer output collection when read in RAW mode. -->
     <parameter name="EUBRDRawModeOutputCollection" type="string" lcioOutType="TrackerRawData"> rawdata </parameter>
-    <!-- Type of sparsified pixel data structure (use SparsePixelType enumerator). -->
-    <!-- parameter name="EUDRBSparsePixelType" type="int">1 </parameter -->
-    <!-- This is the mimotel output collection when read in ZS mode. -->
     <parameter name="EUDRBZSModeOutputCollection" type="string" lcioOutType="TrackerData"> zsdata_m26 </parameter>
-    <!-- The geometry identification number. -->
     <parameter name="GeoID" type="int"> 0 </parameter>
-    <!-- This is the input file name. -->
     <parameter name="InputFileName" type="string"> @NativePath@/@FilePrefix@.raw </parameter>
-    <!-- Resynchronize the events based on the TLU trigger ID. -->
     <parameter name="SyncTriggerID" type="bool"> true </parameter>
   </processor>
 
-  <!-- EUTelAutoPedestalNoiseProcessor produces initial pedestal / noise / status with user provided values. -->
   <processor name="MyEUTelAutoPedestalNoiseProcessor" type="EUTelAutoPedestalNoiseProcessor">
-    <!-- The initial value of noise (one value for each detector). -->
-    <!--parameter name="InitNoiseValue" type="FloatVec">1 1 1 1 1 1 </parameter-->
-    <!-- The initial value of the pedestal (one value for each detector). -->
-    <!--parameter name="InitPedestalValue" type="FloatVec">0 0 0 0 0 0 </parameter-->
-    <!-- The maximum pixel along x (default 255, one value per detector). -->
     <parameter name="MaxXVector" type="IntVec">1151 1151 1151 1151 1151 1151 </parameter>
-    <!-- The maximum pixel along y (default 255, one value per detector). -->
     <parameter name="MaxYVector" type="IntVec">575 575 575 575 575 575 </parameter>
-    <!-- The minimum pixel along x (default 0, one value per detector). -->
-    <!-- parameter name="MinXVector" type="IntVec">0 0 0 0 0 0 </parameter -->
-    <!-- The minimum pixel along y (default 0, one value per detector). -->
-    <!-- parameter name="MinYVector" type="IntVec">0 0 0 0 0 0 </parameter -->
-    <!-- Noise local collection. -->
     <parameter name="NoiseCollectionName" type="string" lcioOutType="TrackerData"> m26_noise </parameter>
-    <!-- Pedestal local collection. -->
     <parameter name="PedestalCollectionName" type="string" lcioOutType="TrackerData"> m26_pedestal </parameter>
-    <!-- The sensorID for the generated collection (one per detector). -->
-    <!-- parameter name="SensorIDVec" type="IntVec">0 1 2 3 4 5 </parameter -->
-    <!-- Pixel status collection. -->
     <parameter name="StatusCollectionName" type="string" lcioOutType="TrackerRawData"> m26_status </parameter>
   </processor>
 
-  <!--EUTelHotPixelKiller periodically checks for pixel singing loud too often and removes them. -->
   <processor name="MyEUTelHotPixelKiller" type="EUTelHotPixelKiller">
-    <!-- This flag is used to initialise simple data decoding and hot pixel finder (0: no, 1: yes). -->
     <parameter name="BuildHotPixelDatabase" type="int">1 </parameter>
-    <!-- The list of sensor IDs that have to be excluded from the clustering. -->
-    <!-- parameter name="ExcludedPlanes" type="IntVec"> </parameter -->
-    <!-- This is the name of the hot pixel collection to be saved into the output slcio file. -->
     <parameter name="HotPixelCollectionName" type="string">m26_hotpixel </parameter>
-    <!-- This is the name of the LCIO file name with the input/output hot pixel collections (add .slcio extension). -->
     <parameter name="HotPixelDBFile" type="string" value="@DatabasePath@/@FilePrefix@-hotpixel.slcio"/>
-    <!-- Write mode for HotPixelDB file: WRITE_APPEND or WRITE_NEW. -->
     <parameter name="LCIOWriteMode" type="string">WRITE_NEW </parameter>
-    <!-- This float number [0,1] represents the maximum allowed firing frequency within the selected number of events per cycle. -->
     <parameter name="MaxAllowedFiringFreq" type="float"> @FiringFrequency@ </parameter>
-    <!-- The number of events to be considered for each update cycle. -->
     <parameter name="NoOfEventPerCycle" type="int">2000 </parameter>
-    <!-- The total number of hot pixel cycles. -->
     <parameter name="TotalNoOfCycle" type="int" value="5"/>
-    <!-- Noise input collection name. -->
     <parameter name="NoiseCollectionName" type="string" lcioInType="TrackerData">m26_noise </parameter>
-    <!-- Pixel status input collection name. -->
     <parameter name="StatusCollectionName" type="string" lcioInType="TrackerRawData">m26_status </parameter>
-    <!-- Input of zero suppressed data. -->
     <parameter name="ZSDataCollectionName" type="string" lcioInType="TrackerData">zsdata_m26 </parameter>
   </processor>
 
-  <!-- Writes the current event to the specified LCIO output file. Eventually it adds an EORE at the of the file if it was missing. This needs to be the last active processor. -->
   <processor name="MyEUTelOutputProcessor" type="EUTelOutputProcessor">
-    <!-- Drops the named collections from the event. -->
-    <!-- parameter name="DropCollectionNames" type="StringVec">TPCHits HCalHits </parameter -->
-    <!-- Drops all collections of the given type from the event. -->
-    <!-- parameter name="DropCollectionTypes" type="StringVec">SimTrackerHit SimCalorimeterHit </parameter -->
-    <!-- Write complete objects in subset collections to the file, i.e. ignore subset flag. -->
-    <!-- parameter name="FullSubsetCollections" type="StringVec">MCParticlesSkimmed </parameter -->
-    <!-- Force keeping of the named collections - overrules DropCollectionTypes and DropCollectionNames. -->
-    <!-- parameter name="KeepCollectionNames" type="StringVec">MyPreciousSimTrackerHits </parameter -->
-    <!-- Name of the output file. -->
     <parameter name="LCIOOutputFile" type="string">@LcioPath@/@FilePrefix@-converter.slcio </parameter>
-    <!-- Write mode for the output file: WRITE_APPEND or WRITE_NEW. -->
     <parameter name="LCIOWriteMode" type="string">WRITE_NEW </parameter>
-    <!-- Set to true to remove intermediate EORE in merged runs. -->
-    <!--parameter name="SkipIntermediateEORE" type="bool">true </parameter-->
-    <!-- Split output file if its size (in kB) exceeds the given value - doesn't work with APPEND and NEW. -->
-    <!-- parameter name="SplitFileSizekB" type="int">1992294 </parameter -->
   </processor>
 
   <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
-    <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
-    <!--Print event number every n Events (default 100)-->
     <parameter name="EveryNEvents" type="int" value="1000"/>
-    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
     <parameter name="printTimestamp" type="bool" value="false" />
-    <!--parameter name="Verbosity" type="string" value="DEBUG"/-->
   </processor>
-
 
 </marlin>
