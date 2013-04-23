@@ -363,8 +363,8 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
             prealign[ii]->addPoint( hitX[ii], hitY[ii] );
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
               if(_fillHistos) {
-//                (dynamic_cast<AIDA::IHistogram1D*> (_hitXCorr[prealign[ii]->getIden()]))->fill( hitX[ii] );
-//                (dynamic_cast<AIDA::IHistogram1D*> (_hitYCorr[prealign[ii]->getIden()]))->fill( hitY[ii] );
+                (dynamic_cast<AIDA::IHistogram1D*> (_hitXCorr[prealign[ii]->getIden()]))->fill( hitX[ii] );
+                (dynamic_cast<AIDA::IHistogram1D*> (_hitYCorr[prealign[ii]->getIden()]))->fill( hitY[ii] );
               }
 #endif
          } 
