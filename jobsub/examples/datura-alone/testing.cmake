@@ -48,6 +48,16 @@
 
     SET( converter_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
+  # !!! ALTERNATIVE TEST FOR MEM CHECK RUNS (reduced run range)
+    ADD_TEST( NAME TestJobsubExampleDaturaAloneConverterRunMemCheck
+              WORKING_DIRECTORY "${testdir}"
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} -o MaxRecordNumber=500 converter ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneConverterRunMemCheck PROPERTIES
+        PASS_REGULAR_EXPRESSION "${converter_pass_regex_1}.*${converter_pass_regex_2}.*${converter_pass_regex_3}"
+        FAIL_REGULAR_EXPRESSION "${converter_fail_regex}"
+	DEPENDS TestJobsubExampleDaturaAloneSetup
+    )
+
     ADD_TEST( NAME TestJobsubExampleDaturaAloneConverterRun 
               WORKING_DIRECTORY "${testdir}"
 	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} converter ${RunNr} )
@@ -59,17 +69,6 @@
 	# test depends on earlier steps
 	DEPENDS TestJobsubExampleDaturaAloneSetup
     )
-
-  # !!! ALTERNATIVE TEST FOR MEM CHECK RUNS (reduced run range)
-    ADD_TEST( NAME TestJobsubExampleDaturaAloneConverterRunMemCheck
-              WORKING_DIRECTORY "${testdir}"
-	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} -o MaxRecordNumber=500 converter ${RunNr} )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneConverterRunMemCheck PROPERTIES
-        PASS_REGULAR_EXPRESSION "${converter_pass_regex_1}.*${converter_pass_regex_2}.*${converter_pass_regex_3}"
-        FAIL_REGULAR_EXPRESSION "${converter_fail_regex}"
-	DEPENDS TestJobsubExampleDaturaAloneSetup
-    )
-
 
     # now check if the expected output files exist and look ok
     ADD_TEST( TestJobsubExampleDaturaAloneConverterLog sh -c "[ -f ${testdir}/output/logs/converter-${PaddedRunNr}.zip ]" )

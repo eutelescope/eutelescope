@@ -1,10 +1,3 @@
-
-# ignore tests that are redundant if not runnig memchecks
-set (CTEST_CUSTOM_TESTS_IGNORE 
-  TestJobsubExampleDaturaAloneConverterRunMemCheck
-  TestJobsubExampleDaturaNoDUTConverterRunMemCheck
-  )
-
 #
 # +++++++++ IGNORE SOME OF THE TESTS WHEN RUNNING MEMCHECKS (e.g. valgrind) +++++++++++++++
 #
@@ -16,26 +9,21 @@ set (CTEST_CUSTOM_MEMCHECK_IGNORE
 	TestJobsubExampleDaturaNoDUTCleanup
 	TestJobsubExampleDaturaNoDUTSetup
 	TestJobsubExampleDaturaNoDUTConverterRun
-	TestJobsubExampleDaturaNoDUTConverterRunMemCheck
 	TestJobsubExampleDaturaNoDUTConverterLog
 	TestJobsubExampleDaturaNoDUTConverterHisto
 	TestJobsubExampleDaturaNoDUTConverterHotpix
 	TestJobsubExampleDaturaNoDUTConverterOutput
-	TestJobsubExampleDaturaNoDUTClusteringRun
 	TestJobsubExampleDaturaNoDUTClusteringLog
 	TestJobsubExampleDaturaNoDUTClusteringHisto
 	TestJobsubExampleDaturaNoDUTClusteringOutput
-	TestJobsubExampleDaturaNoDUTHitmakerRun
 	TestJobsubExampleDaturaNoDUTHitmakerLog
 	TestJobsubExampleDaturaNoDUTHitmakerHisto
 	TestJobsubExampleDaturaNoDUTHitmakerPrealign
 	TestJobsubExampleDaturaNoDUTHitmakerOutput
-	TestJobsubExampleDaturaNoDUTAlignRun
 	TestJobsubExampleDaturaNoDUTAlignLog
 	TestJobsubExampleDaturaNoDUTAlignHisto
 	TestJobsubExampleDaturaNoDUTAlignDB
 	TestJobsubExampleDaturaNoDUTAlignOutput
-	TestJobsubExampleDaturaNoDUTFitterRun
 	TestJobsubExampleDaturaNoDUTFitterLog
 	TestJobsubExampleDaturaNoDUTFitterHisto
 	TestJobsubExampleDaturaNoDUTFitterOutput

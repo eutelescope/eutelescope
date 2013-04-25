@@ -49,6 +49,16 @@
 
     SET( converter_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
+  # !!! ALTERNATIVE TEST FOR MEM CHECK RUNS (reduced run range)
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTConverterRunMemCheck
+              WORKING_DIRECTORY "${testdir}"
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} -o MaxRecordNumber=500 converter ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterRunMemCheck PROPERTIES
+        PASS_REGULAR_EXPRESSION "${converter_pass_regex_1}.*${converter_pass_regex_2}.*${converter_pass_regex_3}"
+        FAIL_REGULAR_EXPRESSION "${converter_fail_regex}"
+	DEPENDS TestJobsubExampleDaturaNoDUTSetup
+    )
+
     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTConverterRun 
               WORKING_DIRECTORY "${testdir}"
 	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} converter ${RunNr} )
@@ -58,16 +68,6 @@
         # test will fail if ANY of the following expressions is matched 
         FAIL_REGULAR_EXPRESSION "${converter_fail_regex}"
 	# test depends on earlier steps
-	DEPENDS TestJobsubExampleDaturaNoDUTSetup
-    )
-
-  # !!! ALTERNATIVE TEST FOR MEM CHECK RUNS (reduced run range)
-    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTConverterRunMemCheck
-              WORKING_DIRECTORY "${testdir}"
-	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} -o MaxRecordNumber=500 converter ${RunNr} )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterRunMemCheck PROPERTIES
-        PASS_REGULAR_EXPRESSION "${converter_pass_regex_1}.*${converter_pass_regex_2}.*${converter_pass_regex_3}"
-        FAIL_REGULAR_EXPRESSION "${converter_fail_regex}"
 	DEPENDS TestJobsubExampleDaturaNoDUTSetup
     )
 

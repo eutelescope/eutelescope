@@ -53,7 +53,7 @@ while :; do
 	echo " .. cleaning up .."
 	make clean
 	echo " .. running nightly checks .."
-        ctest -D Nightly # also performs SVN update
+        ctest -E MemCheck -D Nightly # also performs SVN update
 	#ctest -D Experimental # does no SVN update before building
 	echo " .. running memory usage checks .."
 	ctest -D MemoryCheck
