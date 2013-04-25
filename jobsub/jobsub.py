@@ -406,7 +406,7 @@ def main(argv=None):
         log.error("At least one run is specified multiple times!")
         return 2
 
-    # dictionary keeping our paramters
+    # dictionary keeping our parameters
     # here you can set some minimal default config values that will (possibly) be overwritten by the config file
     parameters = {"templatepath":".", "templatefile":args.jobtask+"-tmp.xml", "logpath":"."}
 

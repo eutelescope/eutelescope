@@ -218,10 +218,9 @@ optional arguments:
 
   #+begin_src sh
   export ANALYSIS=/data/testbeam/analysis
-  mkdir -p $ANALYSIS/output/histo && mkdir -p $ANALYSIS/output/results \
-                    && mkdir -p $ANALYSIS/output/db \
-                    && mkdir -p $ANALYSIS/output/logs \
-                    && mkdir -p $ANALYSIS/output/lcio-raw
+  mkdir -p $ANALYSIS/output/histograms  && mkdir -p $ANALYSIS/output/database \
+             && mkdir -p $ANALYSIS/output/logs \
+             && mkdir -p $ANALYSIS/output/lcio
   #+end_src
 
   The analysis we want to perform is controlled by a config file
@@ -230,7 +229,7 @@ optional arguments:
   jobsub: 
   
   #+begin_src sh
-  export ANALYSIS_CONF=$EUTELESCOPE/jobsub/examples/datura-alone
+  export ANALYSIS_CONF=$EUTELESCOPE/jobsub/examples/datura-noDUT
   #+end_src
 
   In principle, neither the table nor the config are required as long
@@ -244,7 +243,7 @@ optional arguments:
   #+begin_src sh
   cd $ANALYSIS
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
-                   -csv ${ANALYSIS_CONF}/table_orgmode.csv converter 4118
+                   -csv ${ANALYSIS_CONF}/runlist.csv converter 97
   #+end_src
 
   Here, jobsub will generate a steering file using the template file
@@ -255,13 +254,13 @@ optional arguments:
   The next steps follow the same pattern:
   #+begin_src sh
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
-                    -csv ${ANALYSIS_CONF}/table_orgmode.csv clusearch 4118
+                    -csv ${ANALYSIS_CONF}/table_orgmode.csv clustering 97
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
-                    -csv ${ANALYSIS_CONF}/table_orgmode.csv hitmaker 4118
+                    -csv ${ANALYSIS_CONF}/table_orgmode.csv hitmaker 97
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
-                    -csv ${ANALYSIS_CONF}/table_orgmode.csv align 4118
+                    -csv ${ANALYSIS_CONF}/table_orgmode.csv align 97
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg 
-                    -csv ${ANALYSIS_CONF}/table_orgmode.csv fitter 4118
+                    -csv ${ANALYSIS_CONF}/table_orgmode.csv fitter 97
   #+end_src sh
 
   For this example, the output of each step is stored in
@@ -269,7 +268,9 @@ optional arguments:
   the paths in the config.cfg file.
 
   If all steps succeed, we end up with an LCIO-Collection of tracks on
-  which detailed studies can be performed.
+  which detailed studies can be performed. In fact, the last step already
+  determines unbiased residuals for each telescope plane using the
+  EUTelDUTHistograms processor.
     
 * Appendix 1: pysub migration
   Currently, jobsub does not directly support submission on the grid;

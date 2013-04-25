@@ -1,15 +1,8 @@
-********
-IN THE FUTURE, this directory will contain well-documented examples 
-that can be used as a base for your own analysis.
-HOWEVER, THE CURRENT EXAMPLES ARE MAINLY TEST-CASES.
-WE ENCOURAGE YOU THEREFORE TO START WITH FRESH STEERING FILES 
-AND COMMIT YOUR ANALYSIS BACK TO US FOR FUTURE REFERENCE.
-********
 
 This subdirectory contains example configurations and steering files
 that can be used as a basis for your own analysis:
 
-* datura-alone
+* datura-noDUT
      The Datura telescope with six planes of Mimosa26 without DUT
 
 All examples are also being used for automated data-driven tests using
@@ -20,8 +13,8 @@ such a test.
 All examples are self-contained and only refer to other files within
 their subfolders (with the exception of the raw data files).
 
-If you want to add your configuration as an example for others and as
-basis for automated and constant verification, you need to provide the
-necessary steering-files together with a data sample and
+Please consider to add your configuration as an example for others and
+as basis for automated and constant verification: you would need to
+provide the necessary steering-files together with a data sample and
 documentation. Please contact the EUTelescope software coordinators
 for further information.
