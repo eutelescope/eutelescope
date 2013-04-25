@@ -15,7 +15,7 @@
   SET ( G4_DIR "$ENV{G4INSTALL}" )
 
   EXECUTE_PROCESS(
-      COMMAND find ${G4_DIR}/include/Geant4/ -type d # -printf "%p;" # not recognized on mac osx
+      COMMAND test -d ${G4_DIR}/include/Geant4/
       OUTPUT_VARIABLE G4_INCLUDE_DIRS
       RESULT_VARIABLE _exit_code
   )
