@@ -188,12 +188,11 @@ INCLUDE_DIRECTORIES( ./include )
 #INSTALL_DIRECTORY( ./include DESTINATION . FILES_MATCHING PATTERN "*.h" )
 
 # definitions to pass to the compiler
-#ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra" )
 ADD_DEFINITIONS( "-Wall -ansi -pedantic -Wextra" )
 ADD_DEFINITIONS( "-Wno-long-long" )
 
 # debuging warnings and switches - only active if  CMAKE_BUILD_TYPE  is set to debug
-SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"  CACHE STRING "Debug options." FORCE )
+SET(CMAKE_CXX_FLAGS_DEBUG "-O0 -g -fno-inline -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wctor-dtor-privacy -Wdisabled-optimization -Wformat=2 -Winit-self -Wmissing-include-dirs -Wold-style-cast -Woverloaded-virtual -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"  CACHE STRING "Debug options." FORCE )
 SET(CMAKE_CXX_FLAGS_RELWITHDEBINFO "-O2 -g -fdiagnostics-show-option -Weffc++ -Wcast-align -Wcast-qual -Wdisabled-optimization -Winit-self -Wmissing-include-dirs -Wredundant-decls -Wsign-promo -Wstrict-null-sentinel -Wswitch-default -Wundef"  CACHE STRING "Debug options." FORCE )
 # also useful: -Wshadow (however, GCC 4.1 uses this even for system libraries, causing many warnings from Marlin & co)
 
@@ -298,6 +297,15 @@ ENDIF()
 # check environment
 IF( DEFINED ENV{EUTELESCOPE} AND DEFINED ENV{MARLIN})
 
+# use valgrind for dynamic analysis
+set (CTEST_MEMORYCHECK_COMMAND "/usr/bin/valgrind")
+set (CTEST_MEMORYCHECK_COMMAND_OPTIONS "-q --num-callers=50 --tool=memcheck --trace-children=yes --leak-check=yes --leak-resolution=high --suppressions=$ENV{ROOTSYS}/etc/valgrind-root.supp --suppressions=$ENV{EUTELESCOPE}/test/valgrind/valgrind-python.supp")
+
+# User Options to be included in DartConfiguration.tcl
+set(MEMORYCHECK_COMMAND ${CTEST_MEMORYCHECK_COMMAND} CACHE STRING "" FORCE)
+set(MEMORYCHECK_COMMAND_OPTIONS ${CTEST_MEMORYCHECK_COMMAND_OPTIONS} CACHE STRING "" FORCE)
+
+
 # cppcheck should be a useful check for developers to test their code against
 # if cppcheck is installed, offer static code analysis test
 find_program(CPPCHECK cppcheck /scratch/local/bin) # hint at path /scratch/... used on EUTelTesting server; will also parse $PATH
@@ -317,8 +325,8 @@ endif()
 # software coordinators.
 # !RELEASE: the data-driven tests require DESY-AFS access and are not
 # useful for typical users (comment out the following lines)
+  INCLUDE(jobsub/examples/datura-noDUT/testing.cmake)
   INCLUDE(jobsub/examples/datura-alone/testing.cmake)
-  INCLUDE(pysub/examples/datura-alone/testing.cmake)
   INCLUDE(pysub/examples/anemone-2FEI4/testing.cmake)
   configure_file (
 	       ./CTestCustom.cmake.in   # set custom settings (e.g. tests to be skipped for valgrind)

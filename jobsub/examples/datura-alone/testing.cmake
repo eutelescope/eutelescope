@@ -59,6 +59,18 @@
 	# test depends on earlier steps
 	DEPENDS TestJobsubExampleDaturaAloneSetup
     )
+
+  # !!! ALTERNATIVE TEST FOR MEM CHECK RUNS (reduced run range)
+    ADD_TEST( NAME TestJobsubExampleDaturaAloneConverterRunMemCheck
+              WORKING_DIRECTORY "${testdir}"
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} -o MaxRecordNumber=500 converter ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneConverterRunMemCheck PROPERTIES
+        PASS_REGULAR_EXPRESSION "${converter_pass_regex_1}.*${converter_pass_regex_2}.*${converter_pass_regex_3}"
+        FAIL_REGULAR_EXPRESSION "${converter_fail_regex}"
+	DEPENDS TestJobsubExampleDaturaAloneSetup
+    )
+
+
     # now check if the expected output files exist and look ok
     ADD_TEST( TestJobsubExampleDaturaAloneConverterLog sh -c "[ -f ${testdir}/output/logs/converter-${PaddedRunNr}.zip ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneConverterLog PROPERTIES DEPENDS TestJobsubExampleDaturaAloneConverterRun)
@@ -109,8 +121,7 @@
     ADD_TEST( TestJobsubExampleDaturaAloneClusearchOffset sh -c "[ -f ${testdir}/output/db/run${PaddedRunNr}-offset-db.slcio ] && lcio_check_col_elements --expelements 6  preAlignment  ${testdir}/output/db/run${PaddedRunNr}-offset-db.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneClusearchOffset PROPERTIES DEPENDS TestJobsubExampleDaturaAloneClusearchRun)
 
-
-    ADD_TEST( TestJobsubExampleDaturaAloneClusearchOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-clu.slcio ] && lcio_check_col_elements --expelements 6 zsdata_m26 ${testdir}/output/results/run${PaddedRunNr}-clu.slcio" )
+    ADD_TEST( TestJobsubExampleDaturaAloneClusearchOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-clu.slcio ] && lcio_check_col_elements --average --expelements 35 cluster_m26 ${testdir}/output/results/run${PaddedRunNr}-clu.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneClusearchOutput PROPERTIES DEPENDS TestJobsubExampleDaturaAloneClusearchRun)
 
 
@@ -185,7 +196,7 @@
     ADD_TEST( TestJobsubExampleDaturaAloneAlignHisto sh -c "[ -f ${testdir}/output/histo/run${PaddedRunNr}-align-histo.root ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneAlignHisto PROPERTIES DEPENDS TestJobsubExampleDaturaAloneAlignRun)
 
-    ADD_TEST( TestJobsubExampleDaturaAloneAlignDB sh -c "[ -f ${testdir}/output/db/run${PaddedRunNr}-align-db.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/db/run${PaddedRunNr}-prealign-db.slcio" )
+    ADD_TEST( TestJobsubExampleDaturaAloneAlignDB sh -c "[ -f ${testdir}/output/db/run${PaddedRunNr}-align-db.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/db/run${PaddedRunNr}-align-db.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneAlignDB PROPERTIES DEPENDS TestJobsubExampleDaturaAloneAlignRun)
 
     ADD_TEST( TestJobsubExampleDaturaAloneAlignOutput sh -c "[ -f ${testdir}/output/results/run${PaddedRunNr}-align-mille.bin -a -f ${testdir}/output/results/run${PaddedRunNr}-pede-steer.txt ] " )

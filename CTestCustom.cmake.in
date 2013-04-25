@@ -1,14 +1,49 @@
+
+# ignore tests that are redundant if not runnig memchecks
+set (CTEST_CUSTOM_TESTS_IGNORE 
+  TestJobsubExampleDaturaAloneConverterRunMemCheck
+  TestJobsubExampleDaturaNoDUTConverterRunMemCheck
+  )
+
 #
 # +++++++++ IGNORE SOME OF THE TESTS WHEN RUNNING MEMCHECKS (e.g. valgrind) +++++++++++++++
 #
-# this basically includes every test except the *Run tests
+# this basically includes every test except the *Run tests other than converter
 #
-
 set (CTEST_CUSTOM_MEMCHECK_IGNORE 
 	${CTEST_CUSTOM_MEMCHECK_IGNORE}
 	TestCppcheckSources
+	TestJobsubExampleDaturaNoDUTCleanup
+	TestJobsubExampleDaturaNoDUTSetup
+	TestJobsubExampleDaturaNoDUTConverterRun
+	TestJobsubExampleDaturaNoDUTConverterRunMemCheck
+	TestJobsubExampleDaturaNoDUTConverterLog
+	TestJobsubExampleDaturaNoDUTConverterHisto
+	TestJobsubExampleDaturaNoDUTConverterHotpix
+	TestJobsubExampleDaturaNoDUTConverterOutput
+	TestJobsubExampleDaturaNoDUTClusteringRun
+	TestJobsubExampleDaturaNoDUTClusteringLog
+	TestJobsubExampleDaturaNoDUTClusteringHisto
+	TestJobsubExampleDaturaNoDUTClusteringOutput
+	TestJobsubExampleDaturaNoDUTHitmakerRun
+	TestJobsubExampleDaturaNoDUTHitmakerLog
+	TestJobsubExampleDaturaNoDUTHitmakerHisto
+	TestJobsubExampleDaturaNoDUTHitmakerPrealign
+	TestJobsubExampleDaturaNoDUTHitmakerOutput
+	TestJobsubExampleDaturaNoDUTAlignRun
+	TestJobsubExampleDaturaNoDUTAlignLog
+	TestJobsubExampleDaturaNoDUTAlignHisto
+	TestJobsubExampleDaturaNoDUTAlignDB
+	TestJobsubExampleDaturaNoDUTAlignOutput
+	TestJobsubExampleDaturaNoDUTFitterRun
+	TestJobsubExampleDaturaNoDUTFitterLog
+	TestJobsubExampleDaturaNoDUTFitterHisto
+	TestJobsubExampleDaturaNoDUTFitterOutput
+	TestJobsubExampleDaturaNoDUTStatTestAlign
+	TestJobsubExampleDaturaNoDUTStatTestFitter
 	TestJobsubExampleDaturaAloneCleanup
 	TestJobsubExampleDaturaAloneSetup
+	TestJobsubExampleDaturaAloneConverterRun
 	TestJobsubExampleDaturaAloneConverterLog
 	TestJobsubExampleDaturaAloneConverterHisto
 	TestJobsubExampleDaturaAloneConverterHotpix
@@ -30,29 +65,6 @@ set (CTEST_CUSTOM_MEMCHECK_IGNORE
 	TestJobsubExampleDaturaAloneFitterOutput
 	TestJobsubExampleDaturaAloneStatTestAlign
 	TestJobsubExampleDaturaAloneStatTestFitter
-	TestPysubExampleDaturaAloneCleanup
-	TestPysubExampleDaturaAloneSetup
-	TestPysubExampleDaturaAloneConverterLog
-	TestPysubExampleDaturaAloneConverterHisto
-	TestPysubExampleDaturaAloneConverterHotpix
-	TestPysubExampleDaturaAloneConverterOutput
-	TestPysubExampleDaturaAloneClusearchLog
-	TestPysubExampleDaturaAloneClusearchHisto
-	TestPysubExampleDaturaAloneClusearchOffset
-	TestPysubExampleDaturaAloneClusearchOutput
-	TestPysubExampleDaturaAloneHitmakerLog
-	TestPysubExampleDaturaAloneHitmakerHisto
-	TestPysubExampleDaturaAloneHitmakerPrealign
-	TestPysubExampleDaturaAloneHitmakerOutput
-	TestPysubExampleDaturaAloneAlignLog
-	TestPysubExampleDaturaAloneAlignHisto
-	TestPysubExampleDaturaAloneAlignDB
-	TestPysubExampleDaturaAloneAlignOutput
-	TestPysubExampleDaturaAloneFitterLog
-	TestPysubExampleDaturaAloneFitterHisto
-	TestPysubExampleDaturaAloneFitterOutput
-	TestPysubExampleDaturaAloneStatTestAlign
-	TestPysubExampleDaturaAloneStatTestFitter
 	TestPysubExampleAnemone2FEI4Cleanup
 	TestPysubExampleAnemone2FEI4Setup
 	TestPysubExampleAnemone2FEI4ConverterLog
@@ -78,9 +90,6 @@ set (CTEST_CUSTOM_MEMCHECK_IGNORE
 	TestPysubExampleAnemone2FEI4StatTestFitter
     )
 
-# use valgrind for dynamic analysis
-set (CTEST_MEMORYCHECK_COMMAND "/usr/bin/valgrind")
-set (CTEST_MEMORYCHECK_COMMAND_OPTIONS "--trace-children=yes --leak-check=yes --leak-resolution=high  --suppressions=$ROOTSYS/etc/valgrind-root.supp")
 
 # increase the maximum number of warnings reported by ctest from the default 50
 set (CTEST_CUSTOM_MAXIMUM_NUMBER_OF_WARNINGS 150)

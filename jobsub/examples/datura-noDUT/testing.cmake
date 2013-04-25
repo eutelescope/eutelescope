@@ -6,26 +6,33 @@
 
 # ======================================================================
 # ======================================================================
-# TestPysubExampleDaturaAlone: based on config in pysub/examples/datura-alone
+# TestJobsubExampleDaturaNoDUT: based on config in jobsub/examples/datura-noDUT
 # ======================================================================
 # ======================================================================
 
-    SET( testdir "${PROJECT_BINARY_DIR}/Testing/test_datura-alone" )
-    SET( pysubdir "$ENV{EUTELESCOPE}/pysub" )
-    SET( exampledir "${pysubdir}/examples/datura-alone" )
+    SET( testdir "${PROJECT_BINARY_DIR}/Testing/test_datura-noDUT" )
+    SET( jobsubdir "$ENV{EUTELESCOPE}/jobsub" )
+    SET( exampledir "${jobsubdir}/examples/datura-noDUT" )
 
-    SET( RunNr "4118" )
+    # the run number
+    SET( RunNr "97" )
+    # run number padded with leading zeros
+    execute_process(COMMAND sh -c "printf %06d ${RunNr}" OUTPUT_VARIABLE PaddedRunNr)
  
    # only needed in the last step to test the results of EUTel against a set of reference files:
     SET( stattestdir "$ENV{EUTELESCOPE}/test/stattest/bin" )
-    SET( referencedatadir "/afs/desy.de/group/telescopes/EutelTestData/TestPysubExampleDaturaAlone" )
+    SET( referencedatadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT" )
+
+    SET( executable "jobsub.py" )
+    # options: use config, use csv, change native path to central AFS location, reduce number of events to 200k
+    SET( jobsubOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=200000)
 
 
 #
 #  STEP 0: PREPARE TEST DIRECTORY
 #
-	ADD_TEST( TestPysubExampleDaturaAloneCleanup sh -c "[ -d ${testdir} ] && rm -rf ${testdir} || echo 'no cleanup needed.'" )
-	ADD_TEST( TestPysubExampleDaturaAloneSetup sh -c "mkdir -p ${testdir}/output/histo && mkdir -p ${testdir}/output/results && mkdir -p ${testdir}/output/db && mkdir -p ${testdir}/output/logs && mkdir -p ${testdir}/output/lcio-raw" )
+	ADD_TEST( TestJobsubExampleDaturaNoDUTCleanup sh -c "[ -d ${testdir} ] && rm -rf ${testdir} || echo 'no cleanup needed.'" )
+	ADD_TEST( TestJobsubExampleDaturaNoDUTSetup sh -c "mkdir -p ${testdir}/output/histograms  && mkdir -p ${testdir}/output/database && mkdir -p ${testdir}/output/logs && mkdir -p ${testdir}/output/lcio" )
 #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #  STEP 1: CONVERTER
@@ -35,36 +42,48 @@
 #  - currently running only over 10000 events (see steering template); should this number be adjusted and/or tested for (using lcio_event_counter)?
 #  - set property DEPENDS to make sure that failure of required steps does not cause following steps to fail as well 
 
-    SET( executable "submit-converter.py" )
-
     # all this regular expressions must be matched for the test to pass
-    SET( converter_pass_regex_1 "Now processing run 0*${RunNr}" )
-    SET( converter_pass_regex_2 "Running Marlin" )
-    SET( converter_pass_regex_3 "Marlin finished successfully" )
+    SET( converter_pass_regex_1 "Now running Marlin" )
+    SET( converter_pass_regex_2 "Processing event.*in run ${PaddedRunNr}" )
+    SET( converter_pass_regex_3 "Marlin execution done" )
 
-    SET( converter_fail_regex "Skipping to the next run" "ERROR" "CRITICAL" "segmentation violation")
+    SET( converter_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
-    ADD_TEST( TestPysubExampleDaturaAloneConverterRun sh -c "cd ${testdir} && python ${pysubdir}/${executable} --config=${exampledir}/config.cfg --hot ${RunNr} ${RunNr}" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneConverterRun PROPERTIES
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTConverterRun 
+              WORKING_DIRECTORY "${testdir}"
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} converter ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${converter_pass_regex_1}.*${converter_pass_regex_2}.*${converter_pass_regex_3}"
         # test will fail if ANY of the following expressions is matched 
         FAIL_REGULAR_EXPRESSION "${converter_fail_regex}"
 	# test depends on earlier steps
-	DEPENDS TestPysubExampleDaturaAloneSetup
+	DEPENDS TestJobsubExampleDaturaNoDUTSetup
     )
+
+  # !!! ALTERNATIVE TEST FOR MEM CHECK RUNS (reduced run range)
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTConverterRunMemCheck
+              WORKING_DIRECTORY "${testdir}"
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} -o MaxRecordNumber=500 converter ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterRunMemCheck PROPERTIES
+        PASS_REGULAR_EXPRESSION "${converter_pass_regex_1}.*${converter_pass_regex_2}.*${converter_pass_regex_3}"
+        FAIL_REGULAR_EXPRESSION "${converter_fail_regex}"
+	DEPENDS TestJobsubExampleDaturaNoDUTSetup
+    )
+
+
     # now check if the expected output files exist and look ok
-    ADD_TEST( TestPysubExampleDaturaAloneConverterLog sh -c "[ -f ${testdir}/output/logs/converter-`printf %06d ${RunNr}`.tar.gz ]" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneConverterLog PROPERTIES DEPENDS TestPysubExampleDaturaAloneConverterRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTConverterLog sh -c "[ -f ${testdir}/output/logs/converter-${PaddedRunNr}.zip ]" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTConverterRun)
 
-    ADD_TEST( TestPysubExampleDaturaAloneConverterHisto sh -c "[ -f ${testdir}/output/histo/run`printf %06d ${RunNr}`-converter-histo.root ]" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneConverterHisto PROPERTIES DEPENDS TestPysubExampleDaturaAloneConverterRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTConverterHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-converter.root ]" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTConverterRun)
 
-    ADD_TEST( TestPysubExampleDaturaAloneConverterHotpix sh -c "[ -f ${testdir}/output/db/run${RunNr}-hotpixel-db.slcio ] && lcio_check_col_elements --expelements 6  hotpixel_m26  ${testdir}/output/db/run${RunNr}-hotpixel-db.slcio" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneConverterHotpix PROPERTIES DEPENDS TestPysubExampleDaturaAloneConverterRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTConverterHotpix sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-hotpixel.slcio ] && lcio_check_col_elements --expelements 6  m26_hotpixel  ${testdir}/output/database/run${PaddedRunNr}-hotpixel.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterHotpix PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTConverterRun)
 
-    ADD_TEST( TestPysubExampleDaturaAloneConverterOutput sh -c "[ -f ${testdir}/output/lcio-raw/run`printf %06d ${RunNr}`.slcio ] && lcio_check_col_elements --expelements 6 zsdata_m26 ${testdir}/output/lcio-raw/run`printf %06d ${RunNr}`.slcio" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneConverterOutput PROPERTIES DEPENDS TestPysubExampleDaturaAloneConverterRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTConverterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-converter.slcio ] && lcio_check_col_elements --expelements 6 zsdata_m26 ${testdir}/output/lcio/run${PaddedRunNr}-converter.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTConverterRun)
 
 
 
@@ -74,37 +93,35 @@
 #  STEP 2: CLUSTERING
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-    SET( executable "submit-clusearch.py" )
 
     # all this regular expressions must be matched for the test to pass
-    SET( clusearch_pass_regex_1 "Now processing run 0*${RunNr}" )
-    SET( clusearch_pass_regex_2 "Running Marlin" )
-    SET( clusearch_pass_regex_3 "Marlin finished successfully" )
+    SET( clustering_pass_regex_1 "Now running Marlin" )
+    SET( clustering_pass_regex_2 "Processing event.*in run ${PaddedRunNr}" )
+    SET( clustering_pass_regex_3 "Marlin execution done" )
 
-    SET( clusearch_fail_regex "Skipping to the next run" "ERROR" "CRITICAL" "segmentation violation")
+    SET( clustering_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
-    ADD_TEST( TestPysubExampleDaturaAloneClusearchRun sh -c "cd ${testdir} && python ${pysubdir}/${executable} --config=${exampledir}/config.cfg --hot ${RunNr} ${RunNr}" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneClusearchRun PROPERTIES
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTClusteringRun 
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} clustering ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTClusteringRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${clusearch_pass_regex_1}.*${clusearch_pass_regex_2}.*${clusearch_pass_regex_3}"
+        PASS_REGULAR_EXPRESSION "${clustering_pass_regex_1}.*${clustering_pass_regex_2}.*${clustering_pass_regex_3}"
         # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${clusearch_fail_regex}"
+        FAIL_REGULAR_EXPRESSION "${clustering_fail_regex}"
 	# test depends on earlier steps
-	DEPENDS TestPysubExampleDaturaAloneConverterOutput
+	DEPENDS TestJobsubExampleDaturaNoDUTConverterOutput
 	)
     # now check if the expected output files exist and look ok
-    ADD_TEST( TestPysubExampleDaturaAloneClusearchLog sh -c "[ -f ${testdir}/output/logs/clusearch-`printf %06d ${RunNr}`.tar.gz ]" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneClusearchLog PROPERTIES DEPENDS TestPysubExampleDaturaAloneClusearchRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTClusteringLog sh -c "[ -f ${testdir}/output/logs/clustering-${PaddedRunNr}.zip ]" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTClusteringLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTClusteringRun)
 
-    ADD_TEST( TestPysubExampleDaturaAloneClusearchHisto sh -c "[ -f ${testdir}/output/histo/run`printf %06d ${RunNr}`-clu-histo.root ]" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneClusearchHisto PROPERTIES DEPENDS TestPysubExampleDaturaAloneClusearchRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTClusteringHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-clustering.root ]" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTClusteringHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTClusteringRun)
 
-    ADD_TEST( TestPysubExampleDaturaAloneClusearchOffset sh -c "[ -f ${testdir}/output/db/run`printf %06d ${RunNr}`-offset-db.slcio ] && lcio_check_col_elements --expelements 6  preAlignment  ${testdir}/output/db/run`printf %06d ${RunNr}`-offset-db.slcio" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneClusearchOffset PROPERTIES DEPENDS TestPysubExampleDaturaAloneClusearchRun)
-
-
-    ADD_TEST( TestPysubExampleDaturaAloneClusearchOutput sh -c "[ -f ${testdir}/output/results/run`printf %06d ${RunNr}`-clu-p.slcio ] && lcio_check_col_elements --expelements 6 zsdata_m26 ${testdir}/output/results/run`printf %06d ${RunNr}`-clu-p.slcio" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneClusearchOutput PROPERTIES DEPENDS TestPysubExampleDaturaAloneClusearchRun)
+    # we expect an average of 24.4 clusters per event
+    ADD_TEST( TestJobsubExampleDaturaNoDUTClusteringOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio ] && lcio_check_col_elements --average --expelements 24 m26_cluster ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTClusteringOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTClusteringRun)
 
 
 
@@ -113,37 +130,37 @@
 #  STEP 3: HITMAKER
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-    SET( executable "submit-hitmaker.py" )
-
     # all this regular expressions must be matched for the test to pass
-    SET( hitmaker_pass_regex_1 "Running Marlin" )
-    SET( hitmaker_pass_regex_2 "Successfully finished" )
-    SET( hitmaker_pass_regex_3 "Marlin finished successfully" )
+    SET( hitmaker_pass_regex_1 "Now running Marlin" )
+    SET( hitmaker_pass_regex_2 "Processing event.*in run ${PaddedRunNr}" )
+    SET( hitmaker_pass_regex_3 "Marlin execution done" )
 
-    SET( hitmaker_fail_regex "Skipping to the next run" "ERROR" "CRITICAL" "segmentation violation")
+    SET( hitmaker_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
-    ADD_TEST( TestPysubExampleDaturaAloneHitmakerRun sh -c "cd ${testdir} && python ${pysubdir}/${executable} --config=${exampledir}/config.cfg -o ${RunNr} run`printf %06d ${RunNr}`-clu-p.slcio" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneHitmakerRun PROPERTIES
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTHitmakerRun 
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} hitmaker ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitmakerRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${hitmaker_pass_regex_1}.*${hitmaker_pass_regex_2}.*${hitmaker_pass_regex_3}"
         # test will fail if ANY of the following expressions is matched 
         FAIL_REGULAR_EXPRESSION "${hitmaker_fail_regex}"
 	# test depends on earlier steps
-	DEPENDS TestPysubExampleDaturaAloneClusearchOutput
+	DEPENDS TestJobsubExampleDaturaNoDUTClusteringOutput
 	)
     # now check if the expected output files exist and look ok
-    ADD_TEST( TestPysubExampleDaturaAloneHitmakerLog sh -c "[ -f ${testdir}/output/logs/hitmaker-${RunNr}.tar.gz ]" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneHitmakerLog PROPERTIES DEPENDS TestPysubExampleDaturaAloneHitmakerRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTHitmakerLog sh -c "[ -f ${testdir}/output/logs/hitmaker-${PaddedRunNr}.zip ]" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitmakerLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTHitmakerRun)
 
-    ADD_TEST( TestPysubExampleDaturaAloneHitmakerHisto sh -c "[ -f ${testdir}/output/histo/${RunNr}-hit-histo.root ]" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneHitmakerHisto PROPERTIES DEPENDS TestPysubExampleDaturaAloneHitmakerRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTHitmakerHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-hitmaker.root ]" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitmakerHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTHitmakerRun)
 
-    ADD_TEST( TestPysubExampleDaturaAloneHitmakerPrealign sh -c "[ -f ${testdir}/output/db/${RunNr}-prealign-db.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/db/${RunNr}-prealign-db.slcio" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneHitmakerPrealign PROPERTIES DEPENDS TestPysubExampleDaturaAloneHitmakerRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTHitmakerPrealign sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-prealignment.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/database/run${PaddedRunNr}-prealignment.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitmakerPrealign PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTHitmakerRun)
 
-    # we expect an average hit number of 35 for run 4118 using the example configuration
-    ADD_TEST( TestPysubExampleDaturaAloneHitmakerOutput sh -c "[ -f ${testdir}/output/results/${RunNr}-hit.slcio ] && lcio_check_col_elements -a --expelements 35 hit ${testdir}/output/results/${RunNr}-hit.slcio" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneHitmakerOutput PROPERTIES DEPENDS TestPysubExampleDaturaAloneHitmakerRun)
+    # we expect an average hit number of 24 for run 97 (wide geometry) using the example configuration
+    ADD_TEST( TestJobsubExampleDaturaNoDUTHitmakerOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-hitmaker.slcio ] && lcio_check_col_elements -a --expelements 24 hit ${testdir}/output/lcio/run${PaddedRunNr}-hitmaker.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitmakerOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTHitmakerRun)
 
 
 #
@@ -151,39 +168,38 @@
 #  STEP 4: ALIGNMENT
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-    SET( executable "submit-align.py" )
-
     # all this regular expressions must be matched for the test to pass
-    SET( align_pass_regex_1 "Checking the input file ${RunNr}-hit.slcio" )
-    SET( align_pass_regex_2 "Running Marlin" )
-    SET( align_pass_regex_3 "Pede successfully finished" )
-    SET( align_pass_regex_4 "Marlin finished successfully" )
+    SET( align_pass_regex_1 "Now running Marlin" )
+    SET( align_pass_regex_2 "Initialising Mille" )
+    SET( align_pass_regex_3 "Processing event.*in run ${PaddedRunNr}" )
+    SET( align_pass_regex_4 "Pede successfully finished" )
+    SET( align_pass_regex_5 "Marlin execution done" )
 
-    SET( align_fail_regex "Skipping to the next run" "ERROR" "CRITICAL" "segmentation violation")
+    SET( align_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
-    ADD_TEST( TestPysubExampleDaturaAloneAlignRun sh -c "cd ${testdir} && python ${pysubdir}/${executable} --config=${exampledir}/config.cfg -o ${RunNr} ${RunNr}-hit.slcio" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneAlignRun PROPERTIES
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTAlignRun 
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} align ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${align_pass_regex_1}.*${align_pass_regex_2}.*${align_pass_regex_3}.*${align_pass_regex_4}"
         # test will fail if ANY of the following expressions is matched 
         FAIL_REGULAR_EXPRESSION "${align_fail_regex}"
 	# test depends on earlier steps
-	DEPENDS TestPysubExampleDaturaAloneHitmakerOutput
+	DEPENDS TestJobsubExampleDaturaNoDUTHitmakerOutput
 	)
     # now check if the expected output files exist and look ok
-    ADD_TEST( TestPysubExampleDaturaAloneAlignLog sh -c "[ -f ${testdir}/output/logs/align-${RunNr}.tar.gz ]" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneAlignLog PROPERTIES DEPENDS TestPysubExampleDaturaAloneAlignRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTAlignLog sh -c "[ -f ${testdir}/output/logs/align-${PaddedRunNr}.zip ]" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTAlignRun)
 
-    ADD_TEST( TestPysubExampleDaturaAloneAlignHisto sh -c "[ -f ${testdir}/output/histo/${RunNr}-align-histo.root ]" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneAlignHisto PROPERTIES DEPENDS TestPysubExampleDaturaAloneAlignRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTAlignHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-alignment.root ]" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTAlignRun)
 
-    ADD_TEST( TestPysubExampleDaturaAloneAlignDB sh -c "[ -f ${testdir}/output/db/${RunNr}-align-db.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/db/${RunNr}-prealign-db.slcio" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneAlignDB PROPERTIES DEPENDS TestPysubExampleDaturaAloneAlignRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTAlignDB sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-alignment.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/database/run${PaddedRunNr}-alignment.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignDB PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTAlignRun)
 
-    ADD_TEST( TestPysubExampleDaturaAloneAlignOutput sh -c "[ -f ${testdir}/output/results/${RunNr}-align-mille.bin -a -f ${testdir}/output/results/${RunNr}-pede-steer.txt ] " )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneAlignOutput PROPERTIES DEPENDS TestPysubExampleDaturaAloneAlignRun)
-
-
+    ADD_TEST( TestJobsubExampleDaturaNoDUTAlignOutput sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-align-mille.bin -a -f ${testdir}/output/database/run${PaddedRunNr}-pede-steer.txt ] " )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTAlignRun)
 
 
 
@@ -194,35 +210,35 @@
 #  STEP 5: FITTER
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-    SET( executable "submit-fitter.py" )
-
     # all this regular expressions must be matched for the test to pass
     SET( fit_pass_regex_1 "Processing run header 1" )
     SET( fit_pass_regex_2 "Total number of reconstructed tracks *[0-9][0-9][0-9][0-9][0-9]+" )
-    SET( fit_pass_regex_3 "Marlin finished successfully" )
+    SET( fit_pass_regex_3 "Marlin execution done" )
 
-    SET( fit_fail_regex "Skipping to the next run" "ERROR" "CRITICAL" "segmentation violation")
+    SET( fit_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
-    ADD_TEST( TestPysubExampleDaturaAloneFitterRun sh -c "cd ${testdir} && python ${pysubdir}/${executable} --config=${exampledir}/config.cfg -o ${RunNr} ${RunNr}-hit.slcio -a ${RunNr}-align-db.slcio" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneFitterRun PROPERTIES
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTFitterRun 
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} fitter ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFitterRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}.*${fit_pass_regex_2}.*${fit_pass_regex_3}"
         # test will fail if ANY of the following expressions is matched 
         FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
 	# test depends on earlier steps
-	DEPENDS TestPysubExampleDaturaAloneAlignRun
+	DEPENDS TestJobsubExampleDaturaNoDUTAlignRun
 	)
     # now check if the expected output files exist and look ok
-    ADD_TEST( TestPysubExampleDaturaAloneFitterLog sh -c "[ -f ${testdir}/output/logs/fitter-${RunNr}.tar.gz ]" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneFitterLog PROPERTIES DEPENDS TestPysubExampleDaturaAloneFitterRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTFitterLog sh -c "[ -f ${testdir}/output/logs/fitter-${PaddedRunNr}.zip ]" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFitterLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTFitterRun)
 
-    ADD_TEST( TestPysubExampleDaturaAloneFitterHisto sh -c "[ -f ${testdir}/output/histo/${RunNr}-track-histo.root ]" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneFitterHisto PROPERTIES DEPENDS TestPysubExampleDaturaAloneFitterRun)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTFitterHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-tracking.root ]" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFitterHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTFitterRun)
 
-    # we expect to see between 1 and 7 tracks in every event 
-    # but tolerate if this is not the case in 15% of the events (empty events are not counted!)
-    ADD_TEST( TestPysubExampleDaturaAloneFitterOutput sh -c "[ -f ${testdir}/output/results/${RunNr}-track.slcio ] && lcio_check_col_elements --pedantic --expelements 4 --abselementerror 3 --releventerror .15 track ${testdir}/output/results/${RunNr}-track.slcio" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneFitterOutput PROPERTIES DEPENDS TestPysubExampleDaturaAloneFitterRun)
+    # we expect to see between 1 and 3 tracks in every event 
+    # but tolerate if this is not the case in 40% of the events (empty events are counted)
+    ADD_TEST( TestJobsubExampleDaturaNoDUTFitterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-tracking.slcio ] && lcio_check_col_elements --pedantic --expelements 2 --abselementerror 1 --releventerror .40 track0 ${testdir}/output/lcio/run${PaddedRunNr}-tracking.slcio" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFitterOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTFitterRun)
 
 #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
@@ -240,24 +256,24 @@
 
     # run stattest tool on output from previous step and test it against reference file; test are configured in specified config file (*.qa)
 
-    ADD_TEST( TestPysubExampleDaturaAloneStatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH python ${stattestdir}/${executable} -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_DaturaAloneAlign.qa ${testdir}/output/histo/${RunNr}-align-histo.root ${referencedatadir}/${RunNr}-align-histo.root" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneStatTestAlign PROPERTIES
+    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH python ${stattestdir}/${executable} --cdash -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTAlign.qa ${testdir}/output/histograms/run${PaddedRunNr}-alignment.root ${referencedatadir}/${RunNr}-alignment.root" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestAlign PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
         # test will fail if ANY of the following expressions is matched 
         FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
 	# test depends on earlier steps
-	DEPENDS TestPysubExampleDaturaAloneAlignRun
+	DEPENDS TestJobsubExampleDaturaNoDUTAlignRun
 	)
 
 
-    ADD_TEST( TestPysubExampleDaturaAloneStatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH python ${stattestdir}/${executable} -g ${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_DaturaAloneFitter.qa ${testdir}/output/histo/${RunNr}-track-histo.root ${referencedatadir}/${RunNr}-track-histo.root" )
-    SET_TESTS_PROPERTIES (TestPysubExampleDaturaAloneStatTestFitter PROPERTIES
+    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH python ${stattestdir}/${executable} --cdash  -g${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTFitter.qa ${testdir}/output/histograms/run${PaddedRunNr}-tracking.root ${referencedatadir}/${RunNr}-tracking.root" )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestFitter PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
         # test will fail if ANY of the following expressions is matched 
         FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
 	# test depends on earlier steps
-	DEPENDS TestPysubExampleDaturaAloneFitterRun
+	DEPENDS TestJobsubExampleDaturaNoDUTFitterRun
 	)
 
