@@ -147,27 +147,27 @@ void EUTelNativeReader::readDataSource(int numEvents) {
   // print out a debug message
   streamlog_out( DEBUG4 ) << "Reading " << _fileName << " with eudaq file deserializer " << endl;
 
+  eudaq::FileReader * reader = 0;
   // open the input file with the eudaq reader
   try{
-    eudaq::FileReader reader( _fileName, "", _syncTriggerID );
+    reader = new eudaq::FileReader( _fileName, "", _syncTriggerID );
   }
   catch(...){
-    streamlog_out( ERROR5 ) << "eudaq::FileReader could not read the file name correctly. Please check the path and file names that have been input" << endl;
+    streamlog_out( ERROR5 ) << "eudaq::FileReader could not read the input file ' " << _fileName << " '. Please verify that the path and file name are correct." << endl;
     exit(1);
   }
-  eudaq::FileReader reader( _fileName, "", _syncTriggerID );
-  if ( reader.Event().IsBORE() ) {
-    eudaq::PluginManager::Initialize(  reader.Event() );
+
+  if ( reader->Event().IsBORE() ) {
+    eudaq::PluginManager::Initialize(  reader->Event() );
     // this is the case in which the eudaq event is a Begin Of Run
     // Event. This is translating into a RunHeader in the case of
     // LCIO
-    processBORE( reader.Event() );
-
+    processBORE( reader->Event() );
   }
 
-  while ( reader.NextEvent() && (eventCounter < numEvents ) ) {
+  while ( reader->NextEvent() && (eventCounter < numEvents ) ) {
 
-    const eudaq::DetectorEvent& eudaqEvent = reader.Event();
+    const eudaq::DetectorEvent& eudaqEvent = reader->Event();
 
     if ( eudaqEvent.IsBORE() ) {
 
@@ -181,7 +181,6 @@ void EUTelNativeReader::readDataSource(int numEvents) {
       // Anyway I'm processing this BORE again,
       processBORE( eudaqEvent );
 
-
     } else if ( eudaqEvent.IsEORE() ) {
 
       streamlog_out( DEBUG4 ) << "Found a EORE event " << endl;
@@ -194,19 +193,17 @@ void EUTelNativeReader::readDataSource(int numEvents) {
       LCEvent * lcEvent = eudaq::PluginManager::ConvertToLCIO( eudaqEvent );
 
       if ( lcEvent == NULL ) {
-        streamlog_out ( ERROR1 ) << "The eudaq plugin manager is not able to create a valid LCEvent" << endl
-                                 << "Check that eudaq was compiled with LCIO and EUTELESCOPE active "<< endl;
-        throw MissingLibraryException( this, "eudaq" );
+	streamlog_out ( ERROR1 ) << "The eudaq plugin manager is not able to create a valid LCEvent" << endl
+				 << "Check that eudaq was compiled with LCIO and EUTELESCOPE active "<< endl;
+	throw MissingLibraryException( this, "eudaq" );
       }
-
       ProcessorMgr::instance()->processEvent( lcEvent );
       delete lcEvent;
-
     }
-
     ++eventCounter;
-
   }
+
+  delete reader;
 
 }
 
