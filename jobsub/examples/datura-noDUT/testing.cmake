@@ -23,9 +23,19 @@
     SET( stattestdir "$ENV{EUTELESCOPE}/test/stattest/bin" )
     SET( referencedatadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT" )
 
-    SET( executable "jobsub.py" )
+    SET( executable python -tt ${jobsubdir}/jobsub.py )
     # options: use config, use csv, change native path to central AFS location, reduce number of events to 200k
     SET( jobsubOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=200000)
+
+
+    # all this regular expressions must be matched for the tests to pass
+    # the order of the expressions must be matched in the test execution!
+    # additional statements can be defined for each test individually
+    SET( jobsub_pass_regex_1 "Now running Marlin" )
+    SET( marlin_pass_regex_1 "Processing event.*in run ${PaddedRunNr}" )
+    SET( jobsub_pass_regex_2 "Marlin execution done" )
+
+    SET( generic_fail_regex "ERROR" "CRITICAL" "segmentation violation")
 
 
 #
@@ -38,35 +48,27 @@
 #  STEP 1: CONVERTER
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-# todo:
-#  - currently running only over 10000 events (see steering template); should this number be adjusted and/or tested for (using lcio_event_counter)?
-#  - set property DEPENDS to make sure that failure of required steps does not cause following steps to fail as well 
 
-    # all this regular expressions must be matched for the test to pass
-    SET( converter_pass_regex_1 "Now running Marlin" )
-    SET( converter_pass_regex_2 "Processing event.*in run ${PaddedRunNr}" )
-    SET( converter_pass_regex_3 "Marlin execution done" )
-
-    SET( converter_fail_regex "ERROR" "CRITICAL" "segmentation violation")
-
-  # !!! ALTERNATIVE TEST FOR MEM CHECK RUNS (reduced run range)
+  # STEP 1 VARIANT USED FOR MEMCHECKS ONLY:
+  # Converter run with reduced run range
     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTConverterRunMemCheck
               WORKING_DIRECTORY "${testdir}"
-	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} -o MaxRecordNumber=500 converter ${RunNr} )
+	      COMMAND ${executable} ${jobsubOptions} -o MaxRecordNumber=1000 converter ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterRunMemCheck PROPERTIES
-        PASS_REGULAR_EXPRESSION "${converter_pass_regex_1}.*${converter_pass_regex_2}.*${converter_pass_regex_3}"
-        FAIL_REGULAR_EXPRESSION "${converter_fail_regex}"
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
 	DEPENDS TestJobsubExampleDaturaNoDUTSetup
     )
 
+
     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTConverterRun 
               WORKING_DIRECTORY "${testdir}"
-	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} converter ${RunNr} )
+	      COMMAND ${executable} ${jobsubOptions} converter ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${converter_pass_regex_1}.*${converter_pass_regex_2}.*${converter_pass_regex_3}"
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
         # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${converter_fail_regex}"
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
 	# test depends on earlier steps
 	DEPENDS TestJobsubExampleDaturaNoDUTSetup
     )
@@ -93,22 +95,14 @@
 #  STEP 2: CLUSTERING
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-
-    # all this regular expressions must be matched for the test to pass
-    SET( clustering_pass_regex_1 "Now running Marlin" )
-    SET( clustering_pass_regex_2 "Processing event.*in run ${PaddedRunNr}" )
-    SET( clustering_pass_regex_3 "Marlin execution done" )
-
-    SET( clustering_fail_regex "ERROR" "CRITICAL" "segmentation violation")
-
     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTClusteringRun 
               WORKING_DIRECTORY ${testdir} 
-	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} clustering ${RunNr} )
+	      COMMAND ${executable} ${jobsubOptions} clustering ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTClusteringRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${clustering_pass_regex_1}.*${clustering_pass_regex_2}.*${clustering_pass_regex_3}"
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
         # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${clustering_fail_regex}"
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
 	# test depends on earlier steps
 	DEPENDS TestJobsubExampleDaturaNoDUTConverterOutput
 	)
@@ -130,21 +124,14 @@
 #  STEP 3: HITMAKER
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-    # all this regular expressions must be matched for the test to pass
-    SET( hitmaker_pass_regex_1 "Now running Marlin" )
-    SET( hitmaker_pass_regex_2 "Processing event.*in run ${PaddedRunNr}" )
-    SET( hitmaker_pass_regex_3 "Marlin execution done" )
-
-    SET( hitmaker_fail_regex "ERROR" "CRITICAL" "segmentation violation")
-
     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTHitmakerRun 
               WORKING_DIRECTORY ${testdir} 
-	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} hitmaker ${RunNr} )
+	      COMMAND ${executable} ${jobsubOptions} hitmaker ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitmakerRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${hitmaker_pass_regex_1}.*${hitmaker_pass_regex_2}.*${hitmaker_pass_regex_3}"
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
         # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${hitmaker_fail_regex}"
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
 	# test depends on earlier steps
 	DEPENDS TestJobsubExampleDaturaNoDUTClusteringOutput
 	)
@@ -169,22 +156,17 @@
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
     # all this regular expressions must be matched for the test to pass
-    SET( align_pass_regex_1 "Now running Marlin" )
-    SET( align_pass_regex_2 "Initialising Mille" )
-    SET( align_pass_regex_3 "Processing event.*in run ${PaddedRunNr}" )
-    SET( align_pass_regex_4 "Pede successfully finished" )
-    SET( align_pass_regex_5 "Marlin execution done" )
-
-    SET( align_fail_regex "ERROR" "CRITICAL" "segmentation violation")
+    SET( align_pass_regex_1 "Initialising Mille" )
+    SET( align_pass_regex_2 "Pede successfully finished" )
 
     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTAlignRun 
               WORKING_DIRECTORY ${testdir} 
-	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} align ${RunNr} )
+	      COMMAND ${executable} ${jobsubOptions} align ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${align_pass_regex_1}.*${align_pass_regex_2}.*${align_pass_regex_3}.*${align_pass_regex_4}"
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${align_pass_regex_1}.*${marlin_pass_regex_1}.*${align_pass_regex_2}.*${jobsub_pass_regex_2}"
         # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${align_fail_regex}"
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
 	# test depends on earlier steps
 	DEPENDS TestJobsubExampleDaturaNoDUTHitmakerOutput
 	)
@@ -210,21 +192,16 @@
 #  STEP 5: FITTER
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-    # all this regular expressions must be matched for the test to pass
-    SET( fit_pass_regex_1 "Processing run header 1" )
-    SET( fit_pass_regex_2 "Total number of reconstructed tracks *[0-9][0-9][0-9][0-9][0-9]+" )
-    SET( fit_pass_regex_3 "Marlin execution done" )
-
-    SET( fit_fail_regex "ERROR" "CRITICAL" "segmentation violation")
+    SET( fit_pass_regex_1 "Total number of reconstructed tracks *[0-9][0-9][0-9][0-9][0-9]+" )
 
     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTFitterRun 
               WORKING_DIRECTORY ${testdir} 
-	      COMMAND python ${jobsubdir}/${executable} ${jobsubOptions} fitter ${RunNr} )
+	      COMMAND ${executable} ${jobsubOptions} fitter ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFitterRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}.*${fit_pass_regex_2}.*${fit_pass_regex_3}"
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${fit_pass_regex_1}.*${jobsub_pass_regex_2}"
         # test will fail if ANY of the following expressions is matched 
-        FAIL_REGULAR_EXPRESSION "${fit_fail_regex}"
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
 	# test depends on earlier steps
 	DEPENDS TestJobsubExampleDaturaNoDUTAlignRun
 	)
@@ -248,7 +225,7 @@
 
     # TODO: ask Andrea Dotti or other Geant4 people for their FindStatTest.cmake 
 
-    SET( executable "runtests.py" )
+    SET( executable "python ${stattestdir}/runtests.py" )
 
     # all this regular expressions must be matched for the test to pass
     SET( fit_pass_regex_1 "SUCCESS" )
@@ -256,7 +233,7 @@
 
     # run stattest tool on output from previous step and test it against reference file; test are configured in specified config file (*.qa)
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH python ${stattestdir}/${executable} --cdash -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTAlign.qa ${testdir}/output/histograms/run${PaddedRunNr}-alignment.root ${referencedatadir}/run${PaddedRunNr}-alignment.root" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTAlign.qa ${testdir}/output/histograms/run${PaddedRunNr}-alignment.root ${referencedatadir}/run${PaddedRunNr}-alignment.root" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestAlign PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
@@ -267,7 +244,7 @@
 	)
 
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH python ${stattestdir}/${executable} --cdash  -g${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTFitter.qa ${testdir}/output/histograms/run${PaddedRunNr}-tracking.root ${referencedatadir}/run${PaddedRunNr}-tracking.root" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTFitter.qa ${testdir}/output/histograms/run${PaddedRunNr}-tracking.root ${referencedatadir}/run${PaddedRunNr}-tracking.root" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestFitter PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
@@ -276,4 +253,5 @@
 	# test depends on earlier steps
 	DEPENDS TestJobsubExampleDaturaNoDUTFitterRun
 	)
+
 

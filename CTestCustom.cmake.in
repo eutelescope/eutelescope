@@ -1,7 +1,7 @@
 #
 # +++++++++ IGNORE SOME OF THE TESTS WHEN RUNNING MEMCHECKS (e.g. valgrind) +++++++++++++++
 #
-# this basically includes every test except the *Run tests other than converter
+# this basically includes every test except the *Run tests other than converter (which is run separately for memchecks)
 #
 set (CTEST_CUSTOM_MEMCHECK_IGNORE 
 	${CTEST_CUSTOM_MEMCHECK_IGNORE}
@@ -53,24 +53,28 @@ set (CTEST_CUSTOM_MEMCHECK_IGNORE
 	TestJobsubExampleDaturaAloneFitterOutput
 	TestJobsubExampleDaturaAloneStatTestAlign
 	TestJobsubExampleDaturaAloneStatTestFitter
+	# EXCLUDE ALL PYSUB EXAMPLES FROM MEMCHECKS (NOT SET UP CORRECTLY YET!)
 	TestPysubExampleAnemone2FEI4Cleanup
 	TestPysubExampleAnemone2FEI4Setup
+	TestPysubExampleAnemone2FEI4ConverterRun
 	TestPysubExampleAnemone2FEI4ConverterLog
 	TestPysubExampleAnemone2FEI4ConverterHisto
 	TestPysubExampleAnemone2FEI4ConverterHotpix
 	TestPysubExampleAnemone2FEI4ConverterOutput
+	TestPysubExampleAnemone2FEI4ClusearchRun
 	TestPysubExampleAnemone2FEI4ClusearchLog
 	TestPysubExampleAnemone2FEI4ClusearchHisto
-	TestPysubExampleAnemone2FEI4ClusearchOffset
 	TestPysubExampleAnemone2FEI4ClusearchOutput
+	TestPysubExampleAnemone2FEI4HitmakerRun
 	TestPysubExampleAnemone2FEI4HitmakerLog
 	TestPysubExampleAnemone2FEI4HitmakerHisto
 	TestPysubExampleAnemone2FEI4HitmakerPrealign
-	TestPysubExampleAnemone2FEI4HitmakerOutput
+	TestPysubExampleAnemone2FEI4AlignRun
 	TestPysubExampleAnemone2FEI4AlignLog
 	TestPysubExampleAnemone2FEI4AlignHisto
 	TestPysubExampleAnemone2FEI4AlignDB
 	TestPysubExampleAnemone2FEI4AlignOutput
+	TestPysubExampleAnemone2FEI4FitterRun
 	TestPysubExampleAnemone2FEI4FitterLog
 	TestPysubExampleAnemone2FEI4FitterHisto
 	TestPysubExampleAnemone2FEI4FitterOutput

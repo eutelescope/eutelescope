@@ -84,7 +84,6 @@
    Memcheck:Leak
    fun:realloc
    fun:_PyObject_GC_Resize
-   fun:COMMENT_THIS_LINE_TO_DISABLE_LEAK_WARNING
 }
 
 {
@@ -92,7 +91,14 @@
    Memcheck:Leak
    fun:malloc
    fun:_PyObject_GC_New
-   fun:COMMENT_THIS_LINE_TO_DISABLE_LEAK_WARNING
+}
+
+{
+   Handle PyMalloc confusing valgrind (possibly leaked)
+   Memcheck:Leak
+   fun:malloc
+   fun:_PyObject_GC_Malloc
+   fun:_PyObject_GC_NewVar
 }
 
 {
@@ -100,8 +106,29 @@
    Memcheck:Leak
    fun:malloc
    fun:_PyObject_GC_NewVar
-   fun:COMMENT_THIS_LINE_TO_DISABLE_LEAK_WARNING
 }
+
+{
+   Handle PyDict_New (possibly leaked)
+   Memcheck:Leak
+   fun:malloc
+   fun:PyDict_New
+}
+
+{
+   Handle PyDict_New (possibly leaked)
+   Memcheck:Leak
+   fun:malloc
+   fun:dictresize*
+}
+
+{
+   Handle PyTuple_New (possibly leaked)
+   Memcheck:Leak
+   fun:malloc
+   fun:PyTuple_New
+}
+
 
 #
 # Non-python specific leaks
@@ -127,37 +154,109 @@
 {
    ADDRESS_IN_RANGE/Invalid read of size 4
    Memcheck:Addr4
-   fun:PyObject_Free
+   fun:PyObject_Free*
 }
 
 {
    ADDRESS_IN_RANGE/Invalid read of size 4
    Memcheck:Value4
-   fun:PyObject_Free
+   fun:PyObject_Free*
+}
+
+{
+   ADDRESS_IN_RANGE/Invalid read of size 8
+   Memcheck:Addr8
+   fun:PyObject_Free*
+}
+
+{
+   ADDRESS_IN_RANGE/Invalid read of size 8
+   Memcheck:Value8
+   fun:PyObject_Free*
 }
 
 {
    ADDRESS_IN_RANGE/Conditional jump or move depends on uninitialised value
    Memcheck:Cond
-   fun:PyObject_Free
+   fun:PyObject_Free*
 }
 
 {
    ADDRESS_IN_RANGE/Invalid read of size 4
    Memcheck:Addr4
-   fun:PyObject_Realloc
+   fun:PyObject_Realloc*
 }
 
 {
    ADDRESS_IN_RANGE/Invalid read of size 4
    Memcheck:Value4
-   fun:PyObject_Realloc
+   fun:PyObject_Realloc*
+}
+
+{
+   ADDRESS_IN_RANGE/Invalid read of size 8
+   Memcheck:Addr8
+   fun:PyObject_Realloc*
+}
+
+{
+   ADDRESS_IN_RANGE/Invalid read of size 8
+   Memcheck:Value8
+   fun:PyObject_Realloc*
 }
 
 {
    ADDRESS_IN_RANGE/Conditional jump or move depends on uninitialised value
    Memcheck:Cond
-   fun:PyObject_Realloc
+   fun:PyObject_Realloc*
+}
+
+{
+   ADDRESS_IN_RANGE/Use of uninitialised value of size 4
+   Memcheck:Addr4
+   fun:PyObject_Free*
+}
+
+{
+   ADDRESS_IN_RANGE/Use of uninitialised value of size 4
+   Memcheck:Value4
+   fun:PyObject_Free*
+}
+
+{
+   ADDRESS_IN_RANGE/Use of uninitialised value of size 4
+   Memcheck:Addr4
+   fun:PyObject_Realloc*
+}
+
+{
+   ADDRESS_IN_RANGE/Use of uninitialised value of size 4
+   Memcheck:Value4
+   fun:PyObject_Realloc*
+}
+
+{
+   ADDRESS_IN_RANGE/Use of uninitialised value of size 8
+   Memcheck:Addr8
+   fun:PyObject_Free*
+}
+
+{
+   ADDRESS_IN_RANGE/Use of uninitialised value of size 8
+   Memcheck:Value8
+   fun:PyObject_Free*
+}
+
+{
+   ADDRESS_IN_RANGE/Use of uninitialised value of size 8
+   Memcheck:Addr8
+   fun:PyObject_Realloc*
+}
+
+{
+   ADDRESS_IN_RANGE/Use of uninitialised value of size 8
+   Memcheck:Value8
+   fun:PyObject_Realloc*
 }
 
 ###
