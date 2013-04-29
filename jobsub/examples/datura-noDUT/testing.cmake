@@ -26,18 +26,16 @@
     SET( executable python -tt ${jobsubdir}/jobsub.py )
     # options: use config, use csv, change native path to central AFS location, reduce number of events to 200k
     SET( jobsubOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=200000)
-    # options for memcheck runs
-    SET( jobsubMemCheckOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=1000)
 
 
-    # all this regular expressions must be matched for the tests to pass
+    # all this regular expressions must be matched for the tests to pass.
     # the order of the expressions must be matched in the test execution!
     # additional statements can be defined for each test individually
     SET( jobsub_pass_regex_1 "Now running Marlin" )
     SET( marlin_pass_regex_1 "Processing event.*in run ${PaddedRunNr}" )
     SET( jobsub_pass_regex_2 "Marlin execution done" )
 
-    SET( generic_fail_regex "ERROR" "CRITICAL" "segmentation violation")
+    SET( generic_fail_regex "ERROR" "CRITICAL" "segmentation violation" "There were [0-9]* error messages reported")
 
 
 #
@@ -50,18 +48,6 @@
 #  STEP 1: CONVERTER
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-
-  # STEP 1 VARIANT USED FOR MEMCHECKS ONLY:
-  # Converter run with reduced run range
-    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTConverterRunMemCheck
-              WORKING_DIRECTORY "${testdir}"
-	      COMMAND ${executable} ${jobsubMemCheckOptions} converter ${RunNr} )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterRunMemCheck PROPERTIES
-        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
-        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
-	DEPENDS TestJobsubExampleDaturaNoDUTSetup
-    )
-
 
     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTConverterRun 
               WORKING_DIRECTORY "${testdir}"
@@ -224,9 +210,6 @@
 #  STEP 6: StatTest
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-
-    # TODO: ask Andrea Dotti or other Geant4 people for their FindStatTest.cmake 
-
     SET( executable "python ${stattestdir}/runtests.py" )
 
     # all this regular expressions must be matched for the test to pass
@@ -257,3 +240,53 @@
 	)
 
 
+#
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#  STEP 7: MemChecks
+# +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
+#
+  # STEP 1-5 VARIANTS USED FOR MEMCHECKS ONLY:
+    SET( executable python -tt ${jobsubdir}/jobsub.py )
+    # options for memcheck runs: reduced run range, plain output for valgrind parsing
+    SET( jobsubMemCheckOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=2000 --plain)
+
+  # Converter run with reduced run range
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTConverterRunMemCheck
+              WORKING_DIRECTORY "${testdir}"
+	      COMMAND ${executable} ${jobsubMemCheckOptions} converter ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterRunMemCheck PROPERTIES
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
+    )
+
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTClusteringRunMemCheck
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND ${executable} ${jobsubMemCheckOptions} clustering ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTClusteringRunMemCheck PROPERTIES
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
+	)
+
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTHitmakerRunMemCheck
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND ${executable} ${jobsubMemCheckOptions} hitmaker ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTHitmakerRunMemCheck PROPERTIES
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
+	)
+
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTAlignRunMemCheck
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND ${executable} ${jobsubMemCheckOptions} align ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignRunMemCheck PROPERTIES
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
+	)
+
+    ADD_TEST( NAME TestJobsubExampleDaturaNoDUTFitterRunMemCheck
+              WORKING_DIRECTORY ${testdir} 
+	      COMMAND ${executable} ${jobsubMemCheckOptions} fitter ${RunNr} )
+    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFitterRunMemCheck PROPERTIES
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
+        FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
+	)

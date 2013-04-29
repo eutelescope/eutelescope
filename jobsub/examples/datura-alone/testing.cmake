@@ -22,10 +22,6 @@
     SET( executable "jobsub.py" )
     SET( jobsubOptions --config=${exampledir}/config.cfg -csv ${exampledir}/table_orgmode.csv)
 
-    # options for memcheck runs
-    SET( jobsubMemCheckOptions --config=${exampledir}/config.cfg -csv ${exampledir}/table_orgmode.csv -o MaxRecordNumber=1000)
-
- 
    # only needed in the last step to test the results of EUTel against a set of reference files:
     SET( stattestdir "$ENV{EUTELESCOPE}/test/stattest/bin" )
     SET( referencedatadir "/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaAlone" )
@@ -51,16 +47,6 @@
     SET( converter_pass_regex_3 "Marlin execution done" )
 
     SET( converter_fail_regex "ERROR" "CRITICAL" "segmentation violation")
-
-  # !!! ALTERNATIVE TEST FOR MEM CHECK RUNS (reduced run range)
-    ADD_TEST( NAME TestJobsubExampleDaturaAloneConverterRunMemCheck
-              WORKING_DIRECTORY "${testdir}"
-	      COMMAND python ${jobsubdir}/${executable} ${jobsubMemCheckOptions} converter ${RunNr} )
-    SET_TESTS_PROPERTIES (TestJobsubExampleDaturaAloneConverterRunMemCheck PROPERTIES
-        PASS_REGULAR_EXPRESSION "${converter_pass_regex_1}.*${converter_pass_regex_2}.*${converter_pass_regex_3}"
-        FAIL_REGULAR_EXPRESSION "${converter_fail_regex}"
-	DEPENDS TestJobsubExampleDaturaAloneSetup
-    )
 
     ADD_TEST( NAME TestJobsubExampleDaturaAloneConverterRun 
               WORKING_DIRECTORY "${testdir}"

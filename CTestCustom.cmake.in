@@ -1,7 +1,7 @@
 #
 # +++++++++ IGNORE SOME OF THE TESTS WHEN RUNNING MEMCHECKS (e.g. valgrind) +++++++++++++++
 #
-# this basically includes every test except the *Run tests other than converter (which is run separately for memchecks)
+# this basically includes every test except the *RunMemCheck tests
 #
 set (CTEST_CUSTOM_MEMCHECK_IGNORE 
 	${CTEST_CUSTOM_MEMCHECK_IGNORE}
@@ -13,17 +13,21 @@ set (CTEST_CUSTOM_MEMCHECK_IGNORE
 	TestJobsubExampleDaturaNoDUTConverterHisto
 	TestJobsubExampleDaturaNoDUTConverterHotpix
 	TestJobsubExampleDaturaNoDUTConverterOutput
+	TestJobsubExampleDaturaNoDUTClusteringRun
 	TestJobsubExampleDaturaNoDUTClusteringLog
 	TestJobsubExampleDaturaNoDUTClusteringHisto
 	TestJobsubExampleDaturaNoDUTClusteringOutput
+	TestJobsubExampleDaturaNoDUTHitmakerRun
 	TestJobsubExampleDaturaNoDUTHitmakerLog
 	TestJobsubExampleDaturaNoDUTHitmakerHisto
 	TestJobsubExampleDaturaNoDUTHitmakerPrealign
 	TestJobsubExampleDaturaNoDUTHitmakerOutput
+	TestJobsubExampleDaturaNoDUTAlignRun
 	TestJobsubExampleDaturaNoDUTAlignLog
 	TestJobsubExampleDaturaNoDUTAlignHisto
 	TestJobsubExampleDaturaNoDUTAlignDB
 	TestJobsubExampleDaturaNoDUTAlignOutput
+	TestJobsubExampleDaturaNoDUTFitterRun
 	TestJobsubExampleDaturaNoDUTFitterLog
 	TestJobsubExampleDaturaNoDUTFitterHisto
 	TestJobsubExampleDaturaNoDUTFitterOutput
@@ -36,24 +40,27 @@ set (CTEST_CUSTOM_MEMCHECK_IGNORE
 	TestJobsubExampleDaturaAloneConverterHisto
 	TestJobsubExampleDaturaAloneConverterHotpix
 	TestJobsubExampleDaturaAloneConverterOutput
+	TestJobsubExampleDaturaAloneClusearchRun
 	TestJobsubExampleDaturaAloneClusearchLog
 	TestJobsubExampleDaturaAloneClusearchHisto
 	TestJobsubExampleDaturaAloneClusearchOffset
 	TestJobsubExampleDaturaAloneClusearchOutput
+	TestJobsubExampleDaturaAloneHitmakerRun
 	TestJobsubExampleDaturaAloneHitmakerLog
 	TestJobsubExampleDaturaAloneHitmakerHisto
 	TestJobsubExampleDaturaAloneHitmakerPrealign
 	TestJobsubExampleDaturaAloneHitmakerOutput
+	TestJobsubExampleDaturaAloneAlignRun
 	TestJobsubExampleDaturaAloneAlignLog
 	TestJobsubExampleDaturaAloneAlignHisto
 	TestJobsubExampleDaturaAloneAlignDB
 	TestJobsubExampleDaturaAloneAlignOutput
+	TestJobsubExampleDaturaAloneFitterRun
 	TestJobsubExampleDaturaAloneFitterLog
 	TestJobsubExampleDaturaAloneFitterHisto
 	TestJobsubExampleDaturaAloneFitterOutput
 	TestJobsubExampleDaturaAloneStatTestAlign
 	TestJobsubExampleDaturaAloneStatTestFitter
-	# EXCLUDE ALL PYSUB EXAMPLES FROM MEMCHECKS (NOT SET UP CORRECTLY YET!)
 	TestPysubExampleAnemone2FEI4Cleanup
 	TestPysubExampleAnemone2FEI4Setup
 	TestPysubExampleAnemone2FEI4ConverterRun

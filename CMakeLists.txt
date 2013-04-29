@@ -299,7 +299,7 @@ IF( DEFINED ENV{EUTELESCOPE} AND DEFINED ENV{MARLIN})
 
 # use valgrind for dynamic analysis
 set (CTEST_MEMORYCHECK_COMMAND "/usr/bin/valgrind")
-set (CTEST_MEMORYCHECK_COMMAND_OPTIONS "-q --num-callers=50 --tool=memcheck --track-origins=yes --trace-children=yes --leak-check=full --leak-resolution=med --suppressions=$ENV{ROOTSYS}/etc/valgrind-root.supp --suppressions=$ENV{EUTELESCOPE}/test/valgrind/valgrind-python.supp")
+set (CTEST_MEMORYCHECK_COMMAND_OPTIONS "-q --num-callers=50 --tool=memcheck --track-origins=yes --trace-children=yes --leak-check=full --leak-resolution=low --suppressions=$ENV{ROOTSYS}/etc/valgrind-root.supp --suppressions=$ENV{EUTELESCOPE}/test/valgrind/valgrind-python.supp")
 
 # User Options to be included in DartConfiguration.tcl
 set(MEMORYCHECK_COMMAND ${CTEST_MEMORYCHECK_COMMAND} CACHE STRING "" FORCE)
