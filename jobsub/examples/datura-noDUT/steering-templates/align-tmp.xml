@@ -55,7 +55,7 @@
   </processor>
 
   <processor name="MyEUTelCorrelator" type="EUTelCorrelator">
-    <parameter name="InputClusterCollections" type="string" lcioInType="TrackerPulse"> m26_cluster </parameter>
+    <parameter name="InputClusterCollections" type="string" lcioInType="TrackerPulse"> </parameter>
     <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
     <parameter name="ClusterChargeMinimum" type="int" value="2"/>
     <parameter name="DumpOffset" type="bool" value="true"/>

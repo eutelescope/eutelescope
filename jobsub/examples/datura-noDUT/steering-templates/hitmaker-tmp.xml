@@ -46,7 +46,7 @@
   </processor>
 
   <processor name="Save" type="EUTelOutputProcessor">
-    <parameter name="DropCollectionNames" type="StringVec"> original_zsdata m26_cluster </parameter>
+    <parameter name="DropCollectionNames" type="StringVec"> m26_cluster </parameter>
     <parameter name="LCIOOutputFile" type="string">  @LcioPath@/@FilePrefix@-hitmaker.slcio </parameter>
     <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   </processor>

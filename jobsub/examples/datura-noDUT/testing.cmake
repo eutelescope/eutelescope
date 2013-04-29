@@ -26,6 +26,8 @@
     SET( executable python -tt ${jobsubdir}/jobsub.py )
     # options: use config, use csv, change native path to central AFS location, reduce number of events to 200k
     SET( jobsubOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=200000)
+    # options for memcheck runs
+    SET( jobsubMemCheckOptions --config=${exampledir}/config.cfg -csv ${exampledir}/runlist.csv -o NativePath=${referencedatadir} -o MaxRecordNumber=1000)
 
 
     # all this regular expressions must be matched for the tests to pass
@@ -53,7 +55,7 @@
   # Converter run with reduced run range
     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTConverterRunMemCheck
               WORKING_DIRECTORY "${testdir}"
-	      COMMAND ${executable} ${jobsubOptions} -o MaxRecordNumber=1000 converter ${RunNr} )
+	      COMMAND ${executable} ${jobsubMemCheckOptions} converter ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterRunMemCheck PROPERTIES
         PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
         FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
@@ -192,14 +194,14 @@
 #  STEP 5: FITTER
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #
-    SET( fit_pass_regex_1 "Total number of reconstructed tracks *[0-9][0-9][0-9][0-9][0-9]+" )
+    #SET( fit_pass_regex_1 "Total number of reconstructed tracks *[0-9][0-9][0-9][0-9][0-9]+" )
 
     ADD_TEST( NAME TestJobsubExampleDaturaNoDUTFitterRun 
               WORKING_DIRECTORY ${testdir} 
 	      COMMAND ${executable} ${jobsubOptions} fitter ${RunNr} )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFitterRun PROPERTIES
         # test will pass if ALL of the following expressions are matched
-        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${fit_pass_regex_1}.*${jobsub_pass_regex_2}"
+        PASS_REGULAR_EXPRESSION "${jobsub_pass_regex_1}.*${marlin_pass_regex_1}.*${jobsub_pass_regex_2}"
         # test will fail if ANY of the following expressions is matched 
         FAIL_REGULAR_EXPRESSION "${generic_fail_regex}"
 	# test depends on earlier steps
