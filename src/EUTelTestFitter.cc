@@ -1377,7 +1377,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 #endif
 
       // before returning clean up the memory
-
+      delete fittrackvec;
+      delete fitpointvec;
+      delete corrpointvec;
       delete [] planeHitID;
       delete [] hitPlane;
       delete [] hitFits;
@@ -1722,6 +1724,9 @@ if(jhit>=0){
 
       // before throwing the exception I should clean up the
       // memory...
+      delete fittrackvec;
+      delete fitpointvec;
+      delete corrpointvec;
       delete [] planeHitID;
       delete [] hitPlane;
       delete [] hitFits;
