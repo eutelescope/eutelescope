@@ -365,6 +365,7 @@ def main(argv=None):
     parser.add_argument("-l", "--log", default="info", help="Sets the verbosity of log messages during job submission where LEVEL is either debug, info, warning or error", metavar="LEVEL")
     parser.add_argument("-s", "--silent", action="store_true", default=False, help="Suppress non-error (stdout) Marlin output to console")
     parser.add_argument("--dry-run", action="store_true", default=False, help="Write steering files but skip actual Marlin execution")
+    parser.add_argument("--plain", action="store_true", default=False, help="Output written to stdout/stderr and log file in prefix-less format i.e. without time stamping")
     parser.add_argument("jobtask", help="Which task to submit (e.g. convert, hitmaker, align); task names are arbitrary and can be set up by the user; they determine e.g. the config section and default steering file names.")
     parser.add_argument("runs", help="The runs to be analyzed; can be a list of single runs and/or a range, e.g. 1056-1060.", nargs='*')
     args = parser.parse_args(argv)
@@ -377,10 +378,12 @@ def main(argv=None):
         if not isinstance(numeric_level, int):
             log.error('Invalid log level: %s' % args.log)
             return 2
-
     handler_stream.setLevel(numeric_level)
     log.setLevel(numeric_level)
-    log.debug( "Command line arguments used: %s ", args )
+
+    if args.plain:
+        formatter = logging.Formatter('%(message)s')
+        handler_stream.setFormatter(formatter)
 
     # set up submission log file if requested on command line
     if args.log_file:
@@ -388,6 +391,8 @@ def main(argv=None):
         handler_file.setFormatter(formatter)
         handler_file.setLevel(numeric_level)
         log.addHandler(handler_file) 
+
+    log.debug( "Command line arguments used: %s ", args )
 
     runs = list()
     for runnum in args.runs:
@@ -493,7 +498,7 @@ def main(argv=None):
                     steeringStringBase = ireplace("@" + key + "@", parameters[key], steeringStringBase)
         except EOFError:
             if (not key == "eutelescopepath" and not key == "home" and not key == "logpath"): # do not warn about default content of config
-                log.warn(" Parameter '" + key + "' was not found in template file "+parameters["templatefile"])
+                log.warn("Parameter '" + key + "' was not found in template file "+parameters["templatefile"])
 
     if args.concatenate:
         # replace list of runs with first run only
@@ -538,7 +543,7 @@ def main(argv=None):
                         if not field == "" and not field == "runnumber":                    
                             steeringString = ireplace("@" + field + "@", parameters_csv[run][field], steeringString)
                     except EOFError:
-                        log.warn(" Parameter '" + field + "' from the csv file was not found in the template file (already overwritten by config file parameters?)")
+                        log.warn("Parameter '" + field + "' from the csv file was not found in the template file (already overwritten by config file parameters?)")
             except KeyError:
                 log.warning("Run #" + runnr + " was not found in the specified CSV file - will skip this run! ")
                 continue
