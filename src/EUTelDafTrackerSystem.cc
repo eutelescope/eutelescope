@@ -25,9 +25,9 @@ FitPlane::FitPlane(int sensorID, float zPos, float sigmaX, float sigmaY, float s
 
 void FitPlane::print(){
   //Pretty print initialized plane info
-  cout << "SensorID: " << sensorID;
+  streamlog_out(DEBUG0) << "SensorID: " << sensorID;
   printf(" Z-position: %012.3f ", zPosition);
-  cout << " Hit sigma x: " << sigmas(0)
+  streamlog_out(DEBUG0) << " Hit sigma x: " << sigmas(0)
        << " Hit sigma y: " << sigmas(1)
        << " Sigma scatter theta: " << sqrt(scatterThetaSqr)
        << " Excluded: " << excluded << endl;
@@ -168,7 +168,7 @@ void TrackerSystem::clusterTracker(){
 
     if(candidate.size() < getMinClusterSize() ){ continue; }
     if(m_nTracks >= m_maxCandidates) {
-      std::cout << "Maximum number of track candidates(" << m_maxCandidates 
+      streamlog_out(WARNING5) << "Maximum number of track candidates(" << m_maxCandidates 
 		<< ") reached in DAF fitter! If this happens a lot, your configuration is probably off." 
 		<< " If you are sure you config is right, see trackersystem.h on how to increase it." << std::endl;
       return;
@@ -341,9 +341,9 @@ void TrackerSystem::checkNan(TrackEstimate* e){
       isnan(e->cov(1,1)) or
       isnan(e->cov(2,2)) or
       isnan(e->cov(3,3))){
-    cout << "Found nan!" << endl;
-    cout << e->params << endl;
-    cout << e->cov << endl;
+    streamlog_out(ERROR5) << "Found nan!" << endl;
+    streamlog_out(ERROR5) << e->params << endl;
+    streamlog_out(ERROR5) << e->cov << endl;
     exit(1);
   }
 }
