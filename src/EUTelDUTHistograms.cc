@@ -430,11 +430,6 @@ EUTelDUTHistograms::EUTelDUTHistograms()
                              "Name of the histogram information file",
                              _histoInfoFileName, string( "histoinfo.xml" ) );
 
-  registerProcessorParameter ("DebugEventCount",
-                              "Print out every DebugEnevtCount event",
-                              _debugCount,  static_cast < int > (100));
-
-
   registerOptionalParameter("cluSizeXCut","cluster size X cut ", _cluSizeXCut, static_cast <int> (-1) );
  
   registerOptionalParameter("cluSizeYCut","cluster size Y cut ", _cluSizeYCut, static_cast <int> (-1) );
@@ -551,14 +546,14 @@ void EUTelDUTHistograms::processRunHeader( LCRunHeader* runHeader) {
 
   int runNr = runHeader->getRunNumber();
 
-  message<MESSAGE5> ( log() << "Processing run header " << _nRun
+  message<DEBUG5> ( log() << "Processing run header " << _nRun
                      << ", run nr " << runNr );
 
   const std::string detectorName = runHeader->getDetectorName();
   const std::string detectorDescription = runHeader->getDescription();
   //  const std::vector<std::string> * subDets = runHeader->getActiveSubdetectors();
 
-  message<MESSAGE5> ( log() << detectorName << " : " << detectorDescription ) ;
+  message<DEBUG5> ( log() << detectorName << " : " << detectorDescription ) ;
 
 
 }
@@ -592,9 +587,6 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
     message<DEBUG5> ( "EORE found: nothing else to do." );
     return;
   }
-
-  bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
-//  debug = 1;
  
   if ( _nEvt % 1000 == 0 ) {
     streamlog_out( MESSAGE2 ) << "Processing event "
@@ -607,7 +599,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   int evtNr = event->getEventNumber();
 
 
-  if(debug)message<MESSAGE5> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
+  message<DEBUG5> ( log() << "Processing record " << _nEvt << " == event " << evtNr );
 
 
 
@@ -617,7 +609,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
    if( _inputFitHitColName != "dummy" )
    {
-     if(debug)message<MESSAGE5> ( log() << "inputFitHitColName = " << _inputFitHitColName << " (not dummy)" << endl); 
+     message<DEBUG5> ( log() << "inputFitHitColName = " << _inputFitHitColName << " (not dummy)" << endl); 
      if( read_track_from_collections( event ) > 0 ) 
      {
 //       message<MESSAGE5> ( log() << "no tracks existing!" << endl); 
@@ -626,7 +618,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
    } 
    else
    {
-     if(debug)message<MESSAGE5> ( log() << "inputFitHitColName = " << _inputFitHitColName << " (should be called dummy)" << endl); 
+     message<DEBUG5> ( log() << "inputFitHitColName = " << _inputFitHitColName << " (should be called dummy)" << endl); 
      if( read_track( event ) > 0 ) 
      {
 //       message<MESSAGE5> ( log() << "no tracks existing!" << endl); 
@@ -634,7 +626,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
      }
    }
   
-  if(debug)
+  if(streamlog_level(DEBUG5))
   {
     message<MESSAGE5> ( log() << _maptrackid  << " fitted tracks " ); 
     for( int itrack=0; itrack<_maptrackid; itrack++)
@@ -644,7 +636,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
   } 
 //return;
 
-  if(debug)message<MESSAGE5> ( log() << _measuredX.size() << " hits at DUT " );
+  message<DEBUG5> ( log() << _measuredX.size() << " hits at DUT " );
 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -657,7 +649,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_FittedYHistoName]))->fill(_fittedY[itrack][ifit]);
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_FittedXYHistoName]))->fill(_fittedX[itrack][ifit],_fittedY[itrack][ifit]);
-      if(debug)message<MESSAGE5> ( log() << "Fit " << ifit << " [track:"<< itrack << "] "
+      message<DEBUG5> ( log() << "Fit " << ifit << " [track:"<< itrack << "] "
                                 << "   X = " << _fittedX[itrack][ifit]
                                 << "   Y = " << _fittedY[itrack][ifit]) ;
     }
@@ -675,7 +667,7 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
       (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_MeasuredYHistoName]))->fill(_measuredY[ihit]);
 
       (dynamic_cast<AIDA::IHistogram2D*> ( _aidaHistoMap[_MeasuredXYHistoName]))->fill(_measuredX[ihit],_measuredY[ihit]);
-      if(debug)message<MESSAGE5> ( log() << "Hit " << ihit
+      message<DEBUG5> ( log() << "Hit " << ihit
                                 << "   X = " << _measuredX[ihit]
                                 << "   Y = " << _measuredY[ihit]) ;
     }
@@ -714,9 +706,9 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
             (_measuredX[ihit]-_fittedX[itrack][ifit])*(_measuredX[ihit]-_fittedX[itrack][ifit])
             + (_measuredY[ihit]-_fittedY[itrack][ifit])*(_measuredY[ihit]-_fittedY[itrack][ifit]);
 
-                  if(debug)message<MESSAGE5> ( log() << "Fit ["<< itrack << ":" << _maptrackid <<"], ifit= " << ifit << " ["<< _fittedX[itrack][ifit] << ":" << _fittedY[itrack][ifit] << "]" << endl) ;
-                  if(debug)message<MESSAGE5> ( log() << "rec " << ihit << " ["<< _measuredX[ihit] << ":" << _measuredY[ihit] << "]" << endl) ;
-                  if(debug)message<MESSAGE5> ( log() << "distance : " << TMath::Sqrt( dist2rd )  << endl) ;
+                  message<DEBUG5> ( log() << "Fit ["<< itrack << ":" << _maptrackid <<"], ifit= " << ifit << " ["<< _fittedX[itrack][ifit] << ":" << _fittedY[itrack][ifit] << "]" << endl) ;
+                  message<DEBUG5> ( log() << "rec " << ihit << " ["<< _measuredX[ihit] << ":" << _measuredY[ihit] << "]" << endl) ;
+                  message<DEBUG5> ( log() << "distance : " << TMath::Sqrt( dist2rd )  << endl) ;
           if(dist2rd<distmin)
             {
               distmin = dist2rd;
@@ -1044,12 +1036,9 @@ void EUTelDUTHistograms::processEvent( LCEvent * event ) {
 //  while(0);// distmin < _distMax*_distMax );
   
 
-  if(debug)
-    {     
-      message<MESSAGE5> ( log() << nMatch << " DUT hits matched to fitted tracks ");
-      message<MESSAGE5> ( log() << _measuredX.size() << " DUT hits not matched to any track ");
-      message<MESSAGE5> ( log() << "track "<<itrack<<" has " << _fittedX[itrack].size() << " _fittedX[itrack].size() not matched to any DUT hit ");
-    }
+    message<DEBUG5> ( log() << nMatch << " DUT hits matched to fitted tracks ");
+    message<DEBUG5> ( log() << _measuredX.size() << " DUT hits not matched to any track ");
+    message<DEBUG5> ( log() << "track "<<itrack<<" has " << _fittedX[itrack].size() << " _fittedX[itrack].size() not matched to any DUT hit ");
 
 
   // Efficiency plots - unmatched tracks
@@ -2920,7 +2909,7 @@ int EUTelDUTHistograms::guessSensorID(const double * hit )
 
    bool debug = ( _debugCount>0 );
 
-   if(debug)
+   if(streamlog_level(DEBUG5))
    {
       for(size_t ii = 0 ; ii <  static_cast<size_t>(_referenceHitVec->getNumberOfElements()); ii++)
       {
@@ -3040,7 +3029,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
 
   int nTrack = trackcol->getNumberOfElements()  ;
 
-  if(debug)message<MESSAGE5> ( log() << "Total of " << nTrack << " tracks in input collection " );
+  message<DEBUG5> ( log() << "Total of " << nTrack << " tracks in input collection " );
 
   if(nTrack == 0 ) return 1;
 
@@ -3085,9 +3074,9 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
   int nTracks = fit__col->getNumberOfElements()  ;
   int nRecHits = rec__col->getNumberOfElements()  ;
 
-  if(debug)message<MESSAGE5> ( log() << "\n tracks " << nTracks << " \n hits " <<  nRecHits << endl );
-  if(debug)message<MESSAGE5> ( log() << "Total of " << nTracks  <<" (fit) hits in input collection " );
-  if(debug)message<MESSAGE5> ( log() << "Total of " << nRecHits <<" (rec) hits  in input collection " );
+  message<DEBUG5> ( log() << "\n tracks " << nTracks << " \n hits " <<  nRecHits << endl );
+  message<DEBUG5> ( log() << "Total of " << nTracks  <<" (fit) hits in input collection " );
+  message<DEBUG5> ( log() << "Total of " << nRecHits <<" (rec) hits  in input collection " );
 
 
 // looking through a track info:
@@ -3146,7 +3135,6 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
 
               if( hsensorID == _iDUT  )  // get all fitted hits on board
                 {
-//                  if(debug)message<MESSAGE5> ( log() << "---   hit " << itrack << " id " << hsensorID << " point " <<  pos[0] << " "<< pos[1] << " " << pos[2] << endl );
 
                   _fittedX[_maptrackid].push_back(pos[0]);
                   _fittedY[_maptrackid].push_back(pos[1]);
@@ -3176,7 +3164,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
           _localX[_maptrackid].push_back(locX);
           _localY[_maptrackid].push_back(locY);
 
-          if(debug)message<MESSAGE5> ( log() << "_fittedX element [" << _fittedX[_maptrackid].size()-1 <<  "]" << _fittedX[_maptrackid][ _fittedX.size()-1] << " " << _fittedY[_maptrackid][ _fittedX.size()-1] << " for DUT " << hsensorID << endl);
+          message<DEBUG5> ( log() << "_fittedX element [" << _fittedX[_maptrackid].size()-1 <<  "]" << _fittedX[_maptrackid][ _fittedX.size()-1] << " " << _fittedY[_maptrackid][ _fittedX.size()-1] << " for DUT " << hsensorID << endl);
 
 //                  break;
                 }
@@ -3188,7 +3176,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
       _maptrackid++; 
    }
 
-  if(debug)
+  if(streamlog_level(DEBUG5))
   {
     for(int ii=0;ii<_maptrackid;ii++)
     {
@@ -3200,7 +3188,7 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
     }
   }
 
-  if(debug) message<MESSAGE5> ( log() << "rechits " << endl );
+  message<DEBUG5> ( log() << "rechits " << endl );
 
    // Clear local tables with measured position
   _clusterSizeX.clear();
@@ -3270,11 +3258,11 @@ int EUTelDUTHistograms::read_track_from_collections(LCEvent *event)
           _measuredY.push_back(pos[1]);
           _bgmeasuredX.push_back(pos[0]);
           _bgmeasuredY.push_back(pos[1]);
-          if(debug)message<MESSAGE5> ( log() << "_measured element [" << _measuredX.size()-1 <<  "]"  << _measuredX[ _measuredX.size()-1] << " " << _measuredY[ _measuredX.size()-1] << " for DUT " << hsensorID << endl);
+          message<DEBUG5> ( log() << "_measured element [" << _measuredX.size()-1 <<  "]"  << _measuredX[ _measuredX.size()-1] << " " << _measuredY[ _measuredX.size()-1] << " for DUT " << hsensorID << endl);
                }
             }
 
-    if(debug)message<MESSAGE5> ( log() << "Total of " << _measuredX.size() << " hits at DUT " << _iDUT << endl);
+    message<DEBUG5> ( log() << "Total of " << _measuredX.size() << " hits at DUT " << _iDUT << endl);
       
 
  return 0;
@@ -3325,7 +3313,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
   int nTrack = trackcol->getNumberOfElements()  ;
 
 
-  if(debug)message<MESSAGE5> ( log() << "Total of " << nTrack << " tracks in input collection " );
+  message<DEBUG5> ( log() << "Total of " << nTrack << " tracks in input collection " );
 
 // looking through a track info:
 // initialise a class-internal track counter:
@@ -3449,7 +3437,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
 
   nHit = hitcol->getNumberOfElements();
 
-  if(debug)message<MESSAGE5> ( log() << "Total of " << nHit << " tracker hits in input collection " );
+  message<DEBUG5> ( log() << "Total of " << nHit << " tracker hits in input collection " );
 
 
   for(int ihit=0; ihit< nHit ; ihit++)
@@ -3497,7 +3485,7 @@ int EUTelDUTHistograms::read_track(LCEvent *event)
        }
     }
 
-    if(debug)message<MESSAGE5> ( log() << "Total of " << _measuredX.size() << " hits at DUT " << _iDUT << endl);
+    message<DEBUG5> ( log() << "Total of " << _measuredX.size() << " hits at DUT " << _iDUT << endl);
 
  return 0;
 }
