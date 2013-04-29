@@ -178,22 +178,16 @@ private:
   DISALLOW_COPY_AND_ASSIGN(EUTelX0Processor)//See #define just above
   #endif
   
-  //!Cut and Store Hits
-  /*!This looks at the two layers and extrapolates a track line between them. It also allows for a cut to be made that stops tracks with angles greater than +/- anglecut.
-  size1 and size2 refer to the specific sizes of the number of hits in the first and second layer.
-  firstLayer and secondLayer inform the user in which two layers the extrapolation is being made. It is important that you get the order the right way around for the extrapolation. For instance, if going from layer 0 and 1 to layer 2 then the firstLayer = 0 and secondLayer = 1. But if going from layers 3 and 4 to 2 then the extrapolation is in the opposite direction and so firstLayer = 4 and secondLayer = 3.
-  */
-  void basicFitter(LCCollection *alignedHitCollection);
-  //!Caculate X0
+ //!Caculate X0
   /*!This function calculates the value of the material budget.
   */
   double calculateX0();
-  void printTrackParameters(EVENT::Track* track);
-  void printHitParameters(EVENT::TrackerHit* hit);
-  void testtrack(LCCollection *trackCollection);
+  std::vector< TVector3* > getHitsFromTrack(Track *track);
+  void printTrackParameters(EVENT::Track *track);
+  void printHitParameters(EVENT::TrackerHit *hit);
+  void singlePointResolution(EVENT::Track *track);
   void threePointResolution(EVENT::Track *track);
-  void createResiduals(LCCollection *trackCollection);
-  void kinkEstimate(EVENT::Track* track);
+  void kinkEstimate(EVENT::Track *track);
   void kinkGaussian();
 
   //Private member values
@@ -236,9 +230,6 @@ private:
   std::map<std::pair< Double_t, Double_t > , std::vector< TVector3 > > _residualProfile; //TODO(Phillip Hamnett): Can this be joined with _residual? //Used as above but for created a profile histogram
   int _runNumber;
   std::string _trackCollectionName;
-
-  std::vector< TVector3* > getHitsFromTrack(Track *track);
-  void singlePointResolution(EVENT::Track*);
 };
 //! A global instance of the processor
 EUTelX0Processor gEUTelX0Processor;

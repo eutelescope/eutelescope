@@ -74,6 +74,11 @@ void EUTelX0Processor::init()
   double minbin = -0.1, maxbin = 0.1;//Maximum and minimum bin values
   double minbinangle = -0.01, maxbinangle = 0.01, minbinalpha = -0.01, maxbinalpha = 0.01;
   std::vector<double> empty;  
+   
+  AIDA::IHistogram1D * SinglePointResidualXPlane0 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane0",nobins,minbin,maxbin);
+  SinglePointResidualXPlane0->setTitle("SinglePointResidualXPlane0");
+  _histoThing.insert(make_pair("SinglePointResidualXPlane0",SinglePointResidualXPlane0));
+  _histoData["SinglePointResidualXPlane0"] = empty;
   
   AIDA::IHistogram1D * SinglePointResidualXPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane1",nobins,minbin,maxbin);
   SinglePointResidualXPlane1->setTitle("SinglePointResidualXPlane1");
@@ -94,6 +99,16 @@ void EUTelX0Processor::init()
   SinglePointResidualXPlane4->setTitle("SinglePointResidualXPlane4");
   _histoThing.insert(make_pair("SinglePointResidualXPlane4",SinglePointResidualXPlane4));
   _histoData["SinglePointResidualXPlane4"] = empty;
+   
+  AIDA::IHistogram1D * SinglePointResidualXPlane5 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane5",nobins,minbin,maxbin);
+  SinglePointResidualXPlane5->setTitle("SinglePointResidualXPlane5");
+  _histoThing.insert(make_pair("SinglePointResidualXPlane5",SinglePointResidualXPlane5));
+  _histoData["SinglePointResidualXPlane5"] = empty;
+   
+  AIDA::IHistogram1D * SinglePointResidualYPlane0 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane0",nobins,minbin,maxbin);
+  SinglePointResidualXPlane0->setTitle("SinglePointResidualXPlane0");
+  _histoThing.insert(make_pair("SinglePointResidualXPlane0",SinglePointResidualXPlane0));
+  _histoData["SinglePointResidualXPlane0"] = empty;
  
   AIDA::IHistogram1D * SinglePointResidualYPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualYPlane1",nobins,minbin,maxbin);
   SinglePointResidualYPlane1->setTitle("SinglePointResidualYPlane1");
@@ -114,6 +129,11 @@ void EUTelX0Processor::init()
   SinglePointResidualYPlane4->setTitle("SinglePointResidualYPlane4");
   _histoThing.insert(make_pair("SinglePointResidualYPlane4",SinglePointResidualYPlane4));
   _histoData["SinglePointResidualYPlane4"] = empty;
+   
+  AIDA::IHistogram1D * SinglePointResidualYPlane5 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane5",nobins,minbin,maxbin);
+  SinglePointResidualXPlane5->setTitle("SinglePointResidualXPlane5");
+  _histoThing.insert(make_pair("SinglePointResidualXPlane5",SinglePointResidualXPlane5));
+  _histoData["SinglePointResidualXPlane5"] = empty;
  
   AIDA::IHistogram1D * ThreePointResidualXPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualXPlane1",nobins,minbin,maxbin);
   ThreePointResidualXPlane1->setTitle("ThreePointResidualXPlane1");
@@ -373,11 +393,11 @@ void EUTelX0Processor::printHitParameters( TrackerHit* trackhit ){
 void EUTelX0Processor::kinkEstimate(Track* track){
   //This function works out an angle based on a straight line fitted from plane 0 to 2 and plane 5 to 3
   //It will also store all other angles in histograms too
-  streamlog_out(MESSAGE0) << "Running function kinkEstimate(Track* " << &track << ")" << std::endl;
+  streamlog_out(DEBUG0) << "Running function kinkEstimate(Track* " << &track << ")" << std::endl;
   
   //First we extract the relevant hits from the track
   std::vector< TVector3* > hits = getHitsFromTrack(track);
-  streamlog_out(MESSAGE0) << "Successfully got hits from track" << std::endl;
+  streamlog_out(DEBUG3) << "Successfully got hits from track" << std::endl;
   //Then we find the position where those lines would have hit the DUT
   //THIS IS TO BE DECIDED IF IT IS NEEDED LATER
 
@@ -403,93 +423,54 @@ void EUTelX0Processor::kinkEstimate(Track* track){
     yforward << "Angle Y Forward Plane " << i;
     xbackward << "Angle X Backward Plane " << i+1;
     ybackward << "Angle Y Backward Plane " << i+1;
-    dynamic_cast< AIDA::IHistogram1D* >(_histoThing[xforward.str().c_str()])->fill(frontanglex);
-    dynamic_cast< AIDA::IHistogram1D* >(_histoThing[yforward.str().c_str()])->fill(frontangley);
-    dynamic_cast< AIDA::IHistogram1D* >(_histoThing[xbackward.str().c_str()])->fill(backanglex);
-    dynamic_cast< AIDA::IHistogram1D* >(_histoThing[ybackward.str().c_str()])->fill(backangley);
+    try{
+      dynamic_cast< AIDA::IHistogram1D* >(_histoThing[xforward.str().c_str()])->fill(frontanglex);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << xforward.str().c_str() << endl;
+    }
+    try{
+      dynamic_cast< AIDA::IHistogram1D* >(_histoThing[yforward.str().c_str()])->fill(frontangley);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << yforward.str().c_str() << endl;
+    }
+    try{
+      dynamic_cast< AIDA::IHistogram1D* >(_histoThing[xbackward.str().c_str()])->fill(backanglex);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << xbackward.str().c_str() << endl;
+    }
+    try{
+      dynamic_cast< AIDA::IHistogram1D* >(_histoThing[ybackward.str().c_str()])->fill(backangley);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << ybackward.str().c_str() << endl;
+    }
   }
  
   int scatterxsize = static_cast< int >(scatterx.size());
   for(int i = 0; i < scatterxsize-1; ++i){
     double scatteringanglex = scatterx[i+1] - scatterx[i];
     double scatteringangley = scattery[i+1] - scattery[i];
-    std::stringstream scatterx,scattery,scatterxy;
-    scatterx << "Scattering Angle X Plane " << i+1;
-    scattery << "Scattering Angle Y Plane " << i+1;
-    scatterxy << "Kink Angle Plane " << i+1;
-    dynamic_cast< AIDA::IHistogram1D* >(_histoThing[scatterx.str().c_str()])->fill(scatteringanglex);
-    dynamic_cast< AIDA::IHistogram1D* >(_histoThing[scattery.str().c_str()])->fill(scatteringangley);
-    dynamic_cast< AIDA::IHistogram2D* >(_histoThing[scatterxy.str().c_str()])->fill(scatteringanglex,scatteringangley);
+    std::stringstream ssscatterx,ssscattery,ssscatterxy;
+    ssscatterx << "Scattering Angle X Plane " << i+1;
+    ssscattery << "Scattering Angle Y Plane " << i+1;
+    ssscatterxy << "Kink Angle Plane " << i+1;
+    try{
+      dynamic_cast< AIDA::IHistogram1D* >(_histoThing[ssscatterx.str().c_str()])->fill(scatteringanglex);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterx.str().c_str() << endl;
+    }
+    try{
+      dynamic_cast< AIDA::IHistogram1D* >(_histoThing[ssscattery.str().c_str()])->fill(scatteringangley);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscattery.str().c_str() << endl;
+    }
+    try{
+      dynamic_cast< AIDA::IHistogram2D* >(_histoThing[ssscatterxy.str().c_str()])->fill(scatteringanglex,scatteringangley);
+    } catch(std::bad_cast &bc){
+      streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterxy.str().c_str() << endl;
+    }
   }
 
-  
-
-
-
-
-
-
-/*
-  try{
-    double residualxfront = (x2 + x0)/2.0 - x1;
-    double residualyfront = (y2 + y0)/2.0 - y1;
-    double residualxback = (x5 + x3)/2.0 - x4;
-    double residualyback = (y5 + y3)/2.0 - y4;
-    streamlog_out(DEBUG0) << "Filled the front and back residuals" << std::endl;
-    if(sqrt(pow(residualxfront,2) + pow(residualyfront,2)) > _residualCut
-       || sqrt(pow(residualxback,2) + pow(residualyback,2)) > _residualCut){
-      //This if statement determines if the residual is good enough to consider this an actual track. If not then the if statment is executed and an exception is thrown
-      throw _residualCut;
-    }
-    streamlog_out(DEBUG0) << "Successfully checked for whether the particle passed the residual cut selection" << std::endl;
-   
-    double deltaxfront = x2 - x0;
-    double deltaxback = x5 - x3;
-  
-    double deltayfront = y2 - y0;
-    double deltayback = y5 - y3;
-    
-    double deltazfront = z2 - z0;
-    double deltazback = z5 - z3;
-  
-    double radianstodegrees = 180/3.1415;
-  
-    if(deltazfront == 0 || deltazback == 0){
-      std::string errormessage("Program attempted to divide by zero (due to deltazfront or deltazback being equal to zero). Therefore this particular track will be ignored in the histograms.");
-      throw errormessage;
-    }
-    double anglexfront = atan2(deltaxfront,deltazfront)*radianstodegrees;
-    double anglexback = atan2(deltaxback,deltazback)*radianstodegrees;
-  
-    double angleyfront = atan2(deltayfront,deltazfront)*radianstodegrees;
-    double angleyback = atan2(deltayback,deltazback)*radianstodegrees;
-    streamlog_out(DEBUG0) << "Successfully filled all the angles" << std::endl;
-    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Angle X Front"])->fill(anglexfront);
-    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Angle Y Front"])->fill(angleyfront);
-    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Angle X Back"])->fill(anglexback);
-    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Angle Y Back"])->fill(angleyback);
-    //Then we add these two angles together and return the result
-    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Scattering Angle X"])->fill(anglexfront + anglexback);
-    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Scattering Angle Y"])->fill(angleyfront + angleyback);
-    double kinkangle = sqrt(pow(anglexfront + anglexback,2) + pow(angleyfront + angleyback,2));  //Not sure if this is the correct way to work out the angle
-    dynamic_cast< AIDA::IHistogram1D* >(_histoThing["Kink Angle"])->fill(kinkangle);
-    streamlog_out(DEBUG0) << "Successfully filled all the histograms" << std::endl;
-  } catch(double residual){
-      if(residual == _residualCut){
-        streamlog_out(DEBUG8) << "A track was rejected because the straight line fit through it had too large of a resolution, the resolution was great than " << _residualCut << "." << std::endl << 
-        "Therefore the data was not added to the histogram and will be ignored. If you see this message a lot it means either your cut is too small or the track candidates created in other processors are too loose" << std::endl;
-      } else{
-        streamlog_out(ERROR9) << "Unknown exception occured in EUTelX0Processor::kinkEstimate, the catch for doubles caught the following value: " << residual << std::endl;
-        exit(1);
-      }
-    } catch(std::string errormessage){
-    streamlog_out(DEBUG8) << errormessage.c_str() << std::endl;
-  } catch(...){
-    streamlog_out(ERROR9) << "Unknown exception occured in EUTelX0Processor, at a guess I would say this was caused by the dynamic casting of AIDA Histograms" << std::endl;
-    exit(1);
-  }
-  */
-  streamlog_out(MESSAGE0) << "Made it to the end of kinkEstimate()" << endl;
+  streamlog_out(DEBUG3) << "Made it to the end of kinkEstimate()" << endl;
 }
 
 void EUTelX0Processor::kinkGaussian(){
@@ -549,77 +530,6 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
     exit(1);
   }
   _eventNumber++;
-}
-
-void EUTelX0Processor::createResiduals(LCCollection *trackCollection){
-  int sizeElement = trackCollection->getNumberOfElements();
-  for(int i = 0; i < sizeElement; ++i){
-    Track* trackElement = dynamic_cast< Track* >(trackCollection->getElementAt(i));
-    const vector< TrackerHit* > hits = trackElement->getTrackerHits();
-    int sizeHits = hits.size();
-    map< int, TVector3 > vecHits;
-    for(int j = 0; j < sizeHits; ++j){
-      if(hits[j]->getType() >= 32){  //Insist on a fitted hit
-        TVector3 temp(hits[j]->getPosition()[0],hits[j]->getPosition()[1],hits[j]->getPosition()[2]);
-        int layer = guessSensorID(hits[j]->getPosition());
-        vecHits[layer] = temp;
-      }
-    }
-    //Now we have all the hits of a track, we have to work out what the residual of the track is
-    //Start with the forward residuals (TODO: (Phillip Hamnett) add the backward residuals too at some point)
-    for(int j = 0; j < _noLayers; ++j){
-      double dxf,dyf,dzf;
-      if(j == 0){
-        dxf = vecHits[j+1].x() - vecHits[j].x();
-        dyf = vecHits[j+1].y() - vecHits[j].y();
-        dzf = vecHits[j+1].z() - vecHits[j].z();
-      }
-      else if(j == 5){
-        dxf = dyf = dzf = 0;
-      }
-      else{
-        dxf = vecHits[j+1].x() - vecHits[j].x();
-        dyf = vecHits[j+1].y() - vecHits[j].y();
-        dzf = vecHits[j+1].z() - vecHits[j].z();
-      }
-      if(dxf != 0 || dyf != 0 || dzf != 0){
-        (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualX"]))->fill(dxf/dzf);
-        (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualY"]))->fill(dyf/dzf);
-//        (dynamic_cast< AIDA::IHistogram1D* > (_histoThing[_histoResidualXY]))->fill(dxf/dyf);
-      }
-    }
-  }
-}
-
-void EUTelX0Processor::testtrack(LCCollection *trackCollection){
-  if(_debug){
-    streamlog_out( DEBUG5 ) << "trackCollection contains " << trackCollection->getNumberOfElements() << " elements" << std::endl;
-    streamlog_out( DEBUG5 ) << "The elements are as follows: " << std::endl;
-    for(int i = 0; i < trackCollection->getNumberOfElements(); ++i){
-      Track* trackElement = dynamic_cast< Track* >(trackCollection->getElementAt(i));
-      streamlog_out( DEBUG5 ) << "Element " << i << " contains the following values:" << std::endl;
-      streamlog_out( DEBUG5 ) << "D0 = " << trackElement->getD0() << std::endl
-           << "Omega = " << trackElement->getOmega() << std::endl
-           << "Phi = " << trackElement->getPhi() << std::endl
-           << "Z0 = " << trackElement->getZ0() << std::endl
-           << "Tan Lambda = " << trackElement->getTanLambda() << std::endl
-           << "Reference Point = " << trackElement->getReferencePoint()[0] << ", " <<  trackElement->getReferencePoint()[1] << ", " << trackElement->getReferencePoint()[2] << std::endl
-           << "Type = " << trackElement->getType() << std::endl
-           << "Chi2 = " << trackElement->getChi2() << std::endl 
-           << "Degrees of Freedom = " << trackElement->getNdf() << std::endl 
-           << "The covariance matrix is as follows:" << std::endl;
-      const vector<float> covMatrix = trackElement->getCovMatrix();
-      for(size_t j = 0; j < covMatrix.size(); ++j){
-        streamlog_out( DEBUG5 ) << covMatrix[j] << std::endl;
-      }
-      streamlog_out( DEBUG5 ) <<  "The track hits are finally listed here:" << std::endl;
-      const vector<TrackerHit*> hits = trackElement->getTrackerHits();
-      for(size_t j = 0; j < hits.size(); ++j){
-        streamlog_out( DEBUG5 ) << "Hit " << j << " = " << hits[j]->getPosition()[0] << ", " <<  hits[j]->getPosition()[1] << ", " << hits[j]->getPosition()[2]  << std::endl;
-      }
-      streamlog_out( DEBUG5 ) << std::endl;
-    }
-  }
 }
 
 int EUTelX0Processor::guessSensorID(const double * hit )
@@ -776,30 +686,48 @@ void EUTelX0Processor::singlePointResolution(Track *track){
 //It then compares that hit with the actual hit on that next plane and the differencce is plotted
   streamlog_out(DEBUG1) << "Function EUTeoX0Processor::singlePointResolution(Track *" << &track << ") called" << std::endl;
   std::vector< TVector3* > hits = getHitsFromTrack(track);
+  int i = 0;
   for(std::vector< TVector3* >::iterator it = hits.begin(); it != hits.end(); ++it){
-    if(it == hits.begin()){
-      streamlog_out(DEBUG0) << "Processing first hit in singlePointResolution" << std::endl;
-      double x0, y0, x1, y1, x2, y2, z0, z1, z2;
-      x0 = (*it)->x();
-      y0 = (*it)->y();
-      z0 = (*it)->z();
-      x1 = (*it + 1)->x();
-      y1 = (*it + 1)->y();
-      z1 = (*it + 1)->z();
-      x2 = (*it + 2)->x();
-      y2 = (*it + 2)->y();
-      z2 = (*it + 2)->z();
-      double predictx, predicty;
+    stringstream histogramnamex,histogramnamey;
+    histogramnamex << "SinglePointResidualXPlane" << i;
+    histogramnamey << "SinglePointResidualYPlane" << i;
+    double x0, y0, x1, y1, x2, y2, z0, z1, z2;
+    x0 = (*it)->x();
+    y0 = (*it)->y();
+    z0 = (*it)->z();
+    x1 = (*it + 1)->x();
+    y1 = (*it + 1)->y();
+    z1 = (*it + 1)->z();
+    x2 = (*it + 2)->x();
+    y2 = (*it + 2)->y();
+    z2 = (*it + 2)->z();
+    double predictx, predicty;
+    if(it == hits.begin() || it == hits.begin() + 1){
+      predictx = (x2-x1)*(z2-z0)/(z2-z1);
+      predicty = (y2-y1)*(z2-z0)/(z2-z1);
+      try{
+        dynamic_cast< AIDA::IHistogram1D* > (_histoThing[histogramnamex.str().c_str()])->fill(x0 - predictx);
+      } catch(std::bad_cast &bc){
+        streamlog_out(ERROR3) << "Unable to fill histogram: " << histogramnamex.str().c_str() << endl;
+      }
+      try{
+        dynamic_cast< AIDA::IHistogram1D* > (_histoThing[histogramnamey.str().c_str()])->fill(y0 - predicty);
+      } catch(std::bad_cast &bc){
+        streamlog_out(ERROR3) << "Unable to fill histogram: " << histogramnamey.str().c_str() << endl;
+      }
+    } else {
       predictx = (x1-x0)*(z2-z0)/(z1-z0);
       predicty = (y1-y0)*(z2-z0)/(z1-z0);
-      dynamic_cast< AIDA::IHistogram1D* > (_histoThing["SinglePointResidualXPlane1"])->fill(x2 - predictx);
-      dynamic_cast< AIDA::IHistogram1D* > (_histoThing["SinglePointResidualYPlane1"])->fill(y2 - predicty);
-    } else if(it == hits.end()){
-      streamlog_out(DEBUG0) << "Processing last hit in singlePointResolution" << std::endl;
-      
-    }
-    else{
-
+       try{
+        dynamic_cast< AIDA::IHistogram1D* > (_histoThing[histogramnamex.str().c_str()])->fill(x2 - predictx);
+      } catch(std::bad_cast &bc){
+        streamlog_out(ERROR3) << "Unable to fill histogram: " << histogramnamex.str().c_str() << endl;
+      }
+      try{
+        dynamic_cast< AIDA::IHistogram1D* > (_histoThing[histogramnamey.str().c_str()])->fill(y2 - predicty);
+      } catch(std::bad_cast &bc){
+        streamlog_out(ERROR3) << "Unable to fill histogram: " << histogramnamey.str().c_str() << endl;
+      }     
     }
   }
 
@@ -809,226 +737,38 @@ void EUTelX0Processor::threePointResolution(Track *track){
 //This function draws a line between the hits in plane i and i+2
 //then it compares where the hit in plane i+1 is with the average of the other two planes
 //this is then plotted as a residual for each plane.
-  streamlog_out(DEBUG0) << "Function EUTelX0Processor::threePointResolution(Track *" << &track << ") called" << std::endl;
+  streamlog_out(ERROR0) << "Function EUTelX0Processor::threePointResolution(Track *" << &track << ") called" << std::endl;
 
   std::vector< TrackerHit* > trackhits = track->getTrackerHits();
   std::vector< TVector3* > hits = getHitsFromTrack(track);
   int i = 1;
   for(std::vector< TVector3* >::iterator it = hits.begin(); it != hits.end() - 2; ++it){
     //This determines the guess of the position of the particle as it should hit the middle sensor
+    streamlog_out(ERROR0) << "In the for loop of the three point resolution function" << endl;
     double averagingfactor = ((*it + 1)->z() - (*it)->z())/((*it + 2)->z() - (*it)->z());
     if(averagingfactor == 0){
+      streamlog_out(ERROR0) << "Averaging factor == 0)" << endl;
       continue;
     }
     double averagex = ((*it)->x() + (*it + 2)->x())/averagingfactor;
     double averagey = ((*it)->y() + (*it + 2)->x())/averagingfactor;
     double middlex = (*it + 1)->x();
     double middley = (*it + 1)->y();
-
-    stringstream ResidualX, ResidualY;
-    ResidualX << "ResidualXPlane" << i;
-    ResidualY << "ResidualYPlane" << i;
+    std::stringstream ResidualX, ResidualY;
+    ResidualX << "ThreePointResidualXPlane" << i;
+    ResidualX << "ThreePointResidualYPlane" << i;
     try{
-      dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualX"])->fill(averagex - middlex);
-      dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualY"])->fill(averagey - middley);
       dynamic_cast< AIDA::IHistogram1D* > (_histoThing[ResidualX.str().c_str()])->fill(averagex - middlex);
+    } catch(std::bad_cast& bc){
+      streamlog_out(ERROR5) << "Unable to fill histogram " << ResidualX.str() << " due to bad cast" << std::endl;
+    }
+    try{
       dynamic_cast< AIDA::IHistogram1D* > (_histoThing[ResidualY.str().c_str()])->fill(averagey - middley);
     } catch(std::bad_cast& bc){
-      streamlog_out(ERROR5) << "Unable to fill histograms due to bad cast" << std::endl;
+      streamlog_out(ERROR5) << "Unable to fill histogram " << ResidualY.str() << " due to bad cast" << std::endl;
     }
+    streamlog_out(ERROR0) << "Made it to the end of the for loop" << endl;
     i++;
   }
-/*
-  map< int, vector< TVector3> > hitvectortemp;//Temporary map for storing vectors of hit information pre-cut
-  for(std::vector< TrackerHit* >::iterator it = trackhits.begin(); it != trackhits.end(); ++it){
-    TrackerHit* tHit = *it;//Get the hit from each element of the collection
-    const double* pos = tHit->getPosition();//Get the position of the hit in x, y and z
-    int layernumber = guessSensorID(pos);//Get the layer number of the hit
-    Double_t X = pos[0], Y = pos[1], Z = pos[2];//Store the hit positions as Double_t's to keep ROOT happy
-    TVector3 tempvec(X,Y,Z);//Add the positions to a TVector3
-    hitvectortemp[layernumber].push_back(tempvec);//Then put it in the temporary map
-  }
-  for(int i = 0; i < _noLayers - 1; ++i){
-    streamlog_out(DEBUG0) << "Entering layer " << i << std::endl;
-    size_t hitvecisize = hitvectortemp[i].size();
-    size_t hitveci2size = hitvectortemp[i+2].size();
-    size_t hitveci1size = hitvectortemp[i+1].size();
-    streamlog_out(DEBUG0) << "Hit vector sizes are: " << hitvecisize << "," << hitveci2size << "," << hitveci1size << std::endl;
-    for(size_t j = 0; j < hitvecisize; ++j){
-      TVector3 hiti = hitvectortemp[i][j];
-      for(size_t k = 0; k < hitveci2size; ++k){
-        TVector3 hiti2 = hitvectortemp[i+2][k];
-        for(size_t l = 0; l < hitveci1size; ++l){
-          TVector3 hiti1 = hitvectortemp[i+1][l];
-          double averagex = (hiti.x() + hiti2.x())/2.0;
-          double averagey = (hiti.y() + hiti2.y())/2.0;
-          streamlog_out(DEBUG0) << "Does the value fall within cut parameters?" << std::endl
-                    << "x^2 + y^2 = " << pow((averagex-hiti1.x()),2) + pow((averagey-hiti1.y()),2) << std::endl
-                    << "cutValue1 = " << _cutValue1 << std::endl;
-          if(sqrt(pow((averagex-hiti1.x()),2) + pow((averagey-hiti1.y()),2)) < _cutValue1){
-            streamlog_out(DEBUG0) << "Filling histograms for residuals" << std::endl;
-            (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualX"]))->fill(averagex - hiti1.x());
-            (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualY"]))->fill(averagey - hiti1.y());
-            if(i == 0){
-              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualXPlane1"]))->fill(averagex - hiti1.x());
-              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualYPlane1"]))->fill(averagey - hiti1.y());
-            }
-            else if(i == 1){
-              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualXPlane2"]))->fill(averagex - hiti1.x());
-              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualYPlane2"]))->fill(averagey - hiti1.y());
-            }
-            else if(i == 2){
-              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualXPlane3"]))->fill(averagex - hiti1.x());
-              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualYPlane3"]))->fill(averagey - hiti1.y());
-            }
-            else if(i == 3){
-              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualXPlane4"]))->fill(averagex - hiti1.x());
-              (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualYPlane4"]))->fill(averagey - hiti1.y());
-            }
-          }
-        }
-      }
-    }
-  }
-*/
-}
-
-void EUTelX0Processor::basicFitter(LCCollection *alignedHitCollection){
-  
-  map< int, vector< TVector3> > hitvectortemp;//Temporary map for storing vectors of hit information pre-cut
-  int collectionsize = alignedHitCollection->getNumberOfElements();
-  for(int i = 0; i < collectionsize; ++i){
-    TrackerHit* tHit = dynamic_cast<TrackerHit*>(alignedHitCollection->getElementAt(i));//Get the hit from each element of the collection
-    const double* pos = tHit->getPosition();//Get the position of the hit in x, y and z
-    int layernumber = guessSensorID(pos);//Get the layer number of the hit
-    Double_t X = pos[0], Y = pos[1], Z = pos[2];//Store the hit positions as Double_t's to keep ROOT happy
-    TVector3 tempvec(X,Y,Z);//Add the positions to a TVector3
-    hitvectortemp[layernumber].push_back(tempvec);//Then put it in the temporary map
-    if(_debug == true){
-      cout << "In for loop 'for(int i = 0; i < collectionsize; ++i)':" << std::endl
-           << "layernumber = " << layernumber << ", X = " << X << ", Y = " << Y << ", Z = " << Z << std::endl
-           << "hitvectortemp[" << layernumber << "].size() = " << hitvectortemp[layernumber].size() << std::endl;
-    }
-  }//End of: for(int i = 0; i < colSize; ++i)
-  if(_debug == true){
-    cout << "So now, hitvectortemp contains: " << std::endl;
-    for(map< int, vector< TVector3 > >::iterator it = hitvectortemp.begin(); it != hitvectortemp.end(); ++it){
-      int layer = it->first;
-      cout << "Layer " << layer << ":" << std::endl;
-      for(vector< TVector3 >::iterator it2 = it->second.begin(); it2 != it->second.end(); ++it2){
-        cout  << it2->x() << ", " << it2->y() << ", " << it2->z() << std::endl;
-      }
-    }
-  }
-  double layerdifference = 0.1;  //This is the radius of a circle in which the two particles must lie
-  vector< pair< TVector3, TVector3 > > relatedhits01;
-  if(_debug == true){
-    cout << "The following hits are within each others acceptable position difference (radius) of " << layerdifference << ":" << std::endl;
-  }
-  for(vector< TVector3 >::iterator hit0 = hitvectortemp[0].begin(); hit0 != hitvectortemp[0].end(); ++hit0){
-    for(vector< TVector3 >::iterator hit1 = hitvectortemp[1].begin(); hit1 != hitvectortemp[1].end(); ++hit1){
-      if(sqrt(pow(hit0->x() - hit1->x(),2) + pow(hit0->y() - hit1->y(),2)) < layerdifference){
-        if(_debug == true){
-          cout << "Layer 0: " << hit0->x() << ", " << hit0->y() << ", " << hit0->z() << std::endl;
-          cout << "Layer 1: " << hit1->x() << ", " << hit1->y() << ", " << hit1->z() << std::endl;
-        }
-        pair< TVector3, TVector3 > relatedhits(*hit0,*hit1);
-        relatedhits01.push_back(relatedhits);
-      }
-    }
-  }
-  if(_debug == true){
-    cout << "The number of related hits in Layers 0 and 1 is:  " << relatedhits01.size() << std::endl;
-  }
-  //Make a projected point on layer 2 based on all related hits
-  vector< TVector3 > projectedhits01;
-  for(vector< pair< TVector3, TVector3 > >::iterator it = relatedhits01.begin(); it != relatedhits01.end(); ++it){
-    TVector3 projectedhit(2*it->second.x() - it->first.x(), 2*it->second.y() - it->first.y(), 2*it->second.z());
-    projectedhits01.push_back(projectedhit);
-  }
-  if(_debug == true){
-    cout << "These are the predicted positions in layer 2 based on layers 0 and 1:" << std::endl;
-    for(vector< TVector3 >::iterator it = projectedhits01.begin(); it != projectedhits01.end(); ++it){
-      cout << it->x() << ", " << it->y() << ", " << it->z() << std::endl;
-    }
-  }
-  //Clean up
-  relatedhits01.clear();
-  //Now to repeat on the other side, and then compare results
-  vector< pair< TVector3, TVector3 > > relatedhits43;
-  if(_debug == true){
-    cout << "The following hits are within each others acceptable position difference (radius) of " << layerdifference << ":" << std::endl;
-  }
-  for(vector< TVector3 >::iterator hit4 = hitvectortemp[4].begin(); hit4 != hitvectortemp[4].end(); ++hit4){
-    for(vector< TVector3 >::iterator hit3 = hitvectortemp[3].begin(); hit3 != hitvectortemp[3].end(); ++hit3){
-      if(sqrt(pow(hit4->x() - hit3->x(),2) + pow(hit4->y() - hit3->y(),2)) < layerdifference){
-        if(_debug == true){
-          cout << "Layer 4: " << hit4->x() << ", " << hit4->y() << ", " << hit4->z() << std::endl;
-          cout << "Layer 3: " << hit3->x() << ", " << hit3->y() << ", " << hit3->z() << std::endl;
-        }
-        pair< TVector3, TVector3 > relatedhits(*hit4,*hit3);
-        relatedhits43.push_back(relatedhits);
-      }
-    }
-  }
-  if(_debug == true){
-    cout << "The number of related hits in Layers 4 and 3 is:  " << relatedhits43.size() << std::endl;
-  }
-  //Make a projected point on layer 2 based on all related hits
-  vector< TVector3 > projectedhits43;
-  for(vector< pair< TVector3, TVector3 > >::iterator it = relatedhits43.begin(); it != relatedhits43.end(); ++it){
-    TVector3 projectedhit(2*it->second.x() - it->first.x(), 2*it->second.y() - it->first.y(), 2*it->second.z());
-    projectedhits43.push_back(projectedhit);
-  }
-  if(_debug == true){
-    cout << "These are the predicted positions in layer 2 based on layers 4 and 3:" << std::endl;
-    for(vector< TVector3 >::iterator it = projectedhits43.begin(); it != projectedhits43.end(); ++it){
-      cout << it->x() << ", " << it->y() << ", " << it->z() << std::endl;
-    }
-  }
-  //Clean up
-  relatedhits43.clear();
-  cout << "projectedhits01.size() = " << projectedhits01.size() << std::endl;
-  cout << "projectedhits43.size() = " << projectedhits43.size() << std::endl;
-  //Now we have projected hits in the 2nd layer from both the forward and backward direction. Now we make a residual between the two assuming that anything within a radius of 'layerdifference' of each other should be taken account of only
-  for(vector< TVector3 >::iterator hits012 = projectedhits01.begin(); hits012 != projectedhits01.end(); ++hits012){
-    for(vector< TVector3 >::iterator hits432 = projectedhits43.begin(); hits432 != projectedhits43.end(); ++ hits432){  
-      if(sqrt(pow(hits012->x() - hits432->x(),2) + pow(hits012->y() - hits432->y(),2)) < layerdifference){
-        cout << "Hit recorded in histogram" << std::endl;
-        double newx = hits012->x() - hits432->x();
-        double newy = hits012->y() - hits432->y();
-        double newz = 20;  //HACK - find a better way of deducing the z position of layer 2
-        Double_t theta012 = (atan(hits012->x()/newz)/3.14)*180;
-        Double_t phi012 = (atan(hits012->y()/newz)/3.14)*180;
-        Double_t alpha012 = tan(theta012)*tan(phi012)/sqrt(tan(theta012)*tan(theta012) + tan(phi012)*tan(phi012));
-        Double_t theta432 = (atan(hits432->x()/newz)/3.14)*180;
-        Double_t phi432 = (atan(hits432->y()/newz)/3.14)*180;
-        Double_t alpha432 = tan(theta432)*tan(phi432)/sqrt(tan(theta432)*tan(theta432) + tan(phi432)*tan(phi432));
-        if(_debug == true){
-          cout << newx << ", " << newy << ", " << newz << std::endl;
-          cout << theta012 << ", " << phi012 << ", " << alpha012 << std::endl;
-        }
-        (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualX"]))->fill(newx);
-        (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["ResidualY"]))->fill(newy);
-        (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["Theta012"]))->fill(theta012);
-        (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["Phi012"]))->fill(phi012);
-        (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["Alpha012"]))->fill(alpha012);
-        (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["Theta432"]))->fill(theta432);
-        (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["Phi432"]))->fill(phi432);
-        (dynamic_cast< AIDA::IHistogram1D* > (_histoThing["Alpha432"]))->fill(alpha432);
-        _histoData["ResidualX"].push_back(newx);
-        _histoData["ResidualY"].push_back(newy);
-        _histoData["Theta012"].push_back(theta012);
-        _histoData["Phi012"].push_back(phi012);
-        _histoData["Alpha012"].push_back(alpha012);
-        _histoData["Theta432"].push_back(theta432);
-        _histoData["Phi432"].push_back(phi432);
-        _histoData["Alpha432"].push_back(alpha432);
-      }
-    }
-  }
-  projectedhits01.clear();
-  projectedhits43.clear();
-
 }
 
