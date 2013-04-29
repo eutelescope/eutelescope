@@ -95,13 +95,8 @@ EUTelCorrelator::EUTelCorrelator () : Processor("EUTelCorrelator") {
   // modify processor description
   _description =
     "EUTelCorrelator fills histograms with correlation plots";
-/*
-  registerInputCollection(LCIO::TRACKERPULSE,"InputClusterCollectionName",
-                          "Cluster (pulse) collection name",
-                          _inputClusterCollectionName, string ( "cluster" ) );
-*/
+
   EVENT::StringVec	      _clusterCollectionVecExample;
-//  _clusterCollectionVecExample.push_back("cluster");
   
   registerInputCollections ( LCIO::TRACKERPULSE, "InputClusterCollections",
                             "List of cluster collections",
@@ -361,7 +356,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
     for( size_t i = 0; i < _clusterCollectionVec.size() ; i++ )
     {
-       _inputClusterCollectionName = _clusterCollectionVec[i];
+      std::string _inputClusterCollectionName = _clusterCollectionVec[i];
 
        try 
        {
@@ -431,7 +426,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
       for( size_t i = 0; i < _clusterCollectionVec.size() ; i++ )
       {
-         _ExternalInputClusterCollectionName = _clusterCollectionVec[i];
+         std::string _ExternalInputClusterCollectionName = _clusterCollectionVec[i];
 
          LCCollectionVec * externalInputClusterCollection   = static_cast<LCCollectionVec*>   (event->getCollection( _ExternalInputClusterCollectionName ));
          CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder( externalInputClusterCollection );
@@ -513,7 +508,7 @@ void EUTelCorrelator::processEvent (LCEvent * event) {
 
         for( size_t i = 0; i < _clusterCollectionVec.size() ; i++ )
         {
-          _InternalInputClusterCollectionName = _clusterCollectionVec[i];
+          std::string _InternalInputClusterCollectionName = _clusterCollectionVec[i];
 
          LCCollectionVec * internalInputClusterCollection   = static_cast<LCCollectionVec*>   (event->getCollection( _InternalInputClusterCollectionName ));
          CellIDDecoder<TrackerPulseImpl>  pulseCellDecoder( internalInputClusterCollection );

@@ -157,13 +157,6 @@ namespace eutelescope {
     //! set the plane you would like to use as a reference/strating point for correlation plots
     int _fixedPlaneID;
 
-    //! Input cluster collection name
-    /*! This is the name of the collection containing the input clusters
-     */
-    std::string _inputClusterCollectionName;
-    std::string _InternalInputClusterCollectionName;
-    std::string _ExternalInputClusterCollectionName;
-
     //! vector of correlation band cuts in X (upper limit)
     std::vector< float  > _residualsXMax;
     //! vector of correlation band cuts in X (lower limit) 
