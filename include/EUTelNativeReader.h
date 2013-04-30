@@ -257,8 +257,6 @@ namespace eutelescope {
      *  have been found in the current run
      */
     unsigned int _eudrbTotalOutOfSyncEvent;
-
-    int _maxRecord;
   };
 
   //! A global instance of the processor

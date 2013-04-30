@@ -117,11 +117,6 @@ EUTelNativeReader::EUTelNativeReader ():
 
   registerProcessorParameter("SyncTriggerID", "Resynchronize the events based on the TLU trigger ID",
                              _syncTriggerID, false );
-
-  registerProcessorParameter("MaxRecordNumber", "Maximum number of records to convert",
-                             _maxRecord, static_cast<int>(10000) );
-
-
 }
 
 EUTelNativeReader * EUTelNativeReader::newProcessor () {
@@ -191,15 +186,7 @@ void EUTelNativeReader::readDataSource(int numEvents) {
       processEORE( eudaqEvent );
 
     } else {
-
-      if(eventCounter > _maxRecord){
-        ++eventCounter;
-        if(eventCounter %10000 == 0){
-          streamlog_out(MESSAGE9) << "Skipping event " << eventCounter << endl;
-        }
-        break;
-      }
-
+ 
       LCEvent * lcEvent = eudaq::PluginManager::ConvertToLCIO( eudaqEvent );
 
       if ( lcEvent == NULL ) {
