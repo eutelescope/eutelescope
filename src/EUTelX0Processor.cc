@@ -105,10 +105,10 @@ void EUTelX0Processor::init()
   _histoThing.insert(make_pair("SinglePointResidualXPlane5",SinglePointResidualXPlane5));
   _histoData["SinglePointResidualXPlane5"] = empty;
    
-  AIDA::IHistogram1D * SinglePointResidualYPlane0 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane0",nobins,minbin,maxbin);
-  SinglePointResidualXPlane0->setTitle("SinglePointResidualXPlane0");
-  _histoThing.insert(make_pair("SinglePointResidualXPlane0",SinglePointResidualXPlane0));
-  _histoData["SinglePointResidualXPlane0"] = empty;
+  AIDA::IHistogram1D * SinglePointResidualYPlane0 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualYPlane0",nobins,minbin,maxbin);
+  SinglePointResidualYPlane0->setTitle("SinglePointResidualYPlane0");
+  _histoThing.insert(make_pair("SinglePointResidualYPlane0",SinglePointResidualYPlane0));
+  _histoData["SinglePointResidualYPlane0"] = empty;
  
   AIDA::IHistogram1D * SinglePointResidualYPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualYPlane1",nobins,minbin,maxbin);
   SinglePointResidualYPlane1->setTitle("SinglePointResidualYPlane1");
@@ -130,10 +130,10 @@ void EUTelX0Processor::init()
   _histoThing.insert(make_pair("SinglePointResidualYPlane4",SinglePointResidualYPlane4));
   _histoData["SinglePointResidualYPlane4"] = empty;
    
-  AIDA::IHistogram1D * SinglePointResidualYPlane5 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane5",nobins,minbin,maxbin);
-  SinglePointResidualXPlane5->setTitle("SinglePointResidualXPlane5");
-  _histoThing.insert(make_pair("SinglePointResidualXPlane5",SinglePointResidualXPlane5));
-  _histoData["SinglePointResidualXPlane5"] = empty;
+  AIDA::IHistogram1D * SinglePointResidualYPlane5 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualYPlane5",nobins,minbin,maxbin);
+  SinglePointResidualYPlane5->setTitle("SinglePointResidualYPlane5");
+  _histoThing.insert(make_pair("SinglePointResidualYPlane5",SinglePointResidualYPlane5));
+  _histoData["SinglePointResidualYPlane5"] = empty;
  
   AIDA::IHistogram1D * ThreePointResidualXPlane1 = AIDAProcessor::histogramFactory(this)->createHistogram1D("ThreePointResidualXPlane1",nobins,minbin,maxbin);
   ThreePointResidualXPlane1->setTitle("ThreePointResidualXPlane1");
@@ -730,7 +730,6 @@ void EUTelX0Processor::singlePointResolution(Track *track){
       }     
     }
   }
-
 }
 
 void EUTelX0Processor::threePointResolution(Track *track){
