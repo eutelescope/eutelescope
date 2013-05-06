@@ -182,16 +182,16 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor ()
   // now the optional parameters
   registerProcessorParameter ("CorrectionMethod",
                               "Available methods are:\n"
-                              " 0 --> shift only \n"
-                              " 1 --> rotation first \n"
-                              " 2 --> shift first ",
+                              " 0 -> shift only \n"
+                              " 1 -> rotation first \n"
+                              " 2 -> shift first ",
                               _correctionMethod, static_cast<int > (1));
 
   // now the optional parameters
   registerProcessorParameter ("ApplyAlignmentDirection",
                               "Available directinos are:\n"
-                              " 0 --> direct  \n"
-                              " 1 --> reverse ",
+                              " 0 -> direct  \n"
+                              " 1 -> reverse ",
                               _applyAlignmentDirection, static_cast<int > (0));
 
 
