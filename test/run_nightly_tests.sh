@@ -56,7 +56,7 @@ while :; do
         ctest -E MemCheck -D Nightly # also performs SVN update
 	#ctest -D Experimental # does no SVN update before building
 	echo " .. running memory usage checks .."
-	ctest -D MemoryCheck
+	ctest -R MemCheck -D MemoryCheck
 	echo " .. my job is done done for now, going to sleep on $(date) .. "
 	sleep 59
     fi
