@@ -26,10 +26,10 @@
 
 namespace eutelescope {
 
-        void EUTelExhaustiveTrackFinder::PruneTrackCandidates( std::map< int, EVENT::TrackerHitVec >& trackCandidates ) {
-            std::map< int, EVENT::TrackerHitVec >::iterator itr;
+        void EUTelExhaustiveTrackFinder::PruneTrackCandidates( std::vector< EVENT::TrackerHitVec >& trackCandidates ) {
+            std::vector< EVENT::TrackerHitVec >::iterator itr;
             for( itr = trackCandidates.begin(); itr != trackCandidates.end();  ) {
-                if( itr->second.size() < 6 ) trackCandidates.erase( itr++ );
+                if( (*itr).size() < 6 ) trackCandidates.erase( itr++ );
             }
             return;
         }
@@ -49,7 +49,7 @@ namespace eutelescope {
         }
         
         void EUTelExhaustiveTrackFinder::FindTracks2( int& missinghits,
-                                                      std::map< int, EVENT::TrackerHitVec >& trackCandidates,
+                                                      std::vector< EVENT::TrackerHitVec >& trackCandidates,
                                                       EVENT::TrackerHitVec& vec,
                                                       const std::vector<EVENT::TrackerHitVec>& _allHitsArray,
                                                       unsigned int iPlane,
@@ -106,9 +106,9 @@ namespace eutelescope {
                     bool takehit = true;
                     const int e = vec.size() - 2;
                     if (e >= 0) {
-                        double residualX = fabs(vec[ e ]->getPosition()[0] - vec[e + 1]->getPosition()[0]);
-                        double residualY = fabs(vec[ e ]->getPosition()[1] - vec[e + 1]->getPosition()[1]);
-                        double residualZ = fabs(vec[ e ]->getPosition()[2] - vec[e + 1]->getPosition()[2]);
+                        double residualX = (vec[ e ]->getPosition()[0] - vec[e + 1]->getPosition()[0]);
+                        double residualY = (vec[ e ]->getPosition()[1] - vec[e + 1]->getPosition()[1]);
+                        double residualZ = (vec[ e ]->getPosition()[2] - vec[e + 1]->getPosition()[2]);
                         streamlog_out(DEBUG0) << "residuals:" << std::endl;
                         streamlog_out(DEBUG0) << residualX << std::endl;
                         streamlog_out(DEBUG0) << residualY << std::endl;
@@ -135,9 +135,9 @@ namespace eutelescope {
                         // now loop through all hits on a track candidate "vec"
                         // start at the end, stop on the first non-zero hit
                         if (vec[e] != NULL ) { // non zero hit has a pointer vec[e] != NULL
-                            residualX = fabs(vec[ e ]->getPosition()[0] - vec[e + 1]->getPosition()[0]);
-                            residualY = fabs(vec[ e ]->getPosition()[1] - vec[e + 1]->getPosition()[1]);
-                            residualZ = fabs(vec[ e ]->getPosition()[2] - vec[e + 1]->getPosition()[2]);
+                            residualX = (vec[ e ]->getPosition()[0] - vec[e + 1]->getPosition()[0]);
+                            residualY = (vec[ e ]->getPosition()[1] - vec[e + 1]->getPosition()[1]);
+                            residualZ = (vec[ e ]->getPosition()[2] - vec[e + 1]->getPosition()[2]);
                         }
 
                         if( residualX < _residualsXMin[e] || residualX > _residualsXMax[e] ||
@@ -155,7 +155,7 @@ namespace eutelescope {
 //			for_each( aCandidate.begin(), aCandidate.end(), std::bind1st( std::mem_fun(&IMPL::TrackImpl::addHit), track ) );
 //			trackCandidates.push_back( track );
 //			delete track;
-                        trackCandidates.insert( std::make_pair( static_cast< int >(trackCandidates.size()), aCandidate) );
+                        trackCandidates.push_back( aCandidate );
                         streamlog_out(DEBUG0) << "indexarray size at last plane:" << trackCandidates.size() << std::endl;
 		    }
 //                    vec.pop_back(); //last element must be removed because the
@@ -165,7 +165,7 @@ namespace eutelescope {
         }
 
         void EUTelExhaustiveTrackFinder::FindTracks1( int& missinghits,
-                                                      std::map< int, EVENT::TrackerHitVec >& indexarray,
+                                                      std::vector< EVENT::TrackerHitVec >& indexarray,
                                                       EVENT::TrackerHitVec& vec,
                                                       const std::vector<EVENT::TrackerHitVec>& _allHitsArray,
                                                       unsigned int iPlane,
@@ -242,7 +242,7 @@ namespace eutelescope {
 
                     if (taketrack) {
                             EVENT::TrackerHitVec aCandidate = vec;         //copy vec, because it will be reused
-                            indexarray.insert( std::make_pair(static_cast< int >(indexarray.size()), aCandidate) );
+                            indexarray.push_back( aCandidate );
                             streamlog_out(DEBUG0) << "indexarray size at last plane:" << indexarray.size() << std::endl;
                     }
                     vec.pop_back(); //last element must be removed because the

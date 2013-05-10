@@ -8,6 +8,7 @@
 
 // C++
 #include <map>
+#include <string>
 
 // LCIO includes
 #include "LCIOSTLTypes.h"
@@ -20,6 +21,11 @@
 #include "gear/SiPlanesLayerLayout.h"
 #include "gear/SiPlanesParameters.h"
 
+#ifdef USE_TGEO
+// ROOT
+#include "TGeoManager.h"
+#endif //USE_TGEO
+
 // built only if GEAR is available
 #ifdef USE_GEAR
 
@@ -29,6 +35,18 @@ public:
     EUTelGeometryTelescopeGeoDescription(const EUTelGeometryTelescopeGeoDescription& orig);
     virtual ~EUTelGeometryTelescopeGeoDescription();
 
+public:
+    // TGeo stuff
+    
+    /** Initialize TGeo geometry 
+     * Establish access to TGeoManager, load geometry description file.
+     * 
+     * @param tgeofilename name of a .root or .gdml file with valid geometry
+     * 
+     * @see ROOT TGeoManager::Import
+     */
+    void initializeTGeoDescription( std::string tgeofilename );
+    
 public:
     /** Silicon planes parameters as described in GEAR
      * This structure actually contains the following:
@@ -51,6 +69,7 @@ public:
      *  init() phase and stored for local use
      */
     gear::SiPlanesLayerLayout* _siPlanesLayerLayout;
+
 
 public:
     //    /** Ordered sensor ID
@@ -85,6 +104,19 @@ public:
     /** Number of planes including DUT */
     size_t _nPlanes;
 
+
+#ifdef  USE_TGEO
+public:
+    // TGeo stuff
+    /** @TODO this must be coupled with GEAR
+     * description. No checks of consistency between GEAR and TGeo
+     * descriptions are being done, currently.
+     */
+
+    /** Geometry manager global object */
+    TGeoManager* _geoManager;
+#endif // USE_TGEO
+    
 };
 
 #endif  // USE_GEAR

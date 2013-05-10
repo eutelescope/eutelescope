@@ -29,6 +29,7 @@
 #include "EUTelUtility.h"
 #include "EUTelExhaustiveTrackFinder.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
+#include "EUTelLCObjectTrackCandidate.h"
 // Cluster types
 #include "EUTelSparseCluster2Impl.h"
 #include "EUTelSparseClusterImpl.h"
@@ -214,8 +215,11 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent( LCEvent * evt ) 
 
     // Do not process last events
     if ( event->getEventType( ) == kEORE ) {
-        streamlog_out( DEBUG2 ) << "EORE found: nothing else to do." << std::endl;
+        streamlog_out ( DEBUG4 ) << "EORE found: nothing else to do." << endl;
         return;
+    } else if ( event->getEventType( ) == kUNKNOWN ) {
+        streamlog_out ( WARNING2 ) << "Event number " << event->getEventNumber( ) << " in run " << event->getRunNumber( )
+                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
     }
 
     // Try to access collection
@@ -240,7 +244,7 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent( LCEvent * evt ) 
         int _nTracks = 0;
         int _nGoodTracks = 0;
 
-        std::map< int, EVENT::TrackerHitVec > trackCandidates;
+        vector< EVENT::TrackerHitVec > trackCandidates;
 
         streamlog_out( DEBUG1 ) << "Event #" << _nProcessedEvents << std::endl;
         streamlog_out( DEBUG1 ) << "Initialising hits for _theFinder..." << std::endl;
@@ -276,26 +280,31 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent( LCEvent * evt ) 
 
 
 
-//        // Write output collection
-//
-//        // add new track candidates to the collection
-//        LCCollectionVec * trkCandCollection = 0;
-//        try {
-//            trkCandCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
-//        } catch ( ... ) {
-//            streamlog_out  ( WARNING2 ) << "Can't allocate output collection" << endl;
-//        }
+        // Write output collection
+
+        // add new track candidates to the collection
+        LCCollectionVec * trkCandCollection = 0;
+        try {
+            trkCandCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
+        } catch ( ... ) {
+            streamlog_out  ( WARNING2 ) << "Can't allocate output collection" << endl;
+        }
 //        
-//        trkCandCollection->push_back( trackCandidates );
-//        try {
-//            evt->getCollection( _trackCandidateHitsOutputCollectionName ) ;
-//        } catch ( ... ) {
-//            evt->addCollection( trkCandCollection, _trackCandidateHitsOutputCollectionName );
-//        }
+        LCGenericObjectImpl* lcTrackCandidates = 
+                new EUTelLCObjectTrackCandidate( trackCandidates );
+        
+        trkCandCollection->push_back( lcTrackCandidates );
+        try {
+            evt->getCollection( _trackCandidateHitsOutputCollectionName ) ;
+        } catch ( ... ) {
+            evt->addCollection( trkCandCollection, _trackCandidateHitsOutputCollectionName );
+        }
 
     }
 
     _nProcessedEvents++;
+    
+    if ( isFirstEvent() ) _isFirstEvent = false;
 }
 
 // @TODO LCEvent* evt must be removed from the list of arguments

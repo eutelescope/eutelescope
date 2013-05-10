@@ -1,12 +1,11 @@
-/* 
+/** 
  * File:   EUTelExhaustiveTrackFinder.h
  * Contact: denys.lontkovskyi@desy.de
  *
- * Created on January 27, 2013, 6:25 PM
  */
 
 #ifndef EXHAUSTIVETRACKFINDER_H
-#define	EXHAUSTIVETRACKFINDER_H
+#define	EXHAUSTIVETRACKFINDER_H 1
 
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
@@ -22,12 +21,17 @@
 
 namespace eutelescope {
 
+    /** @class EUTelExhaustiveTrackFinder perfors search of trach candidates 
+     *  Search algorithm is based on enumeration of all possible combinations
+     * of hits that may come from a single track
+     * 
+     */
     class EUTelExhaustiveTrackFinder : public EUTelTrackFinder {
     public:
         EUTelExhaustiveTrackFinder() : 
                 EUTelTrackFinder( "EUTelExhaustiveTrackFinder" ),
                 _allowedMissingHits(0),
-                _maxTrackCandidates(9999),
+                _maxTrackCandidates(100),
                 _mode(2),
 		_residualsYMin(),
 		_residualsXMin(),
@@ -38,7 +42,7 @@ namespace eutelescope {
         EUTelExhaustiveTrackFinder(std::string name) : 
                EUTelTrackFinder(name),
 	       _allowedMissingHits(0), 
-      	       _maxTrackCandidates(9999), 
+      	       _maxTrackCandidates(100), 
    	       _mode(2),
    	       _residualsYMin(),
 	       _residualsXMin(),
@@ -52,7 +56,7 @@ namespace eutelescope {
             _residualsYMax.clear();
         };
 
-        EUTelExhaustiveTrackFinder(std::string name, int allowedMissingHits, int maxTrackCandidates) : 
+        EUTelExhaustiveTrackFinder(std::string name, unsigned int allowedMissingHits, unsigned int maxTrackCandidates) : 
 		EUTelTrackFinder(name), 
 		_allowedMissingHits(allowedMissingHits),
 		_maxTrackCandidates(maxTrackCandidates),
@@ -72,22 +76,29 @@ namespace eutelescope {
         virtual ~EUTelExhaustiveTrackFinder() {
         };
 
+        // Getters and Setters
+        
+    public:
         inline int GetAllowedMissingHits() const {
             return _allowedMissingHits;
         };
 
-        inline void SetAllowedMissingHits(int allowedMissingHits) {
+        inline void SetAllowedMissingHits( unsigned int allowedMissingHits) {
             this->_allowedMissingHits = allowedMissingHits;
         }
         
+        
+    public:
         inline int GetMaxTrackCandidates() const {
             return _maxTrackCandidates;
         };
 
-        inline void SetMaxTrackCandidates(int maxTrackCandidates) {
+        inline void SetMaxTrackCandidates( unsigned int maxTrackCandidates) {
             this->_maxTrackCandidates = maxTrackCandidates;
         }
         
+        
+    public:
         void SetResidualsYMin( const EVENT::FloatVec& residualsYMin ) {
             this->_residualsYMin.resize(residualsYMin.size());
             std::copy(residualsYMin.begin(), residualsYMin.end(), _residualsYMin.begin());
@@ -98,6 +109,8 @@ namespace eutelescope {
             std::copy(residualsYMax.begin(), residualsYMax.end(), _residualsYMax.begin());
         }
         
+        
+    public:
         void SetResidualsXMin( const EVENT::FloatVec& residualsXMin ) {
             this->_residualsXMin.resize(residualsXMin.size());
             std::copy(residualsXMin.begin(), residualsXMin.end(), _residualsXMin.begin());
@@ -108,23 +121,25 @@ namespace eutelescope {
             std::copy(residualsXMax.begin(), residualsXMax.end(), _residualsXMax.begin());
         }
 
+    public:
         void SetDistanceMaxVec( const EVENT::FloatVec& distanceMaxVec) {
             this->_distanceMaxVec.resize(distanceMaxVec.size());
             std::copy(distanceMaxVec.begin(), distanceMaxVec.end(), _distanceMaxVec.begin());
         }
         
+    public:
         inline int GetMode() const { return _mode; }
 
-        inline void SetMode(int _mode) { this->_mode = _mode; }
+        inline void SetMode(int mode = 2) { this->_mode = mode; }
         
     protected:
         EUTelTrackFinder::SearchResult DoTrackSearch();
         
     private:
-        void FindTracks1(int&, std::map< int, EVENT::TrackerHitVec >&, EVENT::TrackerHitVec&, const std::vector< EVENT::TrackerHitVec> &, unsigned int, EVENT::TrackerHit*);
-        void FindTracks2(int&, std::map< int, EVENT::TrackerHitVec >&, EVENT::TrackerHitVec&, const std::vector< EVENT::TrackerHitVec> &, unsigned int, EVENT::TrackerHit*);
+        void FindTracks1(int&, std::vector< EVENT::TrackerHitVec >&, EVENT::TrackerHitVec&, const std::vector< EVENT::TrackerHitVec> &, unsigned int, EVENT::TrackerHit*);
+        void FindTracks2(int&, std::vector< EVENT::TrackerHitVec >&, EVENT::TrackerHitVec&, const std::vector< EVENT::TrackerHitVec> &, unsigned int, EVENT::TrackerHit*);
         
-        void PruneTrackCandidates( std::map< int, EVENT::TrackerHitVec >& );
+        void PruneTrackCandidates( std::vector< EVENT::TrackerHitVec >& );
 
     private:
         int _allowedMissingHits;
