@@ -53,7 +53,7 @@ FIND_PACKAGE( MarlinUtil 1.2 REQUIRED )
 FIND_PACKAGE( GSL )
 FIND_PACKAGE( AIDA )
 FIND_PACKAGE( EUDAQ )
-FIND_PACKAGE( ROOT COMPONENTS Minuit )
+FIND_PACKAGE( ROOT COMPONENTS Minuit Geom )
 FIND_PACKAGE( LCCD  REQUIRED )               
 # Uncomment as soon as we have Eigen from system library or elsewhere
 #FIND_PACKAGE( Eigen )
