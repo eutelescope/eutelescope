@@ -151,7 +151,8 @@ void EUTelNativeReader::readDataSource(int numEvents) {
   }
   catch(...){
     streamlog_out( ERROR5 ) << "eudaq::FileReader could not read the input file ' " << _fileName << " '. Please verify that the path and file name are correct." << endl;
-    exit(1);
+//    exit(1);
+     throw ParseException("Problems with reading file " + _fileName );
   }
 
   if ( reader->Event().IsBORE() ) {

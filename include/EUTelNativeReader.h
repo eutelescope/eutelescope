@@ -106,7 +106,7 @@ namespace eutelescope {
 
     //! Creates events from the eudaq software
     /*! This is the real method. This is looping over all the events
-     *  containied into the native file and calling the appropriate
+     *  contained into the native file and calling the appropriate
      *  decoder for each of the subevent found into the current event.
      *
      *  When reading the BORE a list of EUTelBaseDetector derived
