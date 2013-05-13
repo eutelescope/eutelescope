@@ -21,6 +21,8 @@
 #include <AIDA/IProfile1D.h>
 #endif
 
+#ifdef USE_GBL
+
 // GBL
 #include "include/MilleBinary.h"
 
@@ -159,6 +161,8 @@ namespace eutelescope {
     EUTelProcessorTrackingGBLTrackFit gEUTelProcessorTrackingGBLTrackFit;
 
 } // eutelescope
+
+#endif // USE_GBL
 
 #endif	/* EUTELESCOPEPROCESSORTRACKINGGBLTRACKFIT_H */
 

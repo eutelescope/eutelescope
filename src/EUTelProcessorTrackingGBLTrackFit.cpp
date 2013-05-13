@@ -1,5 +1,4 @@
-//#ifdef YO
-#include "EUTelProcessorTrackingGBLTrackFit.h"
+#ifdef USE_GBL
 
 // C++
 #include <map>
@@ -29,6 +28,8 @@
 #endif
 
 // EUTELESCOPE
+#include "EUTelProcessorTrackingGBLTrackFit.h"
+
 #include "EUTelExceptions.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
@@ -532,4 +533,5 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms( ) {
     }
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 }
-//#endif // YO
+
+#endif // USE_GBL
