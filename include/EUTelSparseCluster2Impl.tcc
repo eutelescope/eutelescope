@@ -16,7 +16,12 @@
 namespace eutelescope {
 
   template<class PixelType>
-  EUTelSparseCluster2Impl<PixelType>::EUTelSparseCluster2Impl(IMPL::TrackerDataImpl * data) : EUTelVirtualCluster(data) {
+  EUTelSparseCluster2Impl<PixelType>::EUTelSparseCluster2Impl(IMPL::TrackerDataImpl * data) : 
+    EUTelVirtualCluster(data),
+    _nElement(0),
+    _type(kUnknownPixelType),
+    _trackerData()
+  {
 
     std::auto_ptr<PixelType> pixel( new PixelType);
     _nElement       = pixel->getNoOfElements();

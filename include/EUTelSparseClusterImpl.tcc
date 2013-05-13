@@ -17,15 +17,19 @@ using namespace EVENT;
 namespace eutelescope {
 
   template<class PixelType>
-  EUTelSparseClusterImpl<PixelType>::EUTelSparseClusterImpl(IMPL::TrackerDataImpl * data) : EUTelVirtualCluster(data) {
+  EUTelSparseClusterImpl<PixelType>::EUTelSparseClusterImpl(IMPL::TrackerDataImpl * data) : 
+    EUTelVirtualCluster(data),
+    _nElement(0),
+    _type(kUnknownPixelType),
+    _noiseValues(),
+    _noiseSetSwitch(false)
+  {
 
     std::auto_ptr<PixelType> pixel( new PixelType);
     _nElement       = pixel->getNoOfElements();
     _type           = pixel->getSparsePixelType();
     _trackerData    = data;
-    _noiseSetSwitch = false;
     _noiseValues.clear();
-
   }
 
 
