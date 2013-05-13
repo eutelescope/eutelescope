@@ -114,51 +114,68 @@ optional arguments:
      for parsing: http://docs.python.org/2/library/configparser.html
 
 *** Example
-    The following is an excerpt from jobsub/examples/datura-alone/config.cfg:
+    The following is an excerpt from jobsub/examples/datura-noDUT/config.cfg:
     #+begin_src conf
-    [DEFAULT]
-    # global section. Settings can be overwritten through task-specific sections
-    # the template file name can be set with
-    # TemplateFile = file.xml
-    # The default is '[task]-tmp.xml'
-    BasePath     		= %(eutelescopepath)s/jobsub/examples/datura-alone
-    TemplatePath		= %(BasePath)s/steering-templates
-    # set the folder which contains the raw/native data files
-    NativeFolder            = /afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaAlone
-    # geometry file
-    GEARFile    		= gear_desy2012_06f_tb21.xml
-    # histogram information
-    Histoinfo   		= histoinfo.xml
-    # format for the output; @RunNumber@ is the current 
-    # run number padded with leading zeros to 6 digits
-    Output			= run@RunNumber@
-    # which run number to use for hot pixel determination (use current run)
-    HotpixelRunNumber	= @RunNumber@
-    # do not skip events
-    SkipNEvents = 
-    # recommended subfolder structure:
-    LocalFolderOutputBase	= ./output
-    LcioRawFolder            	= %(LocalFolderOutputBase)s/lcio-raw
-    DBPath			= %(LocalFolderOutputBase)s/db
-    ResultsPath			= %(LocalFolderOutputBase)s/results
-    HistoPath			= %(LocalFolderOutputBase)s/histo
-    LogPath			= %(LocalFolderOutputBase)s/logs
-    # limit processing of run to a certain number of events
-    MaxRecordNumber = 100000
 
-    [converter]
-    # section for the converter step
-    # nothing specific to set here
+     [DEFAULT]
+     # Global section. Settings can be overwritten through task-specific sections
+     # The python config parser interprets '%(NAME)s' as the corresponding variable NAME.
+     # The template file name can be set with TemplateFile = file.xml. The default is '[task]-tmp.xml'
+     
+     BasePath     		= %(eutelescopepath)s/jobsub/examples/datura-noDUT
+     TemplatePath		= %(BasePath)s/steering-templates
+     
+     # Set the folder which contains the raw/native data files
+     # You can find a data sample at /afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT
+     NativePath		= /data/user/eicht/testbeam/telescope_150mm/native
+     
+     # Geometry file
+     GearFile    		= gear_desy2012_150mm.xml
+     
+     # Path to the geometry file
+     GeometryPath		= %(BasePath)s
+     
+     # Output format; @RunNumber@ is the current run number padded with leading zeros to 6 digits
+     FilePrefix   	 	= run@RunNumber@	
 
-    [align]
-    InputFile		= %(ResultsPath)s/run@RunNumber@-hit.slcio
-    PedeSteeringFile	= %(TemplatePath)s/pede-steer-tmp.txt
-    # do not need so many events for alignment - this overwrites global value set above
-    MaxRecordNumber     = 75000
-    ResidualXMin        = -300. -300. -300. -600. -600. -600.
-    ResidualXMax        =  300.  300.  300.  600.  600.  600.
-    ResidualYMin        = -300. -300. -300. -600. -600. -600.
-    ResidualYMax        =  300.  300.  300.  600.  600.  600.
+     # Limit processing of a run to a certain number of events
+     MaxRecordNumber		= 99999999
+     
+     # Output subfolder structure
+     DatabasePath		= ./output/database
+     LcioPath		        = ./output/lcio
+     HistogramPath		= ./output/histograms
+     LogPath			= ./output/logs
+
+     # The verbosity used by the eutelescope producers 
+     # (i.e. MESSAGE, DEBUG, ERROR with appended level from 0..9, e.g. MESSAGE5).
+     # If you set this to DEBUG0 but you do not see any DEBUG messages, 
+     # make sure that you set CMAKE_BUILD_TYPE to Debug in the 
+     # $EUTELESCOPE/CMakeList.txt file.
+     Verbosity		= MESSAGE
+     # Verbosity = DEBUG
+     
+     
+     # Section for the converter step
+     [converter]
+     # Hot Pixel detection
+     FiringFrequency		= 0.1
+
+     
+     # Section for the clustering step
+     [clustering]
+     # Clustering alogrithm
+     ClusteringAlgorithm	= SparseCluster2
+
+     
+     # Section for the hitmaker step
+     [hitmaker]
+     # Choose center of gravity algorithm (FULL, NPixel or NxMPixel), see documentation for information.
+     CenterOfGravity		= FULL
+     
+     # Parameters for center of gravity algorithms:
+     NPixel			= 9
+     NxMPixel		= 3 3
     #+end_src
 
 ** Table (comma-separated text file)
@@ -205,7 +222,8 @@ optional arguments:
    becomes:
 
    #+begin_example
-    <parameter name="FileName" type="string" value= /my/path/to/data/1234.lcio /my/path/to/data/1235.lcio /my/path/to/data/1236.lcio /my/path/to/data/1237.lcio/>
+    <parameter name="FileName" type="string" value= /my/path/to/data/1234.lcio 
+            /my/path/to/data/1235.lcio /my/path/to/data/1236.lcio /my/path/to/data/1237.lcio/>
    #+end_example
 
    This can be useful if you want to combine several runs e.g. for alignment.
