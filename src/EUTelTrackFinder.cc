@@ -44,7 +44,7 @@ namespace eutelescope {
     }
     
     
-    std::map<int, EVENT::TrackerHitVec> EUTelTrackFinder::GetTrackCandidates() const {
+    std::vector< EVENT::TrackerHitVec > EUTelTrackFinder::GetTrackCandidates() const {
         
         if( !_isReady ) {
             streamlog_out( ERROR ) << "Track finder " << _name << std::endl;
