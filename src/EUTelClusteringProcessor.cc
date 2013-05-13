@@ -58,10 +58,6 @@
 #endif
 
 // system includes <>
-#ifdef MARLINDEBUG
-#include <fstream>
-#include <cassert>
-#endif
 #include <string>
 #include <sstream>
 #include <vector>
@@ -75,24 +71,6 @@ using namespace std;
 using namespace lcio;
 using namespace marlin;
 using namespace eutelescope;
-
-#ifdef MARLINDEBUG
-/// /* DEBUG */ ofstream logfile;
-#endif
-
-// definition of static members mainly used to name histograms
-#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-std::string EUTelClusteringProcessor::_clusterSignalHistoName      = "clusterSignal";
-std::string EUTelClusteringProcessor::_clusterSizeXHistoName       = "clusterSizeX";
-std::string EUTelClusteringProcessor::_clusterSizeYHistoName       = "clusterSizeY";
-std::string EUTelClusteringProcessor::_seedSignalHistoName         = "seedSignal";
-std::string EUTelClusteringProcessor::_hitMapHistoName             = "hitMap";
-std::string EUTelClusteringProcessor::_seedSNRHistoName            = "seedSNR";
-std::string EUTelClusteringProcessor::_clusterNoiseHistoName       = "clusterNoise";
-std::string EUTelClusteringProcessor::_clusterSNRHistoName         = "clusterSNR";
-std::string EUTelClusteringProcessor::_cluster_vs_seedSNRHistoName = "cluster_vs_seedSNR";
-std::string EUTelClusteringProcessor::_eventMultiplicityHistoName  = "eventMultiplicity";
-#endif
 
 static const int  MAXCLUSTERSIZE = 4096;
 
@@ -122,13 +100,11 @@ EUTelClusteringProcessor::EUTelClusteringProcessor ()
   _fillHistos(false),
   _histoInfoFileName(""),
   _seedCandidateMap(),
-  _indexMap(),
   _totClusterMap(),
   _noOfDetector(0),
   _ExcludedPlanes(),
   _clusterSpectraNVector(),
   _clusterSpectraNxNVector(),
-  _aidaHistoMap(),
   _siPlanesParameters(NULL),
   _siPlanesLayerLayout(NULL),
   _isGeometryReady(false),
@@ -145,7 +121,21 @@ EUTelClusteringProcessor::EUTelClusteringProcessor ()
   hotPixelCollectionVec(NULL),
   hasNZSData(false),
   hasZSData(false),
-  _hitIndexMapVec()
+  _hitIndexMapVec(),
+  _clusterSignalHistos(),
+  _clusterSizeXHistos(),
+  _clusterSizeYHistos(),
+  _seedSignalHistos(),
+  _hitMapHistos(),
+  _seedSNRHistos(),
+  _clusterNoiseHistos(),
+  _clusterSNRHistos(),
+  _cluster_vs_seedSNRHistos(),
+  _eventMultiplicityHistos(),
+  _clusterSignal_NHistos(),
+  _clusterSNR_NHistos(),
+  _clusterSignal_NxNHistos(),
+  _clusterSNR_NxNHistos()
  {
   
   // modify processor description
@@ -1210,38 +1200,8 @@ void EUTelClusteringProcessor::digitalFixedFrameClustering(LCEvent * evt, LCColl
                                 // nothing to do?
                             }
 
-//                            bool isHit  = true;
-//                            bool isGood = true;
-
- //                           if( _dataFormatType == EUTELESCOPE::BINARY )
- //                           {
-//                                isHit  = ( status->getADCValues()[ _indexMap[index] ] == EUTELESCOPE::HITPIXEL  );
-//                                isGood = ( status->getADCValues()[ _indexMap[index] ] == EUTELESCOPE::GOODPIXEL );
- //                           }
-//                            else
-//                            {
-//                                isHit  = ( status->getADCValues()[index] == EUTELESCOPE::HITPIXEL  );
-//                                isGood = ( status->getADCValues()[index] == EUTELESCOPE::GOODPIXEL );
-//                            }            
-                            
-                            // fill the pixel index in the corresponding array
-                            // for the digital fixed frame cluster
-//                            if(isGood)
-//                            {
-//                                clusterCandidateIndeces.push_back(index);
-//                            }
-//                            else
-//                            {
                                 clusterCandidateIndeces.push_back(-1);
-//                            }
-
-//                            if ( isGood && !isHit ) 
-//                            {
-//                            }
-//                            else if (isHit) 
-//                            {
                                 cluQuality = cluQuality | kIncompleteCluster | kMergedCluster ;
-//                            }
                         }
                 
                         // sanity check
@@ -2688,10 +2648,6 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     /// /* DEBUG */    logfile.open("clustering.log");
   }
 
-#ifdef MARLINDEBUG
-  /// /* DEBUG */ message<DEBUG5> ( logfile << "Event " << _iEvt );
-#endif
-
   streamlog_out ( DEBUG0 ) << "Event " << _iEvt << endl;
 
   bool isDummyAlreadyExisting = false;
@@ -2746,10 +2702,6 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 
     streamlog_out ( DEBUG0 ) << "  Working on detector " << sensorID << endl;
 
-#ifdef MARLINDEBUG
-    /// /* DEBUG */ message<DEBUG5> ( logfile << "  Working on detector " << iDetector );
-#endif
-
     TrackerDataImpl    * noise  = dynamic_cast<TrackerDataImpl*>   (noiseCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
     TrackerRawDataImpl * status = dynamic_cast<TrackerRawDataImpl*>(statusCollectionVec->getElementAt( _ancillaryIndexMap[ sensorID ] ));
 
@@ -2765,11 +2717,6 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
 
     _seedCandidateMap.clear();
 
-#ifdef MARLINDEBUG
-    /// /* DEBUG */ message<DEBUG5> ( log() << "Max signal " << (*max_element(nzsData->getChargeValues().begin(), nzsData->getChargeValues().end()))
-    /// /* DEBUG */                  << "\nMin signal " << (*min_element(nzsData->getChargeValues().begin(), nzsData->getChargeValues().end())) );
-#endif
-
     for (unsigned int iPixel = 0; iPixel < nzsData->getChargeValues().size(); iPixel++) 
     {
         if (status->getADCValues()[iPixel] == EUTELESCOPE::GOODPIXEL) 
@@ -2784,9 +2731,6 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     // continue only if seed candidate map is not empty!
     if ( !_seedCandidateMap.empty() ) {
 
-#ifdef MARLINDEBUG
-      /// /* DEBUG */      message<DEBUG5> ( logfile << "  Seed candidates " << _seedCandidateMap.size() );
-#endif
       streamlog_out ( DEBUG0 ) << "  Seed candidates " << _seedCandidateMap.size() << endl;
 
       // now built up a cluster for each seed candidate
@@ -2886,11 +2830,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
             idClusterEncoder["quality"]       = static_cast<int>(cluQuality);
             idClusterEncoder.setCellID(cluster);
 
-#ifdef MARLINDEBUG
-            /// /* DEBUG */         message<DEBUG5> ( logfile << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY );
-#endif
             streamlog_out (DEBUG0) << "  Cluster no " <<  clusterCounter << " seedX " << seedX << " seedY " << seedY << endl;
-
 
             while ( indexIter != clusterCandidateIndeces.end() ) {
               if (*indexIter != -1 ) {
@@ -2898,20 +2838,6 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
               }
               ++indexIter;
             }
-
-#ifdef MARLINDEBUG
-            for (unsigned int iPixel = 0; iPixel < clusterCandidateIndeces.size(); iPixel++) {
-              /// /* DEBUG */         message<DEBUG5> ( logfile << "  x " << matrixDecoder.getXFromIndex(clusterCandidateIndeces[iPixel])
-              /// /* DEBUG */                          << "  y " <<  matrixDecoder.getYFromIndex(clusterCandidateIndeces[iPixel])
-              /// /* DEBUG */                          << "  s " <<
-              /// clusterCandidateCharges[iPixel]);
-              if ( clusterCandidateIndeces[iPixel] != -1 ) {
-                streamlog_out ( DEBUG0 ) << "  x " <<  matrixDecoder.getXFromIndex(clusterCandidateIndeces[iPixel])
-                                         << "  y " <<  matrixDecoder.getYFromIndex(clusterCandidateIndeces[iPixel])
-                                         << "  s " <<  clusterCandidateCharges[iPixel] << endl;
-              }
-            }
-#endif
 
             // copy the candidate charges inside the cluster
             cluster->setChargeValues(clusterCandidateCharges);
@@ -2988,11 +2914,6 @@ void EUTelClusteringProcessor::nzsBrickedClustering(LCEvent * evt, LCCollectionV
       //DEBUG:
       //logfile.open("clustering.log");
     }
-
-#ifdef MARLINDEBUG
-  //DEBUG:
-  //message<DEBUG5> ( logfile << "Event " << _iEvt );
-#endif
 
   streamlog_out ( DEBUG0 ) << "nzsBrickedClustering: Event " << _iEvt << endl;
 
@@ -3468,6 +3389,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
           if(_ExcludedPlanes[i] == detectorID)
             {
               foundexcludedsensor = true;
+	      break;
             }
         }
       if(foundexcludedsensor)
@@ -3475,46 +3397,34 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
       // increment of one unit the event counter for this plane
       eventCounterVec[ _ancillaryIndexMap[ detectorID] ]++;
 
-      string tempHistoName="";
-
       // plot the cluster total charge
-      tempHistoName = _clusterSignalHistoName + "_d" + to_string( detectorID ) ;
-      (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getTotalCharge());
+      (dynamic_cast<AIDA::IHistogram1D*> (_clusterSignalHistos[detectorID]))->fill(cluster->getTotalCharge());
 
       // get the cluster size in X and Y separately and plot it:
       int xSize, ySize;
       cluster->getClusterSize(xSize,ySize);
-      tempHistoName = _clusterSizeXHistoName + "_d" + to_string( detectorID ) ;
-      (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(xSize);
-
-      tempHistoName = _clusterSizeYHistoName + "_d" + to_string( detectorID ) ;
-      (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(ySize);
+      (dynamic_cast<AIDA::IHistogram1D*> (_clusterSizeXHistos[detectorID]))->fill(xSize);
+      (dynamic_cast<AIDA::IHistogram1D*> (_clusterSizeYHistos[detectorID]))->fill(ySize);
 
       // plot the seed charge
-      tempHistoName = _seedSignalHistoName + "_d" + to_string( detectorID ) ;
-      (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))->fill(cluster->getSeedCharge());
+      (dynamic_cast<AIDA::IHistogram1D*> (_seedSignalHistos[detectorID]))->fill(cluster->getSeedCharge());
 
       vector<float > charges = cluster->getClusterCharge(_clusterSpectraNVector);
       for ( unsigned int i = 0; i < charges.size() ; i++ ) {
-        tempHistoName = _clusterSignalHistoName + to_string( _clusterSpectraNVector[i] )
-          + "_d" + to_string( detectorID );
-        (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))
+        (dynamic_cast<AIDA::IHistogram1D*> (_clusterSignal_NHistos[_clusterSpectraNVector[i]][detectorID]))
           ->fill(charges[i]);
       }
 
       vector<int >::iterator iter = _clusterSpectraNxNVector.begin();
       while ( iter != _clusterSpectraNxNVector.end() ) {
-        tempHistoName = _clusterSignalHistoName + to_string( *iter ) + "x"
-          + to_string( *iter ) + "_d" + to_string( detectorID );
-        (dynamic_cast<AIDA::IHistogram1D*> (_aidaHistoMap[tempHistoName]))
+        (dynamic_cast<AIDA::IHistogram1D*> (_clusterSignal_NxNHistos[*iter][detectorID]))
           ->fill(cluster->getClusterCharge((*iter), (*iter)));
         ++iter;
       }
 
-      tempHistoName = _hitMapHistoName + "_d" + to_string( detectorID );
       int xSeed, ySeed;
       cluster->getCenterCoord(xSeed, ySeed);
-      (dynamic_cast<AIDA::IHistogram2D*> (_aidaHistoMap[tempHistoName]))
+      (dynamic_cast<AIDA::IHistogram2D*> (_hitMapHistos[detectorID]))
         ->fill(static_cast<double >(xSeed), static_cast<double >(ySeed), 1.);
 
 
@@ -3599,38 +3509,33 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 
       if(type == kEUTelDFFClusterImpl)
         fillSNRSwitch = false;
+
       if ( fillSNRSwitch ) {
 
         AIDA::IHistogram1D * histo;
-        tempHistoName = _clusterNoiseHistoName + "_d" + to_string( detectorID );
-        histo = dynamic_cast<AIDA::IHistogram1D* > ( _aidaHistoMap[tempHistoName] );
+        histo = dynamic_cast<AIDA::IHistogram1D* > ( _clusterNoiseHistos[detectorID] );
         if ( histo ) {
           histo->fill( cluster->getClusterNoise() );
         }
 
-        tempHistoName = _clusterSNRHistoName + "_d" + to_string( detectorID );
-        histo = dynamic_cast<AIDA::IHistogram1D* > ( _aidaHistoMap[tempHistoName] );
+        histo = dynamic_cast<AIDA::IHistogram1D* > ( _clusterSNRHistos[detectorID] );
         if ( histo ) {
           histo->fill( cluster->getClusterSNR() );
         }
 
-        tempHistoName = _seedSNRHistoName + "_d" + to_string( detectorID );
-        histo = dynamic_cast<AIDA::IHistogram1D * > ( _aidaHistoMap[tempHistoName] );
+        histo = dynamic_cast<AIDA::IHistogram1D * > ( _seedSNRHistos[detectorID] );
         if ( histo ) {
           histo->fill( cluster->getSeedSNR() );
         }
 
-        tempHistoName = _cluster_vs_seedSNRHistoName + "_d" + to_string( detectorID );
-        AIDA::IHistogram2D *histo2d = dynamic_cast<AIDA::IHistogram2D * > ( _aidaHistoMap[tempHistoName] );
+        AIDA::IHistogram2D *histo2d = dynamic_cast<AIDA::IHistogram2D * > ( _cluster_vs_seedSNRHistos[detectorID] );
         if ( histo2d ) {
           histo2d->fill( cluster->getSeedSNR(), cluster->getClusterSNR() );
         }
 
         vector<int >::iterator iter = _clusterSpectraNxNVector.begin();
         while ( iter != _clusterSpectraNxNVector.end() ) {
-          tempHistoName = _clusterSNRHistoName + to_string( *iter ) + "x"
-            + to_string( *iter ) + "_d" + to_string( detectorID );
-          histo = dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[tempHistoName] ) ;
+          histo = dynamic_cast<AIDA::IHistogram1D*> ( _clusterSNR_NxNHistos[*iter][detectorID] ) ;
           if ( histo ) {
             histo->fill(cluster->getClusterSNR( (*iter), (*iter) ));
           }
@@ -3639,9 +3544,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
 
         vector<float > snrs = cluster->getClusterSNR(_clusterSpectraNVector);
         for ( unsigned int i = 0; i < snrs.size() ; i++ ) {
-          tempHistoName = _clusterSNRHistoName + to_string( _clusterSpectraNVector[i] )
-            + "_d" + to_string( detectorID );
-          histo = dynamic_cast<AIDA::IHistogram1D * > ( _aidaHistoMap[tempHistoName] ) ;
+          histo = dynamic_cast<AIDA::IHistogram1D * > ( _clusterSNR_NHistos[_clusterSpectraNVector[i]][detectorID] ) ;
           if ( histo ) {
             histo->fill( snrs[i] );
           }
@@ -3654,8 +3557,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
     // fill the event multiplicity here
     string tempHistoName;
     for ( int iDetector = 0; iDetector < _noOfDetector; iDetector++ ) {
-      tempHistoName = _eventMultiplicityHistoName + "_d" + to_string( _orderedSensorIDVec.at( iDetector) );
-      AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D *> ( _aidaHistoMap[tempHistoName] );
+      AIDA::IHistogram1D * histo = dynamic_cast<AIDA::IHistogram1D *> ( _eventMultiplicityHistos[_orderedSensorIDVec.at( iDetector)] );
       if ( histo ) {
         histo->fill( eventCounterVec[iDetector] );
       }
@@ -3688,6 +3590,18 @@ void EUTelClusteringProcessor::bookHistos() {
                                << "Continuing without histogram manager" << endl;
     isHistoManagerAvailable = false;
   }
+
+  // define our histogram names
+  std::string _clusterSignalHistoName      = "clusterSignal";
+  std::string _clusterSizeXHistoName       = "clusterSizeX";
+  std::string _clusterSizeYHistoName       = "clusterSizeY";
+  std::string _seedSignalHistoName         = "seedSignal";
+  std::string _hitMapHistoName             = "hitMap";
+  std::string _seedSNRHistoName            = "seedSNR";
+  std::string _clusterNoiseHistoName       = "clusterNoise";
+  std::string _clusterSNRHistoName         = "clusterSNR";
+  std::string _cluster_vs_seedSNRHistoName = "cluster_vs_seedSNR";
+  std::string _eventMultiplicityHistoName  = "eventMultiplicity";
 
 
   string tempHistoName;
@@ -3807,41 +3721,35 @@ void EUTelClusteringProcessor::bookHistos() {
     }
 
 
-
-
     // cluster signal
     tempHistoName = _clusterSignalHistoName + "_d" + to_string( sensorID );
-    AIDA::IHistogram1D * clusterSignalHisto =
-      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                clusterNBin,clusterMin,clusterMax);
-    _aidaHistoMap.insert(make_pair(tempHistoName, clusterSignalHisto));
-    clusterSignalHisto->setTitle(clusterTitle.c_str());
+    _clusterSignalHistos.insert(make_pair(sensorID, 
+					  AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+												    clusterNBin,clusterMin,clusterMax)));
+    _clusterSignalHistos[sensorID]->setTitle(clusterTitle.c_str());
 
     // cluster signal along X
     tempHistoName = _clusterSizeXHistoName + "_d" + to_string( sensorID );
-    AIDA::IHistogram1D * clusterSizeXHisto =
-      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                clusterXNBin,clusterXMin,clusterXMax);
-    _aidaHistoMap.insert(make_pair(tempHistoName, clusterSizeXHisto));
-    clusterSizeXHisto->setTitle(clusterXTitle.c_str());
+    _clusterSizeXHistos.insert(make_pair(sensorID, 
+					AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+												  clusterXNBin,clusterXMin,clusterXMax)));
+    _clusterSizeXHistos[sensorID]->setTitle(clusterXTitle.c_str());
 
     // cluster signal along Y
     tempHistoName = _clusterSizeYHistoName + "_d" + to_string( sensorID );
-    AIDA::IHistogram1D * clusterSizeYHisto =
-      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                clusterYNBin,clusterYMin,clusterYMax);
-    _aidaHistoMap.insert(make_pair(tempHistoName, clusterSizeYHisto));
-    clusterSizeYHisto->setTitle(clusterYTitle.c_str());
+    _clusterSizeYHistos.insert(make_pair(sensorID, 
+					AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+												  clusterYNBin,clusterYMin,clusterYMax)));
+    _clusterSizeYHistos[sensorID]->setTitle(clusterYTitle.c_str());
 
 
 
     // cluster SNR
     tempHistoName = _clusterSNRHistoName + "_d" + to_string( sensorID );
-    AIDA::IHistogram1D * clusterSNRHisto =
-      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
-                                                                clusterSNRNBin, clusterSNRMin, clusterSNRMax);
-    _aidaHistoMap.insert( make_pair(tempHistoName, clusterSNRHisto) ) ;
-    clusterSNRHisto->setTitle(clusterSNRTitle.c_str());
+    _clusterSNRHistos.insert( make_pair(sensorID, 
+			      AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
+											clusterSNRNBin, clusterSNRMin, clusterSNRMax)));
+    _clusterSNRHistos[sensorID]->setTitle(clusterSNRTitle.c_str());
 
     
    // cluster vs seed SNR
@@ -3850,20 +3758,24 @@ void EUTelClusteringProcessor::bookHistos() {
       AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
                                                                 cluster_vs_seedSNRNBin_X,cluster_vs_seedSNRMin_X,cluster_vs_seedSNRMax_X,
                                                                 cluster_vs_seedSNRNBin_Y,cluster_vs_seedSNRMin_Y,cluster_vs_seedSNRMax_Y);
-    _aidaHistoMap.insert( make_pair(tempHistoName, cluster_vs_seedSNRHisto) ) ;
+    _cluster_vs_seedSNRHistos.insert( make_pair(sensorID, cluster_vs_seedSNRHisto) ) ;
     cluster_vs_seedSNRHisto->setTitle(cluster_vs_seedSNRTitle);
 
     
     vector<int >::iterator iter = _clusterSpectraNVector.begin();
     while ( iter != _clusterSpectraNVector.end() ) {
+      // create 'outer' map if not existing for this sprectrum 'N'
+      _clusterSignal_NHistos.insert( make_pair( *iter, std::map<int,AIDA::IBaseHistogram*>()));
+      _clusterSNR_NHistos.insert( make_pair( *iter, std::map<int,AIDA::IBaseHistogram*>()));
+      
       // this is for the signal
       tempHistoName = _clusterSignalHistoName + to_string( *iter ) + "_d" + to_string( sensorID );
       AIDA::IHistogram1D * clusterSignalNHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                   clusterNBin, clusterMin, clusterMax);
-      _aidaHistoMap.insert(make_pair(tempHistoName, clusterSignalNHisto) );
       string tempTitle = "Cluster spectrum with the " + to_string( *iter ) + " most significant pixels ";
       clusterSignalNHisto->setTitle(tempTitle.c_str());
+      _clusterSignal_NHistos.at(*iter).insert(make_pair(sensorID, clusterSignalNHisto) );
 
 
       // this is for the SNR
@@ -3872,14 +3784,17 @@ void EUTelClusteringProcessor::bookHistos() {
         AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                   clusterSNRNBin, clusterSNRMin, clusterSNRMax);
       tempTitle = "Cluster SNR with the " + to_string(*iter ) + " most significant pixels";
-      _aidaHistoMap.insert( make_pair( tempHistoName, clusterSNRNHisto ) );
       clusterSNRNHisto->setTitle(tempTitle.c_str());
+      _clusterSNR_NHistos.at(*iter).insert( make_pair( sensorID, clusterSNRNHisto ) );
 
       ++iter;
-    }
+    } // while _clusterSpectraNVector
 
     iter = _clusterSpectraNxNVector.begin();
     while ( iter != _clusterSpectraNxNVector.end() ) {
+      // create 'outer' map if not existing for this sprectrum 'NxN'
+      _clusterSignal_NxNHistos.insert( make_pair( *iter, std::map<int,AIDA::IBaseHistogram*>()));
+      _clusterSNR_NxNHistos.insert( make_pair( *iter, std::map<int,AIDA::IBaseHistogram*>()));
 
       // first the signal
       tempHistoName = _clusterSignalHistoName + to_string( *iter ) + "x"
@@ -3887,12 +3802,9 @@ void EUTelClusteringProcessor::bookHistos() {
       AIDA::IHistogram1D * clusterSignalNxNHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                   clusterNBin, clusterMin, clusterMax);
-      _aidaHistoMap.insert(make_pair(tempHistoName, clusterSignalNxNHisto) );
       string tempTitle = "Cluster spectrum with " + to_string( *iter ) + " by " +  to_string( *iter ) + " pixels ";
       clusterSignalNxNHisto->setTitle(tempTitle.c_str());
-
-
-
+      _clusterSignal_NxNHistos.at(*iter).insert(make_pair(sensorID, clusterSignalNxNHisto) );
       
       // then the SNR
       tempHistoName = _clusterSNRHistoName + to_string( *iter ) + "x"
@@ -3900,13 +3812,12 @@ void EUTelClusteringProcessor::bookHistos() {
       AIDA::IHistogram1D * clusterSNRNxNHisto =
         AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                   clusterSNRNBin, clusterSNRMin, clusterSNRMax);
-      _aidaHistoMap.insert(make_pair(tempHistoName, clusterSNRNxNHisto) );
       tempTitle = "SNR with " + to_string( *iter ) + " by " + to_string( *iter ) + " pixels ";
       clusterSNRNxNHisto->setTitle(tempTitle.c_str());
-
+      _clusterSNR_NxNHistos.at(*iter).insert(make_pair(sensorID, clusterSNRNxNHisto) );
 
       ++iter;
-    }
+    } // while _clusterSpectraNxNVector
 
     tempHistoName = _seedSignalHistoName + "_d" + to_string( sensorID );
     int    seedNBin  = 500;
@@ -3926,8 +3837,9 @@ void EUTelClusteringProcessor::bookHistos() {
     AIDA::IHistogram1D * seedSignalHisto =
       AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                 seedNBin, seedMin, seedMax);
-    _aidaHistoMap.insert(make_pair(tempHistoName, seedSignalHisto));
+    _seedSignalHistos.insert(make_pair(sensorID, seedSignalHisto));
     seedSignalHisto->setTitle(seedTitle.c_str());
+
     tempHistoName = _seedSNRHistoName + "_d" + to_string( sensorID ) ;
     int    seedSNRNBin  =  300;
     double seedSNRMin   =    0.;
@@ -3946,7 +3858,7 @@ void EUTelClusteringProcessor::bookHistos() {
     AIDA::IHistogram1D * seedSNRHisto =
       AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                 seedSNRNBin, seedSNRMin, seedSNRMax);
-    _aidaHistoMap.insert( make_pair(tempHistoName, seedSNRHisto ));
+    _seedSNRHistos.insert( make_pair(sensorID, seedSNRHisto ));
     seedSNRHisto->setTitle(seedSNRTitle.c_str());
 
     tempHistoName = _clusterNoiseHistoName + "_d" + to_string( sensorID );
@@ -3967,7 +3879,7 @@ void EUTelClusteringProcessor::bookHistos() {
     AIDA::IHistogram1D * clusterNoiseHisto =
       AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                 clusterNoiseNBin, clusterNoiseMin, clusterNoiseMax);
-    _aidaHistoMap.insert( make_pair(tempHistoName, clusterNoiseHisto ));
+    _clusterNoiseHistos.insert( make_pair(sensorID, clusterNoiseHisto ));
     clusterNoiseHisto->setTitle(clusterNoiseTitle.c_str());
 
     tempHistoName = _hitMapHistoName + "_d" + to_string( sensorID );
@@ -3980,7 +3892,7 @@ void EUTelClusteringProcessor::bookHistos() {
     AIDA::IHistogram2D * hitMapHisto =
       AIDAProcessor::histogramFactory(this)->createHistogram2D( (basePath + tempHistoName).c_str(),
                                                                 xBin, xMin, xMax,yBin, yMin, yMax);
-    _aidaHistoMap.insert(make_pair(tempHistoName, hitMapHisto));
+    _hitMapHistos.insert(make_pair(sensorID, hitMapHisto));
     hitMapHisto->setTitle("Hit map");
 
     tempHistoName = _eventMultiplicityHistoName + "_d" + to_string( sensorID );
@@ -4001,7 +3913,7 @@ void EUTelClusteringProcessor::bookHistos() {
     AIDA::IHistogram1D * eventMultiHisto =
       AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(),
                                                                 eventMultiNBin, eventMultiMin, eventMultiMax);
-    _aidaHistoMap.insert( make_pair(tempHistoName, eventMultiHisto) );
+    _eventMultiplicityHistos.insert( make_pair(sensorID, eventMultiHisto) );
     eventMultiHisto->setTitle( eventMultiTitle.c_str() );
 
   }

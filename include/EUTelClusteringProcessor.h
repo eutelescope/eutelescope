@@ -380,8 +380,7 @@ namespace eutelescope {
     /*! This method is used to prepare the needed directory structure
      *  within the current ITree folder and books all required
      *  histograms. Histogram pointers are stored into
-     *  EUTelHistogramMaker::_aidaHistoMap so that they can be
-     *  recalled and filled from anywhere in the code.
+     *  vectors for class-wide access
      */
     void bookHistos();
 
@@ -805,21 +804,6 @@ namespace eutelescope {
      */
     std::map<float, unsigned int> _seedCandidateMap;
 
-    //!
-    /*!
-     * .
-     * .
-     */
-//    std::map<unsigned int, std::map<unsigned int, bool> > sensormatrix;
-//    std::vector< dim2array<bool> > sensormatrix;
-
-    //!
-    /*!
-     * .
-     * .
-     */
-    std::map< int, int > _indexMap;
-
     //! Total cluster found
     /*! This is a map correlating the sensorID number and the
      *  total number of clusters found on that sensor.
@@ -853,82 +837,44 @@ namespace eutelescope {
      */
     std::vector<int > _clusterSpectraNxNVector;
 
-    //! AIDA histogram map
-    /*! The histogram filling procedure may occur in many different
-     *  places, while it is usually a good reason to keep the booking
-     *  procedure in one place only. To recall an histogram pointer
-     *  from a different place in the code they are stored within this
-     *  histogram map. The second object of the pair has to a
-     *  AIDA::IBaseHistogram since this is the base class of all
-     *  different kind of histograms, profiles included. It has also
-     *  to be a pointer since, this is a pure virtual class and we
-     *  want to use <code>dynamic_cast</code> to convert them back to
-     *  their original cast.
-     */
-    std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
+    //! Map for pointer to cluster signal histograms.
+    std::map<int,AIDA::IBaseHistogram*> _clusterSignalHistos;
 
-    //! Cluster signal histogram base name.
-    /*! This is the name of the cluster signal histogram. To this
-     *  name, the detector number is added in order to make it
-     *  unique. This is used also for the other cluster spectra.
-     */
-    static std::string _clusterSignalHistoName;
+    //! Map for pointer to Cluster signal histogram (size along X).
+    std::map<int,AIDA::IBaseHistogram*> _clusterSizeXHistos;
 
-    //! Cluster signal histogram base name (size along X).
-    /*! This is the name of the cluster signal histogram. To this
-     *  name, the detector number is added in order to make it
-     *  unique. This is used also for the other cluster spectra.
-     */
-    static std::string _clusterSizeXHistoName;
+    //! Map for pointer to Cluster signal histogram (size along Y).
+    std::map<int,AIDA::IBaseHistogram*> _clusterSizeYHistos;
 
+     //! Map for pointer to Seed pixel signal histo 
+    std::map<int,AIDA::IBaseHistogram*> _seedSignalHistos;
 
-    //! Cluster signal histogram base name (size along Y).
-    /*! This is the name of the cluster signal histogram. To this
-     *  name, the detector number is added in order to make it
-     *  unique. This is used also for the other cluster spectra.
-     */
-    static std::string _clusterSizeYHistoName;
+    //! Map for pointer to Hit map histogram 
+     std::map<int,AIDA::IBaseHistogram*> _hitMapHistos;
 
- 
-    //! Seed pixel signal histo name
-    /*! This is the seed pixel spectrum histogram. To this name,
-     *  the detector ID is added in order to make it unique.
-     */
-    static std::string _seedSignalHistoName;
+    //! Map for pointer to Seed pixel SNR 
+    std::map<int,AIDA::IBaseHistogram*> _seedSNRHistos;
 
-    //! Hit map histogram name
-    /*! This is the hit map in pixel coordinate histogram name.
-     */
-    static std::string _hitMapHistoName;
+    //! Map for pointer to Cluster noise histogram 
+    std::map<int,AIDA::IBaseHistogram*> _clusterNoiseHistos;
 
-    //! Seed pixel SNR name
-    /*! This is the seed pixel SNR histogram name
-     */
-    static std::string _seedSNRHistoName;
+    //! Map for pointer to Cluster SNR histogram 
+    std::map<int,AIDA::IBaseHistogram*> _clusterSNRHistos;
 
-    //! Cluster noise histogram name
-    /*! This is the full cluster noise histogram name
-     */
-    static std::string _clusterNoiseHistoName;
+    //! Map for pointer to Cluster vs Seed SNR histogram 
+    std::map<int,AIDA::IBaseHistogram*> _cluster_vs_seedSNRHistos;
 
-    //! Cluster SNR histogram name
-    /*! This is the name of the histogram containing the seed pixel
-     *  SNR
-     */
-    static std::string _clusterSNRHistoName;
+    //! Map for pointer to Event multiplicity histogram 
+    std::map<int,AIDA::IBaseHistogram*> _eventMultiplicityHistos;
 
-    //! Cluster vs Seed SNR histogram name
-    /*! This is the name of the 2D histogram containing the cluster pixel
-     *  SNR vs the seed pixel SNR
-     */
-    static std::string _cluster_vs_seedSNRHistoName;
+    //! Map (of maps) for pointers to histograms with cluster spectra with the X most significant pixels
+    std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSignal_NHistos;
 
-    //! Event multiplicity histogram name
-    /*! There is one of this histogram for each plane in the telescope
-     *  setup. For each event this histogram is filled with the number
-     *  of clusters passing the thresholds found.
-     */
-    static std::string _eventMultiplicityHistoName;
+    //! Map (of maps) for pointers to histograms with cluster SRN spectra with the X most significant pixels
+    std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSNR_NHistos;
+
+    std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSignal_NxNHistos;
+    std::map<int, std::map<int,AIDA::IBaseHistogram*> > _clusterSNR_NxNHistos;
 
 #endif
 
