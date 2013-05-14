@@ -183,10 +183,10 @@ def check_program(name):
         prog = os.path.join(dir, name)
         if os.path.exists(prog): return prog
 
-def runMarlin(filenamebase, silent):
+def runMarlin(filenamebase, jobtask, silent):
     """ Runs Marlin and stores log of output """
     from sys import exit # use sys.exit instead of built-in exit (latter raises exception)
-    log = logging.getLogger('jobsub.marlin')
+    log = logging.getLogger('jobsub.' + jobtask)
 
     # check for Marlin executable
     cmd = check_program("Marlin")
@@ -238,7 +238,11 @@ def runMarlin(filenamebase, silent):
         terr.daemon = True 
         tout.start()
         terr.start()
+        # open log file
         log_file = open(filenamebase+".log", "w")
+        # print timestamp to log file
+        import datetime
+        log_file.write("---=== Analysis started on " + datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p") + " ===---\n\n")
         try:
             while p.poll() is None:
                 # read line without blocking
@@ -569,7 +573,7 @@ def main(argv=None):
         if args.dry_run:
             log.info("Dry run: skipping Marlin execution. Steering file written to "+basefilename+'.xml')
         else:
-            rcode = runMarlin(basefilename, args.silent) # start Marlin execution
+            rcode = runMarlin(basefilename, args.jobtask, args.silent) # start Marlin execution
             if rcode == 0:
                 log.info("Marlin execution done")
             else:
