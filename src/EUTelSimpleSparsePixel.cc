@@ -21,7 +21,11 @@ using namespace std;
 using namespace eutelescope;
 
 
-EUTelSimpleSparsePixel::EUTelSimpleSparsePixel() {
+EUTelSimpleSparsePixel::EUTelSimpleSparsePixel()\
+  : _xCoord(0),
+    _yCoord(0),
+    _signal(0)
+{
   _xCoord = 0;
   _yCoord = 0;
   _signal = 0;
@@ -29,7 +33,11 @@ EUTelSimpleSparsePixel::EUTelSimpleSparsePixel() {
   _type = kEUTelSimpleSparsePixel;
 }
 
-EUTelSimpleSparsePixel::EUTelSimpleSparsePixel(short xCoord, short yCoord, short signal) {
+EUTelSimpleSparsePixel::EUTelSimpleSparsePixel(short xCoord, short yCoord, short signal)
+  : _xCoord(0),
+    _yCoord(0),
+    _signal(0)
+{
   _xCoord = xCoord;
   _yCoord = yCoord;
   _signal = signal;
