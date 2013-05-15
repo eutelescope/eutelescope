@@ -83,9 +83,12 @@ class CDashMeasurement
   }
 
 public:
-  CDashMeasurement( string name, int value )   { mname << name; setInteger(value); }
-  CDashMeasurement( string name, double value ){ mname << name; setDouble(value); }
-  CDashMeasurement( string name, string value ){ mname << name; setString(value); }
+  CDashMeasurement( string name, int value ) : mymeasurement(), mtype(), mname(), isImage()
+    { mname << name; setInteger(value); }
+  CDashMeasurement( string name, double value ) : mymeasurement(), mtype(), mname(), isImage()
+    { mname << name; setDouble(value); }
+  CDashMeasurement( string name, string value ) : mymeasurement(), mtype(), mname(), isImage()
+    { mname << name; setString(value); }
 
   // only show output when precompiler flag is set
 #ifdef DO_TESTING
