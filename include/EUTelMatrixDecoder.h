@@ -107,7 +107,12 @@ namespace eutelescope {
      */
     template <class T>
     EUTelMatrixDecoder(UTIL::CellIDDecoder<T >& decoder, T * rawData)
-      throw (InvalidParameterException, lcio::Exception) {
+      throw (InvalidParameterException, lcio::Exception)
+      : _xNoOfPixel(0),
+        _yNoOfPixel(0),
+        _xMin(0),
+        _yMin(0)
+    {
   
       _xNoOfPixel = decoder(rawData)["xMax"] - decoder(rawData)["xMin"] + 1;
       _yNoOfPixel = decoder(rawData)["yMax"] - decoder(rawData)["yMin"] + 1;
