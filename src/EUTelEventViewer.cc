@@ -55,7 +55,18 @@ using namespace marlin ;
 using namespace eutelescope;
 
 
-EUTelEventViewer::EUTelEventViewer() : Processor("EUTelEventViewer") {
+EUTelEventViewer::EUTelEventViewer()
+ : Processor("EUTelEventViewer"),
+   _trackerHitCollectionNameVec(),
+   _trackCollectionNameVec(),
+   _alignmentCollectionName(""),
+   _layerTrackerHit(-1),
+   _layerTrack(-1),
+   _waitForKeyboard(true),
+   _autoForwardDelay(4.0),
+   _detModel(99999),
+   _iEvt(0)
+{
 
   _description = "Event display" ;
 
