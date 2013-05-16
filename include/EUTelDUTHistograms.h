@@ -31,6 +31,10 @@
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 #include <AIDA/IBaseHistogram.h>
 #include <AIDA/IHistogram1D.h>
+#include <AIDA/IHistogram2D.h>
+#include <AIDA/IProfile1D.h>
+#include <AIDA/IProfile2D.h>
+
 #endif
 
 // system includes <>
@@ -75,10 +79,6 @@ namespace eutelescope {
    * \param HistoInfoFileName Name of the histogram information file.
    *        Using this file histogram parameters can be changed without
    *        recompiling the code.
-   *
-   * \param DebugEventCount      Print out debug and information
-   * messages only for one out of given number of events. If zero, no
-   * debug information is printed.
    *
    * \author A.F.Zarnecki, University of Warsaw
    * @version $Id$
@@ -222,17 +222,11 @@ protected:
 
     int _manualDUTid;
 
-    //!  Debug print out for one out of given number of events.
-    int _debugCount ;
-
-
-
     // Internal processor variables
     // ----------------------------
 
 
     int _nRun ;
-    int _nEvt ;
 
     int _iDUT;
     double _zDUT;
@@ -261,8 +255,6 @@ protected:
     int _trackNCluXCut;
     int _trackNCluYCut;
 
-
-
     std::vector<double> _measuredX;
     std::vector<double> _measuredY;
 
@@ -278,238 +270,56 @@ protected:
     std::map< int, std::vector<double> >  _bgfittedX;   
     std::map< int, std::vector<double> >  _bgfittedY;   
  
-//obs.igor.280812    std::vector<double> _fittedX;
-//obs.igor.280812    std::vector<double> _fittedY;
-
-//obs.igor.280812    std::vector<double> _bgfittedX;
-//obs.igor.280812    std::vector<double> _bgfittedY;
-
     std::vector<float > _DUTalign;
 
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
-    //! AIDA histogram map
-    /*! Used to refer to histograms by their names, i.e. to recall
-     *  a histogram pointer using histogram name.
+    //! AIDA histogram maps
+    /*! Used to manage to histograms pointers in a flexible and
+      ! efficient way.  
      */
 
-    std::map<std::string , AIDA::IBaseHistogram * > _aidaHistoMap;
+    // ! Histograms for full detector and for sub matrices are handled by enums to make the distiction clear in the code.
+    enum detMatrix {SubMatrixA, SubMatrixB, SubMatrixC, SubMatrixD, FullDetector};
 
-    static std::string _ClusterSizeXHistoName  ;
-    static std::string _ClusterSizeYHistoName  ;
-    static std::string _ClusterSizeXYHistoName ;
+    // ! Some histograms are filled for a particular cluster size; this determines the max. cluster size considered
+    static const int HistoMaxClusterSize = 7;
 
-    static std::string _ClusterSizeXAHistoName  ;
-    static std::string _ClusterSizeYAHistoName  ;
-    static std::string _ClusterSizeXYAHistoName ;
+    enum projAxis {projX, projY, projXY};
 
-    static std::string _ClusterSizeXBHistoName  ;
-    static std::string _ClusterSizeYBHistoName  ;
-    static std::string _ClusterSizeXYBHistoName ;
+    std::map< projAxis, std::map< detMatrix, AIDA::IBaseHistogram*> > _ClusterSizeHistos;
+    std::map< projAxis, std::map< detMatrix, std::map< int, AIDA::IBaseHistogram*> > > _ShiftHistos; // w/ cluster size studies
 
-    static std::string _ClusterSizeXCHistoName  ;
-    static std::string _ClusterSizeYCHistoName  ;
-    static std::string _ClusterSizeXYCHistoName ;
+    std::map< projAxis, AIDA::IBaseHistogram*> _MeasuredHistos;
+    std::map< projAxis, AIDA::IBaseHistogram*> _MatchedHistos;
+    std::map< projAxis, AIDA::IBaseHistogram*> _UnMatchedHistos;
+    std::map< projAxis, AIDA::IBaseHistogram*> _FittedHistos;
+    std::map< projAxis, AIDA::IBaseHistogram*> _EfficiencyHistos;
+    std::map< projAxis, AIDA::IBaseHistogram*> _BgEfficiencyHistos;
+    std::map< projAxis, AIDA::IBaseHistogram*> _NoiseHistos;
+    std::map< projAxis, AIDA::IBaseHistogram*> _BgShiftHistos;
 
-    static std::string _ClusterSizeXDHistoName  ;
-    static std::string _ClusterSizeYDHistoName  ;
-    static std::string _ClusterSizeXYDHistoName ;
+    AIDA::IProfile1D* _ShiftXvsYHisto;
+    AIDA::IProfile1D* _ShiftYvsXHisto;
+    AIDA::IProfile1D* _ShiftXvsXHisto;
+    AIDA::IProfile1D* _ShiftYvsYHisto;
 
-    static std::string _MeasuredXHistoName;
-    static std::string _MeasuredYHistoName;
-    static std::string _MeasuredXYHistoName;
+    AIDA::IHistogram2D* _ShiftXvsY2DHisto;
+    AIDA::IHistogram2D* _ShiftYvsX2DHisto;
+    AIDA::IHistogram2D* _ShiftXvsX2DHisto;
+    AIDA::IHistogram2D* _ShiftYvsY2DHisto;
 
-    static std::string _MatchedXHistoName;
-    static std::string _MatchedYHistoName;
-    static std::string _MatchedXYHistoName;
+    AIDA::IProfile1D* _EtaXHisto;
+    AIDA::IProfile1D* _EtaYHisto;
+    AIDA::IHistogram2D* _EtaX2DHisto;
+    AIDA::IHistogram2D* _EtaY2DHisto;
+    AIDA::IProfile2D* _EtaX3DHisto;
+    AIDA::IProfile2D* _EtaY3DHisto;
 
-    static std::string _UnMatchedXHistoName;
-    static std::string _UnMatchedYHistoName;
-    static std::string _UnMatchedXYHistoName;
-
-    static std::string _FittedXHistoName;
-    static std::string _FittedYHistoName;
-    static std::string _FittedXYHistoName;
-
-    static std::string _EfficiencyXHistoName;
-    static std::string _EfficiencyYHistoName;
-    static std::string _EfficiencyXYHistoName;
-
-    static std::string _BgEfficiencyXHistoName;
-    static std::string _BgEfficiencyYHistoName;
-    static std::string _BgEfficiencyXYHistoName;
-
-    static std::string _NoiseXHistoName;
-    static std::string _NoiseYHistoName;
-    static std::string _NoiseXYHistoName;
-
-    static std::string _ShiftXHistoName;
-    static std::string _ShiftYHistoName;
-    static std::string _ShiftXYHistoName;
-
-// submatrix A
-    static std::string _ShiftXAHistoName;
-    static std::string _ShiftYAHistoName;
-    static std::string _ShiftXYAHistoName;
-    // cluster size 1
-    static std::string _ShiftXA1HistoName;
-    static std::string _ShiftYA1HistoName;
-    static std::string _ShiftXYA1HistoName;
-    // cluster size 2
-    static std::string _ShiftXA2HistoName;
-    static std::string _ShiftYA2HistoName;
-    static std::string _ShiftXYA2HistoName;
-    // cluster size 3
-    static std::string _ShiftXA3HistoName;
-    static std::string _ShiftYA3HistoName;
-    static std::string _ShiftXYA3HistoName;
-    // cluster size 4
-    static std::string _ShiftXA4HistoName;
-    static std::string _ShiftYA4HistoName;
-    static std::string _ShiftXYA4HistoName;
-    // cluster size 5
-    static std::string _ShiftXA5HistoName;
-    static std::string _ShiftYA5HistoName;
-    static std::string _ShiftXYA5HistoName;
-    // cluster size 6
-    static std::string _ShiftXA6HistoName;
-    static std::string _ShiftYA6HistoName;
-    static std::string _ShiftXYA6HistoName;
-    // cluster size 7
-    static std::string _ShiftXA7HistoName;
-    static std::string _ShiftYA7HistoName;
-    static std::string _ShiftXYA7HistoName;
-
-
-// submatrix B
-    static std::string _ShiftXBHistoName;
-    static std::string _ShiftYBHistoName;
-    static std::string _ShiftXYBHistoName;
-    // cluster size 1
-    static std::string _ShiftXB1HistoName;
-    static std::string _ShiftYB1HistoName;
-    static std::string _ShiftXYB1HistoName;
-    // cluster size 2
-    static std::string _ShiftXB2HistoName;
-    static std::string _ShiftYB2HistoName;
-    static std::string _ShiftXYB2HistoName;
-    // cluster size 3
-    static std::string _ShiftXB3HistoName;
-    static std::string _ShiftYB3HistoName;
-    static std::string _ShiftXYB3HistoName;
-    // cluster size 4
-    static std::string _ShiftXB4HistoName;
-    static std::string _ShiftYB4HistoName;
-    static std::string _ShiftXYB4HistoName;
-    // cluster size 5
-    static std::string _ShiftXB5HistoName;
-    static std::string _ShiftYB5HistoName;
-    static std::string _ShiftXYB5HistoName;
-    // cluster size 6
-    static std::string _ShiftXB6HistoName;
-    static std::string _ShiftYB6HistoName;
-    static std::string _ShiftXYB6HistoName;
-    // cluster size 7
-    static std::string _ShiftXB7HistoName;
-    static std::string _ShiftYB7HistoName;
-    static std::string _ShiftXYB7HistoName;
-
-
-// submatrix C
-    static std::string _ShiftXCHistoName;
-    static std::string _ShiftYCHistoName;
-    static std::string _ShiftXYCHistoName;
-    // cluster size 1
-    static std::string _ShiftXC1HistoName;
-    static std::string _ShiftYC1HistoName;
-    static std::string _ShiftXYC1HistoName;
-    // cluster size 2
-    static std::string _ShiftXC2HistoName;
-    static std::string _ShiftYC2HistoName;
-    static std::string _ShiftXYC2HistoName;
-    // cluster size 3
-    static std::string _ShiftXC3HistoName;
-    static std::string _ShiftYC3HistoName;
-    static std::string _ShiftXYC3HistoName;
-    // cluster size 4
-    static std::string _ShiftXC4HistoName;
-    static std::string _ShiftYC4HistoName;
-    static std::string _ShiftXYC4HistoName;
-    // cluster size 5
-    static std::string _ShiftXC5HistoName;
-    static std::string _ShiftYC5HistoName;
-    static std::string _ShiftXYC5HistoName;
-    // cluster size 6
-    static std::string _ShiftXC6HistoName;
-    static std::string _ShiftYC6HistoName;
-    static std::string _ShiftXYC6HistoName;
-    // cluster size 7
-    static std::string _ShiftXC7HistoName;
-    static std::string _ShiftYC7HistoName;
-    static std::string _ShiftXYC7HistoName;
-
-
-// submatrix D
-    static std::string _ShiftXDHistoName;
-    static std::string _ShiftYDHistoName;
-    static std::string _ShiftXYDHistoName;
-    // cluster size 1
-    static std::string _ShiftXD1HistoName;
-    static std::string _ShiftYD1HistoName;
-    static std::string _ShiftXYD1HistoName;
-    // cluster size 2
-    static std::string _ShiftXD2HistoName;
-    static std::string _ShiftYD2HistoName;
-    static std::string _ShiftXYD2HistoName;
-    // cluster size 3
-    static std::string _ShiftXD3HistoName;
-    static std::string _ShiftYD3HistoName;
-    static std::string _ShiftXYD3HistoName;
-    // cluster size 4
-    static std::string _ShiftXD4HistoName;
-    static std::string _ShiftYD4HistoName;
-    static std::string _ShiftXYD4HistoName;
-    // cluster size 5
-    static std::string _ShiftXD5HistoName;
-    static std::string _ShiftYD5HistoName;
-    static std::string _ShiftXYD5HistoName;
-    // cluster size 6
-    static std::string _ShiftXD6HistoName;
-    static std::string _ShiftYD6HistoName;
-    static std::string _ShiftXYD6HistoName;
-    // cluster size 7
-    static std::string _ShiftXD7HistoName;
-    static std::string _ShiftYD7HistoName;
-    static std::string _ShiftXYD7HistoName;
-
-
-
-
-    static std::string _BgShiftXHistoName;
-    static std::string _BgShiftYHistoName;
-    static std::string _BgShiftXYHistoName;
-
-    static std::string _ShiftXvsYHistoName;
-    static std::string _ShiftYvsXHistoName;
-    static std::string _ShiftXvsY2DHistoName;
-    static std::string _ShiftYvsX2DHistoName;
-
-    static std::string _ShiftXvsXHistoName;
-    static std::string _ShiftYvsYHistoName;
-    static std::string _ShiftXvsX2DHistoName;
-    static std::string _ShiftYvsY2DHistoName;
-
-    static std::string _EtaXHistoName;
-    static std::string _EtaYHistoName;
-    static std::string _EtaX2DHistoName;
-    static std::string _EtaY2DHistoName;
-    static std::string _EtaX3DHistoName;
-    static std::string _EtaY3DHistoName;
-
-    static std::string _PixelEfficiencyHistoName    ;
-    static std::string _PixelResolutionXHistoName   ;
-    static std::string _PixelResolutionYHistoName   ;
-    static std::string _PixelChargeSharingHistoName ;
+    AIDA::IProfile2D* _PixelEfficiencyHisto    ;
+    AIDA::IProfile2D* _PixelResolutionXHisto   ;
+    AIDA::IProfile2D* _PixelResolutionYHisto   ;
+    AIDA::IProfile2D* _PixelChargeSharingHisto ;
 
 #endif
 
