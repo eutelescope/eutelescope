@@ -748,7 +748,9 @@ void EUTelMilleGBL::processEvent(LCEvent * event) {
         streamlog_out(DEBUG1) << "Search results retrieved..." << std::endl;
         streamlog_out(DEBUG1) << "Search results = " << (int) search_result << std::endl;
         streamlog_out(DEBUG1) << "Retrieving track candidates..." << std::endl;
-        trackCandidates = _theFinder->GetTrackCandidates();
+	//FIXME (Simon): commented out, was producing build errors
+	// (Trying to assign a vector to a map won't work...)
+        //trackCandidates = _theFinder->GetTrackCandidates();
         std::vector<std::vector<int> > indexarray;
 
         _nTracks = (int) trackCandidates.size();
