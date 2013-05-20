@@ -1,0 +1,101 @@
+# this file uses emacs Org mode formatting -*- mode: Org; -*-
+Python ROOT plotter - A tool for selecting and assembling histogram
+plots and comparision plots from multiple ROOT files at once
+* Requirements
+** PyROOT
+   PyROOT is part of the ROOT package and is usually installed
+   automatically as long as the python developer libraries are found
+   during configure time. Install python-dev through your
+   distribution's package manager, e.g. on Ubuntu: 
+
+   #+begin_src shell-script
+   sudo apt-get install python-dev
+   #+end_src
+
+** rootpy
+   Install from http://rootpy.org/install.html
+* Usage
+
+#+begin_example
+usage: pyroplot [-h] [--version] [-l LEVEL] [--compare] [--select SELECT]
+                [--selection-from-file FILE] [--one-file-per-histogram]
+                [-o FILE/PATH] [--with-2D] [--with-3D] [--list-only]
+                [--strict]
+                [files [files ...]]
+
+Python ROOT plotter - A tool for selecting and assembling histogram plots and
+comparision plots from multiple ROOT files at once
+
+positional arguments:
+  files                 The files to be processed; additional info STRING to
+                        be included in the plot legend can be added by
+                        specifiying FILE:STRING
+
+optional arguments:
+  -h, --help            show this help message and exit
+  --version             show program's version number and exit
+  -l LEVEL, --log LEVEL
+                        Sets the verbosity of log messages where LEVEL is
+                        either debug, info, warning or error
+  --compare             Compare the selected histograms between files (ratio
+                        plots, chi2) where the first file provides the
+                        reference.
+  --select SELECT, -s SELECT
+                        Specify regular expression(s) for histogram selection.
+  --selection-from-file FILE
+                        Load list of regular expressions for histogram
+                        selection from file (plain text file, one reg ex per line).
+  --one-file-per-histogram
+                        Writes one file per histogram instead of storing all
+                        plots in one single file.
+  -o FILE/PATH, --output FILE/PATH
+                        Output path and file name. If the file does not end in
+                        '.pdf' it will be assumed to be a path and created if
+                        needed. If --one-file-per-histogram is set, this will
+                        be the output directory for the plots.
+  --with-2D, -2D        Also loads TH2-type histograms.
+  --with-3D, -3D        Also loads TH3-type and Profile2D-type histograms,
+                        implies --with-2D.
+  --list-only           Do not generate plots but only list objects in ROOT
+                        file(s) and indicate which ones would be selected.
+  --strict              Require the selection to match the full histogram path
+                        and name (with implied '^' and '$') instead of only a
+                        partial match.
+#+end_example
+
+* Examples
+** Plot all histograms from multiple files into one pdf
+   #+begin_src shell-script
+   python pyroplot.py run000123*.root
+   #+end_src
+
+   This will generate plots for every root file matching "run000123*"
+   and will store it into the file "overview.pdf" in the local directory.
+
+** Plot only a selection of histograms
+   #+begin_src shell-script
+   python pyroplot.py --select 'detector_4/.*' run000123_clustering.root
+   #+end_src
+
+   Multiple regular expressions can be specified by repeating the
+   "--select" switch. The regular expressions can alternatively also
+   be saved into a text file (one per line) and loaded using the
+   "--selection-from-file" switch.
+
+   A global default selection will be used if no selection
+   criteria were given; this is then loaded from the file
+   'default.sel' in the pyroplot directory.
+
+** Compare histograms from two (or more) files
+   #+begin_src shell-script
+   python pyroplot.py --compare --select 'detector_4/.*' run000123_clustering.root run00987_clustering.root
+   #+end_src
+   
+   To make the output easier to interpret, additional information on
+   the files can be specified using the "FILE:INFOSTRING" syntax, e.g.
+
+   #+begin_src shell-script
+   python pyroplot.py --compare run000123_clustering.root:"6GeV @ DESY" run00987_clustering.root:"120GeV at SPS"
+   #+end_src
+
+   This information will be displayed in the plots' legend.
