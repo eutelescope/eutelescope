@@ -151,7 +151,8 @@ def makePage( algorithm , pagename , cdash = False, prefix=""):
         algorithm.test.residuals = makeResiduals( h1 , h2 )
         algorithm.test.residuals.Draw()
     c.Print(pagename+prefix)
-    if cdash == True:
+    # only print CDASH info if the test has failed (saves space on webserver)
+    if cdash == True and not (algorithm.output.result == Result.SUCCESS):
         import os
         c.Print(os.path.dirname(pagename)+"/"+algorithm.output.name.replace('/','_')+".png")
         print " <DartMeasurementFile name=\"" + algorithm.output.name +  "\" type=\"image/png\"> " + os.path.dirname(pagename) + "/" + algorithm.output.name.replace('/','_') + ".png" + " </DartMeasurementFile>"

@@ -19,8 +19,9 @@ detailed information see the CMake manual or web page
 
 PREREQUISITES: in order to be able to run static code analysis tests
 you will need to install cppcheck (http://sourceforge.net/projects/cppcheck/). 
-To run the stattest program under SL5.8, you will also have to install
-the package "giflib".
+To run the stattest program under *SL5.8*, you will also have to install
+the package "giflib"; while *Ubuntu* requires you to have python-dev installed 
+at ROOT compile time in order for the ROOT python libraries to be built.
 
 To see which tests are available, enter the build directory of
 EUTelescope and run
