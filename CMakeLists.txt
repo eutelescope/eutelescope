@@ -32,7 +32,7 @@ SET( ${PROJECT_NAME}_VERSION_PATCH 0 )
 # debugging e.g. using gdb, please consider "Debug" which will turn
 # off all (!) optimizations but will be "gdb-friendlier"
 # !RELEASE: comment out the following line and comment in either one of the release ones
-#SET(CMAKE_BUILD_TYPE Debug) # use for debugging with e.g. gdb: add. warnings, no optimizations, debug symbols
+# SET(CMAKE_BUILD_TYPE Debug) # use for debugging with e.g. gdb: add. warnings, no optimizations, debug symbols
 SET(CMAKE_BUILD_TYPE RelWithDebInfo) # useful for normal development, runs faster but compilation takes longer: gcc optimizations (-O2) with debug symbols and add. warnings
 # SET(CMAKE_BUILD_TYPE Release) # for production: full gcc optimization (-O3), no debug symbols, no debug messages
 
@@ -327,7 +327,7 @@ endif()
 # useful for typical users (comment out the following lines)
   INCLUDE(jobsub/examples/datura-noDUT/testing.cmake)
   INCLUDE(jobsub/examples/datura-alone/testing.cmake)
-  INCLUDE(pysub/examples/anemone-2FEI4/testing.cmake)
+  INCLUDE(jobsub/examples/anemone-2FEI4/testing.cmake)
   configure_file (
 	       ./CTestCustom.cmake.in   # set custom settings (e.g. tests to be skipped for valgrind)
 	       ${PROJECT_BINARY_DIR}/CTestCustom.cmake
