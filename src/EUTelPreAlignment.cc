@@ -162,6 +162,13 @@ void EUTelPreAlign::init () {
     _sensorIDtoZOrderMap.insert(make_pair( sensorID, _sensors_to_the_left));
   }
 
+  for ( int iPlane = 0 ; iPlane < _siPlanesLayerLayout->getNLayers(); iPlane++ ) 
+  {
+    _siPlaneZPosition[ iPlane ] = _siPlanesLayerLayout->getLayerPositionZ(iPlane);
+    int sensorID = _siPlanesLayerLayout->getID( iPlane );
+    _sensorIDinZordered.insert(make_pair( _sensorIDtoZOrderMap[ sensorID ], sensorID ) );
+  }
+
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
   string tempHistoName = "";
   string basePath; 
@@ -169,17 +176,18 @@ void EUTelPreAlign::init () {
   if(_fillHistos) {
     for(unsigned int i = 1; i < _sensorIDVecZOrder.size(); i++)
     {
-      basePath = "plane_" + to_string( i );
+      int sensorID = _sensorIDinZordered[i];
+      basePath = "plane_" + to_string( sensorID );
       AIDAProcessor::tree(this)->mkdir(basePath.c_str());
       basePath.append("/");
  
-      tempHistoName = "hitXCorr_0_to_" + to_string( i ) ;
+      tempHistoName = "hitXCorr_0_to_" + to_string( sensorID ) ;
       AIDA::IHistogram1D * histo1Da = AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 100 , -10., 10.);
-      _hitXCorr.insert( make_pair( i, histo1Da) );
+      _hitXCorr.insert( make_pair( sensorID, histo1Da) );
  
-      tempHistoName = "hitYCorr_0_to_" + to_string( i ) ;
+      tempHistoName = "hitYCorr_0_to_" + to_string( sensorID) ;
       AIDA::IHistogram1D * histo1Db = AIDAProcessor::histogramFactory(this)->createHistogram1D( (basePath + tempHistoName).c_str(), 100 , -10., 10.) ;
-      _hitYCorr.insert( make_pair( i, histo1Db) );
+      _hitYCorr.insert( make_pair( sensorID, histo1Db) );
     }
   }
 #endif
@@ -274,11 +282,14 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 
   if ( isFirstEvent() )
   {
+
     FillHotPixelMap(event);
-    if ( _applyToReferenceHitCollection ) 
+
+   if ( _applyToReferenceHitCollection ) 
     {
        try{
-       _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
+
+   _referenceHitVec = dynamic_cast < LCCollectionVec * > (event->getCollection( _referenceHitCollectionName));
        }
        catch(...)
        {
@@ -302,8 +313,11 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
                                << " is of unknown type. Continue considering it as a normal Data Event." << endl;
   }
 
+
+
   try {
     LCCollectionVec * inputCollectionVec         = dynamic_cast < LCCollectionVec * > (evt->getCollection(_inputHitCollectionName));
+
 
     std::vector<float>   hitX;
     std::vector<float>   hitY;
@@ -311,7 +325,9 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 
 
     //Loop over hits in fixed plane
-    for (size_t ref = 0; ref < inputCollectionVec->size(); ref++) {
+    for (size_t ref = 0; ref < inputCollectionVec->size(); ref++) 
+    {
+
       TrackerHitImpl   * refHit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( ref ) ) ;
       const double * refPos = refHit->getPosition();
       // identify fixed plane
@@ -323,8 +339,8 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
       for (size_t iHit = 0; iHit < inputCollectionVec->size(); iHit++) 
       {
 	TrackerHitImpl   * hit   = dynamic_cast< TrackerHitImpl * >  ( inputCollectionVec->getElementAt( iHit ) ) ;
-	if( hitContainsHotPixels(hit) ) continue;
-
+        if( hitContainsHotPixels(hit) ) continue;
+        
         const double * pos = hit->getPosition();
         int iHitID = guessSensorID(pos);  
         if( iHitID == _fixedID ) continue;
@@ -355,12 +371,12 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 	  streamlog_out ( ERROR5 ) << "Mismatched hit at " << pos[2] << endl;
 	}
       }
-
+        
       if( prealign.size() > static_cast< unsigned int >(_minNumberOfCorrelatedHits) && hitX.size() == hitY.size() )
       {
          for(unsigned int ii = 0 ;ii < prealign.size();ii++)
          {  
-            prealign[ii]->addPoint( hitX[ii], hitY[ii] );
+              prealign[ii]->addPoint( hitX[ii], hitY[ii] );
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
               if(_fillHistos) {
                 (dynamic_cast<AIDA::IHistogram1D*> (_hitXCorr[prealign[ii]->getIden()]))->fill( hitX[ii] );
@@ -369,6 +385,7 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 #endif
          } 
       }
+        
     }
   }
   catch (DataNotAvailableException& e) { 
@@ -377,6 +394,7 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
   }
 
   if ( isFirstEvent() ) _isFirstEvent = false;
+        
 }
 
 bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit) 

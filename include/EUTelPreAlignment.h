@@ -194,11 +194,16 @@ namespace eutelescope {
     /*! it's position along Z axis
      */ 
     std::vector< int > _sensorIDVecZOrder;
-    //! sensor ID to position along Z id
+    //! map for sensor ID to position along Z id
     /*!
      */
     std::map<int, int> _sensorIDtoZOrderMap;
 
+    //! map for sensor position along Z to nominal ID in data stream 
+    /*!
+     */
+    std::map<int, int> _sensorIDinZordered;
+ 
 // _residual cuts [relative to the first upstream plane!]
     //! vector of correlation band cuts in X (upper limit)
     std::vector< float  > _residualsXMax;
