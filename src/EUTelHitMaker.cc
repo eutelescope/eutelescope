@@ -991,18 +991,9 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     if ( isFirstEvent() ) _isFirstEvent = false;
 }
 
-//void EUTelHitMaker::end() 
-//{
-//  streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
-//}
-
 void EUTelHitMaker::end() 
 {
- 
-
-
   streamlog_out ( MESSAGE4 )  << "Successfully finished" << endl;
-
 }
 
 void EUTelHitMaker::bookHistos(int sensorID, bool isDUT, LCCollection * xEtaCollection, LCCollection * yEtaCollection) {
