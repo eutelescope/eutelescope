@@ -42,7 +42,7 @@
 #  STEP 0: PREPARE TEST DIRECTORY
 #
     ADD_TEST( TestJobsubExampleAnemone2FEI4Cleanup sh -c "[ -d ${testdir} ] && rm -rf ${testdir} || echo 'no cleanup needed.'" )
-    ADD_TEST( TestJobsubExampleAnemone2FEI4Setup sh -c "mkdir -p ${testdir}/output/histograms  && mkdir -p ${testdir}/output/database && mkdir -p ${testdir}/output/logs  && mkdir -p ${testdir}/output/lcio-raw && mkdir -p ${testdir}/output/results" )
+    ADD_TEST( TestJobsubExampleAnemone2FEI4Setup sh -c "mkdir -p ${testdir}/output/histograms  && mkdir -p ${testdir}/output/database && mkdir -p ${testdir}/output/logs  && mkdir -p ${testdir}/output/lcio && mkdir -p ${testdir}/output/results" )
 #
 # +++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++
 #  STEP 1: CONVERTER
