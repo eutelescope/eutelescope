@@ -35,7 +35,7 @@ namespace eutelescope {
         inline void SetName( std::string name) { this->_name = name; }
         inline std::string GetName() const { return _name; }
 
-        virtual void SetTrackCandidates( std::map< int, EVENT::TrackerHitVec >& );
+        virtual void SetTrackCandidates( std::vector< EVENT::TrackerHitVec >& );
 
         virtual void FitTracks();
     protected:

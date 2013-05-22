@@ -92,12 +92,12 @@ EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {
 }
 
 void EUTelGeometryTelescopeGeoDescription::initializeTGeoDescription( string tgeofilename ) {
-    #ifdef USE_TGEO
+//    #ifdef USE_TGEO
     // get access to ROOT's geometry manager
     
     _geoManager = TGeoManager::Import( tgeofilename.c_str() );
     if( !_geoManager ) {
         streamlog_out( WARNING ) << "Can't read file " << tgeofilename << endl;
     }
-    #endif //USE_TGEO
+//    #endif //USE_TGEO
 }

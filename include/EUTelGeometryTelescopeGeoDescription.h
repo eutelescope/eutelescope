@@ -21,10 +21,10 @@
 #include "gear/SiPlanesLayerLayout.h"
 #include "gear/SiPlanesParameters.h"
 
-#ifdef USE_TGEO
+//#ifdef USE_TGEO
 // ROOT
 #include "TGeoManager.h"
-#endif //USE_TGEO
+//#endif //USE_TGEO
 
 // built only if GEAR is available
 #ifdef USE_GEAR
@@ -105,7 +105,7 @@ public:
     size_t _nPlanes;
 
 
-#ifdef  USE_TGEO
+//#ifdef  USE_TGEO
 public:
     // TGeo stuff
     /** @TODO this must be coupled with GEAR
@@ -115,7 +115,7 @@ public:
 
     /** Geometry manager global object */
     TGeoManager* _geoManager;
-#endif // USE_TGEO
+//#endif // USE_TGEO
     
 };
 
