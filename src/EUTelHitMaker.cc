@@ -963,6 +963,12 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
       TrackerHitImpl * hit = new TrackerHitImpl;
 //      hit->setDetectorID( detectorID ) ;
       hit->setPosition( &telPos[0] );
+      float cov[TRKHITNCOVMATRIX] = {0.,0.,0.,0.,0.,0.};
+      double resx = xPitch / sqrt(12.);
+      double resy = yPitch / sqrt(12.);
+      cov[0] = resx * resx; // cov(x,x)
+      cov[2] = resy * resy; // cov(y,y)
+      hit->setCovMatrix( cov );
       hit->setType( pulseCellDecoder(pulse)["type"] );
 
       // prepare a LCObjectVec to store the current cluster
