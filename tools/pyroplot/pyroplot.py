@@ -30,21 +30,27 @@ def timeStampCanvas ( canvas ):
     text.SetTextSize(0.015)
     text.DrawTextNDC(.7,0.008,datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p"))
 
-def markCanvas ( canvas, textstring, x = 0.14, y = 0.007, size = 0.013, color = 1 ):
-    markPad(textstring, x, y, size, color, canvas, 0)
+def markCanvas ( canvas, text, x = 0.14, y = 0.007, size = 0.013, color = 1 ):
+    markPad(text, x, y, size, color, canvas, 0)
 
-def markPad ( textstring, x = 0.14, y = 0.007, size = 0.013, color = 1, canvas = None, npad = -1 ):
+def markPad ( text, x = 0.14, y = 0.007, size = 0.013, color = 1, canvas = None, npad = -1 ):
+    """
+    Puts a line of text on a specific canvas and pad. If none are specified, the current pad is used
+    """
     import rootpy
     from rootpy.plotting import Canvas
     from ROOT import TText
-    text=TText()
+    t=TText()
     if npad >= 0 and canvas:
         canvas.cd(npad) #select pad (0 = whole canvas)
-    text.SetTextSize(size)
-    text.SetTextColor(color)
-    text.DrawTextNDC(x,y,textstring)
+    t.SetTextSize(size)
+    t.SetTextColor(color)
+    t.DrawTextNDC(x,y,text)
 
 def printPlots(cans,outPath,separateFiles):
+    """
+    Prints a list of canvases to a single pdf file or separate files.
+    """
     import rootpy
     from rootpy.plotting import Canvas
     log = logging.getLogger('pyroplot')
@@ -54,7 +60,7 @@ def printPlots(cans,outPath,separateFiles):
         log.info( "Saving %d canvases to single file '%s'"%(len(cans),outPath))
     pdfOpen = False
     # loop over list of canvases and save them to file(s)
-    for idx, cname in enumerate(cans):
+    for idx, cname in enumerate(sorted(cans)):
         can = cans[cname]
         timeStampCanvas(can)
         if not separateFiles:
@@ -92,14 +98,59 @@ def makePlotCollection( histodicts, files, filesdescr, outPath, docompare, dosep
     # now print the canvases
     printPlots(canvas,outPath,doseparateFiles)
 
+def plotHistos ( histos, option = "", statbox = True):
+    """ 
+    Plots a list of histograms
+    """
+    log = logging.getLogger('pyroplot')
+    import rootpy
+    from rootpy.plotting import Hist
+    from ROOT import kRed,gPad,TPaveStats
+    for idx, hist in enumerate(histos):
+        try:
+            thisopt = option
+            if idx:
+                if statbox:
+                    thisopt += "sames"
+                else:
+                    thisopt += "same"
+            histcopy = hist.DrawCopy(thisopt)
+            gPad.Update()
+            if statbox:
+                try:
+                    statBox = histcopy.GetListOfFunctions().FindObject("stats")
+                    # offset from last statbox
+                    offset = .18
+                    # needs to be larger for Profile & 2D histos
+                    if (hist.__class__.__name__=="Profile"
+                        or hist.__class__.__name__=="Hist2D"
+                        or hist.__class__.__name__=="Profile2D"
+                        or hist.__class__.__name__=="Hist3D"):
+                        offset = .26
+                    statBox.SetY1NDC(statBox.GetY1NDC()-offset*(idx))
+                    statBox.SetY2NDC(statBox.GetY2NDC()-offset*(idx))
+                    statBox.SetTextColor(hist.GetLineColor())
+                    statBox.SetBorderSize(2)
+                except AttributeError:
+                    log.debug("Could not get statbox for histogram " + hist.GetName())
+            
+        except rootpy.ROOTError, e:
+            log.error("Drawing histogram %s caused ROOTError exception ('%s')"%(hist.GetName(),e.msg))
+            gPad.Clear() # otherwise this happens again when drawing..
+            markPad ( text="Could not draw %s ('%s')"%(hist.GetName(),e.msg), x = 0.14, y = 0.4, size = 0.023, color = kRed)
+            return # give up!
+
 
 def makePage( histos, fileName, fileDescr, separateFiles):
+    """
+    Prepares a canvas with one histogram per pad
+    """
     import rootpy
     from rootpy.plotting import Hist, Canvas
-    from ROOT import kBlue,kRed,kGreen,kYellow,gPad,TPaveStats
+    from ROOT import kBlue
     log = logging.getLogger('pyroplot')
     cans = {}
-    for idx, name in enumerate(histos):
+    for idx, name in enumerate(sorted(histos.keys)):
         if separateFiles:
             log.debug( "Creating new canvas with index %d."%(idx))
             c=Canvas( 600, 800)
@@ -118,27 +169,24 @@ def makePage( histos, fileName, fileDescr, separateFiles):
         hist.color = kBlue
         if not separateFiles:
             c.cd(idx%6+1)
-        h = hist.DrawCopy("")
-        gPad.Update()
-        statBox = h.GetListOfFunctions().FindObject("stats")
-        statBox.SetName('new_stat')
-        statBox.SetTextColor(kBlue)
-        statBox.SetBorderSize(2)
+        plotHistos([hist])
     return cans
 
 
 def makeComparisionPage( histodicts , fileNames, fileDescr, separateFiles):
+    """
+    Prepares a canvas comparing multiple histograms: plotting all in one pad and their ratios in the second
+    """
     import rootpy
     from rootpy.plotting import Hist, Canvas, Legend
     import ROOT
-    from ROOT import gPad,TPaveStats
     log = logging.getLogger('pyroplot')
     cans = {}
     colors = [ROOT.kBlue, ROOT.kRed+1,ROOT.kViolet-1, ROOT.kOrange+7,ROOT.kGreen-7,ROOT.kOrange-6,
               ROOT.kPink-9,ROOT.kTeal-6,ROOT.kBlue+4,ROOT.kAzure+2]
     # prepare set of histograms to compare to the reference on (the first)
-    # loop over the reference set of histos:
-    for hidx, refname in enumerate(histodicts[0]):
+    # loop over the reference set of histos (sorted by key):
+    for hidx, refname in enumerate(sorted(histodicts[0].keys())):
         # prepare canvas
         if separateFiles:
             log.debug( "Creating new canvas with index %d."%(hidx))
@@ -152,59 +200,56 @@ def makeComparisionPage( histodicts , fileNames, fileDescr, separateFiles):
             c=Canvas( 600, 800)
             cans[refname] = c
             c.Divide(2,3)
-        # draw the reference histogram
-        refhist = histodicts[0][refname]
-        log.info( "Drawing reference histogram #" + str(hidx%3+1) +": " + refhist.GetName() + " in canvas #" + str(int(hidx/3) ))
-        refhist.color = colors[0]
-        # go to right pad
-        if not separateFiles:
-            c.cd(2*(hidx%3)+1) # six pads (2x3) but we always skip one for the ratio
-        refcopy = refhist.DrawCopy("")
-        gPad.Update()
-        statBox = refcopy.GetListOfFunctions().FindObject("stats")
-        statBox.SetTextColor(colors[0])
-        statBox.SetBorderSize(2)
-        # draw remaining histograms and prepare ratio plots
-        # prepare histos for residual/ratio plots
+        # prepare histograms for drawing
+        log.info( "Drawing histogram #" + str(hidx+1) +" (" + refname + ") on canvas #" + str(len(cans)) )
+        hists = []
         ratiohists = []
-        riter = iter (histodicts)
-        next (riter) # skip first run for ratio since it's the reference histo
-        for idx, r in enumerate(riter):
+        hiter = iter (histodicts)
+        # special treatment for tprofile: prepare the reference projection for the ratio
+        if histodicts[0][refname].__class__.__name__=="Profile":
+            refProj = histodicts[0][refname].ProjectionX()
+            refProj.SetName("reference_proj")
+        for idx, h in enumerate(hiter):
             # make sure we have this histogram loaded:
-            if not r[refname]:
+            if not h[refname]:
                 continue
             # access the corresponding histogram of the other files at the same hidx as used for ref
-            r[refname].color = colors[idx+1]
-            r[refname].linestyle = idx
-            h = r[refname].DrawCopy("sames")
-            gPad.Update()
-            statBox = h.GetListOfFunctions().FindObject("stats")
-            statBox.SetY1NDC(statBox.GetY1NDC()-.18*(idx+1))
-            statBox.SetY2NDC(statBox.GetY2NDC()-.18*(idx+1))
-            statBox.SetTextColor(colors[idx+1])
-            statBox.SetBorderSize(2)
-            myratio = r[refname].Clone()
-            myratio.Add(refhist,-1.) # subtract reference hist
-            myratio.Divide(refhist)
-            myratio.yaxis.SetTitle("(h_{cmp} - h_{ref})/h_{ref}")
-            myratio.SetTitle("relative difference to reference")
-            myratio.SetMaximum(1)
-            myratio.SetMinimum(-1)
-            myratio.SetStats(0)
-            ratiohists.append(myratio)
+            h[refname].color = colors[idx]
+            h[refname].linestyle = idx
+            hists.append (h[refname])
+            # prepare ratio is this is not the first (i.e. reference) histogram
+            if idx:
+                # special treatment for TProfile:
+                if h[refname].__class__.__name__=="Profile":
+                    myratio = Hist(h[refname].nbins(), h[refname].lowerbound(), h[refname].upperbound()) #dummy hist
+                    myratioproj = h[refname].ProjectionX()
+                    myratioproj.SetName("cmp_hist_proj"+str(idx))
+                    myratio.divide(myratioproj,refProj)
+                    myratio.color = colors[idx]
+                else:
+                    myratio = h[refname].clone() # make sure that the ratio has the right type
+                    myratio.Divide(h[refname], histodicts[0][refname]) # divide by reference hist
+                myratio.yaxis.SetTitle("(h_{cmp} - h_{ref})/h_{ref}")
+                myratio.SetTitle("ratio to reference")
+                myratio.SetMaximum(2)
+                myratio.SetMinimum(0)
+                myratio.SetStats(0)
+                ratiohists.append(myratio)
+        # go to right pad to draw main histos
+        if not separateFiles:
+            c.cd(2*(hidx%3)+1) # six pads (2x3) but we always skip one for the ratio
+        plotHistos(hists)
+        # go to right pad to draw ratios
         if not separateFiles:
             c.cd(2*(hidx%3)+2)
         else:
             c.cd(2)
-        for idx,ratiohist in enumerate(ratiohists):
-            arg = "same"
-            if not idx:
-                arg = ""
-            ratiohist.DrawCopy(arg)
+        log.debug( "Plotting ratios for #" + str(hidx%3+1) +": " + refname + " in canvas #" + str(int(hidx/3) ))
+        plotHistos(histos = ratiohists, statbox=False)
         #create legend
         legend = Legend(nentries=len(histodicts)+len(fileDescr)+1, leftmargin=0.25, 
                         topmargin=0.05, rightmargin=0.25, entryheight=0.05)
-        legend.AddEntry(refhist,label=os.path.basename(fileNames[0]), legendstyle="l")
+        legend.AddEntry(histodicts[0][refname],label=os.path.basename(fileNames[0]), legendstyle="l")
         if fileNames[0] in fileDescr:
             legend.AddEntry(None,label=fileDescr[fileNames[0]],legendstyle="")
         legend.AddEntry(None,label="(reference)",legendstyle="")
@@ -294,8 +339,6 @@ def loadHistogramsFromFile(filename, histonames, with2d, with3d):
             # this can happen if the reference file contains more histos than the others
             log.warn("%s not found in file %s"%(h,filename))
             continue
-        if issubclass(type(histo), Hist):
-            print "subclass checks out for %s: "%(h,type(histo))
         # might want to ignore Hist2D etc: VERY SLOW and plot processing not optimally suited yet
         if ((histo.__class__.__name__=="Hist" 
              or histo.__class__.__name__=="Profile")
