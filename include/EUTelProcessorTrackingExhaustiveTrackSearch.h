@@ -92,6 +92,11 @@ namespace eutelescope {
         /** Fills hits data structure for track finder */
         void FillHits(LCEvent * evt, LCCollection* col, vector< EVENT::TrackerHitVec >& allHits) const;
 
+        /** Prepare LCIO data structure for dumping track
+         * candidate hits into LCIO files
+         */
+        void addTrackCandidateToCollection(LCEvent* evt, const vector< EVENT::TrackerHitVec >&);
+
 
     protected:
 
@@ -115,7 +120,7 @@ namespace eutelescope {
 
         /** Minimum allowed charge of the cluster  */
         int _mimosa26ClusterChargeMin;
-        
+
         /** Flag that spcecifies to which sensors to 
          *  apply rectangular fiducial area cuts
          * @TODO must be a part of a separate data structure
@@ -181,7 +186,10 @@ namespace eutelescope {
         map< string, AIDA::IHistogram1D* > _aidaHistoMap1D;
 
         /** Names of histograms */
-        static string _numberTracksCandidatesHistName;
+        struct _histName {
+            static string _numberTracksCandidatesHistName;
+            static string _numberOfHitOnTrackCandidateHistName;
+        };
 
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 

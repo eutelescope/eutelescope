@@ -79,13 +79,13 @@ namespace eutelescope {
         // Processor parameters
 
     public:
-        
+
         /** Mille binary filename */
         string _binaryFilename;
 
         /** TGeo geometry file name */
         string _tgeoFileName;
-        
+
     protected:
 
         // Input/Output collections of the processor
@@ -100,7 +100,7 @@ namespace eutelescope {
 
         /** Track fitter */
         EUTelTrackFitter *_trackFitter;
-        
+
         /** Mille */
         gbl::MilleBinary * _milleGBL;
 
@@ -141,17 +141,19 @@ namespace eutelescope {
         map< string, AIDA::IHistogram2D* > _aidaHistoMap2D;
 
         /** Names of histograms */
-        static string _chi2GblFitHistName;
-        static string _probGblFitHistName;
-        static string _residGblFitHistName;
-        static string _residGblFitHistNameX;
-        static string _residGblFitHistNameY;
-        static string _resid2DGblFitHistNameXvsX;
-        static string _resid2DGblFitHistNameXvsY;
-        static string _resid2DGblFitHistNameYvsX;
-        static string _resid2DGblFitHistNameYvsY;
-        static string _kinkGblFitHistNameX;
-        static string _kinkGblFitHistNameY;
+        struct _histName {
+            static string _chi2GblFitHistName;
+            static string _probGblFitHistName;
+            static string _residGblFitHistName;
+            static string _residGblFitHistNameX;
+            static string _residGblFitHistNameY;
+            static string _resid2DGblFitHistNameXvsX;
+            static string _resid2DGblFitHistNameXvsY;
+            static string _resid2DGblFitHistNameYvsX;
+            static string _resid2DGblFitHistNameYvsY;
+            static string _kinkGblFitHistNameX;
+            static string _kinkGblFitHistNameY;
+        };
 
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 

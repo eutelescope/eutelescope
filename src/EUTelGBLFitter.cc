@@ -44,6 +44,7 @@
 #include <utility>
 #include <vector>
 #include <iomanip>
+#include <iterator>
 
 namespace eutelescope {
 
@@ -84,7 +85,7 @@ namespace eutelescope {
         return _parPropJac;
     }
 
-    void EUTelGBLFitter::SetTrackCandidates(std::map< int, EVENT::TrackerHitVec >& trackCandidates) {
+    void EUTelGBLFitter::SetTrackCandidates( const std::vector< EVENT::TrackerHitVec >& trackCandidates) {
         this->_trackCandidates = trackCandidates;
         return;
     }
@@ -159,17 +160,19 @@ namespace eutelescope {
         streamlog_out(DEBUG1) << " N track candidates:" << (int) _trackCandidates.size() << std::endl;
 
         streamlog_out(DEBUG1) << "Following track candidates supplied:" << std::endl;
-        std::map< int, EVENT::TrackerHitVec >::const_iterator itTrkCandHelp = _trackCandidates.begin();
+        std::vector< EVENT::TrackerHitVec >::iterator itTrkCandHelp = _trackCandidates.begin();
         EVENT::TrackerHitVec::const_iterator itHitHelp;
         for (; itTrkCandHelp != _trackCandidates.end(); ++itTrkCandHelp) {
-            streamlog_out(DEBUG1) << std::setfill('-') << std::setw(10) << itTrkCandHelp->first << std::setw(10) << ":" << std::setfill(' ') << std::endl;
-            itHitHelp = itTrkCandHelp->second.begin();
-            for (; itHitHelp != itTrkCandHelp->second.end(); ++itHitHelp) {
+            streamlog_out(DEBUG1) << std::setfill('-') << std::setw(10) << std::distance( _trackCandidates.begin(), itTrkCandHelp ) << std::setw(10) << ":" << std::setfill(' ') << std::endl;
+            itHitHelp = itTrkCandHelp->begin();
+            streamlog_out(DEBUG1) << "Hi, HERE " << itTrkCandHelp->size() << std::endl;
+            for (; itHitHelp != itTrkCandHelp->end(); ++itHitHelp) {
                 streamlog_out(DEBUG0) << *itHitHelp << std::endl;
                 streamlog_out(DEBUG0) << std::setw(10) << (*itHitHelp)->getPosition()[0]
                         << std::setw(10) << (*itHitHelp)->getPosition()[1]
                         << std::setw(10) << (*itHitHelp)->getPosition()[2] << std::endl;
             }
+            streamlog_out(DEBUG1) <<"Hi, THERE" << std::endl;
         }
 
         TVectorD meas(2);
@@ -211,11 +214,11 @@ namespace eutelescope {
 	alDer[1][0] = 0.0; // dy/dx
 	alDer[1][1] = 1.0; // dy/dy
         
-        std::map< int, EVENT::TrackerHitVec >::const_iterator itTrkCand = _trackCandidates.begin();
+        std::vector< EVENT::TrackerHitVec >::const_iterator itTrkCand = _trackCandidates.begin();
         EVENT::TrackerHitVec::const_iterator itHit;
         for (; itTrkCand != _trackCandidates.end(); ++itTrkCand) {
 
-            if( itTrkCand->second.size() > 6 ) continue;
+            if( itTrkCand->size() > 6 ) continue;
             
             IMPL::TrackImpl * fittrack = new IMPL::TrackImpl();
 
@@ -227,9 +230,9 @@ namespace eutelescope {
             TMatrixD jacPointToPoint(5, 5);
             jacPointToPoint.UnitMatrix();
             double step = 0.;
-            double zprev = itTrkCand->second.front()->getPosition()[2];
-            itHit = itTrkCand->second.begin();
-            for (; itHit != itTrkCand->second.end(); ++itHit) {
+            double zprev = itTrkCand->front()->getPosition()[2];
+            itHit = itTrkCand->begin();
+            for (; itHit != itTrkCand->end(); ++itHit) {
                 const double* hitpos = (*itHit)->getPosition();
 //                step = hitpos[2] - zprev;			// commented out because propagation is done in air's sub-block
 //                streamlog_out(DEBUG0) << "Step size:" << step << std::endl;	// commented out beacause propagation is done in air's sub-block
@@ -243,8 +246,8 @@ namespace eutelescope {
                 globalLabels[2] = 3 + iPlane*10; // rot
 //                
 //                
-                double xPred = InterpolateTrackX(itTrkCand->second, hitpos[2]);
-                double yPred = InterpolateTrackY(itTrkCand->second, hitpos[2]);
+                double xPred = InterpolateTrackX(*itTrkCand, hitpos[2]);
+                double yPred = InterpolateTrackY(*itTrkCand, hitpos[2]);
 //                
                 alDer[0][2] = -yPred; // dx/rot
                 alDer[1][2] = xPred; // dy/rot
@@ -268,7 +271,7 @@ namespace eutelescope {
 
 		// construct effective scatterers for air
 		// the scatters must be at (Z(plane i) + Z(plane i+1))/2. +/- (Z(plane i) - Z(plane i+1))/sqrt(12)
-		if ( iPlane < itTrkCand->second.size()-1 ) {
+		if ( iPlane < itTrkCand->size()-1 ) {
 			const double planeSpacing = hitpos[2] - (*(itHit+1))->getPosition()[2];		// works only for 6 hits tracks
 			// propagate parameters into air gap
 			step = planeSpacing/2. - planeSpacing/sqrt(12.);

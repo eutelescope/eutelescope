@@ -39,7 +39,7 @@ namespace eutelescope {
 	EUTelGBLFitter(std::string name);
         virtual ~EUTelGBLFitter();
         
-        void SetTrackCandidates( std::map< int, EVENT::TrackerHitVec >& );
+        void SetTrackCandidates( const std::vector< EVENT::TrackerHitVec >& );
         void FitTracks();
 
 	enum AlignmentMode { kXYShift, kXYShiftZRot };
@@ -76,7 +76,7 @@ namespace eutelescope {
         void Reset();
         
     private:
-        std::map< int, EVENT::TrackerHitVec > _trackCandidates;
+        std::vector< EVENT::TrackerHitVec > _trackCandidates;
         
         std::map< int, gbl::GblTrajectory* > _gblTrackCandidates;
 
