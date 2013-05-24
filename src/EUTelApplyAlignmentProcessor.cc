@@ -96,7 +96,6 @@ std::string EUTelApplyAlignmentProcessor::_hitHistoAfterAlignName     = "HitHist
 EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor () 
 : Processor("EUTelApplyAlignmentProcessor"),
   _conversionIdMap(),
-  _referenceHitLCIOFile(""),
   _nRun(0),
   _nEvt(0),
   _iDUT(0),
@@ -167,10 +166,10 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor ()
                             "The name of the output hit collection",
                             _outputHitCollectionName, string("PreAlignedHit"));
 
-  registerOptionalParameter("ReferenceCollection","This is the name of the reference it collection (init at 0,0,0)",
-                            internal_referenceHitCollectionName, static_cast< string > ( "reference" ) );
+  registerOptionalParameter("ReferenceCollection","This is the name of the reference hit collection",
+                            internal_referenceHitCollectionName, static_cast< string > ( "referenceHit" ) );
 
-  registerOptionalParameter("OutputReferenceCollection","This is the name of the reference it collection (init at 0,0,0)",
+  registerOptionalParameter("OutputReferenceCollection","This is the name of the modified output reference hit collection",
                             _outputReferenceHitCollectionName, static_cast< string > ( "output_refhit" ) );
 
 
@@ -244,10 +243,6 @@ EUTelApplyAlignmentProcessor::EUTelApplyAlignmentProcessor ()
                             _gamma, static_cast< double > ( 0.00 ) );
   registerOptionalParameter("PrintEvents", "Events number to have DEBUG1 printed outs (default=10)",
                             _printEvents, static_cast<int> (10) );
-
-
-  registerOptionalParameter("ReferenceHitFile","This is the name of the reference it collection (init at 0,0,0)",
-                            _referenceHitLCIOFile, static_cast< string > ( "reference.slcio" ) );
 
 }
 
@@ -2554,40 +2549,4 @@ int EUTelApplyAlignmentProcessor::guessSensorID(const double * hit )
   return sensorID;
 }
 
-
-void EUTelApplyAlignmentProcessor::DumpReferenceHitDB()
-{
-// create a reference hit collection file (DB)
-
-  LCWriter * lcWriter = LCFactory::getInstance()->createLCWriter();
-  try {
-    lcWriter->open( _referenceHitLCIOFile, LCIO::WRITE_APPEND );
-  } catch ( IOException& e ) {
-    streamlog_out ( ERROR4 ) << e.what() << endl;
-    exit(-1);
-  }
-
-  LCEventImpl * event = new LCEventImpl;
-
-  streamlog_out ( MESSAGE7 ) << "Writing to " << _referenceHitLCIOFile << std::endl;
-
-  LCCollectionVec * referenceHitCollection = new LCCollectionVec( LCIO::LCGENERICOBJECT );
-  for(size_t ii = 0 ; ii <  _orderedSensorIDVec.size(); ii++)
-  {
-    EUTelReferenceHit * refhit = new EUTelReferenceHit();
-    refhit->setSensorID( _orderedSensorIDVec[ii] );
-    refhit->setXOffset( 0. );
-    refhit->setYOffset( 0. );
-    refhit->setZOffset( 0. );
-   
-    refhit->setAlpha( 0. );
-    refhit->setBeta( 0. );
-    refhit->setGamma( 0. );
-
-    referenceHitCollection->push_back( refhit );
-  }
-  event->addCollection( referenceHitCollection, "referenceHit" );
-  lcWriter->writeEvent( event );
-  delete event;
-}
 #endif

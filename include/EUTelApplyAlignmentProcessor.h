@@ -227,9 +227,6 @@ namespace eutelescope {
     virtual    LCCollectionVec* CreateDummyReferenceHitCollection();
     virtual void CheckIOCollections(LCEvent* event);
 
-    void DumpReferenceHitDB();
-
-
   private:
     //! Conversion ID map.
     /*! In the data file, each cluster is tagged with a detector ID
@@ -240,9 +237,6 @@ namespace eutelescope {
      *  layerindex.
      */
     std::map< int, int > _conversionIdMap;
-
-    //! Reference Hit file 
-    std::string _referenceHitLCIOFile;
 
   #ifndef DISALLOW_COPY_AND_ASSIGN
   //Following #define stops the accidental creation of a copy or assignment operator by causing a link error. Copy and Assignment operators not allowed because they are unnecessary and the cause of many bugs
