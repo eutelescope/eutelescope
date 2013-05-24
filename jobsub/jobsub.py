@@ -212,6 +212,9 @@ def runMarlin(filenamebase, jobtask, silent):
     except ImportError:
         from queue import Queue, Empty  # python 3.x
 
+    import datetime
+    import shlex        
+
     # parsing process output using threads
     # (approach from http://stackoverflow.com/a/4896288)
     def enqueue_output(out, queue):
@@ -219,7 +222,6 @@ def runMarlin(filenamebase, jobtask, silent):
         for line in iter(out.readline, ''):
             queue.put(line)
         out.close()
-    import shlex        
     ON_POSIX = 'posix' in sys.builtin_module_names
     cmd = cmd+" "+filenamebase+".xml"
     rcode = None # the return code that will be set by a later subprocess method
@@ -241,7 +243,6 @@ def runMarlin(filenamebase, jobtask, silent):
         # open log file
         log_file = open(filenamebase+".log", "w")
         # print timestamp to log file
-        import datetime
         log_file.write("---=== Analysis started on " + datetime.datetime.now().strftime("%A, %d. %B %Y %I:%M%p") + " ===---\n\n")
         try:
             while p.poll() is None:
@@ -458,7 +459,7 @@ def main(argv=None):
             return 2
         for key in cmdoptions: # and overwrite our current config settings
             log.debug( "Parsing cmd line: Setting "+key+" to value '"+cmdoptions[key]+"', possibly overwriting corresponding config file option")
-            parameters[key] = cmdoptions[key]
+            parameters[key.lower()] = cmdoptions[key]
 
     log.debug( "Our final config:")
     for key, value in parameters.items():
