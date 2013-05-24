@@ -32,12 +32,14 @@ int main( int argc, char ** argv ) {
     "This program is used to convert the output of pede into\n"
     "a LCIO file containing alignment constants.\n"
     "\n"
-    "Usage: pede2lcio [options] pedeoutput.res lciofile.slcio\n\n"
+    "Usage: pede2lcio [options] pedeoutput.res lciofile.slcio -n [nparameters]\n\n"
+    "-n --nparameters           Number of alignment parameters per detector\n"
     "-h --help       To print this help\n"
     "\n";
 
   option->addUsage( usageString.c_str() );
   option->setFlag( "help", 'h');
+  option->setOption( "nparameters", 'n');
 
   // process the command line arguments
   option->processCommandArgs( argc, argv );
@@ -47,7 +49,8 @@ int main( int argc, char ** argv ) {
     return 0;
   }
 
-  if ( ( option->getArgc() == 0 ) || ( option->getArgc() != 2 ) ) {
+  if ( ( option->getArgc() == 0 ) || 
+       ( option->getArgc() != 2 ) ) {
     option->printUsage();
     return 0;
   }
@@ -57,6 +60,11 @@ int main( int argc, char ** argv ) {
   pedeFileName = option->getArgv(0);
   lcioFileName = option->getArgv(1);
 
+  int nparams = 3;
+  char* strNParams;
+  strNParams = option->getValue('n');
+  if( strNParams ) nparams = atoi(strNParams);
+  
   // check if the lcio file has the extension
   if ( lcioFileName.rfind( ".slcio", string::npos ) == string::npos ) {
     lcioFileName.append( ".slcio" );
@@ -122,7 +130,7 @@ int main( int argc, char ** argv ) {
 
       bool goodLine = true;
 
-      for ( unsigned int iParam = 0 ; iParam < 3 ; ++iParam ) {
+      for ( unsigned int iParam = 0 ; iParam < nparams ; ++iParam ) {
 
         getline( pedeFile, line );
 
@@ -138,7 +146,7 @@ int main( int argc, char ** argv ) {
           tokens.push_back( buffer ) ;
         }
 
-        if ( ( tokens.size() == 3 ) || ( tokens.size() == 6 ) ) {
+        if ( ( tokens.size() == 3 ) || ( tokens.size() == 5 ) || ( tokens.size() == 6 ) ) {
           goodLine = true;
         } else goodLine = false;
 
@@ -152,15 +160,15 @@ int main( int argc, char ** argv ) {
 //         }
 
         if ( iParam == 0 ) {
-          constant->setXOffset( tokens[1] / 1000 );
+          constant->setXOffset( tokens[1] );
           if ( ! isFixed ) {
-            double err  = tokens[4] / 1000;
+            double err  = tokens[4];
             constant->setXOffsetError( err ) ;
           }
         }
         if ( iParam == 1 ) {
-          constant->setYOffset( tokens[1] / 1000 ) ;
-          if ( ! isFixed ) constant->setYOffsetError( tokens[4] / 1000 ) ;
+          constant->setYOffset( tokens[1] ) ;
+          if ( ! isFixed ) constant->setYOffsetError( tokens[4] ) ;
         }
         if ( iParam == 2 ) {
           constant->setGamma( tokens[1]  ) ;
