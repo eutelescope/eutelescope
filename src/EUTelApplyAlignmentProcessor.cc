@@ -1264,6 +1264,7 @@ void EUTelApplyAlignmentProcessor::Direct(LCEvent *event) {
       TrackerHitImpl   * outputHit  = new TrackerHitImpl;
       outputHit->setType( inputHit->getType() );
       outputHit->rawHits() = inputHit->getRawHits();
+      outputHit->setCovMatrix( inputHit->getCovMatrix() );
 
       // hit coordinates in the center-of-the sensor frame (axis coincide with the global frame)
       const double *inputS = static_cast<const double*> ( inputHit->getPosition() ) ;
