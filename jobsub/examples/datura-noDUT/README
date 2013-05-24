@@ -7,7 +7,7 @@ telescope with six planes of Mimosa26 without DUT.
 This example is based on a test beam campaign done in 2012/2013 at DESY.
 
 A corresponding data sample can be found at:
-/afs/desy.de/group/telescopes/EutelTestData/TestPysubExampleDaturaNoDUT
+/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT
 
 If you are interested in the data but cannot access the above path,
 please contact the EUTelescope software coordinators via mail:
