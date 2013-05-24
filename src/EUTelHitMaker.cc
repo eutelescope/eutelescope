@@ -132,13 +132,13 @@ EUTelHitMaker::EUTelHitMaker () : Processor("EUTelHitMaker") {
   registerOptionalParameter("OffsetDBFile","This is the name of the LCIO file name with the output offset db (add .slcio)",
                             _offsetDBFile, static_cast< string > ( "offset-db.slcio" ) );
  
-  registerOptionalParameter("OffsetCollection","This is the name of the preAligment collection stored in the offset-db.slcio file",
+  registerOptionalParameter("OffsetCollection","This is the name of the preAligment collection determined from hit correlations and stored in the offset db file.",
                             _preAlignmentCollectionName, static_cast< string > ( "preAlignment" ) );
  
-  registerOptionalParameter("ReferenceCollection","This is the name of the reference it collection (init at 0,0,0)",
-                            _referenceHitCollectionName, static_cast< string > ( "reference" ) );
+  registerOptionalParameter("ReferenceCollection","This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.",
+                            _referenceHitCollectionName, static_cast< string > ( "referenceHit" ) );
  
-  registerOptionalParameter("ReferenceHitFile","This is the name of the reference it collection (init at 0,0,0)",
+  registerOptionalParameter("ReferenceHitFile","This is the file where the reference hit collection is stored",
                             _referenceHitLCIOFile, static_cast< string > ( "reference.slcio" ) );
     
 }
@@ -272,7 +272,7 @@ void EUTelHitMaker::DumpReferenceHitDB()
      refhit->setGamma( _RotatedVector[2] );
      referenceHitCollection->push_back( refhit );
   }
-  event->addCollection( referenceHitCollection, "referenceHit" );
+  event->addCollection( referenceHitCollection, _referenceHitCollectionName );
 
   addReferenceHitCollection(event, "referenceHit11");
   addReferenceHitCollection(event, "referenceHit12");
