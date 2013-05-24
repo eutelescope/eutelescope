@@ -92,6 +92,10 @@ namespace eutelescope {
         /** Fills hits data structure for track finder */
         void FillHits(LCEvent * evt, LCCollection* col, vector< EVENT::TrackerHitVec >& allHits) const;
 
+        /** Assign uncertainties to hits 
+         * @TODO this must be a part of hitmaker
+         */
+//        TrackerHitImpl* assignCov( TrackerHitImpl* ) const;
         /** Prepare LCIO data structure for dumping track
          * candidate hits into LCIO files
          */
@@ -133,14 +137,6 @@ namespace eutelescope {
 
         /** Track finder*/
         EUTelTrackFinder *_trackFinder;
-
-
-    protected:
-
-        // Geometry related information
-
-        /** GEAR description */
-        EUTelGeometryTelescopeGeoDescription* _geometry;
 
 
     private:

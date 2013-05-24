@@ -79,6 +79,8 @@ namespace eutelescope {
         // Processor parameters
 
     public:
+        /** Beam energy in [GeV] */
+        double _eBeam;
 
         /** Mille binary filename */
         string _binaryFilename;
@@ -103,14 +105,6 @@ namespace eutelescope {
 
         /** Mille */
         gbl::MilleBinary * _milleGBL;
-
-
-    protected:
-
-        // Geometry related information
-
-        /** GEAR description */
-        EUTelGeometryTelescopeGeoDescription* _geometry;
 
 
     private:

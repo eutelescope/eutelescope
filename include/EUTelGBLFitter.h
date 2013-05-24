@@ -36,17 +36,33 @@ namespace eutelescope {
     class EUTelGBLFitter : public EUTelTrackFitter {
     public:
         EUTelGBLFitter();
-	EUTelGBLFitter(std::string name);
+        EUTelGBLFitter(std::string name);
         virtual ~EUTelGBLFitter();
-        
-        void SetTrackCandidates( const std::vector< EVENT::TrackerHitVec >& );
+
+        void SetTrackCandidates(const std::vector< EVENT::TrackerHitVec >&);
         void FitTracks();
 
-	enum AlignmentMode { kXYShift, kXYShiftZRot };
+        /** Possible choises of alignment degrees of freedom */
+        enum AlignmentMode {
+            kXYShift, kXYShiftZRot
+        };
 
-        inline void SetAlignmentMode( AlignmentMode alignmentMode ) { this->_alignmentMode = alignmentMode; }
-        inline AlignmentMode GetAlignmentMode() const { return _alignmentMode; }
+        inline void SetAlignmentMode(AlignmentMode alignmentMode) {
+            this->_alignmentMode = alignmentMode;
+        }
 
+        inline AlignmentMode GetAlignmentMode() const {
+            return _alignmentMode;
+        }
+
+        inline void SetBeamEnergy( double beamE ) {
+            this->_eBeam = beamE;
+        }
+
+        inline double GetBeamEnergy() const {
+            return _eBeam;
+        }
+        
         std::map<int, gbl::GblTrajectory*> GetGblTrackCandidates() const {
             return _gblTrackCandidates;
         }
@@ -60,34 +76,45 @@ namespace eutelescope {
             return _gblTrackPoints;
         }
 
-        void SetMilleBinary( gbl::MilleBinary* _mille ) {
+        void SetMilleBinary(gbl::MilleBinary* _mille) {
             this->_mille = _mille;
         }
 
     private:
-	TMatrixD PropagatePar( double );
-        
-//        double* GetTrackOffset( const Utility::HitsPVec& ) const;
-//        double* GetTrackSlope( const Utility::HitsPVec& ) const;
-        
-        double InterpolateTrackX( const EVENT::TrackerHitVec& , const double  ) const;
-        double InterpolateTrackY( const EVENT::TrackerHitVec& , const double  ) const;
+        TMatrixD PropagatePar(double);
+
+        //        double* GetTrackOffset( const Utility::HitsPVec& ) const;
+        //        double* GetTrackSlope( const Utility::HitsPVec& ) const;
+
+        double InterpolateTrackX(const EVENT::TrackerHitVec&, const double) const;
+        double InterpolateTrackY(const EVENT::TrackerHitVec&, const double) const;
 
         void Reset();
-        
+
     private:
         std::vector< EVENT::TrackerHitVec > _trackCandidates;
-        
+
         std::map< int, gbl::GblTrajectory* > _gblTrackCandidates;
 
-        IMPL::LCCollectionVec     *_fittrackvec;
-        
-        std::vector< std::vector< gbl::GblPoint > > _gblTrackPoints;
-        
-	AlignmentMode _alignmentMode;
+        IMPL::LCCollectionVec *_fittrackvec;
 
-	TMatrixD _parPropJac;
-        
+        std::vector< std::vector< gbl::GblPoint > > _gblTrackPoints;
+    
+    private:
+        /** Parameter propagation jacobian */
+        TMatrixD _parPropJac;
+
+
+    private:
+        /** Beam energy in [GeV] */
+        double _eBeam;
+
+        // Alignment 
+    private:
+        /** Alignmet degrees of freedom */
+        AlignmentMode _alignmentMode;
+
+        /** Milipede binary file handle */
         gbl::MilleBinary* _mille;
 
     };

@@ -155,9 +155,6 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::init() {
     _nProcessedEvents = 0;
 
 
-    // Getting access to geometry description
-    _geometry = new EUTelGeometryTelescopeGeoDescription;
-
     // Instantiate track finder. This is a working horse of the processor.
     {
         streamlog_out(DEBUG) << "Initialisation of track finder" << std::endl;
@@ -197,10 +194,10 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processRunHeader(LCRunHeader* 
             << "This may mean that the GeoID parameter was not set" << endl;
 
 
-    if (header->getGeoID() != _geometry->_siPlanesParameters->getSiPlanesID()) {
+    if (header->getGeoID() != EUTelGeometryTelescopeGeoDescription::getInstance()._siPlanesParameters->getSiPlanesID()) {
         streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl
                 << "The run header says the GeoID is " << header->getGeoID() << endl
-                << "The GEAR description says is     " << _geometry->_siPlanesParameters->getSiPlanesID() << endl;
+                << "The GEAR description says is     " << EUTelGeometryTelescopeGeoDescription::getInstance()._siPlanesParameters->getSiPlanesID() << endl;
     }
 
     _nProcessedRuns++;
@@ -239,7 +236,7 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent(LCEvent * evt) {
         if (_nProcessedEvents % 10000 == 1) streamlog_out(MESSAGE5) << "EUTelProcessorTrackingExhaustiveTrackSearch" << endl;
 
         // Prepare hits for track finder
-        vector< EVENT::TrackerHitVec > allHitsArray(_geometry->_nPlanes, EVENT::TrackerHitVec());
+        vector< EVENT::TrackerHitVec > allHitsArray(EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes, EVENT::TrackerHitVec());
         FillHits(evt, col, allHitsArray);
 
         // Search tracks
@@ -251,7 +248,7 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent(LCEvent * evt) {
         streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << std::endl;
         streamlog_out(DEBUG1) << "Initialising hits for _theFinder..." << std::endl;
         TrackerHitVec::iterator itHit;
-        for (size_t iLayer = 0; iLayer < _geometry->_nPlanes; iLayer++) {
+        for (size_t iLayer = 0; iLayer < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iLayer++) {
             streamlog_out(DEBUG1) << iLayer << endl;
             for (itHit = allHitsArray[iLayer].begin(); itHit != allHitsArray[iLayer].end(); ++itHit) {
                 streamlog_out(DEBUG1) << *itHit << endl;
@@ -381,13 +378,26 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::FillHits(LCEvent * evt,
         }
 
         unsigned int localSensorID = Utility::GuessSensorID(hit);
-        layerIndex = _geometry->_sensorIDVecMap[ localSensorID ];
+        layerIndex = EUTelGeometryTelescopeGeoDescription::getInstance()._sensorIDVecMap[ localSensorID ];
         allHitsArray[layerIndex].push_back(hit);
 
         delete cluster; // <--- destroying the cluster
     } // end loop over all hits in collection
 
 }
+
+//TrackerHitImpl* EUTelProcessorTrackingExhaustiveTrackSearch::assignCov( TrackerHitImpl* hit ) const{
+//    float cov[TRKHITNCOVMATRIX] = {0.,0.,0.,0.,0.,0.};
+//    double resx = EUTelGeometryTelescopeGeoDescription::getInstance()._siPlanesLayerLayout->getSensitivePitchX(0) / sqrt(12.);
+//    double resy = EUTelGeometryTelescopeGeoDescription::getInstance()._siPlanesLayerLayout->getSensitivePitchY(0) / sqrt(12.);
+//    cov[0] = resx * resx; // cov(x,x)
+//    cov[2] = resy * resy; // cov(y,y)
+//
+//    TrackerHitImpl* hitcov = new TrackerHitImpl;
+//    hitcov->setPosition( hit->getPosition() );
+//    hitcov->setCovMatrix( cov );
+//    return hitcov;
+//}
 
 void EUTelProcessorTrackingExhaustiveTrackSearch::addTrackCandidateToCollection(LCEvent* evt, const vector< EVENT::TrackerHitVec >& trackCandidates) {
     // Prepare output collection
@@ -416,7 +426,8 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::addTrackCandidateToCollection(
         EVENT::TrackerHitVec trkcandhits = trackCandidates[itrk];
         for (size_t ihit = 0; ihit < trkcandhits.size(); ihit++) {
             TrackerHitImpl* hit = static_cast<TrackerHitImpl*>(trkcandhits[ihit]);
-            trackcand->addHit(hit);
+//            trackcand->addHit( assignCov(hit) );
+            trackcand->addHit( hit );
         }
         streamlog_out( DEBUG1 ) << "Track has " << trackcand->getTrackerHits().size() << " hits" << endl;
         trkCandCollection->push_back(trackcand);
@@ -439,8 +450,6 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::check(LCEvent * evt) {
 }
 
 void EUTelProcessorTrackingExhaustiveTrackSearch::end() {
-
-    delete _geometry;
 
     streamlog_out(MESSAGE) << "EUTelProcessorTrackingExhaustiveTrackSearch::end()  " << name()
             << " processed " << _nProcessedEvents << " events in " << _nProcessedRuns << " runs "

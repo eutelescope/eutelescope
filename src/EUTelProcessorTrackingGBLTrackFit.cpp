@@ -103,7 +103,9 @@ EUTelProcessorTrackingGBLTrackFit::EUTelProcessorTrackingGBLTrackFit( ) :
             std::string( "TrackCollection" ) );
 
 
-
+    // Necessary processor parameters that define fitter settings
+    registerProcessorParameter( "BeamEnergy", "Beam energy [GeV]", _eBeam, static_cast < double >( 4.0));
+    
     // Optional processor parameters that define finder settings
 
     registerOptionalParameter( "BinaryFilename", "Name of the Millepede binary file.", _binaryFilename, std::string( "mille.bin" ) );
@@ -125,8 +127,7 @@ void EUTelProcessorTrackingGBLTrackFit::init( ) {
 
 
     // Getting access to geometry description
-    _geometry = new EUTelGeometryTelescopeGeoDescription;
-    _geometry -> initializeTGeoDescription( _tgeoFileName );
+    EUTelGeometryTelescopeGeoDescription::getInstance().initializeTGeoDescription( _tgeoFileName );
 
     // Instantiate millipede output. 
     {
@@ -147,6 +148,7 @@ void EUTelProcessorTrackingGBLTrackFit::init( ) {
 
         EUTelGBLFitter* Fitter = new EUTelGBLFitter( "myGBLFitter" );
         Fitter->SetMilleBinary( _milleGBL );
+        Fitter->SetBeamEnergy( _eBeam );
         _trackFitter = Fitter;
 
         if ( !_trackFitter ) {
@@ -174,10 +176,10 @@ void EUTelProcessorTrackingGBLTrackFit::processRunHeader( LCRunHeader* run ) {
             << "This may mean that the GeoID parameter was not set" << endl;
 
 
-    if ( header->getGeoID( ) != _geometry->_siPlanesParameters->getSiPlanesID( ) ) {
+    if ( header->getGeoID( ) != EUTelGeometryTelescopeGeoDescription::getInstance()._siPlanesParameters->getSiPlanesID( ) ) {
         streamlog_out( WARNING5 ) << "Error during the geometry consistency check: " << endl
                 << "The run header says the GeoID is " << header->getGeoID( ) << endl
-                << "The GEAR description says is     " << _geometry->_siPlanesParameters->getSiPlanesID( ) << endl;
+                << "The GEAR description says is     " << EUTelGeometryTelescopeGeoDescription::getInstance()._siPlanesParameters->getSiPlanesID( ) << endl;
     }
 
     _nProcessedRuns++;
@@ -263,9 +265,9 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent( LCEvent * evt ) {
 
                 std::stringstream sstr;
                 gbl::GblTrajectory* gblTraj = gblTracks[ iCounter ];
-                gblTraj->printTrajectory( );
-                gblTraj->printPoints( );
-                gblTraj->printData( );
+//                gblTraj->printTrajectory( );
+//                gblTraj->printPoints( );
+//                gblTraj->printData( );
                 std::vector< gbl::GblPoint > gblPointVec = static_cast < EUTelGBLFitter* > ( _trackFitter )->GetGblTracksPoints( )[iCounter];
                 std::vector< gbl::GblPoint >::const_iterator itGblPoint = gblPointVec.begin( );
                 int iPlane = 0; // wrong in case of missing planes
@@ -333,7 +335,6 @@ void EUTelProcessorTrackingGBLTrackFit::check( LCEvent * evt ) {
 
 void EUTelProcessorTrackingGBLTrackFit::end( ) {
 
-    delete _geometry;
     delete _milleGBL;
 
     streamlog_out( MESSAGE ) << "EUTelProcessorTrackingGBLTrackFit::end()  " << name( )
@@ -389,7 +390,7 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms( ) {
         std::stringstream sstm;
         std::string residGblFitHistName;
         std::string histTitle;
-        for ( int iPlane = 0; iPlane < _geometry->_nPlanes; iPlane++ ) {
+        for ( int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++ ) {
             sstm << _histName::_residGblFitHistNameX << iPlane;
             residGblFitHistName = sstm.str( );
             sstm.str( std::string( ) );
@@ -408,7 +409,7 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms( ) {
             sstm.str( std::string( "" ) );
         }
 
-        for ( int iPlane = 0; iPlane < _geometry->_nPlanes; iPlane++ ) {
+        for ( int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++ ) {
             sstm << _histName::_residGblFitHistNameY << iPlane;
             residGblFitHistName = sstm.str( );
             sstm.str( std::string( ) );
@@ -433,7 +434,7 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms( ) {
         MinX = -0.001;
         MaxX = 0.001;
         std::string resid2DGblFitHistName;
-        for ( int iPlane = 0; iPlane < _geometry->_nPlanes; iPlane++ ) {
+        for ( int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++ ) {
             sstm << _histName::_resid2DGblFitHistNameXvsX << iPlane;
             resid2DGblFitHistName = sstm.str( );
             sstm.str( std::string( ) );
@@ -469,7 +470,7 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms( ) {
             sstm.str( std::string( "" ) );
         }
 
-        for ( int iPlane = 0; iPlane < _geometry->_nPlanes; iPlane++ ) {
+        for ( int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++ ) {
             sstm << _histName::_resid2DGblFitHistNameYvsX << iPlane;
             resid2DGblFitHistName = sstm.str( );
             sstm.str( std::string( ) );
@@ -509,7 +510,7 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms( ) {
         MinX = -0.001;
         MaxX = 0.001;
         std::string kinkGblFitHistName;
-        for ( int iPlane = 0; iPlane < _geometry->_nPlanes; iPlane++ ) {
+        for ( int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++ ) {
             sstm << _histName::_kinkGblFitHistNameX << iPlane;
             kinkGblFitHistName = sstm.str( );
             sstm.str( std::string( ) );
@@ -528,7 +529,7 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms( ) {
             sstm.str( std::string( "" ) );
         }
 
-        for ( int iPlane = 0; iPlane < _geometry->_nPlanes; iPlane++ ) {
+        for ( int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++ ) {
             sstm << _histName::_kinkGblFitHistNameY << iPlane;
             kinkGblFitHistName = sstm.str( );
             sstm.str( std::string( ) );
