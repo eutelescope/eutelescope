@@ -214,7 +214,7 @@
 
     # all this regular expressions must be matched for the test to pass
     SET( fit_pass_regex_1 "SUCCESS" )
-    SET( fit_fail_regex "FAILED" "NOT PASSED" "segmentation violation")
+    SET( fit_fail_regex "FAILED" "NOT PASSED" "Error" "segmentation violation")
 
     # run stattest tool on output from previous step and test it against reference file; test are configured in specified config file (*.qa)
 
