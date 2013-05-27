@@ -468,6 +468,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
     double xZero = 0., yZero = 0., zZero = 0. ;
     double xSize = 0., ySize = 0.;
     double zThickness = 0.;
+    double resolution = 0.;
     double xPitch = 0., yPitch = 0.;
     double xPointing[2] = { 1., 0. }, yPointing[2] = { 1., 0. };
 
@@ -563,6 +564,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           yZero        = _siPlanesLayerLayout->getDUTSensitivePositionY(); // mm
           zZero        = _siPlanesLayerLayout->getDUTSensitivePositionZ(); // mm
           zThickness   = _siPlanesLayerLayout->getDUTSensitiveThickness(); // mm
+          resolution   = _siPlanesLayerLayout->getDUTSensitiveResolution();// mm
           xPitch       = _siPlanesLayerLayout->getDUTSensitivePitchX();    // mm
           yPitch       = _siPlanesLayerLayout->getDUTSensitivePitchY();    // mm
           xSize        = _siPlanesLayerLayout->getDUTSensitiveSizeX();     // mm
@@ -611,6 +613,7 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
           yZero        = _siPlanesLayerLayout->getSensitivePositionY(layerIndex); // mm
           zZero        = _siPlanesLayerLayout->getSensitivePositionZ(layerIndex); // mm
           zThickness   = _siPlanesLayerLayout->getSensitiveThickness(layerIndex); // mm
+          resolution   = _siPlanesLayerLayout->getSensitiveResolution(layerIndex);// mm
           xPitch       = _siPlanesLayerLayout->getSensitivePitchX(layerIndex);    // mm
           yPitch       = _siPlanesLayerLayout->getSensitivePitchY(layerIndex);    // mm
           xSize        = _siPlanesLayerLayout->getSensitiveSizeX(layerIndex);     // mm
@@ -964,8 +967,8 @@ void EUTelHitMaker::processEvent (LCEvent * event) {
 //      hit->setDetectorID( detectorID ) ;
       hit->setPosition( &telPos[0] );
       float cov[TRKHITNCOVMATRIX] = {0.,0.,0.,0.,0.,0.};
-      double resx = xPitch / sqrt(12.);
-      double resy = yPitch / sqrt(12.);
+      double resx = resolution;
+      double resy = resolution;
       cov[0] = resx * resx; // cov(x,x)
       cov[2] = resy * resy; // cov(y,y)
       hit->setCovMatrix( cov );
