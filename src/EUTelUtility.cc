@@ -285,80 +285,17 @@ namespace eutelescope {
             return hotPixelMap;
         }
 
-//        void EUTelMilleDL::findtracks(
-//                std::vector<std::vector<int> > &indexarray,
-//                std::vector<int> vec,
-//                std::vector<std::vector<HitsInPlane> > &_hitsArray,
-//                int i,
-//                int y
-//                ) {
-//            if (i > 0)
-//                vec.push_back(y);
-//
-//            for (size_t j = 0; j < _hitsArray[i].size(); j++) {
-//                //if we are not in the last plane, call this method again
-//                if (i < (int) (_hitsArray.size()) - 1) {
-//                    vec.push_back((int) j); //index of the cluster in the last plane
-//
-//                    //track candidate requirements
-//                    bool taketrack = true;
-//                    const int e = vec.size() - 2;
-//                    if (e >= 0) {
-//                        double distance = sqrt(
-//                                pow(_hitsArray[e][vec[e]].measuredX - _hitsArray[e + 1][vec[e + 1]].measuredX, 2) +
-//                                pow(_hitsArray[e][vec[e]].measuredY - _hitsArray[e + 1][vec[e + 1]].measuredY, 2)
-//                                );
-//                        double distance_z = _hitsArray[e + 1][vec[e + 1]].measuredZ - _hitsArray[e][vec[e]].measuredZ;
-//
-//
-//                        const double dM = _distanceMaxVec[e];
-//
-//                        double distancemax = dM * (distance_z / 100000.0);
-//
-//                        if (distance >= distancemax)
-//                            taketrack = false;
-//
-//                        if (_onlySingleHitEvents == 1 && (_hitsArray[e].size() != 1 || _hitsArray[e + 1].size() != 1))
-//                            taketrack = false;
-//                    }
-//                    vec.pop_back();
-//
-//                    if (taketrack)
-//                        findtracks(indexarray, vec, _hitsArray, i + 1, (int) j);
-//                } else {
-//                    //we are in the last plane
-//                    vec.push_back((int) j); //index of the cluster in the last plane
-//
-//                    //track candidate requirements
-//                    bool taketrack = true;
-//                    for (size_t e = 0; e < vec.size() - 1; e++) {
-//                        double distance = sqrt(
-//                                pow(_hitsArray[e][vec[e]].measuredX - _hitsArray[e + 1][vec[e + 1]].measuredX, 2) +
-//                                pow(_hitsArray[e][vec[e]].measuredY - _hitsArray[e + 1][vec[e + 1]].measuredY, 2)
-//                                );
-//                        double distance_z = _hitsArray[e + 1][vec[e + 1]].measuredZ - _hitsArray[e][vec[e]].measuredZ;
-//
-//                        const double dM = _distanceMaxVec[e];
-//
-//                        double distancemax = dM * (distance_z / 100000.0);
-//
-//                        if (distance >= distancemax)
-//                            taketrack = false;
-//
-//                        if (_onlySingleHitEvents == 1 && (_hitsArray[e].size() != 1 || _hitsArray[e + 1].size() != 1))
-//                            taketrack = false;
-//
-//                    }
-//                    if ((int) indexarray.size() >= _maxTrackCandidates)
-//                        taketrack = false;
-//
-//                    if (taketrack) {
-//                        indexarray.push_back(vec);
-//                    }
-//                    vec.pop_back(); //last element must be removed because the
-//                    //vector is still used
-//                }
-//            }
-//        }
+        /** Calculate median */
+        double getMedian( std::vector<double>& vec ) {
+            std::sort( vec.begin( ), vec.end( ) );
+            double median = -999.;
+            size_t size = vec.size( );
+            if ( size % 2 == 0 ) {
+                median = ( vec[size / 2 - 1] + vec[size / 2] ) / 2;
+            } else {
+                median = vec[size / 2];
+            }
+            return median;
+        }
     }
 }

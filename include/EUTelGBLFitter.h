@@ -12,6 +12,7 @@
 
 // eutelescope includes ".h"
 #include "EUTelTrackFitter.h"
+#include "EUTelUtility.h"
 
 // LCIO
 #include <IMPL/LCCollectionVec.h>
@@ -30,39 +31,39 @@
 // system includes <>
 #include <map>
 #include <string>
+#include <algorithm>
+#include <functional>
 
 namespace eutelescope {
 
     class EUTelGBLFitter : public EUTelTrackFitter {
+
     public:
         EUTelGBLFitter();
         EUTelGBLFitter(std::string name);
         virtual ~EUTelGBLFitter();
 
         void SetTrackCandidates(const std::vector< EVENT::TrackerHitVec >&);
+
+        /** Fit tracks */
         void FitTracks();
 
-        /** Possible choises of alignment degrees of freedom */
-        enum AlignmentMode {
-            kXYShift, kXYShiftZRot
-        };
-
-        inline void SetAlignmentMode(AlignmentMode alignmentMode) {
+        inline void SetAlignmentMode( Utility::AlignmentMode alignmentMode) {
             this->_alignmentMode = alignmentMode;
         }
 
-        inline AlignmentMode GetAlignmentMode() const {
+        inline Utility::AlignmentMode GetAlignmentMode() const {
             return _alignmentMode;
         }
 
-        inline void SetBeamEnergy( double beamE ) {
+        inline void SetBeamEnergy(double beamE) {
             this->_eBeam = beamE;
         }
 
         inline double GetBeamEnergy() const {
             return _eBeam;
         }
-        
+
         std::map<int, gbl::GblTrajectory*> GetGblTrackCandidates() const {
             return _gblTrackCandidates;
         }
@@ -72,13 +73,32 @@ namespace eutelescope {
         }
 
         std::vector<std::vector<gbl::GblPoint> >& GetGblTracksPoints() {
-            //std::vector<std::vector<gbl::GblPoint> >& gblTracksPoints = _gblTracksPoints;
             return _gblTrackPoints;
         }
 
         void SetMilleBinary(gbl::MilleBinary* _mille) {
             this->_mille = _mille;
         }
+
+        inline void SetChi2Cut(double chi2cut) {
+            this->_chi2cut = chi2cut;
+        }
+
+        inline double GetChi2Cut() const {
+            return _chi2cut;
+        }
+        
+        void SetZRotationsVec(std::vector<int>& );
+        
+        void SetYShiftsVec(std::vector<int>& );
+        
+        void SetXShiftsVec(std::vector<int>& );
+        
+        std::map<int, int> GetParamterIdZRotationsMap() const;
+        
+        std::map<int, int> GetParamterIdYShiftsMap() const;
+        
+        std::map<int, int> GetParamterIdXShiftsMap() const;
 
     private:
         TMatrixD PropagatePar(double);
@@ -99,7 +119,7 @@ namespace eutelescope {
         IMPL::LCCollectionVec *_fittrackvec;
 
         std::vector< std::vector< gbl::GblPoint > > _gblTrackPoints;
-    
+
     private:
         /** Parameter propagation jacobian */
         TMatrixD _parPropJac;
@@ -111,12 +131,26 @@ namespace eutelescope {
 
         // Alignment 
     private:
-        /** Alignmet degrees of freedom */
-        AlignmentMode _alignmentMode;
+        /** Alignment degrees of freedom */
+        Utility::AlignmentMode _alignmentMode;
 
         /** Milipede binary file handle */
         gbl::MilleBinary* _mille;
-
+        
+        /** Parameter ids */
+        std::map<int,int> _paramterIdXShiftsMap;
+        
+        /** Parameter ids */
+        std::map<int,int> _paramterIdYShiftsMap;
+        
+        /** Parameter ids */
+        std::map<int,int> _paramterIdZRotationsMap;
+        
+        // Track requirements for alignment step
+        
+        /** Maximum allowed track 2hi2 value*/
+        double _chi2cut;
+        
     };
 
 }

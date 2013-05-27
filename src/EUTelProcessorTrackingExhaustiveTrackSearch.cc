@@ -233,7 +233,7 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent(LCEvent * evt) {
 
     // this will only be entered if the collection is available
     if (col != NULL) {
-        if (_nProcessedEvents % 10000 == 1) streamlog_out(MESSAGE5) << "EUTelProcessorTrackingExhaustiveTrackSearch" << endl;
+        streamlog_out(DEBUG2) << "EUTelProcessorTrackingExhaustiveTrackSearch::processEvent()" << endl;
 
         // Prepare hits for track finder
         vector< EVENT::TrackerHitVec > allHitsArray(EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes, EVENT::TrackerHitVec());

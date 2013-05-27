@@ -72,6 +72,9 @@ namespace eutelescope {
 
 
     public:
+        /** Prepare MILLIPEDE steering file */
+        void writeMilleSteeringFile();
+
         /** Histogram booking */
         void bookHistograms();
 
@@ -79,11 +82,38 @@ namespace eutelescope {
         // Processor parameters
 
     public:
+
+        // Necessary parameters
+
         /** Beam energy in [GeV] */
         double _eBeam;
 
+
+        // Optional parameters
+
+        /** Alignment mode */
+        string _alignmentMode;
+
+        /** Parameter ids */
+        IntVec _xShiftsVec;
+        
+        /** Parameter ids */
+        IntVec _yShiftsVec;
+        
+        /** Parameter ids */
+        IntVec _zRotationsVec;
+        
         /** Mille binary filename */
-        string _binaryFilename;
+        string _milleBinaryFilename;
+
+        /** Mille steering filename */
+        string _milleSteeringFilename;
+
+        /** Alignment plane ids*/
+        IntVec _alignmentPlaneIds;
+        
+        /** Maximum value of track chi2 for millipede */
+        double _maxChi2Cut;
 
         /** TGeo geometry file name */
         string _tgeoFileName;
@@ -105,6 +135,16 @@ namespace eutelescope {
 
         /** Mille */
         gbl::MilleBinary * _milleGBL;
+
+    private:
+
+        struct AlignmentConstants {
+            std::map< int, std::vector<double> > _xResiduals;   //! all x residuals for given plane id
+            std::map< int, std::vector<double> > _yResiduals;   //! all y residuals for given plane id
+        };
+
+        /** Initial alignment constants */
+        AlignmentConstants _alignmentConstants;
 
 
     private:

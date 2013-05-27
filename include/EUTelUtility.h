@@ -30,19 +30,17 @@ namespace eutelescope {
     namespace Utility {
 
         class Hit;
-        
+
         /**
          * Vector of Hits in plane
          */
         typedef std::vector< Hit > HitsVec;
         typedef std::vector< Hit* > HitsPVec;
 
-
         /**
          * Represents geometric properties of hits
          */
         class Hit {
-
         public:
 
             Hit() : _PlaneID(-1), _x(0.0), _y(0.0), _z(0.0) {
@@ -89,18 +87,18 @@ namespace eutelescope {
             int GetPlaneID() const {
                 return _PlaneID;
             }
-            
+
             void Print() {
-                streamlog_out( DEBUG0 ) << "Hit:" << std::endl;
-                streamlog_out( DEBUG0 ) << "PlaneID" << std::setw(10) << setiosflags(std::ios::right) << _PlaneID << std::endl;
-                streamlog_out( DEBUG0 ) << "X:" << std::setw(10) << std::setprecision(6) << setiosflags(std::ios::right) << _x << std::endl;
-                streamlog_out( DEBUG0 ) << "Y:" << std::setw(10) << std::setprecision(6) << setiosflags(std::ios::right) << _y << std::endl;
-                streamlog_out( DEBUG0 ) << "Z:" << std::setw(10) << std::setprecision(6) << setiosflags(std::ios::right) << _z << std::endl;
+                streamlog_out(DEBUG0) << "Hit:" << std::endl;
+                streamlog_out(DEBUG0) << "PlaneID" << std::setw(10) << setiosflags(std::ios::right) << _PlaneID << std::endl;
+                streamlog_out(DEBUG0) << "X:" << std::setw(10) << std::setprecision(6) << setiosflags(std::ios::right) << _x << std::endl;
+                streamlog_out(DEBUG0) << "Y:" << std::setw(10) << std::setprecision(6) << setiosflags(std::ios::right) << _y << std::endl;
+                streamlog_out(DEBUG0) << "Z:" << std::setw(10) << std::setprecision(6) << setiosflags(std::ios::right) << _z << std::endl;
             }
-            
+
         protected:
             int _PlaneID;
-            
+
             double _x;
             double _y;
             double _z;
@@ -111,11 +109,11 @@ namespace eutelescope {
          */
         class SensorRectangular {
         protected:
-            int sensor;         // SensorID
-            int A;              // lowest pixel in X direction
-            int B;              // lowest pixel in Y direction
-            int C;              // highest pixel in X direction
-            int D;              // highest pixel in Y direction
+            int sensor; // SensorID
+            int A; // lowest pixel in X direction
+            int B; // lowest pixel in Y direction
+            int C; // highest pixel in X direction
+            int D; // highest pixel in Y direction
         public:
 
             SensorRectangular(int s, int a, int b, int c, int d) : sensor(s), A(a), B(b), C(c), D(d) {
@@ -124,9 +122,12 @@ namespace eutelescope {
             SensorRectangular() : sensor(0), A(0), B(0), C(0), D(0) {
             };
 
-            int getSensor() const { return sensor; }
-            
+            int getSensor() const {
+                return sensor;
+            }
+
             //look if x and y are inside the foreseen rectangular
+
             bool isInside(int x, int y) const {
                 return (x >= A && x <= C && y >= B && y <= D);
             }
@@ -143,7 +144,9 @@ namespace eutelescope {
 
         public:
 
-            void addRectangular(SensorRectangular &s) { _rect[s.getSensor() ] = s; }
+            void addRectangular(SensorRectangular &s) {
+                _rect[s.getSensor() ] = s;
+            }
 
             bool isInside(int s, int x, int y) {
                 std::map<int, SensorRectangular >::iterator it = _rect.find(s);
@@ -155,44 +158,40 @@ namespace eutelescope {
             }
 
         };
-        
+
         /*!
          * Fills indices of not excluded planes
          */
-        
+
         void FillNotExcludedPlanesIndices(
                 std::vector< int >&,
                 const std::vector< unsigned int >&,
-                unsigned int = 0 );
-        
+                unsigned int = 0);
+
         /*!
          * Checks if a hit belongs to a hot-pixel-map
          */
-        
+
         //! Called for first event per run
         /*! Reads hotpixel information from hotPixelCollection into hotPixelMap
          * to be used in the sensor exclusion area logic 
          */
 
-        std::map<std::string, bool > FillHotPixelMap( EVENT::LCEvent *event, const std::string& hotPixelCollectionName );
-        
-        bool HitContainsHotPixels( const IMPL::TrackerHitImpl * hit, const std::map<std::string, bool >& hotPixelMap );
+        std::map<std::string, bool > FillHotPixelMap(EVENT::LCEvent *event, const std::string& hotPixelCollectionName);
+
+        bool HitContainsHotPixels(const IMPL::TrackerHitImpl * hit, const std::map<std::string, bool >& hotPixelMap);
 
         EUTelVirtualCluster* GetClusterFromHit(const IMPL::TrackerHitImpl*);
+
+        int GuessSensorID(const IMPL::TrackerHitImpl * hit);
+
+        /** Calculate median */
+        double getMedian(std::vector<double>& );
         
-        int GuessSensorID( const IMPL::TrackerHitImpl * hit );
-//
-//        /**
-//         * Recursive track search
-//         */
-//        
-//        void findtracks(
-//                std::vector<std::vector<int> > &indexarray, //resulting vector of hit indizes
-//                std::vector<int> vec, //for internal use
-//                std::vector<std::vector<HitsInPlane> > &_hitsArray, //contains all hits for each plane
-//                int i, //plane number
-//                int y //hit index number
-//                );
+        /** Possible choices of alignment degrees of freedom */
+        enum AlignmentMode {
+            noAlignment, XYShift, XYShiftZRot
+        };
     }
 }
 
