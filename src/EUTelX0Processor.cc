@@ -70,11 +70,56 @@ EUTelX0Processor::EUTelX0Processor()
 void EUTelX0Processor::init()
 {
   streamlog_out(DEBUG5) << "Running EUTelX0Processor::init()" << std::endl;
-  int nobins = 10000, nobinsangle = 100;//Number of bins in the histograms
+  int nobins = 10000, nobinsangle = 1000;//Number of bins in the histograms
   double minbin = -0.1, maxbin = 0.1;//Maximum and minimum bin values
   double minbinangle = -0.01, maxbinangle = 0.01, minbinalpha = -0.01, maxbinalpha = 0.01;
   std::vector<double> empty;  
-   
+  int binsx = 20;
+  int minbinsx = -10;
+  int maxbinsx = 10;
+  int binsy = 10;
+  int minbinsy = -5;
+  int maxbinsy = 5;
+
+  ScatteringAngleXPlane1Map = new TH2D("ScatteringAngleXPlane1Map",
+                                       "Scattering Angle in X on Plane 1;x (mm);y(mm)"
+				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+  ScatteringAngleXPlane2Map = new TH2D("ScatteringAngleXPlane2Map",
+                                       "Scattering Angle in X on Plane 2;x (mm);y(mm)"
+				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+  ScatteringAngleXPlane3Map = new TH2D("ScatteringAngleXPlane3Map",
+                                       "Scattering Angle in X on Plane 3;x (mm);y(mm)"
+				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+  ScatteringAngleXPlane4Map = new TH2D("ScatteringAngleXPlane4Map",
+                                       "Scattering Angle in X on Plane 4;x (mm);y(mm)"
+				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+  ScatteringAngleYPlane1Map = new TH2D("ScatteringAngleYPlane1Map",
+                                       "Scattering Angle in Y on Plane 1;x (mm);y(mm)"
+				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+  ScatteringAngleYPlane2Map = new TH2D("ScatteringAngleYPlane2Map",
+                                       "Scattering Angle in Y on Plane 2;x (mm);y(mm)"
+				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+  ScatteringAngleYPlane3Map = new TH2D("ScatteringAngleYPlane3Map",
+                                       "Scattering Angle in Y on Plane 3;x (mm);y(mm)"
+				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+  ScatteringAngleYPlane4Map = new TH2D("ScatteringAngleYPlane4Map",
+                                       "Scattering Angle in Y on Plane 4;x (mm);y(mm)"
+				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+  RadiationLengthPlane1Map = new TH2D("RadiationLengthPlane1Map",
+                                       "Radiation Length on Plane 1;x (mm);y(mm)"
+				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+  RadiationLengthPlane2Map = new TH2D("RadiationLengthPlane2Map",
+                                       "Radiation Length on Plane 2;x (mm);y(mm)"
+				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+  RadiationLengthPlane3Map = new TH2D("RadiationLengthPlane3Map",
+                                       "Radiation Length on Plane 3;x (mm);y(mm)"
+				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+  RadiationLengthPlane4Map = new TH2D("RadiationLengthPlane4Map",
+                                       "Radiation Length on Plane 4;x (mm);y(mm)"
+				       ,binsx,minbinsx,maxbinsx,binsy,minbinsy,maxbinsy);
+
+ 
+  
   AIDA::IHistogram1D * SinglePointResidualXPlane0 = AIDAProcessor::histogramFactory(this)->createHistogram1D("SinglePointResidualXPlane0",nobins,minbin,maxbin);
   SinglePointResidualXPlane0->setTitle("SinglePointResidualXPlane0");
   _histoThing.insert(make_pair("SinglePointResidualXPlane0",SinglePointResidualXPlane0));
@@ -396,33 +441,49 @@ void EUTelX0Processor::kinkEstimate(Track* track){
   streamlog_out(DEBUG0) << "Running function kinkEstimate(Track* " << &track << ")" << std::endl;
   
   //First we extract the relevant hits from the track
+  try{
+    std::vector< TVector3* > hits = getHitsFromTrack(track);
+  } catch(...)
+  { 
+//cout << "1" << endl;
+    streamlog_out(ERROR3) << "Could not get hits from track" << endl;
+    return;
+  }
   std::vector< TVector3* > hits = getHitsFromTrack(track);
+
   streamlog_out(DEBUG3) << "Successfully got hits from track" << std::endl;
   //Then we find the position where those lines would have hit the DUT
   //THIS IS TO BE DECIDED IF IT IS NEEDED LATER
+  const double dutposition(hits[2]->z());
+  streamlog_out(DEBUG3) << "For now DUT position is set to the position of the 2nd plane, that is at " << dutposition << endl;
+  streamlog_out(ERROR9) << "Hit positions (x y z) " << hits[2]->x() << ", " << hits[2]->y() << ", " << hits[2]->z() << endl;  
 
   //Then we work out the angles of these lines with respect to XZ and YZ, plot results in histograms
-  int hitsize = static_cast< int >(hits.size());
+  const size_t hitsize = hits.size();
+  if(hitsize <= 1)
+  {
+    streamlog_out(DEBUG5) << "This track has only one hit, aborting track" << endl;
+    return;
+  }
   std::vector< double > scatterx, scattery;
-  for(int i = 0; i < hitsize-1; ++i){
-    double x0 = hits[i]->x();
-    double y0 = hits[i]->y();
-    double z0 = hits[i]->z();
-    double x1 = hits[i+1]->x();
-    double y1 = hits[i+1]->y();
-    double z1 = hits[i+1]->z();
-    double deltaz = z1-z0;
-    double frontanglex = atan2(x1-x0,deltaz);
-    double frontangley = atan2(y1-y0,deltaz);
-    double backanglex = atan2(x0-x1,deltaz);
-    double backangley = atan2(y0-y1,deltaz);
+  streamlog_out(DEBUG3) << "hitsize = " << hitsize << std::endl;
+  for(size_t i = 0; i < hitsize-1; ++i){
+    streamlog_out(DEBUG3) << "Running now in the first for loop in element " << i << std::endl;
+    const double x0 = hits[i]->x();
+    const double y0 = hits[i]->y();
+    const double z0 = hits[i]->z();
+    const double x1 = hits[i+1]->x();
+    const double y1 = hits[i+1]->y();
+    const double z1 = hits[i+1]->z();
+    const double deltaz = z1-z0;
+    streamlog_out(DEBUG3) << x0 << endl << y0 << endl << z0 << endl << x1 << endl << y1 << endl << z1 << endl;
+    const double frontanglex = atan2(x1-x0,deltaz);
+    const double frontangley = atan2(y1-y0,deltaz);
     scatterx.push_back(frontanglex);
     scattery.push_back(frontangley);
     std::stringstream xforward,yforward,xbackward,ybackward;
     xforward << "Angle X Forward Plane " << i;
     yforward << "Angle Y Forward Plane " << i;
-    xbackward << "Angle X Backward Plane " << i+1;
-    ybackward << "Angle Y Backward Plane " << i+1;
     try{
       dynamic_cast< AIDA::IHistogram1D* >(_histoThing[xforward.str().c_str()])->fill(frontanglex);
     } catch(std::bad_cast &bc){
@@ -433,22 +494,14 @@ void EUTelX0Processor::kinkEstimate(Track* track){
     } catch(std::bad_cast &bc){
       streamlog_out(ERROR3) << "Unable to fill histogram: " << yforward.str().c_str() << endl;
     }
-    try{
-      dynamic_cast< AIDA::IHistogram1D* >(_histoThing[xbackward.str().c_str()])->fill(backanglex);
-    } catch(std::bad_cast &bc){
-      streamlog_out(ERROR3) << "Unable to fill histogram: " << xbackward.str().c_str() << endl;
-    }
-    try{
-      dynamic_cast< AIDA::IHistogram1D* >(_histoThing[ybackward.str().c_str()])->fill(backangley);
-    } catch(std::bad_cast &bc){
-      streamlog_out(ERROR3) << "Unable to fill histogram: " << ybackward.str().c_str() << endl;
-    }
   }
  
-  int scatterxsize = static_cast< int >(scatterx.size());
-  for(int i = 0; i < scatterxsize-1; ++i){
-    double scatteringanglex = scatterx[i+1] - scatterx[i];
-    double scatteringangley = scattery[i+1] - scattery[i];
+  const size_t scatterxsize = scatterx.size();
+  streamlog_out(DEBUG3) << "scatterxsize = " << scatterxsize << std::endl;
+  for(size_t i = 0; i < scatterxsize-1; ++i){
+    streamlog_out(DEBUG3) << "Running now in the second for loop in element " << i << std::endl;
+    const double scatteringanglex = scatterx[i+1] - scatterx[i];
+    const double scatteringangley = scattery[i+1] - scattery[i];
     std::stringstream ssscatterx,ssscattery,ssscatterxy;
     ssscatterx << "Scattering Angle X Plane " << i+1;
     ssscattery << "Scattering Angle Y Plane " << i+1;
@@ -469,7 +522,6 @@ void EUTelX0Processor::kinkEstimate(Track* track){
       streamlog_out(ERROR3) << "Unable to fill histogram: " << ssscatterxy.str().c_str() << endl;
     }
   }
-
   streamlog_out(DEBUG3) << "Made it to the end of kinkEstimate()" << endl;
 }
 
@@ -493,7 +545,7 @@ void EUTelX0Processor::kinkGaussian(){
 
 void EUTelX0Processor::processEvent(LCEvent *evt)
 {
-  streamlog_out(MESSAGE0) << "Running EUTelX0Processor::processEvent(LCEvent *evt) with evt = " << evt << std::endl;
+  streamlog_out(DEBUG0) << "Running EUTelX0Processor::processEvent(LCEvent *evt) with evt = " << evt << std::endl;
   //Take track from input parameter
   //Work out kink angle from track
   //Put kink angle into histogram
@@ -503,6 +555,7 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
     //Deduce radiation length from sigma value - See Nadler and Fruwurth paper
 
   try{
+//cout << "Event number " << _eventNumber << endl;
     if(_eventNumber == _maxRecords - 2){ //Not sure about the -2
       _finalEvent = true;
       kinkGaussian();
@@ -515,11 +568,12 @@ void EUTelX0Processor::processEvent(LCEvent *evt)
         streamlog_out(DEBUG0) << "Here is all the information about the track in run " << _runNumber << ", event " << _eventNumber << ", element " << i << std::endl << std::endl;
 //        printTrackParameters( eventtrack );
         kinkEstimate( eventtrack );
+//        singlePointResolution( eventtrack );
 //        threePointResolution( eventtrack );
       }
     }
   } catch(DataNotAvailableException &datanotavailable){
-    streamlog_out(WARNING4) << "Exception occured: " << datanotavailable.what() << std::endl
+    streamlog_out(DEBUG4) << "Exception occured: " << datanotavailable.what() << std::endl
       << "Could not get collection '" << _trackCollectionName << "' from event " << _eventNumber << ", Skipping Event" << std::endl;
   } catch(...){
     streamlog_out(ERROR9) << "Unknown exception occured in EUTelX0Processor, here is some information which might help:" << std::endl
@@ -539,7 +593,7 @@ int EUTelX0Processor::guessSensorID(const double * hit )
   streamlog_out( DEBUG5 ) << "referencehit collection: " << _referenceHitCollectionName << " at "<< _referenceHitVec << std::endl;
   if( _referenceHitVec == 0)
   {
-    streamlog_out( MESSAGE5 ) << "_referenceHitVec is empty" << std::endl;
+    streamlog_out( DEBUG5 ) << "_referenceHitVec is empty" << std::endl;
     return 0;
   }
 
@@ -670,7 +724,7 @@ std::vector< TVector3* > EUTelX0Processor::getHitsFromTrack(Track *track){
  std::vector< TrackerHit* > trackhits = track->getTrackerHits();
  std::vector< TVector3* > hits;
  for(std::vector< TrackerHit* >::iterator it = trackhits.begin(); it != trackhits.end(); ++it){
-    if((*it)->getType() == 32){  //Check if the hit type is appropriate
+    if((*it)->getType() < 32){  //Check if the hit type is appropriate
       Double_t x = (*it)->getPosition()[0];
       Double_t y = (*it)->getPosition()[1];
       Double_t z = (*it)->getPosition()[2];
@@ -736,17 +790,17 @@ void EUTelX0Processor::threePointResolution(Track *track){
 //This function draws a line between the hits in plane i and i+2
 //then it compares where the hit in plane i+1 is with the average of the other two planes
 //this is then plotted as a residual for each plane.
-  streamlog_out(ERROR0) << "Function EUTelX0Processor::threePointResolution(Track *" << &track << ") called" << std::endl;
+  streamlog_out(DEBUG1) << "Function EUTelX0Processor::threePointResolution(Track *" << &track << ") called" << std::endl;
 
   std::vector< TrackerHit* > trackhits = track->getTrackerHits();
   std::vector< TVector3* > hits = getHitsFromTrack(track);
   int i = 1;
   for(std::vector< TVector3* >::iterator it = hits.begin(); it != hits.end() - 2; ++it){
     //This determines the guess of the position of the particle as it should hit the middle sensor
-    streamlog_out(ERROR0) << "In the for loop of the three point resolution function" << endl;
+    streamlog_out(DEBUG1) << "In the for loop of the three point resolution function" << endl;
     double averagingfactor = ((*it + 1)->z() - (*it)->z())/((*it + 2)->z() - (*it)->z());
     if(averagingfactor == 0){
-      streamlog_out(ERROR0) << "Averaging factor == 0)" << endl;
+      streamlog_out(ERROR5) << "Averaging factor == 0)" << endl;
       continue;
     }
     double averagex = ((*it)->x() + (*it + 2)->x())/averagingfactor;
@@ -766,7 +820,7 @@ void EUTelX0Processor::threePointResolution(Track *track){
     } catch(std::bad_cast& bc){
       streamlog_out(ERROR5) << "Unable to fill histogram " << ResidualY.str() << " due to bad cast" << std::endl;
     }
-    streamlog_out(ERROR0) << "Made it to the end of the for loop" << endl;
+    streamlog_out(DEBUG1) << "Made it to the end of the for loop" << endl;
     i++;
   }
 }
