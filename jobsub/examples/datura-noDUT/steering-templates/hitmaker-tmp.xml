@@ -71,7 +71,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--This is the name of the reference it collection (init at 0,0,0)-->
   <!--parameter name="ReferenceCollection" type="string" value="reference"/-->
   <!--This is the name of the reference it collection (init at 0,0,0)-->
-  <!--parameter name="ReferenceHitFile" type="string" value="reference.slcio"/-->
+  <parameter name="ReferenceHitFile" type="string" value="@DatabasePath@/@FilePrefix@-reference.slcio"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -83,7 +83,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--Name of LCIO db file where alignment constantds will be stored-->
   <parameter name="AlignmentConstantLCIOFile" type="string" value="@DatabasePath@/@FilePrefix@-prealignment.slcio"/>
   <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )-->
-  <!--parameter name="ApplyToReferenceCollection" type="bool" value="false"/-->
+  <parameter name="ApplyToReferenceCollection" type="bool" value="true"/>
   <!--How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)-->
   <parameter name="Events" type="int" value="@PrealignEvents@"/>
   <!--SensorID of fixed plane-->
@@ -93,17 +93,17 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
   <parameter name="HotPixelCollectionName" type="string" value="m26_hotpixel"/>
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
-  <parameter name="MinNumberOfCorrelatedHits" type="int" value="4"/>
+  <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
   <!--reference hit collection name -->
-  <!--parameter name="ReferenceCollection" type="string" value="reference"/-->
+  <parameter name="ReferenceCollection" type="string" value="referenceHit"/>
   <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <!--parameter name="ResidualsXMax" type="FloatVec"> 10 10 10 10 10 10 </parameter-->
+  <parameter name="ResidualsXMax" type="FloatVec"> 5 5 5 5 5 5 </parameter>
   <!--Minimal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <!--parameter name="ResidualsXMin" type="FloatVec"> -10 -10 -10 -10 -10 -10 </parameter-->
+  <parameter name="ResidualsXMin" type="FloatVec"> -5 -5 -5 -5 -5 -5 </parameter>
   <!--Maximal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <!--parameter name="ResidualsYMax" type="FloatVec"> 10 10 10 10 10 10 </parameter-->
+  <parameter name="ResidualsYMax" type="FloatVec"> 5 5 5 5 5 5 </parameter>
   <!--Minimal values of the hit residuals in the Y direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <!--parameter name="ResidualsYMin" type="FloatVec"> -10 -10 -10 -10 -10 -10 </parameter-->
+  <parameter name="ResidualsYMin" type="FloatVec"> -5 -5 -5 -5 -5 -5 </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>

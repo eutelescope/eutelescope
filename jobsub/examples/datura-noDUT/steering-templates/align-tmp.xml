@@ -17,6 +17,7 @@
 
    <execute>
       <processor name="AIDA"/>
+      <processor name="LoadRefHitDB"/>
       <processor name="LoadPreAlignment"/>
       <processor name="ApplyPreAlignment"/>
       <processor name="MyEUTelCorrelator"/>
@@ -44,6 +45,11 @@
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
+
+  <processor name="LoadRefHitDB"     type="ConditionsProcessor">
+    <!--parameter name="DBInit" type="string" value="localhost:lccd_test:align:tel"/-->
+    <parameter name="SimpleFileHandler" type="StringVec"> referenceHit  @DatabasePath@/@FilePrefix@-reference.slcio referenceHit</parameter>
+  </processor>
 
  <processor name="LoadPreAlignment" type="ConditionsProcessor">
  <!--ConditionsProcessor provides access to conditions data  transparently from LCIO files or a databases, using LCCD-->
@@ -76,7 +82,7 @@
  1 -> reverse -->
   <parameter name="ApplyAlignmentDirection" type="int" value="0"/>
   <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )-->
-  <!--parameter name="ApplyToReferenceCollection" type="bool" value="false"/-->
+  <parameter name="ApplyToReferenceCollection" type="bool" value="true"/>
   <!--Rotation Angle around Y axis-->
   <!--parameter name="Beta" type="double" value="0"/-->
   <!--Available methods are:
@@ -117,9 +123,9 @@
  <processor name="MyEUTelCorrelator" type="EUTelCorrelator">
  <!--EUTelCorrelator fills histograms with correlation plots-->
   <!--Hit collection name-->
-  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
+  <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> prealignedhits </parameter>
   <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )-->
-  <!--parameter name="ApplyToReferenceCollection" type="bool" value="false"/-->
+  <parameter name="ApplyToReferenceCollection" type="bool" value="true"/>
   <!--Minimum allowed cluster charge to be taken into account for the correlation plots (default = 2)-->
   <parameter name="ClusterChargeMinimum" type="int" value="2"/>
   <!--Dump the offset X and Y values calculated from the correlation bands (default = true)-->
@@ -160,7 +166,7 @@
 1 - shifts in the X and Y directions and a rotation around the Z axis,
 2 - only shifts in the X and Y directions
 3 - (EXPERIMENTAL) shifts in the X,Y and Z directions and rotations around all three axis-->
-  <parameter name="AlignMode" type="int" value="3"/>
+  <parameter name="AlignMode" type="int" value="1"/>
   <!--This is the name of the alignment collection to be saved into the slcio file-->
   <!--parameter name="AlignmentConstantCollectionName" type="string" value="alignment"/-->
   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
@@ -168,7 +174,7 @@
   <!--Set how many hits (=planes) can be missing on a track candidate.-->
   <!--parameter name="AllowedMissingHits" type="int" value="0"/-->
   <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?-->
-  <!--parameter name="ApplyToReferenceCollection" type="bool" value="false"/-->
+  <parameter name="ApplyToReferenceCollection" type="bool" value="true"/>
   <!--Name of the Millepede binary file.-->
   <parameter name="BinaryFilename" type="string" value="@DatabasePath@/@FilePrefix@-align-mille.bin"/>
   <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
@@ -196,7 +202,7 @@
   <!--Maximal number of track candidates (Total).-->
   <parameter name="MaxTrackCandidatesTotal" type="int" value="@MaxTrackCandidates@"/>
   <!--Remove Mimosa26 clusters with a charge (i.e. number of fired pixels in cluster) below or equal to this value-->
-  <!--parameter name="MimosaClusterChargeMin" type="int" value="1"/-->
+  <parameter name="MimosaClusterChargeMin" type="int" value="@ClusterSizeCut@"/>
   <!--Use only events with one hit in every plane.-->
   <parameter name="OnlySingleHitEvents" type="bool" value="@OnlySingleHitEvents@"/>
   <!--Use only events with one track candidate.-->
@@ -218,23 +224,23 @@
   <!--reference hit collection name -->
   <!--parameter name="ReferenceCollection" type="string" value="reference"/-->
   <!--Maximal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMax" type="FloatVec" value="@ResidualXMax@"/>
+  <parameter name="ResidualsXMax" type="FloatVec" value="@ResidualX@ @ResidualX@ @ResidualX@ @ResidualX@ @ResidualX@ @ResidualX@"/>
   <!--Minimal values of the hit residuals in the X direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsXMin" type="FloatVec" value="@ResidualXMin@"/>
+  <parameter name="ResidualsXMin" type="FloatVec" value="-@ResidualX@ -@ResidualX@ -@ResidualX@ -@ResidualX@ -@ResidualX@ -@ResidualX@"/>
   <!--Maximal values of the hit residuals in the Y direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMax" type="FloatVec" value="@ResidualYMax@"/>
+  <parameter name="ResidualsYMax" type="FloatVec" value="@ResidualY@ @ResidualY@ @ResidualY@ @ResidualY@ @ResidualY@ @ResidualY@"/>
   <!--Minimal values of the hit residuals in the Y direction for a track. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResidualsYMin" type="FloatVec" value="@ResidualYMin@"/>
+  <parameter name="ResidualsYMin" type="FloatVec" value="-@ResidualY@ -@ResidualY@ -@ResidualY@ -@ResidualY@ -@ResidualY@ -@ResidualY@"/>
   <!--X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResolutionX" type="FloatVec"> 18 18 18 18 18 18 </parameter>
+  <parameter name="ResolutionX" type="FloatVec"> @ResolutionX@ @ResolutionX@ @ResolutionX@ @ResolutionX@ @ResolutionX@ @ResolutionX@</parameter>
   <!--Y resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResolutionY" type="FloatVec"> 18 18 18 18 18 18 </parameter>
+  <parameter name="ResolutionY" type="FloatVec"> @ResolutionY@ @ResolutionY@ @ResolutionY@ @ResolutionY@ @ResolutionY@ @ResolutionY@</parameter>
   <!--Z resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
-  <parameter name="ResolutionZ" type="FloatVec"> 1 1 1 1 1 1 </parameter>
+  <parameter name="ResolutionZ" type="FloatVec"> @ResolutionZ@ @ResolutionZ@ @ResolutionZ@ @ResolutionZ@ @ResolutionZ@ @ResolutionZ@</parameter>
   <!--Execute the pede program using the generated steering file.-->
   <parameter name="RunPede" type="bool" value="1"/>
   <!--Resolution of the telescope for Millepede (sigma_x=sigma_y.-->
-  <parameter name="TelescopeResolution" type="float" value="10"/>
+  <!--parameter name="TelescopeResolution" type="float" value="10"/-->
   <!--Rotation around the x axis of the sensors in test mode (to be determined by the alignment).-->
   <!--parameter name="TestModeSensorAlpha" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
   <!--Rotation around the y axis of the sensors in test mode (to be determined by the alignment).-->
