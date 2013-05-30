@@ -802,7 +802,8 @@ namespace eutelescope {
     /*! The map key is the pixel index in the matrix, while the float
      *  value the pixel signal
      */
-    std::map<float, unsigned int> _seedCandidateMap;
+    std::vector< std::pair<float,unsigned int> > _seedCandidateMap;    
+    //std::map<float, unsigned int> _seedCandidateMap;
 
     //! Total cluster found
     /*! This is a map correlating the sensorID number and the

@@ -58,6 +58,7 @@
 #endif
 
 // system includes <>
+#include <algorithm>
 #include <string>
 #include <sstream>
 #include <vector>
@@ -1503,9 +1504,9 @@ void EUTelClusteringProcessor::zsFixedFrameClustering(LCEvent * evt, LCCollectio
 
     if ( !seedCandidateMap.empty() ) {
 
-      streamlog_out ( DEBUG0 ) << "  Seed candidates " << seedCandidateMap.size() << endl;
+      streamlog_out ( DEBUG0 ) << "There are " << seedCandidateMap.size() << " seed candidates." << endl;
 
-      // now built up a cluster for each seed candidate
+      // now build up a cluster for each seed candidate
       multimap<float, int >::reverse_iterator rMapIter = seedCandidateMap.rbegin();
       while ( rMapIter != seedCandidateMap.rend() ) {
       
@@ -2723,7 +2724,7 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
         {
             if ( nzsData->getChargeValues()[iPixel] > _ffSeedCut * noise->getChargeValues()[iPixel]) 
             {
-                _seedCandidateMap.insert(make_pair( nzsData->getChargeValues()[iPixel], iPixel));
+                _seedCandidateMap.push_back(make_pair( nzsData->getChargeValues()[iPixel], iPixel));
             }
         }
     }
@@ -2731,10 +2732,12 @@ void EUTelClusteringProcessor::fixedFrameClustering(LCEvent * evt, LCCollectionV
     // continue only if seed candidate map is not empty!
     if ( !_seedCandidateMap.empty() ) {
 
-      streamlog_out ( DEBUG0 ) << "  Seed candidates " << _seedCandidateMap.size() << endl;
+      streamlog_out ( DEBUG0 ) << "There are << " << _seedCandidateMap.size() << " seed candidates." << endl;
 
       // now built up a cluster for each seed candidate
-      map<float, unsigned int>::iterator mapIter = _seedCandidateMap.end();
+      //Start by sorting the vector in order of smallest to largest seed signal
+      std::sort(_seedCandidateMap.begin(),_seedCandidateMap.end());
+      vector< pair< float, unsigned int > >::iterator mapIter = _seedCandidateMap.end();
       while ( mapIter != _seedCandidateMap.begin() ) {
         --mapIter;
         // check if this seed candidate has not been already added to a
@@ -2990,7 +2993,7 @@ void EUTelClusteringProcessor::nzsBrickedClustering(LCEvent * evt, LCCollectionV
       resetStatus(status);
 
       // prepare a multimap for the seed candidates
-      multimap<float , int > seedCandidateMap;
+      vector< pair <float, int> > seedCandidateMap;
 
       // fill the seed candidate map
       for (unsigned int iPixel = 0; iPixel < nzsData->getChargeValues().size(); iPixel++)
@@ -3000,7 +3003,7 @@ void EUTelClusteringProcessor::nzsBrickedClustering(LCEvent * evt, LCCollectionV
               //! CUT 1
               if ( nzsData->getChargeValues()[iPixel] > _ffSeedCut * noise->getChargeValues()[iPixel])
                 {
-                  seedCandidateMap.insert(make_pair( nzsData->getChargeValues()[iPixel], iPixel));
+                  seedCandidateMap.push_back(make_pair( nzsData->getChargeValues()[iPixel], iPixel));
                   streamlog_out ( MESSAGE2 )
                     << "Added pixel at (index=" << iPixel
                     << ") with signal " << nzsData->getChargeValues()[iPixel]
@@ -3022,14 +3025,15 @@ void EUTelClusteringProcessor::nzsBrickedClustering(LCEvent * evt, LCCollectionV
             }
         }
 
-      streamlog_out ( DEBUG0 ) << "  Number of seed candidates: " << seedCandidateMap.size() << endl;
-
+      streamlog_out ( DEBUG0 ) << "The number of seed candidates is: " << seedCandidateMap.size() << endl;
+      std::sort(seedCandidateMap.begin(),seedCandidateMap.end());
       if ( !seedCandidateMap.empty() )
         {
           // now build up a cluster for each seed candidate
-          multimap<float, int >::reverse_iterator rMapIter = seedCandidateMap.rbegin();
-          while ( rMapIter != seedCandidateMap.rend() )
+          vector< pair<float, int> >::iterator rMapIter = seedCandidateMap.end();
+          while ( rMapIter != seedCandidateMap.begin() )
             {
+              rMapIter--;
               if ( status->adcValues()[ (*rMapIter).second ] == EUTELESCOPE::GOODPIXEL )
                 {
                   // if we enter here, this means that at least the seed pixel
@@ -3253,9 +3257,6 @@ void EUTelClusteringProcessor::nzsBrickedClustering(LCEvent * evt, LCCollectionV
                   delete brickedClusterCandidate;
 
                 } //END: if ( currentSeedpixelcandidate == EUTELESCOPE::GOODPIXEL )
-
-              ++rMapIter;
-
             } //END: while (not all seed candidates in the map have been processed) ((while ( rMapIter != seedCandidateMap.rend() )))
         } //END: if ( seedCandidateMap.size() != 0 )
     } //for ( unsigned int i = 0 ; i < zsInputDataCollectionVec->size(); i++ )
