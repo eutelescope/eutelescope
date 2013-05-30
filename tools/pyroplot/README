@@ -17,11 +17,11 @@ plots and comparision plots from multiple ROOT files at once
 * Usage
 
 #+begin_example
-usage: pyroplot [-h] [--version] [-l LEVEL] [--compare] [--select SELECT]
-                [--selection-from-file FILE] [--one-file-per-histogram]
-                [-o FILE/PATH] [--with-2D] [--with-3D] [--list-only]
-                [--strict]
-                [files [files ...]]
+usage: pyroplot.py [-h] [--version] [-l LEVEL] [--compare] [-log]
+                   [--select SELECT] [--selection-from-file FILE]
+                   [--one-file-per-histogram] [-o FILE/PATH] [--with-2D]
+                   [--with-3D] [--list-only] [--strict]
+                   files [files ...]
 
 Python ROOT plotter - A tool for selecting and assembling histogram plots and
 comparision plots from multiple ROOT files at once
@@ -34,17 +34,20 @@ positional arguments:
 optional arguments:
   -h, --help            show this help message and exit
   --version             show program's version number and exit
-  -l LEVEL, --log LEVEL
+  -l LEVEL, --log-level LEVEL
                         Sets the verbosity of log messages where LEVEL is
                         either debug, info, warning or error
   --compare             Compare the selected histograms between files (ratio
                         plots, chi2) where the first file provides the
                         reference.
+  -log, --log-scale     Uses a logarithmic scale for the y axis; only relevant
+                        when not using '--compare'.
   --select SELECT, -s SELECT
                         Specify regular expression(s) for histogram selection.
   --selection-from-file FILE
                         Load list of regular expressions for histogram
-                        selection from file (plain text file, one reg ex per line).
+                        selection from file (plain text file, one reg ex per
+                        line).
   --one-file-per-histogram
                         Writes one file per histogram instead of storing all
                         plots in one single file.
@@ -61,6 +64,7 @@ optional arguments:
   --strict              Require the selection to match the full histogram path
                         and name (with implied '^' and '$') instead of only a
                         partial match.
+
 #+end_example
 
 * Examples

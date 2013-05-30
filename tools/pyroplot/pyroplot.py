@@ -87,34 +87,56 @@ def printPlots(cans,outPath,separateFiles):
         can.Print(outPath+")") # close the pdf file
 
 
-def makePlotCollection( histodicts, files, filesdescr, outPath, docompare, doseparateFiles):
+def makePlotCollection( histodicts, files, filesdescr, outPath, docompare, doseparateFiles, logscale):
     log = logging.getLogger('pyroplot')
     canvas = {}
     if docompare:
         canvas.update( makeComparisionPage(histodicts, files, filesdescr, doseparateFiles))
     else:
         for idx, histos in enumerate(histodicts):
-            canvas.update( makePage(histos, files[idx], doseparateFiles))
+            canvas.update( makePage(histos, files[idx], filesdescr[files[idx]], doseparateFiles, logscale))
     # now print the canvases
     printPlots(canvas,outPath,doseparateFiles)
 
-def plotHistos ( histos, option = "", statbox = True):
+def plotHistos ( histos, text = "", option = "", statbox = True):
     """ 
     Plots a list of histograms
     """
     log = logging.getLogger('pyroplot')
     import rootpy
-    from rootpy.plotting import Hist
+    from rootpy.plotting import Hist, HistStack
     from ROOT import kRed,gPad,TPaveStats
+    # determine and set maximum for all histograms
+    stack = HistStack()
+    for hist in histos:
+        stack.Add(hist)
+    # determine maximum value (will be set for all histograms)
+    maxplot = stack.GetMaximum()
+    minplot = stack.GetMinimum()
     for idx, hist in enumerate(histos):
         try:
+            hist.SetMaximum(maxplot)
+            if gPad.GetLogy():
+                hist.SetMinimum(1.)
+            else:
+                if minplot > 0:
+                    hist.SetMinimum(0.)
             thisopt = option
+            # if not first histo, add "same" to options so previous ones are not overwritten
             if idx:
                 if statbox:
                     thisopt += "sames"
                 else:
                     thisopt += "same"
             histcopy = hist.DrawCopy(thisopt)
+            # on first go: print identifying text on pad
+            if not idx and text:
+                markPad(text=text, x=.14, y=.85, size=0.041)
+                if statbox:
+                    thisopt += "sames"
+                else:
+                    thisopt += "same"
+                histcopy.Draw(thisopt)
             gPad.Update()
             if statbox:
                 try:
@@ -141,16 +163,16 @@ def plotHistos ( histos, option = "", statbox = True):
             return # give up!
 
 
-def makePage( histos, fileName, fileDescr, separateFiles):
+def makePage( histos, fileName, fileDescr, separateFiles, logscale):
     """
     Prepares a canvas with one histogram per pad
     """
     import rootpy
     from rootpy.plotting import Hist, Canvas
-    from ROOT import kBlue
+    from ROOT import kBlue,gPad
     log = logging.getLogger('pyroplot')
     cans = {}
-    for idx, name in enumerate(sorted(histos.keys)):
+    for idx, name in enumerate(sorted(histos.keys())):
         if separateFiles:
             log.debug( "Creating new canvas with index %d."%(idx))
             c=Canvas( 600, 800)
@@ -169,7 +191,9 @@ def makePage( histos, fileName, fileDescr, separateFiles):
         hist.color = kBlue
         if not separateFiles:
             c.cd(idx%6+1)
-        plotHistos([hist])
+        if logscale:
+            gPad.SetLogy()
+        plotHistos(histos=[hist],text=name)
     return cans
 
 
@@ -180,6 +204,7 @@ def makeComparisionPage( histodicts , fileNames, fileDescr, separateFiles):
     import rootpy
     from rootpy.plotting import Hist, Canvas, Legend
     import ROOT
+    from ROOT import gPad
     log = logging.getLogger('pyroplot')
     cans = {}
     colors = [ROOT.kBlue, ROOT.kRed+1,ROOT.kViolet-1, ROOT.kOrange+7,ROOT.kGreen-7,ROOT.kOrange-6,
@@ -192,14 +217,14 @@ def makeComparisionPage( histodicts , fileNames, fileDescr, separateFiles):
             log.debug( "Creating new canvas with index %d."%(hidx))
             c=Canvas( 600, 270)
             cans[refname] = c
-            c.Divide(2,1)
+            c.Divide(3,1)
             c.cd(1)
-        if not separateFiles and (hidx)%3 == 0:
+        if not separateFiles and (hidx)%4 == 0:
             log.debug( "Creating new canvas with index %d."%(hidx/3))
             # start a new canvas
             c=Canvas( 600, 800)
             cans[refname] = c
-            c.Divide(2,3)
+            c.Divide(3,4)
         # prepare histograms for drawing
         log.info( "Drawing histogram #" + str(hidx+1) +" (" + refname + ") on canvas #" + str(len(cans)) )
         hists = []
@@ -211,7 +236,7 @@ def makeComparisionPage( histodicts , fileNames, fileDescr, separateFiles):
             refProj.SetName("reference_proj")
         for idx, h in enumerate(hiter):
             # make sure we have this histogram loaded:
-            if not h[refname]:
+            if not refname in h:
                 continue
             # access the corresponding histogram of the other files at the same hidx as used for ref
             h[refname].color = colors[idx]
@@ -224,11 +249,19 @@ def makeComparisionPage( histodicts , fileNames, fileDescr, separateFiles):
                     myratio = Hist(h[refname].nbins(), h[refname].lowerbound(), h[refname].upperbound()) #dummy hist
                     myratioproj = h[refname].ProjectionX()
                     myratioproj.SetName("cmp_hist_proj"+str(idx))
-                    myratio.divide(myratioproj,refProj)
+                    try:
+                        myratio.divide(myratioproj,refProj)
+                    except rootpy.ROOTError, e:
+                        log.error("Calculation of ratio for histogram %s caused ROOTError exception ('%s')"%(h[refname].GetName(),e.msg))
+                        break
                     myratio.color = colors[idx]
                 else:
                     myratio = h[refname].clone() # make sure that the ratio has the right type
-                    myratio.Divide(h[refname], histodicts[0][refname]) # divide by reference hist
+                    try:
+                        myratio.Divide(h[refname], histodicts[0][refname]) # divide by reference hist
+                    except rootpy.ROOTError, e:
+                        log.error("Calculation of ratio for histogram %s caused ROOTError exception ('%s')"%(h[refname].GetName(),e.msg))
+                        break
                 myratio.yaxis.SetTitle("(h_{cmp} - h_{ref})/h_{ref}")
                 myratio.SetTitle("ratio to reference")
                 myratio.SetMaximum(2)
@@ -237,21 +270,29 @@ def makeComparisionPage( histodicts , fileNames, fileDescr, separateFiles):
                 ratiohists.append(myratio)
         # go to right pad to draw main histos
         if not separateFiles:
-            c.cd(2*(hidx%3)+1) # six pads (2x3) but we always skip one for the ratio
-        plotHistos(hists)
-        # go to right pad to draw ratios
+            c.cd(3*(hidx%4)+1) # 12 pads (4x3) but we always skip one for the ratio and one for the log plot
+        plotHistos(histos=hists,text=refname)
+        # go to right pad to draw log plots
         if not separateFiles:
-            c.cd(2*(hidx%3)+2)
+            c.cd(3*(hidx%4)+2)
         else:
             c.cd(2)
+        gPad.SetLogy()
+        plotHistos(histos=hists, text="log scale")
+        # go to last pad to draw ratios
+        if not separateFiles:
+            c.cd(3*(hidx%4)+3)
+        else:
+            c.cd(3)
         log.debug( "Plotting ratios for #" + str(hidx%3+1) +": " + refname + " in canvas #" + str(int(hidx/3) ))
-        plotHistos(histos = ratiohists, statbox=False)
+        plotHistos(histos=ratiohists, statbox=False, text="ratio")
         #create legend
         legend = Legend(nentries=len(histodicts)+len(fileDescr)+1, leftmargin=0.25, 
                         topmargin=0.05, rightmargin=0.25, entryheight=0.05)
         legend.AddEntry(histodicts[0][refname],label=os.path.basename(fileNames[0]), legendstyle="l")
         if fileNames[0] in fileDescr:
-            legend.AddEntry(None,label=fileDescr[fileNames[0]],legendstyle="")
+            if fileDescr[fileNames[0]]:
+                legend.AddEntry(None,label=fileDescr[fileNames[0]],legendstyle="")
         legend.AddEntry(None,label="(reference)",legendstyle="")
         for idx,ratiohist in enumerate(ratiohists):
             legend.AddEntry(ratiohist,
@@ -259,7 +300,8 @@ def makeComparisionPage( histodicts , fileNames, fileDescr, separateFiles):
                             legendstyle="l")
             # add additional info if specified by the user
             if fileNames[idx+1] in fileDescr:
-                legend.AddEntry(None,label=fileDescr[fileNames[idx+1]],legendstyle="")
+                if fileDescr[fileNames[idx+1]]:
+                    legend.AddEntry(None,label=fileDescr[fileNames[idx+1]],legendstyle="")
         legend.SetBorderSize(0)
         legend.SetMargin(0.3)
         legend.Draw()
@@ -376,8 +418,9 @@ def run( argv = sys.argv ):
     # command line argument parsing
     parser = argparse.ArgumentParser(description="Python ROOT plotter - A tool for selecting and assembling histogram plots and comparision plots from multiple ROOT files at once")
     parser.add_argument('--version', action='version', version='Revision: $Revision$, $LastChangedDate$')
-    parser.add_argument("-l", "--log", default="info", help="Sets the verbosity of log messages where LEVEL is either debug, info, warning or error", metavar="LEVEL")
+    parser.add_argument("-l", "--log-level", default="info", help="Sets the verbosity of log messages where LEVEL is either debug, info, warning or error", metavar="LEVEL")
     parser.add_argument("--compare", action="store_true", default=False, help="Compare the selected histograms between files (ratio plots, chi2) where the first file provides the reference.")
+    parser.add_argument("-log", "--log-scale", action="store_true", default=False, help="Uses a logarithmic scale for the y axis; only relevant when not using '--compare'.")
     parser.add_argument('--select', '-s', action='append', help="Specify regular expression(s) for histogram selection.")
     parser.add_argument("--selection-from-file", help="Load list of regular expressions for histogram selection from file (plain text file, one reg ex per line).", metavar="FILE")
     parser.add_argument("--one-file-per-histogram", action="store_true", default=False, help="Writes one file per histogram instead of storing all plots in one single file.")
@@ -391,11 +434,11 @@ def run( argv = sys.argv ):
     args = parser.parse_args(argv)
     # set the logging level
     numeric_level = getattr(logging, "INFO", None) # default: INFO messages and above
-    if args.log:
-        # Convert log level to upper case to allow the user to specify --log=DEBUG or --log=debug
-        numeric_level = getattr(logging, args.log.upper(), None)
+    if args.log_level:
+        # Convert log level to upper case to allow the user to specify --log-level=DEBUG or --log-level=debug
+        numeric_level = getattr(logging, args.log_level.upper(), None)
         if not isinstance(numeric_level, int):
-            log.error('Invalid log level: %s' % args.log)
+            log.error('Invalid log level: %s' % args.log_level)
             exit(2)
     log.setLevel(numeric_level)
     log.debug( "Command line arguments used: %s ", args )
@@ -455,6 +498,7 @@ def run( argv = sys.argv ):
         if (len(s)==1):
             # didn't work, only have one entry
             fileNames.append(s[0])
+            fileDescr[s[0]] = ""
         else:
             fileNames.append(s[0])
             fileDescr[s[0]] = s[1]
@@ -474,7 +518,7 @@ def run( argv = sys.argv ):
         histoDicts.append(h) # append to main histo list
     if histoDicts:
         log.info("Input file(s) read. %d histograms matched selection criteria and were loaded"%(sum(len(histos) for histos in histoDicts)))
-        makePlotCollection(histoDicts, fileNames, fileDescr, outputFilePath, args.compare, args.one_file_per_histogram)
+        makePlotCollection(histoDicts, fileNames, fileDescr, outputFilePath, args.compare, args.one_file_per_histogram,args.log_scale)
 
     log.info("done")    
     
