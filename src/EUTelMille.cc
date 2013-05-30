@@ -187,7 +187,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   // choose input mode
   registerOptionalParameter("InputMode","Selects the source of input hits."
-                            "\n0 - hits read from hitfile with simple trackfinding. "
+                            "\n0 - hits read from hitfile and simple straight line trackfinding will be  performed internally. "
                             "\n1 - hits read from output of tracking processor. "
                             "\n2 - Test mode. Simple internal simulation and simple trackfinding. "
                             "\n3 - Mixture of a track collection from the telescope and hit collections for the DUT (only one DUT layer can be used unfortunately)",
@@ -209,7 +209,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
                            _hitCollectionName,HitCollectionNameVecExample);
 
   registerInputCollection(LCIO::TRACK,"TrackCollectionName",
-                          "Track collection name",
+                          "Track collection name. This is only relevant if InputMode is set to larger to 1",
                           _trackCollectionName,std::string("fittracks"));
 
   // parameters
@@ -227,12 +227,12 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
   registerOptionalParameter("FixedPlanes","Fix sensor planes in the fit according to their sensor ids.",_FixedPlanes_sensorIDs ,IntVec());
 
 
-  registerOptionalParameter("MaxTrackCandidatesTotal","Maximal number of track candidates (Total).",_maxTrackCandidatesTotal, static_cast <int> (10000000));
-  registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates.",_maxTrackCandidates, static_cast <int> (2000));
+  registerOptionalParameter("MaxTrackCandidatesTotal","Stop processor after this maximum number of track candidates (Total) is reached.",_maxTrackCandidatesTotal, static_cast <int> (10000000));
+  registerOptionalParameter("MaxTrackCandidates","Maximal number of track candidates in a event.",_maxTrackCandidates, static_cast <int> (2000));
 
   registerOptionalParameter("BinaryFilename","Name of the Millepede binary file.",_binaryFilename, string ("mille.bin"));
 
-  registerOptionalParameter("TelescopeResolution","Resolution of the telescope for Millepede (sigma_x=sigma_y.",_telescopeResolution, static_cast <float> (3.0));
+  registerOptionalParameter("TelescopeResolution","(default) Resolution of the telescope for Millepede (sigma_x=sigma_y) used only if plane dependent resolution is set inconsistently.",_telescopeResolution, static_cast <float> (3.0));
 
   registerOptionalParameter("OnlySingleHitEvents","Use only events with one hit in every plane.",_onlySingleHitEvents, static_cast <bool> (false));
 
@@ -269,7 +269,7 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   registerOptionalParameter("ResolutionZ","Z resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.",_resolutionZ,FloatVec (static_cast <int> (6), 10.));
 
-  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("reference") );
+  registerOptionalParameter("ReferenceCollection","reference hit collection name ", _referenceHitCollectionName, static_cast <string> ("referenceHit") );
  
   registerOptionalParameter("ApplyToReferenceCollection","Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?",  _applyToReferenceHitCollection, static_cast< bool   > ( false ));
  
@@ -1164,22 +1164,8 @@ void EUTelMille::processEvent (LCEvent * event) {
     }
   }
   
-  if (_iEvt % 100 == 0 && _iEvt % 1000 != 0) 
-  {
-    streamlog_out( MESSAGE3 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
-    streamlog_out( MESSAGE3 ) << "Currently having " << _nMilleDataPoints << " data points in "
-                              << _nMilleTracks << " tracks " << endl;
-  }
-
   if (_iEvt % 1000 == 0) 
   {
-    streamlog_out( MESSAGE5 ) << "Processing event "
-                              << setw(6) << setiosflags(ios::right) << event->getEventNumber() << " in run "
-                              << setw(6) << setiosflags(ios::right) << setfill('0')  << event->getRunNumber() << setfill(' ')
-                              << " (Total = " << setw(10) << _iEvt << ")" << resetiosflags(ios::left) << endl;
     streamlog_out( MESSAGE5 ) << "Currently having " << _nMilleDataPoints << " data points in "
                               << _nMilleTracks << " tracks " << endl;
   }
@@ -1961,6 +1947,7 @@ void EUTelMille::processEvent (LCEvent * event) {
               c0 = TMath::Sin(psi);
               c1 = -1.0*TMath::Cos(psi) * TMath::Sin(delta);
               c2 = TMath::Cos(delta) * TMath::Cos(psi);
+	      //cout << " b0: " << b0 << ", b1: " << b1 << ", c2: " << c2 << endl;
               par_c0 = c0;
               par_c1 = c1;
               validminuittrack = true;
@@ -1993,6 +1980,9 @@ void EUTelMille::processEvent (LCEvent * event) {
 			_waferResidX[help] = point[0] - x;
 			_waferResidY[help] = point[1] - y;
 			_waferResidZ[help] = point[2] - z;
+			// TODO: THIS LOOKS LIKE A BUG!!
+			//cout << "point[2] = " << point[2] << ", z = " << z << endl;
+			//cout << "z residual w/ ref vec: " << _waferResidZ[help] << ", w/o ref vec: " << la*sqrt(1.0 - c0*c0 - c1*c1) - z << endl;
 		      }else{
 		      _waferResidX[help] = 0.;
 		      _waferResidY[help] = 0.;
@@ -2725,6 +2715,10 @@ TVector3 EUTelMille::Line2Plane(int iplane, const TVector3& lpoint, const TVecto
           
         double linecoord_numenator   = norm2Plane.Dot(hitInPlane-lpoint);
         double linecoord_denumenator = norm2Plane.Dot(lvector);
+
+	//cout <<  "xoff: " << refhit->getXOffset()*1000. << ", yoff: " <<  refhit->getYOffset()*1000. << " zoff: " << refhit->getZOffset()*1000. << endl;
+
+	//cout << " linecoord_numenator: " << linecoord_numenator << ", linecoord_denumenator: " << linecoord_denumenator << ", ratio: " << linecoord_numenator/linecoord_denumenator << endl;
 
         point = (linecoord_numenator/linecoord_denumenator)*lvector + lpoint;
 
