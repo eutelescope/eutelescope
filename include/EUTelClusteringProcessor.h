@@ -433,28 +433,21 @@ namespace eutelescope {
      *  This algorithm is based on the reconstruction of clusters
      *  having a rectangular predefined maximum shape centered around
      *  the seed pixel. The seed pixel is defined as the one with the
-     *  highest signal. Follows a brief description of the algorithm:
+     *  highest signal. Here follows a brief description of the algorithm:
      *
      *  \li The full data matrix is scanned searching for seed pixel
      *  candidates. A seed candidate is defined as a pixel with a
      *  signal to noise ratio in excess the
      *  EUTelClusteringProcessor::_seedPixelCut defined by the
-     *  user. All candidates are added to a map
+     *  user. All candidates are added to a vector< pair< float, int > >
      *  (EUTelClusteringProcessor::_seedCandidateMap) where the first
      *  template element is the (float) pixel charge and the second is
      *  the pixel index.
      *
-     *  \li The use of a map has the advantage that the belonging
-     *  elements are sorted according to the "key" value,
-     *  i.e. according to the pixel signal. In this way, at the end of
+     *  \li This is the sorted using the std::algorithm library by the first element of the pair
+     *  i.e. the pixel signal. In this way, at the end of
      *  the matrix crossing, the last element of the map is the pixel
-     *  seed candidate with the highest signal. A known limitation of
-     *  this approach is the impossibility to store two pixels with
-     *  exactly the same signal. Nevertheless, this approach is
-     *  competitive compared to using the pixel index as map key. This
-     *  second approach excludes the possibility to have two pixels
-     *  with the same key, but requires a more complicated sorting
-     *  algorithm. The seed candidate map has to be compulsory sorted,
+     *  seed candidate with the highest signal. The seed candidate map has to be compulsory sorted,
      *  because the cluster building procedure has to start from a
      *  seed pixel.
      *
@@ -465,10 +458,10 @@ namespace eutelescope {
      *  center of the resulting cluster. Only pixels with a good
      *  status, effectively belonging to the matrix (1) and not yet
      *  belonging to the any other clusters are added to the current
-     *  cluster candidate.
+     *  cluster candidate. //TODO: (Phillip Hamnett) CHECK THIS
      *
      *  \li A cluster candidate is finally accepted as a good cluster
-     *  if its SNR is passing the _clusterCur threshold. Each good
+     *  if its SNR is passing the _clusterCut threshold. Each good
      *  cluster is added to the current event using a TrackerData
      *  class. The cellID encoding used is the
      *  EUTELESCOPE::CLUSTERDEFAULTENCODING where along with the
@@ -476,7 +469,7 @@ namespace eutelescope {
      *  coordinates and the cluster sizes are stored so that the
      *  cluster can be reconstructed.
      *
-     *  (1) The 2D coordinates of each pixel is determined using the
+     *  (1) The 2D coordinates of each pixel are determined using the
      *  pixel index information along with the size along X of the
      *  matrix. For this purpose, some utility methods have been
      *  defined; those methods don't perform any consistency check of
@@ -632,7 +625,7 @@ namespace eutelescope {
 
     //! Clusterization algorithm for full frames
     /*! This string is used to select which clustering algorithm
-     *  should be used. Follows a list of available algorithms:
+     *  should be used. Here follows a list of available algorithms:
      *
      *  \li <b>FixedFrame</b>: Selectable also using the
      *  EUTELESCOPE::FIXEDFRAME static constant, it allows to select
@@ -640,11 +633,11 @@ namespace eutelescope {
      *  seed pixel. The seed pixel is identified as the one with the
      *  highest signal. The full matrix is scanned row wise both the
      *  index and the signal of pixel passing the seed pixel threshold
-     *  are recorded into a map using the index as a key. The map is
-     *  then sorted according to the signal and then, starting from
+     *  are recorded into a vector< pair< float, int > >. This vector is
+     *  then sorted according to the signal (float) and then, starting from
      *  the first entry in the map a new cluster is created around the
      *  seed pixel candidate. The resulting cluster is accepted if it
-     *  passing also the cluster threshold. Once a pixel has been
+     *  is also passing the cluster threshold. Once a pixel has been
      *  assigned to a cluster, to avoid double counting, it cannot be
      *  assigned to any other clusters and is removed from further
      *  operations.
@@ -799,11 +792,9 @@ namespace eutelescope {
     void readCollections(LCEvent *evt);
 
     //! The seed candidate pixel map.
-    /*! The map key is the pixel index in the matrix, while the float
-     *  value the pixel signal
+    /*! This is a vector which stores the seed index and the size of the signal. The signal is the floating point and the unsigned integer is the 
      */
     std::vector< std::pair<float,unsigned int> > _seedCandidateMap;    
-    //std::map<float, unsigned int> _seedCandidateMap;
 
     //! Total cluster found
     /*! This is a map correlating the sensorID number and the

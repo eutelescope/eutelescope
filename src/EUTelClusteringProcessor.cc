@@ -3367,6 +3367,8 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
         // knowing that is a sparse cluster is not enough we need also
         // to know also the sparse pixel type. This information is
         // available in the "original_zsdata" collection. Let's get it!
+
+        //TODO: (Phillip Hamnett) - This is inefficient, must look into a better way of getting the sparse cluster type
         LCCollectionVec * sparseClusterCollectionVec = dynamic_cast < LCCollectionVec * > (evt->getCollection("original_zsdata"));
         TrackerDataImpl * oneCluster = dynamic_cast<TrackerDataImpl*> (sparseClusterCollectionVec->getElementAt( 0 ));
         CellIDDecoder<TrackerDataImpl > anotherDecoder(sparseClusterCollectionVec);
@@ -3374,7 +3376,7 @@ void EUTelClusteringProcessor::fillHistos (LCEvent * evt) {
         if ( pixelType == kEUTelSimpleSparsePixel ) {
           cluster = new EUTelSparseClusterImpl<EUTelSimpleSparsePixel > ( static_cast<TrackerDataImpl*> ( pulse->getTrackerData() ) );
         } else {
-          streamlog_out ( ERROR4 ) <<  "Unknown cluster type. Sorry for quitting" << endl;
+          streamlog_out ( ERROR4 ) <<  "Unknown sparse cluster type. Sorry for quitting" << endl;
           throw UnknownDataTypeException("Cluster type unknown");
         }
       } else {

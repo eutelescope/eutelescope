@@ -12,6 +12,9 @@
 #ifndef EUTELSPARSECLUSTERIMPL_TCC
 #define EUTELSPARSECLUSTERIMPL_TCC
 
+#include <iostream>
+using namespace std;
+
 using namespace EVENT;
 
 namespace eutelescope {
@@ -353,7 +356,10 @@ namespace eutelescope {
   float EUTelSparseClusterImpl<PixelType>::getClusterCharge(int nPixel) const {
 
 
-    if ( static_cast<unsigned int> (nPixel) >= size() ) return getTotalCharge();
+    if ( static_cast<unsigned int> (nPixel) >= size() )
+    {
+      return getTotalCharge();
+    }
 
     std::vector<float > allSignals;
     
@@ -387,7 +393,6 @@ namespace eutelescope {
     std::vector<float > allSignals;
     PixelType * sparsePixel = new PixelType;
     for ( unsigned int iPixel = 0; iPixel < size(); iPixel++ ) {
-    
       getSparsePixelAt(iPixel, sparsePixel);
       allSignals.push_back( sparsePixel->getSignal() );
 
@@ -398,7 +403,8 @@ namespace eutelescope {
     for (unsigned int i = 0; i < nPixels.size(); i++ ) {
       iter = allSignals.begin();
       float charge = 0;
-      while ( iter != allSignals.begin() + nPixels[i] ) {
+      while ( iter != allSignals.begin() + nPixels[i]
+            && iter != allSignals.end() ) {//add or for allsignals.end
 	charge += (*iter);
 	++iter;
       }
