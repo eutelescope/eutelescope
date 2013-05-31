@@ -53,7 +53,7 @@ namespace eutelescope {
      *  @param noiseValues A STL vector of float containing the noise
      *  values.
      */
-    virtual void setNoiseValues(std::vector<float > noiseValues)          = 0;
+    virtual void setNoiseValues(std::vector<float > noiseValues) = 0;
     
     //! Return the detector ID
     /*! This number is used to link the detector which this cluster
@@ -61,14 +61,14 @@ namespace eutelescope {
      *
      *  @return The detector ID.
      */ 
-    virtual int  getDetectorID() const                                    = 0;
+    virtual int  getDetectorID() const = 0;
 
     //! Return the cluster ID
     /*! This number is used to enumerate clusters.
      *
      *  @return The cluster ID.
      */ 
-    virtual int  getClusterID() const                                     = 0;
+    virtual int  getClusterID() const = 0;
 
     //! Get the seed pixel coordinate in the local FoR
     /*! Regardless the kind of cluster in use, it is always possible
@@ -79,7 +79,7 @@ namespace eutelescope {
      *  @param ySeed The coordinate along y of the seed pixel in the
      *  local frame of reference
      */ 
-    virtual void getSeedCoord(int& xSeed, int& ySeed)  const              = 0;
+    virtual void getSeedCoord(int& xSeed, int& ySeed) const = 0;
 
     //! Get the central pixel coordinate in the local FoR
     /*! Regardless the kind of cluster in use, the pixel containing
@@ -89,7 +89,7 @@ namespace eutelescope {
      *  @param xCenter The coordinate along x of the central pixel
      *  @param yCenter The coordinate along y of the central pixel
      */
-    virtual void getCenterCoord(int& xCenter, int& yCenter) const         = 0;
+    virtual void getCenterCoord(int& xCenter, int& yCenter) const = 0;
 
     //! Get the cluster dimensions
     /*! For each cluster type is always possible to define the
@@ -98,7 +98,7 @@ namespace eutelescope {
      *  @param xSize The size along x
      *  @param ySize The size along y
      */ 
-    virtual void getClusterSize(int& xSize, int& ySize) const             = 0;
+    virtual void getClusterSize(int& xSize, int& ySize) const = 0;
 
     //! Return the cluster quality
     /*! It returns the cluster quality using the ClusterQuality enum.
@@ -107,7 +107,7 @@ namespace eutelescope {
      *
      *  @see eutelescope::ClusterQuality
      */
-    virtual ClusterQuality getClusterQuality() const                      = 0;
+    virtual ClusterQuality getClusterQuality() const = 0;
 
     //! Return the distance from another 
     /*! This method return the distance between this and another
@@ -116,25 +116,25 @@ namespace eutelescope {
      *  @param  clu The other cluster
      *  @return The distance between @a this and @a clu
      */ 
-    virtual float getDistance(EUTelVirtualCluster* clu) const             = 0;
+    virtual float getDistance(EUTelVirtualCluster* clu) const = 0;
 
     //! Return the radius of the external circle
     /*!
      *  @return The radius of the external circle
      */ 
-    virtual float getExternalRadius() const                               = 0;
+    virtual float getExternalRadius() const = 0;
 
     //! Return the total charge
     /*!
      *  @return The total integrated charge
      */
-    virtual float getTotalCharge() const                                  = 0;
+    virtual float getTotalCharge() const = 0;
     
     //! Return the seed pixel charge
     /*! 
      *  @return the charge of the seed pixel
      */ 
-    virtual float getSeedCharge() const                                   = 0;
+    virtual float getSeedCharge() const = 0;
 
     //! Return the charge of cluster with N pixels
     /*! This method can be used to return the charge integrated into
@@ -144,7 +144,7 @@ namespace eutelescope {
      *  @return the charge of cluster with N pixels
      *  @param nPixel The number of pixels to consider
      */ 
-    virtual float getClusterCharge(int nPixel) const                      = 0;
+    virtual float getClusterCharge(int nPixel) const = 0;
 
     //! Calculate the cluster charge with different number of pixels
     /*! This method is a better and faster replacement of the
@@ -154,8 +154,7 @@ namespace eutelescope {
      *  @param nPixels The list of number of pixels
      *  @return The charges for each number of pixels
      */ 
-    virtual std::vector<float > getClusterCharge(std::vector<int > nPixels) const 
-                                                                      = 0;
+    virtual std::vector<float > getClusterCharge(std::vector<int > nPixels) const = 0;
 
     //! Return the charge of a subset of the cluster
     /*! Whatever shape the cluster has it is always possible to define
@@ -166,7 +165,7 @@ namespace eutelescope {
      *  @param  ySize Odd number to define the y size of the subframe
      *  @return The charge of the cluster subframe
      */ 
-    virtual float getClusterCharge(int xSize, int ySize) const            = 0; 
+    virtual float getClusterCharge(int xSize, int ySize) const = 0; 
 
     //! Return the center of gravity shift from the seed coordinates
     /*! Having a charge distribution it is possible to calculate the
@@ -178,7 +177,7 @@ namespace eutelescope {
      *  @param x Shift along x
      *  @param y Shift along y
      */ 
-    virtual void  getCenterOfGravityShift(float& x, float& y) const       = 0;
+    virtual void  getCenterOfGravityShift(float& x, float& y) const = 0;
 
     //! Return the CoG shift using only a subregion of the cluster
     /*! As the method above, but this uses only a subset of pixel in
@@ -190,8 +189,7 @@ namespace eutelescope {
      *  @param xSize Frame size along x
      *  @param ySize Frame size along y
      */ 
-    virtual void  getCenterOfGravityShift(float& x, float& y, 
-					  int xSize, int ySize) const     = 0;
+    virtual void  getCenterOfGravityShift(float& x, float& y, int xSize, int ySize) const = 0;
     
     //! Return the CoG shift using only the nth higher pixels
     /*! As the above method, but this uses only the @n pixels with the
@@ -201,8 +199,7 @@ namespace eutelescope {
      *  @param y Shift along y
      *  @param n Number of pixels to be used
      */
-    virtual void  getCenterOfGravityShift(float& x, float& y,
-					  int n) const                    = 0;
+    virtual void  getCenterOfGravityShift(float& x, float& y, int n) const = 0;
 
     //! Return the CoG coordinates
     /*! This method adds already to the shift the coordinates of the
@@ -211,14 +208,14 @@ namespace eutelescope {
      *  @param x CoG coordinate along x
      *  @param y CoG coordinate along y
      */ 
-    virtual void  getCenterOfGravity(float& x, float& y) const            = 0;
+    virtual void  getCenterOfGravity(float& x, float& y) const = 0;
     
     //! Set the cluster quality
     /*! Used to set the cluster quality using the ClusterQuality enum.
      *  
      *  @see eutelescope::ClusterQuality
      */
-    virtual void setClusterQuality(ClusterQuality)                        = 0;
+    virtual void setClusterQuality(ClusterQuality) = 0;
 
     //! Get the noise value vector
     /*! This method is used to get a vector containing the pixel noise
@@ -227,7 +224,7 @@ namespace eutelescope {
      *
      *  @return A vector of float containing the noise values.
      */
-    virtual std::vector<float > getNoiseValues() const                    = 0;
+    virtual std::vector<float > getNoiseValues() const = 0;
 
     //! Get the cluster noise
     /*! This method is used to calculate the cluster noise.
@@ -236,7 +233,7 @@ namespace eutelescope {
      *
      *  @return A float value representing the cluster noise.
      */
-    virtual float getClusterNoise() const                                 = 0;
+    virtual float getClusterNoise() const = 0;
 
     //! Get the cluster SNR
     /*! This method is used to calculate the cluster signal to noise
@@ -244,7 +241,7 @@ namespace eutelescope {
      *
      *  @return The cluster SNR for the current cluster
      */ 
-    virtual float getClusterSNR() const                                   = 0;
+    virtual float getClusterSNR() const = 0;
 
     //! Get seed pixel SNR
     /*! This method is used to calculate the seed pixel signal to
@@ -253,7 +250,7 @@ namespace eutelescope {
      *
      *  @return The seed pixel SNR
      */
-    virtual float getSeedSNR() const                                      = 0;
+    virtual float getSeedSNR() const = 0;
 
     //! Get the cluster N SNR
     /*! This method returns the SNR of the cluster considering only
@@ -263,7 +260,7 @@ namespace eutelescope {
      *  @param nPixel The number of pixel to consider in the cluster
      *  @return The cluster N SNR.
      */ 
-    virtual float getClusterSNR(int nPixel) const                         = 0;
+    virtual float getClusterSNR(int nPixel) const = 0;
      
     //! Get the cluster N x M SNR
     /*! This method returns the SNR when considering only a
@@ -274,7 +271,7 @@ namespace eutelescope {
      *  @param ySize Odd number to define the y size of the subframe
      *  @return The SNR of the cluster subframe
      */
-    virtual float getClusterSNR(int xSize, int ySize) const               = 0;
+    virtual float getClusterSNR(int xSize, int ySize) const = 0;
 
     //! Calculate the cluster SNR with different number of pixels
     /*! This method is a better and faster replacement of the
@@ -284,8 +281,7 @@ namespace eutelescope {
      *  @param nPixels The list of number of pixels
      *  @return The SNRs for each number of pixels
      */ 
-    virtual std::vector<float > getClusterSNR(std::vector<int > nPixels) const 
-                                                                          = 0;
+    virtual std::vector<float > getClusterSNR(std::vector<int > nPixels) const = 0;
 
     //! Return a pointer to the TrackerDataImpl
     /*! This method is used to expose to the public the
@@ -293,14 +289,14 @@ namespace eutelescope {
      *
      *  @return The pointer of _trackerData
      */
-    virtual IMPL::TrackerDataImpl * trackerData()                         = 0;
+    virtual IMPL::TrackerDataImpl * trackerData() = 0;
 
     //! Print
     /*! This method is used to print out the content of the clusters
      * 
      *  @param os The input output stream
      */
-    virtual void print(std::ostream& os) const                            = 0;
+    virtual void print(std::ostream& os) const = 0;
       
     //! Overload of operator<<
     /*! This friend function is the overload of the operator << for
