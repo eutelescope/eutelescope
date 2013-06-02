@@ -9,7 +9,7 @@
 # Variables used by this module, which can change the default behaviour and
 # need to be set before calling find_package:
 #
-#   XERCESC_ROOT_DIR            Root directory to XERCESC installation. Will
+#   XercesC_HOME            Root directory to XERCESC installation. Will
 #                               be used ahead of CMake default path.
 #
 # The following advanced variables may be used if the module has difficulty
@@ -25,13 +25,14 @@
 # For details see the accompanying COPYING-CMAKE-SCRIPTS file.
 
 
-IF ( DEFINED "$ENV{XERCESC_ROOT_DIR}" )
+IF ( DEFINED ENV{XercesC_HOME}  )
+SET ( XercesC_HOME "$ENV{XercesC_HOME}" )
 
-# Look for the header - preferentially searching below XERCESC_ROOT_DIR
+# Look for the header - preferentially searching below XercesC_HOME
 find_path(
     XERCESC_INCLUDE_DIR 
     NAMES xercesc/util/XercesVersion.hpp
-    PATHS ${XERCESC_ROOT_DIR}
+    PATHS ${XercesC_HOME}
     PATH_SUFFIXES include
     NO_DEFAULT_PATH 
 )
@@ -42,31 +43,27 @@ find_path(
     NAMES xercesc/util/XercesVersion.hpp
 )
 
-MESSAGE ( STATUS "xerces: ${XERCESC_FOUND}" )
-MESSAGE ( STATUS "xerces: ${XERCESC_ROOT_DIR}" )
-MESSAGE ( STATUS "xerces: ${XERCESC_LIBRARY}" )
-MESSAGE ( STATUS "xerces: ${XERCESC_INCLUDE_DIR}" )
-
 EXECUTE_PROCESS(
-    COMMAND find ${XERCESC_ROOT_DIR}/include/xercesc/ -type d # -printf "%p;" # not recognized on mac osx
+    COMMAND find ${XercesC_HOME}/include/xercesc/ -type d # -printf "%p;" # not recognized on mac osx
     OUTPUT_VARIABLE XERCESC_INCLUDE_DIR
     RESULT_VARIABLE _exit_code
 )
- 
 
-# Look for the library, preferentially searching below XERCESC_ROOT_DIR
+
+# Look for the library, preferentially searching below XercesC_HOME
 find_library(
     XERCESC_LIBRARY
     NAMES xerces-c 
-    PATHS ${XERCESC_ROOT_DIR}
+    PATHS ${XercesC_HOME}
     PATH_SUFFIXES lib64 lib32 lib
     NO_DEFAULT_PATH 
 )
 
 
+
+
+
 CHECK_PACKAGE_LIBS( XERCESC xerces-c  )
-
-
 include(FindPackageHandleStandardArgs)
 
 
@@ -76,6 +73,11 @@ find_package_handle_standard_args(
     XERCESC_LIBRARY
     XERCESC_INCLUDE_DIR
 )
+
+MESSAGE ( STATUS "xerces: ${XERCESC_FOUND}" )
+MESSAGE ( STATUS "xerces: ${XercesC_HOME}" )
+MESSAGE ( STATUS "xerces: ${XERCESC_INCLUDE_DIR}" )
+MESSAGE ( STATUS "xerces: ${XERCESC_LIBRARY}" )
 
 
 if (XERCESC_FOUND)
