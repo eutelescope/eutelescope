@@ -118,7 +118,6 @@ int main( int argc, char ** argv ) {
     string buffer;
     double value = 0.;
     double err = 0.;
-    bool isFixed = false;
 
     int sensorID = 0;
 
@@ -138,12 +137,13 @@ int main( int argc, char ** argv ) {
           tokens.push_back( buffer ) ;
         }
 
-        if ( ( tokens.size() == 5 ) ) goodLine = true;
+        if ( ( tokens.size() == 5 ) || ( tokens.size() == 6 ) ) goodLine = true;
 
         if( !goodLine ) continue;
 
         value =  atof(tokens[4].c_str());
         sensorID = atoi(tokens[3].c_str());
+        if( tokens.size() == 6 ) err = atof(tokens[5].c_str());
         
         if( constants_map.find( sensorID ) == constants_map.end() ) {
             eutelescope::EUTelAlignmentConstant * constant = new eutelescope::EUTelAlignmentConstant;
@@ -153,29 +153,29 @@ int main( int argc, char ** argv ) {
         if( tokens[2].compare("shift") == 0 ) {
             if( tokens[1].compare("X") == 0 ) {
                 constants_map[sensorID]->setXOffset( value );
-                if ( !isFixed ) constants_map[sensorID]->setXOffsetError( err ) ;
+                constants_map[sensorID]->setXOffsetError( err ) ;
             }
             if( tokens[1].compare("Y") == 0 ) {
                 constants_map[sensorID]->setYOffset( value );
-                if ( !isFixed ) constants_map[sensorID]->setYOffsetError( err ) ;
+                constants_map[sensorID]->setYOffsetError( err ) ;
             }
             if( tokens[1].compare("Z") == 0 ) {
                 constants_map[sensorID]->setZOffset( value );
-                if ( !isFixed ) constants_map[sensorID]->setZOffsetError( err ) ;
+                constants_map[sensorID]->setZOffsetError( err ) ;
             }
         }
         if( tokens[2].compare("rotation") == 0 ) {
             if( tokens[1].compare("YZ") == 0 ) {
                 constants_map[sensorID]->setAlpha( value );
-                if ( !isFixed ) constants_map[sensorID]->setAlphaError( err ) ;
+                constants_map[sensorID]->setAlphaError( err ) ;
             }
             if( tokens[1].compare("XZ") == 0 ) {
                 constants_map[sensorID]->setBeta( value );
-                if ( !isFixed ) constants_map[sensorID]->setBetaError( err ) ;
+                constants_map[sensorID]->setBetaError( err ) ;
             }
             if( tokens[1].compare("XY") == 0 ) {
                 constants_map[sensorID]->setGamma( value );
-                if ( !isFixed ) constants_map[sensorID]->setGammaError( err ) ;
+                constants_map[sensorID]->setGammaError( err ) ;
             }
         }
 
