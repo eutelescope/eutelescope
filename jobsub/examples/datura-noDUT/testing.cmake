@@ -218,7 +218,7 @@
 
     # run stattest tool on output from previous step and test it against reference file; test are configured in specified config file (*.qa)
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestClustering sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTClustering.qa ${testdir}/output/histograms/run${PaddedRunNr}-clustering.root ${referencedatadir}/run${PaddedRunNr}-clustering.root" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestClustering sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash -g ${testdir}/output/stattest_report_clustering.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTClustering.qa ${testdir}/output/histograms/run${PaddedRunNr}-clustering.root ${referencedatadir}/run${PaddedRunNr}-clustering.root" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestClustering PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
