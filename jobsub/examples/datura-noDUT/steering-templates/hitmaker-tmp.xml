@@ -91,7 +91,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--Switch on or off the histogram filling-->
   <parameter name="HistogramFilling" type="bool" value="@FillHistograms@"/>
   <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
-  <parameter name="HotPixelCollectionName" type="string" value="m26_hotpixel"/>
+  <!-- parameter name="HotPixelCollectionName" type="string" value="m26_hotpixel"/-->
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
   <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
   <!--reference hit collection name -->
