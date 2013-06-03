@@ -272,13 +272,13 @@ optional arguments:
   The next steps follow the same pattern:
   #+begin_src sh
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
-                    -csv ${ANALYSIS_CONF}/table_orgmode.csv clustering 97
+                    -csv ${ANALYSIS_CONF}/runlist.csv clustering 97
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
-                    -csv ${ANALYSIS_CONF}/table_orgmode.csv hitmaker 97
+                    -csv ${ANALYSIS_CONF}/runlist.csv hitmaker 97
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg \
-                    -csv ${ANALYSIS_CONF}/table_orgmode.csv align 97
+                    -csv ${ANALYSIS_CONF}/runlist.csv align 97
   $EUTELESCOPE/jobsub/jobsub.py --config=${ANALYSIS_CONF}/config.cfg 
-                    -csv ${ANALYSIS_CONF}/table_orgmode.csv fitter 97
+                    -csv ${ANALYSIS_CONF}/runlist.csv fitter 97
   #+end_src sh
 
   For this example, the output of each step is stored in
