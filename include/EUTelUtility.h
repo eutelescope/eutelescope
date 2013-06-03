@@ -185,12 +185,15 @@ namespace eutelescope {
 
         int GuessSensorID(const IMPL::TrackerHitImpl * hit);
 
+        /** Highland's formula for multiple scattering */
+        double getThetaRMSHighland( double, double );
+        
         /** Calculate median */
         double getMedian(std::vector<double>& );
         
         /** Possible choices of alignment degrees of freedom */
         enum AlignmentMode {
-            noAlignment, XYShift, XYShiftZRot
+            noAlignment, XYShift, XYShiftXYRot, XYZShiftXYRot, XYShiftYZRotXYRot, XYShiftXZRotXYRot, XYShiftXZRotYZRotXYRot
         };
     }
 }

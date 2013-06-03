@@ -88,13 +88,25 @@ namespace eutelescope {
             return _chi2cut;
         }
         
+        void SetXRotationsVec(std::vector<int>& );
+        
+        void SetYRotationsVec(std::vector<int>& );
+        
         void SetZRotationsVec(std::vector<int>& );
+        
+        void SetZShiftsVec(std::vector<int>& );
         
         void SetYShiftsVec(std::vector<int>& );
         
         void SetXShiftsVec(std::vector<int>& );
         
+        std::map<int, int> GetParamterIdXRotationsMap() const;
+        
+        std::map<int, int> GetParamterIdYRotationsMap() const;
+        
         std::map<int, int> GetParamterIdZRotationsMap() const;
+        
+        std::map<int, int> GetParamterIdZShiftsMap() const;
         
         std::map<int, int> GetParamterIdYShiftsMap() const;
         
@@ -108,9 +120,18 @@ namespace eutelescope {
 
         double InterpolateTrackX(const EVENT::TrackerHitVec&, const double) const;
         double InterpolateTrackY(const EVENT::TrackerHitVec&, const double) const;
+        
+        double GetTrackSlopeX(const EVENT::TrackerHitVec&) const;
+        double GetTrackSlopeY(const EVENT::TrackerHitVec&) const;
 
         void Reset();
 
+        void AddMeasurementsGBL( gbl::GblPoint&, TVectorD&, TVectorD&, const double*, double, double, const EVENT::FloatVec&, TMatrixD& );
+        
+        void AddScattererGBL( gbl::GblPoint&, TVectorD&, TVectorD&, int, double );
+        
+        void AddGlobalParametersGBL( gbl::GblPoint&, TMatrixD&, std::vector<int>&, int, double, double, double, double );
+        
     private:
         std::vector< EVENT::TrackerHitVec > _trackCandidates;
 
@@ -142,6 +163,15 @@ namespace eutelescope {
         
         /** Parameter ids */
         std::map<int,int> _paramterIdYShiftsMap;
+        
+        /** Parameter ids */
+        std::map<int,int> _paramterIdZShiftsMap;
+        
+        /** Parameter ids */
+        std::map<int,int> _paramterIdXRotationsMap;
+        
+        /** Parameter ids */
+        std::map<int,int> _paramterIdYRotationsMap;
         
         /** Parameter ids */
         std::map<int,int> _paramterIdZRotationsMap;

@@ -285,7 +285,18 @@ namespace eutelescope {
             return hotPixelMap;
         }
 
-        /** Calculate median */
+        /** Highland's formula for multiple scattering 
+         * @param p momentum of the particle [GeV/c]
+         * @param x thickness of the material in units of radiation lenght
+         */
+        double getThetaRMSHighland( double p, double x ) {
+            double tet = (0.0136 * sqrt(x) / p * (1 + 0.038 * std::log(x)));
+            return tet;
+        }
+        
+        /** Calculate median 
+         * Sort supplied vector and determine the median
+         */
         double getMedian( std::vector<double>& vec ) {
             std::sort( vec.begin( ), vec.end( ) );
             double median = -999.;

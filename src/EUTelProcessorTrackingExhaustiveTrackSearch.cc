@@ -100,32 +100,32 @@ _nProcessedEvents(0) {
     registerOptionalParameter("FinderMode", "Finder mode. Possible values are 1, 2",
             _finderMode, static_cast<int> (2));
 
-    const FloatVec MinimalResidualsX(10, -3000.); // assumes there are at most 10 planes. But this doesn't matter.
+    const FloatVec MinimalResidualsX(6, -3000.); // assumes there are at most 10 planes. But this doesn't matter.
     registerOptionalParameter("ResidualsXMin",
             "Minimal values of the hit residuals in the X direction for a track. "
             "Note: these numbers are ordered according to the z position of "
             "the sensors and NOT according to the sensor id.",
             _residualsXMin, MinimalResidualsX);
 
-    const FloatVec MinimalResidualsY(10, -3000.); // assumes there are at most 10 planes. But this doesn't matter.
+    const FloatVec MinimalResidualsY(6, -3000.); // assumes there are at most 10 planes. But this doesn't matter.
     registerOptionalParameter("ResidualsYMin", "Minimal values of the hit residuals in the Y direction for a track. "
             "Note: these numbers are ordered according to the z position of "
             "the sensors and NOT according to the sensor id.",
             _residualsYMin, MinimalResidualsY);
 
-    const FloatVec MaximalResidualsX(10, 3000.); // assumes there are at most 10 planes. But this doesn't matter.
+    const FloatVec MaximalResidualsX(6, 3000.); // assumes there are at most 10 planes. But this doesn't matter.
     registerOptionalParameter("ResidualsXMax", "Maximal values of the hit residuals in the X direction for a track. "
             "Note: these numbers are ordered according to the z position of "
             "the sensors and NOT according to the sensor id.",
             _residualsXMax, MaximalResidualsX);
 
-    const FloatVec MaximalResidualsY(10, 3000.); // assumes there are at most 10 planes. But this doesn't matter.
+    const FloatVec MaximalResidualsY(6, 3000.); // assumes there are at most 10 planes. But this doesn't matter.
     registerOptionalParameter("ResidualsYMax", "Maximal values of the hit residuals in the Y direction for a track. "
             "Note: these numbers are ordered according to the z position of "
             "the sensors and NOT according to the sensor id.",
             _residualsYMax, MaximalResidualsY);
 
-    const FloatVec MaximalResidualsR(10, 3000.);
+    const FloatVec MaximalResidualsR(6, 3000.);
     registerOptionalParameter("ResidualsRMax", "Maximal allowed distance between hits entering the recognition step "
             "per 10 cm space between the planes. One value for each neighbor planes. "
             "DistanceMax will be used for each pair if this vector is empty.",

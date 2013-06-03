@@ -144,6 +144,7 @@ int main( int argc, char ** argv ) {
         value =  atof(tokens[4].c_str());
         sensorID = atoi(tokens[3].c_str());
         if( tokens.size() == 6 ) err = atof(tokens[5].c_str());
+        if( tokens.size() == 5 ) err = 0.;
         
         if( constants_map.find( sensorID ) == constants_map.end() ) {
             eutelescope::EUTelAlignmentConstant * constant = new eutelescope::EUTelAlignmentConstant;

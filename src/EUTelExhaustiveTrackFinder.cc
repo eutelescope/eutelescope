@@ -211,7 +211,7 @@ namespace eutelescope {
                                 );
                         double distance_z = vec[ e + 1 ]->getPosition()[2] - vec[ e ]->getPosition()[2];
                         const double dM = _distanceMaxVec[e];
-                        double distancemax = dM * fabs(distance_z / 100000.0);
+                        double distancemax = dM * fabs(distance_z);
 
                         if (distance >= distancemax) taketrack = false;
 //                        if (/*_onlySingleHitEvents == 1 && */(_allHitsArray[e].size() != 1 || _allHitsArray[e + 1].size() != 1)) taketrack = false;
@@ -232,7 +232,7 @@ namespace eutelescope {
                                 );
                         double distance_z = vec[ e ]->getPosition()[2] - vec[ e + 1 ]->getPosition()[2];
                         const double dM = _distanceMaxVec[e];
-                        double distancemax = dM * fabs(distance_z / 100000.0);
+                        double distancemax = dM * fabs(distance_z);
 
                         if (distance >= distancemax) taketrack = false;
 //                        if (_allHitsArray[e].size() != 1 || _allHitsArray[e + 1].size() != 1) taketrack = false;    //only one hit in each planes
