@@ -154,15 +154,14 @@ namespace eutelescope {
     bool             _applyToReferenceHitCollection;
     LCCollectionVec* _referenceHitVec;    
     
-    //! Vector of map arrays, keeps record of hit pixels 
-    /*! The vector elements are sorted by Detector ID
-     *  For each Detector unique ID element a map of pixels is created. 
-     *  first level key   sensor unique 
-     *              value sensor map
-     *  sensor map key    unique row number
-     *             value  vector of column numbers.
+    //! map of vectors, keeps record of hit pixels 
+    /*! 
+     *  For each Detector a vector is stored in a map.
+     *  Each vector holds pairs of integers (representing X and Y pixel array positions).
+     *  If an element (i.e. the X and Y position of a pixel) is present in the vector,
+     *  this indicates that the corresponding pixel was marked "hot"
      */
-    std::map<std::string, bool> _hotPixelMap;
+    std::map<int, std::vector<std::pair<short, short> > > _hotPixelMap;
  
     //! How many events are needed to get reasonable correlation plots 
     /*! (and Offset DB values) 

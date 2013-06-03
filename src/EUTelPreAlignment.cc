@@ -71,8 +71,8 @@ EUTelPreAlign::EUTelPreAlign () :Processor("EUTelPreAlign") {
   registerOptionalParameter("AlignmentConstantLCIOFile","Name of LCIO db file where alignment constantds will be stored", 
 			    _alignmentConstantLCIOFile, std::string( "alignment.slcio" ) );
 
-  registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection to be saved into the output slcio file",
-                             _hotPixelCollectionName, static_cast< string > ( "hotpixel" ));
+  registerOptionalParameter("HotPixelCollectionName", "This is the name of the hot pixel collection that clusters should be checked against (optional). ",
+                             _hotPixelCollectionName, static_cast< string > ( "" ));
 
   registerProcessorParameter ("Events",
                               "How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)",
@@ -203,6 +203,9 @@ void EUTelPreAlign::processRunHeader (LCRunHeader * rdr) {
 
 void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 {
+
+  if (_hotPixelCollectionName.empty()) return;
+
     LCCollectionVec *hotPixelCollectionVec = 0;
     try 
     {
@@ -211,7 +214,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
     }
     catch (...)
     {
-      streamlog_out ( MESSAGE5 ) << "Hotpixel database " << _hotPixelCollectionName.c_str() << " not found" << endl; 
+      streamlog_out ( WARNING5 ) << "Hotpixel database " << _hotPixelCollectionName.c_str() << " not found" << endl; 
       return;
     }
 
@@ -236,9 +239,7 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 
                try
                {
-                  char ix[100];
-                  sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
-                  _hotPixelMap[ix] = true;             
+		 _hotPixelMap[sensorID].push_back(std::make_pair(apixPixel.getXCoord(), apixPixel.getYCoord()));
                }
                catch(...)
                {
@@ -261,13 +262,12 @@ void  EUTelPreAlign::FillHotPixelMap(LCEvent *event)
 
               try
               {
-                 char ix[100];
-                 sprintf(ix, "%d,%d,%d", sensorID, m26Pixel.getXCoord(), m26Pixel.getYCoord() ); 
-                 _hotPixelMap[ix] = true;             
+		 _hotPixelMap[sensorID].push_back(std::make_pair(m26Pixel.getXCoord(), m26Pixel.getYCoord()));
               }
               catch(...)
               {
 		streamlog_out ( ERROR5 ) << " cannot add pixel to hotpixel map! SensorID: "  << sensorID << ", X:" << m26Pixel.getXCoord() << ", Y:" << m26Pixel.getYCoord() << endl; 
+		abort();
               }
              }
            }          
@@ -399,7 +399,11 @@ void EUTelPreAlign::processEvent (LCEvent * event) {
 
 bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit) 
 {
+
         bool skipHit = false;
+
+	// if no hot pixel map was loaded, just return here
+	if (_hotPixelMap.size() == 0) return 0;
  
         try
         {
@@ -418,14 +422,19 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
                 EUTelSimpleSparsePixel m26Pixel;
                 cluster->getSparsePixelAt( iPixel, &m26Pixel);
 		{
-		  char ix[100];
-		  sprintf(ix, "%d,%d,%d", sensorID, m26Pixel.getXCoord(), m26Pixel.getYCoord() ); 
-		  std::map<std::string, bool >::const_iterator z = _hotPixelMap.find(ix);
-		  if(z!=_hotPixelMap.end() && _hotPixelMap[ix] == true  )
-		    { 
+		  try{
+		    if (std::find(_hotPixelMap.at(sensorID).begin(), 
+				  _hotPixelMap.at(sensorID).end(),
+				  std::make_pair(m26Pixel.getXCoord(),m26Pixel.getYCoord()))
+			!= _hotPixelMap.at(sensorID).end()){ 
 		      skipHit = true; 	      
 		      delete cluster;                        			  
 		      return true; // if TRUE  this hit will be skipped
+		    }
+		  }
+		  catch(const std::out_of_range& oor){
+		    streamlog_out(DEBUG0) << " Could not find hot pixel map for sensor ID " 
+					  << sensorID << ": " << oor.what() << endl;
 		  }
 		}
               }
@@ -469,19 +478,26 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
                     EUTelAPIXSparsePixel apixPixel;
                     apixCluster->getSparsePixelAt(iPixel, &apixPixel);
                     {
-                       char ix[100];
-                       sprintf(ix, "%d,%d,%d", sensorID, apixPixel.getXCoord(), apixPixel.getYCoord() ); 
-                       if( _hotPixelMap[ix]  )
-                       { 
+		      try{
+			if (std::find(_hotPixelMap.at(sensorID).begin(), 
+				      _hotPixelMap.at(sensorID).end(),
+				      std::make_pair(apixPixel.getXCoord(), apixPixel.getYCoord()))
+			    != _hotPixelMap.at(sensorID).end()){ 
                           skipHit = true; 	      
                           delete apixCluster;                        
                           return true; // if TRUE  this hit will be skipped
-                       }
-                       else
-                       { 
-                          skipHit = false; 	      
-                       } 
-                    }
+			}
+			else
+			  { 
+			    skipHit = false; 	      
+			  } 
+		      }
+		      catch(const std::out_of_range& oor){
+			streamlog_out(DEBUG0) << " Could not find hot pixel map for sensor ID " 
+					      << sensorID << ": " << oor.what() << endl;
+		      }
+		      
+		    }
                 }                
                 delete apixCluster;
                 return skipHit; // if TRUE  this hit will be skipped
@@ -492,14 +508,18 @@ bool EUTelPreAlign::hitContainsHotPixels( TrackerHitImpl   * hit)
            }
  
        }
-       catch(...)
-       { 
-          // if anything went wrong in the above return FALSE, meaning do not skip this hit
+	catch (exception& e)
+	  {
+	     streamlog_out(ERROR4) << "something went wrong in EUTelPreAlign::hitContainsHotPixels: " << e.what() << endl;
+	  }
+	catch(...)
+	  { 
+	    // if anything went wrong in the above return FALSE, meaning do not skip this hit
+	    
+	    streamlog_out(ERROR4) << "something went wrong in EUTelPreAlign::hitContainsHotPixels " << endl;
+	    return 0;
+	  }
 	
-          streamlog_out(ERROR4) << "something went wrong in EUTelPreAlign::hitContainsHotPixels " << endl;
-          return 0;
-       }
- 
        // if none of the above worked return FALSE, meaning do not skip this hit
        return 0;
 }
