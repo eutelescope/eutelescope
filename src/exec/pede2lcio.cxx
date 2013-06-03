@@ -16,10 +16,18 @@
 #include <fstream>
 #include <string>
 #include <sstream>
-#include <memory>
+#include <functional>
+#include <algorithm>
 
 using namespace std;
 
+struct CollectionWriter {
+    lcio::LCCollectionVec* _constantsCollection;
+        void operator()( std::pair<const int, eutelescope::EUTelAlignmentConstant*>& pair ) {
+          _constantsCollection->push_back( pair.second );
+                cout << (*pair.second) << endl;
+        }
+} colWriter;
 
 int main( int argc, char ** argv ) {
 
@@ -32,14 +40,12 @@ int main( int argc, char ** argv ) {
     "This program is used to convert the output of pede into\n"
     "a LCIO file containing alignment constants.\n"
     "\n"
-    "Usage: pede2lcio [options] pedeoutput.res lciofile.slcio -n [nparameters]\n\n"
-    "-n --nparameters           Number of alignment parameters per detector\n"
+    "Usage: pede2lcio [options] conversion_file lciofile.slcio\n\n"
     "-h --help       To print this help\n"
     "\n";
 
   option->addUsage( usageString.c_str() );
   option->setFlag( "help", 'h');
-  option->setOption( "nparameters", 'n');
 
   // process the command line arguments
   option->processCommandArgs( argc, argv );
@@ -60,11 +66,6 @@ int main( int argc, char ** argv ) {
   pedeFileName = option->getArgv(0);
   lcioFileName = option->getArgv(1);
 
-  int nparams = 3;
-  char* strNParams;
-  strNParams = option->getValue('n');
-  if( strNParams ) nparams = atoi(strNParams);
-  
   // check if the lcio file has the extension
   if ( lcioFileName.rfind( ".slcio", string::npos ) == string::npos ) {
     lcioFileName.append( ".slcio" );
@@ -109,84 +110,81 @@ int main( int argc, char ** argv ) {
 
     lcio::LCCollectionVec * constantsCollection = new lcio::LCCollectionVec( lcio::LCIO::LCGENERICOBJECT );
 
+    map< int, eutelescope::EUTelAlignmentConstant* > constants_map;
 
-    vector<double > tokens;
-    stringstream tokenizer;
+    vector< string > tokens;
+    istringstream tokenizer;
     string line;
-    double buffer;
-
-    // get the first line and throw it away since it is a
-    // comment!
-    getline( pedeFile, line );
+    string buffer;
+    double value = 0.;
+    double err = 0.;
+    bool isFixed = false;
 
     int sensorID = 0;
 
-    while ( true  ) {
+    while ( getline( pedeFile, line ) ) {
 
-      eutelescope::EUTelAlignmentConstant * constant = new eutelescope::EUTelAlignmentConstant;
+      bool goodLine = false;
 
-      constant->setSensorID( sensorID );
-      ++sensorID;
-
-      bool goodLine = true;
-
-      for ( unsigned int iParam = 0 ; iParam < nparams ; ++iParam ) {
-
-        getline( pedeFile, line );
-
-        if ( line.empty() ) {
-          goodLine = false;
-        }
+        if ( !line.empty() ) goodLine = true;
+      
+        if( !goodLine ) continue;
 
         tokens.clear();
         tokenizer.clear();
         tokenizer.str( line );
 
-        while ( tokenizer >> buffer ) {
+        while ( tokenizer >> skipws >> buffer ) {
           tokens.push_back( buffer ) ;
         }
 
-        if ( ( tokens.size() == 3 ) || ( tokens.size() == 5 ) || ( tokens.size() == 6 ) ) {
-          goodLine = true;
-        } else goodLine = false;
+        if ( ( tokens.size() == 5 ) ) goodLine = true;
 
-        bool isFixed = ( tokens.size() == 3 );
-//         if ( isFixed ) {
-//           cout  << "Parameter " << tokens[0] << " is at " << ( tokens[1] / 1000 )
-//                << " (fixed)"  << endl;
-//         } else {
-//           cout << "Parameter " << tokens[0] << " is at " << (tokens[1] / 1000 )
-//                << " +/- " << ( tokens[4] / 1000 )  << endl;
-//         }
+        if( !goodLine ) continue;
 
-        if ( iParam == 0 ) {
-          constant->setXOffset( tokens[1] );
-          if ( ! isFixed ) {
-            double err  = tokens[4];
-            constant->setXOffsetError( err ) ;
-          }
+        value =  atof(tokens[4].c_str());
+        sensorID = atoi(tokens[3].c_str());
+        
+        if( constants_map.find( sensorID ) == constants_map.end() ) {
+            eutelescope::EUTelAlignmentConstant * constant = new eutelescope::EUTelAlignmentConstant;
+            constants_map[sensorID] = constant;
         }
-        if ( iParam == 1 ) {
-          constant->setYOffset( tokens[1] ) ;
-          if ( ! isFixed ) constant->setYOffsetError( tokens[4] ) ;
+        
+        if( tokens[2].compare("shift") == 0 ) {
+            if( tokens[1].compare("X") == 0 ) {
+                constants_map[sensorID]->setXOffset( value );
+                if ( !isFixed ) constants_map[sensorID]->setXOffsetError( err ) ;
+            }
+            if( tokens[1].compare("Y") == 0 ) {
+                constants_map[sensorID]->setYOffset( value );
+                if ( !isFixed ) constants_map[sensorID]->setYOffsetError( err ) ;
+            }
+            if( tokens[1].compare("Z") == 0 ) {
+                constants_map[sensorID]->setZOffset( value );
+                if ( !isFixed ) constants_map[sensorID]->setZOffsetError( err ) ;
+            }
         }
-        if ( iParam == 2 ) {
-          constant->setGamma( tokens[1]  ) ;
-          if ( ! isFixed ) constant->setGammaError( tokens[4] ) ;
+        if( tokens[2].compare("rotation") == 0 ) {
+            if( tokens[1].compare("YZ") == 0 ) {
+                constants_map[sensorID]->setAlpha( value );
+                if ( !isFixed ) constants_map[sensorID]->setAlphaError( err ) ;
+            }
+            if( tokens[1].compare("XZ") == 0 ) {
+                constants_map[sensorID]->setBeta( value );
+                if ( !isFixed ) constants_map[sensorID]->setBetaError( err ) ;
+            }
+            if( tokens[1].compare("XY") == 0 ) {
+                constants_map[sensorID]->setGamma( value );
+                if ( !isFixed ) constants_map[sensorID]->setGammaError( err ) ;
+            }
         }
 
-      }
+        constants_map[sensorID]->setSensorID( sensorID );
 
-      // right place to add the constant to the collection
-      if ( goodLine ) {
-        constantsCollection->push_back( constant );
-        cout << (*constant) << endl;
-      }
-      else delete constant;
-    
-      if ( !pedeFile ) break;
     }
 
+    colWriter._constantsCollection = constantsCollection;
+    for_each( constants_map.begin(), constants_map.end(), colWriter );
 
     event->addCollection( constantsCollection, "alignment" );
     lcWriter->writeEvent( event );
