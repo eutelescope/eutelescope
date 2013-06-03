@@ -87,7 +87,7 @@ then
 fi
 
 # Merge MILLIPEDE steering and output files
-join $steering_file $outres_file | grep '^[0-9]' | awk '{ printf "%-10s%-4s%-20s%-15s%-15s\n",$1,$5,$6,$7,$8}' | tee out.pede2lcio
+join $steering_file $outres_file | grep '^[0-9]' | awk '{ printf "%-10s%-4s%-20s%-15s%-15s%-15s\n",$1,$5,$6,$7,$8,$11}' | tee out.pede2lcio
 
 # Convert to lcio collection file
 pede2lcio out.pede2lcio $lcio_file
