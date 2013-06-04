@@ -19,7 +19,9 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
 
   <execute>
     <processor name="AIDA"/>
-    <processor name="Align"/>
+    <processor name="PrintEventNumber"/>
+    <processor name="GBLTrackFit"/>
+    <processor name="Save"/>
   </execute>
 
 
@@ -43,136 +45,86 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
     <parameter name="Compress" type="int" value="1"/>
 
     <!-- filename without extension-->
-    <parameter name="FileName" type="string" value="@HistoPath@/@Output@-align-histo"/>
+    <parameter name="FileName" type="string" value="@HistoPath@/@Output@-trkfit-histo"/>
 
     <!-- type of output file xml (default) or root ( only OpenScientist)-->
     <parameter name="FileType" type="string" value="root"/>
   </processor>
 
-
-  <processor name="Align" type="EUTelMilleGBL">
-    <!--EUTelMille uses the MILLE program to write data files for MILLEPEDE II.-->
-
-    <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
-    <parameter name="AlignmentConstantLCIOFile" type="string" value="@DBPath@/@Output@-align-db.slcio"/>
-
-    <!--Name of the Millepede binary file.-->
-    <parameter name="BinaryFilename" type="string" value="@ResultsPath@/@Output@-align-mille.bin"/>
-
-    <!--Name of the steering file for the pede program.-->
-    <parameter name="PedeSteerfileName" type="string" value="@ResultsPath@/@Output@-pede-steer.txt"/>
-
-    <!--Execute the pede program using the generated steering file.-->
-    <parameter name="RunPede" type="int" value="@RunPede@"/>
-
-    <!--Use cuts on the residuals to reduce the combinatorial background. 0 for off (default), 1 for on-->
-    <parameter name="UseResidualCuts" type="int" value="@UseResidualCuts@"/>
-
-    <!--Residual cuts along both size in microns-->
-    <parameter name="ResidualsXMax" type="FloatVec"> @ResidualXMax@ </parameter>
-    <parameter name="ResidualsXMin" type="FloatVec"> @ResidualXMin@ </parameter>
-    <parameter name="ResidualsYMax" type="FloatVec"> @ResidualYMax@ </parameter>
-    <parameter name="ResidualsYMin" type="FloatVec"> @ResidualYMin@ </parameter>
-
-    <!--Hit collection name-->
-    <parameter name="HitCollectionName" type="string" lcioInType="TrackerHit"> PreAlignedHit </parameter>
-
-    <!--Track collection name-->
-    <parameter name="TrackCollectionName" type="string" lcioInType="Track"> fittracks </parameter>
-
-    <!--Number of alignment constants used.
-	       Available mode are:
-	       1 - shifts in the X and Y directions and a rotation around the Z axis
-	       2 - only shifts in the X and Y directions
-               3 - (EXPERIMENTAL) shifts in the X,Y and Z directions and rotations around all three axis
-    -->
-    <parameter name="AlignMode" type="int" value="3"/>
-
-    <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
-    <parameter name="DistanceMax" type="float" value="@DistanceMax@"/>
-
-    <!--Exclude planes from fit.-->
-    <parameter name="ExcludePlanes" type="IntVec">@ExcludePlanes@ </parameter>
-
-    <!--Fix sensor planes in the fit according to their sensor ids.-->
-    <parameter name="FixedPlanes" type="IntVec">@FixedPlanes@ </parameter>
-
-    <!--Generate a steering file for the pede program.-->
-    <parameter name="GeneratePedeSteerfile" type="int" value="1"/>
-
-    <!--Selects the source of input hits.
-		0 - hits read from hitfile with simple trackfinding.
-		1 - hits read from output of tracking processor.
-		2 - Test mode. Simple internal simulation and simple trackfinding.-->
-    <parameter name="InputMode" type="int" value="0"/>
-
-    <!--Maximal number of track candidates.-->
-    <parameter name="MaxTrackCandidates" type="int" value="200000"/>
-    <parameter name="MaxTrackCandidatesTotal" type="int" value="200000"/>
-
-    <!--Use only events with one hit in every plane.-->
-    <parameter name="OnlySingleHitEvents" type="int" value="0"/>
-
-    <!--Use only events with one track candidate.-->
-    <parameter name="OnlySingleTrackEvents" type="int" value="0"/>
-
-  <!-- FixParameter: takes bit coded values as alignment parameters for each plane
-     2** 0 = 1  -> x
-     2** 1 = 2  -> y
-     2** 2 = 4  -> z
-     2** 3 = 8  -> ZX
-     2** 4 = 16 -> ZY
-     2** 5 = 32 -> XY plane
-   -->
-  <parameter name="FixParameter" type="int" value="28 28 28  28 28 28 "  />
-
-    <!--parameter name="FixParameter" type="int" value="63 63 63    63  63 63"/-->
-
-    <!--Start values for the alignment for the angle gamma.-->
-    <!--parameter name="PedeUserStartValuesGamma" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
-
-    <!--Start values for the alignment for shifts in the X direction.-->
-    <!--parameter name="PedeUserStartValuesX" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
-
-    <!--Start values for the alignment for shifts in the Y direction.-->
-    <!--parameter name="PedeUserStartValuesY" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
-
-    <!--Resolution of the telescope for Millepede.-->
-    <parameter name="TelescopeResolution" type="float" value="10"/>
-    <parameter name="ResolutionX" type="float" value="   18     18     18           18     18     18 "/>
-    <parameter name="ResolutionY" type="float" value="   18     18     18           18     18     18 "/>
-    <parameter name="ResolutionZ" type="float" value="    1      1      1            1      1      1 "/>
-
-    <!--Rotation around the x axis of the sensors in test mode (to be determined by the alignment).-->
-    <!--parameter name="TestModeSensorAlpha" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
-
-    <!--Rotation around the y axis of the sensors in test mode (to be determined by the alignment).-->
-    <!--parameter name="TestModeSensorBeta" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
-
-    <!--Rotation around the z axis of the sensors in test mode (to be determined by the alignment).-->
-    <!--parameter name="TestModeSensorGamma" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
-
-    <!--Resolution assumed for the sensors in test mode.-->
-    <!--parameter name="TestModeSensorResolution" type="float" value="3"/-->
-
-    <!--X shifts of the sensors in test mode (to be determined by the alignment).-->
-    <!--parameter name="TestModeSensorXShifts" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
-
-    <!--Y shifts of the sensors in test mode (to be determined by the alignment).-->
-    <!--parameter name="TestModeSensorYShifts" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
-
-    <!--Z positions of the sensors in test mode.-->
-    <!--parameter name="TestModeSensorZPositions" type="FloatVec"> 20000 40000 60000 80000 100000 120000 </parameter-->
-
-    <!--Width of the track slope distribution in the x direction-->
-    <!--parameter name="TestModeXTrackSlope" type="float" value="0.0005"/-->
-
-    <!--Width of the track slope distribution in the y direction-->
-    <!--parameter name="TestModeYTrackSlope" type="float" value="0.0005"/-->
-
-    <!--Give start values for pede by hand (0 - automatic calculation of start values, 1 - start values defined by user).-->
-    <!--parameter name="UsePedeUserStartValues" type="int" value="0"/-->
-
+  <processor name="PrintEventNumber" type="EUTelUtilityPrintEventNumber">
+    <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+    <!--Print event number for every n-th event-->
+    <parameter name="EveryNEvents" type="int">1000 </parameter>
+    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+    <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+    <!--print the event timestamp as read from LCIO-->
+    <!--parameter name="printTimestamp" type="bool">false </parameter-->
   </processor>
+
+ <processor name="GBLTrackFit" type="EUTelProcessorTrackingGBLTrackFit">
+ <!--EUTelProcessorTrackingGBLTrackFit performs track fits using GBL optionally writing data files for MILLEPEDE II.-->
+  <!--Alignment mode specifies alignment degrees of freedom to be considered
+0 - No alignment at all. Simply fit tracks assuming that alignment is correct
+1 - Alignment of XY shifts
+2 - Alignment of XY shifts + rotations around Z
+3 - Alignment of XYZ shifts + rotations around Z
+4 - Alignment of XY shifts + rotations around X and Z
+5 - Alignment of XY shifts + rotations around Y and Z
+6 - Alignment of XY shifts + rotations around X,Y and Z
+-->
+  <parameter name="AlignmentMode" type="int">@AlignmentMode@ </parameter>
+  <!--Ids of planes to be used in alignment-->
+  <parameter name="AlignmentPlanes" type="IntVec">@AlignPlaneIds@ </parameter>
+  <!--Beam energy [GeV]-->
+  <parameter name="BeamEnergy" type="double">@BeamEnergy@ </parameter>
+  <!--Name of the TGeo geometry definition file-->
+  <parameter name="GeometryFilename" type="string">@TGeoGeometryFileName@ </parameter>
+  <!--Name of the Millepede binary file-->
+  <parameter name="MilleBinaryFilename" type="string">@MilleBinaryFile@ </parameter>
+  <!--Maximum chi2 of a track candidate that goes into millepede-->
+  <parameter name="MilleMaxChi2Cut" type="double">@Chi2Cut@ </parameter>
+  <!--Plane ids and parameter ids for X rotations-->
+  <parameter name="MilleParametersXRotations" type="IntVec">@MilleParametersXRotations@ </parameter>
+  <!--Plane ids and parameter ids for X shifts-->
+  <parameter name="MilleParametersXShifts" type="IntVec">@MilleParametersXShifts@ </parameter>
+  <!--Plane ids and parameter ids for Y rotations-->
+  <parameter name="MilleParametersYRotations" type="IntVec">@MilleParametersYRotations@ </parameter>
+  <!--Plane ids and parameter ids for Y shifts-->
+  <parameter name="MilleParametersYShifts" type="IntVec">@MilleParametersYShifts@ </parameter>
+  <!--Plane ids and parameter ids for Z rotations-->
+  <parameter name="MilleParametersZRotations" type="IntVec">@MilleParametersZRotations@ </parameter>
+  <!--Plane ids and parameter ids for Z shifts-->
+  <parameter name="MilleParametersZShifts" type="IntVec">@MilleParametersZShifts@ </parameter>
+  <!--Name of the Millepede steering file to be created-->
+  <parameter name="MilleSteeringFilename" type="string">pede-steer.txt </parameter>
+  <!--Execute the pede at the end of processing using the generated steering file.-->
+  <parameter name="RunPede" type="bool">@RunPede@ </parameter>
+  <!--Input track candidates hits collection name-->
+  <parameter name="TrackCandHitInputCollectionName" type="string" lcioInType="Track">track_candidates </parameter>
+  <!--Output tracks collection name-->
+  <parameter name="TracksOutputCollectionName" type="string" lcioOutType="Track">TrackCollection </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="Save" type="EUTelOutputProcessor">
+ <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
+  <!--drops the named collections from the event-->
+  <parameter name="DropCollectionNames" type="StringVec"> track_candidates </parameter>
+  <!--drops all collections of the given type from the event-->
+  <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
+  <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
+  <!--parameter name="FullSubsetCollections" type="StringVec" value="MCParticlesSkimmed"/-->
+  <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
+  <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
+  <!-- name of output file -->
+  <parameter name="LCIOOutputFile" type="string" value="@ResultsPath@/@Output@-trkgbl.slcio "/>
+  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+  <!--Set it to true to remove intermediate EORE in merged runs-->
+  <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
+  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+  <!-- <parameter name="SplitFileSizekB" type="int" value="1000000"/> DP -->
+ </processor>
 
 </marlin>
