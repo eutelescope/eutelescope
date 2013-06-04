@@ -95,7 +95,7 @@ _nProcessedEvents(0) {
             _maxMissingHitsPerTrackCand, static_cast<int> (0)); // Search full-length tracks by default
 
     registerOptionalParameter("MaxNTracksPerEvent", "Maximal number of track candidates to be found in events",
-            _maxNTracks, static_cast<int> (100));
+            _maxNTracks, static_cast<int> (10));
 
     registerOptionalParameter("FinderMode", "Finder mode. Possible values are 1, 2",
             _finderMode, static_cast<int> (2));
