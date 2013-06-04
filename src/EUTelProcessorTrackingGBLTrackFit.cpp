@@ -140,7 +140,7 @@ _nProcessedEvents(0) {
 
     registerOptionalParameter("AlignmentPlanes", "Ids of planes to be used in alignment", _alignmentPlaneIds, IntVec());
     
-    registerOptionalParameter("RunPede","Execute the pede at the end of processing using the generated steering file.",_runPede, static_cast <bool> (true));
+    registerOptionalParameter("RunPede","Execute the pede at the end of processing using the generated steering file.",_runPede, static_cast <bool> (false));
 
 }
 
