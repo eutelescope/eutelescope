@@ -193,7 +193,7 @@ namespace eutelescope {
         
         /** Possible choices of alignment degrees of freedom */
         enum AlignmentMode {
-            noAlignment, XYShift, XYShiftXYRot, XYZShiftXYRot, XYShiftYZRotXYRot, XYShiftXZRotXYRot, XYShiftXZRotYZRotXYRot
+            noAlignment, XYShift, XYShiftXYRot, XYZShiftXYRot, XYShiftYZRotXYRot, XYShiftXZRotXYRot, XYShiftXZRotYZRotXYRot, XYZShiftXZRotYZRotXYRot
         };
     }
 }

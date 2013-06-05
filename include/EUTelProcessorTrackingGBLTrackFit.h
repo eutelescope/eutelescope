@@ -129,6 +129,9 @@ namespace eutelescope {
 
         /** TGeo geometry file name */
         string _tgeoFileName;
+        
+        /** Histogram info file name */
+        string _histoInfoFileName;
 
     protected:
 

@@ -25,6 +25,7 @@
 #endif // MARLIN_USE_AIDA
 
 // EUTELESCOPE
+#include "EUTelHistogramManager.h"
 #include "EUTelExceptions.h"
 #include "EUTelRunHeaderImpl.h"
 #include "EUTelEventImpl.h"
@@ -131,6 +132,9 @@ _nProcessedEvents(0) {
             "DistanceMax will be used for each pair if this vector is empty.",
             _residualsRMax, MaximalResidualsR);
 
+    // Histogram information
+
+    registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
 
     /**    @TODO must be a part of a separate data structure 
      *     Do we need this at all
@@ -386,18 +390,6 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::FillHits(LCEvent * evt,
 
 }
 
-//TrackerHitImpl* EUTelProcessorTrackingExhaustiveTrackSearch::assignCov( TrackerHitImpl* hit ) const{
-//    float cov[TRKHITNCOVMATRIX] = {0.,0.,0.,0.,0.,0.};
-//    double resx = EUTelGeometryTelescopeGeoDescription::getInstance()._siPlanesLayerLayout->getSensitivePitchX(0) / sqrt(12.);
-//    double resy = EUTelGeometryTelescopeGeoDescription::getInstance()._siPlanesLayerLayout->getSensitivePitchY(0) / sqrt(12.);
-//    cov[0] = resx * resx; // cov(x,x)
-//    cov[2] = resy * resy; // cov(y,y)
-//
-//    TrackerHitImpl* hitcov = new TrackerHitImpl;
-//    hitcov->setPosition( hit->getPosition() );
-//    hitcov->setCovMatrix( cov );
-//    return hitcov;
-//}
 
 void EUTelProcessorTrackingExhaustiveTrackSearch::addTrackCandidateToCollection(LCEvent* evt, const vector< EVENT::TrackerHitVec >& trackCandidates) {
     // Prepare output collection
@@ -463,14 +455,35 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::bookHistograms() {
     try {
         streamlog_out(DEBUG) << "Booking histograms..." << std::endl;
 
-        const int tracksNBin = 20;
-        const double tracksMin = -0.5;
-        const double tracksMax = 19.5;
+        auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+        EUTelHistogramInfo    * histoInfo;
+        bool                    isHistoManagerAvailable;
+
+        try {
+            isHistoManagerAvailable = histoMgr->init( );
+        } catch ( ios::failure& e ) {
+            streamlog_out( ERROR5 ) << "I/O problem with " << _histoInfoFileName << "\n"
+                    << "Continuing without histogram manager using default settings"    << endl;
+            isHistoManagerAvailable = false;
+        } catch ( ParseException& e ) {
+            streamlog_out( ERROR5 ) << e.what( ) << "\n"
+                    << "Continuing without histogram manager using default settings" << endl;
+            isHistoManagerAvailable = false;
+        }
+        
+        const int tracksNBin = 20;    
+        const double tracksXMin = -0.5;
+        const double tracksXMax = 19.5;
+
+        histoInfo = histoMgr->getHistogramInfo(_histName::_numberTracksCandidatesHistName);        
+        int NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : tracksNBin;
+        double XMin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : tracksXMin;
+        double XMax = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : tracksXMax;
 
         // Number of track candidates from pattern recognition step
         AIDA::IHistogram1D * numberTracksCandidates =
-                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_numberTracksCandidatesHistName, tracksNBin,
-                tracksMin, tracksMax);
+                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_numberTracksCandidatesHistName, NBin,
+                XMin, XMax);
 
         if (numberTracksCandidates) {
             numberTracksCandidates->setTitle("Number of track candidates;N tracks;N events");
@@ -481,13 +494,18 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::bookHistograms() {
         }
         
         const int hitsNBin = 10;
-        const double hitsMin = 0;
-        const double hitsMax = 10;
+        const double hitsMin = -0.5;
+        const double hitsMax = 9.5;
+        
+        histoInfo = histoMgr->getHistogramInfo(_histName::_numberOfHitOnTrackCandidateHistName);        
+        NBin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : hitsNBin;
+        XMin = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : hitsMin;
+        XMax = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : hitsMax;
         
         // Number of hit per track candidate
         AIDA::IHistogram1D * numberHitsOnTrackCandidates =
-                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_numberOfHitOnTrackCandidateHistName, hitsNBin,
-                hitsMin, hitsMax);
+                marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(_histName::_numberOfHitOnTrackCandidateHistName, NBin,
+                XMin, XMax);
 
         if (numberHitsOnTrackCandidates) {
             numberHitsOnTrackCandidates->setTitle("Number of hits on track candidates;N hits;N tracks");

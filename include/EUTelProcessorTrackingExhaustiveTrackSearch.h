@@ -159,6 +159,8 @@ namespace eutelescope {
         FloatVec _residualsRMax; /** Maximal distance in XY plane */
 
 
+        /** Histogram info file name */
+        string _histoInfoFileName;
 
     protected:
 

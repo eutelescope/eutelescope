@@ -30,6 +30,7 @@
 // EUTELESCOPE
 #include "EUTelProcessorTrackingGBLTrackFit.h"
 
+#include "EUTelHistogramManager.h"
 #include "EUTelPStream.h"
 #include "EUTelExceptions.h"
 #include "EUTelRunHeaderImpl.h"
@@ -109,6 +110,7 @@ _nProcessedEvents(0) {
 
     // Optional processor parameters that define finder settings
 
+    // MILLIPEDE specific parameters
     registerOptionalParameter("AlignmentMode", "Alignment mode specifies alignment degrees of freedom to be considered\n"
             "0 - No alignment at all. Simply fit tracks assuming that alignment is correct\n"
             "1 - Alignment of XY shifts\n"
@@ -116,7 +118,9 @@ _nProcessedEvents(0) {
             "3 - Alignment of XYZ shifts + rotations around Z\n"
             "4 - Alignment of XY shifts + rotations around X and Z\n"
             "5 - Alignment of XY shifts + rotations around Y and Z\n"
-            "6 - Alignment of XY shifts + rotations around X,Y and Z\n", _alignmentMode, static_cast<int> (0));
+            "6 - Alignment of XY shifts + rotations around X,Y and Z\n"
+            "7 - Alignment of XYZ shifts + rotations around X,Y and Z\n",
+            _alignmentMode, static_cast<int> (0));
 
     registerOptionalParameter("MilleParametersXShifts", "Plane ids and parameter ids for X shifts", _xShiftsVec, IntVec());
 
@@ -134,14 +138,19 @@ _nProcessedEvents(0) {
 
     registerOptionalParameter("MilleSteeringFilename", "Name of the Millepede steering file to be created", _milleSteeringFilename, std::string("pede-steer.txt"));
 
-    registerOptionalParameter("GeometryFilename", "Name of the TGeo geometry definition file", _tgeoFileName, std::string("TELESCOPE.root"));
-
     registerOptionalParameter("MilleMaxChi2Cut", "Maximum chi2 of a track candidate that goes into millepede", _maxChi2Cut, double(1000.));
 
     registerOptionalParameter("AlignmentPlanes", "Ids of planes to be used in alignment", _alignmentPlaneIds, IntVec());
     
     registerOptionalParameter("RunPede","Execute the pede at the end of processing using the generated steering file.",_runPede, static_cast <bool> (false));
+    
+    // Geometry definition
+    
+    registerOptionalParameter("GeometryFilename", "Name of the TGeo geometry definition file", _tgeoFileName, std::string("TELESCOPE.root"));
+    
+    // Histogram information
 
+    registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
 }
 
 void EUTelProcessorTrackingGBLTrackFit::init() {
@@ -191,6 +200,8 @@ void EUTelProcessorTrackingGBLTrackFit::init() {
             alignmentMode = Utility::XYShiftXZRotXYRot;
         } else if (_alignmentMode==6) {
             alignmentMode = Utility::XYShiftXZRotYZRotXYRot;
+        } else if (_alignmentMode==7) {
+            alignmentMode = Utility::XYZShiftXZRotYZRotXYRot;
         }else {
             streamlog_out(WARNING3) << "Alignment mode was not recognized:" << _alignmentMode << std::endl;
             streamlog_out(WARNING3) << "Alignment will not be performed" << std::endl;
@@ -577,6 +588,19 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
                           << setw(25) << " ! YZ rotation " << sensorId << endl;
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01"
                          << setw(25)  << " ! XY rotation " << sensorId << endl;
+            } else if( fitter->GetAlignmentMode()==Utility::XYZShiftXZRotYZRotXYRot ) {
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << _alignmentConstants._xResiduals[sensorId]/_alignmentConstants._nxResiduals[sensorId] << setw(25) << "0.01" 
+                          << setw(25) << " ! X shift " << sensorId << endl;
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << _alignmentConstants._yResiduals[sensorId]/_alignmentConstants._nyResiduals[sensorId] << setw(25) << "0.01" 
+                          << setw(25) << " ! Y shift " << sensorId << endl;
+                steerFile << left << setw(25) << ZShiftsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01" 
+                          << setw(25) << " ! Z shift " << sensorId << endl;
+                steerFile << left << setw(25) << YRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01" 
+                          << setw(25) << " ! XZ rotation " << sensorId << endl;
+                steerFile << left << setw(25) << XRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01" 
+                          << setw(25) << " ! YZ rotation " << sensorId << endl;
+                steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01"
+                         << setw(25)  << " ! XY rotation " << sensorId << endl;
             } else if ( fitter->GetAlignmentMode()==Utility::XYShiftXYRot ) {
                 steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << _alignmentConstants._xResiduals[sensorId]/_alignmentConstants._nxResiduals[sensorId] << setw(25) << "0.01" 
                           << setw(25) << " ! X shift " << sensorId << endl;
@@ -617,23 +641,34 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 
     try {
+        
         streamlog_out(DEBUG) << "Booking histograms..." << std::endl;
 
-        const int chi2NBin = 1000;
-        const double chi2Min = 0.;
-        const double chi2Max = 1000.;
+        auto_ptr<EUTelHistogramManager> histoMgr( new EUTelHistogramManager( _histoInfoFileName ));
+        EUTelHistogramInfo    * histoInfo;
+        bool                    isHistoManagerAvailable;
 
-        const int probNBin = 1000;
-        const double probMin = 0.;
-        const double probMax = 1.;
+        try {
+            isHistoManagerAvailable = histoMgr->init( );
+        } catch ( ios::failure& e ) {
+            streamlog_out( ERROR5 ) << "I/O problem with " << _histoInfoFileName << "\n"
+                    << "Continuing without histogram manager using default settings"    << endl;
+            isHistoManagerAvailable = false;
+        } catch ( ParseException& e ) {
+            streamlog_out( ERROR5 ) << e.what( ) << "\n"
+                    << "Continuing without histogram manager using default settings" << endl;
+            isHistoManagerAvailable = false;
+        }
+        
+        histoInfo = histoMgr->getHistogramInfo(_histName::_chi2GblFitHistName);
+        int chi2NBin =          ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 1000;    
+        double chi2Min =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : 0.;
+        double chi2Max =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 1000.;
 
-        int NBinX = 4000;
-        double MinX = -20.;
-        double MaxX = 20.;
-        int NBinY = 4000;
-        double MinY = -20.;
-        double MaxY = 20.;
-
+        histoInfo = histoMgr->getHistogramInfo(_histName::_probGblFitHistName);
+        int probNBin =          ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : 1000;
+        double probMin =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : 0.;
+        double probMax =        ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : 1.;
 
         // GBL fits
         AIDA::IHistogram1D * chi2GblFit =
@@ -656,6 +691,16 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
         }
 
+        const int    resid1dNBinX = 1000;
+        const double residMinX    = -20.;
+        const double residMaxX    = 20.;
+        
+        int NBinX;
+        double MinX;
+        double MaxX;
+        int NBinY;
+        double MinY;
+        double MaxY;
         // Residuals after fit
         std::stringstream sstm;
         std::string residGblFitHistName;
@@ -667,6 +712,10 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm << "Normalised residuals. Plane " << iPlane << "X direction; Normalised residuals; N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : resid1dNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : residMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : residMaxX;
             AIDA::IHistogram1D * residGblFit =
                     marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX);
             if (residGblFit) {
@@ -686,6 +735,10 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm << "Normalised residuals. Plane " << iPlane << "Y direction; Normalised residuals; N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : resid1dNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : residMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : residMaxX;
             AIDA::IHistogram1D * residGblFit =
                     marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX);
             if (residGblFit) {
@@ -699,12 +752,19 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
         }
 
         // 2D histograms
-        NBinY = 100;
-        NBinX = 100;
-        MinX = -15.;
-        MaxX = 15.;
-        MinY = -20.;
-        MaxY = 20.;
+        const int residNBinY = 100;
+        const int residNBinX = 100;
+        const double hitposMinX = -15.;
+        const double hitposMaxX = 15.;
+        const double residMinY = -20.;
+        const double residMaxY = 20.;
+        
+        NBinY = residNBinY;
+        NBinX = residNBinX;
+        MinX = hitposMinX;
+        MaxX = hitposMaxX;
+        MinY = residMinY;
+        MaxY = residMaxY;
         std::string resid2DGblFitHistName;
         for (int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++) {
             sstm << _histName::_resid2DGblFitHistNameXvsX << iPlane;
@@ -713,6 +773,13 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm << "Normalised residuals. Plane " << iPlane << "; x (mm); Normalised residuals rx";
             histTitle = sstm.str();
             sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : residNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : hitposMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : hitposMaxX;
+            NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : residNBinY;
+            MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : residMinY;
+            MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : residMaxY;
             AIDA::IHistogram2D * residGblFit1 =
                     marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(resid2DGblFitHistName, NBinX, MinX, MaxX, NBinY, MinY, MaxY);
             if (residGblFit1) {
@@ -730,6 +797,13 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm << "Normalised residuals. Plane " << iPlane << "; y (mm); Normalised residuals rx";
             histTitle = sstm.str();
             sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : residNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : hitposMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : hitposMaxX;
+            NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : residNBinY;
+            MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : residMinY;
+            MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : residMaxY;
             AIDA::IHistogram2D * residGblFit2 =
                     marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(resid2DGblFitHistName, NBinX, MinX, MaxX, NBinY, MinY, MaxY);
             if (residGblFit2) {
@@ -749,6 +823,13 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm << "Normalised residuals. Plane " << iPlane << "; x (mm); Normalised residuals ry";
             histTitle = sstm.str();
             sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : residNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : hitposMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : hitposMaxX;
+            NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : residNBinY;
+            MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : residMinY;
+            MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : residMaxY;
             AIDA::IHistogram2D * residGblFit1 =
                     marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(resid2DGblFitHistName, NBinX, MinX, MaxX, NBinY, MinY, MaxY);
             if (residGblFit1) {
@@ -766,6 +847,13 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm << "Normalised residuals. Plane " << iPlane << "; y (mm); Normalised residuals ry";
             histTitle = sstm.str();
             sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : residNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : hitposMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : hitposMaxX;
+            NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : residNBinY;
+            MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : residMinY;
+            MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : residMaxY;
             AIDA::IHistogram2D * residGblFit2 =
                     marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(resid2DGblFitHistName, NBinX, MinX, MaxX, NBinY, MinY, MaxY);
             if (residGblFit2) {
@@ -779,8 +867,12 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
         }
 
         // Kink angles after fit
-        MinX = -0.001;
-        MaxX = 0.001;
+        const int    kinkNBinX = 100;
+        const double kinkMinX = -0.001;
+        const double kinkMaxX = 0.001;
+        NBinX = kinkNBinX;
+        MinX = kinkMinX;
+        MaxX = kinkMaxX;
         std::string kinkGblFitHistName;
         for (int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++) {
             sstm << _histName::_kinkGblFitHistNameX << iPlane;
@@ -789,6 +881,10 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm << "Kink angles. Plane " << iPlane << "X direction; kink (rad); N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(kinkGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : kinkNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : kinkMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : kinkMaxX;
             AIDA::IHistogram1D * residGblFit =
                     marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(kinkGblFitHistName, NBinX, MinX, MaxX);
             if (residGblFit) {
@@ -808,6 +904,10 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm << "Kink angles. Plane " << iPlane << "Y direction; kink (rad); N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(kinkGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : kinkNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : kinkMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : kinkMaxX;
             AIDA::IHistogram1D * residGblFit =
                     marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(kinkGblFitHistName, NBinX, MinX, MaxX);
             if (residGblFit) {

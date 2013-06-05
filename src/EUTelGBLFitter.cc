@@ -319,15 +319,25 @@ namespace eutelescope {
                 || _alignmentMode == Utility::XYZShiftXYRot
                 || _alignmentMode == Utility::XYShiftXZRotXYRot
                 || _alignmentMode == Utility::XYShiftYZRotXYRot
-                || _alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
+                || _alignmentMode == Utility::XYShiftXZRotYZRotXYRot
+                || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
             alDer[0][2] = -yPred; // dx/rot
             alDer[1][2] = xPred; // dy/rot
             globalLabels[2] = _paramterIdZRotationsMap[iPlane]; // rot z
         }
-        if (_alignmentMode == Utility::XYZShiftXYRot ) {
+        if (_alignmentMode == Utility::XYZShiftXYRot
+                || _alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
             alDer[0][3] = xSlope; // dx/dz
             alDer[1][3] = ySlope; // dy/dz
             globalLabels[3] = _paramterIdZShiftsMap[iPlane]; // dz
+        }
+        if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
+            alDer[0][4] = xPred*xSlope; // dx/rot y
+            alDer[1][4] = xPred*ySlope; // dy/rot y
+            globalLabels[4] = _paramterIdYRotationsMap[iPlane]; // drot y
+            alDer[0][5] = yPred*xSlope; // dx/rot x
+            alDer[1][5] = yPred*ySlope; // dy/rot x
+            globalLabels[5] = _paramterIdXRotationsMap[iPlane]; // drot x
         }
         if (_alignmentMode == Utility::XYShiftXZRotXYRot) {
             alDer[0][3] = xPred*xSlope; // dx/rot y
@@ -338,6 +348,14 @@ namespace eutelescope {
             alDer[0][3] = yPred*xSlope; // dx/rot x
             alDer[1][3] = yPred*ySlope; // dy/rot x
             globalLabels[3] = _paramterIdXRotationsMap[iPlane]; // drot x
+        }
+        if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
+            alDer[0][3] = xPred*xSlope; // dx/rot y
+            alDer[1][3] = xPred*ySlope; // dy/rot y
+            globalLabels[3] = _paramterIdYRotationsMap[iPlane]; // drot y
+            alDer[0][4] = yPred*xSlope; // dx/rot x
+            alDer[1][4] = yPred*ySlope; // dy/rot x
+            globalLabels[4] = _paramterIdXRotationsMap[iPlane]; // drot x
         }
         if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
             alDer[0][3] = xPred*xSlope; // dx/rot y
@@ -386,6 +404,9 @@ namespace eutelescope {
         } else if (_alignmentMode == Utility::XYShiftXZRotYZRotXYRot) {
             globalLabels.resize(5);
             alDer.ResizeTo(2, 5);
+        } else if (_alignmentMode == Utility::XYZShiftXZRotYZRotXYRot) {
+            globalLabels.resize(6);
+            alDer.ResizeTo(2, 6);
         }
         alDer.Zero();
 
