@@ -10,7 +10,7 @@
 // eutelescope includes ".h"
 #include "EUTELESCOPE.h"
 #include "EUTelTrackFinder.h"
-//#include "EUTelUtility.h"
+#include "EUTelUtility.h"
 
 // lcio includes <.h>
 #include "LCIOSTLTypes.h"
@@ -27,6 +27,9 @@ namespace eutelescope {
      * 
      */
     class EUTelExhaustiveTrackFinder : public EUTelTrackFinder {
+    private:
+        DISALLOW_COPY_AND_ASSIGN(EUTelExhaustiveTrackFinder)    // prevent users from making (default) copies of processors
+        
     public:
         EUTelExhaustiveTrackFinder() : 
                 EUTelTrackFinder( "EUTelExhaustiveTrackFinder" ),
@@ -136,8 +139,8 @@ namespace eutelescope {
         EUTelTrackFinder::SearchResult DoTrackSearch();
         
     private:
-        void FindTracks1(int&, std::vector< EVENT::TrackerHitVec >&, EVENT::TrackerHitVec&, const std::vector< EVENT::TrackerHitVec> &, unsigned int, EVENT::TrackerHit*);
-        void FindTracks2(int&, std::vector< EVENT::TrackerHitVec >&, EVENT::TrackerHitVec&, const std::vector< EVENT::TrackerHitVec> &, unsigned int, EVENT::TrackerHit*);
+        void FindTracks1(int&, std::vector< EVENT::TrackerHitVec >&, EVENT::TrackerHitVec&, std::map< int, EVENT::TrackerHitVec> &, int, EVENT::TrackerHit*);
+        void FindTracks2(int&, std::vector< EVENT::TrackerHitVec >&, EVENT::TrackerHitVec&, std::map< int, EVENT::TrackerHitVec> &, int, EVENT::TrackerHit*);
         
         void PruneTrackCandidates( std::vector< EVENT::TrackerHitVec >& );
 

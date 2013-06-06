@@ -27,7 +27,7 @@
 #include "TMath.h"
 
 using namespace eutelescope;
-
+using namespace geo;
 using namespace std;
 
 EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getInstance() {
@@ -35,7 +35,18 @@ EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getI
     return instance;
 }
 
-EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() {
+EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() :
+_siPlanesParameters(0),
+_siPlanesLayerLayout(0),
+_sensorIDVec(),
+_sensorIDVecMap(),
+_sensorIDVecZOrder(),
+_sensorIDtoZOrderMap(),
+_sensorIDMap(),
+_siPlaneZPosition(),
+_nPlanes(0),
+_geoManager(0)
+{
 
     // -------          Сopy-paste from another class           ----------- //
 
@@ -100,9 +111,6 @@ EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() {
     
     // TGeo manager initialisation
     
-}
-
-EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription(const EUTelGeometryTelescopeGeoDescription& orig) {
 }
 
 EUTelGeometryTelescopeGeoDescription::~EUTelGeometryTelescopeGeoDescription() {

@@ -62,24 +62,17 @@ namespace eutelescope {
         return _trackCandidates;
     }
 
-    void EUTelTrackFinder::SetAllHits( const std::vector< EVENT::TrackerHitVec >& allHits) {
+    void EUTelTrackFinder::SetAllHits( const std::map< int, EVENT::TrackerHitVec >& allHits) {
         
         streamlog_out( DEBUG1 ) << "EUTelTrackFinder::SetAllHits()." << std::endl;
         streamlog_out( DEBUG1 ) << " Hits for track search ready." << std::endl;
         _isReady = kIsReady;
 	this->_allHits = allHits;
-//	streamlog_out( DEBUG ) << "Hits coorinates"<<std::endl;
-//	for( int layerIndex = 0; layerIndex < _allHits.size(); layerIndex++ ) {
-//		streamlog_out( DEBUG ) << "Plane #"<<layerIndex<<std::endl;
-//		for( int hitIndex = 0; hitIndex < _allHits[layerIndex].size(); hitIndex++ ) {
-//			Utility::Hit hit = _allHits[layerIndex][hitIndex];
-//			streamlog_out( DEBUG ) << hit.X() << std::endl;
-//		}
-//	}	
+
 	return;
     }
 
-    std::vector< EVENT::TrackerHitVec > EUTelTrackFinder::GetAllHits() const {
+    std::map< int, EVENT::TrackerHitVec > EUTelTrackFinder::GetAllHits() const {
         return _allHits;
     }
 

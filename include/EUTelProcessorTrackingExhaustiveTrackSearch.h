@@ -23,6 +23,7 @@
 // EUTELESCOPE
 #include "EUTelTrackFinder.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
+#include "EUTelUtility.h"
 
 using namespace lcio;
 using namespace marlin;
@@ -40,6 +41,9 @@ namespace eutelescope {
      *  @see EUTelTrackFinder
      */
     class EUTelProcessorTrackingExhaustiveTrackSearch : public Processor {
+    private:
+        DISALLOW_COPY_AND_ASSIGN(EUTelProcessorTrackingExhaustiveTrackSearch)   // prevent users from making (default) copies of processors
+        
     public:
 
         virtual Processor* newProcessor() {
@@ -90,7 +94,7 @@ namespace eutelescope {
 
     public:
         /** Fills hits data structure for track finder */
-        void FillHits(LCEvent * evt, LCCollection* col, vector< EVENT::TrackerHitVec >& allHits) const;
+        void FillHits(LCEvent * evt, LCCollection* col, map< int, EVENT::TrackerHitVec >& allHits) const;
 
         /** Assign uncertainties to hits 
          * @TODO this must be a part of hitmaker
@@ -121,17 +125,6 @@ namespace eutelescope {
 
         /** Map of hot pixels */
         map<string, bool > _hotPixelMap;
-
-        /** Minimum allowed charge of the cluster  */
-        int _mimosa26ClusterChargeMin;
-
-        /** Flag that spcecifies to which sensors to 
-         *  apply rectangular fiducial area cuts
-         * @TODO must be a part of a separate data structure
-         */
-        vector<int> _useSensorRectangular;
-
-
 
     protected:
 
@@ -174,7 +167,7 @@ namespace eutelescope {
     public:
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
         /** AIDA histogram map
-        /*  Instead of putting several pointers to AIDA histograms as
+         *  Instead of putting several pointers to AIDA histograms as
          *  class members, histograms are booked in the init() method and
          *  their pointers are inserted into this map keyed by their
          *  names.

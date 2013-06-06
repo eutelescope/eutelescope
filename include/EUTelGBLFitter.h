@@ -37,10 +37,13 @@
 namespace eutelescope {
 
     class EUTelGBLFitter : public EUTelTrackFitter {
-
+        
+    private:
+        DISALLOW_COPY_AND_ASSIGN(EUTelGBLFitter)        // prevent users from making (default) copies of processors
+      
     public:
         EUTelGBLFitter();
-        EUTelGBLFitter(std::string name);
+        explicit EUTelGBLFitter(std::string name);
         virtual ~EUTelGBLFitter();
 
         void SetTrackCandidates(const std::vector< EVENT::TrackerHitVec >&);

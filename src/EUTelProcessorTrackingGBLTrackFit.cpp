@@ -39,13 +39,13 @@
 #include "EUTelExhaustiveTrackFinder.h"
 #include "EUTelLCObjectTrackCandidate.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
-// Cluster types
-#include "EUTelSparseCluster2Impl.h"
-#include "EUTelSparseClusterImpl.h"
-#include "EUTelBrickedClusterImpl.h"
-#include "EUTelDFFClusterImpl.h"
-#include "EUTelFFClusterImpl.h"
 
+// Cluster types
+class EUTelSparseCluster2Impl;
+class EUTelSparseClusterImpl;
+class EUTelBrickedClusterImpl;
+class EUTelDFFClusterImpl;
+class EUTelFFClusterImpl;
 
 using namespace lcio;
 using namespace marlin;
@@ -82,10 +82,33 @@ std::string EUTelProcessorTrackingGBLTrackFit::_histName::_kinkGblFitHistNameY =
 /** Default constructor */
 EUTelProcessorTrackingGBLTrackFit::EUTelProcessorTrackingGBLTrackFit() :
 Processor("EUTelProcessorTrackingGBLTrackFit"),
+_eBeam(-1.),
+_alignmentMode(0),
+_xShiftsVec(),
+_yShiftsVec(),
+_zShiftsVec(),
+_xRotationsVec(),
+_yRotationsVec(),
+_zRotationsVec(),
+_milleBinaryFilename("mille.bin"),
+_milleSteeringFilename("pede-steer.txt"),
+_alignmentPlaneIds(),
+_runPede(false),
+_maxChi2Cut(1000.),
+_tgeoFileName("TELESCOPE.root"),
+_histoInfoFileName("histoinfo.xml"),
 _trackCandidateHitsInputCollectionName("TrackCandidateHitCollection"),
 _tracksOutputCollectionName("TrackCollection"),
+_trackFitter(0),
+_milleGBL(0),
+_alignmentConstants(),
 _nProcessedRuns(0),
-_nProcessedEvents(0) {
+_nProcessedEvents(0),
+#if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+_aidaHistoMap1D(),
+_aidaHistoMap2D()
+#endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
+{
 
     // Processor description
     _description = "EUTelProcessorTrackingGBLTrackFit performs track fits using GBL optionally writing data files for MILLEPEDE II.";
@@ -166,7 +189,7 @@ void EUTelProcessorTrackingGBLTrackFit::init() {
 
 
     // Getting access to geometry description
-    EUTelGeometryTelescopeGeoDescription::getInstance().initializeTGeoDescription(_tgeoFileName);
+    geo::gGeometry().initializeTGeoDescription(_tgeoFileName);
 
     // Instantiate millipede output. 
     {
@@ -246,10 +269,10 @@ void EUTelProcessorTrackingGBLTrackFit::processRunHeader(LCRunHeader * run) {
             << "This may mean that the GeoID parameter was not set" << endl;
 
 
-    if (header->getGeoID() != EUTelGeometryTelescopeGeoDescription::getInstance()._siPlanesParameters->getSiPlanesID()) {
+    if (header->getGeoID() != geo::gGeometry()._siPlanesParameters->getSiPlanesID()) {
         streamlog_out(WARNING5) << "Error during the geometry consistency check: " << endl
                 << "The run header says the GeoID is " << header->getGeoID() << endl
-                << "The GEAR description says is     " << EUTelGeometryTelescopeGeoDescription::getInstance()._siPlanesParameters->getSiPlanesID() << endl;
+                << "The GEAR description says is     " << geo::gGeometry()._siPlanesParameters->getSiPlanesID() << endl;
     }
 
     
@@ -542,9 +565,9 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
     
     // loop over all planes
     // @TODO assumes that planes have ids 0..._nplanes !generaly wrong
-    for (unsigned int help = 0; help < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; help++) {
+    for (unsigned int help = 0; help < geo::gGeometry()._nPlanes; help++) {
 
-        int sensorId = EUTelGeometryTelescopeGeoDescription::getInstance()._sensorIDVecZOrder[help];
+        int sensorId = geo::gGeometry()._sensorIDVecZOrder[help];
         bool isPlaneExcluded = std::find(_alignmentPlaneIds.begin(), _alignmentPlaneIds.end(), sensorId) == _alignmentPlaneIds.end();
               
         // if plane not excluded
@@ -705,11 +728,11 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
         std::stringstream sstm;
         std::string residGblFitHistName;
         std::string histTitle;
-        for (int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++) {
-            sstm << _histName::_residGblFitHistNameX << iPlane;
+        for (size_t iPlane = 0; iPlane < geo::gGeometry()._nPlanes; iPlane++) {
+            sstm << _histName::_residGblFitHistNameX << geo::gGeometry()._sensorIDVec.at(iPlane);
             residGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << iPlane << "X direction; Normalised residuals; N hits";
+            sstm << "Normalised residuals. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "X direction; Normalised residuals; N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
@@ -728,11 +751,11 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm.str(std::string(""));
         }
 
-        for (int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++) {
-            sstm << _histName::_residGblFitHistNameY << iPlane;
+        for (size_t iPlane = 0; iPlane < geo::gGeometry()._nPlanes; iPlane++) {
+            sstm << _histName::_residGblFitHistNameY << geo::gGeometry()._sensorIDVec.at(iPlane);
             residGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << iPlane << "Y direction; Normalised residuals; N hits";
+            sstm << "Normalised residuals. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "Y direction; Normalised residuals; N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
@@ -766,11 +789,11 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
         MinY = residMinY;
         MaxY = residMaxY;
         std::string resid2DGblFitHistName;
-        for (int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++) {
-            sstm << _histName::_resid2DGblFitHistNameXvsX << iPlane;
+        for (size_t iPlane = 0; iPlane < geo::gGeometry()._nPlanes; iPlane++) {
+            sstm << _histName::_resid2DGblFitHistNameXvsX << geo::gGeometry()._sensorIDVec.at(iPlane);
             resid2DGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << iPlane << "; x (mm); Normalised residuals rx";
+            sstm << "Normalised residuals. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "; x (mm); Normalised residuals rx";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
@@ -791,10 +814,10 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             }
             sstm.str(std::string(""));
 
-            sstm << _histName::_resid2DGblFitHistNameXvsY << iPlane;
+            sstm << _histName::_resid2DGblFitHistNameXvsY << geo::gGeometry()._sensorIDVec.at(iPlane);
             resid2DGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << iPlane << "; y (mm); Normalised residuals rx";
+            sstm << "Normalised residuals. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "; y (mm); Normalised residuals rx";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
@@ -816,11 +839,11 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm.str(std::string(""));
         }
 
-        for (int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++) {
-            sstm << _histName::_resid2DGblFitHistNameYvsX << iPlane;
+        for (size_t iPlane = 0; iPlane < geo::gGeometry()._nPlanes; iPlane++) {
+            sstm << _histName::_resid2DGblFitHistNameYvsX << geo::gGeometry()._sensorIDVec.at(iPlane);
             resid2DGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << iPlane << "; x (mm); Normalised residuals ry";
+            sstm << "Normalised residuals. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "; x (mm); Normalised residuals ry";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
@@ -841,10 +864,10 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             }
             sstm.str(std::string(""));
 
-            sstm << _histName::_resid2DGblFitHistNameYvsY << iPlane;
+            sstm << _histName::_resid2DGblFitHistNameYvsY << geo::gGeometry()._sensorIDVec.at(iPlane);
             resid2DGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << iPlane << "; y (mm); Normalised residuals ry";
+            sstm << "Normalised residuals. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "; y (mm); Normalised residuals ry";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
@@ -874,11 +897,11 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
         MinX = kinkMinX;
         MaxX = kinkMaxX;
         std::string kinkGblFitHistName;
-        for (int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++) {
-            sstm << _histName::_kinkGblFitHistNameX << iPlane;
+        for (int iPlane = 0; iPlane < geo::gGeometry()._nPlanes; iPlane++) {
+            sstm << _histName::_kinkGblFitHistNameX << geo::gGeometry()._sensorIDVec.at(iPlane);
             kinkGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Kink angles. Plane " << iPlane << "X direction; kink (rad); N hits";
+            sstm << "Kink angles. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "X direction; kink (rad); N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(kinkGblFitHistName);
@@ -897,11 +920,11 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm.str(std::string(""));
         }
 
-        for (int iPlane = 0; iPlane < EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes; iPlane++) {
-            sstm << _histName::_kinkGblFitHistNameY << iPlane;
+        for (size_t iPlane = 0; iPlane < geo::gGeometry()._nPlanes; iPlane++) {
+            sstm << _histName::_kinkGblFitHistNameY << geo::gGeometry()._sensorIDVec.at(iPlane);
             kinkGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Kink angles. Plane " << iPlane << "Y direction; kink (rad); N hits";
+            sstm << "Kink angles. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "Y direction; kink (rad); N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(kinkGblFitHistName);
@@ -926,3 +949,4 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
 }
 
 #endif // USE_GBL
+

@@ -30,6 +30,7 @@
 #include "EUTelTrackFitter.h"
 #include "EUTelGBLFitter.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
+#include "EUTelUtility.h"
 
 using namespace lcio;
 using namespace marlin;
@@ -42,6 +43,10 @@ namespace eutelescope {
      *  @see EUTelTrackFitter
      */
     class EUTelProcessorTrackingGBLTrackFit : public Processor {
+
+    private:
+        DISALLOW_COPY_AND_ASSIGN(EUTelProcessorTrackingGBLTrackFit)     // prevent users from making (default) copies of processors
+        
     public:
 
         virtual Processor* newProcessor() {
@@ -49,7 +54,8 @@ namespace eutelescope {
         }
 
         EUTelProcessorTrackingGBLTrackFit();
-
+        
+    public:
         /** Called at the begin of the job before anything is read.
          * Use to initialize the processor, e.g. book histograms.
          */
@@ -154,6 +160,7 @@ namespace eutelescope {
     private:
 
         struct AlignmentConstants {
+            AlignmentConstants() : _xResiduals(), _nxResiduals(), _yResiduals(), _nyResiduals() {};
             std::map< int, double > _xResiduals;   //! sum all x residuals for given plane id
             std::map< int, int >    _nxResiduals;  //! number of residuals used to calculate mean for given plane id
             std::map< int, double > _yResiduals;   //! sum all y residuals for given plane id

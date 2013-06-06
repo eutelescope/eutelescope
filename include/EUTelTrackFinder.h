@@ -19,17 +19,22 @@
 #include <string>
 #include <vector>
 
+// EUTELESCOPE
+#include "EUTelUtility.h"
+
 
 namespace eutelescope {
 
     
     class EUTelTrackFinder {
         
+    private:
+        DISALLOW_COPY_AND_ASSIGN(EUTelTrackFinder)      // prevent users from making (default) copies of processors       
+        
     public:
         EUTelTrackFinder();
- //       EUTelTrackFinder( const EUTelTrackFinder& orig );
-        EUTelTrackFinder( std::string name );
-        
+        explicit EUTelTrackFinder( std::string name );
+
         virtual ~EUTelTrackFinder();
 
     public:
@@ -46,8 +51,8 @@ namespace eutelescope {
         virtual EUTelTrackFinder::SearchResult SearchTracks();
         virtual std::vector< EVENT::TrackerHitVec > GetTrackCandidates() const;
         
-        void SetAllHits( const std::vector< EVENT::TrackerHitVec >& _allHits);
-        std::vector< EVENT::TrackerHitVec > GetAllHits() const;
+        void SetAllHits( const std::map< int, EVENT::TrackerHitVec >& _allHits);
+        std::map< int, EVENT::TrackerHitVec > GetAllHits() const;
 
         inline void SetName( std::string name) { this->_name = name; }
         inline std::string GetName() const { return _name; }
@@ -61,7 +66,7 @@ namespace eutelescope {
                 
         std::string _name;
         
-        std::vector< EVENT::TrackerHitVec > _allHits;
+        std::map< int, EVENT::TrackerHitVec > _allHits;
         std::vector< EVENT::TrackerHitVec > _trackCandidates;
 
     };

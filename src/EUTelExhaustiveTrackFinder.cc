@@ -9,7 +9,7 @@
 #include "EUTelExhaustiveTrackFinder.h"
 #include "EUTELESCOPE.h"
 #include "EUTelTrackFinder.h"
-//#include "EUTelUtility.h"
+#include "EUTelGeometryTelescopeGeoDescription.h"
 
 // lcio includes <.h>
 #include "LCIOSTLTypes.h"
@@ -41,8 +41,8 @@ namespace eutelescope {
             EVENT::TrackerHitVec vec;
             int missinghits = 0;
 	    _trackCandidates.clear();
-            if( _mode == 1 ) FindTracks1( missinghits, this->_trackCandidates, vec, this->_allHits, 0, NULL );
-            if( _mode == 2 ) FindTracks2( missinghits, this->_trackCandidates, vec, this->_allHits, 0, NULL );
+            if( _mode == 1 ) FindTracks1( missinghits, _trackCandidates, vec, _allHits, 0, NULL );
+            if( _mode == 2 ) FindTracks2( missinghits, _trackCandidates, vec, _allHits, 0, NULL );
             
             //PruneTrackCandidates( this->_trackCandidates );
             return kSuccess;
@@ -51,14 +51,16 @@ namespace eutelescope {
         void EUTelExhaustiveTrackFinder::FindTracks2( int& missinghits,
                                                       std::vector< EVENT::TrackerHitVec >& trackCandidates,
                                                       EVENT::TrackerHitVec& vec,
-                                                      const std::vector<EVENT::TrackerHitVec>& _allHitsArray,
-                                                      unsigned int iPlane,
+                                                      std::map<int, EVENT::TrackerHitVec>& _allHitsArray,
+                                                      int iPlane,
                                                       EVENT::TrackerHit* hitInPrevPlane) {
 
             streamlog_out(DEBUG0) << "EUTelExhaustiveTrackFinder::findtracks2()" << std::endl;
             streamlog_out(DEBUG0) << "Looking for tracks ..." << std::endl;
             streamlog_out(DEBUG0) << "Missing hits:" << missinghits << std::endl;
 
+//            const EVENT::IntVec sensorIDVecZOrder = geo::gGeometry._sensorIDVecZOrder;
+            
 //            // recursive chain is dropped here;
 //            if ( missinghits > GetAllowedMissingHits() ) {
 //		 streamlog_out(DEBUG0) << "indexarray size:" << trackCandidates.size() << std::endl;
@@ -72,7 +74,7 @@ namespace eutelescope {
             }
 
             // search for hits in the next plane if plane iPlane has no hits
-            const unsigned int nPlanes = _allHitsArray.size();
+            const size_t nPlanes = _allHitsArray.size();
             if ( _allHitsArray[ iPlane ].empty() && (iPlane < nPlanes - 1) ) {
                     ++missinghits;
                     if( missinghits > GetAllowedMissingHits() ) return;
@@ -93,7 +95,7 @@ namespace eutelescope {
             }
         
             // loop over hits in current plane
-            const int nHitsInCurrentPlane = _allHitsArray[ iPlane ].size();
+            const size_t nHitsInCurrentPlane = _allHitsArray[ iPlane ].size();
             for ( int j = 0; j < nHitsInCurrentPlane; j++) {
 
                 EVENT::TrackerHit* iHit = _allHitsArray[iPlane][j];
@@ -167,8 +169,8 @@ namespace eutelescope {
         void EUTelExhaustiveTrackFinder::FindTracks1( int& missinghits,
                                                       std::vector< EVENT::TrackerHitVec >& indexarray,
                                                       EVENT::TrackerHitVec& vec,
-                                                      const std::vector<EVENT::TrackerHitVec>& _allHitsArray,
-                                                      unsigned int iPlane,
+                                                      std::map< int, EVENT::TrackerHitVec>& _allHitsArray,
+                                                      int iPlane,
                                                       EVENT::TrackerHit* y) {
 
             //streamlog_out(DEBUG0) << "EUTelExhaustiveTrackFinder::findtracks2()" << std::endl;
