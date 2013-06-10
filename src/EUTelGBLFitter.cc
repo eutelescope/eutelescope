@@ -273,13 +273,13 @@ namespace eutelescope {
      * @param p momentum of the particle
      */
     void EUTelGBLFitter::AddScattererGBL(gbl::GblPoint& point, TVectorD& scat, TVectorD& scatPrecSensor, int iPlane, double p) {
-        const double radlenSi = EUTelGeometryTelescopeGeoDescription::
+        const double radlenSi = geo::EUTelGeometryTelescopeGeoDescription::
                 getInstance()._siPlanesLayerLayout->getSensitiveRadLength(iPlane);
-        const double radlenKap = EUTelGeometryTelescopeGeoDescription::
+        const double radlenKap = geo::EUTelGeometryTelescopeGeoDescription::
                 getInstance()._siPlanesLayerLayout->getLayerRadLength(iPlane);
-        const double thicknessSi = EUTelGeometryTelescopeGeoDescription::
+        const double thicknessSi = geo::EUTelGeometryTelescopeGeoDescription::
                 getInstance()._siPlanesLayerLayout->getSensitiveThickness(iPlane);
-        const double thicknessKap = EUTelGeometryTelescopeGeoDescription::
+        const double thicknessKap = geo::EUTelGeometryTelescopeGeoDescription::
                 getInstance()._siPlanesLayerLayout->getLayerThickness(iPlane);
 
         const double X0Si = thicknessSi / radlenSi; // Si 
@@ -416,7 +416,7 @@ namespace eutelescope {
         EVENT::TrackerHitVec::const_iterator itHit;
         for (; itTrkCand != _trackCandidates.end(); ++itTrkCand) {
 
-            if (itTrkCand->size() > EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes) continue;
+            if (itTrkCand->size() > geo::EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes) continue;
 
             IMPL::TrackImpl * fittrack = new IMPL::TrackImpl();
 
