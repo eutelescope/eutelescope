@@ -289,7 +289,7 @@
   <!--Flag for storing output (fitted) hits in track-->
   <parameter name="OutputHitsInTrack" type="bool" value="true"/>
   <!--Ids of layers which should be treated as passive in the fit-->
-  <parameter name="PassiveLayerIDs" type="IntVec" value="0"/>
+  <parameter name="PassiveLayerIDs" type="IntVec" value=""/>
   <!--reference hit collection name -->
   <parameter name="ReferenceCollection" type="string" value="referenceHit"/>
   <!--X resolution parameter for each plane. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->
