@@ -215,15 +215,15 @@ The presence of this collection in the event is allowing all the noise based sel
     <parameter name="AlignmentConstantLCIOFile" type="string"> @DBPath@/@Output@-prealign-db.slcio </parameter>
     <parameter name="ReferenceCollection" type="string" > refhit </parameter>
     <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-    <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
+    <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
     <parameter name="Events"  type="int" value="999"/>
     <parameter name="HotPixelCollectionName"> hotpixel_apix </parameter>
 
     <!--Residual cuts along both size in microns-->
-    <parameter name="ResidualsXMax" type="FloatVec">  2.  2.  2.   10.0  10.0  5.  5.  5.          </parameter>
-    <parameter name="ResidualsXMin" type="FloatVec"> -2. -2. -2.  -10.0 -10.0 -5. -5. -5.          </parameter>
-    <parameter name="ResidualsYMax" type="FloatVec">  2.  2.  2.   10.0  10.0  5.  5.  5.          </parameter>
-    <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2.  -10.0 -10.0 -5. -5. -5.          </parameter>
+    <parameter name="ResidualsXMax" type="FloatVec">  5.  5.  5.  5.  5.  5.          </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -5. -5. -5. -5. -5. -5.          </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  5.  5.  5.  5.  5.  5.          </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -5. -5. -5. -5. -5. -5.          </parameter>
  </processor>
  
 <processor name="Correlator" type="EUTelCorrelator">
@@ -234,14 +234,14 @@ The presence of this collection in the event is allowing all the noise based sel
   <parameter name="DumpOffset" type="bool" > false </parameter>
   <parameter name="ReferenceCollection" type="string" > refhit </parameter>
   <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-  <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
+  <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
   <parameter name="Events"  type="int" value="999"/>
 
   <!--Residual cuts along both size in microns-->
-    <parameter name="ResidualsXMax" type="FloatVec">  2.  2.  2.   10.0  10.0    5.  5.  5.          </parameter>
-    <parameter name="ResidualsXMin" type="FloatVec"> -2. -2. -2.  -10.0 -10.0   -5. -5. -5.          </parameter>
-    <parameter name="ResidualsYMax" type="FloatVec">  2.  2.  2.   10.0  10.0    5.  5.  5.          </parameter>
-    <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2.  -10.0 -10.0   -5. -5. -5.          </parameter>
+    <parameter name="ResidualsXMax" type="FloatVec">  5.  5.  5.     5.  5.  5.          </parameter>
+    <parameter name="ResidualsXMin" type="FloatVec"> -5. -5. -5.    -5. -5. -5.          </parameter>
+    <parameter name="ResidualsYMax" type="FloatVec">  5.  5.  5.     5.  5.  5.          </parameter>
+    <parameter name="ResidualsYMin" type="FloatVec"> -5. -5. -5.    -5. -5. -5.          </parameter>
 
 
 </processor>
