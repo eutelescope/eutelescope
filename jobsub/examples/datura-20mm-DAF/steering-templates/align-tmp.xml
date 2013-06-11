@@ -93,16 +93,16 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
     <parameter name="AlignmentCollectionNames">prealign    </parameter>
     <parameter name="ReferenceCollection" type="string" > refhit </parameter>
     <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-    <parameter name="Ebeam" type="float" value="4"/>
-    <parameter name="TelResolutionX" type="float" value="180"/>
-    <parameter name="TelResolutionY" type="float" value="180"/>
+    <parameter name="Ebeam" type="float" value="@BeamEnergy@"/>
+    <parameter name="TelResolutionX" type="float" value="140"/>
+    <parameter name="TelResolutionY" type="float" value="140"/>
     <parameter name="DutResolutionX" type="float" value="200" />
     <parameter name="DutResolutionY" type="float" value="200"/>
     <parameter name="NominalDxdz" type="float" value="0.0"/>
     <parameter name="NominalDydz" type="float" value="0.0"/>
-    <parameter name="FinderRadius" type="float" value="500" />
-    <parameter name="Chi2Cutoff" type="float" value="100"/>
-    <parameter name="MaxChi2OverNdof" type="float" value="10"/>
+    <parameter name="FinderRadius" type="float" value="1500" />
+    <parameter name="Chi2Cutoff" type="float" value="1000"/>
+    <parameter name="MaxChi2OverNdof" type="float" value="100"/>
     <parameter name="NDutHits" type="int" value="0"/>
   </processor>
 
