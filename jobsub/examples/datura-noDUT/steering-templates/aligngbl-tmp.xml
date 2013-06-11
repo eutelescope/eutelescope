@@ -1,0 +1,134 @@
+<?xml version="1.0" encoding="us-ascii"?>
+<!-- ?xml-stylesheet type="text/xsl" href="http://ilcsoft.desy.de/marlin/marlin.xsl"? -->
+<!-- ?xml-stylesheet type="text/xsl" href="marlin.xsl"? -->
+
+<!-- 
+
+==========================================================================================
+                     Steering file template for the pysub framework
+
+                               ==> align-tmp.xml <===
+
+Author: Antonio Bulgheroni, INFN <mailto:antonio.bulgheroni@gmail.com>
+Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
+==========================================================================================
+
+--> 
+<marlin xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xsi:noNamespaceSchemaLocation="http://ilcsoft.desy.de/marlin/marlin.xsd">
+
+
+  <execute>
+    <processor name="AIDA"/>
+    <processor name="GBLTrackFit"/>
+    <processor name="Save"/>
+    <processor name="PrintEventNumber"/>
+  </execute>
+
+
+  <global>
+    <parameter name="LCIOInputFiles"> @LcioPath@/@FilePrefix@-trkcand.slcio </parameter>
+    <parameter name="GearXMLFile" value="@GeometryPath@/@GearFile@"/>
+    <parameter name="MaxRecordNumber" value="@MaxRecordNumber@"/>
+    <parameter name="SkipNEvents" value="0"/>
+    <parameter name="SupressCheck" value="false"/>
+    <parameter name="Verbosity" value="@Verbosity@"/>
+  </global>
+
+
+  <processor name="AIDA" type="AIDAProcessor">
+    <!--Processor that handles AIDA files.
+		  Creates one directory per processor.
+		  Processors only need to create and fill the histograms, clouds and tuples.
+		  Needs to be the first ActiveProcessor-->
+
+    <!-- compression of output file 0: false >0: true (default) -->
+    <parameter name="Compress" type="int" value="1"/>
+
+    <!-- filename without extension-->
+    <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-aligngbl"/>
+
+    <!-- type of output file xml (default) or root ( only OpenScientist)-->
+    <parameter name="FileType" type="string" value="root"/>
+  </processor>
+
+
+
+ <processor name="GBLTrackFit" type="EUTelProcessorTrackingGBLTrackFit">
+ <!--EUTelProcessorTrackingGBLTrackFit performs track fits using GBL optionally writing data files for MILLEPEDE II.-->
+  <!--Alignment mode specifies alignment degrees of freedom to be considered
+0 - No alignment at all. Simply fit tracks assuming that alignment is correct
+1 - Alignment of XY shifts
+2 - Alignment of XY shifts + rotations around Z
+3 - Alignment of XYZ shifts + rotations around Z
+4 - Alignment of XY shifts + rotations around X and Z
+5 - Alignment of XY shifts + rotations around Y and Z
+6 - Alignment of XY shifts + rotations around X,Y and Z
+-->
+  <parameter name="AlignmentMode" type="int">@AlignmentMode@ </parameter>
+  <!--Ids of planes to be used in alignment-->
+  <parameter name="AlignmentPlanes" type="IntVec">@AlignPlaneIds@ </parameter>
+  <!--Beam energy [GeV]-->
+  <parameter name="BeamEnergy" type="double">@BeamEnergy@ </parameter>
+  <!--Name of the TGeo geometry definition file-->
+  <parameter name="GeometryFilename" type="string">@TGeoGeometryFileName@ </parameter>
+  <!--Name of histogram info xml file-->
+  <parameter name="HistogramInfoFilename" type="string">@HistoInfoFile@ </parameter>
+  <!--Name of the Millepede binary file-->
+  <parameter name="MilleBinaryFilename" type="string">@MilleBinaryFile@ </parameter>
+  <!--Maximum chi2 of a track candidate that goes into millepede-->
+  <parameter name="MilleMaxChi2Cut" type="double">@Chi2Cut@ </parameter>
+  <!--Plane ids and parameter ids for X rotations-->
+  <parameter name="MilleParametersXRotations" type="IntVec">@MilleParametersXRotations@ </parameter>
+  <!--Plane ids and parameter ids for X shifts-->
+  <parameter name="MilleParametersXShifts" type="IntVec">@MilleParametersXShifts@ </parameter>
+  <!--Plane ids and parameter ids for Y rotations-->
+  <parameter name="MilleParametersYRotations" type="IntVec">@MilleParametersYRotations@ </parameter>
+  <!--Plane ids and parameter ids for Y shifts-->
+  <parameter name="MilleParametersYShifts" type="IntVec">@MilleParametersYShifts@ </parameter>
+  <!--Plane ids and parameter ids for Z rotations-->
+  <parameter name="MilleParametersZRotations" type="IntVec">@MilleParametersZRotations@ </parameter>
+  <!--Plane ids and parameter ids for Z shifts-->
+  <parameter name="MilleParametersZShifts" type="IntVec">@MilleParametersZShifts@ </parameter>
+  <!--Name of the Millepede steering file to be created-->
+  <parameter name="MilleSteeringFilename" type="string">@MilleSteeringFile@ </parameter>
+  <!--Execute the pede at the end of processing using the generated steering file.-->
+  <parameter name="RunPede" type="bool">@RunPede@ </parameter>
+  <!--Input track candidates hits collection name-->
+  <parameter name="TrackCandHitInputCollectionName" type="string" lcioInType="Track">track_candidates </parameter>
+  <!--Output tracks collection name-->
+  <parameter name="TracksOutputCollectionName" type="string" lcioOutType="Track">TrackCollection </parameter>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+</processor>
+
+ <processor name="Save" type="EUTelOutputProcessor">
+ <!--Writes the current event to the specified LCIO outputfile. Eventually it adds a EORE at the of the file if it was missing Needs to be the last ActiveProcessor.-->
+  <!--drops the named collections from the event-->
+  <parameter name="DropCollectionNames" type="StringVec"> track_candidates </parameter>
+  <!--drops all collections of the given type from the event-->
+  <!--parameter name="DropCollectionTypes" type="StringVec"> SimTrackerHit SimCalorimeterHit </parameter-->
+  <!-- write complete objects in subset collections to the file (i.e. ignore subset flag)-->
+  <!--parameter name="FullSubsetCollections" type="StringVec" value="MCParticlesSkimmed"/-->
+  <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
+  <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
+  <!-- name of output file -->
+  <parameter name="LCIOOutputFile" type="string" value="@LcioPath@/@FilePrefix@-trkgbl.slcio "/>
+  <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
+  <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
+  <!--Set it to true to remove intermediate EORE in merged runs-->
+  <parameter name="SkipIntermediateEORE" type="bool" value="true"/>
+  <!--will split output file if size in kB exceeds given value - doesn't work with APPEND and NEW-->
+  <!-- <parameter name="SplitFileSizekB" type="int" value="1000000"/> DP -->
+ </processor>
+
+   <processor name="PrintEventNumber" type="EUTelUtilityPrintEventNumber">
+    <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+    <!--Print event number for every n-th event-->
+    <parameter name="EveryNEvents" type="int">1000 </parameter>
+    <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+    <!--parameter name="Verbosity" type="string">DEBUG </parameter-->
+    <!--print the event timestamp as read from LCIO-->
+    <parameter name="printTimestamp" type="bool">false </parameter>
+  </processor>
+ 
+</marlin>

@@ -20,9 +20,72 @@ Features of this configuration:
 - Datura telescope with Mimosa26 sensors
 - telescope alone, no DUT
 - settings tuned for DESY testbeam (1-6 GeV electrons)
+- sensor spacing of 20mm and 150mm
+- alignment either via GBL or with standard straightline fit
 
 
 Known issues:
 ------------
 
 - Analysis still in progress: very preliminary results only!
+
+
+Basic how-to:
+------------
+
+Detailed information on how to use EUTELESCOPE software is available at
+http://eutelescope.web.cern.ch/
+
+Assuming you are working in $EUTELESCOPE/jobsub/examples/datura-noDUT:
+
+Create subfolder structure for output:
+
+  cd $EUTELESCOPE/jobsub/examples/datura-noDUT
+  mkdir -p output/database
+  mkdir -p output/histograms
+  mkdir -p output/lcio
+  mkdir -p output/logs
+
+Adjust the config.cfg file as such that the variables BasePath and NativePath
+match match your setup.
+
+Assuming that your environment is set properly (see
+http://eutelescope.web.cern.ch/content/installation) you can submit jobs, as an
+example here with run 5063:
+
+  ../../jobsub.py -c config.cfg -csv runlist.csv converter 5063
+  ../../jobsub.py -c config.cfg -csv runlist.csv clusearch 5063
+  ../../jobsub.py -c config.cfg -csv runlist.csv hitmaker 5063
+
+You can now choose between straightline and GBL alignment. For straightline
+proceed with:
+
+  ../../jobsub.py -c config.cfg -csv runlist.csv alignment 5063
+  ../../jobsub.py -c config.cfg -csv runlist.csv fitter 5063
+
+For GBL use:
+
+  ../../jobsub.py -c config.cfg -csv runlist.csv trksearch 5063
+  ../../jobsub.py -c config.cfg -csv runlist.csv aligngbl 5063
+
+  pede has to be run manually (see
+  http://www.desy.de/~kleinwrt/MP2/doc/html/index.html). For this do:
+
+  pede run005063-pede-steer.txt
+
+  This will produce a millipede.res file with the results of the pede job
+  You have to convert this file to lcio file
+
+  ../../../tools/parsepede/parsemilleout.sh
+
+  ../../../tools/parsepede/parsemilleout.sh run005063-pede-steer.txt \
+  millepede.res output/database/run005063-alignment.slcio
+
+  At this point you should be able to run tracking:
+
+  ../../jobsub/jobsub.py -c config.cfg -csv runlist.csv trkfit 5063
+
+  Check available options (alignment degrees of freedom, chi2 cut on a track
+  candidate etc.) in corresponding steering files and adjust according to your
+  analysis. Beware that some options are still under development.
+
