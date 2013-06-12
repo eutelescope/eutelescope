@@ -2,6 +2,9 @@
 Python ROOT plotter - A tool for selecting and assembling histogram
 plots and comparision plots from multiple ROOT files at once
 * Requirements
+** Python
+   Due to its dependency on the rootpy module (see below), pyroplot
+   requires a Python interpreter version 2.6 or later.
 ** PyROOT
    PyROOT is part of the ROOT package and is usually installed
    automatically as long as the python developer libraries are found
@@ -13,7 +16,9 @@ plots and comparision plots from multiple ROOT files at once
    #+end_src
 
 ** rootpy
-   Install from http://rootpy.org/install.html
+   rootpy makes the ROOT Python interface more "pythonic" and easier to use.
+   EUTelescope ships with a released version (in ./external/pymodules/rootpy-X.Y).
+   Or install a more up-to-date one from http://rootpy.org/install.html
 * Usage
 
 #+begin_example

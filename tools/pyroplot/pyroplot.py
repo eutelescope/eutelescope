@@ -19,6 +19,7 @@ from sys import exit # use sys.exit instead of built-in exit (latter raises exce
 import logging
 import os
 
+
 def timeStampCanvas ( canvas ):
     import rootpy
     from rootpy.plotting import Canvas
@@ -334,7 +335,8 @@ def findHistogramsInFile(filename, regexlist, strict, verbose = False):
         print " File: %s"%(filename)
         print "=================================="
     # open file and loop over it
-    with root_open(filename) as f:
+    f = root_open(filename)
+    try:
         # recursively walk through the file
         for path, dirs, objects in f.walk():
             nobj+=len(objects) # sum up every object we encounter
@@ -360,6 +362,8 @@ def findHistogramsInFile(filename, regexlist, strict, verbose = False):
                     else:
                         sys.stdout.write("( ) ")
                     print fullpath
+    finally:
+        f.close()
     log.info("%s: %d/%d objects selected."%(filename, len(selectedHistos),nobj))
     return selectedHistos
 
@@ -374,6 +378,7 @@ def loadHistogramsFromFile(filename, histonames, with2d, with3d):
     from rootpy.plotting import Hist
     histos = {}
     f =  root_open(filename);
+    nignored = 0
     for h in histonames:
         try:
             histo = f.Get(h)
@@ -387,26 +392,53 @@ def loadHistogramsFromFile(filename, histonames, with2d, with3d):
             or ((with3d or with2d) and histo.__class__.__name__=="Hist2D")
             or (with3d and histo.__class__.__name__=="Profile2D" 
                 or histo.__class__.__name__=="Hist3D")):
-            log.debug("%s inherits from Hist/TH1"%h)
             histo.SetDirectory(0) # remove association with file
             histos[h] = histo
         else:
-            log.warn("IGNORING %s as it is of class '%s'. Enable with --with-2D or --with-3D"%(h,histo.__class__.__name__))
+            log.debug("IGNORING %s as it is of class '%s'"%(h,histo.__class__.__name__))
+            nignored += 1
     f.close()
     log.info("Loaded %d histograms from file %s"%(len(histos),filename))
+    if nignored:
+        log.info("IGNORED %d matching 2D/3D histograms: to see these use the --with-2D or --with-3D switches."%(nignored))
     return histos
 
 def run( argv = sys.argv ):
     # Must be done before :py:mod:`rootpy` logs any messages.
     import logging;
     log = logging.getLogger('pyroplot') # set up logging
+
     try:
         import rootpy
-        from rootpy import log; log = log["/pyroplot"]
-        rootpy.log.basic_config_colorized()
     except ImportError:
-        log.error("Could not load the rootpy modules. Please install from http://www.rootpy.org/install.html")
-        exit(1)
+        # rootpy is not installed; use (old) version provided with EUTelescope
+        # determine (real) path to subdirectory pymodules (relative to current path)
+        libdir = os.path.join(os.path.dirname(os.path.abspath(os.path.realpath(__file__))),"pymodules","rootpy")
+        # search for any rootpy folders
+        import glob
+        rootpydirs = glob.glob(libdir+"*")
+        if not rootpydirs:
+            print "Error: Could not find the rootpy module provided with EUTelescope in %s!"%(libdir)
+        else:
+            # add last entry to python search path
+            sys.path.insert(0, rootpydirs[-1])
+        # try again loading the module
+        try:
+            import rootpy
+        except ImportError:
+            print "Error: Could not load the rootpy modules. Please install them from http://www.rootpy.org/install.html"
+            exit(1)
+        except SyntaxError:
+            req_version = (2,5)
+            cur_version = sys.version_info
+            if cur_version < req_version:
+                print "Error: Python version too old: due to its dependency on rootpy, this script requires a Python interpreter version 2.6 or later (installed: %s.%s.%s)!"%(cur_version[:3])
+                exit(1)
+            print "Error: Failed to load rootpy module! Possibly incompatible with installed Python version (%s.%s.%s)?"%(cur_version[:3])
+            exit(1)
+
+    from rootpy import log; log = log["/pyroplot"]
+    rootpy.log.basic_config_colorized()
     try:
         import ROOT
         ROOT.gROOT.SetBatch(True)
@@ -447,13 +479,16 @@ def run( argv = sys.argv ):
     regexs = []
     # first from file
     if args.selection_from_file:
-        with open(args.selection_from_file, 'r') as f:
+        f = open(args.selection_from_file, 'r')
+        try:
             lines = f.read().splitlines()
             for line in lines:
                 if line: # test if line is not empty (would match anything)
                     log.debug("Loading reg ex from file " + args.selection_from_file 
                               + ": '" + line +"'")
                     regexs.append(line)
+        finally:
+            f.close()
     if args.select:
         for arg in args.select:
             log.debug("Using reg ex from command line: " + arg)
@@ -461,14 +496,17 @@ def run( argv = sys.argv ):
     # still nothing to select? use default
     if not regexs:
         import inspect
-        filepath = os.path.realpath(os.path.abspath(os.path.join(os.path.split(inspect.getfile( inspect.currentframe() ))[0],"default.sel")))
+        filepath = os.path.join(os.path.dirname(os.path.abspath(os.path.realpath(__file__))),"default.sel")
         try:
-            with open(filepath, 'r') as f:
+            f = open(filepath, 'r')
+            try:
                 lines = f.read().splitlines()
                 for line in lines:
                     if line: # test if line is not empty (would match anything)
                         log.debug("Loading reg ex from file " + filepath + ": '" + line +"'")
                         regexs.append(line)
+            finally:
+                f.close()
         except IOError:
             log.warn("Could not find the file with the default selection ('"+filepath+"'), will use default of '.*' (select all)")
             regexs.append('.*')
