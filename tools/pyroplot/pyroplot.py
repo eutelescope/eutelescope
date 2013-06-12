@@ -420,8 +420,8 @@ def run( argv = sys.argv ):
         if not rootpydirs:
             print "Error: Could not find the rootpy module provided with EUTelescope in %s!"%(libdir)
         else:
-            # add last entry to python search path
-            sys.path.insert(0, rootpydirs[-1])
+            # add last entry to python search path (subfolder rootpy where the modules are located)
+            sys.path.append(rootpydirs[-1])
         # try again loading the module
         try:
             import rootpy
