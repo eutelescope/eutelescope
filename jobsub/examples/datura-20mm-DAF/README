@@ -7,11 +7,11 @@ pysub-templates and have not been optimized.
 This directory contains an example configuration for the Datura
 telescope with six planes of Mimosa26 without DUT.
 
-This example is based on a test beam campaign done in May 2012 at DESY
-by the DESY CMS pixel group.
+This example is based on a test beam campaign done in August 2012 at DESY
+within DESY summer school.
 
 The corresponding data can be found at:
-/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaAlone
+CMS and ATLAS wockgroup servers.
 
 If you are interested in the data but cannot access the above path,
 please contact the EUTelescope software coordinators.
@@ -21,16 +21,199 @@ Features of this configuration:
 ------------------------------
 
 - telescope alone, no DUT data
-- "passive material" (CMS pixel sensor+ROC, socket, and PCB) in between telescope arms
+- distance between planes 20 mm
 
 
 Known issues:
 ------------
 
-- does not use the reference vector framework for identifying a sensor
-  plane corresponding to a hit; therefore, planes are identified by
-  their z-coordinate which could lead to problems if this
-  configuration is used in geometries with overlapping sensor layers
-  (in z)
+EUTelMille hard coded steering parameters:
 
-- no actual data analysis is performed in this example
+-      steerFile << "! chiscut 5.0 2.5" << endl;
+-      steerFile << "! outlierdownweighting 4" << endl;
+
+changed to 
+
++      steerFile << "chiscut 30. 6.0" << endl;
++      steerFile << "outlierdownweighting 4" << endl;
+
+seems to be important. to be checked.
+
+list of DUTHisto unbiased residuals below:
+
+
+fitter-000034.log:[ "DUTHisto05"]     X:  Ntrk:  4642  Mean:  0.18  RMS:  7.60     Y:  Ntrk:  4642  Mean:  0.55  RMS:  7.44
+fitter-000034.log:[ "DUTHisto04"]     X:  Ntrk:  4829  Mean: -0.08  RMS:  4.91     Y:  Ntrk:  4829  Mean: -0.10  RMS:  4.90
+fitter-000034.log:[ "DUTHisto03"]     X:  Ntrk:  4826  Mean: -0.06  RMS:  5.17     Y:  Ntrk:  4826  Mean: -0.20  RMS:  5.12
+fitter-000034.log:[ "DUTHisto02"]     X:  Ntrk:  4829  Mean: -0.04  RMS:  5.09     Y:  Ntrk:  4829  Mean: -0.17  RMS:  5.24
+fitter-000034.log:[ "DUTHisto01"]     X:  Ntrk:  4828  Mean:  0.01  RMS:  4.80     Y:  Ntrk:  4828  Mean: -0.00  RMS:  4.77
+fitter-000034.log:[ "DUTHisto00"]     X:  Ntrk:  4647  Mean: -0.00  RMS:  7.49     Y:  Ntrk:  4647  Mean:  0.45  RMS:  7.65
+fitter-000035.log:[ "DUTHisto05"]     X:  Ntrk:  4089  Mean:  0.07  RMS:  7.65     Y:  Ntrk:  4089  Mean: -0.08  RMS:  7.43
+fitter-000035.log:[ "DUTHisto04"]     X:  Ntrk:  4277  Mean:  0.01  RMS:  4.98     Y:  Ntrk:  4277  Mean:  0.04  RMS:  4.83
+fitter-000035.log:[ "DUTHisto03"]     X:  Ntrk:  4283  Mean: -0.00  RMS:  5.13     Y:  Ntrk:  4283  Mean:  0.01  RMS:  5.13
+fitter-000035.log:[ "DUTHisto02"]     X:  Ntrk:  4270  Mean: -0.07  RMS:  4.95     Y:  Ntrk:  4270  Mean:  0.10  RMS:  5.06
+fitter-000035.log:[ "DUTHisto01"]     X:  Ntrk:  4284  Mean:  0.04  RMS:  4.87     Y:  Ntrk:  4284  Mean: -0.07  RMS:  4.99
+fitter-000035.log:[ "DUTHisto00"]     X:  Ntrk:  4089  Mean:  0.03  RMS:  7.43     Y:  Ntrk:  4089  Mean:  0.04  RMS:  7.49
+fitter-000036.log:[ "DUTHisto05"]     X:  Ntrk:  1329  Mean:  0.18  RMS:  7.50     Y:  Ntrk:  1329  Mean:  0.09  RMS:  7.68
+fitter-000036.log:[ "DUTHisto04"]     X:  Ntrk:  1369  Mean: -0.21  RMS:  4.88     Y:  Ntrk:  1369  Mean: -0.00  RMS:  4.79
+fitter-000036.log:[ "DUTHisto03"]     X:  Ntrk:  1368  Mean: -0.04  RMS:  4.90     Y:  Ntrk:  1368  Mean: -0.02  RMS:  4.76
+fitter-000036.log:[ "DUTHisto02"]     X:  Ntrk:  1374  Mean:  0.01  RMS:  5.01     Y:  Ntrk:  1374  Mean:  0.02  RMS:  5.17
+fitter-000036.log:[ "DUTHisto01"]     X:  Ntrk:  1372  Mean:  0.04  RMS:  4.77     Y:  Ntrk:  1372  Mean: -0.17  RMS:  4.63
+fitter-000036.log:[ "DUTHisto00"]     X:  Ntrk:  1317  Mean: -0.27  RMS:  7.33     Y:  Ntrk:  1317  Mean:  0.13  RMS:  7.51
+fitter-000037.log:[ "DUTHisto05"]     X:  Ntrk:  2295  Mean: -0.30  RMS:  7.69     Y:  Ntrk:  2295  Mean: -0.05  RMS:  7.47
+fitter-000037.log:[ "DUTHisto04"]     X:  Ntrk:  2391  Mean:  0.06  RMS:  5.06     Y:  Ntrk:  2391  Mean:  0.04  RMS:  4.87
+fitter-000037.log:[ "DUTHisto03"]     X:  Ntrk:  2394  Mean:  0.02  RMS:  5.17     Y:  Ntrk:  2394  Mean: -0.00  RMS:  5.25
+fitter-000037.log:[ "DUTHisto02"]     X:  Ntrk:  2400  Mean: -0.02  RMS:  5.37     Y:  Ntrk:  2400  Mean:  0.05  RMS:  5.04
+fitter-000037.log:[ "DUTHisto01"]     X:  Ntrk:  2398  Mean: -0.06  RMS:  4.91     Y:  Ntrk:  2398  Mean:  0.05  RMS:  4.62
+fitter-000037.log:[ "DUTHisto00"]     X:  Ntrk:  2285  Mean:  0.03  RMS:  7.58     Y:  Ntrk:  2285  Mean: -0.03  RMS:  7.47
+fitter-000038.log:[ "DUTHisto05"]     X:  Ntrk:  3816  Mean: -0.06  RMS:  7.70     Y:  Ntrk:  3816  Mean:  0.39  RMS:  7.49
+fitter-000038.log:[ "DUTHisto04"]     X:  Ntrk:  3982  Mean: -0.10  RMS:  5.09     Y:  Ntrk:  3982  Mean: -0.09  RMS:  5.07
+fitter-000038.log:[ "DUTHisto03"]     X:  Ntrk:  3974  Mean:  0.01  RMS:  5.44     Y:  Ntrk:  3974  Mean: -0.16  RMS:  5.24
+fitter-000038.log:[ "DUTHisto02"]     X:  Ntrk:  3977  Mean:  0.08  RMS:  5.41     Y:  Ntrk:  3977  Mean: -0.18  RMS:  5.40
+fitter-000038.log:[ "DUTHisto01"]     X:  Ntrk:  3988  Mean:  0.03  RMS:  4.90     Y:  Ntrk:  3988  Mean:  0.05  RMS:  4.91
+fitter-000038.log:[ "DUTHisto00"]     X:  Ntrk:  3784  Mean: -0.08  RMS:  7.56     Y:  Ntrk:  3784  Mean:  0.35  RMS:  7.67
+fitter-000039.log:[ "DUTHisto05"]     X:  Ntrk:  2295  Mean: -0.11  RMS:  7.77     Y:  Ntrk:  2295  Mean:  0.19  RMS:  7.81
+fitter-000039.log:[ "DUTHisto04"]     X:  Ntrk:  2382  Mean:  0.07  RMS:  5.09     Y:  Ntrk:  2382  Mean: -0.08  RMS:  5.04
+fitter-000039.log:[ "DUTHisto03"]     X:  Ntrk:  2383  Mean: -0.01  RMS:  5.47     Y:  Ntrk:  2383  Mean: -0.00  RMS:  5.27
+fitter-000039.log:[ "DUTHisto02"]     X:  Ntrk:  2385  Mean: -0.06  RMS:  5.27     Y:  Ntrk:  2385  Mean:  0.06  RMS:  5.46
+fitter-000039.log:[ "DUTHisto01"]     X:  Ntrk:  2386  Mean:  0.05  RMS:  5.03     Y:  Ntrk:  2386  Mean: -0.00  RMS:  4.96
+fitter-000039.log:[ "DUTHisto00"]     X:  Ntrk:  2292  Mean: -0.16  RMS:  7.65     Y:  Ntrk:  2292  Mean:  0.14  RMS:  7.89
+fitter-000040.log:[ "DUTHisto05"]     X:  Ntrk:  3013  Mean:  0.08  RMS:  7.99     Y:  Ntrk:  3013  Mean:  0.08  RMS:  8.00
+fitter-000040.log:[ "DUTHisto04"]     X:  Ntrk:  3164  Mean: -0.03  RMS:  5.30     Y:  Ntrk:  3164  Mean:  0.01  RMS:  5.43
+fitter-000040.log:[ "DUTHisto03"]     X:  Ntrk:  3165  Mean: -0.01  RMS:  5.49     Y:  Ntrk:  3165  Mean: -0.06  RMS:  5.50
+fitter-000040.log:[ "DUTHisto02"]     X:  Ntrk:  3155  Mean:  0.04  RMS:  5.73     Y:  Ntrk:  3155  Mean:  0.02  RMS:  5.77
+fitter-000040.log:[ "DUTHisto01"]     X:  Ntrk:  3162  Mean: -0.08  RMS:  5.15     Y:  Ntrk:  3162  Mean: -0.01  RMS:  5.28
+fitter-000040.log:[ "DUTHisto00"]     X:  Ntrk:  3002  Mean:  0.09  RMS:  7.83     Y:  Ntrk:  3002  Mean:  0.11  RMS:  8.05
+fitter-000041.log:[ "DUTHisto05"]     X:  Ntrk:   742  Mean:  0.43  RMS:  7.98     Y:  Ntrk:   742  Mean:  0.14  RMS:  8.04
+fitter-000041.log:[ "DUTHisto04"]     X:  Ntrk:   763  Mean: -0.18  RMS:  5.29     Y:  Ntrk:   763  Mean:  0.01  RMS:  5.32
+fitter-000041.log:[ "DUTHisto03"]     X:  Ntrk:   760  Mean: -0.06  RMS:  5.48     Y:  Ntrk:   760  Mean:  0.04  RMS:  5.22
+fitter-000041.log:[ "DUTHisto02"]     X:  Ntrk:   759  Mean:  0.11  RMS:  5.34     Y:  Ntrk:   759  Mean:  0.20  RMS:  5.61
+fitter-000041.log:[ "DUTHisto01"]     X:  Ntrk:   761  Mean:  0.07  RMS:  5.27     Y:  Ntrk:   761  Mean:  0.13  RMS:  5.25
+fitter-000041.log:[ "DUTHisto00"]     X:  Ntrk:   735  Mean:  0.14  RMS:  7.84     Y:  Ntrk:   735  Mean:  0.08  RMS:  7.80
+fitter-000045.log:[ "DUTHisto05"]     X:  Ntrk:   536  Mean:  0.02  RMS:  8.33     Y:  Ntrk:   536  Mean:  0.06  RMS:  8.12
+fitter-000045.log:[ "DUTHisto04"]     X:  Ntrk:   561  Mean:  0.15  RMS:  5.66     Y:  Ntrk:   561  Mean:  0.05  RMS:  5.55
+fitter-000045.log:[ "DUTHisto03"]     X:  Ntrk:   563  Mean:  0.08  RMS:  5.53     Y:  Ntrk:   563  Mean: -0.26  RMS:  5.91
+fitter-000045.log:[ "DUTHisto02"]     X:  Ntrk:   563  Mean: -0.01  RMS:  5.51     Y:  Ntrk:   563  Mean: -0.09  RMS:  5.80
+fitter-000045.log:[ "DUTHisto01"]     X:  Ntrk:   564  Mean: -0.00  RMS:  5.14     Y:  Ntrk:   564  Mean:  0.23  RMS:  4.97
+fitter-000045.log:[ "DUTHisto00"]     X:  Ntrk:   539  Mean:  0.10  RMS:  7.91     Y:  Ntrk:   539  Mean: -0.14  RMS:  8.28
+fitter-000046.log:[ "DUTHisto05"]     X:  Ntrk:  1464  Mean: -0.36  RMS:  7.00     Y:  Ntrk:  1464  Mean:  0.82  RMS:  6.84
+fitter-000046.log:[ "DUTHisto04"]     X:  Ntrk:  1497  Mean:  0.33  RMS:  4.65     Y:  Ntrk:  1497  Mean: -0.27  RMS:  4.66
+fitter-000046.log:[ "DUTHisto03"]     X:  Ntrk:  1502  Mean:  0.17  RMS:  4.87     Y:  Ntrk:  1502  Mean: -0.63  RMS:  4.83
+fitter-000046.log:[ "DUTHisto02"]     X:  Ntrk:  1503  Mean: -0.13  RMS:  4.83     Y:  Ntrk:  1503  Mean:  0.29  RMS:  4.89
+fitter-000046.log:[ "DUTHisto01"]     X:  Ntrk:  1501  Mean:  0.05  RMS:  4.55     Y:  Ntrk:  1501  Mean:  0.30  RMS:  4.59
+fitter-000046.log:[ "DUTHisto00"]     X:  Ntrk:  1462  Mean:  0.04  RMS:  6.61     Y:  Ntrk:  1462  Mean: -0.05  RMS:  6.92
+fitter-000047.log:[ "DUTHisto05"]     X:  Ntrk:  4537  Mean:  0.04  RMS:  6.95     Y:  Ntrk:  4537  Mean:  0.03  RMS:  6.85
+fitter-000047.log:[ "DUTHisto04"]     X:  Ntrk:  4679  Mean:  0.02  RMS:  4.69     Y:  Ntrk:  4679  Mean: -0.02  RMS:  4.74
+fitter-000047.log:[ "DUTHisto03"]     X:  Ntrk:  4684  Mean: -0.03  RMS:  4.79     Y:  Ntrk:  4684  Mean:  0.06  RMS:  4.85
+fitter-000047.log:[ "DUTHisto02"]     X:  Ntrk:  4685  Mean:  0.04  RMS:  4.73     Y:  Ntrk:  4685  Mean: -0.03  RMS:  4.73
+fitter-000047.log:[ "DUTHisto01"]     X:  Ntrk:  4688  Mean:  0.02  RMS:  4.42     Y:  Ntrk:  4688  Mean:  0.05  RMS:  4.52
+fitter-000047.log:[ "DUTHisto00"]     X:  Ntrk:  4570  Mean: -0.02  RMS:  6.86     Y:  Ntrk:  4570  Mean:  0.02  RMS:  6.88
+fitter-000048.log:[ "DUTHisto05"]     X:  Ntrk:  5473  Mean: -0.08  RMS:  6.93     Y:  Ntrk:  5473  Mean: -0.01  RMS:  6.76
+fitter-000048.log:[ "DUTHisto04"]     X:  Ntrk:  5649  Mean:  0.05  RMS:  4.66     Y:  Ntrk:  5649  Mean:  0.02  RMS:  4.64
+fitter-000048.log:[ "DUTHisto03"]     X:  Ntrk:  5647  Mean: -0.03  RMS:  4.84     Y:  Ntrk:  5647  Mean: -0.09  RMS:  4.72
+fitter-000048.log:[ "DUTHisto02"]     X:  Ntrk:  5654  Mean:  0.00  RMS:  4.85     Y:  Ntrk:  5654  Mean:  0.04  RMS:  4.89
+fitter-000048.log:[ "DUTHisto01"]     X:  Ntrk:  5649  Mean: -0.00  RMS:  4.45     Y:  Ntrk:  5649  Mean: -0.00  RMS:  4.50
+fitter-000048.log:[ "DUTHisto00"]     X:  Ntrk:  5488  Mean: -0.01  RMS:  6.91     Y:  Ntrk:  5488  Mean:  0.05  RMS:  6.71
+fitter-000049.log:[ "DUTHisto05"]     X:  Ntrk:  3021  Mean:  0.08  RMS:  6.71     Y:  Ntrk:  3021  Mean: -0.01  RMS:  6.71
+fitter-000049.log:[ "DUTHisto04"]     X:  Ntrk:  3124  Mean: -0.04  RMS:  4.59     Y:  Ntrk:  3124  Mean: -0.03  RMS:  4.47
+fitter-000049.log:[ "DUTHisto03"]     X:  Ntrk:  3125  Mean: -0.04  RMS:  4.78     Y:  Ntrk:  3125  Mean:  0.07  RMS:  4.88
+fitter-000049.log:[ "DUTHisto02"]     X:  Ntrk:  3127  Mean: -0.00  RMS:  4.84     Y:  Ntrk:  3127  Mean:  0.08  RMS:  4.88
+fitter-000049.log:[ "DUTHisto01"]     X:  Ntrk:  3126  Mean:  0.04  RMS:  4.48     Y:  Ntrk:  3126  Mean: -0.04  RMS:  4.44
+fitter-000049.log:[ "DUTHisto00"]     X:  Ntrk:  3032  Mean: -0.18  RMS:  6.67     Y:  Ntrk:  3032  Mean: -0.10  RMS:  6.79
+fitter-000050.log:[ "DUTHisto05"]     X:  Ntrk:  1359  Mean: -0.16  RMS:  6.54     Y:  Ntrk:  1359  Mean: -0.36  RMS:  6.76
+fitter-000050.log:[ "DUTHisto04"]     X:  Ntrk:  1398  Mean:  0.03  RMS:  4.63     Y:  Ntrk:  1398  Mean:  0.09  RMS:  4.74
+fitter-000050.log:[ "DUTHisto03"]     X:  Ntrk:  1398  Mean:  0.08  RMS:  4.66     Y:  Ntrk:  1398  Mean:  0.11  RMS:  4.80
+fitter-000050.log:[ "DUTHisto02"]     X:  Ntrk:  1399  Mean:  0.07  RMS:  4.70     Y:  Ntrk:  1399  Mean:  0.10  RMS:  4.77
+fitter-000050.log:[ "DUTHisto01"]     X:  Ntrk:  1402  Mean:  0.08  RMS:  4.20     Y:  Ntrk:  1402  Mean: -0.04  RMS:  4.38
+fitter-000050.log:[ "DUTHisto00"]     X:  Ntrk:  1371  Mean: -0.12  RMS:  6.69     Y:  Ntrk:  1371  Mean: -0.24  RMS:  6.92
+fitter-000051.log:[ "DUTHisto05"]     X:  Ntrk:  1384  Mean:  0.14  RMS:  6.85     Y:  Ntrk:  1384  Mean:  0.04  RMS:  6.77
+fitter-000051.log:[ "DUTHisto04"]     X:  Ntrk:  1420  Mean: -0.04  RMS:  4.65     Y:  Ntrk:  1420  Mean:  0.00  RMS:  4.57
+fitter-000051.log:[ "DUTHisto03"]     X:  Ntrk:  1420  Mean: -0.03  RMS:  4.94     Y:  Ntrk:  1420  Mean: -0.04  RMS:  4.82
+fitter-000051.log:[ "DUTHisto02"]     X:  Ntrk:  1415  Mean: -0.02  RMS:  5.00     Y:  Ntrk:  1415  Mean:  0.00  RMS:  4.83
+fitter-000051.log:[ "DUTHisto01"]     X:  Ntrk:  1419  Mean:  0.08  RMS:  4.50     Y:  Ntrk:  1419  Mean: -0.11  RMS:  4.51
+fitter-000051.log:[ "DUTHisto00"]     X:  Ntrk:  1381  Mean: -0.02  RMS:  6.89     Y:  Ntrk:  1381  Mean:  0.12  RMS:  6.90
+fitter-000052.log:[ "DUTHisto05"]     X:  Ntrk:  1493  Mean:  0.17  RMS:  7.19     Y:  Ntrk:  1493  Mean:  0.14  RMS:  6.93
+fitter-000052.log:[ "DUTHisto04"]     X:  Ntrk:  1535  Mean: -0.17  RMS:  4.81     Y:  Ntrk:  1535  Mean:  0.03  RMS:  4.74
+fitter-000052.log:[ "DUTHisto03"]     X:  Ntrk:  1531  Mean: -0.06  RMS:  5.20     Y:  Ntrk:  1531  Mean:  0.08  RMS:  4.98
+fitter-000052.log:[ "DUTHisto02"]     X:  Ntrk:  1534  Mean:  0.07  RMS:  5.14     Y:  Ntrk:  1534  Mean:  0.02  RMS:  5.30
+fitter-000052.log:[ "DUTHisto01"]     X:  Ntrk:  1533  Mean: -0.04  RMS:  4.78     Y:  Ntrk:  1533  Mean: -0.20  RMS:  4.73
+fitter-000052.log:[ "DUTHisto00"]     X:  Ntrk:  1485  Mean:  0.10  RMS:  7.04     Y:  Ntrk:  1485  Mean:  0.32  RMS:  6.99
+fitter-000053.log:[ "DUTHisto05"]     X:  Ntrk:   905  Mean:  0.25  RMS:  7.11     Y:  Ntrk:   905  Mean:  0.32  RMS:  7.38
+fitter-000053.log:[ "DUTHisto04"]     X:  Ntrk:   927  Mean: -0.11  RMS:  4.99     Y:  Ntrk:   927  Mean: -0.05  RMS:  5.18
+fitter-000053.log:[ "DUTHisto03"]     X:  Ntrk:   930  Mean: -0.09  RMS:  5.08     Y:  Ntrk:   930  Mean: -0.04  RMS:  5.28
+fitter-000053.log:[ "DUTHisto02"]     X:  Ntrk:   935  Mean: -0.01  RMS:  5.55     Y:  Ntrk:   935  Mean: -0.09  RMS:  5.14
+fitter-000053.log:[ "DUTHisto01"]     X:  Ntrk:   928  Mean:  0.00  RMS:  4.58     Y:  Ntrk:   928  Mean:  0.11  RMS:  4.86
+fitter-000053.log:[ "DUTHisto00"]     X:  Ntrk:   905  Mean:  0.08  RMS:  7.11     Y:  Ntrk:   905  Mean:  0.40  RMS:  7.20
+fitter-000054.log:[ "DUTHisto05"]     X:  Ntrk:   761  Mean: -0.18  RMS:  7.31     Y:  Ntrk:   761  Mean: -0.03  RMS:  7.19
+fitter-000054.log:[ "DUTHisto04"]     X:  Ntrk:   779  Mean: -0.04  RMS:  4.83     Y:  Ntrk:   779  Mean: -0.03  RMS:  5.08
+fitter-000054.log:[ "DUTHisto03"]     X:  Ntrk:   779  Mean:  0.08  RMS:  5.35     Y:  Ntrk:   779  Mean: -0.05  RMS:  5.30
+fitter-000054.log:[ "DUTHisto02"]     X:  Ntrk:   783  Mean:  0.07  RMS:  5.13     Y:  Ntrk:   783  Mean:  0.07  RMS:  5.05
+fitter-000054.log:[ "DUTHisto01"]     X:  Ntrk:   780  Mean:  0.10  RMS:  5.00     Y:  Ntrk:   780  Mean: -0.01  RMS:  4.83
+fitter-000054.log:[ "DUTHisto00"]     X:  Ntrk:   763  Mean: -0.17  RMS:  7.31     Y:  Ntrk:   763  Mean:  0.11  RMS:  7.01
+fitter-000055.log:[ "DUTHisto05"]     X:  Ntrk:  1937  Mean:  0.27  RMS:  7.66     Y:  Ntrk:  1937  Mean: -0.06  RMS:  7.55
+fitter-000055.log:[ "DUTHisto04"]     X:  Ntrk:  2008  Mean: -0.16  RMS:  5.32     Y:  Ntrk:  2008  Mean: -0.01  RMS:  5.20
+fitter-000055.log:[ "DUTHisto03"]     X:  Ntrk:  2012  Mean: -0.21  RMS:  5.59     Y:  Ntrk:  2012  Mean: -0.14  RMS:  5.43
+fitter-000055.log:[ "DUTHisto02"]     X:  Ntrk:  2008  Mean:  0.06  RMS:  5.62     Y:  Ntrk:  2008  Mean:  0.02  RMS:  5.50
+fitter-000055.log:[ "DUTHisto01"]     X:  Ntrk:  2013  Mean:  0.05  RMS:  5.31     Y:  Ntrk:  2013  Mean: -0.00  RMS:  5.08
+fitter-000055.log:[ "DUTHisto00"]     X:  Ntrk:  1935  Mean:  0.01  RMS:  7.72     Y:  Ntrk:  1935  Mean: -0.18  RMS:  7.57
+fitter-000058.log:[ "DUTHisto05"]     X:  Ntrk:  1405  Mean:  0.27  RMS:  6.21     Y:  Ntrk:  1405  Mean: -0.21  RMS:  6.22
+fitter-000058.log:[ "DUTHisto04"]     X:  Ntrk:  1423  Mean: -0.04  RMS:  4.43     Y:  Ntrk:  1423  Mean:  0.09  RMS:  4.64
+fitter-000058.log:[ "DUTHisto03"]     X:  Ntrk:  1423  Mean: -0.10  RMS:  4.38     Y:  Ntrk:  1423  Mean:  0.14  RMS:  4.51
+fitter-000058.log:[ "DUTHisto02"]     X:  Ntrk:  1428  Mean: -0.12  RMS:  4.67     Y:  Ntrk:  1428  Mean:  0.09  RMS:  4.55
+fitter-000058.log:[ "DUTHisto01"]     X:  Ntrk:  1426  Mean:  0.52  RMS:  4.26     Y:  Ntrk:  1426  Mean: -0.09  RMS:  4.56
+fitter-000058.log:[ "DUTHisto00"]     X:  Ntrk:  1411  Mean: -0.28  RMS:  6.25     Y:  Ntrk:  1411  Mean: -0.16  RMS:  6.06
+fitter-000059.log:[ "DUTHisto05"]     X:  Ntrk: 28269  Mean: -0.06  RMS:  6.19     Y:  Ntrk: 28269  Mean:  0.05  RMS:  6.26
+fitter-000059.log:[ "DUTHisto04"]     X:  Ntrk: 28734  Mean:  0.03  RMS:  4.45     Y:  Ntrk: 28734  Mean: -0.01  RMS:  4.49
+fitter-000059.log:[ "DUTHisto03"]     X:  Ntrk: 28717  Mean: -0.01  RMS:  4.48     Y:  Ntrk: 28717  Mean: -0.01  RMS:  4.45
+fitter-000059.log:[ "DUTHisto02"]     X:  Ntrk: 28718  Mean: -0.00  RMS:  4.45     Y:  Ntrk: 28718  Mean:  0.00  RMS:  4.45
+fitter-000059.log:[ "DUTHisto01"]     X:  Ntrk: 28734  Mean:  0.00  RMS:  4.28     Y:  Ntrk: 28734  Mean: -0.00  RMS:  4.39
+fitter-000059.log:[ "DUTHisto00"]     X:  Ntrk: 28316  Mean: -0.01  RMS:  6.08     Y:  Ntrk: 28316  Mean:  0.02  RMS:  6.22
+fitter-000061.log:[ "DUTHisto05"]     X:  Ntrk: 29894  Mean:  0.13  RMS:  6.22     Y:  Ntrk: 29894  Mean:  0.08  RMS:  6.18
+fitter-000061.log:[ "DUTHisto04"]     X:  Ntrk: 30339  Mean: -0.05  RMS:  4.38     Y:  Ntrk: 30339  Mean: -0.01  RMS:  4.41
+fitter-000061.log:[ "DUTHisto03"]     X:  Ntrk: 30357  Mean: -0.05  RMS:  4.41     Y:  Ntrk: 30357  Mean: -0.04  RMS:  4.39
+fitter-000061.log:[ "DUTHisto02"]     X:  Ntrk: 30329  Mean: -0.03  RMS:  4.36     Y:  Ntrk: 30329  Mean: -0.02  RMS:  4.44
+fitter-000061.log:[ "DUTHisto01"]     X:  Ntrk: 30327  Mean:  0.02  RMS:  4.26     Y:  Ntrk: 30327  Mean: -0.02  RMS:  4.27
+fitter-000061.log:[ "DUTHisto00"]     X:  Ntrk: 29917  Mean:  0.06  RMS:  6.08     Y:  Ntrk: 29917  Mean:  0.11  RMS:  6.13
+fitter-000062.log:[ "DUTHisto05"]     X:  Ntrk: 31425  Mean: -0.08  RMS:  6.21     Y:  Ntrk: 31425  Mean:  0.04  RMS:  6.14
+fitter-000062.log:[ "DUTHisto04"]     X:  Ntrk: 31903  Mean:  0.03  RMS:  4.34     Y:  Ntrk: 31903  Mean:  0.01  RMS:  4.37
+fitter-000062.log:[ "DUTHisto03"]     X:  Ntrk: 31942  Mean:  0.01  RMS:  4.49     Y:  Ntrk: 31942  Mean: -0.01  RMS:  4.41
+fitter-000062.log:[ "DUTHisto02"]     X:  Ntrk: 31938  Mean:  0.03  RMS:  4.39     Y:  Ntrk: 31938  Mean: -0.01  RMS:  4.42
+fitter-000062.log:[ "DUTHisto01"]     X:  Ntrk: 31930  Mean: -0.03  RMS:  4.27     Y:  Ntrk: 31930  Mean:  0.01  RMS:  4.30
+fitter-000062.log:[ "DUTHisto00"]     X:  Ntrk: 31470  Mean: -0.03  RMS:  6.11     Y:  Ntrk: 31470  Mean:  0.04  RMS:  6.09
+fitter-000063.log:[ "DUTHisto05"]     X:  Ntrk: 30936  Mean:  0.06  RMS:  6.22     Y:  Ntrk: 30936  Mean:  0.07  RMS:  6.25
+fitter-000063.log:[ "DUTHisto04"]     X:  Ntrk: 31380  Mean: -0.04  RMS:  4.43     Y:  Ntrk: 31380  Mean: -0.02  RMS:  4.46
+fitter-000063.log:[ "DUTHisto03"]     X:  Ntrk: 31432  Mean:  0.02  RMS:  4.51     Y:  Ntrk: 31432  Mean: -0.02  RMS:  4.51
+fitter-000063.log:[ "DUTHisto02"]     X:  Ntrk: 31428  Mean: -0.00  RMS:  4.47     Y:  Ntrk: 31428  Mean: -0.01  RMS:  4.50
+fitter-000063.log:[ "DUTHisto01"]     X:  Ntrk: 31415  Mean:  0.03  RMS:  4.31     Y:  Ntrk: 31415  Mean: -0.00  RMS:  4.36
+fitter-000063.log:[ "DUTHisto00"]     X:  Ntrk: 30965  Mean: -0.01  RMS:  6.16     Y:  Ntrk: 30965  Mean:  0.07  RMS:  6.24
+fitter-000064.log:[ "DUTHisto05"]     X:  Ntrk: 26479  Mean:  0.13  RMS:  6.36     Y:  Ntrk: 26479  Mean:  0.06  RMS:  6.31
+fitter-000064.log:[ "DUTHisto04"]     X:  Ntrk: 26878  Mean: -0.06  RMS:  4.55     Y:  Ntrk: 26878  Mean: -0.01  RMS:  4.51
+fitter-000064.log:[ "DUTHisto03"]     X:  Ntrk: 26875  Mean: -0.07  RMS:  4.66     Y:  Ntrk: 26875  Mean: -0.04  RMS:  4.58
+fitter-000064.log:[ "DUTHisto02"]     X:  Ntrk: 26855  Mean: -0.01  RMS:  4.64     Y:  Ntrk: 26855  Mean: -0.02  RMS:  4.65
+fitter-000064.log:[ "DUTHisto01"]     X:  Ntrk: 26858  Mean: -0.00  RMS:  4.45     Y:  Ntrk: 26858  Mean:  0.05  RMS:  4.47
+fitter-000064.log:[ "DUTHisto00"]     X:  Ntrk: 26454  Mean:  0.09  RMS:  6.35     Y:  Ntrk: 26454  Mean: -0.00  RMS:  6.31
+fitter-000065.log:[ "DUTHisto05"]     X:  Ntrk: 24860  Mean:  0.19  RMS:  6.51     Y:  Ntrk: 24860  Mean:  0.01  RMS:  6.51
+fitter-000065.log:[ "DUTHisto04"]     X:  Ntrk: 25311  Mean: -0.11  RMS:  4.74     Y:  Ntrk: 25311  Mean: -0.01  RMS:  4.72
+fitter-000065.log:[ "DUTHisto03"]     X:  Ntrk: 25331  Mean: -0.08  RMS:  4.77     Y:  Ntrk: 25331  Mean: -0.00  RMS:  4.81
+fitter-000065.log:[ "DUTHisto02"]     X:  Ntrk: 25326  Mean: -0.01  RMS:  4.84     Y:  Ntrk: 25326  Mean: -0.00  RMS:  4.79
+fitter-000065.log:[ "DUTHisto01"]     X:  Ntrk: 25316  Mean:  0.02  RMS:  4.60     Y:  Ntrk: 25316  Mean: -0.01  RMS:  4.61
+fitter-000065.log:[ "DUTHisto00"]     X:  Ntrk: 24903  Mean:  0.05  RMS:  6.58     Y:  Ntrk: 24903  Mean:  0.04  RMS:  6.45
+fitter-000066.log:[ "DUTHisto05"]     X:  Ntrk: 21289  Mean:  0.06  RMS:  6.57     Y:  Ntrk: 21289  Mean: -0.00  RMS:  6.60
+fitter-000066.log:[ "DUTHisto04"]     X:  Ntrk: 21669  Mean: -0.09  RMS:  4.82     Y:  Ntrk: 21669  Mean: -0.01  RMS:  4.86
+fitter-000066.log:[ "DUTHisto03"]     X:  Ntrk: 21674  Mean:  0.02  RMS:  4.91     Y:  Ntrk: 21674  Mean:  0.01  RMS:  4.85
+fitter-000066.log:[ "DUTHisto02"]     X:  Ntrk: 21686  Mean:  0.02  RMS:  4.93     Y:  Ntrk: 21686  Mean:  0.02  RMS:  4.98
+fitter-000066.log:[ "DUTHisto01"]     X:  Ntrk: 21676  Mean: -0.02  RMS:  4.69     Y:  Ntrk: 21676  Mean: -0.05  RMS:  4.69
+fitter-000066.log:[ "DUTHisto00"]     X:  Ntrk: 21305  Mean:  0.02  RMS:  6.57     Y:  Ntrk: 21305  Mean:  0.05  RMS:  6.64
+fitter-000067.log:[ "DUTHisto05"]     X:  Ntrk: 16725  Mean:  0.10  RMS:  6.70     Y:  Ntrk: 16725  Mean:  0.13  RMS:  6.72
+fitter-000067.log:[ "DUTHisto04"]     X:  Ntrk: 17015  Mean: -0.07  RMS:  4.93     Y:  Ntrk: 17015  Mean:  0.02  RMS:  4.96
+fitter-000067.log:[ "DUTHisto03"]     X:  Ntrk: 17033  Mean: -0.01  RMS:  4.99     Y:  Ntrk: 17033  Mean: -0.03  RMS:  4.94
+fitter-000067.log:[ "DUTHisto02"]     X:  Ntrk: 17030  Mean: -0.00  RMS:  5.01     Y:  Ntrk: 17030  Mean: -0.05  RMS:  4.99
+fitter-000067.log:[ "DUTHisto01"]     X:  Ntrk: 17051  Mean: -0.03  RMS:  4.86     Y:  Ntrk: 17051  Mean: -0.04  RMS:  4.82
+fitter-000067.log:[ "DUTHisto00"]     X:  Ntrk: 16751  Mean:  0.07  RMS:  6.83     Y:  Ntrk: 16751  Mean:  0.16  RMS:  6.78
+fitter-000068.log:[ "DUTHisto05"]     X:  Ntrk: 13003  Mean:  0.11  RMS:  6.84     Y:  Ntrk: 13003  Mean:  0.16  RMS:  6.85
+fitter-000068.log:[ "DUTHisto04"]     X:  Ntrk: 13237  Mean: -0.08  RMS:  5.05     Y:  Ntrk: 13237  Mean: -0.05  RMS:  5.03
+fitter-000068.log:[ "DUTHisto03"]     X:  Ntrk: 13243  Mean: -0.04  RMS:  5.07     Y:  Ntrk: 13243  Mean: -0.02  RMS:  5.00
+fitter-000068.log:[ "DUTHisto02"]     X:  Ntrk: 13235  Mean:  0.02  RMS:  5.11     Y:  Ntrk: 13235  Mean: -0.05  RMS:  5.11
+fitter-000068.log:[ "DUTHisto01"]     X:  Ntrk: 13242  Mean:  0.03  RMS:  4.90     Y:  Ntrk: 13242  Mean:  0.02  RMS:  4.89
+fitter-000068.log:[ "DUTHisto00"]     X:  Ntrk: 13020  Mean:  0.01  RMS:  6.76     Y:  Ntrk: 13020  Mean:  0.14  RMS:  6.84
+
