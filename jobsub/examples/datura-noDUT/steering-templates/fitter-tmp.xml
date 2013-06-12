@@ -305,7 +305,7 @@
   <!--Ids of layers which should NOT be included in the fit-->
   <!--parameter name="SkipLayerIDs" type="IntVec"> </parameter-->
   <!--Maximum hit distance from the expected position, used for hit preselection-->
-  <parameter name="SlopeDistanceMax" type="float" value="@DistanceMax@"/>
+  <parameter name="SlopeDistanceMax" type="float" value="@SlopeDistanceMax@"/>
   <!--Limit on track slope change when passing sensor layer (in X direction)-->
   <parameter name="SlopeXLimit" type="float" value="0.01"/>
   <!--Limit on track slope change when passing sensor layer (in Y direction)-->
@@ -394,7 +394,7 @@
   <!--DUT sensor pitch in Y-->
   <parameter name="DUTpitchY" type="double" value="0.018"/>
   <!--Maximum allowed distance between fit and matched DUT hit-->
-  <parameter name="DistMax" type="double" value="1.0"/>
+  <parameter name="DistMax" type="double" value="@DistanceFitPosition@"/>
   <!--Name of the histogram information file-->
   <parameter name="HistoInfoFileName" type="string"> @HistoInfoFile@ @HistoInfoFile@ </parameter>
   <!--Id of telescope layer which should be used as DUT-->
