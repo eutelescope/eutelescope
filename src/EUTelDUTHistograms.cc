@@ -715,7 +715,15 @@ void EUTelDUTHistograms::check( LCEvent * /* evt */ ) {
 
 void EUTelDUTHistograms::end(){
 
-
+	// fill global: any matrix, any cluster size (cluster size 0 -> any cluster size)
+	streamlog_out( MESSAGE4 ) << "DUT " << 
+        (dynamic_cast<AIDA::IHistogram1D*> (_ShiftHistos.at(projX).at(FullDetector).at(0)))->allEntries() << " " <<
+	(dynamic_cast<AIDA::IHistogram1D*> (_ShiftHistos.at(projX).at(FullDetector).at(0)))->mean()*1000. << " " <<
+	(dynamic_cast<AIDA::IHistogram1D*> (_ShiftHistos.at(projX).at(FullDetector).at(0)))->rms()*1000.  << " " <<
+        (dynamic_cast<AIDA::IHistogram1D*> (_ShiftHistos.at(projY).at(FullDetector).at(0)))->allEntries() << " " <<
+	(dynamic_cast<AIDA::IHistogram1D*> (_ShiftHistos.at(projY).at(FullDetector).at(0)))->mean()*1000. << " " <<
+	(dynamic_cast<AIDA::IHistogram1D*> (_ShiftHistos.at(projY).at(FullDetector).at(0)))->rms()*1000.  << " " << endl;
+      
 }
 
 
