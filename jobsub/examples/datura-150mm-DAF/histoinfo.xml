@@ -87,8 +87,8 @@
     <histo name="beamRotY"    type="P1D" xBin="100" xMin="-5" xMax="5" yMin="-1.5" yMax="1.5" />
 
     <!-- EUTelDUTHistograms -->
-            <histo name="DUTshiftY"     type="H1D" xBin="400" xMin="-0.6" xMax="0.6"/>
-            <histo name="DUTshiftX"     type="H1D" xBin="400" xMin="-0.6" xMax="0.6"/>
+            <histo name="DUTshiftY"     type="H1D" xBin="300" xMin="-0.15" xMax="0.15"/>
+            <histo name="DUTshiftX"     type="H1D" xBin="300" xMin="-0.15" xMax="0.15"/>
 
 
   </histos>
