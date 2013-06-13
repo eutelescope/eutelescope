@@ -461,6 +461,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
         // some incremental index value to status of each pixel 
         for ( unsigned int index = 0; index < statusVec.size(); index++ ) 
         {
+#ifndef STREAMLOG_DEBUG_ACTIVE
             streamlog_out ( DEBUG3 )  << 
                 " index "<< index << 
                 " all " << statusVec.size() << 
@@ -472,7 +473,7 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
                 " (orig decoded_XY_index = " << _inverse_hitIndexMapVec[iDetector][index] <<
                 " freq " << _firingFreqVec[iDetector][index] <<
                 " status " <<  statusVec[ index ]  << endl;
-            
+#endif           
            if( statusVec[ index ] == EUTELESCOPE::HITPIXEL ) 
             {
                 _firingFreqVec[ iDetector ][ index ] += 1;
