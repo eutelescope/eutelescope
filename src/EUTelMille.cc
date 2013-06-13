@@ -3109,8 +3109,8 @@ void EUTelMille::end() {
       } // end loop over all planes
 
       steerFile << endl;
-      steerFile << "! chiscut 5.0 2.5" << endl;
-      steerFile << "! outlierdownweighting 4" << endl;
+      steerFile << "chiscut 5.0 2.5" << endl;
+      steerFile << "outlierdownweighting 4" << endl;
       steerFile << endl;
       steerFile << "method inversion 10 0.001" << endl;
       steerFile << endl;
