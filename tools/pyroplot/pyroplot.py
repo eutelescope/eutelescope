@@ -409,6 +409,23 @@ def run( argv = sys.argv ):
     log = logging.getLogger('pyroplot') # set up logging
 
     try:
+        import ROOT
+    except ImportError:
+        # module failed to load - maybe PYTHONPATH is not set correctly?
+        # guess the right path, but that is only possible if ROOTSYS is set:
+        if os.environ.get('ROOTSYS') is None:
+            print "ERROR: Could not load the Python ROOT module. Please make sure that your ROOT installation is compiled with Python support and that your PYTHONPATH is set correctly and includes libPyROOT.so"
+            exit(1)
+        sys.path.append(os.path.join(os.environ.get('ROOTSYS'),"lib"))
+        sys.path.append(os.path.join(os.environ.get('ROOTSYS'),"lib","root"))
+        # try again:
+        try:
+            import ROOT
+        except ImportError:
+            print "ERROR: Could not load the Python ROOT module. Please make sure that your ROOT installation is compiled with Python support and that your PYTHONPATH is set correctly and includes libPyROOT.so"
+            exit(1)
+
+    try:
         import rootpy
     except ImportError:
         # rootpy is not installed; use (old) version provided with EUTelescope
@@ -439,13 +456,9 @@ def run( argv = sys.argv ):
 
     from rootpy import log; log = log["/pyroplot"]
     rootpy.log.basic_config_colorized()
-    try:
-        import ROOT
-        ROOT.gROOT.SetBatch(True)
-        ROOT.gErrorIgnoreLevel = 1001
-    except ImportError:
-        log.error("Could not load the Python ROOT module. Please make sure that your ROOT installation is correctly set up and includes libPyROOT.so")
-        exit(1)
+    ROOT.gROOT.SetBatch(True)
+    ROOT.gErrorIgnoreLevel = 1001
+
     import argparse
     # command line argument parsing
     parser = argparse.ArgumentParser(description="Python ROOT plotter - A tool for selecting and assembling histogram plots and comparision plots from multiple ROOT files at once")
