@@ -216,7 +216,7 @@ The presence of this collection in the event is allowing all the noise based sel
     <parameter name="ReferenceCollection" type="string" > refhit </parameter>
     <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
     <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
-    <parameter name="Events"  type="int" value="4999"/>
+    <parameter name="Events"  type="int" value="9999"/>
     <parameter name="HotPixelCollectionName"> hotpixel_apix </parameter>
 
     <!--Residual cuts along both size in microns-->
@@ -235,7 +235,7 @@ The presence of this collection in the event is allowing all the noise based sel
   <parameter name="ReferenceCollection" type="string" > refhit </parameter>
   <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
   <parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/>
-  <parameter name="Events"  type="int" value="4999"/>
+  <parameter name="Events"  type="int" value="9999"/>
 
   <!--Residual cuts along both size in microns-->
     <parameter name="ResidualsXMax" type="FloatVec">  5.  5.  5.   5.  5.  5.          </parameter>
