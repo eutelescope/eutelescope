@@ -244,13 +244,12 @@ ADD_EUTELESCOPE_TOOL( pedestalmerge )
 # display some variables and write them to cache
 DISPLAY_STD_VARIABLES()
 
-# create some useful symbolic links in bin directory
-add_custom_command(
-    TARGET ${PROJECT_NAME} POST_BUILD
-    COMMAND ln -sf ${PROJECT_SOURCE_DIR}/jobsub/jobsub.py ${PROJECT_SOURCE_DIR}/bin/jobsub
-    COMMAND ln -sf ${PROJECT_SOURCE_DIR}/jobsub/jobsub.py ${PROJECT_SOURCE_DIR}/bin/jobsub.py
-    COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot.py
-    COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot
+# create some useful symbolic links in bin directory at install time
+install (CODE
+    "EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/jobsub/jobsub.py ${PROJECT_SOURCE_DIR}/bin/jobsub)
+    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/jobsub/jobsub.py ${PROJECT_SOURCE_DIR}/bin/jobsub.py)
+    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot.py)
+    EXECUTE_PROCESS(COMMAND ln -sf ${PROJECT_SOURCE_DIR}/tools/pyroplot/pyroplot.py ${PROJECT_SOURCE_DIR}/bin/pyroplot)"
 )
 
 #  _            _       
