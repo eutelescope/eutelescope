@@ -66,12 +66,17 @@ def printPlots(cans,outPath,separateFiles):
         timeStampCanvas(can)
         if not separateFiles:
             if not pdfOpen:
-                log.debug( "Saving canvas to '" + outPath +"'")
+                log.debug( "Saving canvas #%i to '%s'"%(idx, outPath))
                 can.Print(outPath+"(") # open the pdf file for appending
                 pdfOpen = True
             else:
                 log.debug( "Storing canvas #"+str(idx))
-                can.Print(outPath) # print in the same file
+                # check if we are on the last canvas: then close the pdf
+                if idx == (len(cans)-1):
+                    log.debug( ".. and closing pdf file")
+                    can.Print(outPath+")") # close the pdf file
+                else:
+                    can.Print(outPath) # print in the same file
                 log.debug( "Done with canvas #"+str(idx))
         else:
             # set up file name to print to
@@ -84,8 +89,6 @@ def printPlots(cans,outPath,separateFiles):
             if not os.path.exists(os.path.dirname(filename)):
                         os.makedirs(os.path.dirname(filename))
             can.Print(filename)
-    if pdfOpen:
-        can.Print(outPath+")") # close the pdf file
 
 
 def makePlotCollection( histodicts, files, filesdescr, outPath, docompare, doseparateFiles, logscale):
