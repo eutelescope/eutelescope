@@ -176,6 +176,7 @@ def makePage( histos, fileName, fileDescr, separateFiles, logscale):
     from ROOT import kBlue,gPad
     log = logging.getLogger('pyroplot')
     cans = {}
+    log.info( "Drawing histograms .." )
     for idx, name in enumerate(sorted(histos.keys())):
         if separateFiles:
             log.debug( "Creating new canvas with index %d."%(idx))
@@ -213,6 +214,7 @@ def makeComparisionPage( histodicts , fileNames, fileDescr, separateFiles):
     cans = {}
     colors = [ROOT.kBlue, ROOT.kRed+1,ROOT.kViolet-1, ROOT.kOrange+7,ROOT.kGreen-7,ROOT.kOrange-6,
               ROOT.kPink-9,ROOT.kTeal-6,ROOT.kBlue+4,ROOT.kAzure+2]
+    log.info( "Drawing histograms .." )
     # prepare set of histograms to compare to the reference on (the first)
     # loop over the reference set of histos (sorted by key):
     for hidx, refname in enumerate(sorted(histodicts[0].keys())):
@@ -230,7 +232,7 @@ def makeComparisionPage( histodicts , fileNames, fileDescr, separateFiles):
             cans[refname] = c
             c.Divide(3,4)
         # prepare histograms for drawing
-        log.info( "Drawing histogram #" + str(hidx+1) +" (" + refname + ") on canvas #" + str(len(cans)) )
+        log.debug( "Drawing histogram #" + str(hidx+1) +" (" + refname + ") on canvas #" + str(len(cans)) )
         hists = []
         ratiohists = []
         hiter = iter (histodicts)
@@ -293,19 +295,19 @@ def makeComparisionPage( histodicts , fileNames, fileDescr, separateFiles):
         #create legend
         legend = Legend(nentries=len(histodicts)+len(fileDescr)+1, leftmargin=0.25, 
                         topmargin=0.05, rightmargin=0.25, entryheight=0.05)
-        legend.AddEntry(histodicts[0][refname],label=os.path.basename(fileNames[0]), legendstyle="l")
+        legend.AddEntry(histodicts[0][refname],label=os.path.basename(fileNames[0]), style="l")
         if fileNames[0] in fileDescr:
             if fileDescr[fileNames[0]]:
-                legend.AddEntry(None,label=fileDescr[fileNames[0]],legendstyle="")
-        legend.AddEntry(None,label="(reference)",legendstyle="")
+                legend.AddEntry(None,label=fileDescr[fileNames[0]],style="")
+        legend.AddEntry(None,label="(reference)",style="")
         for idx,ratiohist in enumerate(ratiohists):
             legend.AddEntry(ratiohist,
                             label=os.path.basename(fileNames[idx+1]), 
-                            legendstyle="l")
+                            style="l")
             # add additional info if specified by the user
             if fileNames[idx+1] in fileDescr:
                 if fileDescr[fileNames[idx+1]]:
-                    legend.AddEntry(None,label=fileDescr[fileNames[idx+1]],legendstyle="")
+                    legend.AddEntry(None,label=fileDescr[fileNames[idx+1]],style="")
         legend.SetBorderSize(0)
         legend.SetMargin(0.3)
         legend.Draw()
@@ -490,6 +492,8 @@ def run( argv = sys.argv ):
             exit(2)
     log.setLevel(numeric_level)
     log.debug( "Command line arguments used: %s ", args )
+
+    log.debug("Using rootpy %s from %s"%(rootpy.__version__,rootpy.__file__))
 
     # laod and combine all specified reg ex
     regexs = []

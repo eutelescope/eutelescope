@@ -17,8 +17,8 @@ plots and comparision plots from multiple ROOT files at once
 
 ** rootpy
    rootpy makes the ROOT Python interface more "pythonic" and easier to use.
-   EUTelescope ships with a released version (in ./external/pymodules/rootpy-X.Y).
-   Or install a more up-to-date one from http://rootpy.org/install.html
+   EUTelescope ships with a development snapshot (in ./external/pymodules/rootpy-dev).
+   Alternatively, install a more up-to-date one from http://rootpy.org/install.html
 * Usage
 
 #+begin_example
