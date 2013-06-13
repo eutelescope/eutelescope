@@ -97,7 +97,7 @@
 #
 # At this point you should be able to run tracking:
 #
-#  ../../jobsub/jobsub.py -c config.cfg -csv runlist.csv trackfit FIXME
+#  ../../jobsub.py -c config.cfg -csv runlist.csv trackfit FIXME
 #
 # Check available options (alignment degrees of freedom, chi2 cut on a track
 # candidate etc.) in corresponding steering files and adjust according to your
