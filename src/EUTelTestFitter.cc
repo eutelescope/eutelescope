@@ -304,7 +304,7 @@ EUTelTestFitter::EUTelTestFitter()
   registerOptionalParameter("UseSlope","Use expected track direction to constraint number of considered hit combinations (track preselection).", _UseSlope, true );
   registerOptionalParameter("SlopeXLimit","Limit on track slope change when passing sensor layer (in X direction)", _SlopeXLimit, static_cast <float> (0.001));
   registerOptionalParameter("SlopeYLimit","Limit on track slope change when passing sensor layer (in Y direction)", _SlopeYLimit, static_cast <float> (0.001));
-  registerOptionalParameter("SlopeDistanceMax","Maximum hit distance from the expected position, used for hit preselection", _SlopeDistanceMax, static_cast <float> (1.));
+  registerOptionalParameter("SlopeDistanceMax","Maximum hit distance from the expected position, used for hit preselection in [mm]", _SlopeDistanceMax, static_cast <float> (1.));
   // -------------------------------------------------------------------------------------------------
 
   std::vector<int > initLayerIDs;

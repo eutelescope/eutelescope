@@ -210,7 +210,7 @@ _PixelChargeSharingHisto ()
                               _manualDUTid,  static_cast < int > (0));
 
   registerProcessorParameter ("DistMax",
-                              "Maximum allowed distance between fit and matched DUT hit",
+                              "Maximum allowed distance between fit and matched DUT hit in [mm]",
                               _distMax,  static_cast < double > (0.1));
 
 
