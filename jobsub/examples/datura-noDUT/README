@@ -1,91 +1,106 @@
-Datura telescope without explicit DUT at different geometries
-===================
-
-This directory contains an example configuration for the Datura
-telescope with six planes of Mimosa26 without DUT.
-
-This example is based on a test beam campaign done in 2012/2013 at DESY.
-
-A corresponding data sample can be found at:
-/afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT
-
-If you are interested in the data but cannot access the above path,
-please contact the EUTelescope software coordinators via mail:
-eutelescope-coordinators@desy.de
-
-
-Features of this configuration:
-------------------------------
-
-- Datura telescope with Mimosa26 sensors
-- telescope alone, no DUT
-- settings tuned for DESY testbeam (1-6 GeV electrons)
-- sensor spacing of 20mm and 150mm
-- alignment either via GBL or with standard straightline fit
-
-
-Known issues:
-------------
-
-- Analysis still in progress: very preliminary results only!
-
-
-Basic how-to:
-------------
-
-Detailed information on how to use EUTELESCOPE software is available at
-http://eutelescope.web.cern.ch/
-
-Assuming you are working in $EUTELESCOPE/jobsub/examples/datura-noDUT:
-
-Create subfolder structure for output:
-
-  cd $EUTELESCOPE/jobsub/examples/datura-noDUT
-  mkdir -p output/database
-  mkdir -p output/histograms
-  mkdir -p output/lcio
-  mkdir -p output/logs
-
-Adjust the config.cfg file as such that the variables BasePath and NativePath
-match match your setup.
-
-Assuming that your environment is set properly (see
-http://eutelescope.web.cern.ch/content/installation) you can submit jobs, as an
-example here with run 5063:
-
-  ../../jobsub.py -c config.cfg -csv runlist.csv converter 5063
-  ../../jobsub.py -c config.cfg -csv runlist.csv clusearch 5063
-  ../../jobsub.py -c config.cfg -csv runlist.csv hitmaker 5063
-
-You can now choose between straightline and GBL alignment. For straightline
-proceed with:
-
-  ../../jobsub.py -c config.cfg -csv runlist.csv alignment 5063
-  ../../jobsub.py -c config.cfg -csv runlist.csv fitter 5063
-
-For GBL use:
-
-  ../../jobsub.py -c config.cfg -csv runlist.csv trksearch 5063
-  ../../jobsub.py -c config.cfg -csv runlist.csv aligngbl 5063
-
-  pede has to be run manually (see
-  http://www.desy.de/~kleinwrt/MP2/doc/html/index.html). For this do:
-
-  pede run005063-pede-steer.txt
-
-  This will produce a millipede.res file with the results of the pede job
-  You have to convert this file to lcio file
-
-  ../../../tools/parsepede/parsemilleout.sh
-
-  ../../../tools/parsepede/parsemilleout.sh run005063-pede-steer.txt \
-  millepede.res output/database/run005063-alignment.slcio
-
-  At this point you should be able to run tracking:
-
-  ../../jobsub/jobsub.py -c config.cfg -csv runlist.csv trkfit 5063
-
-  Check available options (alignment degrees of freedom, chi2 cut on a track
-  candidate etc.) in corresponding steering files and adjust according to your
-  analysis. Beware that some options are still under development.
-
+# =============================================================================
+#
+# examples/datura-noDUT
+#
+# Example config and steering files for running locally over telescope data
+# only. This example uses data taken with the Datura telescope at DESY TB21 in
+# 2012 and 2013 with different geometries. For tests, an example run is here:
+# /afs/desy.de/group/telescopes/EutelTestData/FIXME
+# If you are interested in the data but cannot access the above path, please
+# contact the EUTelescope software coordinators via mail:
+# eutelescope-coordinators@desy.de
+#
+# =============================================================================
+#
+# Features of this configuration:
+#
+# Datura telescope with Mimosa26 sensors
+# Telescope alone, no DUT
+# Settings tuned for DESY testbeam (1-6 GeV electrons)
+# Sensor spacing of 20mm and 150mm
+# Alignment either via GBL or with standard straightline fit (with or without
+# DAFfitter)
+#
+# =============================================================================
+#
+# Known issues:
+#
+# Analysis still in progress: very preliminary results only!
+#
+# =============================================================================
+#
+# Basic how-to:
+#
+#
+# Detailed information on how to use EUTELESCOPE software is available at
+#
+# http://eutelescope.desy.de
+#
+# Assuming you are working in $EUTELESCOPE/jobsub/examples/datura-noDUT:
+#
+# Create subfolder structure for output:
+#
+#   cd $EUTELESCOPE/jobsub/examples/datura-noDUT
+#   mkdir -p output/database
+#   mkdir -p output/histograms
+#   mkdir -p output/lcio
+#   mkdir -p output/logs
+#
+# Adjust this config.cfg file as such that the variables BasePath and
+# NativeFolder match match your setup.
+#
+# Assuming that your environment is set properly (see
+# http://eutelescope.web.cern.ch/content/installation) you can submit jobs, as
+# an example here with run FIXME:
+#
+#  ../../jobsub.py -c config.cfg -csv runlist.csv converter FIXME
+#  ../../jobsub.py -c config.cfg -csv runlist.csv clusearch FIXME
+#  ../../jobsub.py -c config.cfg -csv runlist.csv hitmaker FIXME
+#
+# You must now select an alignment:
+#
+# -----------------------------------------------------------------------------
+#
+# A) straightline without DAFfitter
+#
+# Adjust settings in the [align] and [fitter] section
+#
+#  ../../jobsub.py -c config.cfg -csv runlist.csv align FIXME
+#  ../../jobsub.py -c config.cfg -csv runlist.csv fitter FIXME
+#
+#
+# -----------------------------------------------------------------------------
+#
+# B) straightline with DAFfitter
+#
+# Adjust settings in the [aligndaf] and [fitter] section
+#
+#  ../../jobsub.py -c config.cfg -csv runlist.csv aligndaf FIXME
+#  ../../jobsub.py -c config.cfg -csv runlist.csv fitter FIXME
+#
+#
+# -----------------------------------------------------------------------------
+#
+# C) General Broken Lines
+#
+# Adjust settings in the [tracksearch], [aligngbl] and [trackfit] sections
+#
+# ../../jobsub.py -c config.cfg -csv runlist.csv tracksearch FIXME
+# ../../jobsub.py -c config.cfg -csv runlist.csv aligngbl FIXME
+#
+# This will produce a millipede.res file with the results of the pede job. You
+# have to convert this file to lcio file
+#
+# ../../../tools/parsepede/parsemilleout.sh \
+# output/database/run00FIXME-pede-steer.txt \
+# millepede.res output/database/run00FIXME-align.slcio
+#
+# At this point you should be able to run tracking:
+#
+#  ../../jobsub/jobsub.py -c config.cfg -csv runlist.csv trackfit FIXME
+#
+# Check available options (alignment degrees of freedom, chi2 cut on a track
+# candidate etc.) in corresponding steering files and adjust according to your
+# analysis. Beware that some options are still under development.
+#
+# 
