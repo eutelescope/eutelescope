@@ -183,7 +183,7 @@ def makePage( histos, fileName, fileDescr, separateFiles, logscale):
             log.debug( "Creating new canvas with index %d."%(idx/6))
             # start a new canvas
             c=Canvas( 600, 800)
-            cans[name]=c
+            cans[fileName+'/'+name]=c
             c.Divide(2,3)
             markCanvas(c, fileName+" "+fileDescr, 0.05, y = 0.009, size = 0.025, color = 2 )
         # draw the histogram
