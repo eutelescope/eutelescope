@@ -74,12 +74,12 @@ _hotPixelMap(),
 _trackFinder(0),
 _maxMissingHitsPerTrackCand(0),
 _maxNTracks(10),
-_finderMode(2),
-_residualsXMin(6, -300.),
-_residualsYMin(6, -300.),
-_residualsXMax(6, 300.),
-_residualsYMax(6, 300.),
-_residualsRMax(6, 300.),
+_finderMode(3),
+_residualsXMin(6, -0.5),
+_residualsYMin(6, -0.5),
+_residualsXMax(6, 0.5),
+_residualsYMax(6, 0.5),
+_residualsRMax(6, 0.5),
 _histoInfoFileName("histoinfo.xml"),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
@@ -109,39 +109,41 @@ _aidaHistoMap1D() {
             _maxMissingHitsPerTrackCand, static_cast<int> (0)); // Search full-length tracks by default
 
     registerOptionalParameter("MaxNTracksPerEvent", "Maximal number of track candidates to be found in events",
-            _maxNTracks, static_cast<int> (10));
+            _maxNTracks, static_cast<int> (100));
 
-    registerOptionalParameter("FinderMode", "Finder mode. Possible values are 1, 2",
-            _finderMode, static_cast<int> (2));
+    registerOptionalParameter("FinderMode", "Finder mode. Possible values are 1, 2, 3",
+            _finderMode, static_cast<int> (3));
 
-    const FloatVec MinimalResidualsX(6, -300.); // assumes there are at most 10 planes. But this doesn't matter.
+    const double defWindowSize = 50.5;
+    
+    const FloatVec MinimalResidualsX(6, -defWindowSize); // assumes there are at most 10 planes. But this doesn't matter.
     registerOptionalParameter("ResidualsXMin",
             "Minimal values of the hit residuals in the X direction for a track. "
             "Note: these numbers are ordered according to the z position of "
             "the sensors and NOT according to the sensor id.",
             _residualsXMin, MinimalResidualsX);
 
-    const FloatVec MinimalResidualsY(6, -300.); // assumes there are at most 10 planes. But this doesn't matter.
+    const FloatVec MinimalResidualsY(6, -defWindowSize); // assumes there are at most 10 planes. But this doesn't matter.
     registerOptionalParameter("ResidualsYMin", "Minimal values of the hit residuals in the Y direction for a track. "
             "Note: these numbers are ordered according to the z position of "
             "the sensors and NOT according to the sensor id.",
             _residualsYMin, MinimalResidualsY);
 
-    const FloatVec MaximalResidualsX(6, 300.); // assumes there are at most 10 planes. But this doesn't matter.
+    const FloatVec MaximalResidualsX(6, defWindowSize); // assumes there are at most 10 planes. But this doesn't matter.
     registerOptionalParameter("ResidualsXMax", "Maximal values of the hit residuals in the X direction for a track. "
             "Note: these numbers are ordered according to the z position of "
             "the sensors and NOT according to the sensor id.",
             _residualsXMax, MaximalResidualsX);
 
-    const FloatVec MaximalResidualsY(6, 300.); // assumes there are at most 10 planes. But this doesn't matter.
+    const FloatVec MaximalResidualsY(6, defWindowSize); // assumes there are at most 10 planes. But this doesn't matter.
     registerOptionalParameter("ResidualsYMax", "Maximal values of the hit residuals in the Y direction for a track. "
             "Note: these numbers are ordered according to the z position of "
             "the sensors and NOT according to the sensor id.",
             _residualsYMax, MaximalResidualsY);
 
-    const FloatVec MaximalResidualsR(6, 300.);
+    const FloatVec MaximalResidualsR(6, defWindowSize);
     registerOptionalParameter("ResidualsRMax", "Maximal allowed distance between hits entering the recognition step "
-            "per 10 cm space between the planes. One value for each neighbor planes. "
+            "per 15 cm space between the planes. One value for each neighbor planes. "
             "DistanceMax will be used for each pair if this vector is empty.",
             _residualsRMax, MaximalResidualsR);
 
@@ -168,6 +170,30 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::init() {
     _nProcessedRuns = 0;
     _nProcessedEvents = 0;
 
+    // Check if the window size was properly initilised
+    {
+        const double defWindowSize = 1.;
+        if( _residualsRMax.size() < geo::gGeometry().nPlanes() ) {
+            streamlog_out( WARNING2 ) << "Size of residualsRMax is less than number of planes. Using defaults for the rest." << endl;
+            while( _residualsRMax.size() < geo::gGeometry().nPlanes() ) _residualsRMax.push_back( defWindowSize );
+        }
+        if( _residualsXMax.size() < geo::gGeometry().nPlanes() ) {
+            streamlog_out( WARNING2 ) << "Size of residualsXMax is less than number of planes. Using defaults for the rest." << endl;
+            while( _residualsXMax.size() < geo::gGeometry().nPlanes() ) _residualsXMax.push_back( defWindowSize );
+        }
+        if( _residualsXMin.size() < geo::gGeometry().nPlanes() ) {
+            streamlog_out( WARNING2 ) << "Size of residualsXMin is less than number of planes. Using defaults for the rest." << endl;
+            while( _residualsXMin.size() < geo::gGeometry().nPlanes() ) _residualsXMin.push_back( -defWindowSize );
+        }
+        if( _residualsYMax.size() < geo::gGeometry().nPlanes() ) {
+            streamlog_out( WARNING2 ) << "Size of residualsYMax is less than number of planes. Using defaults for the rest." << endl;
+            while( _residualsYMax.size() < geo::gGeometry().nPlanes() ) _residualsYMax.push_back( defWindowSize );
+        }
+        if( _residualsYMin.size() < geo::gGeometry().nPlanes() ) {
+            streamlog_out( WARNING2 ) << "Size of residualsYMin is less than number of planes. Using defaults for the rest." << endl;
+            while( _residualsYMin.size() < geo::gGeometry().nPlanes() ) _residualsYMin.push_back( -defWindowSize );
+        }
+    }
 
     // Instantiate track finder. This is a working horse of the processor.
     {
@@ -226,7 +252,8 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent(LCEvent * evt) {
 
     EUTelEventImpl * event = static_cast<EUTelEventImpl*> (evt);
 
-    // Do not process last events
+    // Do not process last or unknown events
+    
     if (event->getEventType() == kEORE) {
         streamlog_out(DEBUG4) << "EORE found: nothing else to do." << endl;
         return;
@@ -251,41 +278,22 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent(LCEvent * evt) {
 
         // Prepare hits for track finder
         map< int, EVENT::TrackerHitVec > allHitsArray;
-        FillHits(evt, col, allHitsArray);
+        vector< EVENT::TrackerHitVec > allHitsVec;
+        const int nEmptyPlanes = FillHits(evt, col, allHitsArray, allHitsVec);
 
         // Search tracks
-        int nTracks = 0;
-        int nGoodTracks = 0;
-
-        vector< EVENT::TrackerHitVec > trackCandidates;
-
         streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << std::endl;
         streamlog_out(DEBUG1) << "Initialising hits for _theFinder..." << std::endl;
-        TrackerHitVec::iterator itHit;
-        const EVENT::IntVec sensorIDVecZOrder = geo::gGeometry()._sensorIDVecZOrder;
-        const size_t nplanes = geo::gGeometry()._nPlanes;
-        for (size_t iLayer = 0; iLayer < nplanes; iLayer++) {
-            streamlog_out(DEBUG1) << "Plane " << sensorIDVecZOrder.at(iLayer) << endl;
-            streamlog_out(DEBUG1) << allHitsArray[sensorIDVecZOrder.at(iLayer)].size() << " hit(s) in plane" << endl;
-            for (itHit = allHitsArray[sensorIDVecZOrder.at(iLayer)].begin(); itHit != allHitsArray[sensorIDVecZOrder.at(iLayer)].end(); ++itHit) {
-                streamlog_out(DEBUG1) << *itHit << endl;
-                streamlog_out(DEBUG1) << setw(10) << Utility::GuessSensorID(static_cast<TrackerHitImpl*>(*itHit)) << endl;
-                streamlog_out(DEBUG1) << setw(10) << (*itHit)->id() << endl;
-                streamlog_out(DEBUG1) << setw(10) << (*itHit)->getPosition()[0]
-                        << setw(10) << (*itHit)->getPosition()[1]
-                        << setw(10) << (*itHit)->getPosition()[2] << endl;
-            }
-        }
-
-        _trackFinder->SetAllHits(allHitsArray);
+        
+        _trackFinder->SetAllHits(allHitsVec);
+        static_cast<EUTelExhaustiveTrackFinder*>(_trackFinder)->SetNEmptyPlanes(nEmptyPlanes);
         streamlog_out(DEBUG1) << "Trying to find tracks..." << endl;
         EUTelTrackFinder::SearchResult searchResult = _trackFinder->SearchTracks();
-        streamlog_out(DEBUG1) << "Search results retrieved..." << endl;
-        streamlog_out(DEBUG1) << "Search results = " << (int) searchResult << endl;
+        streamlog_out(DEBUG1) << "Search results = " << static_cast<int>(searchResult) << endl;
         streamlog_out(DEBUG1) << "Retrieving track candidates..." << endl;
-        trackCandidates = _trackFinder->GetTrackCandidates();
-
-        nTracks = (int) trackCandidates.size();
+        vector< EVENT::TrackerHitVec > trackCandidates = _trackFinder->GetTrackCandidates();
+       
+        const int nTracks = trackCandidates.size();
         static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_numberTracksCandidatesHistName ]) -> fill(nTracks);
         streamlog_out(DEBUG1) << "Event #" << _nProcessedEvents << endl;
         streamlog_out(DEBUG1) << "Track finder " << _trackFinder->GetName() << " found  " << nTracks << endl;
@@ -293,7 +301,7 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent(LCEvent * evt) {
         int nHitsOnTrack = 0;
         vector< EVENT::TrackerHitVec >::const_iterator itrk = trackCandidates.begin();
         for ( ; itrk != trackCandidates.end(); ++itrk ) {
-            nHitsOnTrack = (int)itrk->size();
+            nHitsOnTrack = itrk->size();
             static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ _histName::_numberOfHitOnTrackCandidateHistName ]) -> fill(nHitsOnTrack);
         }
 
@@ -301,27 +309,35 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::processEvent(LCEvent * evt) {
         // Write output collection
         addTrackCandidateToCollection(evt, trackCandidates);
 
-        _trackFinder->Reset(); // Breaks Fitter track candidates reference???!!!
+        _trackFinder->Reset();
 
         _nProcessedEvents++;
 
         if (isFirstEvent()) _isFirstEvent = false;
-    }
+    } // if (col != NULL)
 }
 
-// @TODO LCEvent* evt must be removed from the list of arguments
-
-void EUTelProcessorTrackingExhaustiveTrackSearch::FillHits(LCEvent * evt,
+/** 
+ * Fill hits in a map sorted by the number of plane along Z axis.
+ * 
+ * @TODO LCEvent* evt must be removed from the list of arguments, idealy.
+ * 
+ * @param evt event pointer
+ * @param collection hits collection pointer
+ * @param [out] allHitsArray vector of hits sorted by number along Z axis
+ * @return number of planes with missing hits
+ */
+int EUTelProcessorTrackingExhaustiveTrackSearch::FillHits(LCEvent * evt,
         LCCollection* collection,
-        map< int, EVENT::TrackerHitVec >& allHitsArray) const {
+        map< int, EVENT::TrackerHitVec >& allHitsArray,
+        vector< EVENT::TrackerHitVec >& allHitsVec) const {
 
-    int layerIndex = -1;
-
+    allHitsVec.resize( geo::gGeometry().nPlanes() );
+    
     // loop over all hits in collection
     for (int iHit = 0; iHit < collection->getNumberOfElements(); iHit++) {
 
         TrackerHitImpl * hit = static_cast<TrackerHitImpl*> (collection->getElementAt(iHit));
-        ///code hoes here;
         if (Utility::HitContainsHotPixels(hit, _hotPixelMap)) {
             streamlog_out(DEBUG3) << "Hit " << iHit << " contains hot pixels; skip this one. " << std::endl;
             continue;
@@ -332,7 +348,6 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::FillHits(LCEvent * evt,
         EUTelVirtualCluster * cluster;
         cluster = Utility::GetClusterFromHit(hit);
 
-        //Warning! It is very bad idea to do like this. This code must ideally be implemented in GetClusterFromHit
         if (hit->getType() == kEUTelSparseClusterImpl) {
             // ok the cluster is of sparse type, but we also need to know
             // the kind of pixel description used. This information is
@@ -355,41 +370,41 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::FillHits(LCEvent * evt,
             }
         }
 
-        // @TODO add support of kEUTelAPIXClusterImpl type
         if (hit->getType() == kEUTelAPIXClusterImpl) {
-            streamlog_out(MESSAGE4) << "kEUTelAPIXClusterImpl is not supported at the moment" << std::endl;
-            continue;
-            //                
-            //            TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> (clusterVector[0]);
-            //            EUTelSparseClusterImpl< EUTelAPIXSparsePixel > *apixCluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > (clusterFrame);
-            //            int sensorID = apixCluster->getDetectorID();
-            //            bool skipHit = false;
-            //            for (size_t iPixel = 0; iPixel < apixCluster->size(); ++iPixel) {
-            //                EUTelAPIXSparsePixel apixPixel;
-            //                apixCluster->getSparsePixelAt(iPixel, &apixPixel);
-            //                int pixelX = apixPixel.getXCoord();
-            //                int pixelY = apixPixel.getYCoord();
-            //                skipHit = !_rect.isInside(sensorID, pixelX, pixelY);
-            //            }
-            //
-            //            if (skipHit) {
-            //                streamlog_out(MESSAGE4) << "Skipping cluster due to rectangular cut!" << std::endl;
-            //                continue;
-            //            }
-            //            if (skipHit) {
-            //                streamlog_out(MESSAGE4) << "TEST: This message should never appear!" << std::endl;
-            //            }
+            TrackerDataImpl * clusterFrame = static_cast<TrackerDataImpl*> (clusterVector[0]);
+            EUTelSparseClusterImpl< EUTelAPIXSparsePixel > *apixCluster = new EUTelSparseClusterImpl< EUTelAPIXSparsePixel > (clusterFrame);
+            int sensorID = apixCluster->getDetectorID();
+            bool skipHit = false;
         }
 
-        unsigned int localSensorID = Utility::GuessSensorID(hit);
-        layerIndex = geo::gGeometry()._sensorIDVecMap[ localSensorID ];
-        allHitsArray[layerIndex].push_back(hit);
-
+        const int localSensorID = Utility::GuessSensorID( hit );  // localSensorID == -1, if detector ID was not found
+        const int numberAlongZ = geo::gGeometry().sensorIDtoZOrder( localSensorID );
+        if ( localSensorID >= 0 ) allHitsArray[ numberAlongZ ].push_back( hit );
+        if ( localSensorID >= 0 ) allHitsVec[ numberAlongZ ].push_back( hit );
+        
         delete cluster; // <--- destroying the cluster
     } // end loop over all hits in collection
-
+    
+    
+    // remove planes with no hits
+    int nEmptyPlanes = 0;
+    for ( vector<EVENT::TrackerHitVec>::iterator it=allHitsVec.begin(); it!=allHitsVec.end(); ) {
+        if( it->empty() ) { 
+            nEmptyPlanes++;
+            it = allHitsVec.erase(it); 
+        }
+        else ++it;
+    }
+    
+    return nEmptyPlanes;
 }
 
+/**
+ * Dumpt track candidate into lcio collection.
+ * 
+ * @param evt event pointer
+ * @param trackCandidates  vectors of hits assigned to track candidates
+ */
 void EUTelProcessorTrackingExhaustiveTrackSearch::addTrackCandidateToCollection(LCEvent* evt, const vector< EVENT::TrackerHitVec >& trackCandidates) {
     // Prepare output collection
     LCCollectionVec * trkCandCollection = 0;
@@ -404,20 +419,12 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::addTrackCandidateToCollection(
 
     // Fill track parameters with nonsense except of hits
     for (size_t itrk = 0; itrk < trackCandidates.size(); itrk++) {
-        TrackImpl* trackcand = new TrackImpl;           // Don't free it manually, because it is (presumably) owned by trkCandCollection
-        trackcand->setD0(999.);
-        trackcand->setZ0(999.);
-        trackcand->setTanLambda(999.);
-        trackcand->setOmega(999.);
-        trackcand->setPhi(999.);
-        trackcand->setChi2(999.);
-        trackcand->setNdf(999);     
+        TrackImpl* trackcand = new TrackImpl;           // Don't free it manually, because it is owned by trkCandCollection
 
         // Assign hits to LCIO TRACK
         EVENT::TrackerHitVec trkcandhits = trackCandidates[itrk];
         for (size_t ihit = 0; ihit < trkcandhits.size(); ihit++) {
             TrackerHitImpl* hit = static_cast<TrackerHitImpl*>(trkcandhits[ihit]);
-//            trackcand->addHit( assignCov(hit) );
             trackcand->addHit( hit );
         }
         streamlog_out( DEBUG1 ) << "Track has " << trackcand->getTrackerHits().size() << " hits" << endl;
@@ -515,7 +522,7 @@ void EUTelProcessorTrackingExhaustiveTrackSearch::bookHistograms() {
         }
         
     } catch (lcio::Exception& e) {
-        streamlog_out(WARNING2) << "Can't allocate histgrams. Continue without histogramming" << endl;
+        streamlog_out(WARNING2) << "Can't allocate histograms. Continue without histogramming" << endl;
     }
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
 }

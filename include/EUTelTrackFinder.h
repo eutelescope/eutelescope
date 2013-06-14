@@ -51,8 +51,8 @@ namespace eutelescope {
         virtual EUTelTrackFinder::SearchResult SearchTracks();
         virtual std::vector< EVENT::TrackerHitVec > GetTrackCandidates() const;
         
-        void SetAllHits( const std::map< int, EVENT::TrackerHitVec >& _allHits);
-        std::map< int, EVENT::TrackerHitVec > GetAllHits() const;
+        void SetAllHits( const std::vector< EVENT::TrackerHitVec >& _allHits);
+        std::vector< EVENT::TrackerHitVec > GetAllHits() const;
 
         inline void SetName( std::string name) { this->_name = name; }
         inline std::string GetName() const { return _name; }
@@ -66,7 +66,7 @@ namespace eutelescope {
                 
         std::string _name;
         
-        std::map< int, EVENT::TrackerHitVec > _allHits;
+        std::vector< EVENT::TrackerHitVec > _allHits;
         std::vector< EVENT::TrackerHitVec > _trackCandidates;
 
     };

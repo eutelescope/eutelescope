@@ -23,6 +23,7 @@
 #include <iomanip>
 #include <iostream>
 #include <vector>
+#include <map>
 
 #ifndef DISALLOW_COPY_AND_ASSIGN
 //Following #define stops the accidental creation of a copy or assignment operator by causing a link error.
@@ -202,6 +203,75 @@ namespace eutelescope {
         enum AlignmentMode {
             noAlignment, XYShift, XYShiftXYRot, XYZShiftXYRot, XYShiftYZRotXYRot, XYShiftXZRotXYRot, XYShiftXZRotYZRotXYRot, XYZShiftXZRotYZRotXYRot
         };
+
+        /** @struct BinomialCombination
+         * This structure generates combinations of n objects 
+         * taken k at a time. Combinations are composed from numbers 0 .. n-1.
+         * 
+         * @see D. Knuth "Art of programming. Combinatorial Algorithms" Volume 4A
+         * 
+         * \b Usage:
+         * \code{.cpp}
+         *  BinomialCombination com(5,3);
+         * 
+         *  std::vector < std::vector < int > > combinations;
+         *  combinations = com.sampleCombinations();
+         * \endcode
+         * 
+         */
+        struct BinomialCombination {
+
+            DISALLOW_COPY_AND_ASSIGN( BinomialCombination )     // prevent users from making (default) copies
+            
+            // Constructors 
+            
+            BinomialCombination() : _nObjects(1), _kTaken(1) {
+            }
+
+            BinomialCombination(int n, int k) : _nObjects(n), _kTaken(k) {
+            }
+
+            /** Sample posible combinations of n objekts taken k at
+             * one time. Generated combinations are sorted in lexicografical
+             * order.
+             * 
+             * @return vector of possible combinations
+             */
+            std::vector < std::vector < int > > sampleCombinations() {
+
+               std::vector < int > statevec;    // statevec stores current combination
+                // intialise algorithm
+                {
+                    for (int j = 1; j <= _kTaken; ++j) statevec.push_back(j - 1);
+                    statevec.push_back(_nObjects);
+                    statevec.push_back(0);
+                }
+
+                std::vector < std::vector < int > > result; // result keeps all generated combinations
+                // iterate over combinations
+                std::vector < int > currentCombination(_kTaken);
+                int j = 1;
+                do {
+                    std::copy( statevec.begin(), statevec.begin() + _kTaken, 
+                               currentCombination.begin() );
+                    result.push_back( currentCombination );
+                    for ( j = 1; (statevec[ j - 1 ] + 1 == statevec[ j ]); ++j ) {
+                        statevec[ j - 1 ] = j - 1;
+                    }
+                    statevec[ j - 1 ]++;
+                } while (j <= _kTaken);
+                return result;
+            }
+
+        private:
+            
+            /** Total number of objects */
+            int _nObjects;
+            
+            /** Number of objects taken at one time */
+            int _kTaken;
+        };
+
     }
 }
 

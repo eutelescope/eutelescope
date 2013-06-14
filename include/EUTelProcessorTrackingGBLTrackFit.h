@@ -127,6 +127,9 @@ namespace eutelescope {
         /** Alignment plane ids*/
         IntVec _alignmentPlaneIds;
         
+        /** Alignment plane ids*/
+        IntVec _fixedAlignmentPlaneIds;
+        
         /** Automatic pede run flag*/
         bool _runPede;
         
@@ -203,12 +206,19 @@ namespace eutelescope {
             static string _chi2GblFitHistName;
             static string _probGblFitHistName;
             static string _residGblFitHistName;
+            static string _normResidGblFitHistName;
             static string _residGblFitHistNameX;
             static string _residGblFitHistNameY;
+            static string _normResidGblFitHistNameX;
+            static string _normResidGblFitHistNameY;
             static string _resid2DGblFitHistNameXvsX;
             static string _resid2DGblFitHistNameXvsY;
             static string _resid2DGblFitHistNameYvsX;
             static string _resid2DGblFitHistNameYvsY;
+            static string _normResid2DGblFitHistNameXvsX;
+            static string _normResid2DGblFitHistNameXvsY;
+            static string _normResid2DGblFitHistNameYvsX;
+            static string _normResid2DGblFitHistNameYvsY;
             static string _kinkGblFitHistNameX;
             static string _kinkGblFitHistNameY;
         };

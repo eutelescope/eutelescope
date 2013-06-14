@@ -7,9 +7,11 @@
 
 // eutelescope includes ".h"
 #include "EUTelExhaustiveTrackFinder.h"
+
 #include "EUTELESCOPE.h"
 #include "EUTelTrackFinder.h"
 #include "EUTelGeometryTelescopeGeoDescription.h"
+#include "EUTelUtility.h"
 
 // lcio includes <.h>
 #include "LCIOSTLTypes.h"
@@ -33,20 +35,125 @@ namespace eutelescope {
             }
             return;
         }
+        /** Check if track candidate satisfies selection requirements.
+         *  Track candidate passes if all of it hits are in a window
+         *  defined by _residualsXMin, _residualsXMax and _distanceMaxVec etc.
+         *  Window size changes with distance between planes. By default 150mm
+         *  is assumed.
+         * 
+         * @param trackCandidate vector of hits to be checked
+         * @return true if track candidate satisfies all requirements
+         */
+        bool EUTelExhaustiveTrackFinder::IsGoodCandidate( const EVENT::TrackerHitVec& trackCandidate ) {
+            bool isGood = true;
+            
+            // iterate over candidate's hits
+            EVENT::TrackerHitVec::const_iterator itrPrevHit = trackCandidate.begin();
+            EVENT::TrackerHitVec::const_iterator itrHit;
+            for ( itrHit = trackCandidate.begin(); itrHit != trackCandidate.end(); ++itrHit ) {
+                const double zSpacing = 150.;   // [mm]
+                const double* posPrevHit = (*itrPrevHit)->getPosition();
+                const double* posHit     = (*itrHit)->getPosition();
+                const double resX = posHit[ 0 ] - posPrevHit[ 0 ];
+                const double resY = posHit[ 1 ] - posPrevHit[ 1 ];
+                const double resZ = posHit[ 2 ] - posPrevHit[ 2 ];
+                const double resR = resX*resX + resY*resY;
+                const int sensorID = Utility::GuessSensorID( static_cast< IMPL::TrackerHitImpl* >(*itrHit) );
+                const int numberAlongZ = geo::gGeometry().sensorIDtoZOrder( sensorID );
+                if( _mode == 1 ) {
+                    if( resX > _residualsXMin[ numberAlongZ ] * resZ / zSpacing ) {
+                        isGood = false;
+                        break;
+                    }
+                    if( resX < _residualsXMin[ numberAlongZ ] * resZ / zSpacing ) {
+                        isGood = false;
+                        break;
+                    }
+                    if( resY > _residualsYMax[ numberAlongZ ] * resZ / zSpacing ) {
+                        isGood = false;
+                        break;
+                    }
+                    if( resY < _residualsYMin[ numberAlongZ ] * resZ / zSpacing ) {
+                        isGood = false;
+                        break;
+                    }
+                } else {
+                    if ( sqrt( resR ) > _distanceMaxVec [ numberAlongZ ] * resZ / zSpacing  ) {
+                        isGood = false;
+                        break;
+                    }
+                }
+                itrPrevHit = itrHit;
+            }
+            
+            return isGood;
+        }
           
         EUTelTrackFinder::SearchResult EUTelExhaustiveTrackFinder::DoTrackSearch() {
             streamlog_out(DEBUG1) << "EUTelExhaustiveTrackFinder::DoTrackSearch()" << std::endl;
             streamlog_out(DEBUG1) << "Looking for tracks ..." << std::endl;
-            // start with -1 because increment at the beginning make it 0
-            EVENT::TrackerHitVec vec;
-            int missinghits = 0;
+           
 	    _trackCandidates.clear();
-            if( _mode == 1 ) FindTracks1( missinghits, _trackCandidates, vec, _allHits, 0, NULL );
-            if( _mode == 2 ) FindTracks2( missinghits, _trackCandidates, vec, _allHits, 0, NULL );
+
+            FindTracks( _allowedMissingHits, _trackCandidates, _allHits );
             
-            //PruneTrackCandidates( this->_trackCandidates );
             return kSuccess;
         }
+        
+        void EUTelExhaustiveTrackFinder::FindTracks( int allowedmissinghits,
+                                                     std::vector< EVENT::TrackerHitVec >& trackCandidates,
+                                                     std::vector< EVENT::TrackerHitVec>& allHitsArray ) {
+            
+            const int nPlanes = geo::gGeometry().nPlanes();
+            
+//            if ( allHitsArray.size() != nPlanes ) return;
+            
+            // look for full length tracks first
+            EVENT::TrackerHitVec comb;
+            if( _nEmptyPlanes == 0 ) {
+            CombinationGenerator st(this,allHitsArray);
+                do {
+                    comb = st.getCurrentCombination();
+                    if( IsGoodCandidate( comb ) ) 
+                        trackCandidates.push_back(comb);
+                } while (st.incrementCurrentCombination());
+            }
+            // if missing hits were allowed
+            // sample possible combinations of planes with missing hits
+            for( int missinghits = _nEmptyPlanes + 1; missinghits <= allowedmissinghits; ++missinghits ) {
+                Utility::BinomialCombination com(nPlanes, missinghits);
+                std::vector < std::vector < int > > dropedPlanesCombinations;
+                dropedPlanesCombinations = com.sampleCombinations();
+
+                std::vector < int > dropedPlanes;
+                // iterate over combinations of planes with missing hits
+                std::vector < std::vector < int > >::const_iterator itrDropPlanes;
+                for (itrDropPlanes = dropedPlanesCombinations.begin();
+                        itrDropPlanes != dropedPlanesCombinations.end(); ++itrDropPlanes) {
+                    dropedPlanes = *itrDropPlanes;
+
+                    // construct all possible combinations of hits from remaining planes
+                    std::vector< EVENT::TrackerHitVec> RemainigHits;
+
+                    // remove planes with assumed missing hits
+                    bool isTake;
+                    for ( int i = 0; i < (int)allHitsArray.size(); ++i ) {
+                        isTake = true;
+                        for (int j = 0; j < (int)dropedPlanes.size(); ++j) {
+                            if ( i == dropedPlanes[j] ) { isTake = false; break; }
+                        }
+                        if ( isTake ) RemainigHits.push_back( allHitsArray[i] );
+                    }
+
+                    CombinationGenerator st(this,RemainigHits);
+                    do {
+                        comb = st.getCurrentCombination();
+                        if( IsGoodCandidate( comb ) ) 
+                            trackCandidates.push_back(comb);
+                    } while (st.incrementCurrentCombination());
+                } // end of loop over each droped planes combination
+            } // for( int missinghits = 0; missinghits <= allowedmissinghits; ++missinghits )
+        } // FindTracks()
         
         void EUTelExhaustiveTrackFinder::FindTracks2( int& missinghits,
                                                       std::vector< EVENT::TrackerHitVec >& trackCandidates,
@@ -59,37 +166,23 @@ namespace eutelescope {
             streamlog_out(DEBUG0) << "Looking for tracks ..." << std::endl;
             streamlog_out(DEBUG0) << "Missing hits:" << missinghits << std::endl;
 
-//            const EVENT::IntVec sensorIDVecZOrder = geo::gGeometry._sensorIDVecZOrder;
-            
-//            // recursive chain is dropped here;
-//            if ( missinghits > GetAllowedMissingHits() ) {
-//		 streamlog_out(DEBUG0) << "indexarray size:" << trackCandidates.size() << std::endl;
-//		 return;
-//	    }
-            
-            // recall hit id from the plane (i-1)
-            if ( hitInPrevPlane != 0 ) { 
-                vec.pop_back();
-                vec.push_back(hitInPrevPlane);
-            }
 
             // search for hits in the next plane if plane iPlane has no hits
             const size_t nPlanes = _allHitsArray.size();
-            if ( _allHitsArray[ iPlane ].empty() && (iPlane < nPlanes - 1) ) {
-                    ++missinghits;
-                    if( missinghits > GetAllowedMissingHits() ) return;
-		    FindTracks2(missinghits, trackCandidates, vec, _allHitsArray, iPlane + 1, NULL);
-	    }
 
             // recursive chain is dropped here
             if ( missinghits > GetAllowedMissingHits() ) return;
 
             //assume missing hit in this plane
-            if( (missinghits < GetAllowedMissingHits()) && (iPlane < nPlanes - 1) ) {
+            if( (missinghits < GetAllowedMissingHits()) ) {
                 int missinghits_copy = missinghits;
                 ++missinghits;
                 EVENT::TrackerHitVec vec_copy = vec;
-                FindTracks2(missinghits, trackCandidates, vec, _allHitsArray, iPlane + 1, NULL );
+                if( iPlane < nPlanes - 1 ) FindTracks2(missinghits, trackCandidates, vec, _allHitsArray, iPlane + 1, (vec.empty())?NULL:vec.front() );
+                else {
+                    EVENT::TrackerHitVec aCandidate = vec;
+                    trackCandidates.push_back( aCandidate );
+                }
                 vec = vec_copy;
                 missinghits = missinghits_copy;
             }
@@ -100,7 +193,8 @@ namespace eutelescope {
 
                 EVENT::TrackerHit* iHit = _allHitsArray[iPlane][j];
 		streamlog_out(DEBUG0) << "Hit " << j << " in plane " << iPlane << std::endl;
-                vec.push_back(iHit); //index of the cluster in the last plane
+                /*if( vec.size() + missinghits < iPlane + 1 )*/ vec.push_back(iHit); //index of the cluster in the last plane
+                /*else { vec.pop_back(); vec.push_back(iHit); }*/
                 
                 // if we are not in the last plane, call this method again
                 if ( iPlane < nPlanes - 1 ) {
@@ -153,16 +247,12 @@ namespace eutelescope {
                     //we are in the last plane. if the hit satisfies track candidate requirement then store this track candidate.
                     if( taketrack ) {
                         EVENT::TrackerHitVec aCandidate = vec;
-//			IMPL::TrackImpl* track = new IMPL::TrackImpl();
-//			for_each( aCandidate.begin(), aCandidate.end(), std::bind1st( std::mem_fun(&IMPL::TrackImpl::addHit), track ) );
-//			trackCandidates.push_back( track );
-//			delete track;
                         trackCandidates.push_back( aCandidate );
                         streamlog_out(DEBUG0) << "indexarray size at last plane:" << trackCandidates.size() << std::endl;
 		    }
-//                    vec.pop_back(); //last element must be removed because the
                     //vector is still used -> we are in a last plane hit loop!
                 }
+                vec.pop_back();
             }
         }
 

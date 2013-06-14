@@ -62,7 +62,7 @@ namespace eutelescope {
         return _trackCandidates;
     }
 
-    void EUTelTrackFinder::SetAllHits( const std::map< int, EVENT::TrackerHitVec >& allHits) {
+    void EUTelTrackFinder::SetAllHits( const std::vector< EVENT::TrackerHitVec >& allHits) {
         
         streamlog_out( DEBUG1 ) << "EUTelTrackFinder::SetAllHits()." << std::endl;
         streamlog_out( DEBUG1 ) << " Hits for track search ready." << std::endl;
@@ -72,7 +72,7 @@ namespace eutelescope {
 	return;
     }
 
-    std::map< int, EVENT::TrackerHitVec > EUTelTrackFinder::GetAllHits() const {
+    std::vector< EVENT::TrackerHitVec > EUTelTrackFinder::GetAllHits() const {
         return _allHits;
     }
 

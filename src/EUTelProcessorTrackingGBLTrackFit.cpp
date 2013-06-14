@@ -69,12 +69,19 @@ using namespace eutelescope;
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_chi2GblFitHistName = "chi2GblFit";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_probGblFitHistName = "probGblFit";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_residGblFitHistName = "ResidualsGblFit";
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_normResidGblFitHistName = "NormResidualsGblFit";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_residGblFitHistNameX = "ResidualsGblFit_x";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_residGblFitHistNameY = "ResidualsGblFit_y";
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_normResidGblFitHistNameX = "NormResidualsGblFit_x";
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_normResidGblFitHistNameY = "NormResidualsGblFit_y";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_resid2DGblFitHistNameXvsX = "Residuals2DGblFit_xVSx";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_resid2DGblFitHistNameYvsX = "Residuals2DGblFit_yVSx";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_resid2DGblFitHistNameXvsY = "Residuals2DGblFit_xVSy";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_resid2DGblFitHistNameYvsY = "Residuals2DGblFit_yVSy";
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_normResid2DGblFitHistNameXvsX = "NormResiduals2DGblFit_xVSx";
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_normResid2DGblFitHistNameYvsX = "NormResiduals2DGblFit_yVSx";
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_normResid2DGblFitHistNameXvsY = "NormResiduals2DGblFit_xVSy";
+std::string EUTelProcessorTrackingGBLTrackFit::_histName::_normResid2DGblFitHistNameYvsY = "NormResiduals2DGblFit_yVSy";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_kinkGblFitHistNameX = "KinksGblFit_x";
 std::string EUTelProcessorTrackingGBLTrackFit::_histName::_kinkGblFitHistNameY = "KinksGblFit_y";
 #endif // defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -93,6 +100,7 @@ _zRotationsVec(),
 _milleBinaryFilename("mille.bin"),
 _milleSteeringFilename("pede-steer.txt"),
 _alignmentPlaneIds(),
+_fixedAlignmentPlaneIds(),
 _runPede(false),
 _maxChi2Cut(1000.),
 _tgeoFileName("TELESCOPE.root"),
@@ -164,6 +172,8 @@ _aidaHistoMap2D()
     registerOptionalParameter("MilleMaxChi2Cut", "Maximum chi2 of a track candidate that goes into millepede", _maxChi2Cut, double(1000.));
 
     registerOptionalParameter("AlignmentPlanes", "Ids of planes to be used in alignment", _alignmentPlaneIds, IntVec());
+    
+    registerOptionalParameter("FixedAlignmentPlanes", "Ids of planes to be fixed during millipede call", _fixedAlignmentPlaneIds, IntVec());
     
     registerOptionalParameter("RunPede","Execute the pede at the end of processing using the generated steering file.",_runPede, static_cast <bool> (false));
     
@@ -330,7 +340,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 
     // this will only be entered if the collection is available
     if (col != NULL) {
-        if (_nProcessedEvents % 1000 == 1) streamlog_out(DEBUG2) << "EUTelProcessorTrackingGBLTrackFit" << endl;
+        streamlog_out(DEBUG2) << "EUTelProcessorTrackingGBLTrackFit" << endl;
 
         vector < EVENT::TrackerHitVec > trackCandidates;
         for (int iCol = 0; iCol < col->getNumberOfElements(); iCol++) {
@@ -355,9 +365,9 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
         TVectorD measErr(200);
         TVectorD residualErr(200);
         TVectorD downWeight(200);
-        int nTracks = trackCandidates.size();
+        const int nTracks = trackCandidates.size();
         streamlog_out(DEBUG1) << "N tracks found " << nTracks << endl;
-        if (nTracks != 0) {
+        if (nTracks == 1) {
             _trackFitter->SetTrackCandidates(trackCandidates);
             _trackFitter->FitTracks();
             //
@@ -379,11 +389,10 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 
                 std::map< int, gbl::GblTrajectory* > gblTracks = static_cast<EUTelGBLFitter*> (_trackFitter)->GetGblTrackCandidates();
 
+                const double um = 1000.;
                 std::stringstream sstr;
+                std::stringstream sstrNorm;
                 gbl::GblTrajectory* gblTraj = gblTracks[ iCounter ];
-                //                gblTraj->printTrajectory( );
-                //                gblTraj->printPoints( );
-                //                gblTraj->printData( );
                 std::vector< gbl::GblPoint > gblPointVec = static_cast<EUTelGBLFitter*> (_trackFitter)->GetGblTracksPoints()[iCounter];
                 std::vector< gbl::GblPoint >::const_iterator itGblPoint = gblPointVec.begin();
                 int iPlane = 0; // wrong in case of missing planes
@@ -395,17 +404,23 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
                         // spatial residuals
                         gblTraj->getMeasResults(itGblPoint->getLabel(), numData, residual, measErr, residualErr, downWeight);
                         sstr << _histName::_residGblFitHistNameX << iPlane;
+                        sstrNorm << _histName::_normResidGblFitHistNameX << iPlane;
                         streamlog_out(DEBUG0) << std::setw(15) << std::setprecision(5) << residual[0] << std::setw(15) << std::setprecision(5) << residualErr[0] << std::endl;
-                        static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[0] / residualErr[0], downWeight[0]);
+                        static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[0]*um, downWeight[0]);
+                        static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstrNorm.str() ]) -> fill(residual[0] / residualErr[0], downWeight[0]);
                         _alignmentConstants._xResiduals[iPlane]+=(residual[0]);
                         _alignmentConstants._nxResiduals[iPlane]++;
                         sstr.str(std::string());
+                        sstrNorm.str(std::string());
                         sstr << _histName::_residGblFitHistNameY << iPlane;
+                        sstrNorm << _histName::_normResidGblFitHistNameY << iPlane;
                         streamlog_out(DEBUG0) << std::setw(15) << std::setprecision(5) << residual[1] << std::setw(15) << std::setprecision(5) << residualErr[1] << std::endl;
-                        static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[1] / residualErr[1], downWeight[1]);
+                        static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[1]*um, downWeight[1]);
+                        static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstrNorm.str() ]) -> fill(residual[1] / residualErr[1], downWeight[1]);
                         _alignmentConstants._yResiduals[iPlane]+=(residual[1]);
                         _alignmentConstants._nyResiduals[iPlane]++;
                         sstr.str(std::string());
+                        sstrNorm.str(std::string());
                         // kinks
                         gblTraj->getScatResults(itGblPoint->getLabel(), numData, residual, measErr, residualErr, downWeight);
                         sstr << _histName::_kinkGblFitHistNameX << iPlane;
@@ -416,22 +431,35 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
                         streamlog_out(DEBUG0) << std::setw(15) << std::setprecision(5) << residual[1] << std::setw(15) << std::setprecision(5) << residualErr[1] << std::endl;
                         static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[1], downWeight[1]);
                         sstr.str(std::string());
+                        sstrNorm.str(std::string());
 
                         // 2D histograms
                         EVENT::TrackerHitVec hit_track1 = trackCandidates.front();
                         const double* hitpos = hit_track1[iPlane]->getPosition(); // wrong in case of empty planes
                         sstr << _histName::_resid2DGblFitHistNameXvsX << iPlane;
-                        static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstr.str() ]) -> fill(hitpos[0], residual[0] / residualErr[0], downWeight[0]);
+                        sstrNorm << _histName::_normResid2DGblFitHistNameXvsX << iPlane;
+                        static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstr.str() ]) -> fill(hitpos[0], residual[0] * um, downWeight[0]);
+                        static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstrNorm.str() ]) -> fill(hitpos[0], residual[0] / residualErr[0], downWeight[0]);
                         sstr.str(std::string());
+                        sstrNorm.str(std::string());
                         sstr << _histName::_resid2DGblFitHistNameXvsY << iPlane;
-                        static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstr.str() ]) -> fill(hitpos[1], residual[0] / residualErr[0], downWeight[0]);
+                        sstrNorm << _histName::_normResid2DGblFitHistNameXvsY << iPlane;
+                        static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstr.str() ]) -> fill(hitpos[1], residual[0] * um, downWeight[0]);
+                        static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstrNorm.str() ]) -> fill(hitpos[1], residual[0] / residualErr[0], downWeight[0]);
                         sstr.str(std::string());
+                        sstrNorm.str(std::string());
                         sstr << _histName::_resid2DGblFitHistNameYvsX << iPlane;
-                        static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstr.str() ]) -> fill(hitpos[0], residual[1] / residualErr[1], downWeight[1]);
+                        sstrNorm << _histName::_normResid2DGblFitHistNameYvsX << iPlane;
+                        static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstr.str() ]) -> fill(hitpos[0], residual[1] * um, downWeight[1]);
+                        static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstrNorm.str() ]) -> fill(hitpos[0], residual[1] / residualErr[1], downWeight[1]);
                         sstr.str(std::string());
+                        sstrNorm.str(std::string());
                         sstr << _histName::_resid2DGblFitHistNameYvsY << iPlane;
-                        static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstr.str() ]) -> fill(hitpos[1], residual[1] / residualErr[1], downWeight[1]);
+                        sstrNorm << _histName::_normResid2DGblFitHistNameYvsY << iPlane;
+                        static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstr.str() ]) -> fill(hitpos[1], residual[1] * um, downWeight[1]);
+                        static_cast<AIDA::IHistogram2D*> (_aidaHistoMap2D[ sstrNorm.str() ]) -> fill(hitpos[1], residual[1] / residualErr[1], downWeight[1]);
                         sstr.str(std::string());
+                        sstrNorm.str(std::string());
 
                         if (itGblPoint->getLabel() < 1000)++iPlane;
                     }
@@ -453,6 +481,7 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
 
 void EUTelProcessorTrackingGBLTrackFit::check(LCEvent * evt) {
     // nothing to check here
+    evt; // suppress unused parameter compiler warning
 }
 
 void EUTelProcessorTrackingGBLTrackFit::end() {
@@ -565,76 +594,83 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
     
     // loop over all planes
     // @TODO assumes that planes have ids 0..._nplanes !generaly wrong
-    for (unsigned int help = 0; help < geo::gGeometry()._nPlanes; help++) {
+    for (unsigned int help = 0; help < geo::gGeometry().nPlanes(); help++) {
 
-        int sensorId = geo::gGeometry()._sensorIDVecZOrder[help];
-        bool isPlaneExcluded = std::find(_alignmentPlaneIds.begin(), _alignmentPlaneIds.end(), sensorId) == _alignmentPlaneIds.end();
-              
+        const int sensorId = geo::gGeometry().sensorIDsVecZOrder()[help];
+        const bool isPlaneExcluded = std::find(_alignmentPlaneIds.begin(), _alignmentPlaneIds.end(), sensorId) == _alignmentPlaneIds.end();
+        
+        // check if plane has to be used as fixed
+        const bool isFixed = std::find(_fixedAlignmentPlaneIds.begin(), _fixedAlignmentPlaneIds.end(), sensorId) != _fixedAlignmentPlaneIds.end();
+        
         // if plane not excluded
         if ( !isPlaneExcluded ) {
 
+            const string initUncertainty = (isFixed) ? "-1." : "0.01";
+            const double initXshift = (isFixed) ? 0. : _alignmentConstants._xResiduals[sensorId]/_alignmentConstants._nxResiduals[sensorId];
+            const double initYshift = (isFixed) ? 0. : _alignmentConstants._yResiduals[sensorId]/_alignmentConstants._nyResiduals[sensorId];
+            
             if( fitter->GetAlignmentMode()==Utility::XYZShiftXYRot ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << _alignmentConstants._xResiduals[sensorId]/_alignmentConstants._nxResiduals[sensorId] << setw(25) << "0.01" 
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertainty
                            << setw(25) << " ! X shift " << setw(25) << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << _alignmentConstants._yResiduals[sensorId]/_alignmentConstants._nyResiduals[sensorId] << setw(25) << "0.01" 
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << initYshift << setw(25) << initUncertainty
                            << setw(25) << " ! Y shift " << setw(25) << sensorId << endl;
-                steerFile << left << setw(25) << ZShiftsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01" 
+                steerFile << left << setw(25) << ZShiftsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                            << setw(25) << " ! Z shift " << setw(25) << sensorId << endl;
-                steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01"
+                steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                           << setw(25) << " ! XY rotation " << sensorId << endl;
             } else if( fitter->GetAlignmentMode()==Utility::XYShiftYZRotXYRot ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << _alignmentConstants._xResiduals[sensorId]/_alignmentConstants._nxResiduals[sensorId] << setw(25) << "0.01" 
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertainty
                           << setw(25) << " ! X shift " << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25)  << _alignmentConstants._yResiduals[sensorId]/_alignmentConstants._nyResiduals[sensorId] << setw(25) << "0.01" 
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25)  << initYshift << setw(25) << initUncertainty
                           << setw(25) << " ! Y shift " << sensorId << endl;
-                steerFile << left << setw(25) << XRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01" 
+                steerFile << left << setw(25) << XRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                           << setw(25) << " ! YZ rotation " << sensorId << endl;
-                steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01"
+                steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                           << setw(25) << " ! XY rotation " << sensorId << endl;
             } else if( fitter->GetAlignmentMode()==Utility::XYShiftXZRotXYRot ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << _alignmentConstants._xResiduals[sensorId]/_alignmentConstants._nxResiduals[sensorId] << setw(25) << "0.01" 
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertainty
                           << setw(25) << " ! X shift " << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << _alignmentConstants._yResiduals[sensorId]/_alignmentConstants._nyResiduals[sensorId] << setw(25) << "0.01" 
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << initYshift << setw(25) << initUncertainty
                           << setw(25) << " ! Y shift " << sensorId << endl;
-                steerFile << left << setw(25) << YRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01" 
+                steerFile << left << setw(25) << YRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                           << setw(25) << " ! XZ rotation " << sensorId << endl;
-                steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01"
+                steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                          << setw(25)  << " ! XY rotation " << sensorId << endl;
             } else if( fitter->GetAlignmentMode()==Utility::XYShiftXZRotYZRotXYRot ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << _alignmentConstants._xResiduals[sensorId]/_alignmentConstants._nxResiduals[sensorId] << setw(25) << "0.01" 
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertainty
                           << setw(25) << " ! X shift " << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << _alignmentConstants._yResiduals[sensorId]/_alignmentConstants._nyResiduals[sensorId] << setw(25) << "0.01" 
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << initYshift << setw(25) << initUncertainty
                           << setw(25) << " ! Y shift " << sensorId << endl;
-                steerFile << left << setw(25) << YRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01" 
+                steerFile << left << setw(25) << YRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                           << setw(25) << " ! XZ rotation " << sensorId << endl;
-                steerFile << left << setw(25) << XRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01" 
+                steerFile << left << setw(25) << XRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                           << setw(25) << " ! YZ rotation " << sensorId << endl;
-                steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01"
+                steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                          << setw(25)  << " ! XY rotation " << sensorId << endl;
             } else if( fitter->GetAlignmentMode()==Utility::XYZShiftXZRotYZRotXYRot ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << _alignmentConstants._xResiduals[sensorId]/_alignmentConstants._nxResiduals[sensorId] << setw(25) << "0.01" 
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertainty
                           << setw(25) << " ! X shift " << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << _alignmentConstants._yResiduals[sensorId]/_alignmentConstants._nyResiduals[sensorId] << setw(25) << "0.01" 
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << initYshift << setw(25) << initUncertainty
                           << setw(25) << " ! Y shift " << sensorId << endl;
-                steerFile << left << setw(25) << ZShiftsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01" 
+                steerFile << left << setw(25) << ZShiftsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                           << setw(25) << " ! Z shift " << sensorId << endl;
-                steerFile << left << setw(25) << YRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01" 
+                steerFile << left << setw(25) << YRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                           << setw(25) << " ! XZ rotation " << sensorId << endl;
-                steerFile << left << setw(25) << XRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01" 
+                steerFile << left << setw(25) << XRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                           << setw(25) << " ! YZ rotation " << sensorId << endl;
-                steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01"
+                steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                          << setw(25)  << " ! XY rotation " << sensorId << endl;
             } else if ( fitter->GetAlignmentMode()==Utility::XYShiftXYRot ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << _alignmentConstants._xResiduals[sensorId]/_alignmentConstants._nxResiduals[sensorId] << setw(25) << "0.01" 
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertainty
                           << setw(25) << " ! X shift " << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << _alignmentConstants._yResiduals[sensorId]/_alignmentConstants._nyResiduals[sensorId] << setw(25) << "0.01" 
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << initYshift << setw(25) << initUncertainty
                           << setw(25) << " ! Y shift " << sensorId << endl;
-                steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "0.01" 
+                steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << initUncertainty
                           << setw(25) << " ! XY rotation " << sensorId << endl;
             } else if ( fitter->GetAlignmentMode()==Utility::XYShift ) {
-                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << _alignmentConstants._xResiduals[sensorId]/_alignmentConstants._nxResiduals[sensorId] << setw(25) << "0.01"
+                steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertainty
                           << setw(25) << " ! X shift " << sensorId << endl;
-                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << _alignmentConstants._yResiduals[sensorId]/_alignmentConstants._nyResiduals[sensorId] << setw(25) << "0.01"
+                steerFile << left << setw(25) << YShiftsMap[sensorId] << setw(25) << initYshift << setw(25) << initUncertainty
                           << setw(25) << " ! Y shift " << sensorId << endl;
                 steerFile << left << setw(25) << ZRotationsMap[sensorId] << setw(25) << "0.0" << setw(25) << "-1.0"
                           << setw(25) << " ! XY rotation fixed" << sensorId << endl;
@@ -728,11 +764,36 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
         std::stringstream sstm;
         std::string residGblFitHistName;
         std::string histTitle;
-        for (size_t iPlane = 0; iPlane < geo::gGeometry()._nPlanes; iPlane++) {
-            sstm << _histName::_residGblFitHistNameX << geo::gGeometry()._sensorIDVec.at(iPlane);
+        // normalised residuals y
+        for (size_t iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
+            sstm << _histName::_normResidGblFitHistNameX << geo::gGeometry().sensorIDsVec().at(iPlane);
             residGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "X direction; Normalised residuals; N hits";
+            sstm << "Normalised residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "X direction; Normalised residuals; N hits";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : resid1dNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : residMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : residMaxX;
+            AIDA::IHistogram1D * residGblFit =
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX);
+            if (residGblFit) {
+                residGblFit->setTitle(histTitle);
+                _aidaHistoMap1D.insert(std::make_pair(residGblFitHistName, residGblFit));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+            }
+            sstm.str(std::string(""));
+        }
+        
+        // plane residuals y
+        for (size_t iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
+            sstm << _histName::_residGblFitHistNameX << geo::gGeometry().sensorIDsVec().at(iPlane);
+            residGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "X direction; residuals [um]; N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
@@ -751,11 +812,36 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm.str(std::string(""));
         }
 
-        for (size_t iPlane = 0; iPlane < geo::gGeometry()._nPlanes; iPlane++) {
-            sstm << _histName::_residGblFitHistNameY << geo::gGeometry()._sensorIDVec.at(iPlane);
+        // normalised residuals y
+        for (size_t iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
+            sstm << _histName::_normResidGblFitHistNameY << geo::gGeometry().sensorIDsVec().at(iPlane);
             residGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "Y direction; Normalised residuals; N hits";
+            sstm << "Normalised residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "Y direction; Normalised residuals; N hits";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : resid1dNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : residMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : residMaxX;
+            AIDA::IHistogram1D * residGblFit =
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram1D(residGblFitHistName, NBinX, MinX, MaxX);
+            if (residGblFit) {
+                residGblFit->setTitle(histTitle);
+                _aidaHistoMap1D.insert(std::make_pair(residGblFitHistName, residGblFit));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (residGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+            }
+            sstm.str(std::string(""));
+        }
+        
+        // plane residuals y
+        for (size_t iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
+            sstm << _histName::_residGblFitHistNameY << geo::gGeometry().sensorIDsVec().at(iPlane);
+            residGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "Y direction; residuals [um]; N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(residGblFitHistName);
@@ -789,11 +875,13 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
         MinY = residMinY;
         MaxY = residMaxY;
         std::string resid2DGblFitHistName;
-        for (size_t iPlane = 0; iPlane < geo::gGeometry()._nPlanes; iPlane++) {
-            sstm << _histName::_resid2DGblFitHistNameXvsX << geo::gGeometry()._sensorIDVec.at(iPlane);
+        
+        // normalised residuals x
+        for (size_t iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
+            sstm << _histName::_normResid2DGblFitHistNameXvsX << geo::gGeometry().sensorIDsVec().at(iPlane);
             resid2DGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "; x (mm); Normalised residuals rx";
+            sstm << "Normalised residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "; x (mm); Normalised residuals rx";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
@@ -814,10 +902,61 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             }
             sstm.str(std::string(""));
 
-            sstm << _histName::_resid2DGblFitHistNameXvsY << geo::gGeometry()._sensorIDVec.at(iPlane);
+            sstm << _histName::_normResid2DGblFitHistNameXvsY << geo::gGeometry().sensorIDsVec().at(iPlane);
             resid2DGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "; y (mm); Normalised residuals rx";
+            sstm << "Normalised residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "; y (mm); Normalised residuals rx";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : residNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : hitposMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : hitposMaxX;
+            NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : residNBinY;
+            MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : residMinY;
+            MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : residMaxY;
+            AIDA::IHistogram2D * residGblFit2 =
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(resid2DGblFitHistName, NBinX, MinX, MaxX, NBinY, MinY, MaxY);
+            if (residGblFit2) {
+                residGblFit2->setTitle(histTitle);
+                _aidaHistoMap2D.insert(std::make_pair(resid2DGblFitHistName, residGblFit2));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (resid2DGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+            }
+            sstm.str(std::string(""));
+        }
+        
+        // plane residuals x
+        for (size_t iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
+            sstm << _histName::_resid2DGblFitHistNameXvsX << geo::gGeometry().sensorIDsVec().at(iPlane);
+            resid2DGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "; x (mm); Residuals rx [um]";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : residNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : hitposMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : hitposMaxX;
+            NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : residNBinY;
+            MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : residMinY;
+            MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : residMaxY;
+            AIDA::IHistogram2D * residGblFit1 =
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(resid2DGblFitHistName, NBinX, MinX, MaxX, NBinY, MinY, MaxY);
+            if (residGblFit1) {
+                residGblFit1->setTitle(histTitle);
+                _aidaHistoMap2D.insert(std::make_pair(resid2DGblFitHistName, residGblFit1));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (resid2DGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+            }
+            sstm.str(std::string(""));
+
+            sstm << _histName::_resid2DGblFitHistNameXvsY << geo::gGeometry().sensorIDsVec().at(iPlane);
+            resid2DGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "; y (mm); Residuals rx [um]";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
@@ -839,11 +978,12 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm.str(std::string(""));
         }
 
-        for (size_t iPlane = 0; iPlane < geo::gGeometry()._nPlanes; iPlane++) {
-            sstm << _histName::_resid2DGblFitHistNameYvsX << geo::gGeometry()._sensorIDVec.at(iPlane);
+        // normalised residuals y
+        for (size_t iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
+            sstm << _histName::_normResid2DGblFitHistNameYvsX << geo::gGeometry().sensorIDsVec().at(iPlane);
             resid2DGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "; x (mm); Normalised residuals ry";
+            sstm << "Normalised residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "; x (mm); Residuals ry [um]";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
@@ -864,10 +1004,61 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             }
             sstm.str(std::string(""));
 
-            sstm << _histName::_resid2DGblFitHistNameYvsY << geo::gGeometry()._sensorIDVec.at(iPlane);
+            sstm << _histName::_normResid2DGblFitHistNameYvsY << geo::gGeometry().sensorIDsVec().at(iPlane);
             resid2DGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Normalised residuals. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "; y (mm); Normalised residuals ry";
+            sstm << "Normalised residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "; y (mm); Normalised residuals ry";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : residNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : hitposMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : hitposMaxX;
+            NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : residNBinY;
+            MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : residMinY;
+            MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : residMaxY;
+            AIDA::IHistogram2D * residGblFit2 =
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(resid2DGblFitHistName, NBinX, MinX, MaxX, NBinY, MinY, MaxY);
+            if (residGblFit2) {
+                residGblFit2->setTitle(histTitle);
+                _aidaHistoMap2D.insert(std::make_pair(resid2DGblFitHistName, residGblFit2));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (resid2DGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+            }
+            sstm.str(std::string(""));
+        }
+        
+        // plane residuals y
+        for (size_t iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
+            sstm << _histName::_resid2DGblFitHistNameYvsX << geo::gGeometry().sensorIDsVec().at(iPlane);
+            resid2DGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "; x (mm); Residuals ry [um]";
+            histTitle = sstm.str();
+            sstm.str(std::string(""));
+            histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
+            NBinX = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xBin : residNBinX;
+            MinX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMin : hitposMinX;
+            MaxX =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_xMax : hitposMaxX;
+            NBinY = ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yBin : residNBinY;
+            MinY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMin : residMinY;
+            MaxY =  ( isHistoManagerAvailable && histoInfo ) ? histoInfo->_yMax : residMaxY;
+            AIDA::IHistogram2D * residGblFit1 =
+                    marlin::AIDAProcessor::histogramFactory(this)->createHistogram2D(resid2DGblFitHistName, NBinX, MinX, MaxX, NBinY, MinY, MaxY);
+            if (residGblFit1) {
+                residGblFit1->setTitle(histTitle);
+                _aidaHistoMap2D.insert(std::make_pair(resid2DGblFitHistName, residGblFit1));
+            } else {
+                streamlog_out(ERROR2) << "Problem booking the " << (resid2DGblFitHistName) << std::endl;
+                streamlog_out(ERROR2) << "Very likely a problem with path name. Switching off histogramming and continue w/o" << std::endl;
+            }
+            sstm.str(std::string(""));
+
+            sstm << _histName::_resid2DGblFitHistNameYvsY << geo::gGeometry().sensorIDsVec().at(iPlane);
+            resid2DGblFitHistName = sstm.str();
+            sstm.str(std::string());
+            sstm << "Residuals. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "; y (mm); Residuals ry [um]";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(resid2DGblFitHistName);
@@ -897,11 +1088,11 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
         MinX = kinkMinX;
         MaxX = kinkMaxX;
         std::string kinkGblFitHistName;
-        for (int iPlane = 0; iPlane < geo::gGeometry()._nPlanes; iPlane++) {
-            sstm << _histName::_kinkGblFitHistNameX << geo::gGeometry()._sensorIDVec.at(iPlane);
+        for (int iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
+            sstm << _histName::_kinkGblFitHistNameX << geo::gGeometry().sensorIDsVec().at(iPlane);
             kinkGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Kink angles. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "X direction; kink (rad); N hits";
+            sstm << "Kink angles. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "X direction; kink (rad); N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(kinkGblFitHistName);
@@ -920,11 +1111,11 @@ void EUTelProcessorTrackingGBLTrackFit::bookHistograms() {
             sstm.str(std::string(""));
         }
 
-        for (size_t iPlane = 0; iPlane < geo::gGeometry()._nPlanes; iPlane++) {
-            sstm << _histName::_kinkGblFitHistNameY << geo::gGeometry()._sensorIDVec.at(iPlane);
+        for (size_t iPlane = 0; iPlane < geo::gGeometry().nPlanes(); iPlane++) {
+            sstm << _histName::_kinkGblFitHistNameY << geo::gGeometry().sensorIDsVec().at(iPlane);
             kinkGblFitHistName = sstm.str();
             sstm.str(std::string());
-            sstm << "Kink angles. Plane " << geo::gGeometry()._sensorIDVec.at(iPlane) << "Y direction; kink (rad); N hits";
+            sstm << "Kink angles. Plane " << geo::gGeometry().sensorIDsVec().at(iPlane) << "Y direction; kink (rad); N hits";
             histTitle = sstm.str();
             sstm.str(std::string(""));
             histoInfo = histoMgr->getHistogramInfo(kinkGblFitHistName);

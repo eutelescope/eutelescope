@@ -167,6 +167,8 @@ namespace eutelescope {
                         return skipHit; // if TRUE  this hit will be skipped
                     }
 
+//                    delete cluster;
+                    
                 } catch (lcio::Exception e) {
                     // catch specific exceptions
                     streamlog_out(ERROR) << "Exception occured in hitContainsHotPixels(): " << e.what() << std::endl;
@@ -201,6 +203,11 @@ namespace eutelescope {
             
         }
 
+        /**
+         * Determine hit's plane id
+         * @param hit 
+         * @return plane id
+         */
         int GuessSensorID( const IMPL::TrackerHitImpl * hit ) {
             if ( hit == NULL ) {
                 streamlog_out(ERROR) << "An invalid hit pointer supplied! will exit now\n" << std::endl;

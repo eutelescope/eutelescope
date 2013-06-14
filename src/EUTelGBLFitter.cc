@@ -51,8 +51,20 @@
 namespace eutelescope {
 
     EUTelGBLFitter::EUTelGBLFitter() : EUTelTrackFitter("GBLTrackFitter"),
-    _alignmentMode(Utility::XYShiftXYRot),
+    _trackCandidates(),
+    _gblTrackCandidates(),
+    _fittrackvec(0),
+    _gblTrackPoints(),
     _parPropJac(5, 5),
+    _eBeam(-1.),
+    _alignmentMode(Utility::XYShiftXYRot),
+    _mille(0),
+    _paramterIdXShiftsMap(),
+    _paramterIdYShiftsMap(),
+    _paramterIdZShiftsMap(),
+    _paramterIdXRotationsMap(),
+    _paramterIdYRotationsMap(),
+    _paramterIdZRotationsMap(),
     _chi2cut(1000.) {
         _trackCandidates.clear();
         _gblTrackCandidates.clear();
@@ -63,6 +75,32 @@ namespace eutelescope {
 
     }
 
+    EUTelGBLFitter::EUTelGBLFitter(std::string name) : EUTelTrackFitter(name),
+    _trackCandidates(),
+    _gblTrackCandidates(),
+    _fittrackvec(0),
+    _gblTrackPoints(),
+    _parPropJac(5, 5),
+    _eBeam(-1.),
+    _alignmentMode(Utility::XYShiftXYRot),
+    _mille(0),
+    _paramterIdXShiftsMap(),
+    _paramterIdYShiftsMap(),
+    _paramterIdZShiftsMap(),
+    _paramterIdXRotationsMap(),
+    _paramterIdYRotationsMap(),
+    _paramterIdZRotationsMap(),
+    _chi2cut(1000.) {
+        _trackCandidates.clear();
+        _gblTrackCandidates.clear();
+
+        _fittrackvec = new IMPL::LCCollectionVec(EVENT::LCIO::TRACK);
+    }
+
+    EUTelGBLFitter::~EUTelGBLFitter() {
+        delete _fittrackvec;
+    }
+    
     void EUTelGBLFitter::SetXRotationsVec(std::vector<int>& xRotationsVec) {
         if (xRotationsVec.size() % 2 != 0) {
             streamlog_out(WARNING2) << "zRotationsVec is probably wrongly specified \n"
@@ -153,20 +191,6 @@ namespace eutelescope {
         return _paramterIdXShiftsMap;
     }
 
-    EUTelGBLFitter::EUTelGBLFitter(std::string name) : EUTelTrackFitter(name),
-    _alignmentMode(Utility::XYShiftXYRot),
-    _parPropJac(5, 5),
-    _chi2cut(1000.) {
-        _trackCandidates.clear();
-        _gblTrackCandidates.clear();
-
-        _fittrackvec = new IMPL::LCCollectionVec(EVENT::LCIO::TRACK);
-    }
-
-    EUTelGBLFitter::~EUTelGBLFitter() {
-        delete _fittrackvec;
-    }
-
     TMatrixD EUTelGBLFitter::PropagatePar(double ds) {
         /* for GBL:
            Jacobian for straight line track
@@ -178,7 +202,82 @@ namespace eutelescope {
         _parPropJac[4][2] = ds; // y = y0 + yp * ds
         return _parPropJac;
     }
+    
+    /** Propagation jacobian for solenoidal magnetic field
+     * 
+     *  This is C++ port of C. Kleinwort's python code b2thlx
+     * 
+     * @param ds        (3D) arc length to endpoint
+     * @param phi       azimuthal direction at starting point
+     * @param bfac      Magnetic field strength
+     * @return 
+     */
+    /*
+    TMatrixD EUTelGBLFitter::PropagatePar( double ds, double phi, double bfac ) {
+        // for GBL:
+        //   Jacobian for helical track
+        //   track = q/p, 
+        //            0,   1,  2, 3, 4
+        //
+        
+        // TODO: undefined curvature. see klnwrt
+        const double curvature          = 1.;
+        // TODO: undefined dzds. see klnwrt
+        const double dzds               = 1.;
+        
+        // at starting point
+        const double cosLamStart        = 1./sqrt(1. + dzds*dzds);
+        const double sinLamStart        = cosLamStart*dzds;
+        
+        // at end point
+        const double cosLamEnd          = cosLamStart;
+        const double sinLamEnd          = sinLamStart;
+        const double invCosLamEnd       = 1./cosLamEnd;
+        
+        // direction of magnetic field
+        TVector3 BFieldDir(0.,0.,1.);
+        
+        // track direction vectors
+        const double phiEnd = phi * ds * cosLamStart * curvature;
+        TVector3 t1(cosLamStart*cos(phi), cosLamStart*sin(phi), sinLamStart);
+        TVector3 t2(cosLamEnd*cos(phiEnd), cosLamEnd*sin(phiEnd), sinLamEnd);
+        
+        
+        const double q                  = curvature*cosLamStart;
+        const double theta              = q * ds;
+        const double sinTheta           = sin(theta);
+        const double cosTheta           = cos(theta);
+        const double gamma              = BFieldDir.Dot(t2);    // (B,T)
+        
+        TVector3 an1                    = BFieldDir.Cross(t1);  // B x T0
+        TVector3 an2                    = BFieldDir.Cross(t2);  // B x T
+        
+        // U0, V0
+        const double au1                = 1./t1.Perp2();
+        TVector3 u1( -au1*t1[1], au1*t1[0], 0. );
+        TVector3 v1( t1[2]*u1[2], t1[2]*u1[0], t1[0]*u1[1] - t1[1]*u1[0] );
+        
+        // U, V
+        const double au2                = 1./t2.Perp2();
+        TVector3 u2( -au2*t2[1], au1*t2[0], 0. );
+        TVector3 v2( t2[2]*u2[2], t2[2]*u2[0], t2[0]*u2[1] - t2[1]*u2[0] );
+        
+        const double qp                 = -bfac;
+        const double pav                = qp / cosLamStart / curvature;
+        const double anv                = -BFieldDir.Dot(u2);
+        const double anu                = -BFieldDir.Dot(v2);
+        const double omCosTheta         = 1. - cosTheta;
+        const double tmSinTheta         = theta - sinTheta;
+        
+        
+        _parPropJac.Zero();
+             // q/p
+        _parPropJac[0][0] = 1.;
+        _parPropJac[0][0] = 1.;     
 
+        return _parPropJac;
+    }
+        */
     void EUTelGBLFitter::SetTrackCandidates(const std::vector< EVENT::TrackerHitVec >& trackCandidates) {
         this->_trackCandidates = trackCandidates;
         return;
@@ -273,14 +372,10 @@ namespace eutelescope {
      * @param p momentum of the particle
      */
     void EUTelGBLFitter::AddScattererGBL(gbl::GblPoint& point, TVectorD& scat, TVectorD& scatPrecSensor, int iPlane, double p) {
-        const double radlenSi = geo::EUTelGeometryTelescopeGeoDescription::
-                getInstance()._siPlanesLayerLayout->getSensitiveRadLength(iPlane);
-        const double radlenKap = geo::EUTelGeometryTelescopeGeoDescription::
-                getInstance()._siPlanesLayerLayout->getLayerRadLength(iPlane);
-        const double thicknessSi = geo::EUTelGeometryTelescopeGeoDescription::
-                getInstance()._siPlanesLayerLayout->getSensitiveThickness(iPlane);
-        const double thicknessKap = geo::EUTelGeometryTelescopeGeoDescription::
-                getInstance()._siPlanesLayerLayout->getLayerThickness(iPlane);
+        const double radlenSi           = geo::gGeometry()._siPlanesLayerLayout->getSensitiveRadLength(iPlane);
+        const double radlenKap          = geo::gGeometry()._siPlanesLayerLayout->getLayerRadLength(iPlane);
+        const double thicknessSi        = geo::gGeometry()._siPlanesLayerLayout->getSensitiveThickness(iPlane);
+        const double thicknessKap       = geo::gGeometry()._siPlanesLayerLayout->getLayerThickness(iPlane);
 
         const double X0Si = thicknessSi / radlenSi; // Si 
         const double X0Kap = thicknessKap / radlenKap; // Kapton                
@@ -416,7 +511,8 @@ namespace eutelescope {
         EVENT::TrackerHitVec::const_iterator itHit;
         for (; itTrkCand != _trackCandidates.end(); ++itTrkCand) {
 
-            if (itTrkCand->size() > geo::EUTelGeometryTelescopeGeoDescription::getInstance()._nPlanes) continue;
+            // sanity check. Mustn't happen in principle.
+            if (itTrkCand->size() > geo::gGeometry().nPlanes()) continue;
 
             IMPL::TrackImpl * fittrack = new IMPL::TrackImpl();
 
@@ -424,7 +520,7 @@ namespace eutelescope {
             std::vector< gbl::GblPoint > pointList;
 
             int iLabel = 0;
-            int iPlane = 0;
+            size_t iPlane = 0;
             TMatrixD jacPointToPoint(5, 5);
             jacPointToPoint.UnitMatrix();
             double step = 0.;

@@ -94,16 +94,13 @@ namespace eutelescope {
 
     public:
         /** Fills hits data structure for track finder */
-        void FillHits(LCEvent * evt, LCCollection* col, map< int, EVENT::TrackerHitVec >& allHits) const;
+        int FillHits(LCEvent*, LCCollection*,
+                map< int, EVENT::TrackerHitVec >&, vector< EVENT::TrackerHitVec >&) const;
 
-        /** Assign uncertainties to hits 
-         * @TODO this must be a part of hitmaker
-         */
-//        TrackerHitImpl* assignCov( TrackerHitImpl* ) const;
         /** Prepare LCIO data structure for dumping track
          * candidate hits into LCIO files
          */
-        void addTrackCandidateToCollection(LCEvent* evt, const vector< EVENT::TrackerHitVec >&);
+        void addTrackCandidateToCollection(LCEvent*, const vector< EVENT::TrackerHitVec >&);
 
 
     protected:

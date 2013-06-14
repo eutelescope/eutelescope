@@ -57,6 +57,24 @@ namespace eutelescope {
              * @TODO this routine has to be considered to be constant
              */
             static EUTelGeometryTelescopeGeoDescription& getInstance();
+            
+            size_t nPlanes() const;
+            
+            EVENT::DoubleVec siPlanesZPositions() const;
+            
+            double siPlaneZPosition( int );
+            
+            std::map<double, int> getSensorIDMap() const;
+            
+            std::map<int, int> sensorIDstoZOrder() const;
+            
+            int sensorIDtoZOrder( int );
+            
+            EVENT::IntVec sensorIDsVecZOrder() const;
+            
+            std::map<int, int> sensorIDsVecMap() const;
+            
+            EVENT::IntVec sensorIDsVec() const;
 
         public:
             virtual ~EUTelGeometryTelescopeGeoDescription();
@@ -102,7 +120,7 @@ namespace eutelescope {
             gear::SiPlanesLayerLayout* _siPlanesLayerLayout;
 
 
-        public:
+        private:
             //    /** Ordered sensor ID
             //     *  This vector contains sensorID sorted according to their 
             //     *  position along the Z axis (beam axis)

@@ -35,6 +35,42 @@ EUTelGeometryTelescopeGeoDescription& EUTelGeometryTelescopeGeoDescription::getI
     return instance;
 }
 
+size_t EUTelGeometryTelescopeGeoDescription::nPlanes( ) const {
+    return _nPlanes;
+}
+
+EVENT::DoubleVec EUTelGeometryTelescopeGeoDescription::siPlanesZPositions( ) const {
+    return _siPlaneZPosition;
+}
+
+double EUTelGeometryTelescopeGeoDescription::siPlaneZPosition( int planeID ) {
+    return _siPlaneZPosition[ this->_sensorIDtoZOrderMap[ planeID ] ];
+}
+
+std::map<double, int> EUTelGeometryTelescopeGeoDescription::getSensorIDMap( ) const {
+    return _sensorIDMap;
+}
+
+std::map<int, int> EUTelGeometryTelescopeGeoDescription::sensorIDstoZOrder( ) const {
+    return _sensorIDtoZOrderMap;
+}
+
+int EUTelGeometryTelescopeGeoDescription::sensorIDtoZOrder( int planeID ) {
+    return _sensorIDtoZOrderMap[ planeID ];
+}
+
+EVENT::IntVec EUTelGeometryTelescopeGeoDescription::sensorIDsVecZOrder( ) const {
+    return _sensorIDVecZOrder;
+}
+
+std::map<int, int> EUTelGeometryTelescopeGeoDescription::sensorIDsVecMap( ) const {
+    return _sensorIDVecMap;
+}
+
+EVENT::IntVec EUTelGeometryTelescopeGeoDescription::sensorIDsVec( ) const {
+    return _sensorIDVec;
+}
+
 EUTelGeometryTelescopeGeoDescription::EUTelGeometryTelescopeGeoDescription() :
 _siPlanesParameters(0),
 _siPlanesLayerLayout(0),
@@ -47,8 +83,6 @@ _siPlaneZPosition(),
 _nPlanes(0),
 _geoManager(0)
 {
-
-    // -------          Сopy-paste from another class           ----------- //
 
     // Check if the GEAR manager is not corrupted, otherwise stop
 
