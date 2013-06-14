@@ -27,6 +27,7 @@ Version: $Id: hitmaker-tmp.xml,v 1.3 2009-06-04 17:19:01 bulgheroni Exp $
       <processor name="PreAligner"/> 
       <processor name="Correlator"/> 
       <processor name="Save"/>
+      <processor name="MyEUTelUtilityPrintEventNumber"/>
    </execute>
 
    <global>
@@ -167,8 +168,8 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
     <parameter name="AlignmentConstantLCIOFile" type="string"> @DBPath@/@Output@-prealign-db.slcio </parameter>
     <parameter name="ReferenceCollection" type="string" > refhit </parameter>
     <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-    <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
-    <parameter name="Events"  type="int" value="999"/>
+    <parameter name="MinNumberOfCorrelatedHits" type="int" value="8"/>
+    <parameter name="Events"  type="int" value="9999"/>
     <parameter name="HotPixelCollectionName"> hotpixel_apix </parameter>
 
     <!--Residual cuts along both size in microns-->
@@ -186,8 +187,8 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <parameter name="DumpOffset" type="bool" > false </parameter>
   <parameter name="ReferenceCollection" type="string" > refhit </parameter>
   <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-  <parameter name="MinNumberOfCorrelatedHits" type="int" value="7"/>
-  <parameter name="Events"  type="int" value="999"/>
+  <parameter name="MinNumberOfCorrelatedHits" type="int" value="8"/>
+  <parameter name="Events"  type="int" value="9999"/>
 
   <!--Residual cuts along both size in microns-->
     <parameter name="ResidualsXMax" type="FloatVec">  2.  2.  2.   10.0  10.0    5.  5.  5.          </parameter>
@@ -196,6 +197,16 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
     <parameter name="ResidualsYMin" type="FloatVec"> -2. -2. -2.  -10.0 -10.0   -5. -5. -5.          </parameter>
 
 
+</processor>
+
+<processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="1000"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
 </processor>
 
 </marlin>

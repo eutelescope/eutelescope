@@ -22,8 +22,9 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
       <processor name="LoadRefHitDB"/>
       <processor name="LoadPreAlignment"/>
       <processor name="ApplyPreAlignment"/>
-      <processor name="DafFitter"/>
+      <processor name="DafFitter"/> 
       <processor name="Align"/>
+      <processor name="MyEUTelUtilityPrintEventNumber"/>
   </execute>
 
    <global>
@@ -98,16 +99,16 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
     <parameter name="AlignmentCollectionNames">prealign    </parameter>
     <parameter name="ReferenceCollection" type="string" > refhit </parameter>
     <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
-    <parameter name="Ebeam" type="float" value="4"/>
+    <parameter name="Ebeam" type="float" value="@BeamEnergy@"/>
     <parameter name="TelResolutionX" type="float" value="180"/>
     <parameter name="TelResolutionY" type="float" value="180"/>
-    <parameter name="DutResolutionX" type="float" value="2500" />
-    <parameter name="DutResolutionY" type="float" value="500"/>
+    <parameter name="DutResolutionX" type="float" value="500" />
+    <parameter name="DutResolutionY" type="float" value="2500"/>
     <parameter name="NominalDxdz" type="float" value="0.0"/>
     <parameter name="NominalDydz" type="float" value="0.0"/>
     <parameter name="FinderRadius" type="float" value="500" />
-    <parameter name="Chi2Cutoff" type="float" value="100"/>
-    <parameter name="MaxChi2OverNdof" type="float" value="10"/>
+    <parameter name="Chi2Cutoff" type="float" value="1000"/>
+    <parameter name="MaxChi2OverNdof" type="float" value="1000"/>
     <parameter name="NDutHits" type="int" value="0"/>
   </processor>
 
@@ -187,9 +188,9 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--parameter name="PedeUserStartValuesY" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
   <!--Resolution of the telescope for Millepede.-->
   <parameter name="TelescopeResolution" type="float" value="10"/>
-  <parameter name="ResolutionX" type="float" value="    4      4      4       10    50         4      4      4 "/>
-  <parameter name="ResolutionY" type="float" value="    4      4      4       10    10         4      4      4 "/>
-  <parameter name="ResolutionZ" type="float" value=" 5000   5000   5000     5000  5000      5000   5000   5000 "/>
+  <parameter name="ResolutionX" type="float" value="    18      18      18       10    10         18      18      18 "/>
+  <parameter name="ResolutionY" type="float" value="    18      18      18       50    50         18      18      18 "/>
+  <parameter name="ResolutionZ" type="float" value="   100     100     100      100   100        100     100     100 "/>
   <!--Rotation around the x axis of the sensors in test mode (to be determined by the alignment).-->
   <!--parameter name="TestModeSensorAlpha" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
   <!--Rotation around the y axis of the sensors in test mode (to be determined by the alignment).-->
@@ -212,6 +213,17 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--parameter name="UsePedeUserStartValues" type="int" value="0"/-->
 
 </processor>
+
+
+ <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+   <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+   <!--Print event number for every n-th event-->
+   <parameter name="EveryNEvents" type="int" value="1000"/>
+   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+   <!--parameter name="Verbosity" type="string" value=""/-->
+   <!--print the event timestamp as read from LCIO-->
+   <parameter name="printTimestamp" type="bool" value="false"/>
+ </processor>
 
 
 </marlin>

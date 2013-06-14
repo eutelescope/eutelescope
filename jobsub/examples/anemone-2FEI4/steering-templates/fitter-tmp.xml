@@ -28,6 +28,7 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
       <xprocessor name="APIXTbTrack"/>
       <xgroup name="APIXDUTHisto"/>
       <processor name="Save"/>
+      <processor name="MyEUTelUtilityPrintEventNumber"/>
    </execute>
 
    <global>
@@ -228,4 +229,14 @@ Version: $Id: fitter-tmp.xml,v 1.7 2009-08-01 13:59:45 bulgheroni Exp $
 
   </group>
    
+ <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="1000"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--print the event timestamp as read from LCIO-->
+  <parameter name="printTimestamp" type="bool" value="false"/>
+</processor>
+
 </marlin>
