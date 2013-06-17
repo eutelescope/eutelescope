@@ -162,10 +162,10 @@
     ADD_TEST( TestJobsubExampleDaturaNoDUTAlignLog sh -c "[ -f ${testdir}/output/logs/align-${PaddedRunNr}.zip ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTAlignRun)
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTAlignHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-align.root ]" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTAlignHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-alignment.root ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTAlignRun)
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTAlignDB sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-align.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/database/run${PaddedRunNr}-align.slcio" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTAlignDB sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-alignment.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/database/run${PaddedRunNr}-alignment.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignDB PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTAlignRun)
 
     ADD_TEST( TestJobsubExampleDaturaNoDUTAlignOutput sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-align-mille.bin -a -f ${testdir}/output/database/run${PaddedRunNr}-pede-steer.txt ] " )
@@ -229,7 +229,7 @@
 	)
 
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTAlign.qa ${testdir}/output/histograms/run${PaddedRunNr}-align.root ${referencedatadir}/run${PaddedRunNr}-alignment.root" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTAlign.qa ${testdir}/output/histograms/run${PaddedRunNr}-alignment.root ${referencedatadir}/run${PaddedRunNr}-alignment.root" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestAlign PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"

@@ -36,7 +36,7 @@
   <!-- compression of output file 0: false >0: true (default) -->
   <parameter name="Compress" type="int" value="1"/>
   <!-- filename without extension-->
-  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-aligngbl"/>
+  <parameter name="FileName" type="string" value="@HistogramPath@/@FilePrefix@-alignmentgbl"/>
   <!-- type of output file root (default) or xml )-->
   <parameter name="FileType" type="string" value="root"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -69,7 +69,7 @@
   <!--Name of histogram info xml file-->
   <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
   <!--Name of the Millepede binary file-->
-  <parameter name="MilleBinaryFilename" type="string" value="@MilleBinaryFile@"/>
+  <parameter name="MilleBinaryFilename" type="string" value="@DatabasePath@/@FilePrefix@-align-mille.bin"/>
   <!--Maximum chi2 of a track candidate that goes into millepede-->
   <parameter name="MilleMaxChi2Cut" type="double" value="@Chi2Cut@"/>
   <!--Plane ids and parameter ids for X rotations-->
@@ -85,7 +85,7 @@
   <!--Plane ids and parameter ids for Z shifts-->
   <parameter name="MilleParametersZShifts" type="IntVec" value="@MilleParametersZShifts@"/>
   <!--Name of the Millepede steering file to be created-->
-  <parameter name="MilleSteeringFilename" type="string" value="@MilleSteeringFile@"/>
+  <parameter name="MilleSteeringFilename" type="string" value="@DatabasePath@/@FilePrefix@-pede-steer.txt"/>
   <!--Execute the pede at the end of processing using the generated steering file.-->
   <parameter name="RunPede" type="bool" value="@RunPede@"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
