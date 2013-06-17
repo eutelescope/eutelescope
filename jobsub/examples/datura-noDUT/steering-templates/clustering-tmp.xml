@@ -83,7 +83,7 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26 @DataBasePath@/run@HotPixelRunNumber@-hotpixel.slcio hotpixel_m26 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26 @DatabasePath@/run@HotPixelRunNumber@-hotpixel.slcio hotpixel_m26 </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -127,7 +127,7 @@ Available types of the data format:
   <!--Threshold in SNR for seed pixel identification-->
   <parameter name="FFSeedCut" type="float" value="0.0"/>
   <!--This is the name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string" value="@HistoInfo@"/>
+  <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
   <!--Switch on or off the histogram filling-->
   <parameter name="HistogramFilling" type="bool" value="false"/>
   <!--This is the name of the hotpixel collection-->
@@ -172,7 +172,7 @@ Available algorithms are:
   <!--If there are more then this number of correlated hits (planes->track candidate) (default=5)-->
   <!--parameter name="MinNumberOfCorrelatedHits" type="int" value="5"/-->
   <!--This is the name of the LCIO file name with the output offset db (add .slcio)-->
-  <parameter name="OffsetDBFile" type="string" value="@DataBasePath@/run@RunNumber@-offset.slcio"/>
+  <parameter name="OffsetDBFile" type="string" value="@DatabasePath@/run@RunNumber@-offset.slcio"/>
   <!--reference hit collection name -->
   <!--parameter name="ReferenceCollection" type="string" value="referenceHit"/-->
   <!--Maximal values of the hit residuals in the X direction for a correlation band. Note: these numbers are ordered according to the z position of the sensors and NOT according to the sensor id.-->

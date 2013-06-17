@@ -67,7 +67,7 @@
   <!--Name of the TGeo geometry definition file-->
   <parameter name="GeometryFilename" type="string" value="@TGeoGeometryFileName@"/>
   <!--Name of histogram info xml file-->
-  <parameter name="HistogramInfoFilename" type="string" value="@Histoinfo@"/>
+  <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
   <!--Name of the Millepede binary file-->
   <parameter name="MilleBinaryFilename" type="string" value="@MilleBinaryFile@"/>
   <!--Maximum chi2 of a track candidate that goes into millepede-->

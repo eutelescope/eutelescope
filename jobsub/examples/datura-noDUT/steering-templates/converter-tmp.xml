@@ -62,7 +62,7 @@
   <!--The geometry identification number-->
   <parameter name="GeoID" type="int" value="100"/>
   <!--This is the input file name-->
-  <parameter name="InputFileName" type="string" value="@NativeFolder@/run@RunNumber@.raw"/>
+  <parameter name="InputFileName" type="string" value="@NativePath@/run@RunNumber@.raw"/>
   <!--Resynchronize the events based on the TLU trigger ID-->
   <parameter name="SyncTriggerID" type="bool" value="false"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
@@ -110,7 +110,7 @@
   <!--This is the name of the hot pixel collection to be saved into the output slcio file-->
   <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26"/>
   <!--This is the name of the LCIO file name with the output hotpixel db (add .slcio)-->
-  <parameter name="HotPixelDBFile" type="string" value="@DataBasePath@/run@HotPixelRunNumber@-hotpixel.slcio"/>
+  <parameter name="HotPixelDBFile" type="string" value="@DatabasePath@/run@HotPixelRunNumber@-hotpixel.slcio"/>
   <!--Write mode for HotPixelDB file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--This float number [0,1] represents the maximum allowed firing frequency

@@ -55,7 +55,7 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -71,7 +71,7 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> prealign @DataBasePath@/@FilePrefix@-prealignment.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> prealign @DatabasePath@/@FilePrefix@-prealignment.slcio alignment </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -141,13 +141,13 @@
   <!--This is the name of the alignment collection to be saved into the slcio file-->
   <!--parameter name="AlignmentConstantCollectionName" type="string" value="alignment"/-->
   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
-  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DataBasePath@/@FilePrefix@-align.slcio"/>
+  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DatabasePath@/@FilePrefix@-align.slcio"/>
   <!--Set how many hits (=planes) can be missing on a track candidate.-->
   <!--parameter name="AllowedMissingHits" type="int" value="0"/-->
   <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?-->
   <!--parameter name="ApplyToReferenceCollection" type="bool" value="false"/-->
   <!--Name of the Millepede binary file.-->
-  <parameter name="BinaryFilename" type="string" value="@DataBasePath@/@FilePrefix@-align-mille.bin"/>
+  <parameter name="BinaryFilename" type="string" value="@DatabasePath@/@FilePrefix@-align-mille.bin"/>
   <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes.-->
   <parameter name="DistanceMax" type="float" value="@DistanceMax@"/>
   <!--Maximal allowed distance between hits entering the fit per 10 cm space between the planes. One value for each neighbor planes. DistanceMax will be used for each pair if this vector is empty.-->
@@ -179,7 +179,7 @@
   <!--Use only events with one track candidate.-->
   <parameter name="OnlySingleTrackEvents" type="bool" value="0"/>
   <!--Name of the steering file for the pede program.-->
-  <parameter name="PedeSteerfileName" type="string" value="@DataBasePath@/@FilePrefix@-pede-steer.txt"/>
+  <parameter name="PedeSteerfileName" type="string" value="@DatabasePath@/@FilePrefix@-pede-steer.txt"/>
   <!--Start values for the alignment for the angle alpha.-->
   <!--parameter name="PedeUserStartValuesAlpha" type="FloatVec"> 0 0 0 0 0 0 </parameter-->
   <!--Start values for the alignment for the angle beta.-->

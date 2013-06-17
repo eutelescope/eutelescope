@@ -58,7 +58,7 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26 @DataBasePath@/@FilePrefix@-hotpixel.slcio hotpixel_m26 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> hotpixel_m26 @DatabasePath@/@FilePrefix@-hotpixel.slcio hotpixel_m26 </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -74,7 +74,7 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -107,7 +107,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--This is the name of the reference hit collection initialized in this processor. This collection provides the reference vector to correctly determine a plane corresponding to a global hit coordiante.-->
   <!--parameter name="ReferenceCollection" type="string" value="referenceHit"/-->
   <!--This is the file where the reference hit collection is stored-->
-  <parameter name="ReferenceHitFile" type="string" value="@DataBasePath@/@FilePrefix@-referencehit.slcio"/>
+  <parameter name="ReferenceHitFile" type="string" value="@DatabasePath@/@FilePrefix@-referencehit.slcio"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -117,7 +117,7 @@ NxMPixel: using a subframe of the cluster N x M pixels wide (set NxMPixel too).-
   <!--The name of the input hit collection-->
   <parameter name="InputHitCollectionName" type="string" lcioInType="TrackerHit"> hit </parameter>
   <!--Name of LCIO db file where alignment constantds will be stored-->
-  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DataBasePath@/@FilePrefix@-prealignment.slcio"/>
+  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DatabasePath@/@FilePrefix@-prealignment.slcio"/>
   <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )-->
   <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
   <!--How many events should be used for an approximation to the X,Y shifts (pre-alignment)? (default=50000)-->

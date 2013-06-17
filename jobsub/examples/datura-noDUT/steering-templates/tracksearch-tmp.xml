@@ -52,7 +52,7 @@
   <!--Finder mode. Possible values are 1, 2-->
   <!--parameter name="FinderMode" type="int" value="2"/-->
   <!--Name of histogram info xml file-->
-  <parameter name="HistogramInfoFilename" type="string" value="@Histoinfo@"/>
+  <parameter name="HistogramInfoFilename" type="string" value="@HistoInfoFile@"/>
   <!--Name of the hot pixel collection -->
   <!--parameter name="HotPixelCollectionName" type="string" value="hotpixel"/-->
   <!--Maximal number of missing hits on a track candidate-->

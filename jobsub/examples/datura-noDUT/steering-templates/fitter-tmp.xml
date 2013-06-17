@@ -75,19 +75,19 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit01 @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit01 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit02 @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit02 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit11 @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit11 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit12 @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit12 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit21 @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit21 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit22 @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit22 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit31 @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit31 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit32 @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit32 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit41 @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit41 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit42 @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit42 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit51 @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit51 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit52 @DataBasePath@/@FilePrefix@-referencehit.slcio referenceHit52 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit01 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit01 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit02 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit02 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit11 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit11 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit12 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit12 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit21 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit21 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit22 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit22 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit31 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit31 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit32 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit32 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit41 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit41 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit42 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit42 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit51 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit51 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit52 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit52 </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -103,7 +103,7 @@
   <!--Initialization of a data file handler-->
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
-  <parameter name="SimpleFileHandler" type="StringVec"> prealign @DataBasePath@/@FilePrefix@-prealignment.slcio alignment </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> prealign @DatabasePath@/@FilePrefix@-prealignment.slcio alignment </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
@@ -249,7 +249,7 @@
   <!--Allowed number of missing hits in the track-->
   <parameter name="AllowMissingHits" type="int" value="@AllowedMissingHits@"/>
   <!--Allowed number of hits removed from the track-->
-  <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@"/>
+  <parameter name="AllowSkipHits" type="int" value="@AllowedSkipHits@"/>HistoInfoFile
   <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection? (default - false )-->
   <parameter name="ApplyToReferenceCollection" type="bool" value="1"/>
   <!--Beam direction tilt in X-Z plane [rad] (for beam constraint)-->
@@ -275,7 +275,7 @@
   <!--Beam energy [GeV]-->
   <parameter name="Ebeam" type="double" value="@BeamEnergy@"/>
   <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName" type="string"> @HistoInfoFile@ </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="InputHitCollectionName" value="alignedHit"/>
   <!--Flag for storing input (measured) hits in track-->
@@ -408,7 +408,7 @@
   <!--Rotation Angle around Z axis-->
   <!--parameter name="Gamma" type="double" value="0"/-->
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
-  <parameter name="HistoInfoFileName"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName"> @HistoInfoFile@ </parameter>
   <!--Enable or disable histograms-->
   <parameter name="HistogramSwitch" type="bool" value="false"/>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
@@ -504,7 +504,7 @@
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="Ebeam" value="@BeamEnergy@"/>
   <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName" type="string"> @HistoInfoFile@ </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="InputCollectionName" value="alignedHit"/>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
@@ -612,7 +612,7 @@
   <!--Beam energy [GeV]-->
   <parameter name="Ebeam" type="double" value="@BeamEnergy@"/>
   <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName" type="string"> @HistoInfoFile@ </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="InputHitCollectionName" value="alignedHit"/>
   <!--Flag for storing input (measured) hits in track-->
@@ -745,7 +745,7 @@
   <!--Rotation Angle around Z axis-->
   <!--parameter name="Gamma" type="double" value="0"/-->
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
-  <parameter name="HistoInfoFileName"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName"> @HistoInfoFile@ </parameter>
   <!--Enable or disable histograms-->
   <parameter name="HistogramSwitch" type="bool" value="false"/>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
@@ -841,7 +841,7 @@
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="Ebeam" value="@BeamEnergy@"/>
   <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName" type="string"> @HistoInfoFile@ </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="InputCollectionName" value="alignedHit"/>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
@@ -949,7 +949,7 @@
   <!--Beam energy [GeV]-->
   <parameter name="Ebeam" type="double" value="@BeamEnergy@"/>
   <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName" type="string"> @HistoInfoFile@ </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="InputHitCollectionName" value="alignedHit"/>
   <!--Flag for storing input (measured) hits in track-->
@@ -1082,7 +1082,7 @@
   <!--Rotation Angle around Z axis-->
   <!--parameter name="Gamma" type="double" value="0"/-->
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
-  <parameter name="HistoInfoFileName"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName"> @HistoInfoFile@ </parameter>
   <!--Enable or disable histograms-->
   <parameter name="HistogramSwitch" type="bool" value="false"/>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
@@ -1178,7 +1178,7 @@
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="Ebeam" value="@BeamEnergy@"/>
   <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName" type="string"> @HistoInfoFile@ </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="InputCollectionName" value="alignedHit"/>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
@@ -1286,7 +1286,7 @@
   <!--Beam energy [GeV]-->
   <parameter name="Ebeam" type="double" value="@BeamEnergy@"/>
   <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName" type="string"> @HistoInfoFile@ </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="InputHitCollectionName" value="alignedHit"/>
   <!--Flag for storing input (measured) hits in track-->
@@ -1419,7 +1419,7 @@
   <!--Rotation Angle around Z axis-->
   <!--parameter name="Gamma" type="double" value="0"/-->
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
-  <parameter name="HistoInfoFileName"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName"> @HistoInfoFile@ </parameter>
   <!--Enable or disable histograms-->
   <parameter name="HistogramSwitch" type="bool" value="false"/>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
@@ -1515,7 +1515,7 @@
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="Ebeam" value="@BeamEnergy@"/>
   <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName" type="string"> @HistoInfoFile@ </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="InputCollectionName" value="alignedHit"/>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
@@ -1623,7 +1623,7 @@
   <!--Beam energy [GeV]-->
   <parameter name="Ebeam" type="double" value="@BeamEnergy@"/>
   <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName" type="string"> @HistoInfoFile@ </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="InputHitCollectionName" value="alignedHit"/>
   <!--Flag for storing input (measured) hits in track-->
@@ -1756,7 +1756,7 @@
   <!--Rotation Angle around Z axis-->
   <!--parameter name="Gamma" type="double" value="0"/-->
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
-  <parameter name="HistoInfoFileName"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName"> @HistoInfoFile@ </parameter>
   <!--Enable or disable histograms-->
   <parameter name="HistogramSwitch" type="bool" value="false"/>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
@@ -1852,7 +1852,7 @@
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="Ebeam" value="@BeamEnergy@"/>
   <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName" type="string"> @HistoInfoFile@ </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="InputCollectionName" value="alignedHit"/>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
@@ -1960,7 +1960,7 @@
   <!--Beam energy [GeV]-->
   <parameter name="Ebeam" type="double" value="@BeamEnergy@"/>
   <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName" type="string"> @HistoInfoFile@ </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="InputHitCollectionName" value="alignedHit"/>
   <!--Flag for storing input (measured) hits in track-->
@@ -2093,7 +2093,7 @@
   <!--Rotation Angle around Z axis-->
   <!--parameter name="Gamma" type="double" value="0"/-->
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
-  <parameter name="HistoInfoFileName"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName"> @HistoInfoFile@ </parameter>
   <!--Enable or disable histograms-->
   <parameter name="HistogramSwitch" type="bool" value="false"/>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
@@ -2189,7 +2189,7 @@
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="Ebeam" value="@BeamEnergy@"/>
   <!--Name of the histogram information file-->
-  <parameter name="HistoInfoFileName" type="string"> @HistoInfo@ </parameter>
+  <parameter name="HistoInfoFileName" type="string"> @HistoInfoFile@ </parameter>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
   <parameter name="InputCollectionName" value="alignedHit"/>
   <!-- Sorry, this parameter isn't a default parameter for this processor: description and type lost!!  -->
@@ -2259,7 +2259,7 @@
   <!--force keep of the named collections - overrules DropCollectionTypes (and DropCollectionNames)-->
   <!--parameter name="KeepCollectionNames" type="StringVec" value="MyPreciousSimTrackerHits"/-->
   <!-- name of output file -->
-  <parameter name="LCIOOutputFile" type="string" value="@DataBasePath@/@FilePrefix@-track.slcio"/>
+  <parameter name="LCIOOutputFile" type="string" value="@DatabasePath@/@FilePrefix@-track.slcio"/>
   <!--write mode for output file:  WRITE_APPEND or WRITE_NEW-->
   <parameter name="LCIOWriteMode" type="string" value="WRITE_NEW"/>
   <!--Set it to true to remove intermediate EORE in merged runs-->

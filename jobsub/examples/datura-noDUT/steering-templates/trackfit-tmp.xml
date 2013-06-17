@@ -127,7 +127,7 @@ Version: $Id: align-tmp.xml,v 1.3 2009-05-19 18:01:01 bulgheroni Exp $
   <!--Name of the TGeo geometry definition file-->
   <parameter name="GeometryFilename" type="string">@TGeoGeometryFileName@ </parameter>
   <!--Name of histogram info xml file-->
-  <parameter name="HistogramInfoFilename" type="string">@HistoInfo@ </parameter>
+  <parameter name="HistogramInfoFilename" type="string">@HistoInfoFile@ </parameter>
   <parameter name="TrackCandHitInputCollectionName" type="string" lcioInType="Track">aligned_track_candidates </parameter>
   <!--Output tracks collection name-->
   <parameter name="TracksOutputCollectionName" type="string" lcioOutType="Track">TrackCollection </parameter>
