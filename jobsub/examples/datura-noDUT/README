@@ -93,7 +93,7 @@
 #
 # ../../../tools/parsepede/parsemilleout.sh \
 # output/database/run00FIXME-pede-steer.txt \
-# millepede.res output/database/run00FIXME-align.slcio
+# millepede.res output/database/run00FIXME-alignment.slcio
 #
 # At this point you should be able to run tracking:
 #

@@ -201,7 +201,7 @@
   <!--This is the name of the alignment collection to be saved into the slcio file-->
   <!--parameter name="AlignmentConstantCollectionName" type="string" value="alignment"/-->
   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
-  <parameter name="AlignmentConstantLCIOFile" type="string" value="@LcioPath@/@FilePrefix@-alignment.slcio"/>
+  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DatabasePath@/@FilePrefix@-alignment.slcio"/>
   <!--Set how many hits (=planes) can be missing on a track candidate.-->
   <!--parameter name="AllowedMissingHits" type="int" value="0"/-->
   <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?-->
