@@ -21,6 +21,7 @@
       <processor name="LoadPreAlignment"/>
       <processor name="ApplyPreAlignment"/>
       <processor name="AlignStraight"/>
+      <processor name="MyEUTelUtilityPrintEventNumber"/>
    </execute>
 
    <global>
@@ -141,7 +142,7 @@
   <!--This is the name of the alignment collection to be saved into the slcio file-->
   <!--parameter name="AlignmentConstantCollectionName" type="string" value="alignment"/-->
   <!--This is the name of the LCIO file name with the output alignmentconstants (add .slcio)-->
-  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DatabasePath@/@FilePrefix@-align.slcio"/>
+  <parameter name="AlignmentConstantLCIOFile" type="string" value="@DatabasePath@/@FilePrefix@-alignment.slcio"/>
   <!--Set how many hits (=planes) can be missing on a track candidate.-->
   <!--parameter name="AllowedMissingHits" type="int" value="0"/-->
   <!--Do you want the reference hit collection to be corrected by the shifts and tilts from the alignment collection?-->
@@ -240,6 +241,15 @@
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
 
+ <processor name="MyEUTelUtilityPrintEventNumber" type="EUTelUtilityPrintEventNumber">
+ <!--EUTelUtilityPrintEventNumber prints event number to screen depending on the verbosity level-->
+  <!--Print event number for every n-th event-->
+  <parameter name="EveryNEvents" type="int" value="1000"/>
+  <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
+  <!--parameter name="Verbosity" type="string" value=""/-->
+  <!--print the event timestamp as read from LCIO-->
+  <!--parameter name="printTimestamp" type="bool" value="false"/-->
+</processor>
  
 
 </marlin>

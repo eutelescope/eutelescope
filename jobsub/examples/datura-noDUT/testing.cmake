@@ -69,7 +69,7 @@
     ADD_TEST( TestJobsubExampleDaturaNoDUTConverterHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-converter.root ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTConverterRun)
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTConverterHotpix sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-hotpixel.slcio ] && lcio_check_col_elements --expelements 6  m26_hotpixel  ${testdir}/output/database/run${PaddedRunNr}-hotpixel.slcio" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTConverterHotpix sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-hotpixel.slcio ] && lcio_check_col_elements --expelements 6  hotpixel_m26  ${testdir}/output/database/run${PaddedRunNr}-hotpixel.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTConverterHotpix PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTConverterRun)
 
     ADD_TEST( TestJobsubExampleDaturaNoDUTConverterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-converter.slcio ] && lcio_check_col_elements --expelements 6 zsdata_m26 ${testdir}/output/lcio/run${PaddedRunNr}-converter.slcio" )
@@ -102,7 +102,7 @@
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTClusteringHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTClusteringRun)
 
     # we expect an average of 24.4 clusters per event
-    ADD_TEST( TestJobsubExampleDaturaNoDUTClusteringOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio ] && lcio_check_col_elements --average --expelements 24 m26_cluster ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTClusteringOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio ] && lcio_check_col_elements --average --expelements 24 cluster_m26 ${testdir}/output/lcio/run${PaddedRunNr}-clustering.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTClusteringOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTClusteringRun)
 
 
@@ -162,10 +162,10 @@
     ADD_TEST( TestJobsubExampleDaturaNoDUTAlignLog sh -c "[ -f ${testdir}/output/logs/align-${PaddedRunNr}.zip ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTAlignRun)
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTAlignHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-alignment.root ]" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTAlignHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-align.root ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTAlignRun)
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTAlignDB sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-alignment.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/database/run${PaddedRunNr}-alignment.slcio" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTAlignDB sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-align.slcio ] && lcio_check_col_elements --expelements 6  alignment  ${testdir}/output/database/run${PaddedRunNr}-align.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTAlignDB PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTAlignRun)
 
     ADD_TEST( TestJobsubExampleDaturaNoDUTAlignOutput sh -c "[ -f ${testdir}/output/database/run${PaddedRunNr}-align-mille.bin -a -f ${testdir}/output/database/run${PaddedRunNr}-pede-steer.txt ] " )
@@ -197,12 +197,12 @@
     ADD_TEST( TestJobsubExampleDaturaNoDUTFitterLog sh -c "[ -f ${testdir}/output/logs/fitter-${PaddedRunNr}.zip ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFitterLog PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTFitterRun)
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTFitterHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-tracking.root ]" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTFitterHisto sh -c "[ -f ${testdir}/output/histograms/run${PaddedRunNr}-fitter.root ]" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFitterHisto PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTFitterRun)
 
     # we expect to see between 1 and 3 tracks in every event 
     # but tolerate if this is not the case in 40% of the events (empty events are counted)
-    ADD_TEST( TestJobsubExampleDaturaNoDUTFitterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-tracking.slcio ] && lcio_check_col_elements --pedantic --expelements 2 --abselementerror 1 --releventerror .40 track0 ${testdir}/output/lcio/run${PaddedRunNr}-tracking.slcio" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTFitterOutput sh -c "[ -f ${testdir}/output/lcio/run${PaddedRunNr}-track.slcio ] && lcio_check_col_elements --pedantic --expelements 2 --abselementerror 1 --releventerror .40 track0 ${testdir}/output/lcio/run${PaddedRunNr}-track.slcio" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTFitterOutput PROPERTIES DEPENDS TestJobsubExampleDaturaNoDUTFitterRun)
 
 #
@@ -229,7 +229,7 @@
 	)
 
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTAlign.qa ${testdir}/output/histograms/run${PaddedRunNr}-alignment.root ${referencedatadir}/run${PaddedRunNr}-alignment.root" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestAlign sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash -g ${testdir}/output/stattest_report_align.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTAlign.qa ${testdir}/output/histograms/run${PaddedRunNr}-align.root ${referencedatadir}/run${PaddedRunNr}-alignment.root" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestAlign PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
@@ -240,7 +240,7 @@
 	)
 
 
-    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTFitter.qa ${testdir}/output/histograms/run${PaddedRunNr}-tracking.root ${referencedatadir}/run${PaddedRunNr}-tracking.root" )
+    ADD_TEST( TestJobsubExampleDaturaNoDUTStatTestFitter sh -c "PYTHONPATH=$ROOTSYS/lib:$PYTHONPATH ${executable} --cdash  -g${testdir}/output/stattest_report_fitter.pdf ${referencedatadir}/StatTestConf_DaturaNoDUTFitter.qa ${testdir}/output/histograms/run${PaddedRunNr}-fitter.root ${referencedatadir}/run${PaddedRunNr}-tracking.root" )
     SET_TESTS_PROPERTIES (TestJobsubExampleDaturaNoDUTStatTestFitter PROPERTIES
         # test will pass if ALL of the following expressions are matched
         PASS_REGULAR_EXPRESSION "${fit_pass_regex_1}"
