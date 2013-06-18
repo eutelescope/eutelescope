@@ -462,17 +462,20 @@ void EUTelHotPixelKiller::processEvent (LCEvent * event)
         for ( unsigned int index = 0; index < statusVec.size(); index++ ) 
         {
 #ifndef STREAMLOG_DEBUG_ACTIVE
+	  if( streamlog_level( DEBUG3) ){
+
             streamlog_out ( DEBUG3 )  << 
-                " index "<< index << 
-                " all " << statusVec.size() << 
-                " statusVec[index]: " <<  statusVec[index] << 
-                " hit:" << EUTELESCOPE::HITPIXEL << endl;
+	      " index "<< index << 
+	      " all " << statusVec.size() << 
+	      " statusVec[index]: " <<  statusVec[index] << 
+	      " hit:" << EUTELESCOPE::HITPIXEL << endl;
             streamlog_out ( DEBUG3)  << 
-                " get index " << index << 
-                " (tot " << statusVec.size() << ")" <<
-                " (orig decoded_XY_index = " << _inverse_hitIndexMapVec[iDetector][index] <<
-                " freq " << _firingFreqVec[iDetector][index] <<
-                " status " <<  statusVec[ index ]  << endl;
+	      " get index " << index << 
+	      " (tot " << statusVec.size() << ")" <<
+	      " (orig decoded_XY_index = " << _inverse_hitIndexMapVec[iDetector][index] <<
+	      " freq " << _firingFreqVec[iDetector][index] <<
+	      " status " <<  statusVec[ index ]  << endl;
+	  }
 #endif           
            if( statusVec[ index ] == EUTELESCOPE::HITPIXEL ) 
             {

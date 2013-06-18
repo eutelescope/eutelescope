@@ -136,9 +136,6 @@ namespace eutelescope {
    *        hit type (type <=31 for measured hits, type >=32 for fitted).
    * \param OutputHitCollectionName Name of the output collection of
    *        fitted particle positions in telescope planes (hits)
-   * \param DebugEventCount      Print out debug and information
-   *        messages only for one out of given number of events. If
-   *        zero, no debug information is printed.
    * \param HistoInfoFileName Name of the histogram information file.
    *        Using this file histogram parameters can be changed without
    *        recompiling the code.
@@ -475,8 +472,6 @@ namespace eutelescope {
 
     // Global processor parameters
     // Parameter documentation is already included above
-
-    int _debugCount ;
 
     std::string _inputColName ;
 

@@ -98,7 +98,6 @@ EUTelTestFitter::EUTelTestFitter()
   _siPlanesParameters(NULL),
   _siPlanesLayerLayout(NULL),
   _histoInfoFileName(""),
-  _debugCount(0),
   _inputColName(""),
   _outputTrackColName(""),
   _correctedHitColName(""),
@@ -245,10 +244,6 @@ EUTelTestFitter::EUTelTestFitter()
   registerProcessorParameter ("OutputHitsInTrack",
                               "Flag for storing output (fitted) hits in track",
                               _OutputHitsInTrack,  static_cast < bool > (true));
-
-  registerProcessorParameter ("DebugEventCount",
-                              "Print out every DebugEnevtCount event",
-                              _debugCount,  static_cast < int > (10));
 
   registerProcessorParameter ("AllowMissingHits",
                               "Allowed number of missing hits in the track",
@@ -750,8 +745,9 @@ void EUTelTestFitter::init() {
 
     totalScatAngle+= _planeScatAngle[ipl] * _planeScatAngle[ipl];
 
-    streamlog_out( DEBUG5 ) << "Scattering angle in plane " << ipl << ": " << _planeScatAngle[ipl] << endl;
-
+    if(streamlog_level(DEBUG5)){
+      streamlog_out( DEBUG5 ) << "Scattering angle in plane " << ipl << ": " << _planeScatAngle[ipl] << endl;
+    }
     _fitX[ipl] =_fitY[ipl] = 0. ;
     if(static_cast<int>(_resolutionX.size()) < ipl+1 )
     {
@@ -878,8 +874,6 @@ void EUTelTestFitter::processRunHeader( LCRunHeader* runHeader) {
 }
 
 void EUTelTestFitter::processEvent( LCEvent * event ) {
-
-  bool debug = ( _debugCount>0 && _nEvt%_debugCount == 0);
 
   _nEvt ++ ;
 
@@ -1060,8 +1054,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
   int nHit = col->getNumberOfElements()  ;
 
-  if ( debug ) 
-  {
+  if(streamlog_level(DEBUG5)){
     streamlog_out( DEBUG5 )  << "Total of " << nHit << " tracker hits in input collection " << endl;
   }
 
@@ -1253,11 +1246,11 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     hitFits[ihit]=0;
 
-    if ( debug ) {
+    if(streamlog_level(DEBUG5)){
       streamlog_out ( DEBUG5 ) << "Hit " << ihit
-                                          << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]
-                                          << "   Y = " << hitY[ihit] << " +/- " << hitEy[ihit]
-                                          << "   Z = " << hitZ[ihit] << " (plane " << hitPlane[ihit] << ")" << endl;
+			       << "   X = " << hitX[ihit] << " +/- " << hitEx[ihit]
+			       << "   Y = " << hitY[ihit] << " +/- " << hitEy[ihit]
+			       << "   Z = " << hitZ[ihit] << " (plane " << hitPlane[ihit] << ")" << endl;
     }
   }
 
@@ -1344,8 +1337,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     
 
     // Debug output
-    if(debug ) 
-    {
+    if(streamlog_level(DEBUG5)){
       for(int ipl=0;ipl<_nTelPlanes;ipl++) 
       {
         if( _isActive[ipl] )  
@@ -1367,10 +1359,9 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
 
     if(nFiredPlanes + _allowMissingHits < _nActivePlanes) 
     {
-      if(debug) 
-        {
-          streamlog_out ( DEBUG5 ) <<  "Not enough planes hit to perform the fit " << endl;
-        }
+      if(streamlog_level(DEBUG5)){
+	streamlog_out ( DEBUG5 ) <<  "Not enough planes hit to perform the fit " << endl;
+      }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
         (dynamic_cast<AIDA::IHistogram1D*> ( _aidaHistoMap[_nTrackHistoName]))->fill(0);
@@ -1395,7 +1386,7 @@ void EUTelTestFitter::processEvent( LCEvent * event ) {
     }
 
 
-    if( debug ) 
+    if(streamlog_level(DEBUG5))
     {
       streamlog_out ( DEBUG5 ) << nFiredPlanes << " active sensor planes hit, checking "
                                           << nChoice << " fit possibilities "  << endl;
@@ -1714,8 +1705,8 @@ if(jhit>=0){
 #endif
 
     if(nFittedTracks==0) {
-      if(debug) {
-        streamlog_out ( DEBUG5 ) << "No track fulfilling search criteria found ! " << endl;
+      if(streamlog_level(DEBUG5)){
+	streamlog_out ( DEBUG5 ) << "No track fulfilling search criteria found ! " << endl;
       }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -1809,8 +1800,7 @@ if(jhit>=0){
                   hitFits[jhit]++;
 	 }
 
-
-       if(debug)  {
+       if(streamlog_level(DEBUG5)){
          streamlog_out ( DEBUG5 )  << "Track reconstructed from " << nChoiceFired << " hits: " << endl;
 
 
@@ -1832,15 +1822,15 @@ if(jhit>=0){
 
         for(int ipl=0;ipl<_nTelPlanes;ipl++) {
           streamlog_out ( DEBUG5) << "  X = " << fittedX[_nTelPlanes*ifit+ipl] 
-                                             << " +/- " << fittedEx[_nTelPlanes*ifit+ipl]
-                                             << "  Y = " << fittedY[_nTelPlanes*ifit+ipl] 
-                                             << " +/- " << fittedEy[_nTelPlanes*ifit+ipl]
-                                             << "  at Z = " << _planePosition[ipl] << endl;
+				  << " +/- " << fittedEx[_nTelPlanes*ifit+ipl]
+				  << "  Y = " << fittedY[_nTelPlanes*ifit+ipl] 
+				  << " +/- " << fittedEy[_nTelPlanes*ifit+ipl]
+				  << "  at Z = " << _planePosition[ipl] << endl;
         }
 
         streamlog_out ( DEBUG5) << " Fit chi2 = " << choiceChi2 << " including penalties of " << penalty << endl;
 
-      }
+       }
 
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
       // Fill Chi2 histograms
@@ -2087,19 +2077,21 @@ void EUTelTestFitter::end(){
   //        << " processed " << _nEvt << " events in " << _nRun << " runs "
   //        << std::endl ;
 
-  for(int ipl=0;ipl<_nTelPlanes;ipl++)  
-  {
-    stringstream iden;
-    iden << "pl" << _planeID[ipl] << "_";
-    string bname = iden.str();
-
-    streamlog_out( DEBUG5 ) << "X: ["<< ipl << ":" << _planeID[ipl] <<"]" << 
-    _aidaHistoMap1D[bname + "residualX"]->allEntries()<< " " <<
-    _aidaHistoMap1D[bname + "residualX"]->mean()*1000. << " " <<
-    _aidaHistoMap1D[bname + "residualX"]->rms()*1000. << " " <<
-    _aidaHistoMap1D[bname + "residualY"]->allEntries()<< " " <<
-    _aidaHistoMap1D[bname + "residualY"]->mean()*1000. << " " <<
-    _aidaHistoMap1D[bname + "residualY"]->rms()*1000. << " " << endl;
+  if(streamlog_level(DEBUG5)){
+    for(int ipl=0;ipl<_nTelPlanes;ipl++)  
+      {
+	stringstream iden;
+	iden << "pl" << _planeID[ipl] << "_";
+	string bname = iden.str();
+	
+	streamlog_out( DEBUG5 ) << "X: ["<< ipl << ":" << _planeID[ipl] <<"]" << 
+	  _aidaHistoMap1D[bname + "residualX"]->allEntries()<< " " <<
+	  _aidaHistoMap1D[bname + "residualX"]->mean()*1000. << " " <<
+	  _aidaHistoMap1D[bname + "residualX"]->rms()*1000. << " " <<
+	  _aidaHistoMap1D[bname + "residualY"]->allEntries()<< " " <<
+	  _aidaHistoMap1D[bname + "residualY"]->mean()*1000. << " " <<
+	  _aidaHistoMap1D[bname + "residualY"]->rms()*1000. << " " << endl;
+      }
   }
 
   // Print the summary
