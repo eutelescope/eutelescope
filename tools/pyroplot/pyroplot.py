@@ -67,7 +67,12 @@ def printPlots(cans,outPath,separateFiles):
         if not separateFiles:
             if not pdfOpen:
                 log.debug( "Saving canvas #%i to '%s'"%(idx, outPath))
-                can.Print(outPath+"(") # open the pdf file for appending
+                # if we have multiple canvases we need a special operation 
+                # to open the pdf for appending
+                if len(cans) > 1:
+                    can.Print(outPath+"(") # open the pdf file for appending
+                else:
+                    can.Print(outPath) # just write the file if handling single canvas
                 pdfOpen = True
             else:
                 log.debug( "Storing canvas #"+str(idx))
@@ -110,21 +115,27 @@ def plotHistos ( histos, text = "", option = "", statbox = True):
     import rootpy
     from rootpy.plotting import Hist, HistStack
     from ROOT import kRed,gPad,TPaveStats
+    # only for 1D and 2D type histograms:
     # determine and set maximum for all histograms
     stack = HistStack()
     for hist in histos:
-        stack.Add(hist)
-    # determine maximum value (will be set for all histograms)
-    maxplot = stack.GetMaximum()
-    minplot = stack.GetMinimum()
-    for idx, hist in enumerate(histos):
-        try:
+        if not hist.__class__.__name__ == "Hist3D":
+            stack.Add(hist)
+    # determine maximum value and set it for all histograms
+    if stack.GetHists():
+        maxplot = stack.GetMaximum()
+        minplot = stack.GetMinimum()
+        for hist in stack.GetHists():
             hist.SetMaximum(maxplot)
+            # special treatment for log scale Y
             if gPad.GetLogy():
                 hist.SetMinimum(1.)
             else:
+                # if histogram minimum is positive, set to 0.
                 if minplot > 0:
                     hist.SetMinimum(0.)
+    for idx, hist in enumerate(histos):
+        try:
             thisopt = option
             # if not first histo, add "same" to options so previous ones are not overwritten
             if idx:
@@ -182,23 +193,25 @@ def makePage( histos, fileName, fileDescr, separateFiles, logscale):
             log.debug( "Creating new canvas with index %d."%(idx))
             c=Canvas( 600, 800)
             cans[name]=c
-            markCanvas(c, fileName+" "+fileDescr, 0.05, y = 0.009, size = 0.025, color = 2 )
+            markCanvas(c, fileName, 0.05, y = 0.009, size = 0.025, color = 2 )
         if not separateFiles and (idx)%6 == 0:
             log.debug( "Creating new canvas with index %d."%(idx/6))
             # start a new canvas
             c=Canvas( 600, 800)
             cans[fileName+'/'+name]=c
             c.Divide(2,3)
-            markCanvas(c, fileName+" "+fileDescr, 0.05, y = 0.009, size = 0.025, color = 2 )
+            markCanvas(c, fileName, 0.05, y = 0.009, size = 0.025, color = 2 )
         # draw the histogram
         hist = histos[name]
-        log.debug( "Drawing histogram #" + str(idx%6+1) +": " + hist.GetName() + " in canvas #" + str(int(idx/6) ))
+        log.debug( "Drawing histogram #" + str(idx%6+1) +": " + hist.GetName() + " (" + hist.__class__.__name__ + ") in canvas #" + str(int(idx/6) ))
         hist.color = kBlue
         if not separateFiles:
             c.cd(idx%6+1)
         if logscale:
             gPad.SetLogy()
         plotHistos(histos=[hist],text=name)
+        if fileDescr:
+            markPad(text=fileDescr, x=.14, y=.8, size=0.041, color = 2)
     return cans
 
 
@@ -338,6 +351,7 @@ def findHistogramsInFile(filename, regexlist, strict, verbose = False):
         # some header output only needed when listing the contents
         print "=================================="
         print " File: %s"%(filename)
+        print " (matched by regex) path/and/objectname"
         print "=================================="
     # open file and loop over it
     f = root_open(filename)
@@ -395,8 +409,8 @@ def loadHistogramsFromFile(filename, histonames, with2d, with3d):
         if ((histo.__class__.__name__=="Hist" 
              or histo.__class__.__name__=="Profile")
             or ((with3d or with2d) and histo.__class__.__name__=="Hist2D")
-            or (with3d and histo.__class__.__name__=="Profile2D" 
-                or histo.__class__.__name__=="Hist3D")):
+            or (with3d and (histo.__class__.__name__=="Profile2D" 
+                or histo.__class__.__name__=="Hist3D"))):
             histo.SetDirectory(0) # remove association with file
             histos[h] = histo
         else:
@@ -477,7 +491,7 @@ def run( argv = sys.argv ):
     parser.add_argument("-o","--output", default="./overview.pdf", help="Output path and file name. If the file does not end in '.pdf' it will be assumed to be a path and created if needed. If --one-file-per-histogram is set, this will be the output directory for the plots.", metavar="FILE/PATH")
     parser.add_argument("--with-2D","-2D", action="store_true", default=False, help="Also loads TH2-type histograms.")    
     parser.add_argument("--with-3D","-3D", action="store_true", default=False, help="Also loads TH3-type and Profile2D-type histograms, implies --with-2D.")    
-    parser.add_argument("--list-only", action="store_true", default=False, help="Do not generate plots but only list objects in ROOT file(s) and indicate which ones would be selected.")
+    parser.add_argument("--list-only", "--list", action="store_true", default=False, help="Do not generate plots but only list objects in ROOT file(s) and indicate which ones would be selected.")
     parser.add_argument("--strict", action="store_true", default=False, help="Require the selection to match the full histogram path and name (with implied '^' and '$') instead of only a partial match.")
     parser.add_argument("files", help="The files to be processed; additional info STRING to be included in the plot legend can be added by specifiying FILE:STRING", nargs='+')
     # parse the arguments
