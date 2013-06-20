@@ -425,6 +425,7 @@ namespace eutelescope {
     IntVec _FixedPlanes_sensorIDs; //this is going to be
     //set by the user.
     
+    StringVec _pedeSteerAddCmds; // allows user-added commands in the pede steering file
 
 
     int _maxTrackCandidates;

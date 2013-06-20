@@ -280,6 +280,8 @@ EUTelMille::EUTelMille () : Processor("EUTelMille") {
 
   registerOptionalParameter("PedeSteerfileName","Name of the steering file for the pede program.",_pedeSteerfileName, string("steer_mille.txt"));
 
+  registerOptionalParameter("PedeSteeringAdditionalCmds","FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.",_pedeSteerAddCmds, StringVec());
+
   registerOptionalParameter("RunPede","Execute the pede program using the generated steering file.",_runPede, static_cast <bool> (true));
 
   registerOptionalParameter("UsePedeUserStartValues","Give start values for pede by hand (0 - automatic calculation of start values, 1 - start values defined by user).", _usePedeUserStartValues, static_cast <int> (0));
@@ -3109,7 +3111,14 @@ void EUTelMille::end() {
       } // end loop over all planes
 
       steerFile << endl;
-      steerFile << "chiscut 30.0 6.0" << endl;
+      for(StringVec::iterator it = _pedeSteerAddCmds.begin(); it != _pedeSteerAddCmds.end(); ++it) {
+	// two backslashes will be interpreted as newline
+	if (*it == "\\\\")
+	  steerFile << endl;
+	else
+	  steerFile << *it << " ";
+      }
+      steerFile << endl;
       steerFile << "outlierdownweighting 4" << endl;
       steerFile << endl;
       steerFile << "method inversion 10 0.001" << endl;
