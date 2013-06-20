@@ -101,93 +101,52 @@ namespace eutelescope {
         delete _fittrackvec;
     }
     
-    void EUTelGBLFitter::SetXRotationsVec(std::vector<int>& xRotationsVec) {
-        if (xRotationsVec.size() % 2 != 0) {
-            streamlog_out(WARNING2) << "zRotationsVec is probably wrongly specified \n"
-                    "Size of zRotationsVec is odd" << std::endl;
-            return;
-        }
-        for (size_t ipair = 0; ipair < xRotationsVec.size(); ipair += 2) {
-            _paramterIdXRotationsMap.insert(std::make_pair(xRotationsVec[ipair], xRotationsVec[ipair + 1]));
-        }
+    
+    void EUTelGBLFitter::setParamterIdXRotationsMap( const std::map<int, int>& map ) {
+        _paramterIdXRotationsMap = map;
     }
     
-    void EUTelGBLFitter::SetYRotationsVec(std::vector<int>& yRotationsVec) {
-        if (yRotationsVec.size() % 2 != 0) {
-            streamlog_out(WARNING2) << "zRotationsVec is probably wrongly specified \n"
-                    "Size of zRotationsVec is odd" << std::endl;
-            return;
-        }
-        for (size_t ipair = 0; ipair < yRotationsVec.size(); ipair += 2) {
-            _paramterIdYRotationsMap.insert(std::make_pair(yRotationsVec[ipair], yRotationsVec[ipair + 1]));
-        }
+    void EUTelGBLFitter::setParamterIdYRotationsMap( const std::map<int, int>& map ) {
+        _paramterIdYRotationsMap = map;
     }
     
-    void EUTelGBLFitter::SetZRotationsVec(std::vector<int>& zRotationsVec) {
-        if (zRotationsVec.size() % 2 != 0) {
-            streamlog_out(WARNING2) << "zRotationsVec is probably wrongly specified \n"
-                    "Size of zRotationsVec is odd" << std::endl;
-            return;
-        }
-        for (size_t ipair = 0; ipair < zRotationsVec.size(); ipair += 2) {
-            _paramterIdZRotationsMap.insert(std::make_pair(zRotationsVec[ipair], zRotationsVec[ipair + 1]));
-        }
+    void EUTelGBLFitter::setParamterIdZRotationsMap( const std::map<int, int>& map ) {
+        _paramterIdZRotationsMap = map;
     }
 
-    void EUTelGBLFitter::SetZShiftsVec(std::vector<int>& zShiftsVec) {
-        if (zShiftsVec.size() % 2 != 0) {
-            streamlog_out(WARNING2) << "zShiftsVec is probably wrongly specified \n"
-                    "Size of zShiftsVec is odd" << std::endl;
-            return;
-        }
-        for (size_t ipair = 0; ipair < zShiftsVec.size(); ipair += 2) {
-            _paramterIdZShiftsMap.insert(std::make_pair(zShiftsVec[ipair], zShiftsVec[ipair + 1]));
-        }
+    void EUTelGBLFitter::setParamterIdZShiftsMap( const std::map<int, int>& map ) {
+        _paramterIdZShiftsMap = map;
     }
 
-    void EUTelGBLFitter::SetYShiftsVec(std::vector<int>& yShiftsVec) {
-        if (yShiftsVec.size() % 2 != 0) {
-            streamlog_out(WARNING2) << "yShiftsVec is probably wrongly specified \n"
-                    "Size of yShiftsVec is odd" << std::endl;
-            return;
-        }
-        for (size_t ipair = 0; ipair < yShiftsVec.size(); ipair += 2) {
-            _paramterIdYShiftsMap.insert(std::make_pair(yShiftsVec[ipair], yShiftsVec[ipair + 1]));
-        }
+    void EUTelGBLFitter::setParamterIdYShiftsMap( const std::map<int, int>& map ) {
+        _paramterIdYShiftsMap = map;
     }
 
-    void EUTelGBLFitter::SetXShiftsVec(std::vector<int>& xShiftsVec) {
-        if (xShiftsVec.size() % 2 != 0) {
-            streamlog_out(WARNING2) << "xShiftsVec is probably wrongly specified \n"
-                    "Size of xShiftsVec is odd" << std::endl;
-            return;
-        }
-        for (size_t ipair = 0; ipair < xShiftsVec.size(); ipair += 2) {
-            _paramterIdXShiftsMap.insert(std::make_pair(xShiftsVec[ipair], xShiftsVec[ipair + 1]));
-        }
+    void EUTelGBLFitter::setParamterIdXShiftsMap( const std::map<int, int>& map ) {
+        _paramterIdXShiftsMap = map;
     }
-
-    std::map<int, int> EUTelGBLFitter::GetParamterIdXRotationsMap() const {
+    
+    std::map<int, int> EUTelGBLFitter::getParamterIdXRotationsMap() const {
         return _paramterIdXRotationsMap;
     }
     
-    std::map<int, int> EUTelGBLFitter::GetParamterIdYRotationsMap() const {
+    std::map<int, int> EUTelGBLFitter::getParamterIdYRotationsMap() const {
         return _paramterIdYRotationsMap;
     }
     
-    std::map<int, int> EUTelGBLFitter::GetParamterIdZRotationsMap() const {
+    std::map<int, int> EUTelGBLFitter::getParamterIdZRotationsMap() const {
         return _paramterIdZRotationsMap;
     }
 
-    std::map<int, int> EUTelGBLFitter::GetParamterIdZShiftsMap() const {
+    std::map<int, int> EUTelGBLFitter::getParamterIdZShiftsMap() const {
         return _paramterIdZShiftsMap;
     }
 
-    std::map<int, int> EUTelGBLFitter::GetParamterIdYShiftsMap() const {
+    std::map<int, int> EUTelGBLFitter::getParamterIdYShiftsMap() const {
         return _paramterIdYShiftsMap;
     }
 
-    std::map<int, int> EUTelGBLFitter::GetParamterIdXShiftsMap() const {
+    std::map<int, int> EUTelGBLFitter::getParamterIdXShiftsMap() const {
         return _paramterIdXShiftsMap;
     }
 

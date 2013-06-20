@@ -75,16 +75,29 @@ namespace eutelescope {
          */
         virtual void end();
 
-
-
-    public:
-        /** Prepare MILLIPEDE steering file */
+    private:
+        /** Prepare MILLEPEDE steering file */
         void writeMilleSteeringFile();
 
+        /** Rename MILLEPEDE result file */
+        void moveMilleResultFile( const string&, const string& );
+        
+        /** Parse MILLEPEDE result file
+         * and create output collection
+         */
+        bool parseMilleOutput( const string& );
+        
+        /** Run pede executable to solve alignment problem */
+        void runPede();
+
+        /** Generate MILLEPEDE parameter labels */
+        void fillMilleParametersLabels();
+       
+    public:
         /** Histogram booking */
         void bookHistograms();
 
-
+        
         // Processor parameters
 
     public:
@@ -118,20 +131,59 @@ namespace eutelescope {
         /** Parameter ids */
         IntVec _zRotationsVec;
         
+        /** Parameter ids */
+        map<int,int> _xShiftsMap;
+        
+        /** Parameter ids */
+        map<int,int> _yShiftsMap;
+        
+        /** Parameter ids */
+        map<int,int> _zShiftsMap;
+        
+        /** Parameter ids */
+        map<int,int> _xRotationsMap;
+        
+        /** Parameter ids */
+        map<int,int> _yRotationsMap;
+        
+        /** Parameter ids */
+        map<int,int> _zRotationsMap;
+        
         /** Mille binary filename */
         string _milleBinaryFilename;
 
         /** Mille steering filename */
         string _milleSteeringFilename;
 
+        /** Mille result filename */
+        string _milleResultFileName;
+        
         /** Alignment plane ids*/
         IntVec _alignmentPlaneIds;
         
-        /** Alignment plane ids*/
-        IntVec _fixedAlignmentPlaneIds;
+        /** Alignment X shift plane ids to be fixed */
+        IntVec _fixedAlignmentXShfitPlaneIds;
+        
+        /** Alignment Y shift plane ids to be fixed */
+        IntVec _fixedAlignmentYShfitPlaneIds;
+        
+        /** Alignment Z shift plane ids to be fixed */
+        IntVec _fixedAlignmentZShfitPlaneIds;
+        
+        /** Alignment X rotation plane ids to be fixed */
+        IntVec _fixedAlignmentXRotationPlaneIds;
+        
+        /** Alignment Y rotation plane ids to be fixed */
+        IntVec _fixedAlignmentYRotationPlaneIds;
+        
+        /** Alignment Z rotation plane ids to be fixed */
+        IntVec _fixedAlignmentZRotationPlaneIds;
         
         /** Automatic pede run flag*/
         bool _runPede;
+        
+        /** Alignment constants file name */
+        string _alignmentConstantLCIOFile;
         
         /** Maximum value of track chi2 for millipede */
         double _maxChi2Cut;

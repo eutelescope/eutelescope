@@ -91,29 +91,29 @@ namespace eutelescope {
             return _chi2cut;
         }
         
-        void SetXRotationsVec(std::vector<int>& );
+        void setParamterIdXRotationsMap( const std::map<int, int>& );
         
-        void SetYRotationsVec(std::vector<int>& );
+        void setParamterIdYRotationsMap( const std::map<int, int>& );
         
-        void SetZRotationsVec(std::vector<int>& );
+        void setParamterIdZRotationsMap( const std::map<int, int>& );
         
-        void SetZShiftsVec(std::vector<int>& );
+        void setParamterIdZShiftsMap( const std::map<int, int>& );
         
-        void SetYShiftsVec(std::vector<int>& );
+        void setParamterIdYShiftsMap( const std::map<int, int>& );
         
-        void SetXShiftsVec(std::vector<int>& );
+        void setParamterIdXShiftsMap(const std::map<int, int>& );
         
-        std::map<int, int> GetParamterIdXRotationsMap() const;
+        std::map<int, int> getParamterIdXRotationsMap() const;
         
-        std::map<int, int> GetParamterIdYRotationsMap() const;
+        std::map<int, int> getParamterIdYRotationsMap() const;
         
-        std::map<int, int> GetParamterIdZRotationsMap() const;
+        std::map<int, int> getParamterIdZRotationsMap() const;
         
-        std::map<int, int> GetParamterIdZShiftsMap() const;
+        std::map<int, int> getParamterIdZShiftsMap() const;
         
-        std::map<int, int> GetParamterIdYShiftsMap() const;
+        std::map<int, int> getParamterIdYShiftsMap() const;
         
-        std::map<int, int> GetParamterIdXShiftsMap() const;
+        std::map<int, int> getParamterIdXShiftsMap() const;
 
     private:
         TMatrixD PropagatePar(double);
