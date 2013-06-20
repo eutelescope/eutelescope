@@ -422,7 +422,8 @@ namespace eutelescope
     kDEPFET            = 103,
     kTaki              = 104,
     kAPIX              = 105,
-    kFortis            = 106
+    kFortis            = 106,
+    kTimepix           = 107
   } ;
 
   //! Readout mode
