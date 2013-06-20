@@ -129,7 +129,7 @@ Available types of the data format:
   <!--This is the name of the histogram information file-->
   <parameter name="HistoInfoFileName" type="string" value="@HistoInfoFile@"/>
   <!--Switch on or off the histogram filling-->
-  <parameter name="HistogramFilling" type="bool" value="false"/>
+  <parameter name="HistogramFilling" type="bool" value="true"/>
   <!--This is the name of the hotpixel collection-->
   <parameter name="HotPixelCollectionName" type="string" value="hotpixel_m26"/>
   <!--Threshold in SNR for clusters contained in ZS data-->
