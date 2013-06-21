@@ -112,24 +112,9 @@ namespace eutelescope {
 
         /** Alignment mode */
         int _alignmentMode;
-
-        /** Parameter ids */
-        IntVec _xShiftsVec;
-        
-        /** Parameter ids */
-        IntVec _yShiftsVec;
-        
-        /** Parameter ids */
-        IntVec _zShiftsVec;
-        
-        /** Parameter ids */
-        IntVec _xRotationsVec;
-        
-        /** Parameter ids */
-        IntVec _yRotationsVec;
-        
-        /** Parameter ids */
-        IntVec _zRotationsVec;
+      
+        /** GBL M-estimator option */
+        string _mEstimatorType;
         
         /** Parameter ids */
         map<int,int> _xShiftsMap;
@@ -157,6 +142,9 @@ namespace eutelescope {
 
         /** Mille result filename */
         string _milleResultFileName;
+        
+        /** Allows user-added commands in the pede steering file */
+        StringVec _pedeSteerAddCmds;
         
         /** Alignment plane ids*/
         IntVec _alignmentPlaneIds;
@@ -214,8 +202,8 @@ namespace eutelescope {
 
     private:
 
-        struct AlignmentConstants {
-            AlignmentConstants() : _xResiduals(), _nxResiduals(), _yResiduals(), _nyResiduals() {};
+        struct SeedAlignmentConstants {
+            SeedAlignmentConstants() : _xResiduals(), _nxResiduals(), _yResiduals(), _nyResiduals() {};
             std::map< int, double > _xResiduals;   //! sum all x residuals for given plane id
             std::map< int, int >    _nxResiduals;  //! number of residuals used to calculate mean for given plane id
             std::map< int, double > _yResiduals;   //! sum all y residuals for given plane id
@@ -223,7 +211,7 @@ namespace eutelescope {
         };
 
         /** Initial alignment constants */
-        AlignmentConstants _alignmentConstants;
+        SeedAlignmentConstants _seedAlignmentConstants;
 
 
     private:

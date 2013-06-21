@@ -47,6 +47,7 @@
 #include <vector>
 #include <iomanip>
 #include <iterator>
+#include <algorithm>
 
 namespace eutelescope {
 
@@ -58,6 +59,7 @@ namespace eutelescope {
     _parPropJac(5, 5),
     _eBeam(-1.),
     _alignmentMode(Utility::XYShiftXYRot),
+    _mEstimatorType(),
     _mille(0),
     _paramterIdXShiftsMap(),
     _paramterIdYShiftsMap(),
@@ -83,6 +85,7 @@ namespace eutelescope {
     _parPropJac(5, 5),
     _eBeam(-1.),
     _alignmentMode(Utility::XYShiftXYRot),
+    _mEstimatorType(),
     _mille(0),
     _paramterIdXShiftsMap(),
     _paramterIdYShiftsMap(),
@@ -148,6 +151,29 @@ namespace eutelescope {
 
     std::map<int, int> EUTelGBLFitter::getParamterIdXShiftsMap() const {
         return _paramterIdXShiftsMap;
+    }
+
+    void EUTelGBLFitter::setMEstimatorType( const std::string& mEstimatorType ) {
+        std::string mEstimatorTypeLowerCase = mEstimatorType;
+        std::transform( mEstimatorType.begin(), mEstimatorType.end(), mEstimatorTypeLowerCase.begin(), ::tolower);
+        
+        if ( mEstimatorType.size() != 1 ) {
+            streamlog_out( WARNING1 ) << "More than one character supplied as M-estimator option" << std::endl;
+            streamlog_out( WARNING1 ) << "No M-estimator downweighting will be used" << std::endl;
+            return;
+        }
+        
+        if ( mEstimatorType.compare("t") == 0 ||
+             mEstimatorType.compare("h") == 0 ||
+             mEstimatorType.compare("c") == 0   ) this->_mEstimatorType = _mEstimatorType;
+        else {
+            streamlog_out( WARNING1 ) << "M-estimator option " << mEstimatorType << " was not recognized" << std::endl;
+            streamlog_out( WARNING1 ) << "No M-estimator downweighting will be used" << std::endl;
+        }
+    }
+
+    std::string EUTelGBLFitter::getMEstimatorType( ) const {
+        return _mEstimatorType;
     }
 
     TMatrixD EUTelGBLFitter::PropagatePar(double ds) {
@@ -513,15 +539,18 @@ namespace eutelescope {
                 // construct effective scatterers for air
                 // the scatters must be at (Z(plane i) + Z(plane i+1))/2. +/- (Z(plane i) - Z(plane i+1))/sqrt(12)
                 if (iPlane < itTrkCand->size() - 1) {
-                    const double planeSpacing = hitpos[2] - (*(itHit + 1))->getPosition()[2]; // works only for 6 hits tracks
+                    const TVector3 startPoint( hitpos[0], hitpos[1], hitpos[2] );
+                    const TVector3 endPoint(  (*(itHit + 1))->getPosition()[0], (*(itHit + 1))->getPosition()[1], (*(itHit + 1))->getPosition()[2] );
+                    const TVector3 distPoint = endPoint - startPoint;
+                    const double hitSpacing = distPoint.Mag(); 
 
-                    double X0Air = planeSpacing / 304e3; // Air
+                    double X0Air =  hitSpacing / 304e3; // Air
                     double tetAir = Utility::getThetaRMSHighland(p, X0Air);
                     scatPrecAir[0] = 1.0 / (tetAir * tetAir);
                     scatPrecAir[1] = 1.0 / (tetAir * tetAir);
 
                     // propagate parameters into air gap
-                    step = planeSpacing / 2. - planeSpacing / sqrt(12.);
+                    step = hitSpacing / 2. - hitSpacing / sqrt(12.);
                     //step = planeSpacing/2.;
                     streamlog_out(DEBUG0) << "Step size in the air gap:" << step << std::endl;
                     jacPointToPoint = PropagatePar(step);
@@ -529,20 +558,20 @@ namespace eutelescope {
                     gbl::GblPoint pointInAir1(jacPointToPoint);
                     //pointInAir1.setLabel(1000+iLabel);
                     pointInAir1.setLabel(++iLabel);
-                    //			pointInAir1.addScatterer(scat, scatPrecAir);
+                    			pointInAir1.addScatterer(scat, scatPrecAir);
                     pointList.push_back(pointInAir1);
 
-                    step = 2. * planeSpacing / sqrt(12.);
+                    step = 2. * hitSpacing / sqrt(12.);
                     streamlog_out(DEBUG0) << "Step size in the air gap:" << step << std::endl;
                     jacPointToPoint = PropagatePar(step);
                     // point with scatterer
                     gbl::GblPoint pointInAir2(jacPointToPoint);
                     //pointInAir2.setLabel(2000+iLabel);
                     pointInAir2.setLabel(++iLabel);
-                    //			pointInAir2.addScatterer(scat, scatPrecAir);
+                    			pointInAir2.addScatterer(scat, scatPrecAir);
                     pointList.push_back(pointInAir2);
 
-                    step = planeSpacing / 2. - planeSpacing / sqrt(12.);
+                    step = hitSpacing / 2. - hitSpacing / sqrt(12.);
                     //step = planeSpacing/2.;
                     streamlog_out(DEBUG0) << "Step size in the air gap:" << step << std::endl;
                     jacPointToPoint = PropagatePar(step);
@@ -558,9 +587,8 @@ namespace eutelescope {
             double loss = 0.;
             int ndf = 0;
             int ierr = 0;
-            const std::string mEstOpt = "T";
-            //            ierr = traj->fit(chi2, ndf, loss, mEstOpt);
-            ierr = traj->fit(chi2, ndf, loss);
+            if ( !_mEstimatorType.empty() ) ierr = traj->fit(chi2, ndf, loss, _mEstimatorType);
+            else ierr = traj->fit(chi2, ndf, loss);
 
             if (chi2 < _chi2cut) {
                 if (!ierr) traj->milleOut(*_mille);

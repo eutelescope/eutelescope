@@ -93,15 +93,17 @@ EUTelProcessorTrackingGBLTrackFit::EUTelProcessorTrackingGBLTrackFit() :
 Processor("EUTelProcessorTrackingGBLTrackFit"),
 _eBeam(-1.),
 _alignmentMode(0),
-_xShiftsVec(),
-_yShiftsVec(),
-_zShiftsVec(),
-_xRotationsVec(),
-_yRotationsVec(),
-_zRotationsVec(),
+_mEstimatorType(),
+_xShiftsMap(),
+_yShiftsMap(),
+_zShiftsMap(),
+_xRotationsMap(),
+_yRotationsMap(),
+_zRotationsMap(),
 _milleBinaryFilename("mille.bin"),
 _milleSteeringFilename("pede-steer.txt"),
 _milleResultFileName("millepede.res"),
+_pedeSteerAddCmds(),
 _alignmentPlaneIds(),
 _fixedAlignmentXShfitPlaneIds(),
 _fixedAlignmentYShfitPlaneIds(),
@@ -118,6 +120,7 @@ _trackCandidateHitsInputCollectionName("TrackCandidateHitCollection"),
 _tracksOutputCollectionName("TrackCollection"),
 _trackFitter(0),
 _milleGBL(0),
+_seedAlignmentConstants(),
 _nProcessedRuns(0),
 _nProcessedEvents(0),
 #if defined(USE_AIDA) || defined(MARLIN_USE_AIDA)
@@ -161,11 +164,15 @@ _aidaHistoMap2D()
             "7 - Alignment of XYZ shifts + rotations around X,Y and Z\n",
             _alignmentMode, static_cast<int> (0));
 
+    registerOptionalParameter("GBLMEstimatorType", "GBL outlier down-weighting option (t,h,c)", _mEstimatorType, string() );
+    
     registerOptionalParameter("MilleBinaryFilename", "Name of the Millepede binary file", _milleBinaryFilename, std::string("mille.bin"));
 
     registerOptionalParameter("MilleSteeringFilename", "Name of the Millepede steering file to be created", _milleSteeringFilename, std::string("pede-steer.txt"));
     
     registerOptionalParameter("MilleResultFilename", "Name of the Millepede result file", _milleResultFileName, std::string("millepede.res"));
+    
+    registerOptionalParameter("PedeSteeringAdditionalCmds","FOR EXPERTS: List of commands that should be included in the pede steering file. Use '\\' to seperate options and introduce a line break.",_pedeSteerAddCmds, StringVec());
 
     registerOptionalParameter("MilleMaxChi2Cut", "Maximum chi2 of a track candidate that goes into millepede", _maxChi2Cut, double(1000.));
 
@@ -199,7 +206,7 @@ _aidaHistoMap2D()
     
     // Histogram information
 
-    registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, std::string("histoinfo.xml"));
+    registerOptionalParameter("HistogramInfoFilename", "Name of histogram info xml file", _histoInfoFileName, string("histoinfo.xml"));
 }
 
 void EUTelProcessorTrackingGBLTrackFit::init() {
@@ -261,7 +268,7 @@ void EUTelProcessorTrackingGBLTrackFit::init() {
         fillMilleParametersLabels();
         
         // Initialize GBL fitter
-        EUTelGBLFitter* Fitter = new EUTelGBLFitter("myGBLFitter");
+        EUTelGBLFitter* Fitter = new EUTelGBLFitter("GBLFitter");
         Fitter->SetAlignmentMode(alignmentMode);
         Fitter->setParamterIdXShiftsMap(_xShiftsMap);
         Fitter->setParamterIdYShiftsMap(_yShiftsMap);
@@ -269,10 +276,10 @@ void EUTelProcessorTrackingGBLTrackFit::init() {
         Fitter->setParamterIdXRotationsMap(_xRotationsMap);
         Fitter->setParamterIdYRotationsMap(_yRotationsMap);
         Fitter->setParamterIdZRotationsMap(_zRotationsMap);
-        
         Fitter->SetMilleBinary(_milleGBL);
         Fitter->SetBeamEnergy(_eBeam);
         Fitter->SetChi2Cut(_maxChi2Cut);
+        if (!_mEstimatorType.empty() ) Fitter->setMEstimatorType(_mEstimatorType);
         _trackFitter = Fitter;
 
         if (!_trackFitter) {
@@ -309,24 +316,24 @@ void EUTelProcessorTrackingGBLTrackFit::processRunHeader(LCRunHeader * run) {
     // Flush seeding alignment constants
     {
         streamlog_out( DEBUG1 ) << "Flush alignment constants (X shifts)" << std::endl;
-        for ( std::map<int, double >::iterator iDet = _alignmentConstants._xResiduals.begin( );
-                iDet != _alignmentConstants._xResiduals.end( ); ++iDet ) {
+        for ( std::map<int, double >::iterator iDet = _seedAlignmentConstants._xResiduals.begin( );
+                iDet != _seedAlignmentConstants._xResiduals.end( ); ++iDet ) {
             iDet->second = 0.;
         }
 
-        for ( std::map<int, int >::iterator iDet = _alignmentConstants._nxResiduals.begin( );
-                iDet != _alignmentConstants._nxResiduals.end( ); ++iDet ) {
+        for ( std::map<int, int >::iterator iDet = _seedAlignmentConstants._nxResiduals.begin( );
+                iDet != _seedAlignmentConstants._nxResiduals.end( ); ++iDet ) {
             iDet->second = 1;
         }
 
         streamlog_out( DEBUG1 ) << "Flush alignment constants (Y shifts)" << std::endl;
-        for ( std::map<int, double >::iterator iDet = _alignmentConstants._yResiduals.begin( );
-                iDet != _alignmentConstants._yResiduals.end( ); ++iDet ) {
+        for ( std::map<int, double >::iterator iDet = _seedAlignmentConstants._yResiduals.begin( );
+                iDet != _seedAlignmentConstants._yResiduals.end( ); ++iDet ) {
             iDet->second = 0.;
         }
 
-        for ( std::map<int, int >::iterator iDet = _alignmentConstants._nyResiduals.begin( );
-                iDet != _alignmentConstants._nyResiduals.end( ); ++iDet ) {
+        for ( std::map<int, int >::iterator iDet = _seedAlignmentConstants._nyResiduals.begin( );
+                iDet != _seedAlignmentConstants._nyResiduals.end( ); ++iDet ) {
             iDet->second = 1;
         }
     }
@@ -425,6 +432,8 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
                 std::stringstream sstr;
                 std::stringstream sstrNorm;
                 gbl::GblTrajectory* gblTraj = gblTracks[ iCounter ];
+//                gblTraj->printTrajectory(1);
+//                gblTraj->printPoints(1);
                 std::vector< gbl::GblPoint > gblPointVec = static_cast<EUTelGBLFitter*> (_trackFitter)->GetGblTracksPoints()[iCounter];
                 std::vector< gbl::GblPoint >::const_iterator itGblPoint = gblPointVec.begin();
                 int iPlane = 0; // wrong in case of missing planes
@@ -440,8 +449,8 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
                         streamlog_out(DEBUG0) << std::setw(15) << std::setprecision(5) << residual[0] << std::setw(15) << std::setprecision(5) << residualErr[0] << std::endl;
                         static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[0]*um, downWeight[0]);
                         static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstrNorm.str() ]) -> fill(residual[0] / residualErr[0], downWeight[0]);
-                        _alignmentConstants._xResiduals[iPlane]+=(residual[0]);
-                        _alignmentConstants._nxResiduals[iPlane]++;
+                        _seedAlignmentConstants._xResiduals[iPlane]+=(residual[0]);
+                        _seedAlignmentConstants._nxResiduals[iPlane]++;
                         sstr.str(std::string());
                         sstrNorm.str(std::string());
                         sstr << _histName::_residGblFitHistNameY << iPlane;
@@ -449,8 +458,8 @@ void EUTelProcessorTrackingGBLTrackFit::processEvent(LCEvent * evt) {
                         streamlog_out(DEBUG0) << std::setw(15) << std::setprecision(5) << residual[1] << std::setw(15) << std::setprecision(5) << residualErr[1] << std::endl;
                         static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstr.str() ]) -> fill(residual[1]*um, downWeight[1]);
                         static_cast<AIDA::IHistogram1D*> (_aidaHistoMap1D[ sstrNorm.str() ]) -> fill(residual[1] / residualErr[1], downWeight[1]);
-                        _alignmentConstants._yResiduals[iPlane]+=(residual[1]);
-                        _alignmentConstants._nyResiduals[iPlane]++;
+                        _seedAlignmentConstants._yResiduals[iPlane]+=(residual[1]);
+                        _seedAlignmentConstants._nyResiduals[iPlane]++;
                         sstr.str(std::string());
                         sstrNorm.str(std::string());
                         // kinks
@@ -600,7 +609,6 @@ bool EUTelProcessorTrackingGBLTrackFit::parseMilleOutput( const string& milleRes
         return isOK;
     }
     
-    // @TODO change code here!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
     const string command = "parsemilleout.sh " + _milleSteeringFilename + " " + milleResultFileName + " " + _alignmentConstantLCIOFile;
     streamlog_out ( MESSAGE5 ) << "Convering millepede results to LCIO collections... " << endl;
     streamlog_out ( MESSAGE5 ) << command << endl;
@@ -670,7 +678,7 @@ void EUTelProcessorTrackingGBLTrackFit::moveMilleResultFile( const string& oldMi
     ifstream outfile( newMilleResultFileName.c_str() );
     if ( outfile.good( ) ) {
         streamlog_out( WARNING2 ) << newMilleResultFileName << " exists in current directory." << endl;
-        streamlog_out( WARNING2 ) << newMilleResultFileName << " will not be reanamed." << endl;
+        streamlog_out( WARNING2 ) << newMilleResultFileName << " will not be renamed." << endl;
         return;
     }
     
@@ -742,8 +750,8 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
             const string initUncertaintyYRotation = (isFixedYRotation) ? "-1." : "0.01";
             const string initUncertaintyZRotation = (isFixedZRotation) ? "-1." : "0.01";
             
-            const double initXshift = (isFixedXShift) ? 0. : _alignmentConstants._xResiduals[sensorId]/_alignmentConstants._nxResiduals[sensorId];
-            const double initYshift = (isFixedYShift) ? 0. : _alignmentConstants._yResiduals[sensorId]/_alignmentConstants._nyResiduals[sensorId];
+            const double initXshift = (isFixedXShift) ? 0. : _seedAlignmentConstants._xResiduals[sensorId]/_seedAlignmentConstants._nxResiduals[sensorId];
+            const double initYshift = (isFixedYShift) ? 0. : _seedAlignmentConstants._yResiduals[sensorId]/_seedAlignmentConstants._nyResiduals[sensorId];
             
             if( fitter->GetAlignmentMode()==Utility::XYZShiftXYRot ) {
                 steerFile << left << setw(25) << XShiftsMap[sensorId] << setw(25) << initXshift << setw(25) << initUncertaintyXShift
@@ -821,8 +829,16 @@ void EUTelProcessorTrackingGBLTrackFit::writeMilleSteeringFile() {
     steerFile << endl;
     steerFile << "method inversion 5 0.001" << endl;
     steerFile << "chiscut 50.0 10." << endl;
-    steerFile << "! outlierdownweighting 4" << endl;
-    steerFile << "! histprint" << endl;
+    for ( StringVec::iterator it = _pedeSteerAddCmds.begin( ); it != _pedeSteerAddCmds.end( ); ++it ) {
+        // two backslashes will be interpreted as newline
+        if ( *it == "\\\\" )
+            steerFile << endl;
+        else
+            steerFile << *it << " ";
+    }
+    steerFile << endl;
+    steerFile << "!outlierdownweighting 4" << endl;
+    steerFile << "!histprint" << endl;
     steerFile << endl;
     steerFile << "end" << endl;
 

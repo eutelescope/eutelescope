@@ -114,6 +114,10 @@ namespace eutelescope {
         std::map<int, int> getParamterIdYShiftsMap() const;
         
         std::map<int, int> getParamterIdXShiftsMap() const;
+        
+        void setMEstimatorType( const std::string& _mEstimatorType );
+        
+        std::string getMEstimatorType() const;
 
     private:
         TMatrixD PropagatePar(double);
@@ -158,6 +162,9 @@ namespace eutelescope {
         /** Alignment degrees of freedom */
         Utility::AlignmentMode _alignmentMode;
 
+        /** Outlier downweighting option */
+        std::string _mEstimatorType;
+        
         /** Milipede binary file handle */
         gbl::MilleBinary* _mille;
         
