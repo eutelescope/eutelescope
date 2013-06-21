@@ -64,7 +64,7 @@
   <!--This is the input file name-->
   <parameter name="InputFileName" type="string" value="@NativePath@/run@RunNumber@.raw"/>
   <!--Resynchronize the events based on the TLU trigger ID-->
-  <parameter name="SyncTriggerID" type="bool" value="false"/>
+  <parameter name="SyncTriggerID" type="bool" value="true"/>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
