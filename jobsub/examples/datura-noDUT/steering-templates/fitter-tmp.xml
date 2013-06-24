@@ -77,18 +77,18 @@
   <!--parameter name="DataFileHandler" type="StringVec" value="conditionsName"/-->
   <!--Initialization of a simple conditions file handler-->
   <parameter name="SimpleFileHandler" type="StringVec"> refhit @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit01 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit01 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit02 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit02 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit11 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit11 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit12 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit12 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit21 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit21 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit22 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit22 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit31 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit31 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit32 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit32 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit41 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit41 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit42 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit42 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit51 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit51 </parameter>
-  <parameter name="SimpleFileHandler" type="StringVec"> refhit52 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit52 </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit01 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit02 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit11 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit12 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit21 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit22 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit31 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit32 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit41 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit42 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit51 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
+  <parameter name="SimpleFileHandler" type="StringVec"> refhit52 @DatabasePath@/@FilePrefix@-referencehit.slcio referenceHit </parameter>
   <!--verbosity level of this processor ("DEBUG0-4,MESSAGE0-4,WARNING0-4,ERROR0-4,SILENT")-->
   <!--parameter name="Verbosity" type="string" value=""/-->
 </processor>
