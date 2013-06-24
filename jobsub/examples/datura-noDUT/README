@@ -7,8 +7,7 @@
  only. This example uses data taken with the Datura telescope at DESY TB21 in
  2012 and 2013 with different geometries. For tests, example runs are located at:
 
- /afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT/run000033.raw
- /afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT/run000097.raw
+ /afs/desy.de/group/telescopes/EutelTestData/TestExampleDaturaNoDUT
 
  If you are interested in the data but cannot access the above path, please
  contact the EUTelescope software coordinators via mail:
