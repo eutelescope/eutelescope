@@ -242,8 +242,8 @@ optional arguments:
   #+end_src
 
   The analysis we want to perform is controlled by a config file
-  (config.cfg), a csv-table (table_orgmode.csv) and steering file
-  templates (*.xml), all located in the examples sub directory of
+  (config.cfg), a csv-table (runlist.csv) and steering file
+  templates (*.xml), all located in the examples subdirectory of
   jobsub: 
   
   #+begin_src sh
@@ -286,9 +286,11 @@ optional arguments:
   the paths in the config.cfg file.
 
   If all steps succeed, we end up with an LCIO-Collection of tracks on
-  which detailed studies can be performed. In fact, the last step already
-  determines unbiased residuals for each telescope plane using the
-  EUTelDUTHistograms processor.
+  which detailed studies can be performed. In fact, the last step
+  already determines unbiased residuals for each telescope plane using
+  the EUTelDUTHistograms processor. The corresponding histograms can
+  be found in the root file
+  $ANALYSIS/output/histograms/run000097-fitter.root .
     
 * Appendix 1: pysub migration
   Currently, jobsub does not directly support submission on the grid;
