@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """
 Python ROOT plotter - A tool for selecting and assembling histogram
 plots and comparision plots from multiple ROOT files at once

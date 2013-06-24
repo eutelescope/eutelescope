@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python2
 """
 jobsub: a tool for EUTelescope job submission to Marlin 
 
