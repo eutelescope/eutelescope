@@ -24,6 +24,9 @@
     <histo name="DataDistHisto"     type="H1D" xBin="5000" xMin="-500"    xMax="500" />
     <histo name="CommonDistHisto"   type="H1D" xBin="100"  xMin="-10"     xMax="10" />
 
+    <!-- EUTelClusteringProcessor -->
+    <histo name="ClusterSNR"        type="H1D" xBin="20"  xMin="0"     xMax="20" />
+
     <!-- EUTelHitMaker -->
     <histo name="HitCloudLocal"     type="C2D" />
     <histo name="HitCloudTelescope" type="C2D" />
