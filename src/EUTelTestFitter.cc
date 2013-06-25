@@ -569,7 +569,7 @@ void EUTelTestFitter::init() {
       resolution = _siPlanesLayerLayout->getSensitiveResolution(ipl);
     }  else {
       _planeID[iz]=_siPlanesLayerLayout->getDUTID();
-      _planeThickness[iz]=_siPlanesLayerLayout->getDUTThickness();
+      _planeThickness[iz]=_siPlanesLayerLayout->getLayerThickness(ipl) + _siPlanesLayerLayout->getSensitiveThickness(ipl) ;
       _planeX0[iz]=_siPlanesLayerLayout->getDUTRadLength();
       resolution = _siPlanesLayerLayout->getDUTSensitiveResolution();
     }
@@ -2077,7 +2077,8 @@ void EUTelTestFitter::end(){
   //        << " processed " << _nEvt << " events in " << _nRun << " runs "
   //        << std::endl ;
 
-  if(streamlog_level(DEBUG5)){
+  if(streamlog_level(DEBUG5))
+  {
     for(int ipl=0;ipl<_nTelPlanes;ipl++)  
       {
 	stringstream iden;
@@ -3007,7 +3008,8 @@ void EUTelTestFitter::getTrackImpactPoint(double & x, double & y, double & z, Tr
 	NormalVector(1) = 0.;
 	NormalVector(2) = 1.;
 
-	double	z_sensor = _siPlanesLayerLayout->getSensitivePositionZ(_indexDUT)+ 0.5 * _siPlanesLayerLayout->getSensitiveThickness( _indexDUT );
+	double	z_sensor = _siPlanesLayerLayout->getSensitivePositionZ(_indexDUT) +
+                   0.5 * ( _siPlanesLayerLayout->getLayerThickness( _indexDUT ) + _siPlanesLayerLayout->getSensitiveThickness( _indexDUT ) );
 
 	// this is a vector to the point in the plane
 	TVectorD		r0Vector(3);
